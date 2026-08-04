@@ -26,6 +26,94 @@ const TIMING_ONLY_FIELD_NAMES: &[&str] = &[
 ];
 const TIMING_PRESENT_MARKER: &str = "<timing: present>";
 
+#[test]
+fn canonical_semantic_bytes_sort_object_fields_and_preserve_timing_field_presence() {
+    let baseline = serde_json::json!({
+        "z": [true, 3.5],
+        "runtimeMs": 1,
+        "a": { "inner": "value" }
+    });
+    let reordered_with_different_timing = serde_json::json!({
+        "a": { "inner": "value" },
+        "runtimeMs": 2,
+        "z": [true, 3.5]
+    });
+    let timing_absent = serde_json::json!({
+        "a": { "inner": "value" },
+        "z": [true, 3.5]
+    });
+
+    assert_eq!(
+        canonical_semantic_bytes(&baseline),
+        canonical_semantic_bytes(&reordered_with_different_timing)
+    );
+    assert_ne!(
+        canonical_semantic_bytes(&baseline),
+        canonical_semantic_bytes(&timing_absent)
+    );
+}
+
+#[test]
+fn canonical_semantic_bytes_preserve_semantic_values_and_normalize_only_measurements() {
+    let first = serde_json::json!({
+        "result": {
+            "beta": 2,
+            "alpha": ["first", "second"],
+            "label": "stable",
+            "enabled": true,
+            "optional": null
+        },
+        "runtimeMs": 17,
+        "elapsedMs": 18,
+        "serializedTraceBytes": 19,
+        "peakRssDeltaBytes": 20
+    });
+    let reordered_with_different_measurements = serde_json::json!({
+        "peakRssDeltaBytes": 200,
+        "result": {
+            "optional": null,
+            "enabled": true,
+            "label": "stable",
+            "alpha": ["first", "second"],
+            "beta": 2
+        },
+        "serializedTraceBytes": 190,
+        "elapsedMs": 180,
+        "runtimeMs": 170
+    });
+    let semantic_changes = [
+        serde_json::json!({
+            "result": {"alpha": ["second", "first"], "beta": 2, "label": "stable", "enabled": true, "optional": null},
+            "runtimeMs": 170, "elapsedMs": 180, "serializedTraceBytes": 190, "peakRssDeltaBytes": 200
+        }),
+        serde_json::json!({
+            "result": {"alpha": ["first", "second"], "beta": 3, "label": "stable", "enabled": true, "optional": null},
+            "runtimeMs": 170, "elapsedMs": 180, "serializedTraceBytes": 190, "peakRssDeltaBytes": 200
+        }),
+        serde_json::json!({
+            "result": {"alpha": ["first", "second"], "beta": 2, "label": "changed", "enabled": true, "optional": null},
+            "runtimeMs": 170, "elapsedMs": 180, "serializedTraceBytes": 190, "peakRssDeltaBytes": 200
+        }),
+        serde_json::json!({
+            "result": {"alpha": ["first", "second"], "beta": 2, "label": "stable", "enabled": false, "optional": null},
+            "runtimeMs": 170, "elapsedMs": 180, "serializedTraceBytes": 190, "peakRssDeltaBytes": 200
+        }),
+        serde_json::json!({
+            "result": {"alpha": ["first", "second"], "beta": 2, "label": "stable", "enabled": true, "optional": "present"},
+            "runtimeMs": 170, "elapsedMs": 180, "serializedTraceBytes": 190, "peakRssDeltaBytes": 200
+        }),
+    ];
+
+    let first_bytes = canonical_semantic_bytes(&first);
+    assert_eq!(
+        first_bytes,
+        canonical_semantic_bytes(&reordered_with_different_measurements)
+    );
+    for changed in semantic_changes {
+        assert_ne!(first_bytes, canonical_semantic_bytes(&changed));
+    }
+}
+
 struct NullSink;
 
 impl EngineEventSink for NullSink {
@@ -456,13 +544,16 @@ fn append_canonical_json(bytes: &mut Vec<u8>, value: &Value) {
     }
 }
 
-fn canonical_semantic_bytes(result: &polygon_nesting_protocol::EngineResult) -> Vec<u8> {
-    let normalized = normalize_timing_only_fields(
-        &serde_json::to_value(result).expect("engine result must serialize"),
-    );
+fn canonical_semantic_bytes(value: &Value) -> Vec<u8> {
+    let normalized = normalize_timing_only_fields(value);
     let mut bytes = Vec::new();
     append_canonical_json(&mut bytes, &normalized);
     bytes
+}
+
+fn canonical_engine_result_bytes(result: &polygon_nesting_protocol::EngineResult) -> Vec<u8> {
+    let value = serde_json::to_value(result).expect("engine result must serialize");
+    canonical_semantic_bytes(&value)
 }
 
 fn run_once(
@@ -496,7 +587,7 @@ fn thread_equality_case(piece_count: usize) {
         for repeat in 0..REPEATS_PER_THREAD_COUNT {
             let result = run_once(&request, worker_count);
             run_counts[worker_index] += 1;
-            let result_bytes = canonical_semantic_bytes(&result);
+            let result_bytes = canonical_engine_result_bytes(&result);
             if worker_count == 1 && repeat == 0 {
                 baseline_bytes = Some(result_bytes);
             } else {
