@@ -1,0 +1,17 @@
+[workspace]
+members = [
+    "crates/polygon-nesting-protocol",
+    "crates/polygon-nesting-core",
+    "crates/polygon-nesting-cli",
+    "crates/polygon-nesting-napi",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+overflow-checks = true

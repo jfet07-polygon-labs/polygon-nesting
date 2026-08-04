@@ -1,0 +1,11 @@
+/target/
+/artifacts/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+*.node
+*.pem
+*.tgz
+.DS_Store

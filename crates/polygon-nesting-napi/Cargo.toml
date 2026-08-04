@@ -1,0 +1,17 @@
+[package]
+name = "polygon-nesting-napi"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+napi = { version = "3", features = ["serde-json"] }
+napi-derive = "3"
+polygon-nesting-core = { path = "../polygon-nesting-core" }
+polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }
+serde_json = "1"
+
+[build-dependencies]
+napi-build = "2"

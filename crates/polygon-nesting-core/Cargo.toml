@@ -1,0 +1,7 @@
+[package]
+name = "polygon-nesting-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }
