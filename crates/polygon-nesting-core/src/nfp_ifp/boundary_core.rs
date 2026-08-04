@@ -168,7 +168,7 @@ pub fn resolve_nfp_boundary(
 /// pairwise-NFP cache keys that loop's later, **unmodified** calls to
 /// [`resolve_nfp_boundary`] would find missing -- then dispatches the pure
 /// [`compute_relative_nfp_boundary`] computation for that deduplicated set
-/// across this job's Rayon pool (`boundary::parallel::with_job_pool`), and
+/// across this job's Rayon pool ([`crate::parallel::with_job_pool`]), and
 /// publishes every successfully-computed result into `cache` serially, in
 /// the exact order each key was first encountered.
 ///

@@ -52,7 +52,6 @@ use crate::archive::shared::{
     SharedArchiveError, SharedArchivePhase,
 };
 use crate::archive::{periodic_family, reconstruction};
-use crate::parallel::map_slice_with_job_pool;
 use crate::caches::GeometryCacheStore;
 use crate::capacity::mode::{
     run_intrinsic_capacity_mode, run_intrinsic_capacity_scheduler_cold_quantum,
@@ -75,6 +74,7 @@ use crate::geometry::collision_builder::{build_piece, BuildCollisionGeometryInpu
 use crate::nfp_ifp::{
     NfpIfpAbortReason, NfpIfpCheckpointPhase, NfpIfpControl, NfpIfpControlAbortError,
 };
+use crate::parallel::map_slice_with_job_pool;
 use crate::search::layout_scorer::FreeMaterialCache;
 use crate::search::sort_pieces::{sort_pieces_for_nesting, PreparedPiece as SortedPreparedPiece};
 use crate::search::strict_decoder::IntrinsicStrictDecoderFailure;

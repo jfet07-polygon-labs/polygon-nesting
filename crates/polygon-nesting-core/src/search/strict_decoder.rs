@@ -106,7 +106,6 @@ use num_bigint::BigInt;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::parallel::{has_job_pool, with_job_pool};
 use crate::caches::{
     resolve_transformed_collision_geometry, CandidateDomain, GeometryCacheStore,
     NfpCandidatePruningMode, TransformCollisionGeometryKeyInput,
@@ -134,6 +133,7 @@ use crate::nfp_ifp::{
     generate_placement_candidates, GeneratePlacementCandidatesInput, LegalCandidateMemo,
     NfpIfpAbortReason, NfpIfpControl, NfpIfpControlAbortError, NfpIfpError,
 };
+use crate::parallel::{has_job_pool, with_job_pool};
 use crate::validation::placement::IrregularGeometryInputError;
 
 use super::beam_state::{
@@ -3864,9 +3864,9 @@ mod tests {
 
     use std::cell::Cell;
 
-    use crate::parallel::JobPool;
     use crate::canonical_grid::CanonicalGridPoint;
     use crate::domain::IrregularPlacementCandidate;
+    use crate::parallel::JobPool;
 
     fn strict_scoring_worker_indexes() -> Vec<(usize, Option<usize>)> {
         let mut observations = Vec::new();

@@ -28,10 +28,10 @@ use serde::Serialize;
 /// matching the TS namespace constants verbatim (e.g. "pairwise-nfp-relative-v3")
 /// so evidence can be cross-referenced against the TS baseline by name.
 ///
-/// `Serialize` (added for `boundary::diagnostics`'s opt-in
-/// `getLastJobDiagnostics` sidecar, `architecture.md` §4.5): purely a
-/// diagnostic-channel convenience, not a parity/canonical encoding -- see
-/// this module's top doc, "not a byte-parity target."
+/// `Serialize` supports the optional job-diagnostics sidecar described in
+/// `architecture.md` §4.5. This is purely a diagnostic-channel convenience,
+/// not a parity or canonical encoding; see this module's top doc, "not a
+/// byte-parity target."
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CacheNamespaceTelemetry {

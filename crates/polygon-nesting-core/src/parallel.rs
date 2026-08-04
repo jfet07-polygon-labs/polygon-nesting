@@ -5,29 +5,25 @@
 //! parameter through every intervening function signature.
 //!
 //! Per `cache-concurrency-design.md` §7 ("Job-owned thread pool; no
-//! global-pool leakage across jobs") and migration-prompt §14.4:
+//! global-pool leakage across jobs"):
 //!
 //! - **One pool per job, never the ambient global Rayon pool, never
 //!   `rayon::spawn`.** [`build_job_thread_pool`] always calls
 //!   `rayon::ThreadPoolBuilder::build` (never `build_global`), producing a
-//!   pool owned by the caller (`boundary::run_job`). Every Rayon parallel
-//!   site in this crate reaches that pool exclusively through
-//!   [`with_job_pool`], which runs the supplied closure via
-//!   `ThreadPool::install` -- never through a bare `.par_iter()` call that
-//!   would silently fall back to `rayon`'s ambient global pool.
-//! - **Thread-local, not a passed-down parameter.** `run_job` (the job's
-//!   single, synchronous, coordinating OS thread -- see `boundary::job`'s
-//!   own doc, "one dedicated OS thread runs one job's `compute()` body end
-//!   to end") calls [`JobPool::install`] once, at job start, which stashes
-//!   the pool in a `thread_local!` slot scoped to that one OS thread for
-//!   the lifetime of the returned guard. Every parallel site downstream
-//!   calls [`with_job_pool`], which reads that same thread-local. Because
-//!   the slot is `thread_local!` (not a process-global), two jobs running
-//!   concurrently on two different OS threads (napi's libuv worker pool
-//!   genuinely reuses/parallelizes multiple such threads) each see only
-//!   their own pool -- this is the structural proof migration-prompt §14.4
-//!   asks for ("no Rayon worker thread ever executes work tagged with a
-//!   different job's ID"), not merely an informal claim; see this module's
+//!   pool owned by the job service. Every Rayon parallel site in this crate
+//!   reaches that pool exclusively through [`with_job_pool`], which runs the
+//!   supplied closure via `ThreadPool::install` -- never through a bare
+//!   `.par_iter()` call that would silently fall back to `rayon`'s ambient
+//!   global pool.
+//! - **Thread-local, not a passed-down parameter.** The job's single,
+//!   synchronous coordinator thread calls [`JobPool::install`] once at job
+//!   start, which stashes the pool in a `thread_local!` slot scoped to that
+//!   OS thread for the lifetime of the returned guard. Every parallel site
+//!   downstream calls [`with_job_pool`], which reads that same thread-local.
+//!   Because the slot is `thread_local!` (not a process-global), two jobs
+//!   running concurrently on different coordinator threads each see only
+//!   their own pool. Worker tags provide the structural proof that no Rayon
+//!   worker executes work assigned to a different job; see this module's
 //!   tests.
 //! - **No pool installed means no Rayon at all, not inline `par_iter`.**
 //!   `with_job_pool`'s no-pool fallback runs the closure inline on the
@@ -52,18 +48,16 @@
 //! Resolved once per job, before any Rayon work starts
 //! ([`resolve_thread_count`]), from (highest priority first):
 //! 1. an explicit override -- reserved for the thread-equality determinism
-//!    test suite; no N-API argument threads this through today, so
+//!    test suite; the public protocol does not expose this override, so
 //!    production callers always pass `None` here;
 //! 2. the `MIN_PLANE_IRREGULAR_NATIVE_THREADS` process environment
 //!    variable, parsed as a positive integer;
 //! 3. one fewer than the OS-visible logical CPU count, clamped to `1`.
-//!    Rayon workers execute parallel work while the native job coordinator
-//!    runs on a separate libuv thread, so the automatic default leaves one
-//!    CPU available to the coordinator and Electron. Per prompt §14.4 and
-//!    `cache-concurrency-design.md` §7, this resolved value is
-//!    diagnostics-only: it is echoed into
-//!    `boundary::diagnostics::JobDiagnostics::thread_count_used` and never
-//!    reaches the result DTO, a checkpoint, or any hashed surface.
+//!    Rayon workers execute parallel work while the job coordinator runs on
+//!    its own thread, so the automatic default leaves one CPU available to
+//!    the coordinator. Per `cache-concurrency-design.md` §7, this resolved
+//!    value is diagnostics-only: it is reported through job diagnostics and
+//!    never reaches the result DTO, a checkpoint, or any hashed surface.
 
 use std::cell::{Cell, RefCell};
 use std::env;
@@ -174,10 +168,9 @@ pub struct JobThreadCounts {
 }
 
 /// RAII guard returned by [`JobPool::install`]. Clears this OS thread's
-/// installed-pool slot on drop (including during a panic unwind, so
-/// `boundary::contain_panics`' `catch_unwind` never observes a stale
-/// installed pool on a subsequent job reusing the same libuv worker
-/// thread).
+/// installed-pool slot on drop, including during a panic unwind, so a
+/// subsequent job reusing the same coordinator thread never observes a
+/// stale installed pool.
 pub struct JobPoolGuard {
     _private: (),
 }
@@ -195,9 +188,9 @@ impl Drop for JobPoolGuard {
 /// (override/env/automatic default -- what we asked
 /// [`build_job_thread_pool`] for) and the *actual* live pool size read back
 /// from the built pool. The two differ exactly when the pool-build fallback
-/// fired; `boundary::diagnostics::JobDiagnostics` reports both so benchmark
-/// validation can reject requested-versus-actual mismatches instead of
-/// silently attributing multi-thread timings to a one-thread pool.
+/// fired; job diagnostics report both so benchmark validation can reject
+/// requested-versus-actual mismatches instead of silently attributing
+/// multi-thread timings to a one-thread pool.
 pub struct JobPool {
     pool: Arc<rayon::ThreadPool>,
     requested_thread_count: usize,
@@ -238,8 +231,8 @@ impl JobPool {
         self.actual_thread_count
     }
 
-    /// Both counts as one copyable snapshot, for `boundary::run_job`'s
-    /// return tuple and the diagnostics sidecar.
+    /// Both counts as one copyable snapshot for the job result and
+    /// diagnostics sidecar.
     pub fn thread_counts(&self) -> JobThreadCounts {
         JobThreadCounts {
             requested: self.requested_thread_count,
