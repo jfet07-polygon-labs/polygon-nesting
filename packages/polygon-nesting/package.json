@@ -1,0 +1,26 @@
+{
+  "name": "@jfet97/polygon-nesting",
+  "version": "0.1.0",
+  "private": false,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "main": "npm/index.cjs",
+  "exports": "./npm/index.cjs",
+  "files": [
+    "npm/index.cjs",
+    "npm/target.cjs",
+    "npm/*.node",
+    "NOTICE",
+    "LICENSES/**"
+  ],
+  "scripts": {
+    "build": "node scripts/build-native.mjs",
+    "build:release": "node scripts/build-native.mjs --profile release",
+    "test": "node --test scripts/build-native.test.mjs",
+    "pack:dry-run": "npm pack --dry-run --json"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
