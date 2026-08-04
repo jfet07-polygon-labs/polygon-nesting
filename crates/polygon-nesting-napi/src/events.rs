@@ -255,20 +255,35 @@ fn status_for_terminal_outcome(outcome: i32) -> Status {
     }
 }
 
-#[derive(Default)]
+const NO_DELIVERY_FAILURE: i32 = -1;
+
 struct DeliveryFailure {
-    first: Option<Status>,
+    first: AtomicI32,
+}
+
+impl Default for DeliveryFailure {
+    fn default() -> Self {
+        Self {
+            first: AtomicI32::new(NO_DELIVERY_FAILURE),
+        }
+    }
 }
 
 impl DeliveryFailure {
-    fn record(&mut self, status: Status) {
-        if self.first.is_none() {
-            self.first = Some(status);
-        }
+    fn record(&self, status: Status) {
+        let _ = self.first.compare_exchange(
+            NO_DELIVERY_FAILURE,
+            i32::from(status),
+            Ordering::SeqCst,
+            Ordering::SeqCst,
+        );
     }
 
     fn status(&self) -> Option<Status> {
-        self.first
+        match self.first.load(Ordering::SeqCst) {
+            NO_DELIVERY_FAILURE => None,
+            status => Some(Status::from(status)),
+        }
     }
 }
 
@@ -277,7 +292,7 @@ pub struct EventBridge {
     next_ordinal: u64,
     terminal_emitted: bool,
     terminal_latch: TerminalLatch,
-    delivery_failure: DeliveryFailure,
+    delivery_failure: Arc<DeliveryFailure>,
 }
 
 impl EventBridge {
@@ -287,7 +302,7 @@ impl EventBridge {
             next_ordinal: 0,
             terminal_emitted: false,
             terminal_latch,
-            delivery_failure: DeliveryFailure::default(),
+            delivery_failure: Arc::new(DeliveryFailure::default()),
         }
     }
 
@@ -316,6 +331,11 @@ impl EventBridge {
         status
     }
 
+    /// Advances the core ordinal for a filtered semantic event without invoking JS.
+    pub fn skip_core(&mut self, event: SequencedEngineEvent) -> Status {
+        self.deliver_core(event, |_frame| Status::Ok)
+    }
+
     /// Appends one terminal frame and waits until its callback acknowledges it.
     pub fn emit_terminal_and_wait(
         &mut self,
@@ -328,10 +348,7 @@ impl EventBridge {
         let frame = EventFrame::Terminal {
             ordinal: self.next_ordinal,
         };
-        self.next_ordinal = self
-            .next_ordinal
-            .checked_add(1)
-            .expect("event ordinal overflow after terminal");
+        self.next_ordinal = self.next_ordinal.saturating_add(1);
         let status = self
             .terminal_latch
             .enqueue_terminal_and_wait(|acknowledgement| enqueue(frame, acknowledgement));
@@ -346,14 +363,32 @@ impl EventBridge {
         self.delivery_failure.status()
     }
 
+    #[cfg(test)]
+    /// Records a JavaScript callback result reported after nonblocking dispatch.
+    fn record_nonterminal_callback_status(&self, status: Status) {
+        if status != Status::Ok {
+            self.delivery_failure.record(status);
+        }
+    }
+
     /// Delivers a core frame through the N-API callback without blocking.
     pub fn deliver_core_to_js(
         &mut self,
         event: SequencedEngineEvent,
         callback: &JsonEventFn,
     ) -> Status {
-        self.deliver_core(event, |frame| {
-            callback.call(frame.json(), ThreadsafeFunctionCallMode::NonBlocking)
+        let delivery_failure = Arc::clone(&self.delivery_failure);
+        self.deliver_core(event, move |frame| {
+            callback.call_with_return_value(
+                frame.json(),
+                ThreadsafeFunctionCallMode::NonBlocking,
+                move |callback_result, _env| {
+                    if let Err(error) = callback_result {
+                        delivery_failure.record(error.status);
+                    }
+                    Ok(())
+                },
+            )
         })
     }
 
@@ -452,7 +487,7 @@ mod tests {
             next_ordinal: u64::MAX,
             terminal_emitted: false,
             terminal_latch: TerminalLatch::new(),
-            delivery_failure: DeliveryFailure::default(),
+            delivery_failure: Arc::new(DeliveryFailure::default()),
         };
         let mut delivery_called = false;
 
@@ -507,6 +542,36 @@ mod tests {
         assert_eq!(frames[0].ordinal(), 0);
         assert_eq!(frames[1].ordinal(), 1);
         assert_eq!(frames[2], EventFrame::Terminal { ordinal: 2 });
+    }
+
+    #[test]
+    fn suppressing_snapshot_delivery_preserves_core_owned_ordinals() {
+        let mut bridge = EventBridge::new(TerminalLatch::new());
+        let mut frames = Vec::new();
+
+        bridge.deliver_core(progress(0, PortfolioPhase::SharedArchive), |frame| {
+            frames.push(frame);
+            Status::Ok
+        });
+        assert_eq!(bridge.skip_core(snapshot(1)), Status::Ok);
+        bridge.deliver_core(progress(2, PortfolioPhase::Completed), |frame| {
+            frames.push(frame);
+            Status::Ok
+        });
+        bridge.emit_terminal_and_wait(|frame, acknowledgement| {
+            frames.push(frame);
+            acknowledgement.acknowledge(Status::Ok);
+            Status::Ok
+        });
+
+        assert_eq!(
+            frames,
+            vec![
+                EventFrame::Core(progress(0, PortfolioPhase::SharedArchive)),
+                EventFrame::Core(progress(2, PortfolioPhase::Completed)),
+                EventFrame::Terminal { ordinal: 3 },
+            ]
+        );
     }
 
     #[test]
@@ -771,6 +836,23 @@ mod tests {
     }
 
     #[test]
+    fn nonterminal_callback_exception_precedes_terminal_acknowledgement() {
+        let mut bridge = EventBridge::new(TerminalLatch::new());
+
+        bridge.record_nonterminal_callback_status(Status::PendingException);
+        let terminal_status = bridge.emit_terminal_and_wait(|_frame, acknowledgement| {
+            acknowledgement.acknowledge(Status::Ok);
+            Status::Ok
+        });
+
+        assert_eq!(terminal_status, Status::Ok);
+        assert_eq!(
+            bridge.first_delivery_failure(),
+            Some(Status::PendingException)
+        );
+    }
+
+    #[test]
     fn retains_first_delivery_failure_after_terminal_acknowledgement() {
         let mut bridge = EventBridge::new(TerminalLatch::new());
 
@@ -787,5 +869,21 @@ mod tests {
 
         assert_eq!(terminal_status, Status::Ok);
         assert_eq!(bridge.first_delivery_failure(), Some(Status::QueueFull));
+    }
+
+    #[test]
+    fn terminal_ordinal_overflow_never_panics() {
+        let mut bridge = EventBridge {
+            next_ordinal: u64::MAX,
+            terminal_emitted: false,
+            terminal_latch: TerminalLatch::new(),
+            delivery_failure: Arc::new(DeliveryFailure::default()),
+        };
+        let status = bridge.emit_terminal_and_wait(|frame, acknowledgement| {
+            assert_eq!(frame, EventFrame::Terminal { ordinal: u64::MAX });
+            acknowledgement.acknowledge(Status::Ok);
+            Status::Ok
+        });
+        assert_eq!(status, Status::Ok);
     }
 }

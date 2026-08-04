@@ -1,8 +1,9 @@
 pub mod compat;
+pub mod job;
 
 mod diagnostics;
 mod events;
-mod job;
+mod registry;
 
 use napi_derive::napi;
 use polygon_nesting_protocol::EngineInfo;
@@ -54,6 +55,7 @@ mod tests {
 
     #[test]
     fn diagnostics_export_returns_valid_json_or_null() {
+        let _diagnostics_guard = diagnostics::test_guard();
         let json = get_last_job_diagnostics();
         let parsed: serde_json::Value =
             serde_json::from_str(&json).expect("valid diagnostics JSON");

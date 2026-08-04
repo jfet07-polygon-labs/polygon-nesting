@@ -1,0 +1,194 @@
+use polygon_nesting_napi::job::{
+    cancellation_reason_from_wire, project_adapter_error, project_delivery_failure,
+    project_engine_error, project_panic,
+};
+use polygon_nesting_protocol::{EngineError, EngineErrorCode};
+
+fn error(category: EngineErrorCode, operation: &str, message: &str) -> serde_json::Value {
+    serde_json::from_str(&project_engine_error(EngineError::new(
+        category, operation, message,
+    )))
+    .expect("valid envelope JSON")
+}
+
+#[test]
+fn compat_decode_error_resolves_as_the_desktop_failure_envelope() {
+    let error = polygon_nesting_napi::compat::decode_desktop_request("{not json")
+        .expect_err("invalid request must fail decode");
+    let envelope: serde_json::Value =
+        serde_json::from_str(&project_adapter_error(error)).expect("valid envelope JSON");
+    assert_eq!(envelope["error"]["category"], "worker_protocol_error");
+    assert_eq!(envelope["error"]["operation"], "decodeRequestJson");
+}
+
+#[test]
+fn engine_cancelled_projects_to_desktop_worker_cancelled() {
+    let envelope = error(
+        EngineErrorCode::Cancelled,
+        "computeIrregularNesting",
+        "cancelled",
+    );
+    assert_eq!(envelope["error"]["category"], "worker_cancelled");
+}
+
+#[test]
+fn engine_deadline_projects_to_desktop_worker_timeout() {
+    let envelope = error(
+        EngineErrorCode::DeadlineExceeded,
+        "computeIrregularNesting",
+        "deadline exceeded",
+    );
+    assert_eq!(envelope["error"]["category"], "worker_timeout");
+}
+
+#[test]
+fn engine_invalid_geometry_projects_to_desktop_geometry_error() {
+    let envelope = error(
+        EngineErrorCode::InvalidGeometry,
+        "validate",
+        "invalid geometry",
+    );
+    assert_eq!(envelope["error"]["category"], "irregular_geometry_invalid");
+}
+
+#[test]
+fn engine_failure_projects_to_desktop_no_valid_result() {
+    let envelope = error(
+        EngineErrorCode::EngineFailure,
+        "computeIrregularNesting",
+        "no result",
+    );
+    assert_eq!(envelope["error"]["category"], "irregular_no_valid_result");
+}
+
+#[test]
+fn source_geometry_failure_projects_to_exact_desktop_category() {
+    let envelope: serde_json::Value = serde_json::from_str(&project_engine_error(
+        EngineError::new(
+            EngineErrorCode::InvalidGeometry,
+            "computeIrregularNesting",
+            "source geometry missing",
+        )
+        .with_context("preparedPieceId", "prepared-1")
+        .with_context("sourcePieceId", "source-1"),
+    ))
+    .expect("valid envelope JSON");
+
+    assert_eq!(
+        envelope["error"]["category"],
+        "irregular_source_geometry_missing"
+    );
+    assert_eq!(
+        envelope["error"]["context"]["preparedPieceId"],
+        "prepared-1"
+    );
+    assert_eq!(envelope["error"]["context"]["sourcePieceId"], "source-1");
+}
+
+#[test]
+fn scoring_engine_failures_project_to_exact_desktop_category() {
+    for (operation, category) in [
+        ("runPortfolio", Some("scoring")),
+        ("searchPortfolio", Some("search")),
+        ("scorePlacement", None),
+        ("scoreLayout", None),
+    ] {
+        let mut error =
+            EngineError::new(EngineErrorCode::EngineFailure, operation, "scoring failed")
+                .with_context("operation", operation);
+        if let Some(category) = category {
+            error = error.with_context("category", category);
+        }
+        let envelope: serde_json::Value =
+            serde_json::from_str(&project_engine_error(error)).expect("valid envelope JSON");
+        assert_eq!(
+            envelope["error"]["category"], "irregular_scoring_error",
+            "operation {operation}"
+        );
+    }
+}
+
+#[test]
+fn accepted_not_implemented_context_projects_to_exact_desktop_category() {
+    let envelope: serde_json::Value = serde_json::from_str(&project_engine_error(
+        EngineError::new(
+            EngineErrorCode::InternalFailure,
+            "extendFreeMaterial",
+            "not implemented",
+        )
+        .with_context("service", "freeMaterial")
+        .with_context("operation", "extendFreeMaterial"),
+    ))
+    .expect("valid envelope JSON");
+
+    assert_eq!(envelope["error"]["category"], "not_implemented");
+    assert_eq!(envelope["error"]["context"]["service"], "freeMaterial");
+    assert_eq!(
+        envelope["error"]["context"]["operation"],
+        "extendFreeMaterial"
+    );
+}
+
+#[test]
+fn generic_engine_failure_omits_empty_desktop_context() {
+    let envelope = error(
+        EngineErrorCode::EngineFailure,
+        "computeIrregularNesting",
+        "no result",
+    );
+    assert!(envelope["error"].get("context").is_none());
+}
+
+#[test]
+fn archive_ineligible_projects_each_reason_to_accepted_desktop_routing_failure() {
+    for (reason, accepted_text) in [
+        ("archive-disabled", "intrinsicSharedArchiveEnabled is false"),
+        ("ga-active", "GA is active"),
+        ("short-side-fill", "placementPolicyId is 'short-side-fill'"),
+    ] {
+        let envelope: serde_json::Value = serde_json::from_str(&project_engine_error(
+            EngineError::new(
+                EngineErrorCode::ArchiveIneligible,
+                "archive-ineligible",
+                "ignored",
+            )
+            .with_context("reason", reason),
+        ))
+        .expect("valid envelope JSON");
+        assert_eq!(envelope["error"]["category"], "not_implemented");
+        assert_eq!(
+            envelope["error"]["operation"],
+            "legacy-portfolio-unsupported"
+        );
+        assert_eq!(envelope["error"]["context"]["service"], "irregular-native");
+        assert_eq!(
+            envelope["error"]["message"],
+            format!(
+                "request settings are not intrinsic-shared-archive-eligible ({accepted_text}); this backend only implements the Compact / Compact Short Side archive path and does not emulate TypeScript's legacy windowed-beam/GA path -- route this request to the TypeScript backend."
+            )
+        );
+    }
+}
+
+#[test]
+fn adapter_projects_delivery_failures_after_terminal_acknowledgement() {
+    let envelope: serde_json::Value =
+        serde_json::from_str(&project_delivery_failure("QueueFull")).expect("valid envelope JSON");
+    assert_eq!(envelope["error"]["category"], "worker_protocol_error");
+    assert_eq!(envelope["error"]["operation"], "nativeEventDelivery");
+}
+
+#[test]
+fn adapter_sanitizes_caught_panics_without_raw_payload() {
+    let envelope: serde_json::Value =
+        serde_json::from_str(&project_panic("runIrregularJob")).expect("valid envelope JSON");
+    assert_eq!(envelope["error"]["category"], "unknown_error");
+    assert_eq!(envelope["error"]["context"]["backend"], "rust");
+}
+
+#[test]
+fn only_documented_cancellation_wire_reasons_are_accepted() {
+    assert!(cancellation_reason_from_wire("cancelled").is_some());
+    assert!(cancellation_reason_from_wire("timeout").is_some());
+    assert!(cancellation_reason_from_wire("deadline").is_none());
+}

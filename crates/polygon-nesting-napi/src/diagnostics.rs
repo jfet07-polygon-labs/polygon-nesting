@@ -57,6 +57,17 @@ impl JobDiagnostics {
         })
     }
 
+    pub(crate) fn no_pool(backend_version: impl Into<String>, wall_clock_ms: f64) -> Self {
+        Self {
+            backend_version: backend_version.into(),
+            thread_count_used: 1,
+            thread_count_requested: 1,
+            wall_clock_ms,
+            cache_telemetry: CacheTelemetrySnapshot::default(),
+            free_material_cache_telemetry: FreeMaterialCacheTelemetry::default(),
+        }
+    }
+
     #[cfg(test)]
     fn for_test(backend_version: &str) -> Self {
         let mut cache_telemetry = CacheTelemetrySnapshot::default();
@@ -231,7 +242,7 @@ fn reset_for_test(_guard: &std::sync::MutexGuard<'static, ()>) {
 }
 
 #[cfg(test)]
-fn test_guard() -> std::sync::MutexGuard<'static, ()> {
+pub(crate) fn test_guard() -> std::sync::MutexGuard<'static, ()> {
     static GUARD: OnceLock<Mutex<()>> = OnceLock::new();
     GUARD
         .get_or_init(|| Mutex::new(()))
