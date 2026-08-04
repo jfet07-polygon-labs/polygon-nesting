@@ -549,6 +549,7 @@ dependencies = [
  "napi-derive",
  "polygon-nesting-core",
  "polygon-nesting-protocol",
+ "serde",
  "serde_json",
 ]
 
