@@ -2,6 +2,7 @@ pub mod compat;
 
 mod diagnostics;
 mod events;
+mod job;
 
 use napi_derive::napi;
 use polygon_nesting_protocol::EngineInfo;
