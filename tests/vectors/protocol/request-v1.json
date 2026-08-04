@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "timeoutMs": 9007199254740991,
+  "profile": "compact",
+  "sheet": {
+    "width": 2000,
+    "height": 2700,
+    "label": "2000x2700"
+  },
+  "pieces": [
+    {
+      "id": "triangle-copy-1",
+      "sourcePieceId": "triangle-copy-1",
+      "interchangeabilityKey": "triangle-20",
+      "realBounds": {
+        "x": 0,
+        "y": 0,
+        "width": 70,
+        "height": 60
+      },
+      "paddedBounds": {
+        "x": 0,
+        "y": 0,
+        "width": 80,
+        "height": 70,
+        "longestEdge": 80,
+        "area": 5600,
+        "imbalance": 10
+      },
+      "padding": 5,
+      "allowRotation": true,
+      "allowMirror": true
+    }
+  ],
+  "settings": {
+    "padding": 10,
+    "allowGlobalRotation": true,
+    "allowGlobalMirror": true,
+    "geometry": {
+      "flatteningSagToleranceMm": 0.25,
+      "clearanceSafetyMarginMm": 0.25,
+      "geometryBackendId": "irregular-convex-v2-default",
+      "geometryBackendVersion": "0"
+    },
+    "optimizer": {
+      "orderWindow": 4,
+      "beamWidth": 8,
+      "localCandidateFanout": 4,
+      "localRepairBudget": 0,
+      "intrinsicSharedArchiveEnabled": true,
+      "transformCap": 8,
+      "transformMinimumEdgeLengthMm": 1.2,
+      "transformAngleDeduplicationToleranceDeg": 0.051,
+      "configuredRotationEnabled": true,
+      "edgeAlignmentEnabled": true,
+      "configuredRotationDeg": [],
+      "gaEnabled": false,
+      "baselineOnly": true,
+      "gaPopulation": 12,
+      "gaGenerationBudget": 2,
+      "gaEvaluationBudget": 24,
+      "gaTimeBudgetMs": 15000,
+      "gaSeed": "default",
+      "priorityOrderMutationEnabled": true,
+      "transformPreferenceMutationEnabled": true,
+      "placementPolicyMutationEnabled": true,
+      "placementPolicyId": "edge-contact-then-balanced-compactness",
+      "placementPolicyIds": [
+        "balanced-compactness",
+        "short-side-fill",
+        "edge-contact-then-balanced-compactness"
+      ]
+    }
+  },
+  "historyMode": "off"
+}

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "sourceCommit": "e4f3608878611c002f343473fab72adc7d155f87",
+  "artifacts": {
+    "request-v1.json": {
+      "sourceArtifact": "migration-corpus/triangle-20-2000x2700-compact/request.json",
+      "sourceArtifactSha256": "69103cfdc60e38e9efa028bf33f320c36eecc0b0417a839953990cdd1cc4f6f2",
+      "derivation": "Application-neutral projection retaining one prepared piece, the user-owned sheet label, and the accepted Compact settings. Adapter routing identifiers, source-file metadata, and worker-only options were removed."
+    },
+    "event-v1.json": {
+      "sourceArtifact": "migration-corpus/triangle-20-2000x2700-compact/events.ndjson",
+      "sourceArtifactSha256": "865993c508b4e85fa2d7b62deb19529424eeed4dc88c3d36a207ebf2f6d52464",
+      "derivation": "The final semantic progress event was wrapped in the neutral sequenced event envelope. The terminal transport acknowledgement was removed."
+    },
+    "archive-ineligible-outcome-v1.json": {
+      "sourceArtifact": "crates/irregular-nesting-native/src/boundary/error.rs",
+      "derivation": "The archive routing failure was promoted to a distinct application-neutral outcome variant with a typed reason."
+    },
+    "state-snapshot-event-v1.json": {
+      "sourceArtifact": "crates/irregular-nesting-native/src/domain/piece.rs",
+      "sourceArtifactSha256": "68cabe898cb09dd2210cbf93c6e427016235bd3175158e7021ece2fa827e481c",
+      "derivation": "A complete accepted result-side prepared piece was embedded in the neutral sequenced StateSnapshot event envelope. Adapter routing identifiers were excluded."
+    }
+  }
+}

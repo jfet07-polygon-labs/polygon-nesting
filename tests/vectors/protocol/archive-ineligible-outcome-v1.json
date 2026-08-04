@@ -1,0 +1,1 @@
+{"version":1,"outcome":{"status":"archive-ineligible","reason":"archive-disabled","error":{"category":"archive_ineligible","operation":"archive-ineligible","message":"request is not eligible for the supported polygon nesting archive path: archive-disabled","context":{"reason":"archive-disabled"}}}}
