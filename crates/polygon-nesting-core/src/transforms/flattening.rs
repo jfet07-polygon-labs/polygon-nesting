@@ -794,7 +794,10 @@ mod vector_tests {
     use std::fs;
 
     fn load_vectors() -> Value {
-        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/vectors/flattening.json");
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../tests/vectors/core/flattening.json"
+        );
         let raw =
             fs::read_to_string(path).unwrap_or_else(|err| panic!("failed to read {path}: {err}"));
         serde_json::from_str(&raw).unwrap_or_else(|err| panic!("failed to parse {path}: {err}"))

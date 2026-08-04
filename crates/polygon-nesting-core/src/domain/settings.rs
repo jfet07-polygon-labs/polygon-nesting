@@ -415,7 +415,7 @@ mod tests {
     #[test]
     fn irregular_nesting_settings_deserializes_the_mixed61_fixture_payload() {
         let fixture_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../tests/fixtures/irregularSheetInvariance/mixed61-request.json");
+            .join("../../tests/fixtures/mixed-61/mixed61-request.json");
         let raw = std::fs::read_to_string(&fixture_path)
             .unwrap_or_else(|err| panic!("failed to read {fixture_path:?}: {err}"));
         let request: serde_json::Value =
