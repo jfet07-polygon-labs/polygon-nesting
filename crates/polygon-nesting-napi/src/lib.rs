@@ -1,3 +1,5 @@
+pub mod compat;
+
 mod diagnostics;
 
 use napi_derive::napi;
