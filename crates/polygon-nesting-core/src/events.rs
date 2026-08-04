@@ -1,7 +1,7 @@
-//! Core event delivery API.
+//! Typed job event delivery.
 //!
-//! Event serialization and sequencing behavior are implemented by the Task 24
-//! execution service. This module only establishes the typed service boundary.
+//! The sequencer assigns zero-based, strictly increasing ordinals before
+//! forwarding protocol events to the caller-provided sink.
 
 use polygon_nesting_protocol::{EngineEvent, SequencedEngineEvent};
 
@@ -22,8 +22,10 @@ impl<'a> EventSequencer<'a> {
         }
     }
 
-    pub fn emit(&mut self, _event: EngineEvent) {
-        todo!("Task 24 event sequencing behavior")
+    pub fn emit(&mut self, event: EngineEvent) {
+        let ordinal = self.next_ordinal;
+        self.next_ordinal = ordinal.checked_add(1).expect("event ordinal overflow");
+        self.sink.emit(SequencedEngineEvent { ordinal, event });
     }
 
     pub fn next_ordinal(&self) -> u64 {
