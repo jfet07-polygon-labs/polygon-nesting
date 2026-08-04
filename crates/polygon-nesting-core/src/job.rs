@@ -2067,6 +2067,7 @@ pub struct Job<'a> {
     request: &'a EngineRequest,
     control: &'a CancellationControl,
     sink: &'a mut dyn EngineEventSink,
+    thread_count_override: Option<usize>,
 }
 
 impl<'a> Job<'a> {
@@ -2079,6 +2080,21 @@ impl<'a> Job<'a> {
             request,
             control,
             sink,
+            thread_count_override: None,
+        }
+    }
+
+    pub fn with_thread_count(
+        request: &'a EngineRequest,
+        control: &'a CancellationControl,
+        sink: &'a mut dyn EngineEventSink,
+        thread_count_override: Option<usize>,
+    ) -> Self {
+        Self {
+            request,
+            control,
+            sink,
+            thread_count_override,
         }
     }
 
@@ -2097,7 +2113,7 @@ impl<'a> Job<'a> {
             .ok_or_else(|| internal_failure("prepare-nesting-request"))?;
         let mut geometry_cache = GeometryCacheStore::new();
         let mut free_material_cache = FreeMaterialCache::new();
-        let pool = JobPool::new(None);
+        let pool = JobPool::new(self.thread_count_override);
         let thread_counts = pool.thread_counts();
         let mut event_sink = ProtocolEventSink::new(self.sink);
         let mut cancellation_reason = || match self.control.reason() {
