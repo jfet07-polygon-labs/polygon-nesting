@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "timeoutMs": 1000,
+  "profile": "compact",
+  "sheet": {"width": 100, "height": 100, "label": "cli-fixture-sheet"},
+  "pieces": [{
+    "id": "piece",
+    "sourcePieceId": "source",
+    "realBounds": {"x": 0, "y": 0, "width": 10, "height": 10},
+    "paddedBounds": {"x": 0, "y": 0, "width": 10, "height": 10, "longestEdge": 10, "area": 100, "imbalance": 0},
+    "padding": 0,
+    "allowRotation": true,
+    "allowMirror": false
+  }],
+  "sourcePieces": [{
+    "id": "source",
+    "sourceFileId": "fixture",
+    "label": "source",
+    "realBounds": {"x": 0, "y": 0, "width": 10, "height": 10},
+    "geometry": {
+      "entityType": "LINE",
+      "closed": true,
+      "segments": [
+        {"kind": "line", "x1": 0, "y1": 0, "x2": 10, "y2": 0},
+        {"kind": "line", "x1": 10, "y1": 0, "x2": 10, "y2": 10},
+        {"kind": "line", "x1": 10, "y1": 10, "x2": 0, "y2": 10},
+        {"kind": "line", "x1": 0, "y1": 10, "x2": 0, "y2": 0}
+      ]
+    },
+    "warnings": []
+  }],
+  "settings": {
+    "padding": 0,
+    "allowGlobalRotation": true,
+    "allowGlobalMirror": false,
+    "geometry": {"flatteningSagToleranceMm": 0.1, "clearanceSafetyMarginMm": 0.1, "geometryBackendId": "fixture-backend", "geometryBackendVersion": "v1"},
+    "optimizer": {
+      "orderWindow": 1,
+      "beamWidth": 1,
+      "localCandidateFanout": 1,
+      "localRepairBudget": 0,
+      "intrinsicSharedArchiveEnabled": true,
+      "transformCap": 4,
+      "transformMinimumEdgeLengthMm": 1,
+      "transformAngleDeduplicationToleranceDeg": 0.01,
+      "configuredRotationEnabled": true,
+      "edgeAlignmentEnabled": true,
+      "configuredRotationDeg": [],
+      "gaEnabled": false,
+      "baselineOnly": true,
+      "gaPopulation": 1,
+      "gaGenerationBudget": 0,
+      "gaEvaluationBudget": 0,
+      "gaTimeBudgetMs": 0,
+      "gaSeed": "fixture",
+      "priorityOrderMutationEnabled": true,
+      "transformPreferenceMutationEnabled": true,
+      "placementPolicyMutationEnabled": true,
+      "placementPolicyId": "balanced-compactness",
+      "placementPolicyIds": ["balanced-compactness"]
+    }
+  },
+  "historyMode": "stream"
+}

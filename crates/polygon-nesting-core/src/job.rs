@@ -2063,6 +2063,27 @@ fn project_error(error: IrregularComputeErrorType) -> EngineError {
     }
 }
 
+fn control_failure_outcome(control: &CancellationControl) -> Option<EngineOutcome> {
+    const OPERATION: &str = "computeIrregularNesting";
+
+    let error = match control.reason()? {
+        crate::CancelReason::Cancelled => {
+            EngineError::new(EngineErrorCode::Cancelled, OPERATION, "cancelled by caller")
+                .with_context("reason", "cancelled")
+        }
+        crate::CancelReason::Deadline => EngineError::new(
+            EngineErrorCode::DeadlineExceeded,
+            OPERATION,
+            "deadline exceeded",
+        )
+        .with_context("reason", "deadline"),
+    };
+    Some(EngineOutcome::Failure {
+        error,
+        diagnostics: ExecutionDiagnostics::default(),
+    })
+}
+
 pub struct Job<'a> {
     request: &'a EngineRequest,
     control: &'a CancellationControl,
@@ -2100,6 +2121,9 @@ impl<'a> Job<'a> {
 
     pub fn run(self) -> Result<EngineOutcome, EngineError> {
         self.request.validate().map_err(validation_error)?;
+        if let Some(outcome) = control_failure_outcome(self.control) {
+            return Ok(outcome);
+        }
         if let Some(outcome) = self.request.archive_ineligible_outcome() {
             return Ok(outcome);
         }
@@ -2116,10 +2140,17 @@ impl<'a> Job<'a> {
         let pool = JobPool::new(self.thread_count_override);
         let thread_counts = pool.thread_counts();
         let mut event_sink = ProtocolEventSink::new(self.sink);
-        let mut cancellation_reason = || match self.control.reason() {
-            Some(crate::CancelReason::Cancelled) => Some(NfpIfpAbortReason::Cancelled),
-            Some(crate::CancelReason::Deadline) => Some(NfpIfpAbortReason::Deadline),
-            None => None,
+        let mut cancellation_reason = || {
+            if self.control.reason().is_none()
+                && started.elapsed().as_secs_f64() * 1_000.0 >= self.request.timeout_ms
+            {
+                self.control.cancel(crate::CancelReason::Deadline);
+            }
+            match self.control.reason() {
+                Some(crate::CancelReason::Cancelled) => Some(NfpIfpAbortReason::Cancelled),
+                Some(crate::CancelReason::Deadline) => Some(NfpIfpAbortReason::Deadline),
+                None => None,
+            }
         };
         let mut options = ComputeIrregularNestingOptions {
             event_sink: Some(&mut event_sink),

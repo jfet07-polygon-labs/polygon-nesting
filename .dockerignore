@@ -1,0 +1,47 @@
+.git
+.gitignore
+.gitattributes
+.github
+.claude
+knowledge
+
+# build and package outputs
+target
+**/target
+build
+dist
+coverage
+node_modules
+**/node_modules
+*.node
+*.tgz
+*.tar.gz
+*.zip
+*.log
+
+# credentials and certificates
+.npmrc
+.cargo/credentials
+.cargo/credentials.toml
+id_rsa
+id_ed25519
+id_ecdsa
+id_dsa
+*.kdbx
+.env*
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.p7b
+*.p7c
+
+# editor and operating-system files
+.DS_Store
+.vscode
+.idea
+*.swp
+*.swo
+*~

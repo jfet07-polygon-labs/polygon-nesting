@@ -121,6 +121,35 @@ fn typed_job_returns_archive_ineligible_before_events() {
 }
 
 #[test]
+fn typed_job_projects_pre_cancelled_control_before_archive_ineligible() {
+    for (reason, expected) in [
+        (
+            CancelReason::Cancelled,
+            polygon_nesting_protocol::EngineErrorCode::Cancelled,
+        ),
+        (
+            CancelReason::Deadline,
+            polygon_nesting_protocol::EngineErrorCode::DeadlineExceeded,
+        ),
+    ] {
+        let mut request = valid_request();
+        archive_disabled(&mut request);
+        let control = CancellationControl::new();
+        assert!(control.cancel(reason));
+        let mut sink = RecordingSink::default();
+
+        let outcome = Job::new(&request, &control, &mut sink)
+            .run()
+            .expect("pre-cancelled jobs should return a typed outcome");
+
+        assert!(
+            matches!(outcome, EngineOutcome::Failure { error, diagnostics } if error.category == expected && diagnostics.is_empty())
+        );
+        assert!(sink.events.lock().unwrap().is_empty());
+    }
+}
+
+#[test]
 fn typed_job_reports_post_cleanup_cache_telemetry() {
     let request = valid_request();
     let control = CancellationControl::new();
