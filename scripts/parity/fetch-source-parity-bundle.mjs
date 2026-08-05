@@ -145,6 +145,17 @@ export function attestationVerificationArgs(archive) {
   ];
 }
 
+export function extractionArgs(archive, destination, platform = process.platform) {
+  return [
+    ...(platform === 'win32' ? ['--force-local'] : []),
+    '-xzf',
+    archive,
+    '--no-same-owner',
+    '-C',
+    destination,
+  ];
+}
+
 async function main() {
   const sourceRun = argument('--source-run');
   if (!/^[1-9][0-9]*$/.test(sourceRun)) fail('source run must be a canonical positive decimal ID');
@@ -177,7 +188,7 @@ async function main() {
   }
   run('gh', attestationVerificationArgs(archive));
   assertSafeArchive(archive);
-  run('tar', ['-xzf', archive, '--no-same-owner', '-C', staging]);
+  run('tar', extractionArgs(archive, staging));
   const provenance = {
     repository: SOURCE_REPOSITORY,
     workflow: SOURCE_WORKFLOW,
