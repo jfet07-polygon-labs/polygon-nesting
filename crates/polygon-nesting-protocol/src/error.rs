@@ -73,6 +73,7 @@ pub enum EngineErrorCode {
     DeadlineExceeded,
     EngineFailure,
     InternalFailure,
+    IoFailure,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

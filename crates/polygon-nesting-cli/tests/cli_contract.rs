@@ -575,6 +575,175 @@ fn malformed_deadline_value_writes_a_typed_failure_when_output_is_available() {
 }
 
 #[test]
+fn malformed_recovery_after_a_top_level_flag_writes_one_safe_output_envelope() {
+    let directory = temporary_directory("recovery-after-top-level-flag");
+    let input = directory.join("request.json");
+    let output = directory.join("result.json");
+    fs::write(
+        &input,
+        include_bytes!("../../../tests/fixtures/cli/request-v1.json"),
+    )
+    .expect("fixture input should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "--info",
+            "run",
+            "--input",
+            input.to_str().expect("input path is UTF-8"),
+            "--output",
+            output.to_str().expect("output path is UTF-8"),
+            "--deadline-ms",
+            "not-a-number",
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    let outcome: Value = serde_json::from_slice(&fs::read(&output).expect("outcome should exist"))
+        .expect("outcome should be JSON");
+    assert_eq!(outcome["outcome"]["error"]["category"], "malformed_input");
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn malformed_recovery_does_not_treat_an_option_value_as_a_run_command() {
+    let directory = temporary_directory("recovery-option-value-run");
+    let output = directory.join("result.json");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "--input",
+            "run",
+            "--output",
+            output.to_str().expect("output path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert!(
+        !output.exists(),
+        "a non-command run value must not recover output"
+    );
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn malformed_recovery_with_multiple_run_tokens_does_not_write_an_artifact() {
+    let directory = temporary_directory("recovery-multiple-run-tokens");
+    let output = directory.join("result.json");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run",
+            "--output",
+            output.to_str().expect("output path is UTF-8"),
+            "run",
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert!(!output.exists(), "ambiguous recovery must not write output");
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn info_run_conflict_writes_a_typed_malformed_input_outcome_when_output_is_safe() {
+    let directory = temporary_directory("info-run-conflict");
+    let input = directory.join("request.json");
+    let output = directory.join("result.json");
+    fs::write(
+        &input,
+        include_bytes!("../../../tests/fixtures/cli/request-v1.json"),
+    )
+    .expect("fixture input should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "--info",
+            "run",
+            "--input",
+            input.to_str().expect("input path is UTF-8"),
+            "--output",
+            output.to_str().expect("output path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    let outcome: Value = serde_json::from_slice(&fs::read(&output).expect("outcome should exist"))
+        .expect("outcome should be JSON");
+    assert_eq!(outcome["outcome"]["error"]["category"], "malformed_input");
+    assert_eq!(
+        String::from_utf8(process.stderr).expect("stderr should be UTF-8"),
+        "polygon-nesting: malformed input or invocation\n"
+    );
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn info_run_conflict_does_not_overwrite_an_input_output_alias() {
+    let directory = temporary_directory("info-run-conflict-input-output-alias");
+    let input = directory.join("request.json");
+    let original = include_bytes!("../../../tests/fixtures/cli/request-v1.json");
+    fs::write(&input, original).expect("fixture input should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "--info",
+            "run",
+            "--input",
+            input.to_str().expect("input path is UTF-8"),
+            "--output",
+            input.to_str().expect("input path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert_eq!(
+        fs::read(&input).expect("input should remain intact"),
+        original
+    );
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn info_run_conflict_does_not_write_an_output_events_alias() {
+    let directory = temporary_directory("info-run-conflict-output-events-alias");
+    let input = directory.join("request.json");
+    let shared = directory.join("shared.json");
+    fs::write(
+        &input,
+        include_bytes!("../../../tests/fixtures/cli/request-v1.json"),
+    )
+    .expect("fixture input should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "--info",
+            "run",
+            "--input",
+            input.to_str().expect("input path is UTF-8"),
+            "--output",
+            shared.to_str().expect("output path is UTF-8"),
+            "--events",
+            shared.to_str().expect("events path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert!(!shared.exists(), "aliased artifacts must not be written");
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
 fn duplicate_events_does_not_suppress_an_unambiguous_output_envelope() {
     let directory = temporary_directory("duplicate-events-output-recovery");
     let input = directory.join("request.json");
@@ -940,10 +1109,39 @@ fn event_write_failure_uses_the_write_failure_exit() {
         .expect("CLI should start");
 
     assert_eq!(process.status.code(), Some(5));
-    assert!(output.exists());
+    let outcome: Value = serde_json::from_slice(&fs::read(&output).expect("outcome should exist"))
+        .expect("outcome should be JSON");
+    assert_eq!(outcome["outcome"]["status"], "failure");
+    assert_eq!(outcome["outcome"]["error"]["category"], "io_failure");
+    assert_eq!(outcome["outcome"]["error"]["operation"], "write-events");
+    assert_eq!(
+        outcome["outcome"]["error"]["message"],
+        "event artifact could not be written"
+    );
     assert_eq!(
         String::from_utf8(process.stderr).expect("stderr should be UTF-8"),
         "polygon-nesting: output or event write failure\n"
+    );
+    let temporary_prefix = format!(
+        ".{}.",
+        output
+            .file_name()
+            .expect("output has a filename")
+            .to_string_lossy()
+    );
+    let temporary_files = fs::read_dir(&directory)
+        .expect("directory should remain readable")
+        .filter_map(Result::ok)
+        .filter(|entry| {
+            entry
+                .file_name()
+                .to_string_lossy()
+                .starts_with(&temporary_prefix)
+        })
+        .collect::<Vec<_>>();
+    assert!(
+        temporary_files.is_empty(),
+        "temporary outcomes should be removed: {temporary_files:?}"
     );
 
     fs::remove_dir_all(directory).expect("temporary directory should be removed");
@@ -990,6 +1188,65 @@ fn run_uses_the_supplied_control_for_deterministic_cancellation() {
     assert_eq!(outcome["outcome"]["error"]["category"], "cancelled");
 
     fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[cfg(unix)]
+#[test]
+fn low_file_limits_do_not_accumulate_staging_jobs() {
+    let directory = temporary_directory("low-file-limit-staging-cleanup");
+    let input = directory.join("request.json");
+    let output = directory.join("result.json");
+    fs::write(
+        &input,
+        include_bytes!("../../../tests/fixtures/cli/request-v1.json"),
+    )
+    .expect("fixture input should be written");
+
+    for limit in [5, 6] {
+        for _ in 0..3 {
+            let mut command = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"));
+            command
+                .args([
+                    "run",
+                    "--input",
+                    input.to_str().expect("input path is UTF-8"),
+                    "--output",
+                    output.to_str().expect("output path is UTF-8"),
+                ])
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null());
+            let status = run_with_nofile_limit(&mut command, limit)
+                .expect("limited CLI process should start");
+
+            assert_eq!(status.code(), Some(5));
+            let root = directory.join(".polygon-nesting-staging");
+            assert!(
+                fs::read_dir(&root)
+                    .expect("persistent staging root should be readable")
+                    .next()
+                    .is_none(),
+                "limit {limit} must not leave a job directory"
+            );
+        }
+    }
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[cfg(unix)]
+fn run_with_nofile_limit(
+    command: &mut Command,
+    limit: u64,
+) -> std::io::Result<std::process::ExitStatus> {
+    use nix::sys::resource::{setrlimit, Resource};
+    use std::os::unix::process::CommandExt;
+
+    unsafe {
+        command.pre_exec(move || {
+            setrlimit(Resource::RLIMIT_NOFILE, limit, limit).map_err(std::io::Error::from)
+        });
+    }
+    command.status()
 }
 
 #[cfg(unix)]

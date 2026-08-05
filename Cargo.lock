@@ -520,6 +520,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "ctrlc",
+ "nix",
  "polygon-nesting-core",
  "polygon-nesting-protocol",
  "serde_json",

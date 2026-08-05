@@ -5,7 +5,8 @@ use std::sync::Arc;
 
 use clap::{Args, Parser, Subcommand};
 use polygon_nesting_cli::{
-    run_with_deadline, write_malformed_invocation, write_malformed_output, ExitStatus, RunPaths,
+    run_with_deadline, write_malformed_invocation, write_malformed_output,
+    write_signal_registration_failure, ExitStatus, RunPaths,
 };
 use polygon_nesting_core::{CancelReason, CancellationControl};
 
@@ -69,24 +70,40 @@ fn run_main() -> ExitStatus {
         Ok(cli) => cli,
         Err(_) => return recover_malformed_invocation(),
     };
+    run_parsed(cli, |control| {
+        let signal_control = Arc::clone(&control);
+        ctrlc::set_handler(move || {
+            signal_control.cancel(CancelReason::Cancelled);
+        })
+        .is_ok()
+    })
+}
+
+fn run_parsed(
+    cli: Cli,
+    install_signal_handler: impl FnOnce(Arc<CancellationControl>) -> bool,
+) -> ExitStatus {
     if cli.info {
-        if cli.command.is_some() {
-            return ExitStatus::MalformedInput;
-        }
-        return print_info();
+        let Some(Command::Run(arguments)) = cli.command else {
+            return print_info();
+        };
+        return write_malformed_invocation(RunPaths {
+            input: &arguments.input,
+            output: &arguments.output,
+            events: arguments.events.as_deref(),
+        });
     }
     let Some(Command::Run(arguments)) = cli.command else {
         return ExitStatus::MalformedInput;
     };
 
     let control = Arc::new(CancellationControl::new());
-    let signal_control = Arc::clone(&control);
-    if ctrlc::set_handler(move || {
-        signal_control.cancel(CancelReason::Cancelled);
-    })
-    .is_err()
-    {
-        return ExitStatus::InternalFailure;
+    if !install_signal_handler(Arc::clone(&control)) {
+        return write_signal_registration_failure(RunPaths {
+            input: &arguments.input,
+            output: &arguments.output,
+            events: arguments.events.as_deref(),
+        });
     }
 
     run_with_deadline(
@@ -150,12 +167,16 @@ impl RecoveredArtifactPaths {
 
 fn recover_artifact_paths() -> RecoveredArtifactPaths {
     let arguments = std::env::args_os().skip(1).collect::<Vec<_>>();
-    if arguments.first().and_then(|argument| argument.to_str()) != Some("run") {
+    recover_artifact_paths_from(&arguments)
+}
+
+fn recover_artifact_paths_from(arguments: &[std::ffi::OsString]) -> RecoveredArtifactPaths {
+    let Some(run_position) = recover_run_position(arguments) else {
         return RecoveredArtifactPaths::default();
-    }
+    };
 
     let mut paths = RecoveredArtifactPaths::default();
-    let mut index = 1;
+    let mut index = run_position + 1;
     while index < arguments.len() {
         let Some(argument) = arguments[index].to_str() else {
             index += 1;
@@ -186,6 +207,40 @@ fn recover_artifact_paths() -> RecoveredArtifactPaths {
     paths
 }
 
+fn recover_run_position(arguments: &[std::ffi::OsString]) -> Option<usize> {
+    let mut index = 0;
+    while index < arguments.len() {
+        let argument = arguments[index].to_string_lossy();
+        if argument == "run" {
+            let run_position = index;
+            index += 1;
+            while index < arguments.len() {
+                let argument = arguments[index].to_string_lossy();
+                if matches!(
+                    argument.as_ref(),
+                    "--input" | "--output" | "--events" | "--deadline-ms"
+                ) {
+                    index += 2;
+                    continue;
+                }
+                if argument == "run" {
+                    return None;
+                }
+                index += 1;
+            }
+            return Some(run_position);
+        }
+        if argument == "--info" || argument.contains('=') {
+            index += 1;
+        } else if argument.starts_with('-') {
+            index += 2;
+        } else {
+            index += 1;
+        }
+    }
+    None
+}
+
 fn print_info() -> ExitStatus {
     match serde_json::to_string(&polygon_nesting_core::engine_info()) {
         Ok(info) => {
@@ -198,11 +253,60 @@ fn print_info() -> ExitStatus {
 
 #[cfg(test)]
 mod tests {
+    use std::ffi::OsString;
     use std::panic::{catch_unwind, AssertUnwindSafe};
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
-    use super::PanicHookGuard;
+    use super::{recover_artifact_paths_from, Cli, Command, PanicHookGuard, RunArguments};
+
+    #[test]
+    fn signal_registration_failure_writes_internal_envelope_before_reading_input() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock is after the Unix epoch")
+            .as_nanos();
+        let directory = std::env::temp_dir().join(format!("polygon-nesting-signal-main-{unique}"));
+        std::fs::create_dir_all(&directory).expect("temporary directory should be created");
+        let output = directory.join("result.json");
+        let status = super::run_parsed(
+            Cli {
+                info: false,
+                command: Some(Command::Run(RunArguments {
+                    input: directory.join("does-not-exist.json"),
+                    output: output.clone(),
+                    events: None,
+                    deadline_ms: None,
+                })),
+            },
+            |_| false,
+        );
+
+        assert_eq!(status, polygon_nesting_cli::ExitStatus::InternalFailure);
+        let outcome: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(&output).expect("internal outcome should be written"),
+        )
+        .expect("internal outcome should be JSON");
+        assert_eq!(outcome["outcome"]["error"]["category"], "internal_failure");
+        std::fs::remove_dir_all(directory).expect("temporary directory should be removed");
+    }
+
+    #[test]
+    fn malformed_recovery_finds_one_run_after_top_level_flags() {
+        let arguments = [
+            OsString::from("--info"),
+            OsString::from("run"),
+            OsString::from("--input"),
+            OsString::from("request.json"),
+            OsString::from("--output"),
+            OsString::from("result.json"),
+            OsString::from("--deadline-ms"),
+        ];
+
+        let paths = recover_artifact_paths_from(&arguments);
+        assert!(paths.unique_run_paths().is_some());
+    }
 
     #[test]
     fn panic_hook_guard_restores_the_original_hook() {

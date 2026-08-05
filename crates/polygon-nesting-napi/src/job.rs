@@ -73,7 +73,8 @@ pub fn project_engine_error(error: EngineError) -> String {
         {
             "not_implemented"
         }
-        polygon_nesting_protocol::EngineErrorCode::InternalFailure => "unknown_error",
+        polygon_nesting_protocol::EngineErrorCode::InternalFailure
+        | polygon_nesting_protocol::EngineErrorCode::IoFailure => "unknown_error",
         polygon_nesting_protocol::EngineErrorCode::MalformedInput
         | polygon_nesting_protocol::EngineErrorCode::ProtocolVersionMismatch => {
             "worker_protocol_error"

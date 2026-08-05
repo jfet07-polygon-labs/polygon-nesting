@@ -663,6 +663,7 @@ fn error_categories_are_application_neutral() {
         (EngineErrorCode::DeadlineExceeded, "deadline_exceeded"),
         (EngineErrorCode::EngineFailure, "engine_failure"),
         (EngineErrorCode::InternalFailure, "internal_failure"),
+        (EngineErrorCode::IoFailure, "io_failure"),
     ];
 
     for (category, expected) in categories {

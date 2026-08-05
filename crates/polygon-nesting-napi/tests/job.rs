@@ -130,6 +130,16 @@ fn accepted_not_implemented_context_projects_to_exact_desktop_category() {
 }
 
 #[test]
+fn io_failure_projects_to_conservative_desktop_unknown_error() {
+    let envelope = error(
+        EngineErrorCode::IoFailure,
+        "write-events",
+        "event artifact could not be written",
+    );
+    assert_eq!(envelope["error"]["category"], "unknown_error");
+}
+
+#[test]
 fn generic_engine_failure_omits_empty_desktop_context() {
     let envelope = error(
         EngineErrorCode::EngineFailure,
