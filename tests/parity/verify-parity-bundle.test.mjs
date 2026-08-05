@@ -128,7 +128,7 @@ test('centralizes the exact attested old-side archive contract', () => {
     workflow: '.github/workflows/capture-old-rust-parity.yml',
     workflowName: 'Capture accepted old Rust parity',
     ref: 'refs/heads/main',
-    workflowSupportRevision: '00a6b0e9a1bb3662098e185da37df7c34418260a',
+    workflowSupportRevision: '93fed7f533ed119e9573d0e6c2ebd2b2f4815a10',
     acceptedEngineRevision: '5c72d8fca8e078b0a6e7d5f2515a8a0953475481',
     sourceProvenanceRevision: 'e4f3608878611c002f343473fab72adc7d155f87',
     artifactPrefix: 'old-rust-parity-capture-',
