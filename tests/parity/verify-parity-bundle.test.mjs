@@ -191,6 +191,7 @@ test('workflow uses every required parity runner and collects all matrix results
   assert.match(workflow, /--source-provenance-evidence "\$RUNNER_TEMP\/standalone-parity-provenance\/\$\{\{ matrix\.key \}\}\.json"/);
   assert.match(workflow, /old-new-parity-bundle\.tar\.gz/);
   assert.match(workflow, /actions\/attest-build-provenance@/);
+  assert.doesNotMatch(workflow, /jfet97\/min-plane-dfx/);
   assert.match(workflow, /id-token: write/);
   assert.match(workflow, /attestations: write/);
 });
