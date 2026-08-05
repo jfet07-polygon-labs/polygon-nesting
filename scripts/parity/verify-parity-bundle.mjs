@@ -3,7 +3,7 @@ import { lstat, readdir, readFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 
 export const SOURCE_CONTRACT = Object.freeze({
-  repository: 'jfet97/min-plane-dfx',
+  repository: 'jfet97/min-plane-dxf',
   workflow: '.github/workflows/capture-old-rust-parity.yml',
   workflowName: 'Capture accepted old Rust parity',
   ref: 'refs/heads/main',

@@ -22,6 +22,7 @@ import {
 } from '../../scripts/parity/verify-parity-bundle.mjs';
 import {
   assertSafeArchive,
+  attestationVerificationArgs,
   requireDisjointDestinations,
 } from '../../scripts/parity/fetch-source-parity-bundle.mjs';
 
@@ -124,7 +125,7 @@ test('pins the complete Task109 canonical dependency output', () => {
 
 test('centralizes the exact attested old-side archive contract', () => {
   assert.deepEqual(SOURCE_CONTRACT, {
-    repository: 'jfet97/min-plane-dfx',
+    repository: 'jfet97/min-plane-dxf',
     workflow: '.github/workflows/capture-old-rust-parity.yml',
     workflowName: 'Capture accepted old Rust parity',
     ref: 'refs/heads/main',
@@ -140,6 +141,18 @@ test('centralizes the exact attested old-side archive contract', () => {
     bundleManifestVersion: 1,
     rawFilenames: ['request.json', 'result.json', 'events.ndjson', 'stderr.txt', 'process.json'],
   });
+});
+
+test('uses the documented signer-workflow identity format for attestation verification', () => {
+  assert.deepEqual(attestationVerificationArgs('/tmp/capture.tar.gz'), [
+    'attestation',
+    'verify',
+    '/tmp/capture.tar.gz',
+    '--repo',
+    'jfet97/min-plane-dxf',
+    '--signer-workflow',
+    'jfet97/min-plane-dxf/.github/workflows/capture-old-rust-parity.yml',
+  ]);
 });
 
 test('defines the trusted canonical 18-row order independently of bundle metadata', () => {
@@ -402,6 +415,13 @@ test('rejects dependency identities that differ from the accepted old pair', () 
 test('pins the executed N-API derive dependency to the accepted version', async () => {
   const cargoToml = await readFile(new URL('../../crates/polygon-nesting-napi/Cargo.toml', import.meta.url), 'utf8');
   assert.match(cargoToml, /^napi-derive = "=3\.6\.1"$/m);
+});
+
+test('accepts canonical directory members with trailing slashes', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'parity-directory-archive-'));
+  const archive = join(root, 'safe.tar.gz');
+  await writeTarMember(archive, './old/raw/', '5');
+  assert.doesNotThrow(() => assertSafeArchive(archive));
 });
 
 test('rejects symlink archive members before extraction', async () => {
