@@ -20,11 +20,13 @@ import {
   PARITY_TARGETS,
   SOURCE_CONTRACT,
 } from '../../scripts/parity/verify-parity-bundle.mjs';
-import {
+import * as sourceParityBundle from '../../scripts/parity/fetch-source-parity-bundle.mjs';
+
+const {
   assertSafeArchive,
   attestationVerificationArgs,
   requireDisjointDestinations,
-} from '../../scripts/parity/fetch-source-parity-bundle.mjs';
+} = sourceParityBundle;
 
 const SOURCE = {
   repository: SOURCE_CONTRACT.repository,
@@ -152,6 +154,31 @@ test('uses the documented signer-workflow identity format for attestation verifi
     'jfet97/min-plane-dxf',
     '--signer-workflow',
     'jfet97/min-plane-dxf/.github/workflows/capture-old-rust-parity.yml',
+  ]);
+});
+
+test('forces Windows tar to treat native archive drive paths as local', () => {
+  assert.deepEqual(sourceParityBundle.extractionArgs('C:\\actions\\temp\\capture.tar.gz', '/tmp/staging', 'win32'), [
+    '--force-local',
+    '-xzf',
+    'C:\\actions\\temp\\capture.tar.gz',
+    '--no-same-owner',
+    '-C',
+    '/tmp/staging',
+  ]);
+  assert.deepEqual(sourceParityBundle.extractionArgs('/tmp/capture.tar.gz', '/tmp/staging', 'linux'), [
+    '-xzf',
+    '/tmp/capture.tar.gz',
+    '--no-same-owner',
+    '-C',
+    '/tmp/staging',
+  ]);
+  assert.deepEqual(sourceParityBundle.extractionArgs('/tmp/capture.tar.gz', '/tmp/staging', 'darwin'), [
+    '-xzf',
+    '/tmp/capture.tar.gz',
+    '--no-same-owner',
+    '-C',
+    '/tmp/staging',
   ]);
 });
 
