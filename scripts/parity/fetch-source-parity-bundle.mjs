@@ -49,10 +49,13 @@ function tarSize(bytes) {
   return Number.parseInt(value || '0', 8);
 }
 
-function assertSafeMemberPath(path) {
+function assertSafeMemberPath(path, type) {
   const normalized = path.replace(/^(\.\/)+/, '');
-  if (normalized && !normalized.startsWith('/') && !normalized.startsWith('\\') && !normalized.includes('\\') && !/^[A-Za-z]:/.test(normalized) && !normalized.split('/').some((part) => part === '' || part === '.' || part === '..')) return;
-  if (normalized === '') return;
+  const candidate = type === 0x35 && normalized.endsWith('/')
+    ? normalized.slice(0, -1)
+    : normalized;
+  if (candidate && !candidate.startsWith('/') && !candidate.startsWith('\\') && !candidate.includes('\\') && !/^[A-Za-z]:/.test(candidate) && !candidate.split('/').some((part) => part === '' || part === '.' || part === '..')) return;
+  if (candidate === '') return;
   fail('archive contains an unsafe path');
 }
 
@@ -75,7 +78,7 @@ export function assertSafeArchive(archive) {
     const name = tarText(header.subarray(0, 100), 'member name');
     const prefix = tarText(header.subarray(345, 500), 'member prefix');
     const path = prefix ? `${prefix}/${name}` : name;
-    assertSafeMemberPath(path);
+    assertSafeMemberPath(path, type);
     const size = tarSize(header.subarray(124, 136));
     if (!Number.isSafeInteger(size) || size < 0) fail('archive member size is invalid');
     offset += 512 + Math.ceil(size / 512) * 512;
@@ -130,6 +133,18 @@ export function requireDisjointDestinations(output, provenanceOutput) {
   }
 }
 
+export function attestationVerificationArgs(archive) {
+  return [
+    'attestation',
+    'verify',
+    archive,
+    '--repo',
+    SOURCE_REPOSITORY,
+    '--signer-workflow',
+    `${SOURCE_REPOSITORY}/${SOURCE_WORKFLOW}`,
+  ];
+}
+
 async function main() {
   const sourceRun = argument('--source-run');
   if (!/^[1-9][0-9]*$/.test(sourceRun)) fail('source run must be a canonical positive decimal ID');
@@ -160,7 +175,7 @@ async function main() {
   if (!expectedArchiveSha256 || sha256(await readFile(archive)) !== expectedArchiveSha256) {
     fail('target archive digest sibling does not match');
   }
-  run('gh', ['attestation', 'verify', archive, '--repo', SOURCE_REPOSITORY, '--signer-workflow', `https://github.com/${SOURCE_REPOSITORY}/${SOURCE_WORKFLOW}`]);
+  run('gh', attestationVerificationArgs(archive));
   assertSafeArchive(archive);
   run('tar', ['-xzf', archive, '--no-same-owner', '-C', staging]);
   const provenance = {
