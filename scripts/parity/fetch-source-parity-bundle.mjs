@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
 import { readFileSync, realpathSync } from 'node:fs';
-import { lstat, mkdir, mkdtemp, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, readdir, readFile, rename, rm, rmdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, posix, relative, resolve, sep, win32 } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import { spawnSync } from 'node:child_process';
@@ -156,6 +156,25 @@ export function extractionArgs(archive, destination, platform = process.platform
   ];
 }
 
+export function publicationStagingTemplate(output, platform = process.platform) {
+  const paths = platform === 'win32' ? win32 : posix;
+  return paths.join(paths.dirname(output), 'polygon-source-parity-stage-');
+}
+
+async function removeCreatedOutputParentChain(outputParent, createdOutputParent) {
+  if (!createdOutputParent) return;
+  let current = outputParent;
+  while (true) {
+    try {
+      await rmdir(current);
+    } catch {
+      return;
+    }
+    if (current === createdOutputParent) return;
+    current = dirname(current);
+  }
+}
+
 async function main() {
   const sourceRun = argument('--source-run');
   if (!/^[1-9][0-9]*$/.test(sourceRun)) fail('source run must be a canonical positive decimal ID');
@@ -166,7 +185,9 @@ async function main() {
   await requireAbsent(output, 'output');
   await requireAbsent(provenanceOutput, 'provenance output');
   const downloaded = await mkdtemp(join(tmpdir(), 'polygon-source-parity-download-'));
-  const staging = await mkdtemp(join(tmpdir(), 'polygon-source-parity-stage-'));
+  let staging;
+  let createdOutputParent;
+  let published = false;
   try {
   const runMetadata = JSON.parse(run('gh', ['run', 'view', sourceRun, '--repo', SOURCE_REPOSITORY, '--json', 'headSha,headBranch,workflowName']));
   if (runMetadata.headSha !== SOURCE_CONTRACT.workflowSupportRevision || runMetadata.headBranch !== 'main' || runMetadata.workflowName !== SOURCE_CONTRACT.workflowName) {
@@ -188,6 +209,8 @@ async function main() {
   }
   run('gh', attestationVerificationArgs(archive));
   assertSafeArchive(archive);
+  createdOutputParent = await mkdir(dirname(output), { recursive: true });
+  staging = await mkdtemp(publicationStagingTemplate(output));
   run('tar', extractionArgs(archive, staging));
   const provenance = {
     repository: SOURCE_REPOSITORY,
@@ -215,13 +238,14 @@ async function main() {
   };
   await requireAbsent(output, 'output');
   await requireAbsent(provenanceOutput, 'provenance output');
-  await mkdir(dirname(output), { recursive: true });
   await mkdir(dirname(provenanceOutput), { recursive: true });
   await writeFile(provenanceOutput, `${JSON.stringify(evidence, null, 2)}\n`, { flag: 'wx' });
   await rename(staging, output);
+  published = true;
   } finally {
     await rm(downloaded, { recursive: true, force: true });
-    await rm(staging, { recursive: true, force: true });
+    if (staging) await rm(staging, { recursive: true, force: true });
+    if (!published) await removeCreatedOutputParentChain(dirname(output), createdOutputParent);
   }
 }
 

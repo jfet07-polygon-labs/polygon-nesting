@@ -165,6 +165,12 @@ test('offline verification recomputes OCI archive evidence after Task112 parity 
   await verifyReleaseCandidate({ candidateDirectory: fixture.outputDirectory, trustedSourceRoot: fixture.parity.trustedSourceRoot, ociArchivePath: oci.archivePath, ociEvidencePath: evidencePath })
 })
 
+test('normal PR quality checks run the complete parity and release contract suite', () => {
+  const ci = readFileSync(join(REPOSITORY_ROOT, '.github/workflows/ci.yml'), 'utf8')
+  assert.match(ci, /node --test tests\/parity\/\*\.test\.mjs scripts\/release-ci\.test\.mjs/)
+  assert.doesNotMatch(ci, /^\s*node --test scripts\/release-ci\.test\.mjs$/m)
+})
+
 test('CI and release workflows use the Task112 aggregate trust chain', async () => {
   const ci = readFileSync(join(REPOSITORY_ROOT, '.github/workflows/ci.yml'), 'utf8')
   const release = readFileSync(join(REPOSITORY_ROOT, '.github/workflows/release.yml'), 'utf8')
