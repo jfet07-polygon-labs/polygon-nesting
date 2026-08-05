@@ -1,4 +1,6 @@
-use polygon_nesting_napi::compat::{decode_desktop_request, AdapterError};
+use polygon_nesting_napi::compat::{
+    adapt_desktop_request_to_engine_json, decode_desktop_request, AdapterError,
+};
 use polygon_nesting_protocol::{EngineProfile, HistoryMode, ProtocolVersion};
 
 const COMPACT_REQUEST: &str =
@@ -28,6 +30,23 @@ fn normalize_json_numbers(value: &mut serde_json::Value) {
         }
         _ => {}
     }
+}
+
+#[test]
+fn public_adapter_serializes_the_production_desktop_decoder_output() {
+    let adapted: serde_json::Value = serde_json::from_str(
+        &adapt_desktop_request_to_engine_json(COMPACT_REQUEST).expect("fixture adapts"),
+    )
+    .expect("adapter output is neutral engine request JSON");
+    assert_eq!(adapted["version"], 1);
+    assert_eq!(adapted["profile"], "compact");
+    assert!(adapted.get("jobId").is_none());
+}
+
+#[test]
+fn public_adapter_rejects_desktop_request_with_job_id_only_after_decoding() {
+    let invalid = r#"{"version":1,"jobId":"only-a-job"}"#;
+    assert!(adapt_desktop_request_to_engine_json(invalid).is_err());
 }
 
 #[test]

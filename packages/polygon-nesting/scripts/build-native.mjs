@@ -183,12 +183,15 @@ function buildNative({
   fileSystem.remove(sourcePath, { force: true })
   fileSystem.remove(addonPath, { force: true })
 
-  const args = cargoBuildArgsForTarget(
-    nativeTarget.platform,
-    nativeTarget.arch,
-    profile,
-    manifestPath
-  )
+  const args = [
+    ...cargoBuildArgsForTarget(
+      nativeTarget.platform,
+      nativeTarget.arch,
+      profile,
+      manifestPath
+    ),
+    '--locked'
+  ]
   execute('cargo', args, {
     cwd: workspaceRoot,
     env: { ...process.env, CARGO_TARGET_DIR: join(workspaceRoot, 'target') },

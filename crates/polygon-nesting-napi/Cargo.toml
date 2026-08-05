@@ -8,7 +8,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 napi = { version = "3", features = ["serde-json"] }
-napi-derive = "3"
+napi-derive = "=3.6.1"
 polygon-nesting-core = { path = "../polygon-nesting-core" }
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }
 serde = { version = "1", features = ["derive"] }

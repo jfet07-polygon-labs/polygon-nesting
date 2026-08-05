@@ -35,7 +35,7 @@ impl EventFrame {
         }
     }
 
-    fn json(&self) -> String {
+    pub fn json(&self) -> String {
         match self {
             Self::Core(sequenced_event) => {
                 let event = serde_json::to_string(&sequenced_event.event)
