@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { readFileSync, realpathSync } from 'node:fs';
+import { lstat, mkdir, mkdtemp, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import { spawnSync } from 'node:child_process';
@@ -88,14 +89,59 @@ function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
+async function requireAbsent(path, label) {
+  try {
+    await lstat(path);
+    fail(`${label} already exists`);
+  } catch (error) {
+    if (error instanceof ParityValidationError || error?.code !== 'ENOENT') throw error;
+  }
+}
+
+function resolveExistingPathPrefix(path) {
+  const missing = [];
+  let current = path;
+  while (true) {
+    try {
+      return join(realpathSync(current), ...missing);
+    } catch (error) {
+      if (error?.code !== 'ENOENT') throw error;
+      const parent = dirname(current);
+      if (parent === current) throw error;
+      missing.unshift(basename(current));
+      current = parent;
+    }
+  }
+}
+
+function pathContains(ancestor, candidate) {
+  const relationship = relative(ancestor, candidate);
+  return (
+    relationship === '' ||
+    (!relationship.startsWith(`..${sep}`) && relationship !== '..' && !isAbsolute(relationship))
+  );
+}
+
+export function requireDisjointDestinations(output, provenanceOutput) {
+  const physicalOutput = resolveExistingPathPrefix(output);
+  const physicalProvenanceOutput = resolveExistingPathPrefix(provenanceOutput);
+  if (pathContains(physicalOutput, physicalProvenanceOutput) || pathContains(physicalProvenanceOutput, physicalOutput)) {
+    fail('output and provenance output must be disjoint');
+  }
+}
+
 async function main() {
   const sourceRun = argument('--source-run');
+  if (!/^[1-9][0-9]*$/.test(sourceRun)) fail('source run must be a canonical positive decimal ID');
   const target = parityTarget(argument('--target'));
   const output = resolve(argument('--output'));
-  const downloaded = join(output, 'downloaded');
-  await rm(output, { recursive: true, force: true });
-  await mkdir(downloaded, { recursive: true });
-
+  const provenanceOutput = resolve(argument('--provenance-output'));
+  requireDisjointDestinations(output, provenanceOutput);
+  await requireAbsent(output, 'output');
+  await requireAbsent(provenanceOutput, 'provenance output');
+  const downloaded = await mkdtemp(join(tmpdir(), 'polygon-source-parity-download-'));
+  const staging = await mkdtemp(join(tmpdir(), 'polygon-source-parity-stage-'));
+  try {
   const runMetadata = JSON.parse(run('gh', ['run', 'view', sourceRun, '--repo', SOURCE_REPOSITORY, '--json', 'headSha,headBranch,workflowName']));
   if (runMetadata.headSha !== SOURCE_CONTRACT.workflowSupportRevision || runMetadata.headBranch !== 'main' || runMetadata.workflowName !== SOURCE_CONTRACT.workflowName) {
     fail('source workflow run is not for the accepted workflow, revision, and allowed ref');
@@ -116,7 +162,7 @@ async function main() {
   }
   run('gh', ['attestation', 'verify', archive, '--repo', SOURCE_REPOSITORY, '--signer-workflow', `https://github.com/${SOURCE_REPOSITORY}/${SOURCE_WORKFLOW}`]);
   assertSafeArchive(archive);
-  run('tar', ['-xzf', archive, '--no-same-owner', '-C', output]);
+  run('tar', ['-xzf', archive, '--no-same-owner', '-C', staging]);
   const provenance = {
     repository: SOURCE_REPOSITORY,
     workflow: SOURCE_WORKFLOW,
@@ -124,7 +170,7 @@ async function main() {
     sha: SOURCE_CONTRACT.workflowSupportRevision,
     artifact: target.artifact,
   };
-  const verified = await verifyParityDirectory(output, { source: provenance, provenance, target: target.target });
+  const verified = await verifyParityDirectory(staging, { source: provenance, provenance, target: target.target });
   const archiveSha256 = sha256(await readFile(archive));
   const evidence = {
     schemaVersion: 1,
@@ -141,7 +187,16 @@ async function main() {
     bundleManifest: verified.bundleManifest,
     rawChecksums: verified.rawChecksums,
   };
-  await writeFile(join(output, 'source-provenance-evidence.json'), `${JSON.stringify(evidence, null, 2)}\n`);
+  await requireAbsent(output, 'output');
+  await requireAbsent(provenanceOutput, 'provenance output');
+  await mkdir(dirname(output), { recursive: true });
+  await mkdir(dirname(provenanceOutput), { recursive: true });
+  await writeFile(provenanceOutput, `${JSON.stringify(evidence, null, 2)}\n`, { flag: 'wx' });
+  await rename(staging, output);
+  } finally {
+    await rm(downloaded, { recursive: true, force: true });
+    await rm(staging, { recursive: true, force: true });
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

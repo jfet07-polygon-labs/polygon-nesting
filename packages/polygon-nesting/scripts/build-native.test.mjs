@@ -85,6 +85,7 @@ test('passes explicit Cargo build arguments for every deployment target', () => 
       resolve(REPOSITORY_ROOT, 'crates', 'polygon-nesting-napi', 'Cargo.toml')
     ), [
       'build',
+      '--locked',
       '--manifest-path',
       resolve(REPOSITORY_ROOT, 'crates', 'polygon-nesting-napi', 'Cargo.toml'),
       '--release',
@@ -141,12 +142,12 @@ test('builds from the standalone workspace and stages the mapped addon', () => {
     assert.equal(commands[0].command, 'cargo')
     assert.deepEqual(commands[0].args, [
       'build',
+      '--locked',
       '--manifest-path',
       resolve(workspaceRoot, 'crates', 'polygon-nesting-napi', 'Cargo.toml'),
       '--release',
       '--target',
-      nativeTarget.cargoTarget,
-      '--locked'
+      nativeTarget.cargoTarget
     ])
     assert.equal(commands[0].options.cwd, workspaceRoot)
     assert.equal(commands[0].options.stdio, 'inherit')

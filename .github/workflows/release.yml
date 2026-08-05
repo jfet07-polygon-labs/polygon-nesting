@@ -1,0 +1,277 @@
+name: Release candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      ci_run_id:
+        description: Successful manual CI run ID with externally generated parity contracts
+        required: false
+        type: string
+  push:
+    tags:
+      - v0.1.0
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  authorize-source:
+    name: Authorize immutable source
+    runs-on: ubuntu-24.04
+    outputs:
+      source-commit: ${{ steps.source.outputs.result }}
+    steps:
+      - name: Verify GitHub-validated signed tag or capture dispatch source
+        id: source
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            if (context.ref.startsWith('refs/tags/')) {
+              const tagName = context.ref.slice('refs/tags/'.length);
+              const { data: ref } = await github.rest.git.getRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `tags/${tagName}`
+              });
+              if (ref.object.type !== 'tag') {
+                core.setFailed('Release tags must be annotated and signed; lightweight tags are rejected');
+                return;
+              }
+              const { data: tag } = await github.rest.git.getTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_sha: ref.object.sha
+              });
+              if (!tag.verification.verified || tag.verification.reason !== 'valid') {
+                core.setFailed(`GitHub did not verify the release tag signature: ${tag.verification.reason}`);
+                return;
+              }
+              if (tag.object.type !== 'commit') {
+                core.setFailed('The verified tag must point directly to a commit');
+                return;
+              }
+              return tag.object.sha;
+            }
+            return context.sha;
+
+  resolve-ci:
+    name: Resolve matching parity-gated CI evidence
+    needs: authorize-source
+    runs-on: ubuntu-24.04
+    outputs:
+      run-id: ${{ steps.resolve.outputs.result }}
+    steps:
+      - name: Resolve successful manual CI run and release artifacts
+        id: resolve
+        uses: actions/github-script@v7
+        env:
+          CI_RUN_ID: ${{ inputs.ci_run_id }}
+          SOURCE_COMMIT: ${{ needs.authorize-source.outputs.source-commit }}
+        with:
+          result-encoding: string
+          script: |
+            const requiredArtifacts = new Set([
+              'release-native-linux-x64',
+              'release-native-win32-x64',
+              'release-native-darwin-arm64',
+              'release-native-darwin-x64'
+            ]);
+            async function validateRun(run) {
+              if (run.head_sha !== process.env.SOURCE_COMMIT || run.conclusion !== 'success' || run.event !== 'workflow_dispatch' && run.event !== 'workflow_call' || !run.path.endsWith('/ci.yml')) return false;
+              const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.id,
+                per_page: 100
+              });
+              const names = new Set(data.artifacts.filter(artifact => !artifact.expired).map(artifact => artifact.name));
+              return [...requiredArtifacts].every(name => names.has(name));
+            }
+            const supplied = process.env.CI_RUN_ID;
+            if (supplied) {
+              if (!/^[1-9][0-9]*$/.test(supplied)) {
+                core.setFailed('ci_run_id must be a positive integer');
+                return;
+              }
+              const { data: run } = await github.rest.actions.getWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: Number(supplied)
+              });
+              if (!await validateRun(run)) {
+                core.setFailed('The supplied run is not a successful manual ci.yml run with all four externally bound release artifacts for this source commit');
+                return;
+              }
+              return supplied;
+            }
+            const { data } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ci.yml',
+              head_sha: process.env.SOURCE_COMMIT,
+              event: 'workflow_dispatch',
+              status: 'completed',
+              per_page: 100
+            });
+            for (const run of data.workflow_runs) {
+              if (await validateRun(run)) return String(run.id);
+            }
+            core.setFailed('No successful manual CI run with all four externally generated parity contracts exists for the exact source commit');
+
+  candidate:
+    name: Assemble npm release candidate
+    needs: [authorize-source, resolve-ci]
+    runs-on: ubuntu-24.04
+    env:
+      SOURCE_COMMIT: ${{ needs.authorize-source.outputs.source-commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+      - name: Download parity-bound native artifacts
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.resolve-ci.outputs.run-id }}
+          pattern: release-native-*
+          path: downloaded-native-artifacts
+      - name: Normalize four release-native artifact directories
+        run: |
+          mkdir native-artifacts
+          for target in linux-x64 win32-x64 darwin-arm64 darwin-x64; do
+            source="downloaded-native-artifacts/release-native-$target"
+            test -d "$source"
+            test ! -e "native-artifacts/$target"
+            mv "$source" "native-artifacts/$target"
+          done
+          test "$(find native-artifacts -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = 4
+      - name: Assemble candidate without compiling
+        run: node scripts/assemble-release-candidate.mjs --artifacts native-artifacts --output release-candidate --source-commit "$SOURCE_COMMIT" --trusted-source-root "$GITHUB_WORKSPACE"
+      - name: Validate candidate offline
+        run: node scripts/verify-release-candidate.mjs --candidate release-candidate --trusted-source-root "$GITHUB_WORKSPACE"
+      - name: Require deterministic release notes
+        run: test -s release-candidate/RELEASE_NOTES.md
+      - name: Upload immutable npm candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
+          path: release-candidate
+          if-no-files-found: error
+          retention-days: 90
+
+  oci:
+    name: Build immutable OCI candidate archive
+    needs: [authorize-source, candidate]
+    runs-on: ubuntu-24.04
+    env:
+      SOURCE_COMMIT: ${{ needs.authorize-source.outputs.source-commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download npm candidate evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
+          path: release-candidate
+      - uses: docker/setup-buildx-action@v3
+      - name: Build locked Linux amd64 OCI archive
+        run: >-
+          docker buildx build
+          --platform linux/amd64
+          --provenance=false
+          --build-arg ENGINE_VERSION=0.1.0
+          --build-arg SOURCE_COMMIT="$SOURCE_COMMIT"
+          --tag polygon-nesting:0.1.0-rc
+          --output type=oci,dest=oci-image.tar
+          .
+      - name: Resolve OCI manifest digest with skopeo
+        id: manifest-digest
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+          skopeo inspect --raw oci-archive:oci-image.tar > oci-manifest.json
+          manifest_digest="sha256:$(sha256sum oci-manifest.json | cut -d' ' -f1)"
+          export MANIFEST_DIGEST="$manifest_digest"
+          mkdir oci-layout
+          tar -xf oci-image.tar -C oci-layout
+          node --input-type=module -e "import {readFileSync,writeFileSync} from 'node:fs'; const index=JSON.parse(readFileSync('oci-layout/index.json','utf8')); if(index.manifests.length!==1) throw new Error('OCI archive must contain exactly one manifest descriptor'); const descriptor=index.manifests[0]; if(descriptor.platform?.os!=='linux'||descriptor.platform?.architecture!=='amd64') throw new Error('OCI manifest descriptor must be linux/amd64'); if(descriptor.digest!==process.env.MANIFEST_DIGEST) throw new Error('skopeo manifest digest must equal the OCI index descriptor digest'); writeFileSync('manifest-digest.txt',descriptor.digest+'\n');"
+          printf 'digest=%s\n' "$(cat manifest-digest.txt)" >> "$GITHUB_OUTPUT"
+      - name: Load archive through a local registry under immutable digest reference
+        env:
+          MANIFEST_DIGEST: ${{ steps.manifest-digest.outputs.digest }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+          docker run --detach --publish 5000:5000 --name release-registry registry:2.8.3@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:5000/v2/ >/dev/null; then break; fi
+            if [ "$attempt" = 30 ]; then docker logs release-registry; exit 1; fi
+            sleep 1
+          done
+          skopeo copy --dest-tls-verify=false oci-archive:oci-image.tar docker://127.0.0.1:5000/polygon-nesting:0.1.0-rc
+          IMMUTABLE_IMAGE_REF="127.0.0.1:5000/polygon-nesting@${MANIFEST_DIGEST}"
+          docker pull "$IMMUTABLE_IMAGE_REF"
+          printf 'IMMUTABLE_IMAGE_REF=%s\n' "$IMMUTABLE_IMAGE_REF" >> "$GITHUB_ENV"
+      - name: Run non-root smoke against immutable loaded digest
+        run: ./scripts/smoke-cli-image.sh "$IMMUTABLE_IMAGE_REF"
+      - name: Capture OCI archive digest labels and legal evidence
+        env:
+          MANIFEST_DIGEST: ${{ steps.manifest-digest.outputs.digest }}
+        run: |
+          docker image inspect "$IMMUTABLE_IMAGE_REF" > image-inspect.json
+          node --input-type=module -e "import {createHash} from 'node:crypto'; import {readFileSync,writeFileSync} from 'node:fs'; const [image]=JSON.parse(readFileSync('image-inspect.json','utf8')); const release=JSON.parse(readFileSync('release-candidate/release.json','utf8')); const evidence={schemaVersion:1,manifestDigest:process.env.MANIFEST_DIGEST,archiveSha256:createHash('sha256').update(readFileSync('oci-image.tar')).digest('hex'),immutableImageReference:process.env.IMMUTABLE_IMAGE_REF,platform:'linux/amd64',sourceCommit:process.env.SOURCE_COMMIT,nonRootSmoke:true,labels:image.Config.Labels,legalHashes:release.legalHashes}; writeFileSync('oci-evidence.json',JSON.stringify(evidence,null,2)+'\n');"
+      - name: Validate combined candidate evidence offline
+        run: >-
+          node scripts/verify-release-candidate.mjs
+          --candidate release-candidate
+          --trusted-source-root "$GITHUB_WORKSPACE"
+          --oci-archive oci-image.tar
+          --oci-evidence oci-evidence.json
+      - name: Upload immutable OCI archive and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: oci-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
+          path: |
+            oci-image.tar
+            manifest-digest.txt
+            oci-evidence.json
+          if-no-files-found: error
+          retention-days: 90
+
+  publication-placeholder:
+    name: Protected future publication gate
+    needs: [authorize-source, candidate, oci]
+    runs-on: ubuntu-24.04
+    environment: publish
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+      - name: Download npm candidate only
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
+          path: release-candidate
+      - name: Download immutable OCI archive and digest evidence only
+        uses: actions/download-artifact@v4
+        with:
+          name: oci-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
+          path: oci-candidate
+      - name: Confirm inert publication handoff
+        run: |
+          test -f release-candidate/release.json
+          test -f release-candidate/RELEASE_NOTES.md
+          test -f oci-candidate/oci-image.tar
+          test -f oci-candidate/manifest-digest.txt
+          test -f oci-candidate/oci-evidence.json
+          node scripts/verify-release-candidate.mjs --candidate release-candidate --trusted-source-root "$GITHUB_WORKSPACE" --oci-archive oci-candidate/oci-image.tar --oci-evidence oci-candidate/oci-evidence.json
+          printf '%s\n' 'Publication remains disabled. Any future registry authentication must reference ${NODE_AUTH_TOKEN} at runtime after protected-environment approval.'

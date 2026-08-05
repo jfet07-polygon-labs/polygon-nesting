@@ -35,7 +35,10 @@ struct RunArguments {
     deadline_ms: Option<f64>,
 }
 
-struct PanicHookGuard(Option<Box<dyn Fn(&PanicHookInfo<'_>) + Send + Sync + 'static>>);
+type PanicHook = Box<dyn Fn(&PanicHookInfo<'_>) + Send + Sync + 'static>;
+
+#[allow(clippy::items_after_test_module)]
+struct PanicHookGuard(Option<PanicHook>);
 
 impl PanicHookGuard {
     fn silence() -> Self {
@@ -197,6 +200,7 @@ fn print_info() -> ExitStatus {
 }
 
 #[cfg(test)]
+#[allow(clippy::items_after_test_module)]
 mod tests {
     use std::panic::{catch_unwind, AssertUnwindSafe};
     use std::sync::atomic::{AtomicBool, Ordering};

@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 import { createHash, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
-import { cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { copyFile, cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { dirname, extname, join, resolve } from 'node:path';
 
 import {
   ACCEPTED_OLD_REVISION,
+  CANONICAL_ROW_IDS,
   NORMALIZATION_VERSION,
   ParityValidationError,
   SOURCE_CONTRACT,
@@ -50,13 +51,25 @@ async function writeNewFile(path, content) {
 }
 
 function rowIds(rawChecksums) {
-  return [...new Set(Object.keys(rawChecksums).map((path) => /^old\/raw\/([^/]+)\//.exec(path)?.[1]).filter(Boolean))].sort();
+  const discovered = [...new Set(Object.keys(rawChecksums).map((path) => /^old\/raw\/([^/]+)\//.exec(path)?.[1]).filter(Boolean))].sort();
+  if (JSON.stringify(discovered) !== JSON.stringify([...CANONICAL_ROW_IDS].sort())) fail('old-side checksum rows do not equal the canonical corpus');
+  return [...CANONICAL_ROW_IDS];
 }
 
 function canonicalJson(value) {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
   if (value && typeof value === 'object') return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(',')}}`;
   return JSON.stringify(value);
+}
+
+function validateSourceProvenanceEvidence(bytes, verified, target) {
+  let evidence;
+  try { evidence = JSON.parse(bytes); } catch { fail('source provenance evidence is not valid JSON'); }
+  const keys = ['acceptedOldRevision', 'archiveSha256', 'bundleManifest', 'captureMetadata', 'expectedArchiveSha256', 'rawChecksums', 'schemaVersion', 'sourceArtifact', 'sourceRepository', 'sourceRun', 'sourceWorkflow', 'target', 'verification'];
+  if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence) || JSON.stringify(Object.keys(evidence).sort()) !== JSON.stringify(keys)) fail('source provenance evidence schema is not accepted');
+  if (evidence.schemaVersion !== 1 || typeof evidence.sourceRun !== 'string' || !/^[1-9][0-9]*$/.test(evidence.sourceRun) || evidence.sourceRun !== verified.captureMetadata?.workflow?.runId || typeof verified.captureMetadata?.workflow?.runId !== 'string' || !/^[1-9][0-9]*$/.test(verified.captureMetadata.workflow.runId) || evidence.sourceRepository !== SOURCE_CONTRACT.repository || evidence.sourceWorkflow !== SOURCE_CONTRACT.workflow || evidence.sourceArtifact !== target.artifact || evidence.acceptedOldRevision !== ACCEPTED_OLD_REVISION || evidence.target !== target.target || evidence.verification !== 'gh attestation verify succeeded before extraction' || !/^[a-f0-9]{64}$/.test(evidence.archiveSha256) || evidence.archiveSha256 !== evidence.expectedArchiveSha256) fail('source provenance evidence identity is not accepted');
+  if (canonicalJson(evidence.captureMetadata) !== canonicalJson(verified.captureMetadata) || canonicalJson(evidence.bundleManifest) !== canonicalJson(verified.bundleManifest) || canonicalJson(evidence.rawChecksums) !== canonicalJson(verified.rawChecksums)) fail('source provenance evidence differs from the verified old-side bundle');
+  return evidence;
 }
 
 async function executableIdentity(path, label, evidenceRoot, source = null) {
@@ -266,6 +279,7 @@ async function main() {
   const newRoot = resolve(argument('--new-root'));
   const addonPath = oneOfArguments(['--addon', '--package']);
   const evidencePath = resolve(argument('--evidence'));
+  const sourceProvenanceEvidencePath = resolve(argument('--source-provenance-evidence'));
   const target = parityTarget(argument('--target'));
   const sourceRevision = optionalArgument('--source-revision') ?? SOURCE_CONTRACT.workflowSupportRevision;
   if (!/^[a-f0-9]{40}$/.test(sourceRevision)) fail('standalone source revision must be a full SHA');
@@ -279,8 +293,12 @@ async function main() {
   if (cliArguments.some(Boolean) && cliArguments.some((path) => !path)) fail('adapter, CLI, and both projectors must be supplied together');
   const identity = { repository: SOURCE_CONTRACT.repository, workflow: SOURCE_CONTRACT.workflow, ref: SOURCE_CONTRACT.ref, sha: SOURCE_CONTRACT.workflowSupportRevision, artifact: target.artifact };
   const verified = await verifyParityDirectory(oldRoot, { source: identity, provenance: identity, target: target.target });
+  const sourceProvenanceEvidence = await readFile(sourceProvenanceEvidencePath, 'utf8');
+  validateSourceProvenanceEvidence(sourceProvenanceEvidence, verified, target);
   await copyOldEvidence(oldRoot, newRoot);
+  await copyFile(sourceProvenanceEvidencePath, join(newRoot, 'source-provenance-evidence.json'));
   const projectorSources = await copyProjectorSources(newRoot, sourceRevision);
+  await writeFile(join(newRoot, 'source-provenance.json'), `${canonicalJson({ sourceRevision, sourceVersion: 1, trustedSourceRootKind: 'committed-git-source-at-workflow-sha' })}\n`, { flag: 'wx' });
   const addon = await loadAddon(addonPath);
   const rows = rowIds(verified.rawChecksums);
   for (const rowId of rows) await captureNapiRow(addon, oldRoot, newRoot, rowId, target.target);
