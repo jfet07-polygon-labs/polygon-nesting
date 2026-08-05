@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import { link, lstat, mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, link, lstat, mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, join, posix, win32 } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { gzipSync } from 'node:zlib';
@@ -25,6 +25,7 @@ import * as sourceParityBundle from '../../scripts/parity/fetch-source-parity-bu
 const {
   assertSafeArchive,
   attestationVerificationArgs,
+  publicationStagingTemplate,
   requireDisjointDestinations,
 } = sourceParityBundle;
 
@@ -180,6 +181,87 @@ test('forces Windows tar to treat native archive drive paths as local', () => {
     '-C',
     '/tmp/staging',
   ]);
+});
+
+test('stages final publication beside its output on every supported platform', () => {
+  const windowsOutput = 'D:\\a\\polygon-nesting\\polygon-nesting\\artifacts\\trusted-parity-bundle\\x86_64-pc-windows-msvc';
+  const windowsStaging = publicationStagingTemplate(windowsOutput, 'win32');
+  assert.equal(windowsStaging, 'D:\\a\\polygon-nesting\\polygon-nesting\\artifacts\\trusted-parity-bundle\\polygon-source-parity-stage-');
+  assert.equal(win32.parse(windowsStaging).root, win32.parse(windowsOutput).root);
+
+  for (const platform of ['linux', 'darwin']) {
+    const output = '/workspace/artifacts/trusted-parity-bundle/x86_64-unknown-linux-gnu';
+    assert.equal(
+      publicationStagingTemplate(output, platform),
+      posix.join(posix.dirname(output), 'polygon-source-parity-stage-'),
+    );
+  }
+});
+
+test('cleans a newly created output parent after extraction failure without deleting an existing parent', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'parity-output-parent-cleanup-'));
+  const source = await fixture({ withBuildIdentity: true });
+  const archiveName = `${SOURCE_CONTRACT.archivePrefix}aarch64-apple-darwin${SOURCE_CONTRACT.archiveSuffix}`;
+  const digestName = `${SOURCE_CONTRACT.archivePrefix}aarch64-apple-darwin${SOURCE_CONTRACT.archiveDigestSuffix}`;
+  const archive = join(root, archiveName);
+  const digest = join(root, digestName);
+  const bin = join(root, 'bin');
+  const fakeGh = join(bin, 'fake-gh.mjs');
+  await mkdir(bin);
+  await execFileAsync('tar', ['--format=ustar', '-czf', archive, '-C', source, '.']);
+  await writeFile(digest, `${createHash('sha256').update(await readFile(archive)).digest('hex')}  ${archiveName}\n`);
+  await writeFile(fakeGh, `import { copyFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+if (args[0] === 'run' && args[1] === 'view') process.stdout.write('${JSON.stringify({ headSha: SOURCE_CONTRACT.workflowSupportRevision, headBranch: 'main', workflowName: SOURCE_CONTRACT.workflowName })}');
+else if (args[0] === 'run' && args[1] === 'download') {
+  const directory = args[args.indexOf('--dir') + 1];
+  copyFileSync(process.env.PARITY_ARCHIVE, directory + '/' + process.env.PARITY_ARCHIVE_NAME);
+  copyFileSync(process.env.PARITY_DIGEST, directory + '/' + process.env.PARITY_DIGEST_NAME);
+}`);
+  const suffix = process.platform === 'win32' ? '.cmd' : '';
+  await writeFile(join(bin, `gh${suffix}`), process.platform === 'win32'
+    ? `@echo off\r\n"${process.execPath}" "${fakeGh}" %*\r\n`
+    : `#!/bin/sh\nexec "${process.execPath}" "${fakeGh}" "$@"\n`);
+  await writeFile(join(bin, `tar${suffix}`), process.platform === 'win32'
+    ? '@if not "%PARITY_CONCURRENT_FILE%"=="" echo concurrent> "%PARITY_CONCURRENT_FILE%"\r\n@echo extraction failed 1>&2\r\nexit /b 1\r\n'
+    : '#!/bin/sh\nif [ -n "$PARITY_CONCURRENT_FILE" ]; then printf "%s" concurrent > "$PARITY_CONCURRENT_FILE"; fi\nprintf "%s\\n" extraction-failed >&2\nexit 1\n');
+  if (process.platform !== 'win32') {
+    await chmod(join(bin, 'gh'), 0o755);
+    await chmod(join(bin, 'tar'), 0o755);
+  }
+  const environment = {
+    ...process.env,
+    PARITY_ARCHIVE: archive,
+    PARITY_ARCHIVE_NAME: archiveName,
+    PARITY_DIGEST: digest,
+    PARITY_DIGEST_NAME: digestName,
+    PATH: `${bin}${delimiter}${process.env.PATH}`,
+  };
+  const run = (output, provenanceOutput, overrides = {}) => execFileAsync(process.execPath, [
+    'scripts/parity/fetch-source-parity-bundle.mjs',
+    '--source-run', '1',
+    '--target', 'aarch64-apple-darwin',
+    '--output', output,
+    '--provenance-output', provenanceOutput,
+  ], { cwd: process.cwd(), env: { ...environment, ...overrides } });
+  const createdParent = join(root, 'created');
+  await assert.rejects(run(join(createdParent, 'nested', 'output'), join(root, 'provenance', 'created.json')), /tar -xzf failed/);
+  await assert.rejects(lstat(createdParent), { code: 'ENOENT' });
+
+  const concurrentParent = join(root, 'concurrent');
+  const concurrentFile = join(concurrentParent, 'nested', 'other-publisher');
+  await assert.rejects(
+    run(join(concurrentParent, 'nested', 'output'), join(root, 'provenance', 'concurrent.json'), { PARITY_CONCURRENT_FILE: concurrentFile }),
+    /tar -xzf failed/,
+  );
+  assert.equal(await readFile(concurrentFile, 'utf8'), 'concurrent');
+
+  const existingParent = join(root, 'existing');
+  await mkdir(existingParent);
+  await assert.rejects(run(join(existingParent, 'output'), join(root, 'provenance', 'existing.json')), /tar -xzf failed/);
+  assert.ok((await lstat(existingParent)).isDirectory());
+  await rm(source, { recursive: true, force: true });
+  await rm(root, { recursive: true, force: true });
 });
 
 test('defines the trusted canonical 18-row order independently of bundle metadata', () => {

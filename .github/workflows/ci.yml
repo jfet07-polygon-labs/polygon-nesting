@@ -38,7 +38,7 @@ jobs:
           python3 -m unittest discover -s scripts/tests -p 'test_*.py'
           ./scripts/test-cli-image-contract.sh
           node scripts/verify-release-candidate.mjs --dry-run
-          node --test scripts/release-ci.test.mjs
+          node --test tests/parity/*.test.mjs scripts/release-ci.test.mjs
 
   oci-smoke:
     name: Linux amd64 OCI smoke
