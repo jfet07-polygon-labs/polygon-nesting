@@ -8,16 +8,16 @@ The consuming backend owns:
 
 1. creating a durable run record;
 2. validating authorization and choosing the OCI image version;
-3. placing one protocol v1 `request.json` file in durable storage or a mounted work volume;
+3. placing one protocol v1 `request.json` file in durable storage backed by the platform-managed Azure Files `/work` mount;
 4. starting one Container Job execution with allocated CPU and memory;
-5. making `/work` available to the container and collecting the output artifacts after exit;
+5. mounting `/work` in the container and collecting the output artifacts after exit;
 6. mapping the documented CLI exit status and artifacts into backend job state.
 
 The image owns only deterministic engine execution. It has no Azure credentials, storage SDK, customer account configuration, HTTP listener, or application database dependency.
 
 ## File contract
 
-The container entrypoint is equivalent to:
+The image entrypoint is `/usr/local/bin/polygon-nesting`. Each Container Job execution must supply the `run` subcommand and its arguments, for example:
 
 ```sh
 polygon-nesting run \
@@ -26,13 +26,15 @@ polygon-nesting run \
   --events /work/events.ndjson
 ```
 
+Running the image without the `run` invocation is malformed and exits with the documented status `2`.
+
 `request.json` is a single protocol v1 `EngineRequest`. `result.json` is one versioned outcome envelope. `events.ndjson` is optional and is ordered semantic event data suitable for compact progress capture. A backend that needs final-result-only jobs omits `--events`.
 
-The backend must use a durable shared or transferred storage mechanism for all three paths. The container filesystem disappears when its execution ends.
+The backend must use the platform-managed Azure Files `/work` mount for all three paths. It must mount a per-run Azure Files directory at `/work`, or namespace the three artifact paths by the durable run ID, so concurrent executions cannot overwrite one another. The container filesystem disappears when its execution ends.
 
 ## Execution behavior
 
-Start one container execution for each nesting job. Do not multiplex customer jobs through one running container. The core creates the job-owned Rayon pool using the CPU allocation provided to that execution. `SIGTERM` and `SIGINT` request cooperative cancellation, so the backend should allow its Container Job termination grace period before forcing termination.
+Start one container execution for each nesting job. Do not multiplex customer jobs through one running container. The core creates a job-owned Rayon pool. It first honors a positive `MIN_PLANE_IRREGULAR_NATIVE_THREADS` value; otherwise it uses one fewer than the OS-visible logical CPU count, clamped to one. Allocate CPU and memory for that execution accordingly. `SIGTERM` and `SIGINT` request cooperative cancellation, so the backend should allow its Container Job termination grace period before forcing termination.
 
 A nonzero exit uses the stable statuses in [the CLI contract](cli-contract.md): `1` is an internal failure, `2` is malformed input or invocation, `3` is a typed domain failure, `4` is cancellation or deadline, and `5` is an output artifact failure. A process exit status alone is not a substitute for collecting `result.json` when the documented outcome was written.
 

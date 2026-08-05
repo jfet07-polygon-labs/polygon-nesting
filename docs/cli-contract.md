@@ -27,11 +27,11 @@ When requested, the event artifact is newline-delimited JSON. Every line is one 
 | Status | Meaning |
 | --- | --- |
 | `0` | Successful outcome written. |
-| `1` | Internal failure. A sanitized typed internal-failure outcome is written when the output artifact is available. |
-| `2` | Malformed command invocation, unreadable input, malformed JSON, invalid deadline, request validation failure, or unsafe artifact path alias. A sanitized typed malformed-input outcome is written when the output artifact is available. |
+| `1` | Internal failure. A sanitized typed internal-failure outcome is written when runner execution reaches artifact handling and the output artifact is available. Signal-handler installation failure and the outer process panic guard exit `1` without an artifact. |
+| `2` | Malformed command invocation, unreadable input, malformed JSON, invalid deadline, request validation failure, or unsafe artifact path alias. When the runner can recover one safe unique output path, it writes a sanitized typed malformed-input outcome, with a unique safe input and event path when available. An invocation that combines `--info` with `run` exits `2` without writing an artifact. |
 | `3` | Typed domain failure written, including archive-ineligible requests and non-cancellation engine failures. |
 | `4` | Typed cancellation or deadline outcome written. |
-| `5` | Result or requested event artifact could not be encoded or written. |
+| `5` | Result or requested event artifact could not be encoded or written. If the event artifact fails after the result is written, the existing result artifact is retained; no replacement I/O-failure outcome is written. |
 
 For nonzero statuses, stderr contains only a stable category message prefixed with `polygon-nesting:`. It excludes panic payloads, source locations, and raw parser details.
 
