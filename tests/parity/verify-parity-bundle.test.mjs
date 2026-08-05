@@ -1,0 +1,377 @@
+import assert from 'node:assert/strict';
+import { link, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { gzipSync } from 'node:zlib';
+import test from 'node:test';
+
+import {
+  ParityValidationError,
+  verifyParityDirectory,
+  normalizeSemanticJson,
+  verifyDependencyIdentity,
+  compareParityRows,
+  CANONICAL_ROW_IDS,
+  ACCEPTED_NATIVE_DEPENDENCIES,
+  ACCEPTED_NATIVE_DEPENDENCIES_SHA256,
+  PARITY_TARGETS,
+  SOURCE_CONTRACT,
+} from '../../scripts/parity/verify-parity-bundle.mjs';
+import { assertSafeArchive } from '../../scripts/parity/fetch-source-parity-bundle.mjs';
+
+const SOURCE = {
+  repository: SOURCE_CONTRACT.repository,
+  workflow: SOURCE_CONTRACT.workflow,
+  ref: SOURCE_CONTRACT.ref,
+  sha: SOURCE_CONTRACT.workflowSupportRevision,
+  artifact: 'old-rust-parity-capture-aarch64-apple-darwin',
+};
+
+async function fixture({ withBuildIdentity = false } = {}) {
+  const root = await mkdtemp(join(tmpdir(), 'parity-consumer-'));
+  const fixtureRows = withBuildIdentity ? CANONICAL_ROW_IDS : ['desktop-01'];
+  for (const rowId of fixtureRows) {
+    const row = join(root, 'old', 'raw', rowId);
+    await mkdir(row, { recursive: true });
+    await writeFile(join(row, 'request.json'), '{"desktop":true}\n');
+    await writeFile(join(row, 'result.json'), '{"result":"ok","runtimeMs":1}\n');
+    await writeFile(join(row, 'events.ndjson'), '{"kind":"portfolio-progress","elapsedMs":2}\n');
+    await writeFile(join(row, 'stderr.txt'), '');
+    await writeFile(join(row, 'process.json'), JSON.stringify({ rowId }));
+  }
+  const rawPaths = [
+    'request.json', 'result.json', 'events.ndjson', 'stderr.txt', 'process.json',
+  ];
+  const files = (await Promise.all(fixtureRows.flatMap((rowId) => rawPaths.map(async (filename) => {
+    const path = `old/raw/${rowId}/${filename}`;
+    const bytes = await readFile(join(root, path));
+    return { path, sha256: createHash('sha256').update(bytes).digest('hex'), size: bytes.length };
+  })))).flat();
+  await writeFile(join(root, SOURCE_CONTRACT.captureMetadata), JSON.stringify({
+    version: 1,
+    acceptedEngineRevision: SOURCE_CONTRACT.acceptedEngineRevision,
+    sourceProvenanceRevision: SOURCE_CONTRACT.sourceProvenanceRevision,
+    target: 'aarch64-apple-darwin',
+    toolchain: '1.95.0',
+    artifactName: SOURCE.artifact,
+    build: { profile: 'release', features: [] },
+    rustc: { identity: 'rustc 1.95.0', verbose: 'release: 1.95.0' },
+    cargo: { identity: 'cargo 1.95.0' },
+    sourceCargoLockSha256: 'c'.repeat(64),
+    nativeDependencies: {
+      entries: ACCEPTED_NATIVE_DEPENDENCIES,
+      sha256: ACCEPTED_NATIVE_DEPENDENCIES_SHA256,
+    },
+    addon: {
+      historicalSha256: '9fc447f80a820c60676eee62706694c7f7ac79092a66ac131ac50b4f216dec9b',
+      freshSha256: 'e'.repeat(64),
+    },
+    workflow: { repository: SOURCE.repository, ref: SOURCE.ref, sha: SOURCE.sha, runId: '1', runAttempt: '1' },
+    corpus: { manifestName: 'migration-corpus.json', manifestSha256: 'a'.repeat(64), sha256SumsSha256: 'b'.repeat(64), rowIds: fixtureRows },
+    raw: {
+      version: 1,
+      files: files.map(({ path, sha256, size }) => ({ path: path.slice('old/raw/'.length), sha256, size })),
+    },
+  }, null, 2));
+  const metadataBytes = await readFile(join(root, SOURCE_CONTRACT.captureMetadata));
+  files.push({
+    path: SOURCE_CONTRACT.captureMetadata,
+    sha256: createHash('sha256').update(metadataBytes).digest('hex'),
+    size: metadataBytes.length,
+  });
+  await writeFile(join(root, SOURCE_CONTRACT.bundleManifest), JSON.stringify({ version: 1, files }, null, 2));
+  await writeFile(join(root, 'SHA256SUMS'), `${files.map(({ path, sha256 }) => `${sha256}  ${path}`).join('\n')}\n`);
+  return root;
+}
+
+const execFileAsync = promisify(execFile);
+
+function expectFailure(action, message) {
+  return assert.rejects(action, (error) => error instanceof ParityValidationError && error.message.includes(message));
+}
+
+async function writeTarMember(archive, name, type = '0') {
+  const header = Buffer.alloc(512);
+  Buffer.from(name).copy(header, 0);
+  header.write('0000644\0', 100, 'ascii');
+  header.write('0000000\0', 108, 'ascii');
+  header.write('0000000\0', 116, 'ascii');
+  header.write('00000000000\0', 124, 'ascii');
+  header.write('00000000000\0', 136, 'ascii');
+  header.fill(0x20, 148, 156);
+  header.write(type, 156, 'ascii');
+  header.write('ustar\0', 257, 'ascii');
+  header.write('00', 263, 'ascii');
+  const checksum = header.reduce((total, byte) => total + byte, 0);
+  header.write(`${checksum.toString(8).padStart(6, '0')}\0 `, 148, 'ascii');
+  await writeFile(archive, gzipSync(Buffer.concat([header, Buffer.alloc(1024)])));
+}
+
+test('pins the complete Task109 canonical dependency output', () => {
+  assert.equal(ACCEPTED_NATIVE_DEPENDENCIES.length, 61);
+  assert.equal(ACCEPTED_NATIVE_DEPENDENCIES_SHA256, '8925ac904fa2eb41a3f82907d530578a5174509eef0470712193cc4d45a3d0c8');
+  assert.equal(
+    createHash('sha256').update(`${JSON.stringify(ACCEPTED_NATIVE_DEPENDENCIES)}\n`).digest('hex'),
+    ACCEPTED_NATIVE_DEPENDENCIES_SHA256,
+  );
+});
+
+test('centralizes the exact attested old-side archive contract', () => {
+  assert.deepEqual(SOURCE_CONTRACT, {
+    repository: 'jfet97/min-plane-dfx',
+    workflow: '.github/workflows/capture-old-rust-parity.yml',
+    workflowName: 'Capture accepted old Rust parity',
+    ref: 'refs/heads/main',
+    workflowSupportRevision: '2049934441c4cc07fb5ed58de2f02a199a9b6ea5',
+    acceptedEngineRevision: '5c72d8fca8e078b0a6e7d5f2515a8a0953475481',
+    sourceProvenanceRevision: 'e4f3608878611c002f343473fab72adc7d155f87',
+    artifactPrefix: 'old-rust-parity-capture-',
+    archivePrefix: 'old-rust-parity-capture-',
+    archiveSuffix: '.tar.gz',
+    archiveDigestSuffix: '.tar.gz.sha256',
+    captureMetadata: 'capture-metadata.json',
+    bundleManifest: 'bundle-manifest.json',
+    bundleManifestVersion: 1,
+    rawFilenames: ['request.json', 'result.json', 'events.ndjson', 'stderr.txt', 'process.json'],
+  });
+});
+
+test('defines the trusted canonical 18-row order independently of bundle metadata', () => {
+  assert.equal(CANONICAL_ROW_IDS.length, 18);
+  assert.deepEqual(CANONICAL_ROW_IDS.slice(0, 6), [
+    'triangle-20-2000x2700-compact', 'triangle-20-2000x2700-short-side', 'triangle-20-600x400-compact',
+    'triangle-20-600x400-short-side', 'triangle-20-300x300-compact', 'triangle-20-300x300-short-side',
+  ]);
+});
+
+test('defines all four exact source and standalone target runner pairs', () => {
+  assert.deepEqual(PARITY_TARGETS.map(({ runner, target }) => ({ runner, target })), [
+    { runner: 'ubuntu-24.04', target: 'x86_64-unknown-linux-gnu' },
+    { runner: 'windows-latest', target: 'x86_64-pc-windows-msvc' },
+    { runner: 'macos-15', target: 'aarch64-apple-darwin' },
+    { runner: 'macos-15-intel', target: 'x86_64-apple-darwin' },
+  ]);
+  assert.ok(PARITY_TARGETS.every(({ profile, features, rustVersion }) => profile === 'release' && features.length === 0 && rustVersion === '1.95.0'));
+});
+
+test('workflow uses every required parity runner and collects all matrix results', async () => {
+  const workflow = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
+  for (const { runner, target } of PARITY_TARGETS) {
+    assert.match(workflow, new RegExp(runner.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.match(workflow, new RegExp(target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+  assert.match(workflow, /strategy:/);
+  assert.match(workflow, /require-all-targets/);
+  assert.match(workflow, /actions\/checkout@11bd71901bbe5b1630ceea73d27597364c9af683/);
+  assert.match(workflow, /actions\/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020/);
+  assert.match(workflow, /dtolnay\/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c/);
+  assert.match(workflow, /old-new-parity-target-\$\{\{ matrix\.key \}\}/);
+  assert.match(workflow, /assemble-parity-aggregate\.mjs/);
+  assert.match(workflow, /--trusted-source-root "\$GITHUB_WORKSPACE"/);
+  assert.match(workflow, /old-new-parity-bundle\.tar\.gz/);
+  assert.match(workflow, /actions\/attest-build-provenance@/);
+  assert.match(workflow, /id-token: write/);
+  assert.match(workflow, /attestations: write/);
+});
+
+test('rejects a source bundle without independent provenance', async () => {
+  const root = await fixture();
+  await expectFailure(() => verifyParityDirectory(root, { source: SOURCE, provenance: null }), 'provenance attestation is required');
+});
+
+test('rejects fabricated source identity and self asserted metadata', async () => {
+  const root = await fixture();
+  await expectFailure(() => verifyParityDirectory(root, {
+    source: { ...SOURCE, repository: 'evil/repository' },
+    provenance: { repository: 'evil/repository', workflow: SOURCE.workflow, ref: SOURCE.ref, sha: SOURCE.sha, artifact: SOURCE.artifact },
+  }), 'repository');
+});
+
+test('rejects a bundle with missing immutable raw files', async () => {
+  const root = await fixture({ withBuildIdentity: true });
+  await rm(join(root, 'old', 'raw', CANONICAL_ROW_IDS[0], 'result.json'));
+  await expectFailure(() => verifyParityDirectory(root, {
+    source: SOURCE,
+    provenance: SOURCE,
+  }), 'raw file is missing');
+});
+
+test('normalizes only approved measurements while preserving field presence', () => {
+  const normalized = normalizeSemanticJson({ runtimeMs: 1, threadCount: 4, nested: { elapsedMs: 2 } });
+  assert.deepEqual(normalized, { runtimeMs: '<measurement>', threadCount: 4, nested: { elapsedMs: '<measurement>' } });
+});
+
+test('requires a lock hash before accepting a complete checksummed raw capture', async () => {
+  const root = await fixture({ withBuildIdentity: true });
+  const metadataPath = join(root, SOURCE_CONTRACT.captureMetadata);
+  const metadata = JSON.parse(await readFile(metadataPath));
+  delete metadata.sourceCargoLockSha256;
+  await writeFile(metadataPath, JSON.stringify(metadata));
+  await expectFailure(() => verifyParityDirectory(root, { source: SOURCE, provenance: SOURCE }), 'schema is not accepted');
+});
+
+test('rejects additional properties in the exact capture metadata contract', async () => {
+  const root = await fixture({ withBuildIdentity: true });
+  const metadataPath = join(root, SOURCE_CONTRACT.captureMetadata);
+  const metadata = JSON.parse(await readFile(metadataPath));
+  metadata.untrusted = true;
+  await writeFile(metadataPath, JSON.stringify(metadata));
+  await expectFailure(() => verifyParityDirectory(root, { source: SOURCE, provenance: SOURCE }), 'schema is not accepted');
+});
+
+test('rejects nested metadata additions and workflow identity drift', async () => {
+  const cases = [
+    ['build', (metadata) => { metadata.build.untrusted = true; }, 'schema is not accepted'],
+    ['repository', (metadata) => { metadata.workflow.repository = 'untrusted/repository'; }, 'workflow identity is not accepted'],
+    ['ref', (metadata) => { metadata.workflow.ref = 'refs/heads/untrusted'; }, 'workflow identity is not accepted'],
+  ];
+  for (const [, mutate, expected] of cases) {
+    const root = await fixture({ withBuildIdentity: true });
+    const metadataPath = join(root, SOURCE_CONTRACT.captureMetadata);
+    const metadata = JSON.parse(await readFile(metadataPath));
+    mutate(metadata);
+    await writeFile(metadataPath, JSON.stringify(metadata));
+    await expectFailure(() => verifyParityDirectory(root, { source: SOURCE, provenance: SOURCE }), expected);
+  }
+});
+
+test('rejects noncanonical dependency metadata entries and digests', async () => {
+  const cases = [
+    (metadata) => { metadata.nativeDependencies.entries[0].version = '99.0.0'; },
+    (metadata) => { metadata.nativeDependencies.entries = [{ name: 'z', version: '1' }, { name: 'a', version: '1' }]; },
+    (metadata) => { metadata.nativeDependencies.sha256 = '0'.repeat(64); },
+  ];
+  for (const mutate of cases) {
+    const root = await fixture({ withBuildIdentity: true });
+    const metadataPath = join(root, SOURCE_CONTRACT.captureMetadata);
+    const metadata = JSON.parse(await readFile(metadataPath));
+    mutate(metadata);
+    await writeFile(metadataPath, JSON.stringify(metadata));
+    await expectFailure(() => verifyParityDirectory(root, { source: SOURCE, provenance: SOURCE }), 'dependency');
+  }
+});
+
+test('rejects arbitrary canonical dependency entries with a recomputed digest', async () => {
+  const root = await fixture({ withBuildIdentity: true });
+  const metadataPath = join(root, SOURCE_CONTRACT.captureMetadata);
+  const metadata = JSON.parse(await readFile(metadataPath));
+  metadata.nativeDependencies.entries = [{ name: 'arbitrary', version: '999' }];
+  metadata.nativeDependencies.sha256 = createHash('sha256')
+    .update(`${JSON.stringify(metadata.nativeDependencies.entries)}\n`)
+    .digest('hex');
+  await writeFile(metadataPath, JSON.stringify(metadata));
+  await expectFailure(() => verifyParityDirectory(root, { source: SOURCE, provenance: SOURCE }), 'dependency identity is not accepted');
+});
+
+test('accepts a complete checksummed capture with exact build identity', async () => {
+  const root = await fixture({ withBuildIdentity: true });
+  const verified = await verifyParityDirectory(root, { source: SOURCE, provenance: SOURCE });
+  assert.equal(verified.captureMetadata.acceptedEngineRevision, SOURCE_CONTRACT.acceptedEngineRevision);
+  assert.equal(verified.normalizationVersion, '1');
+});
+
+test('rejects a changed raw file after checksums were recorded', async () => {
+  const root = await fixture({ withBuildIdentity: true });
+  await writeFile(join(root, 'old', 'raw', CANONICAL_ROW_IDS[0], 'result.json'), '{"result":"tampered"}\n');
+  await expectFailure(() => verifyParityDirectory(root, { source: SOURCE, provenance: SOURCE }), 'bundle manifest hash differs');
+});
+
+test('compares semantic result and ordered event records without normalizing thread count', async () => {
+  const oldRoot = await fixture();
+  const newRoot = await mkdtemp(join(tmpdir(), 'new-parity-consumer-'));
+  const newRow = join(newRoot, 'new', 'raw', 'desktop-01');
+  await mkdir(newRow, { recursive: true });
+  await writeFile(join(newRow, 'result.json'), '{"result":"ok","runtimeMs":900}\n');
+  await writeFile(join(newRow, 'events.ndjson'), '{"kind":"portfolio-progress","elapsedMs":999}\n');
+  await writeFile(join(newRow, 'request.json'), '{"desktop":true}\n');
+  await writeFile(join(newRow, 'stderr.txt'), '');
+  await writeFile(join(newRow, 'process.json'), JSON.stringify({ rowId: 'desktop-01' }));
+  const evidence = await compareParityRows(oldRoot, newRoot, ['desktop-01']);
+  assert.equal(evidence.length, 5);
+  assert.deepEqual(evidence.map(({ filename }) => filename), ['request.json', 'result.json', 'events.ndjson', 'stderr.txt', 'process.json']);
+  await writeFile(join(newRow, 'result.json'), '{"result":"ok","threadCount":99,"runtimeMs":900}\n');
+  await expectFailure(() => compareParityRows(oldRoot, newRoot, ['desktop-01']), 'semantic mismatch');
+});
+
+test('production parity command fails when captured standalone output differs semantically', async () => {
+  const oldRoot = await fixture({ withBuildIdentity: true });
+  const newRoot = await mkdtemp(join(tmpdir(), 'new-parity-command-'));
+  const addon = join(newRoot, 'fake-addon.mjs');
+  await writeFile(addon, `export async function runIrregularJob(_request, _token, onEvent) { onEvent('{"kind":"portfolio-progress","elapsedMs":5}'); return '{"result":"different"}'; }`);
+  await assert.rejects(
+    execFileAsync(process.execPath, [
+      'scripts/parity/run-old-new-parity.mjs', '--old-root', oldRoot, '--new-root', newRoot,
+      '--addon', addon, '--target', 'aarch64-apple-darwin', '--evidence', join(newRoot, 'evidence.json'),
+    ], { cwd: process.cwd() }),
+    /semantic mismatch/,
+  );
+});
+
+test('rejects dependency identities that differ from the accepted old pair', () => {
+  assert.throws(() => verifyDependencyIdentity({ 'napi-derive': '3.6.2' }, { 'napi-derive': '3.6.1' }), /napi-derive/);
+});
+
+test('pins the executed N-API derive dependency to the accepted version', async () => {
+  const cargoToml = await readFile(new URL('../../crates/polygon-nesting-napi/Cargo.toml', import.meta.url), 'utf8');
+  assert.match(cargoToml, /^napi-derive = "=3\.6\.1"$/m);
+});
+
+test('rejects symlink archive members before extraction', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'parity-archive-'));
+  await writeFile(join(root, 'payload.json'), '{}');
+  await symlink('payload.json', join(root, 'linked.json'));
+  const archive = join(root, 'unsafe.tar.gz');
+  await execFileAsync('tar', ['-czf', archive, '-C', root, 'linked.json']);
+  assert.throws(() => assertSafeArchive(archive), /symlink/);
+});
+
+test('rejects hardlink archive members before extraction', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'parity-hardlink-archive-'));
+  await writeFile(join(root, 'payload.json'), '{}');
+  await link(join(root, 'payload.json'), join(root, 'linked.json'));
+  const archive = join(root, 'unsafe.tar.gz');
+  await execFileAsync('tar', ['-czf', archive, '-C', root, 'payload.json', 'linked.json']);
+  assert.throws(() => assertSafeArchive(archive), /hardlink/);
+});
+
+test('rejects traversal archive members whose names contain spaces', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'parity-spaced-traversal-archive-'));
+  const archive = join(root, 'unsafe.tar.gz');
+  await writeTarMember(archive, '../outside payload');
+  assert.throws(() => assertSafeArchive(archive), /unsafe path/);
+});
+
+test('rejects Win32 drive-designator archive members', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'parity-win32-drive-archive-'));
+  const archive = join(root, 'unsafe.tar.gz');
+  await writeTarMember(archive, 'C:/outside payload');
+  assert.throws(() => assertSafeArchive(archive), /unsafe path/);
+});
+
+test('rejects Win32 drive-relative archive members', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'parity-win32-drive-relative-archive-'));
+  const archive = join(root, 'unsafe.tar.gz');
+  await writeTarMember(archive, 'C:outside payload');
+  assert.throws(() => assertSafeArchive(archive), /unsafe path/);
+});
+
+test('rejects symlinked capture metadata before parsing it', async () => {
+  const root = await fixture({ withBuildIdentity: true });
+  const metadata = join(root, SOURCE_CONTRACT.captureMetadata);
+  const external = join(root, 'external-capture-metadata.json');
+  await writeFile(external, await readFile(metadata));
+  await rm(metadata);
+  await symlink(external, metadata);
+  await expectFailure(() => verifyParityDirectory(root, { source: SOURCE, provenance: SOURCE }), 'regular non-symlink');
+});
+
+test('rejects symlink raw files', async () => {
+  const root = await fixture({ withBuildIdentity: true });
+  const path = join(root, 'old', 'raw', CANONICAL_ROW_IDS[0], 'stderr.txt');
+  await rm(path);
+  await symlink('request.json', path);
+  await expectFailure(() => verifyParityDirectory(root, { source: SOURCE, provenance: SOURCE }), 'regular non-symlink');
+});

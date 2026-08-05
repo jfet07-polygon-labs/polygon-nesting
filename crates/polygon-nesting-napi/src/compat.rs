@@ -134,6 +134,11 @@ impl From<DesktopObjectiveProfileId> for EngineProfile {
     }
 }
 
+pub fn adapt_desktop_request_to_engine_json(input: &str) -> Result<String, AdapterError> {
+    let prepared = decode_desktop_request(input)?;
+    serde_json::to_string(&prepared.request).map_err(AdapterError::malformed_request_json)
+}
+
 pub fn decode_desktop_request(input: &str) -> Result<PreparedDesktopRequest, AdapterError> {
     let dto: DesktopRequestDto = serde_json::from_str(input).map_err(|error| {
         if error.to_string().contains("number out of range") {

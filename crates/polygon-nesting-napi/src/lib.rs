@@ -2,7 +2,7 @@ pub mod compat;
 pub mod job;
 
 mod diagnostics;
-mod events;
+pub mod events;
 mod registry;
 
 use napi_derive::napi;

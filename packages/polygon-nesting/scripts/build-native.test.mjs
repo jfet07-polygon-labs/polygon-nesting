@@ -145,7 +145,8 @@ test('builds from the standalone workspace and stages the mapped addon', () => {
       resolve(workspaceRoot, 'crates', 'polygon-nesting-napi', 'Cargo.toml'),
       '--release',
       '--target',
-      nativeTarget.cargoTarget
+      nativeTarget.cargoTarget,
+      '--locked'
     ])
     assert.equal(commands[0].options.cwd, workspaceRoot)
     assert.equal(commands[0].options.stdio, 'inherit')
