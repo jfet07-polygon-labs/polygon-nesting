@@ -189,8 +189,7 @@ function buildNative({
       nativeTarget.arch,
       profile,
       manifestPath
-    ),
-    '--locked'
+    )
   ]
   execute('cargo', args, {
     cwd: workspaceRoot,

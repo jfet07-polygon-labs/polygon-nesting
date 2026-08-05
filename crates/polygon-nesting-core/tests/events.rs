@@ -17,7 +17,6 @@ impl EngineEventSink for RecordingSink {
 #[test]
 fn sequencer_records_semantic_events_in_callback_order() {
     let mut sink = RecordingSink::default();
-    let mut sequencer = EventSequencer::new(&mut sink);
     let progress_before = EngineEvent::PortfolioProgress {
         progress: PortfolioProgress {
             phase: PortfolioPhase::SharedArchive,
@@ -45,11 +44,13 @@ fn sequencer_records_semantic_events_in_callback_order() {
         },
     };
 
-    sequencer.emit(progress_before.clone());
-    sequencer.emit(snapshot.clone());
-    sequencer.emit(progress_after.clone());
-    assert_eq!(sequencer.next_ordinal(), 3);
-    drop(sequencer);
+    {
+        let mut sequencer = EventSequencer::new(&mut sink);
+        sequencer.emit(progress_before.clone());
+        sequencer.emit(snapshot.clone());
+        sequencer.emit(progress_after.clone());
+        assert_eq!(sequencer.next_ordinal(), 3);
+    }
 
     assert_eq!(
         sink.events,

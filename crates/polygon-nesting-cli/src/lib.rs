@@ -178,12 +178,12 @@ fn paths_alias(first: &Path, second: &Path) -> bool {
     {
         use std::os::unix::fs::MetadataExt;
 
-        return fs::metadata(first)
+        fs::metadata(first)
             .ok()
             .zip(fs::metadata(second).ok())
             .is_some_and(|(first, second)| {
                 first.dev() == second.dev() && first.ino() == second.ino()
-            });
+            })
     }
     #[cfg(not(unix))]
     false

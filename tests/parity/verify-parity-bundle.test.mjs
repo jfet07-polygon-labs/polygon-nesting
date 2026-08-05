@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { link, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { link, lstat, mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -20,7 +20,10 @@ import {
   PARITY_TARGETS,
   SOURCE_CONTRACT,
 } from '../../scripts/parity/verify-parity-bundle.mjs';
-import { assertSafeArchive } from '../../scripts/parity/fetch-source-parity-bundle.mjs';
+import {
+  assertSafeArchive,
+  requireDisjointDestinations,
+} from '../../scripts/parity/fetch-source-parity-bundle.mjs';
 
 const SOURCE = {
   repository: SOURCE_CONTRACT.repository,
@@ -171,10 +174,89 @@ test('workflow uses every required parity runner and collects all matrix results
   assert.match(workflow, /old-new-parity-target-\$\{\{ matrix\.key \}\}/);
   assert.match(workflow, /assemble-parity-aggregate\.mjs/);
   assert.match(workflow, /--trusted-source-root "\$GITHUB_WORKSPACE"/);
+  assert.match(workflow, /--provenance-output "\$RUNNER_TEMP\/standalone-parity-provenance\/\$\{\{ matrix\.key \}\}\.json"/);
+  assert.match(workflow, /--source-provenance-evidence "\$RUNNER_TEMP\/standalone-parity-provenance\/\$\{\{ matrix\.key \}\}\.json"/);
   assert.match(workflow, /old-new-parity-bundle\.tar\.gz/);
   assert.match(workflow, /actions\/attest-build-provenance@/);
   assert.match(workflow, /id-token: write/);
   assert.match(workflow, /attestations: write/);
+});
+
+test('requires disjoint source-parity output and provenance destinations before publication', () => {
+  const root = join(tmpdir(), 'parity-fetch-destination-test');
+  const output = join(root, 'output');
+  const provenance = join(root, 'provenance.json');
+  assert.doesNotThrow(() => requireDisjointDestinations(output, provenance));
+
+  for (const [candidateOutput, candidateProvenance] of [
+    [output, output],
+    [output, join(output, 'provenance.json')],
+    [join(root, 'output', 'bundle'), join(root, 'output')],
+  ]) {
+    assert.throws(
+      () => requireDisjointDestinations(candidateOutput, candidateProvenance),
+      (error) => error instanceof ParityValidationError && error.message === 'output and provenance output must be disjoint',
+    );
+  }
+});
+
+test('source-parity fetch rejects overlapping destinations without creating output or temporary state', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'parity-fetch-overlap-'));
+  const temp = join(root, 'temp');
+  await mkdir(temp);
+
+  for (const [output, provenanceOutput] of [
+    [join(root, 'same'), join(root, 'same')],
+    [join(root, 'output'), join(root, 'output', 'provenance.json')],
+    [join(root, 'provenance', 'output'), join(root, 'provenance')],
+  ]) {
+    await assert.rejects(
+      execFileAsync(process.execPath, [
+        'scripts/parity/fetch-source-parity-bundle.mjs',
+        '--source-run', '1',
+        '--target', 'aarch64-apple-darwin',
+        '--output', output,
+        '--provenance-output', provenanceOutput,
+      ], { cwd: process.cwd(), env: { ...process.env, TMPDIR: temp } }),
+      /output and provenance output must be disjoint/,
+    );
+    await assert.rejects(lstat(output), { code: 'ENOENT' });
+    await assert.rejects(lstat(provenanceOutput), { code: 'ENOENT' });
+    assert.deepEqual(await readdir(temp), []);
+  }
+
+  await rm(root, { recursive: true, force: true });
+});
+
+test('source-parity fetch rejects physically nested destinations through existing symlink parents', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'parity-fetch-symlink-overlap-'));
+  const temp = join(root, 'temp');
+  const physical = join(root, 'physical');
+  const alias = join(root, 'alias');
+  await mkdir(temp);
+  await mkdir(physical);
+  await symlink(physical, alias, process.platform === 'win32' ? 'junction' : 'dir');
+
+  for (const [output, provenanceOutput] of [
+    [join(alias, 'output'), join(physical, 'output', 'provenance.json')],
+    [join(physical, 'provenance'), join(alias, 'provenance', 'output')],
+  ]) {
+    await assert.rejects(
+      execFileAsync(process.execPath, [
+        'scripts/parity/fetch-source-parity-bundle.mjs',
+        '--source-run', '1',
+        '--target', 'aarch64-apple-darwin',
+        '--output', output,
+        '--provenance-output', provenanceOutput,
+      ], { cwd: process.cwd(), env: { ...process.env, TMPDIR: temp } }),
+      /output and provenance output must be disjoint/,
+    );
+    await assert.rejects(lstat(output), { code: 'ENOENT' });
+    await assert.rejects(lstat(provenanceOutput), { code: 'ENOENT' });
+    assert.deepEqual(await readdir(temp), []);
+  }
+
+  await rm(root, { recursive: true, force: true });
 });
 
 test('rejects a source bundle without independent provenance', async () => {
@@ -301,10 +383,13 @@ test('production parity command fails when captured standalone output differs se
   const newRoot = await mkdtemp(join(tmpdir(), 'new-parity-command-'));
   const addon = join(newRoot, 'fake-addon.mjs');
   await writeFile(addon, `export async function runIrregularJob(_request, _token, onEvent) { onEvent('{"kind":"portfolio-progress","elapsedMs":5}'); return '{"result":"different"}'; }`);
+  const verified = await verifyParityDirectory(oldRoot, { source: SOURCE, provenance: SOURCE, target: 'aarch64-apple-darwin' });
+  const provenance = join(newRoot, 'old-capture-provenance.json');
+  await writeFile(provenance, `${JSON.stringify({ schemaVersion: 1, sourceRun: '1', sourceRepository: SOURCE.repository, sourceWorkflow: SOURCE.workflow, sourceArtifact: SOURCE.artifact, acceptedOldRevision: '5c72d8fca8e078b0a6e7d5f2515a8a0953475481', target: 'aarch64-apple-darwin', archiveSha256: 'a'.repeat(64), expectedArchiveSha256: 'a'.repeat(64), verification: 'gh attestation verify succeeded before extraction', captureMetadata: verified.captureMetadata, bundleManifest: verified.bundleManifest, rawChecksums: verified.rawChecksums })}\n`);
   await assert.rejects(
     execFileAsync(process.execPath, [
       'scripts/parity/run-old-new-parity.mjs', '--old-root', oldRoot, '--new-root', newRoot,
-      '--addon', addon, '--target', 'aarch64-apple-darwin', '--evidence', join(newRoot, 'evidence.json'),
+      '--addon', addon, '--target', 'aarch64-apple-darwin', '--evidence', join(newRoot, 'evidence.json'), '--source-provenance-evidence', provenance,
     ], { cwd: process.cwd() }),
     /semantic mismatch/,
   );

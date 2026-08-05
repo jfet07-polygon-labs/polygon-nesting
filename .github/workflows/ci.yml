@@ -1,0 +1,197 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      parity_source_run_id:
+        description: Explicit jfet97/polygon-nesting run ID containing the trusted aggregate parity bundle
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  attestations: read
+
+jobs:
+  quality:
+    name: Quality checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+      - uses: dtolnay/rust-toolchain@1.95.0
+        with:
+          components: clippy,rustfmt
+      - name: Check Rust formatting
+        run: cargo fmt --all --check
+      - name: Lint release workspace
+        run: cargo clippy --workspace --all-targets --release --locked -- -D warnings
+      - name: Test release workspace
+        run: cargo test --workspace --release --locked
+      - name: Test repository contracts
+        run: |
+          python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+          ./scripts/test-cli-image-contract.sh
+          node scripts/verify-release-candidate.mjs --dry-run
+          node --test scripts/release-ci.test.mjs
+
+  oci-smoke:
+    name: Linux amd64 OCI smoke
+    needs: quality
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build locked Linux amd64 image
+        run: >-
+          docker buildx build
+          --load
+          --platform linux/amd64
+          --build-arg ENGINE_VERSION=0.1.0
+          --build-arg SOURCE_COMMIT="${GITHUB_SHA}"
+          --tag polygon-nesting:ci-smoke
+          .
+      - name: Execute Linux amd64 smoke contract
+        run: ./scripts/smoke-cli-image.sh polygon-nesting:ci-smoke
+
+  native:
+    name: Native ${{ matrix.target-key }}
+    needs: quality
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target-key: linux-x64
+            runner: ubuntu-24.04
+            platform: linux
+            arch: x64
+            cargo-target: x86_64-unknown-linux-gnu
+          - target-key: win32-x64
+            runner: windows-latest
+            platform: win32
+            arch: x64
+            cargo-target: x86_64-pc-windows-msvc
+          - target-key: darwin-arm64
+            runner: macos-15
+            platform: darwin
+            arch: arm64
+            cargo-target: aarch64-apple-darwin
+          - target-key: darwin-x64
+            runner: macos-15-intel
+            platform: darwin
+            arch: x64
+            cargo-target: x86_64-apple-darwin
+    runs-on: ${{ matrix.runner }}
+    env:
+      TARGET_KEY: ${{ matrix.target-key }}
+      TARGET_PLATFORM: ${{ matrix.platform }}
+      TARGET_ARCH: ${{ matrix.arch }}
+      CARGO_TARGET: ${{ matrix.cargo-target }}
+      ADDON_NAME: irregular-nesting-native.${{ matrix.target-key }}.node
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+      - uses: dtolnay/rust-toolchain@1.95.0
+      - name: Build matching native addon with locked dependencies
+        working-directory: packages/polygon-nesting
+        run: npm run build:release -- --target ${{ matrix.cargo-target }}
+      - name: Load addon with Node
+        working-directory: packages/polygon-nesting
+        run: node -e "require('./npm/' + process.env.ADDON_NAME); process.stdout.write('node-load-ok\\n')"
+      - name: Load addon with Electron as Node
+        working-directory: packages/polygon-nesting
+        env:
+          ELECTRON_RUN_AS_NODE: "1"
+        run: npx --yes --package=electron@39.2.7 electron -e "require('./npm/' + process.env.ADDON_NAME); process.stdout.write('electron-load-ok\\n')"
+      - name: Test staged package
+        working-directory: packages/polygon-nesting
+        run: npm test
+      - name: Prepare native build artifact
+        env:
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: >-
+          node --input-type=module -e "import {createHash} from 'node:crypto'; import {spawnSync} from 'node:child_process'; import {cpSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs'; import {join} from 'node:path'; const sha=path=>createHash('sha256').update(readFileSync(path)).digest('hex'); const version=command=>{const result=spawnSync(command,['-V'],{encoding:'utf8'}); if(result.status!==0) throw new Error(command+' version inspection failed'); return result.stdout.trim()}; const source=join('packages','polygon-nesting','npm',process.env.ADDON_NAME); const hash=sha(source); mkdirSync('native-build',{recursive:true}); cpSync(source,join('native-build',process.env.ADDON_NAME)); writeFileSync(join('native-build',process.env.ADDON_NAME+'.sha256'),hash+'  '+process.env.ADDON_NAME+'\n'); const metadata={schemaVersion:2,targetKey:process.env.TARGET_KEY,platform:process.env.TARGET_PLATFORM,arch:process.env.TARGET_ARCH,cargoTarget:process.env.CARGO_TARGET,rustc:version('rustc'),cargo:version('cargo'),profile:'release',features:[],sourceRevision:process.env.SOURCE_COMMIT,nativeDependency:{cargoLockSha256:sha('Cargo.lock'),napiManifestSha256:sha(join('crates','polygon-nesting-napi','Cargo.toml'))}}; writeFileSync(join('native-build','target.json'),JSON.stringify(metadata,null,2)+'\n');"
+      - name: Upload ordinary native build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-build-${{ matrix.target-key }}
+          path: native-build
+          if-no-files-found: error
+          retention-days: 30
+
+  parity-release-gate:
+    name: External parity contract ${{ matrix.target }}
+    if: github.event_name == 'workflow_dispatch'
+    needs: native
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            cargo-target: x86_64-unknown-linux-gnu
+          - target: win32-x64
+            cargo-target: x86_64-pc-windows-msvc
+          - target: darwin-arm64
+            cargo-target: aarch64-apple-darwin
+          - target: darwin-x64
+            cargo-target: x86_64-apple-darwin
+    env:
+      PARITY_SOURCE_RUN_ID: ${{ inputs.parity_source_run_id }}
+      TARGET_KEY: ${{ matrix.target }}
+      CARGO_TARGET: ${{ matrix.cargo-target }}
+      SOURCE_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require and authorize the aggregate parity run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          case "$PARITY_SOURCE_RUN_ID" in
+            *[!0-9]*|'') printf '%s\n' 'Externally generated parity evidence is required for a release-candidate CI run.' >&2; exit 1 ;;
+          esac
+          gh api "repos/jfet97/polygon-nesting/actions/runs/$PARITY_SOURCE_RUN_ID" > source-run.json
+          node --input-type=module -e "import {readFileSync} from 'node:fs'; const run=JSON.parse(readFileSync('source-run.json')); if(run.repository.full_name!=='jfet97/polygon-nesting'||run.path!=='.github/workflows/standalone-parity.yml'||run.head_branch!=='main'||run.head_sha!==process.env.SOURCE_COMMIT||(run.event!=='workflow_call'&&run.event!=='workflow_dispatch')||run.conclusion!=='success') throw new Error('source run does not match the trusted aggregate parity provenance');"
+      - name: Download ordinary native build
+        uses: actions/download-artifact@v4
+        with:
+          name: native-build-${{ matrix.target }}
+          path: bound-artifact
+      - name: Download and attest aggregate parity archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download "$PARITY_SOURCE_RUN_ID" --repo jfet97/polygon-nesting --name old-new-parity-bundle --dir parity-input
+          test "$(find parity-input -type f | wc -l | tr -d ' ')" = 2
+          archive="parity-input/old-new-parity-bundle.tar.gz"
+          digest="parity-input/old-new-parity-bundle.tar.gz.sha256"
+          test -f "$archive"
+          test -f "$digest"
+          gh attestation verify "$archive" --repo jfet97/polygon-nesting --signer-workflow https://github.com/jfet97/polygon-nesting/.github/workflows/standalone-parity.yml
+      - name: Stage verified target parity evidence
+        run: >-
+          node scripts/stage-parity-aggregate.mjs
+          --archive parity-input/old-new-parity-bundle.tar.gz
+          --digest parity-input/old-new-parity-bundle.tar.gz.sha256
+          --target "$TARGET_KEY"
+          --cargo-target "$CARGO_TARGET"
+          --source-commit "$SOURCE_COMMIT"
+          --artifact-directory bound-artifact
+          --trusted-source-root "$GITHUB_WORKSPACE"
+      - name: Bind verified raw parity bundle to native build
+        run: >-
+          test -f bound-artifact/parity.json && test -f bound-artifact/old-new-parity-bundle.tar.gz
+      - name: Upload release-bound native artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-native-${{ matrix.target }}
+          path: bound-artifact
+          if-no-files-found: error
+          retention-days: 30

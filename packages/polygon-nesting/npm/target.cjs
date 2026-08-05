@@ -56,7 +56,7 @@ function cargoBuildArgsForTarget(platform, arch, profile, manifestPath) {
   const { cargoTarget } = resolveNativeTarget(platform, arch)
   const profileArgs = profile === 'release' ? ['--release'] : profile === 'dev' ? [] : ['--profile', profile]
   const manifestArgs = manifestPath === undefined ? [] : ['--manifest-path', manifestPath]
-  return ['build', ...manifestArgs, ...profileArgs, '--target', cargoTarget]
+  return ['build', '--locked', ...manifestArgs, ...profileArgs, '--target', cargoTarget]
 }
 
 function artifactPathForTarget(workspaceRoot, platform, arch, profile) {

@@ -61,7 +61,7 @@ jobs:
           targets: ${{ matrix.target }}
       - name: Fetch matching attested old-side bundle
         shell: bash
-        run: node scripts/parity/fetch-source-parity-bundle.mjs --source-run "${{ inputs.source-run }}" --target "${{ matrix.target }}" --output "$PARITY_BUNDLE_ROOT/${{ matrix.target }}"
+        run: node scripts/parity/fetch-source-parity-bundle.mjs --source-run "${{ inputs.source-run }}" --target "${{ matrix.target }}" --output "$PARITY_BUNDLE_ROOT/${{ matrix.target }}" --provenance-output "$RUNNER_TEMP/standalone-parity-provenance/${{ matrix.key }}.json"
       - name: Build locked release parity executables
         shell: bash
         run: >-
@@ -87,6 +87,7 @@ jobs:
           --outcome-projector "target/${{ matrix.target }}/release/parity-project-engine-outcome${{ matrix.executable-suffix }}"
           --events-projector "target/${{ matrix.target }}/release/parity-project-engine-events${{ matrix.executable-suffix }}"
           --evidence "$RUNNER_TEMP/standalone-parity/${{ matrix.key }}/parity.json"
+          --source-provenance-evidence "$RUNNER_TEMP/standalone-parity-provenance/${{ matrix.key }}.json"
       - name: Upload one verified target evidence bundle
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

@@ -70,8 +70,10 @@ impl JobDiagnostics {
 
     #[cfg(test)]
     fn for_test(backend_version: &str) -> Self {
-        let mut cache_telemetry = CacheTelemetrySnapshot::default();
-        cache_telemetry.cap_bytes = 64;
+        let mut cache_telemetry = CacheTelemetrySnapshot {
+            cap_bytes: 64,
+            ..Default::default()
+        };
         cache_telemetry.namespace_mut("sheet-ifp-v1").hits = 3;
         Self {
             backend_version: backend_version.to_string(),
