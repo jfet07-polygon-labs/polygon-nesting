@@ -11,6 +11,20 @@ const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const REPOSITORY_ROOT = resolve(PACKAGE_ROOT, '..', '..')
 const buildNative = await import('./build-native.mjs')
 
+function npmPackInvocation(packageRoot, platform = process.platform) {
+  return platform === 'win32'
+    ? {
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', 'npm pack --dry-run --json'],
+        options: { cwd: packageRoot, encoding: 'utf8' }
+      }
+    : {
+        command: 'npm',
+        args: ['pack', '--dry-run', '--json'],
+        options: { cwd: packageRoot, encoding: 'utf8' }
+      }
+}
+
 const TARGETS = [
   {
     platform: 'linux',
@@ -548,11 +562,22 @@ test('bounds worker lifecycle probe execution and reports spawn failures', () =>
   )
 })
 
-test('npm pack dry-run contains the allowlist without source or target leakage', () => {
-  const packed = spawnSync('npm', ['pack', '--dry-run', '--json'], {
-    cwd: PACKAGE_ROOT,
-    encoding: 'utf8'
+test('uses an explicit command interpreter to run npm pack on Windows', () => {
+  assert.deepEqual(npmPackInvocation(PACKAGE_ROOT, 'win32'), {
+    command: 'cmd.exe',
+    args: ['/d', '/s', '/c', 'npm pack --dry-run --json'],
+    options: { cwd: PACKAGE_ROOT, encoding: 'utf8' }
   })
+  assert.deepEqual(npmPackInvocation(PACKAGE_ROOT, 'linux'), {
+    command: 'npm',
+    args: ['pack', '--dry-run', '--json'],
+    options: { cwd: PACKAGE_ROOT, encoding: 'utf8' }
+  })
+})
+
+test('npm pack dry-run contains the allowlist without source or target leakage', () => {
+  const { command, args, options } = npmPackInvocation(PACKAGE_ROOT)
+  const packed = spawnSync(command, args, options)
   assert.equal(packed.status, 0, packed.stderr || packed.stdout)
   const [{ files }] = JSON.parse(packed.stdout)
   const names = files.map(({ path }) => path).sort()

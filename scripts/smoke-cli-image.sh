@@ -16,6 +16,11 @@ test "$architecture" = amd64
 configured_user=$(docker image inspect --format '{{.Config.User}}' "$image")
 test -n "$configured_user"
 test "$(docker run --rm --platform linux/amd64 --entrypoint id "$image" -u)" != 0
+host_uid=$(id -u)
+host_gid=$(id -g)
+case "$host_uid:$host_gid" in
+  *[!0-9:]*|:*|*:|*:*:*|0*:*) exit 1 ;;
+esac
 
 test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.version"}}' "$image")" = 0.1.0
 test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.source"}}' "$image")" = https://github.com/jfet97/polygon-nesting
@@ -32,6 +37,7 @@ chmod 777 "$workspace"
 
 docker run --rm \
   --platform linux/amd64 \
+  --user "$host_uid:$host_gid" \
   --mount "type=bind,src=$workspace,dst=/work" \
   "$image" run \
   --input /work/request.json \
@@ -54,7 +60,7 @@ assert [event["ordinal"] for event in events] == list(range(len(events)))
 PY
 
 printf '{' > "$workspace/malformed.json"
-if docker run --rm --platform linux/amd64 --mount "type=bind,src=$workspace,dst=/work" "$image" run --input /work/malformed.json --output /work/malformed-result.json; then
+if docker run --rm --platform linux/amd64 --user "$host_uid:$host_gid" --mount "type=bind,src=$workspace,dst=/work" "$image" run --input /work/malformed.json --output /work/malformed-result.json; then
   exit 1
 else
   test "$?" = 2
@@ -77,7 +83,7 @@ request["settings"]["optimizer"]["intrinsicSharedArchiveEnabled"] = False
 with open(sys.argv[2], "w", encoding="utf-8") as output_file:
     json.dump(request, output_file)
 PY
-if docker run --rm --platform linux/amd64 --mount "type=bind,src=$workspace,dst=/work" "$image" run --input /work/archive-ineligible.json --output /work/archive-result.json; then
+if docker run --rm --platform linux/amd64 --user "$host_uid:$host_gid" --mount "type=bind,src=$workspace,dst=/work" "$image" run --input /work/archive-ineligible.json --output /work/archive-result.json; then
   exit 1
 else
   test "$?" = 3

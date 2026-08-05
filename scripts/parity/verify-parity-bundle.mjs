@@ -7,7 +7,7 @@ export const SOURCE_CONTRACT = Object.freeze({
   workflow: '.github/workflows/capture-old-rust-parity.yml',
   workflowName: 'Capture accepted old Rust parity',
   ref: 'refs/heads/main',
-  workflowSupportRevision: '2049934441c4cc07fb5ed58de2f02a199a9b6ea5',
+  workflowSupportRevision: '7bbd347d1ce9c02e712bd178eae061e6e931a7fd',
   acceptedEngineRevision: '5c72d8fca8e078b0a6e7d5f2515a8a0953475481',
   sourceProvenanceRevision: 'e4f3608878611c002f343473fab72adc7d155f87',
   artifactPrefix: 'old-rust-parity-capture-',

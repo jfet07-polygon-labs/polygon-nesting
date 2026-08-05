@@ -40,3 +40,8 @@ grep -Fqx 'USER polygon' "$dockerfile"
 grep -Fq 'docker image inspect --format' "$smoke"
 grep -Fq -- '--entrypoint id' "$smoke"
 grep -Fq 'sha256sum' "$smoke"
+grep -Fqx 'host_uid=$(id -u)' "$smoke"
+grep -Fqx 'host_gid=$(id -g)' "$smoke"
+grep -Fqx 'case "$host_uid:$host_gid" in' "$smoke"
+grep -Fqx '  *[!0-9:]*|:*|*:|*:*:*|0*:*) exit 1 ;;' "$smoke"
+test "$(grep -Fc -- '--user "$host_uid:$host_gid"' "$smoke")" = 3
