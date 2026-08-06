@@ -5,7 +5,7 @@ runs:
   using: composite
   steps:
     - name: Restore Cargo dependency cache
-      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9
+      uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
       with:
         path: |
           ~/.cargo/registry/index
@@ -20,6 +20,19 @@ runs:
         SCCACHE_BOOTSTRAP_TARGET_DIR: ${{ runner.temp }}/sccache-bootstrap
         SCCACHE_VERSION: 0.10.0
       run: node scripts/ensure-sccache.mjs
+    - name: Export GitHub Actions cache credentials
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+      with:
+        script: |
+          const cacheUrl = process.env.ACTIONS_RESULTS_URL || process.env.ACTIONS_CACHE_URL
+          const runtimeToken = process.env.ACTIONS_RUNTIME_TOKEN
+          if (!cacheUrl || !runtimeToken) {
+            core.setFailed('GitHub Actions cache runtime credentials are unavailable')
+            return
+          }
+          core.exportVariable('ACTIONS_RESULTS_URL', cacheUrl)
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', runtimeToken)
+          core.exportVariable('ACTIONS_CACHE_SERVICE_V2', process.env.ACTIONS_CACHE_SERVICE_V2 || '')
     - name: Configure sccache
       shell: bash
       run: |
