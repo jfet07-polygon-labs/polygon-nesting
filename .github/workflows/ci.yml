@@ -25,8 +25,6 @@ jobs:
   quality:
     name: Quality checks
     runs-on: ubuntu-24.04
-    env:
-      CARGO_TARGET_DIR: ${{ runner.temp }}/cargo-target-quality
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -40,9 +38,11 @@ jobs:
       - name: Prepare fresh Cargo target directory
         shell: bash
         run: |
+          CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target-quality"
           rm -rf "$CARGO_TARGET_DIR"
           mkdir -p "$CARGO_TARGET_DIR"
           test -z "$(find "$CARGO_TARGET_DIR" -mindepth 1 -print -quit)"
+          printf 'CARGO_TARGET_DIR=%s\n' "$CARGO_TARGET_DIR" >> "$GITHUB_ENV"
       - name: Check Rust formatting
         run: cargo fmt --all --check
       - name: Lint release workspace
@@ -108,7 +108,6 @@ jobs:
       TARGET_PLATFORM: ${{ matrix.platform }}
       TARGET_ARCH: ${{ matrix.arch }}
       CARGO_TARGET: ${{ matrix.cargo-target }}
-      CARGO_TARGET_DIR: ${{ runner.temp }}/cargo-target-native-${{ matrix.target-key }}
       ADDON_NAME: irregular-nesting-native.${{ matrix.target-key }}.node
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -123,9 +122,11 @@ jobs:
       - name: Prepare fresh Cargo target directory
         shell: bash
         run: |
+          CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target-native-${TARGET_KEY}"
           rm -rf "$CARGO_TARGET_DIR"
           mkdir -p "$CARGO_TARGET_DIR"
           test -z "$(find "$CARGO_TARGET_DIR" -mindepth 1 -print -quit)"
+          printf 'CARGO_TARGET_DIR=%s\n' "$CARGO_TARGET_DIR" >> "$GITHUB_ENV"
       - name: Build matching native addon with locked dependencies
         working-directory: packages/polygon-nesting
         run: npm run build:release -- --target ${{ matrix.cargo-target }}

@@ -48,7 +48,6 @@ jobs:
     runs-on: ${{ matrix.runner }}
     env:
       CARGO_TERM_COLOR: always
-      CARGO_TARGET_DIR: ${{ runner.temp }}/cargo-target-parity-${{ matrix.key }}
       PARITY_BUNDLE_ROOT: ${{ inputs.parity-bundle-path || 'artifacts/trusted-parity-bundle' }}
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -64,9 +63,11 @@ jobs:
       - name: Prepare fresh Cargo target directory
         shell: bash
         run: |
+          CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}"
           rm -rf "$CARGO_TARGET_DIR"
           mkdir -p "$CARGO_TARGET_DIR"
           test -z "$(find "$CARGO_TARGET_DIR" -mindepth 1 -print -quit)"
+          printf 'CARGO_TARGET_DIR=%s\n' "$CARGO_TARGET_DIR" >> "$GITHUB_ENV"
       - name: Fetch matching attested old-side bundle
         shell: bash
         run: node scripts/parity/fetch-source-parity-bundle.mjs --source-run "${{ inputs.source-run }}" --target "${{ matrix.target }}" --output "$PARITY_BUNDLE_ROOT/${{ matrix.target }}" --provenance-output "$RUNNER_TEMP/standalone-parity-provenance/${{ matrix.key }}.json"

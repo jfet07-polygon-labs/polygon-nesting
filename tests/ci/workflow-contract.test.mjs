@@ -51,28 +51,72 @@ function assertCargoCacheContract(action) {
   assert.match(action, /CARGO_INCREMENTAL=0/)
 }
 
+function workflowJobs(workflow) {
+  const [, jobs] = workflow.match(/^jobs:\n([\s\S]*)/m) ?? []
+  assert.notEqual(jobs, undefined, 'workflow must define jobs')
+  return [...jobs.matchAll(/^  ([\w-]+):\n([\s\S]*?)(?=^  [\w-]+:\n|(?![\s\S]))/gm)]
+    .map(([, name, job]) => ({ name, job }))
+}
+
 function workflowJob(workflow, name) {
-  const [, job] = workflow.match(new RegExp(
-    `^  ${name}:\\n([\\s\\S]*?)(?=^  [\\w-]+:\\n|(?![\\s\\S]))`,
-    'm'
-  )) ?? []
+  const job = workflowJobs(workflow).find((candidate) => candidate.name === name)?.job
   assert.notEqual(job, undefined, `workflow must define the ${name} job`)
   return job
 }
 
-function assertFreshTargetDirectory(job) {
-  assert.match(job, /CARGO_TARGET_DIR:\s*\$\{\{ runner\.temp \}\}\//)
-  assert.match(job, /- name: Prepare fresh Cargo target directory\n\s+shell: bash\n\s+run: \|\n\s+rm -rf "\$CARGO_TARGET_DIR"\n\s+mkdir -p "\$CARGO_TARGET_DIR"\n\s+test -z "\$\(find "\$CARGO_TARGET_DIR" -mindepth 1 -print -quit\)"/)
+function jobEnvironment(job) {
+  const [, environment] = job.match(/^    env:\n((?:^      [^\n]*\n)*)/m) ?? []
+  return environment ?? ''
+}
+
+function assertNoRunnerContextInJobEnvironment(workflow) {
+  for (const { name, job } of workflowJobs(workflow)) {
+    assert.doesNotMatch(
+      jobEnvironment(job),
+      /\$\{\{\s*runner\./,
+      `runner context is not allowed in jobs.${name}.env`
+    )
+  }
+}
+
+function targetDirectoryPreparation(job) {
+  const marker = '      - name: Prepare fresh Cargo target directory\n'
+  const markerIndex = job.indexOf(marker)
+  assert.notEqual(markerIndex, -1, 'Rust-producing job must prepare a fresh Cargo target directory')
+  const scriptMarker = '        run: |\n'
+  const scriptStart = job.indexOf(scriptMarker, markerIndex)
+  assert.notEqual(scriptStart, -1, 'target-directory preparation must use a shell run block')
+  const bodyStart = scriptStart + scriptMarker.length
+  const nextStep = job.indexOf('\n      - ', bodyStart)
+  return job.slice(bodyStart, nextStep === -1 ? job.length : nextStep)
+    .replace(/^ {10}/gm, '')
+}
+
+function targetDirectoryAssignments(job) {
+  return [...targetDirectoryPreparation(job).matchAll(/^CARGO_TARGET_DIR="([^"]+)"$/gm)]
+    .map(([, directory]) => directory)
+}
+
+function assertFreshTargetDirectory(job, expectedRoot, compilePattern) {
+  assert.doesNotMatch(jobEnvironment(job), /^      CARGO_TARGET_DIR:/m)
+  const preparation = targetDirectoryPreparation(job)
+  assert.equal(
+    preparation.split('\n', 1)[0],
+    `CARGO_TARGET_DIR="${expectedRoot}"`,
+    'target-directory preparation must use the exact runner-temp root'
+  )
+  assert.match(preparation, /rm -rf "\$CARGO_TARGET_DIR"/)
+  assert.match(preparation, /mkdir -p "\$CARGO_TARGET_DIR"/)
+  assert.match(preparation, /test -z "\$\(find "\$CARGO_TARGET_DIR" -mindepth 1 -print -quit\)"/)
+  assert.match(preparation, /printf 'CARGO_TARGET_DIR=%s\\n' "\$CARGO_TARGET_DIR" >> "\$GITHUB_ENV"/)
+  const preparationIndex = job.indexOf('      - name: Prepare fresh Cargo target directory')
+  const compileIndex = job.search(compilePattern)
+  assert.ok(compileIndex > preparationIndex, 'fresh target-directory preparation must precede compilation')
 }
 
 function matrixValues(job, property) {
   return [...job.matchAll(new RegExp(`^          - ${property}: (.+)$`, 'gm'))]
     .map(([, value]) => value)
-}
-
-function cargoTargetDirectories(job) {
-  return [...job.matchAll(/^      CARGO_TARGET_DIR: (.+)$/gm)]
-    .map(([, directory]) => directory)
 }
 
 function assertCiTriggerContract(workflow) {
@@ -94,19 +138,23 @@ function assertCiTriggerContract(workflow) {
 }
 
 function assertDistinctCargoTargetRoots(ciWorkflow, parityWorkflow) {
+  assertNoRunnerContextInJobEnvironment(ciWorkflow)
+  assertNoRunnerContextInJobEnvironment(parityWorkflow)
   const quality = workflowJob(ciWorkflow, 'quality')
   const native = workflowJob(ciWorkflow, 'native')
   const parityJob = workflowJob(parityWorkflow, 'parity')
-  for (const job of [quality, native, parityJob]) assertFreshTargetDirectory(job)
+  assertFreshTargetDirectory(quality, '$RUNNER_TEMP/cargo-target-quality', /cargo clippy --workspace/)
+  assertFreshTargetDirectory(native, '$RUNNER_TEMP/cargo-target-native-${TARGET_KEY}', /npm run build:release/)
+  assertFreshTargetDirectory(parityJob, '$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}', /cargo build --locked --release/)
 
-  assert.deepEqual(cargoTargetDirectories(quality), [
-    '${{ runner.temp }}/cargo-target-quality'
+  assert.deepEqual(targetDirectoryAssignments(quality), [
+    '$RUNNER_TEMP/cargo-target-quality'
   ], 'quality job Cargo target root must be exact')
-  assert.deepEqual(cargoTargetDirectories(native), [
-    '${{ runner.temp }}/cargo-target-native-${{ matrix.target-key }}'
+  assert.deepEqual(targetDirectoryAssignments(native), [
+    '$RUNNER_TEMP/cargo-target-native-${TARGET_KEY}'
   ], 'native job Cargo target root must be exact')
-  assert.deepEqual(cargoTargetDirectories(parityJob), [
-    '${{ runner.temp }}/cargo-target-parity-${{ matrix.key }}'
+  assert.deepEqual(targetDirectoryAssignments(parityJob), [
+    '$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}'
   ], 'parity job Cargo target root must be exact')
 
   const nativeRoots = matrixValues(native, 'target-key').map((key) => `cargo-target-native-${key}`)
@@ -168,17 +216,28 @@ test('CI only pushes main, tests workflow contracts, and preserves manual runs f
   assert.match(ci, /tests\/ci\/\*\.test\.mjs/)
 })
 
-test('Rust-producing CI jobs compile from empty runner-temp target roots and use the shared safe cache action', () => {
+test('Rust-producing CI jobs export fresh runner-temp target roots before compilation and use the shared safe cache action', () => {
   for (const workflow of [ci, parity]) {
     assert.match(workflow, /\.\/\.github\/actions\/setup-rust-cache/)
-    assert.match(workflow, /CARGO_TARGET_DIR:\s*\$\{\{ runner\.temp \}\}/)
-    assert.match(workflow, /rm -rf "\$CARGO_TARGET_DIR"/)
-    assert.match(workflow, /mkdir -p "\$CARGO_TARGET_DIR"/)
-    assert.match(workflow, /test -z "\$\(find "\$CARGO_TARGET_DIR" -mindepth 1 -print -quit\)"/)
     assert.match(workflow, /--locked/)
   }
+  assertDistinctCargoTargetRoots(ci, parity)
   assert.match(parity, /\$CARGO_TARGET_DIR\/\$\{\{ matrix\.target \}\}\/release\/polygon-nesting/)
   assert.match(parity, /\$CARGO_TARGET_DIR\/\$\{\{ matrix\.target \}\}\/release\/parity-desktop-request-adapter/)
+})
+
+test('workflow contracts reject runner context in job-level environment', () => {
+  assertNoRunnerContextInJobEnvironment(ci)
+  assertNoRunnerContextInJobEnvironment(parity)
+  assert.throws(
+    () => assertNoRunnerContextInJobEnvironment(
+      ci.replace(
+        '      TARGET_KEY: ${{ matrix.target-key }}\n',
+        '      TARGET_KEY: ${{ matrix.target-key }}\n      BAD_RUNNER_PATH: ${{ runner.temp }}\n'
+      )
+    ),
+    /runner context/
+  )
 })
 
 test('Rust cache allowlist and restore prefix bind the complete dependency identity', () => {
@@ -237,10 +296,10 @@ test('workflow contracts reject mutable triggers, target roots, and image refere
   )
   assert.throws(
     () => assertDistinctCargoTargetRoots(
-      ci.replace('cargo-target-native-${{ matrix.target-key }}', 'cargo-target-quality'),
+      ci.replace('cargo-target-native-${TARGET_KEY}', 'cargo-target-quality'),
       parity
     ),
-    /distinct|target root/
+    /distinct|target root|runner-temp root/
   )
   assert.throws(
     () => assertPinnedDockerBaseImages(dockerfile.replace(/@sha256:[a-f0-9]{64}/, '')),
