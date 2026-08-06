@@ -23,6 +23,8 @@ test('publication is a fixed manual workflow with minimal permissions and one Bl
   assert.equal((workflow.match(/^  publish:\n/gm) ?? []).length, 1)
   assert.match(workflow, /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
   assert.doesNotMatch(workflow, /^    environment:/m)
+  assert.doesNotMatch(workflow, /^      [A-Z_]+: \$\{\{ runner\.temp \}\}/m)
+  assert.match(workflow, /\$RUNNER_TEMP\/native-package-publication/)
 })
 
 test('publication pins the fixed source run and exact artifact names without rebuilding', () => {

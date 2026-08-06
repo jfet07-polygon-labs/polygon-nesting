@@ -16,8 +16,6 @@ jobs:
       SOURCE_REPOSITORY: jfet07-polygon-labs/polygon-nesting
       SOURCE_RUN_ID: "31109349775"
       SOURCE_HEAD_SHA: 92d51ba49c496ccd818646e9504bd042b2f73187
-      PUBLICATION_OUTPUT: ${{ runner.temp }}/native-package-publication
-      ARTIFACTS_ROOT: ${{ runner.temp }}/native-artifacts
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -64,9 +62,9 @@ jobs:
       - name: Assemble and verify publication tarball
         run: >-
           node scripts/publish-native-package.mjs assemble
-          --artifacts-root "$ARTIFACTS_ROOT"
+          --artifacts-root "$RUNNER_TEMP/native-artifacts"
           --package-root packages/polygon-nesting
-          --output "$PUBLICATION_OUTPUT"
+          --output "$RUNNER_TEMP/native-package-publication"
       - name: Determine whether the exact version needs publication
         id: publication-state
         env:
@@ -87,7 +85,7 @@ jobs:
             fi
           fi
           ACTION="$(node scripts/publish-native-package.mjs publication-decision \
-            --manifest "$PUBLICATION_OUTPUT/publication-manifest.json" \
+            --manifest "$RUNNER_TEMP/native-package-publication/publication-manifest.json" \
             --registry-metadata "$REGISTRY_ROOT/metadata.json")"
           printf 'action=%s\n' "$ACTION" >> "$GITHUB_OUTPUT"
       - name: Publish the exact verified tarball
@@ -95,7 +93,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TARBALL_PATH="$(node -e "const manifest=require(process.env.PUBLICATION_OUTPUT + '/publication-manifest.json'); process.stdout.write(manifest.tarball.path)")"
+          PUBLICATION_MANIFEST="$RUNNER_TEMP/native-package-publication/publication-manifest.json"
+          TARBALL_PATH="$(node -e "const manifest=require(process.argv[1]); process.stdout.write(manifest.tarball.path)" "$PUBLICATION_MANIFEST")"
           test -f "$TARBALL_PATH"
           npm publish "$TARBALL_PATH" --ignore-scripts --registry https://npm.pkg.github.com
       - name: Verify registry delivery and exact installation
@@ -110,6 +109,6 @@ jobs:
           (cd "$DELIVERY_ROOT" && npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet07-polygon-labs/polygon-nesting@0.1.0")
           DELIVERY_ROOT="$DELIVERY_ROOT" node -e "const path=require('node:path'); const {createRequire}=require('node:module'); const load=createRequire(path.join(process.env.DELIVERY_ROOT, 'package.json')); const packageManifest=require(path.join(process.env.DELIVERY_ROOT, 'node_modules/@jfet07-polygon-labs/polygon-nesting/package.json')); load('@jfet07-polygon-labs/polygon-nesting'); process.stdout.write(JSON.stringify(packageManifest) + '\n')" > "$DELIVERY_ROOT/installed-package.json"
           node scripts/publish-native-package.mjs verify-delivery \
-            --manifest "$PUBLICATION_OUTPUT/publication-manifest.json" \
+            --manifest "$RUNNER_TEMP/native-package-publication/publication-manifest.json" \
             --registry-metadata "$DELIVERY_ROOT/registry-metadata.json" \
             --installed-package "$DELIVERY_ROOT/installed-package.json"
