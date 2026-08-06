@@ -8,6 +8,7 @@ import target from '../npm/target.cjs'
 const {
   artifactPathForTarget,
   cargoBuildArgsForTarget,
+  cargoTargetDirectoryForWorkspace,
   resolveNativeTarget,
   resolveNativeTargetByCargoTarget,
   stagedAddonFileName
@@ -156,6 +157,7 @@ function buildNative({
   arch = process.arch,
   profile = 'release',
   cargoTarget,
+  cargoTargetDirectory = cargoTargetDirectoryForWorkspace(workspaceRoot),
   execute = execFileSync,
   verifyExecute = spawnSync,
   fileSystem = {
@@ -173,7 +175,8 @@ function buildNative({
     workspaceRoot,
     nativeTarget.platform,
     nativeTarget.arch,
-    profile
+    profile,
+    cargoTargetDirectory
   )
   const npmDirectory = join(packageRoot, 'npm')
   const addonPath = join(
@@ -193,7 +196,7 @@ function buildNative({
   ]
   execute('cargo', args, {
     cwd: workspaceRoot,
-    env: { ...process.env, CARGO_TARGET_DIR: join(workspaceRoot, 'target') },
+    env: { ...process.env, CARGO_TARGET_DIR: cargoTargetDirectory },
     stdio: 'inherit'
   })
   if (!fileSystem.exists(sourcePath)) {

@@ -48,6 +48,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     env:
       CARGO_TERM_COLOR: always
+      CARGO_TARGET_DIR: ${{ runner.temp }}/cargo-target-parity-${{ matrix.key }}
       PARITY_BUNDLE_ROOT: ${{ inputs.parity-bundle-path || 'artifacts/trusted-parity-bundle' }}
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -59,6 +60,13 @@ jobs:
         with:
           toolchain: 1.95.0
           targets: ${{ matrix.target }}
+      - uses: ./.github/actions/setup-rust-cache
+      - name: Prepare fresh Cargo target directory
+        shell: bash
+        run: |
+          rm -rf "$CARGO_TARGET_DIR"
+          mkdir -p "$CARGO_TARGET_DIR"
+          test -z "$(find "$CARGO_TARGET_DIR" -mindepth 1 -print -quit)"
       - name: Fetch matching attested old-side bundle
         shell: bash
         run: node scripts/parity/fetch-source-parity-bundle.mjs --source-run "${{ inputs.source-run }}" --target "${{ matrix.target }}" --output "$PARITY_BUNDLE_ROOT/${{ matrix.target }}" --provenance-output "$RUNNER_TEMP/standalone-parity-provenance/${{ matrix.key }}.json"
@@ -82,10 +90,10 @@ jobs:
           --target "${{ matrix.target }}"
           --target-key "${{ matrix.key }}"
           --source-revision "$GITHUB_SHA"
-          --adapter "target/${{ matrix.target }}/release/parity-desktop-request-adapter${{ matrix.executable-suffix }}"
-          --cli "target/${{ matrix.target }}/release/polygon-nesting${{ matrix.executable-suffix }}"
-          --outcome-projector "target/${{ matrix.target }}/release/parity-project-engine-outcome${{ matrix.executable-suffix }}"
-          --events-projector "target/${{ matrix.target }}/release/parity-project-engine-events${{ matrix.executable-suffix }}"
+          --adapter "$CARGO_TARGET_DIR/${{ matrix.target }}/release/parity-desktop-request-adapter${{ matrix.executable-suffix }}"
+          --cli "$CARGO_TARGET_DIR/${{ matrix.target }}/release/polygon-nesting${{ matrix.executable-suffix }}"
+          --outcome-projector "$CARGO_TARGET_DIR/${{ matrix.target }}/release/parity-project-engine-outcome${{ matrix.executable-suffix }}"
+          --events-projector "$CARGO_TARGET_DIR/${{ matrix.target }}/release/parity-project-engine-events${{ matrix.executable-suffix }}"
           --evidence "$RUNNER_TEMP/standalone-parity/${{ matrix.key }}/parity.json"
           --source-provenance-evidence "$RUNNER_TEMP/standalone-parity-provenance/${{ matrix.key }}.json"
       - name: Upload one verified target evidence bundle

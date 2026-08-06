@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Verify GitHub-validated signed tag or capture dispatch source
         id: source
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         with:
           result-encoding: string
           script: |
@@ -65,7 +65,7 @@ jobs:
     steps:
       - name: Resolve successful manual CI run and release artifacts
         id: resolve
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
           CI_RUN_ID: ${{ inputs.ci_run_id }}
           SOURCE_COMMIT: ${{ needs.authorize-source.outputs.source-commit }}
@@ -127,14 +127,14 @@ jobs:
     env:
       SOURCE_COMMIT: ${{ needs.authorize-source.outputs.source-commit }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22.22.0
       - name: Download parity-bound native artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           github-token: ${{ github.token }}
           run-id: ${{ needs.resolve-ci.outputs.run-id }}
@@ -157,7 +157,7 @@ jobs:
       - name: Require deterministic release notes
         run: test -s release-candidate/RELEASE_NOTES.md
       - name: Upload immutable npm candidate
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: npm-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
           path: release-candidate
@@ -171,15 +171,15 @@ jobs:
     env:
       SOURCE_COMMIT: ${{ needs.authorize-source.outputs.source-commit }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
       - name: Download npm candidate evidence
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: npm-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
           path: release-candidate
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
       - name: Build locked Linux amd64 OCI archive
         run: >-
           docker buildx build
@@ -234,7 +234,7 @@ jobs:
           --oci-archive oci-image.tar
           --oci-evidence oci-evidence.json
       - name: Upload immutable OCI archive and evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: oci-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
           path: |
@@ -250,19 +250,19 @@ jobs:
     runs-on: ubuntu-24.04
     environment: publish
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22.22.0
       - name: Download npm candidate only
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: npm-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
           path: release-candidate
       - name: Download immutable OCI archive and digest evidence only
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: oci-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
           path: oci-candidate

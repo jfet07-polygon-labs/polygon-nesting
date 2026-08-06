@@ -1,0 +1,33 @@
+name: Setup safe Rust cache
+description: Cache Cargo dependency sources and configure sccache without persisting build output
+
+runs:
+  using: composite
+  steps:
+    - name: Restore Cargo dependency cache
+      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9
+      with:
+        path: |
+          ~/.cargo/registry/index
+          ~/.cargo/registry/cache
+          ~/.cargo/git/db
+        key: rust-cache-v1-${{ runner.os }}-${{ runner.arch }}-rust-1.95.0-${{ hashFiles('Cargo.lock') }}
+        restore-keys: |
+          rust-cache-v1-${{ runner.os }}-${{ runner.arch }}-rust-1.95.0-
+    - name: Install sccache
+      shell: bash
+      env:
+        SCCACHE_BOOTSTRAP_TARGET_DIR: ${{ runner.temp }}/sccache-bootstrap
+      run: |
+        if ! command -v sccache >/dev/null 2>&1; then
+          rm -rf "$SCCACHE_BOOTSTRAP_TARGET_DIR"
+          mkdir -p "$SCCACHE_BOOTSTRAP_TARGET_DIR"
+          CARGO_TARGET_DIR="$SCCACHE_BOOTSTRAP_TARGET_DIR" cargo install --locked --version 0.10.0 sccache
+        fi
+        sccache --version
+    - name: Configure sccache
+      shell: bash
+      run: |
+        printf '%s\n' 'RUSTC_WRAPPER=sccache' >> "$GITHUB_ENV"
+        printf '%s\n' 'SCCACHE_GHA_ENABLED=true' >> "$GITHUB_ENV"
+        printf '%s\n' 'CARGO_INCREMENTAL=0' >> "$GITHUB_ENV"
