@@ -78,15 +78,75 @@ test('resolves only the closed mapping by Cargo target triple', () => {
 })
 
 test('discovers release and development artifacts below target triples', () => {
+  const targetDirectory = resolve(REPOSITORY_ROOT, 'target')
   for (const nativeTarget of TARGETS) {
     assert.equal(
-      target.artifactPathForTarget(REPOSITORY_ROOT, nativeTarget.platform, nativeTarget.arch, 'release'),
-      resolve(REPOSITORY_ROOT, 'target', nativeTarget.cargoTarget, 'release', nativeTarget.libraryFileName)
+      target.artifactPathForTarget(REPOSITORY_ROOT, nativeTarget.platform, nativeTarget.arch, 'release', targetDirectory),
+      resolve(targetDirectory, nativeTarget.cargoTarget, 'release', nativeTarget.libraryFileName)
     )
     assert.equal(
-      target.artifactPathForTarget(REPOSITORY_ROOT, nativeTarget.platform, nativeTarget.arch, 'dev'),
-      resolve(REPOSITORY_ROOT, 'target', nativeTarget.cargoTarget, 'debug', nativeTarget.libraryFileName)
+      target.artifactPathForTarget(REPOSITORY_ROOT, nativeTarget.platform, nativeTarget.arch, 'dev', targetDirectory),
+      resolve(targetDirectory, nativeTarget.cargoTarget, 'debug', nativeTarget.libraryFileName)
     )
+  }
+})
+
+test('resolves the Cargo target directory from CARGO_TARGET_DIR with the workspace fallback', () => {
+  const targetDirectory = resolve(REPOSITORY_ROOT, 'runner-temp', 'cargo-target')
+  const originalTargetDirectory = process.env.CARGO_TARGET_DIR
+  try {
+    process.env.CARGO_TARGET_DIR = targetDirectory
+    assert.equal(
+      target.cargoTargetDirectoryForWorkspace(REPOSITORY_ROOT),
+      targetDirectory
+    )
+    assert.equal(
+      target.artifactPathForTarget(REPOSITORY_ROOT, 'linux', 'x64', 'release'),
+      resolve(targetDirectory, 'x86_64-unknown-linux-gnu', 'release', 'libpolygon_nesting_napi.so')
+    )
+  } finally {
+    if (originalTargetDirectory === undefined) delete process.env.CARGO_TARGET_DIR
+    else process.env.CARGO_TARGET_DIR = originalTargetDirectory
+  }
+})
+
+test('normalizes a relative CARGO_TARGET_DIR against the workspace for Cargo and artifact discovery', () => {
+  const workspaceRoot = mkdtempSync(resolve(tmpdir(), 'polygon-nesting-relative-target-'))
+  const packageRoot = resolve(workspaceRoot, 'packages', 'polygon-nesting')
+  const relativeTargetDirectory = 'runner-temp/cargo-target'
+  const targetDirectory = resolve(workspaceRoot, relativeTargetDirectory)
+  const nativeTarget = TARGETS[0]
+  const sourcePath = target.artifactPathForTarget(
+    workspaceRoot,
+    nativeTarget.platform,
+    nativeTarget.arch,
+    'release',
+    relativeTargetDirectory
+  )
+  const commands = []
+  try {
+    buildNative.buildNative({
+      packageRoot,
+      workspaceRoot,
+      platform: nativeTarget.platform,
+      arch: nativeTarget.arch,
+      cargoTargetDirectory: relativeTargetDirectory,
+      execute(command, args, options) {
+        commands.push({ command, args, options })
+        mkdirSync(dirname(resolve(targetDirectory, nativeTarget.cargoTarget, 'release', nativeTarget.libraryFileName)), { recursive: true })
+        writeFileSync(resolve(targetDirectory, nativeTarget.cargoTarget, 'release', nativeTarget.libraryFileName), 'native addon')
+      },
+      fileSystem: {
+        copyFile() {},
+        exists: existsSync,
+        makeDirectory() {},
+        remove(path) { rmSync(path, { force: true }) }
+      }
+    })
+    assert.equal(commands[0].options.env.CARGO_TARGET_DIR, targetDirectory)
+    assert.equal(sourcePath, resolve(targetDirectory, nativeTarget.cargoTarget, 'release', nativeTarget.libraryFileName))
+  } finally {
+    rmSync(workspaceRoot, { force: true, recursive: true })
   }
 })
 
@@ -123,12 +183,20 @@ test('builds from the standalone workspace and stages the mapped addon', () => {
   try {
     const nativeTarget = TARGETS[0]
     const packageRoot = resolve(workspaceRoot, 'packages', 'polygon-nesting')
-    const sourcePath = target.artifactPathForTarget(workspaceRoot, nativeTarget.platform, nativeTarget.arch, 'release')
+    const targetDirectory = resolve(workspaceRoot, 'target')
+    const sourcePath = target.artifactPathForTarget(
+      workspaceRoot,
+      nativeTarget.platform,
+      nativeTarget.arch,
+      'release',
+      targetDirectory
+    )
     const copied = []
     const commands = []
     buildNative.buildNative({
       packageRoot,
       workspaceRoot,
+      cargoTargetDirectory: targetDirectory,
       platform: nativeTarget.platform,
       arch: nativeTarget.arch,
       execute(command, args, options) {
@@ -176,6 +244,54 @@ test('builds from the standalone workspace and stages the mapped addon', () => {
         )
       }
     ])
+  } finally {
+    rmSync(workspaceRoot, { force: true, recursive: true })
+  }
+})
+
+test('uses an externally supplied Cargo target directory for Cargo output and artifact discovery', () => {
+  const workspaceRoot = mkdtempSync(resolve(tmpdir(), 'polygon-nesting-custom-target-'))
+  const packageRoot = resolve(workspaceRoot, 'packages', 'polygon-nesting')
+  const targetDirectory = resolve(workspaceRoot, 'runner-temp', 'cargo-target')
+  const nativeTarget = TARGETS[0]
+  const sourcePath = target.artifactPathForTarget(
+    workspaceRoot,
+    nativeTarget.platform,
+    nativeTarget.arch,
+    'release',
+    targetDirectory
+  )
+  const copied = []
+  const commands = []
+  try {
+    buildNative.buildNative({
+      packageRoot,
+      workspaceRoot,
+      platform: nativeTarget.platform,
+      arch: nativeTarget.arch,
+      cargoTargetDirectory: targetDirectory,
+      execute(command, args, options) {
+        commands.push({ command, args, options })
+        mkdirSync(dirname(sourcePath), { recursive: true })
+        writeFileSync(sourcePath, 'native addon')
+      },
+      fileSystem: {
+        copyFile(source, destination) {
+          copied.push({ source, destination })
+        },
+        exists: existsSync,
+        makeDirectory() {},
+        remove(path) {
+          rmSync(path, { force: true })
+        }
+      }
+    })
+    assert.equal(commands.length, 1)
+    assert.equal(commands[0].options.env.CARGO_TARGET_DIR, targetDirectory)
+    assert.deepEqual(copied, [{
+      source: sourcePath,
+      destination: resolve(packageRoot, 'npm', 'irregular-nesting-native.linux-x64.node')
+    }])
   } finally {
     rmSync(workspaceRoot, { force: true, recursive: true })
   }

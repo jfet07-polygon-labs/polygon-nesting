@@ -1,0 +1,139 @@
+name: Publish CI image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/ci/Dockerfile
+      - .github/workflows/ci-image.yml
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ci-image-publish
+  cancel-in-progress: false
+
+env:
+  CI_IMAGE: ghcr.io/jfet07-polygon-labs/polygon-nesting-ci
+  CI_IMAGE_TAG: ci-v1.0.0
+
+jobs:
+  publish:
+    name: Publish immutable Linux CI image
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+      - name: Authenticate to GitHub Container Registry
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - name: Refuse an existing immutable image tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh api --paginate --slurp "/orgs/jfet07-polygon-labs/packages/container/polygon-nesting-ci/versions?per_page=100" > package-versions.json 2> package-versions.err; then
+            if python3 - "$CI_IMAGE_TAG" package-versions.json <<'PY'
+          import json
+          import sys
+
+          tag = sys.argv[1]
+          pages = json.load(open(sys.argv[2], encoding='utf8'))
+          exists = any(
+              tag in version.get('metadata', {}).get('container', {}).get('tags', [])
+              for page in pages
+              for version in page
+          )
+          raise SystemExit(0 if exists else 1)
+          PY
+            then
+              printf '%s\n' 'CI image tag ci-v1.0.0 already exists and will not be retagged' >&2
+              exit 1
+            fi
+          elif grep -Eq '404|Not Found' package-versions.err; then
+            rm -f package-versions.json package-versions.err
+          else
+            cat package-versions.err >&2
+            exit 1
+          fi
+      - name: Build and push immutable Linux CI image
+        id: build
+        run: |
+          set -euo pipefail
+          docker buildx build \
+            --platform linux/amd64 \
+            --provenance=false \
+            --push \
+            --cache-from type=gha,scope=ci-image-linux-amd64 \
+            --cache-to type=gha,mode=max,scope=ci-image-linux-amd64 \
+            --tag "$CI_IMAGE:$CI_IMAGE_TAG" \
+            --metadata-file build-metadata.json \
+            .github/ci
+          manifest_digest="$(python3 -c 'import json; print(json.load(open("build-metadata.json", encoding="utf8"))["containerimage.digest"])')"
+          case "$manifest_digest" in
+            sha256:[0-9a-f][0-9a-f]*) ;;
+            *) printf '%s\n' 'Buildx did not report a SHA-256 manifest digest' >&2; exit 1 ;;
+          esac
+          test "${#manifest_digest}" = 71
+          printf 'digest=%s\n' "$manifest_digest" >> "$GITHUB_OUTPUT"
+      - name: Report pushed manifest digest
+        run: |
+          printf 'Published CI image manifest digest: %s\n' "${{ steps.build.outputs.digest }}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  smoke-pushed-digest:
+    name: Smoke pushed CI image by digest
+    needs: publish
+    runs-on: ubuntu-24.04
+    env:
+      MANIFEST_DIGEST: ${{ needs.publish.outputs.digest }}
+    steps:
+      - name: Pull and smoke the pushed image by manifest digest
+        run: |
+          set -euo pipefail
+          IMAGE_REF="${CI_IMAGE}@${MANIFEST_DIGEST}"
+          case "$MANIFEST_DIGEST" in
+            sha256:[0-9a-f][0-9a-f]*) ;;
+            *) printf '%s\n' 'Published CI image digest is invalid' >&2; exit 1 ;;
+          esac
+          test "${#MANIFEST_DIGEST}" = 71
+          docker pull "$IMAGE_REF"
+          docker image inspect "$IMAGE_REF" --format '{{json .Config.Entrypoint}}' | grep -Fx null
+          docker run --rm "$IMAGE_REF" bash -lc '
+            set -euo pipefail
+            test "$(id -u)" = "0"
+            test "$(uname -m)" = "x86_64"
+            rustc --version | grep -Eq "^rustc 1\\.95\\.0 "
+            cargo --version | grep -Eq "^cargo 1\\.95\\.0 "
+            rustfmt --version | grep -Eq "^rustfmt 1\\.9\\.0-stable "
+            cargo clippy --version | grep -Eq "^clippy 0\\.1\\.95 "
+            rustup target list --installed | grep -Fx x86_64-unknown-linux-gnu
+            test "$(node --version)" = "v22.22.0"
+            test "$(/opt/node-v24.19.0/bin/node --version)" = "v24.19.0"
+            sccache --version | grep -Fx "sccache 0.10.0"
+            gh attestation --help >/dev/null
+            git --version >/dev/null
+            python3 --version >/dev/null
+            bash --version >/dev/null
+            groupadd --help >/dev/null
+            useradd --help >/dev/null
+            sha256sum --version >/dev/null
+            tar --version >/dev/null
+            gzip --version >/dev/null
+            cc --version >/dev/null
+            c++ --version >/dev/null
+            ld --version >/dev/null
+            pkg-config --version >/dev/null
+            for forbidden_path in /workspace /app /src /target /release-candidate /parity-input /native-artifacts /usr/local/bin/polygon-nesting; do
+              test ! -e "$forbidden_path"
+            done
+          '

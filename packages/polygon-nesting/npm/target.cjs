@@ -59,15 +59,28 @@ function cargoBuildArgsForTarget(platform, arch, profile, manifestPath) {
   return ['build', '--locked', ...manifestArgs, ...profileArgs, '--target', cargoTarget]
 }
 
-function artifactPathForTarget(workspaceRoot, platform, arch, profile) {
+function cargoTargetDirectoryForWorkspace(workspaceRoot, environment = process.env) {
+  return path.resolve(workspaceRoot, environment.CARGO_TARGET_DIR || 'target')
+}
+
+function artifactPathForTarget(workspaceRoot, platform, arch, profile, cargoTargetDirectory) {
   const { cargoTarget, libraryFileName } = resolveNativeTarget(platform, arch)
   const targetProfile = profile === 'dev' ? 'debug' : profile
-  return path.join(workspaceRoot, 'target', cargoTarget, targetProfile, libraryFileName)
+  const targetDirectory = cargoTargetDirectory === undefined
+    ? cargoTargetDirectoryForWorkspace(workspaceRoot)
+    : cargoTargetDirectoryForWorkspace(workspaceRoot, { CARGO_TARGET_DIR: cargoTargetDirectory })
+  return path.join(
+    targetDirectory,
+    cargoTarget,
+    targetProfile,
+    libraryFileName
+  )
 }
 
 module.exports = {
   NATIVE_TARGETS,
   artifactPathForTarget,
+  cargoTargetDirectoryForWorkspace,
   cargoBuildArgsForTarget,
   resolveNativeTarget,
   resolveNativeTargetByCargoTarget,
