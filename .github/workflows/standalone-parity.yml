@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       source-run:
-        description: Source jfet97/min-plane-dxf workflow run ID
+        description: Source jfet07-polygon-labs/min-plane-dxf workflow run ID
         required: true
         type: string
       parity-bundle-path:
@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
     inputs:
       source-run:
-        description: Source jfet97/min-plane-dxf workflow run ID
+        description: Source jfet07-polygon-labs/min-plane-dxf workflow run ID
         required: true
         type: string
 

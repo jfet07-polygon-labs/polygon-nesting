@@ -128,7 +128,7 @@ test('pins the complete Task109 canonical dependency output', () => {
 
 test('centralizes the exact attested old-side archive contract', () => {
   assert.deepEqual(SOURCE_CONTRACT, {
-    repository: 'jfet97/min-plane-dxf',
+    repository: 'jfet07-polygon-labs/min-plane-dxf',
     workflow: '.github/workflows/capture-old-rust-parity.yml',
     workflowName: 'Capture accepted old Rust parity',
     ref: 'refs/heads/main',
@@ -152,10 +152,23 @@ test('uses the documented signer-workflow identity format for attestation verifi
     'verify',
     '/tmp/capture.tar.gz',
     '--repo',
-    'jfet97/min-plane-dxf',
+    'jfet07-polygon-labs/min-plane-dxf',
     '--signer-workflow',
-    'jfet97/min-plane-dxf/.github/workflows/capture-old-rust-parity.yml',
+    'jfet07-polygon-labs/min-plane-dxf/.github/workflows/capture-old-rust-parity.yml',
   ]);
+});
+
+test('workflows describe and consume the transferred source identities', async () => {
+  const standalone = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
+  const ci = await readFile(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
+  assert.match(standalone, /Source jfet07-polygon-labs\/min-plane-dxf workflow run ID/);
+  assert.doesNotMatch(standalone, /jfet97\/min-plane-dxf/);
+  for (const expected of [
+    'repos/jfet07-polygon-labs/polygon-nesting/actions/runs/',
+    'jfet07-polygon-labs/polygon-nesting --name old-new-parity-bundle',
+    'https://github.com/jfet07-polygon-labs/polygon-nesting/.github/workflows/standalone-parity.yml',
+  ]) assert.ok(ci.includes(expected), `CI must consume ${expected}`);
+  assert.doesNotMatch(ci, /jfet97\/polygon-nesting/);
 });
 
 test('forces Windows tar to treat native archive drive paths as local', () => {
