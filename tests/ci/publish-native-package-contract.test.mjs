@@ -20,6 +20,10 @@ test('publication is a fixed manual workflow with minimal permissions and one Bl
   assert.match(workflow, /^on:\n  workflow_dispatch:\n$/m)
   assert.doesNotMatch(workflow, /inputs:/)
   assert.match(workflow, /^permissions:\n  actions: read\n  contents: read\n  packages: write\n$/m)
+  assert.match(
+    workflow,
+    /^concurrency:\n  group: native-package-publish\n  queue: max\n  cancel-in-progress: false\n$/m
+  )
   assert.equal((workflow.match(/^  publish:\n/gm) ?? []).length, 1)
   assert.match(workflow, /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
   assert.doesNotMatch(workflow, /^    environment:/m)
