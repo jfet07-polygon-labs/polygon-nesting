@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       parity_source_run_id:
-        description: Explicit jfet97/polygon-nesting run ID containing the trusted aggregate parity bundle
+        description: Explicit jfet07-polygon-labs/polygon-nesting run ID containing the trusted aggregate parity bundle
         required: false
         type: string
 
@@ -157,8 +157,8 @@ jobs:
           case "$PARITY_SOURCE_RUN_ID" in
             *[!0-9]*|'') printf '%s\n' 'Externally generated parity evidence is required for a release-candidate CI run.' >&2; exit 1 ;;
           esac
-          gh api "repos/jfet97/polygon-nesting/actions/runs/$PARITY_SOURCE_RUN_ID" > source-run.json
-          node --input-type=module -e "import {readFileSync} from 'node:fs'; const run=JSON.parse(readFileSync('source-run.json')); if(run.repository.full_name!=='jfet97/polygon-nesting'||run.path!=='.github/workflows/standalone-parity.yml'||run.head_branch!=='main'||run.head_sha!==process.env.SOURCE_COMMIT||(run.event!=='workflow_call'&&run.event!=='workflow_dispatch')||run.conclusion!=='success') throw new Error('source run does not match the trusted aggregate parity provenance');"
+          gh api "repos/jfet07-polygon-labs/polygon-nesting/actions/runs/$PARITY_SOURCE_RUN_ID" > source-run.json
+          node --input-type=module -e "import {readFileSync} from 'node:fs'; const run=JSON.parse(readFileSync('source-run.json')); if(run.repository.full_name!=='jfet07-polygon-labs/polygon-nesting'||run.path!=='.github/workflows/standalone-parity.yml'||run.head_branch!=='main'||run.head_sha!==process.env.SOURCE_COMMIT||(run.event!=='workflow_call'&&run.event!=='workflow_dispatch')||run.conclusion!=='success') throw new Error('source run does not match the trusted aggregate parity provenance');"
       - name: Download ordinary native build
         uses: actions/download-artifact@v4
         with:
@@ -168,13 +168,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run download "$PARITY_SOURCE_RUN_ID" --repo jfet97/polygon-nesting --name old-new-parity-bundle --dir parity-input
+          gh run download "$PARITY_SOURCE_RUN_ID" --repo jfet07-polygon-labs/polygon-nesting --name old-new-parity-bundle --dir parity-input
           test "$(find parity-input -type f | wc -l | tr -d ' ')" = 2
           archive="parity-input/old-new-parity-bundle.tar.gz"
           digest="parity-input/old-new-parity-bundle.tar.gz.sha256"
           test -f "$archive"
           test -f "$digest"
-          gh attestation verify "$archive" --repo jfet97/polygon-nesting --signer-workflow https://github.com/jfet97/polygon-nesting/.github/workflows/standalone-parity.yml
+          gh attestation verify "$archive" --repo jfet07-polygon-labs/polygon-nesting --signer-workflow https://github.com/jfet07-polygon-labs/polygon-nesting/.github/workflows/standalone-parity.yml
       - name: Stage verified target parity evidence
         run: >-
           node scripts/stage-parity-aggregate.mjs
