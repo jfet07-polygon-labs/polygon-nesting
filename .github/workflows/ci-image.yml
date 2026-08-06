@@ -21,7 +21,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
-      digest: ${{ steps.build.outputs.digest }}
+      digest: ${{ steps.result.outputs.digest }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -31,11 +31,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
-      - name: Refuse an existing immutable image tag
+      - name: Resolve immutable image publication state
+        id: state
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          action=publish
+          existing_digest=
           if gh api --paginate --slurp "/orgs/jfet07-polygon-labs/packages/container/polygon-nesting-ci/versions?per_page=100" > package-versions.json 2> package-versions.err; then
             if python3 - "$CI_IMAGE_TAG" package-versions.json <<'PY'
           import json
@@ -51,8 +54,8 @@ jobs:
           raise SystemExit(0 if exists else 1)
           PY
             then
-              printf '%s\n' 'CI image tag ci-v1.0.0 already exists and will not be retagged' >&2
-              exit 1
+              action=reuse
+              existing_digest="$(docker buildx imagetools inspect "$CI_IMAGE:$CI_IMAGE_TAG" --format '{{json .Manifest.Digest}}' | python3 -c 'import json, sys; print(json.load(sys.stdin))')"
             fi
           elif grep -Eq '404|Not Found' package-versions.err; then
             rm -f package-versions.json package-versions.err
@@ -60,8 +63,11 @@ jobs:
             cat package-versions.err >&2
             exit 1
           fi
+          printf 'action=%s\n' "$action" >> "$GITHUB_OUTPUT"
+          printf 'existing_digest=%s\n' "$existing_digest" >> "$GITHUB_OUTPUT"
       - name: Build and push immutable Linux CI image
         id: build
+        if: steps.state.outputs.action == 'publish'
         run: |
           set -euo pipefail
           docker buildx build \
@@ -80,9 +86,21 @@ jobs:
           esac
           test "${#manifest_digest}" = 71
           printf 'digest=%s\n' "$manifest_digest" >> "$GITHUB_OUTPUT"
-      - name: Report pushed manifest digest
+      - name: Resolve immutable manifest digest
+        id: result
+        env:
+          BUILT_DIGEST: ${{ steps.build.outputs.digest }}
+          EXISTING_DIGEST: ${{ steps.state.outputs.existing_digest }}
         run: |
-          printf 'Published CI image manifest digest: %s\n' "${{ steps.build.outputs.digest }}" | tee -a "$GITHUB_STEP_SUMMARY"
+          set -euo pipefail
+          manifest_digest="${BUILT_DIGEST:-$EXISTING_DIGEST}"
+          case "$manifest_digest" in
+            sha256:[0-9a-f][0-9a-f]*) ;;
+            *) printf '%s\n' 'CI image manifest digest is invalid' >&2; exit 1 ;;
+          esac
+          test "${#manifest_digest}" = 71
+          printf 'digest=%s\n' "$manifest_digest" >> "$GITHUB_OUTPUT"
+          printf 'CI image manifest digest: %s\n' "$manifest_digest" | tee -a "$GITHUB_STEP_SUMMARY"
 
   smoke-pushed-digest:
     name: Smoke pushed CI image by digest
@@ -91,6 +109,10 @@ jobs:
     env:
       MANIFEST_DIGEST: ${{ needs.publish.outputs.digest }}
     steps:
+      - name: Authenticate to GitHub Container Registry
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
       - name: Pull and smoke the pushed image by manifest digest
         run: |
           set -euo pipefail
