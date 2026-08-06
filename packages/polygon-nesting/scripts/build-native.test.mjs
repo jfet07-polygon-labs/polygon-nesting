@@ -78,14 +78,15 @@ test('resolves only the closed mapping by Cargo target triple', () => {
 })
 
 test('discovers release and development artifacts below target triples', () => {
+  const targetDirectory = resolve(REPOSITORY_ROOT, 'target')
   for (const nativeTarget of TARGETS) {
     assert.equal(
-      target.artifactPathForTarget(REPOSITORY_ROOT, nativeTarget.platform, nativeTarget.arch, 'release'),
-      resolve(REPOSITORY_ROOT, 'target', nativeTarget.cargoTarget, 'release', nativeTarget.libraryFileName)
+      target.artifactPathForTarget(REPOSITORY_ROOT, nativeTarget.platform, nativeTarget.arch, 'release', targetDirectory),
+      resolve(targetDirectory, nativeTarget.cargoTarget, 'release', nativeTarget.libraryFileName)
     )
     assert.equal(
-      target.artifactPathForTarget(REPOSITORY_ROOT, nativeTarget.platform, nativeTarget.arch, 'dev'),
-      resolve(REPOSITORY_ROOT, 'target', nativeTarget.cargoTarget, 'debug', nativeTarget.libraryFileName)
+      target.artifactPathForTarget(REPOSITORY_ROOT, nativeTarget.platform, nativeTarget.arch, 'dev', targetDirectory),
+      resolve(targetDirectory, nativeTarget.cargoTarget, 'debug', nativeTarget.libraryFileName)
     )
   }
 })
@@ -182,12 +183,20 @@ test('builds from the standalone workspace and stages the mapped addon', () => {
   try {
     const nativeTarget = TARGETS[0]
     const packageRoot = resolve(workspaceRoot, 'packages', 'polygon-nesting')
-    const sourcePath = target.artifactPathForTarget(workspaceRoot, nativeTarget.platform, nativeTarget.arch, 'release')
+    const targetDirectory = resolve(workspaceRoot, 'target')
+    const sourcePath = target.artifactPathForTarget(
+      workspaceRoot,
+      nativeTarget.platform,
+      nativeTarget.arch,
+      'release',
+      targetDirectory
+    )
     const copied = []
     const commands = []
     buildNative.buildNative({
       packageRoot,
       workspaceRoot,
+      cargoTargetDirectory: targetDirectory,
       platform: nativeTarget.platform,
       arch: nativeTarget.arch,
       execute(command, args, options) {

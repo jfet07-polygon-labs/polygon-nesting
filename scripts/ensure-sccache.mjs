@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process'
+import { posix, win32 } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const SCCACHE_VERSION = '0.10.0'
 
@@ -48,12 +50,18 @@ function ensureSccache({
   }
 }
 
+function isMainModule(moduleUrl, argumentPath, platform = process.platform) {
+  if (argumentPath === undefined) return false
+  const path = platform === 'win32' ? win32 : posix
+  return path.resolve(fileURLToPath(moduleUrl, { windows: platform === 'win32' })) === path.resolve(argumentPath)
+}
+
 function main() {
   ensureSccache({
     bootstrapTargetDirectory: process.env.SCCACHE_BOOTSTRAP_TARGET_DIR
   })
 }
 
-if (import.meta.url === new URL(process.argv[1], 'file:').href) main()
+if (isMainModule(import.meta.url, process.argv[1])) main()
 
-export { SCCACHE_VERSION, ensureSccache }
+export { SCCACHE_VERSION, ensureSccache, isMainModule }

@@ -4,11 +4,22 @@ import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 
 const REPOSITORY_ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))))
-const { ensureSccache } = await import('../../scripts/ensure-sccache.mjs')
+const { ensureSccache, isMainModule } = await import('../../scripts/ensure-sccache.mjs')
 
 function result({ status = 0, stdout = '', stderr = '', error } = {}) {
   return { status, stdout, stderr, error, signal: null }
 }
+
+test('recognizes a Windows script path as the invoked main module', () => {
+  assert.equal(
+    isMainModule(
+      'file:///D:/a/polygon-nesting/polygon-nesting/scripts/ensure-sccache.mjs',
+      String.raw`D:\a\polygon-nesting\polygon-nesting\scripts\ensure-sccache.mjs`,
+      'win32'
+    ),
+    true
+  )
+})
 
 test('reinstalls pinned sccache when a preinstalled PATH executable has the wrong version', () => {
   const calls = []
