@@ -628,7 +628,11 @@ test('vendored Clipper headers resolve to authoritative license bytes', () => {
 
 test('package manifest publishes only the addon loader, binaries, and notices', () => {
   const manifest = JSON.parse(readFileSync(resolve(PACKAGE_ROOT, 'package.json'), 'utf8'))
-  assert.equal(manifest.name, '@jfet97/polygon-nesting')
+  assert.equal(manifest.name, '@jfet07-polygon-labs/polygon-nesting')
+  assert.deepEqual(manifest.repository, {
+    type: 'git',
+    url: 'git+https://github.com/jfet07-polygon-labs/polygon-nesting.git'
+  })
   assert.equal(manifest.private, false)
   assert.equal(manifest.publishConfig.registry, 'https://npm.pkg.github.com')
   assert.equal(manifest.main, 'npm/index.cjs')

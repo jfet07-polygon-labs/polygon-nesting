@@ -38,7 +38,7 @@ function makePackageFixture(root) {
     cpSync(join(REPOSITORY_ROOT, 'packages/polygon-nesting', relative), join(packageRoot, relative))
   }
   writeJson(join(packageRoot, 'package.json'), {
-    name: '@jfet97/polygon-nesting',
+    name: '@jfet07-polygon-labs/polygon-nesting',
     version: '0.1.0',
     main: 'npm/index.cjs',
     files: ['npm/index.cjs', 'npm/target.cjs', 'npm/*.node', 'NOTICE', 'LICENSES/**'],
@@ -167,7 +167,7 @@ test('offline verification recomputes OCI archive evidence after Task112 parity 
 
 test('normal PR quality checks run the complete parity and release contract suite', () => {
   const ci = readFileSync(join(REPOSITORY_ROOT, '.github/workflows/ci.yml'), 'utf8')
-  assert.match(ci, /node --test tests\/ci\/\*\.test\.mjs tests\/parity\/\*\.test\.mjs scripts\/release-ci\.test\.mjs/)
+  assert.match(ci, /node --test tests\/ci\/\*\.test\.mjs tests\/parity\/\*\.test\.mjs scripts\/release-ci\.test\.mjs scripts\/publish-native-package\.test\.mjs/)
   assert.doesNotMatch(ci, /^\s*node --test scripts\/release-ci\.test\.mjs$/m)
 })
 

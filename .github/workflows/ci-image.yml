@@ -2,12 +2,6 @@ name: Publish CI image
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - .github/ci/Dockerfile
-      - .github/workflows/ci-image.yml
 
 permissions:
   contents: read
@@ -25,7 +19,7 @@ jobs:
   publish:
     name: Publish immutable Linux CI image
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
       digest: ${{ steps.build.outputs.digest }}
     steps:
@@ -93,7 +87,7 @@ jobs:
   smoke-pushed-digest:
     name: Smoke pushed CI image by digest
     needs: publish
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     env:
       MANIFEST_DIGEST: ${{ needs.publish.outputs.digest }}
     steps:

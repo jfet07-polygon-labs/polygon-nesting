@@ -1,0 +1,115 @@
+name: Publish native package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Publish fixed native package
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    env:
+      SOURCE_REPOSITORY: jfet07-polygon-labs/polygon-nesting
+      SOURCE_RUN_ID: "31109349775"
+      SOURCE_HEAD_SHA: 92d51ba49c496ccd818646e9504bd042b2f73187
+      PUBLICATION_OUTPUT: ${{ runner.temp }}/native-package-publication
+      ARTIFACTS_ROOT: ${{ runner.temp }}/native-artifacts
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22.22.0
+          registry-url: https://npm.pkg.github.com
+          scope: '@jfet07-polygon-labs'
+      - name: Verify fixed source run and artifact inventory
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/publish-native-package.mjs verify-source-run
+      - name: Download native-build-linux-x64
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: native-build-linux-x64
+          path: ${{ runner.temp }}/native-artifacts/native-build-linux-x64
+          repository: jfet07-polygon-labs/polygon-nesting
+          run-id: 31109349775
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download native-build-win32-x64
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: native-build-win32-x64
+          path: ${{ runner.temp }}/native-artifacts/native-build-win32-x64
+          repository: jfet07-polygon-labs/polygon-nesting
+          run-id: 31109349775
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download native-build-darwin-arm64
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: native-build-darwin-arm64
+          path: ${{ runner.temp }}/native-artifacts/native-build-darwin-arm64
+          repository: jfet07-polygon-labs/polygon-nesting
+          run-id: 31109349775
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download native-build-darwin-x64
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: native-build-darwin-x64
+          path: ${{ runner.temp }}/native-artifacts/native-build-darwin-x64
+          repository: jfet07-polygon-labs/polygon-nesting
+          run-id: 31109349775
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Assemble and verify publication tarball
+        run: >-
+          node scripts/publish-native-package.mjs assemble
+          --artifacts-root "$ARTIFACTS_ROOT"
+          --package-root packages/polygon-nesting
+          --output "$PUBLICATION_OUTPUT"
+      - name: Determine whether the exact version needs publication
+        id: publication-state
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REGISTRY_ROOT="$RUNNER_TEMP/native-package-registry-state"
+          mkdir -p "$REGISTRY_ROOT"
+          set +e
+          npm view "@jfet07-polygon-labs/polygon-nesting@0.1.0" --json --registry https://npm.pkg.github.com > "$REGISTRY_ROOT/metadata.json" 2> "$REGISTRY_ROOT/error.log"
+          VIEW_STATUS=$?
+          set -e
+          if [ "$VIEW_STATUS" -ne 0 ]; then
+            if grep -q 'E404' "$REGISTRY_ROOT/error.log"; then
+              printf 'null\n' > "$REGISTRY_ROOT/metadata.json"
+            else
+              cat "$REGISTRY_ROOT/error.log" >&2
+              exit "$VIEW_STATUS"
+            fi
+          fi
+          ACTION="$(node scripts/publish-native-package.mjs publication-decision \
+            --manifest "$PUBLICATION_OUTPUT/publication-manifest.json" \
+            --registry-metadata "$REGISTRY_ROOT/metadata.json")"
+          printf 'action=%s\n' "$ACTION" >> "$GITHUB_OUTPUT"
+      - name: Publish the exact verified tarball
+        if: steps.publication-state.outputs.action == 'publish'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TARBALL_PATH="$(node -e "const manifest=require(process.env.PUBLICATION_OUTPUT + '/publication-manifest.json'); process.stdout.write(manifest.tarball.path)")"
+          test -f "$TARBALL_PATH"
+          npm publish "$TARBALL_PATH" --ignore-scripts --registry https://npm.pkg.github.com
+      - name: Verify registry delivery and exact installation
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DELIVERY_ROOT="$RUNNER_TEMP/native-package-delivery"
+          mkdir -p "$DELIVERY_ROOT"
+          npm view "@jfet07-polygon-labs/polygon-nesting@0.1.0" --json --registry https://npm.pkg.github.com > "$DELIVERY_ROOT/registry-metadata.json"
+          printf '%s\n' '{"name":"polygon-nesting-delivery-check","private":true,"version":"0.0.0"}' > "$DELIVERY_ROOT/package.json"
+          cp .npmrc "$DELIVERY_ROOT/.npmrc"
+          (cd "$DELIVERY_ROOT" && npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet07-polygon-labs/polygon-nesting@0.1.0")
+          DELIVERY_ROOT="$DELIVERY_ROOT" node -e "const path=require('node:path'); const {createRequire}=require('node:module'); const load=createRequire(path.join(process.env.DELIVERY_ROOT, 'package.json')); const packageManifest=require(path.join(process.env.DELIVERY_ROOT, 'node_modules/@jfet07-polygon-labs/polygon-nesting/package.json')); load('@jfet07-polygon-labs/polygon-nesting'); process.stdout.write(JSON.stringify(packageManifest) + '\n')" > "$DELIVERY_ROOT/installed-package.json"
+          node scripts/publish-native-package.mjs verify-delivery \
+            --manifest "$PUBLICATION_OUTPUT/publication-manifest.json" \
+            --registry-metadata "$DELIVERY_ROOT/registry-metadata.json" \
+            --installed-package "$DELIVERY_ROOT/installed-package.json"

@@ -2,7 +2,7 @@
 
 `polygon-nesting` is a standalone Rust implementation of deterministic irregular polygon nesting. It has one typed core and two delivery adapters:
 
-- an Electron N-API addon distributed as `@jfet97/polygon-nesting`;
+- an Electron N-API addon distributed as `@jfet07-polygon-labs/polygon-nesting`;
 - a Linux amd64 OCI image containing the one-shot `polygon-nesting` CLI.
 
 The engine supports the `compact` and `compact-short-side` profiles. Archive-ineligible requests are returned as typed outcomes. The engine does not implement rectangle nesting, Electron application state, storage, HTTP, Azure resource management, or customer credentials.
@@ -18,7 +18,7 @@ polygon-nesting-core
      |          |
 polygon-nesting-cli  polygon-nesting-napi
      |                      |
- OCI image          @jfet97/polygon-nesting
+ OCI image          @jfet07-polygon-labs/polygon-nesting
 ```
 
 `protocol` owns versioned request, outcome, error, and semantic event data. `core` owns deterministic computation, job-local Rayon pools, caches, cancellation checkpoints, and event ordering. The CLI owns command parsing, deadline shortening, artifact-path safety, signal handling, atomic writes, and exit mapping. N-API owns desktop compatibility conversion, adapter validation, error projection, invocation registration, callback acknowledgement, and environment cleanup. The core has no dependency on N-API, Node, Electron, libuv, CLI parsing, Azure SDKs, HTTP servers, or application persistence.

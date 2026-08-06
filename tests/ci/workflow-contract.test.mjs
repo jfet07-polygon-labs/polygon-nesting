@@ -119,6 +119,18 @@ function matrixValues(job, property) {
     .map(([, value]) => value)
 }
 
+function matrixIncludeItems(job) {
+  const [, include] = job.match(/^    strategy:\n      fail-fast: false\n      matrix:\n        include:\n([\s\S]*?)(?=^    [\w-]+:|(?![\s\S]))/m) ?? []
+  assert.notEqual(include, undefined, 'job must define a matrix include list')
+  return include.trimEnd().split(/^          - /m).filter(Boolean).map((item) => Object.fromEntries(
+    item.split('\n').filter(Boolean).map((line, index) => {
+      const [, key, value] = line.match(index === 0 ? /^([^:]+): (.+)$/ : /^            ([^:]+): (.+)$/) ?? []
+      assert.notEqual(key, undefined, `matrix item is malformed: ${line}`)
+      return [key, value]
+    })
+  ))
+}
+
 function assertCiTriggerContract(workflow) {
   const [, triggerBlock] = workflow.match(/^on:\n([\s\S]*?)^concurrency:/m) ?? []
   assert.equal(triggerBlock, [
@@ -137,14 +149,98 @@ function assertCiTriggerContract(workflow) {
   ].join('\n'), 'CI trigger contract must be exact and unrestricted')
 }
 
+function assertReleaseTriggerContract(workflow) {
+  const [, triggerBlock] = workflow.match(/^on:\n([\s\S]*?)^permissions:/m) ?? []
+  assert.equal(triggerBlock, [
+    '  workflow_dispatch:',
+    '    inputs:',
+    '      ci_run_id:',
+    '        description: Successful manual CI run ID with externally generated parity contracts',
+    '        required: false',
+    '        type: string',
+    '  push:',
+    '    tags:',
+    '      - v0.1.0',
+    '',
+    ''
+  ].join('\n'), 'release triggers must remain limited to manual dispatch and the exact release tag')
+}
+
+function assertStandaloneParityTriggerContract(workflow) {
+  const [, triggerBlock] = workflow.match(/^on:\n([\s\S]*?)^permissions:/m) ?? []
+  assert.equal(triggerBlock, [
+    '  workflow_call:',
+    '    inputs:',
+    '      source-run:',
+    '        description: Source jfet07-polygon-labs/min-plane-dxf workflow run ID',
+    '        required: true',
+    '        type: string',
+    '      parity-bundle-path:',
+    '        description: Fixed output path for trusted parity input',
+    '        required: true',
+    '        type: string',
+    '  workflow_dispatch:',
+    '    inputs:',
+    '      source-run:',
+    '        description: Source jfet07-polygon-labs/min-plane-dxf workflow run ID',
+    '        required: true',
+    '        type: string',
+    '',
+    ''
+  ].join('\n'), 'standalone parity triggers must remain limited to workflow calls and manual dispatch')
+}
+
+function assertCiRunnerContract(workflow) {
+  const native = workflowJob(workflow, 'native')
+  const intel = workflowJob(workflow, 'native-intel-release')
+  assert.match(workflowJob(workflow, 'quality'), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
+  assert.match(workflowJob(workflow, 'oci-smoke'), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
+  assert.match(workflowJob(workflow, 'parity-release-gate'), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
+  assert.deepEqual(matrixIncludeItems(native), [
+    {
+      'target-key': 'linux-x64',
+      runner: 'blacksmith-2vcpu-ubuntu-2404',
+      platform: 'linux',
+      arch: 'x64',
+      'cargo-target': 'x86_64-unknown-linux-gnu'
+    },
+    {
+      'target-key': 'win32-x64',
+      runner: 'blacksmith-2vcpu-windows-2025',
+      platform: 'win32',
+      arch: 'x64',
+      'cargo-target': 'x86_64-pc-windows-msvc'
+    },
+    {
+      'target-key': 'darwin-arm64',
+      runner: 'blacksmith-6vcpu-macos-15',
+      platform: 'darwin',
+      arch: 'arm64',
+      'cargo-target': 'aarch64-apple-darwin'
+    }
+  ])
+  assert.match(intel, /^    if: github\.event_name == 'workflow_dispatch'$/m)
+  assert.match(intel, /^    runs-on: macos-15-intel$/m)
+  assert.match(intel, /^      TARGET_KEY: darwin-x64$/m)
+  assert.match(workflowJob(workflow, 'parity-release-gate'), /^    needs: \[native, native-intel-release\]$/m)
+}
+
+function assertReleaseRunnerContract(workflow) {
+  for (const jobName of ['authorize-source', 'resolve-ci', 'candidate', 'oci', 'publication-placeholder']) {
+    assert.match(workflowJob(workflow, jobName), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
+  }
+}
+
 function assertDistinctCargoTargetRoots(ciWorkflow, parityWorkflow) {
   assertNoRunnerContextInJobEnvironment(ciWorkflow)
   assertNoRunnerContextInJobEnvironment(parityWorkflow)
   const quality = workflowJob(ciWorkflow, 'quality')
   const native = workflowJob(ciWorkflow, 'native')
+  const intel = workflowJob(ciWorkflow, 'native-intel-release')
   const parityJob = workflowJob(parityWorkflow, 'parity')
   assertFreshTargetDirectory(quality, '$RUNNER_TEMP/cargo-target-quality', /cargo clippy --workspace/)
   assertFreshTargetDirectory(native, '$RUNNER_TEMP/cargo-target-native-${TARGET_KEY}', /npm run build:release/)
+  assertFreshTargetDirectory(intel, '$RUNNER_TEMP/cargo-target-native-darwin-x64', /npm run build:release/)
   assertFreshTargetDirectory(parityJob, '$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}', /cargo build --locked --release/)
 
   assert.deepEqual(targetDirectoryAssignments(quality), [
@@ -153,11 +249,14 @@ function assertDistinctCargoTargetRoots(ciWorkflow, parityWorkflow) {
   assert.deepEqual(targetDirectoryAssignments(native), [
     '$RUNNER_TEMP/cargo-target-native-${TARGET_KEY}'
   ], 'native job Cargo target root must be exact')
+  assert.deepEqual(targetDirectoryAssignments(intel), [
+    '$RUNNER_TEMP/cargo-target-native-darwin-x64'
+  ], 'release Intel job Cargo target root must be exact')
   assert.deepEqual(targetDirectoryAssignments(parityJob), [
     '$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}'
   ], 'parity job Cargo target root must be exact')
 
-  const nativeRoots = matrixValues(native, 'target-key').map((key) => `cargo-target-native-${key}`)
+  const nativeRoots = [...matrixValues(native, 'target-key').map((key) => `cargo-target-native-${key}`), 'cargo-target-native-darwin-x64']
   const parityRoots = matrixValues(parityJob, 'key').map((key) => `cargo-target-parity-${key}`)
   assert.deepEqual(nativeRoots, [
     'cargo-target-native-linux-x64',
@@ -271,8 +370,12 @@ test('every remote action in workflows and the composite is pinned by a full com
   assert.match(release, /NODE_AUTH_TOKEN/)
 })
 
-test('CI trigger and Cargo target roots have the exact per-job contract', () => {
+test('CI, release, and standalone parity trigger, runner, and Cargo target-root contracts are exact', () => {
   assertCiTriggerContract(ci)
+  assertReleaseTriggerContract(release)
+  assertStandaloneParityTriggerContract(parity)
+  assertCiRunnerContract(ci)
+  assertReleaseRunnerContract(release)
   assertDistinctCargoTargetRoots(ci, parity)
 })
 
@@ -295,6 +398,22 @@ test('workflow contracts reject mutable triggers, target roots, and image refere
     /trigger/
   )
   assert.throws(
+    () => assertReleaseTriggerContract(release.replace('  push:\n', '  pull_request:\n  push:\n')),
+    /release triggers/
+  )
+  assert.throws(
+    () => assertReleaseTriggerContract(release.replace('      - v0.1.0', '      - v0.1.0\n      - v*')),
+    /release triggers/
+  )
+  assert.throws(
+    () => assertStandaloneParityTriggerContract(parity.replace('  workflow_dispatch:\n', '  pull_request:\n  workflow_dispatch:\n')),
+    /standalone parity triggers/
+  )
+  assert.throws(
+    () => assertStandaloneParityTriggerContract(parity.replace('  workflow_call:\n', '  push:\n  workflow_call:\n')),
+    /standalone parity triggers/
+  )
+  assert.throws(
     () => assertDistinctCargoTargetRoots(
       ci.replace('cargo-target-native-${TARGET_KEY}', 'cargo-target-quality'),
       parity
@@ -310,8 +429,27 @@ test('workflow contracts reject mutable triggers, target roots, and image refere
     /registry digest/
   )
   assert.throws(
-    () => assertExactElectronRuntime(ci.replace('electron@39.2.7', 'electron@latest')),
+    () => assertExactElectronRuntime(ci.replaceAll('electron@39.2.7', 'electron@latest')),
     /Electron runtime/
+  )
+  assert.throws(
+    () => assertCiRunnerContract(ci.replace('blacksmith-2vcpu-ubuntu-2404', 'ubuntu-latest')),
+    /runs-on|deepEqual/
+  )
+  assert.throws(
+    () => assertCiRunnerContract(ci.replace(
+      '    runs-on: ${{ matrix.runner }}',
+      "          - platform: darwin\n            target-key: darwin-x64\n            runner: macos-15-intel\n            arch: x64\n            cargo-target: x86_64-apple-darwin\n    runs-on: ${{ matrix.runner }}"
+    )),
+    /deep-equal/
+  )
+  assert.throws(
+    () => assertCiRunnerContract(ci.replace("if: github.event_name == 'workflow_dispatch'", "if: github.event_name != 'workflow_dispatch'")),
+    /event_name/
+  )
+  assert.throws(
+    () => assertReleaseRunnerContract(release.replace('runs-on: blacksmith-2vcpu-ubuntu-2404', 'runs-on: ubuntu-latest')),
+    /runs-on/
   )
   assert.throws(
     () => assertPrivateCiImagesPinned('container: ghcr.io/jfet97/polygon-nesting-ci:latest'),

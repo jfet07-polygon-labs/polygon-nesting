@@ -18,7 +18,7 @@ permissions:
 jobs:
   authorize-source:
     name: Authorize immutable source
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
       source-commit: ${{ steps.source.outputs.result }}
     steps:
@@ -59,7 +59,7 @@ jobs:
   resolve-ci:
     name: Resolve matching parity-gated CI evidence
     needs: authorize-source
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
       run-id: ${{ steps.resolve.outputs.result }}
     steps:
@@ -123,7 +123,7 @@ jobs:
   candidate:
     name: Assemble npm release candidate
     needs: [authorize-source, resolve-ci]
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     env:
       SOURCE_COMMIT: ${{ needs.authorize-source.outputs.source-commit }}
     steps:
@@ -167,7 +167,7 @@ jobs:
   oci:
     name: Build immutable OCI candidate archive
     needs: [authorize-source, candidate]
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     env:
       SOURCE_COMMIT: ${{ needs.authorize-source.outputs.source-commit }}
     steps:
@@ -247,7 +247,7 @@ jobs:
   publication-placeholder:
     name: Protected future publication gate
     needs: [authorize-source, candidate, oci]
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     environment: publish
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683

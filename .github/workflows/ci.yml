@@ -24,7 +24,7 @@ permissions:
 jobs:
   quality:
     name: Quality checks
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -54,12 +54,12 @@ jobs:
           python3 -m unittest discover -s scripts/tests -p 'test_*.py'
           ./scripts/test-cli-image-contract.sh
           node scripts/verify-release-candidate.mjs --dry-run
-          node --test tests/ci/*.test.mjs tests/parity/*.test.mjs scripts/release-ci.test.mjs
+          node --test tests/ci/*.test.mjs tests/parity/*.test.mjs scripts/release-ci.test.mjs scripts/publish-native-package.test.mjs
 
   oci-smoke:
     name: Linux amd64 OCI smoke
     needs: quality
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
@@ -83,25 +83,20 @@ jobs:
       matrix:
         include:
           - target-key: linux-x64
-            runner: ubuntu-24.04
+            runner: blacksmith-2vcpu-ubuntu-2404
             platform: linux
             arch: x64
             cargo-target: x86_64-unknown-linux-gnu
           - target-key: win32-x64
-            runner: windows-latest
+            runner: blacksmith-2vcpu-windows-2025
             platform: win32
             arch: x64
             cargo-target: x86_64-pc-windows-msvc
           - target-key: darwin-arm64
-            runner: macos-15
+            runner: blacksmith-6vcpu-macos-15
             platform: darwin
             arch: arm64
             cargo-target: aarch64-apple-darwin
-          - target-key: darwin-x64
-            runner: macos-15-intel
-            platform: darwin
-            arch: x64
-            cargo-target: x86_64-apple-darwin
     runs-on: ${{ matrix.runner }}
     env:
       TARGET_KEY: ${{ matrix.target-key }}
@@ -154,11 +149,67 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  native-intel-release:
+    name: Native darwin-x64
+    if: github.event_name == 'workflow_dispatch'
+    needs: quality
+    runs-on: macos-15-intel
+    env:
+      TARGET_KEY: darwin-x64
+      TARGET_PLATFORM: darwin
+      TARGET_ARCH: x64
+      CARGO_TARGET: x86_64-apple-darwin
+      ADDON_NAME: irregular-nesting-native.darwin-x64.node
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22.22.0
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.95.0
+          targets: x86_64-apple-darwin
+      - uses: ./.github/actions/setup-rust-cache
+      - name: Prepare fresh Cargo target directory
+        shell: bash
+        run: |
+          CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target-native-darwin-x64"
+          rm -rf "$CARGO_TARGET_DIR"
+          mkdir -p "$CARGO_TARGET_DIR"
+          test -z "$(find "$CARGO_TARGET_DIR" -mindepth 1 -print -quit)"
+          printf 'CARGO_TARGET_DIR=%s\n' "$CARGO_TARGET_DIR" >> "$GITHUB_ENV"
+      - name: Build matching native addon with locked dependencies
+        working-directory: packages/polygon-nesting
+        run: npm run build:release -- --target x86_64-apple-darwin
+      - name: Load addon with Node
+        working-directory: packages/polygon-nesting
+        run: node -e "require('./npm/' + process.env.ADDON_NAME); process.stdout.write('node-load-ok\\n')"
+      - name: Load addon with Electron as Node
+        working-directory: packages/polygon-nesting
+        env:
+          ELECTRON_RUN_AS_NODE: "1"
+        run: npx --yes --package=electron@39.2.7 electron -e "require('./npm/' + process.env.ADDON_NAME); process.stdout.write('electron-load-ok\\n')"
+      - name: Test staged package
+        working-directory: packages/polygon-nesting
+        run: npm test
+      - name: Prepare native build artifact
+        env:
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: >-
+          node --input-type=module -e "import {createHash} from 'node:crypto'; import {spawnSync} from 'node:child_process'; import {cpSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs'; import {join} from 'node:path'; const sha=path=>createHash('sha256').update(readFileSync(path)).digest('hex'); const version=command=>{const result=spawnSync(command,['-V'],{encoding:'utf8'}); if(result.status!==0) throw new Error(command+' version inspection failed'); return result.stdout.trim()}; const source=join('packages','polygon-nesting','npm',process.env.ADDON_NAME); const hash=sha(source); mkdirSync('native-build',{recursive:true}); cpSync(source,join('native-build',process.env.ADDON_NAME)); writeFileSync(join('native-build',process.env.ADDON_NAME+'.sha256'),hash+'  '+process.env.ADDON_NAME+'\n'); const metadata={schemaVersion:2,targetKey:process.env.TARGET_KEY,platform:process.env.TARGET_PLATFORM,arch:process.env.TARGET_ARCH,cargoTarget:process.env.CARGO_TARGET,rustc:version('rustc'),cargo:version('cargo'),profile:'release',features:[],sourceRevision:process.env.SOURCE_COMMIT,nativeDependency:{cargoLockSha256:sha('Cargo.lock'),napiManifestSha256:sha(join('crates','polygon-nesting-napi','Cargo.toml'))}}; writeFileSync(join('native-build','target.json'),JSON.stringify(metadata,null,2)+'\n');"
+      - name: Upload ordinary native build artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-build-darwin-x64
+          path: native-build
+          if-no-files-found: error
+          retention-days: 30
+
   parity-release-gate:
     name: External parity contract ${{ matrix.target }}
     if: github.event_name == 'workflow_dispatch'
-    needs: native
-    runs-on: ubuntu-24.04
+    needs: [native, native-intel-release]
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     strategy:
       fail-fast: false
       matrix:

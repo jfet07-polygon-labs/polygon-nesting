@@ -4,7 +4,7 @@
 
 The accepted source revision is `e4f3608878611c002f343473fab72adc7d155f87` from `min-plane-dfx`. The frozen extraction-baseline commit is `5c72d8fca8e078b0a6e7d5f2515a8a0953475481`. The source worktree was clean when this document was prepared.
 
-The recorded preparation toolchain is Rust `1.95.0` (`59807616e1fa2540724bfbac14d7976d7e4a3860`), Cargo `1.95.0`, Node `v24.16.0`, and pnpm `11.8.0` on `aarch64-apple-darwin`. The source-baseline decision explicitly did not claim a historical performance speedup. It accepted existing correctness and quality evidence; a new performance claim requires independently recorded benchmark evidence.
+The recorded preparation toolchain is `rustc 1.95.0 (59807616e 2026-04-14)`, `cargo 1.95.0 (f2d3ce0bd 2026-03-21)`, Node `v24.16.0`, and pnpm `11.8.0` on `aarch64-apple-darwin`. The source-baseline decision explicitly did not claim a historical performance speedup. It accepted existing correctness and quality evidence; a new performance claim requires independently recorded benchmark evidence.
 
 Protocol-vector provenance is machine-readable in `tests/vectors/protocol/provenance.json`. Its `sourceArtifact` paths identify artifacts from the frozen baseline, not paths that resolve in the accepted-source tree at `e4f3608878611c002f343473fab72adc7d155f87`. The baseline commit above is the provenance anchor for those paths. Its imported source-artifact hashes are:
 
@@ -50,11 +50,17 @@ The imported Clipper2 translation is declared in `NOTICE`; the complete Boost So
 
 The OCI license label is `NOASSERTION`. It is not a repository-wide license assertion.
 
-## Release-candidate evidence
+## Authorized fixed-run package cutover
 
-A releasable `0.1.0` candidate must record, under `docs/release-evidence/0.1.0/`, a source record, parity record, release record, and `SHA256SUMS`. Required immutable facts are the standalone engine release commit and tag, the accepted source commit, Rust and Cargo identities, target triple, build profile and features, complete fixture and vector hashes, frozen-request hashes, old-engine and new-engine semantic hashes, four addon hashes, NPM tarball hash and manifest, OCI digest and labels, and each gate command with its result. `SHA256SUMS` must cover every candidate evidence file other than itself, fixture, vector, staged addon, package tarball, and legal file named by the candidate.
+The one-time authorized fast package cutover publishes `@jfet07-polygon-labs/polygon-nesting@0.1.0` from the four ordinary `native-build-*` artifacts in CI run `31109349775`. The dedicated manual workflow pins the run identity, complete artifact inventory, target metadata, native dependency hashes, addon hashes, wrapper hashes, and final package allowlist. It does not rebuild Rust and does not run new parity. This narrow authorization exists to make the fixed package available for downstream cutover validation. It does not authorize OCI publication, a GitHub release, or desktop dependency replacement. It does not authorize removal of the embedded Rust engine.
 
-No release-candidate evidence directory, published NPM package, OCI digest, GitHub release, or Azure deployment exists in this repository state. Absence of those records is a release blocker, not a waived check. Publishing must consume the verified tarball and image digest without rebuilding. The authorized destinations are GitHub Packages for `@jfet97/polygon-nesting` and `ghcr.io/jfet97/polygon-nesting` for the OCI image. The image must be published as `0.1.0` and `source-e4f360887861`, both resolving to the verified digest, and the private GitHub release must attach its checksums and evidence.
+The workflow assembles the same immutable tarball on every attempt. If version `0.1.0` is absent, it publishes that explicit tarball. If the version already exists, a rerun skips publication only when the registry shasum and integrity exactly match the freshly assembled tarball. Every attempt then installs and loads the exact registry version in a fresh project. Any existing version with different bytes is a terminal mismatch.
+
+## Standard future release-candidate evidence
+
+The standard future release path remains parity-bound. A release candidate must record, under `docs/release-evidence/<version>/`, a source record, parity record, release record, and `SHA256SUMS`. Required immutable facts are the standalone engine release commit and tag, the accepted source commit, Rust and Cargo identities, target triple, build profile and features, complete fixture and vector hashes, frozen-request hashes, old-engine and new-engine semantic hashes, four addon hashes, NPM tarball hash and manifest, OCI digest and labels, and each gate command with its result. `SHA256SUMS` must cover every candidate evidence file other than itself, fixture, vector, staged addon, package tarball, and legal file named by the candidate.
+
+Outside the one-time package authorization above, absence of release-candidate evidence is a release blocker, not a waived check. Standard publishing must consume the verified tarball and image digest without rebuilding. The authorized destinations are GitHub Packages for `@jfet07-polygon-labs/polygon-nesting` and `ghcr.io/jfet97/polygon-nesting` for the OCI image. An OCI image must resolve every authorized tag to the verified digest, and a private GitHub release must attach its checksums and evidence.
 
 ## Parity gates
 

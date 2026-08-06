@@ -97,17 +97,7 @@ function assertDockerfileContract(dockerfile) {
 
 function assertWorkflowTriggers(workflow) {
   const [, triggerBlock] = workflow.match(/^on:\n([\s\S]*?)^permissions:/m) ?? []
-  assert.equal(triggerBlock, [
-    '  workflow_dispatch:',
-    '  push:',
-    '    branches:',
-    '      - main',
-    '    paths:',
-    '      - .github/ci/Dockerfile',
-    '      - .github/workflows/ci-image.yml',
-    '',
-    ''
-  ].join('\n'), 'CI image publisher triggers must remain limited to manual dispatch and the reviewed main paths')
+  assert.equal(triggerBlock, '  workflow_dispatch:\n\n', 'CI image publisher must be manual-only')
 }
 
 function workflowJob(workflow, name) {
@@ -146,7 +136,7 @@ function assertWorkflowContract(workflow) {
 
   const publish = workflowJob(workflow, 'publish')
   assert.match(publish, /^    if: github\.ref == 'refs\/heads\/main'$/m, 'publisher must reject manually selected non-main refs')
-  assert.match(publish, /^    runs-on: ubuntu-24\.04$/m)
+  assert.match(publish, /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
   assert.doesNotMatch(publish, /^\s+container:/m, 'publisher must run directly on the hosted Ubuntu runner')
   assert.doesNotMatch(workflow, /^\s+container:/m, 'workflow must not use a job container to publish its own image')
   assert.match(publish, /docker buildx build/)
@@ -154,7 +144,7 @@ function assertWorkflowContract(workflow) {
 
   const smoke = workflowJob(workflow, 'smoke-pushed-digest')
   assert.match(smoke, /^    needs: publish$/m)
-  assert.match(smoke, /^    runs-on: ubuntu-24\.04$/m)
+  assert.match(smoke, /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
   assert.match(smoke, /MANIFEST_DIGEST: \$\{\{ needs\.publish\.outputs\.digest \}\}/)
   assert.match(smoke, /IMAGE_REF="\$\{CI_IMAGE\}@\$\{MANIFEST_DIGEST\}"/)
   assert.match(smoke, /docker pull "\$IMAGE_REF"/)
@@ -243,8 +233,8 @@ test('CI image contracts reject mutable images, downloads, and unsafe image cont
 test('CI image workflow contracts reject widened authority and tag-based smoke tests', () => {
   const workflow = loadRequiredText(WORKFLOW_PATH, '.github/workflows/ci-image.yml')
   assert.throws(
-    () => assertWorkflowContract(workflow.replace('      - .github/workflows/ci-image.yml', '      - .github/workflows/ci-image.yml\n      - packages/**')),
-    /triggers/
+    () => assertWorkflowContract(workflow.replace('  workflow_dispatch:\n', '  workflow_dispatch:\n  push:\n    branches:\n      - main\n')),
+    /manual-only/
   )
   assert.throws(
     () => assertWorkflowContract(workflow.replace('  packages: write', '  packages: write\n  id-token: write')),
@@ -259,7 +249,7 @@ test('CI image workflow contracts reject widened authority and tag-based smoke t
     /main ref/
   )
   assert.throws(
-    () => assertWorkflowContract(workflow.replace('runs-on: ubuntu-24.04', 'runs-on: ubuntu-latest')),
+    () => assertWorkflowContract(workflow.replace('runs-on: blacksmith-2vcpu-ubuntu-2404', 'runs-on: ubuntu-latest')),
     /runs-on/
   )
   assert.throws(

@@ -2,7 +2,7 @@
 
 ## Package
 
-The desktop package is `@jfet97/polygon-nesting` version `0.1.0`, published only to `https://npm.pkg.github.com` when release authorization and evidence exist. Node 18 or newer is required. The package contents allowlist is `package.json`, the CommonJS loader, target map, matching `.node` artifacts, `NOTICE`, and the Clipper2 license text. It must not ship Rust source or a Cargo `target/` directory.
+The desktop package is `@jfet07-polygon-labs/polygon-nesting` version `0.1.0`, published only to `https://npm.pkg.github.com` when publication authorization and immutable source evidence exist. The one-time `0.1.0` fast package cutover uses the four fixed ordinary CI artifacts from run `31109349775` without rebuilding Rust or running new parity. Standard future releases remain parity-bound under the migration contract. Node 18 or newer is required. The package contents allowlist is `package.json`, the CommonJS loader, target map, matching `.node` artifacts, `NOTICE`, and the Clipper2 license text. It must not ship Rust source or a Cargo `target/` directory.
 
 The loader preserves the desktop binary naming contract:
 
@@ -47,4 +47,4 @@ Cancellation is keyed by opaque invocation-token identity. The adapter cleans up
 
 Core semantic frames retain their core-owned ordinals. When snapshot callbacks are disabled, the adapter suppresses delivery but does not renumber future frames. After core completion it sends exactly one `{"kind":"terminal","ordinal":N}` frame, where `N` follows the last consumed core ordinal, and waits for callback acknowledgement. The first callback transport failure is retained separately from the core outcome. Environment cleanup releases a terminal waiter with the N-API closing status.
 
-The desktop application should consume a released package version or an immutable release-candidate tarball through its existing `irregular-nesting-native` resolution key. The final registry alias is `"irregular-nesting-native": "npm:@jfet97/polygon-nesting@0.1.0"`. Access to the private GitHub Packages registry requires the configured `NODE_AUTH_TOKEN`; no token is committed. The desktop must not depend at runtime on a repository-relative Rust path or `workspace:*` package.
+The desktop application should consume a released package version or an immutable release-candidate tarball through its existing `irregular-nesting-native` resolution key. The final registry alias is `"irregular-nesting-native": "npm:@jfet07-polygon-labs/polygon-nesting@0.1.0"`. Access to the private GitHub Packages registry requires the configured `NODE_AUTH_TOKEN`; no token is committed. The desktop must not depend at runtime on a repository-relative Rust path or `workspace:*` package.

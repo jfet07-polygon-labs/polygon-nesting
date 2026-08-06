@@ -1,6 +1,10 @@
 {
-  "name": "@jfet97/polygon-nesting",
+  "name": "@jfet07-polygon-labs/polygon-nesting",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jfet07-polygon-labs/polygon-nesting.git"
+  },
   "private": false,
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"

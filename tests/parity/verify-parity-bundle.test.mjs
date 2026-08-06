@@ -292,11 +292,47 @@ test('defines the trusted canonical 18-row order independently of bundle metadat
   ]);
 });
 
+function standaloneParityMatrixItems(workflow) {
+  const [, include] = workflow.match(/^      matrix:\n        include:\n([\s\S]*?)(?=^    runs-on:)/m) ?? [];
+  assert.notEqual(include, undefined, 'standalone parity workflow must define a matrix include list');
+  return include.trimEnd().split(/^          - /m).filter(Boolean).map((item) => Object.fromEntries(
+    item.split('\n').filter(Boolean).map((line, index) => {
+      const [, key, value] = line.match(index === 0 ? /^([^:]+): (.+)$/ : /^            ([^:]+): (.+)$/) ?? [];
+      assert.notEqual(key, undefined, `matrix item is malformed: ${line}`);
+      return [key, value];
+    }),
+  ));
+}
+
+function assertStandaloneParityMatrixContract(workflow) {
+  assert.deepEqual(standaloneParityMatrixItems(workflow), PARITY_TARGETS.map(({ key, runner, target }) => ({
+    key,
+    runner,
+    target,
+    'executable-suffix': key === 'win32-x64' ? "'.exe'" : "''",
+  })));
+}
+
+function workflowJob(workflow, name) {
+  const [, job] = workflow.match(new RegExp(
+    `^  ${name}:\\n([\\s\\S]*?)(?=^  [\\w-]+:\\n|(?![\\s\\S]))`,
+    'm',
+  )) ?? [];
+  assert.notEqual(job, undefined, `workflow must define the ${name} job`);
+  return job;
+}
+
+function assertStandaloneParityLinuxJobRunners(workflow) {
+  for (const jobName of ['aggregate', 'require-all-targets']) {
+    assert.match(workflowJob(workflow, jobName), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m);
+  }
+}
+
 test('defines all four exact source and standalone target runner pairs', () => {
   assert.deepEqual(PARITY_TARGETS.map(({ runner, target }) => ({ runner, target })), [
-    { runner: 'ubuntu-24.04', target: 'x86_64-unknown-linux-gnu' },
-    { runner: 'windows-latest', target: 'x86_64-pc-windows-msvc' },
-    { runner: 'macos-15', target: 'aarch64-apple-darwin' },
+    { runner: 'blacksmith-2vcpu-ubuntu-2404', target: 'x86_64-unknown-linux-gnu' },
+    { runner: 'blacksmith-2vcpu-windows-2025', target: 'x86_64-pc-windows-msvc' },
+    { runner: 'blacksmith-6vcpu-macos-15', target: 'aarch64-apple-darwin' },
     { runner: 'macos-15-intel', target: 'x86_64-apple-darwin' },
   ]);
   assert.ok(PARITY_TARGETS.every(({ profile, features, rustVersion }) => profile === 'release' && features.length === 0 && rustVersion === '1.95.0'));
@@ -304,6 +340,8 @@ test('defines all four exact source and standalone target runner pairs', () => {
 
 test('workflow uses every required parity runner and collects all matrix results', async () => {
   const workflow = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
+  assertStandaloneParityMatrixContract(workflow);
+  assertStandaloneParityLinuxJobRunners(workflow);
   for (const { runner, target } of PARITY_TARGETS) {
     assert.match(workflow, new RegExp(runner.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     assert.match(workflow, new RegExp(target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
@@ -323,6 +361,38 @@ test('workflow uses every required parity runner and collects all matrix results
   assert.doesNotMatch(workflow, /jfet97\/min-plane-dfx/);
   assert.match(workflow, /id-token: write/);
   assert.match(workflow, /attestations: write/);
+});
+
+test('standalone parity aggregate jobs reject non-Blacksmith Linux runners', async () => {
+  const workflow = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
+  assert.throws(
+    () => assertStandaloneParityLinuxJobRunners(workflow.replace(
+      '  aggregate:\n    needs: parity\n    if: ${{ needs.parity.result == \'success\' }}\n    runs-on: blacksmith-2vcpu-ubuntu-2404',
+      '  aggregate:\n    needs: parity\n    if: ${{ needs.parity.result == \'success\' }}\n    runs-on: ubuntu-24.04',
+    )),
+    /runs-on/,
+  );
+  assert.throws(
+    () => assertStandaloneParityLinuxJobRunners(workflow.replace(
+      '  require-all-targets:\n    if: always()\n    needs: [parity, aggregate]\n    runs-on: blacksmith-2vcpu-ubuntu-2404',
+      '  require-all-targets:\n    if: always()\n    needs: [parity, aggregate]\n    runs-on: ubuntu-latest',
+    )),
+    /runs-on/,
+  );
+});
+
+test('standalone parity matrix rejects swapped target runner assignments', async () => {
+  const workflow = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
+  const swappedRunners = workflow
+    .replace('runner: blacksmith-2vcpu-ubuntu-2404', 'runner: temporary-runner')
+    .replace('runner: blacksmith-2vcpu-windows-2025', 'runner: blacksmith-2vcpu-ubuntu-2404')
+    .replace('runner: temporary-runner', 'runner: blacksmith-2vcpu-windows-2025');
+  assert.throws(() => assertStandaloneParityMatrixContract(swappedRunners), /strictly deep-equal/);
+  const addedTarget = workflow.replace(
+    '    runs-on: ${{ matrix.runner }}',
+    "          - target: x86_64-unknown-linux-musl\n            key: linux-musl-x64\n            runner: blacksmith-2vcpu-ubuntu-2404\n            executable-suffix: ''\n    runs-on: ${{ matrix.runner }}",
+  );
+  assert.throws(() => assertStandaloneParityMatrixContract(addedTarget), /strictly deep-equal/);
 });
 
 test('requires disjoint source-parity output and provenance destinations before publication', () => {
