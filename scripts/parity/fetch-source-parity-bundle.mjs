@@ -152,7 +152,7 @@ export function extractionArgs(archive, destination, platform = process.platform
     archive,
     '--no-same-owner',
     '-C',
-    destination,
+    platform === 'win32' ? destination.replaceAll('\\', '/') : destination,
   ];
 }
 
