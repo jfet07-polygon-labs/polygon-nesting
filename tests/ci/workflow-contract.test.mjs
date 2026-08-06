@@ -8,21 +8,47 @@ const REPOSITORY_ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url)))
 const ci = readFileSync(join(REPOSITORY_ROOT, '.github', 'workflows', 'ci.yml'), 'utf8')
 const parity = readFileSync(join(REPOSITORY_ROOT, '.github', 'workflows', 'standalone-parity.yml'), 'utf8')
 const release = readFileSync(join(REPOSITORY_ROOT, '.github', 'workflows', 'release.yml'), 'utf8')
+const rustCacheAction = readFileSync(join(REPOSITORY_ROOT, '.github', 'actions', 'setup-rust-cache', 'action.yml'), 'utf8')
 
-const ACTION_PINS = [
-  'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683',
-  'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020',
-  'dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c',
-  'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02',
-  'actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093',
-  'actions/attest-build-provenance@96b4a1ef7235a096b17240c259729fdd70c83d45',
-]
+function remoteActionReferences(workflow) {
+  return [...workflow.matchAll(/^\s*uses:\s+([^\s]+)\s*$/gm)]
+    .map(([, reference]) => reference)
+    .filter((reference) => !reference.startsWith('./'))
+}
 
-function assertPinnedActions(workflow) {
-  assert.doesNotMatch(workflow, /uses:\s+[^\s@]+@(v\d+|main|master|latest)\b/)
-  for (const pin of ACTION_PINS) {
-    if (workflow.includes(pin)) assert.match(workflow, new RegExp(pin))
+function assertRemoteActionsPinned(workflow) {
+  for (const reference of remoteActionReferences(workflow)) {
+    assert.match(reference, /^[^@\s]+@[a-f0-9]{40}$/i, `remote action must use a full commit SHA: ${reference}`)
   }
+}
+
+function cachedCargoPaths(action) {
+  const [, block] = action.match(/path:\s*\|\n((?:\s+[^\n]+\n)+?)\s+key:/) ?? []
+  assert.notEqual(block, undefined, 'Cargo cache paths are required')
+  return block.trim().split('\n').map((path) => path.trim())
+}
+
+function restorePrefixes(action) {
+  const [, block] = action.match(/restore-keys:\s*\|\n((?: {10}[^\n]+\n?)+)/) ?? []
+  assert.notEqual(block, undefined, 'Cargo cache restore prefix is required')
+  return block.trim().split('\n').map((prefix) => prefix.trim())
+}
+
+function assertCargoCacheContract(action) {
+  assert.deepEqual(cachedCargoPaths(action), [
+    '~/.cargo/registry/index',
+    '~/.cargo/registry/cache',
+    '~/.cargo/git/db'
+  ])
+  assert.deepEqual(restorePrefixes(action), [
+    'rust-cache-v1-${{ runner.os }}-${{ runner.arch }}-rust-1.95.0-'
+  ])
+  assert.match(action, /key:\s*rust-cache-v1-\$\{\{ runner\.os \}\}-\$\{\{ runner\.arch \}\}-rust-1\.95\.0-\$\{\{ hashFiles\('Cargo\.lock'\) \}\}/)
+  assert.match(action, /node scripts\/ensure-sccache\.mjs/)
+  assert.match(action, /SCCACHE_VERSION:\s*0\.10\.0/)
+  assert.match(action, /RUSTC_WRAPPER=sccache/)
+  assert.match(action, /SCCACHE_GHA_ENABLED=true/)
+  assert.match(action, /CARGO_INCREMENTAL=0/)
 }
 
 test('CI only pushes main, tests workflow contracts, and preserves manual runs from cancellation', () => {
@@ -47,24 +73,33 @@ test('Rust-producing CI jobs compile from empty runner-temp target roots and use
   assert.match(parity, /\$CARGO_TARGET_DIR\/\$\{\{ matrix\.target \}\}\/release\/parity-desktop-request-adapter/)
 })
 
-test('Rust cache only stores immutable Cargo dependencies and enables cross-platform sccache', () => {
-  const action = readFileSync(join(REPOSITORY_ROOT, '.github', 'actions', 'setup-rust-cache', 'action.yml'), 'utf8')
-  assert.match(action, /path:\s*\|[\s\S]*\.cargo\/registry\/index[\s\S]*\.cargo\/registry\/cache[\s\S]*\.cargo\/git\/db/)
-  assert.doesNotMatch(action, /(^|\n)\s*-?\s*target\//)
-  assert.doesNotMatch(action, /\.node/)
-  assert.doesNotMatch(action, /parity|evidence|artifact/i)
-  assert.match(action, /RUSTC_WRAPPER=sccache/)
-  assert.match(action, /SCCACHE_GHA_ENABLED=true/)
-  assert.match(action, /CARGO_INCREMENTAL=0/)
-  assert.match(action, /rust-cache-v1-/)
-  assert.match(action, /runner\.os/)
-  assert.match(action, /runner\.arch/)
-  assert.match(action, /1\.95\.0/)
-  assert.match(action, /hashFiles\('Cargo\.lock'\)/)
+test('Rust cache allowlist and restore prefix bind the complete dependency identity', () => {
+  assertCargoCacheContract(rustCacheAction)
 })
 
-test('all workflow actions are pinned by reviewed commit SHA without changing release publication posture', () => {
-  for (const workflow of [ci, parity, release]) assertPinnedActions(workflow)
+test('workflow contract rejects mutable action references, broad cache keys, and cached executable paths', () => {
+  assert.throws(
+    () => assertRemoteActionsPinned('uses: actions/checkout@stable\n'),
+    /full commit SHA/
+  )
+  assert.throws(
+    () => assertCargoCacheContract(rustCacheAction.replace(
+      '~/.cargo/git/db',
+      '~/.cargo/git/db\n          ~/.cargo/bin'
+    )),
+    /deep-equal|key/
+  )
+  assert.throws(
+    () => assertCargoCacheContract(rustCacheAction.replace(
+      'rust-cache-v1-${{ runner.os }}-${{ runner.arch }}-rust-1.95.0-',
+      'rust-cache-v1-'
+    )),
+    /deepEqual|key/
+  )
+})
+
+test('every remote action in workflows and the composite is pinned by a full commit SHA', () => {
+  for (const workflow of [ci, parity, release, rustCacheAction]) assertRemoteActionsPinned(workflow)
   assert.match(release, /Publication remains disabled/)
   assert.match(release, /NODE_AUTH_TOKEN/)
 })

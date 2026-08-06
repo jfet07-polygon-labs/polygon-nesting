@@ -170,13 +170,16 @@ function buildNative({
   const nativeTarget = cargoTarget === undefined
     ? resolveNativeTarget(platform, arch)
     : resolveNativeTargetByCargoTarget(cargoTarget)
+  const targetDirectory = cargoTargetDirectoryForWorkspace(workspaceRoot, {
+    CARGO_TARGET_DIR: cargoTargetDirectory
+  })
   const manifestPath = join(workspaceRoot, 'crates', 'polygon-nesting-napi', 'Cargo.toml')
   const sourcePath = artifactPathForTarget(
     workspaceRoot,
     nativeTarget.platform,
     nativeTarget.arch,
     profile,
-    cargoTargetDirectory
+    targetDirectory
   )
   const npmDirectory = join(packageRoot, 'npm')
   const addonPath = join(
@@ -196,7 +199,7 @@ function buildNative({
   ]
   execute('cargo', args, {
     cwd: workspaceRoot,
-    env: { ...process.env, CARGO_TARGET_DIR: cargoTargetDirectory },
+    env: { ...process.env, CARGO_TARGET_DIR: targetDirectory },
     stdio: 'inherit'
   })
   if (!fileSystem.exists(sourcePath)) {

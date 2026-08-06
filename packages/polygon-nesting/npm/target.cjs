@@ -60,16 +60,17 @@ function cargoBuildArgsForTarget(platform, arch, profile, manifestPath) {
 }
 
 function cargoTargetDirectoryForWorkspace(workspaceRoot, environment = process.env) {
-  return environment.CARGO_TARGET_DIR || path.join(workspaceRoot, 'target')
+  return path.resolve(workspaceRoot, environment.CARGO_TARGET_DIR || 'target')
 }
 
 function artifactPathForTarget(workspaceRoot, platform, arch, profile, cargoTargetDirectory) {
   const { cargoTarget, libraryFileName } = resolveNativeTarget(platform, arch)
   const targetProfile = profile === 'dev' ? 'debug' : profile
+  const targetDirectory = cargoTargetDirectory === undefined
+    ? cargoTargetDirectoryForWorkspace(workspaceRoot)
+    : cargoTargetDirectoryForWorkspace(workspaceRoot, { CARGO_TARGET_DIR: cargoTargetDirectory })
   return path.join(
-    cargoTargetDirectory === undefined
-      ? cargoTargetDirectoryForWorkspace(workspaceRoot)
-      : cargoTargetDirectory,
+    targetDirectory,
     cargoTarget,
     targetProfile,
     libraryFileName

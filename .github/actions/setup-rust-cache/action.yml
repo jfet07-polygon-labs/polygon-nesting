@@ -14,17 +14,12 @@ runs:
         key: rust-cache-v1-${{ runner.os }}-${{ runner.arch }}-rust-1.95.0-${{ hashFiles('Cargo.lock') }}
         restore-keys: |
           rust-cache-v1-${{ runner.os }}-${{ runner.arch }}-rust-1.95.0-
-    - name: Install sccache
+    - name: Verify pinned sccache
       shell: bash
       env:
         SCCACHE_BOOTSTRAP_TARGET_DIR: ${{ runner.temp }}/sccache-bootstrap
-      run: |
-        if ! command -v sccache >/dev/null 2>&1; then
-          rm -rf "$SCCACHE_BOOTSTRAP_TARGET_DIR"
-          mkdir -p "$SCCACHE_BOOTSTRAP_TARGET_DIR"
-          CARGO_TARGET_DIR="$SCCACHE_BOOTSTRAP_TARGET_DIR" cargo install --locked --version 0.10.0 sccache
-        fi
-        sccache --version
+        SCCACHE_VERSION: 0.10.0
+      run: node scripts/ensure-sccache.mjs
     - name: Configure sccache
       shell: bash
       run: |

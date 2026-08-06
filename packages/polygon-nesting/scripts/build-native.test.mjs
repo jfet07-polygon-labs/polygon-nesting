@@ -109,6 +109,46 @@ test('resolves the Cargo target directory from CARGO_TARGET_DIR with the workspa
   }
 })
 
+test('normalizes a relative CARGO_TARGET_DIR against the workspace for Cargo and artifact discovery', () => {
+  const workspaceRoot = mkdtempSync(resolve(tmpdir(), 'polygon-nesting-relative-target-'))
+  const packageRoot = resolve(workspaceRoot, 'packages', 'polygon-nesting')
+  const relativeTargetDirectory = 'runner-temp/cargo-target'
+  const targetDirectory = resolve(workspaceRoot, relativeTargetDirectory)
+  const nativeTarget = TARGETS[0]
+  const sourcePath = target.artifactPathForTarget(
+    workspaceRoot,
+    nativeTarget.platform,
+    nativeTarget.arch,
+    'release',
+    relativeTargetDirectory
+  )
+  const commands = []
+  try {
+    buildNative.buildNative({
+      packageRoot,
+      workspaceRoot,
+      platform: nativeTarget.platform,
+      arch: nativeTarget.arch,
+      cargoTargetDirectory: relativeTargetDirectory,
+      execute(command, args, options) {
+        commands.push({ command, args, options })
+        mkdirSync(dirname(resolve(targetDirectory, nativeTarget.cargoTarget, 'release', nativeTarget.libraryFileName)), { recursive: true })
+        writeFileSync(resolve(targetDirectory, nativeTarget.cargoTarget, 'release', nativeTarget.libraryFileName), 'native addon')
+      },
+      fileSystem: {
+        copyFile() {},
+        exists: existsSync,
+        makeDirectory() {},
+        remove(path) { rmSync(path, { force: true }) }
+      }
+    })
+    assert.equal(commands[0].options.env.CARGO_TARGET_DIR, targetDirectory)
+    assert.equal(sourcePath, resolve(targetDirectory, nativeTarget.cargoTarget, 'release', nativeTarget.libraryFileName))
+  } finally {
+    rmSync(workspaceRoot, { force: true, recursive: true })
+  }
+})
+
 test('passes explicit Cargo build arguments for every deployment target', () => {
   for (const nativeTarget of TARGETS) {
     assert.deepEqual(target.cargoBuildArgsForTarget(
