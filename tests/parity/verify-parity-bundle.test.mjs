@@ -171,15 +171,22 @@ test('workflows describe and consume the transferred source identities', async (
   assert.doesNotMatch(ci, /jfet97\/polygon-nesting/);
 });
 
-test('forces Windows tar to treat native archive drive paths as local', () => {
-  assert.deepEqual(sourceParityBundle.extractionArgs('C:\\actions\\temp\\capture.tar.gz', '/tmp/staging', 'win32'), [
-    '--force-local',
-    '-xzf',
-    'C:\\actions\\temp\\capture.tar.gz',
-    '--no-same-owner',
-    '-C',
-    '/tmp/staging',
-  ]);
+test('forces Windows tar to treat native paths as local and preserves its destination', () => {
+  assert.deepEqual(
+    sourceParityBundle.extractionArgs(
+      'C:\\actions\\temp\\capture.tar.gz',
+      'D:\\a\\polygon-nesting\\artifacts\\polygon-source-parity-stage-123',
+      'win32',
+    ),
+    [
+      '--force-local',
+      '-xzf',
+      'C:\\actions\\temp\\capture.tar.gz',
+      '--no-same-owner',
+      '-C',
+      'D:/a/polygon-nesting/artifacts/polygon-source-parity-stage-123',
+    ],
+  );
   assert.deepEqual(sourceParityBundle.extractionArgs('/tmp/capture.tar.gz', '/tmp/staging', 'linux'), [
     '-xzf',
     '/tmp/capture.tar.gz',
