@@ -3,7 +3,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { copyFile, cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, extname, join, resolve } from 'node:path';
 
 import {
@@ -17,14 +17,11 @@ import {
   verifyParityDirectory,
 } from './verify-parity-bundle.mjs';
 import { PARITY_TARGET_LAYOUT } from './assemble-parity-aggregate.mjs';
+import { copyCommittedProjectorSources } from './projector-source-evidence.mjs';
 
 const EXECUTABLE_VERSION = 1;
 const SOURCE_CONTRACT_VERSION = 1;
-const PROJECTOR_SOURCES = Object.freeze({
-  adapter: Object.freeze({ label: 'parity-desktop-request-adapter', path: 'crates/polygon-nesting-napi/src/bin/parity-desktop-request-adapter.rs' }),
-  outcomeProjector: Object.freeze({ label: 'parity-project-engine-outcome', path: 'crates/polygon-nesting-napi/src/bin/parity-project-engine-outcome.rs' }),
-  eventsProjector: Object.freeze({ label: 'parity-project-engine-events', path: 'crates/polygon-nesting-napi/src/bin/parity-project-engine-events.rs' }),
-});
+const SOURCE_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
 function fail(message) {
   throw new ParityValidationError(message);
@@ -88,18 +85,6 @@ async function executableIdentity(path, label, evidenceRoot, source = null) {
       sourceRevision: source.revision,
     } : {}),
   };
-}
-
-async function copyProjectorSources(newRoot, sourceRevision) {
-  const sources = {};
-  for (const [key, source] of Object.entries(PROJECTOR_SOURCES)) {
-    const sourceUrl = new URL(`../../${source.path}`, import.meta.url);
-    const bytes = await readFile(sourceUrl);
-    const destination = join(newRoot, 'source', source.path);
-    await writeNewFile(destination, bytes);
-    sources[key] = { ...source, sha256: sha256(bytes), revision: sourceRevision };
-  }
-  return sources;
 }
 
 function runProcess(command, arguments_, input) {
@@ -297,7 +282,6 @@ async function main() {
   validateSourceProvenanceEvidence(sourceProvenanceEvidence, verified, target);
   await copyOldEvidence(oldRoot, newRoot);
   await copyFile(sourceProvenanceEvidencePath, join(newRoot, 'source-provenance-evidence.json'));
-  const projectorSources = await copyProjectorSources(newRoot, sourceRevision);
   await writeFile(join(newRoot, 'source-provenance.json'), `${canonicalJson({ sourceRevision, sourceVersion: 1, trustedSourceRootKind: 'committed-git-source-at-workflow-sha' })}\n`, { flag: 'wx' });
   const addon = await loadAddon(addonPath);
   const rows = rowIds(verified.rawChecksums);
@@ -306,6 +290,11 @@ async function main() {
   let cliComparisons = [];
   let executableIdentities = {};
   if (adapter) {
+    const projectorSources = await copyCommittedProjectorSources({
+      evidenceRoot: newRoot,
+      sourceRevision,
+      sourceRoot: SOURCE_ROOT,
+    });
     executableIdentities = {
       adapter: await executableIdentity(adapter, 'parity-desktop-request-adapter', newRoot, projectorSources.adapter),
       cli: await executableIdentity(cli, 'polygon-nesting', newRoot),
