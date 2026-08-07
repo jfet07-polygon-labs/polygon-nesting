@@ -516,7 +516,7 @@ checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
 name = "polygon-nesting-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "ctrlc",
@@ -528,7 +528,7 @@ dependencies = [
 
 [[package]]
 name = "polygon-nesting-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "libm",
  "num-bigint",
@@ -543,7 +543,7 @@ dependencies = [
 
 [[package]]
 name = "polygon-nesting-napi"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "napi",
  "napi-build",
@@ -556,7 +556,7 @@ dependencies = [
 
 [[package]]
 name = "polygon-nesting-protocol"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde",
  "serde_json",

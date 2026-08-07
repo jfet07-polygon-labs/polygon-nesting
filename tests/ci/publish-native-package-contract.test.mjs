@@ -25,11 +25,11 @@ test('protected release publisher owns both GHCR and GitHub npm delivery', () =>
 test('npm publication consumes only the verified candidate tarball and is rerunnable', () => {
   assert.match(publisher, /NPM_TARBALL=.*release-candidate/)
   assert.match(publisher, /npm publish "\$NPM_TARBALL" --ignore-scripts --registry https:\/\/npm\.pkg\.github\.com/)
-  assert.match(publisher, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.0" --json/)
+  assert.match(publisher, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.1" --json/)
   assert.match(publisher, /refusing to replace an existing npm version with different bytes/)
   assert.match(publisher, /if: steps\.npm-state\.outputs\.action == 'publish'/)
   assert.match(publisher, /published npm package bytes differ from the verified release tarball/)
-  assert.match(publisher, /npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet07-polygon-labs\/polygon-nesting@0\.1\.0"/)
+  assert.match(publisher, /npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet07-polygon-labs\/polygon-nesting@0\.1\.1"/)
   assert.match(publisher, /readFileSync\(join\(process\.env\.DELIVERY_ROOT, 'node_modules\/\@jfet07-polygon-labs\/polygon-nesting\/package\.json'\), 'utf8'\)/)
   assert.match(publisher, /load\('@jfet07-polygon-labs\/polygon-nesting'\)/)
   assert.doesNotMatch(publisher, /load\('@jfet07-polygon-labs\/polygon-nesting\/package\.json'\)/)
