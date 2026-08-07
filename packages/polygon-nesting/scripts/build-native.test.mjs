@@ -646,7 +646,25 @@ test('package manifest publishes only the addon loader, binaries, and notices', 
   ])
 })
 
-test('validates local package subsets and complete four-target release candidates', () => {
+test('publishes three native targets while retaining local Windows build support', () => {
+  assert.deepEqual(Object.keys(target.NATIVE_TARGETS).sort(), [
+    'darwin-arm64',
+    'darwin-x64',
+    'linux-x64',
+    'win32-x64'
+  ])
+  assert.deepEqual(Object.keys(target.PUBLISHED_NATIVE_TARGETS).sort(), [
+    'darwin-arm64',
+    'darwin-x64',
+    'linux-x64'
+  ])
+  assert.deepEqual(
+    target.resolveNativeTarget('win32', 'x64'),
+    TARGETS.find(({ platform }) => platform === 'win32')
+  )
+})
+
+test('validates local package subsets and complete three-target release candidates', () => {
   const baseFiles = [
     'LICENSES/clipper2-ts-BSL-1.0.txt',
     'NOTICE',
@@ -654,17 +672,24 @@ test('validates local package subsets and complete four-target release candidate
     'npm/target.cjs',
     'package.json'
   ]
-  const stagedFiles = TARGETS.map(({ platform, arch }) => `npm/irregular-nesting-native.${platform}-${arch}.node`)
-  assert.doesNotThrow(() => buildNative.validatePackageContents([...baseFiles, stagedFiles[0]]))
+  const publishedFiles = Object.values(target.PUBLISHED_NATIVE_TARGETS)
+    .map(({ platform, arch }) => `npm/irregular-nesting-native.${platform}-${arch}.node`)
+  const windowsFile = 'npm/irregular-nesting-native.win32-x64.node'
+  assert.doesNotThrow(() => buildNative.validatePackageContents([...baseFiles, publishedFiles[0]]))
+  assert.doesNotThrow(() => buildNative.validatePackageContents([...baseFiles, windowsFile]))
   assert.throws(
     () => buildNative.validatePackageContents([...baseFiles, 'npm/unknown.node']),
     /unsupported staged addon/
   )
   assert.throws(
-    () => buildNative.validatePackageContents([...baseFiles, stagedFiles[0]], { requireAllTargets: true }),
-    /requires all four supported staged addons/
+    () => buildNative.validatePackageContents([...baseFiles, publishedFiles[0]], { requireAllTargets: true }),
+    /requires all three published staged addons/
   )
-  assert.doesNotThrow(() => buildNative.validatePackageContents([...baseFiles, ...stagedFiles], { requireAllTargets: true }))
+  assert.doesNotThrow(() => buildNative.validatePackageContents([...baseFiles, ...publishedFiles], { requireAllTargets: true }))
+  assert.throws(
+    () => buildNative.validatePackageContents([...baseFiles, ...publishedFiles, windowsFile], { requireAllTargets: true }),
+    /must contain exactly the three published staged addons/
+  )
 })
 
 test('bounds worker lifecycle probe execution and reports spawn failures', () => {
@@ -695,7 +720,17 @@ test('uses an explicit command interpreter to run npm pack on Windows', () => {
   })
 })
 
-test('npm pack dry-run contains the allowlist without source or target leakage', () => {
+test('npm pack dry-run contains the allowlist without source or target leakage', (t) => {
+  const hostAddon = resolve(
+    PACKAGE_ROOT,
+    'npm',
+    target.stagedAddonFileName(process.platform, process.arch)
+  )
+  const createdHostAddon = !existsSync(hostAddon)
+  if (createdHostAddon) {
+    writeFileSync(hostAddon, 'package-manifest-test-addon')
+    t.after(() => rmSync(hostAddon, { force: true }))
+  }
   const { command, args, options } = npmPackInvocation(PACKAGE_ROOT)
   const packed = spawnSync(command, args, options)
   assert.equal(packed.status, 0, packed.stderr || packed.stdout)

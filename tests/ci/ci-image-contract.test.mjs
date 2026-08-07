@@ -218,9 +218,8 @@ test('Linux-only CI jobs consume the immutable image while native and Docker job
   const parityWorkflow = loadRequiredText(PARITY_WORKFLOW_PATH, '.github/workflows/standalone-parity.yml')
   assertCiImageContainers(qualityWorkflow)
   assertCiImageContainers(parityWorkflow)
-  assert.doesNotMatch(workflowJob(qualityWorkflow, 'oci-smoke'), /^\s+container:/m)
+  assert.doesNotMatch(workflowJob(qualityWorkflow, 'oci-evidence'), /^\s+container:/m)
   assert.doesNotMatch(workflowJob(qualityWorkflow, 'native'), /^\s+container:/m)
-  assert.doesNotMatch(workflowJob(qualityWorkflow, 'native-intel-release'), /^\s+container:/m)
   assert.doesNotMatch(workflowJob(parityWorkflow, 'parity'), /^\s+container:/m)
 })
 

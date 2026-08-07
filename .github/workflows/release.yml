@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       ci_run_id:
-        description: Successful manual CI run ID containing all four native build artifacts
+        description: Successful main CI run ID containing exact release evidence
         required: false
         type: string
   push:
@@ -57,13 +57,13 @@ jobs:
             return context.sha;
 
   resolve-ci:
-    name: Resolve matching native CI evidence
+    name: Resolve matching main CI evidence
     needs: authorize-source
     runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
       run-id: ${{ steps.resolve.outputs.result }}
     steps:
-      - name: Resolve successful manual CI run and release artifacts
+      - name: Resolve successful main push CI run and release artifacts
         id: resolve
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         env:
@@ -74,12 +74,12 @@ jobs:
           script: |
             const requiredArtifacts = new Set([
               'native-build-linux-x64',
-              'native-build-win32-x64',
               'native-build-darwin-arm64',
-              'native-build-darwin-x64'
+              'native-build-darwin-x64',
+              `oci-build-${process.env.SOURCE_COMMIT}`
             ]);
             async function validateRun(run) {
-              if (run.head_sha !== process.env.SOURCE_COMMIT || run.conclusion !== 'success' || run.event !== 'workflow_dispatch' && run.event !== 'workflow_call' || !run.path.endsWith('/ci.yml')) return false;
+              if (run.head_sha !== process.env.SOURCE_COMMIT || run.conclusion !== 'success' || run.event !== 'push' || run.head_branch !== 'main' || !run.path.endsWith('/ci.yml')) return false;
               const { data } = await github.rest.actions.listWorkflowRunArtifacts({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -87,7 +87,7 @@ jobs:
                 per_page: 100
               });
               const names = new Set(data.artifacts.filter(artifact => !artifact.expired).map(artifact => artifact.name));
-              return [...requiredArtifacts].every(name => names.has(name));
+              return names.size === requiredArtifacts.size && [...requiredArtifacts].every(name => names.has(name));
             }
             const supplied = process.env.CI_RUN_ID;
             if (supplied) {
@@ -101,7 +101,7 @@ jobs:
                 run_id: Number(supplied)
               });
               if (!await validateRun(run)) {
-                core.setFailed('The supplied run is not a successful manual ci.yml run with all four native build artifacts for this source commit');
+                core.setFailed('The supplied run is not a successful main push ci.yml run with exact release evidence for this source commit');
                 return;
               }
               return supplied;
@@ -110,15 +110,16 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'ci.yml',
+              branch: 'main',
               head_sha: process.env.SOURCE_COMMIT,
-              event: 'workflow_dispatch',
+              event: 'push',
               status: 'completed',
               per_page: 100
             });
             for (const run of data.workflow_runs) {
               if (await validateRun(run)) return String(run.id);
             }
-            core.setFailed('No successful manual CI run with all four native build artifacts exists for the exact source commit');
+            core.setFailed('No successful main push CI run with exact release evidence exists for the source commit');
 
   candidate:
     name: Assemble npm release candidate
@@ -129,6 +130,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ needs.authorize-source.outputs.source-commit }}
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
@@ -140,19 +142,19 @@ jobs:
           run-id: ${{ needs.resolve-ci.outputs.run-id }}
           pattern: native-build-*
           path: downloaded-native-artifacts
-      - name: Normalize four native build artifact directories
+      - name: Normalize three published native build artifact directories
         run: |
           mkdir native-artifacts
-          for target in linux-x64 win32-x64 darwin-arm64 darwin-x64; do
+          for target in linux-x64 darwin-arm64 darwin-x64; do
             source="downloaded-native-artifacts/native-build-$target"
             test -d "$source"
             test ! -e "native-artifacts/$target"
             mv "$source" "native-artifacts/$target"
           done
-          test "$(find native-artifacts -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = 4
+          test "$(find native-artifacts -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = 3
       - name: Assemble candidate without compiling
         run: node scripts/assemble-release-candidate.mjs --artifacts native-artifacts --output release-candidate --source-commit "$SOURCE_COMMIT" --trusted-source-root "$GITHUB_WORKSPACE"
-      - name: Validate candidate offline
+      - name: Validate npm candidate offline
         run: node scripts/verify-release-candidate.mjs --candidate release-candidate --trusted-source-root "$GITHUB_WORKSPACE"
       - name: Require deterministic release notes
         run: test -s release-candidate/RELEASE_NOTES.md
@@ -165,81 +167,39 @@ jobs:
           retention-days: 90
 
   oci:
-    name: Build immutable OCI candidate archive
-    needs: [authorize-source, candidate]
+    name: Reuse verified OCI candidate archive
+    needs: [authorize-source, resolve-ci, candidate]
     runs-on: blacksmith-2vcpu-ubuntu-2404
     env:
       SOURCE_COMMIT: ${{ needs.authorize-source.outputs.source-commit }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ needs.authorize-source.outputs.source-commit }}
           persist-credentials: false
       - name: Download npm candidate evidence
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: npm-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
           path: release-candidate
-      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
-      - name: Build locked Linux amd64 OCI archive
-        run: >-
-          docker buildx build --target runtime
-          --platform linux/amd64
-          --provenance=false
-          --build-arg ENGINE_VERSION=0.1.0
-          --build-arg SOURCE_COMMIT="$SOURCE_COMMIT"
-          --tag polygon-nesting:0.1.0-rc
-          --output type=oci,dest=oci-image.tar
-          .
-      - name: Resolve OCI manifest digest with skopeo
-        id: manifest-digest
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y skopeo
-          skopeo inspect --raw oci-archive:oci-image.tar > oci-manifest.json
-          manifest_digest="sha256:$(sha256sum oci-manifest.json | cut -d' ' -f1)"
-          export MANIFEST_DIGEST="$manifest_digest"
-          mkdir oci-layout
-          tar -xf oci-image.tar -C oci-layout
-          node --input-type=module -e "import {readFileSync,writeFileSync} from 'node:fs'; const index=JSON.parse(readFileSync('oci-layout/index.json','utf8')); if(index.manifests.length!==1) throw new Error('OCI archive must contain exactly one manifest descriptor'); const descriptor=index.manifests[0]; if(descriptor.platform?.os!=='linux'||descriptor.platform?.architecture!=='amd64') throw new Error('OCI manifest descriptor must be linux/amd64'); if(descriptor.digest!==process.env.MANIFEST_DIGEST) throw new Error('skopeo manifest digest must equal the OCI index descriptor digest'); writeFileSync('manifest-digest.txt',descriptor.digest+'\n');"
-          printf 'digest=%s\n' "$(cat manifest-digest.txt)" >> "$GITHUB_OUTPUT"
-      - name: Load archive through a local registry under immutable digest reference
-        env:
-          MANIFEST_DIGEST: ${{ steps.manifest-digest.outputs.digest }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y skopeo
-          docker run --detach --publish 5000:5000 --name release-registry registry:2.8.3@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
-          for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:5000/v2/ >/dev/null; then break; fi
-            if [ "$attempt" = 30 ]; then docker logs release-registry; exit 1; fi
-            sleep 1
-          done
-          skopeo copy --dest-tls-verify=false oci-archive:oci-image.tar docker://127.0.0.1:5000/polygon-nesting:0.1.0-rc
-          IMMUTABLE_IMAGE_REF="127.0.0.1:5000/polygon-nesting@${MANIFEST_DIGEST}"
-          docker pull "$IMMUTABLE_IMAGE_REF"
-          printf 'IMMUTABLE_IMAGE_REF=%s\n' "$IMMUTABLE_IMAGE_REF" >> "$GITHUB_ENV"
-      - name: Run non-root smoke against immutable loaded digest
-        run: ./scripts/smoke-cli-image.sh "$IMMUTABLE_IMAGE_REF"
-      - name: Capture OCI archive digest labels and legal evidence
-        env:
-          MANIFEST_DIGEST: ${{ steps.manifest-digest.outputs.digest }}
-        run: |
-          docker image inspect "$IMMUTABLE_IMAGE_REF" > image-inspect.json
-          node --input-type=module -e "import {createHash} from 'node:crypto'; import {readFileSync,writeFileSync} from 'node:fs'; const [image]=JSON.parse(readFileSync('image-inspect.json','utf8')); const release=JSON.parse(readFileSync('release-candidate/release.json','utf8')); const evidence={schemaVersion:1,manifestDigest:process.env.MANIFEST_DIGEST,archiveSha256:createHash('sha256').update(readFileSync('oci-image.tar')).digest('hex'),immutableImageReference:process.env.IMMUTABLE_IMAGE_REF,platform:'linux/amd64',sourceCommit:process.env.SOURCE_COMMIT,nonRootSmoke:true,labels:image.Config.Labels,legalHashes:release.legalHashes}; writeFileSync('oci-evidence.json',JSON.stringify(evidence,null,2)+'\n');"
-      - name: Validate combined candidate evidence offline
+      - name: Download exact OCI build evidence from main CI
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.resolve-ci.outputs.run-id }}
+          name: oci-build-${{ needs.authorize-source.outputs.source-commit }}
+          path: oci-candidate
+      - name: Validate combined candidate evidence offline without rebuilding
         run: >-
           node scripts/verify-release-candidate.mjs
           --candidate release-candidate
           --trusted-source-root "$GITHUB_WORKSPACE"
-          --oci-archive oci-image.tar
-          --oci-evidence oci-evidence.json
-      - name: Upload immutable OCI archive and evidence
+          --oci-archive oci-candidate/oci-image.tar
+          --oci-evidence oci-candidate/oci-evidence.json
+      - name: Upload exact immutable OCI archive and evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: oci-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
-          path: |
-            oci-image.tar
-            manifest-digest.txt
-            oci-evidence.json
+          path: oci-candidate
           if-no-files-found: error
           retention-days: 90

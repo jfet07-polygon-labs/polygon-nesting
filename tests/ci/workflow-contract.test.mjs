@@ -155,7 +155,6 @@ function assertCiTriggerContract(workflow) {
     '    branches:',
     '      - main',
     '  pull_request:',
-    '  workflow_dispatch:',
     '',
     ''
   ].join('\n'), 'CI trigger contract must be exact and unrestricted')
@@ -167,7 +166,7 @@ function assertReleaseTriggerContract(workflow) {
     '  workflow_dispatch:',
     '    inputs:',
     '      ci_run_id:',
-    '        description: Successful manual CI run ID containing all four native build artifacts',
+    '        description: Successful main CI run ID containing exact release evidence',
     '        required: false',
     '        type: string',
     '  push:',
@@ -204,9 +203,8 @@ function assertStandaloneParityTriggerContract(workflow) {
 
 function assertCiRunnerContract(workflow) {
   const native = workflowJob(workflow, 'native')
-  const intel = workflowJob(workflow, 'native-intel-release')
   assert.match(workflowJob(workflow, 'quality'), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
-  assert.match(workflowJob(workflow, 'oci-smoke'), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
+  assert.match(workflowJob(workflow, 'oci-evidence'), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
   assert.doesNotMatch(workflow, /^  parity-release-gate:$/m)
   assert.deepEqual(matrixIncludeItems(native), [
     {
@@ -217,23 +215,21 @@ function assertCiRunnerContract(workflow) {
       'cargo-target': 'x86_64-unknown-linux-gnu'
     },
     {
-      'target-key': 'win32-x64',
-      runner: 'blacksmith-2vcpu-windows-2025',
-      platform: 'win32',
-      arch: 'x64',
-      'cargo-target': 'x86_64-pc-windows-msvc'
-    },
-    {
       'target-key': 'darwin-arm64',
       runner: 'blacksmith-6vcpu-macos-15',
       platform: 'darwin',
       arch: 'arm64',
       'cargo-target': 'aarch64-apple-darwin'
+    },
+    {
+      'target-key': 'darwin-x64',
+      runner: 'macos-15-intel',
+      platform: 'darwin',
+      arch: 'x64',
+      'cargo-target': 'x86_64-apple-darwin'
     }
   ])
-  assert.match(intel, /^    if: github\.event_name == 'workflow_dispatch'$/m)
-  assert.match(intel, /^    runs-on: macos-15-intel$/m)
-  assert.match(intel, /^      TARGET_KEY: darwin-x64$/m)
+  assert.match(native, /^    if: github\.event_name == 'push'$/m)
 }
 
 function assertReleaseRunnerContract(workflow) {
@@ -247,12 +243,10 @@ function assertDistinctCargoTargetRoots(ciWorkflow, parityWorkflow) {
   assertNoRunnerContextInJobEnvironment(parityWorkflow)
   const quality = workflowJob(ciWorkflow, 'quality')
   const native = workflowJob(ciWorkflow, 'native')
-  const intel = workflowJob(ciWorkflow, 'native-intel-release')
   const parityJob = workflowJob(parityWorkflow, 'parity')
   const parityLinuxJob = workflowJob(parityWorkflow, 'parity-linux')
   assertFreshTargetDirectory(quality, '$RUNNER_TEMP/cargo-target-quality', /cargo clippy --workspace/)
   assertFreshTargetDirectory(native, '$RUNNER_TEMP/cargo-target-native-${TARGET_KEY}', /npm run build:release/)
-  assertFreshTargetDirectory(intel, '$RUNNER_TEMP/cargo-target-native-darwin-x64', /npm run build:release/)
   assertFreshTargetDirectory(parityJob, '$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}', /cargo build --locked --release/)
   assertFreshTargetDirectory(parityLinuxJob, '$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}', /cargo build --locked --release/)
 
@@ -262,9 +256,6 @@ function assertDistinctCargoTargetRoots(ciWorkflow, parityWorkflow) {
   assert.deepEqual(targetDirectoryAssignments(native), [
     '$RUNNER_TEMP/cargo-target-native-${TARGET_KEY}'
   ], 'native job Cargo target root must be exact')
-  assert.deepEqual(targetDirectoryAssignments(intel), [
-    '$RUNNER_TEMP/cargo-target-native-darwin-x64'
-  ], 'release Intel job Cargo target root must be exact')
   assert.deepEqual(targetDirectoryAssignments(parityJob), [
     '$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}'
   ], 'parity job Cargo target root must be exact')
@@ -272,20 +263,18 @@ function assertDistinctCargoTargetRoots(ciWorkflow, parityWorkflow) {
     '$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}'
   ], 'Linux parity job Cargo target root must be exact')
 
-  const nativeRoots = [...matrixValues(native, 'target-key').map((key) => `cargo-target-native-${key}`), 'cargo-target-native-darwin-x64']
+  const nativeRoots = matrixValues(native, 'target-key').map((key) => `cargo-target-native-${key}`)
   const parityRoots = [
     ...matrixValues(parityLinuxJob, 'key'),
     ...matrixValues(parityJob, 'key')
   ].map((key) => `cargo-target-parity-${key}`)
   assert.deepEqual(nativeRoots, [
     'cargo-target-native-linux-x64',
-    'cargo-target-native-win32-x64',
     'cargo-target-native-darwin-arm64',
     'cargo-target-native-darwin-x64'
   ])
   assert.deepEqual(parityRoots, [
     'cargo-target-parity-linux-x64',
-    'cargo-target-parity-win32-x64',
     'cargo-target-parity-darwin-arm64',
     'cargo-target-parity-darwin-x64'
   ])
@@ -305,10 +294,10 @@ function assertPinnedDockerBaseImages(dockerfile) {
   ])
 }
 
-function assertReleaseRegistryDigest(workflow) {
-  const [, image] = workflow.match(/docker run --detach --publish 5000:5000 --name release-registry\s+(registry:[^\s]+)/) ?? []
-  assert.equal(image, 'registry:2.8.3@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373', 'release registry digest must be exact')
-  assert.match(image, /^registry:2\.8\.3@sha256:[a-f0-9]{64}$/i, 'release registry digest must be immutable')
+function assertCiRegistryDigest(workflow) {
+  const [, image] = workflow.match(/docker run --detach --publish 5000:5000 --name ci-registry\s+(registry:[^\s]+)/) ?? []
+  assert.equal(image, 'registry:2.8.3@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373', 'CI registry digest must be exact')
+  assert.match(image, /^registry:2\.8\.3@sha256:[a-f0-9]{64}$/i, 'CI registry digest must be immutable')
 }
 
 function assertExactElectronRuntime(workflow) {
@@ -357,25 +346,25 @@ function assertRuntimePublicationSecurityContract(workflow) {
   )
 }
 
-test('CI only pushes main, tests workflow contracts, and preserves manual runs from cancellation', () => {
+test('CI runs quality on pull requests and produces release evidence only on main pushes', () => {
   assert.match(ci, /push:\n\s+branches:\n\s+- main/)
   assert.match(ci, /pull_request:/)
-  assert.match(ci, /workflow_dispatch:/)
+  assert.doesNotMatch(ci, /workflow_dispatch:/)
   assert.match(ci, /concurrency:\n\s+group:.*github\.event_name/s)
-  assert.match(ci, /cancel-in-progress:\s*\$\{\{ github\.event_name != 'workflow_dispatch' \}\}/)
+  assert.match(ci, /cancel-in-progress: true/)
   assert.match(ci, /tests\/ci\/\*\.test\.mjs/)
+  assert.match(workflowJob(ci, 'native'), /^    if: github\.event_name == 'push'$/m)
+  assert.match(workflowJob(ci, 'oci-evidence'), /^    if: github\.event_name == 'push'$/m)
 })
 
 test('compatible Linux jobs use the immutable CI image and native jobs stay outside it', () => {
   assertCiImageContainer(workflowJob(ci, 'quality'))
   assertCiImageContainer(workflowJob(parity, 'parity-linux'))
-  assertNoCiImageContainer(workflowJob(ci, 'oci-smoke'))
+  assertNoCiImageContainer(workflowJob(ci, 'oci-evidence'))
   assertNoCiImageContainer(workflowJob(ci, 'native'))
-  assertNoCiImageContainer(workflowJob(ci, 'native-intel-release'))
   assertNoCiImageContainer(workflowJob(parity, 'parity'))
-  assertNoCiImageContainer(workflowJob(parity, 'aggregate'))
-  assertNoCiImageContainer(workflowJob(parity, 'require-all-targets'))
   assert.match(workflowJob(parity, 'parity-linux'), /key: linux-x64[\s\S]*target: x86_64-unknown-linux-gnu/)
+  assert.doesNotMatch(`${ci}\n${parity}`, /blacksmith-2vcpu-windows|x86_64-pc-windows-msvc/)
   assert.doesNotMatch(workflowJob(parity, 'parity-linux'), /actions\/setup-node|dtolnay\/rust-toolchain/)
   assert.match(workflowJob(parity, 'parity-linux'), /PATH: \/opt\/node-v24\.19\.0\/bin:/)
 })
@@ -393,6 +382,7 @@ test('Rust-producing CI jobs export fresh runner-temp target roots before compil
   assertDistinctCargoTargetRoots(ci, parity)
   assert.match(parity, /\$CARGO_TARGET_DIR\/\$\{\{ matrix\.target \}\}\/release\/polygon-nesting/)
   assert.match(parity, /\$CARGO_TARGET_DIR\/\$\{\{ matrix\.target \}\}\/release\/parity-desktop-request-adapter/)
+  assert.doesNotMatch(parity, /aggregate:|require-all-targets:|assemble-parity-aggregate\.mjs/)
 })
 
 test('workflow contracts reject runner context in job-level environment', () => {
@@ -451,13 +441,17 @@ test('CI, release, and standalone parity trigger, runner, and Cargo target-root 
 test('image and runtime contracts require immutable references', () => {
   const dockerfile = readFileSync(join(REPOSITORY_ROOT, 'Dockerfile'), 'utf8')
   assertPinnedDockerBaseImages(dockerfile)
-  assertReleaseRegistryDigest(release)
+  assertCiRegistryDigest(ci)
   assertExactElectronRuntime(ci)
   assertPrivateCiImagesPinned(`${ci}\n${parity}\n${release}`)
 })
 
-test('release builds runtime and publication consumes only a selected archived release', () => {
-  assert.match(release, /docker buildx build[\s\S]*--target runtime/)
+test('main CI builds runtime once, release reuses it, and publication consumes only a selected archived release', () => {
+  assert.match(ci, /docker buildx build[\s\S]*--target runtime/)
+  assert.match(ci, /--output type=oci,dest=oci-image\.tar/)
+  assert.match(ci, /name: oci-build-\$\{\{ github\.sha \}\}/)
+  assert.doesNotMatch(release, /docker buildx build|smoke-cli-image\.sh/)
+  assert.match(release, /name: oci-build-\$\{\{ needs\.authorize-source\.outputs\.source-commit \}\}/)
   assert.doesNotMatch(release, /publication-placeholder|Publication remains disabled/)
   assert.notEqual(runtimePublicationRequest, '', 'runtime publication request workflow must exist')
   assert.notEqual(runtimePublication, '', 'runtime publication workflow must exist')
@@ -593,7 +587,7 @@ test('workflow contracts reject mutable triggers, target roots, and image refere
     /digest/
   )
   assert.throws(
-    () => assertReleaseRegistryDigest(release.replace(/@sha256:[a-f0-9]{64}/, '')),
+    () => assertCiRegistryDigest(ci.replace('registry:2.8.3@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373', 'registry:2.8.3')),
     /registry digest/
   )
   assert.throws(
@@ -610,10 +604,6 @@ test('workflow contracts reject mutable triggers, target roots, and image refere
       "          - platform: darwin\n            target-key: darwin-x64\n            runner: macos-15-intel\n            arch: x64\n            cargo-target: x86_64-apple-darwin\n    runs-on: ${{ matrix.runner }}"
     )),
     /deep-equal/
-  )
-  assert.throws(
-    () => assertCiRunnerContract(ci.replace("if: github.event_name == 'workflow_dispatch'", "if: github.event_name != 'workflow_dispatch'")),
-    /event_name/
   )
   assert.throws(
     () => assertReleaseRunnerContract(release.replace('runs-on: blacksmith-2vcpu-ubuntu-2404', 'runs-on: ubuntu-latest')),

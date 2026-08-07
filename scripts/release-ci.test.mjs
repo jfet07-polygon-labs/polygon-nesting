@@ -10,7 +10,6 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const REPOSITORY_ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
 const TARGETS = [
   ['linux-x64', 'linux', 'x64', 'x86_64-unknown-linux-gnu'],
-  ['win32-x64', 'win32', 'x64', 'x86_64-pc-windows-msvc'],
   ['darwin-arm64', 'darwin', 'arm64', 'aarch64-apple-darwin'],
   ['darwin-x64', 'darwin', 'x64', 'x86_64-apple-darwin']
 ]
@@ -100,13 +99,13 @@ function makeOciArchive(root, labels) {
   return { archivePath, manifestDigest: `sha256:${manifestDigest}` }
 }
 
-test('assembles all four current native targets and verifies an offline candidate', async (t) => {
+test('assembles all three published native targets and verifies an offline candidate', async (t) => {
   const fixture = makeFixture(t)
   const { assembleReleaseCandidate } = await loadModule('assemble-release-candidate.mjs')
   const { verifyReleaseCandidate } = await loadModule('verify-release-candidate.mjs')
   const release = await assembleReleaseCandidate(fixture)
   assert.equal(release.schemaVersion, 3)
-  assert.equal(release.nativeArtifacts.length, 4)
+  assert.equal(release.nativeArtifacts.length, 3)
   assert.equal('parityAggregate' in release, false)
   await verifyReleaseCandidate({ candidateDirectory: fixture.outputDirectory, trustedSourceRoot: fixture.trustedSourceRoot })
 })
@@ -228,12 +227,30 @@ test('normal PR quality checks run current repository release contracts', () => 
   assert.doesNotMatch(ci, /^\s*node --test scripts\/release-ci\.test\.mjs$/m)
 })
 
-test('CI and release workflows use current native artifacts without legacy parity gating', () => {
+test('main CI is the sole build evidence producer and excludes hosted Windows', () => {
+  const ci = readFileSync(join(REPOSITORY_ROOT, '.github/workflows/ci.yml'), 'utf8')
+  assert.doesNotMatch(ci, /workflow_dispatch|win32-x64|windows-2025/)
+  assert.match(ci, /if: github\.event_name == 'push'/)
+  assert.match(ci, /target-key: darwin-x64/)
+  assert.match(ci, /name: native-build-\$\{\{ matrix\.target-key \}\}/)
+  assert.match(ci, /name: oci-build-\$\{\{ github\.sha \}\}/)
+  assert.match(ci, /--output type=oci,dest=oci-image\.tar/)
+  assert.match(ci, /smoke-cli-image\.sh/)
+})
+
+test('release reuses exact successful main CI evidence without quality, compilation, or image rebuilds', () => {
   const ci = readFileSync(join(REPOSITORY_ROOT, '.github/workflows/ci.yml'), 'utf8')
   const release = readFileSync(join(REPOSITORY_ROOT, '.github/workflows/release.yml'), 'utf8')
-  assert.doesNotMatch(ci, /parity_source_run_id|parity-release-gate|release-native-/)
+  const assembler = readFileSync(join(REPOSITORY_ROOT, 'scripts/assemble-release-candidate.mjs'), 'utf8')
   assert.doesNotMatch(release, /Task112|parity-bound|release-native-|externally generated parity/)
+  assert.match(release, /run\.event !== 'push'/)
+  assert.match(release, /run\.head_branch !== 'main'/)
   assert.match(release, /pattern: native-build-\*/)
+  assert.match(release, /name: oci-build-\$\{\{ needs\.authorize-source\.outputs\.source-commit \}\}/)
   assert.match(release, /downloaded-native-artifacts\/native-build-\$target/)
+  assert.match(release, /for target in linux-x64 darwin-arm64 darwin-x64/)
   assert.match(release, /--trusted-source-root "\$GITHUB_WORKSPACE"/)
+  assert.match(ci, /node --test packages\/polygon-nesting\/scripts\/build-native\.test\.mjs/)
+  assert.doesNotMatch(release, /cargo (build|test|clippy)|npm (run build:release|test)|docker buildx build|smoke-cli-image\.sh/)
+  assert.doesNotMatch(assembler, /execute\('npm', \['test'\]/)
 })

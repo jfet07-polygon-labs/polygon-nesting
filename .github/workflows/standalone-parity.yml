@@ -29,10 +29,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - key: win32-x64
-            runner: blacksmith-2vcpu-windows-2025
-            target: x86_64-pc-windows-msvc
-            executable-suffix: '.exe'
           - key: darwin-arm64
             runner: blacksmith-6vcpu-macos-15
             target: aarch64-apple-darwin
@@ -166,52 +162,3 @@ jobs:
           path: ${{ runner.temp }}/standalone-parity/${{ matrix.key }}
           if-no-files-found: error
           retention-days: 7
-
-  aggregate:
-    needs: [parity, parity-linux]
-    if: ${{ needs.parity.result == 'success' && needs['parity-linux'].result == 'success' }}
-    runs-on: blacksmith-2vcpu-ubuntu-2404
-    permissions:
-      contents: read
-      id-token: write
-      attestations: write
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Download exactly four target bundles
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          pattern: old-new-parity-target-*
-          path: ${{ runner.temp }}/old-new-parity-targets
-          merge-multiple: false
-      - name: Assemble deterministic aggregate parity archive
-        shell: bash
-        run: >-
-          node scripts/parity/assemble-parity-aggregate.mjs
-          --input "$RUNNER_TEMP/old-new-parity-targets"
-          --output "$RUNNER_TEMP/old-new-parity-bundle"
-          --source-revision "$GITHUB_SHA"
-          --trusted-source-root "$GITHUB_WORKSPACE"
-      - name: Upload exact aggregate artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: old-new-parity-bundle
-          path: |-
-            ${{ runner.temp }}/old-new-parity-bundle/old-new-parity-bundle.tar.gz
-            ${{ runner.temp }}/old-new-parity-bundle/old-new-parity-bundle.tar.gz.sha256
-          if-no-files-found: error
-          retention-days: 7
-      - name: Attest aggregate parity archive
-        uses: actions/attest-build-provenance@96b4a1ef7235a096b17240c259729fdd70c83d45
-        with:
-          subject-path: ${{ runner.temp }}/old-new-parity-bundle/old-new-parity-bundle.tar.gz
-  require-all-targets:
-    if: always()
-    needs: [parity, parity-linux, aggregate]
-    runs-on: blacksmith-2vcpu-ubuntu-2404
-    steps:
-      - name: Require every target parity bundle and aggregate
-        shell: bash
-        run: >-
-          test "${{ needs.parity.result }}" = success &&
-          test "${{ needs.parity-linux.result }}" = success &&
-          test "${{ needs.aggregate.result }}" = success

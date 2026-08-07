@@ -14,7 +14,7 @@ Protocol-vector provenance is machine-readable in `tests/vectors/protocol/proven
 | `event-v1.json` source artifact | `865993c508b4e85fa2d7b62deb19529424eeed4dc88c3d36a207ebf2f6d52464` |
 | `state-snapshot-event-v1.json` source artifact | `68cabe898cb09dd2210cbf93c6e427016235bd3175158e7021ece2fa827e481c` |
 
-The source baseline commit records `docs/artifacts/polygon-nesting-extraction-baseline/source.json`, `migration-corpus.json`, `native-vectors.sha256`, `source-fixtures.sha256`, `legal-and-addon.sha256`, `package-manifest.json`, `gates/results.json`, gate logs, and a complete `SHA256SUMS` manifest. These are provenance records in source history, not runtime dependencies of this repository. The baseline commands are reproducible from the accepted source with `cargo fmt --manifest-path crates/irregular-nesting-native/Cargo.toml -- --check`, `cargo clippy --manifest-path crates/irregular-nesting-native/Cargo.toml --all-targets -- -D warnings`, `cargo test --release --manifest-path crates/irregular-nesting-native/Cargo.toml`, and its separately recorded Node, Electron, quality, capacity, fixture-export, and hash gates. The release candidate must rerun its corresponding standalone commands and record their exact output and exit status.
+The source baseline commit records `docs/artifacts/polygon-nesting-extraction-baseline/source.json`, `migration-corpus.json`, `native-vectors.sha256`, `source-fixtures.sha256`, `legal-and-addon.sha256`, `package-manifest.json`, `gates/results.json`, gate logs, and a complete `SHA256SUMS` manifest. These are provenance records in source history, not runtime dependencies of this repository. The historical baseline commands are reproducible from the accepted source with `cargo fmt --manifest-path crates/irregular-nesting-native/Cargo.toml -- --check`, `cargo clippy --manifest-path crates/irregular-nesting-native/Cargo.toml --all-targets -- -D warnings`, `cargo test --release --manifest-path crates/irregular-nesting-native/Cargo.toml`, and its separately recorded Node, Electron, quality, capacity, fixture-export, and hash gates. Current releases use the successful `main` CI evidence described below instead of rerunning those historical baseline commands.
 
 ## Source ownership map
 
@@ -29,7 +29,7 @@ The source baseline commit records `docs/artifacts/polygon-nesting-extraction-ba
 | `boundary/job.rs` | `crates/polygon-nesting-napi/src/job.rs` | AsyncTask, invocation registry, and desktop lifecycle |
 | `boundary/diagnostics.rs` | `crates/polygon-nesting-napi/src/diagnostics.rs` | N-API diagnostic glue |
 | `boundary/mod.rs` | Split across core, protocol, and N-API modules above | No standalone boundary directory |
-| Native addon build metadata | `crates/polygon-nesting-napi/build.rs` and `packages/polygon-nesting/scripts/build-native.mjs` | Four-target addon build and staging |
+| Native addon build metadata | `crates/polygon-nesting-napi/build.rs` and `packages/polygon-nesting/scripts/build-native.mjs` | Four-target local/manual addon build support and three-target publication staging |
 | No source equivalent | `crates/polygon-nesting-cli/**`, `Dockerfile`, and CLI image scripts | New CLI and OCI adapter |
 | Electron renderer, preload, main process, SQLite, DXF dialogs, IPC, worker supervision, TypeScript polygon algorithm, rectangle nesting | Excluded | Application ownership remains outside this repository |
 
@@ -52,9 +52,9 @@ The OCI license label is `NOASSERTION`. It is not a repository-wide license asse
 
 ## Current repository release publication
 
-The current repository is the authoritative source for `@jfet07-polygon-labs/polygon-nesting` and the Azure Jobs runtime image. A manual CI run builds and loads the package on all four native targets, records exact Rust, Cargo, source, dependency, addon, wrapper, and legal identities, and uploads four `native-build-*` artifacts. The release workflow accepts only a successful manual CI run for the exact source commit with all four unexpired artifacts.
+The current repository is the authoritative source for `@jfet07-polygon-labs/polygon-nesting` and the Azure Jobs runtime image. Pull requests run quality checks only. A successful push to `main` runs quality once, builds and loads the three published native targets (Linux x64, macOS arm64, and macOS x64), and builds and smoke-tests the Linux amd64 OCI archive once. The release workflow accepts only the exact unexpired evidence from that successful `main` CI run. Windows x64 remains supported for local/manual source builds, but hosted CI does not build or publish it.
 
-The release candidate is assembled without rebuilding native code. It records the source commit, complete native metadata, addon hashes, NPM tarball hash and manifest, OCI archive hash, manifest digest, labels, and non-root smoke result. The protected default-branch publisher verifies the candidate again, publishes the exact NPM tarball to GitHub Packages, and copies the exact OCI archive to GHCR. Existing version or tag bytes must match exactly; publication refuses to replace immutable identities with different content.
+The release candidate is assembled without rebuilding native code or the OCI image and without repeating quality or smoke tests. It records the source commit, complete native metadata, addon hashes, NPM tarball hash and manifest, OCI archive hash, manifest digest, labels, and the CI non-root smoke result. The protected default-branch publisher verifies the candidate again, publishes the exact NPM tarball to GitHub Packages, and copies the exact OCI archive to GHCR. Existing version or tag bytes must match exactly; publication refuses to replace immutable identities with different content.
 
 The required current-repository gates include protocol and canonical JSON vectors, the canonical 18-row semantic matrix, exact-grid numeric vectors, all core tests, thread-count equality at 1, 2, 4, and 8 workers, no-global-pool containment, N-API Node and Electron-as-Node loading, terminal acknowledgement and cleanup lifecycle tests, CLI artifact and exit-code tests, package allowlist and legal-hash checks, Full versus Off diagnostic trace equivalence, and a non-root Linux amd64 image smoke test.
 
@@ -62,11 +62,11 @@ Protocol and contract requests set `diagnosticTraceMode: "full"` explicitly. Pro
 
 ## Optional migration parity
 
-The standalone old-versus-new parity workflow remains available as a manual migration diagnostic. It compares the accepted old `min-plane-dxf` outputs with the current core, N-API adapter, and CLI while normalizing documented timing and worker diagnostics. It is no longer a CI, release-candidate, NPM publication, or OCI publication prerequisite because the port is complete and this repository's contract suite is now authoritative.
+The standalone old-versus-new parity workflow remains available as a manual migration diagnostic for Linux x64 and both macOS architectures. It compares the accepted old `min-plane-dxf` outputs with the current core, N-API adapter, and CLI while normalizing documented timing and worker diagnostics. Windows parity remains available through the local/manual scripts, but no hosted Windows job is defined. Old-versus-new parity is no longer a CI, release-candidate, NPM publication, or OCI publication prerequisite because the port is complete and this repository's contract suite is now authoritative.
 
 ## Desktop cutover and removal rule
 
-1. Assemble and verify one immutable NPM tarball containing the four target addons, and one immutable Linux amd64 OCI image digest.
+1. Assemble and verify one immutable NPM tarball containing the three published native target addons, and one immutable Linux amd64 OCI image digest.
 2. Install the exact candidate tarball under the existing `irregular-nesting-native` dependency key without changing the desktop loader unless a verified incompatibility requires it.
 3. Run same-target old-versus-new corpus parity, package resolution, Node and Electron loading, lifecycle, legal, quality, and packaged-app gates for every supported desktop target.
 4. Publish the exact verified artifacts only after authorization, then verify registry delivery by installing the published package and pulling the OCI image by digest.
