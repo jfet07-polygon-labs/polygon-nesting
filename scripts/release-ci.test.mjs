@@ -35,7 +35,7 @@ function makePackageFixture(root) {
   }
   writeJson(join(packageRoot, 'package.json'), {
     name: '@jfet07-polygon-labs/polygon-nesting',
-    version: '0.1.0',
+    version: '0.1.1',
     main: 'npm/index.cjs',
     files: ['npm/index.cjs', 'npm/target.cjs', 'npm/*.node', 'NOTICE', 'LICENSES/**'],
     scripts: { test: 'node package-check.mjs' }
@@ -53,7 +53,8 @@ function makeFixture(t) {
   const artifactsRoot = join(root, 'artifacts')
   const packageRoot = makePackageFixture(root)
   const outputDirectory = join(root, 'candidate')
-  const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPOSITORY_ROOT, encoding: 'utf8' }).trim()
+  const sourceCommit = execFileSync('git', ['stash', 'create'], { cwd: REPOSITORY_ROOT, encoding: 'utf8' }).trim()
+    || execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPOSITORY_ROOT, encoding: 'utf8' }).trim()
   for (const [targetKey, platform, arch, cargoTarget] of TARGETS) {
     const directory = join(artifactsRoot, targetKey)
     const addonName = `irregular-nesting-native.${targetKey}.node`
@@ -177,7 +178,7 @@ test('offline verification recomputes OCI archive and runtime publication eviden
   const { verifyReleaseCandidate } = await loadModule('verify-release-candidate.mjs')
   const { verifyRuntimePublication } = await loadModule('verify-runtime-publication.mjs')
   const release = await assembleReleaseCandidate(fixture)
-  const labels = { 'org.opencontainers.image.title': 'polygon-nesting', 'org.opencontainers.image.licenses': 'NOASSERTION', 'org.opencontainers.image.source': 'https://github.com/jfet97/polygon-nesting', 'org.opencontainers.image.version': '0.1.0', 'org.opencontainers.image.revision': release.sourceCommit }
+  const labels = { 'org.opencontainers.image.title': 'polygon-nesting', 'org.opencontainers.image.licenses': 'NOASSERTION', 'org.opencontainers.image.source': 'https://github.com/jfet07-polygon-labs/polygon-nesting', 'org.opencontainers.image.version': '0.1.1', 'org.opencontainers.image.revision': release.sourceCommit }
   const oci = makeOciArchive(fixture.root, labels)
   const evidencePath = join(fixture.root, 'oci-evidence.json')
   const manifestDigestPath = join(fixture.root, 'manifest-digest.txt')

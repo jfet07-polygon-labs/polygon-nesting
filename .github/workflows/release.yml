@@ -9,7 +9,7 @@ on:
         type: string
   push:
     tags:
-      - v0.1.0
+      - v0.1.1
 
 permissions:
   contents: read

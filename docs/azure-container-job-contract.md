@@ -52,12 +52,12 @@ A nonzero exit uses the stable statuses in [the CLI contract](cli-contract.md): 
 
 The Dockerfile rejects every target platform except `linux/amd64`. `scripts/smoke-cli-image.sh` verifies fixture execution, image architecture, the configured non-root user, OCI labels, and copied legal-file hashes. No Linux arm64 support is promised.
 
-Release builds must pass nonempty `ENGINE_VERSION=0.1.0` and a non-`unknown` `SOURCE_COMMIT` build argument. Build and smoke verification are separate commands:
+Release builds must pass nonempty `ENGINE_VERSION=0.1.1` and a non-`unknown` `SOURCE_COMMIT` build argument. Build and smoke verification are separate commands:
 
 ```sh
 revision=$(git rev-parse HEAD)
 docker buildx build --load --platform linux/amd64 \
-  --build-arg ENGINE_VERSION=0.1.0 \
+  --build-arg ENGINE_VERSION=0.1.1 \
   --build-arg SOURCE_COMMIT="$revision" \
   --tag polygon-nesting:smoke .
 ./scripts/smoke-cli-image.sh polygon-nesting:smoke

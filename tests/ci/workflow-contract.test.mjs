@@ -171,7 +171,7 @@ function assertReleaseTriggerContract(workflow) {
     '        type: string',
     '  push:',
     '    tags:',
-    '      - v0.1.0',
+    '      - v0.1.1',
     '',
     ''
   ].join('\n'), 'release triggers must remain limited to manual dispatch and the exact release tag')
@@ -506,7 +506,7 @@ test('main CI builds runtime once, release reuses it, and publication consumes o
   assert.match(publish, /docker login ghcr\.io/)
   assert.match(publish, /registry-url: https:\/\/npm\.pkg\.github\.com/)
   assert.match(publish, /npm publish "\$NPM_TARBALL" --ignore-scripts --registry https:\/\/npm\.pkg\.github\.com/)
-  assert.match(publish, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.0"/)
+  assert.match(publish, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.1"/)
   assert.match(publish, /docker pull "\$IMAGE_REF"/)
   assert.match(publish, /run: >-\n\s+"\$RUNNER_TEMP\/trusted-publication-verifier\/scripts\/smoke-cli-image\.sh"\n\s+"\$IMAGE_REF"/)
   assert.doesNotMatch(publish, /run: scripts\/smoke-cli-image\.sh "\$IMAGE_REF"/)
@@ -541,7 +541,7 @@ test('workflow contracts reject mutable triggers, target roots, and image refere
     /release triggers/
   )
   assert.throws(
-    () => assertReleaseTriggerContract(release.replace('      - v0.1.0', '      - v0.1.0\n      - v*')),
+    () => assertReleaseTriggerContract(release.replace('      - v0.1.1', '      - v0.1.1\n      - v*')),
     /release triggers/
   )
   assert.throws(

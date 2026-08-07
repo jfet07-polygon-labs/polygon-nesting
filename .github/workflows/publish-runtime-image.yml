@@ -25,7 +25,7 @@ jobs:
     environment: publish
     env:
       IMAGE_REPOSITORY: ghcr.io/jfet07-polygon-labs/polygon-nesting
-      IMAGE_TAG: ghcr.io/jfet07-polygon-labs/polygon-nesting:0.1.0
+      IMAGE_TAG: ghcr.io/jfet07-polygon-labs/polygon-nesting:0.1.1
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -154,7 +154,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          NPM_TARBALL="$(node --input-type=module -e "import {readFileSync} from 'node:fs'; import {basename,join} from 'node:path'; const release=JSON.parse(readFileSync('release-candidate/release.json','utf8')); if(release.package?.name!=='@jfet07-polygon-labs/polygon-nesting'||release.package?.version!=='0.1.0'||basename(release.tarball?.fileName??'')!==release.tarball?.fileName) throw new Error('release npm identity is invalid'); process.stdout.write(join('release-candidate',release.tarball.fileName))")"
+          NPM_TARBALL="$(node --input-type=module -e "import {readFileSync} from 'node:fs'; import {basename,join} from 'node:path'; const release=JSON.parse(readFileSync('release-candidate/release.json','utf8')); if(release.package?.name!=='@jfet07-polygon-labs/polygon-nesting'||release.package?.version!=='0.1.1'||basename(release.tarball?.fileName??'')!==release.tarball?.fileName) throw new Error('release npm identity is invalid'); process.stdout.write(join('release-candidate',release.tarball.fileName))")"
           test -f "$NPM_TARBALL"
           NPM_TARBALL="$NPM_TARBALL" node --input-type=module <<'NODE'
           import { createHash } from 'node:crypto'
@@ -167,7 +167,7 @@ jobs:
           }, null, 2)}\n`)
           NODE
           set +e
-          npm view "@jfet07-polygon-labs/polygon-nesting@0.1.0" --json --registry https://npm.pkg.github.com > npm-registry.json 2> npm-registry-error.log
+          npm view "@jfet07-polygon-labs/polygon-nesting@0.1.1" --json --registry https://npm.pkg.github.com > npm-registry.json 2> npm-registry-error.log
           view_status=$?
           set -e
           if [ "$view_status" -ne 0 ]; then
@@ -248,7 +248,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          npm view "@jfet07-polygon-labs/polygon-nesting@0.1.0" --json --registry https://npm.pkg.github.com > published-npm-registry.json
+          npm view "@jfet07-polygon-labs/polygon-nesting@0.1.1" --json --registry https://npm.pkg.github.com > published-npm-registry.json
           node --input-type=module <<'NODE'
           import { readFileSync } from 'node:fs'
 
@@ -262,7 +262,7 @@ jobs:
           rm -rf "$delivery_root"
           mkdir -p "$delivery_root"
           printf '{"private":true}\n' > "$delivery_root/package.json"
-          (cd "$delivery_root" && npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet07-polygon-labs/polygon-nesting@0.1.0")
+          (cd "$delivery_root" && npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet07-polygon-labs/polygon-nesting@0.1.1")
           DELIVERY_ROOT="$delivery_root" node --input-type=module <<'NODE'
           import { readFileSync } from 'node:fs'
           import { createRequire } from 'node:module'
@@ -270,7 +270,7 @@ jobs:
 
           const load = createRequire(join(process.env.DELIVERY_ROOT, 'package.json'))
           const manifest = JSON.parse(readFileSync(join(process.env.DELIVERY_ROOT, 'node_modules/@jfet07-polygon-labs/polygon-nesting/package.json'), 'utf8'))
-          if (manifest.name !== '@jfet07-polygon-labs/polygon-nesting' || manifest.version !== '0.1.0') {
+          if (manifest.name !== '@jfet07-polygon-labs/polygon-nesting' || manifest.version !== '0.1.1') {
             throw new Error('installed npm package identity is invalid')
           }
           load('@jfet07-polygon-labs/polygon-nesting')
