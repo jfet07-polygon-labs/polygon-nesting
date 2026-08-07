@@ -8,6 +8,8 @@ const REPOSITORY_ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url)))
 const ci = readFileSync(join(REPOSITORY_ROOT, '.github', 'workflows', 'ci.yml'), 'utf8')
 const parity = readFileSync(join(REPOSITORY_ROOT, '.github', 'workflows', 'standalone-parity.yml'), 'utf8')
 const release = readFileSync(join(REPOSITORY_ROOT, '.github', 'workflows', 'release.yml'), 'utf8')
+const runtimePublicationRequestPath = join(REPOSITORY_ROOT, '.github', 'workflows', 'request-runtime-image-publication.yml')
+const runtimePublicationRequest = existsSync(runtimePublicationRequestPath) ? readFileSync(runtimePublicationRequestPath, 'utf8') : ''
 const runtimePublicationPath = join(REPOSITORY_ROOT, '.github', 'workflows', 'publish-runtime-image.yml')
 const runtimePublication = existsSync(runtimePublicationPath) ? readFileSync(runtimePublicationPath, 'utf8') : ''
 const rustCacheAction = readFileSync(join(REPOSITORY_ROOT, '.github', 'actions', 'setup-rust-cache', 'action.yml'), 'utf8')
@@ -73,6 +75,10 @@ function assertCiImageContainer(job) {
 
 function assertNoCiImageContainer(job) {
   assert.doesNotMatch(job, /^    container:\s+ghcr\.io\/[^\s]+@sha256:[a-f0-9]{64}$/m)
+}
+
+function assertGitSafeDirectory(job) {
+  assert.match(job, /git config --global --add safe\.directory "\$GITHUB_WORKSPACE"/)
 }
 
 function jobEnvironment(job) {
@@ -338,6 +344,25 @@ function assertRuntimeSourceValidation(job) {
   assert.match(job, /artifact\.expired !== false/)
 }
 
+function assertRuntimePublicationSecurityContract(workflow) {
+  assert.deepEqual(
+    workflowJobs(workflow).map(({ name }) => name),
+    ['publish'],
+    'runtime publication must define only the publish job'
+  )
+  const publish = workflowJob(workflow, 'publish')
+  assert.match(
+    publish,
+    /^    if: \$\{\{ github\.event\.workflow_run\.conclusion == 'success' && github\.event\.workflow_run\.head_branch == 'main' \}\}$/m
+  )
+  assert.match(publish, /^    environment: publish$/m)
+  assert.match(
+    publish,
+    /^          if \(comparison\.base_commit\?\.sha !== sourceCommit \|\| \(comparison\.status !== 'ahead' && comparison\.status !== 'identical'\)\) \{$/m,
+    'runtime publication must execute the exact ancestry rejection condition'
+  )
+}
+
 test('CI only pushes main, tests workflow contracts, and preserves manual runs from cancellation', () => {
   assert.match(ci, /push:\n\s+branches:\n\s+- main/)
   assert.match(ci, /pull_request:/)
@@ -360,6 +385,12 @@ test('compatible Linux jobs use the immutable CI image and native jobs stay outs
   assert.match(workflowJob(parity, 'parity-linux'), /key: linux-x64[\s\S]*target: x86_64-unknown-linux-gnu/)
   assert.doesNotMatch(workflowJob(parity, 'parity-linux'), /actions\/setup-node|dtolnay\/rust-toolchain/)
   assert.match(workflowJob(parity, 'parity-linux'), /PATH: \/opt\/node-v24\.19\.0\/bin:/)
+})
+
+test('CI image container jobs trust the checked-out workspace before invoking Git', () => {
+  assertGitSafeDirectory(workflowJob(ci, 'quality'))
+  assertGitSafeDirectory(workflowJob(ci, 'parity-release-gate'))
+  assertGitSafeDirectory(workflowJob(parity, 'parity-linux'))
 })
 
 test('Rust-producing CI jobs export fresh runner-temp target roots before compilation and use the shared safe cache action', () => {
@@ -412,7 +443,7 @@ test('workflow contract rejects mutable action references, broad cache keys, and
 })
 
 test('every remote action in workflows and the composite is pinned by a full commit SHA', () => {
-  for (const workflow of [ci, parity, release, runtimePublication, rustCacheAction]) assertRemoteActionsPinned(workflow)
+  for (const workflow of [ci, parity, release, runtimePublicationRequest, runtimePublication, rustCacheAction]) assertRemoteActionsPinned(workflow)
   assert.doesNotMatch(release, /publication-placeholder|Publication remains disabled/)
 })
 
@@ -436,9 +467,10 @@ test('image and runtime contracts require immutable references', () => {
 test('release builds runtime and publication consumes only a selected archived release', () => {
   assert.match(release, /docker buildx build[\s\S]*--target runtime/)
   assert.doesNotMatch(release, /publication-placeholder|Publication remains disabled/)
+  assert.notEqual(runtimePublicationRequest, '', 'runtime publication request workflow must exist')
   assert.notEqual(runtimePublication, '', 'runtime publication workflow must exist')
-  const [, triggerBlock] = runtimePublication.match(/^on:\n([\s\S]*?)^permissions:/m) ?? []
-  assert.equal(triggerBlock, [
+  const [, requestTriggerBlock] = runtimePublicationRequest.match(/^on:\n([\s\S]*?)^permissions:/m) ?? []
+  assert.equal(requestTriggerBlock, [
     '  workflow_dispatch:',
     '    inputs:',
     '      release_run_id:',
@@ -448,12 +480,39 @@ test('release builds runtime and publication consumes only a selected archived r
     '',
     ''
   ].join('\n'))
+  assert.equal(runtimePublicationRequest.match(/^permissions:\n([\s\S]*?)^jobs:/m)?.[1], '  contents: read\n\n')
+  assert.doesNotMatch(runtimePublicationRequest, /packages: write|environment: publish/)
+  assert.match(runtimePublicationRequest, /release_run_id must be a positive integer/)
+  assert.match(runtimePublicationRequest, /runtime-image-publication-request/)
+  assert.match(runtimePublicationRequest, /retention-days: 1/)
+
+  const [, triggerBlock] = runtimePublication.match(/^on:\n([\s\S]*?)^permissions:/m) ?? []
+  assert.equal(triggerBlock, [
+    '  workflow_run:',
+    '    workflows:',
+    '      - Request runtime image publication',
+    '    types:',
+    '      - completed',
+    '',
+    ''
+  ].join('\n'))
+  assert.doesNotMatch(runtimePublication, /workflow_dispatch|workflow_call/)
   assert.equal(runtimePublication.match(/^permissions:\n([\s\S]*?)^concurrency:/m)?.[1], '  contents: read\n  actions: read\n  packages: write\n\n')
+  assertRuntimePublicationSecurityContract(runtimePublication)
   const publish = workflowJob(runtimePublication, 'publish')
   assertRuntimeSourceValidation(publish)
+  assert.match(publish, /^    if: \$\{\{ github\.event\.workflow_run\.conclusion == 'success' && github\.event\.workflow_run\.head_branch == 'main' \}\}$/m)
+  assert.match(publish, /run-id: \$\{\{ github\.event\.workflow_run\.id \}\}/)
+  assert.match(publish, /name: runtime-image-publication-request/)
+  assert.match(publish, /find publication-request -type f \| wc -l/)
+  assert.match(publish, /test -f publication-request\/release-run-id\.txt/)
+  assert.match(publish, /RELEASE_RUN_ID=.*release-run-id\.txt/)
+  assert.match(publish, /compare\/\$source_commit\.\.\.main/)
+  assert.match(publish, /comparison\.status !== 'ahead' && comparison\.status !== 'identical'/)
+  assert.match(publish, /comparison\.base_commit\?\.sha !== sourceCommit/)
   assert.match(publish, /^    environment: publish$/m)
   assert.match(publish, /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
-  assert.match(publish, /RELEASE_RUN_ID: \$\{\{ inputs\.release_run_id \}\}/)
+  assert.match(publish, /ref: \$\{\{ github\.event\.repository\.default_branch \}\}/)
   assert.match(publish, /gh api "repos\/\$GITHUB_REPOSITORY\/actions\/runs\/\$RELEASE_RUN_ID"/)
   assert.match(publish, /actions\/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093/)
   assert.match(publish, /name: oci-release-candidate-\$\{\{ steps\.source\.outputs\.source_commit \}\}/)
@@ -507,6 +566,17 @@ test('workflow contracts reject mutable triggers, target roots, and image refere
   assert.throws(
     () => assertRuntimeSourceValidation(runtimePublish.replace("run.path !== '.github/workflows/release.yml'", "run.path !== '.github/workflows/other.yml'")),
     /release\\.yml/
+  )
+  assert.throws(
+    () => assertRuntimePublicationSecurityContract(`${runtimePublication}\n  bypass:\n    runs-on: ubuntu-latest\n    steps:\n      - run: docker push ghcr.io/example/bypass\n`),
+    /only the publish job/
+  )
+  assert.throws(
+    () => assertRuntimePublicationSecurityContract(runtimePublication.replace(
+      "if (comparison.base_commit?.sha !== sourceCommit || (comparison.status !== 'ahead' && comparison.status !== 'identical')) {",
+      "if (false && (comparison.base_commit?.sha !== sourceCommit || (comparison.status !== 'ahead' && comparison.status !== 'identical'))) {"
+    )),
+    /ancestry rejection condition/
   )
   assert.throws(
     () => assertStandaloneParityTriggerContract(parity.replace('  workflow_dispatch:\n', '  pull_request:\n  workflow_dispatch:\n')),

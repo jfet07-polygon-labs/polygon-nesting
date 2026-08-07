@@ -1,12 +1,11 @@
 name: Publish runtime image
 
 on:
-  workflow_dispatch:
-    inputs:
-      release_run_id:
-        description: Successful completed release.yml run containing the immutable runtime OCI archive
-        required: true
-        type: string
+  workflow_run:
+    workflows:
+      - Request runtime image publication
+    types:
+      - completed
 
 permissions:
   contents: read
@@ -21,16 +20,26 @@ concurrency:
 jobs:
   publish:
     name: Publish verified runtime image
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
     runs-on: blacksmith-2vcpu-ubuntu-2404
     environment: publish
     env:
-      RELEASE_RUN_ID: ${{ inputs.release_run_id }}
       IMAGE_REPOSITORY: ghcr.io/jfet07-polygon-labs/polygon-nesting
       IMAGE_TAG: ghcr.io/jfet07-polygon-labs/polygon-nesting:0.1.0
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
+
+      - name: Download publication request
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: runtime-image-publication-request
+          path: publication-request
 
       - name: Validate selected release run and exact artifacts
         id: source
@@ -38,6 +47,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          test "$(find publication-request -type f | wc -l | tr -d ' ')" = 1
+          test -f publication-request/release-run-id.txt
+          RELEASE_RUN_ID="$(tr -d '\r\n' < publication-request/release-run-id.txt)"
+          export RELEASE_RUN_ID
           if ! printf '%s' "$RELEASE_RUN_ID" | grep -Eq '^[1-9][0-9]*$'; then
             printf '%s\n' 'release_run_id must be a positive integer' >&2
             exit 1
@@ -69,7 +82,18 @@ jobs:
           writeFileSync('source-metadata.json', `${JSON.stringify({ sourceCommit: run.head_sha }, null, 2)}\n`)
           NODE
           source_commit="$(node --input-type=module -e "import {readFileSync} from 'node:fs'; process.stdout.write(JSON.parse(readFileSync('source-metadata.json','utf8')).sourceCommit)" )"
+          gh api "repos/$GITHUB_REPOSITORY/compare/$source_commit...main" > source-main-comparison.json
+          SOURCE_COMMIT="$source_commit" node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
+
+          const sourceCommit = process.env.SOURCE_COMMIT
+          const comparison = JSON.parse(readFileSync('source-main-comparison.json', 'utf8'))
+          if (comparison.base_commit?.sha !== sourceCommit || (comparison.status !== 'ahead' && comparison.status !== 'identical')) {
+            throw new Error('release run source commit must be reachable from trusted main')
+          }
+          NODE
           printf 'source_commit=%s\n' "$source_commit" >> "$GITHUB_OUTPUT"
+          printf 'RELEASE_RUN_ID=%s\n' "$RELEASE_RUN_ID" >> "$GITHUB_ENV"
 
       - name: Preserve trusted publication verifier
         run: |
@@ -94,7 +118,7 @@ jobs:
         with:
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
-          run-id: ${{ inputs.release_run_id }}
+          run-id: ${{ env.RELEASE_RUN_ID }}
           name: npm-release-candidate-${{ steps.source.outputs.source_commit }}
           path: release-candidate
 
@@ -103,7 +127,7 @@ jobs:
         with:
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
-          run-id: ${{ inputs.release_run_id }}
+          run-id: ${{ env.RELEASE_RUN_ID }}
           name: oci-release-candidate-${{ steps.source.outputs.source_commit }}
           path: oci-candidate
 

@@ -549,12 +549,10 @@ fn coordinate_intrinsic_shared_archive(
     let short_side_profile_requested = input.settings.optimizer.intrinsic_objective_profile_id
         == crate::domain::IntrinsicObjectiveProfileId::ShortSide;
     let mut archive_diagnostics: Vec<CollisionGeometryDiagnostic> = Vec::new();
-    // TS: `selected.capacityTrace` (`:1221` `...(selected.capacityTrace ===
-    // undefined ? {} : {capacityTrace: selected.capacityTrace})`) --
-    // populated from `capacity.trace` at both `materializeIntrinsicCapacityResult`
-    // call sites below (`:1311`), never left `None` once a capacity endpoint
-    // settles the result. Declared `mut` (not a TS-mirroring `let` typo) so
-    // both call sites can actually set it.
+    /* TS: `selected.capacityTrace` (`:1221`). Full mode captures the detailed
+     * capacity trace at both materialization sites. Off mode keeps only the
+     * scalar diagnostic summary required for semantic diagnostics.
+     */
     let mut capacity_trace: Option<IntrinsicCapacityTrace> = None;
     let mut intrinsic_anytime_scheduler_trace: Option<IntrinsicAnytimeSchedulerTrace> = None;
     let mut focused_complete_reconstruction_trace: Option<
@@ -622,6 +620,7 @@ fn coordinate_intrinsic_shared_archive(
                 routing: IntrinsicCapacityRouting::PreflightProvenImpossible,
                 preflight: &preflight,
                 prefix_sources: &[],
+                capture_diagnostic_trace: diagnostic_trace_enabled,
                 capture_cohesion_shadow: false,
                 scheduled_cold_start: None,
                 admit_warm_prefix_endpoints: false,
@@ -641,7 +640,7 @@ fn coordinate_intrinsic_shared_archive(
         selected = materialize_capacity_result(input, &capacity, free_material_cache)?;
         archive_diagnostics.extend(intrinsic_capacity_diagnostics(&preflight, &capacity));
         if diagnostic_trace_enabled {
-            capacity_trace = Some(capacity.trace.clone());
+            capacity_trace = capacity.trace.clone();
         }
         emit_shared_archive_progress(
             &mut *event_sink,
@@ -1097,6 +1096,7 @@ fn coordinate_intrinsic_shared_archive(
                     routing: IntrinsicCapacityRouting::BoundedCompleteArchiveMiss,
                     preflight: &preflight,
                     prefix_sources: &prefix_sources,
+                    capture_diagnostic_trace: diagnostic_trace_enabled,
                     capture_cohesion_shadow: false,
                     scheduled_cold_start,
                     admit_warm_prefix_endpoints: scheduled_cold_start_present,
@@ -1123,6 +1123,8 @@ fn coordinate_intrinsic_shared_archive(
                     &[];
                     let lane_quanta = capacity
                         .trace
+                        .as_ref()
+                        .expect("diagnostic trace enabled for scheduler projection")
                         .lane_coordinator
                         .as_ref()
                         .map(|lane_coordinator| lane_coordinator.quanta.as_slice())
@@ -1152,7 +1154,7 @@ fn coordinate_intrinsic_shared_archive(
                     .collect();
                     trace.cold_checkpoint_reused = scheduled_cold_checkpoint_reused;
                     trace.warm_prefix_endpoints_admitted =
-                        capacity.trace.warm_prefix_endpoints_admitted;
+                        capacity.diagnostic_summary.warm_prefix_endpoints_admitted;
                     trace.cancellation_reason =
                         Some(IntrinsicAnytimeSchedulerCancellationReason::CompleteCohortMiss);
                     trace.quanta.extend(capacity_quanta);
@@ -1160,7 +1162,7 @@ fn coordinate_intrinsic_shared_archive(
                 selected = materialize_capacity_result(input, &capacity, free_material_cache)?;
                 archive_diagnostics.extend(intrinsic_capacity_diagnostics(&preflight, &capacity));
                 if diagnostic_trace_enabled {
-                    capacity_trace = Some(capacity.trace.clone());
+                    capacity_trace = capacity.trace.clone();
                 }
                 emit_shared_archive_progress(
                     &mut *event_sink,
@@ -1571,22 +1573,22 @@ fn intrinsic_capacity_diagnostics(
             });
         }
     }
-    let trace = &capacity.trace;
+    let summary = &capacity.diagnostic_summary;
     diagnostics.push(CollisionGeometryDiagnostic {
         code: "capacity_subset_settled".to_string(),
         message: format!(
             "settlement {}; placed {}; unplaced {}; origin {}; evaluations {}/{}; pruned-count {}; pruned-material {}; prefixes {}/{}; hash {}",
-            trace.cold_search.settlement.as_str(),
-            trace.selected.objective.placed_count,
-            trace.selected.unplaced_count,
-            capacity_endpoint_origin_str(trace.selected.objective.origin),
-            trace.cold_search.consumed_placement_evaluations,
-            trace.cold_search.placement_evaluation_cap,
-            trace.cold_search.pruned_by_attainable_count,
-            trace.cold_search.pruned_by_attainable_material,
-            trace.prefixes.fitting_count,
-            trace.prefixes.captured_count,
-            trace.selected.objective.canonical_geometry_hash,
+            summary.settlement.as_str(),
+            summary.selected_objective.placed_count,
+            summary.unplaced_count,
+            capacity_endpoint_origin_str(summary.selected_objective.origin),
+            summary.consumed_placement_evaluations,
+            summary.placement_evaluation_cap,
+            summary.pruned_by_attainable_count,
+            summary.pruned_by_attainable_material,
+            summary.fitting_prefix_count,
+            summary.captured_prefix_count,
+            summary.selected_objective.canonical_geometry_hash,
         ),
         piece_id: None,
     });

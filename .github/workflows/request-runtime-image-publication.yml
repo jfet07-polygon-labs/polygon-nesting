@@ -1,0 +1,36 @@
+name: Request runtime image publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_run_id:
+        description: Successful completed release.yml run containing the immutable runtime OCI archive
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  request:
+    name: Record runtime image publication request
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    steps:
+      - name: Validate selected release run ID
+        env:
+          RELEASE_RUN_ID: ${{ inputs.release_run_id }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$RELEASE_RUN_ID" | grep -Eq '^[1-9][0-9]*$'; then
+            printf '%s\n' 'release_run_id must be a positive integer' >&2
+            exit 1
+          fi
+          printf '%s\n' "$RELEASE_RUN_ID" > release-run-id.txt
+
+      - name: Upload publication request
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: runtime-image-publication-request
+          path: release-run-id.txt
+          if-no-files-found: error
+          retention-days: 1

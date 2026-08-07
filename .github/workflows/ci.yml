@@ -29,6 +29,8 @@ jobs:
     container: ghcr.io/jfet07-polygon-labs/polygon-nesting-ci@sha256:66a7ca95c13074714135ad840465834e60797ddd45d13d130e0e5c6077b950f3
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Trust checked-out workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: ./.github/actions/setup-rust-cache
       - name: Prepare fresh Cargo target directory
         shell: bash
@@ -225,6 +227,8 @@ jobs:
       SOURCE_COMMIT: ${{ github.sha }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Trust checked-out workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Require and authorize the aggregate parity run
         env:
           GH_TOKEN: ${{ github.token }}

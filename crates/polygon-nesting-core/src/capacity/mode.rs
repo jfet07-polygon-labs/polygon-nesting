@@ -894,10 +894,25 @@ pub struct IntrinsicCapacityTrace {
     pub runtime_ms: f64,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct IntrinsicCapacityDiagnosticSummary {
+    pub settlement: crate::capacity::search::IntrinsicCapacitySettlement,
+    pub selected_objective: IntrinsicCapacityObjective,
+    pub unplaced_count: f64,
+    pub consumed_placement_evaluations: f64,
+    pub placement_evaluation_cap: f64,
+    pub pruned_by_attainable_count: f64,
+    pub pruned_by_attainable_material: f64,
+    pub fitting_prefix_count: f64,
+    pub captured_prefix_count: f64,
+    pub warm_prefix_endpoints_admitted: bool,
+}
+
 /// TS: `intrinsicCapacityMode.ts:329-333` `IntrinsicCapacityModeResult`.
 pub struct IntrinsicCapacityModeResult {
     pub endpoint: IntrinsicCapacityEndpoint,
-    pub trace: IntrinsicCapacityTrace,
+    pub diagnostic_summary: IntrinsicCapacityDiagnosticSummary,
+    pub trace: Option<IntrinsicCapacityTrace>,
     /// Diagnostic-only; always `None` since this port never sets
     /// `capture_phase_timings` (see this module's top doc).
     pub phase_timings: Option<crate::capacity::search::IntrinsicCapacitySearchPhaseTimings>,
@@ -914,6 +929,8 @@ pub struct RunIntrinsicCapacityModeInput<'a> {
     /// Committed direct-constructor states; empty when complete mode was
     /// bypassed.
     pub prefix_sources: &'a [IntrinsicCapacityPrefixSource],
+    /// Builds the detailed output-only diagnostic trace.
+    pub capture_diagnostic_trace: bool,
     /// Runs one independent generic topology frontier without selecting it.
     pub capture_cohesion_shadow: bool,
     /// Existing protected cold work produced before complete-cohort
@@ -1884,6 +1901,10 @@ fn run_intrinsic_capacity_cohesion_shadow<'a>(
 // `runIntrinsicCapacityMode` (`intrinsicCapacityMode.ts:1143-1411`).
 // ===========================================================================
 
+fn capture_diagnostic_trace<T>(enabled: bool, build: impl FnOnce() -> T) -> Option<T> {
+    enabled.then(build)
+}
+
 /// TS: `intrinsicCapacityMode.ts:1143-1411` `runIntrinsicCapacityMode`. Runs
 /// intrinsic-capacity-v1: terminalize fitting complete-search prefixes into
 /// zero-evaluation incumbents, run the empty-start cold subset search, and
@@ -2008,8 +2029,6 @@ pub fn run_intrinsic_capacity_mode<'a>(
         None
     };
 
-    let warm_prefix_lanes: Option<Vec<IntrinsicCapacityWarmPrefixLaneTrace>> =
-        coordinated.as_ref().map(|c| c.warm_prefix_lanes.clone());
     let warm_endpoints: Vec<IntrinsicCapacityEndpoint> = coordinated
         .as_ref()
         .map(|c| c.warm_endpoints.clone())
@@ -2112,72 +2131,84 @@ pub fn run_intrinsic_capacity_mode<'a>(
         }));
     }
 
-    let prefix_incumbent =
-        terminalization
-            .incumbent
-            .as_ref()
-            .map(|incumbent| IntrinsicCapacityIncumbentTrace {
-                source_role: incumbent.source_role.clone(),
-                prefix_depth: incumbent.prefix_depth,
-                placed_count: incumbent.metrics.placed_count,
-                placed_material_area_mm2: incumbent.metrics.placed_material_area_mm2,
-                selected_rotation_deg: incumbent.selected_rotation_deg,
-                canonical_geometry_hash: incumbent.canonical_geometry_hash.clone(),
-            });
-
-    let quality_warm_prefix_trace = coordinated.as_ref().map(|c| {
-        let mut trace = c.quality_warm_prefix.clone();
-        trace.output_influence = if quality_improves_placed_count
-            && quality_endpoint.as_ref().is_some_and(|endpoint| {
-                endpoint.canonical_geometry_hash == selected.canonical_geometry_hash
-            }) {
-            QualityWarmPrefixOutputInfluence::StrictCountImprovement
-        } else {
-            QualityWarmPrefixOutputInfluence::None
-        };
-        trace
-    });
-
     let selected_objective = intrinsic_capacity_objective(&selected);
-    let trace = IntrinsicCapacityTrace {
-        routing: input.routing,
-        preflight: input.preflight.clone(),
-        prefixes: IntrinsicCapacityPrefixTrace {
-            captured_count: terminalization.captured_count,
-            fitting_count: terminalization.fitting_count,
-            rejected_count: terminalization.rejected_count,
-            terminalized_count: terminalization.endpoints.len() as f64,
-            descriptors: descriptors
-                .iter()
-                .map(|descriptor| IntrinsicCapacityPrefixDescriptorSummary {
-                    role: descriptor.role.as_str().to_string(),
-                    depth: descriptor.depth,
-                })
-                .collect(),
-        },
-        prefix_incumbent,
-        cold_search: cold_search.trace.clone(),
-        warm_prefix_lanes,
+    let diagnostic_summary = IntrinsicCapacityDiagnosticSummary {
+        settlement: cold_search.trace.settlement,
+        selected_objective: selected_objective.clone(),
+        unplaced_count: selected.unplaced_prepared_ids.len() as f64,
+        consumed_placement_evaluations: cold_search.trace.consumed_placement_evaluations,
+        placement_evaluation_cap: cold_search.trace.placement_evaluation_cap,
+        pruned_by_attainable_count: cold_search.trace.pruned_by_attainable_count,
+        pruned_by_attainable_material: cold_search.trace.pruned_by_attainable_material,
+        fitting_prefix_count: terminalization.fitting_count,
+        captured_prefix_count: terminalization.captured_count,
         warm_prefix_endpoints_admitted: input.admit_warm_prefix_endpoints,
-        cohesion_shadow: cohesion_shadow.as_ref().map(|shadow| shadow.trace.clone()),
-        quality_warm_prefix: quality_warm_prefix_trace,
-        lane_coordinator: coordinated.as_ref().map(|c| c.trace.clone()),
-        selected: IntrinsicCapacitySelectionTrace {
-            unplaced_count: selected.unplaced_prepared_ids.len() as f64,
-            placed_material_area_mm2: selected.metrics.placed_material_area_mm2,
-            selected_rotation_deg: selected.selected_rotation_deg,
-            objective: selected_objective,
-        },
-        preflight_runtime_ms: input.preflight_runtime_ms,
-        complete_archive_runtime_ms: input.complete_archive_runtime_ms,
-        prefix_terminalization_ms,
-        cold_search_ms,
-        runtime_ms: js_math::max(0.0, started_at.elapsed().as_secs_f64() * 1000.0),
     };
+    let trace =
+        capture_diagnostic_trace(input.capture_diagnostic_trace, || {
+            let prefix_incumbent = terminalization.incumbent.as_ref().map(|incumbent| {
+                IntrinsicCapacityIncumbentTrace {
+                    source_role: incumbent.source_role.clone(),
+                    prefix_depth: incumbent.prefix_depth,
+                    placed_count: incumbent.metrics.placed_count,
+                    placed_material_area_mm2: incumbent.metrics.placed_material_area_mm2,
+                    selected_rotation_deg: incumbent.selected_rotation_deg,
+                    canonical_geometry_hash: incumbent.canonical_geometry_hash.clone(),
+                }
+            });
+            let quality_warm_prefix_trace = coordinated.as_ref().map(|c| {
+                let mut trace = c.quality_warm_prefix.clone();
+                trace.output_influence = if quality_improves_placed_count
+                    && quality_endpoint.as_ref().is_some_and(|endpoint| {
+                        endpoint.canonical_geometry_hash == selected.canonical_geometry_hash
+                    }) {
+                    QualityWarmPrefixOutputInfluence::StrictCountImprovement
+                } else {
+                    QualityWarmPrefixOutputInfluence::None
+                };
+                trace
+            });
+            IntrinsicCapacityTrace {
+                routing: input.routing,
+                preflight: input.preflight.clone(),
+                prefixes: IntrinsicCapacityPrefixTrace {
+                    captured_count: terminalization.captured_count,
+                    fitting_count: terminalization.fitting_count,
+                    rejected_count: terminalization.rejected_count,
+                    terminalized_count: terminalization.endpoints.len() as f64,
+                    descriptors: descriptors
+                        .iter()
+                        .map(|descriptor| IntrinsicCapacityPrefixDescriptorSummary {
+                            role: descriptor.role.as_str().to_string(),
+                            depth: descriptor.depth,
+                        })
+                        .collect(),
+                },
+                prefix_incumbent,
+                cold_search: cold_search.trace.clone(),
+                warm_prefix_lanes: coordinated.as_ref().map(|c| c.warm_prefix_lanes.clone()),
+                warm_prefix_endpoints_admitted: input.admit_warm_prefix_endpoints,
+                cohesion_shadow: cohesion_shadow.as_ref().map(|shadow| shadow.trace.clone()),
+                quality_warm_prefix: quality_warm_prefix_trace,
+                lane_coordinator: coordinated.as_ref().map(|c| c.trace.clone()),
+                selected: IntrinsicCapacitySelectionTrace {
+                    unplaced_count: selected.unplaced_prepared_ids.len() as f64,
+                    placed_material_area_mm2: selected.metrics.placed_material_area_mm2,
+                    selected_rotation_deg: selected.selected_rotation_deg,
+                    objective: selected_objective,
+                },
+                preflight_runtime_ms: input.preflight_runtime_ms,
+                complete_archive_runtime_ms: input.complete_archive_runtime_ms,
+                prefix_terminalization_ms,
+                cold_search_ms,
+                runtime_ms: js_math::max(0.0, started_at.elapsed().as_secs_f64() * 1000.0),
+            }
+        });
 
     Ok(IntrinsicCapacityModeResult {
         phase_timings: cold_search.phase_timings,
         endpoint: selected,
+        diagnostic_summary,
         trace,
     })
 }
@@ -2185,6 +2216,16 @@ pub fn run_intrinsic_capacity_mode<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn disabled_diagnostic_trace_does_not_invoke_the_builder() {
+        let built = std::cell::Cell::new(false);
+        let trace: Option<()> = capture_diagnostic_trace(false, || {
+            built.set(true);
+        });
+        assert!(trace.is_none());
+        assert!(!built.get());
+    }
 
     #[test]
     fn quality_gate_admits_only_a_strict_placed_count_improvement() {
