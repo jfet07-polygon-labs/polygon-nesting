@@ -73,13 +73,43 @@ fn run_main() -> ExitStatus {
         Ok(cli) => cli,
         Err(_) => return recover_malformed_invocation(),
     };
-    run_parsed(cli, |control| {
-        let signal_control = Arc::clone(&control);
-        ctrlc::set_handler(move || {
-            signal_control.cancel(CancelReason::Cancelled);
+    run_parsed(cli, install_signal_handlers)
+}
+
+#[cfg(unix)]
+fn install_signal_handlers(control: Arc<CancellationControl>) -> bool {
+    use signal_hook_registry::{register, unregister};
+
+    let interrupt_control = Arc::clone(&control);
+    /* SAFETY: The handler performs only a lock-free atomic state transition. */
+    let interrupt = unsafe {
+        register(nix::libc::SIGINT, move || {
+            interrupt_control.cancel(CancelReason::Cancelled);
         })
-        .is_ok()
+    };
+    let Ok(interrupt) = interrupt else {
+        return false;
+    };
+
+    /* SAFETY: The handler performs only a lock-free atomic state transition. */
+    let termination = unsafe {
+        register(nix::libc::SIGTERM, move || {
+            control.cancel(CancelReason::Cancelled);
+        })
+    };
+    if termination.is_err() {
+        unregister(interrupt);
+        return false;
+    }
+    true
+}
+
+#[cfg(not(unix))]
+fn install_signal_handlers(control: Arc<CancellationControl>) -> bool {
+    ctrlc::set_handler(move || {
+        control.cancel(CancelReason::Cancelled);
     })
+    .is_ok()
 }
 
 fn run_parsed(
