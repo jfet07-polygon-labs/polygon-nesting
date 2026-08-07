@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import test from 'node:test'
@@ -153,16 +153,65 @@ test('offline verification recomputes OCI archive evidence after Task112 parity 
   const fixture = await makeFixture(t)
   const { assembleReleaseCandidate } = await loadModule('assemble-release-candidate.mjs')
   const { verifyReleaseCandidate } = await loadModule('verify-release-candidate.mjs')
+  const { verifyRuntimePublication } = await loadModule('verify-runtime-publication.mjs')
   const release = await assembleReleaseCandidate({ ...fixture, sourceCommit: fixture.parity.sourceRevision, trustedSourceRoot: fixture.parity.trustedSourceRoot })
   const labels = { 'org.opencontainers.image.title': 'polygon-nesting', 'org.opencontainers.image.licenses': 'NOASSERTION', 'org.opencontainers.image.source': 'https://github.com/jfet97/polygon-nesting', 'org.opencontainers.image.version': '0.1.0', 'org.opencontainers.image.revision': release.sourceCommit }
   const oci = makeOciArchive(fixture.root, labels)
   const evidencePath = join(fixture.root, 'oci-evidence.json')
+  const manifestDigestPath = join(fixture.root, 'manifest-digest.txt')
+  writeFileSync(manifestDigestPath, `${oci.manifestDigest}\n`)
   writeJson(evidencePath, {
     schemaVersion: 1, manifestDigest: oci.manifestDigest, archiveSha256: sha256(readFileSync(oci.archivePath)),
     immutableImageReference: `127.0.0.1:5000/polygon-nesting@${oci.manifestDigest}`, platform: 'linux/amd64', sourceCommit: release.sourceCommit, nonRootSmoke: true,
     labels, legalHashes: release.legalHashes
   })
   await verifyReleaseCandidate({ candidateDirectory: fixture.outputDirectory, trustedSourceRoot: fixture.parity.trustedSourceRoot, ociArchivePath: oci.archivePath, ociEvidencePath: evidencePath })
+  assert.deepEqual(await verifyRuntimePublication({
+    candidateDirectory: fixture.outputDirectory,
+    trustedSourceRoot: fixture.parity.trustedSourceRoot,
+    ociArchivePath: oci.archivePath,
+    ociEvidencePath: evidencePath,
+    manifestDigestPath,
+    sourceCommit: release.sourceCommit,
+    sourceRunId: '123'
+  }), {
+    archiveSha256: sha256(readFileSync(oci.archivePath)),
+    manifestDigest: oci.manifestDigest,
+    immutableImageReference: `127.0.0.1:5000/polygon-nesting@${oci.manifestDigest}`,
+    sourceCommit: release.sourceCommit,
+    sourceRunId: '123'
+  })
+  const evidenceLink = join(fixture.root, 'oci-evidence-link.json')
+  symlinkSync(evidencePath, evidenceLink)
+  await assert.rejects(verifyRuntimePublication({
+    candidateDirectory: fixture.outputDirectory,
+    trustedSourceRoot: fixture.parity.trustedSourceRoot,
+    ociArchivePath: oci.archivePath,
+    ociEvidencePath: evidenceLink,
+    manifestDigestPath,
+    sourceCommit: release.sourceCommit,
+    sourceRunId: '123'
+  }), /OCI evidence must be a regular file/)
+  unlinkSync(evidenceLink)
+  await assert.rejects(verifyRuntimePublication({
+    candidateDirectory: fixture.outputDirectory,
+    trustedSourceRoot: fixture.parity.trustedSourceRoot,
+    ociArchivePath: oci.archivePath,
+    ociEvidencePath: evidencePath,
+    manifestDigestPath,
+    sourceCommit: '0'.repeat(40),
+    sourceRunId: '123'
+  }), /release sourceCommit/)
+  writeFileSync(oci.archivePath, Buffer.concat([readFileSync(oci.archivePath), Buffer.from('mutation')]))
+  await assert.rejects(verifyRuntimePublication({
+    candidateDirectory: fixture.outputDirectory,
+    trustedSourceRoot: fixture.parity.trustedSourceRoot,
+    ociArchivePath: oci.archivePath,
+    ociEvidencePath: evidencePath,
+    manifestDigestPath,
+    sourceCommit: release.sourceCommit,
+    sourceRunId: '123'
+  }), /OCI archive SHA-256/)
 })
 
 test('normal PR quality checks run the complete parity and release contract suite', () => {

@@ -18,6 +18,15 @@ polygon-nesting run \
 
 The input file is one protocol v1 `EngineRequest` JSON document. The adapter decodes it with `polygon_nesting_protocol::decode_request` before calling `polygon_nesting_core::run`. The output is exactly the protocol `encode_outcome` envelope. On Unix, each write uses the persistent `.polygon-nesting-staging` root in the destination parent. The root is opened with `O_NOFOLLOW` and must be a directory owned by the effective user with exact mode `0700`. Each artifact is written in a fresh exclusive per-job directory inside the retained root, synchronized, and renamed into the retained destination directory handle. Per-job cleanup is relative to the retained root and preserves a public replacement of the root path. This boundary excludes malicious mutation by the same user after validation. Consumers must treat a nonzero process exit as an unsuccessful job even if an earlier artifact exists.
 
+The protocol request accepts `diagnosticTraceMode: "full"` or `"off"`; omission is equivalent to `"full"`. Off mode omits only `capacityTrace`, `intrinsicAnytimeSchedulerTrace`, `focusedCompleteReconstructionTrace`, `intrinsicShortSideObserverTrace`, and `intrinsicShortSidePairFoldTrace`. It remains independent of `historyMode`: a request that intentionally disables both can include:
+
+```json
+{
+  "historyMode": "off",
+  "diagnosticTraceMode": "off"
+}
+```
+
 When requested, the event artifact is newline-delimited JSON. Every line is one protocol `encode_event` value. Core execution owns the zero-based ordinals, and the CLI preserves their emitted order without appending a terminal transport event.
 
 `SIGINT` and `SIGTERM` request cooperative cancellation through the core `CancellationControl`. SIGTERM uses the same first-writer cancellation control and maps to `CancelReason::Cancelled`.

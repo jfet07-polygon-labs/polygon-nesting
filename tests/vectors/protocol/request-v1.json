@@ -72,5 +72,6 @@
       ]
     }
   },
-  "historyMode": "off"
+  "historyMode": "off",
+  "diagnosticTraceMode": "full"
 }

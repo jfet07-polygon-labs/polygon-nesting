@@ -28,8 +28,14 @@ do
   grep -Fqx "$pattern" "$dockerignore"
 done
 
+test ! -e "$repository_root/.github/ci/Dockerfile"
+grep -Fqx 'FROM rust:1.95.0-bookworm@sha256:6258907abe69656e41cd992e0b705cdcfabcbbe3db374f92ed2d47121282d4a1 AS base' "$dockerfile"
+grep -Fqx 'FROM base AS ci' "$dockerfile"
+grep -Fqx 'FROM base AS builder' "$dockerfile"
+grep -Fqx 'FROM debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818 AS runtime' "$dockerfile"
 grep -Fqx 'ARG TARGETPLATFORM' "$dockerfile"
 grep -Fqx 'RUN test "$TARGETPLATFORM" = "linux/amd64"' "$dockerfile"
+grep -Fq 'RUN cargo build --release --locked -p polygon-nesting-cli' "$dockerfile"
 grep -Fqx 'ARG ENGINE_VERSION' "$dockerfile"
 grep -Fqx 'ARG SOURCE_COMMIT' "$dockerfile"
 grep -Fq 'test "$ENGINE_VERSION" = "0.1.0"' "$dockerfile"

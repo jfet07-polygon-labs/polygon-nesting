@@ -20,6 +20,7 @@ request.pieces = request.pieces.slice(0, 1);
 request.sourcePieces = request.sourcePieces.slice(0, 1);
 request.options.timeoutMs = 1000;
 request.options.historyMode = 'stream';
+request.options.diagnosticTraceMode = 'full';
 
 function terminalOnlyCallback(json) {
   const frame = JSON.parse(json);

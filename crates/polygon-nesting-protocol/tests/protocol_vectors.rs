@@ -1,12 +1,13 @@
 use polygon_nesting_protocol::result::CapacityLaneCoordinatorTrace;
 use polygon_nesting_protocol::{
     decode_request, encode_event, encode_outcome, encode_request, ArchiveIneligibilityReason,
-    CapacityTrace, EngineError, EngineErrorCode, EngineEvent, EngineOutcome, EngineProfile,
-    EngineResult, ExactDecimalString, ExecutionDiagnostics, FocusedCompleteReconstructionTrace,
-    FreeMaterialSnapshot, IntrinsicAnytimeSchedulerTrace, IntrinsicShortSideObserverTrace,
-    IntrinsicShortSidePairFoldTrace, IrregularTransformReason, LayoutScoreSummary, PortfolioPhase,
-    PortfolioProgress, PortfolioResult, ProtocolError, ProtocolVersion, SequencedEngineEvent,
-    SnapshotPreparedPiece, StateSnapshot, EXACT_DECIMAL_FIELD_NAMES, PROTOCOL_VERSION,
+    CapacityTrace, DiagnosticTraceMode, EngineError, EngineErrorCode, EngineEvent, EngineOutcome,
+    EngineProfile, EngineResult, ExactDecimalString, ExecutionDiagnostics,
+    FocusedCompleteReconstructionTrace, FreeMaterialSnapshot, IntrinsicAnytimeSchedulerTrace,
+    IntrinsicShortSideObserverTrace, IntrinsicShortSidePairFoldTrace, IrregularTransformReason,
+    LayoutScoreSummary, PortfolioPhase, PortfolioProgress, PortfolioResult, ProtocolError,
+    ProtocolVersion, SequencedEngineEvent, SnapshotPreparedPiece, StateSnapshot,
+    EXACT_DECIMAL_FIELD_NAMES, PROTOCOL_VERSION,
 };
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -131,6 +132,46 @@ fn frozen_vector_records_portable_source_provenance() {
 fn protocol_version_one_is_current() {
     assert_eq!(PROTOCOL_VERSION, 1);
     assert_eq!(ProtocolVersion::CURRENT, ProtocolVersion::new(1));
+}
+
+#[test]
+fn diagnostic_trace_mode_defaults_to_full_when_omitted() {
+    let mut request = request_value();
+    request
+        .as_object_mut()
+        .expect("request object")
+        .remove("diagnosticTraceMode");
+
+    let decoded = decode_value(&request).expect("omitted diagnostic trace mode decodes");
+    assert_eq!(decoded.diagnostic_trace_mode, DiagnosticTraceMode::Full);
+}
+
+#[test]
+fn diagnostic_trace_mode_round_trips_supported_wire_values() {
+    for mode in [
+        ("full", DiagnosticTraceMode::Full),
+        ("off", DiagnosticTraceMode::Off),
+    ] {
+        let mut request = request_value();
+        request["diagnosticTraceMode"] = json!(mode.0);
+        let decoded = decode_value(&request).expect("supported diagnostic trace mode decodes");
+        assert_eq!(decoded.diagnostic_trace_mode, mode.1);
+        let encoded: Value = serde_json::from_slice(
+            &encode_request(&decoded).expect("supported diagnostic trace mode re-encodes"),
+        )
+        .expect("encoded request parses");
+        assert_eq!(encoded["diagnosticTraceMode"], json!(mode.0));
+    }
+}
+
+#[test]
+fn diagnostic_trace_mode_rejects_unknown_wire_values() {
+    let mut request = request_value();
+    request["diagnosticTraceMode"] = json!("summary");
+    assert!(matches!(
+        decode_value(&request),
+        Err(ProtocolError::MalformedInput { .. })
+    ));
 }
 
 #[test]

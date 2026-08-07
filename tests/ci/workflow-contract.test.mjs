@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
@@ -8,7 +8,10 @@ const REPOSITORY_ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url)))
 const ci = readFileSync(join(REPOSITORY_ROOT, '.github', 'workflows', 'ci.yml'), 'utf8')
 const parity = readFileSync(join(REPOSITORY_ROOT, '.github', 'workflows', 'standalone-parity.yml'), 'utf8')
 const release = readFileSync(join(REPOSITORY_ROOT, '.github', 'workflows', 'release.yml'), 'utf8')
+const runtimePublicationPath = join(REPOSITORY_ROOT, '.github', 'workflows', 'publish-runtime-image.yml')
+const runtimePublication = existsSync(runtimePublicationPath) ? readFileSync(runtimePublicationPath, 'utf8') : ''
 const rustCacheAction = readFileSync(join(REPOSITORY_ROOT, '.github', 'actions', 'setup-rust-cache', 'action.yml'), 'utf8')
+const CI_IMAGE_REFERENCE = 'ghcr.io/jfet07-polygon-labs/polygon-nesting-ci@sha256:66a7ca95c13074714135ad840465834e60797ddd45d13d130e0e5c6077b950f3'
 
 function remoteActionReferences(workflow) {
   return [...workflow.matchAll(/^\s*uses:\s+([^\s]+)\s*$/gm)]
@@ -62,6 +65,14 @@ function workflowJob(workflow, name) {
   const job = workflowJobs(workflow).find((candidate) => candidate.name === name)?.job
   assert.notEqual(job, undefined, `workflow must define the ${name} job`)
   return job
+}
+
+function assertCiImageContainer(job) {
+  assert.match(job, new RegExp(`^    container: ${CI_IMAGE_REFERENCE.replaceAll('.', '\\.')}$`, 'm'))
+}
+
+function assertNoCiImageContainer(job) {
+  assert.doesNotMatch(job, /^    container:\s+ghcr\.io\/[^\s]+@sha256:[a-f0-9]{64}$/m)
 }
 
 function jobEnvironment(job) {
@@ -226,7 +237,7 @@ function assertCiRunnerContract(workflow) {
 }
 
 function assertReleaseRunnerContract(workflow) {
-  for (const jobName of ['authorize-source', 'resolve-ci', 'candidate', 'oci', 'publication-placeholder']) {
+  for (const jobName of ['authorize-source', 'resolve-ci', 'candidate', 'oci']) {
     assert.match(workflowJob(workflow, jobName), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
   }
 }
@@ -238,10 +249,12 @@ function assertDistinctCargoTargetRoots(ciWorkflow, parityWorkflow) {
   const native = workflowJob(ciWorkflow, 'native')
   const intel = workflowJob(ciWorkflow, 'native-intel-release')
   const parityJob = workflowJob(parityWorkflow, 'parity')
+  const parityLinuxJob = workflowJob(parityWorkflow, 'parity-linux')
   assertFreshTargetDirectory(quality, '$RUNNER_TEMP/cargo-target-quality', /cargo clippy --workspace/)
   assertFreshTargetDirectory(native, '$RUNNER_TEMP/cargo-target-native-${TARGET_KEY}', /npm run build:release/)
   assertFreshTargetDirectory(intel, '$RUNNER_TEMP/cargo-target-native-darwin-x64', /npm run build:release/)
   assertFreshTargetDirectory(parityJob, '$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}', /cargo build --locked --release/)
+  assertFreshTargetDirectory(parityLinuxJob, '$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}', /cargo build --locked --release/)
 
   assert.deepEqual(targetDirectoryAssignments(quality), [
     '$RUNNER_TEMP/cargo-target-quality'
@@ -255,9 +268,15 @@ function assertDistinctCargoTargetRoots(ciWorkflow, parityWorkflow) {
   assert.deepEqual(targetDirectoryAssignments(parityJob), [
     '$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}'
   ], 'parity job Cargo target root must be exact')
+  assert.deepEqual(targetDirectoryAssignments(parityLinuxJob), [
+    '$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}'
+  ], 'Linux parity job Cargo target root must be exact')
 
   const nativeRoots = [...matrixValues(native, 'target-key').map((key) => `cargo-target-native-${key}`), 'cargo-target-native-darwin-x64']
-  const parityRoots = matrixValues(parityJob, 'key').map((key) => `cargo-target-parity-${key}`)
+  const parityRoots = [
+    ...matrixValues(parityLinuxJob, 'key'),
+    ...matrixValues(parityJob, 'key')
+  ].map((key) => `cargo-target-parity-${key}`)
   assert.deepEqual(nativeRoots, [
     'cargo-target-native-linux-x64',
     'cargo-target-native-win32-x64',
@@ -277,9 +296,10 @@ function assertDistinctCargoTargetRoots(ciWorkflow, parityWorkflow) {
 function assertPinnedDockerBaseImages(dockerfile) {
   const images = [...dockerfile.matchAll(/^FROM\s+([^\s]+)(?:\s+AS\s+\w+)?$/gm)]
     .map(([, image]) => image)
-  assert.equal(images.length, 2, 'Dockerfile must define exactly two base images')
-  for (const image of images) assert.match(image, /^[^@\s]+@sha256:[a-f0-9]{64}$/i, `Docker base image requires a digest: ${image}`)
-  assert.deepEqual(images, [
+  const externalImages = images.filter((image) => image.includes('@sha256:'))
+  assert.equal(externalImages.length, 2, 'Dockerfile must define exactly two external base images with digests')
+  for (const image of externalImages) assert.match(image, /^[^@\s]+@sha256:[a-f0-9]{64}$/i, `Docker base image requires a digest: ${image}`)
+  assert.deepEqual(externalImages, [
     'rust:1.95.0-bookworm@sha256:6258907abe69656e41cd992e0b705cdcfabcbbe3db374f92ed2d47121282d4a1',
     'debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818'
   ])
@@ -306,6 +326,18 @@ function assertPrivateCiImagesPinned(workflow) {
   }
 }
 
+function assertRuntimeSourceValidation(job) {
+  assert.match(job, /run\.path !== '\.github\/workflows\/release\.yml'/)
+  assert.match(job, /run\.status !== 'completed'/)
+  assert.match(job, /run\.conclusion !== 'success'/)
+  assert.match(job, /run\.repository\?\.full_name/)
+  assert.match(job, /run\.head_sha/)
+  assert.match(job, /inventory\.total_count !== expected\.length/)
+  assert.match(job, /npm-release-candidate-\$\{run\.head_sha\}/)
+  assert.match(job, /oci-release-candidate-\$\{run\.head_sha\}/)
+  assert.match(job, /artifact\.expired !== false/)
+}
+
 test('CI only pushes main, tests workflow contracts, and preserves manual runs from cancellation', () => {
   assert.match(ci, /push:\n\s+branches:\n\s+- main/)
   assert.match(ci, /pull_request:/)
@@ -313,6 +345,21 @@ test('CI only pushes main, tests workflow contracts, and preserves manual runs f
   assert.match(ci, /concurrency:\n\s+group:.*github\.event_name/s)
   assert.match(ci, /cancel-in-progress:\s*\$\{\{ github\.event_name != 'workflow_dispatch' \}\}/)
   assert.match(ci, /tests\/ci\/\*\.test\.mjs/)
+})
+
+test('compatible Linux jobs use the immutable CI image and native jobs stay outside it', () => {
+  assertCiImageContainer(workflowJob(ci, 'quality'))
+  assertCiImageContainer(workflowJob(ci, 'parity-release-gate'))
+  assertCiImageContainer(workflowJob(parity, 'parity-linux'))
+  assertNoCiImageContainer(workflowJob(ci, 'oci-smoke'))
+  assertNoCiImageContainer(workflowJob(ci, 'native'))
+  assertNoCiImageContainer(workflowJob(ci, 'native-intel-release'))
+  assertNoCiImageContainer(workflowJob(parity, 'parity'))
+  assertNoCiImageContainer(workflowJob(parity, 'aggregate'))
+  assertNoCiImageContainer(workflowJob(parity, 'require-all-targets'))
+  assert.match(workflowJob(parity, 'parity-linux'), /key: linux-x64[\s\S]*target: x86_64-unknown-linux-gnu/)
+  assert.doesNotMatch(workflowJob(parity, 'parity-linux'), /actions\/setup-node|dtolnay\/rust-toolchain/)
+  assert.match(workflowJob(parity, 'parity-linux'), /PATH: \/opt\/node-v24\.19\.0\/bin:/)
 })
 
 test('Rust-producing CI jobs export fresh runner-temp target roots before compilation and use the shared safe cache action', () => {
@@ -365,9 +412,8 @@ test('workflow contract rejects mutable action references, broad cache keys, and
 })
 
 test('every remote action in workflows and the composite is pinned by a full commit SHA', () => {
-  for (const workflow of [ci, parity, release, rustCacheAction]) assertRemoteActionsPinned(workflow)
-  assert.match(release, /Publication remains disabled/)
-  assert.match(release, /NODE_AUTH_TOKEN/)
+  for (const workflow of [ci, parity, release, runtimePublication, rustCacheAction]) assertRemoteActionsPinned(workflow)
+  assert.doesNotMatch(release, /publication-placeholder|Publication remains disabled/)
 })
 
 test('CI, release, and standalone parity trigger, runner, and Cargo target-root contracts are exact', () => {
@@ -387,8 +433,61 @@ test('image and runtime contracts require immutable references', () => {
   assertPrivateCiImagesPinned(`${ci}\n${parity}\n${release}`)
 })
 
+test('release builds runtime and publication consumes only a selected archived release', () => {
+  assert.match(release, /docker buildx build[\s\S]*--target runtime/)
+  assert.doesNotMatch(release, /publication-placeholder|Publication remains disabled/)
+  assert.notEqual(runtimePublication, '', 'runtime publication workflow must exist')
+  const [, triggerBlock] = runtimePublication.match(/^on:\n([\s\S]*?)^permissions:/m) ?? []
+  assert.equal(triggerBlock, [
+    '  workflow_dispatch:',
+    '    inputs:',
+    '      release_run_id:',
+    '        description: Successful completed release.yml run containing the immutable runtime OCI archive',
+    '        required: true',
+    '        type: string',
+    '',
+    ''
+  ].join('\n'))
+  assert.equal(runtimePublication.match(/^permissions:\n([\s\S]*?)^concurrency:/m)?.[1], '  contents: read\n  actions: read\n  packages: write\n\n')
+  const publish = workflowJob(runtimePublication, 'publish')
+  assertRuntimeSourceValidation(publish)
+  assert.match(publish, /^    environment: publish$/m)
+  assert.match(publish, /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
+  assert.match(publish, /RELEASE_RUN_ID: \$\{\{ inputs\.release_run_id \}\}/)
+  assert.match(publish, /gh api "repos\/\$GITHUB_REPOSITORY\/actions\/runs\/\$RELEASE_RUN_ID"/)
+  assert.match(publish, /actions\/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093/)
+  assert.match(publish, /name: oci-release-candidate-\$\{\{ steps\.source\.outputs\.source_commit \}\}/)
+  assert.match(publish, /git archive --format=tar HEAD \| tar -xf -/)
+  assert.match(publish, /test -f "\$verifier_root\/scripts\/smoke-cli-image\.sh"/)
+  assert.match(publish, /node "\$RUNNER_TEMP\/trusted-publication-verifier\/scripts\/verify-runtime-publication\.mjs"/)
+  assert.doesNotMatch(publish, /node scripts\/verify-runtime-publication\.mjs/)
+  assert.match(publish, /--manifest-digest oci-candidate\/manifest-digest\.txt/)
+  assert.match(publish, /MANIFEST_DIGEST=.*readFileSync\('runtime-verification\.json'/)
+  assert.match(publish, /skopeo inspect --format/)
+  assert.match(publish, /refusing to move existing tag to a different digest/)
+  assert.match(publish, /skopeo copy oci-archive:oci-candidate\/oci-image\.tar/)
+  assert.match(publish, /docker login ghcr\.io/)
+  assert.match(publish, /docker pull "\$IMAGE_REF"/)
+  assert.match(publish, /run: >-\n\s+"\$RUNNER_TEMP\/trusted-publication-verifier\/scripts\/smoke-cli-image\.sh"\n\s+"\$IMAGE_REF"/)
+  assert.doesNotMatch(publish, /run: scripts\/smoke-cli-image\.sh "\$IMAGE_REF"/)
+  assert.match(publish, /publication-evidence\.json/)
+  for (const field of ['sourceRunId', 'sourceCommit', 'archiveSha256', 'manifestDigest', 'tag', 'immutableImageReference', 'postPublicationDigest', 'actor', 'repository', 'workflowRunId', 'timestamp', 'smoke']) {
+    assert.match(publish, new RegExp(field), `publication evidence must include ${field}`)
+  }
+  assert.doesNotMatch(publish, /docker build(?:x)? build|cargo build|npm run build/, 'runtime publication must not rebuild source')
+})
+
+test('runtime publication rejects missing provenance and mutable image tags', () => {
+  assert.notEqual(runtimePublication, '', 'runtime publication workflow must exist')
+  const publish = workflowJob(runtimePublication, 'publish')
+  assert.match(publish, /different digest|different existing digest|must not move|refuse/i)
+  assert.match(publish, /post.*digest|POST_PUBLICATION_DIGEST|postPublicationDigest/i)
+  assert.doesNotMatch(publish, /--tag .*:latest/, 'runtime publication must not use a mutable latest tag')
+})
+
 test('workflow contracts reject mutable triggers, target roots, and image references', () => {
   const dockerfile = readFileSync(join(REPOSITORY_ROOT, 'Dockerfile'), 'utf8')
+  const runtimePublish = workflowJob(runtimePublication, 'publish')
   assert.throws(
     () => assertCiTriggerContract(ci.replace('  pull_request:\n', '  pull_request:\n    branches:\n      - main\n')),
     /trigger/
@@ -404,6 +503,10 @@ test('workflow contracts reject mutable triggers, target roots, and image refere
   assert.throws(
     () => assertReleaseTriggerContract(release.replace('      - v0.1.0', '      - v0.1.0\n      - v*')),
     /release triggers/
+  )
+  assert.throws(
+    () => assertRuntimeSourceValidation(runtimePublish.replace("run.path !== '.github/workflows/release.yml'", "run.path !== '.github/workflows/other.yml'")),
+    /release\\.yml/
   )
   assert.throws(
     () => assertStandaloneParityTriggerContract(parity.replace('  workflow_dispatch:\n', '  pull_request:\n  workflow_dispatch:\n')),

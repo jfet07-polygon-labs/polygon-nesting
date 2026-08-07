@@ -60,5 +60,6 @@
       "placementPolicyIds": ["balanced-compactness"]
     }
   },
-  "historyMode": "stream"
+  "historyMode": "stream",
+  "diagnosticTraceMode": "full"
 }

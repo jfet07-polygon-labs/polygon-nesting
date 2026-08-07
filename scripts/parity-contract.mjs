@@ -170,6 +170,18 @@ function verifySource(key, identity, root, target, trustedSourceRoot, sourceRevi
   if (!archived.equals(committed)) fail(`projector source differs from committed candidate source for ${target.key}`);
 }
 
+function requireExplicitFullDiagnosticTraceMode(bytes, label) {
+  let request;
+  try {
+    request = JSON.parse(bytes.toString('utf8'));
+  } catch {
+    fail(`${label} is not valid JSON`);
+  }
+  if (!request || typeof request !== 'object' || Array.isArray(request) || !request.options || typeof request.options !== 'object' || Array.isArray(request.options) || request.options.diagnosticTraceMode !== 'full') {
+    fail(`${label} must explicitly set options.diagnosticTraceMode to full`);
+  }
+}
+
 function verifyComparisons(comparisons, evidenceSide, target) {
   const expected = CANONICAL_ROW_IDS.flatMap((rowId) => SOURCE_CONTRACT.rawFilenames.map((filename) => ({ rowId, filename })));
   if (!Array.isArray(comparisons) || comparisons.length !== expected.length) fail(`comparison rows are incomplete for ${target.key}`);
@@ -182,6 +194,7 @@ function verifyComparisons(comparisons, evidenceSide, target) {
     if (comparison.rowId !== rowId || comparison.filename !== filename || !SHA256_PATTERN.test(comparison.oldRawSha256) || !SHA256_PATTERN.test(comparison.newRawSha256)) fail(`comparison ordering or hash is invalid for ${target.key}`);
     const oldBytes = readFileSync(regularPath(target.root, `old/raw/${rowId}/${filename}`, 'old raw evidence'));
     const newBytes = readFileSync(regularPath(target.root, `${evidenceSide}/raw/${rowId}/${filename}`, 'new raw evidence'));
+    if (filename === 'request.json') requireExplicitFullDiagnosticTraceMode(newBytes, `${target.key} ${evidenceSide} parity request for ${rowId}`);
     if (sha256(oldBytes) !== comparison.oldRawSha256 || sha256(newBytes) !== comparison.newRawSha256) fail(`comparison raw evidence differs for ${target.key}`);
     if (keys.includes('semanticSha256')) {
       const format = filename === 'events.ndjson' ? 'ndjson' : 'json';

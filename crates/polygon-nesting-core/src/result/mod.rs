@@ -115,6 +115,7 @@ pub struct NestingOptions {
     /// the TS field being absent (defaults `true` at the one read site).
     pub allow_global_mirror: Option<bool>,
     pub history_mode: HistoryMode,
+    pub diagnostic_trace_mode: polygon_nesting_protocol::DiagnosticTraceMode,
     /// TS: `request.options.irregularSettings ?? GeometrySettings.Make`
     /// (`nesting.worker.ts:375`) -- the fallback default itself is resolved
     /// by whoever wires `GeometrySettings` (out of this module's scope);

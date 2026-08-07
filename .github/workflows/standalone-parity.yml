@@ -29,10 +29,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - key: linux-x64
-            runner: blacksmith-2vcpu-ubuntu-2404
-            target: x86_64-unknown-linux-gnu
-            executable-suffix: ''
           - key: win32-x64
             runner: blacksmith-2vcpu-windows-2025
             target: x86_64-pc-windows-msvc
@@ -104,9 +100,74 @@ jobs:
           path: ${{ runner.temp }}/standalone-parity/${{ matrix.key }}
           if-no-files-found: error
           retention-days: 7
+  parity-linux:
+    name: Standalone parity Linux amd64
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - key: linux-x64
+            runner: blacksmith-2vcpu-ubuntu-2404
+            target: x86_64-unknown-linux-gnu
+            executable-suffix: ''
+    runs-on: ${{ matrix.runner }}
+    container: ghcr.io/jfet07-polygon-labs/polygon-nesting-ci@sha256:66a7ca95c13074714135ad840465834e60797ddd45d13d130e0e5c6077b950f3
+    env:
+      CARGO_TERM_COLOR: always
+      PARITY_BUNDLE_ROOT: ${{ inputs.parity-bundle-path || 'artifacts/trusted-parity-bundle' }}
+      GH_TOKEN: ${{ github.token }}
+      PATH: /opt/node-v24.19.0/bin:/opt/node-v22.22.0/bin:/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/setup-rust-cache
+      - name: Prepare fresh Cargo target directory
+        shell: bash
+        run: |
+          CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target-parity-${{ matrix.key }}"
+          rm -rf "$CARGO_TARGET_DIR"
+          mkdir -p "$CARGO_TARGET_DIR"
+          test -z "$(find "$CARGO_TARGET_DIR" -mindepth 1 -print -quit)"
+          printf 'CARGO_TARGET_DIR=%s\n' "$CARGO_TARGET_DIR" >> "$GITHUB_ENV"
+      - name: Fetch matching attested old-side bundle
+        shell: bash
+        run: node scripts/parity/fetch-source-parity-bundle.mjs --source-run "${{ inputs.source-run }}" --target "${{ matrix.target }}" --output "$PARITY_BUNDLE_ROOT/${{ matrix.target }}" --provenance-output "$RUNNER_TEMP/standalone-parity-provenance/${{ matrix.key }}.json"
+      - name: Build locked release parity executables
+        shell: bash
+        run: >-
+          cargo build --locked --release --target "${{ matrix.target }}"
+          -p polygon-nesting-cli --bin polygon-nesting
+          -p polygon-nesting-napi --bin parity-desktop-request-adapter
+          --bin parity-project-engine-outcome --bin parity-project-engine-events
+      - name: Build and stage standalone N-API package
+        shell: bash
+        run: node packages/polygon-nesting/scripts/build-native.mjs --release --target "${{ matrix.target }}"
+      - name: Capture standalone N-API and neutral CLI parity
+        shell: bash
+        run: >-
+          node scripts/parity/run-old-new-parity.mjs
+          --old-root "$PARITY_BUNDLE_ROOT/${{ matrix.target }}"
+          --new-root "$RUNNER_TEMP/standalone-parity/${{ matrix.key }}"
+          --package "packages/polygon-nesting/npm/index.cjs"
+          --target "${{ matrix.target }}"
+          --target-key "${{ matrix.key }}"
+          --source-revision "$GITHUB_SHA"
+          --adapter "$CARGO_TARGET_DIR/${{ matrix.target }}/release/parity-desktop-request-adapter${{ matrix.executable-suffix }}"
+          --cli "$CARGO_TARGET_DIR/${{ matrix.target }}/release/polygon-nesting${{ matrix.executable-suffix }}"
+          --outcome-projector "$CARGO_TARGET_DIR/${{ matrix.target }}/release/parity-project-engine-outcome${{ matrix.executable-suffix }}"
+          --events-projector "$CARGO_TARGET_DIR/${{ matrix.target }}/release/parity-project-engine-events${{ matrix.executable-suffix }}"
+          --evidence "$RUNNER_TEMP/standalone-parity/${{ matrix.key }}/parity.json"
+          --source-provenance-evidence "$RUNNER_TEMP/standalone-parity-provenance/${{ matrix.key }}.json"
+      - name: Upload one verified target evidence bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: old-new-parity-target-${{ matrix.key }}
+          path: ${{ runner.temp }}/standalone-parity/${{ matrix.key }}
+          if-no-files-found: error
+          retention-days: 7
+
   aggregate:
-    needs: parity
-    if: ${{ needs.parity.result == 'success' }}
+    needs: [parity, parity-linux]
+    if: ${{ needs.parity.result == 'success' && needs['parity-linux'].result == 'success' }}
     runs-on: blacksmith-2vcpu-ubuntu-2404
     permissions:
       contents: read
@@ -143,11 +204,12 @@ jobs:
           subject-path: ${{ runner.temp }}/old-new-parity-bundle/old-new-parity-bundle.tar.gz
   require-all-targets:
     if: always()
-    needs: [parity, aggregate]
+    needs: [parity, parity-linux, aggregate]
     runs-on: blacksmith-2vcpu-ubuntu-2404
     steps:
       - name: Require every target parity bundle and aggregate
         shell: bash
         run: >-
           test "${{ needs.parity.result }}" = success &&
+          test "${{ needs.parity-linux.result }}" = success &&
           test "${{ needs.aggregate.result }}" = success

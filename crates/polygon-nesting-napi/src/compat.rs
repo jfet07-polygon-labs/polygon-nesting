@@ -1,13 +1,18 @@
 use std::collections::BTreeMap;
 
 use polygon_nesting_protocol::{
-    EngineProfile, EngineRequest, EngineSettings, GeometrySettings, HistoryMode, OptimizerSettings,
-    PreparedPiece, ProtocolError, ProtocolVersion, SheetSpec, SourcePiece,
+    DiagnosticTraceMode, EngineProfile, EngineRequest, EngineSettings, GeometrySettings,
+    HistoryMode, OptimizerSettings, PreparedPiece, ProtocolError, ProtocolVersion, SheetSpec,
+    SourcePiece,
 };
 use serde::{Deserialize, Serialize};
 
 fn default_true() -> bool {
     true
+}
+
+fn default_diagnostic_trace_mode() -> String {
+    "full".to_owned()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -100,6 +105,8 @@ struct DesktopOptionsDto {
     timeout_ms: f64,
     worker_mode: String,
     history_mode: String,
+    #[serde(default = "default_diagnostic_trace_mode")]
+    diagnostic_trace_mode: String,
     irregular_settings: DesktopIrregularSettingsDto,
 }
 
@@ -181,6 +188,15 @@ impl DesktopRequestDto {
                 )));
             }
         };
+        let diagnostic_trace_mode = match self.options.diagnostic_trace_mode.as_str() {
+            "full" => DiagnosticTraceMode::Full,
+            "off" => DiagnosticTraceMode::Off,
+            other => {
+                return Err(AdapterError::revalidation_failed(format!(
+                    "options.diagnosticTraceMode must be one of 'full' | 'off', received {other:?}"
+                )));
+            }
+        };
 
         let request = EngineRequest {
             version: ProtocolVersion::CURRENT,
@@ -202,6 +218,7 @@ impl DesktopRequestDto {
                 optimizer: self.options.irregular_settings.optimizer.settings,
             },
             history_mode,
+            diagnostic_trace_mode,
         };
         request.validate().map_err(map_protocol_error)?;
 

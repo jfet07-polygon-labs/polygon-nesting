@@ -67,6 +67,7 @@ jobs:
           printf 'existing_digest=%s\n' "$existing_digest" >> "$GITHUB_OUTPUT"
       - name: Build and push immutable Linux CI image
         id: build
+        # The root ci target is the source definition; consumers stay pinned to its separately verified digest.
         if: steps.state.outputs.action == 'publish'
         run: |
           set -euo pipefail
@@ -76,9 +77,10 @@ jobs:
             --push \
             --cache-from type=gha,scope=ci-image-linux-amd64 \
             --cache-to type=gha,mode=max,scope=ci-image-linux-amd64 \
+            --target ci \
             --tag "$CI_IMAGE:$CI_IMAGE_TAG" \
             --metadata-file build-metadata.json \
-            .github/ci
+            .
           manifest_digest="$(python3 -c 'import json; print(json.load(open("build-metadata.json", encoding="utf8"))["containerimage.digest"])')"
           case "$manifest_digest" in
             sha256:[0-9a-f][0-9a-f]*) ;;

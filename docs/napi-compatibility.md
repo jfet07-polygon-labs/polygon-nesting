@@ -35,9 +35,11 @@ The addon exports `engineInfoJson`, `nativeCapability`, `getLastJobDiagnostics`,
 
 ## Desktop request adapter
 
-`runIrregularJob` starts an asynchronous task from the established desktop request JSON, an opaque invocation token, an event callback, and the snapshot-delivery option. Its resolved value is a JSON result or error envelope string. The adapter requires request `version: 1`, a nonblank `jobId`, `options.workerMode: "irregular-convex-v2"`, and `options.historyMode` set to `stream`, `final`, or `off`. A supplied `strategyRunId` must be non-empty. `cancelIrregularJob(invocationToken, reason)` returns whether it found a registered invocation and accepts only `cancelled` or `timeout`; other reason strings return `false`.
+`runIrregularJob` starts an asynchronous task from the established desktop request JSON, an opaque invocation token, an event callback, and the snapshot-delivery option. Its resolved value is a JSON result or error envelope string. The adapter requires request `version: 1`, a nonblank `jobId`, `options.workerMode: "irregular-convex-v2"`, and `options.historyMode` set to `stream`, `final`, or `off`. `options.diagnosticTraceMode` accepts exactly `"full"` and `"off"`; omission defaults to `"full"` and any other value is rejected as a desktop revalidation error. A supplied `strategyRunId` must be non-empty. `cancelIrregularJob(invocationToken, reason)` returns whether it found a registered invocation and accepts only `cancelled` or `timeout`; other reason strings return `false`.
 
-Omitted `allowGlobalMirror` and per-piece `allowMirror` default to `true`. Unknown desktop fields are tolerated. Desktop-only identifiers remain in the adapter; the core receives a neutral `EngineRequest` and repeats protocol validation.
+Omitted `allowGlobalMirror` and per-piece `allowMirror` default to `true`. Unknown desktop fields are tolerated. Desktop-only identifiers remain in the adapter; the core receives a neutral `EngineRequest` and repeats protocol validation. The adapter maps the desktop option to the top-level protocol `diagnosticTraceMode` field.
+
+`diagnosticTraceMode: "off"` removes only the five detailed trace fields documented by the protocol contract. It does not renumber core semantic frames. Snapshot suppression still consumes each core ordinal, and completion still appends exactly one terminal frame at the next ordinal.
 
 The adapter projects protocol failures into established desktop error categories. Archive-ineligible and legacy GA-windowed requests are returned as `not_implemented` routing failures so the caller can select the TypeScript backend. They are not emulated by the standalone core.
 

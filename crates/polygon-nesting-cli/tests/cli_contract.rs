@@ -70,6 +70,61 @@ fn run_writes_a_versioned_success_outcome_and_ordered_events() {
 }
 
 #[test]
+fn full_and_off_cli_requests_preserve_semantics_and_reduce_trace_bytes() {
+    let directory = temporary_directory("diagnostic-trace-mode");
+    let fixture: Value = serde_json::from_slice(include_bytes!(
+        "../../../tests/fixtures/cli/request-v1.json"
+    ))
+    .expect("fixture request should be JSON");
+    assert_eq!(fixture["diagnosticTraceMode"], "full");
+
+    let mut outputs = Vec::new();
+    for mode in ["full", "off"] {
+        let input = directory.join(format!("{mode}-request.json"));
+        let output = directory.join(format!("{mode}-result.json"));
+        let mut request = fixture.clone();
+        request["historyMode"] = serde_json::json!("off");
+        request["diagnosticTraceMode"] = serde_json::json!(mode);
+        fs::write(
+            &input,
+            serde_json::to_vec(&request).expect("request should encode"),
+        )
+        .expect("request should be written");
+
+        let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+            .args([
+                "run",
+                "--input",
+                input.to_str().expect("input path is UTF-8"),
+                "--output",
+                output.to_str().expect("output path is UTF-8"),
+            ])
+            .output()
+            .expect("CLI should start");
+        assert!(
+            process.status.success(),
+            "mode {mode} stderr: {}",
+            String::from_utf8_lossy(&process.stderr)
+        );
+        outputs.push(fs::read(&output).expect("result should exist"));
+    }
+
+    let full: Value = serde_json::from_slice(&outputs[0]).expect("full output should be JSON");
+    let off: Value = serde_json::from_slice(&outputs[1]).expect("off output should be JSON");
+    assert!(full["outcome"]["result"]["intrinsicAnytimeSchedulerTrace"].is_object());
+    for field in TRACE_FIELDS {
+        assert!(!off["outcome"]["result"]
+            .as_object()
+            .expect("result object")
+            .contains_key(field));
+    }
+    assert_eq!(normalize_trace_output(full), normalize_trace_output(off));
+    assert!(outputs[1].len() < outputs[0].len());
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
 fn run_without_events_does_not_create_an_event_artifact() {
     let directory = temporary_directory("final-only");
     let input = directory.join("request.json");
@@ -1405,6 +1460,7 @@ fn valid_request() -> EngineRequest {
             },
         },
         history_mode: HistoryMode::Stream,
+        diagnostic_trace_mode: polygon_nesting_protocol::DiagnosticTraceMode::Full,
     }
 }
 
@@ -1417,4 +1473,46 @@ fn source_line(x1: f64, y1: f64, x2: f64, y2: f64) -> SourceGeometrySegment {
         bulge: None,
         source_curve: None,
     })
+}
+
+const TRACE_FIELDS: [&str; 5] = [
+    "capacityTrace",
+    "intrinsicAnytimeSchedulerTrace",
+    "focusedCompleteReconstructionTrace",
+    "intrinsicShortSideObserverTrace",
+    "intrinsicShortSidePairFoldTrace",
+];
+
+fn normalize_trace_output(mut value: Value) -> Value {
+    normalize_trace_value(&mut value);
+    value
+}
+
+fn normalize_trace_value(value: &mut Value) {
+    match value {
+        Value::Array(values) => values.iter_mut().for_each(normalize_trace_value),
+        Value::Object(fields) => {
+            for key in [
+                "runtimeMs",
+                "elapsedMs",
+                "preflightRuntimeMs",
+                "completeArchiveRuntimeMs",
+                "prefixTerminalizationMs",
+                "coldSearchMs",
+                "topologyMeasurementMs",
+                "contactMeasurementMs",
+                "serializedTraceBytes",
+                "peakRssDeltaBytes",
+            ] {
+                if fields.contains_key(key) {
+                    fields.insert(key.to_owned(), Value::String("<measurement>".to_owned()));
+                }
+            }
+            for field in TRACE_FIELDS {
+                fields.remove(field);
+            }
+            fields.values_mut().for_each(normalize_trace_value);
+        }
+        _ => {}
+    }
 }

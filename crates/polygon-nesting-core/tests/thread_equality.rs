@@ -311,6 +311,7 @@ fn engine_request_from_frozen(frozen: FrozenRequest) -> EngineRequest {
             optimizer: optimizer_settings_from_frozen(frozen.options.irregular_settings.optimizer),
         },
         history_mode: history_mode_from_frozen(&frozen.options.history_mode),
+        diagnostic_trace_mode: polygon_nesting_protocol::DiagnosticTraceMode::Full,
     }
 }
 

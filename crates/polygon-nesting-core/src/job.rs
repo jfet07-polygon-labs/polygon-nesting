@@ -9,8 +9,8 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::time::Instant;
 
 use polygon_nesting_protocol::{
-    EllipseSource, EngineError, EngineErrorCode, EngineEvent, EngineOutcome, EngineProfile,
-    EngineRequest, EngineSettings, ExecutionDiagnostics, GeometrySettings,
+    DiagnosticTraceMode, EllipseSource, EngineError, EngineErrorCode, EngineEvent, EngineOutcome,
+    EngineProfile, EngineRequest, EngineSettings, ExecutionDiagnostics, GeometrySettings,
     HistoryMode as ProtocolHistoryMode, OptimizerSettings, PlacementPolicy,
     PreparedPiece as ProtocolPreparedPiece, SourceEntityHandle, SourceGeometry,
     SourceGeometryEntityType, SourceGeometrySegment, SourcePiece, SourceWarning,
@@ -54,6 +54,7 @@ fn prepare_nesting_request(request: &EngineRequest) -> NestingRequest {
             allow_global_rotation: request.settings.allow_global_rotation,
             allow_global_mirror: Some(request.settings.allow_global_mirror),
             history_mode: history_mode_from_engine(request.history_mode),
+            diagnostic_trace_mode: request.diagnostic_trace_mode,
             irregular_settings: Some(nesting_settings_from_engine(
                 &request.settings,
                 request.profile,
@@ -441,7 +442,31 @@ fn execution_diagnostics(
 
 fn project_result(
     result: crate::result::IrregularComputeResult,
+    diagnostic_trace_mode: DiagnosticTraceMode,
 ) -> polygon_nesting_protocol::EngineResult {
+    let diagnostic_traces = match diagnostic_trace_mode {
+        DiagnosticTraceMode::Full => (
+            result.capacity_trace.as_ref().map(project_capacity_trace),
+            result
+                .intrinsic_anytime_scheduler_trace
+                .as_ref()
+                .map(project_scheduler_trace),
+            result
+                .focused_complete_reconstruction_trace
+                .as_ref()
+                .map(project_focused_reconstruction_trace),
+            result
+                .intrinsic_short_side_observer_trace
+                .as_ref()
+                .map(project_short_side_observer_trace),
+            result
+                .intrinsic_short_side_pair_fold_trace
+                .as_ref()
+                .map(project_short_side_pair_fold_trace),
+        ),
+        DiagnosticTraceMode::Off => (None, None, None, None, None),
+    };
+
     polygon_nesting_protocol::EngineResult {
         placed_collision_geometries: result
             .placed_collision_geometries
@@ -505,23 +530,11 @@ fn project_result(
                 .map(project_diagnostic)
                 .collect(),
         },
-        capacity_trace: result.capacity_trace.as_ref().map(project_capacity_trace),
-        intrinsic_anytime_scheduler_trace: result
-            .intrinsic_anytime_scheduler_trace
-            .as_ref()
-            .map(project_scheduler_trace),
-        focused_complete_reconstruction_trace: result
-            .focused_complete_reconstruction_trace
-            .as_ref()
-            .map(project_focused_reconstruction_trace),
-        intrinsic_short_side_observer_trace: result
-            .intrinsic_short_side_observer_trace
-            .as_ref()
-            .map(project_short_side_observer_trace),
-        intrinsic_short_side_pair_fold_trace: result
-            .intrinsic_short_side_pair_fold_trace
-            .as_ref()
-            .map(project_short_side_pair_fold_trace),
+        capacity_trace: diagnostic_traces.0,
+        intrinsic_anytime_scheduler_trace: diagnostic_traces.1,
+        focused_complete_reconstruction_trace: diagnostic_traces.2,
+        intrinsic_short_side_observer_trace: diagnostic_traces.3,
+        intrinsic_short_side_pair_fold_trace: diagnostic_traces.4,
     }
 }
 
@@ -2179,7 +2192,7 @@ impl<'a> Job<'a> {
 
         match execution {
             Ok(Ok(result)) => Ok(EngineOutcome::Success {
-                result: project_result(result),
+                result: project_result(result, self.request.diagnostic_trace_mode),
                 diagnostics,
             }),
             Ok(Err(error)) => Ok(EngineOutcome::Failure {
@@ -3290,6 +3303,7 @@ mod tests {
                 },
             },
             history_mode: protocol::HistoryMode::Final,
+            diagnostic_trace_mode: protocol::DiagnosticTraceMode::Full,
         }
     }
 }
