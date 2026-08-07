@@ -220,15 +220,9 @@ function assertCiRunnerContract(workflow) {
       platform: 'darwin',
       arch: 'arm64',
       'cargo-target': 'aarch64-apple-darwin'
-    },
-    {
-      'target-key': 'darwin-x64',
-      runner: 'macos-15-intel',
-      platform: 'darwin',
-      arch: 'x64',
-      'cargo-target': 'x86_64-apple-darwin'
     }
   ])
+  assert.doesNotMatch(workflow, /darwin-x64|x86_64-apple-darwin|macos-15-intel/)
   assert.match(native, /^    if: github\.event_name == 'push'$/m)
 }
 
@@ -270,13 +264,11 @@ function assertDistinctCargoTargetRoots(ciWorkflow, parityWorkflow) {
   ].map((key) => `cargo-target-parity-${key}`)
   assert.deepEqual(nativeRoots, [
     'cargo-target-native-linux-x64',
-    'cargo-target-native-darwin-arm64',
-    'cargo-target-native-darwin-x64'
+    'cargo-target-native-darwin-arm64'
   ])
   assert.deepEqual(parityRoots, [
     'cargo-target-parity-linux-x64',
-    'cargo-target-parity-darwin-arm64',
-    'cargo-target-parity-darwin-x64'
+    'cargo-target-parity-darwin-arm64'
   ])
   const allRoots = ['cargo-target-quality', ...nativeRoots, ...parityRoots]
   assert.equal(new Set(allRoots).size, allRoots.length, 'Cargo target roots must be distinct')
@@ -601,7 +593,7 @@ test('workflow contracts reject mutable triggers, target roots, and image refere
   assert.throws(
     () => assertCiRunnerContract(ci.replace(
       '    runs-on: ${{ matrix.runner }}',
-      "          - platform: darwin\n            target-key: darwin-x64\n            runner: macos-15-intel\n            arch: x64\n            cargo-target: x86_64-apple-darwin\n    runs-on: ${{ matrix.runner }}"
+      "          - platform: linux\n            target-key: linux-duplicate\n            runner: blacksmith-2vcpu-ubuntu-2404\n            arch: x64\n            cargo-target: x86_64-unknown-linux-gnu\n    runs-on: ${{ matrix.runner }}"
     )),
     /deep-equal/
   )

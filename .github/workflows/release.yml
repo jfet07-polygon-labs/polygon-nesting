@@ -75,7 +75,6 @@ jobs:
             const requiredArtifacts = new Set([
               'native-build-linux-x64',
               'native-build-darwin-arm64',
-              'native-build-darwin-x64',
               `oci-build-${process.env.SOURCE_COMMIT}`
             ]);
             async function validateRun(run) {
@@ -142,16 +141,16 @@ jobs:
           run-id: ${{ needs.resolve-ci.outputs.run-id }}
           pattern: native-build-*
           path: downloaded-native-artifacts
-      - name: Normalize three published native build artifact directories
+      - name: Normalize two published native build artifact directories
         run: |
           mkdir native-artifacts
-          for target in linux-x64 darwin-arm64 darwin-x64; do
+          for target in linux-x64 darwin-arm64; do
             source="downloaded-native-artifacts/native-build-$target"
             test -d "$source"
             test ! -e "native-artifacts/$target"
             mv "$source" "native-artifacts/$target"
           done
-          test "$(find native-artifacts -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = 3
+          test "$(find native-artifacts -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = 2
       - name: Assemble candidate without compiling
         run: node scripts/assemble-release-candidate.mjs --artifacts native-artifacts --output release-candidate --source-commit "$SOURCE_COMMIT" --trusted-source-root "$GITHUB_WORKSPACE"
       - name: Validate npm candidate offline

@@ -124,10 +124,10 @@ function validatePackageContents(files, { requireAllTargets = false } = {}) {
   if (stagedAddons.length === 0) throw new Error('package requires a nonempty staged addon subset')
   if (requireAllTargets) {
     if (PUBLISHED_STAGED_ADDON_FILES.some((name) => !names.has(name))) {
-      throw new Error('release candidate requires all three published staged addons')
+      throw new Error('release candidate requires both published staged addons')
     }
     if (stagedAddons.length !== PUBLISHED_STAGED_ADDON_FILES.length) {
-      throw new Error('release candidate must contain exactly the three published staged addons')
+      throw new Error('release candidate must contain only the two published staged addons')
     }
   }
   return stagedAddons

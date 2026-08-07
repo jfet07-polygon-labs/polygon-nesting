@@ -65,7 +65,7 @@ It requires semantic equivalence after the documented normalization and smaller 
 
 ## N-API package
 
-The package publishes prebuilt addons only for Linux x64, Windows x64, macOS arm64, and macOS x64. The loader retains the desktop alias `irregular-nesting-native` and selects `irregular-nesting-native.<platform>-<arch>.node`. Unsupported targets fail before Cargo is invoked.
+The package publishes prebuilt addons only for Linux x64 and macOS arm64. Windows x64 remains available for local and manual builds but is not published. The loader retains the desktop alias `irregular-nesting-native` and selects `irregular-nesting-native.<platform>-<arch>.node`. Unsupported targets fail before Cargo is invoked.
 
 ## OCI image
 

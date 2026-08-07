@@ -20,19 +20,12 @@ const NATIVE_TARGETS = Object.freeze({
     arch: 'arm64',
     cargoTarget: 'aarch64-apple-darwin',
     libraryFileName: 'libpolygon_nesting_napi.dylib'
-  }),
-  'darwin-x64': Object.freeze({
-    platform: 'darwin',
-    arch: 'x64',
-    cargoTarget: 'x86_64-apple-darwin',
-    libraryFileName: 'libpolygon_nesting_napi.dylib'
   })
 })
 
 const PUBLISHED_NATIVE_TARGETS = Object.freeze({
   'linux-x64': NATIVE_TARGETS['linux-x64'],
-  'darwin-arm64': NATIVE_TARGETS['darwin-arm64'],
-  'darwin-x64': NATIVE_TARGETS['darwin-x64']
+  'darwin-arm64': NATIVE_TARGETS['darwin-arm64']
 })
 
 function resolveNativeTarget(platform, arch) {

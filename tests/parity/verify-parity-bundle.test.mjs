@@ -315,7 +315,7 @@ function assertStandaloneParityMatrixContract(workflow) {
       target,
       'executable-suffix': "''",
     })));
-  assert.doesNotMatch(workflow, /win32-x64|x86_64-pc-windows-msvc|blacksmith-2vcpu-windows/);
+  assert.doesNotMatch(workflow, /win32-x64|x86_64-pc-windows-msvc|blacksmith-2vcpu-windows|darwin-x64|x86_64-apple-darwin|macos-15-intel/);
 }
 
 function workflowJob(workflow, name) {
@@ -327,17 +327,16 @@ function workflowJob(workflow, name) {
   return job;
 }
 
-test('defines all four exact source and standalone target runner pairs', () => {
+test('defines the three exact local parity target runner pairs', () => {
   assert.deepEqual(PARITY_TARGETS.map(({ runner, target }) => ({ runner, target })), [
     { runner: 'blacksmith-2vcpu-ubuntu-2404', target: 'x86_64-unknown-linux-gnu' },
     { runner: 'blacksmith-2vcpu-windows-2025', target: 'x86_64-pc-windows-msvc' },
     { runner: 'blacksmith-6vcpu-macos-15', target: 'aarch64-apple-darwin' },
-    { runner: 'macos-15-intel', target: 'x86_64-apple-darwin' },
   ]);
   assert.ok(PARITY_TARGETS.every(({ profile, features, rustVersion }) => profile === 'release' && features.length === 0 && rustVersion === '1.95.0'));
 });
 
-test('workflow uses the three hosted parity runners and uploads each matrix result', async () => {
+test('workflow uses both hosted parity runners and uploads each matrix result', async () => {
   const workflow = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
   assertStandaloneParityMatrixContract(workflow);
   for (const { runner, target } of PARITY_TARGETS.filter(({ key }) => key !== 'win32-x64')) {

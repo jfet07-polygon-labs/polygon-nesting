@@ -269,7 +269,7 @@ test('rejects rehashed archived projector source that differs from trusted check
   );
 });
 
-test('writes the exact archive and digest sidecar from four verified target artifacts', async () => {
+test('writes the exact archive and digest sidecar from three verified target artifacts', async () => {
   const fixture = await aggregateFixture();
   const result = await assembleParityAggregate({
     inputDirectory: fixture.input,
