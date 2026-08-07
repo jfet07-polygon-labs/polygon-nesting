@@ -105,13 +105,10 @@ jobs:
           test -f "$verifier_root/scripts/smoke-cli-image.sh"
 
       - name: Checkout selected release source
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SOURCE_COMMIT: ${{ steps.source.outputs.source_commit }}
-        run: |
-          set -euo pipefail
-          git -c "http.extraheader=AUTHORIZATION: bearer $GH_TOKEN" fetch --no-tags --depth=1 origin "$SOURCE_COMMIT"
-          git checkout --detach "$SOURCE_COMMIT"
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ steps.source.outputs.source_commit }}
+          persist-credentials: false
 
       - name: Download selected npm release evidence
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093

@@ -36,6 +36,14 @@ test('npm publication consumes only the verified candidate tarball and is rerunn
   assert.doesNotMatch(publisher, /cargo build|npm run build:release/)
 })
 
+test('selected release source uses authenticated checkout without preserving credentials', () => {
+  assert.doesNotMatch(publisher, /http\.extraheader=AUTHORIZATION: bearer/)
+  assert.match(
+    publisher,
+    /- name: Checkout selected release source\n\s+uses: actions\/checkout@[a-f0-9]{40}\n\s+with:\n\s+ref: \$\{\{ steps\.source\.outputs\.source_commit \}\}\n\s+persist-credentials: false/
+  )
+})
+
 test('both immutable destinations are inspected before either artifact is published', () => {
   const inspectNpm = publisher.indexOf('- name: Inspect immutable npm package version')
   const inspectOci = publisher.indexOf('- name: Inspect immutable runtime tag')
