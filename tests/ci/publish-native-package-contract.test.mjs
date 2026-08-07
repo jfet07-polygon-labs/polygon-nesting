@@ -23,7 +23,8 @@ test('protected release publisher owns both GHCR and GitHub npm delivery', () =>
 })
 
 test('npm publication consumes only the verified candidate tarball and is rerunnable', () => {
-  assert.match(publisher, /NPM_TARBALL=.*release-candidate/)
+  assert.match(publisher, /NPM_TARBALL=.*resolve\('release-candidate',release\.tarball\.fileName\)/)
+  assert.doesNotMatch(publisher, /NPM_TARBALL=.*join\('release-candidate',release\.tarball\.fileName\)/)
   assert.match(publisher, /npm publish "\$NPM_TARBALL" --ignore-scripts --registry https:\/\/npm\.pkg\.github\.com/)
   assert.match(publisher, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.1" --json/)
   assert.match(publisher, /refusing to replace an existing npm version with different bytes/)

@@ -154,7 +154,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          NPM_TARBALL="$(node --input-type=module -e "import {readFileSync} from 'node:fs'; import {basename,join} from 'node:path'; const release=JSON.parse(readFileSync('release-candidate/release.json','utf8')); if(release.package?.name!=='@jfet07-polygon-labs/polygon-nesting'||release.package?.version!=='0.1.1'||basename(release.tarball?.fileName??'')!==release.tarball?.fileName) throw new Error('release npm identity is invalid'); process.stdout.write(join('release-candidate',release.tarball.fileName))")"
+          NPM_TARBALL="$(node --input-type=module -e "import {readFileSync} from 'node:fs'; import {basename,resolve} from 'node:path'; const release=JSON.parse(readFileSync('release-candidate/release.json','utf8')); if(release.package?.name!=='@jfet07-polygon-labs/polygon-nesting'||release.package?.version!=='0.1.1'||basename(release.tarball?.fileName??'')!==release.tarball?.fileName) throw new Error('release npm identity is invalid'); process.stdout.write(resolve('release-candidate',release.tarball.fileName))")"
           test -f "$NPM_TARBALL"
           NPM_TARBALL="$NPM_TARBALL" node --input-type=module <<'NODE'
           import { createHash } from 'node:crypto'
