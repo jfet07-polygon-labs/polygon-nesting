@@ -43,12 +43,6 @@ const TARGETS = [
     arch: 'arm64',
     cargoTarget: 'aarch64-apple-darwin',
     libraryFileName: 'libpolygon_nesting_napi.dylib'
-  },
-  {
-    platform: 'darwin',
-    arch: 'x64',
-    cargoTarget: 'x86_64-apple-darwin',
-    libraryFileName: 'libpolygon_nesting_napi.dylib'
   }
 ]
 
@@ -646,25 +640,27 @@ test('package manifest publishes only the addon loader, binaries, and notices', 
   ])
 })
 
-test('publishes three native targets while retaining local Windows build support', () => {
+test('publishes two native targets while retaining local Windows build support', () => {
   assert.deepEqual(Object.keys(target.NATIVE_TARGETS).sort(), [
     'darwin-arm64',
-    'darwin-x64',
     'linux-x64',
     'win32-x64'
   ])
   assert.deepEqual(Object.keys(target.PUBLISHED_NATIVE_TARGETS).sort(), [
     'darwin-arm64',
-    'darwin-x64',
     'linux-x64'
   ])
+  assert.throws(
+    () => target.resolveNativeTarget('darwin', 'x64'),
+    /unsupported native addon target "darwin-x64"/
+  )
   assert.deepEqual(
     target.resolveNativeTarget('win32', 'x64'),
     TARGETS.find(({ platform }) => platform === 'win32')
   )
 })
 
-test('validates local package subsets and complete three-target release candidates', () => {
+test('validates local package subsets and complete two-target release candidates', () => {
   const baseFiles = [
     'LICENSES/clipper2-ts-BSL-1.0.txt',
     'NOTICE',
@@ -683,12 +679,12 @@ test('validates local package subsets and complete three-target release candidat
   )
   assert.throws(
     () => buildNative.validatePackageContents([...baseFiles, publishedFiles[0]], { requireAllTargets: true }),
-    /requires all three published staged addons/
+    /requires both published staged addons/
   )
   assert.doesNotThrow(() => buildNative.validatePackageContents([...baseFiles, ...publishedFiles], { requireAllTargets: true }))
   assert.throws(
     () => buildNative.validatePackageContents([...baseFiles, ...publishedFiles, windowsFile], { requireAllTargets: true }),
-    /must contain exactly the three published staged addons/
+    /must contain only the two published staged addons/
   )
 })
 

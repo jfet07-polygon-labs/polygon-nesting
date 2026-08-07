@@ -32,7 +32,7 @@ export function validateReleaseMetadata(release, trustedSourceRoot) {
   exactKeys(release.package, ['name', 'version'], 'release package')
   equal(release.package.name, '@jfet07-polygon-labs/polygon-nesting', 'release package name')
   equal(release.package.version, '0.1.0', 'release package version')
-  equal(release.nativeArtifacts?.length, 3, 'native artifact count')
+  equal(release.nativeArtifacts?.length, 2, 'native artifact count')
   const targets = Object.entries(target.PUBLISHED_NATIVE_TARGETS)
   equal(JSON.stringify(release.nativeArtifacts.map(({ targetKey }) => targetKey).sort()), JSON.stringify(targets.map(([key]) => key).sort()), 'native target keys')
   for (const artifact of release.nativeArtifacts) {
@@ -160,7 +160,7 @@ export async function verifyReleaseCandidate({ candidateDirectory, trustedSource
   return release
 }
 
-function dryRun() { equal(Object.keys(target.PUBLISHED_NATIVE_TARGETS).length, 3, 'published native target count'); return true }
+function dryRun() { equal(Object.keys(target.PUBLISHED_NATIVE_TARGETS).length, 2, 'published native target count'); return true }
 function parseArgs(argv) { const options = {}; for (let index = 0; index < argv.length; index += 1) { const key = argv[index]; if (key === '--dry-run') { options.dryRun = true; continue } const value = argv[++index]; if (!value || !['--candidate', '--trusted-source-root', '--oci-archive', '--oci-evidence'].includes(key)) throw new Error(`unknown or incomplete option: ${key}`); options[{ '--candidate': 'candidateDirectory', '--trusted-source-root': 'trustedSourceRoot', '--oci-archive': 'ociArchivePath', '--oci-evidence': 'ociEvidencePath' }[key]] = value } return options }
 if (process.argv[1] === fileURLToPath(import.meta.url)) { const options = parseArgs(process.argv.slice(2)); (options.dryRun ? Promise.resolve(dryRun()) : verifyReleaseCandidate(options)).catch((error) => { console.error(`[verify-release-candidate] ${error.message}`); process.exitCode = 1 }) }
 export { dryRun, parseArgs, verifyOciArchive }

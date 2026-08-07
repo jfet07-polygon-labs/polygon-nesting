@@ -59,7 +59,8 @@ test('repository npm configuration binds the organization scope without a commit
 
 test('migration docs define current-repository release gates without legacy parity', () => {
   assert.match(migration, /current repository/i)
-  assert.match(migration, /three published native targets/i)
+  assert.match(migration, /two published native targets/i)
+  assert.doesNotMatch(migration, /macOS x64|darwin-x64|x86_64-apple-darwin/i)
   assert.match(migration, /Windows.*local\/manual/i)
   assert.doesNotMatch(migration, /standard future release path remains parity-bound/i)
   assert.doesNotMatch(migration, /run `31109349775`/)

@@ -2,7 +2,7 @@
 
 ## Package
 
-The desktop package is `@jfet07-polygon-labs/polygon-nesting` version `0.1.0`, published only to `https://npm.pkg.github.com` when publication authorization and immutable source evidence exist. A release candidate consumes three `native-build-*` artifacts from a successful `main` push CI run for the exact source commit and does not rebuild Rust. The same CI run supplies the already smoke-tested OCI archive. The current repository's protocol, canonical 18-row semantic matrix, native, CLI, N-API, and OCI contract suites are authoritative release gates; old-engine migration parity remains an optional manual diagnostic. Node 18 or newer is required. The package contents allowlist is `package.json`, the CommonJS loader, target map, matching `.node` artifacts, `NOTICE`, and the Clipper2 license text. It must not ship Rust source or a Cargo `target/` directory.
+The desktop package is `@jfet07-polygon-labs/polygon-nesting` version `0.1.0`, published only to `https://npm.pkg.github.com` when publication authorization and immutable source evidence exist. A release candidate consumes two `native-build-*` artifacts from a successful `main` push CI run for the exact source commit and does not rebuild Rust. The same CI run supplies the already smoke-tested OCI archive. The current repository's protocol, canonical 18-row semantic matrix, native, CLI, N-API, and OCI contract suites are authoritative release gates; old-engine migration parity remains an optional manual diagnostic. Node 18 or newer is required. The package contents allowlist is `package.json`, the CommonJS loader, target map, matching `.node` artifacts, `NOTICE`, and the Clipper2 license text. It must not ship Rust source or a Cargo `target/` directory.
 
 The loader preserves the desktop binary naming contract:
 
@@ -17,9 +17,8 @@ Local/manual source builds support exactly:
 | Linux | x64 | `x86_64-unknown-linux-gnu` | `libpolygon_nesting_napi.so` |
 | Windows | x64 | `x86_64-pc-windows-msvc` | `polygon_nesting_napi.dll` |
 | macOS | arm64 | `aarch64-apple-darwin` | `libpolygon_nesting_napi.dylib` |
-| macOS | x64 | `x86_64-apple-darwin` | `libpolygon_nesting_napi.dylib` |
 
-The published package contains exactly three addons: Linux x64, macOS arm64, and macOS x64. Windows x64 remains available for local/manual builds, but hosted CI does not build it and the registry package does not contain it.
+The published package contains exactly two addons: Linux x64 and macOS arm64. Windows x64 remains available for local/manual builds, but hosted CI does not build it and the registry package does not contain it.
 
 Unsupported platform and architecture pairs fail before Cargo is invoked. A Darwin addon staged on Darwin is subject to the package build and signing checks. Plain Node and Electron-as-Node addon loading are release gates for each published target.
 

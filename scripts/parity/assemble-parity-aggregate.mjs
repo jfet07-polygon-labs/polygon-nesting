@@ -301,7 +301,7 @@ export async function assembleParityAggregate({ inputDirectory, outputDirectory,
     .map((entry) => entry.name)
     .sort();
   const expectedKeys = PARITY_TARGET_LAYOUT.map(({ key }) => `old-new-parity-target-${key}`).sort();
-  if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) fail('input artifacts must contain exactly the four required target directories');
+  if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) fail(`input artifacts must contain exactly the ${PARITY_TARGET_LAYOUT.length} required target directories`);
 
   await rm(outputRoot, { recursive: true, force: true });
   const stagingDirectory = join(outputRoot, 'staging');
