@@ -24,6 +24,25 @@ fn cancellation_retains_first_deadline_writer() {
 }
 
 #[test]
+fn completion_rejects_late_cancellation() {
+    let control = CancellationControl::new();
+
+    assert!(control.try_complete());
+    assert!(!control.cancel(CancelReason::Cancelled));
+    assert_eq!(control.reason(), None);
+    assert_eq!(control.checkpoint(), Ok(()));
+}
+
+#[test]
+fn cancellation_rejects_late_completion() {
+    let control = CancellationControl::new();
+
+    assert!(control.cancel(CancelReason::Cancelled));
+    assert!(!control.try_complete());
+    assert_eq!(control.reason(), Some(CancelReason::Cancelled));
+}
+
+#[test]
 fn cancellation_concurrent_writers_preserve_one_barrier_winner() {
     let control = Arc::new(CancellationControl::new());
     let barrier = Arc::new(Barrier::new(3));

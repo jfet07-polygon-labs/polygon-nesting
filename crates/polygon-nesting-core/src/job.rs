@@ -2097,6 +2097,38 @@ fn control_failure_outcome(control: &CancellationControl) -> Option<EngineOutcom
     })
 }
 
+fn outcome_cancel_reason(outcome: &EngineOutcome) -> Option<crate::CancelReason> {
+    let EngineOutcome::Failure { error, .. } = outcome else {
+        return None;
+    };
+    match error.category {
+        EngineErrorCode::Cancelled => Some(crate::CancelReason::Cancelled),
+        EngineErrorCode::DeadlineExceeded => Some(crate::CancelReason::Deadline),
+        _ => None,
+    }
+}
+
+fn commit_terminal_result(
+    control: &CancellationControl,
+    candidate: Result<EngineOutcome, EngineError>,
+) -> Result<EngineOutcome, EngineError> {
+    if control.try_complete() {
+        return candidate;
+    }
+    let Some(reason) = control.reason() else {
+        return candidate;
+    };
+    if candidate
+        .as_ref()
+        .ok()
+        .and_then(outcome_cancel_reason)
+        .is_some_and(|candidate_reason| candidate_reason == reason)
+    {
+        return candidate;
+    }
+    Ok(control_failure_outcome(control).expect("cancelled control should produce a typed outcome"))
+}
+
 pub struct Job<'a> {
     request: &'a EngineRequest,
     control: &'a CancellationControl,
@@ -2133,6 +2165,12 @@ impl<'a> Job<'a> {
     }
 
     pub fn run(self) -> Result<EngineOutcome, EngineError> {
+        let control = self.control;
+        let candidate = self.run_uncommitted();
+        commit_terminal_result(control, candidate)
+    }
+
+    fn run_uncommitted(self) -> Result<EngineOutcome, EngineError> {
         self.request.validate().map_err(validation_error)?;
         if let Some(outcome) = control_failure_outcome(self.control) {
             return Ok(outcome);
@@ -2222,6 +2260,26 @@ mod tests {
     use super::*;
 
     const COMPUTE_OPERATION: &str = "computeIrregularNesting";
+
+    #[test]
+    fn terminal_commit_projects_cancellation_that_won_after_candidate_selection() {
+        let mut request = valid_request(protocol::EngineProfile::Compact);
+        request.settings.optimizer.intrinsic_shared_archive_enabled = false;
+        let candidate = Ok(request
+            .archive_ineligible_outcome()
+            .expect("request should be archive-ineligible"));
+        let control = CancellationControl::new();
+        assert!(control.cancel(crate::CancelReason::Cancelled));
+
+        let outcome = commit_terminal_result(&control, candidate)
+            .expect("cancellation should produce a typed outcome");
+
+        assert!(matches!(
+            outcome,
+            EngineOutcome::Failure { error, diagnostics }
+                if error.category == EngineErrorCode::Cancelled && diagnostics.is_empty()
+        ));
+    }
 
     #[test]
     fn project_error_maps_compute_contract_exactly() {

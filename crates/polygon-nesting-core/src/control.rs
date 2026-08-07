@@ -19,6 +19,7 @@ pub enum CancelReason {
 const RUNNING: u8 = 0;
 const CANCELLED: u8 = 1;
 const DEADLINE: u8 = 2;
+const COMPLETED: u8 = 3;
 
 #[derive(Debug)]
 pub struct CancellationControl {
@@ -48,9 +49,15 @@ impl CancellationControl {
             .is_ok()
     }
 
+    pub fn try_complete(&self) -> bool {
+        self.state
+            .compare_exchange(RUNNING, COMPLETED, Ordering::AcqRel, Ordering::Acquire)
+            .is_ok()
+    }
+
     pub fn reason(&self) -> Option<CancelReason> {
         match self.state.load(Ordering::Acquire) {
-            RUNNING => None,
+            RUNNING | COMPLETED => None,
             CANCELLED => Some(CancelReason::Cancelled),
             DEADLINE => Some(CancelReason::Deadline),
             _ => unreachable!("invalid cancellation state"),
