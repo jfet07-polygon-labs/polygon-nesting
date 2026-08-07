@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       ci_run_id:
-        description: Successful manual CI run ID with externally generated parity contracts
+        description: Successful manual CI run ID containing all four native build artifacts
         required: false
         type: string
   push:
@@ -57,7 +57,7 @@ jobs:
             return context.sha;
 
   resolve-ci:
-    name: Resolve matching parity-gated CI evidence
+    name: Resolve matching native CI evidence
     needs: authorize-source
     runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
@@ -73,10 +73,10 @@ jobs:
           result-encoding: string
           script: |
             const requiredArtifacts = new Set([
-              'release-native-linux-x64',
-              'release-native-win32-x64',
-              'release-native-darwin-arm64',
-              'release-native-darwin-x64'
+              'native-build-linux-x64',
+              'native-build-win32-x64',
+              'native-build-darwin-arm64',
+              'native-build-darwin-x64'
             ]);
             async function validateRun(run) {
               if (run.head_sha !== process.env.SOURCE_COMMIT || run.conclusion !== 'success' || run.event !== 'workflow_dispatch' && run.event !== 'workflow_call' || !run.path.endsWith('/ci.yml')) return false;
@@ -101,7 +101,7 @@ jobs:
                 run_id: Number(supplied)
               });
               if (!await validateRun(run)) {
-                core.setFailed('The supplied run is not a successful manual ci.yml run with all four externally bound release artifacts for this source commit');
+                core.setFailed('The supplied run is not a successful manual ci.yml run with all four native build artifacts for this source commit');
                 return;
               }
               return supplied;
@@ -118,7 +118,7 @@ jobs:
             for (const run of data.workflow_runs) {
               if (await validateRun(run)) return String(run.id);
             }
-            core.setFailed('No successful manual CI run with all four externally generated parity contracts exists for the exact source commit');
+            core.setFailed('No successful manual CI run with all four native build artifacts exists for the exact source commit');
 
   candidate:
     name: Assemble npm release candidate
@@ -133,18 +133,18 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22.22.0
-      - name: Download parity-bound native artifacts
+      - name: Download native build artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           github-token: ${{ github.token }}
           run-id: ${{ needs.resolve-ci.outputs.run-id }}
-          pattern: release-native-*
+          pattern: native-build-*
           path: downloaded-native-artifacts
-      - name: Normalize four release-native artifact directories
+      - name: Normalize four native build artifact directories
         run: |
           mkdir native-artifacts
           for target in linux-x64 win32-x64 darwin-arm64 darwin-x64; do
-            source="downloaded-native-artifacts/release-native-$target"
+            source="downloaded-native-artifacts/native-build-$target"
             test -d "$source"
             test ! -e "native-artifacts/$target"
             mv "$source" "native-artifacts/$target"

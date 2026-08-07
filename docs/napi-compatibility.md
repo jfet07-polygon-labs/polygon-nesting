@@ -2,7 +2,7 @@
 
 ## Package
 
-The desktop package is `@jfet07-polygon-labs/polygon-nesting` version `0.1.0`, published only to `https://npm.pkg.github.com` when publication authorization and immutable source evidence exist. The one-time `0.1.0` fast package cutover uses the four fixed ordinary CI artifacts from run `31109349775` without rebuilding Rust or running new parity. Standard future releases remain parity-bound under the migration contract. Node 18 or newer is required. The package contents allowlist is `package.json`, the CommonJS loader, target map, matching `.node` artifacts, `NOTICE`, and the Clipper2 license text. It must not ship Rust source or a Cargo `target/` directory.
+The desktop package is `@jfet07-polygon-labs/polygon-nesting` version `0.1.0`, published only to `https://npm.pkg.github.com` when publication authorization and immutable source evidence exist. A release candidate consumes the four `native-build-*` artifacts from a successful manual CI run for the exact source commit and does not rebuild Rust. The current repository's protocol, canonical 18-row semantic matrix, native, CLI, N-API, and OCI contract suites are authoritative release gates; old-engine migration parity remains an optional manual diagnostic. Node 18 or newer is required. The package contents allowlist is `package.json`, the CommonJS loader, target map, matching `.node` artifacts, `NOTICE`, and the Clipper2 license text. It must not ship Rust source or a Cargo `target/` directory.
 
 The loader preserves the desktop binary naming contract:
 

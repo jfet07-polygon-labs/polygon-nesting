@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { lstat, readdir, readFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
+import { CURRENT_CANONICAL_ROW_IDS } from '../run-current-canonical-matrix.mjs';
 
 export const SOURCE_CONTRACT = Object.freeze({
   repository: 'jfet07-polygon-labs/min-plane-dxf',
@@ -31,11 +32,7 @@ export const ACCEPTED_NATIVE_DEPENDENCIES = Object.freeze([
 ].map(([name, version]) => Object.freeze({ name, version })));
 export const ACCEPTED_NATIVE_DEPENDENCIES_SHA256 = '8925ac904fa2eb41a3f82907d530578a5174509eef0470712193cc4d45a3d0c8';
 
-export const CANONICAL_ROW_IDS = Object.freeze([
-  'triangle-20-2000x2700-compact', 'triangle-20-2000x2700-short-side', 'triangle-20-600x400-compact', 'triangle-20-600x400-short-side', 'triangle-20-300x300-compact', 'triangle-20-300x300-short-side',
-  'mixed-61-2000x2700-compact', 'mixed-61-2000x2700-short-side', 'mixed-61-600x400-compact', 'mixed-61-600x400-short-side', 'mixed-61-300x300-compact', 'mixed-61-300x300-short-side',
-  'shapes-17-2000x2700-compact', 'shapes-17-2000x2700-short-side', 'shapes-17-600x400-compact', 'shapes-17-600x400-short-side', 'shapes-17-300x300-compact', 'shapes-17-300x300-short-side',
-]);
+export const CANONICAL_ROW_IDS = CURRENT_CANONICAL_ROW_IDS;
 
 export const PARITY_TARGETS = Object.freeze([
   Object.freeze({ key: 'linux-x64', runner: 'blacksmith-2vcpu-ubuntu-2404', target: 'x86_64-unknown-linux-gnu', profile: 'release', features: [], rustVersion: RUST_VERSION, artifact: 'old-rust-parity-capture-x86_64-unknown-linux-gnu' }),

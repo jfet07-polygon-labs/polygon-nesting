@@ -156,11 +156,6 @@ function assertCiTriggerContract(workflow) {
     '      - main',
     '  pull_request:',
     '  workflow_dispatch:',
-    '    inputs:',
-    '      parity_source_run_id:',
-    '        description: Explicit jfet07-polygon-labs/polygon-nesting run ID containing the trusted aggregate parity bundle',
-    '        required: false',
-    '        type: string',
     '',
     ''
   ].join('\n'), 'CI trigger contract must be exact and unrestricted')
@@ -172,7 +167,7 @@ function assertReleaseTriggerContract(workflow) {
     '  workflow_dispatch:',
     '    inputs:',
     '      ci_run_id:',
-    '        description: Successful manual CI run ID with externally generated parity contracts',
+    '        description: Successful manual CI run ID containing all four native build artifacts',
     '        required: false',
     '        type: string',
     '  push:',
@@ -212,7 +207,7 @@ function assertCiRunnerContract(workflow) {
   const intel = workflowJob(workflow, 'native-intel-release')
   assert.match(workflowJob(workflow, 'quality'), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
   assert.match(workflowJob(workflow, 'oci-smoke'), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
-  assert.match(workflowJob(workflow, 'parity-release-gate'), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
+  assert.doesNotMatch(workflow, /^  parity-release-gate:$/m)
   assert.deepEqual(matrixIncludeItems(native), [
     {
       'target-key': 'linux-x64',
@@ -239,7 +234,6 @@ function assertCiRunnerContract(workflow) {
   assert.match(intel, /^    if: github\.event_name == 'workflow_dispatch'$/m)
   assert.match(intel, /^    runs-on: macos-15-intel$/m)
   assert.match(intel, /^      TARGET_KEY: darwin-x64$/m)
-  assert.match(workflowJob(workflow, 'parity-release-gate'), /^    needs: \[native, native-intel-release\]$/m)
 }
 
 function assertReleaseRunnerContract(workflow) {
@@ -374,7 +368,6 @@ test('CI only pushes main, tests workflow contracts, and preserves manual runs f
 
 test('compatible Linux jobs use the immutable CI image and native jobs stay outside it', () => {
   assertCiImageContainer(workflowJob(ci, 'quality'))
-  assertCiImageContainer(workflowJob(ci, 'parity-release-gate'))
   assertCiImageContainer(workflowJob(parity, 'parity-linux'))
   assertNoCiImageContainer(workflowJob(ci, 'oci-smoke'))
   assertNoCiImageContainer(workflowJob(ci, 'native'))
@@ -389,7 +382,6 @@ test('compatible Linux jobs use the immutable CI image and native jobs stay outs
 
 test('CI image container jobs trust the checked-out workspace before invoking Git', () => {
   assertGitSafeDirectory(workflowJob(ci, 'quality'))
-  assertGitSafeDirectory(workflowJob(ci, 'parity-release-gate'))
   assertGitSafeDirectory(workflowJob(parity, 'parity-linux'))
 })
 
@@ -526,11 +518,14 @@ test('release builds runtime and publication consumes only a selected archived r
   assert.match(publish, /refusing to move existing tag to a different digest/)
   assert.match(publish, /skopeo copy oci-archive:oci-candidate\/oci-image\.tar/)
   assert.match(publish, /docker login ghcr\.io/)
+  assert.match(publish, /registry-url: https:\/\/npm\.pkg\.github\.com/)
+  assert.match(publish, /npm publish "\$NPM_TARBALL" --ignore-scripts --registry https:\/\/npm\.pkg\.github\.com/)
+  assert.match(publish, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.0"/)
   assert.match(publish, /docker pull "\$IMAGE_REF"/)
   assert.match(publish, /run: >-\n\s+"\$RUNNER_TEMP\/trusted-publication-verifier\/scripts\/smoke-cli-image\.sh"\n\s+"\$IMAGE_REF"/)
   assert.doesNotMatch(publish, /run: scripts\/smoke-cli-image\.sh "\$IMAGE_REF"/)
   assert.match(publish, /publication-evidence\.json/)
-  for (const field of ['sourceRunId', 'sourceCommit', 'archiveSha256', 'manifestDigest', 'tag', 'immutableImageReference', 'postPublicationDigest', 'actor', 'repository', 'workflowRunId', 'timestamp', 'smoke']) {
+  for (const field of ['sourceRunId', 'sourceCommit', 'archiveSha256', 'manifestDigest', 'tag', 'immutableImageReference', 'postPublicationDigest', 'npmPackage', 'actor', 'repository', 'workflowRunId', 'timestamp', 'smoke']) {
     assert.match(publish, new RegExp(field), `publication evidence must include ${field}`)
   }
   assert.doesNotMatch(publish, /docker build(?:x)? build|cargo build|npm run build/, 'runtime publication must not rebuild source')
