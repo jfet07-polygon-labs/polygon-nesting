@@ -157,6 +157,7 @@ fn no_pool_execution_never_initializes_rayons_global_registry() {
             allow_global_rotation: true,
             allow_global_mirror: Some(true),
             history_mode: HistoryMode::Off,
+            diagnostic_trace_mode: polygon_nesting_protocol::DiagnosticTraceMode::Full,
             irregular_settings: None,
         },
     };

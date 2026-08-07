@@ -534,6 +534,10 @@ mod tests {
     }
 
     fn small_desktop_request() -> String {
+        small_desktop_request_with_mode("full")
+    }
+
+    fn small_desktop_request_with_mode(mode: &str) -> String {
         let mut request: serde_json::Value =
             serde_json::from_str(COMPACT_REQUEST).expect("fixture JSON");
         request["pieces"]
@@ -546,6 +550,7 @@ mod tests {
             .truncate(1);
         request["options"]["timeoutMs"] = serde_json::json!(1_000.0);
         request["options"]["historyMode"] = serde_json::json!("stream");
+        request["options"]["diagnosticTraceMode"] = serde_json::json!(mode);
         request.to_string()
     }
 
@@ -860,6 +865,44 @@ mod tests {
             .enumerate()
             .all(|(ordinal, frame)| frame.ordinal() == ordinal as u64));
         assert!(!registry.cancel("events", CancelReason::Cancelled));
+    }
+
+    #[test]
+    fn lifecycle_preserves_ordinals_and_one_terminal_for_each_diagnostic_trace_mode() {
+        for mode in ["full", "off"] {
+            let (registry, lease) = lifecycle_registry(&format!("events-{mode}"));
+            let request_json = small_desktop_request_with_mode(mode);
+            let mut state = LifecycleState::new(Status::Ok);
+            let output = run_lifecycle(
+                Arc::clone(&registry),
+                format!("events-{mode}"),
+                Arc::clone(&lease),
+                &mut state,
+                |state| run_core(state, &request_json, &lease),
+                LifecycleState::deliver_terminal,
+            );
+
+            let envelope: serde_json::Value =
+                serde_json::from_str(&output).expect("success envelope");
+            assert_eq!(envelope["ok"], true, "mode {mode}");
+            let frames = state.frames();
+            assert_eq!(
+                frames
+                    .iter()
+                    .filter(|frame| matches!(frame, EventFrame::Terminal { .. }))
+                    .count(),
+                1,
+                "mode {mode}"
+            );
+            assert!(
+                frames
+                    .iter()
+                    .enumerate()
+                    .all(|(ordinal, frame)| frame.ordinal() == ordinal as u64),
+                "mode {mode}"
+            );
+            assert!(!registry.cancel(&format!("events-{mode}"), CancelReason::Cancelled));
+        }
     }
 
     #[test]

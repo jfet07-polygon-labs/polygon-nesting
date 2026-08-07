@@ -24,6 +24,20 @@ A canonical decimal is `0`, or an optional leading minus sign followed by nonzer
 
 `ExecutionDiagnostics` contains worker counts, elapsed time, and counters. It is intentionally non-semantic. Parity also preserves the presence, but not the value, of these timing-only fields wherever they occur: `runtimeMs`, `elapsedMs`, `preflightRuntimeMs`, `completeArchiveRuntimeMs`, `prefixTerminalizationMs`, `coldSearchMs`, `topologyMeasurementMs`, `contactMeasurementMs`, `serializedTraceBytes`, and `peakRssDeltaBytes`. `elapsedMs` can also occur in a `portfolio-progress` event.
 
+## Diagnostic trace mode
+
+`EngineRequest.diagnosticTraceMode` is a request-level field serialized as `diagnosticTraceMode`. It accepts exactly `"full"` and `"off"`; omission defaults to `"full"` without changing protocol version 1. Canonical protocol vectors specify `"full"` explicitly.
+
+`"off"` suppresses retention and projection of these five expensive result fields:
+
+- `capacityTrace`
+- `intrinsicAnytimeSchedulerTrace`
+- `focusedCompleteReconstructionTrace`
+- `intrinsicShortSideObserverTrace`
+- `intrinsicShortSidePairFoldTrace`
+
+It does not change geometry, placements, scores, hashes, unplaced pieces, collision diagnostics, typed failures, cancellation, worker counts, counters, package metadata, version metadata, or semantic event ordering. Timing and serialized-size measurements remain diagnostics and are normalized by parity. `historyMode` is independent: `historyMode: "off"` suppresses state snapshots, while `diagnosticTraceMode: "off"` suppresses only the five detailed diagnostic traces.
+
 ## Eligibility and errors
 
 The supported engine profiles are `compact` and `compact-short-side`. Requests that disable the shared archive, choose short-side-fill placement, or activate the GA path produce an `archive-ineligible` typed outcome. They are not silently emulated.

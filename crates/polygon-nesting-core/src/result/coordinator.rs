@@ -43,6 +43,8 @@
 use std::sync::Arc;
 use std::time::Instant;
 
+use polygon_nesting_protocol::DiagnosticTraceMode;
+
 use crate::archive::shared::{
     make_intrinsic_shared_archive_endpoint, retain_ranked_shared_archive,
     run_intrinsic_shared_archive_portfolio, select_fitting_shared_archive,
@@ -527,6 +529,11 @@ fn coordinate_intrinsic_shared_archive(
     geometry_cache: &mut GeometryCacheStore,
     free_material_cache: &mut FreeMaterialCache,
 ) -> Result<IrregularComputeResult, IrregularComputeErrorType> {
+    let diagnostic_trace_enabled = matches!(
+        input.request.options.diagnostic_trace_mode,
+        DiagnosticTraceMode::Full
+    );
+
     // TS: `archiveEnabled = isIntrinsicSharedArchiveEligible(input.settings)`
     // (`:483`). Per `result::mod`'s top doc (R1/R2), a non-eligible request
     // is a routing error at this native entry point, not a fallback into
@@ -594,7 +601,7 @@ fn coordinate_intrinsic_shared_archive(
         Vec::new();
 
     if let IntrinsicCapacityPreflightOutcome::ProvenImpossible { .. } = &preflight {
-        if focused_complete_reconstruction_enabled {
+        if focused_complete_reconstruction_enabled && diagnostic_trace_enabled {
             focused_complete_reconstruction_trace = Some(IntrinsicFocusedCompleteReconstructionTrace {
                 version: INTRINSIC_FOCUSED_COMPLETE_RECONSTRUCTION_TRACE_VERSION,
                 status: IntrinsicFocusedCompleteReconstructionStatus::SkippedPreflightProvenImpossible,
@@ -633,7 +640,9 @@ fn coordinate_intrinsic_shared_archive(
         .map_err(map_capacity_search_error)?;
         selected = materialize_capacity_result(input, &capacity, free_material_cache)?;
         archive_diagnostics.extend(intrinsic_capacity_diagnostics(&preflight, &capacity));
-        capacity_trace = Some(capacity.trace.clone());
+        if diagnostic_trace_enabled {
+            capacity_trace = Some(capacity.trace.clone());
+        }
         emit_shared_archive_progress(
             &mut *event_sink,
             IrregularPortfolioPhase::Completed,
@@ -670,32 +679,34 @@ fn coordinate_intrinsic_shared_archive(
         let mut scheduled_cold_checkpoint_reused = false;
 
         if let Some(cold_start) = &scheduled_cold_start {
-            intrinsic_anytime_scheduler_trace = Some(IntrinsicAnytimeSchedulerTrace {
-                version: INTRINSIC_ANYTIME_SCHEDULER_TRACE_VERSION,
-                cold_quantum_depths:
-                    crate::capacity::mode::INTRINSIC_ANYTIME_SCHEDULER_COLD_QUANTUM_DEPTHS,
-                cold_start_status: cold_search_status(cold_start),
-                cold_start_completed_depths: cold_start.trace.completed_depths,
-                cold_start_consumed_placement_evaluations: cold_start
-                    .trace
-                    .consumed_placement_evaluations,
-                cold_checkpoint_reused: false,
-                warm_prefix_endpoints_admitted: false,
-                cancellation_reason: None,
-                quanta: vec![IntrinsicAnytimeSchedulerQuantum {
-                    ordinal: 0,
-                    cohort: IntrinsicAnytimeSchedulerCohort::Partial,
-                    producer_role: IntrinsicAnytimeSchedulerProducerRole::CapacityCold,
-                    outcome: match cold_search_status(cold_start) {
-                        IntrinsicAnytimeSchedulerColdStartStatus::Paused => {
-                            IntrinsicAnytimeSchedulerOutcome::Checkpointed
-                        }
-                        IntrinsicAnytimeSchedulerColdStartStatus::Settled => {
-                            IntrinsicAnytimeSchedulerOutcome::Settled
-                        }
-                    },
-                }],
-            });
+            if diagnostic_trace_enabled {
+                intrinsic_anytime_scheduler_trace = Some(IntrinsicAnytimeSchedulerTrace {
+                    version: INTRINSIC_ANYTIME_SCHEDULER_TRACE_VERSION,
+                    cold_quantum_depths:
+                        crate::capacity::mode::INTRINSIC_ANYTIME_SCHEDULER_COLD_QUANTUM_DEPTHS,
+                    cold_start_status: cold_search_status(cold_start),
+                    cold_start_completed_depths: cold_start.trace.completed_depths,
+                    cold_start_consumed_placement_evaluations: cold_start
+                        .trace
+                        .consumed_placement_evaluations,
+                    cold_checkpoint_reused: false,
+                    warm_prefix_endpoints_admitted: false,
+                    cancellation_reason: None,
+                    quanta: vec![IntrinsicAnytimeSchedulerQuantum {
+                        ordinal: 0,
+                        cohort: IntrinsicAnytimeSchedulerCohort::Partial,
+                        producer_role: IntrinsicAnytimeSchedulerProducerRole::CapacityCold,
+                        outcome: match cold_search_status(cold_start) {
+                            IntrinsicAnytimeSchedulerColdStartStatus::Paused => {
+                                IntrinsicAnytimeSchedulerOutcome::Checkpointed
+                            }
+                            IntrinsicAnytimeSchedulerColdStartStatus::Settled => {
+                                IntrinsicAnytimeSchedulerOutcome::Settled
+                            }
+                        },
+                    }],
+                });
+            }
         }
 
         // `run_intrinsic_shared_archive_portfolio` reborrows the coordinator's
@@ -923,21 +934,23 @@ fn coordinate_intrinsic_shared_archive(
                             return Err(IrregularComputeErrorType::NfpIfpControlAbort(abort));
                         }
                         Err(failure) => {
-                            focused_complete_reconstruction_trace =
-                            Some(IntrinsicFocusedCompleteReconstructionTrace {
-                                version: INTRINSIC_FOCUSED_COMPLETE_RECONSTRUCTION_TRACE_VERSION,
-                                status: IntrinsicFocusedCompleteReconstructionStatus::FailedProtectedFallback,
-                                source_canonical_geometry_hash: Some(
-                                    sheetless_winner.sheetless_canonical_geometry_hash.clone(),
-                                ),
-                                candidate_canonical_geometry_hash: None,
-                                selected_canonical_geometry_hash: None,
-                                consumed_candidate_evaluations: 0.0,
-                                candidate_evaluation_accounting_complete: false,
-                                runtime_ms: 0.0,
-                                output_influence: IntrinsicFocusedCompleteReconstructionOutputInfluence::None,
-                                failure_reason: Some(reconstruction_failure_message(&failure)),
-                            });
+                            if diagnostic_trace_enabled {
+                                focused_complete_reconstruction_trace =
+                                    Some(IntrinsicFocusedCompleteReconstructionTrace {
+                                        version: INTRINSIC_FOCUSED_COMPLETE_RECONSTRUCTION_TRACE_VERSION,
+                                        status: IntrinsicFocusedCompleteReconstructionStatus::FailedProtectedFallback,
+                                        source_canonical_geometry_hash: Some(
+                                            sheetless_winner.sheetless_canonical_geometry_hash.clone(),
+                                        ),
+                                        candidate_canonical_geometry_hash: None,
+                                        selected_canonical_geometry_hash: None,
+                                        consumed_candidate_evaluations: 0.0,
+                                        candidate_evaluation_accounting_complete: false,
+                                        runtime_ms: 0.0,
+                                        output_influence: IntrinsicFocusedCompleteReconstructionOutputInfluence::None,
+                                        failure_reason: Some(reconstruction_failure_message(&failure)),
+                                    });
+                            }
                         }
                         Ok(reconstruction) => {
                             let focused_run = reconstruction.runs.iter().find(|run| {
@@ -986,50 +999,55 @@ fn coordinate_intrinsic_shared_archive(
                                     }
                                 }
                             }
-                            focused_complete_reconstruction_trace =
-                            Some(IntrinsicFocusedCompleteReconstructionTrace {
-                                version: INTRINSIC_FOCUSED_COMPLETE_RECONSTRUCTION_TRACE_VERSION,
-                                status: focused_run
-                                    .map(|run| reconstruction_status(run.status))
-                                    .unwrap_or(
-                                        IntrinsicFocusedCompleteReconstructionStatus::Incomplete,
-                                    ),
-                                source_canonical_geometry_hash: Some(
-                                    sheetless_winner.sheetless_canonical_geometry_hash.clone(),
-                                ),
-                                candidate_canonical_geometry_hash: focused_reconstruction_endpoints
-                                    .first()
-                                    .map(|endpoint| {
-                                        endpoint.sheetless_canonical_geometry_hash.clone()
-                                    }),
-                                selected_canonical_geometry_hash: None,
-                                consumed_candidate_evaluations: reconstruction
-                                    .consumed_candidate_evaluations,
-                                candidate_evaluation_accounting_complete: reconstruction
-                                    .candidate_evaluation_accounting_complete,
-                                runtime_ms: reconstruction.runtime_ms,
-                                output_influence:
-                                    IntrinsicFocusedCompleteReconstructionOutputInfluence::None,
-                                failure_reason: None,
-                            });
+                            if diagnostic_trace_enabled {
+                                focused_complete_reconstruction_trace =
+                                    Some(IntrinsicFocusedCompleteReconstructionTrace {
+                                        version: INTRINSIC_FOCUSED_COMPLETE_RECONSTRUCTION_TRACE_VERSION,
+                                        status: focused_run
+                                            .map(|run| reconstruction_status(run.status))
+                                            .unwrap_or(
+                                                IntrinsicFocusedCompleteReconstructionStatus::Incomplete,
+                                            ),
+                                        source_canonical_geometry_hash: Some(
+                                            sheetless_winner.sheetless_canonical_geometry_hash.clone(),
+                                        ),
+                                        candidate_canonical_geometry_hash: focused_reconstruction_endpoints
+                                            .first()
+                                            .map(|endpoint| {
+                                                endpoint.sheetless_canonical_geometry_hash.clone()
+                                            }),
+                                        selected_canonical_geometry_hash: None,
+                                        consumed_candidate_evaluations: reconstruction
+                                            .consumed_candidate_evaluations,
+                                        candidate_evaluation_accounting_complete: reconstruction
+                                            .candidate_evaluation_accounting_complete,
+                                        runtime_ms: reconstruction.runtime_ms,
+                                        output_influence:
+                                            IntrinsicFocusedCompleteReconstructionOutputInfluence::None,
+                                        failure_reason: None,
+                                    });
+                            }
                         }
                     }
                 }
                 _ => {
-                    focused_complete_reconstruction_trace = Some(IntrinsicFocusedCompleteReconstructionTrace {
-                    version: INTRINSIC_FOCUSED_COMPLETE_RECONSTRUCTION_TRACE_VERSION,
-                    status: IntrinsicFocusedCompleteReconstructionStatus::SkippedNoFittingProtectedEndpoint,
-                    source_canonical_geometry_hash: protected_sheetless_winner
-                        .as_ref()
-                        .map(|winner| winner.sheetless_canonical_geometry_hash.clone()),
-                    candidate_canonical_geometry_hash: None,
-                    selected_canonical_geometry_hash: None,
-                    consumed_candidate_evaluations: 0.0,
-                    candidate_evaluation_accounting_complete: true,
-                    runtime_ms: 0.0,
-                    output_influence: IntrinsicFocusedCompleteReconstructionOutputInfluence::None,
-                    failure_reason: None,
-                });
+                    if diagnostic_trace_enabled {
+                        focused_complete_reconstruction_trace =
+                            Some(IntrinsicFocusedCompleteReconstructionTrace {
+                                version: INTRINSIC_FOCUSED_COMPLETE_RECONSTRUCTION_TRACE_VERSION,
+                                status: IntrinsicFocusedCompleteReconstructionStatus::SkippedNoFittingProtectedEndpoint,
+                                source_canonical_geometry_hash: protected_sheetless_winner
+                                    .as_ref()
+                                    .map(|winner| winner.sheetless_canonical_geometry_hash.clone()),
+                                candidate_canonical_geometry_hash: None,
+                                selected_canonical_geometry_hash: None,
+                                consumed_candidate_evaluations: 0.0,
+                                candidate_evaluation_accounting_complete: true,
+                                runtime_ms: 0.0,
+                                output_influence: IntrinsicFocusedCompleteReconstructionOutputInfluence::None,
+                                failure_reason: None,
+                            });
+                    }
                 }
             }
         }
@@ -1141,7 +1159,9 @@ fn coordinate_intrinsic_shared_archive(
                 }
                 selected = materialize_capacity_result(input, &capacity, free_material_cache)?;
                 archive_diagnostics.extend(intrinsic_capacity_diagnostics(&preflight, &capacity));
-                capacity_trace = Some(capacity.trace.clone());
+                if diagnostic_trace_enabled {
+                    capacity_trace = Some(capacity.trace.clone());
+                }
                 emit_shared_archive_progress(
                     &mut *event_sink,
                     IrregularPortfolioPhase::Completed,
@@ -1684,6 +1704,11 @@ struct RunShortSideProfileBlockInput<'a, 'sink> {
 fn run_short_side_profile_block(
     block: RunShortSideProfileBlockInput<'_, '_>,
 ) -> Result<IrregularComputeResult, IrregularComputeErrorType> {
+    let diagnostic_trace_enabled = matches!(
+        block.input.request.options.diagnostic_trace_mode,
+        DiagnosticTraceMode::Full
+    );
+
     let RunShortSideProfileBlockInput {
         input,
         mut selected,
@@ -1729,6 +1754,7 @@ fn run_short_side_profile_block(
 
     let mut short_side_selected = false;
     let mut intrinsic_short_side_pair_fold_trace = None;
+    let mut pair_fold_status = None;
 
     // TS: `intrinsicShortSideObserverTrace.productionShortAxisSpanMm !==
     // undefined && ... && productionEnvelopeAreaGrid2 !== undefined`
@@ -1793,6 +1819,7 @@ fn run_short_side_profile_block(
                 },
                 geometry_cache,
             );
+        pair_fold_status = Some(pair_fold_outcome.trace.status);
 
         if pair_fold_outcome.trace.status
             == crate::short_side::pair_fold::IntrinsicShortSidePairFoldStatus::Accepted
@@ -1823,11 +1850,13 @@ fn run_short_side_profile_block(
                 // See this function's `capacity_trace` doc comment above:
                 // this new `selected` never carries a capacity trace.
                 capacity_trace = None;
-                let mut measured = pair_fold_outcome.trace.clone();
-                measured.output_influence =
-                    crate::short_side::observer::ShortSideOutputInfluence::Selected;
-                intrinsic_short_side_pair_fold_trace =
-                    Some(crate::short_side::pair_fold::with_measured_trace(measured));
+                if diagnostic_trace_enabled {
+                    let mut measured = pair_fold_outcome.trace.clone();
+                    measured.output_influence =
+                        crate::short_side::observer::ShortSideOutputInfluence::Selected;
+                    intrinsic_short_side_pair_fold_trace =
+                        Some(crate::short_side::pair_fold::with_measured_trace(measured));
+                }
                 archive_diagnostics.push(
                     crate::result::materialize::intrinsic_short_side_profile_diagnostic(
                         "selected",
@@ -1848,7 +1877,7 @@ fn run_short_side_profile_block(
                 );
                 short_side_selected = true;
             }
-        } else {
+        } else if diagnostic_trace_enabled {
             intrinsic_short_side_pair_fold_trace = Some(pair_fold_outcome.trace);
         }
     }
@@ -1859,10 +1888,16 @@ fn run_short_side_profile_block(
             message: format!(
                 "directional Short Side construction invariant failed (archive={:?}, terminal={:?})",
                 observer_trace.status,
-                intrinsic_short_side_pair_fold_trace.as_ref().map(|trace| trace.status)
+                pair_fold_status
             ),
         }));
     }
+
+    let intrinsic_short_side_observer_trace = if diagnostic_trace_enabled {
+        Some(observer_trace)
+    } else {
+        None
+    };
 
     Ok(assemble_result(
         input,
@@ -1871,7 +1906,7 @@ fn run_short_side_profile_block(
         capacity_trace,
         intrinsic_anytime_scheduler_trace,
         focused_complete_reconstruction_trace,
-        Some(observer_trace),
+        intrinsic_short_side_observer_trace,
         intrinsic_short_side_pair_fold_trace,
         event_sink,
     ))

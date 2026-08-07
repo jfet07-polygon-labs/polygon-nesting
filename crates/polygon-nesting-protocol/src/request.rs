@@ -53,6 +53,14 @@ pub enum EngineProfile {
     CompactShortSide,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum DiagnosticTraceMode {
+    #[default]
+    Full,
+    Off,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum HistoryMode {
@@ -73,6 +81,8 @@ pub struct EngineRequest {
     pub source_pieces: Vec<SourcePiece>,
     pub settings: EngineSettings,
     pub history_mode: HistoryMode,
+    #[serde(default)]
+    pub diagnostic_trace_mode: DiagnosticTraceMode,
 }
 
 impl EngineRequest {

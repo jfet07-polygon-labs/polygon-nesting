@@ -43,7 +43,7 @@ async function fixture({ withBuildIdentity = false } = {}) {
   for (const rowId of fixtureRows) {
     const row = join(root, 'old', 'raw', rowId);
     await mkdir(row, { recursive: true });
-    await writeFile(join(row, 'request.json'), '{"desktop":true}\n');
+    await writeFile(join(row, 'request.json'), '{"desktop":true,"options":{"diagnosticTraceMode":"full"}}\n');
     await writeFile(join(row, 'result.json'), '{"result":"ok","runtimeMs":1}\n');
     await writeFile(join(row, 'events.ndjson'), '{"kind":"portfolio-progress","elapsedMs":2}\n');
     await writeFile(join(row, 'stderr.txt'), '');
@@ -292,9 +292,10 @@ test('defines the trusted canonical 18-row order independently of bundle metadat
   ]);
 });
 
-function standaloneParityMatrixItems(workflow) {
-  const [, include] = workflow.match(/^      matrix:\n        include:\n([\s\S]*?)(?=^    runs-on:)/m) ?? [];
-  assert.notEqual(include, undefined, 'standalone parity workflow must define a matrix include list');
+function standaloneParityMatrixItems(workflow, jobName) {
+  const job = workflowJob(workflow, jobName);
+  const [, include] = job.match(/^      matrix:\n        include:\n([\s\S]*?)(?=^    runs-on:)/m) ?? [];
+  assert.notEqual(include, undefined, `${jobName} must define a matrix include list`);
   return include.trimEnd().split(/^          - /m).filter(Boolean).map((item) => Object.fromEntries(
     item.split('\n').filter(Boolean).map((line, index) => {
       const [, key, value] = line.match(index === 0 ? /^([^:]+): (.+)$/ : /^            ([^:]+): (.+)$/) ?? [];
@@ -305,7 +306,11 @@ function standaloneParityMatrixItems(workflow) {
 }
 
 function assertStandaloneParityMatrixContract(workflow) {
-  assert.deepEqual(standaloneParityMatrixItems(workflow), PARITY_TARGETS.map(({ key, runner, target }) => ({
+  const actual = [
+    ...standaloneParityMatrixItems(workflow, 'parity-linux'),
+    ...standaloneParityMatrixItems(workflow, 'parity'),
+  ];
+  assert.deepEqual(actual, PARITY_TARGETS.map(({ key, runner, target }) => ({
     key,
     runner,
     target,
@@ -367,15 +372,15 @@ test('standalone parity aggregate jobs reject non-Blacksmith Linux runners', asy
   const workflow = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
   assert.throws(
     () => assertStandaloneParityLinuxJobRunners(workflow.replace(
-      '  aggregate:\n    needs: parity\n    if: ${{ needs.parity.result == \'success\' }}\n    runs-on: blacksmith-2vcpu-ubuntu-2404',
-      '  aggregate:\n    needs: parity\n    if: ${{ needs.parity.result == \'success\' }}\n    runs-on: ubuntu-24.04',
+      "  aggregate:\n    needs: [parity, parity-linux]\n    if: ${{ needs.parity.result == 'success' && needs['parity-linux'].result == 'success' }}\n    runs-on: blacksmith-2vcpu-ubuntu-2404",
+      "  aggregate:\n    needs: [parity, parity-linux]\n    if: ${{ needs.parity.result == 'success' && needs['parity-linux'].result == 'success' }}\n    runs-on: ubuntu-24.04",
     )),
     /runs-on/,
   );
   assert.throws(
     () => assertStandaloneParityLinuxJobRunners(workflow.replace(
-      '  require-all-targets:\n    if: always()\n    needs: [parity, aggregate]\n    runs-on: blacksmith-2vcpu-ubuntu-2404',
-      '  require-all-targets:\n    if: always()\n    needs: [parity, aggregate]\n    runs-on: ubuntu-latest',
+      '  require-all-targets:\n    if: always()\n    needs: [parity, parity-linux, aggregate]\n    runs-on: blacksmith-2vcpu-ubuntu-2404',
+      '  require-all-targets:\n    if: always()\n    needs: [parity, parity-linux, aggregate]\n    runs-on: ubuntu-latest',
     )),
     /runs-on/,
   );
@@ -581,7 +586,7 @@ test('compares semantic result and ordered event records without normalizing thr
   await mkdir(newRow, { recursive: true });
   await writeFile(join(newRow, 'result.json'), '{"result":"ok","runtimeMs":900}\n');
   await writeFile(join(newRow, 'events.ndjson'), '{"kind":"portfolio-progress","elapsedMs":999}\n');
-  await writeFile(join(newRow, 'request.json'), '{"desktop":true}\n');
+  await writeFile(join(newRow, 'request.json'), '{"desktop":true,"options":{"diagnosticTraceMode":"full"}}\n');
   await writeFile(join(newRow, 'stderr.txt'), '');
   await writeFile(join(newRow, 'process.json'), JSON.stringify({ rowId: 'desktop-01' }));
   const evidence = await compareParityRows(oldRoot, newRoot, ['desktop-01']);

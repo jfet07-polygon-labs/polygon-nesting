@@ -238,6 +238,7 @@ fn default_options() -> NestingOptions {
         allow_global_rotation: true,
         allow_global_mirror: Some(true),
         history_mode: HistoryMode::Stream,
+        diagnostic_trace_mode: polygon_nesting_protocol::DiagnosticTraceMode::Full,
         irregular_settings: None,
     }
 }
@@ -609,6 +610,7 @@ fn decode_request(case: &Value) -> (NestingRequest, IrregularNestingSettings) {
                 .expect("allowGlobalRotation"),
             allow_global_mirror: request_value["allowGlobalMirror"].as_bool(),
             history_mode,
+            diagnostic_trace_mode: polygon_nesting_protocol::DiagnosticTraceMode::Full,
             irregular_settings: None,
         },
     };
@@ -1409,6 +1411,7 @@ fn cancellation_scenario_request(vectors: &Value) -> (NestingRequest, IrregularN
             allow_global_rotation: true,
             allow_global_mirror: Some(true),
             history_mode: HistoryMode::Off,
+            diagnostic_trace_mode: polygon_nesting_protocol::DiagnosticTraceMode::Full,
             irregular_settings: None,
         },
     };

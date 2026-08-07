@@ -5,13 +5,17 @@ import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 
 const REPOSITORY_ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))))
-const DOCKERFILE_PATH = join(REPOSITORY_ROOT, '.github', 'ci', 'Dockerfile')
+const DOCKERFILE_PATH = join(REPOSITORY_ROOT, 'Dockerfile')
+const LEGACY_DOCKERFILE_PATH = join(REPOSITORY_ROOT, '.github', 'ci', 'Dockerfile')
 const WORKFLOW_PATH = join(REPOSITORY_ROOT, '.github', 'workflows', 'ci-image.yml')
 const QUALITY_WORKFLOW_PATH = join(REPOSITORY_ROOT, '.github', 'workflows', 'ci.yml')
+const PARITY_WORKFLOW_PATH = join(REPOSITORY_ROOT, '.github', 'workflows', 'standalone-parity.yml')
 
 const RUST_BASE_IMAGE = 'rust:1.95.0-bookworm@sha256:6258907abe69656e41cd992e0b705cdcfabcbbe3db374f92ed2d47121282d4a1'
+const DEBIAN_BASE_IMAGE = 'debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818'
 const CI_IMAGE = 'ghcr.io/jfet07-polygon-labs/polygon-nesting-ci'
 const CI_IMAGE_TAG = 'ci-v1.0.0'
+const CI_IMAGE_REFERENCE = `${CI_IMAGE}@sha256:66a7ca95c13074714135ad840465834e60797ddd45d13d130e0e5c6077b950f3`
 const NODE_22 = {
   version: '22.22.0',
   archive: 'node-v22.22.0-linux-x64.tar.xz',
@@ -50,6 +54,21 @@ function assertRemoteActionsPinned(workflow) {
   }
 }
 
+function dockerStages(dockerfile) {
+  const matches = [...dockerfile.matchAll(/^FROM\s+([^\s]+)(?:\s+AS\s+(\w+))?\s*$/gm)]
+  return matches.map((match, index) => {
+    const bodyStart = match.index + match[0].length
+    const bodyEnd = matches[index + 1]?.index ?? dockerfile.length
+    return { image: match[1], name: match[2], body: dockerfile.slice(bodyStart, bodyEnd) }
+  })
+}
+
+function stage(dockerfile, name) {
+  const selected = dockerStages(dockerfile).find((candidate) => candidate.name === name)
+  assert.ok(selected, `Dockerfile must define a ${name} stage`)
+  return selected.body
+}
+
 function assertCheckedDownload(dockerfile, { archive, checksum, version }) {
   assert.match(dockerfile, new RegExp(`v?${version.replaceAll('.', '\\.')}`), `download must pin version ${version}`)
   assert.match(dockerfile, new RegExp(`https://[^\\s]+/${archive.replaceAll('.', '\\.')}`), `download URL must name ${archive}`)
@@ -61,38 +80,55 @@ function assertCheckedDownload(dockerfile, { archive, checksum, version }) {
 }
 
 function assertDockerfileContract(dockerfile) {
-  const images = [...dockerfile.matchAll(/^FROM\s+([^\s]+)$/gm)].map(([, image]) => image)
-  assert.deepEqual(images, [RUST_BASE_IMAGE], 'CI image must use the reviewed immutable Rust base')
-  for (const image of images) assert.match(image, /^[^@\s]+@sha256:[a-f0-9]{64}$/i, `Docker base image requires a digest: ${image}`)
+  const stages = dockerStages(dockerfile)
+  const externalImages = stages.filter(({ image }) => image.includes('@sha256:')).map(({ image }) => image)
+  assert.deepEqual(externalImages, [RUST_BASE_IMAGE, DEBIAN_BASE_IMAGE], 'all external stages must use reviewed immutable bases')
+  for (const image of externalImages) assert.match(image, /^[^@\s]+@sha256:[a-f0-9]{64}$/i, `Docker base image requires a digest: ${image}`)
+  assert.deepEqual(stages.map(({ name }) => name), ['base', 'ci', 'builder', 'runtime'])
   assert.match(dockerfile, /^ARG TARGETPLATFORM$/m)
-  assert.match(dockerfile, /RUN test "\$TARGETPLATFORM" = "linux\/amd64"/)
-  assert.match(dockerfile, /org\.opencontainers\.image\.source="https:\/\/github\.com\/jfet07-polygon-labs\/polygon-nesting"/)
-  assert.match(dockerfile, /org\.opencontainers\.image\.version="ci-v1\.0\.0"/)
-  assert.match(dockerfile, /org\.opencontainers\.image\.title="polygon-nesting-ci"/)
-  assert.doesNotMatch(dockerfile, /jfet97/)
+  assert.match(stage(dockerfile, 'base'), /RUN test "\$TARGETPLATFORM" = "linux\/amd64"/)
 
-  for (const artifact of [NODE_22, NODE_24, SCCACHE, GITHUB_CLI]) assertCheckedDownload(dockerfile, artifact)
-  assert.match(dockerfile, /rustup component add --toolchain 1\.95\.0-x86_64-unknown-linux-gnu rustfmt clippy/)
-  assert.ok(dockerfile.includes("rustfmt --version | grep -Eq '^rustfmt 1\\.9\\.0-stable '"), 'rustfmt must be the reviewed Rust 1.95 component release')
-  assert.match(dockerfile, /rustup target add --toolchain 1\.95\.0-x86_64-unknown-linux-gnu x86_64-unknown-linux-gnu/)
-  assert.match(dockerfile, /ENV NODE_22_HOME=\/opt\/node-v22\.22\.0/)
-  assert.match(dockerfile, /NODE_24_HOME=\/opt\/node-v24\.19\.0/)
-  assert.match(dockerfile, /PATH="\/opt\/node-v22\.22\.0\/bin:/)
-  assert.match(dockerfile, /\/etc\/profile\.d\/ci-image-path\.sh/, 'Bash login shells must preserve the CI tool path')
-  assert.match(dockerfile, /install -m 0755 \/tmp\/sccache-v0\.10\.0-x86_64-unknown-linux-musl\/sccache \/usr\/local\/bin\/sccache/)
-  assert.match(dockerfile, /install -m 0755 \/tmp\/gh_2\.97\.0_linux_amd64\/bin\/gh \/usr\/local\/bin\/gh/)
-
+  const ci = stage(dockerfile, 'ci')
+  assert.match(ci, /org\.opencontainers\.image\.source="https:\/\/github\.com\/jfet07-polygon-labs\/polygon-nesting"/)
+  assert.match(ci, /org\.opencontainers\.image\.version="ci-v1\.0\.0"/)
+  assert.match(ci, /org\.opencontainers\.image\.title="polygon-nesting-ci"/)
+  assert.doesNotMatch(ci, /jfet97/)
+  for (const artifact of [NODE_22, NODE_24, SCCACHE, GITHUB_CLI]) assertCheckedDownload(ci, artifact)
+  assert.match(ci, /rustup component add --toolchain 1\.95\.0-x86_64-unknown-linux-gnu rustfmt clippy/)
+  assert.ok(ci.includes("rustfmt --version | grep -Eq '^rustfmt 1\\.9\\.0-stable '"), 'rustfmt must be the reviewed Rust 1.95 component release')
+  assert.match(ci, /rustup target add --toolchain 1\.95\.0-x86_64-unknown-linux-gnu x86_64-unknown-linux-gnu/)
+  assert.match(ci, /ENV NODE_22_HOME=\/opt\/node-v22\.22\.0/)
+  assert.match(ci, /NODE_24_HOME=\/opt\/node-v24\.19\.0/)
+  assert.match(ci, /PATH="\/opt\/node-v22\.22\.0\/bin:/)
+  assert.match(ci, /\/etc\/profile\.d\/ci-image-path\.sh/, 'Bash login shells must preserve the CI tool path')
+  assert.match(ci, /install -m 0755 \/tmp\/sccache-v0\.10\.0-x86_64-unknown-linux-musl\/sccache \/usr\/local\/bin\/sccache/)
+  assert.match(ci, /install -m 0755 \/tmp\/gh_2\.97\.0_linux_amd64\/bin\/gh \/usr\/local\/bin\/gh/)
   for (const packageName of ['bash', 'ca-certificates', 'coreutils', 'git', 'gzip', 'python3', 'tar', 'build-essential', 'binutils', 'libc6-dev', 'libssl-dev', 'pkg-config']) {
-    assert.match(dockerfile, new RegExp(`\\b${packageName.replace('-', '\\-')}\\b`), `CI image must install ${packageName}`)
+    assert.match(ci, new RegExp(`\\b${packageName.replace('-', '\\-')}\\b`), `CI image must install ${packageName}`)
   }
-  assert.match(dockerfile, /^USER root$/m)
-  assert.match(dockerfile, /^CMD \["sleep", "infinity"\]$/m)
-  assert.doesNotMatch(dockerfile, /^ENTRYPOINT\s/m)
+  assert.match(ci, /^USER root$/m)
+  assert.match(ci, /^CMD \["sleep", "infinity"\]$/m)
+  assert.doesNotMatch(ci, /^ENTRYPOINT\s/m)
+  assert.doesNotMatch(ci, /^(?:COPY|ADD)\s/im, 'CI image must not copy build context material')
+  assert.doesNotMatch(ci, /cargo (?:build|fetch|install)\b/, 'CI image must not bake application Cargo outputs')
+  assert.doesNotMatch(ci, /\b(?:CARGO_TARGET_DIR|SCCACHE_GHA_ENABLED|ACTIONS_[A-Z_]+|GITHUB_[A-Z_]+|AZP_[A-Z_]+)\b/, 'CI image must not bake CI cache configuration')
+  assert.doesNotMatch(ci, /\b(?:TOKEN|PASSWORD|SECRET|CREDENTIAL)\b/i, 'CI image must not bake credentials')
 
-  assert.doesNotMatch(dockerfile, /^(?:COPY|ADD)\s/im, 'CI image must not copy build context material')
-  assert.doesNotMatch(dockerfile, /cargo (?:build|fetch|install)\b/, 'CI image must not bake application Cargo outputs')
-  assert.doesNotMatch(dockerfile, /\b(?:CARGO_TARGET_DIR|SCCACHE_GHA_ENABLED|ACTIONS_[A-Z_]+|GITHUB_[A-Z_]+|AZP_[A-Z_]+)\b/, 'CI image must not bake CI cache configuration')
-  assert.doesNotMatch(dockerfile, /\b(?:TOKEN|PASSWORD|SECRET|CREDENTIAL)\b/i, 'CI image must not bake credentials')
+  const builder = stage(dockerfile, 'builder')
+  assert.match(builder, /WORKDIR \/workspace/)
+  assert.match(builder, /COPY Cargo\.toml Cargo\.lock \.\//)
+  assert.match(builder, /COPY crates \.\/crates/)
+  assert.match(builder, /RUN cargo build --release --locked -p polygon-nesting-cli/)
+
+  const runtime = stage(dockerfile, 'runtime')
+  assert.match(runtime, /ARG ENGINE_VERSION/)
+  assert.match(runtime, /ARG SOURCE_COMMIT/)
+  assert.match(runtime, /test "\$ENGINE_VERSION" = "0\.1\.0"/)
+  assert.match(runtime, /test "\$SOURCE_COMMIT" != "unknown"/)
+  assert.match(runtime, /org\.opencontainers\.image\.source="https:\/\/github\.com\/jfet97\/polygon-nesting"/)
+  assert.match(runtime, /org\.opencontainers\.image\.licenses="NOASSERTION"/)
+  assert.match(runtime, /USER polygon/)
+  assert.match(runtime, /ENTRYPOINT \["\/usr\/local\/bin\/polygon-nesting"\]/)
 }
 
 function assertWorkflowTriggers(workflow) {
@@ -137,6 +173,9 @@ function assertWorkflowContract(workflow) {
   assert.match(workflow, /BUILT_DIGEST: \$\{\{ steps\.build\.outputs\.digest \}\}/)
   assert.match(workflow, /EXISTING_DIGEST: \$\{\{ steps\.state\.outputs\.existing_digest \}\}/)
   assert.match(workflow, /CI image manifest digest:/)
+  assert.match(workflow, /--target ci/)
+  assert.match(workflow, /--metadata-file build-metadata\.json[\s\S]*\n\s*\./)
+  assert.doesNotMatch(workflow, /\.github\/ci(?:\s|$)/m, 'CI image must build from repository root')
 
   const publish = workflowJob(workflow, 'publish')
   assert.match(publish, /^    if: github\.ref == 'refs\/heads\/main'$/m, 'publisher must reject manually selected non-main refs')
@@ -144,7 +183,8 @@ function assertWorkflowContract(workflow) {
   assert.doesNotMatch(publish, /^\s+container:/m, 'publisher must run directly on the hosted Ubuntu runner')
   assert.doesNotMatch(workflow, /^\s+container:/m, 'workflow must not use a job container to publish its own image')
   assert.match(publish, /docker buildx build/)
-  assert.match(publish, /\.github\/ci$/m, 'Docker build context must contain only CI image inputs')
+  assert.match(publish, /--target ci/)
+  assert.match(publish, /^\s+\.$/m, 'Docker build context must be the repository root')
 
   const smoke = workflowJob(workflow, 'smoke-pushed-digest')
   assert.match(smoke, /^    needs: publish$/m)
@@ -156,58 +196,39 @@ function assertWorkflowContract(workflow) {
   assert.match(smoke, /docker image inspect "\$IMAGE_REF" --format '\{\{json \.Config\.Entrypoint\}\}' \| grep -Fx null/)
   assert.match(smoke, /docker run --rm "\$IMAGE_REF" bash -lc/)
   assert.doesNotMatch(smoke, /:\$\{CI_IMAGE_TAG\}/, 'smoke must use the pushed manifest digest rather than a tag')
-
-  for (const command of [
-    'test "$(id -u)" = "0"',
-    'test "$(uname -m)" = "x86_64"',
-    'rustc --version',
-    'cargo --version',
-    'rustfmt --version',
-    'cargo clippy --version',
-    'rustup target list --installed',
-    'test "$(node --version)" = "v22.22.0"',
-    'test "$(/opt/node-v24.19.0/bin/node --version)" = "v24.19.0"',
-    'sccache --version',
-    'gh attestation --help',
-    'git --version',
-    'python3 --version',
-    'bash --version',
-    'groupadd --help',
-    'useradd --help',
-    'sha256sum --version',
-    'tar --version',
-    'gzip --version',
-    'cc --version',
-    'c++ --version',
-    'ld --version',
-    'pkg-config --version',
-    '/workspace',
-    '/usr/local/bin/polygon-nesting',
-    '/release-candidate',
-    '/parity-input',
-    '/native-artifacts'
-  ]) assert.ok(smoke.includes(command), `digest smoke must verify ${command}`)
 }
 
-test('portable CI image Dockerfile has pinned tools and excludes application material', () => {
-  assertDockerfileContract(loadRequiredText(DOCKERFILE_PATH, '.github/ci/Dockerfile'))
+function assertCiImageContainers(workflow) {
+  const references = [...workflow.matchAll(/^\s+container:\s+(ghcr\.io\/[^\s]+@sha256:[a-f0-9]{64})\s*$/gm)].map(([, reference]) => reference)
+  assert.ok(references.length > 0, 'Linux CI jobs must use the immutable CI image')
+  assert.deepEqual([...new Set(references)], [CI_IMAGE_REFERENCE], 'all CI containers must use one literal immutable digest')
+}
+
+test('consolidated Dockerfile defines reviewed CI and runtime targets', () => {
+  assert.equal(existsSync(LEGACY_DOCKERFILE_PATH), false, 'the legacy CI Dockerfile must be absent')
+  assertDockerfileContract(loadRequiredText(DOCKERFILE_PATH, 'root Dockerfile'))
 })
 
-test('CI image publisher has exact authority, immutable publication, and digest smoke contracts', () => {
+test('CI image publisher builds the consolidated root ci target', () => {
   assertWorkflowContract(loadRequiredText(WORKFLOW_PATH, '.github/workflows/ci-image.yml'))
 })
 
-test('quality CI remains independent from the unpublished CI image', () => {
+test('Linux-only CI jobs consume the immutable image while native and Docker jobs stay native', () => {
   const qualityWorkflow = loadRequiredText(QUALITY_WORKFLOW_PATH, '.github/workflows/ci.yml')
-  assert.doesNotMatch(qualityWorkflow, /polygon-nesting-ci/)
-  assert.doesNotMatch(qualityWorkflow, /container:\s*ghcr\.io\/jfet07-polygon-labs\/polygon-nesting-ci/)
+  const parityWorkflow = loadRequiredText(PARITY_WORKFLOW_PATH, '.github/workflows/standalone-parity.yml')
+  assertCiImageContainers(qualityWorkflow)
+  assertCiImageContainers(parityWorkflow)
+  assert.doesNotMatch(workflowJob(qualityWorkflow, 'oci-smoke'), /^\s+container:/m)
+  assert.doesNotMatch(workflowJob(qualityWorkflow, 'native'), /^\s+container:/m)
+  assert.doesNotMatch(workflowJob(qualityWorkflow, 'native-intel-release'), /^\s+container:/m)
+  assert.doesNotMatch(workflowJob(parityWorkflow, 'parity'), /^\s+container:/m)
 })
 
 test('CI image contracts reject mutable images, downloads, and unsafe image contents', () => {
-  const dockerfile = loadRequiredText(DOCKERFILE_PATH, '.github/ci/Dockerfile')
+  const dockerfile = loadRequiredText(DOCKERFILE_PATH, 'root Dockerfile')
   assert.throws(
     () => assertDockerfileContract(dockerfile.replace(/@sha256:[a-f0-9]{64}/, '')),
-    /immutable Rust base|digest/
+    /immutable Rust base|digest|external stages/
   )
   assert.throws(
     () => assertDockerfileContract(dockerfile.replace(NODE_22.checksum, '0'.repeat(64))),
@@ -226,11 +247,11 @@ test('CI image contracts reject mutable images, downloads, and unsafe image cont
     /USER root/
   )
   assert.throws(
-    () => assertDockerfileContract(`${dockerfile}\nCOPY . /workspace\n`),
+    () => assertDockerfileContract(`${dockerfile.replace('FROM base AS ci', 'FROM base AS ci\nCOPY . /workspace')}`),
     /copy build context/
   )
   assert.throws(
-    () => assertDockerfileContract(`${dockerfile}\nENV SCCACHE_GHA_ENABLED=true\n`),
+    () => assertDockerfileContract(`${dockerfile.replace('FROM base AS ci', 'FROM base AS ci\nENV SCCACHE_GHA_ENABLED=true')}`),
     /cache configuration/
   )
 })

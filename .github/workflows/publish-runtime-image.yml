@@ -1,0 +1,214 @@
+name: Publish runtime image
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_run_id:
+        description: Successful completed release.yml run containing the immutable runtime OCI archive
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  packages: write
+
+concurrency:
+  group: runtime-image-publish
+  queue: max
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish verified runtime image
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    environment: publish
+    env:
+      RELEASE_RUN_ID: ${{ inputs.release_run_id }}
+      IMAGE_REPOSITORY: ghcr.io/jfet07-polygon-labs/polygon-nesting
+      IMAGE_TAG: ghcr.io/jfet07-polygon-labs/polygon-nesting:0.1.0
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Validate selected release run and exact artifacts
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$RELEASE_RUN_ID" | grep -Eq '^[1-9][0-9]*$'; then
+            printf '%s\n' 'release_run_id must be a positive integer' >&2
+            exit 1
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RELEASE_RUN_ID" > release-run.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RELEASE_RUN_ID/artifacts?per_page=100" > release-artifacts.json
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs'
+
+          const run = JSON.parse(readFileSync('release-run.json', 'utf8'))
+          if (run.path !== '.github/workflows/release.yml' || run.status !== 'completed' || run.conclusion !== 'success' || run.repository?.full_name !== process.env.GITHUB_REPOSITORY) {
+            throw new Error('release_run_id must identify a successful completed release.yml run in this repository')
+          }
+          if (!/^[a-f0-9]{40}$/.test(run.head_sha ?? '')) throw new Error('release run head_sha must be a full lowercase commit ID')
+          const inventory = JSON.parse(readFileSync('release-artifacts.json', 'utf8'))
+          const expected = [
+            `npm-release-candidate-${run.head_sha}`,
+            `oci-release-candidate-${run.head_sha}`
+          ].sort()
+          const actual = (inventory.artifacts ?? []).map(({ name }) => name).sort()
+          if (inventory.total_count !== expected.length || JSON.stringify(actual) !== JSON.stringify(expected)) {
+            throw new Error(`release run must contain exactly ${JSON.stringify(expected)}`)
+          }
+          for (const artifact of inventory.artifacts) {
+            if (!Number.isSafeInteger(artifact.id) || artifact.id <= 0 || artifact.expired !== false) {
+              throw new Error(`release artifact is invalid: ${artifact.name}`)
+            }
+          }
+          writeFileSync('source-metadata.json', `${JSON.stringify({ sourceCommit: run.head_sha }, null, 2)}\n`)
+          NODE
+          source_commit="$(node --input-type=module -e "import {readFileSync} from 'node:fs'; process.stdout.write(JSON.parse(readFileSync('source-metadata.json','utf8')).sourceCommit)" )"
+          printf 'source_commit=%s\n' "$source_commit" >> "$GITHUB_OUTPUT"
+
+      - name: Preserve trusted publication verifier
+        run: |
+          set -euo pipefail
+          verifier_root="$RUNNER_TEMP/trusted-publication-verifier"
+          mkdir -p "$verifier_root"
+          git archive --format=tar HEAD | tar -xf - -C "$verifier_root"
+          test -f "$verifier_root/scripts/verify-runtime-publication.mjs"
+          test -f "$verifier_root/scripts/smoke-cli-image.sh"
+
+      - name: Checkout selected release source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_COMMIT: ${{ steps.source.outputs.source_commit }}
+        run: |
+          set -euo pipefail
+          git -c "http.extraheader=AUTHORIZATION: bearer $GH_TOKEN" fetch --no-tags --depth=1 origin "$SOURCE_COMMIT"
+          git checkout --detach "$SOURCE_COMMIT"
+
+      - name: Download selected npm release evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.release_run_id }}
+          name: npm-release-candidate-${{ steps.source.outputs.source_commit }}
+          path: release-candidate
+
+      - name: Download selected OCI release evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.release_run_id }}
+          name: oci-release-candidate-${{ steps.source.outputs.source_commit }}
+          path: oci-candidate
+
+      - name: Verify release evidence and OCI archive without rebuilding
+        env:
+          SOURCE_COMMIT: ${{ steps.source.outputs.source_commit }}
+        run: >-
+          node "$RUNNER_TEMP/trusted-publication-verifier/scripts/verify-runtime-publication.mjs"
+          --candidate release-candidate
+          --trusted-source-root "$GITHUB_WORKSPACE"
+          --oci-archive oci-candidate/oci-image.tar
+          --oci-evidence oci-candidate/oci-evidence.json
+          --manifest-digest oci-candidate/manifest-digest.txt
+          --source-commit "$SOURCE_COMMIT"
+          --source-run-id "$RELEASE_RUN_ID"
+          > runtime-verification.json
+
+      - name: Install skopeo
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends skopeo
+
+      - name: Authenticate to GHCR
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Inspect and publish immutable runtime tag
+        env:
+          SOURCE_COMMIT: ${{ steps.source.outputs.source_commit }}
+        run: |
+          set -euo pipefail
+          MANIFEST_DIGEST="$(node --input-type=module -e "import {readFileSync} from 'node:fs'; process.stdout.write(JSON.parse(readFileSync('runtime-verification.json','utf8')).manifestDigest)" )"
+          if ! printf '%s' "$MANIFEST_DIGEST" | grep -Eq '^sha256:[a-f0-9]{64}$'; then
+            printf '%s\n' 'OCI evidence manifest digest is invalid' >&2
+            exit 1
+          fi
+          IMAGE_REF="$IMAGE_REPOSITORY@$MANIFEST_DIGEST"
+          set +e
+          existing_digest="$(skopeo inspect --format '{{.Digest}}' "docker://$IMAGE_TAG" 2> tag-inspect-error.log)"
+          inspect_status=$?
+          set -e
+          if [ "$inspect_status" -eq 0 ]; then
+            if [ "$existing_digest" != "$MANIFEST_DIGEST" ]; then
+              printf 'refusing to move existing tag to a different digest: %s != %s\n' "$existing_digest" "$MANIFEST_DIGEST" >&2
+              exit 1
+            fi
+          elif ! grep -Eqi 'manifest unknown|name unknown|not found|404' tag-inspect-error.log; then
+            cat tag-inspect-error.log >&2
+            exit "$inspect_status"
+          else
+            skopeo copy oci-archive:oci-candidate/oci-image.tar "docker://$IMAGE_TAG"
+          fi
+          post_publication_digest="$(skopeo inspect --format '{{.Digest}}' "docker://$IMAGE_TAG")"
+          if [ "$post_publication_digest" != "$MANIFEST_DIGEST" ]; then
+            printf 'published tag digest mismatch: %s != %s\n' "$post_publication_digest" "$MANIFEST_DIGEST" >&2
+            exit 1
+          fi
+          printf 'SOURCE_COMMIT=%s\n' "$SOURCE_COMMIT" >> "$GITHUB_ENV"
+          printf 'MANIFEST_DIGEST=%s\n' "$MANIFEST_DIGEST" >> "$GITHUB_ENV"
+          printf 'IMAGE_REF=%s\n' "$IMAGE_REF" >> "$GITHUB_ENV"
+          printf 'POST_PUBLICATION_DIGEST=%s\n' "$post_publication_digest" >> "$GITHUB_ENV"
+
+      - name: Pull published image by digest
+        run: docker pull "$IMAGE_REF"
+
+      - name: Run runtime smoke test by digest
+        run: >-
+          "$RUNNER_TEMP/trusted-publication-verifier/scripts/smoke-cli-image.sh"
+          "$IMAGE_REF"
+
+      - name: Write publication evidence
+        env:
+          PUBLICATION_TIMESTAMP: ${{ github.run_started_at }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs'
+
+          const verification = JSON.parse(readFileSync('runtime-verification.json', 'utf8'))
+          const evidence = {
+            schemaVersion: 1,
+            sourceRunId: process.env.RELEASE_RUN_ID,
+            sourceCommit: process.env.SOURCE_COMMIT,
+            archiveSha256: verification.archiveSha256,
+            manifestDigest: verification.manifestDigest,
+            tag: process.env.IMAGE_TAG,
+            immutableImageReference: process.env.IMAGE_REF,
+            postPublicationDigest: process.env.POST_PUBLICATION_DIGEST,
+            actor: process.env.GITHUB_ACTOR,
+            repository: process.env.GITHUB_REPOSITORY,
+            workflowRunId: process.env.GITHUB_RUN_ID,
+            timestamp: process.env.PUBLICATION_TIMESTAMP,
+            smoke: { passed: true, imageReference: process.env.IMAGE_REF }
+          }
+          writeFileSync('publication-evidence.json', `${JSON.stringify(evidence, null, 2)}\n`)
+          NODE
+
+      - name: Upload publication evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: runtime-publication-evidence-${{ github.run_id }}
+          path: publication-evidence.json
+          if-no-files-found: error
+          retention-days: 90

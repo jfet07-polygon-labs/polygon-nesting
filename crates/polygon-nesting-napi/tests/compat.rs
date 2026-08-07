@@ -1,7 +1,7 @@
 use polygon_nesting_napi::compat::{
     adapt_desktop_request_to_engine_json, decode_desktop_request, AdapterError,
 };
-use polygon_nesting_protocol::{EngineProfile, HistoryMode, ProtocolVersion};
+use polygon_nesting_protocol::{DiagnosticTraceMode, EngineProfile, HistoryMode, ProtocolVersion};
 
 const COMPACT_REQUEST: &str =
     include_str!("../../../tests/fixtures/mixed-61/300x300-compact/request.json");
@@ -65,6 +65,7 @@ fn frozen_desktop_request_converts_to_neutral_engine_request() {
     assert_eq!(request.profile, EngineProfile::Compact);
     assert_eq!(request.timeout_ms, 9_007_199_254_740_991.0);
     assert_eq!(request.history_mode, HistoryMode::Off);
+    assert_eq!(request.diagnostic_trace_mode, DiagnosticTraceMode::Full);
     assert_eq!(request.settings.padding, 10.0);
     assert!(request.settings.allow_global_rotation);
     assert!(request.settings.allow_global_mirror);
@@ -97,6 +98,7 @@ fn frozen_desktop_request_converts_to_neutral_engine_request() {
             "optimizer": optimizer,
         },
         "historyMode": desktop["options"]["historyMode"],
+        "diagnosticTraceMode": "full",
     });
     let mut actual = serde_json::to_value(&request).expect("engine request JSON");
     normalize_json_numbers(&mut expected);
@@ -110,6 +112,7 @@ fn frozen_desktop_request_converts_to_neutral_engine_request() {
         "sourcePieces",
         "settings",
         "historyMode",
+        "diagnosticTraceMode",
     ] {
         assert_eq!(
             actual[field], expected[field],
@@ -229,6 +232,48 @@ fn zero_timeout_projects_protocol_validation_as_desktop_revalidation_error() {
     assert_eq!(
         error.message,
         "invalid protocol field timeoutMs: must be greater than zero"
+    );
+    assert!(error.context.is_empty());
+}
+
+#[test]
+fn desktop_diagnostic_trace_mode_accepts_explicit_off() {
+    let mut value: serde_json::Value = serde_json::from_str(COMPACT_REQUEST).expect("fixture JSON");
+    value["options"]["diagnosticTraceMode"] = serde_json::json!("off");
+
+    let prepared = decode_desktop_request(&value.to_string()).expect("off mode decodes");
+    assert_eq!(
+        prepared.request.diagnostic_trace_mode,
+        DiagnosticTraceMode::Off
+    );
+}
+
+#[test]
+fn desktop_diagnostic_trace_mode_defaults_to_full_when_omitted() {
+    let mut value: serde_json::Value = serde_json::from_str(COMPACT_REQUEST).expect("fixture JSON");
+    value["options"]
+        .as_object_mut()
+        .expect("options object")
+        .remove("diagnosticTraceMode");
+
+    let prepared = decode_desktop_request(&value.to_string()).expect("omitted mode decodes");
+    assert_eq!(
+        prepared.request.diagnostic_trace_mode,
+        DiagnosticTraceMode::Full
+    );
+}
+
+#[test]
+fn unknown_diagnostic_trace_mode_preserves_desktop_revalidation_error() {
+    let mut value: serde_json::Value = serde_json::from_str(COMPACT_REQUEST).expect("fixture JSON");
+    value["options"]["diagnosticTraceMode"] = serde_json::json!("summary");
+
+    let error = decode_error(&value.to_string());
+    assert_eq!(error.category, "irregular_geometry_invalid");
+    assert_eq!(error.operation, "nativeBoundaryRevalidation");
+    assert_eq!(
+        error.message,
+        "options.diagnosticTraceMode must be one of 'full' | 'off', received \"summary\""
     );
     assert!(error.context.is_empty());
 }

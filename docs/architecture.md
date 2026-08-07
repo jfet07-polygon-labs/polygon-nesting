@@ -19,6 +19,12 @@ The core preserves the exact-grid and numerical authorities used by the imported
 
 Each invocation owns its cache stores, coordinator, and Rayon pool. Unrelated jobs must use separate process executions or separate core invocations. The engine does not use the global Rayon pool for nesting work.
 
+## Trace and history controls
+
+`EngineRequest.diagnosticTraceMode` defaults to `full` and accepts only `full` or `off`. Off mode keeps the scalar bookkeeping required for decisions, counters, cancellation, hashes, and endpoint selection, but does not retain or project `capacityTrace`, `intrinsicAnytimeSchedulerTrace`, `focusedCompleteReconstructionTrace`, `intrinsicShortSideObserverTrace`, or `intrinsicShortSidePairFoldTrace`. The mode changes diagnostic serialization only; it does not change placements, scores, failures, or semantic event order.
+
+`historyMode` is a separate control for state snapshots. `historyMode: "off"` and `diagnosticTraceMode: "off"` may be selected together by production workers, while parity and diagnostic requests use explicit `diagnosticTraceMode: "full"` when trace output is part of the evidence.
+
 ## Cancellation
 
 `CancellationControl` is an atomic first-writer-wins state machine. Its terminal states are `Cancelled` and `Deadline`; the first accepted terminal reason is retained. Core checkpoints translate that one reason into the existing NFP/IFP control path. A deadline is set by the core when the request timeout expires. CLI signals use `Cancelled` through the same control. N-API cancellation uses the same control for an invocation token.

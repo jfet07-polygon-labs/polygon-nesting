@@ -20,15 +20,25 @@ The image owns only deterministic engine execution. It has no Azure credentials,
 The image entrypoint is `/usr/local/bin/polygon-nesting`. Each Container Job execution must supply the `run` subcommand and its arguments, for example:
 
 ```sh
-polygon-nesting run \
+IMAGE='ghcr.io/jfet07-polygon-labs/polygon-nesting@sha256:<verified-linux-amd64-manifest-digest>'
+docker run --rm --volume "$PWD:/work" "$IMAGE" run \
   --input /work/request.json \
   --output /work/result.json \
   --events /work/events.ndjson
 ```
 
-Running the image without the `run` invocation is malformed and exits with the documented status `2`.
+Azure Container Jobs must use the verified runtime image by immutable digest, not a mutable tag. Running the image without the `run` invocation is malformed and exits with the documented status `2`.
 
-`request.json` is a single protocol v1 `EngineRequest`. `result.json` is one versioned outcome envelope. `events.ndjson` is optional and is ordered semantic event data suitable for compact progress capture. A backend that needs final-result-only jobs omits `--events`.
+`request.json` is a single protocol v1 `EngineRequest`. Production jobs that do not need state snapshots or detailed algorithm traces should set both controls explicitly:
+
+```json
+{
+  "historyMode": "off",
+  "diagnosticTraceMode": "off"
+}
+```
+
+`diagnosticTraceMode` omission defaults to `full`. Off mode removes only the five detailed trace fields; it does not change semantic results or typed failure behavior. `result.json` is one versioned outcome envelope. `events.ndjson` is optional and is ordered semantic event data suitable for compact progress capture. A backend that needs final-result-only jobs omits `--events`.
 
 The backend must use the platform-managed Azure Files `/work` mount for all three paths. It must mount a per-run Azure Files directory at `/work`, or namespace the three artifact paths by the durable run ID, so concurrent executions cannot overwrite one another. The container filesystem disappears when its execution ends.
 

@@ -1,8 +1,9 @@
+use polygon_nesting_core::{CancellationControl, EngineEventSink, Job};
 use polygon_nesting_napi::job::{
-    cancellation_reason_from_wire, project_adapter_error, project_delivery_failure,
-    project_engine_error, project_panic,
+    cancellation_reason_from_wire, complete_engine_outcome, project_adapter_error,
+    project_delivery_failure, project_engine_error, project_panic,
 };
-use polygon_nesting_protocol::{EngineError, EngineErrorCode};
+use polygon_nesting_protocol::{EngineError, EngineErrorCode, SequencedEngineEvent};
 
 fn error(category: EngineErrorCode, operation: &str, message: &str) -> serde_json::Value {
     serde_json::from_str(&project_engine_error(EngineError::new(
@@ -201,4 +202,98 @@ fn only_documented_cancellation_wire_reasons_are_accepted() {
     assert!(cancellation_reason_from_wire("cancelled").is_some());
     assert!(cancellation_reason_from_wire("timeout").is_some());
     assert!(cancellation_reason_from_wire("deadline").is_none());
+}
+
+#[test]
+fn n_api_full_and_off_requests_have_equivalent_results() {
+    let full = run_small_desktop_request("full");
+    let off = run_small_desktop_request("off");
+    let full_json: serde_json::Value = serde_json::from_str(&full).expect("full result JSON");
+    let off_json: serde_json::Value = serde_json::from_str(&off).expect("off result JSON");
+
+    assert_eq!(full_json["ok"], true);
+    assert_eq!(off_json["ok"], true);
+    assert!(full_json["result"]["intrinsicAnytimeSchedulerTrace"].is_object());
+    for field in TRACE_FIELDS {
+        assert!(!off_json["result"].as_object().unwrap().contains_key(field));
+    }
+    assert_eq!(normalize(full_json), normalize(off_json));
+}
+
+const TRACE_FIELDS: [&str; 5] = [
+    "capacityTrace",
+    "intrinsicAnytimeSchedulerTrace",
+    "focusedCompleteReconstructionTrace",
+    "intrinsicShortSideObserverTrace",
+    "intrinsicShortSidePairFoldTrace",
+];
+
+fn run_small_desktop_request(diagnostic_trace_mode: &str) -> String {
+    let mut request: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/fixtures/mixed-61/300x300-compact/request.json"
+    ))
+    .expect("fixture JSON");
+    request["pieces"]
+        .as_array_mut()
+        .expect("pieces array")
+        .truncate(1);
+    request["sourcePieces"]
+        .as_array_mut()
+        .expect("source pieces array")
+        .truncate(1);
+    request["options"]["timeoutMs"] = serde_json::json!(1_000.0);
+    request["options"]["historyMode"] = serde_json::json!("off");
+    request["options"]["diagnosticTraceMode"] = serde_json::json!(diagnostic_trace_mode);
+    let prepared = polygon_nesting_napi::compat::decode_desktop_request(&request.to_string())
+        .expect("desktop request decodes");
+    let control = CancellationControl::new();
+    let mut sink = NoopSink;
+    let outcome = Job::new(&prepared.request, &control, &mut sink)
+        .run()
+        .expect("job completes");
+    complete_engine_outcome(outcome)
+}
+
+#[derive(Default)]
+struct NoopSink;
+
+impl EngineEventSink for NoopSink {
+    fn emit(&mut self, _event: SequencedEngineEvent) {}
+}
+
+fn normalize(mut value: serde_json::Value) -> serde_json::Value {
+    normalize_value(&mut value);
+    value
+}
+
+fn normalize_value(value: &mut serde_json::Value) {
+    match value {
+        serde_json::Value::Array(values) => values.iter_mut().for_each(normalize_value),
+        serde_json::Value::Object(fields) => {
+            for key in [
+                "runtimeMs",
+                "elapsedMs",
+                "preflightRuntimeMs",
+                "completeArchiveRuntimeMs",
+                "prefixTerminalizationMs",
+                "coldSearchMs",
+                "topologyMeasurementMs",
+                "contactMeasurementMs",
+                "serializedTraceBytes",
+                "peakRssDeltaBytes",
+            ] {
+                if fields.contains_key(key) {
+                    fields.insert(
+                        key.to_owned(),
+                        serde_json::Value::String("<measurement>".to_owned()),
+                    );
+                }
+            }
+            for field in TRACE_FIELDS {
+                fields.remove(field);
+            }
+            fields.values_mut().for_each(normalize_value);
+        }
+        _ => {}
+    }
 }

@@ -103,7 +103,7 @@ async function createTrustedProjectorRepository(root) {
 }
 
 function rawBytes(filename, rowId, side) {
-  if (filename === 'request.json') return Buffer.from(`${canonicalJson({ request: { desktop: true, rowId } })}\n`);
+  if (filename === 'request.json') return Buffer.from(`${canonicalJson({ desktop: true, rowId, options: { diagnosticTraceMode: 'full' } })}\n`);
   if (filename === 'result.json') return Buffer.from(`${canonicalJson({ result: { placements: [rowId], status: 'ok' }, runtimeMs: side === 'old' ? 1 : side === 'new' ? 9 : 17 })}\n`);
   if (filename === 'events.ndjson') return Buffer.from(`${canonicalJson({ elapsedMs: side === 'old' ? 2 : side === 'new' ? 10 : 18, event: 'completed', rowId })}\n`);
   if (filename === 'stderr.txt') return Buffer.from('');

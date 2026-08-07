@@ -276,7 +276,7 @@ function run(command, arguments_, options) {
 async function archive(stagingDirectory, archivePath) {
   await run('tar', [
     '--sort=name', '--owner=0', '--group=0', '--numeric-owner', '--mtime=UTC 1970-01-01',
-    '-C', stagingDirectory, '-czf', archivePath, '.',
+    '--use-compress-program=gzip -n', '-C', stagingDirectory, '-cf', archivePath, '.',
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
 }
 

@@ -37,7 +37,7 @@ async function targetArtifact(root, target) {
   const comparisons = [];
   for (const rowId of CANONICAL_ROW_IDS) {
     for (const filename of SOURCE_CONTRACT.rawFilenames) {
-      const bytes = Buffer.from(filename === 'result.json' ? '{"result":"ok","runtimeMs":1}\n' : filename === 'events.ndjson' ? '{"kind":"progress","elapsedMs":2}\n' : filename === 'request.json' ? '{"desktop":true}\n' : filename === 'process.json' ? `{"rowId":"${rowId}"}\n` : '');
+      const bytes = Buffer.from(filename === 'result.json' ? '{"result":"ok","runtimeMs":1}\n' : filename === 'events.ndjson' ? '{"kind":"progress","elapsedMs":2}\n' : filename === 'request.json' ? '{"desktop":true,"options":{"diagnosticTraceMode":"full"}}\n' : filename === 'process.json' ? `{"rowId":"${rowId}"}\n` : '');
       for (const side of ['old', 'new', 'projected']) {
         await mkdir(join(directory, side, 'raw', rowId), { recursive: true });
         await writeFile(join(directory, side, 'raw', rowId, filename), bytes);

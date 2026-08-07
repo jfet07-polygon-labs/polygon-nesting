@@ -3141,6 +3141,7 @@
     "timeoutMs": 9007199254740991,
     "workerMode": "irregular-convex-v2",
     "historyMode": "off",
+    "diagnosticTraceMode": "full",
     "historyScope": "winning_path",
     "strategySelectionMode": "single",
     "strategyIds": [],

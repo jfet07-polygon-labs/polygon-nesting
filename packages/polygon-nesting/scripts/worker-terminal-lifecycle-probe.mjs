@@ -51,7 +51,13 @@ function lifecycleRequest() {
   const sourcePieceIds = new Set(pieces.map((piece) => piece.sourcePieceId))
   const sourcePieces = fixture.sourcePieces.filter((piece) => sourcePieceIds.has(piece.id))
   assert(sourcePieces.length === sourcePieceIds.size, 'fixture has source geometry for every piece')
-  return { ...fixture, jobId: 'native-worker-terminal-lifecycle', pieces, sourcePieces }
+  return {
+    ...fixture,
+    jobId: 'native-worker-terminal-lifecycle',
+    pieces,
+    sourcePieces,
+    options: { ...fixture.options, diagnosticTraceMode: 'full' }
+  }
 }
 
 function waitForWorkerMessage(worker, expectedKind) {

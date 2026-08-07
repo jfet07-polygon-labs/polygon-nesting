@@ -37,6 +37,32 @@ polygon-nesting run \
 
 The CLI reads one protocol v1 request and writes one protocol outcome. It exits with `0` for success, `1` for internal failure, `2` for malformed input or invocation, `3` for a typed domain failure, `4` for cancellation or deadline, and `5` for artifact-write failure.
 
+## Request trace controls
+
+Protocol requests accept `diagnosticTraceMode: "full"` or `"off"`; omission defaults to `"full"`. Off mode omits only the detailed `capacityTrace`, `intrinsicAnytimeSchedulerTrace`, `focusedCompleteReconstructionTrace`, `intrinsicShortSideObserverTrace`, and `intrinsicShortSidePairFoldTrace` fields. It preserves semantic results, typed failures, cancellation, counters, worker diagnostics, and event ordinals. `historyMode` independently controls state snapshots.
+
+Production and Azure workers that need neither snapshots nor detailed traces should set both fields explicitly:
+
+```json
+{
+  "historyMode": "off",
+  "diagnosticTraceMode": "off"
+}
+```
+
+Parity and contract requests set `diagnosticTraceMode: "full"` explicitly so their trace-bearing evidence does not depend on the omission default.
+
+The reproducible benchmark alternates the modes and reports runtime samples, minimum and median runtime, and result bytes:
+
+```sh
+node scripts/benchmark-diagnostic-trace-mode.mjs \
+  --cli target/release/polygon-nesting \
+  --input tests/fixtures/cli/request-v1.json \
+  --iterations 5
+```
+
+It requires semantic equivalence after the documented normalization and smaller Off result bytes. It does not enforce a speed threshold.
+
 ## N-API package
 
 The package publishes prebuilt addons only for Linux x64, Windows x64, macOS arm64, and macOS x64. The loader retains the desktop alias `irregular-nesting-native` and selects `irregular-nesting-native.<platform>-<arch>.node`. Unsupported targets fail before Cargo is invoked.

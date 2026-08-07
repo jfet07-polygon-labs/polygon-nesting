@@ -87,6 +87,24 @@ async function executableIdentity(path, label, evidenceRoot, source = null) {
   };
 }
 
+function explicitFullDiagnosticTraceMode(request, rowId) {
+  let parsed;
+  try {
+    parsed = JSON.parse(request);
+  } catch (error) {
+    fail(`parity request for ${rowId} is not valid JSON: ${error.message}`);
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    fail(`parity request for ${rowId} must be an object`);
+  }
+  if (!parsed.options || typeof parsed.options !== 'object' || Array.isArray(parsed.options)) {
+    fail(`parity request for ${rowId} must include an options object`);
+  }
+  if (parsed.options.diagnosticTraceMode === 'full') return request;
+  parsed.options.diagnosticTraceMode = 'full';
+  return `${JSON.stringify(parsed)}\n`;
+}
+
 function runProcess(command, arguments_, input) {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(command, arguments_, { stdio: ['pipe', 'pipe', 'pipe'] });
@@ -125,6 +143,7 @@ async function captureNapiRow(addon, oldRoot, newRoot, rowId, target) {
   const oldRow = join(oldRoot, 'old', 'raw', rowId);
   const newRow = join(newRoot, 'new', 'raw', rowId);
   const request = await readFile(join(oldRow, 'request.json'), 'utf8');
+  const parityRequest = explicitFullDiagnosticTraceMode(request, rowId);
   const events = [];
   const run = addon.runIrregularJob ?? addon.run_irregular_job;
   if (typeof run !== 'function') fail('standalone N-API addon does not export runIrregularJob');
@@ -132,14 +151,14 @@ async function captureNapiRow(addon, oldRoot, newRoot, rowId, target) {
   let result;
   let stderr = '';
   try {
-    result = await run(request, invocationToken, (event) => events.push(event), false);
+    result = await run(parityRequest, invocationToken, (event) => events.push(event), false);
   } catch (error) {
     stderr = `${error instanceof Error ? error.stack ?? error.message : String(error)}\n`;
     result = JSON.stringify({ ok: false, error: { category: 'parity_adapter_failure', message: stderr } });
   }
   const resultBytes = Buffer.from(`${result}\n`);
   const eventBytes = Buffer.from(events.length === 0 ? '' : `${events.join('\n')}\n`);
-  const requestBytes = Buffer.from(request);
+  const requestBytes = Buffer.from(parityRequest);
   await writeNewFile(join(newRow, 'request.json'), requestBytes);
   await writeNewFile(join(newRow, 'result.json'), resultBytes);
   await writeNewFile(join(newRow, 'events.ndjson'), eventBytes);
@@ -163,13 +182,14 @@ async function captureCliRow({ oldRoot, newRoot, rowId, target, adapter, cli, ou
   const oldRow = join(oldRoot, 'old', 'raw', rowId);
   const cliRow = join(newRoot, 'cli', 'raw', rowId);
   const request = await readFile(join(oldRow, 'request.json'));
-  const adapted = await runProcess(adapter, [], request);
+  const parityRequest = Buffer.from(explicitFullDiagnosticTraceMode(request.toString('utf8'), rowId));
+  const adapted = await runProcess(adapter, [], parityRequest);
   assertSuccessfulProcess(adapted, `desktop request adapter for ${rowId}`);
   if (adapted.stderr.length !== 0) fail(`desktop request adapter wrote stderr for ${rowId}`);
   const adaptedRequest = adapted.stdout;
   await writeNewFile(join(cliRow, 'adapted-request.json'), adaptedRequest);
   await writeNewFile(join(cliRow, 'adapter-stderr.txt'), adapted.stderr);
-  await writeNewFile(join(cliRow, 'adapter-process.json'), processEvidence(adapted, target, { requestSha256: sha256(request), adaptedRequestSha256: sha256(adaptedRequest) }));
+  await writeNewFile(join(cliRow, 'adapter-process.json'), processEvidence(adapted, target, { requestSha256: sha256(parityRequest), adaptedRequestSha256: sha256(adaptedRequest) }));
 
   const resultPath = join(cliRow, 'result.json');
   const eventsPath = join(cliRow, 'events.ndjson');
@@ -202,7 +222,7 @@ async function captureCliRow({ oldRoot, newRoot, rowId, target, adapter, cli, ou
 
   const desktopRow = join(newRoot, 'projected', 'raw', rowId);
   await mkdir(desktopRow, { recursive: true });
-  await writeNewFile(join(desktopRow, 'request.json'), request);
+  await writeNewFile(join(desktopRow, 'request.json'), parityRequest);
   await writeNewFile(join(desktopRow, 'result.json'), projectedResult.stdout);
   await writeNewFile(join(desktopRow, 'events.ndjson'), projectedEvents.stdout);
   await writeNewFile(join(desktopRow, 'stderr.txt'), cliRun.stderr);

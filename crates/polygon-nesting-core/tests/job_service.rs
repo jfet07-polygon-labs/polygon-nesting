@@ -341,5 +341,6 @@ fn valid_request() -> EngineRequest {
             },
         },
         history_mode: HistoryMode::Stream,
+        diagnostic_trace_mode: polygon_nesting_protocol::DiagnosticTraceMode::Full,
     }
 }

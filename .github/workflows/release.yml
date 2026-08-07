@@ -182,7 +182,7 @@ jobs:
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
       - name: Build locked Linux amd64 OCI archive
         run: >-
-          docker buildx build
+          docker buildx build --target runtime
           --platform linux/amd64
           --provenance=false
           --build-arg ENGINE_VERSION=0.1.0
@@ -243,35 +243,3 @@ jobs:
             oci-evidence.json
           if-no-files-found: error
           retention-days: 90
-
-  publication-placeholder:
-    name: Protected future publication gate
-    needs: [authorize-source, candidate, oci]
-    runs-on: blacksmith-2vcpu-ubuntu-2404
-    environment: publish
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 22.22.0
-      - name: Download npm candidate only
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: npm-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
-          path: release-candidate
-      - name: Download immutable OCI archive and digest evidence only
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: oci-release-candidate-${{ needs.authorize-source.outputs.source-commit }}
-          path: oci-candidate
-      - name: Confirm inert publication handoff
-        run: |
-          test -f release-candidate/release.json
-          test -f release-candidate/RELEASE_NOTES.md
-          test -f oci-candidate/oci-image.tar
-          test -f oci-candidate/manifest-digest.txt
-          test -f oci-candidate/oci-evidence.json
-          node scripts/verify-release-candidate.mjs --candidate release-candidate --trusted-source-root "$GITHUB_WORKSPACE" --oci-archive oci-candidate/oci-image.tar --oci-evidence oci-candidate/oci-evidence.json
-          printf '%s\n' 'Publication remains disabled. Any future registry authentication must reference ${NODE_AUTH_TOKEN} at runtime after protected-environment approval.'

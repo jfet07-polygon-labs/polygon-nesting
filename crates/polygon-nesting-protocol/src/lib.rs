@@ -9,11 +9,11 @@ use serde::{Deserialize, Serialize};
 pub use error::{EngineError, EngineErrorCode, ProtocolError};
 pub use event::{EngineEvent, PortfolioPhase, PortfolioProgress, SequencedEngineEvent};
 pub use request::{
-    ArchiveIneligibilityReason, CutRowReference, EllipseSource, EllipseSourceKind, EngineProfile,
-    EngineRequest, EngineSettings, GeometrySettings, HistoryMode, OptimizerSettings,
-    PlacementPolicy, PreparedPiece, Rect, RectWithMetrics, SheetSpec, SourceArcSegment,
-    SourceEntityHandle, SourceGeometry, SourceGeometryEntityType, SourceGeometrySegment,
-    SourceLineSegment, SourcePiece, SourceWarning,
+    ArchiveIneligibilityReason, CutRowReference, DiagnosticTraceMode, EllipseSource,
+    EllipseSourceKind, EngineProfile, EngineRequest, EngineSettings, GeometrySettings, HistoryMode,
+    OptimizerSettings, PlacementPolicy, PreparedPiece, Rect, RectWithMetrics, SheetSpec,
+    SourceArcSegment, SourceEntityHandle, SourceGeometry, SourceGeometryEntityType,
+    SourceGeometrySegment, SourceLineSegment, SourcePiece, SourceWarning,
 };
 pub use result::{
     Bounds, CapacityTrace, CollisionGeometry, CollisionTransform, EngineOutcome, EngineResult,
