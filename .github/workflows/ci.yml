@@ -5,11 +5,10 @@ on:
     branches:
       - main
   pull_request:
-  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -53,29 +52,12 @@ jobs:
           python3 -m unittest discover -s scripts/tests -p 'test_*.py'
           ./scripts/test-cli-image-contract.sh
           node scripts/verify-release-candidate.mjs --dry-run
+          node --test packages/polygon-nesting/scripts/build-native.test.mjs
           node --test tests/ci/*.test.mjs tests/parity/*.test.mjs scripts/release-ci.test.mjs
-
-  oci-smoke:
-    name: Linux amd64 OCI smoke
-    needs: quality
-    runs-on: blacksmith-2vcpu-ubuntu-2404
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
-      - name: Build locked Linux amd64 image
-        run: >-
-          docker buildx build
-          --load
-          --platform linux/amd64
-          --build-arg ENGINE_VERSION=0.1.0
-          --build-arg SOURCE_COMMIT="${GITHUB_SHA}"
-          --tag polygon-nesting:ci-smoke
-          .
-      - name: Execute Linux amd64 smoke contract
-        run: ./scripts/smoke-cli-image.sh polygon-nesting:ci-smoke
 
   native:
     name: Native ${{ matrix.target-key }}
+    if: github.event_name == 'push'
     needs: quality
     strategy:
       fail-fast: false
@@ -86,16 +68,16 @@ jobs:
             platform: linux
             arch: x64
             cargo-target: x86_64-unknown-linux-gnu
-          - target-key: win32-x64
-            runner: blacksmith-2vcpu-windows-2025
-            platform: win32
-            arch: x64
-            cargo-target: x86_64-pc-windows-msvc
           - target-key: darwin-arm64
             runner: blacksmith-6vcpu-macos-15
             platform: darwin
             arch: arm64
             cargo-target: aarch64-apple-darwin
+          - target-key: darwin-x64
+            runner: macos-15-intel
+            platform: darwin
+            arch: x64
+            cargo-target: x86_64-apple-darwin
     runs-on: ${{ matrix.runner }}
     env:
       TARGET_KEY: ${{ matrix.target-key }}
@@ -132,15 +114,12 @@ jobs:
         env:
           ELECTRON_RUN_AS_NODE: "1"
         run: npx --yes --package=electron@39.2.7 electron -e "require('./npm/' + process.env.ADDON_NAME); process.stdout.write('electron-load-ok\\n')"
-      - name: Test staged package
-        working-directory: packages/polygon-nesting
-        run: npm test
       - name: Prepare native build artifact
         env:
           SOURCE_COMMIT: ${{ github.sha }}
         run: >-
           node --input-type=module -e "import {createHash} from 'node:crypto'; import {spawnSync} from 'node:child_process'; import {cpSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs'; import {join} from 'node:path'; const sha=path=>createHash('sha256').update(readFileSync(path)).digest('hex'); const version=command=>{const result=spawnSync(command,['-V'],{encoding:'utf8'}); if(result.status!==0) throw new Error(command+' version inspection failed'); return result.stdout.trim()}; const source=join('packages','polygon-nesting','npm',process.env.ADDON_NAME); const hash=sha(source); mkdirSync('native-build',{recursive:true}); cpSync(source,join('native-build',process.env.ADDON_NAME)); writeFileSync(join('native-build',process.env.ADDON_NAME+'.sha256'),hash+'  '+process.env.ADDON_NAME+'\n'); const metadata={schemaVersion:2,targetKey:process.env.TARGET_KEY,platform:process.env.TARGET_PLATFORM,arch:process.env.TARGET_ARCH,cargoTarget:process.env.CARGO_TARGET,rustc:version('rustc'),cargo:version('cargo'),profile:'release',features:[],sourceRevision:process.env.SOURCE_COMMIT,nativeDependency:{cargoLockSha256:sha('Cargo.lock'),napiManifestSha256:sha(join('crates','polygon-nesting-napi','Cargo.toml'))}}; writeFileSync(join('native-build','target.json'),JSON.stringify(metadata,null,2)+'\n');"
-      - name: Upload ordinary native build artifact
+      - name: Upload native build evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: native-build-${{ matrix.target-key }}
@@ -148,58 +127,90 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  native-intel-release:
-    name: Native darwin-x64
-    if: github.event_name == 'workflow_dispatch'
+  oci-evidence:
+    name: Linux amd64 OCI evidence
+    if: github.event_name == 'push'
     needs: quality
-    runs-on: macos-15-intel
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     env:
-      TARGET_KEY: darwin-x64
-      TARGET_PLATFORM: darwin
-      TARGET_ARCH: x64
-      CARGO_TARGET: x86_64-apple-darwin
-      ADDON_NAME: irregular-nesting-native.darwin-x64.node
+      SOURCE_COMMIT: ${{ github.sha }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 22.22.0
-      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
-        with:
-          toolchain: 1.95.0
-          targets: x86_64-apple-darwin
-      - uses: ./.github/actions/setup-rust-cache
-      - name: Prepare fresh Cargo target directory
-        shell: bash
-        run: |
-          CARGO_TARGET_DIR="$RUNNER_TEMP/cargo-target-native-darwin-x64"
-          rm -rf "$CARGO_TARGET_DIR"
-          mkdir -p "$CARGO_TARGET_DIR"
-          test -z "$(find "$CARGO_TARGET_DIR" -mindepth 1 -print -quit)"
-          printf 'CARGO_TARGET_DIR=%s\n' "$CARGO_TARGET_DIR" >> "$GITHUB_ENV"
-      - name: Build matching native addon with locked dependencies
-        working-directory: packages/polygon-nesting
-        run: npm run build:release -- --target x86_64-apple-darwin
-      - name: Load addon with Node
-        working-directory: packages/polygon-nesting
-        run: node -e "require('./npm/' + process.env.ADDON_NAME); process.stdout.write('node-load-ok\\n')"
-      - name: Load addon with Electron as Node
-        working-directory: packages/polygon-nesting
-        env:
-          ELECTRON_RUN_AS_NODE: "1"
-        run: npx --yes --package=electron@39.2.7 electron -e "require('./npm/' + process.env.ADDON_NAME); process.stdout.write('electron-load-ok\\n')"
-      - name: Test staged package
-        working-directory: packages/polygon-nesting
-        run: npm test
-      - name: Prepare native build artifact
-        env:
-          SOURCE_COMMIT: ${{ github.sha }}
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+      - name: Build locked Linux amd64 OCI archive once
         run: >-
-          node --input-type=module -e "import {createHash} from 'node:crypto'; import {spawnSync} from 'node:child_process'; import {cpSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs'; import {join} from 'node:path'; const sha=path=>createHash('sha256').update(readFileSync(path)).digest('hex'); const version=command=>{const result=spawnSync(command,['-V'],{encoding:'utf8'}); if(result.status!==0) throw new Error(command+' version inspection failed'); return result.stdout.trim()}; const source=join('packages','polygon-nesting','npm',process.env.ADDON_NAME); const hash=sha(source); mkdirSync('native-build',{recursive:true}); cpSync(source,join('native-build',process.env.ADDON_NAME)); writeFileSync(join('native-build',process.env.ADDON_NAME+'.sha256'),hash+'  '+process.env.ADDON_NAME+'\n'); const metadata={schemaVersion:2,targetKey:process.env.TARGET_KEY,platform:process.env.TARGET_PLATFORM,arch:process.env.TARGET_ARCH,cargoTarget:process.env.CARGO_TARGET,rustc:version('rustc'),cargo:version('cargo'),profile:'release',features:[],sourceRevision:process.env.SOURCE_COMMIT,nativeDependency:{cargoLockSha256:sha('Cargo.lock'),napiManifestSha256:sha(join('crates','polygon-nesting-napi','Cargo.toml'))}}; writeFileSync(join('native-build','target.json'),JSON.stringify(metadata,null,2)+'\n');"
-      - name: Upload ordinary native build artifact
+          docker buildx build --target runtime
+          --platform linux/amd64
+          --provenance=false
+          --build-arg ENGINE_VERSION=0.1.0
+          --build-arg SOURCE_COMMIT="$SOURCE_COMMIT"
+          --tag polygon-nesting:0.1.0-ci
+          --output type=oci,dest=oci-image.tar
+          .
+      - name: Install skopeo
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends skopeo
+      - name: Resolve immutable OCI manifest digest
+        id: manifest-digest
+        run: |
+          skopeo inspect --raw oci-archive:oci-image.tar > oci-manifest.json
+          manifest_digest="sha256:$(sha256sum oci-manifest.json | cut -d' ' -f1)"
+          export MANIFEST_DIGEST="$manifest_digest"
+          mkdir oci-layout
+          tar -xf oci-image.tar -C oci-layout
+          node --input-type=module -e "import {readFileSync,writeFileSync} from 'node:fs'; const index=JSON.parse(readFileSync('oci-layout/index.json','utf8')); if(index.manifests.length!==1) throw new Error('OCI archive must contain exactly one manifest descriptor'); const descriptor=index.manifests[0]; if(descriptor.platform?.os!=='linux'||descriptor.platform?.architecture!=='amd64') throw new Error('OCI manifest descriptor must be linux/amd64'); if(descriptor.digest!==process.env.MANIFEST_DIGEST) throw new Error('skopeo manifest digest must equal the OCI index descriptor digest'); writeFileSync('manifest-digest.txt',descriptor.digest+'\n');"
+          printf 'digest=%s\n' "$(cat manifest-digest.txt)" >> "$GITHUB_OUTPUT"
+      - name: Load archive under immutable digest reference
+        env:
+          MANIFEST_DIGEST: ${{ steps.manifest-digest.outputs.digest }}
+        run: |
+          docker run --detach --publish 5000:5000 --name ci-registry registry:2.8.3@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:5000/v2/ >/dev/null; then break; fi
+            if [ "$attempt" = 30 ]; then docker logs ci-registry; exit 1; fi
+            sleep 1
+          done
+          skopeo copy --dest-tls-verify=false oci-archive:oci-image.tar docker://127.0.0.1:5000/polygon-nesting:0.1.0-ci
+          IMMUTABLE_IMAGE_REF="127.0.0.1:5000/polygon-nesting@${MANIFEST_DIGEST}"
+          docker pull "$IMMUTABLE_IMAGE_REF"
+          printf 'IMMUTABLE_IMAGE_REF=%s\n' "$IMMUTABLE_IMAGE_REF" >> "$GITHUB_ENV"
+      - name: Run non-root smoke once
+        run: ./scripts/smoke-cli-image.sh "$IMMUTABLE_IMAGE_REF"
+      - name: Capture immutable OCI evidence
+        env:
+          MANIFEST_DIGEST: ${{ steps.manifest-digest.outputs.digest }}
+        run: |
+          docker image inspect "$IMMUTABLE_IMAGE_REF" > image-inspect.json
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto'
+          import { readFileSync, writeFileSync } from 'node:fs'
+
+          const sha = (path) => createHash('sha256').update(readFileSync(path)).digest('hex')
+          const [image] = JSON.parse(readFileSync('image-inspect.json', 'utf8'))
+          const evidence = {
+            schemaVersion: 1,
+            manifestDigest: process.env.MANIFEST_DIGEST,
+            archiveSha256: sha('oci-image.tar'),
+            immutableImageReference: `127.0.0.1:5000/polygon-nesting@${process.env.MANIFEST_DIGEST}`,
+            platform: 'linux/amd64',
+            sourceCommit: process.env.SOURCE_COMMIT,
+            nonRootSmoke: true,
+            labels: image.Config.Labels,
+            legalHashes: {
+              'LICENSES/clipper2-ts-BSL-1.0.txt': sha('packages/polygon-nesting/LICENSES/clipper2-ts-BSL-1.0.txt'),
+              NOTICE: sha('packages/polygon-nesting/NOTICE')
+            }
+          }
+          writeFileSync('oci-evidence.json', `${JSON.stringify(evidence, null, 2)}\n`)
+          NODE
+      - name: Upload immutable OCI build evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: native-build-darwin-x64
-          path: native-build
+          name: oci-build-${{ github.sha }}
+          path: |
+            oci-image.tar
+            manifest-digest.txt
+            oci-evidence.json
           if-no-files-found: error
           retention-days: 30

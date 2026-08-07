@@ -29,6 +29,12 @@ const NATIVE_TARGETS = Object.freeze({
   })
 })
 
+const PUBLISHED_NATIVE_TARGETS = Object.freeze({
+  'linux-x64': NATIVE_TARGETS['linux-x64'],
+  'darwin-arm64': NATIVE_TARGETS['darwin-arm64'],
+  'darwin-x64': NATIVE_TARGETS['darwin-x64']
+})
+
 function resolveNativeTarget(platform, arch) {
   const target = NATIVE_TARGETS[`${platform}-${arch}`]
   if (target === undefined) {
@@ -79,6 +85,7 @@ function artifactPathForTarget(workspaceRoot, platform, arch, profile, cargoTarg
 
 module.exports = {
   NATIVE_TARGETS,
+  PUBLISHED_NATIVE_TARGETS,
   artifactPathForTarget,
   cargoTargetDirectoryForWorkspace,
   cargoBuildArgsForTarget,

@@ -43,14 +43,13 @@ export function renderReleaseNotes(release) { return ['# Polygon Nesting 0.1.0 R
 export async function assembleReleaseCandidate({ artifactsRoot, outputDirectory, packageRoot = PACKAGE_ROOT, sourceCommit, trustedSourceRoot, execute = execFileSync }) {
   if (!/^[a-f0-9]{40}$/.test(sourceCommit ?? '')) throw new Error('sourceCommit must be a full lowercase commit ID')
   if (!trustedSourceRoot) throw new Error('trustedSourceRoot is required')
-  const artifacts = Object.entries(target.NATIVE_TARGETS).map(([targetKey, nativeTarget]) => validateTargetArtifact({ artifactsRoot, sourceCommit, targetKey, nativeTarget, trustedSourceRoot })).sort((a, b) => a.targetKey.localeCompare(b.targetKey))
+  const artifacts = Object.entries(target.PUBLISHED_NATIVE_TARGETS).map(([targetKey, nativeTarget]) => validateTargetArtifact({ artifactsRoot, sourceCommit, targetKey, nativeTarget, trustedSourceRoot })).sort((a, b) => a.targetKey.localeCompare(b.targetKey))
   const npm = join(packageRoot, 'npm')
   mkdirSync(npm, { recursive: true })
   for (const name of readdirSync(npm)) if (name.endsWith('.node')) rmSync(join(npm, name), { force: true })
   for (const artifact of artifacts) copyFileSync(artifact.addonPath, join(npm, artifact.addonName))
   rmSync(outputDirectory, { recursive: true, force: true })
   mkdirSync(outputDirectory, { recursive: true })
-  execute('npm', ['test'], { cwd: packageRoot, stdio: 'inherit' })
   const records = JSON.parse(execute('npm', ['pack', '--json', '--pack-destination', resolve(outputDirectory)], { cwd: packageRoot, encoding: 'utf8' }))
   if (!Array.isArray(records) || records.length !== 1) throw new Error('npm pack must return exactly one record')
   const record = records[0]

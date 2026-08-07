@@ -162,7 +162,8 @@ test('optional parity workflow preserves the transferred source identity without
   const standalone = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
   const ci = await readFile(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
   assert.match(standalone, /Source jfet07-polygon-labs\/min-plane-dxf workflow run ID/);
-  assert.match(standalone, /name: old-new-parity-bundle/);
+  assert.match(standalone, /old-new-parity-target-\$\{\{ matrix\.key \}\}/);
+  assert.doesNotMatch(standalone, /old-new-parity-bundle|blacksmith-2vcpu-windows|x86_64-pc-windows-msvc/);
   assert.doesNotMatch(standalone, /jfet97\/min-plane-dxf/);
   assert.doesNotMatch(ci, /old-new-parity-bundle|standalone-parity\.yml|jfet97\/polygon-nesting/);
 });
@@ -306,12 +307,15 @@ function assertStandaloneParityMatrixContract(workflow) {
     ...standaloneParityMatrixItems(workflow, 'parity-linux'),
     ...standaloneParityMatrixItems(workflow, 'parity'),
   ];
-  assert.deepEqual(actual, PARITY_TARGETS.map(({ key, runner, target }) => ({
-    key,
-    runner,
-    target,
-    'executable-suffix': key === 'win32-x64' ? "'.exe'" : "''",
-  })));
+  assert.deepEqual(actual, PARITY_TARGETS
+    .filter(({ key }) => key !== 'win32-x64')
+    .map(({ key, runner, target }) => ({
+      key,
+      runner,
+      target,
+      'executable-suffix': "''",
+    })));
+  assert.doesNotMatch(workflow, /win32-x64|x86_64-pc-windows-msvc|blacksmith-2vcpu-windows/);
 }
 
 function workflowJob(workflow, name) {
@@ -321,12 +325,6 @@ function workflowJob(workflow, name) {
   )) ?? [];
   assert.notEqual(job, undefined, `workflow must define the ${name} job`);
   return job;
-}
-
-function assertStandaloneParityLinuxJobRunners(workflow) {
-  for (const jobName of ['aggregate', 'require-all-targets']) {
-    assert.match(workflowJob(workflow, jobName), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m);
-  }
 }
 
 test('defines all four exact source and standalone target runner pairs', () => {
@@ -339,55 +337,33 @@ test('defines all four exact source and standalone target runner pairs', () => {
   assert.ok(PARITY_TARGETS.every(({ profile, features, rustVersion }) => profile === 'release' && features.length === 0 && rustVersion === '1.95.0'));
 });
 
-test('workflow uses every required parity runner and collects all matrix results', async () => {
+test('workflow uses the three hosted parity runners and uploads each matrix result', async () => {
   const workflow = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
   assertStandaloneParityMatrixContract(workflow);
-  assertStandaloneParityLinuxJobRunners(workflow);
-  for (const { runner, target } of PARITY_TARGETS) {
+  for (const { runner, target } of PARITY_TARGETS.filter(({ key }) => key !== 'win32-x64')) {
     assert.match(workflow, new RegExp(runner.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     assert.match(workflow, new RegExp(target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   }
   assert.match(workflow, /strategy:/);
-  assert.match(workflow, /require-all-targets/);
   assert.match(workflow, /actions\/checkout@11bd71901bbe5b1630ceea73d27597364c9af683/);
   assert.match(workflow, /actions\/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020/);
   assert.match(workflow, /dtolnay\/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c/);
   assert.match(workflow, /old-new-parity-target-\$\{\{ matrix\.key \}\}/);
-  assert.match(workflow, /assemble-parity-aggregate\.mjs/);
-  assert.match(workflow, /--trusted-source-root "\$GITHUB_WORKSPACE"/);
   assert.match(workflow, /--provenance-output "\$RUNNER_TEMP\/standalone-parity-provenance\/\$\{\{ matrix\.key \}\}\.json"/);
   assert.match(workflow, /--source-provenance-evidence "\$RUNNER_TEMP\/standalone-parity-provenance\/\$\{\{ matrix\.key \}\}\.json"/);
-  assert.match(workflow, /old-new-parity-bundle\.tar\.gz/);
-  assert.match(workflow, /actions\/attest-build-provenance@/);
+  assert.doesNotMatch(
+    workflow,
+    /assemble-parity-aggregate|old-new-parity-bundle\.tar\.gz|actions\/attest-build-provenance|id-token: write|attestations: write/,
+  );
   assert.doesNotMatch(workflow, /jfet97\/min-plane-dfx/);
-  assert.match(workflow, /id-token: write/);
-  assert.match(workflow, /attestations: write/);
-});
-
-test('standalone parity aggregate jobs reject non-Blacksmith Linux runners', async () => {
-  const workflow = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
-  assert.throws(
-    () => assertStandaloneParityLinuxJobRunners(workflow.replace(
-      "  aggregate:\n    needs: [parity, parity-linux]\n    if: ${{ needs.parity.result == 'success' && needs['parity-linux'].result == 'success' }}\n    runs-on: blacksmith-2vcpu-ubuntu-2404",
-      "  aggregate:\n    needs: [parity, parity-linux]\n    if: ${{ needs.parity.result == 'success' && needs['parity-linux'].result == 'success' }}\n    runs-on: ubuntu-24.04",
-    )),
-    /runs-on/,
-  );
-  assert.throws(
-    () => assertStandaloneParityLinuxJobRunners(workflow.replace(
-      '  require-all-targets:\n    if: always()\n    needs: [parity, parity-linux, aggregate]\n    runs-on: blacksmith-2vcpu-ubuntu-2404',
-      '  require-all-targets:\n    if: always()\n    needs: [parity, parity-linux, aggregate]\n    runs-on: ubuntu-latest',
-    )),
-    /runs-on/,
-  );
 });
 
 test('standalone parity matrix rejects swapped target runner assignments', async () => {
   const workflow = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
   const swappedRunners = workflow
     .replace('runner: blacksmith-2vcpu-ubuntu-2404', 'runner: temporary-runner')
-    .replace('runner: blacksmith-2vcpu-windows-2025', 'runner: blacksmith-2vcpu-ubuntu-2404')
-    .replace('runner: temporary-runner', 'runner: blacksmith-2vcpu-windows-2025');
+    .replace('runner: blacksmith-6vcpu-macos-15', 'runner: blacksmith-2vcpu-ubuntu-2404')
+    .replace('runner: temporary-runner', 'runner: blacksmith-6vcpu-macos-15');
   assert.throws(() => assertStandaloneParityMatrixContract(swappedRunners), /strictly deep-equal/);
   const addedTarget = workflow.replace(
     '    runs-on: ${{ matrix.runner }}',

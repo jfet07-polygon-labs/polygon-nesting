@@ -27,6 +27,9 @@ const REQUIRED_PACKAGE_FILES = Object.freeze([
 const STAGED_ADDON_FILES = Object.freeze(
   Object.values(target.NATIVE_TARGETS).map(({ platform, arch }) => `npm/${stagedAddonFileName(platform, arch)}`)
 )
+const PUBLISHED_STAGED_ADDON_FILES = Object.freeze(
+  Object.values(target.PUBLISHED_NATIVE_TARGETS).map(({ platform, arch }) => `npm/${stagedAddonFileName(platform, arch)}`)
+)
 
 function parseArgs(argv) {
   let profile = 'release'
@@ -119,8 +122,13 @@ function validatePackageContents(files, { requireAllTargets = false } = {}) {
   }
   const stagedAddons = STAGED_ADDON_FILES.filter((name) => names.has(name))
   if (stagedAddons.length === 0) throw new Error('package requires a nonempty staged addon subset')
-  if (requireAllTargets && stagedAddons.length !== STAGED_ADDON_FILES.length) {
-    throw new Error('release candidate requires all four supported staged addons')
+  if (requireAllTargets) {
+    if (PUBLISHED_STAGED_ADDON_FILES.some((name) => !names.has(name))) {
+      throw new Error('release candidate requires all three published staged addons')
+    }
+    if (stagedAddons.length !== PUBLISHED_STAGED_ADDON_FILES.length) {
+      throw new Error('release candidate must contain exactly the three published staged addons')
+    }
   }
   return stagedAddons
 }
