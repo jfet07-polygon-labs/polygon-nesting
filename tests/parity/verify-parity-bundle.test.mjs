@@ -158,17 +158,13 @@ test('uses the documented signer-workflow identity format for attestation verifi
   ]);
 });
 
-test('workflows describe and consume the transferred source identities', async () => {
+test('optional parity workflow preserves the transferred source identity without gating CI', async () => {
   const standalone = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
   const ci = await readFile(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
   assert.match(standalone, /Source jfet07-polygon-labs\/min-plane-dxf workflow run ID/);
+  assert.match(standalone, /name: old-new-parity-bundle/);
   assert.doesNotMatch(standalone, /jfet97\/min-plane-dxf/);
-  for (const expected of [
-    'repos/jfet07-polygon-labs/polygon-nesting/actions/runs/',
-    'jfet07-polygon-labs/polygon-nesting --name old-new-parity-bundle',
-    'https://github.com/jfet07-polygon-labs/polygon-nesting/.github/workflows/standalone-parity.yml',
-  ]) assert.ok(ci.includes(expected), `CI must consume ${expected}`);
-  assert.doesNotMatch(ci, /jfet97\/polygon-nesting/);
+  assert.doesNotMatch(ci, /old-new-parity-bundle|standalone-parity\.yml|jfet97\/polygon-nesting/);
 });
 
 test('forces Windows tar to treat native paths as local and preserves its destination', () => {

@@ -6,11 +6,6 @@ on:
       - main
   pull_request:
   workflow_dispatch:
-    inputs:
-      parity_source_run_id:
-        description: Explicit jfet07-polygon-labs/polygon-nesting run ID containing the trusted aggregate parity bundle
-        required: false
-        type: string
 
 concurrency:
   group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
@@ -46,12 +41,19 @@ jobs:
         run: cargo clippy --workspace --all-targets --release --locked -- -D warnings
       - name: Test release workspace
         run: cargo test --workspace --release --locked
+      - name: Run current canonical semantic matrix
+        run: |
+          cargo build --release --locked --package polygon-nesting-cli --bin polygon-nesting
+          cargo build --release --locked --package polygon-nesting-napi --bin parity-desktop-request-adapter
+          node scripts/run-current-canonical-matrix.mjs \
+            --adapter "$CARGO_TARGET_DIR/release/parity-desktop-request-adapter" \
+            --cli "$CARGO_TARGET_DIR/release/polygon-nesting"
       - name: Test repository contracts
         run: |
           python3 -m unittest discover -s scripts/tests -p 'test_*.py'
           ./scripts/test-cli-image-contract.sh
           node scripts/verify-release-candidate.mjs --dry-run
-          node --test tests/ci/*.test.mjs tests/parity/*.test.mjs scripts/release-ci.test.mjs scripts/publish-native-package.test.mjs
+          node --test tests/ci/*.test.mjs tests/parity/*.test.mjs scripts/release-ci.test.mjs
 
   oci-smoke:
     name: Linux amd64 OCI smoke
@@ -199,78 +201,5 @@ jobs:
         with:
           name: native-build-darwin-x64
           path: native-build
-          if-no-files-found: error
-          retention-days: 30
-
-  parity-release-gate:
-    name: External parity contract ${{ matrix.target }}
-    if: github.event_name == 'workflow_dispatch'
-    needs: [native, native-intel-release]
-    runs-on: blacksmith-2vcpu-ubuntu-2404
-    container: ghcr.io/jfet07-polygon-labs/polygon-nesting-ci@sha256:66a7ca95c13074714135ad840465834e60797ddd45d13d130e0e5c6077b950f3
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: linux-x64
-            cargo-target: x86_64-unknown-linux-gnu
-          - target: win32-x64
-            cargo-target: x86_64-pc-windows-msvc
-          - target: darwin-arm64
-            cargo-target: aarch64-apple-darwin
-          - target: darwin-x64
-            cargo-target: x86_64-apple-darwin
-    env:
-      PARITY_SOURCE_RUN_ID: ${{ inputs.parity_source_run_id }}
-      TARGET_KEY: ${{ matrix.target }}
-      CARGO_TARGET: ${{ matrix.cargo-target }}
-      SOURCE_COMMIT: ${{ github.sha }}
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Trust checked-out workspace
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - name: Require and authorize the aggregate parity run
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          case "$PARITY_SOURCE_RUN_ID" in
-            *[!0-9]*|'') printf '%s\n' 'Externally generated parity evidence is required for a release-candidate CI run.' >&2; exit 1 ;;
-          esac
-          gh api "repos/jfet07-polygon-labs/polygon-nesting/actions/runs/$PARITY_SOURCE_RUN_ID" > source-run.json
-          node --input-type=module -e "import {readFileSync} from 'node:fs'; const run=JSON.parse(readFileSync('source-run.json')); if(run.repository.full_name!=='jfet07-polygon-labs/polygon-nesting'||run.path!=='.github/workflows/standalone-parity.yml'||run.head_branch!=='main'||run.head_sha!==process.env.SOURCE_COMMIT||(run.event!=='workflow_call'&&run.event!=='workflow_dispatch')||run.conclusion!=='success') throw new Error('source run does not match the trusted aggregate parity provenance');"
-      - name: Download ordinary native build
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: native-build-${{ matrix.target }}
-          path: bound-artifact
-      - name: Download and attest aggregate parity archive
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh run download "$PARITY_SOURCE_RUN_ID" --repo jfet07-polygon-labs/polygon-nesting --name old-new-parity-bundle --dir parity-input
-          test "$(find parity-input -type f | wc -l | tr -d ' ')" = 2
-          archive="parity-input/old-new-parity-bundle.tar.gz"
-          digest="parity-input/old-new-parity-bundle.tar.gz.sha256"
-          test -f "$archive"
-          test -f "$digest"
-          gh attestation verify "$archive" --repo jfet07-polygon-labs/polygon-nesting --signer-workflow https://github.com/jfet07-polygon-labs/polygon-nesting/.github/workflows/standalone-parity.yml
-      - name: Stage verified target parity evidence
-        run: >-
-          node scripts/stage-parity-aggregate.mjs
-          --archive parity-input/old-new-parity-bundle.tar.gz
-          --digest parity-input/old-new-parity-bundle.tar.gz.sha256
-          --target "$TARGET_KEY"
-          --cargo-target "$CARGO_TARGET"
-          --source-commit "$SOURCE_COMMIT"
-          --artifact-directory bound-artifact
-          --trusted-source-root "$GITHUB_WORKSPACE"
-      - name: Bind verified raw parity bundle to native build
-        run: >-
-          test -f bound-artifact/parity.json && test -f bound-artifact/old-new-parity-bundle.tar.gz
-      - name: Upload release-bound native artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: release-native-${{ matrix.target }}
-          path: bound-artifact
           if-no-files-found: error
           retention-days: 30

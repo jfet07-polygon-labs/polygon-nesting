@@ -1,67 +1,51 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))))
-const workflow = readFileSync(join(ROOT, '.github/workflows/publish-native-package.yml'), 'utf8')
+const legacyWorkflow = join(ROOT, '.github/workflows/publish-native-package.yml')
+const legacyScript = join(ROOT, 'scripts/publish-native-package.mjs')
+const legacyScriptTest = join(ROOT, 'scripts/publish-native-package.test.mjs')
+const publisher = readFileSync(join(ROOT, '.github/workflows/publish-runtime-image.yml'), 'utf8')
 const npmrc = readFileSync(join(ROOT, '.npmrc'), 'utf8')
 const migration = readFileSync(join(ROOT, 'docs/migration-from-min-plane-dfx.md'), 'utf8')
 
-function remoteActionReferences(value) {
-  return [...value.matchAll(/^\s*uses:\s+([^\s]+)\s*$/gm)]
-    .map(([, reference]) => reference)
-    .filter((reference) => !reference.startsWith('./'))
-}
-
-test('publication is a fixed manual workflow with minimal permissions and one Blacksmith job', () => {
-  assert.match(workflow, /^name: Publish native package$/m)
-  assert.match(workflow, /^on:\n  workflow_dispatch:\n$/m)
-  assert.doesNotMatch(workflow, /inputs:/)
-  assert.match(workflow, /^permissions:\n  actions: read\n  contents: read\n  packages: write\n$/m)
-  assert.match(
-    workflow,
-    /^concurrency:\n  group: native-package-publish\n  queue: max\n  cancel-in-progress: false\n$/m
-  )
-  assert.equal((workflow.match(/^  publish:\n/gm) ?? []).length, 1)
-  assert.match(workflow, /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
-  assert.doesNotMatch(workflow, /^    environment:/m)
-  assert.doesNotMatch(workflow, /^      [A-Z_]+: \$\{\{ runner\.temp \}\}/m)
-  assert.match(workflow, /\$RUNNER_TEMP\/native-package-publication/)
+test('protected release publisher owns both GHCR and GitHub npm delivery', () => {
+  assert.equal(existsSync(legacyWorkflow), false, 'the untrusted manual native package publisher must be removed')
+  assert.equal(existsSync(legacyScript), false, 'the fixed-run package publisher script must be removed')
+  assert.equal(existsSync(legacyScriptTest), false, 'the fixed-run package publisher tests must be removed')
+  assert.match(publisher, /^on:\n  workflow_run:/m)
+  assert.match(publisher, /^  packages: write$/m)
+  assert.match(publisher, /^    environment: publish$/m)
+  assert.match(publisher, /github\.event\.workflow_run\.head_branch == 'main'/)
 })
 
-test('publication pins the fixed source run and exact artifact names without rebuilding', () => {
-  assert.match(workflow, /SOURCE_RUN_ID: "31109349775"/)
-  assert.match(workflow, /SOURCE_HEAD_SHA: 92d51ba49c496ccd818646e9504bd042b2f73187/)
-  for (const target of ['linux-x64', 'win32-x64', 'darwin-arm64', 'darwin-x64']) {
-    assert.match(workflow, new RegExp(`name: native-build-${target}`))
-  }
-  assert.doesNotMatch(workflow, /cargo|rust-toolchain|build:release|assemble-release-candidate|release\.yml/i)
+test('npm publication consumes only the verified candidate tarball and is rerunnable', () => {
+  assert.match(publisher, /NPM_TARBALL=.*release-candidate/)
+  assert.match(publisher, /npm publish "\$NPM_TARBALL" --ignore-scripts --registry https:\/\/npm\.pkg\.github\.com/)
+  assert.match(publisher, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.0" --json/)
+  assert.match(publisher, /refusing to replace an existing npm version with different bytes/)
+  assert.match(publisher, /if: steps\.npm-state\.outputs\.action == 'publish'/)
+  assert.match(publisher, /published npm package bytes differ from the verified release tarball/)
+  assert.match(publisher, /npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet07-polygon-labs\/polygon-nesting@0\.1\.0"/)
+  assert.match(publisher, /readFileSync\(join\(process\.env\.DELIVERY_ROOT, 'node_modules\/\@jfet07-polygon-labs\/polygon-nesting\/package\.json'\), 'utf8'\)/)
+  assert.match(publisher, /load\('@jfet07-polygon-labs\/polygon-nesting'\)/)
+  assert.doesNotMatch(publisher, /load\('@jfet07-polygon-labs\/polygon-nesting\/package\.json'\)/)
+  assert.doesNotMatch(publisher, /cargo build|npm run build:release/)
 })
 
-test('publication pins every action and publishes only the generated tarball path', () => {
-  for (const reference of remoteActionReferences(workflow)) {
-    assert.match(reference, /^[^@\s]+@[a-f0-9]{40}$/i)
-  }
-  assert.match(workflow, /NODE_AUTH_TOKEN: \$\{\{ secrets\.GITHUB_TOKEN \}\}/)
-  assert.match(workflow, /manifest\.tarball\.path/)
-  assert.match(workflow, /npm publish "\$TARBALL_PATH" --ignore-scripts --registry https:\/\/npm\.pkg\.github\.com/)
-  assert.doesNotMatch(workflow, /npm publish\s+(?:\.|packages\/polygon-nesting|"?\$STAGING)/)
-})
-
-test('publication safely resumes after an exact version was already published', () => {
-  const decisionStep = workflow.indexOf('id: publication-state')
-  const publishStep = workflow.indexOf('npm publish "$TARBALL_PATH"')
-  const deliveryStep = workflow.indexOf('Verify registry delivery and exact installation')
-  assert.ok(decisionStep >= 0)
-  assert.ok(decisionStep < publishStep)
-  assert.ok(publishStep < deliveryStep)
-  assert.match(workflow, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.0" --json/)
-  assert.match(workflow, /grep -q 'E404'/)
-  assert.match(workflow, /publication-decision/)
-  assert.match(workflow, /if: steps\.publication-state\.outputs\.action == 'publish'/)
-  assert.doesNotMatch(workflow, /- name: Verify registry delivery and exact installation\n\s+if:/)
+test('both immutable destinations are inspected before either artifact is published', () => {
+  const inspectNpm = publisher.indexOf('- name: Inspect immutable npm package version')
+  const inspectOci = publisher.indexOf('- name: Inspect immutable runtime tag')
+  const publishNpm = publisher.indexOf('- name: Publish exact verified npm tarball')
+  const publishOci = publisher.indexOf('- name: Publish exact verified runtime image')
+  assert.ok(inspectNpm >= 0 && inspectOci >= 0 && publishNpm >= 0 && publishOci >= 0)
+  assert.ok(inspectNpm < publishNpm)
+  assert.ok(inspectNpm < publishOci)
+  assert.ok(inspectOci < publishNpm)
+  assert.ok(inspectOci < publishOci)
 })
 
 test('repository npm configuration binds the organization scope without a committed credential', () => {
@@ -73,18 +57,9 @@ test('repository npm configuration binds the organization scope without a commit
   assert.doesNotMatch(npmrc, /_authToken=(?!\$\{NODE_AUTH_TOKEN\})[^\n]+/)
 })
 
-test('publication records and verifies tarball metadata before exact delivery installation', () => {
-  assert.match(workflow, /publication-manifest\.json/)
-  assert.match(workflow, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.0" --json/)
-  assert.match(workflow, /\(cd "\$DELIVERY_ROOT" && npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet07-polygon-labs\/polygon-nesting@0\.1\.0"\)/)
-  assert.match(workflow, /node scripts\/publish-native-package\.mjs verify-delivery/)
-  assert.match(workflow, /load\('@jfet07-polygon-labs\/polygon-nesting'\)/)
-})
-
-test('migration docs distinguish the authorized fast cutover from future parity-bound releases', () => {
-  assert.match(migration, /one-time authorized fast package cutover/i)
-  assert.match(migration, /run `31109349775`/)
-  assert.match(migration, /does not run new parity/i)
-  assert.match(migration, /standard future release path/i)
-  assert.match(migration, /does not authorize removal of the embedded Rust engine/i)
+test('migration docs define current-repository release gates without legacy parity', () => {
+  assert.match(migration, /current repository/i)
+  assert.match(migration, /four native targets/i)
+  assert.doesNotMatch(migration, /standard future release path remains parity-bound/i)
+  assert.doesNotMatch(migration, /run `31109349775`/)
 })
