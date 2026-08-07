@@ -119,6 +119,8 @@ jobs:
       PATH: /opt/node-v24.19.0/bin:/opt/node-v22.22.0/bin:/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Trust checked-out workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: ./.github/actions/setup-rust-cache
       - name: Prepare fresh Cargo target directory
         shell: bash
