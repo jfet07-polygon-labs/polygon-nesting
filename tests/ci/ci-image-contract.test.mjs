@@ -123,7 +123,7 @@ function assertDockerfileContract(dockerfile) {
   const runtime = stage(dockerfile, 'runtime')
   assert.match(runtime, /ARG ENGINE_VERSION/)
   assert.match(runtime, /ARG SOURCE_COMMIT/)
-  assert.match(runtime, /test "\$ENGINE_VERSION" = "0\.1\.1"/)
+  assert.match(runtime, /test "\$ENGINE_VERSION" = "0\.1\.2"/)
   assert.match(runtime, /test "\$SOURCE_COMMIT" != "unknown"/)
   assert.match(runtime, /org\.opencontainers\.image\.source="https:\/\/github\.com\/jfet07-polygon-labs\/polygon-nesting"/)
   assert.match(runtime, /org\.opencontainers\.image\.licenses="NOASSERTION"/)

@@ -39,7 +39,7 @@ export function validateTargetArtifact({ artifactsRoot, sourceCommit, targetKey,
 }
 
 function legal(packageRoot) { return { 'LICENSES/clipper2-ts-BSL-1.0.txt': hash(join(packageRoot, 'LICENSES/clipper2-ts-BSL-1.0.txt')), NOTICE: hash(join(packageRoot, 'NOTICE')) } }
-export function renderReleaseNotes(release) { return ['# Polygon Nesting 0.1.1 Release Candidate', '', `Source commit: \`${release.sourceCommit}\``, `Package SHA-256: \`${release.tarball.sha256}\``, '', '## Native artifacts', ...release.nativeArtifacts.map((item) => `- \`${item.targetKey}\`: \`${item.cargoTarget}\`, addon \`${item.sha256}\``), '', 'The candidate is built from the current repository after the complete Rust, protocol, canonical matrix, native package, CLI, N-API, and OCI contract suites pass.', ''].join('\n') }
+export function renderReleaseNotes(release) { return ['# Polygon Nesting 0.1.2 Release Candidate', '', `Source commit: \`${release.sourceCommit}\``, `Package SHA-256: \`${release.tarball.sha256}\``, '', '## Native artifacts', ...release.nativeArtifacts.map((item) => `- \`${item.targetKey}\`: \`${item.cargoTarget}\`, addon \`${item.sha256}\``), '', 'The candidate is built from the current repository after the complete Rust, protocol, canonical matrix, native package, CLI, N-API, and OCI contract suites pass.', ''].join('\n') }
 export async function assembleReleaseCandidate({ artifactsRoot, outputDirectory, packageRoot = PACKAGE_ROOT, sourceCommit, trustedSourceRoot, execute = execFileSync }) {
   if (!/^[a-f0-9]{40}$/.test(sourceCommit ?? '')) throw new Error('sourceCommit must be a full lowercase commit ID')
   if (!trustedSourceRoot) throw new Error('trustedSourceRoot is required')

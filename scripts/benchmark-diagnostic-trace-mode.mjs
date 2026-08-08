@@ -83,7 +83,7 @@ async function runCli({ cliPath, inputPath, outputPath }) {
   try {
     result = await execFileAsync(
       cliPath,
-      ['run', '--input', inputPath, '--output', outputPath],
+      ['run', '--input', inputPath, '--result-file', outputPath],
       { cwd: REPOSITORY_ROOT, encoding: 'buffer', maxBuffer: 16 * 1024 * 1024 },
     );
   } catch (error) {

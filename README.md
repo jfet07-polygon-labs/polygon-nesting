@@ -30,7 +30,7 @@ See [architecture](docs/architecture.md), [protocol compatibility](docs/protocol
 ```sh
 polygon-nesting run \
   --input /work/request.json \
-  --output /work/result.json \
+  --result-file /work/result.json \
   [--events /work/events.ndjson] \
   [--deadline-ms MILLISECONDS]
 ```

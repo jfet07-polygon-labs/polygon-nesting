@@ -193,7 +193,7 @@ async function captureCliRow({ oldRoot, newRoot, rowId, target, adapter, cli, ou
 
   const resultPath = join(cliRow, 'result.json');
   const eventsPath = join(cliRow, 'events.ndjson');
-  const cliRun = await runProcess(cli, ['run', '--input', join(cliRow, 'adapted-request.json'), '--output', resultPath, '--events', eventsPath], Buffer.alloc(0));
+  const cliRun = await runProcess(cli, ['run', '--input', join(cliRow, 'adapted-request.json'), '--result-file', resultPath, '--events', eventsPath], Buffer.alloc(0));
   assertSuccessfulProcess(cliRun, `neutral CLI for ${rowId}`);
   const result = await readFile(resultPath);
   const events = await readFile(eventsPath);

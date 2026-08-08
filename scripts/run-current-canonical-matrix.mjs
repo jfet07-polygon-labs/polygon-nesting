@@ -53,7 +53,7 @@ export function runCurrentCanonicalMatrix({ adapter, cli }) {
       const output = join(directory, `${ordinal}-result.json`)
       const events = join(directory, `${ordinal}-events.ndjson`)
       writeFileSync(input, adapted.stdout)
-      run(cli, ['run', '--input', input, '--output', output, '--events', events], {}, `CLI for ${rowId}`)
+      run(cli, ['run', '--input', input, '--result-file', output, '--events', events], {}, `CLI for ${rowId}`)
       const outcome = JSON.parse(readFileSync(output, 'utf8'))
       if (outcome.version !== 1 || outcome.outcome?.status !== 'success') {
         fail(`CLI for ${rowId} did not produce a versioned success outcome`)

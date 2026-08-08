@@ -38,7 +38,7 @@ grep -Fqx 'RUN test "$TARGETPLATFORM" = "linux/amd64"' "$dockerfile"
 grep -Fq 'RUN cargo build --release --locked -p polygon-nesting-cli' "$dockerfile"
 grep -Fqx 'ARG ENGINE_VERSION' "$dockerfile"
 grep -Fqx 'ARG SOURCE_COMMIT' "$dockerfile"
-grep -Fq 'test "$ENGINE_VERSION" = "0.1.1"' "$dockerfile"
+grep -Fq 'test "$ENGINE_VERSION" = "0.1.2"' "$dockerfile"
 grep -Fq 'test "$SOURCE_COMMIT" != "unknown"' "$dockerfile"
 test "$(grep -Fc 'org.opencontainers.image.source="https://github.com/jfet07-polygon-labs/polygon-nesting"' "$dockerfile")" = 2
 grep -Fq 'org.opencontainers.image.licenses="NOASSERTION"' "$dockerfile"

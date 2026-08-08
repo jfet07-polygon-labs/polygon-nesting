@@ -7,12 +7,12 @@
 ```sh
 polygon-nesting run \
   --input /work/request.json \
-  --output /work/result.json \
+  --result-file /work/result.json \
   [--events /work/events.ndjson] \
   [--deadline-ms MILLISECONDS]
 ```
 
-`--input` and `--output` are required. `--events` is optional. The three artifact paths must name distinct files, including through relative-path normalization and existing symlinks. This prevents a result or event artifact from replacing the input or another artifact. Omitting `--events` produces only the final result and does not create an event artifact.
+`--input` and `--result-file` are required. `--events` is optional. The three artifact paths must name distinct files, including through relative-path normalization and existing symlinks. This prevents a result or event artifact from replacing the input or another artifact. Omitting `--events` produces only the final result and does not create an event artifact.
 
 `--deadline-ms` must be a positive finite number. It only shortens the decoded request timeout: core execution receives the smaller of the request `timeoutMs` and `--deadline-ms`. Core execution owns deadline detection and cancellation semantics.
 
@@ -51,7 +51,7 @@ For nonzero statuses, stderr contains only a stable category message prefixed wi
 `polygon-nesting --info` prints the versioned engine capability record as JSON:
 
 ```json
-{"name":"polygon-nesting","version":"0.1.1"}
+{"name":"polygon-nesting","version":"0.1.2"}
 ```
 
 The exact version is the built crate version. `--info` cannot be combined with `run`.

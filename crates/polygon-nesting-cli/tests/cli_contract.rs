@@ -38,7 +38,7 @@ fn run_writes_a_versioned_success_outcome_and_ordered_events() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
             "--events",
             events.to_str().expect("events path is UTF-8"),
@@ -96,7 +96,7 @@ fn full_and_off_cli_requests_preserve_semantics_and_reduce_trace_bytes() {
                 "run",
                 "--input",
                 input.to_str().expect("input path is UTF-8"),
-                "--output",
+                "--result-file",
                 output.to_str().expect("output path is UTF-8"),
             ])
             .output()
@@ -141,7 +141,7 @@ fn run_without_events_does_not_create_an_event_artifact() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .output()
@@ -172,7 +172,7 @@ fn run_writes_the_exact_archive_ineligible_outcome_and_domain_exit() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .output()
@@ -209,7 +209,7 @@ fn run_rejects_an_events_path_that_would_replace_the_outcome() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             shared.to_str().expect("output path is UTF-8"),
             "--events",
             shared.to_str().expect("events path is UTF-8"),
@@ -250,7 +250,7 @@ fn run_rejects_an_events_alias_through_a_symlinked_parent_and_dotdot() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
             "--events",
             events.to_str().expect("events path is UTF-8"),
@@ -287,7 +287,7 @@ fn malformed_recovery_rejects_an_events_alias_through_a_symlinked_parent_and_dot
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
             "--events",
             events.to_str().expect("events path is UTF-8"),
@@ -329,7 +329,7 @@ fn run_rejects_a_missing_output_alias_behind_a_relative_symlink_parent() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
             "--events",
             events.to_str().expect("events path is UTF-8"),
@@ -365,7 +365,7 @@ fn malformed_recovery_rejects_a_missing_input_alias_behind_a_relative_symlink_pa
             input.to_str().expect("input path is UTF-8"),
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
             "--deadline-ms",
             "nope",
@@ -394,7 +394,7 @@ fn run_rejects_a_symlinked_output_alias_of_the_input() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .output()
@@ -422,7 +422,7 @@ fn run_rejects_an_events_path_that_would_replace_the_input() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
             "--events",
             input.to_str().expect("input path is UTF-8"),
@@ -488,7 +488,7 @@ fn panic_injection_writes_a_sanitized_internal_failure() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .output()
@@ -518,7 +518,7 @@ fn malformed_request_writes_a_sanitized_failure_outcome_and_malformed_exit() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .output()
@@ -555,7 +555,7 @@ fn structurally_invalid_request_uses_the_malformed_exit() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .output()
@@ -584,7 +584,7 @@ fn run_rejects_hardlinked_output_alias_of_input() {
             "run",
             "--input",
             input.to_str().unwrap(),
-            "--output",
+            "--result-file",
             output.to_str().unwrap(),
         ])
         .output()
@@ -614,7 +614,7 @@ fn malformed_deadline_value_writes_a_typed_failure_when_output_is_available() {
             "run",
             "--input",
             input.to_str().unwrap(),
-            "--output",
+            "--result-file",
             output.to_str().unwrap(),
             "--deadline-ms",
             "nope",
@@ -646,7 +646,7 @@ fn malformed_recovery_after_a_top_level_flag_writes_one_safe_output_envelope() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
             "--deadline-ms",
             "not-a-number",
@@ -670,7 +670,7 @@ fn malformed_recovery_does_not_treat_an_option_value_as_a_run_command() {
         .args([
             "--input",
             "run",
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .output()
@@ -692,7 +692,7 @@ fn malformed_recovery_with_multiple_run_tokens_does_not_write_an_artifact() {
     let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
         .args([
             "run",
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
             "run",
         ])
@@ -721,7 +721,7 @@ fn info_run_conflict_writes_a_typed_malformed_input_outcome_when_output_is_safe(
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .output()
@@ -752,7 +752,7 @@ fn info_run_conflict_does_not_overwrite_an_input_output_alias() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             input.to_str().expect("input path is UTF-8"),
         ])
         .output()
@@ -784,7 +784,7 @@ fn info_run_conflict_does_not_write_an_output_events_alias() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             shared.to_str().expect("output path is UTF-8"),
             "--events",
             shared.to_str().expect("events path is UTF-8"),
@@ -815,7 +815,7 @@ fn duplicate_events_does_not_suppress_an_unambiguous_output_envelope() {
             "run",
             "--input",
             input.to_str().unwrap(),
-            "--output",
+            "--result-file",
             output.to_str().unwrap(),
             "--events",
             events.to_str().unwrap(),
@@ -848,7 +848,7 @@ fn malformed_recovery_does_not_overwrite_a_lexically_equal_input() {
             input.to_str().expect("input path is UTF-8"),
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             input.to_str().expect("input path is UTF-8"),
         ])
         .output()
@@ -880,7 +880,7 @@ fn malformed_recovery_does_not_overwrite_a_symlinked_input_alias() {
             input.to_str().expect("input path is UTF-8"),
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .output()
@@ -912,7 +912,7 @@ fn malformed_recovery_does_not_overwrite_a_hardlinked_input_alias() {
             input.to_str().expect("input path is UTF-8"),
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .output()
@@ -945,7 +945,7 @@ fn huge_finite_request_timeout_remains_a_valid_success() {
             "run",
             "--input",
             input.to_str().unwrap(),
-            "--output",
+            "--result-file",
             output.to_str().unwrap(),
         ])
         .output()
@@ -971,7 +971,7 @@ fn run_deadline_shortens_the_request_and_writes_a_typed_deadline_failure() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
             "--deadline-ms",
             "0.000001",
@@ -1005,7 +1005,7 @@ fn deadline_cannot_lengthen_the_request_timeout() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
             "--deadline-ms",
             "1000",
@@ -1037,7 +1037,7 @@ fn nonpositive_deadline_is_rejected_as_malformed_input() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
             "--deadline-ms",
             "0",
@@ -1071,7 +1071,7 @@ fn output_write_failure_does_not_leave_a_temporary_outcome_artifact() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .output()
@@ -1121,7 +1121,7 @@ fn output_write_failure_uses_the_write_failure_exit() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .output()
@@ -1155,7 +1155,7 @@ fn event_write_failure_uses_the_write_failure_exit() {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
             "--events",
             events.to_str().expect("events path is UTF-8"),
@@ -1265,7 +1265,7 @@ fn low_file_limits_do_not_accumulate_staging_jobs() {
                     "run",
                     "--input",
                     input.to_str().expect("input path is UTF-8"),
-                    "--output",
+                    "--result-file",
                     output.to_str().expect("output path is UTF-8"),
                 ])
                 .stdout(std::process::Stdio::null())
@@ -1326,7 +1326,7 @@ fn assert_cooperative_signal(signal: &str, request: Vec<u8>) {
             "run",
             "--input",
             input.to_str().expect("input path is UTF-8"),
-            "--output",
+            "--result-file",
             output.to_str().expect("output path is UTF-8"),
         ])
         .stdout(Stdio::null())

@@ -28,7 +28,7 @@ enum Command {
 struct RunArguments {
     #[arg(long)]
     input: PathBuf,
-    #[arg(long)]
+    #[arg(long = "result-file")]
     output: PathBuf,
     #[arg(long)]
     events: Option<PathBuf>,
@@ -217,7 +217,7 @@ fn recover_artifact_paths_from(arguments: &[std::ffi::OsString]) -> RecoveredArt
         };
         let (flag, value, consumed) = if let Some((flag, value)) = argument.split_once('=') {
             (flag, Some(PathBuf::from(value)), 1)
-        } else if matches!(argument, "--input" | "--output" | "--events") {
+        } else if matches!(argument, "--input" | "--result-file" | "--events") {
             (
                 argument,
                 arguments.get(index + 1).cloned().map(PathBuf::from),
@@ -230,7 +230,7 @@ fn recover_artifact_paths_from(arguments: &[std::ffi::OsString]) -> RecoveredArt
         if let Some(value) = value {
             match flag {
                 "--input" => paths.inputs.push(value),
-                "--output" => paths.outputs.push(value),
+                "--result-file" => paths.outputs.push(value),
                 "--events" => paths.events.push(value),
                 _ => {}
             }
@@ -251,7 +251,7 @@ fn recover_run_position(arguments: &[std::ffi::OsString]) -> Option<usize> {
                 let argument = arguments[index].to_string_lossy();
                 if matches!(
                     argument.as_ref(),
-                    "--input" | "--output" | "--events" | "--deadline-ms"
+                    "--input" | "--result-file" | "--events" | "--deadline-ms"
                 ) {
                     index += 2;
                     continue;
@@ -333,7 +333,7 @@ mod tests {
             OsString::from("run"),
             OsString::from("--input"),
             OsString::from("request.json"),
-            OsString::from("--output"),
+            OsString::from("--result-file"),
             OsString::from("result.json"),
             OsString::from("--deadline-ms"),
         ];
