@@ -5,6 +5,7 @@ export const QUALITY_GOLDEN_VERSION = 1
 
 const CONTINUOUS_REGRESSION_LIMIT = 0.005
 const CONTINUOUS_IMPROVEMENT_THRESHOLD = 0.0025
+const CONTINUOUS_NOISE_TOLERANCE = 1e-12
 const COUNT_REGRESSION_LIMIT = 1
 
 export const QUALITY_METRICS = Object.freeze([
@@ -179,8 +180,13 @@ function exactDifferences(golden, candidate) {
     for (const field of ['placedCount', 'unplacedCount', 'layoutFingerprint', 'requestFingerprint']) {
       if (before[field] !== after[field]) differences.push(`${rowId}.${field}: ${before[field]} -> ${after[field]}`)
     }
-    for (const { name } of QUALITY_METRICS) {
-      if (before.metrics[name] !== after.metrics[name]) {
+    for (const { kind, name } of QUALITY_METRICS) {
+      const beforeValue = before.metrics[name]
+      const afterValue = after.metrics[name]
+      const equal = kind === 'continuous'
+        ? Math.abs(beforeValue - afterValue) <= CONTINUOUS_NOISE_TOLERANCE * Math.max(1, Math.abs(beforeValue), Math.abs(afterValue))
+        : beforeValue === afterValue
+      if (!equal) {
         differences.push(`${rowId}.${name}: ${before.metrics[name]} -> ${after.metrics[name]}`)
       }
     }

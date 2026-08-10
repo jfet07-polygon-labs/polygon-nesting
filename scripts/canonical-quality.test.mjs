@@ -38,6 +38,18 @@ test('exact quality golden accepts the unchanged matrix and rejects silent layou
   )
 })
 
+test('exact quality golden ignores machine-scale float noise but rejects meaningful metric drift', () => {
+  const accepted = golden()
+  accepted.rows.fixture.metrics.freeMaterialSliverMetric = 11301451.399040373
+  const noisy = structuredClone(accepted)
+  noisy.rows.fixture.metrics.freeMaterialSliverMetric = 11301451.399040371
+  assert.doesNotThrow(() => assertQualityGolden(accepted, noisy))
+
+  const changed = structuredClone(accepted)
+  changed.rows.fixture.metrics.freeMaterialSliverMetric = 11301451.399140373
+  assert.throws(() => assertQualityGolden(accepted, changed), /freeMaterialSliverMetric/)
+})
+
 test('promotion requires a material improvement', () => {
   const accepted = golden()
   const candidate = structuredClone(accepted)
