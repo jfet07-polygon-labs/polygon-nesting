@@ -3380,14 +3380,21 @@ fn periodic_transform_geometry_key(
 }
 
 fn regular_line_polygon_rotation_order(piece: &IrregularPreparedPiece) -> Option<usize> {
-    let vertices: Vec<IrregularPoint> = piece
-        .source
-        .geometry
-        .segments
+    regular_line_polygon_rotation_order_from_segments(&piece.source.geometry.segments)
+}
+
+fn regular_line_polygon_rotation_order_from_segments(
+    segments: &[DxfGeometrySegment],
+) -> Option<usize> {
+    let vertices: Vec<IrregularPoint> = segments
         .iter()
         .map(|segment| match segment {
-            DxfGeometrySegment::Line(line) => Some(IrregularPoint::new(line.x1, line.y1)),
-            DxfGeometrySegment::Arc(_) => None,
+            DxfGeometrySegment::Line(line)
+                if line.bulge.is_none() && line.source_curve.is_none() =>
+            {
+                Some(IrregularPoint::new(line.x1, line.y1))
+            }
+            DxfGeometrySegment::Line(_) | DxfGeometrySegment::Arc(_) => None,
         })
         .collect::<Option<_>>()?;
     if vertices.len() < 3 {
@@ -3732,4 +3739,68 @@ pub fn rank_intrinsic_periodic_cells(
 ) -> Vec<IntrinsicPeriodicCell> {
     cells.sort_by(compare_cells);
     cells
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::{DxfEllipseSource, DxfEllipseSourceKind, DxfLineSegment};
+
+    #[test]
+    fn regular_line_polygon_rejects_bulged_and_curve_preview_segments() {
+        let mut segments = square_line_segments();
+        {
+            let DxfGeometrySegment::Line(first) = &mut segments[0] else {
+                unreachable!();
+            };
+            first.bulge = Some(0.5);
+        }
+        assert_eq!(
+            regular_line_polygon_rotation_order_from_segments(&segments),
+            None
+        );
+
+        {
+            let DxfGeometrySegment::Line(first) = &mut segments[0] else {
+                unreachable!();
+            };
+            first.bulge = None;
+            first.source_curve = Some(DxfEllipseSource {
+                kind: DxfEllipseSourceKind::Ellipse,
+                source_id: "ellipse-1".to_string(),
+                cx: 5.0,
+                cy: 5.0,
+                major_axis_x: 5.0,
+                major_axis_y: 0.0,
+                axis_ratio: 1.0,
+                start_angle: 0.0,
+                end_angle: std::f64::consts::TAU,
+            });
+        }
+        assert_eq!(
+            regular_line_polygon_rotation_order_from_segments(&segments),
+            None
+        );
+    }
+
+    fn square_line_segments() -> Vec<DxfGeometrySegment> {
+        [
+            (0.0, 0.0, 10.0, 0.0),
+            (10.0, 0.0, 10.0, 10.0),
+            (10.0, 10.0, 0.0, 10.0),
+            (0.0, 10.0, 0.0, 0.0),
+        ]
+        .into_iter()
+        .map(|(x1, y1, x2, y2)| {
+            DxfGeometrySegment::Line(DxfLineSegment {
+                x1,
+                y1,
+                x2,
+                y2,
+                bulge: None,
+                source_curve: None,
+            })
+        })
+        .collect()
+    }
 }
