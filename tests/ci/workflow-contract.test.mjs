@@ -171,7 +171,7 @@ function assertReleaseTriggerContract(workflow) {
     '        type: string',
     '  push:',
     '    tags:',
-    '      - v0.1.2',
+    '      - v0.1.3',
     '',
     ''
   ].join('\n'), 'release triggers must remain limited to manual dispatch and the exact release tag')
@@ -507,8 +507,8 @@ test('main CI builds runtime once, release reuses it, and publication consumes o
   assert.match(publish, /registry-url: https:\/\/npm\.pkg\.github\.com/)
   assert.match(publish, /npm publish "\$GITHUB_NPM_TARBALL" --ignore-scripts --registry https:\/\/npm\.pkg\.github\.com/)
   assert.match(publish, /npm publish "\$PUBLIC_NPM_TARBALL" --ignore-scripts --registry https:\/\/registry\.npmjs\.org/)
-  assert.match(publish, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.2" --json --registry https:\/\/npm\.pkg\.github\.com/)
-  assert.match(publish, /npm view "@jfet97\/polygon-nesting@0\.1\.2" --json --registry https:\/\/registry\.npmjs\.org/)
+  assert.match(publish, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.3" --json --registry https:\/\/npm\.pkg\.github\.com/)
+  assert.match(publish, /npm view "@jfet97\/polygon-nesting@0\.1\.3" --json --registry https:\/\/registry\.npmjs\.org/)
   assert.match(publish, /NPM_TOKEN: \$\{\{ secrets\.NPM_TOKEN \}\}/)
   assert.match(publish, /\/\/registry\.npmjs\.org\/:_authToken=\$\{NPM_TOKEN\}/)
   assert.match(publish, /NPM_CONFIG_USERCONFIG="\$RUNNER_TEMP\/npmjs-publish\.npmrc" npm publish/)
@@ -547,7 +547,7 @@ test('workflow contracts reject mutable triggers, target roots, and image refere
     /release triggers/
   )
   assert.throws(
-    () => assertReleaseTriggerContract(release.replace('      - v0.1.2', '      - v0.1.2\n      - v*')),
+    () => assertReleaseTriggerContract(release.replace('      - v0.1.3', '      - v0.1.3\n      - v*')),
     /release triggers/
   )
   assert.throws(

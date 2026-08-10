@@ -105,7 +105,7 @@ function packageReleaseRecord({ destination, outputDirectory, packageRoot, execu
     const manifestPath = join(stagingPackage, 'package.json')
     const manifest = json(manifestPath, 'package manifest')
     equal(manifest.name, PACKAGE_DESTINATIONS[0].name, 'source package name')
-    equal(manifest.version, '0.1.2', 'source package version')
+    equal(manifest.version, '0.1.3', 'source package version')
     equal(manifest.publishConfig?.registry, PACKAGE_DESTINATIONS[0].registry, 'source package registry')
     manifest.name = destination.name
     manifest.publishConfig = { ...manifest.publishConfig, registry: destination.registry }
@@ -119,7 +119,7 @@ function packageReleaseRecord({ destination, outputDirectory, packageRoot, execu
     if (!Array.isArray(records) || records.length !== 1) throw new Error(`npm pack must return exactly one record for ${destination.key}`)
     const record = records[0]
     equal(record.name, destination.name, `${destination.key} npm pack name`)
-    equal(record.version, '0.1.2', `${destination.key} npm pack version`)
+    equal(record.version, '0.1.3', `${destination.key} npm pack version`)
     validatePackageContents(record.files.map(({ path }) => path).sort(), { requireAllTargets: true })
     const packManifestFileName = `npm-pack-manifest-${destination.key}.json`
     writeJson(join(outputDirectory, packManifestFileName), record)
@@ -142,7 +142,7 @@ function packageReleaseRecord({ destination, outputDirectory, packageRoot, execu
 
 export function renderReleaseNotes(release) {
   return [
-    '# Polygon Nesting 0.1.2 Release Candidate',
+    '# Polygon Nesting 0.1.3 Release Candidate',
     '',
     `Source commit: \`${release.sourceCommit}\``,
     '',

@@ -35,7 +35,7 @@ function makePackageFixture(root) {
   }
   writeJson(join(packageRoot, 'package.json'), {
     name: '@jfet07-polygon-labs/polygon-nesting',
-    version: '0.1.2',
+    version: '0.1.3',
     publishConfig: { registry: 'https://npm.pkg.github.com' },
     main: 'npm/index.cjs',
     files: ['npm/index.cjs', 'npm/target.cjs', 'npm/*.node', 'NOTICE', 'LICENSES/**'],
@@ -109,8 +109,8 @@ test('assembles both published native targets and verifies an offline candidate'
   assert.equal(release.nativeArtifacts.length, 2)
   assert.equal('parityAggregate' in release, false)
   assert.deepEqual(release.npmPackages.map(({ name, registry, version }) => ({ name, registry, version })), [
-    { name: '@jfet07-polygon-labs/polygon-nesting', registry: 'https://npm.pkg.github.com', version: '0.1.2' },
-    { name: '@jfet97/polygon-nesting', registry: 'https://registry.npmjs.org', version: '0.1.2' }
+    { name: '@jfet07-polygon-labs/polygon-nesting', registry: 'https://npm.pkg.github.com', version: '0.1.3' },
+    { name: '@jfet97/polygon-nesting', registry: 'https://registry.npmjs.org', version: '0.1.3' }
   ])
   assert.notEqual(release.npmPackages[0].tarball.sha256, release.npmPackages[1].tarball.sha256)
   await verifyReleaseCandidate({ candidateDirectory: fixture.outputDirectory, trustedSourceRoot: fixture.trustedSourceRoot })
@@ -228,7 +228,7 @@ test('offline verification recomputes OCI archive and runtime publication eviden
   const { verifyReleaseCandidate } = await loadModule('verify-release-candidate.mjs')
   const { verifyRuntimePublication } = await loadModule('verify-runtime-publication.mjs')
   const release = await assembleReleaseCandidate(fixture)
-  const labels = { 'org.opencontainers.image.title': 'polygon-nesting', 'org.opencontainers.image.licenses': 'NOASSERTION', 'org.opencontainers.image.source': 'https://github.com/jfet07-polygon-labs/polygon-nesting', 'org.opencontainers.image.version': '0.1.2', 'org.opencontainers.image.revision': release.sourceCommit }
+  const labels = { 'org.opencontainers.image.title': 'polygon-nesting', 'org.opencontainers.image.licenses': 'NOASSERTION', 'org.opencontainers.image.source': 'https://github.com/jfet07-polygon-labs/polygon-nesting', 'org.opencontainers.image.version': '0.1.3', 'org.opencontainers.image.revision': release.sourceCommit }
   const oci = makeOciArchive(fixture.root, labels)
   const evidencePath = join(fixture.root, 'oci-evidence.json')
   const manifestDigestPath = join(fixture.root, 'manifest-digest.txt')

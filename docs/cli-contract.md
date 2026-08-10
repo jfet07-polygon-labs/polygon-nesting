@@ -51,7 +51,7 @@ For nonzero statuses, stderr contains only a stable category message prefixed wi
 `polygon-nesting --info` prints the versioned engine capability record as JSON:
 
 ```json
-{"name":"polygon-nesting","version":"0.1.2"}
+{"name":"polygon-nesting","version":"0.1.3"}
 ```
 
 The exact version is the built crate version. `--info` cannot be combined with `run`.

@@ -22,7 +22,7 @@ case "$host_uid:$host_gid" in
   *[!0-9:]*|:*|*:|*:*:*|0*:*) exit 1 ;;
 esac
 
-test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.version"}}' "$image")" = 0.1.2
+test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.version"}}' "$image")" = 0.1.3
 test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.source"}}' "$image")" = https://github.com/jfet07-polygon-labs/polygon-nesting
 revision=$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image")
 test -n "$revision"
