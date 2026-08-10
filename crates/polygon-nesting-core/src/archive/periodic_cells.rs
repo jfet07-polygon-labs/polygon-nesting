@@ -3390,7 +3390,7 @@ fn regular_line_polygon_rotation_order_from_segments(
         .iter()
         .map(|segment| match segment {
             DxfGeometrySegment::Line(line)
-                if line.bulge.is_none() && line.source_curve.is_none() =>
+                if line.source_curve.is_none() && line.bulge.is_none_or(|bulge| bulge == 0.0) =>
             {
                 Some(IrregularPoint::new(line.x1, line.y1))
             }
@@ -3781,6 +3781,23 @@ mod tests {
             regular_line_polygon_rotation_order_from_segments(&segments),
             None
         );
+    }
+
+    #[test]
+    fn regular_line_polygon_accepts_explicit_zero_bulges() {
+        for bulge in [0.0, -0.0] {
+            let mut segments = square_line_segments();
+            {
+                let DxfGeometrySegment::Line(first) = &mut segments[0] else {
+                    unreachable!();
+                };
+                first.bulge = Some(bulge);
+            }
+            assert_eq!(
+                regular_line_polygon_rotation_order_from_segments(&segments),
+                Some(4)
+            );
+        }
     }
 
     fn square_line_segments() -> Vec<DxfGeometrySegment> {
