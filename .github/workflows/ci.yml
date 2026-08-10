@@ -40,7 +40,7 @@ jobs:
         run: cargo clippy --workspace --all-targets --release --locked -- -D warnings
       - name: Test release workspace
         run: cargo test --workspace --release --locked
-      - name: Run current canonical semantic matrix
+      - name: Run current canonical semantic and quality matrix
         run: |
           cargo build --release --locked --package polygon-nesting-cli --bin polygon-nesting
           cargo build --release --locked --package polygon-nesting-napi --bin parity-desktop-request-adapter
@@ -51,6 +51,7 @@ jobs:
         run: |
           python3 -m unittest discover -s scripts/tests -p 'test_*.py'
           ./scripts/test-cli-image-contract.sh
+          node --test scripts/canonical-quality.test.mjs
           node scripts/release-version.mjs --check
           node scripts/verify-release-candidate.mjs --dry-run
           node --test packages/polygon-nesting/scripts/build-native.test.mjs

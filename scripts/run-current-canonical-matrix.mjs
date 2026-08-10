@@ -4,8 +4,16 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {
+  assertQualityGolden,
+  extractQualityRow,
+  makeQualityGolden,
+  promoteQualityGolden,
+  readQualityGolden
+} from './canonical-quality.mjs'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
+const QUALITY_GOLDEN = join(ROOT, 'tests', 'fixtures', 'canonical-quality-golden.json')
 
 export const CURRENT_CANONICAL_ROW_IDS = Object.freeze([
   'triangle-20-2000x2700-compact', 'triangle-20-2000x2700-short-side', 'triangle-20-600x400-compact', 'triangle-20-600x400-short-side', 'triangle-20-300x300-compact', 'triangle-20-300x300-short-side',
@@ -41,8 +49,9 @@ function fixturePath(rowId) {
   return join(ROOT, 'tests', 'fixtures', family, rowId.slice(family.length + 1), 'request.json')
 }
 
-export function runCurrentCanonicalMatrix({ adapter, cli }) {
+export function runCurrentCanonicalMatrix({ adapter, cli, updateGolden = false }) {
   const directory = mkdtempSync(join(tmpdir(), 'polygon-current-matrix-'))
+  const qualityRows = {}
   try {
     for (const [ordinal, rowId] of CURRENT_CANONICAL_ROW_IDS.entries()) {
       const desktopRequest = JSON.parse(readFileSync(fixturePath(rowId), 'utf8'))
@@ -62,7 +71,17 @@ export function runCurrentCanonicalMatrix({ adapter, cli }) {
       if (frames.length === 0 || frames.some((frame, index) => frame.ordinal !== index)) {
         fail(`CLI for ${rowId} did not produce ordered semantic events`)
       }
-      process.stdout.write(`${rowId}: ok\n`)
+      qualityRows[rowId] = extractQualityRow(rowId, outcome.outcome.result)
+      process.stdout.write(`${rowId}: ${qualityRows[rowId].placedCount} placed, ${qualityRows[rowId].unplacedCount} unplaced\n`)
+    }
+    const accepted = readQualityGolden(QUALITY_GOLDEN)
+    const candidate = makeQualityGolden(qualityRows)
+    if (updateGolden) {
+      const evaluation = promoteQualityGolden(QUALITY_GOLDEN, accepted, candidate)
+      process.stdout.write(`golden promoted with ${evaluation.improvements.length} improvements and ${evaluation.slightRegressions.length} slight regressions\n`)
+    } else {
+      assertQualityGolden(accepted, candidate)
+      process.stdout.write('canonical quality golden: ok\n')
     }
   } finally {
     rmSync(directory, { force: true, recursive: true })
@@ -71,7 +90,11 @@ export function runCurrentCanonicalMatrix({ adapter, cli }) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
-    runCurrentCanonicalMatrix({ adapter: argument('--adapter'), cli: argument('--cli') })
+    runCurrentCanonicalMatrix({
+      adapter: argument('--adapter'),
+      cli: argument('--cli'),
+      updateGolden: process.argv.includes('--update-golden')
+    })
   } catch (error) {
     console.error(`[run-current-canonical-matrix] ${error.message}`)
     process.exitCode = 1
