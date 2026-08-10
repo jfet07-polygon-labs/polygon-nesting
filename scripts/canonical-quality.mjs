@@ -5,8 +5,11 @@ export const QUALITY_GOLDEN_VERSION = 1
 
 const CONTINUOUS_REGRESSION_LIMIT = 0.005
 const CONTINUOUS_IMPROVEMENT_THRESHOLD = 0.0025
-const CONTINUOUS_NOISE_TOLERANCE = 1e-12
 const COUNT_REGRESSION_LIMIT = 1
+const MAX_CONTINUOUS_ULP_DRIFT = 1n
+
+const floatBitsBuffer = new ArrayBuffer(8)
+const floatBitsView = new DataView(floatBitsBuffer)
 
 export const QUALITY_METRICS = Object.freeze([
   { name: 'collisionBoundsAreaMm2', direction: 'min', kind: 'continuous' },
@@ -43,6 +46,17 @@ function normalizedValue(value) {
 
 function compareText(left, right) {
   return left < right ? -1 : left > right ? 1 : 0
+}
+
+function continuousValuesEqual(left, right) {
+  if (left === right) return true
+  if (left < 0 || right < 0) return false
+  floatBitsView.setFloat64(0, left)
+  const leftBits = floatBitsView.getBigUint64(0)
+  floatBitsView.setFloat64(0, right)
+  const rightBits = floatBitsView.getBigUint64(0)
+  const distance = leftBits >= rightBits ? leftBits - rightBits : rightBits - leftBits
+  return distance <= MAX_CONTINUOUS_ULP_DRIFT
 }
 
 export function layoutFingerprint(result) {
@@ -184,7 +198,7 @@ function exactDifferences(golden, candidate) {
       const beforeValue = before.metrics[name]
       const afterValue = after.metrics[name]
       const equal = kind === 'continuous'
-        ? Math.abs(beforeValue - afterValue) <= CONTINUOUS_NOISE_TOLERANCE * Math.max(1, Math.abs(beforeValue), Math.abs(afterValue))
+        ? continuousValuesEqual(beforeValue, afterValue)
         : beforeValue === afterValue
       if (!equal) {
         differences.push(`${rowId}.${name}: ${before.metrics[name]} -> ${after.metrics[name]}`)
