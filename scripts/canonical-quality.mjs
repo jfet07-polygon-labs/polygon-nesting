@@ -71,18 +71,54 @@ export function layoutFingerprint(result) {
   return createHash('sha256').update(JSON.stringify(identity)).digest('hex')
 }
 
-export function extractQualityRow(rowId, result) {
+export function requestFingerprint(requestText) {
+  return createHash('sha256').update(requestText).digest('hex')
+}
+
+function sortedUniqueIds(ids, label) {
+  if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string')) {
+    throw new Error(`${label} must be an array of string IDs`)
+  }
+  const sorted = [...ids].sort(compareText)
+  if (new Set(sorted).size !== sorted.length) throw new Error(`${label} contains duplicate IDs`)
+  return sorted
+}
+
+export function extractQualityRow(rowId, result, { expectedPieceIds, requestFingerprint: fixtureFingerprint }) {
   const score = result.score
   if (score === null || typeof score !== 'object') throw new Error(`${rowId} has no layout score`)
+  const expected = sortedUniqueIds(expectedPieceIds, `${rowId}.expectedPieceIds`)
+  const placed = sortedUniqueIds(
+    result.placedCollisionGeometries.map((entry) => entry.placement?.pieceId),
+    `${rowId}.placedPieceIds`
+  )
+  const unplaced = sortedUniqueIds(result.unplacedPieceIds, `${rowId}.unplacedPieceIds`)
+  const scoreUnplaced = sortedUniqueIds(score.unplacedSourcePieceIds, `${rowId}.score.unplacedSourcePieceIds`)
+  const portfolioUnplaced = sortedUniqueIds(
+    result.portfolio?.unplacedPieceIds,
+    `${rowId}.portfolio.unplacedPieceIds`
+  )
+  if (JSON.stringify(unplaced) !== JSON.stringify(scoreUnplaced) ||
+    JSON.stringify(unplaced) !== JSON.stringify(portfolioUnplaced)) {
+    throw new Error(`${rowId} reports inconsistent unplaced piece IDs`)
+  }
+  if (placed.some((id) => unplaced.includes(id)) ||
+    JSON.stringify([...placed, ...unplaced].sort(compareText)) !== JSON.stringify(expected)) {
+    throw new Error(`${rowId} placed/unplaced IDs do not partition the request pieces`)
+  }
   const metrics = Object.fromEntries(QUALITY_METRICS.map(({ name }) => [
     name,
     finiteNumber(score[name], `${rowId}.${name}`)
   ]))
-  const unplacedCount = finiteNumber(score.unplacedCount, `${rowId}.unplacedCount`)
+  const scoreUnplacedCount = finiteNumber(score.unplacedCount, `${rowId}.score.unplacedCount`)
+  if (!Number.isInteger(scoreUnplacedCount) || scoreUnplacedCount !== unplaced.length) {
+    throw new Error(`${rowId}.score.unplacedCount does not match the unplaced IDs`)
+  }
   return {
-    placedCount: result.placedCollisionGeometries.length,
-    unplacedCount,
+    placedCount: placed.length,
+    unplacedCount: unplaced.length,
     layoutFingerprint: layoutFingerprint(result),
+    requestFingerprint: fixtureFingerprint,
     metrics
   }
 }
@@ -102,6 +138,9 @@ function validateQualityGolden(golden, label) {
     }
     if (typeof row.layoutFingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(row.layoutFingerprint)) {
       throw new Error(`${label}: ${rowId} has an invalid layout fingerprint`)
+    }
+    if (typeof row.requestFingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(row.requestFingerprint)) {
+      throw new Error(`${label}: ${rowId} has an invalid request fingerprint`)
     }
     for (const { name } of QUALITY_METRICS) finiteNumber(row.metrics?.[name], `${label}: ${rowId}.${name}`)
   }
@@ -137,7 +176,7 @@ function exactDifferences(golden, candidate) {
       differences.push(`${rowId}: row ${before === undefined ? 'added' : 'removed'}`)
       continue
     }
-    for (const field of ['placedCount', 'unplacedCount', 'layoutFingerprint']) {
+    for (const field of ['placedCount', 'unplacedCount', 'layoutFingerprint', 'requestFingerprint']) {
       if (before[field] !== after[field]) differences.push(`${rowId}.${field}: ${before[field]} -> ${after[field]}`)
     }
     for (const { name } of QUALITY_METRICS) {
@@ -169,6 +208,7 @@ export function evaluateQualityPromotion(golden, candidate) {
   const errors = []
   const improvements = []
   const slightRegressions = []
+  let tradeoffBalance = 0
   const goldenRows = Object.keys(golden.rows).sort()
   const candidateRows = Object.keys(candidate.rows).sort()
   if (JSON.stringify(goldenRows) !== JSON.stringify(candidateRows)) {
@@ -179,10 +219,17 @@ export function evaluateQualityPromotion(golden, candidate) {
   for (const rowId of goldenRows) {
     const before = golden.rows[rowId]
     const after = candidate.rows[rowId]
+    if (after.requestFingerprint !== before.requestFingerprint) {
+      errors.push(`${rowId}: canonical request fixture changed`)
+    }
     if (after.unplacedCount > before.unplacedCount || after.placedCount < before.placedCount) {
       errors.push(`${rowId}: placement count regressed (${before.placedCount}/${before.unplacedCount} -> ${after.placedCount}/${after.unplacedCount})`)
     } else if (after.unplacedCount < before.unplacedCount || after.placedCount > before.placedCount) {
       improvements.push(`${rowId}: placement count improved`)
+      tradeoffBalance += Math.max(
+        before.unplacedCount - after.unplacedCount,
+        after.placedCount - before.placedCount
+      )
     }
 
     for (const metric of QUALITY_METRICS) {
@@ -194,6 +241,9 @@ export function evaluateQualityPromotion(golden, candidate) {
         const material = metric.kind === 'count'
           ? improvement >= 1
           : relativeChangeMagnitude(beforeValue, improvement) >= CONTINUOUS_IMPROVEMENT_THRESHOLD
+        tradeoffBalance += metric.kind === 'count'
+          ? improvement
+          : beforeValue === 0 ? 1 : improvement / Math.abs(beforeValue) / CONTINUOUS_IMPROVEMENT_THRESHOLD
         if (material) improvements.push(`${rowId}.${metric.name}: ${beforeValue} -> ${afterValue}`)
         continue
       }
@@ -203,13 +253,17 @@ export function evaluateQualityPromotion(golden, candidate) {
         ? regression <= COUNT_REGRESSION_LIMIT
         : relativeChangeMagnitude(beforeValue, regression) <= CONTINUOUS_REGRESSION_LIMIT
       const message = `${rowId}.${metric.name}: ${beforeValue} -> ${afterValue}`
+      tradeoffBalance -= metric.kind === 'count'
+        ? regression
+        : beforeValue === 0 ? Number.POSITIVE_INFINITY : regression / Math.abs(beforeValue) / CONTINUOUS_IMPROVEMENT_THRESHOLD
       if (withinLimit) slightRegressions.push(message)
       else errors.push(`${message} exceeds the slight-regression limit`)
     }
   }
 
   if (improvements.length === 0) errors.push('golden promotion requires at least one material quality improvement')
-  return { accepted: errors.length === 0, errors, improvements, slightRegressions }
+  if (!(tradeoffBalance > 0)) errors.push('aggregate normalized regressions outweigh the measured improvements')
+  return { accepted: errors.length === 0, errors, improvements, slightRegressions, tradeoffBalance }
 }
 
 export function promoteQualityGolden(path, golden, candidate) {

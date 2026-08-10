@@ -9,7 +9,8 @@ import {
   extractQualityRow,
   makeQualityGolden,
   promoteQualityGolden,
-  readQualityGolden
+  readQualityGolden,
+  requestFingerprint
 } from './canonical-quality.mjs'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
@@ -54,7 +55,9 @@ export function runCurrentCanonicalMatrix({ adapter, cli, updateGolden = false }
   const qualityRows = {}
   try {
     for (const [ordinal, rowId] of CURRENT_CANONICAL_ROW_IDS.entries()) {
-      const desktopRequest = JSON.parse(readFileSync(fixturePath(rowId), 'utf8'))
+      const fixtureText = readFileSync(fixturePath(rowId), 'utf8')
+      const desktopRequest = JSON.parse(fixtureText)
+      const expectedPieceIds = desktopRequest.pieces.map((piece) => piece.id)
       desktopRequest.options.diagnosticTraceMode = 'full'
       const adapted = run(adapter, [], { input: `${JSON.stringify(desktopRequest)}\n` }, `adapter for ${rowId}`)
       if (adapted.stderr) fail(`adapter for ${rowId} wrote stderr: ${adapted.stderr}`)
@@ -71,7 +74,10 @@ export function runCurrentCanonicalMatrix({ adapter, cli, updateGolden = false }
       if (frames.length === 0 || frames.some((frame, index) => frame.ordinal !== index)) {
         fail(`CLI for ${rowId} did not produce ordered semantic events`)
       }
-      qualityRows[rowId] = extractQualityRow(rowId, outcome.outcome.result)
+      qualityRows[rowId] = extractQualityRow(rowId, outcome.outcome.result, {
+        expectedPieceIds,
+        requestFingerprint: requestFingerprint(fixtureText)
+      })
       process.stdout.write(`${rowId}: ${qualityRows[rowId].placedCount} placed, ${qualityRows[rowId].unplacedCount} unplaced\n`)
     }
     const accepted = readQualityGolden(QUALITY_GOLDEN)

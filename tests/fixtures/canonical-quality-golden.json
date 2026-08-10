@@ -5,6 +5,7 @@
       "placedCount": 20,
       "unplacedCount": 0,
       "layoutFingerprint": "bf02ccac6dcf0228caca5c42788f8c420525a05f28a94360ecee23df9a24a304",
+      "requestFingerprint": "811595741286ced9fda7a97fd7c6f6c9e0bf7ba24aef186f97fe4f40f5b923d4",
       "metrics": {
         "collisionBoundsAreaMm2": 74428.143126,
         "collisionBoundsSpanMm": 640.505,
@@ -26,6 +27,7 @@
       "placedCount": 20,
       "unplacedCount": 0,
       "layoutFingerprint": "e18070ac7a86dc6e2b376c04da65a0a1efdcd6dd537850edf9dd42658200a10f",
+      "requestFingerprint": "db4c1211145b36c08e1cd0e989dcc9c28d843bc74a502e22077b9d63d040a5b7",
       "metrics": {
         "collisionBoundsAreaMm2": 133623.888,
         "collisionBoundsSpanMm": 1841.435,
@@ -47,6 +49,7 @@
       "placedCount": 20,
       "unplacedCount": 0,
       "layoutFingerprint": "216e7e93da91390717d43a8034b85d0904a6a9aa8fc791e537ef7497d4d11779",
+      "requestFingerprint": "bb9f7f1bfe4b04aeee58bccb3d7d1e43adc418968a015b47a42a9b63f25c930b",
       "metrics": {
         "collisionBoundsAreaMm2": 74428.143126,
         "collisionBoundsSpanMm": 640.505,
@@ -68,6 +71,7 @@
       "placedCount": 20,
       "unplacedCount": 0,
       "layoutFingerprint": "07a1f10fa36272eae3e122c7fd46c0a6d2ba8adf36dd95bb204a2d3314ef297e",
+      "requestFingerprint": "d96ff7a844d001ac58d63dd01240ba2fd4823475ea6ce653ad8f737815622711",
       "metrics": {
         "collisionBoundsAreaMm2": 90196.748722,
         "collisionBoundsSpanMm": 624.323,
@@ -89,6 +93,7 @@
       "placedCount": 17,
       "unplacedCount": 3,
       "layoutFingerprint": "a1e05cb9b7e6c09f74ffc6f70c7c3e116a0b383f1df014ac48f0f6fc003675fa",
+      "requestFingerprint": "394b9fdbb87445492362767c6a74a47a87c803c552e08dffb3deb1c708a43ac1",
       "metrics": {
         "collisionBoundsAreaMm2": 78811.504488,
         "collisionBoundsSpanMm": 562.331,
@@ -110,6 +115,7 @@
       "placedCount": 17,
       "unplacedCount": 3,
       "layoutFingerprint": "58414977ea45814fd08c6ae653cef85e5b7ecaf9336b08111ca223414bac9363",
+      "requestFingerprint": "a8b1c6098305c0b20cac334e8bfc6dff328f0d00852fa20aa5967dfaefbf00e2",
       "metrics": {
         "collisionBoundsAreaMm2": 72567.6,
         "collisionBoundsSpanMm": 541.892,
@@ -131,6 +137,7 @@
       "placedCount": 61,
       "unplacedCount": 0,
       "layoutFingerprint": "0726233be2fc170b3b34ddfa1f334d6092c6ab5080a4a6ee729a33e3854fdb3f",
+      "requestFingerprint": "5234be1fd820d3d47c28ff7d2306e7df0f5d776798b76db19638cc15bf4eadde",
       "metrics": {
         "collisionBoundsAreaMm2": 391605.850174,
         "collisionBoundsSpanMm": 1251.589,
@@ -152,6 +159,7 @@
       "placedCount": 61,
       "unplacedCount": 0,
       "layoutFingerprint": "d21a18642e438717765d29f8148b8f0bf2e0aabd912d62ca5bac6b9cfb4345f2",
+      "requestFingerprint": "fbe5e0b68e4e43a81986fea86d9d12089f5436e344951e6b22033c7c78abf254",
       "metrics": {
         "collisionBoundsAreaMm2": 431858,
         "collisionBoundsSpanMm": 2215.929,
@@ -173,6 +181,7 @@
       "placedCount": 25,
       "unplacedCount": 36,
       "layoutFingerprint": "59a588017a3dc6483d4f434db9350dc5b3ddf0729ac5c1051bc0333591c253b2",
+      "requestFingerprint": "03699305e3189cfbaee01559c2f5d4e470ba7831372a46dee65717251ffd3499",
       "metrics": {
         "collisionBoundsAreaMm2": 239484.9666,
         "collisionBoundsSpanMm": 999.062,
@@ -194,6 +203,7 @@
       "placedCount": 25,
       "unplacedCount": 36,
       "layoutFingerprint": "a6a672b55d532abe5d78cacd745361c0fdbee4100657a082575e6a049ef9e2f3",
+      "requestFingerprint": "2981cdc5e9fe32449692914ddb85dd6814a03176ac376f008de7c3701dc2d039",
       "metrics": {
         "collisionBoundsAreaMm2": 238433.6,
         "collisionBoundsSpanMm": 996.084,
@@ -215,6 +225,7 @@
       "placedCount": 6,
       "unplacedCount": 55,
       "layoutFingerprint": "9d8ff4993fee17146422bf3d79602e90ea611eb12f073cf808a1d811f0b91a84",
+      "requestFingerprint": "9507921466dde9a7535022c3419e2ba46c26843b9dfb337ea19263fe45e36ca4",
       "metrics": {
         "collisionBoundsAreaMm2": 89504.369008,
         "collisionBoundsSpanMm": 598.346,
@@ -236,6 +247,7 @@
       "placedCount": 6,
       "unplacedCount": 55,
       "layoutFingerprint": "cc9efd46185634a26696f0b10d6380ee73f8b41da34c0eb8616d92bdb2d65446",
+      "requestFingerprint": "093edc77ae488bf07811117d44f55630c298d32e16f320e8ecf646573e04332d",
       "metrics": {
         "collisionBoundsAreaMm2": 89002.386896,
         "collisionBoundsSpanMm": 596.67,
@@ -257,6 +269,7 @@
       "placedCount": 17,
       "unplacedCount": 0,
       "layoutFingerprint": "04462b1306f3d114729467517096699159542df59818e22d5043f170d1efc104",
+      "requestFingerprint": "e8748f553554a1eddaebb75323d047dec24596b386c0030791032bc48af3d9d2",
       "metrics": {
         "collisionBoundsAreaMm2": 281233.148068,
         "collisionBoundsSpanMm": 1060.639,
@@ -278,6 +291,7 @@
       "placedCount": 17,
       "unplacedCount": 0,
       "layoutFingerprint": "02902ba5a520e447dd5900335e6a1eeb2fcea4834c91bbdf6f83797876ef06d4",
+      "requestFingerprint": "70487ea9307300819b1c98abfb4b23ab3c545b89c8175b051f295e6aef7fb17e",
       "metrics": {
         "collisionBoundsAreaMm2": 401477.254496,
         "collisionBoundsSpanMm": 2196.81,
@@ -299,6 +313,7 @@
       "placedCount": 14,
       "unplacedCount": 3,
       "layoutFingerprint": "3754a5672bffbcb50e675572be44065c1fd11558480de6261386410a3a503a30",
+      "requestFingerprint": "337f5c986d395521a20aa7c43dbfc6765b4d34f523eccbd919569983c2489f1b",
       "metrics": {
         "collisionBoundsAreaMm2": 232178.021694,
         "collisionBoundsSpanMm": 984.249,
@@ -320,6 +335,7 @@
       "placedCount": 14,
       "unplacedCount": 3,
       "layoutFingerprint": "8d2922ea4a30880e86b4db68810c8853d615f0bd9bfb9b1bd6f36f75aaa8e4b7",
+      "requestFingerprint": "3b45be11a06646a8a3c16f6446a62f2cdcbef3da65b1fefff8fab5dd323ffe07",
       "metrics": {
         "collisionBoundsAreaMm2": 238574.8,
         "collisionBoundsSpanMm": 996.437,
@@ -341,6 +357,7 @@
       "placedCount": 5,
       "unplacedCount": 12,
       "layoutFingerprint": "0ecfe04deedbeaa202fb94b97d991c3ad573b53b3a6a934007118c60e8e5f854",
+      "requestFingerprint": "72beb505e602c9482b47f9af1eb0b301fa7b1c34bd73a01bf06eea826f7b9f01",
       "metrics": {
         "collisionBoundsAreaMm2": 87791.951625,
         "collisionBoundsSpanMm": 592.63,
@@ -362,6 +379,7 @@
       "placedCount": 5,
       "unplacedCount": 12,
       "layoutFingerprint": "8810c32e96184586be80040a064301d0db77f4965146910b6321455873cf8ce5",
+      "requestFingerprint": "d04f248a28270f3148f88598453a96b55b17400b9e9963479ffc72a8ee8fcebe",
       "metrics": {
         "collisionBoundsAreaMm2": 88696.2,
         "collisionBoundsSpanMm": 595.654,
