@@ -33,6 +33,8 @@
 //! is reused for `RectWith`'s base fields rather than re-declaring a third
 //! copy of that shape.
 
+use std::cmp::Ordering;
+
 use crate::domain::{PieceId, Rect};
 
 /// TS: `src/shared/domain/geometry.ts:36-49` `class RectWith`. A rectangle
@@ -119,16 +121,82 @@ pub fn sort_pieces_for_nesting(pieces: &[PreparedPiece]) -> Vec<PreparedPiece> {
     sorted
 }
 
-fn descending(a: f64, b: f64) -> std::cmp::Ordering {
+fn descending(a: f64, b: f64) -> Ordering {
     // Exact-integer inputs (see this module's top doc): plain `<`/`>` is
     // sufficient, then flipped for descending order.
     if a < b {
-        std::cmp::Ordering::Greater
+        Ordering::Greater
     } else if a > b {
-        std::cmp::Ordering::Less
+        Ordering::Less
     } else {
-        std::cmp::Ordering::Equal
+        Ordering::Equal
     }
+}
+
+/// Canonical public-request order used before the stable priority sort.
+pub(crate) fn compare_canonical_request_ties(
+    first: &PreparedPiece,
+    second: &PreparedPiece,
+) -> Ordering {
+    descending(first.real_bounds.width, second.real_bounds.width)
+        .then_with(|| descending(first.real_bounds.height, second.real_bounds.height))
+        .then_with(|| compare_natural_piece_ids(first.id.as_str(), second.id.as_str()))
+}
+
+fn compare_natural_piece_ids(first: &str, second: &str) -> Ordering {
+    let first_bytes = first.as_bytes();
+    let second_bytes = second.as_bytes();
+    let mut first_index = 0;
+    let mut second_index = 0;
+
+    while first_index < first_bytes.len() && second_index < second_bytes.len() {
+        if first_bytes[first_index].is_ascii_digit() && second_bytes[second_index].is_ascii_digit()
+        {
+            let first_start = first_index;
+            let second_start = second_index;
+            while first_index < first_bytes.len() && first_bytes[first_index].is_ascii_digit() {
+                first_index += 1;
+            }
+            while second_index < second_bytes.len() && second_bytes[second_index].is_ascii_digit() {
+                second_index += 1;
+            }
+
+            let mut first_significant = first_start;
+            let mut second_significant = second_start;
+            while first_significant + 1 < first_index && first_bytes[first_significant] == b'0' {
+                first_significant += 1;
+            }
+            while second_significant + 1 < second_index && second_bytes[second_significant] == b'0'
+            {
+                second_significant += 1;
+            }
+
+            let first_number = &first_bytes[first_significant..first_index];
+            let second_number = &second_bytes[second_significant..second_index];
+            let number_order = first_number
+                .len()
+                .cmp(&second_number.len())
+                .then_with(|| first_number.cmp(second_number));
+            if number_order != Ordering::Equal {
+                return number_order;
+            }
+
+            let run_length_order = (first_index - first_start).cmp(&(second_index - second_start));
+            if run_length_order != Ordering::Equal {
+                return run_length_order;
+            }
+            continue;
+        }
+
+        let byte_order = first_bytes[first_index].cmp(&second_bytes[second_index]);
+        if byte_order != Ordering::Equal {
+            return byte_order;
+        }
+        first_index += 1;
+        second_index += 1;
+    }
+
+    first_bytes.len().cmp(&second_bytes.len())
 }
 
 #[cfg(test)]
@@ -179,6 +247,32 @@ mod tests {
         let sorted = sort_pieces_for_nesting(&pieces);
         let ids: Vec<&str> = sorted.iter().map(|p| p.id.as_str()).collect();
         assert_eq!(ids, vec!["a", "b", "c"]);
+    }
+
+    #[test]
+    fn natural_piece_id_order_handles_numeric_runs_without_integer_parsing() {
+        let mut ids = ["piece-10", "piece-02", "piece-2", "piece-1"];
+        ids.sort_by(|first, second| compare_natural_piece_ids(first, second));
+        assert_eq!(ids, ["piece-1", "piece-2", "piece-02", "piece-10"]);
+    }
+
+    #[test]
+    fn canonical_request_ties_prefer_width_then_height_then_natural_id() {
+        let mut wide_10 = piece("piece-10", 100.0, 5000.0, 60.0);
+        wide_10.real_bounds.width = 100.0;
+        wide_10.real_bounds.height = 40.0;
+        let mut tall_1 = piece("piece-1", 100.0, 5000.0, 60.0);
+        tall_1.real_bounds.width = 40.0;
+        tall_1.real_bounds.height = 100.0;
+        let mut wide_2 = piece("piece-2", 100.0, 5000.0, 60.0);
+        wide_2.real_bounds.width = 100.0;
+        wide_2.real_bounds.height = 40.0;
+        let mut pieces = [wide_10, tall_1, wide_2];
+
+        pieces.sort_by(compare_canonical_request_ties);
+
+        let ids: Vec<&str> = pieces.iter().map(|piece| piece.id.as_str()).collect();
+        assert_eq!(ids, ["piece-2", "piece-10", "piece-1"]);
     }
 
     #[test]

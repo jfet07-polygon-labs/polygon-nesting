@@ -34,17 +34,24 @@ use crate::result::{
     NestingOptions, NestingRequest,
 };
 use crate::search::layout_scorer::FreeMaterialCache;
-use crate::search::sort_pieces::{CutRowRef, PreparedPiece, RectWith};
+use crate::search::sort_pieces::{
+    compare_canonical_request_ties, CutRowRef, PreparedPiece, RectWith,
+};
 
 fn prepare_nesting_request(request: &EngineRequest) -> NestingRequest {
+    let mut pieces: Vec<PreparedPiece> = request
+        .pieces
+        .iter()
+        .map(prepared_piece_from_engine)
+        .collect();
+    // the downstream priority sort is intentionally stable on equal geometry
+    // metrics, so establish an input-permutation-independent tie order first
+    pieces.sort_by(compare_canonical_request_ties);
+
     NestingRequest {
         sheet: sheet_spec_from_engine(&request.sheet),
         padding: request.settings.padding,
-        pieces: request
-            .pieces
-            .iter()
-            .map(prepared_piece_from_engine)
-            .collect(),
+        pieces,
         source_pieces: request
             .source_pieces
             .iter()

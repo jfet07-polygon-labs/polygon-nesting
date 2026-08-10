@@ -221,6 +221,51 @@ fn n_api_full_and_off_requests_have_equivalent_results() {
 }
 
 #[test]
+fn shapes_17_result_is_independent_of_production_upload_order() {
+    const PRODUCTION_ORDER: [&str; 17] = [
+        "shapes-17-15",
+        "shapes-17-14",
+        "shapes-17-13",
+        "shapes-17-12",
+        "shapes-17-11",
+        "shapes-17-10",
+        "shapes-17-9",
+        "shapes-17-8",
+        "shapes-17-7",
+        "shapes-17-6",
+        "shapes-17-5",
+        "shapes-17-4",
+        "shapes-17-3",
+        "shapes-17-2",
+        "shapes-17-1",
+        "shapes-17-17",
+        "shapes-17-16",
+    ];
+    let mut baseline: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/fixtures/shapes-17/2000x2700-compact/request.json"
+    ))
+    .expect("fixture JSON");
+    baseline["options"]["diagnosticTraceMode"] = serde_json::json!("off");
+    let mut permuted = baseline.clone();
+    for field in ["pieces", "sourcePieces"] {
+        permuted[field]
+            .as_array_mut()
+            .expect("request array")
+            .sort_by_key(|piece| {
+                let id = piece["id"].as_str().expect("piece id");
+                PRODUCTION_ORDER
+                    .iter()
+                    .position(|expected| *expected == id)
+                    .expect("production order contains every piece")
+            });
+    }
+
+    let baseline_result = run_desktop_request(&baseline);
+    let permuted_result = run_desktop_request(&permuted);
+    assert_eq!(normalize(baseline_result), normalize(permuted_result));
+}
+
+#[test]
 fn issue_21_interchangeable_arc_circle_desktop_request_completes() {
     assert_issue_21_round_family_completes(
         include_str!("../../../tests/fixtures/issue-21/repro-2circles.json"),
@@ -288,6 +333,10 @@ fn run_small_desktop_request(diagnostic_trace_mode: &str) -> String {
     request["options"]["timeoutMs"] = serde_json::json!(1_000.0);
     request["options"]["historyMode"] = serde_json::json!("off");
     request["options"]["diagnosticTraceMode"] = serde_json::json!(diagnostic_trace_mode);
+    run_desktop_request(&request).to_string()
+}
+
+fn run_desktop_request(request: &serde_json::Value) -> serde_json::Value {
     let prepared = polygon_nesting_napi::compat::decode_desktop_request(&request.to_string())
         .expect("desktop request decodes");
     let control = CancellationControl::new();
@@ -295,7 +344,7 @@ fn run_small_desktop_request(diagnostic_trace_mode: &str) -> String {
     let outcome = Job::new(&prepared.request, &control, &mut sink)
         .run()
         .expect("job completes");
-    complete_engine_outcome(outcome)
+    serde_json::from_str(&complete_engine_outcome(outcome)).expect("result JSON")
 }
 
 #[derive(Default)]
