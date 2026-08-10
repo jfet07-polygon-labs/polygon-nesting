@@ -18,7 +18,7 @@ permissions:
 jobs:
   quality:
     name: Quality checks
-    runs-on: blacksmith-2vcpu-ubuntu-2404
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     # This separately verified digest is contract-equivalent to the root ci target, not claimed byte-identical.
     container: ghcr.io/jfet07-polygon-labs/polygon-nesting-ci@sha256:66a7ca95c13074714135ad840465834e60797ddd45d13d130e0e5c6077b950f3
     steps:
