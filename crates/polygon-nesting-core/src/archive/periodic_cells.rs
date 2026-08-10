@@ -88,7 +88,7 @@
 //! production-reachable behavior.
 
 use std::cmp::Ordering;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use num_bigint::BigInt;
@@ -124,6 +124,7 @@ use crate::nfp_ifp::{
     NfpIfpControlAbortError,
 };
 use crate::search::strict_family::group_intrinsic_collision_families;
+use crate::transforms::generator::effective_transform_angle_deduplication_tolerance_deg;
 use crate::validation::placement::{
     assess_placement, AssessPlacementInput, IrregularGeometryInputError,
 };
@@ -136,6 +137,8 @@ pub const MAXIMUM_NFP_BOUNDARY_VERTEX_BASIS_CANDIDATES: usize = 64;
 pub const MAXIMUM_EDGE_CONTACT_RELATIONS_PER_DERIVATION: usize = 64;
 pub const MAXIMUM_EDGE_CONTACT_BASIS_CANDIDATES_PER_DERIVATION: usize = 64;
 pub const MAXIMUM_EDGE_CONTACT_PAIR_VALIDATION_ATTEMPTS_PER_DERIVATION: usize = 256;
+// half the canonical 0.001 mm grid cell diagonal
+const CANONICAL_COORDINATE_UNCERTAINTY_MM: f64 = 0.000_707_106_781_186_547_6;
 
 // ===========================================================================
 // Error taxonomy.
@@ -1281,6 +1284,26 @@ fn enumerate_intrinsic_periodic_family(
         .map(|member| Arc::new(member.clone()))
         .unwrap_or_else(|| Arc::clone(&representative_arc));
 
+    let rotational_symmetry = periodic_rotational_symmetry(&representative);
+    let symmetry_angle_tolerance_deg = match rotational_symmetry {
+        PeriodicRotationalSymmetry::Discrete { .. } => {
+            effective_transform_angle_deduplication_tolerance_deg(
+                &ctx.settings.geometry,
+                &ctx.settings.optimizer,
+                &representative.collision_geometry.collision_polygon.points,
+            )
+            .map_err(|message| IrregularGeometryInputError {
+                operation: "deriveEffectiveTransformPolicy".to_string(),
+                message,
+            })?
+        }
+        PeriodicRotationalSymmetry::None | PeriodicRotationalSymmetry::Continuous => {
+            ctx.settings
+                .optimizer
+                .transform_angle_deduplication_tolerance_deg
+        }
+    };
+    let mut symmetry_residues: Vec<f64> = Vec::new();
     let mut transformed_by_canonical_key = OrderedMap::<TransformedRepresentative>::new();
     let mut runtime_coverage_complete = true;
     let mut sorted_transforms = representative.transforms.clone();
@@ -1307,11 +1330,10 @@ fn enumerate_intrinsic_periodic_family(
         })?
         .value;
         let key = periodic_transform_geometry_key(
-            &representative,
+            rotational_symmetry,
             &geometry,
-            ctx.settings
-                .optimizer
-                .transform_angle_deduplication_tolerance_deg,
+            symmetry_angle_tolerance_deg,
+            &mut symmetry_residues,
         );
         transformed_by_canonical_key.set_if_absent(
             key,
@@ -1406,6 +1428,7 @@ fn enumerate_intrinsic_periodic_family(
                 DEFAULT_NFP_CONSTRUCTION_ALGORITHM,
             )?;
             let offsets = boundary_candidate_points(&pair_nfp.boundary.points, second);
+            let mut seen_candidate_orbits = HashSet::new();
             for point in offsets {
                 checkpoint(&mut ctx.control)?;
                 if now_ms() - started_at >= options.maximum_runtime_ms {
@@ -1417,6 +1440,17 @@ fn enumerate_intrinsic_periodic_family(
                 let legal = check_sheetless(std::slice::from_ref(&fixed), second, point)?;
                 if !legal || !combined_bounds_nonnegative(&[first, second], &[first_point, point]) {
                     let _ = &candidate;
+                    continue;
+                }
+                if periodic_pair_candidate_orbit_key(
+                    first,
+                    first_point,
+                    second,
+                    point,
+                    rotational_symmetry,
+                )
+                .is_some_and(|key| !seen_candidate_orbits.insert(key))
+                {
                     continue;
                 }
                 let derivation = derive_cells(
@@ -3240,6 +3274,154 @@ fn boundary_candidate_points(
     ordered.iter().map(from_grid_point).collect()
 }
 
+fn periodic_pair_candidate_orbit_key(
+    fixed: &TransformedCollisionGeometry,
+    fixed_point: IrregularPoint,
+    moving: &TransformedCollisionGeometry,
+    moving_point: IrregularPoint,
+    symmetry: PeriodicRotationalSymmetry,
+) -> Option<String> {
+    let PeriodicRotationalSymmetry::Discrete { order, .. } = symmetry else {
+        return None;
+    };
+    let requested_orbit_order = greatest_common_divisor_usize(order, 4);
+    let quarter_turn_orbit_order =
+        exact_grid_quarter_turn_orbit_order(&fixed.polygon.points, requested_orbit_order).min(
+            exact_grid_quarter_turn_orbit_order(&moving.polygon.points, requested_orbit_order),
+        );
+    if quarter_turn_orbit_order <= 1 {
+        return None;
+    }
+    let fixed_local_center = polygon_centroid(&fixed.polygon.points)?;
+    let moving_local_center = polygon_centroid(&moving.polygon.points)?;
+    let fixed_center = IrregularPoint::new(
+        fixed_point.x + fixed_local_center.x,
+        fixed_point.y + fixed_local_center.y,
+    );
+    let moving_center = IrregularPoint::new(
+        moving_point.x + moving_local_center.x,
+        moving_point.y + moving_local_center.y,
+    );
+    periodic_vector_orbit_key(
+        IrregularPoint::new(
+            moving_center.x - fixed_center.x,
+            moving_center.y - fixed_center.y,
+        ),
+        quarter_turn_orbit_order,
+    )
+}
+
+fn greatest_common_divisor_usize(mut first: usize, mut second: usize) -> usize {
+    while second != 0 {
+        let remainder = first % second;
+        first = second;
+        second = remainder;
+    }
+    first
+}
+
+fn exact_grid_quarter_turn_orbit_order(points: &[IrregularPoint], requested_order: usize) -> usize {
+    let Some(base_key) = canonical_grid_polygon_key(points, 0) else {
+        return 1;
+    };
+    if requested_order >= 4 && canonical_grid_polygon_key(points, 1).as_ref() == Some(&base_key) {
+        return 4;
+    }
+    if requested_order >= 2 && canonical_grid_polygon_key(points, 2).as_ref() == Some(&base_key) {
+        return 2;
+    }
+    1
+}
+
+fn canonical_grid_polygon_key(points: &[IrregularPoint], quarter_turns: usize) -> Option<String> {
+    let valid = points
+        .iter()
+        .map(|point| {
+            grid_point(*point).map(|point| match quarter_turns % 4 {
+                0 => point,
+                1 => GridPoint {
+                    x: -point.y,
+                    y: point.x,
+                },
+                2 => GridPoint {
+                    x: -point.x,
+                    y: -point.y,
+                },
+                _ => GridPoint {
+                    x: point.y,
+                    y: -point.x,
+                },
+            })
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let min_x = valid.iter().map(|point| &point.x).min()?.clone();
+    let min_y = valid.iter().map(|point| &point.y).min()?.clone();
+    let shifted = valid
+        .iter()
+        .map(|point| GridPoint {
+            x: &point.x - &min_x,
+            y: &point.y - &min_y,
+        })
+        .collect::<Vec<_>>();
+    Some(canonical_cycle(&shifted))
+}
+
+fn polygon_centroid(points: &[IrregularPoint]) -> Option<IrregularPoint> {
+    if points.len() < 3 {
+        return None;
+    }
+    let mut doubled_area = 0.0;
+    let mut weighted_x = 0.0;
+    let mut weighted_y = 0.0;
+    for index in 0..points.len() {
+        let first = points[index];
+        let second = points[(index + 1) % points.len()];
+        let cross = first.x * second.y - second.x * first.y;
+        doubled_area += cross;
+        weighted_x += (first.x + second.x) * cross;
+        weighted_y += (first.y + second.y) * cross;
+    }
+    if !doubled_area.is_finite()
+        || !weighted_x.is_finite()
+        || !weighted_y.is_finite()
+        || doubled_area == 0.0
+    {
+        return None;
+    }
+    let divisor = 3.0 * doubled_area;
+    Some(IrregularPoint::new(
+        weighted_x / divisor,
+        weighted_y / divisor,
+    ))
+}
+
+fn periodic_vector_orbit_key(vector: IrregularPoint, order: usize) -> Option<String> {
+    let mut best: Option<(f64, f64)> = None;
+    for turn in 0..order {
+        let rotated = match (order, turn) {
+            (2, 0) | (4, 0) => vector,
+            (2, 1) | (4, 2) => IrregularPoint::new(-vector.x, -vector.y),
+            (4, 1) => IrregularPoint::new(-vector.y, vector.x),
+            (4, 3) => IrregularPoint::new(vector.y, -vector.x),
+            _ => {
+                let angle = std::f64::consts::TAU * turn as f64 / order as f64;
+                let cos = libm::cos(angle);
+                let sin = libm::sin(angle);
+                IrregularPoint::new(
+                    vector.x * cos - vector.y * sin,
+                    vector.x * sin + vector.y * cos,
+                )
+            }
+        };
+        let x = to_grid_mm(rotated.x)?;
+        let y = to_grid_mm(rotated.y)?;
+        if best.is_none_or(|(best_x, best_y)| x < best_x || (x == best_x && y < best_y)) {
+            best = Some((x, y));
+        }
+    }
+    best.map(|(x, y)| format!("{}:{}", number_to_js_string(x), number_to_js_string(y)))
+}
+
 /// TS: `combinedBoundsNonnegative` (`CELLS:2080-2092`).
 fn combined_bounds_nonnegative(
     geometries: &[&TransformedCollisionGeometry],
@@ -3347,45 +3529,180 @@ fn check_sheetless(
 // ===========================================================================
 
 /* Periodic cells only depend on a shape's physical orientation. Preserve one
- * representative for transformations related by declared circle or verified
+ * representative for transformations related by verified continuous or
  * regular-polygon symmetry, even when rotated tessellations round differently.
  */
-fn periodic_transform_geometry_key(
-    piece: &IrregularPreparedPiece,
-    geometry: &TransformedCollisionGeometry,
-    angle_tolerance_deg: f64,
-) -> String {
+#[derive(Clone, Copy, Debug)]
+enum PeriodicRotationalSymmetry {
+    None,
+    Continuous,
+    Discrete {
+        order: usize,
+        reference_angle_deg: f64,
+    },
+}
+
+fn periodic_rotational_symmetry(piece: &IrregularPreparedPiece) -> PeriodicRotationalSymmetry {
     if matches!(
         piece.source.geometry.entity_type,
         DxfGeometryEntityType::Circle
-    ) {
-        return "rotational-symmetry:continuous".to_string();
-    }
-    let Some(order) = regular_line_polygon_rotation_order(piece) else {
-        return canonical_transformed_polygon_key(geometry);
-    };
-    let period_deg = 360.0 / order as f64;
-    let nearest_turn = js_math::round(geometry.transform.rotation_deg / period_deg);
-    let residue_deg = geometry.transform.rotation_deg - nearest_turn * period_deg;
-    let tolerance_deg = angle_tolerance_deg.max(1e-6);
-    let normalized_residue_deg = ((residue_deg % period_deg) + period_deg) % period_deg;
-    let quantized_residue = if normalized_residue_deg <= tolerance_deg
-        || period_deg - normalized_residue_deg <= tolerance_deg
+    ) || (piece.source.geometry.closed
+        && full_circle_arc_rotation_symmetry(&piece.source.geometry.segments))
     {
-        0
+        return PeriodicRotationalSymmetry::Continuous;
+    }
+    regular_line_polygon_symmetry_from_segments(&piece.source.geometry.segments)
+        .map(
+            |RegularLinePolygonSymmetry {
+                 order,
+                 reference_angle_deg,
+             }| PeriodicRotationalSymmetry::Discrete {
+                order,
+                reference_angle_deg,
+            },
+        )
+        .unwrap_or(PeriodicRotationalSymmetry::None)
+}
+
+fn periodic_transform_geometry_key(
+    symmetry: PeriodicRotationalSymmetry,
+    geometry: &TransformedCollisionGeometry,
+    angle_tolerance_deg: f64,
+    symmetry_residues: &mut Vec<f64>,
+) -> String {
+    match symmetry {
+        PeriodicRotationalSymmetry::None => canonical_transformed_polygon_key(geometry),
+        PeriodicRotationalSymmetry::Continuous => "rotational-symmetry:continuous".to_string(),
+        PeriodicRotationalSymmetry::Discrete {
+            order,
+            reference_angle_deg,
+            ..
+        } => {
+            let period_deg = 360.0 / order as f64;
+            let transformed_reference_angle_deg = if geometry.transform.mirrored {
+                180.0 - reference_angle_deg + geometry.transform.rotation_deg
+            } else {
+                reference_angle_deg + geometry.transform.rotation_deg
+            };
+            let residue_deg = transformed_reference_angle_deg.rem_euclid(period_deg);
+            let tolerance_deg = angle_tolerance_deg.max(1e-6);
+            let residue_index =
+                periodic_residue_index(symmetry_residues, residue_deg, period_deg, tolerance_deg);
+            format!("rotational-symmetry:{order}:{residue_index}")
+        }
+    }
+}
+
+fn periodic_residue_index(
+    residues: &mut Vec<f64>,
+    residue_deg: f64,
+    period_deg: f64,
+    tolerance_deg: f64,
+) -> usize {
+    match residues.iter().position(|existing| {
+        periodic_residue_distance_deg(*existing, residue_deg, period_deg) <= tolerance_deg
+    }) {
+        Some(index) => index,
+        None => {
+            residues.push(residue_deg);
+            residues.len() - 1
+        }
+    }
+}
+
+fn periodic_residue_distance_deg(first: f64, second: f64, period_deg: f64) -> f64 {
+    let absolute_distance = (first - second).abs();
+    js_math::min(absolute_distance, period_deg - absolute_distance)
+}
+
+fn arc_endpoint_matches_circle(
+    arc: &crate::domain::DxfArcSegment,
+    start: bool,
+    tolerance: f64,
+) -> bool {
+    let (x, y, angle_deg) = if start {
+        (arc.x1, arc.y1, arc.start_angle)
     } else {
-        js_math::round(normalized_residue_deg / tolerance_deg) as i64
+        (arc.x2, arc.y2, arc.end_angle)
     };
-    format!("rotational-symmetry:{order}:{quantized_residue}")
+    let angle_rad = angle_deg * std::f64::consts::PI / 180.0;
+    let expected_x = arc.cx + libm::cos(angle_rad) * arc.radius;
+    let expected_y = arc.cy + libm::sin(angle_rad) * arc.radius;
+    (x - expected_x).abs() <= tolerance && (y - expected_y).abs() <= tolerance
 }
 
-fn regular_line_polygon_rotation_order(piece: &IrregularPreparedPiece) -> Option<usize> {
-    regular_line_polygon_rotation_order_from_segments(&piece.source.geometry.segments)
+fn full_circle_arc_rotation_symmetry(segments: &[DxfGeometrySegment]) -> bool {
+    let Some(DxfGeometrySegment::Arc(first)) = segments.first() else {
+        return false;
+    };
+    if !first.cx.is_finite()
+        || !first.cy.is_finite()
+        || !first.radius.is_finite()
+        || first.radius <= 0.0
+    {
+        return false;
+    }
+    let linear_tolerance = (first.radius * 1e-9).max(1e-9);
+    let angular_tolerance = 1e-7;
+    let mut total_sweep_deg = 0.0;
+    for (index, segment) in segments.iter().enumerate() {
+        let DxfGeometrySegment::Arc(arc) = segment else {
+            return false;
+        };
+        if !arc.cx.is_finite()
+            || !arc.cy.is_finite()
+            || !arc.radius.is_finite()
+            || !arc.start_angle.is_finite()
+            || !arc.end_angle.is_finite()
+            || (arc.cx - first.cx).abs() > linear_tolerance
+            || (arc.cy - first.cy).abs() > linear_tolerance
+            || (arc.radius - first.radius).abs() > linear_tolerance
+            || !arc_endpoint_matches_circle(arc, true, linear_tolerance)
+            || !arc_endpoint_matches_circle(arc, false, linear_tolerance)
+        {
+            return false;
+        }
+        let next = &segments[(index + 1) % segments.len()];
+        let DxfGeometrySegment::Arc(next_arc) = next else {
+            return false;
+        };
+        if (arc.x2 - next_arc.x1).abs() > linear_tolerance
+            || (arc.y2 - next_arc.y1).abs() > linear_tolerance
+        {
+            return false;
+        }
+        let raw_sweep_deg = arc.end_angle - arc.start_angle;
+        let sweep_deg = if raw_sweep_deg > 0.0 {
+            raw_sweep_deg
+        } else {
+            let wrapped_sweep_deg = raw_sweep_deg % 360.0;
+            if wrapped_sweep_deg == 0.0 {
+                360.0
+            } else {
+                wrapped_sweep_deg + 360.0
+            }
+        };
+        total_sweep_deg += sweep_deg;
+    }
+    (total_sweep_deg - 360.0).abs() <= angular_tolerance
 }
 
+#[derive(Clone, Copy, Debug)]
+struct RegularLinePolygonSymmetry {
+    order: usize,
+    reference_angle_deg: f64,
+}
+
+#[cfg(test)]
 fn regular_line_polygon_rotation_order_from_segments(
     segments: &[DxfGeometrySegment],
 ) -> Option<usize> {
+    regular_line_polygon_symmetry_from_segments(segments).map(|symmetry| symmetry.order)
+}
+
+fn regular_line_polygon_symmetry_from_segments(
+    segments: &[DxfGeometrySegment],
+) -> Option<RegularLinePolygonSymmetry> {
     let vertices: Vec<IrregularPoint> = segments
         .iter()
         .map(|segment| match segment {
@@ -3399,6 +3716,15 @@ fn regular_line_polygon_rotation_order_from_segments(
         .collect::<Option<_>>()?;
     if vertices.len() < 3 {
         return None;
+    }
+    for (index, segment) in segments.iter().enumerate() {
+        let DxfGeometrySegment::Line(line) = segment else {
+            return None;
+        };
+        let next = vertices[(index + 1) % vertices.len()];
+        if (line.x2 - next.x).abs() > 0.001 || (line.y2 - next.y).abs() > 0.001 {
+            return None;
+        }
     }
     let count = vertices.len() as f64;
     let center = IrregularPoint::new(
@@ -3416,9 +3742,15 @@ fn regular_line_polygon_rotation_order_from_segments(
     if !radius_squared.is_finite() || radius_squared <= 0.0 {
         return None;
     }
+    let radius = libm::sqrt(radius_squared);
     let first_dot = offsets[0].x * offsets[1].x + offsets[0].y * offsets[1].y;
     let first_cross = offsets[0].x * offsets[1].y - offsets[0].y * offsets[1].x;
-    let tolerance = (radius_squared * 1e-8).max(1e-9);
+    let tolerance = (radius_squared * 1e-8)
+        .max(
+            4.0 * radius * CANONICAL_COORDINATE_UNCERTAINTY_MM
+                + 8.0 * CANONICAL_COORDINATE_UNCERTAINTY_MM * CANONICAL_COORDINATE_UNCERTAINTY_MM,
+        )
+        .max(1e-9);
     if first_cross.abs() <= tolerance {
         return None;
     }
@@ -3438,7 +3770,10 @@ fn regular_line_polygon_rotation_order_from_segments(
             return None;
         }
     }
-    Some(offsets.len())
+    Some(RegularLinePolygonSymmetry {
+        order: offsets.len(),
+        reference_angle_deg: libm::atan2(offsets[0].y, offsets[0].x) * 180.0 / std::f64::consts::PI,
+    })
 }
 
 fn canonical_transformed_polygon_key(geometry: &TransformedCollisionGeometry) -> String {
@@ -3744,7 +4079,7 @@ pub fn rank_intrinsic_periodic_cells(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::{DxfEllipseSource, DxfEllipseSourceKind, DxfLineSegment};
+    use crate::domain::{DxfArcSegment, DxfEllipseSource, DxfEllipseSourceKind, DxfLineSegment};
 
     #[test]
     fn regular_line_polygon_rejects_bulged_and_curve_preview_segments() {
@@ -3798,6 +4133,212 @@ mod tests {
                 Some(4)
             );
         }
+    }
+
+    #[test]
+    fn regular_line_polygon_accepts_vertices_snapped_to_canonical_grid() {
+        let radius = 52.5;
+        let center = 52.5;
+        for phase_deg in [0.0, 0.2, 23.7] {
+            let phase = phase_deg * std::f64::consts::PI / 180.0;
+            let vertices: Vec<IrregularPoint> = (0..64)
+                .map(|index| {
+                    let angle = phase + std::f64::consts::TAU * index as f64 / 64.0;
+                    IrregularPoint::new(
+                        js_math::round((center + radius * libm::cos(angle)) * 1_000.0) / 1_000.0,
+                        js_math::round((center + radius * libm::sin(angle)) * 1_000.0) / 1_000.0,
+                    )
+                })
+                .collect();
+            let segments = vertices
+                .iter()
+                .enumerate()
+                .map(|(index, first)| {
+                    let second = vertices[(index + 1) % vertices.len()];
+                    DxfGeometrySegment::Line(DxfLineSegment {
+                        x1: first.x,
+                        y1: first.y,
+                        x2: second.x,
+                        y2: second.y,
+                        bulge: None,
+                        source_curve: None,
+                    })
+                })
+                .collect::<Vec<_>>();
+
+            assert_eq!(
+                regular_line_polygon_rotation_order_from_segments(&segments),
+                Some(64),
+                "phase {phase_deg} degrees",
+            );
+        }
+    }
+
+    #[test]
+    fn regular_line_polygon_rejects_distortion_beyond_grid_uncertainty() {
+        let vertices = [
+            IrregularPoint::new(10.003, 0.0),
+            IrregularPoint::new(0.0, 10.0),
+            IrregularPoint::new(-10.0, 0.0),
+            IrregularPoint::new(0.0, -10.0),
+        ];
+        let segments = vertices
+            .iter()
+            .enumerate()
+            .map(|(index, first)| {
+                let second = vertices[(index + 1) % vertices.len()];
+                DxfGeometrySegment::Line(DxfLineSegment {
+                    x1: first.x,
+                    y1: first.y,
+                    x2: second.x,
+                    y2: second.y,
+                    bulge: None,
+                    source_curve: None,
+                })
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            regular_line_polygon_rotation_order_from_segments(&segments),
+            None
+        );
+    }
+
+    #[test]
+    fn polygon_centroid_finds_an_odd_polygon_rotation_center() {
+        let expected_center = IrregularPoint::new(7.0, 11.0);
+        let vertices: Vec<IrregularPoint> = (0..3)
+            .map(|index| {
+                let angle = std::f64::consts::TAU * index as f64 / 3.0;
+                IrregularPoint::new(
+                    expected_center.x + 5.0 * libm::cos(angle),
+                    expected_center.y + 5.0 * libm::sin(angle),
+                )
+            })
+            .collect();
+
+        let center = polygon_centroid(&vertices).expect("regular triangle centroid");
+        assert!((center.x - expected_center.x).abs() < 1e-9);
+        assert!((center.y - expected_center.y).abs() < 1e-9);
+    }
+
+    #[test]
+    fn periodic_residue_matching_crosses_rounding_bucket_boundaries() {
+        let mut residues = vec![2.810_922_924_295_829_4];
+        assert_eq!(
+            periodic_residue_index(&mut residues, 2.816_784_660_044_533, 5.625, 0.01),
+            0
+        );
+        assert_eq!(residues.len(), 1);
+    }
+
+    #[test]
+    fn exact_grid_quarter_turn_orbit_requires_exact_polygon_symmetry() {
+        let square = [
+            IrregularPoint::new(10.0, 0.0),
+            IrregularPoint::new(0.0, 10.0),
+            IrregularPoint::new(-10.0, 0.0),
+            IrregularPoint::new(0.0, -10.0),
+        ];
+        let rectangle = [
+            IrregularPoint::new(20.0, 0.0),
+            IrregularPoint::new(0.0, 10.0),
+            IrregularPoint::new(-20.0, 0.0),
+            IrregularPoint::new(0.0, -10.0),
+        ];
+        let approximate_square = [
+            IrregularPoint::new(10.0, 0.0),
+            IrregularPoint::new(0.0, 10.0),
+            IrregularPoint::new(-10.0, 0.0),
+            IrregularPoint::new(0.0, -10.001),
+        ];
+
+        assert_eq!(exact_grid_quarter_turn_orbit_order(&square, 4), 4);
+        assert_eq!(exact_grid_quarter_turn_orbit_order(&rectangle, 4), 2);
+        assert_eq!(
+            exact_grid_quarter_turn_orbit_order(&approximate_square, 4),
+            1
+        );
+    }
+
+    #[test]
+    fn periodic_vector_orbit_key_collapses_regular_rotations() {
+        assert_eq!(
+            periodic_vector_orbit_key(IrregularPoint::new(10.0, 0.0), 4),
+            periodic_vector_orbit_key(IrregularPoint::new(0.0, 10.0), 4)
+        );
+        assert_ne!(
+            periodic_vector_orbit_key(IrregularPoint::new(10.0, 0.0), 4),
+            periodic_vector_orbit_key(IrregularPoint::new(11.0, 0.0), 4)
+        );
+
+        let hexagon_quarter_turn_orbit_order = greatest_common_divisor_usize(6, 4);
+        assert_eq!(hexagon_quarter_turn_orbit_order, 2);
+        assert_eq!(
+            periodic_vector_orbit_key(
+                IrregularPoint::new(10.0, 0.0),
+                hexagon_quarter_turn_orbit_order,
+            ),
+            periodic_vector_orbit_key(
+                IrregularPoint::new(-10.0, 0.0),
+                hexagon_quarter_turn_orbit_order,
+            )
+        );
+        assert_ne!(
+            periodic_vector_orbit_key(
+                IrregularPoint::new(10.0, 0.0),
+                hexagon_quarter_turn_orbit_order,
+            ),
+            periodic_vector_orbit_key(
+                IrregularPoint::new(5.0, 8.660_254_037_844_386),
+                hexagon_quarter_turn_orbit_order,
+            )
+        );
+    }
+
+    #[test]
+    fn full_circle_arc_symmetry_accepts_connected_semicircles_only() {
+        let mut segments = vec![
+            DxfGeometrySegment::Arc(DxfArcSegment {
+                x1: 105.0,
+                y1: 52.5,
+                x2: 0.0,
+                y2: 52.50000000000001,
+                cx: 52.5,
+                cy: 52.5,
+                radius: 52.5,
+                start_angle: 0.0,
+                end_angle: 180.0,
+            }),
+            DxfGeometrySegment::Arc(DxfArcSegment {
+                x1: 0.0,
+                y1: 52.50000000000001,
+                x2: 105.0,
+                y2: 52.499999999999986,
+                cx: 52.5,
+                cy: 52.5,
+                radius: 52.5,
+                start_angle: 180.0,
+                end_angle: 360.0,
+            }),
+        ];
+        assert!(full_circle_arc_rotation_symmetry(&segments));
+
+        segments.pop();
+        assert!(!full_circle_arc_rotation_symmetry(&segments));
+
+        let malformed = vec![DxfGeometrySegment::Arc(DxfArcSegment {
+            x1: 20.0,
+            y1: 0.0,
+            x2: 20.0,
+            y2: 0.0,
+            cx: 0.0,
+            cy: 0.0,
+            radius: 10.0,
+            start_angle: 0.0,
+            end_angle: 360.0,
+        })];
+        assert!(!full_circle_arc_rotation_symmetry(&malformed));
     }
 
     fn square_line_segments() -> Vec<DxfGeometrySegment> {

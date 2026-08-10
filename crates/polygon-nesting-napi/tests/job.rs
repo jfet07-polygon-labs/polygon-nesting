@@ -3,7 +3,7 @@ use polygon_nesting_napi::job::{
     cancellation_reason_from_wire, complete_engine_outcome, project_adapter_error,
     project_delivery_failure, project_engine_error, project_panic,
 };
-use polygon_nesting_protocol::{EngineError, EngineErrorCode, SequencedEngineEvent};
+use polygon_nesting_protocol::{EngineError, EngineErrorCode, EngineOutcome, SequencedEngineEvent};
 
 fn error(category: EngineErrorCode, operation: &str, message: &str) -> serde_json::Value {
     serde_json::from_str(&project_engine_error(EngineError::new(
@@ -218,6 +218,50 @@ fn n_api_full_and_off_requests_have_equivalent_results() {
         assert!(!off_json["result"].as_object().unwrap().contains_key(field));
     }
     assert_eq!(normalize(full_json), normalize(off_json));
+}
+
+#[test]
+fn issue_21_interchangeable_arc_circle_desktop_request_completes() {
+    assert_issue_21_round_family_completes(
+        include_str!("../../../tests/fixtures/issue-21/repro-2circles.json"),
+        2,
+    );
+}
+
+#[test]
+fn issue_21_interchangeable_chord_circle_desktop_request_completes() {
+    assert_issue_21_round_family_completes(
+        include_str!("../../../tests/fixtures/issue-21/G-2circles-lines.json"),
+        2,
+    );
+}
+
+#[test]
+fn issue_21_exact_production_desktop_request_completes() {
+    assert_issue_21_round_family_completes(
+        include_str!("../../../tests/fixtures/issue-21/A-exact-production.json"),
+        10,
+    );
+}
+
+fn assert_issue_21_round_family_completes(request: &str, expected_piece_count: usize) {
+    let prepared = polygon_nesting_napi::compat::decode_desktop_request(request)
+        .expect("desktop request decodes");
+    let control = CancellationControl::new();
+    let mut sink = NoopSink;
+
+    let outcome = Job::new(&prepared.request, &control, &mut sink)
+        .run()
+        .expect("job completes");
+
+    let EngineOutcome::Success { result, .. } = outcome else {
+        panic!("expected success: {outcome:?}");
+    };
+    assert_eq!(
+        result.placed_collision_geometries.len(),
+        expected_piece_count
+    );
+    assert!(result.unplaced_piece_ids.is_empty());
 }
 
 const TRACE_FIELDS: [&str; 5] = [

@@ -229,8 +229,9 @@ pub fn generate_transforms(
         BoundaryValidation::Valid { .. } => {}
     }
 
-    let effective_policy = derive_effective_transform_policy(input, boundary)
-        .map_err(|message| IrregularGeometryInputError::new("generateTransforms", message))?;
+    let effective_policy =
+        derive_effective_transform_policy(&input.geometry_settings, &input.settings, boundary)
+            .map_err(|message| IrregularGeometryInputError::new("generateTransforms", message))?;
 
     let usable_edges = derive_usable_edges(boundary, effective_policy.minimum_edge_length_mm)
         .map_err(|message| IrregularGeometryInputError::new("generateTransforms", message))?;
@@ -353,21 +354,20 @@ fn transform_angle_candidates(
 
 /// TS: `transformGenerator.ts:158-211` `deriveEffectiveTransformPolicy`.
 fn derive_effective_transform_policy(
-    input: &GenerateTransformsInput,
+    geometry_settings: &IrregularGeometrySettings,
+    settings: &IrregularOptimizerSettings,
     boundary: &[IrregularPoint],
 ) -> Result<EffectiveTransformPolicy, String> {
-    if !intrinsic_shared_archive_eligible(&input.settings) {
+    if !intrinsic_shared_archive_eligible(settings) {
         return Ok(EffectiveTransformPolicy {
-            minimum_edge_length_mm: input.settings.transform_minimum_edge_length_mm,
-            angle_deduplication_tolerance_deg: input
-                .settings
-                .transform_angle_deduplication_tolerance_deg,
+            minimum_edge_length_mm: settings.transform_minimum_edge_length_mm,
+            angle_deduplication_tolerance_deg: settings.transform_angle_deduplication_tolerance_deg,
         });
     }
 
     let bounds = bounds_for_boundary(boundary)?;
 
-    let sag_mm = input.geometry_settings.flattening_sag_tolerance_mm;
+    let sag_mm = geometry_settings.flattening_sag_tolerance_mm;
     let smaller_collision_dimension_mm = js_math::min(bounds.width_mm, bounds.height_mm);
     let minimum_edge_length_mm = js_math::min(
         COMPACT_EDGE_SAG_MULTIPLIER * sag_mm,
@@ -409,6 +409,15 @@ fn derive_effective_transform_policy(
         minimum_edge_length_mm,
         angle_deduplication_tolerance_deg,
     })
+}
+
+pub(crate) fn effective_transform_angle_deduplication_tolerance_deg(
+    geometry_settings: &IrregularGeometrySettings,
+    settings: &IrregularOptimizerSettings,
+    boundary: &[IrregularPoint],
+) -> Result<f64, String> {
+    derive_effective_transform_policy(geometry_settings, settings, boundary)
+        .map(|policy| policy.angle_deduplication_tolerance_deg)
 }
 
 struct BoundaryBounds {
@@ -954,9 +963,34 @@ mod tests {
             geometry_settings: base_geometry_settings(),
             settings,
         };
-        let policy = derive_effective_transform_policy(&input, &square).expect("policy derives");
+        let policy =
+            derive_effective_transform_policy(&input.geometry_settings, &input.settings, &square)
+                .expect("policy derives");
         // min(4 * 0.25, 0.01 * 100) = min(1.0, 1.0) = 1.0
         assert_eq!(policy.minimum_edge_length_mm, 1.0);
+    }
+
+    #[test]
+    fn adaptive_compact_policy_caps_angle_tolerance_for_large_geometry() {
+        let boundary = vec![
+            p(0.0, 0.0),
+            p(10_000.0, 0.0),
+            p(10_000.0, 10_000.0),
+            p(0.0, 10_000.0),
+        ];
+        let mut settings = base_settings();
+        settings.intrinsic_shared_archive_enabled = true;
+        settings.placement_policy_id =
+            IrregularPlacementPolicyId::EdgeContactThenBalancedCompactness;
+        settings.transform_angle_deduplication_tolerance_deg = 1.0;
+
+        let tolerance = effective_transform_angle_deduplication_tolerance_deg(
+            &base_geometry_settings(),
+            &settings,
+            &boundary,
+        )
+        .expect("angle tolerance derives");
+        assert!(tolerance < 0.01);
     }
 
     #[test]
