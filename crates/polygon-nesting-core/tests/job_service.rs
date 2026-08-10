@@ -4,8 +4,8 @@ use polygon_nesting_core::{CancelReason, CancellationControl, EngineEventSink, J
 use polygon_nesting_protocol::{
     EngineEvent, EngineOutcome, EngineProfile, EngineRequest, EngineSettings, GeometrySettings,
     HistoryMode, OptimizerSettings, PlacementPolicy, PreparedPiece, ProtocolVersion, Rect,
-    RectWithMetrics, SourceGeometry, SourceGeometryEntityType, SourceGeometrySegment,
-    SourceLineSegment, SourcePiece,
+    RectWithMetrics, SourceArcSegment, SourceGeometry, SourceGeometryEntityType,
+    SourceGeometrySegment, SourceLineSegment, SourcePiece,
 };
 
 #[derive(Default)]
@@ -72,6 +72,36 @@ fn typed_job_runs_on_its_job_pool_and_emits_semantic_events() {
         .iter()
         .enumerate()
         .all(|(index, (_, event))| event.ordinal == index as u64));
+}
+
+#[test]
+fn compact_archive_completes_for_interchangeable_circle_copies() {
+    let request = interchangeable_circle_copies_request();
+    let control = CancellationControl::new();
+    let mut sink = RecordingSink::default();
+
+    let outcome = Job::new(&request, &control, &mut sink).run().unwrap();
+
+    let EngineOutcome::Success { result, .. } = outcome else {
+        panic!("expected success: {outcome:?}");
+    };
+    assert_eq!(result.placed_collision_geometries.len(), 2);
+    assert!(result.unplaced_piece_ids.is_empty());
+}
+
+#[test]
+fn compact_archive_completes_for_interchangeable_regular_polygon_copies() {
+    let request = interchangeable_regular_polygon_copies_request();
+    let control = CancellationControl::new();
+    let mut sink = RecordingSink::default();
+
+    let outcome = Job::new(&request, &control, &mut sink).run().unwrap();
+
+    let EngineOutcome::Success { result, .. } = outcome else {
+        panic!("expected success: {outcome:?}");
+    };
+    assert_eq!(result.placed_collision_geometries.len(), 2);
+    assert!(result.unplaced_piece_ids.is_empty());
 }
 
 #[test]
@@ -217,6 +247,141 @@ fn ga_active(request: &mut EngineRequest) {
     request.settings.optimizer.ga_generation_budget = 1.0;
     request.settings.optimizer.ga_evaluation_budget = 1.0;
     request.settings.optimizer.ga_time_budget_ms = 1.0;
+}
+
+fn interchangeable_regular_polygon_copies_request() -> EngineRequest {
+    let mut request = interchangeable_circle_copies_request();
+    let radius = 52.5;
+    let center = 52.5;
+    let vertex_count = 64usize;
+    let segments = (0..vertex_count)
+        .map(|index| {
+            let angle = std::f64::consts::TAU * index as f64 / vertex_count as f64;
+            let next_angle = std::f64::consts::TAU * (index + 1) as f64 / vertex_count as f64;
+            SourceGeometrySegment::Line(SourceLineSegment {
+                x1: center + radius * angle.cos(),
+                y1: center + radius * angle.sin(),
+                x2: center + radius * next_angle.cos(),
+                y2: center + radius * next_angle.sin(),
+                bulge: None,
+                source_curve: None,
+            })
+        })
+        .collect();
+    let geometry = SourceGeometry {
+        entity_type: SourceGeometryEntityType::Lwpolyline,
+        closed: true,
+        segments,
+    };
+    request.source_pieces[0].geometry = geometry.clone();
+    request.source_pieces[1].geometry = geometry;
+    request
+}
+
+fn interchangeable_circle_copies_request() -> EngineRequest {
+    let mut request = valid_request();
+    let real_bounds = Rect {
+        x: 0.0,
+        y: 0.0,
+        width: 105.0,
+        height: 105.0,
+    };
+    let padded_bounds = RectWithMetrics {
+        x: 0.0,
+        y: 0.0,
+        width: 115.0,
+        height: 115.0,
+        longest_edge: 115.0,
+        area: 13_225.0,
+        imbalance: 0.0,
+    };
+    let circle_geometry = SourceGeometry {
+        entity_type: SourceGeometryEntityType::Circle,
+        closed: true,
+        segments: vec![
+            SourceGeometrySegment::Arc(SourceArcSegment {
+                x1: 105.0,
+                y1: 52.5,
+                x2: 0.0,
+                y2: 52.5,
+                cx: 52.5,
+                cy: 52.5,
+                radius: 52.5,
+                start_angle: 0.0,
+                end_angle: 180.0,
+            }),
+            SourceGeometrySegment::Arc(SourceArcSegment {
+                x1: 0.0,
+                y1: 52.5,
+                x2: 105.0,
+                y2: 52.5,
+                cx: 52.5,
+                cy: 52.5,
+                radius: 52.5,
+                start_angle: 180.0,
+                end_angle: 360.0,
+            }),
+        ],
+    };
+
+    request.timeout_ms = 60_000.0;
+    request.sheet.width = 2_400.0;
+    request.sheet.height = 1_500.0;
+    request.sheet.label = "2400x1500 circle regression sheet".to_string();
+    request.settings.padding = 10.0;
+    request.settings.optimizer.transform_cap = 8.0;
+    request.settings.optimizer.transform_minimum_edge_length_mm = 1.2;
+    request
+        .settings
+        .optimizer
+        .transform_angle_deduplication_tolerance_deg = 0.051;
+    request.history_mode = HistoryMode::Off;
+    request.diagnostic_trace_mode = polygon_nesting_protocol::DiagnosticTraceMode::Off;
+    request.pieces = vec![
+        PreparedPiece {
+            id: "circle-piece-1".to_string(),
+            source_piece_id: "circle-source-1".to_string(),
+            interchangeability_key: Some("round-family".to_string()),
+            real_bounds: real_bounds.clone(),
+            padded_bounds: padded_bounds.clone(),
+            padding: 5.0,
+            allow_rotation: true,
+            allow_mirror: false,
+            cut_row_ref: None,
+        },
+        PreparedPiece {
+            id: "circle-piece-2".to_string(),
+            source_piece_id: "circle-source-2".to_string(),
+            interchangeability_key: Some("round-family".to_string()),
+            real_bounds: real_bounds.clone(),
+            padded_bounds: padded_bounds.clone(),
+            padding: 5.0,
+            allow_rotation: true,
+            allow_mirror: false,
+            cut_row_ref: None,
+        },
+    ];
+    request.source_pieces = vec![
+        SourcePiece {
+            id: "circle-source-1".to_string(),
+            source_file_id: "circle-file-1".to_string(),
+            source_layer: None,
+            label: "circle-1.dxf".to_string(),
+            real_bounds: real_bounds.clone(),
+            geometry: circle_geometry.clone(),
+            warnings: Vec::new(),
+        },
+        SourcePiece {
+            id: "circle-source-2".to_string(),
+            source_file_id: "circle-file-2".to_string(),
+            source_layer: None,
+            label: "circle-2.dxf".to_string(),
+            real_bounds,
+            geometry: circle_geometry,
+            warnings: Vec::new(),
+        },
+    ];
+    request
 }
 
 fn valid_request() -> EngineRequest {
