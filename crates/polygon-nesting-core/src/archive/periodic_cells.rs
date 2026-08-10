@@ -113,9 +113,9 @@ use crate::clipper::core::{
 };
 use crate::clipper::engine::{boolean_op_with_poly_tree, PolyTree64};
 use crate::domain::{
-    IrregularNestingSettings, IrregularPlacedPiece, IrregularPlacement,
-    IrregularPlacementCandidate, IrregularPoint, IrregularPreparedPiece, IrregularTransform,
-    IrregularTransformCandidate, TransformedCollisionGeometry,
+    DxfGeometryEntityType, DxfGeometrySegment, IrregularNestingSettings, IrregularPlacedPiece,
+    IrregularPlacement, IrregularPlacementCandidate, IrregularPoint, IrregularPreparedPiece,
+    IrregularTransform, IrregularTransformCandidate, TransformedCollisionGeometry,
 };
 use crate::geometry::convex::{bounds_for_points, translate_polygon_with_bounds};
 use crate::js_number::{cmp_js_code_units, js_math, number_to_js_string};
@@ -1306,7 +1306,13 @@ fn enumerate_intrinsic_periodic_family(
             message,
         })?
         .value;
-        let key = canonical_transformed_polygon_key(&geometry);
+        let key = periodic_transform_geometry_key(
+            &representative,
+            &geometry,
+            ctx.settings
+                .optimizer
+                .transform_angle_deduplication_tolerance_deg,
+        );
         transformed_by_canonical_key.set_if_absent(
             key,
             TransformedRepresentative {
@@ -3339,6 +3345,94 @@ fn check_sheetless(
 // ===========================================================================
 // Canonical identity keys (`CELLS:2145-2226`).
 // ===========================================================================
+
+/* Periodic cells only depend on a shape's physical orientation. Preserve one
+ * representative for transformations related by declared circle or verified
+ * regular-polygon symmetry, even when rotated tessellations round differently.
+ */
+fn periodic_transform_geometry_key(
+    piece: &IrregularPreparedPiece,
+    geometry: &TransformedCollisionGeometry,
+    angle_tolerance_deg: f64,
+) -> String {
+    if matches!(
+        piece.source.geometry.entity_type,
+        DxfGeometryEntityType::Circle
+    ) {
+        return "rotational-symmetry:continuous".to_string();
+    }
+    let Some(order) = regular_line_polygon_rotation_order(piece) else {
+        return canonical_transformed_polygon_key(geometry);
+    };
+    let period_deg = 360.0 / order as f64;
+    let nearest_turn = js_math::round(geometry.transform.rotation_deg / period_deg);
+    let residue_deg = geometry.transform.rotation_deg - nearest_turn * period_deg;
+    let tolerance_deg = angle_tolerance_deg.max(1e-6);
+    let normalized_residue_deg = ((residue_deg % period_deg) + period_deg) % period_deg;
+    let quantized_residue = if normalized_residue_deg <= tolerance_deg
+        || period_deg - normalized_residue_deg <= tolerance_deg
+    {
+        0
+    } else {
+        js_math::round(normalized_residue_deg / tolerance_deg) as i64
+    };
+    format!("rotational-symmetry:{order}:{quantized_residue}")
+}
+
+fn regular_line_polygon_rotation_order(piece: &IrregularPreparedPiece) -> Option<usize> {
+    let vertices: Vec<IrregularPoint> = piece
+        .source
+        .geometry
+        .segments
+        .iter()
+        .map(|segment| match segment {
+            DxfGeometrySegment::Line(line) => Some(IrregularPoint::new(line.x1, line.y1)),
+            DxfGeometrySegment::Arc(_) => None,
+        })
+        .collect::<Option<_>>()?;
+    if vertices.len() < 3 {
+        return None;
+    }
+    let count = vertices.len() as f64;
+    let center = IrregularPoint::new(
+        vertices.iter().map(|point| point.x).sum::<f64>() / count,
+        vertices.iter().map(|point| point.y).sum::<f64>() / count,
+    );
+    if !center.x.is_finite() || !center.y.is_finite() {
+        return None;
+    }
+    let offsets: Vec<IrregularPoint> = vertices
+        .iter()
+        .map(|point| IrregularPoint::new(point.x - center.x, point.y - center.y))
+        .collect();
+    let radius_squared = offsets[0].x * offsets[0].x + offsets[0].y * offsets[0].y;
+    if !radius_squared.is_finite() || radius_squared <= 0.0 {
+        return None;
+    }
+    let first_dot = offsets[0].x * offsets[1].x + offsets[0].y * offsets[1].y;
+    let first_cross = offsets[0].x * offsets[1].y - offsets[0].y * offsets[1].x;
+    let tolerance = (radius_squared * 1e-8).max(1e-9);
+    if first_cross.abs() <= tolerance {
+        return None;
+    }
+    for index in 0..offsets.len() {
+        let first = offsets[index];
+        let second = offsets[(index + 1) % offsets.len()];
+        let current_radius_squared = first.x * first.x + first.y * first.y;
+        let dot = first.x * second.x + first.y * second.y;
+        let cross = first.x * second.y - first.y * second.x;
+        if !current_radius_squared.is_finite()
+            || !dot.is_finite()
+            || !cross.is_finite()
+            || (current_radius_squared - radius_squared).abs() > tolerance
+            || (dot - first_dot).abs() > tolerance
+            || (cross - first_cross).abs() > tolerance
+        {
+            return None;
+        }
+    }
+    Some(offsets.len())
+}
 
 fn canonical_transformed_polygon_key(geometry: &TransformedCollisionGeometry) -> String {
     let points: Vec<Option<GridPoint>> = geometry
