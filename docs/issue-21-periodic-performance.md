@@ -264,6 +264,18 @@ and lattice diagnoses, 0 memo hits), and all canonical-key, layout,
 ordering, provenance, and coverage suites pass unchanged — no vector,
 snapshot, or expected output was regenerated.
 
+## Post-rebase confirmation
+
+After rebasing onto `main` at `623e61c` (“fix: make public nesting order
+invariant”, version 0.1.8) and bumping to 0.1.9, the full release
+verification was repeated on the rebased revision: periodic vectors 8/8
+(characterization 0.87 s), canonical layout vectors 4/4, core `Job`
+regression, the complete N-API `job` suite 19/19 (including the new
+order-invariance test from `main`), and the core unit suite 562/562. Final
+same-machine timings: arc 0.10/0.09/0.09/0.08/0.08 s (median **0.09 s**),
+chord 0.84/0.82/0.84/0.83/0.83 s (median **0.83 s**) — unchanged from the
+pre-rebase Stage 3 result within run-to-run noise.
+
 ## Files changed
 
 - `crates/polygon-nesting-core/src/archive/periodic_cells.rs` — Stage 1
