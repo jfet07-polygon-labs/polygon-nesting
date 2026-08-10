@@ -543,16 +543,81 @@ pub struct IntrinsicPeriodicSeed {
 // `GeometryKernel | GeometrySettings | NfpIfpService`).
 // ===========================================================================
 
-/// Bundles the mutable geometry cache, the (immutable) nesting settings, and
-/// the optional cooperative-cancellation control this whole cluster threads
-/// through every call. Mirrors the `Effect` context TS resolves via `yield*`
-/// (`CELLS:285-287`); Rust has no ambient DI layer, so callers construct and
-/// own this explicitly, the same pattern `search::strict_decoder`'s own
-/// module doc establishes.
+/// Opt-in, observer-only counters for deterministic periodic archive work.
+///
+/// This is owned by the caller and threaded through [`PeriodicRunContext`] as
+/// an optional mutable reference. When absent, no counters are allocated or
+/// updated and periodic archive behavior is unchanged.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct IntrinsicPeriodicWorkTelemetry {
+    pub p1_derive_cells_calls: u64,
+    pub p2_derive_cells_calls: u64,
+    pub raw_p2_offsets: u64,
+    pub nonnegative_p2_offsets: u64,
+    pub duplicate_candidate_orbits: u64,
+    pub p2_sheetless_legality_checks: u64,
+    pub basis_candidates: u64,
+    pub lattice_diagnosis_requests: u64,
+    pub lattice_diagnosis_computations: u64,
+    pub lattice_diagnosis_memo_hits: u64,
+}
+
+impl IntrinsicPeriodicWorkTelemetry {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    fn record_derive_cells(&mut self, role: IntrinsicPeriodicRole) {
+        match role {
+            IntrinsicPeriodicRole::P1 => self.p1_derive_cells_calls += 1,
+            IntrinsicPeriodicRole::P2 => self.p2_derive_cells_calls += 1,
+        }
+    }
+
+    fn record_p2_offset(&mut self, nonnegative: bool) {
+        self.raw_p2_offsets += 1;
+        if nonnegative {
+            self.nonnegative_p2_offsets += 1;
+        }
+    }
+
+    fn record_nonnegative_p2_offset(&mut self) {
+        self.nonnegative_p2_offsets += 1;
+    }
+
+    fn record_duplicate_candidate_orbit(&mut self) {
+        self.duplicate_candidate_orbits += 1;
+    }
+
+    fn record_p2_sheetless_legality_check(&mut self) {
+        self.p2_sheetless_legality_checks += 1;
+    }
+
+    fn record_basis_candidate(&mut self) {
+        self.basis_candidates += 1;
+    }
+
+    fn record_lattice_diagnosis_request(&mut self, memo_hit: bool) {
+        self.lattice_diagnosis_requests += 1;
+        if memo_hit {
+            self.lattice_diagnosis_memo_hits += 1;
+        } else {
+            self.lattice_diagnosis_computations += 1;
+        }
+    }
+}
+
+/// Bundles the mutable geometry cache, the (immutable) nesting settings, the
+/// optional cooperative-cancellation control, and opt-in work telemetry this
+/// whole cluster threads through every call. Mirrors the `Effect` context TS
+/// resolves via `yield*` (`CELLS:285-287`); Rust has no ambient DI layer, so
+/// callers construct and own this explicitly, the same pattern
+/// `search::strict_decoder`'s own module doc establishes.
 pub struct PeriodicRunContext<'a> {
     pub settings: &'a IrregularNestingSettings,
     pub geometry_cache: &'a mut GeometryCacheStore,
     pub control: Option<&'a mut dyn NfpIfpControl>,
+    pub telemetry: Option<&'a mut IntrinsicPeriodicWorkTelemetry>,
 }
 
 fn checkpoint(control: &mut Option<&mut dyn NfpIfpControl>) -> Result<(), IntrinsicPeriodicError> {
@@ -1436,11 +1501,24 @@ fn enumerate_intrinsic_periodic_family(
                     pair_coverage_complete = false;
                     break;
                 }
+                if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+                    telemetry.record_p2_offset(false);
+                }
                 let candidate = make_candidate(second, point);
+                if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+                    telemetry.record_p2_sheetless_legality_check();
+                }
                 let legal = check_sheetless(std::slice::from_ref(&fixed), second, point)?;
-                if !legal || !combined_bounds_nonnegative(&[first, second], &[first_point, point]) {
+                if !legal {
                     let _ = &candidate;
                     continue;
+                }
+                if !combined_bounds_nonnegative(&[first, second], &[first_point, point]) {
+                    let _ = &candidate;
+                    continue;
+                }
+                if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+                    telemetry.record_nonnegative_p2_offset();
                 }
                 if periodic_pair_candidate_orbit_key(
                     first,
@@ -1451,6 +1529,9 @@ fn enumerate_intrinsic_periodic_family(
                 )
                 .is_some_and(|key| !seen_candidate_orbits.insert(key))
                 {
+                    if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+                        telemetry.record_duplicate_candidate_orbit();
+                    }
                     continue;
                 }
                 let derivation = derive_cells(
@@ -2167,6 +2248,9 @@ fn derive_cells(
     members: &[IntrinsicPeriodicBaseMember],
     ctx: &mut PeriodicRunContext<'_>,
 ) -> Result<IntrinsicPeriodicCellDerivation, IntrinsicPeriodicError> {
+    if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+        telemetry.record_derive_cells(role);
+    }
     let mut forbidden: Vec<ForbiddenBoundary> = Vec::new();
     for fixed_member in members {
         for moving_member in members {
@@ -2267,6 +2351,9 @@ fn derive_cells(
         );
     }
     for candidate in bases {
+        if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+            telemetry.record_basis_candidate();
+        }
         let (raw_v1, raw_v2) = (candidate.basis.0.clone(), candidate.basis.1.clone());
         let canonical = match canonicalize_basis(&raw_v1, &raw_v2) {
             Some(value) => value,
@@ -2281,6 +2368,9 @@ fn derive_cells(
             }
         };
         let infinite_far_proof = far_neighbor_certificate_grid(members, &canonical);
+        if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+            telemetry.record_lattice_diagnosis_request(false);
+        }
         let lattice = diagnose_lattice(members, &canonical)?;
         let determinant_grid2 = abs_bigint(&cross_grid(&canonical.0, &canonical.1));
         let member_doubled_area_grid2 = members.iter().fold(BigInt::from(0), |sum, member| {
@@ -4339,6 +4429,31 @@ mod tests {
             end_angle: 360.0,
         })];
         assert!(!full_circle_arc_rotation_symmetry(&malformed));
+    }
+
+    #[test]
+    fn periodic_work_telemetry_records_only_integer_work_counters() {
+        let mut telemetry = IntrinsicPeriodicWorkTelemetry::new();
+        telemetry.record_derive_cells(IntrinsicPeriodicRole::P1);
+        telemetry.record_derive_cells(IntrinsicPeriodicRole::P2);
+        telemetry.record_p2_offset(true);
+        telemetry.record_p2_offset(false);
+        telemetry.record_duplicate_candidate_orbit();
+        telemetry.record_p2_sheetless_legality_check();
+        telemetry.record_basis_candidate();
+        telemetry.record_lattice_diagnosis_request(false);
+        telemetry.record_lattice_diagnosis_request(true);
+
+        assert_eq!(telemetry.p1_derive_cells_calls, 1);
+        assert_eq!(telemetry.p2_derive_cells_calls, 1);
+        assert_eq!(telemetry.raw_p2_offsets, 2);
+        assert_eq!(telemetry.nonnegative_p2_offsets, 1);
+        assert_eq!(telemetry.duplicate_candidate_orbits, 1);
+        assert_eq!(telemetry.p2_sheetless_legality_checks, 1);
+        assert_eq!(telemetry.basis_candidates, 1);
+        assert_eq!(telemetry.lattice_diagnosis_requests, 2);
+        assert_eq!(telemetry.lattice_diagnosis_computations, 1);
+        assert_eq!(telemetry.lattice_diagnosis_memo_hits, 1);
     }
 
     fn square_line_segments() -> Vec<DxfGeometrySegment> {

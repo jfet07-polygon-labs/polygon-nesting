@@ -29,7 +29,8 @@ use polygon_nesting_core::archive::periodic_cells::{
     select_intrinsic_periodic_seed_front, IntrinsicPeriodicBaseMember,
     IntrinsicPeriodicCatalogOptions, IntrinsicPeriodicCell, IntrinsicPeriodicCropProvenance,
     IntrinsicPeriodicCropTraversal, IntrinsicPeriodicExactEnvelope, IntrinsicPeriodicRole,
-    IntrinsicPeriodicSeed, IntrinsicPeriodicVector, PeriodicRunContext,
+    IntrinsicPeriodicSeed, IntrinsicPeriodicVector, IntrinsicPeriodicWorkTelemetry,
+    PeriodicRunContext,
 };
 use polygon_nesting_core::archive::periodic_family::{
     continuations_for_execution, order_periodic_continuations_for_execution,
@@ -40,15 +41,18 @@ use polygon_nesting_core::archive::periodic_family::{
 use polygon_nesting_core::caches::GeometryCacheStore;
 use polygon_nesting_core::domain::{
     default_irregular_placement_policy_ids, CollisionGeometry, DxfGeometryEntityType,
-    DxfGeometrySummary, ImportedPiece, IntrinsicObjectiveProfileId, IrregularBounds,
-    IrregularGeometrySettings, IrregularNestingSettings, IrregularOptimizerSettings,
-    IrregularPlacedPiece, IrregularPlacement, IrregularPlacementPolicyId, IrregularPoint,
-    IrregularPolygon, IrregularPreparedPiece, IrregularTransform, IrregularTransformCandidate,
-    IrregularTransformReason, PieceId, Rect, SheetSpec, SourceFileId, TransformedCollisionGeometry,
+    DxfGeometrySegment, DxfGeometrySummary, DxfLineSegment, ImportedPiece,
+    IntrinsicObjectiveProfileId, IrregularBounds, IrregularGeometrySettings,
+    IrregularNestingSettings, IrregularOptimizerSettings, IrregularPlacedPiece, IrregularPlacement,
+    IrregularPlacementPolicyId, IrregularPoint, IrregularPolygon, IrregularPreparedPiece,
+    IrregularTransform, IrregularTransformCandidate, IrregularTransformReason, PieceId, Rect,
+    SheetSpec, SourceFileId, TransformedCollisionGeometry,
 };
+use polygon_nesting_core::geometry::collision_builder::{build_piece, BuildCollisionGeometryInput};
 use polygon_nesting_core::nfp_ifp::{
     NfpIfpAbortReason, NfpIfpCheckpointPhase, NfpIfpControl, NfpIfpControlAbortError,
 };
+use polygon_nesting_core::transforms::generator::{generate_transforms, GenerateTransformsInput};
 use serde_json::Value;
 
 // ---------------------------------------------------------------------------
@@ -708,6 +712,7 @@ fn catalog_cases_reproduce_ts_outcomes() {
             settings: &settings,
             geometry_cache: &mut geometry_cache,
             control: None,
+            telemetry: None,
         };
         let catalog = enumerate_intrinsic_periodic_cells(&pieces, &options, &mut ctx)
             .unwrap_or_else(|err| {
@@ -1247,6 +1252,171 @@ fn portfolio_cases_reproduce_ts_outcomes() {
             actual_winner_source_id, expected_winner_source_id,
             "{case_id}: winnerSourceId"
         );
+    }
+}
+
+fn regular_polygon_pieces(
+    settings: &IrregularNestingSettings,
+    side_count: usize,
+) -> Vec<IrregularPreparedPiece> {
+    let center = 52.5;
+    let radius = 52.5;
+    let segments = (0..side_count)
+        .map(|index| {
+            let angle = std::f64::consts::TAU * index as f64 / side_count as f64;
+            let next_angle = std::f64::consts::TAU * (index + 1) as f64 / side_count as f64;
+            DxfGeometrySegment::Line(DxfLineSegment {
+                x1: center + radius * libm::cos(angle),
+                y1: center + radius * libm::sin(angle),
+                x2: center + radius * libm::cos(next_angle),
+                y2: center + radius * libm::sin(next_angle),
+                bulge: None,
+                source_curve: None,
+            })
+        })
+        .collect::<Vec<_>>();
+    ["regular-64-a", "regular-64-b"]
+        .into_iter()
+        .map(|id| {
+            let piece_id = PieceId::new(id);
+            let mut source = imported_piece(&piece_id);
+            source.geometry = DxfGeometrySummary {
+                entity_type: DxfGeometryEntityType::Lwpolyline,
+                closed: true,
+                segments: segments.clone(),
+            };
+            let collision_geometry = build_piece(
+                &BuildCollisionGeometryInput {
+                    piece: source.clone(),
+                    total_padding_mm: 10.0,
+                },
+                &settings.geometry,
+            )
+            .expect("regular polygon collision geometry");
+            let transforms = generate_transforms(&GenerateTransformsInput {
+                geometry: collision_geometry.clone(),
+                allow_rotation: true,
+                allow_mirror: true,
+                geometry_settings: settings.geometry.clone(),
+                settings: settings.optimizer.clone(),
+            })
+            .expect("regular polygon transforms");
+            IrregularPreparedPiece {
+                piece_id: Some(piece_id),
+                interchangeability_key: Some("round-family".to_string()),
+                source,
+                allow_mirror: true,
+                collision_geometry,
+                transforms,
+                priority_order_key: None,
+            }
+        })
+        .collect()
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct PeriodicCoverage {
+    runtime: bool,
+    transform: bool,
+    pair: bool,
+    cell: bool,
+}
+
+fn run_regular_polygon_with_telemetry(
+    side_count: usize,
+    enabled: bool,
+) -> (
+    Vec<String>,
+    IntrinsicPeriodicWorkTelemetry,
+    PeriodicCoverage,
+    f64,
+) {
+    let mut settings = settings();
+    settings.geometry.flattening_sag_tolerance_mm = 0.25;
+    settings.geometry.clearance_safety_margin_mm = 0.25;
+    settings.optimizer.transform_cap = 8.0;
+    settings.optimizer.transform_minimum_edge_length_mm = 1.2;
+    settings
+        .optimizer
+        .transform_angle_deduplication_tolerance_deg = 0.051;
+    settings.optimizer.configured_rotation_deg = vec![];
+    let pieces = regular_polygon_pieces(&settings, side_count);
+    let options = IntrinsicPeriodicCatalogOptions {
+        maximum_runtime_ms: f64::INFINITY,
+        maximum_family_count: 8,
+        maximum_transforms_per_family: 16,
+        maximum_pairs_per_family: 120,
+        maximum_cells_per_family_role: 10_000,
+        capture_source_survival_audit: false,
+    };
+    let mut geometry_cache = GeometryCacheStore::new();
+    let mut telemetry = IntrinsicPeriodicWorkTelemetry::new();
+    let telemetry_ref = if enabled { Some(&mut telemetry) } else { None };
+    let mut ctx = PeriodicRunContext {
+        settings: &settings,
+        geometry_cache: &mut geometry_cache,
+        control: None,
+        telemetry: telemetry_ref,
+    };
+    let catalog = enumerate_intrinsic_periodic_cells(&pieces, &options, &mut ctx)
+        .expect("regular 64-gon catalog");
+    let family = catalog.families.first().expect("one regular family");
+    (
+        catalog
+            .cells
+            .into_iter()
+            .map(|cell| cell.canonical_key)
+            .collect(),
+        telemetry,
+        PeriodicCoverage {
+            runtime: catalog.runtime_coverage_complete,
+            transform: family.transform_coverage_complete,
+            pair: family.pair_coverage_complete,
+            cell: family.cell_coverage_complete,
+        },
+        family.retained_transform_count,
+    )
+}
+
+#[test]
+fn regular_polygon_periodic_work_is_deterministic_and_observer_only() {
+    let side_count = if cfg!(debug_assertions) { 8 } else { 64 };
+    let (keys_without_telemetry, _, coverage_without_telemetry, retained_transform_count) =
+        run_regular_polygon_with_telemetry(side_count, false);
+    let (keys_first, telemetry_first, coverage_first, _) =
+        run_regular_polygon_with_telemetry(side_count, true);
+    let (keys_second, telemetry_second, coverage_second, _) =
+        run_regular_polygon_with_telemetry(side_count, true);
+
+    assert_eq!(
+        coverage_without_telemetry,
+        PeriodicCoverage {
+            runtime: true,
+            transform: true,
+            pair: true,
+            cell: true,
+        }
+    );
+    assert_eq!(coverage_without_telemetry, coverage_first);
+    assert_eq!(coverage_first, coverage_second);
+    assert_eq!(retained_transform_count, 2.0);
+    assert_eq!(keys_without_telemetry, keys_first);
+    assert_eq!(keys_first, keys_second);
+    assert_eq!(telemetry_first, telemetry_second);
+    assert_eq!(
+        telemetry_first.p2_sheetless_legality_checks,
+        telemetry_first.raw_p2_offsets
+    );
+    assert_eq!(telemetry_first.duplicate_candidate_orbits, 0);
+    assert_eq!(
+        telemetry_first.lattice_diagnosis_computations,
+        telemetry_first.lattice_diagnosis_requests
+    );
+    assert_eq!(telemetry_first.lattice_diagnosis_memo_hits, 0);
+
+    if !cfg!(debug_assertions) {
+        assert_eq!(telemetry_first.p1_derive_cells_calls, 2);
+        assert_eq!(telemetry_first.p2_derive_cells_calls, 24);
     }
 }
 
