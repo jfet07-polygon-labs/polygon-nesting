@@ -12,7 +12,7 @@ const publisher = readFileSync(join(ROOT, '.github/workflows/publish-runtime-ima
 const npmrc = readFileSync(join(ROOT, '.npmrc'), 'utf8')
 const migration = readFileSync(join(ROOT, 'docs/migration-from-min-plane-dfx.md'), 'utf8')
 
-test('protected release publisher owns both GHCR and GitHub npm delivery', () => {
+test('protected release publisher owns GHCR, GitHub Packages, and npmjs delivery', () => {
   assert.equal(existsSync(legacyWorkflow), false, 'the untrusted manual native package publisher must be removed')
   assert.equal(existsSync(legacyScript), false, 'the fixed-run package publisher script must be removed')
   assert.equal(existsSync(legacyScriptTest), false, 'the fixed-run package publisher tests must be removed')
@@ -22,19 +22,34 @@ test('protected release publisher owns both GHCR and GitHub npm delivery', () =>
   assert.match(publisher, /github\.event\.workflow_run\.head_branch == 'main'/)
 })
 
-test('npm publication consumes only the verified candidate tarball and is rerunnable', () => {
-  assert.match(publisher, /NPM_TARBALL=.*resolve\('release-candidate',release\.tarball\.fileName\)/)
-  assert.doesNotMatch(publisher, /NPM_TARBALL=.*join\('release-candidate',release\.tarball\.fileName\)/)
-  assert.match(publisher, /npm publish "\$NPM_TARBALL" --ignore-scripts --registry https:\/\/npm\.pkg\.github\.com/)
-  assert.match(publisher, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.2" --json/)
+test('dual npm publication consumes only verified candidate tarballs and is rerunnable', () => {
+  assert.match(publisher, /GITHUB_NPM_TARBALL=.*resolve\('release-candidate',githubPackage\.tarball\.fileName\)/)
+  assert.match(publisher, /PUBLIC_NPM_TARBALL=.*resolve\('release-candidate',publicPackage\.tarball\.fileName\)/)
+  assert.doesNotMatch(publisher, /NPM_TARBALL=.*join\('release-candidate'/)
+  assert.match(publisher, /npm publish "\$GITHUB_NPM_TARBALL" --ignore-scripts --registry https:\/\/npm\.pkg\.github\.com/)
+  assert.match(publisher, /npm publish "\$PUBLIC_NPM_TARBALL" --ignore-scripts --registry https:\/\/registry\.npmjs\.org/)
+  assert.match(publisher, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.2" --json --registry https:\/\/npm\.pkg\.github\.com/)
+  assert.match(publisher, /npm view "@jfet97\/polygon-nesting@0\.1\.2" --json --registry https:\/\/registry\.npmjs\.org/)
   assert.match(publisher, /refusing to replace an existing npm version with different bytes/)
-  assert.match(publisher, /if: steps\.npm-state\.outputs\.action == 'publish'/)
+  assert.match(publisher, /if: steps\.github-npm-state\.outputs\.action == 'publish'/)
+  assert.match(publisher, /if: steps\.public-npm-state\.outputs\.action == 'publish'/)
   assert.match(publisher, /published npm package bytes differ from the verified release tarball/)
-  assert.match(publisher, /npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet07-polygon-labs\/polygon-nesting@0\.1\.2"/)
-  assert.match(publisher, /readFileSync\(join\(process\.env\.DELIVERY_ROOT, 'node_modules\/\@jfet07-polygon-labs\/polygon-nesting\/package\.json'\), 'utf8'\)/)
+  assert.match(publisher, /npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet07-polygon-labs\/polygon-nesting@0\.1\.2" --registry https:\/\/npm\.pkg\.github\.com/)
+  assert.match(publisher, /npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet97\/polygon-nesting@0\.1\.2" --registry https:\/\/registry\.npmjs\.org/)
   assert.match(publisher, /load\('@jfet07-polygon-labs\/polygon-nesting'\)/)
-  assert.doesNotMatch(publisher, /load\('@jfet07-polygon-labs\/polygon-nesting\/package\.json'\)/)
+  assert.match(publisher, /load\('@jfet97\/polygon-nesting'\)/)
   assert.doesNotMatch(publisher, /cargo build|npm run build:release/)
+})
+
+test('registry credentials are isolated to their destination commands', () => {
+  const githubTokenUses = [...publisher.matchAll(/NODE_AUTH_TOKEN: \$\{\{ github\.token \}\}/g)]
+  const npmTokenUses = [...publisher.matchAll(/NPM_TOKEN: \$\{\{ secrets\.NPM_TOKEN \}\}/g)]
+  assert.ok(githubTokenUses.length >= 3)
+  assert.equal(npmTokenUses.length, 1)
+  assert.match(publisher, /printf '%s\\n' '\/\/registry\.npmjs\.org\/:_authToken=\$\{NPM_TOKEN\}' > "\$RUNNER_TEMP\/npmjs-publish\.npmrc"/)
+  assert.match(publisher, /NPM_CONFIG_USERCONFIG="\$RUNNER_TEMP\/npmjs-publish\.npmrc" npm publish "\$PUBLIC_NPM_TARBALL"/)
+  assert.doesNotMatch(publisher, /NODE_AUTH_TOKEN: \$\{\{ secrets\.NPM_TOKEN \}\}/)
+  assert.doesNotMatch(publisher, /NPM_TOKEN: \$\{\{ github\.token \}\}/)
 })
 
 test('selected release source uses authenticated checkout without preserving credentials', () => {
@@ -45,16 +60,19 @@ test('selected release source uses authenticated checkout without preserving cre
   )
 })
 
-test('both immutable destinations are inspected before either artifact is published', () => {
-  const inspectNpm = publisher.indexOf('- name: Inspect immutable npm package version')
+test('all immutable destinations are inspected before any artifact is published', () => {
+  const inspectGitHubNpm = publisher.indexOf('- name: Inspect immutable GitHub Packages version')
+  const inspectPublicNpm = publisher.indexOf('- name: Inspect immutable npmjs version')
   const inspectOci = publisher.indexOf('- name: Inspect immutable runtime tag')
-  const publishNpm = publisher.indexOf('- name: Publish exact verified npm tarball')
-  const publishOci = publisher.indexOf('- name: Publish exact verified runtime image')
-  assert.ok(inspectNpm >= 0 && inspectOci >= 0 && publishNpm >= 0 && publishOci >= 0)
-  assert.ok(inspectNpm < publishNpm)
-  assert.ok(inspectNpm < publishOci)
-  assert.ok(inspectOci < publishNpm)
-  assert.ok(inspectOci < publishOci)
+  const firstPublish = Math.min(
+    publisher.indexOf('- name: Publish exact verified GitHub Packages tarball'),
+    publisher.indexOf('- name: Publish exact verified npmjs tarball'),
+    publisher.indexOf('- name: Publish exact verified runtime image')
+  )
+  assert.ok(inspectGitHubNpm >= 0 && inspectPublicNpm >= 0 && inspectOci >= 0 && firstPublish >= 0)
+  assert.ok(inspectGitHubNpm < firstPublish)
+  assert.ok(inspectPublicNpm < firstPublish)
+  assert.ok(inspectOci < firstPublish)
 })
 
 test('repository npm configuration binds the organization scope without a committed credential', () => {

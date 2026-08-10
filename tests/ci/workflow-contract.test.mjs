@@ -505,13 +505,19 @@ test('main CI builds runtime once, release reuses it, and publication consumes o
   assert.match(publish, /skopeo copy oci-archive:oci-candidate\/oci-image\.tar/)
   assert.match(publish, /docker login ghcr\.io/)
   assert.match(publish, /registry-url: https:\/\/npm\.pkg\.github\.com/)
-  assert.match(publish, /npm publish "\$NPM_TARBALL" --ignore-scripts --registry https:\/\/npm\.pkg\.github\.com/)
-  assert.match(publish, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.2"/)
+  assert.match(publish, /npm publish "\$GITHUB_NPM_TARBALL" --ignore-scripts --registry https:\/\/npm\.pkg\.github\.com/)
+  assert.match(publish, /npm publish "\$PUBLIC_NPM_TARBALL" --ignore-scripts --registry https:\/\/registry\.npmjs\.org/)
+  assert.match(publish, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.2" --json --registry https:\/\/npm\.pkg\.github\.com/)
+  assert.match(publish, /npm view "@jfet97\/polygon-nesting@0\.1\.2" --json --registry https:\/\/registry\.npmjs\.org/)
+  assert.match(publish, /NPM_TOKEN: \$\{\{ secrets\.NPM_TOKEN \}\}/)
+  assert.match(publish, /\/\/registry\.npmjs\.org\/:_authToken=\$\{NPM_TOKEN\}/)
+  assert.match(publish, /NPM_CONFIG_USERCONFIG="\$RUNNER_TEMP\/npmjs-publish\.npmrc" npm publish/)
+  assert.doesNotMatch(publish, /NODE_AUTH_TOKEN: \$\{\{ secrets\.NPM_TOKEN \}\}/)
   assert.match(publish, /docker pull "\$IMAGE_REF"/)
   assert.match(publish, /run: >-\n\s+"\$RUNNER_TEMP\/trusted-publication-verifier\/scripts\/smoke-cli-image\.sh"\n\s+"\$IMAGE_REF"/)
   assert.doesNotMatch(publish, /run: scripts\/smoke-cli-image\.sh "\$IMAGE_REF"/)
   assert.match(publish, /publication-evidence\.json/)
-  for (const field of ['sourceRunId', 'sourceCommit', 'archiveSha256', 'manifestDigest', 'tag', 'immutableImageReference', 'postPublicationDigest', 'npmPackage', 'actor', 'repository', 'workflowRunId', 'timestamp', 'smoke']) {
+  for (const field of ['sourceRunId', 'sourceCommit', 'archiveSha256', 'manifestDigest', 'tag', 'immutableImageReference', 'postPublicationDigest', 'npmPackages', '@jfet07-polygon-labs/polygon-nesting', '@jfet97/polygon-nesting', 'https://npm.pkg.github.com', 'https://registry.npmjs.org', 'actor', 'repository', 'workflowRunId', 'timestamp', 'smoke']) {
     assert.match(publish, new RegExp(field), `publication evidence must include ${field}`)
   }
   assert.doesNotMatch(publish, /docker build(?:x)? build|cargo build|npm run build/, 'runtime publication must not rebuild source')

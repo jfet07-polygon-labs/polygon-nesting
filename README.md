@@ -2,7 +2,7 @@
 
 `polygon-nesting` is a standalone Rust implementation of deterministic irregular polygon nesting. It has one typed core and two delivery adapters:
 
-- an Electron N-API addon distributed as `@jfet07-polygon-labs/polygon-nesting`;
+- an Electron N-API addon distributed through GitHub Packages as `@jfet07-polygon-labs/polygon-nesting` and through npmjs as `@jfet97/polygon-nesting`;
 - a Linux amd64 OCI image containing the one-shot `polygon-nesting` CLI.
 
 The engine supports the `compact` and `compact-short-side` profiles. Archive-ineligible requests are returned as typed outcomes. The engine does not implement rectangle nesting, Electron application state, storage, HTTP, Azure resource management, or customer credentials.
@@ -19,6 +19,7 @@ polygon-nesting-core
 polygon-nesting-cli  polygon-nesting-napi
      |                      |
  OCI image          @jfet07-polygon-labs/polygon-nesting
+                    @jfet97/polygon-nesting
 ```
 
 `protocol` owns versioned request, outcome, error, and semantic event data. `core` owns deterministic computation, job-local Rayon pools, caches, cancellation checkpoints, and event ordering. The CLI owns command parsing, deadline shortening, artifact-path safety, signal handling, atomic writes, and exit mapping. N-API owns desktop compatibility conversion, adapter validation, error projection, invocation registration, callback acknowledgement, and environment cleanup. The core has no dependency on N-API, Node, Electron, libuv, CLI parsing, Azure SDKs, HTTP servers, or application persistence.
@@ -65,7 +66,7 @@ It requires semantic equivalence after the documented normalization and smaller 
 
 ## N-API package
 
-The package publishes prebuilt addons only for Linux x64 and macOS arm64. Windows x64 remains available for local and manual builds but is not published. The loader retains the desktop alias `irregular-nesting-native` and selects `irregular-nesting-native.<platform>-<arch>.node`. Unsupported targets fail before Cargo is invoked.
+The same prebuilt addon payload is published in two packages at version `0.1.2`: `@jfet07-polygon-labs/polygon-nesting` on GitHub Packages and `@jfet97/polygon-nesting` on npmjs. Both packages include only Linux x64 and macOS arm64 addons. Windows x64 remains available for local and manual builds but is not published. The loader retains the desktop alias `irregular-nesting-native` and selects `irregular-nesting-native.<platform>-<arch>.node`. Unsupported targets fail before Cargo is invoked.
 
 ## OCI image
 
@@ -75,4 +76,4 @@ The OCI image supports only `linux/amd64` and runs as the non-root `polygon` use
 
 The initial source is `min-plane-dfx` commit `e4f3608878611c002f343473fab72adc7d155f87`. The translated Clipper2 material is identified in [NOTICE](NOTICE) and its complete BSL 1.0 text is in [LICENSES/clipper2-ts-BSL-1.0.txt](LICENSES/clipper2-ts-BSL-1.0.txt). Current legal hashes and release-candidate evidence requirements are documented in [migration-from-min-plane-dfx.md](docs/migration-from-min-plane-dfx.md).
 
-No package publication, OCI publication, or Azure deployment is claimed by this repository state. The embedded source engine must remain in the desktop application until the documented same-target parity, release-candidate, registry-delivery, Electron loading, and packaged-app gates all pass.
+The protected publication workflow delivers the verified package payload to GitHub Packages and npmjs and the verified runtime image to GHCR. No Azure deployment is claimed by this repository state. The embedded source engine must remain in the desktop application until the documented same-target parity, release-candidate, registry-delivery, Electron loading, and packaged-app gates all pass.

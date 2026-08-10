@@ -36,6 +36,7 @@ function makePackageFixture(root) {
   writeJson(join(packageRoot, 'package.json'), {
     name: '@jfet07-polygon-labs/polygon-nesting',
     version: '0.1.2',
+    publishConfig: { registry: 'https://npm.pkg.github.com' },
     main: 'npm/index.cjs',
     files: ['npm/index.cjs', 'npm/target.cjs', 'npm/*.node', 'NOTICE', 'LICENSES/**'],
     scripts: { test: 'node package-check.mjs' }
@@ -104,10 +105,59 @@ test('assembles both published native targets and verifies an offline candidate'
   const { assembleReleaseCandidate } = await loadModule('assemble-release-candidate.mjs')
   const { verifyReleaseCandidate } = await loadModule('verify-release-candidate.mjs')
   const release = await assembleReleaseCandidate(fixture)
-  assert.equal(release.schemaVersion, 3)
+  assert.equal(release.schemaVersion, 4)
   assert.equal(release.nativeArtifacts.length, 2)
   assert.equal('parityAggregate' in release, false)
+  assert.deepEqual(release.npmPackages.map(({ name, registry, version }) => ({ name, registry, version })), [
+    { name: '@jfet07-polygon-labs/polygon-nesting', registry: 'https://npm.pkg.github.com', version: '0.1.2' },
+    { name: '@jfet97/polygon-nesting', registry: 'https://registry.npmjs.org', version: '0.1.2' }
+  ])
+  assert.notEqual(release.npmPackages[0].tarball.sha256, release.npmPackages[1].tarball.sha256)
   await verifyReleaseCandidate({ candidateDirectory: fixture.outputDirectory, trustedSourceRoot: fixture.trustedSourceRoot })
+  const repeated = await assembleReleaseCandidate({ ...fixture, outputDirectory: join(fixture.root, 'candidate-repeat') })
+  assert.deepEqual(
+    repeated.npmPackages.map(({ packManifest, tarball }) => ({ packManifest: packManifest.sha256, tarball: tarball.sha256 })),
+    release.npmPackages.map(({ packManifest, tarball }) => ({ packManifest: packManifest.sha256, tarball: tarball.sha256 }))
+  )
+})
+
+test('dual package verifier accepts only manifest identity and registry differences', async (t) => {
+  const fixture = makeFixture(t)
+  const { assembleReleaseCandidate } = await loadModule('assemble-release-candidate.mjs')
+  const { comparePackagePayloads, validatePackageManifestPair } = await loadModule('verify-release-candidate.mjs')
+  const release = await assembleReleaseCandidate(fixture)
+  const [githubPackage, publicPackage] = release.npmPackages
+  const payloads = comparePackagePayloads({
+    candidateDirectory: fixture.outputDirectory,
+    packageRecords: release.npmPackages
+  })
+  assert.deepEqual(payloads.githubPayload, payloads.publicPayload)
+  assert.doesNotThrow(() => validatePackageManifestPair(
+    payloads.githubManifest,
+    payloads.publicManifest
+  ))
+  assert.throws(() => validatePackageManifestPair(
+    payloads.githubManifest,
+    { ...payloads.publicManifest, main: 'npm/other.cjs' }
+  ), /approved identity and registry differences/)
+  assert.notEqual(githubPackage.packManifest.sha256, publicPackage.packManifest.sha256)
+})
+
+test('dual package verifier rejects archive members outside package directory', async (t) => {
+  const fixture = makeFixture(t)
+  const { assembleReleaseCandidate } = await loadModule('assemble-release-candidate.mjs')
+  const { comparePackagePayloads } = await loadModule('verify-release-candidate.mjs')
+  const release = await assembleReleaseCandidate(fixture)
+  const publicTarball = join(fixture.outputDirectory, release.npmPackages[1].tarball.fileName)
+  const extraction = join(fixture.root, 'public-tarball')
+  mkdirSync(extraction)
+  execFileSync('tar', ['-xzf', publicTarball, '-C', extraction])
+  writeFileSync(join(extraction, 'unexpected.txt'), 'not part of the npm package\n')
+  execFileSync('tar', ['-czf', publicTarball, '-C', extraction, '.'])
+  assert.throws(() => comparePackagePayloads({
+    candidateDirectory: fixture.outputDirectory,
+    packageRecords: release.npmPackages
+  }), /outside package directory/)
 })
 
 test('release metadata resolves legal evidence from the selected source commit', async (t) => {
@@ -166,8 +216,8 @@ test('offline verification rejects a mutated candidate manifest', async (t) => {
   const fixture = makeFixture(t)
   const { assembleReleaseCandidate } = await loadModule('assemble-release-candidate.mjs')
   const { verifyReleaseCandidate } = await loadModule('verify-release-candidate.mjs')
-  await assembleReleaseCandidate(fixture)
-  const manifest = join(fixture.outputDirectory, 'npm-pack-manifest.json')
+  const release = await assembleReleaseCandidate(fixture)
+  const manifest = join(fixture.outputDirectory, release.npmPackages[0].packManifest.fileName)
   writeFileSync(manifest, `${readFileSync(manifest, 'utf8')} `)
   await assert.rejects(verifyReleaseCandidate({ candidateDirectory: fixture.outputDirectory, trustedSourceRoot: fixture.trustedSourceRoot }), /pack manifest SHA-256/)
 })

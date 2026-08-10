@@ -148,48 +148,70 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: '@jfet07-polygon-labs'
 
-      - name: Inspect immutable npm package version
-        id: npm-state
+      - name: Resolve verified npm candidates
+        run: |
+          set -euo pipefail
+          GITHUB_NPM_TARBALL="$(node --input-type=module -e "import {readFileSync} from 'node:fs'; import {basename,resolve} from 'node:path'; const release=JSON.parse(readFileSync('release-candidate/release.json','utf8')); const [githubPackage,publicPackage]=release.npmPackages??[]; if(githubPackage?.name!=='@jfet07-polygon-labs/polygon-nesting'||githubPackage?.version!=='0.1.2'||githubPackage?.registry!=='https://npm.pkg.github.com'||publicPackage?.name!=='@jfet97/polygon-nesting'||publicPackage?.version!=='0.1.2'||publicPackage?.registry!=='https://registry.npmjs.org'||basename(githubPackage.tarball?.fileName??'')!==githubPackage.tarball.fileName) throw new Error('dual npm release identity is invalid'); process.stdout.write(resolve('release-candidate',githubPackage.tarball.fileName))")"
+          PUBLIC_NPM_TARBALL="$(node --input-type=module -e "import {readFileSync} from 'node:fs'; import {basename,resolve} from 'node:path'; const release=JSON.parse(readFileSync('release-candidate/release.json','utf8')); const [githubPackage,publicPackage]=release.npmPackages??[]; if(basename(publicPackage?.tarball?.fileName??'')!==publicPackage.tarball.fileName) throw new Error('npmjs tarball path is invalid'); process.stdout.write(resolve('release-candidate',publicPackage.tarball.fileName))")"
+          test -f "$GITHUB_NPM_TARBALL"
+          test -f "$PUBLIC_NPM_TARBALL"
+          GITHUB_NPM_TARBALL="$GITHUB_NPM_TARBALL" PUBLIC_NPM_TARBALL="$PUBLIC_NPM_TARBALL" node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto'
+          import { readFileSync, writeFileSync } from 'node:fs'
+
+          for (const [path, output] of [[process.env.GITHUB_NPM_TARBALL, 'expected-github-npm-dist.json'], [process.env.PUBLIC_NPM_TARBALL, 'expected-public-npm-dist.json']]) {
+            const bytes = readFileSync(path)
+            writeFileSync(output, `${JSON.stringify({ shasum: createHash('sha1').update(bytes).digest('hex'), integrity: `sha512-${createHash('sha512').update(bytes).digest('base64')}` }, null, 2)}\n`)
+          }
+          NODE
+          printf 'GITHUB_NPM_TARBALL=%s\n' "$GITHUB_NPM_TARBALL" >> "$GITHUB_ENV"
+          printf 'PUBLIC_NPM_TARBALL=%s\n' "$PUBLIC_NPM_TARBALL" >> "$GITHUB_ENV"
+
+      - name: Inspect immutable GitHub Packages version
+        id: github-npm-state
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          NPM_TARBALL="$(node --input-type=module -e "import {readFileSync} from 'node:fs'; import {basename,resolve} from 'node:path'; const release=JSON.parse(readFileSync('release-candidate/release.json','utf8')); if(release.package?.name!=='@jfet07-polygon-labs/polygon-nesting'||release.package?.version!=='0.1.2'||basename(release.tarball?.fileName??'')!==release.tarball?.fileName) throw new Error('release npm identity is invalid'); process.stdout.write(resolve('release-candidate',release.tarball.fileName))")"
-          test -f "$NPM_TARBALL"
-          NPM_TARBALL="$NPM_TARBALL" node --input-type=module <<'NODE'
-          import { createHash } from 'node:crypto'
-          import { readFileSync, writeFileSync } from 'node:fs'
-
-          const bytes = readFileSync(process.env.NPM_TARBALL)
-          writeFileSync('expected-npm-dist.json', `${JSON.stringify({
-            shasum: createHash('sha1').update(bytes).digest('hex'),
-            integrity: `sha512-${createHash('sha512').update(bytes).digest('base64')}`
-          }, null, 2)}\n`)
-          NODE
           set +e
-          npm view "@jfet07-polygon-labs/polygon-nesting@0.1.2" --json --registry https://npm.pkg.github.com > npm-registry.json 2> npm-registry-error.log
+          npm view "@jfet07-polygon-labs/polygon-nesting@0.1.2" --json --registry https://npm.pkg.github.com > github-npm-registry.json 2> github-npm-registry-error.log
           view_status=$?
           set -e
           if [ "$view_status" -ne 0 ]; then
-            if grep -q 'E404' npm-registry-error.log; then
-              printf 'null\n' > npm-registry.json
-            else
-              cat npm-registry-error.log >&2
-              exit "$view_status"
-            fi
+            if grep -q 'E404' github-npm-registry-error.log; then printf 'null\n' > github-npm-registry.json; else cat github-npm-registry-error.log >&2; exit "$view_status"; fi
           fi
-          action="$(node --input-type=module <<'NODE'
+          action="$(EXPECTED=expected-github-npm-dist.json EXISTING=github-npm-registry.json node --input-type=module <<'NODE'
           import { readFileSync } from 'node:fs'
-
-          const expected = JSON.parse(readFileSync('expected-npm-dist.json', 'utf8'))
-          const existing = JSON.parse(readFileSync('npm-registry.json', 'utf8'))
+          const expected = JSON.parse(readFileSync(process.env.EXPECTED, 'utf8'))
+          const existing = JSON.parse(readFileSync(process.env.EXISTING, 'utf8'))
           if (existing === null) process.stdout.write('publish')
           else if (existing.dist?.shasum === expected.shasum && existing.dist?.integrity === expected.integrity) process.stdout.write('skip')
           else throw new Error('refusing to replace an existing npm version with different bytes')
           NODE
           )"
           printf 'action=%s\n' "$action" >> "$GITHUB_OUTPUT"
-          printf 'NPM_TARBALL=%s\n' "$NPM_TARBALL" >> "$GITHUB_ENV"
+
+      - name: Inspect immutable npmjs version
+        id: public-npm-state
+        run: |
+          set -euo pipefail
+          set +e
+          npm view "@jfet97/polygon-nesting@0.1.2" --json --registry https://registry.npmjs.org > public-npm-registry.json 2> public-npm-registry-error.log
+          view_status=$?
+          set -e
+          if [ "$view_status" -ne 0 ]; then
+            if grep -q 'E404' public-npm-registry-error.log; then printf 'null\n' > public-npm-registry.json; else cat public-npm-registry-error.log >&2; exit "$view_status"; fi
+          fi
+          action="$(EXPECTED=expected-public-npm-dist.json EXISTING=public-npm-registry.json node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
+          const expected = JSON.parse(readFileSync(process.env.EXPECTED, 'utf8'))
+          const existing = JSON.parse(readFileSync(process.env.EXISTING, 'utf8'))
+          if (existing === null) process.stdout.write('publish')
+          else if (existing.dist?.shasum === expected.shasum && existing.dist?.integrity === expected.integrity) process.stdout.write('skip')
+          else throw new Error('refusing to replace an existing npm version with different bytes')
+          NODE
+          )"
+          printf 'action=%s\n' "$action" >> "$GITHUB_OUTPUT"
 
       - name: Install skopeo
         run: |
@@ -237,43 +259,72 @@ jobs:
           printf 'MANIFEST_DIGEST=%s\n' "$MANIFEST_DIGEST" >> "$GITHUB_ENV"
           printf 'IMAGE_REF=%s\n' "$IMAGE_REF" >> "$GITHUB_ENV"
 
-      - name: Publish exact verified npm tarball
-        if: steps.npm-state.outputs.action == 'publish'
+      - name: Publish exact verified GitHub Packages tarball
+        if: steps.github-npm-state.outputs.action == 'publish'
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}
-        run: npm publish "$NPM_TARBALL" --ignore-scripts --registry https://npm.pkg.github.com
+        run: npm publish "$GITHUB_NPM_TARBALL" --ignore-scripts --registry https://npm.pkg.github.com
 
-      - name: Verify immutable npm package delivery
+      - name: Publish exact verified npmjs tarball
+        if: steps.public-npm-state.outputs.action == 'publish'
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > "$RUNNER_TEMP/npmjs-publish.npmrc"
+          chmod 0600 "$RUNNER_TEMP/npmjs-publish.npmrc"
+          NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/npmjs-publish.npmrc" npm publish "$PUBLIC_NPM_TARBALL" --ignore-scripts --registry https://registry.npmjs.org --access public
+
+      - name: Verify immutable GitHub Packages delivery
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          npm view "@jfet07-polygon-labs/polygon-nesting@0.1.2" --json --registry https://npm.pkg.github.com > published-npm-registry.json
-          node --input-type=module <<'NODE'
+          npm view "@jfet07-polygon-labs/polygon-nesting@0.1.2" --json --registry https://npm.pkg.github.com > published-github-npm-registry.json
+          EXPECTED=expected-github-npm-dist.json PUBLISHED=published-github-npm-registry.json node --input-type=module <<'NODE'
           import { readFileSync } from 'node:fs'
-
-          const expected = JSON.parse(readFileSync('expected-npm-dist.json', 'utf8'))
-          const published = JSON.parse(readFileSync('published-npm-registry.json', 'utf8'))
-          if (published.dist?.shasum !== expected.shasum || published.dist?.integrity !== expected.integrity) {
-            throw new Error('published npm package bytes differ from the verified release tarball')
-          }
+          const expected = JSON.parse(readFileSync(process.env.EXPECTED, 'utf8'))
+          const published = JSON.parse(readFileSync(process.env.PUBLISHED, 'utf8'))
+          if (published.dist?.shasum !== expected.shasum || published.dist?.integrity !== expected.integrity) throw new Error('published npm package bytes differ from the verified release tarball')
           NODE
-          delivery_root="$RUNNER_TEMP/npm-delivery"
+          delivery_root="$RUNNER_TEMP/github-npm-delivery"
           rm -rf "$delivery_root"
           mkdir -p "$delivery_root"
           printf '{"private":true}\n' > "$delivery_root/package.json"
-          (cd "$delivery_root" && npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet07-polygon-labs/polygon-nesting@0.1.2")
+          (cd "$delivery_root" && npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet07-polygon-labs/polygon-nesting@0.1.2" --registry https://npm.pkg.github.com)
           DELIVERY_ROOT="$delivery_root" node --input-type=module <<'NODE'
           import { readFileSync } from 'node:fs'
           import { createRequire } from 'node:module'
           import { join } from 'node:path'
-
           const load = createRequire(join(process.env.DELIVERY_ROOT, 'package.json'))
           const manifest = JSON.parse(readFileSync(join(process.env.DELIVERY_ROOT, 'node_modules/@jfet07-polygon-labs/polygon-nesting/package.json'), 'utf8'))
-          if (manifest.name !== '@jfet07-polygon-labs/polygon-nesting' || manifest.version !== '0.1.2') {
-            throw new Error('installed npm package identity is invalid')
-          }
+          if (manifest.name !== '@jfet07-polygon-labs/polygon-nesting' || manifest.version !== '0.1.2') throw new Error('installed npm package identity is invalid')
           load('@jfet07-polygon-labs/polygon-nesting')
+          NODE
+
+      - name: Verify immutable npmjs delivery
+        run: |
+          set -euo pipefail
+          npm view "@jfet97/polygon-nesting@0.1.2" --json --registry https://registry.npmjs.org > published-public-npm-registry.json
+          EXPECTED=expected-public-npm-dist.json PUBLISHED=published-public-npm-registry.json node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
+          const expected = JSON.parse(readFileSync(process.env.EXPECTED, 'utf8'))
+          const published = JSON.parse(readFileSync(process.env.PUBLISHED, 'utf8'))
+          if (published.dist?.shasum !== expected.shasum || published.dist?.integrity !== expected.integrity) throw new Error('published npm package bytes differ from the verified release tarball')
+          NODE
+          delivery_root="$RUNNER_TEMP/public-npm-delivery"
+          rm -rf "$delivery_root"
+          mkdir -p "$delivery_root"
+          printf '{"private":true}\n' > "$delivery_root/package.json"
+          (cd "$delivery_root" && npm install --ignore-scripts --no-audit --no-fund --save-exact "@jfet97/polygon-nesting@0.1.2" --registry https://registry.npmjs.org)
+          DELIVERY_ROOT="$delivery_root" node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
+          import { createRequire } from 'node:module'
+          import { join } from 'node:path'
+          const load = createRequire(join(process.env.DELIVERY_ROOT, 'package.json'))
+          const manifest = JSON.parse(readFileSync(join(process.env.DELIVERY_ROOT, 'node_modules/@jfet97/polygon-nesting/package.json'), 'utf8'))
+          if (manifest.name !== '@jfet97/polygon-nesting' || manifest.version !== '0.1.2') throw new Error('installed npm package identity is invalid')
+          load('@jfet97/polygon-nesting')
           NODE
 
       - name: Publish exact verified runtime image
@@ -308,9 +359,12 @@ jobs:
 
           const verification = JSON.parse(readFileSync('runtime-verification.json', 'utf8'))
           const release = JSON.parse(readFileSync('release-candidate/release.json', 'utf8'))
-          const npmDist = JSON.parse(readFileSync('expected-npm-dist.json', 'utf8'))
+          const npmPackages = release.npmPackages.map((item) => {
+            const npmDist = JSON.parse(readFileSync(item.key === 'github' ? 'expected-github-npm-dist.json' : 'expected-public-npm-dist.json', 'utf8'))
+            return { name: item.name, version: item.version, registry: item.registry, shasum: npmDist.shasum, integrity: npmDist.integrity }
+          })
           const evidence = {
-            schemaVersion: 1,
+            schemaVersion: 2,
             sourceRunId: process.env.RELEASE_RUN_ID,
             sourceCommit: process.env.SOURCE_COMMIT,
             archiveSha256: verification.archiveSha256,
@@ -318,13 +372,7 @@ jobs:
             tag: process.env.IMAGE_TAG,
             immutableImageReference: process.env.IMAGE_REF,
             postPublicationDigest: process.env.POST_PUBLICATION_DIGEST,
-            npmPackage: {
-              name: release.package.name,
-              version: release.package.version,
-              registry: 'https://npm.pkg.github.com',
-              shasum: npmDist.shasum,
-              integrity: npmDist.integrity
-            },
+            npmPackages,
             actor: process.env.GITHUB_ACTOR,
             repository: process.env.GITHUB_REPOSITORY,
             workflowRunId: process.env.GITHUB_RUN_ID,
