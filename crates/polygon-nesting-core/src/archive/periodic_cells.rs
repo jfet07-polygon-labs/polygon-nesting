@@ -118,7 +118,9 @@ use crate::domain::{
     IrregularTransform, IrregularTransformCandidate, TransformedCollisionGeometry,
 };
 use crate::geometry::convex::{bounds_for_points, translate_polygon_with_bounds};
-use crate::js_number::{cmp_js_code_units, js_math, number_to_js_string};
+use crate::js_number::{
+    canonical_bidirectional_cyclic_key, cmp_js_code_units, js_math, number_to_js_string,
+};
 use crate::nfp_ifp::{
     compute_nfp, nfp_checkpoint, ComputeNfpInput, NfpIfpCheckpointPhase, NfpIfpControl,
     NfpIfpControlAbortError,
@@ -1121,7 +1123,11 @@ pub fn canonical_periodic_cell_identity_control(
 ) -> Option<String> {
     let first = grid_point(IrregularPoint::new(v1.x, v1.y))?;
     let second = grid_point(IrregularPoint::new(v2.x, v2.y))?;
-    Some(canonical_cell_key(role, members, &(first, second)))
+    Some(canonical_cell_key(
+        role,
+        &canonical_cell_member_turn_keys(members),
+        &(first, second),
+    ))
 }
 
 /// TS: `periodicMemberDoubledAreaControl` (`CELLS:2241-2243`).
@@ -1165,6 +1171,17 @@ fn far_neighbor_certificate_grid(
     members: &[IntrinsicPeriodicBaseMember],
     basis: &(GridPoint, GridPoint),
 ) -> bool {
+    far_neighbor_certificate_from_maximum(&far_neighbor_maximum_distance_squared(members), basis)
+}
+
+/// The member-only half of the far-neighbor certificate: the maximum squared
+/// pairwise distance between world vertices. `None` when no member vertex
+/// survives grid conversion (the certificate is then vacuously `false`).
+/// Depends only on the members, never on the basis, so `derive_cells`
+/// computes it once per invocation and reuses it across basis candidates.
+fn far_neighbor_maximum_distance_squared(
+    members: &[IntrinsicPeriodicBaseMember],
+) -> Option<BigInt> {
     let mut vertices: Vec<GridPoint> = Vec::new();
     for member in members {
         let translation = match grid_point(member.point) {
@@ -1181,7 +1198,7 @@ fn far_neighbor_certificate_grid(
         }
     }
     if vertices.is_empty() {
-        return false;
+        return None;
     }
     let mut maximum_distance_squared = BigInt::from(0);
     for first in &vertices {
@@ -1194,12 +1211,22 @@ fn far_neighbor_certificate_grid(
             }
         }
     }
+    Some(maximum_distance_squared)
+}
+
+fn far_neighbor_certificate_from_maximum(
+    maximum_distance_squared: &Option<BigInt>,
+    basis: &(GridPoint, GridPoint),
+) -> bool {
+    let Some(maximum_distance_squared) = maximum_distance_squared else {
+        return false;
+    };
     let determinant = abs_bigint(&cross_grid(&basis.0, &basis.1));
     let f2 = &basis.0.x * &basis.0.x
         + &basis.0.y * &basis.0.y
         + &basis.1.x * &basis.1.x
         + &basis.1.y * &basis.1.y;
-    &(&BigInt::from(4) * &determinant) * &determinant > &maximum_distance_squared * &f2
+    &(&BigInt::from(4) * &determinant) * &determinant > maximum_distance_squared * &f2
 }
 
 // ===========================================================================
@@ -2350,6 +2377,14 @@ fn derive_cells(
             None,
         );
     }
+    // Member-only values, lazily computed on the first basis candidate that
+    // needs them and reused across the whole loop (they are provably
+    // independent of the basis and of the candidate source); fully-rejected
+    // derivations skip the work entirely.
+    let mut member_turn_keys: Option<[String; 4]> = None;
+    let mut far_neighbor_maximum: Option<Option<BigInt>> = None;
+    let mut member_doubled_area: Option<BigInt> = None;
+    let mut base_cell_shape: Option<Option<(f64, f64)>> = None;
     for candidate in bases {
         if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
             telemetry.record_basis_candidate();
@@ -2367,17 +2402,25 @@ fn derive_cells(
                 continue;
             }
         };
-        let infinite_far_proof = far_neighbor_certificate_grid(members, &canonical);
+        let infinite_far_proof = far_neighbor_certificate_from_maximum(
+            far_neighbor_maximum
+                .get_or_insert_with(|| far_neighbor_maximum_distance_squared(members)),
+            &canonical,
+        );
         if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
             telemetry.record_lattice_diagnosis_request(false);
         }
         let lattice = diagnose_lattice(members, &canonical)?;
         let determinant_grid2 = abs_bigint(&cross_grid(&canonical.0, &canonical.1));
-        let member_doubled_area_grid2 = members.iter().fold(BigInt::from(0), |sum, member| {
-            sum + polygon_area_grid2(&member.geometry, member.point)
-        });
-        let shape = match measure_base_cell_shape(members) {
-            Some(value) => value,
+        let member_doubled_area_grid2 = member_doubled_area
+            .get_or_insert_with(|| {
+                members.iter().fold(BigInt::from(0), |sum, member| {
+                    sum + polygon_area_grid2(&member.geometry, member.point)
+                })
+            })
+            .clone();
+        let shape = match base_cell_shape.get_or_insert_with(|| measure_base_cell_shape(members)) {
+            Some(value) => *value,
             None => {
                 reject(
                     &mut rejected,
@@ -2388,7 +2431,11 @@ fn derive_cells(
                 continue;
             }
         };
-        let canonical_key = canonical_cell_key(role, members, &canonical);
+        let canonical_key = canonical_cell_key(
+            role,
+            member_turn_keys.get_or_insert_with(|| canonical_cell_member_turn_keys(members)),
+            &canonical,
+        );
         result.push(IntrinsicPeriodicCell {
             role,
             family_key: family_key.to_string(),
@@ -3899,12 +3946,30 @@ fn canonical_transformed_polygon_key(geometry: &TransformedCollisionGeometry) ->
     canonical_cycle(&shifted)
 }
 
-/// TS: `canonicalCellKey` (`CELLS:2154-2201`).
-fn canonical_cell_key(
-    role: IntrinsicPeriodicRole,
-    members: &[IntrinsicPeriodicBaseMember],
-    basis: &(GridPoint, GridPoint),
-) -> String {
+/// TS: `canonicalCellKey`'s inner `rotate` lambda (`CELLS:2154-2201`).
+fn rotate_grid_quarter(point: &GridPoint, turn: u8) -> GridPoint {
+    match turn {
+        1 => GridPoint {
+            x: -&point.y,
+            y: point.x.clone(),
+        },
+        2 => GridPoint {
+            x: -&point.x,
+            y: -&point.y,
+        },
+        3 => GridPoint {
+            x: point.y.clone(),
+            y: -&point.x,
+        },
+        _ => point.clone(),
+    }
+}
+
+/// TS: `canonicalCellKey` (`CELLS:2154-2201`), member-identity half: one
+/// sorted, joined member string per quarter-turn. Depends only on the
+/// members (world polygons), never on the basis, so `derive_cells` computes
+/// it once per invocation and reuses it across every basis candidate.
+fn canonical_cell_member_turn_keys(members: &[IntrinsicPeriodicBaseMember]) -> [String; 4] {
     let world_polygons: Vec<Vec<GridPoint>> = members
         .iter()
         .map(|member| match grid_point(member.point) {
@@ -3924,31 +3989,15 @@ fn canonical_cell_key(
         })
         .collect();
 
-    let rotate = |point: &GridPoint, turn: u8| -> GridPoint {
-        match turn {
-            1 => GridPoint {
-                x: -&point.y,
-                y: point.x.clone(),
-            },
-            2 => GridPoint {
-                x: -&point.x,
-                y: -&point.y,
-            },
-            3 => GridPoint {
-                x: point.y.clone(),
-                y: -&point.x,
-            },
-            _ => point.clone(),
-        }
-    };
-
-    let mut variants: Vec<String> = Vec::new();
-    for turn in 0..4u8 {
-        let first = rotate(&basis.0, turn);
-        let second = rotate(&basis.1, turn);
+    [0u8, 1, 2, 3].map(|turn| {
         let rotated_polygons: Vec<Vec<GridPoint>> = world_polygons
             .iter()
-            .map(|polygon| polygon.iter().map(|point| rotate(point, turn)).collect())
+            .map(|polygon| {
+                polygon
+                    .iter()
+                    .map(|point| rotate_grid_quarter(point, turn))
+                    .collect()
+            })
             .collect();
         let all: Vec<&GridPoint> = rotated_polygons.iter().flatten().collect();
         let min_x = all
@@ -3977,7 +4026,23 @@ fn canonical_cell_key(
             })
             .collect();
         member_keys.sort_by(|first, second| cmp_js_code_units(first, second));
-        let member_key = member_keys.join("|");
+        member_keys.join("|")
+    })
+}
+
+/// TS: `canonicalCellKey` (`CELLS:2154-2201`), per-basis half: assembles the
+/// 8 role-agnostic variants from the precomputed member turn keys plus the
+/// rotated basis vectors and keeps the code-unit minimum.
+fn canonical_cell_key(
+    role: IntrinsicPeriodicRole,
+    member_turn_keys: &[String; 4],
+    basis: &(GridPoint, GridPoint),
+) -> String {
+    let mut variants: Vec<String> = Vec::new();
+    for turn in 0..4u8 {
+        let first = rotate_grid_quarter(&basis.0, turn);
+        let second = rotate_grid_quarter(&basis.1, turn);
+        let member_key = &member_turn_keys[turn as usize];
         variants.push(format!(
             "{}:{},{};{},{}",
             member_key, first.x, first.y, second.x, second.y
@@ -3995,23 +4060,15 @@ fn canonical_cell_key(
     )
 }
 
-/// TS: `canonicalCycle` (`CELLS:2217-2226`).
+/// TS: `canonicalCycle` (`CELLS:2217-2226`). Each coordinate token is
+/// rendered exactly once; the winning bidirectional rotation is selected by
+/// virtual code-unit comparison and only that winner is materialized.
 fn canonical_cycle(points: &[GridPoint]) -> String {
-    let mut variants: Vec<String> = Vec::new();
-    let reversed: Vec<GridPoint> = points.iter().rev().cloned().collect();
-    for sequence in [points.to_vec(), reversed] {
-        let length = sequence.len();
-        for offset in 0..length {
-            let mut rendered: Vec<String> = Vec::with_capacity(length);
-            for k in 0..length {
-                let point = &sequence[(offset + k) % length];
-                rendered.push(format!("{},{}", point.x, point.y));
-            }
-            variants.push(rendered.join(";"));
-        }
-    }
-    variants.sort_by(|first, second| cmp_js_code_units(first, second));
-    variants.into_iter().next().unwrap_or_default()
+    let tokens: Vec<String> = points
+        .iter()
+        .map(|point| format!("{},{}", point.x, point.y))
+        .collect();
+    canonical_bidirectional_cyclic_key(&tokens)
 }
 
 fn polygon_area_grid2(geometry: &TransformedCollisionGeometry, point: IrregularPoint) -> BigInt {
@@ -4169,7 +4226,424 @@ pub fn rank_intrinsic_periodic_cells(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::{DxfArcSegment, DxfEllipseSource, DxfEllipseSourceKind, DxfLineSegment};
+    use crate::domain::{
+        CollisionGeometry, DxfArcSegment, DxfEllipseSource, DxfEllipseSourceKind,
+        DxfGeometrySummary, DxfLineSegment, ImportedPiece, IrregularBounds, IrregularPolygon,
+        IrregularTransformReason, PieceId, Rect, SourceFileId,
+    };
+
+    // -----------------------------------------------------------------------
+    // Naive oracle for `canonical_cell_key`: a verbatim copy of the
+    // pre-optimization single-pass implementation (member identity strings
+    // recomputed for every basis, `canonical_cycle` materializing all 2n
+    // rotation strings). The production implementation must stay
+    // byte-for-byte equal to this oracle for every input.
+    // -----------------------------------------------------------------------
+
+    fn oracle_canonical_cycle(points: &[GridPoint]) -> String {
+        let mut variants: Vec<String> = Vec::new();
+        let reversed: Vec<GridPoint> = points.iter().rev().cloned().collect();
+        for sequence in [points.to_vec(), reversed] {
+            let length = sequence.len();
+            for offset in 0..length {
+                let mut rendered: Vec<String> = Vec::with_capacity(length);
+                for k in 0..length {
+                    let point = &sequence[(offset + k) % length];
+                    rendered.push(format!("{},{}", point.x, point.y));
+                }
+                variants.push(rendered.join(";"));
+            }
+        }
+        variants.sort_by(|first, second| cmp_js_code_units(first, second));
+        variants.into_iter().next().unwrap_or_default()
+    }
+
+    fn oracle_canonical_cell_key(
+        role: IntrinsicPeriodicRole,
+        members: &[IntrinsicPeriodicBaseMember],
+        basis: &(GridPoint, GridPoint),
+    ) -> String {
+        let world_polygons: Vec<Vec<GridPoint>> = members
+            .iter()
+            .map(|member| match grid_point(member.point) {
+                None => Vec::new(),
+                Some(translation) => member
+                    .geometry
+                    .polygon
+                    .points
+                    .iter()
+                    .filter_map(|vertex| {
+                        grid_point(*vertex).map(|local| GridPoint {
+                            x: &local.x + &translation.x,
+                            y: &local.y + &translation.y,
+                        })
+                    })
+                    .collect(),
+            })
+            .collect();
+
+        let rotate = |point: &GridPoint, turn: u8| -> GridPoint {
+            match turn {
+                1 => GridPoint {
+                    x: -&point.y,
+                    y: point.x.clone(),
+                },
+                2 => GridPoint {
+                    x: -&point.x,
+                    y: -&point.y,
+                },
+                3 => GridPoint {
+                    x: point.y.clone(),
+                    y: -&point.x,
+                },
+                _ => point.clone(),
+            }
+        };
+
+        let mut variants: Vec<String> = Vec::new();
+        for turn in 0..4u8 {
+            let first = rotate(&basis.0, turn);
+            let second = rotate(&basis.1, turn);
+            let rotated_polygons: Vec<Vec<GridPoint>> = world_polygons
+                .iter()
+                .map(|polygon| polygon.iter().map(|point| rotate(point, turn)).collect())
+                .collect();
+            let all: Vec<&GridPoint> = rotated_polygons.iter().flatten().collect();
+            let min_x = all
+                .iter()
+                .map(|point| &point.x)
+                .min()
+                .cloned()
+                .unwrap_or_else(|| BigInt::from(0));
+            let min_y = all
+                .iter()
+                .map(|point| &point.y)
+                .min()
+                .cloned()
+                .unwrap_or_else(|| BigInt::from(0));
+            let mut member_keys: Vec<String> = rotated_polygons
+                .iter()
+                .map(|polygon| {
+                    let shifted: Vec<GridPoint> = polygon
+                        .iter()
+                        .map(|point| GridPoint {
+                            x: &point.x - &min_x,
+                            y: &point.y - &min_y,
+                        })
+                        .collect();
+                    oracle_canonical_cycle(&shifted)
+                })
+                .collect();
+            member_keys.sort_by(|first, second| cmp_js_code_units(first, second));
+            let member_key = member_keys.join("|");
+            variants.push(format!(
+                "{}:{},{};{},{}",
+                member_key, first.x, first.y, second.x, second.y
+            ));
+            variants.push(format!(
+                "{}:{},{};{},{}",
+                member_key, second.x, second.y, first.x, first.y
+            ));
+        }
+        variants.sort_by(|first, second| cmp_js_code_units(first, second));
+        format!(
+            "{}:{}",
+            role.as_str(),
+            variants.into_iter().next().unwrap_or_default()
+        )
+    }
+
+    fn key_test_member(
+        points: &[(f64, f64)],
+        translation: (f64, f64),
+    ) -> IntrinsicPeriodicBaseMember {
+        let polygon_points: Vec<IrregularPoint> = points
+            .iter()
+            .map(|(x, y)| IrregularPoint::new(*x, *y))
+            .collect();
+        let polygon = IrregularPolygon::new(polygon_points.clone());
+        let bounds = bounds_for_points(&polygon_points)
+            .unwrap_or_else(|| IrregularBounds::new(0.0, 0.0, 0.0, 0.0));
+        let piece_id = PieceId::new("key-test-piece");
+        let piece = IrregularPreparedPiece {
+            piece_id: Some(piece_id.clone()),
+            interchangeability_key: None,
+            source: ImportedPiece {
+                id: piece_id.clone(),
+                source_file_id: SourceFileId::new("key-test-source"),
+                source_layer: None,
+                label: "key-test".to_string(),
+                real_bounds: Rect {
+                    x: 0.0,
+                    y: 0.0,
+                    width: 1.0,
+                    height: 1.0,
+                },
+                geometry: DxfGeometrySummary {
+                    entity_type: DxfGeometryEntityType::PresetShape,
+                    closed: true,
+                    segments: vec![],
+                },
+                warnings: vec![],
+            },
+            allow_mirror: false,
+            collision_geometry: CollisionGeometry {
+                source_piece_id: piece_id.clone(),
+                source_bounds: bounds,
+                sampled_points: polygon_points.clone(),
+                convex_hull: polygon.clone(),
+                collision_polygon: polygon.clone(),
+                placement_reference: IrregularPoint::new(0.0, 0.0),
+                diagnostics: vec![],
+            },
+            transforms: vec![],
+            priority_order_key: None,
+        };
+        IntrinsicPeriodicBaseMember {
+            piece: Arc::new(piece),
+            geometry: TransformedCollisionGeometry {
+                source_piece_id: piece_id,
+                transform: IrregularTransformCandidate {
+                    index: 0.0,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    reason: IrregularTransformReason::Orthogonal,
+                },
+                polygon,
+                bounds,
+            },
+            point: IrregularPoint::new(translation.0, translation.1),
+        }
+    }
+
+    fn grid_basis(v1: (i64, i64), v2: (i64, i64)) -> (GridPoint, GridPoint) {
+        (
+            GridPoint {
+                x: BigInt::from(v1.0),
+                y: BigInt::from(v1.1),
+            },
+            GridPoint {
+                x: BigInt::from(v2.0),
+                y: BigInt::from(v2.1),
+            },
+        )
+    }
+
+    /// Naive oracle for the far-neighbor certificate: the pre-optimization
+    /// implementation copied verbatim, recomputing the member vertex set and
+    /// maximum pairwise distance for every basis.
+    fn oracle_far_neighbor_certificate_grid(
+        members: &[IntrinsicPeriodicBaseMember],
+        basis: &(GridPoint, GridPoint),
+    ) -> bool {
+        let mut vertices: Vec<GridPoint> = Vec::new();
+        for member in members {
+            let translation = match grid_point(member.point) {
+                Some(value) => value,
+                None => continue,
+            };
+            for vertex in &member.geometry.polygon.points {
+                if let Some(local) = grid_point(*vertex) {
+                    vertices.push(GridPoint {
+                        x: &local.x + &translation.x,
+                        y: &local.y + &translation.y,
+                    });
+                }
+            }
+        }
+        if vertices.is_empty() {
+            return false;
+        }
+        let mut maximum_distance_squared = BigInt::from(0);
+        for first in &vertices {
+            for second in &vertices {
+                let dx = &first.x - &second.x;
+                let dy = &first.y - &second.y;
+                let distance = &dx * &dx + &dy * &dy;
+                if distance > maximum_distance_squared {
+                    maximum_distance_squared = distance;
+                }
+            }
+        }
+        let determinant = abs_bigint(&cross_grid(&basis.0, &basis.1));
+        let f2 = &basis.0.x * &basis.0.x
+            + &basis.0.y * &basis.0.y
+            + &basis.1.x * &basis.1.x
+            + &basis.1.y * &basis.1.y;
+        &(&BigInt::from(4) * &determinant) * &determinant > &maximum_distance_squared * &f2
+    }
+
+    #[test]
+    fn far_neighbor_certificate_matches_naive_oracle() {
+        let square = [(0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0)];
+        let scalene = [(0.0, 0.0), (5.0, 0.0), (6.5, 2.5), (2.0, 4.0)];
+        let member_sets: Vec<Vec<IntrinsicPeriodicBaseMember>> = vec![
+            vec![key_test_member(&square, (0.0, 0.0))],
+            vec![
+                key_test_member(&square, (0.0, 0.0)),
+                key_test_member(&square, (10.0, 0.0)),
+            ],
+            vec![
+                key_test_member(&scalene, (-7.0, -3.0)),
+                key_test_member(&square, (20.0, 1.0)),
+            ],
+            // Non-finite member point: no vertex survives grid conversion,
+            // so the certificate must stay `false` for every basis.
+            vec![key_test_member(&square, (f64::NAN, 0.0))],
+        ];
+        // Small and huge bases straddle the 4·det² > max_dist²·f2 boundary.
+        let bases = [
+            grid_basis((10_000, 0), (0, 10_000)),
+            grid_basis((100_000, 0), (0, 100_000)),
+            grid_basis((-25_000, 3), (17, 25_000)),
+            grid_basis((1, 2), (3, 4)),
+        ];
+        for (set_index, members) in member_sets.iter().enumerate() {
+            // Mirror `derive_cells`' reuse pattern: the member-only maximum
+            // computed lazily once, reused across every basis.
+            let mut far_neighbor_maximum: Option<Option<BigInt>> = None;
+            for (basis_index, basis) in bases.iter().enumerate() {
+                assert_eq!(
+                    far_neighbor_certificate_from_maximum(
+                        far_neighbor_maximum
+                            .get_or_insert_with(|| far_neighbor_maximum_distance_squared(members)),
+                        basis,
+                    ),
+                    oracle_far_neighbor_certificate_grid(members, basis),
+                    "member set {set_index}, basis {basis_index}",
+                );
+                // The un-hoisted public composition must agree as well.
+                assert_eq!(
+                    far_neighbor_certificate_grid(members, basis),
+                    oracle_far_neighbor_certificate_grid(members, basis),
+                    "member set {set_index}, basis {basis_index} (direct)",
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn canonical_cycle_matches_materializing_oracle() {
+        let ring = |coordinates: &[(i64, i64)]| -> Vec<GridPoint> {
+            coordinates
+                .iter()
+                .map(|(x, y)| GridPoint {
+                    x: BigInt::from(*x),
+                    y: BigInt::from(*y),
+                })
+                .collect()
+        };
+        let huge = "123456789012345678901234567890";
+        let mut cases: Vec<Vec<GridPoint>> = vec![
+            ring(&[]),
+            ring(&[(7, -3)]),
+            ring(&[(0, 0), (1, 0), (1, 1), (0, 1)]),
+            ring(&[(2, 2), (2, 2), (2, 2)]),
+            // Prefix hazards and mixed digit widths.
+            ring(&[(1, 2), (1, 20), (12, 0), (120, 0)]),
+            ring(&[(-10, 0), (0, -10), (10, 0), (0, 10)]),
+            ring(&[(0, 0), (-1, -1), (1, 1), (-1, 1), (1, -1)]),
+        ];
+        cases.push(vec![
+            GridPoint {
+                x: huge.parse::<BigInt>().expect("huge coordinate"),
+                y: -huge.parse::<BigInt>().expect("huge coordinate"),
+            },
+            GridPoint {
+                x: BigInt::from(1),
+                y: huge.parse::<BigInt>().expect("huge coordinate"),
+            },
+            GridPoint {
+                x: -huge.parse::<BigInt>().expect("huge coordinate"),
+                y: BigInt::from(0),
+            },
+        ]);
+        // Deterministically generated rings (fixed linear-congruential
+        // sequence) over a small coordinate range rich in shared prefixes.
+        let mut state: u64 = 0x9E3779B97F4A7C15;
+        for ring_length in 0..=8usize {
+            let mut generated: Vec<GridPoint> = Vec::with_capacity(ring_length);
+            for _ in 0..ring_length {
+                state = state
+                    .wrapping_mul(6364136223846793005)
+                    .wrapping_add(1442695040888963407);
+                let x = ((state >> 33) % 41) as i64 - 20;
+                state = state
+                    .wrapping_mul(6364136223846793005)
+                    .wrapping_add(1442695040888963407);
+                let y = ((state >> 33) % 41) as i64 - 20;
+                generated.push(GridPoint {
+                    x: BigInt::from(x * 10),
+                    y: BigInt::from(y * 10),
+                });
+            }
+            cases.push(generated);
+        }
+        for (index, case) in cases.iter().enumerate() {
+            assert_eq!(
+                canonical_cycle(case),
+                oracle_canonical_cycle(case),
+                "ring case {index}",
+            );
+        }
+    }
+
+    #[test]
+    fn canonical_cell_key_matches_naive_oracle_across_roles_members_and_bases() {
+        let square = [(0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0)];
+        let rectangle = [(0.0, 0.0), (7.0, 0.0), (7.0, 3.0), (0.0, 3.0)];
+        // Asymmetric convex ring: no rotational symmetry, exercises distinct
+        // member keys per quarter-turn.
+        let scalene = [(0.0, 0.0), (5.0, 0.0), (6.5, 2.5), (2.0, 4.0)];
+        // Snapped sub-millimetre coordinates: multi-digit grid integers with
+        // differing digit widths (prefix hazards inside token streams).
+        let snapped = [(0.001, 0.002), (12.4, 0.02), (12.402, 9.998), (0.1, 10.0)];
+
+        let member_sets: Vec<Vec<IntrinsicPeriodicBaseMember>> = vec![
+            vec![key_test_member(&square, (0.0, 0.0))],
+            vec![key_test_member(&scalene, (2.0, 3.0))],
+            vec![
+                key_test_member(&square, (0.0, 0.0)),
+                key_test_member(&square, (10.0, 0.0)),
+            ],
+            vec![
+                key_test_member(&rectangle, (-7.0, -3.0)),
+                key_test_member(&scalene, (20.0, 1.0)),
+            ],
+            vec![
+                key_test_member(&snapped, (0.0, 0.0)),
+                key_test_member(&snapped, (12.402, 0.0)),
+            ],
+            // Non-finite member point: the world polygon degrades to the
+            // empty ring and the key must keep using the documented zero
+            // fallback for the min-shift.
+            vec![key_test_member(&square, (f64::NAN, 0.0))],
+        ];
+        let bases = [
+            grid_basis((10_000, 0), (0, 10_000)),
+            grid_basis((0, 10_000), (10_000, 0)),
+            grid_basis((-10_000, 0), (0, -10_000)),
+            grid_basis((12_402, -20), (17, 9_998)),
+            grid_basis((1, 2), (3, 4)),
+        ];
+
+        for (set_index, members) in member_sets.iter().enumerate() {
+            for role in [IntrinsicPeriodicRole::P1, IntrinsicPeriodicRole::P2] {
+                // Mirror `derive_cells`' actual reuse pattern: member turn
+                // keys computed lazily once, reused across every basis.
+                let mut member_turn_keys: Option<[String; 4]> = None;
+                for (basis_index, basis) in bases.iter().enumerate() {
+                    let turn_keys = member_turn_keys
+                        .get_or_insert_with(|| canonical_cell_member_turn_keys(members));
+                    assert_eq!(
+                        canonical_cell_key(role, turn_keys, basis),
+                        oracle_canonical_cell_key(role, members, basis),
+                        "member set {set_index}, role {role:?}, basis {basis_index}",
+                    );
+                }
+            }
+        }
+    }
 
     #[test]
     fn regular_line_polygon_rejects_bulged_and_curve_preview_segments() {
