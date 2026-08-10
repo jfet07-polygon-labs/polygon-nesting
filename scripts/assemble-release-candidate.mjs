@@ -7,8 +7,10 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import target from '../packages/polygon-nesting/npm/target.cjs'
 import { validatePackageContents } from '../packages/polygon-nesting/scripts/build-native.mjs'
+import { validateReleaseVersion } from './release-version.mjs'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
+const RELEASE_VERSION = validateReleaseVersion(ROOT)
 const PACKAGE_ROOT = join(ROOT, 'packages/polygon-nesting')
 const PACKAGE_DESTINATIONS = [
   { key: 'github', name: '@jfet07-polygon-labs/polygon-nesting', registry: 'https://npm.pkg.github.com' },
@@ -105,7 +107,7 @@ function packageReleaseRecord({ destination, outputDirectory, packageRoot, execu
     const manifestPath = join(stagingPackage, 'package.json')
     const manifest = json(manifestPath, 'package manifest')
     equal(manifest.name, PACKAGE_DESTINATIONS[0].name, 'source package name')
-    equal(manifest.version, '0.1.3', 'source package version')
+    equal(manifest.version, RELEASE_VERSION, 'source package version')
     equal(manifest.publishConfig?.registry, PACKAGE_DESTINATIONS[0].registry, 'source package registry')
     manifest.name = destination.name
     manifest.publishConfig = { ...manifest.publishConfig, registry: destination.registry }
@@ -119,7 +121,7 @@ function packageReleaseRecord({ destination, outputDirectory, packageRoot, execu
     if (!Array.isArray(records) || records.length !== 1) throw new Error(`npm pack must return exactly one record for ${destination.key}`)
     const record = records[0]
     equal(record.name, destination.name, `${destination.key} npm pack name`)
-    equal(record.version, '0.1.3', `${destination.key} npm pack version`)
+    equal(record.version, RELEASE_VERSION, `${destination.key} npm pack version`)
     validatePackageContents(record.files.map(({ path }) => path).sort(), { requireAllTargets: true })
     const packManifestFileName = `npm-pack-manifest-${destination.key}.json`
     writeJson(join(outputDirectory, packManifestFileName), record)
@@ -142,7 +144,7 @@ function packageReleaseRecord({ destination, outputDirectory, packageRoot, execu
 
 export function renderReleaseNotes(release) {
   return [
-    '# Polygon Nesting 0.1.3 Release Candidate',
+    `# Polygon Nesting ${RELEASE_VERSION} Release Candidate`,
     '',
     `Source commit: \`${release.sourceCommit}\``,
     '',

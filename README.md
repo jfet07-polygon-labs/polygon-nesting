@@ -66,7 +66,7 @@ It requires semantic equivalence after the documented normalization and smaller 
 
 ## N-API package
 
-The same prebuilt addon payload is published in two packages at version `0.1.3`: `@jfet07-polygon-labs/polygon-nesting` on GitHub Packages and `@jfet97/polygon-nesting` on npmjs. Both packages include only Linux x64 and macOS arm64 addons. Windows x64 remains available for local and manual builds but is not published. The loader retains the desktop alias `irregular-nesting-native` and selects `irregular-nesting-native.<platform>-<arch>.node`. Unsupported targets fail before Cargo is invoked.
+The same prebuilt addon payload is published in two packages at the canonical workspace version from `Cargo.toml`: `@jfet07-polygon-labs/polygon-nesting` on GitHub Packages and `@jfet97/polygon-nesting` on npmjs. Run `node scripts/release-version.mjs --sync` after changing that single version source; CI rejects unsynchronized npm or lock metadata. Both packages include only Linux x64 and macOS arm64 addons. Windows x64 remains available for local and manual builds but is not published. The loader retains the desktop alias `irregular-nesting-native` and selects `irregular-nesting-native.<platform>-<arch>.node`. Unsupported targets fail before Cargo is invoked.
 
 ## OCI image
 

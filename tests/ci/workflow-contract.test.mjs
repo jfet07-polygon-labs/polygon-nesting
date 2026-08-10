@@ -171,10 +171,12 @@ function assertReleaseTriggerContract(workflow) {
     '        type: string',
     '  push:',
     '    tags:',
-    '      - v0.1.3',
+    "      - 'v*'",
     '',
     ''
-  ].join('\n'), 'release triggers must remain limited to manual dispatch and the exact release tag')
+  ].join('\n'), 'release triggers must remain limited to manual dispatch and version tags')
+  assert.match(workflow, /path: 'Cargo\.toml'/)
+  assert.match(workflow, /tagName !== `v\$\{version\}`/)
 }
 
 function assertStandaloneParityTriggerContract(workflow) {
@@ -507,14 +509,17 @@ test('main CI builds runtime once, release reuses it, and publication consumes o
   assert.match(publish, /registry-url: https:\/\/npm\.pkg\.github\.com/)
   assert.match(publish, /npm publish "\$GITHUB_NPM_TARBALL" --ignore-scripts --registry https:\/\/npm\.pkg\.github\.com/)
   assert.match(publish, /npm publish "\$PUBLIC_NPM_TARBALL" --ignore-scripts --registry https:\/\/registry\.npmjs\.org/)
-  assert.match(publish, /npm view "@jfet07-polygon-labs\/polygon-nesting@0\.1\.3" --json --registry https:\/\/npm\.pkg\.github\.com/)
-  assert.match(publish, /npm view "@jfet97\/polygon-nesting@0\.1\.3" --json --registry https:\/\/registry\.npmjs\.org/)
+  assert.match(publish, /npm view "@jfet07-polygon-labs\/polygon-nesting@\$RELEASE_VERSION" --json --registry https:\/\/npm\.pkg\.github\.com/)
+  assert.match(publish, /npm view "@jfet97\/polygon-nesting@\$RELEASE_VERSION" --json --registry https:\/\/registry\.npmjs\.org/)
+  assert.match(publish, /RELEASE_VERSION=.*release\.npmPackages\[0\]\.version/)
+  assert.match(publish, /IMAGE_TAG=%s:%s/)
+  assert.doesNotMatch(publish, /\(\?:\\\+\[0-9A-Za-z.-\]\+\)\?/, 'release versions used as OCI tags must reject build metadata')
   assert.match(publish, /NPM_TOKEN: \$\{\{ secrets\.NPM_TOKEN \}\}/)
   assert.match(publish, /\/\/registry\.npmjs\.org\/:_authToken=\$\{NPM_TOKEN\}/)
   assert.match(publish, /NPM_CONFIG_USERCONFIG="\$RUNNER_TEMP\/npmjs-publish\.npmrc" npm publish/)
   assert.doesNotMatch(publish, /NODE_AUTH_TOKEN: \$\{\{ secrets\.NPM_TOKEN \}\}/)
   assert.match(publish, /docker pull "\$IMAGE_REF"/)
-  assert.match(publish, /run: >-\n\s+"\$RUNNER_TEMP\/trusted-publication-verifier\/scripts\/smoke-cli-image\.sh"\n\s+"\$IMAGE_REF"/)
+  assert.match(publish, /run: >-\n\s+"\$RUNNER_TEMP\/trusted-publication-verifier\/scripts\/smoke-cli-image\.sh"\n\s+"\$IMAGE_REF"\n\s+"\$RELEASE_VERSION"/)
   assert.doesNotMatch(publish, /run: scripts\/smoke-cli-image\.sh "\$IMAGE_REF"/)
   assert.match(publish, /publication-evidence\.json/)
   for (const field of ['sourceRunId', 'sourceCommit', 'archiveSha256', 'manifestDigest', 'tag', 'immutableImageReference', 'postPublicationDigest', 'npmPackages', '@jfet07-polygon-labs/polygon-nesting', '@jfet97/polygon-nesting', 'https://npm.pkg.github.com', 'https://registry.npmjs.org', 'actor', 'repository', 'workflowRunId', 'timestamp', 'smoke']) {
@@ -547,7 +552,7 @@ test('workflow contracts reject mutable triggers, target roots, and image refere
     /release triggers/
   )
   assert.throws(
-    () => assertReleaseTriggerContract(release.replace('      - v0.1.3', '      - v0.1.3\n      - v*')),
+    () => assertReleaseTriggerContract(release.replace("      - 'v*'", "      - 'v*'\n      - latest")),
     /release triggers/
   )
   assert.throws(

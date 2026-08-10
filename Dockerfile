@@ -90,7 +90,7 @@ FROM debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bb
 ARG ENGINE_VERSION
 ARG SOURCE_COMMIT
 RUN test -n "$ENGINE_VERSION" \
-    && test "$ENGINE_VERSION" = "0.1.3" \
+    && printf '%s' "$ENGINE_VERSION" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$' \
     && test -n "$SOURCE_COMMIT" \
     && test "$SOURCE_COMMIT" != "unknown"
 LABEL org.opencontainers.image.title="polygon-nesting" \

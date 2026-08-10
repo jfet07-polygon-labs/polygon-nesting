@@ -3,12 +3,15 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, relative, resolve, sep } from 'node:path'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import target from '../packages/polygon-nesting/npm/target.cjs'
 import { validatePackageContents } from '../packages/polygon-nesting/scripts/build-native.mjs'
 import { PACKAGE_DESTINATIONS, renderReleaseNotes, stable } from './assemble-release-candidate.mjs'
+import { validateReleaseVersion } from './release-version.mjs'
 
+const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
+const RELEASE_VERSION = validateReleaseVersion(ROOT)
 const SHA = /^[a-f0-9]{64}$/
 const DIGEST = /^sha256:[a-f0-9]{64}$/
 const hash = (path) => createHash('sha256').update(readFileSync(path)).digest('hex')
@@ -74,7 +77,7 @@ export function validateReleaseMetadata(release, trustedSourceRoot) {
     exactKeys(packageRecord, ['key', 'name', 'packManifest', 'packedFiles', 'registry', 'tarball', 'version'], `${destination.key} npm package`)
     equal(packageRecord.key, destination.key, `${destination.key} npm package key`)
     equal(packageRecord.name, destination.name, `${destination.key} npm package name`)
-    equal(packageRecord.version, '0.1.3', `${destination.key} npm package version`)
+    equal(packageRecord.version, RELEASE_VERSION, `${destination.key} npm package version`)
     equal(packageRecord.registry, destination.registry, `${destination.key} npm package registry`)
     exactKeys(packageRecord.packManifest, ['fileName', 'sha256'], `${destination.key} pack manifest`)
     exactKeys(packageRecord.tarball, ['fileName', 'sha256'], `${destination.key} tarball`)
@@ -115,8 +118,8 @@ function extractTarball(tarball, execute) {
 export function validatePackageManifestPair(githubManifest, publicManifest) {
   equal(githubManifest.name, PACKAGE_DESTINATIONS[0].name, 'GitHub Packages manifest name')
   equal(publicManifest.name, PACKAGE_DESTINATIONS[1].name, 'npmjs manifest name')
-  equal(githubManifest.version, '0.1.3', 'GitHub Packages manifest version')
-  equal(publicManifest.version, '0.1.3', 'npmjs manifest version')
+  equal(githubManifest.version, RELEASE_VERSION, 'GitHub Packages manifest version')
+  equal(publicManifest.version, RELEASE_VERSION, 'npmjs manifest version')
   equal(githubManifest.publishConfig?.registry, PACKAGE_DESTINATIONS[0].registry, 'GitHub Packages manifest registry')
   equal(publicManifest.publishConfig?.registry, PACKAGE_DESTINATIONS[1].registry, 'npmjs manifest registry')
   const normalizedPublic = structuredClone(publicManifest)
@@ -256,7 +259,7 @@ export async function verifyReleaseCandidate({ candidateDirectory, trustedSource
     for (const [key, value] of Object.entries({
       'org.opencontainers.image.title': 'polygon-nesting',
       'org.opencontainers.image.source': 'https://github.com/jfet07-polygon-labs/polygon-nesting',
-      'org.opencontainers.image.version': '0.1.3',
+      'org.opencontainers.image.version': RELEASE_VERSION,
       'org.opencontainers.image.revision': release.sourceCommit,
       'org.opencontainers.image.licenses': 'NOASSERTION'
     })) equal(evidence.labels?.[key], value, `OCI label ${key}`)
