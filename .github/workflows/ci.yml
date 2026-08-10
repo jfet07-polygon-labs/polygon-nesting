@@ -18,7 +18,7 @@ permissions:
 jobs:
   quality:
     name: Quality checks
-    runs-on: blacksmith-2vcpu-ubuntu-2404
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     # This separately verified digest is contract-equivalent to the root ci target, not claimed byte-identical.
     container: ghcr.io/jfet07-polygon-labs/polygon-nesting-ci@sha256:66a7ca95c13074714135ad840465834e60797ddd45d13d130e0e5c6077b950f3
     steps:
@@ -40,7 +40,7 @@ jobs:
         run: cargo clippy --workspace --all-targets --release --locked -- -D warnings
       - name: Test release workspace
         run: cargo test --workspace --release --locked
-      - name: Run current canonical semantic matrix
+      - name: Run current canonical semantic and quality matrix
         run: |
           cargo build --release --locked --package polygon-nesting-cli --bin polygon-nesting
           cargo build --release --locked --package polygon-nesting-napi --bin parity-desktop-request-adapter
@@ -51,6 +51,7 @@ jobs:
         run: |
           python3 -m unittest discover -s scripts/tests -p 'test_*.py'
           ./scripts/test-cli-image-contract.sh
+          node --test scripts/canonical-quality.test.mjs
           node scripts/release-version.mjs --check
           node scripts/verify-release-candidate.mjs --dry-run
           node --test packages/polygon-nesting/scripts/build-native.test.mjs

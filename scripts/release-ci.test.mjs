@@ -274,6 +274,7 @@ test('offline verification recomputes OCI archive and runtime publication eviden
 test('normal PR quality checks run current repository release contracts', () => {
   const ci = readFileSync(join(REPOSITORY_ROOT, '.github/workflows/ci.yml'), 'utf8')
   assert.match(ci, /node --test tests\/ci\/\*\.test\.mjs tests\/parity\/\*\.test\.mjs scripts\/release-ci\.test\.mjs/)
+  assert.match(ci, /node --test scripts\/canonical-quality\.test\.mjs/)
   assert.match(ci, /node scripts\/run-current-canonical-matrix\.mjs/)
   assert.doesNotMatch(ci, /publish-native-package\.test\.mjs/)
   assert.doesNotMatch(ci, /^\s*node --test scripts\/release-ci\.test\.mjs$/m)

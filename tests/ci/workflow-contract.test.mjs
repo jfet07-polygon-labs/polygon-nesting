@@ -205,7 +205,7 @@ function assertStandaloneParityTriggerContract(workflow) {
 
 function assertCiRunnerContract(workflow) {
   const native = workflowJob(workflow, 'native')
-  assert.match(workflowJob(workflow, 'quality'), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
+  assert.match(workflowJob(workflow, 'quality'), /^    runs-on: blacksmith-8vcpu-ubuntu-2404$/m)
   assert.match(workflowJob(workflow, 'oci-evidence'), /^    runs-on: blacksmith-2vcpu-ubuntu-2404$/m)
   assert.doesNotMatch(workflow, /^  parity-release-gate:$/m)
   assert.deepEqual(matrixIncludeItems(native), [
@@ -598,7 +598,7 @@ test('workflow contracts reject mutable triggers, target roots, and image refere
     /Electron runtime/
   )
   assert.throws(
-    () => assertCiRunnerContract(ci.replace('blacksmith-2vcpu-ubuntu-2404', 'ubuntu-latest')),
+    () => assertCiRunnerContract(ci.replace('blacksmith-8vcpu-ubuntu-2404', 'ubuntu-latest')),
     /runs-on|deepEqual/
   )
   assert.throws(
