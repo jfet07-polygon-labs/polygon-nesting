@@ -83,7 +83,7 @@ geometry math.
 (`basis_candidates = 1770` across the 26 derivations). Each call recomputed,
 per quarter-turn, the member identity strings (grid conversion, rotation,
 min-shift, `canonical_cycle`) even though those strings depend only on the
-members — the basis only contributes the two formatted basis vectors of each
+members: the basis only contributes the two formatted basis vectors of each
 variant. `canonical_cycle` itself materializes all `2n` full rotation strings
 of an `n`-token ring (`2n²` BigInt renders per call) and sorts them. For the
 64-gon: ~14 000 `canonical_cycle` calls ≈ 124 M BigInt renders per
@@ -103,7 +103,7 @@ Further stages (cyclic canonicalization without materializing every rotation,
 lattice diagnosis memoization) are evaluated one at a time on re-measured
 profiles after each stage lands.
 
-## Stage 1 — hoist basis-independent member turn keys out of the basis loop
+## Stage 1: hoist basis-independent member turn keys out of the basis loop
 
 Change: `canonical_cell_key` split into `canonical_cell_member_turn_keys`
 (member-only, per quarter-turn, computed lazily once per `derive_cells`
@@ -131,7 +131,7 @@ The chord improvement matches the profiled 49.3 % `canonical_cell_key`
 cumulative share; the arc fixture has tiny rings and small basis counts, so
 the small improvement there is expected.
 
-## Stage 2 — cyclic canonicalization without materializing every rotation
+## Stage 2: cyclic canonicalization without materializing every rotation
 
 Change: new crate-private
 `js_number::canonical_bidirectional_cyclic_key(tokens: &[String]) -> String`.
@@ -171,7 +171,7 @@ regressions pass (9.83 s → 1.86 s for the filtered trio). The arc fixture's
 large gain comes from `canonical_ring` inside the crop/continuation phase
 (39.2 % of the baseline profile), which Stage 1 did not touch.
 
-## Stage 3 — hoist remaining member-only work out of the basis loop
+## Stage 3: hoist remaining member-only work out of the basis loop
 
 The post-Stage-2 profile (2 314 samples over the 1.9 s chord run) showed the
 remaining `derive_cells` cost dominated by three member-only computations
@@ -211,7 +211,7 @@ pass; full workspace release test suite passes (`cargo test --workspace
 
 `perf record --call-graph fp -e cpu-clock:u` over the chord fixture after
 Stage 3 (2 717 samples): `run_intrinsic_periodic_family_portfolio` is down
-to 49.4 % of the process; the residual cost is diffuse — `assess_placement`
+to 49.4 % of the process; the residual cost is diffuse: `assess_placement`
 17.7 % self (crop/lattice/edge-contact legality), canonical layout topology
 measurement ≈ 18 %, edge-contact derivation ≈ 7.6 %, `ryu_js::format64`
 ≈ 7.1 % (NFP cache-key digests and layout identity renders). The member-only
@@ -236,19 +236,21 @@ substantially higher blast radius):
   identities requires the global parity evidence the assignment describes
   and is not justified by the current profile alone.
 
-## Telemetry observer concern — resolution
+## Telemetry observer concern: resolution
 
 The opt-in `IntrinsicPeriodicWorkTelemetry` counters increment between
-finite-deadline checks, so an enabled-telemetry run extremely close to a
-finite deadline could theoretically admit one fewer later candidate than a
-disabled run. Resolution adopted (assignment outcome 1): telemetry stays
-strictly test-only. Production always passes `telemetry: None`
-(`periodic_family.rs` portfolio driver), and the focused characterization
-opts in only under `maximum_runtime_ms = ∞`, where the deadline comparison
-is unreachable. No production finite-deadline observer-neutrality claim is
-made or implied; the deterministic-equality guarantees the characterization
-proves (identical keys, coverage, and counters across repeated runs, with
-and without telemetry) hold under the no-deadline seam only.
+finite-deadline checks, so exposing them through the production call path
+could affect a run extremely close to its deadline. Resolution adopted
+(assignment outcome 1): `PeriodicRunContext` retains only `settings`,
+`geometry_cache`, and `control`; the public
+`enumerate_intrinsic_periodic_cells` signature remains telemetry-free. The
+`#[doc(hidden)]` test-only `characterize_intrinsic_periodic_cells` seam
+threads counters through private functions and rejects finite
+`maximum_runtime_ms`. It therefore runs only with an unlimited deadline.
+The focused characterization compares its catalog with the ordinary public
+enumeration, then verifies deterministic counters across repeated
+characterization runs. No production finite-deadline observer-neutrality
+claim is made or implied.
 
 ## Result summary
 
@@ -261,7 +263,7 @@ The release 64-gon characterization counter dump is byte-identical at every
 stage (2 retained representatives, 2 P1 / 24 P2 derivations, 132 raw P2
 offsets, 24 nonnegative offsets, 0 duplicate orbits, 1 770 basis candidates
 and lattice diagnoses, 0 memo hits), and all canonical-key, layout,
-ordering, provenance, and coverage suites pass unchanged — no vector,
+ordering, provenance, and coverage suites pass unchanged: no vector,
 snapshot, or expected output was regenerated.
 
 ## Post-rebase confirmation
@@ -273,20 +275,20 @@ verification was repeated on the rebased revision: periodic vectors 8/8
 regression, the complete N-API `job` suite 19/19 (including the new
 order-invariance test from `main`), and the core unit suite 562/562. Final
 same-machine timings: arc 0.10/0.09/0.09/0.08/0.08 s (median **0.09 s**),
-chord 0.84/0.82/0.84/0.83/0.83 s (median **0.83 s**) — unchanged from the
+chord 0.84/0.82/0.84/0.83/0.83 s (median **0.83 s**): unchanged from the
 pre-rebase Stage 3 result within run-to-run noise.
 
 ## Files changed
 
-- `crates/polygon-nesting-core/src/archive/periodic_cells.rs` — Stage 1
+- `crates/polygon-nesting-core/src/archive/periodic_cells.rs`: Stage 1
   (`canonical_cell_member_turn_keys` split + lazy reuse in `derive_cells`),
   Stage 2 (`canonical_cycle` on the shared virtual-rotation helper), Stage 3
   (far-neighbor maximum + member doubled area + base-cell shape hoists);
   naive-oracle unit tests for each.
-- `crates/polygon-nesting-core/src/js_number/mod.rs` — the
+- `crates/polygon-nesting-core/src/js_number/mod.rs`: the
   `canonical_bidirectional_cyclic_key` helper and its token-level oracle
   battery.
-- `crates/polygon-nesting-core/src/canonical_grid/layout.rs` —
+- `crates/polygon-nesting-core/src/canonical_grid/layout.rs`:
   `canonical_ring` on the shared helper (`canonical_ring_direction`
   removed); ring-level oracle test.
-- `docs/issue-21-periodic-performance.md` — this evidence document.
+- `docs/issue-21-periodic-performance.md`: this evidence document.

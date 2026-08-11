@@ -68,7 +68,7 @@
 //!   quarter-turn rotation (`0/90/180/270`, exact integer rotation via
 //!   [`rotate_grid_point`] — no floating trig), each internally winding-
 //!   *and* ring-origin-normalized by [`canonical_ring`]'s bidirectional
-//!   minimal-rotation search (raw code-unit `<`, not `localeCompare` — see
+//!   minimal-rotation search (raw code-unit `<`, not `localeCompare`; see
 //!   `canonical-grid.md` §6), then
 //!   piece-order-normalized by a **default** (code-unit) sort of the
 //!   per-path ring keys, then encoded as a compact `JSON.stringify` array of
@@ -489,7 +489,7 @@ fn json_stringify_string_array(values: &[String]) -> String {
 /// TS source: `canonicalLayoutGeometry.ts:613-630` (`canonicalRing` +
 /// `canonicalRingDirection`). Both the ring-origin *and* winding
 /// normalization in one step: the code-unit-smallest semicolon-joined
-/// rotation across both vertex orders wins (raw `<`, not `localeCompare` —
+/// rotation across both vertex orders wins (raw `<`, not `localeCompare`;
 /// R8). Each `"x,y"` token is rendered exactly once; the shared
 /// virtual-rotation helper compares candidates as joined code-unit streams
 /// and materializes only the winner.
@@ -1449,7 +1449,7 @@ mod tests {
     }
 
     /// Naive oracle for [`canonical_ring`]: the pre-optimization pair
-    /// (`canonicalRing` + `canonicalRingDirection`) copied verbatim — every
+    /// (`canonicalRing` + `canonicalRingDirection`) copied verbatim; every
     /// rotation of both windings materialized, code-unit minimum kept.
     fn oracle_canonical_ring(path: &[CanonicalGridPoint]) -> String {
         let forward = oracle_canonical_ring_direction(path);

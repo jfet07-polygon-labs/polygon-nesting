@@ -2016,7 +2016,6 @@ pub fn run_intrinsic_periodic_family_portfolio(
         settings,
         geometry_cache,
         control: catalog_control_opt.take(),
-        telemetry: None,
     };
     let catalog = enumerate_intrinsic_periodic_cells(pieces, &catalog_options, &mut ctx)?;
     let catalog_ms = if capture_phase_timings {

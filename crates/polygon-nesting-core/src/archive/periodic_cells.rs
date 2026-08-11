@@ -547,9 +547,8 @@ pub struct IntrinsicPeriodicSeed {
 
 /// Opt-in, observer-only counters for deterministic periodic archive work.
 ///
-/// This is owned by the caller and threaded through [`PeriodicRunContext`] as
-/// an optional mutable reference. When absent, no counters are allocated or
-/// updated and periodic archive behavior is unchanged.
+/// This is produced only by [`characterize_intrinsic_periodic_cells`]. The
+/// production enumeration path does not allocate or update these counters.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct IntrinsicPeriodicWorkTelemetry {
     pub p1_derive_cells_calls: u64,
@@ -609,9 +608,8 @@ impl IntrinsicPeriodicWorkTelemetry {
     }
 }
 
-/// Bundles the mutable geometry cache, the (immutable) nesting settings, the
-/// optional cooperative-cancellation control, and opt-in work telemetry this
-/// whole cluster threads through every call. Mirrors the `Effect` context TS
+/// Bundles the mutable geometry cache, the (immutable) nesting settings, and
+/// optional cooperative-cancellation control. Mirrors the `Effect` context TS
 /// resolves via `yield*` (`CELLS:285-287`); Rust has no ambient DI layer, so
 /// callers construct and own this explicitly, the same pattern
 /// `search::strict_decoder`'s own module doc establishes.
@@ -619,7 +617,28 @@ pub struct PeriodicRunContext<'a> {
     pub settings: &'a IrregularNestingSettings,
     pub geometry_cache: &'a mut GeometryCacheStore,
     pub control: Option<&'a mut dyn NfpIfpControl>,
-    pub telemetry: Option<&'a mut IntrinsicPeriodicWorkTelemetry>,
+}
+
+/// Test-only result from [`characterize_intrinsic_periodic_cells`].
+#[doc(hidden)]
+#[derive(Debug, PartialEq)]
+pub struct IntrinsicPeriodicWorkCharacterization {
+    pub catalog: IntrinsicPeriodicCatalog,
+    pub telemetry: IntrinsicPeriodicWorkTelemetry,
+}
+
+/// Error returned when periodic work characterization cannot run.
+#[doc(hidden)]
+#[derive(Clone, Debug, PartialEq)]
+pub enum IntrinsicPeriodicCharacterizationError {
+    MaximumRuntimeMustBeInfinite,
+    Periodic(IntrinsicPeriodicError),
+}
+
+impl From<IntrinsicPeriodicError> for IntrinsicPeriodicCharacterizationError {
+    fn from(value: IntrinsicPeriodicError) -> Self {
+        Self::Periodic(value)
+    }
 }
 
 fn checkpoint(control: &mut Option<&mut dyn NfpIfpControl>) -> Result<(), IntrinsicPeriodicError> {
@@ -1238,6 +1257,38 @@ pub fn enumerate_intrinsic_periodic_cells(
     options: &IntrinsicPeriodicCatalogOptions,
     ctx: &mut PeriodicRunContext<'_>,
 ) -> Result<IntrinsicPeriodicCatalog, IntrinsicPeriodicError> {
+    enumerate_intrinsic_periodic_cells_with_telemetry(pieces, options, ctx, None)
+}
+
+/// Runs an unlimited periodic enumeration with deterministic work counters.
+///
+/// This characterization seam is for tests only. Finite runtime limits are
+/// rejected so counter writes cannot affect production deadline behavior.
+#[doc(hidden)]
+pub fn characterize_intrinsic_periodic_cells(
+    pieces: &[IrregularPreparedPiece],
+    options: &IntrinsicPeriodicCatalogOptions,
+    ctx: &mut PeriodicRunContext<'_>,
+) -> Result<IntrinsicPeriodicWorkCharacterization, IntrinsicPeriodicCharacterizationError> {
+    if options.maximum_runtime_ms != f64::INFINITY {
+        return Err(IntrinsicPeriodicCharacterizationError::MaximumRuntimeMustBeInfinite);
+    }
+    let mut telemetry = IntrinsicPeriodicWorkTelemetry::new();
+    let catalog = enumerate_intrinsic_periodic_cells_with_telemetry(
+        pieces,
+        options,
+        ctx,
+        Some(&mut telemetry),
+    )?;
+    Ok(IntrinsicPeriodicWorkCharacterization { catalog, telemetry })
+}
+
+fn enumerate_intrinsic_periodic_cells_with_telemetry(
+    pieces: &[IrregularPreparedPiece],
+    options: &IntrinsicPeriodicCatalogOptions,
+    ctx: &mut PeriodicRunContext<'_>,
+    mut telemetry: Option<&mut IntrinsicPeriodicWorkTelemetry>,
+) -> Result<IntrinsicPeriodicCatalog, IntrinsicPeriodicError> {
     let started_at = now_ms();
     let mut eligible_families: Vec<_> = group_intrinsic_collision_families(pieces)
         .into_iter()
@@ -1274,7 +1325,13 @@ pub fn enumerate_intrinsic_periodic_cells(
         if now_ms() - started_at >= options.maximum_runtime_ms {
             break;
         }
-        let catalog = enumerate_intrinsic_periodic_family(family, started_at, options, ctx)?;
+        let catalog = enumerate_intrinsic_periodic_family(
+            family,
+            started_at,
+            options,
+            ctx,
+            telemetry.as_deref_mut(),
+        )?;
         for cell in &catalog.cells {
             global_cells.set(cell.canonical_key.clone(), cell.clone());
         }
@@ -1351,6 +1408,7 @@ fn enumerate_intrinsic_periodic_family(
     started_at: f64,
     options: &IntrinsicPeriodicCatalogOptions,
     ctx: &mut PeriodicRunContext<'_>,
+    mut telemetry: Option<&mut IntrinsicPeriodicWorkTelemetry>,
 ) -> Result<IntrinsicPeriodicFamilyCatalog, IntrinsicPeriodicError> {
     let representative = match family.members.first() {
         Some(value) => value.clone(),
@@ -1475,6 +1533,7 @@ fn enumerate_intrinsic_periodic_family(
                 point,
             }],
             ctx,
+            telemetry.as_deref_mut(),
         )?;
         if derivation.cells.is_empty() {
             increment_rejected(&mut rejected, "noP1Basis");
@@ -1528,11 +1587,11 @@ fn enumerate_intrinsic_periodic_family(
                     pair_coverage_complete = false;
                     break;
                 }
-                if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+                if let Some(telemetry) = telemetry.as_deref_mut() {
                     telemetry.record_p2_offset(false);
                 }
                 let candidate = make_candidate(second, point);
-                if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+                if let Some(telemetry) = telemetry.as_deref_mut() {
                     telemetry.record_p2_sheetless_legality_check();
                 }
                 let legal = check_sheetless(std::slice::from_ref(&fixed), second, point)?;
@@ -1544,7 +1603,7 @@ fn enumerate_intrinsic_periodic_family(
                     let _ = &candidate;
                     continue;
                 }
-                if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+                if let Some(telemetry) = telemetry.as_deref_mut() {
                     telemetry.record_nonnegative_p2_offset();
                 }
                 if periodic_pair_candidate_orbit_key(
@@ -1556,7 +1615,7 @@ fn enumerate_intrinsic_periodic_family(
                 )
                 .is_some_and(|key| !seen_candidate_orbits.insert(key))
                 {
-                    if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+                    if let Some(telemetry) = telemetry.as_deref_mut() {
                         telemetry.record_duplicate_candidate_orbit();
                     }
                     continue;
@@ -1577,6 +1636,7 @@ fn enumerate_intrinsic_periodic_family(
                         },
                     ],
                     ctx,
+                    telemetry.as_deref_mut(),
                 )?;
                 if derivation.cells.is_empty() {
                     increment_rejected(&mut rejected, "noP2Basis");
@@ -2274,8 +2334,9 @@ fn derive_cells(
     family_key: &str,
     members: &[IntrinsicPeriodicBaseMember],
     ctx: &mut PeriodicRunContext<'_>,
+    mut telemetry: Option<&mut IntrinsicPeriodicWorkTelemetry>,
 ) -> Result<IntrinsicPeriodicCellDerivation, IntrinsicPeriodicError> {
-    if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+    if let Some(telemetry) = telemetry.as_deref_mut() {
         telemetry.record_derive_cells(role);
     }
     let mut forbidden: Vec<ForbiddenBoundary> = Vec::new();
@@ -2386,7 +2447,7 @@ fn derive_cells(
     let mut member_doubled_area: Option<BigInt> = None;
     let mut base_cell_shape: Option<Option<(f64, f64)>> = None;
     for candidate in bases {
-        if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+        if let Some(telemetry) = telemetry.as_deref_mut() {
             telemetry.record_basis_candidate();
         }
         let (raw_v1, raw_v2) = (candidate.basis.0.clone(), candidate.basis.1.clone());
@@ -2407,7 +2468,7 @@ fn derive_cells(
                 .get_or_insert_with(|| far_neighbor_maximum_distance_squared(members)),
             &canonical,
         );
-        if let Some(telemetry) = ctx.telemetry.as_deref_mut() {
+        if let Some(telemetry) = telemetry.as_deref_mut() {
             telemetry.record_lattice_diagnosis_request(false);
         }
         let lattice = diagnose_lattice(members, &canonical)?;

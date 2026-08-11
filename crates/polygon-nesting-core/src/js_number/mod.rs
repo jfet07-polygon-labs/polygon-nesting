@@ -384,7 +384,7 @@ mod tests {
 
     /// Naive oracle for [`canonical_bidirectional_cyclic_key`]: materialize
     /// all `2n` rotation strings of both windings, sort with
-    /// [`cmp_js_code_units`], keep the first — the exact shape the production
+    /// [`cmp_js_code_units`], keep the first; this is the exact shape the production
     /// cyclic canonicalizations used before the virtual-rotation helper.
     fn oracle_bidirectional_cyclic_key(tokens: &[String]) -> String {
         let mut variants: Vec<String> = Vec::new();
@@ -416,7 +416,7 @@ mod tests {
             // Repeated tokens (every rotation compares equal for a while).
             tokens(&["3,3", "3,3", "3,3"]),
             tokens(&["5,1", "5,1", "5,2", "5,1"]),
-            // Prefix hazards: "1,2" + ";" versus "1,20" + following bytes —
+            // Prefix hazards: "1,2" + ";" versus "1,20" + following bytes;
             // ';' (0x3B) sorts after every digit, so token-by-token
             // comparison would order these differently.
             tokens(&["1,2", "1,20"]),

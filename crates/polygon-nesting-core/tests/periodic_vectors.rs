@@ -23,14 +23,14 @@ use std::fs;
 use std::sync::Arc;
 
 use polygon_nesting_core::archive::periodic_cells::{
-    compare_intrinsic_periodic_seed_envelope, compare_intrinsic_periodic_seed_envelope_area_first,
-    enumerate_intrinsic_periodic_cell_crops, enumerate_intrinsic_periodic_cells,
-    non_dominated_intrinsic_periodic_seeds, rank_intrinsic_periodic_seeds,
-    select_intrinsic_periodic_seed_front, IntrinsicPeriodicBaseMember,
-    IntrinsicPeriodicCatalogOptions, IntrinsicPeriodicCell, IntrinsicPeriodicCropProvenance,
+    characterize_intrinsic_periodic_cells, compare_intrinsic_periodic_seed_envelope,
+    compare_intrinsic_periodic_seed_envelope_area_first, enumerate_intrinsic_periodic_cell_crops,
+    enumerate_intrinsic_periodic_cells, non_dominated_intrinsic_periodic_seeds,
+    rank_intrinsic_periodic_seeds, select_intrinsic_periodic_seed_front,
+    IntrinsicPeriodicBaseMember, IntrinsicPeriodicCatalogOptions, IntrinsicPeriodicCell,
+    IntrinsicPeriodicCharacterizationError, IntrinsicPeriodicCropProvenance,
     IntrinsicPeriodicCropTraversal, IntrinsicPeriodicExactEnvelope, IntrinsicPeriodicRole,
-    IntrinsicPeriodicSeed, IntrinsicPeriodicVector, IntrinsicPeriodicWorkTelemetry,
-    PeriodicRunContext,
+    IntrinsicPeriodicSeed, IntrinsicPeriodicVector, PeriodicRunContext,
 };
 use polygon_nesting_core::archive::periodic_family::{
     continuations_for_execution, order_periodic_continuations_for_execution,
@@ -712,7 +712,6 @@ fn catalog_cases_reproduce_ts_outcomes() {
             settings: &settings,
             geometry_cache: &mut geometry_cache,
             control: None,
-            telemetry: None,
         };
         let catalog = enumerate_intrinsic_periodic_cells(&pieces, &options, &mut ctx)
             .unwrap_or_else(|err| {
@@ -1322,15 +1321,18 @@ struct PeriodicCoverage {
     cell: bool,
 }
 
-fn run_regular_polygon_with_telemetry(
-    side_count: usize,
-    enabled: bool,
-) -> (
-    Vec<String>,
-    IntrinsicPeriodicWorkTelemetry,
-    PeriodicCoverage,
-    f64,
-) {
+fn regular_polygon_catalog_options() -> IntrinsicPeriodicCatalogOptions {
+    IntrinsicPeriodicCatalogOptions {
+        maximum_runtime_ms: f64::INFINITY,
+        maximum_family_count: 8,
+        maximum_transforms_per_family: 16,
+        maximum_pairs_per_family: 120,
+        maximum_cells_per_family_role: 10_000,
+        capture_source_survival_audit: false,
+    }
+}
+
+fn regular_polygon_settings() -> IrregularNestingSettings {
     let mut settings = settings();
     settings.geometry.flattening_sag_tolerance_mm = 0.25;
     settings.geometry.clearance_safety_margin_mm = 0.25;
@@ -1340,26 +1342,12 @@ fn run_regular_polygon_with_telemetry(
         .optimizer
         .transform_angle_deduplication_tolerance_deg = 0.051;
     settings.optimizer.configured_rotation_deg = vec![];
-    let pieces = regular_polygon_pieces(&settings, side_count);
-    let options = IntrinsicPeriodicCatalogOptions {
-        maximum_runtime_ms: f64::INFINITY,
-        maximum_family_count: 8,
-        maximum_transforms_per_family: 16,
-        maximum_pairs_per_family: 120,
-        maximum_cells_per_family_role: 10_000,
-        capture_source_survival_audit: false,
-    };
-    let mut geometry_cache = GeometryCacheStore::new();
-    let mut telemetry = IntrinsicPeriodicWorkTelemetry::new();
-    let telemetry_ref = if enabled { Some(&mut telemetry) } else { None };
-    let mut ctx = PeriodicRunContext {
-        settings: &settings,
-        geometry_cache: &mut geometry_cache,
-        control: None,
-        telemetry: telemetry_ref,
-    };
-    let catalog = enumerate_intrinsic_periodic_cells(&pieces, &options, &mut ctx)
-        .expect("regular 64-gon catalog");
+    settings
+}
+
+fn periodic_catalog_summary(
+    catalog: polygon_nesting_core::archive::periodic_cells::IntrinsicPeriodicCatalog,
+) -> (Vec<String>, PeriodicCoverage, f64) {
     let family = catalog.families.first().expect("one regular family");
     (
         catalog
@@ -1367,7 +1355,6 @@ fn run_regular_polygon_with_telemetry(
             .into_iter()
             .map(|cell| cell.canonical_key)
             .collect(),
-        telemetry,
         PeriodicCoverage {
             runtime: catalog.runtime_coverage_complete,
             transform: family.transform_coverage_complete,
@@ -1381,15 +1368,46 @@ fn run_regular_polygon_with_telemetry(
 #[test]
 fn regular_polygon_periodic_work_is_deterministic_and_observer_only() {
     let side_count = if cfg!(debug_assertions) { 8 } else { 64 };
-    let (keys_without_telemetry, _, coverage_without_telemetry, retained_transform_count) =
-        run_regular_polygon_with_telemetry(side_count, false);
-    let (keys_first, telemetry_first, coverage_first, _) =
-        run_regular_polygon_with_telemetry(side_count, true);
-    let (keys_second, telemetry_second, coverage_second, _) =
-        run_regular_polygon_with_telemetry(side_count, true);
+    let settings = regular_polygon_settings();
+    let pieces = regular_polygon_pieces(&settings, side_count);
+    let options = regular_polygon_catalog_options();
+
+    let mut ordinary_geometry_cache = GeometryCacheStore::new();
+    let mut ordinary_ctx = PeriodicRunContext {
+        settings: &settings,
+        geometry_cache: &mut ordinary_geometry_cache,
+        control: None,
+    };
+    let ordinary = enumerate_intrinsic_periodic_cells(&pieces, &options, &mut ordinary_ctx)
+        .expect("regular polygon catalog");
+
+    let mut first_geometry_cache = GeometryCacheStore::new();
+    let mut first_ctx = PeriodicRunContext {
+        settings: &settings,
+        geometry_cache: &mut first_geometry_cache,
+        control: None,
+    };
+    let first = characterize_intrinsic_periodic_cells(&pieces, &options, &mut first_ctx)
+        .expect("first regular polygon characterization");
+
+    let mut second_geometry_cache = GeometryCacheStore::new();
+    let mut second_ctx = PeriodicRunContext {
+        settings: &settings,
+        geometry_cache: &mut second_geometry_cache,
+        control: None,
+    };
+    let second = characterize_intrinsic_periodic_cells(&pieces, &options, &mut second_ctx)
+        .expect("second regular polygon characterization");
+
+    let (ordinary_keys, ordinary_coverage, retained_transform_count) =
+        periodic_catalog_summary(ordinary);
+    let (first_keys, first_coverage, _) = periodic_catalog_summary(first.catalog);
+    let (second_keys, second_coverage, _) = periodic_catalog_summary(second.catalog);
+    let telemetry_first = first.telemetry;
+    let telemetry_second = second.telemetry;
 
     assert_eq!(
-        coverage_without_telemetry,
+        ordinary_coverage,
         PeriodicCoverage {
             runtime: true,
             transform: true,
@@ -1397,11 +1415,11 @@ fn regular_polygon_periodic_work_is_deterministic_and_observer_only() {
             cell: true,
         }
     );
-    assert_eq!(coverage_without_telemetry, coverage_first);
-    assert_eq!(coverage_first, coverage_second);
+    assert_eq!(ordinary_coverage, first_coverage);
+    assert_eq!(first_coverage, second_coverage);
     assert_eq!(retained_transform_count, 2.0);
-    assert_eq!(keys_without_telemetry, keys_first);
-    assert_eq!(keys_first, keys_second);
+    assert_eq!(ordinary_keys, first_keys);
+    assert_eq!(first_keys, second_keys);
     assert_eq!(telemetry_first, telemetry_second);
     assert_eq!(
         telemetry_first.p2_sheetless_legality_checks,
@@ -1417,7 +1435,34 @@ fn regular_polygon_periodic_work_is_deterministic_and_observer_only() {
     if !cfg!(debug_assertions) {
         assert_eq!(telemetry_first.p1_derive_cells_calls, 2);
         assert_eq!(telemetry_first.p2_derive_cells_calls, 24);
+        assert_eq!(telemetry_first.raw_p2_offsets, 132);
+        assert_eq!(telemetry_first.nonnegative_p2_offsets, 24);
+        assert_eq!(telemetry_first.duplicate_candidate_orbits, 0);
+        assert_eq!(telemetry_first.p2_sheetless_legality_checks, 132);
+        assert_eq!(telemetry_first.basis_candidates, 1770);
+        assert_eq!(telemetry_first.lattice_diagnosis_requests, 1770);
+        assert_eq!(telemetry_first.lattice_diagnosis_computations, 1770);
+        assert_eq!(telemetry_first.lattice_diagnosis_memo_hits, 0);
     }
+}
+
+#[test]
+fn periodic_work_characterization_rejects_finite_runtime_limits() {
+    let settings = regular_polygon_settings();
+    let pieces = regular_polygon_pieces(&settings, 8);
+    let mut options = regular_polygon_catalog_options();
+    options.maximum_runtime_ms = 1.0;
+    let mut geometry_cache = GeometryCacheStore::new();
+    let mut ctx = PeriodicRunContext {
+        settings: &settings,
+        geometry_cache: &mut geometry_cache,
+        control: None,
+    };
+
+    assert!(matches!(
+        characterize_intrinsic_periodic_cells(&pieces, &options, &mut ctx),
+        Err(IntrinsicPeriodicCharacterizationError::MaximumRuntimeMustBeInfinite)
+    ));
 }
 
 #[test]
