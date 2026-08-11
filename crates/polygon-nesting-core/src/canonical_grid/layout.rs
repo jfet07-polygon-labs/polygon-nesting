@@ -67,9 +67,9 @@
 //! - [`identity_at_quarter_turn`] computes one candidate identity string per
 //!   quarter-turn rotation (`0/90/180/270`, exact integer rotation via
 //!   [`rotate_grid_point`] — no floating trig), each internally winding-
-//!   *and* ring-origin-normalized by [`canonical_ring`]/
-//!   [`canonical_ring_direction`]'s `O(n²)` minimal-rotation search (raw
-//!   code-unit `<`, not `localeCompare` — see `canonical-grid.md` §6), then
+//!   *and* ring-origin-normalized by [`canonical_ring`]'s bidirectional
+//!   minimal-rotation search (raw code-unit `<`, not `localeCompare`; see
+//!   `canonical-grid.md` §6), then
 //!   piece-order-normalized by a **default** (code-unit) sort of the
 //!   per-path ring keys, then encoded as a compact `JSON.stringify` array of
 //!   strings (see [`json_stringify_string_array`]).
@@ -130,7 +130,10 @@ use crate::clipper::core::{
 };
 use crate::clipper::engine::{boolean_op_with_poly_tree, poly_tree_to_paths64, PolyTree64};
 use crate::domain::{IrregularPlacedPiece, IrregularPoint, PieceId, SheetSpec};
-use crate::js_number::{cmp_js_code_units, fold_negative_zero, js_math, number_to_js_string};
+use crate::js_number::{
+    canonical_bidirectional_cyclic_key, cmp_js_code_units, fold_negative_zero, js_math,
+    number_to_js_string,
+};
 
 use super::contact::{
     has_positive_canonical_grid_boundary_contact, measure_canonical_grid_boundary_contact,
@@ -483,52 +486,25 @@ fn json_stringify_string_array(values: &[String]) -> String {
     out
 }
 
-/// TS source: `canonicalLayoutGeometry.ts:613-617` (`canonicalRing`). Both
-/// the ring-origin *and* winding normalization in one step: tries both the
-/// forward and reverse vertex order and keeps whichever minimal-rotation key
-/// is code-unit-smaller.
+/// TS source: `canonicalLayoutGeometry.ts:613-630` (`canonicalRing` +
+/// `canonicalRingDirection`). Both the ring-origin *and* winding
+/// normalization in one step: the code-unit-smallest semicolon-joined
+/// rotation across both vertex orders wins (raw `<`, not `localeCompare`;
+/// R8). Each `"x,y"` token is rendered exactly once; the shared
+/// virtual-rotation helper compares candidates as joined code-unit streams
+/// and materializes only the winner.
 fn canonical_ring(path: &[CanonicalGridPoint]) -> String {
-    let forward = canonical_ring_direction(path);
-    let reversed: CanonicalGridPath = path.iter().rev().copied().collect();
-    let reverse = canonical_ring_direction(&reversed);
-    if cmp_js_code_units(&forward, &reverse) == Ordering::Less {
-        forward
-    } else {
-        reverse
-    }
-}
-
-/// TS source: `canonicalLayoutGeometry.ts:619-630` (`canonicalRingDirection`).
-/// The `O(n^2)` minimal-rotation search: every rotation offset produces a
-/// semicolon-joined `"x,y"` key, and the code-unit-lexicographically
-/// smallest one wins (raw `<`, not `localeCompare` — R8).
-fn canonical_ring_direction(path: &[CanonicalGridPoint]) -> String {
-    if path.is_empty() {
-        return String::new();
-    }
-    let len = path.len();
-    let mut best: Option<String> = None;
-    for offset in 0..len {
-        let key = (0..len)
-            .map(|index| {
-                let point = path[(index + offset) % len];
-                format!(
-                    "{},{}",
-                    number_to_js_string(point.x),
-                    number_to_js_string(point.y)
-                )
-            })
-            .collect::<Vec<_>>()
-            .join(";");
-        let better = match &best {
-            None => true,
-            Some(current) => cmp_js_code_units(&key, current) == Ordering::Less,
-        };
-        if better {
-            best = Some(key);
-        }
-    }
-    best.unwrap_or_default()
+    let tokens: Vec<String> = path
+        .iter()
+        .map(|point| {
+            format!(
+                "{},{}",
+                number_to_js_string(point.x),
+                number_to_js_string(point.y)
+            )
+        })
+        .collect();
+    canonical_bidirectional_cyclic_key(&tokens)
 }
 
 /// TS source: `canonicalLayoutGeometry.ts:632-643` (`rotateGridPoint`). Exact
@@ -1470,6 +1446,98 @@ mod tests {
 
     fn point(x: f64, y: f64) -> IrregularPoint {
         IrregularPoint::new(x, y)
+    }
+
+    /// Naive oracle for [`canonical_ring`]: the pre-optimization pair
+    /// (`canonicalRing` + `canonicalRingDirection`) copied verbatim; every
+    /// rotation of both windings materialized, code-unit minimum kept.
+    fn oracle_canonical_ring(path: &[CanonicalGridPoint]) -> String {
+        let forward = oracle_canonical_ring_direction(path);
+        let reversed: CanonicalGridPath = path.iter().rev().copied().collect();
+        let reverse = oracle_canonical_ring_direction(&reversed);
+        if cmp_js_code_units(&forward, &reverse) == Ordering::Less {
+            forward
+        } else {
+            reverse
+        }
+    }
+
+    fn oracle_canonical_ring_direction(path: &[CanonicalGridPoint]) -> String {
+        if path.is_empty() {
+            return String::new();
+        }
+        let len = path.len();
+        let mut best: Option<String> = None;
+        for offset in 0..len {
+            let key = (0..len)
+                .map(|index| {
+                    let point = path[(index + offset) % len];
+                    format!(
+                        "{},{}",
+                        number_to_js_string(point.x),
+                        number_to_js_string(point.y)
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join(";");
+            let better = match &best {
+                None => true,
+                Some(current) => cmp_js_code_units(&key, current) == Ordering::Less,
+            };
+            if better {
+                best = Some(key);
+            }
+        }
+        best.unwrap_or_default()
+    }
+
+    #[test]
+    fn canonical_ring_matches_materializing_oracle() {
+        let ring = |coordinates: &[(f64, f64)]| -> Vec<CanonicalGridPoint> {
+            coordinates
+                .iter()
+                .map(|(x, y)| CanonicalGridPoint::new(*x, *y))
+                .collect()
+        };
+        let mut cases: Vec<Vec<CanonicalGridPoint>> = vec![
+            ring(&[]),
+            ring(&[(3.0, -7.5)]),
+            ring(&[(0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0)]),
+            ring(&[(2.0, 2.0), (2.0, 2.0), (2.0, 2.0)]),
+            // Prefix hazards and digit widths in JS float renders.
+            ring(&[(1.0, 2.0), (1.0, 20.0), (12.0, 0.0), (120.0, 0.0)]),
+            // Negative zero exactly as `rotate_grid_point`'s unary minus can
+            // produce it, plus plain zero: both render as "0".
+            ring(&[(-0.0, 0.0), (0.0, -0.0), (1.0, -1.0)]),
+            // Exponent-form renders ("1e+21", "1e-7") and fractionals.
+            ring(&[(1e21, 1e-7), (0.000001, 622.202), (0.1, -1.0)]),
+            ring(&[(-10.25, 0.5), (0.5, -10.25), (10.25, -0.5), (-0.5, 10.25)]),
+        ];
+        // Deterministically generated rings (fixed linear-congruential
+        // sequence) on the 0.001 canonical grid.
+        let mut state: u64 = 0x853C49E6748FEA9B;
+        for ring_length in 0..=8usize {
+            let mut generated: Vec<CanonicalGridPoint> = Vec::with_capacity(ring_length);
+            for _ in 0..ring_length {
+                state = state
+                    .wrapping_mul(6364136223846793005)
+                    .wrapping_add(1442695040888963407);
+                let x = (((state >> 33) % 4001) as f64 - 2000.0) / 1000.0;
+                state = state
+                    .wrapping_mul(6364136223846793005)
+                    .wrapping_add(1442695040888963407);
+                let y = (((state >> 33) % 4001) as f64 - 2000.0) / 1000.0;
+                generated.push(CanonicalGridPoint::new(x, y));
+            }
+            cases.push(generated);
+        }
+        for (index, case) in cases.iter().enumerate() {
+            assert_eq!(
+                canonical_ring(case),
+                oracle_canonical_ring(case),
+                "ring case {index}",
+            );
+        }
     }
 
     fn rectangle(width: f64, height: f64) -> Vec<IrregularPoint> {

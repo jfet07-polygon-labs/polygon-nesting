@@ -227,6 +227,75 @@ pub fn cmp_js_code_units(first: &str, second: &str) -> Ordering {
     }
 }
 
+/// Canonical bidirectional cyclic key: the [`cmp_js_code_units`]-smallest
+/// semicolon-joined rotation of `tokens`, considering every cyclic origin of
+/// both the forward and the reversed token order, while materializing only
+/// the winning candidate.
+///
+/// Byte-for-byte equivalent to rendering all `2n` full rotation strings and
+/// keeping the sorted minimum, including prefix hazards across token and
+/// separator boundaries (`"1,2"` then `';'` versus `"1,20"` then more
+/// digits): candidates are compared as virtual joined code-unit streams,
+/// never token-by-token.
+pub(crate) fn canonical_bidirectional_cyclic_key(tokens: &[String]) -> String {
+    if tokens.is_empty() {
+        return String::new();
+    }
+    let mut best = (false, 0usize);
+    for reversed in [false, true] {
+        for offset in 0..tokens.len() {
+            if (reversed, offset) == (false, 0) {
+                continue;
+            }
+            let candidate = cyclic_key_code_units(tokens, reversed, offset);
+            let incumbent = cyclic_key_code_units(tokens, best.0, best.1);
+            if candidate.cmp(incumbent) == Ordering::Less {
+                best = (reversed, offset);
+            }
+        }
+    }
+    let length = tokens.len();
+    let mut key = String::with_capacity(tokens.iter().map(String::len).sum::<usize>() + length - 1);
+    for position in 0..length {
+        if position > 0 {
+            key.push(';');
+        }
+        key.push_str(&tokens[cyclic_token_index(length, best.0, best.1, position)]);
+    }
+    key
+}
+
+/// Index of the `position`-th token of the rotation candidate that walks the
+/// (optionally reversed) cyclic token order starting at `offset`.
+fn cyclic_token_index(length: usize, reversed: bool, offset: usize, position: usize) -> usize {
+    let rotated = (offset + position) % length;
+    if reversed {
+        length - 1 - rotated
+    } else {
+        rotated
+    }
+}
+
+/// The UTF-16 code units of one rotation candidate's virtual joined string,
+/// exactly as if the full `';'`-joined rotation had been materialized first.
+fn cyclic_key_code_units(
+    tokens: &[String],
+    reversed: bool,
+    offset: usize,
+) -> impl Iterator<Item = u16> + '_ {
+    let length = tokens.len();
+    (0..length).flat_map(move |position| {
+        let separator = if position + 1 < length {
+            Some(b';' as u16)
+        } else {
+            None
+        };
+        tokens[cyclic_token_index(length, reversed, offset, position)]
+            .encode_utf16()
+            .chain(separator)
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -311,5 +380,93 @@ mod tests {
         // Confirm Rust's default byte-order `str::cmp` would get this backwards,
         // which is exactly the divergence this function exists to avoid.
         assert_eq!(supplementary.cmp(bmp_private_use), Ordering::Greater);
+    }
+
+    /// Naive oracle for [`canonical_bidirectional_cyclic_key`]: materialize
+    /// all `2n` rotation strings of both windings, sort with
+    /// [`cmp_js_code_units`], keep the first; this is the exact shape the production
+    /// cyclic canonicalizations used before the virtual-rotation helper.
+    fn oracle_bidirectional_cyclic_key(tokens: &[String]) -> String {
+        let mut variants: Vec<String> = Vec::new();
+        let reversed: Vec<String> = tokens.iter().rev().cloned().collect();
+        for sequence in [tokens.to_vec(), reversed] {
+            let length = sequence.len();
+            for offset in 0..length {
+                let rotation: Vec<String> = (0..length)
+                    .map(|position| sequence[(offset + position) % length].clone())
+                    .collect();
+                variants.push(rotation.join(";"));
+            }
+        }
+        variants.sort_by(|first, second| cmp_js_code_units(first, second));
+        variants.into_iter().next().unwrap_or_default()
+    }
+
+    fn tokens(values: &[&str]) -> Vec<String> {
+        values.iter().map(|value| value.to_string()).collect()
+    }
+
+    #[test]
+    fn canonical_bidirectional_cyclic_key_matches_materializing_oracle() {
+        let cases: Vec<Vec<String>> = vec![
+            // Empty and singleton rings.
+            tokens(&[]),
+            tokens(&["0,0"]),
+            tokens(&["-12,7"]),
+            // Repeated tokens (every rotation compares equal for a while).
+            tokens(&["3,3", "3,3", "3,3"]),
+            tokens(&["5,1", "5,1", "5,2", "5,1"]),
+            // Prefix hazards: "1,2" + ";" versus "1,20" + following bytes;
+            // ';' (0x3B) sorts after every digit, so token-by-token
+            // comparison would order these differently.
+            tokens(&["1,2", "1,20"]),
+            tokens(&["1,20", "1,2", "1,200"]),
+            tokens(&["1", "1,2", "12", "1,20"]),
+            // Negative and zero coordinates, mixed digit widths.
+            tokens(&["-5,0", "0,-5", "100,2", "9,99"]),
+            tokens(&["0,0", "-0,0", "0,-0"]),
+            // Large BigInt-scale coordinates.
+            tokens(&[
+                "123456789012345678901234567890,-98765432109876543210",
+                "-123456789012345678901234567891,1",
+                "123456789012345678901234567890,-98765432109876543211",
+            ]),
+            // JS float renders as produced by `number_to_js_string`.
+            tokens(&["1e+21,0.000001", "1e-7,622.202", "0.1,-1"]),
+            // Non-ASCII: supplementary-plane token must order by UTF-16 code
+            // units (surrogates), not by Unicode scalar value.
+            tokens(&["\u{10000}", "\u{ffff}", "z"]),
+        ];
+        for (index, case) in cases.iter().enumerate() {
+            assert_eq!(
+                canonical_bidirectional_cyclic_key(case),
+                oracle_bidirectional_cyclic_key(case),
+                "case {index}: {case:?}",
+            );
+        }
+
+        // Deterministically generated rings over a hazard-prone alphabet
+        // (fixed linear-congruential sequence, no ambient randomness).
+        let alphabet = tokens(&[
+            "1,2", "1,20", "12,0", "120,0", "-1,2", "0,0", "2,1", "1,2", "9,9", "10,1",
+        ]);
+        let mut state: u64 = 0x2545F491_4F6CDD1D;
+        for ring_length in 0..=9usize {
+            for _repeat in 0..8 {
+                let ring: Vec<String> = (0..ring_length)
+                    .map(|_| {
+                        state = state
+                            .wrapping_mul(6364136223846793005)
+                            .wrapping_add(1442695040888963407);
+                        alphabet[(state >> 33) as usize % alphabet.len()].clone()
+                    })
+                    .collect();
+                assert_eq!(
+                    canonical_bidirectional_cyclic_key(&ring),
+                    oracle_bidirectional_cyclic_key(&ring),
+                    "generated ring: {ring:?}",
+                );
+            }
+        }
     }
 }
