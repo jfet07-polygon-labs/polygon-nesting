@@ -864,13 +864,16 @@ fn add_antiparallel_edge_support_points(
         })
         .collect();
     let moving_points = &moving.polygon.points;
+    // Loop-invariant: the moving edge list was rebuilt for every fixed
+    // edge; hoisting it preserves the identical edge sequence per pass.
+    let moving_edges = polygon_edges_from_points(moving_points);
 
     for fixed_edge in polygon_edges_from_points(&fixed_points) {
         let fixed_direction = IrregularPoint::new(
             fixed_edge.end.x - fixed_edge.start.x,
             fixed_edge.end.y - fixed_edge.start.y,
         );
-        for moving_edge in polygon_edges_from_points(moving_points) {
+        for moving_edge in &moving_edges {
             let moving_direction = IrregularPoint::new(
                 moving_edge.end.x - moving_edge.start.x,
                 moving_edge.end.y - moving_edge.start.y,
@@ -1252,23 +1255,27 @@ pub fn generate_placement_candidates_uncached(
     let contact_only = input.candidate_domain != CandidateDomain::Sheet;
     let mut points = CanonicalPointSet::new();
 
-    let all_nfp_index = BoundsIndex::new(
-        nfp_boundaries
-            .iter()
-            .map(|boundary| BoundsIndexEntry {
-                value: boundary.index,
-                bounds: boundary.bounds,
-            })
-            .collect(),
-    );
-
     let candidate_nfp_boundary_indices: Vec<usize> =
         if sheetless_nfp || candidate_pruning_mode != NfpCandidatePruningMode::Indexed {
             (0..nfp_boundaries.len()).collect()
         } else {
             match &ifp_bounds {
                 None => Vec::new(),
-                Some(bounds) => all_nfp_index.query(bounds),
+                // Built only on the branch that queries it: the production
+                // sheetless domain never reads this index, and its only
+                // consumer is the single query below (the sorted build is a
+                // pure function of `nfp_boundaries`, so building it lazily
+                // is observationally identical).
+                Some(bounds) => BoundsIndex::new(
+                    nfp_boundaries
+                        .iter()
+                        .map(|boundary| BoundsIndexEntry {
+                            value: boundary.index,
+                            bounds: boundary.bounds,
+                        })
+                        .collect(),
+                )
+                .query(bounds),
             }
         };
     let candidate_nfp_index = BoundsIndex::new(
