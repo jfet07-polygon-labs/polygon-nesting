@@ -136,7 +136,9 @@ use crate::js_number::{
 };
 
 use super::contact::{
-    has_positive_canonical_grid_boundary_contact, measure_canonical_grid_boundary_contact,
+    canonical_grid_path_edges, has_positive_canonical_grid_boundary_contact,
+    has_positive_contact_between_prepared_edges, measure_canonical_grid_boundary_contact,
+    CanonicalGridEdge,
 };
 use super::{
     canonical_grid_absolute_doubled_area, canonical_grid_compare_bigints,
@@ -1428,11 +1430,26 @@ struct ContactGraphMetrics {
 
 fn measure_contact_graph(polygons: &[CanonicalGridPath]) -> Option<ContactGraphMetrics> {
     let mut neighbors: Vec<HashSet<usize>> = vec![HashSet::new(); polygons.len()];
+    // Each polygon's edge list is a pure function of its path, so building
+    // all of them once replaces the per-pair rebuild (each polygon's edges
+    // were previously constructed n−1 times).
+    //
+    // Failure semantics are preserved exactly rather than hoisted: an
+    // unbuildable ring (fewer than 3 points, a non-safe-integer coordinate,
+    // or a repeated consecutive vertex) must surface `None` only when a
+    // scanned pair actually touches it, and in the same first-`first_index`-
+    // then-`second_index` order the per-pair form used. Hoisting the `?` to
+    // the build loop would additionally reject a single-polygon layout,
+    // whose pair loop is empty and therefore never built any edges before.
+    let edge_lists: Vec<Option<Vec<CanonicalGridEdge>>> = polygons
+        .iter()
+        .map(|polygon| canonical_grid_path_edges(polygon, None))
+        .collect();
     for first_index in 0..polygons.len() {
         for second_index in 0..first_index {
-            let has_positive_contact = has_positive_canonical_grid_boundary_contact(
-                &polygons[first_index],
-                &polygons[second_index],
+            let has_positive_contact = has_positive_contact_between_prepared_edges(
+                edge_lists[first_index].as_deref()?,
+                edge_lists[second_index].as_deref()?,
             )?;
             if has_positive_contact {
                 neighbors[first_index].insert(second_index);
