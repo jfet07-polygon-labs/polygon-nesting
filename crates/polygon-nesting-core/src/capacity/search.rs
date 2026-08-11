@@ -125,8 +125,8 @@ use crate::domain::{
 use crate::geometry::hash::sha256_hex;
 use crate::js_number::{cmp_js_code_units, is_safe_integer, js_math, number_to_js_string};
 use crate::nfp_ifp::{
-    generate_placement_candidates, GeneratePlacementCandidatesInput, LegalCandidateMemo,
-    NfpIfpCheckpointPhase, NfpIfpControl, NfpIfpControlAbortError, NfpIfpError,
+    generate_placement_candidates_with_prepared_placed, GeneratePlacementCandidatesInput,
+    LegalCandidateMemo, NfpIfpCheckpointPhase, NfpIfpControl, NfpIfpControlAbortError, NfpIfpError,
 };
 use crate::search::beam_state::{
     IrregularBeamState, IrregularBeamStateInput, IrregularCollisionBounds, TimingNowFn,
@@ -1145,10 +1145,10 @@ pub fn run_intrinsic_capacity_cold_search(
                             settings,
                             candidate_domain: CandidateDomain::SheetlessNfp,
                             want_provenance: false,
-                            prepared_placed_memo_parts: Some(&entry_prepared_placed_memo_parts),
                         };
-                        generate_placement_candidates(
+                        generate_placement_candidates_with_prepared_placed(
                             &gp_input,
+                            Some(&entry_prepared_placed_memo_parts),
                             geometry_cache,
                             DEFAULT_NFP_CONSTRUCTION_ALGORITHM,
                             NfpCandidatePruningMode::Indexed,

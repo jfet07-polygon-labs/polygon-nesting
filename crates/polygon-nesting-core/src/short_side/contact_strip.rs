@@ -957,7 +957,6 @@ fn construct_strip(
                 settings: input.settings,
                 candidate_domain: CandidateDomain::Sheet,
                 want_provenance: false,
-                prepared_placed_memo_parts: None,
             };
             let candidates = {
                 let mut control =

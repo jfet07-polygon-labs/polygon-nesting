@@ -98,12 +98,6 @@ pub struct LegalPlacementCandidateMemoKeyInput<'a> {
     /// dimensions the caller might otherwise have on hand.
     pub sheet: Option<SheetDimensions>,
     pub placed: &'a [PlacedPieceKeyInput<'a>],
-    /// When `Some`, replaces re-rendering `placed`'s digest payload with the
-    /// caller-prepared join — callers must have built it (via
-    /// [`prepare_placed_memo_parts`]) from exactly the pieces `placed`
-    /// describes, which per-beam-state drivers guarantee because their
-    /// placed set is frozen while candidates are generated for it.
-    pub prepared_placed: Option<&'a PreparedPlacedMemoParts>,
     pub moving_polygon_points: &'a [IrregularPoint],
     pub moving_bounds: &'a IrregularBounds,
     pub settings: &'a IrregularGeometrySettings,
@@ -115,11 +109,13 @@ pub struct LegalPlacementCandidateMemoKeyInput<'a> {
 /// per frozen placed set and reused across the piece×transform candidate
 /// generations that all share it. Byte-identical by construction: the
 /// payload is rendered by the same digest code the per-call path uses.
-pub struct PreparedPlacedMemoParts {
+pub(crate) struct PreparedPlacedMemoParts {
     joined: String,
 }
 
-pub fn prepare_placed_memo_parts(placed: &[PlacedPieceKeyInput<'_>]) -> PreparedPlacedMemoParts {
+pub(crate) fn prepare_placed_memo_parts(
+    placed: &[PlacedPieceKeyInput<'_>],
+) -> PreparedPlacedMemoParts {
     PreparedPlacedMemoParts {
         joined: join_placed_memo_parts(placed),
     }
@@ -180,6 +176,20 @@ pub fn legal_placement_candidate_memo_key(
     construction_algorithm: super::nfp_cache_key::NfpConstructionAlgorithm,
     candidate_pruning_mode: NfpCandidatePruningMode,
 ) -> String {
+    legal_placement_candidate_memo_key_with_prepared_placed(
+        input,
+        None,
+        construction_algorithm,
+        candidate_pruning_mode,
+    )
+}
+
+pub(crate) fn legal_placement_candidate_memo_key_with_prepared_placed(
+    input: &LegalPlacementCandidateMemoKeyInput<'_>,
+    prepared_placed: Option<&PreparedPlacedMemoParts>,
+    construction_algorithm: super::nfp_cache_key::NfpConstructionAlgorithm,
+    candidate_pruning_mode: NfpCandidatePruningMode,
+) -> String {
     let sheet_identity = match input.sheet {
         None => "sheet=deferred".to_string(),
         Some(dimensions) => format!(
@@ -189,7 +199,7 @@ pub fn legal_placement_candidate_memo_key(
         ),
     };
 
-    let placed_joined = match input.prepared_placed {
+    let placed_joined = match prepared_placed {
         Some(prepared) => prepared.joined.clone(),
         None => join_placed_memo_parts(input.placed),
     };
@@ -285,7 +295,6 @@ mod tests {
         let bounds = IrregularBounds::new(0.0, 0.0, 1.0, 1.0);
         let moving = [p(0.0, 0.0), p(1.0, 0.0), p(1.0, 1.0), p(0.0, 1.0)];
         let input = LegalPlacementCandidateMemoKeyInput {
-            prepared_placed: None,
             sheet: None,
             placed: &[],
             moving_polygon_points: &moving,
@@ -313,7 +322,6 @@ mod tests {
         let bounds = IrregularBounds::new(0.0, 0.0, 1.0, 1.0);
         let moving = [p(0.0, 0.0), p(1.0, 0.0), p(1.0, 1.0), p(0.0, 1.0)];
         let input = LegalPlacementCandidateMemoKeyInput {
-            prepared_placed: None,
             sheet: Some(SheetDimensions {
                 width: 20.0,
                 height: 15.0,
@@ -346,7 +354,6 @@ mod tests {
         let bounds = IrregularBounds::new(0.0, 0.0, 1.0, 1.0);
         let moving = [p(0.0, 0.0), p(1.0, 0.0), p(1.0, 1.0), p(0.0, 1.0)];
         let input = LegalPlacementCandidateMemoKeyInput {
-            prepared_placed: None,
             sheet: Some(SheetDimensions {
                 width: 20.0,
                 height: 15.0,
@@ -390,7 +397,6 @@ mod tests {
         };
         let placed = [placed_b, placed_a];
         let input = LegalPlacementCandidateMemoKeyInput {
-            prepared_placed: None,
             sheet: None,
             placed: &placed,
             moving_polygon_points: &square,

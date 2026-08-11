@@ -734,7 +734,6 @@ fn generated_candidates_match_ts_ordered_output() {
             settings: &settings,
             candidate_domain: decode_candidate_domain(&case.candidate_domain),
             want_provenance: false,
-            prepared_placed_memo_parts: None,
         };
         let mut cache = GeometryCacheStore::new();
         let pruning_mode = decode_pruning_mode(&case.pruning_mode);
@@ -983,7 +982,6 @@ fn rejection_cases_match_ts_error_taxonomy_and_abort_phases() {
                     settings: &settings,
                     candidate_domain: CandidateDomain::Sheet,
                     want_provenance: false,
-                    prepared_placed_memo_parts: None,
                 };
                 let mut cache = GeometryCacheStore::new();
                 let error = generate_placement_candidates(
@@ -1065,7 +1063,6 @@ fn run_abort_scenario(abort_phase_name: &str, case: &RejectionCase) {
         settings: &settings,
         candidate_domain: CandidateDomain::Sheet,
         want_provenance: false,
-        prepared_placed_memo_parts: None,
     };
     let mut control = RecordingAbortControl {
         abort_at: abort_phase,

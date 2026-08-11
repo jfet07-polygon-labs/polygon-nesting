@@ -62,9 +62,12 @@ pub use geometry_cache_identity::{
     TRANSFORM_GEOMETRY_CACHE_NAMESPACE,
 };
 pub use legal_candidate_memo::{
-    legal_placement_candidate_memo_key, prepare_placed_memo_parts, CandidateDomain,
-    LegalPlacementCandidateMemoKeyInput, NfpCandidatePruningMode, PlacedPieceKeyInput,
-    PreparedPlacedMemoParts, SheetDimensions, LEGAL_CANDIDATE_MEMO_NAMESPACE,
+    legal_placement_candidate_memo_key, CandidateDomain, LegalPlacementCandidateMemoKeyInput,
+    NfpCandidatePruningMode, PlacedPieceKeyInput, SheetDimensions, LEGAL_CANDIDATE_MEMO_NAMESPACE,
+};
+pub(crate) use legal_candidate_memo::{
+    legal_placement_candidate_memo_key_with_prepared_placed, prepare_placed_memo_parts,
+    PreparedPlacedMemoParts,
 };
 pub use nfp_cache_key::{
     canonical_polygon_digest, make_pairwise_nfp_cache_key,
