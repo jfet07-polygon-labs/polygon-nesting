@@ -1116,31 +1116,47 @@ pub fn run_intrinsic_capacity_cold_search(
                     &settings.geometry,
                     geometry_cache,
                 )?;
-                let legal_candidates: Vec<IrregularPlacementCandidate> =
-                    if entry.state.placed_collision_geometries.is_empty() {
-                        origin_anchor_candidates(&moving)
-                    } else {
-                        let coordinate_domain = intrinsic_coordinate_domain();
-                        let gp_input = GeneratePlacementCandidatesInput {
-                            sheet: &coordinate_domain,
-                            placed: &entry.state.placed_collision_geometries,
-                            placed_collision_index: Some(&entry.state.placed_collision_index),
-                            moving: &moving,
-                            settings,
-                            candidate_domain: CandidateDomain::SheetlessNfp,
-                            want_provenance: false,
-                        };
-                        generate_placement_candidates(
-                            &gp_input,
-                            geometry_cache,
-                            DEFAULT_NFP_CONSTRUCTION_ALGORITHM,
-                            NfpCandidatePruningMode::Indexed,
-                            Some(&mut candidate_memo),
-                            None,
-                            Some(&mut control),
-                        )?
-                        .candidates
+                let legal_candidates: Vec<IrregularPlacementCandidate> = if entry
+                    .state
+                    .placed_collision_geometries
+                    .is_empty()
+                {
+                    origin_anchor_candidates(&moving)
+                } else {
+                    let coordinate_domain = intrinsic_coordinate_domain();
+                    let placed_memo_key_inputs: Vec<crate::caches::PlacedPieceKeyInput<'_>> = entry
+                        .state
+                        .placed_collision_geometries
+                        .iter()
+                        .map(|placed| crate::caches::PlacedPieceKeyInput {
+                            collision_polygon_points: &placed.collision_geometry.polygon.points,
+                            translate_x: placed.placement.transform.translate_x,
+                            translate_y: placed.placement.transform.translate_y,
+                        })
+                        .collect();
+                    let prepared_placed_memo_parts =
+                        crate::caches::prepare_placed_memo_parts(&placed_memo_key_inputs);
+                    let gp_input = GeneratePlacementCandidatesInput {
+                        sheet: &coordinate_domain,
+                        placed: &entry.state.placed_collision_geometries,
+                        placed_collision_index: Some(&entry.state.placed_collision_index),
+                        moving: &moving,
+                        settings,
+                        candidate_domain: CandidateDomain::SheetlessNfp,
+                        want_provenance: false,
+                        prepared_placed_memo_parts: Some(&prepared_placed_memo_parts),
                     };
+                    generate_placement_candidates(
+                        &gp_input,
+                        geometry_cache,
+                        DEFAULT_NFP_CONSTRUCTION_ALGORITHM,
+                        NfpCandidatePruningMode::Indexed,
+                        Some(&mut candidate_memo),
+                        None,
+                        Some(&mut control),
+                    )?
+                    .candidates
+                };
                 if capture_topology_retention {
                     contact_fanout_trace.legal_candidate_count += legal_candidates.len() as f64;
                 }

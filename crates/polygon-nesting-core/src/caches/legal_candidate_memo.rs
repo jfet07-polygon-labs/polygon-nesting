@@ -98,10 +98,45 @@ pub struct LegalPlacementCandidateMemoKeyInput<'a> {
     /// dimensions the caller might otherwise have on hand.
     pub sheet: Option<SheetDimensions>,
     pub placed: &'a [PlacedPieceKeyInput<'a>],
+    /// When `Some`, replaces re-rendering `placed`'s digest payload with the
+    /// caller-prepared join — callers must have built it (via
+    /// [`prepare_placed_memo_parts`]) from exactly the pieces `placed`
+    /// describes, which per-beam-state drivers guarantee because their
+    /// placed set is frozen while candidates are generated for it.
+    pub prepared_placed: Option<&'a PreparedPlacedMemoParts>,
     pub moving_polygon_points: &'a [IrregularPoint],
     pub moving_bounds: &'a IrregularBounds,
     pub settings: &'a IrregularGeometrySettings,
     pub candidate_domain: CandidateDomain,
+}
+
+/// The `placed=` payload of the legal-candidate memo key (every placed
+/// piece's exact ordered polygon digest at its translation), prepared once
+/// per frozen placed set and reused across the piece×transform candidate
+/// generations that all share it. Byte-identical by construction: the
+/// payload is rendered by the same digest code the per-call path uses.
+pub struct PreparedPlacedMemoParts {
+    joined: String,
+}
+
+pub fn prepare_placed_memo_parts(placed: &[PlacedPieceKeyInput<'_>]) -> PreparedPlacedMemoParts {
+    PreparedPlacedMemoParts {
+        joined: join_placed_memo_parts(placed),
+    }
+}
+
+fn join_placed_memo_parts(placed: &[PlacedPieceKeyInput<'_>]) -> String {
+    placed
+        .iter()
+        .map(|placed| {
+            format!(
+                "{}@{}",
+                exact_ordered_polygon_digest(placed.collision_polygon_points),
+                point_translation_digest(placed.translate_x, placed.translate_y)
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("|")
 }
 
 /// `width`/`height` only — deliberately **not** `SheetSpec` (which also
@@ -154,22 +189,15 @@ pub fn legal_placement_candidate_memo_key(
         ),
     };
 
-    let placed_parts: Vec<String> = input
-        .placed
-        .iter()
-        .map(|placed| {
-            format!(
-                "{}@{}",
-                exact_ordered_polygon_digest(placed.collision_polygon_points),
-                point_translation_digest(placed.translate_x, placed.translate_y)
-            )
-        })
-        .collect();
+    let placed_joined = match input.prepared_placed {
+        Some(prepared) => prepared.joined.clone(),
+        None => join_placed_memo_parts(input.placed),
+    };
 
     let mut array_elements: Vec<String> = Vec::with_capacity(9);
     array_elements.push(json_string(LEGAL_CANDIDATE_MEMO_NAMESPACE));
     array_elements.push(json_string(&sheet_identity));
-    array_elements.push(json_string(&format!("placed={}", placed_parts.join("|"))));
+    array_elements.push(json_string(&format!("placed={placed_joined}")));
     array_elements.push(json_string(&format!(
         "moving={}",
         exact_ordered_polygon_digest(input.moving_polygon_points)
@@ -257,6 +285,7 @@ mod tests {
         let bounds = IrregularBounds::new(0.0, 0.0, 1.0, 1.0);
         let moving = [p(0.0, 0.0), p(1.0, 0.0), p(1.0, 1.0), p(0.0, 1.0)];
         let input = LegalPlacementCandidateMemoKeyInput {
+            prepared_placed: None,
             sheet: None,
             placed: &[],
             moving_polygon_points: &moving,
@@ -284,6 +313,7 @@ mod tests {
         let bounds = IrregularBounds::new(0.0, 0.0, 1.0, 1.0);
         let moving = [p(0.0, 0.0), p(1.0, 0.0), p(1.0, 1.0), p(0.0, 1.0)];
         let input = LegalPlacementCandidateMemoKeyInput {
+            prepared_placed: None,
             sheet: Some(SheetDimensions {
                 width: 20.0,
                 height: 15.0,
@@ -316,6 +346,7 @@ mod tests {
         let bounds = IrregularBounds::new(0.0, 0.0, 1.0, 1.0);
         let moving = [p(0.0, 0.0), p(1.0, 0.0), p(1.0, 1.0), p(0.0, 1.0)];
         let input = LegalPlacementCandidateMemoKeyInput {
+            prepared_placed: None,
             sheet: Some(SheetDimensions {
                 width: 20.0,
                 height: 15.0,
@@ -359,6 +390,7 @@ mod tests {
         };
         let placed = [placed_b, placed_a];
         let input = LegalPlacementCandidateMemoKeyInput {
+            prepared_placed: None,
             sheet: None,
             placed: &placed,
             moving_polygon_points: &square,

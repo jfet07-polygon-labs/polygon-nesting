@@ -386,6 +386,7 @@ fn legal_placement_candidate_memo_key_matches_ts_production_oracle_over_the_full
         );
 
         let input = LegalPlacementCandidateMemoKeyInput {
+            prepared_placed: None,
             sheet,
             placed: &placed,
             moving_polygon_points: &moving_polygon,

@@ -110,6 +110,12 @@ pub struct GeneratePlacementCandidatesInput<'a> {
     /// this module's top-level doc for why a `bool` input flag plus a
     /// returned `Option` is an exact-content, exact-timing equivalent.
     pub want_provenance: bool,
+    /// Caller-prepared `placed=` payload of the legal-candidate memo key
+    /// (see `caches::prepare_placed_memo_parts`): per-beam-state drivers
+    /// whose placed set is frozen across piece×transform candidate
+    /// generations prepare it once; `None` renders it per call, byte-
+    /// identically.
+    pub prepared_placed_memo_parts: Option<&'a crate::caches::PreparedPlacedMemoParts>,
 }
 
 /// TS: `services.ts:161-175` (`NfpIfpCandidateProvenance`).

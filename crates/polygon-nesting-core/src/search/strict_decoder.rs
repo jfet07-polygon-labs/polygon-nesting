@@ -3424,6 +3424,21 @@ pub fn construct_intrinsic_strict_state(
         // was briefly hoisted to function scope).
         let anchored_parent_keys_memo: Arc<AnchoredParentKeysMemo> =
             Arc::new(Mutex::new(HashMap::new()));
+        // Same frozen-placed-set scope: the legal-candidate memo key's
+        // `placed=` payload is identical for every piece x transform
+        // candidate generation against this state.
+        let placed_memo_key_inputs: Vec<crate::caches::PlacedPieceKeyInput<'_>> = state
+            .placed_collision_geometries
+            .iter()
+            .map(|placed| crate::caches::PlacedPieceKeyInput {
+                collision_polygon_points: &placed.collision_geometry.polygon.points,
+                translate_x: placed.placement.transform.translate_x,
+                translate_y: placed.placement.transform.translate_y,
+            })
+            .collect();
+        let prepared_placed_memo_parts =
+            crate::caches::prepare_placed_memo_parts(&placed_memo_key_inputs);
+        drop(placed_memo_key_inputs);
         let remaining_prepared_pieces: Vec<Arc<IrregularPreparedPiece>> =
             input.remaining_prepared_pieces[(piece_index + 1)..].to_vec();
         let mut candidates_by_family: Vec<(String, ScoredCandidate)> = Vec::new();
@@ -3485,6 +3500,7 @@ pub fn construct_intrinsic_strict_state(
                         settings,
                         candidate_domain: CandidateDomain::SheetlessNfp,
                         want_provenance: false,
+                        prepared_placed_memo_parts: Some(&prepared_placed_memo_parts),
                     };
                     match generate_placement_candidates(
                         &gp_input,

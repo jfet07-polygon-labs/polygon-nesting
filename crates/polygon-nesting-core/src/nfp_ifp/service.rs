@@ -460,6 +460,7 @@ fn build_memo_key(
     let key_input = LegalPlacementCandidateMemoKeyInput {
         sheet,
         placed: &placed_key_inputs,
+        prepared_placed: input.prepared_placed_memo_parts,
         moving_polygon_points: &input.moving.polygon.points,
         moving_bounds: &moving_bounds,
         settings: &input.settings.geometry,
@@ -596,6 +597,7 @@ mod tests {
             settings: &settings_full,
             candidate_domain: CandidateDomain::Sheet,
             want_provenance: false,
+            prepared_placed_memo_parts: None,
         };
         let mut telemetry = NfpIfpTelemetry::new();
         let outcome = generate_placement_candidates(
@@ -638,6 +640,7 @@ mod tests {
                 settings: &settings_full,
                 candidate_domain: CandidateDomain::Sheet,
                 want_provenance: false,
+                prepared_placed_memo_parts: None,
             };
             let outcome = generate_placement_candidates(
                 &input,
@@ -686,6 +689,7 @@ mod tests {
             settings: &settings_full,
             candidate_domain: CandidateDomain::Sheet,
             want_provenance: true,
+            prepared_placed_memo_parts: None,
         };
         let first = generate_placement_candidates(
             &input_wants_provenance,
@@ -711,6 +715,7 @@ mod tests {
             settings: &settings_full,
             candidate_domain: CandidateDomain::Sheet,
             want_provenance: false,
+            prepared_placed_memo_parts: None,
         };
         let mut telemetry = NfpIfpTelemetry::new();
         let second = generate_placement_candidates(
