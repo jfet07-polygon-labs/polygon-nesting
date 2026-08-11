@@ -1,0 +1,138 @@
+# Canonical matrix performance investigation
+
+Working notes and evidence for single-thread-work reduction on the
+canonical-matrix workload (Triangle-20, Mixed-61, Shapes-17 across the
+2000×2700 / 600×400 / 300×300 sheets, Compact and Short-Side profiles),
+following the Issue-21 periodic archive work
+(`docs/issue-21-periodic-performance.md`). Hard gate for every change: the
+canonical quality golden (`tests/fixtures/canonical-quality-golden.json`)
+must stay byte-identical across all 18 rows — request fingerprints,
+placement counts, layout fingerprints, and score metrics.
+
+## Baseline
+
+- Machine: Linux x86_64, 16 hardware threads, 62 GiB RAM (same machine for
+  every number here; release CLI, project toolchain rustc 1.95.0 via
+  `nix develop`); branch base `main` @ `322aa4c` (version 0.1.9).
+- Per-row driver identical to `scripts/run-current-canonical-matrix.mjs`:
+  adapter output fed to `polygon-nesting run` with
+  `diagnosticTraceMode: "full"`.
+
+Single-run sweep of all 18 rows (elapsed seconds):
+
+```text
+16.24 mixed-61-2000x2700-short-side     2.12 triangle-20-300x300-short-side
+15.80 mixed-61-2000x2700-compact        2.06 triangle-20-300x300-compact
+ 2.66 shapes-17-2000x2700-short-side    1.95 triangle-20-600x400-short-side
+ 2.47 shapes-17-600x400-short-side      1.95 triangle-20-2000x2700-short-side
+ 2.26 shapes-17-600x400-compact         1.88 triangle-20-2000x2700-compact
+ 2.24 shapes-17-2000x2700-compact       1.86 triangle-20-600x400-compact
+ 1.59 mixed-61-600x400-short-side       0.40 shapes-17-300x300-short-side
+ 1.44 mixed-61-600x400-compact          0.39 shapes-17-300x300-compact
+ 0.31 mixed-61-300x300-short-side       0.31 mixed-61-300x300-compact
+```
+
+The two mixed-61-2000×2700 rows dominate (half the whole matrix runtime).
+For mixed-61-2000x2700-compact: `real ≈ 16.0 s`, `user ≈ 39.5 s`,
+`sys ≈ 5.9 s` — 2.5× effective core use on 16 cores.
+
+### Profile findings
+
+`perf record --call-graph fp -e cpu-clock:u` (frame-pointer scratch build):
+
+- Whole-process view: `score_candidate` 27.6 % cumulative — inside it the
+  beam-state canonical keys (`canonical_collision_polygon_key` 12.1 %,
+  `canonical_ring_key` 11.3 %, `canonical_point_key` 7.2 %); rayon/
+  crossbeam scheduling ≈ 23 % flat; ryu `format64` 6.4 %; allocator
+  cluster ≈ 14 %.
+- Instrumented counts (bit-repeatable): 4.94 M `canonical_ring_key` calls
+  per mixed-61-2000×2700 run, **93.5 % from
+  `bottom_left_anchored_canonical_occupied_geometry_key`** re-rendering
+  every placed piece's key per scored candidate; ≈ 47 M `canonical_number`
+  calls; 8.47 M entry-key `String` clones (≈ 1.36 GB).
+- **Per-thread view (the decisive one)**: the coordinator thread holds
+  41.6 % of all CPU samples ≈ 15 s ≈ the entire wall time — the wall
+  critical path is the serial coordinator, and worker-side CPU (idle
+  steal-spin included) inflates flat scheduling shares without being on
+  the critical path. Coordinator breakdown: strict state construction
+  18.5 %, capacity cold search 17.2 % (retention topology measure 5.2 %,
+  `compare_topology_metric` 5.3 %, retain 5.0 %), candidate generation
+  12.7 %, periodic portfolio 14.7 %, `measure_canonical_layout_topology_exact`
+  6.5 %.
+
+## Stages
+
+### Stage 1 (kept) — memoized anchor-translated parent keys in strict scoring
+
+Per-parent-state memo (exact anchor-translation bit pattern → the parent
+pieces' sorted anchored entry keys) threaded through both scoring modes;
+each candidate renders only its own piece's key and merges it at its
+`partition_point` upper bound, concatenated borrow-only via the new
+`canonical_entry_list_key_parts`. Equal keys are identical strings, so the
+sorted-multiset concatenation is order-invariant among ties — byte-equal to
+the plain probe, pinned by the
+`anchored_key_via_parent_memo_matches_plain_probe` differential test.
+
+Memo scope matters: the memo lives one decode-step iteration (the parent
+state advances at the bottom of each piece iteration). A briefly-tried
+whole-construction scope produced stale parent keys and flipped one
+selection tie-break — caught before any push by
+`coordinator_vectors::full_job_vectors_match_ts_oracle` (the roomy-n6-c0
+canonical geometry hash), which the 18-row golden alone did not trip;
+scope is now pinned by that suite plus a code comment.
+
+Measured (mixed-61-2000x2700-compact, 3 runs each, correct scope): user
+CPU 39.5 s → 37.0 s (−6 %); wall unchanged on this 16-core machine
+(scoring is parallel, off the coordinator critical path). Smaller/loaded
+machines convert the CPU cut to wall time directly. Golden identical.
+
+### Stage 2 (reverted) — rayon granularity knobs
+
+Tried `with_min_len(8)` on the per-point legality dispatch and a
+32 → 256 scoring chunk size. Both are provably order-preserving, but
+measurement showed wall-time regressions (min_len starved workers inside
+32-item chunks: sys 5.9 → 8.5 s; chunk 256 alone was flat-to-worse).
+Reverted in full. Lesson recorded: the ~23 % flat crossbeam share is
+mostly idle-worker steal-spin during serial coordinator phases — CPU-time
+noise, not wall-time cost — so scheduling knobs don't pay here.
+
+### Stage 3 (kept) — shared occupied Clipper union in layout topology
+
+`measure_canonical_layout_topology_exact` executed the identical even-odd
+occupied Union twice (hull-gap and cavity measurements). The tree — a pure
+function of the paths — is now built once and shared via `_from_union`
+variants; plain-signature functions remain for other callers, and every
+branch runs byte-identical code. Sits directly on the coordinator's
+capacity-retention critical path.
+
+Measured (mixed-61-2000x2700-compact, 3 runs): wall 16.0 s → 15.6–15.8 s
+(−1.25 % to −2.5 % across runs), cumulative with Stage 1: user −6 %.
+Golden identical; `canonical_layout_vectors` and the full workspace
+release suite pass.
+
+## Remaining opportunities (profile-ranked, deferred)
+
+- `compare_topology_metric` (5.3 % of coordinator): decorate-sort in
+  `retain_capacity_beam_entries` / `retain_capacity_cohesion_frontier` so
+  per-comparison memo lookups (long-String successor-identity hashes)
+  happen once per entry instead of per comparison.
+- Contact-graph edge prebuild inside `measure_contact_graph`
+  (each polygon's edge list currently rebuilt n−1 times per topology call).
+- Candidate-generation per-call rebuilds (12.7 % of coordinator): moving
+  digest recomputed per placed piece, warm-hit boundary clone, dead
+  `all_nfp_index` under the production `SheetlessNfp` domain, moving-edge
+  list rebuilt inside the antiparallel fixed-edge loop.
+- `gap_regions.rs` duplicate `canonical_ring` (materializes all 2n
+  rotations; the shared `canonical_bidirectional_cyclic_key` helper from
+  the Issue-21 work is a drop-in) plus ring keys recomputed inside sort
+  comparators — not hot for these three fixture families, relevant for
+  gap-contained-heavy workloads.
+- Per-candidate `remaining_prepared_pieces` Vec clone and deep
+  `TransformedCollisionGeometry` clone in scoring input construction
+  (allocator-cluster feeders).
+- Structural ceiling: the capacity beam loop is serial per
+  entry/transform/candidate; the coordinator is ≈ 94 % busy while 15
+  workers average ≈ 4 % each. Any future wall-time step change on large
+  mixed workloads needs either less serial work per beam entry or a
+  deterministic parallelization of that loop — a design-level change, not
+  a local optimization.
