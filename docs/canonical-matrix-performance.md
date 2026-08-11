@@ -167,17 +167,26 @@ bit-identical telemetry accounting (`record_cloning_hit` fires for every
 present entry exactly as the cloning `get` did). Wall within run noise;
 a strict per-hit polygon-clone removal.
 
-Cumulative after stages 1–8 (mixed-61-2000x2700-compact, 5-run medians):
-**wall 16.03 s → 14.56 s (−9.2 %), user CPU 39.5 s → 35.6 s (−10 %)** —
+### Stage 9 (kept) — legal-candidate memo placed payload prepared per state
+
+`build_memo_key` re-rendered every placed piece's exact ordered polygon
+digest on each candidate-generation call, hit or miss. The memo-key input
+now accepts a caller-prepared placed payload (same digest code →
+byte-identical keys); the strict decoder prepares it once per piece
+iteration, the capacity beam loop once per entry, and every other caller
+renders per call as before. Wall median 14.56 s → 14.52 s.
+
+Cumulative after stages 1–9 (mixed-61-2000x2700-compact, 5-run medians):
+**wall 16.03 s → 14.52 s (−9.4 %), user CPU 39.5 s → 35.4 s (−10.4 %)** —
 all with the quality golden byte-identical across the 18 rows and the
 full workspace release suite green at every stage.
 
 ## Remaining opportunities (profile-ranked, deferred)
 
-- Candidate-generation memo key (`service.rs` `build_memo_key`): the
-  legal-candidate memo still renders an exact ordered polygon digest of
-  the moving polygon and every placed piece on every call, hit or miss —
-  the same prepared-parts treatment as Stage 7 applies.
+- Candidate-generation memo key, moving half: Stage 9 prepared the
+  placed payload once per state; the moving-polygon digest of the memo
+  key is still rendered per call (it varies per piece × transform, so
+  the win is bounded).
 - Scoring input construction: per-candidate `remaining_prepared_pieces`
   Vec clone and the per-candidate deep `TransformedCollisionGeometry`
   clone in `score_candidate_body` (allocator-cluster feeders).
