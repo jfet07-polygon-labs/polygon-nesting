@@ -110,14 +110,37 @@ Measured (mixed-61-2000x2700-compact, 3 runs): wall 16.0 s → 15.6–15.8 s
 Golden identical; `canonical_layout_vectors` and the full workspace
 release suite pass.
 
+### Stage 4 (kept) — per-entry topology lookup cache in retention sorts
+
+`compare_topology_metric` re-resolved both entries' memoized topology per
+comparison (successor-identity String hash + a deep struct clone per
+side). Retention sorts and the depth trace now decorate each pass with
+once-cells: the first comparison that needs an entry still calls
+`measure` at exactly the same moment — same memoized-measure set, same
+checkpoint-visible `topologyMeasurementCount`/`Ms` increments, pinned by
+`capacity_search_vectors`' integrity-hash preimages — and later
+comparisons borrow the slot. Wall within run noise (median
+15.66 s → 15.59 s); kept as a strict per-comparison hash/allocation
+removal on the serial retention path.
+
+### Stage 5 (kept) — contact-graph edge lists built once per polygon
+
+`measure_contact_graph` rebuilt both polygons' canonical grid edge lists
+on every pair (each polygon's edges constructed n−1 times per topology
+call). The all-pairs loop now prebuilds each edge list once; scan order,
+short-circuit, and `None` propagation are unchanged. Wall within run
+noise (median ≈ 15.6 s); a strict allocation/validation removal on the
+serial topology path.
+
+After stages 1–5 the cumulative mixed-61-2000x2700-compact medians are:
+wall 16.03 s → ≈ 15.6 s (−2.5 % to −3 %), user CPU 39.5 s → ≈ 37.1 s
+(−6 %). The honest reading: the remaining serial wall time is now spread
+across candidate generation, strict state construction, and the periodic
+portfolio residue, with no single ≥ 10 % local target left below the
+structural beam-loop change.
+
 ## Remaining opportunities (profile-ranked, deferred)
 
-- `compare_topology_metric` (5.3 % of coordinator): decorate-sort in
-  `retain_capacity_beam_entries` / `retain_capacity_cohesion_frontier` so
-  per-comparison memo lookups (long-String successor-identity hashes)
-  happen once per entry instead of per comparison.
-- Contact-graph edge prebuild inside `measure_contact_graph`
-  (each polygon's edge list currently rebuilt n−1 times per topology call).
 - Candidate-generation per-call rebuilds (12.7 % of coordinator): moving
   digest recomputed per placed piece, warm-hit boundary clone, dead
   `all_nfp_index` under the production `SheetlessNfp` domain, moving-edge
