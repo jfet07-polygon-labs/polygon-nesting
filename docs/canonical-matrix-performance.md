@@ -176,8 +176,17 @@ byte-identical keys); the strict decoder prepares it once per piece
 iteration, the capacity beam loop once per entry, and every other caller
 renders per call as before. Wall median 14.56 s → 14.52 s.
 
-Cumulative after stages 1–9 (mixed-61-2000x2700-compact, 5-run medians):
-**wall 16.03 s → 14.52 s (−9.4 %), user CPU 39.5 s → 35.4 s (−10.4 %)** —
+### Stage 10 (kept) — short-circuit per-point NFP interior test
+
+The indexed interior-rejection test collected every bounds-index match
+into a Vec (cloning each value) per candidate point before an existential
+`.any`. `BoundsIndex::any_match` now scans the identical pre-sorted range
+in the identical order with the predicate interleaved — an existence test
+over a pure predicate, so the result is unchanged and per-point work is
+strictly ≤. Wall median 14.52 s → 14.26 s, user 35.4 s → 34.4 s.
+
+Cumulative after stages 1–10 (mixed-61-2000x2700-compact, 5-run medians):
+**wall 16.03 s → 14.26 s (−11.0 %), user CPU 39.5 s → 34.4 s (−12.9 %)** —
 all with the quality golden byte-identical across the 18 rows and the
 full workspace release suite green at every stage.
 
@@ -190,10 +199,11 @@ full workspace release suite green at every stage.
 - Scoring input construction: per-candidate `remaining_prepared_pieces`
   Vec clone and the per-candidate deep `TransformedCollisionGeometry`
   clone in `score_candidate_body` (allocator-cluster feeders).
-- Candidate-generation per-call rebuilds (remainder after stages 6–8):
+- Candidate-generation per-call rebuilds (remainder after stages 6–10):
   per-boundary `validate_strict_boundary`/`bounds_for_points`/segment and
   `BoundsIndex` rebuilds across the transform loop while the placed set
-  is frozen, and `BoundsIndex::query`'s per-call `Vec` allocation.
+  is frozen; the remaining collecting `query` call sites (checkpoint
+  cadence is tied to collected indices there).
 - `gap_regions.rs` duplicate `canonical_ring` (materializes all 2n
   rotations; the shared `canonical_bidirectional_cyclic_key` helper from
   the Issue-21 work is a drop-in) plus ring keys recomputed inside sort
