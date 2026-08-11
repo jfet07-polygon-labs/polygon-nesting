@@ -155,29 +155,54 @@ pub(crate) fn resolve_nfp_boundary_with_prepared_moving(
         &input.fixed.collision_geometry.transform,
     );
 
-    let cached: Option<IrregularPolygon> = cache.get(&key);
-    let relative_boundary: IrregularPolygon = if is_valid_cached_nfp_boundary(cached.as_ref()) {
-        cache.record_hit(NFP_GEOMETRY_CACHE_NAMESPACE);
-        cached.expect("validity check above requires Some")
-    } else {
-        if cached.is_some() {
-            cache.record_stale_detection(NFP_GEOMETRY_CACHE_NAMESPACE);
-            cache.remove(&key);
+    // Borrow-based valid-hit path: the cached relative boundary is only
+    // ever read once (by `translate_nfp_boundary`, a pure function), so a
+    // valid hit translates in place instead of deep-cloning the polygon
+    // out of the store. Telemetry counters are kept bit-identical to the
+    // cloning `get` this replaces: `probe_with` performs the same
+    // lookup/touch/miss accounting, and `record_cloning_hit` fires for
+    // every present entry (valid or stale) exactly as `get`'s Some return
+    // did.
+    enum CachedProbe {
+        ValidTranslated(Result<IrregularPolygon, String>),
+        StalePresent,
+        Cold,
+    }
+    let probe = cache.probe_with(&key, |cached: Option<&IrregularPolygon>| match cached {
+        Some(value) if is_valid_cached_nfp_boundary(Some(value)) => {
+            CachedProbe::ValidTranslated(translate_nfp_boundary(input, value))
         }
-        let computed = compute_relative_nfp_boundary(
-            &input.fixed.collision_geometry.polygon.points,
-            &input.moving.polygon.points,
-            construction_algorithm,
-        )?;
-        let _admitted = cache.set(&key, computed.clone(), charge_nfp_polygon(&computed));
-        computed
-    };
-
-    let translated = translate_nfp_boundary(input, &relative_boundary)?;
-    Ok(CoreNfpSuccess {
-        boundary: translated,
-        key,
-    })
+        Some(_) => CachedProbe::StalePresent,
+        None => CachedProbe::Cold,
+    });
+    match probe {
+        CachedProbe::ValidTranslated(translated) => {
+            cache.record_cloning_hit(NFP_GEOMETRY_CACHE_NAMESPACE);
+            cache.record_hit(NFP_GEOMETRY_CACHE_NAMESPACE);
+            Ok(CoreNfpSuccess {
+                boundary: translated?,
+                key,
+            })
+        }
+        stale_or_cold => {
+            if matches!(stale_or_cold, CachedProbe::StalePresent) {
+                cache.record_cloning_hit(NFP_GEOMETRY_CACHE_NAMESPACE);
+                cache.record_stale_detection(NFP_GEOMETRY_CACHE_NAMESPACE);
+                cache.remove(&key);
+            }
+            let computed = compute_relative_nfp_boundary(
+                &input.fixed.collision_geometry.polygon.points,
+                &input.moving.polygon.points,
+                construction_algorithm,
+            )?;
+            let _admitted = cache.set(&key, computed.clone(), charge_nfp_polygon(&computed));
+            let translated = translate_nfp_boundary(input, &computed)?;
+            Ok(CoreNfpSuccess {
+                boundary: translated,
+                key,
+            })
+        }
+    }
 }
 
 /// `PAR-CACHE-01`/`PAR-NFP-01`

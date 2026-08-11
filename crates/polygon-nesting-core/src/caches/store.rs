@@ -266,10 +266,32 @@ impl GeometryCacheStore {
     pub fn get<A: Clone + 'static>(&mut self, key: &GeometryCacheKey) -> Option<A> {
         let value = self.probe(key, |cached: Option<&A>| cached.cloned());
         if value.is_some() {
-            let counters = self.telemetry.namespace_mut(&key.namespace);
-            counters.cloning_hits = counters.cloning_hits.saturating_add(1);
+            self.record_cloning_hit(&key.namespace);
         }
         value
+    }
+
+    /// Counts one lookup that would have returned a present value through
+    /// [`Self::get`]. Borrow-based resolvers that consume the cached value
+    /// in place through [`Self::probe_with`] call this for every present
+    /// entry (valid or stale) so the telemetry counters stay identical to
+    /// the cloning-lookup path they replaced.
+    pub(crate) fn record_cloning_hit(&mut self, namespace: &str) {
+        let counters = self.telemetry.namespace_mut(namespace);
+        counters.cloning_hits = counters.cloning_hits.saturating_add(1);
+    }
+
+    /// Borrow-based counterpart of [`Self::get`]: runs `inspect` against
+    /// the cached value without cloning it, with the same lookup/touch/miss
+    /// accounting as [`Self::probe`]. Callers replacing a [`Self::get`] must
+    /// pair it with [`Self::record_cloning_hit`] on present entries to keep
+    /// the counters bit-identical.
+    pub(crate) fn probe_with<A: 'static, R>(
+        &mut self,
+        key: &GeometryCacheKey,
+        inspect: impl FnOnce(Option<&A>) -> R,
+    ) -> R {
+        self.probe(key, inspect)
     }
 
     /// Publishes a value with a caller-supplied conservative retained-value
