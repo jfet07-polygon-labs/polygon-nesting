@@ -557,8 +557,26 @@ pub fn measure_canonical_layout_topology_exact(
         .map(|polygon| polygon.path.clone())
         .collect();
     let hull_doubled_area = canonical_grid_absolute_doubled_area(&hull);
-    let largest_gap_doubled_area = largest_hull_gap_doubled_area(&hull, &paths);
-    let enclosed_cavity_count = count_enclosed_occupied_cavities(&paths);
+    // The hull-gap and cavity measurements both consume the identical
+    // even-odd Union of `paths`; build the tree once for both. `paths` is
+    // non-empty here (`canonical_placed_polygons` yielded at least the hull
+    // points above), and pure-tree sharing is byte-identical to the
+    // plain per-measurement builds.
+    let shared_occupied_union = if paths.is_empty() {
+        None
+    } else {
+        Some(occupied_union_tree(&paths))
+    };
+    let largest_gap_doubled_area = match &shared_occupied_union {
+        Some(union_tree) => largest_hull_gap_doubled_area_from_union(&hull, union_tree),
+        None => largest_hull_gap_doubled_area(&hull, &paths),
+    };
+    let enclosed_cavity_count = match &shared_occupied_union {
+        Some(union_tree) => {
+            measure_enclosed_occupied_cavities_from_union(union_tree).map(|metrics| metrics.count)
+        }
+        None => count_enclosed_occupied_cavities(&paths),
+    };
     let occupied_envelope_aspect_ratio = envelope_aspect_ratio(&paths);
     let graph = measure_contact_graph(&paths);
     if hull_doubled_area.is_none()
@@ -1118,17 +1136,21 @@ fn largest_hull_gap_doubled_area(
     if hull.len() < 3 {
         return Some(BigInt::from(0));
     }
+    largest_hull_gap_doubled_area_from_union(hull, &occupied_union_tree(occupied))
+}
+
+/// [`largest_hull_gap_doubled_area`] against an already-built occupied Union
+/// tree (callers must keep the `hull.len() < 3` early return ahead of the
+/// tree, exactly as the plain form does).
+fn largest_hull_gap_doubled_area_from_union(
+    hull: &CanonicalGridPath,
+    occupied_tree: &PolyTree64,
+) -> Option<BigInt> {
+    if hull.len() < 3 {
+        return Some(BigInt::from(0));
+    }
     let oriented_hull = canonical_grid_counter_clockwise(hull)?;
-    let occupied_paths: Paths64 = occupied.iter().map(|path| to_clipper_path(path)).collect();
-    let mut occupied_tree = PolyTree64::new();
-    boolean_op_with_poly_tree(
-        ClipType::Union,
-        Some(&occupied_paths),
-        None,
-        &mut occupied_tree,
-        FillRule::EvenOdd,
-    );
-    let occupied_union = poly_tree_to_paths64(&occupied_tree);
+    let occupied_union = poly_tree_to_paths64(occupied_tree);
     let subject: Paths64 = vec![to_clipper_path(&oriented_hull)];
     let mut gap_tree = PolyTree64::new();
     boolean_op_with_poly_tree(
@@ -1239,6 +1261,25 @@ fn count_enclosed_occupied_cavities(occupied: &[CanonicalGridPath]) -> Option<f6
     measure_enclosed_occupied_cavities(occupied).map(|metrics| metrics.count)
 }
 
+/// Builds the even-odd Clipper Union tree of the occupied paths — the exact
+/// tree both [`largest_hull_gap_doubled_area`] and
+/// [`measure_enclosed_occupied_cavities`] derive internally.
+/// [`measure_canonical_layout_topology_exact`] computes it once and feeds
+/// both `_from_union` variants; a pure function of `occupied`, so sharing
+/// one tree is byte-identical to building it twice.
+fn occupied_union_tree(occupied: &[CanonicalGridPath]) -> PolyTree64 {
+    let occupied_paths: Paths64 = occupied.iter().map(|path| to_clipper_path(path)).collect();
+    let mut tree = PolyTree64::new();
+    boolean_op_with_poly_tree(
+        ClipType::Union,
+        Some(&occupied_paths),
+        None,
+        &mut tree,
+        FillRule::EvenOdd,
+    );
+    tree
+}
+
 /// TS source: `canonicalLayoutGeometry.ts:740-779` (`measureEnclosedOccupiedCavities`).
 fn measure_enclosed_occupied_cavities(
     occupied: &[CanonicalGridPath],
@@ -1250,20 +1291,18 @@ fn measure_enclosed_occupied_cavities(
             total_doubled_area_grid2: "0".to_string(),
         });
     }
-    let occupied_paths: Paths64 = occupied.iter().map(|path| to_clipper_path(path)).collect();
-    let mut tree = PolyTree64::new();
-    boolean_op_with_poly_tree(
-        ClipType::Union,
-        Some(&occupied_paths),
-        None,
-        &mut tree,
-        FillRule::EvenOdd,
-    );
+    measure_enclosed_occupied_cavities_from_union(&occupied_union_tree(occupied))
+}
 
+/// [`measure_enclosed_occupied_cavities`] against an already-built occupied
+/// Union tree (callers must have handled the empty-occupied case first).
+fn measure_enclosed_occupied_cavities_from_union(
+    tree: &PolyTree64,
+) -> Option<CanonicalEnclosedCavityMetrics> {
     let mut count: i64 = 0;
     let mut total_doubled_area_grid2 = BigInt::from(0);
     let ok = visit_enclosed_cavities(
-        &tree,
+        tree,
         PolyTree64::ROOT,
         &mut count,
         &mut total_doubled_area_grid2,
