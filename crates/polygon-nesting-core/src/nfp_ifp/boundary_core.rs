@@ -34,9 +34,9 @@
 use std::collections::HashSet;
 
 use crate::caches::{
-    charge_nfp_polygon, make_pairwise_nfp_cache_key, serialize_geometry_cache_key,
-    GeometryCacheKey, GeometryCacheStore, NfpConstructionAlgorithm, PairwiseNfpKeyInput,
-    NFP_GEOMETRY_CACHE_NAMESPACE,
+    charge_nfp_polygon, make_pairwise_nfp_cache_key_with_prepared_moving,
+    prepare_pairwise_nfp_moving_parts, serialize_geometry_cache_key, GeometryCacheKey,
+    GeometryCacheStore, NfpConstructionAlgorithm, NFP_GEOMETRY_CACHE_NAMESPACE,
 };
 use crate::domain::{
     IrregularGeometrySettings, IrregularPlacedPiece, IrregularPoint, IrregularPolygon,
@@ -113,6 +113,31 @@ pub fn resolve_nfp_boundary(
     cache: &mut GeometryCacheStore,
     construction_algorithm: NfpConstructionAlgorithm,
 ) -> CoreNfpResult {
+    let prepared_moving = prepare_pairwise_nfp_moving_parts(
+        &input.moving.polygon.points,
+        &input.moving.transform,
+        input.settings,
+        construction_algorithm,
+    );
+    resolve_nfp_boundary_with_prepared_moving(
+        input,
+        cache,
+        construction_algorithm,
+        &prepared_moving,
+    )
+}
+
+/// [`resolve_nfp_boundary`] with the moving-side key parts prepared by the
+/// caller — for per-placed loops where the moving geometry is fixed across
+/// iterations. Preparing the parts is pure string formatting, so hoisting
+/// it ahead of the per-call validations cannot change any outcome: both
+/// validations still gate every cache access exactly as before.
+pub(crate) fn resolve_nfp_boundary_with_prepared_moving(
+    input: &CoreNfpInput<'_>,
+    cache: &mut GeometryCacheStore,
+    construction_algorithm: NfpConstructionAlgorithm,
+    prepared_moving: &crate::caches::PreparedPairwiseNfpMovingParts,
+) -> CoreNfpResult {
     if let StrictConvexBoundaryValidation::Invalid { message } =
         validate_strict_boundary(&input.fixed.collision_geometry.polygon.points)
     {
@@ -124,14 +149,11 @@ pub fn resolve_nfp_boundary(
         return Err(message);
     }
 
-    let key_input = PairwiseNfpKeyInput {
-        fixed_polygon: &input.fixed.collision_geometry.polygon.points,
-        moving_polygon: &input.moving.polygon.points,
-        fixed_transform: &input.fixed.collision_geometry.transform,
-        moving_transform: &input.moving.transform,
-        settings: input.settings,
-    };
-    let key = make_pairwise_nfp_cache_key(&key_input, construction_algorithm);
+    let key = make_pairwise_nfp_cache_key_with_prepared_moving(
+        prepared_moving,
+        &input.fixed.collision_geometry.polygon.points,
+        &input.fixed.collision_geometry.transform,
+    );
 
     let cached: Option<IrregularPolygon> = cache.get(&key);
     let relative_boundary: IrregularPolygon = if is_valid_cached_nfp_boundary(cached.as_ref()) {
@@ -237,7 +259,15 @@ pub fn precompute_missing_relative_nfp_boundaries(
     // Phase 1 (serial): the exact deduplicated set of missing keys, in
     // first-encounter order -- `parallelism-inventory.md`'s "ordinal =
     // position in the deduplicated key list assembled before dispatch"
-    // (PAR-CACHE-01's stable-index scheme).
+    // (PAR-CACHE-01's stable-index scheme). The moving-side key parts
+    // (including the expensive moving-polygon digest) are identical for
+    // every placed piece, so they are prepared once for the whole loop.
+    let prepared_moving = prepare_pairwise_nfp_moving_parts(
+        &moving.polygon.points,
+        &moving.transform,
+        settings,
+        construction_algorithm,
+    );
     let mut seen_keys: HashSet<String> = HashSet::new();
     let mut misses: Vec<(GeometryCacheKey, Vec<IrregularPoint>)> = Vec::new();
     for placed_piece in placed {
@@ -246,14 +276,11 @@ pub fn precompute_missing_relative_nfp_boundaries(
         {
             continue;
         }
-        let key_input = PairwiseNfpKeyInput {
-            fixed_polygon: &placed_piece.collision_geometry.polygon.points,
-            moving_polygon: &moving.polygon.points,
-            fixed_transform: &placed_piece.collision_geometry.transform,
-            moving_transform: &moving.transform,
-            settings,
-        };
-        let key = make_pairwise_nfp_cache_key(&key_input, construction_algorithm);
+        let key = make_pairwise_nfp_cache_key_with_prepared_moving(
+            &prepared_moving,
+            &placed_piece.collision_geometry.polygon.points,
+            &placed_piece.collision_geometry.transform,
+        );
         if !seen_keys.insert(serialize_geometry_cache_key(&key)) {
             continue;
         }

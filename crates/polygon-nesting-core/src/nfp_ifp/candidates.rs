@@ -76,7 +76,7 @@ use crate::validation::placement::{
 };
 use crate::validation::spatial_index::PlacedCollisionSpatialIndex;
 
-use super::boundary_core::{resolve_nfp_boundary, CoreNfpInput};
+use super::boundary_core::CoreNfpInput;
 use super::ifp_bounds::{resolve_ifp_bounds, CoreIfpBoundsFailureKind};
 use super::service::{invalid_geometry, nfp_checkpoint, NfpIfpControl, NfpIfpError};
 use super::telemetry::{NfpIfpCheckpointPhase, NfpIfpTelemetry};
@@ -1172,6 +1172,16 @@ pub fn generate_placement_candidates_uncached(
         construction_algorithm,
     );
 
+    // The moving-side key parts (including the expensive moving-polygon
+    // digest) are identical for every placed piece in the loop below;
+    // preparing them once is pure string formatting with byte-identical
+    // assembled keys.
+    let prepared_moving_key_parts = crate::caches::prepare_pairwise_nfp_moving_parts(
+        &input.moving.polygon.points,
+        &input.moving.transform,
+        &input.settings.geometry,
+        construction_algorithm,
+    );
     let mut nfp_boundaries: Vec<NfpBoundary> = Vec::new();
     for placed in input.placed {
         nfp_checkpoint(
@@ -1186,16 +1196,20 @@ pub fn generate_placement_candidates_uncached(
             moving: input.moving,
             settings: &input.settings.geometry,
         };
-        let boundary =
-            match resolve_nfp_boundary(&core_input, geometry_cache, construction_algorithm) {
-                Ok(success) => success.boundary,
-                Err(message) => {
-                    return Err(NfpIfpError::Geometry(invalid_geometry(
-                        "computeNfp",
-                        message,
-                    )));
-                }
-            };
+        let boundary = match super::boundary_core::resolve_nfp_boundary_with_prepared_moving(
+            &core_input,
+            geometry_cache,
+            construction_algorithm,
+            &prepared_moving_key_parts,
+        ) {
+            Ok(success) => success.boundary,
+            Err(message) => {
+                return Err(NfpIfpError::Geometry(invalid_geometry(
+                    "computeNfp",
+                    message,
+                )));
+            }
+        };
 
         nfp_checkpoint(
             &mut control,
