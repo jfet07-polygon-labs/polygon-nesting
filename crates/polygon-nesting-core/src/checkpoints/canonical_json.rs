@@ -742,6 +742,15 @@ pub fn canonical_record(fields: &[Vec<String>]) -> String {
 /// `entry-{index}` row per `entry_keys` element), in the same order, each
 /// still exactly `canonicalToken(name) + canonicalToken(value)`.
 pub fn canonical_entry_list_key(entry_keys: &[String]) -> String {
+    let parts: Vec<&str> = entry_keys.iter().map(String::as_str).collect();
+    canonical_entry_list_key_parts(&parts)
+}
+
+/// [`canonical_entry_list_key`] over borrowed entry keys: identical bytes,
+/// no owned-`String` container required — callers that already hold the
+/// sorted keys in mixed storage (e.g. a memoized shared vector plus one
+/// freshly rendered key) can concatenate without cloning any entry.
+pub fn canonical_entry_list_key_parts(entry_keys: &[&str]) -> String {
     let mut buf = String::with_capacity(
         96 + entry_keys
             .iter()

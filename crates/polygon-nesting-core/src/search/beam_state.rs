@@ -90,13 +90,13 @@
 //! here).
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::sync::{Arc, LazyLock};
+use std::sync::{Arc, LazyLock, Mutex};
 use std::time::Instant;
 
 use crate::canonical_grid::contact::measure_shared_convex_polygon_boundary_contact;
 use crate::checkpoints::canonical_json::{
-    canonical_entry_list_key, canonical_number, canonical_record, json_number_token,
-    locale_compare_keys, write_canonical_token, write_indexed_canonical_token,
+    canonical_entry_list_key, canonical_entry_list_key_parts, canonical_number, canonical_record,
+    json_number_token, locale_compare_keys, write_canonical_token, write_indexed_canonical_token,
 };
 #[cfg(test)]
 use crate::domain::IrregularPlacement;
@@ -823,6 +823,93 @@ impl IrregularBeamState {
         Some(canonical_entry_list_key(&canonical_entry_keys))
     }
 
+    /// [`Self::bottom_left_anchored_canonical_occupied_geometry_key`] for a
+    /// state just produced by [`Self::with_placement`], reusing the
+    /// anchor-translated keys of the parent's pieces across sibling
+    /// candidates that share the same exact anchor translation.
+    ///
+    /// Provably byte-equal to the plain probe (pinned by
+    /// `anchored_key_via_parent_memo_matches_plain_probe`): `child`'s placed
+    /// list is the parent's list plus exactly one appended piece
+    /// (`with_placement` builds it that way), each per-piece key is a pure
+    /// function of `(piece, next_translate_x bits, next_translate_y bits)`,
+    /// and equal keys are identical strings, so the concatenation of the
+    /// sorted key multiset — memoized-parent-half merged with the one fresh
+    /// key at its `partition_point` upper bound — is the same byte sequence
+    /// the probe's collect-then-stable-sort produces. The memo is keyed on
+    /// the anchor translation's exact `f64` bit patterns and holds pure
+    /// values only, so hit/miss and thread interleaving can never change
+    /// any emitted byte.
+    pub(crate) fn bottom_left_anchored_key_via_parent_memo(
+        child: &IrregularBeamState,
+        parent: &IrregularBeamState,
+        memo: &AnchoredParentKeysMemo,
+    ) -> Option<String> {
+        let bounds = match child.translated_collision_bounds {
+            Some(bounds) => bounds,
+            None => return Some(child.canonical_occupied_geometry_key.clone()),
+        };
+        if bounds.min_x == 0.0 && bounds.min_y == 0.0 {
+            return Some(child.canonical_occupied_geometry_key.clone());
+        }
+        let translate_x = -bounds.min_x;
+        let translate_y = -bounds.min_y;
+
+        let parent_pieces = parent.placed_collision_geometries.as_slice();
+        let new_piece = child.placed_collision_geometries.last()?;
+        debug_assert_eq!(
+            child.placed_collision_geometries.len(),
+            parent_pieces.len() + 1,
+            "child must be parent plus exactly the one appended piece",
+        );
+        let next_translate_x = new_piece.placement.transform.translate_x + translate_x;
+        let next_translate_y = new_piece.placement.transform.translate_y + translate_y;
+        if !next_translate_x.is_finite() || !next_translate_y.is_finite() {
+            return None;
+        }
+        let new_key = canonical_placed_geometry_key_at_translation(
+            new_piece,
+            next_translate_x,
+            next_translate_y,
+        );
+
+        let memo_key = (translate_x.to_bits(), translate_y.to_bits());
+        let cached = {
+            let locked = memo.lock().expect("anchored parent key memo poisoned");
+            locked.get(&memo_key).map(Arc::clone)
+        };
+        let parent_keys = match cached {
+            Some(keys) => keys,
+            None => {
+                let mut keys: Vec<String> = Vec::with_capacity(parent_pieces.len());
+                for placed in parent_pieces.iter() {
+                    let piece_translate_x = placed.placement.transform.translate_x + translate_x;
+                    let piece_translate_y = placed.placement.transform.translate_y + translate_y;
+                    if !piece_translate_x.is_finite() || !piece_translate_y.is_finite() {
+                        return None;
+                    }
+                    keys.push(canonical_placed_geometry_key_at_translation(
+                        placed,
+                        piece_translate_x,
+                        piece_translate_y,
+                    ));
+                }
+                keys.sort_by(|first, second| cmp_js_code_units(first, second));
+                let keys = Arc::new(keys);
+                let mut locked = memo.lock().expect("anchored parent key memo poisoned");
+                Arc::clone(locked.entry(memo_key).or_insert(keys))
+            }
+        };
+
+        let insert_at = parent_keys
+            .partition_point(|existing| cmp_js_code_units(existing, &new_key) != Ordering::Greater);
+        let mut parts: Vec<&str> = Vec::with_capacity(parent_keys.len() + 1);
+        parts.extend(parent_keys[..insert_at].iter().map(String::as_str));
+        parts.push(new_key.as_str());
+        parts.extend(parent_keys[insert_at..].iter().map(String::as_str));
+        Some(canonical_entry_list_key_parts(&parts))
+    }
+
     /// TS: `irregularBeamState.ts:379-465` `withQuarterTurnBottomLeft`.
     /// Rigidly rotates the complete layout, then anchors its occupied
     /// bounds bottom-left.
@@ -1142,6 +1229,14 @@ fn dominant_signature_count(counts: &HashMap<String, f64>) -> f64 {
 // ===========================================================================
 
 /// TS: `irregularBeamState.ts:714-720` `canonicalPlacedGeometryKey`.
+/// Memo shared by the sibling candidates of one parent state during one
+/// scoring batch: exact anchor-translation bit pattern → the parent pieces'
+/// sorted anchor-translated entry keys. Values are pure functions of the
+/// parent's placed pieces and the translation bits, so the memo is
+/// observation-free: hit/miss and thread interleaving cannot change any
+/// emitted byte.
+pub(crate) type AnchoredParentKeysMemo = Mutex<HashMap<(u64, u64), Arc<Vec<String>>>>;
+
 fn canonical_placed_geometry_key(placed: &IrregularPlacedPiece) -> String {
     canonical_placed_geometry_key_at_translation(
         placed,
@@ -1606,6 +1701,102 @@ mod tests {
         assert_eq!(
             state.canonical_occupied_geometry_key,
             canonical_entry_list_key(&[])
+        );
+    }
+
+    fn place_for_key_tests(
+        state: Arc<IrregularBeamState>,
+        piece: &Arc<IrregularPlacedPiece>,
+        id: &str,
+    ) -> Arc<IrregularBeamState> {
+        state.with_placement(WithPlacementInput {
+            remaining_prepared_pieces: Vec::new(),
+            placed_collision_geometry: Arc::clone(piece),
+            placement_order_piece_id: PieceId::new(id),
+            on_phase_timings: None,
+            timing_now: None,
+        })
+    }
+
+    #[test]
+    fn anchored_key_via_parent_memo_matches_plain_probe() {
+        // Parent holding one origin square and one at a negative offset, so
+        // every child of it anchors with a strictly negative min corner
+        // (the full re-keying path of the plain probe).
+        let parent = place_for_key_tests(
+            place_for_key_tests(
+                IrregularBeamState::empty(Vec::new()),
+                &square_piece("a", 0.0, 0.0, 4.0),
+                "a",
+            ),
+            &square_piece("b", -3.5, -2.25, 4.0),
+            "b",
+        );
+        let memo: AnchoredParentKeysMemo = Mutex::new(HashMap::new());
+        let candidates = [
+            // New negative min: the child defines the anchor.
+            square_piece("c", -7.25, 1.5, 4.0),
+            // Different ring at the same anchor: exercises a memo hit.
+            square_piece("c2", -7.25, 1.5, 2.0),
+            // Identical geometry and translation as parent piece "b":
+            // equal entry keys — ties must concatenate identically.
+            square_piece("tie", -3.5, -2.25, 4.0),
+            // Interior placement: the anchor comes from parent piece "b".
+            square_piece("d", 10.0, 12.0, 4.0),
+            // Sub-grid-decimal min beyond the parent's (-3.5, -2.25): a
+            // genuinely fresh anchor bit pattern, so the memo-miss path
+            // renders parent keys at a decimal-fraction translation.
+            square_piece("e", -7.2505, -2.2535, 1.0),
+            // Same anchor x as "e", different anchor y: pins the memo key's
+            // y component (a key collapsed to x bits alone would serve "e2"
+            // parent keys rendered at "e"'s y translation and diverge from
+            // the plain probe here).
+            square_piece("e2", -7.2505, -3.7535, 1.0),
+        ];
+        for candidate in &candidates {
+            let child = place_for_key_tests(Arc::clone(&parent), candidate, "cand");
+            assert_eq!(
+                IrregularBeamState::bottom_left_anchored_key_via_parent_memo(
+                    &child, &parent, &memo,
+                ),
+                child.bottom_left_anchored_canonical_occupied_geometry_key(),
+                "candidate {:?}",
+                candidate.placement.source_piece_id,
+            );
+        }
+        let distinct_anchors = memo.lock().expect("memo lock").len();
+        assert_eq!(
+            distinct_anchors, 4,
+            "expected exactly four memoized anchors: (7.25, ...) shared by \
+             c/c2, (3.5, 2.25) shared by tie/d, e's fresh sub-grid \
+             (7.2505, 2.2535), and e2's x-equal/y-distinct (7.2505, 3.7535) \
+             — anything else means a coverage path above stopped exercising \
+             what its comment claims",
+        );
+
+        // Zero-min short-circuit: identical result, memo untouched.
+        let origin_parent = place_for_key_tests(
+            IrregularBeamState::empty(Vec::new()),
+            &square_piece("a", 0.0, 0.0, 4.0),
+            "a",
+        );
+        let child = place_for_key_tests(
+            Arc::clone(&origin_parent),
+            &square_piece("g", 1.0, 1.0, 2.0),
+            "g",
+        );
+        let untouched: AnchoredParentKeysMemo = Mutex::new(HashMap::new());
+        assert_eq!(
+            IrregularBeamState::bottom_left_anchored_key_via_parent_memo(
+                &child,
+                &origin_parent,
+                &untouched,
+            ),
+            child.bottom_left_anchored_canonical_occupied_geometry_key(),
+        );
+        assert!(
+            untouched.lock().expect("memo lock").is_empty(),
+            "the zero-min short-circuit must not touch the memo",
         );
     }
 
