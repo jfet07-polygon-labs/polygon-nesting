@@ -79,29 +79,69 @@ pub fn make_pairwise_nfp_cache_key(
     input: &PairwiseNfpKeyInput<'_>,
     construction_algorithm: NfpConstructionAlgorithm,
 ) -> GeometryCacheKey {
+    make_pairwise_nfp_cache_key_with_prepared_moving(
+        &prepare_pairwise_nfp_moving_parts(
+            input.moving_polygon,
+            input.moving_transform,
+            input.settings,
+            construction_algorithm,
+        ),
+        input.fixed_polygon,
+        input.fixed_transform,
+    )
+}
+
+/// The moving-side and settings parts of a pairwise NFP cache key. Within
+/// one candidate-generation pass the moving polygon, moving transform,
+/// settings, and construction algorithm are fixed while the fixed side
+/// varies per placed piece — and the moving-polygon digest is by far the
+/// most expensive part (a forward-plus-reverse render of every
+/// coordinate). Preparing these once per pass and reusing them keeps the
+/// assembled key parts byte-identical to [`make_pairwise_nfp_cache_key`]
+/// (which itself delegates through this pair of functions).
+pub struct PreparedPairwiseNfpMovingParts {
+    moving_polygon_part: String,
+    moving_transform_part: String,
+    settings_parts: Vec<String>,
+    construction_part: String,
+}
+
+pub fn prepare_pairwise_nfp_moving_parts(
+    moving_polygon: &[IrregularPoint],
+    moving_transform: &IrregularTransformCandidate,
+    settings: &IrregularGeometrySettings,
+    construction_algorithm: NfpConstructionAlgorithm,
+) -> PreparedPairwiseNfpMovingParts {
+    PreparedPairwiseNfpMovingParts {
+        moving_polygon_part: format!(
+            "moving-polygon={}",
+            canonical_polygon_digest(moving_polygon)
+        ),
+        moving_transform_part: format!("moving-transform={}", transform_digest(moving_transform)),
+        settings_parts: geometry_settings_parts(settings),
+        construction_part: format!("nfp-construction={}", construction_algorithm.as_str()),
+    }
+}
+
+pub fn make_pairwise_nfp_cache_key_with_prepared_moving(
+    prepared: &PreparedPairwiseNfpMovingParts,
+    fixed_polygon: &[IrregularPoint],
+    fixed_transform: &IrregularTransformCandidate,
+) -> GeometryCacheKey {
     let mut parts = Vec::with_capacity(8);
     parts.push(format!(
         "fixed-polygon={}",
-        canonical_polygon_digest(input.fixed_polygon)
+        canonical_polygon_digest(fixed_polygon)
     ));
-    parts.push(format!(
-        "moving-polygon={}",
-        canonical_polygon_digest(input.moving_polygon)
-    ));
+    parts.push(prepared.moving_polygon_part.clone());
     parts.push(format!(
         "fixed-transform={}",
-        transform_digest(input.fixed_transform)
+        transform_digest(fixed_transform)
     ));
-    parts.push(format!(
-        "moving-transform={}",
-        transform_digest(input.moving_transform)
-    ));
-    parts.extend(geometry_settings_parts(input.settings));
+    parts.push(prepared.moving_transform_part.clone());
+    parts.extend(prepared.settings_parts.iter().cloned());
     parts.push("nfp-algorithm=convex-fixed-plus-negated-moving-relative-v3".to_string());
-    parts.push(format!(
-        "nfp-construction={}",
-        construction_algorithm.as_str()
-    ));
+    parts.push(prepared.construction_part.clone());
     GeometryCacheKey::new(NFP_GEOMETRY_CACHE_NAMESPACE, parts)
 }
 

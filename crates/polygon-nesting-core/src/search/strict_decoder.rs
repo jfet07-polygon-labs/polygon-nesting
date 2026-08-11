@@ -99,7 +99,8 @@
 //!   provenance value is ever read by this cluster's own code.
 
 use std::cmp::Ordering;
-use std::sync::{Arc, LazyLock};
+use std::collections::HashMap;
+use std::sync::{Arc, LazyLock, Mutex};
 use std::time::Instant;
 
 use num_bigint::BigInt;
@@ -130,16 +131,16 @@ use crate::domain::{
 use crate::geometry::hash::sha256_hex;
 use crate::js_number::{cmp_js_code_units, fold_negative_zero, js_math, number_to_js_string};
 use crate::nfp_ifp::{
-    generate_placement_candidates, GeneratePlacementCandidatesInput, LegalCandidateMemo,
-    NfpIfpAbortReason, NfpIfpControl, NfpIfpControlAbortError, NfpIfpError,
+    generate_placement_candidates_with_prepared_placed, GeneratePlacementCandidatesInput,
+    LegalCandidateMemo, NfpIfpAbortReason, NfpIfpControl, NfpIfpControlAbortError, NfpIfpError,
 };
 use crate::parallel::{has_job_pool, with_job_pool};
 use crate::validation::placement::IrregularGeometryInputError;
 
 use super::beam_state::{
-    IrregularBeamState, IrregularBeamStateInput, IrregularBeamStatePlacementPhaseTimings,
-    IrregularCollisionBounds, IrregularQuarterTurnDegrees, TimingNowFn, WithPlacementInput,
-    WithUnplacedPieceInput,
+    AnchoredParentKeysMemo, IrregularBeamState, IrregularBeamStateInput,
+    IrregularBeamStatePlacementPhaseTimings, IrregularCollisionBounds, IrregularQuarterTurnDegrees,
+    TimingNowFn, WithPlacementInput, WithUnplacedPieceInput,
 };
 
 use super::gap_regions::{
@@ -927,6 +928,7 @@ struct StrictScoringInput {
     moving_collision_area_mm2: f64,
     moving_collision_doubled_area_grid2: String,
     gap_regions: Option<Arc<Vec<CanonicalIntrinsicGapRegion>>>,
+    anchored_parent_keys_memo: Arc<AnchoredParentKeysMemo>,
 }
 
 impl StrictScoringInput {
@@ -941,6 +943,7 @@ impl StrictScoringInput {
             self.moving_collision_area_mm2,
             &self.moving_collision_doubled_area_grid2,
             self.gap_regions.as_ref().map(|regions| regions.as_slice()),
+            &self.anchored_parent_keys_memo,
             None,
             &default_timing_now,
         ))
@@ -1179,6 +1182,7 @@ fn score_candidate(
     moving_collision_area_mm2: f64,
     moving_collision_doubled_area_grid2: &str,
     gap_regions: Option<&[CanonicalIntrinsicGapRegion]>,
+    anchored_parent_keys_memo: &AnchoredParentKeysMemo,
     mut phase_timings: Option<&mut CandidateStatePhaseTimings>,
     timing_now: &TimingNowFn,
 ) -> Option<ScoredCandidate> {
@@ -1195,6 +1199,7 @@ fn score_candidate(
         moving_collision_area_mm2,
         moving_collision_doubled_area_grid2,
         gap_regions,
+        anchored_parent_keys_memo,
         reborrow_phase_timings(&mut phase_timings),
         timing_now,
     );
@@ -1235,6 +1240,7 @@ fn score_candidate_body(
     moving_collision_area_mm2: f64,
     moving_collision_doubled_area_grid2: &str,
     gap_regions: Option<&[CanonicalIntrinsicGapRegion]>,
+    anchored_parent_keys_memo: &AnchoredParentKeysMemo,
     mut phase_timings: Option<&mut CandidateStatePhaseTimings>,
     timing_now: &TimingNowFn,
 ) -> Option<ScoredCandidate> {
@@ -1290,7 +1296,11 @@ fn score_candidate_body(
 
     let anchoring_started_at = if has_timings { timing_now() } else { 0.0 };
     let canonical_combined_geometry_key =
-        placed_state.bottom_left_anchored_canonical_occupied_geometry_key();
+        IrregularBeamState::bottom_left_anchored_key_via_parent_memo(
+            &placed_state,
+            state,
+            anchored_parent_keys_memo,
+        );
     if let Some(pt) = reborrow_phase_timings(&mut phase_timings) {
         pt.bottom_left_anchoring_ms += timing_now() - anchoring_started_at;
     }
@@ -3404,6 +3414,31 @@ pub fn construct_intrinsic_strict_state(
     'piece_loop: for piece_index in first_piece_index..input.remaining_prepared_pieces.len() {
         let piece = &input.remaining_prepared_pieces[piece_index];
         let piece_id = prepared_piece_id(piece);
+        // Every candidate scored within this iteration is a child of the one
+        // `state` current here, so anchor-translated parent keys recur
+        // across transforms as well as across sibling candidates. The memo
+        // MUST NOT outlive the iteration: `state` advances at the bottom of
+        // the loop, and stale parent keys would corrupt the combined
+        // geometry keys of the next piece's candidates (caught by
+        // `coordinator_vectors::full_job_vectors_match_ts_oracle` when this
+        // was briefly hoisted to function scope).
+        let anchored_parent_keys_memo: Arc<AnchoredParentKeysMemo> =
+            Arc::new(Mutex::new(HashMap::new()));
+        // Same frozen-placed-set scope: the legal-candidate memo key's
+        // `placed=` payload is identical for every piece x transform
+        // candidate generation against this state.
+        let placed_memo_key_inputs: Vec<crate::caches::PlacedPieceKeyInput<'_>> = state
+            .placed_collision_geometries
+            .iter()
+            .map(|placed| crate::caches::PlacedPieceKeyInput {
+                collision_polygon_points: &placed.collision_geometry.polygon.points,
+                translate_x: placed.placement.transform.translate_x,
+                translate_y: placed.placement.transform.translate_y,
+            })
+            .collect();
+        let prepared_placed_memo_parts =
+            crate::caches::prepare_placed_memo_parts(&placed_memo_key_inputs);
+        drop(placed_memo_key_inputs);
         let remaining_prepared_pieces: Vec<Arc<IrregularPreparedPiece>> =
             input.remaining_prepared_pieces[(piece_index + 1)..].to_vec();
         let mut candidates_by_family: Vec<(String, ScoredCandidate)> = Vec::new();
@@ -3466,8 +3501,9 @@ pub fn construct_intrinsic_strict_state(
                         candidate_domain: CandidateDomain::SheetlessNfp,
                         want_provenance: false,
                     };
-                    match generate_placement_candidates(
+                    match generate_placement_candidates_with_prepared_placed(
                         &gp_input,
+                        Some(&prepared_placed_memo_parts),
                         geometry_cache,
                         DEFAULT_NFP_CONSTRUCTION_ALGORITHM,
                         NfpCandidatePruningMode::Indexed,
@@ -3546,6 +3582,7 @@ pub fn construct_intrinsic_strict_state(
                             moving_collision_area_mm2,
                             &moving_collision_doubled_area_grid2,
                             gap_regions.as_ref().map(|regions| regions.as_slice()),
+                            &anchored_parent_keys_memo,
                             if capture_phase_timings {
                                 Some(&mut candidate_state_phase_timings)
                             } else {
@@ -3603,6 +3640,9 @@ pub fn construct_intrinsic_strict_state(
                                     moving_collision_doubled_area_grid2:
                                         moving_collision_doubled_area_grid2.clone(),
                                     gap_regions: gap_regions.as_ref().map(Arc::clone),
+                                    anchored_parent_keys_memo: Arc::clone(
+                                        &anchored_parent_keys_memo,
+                                    ),
                                 },
                             )
                         });

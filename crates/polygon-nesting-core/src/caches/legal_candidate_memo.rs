@@ -104,6 +104,37 @@ pub struct LegalPlacementCandidateMemoKeyInput<'a> {
     pub candidate_domain: CandidateDomain,
 }
 
+/// The `placed=` payload of the legal-candidate memo key (every placed
+/// piece's exact ordered polygon digest at its translation), prepared once
+/// per frozen placed set and reused across the piece×transform candidate
+/// generations that all share it. Byte-identical by construction: the
+/// payload is rendered by the same digest code the per-call path uses.
+pub(crate) struct PreparedPlacedMemoParts {
+    joined: String,
+}
+
+pub(crate) fn prepare_placed_memo_parts(
+    placed: &[PlacedPieceKeyInput<'_>],
+) -> PreparedPlacedMemoParts {
+    PreparedPlacedMemoParts {
+        joined: join_placed_memo_parts(placed),
+    }
+}
+
+fn join_placed_memo_parts(placed: &[PlacedPieceKeyInput<'_>]) -> String {
+    placed
+        .iter()
+        .map(|placed| {
+            format!(
+                "{}@{}",
+                exact_ordered_polygon_digest(placed.collision_polygon_points),
+                point_translation_digest(placed.translate_x, placed.translate_y)
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("|")
+}
+
 /// `width`/`height` only — deliberately **not** `SheetSpec` (which also
 /// carries `label`). See [`legal_placement_candidate_memo_key`]'s doc
 /// comment for the sheet-label omission this type shape encodes structurally
@@ -145,6 +176,20 @@ pub fn legal_placement_candidate_memo_key(
     construction_algorithm: super::nfp_cache_key::NfpConstructionAlgorithm,
     candidate_pruning_mode: NfpCandidatePruningMode,
 ) -> String {
+    legal_placement_candidate_memo_key_with_prepared_placed(
+        input,
+        None,
+        construction_algorithm,
+        candidate_pruning_mode,
+    )
+}
+
+pub(crate) fn legal_placement_candidate_memo_key_with_prepared_placed(
+    input: &LegalPlacementCandidateMemoKeyInput<'_>,
+    prepared_placed: Option<&PreparedPlacedMemoParts>,
+    construction_algorithm: super::nfp_cache_key::NfpConstructionAlgorithm,
+    candidate_pruning_mode: NfpCandidatePruningMode,
+) -> String {
     let sheet_identity = match input.sheet {
         None => "sheet=deferred".to_string(),
         Some(dimensions) => format!(
@@ -154,22 +199,15 @@ pub fn legal_placement_candidate_memo_key(
         ),
     };
 
-    let placed_parts: Vec<String> = input
-        .placed
-        .iter()
-        .map(|placed| {
-            format!(
-                "{}@{}",
-                exact_ordered_polygon_digest(placed.collision_polygon_points),
-                point_translation_digest(placed.translate_x, placed.translate_y)
-            )
-        })
-        .collect();
+    let placed_joined = match prepared_placed {
+        Some(prepared) => prepared.joined.clone(),
+        None => join_placed_memo_parts(input.placed),
+    };
 
     let mut array_elements: Vec<String> = Vec::with_capacity(9);
     array_elements.push(json_string(LEGAL_CANDIDATE_MEMO_NAMESPACE));
     array_elements.push(json_string(&sheet_identity));
-    array_elements.push(json_string(&format!("placed={}", placed_parts.join("|"))));
+    array_elements.push(json_string(&format!("placed={placed_joined}")));
     array_elements.push(json_string(&format!(
         "moving={}",
         exact_ordered_polygon_digest(input.moving_polygon_points)

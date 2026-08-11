@@ -97,7 +97,7 @@
 //! omitted. The TS side of this seam is added separately per this task's
 //! sanctioned R13 edit to `intrinsicCapacitySearch.ts` itself.
 
-use std::cell::RefCell;
+use std::cell::{OnceCell, RefCell};
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, LazyLock};
@@ -125,8 +125,8 @@ use crate::domain::{
 use crate::geometry::hash::sha256_hex;
 use crate::js_number::{cmp_js_code_units, is_safe_integer, js_math, number_to_js_string};
 use crate::nfp_ifp::{
-    generate_placement_candidates, GeneratePlacementCandidatesInput, LegalCandidateMemo,
-    NfpIfpCheckpointPhase, NfpIfpControl, NfpIfpControlAbortError, NfpIfpError,
+    generate_placement_candidates_with_prepared_placed, GeneratePlacementCandidatesInput,
+    LegalCandidateMemo, NfpIfpCheckpointPhase, NfpIfpControl, NfpIfpControlAbortError, NfpIfpError,
 };
 use crate::search::beam_state::{
     IrregularBeamState, IrregularBeamStateInput, IrregularCollisionBounds, TimingNowFn,
@@ -1098,6 +1098,22 @@ pub fn run_intrinsic_capacity_cold_search(
                 break;
             }
             let entry_placed_owned = cloned_placed(&entry.state.placed_collision_geometries);
+            // The legal-candidate memo key's `placed=` payload is identical
+            // for every transform generated against this entry's frozen
+            // placed set; prepare it once per entry.
+            let entry_placed_memo_key_inputs: Vec<crate::caches::PlacedPieceKeyInput<'_>> = entry
+                .state
+                .placed_collision_geometries
+                .iter()
+                .map(|placed| crate::caches::PlacedPieceKeyInput {
+                    collision_polygon_points: &placed.collision_geometry.polygon.points,
+                    translate_x: placed.placement.transform.translate_x,
+                    translate_y: placed.placement.transform.translate_y,
+                })
+                .collect();
+            let entry_prepared_placed_memo_parts =
+                crate::caches::prepare_placed_memo_parts(&entry_placed_memo_key_inputs);
+            drop(entry_placed_memo_key_inputs);
             let mut scored: Vec<EvaluatedCandidateReference> = Vec::new();
             let mut sorted_transforms: Vec<IrregularTransformCandidate> = piece.transforms.clone();
             sorted_transforms.sort_by(transform_candidate_order);
@@ -1130,8 +1146,9 @@ pub fn run_intrinsic_capacity_cold_search(
                             candidate_domain: CandidateDomain::SheetlessNfp,
                             want_provenance: false,
                         };
-                        generate_placement_candidates(
+                        generate_placement_candidates_with_prepared_placed(
                             &gp_input,
+                            Some(&entry_prepared_placed_memo_parts),
                             geometry_cache,
                             DEFAULT_NFP_CONSTRUCTION_ALGORITHM,
                             NfpCandidatePruningMode::Indexed,
@@ -3490,6 +3507,38 @@ enum TopologyMetric {
     HullWaste,
 }
 
+/// One retention pass's per-entry topology slots. The first comparison that
+/// needs an entry's topology calls through to
+/// [`CapacityTopologyMeasurements::measure`] at exactly the moment the
+/// per-comparison form did — same memoized-measure set, same
+/// checkpoint-visible `topologyMeasurementCount`/`Ms` increments, and the
+/// accounting short-circuit still gates measurement (see
+/// [`compare_topology_metric`]'s doc) — while every later comparison of the
+/// same entry borrows the slot without re-hashing the successor-identity
+/// string or cloning the measured struct.
+struct RetentionTopologyCache<'a> {
+    measurements: &'a CapacityTopologyMeasurements,
+    cells: Vec<OnceCell<Option<CanonicalLayoutTopologyExact>>>,
+}
+
+impl<'a> RetentionTopologyCache<'a> {
+    fn new(measurements: &'a CapacityTopologyMeasurements, entry_count: usize) -> Self {
+        Self {
+            measurements,
+            cells: (0..entry_count).map(|_| OnceCell::new()).collect(),
+        }
+    }
+
+    fn measure(
+        &self,
+        index: usize,
+        entry: &CapacityBeamEntry,
+        timing_now: &TimingNowFn,
+    ) -> &Option<CanonicalLayoutTopologyExact> {
+        self.cells[index].get_or_init(|| self.measurements.measure(entry, timing_now))
+    }
+}
+
 /// TS: `intrinsicCapacitySearch.ts:1889-1920` `compareTopology` (the
 /// closure inside `retainCapacityCohesionFrontier`, called from that
 /// function's own `reserve(entries.toSorted(...), ...)` steps over the
@@ -3529,9 +3578,9 @@ enum TopologyMetric {
 /// than one distinct-accounting measured survivor triggered one or more
 /// extra measurements TS's own comparator never performs.
 fn compare_topology_metric(
-    topology_measurements: &CapacityTopologyMeasurements,
-    first: &CapacityBeamEntry,
-    second: &CapacityBeamEntry,
+    topology: &RetentionTopologyCache<'_>,
+    (first_index, first): (usize, &CapacityBeamEntry),
+    (second_index, second): (usize, &CapacityBeamEntry),
     metric: TopologyMetric,
     timing_now: &TimingNowFn,
 ) -> Ordering {
@@ -3539,9 +3588,9 @@ fn compare_topology_metric(
     if accounting != Ordering::Equal {
         return accounting;
     }
-    let first_topology = topology_measurements.measure(first, timing_now);
-    let second_topology = topology_measurements.measure(second, timing_now);
-    match (&first_topology, &second_topology) {
+    let first_topology = topology.measure(first_index, first, timing_now);
+    let second_topology = topology.measure(second_index, second, timing_now);
+    match (first_topology, second_topology) {
         (None, None) => compare_capacity_beam_entries(first, second),
         (None, Some(_)) => Ordering::Greater,
         (Some(_), None) => Ordering::Less,
@@ -3617,16 +3666,21 @@ fn retain_capacity_cohesion_frontier(
         beam_width_usize,
     );
 
-    let mut by_isolated: Vec<&CapacityBeamEntry> = entries.iter().collect();
+    let topology_cache = RetentionTopologyCache::new(topology_measurements, entries.len());
+    let indexed_entries: Vec<(usize, &CapacityBeamEntry)> = entries.iter().enumerate().collect();
+
+    let mut by_isolated = indexed_entries.clone();
     by_isolated.sort_by(|a, b| {
         compare_topology_metric(
-            topology_measurements,
-            a,
-            b,
+            &topology_cache,
+            *a,
+            *b,
             TopologyMetric::Isolated,
             timing_now,
         )
     });
+    let by_isolated: Vec<&CapacityBeamEntry> =
+        by_isolated.into_iter().map(|(_, entry)| entry).collect();
     reserve_into_beam(
         &mut retained,
         &mut retained_keys,
@@ -3635,16 +3689,18 @@ fn retain_capacity_cohesion_frontier(
         beam_width_usize,
     );
 
-    let mut by_largest: Vec<&CapacityBeamEntry> = entries.iter().collect();
+    let mut by_largest = indexed_entries.clone();
     by_largest.sort_by(|a, b| {
         compare_topology_metric(
-            topology_measurements,
-            a,
-            b,
+            &topology_cache,
+            *a,
+            *b,
             TopologyMetric::LargestComponent,
             timing_now,
         )
     });
+    let by_largest: Vec<&CapacityBeamEntry> =
+        by_largest.into_iter().map(|(_, entry)| entry).collect();
     reserve_into_beam(
         &mut retained,
         &mut retained_keys,
@@ -3653,25 +3709,29 @@ fn retain_capacity_cohesion_frontier(
         beam_width_usize,
     );
 
-    let mut by_component_hull: Vec<&CapacityBeamEntry> = entries.iter().collect();
+    let mut by_component_hull = indexed_entries;
     by_component_hull.sort_by(|a, b| {
         compare_topology_metric(
-            topology_measurements,
-            a,
-            b,
+            &topology_cache,
+            *a,
+            *b,
             TopologyMetric::ComponentCount,
             timing_now,
         )
         .then_with(|| {
             compare_topology_metric(
-                topology_measurements,
-                a,
-                b,
+                &topology_cache,
+                *a,
+                *b,
                 TopologyMetric::HullWaste,
                 timing_now,
             )
         })
     });
+    let by_component_hull: Vec<&CapacityBeamEntry> = by_component_hull
+        .into_iter()
+        .map(|(_, entry)| entry)
+        .collect();
     reserve_into_beam(
         &mut retained,
         &mut retained_keys,
@@ -3793,18 +3853,22 @@ fn make_capacity_topology_retention_depth_trace(
         IntrinsicCapacityTopologyRepresentativeRole::MinimumHullWaste,
     ];
     let mut representatives: Vec<IntrinsicCapacityTopologyRepresentative> = Vec::new();
+    let trace_topology_cache =
+        RetentionTopologyCache::new(topology_measurements, best_accounting.len());
+    let indexed_best_accounting: Vec<(usize, &CapacityBeamEntry)> =
+        best_accounting.iter().copied().enumerate().collect();
     for role in specs {
-        let mut ordered: Vec<&CapacityBeamEntry> = best_accounting.clone();
+        let mut ordered: Vec<(usize, &CapacityBeamEntry)> = indexed_best_accounting.clone();
         match role {
             IntrinsicCapacityTopologyRepresentativeRole::TerminalObjective => {
-                ordered.sort_by(|a, b| compare_capacity_beam_entries(a, b))
+                ordered.sort_by(|a, b| compare_capacity_beam_entries(a.1, b.1))
             }
             IntrinsicCapacityTopologyRepresentativeRole::MinimumComponents => {
                 ordered.sort_by(|a, b| {
                     compare_topology_metric(
-                        topology_measurements,
-                        a,
-                        b,
+                        &trace_topology_cache,
+                        *a,
+                        *b,
                         TopologyMetric::ComponentCount,
                         timing_now,
                     )
@@ -3813,9 +3877,9 @@ fn make_capacity_topology_retention_depth_trace(
             IntrinsicCapacityTopologyRepresentativeRole::MinimumIsolated => {
                 ordered.sort_by(|a, b| {
                     compare_topology_metric(
-                        topology_measurements,
-                        a,
-                        b,
+                        &trace_topology_cache,
+                        *a,
+                        *b,
                         TopologyMetric::Isolated,
                         timing_now,
                     )
@@ -3824,9 +3888,9 @@ fn make_capacity_topology_retention_depth_trace(
             IntrinsicCapacityTopologyRepresentativeRole::MaximumLargestComponent => ordered
                 .sort_by(|a, b| {
                     compare_topology_metric(
-                        topology_measurements,
-                        a,
-                        b,
+                        &trace_topology_cache,
+                        *a,
+                        *b,
                         TopologyMetric::LargestComponent,
                         timing_now,
                     )
@@ -3834,16 +3898,16 @@ fn make_capacity_topology_retention_depth_trace(
             IntrinsicCapacityTopologyRepresentativeRole::MinimumHullWaste => {
                 ordered.sort_by(|a, b| {
                     compare_topology_metric(
-                        topology_measurements,
-                        a,
-                        b,
+                        &trace_topology_cache,
+                        *a,
+                        *b,
                         TopologyMetric::HullWaste,
                         timing_now,
                     )
                 })
             }
         }
-        let Some(entry) = ordered.first().copied() else {
+        let Some((_, entry)) = ordered.first().copied() else {
             continue;
         };
         let decision_identity = intrinsic_capacity_successor_identity(entry);

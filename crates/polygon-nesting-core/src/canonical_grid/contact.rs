@@ -99,7 +99,7 @@ pub enum CanonicalGridBoundaryOverlapAxisUnitsResult {
 
 /// TS source: `canonicalGridContact.ts:17-21` (`CanonicalGridEdge`).
 #[derive(Debug, Clone, Copy)]
-struct CanonicalGridEdge {
+pub(crate) struct CanonicalGridEdge {
     start: CanonicalGridPoint,
     end: CanonicalGridPoint,
     start_index: usize,
@@ -147,8 +147,20 @@ pub fn has_positive_canonical_grid_boundary_contact(
 ) -> Option<bool> {
     let first_edges = canonical_grid_path_edges(first, None)?;
     let second_edges = canonical_grid_path_edges(second, None)?;
-    for first_edge in &first_edges {
-        for second_edge in &second_edges {
+    has_positive_contact_between_prepared_edges(&first_edges, &second_edges)
+}
+
+/// The pairwise half of [`has_positive_canonical_grid_boundary_contact`]
+/// over already-built edge lists, so an all-pairs caller (the layout
+/// contact graph) can build each polygon's edges once instead of once per
+/// pair. Pure and byte-identical: edge construction is deterministic per
+/// path, and the scan order and short-circuit are unchanged.
+pub(crate) fn has_positive_contact_between_prepared_edges(
+    first_edges: &[CanonicalGridEdge],
+    second_edges: &[CanonicalGridEdge],
+) -> Option<bool> {
+    for first_edge in first_edges {
+        for second_edge in second_edges {
             let overlap = canonical_grid_collinear_overlap(first_edge, second_edge)?;
             if overlap.length_mm > 0.0 {
                 return Some(true);
@@ -334,7 +346,7 @@ fn canonical_grid_structural_edge_descriptor(
 /// no checkpoint parameter in their own TS signature,
 /// `hasPositiveCanonicalGridBoundaryContact`/`measureCanonicalGridBoundaryContact`,
 /// always pass `None`), not "a checkpoint that always returns true."
-fn canonical_grid_path_edges(
+pub(crate) fn canonical_grid_path_edges(
     path: &[CanonicalGridPoint],
     mut checkpoint: Option<&mut dyn FnMut() -> bool>,
 ) -> Option<Vec<CanonicalGridEdge>> {

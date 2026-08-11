@@ -76,7 +76,7 @@ use crate::validation::placement::{
 };
 use crate::validation::spatial_index::PlacedCollisionSpatialIndex;
 
-use super::boundary_core::{resolve_nfp_boundary, CoreNfpInput};
+use super::boundary_core::CoreNfpInput;
 use super::ifp_bounds::{resolve_ifp_bounds, CoreIfpBoundsFailureKind};
 use super::service::{invalid_geometry, nfp_checkpoint, NfpIfpControl, NfpIfpError};
 use super::telemetry::{NfpIfpCheckpointPhase, NfpIfpTelemetry};
@@ -477,6 +477,20 @@ impl<T: Clone> BoundsIndex<T> {
         }
         matches
     }
+
+    /// Existential form of [`Self::query`]: `query(bounds).into_iter()
+    /// .any(predicate)` without materializing the match `Vec` or cloning
+    /// any value. Scans the identical pre-sorted range in the identical
+    /// order; the returned bool is an existence test over a pure predicate,
+    /// so interleaving the predicate with the scan (short-circuiting both)
+    /// cannot change it.
+    fn any_match(&self, bounds: &IrregularBounds, mut predicate: impl FnMut(&T) -> bool) -> bool {
+        let first_index = lower_bound_at_least(&self.prefix_max_x, bounds.min_x);
+        let end_index = upper_bound_min_x(&self.entries, bounds.max_x);
+        self.entries[first_index..end_index]
+            .iter()
+            .any(|entry| !are_disjoint(&entry.bounds, bounds) && predicate(&entry.value))
+    }
 }
 
 /// TS: `nfpIfpService.ts:775-792` (`compareBoundsIndexEntries`).
@@ -864,13 +878,16 @@ fn add_antiparallel_edge_support_points(
         })
         .collect();
     let moving_points = &moving.polygon.points;
+    // Loop-invariant: the moving edge list was rebuilt for every fixed
+    // edge; hoisting it preserves the identical edge sequence per pass.
+    let moving_edges = polygon_edges_from_points(moving_points);
 
     for fixed_edge in polygon_edges_from_points(&fixed_points) {
         let fixed_direction = IrregularPoint::new(
             fixed_edge.end.x - fixed_edge.start.x,
             fixed_edge.end.y - fixed_edge.start.y,
         );
-        for moving_edge in polygon_edges_from_points(moving_points) {
+        for moving_edge in &moving_edges {
             let moving_direction = IrregularPoint::new(
                 moving_edge.end.x - moving_edge.start.x,
                 moving_edge.end.y - moving_edge.start.y,
@@ -1029,14 +1046,11 @@ fn assess_candidate_point(
         }
 
         let strictly_inside_any = if candidate_pruning_mode == NfpCandidatePruningMode::Indexed {
-            candidate_nfp_index
-                .query(&point_bounds(candidate_point))
-                .into_iter()
-                .any(|index| {
-                    let boundary = &nfp_boundaries[index];
-                    is_inside_bounds(candidate_point, &boundary.bounds)
-                        && is_strictly_inside(candidate_point, &boundary.boundary, boundary.winding)
-                })
+            candidate_nfp_index.any_match(&point_bounds(candidate_point), |&index| {
+                let boundary = &nfp_boundaries[index];
+                is_inside_bounds(candidate_point, &boundary.bounds)
+                    && is_strictly_inside(candidate_point, &boundary.boundary, boundary.winding)
+            })
         } else {
             nfp_boundaries.iter().any(|boundary| {
                 is_inside_bounds(candidate_point, &boundary.bounds)
@@ -1169,6 +1183,16 @@ pub fn generate_placement_candidates_uncached(
         construction_algorithm,
     );
 
+    // The moving-side key parts (including the expensive moving-polygon
+    // digest) are identical for every placed piece in the loop below;
+    // preparing them once is pure string formatting with byte-identical
+    // assembled keys.
+    let prepared_moving_key_parts = crate::caches::prepare_pairwise_nfp_moving_parts(
+        &input.moving.polygon.points,
+        &input.moving.transform,
+        &input.settings.geometry,
+        construction_algorithm,
+    );
     let mut nfp_boundaries: Vec<NfpBoundary> = Vec::new();
     for placed in input.placed {
         nfp_checkpoint(
@@ -1183,16 +1207,20 @@ pub fn generate_placement_candidates_uncached(
             moving: input.moving,
             settings: &input.settings.geometry,
         };
-        let boundary =
-            match resolve_nfp_boundary(&core_input, geometry_cache, construction_algorithm) {
-                Ok(success) => success.boundary,
-                Err(message) => {
-                    return Err(NfpIfpError::Geometry(invalid_geometry(
-                        "computeNfp",
-                        message,
-                    )));
-                }
-            };
+        let boundary = match super::boundary_core::resolve_nfp_boundary_with_prepared_moving(
+            &core_input,
+            geometry_cache,
+            construction_algorithm,
+            &prepared_moving_key_parts,
+        ) {
+            Ok(success) => success.boundary,
+            Err(message) => {
+                return Err(NfpIfpError::Geometry(invalid_geometry(
+                    "computeNfp",
+                    message,
+                )));
+            }
+        };
 
         nfp_checkpoint(
             &mut control,
@@ -1252,23 +1280,27 @@ pub fn generate_placement_candidates_uncached(
     let contact_only = input.candidate_domain != CandidateDomain::Sheet;
     let mut points = CanonicalPointSet::new();
 
-    let all_nfp_index = BoundsIndex::new(
-        nfp_boundaries
-            .iter()
-            .map(|boundary| BoundsIndexEntry {
-                value: boundary.index,
-                bounds: boundary.bounds,
-            })
-            .collect(),
-    );
-
     let candidate_nfp_boundary_indices: Vec<usize> =
         if sheetless_nfp || candidate_pruning_mode != NfpCandidatePruningMode::Indexed {
             (0..nfp_boundaries.len()).collect()
         } else {
             match &ifp_bounds {
                 None => Vec::new(),
-                Some(bounds) => all_nfp_index.query(bounds),
+                // Built only on the branch that queries it: the production
+                // sheetless domain never reads this index, and its only
+                // consumer is the single query below (the sorted build is a
+                // pure function of `nfp_boundaries`, so building it lazily
+                // is observationally identical).
+                Some(bounds) => BoundsIndex::new(
+                    nfp_boundaries
+                        .iter()
+                        .map(|boundary| BoundsIndexEntry {
+                            value: boundary.index,
+                            bounds: boundary.bounds,
+                        })
+                        .collect(),
+                )
+                .query(bounds),
             }
         };
     let candidate_nfp_index = BoundsIndex::new(

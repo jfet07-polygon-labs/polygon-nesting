@@ -25,9 +25,9 @@
 use std::collections::HashMap;
 
 use crate::caches::{
-    legal_placement_candidate_memo_key, CandidateDomain, GeometryCacheStore,
+    legal_placement_candidate_memo_key_with_prepared_placed, CandidateDomain, GeometryCacheStore,
     LegalPlacementCandidateMemoKeyInput, NfpCandidatePruningMode, NfpConstructionAlgorithm,
-    PlacedPieceKeyInput, SheetDimensions,
+    PlacedPieceKeyInput, PreparedPlacedMemoParts, SheetDimensions,
 };
 use crate::domain::{
     CollisionGeometryDiagnostic, IrregularGeometrySettings, IrregularIfpBounds, IrregularNfp,
@@ -343,6 +343,29 @@ pub fn generate_placement_candidates(
     construction_algorithm: NfpConstructionAlgorithm,
     candidate_pruning_mode: NfpCandidatePruningMode,
     memo: Option<&mut LegalCandidateMemo>,
+    telemetry: Option<&mut NfpIfpTelemetry>,
+    control: Option<&mut dyn NfpIfpControl>,
+) -> Result<GeneratePlacementCandidatesOutcome, NfpIfpError> {
+    generate_placement_candidates_with_prepared_placed(
+        input,
+        None,
+        geometry_cache,
+        construction_algorithm,
+        candidate_pruning_mode,
+        memo,
+        telemetry,
+        control,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn generate_placement_candidates_with_prepared_placed(
+    input: &GeneratePlacementCandidatesInput<'_>,
+    prepared_placed_memo_parts: Option<&PreparedPlacedMemoParts>,
+    geometry_cache: &mut GeometryCacheStore,
+    construction_algorithm: NfpConstructionAlgorithm,
+    candidate_pruning_mode: NfpCandidatePruningMode,
+    memo: Option<&mut LegalCandidateMemo>,
     mut telemetry: Option<&mut NfpIfpTelemetry>,
     mut control: Option<&mut dyn NfpIfpControl>,
 ) -> Result<GeneratePlacementCandidatesOutcome, NfpIfpError> {
@@ -360,7 +383,12 @@ pub fn generate_placement_candidates(
         );
     };
 
-    let key = build_memo_key(input, construction_algorithm, candidate_pruning_mode);
+    let key = build_memo_key(
+        input,
+        prepared_placed_memo_parts,
+        construction_algorithm,
+        candidate_pruning_mode,
+    );
     let cached_present = memo.entries.contains_key(&key);
     let accept_hit = cached_present
         && memo
@@ -435,6 +463,7 @@ pub fn generate_placement_candidates(
 /// [`LegalPlacementCandidateMemoKeyInput`].
 fn build_memo_key(
     input: &GeneratePlacementCandidatesInput<'_>,
+    prepared_placed_memo_parts: Option<&PreparedPlacedMemoParts>,
     construction_algorithm: NfpConstructionAlgorithm,
     candidate_pruning_mode: NfpCandidatePruningMode,
 ) -> String {
@@ -465,7 +494,12 @@ fn build_memo_key(
         settings: &input.settings.geometry,
         candidate_domain: input.candidate_domain,
     };
-    legal_placement_candidate_memo_key(&key_input, construction_algorithm, candidate_pruning_mode)
+    legal_placement_candidate_memo_key_with_prepared_placed(
+        &key_input,
+        prepared_placed_memo_parts,
+        construction_algorithm,
+        candidate_pruning_mode,
+    )
 }
 
 #[cfg(test)]

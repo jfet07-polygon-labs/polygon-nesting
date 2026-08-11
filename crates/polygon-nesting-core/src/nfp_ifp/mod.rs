@@ -63,6 +63,7 @@ pub use ifp_bounds::{
     compute_ifp_bounds as compute_ifp_bounds_core, is_valid_cached_ifp_bounds, resolve_ifp_bounds,
     CoreIfpBoundsFailure, CoreIfpBoundsFailureKind, CoreIfpBoundsResult, CoreIfpBoundsSuccess,
 };
+pub(crate) use service::generate_placement_candidates_with_prepared_placed;
 pub use service::{
     compute_ifp_bounds, compute_nfp, generate_placement_candidates, invalid_geometry,
     nfp_checkpoint, ComputeIfpBoundsError, ComputeIfpBoundsInput, ComputeNfpInput,

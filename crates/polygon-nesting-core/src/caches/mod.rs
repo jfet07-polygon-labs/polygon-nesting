@@ -65,10 +65,15 @@ pub use legal_candidate_memo::{
     legal_placement_candidate_memo_key, CandidateDomain, LegalPlacementCandidateMemoKeyInput,
     NfpCandidatePruningMode, PlacedPieceKeyInput, SheetDimensions, LEGAL_CANDIDATE_MEMO_NAMESPACE,
 };
+pub(crate) use legal_candidate_memo::{
+    legal_placement_candidate_memo_key_with_prepared_placed, prepare_placed_memo_parts,
+    PreparedPlacedMemoParts,
+};
 pub use nfp_cache_key::{
-    canonical_polygon_digest, make_pairwise_nfp_cache_key, NfpConstructionAlgorithm,
-    PairwiseNfpKeyInput, DEFAULT_NFP_CONSTRUCTION_ALGORITHM, NFP_CONSTRUCTION_ALGORITHMS,
-    NFP_GEOMETRY_CACHE_NAMESPACE,
+    canonical_polygon_digest, make_pairwise_nfp_cache_key,
+    make_pairwise_nfp_cache_key_with_prepared_moving, prepare_pairwise_nfp_moving_parts,
+    NfpConstructionAlgorithm, PairwiseNfpKeyInput, PreparedPairwiseNfpMovingParts,
+    DEFAULT_NFP_CONSTRUCTION_ALGORITHM, NFP_CONSTRUCTION_ALGORITHMS, NFP_GEOMETRY_CACHE_NAMESPACE,
 };
 pub use store::{
     charge_ifp_bounds, charge_nfp_polygon, charge_transformed_collision_geometry,
