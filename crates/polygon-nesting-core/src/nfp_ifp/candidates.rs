@@ -483,6 +483,20 @@ impl<T: Clone> BoundsIndex<T> {
         }
         matches
     }
+
+    /// Existential form of [`Self::query`]: `query(bounds).into_iter()
+    /// .any(predicate)` without materializing the match `Vec` or cloning
+    /// any value. Scans the identical pre-sorted range in the identical
+    /// order; the returned bool is an existence test over a pure predicate,
+    /// so interleaving the predicate with the scan (short-circuiting both)
+    /// cannot change it.
+    fn any_match(&self, bounds: &IrregularBounds, mut predicate: impl FnMut(&T) -> bool) -> bool {
+        let first_index = lower_bound_at_least(&self.prefix_max_x, bounds.min_x);
+        let end_index = upper_bound_min_x(&self.entries, bounds.max_x);
+        self.entries[first_index..end_index]
+            .iter()
+            .any(|entry| !are_disjoint(&entry.bounds, bounds) && predicate(&entry.value))
+    }
 }
 
 /// TS: `nfpIfpService.ts:775-792` (`compareBoundsIndexEntries`).
@@ -1038,14 +1052,11 @@ fn assess_candidate_point(
         }
 
         let strictly_inside_any = if candidate_pruning_mode == NfpCandidatePruningMode::Indexed {
-            candidate_nfp_index
-                .query(&point_bounds(candidate_point))
-                .into_iter()
-                .any(|index| {
-                    let boundary = &nfp_boundaries[index];
-                    is_inside_bounds(candidate_point, &boundary.bounds)
-                        && is_strictly_inside(candidate_point, &boundary.boundary, boundary.winding)
-                })
+            candidate_nfp_index.any_match(&point_bounds(candidate_point), |&index| {
+                let boundary = &nfp_boundaries[index];
+                is_inside_bounds(candidate_point, &boundary.bounds)
+                    && is_strictly_inside(candidate_point, &boundary.boundary, boundary.winding)
+            })
         } else {
             nfp_boundaries.iter().any(|boundary| {
                 is_inside_bounds(candidate_point, &boundary.bounds)
