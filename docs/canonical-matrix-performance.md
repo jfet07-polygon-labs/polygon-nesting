@@ -139,20 +139,57 @@ across candidate generation, strict state construction, and the periodic
 portfolio residue, with no single ≥ 10 % local target left below the
 structural beam-loop change.
 
+### Stage 6 (kept) — candidate-generation rebuild hoists
+
+Two pure hoists inside `generate_placement_candidates_uncached`:
+`all_nfp_index` (never queried by the production `SheetlessNfp` domain) is
+now built only inside the one branch that queries it, and the antiparallel
+support scan's moving edge list — previously rebuilt for every fixed
+edge — is built once per pass. Wall on mixed-61-2000x2700-compact:
+median 15.6 s → 15.2 s.
+
+### Stage 7 (kept) — moving-side NFP key parts prepared once per pass
+
+`make_pairwise_nfp_cache_key` rebuilt the moving-polygon digest (the
+dominant, forward-plus-reverse coordinate render) per placed piece, hit
+or miss. The key builder now delegates through
+`prepare_pairwise_nfp_moving_parts` +
+`make_pairwise_nfp_cache_key_with_prepared_moving` (identical part
+order → byte-identical keys), and both per-placed loops (parallel
+precompute pre-pass, main resolve loop) prepare the moving parts once.
+Wall: median 15.2 s → 14.6 s.
+
+### Stage 8 (kept) — valid NFP cache hits translate in place
+
+The hit path deep-cloned the cached relative boundary only to read it
+once; valid hits now translate through a borrow-based store probe with
+bit-identical telemetry accounting (`record_cloning_hit` fires for every
+present entry exactly as the cloning `get` did). Wall within run noise;
+a strict per-hit polygon-clone removal.
+
+Cumulative after stages 1–8 (mixed-61-2000x2700-compact, 5-run medians):
+**wall 16.03 s → 14.56 s (−9.2 %), user CPU 39.5 s → 35.6 s (−10 %)** —
+all with the quality golden byte-identical across the 18 rows and the
+full workspace release suite green at every stage.
+
 ## Remaining opportunities (profile-ranked, deferred)
 
-- Candidate-generation per-call rebuilds (12.7 % of coordinator): moving
-  digest recomputed per placed piece, warm-hit boundary clone, dead
-  `all_nfp_index` under the production `SheetlessNfp` domain, moving-edge
-  list rebuilt inside the antiparallel fixed-edge loop.
+- Candidate-generation memo key (`service.rs` `build_memo_key`): the
+  legal-candidate memo still renders an exact ordered polygon digest of
+  the moving polygon and every placed piece on every call, hit or miss —
+  the same prepared-parts treatment as Stage 7 applies.
+- Scoring input construction: per-candidate `remaining_prepared_pieces`
+  Vec clone and the per-candidate deep `TransformedCollisionGeometry`
+  clone in `score_candidate_body` (allocator-cluster feeders).
+- Candidate-generation per-call rebuilds (remainder after stages 6–8):
+  per-boundary `validate_strict_boundary`/`bounds_for_points`/segment and
+  `BoundsIndex` rebuilds across the transform loop while the placed set
+  is frozen, and `BoundsIndex::query`'s per-call `Vec` allocation.
 - `gap_regions.rs` duplicate `canonical_ring` (materializes all 2n
   rotations; the shared `canonical_bidirectional_cyclic_key` helper from
   the Issue-21 work is a drop-in) plus ring keys recomputed inside sort
   comparators — not hot for these three fixture families, relevant for
   gap-contained-heavy workloads.
-- Per-candidate `remaining_prepared_pieces` Vec clone and deep
-  `TransformedCollisionGeometry` clone in scoring input construction
-  (allocator-cluster feeders).
 - Structural ceiling: the capacity beam loop is serial per
   entry/transform/candidate; the coordinator is ≈ 94 % busy while 15
   workers average ≈ 4 % each. Any future wall-time step change on large
