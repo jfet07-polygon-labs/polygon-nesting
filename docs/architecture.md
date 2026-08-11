@@ -3,11 +3,16 @@
 ## Dependency direction
 
 ```text
-protocol <- core <- cli
-                 <- napi
+                protocol
+               ^   ^   ^
+              /    |    \
+            dxf   core   napi
+              ^    ^
+               \  /
+                cli
 ```
 
-`polygon-nesting-protocol` depends only on `serde` and `serde_json`. `polygon-nesting-core` depends on the protocol and Rust algorithm libraries. `polygon-nesting-cli` and `polygon-nesting-napi` depend on core and protocol. `scripts/verify-dependency-direction.sh` is the executable dependency-direction check.
+`polygon-nesting-protocol` depends only on `serde` and `serde_json`. `polygon-nesting-core` depends on the protocol and Rust algorithm libraries. `polygon-nesting-dxf` depends on the protocol and owns raw-DXF conversion without executing the engine. `polygon-nesting-cli` depends on core, DXF, and protocol; `polygon-nesting-napi` depends on core and protocol. `scripts/verify-dependency-direction.sh` is the executable dependency-direction check.
 
 The protocol is application-neutral. The core must not depend on N-API, `napi-derive`, Node, Electron, libuv, CLI argument parsing, Azure SDKs, HTTP, Blob Storage, or application databases. CLI and N-API must not make algorithm, cache-ownership, or core-validation decisions.
 
@@ -46,4 +51,4 @@ versioned JSON -> protocol decode -> typed core job -> typed outcome/events
                                                 +-> N-API desktop conversion and callbacks
 ```
 
-JSON decoding and encoding belong in adapters and the protocol boundary, not in algorithm modules. Desktop-only routing identifiers, callback lifecycle, and addon cleanup belong in N-API. Artifact paths, signals, and exit statuses belong in CLI. Storage, authorization, Azure execution creation, and frontend status handling belong in the consuming backend.
+JSON decoding and encoding belong in adapters and the protocol boundary, not in algorithm modules. DXF group-code parsing, geometry normalization, filename ordering, and Configurator-compatible request construction belong in the DXF adapter. Desktop-only routing identifiers, callback lifecycle, and addon cleanup belong in N-API. Artifact paths, signals, and exit statuses belong in CLI. Storage, authorization, CSV quantities, customer metadata, Azure execution creation, and frontend status handling belong in the consuming backend.

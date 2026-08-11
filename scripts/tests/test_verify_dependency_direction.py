@@ -26,6 +26,7 @@ class VerifyDependencyDirectionTests(unittest.TestCase):
         package_names = {
             "protocol": "polygon-nesting-protocol",
             "core": "polygon-nesting-core",
+            "dxf": "polygon-nesting-dxf",
             "cli": "polygon-nesting-cli",
             "napi": "polygon-nesting-napi",
         }
@@ -45,7 +46,12 @@ class VerifyDependencyDirectionTests(unittest.TestCase):
             {
                 "protocol": [],
                 "core": ["polygon-nesting-protocol"],
-                "cli": ["polygon-nesting-core", "polygon-nesting-protocol"],
+                "dxf": ["polygon-nesting-protocol"],
+                "cli": [
+                    "polygon-nesting-core",
+                    "polygon-nesting-dxf",
+                    "polygon-nesting-protocol",
+                ],
                 "napi": ["polygon-nesting-core", "polygon-nesting-protocol"],
             }
         )
@@ -57,15 +63,16 @@ class VerifyDependencyDirectionTests(unittest.TestCase):
             {
                 "protocol": [],
                 "core": ["polygon-nesting-protocol"],
+                "dxf": ["polygon-nesting-protocol"],
                 "cli": ["polygon-nesting-core", "polygon-nesting-protocol"],
             },
-            roles=("protocol", "core", "cli"),
+            roles=("protocol", "core", "dxf", "cli"),
         )
 
         self.assertEqual(
             MODULE.find_violations(metadata, self.workspace_root),
             [
-                "workspace must contain exactly 4 member IDs, found 3",
+                "workspace must contain exactly 5 member IDs, found 4",
                 "missing workspace crate: polygon-nesting-napi",
             ],
         )
@@ -75,6 +82,7 @@ class VerifyDependencyDirectionTests(unittest.TestCase):
             {
                 "protocol": [],
                 "core": ["polygon-nesting-protocol"],
+                "dxf": ["polygon-nesting-protocol"],
                 "cli": ["polygon-nesting-core", "polygon-nesting-protocol"],
                 "napi": ["polygon-nesting-core", "polygon-nesting-protocol"],
             },
@@ -84,7 +92,7 @@ class VerifyDependencyDirectionTests(unittest.TestCase):
         self.assertEqual(
             MODULE.find_violations(metadata, self.workspace_root),
             [
-                "workspace must contain exactly 4 member IDs, found 5",
+                "workspace must contain exactly 5 member IDs, found 6",
                 "unexpected workspace crate: polygon-nesting-helper",
             ],
         )
@@ -96,7 +104,7 @@ class VerifyDependencyDirectionTests(unittest.TestCase):
         )
 
         self.assertIn(
-            "workspace must contain exactly 4 member IDs, found 5",
+            "workspace must contain exactly 5 member IDs, found 6",
             MODULE.find_violations(metadata, self.workspace_root),
         )
 
@@ -172,8 +180,13 @@ class VerifyDependencyDirectionTests(unittest.TestCase):
             "protocol_to_core": {"protocol": ["polygon-nesting-core"]},
             "protocol_to_cli": {"protocol": ["polygon-nesting-cli"]},
             "protocol_to_napi": {"protocol": ["polygon-nesting-napi"]},
+            "protocol_to_dxf": {"protocol": ["polygon-nesting-dxf"]},
             "core_to_cli": {"core": ["polygon-nesting-cli"]},
             "core_to_napi": {"core": ["polygon-nesting-napi"]},
+            "core_to_dxf": {"core": ["polygon-nesting-dxf"]},
+            "dxf_to_core": {"dxf": ["polygon-nesting-core"]},
+            "dxf_to_cli": {"dxf": ["polygon-nesting-cli"]},
+            "dxf_to_napi": {"dxf": ["polygon-nesting-napi"]},
             "cli_to_napi": {"cli": ["polygon-nesting-napi"]},
             "napi_to_cli": {"napi": ["polygon-nesting-cli"]},
         }
@@ -195,7 +208,7 @@ class VerifyDependencyDirectionTests(unittest.TestCase):
         self.assertEqual(
             MODULE.find_violations(metadata, self.workspace_root),
             [
-                "workspace must contain exactly 4 member IDs, found 5",
+                "workspace must contain exactly 5 member IDs, found 6",
                 "unexpected workspace crate: polygon-nesting-helper",
                 "polygon-nesting-protocol must not depend on polygon-nesting-helper",
             ],
@@ -206,6 +219,7 @@ class VerifyDependencyDirectionTests(unittest.TestCase):
             {
                 "protocol": ["serde"],
                 "core": ["rand"],
+                "dxf": ["sha2"],
                 "cli": ["clap"],
                 "napi": ["napi"],
             }

@@ -30,6 +30,7 @@ The source baseline commit records `docs/artifacts/polygon-nesting-extraction-ba
 | `boundary/diagnostics.rs` | `crates/polygon-nesting-napi/src/diagnostics.rs` | N-API diagnostic glue |
 | `boundary/mod.rs` | Split across core, protocol, and N-API modules above | No standalone boundary directory |
 | Native addon build metadata | `crates/polygon-nesting-napi/build.rs` and `packages/polygon-nesting/scripts/build-native.mjs` | Three-target local/manual addon build support and two-target publication staging |
+| Configurator DXF conversion seam | `crates/polygon-nesting-dxf/**` | Optional raw-DXF-to-protocol adapter with real Shapes-17 and Mixed-61 corpus tests |
 | No source equivalent | `crates/polygon-nesting-cli/**`, `Dockerfile`, and CLI image scripts | New CLI and OCI adapter |
 | Electron renderer, preload, main process, SQLite, DXF dialogs, IPC, worker supervision, TypeScript polygon algorithm, rectangle nesting | Excluded | Application ownership remains outside this repository |
 

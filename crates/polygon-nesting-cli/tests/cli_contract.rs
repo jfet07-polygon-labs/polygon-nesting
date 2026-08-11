@@ -21,6 +21,338 @@ fn temporary_directory(name: &str) -> std::path::PathBuf {
     directory
 }
 
+fn rectangle_dxf(width: u32, height: u32) -> String {
+    format!(
+        "0\nSECTION\n2\nENTITIES\n0\nLINE\n10\n0\n20\n0\n11\n{width}\n21\n0\n0\nLINE\n10\n{width}\n20\n0\n11\n{width}\n21\n{height}\n0\nLINE\n10\n{width}\n20\n{height}\n11\n0\n21\n{height}\n0\nLINE\n10\n0\n20\n{height}\n11\n0\n21\n0\n0\nENDSEC\n0\nEOF\n"
+    )
+}
+
+#[test]
+fn run_dxf_writes_the_generated_request_and_runs_it() {
+    let directory = temporary_directory("run-dxf-success");
+    let input_directory = directory.join("dxfs");
+    let request = directory.join("request.json");
+    let output = directory.join("result.json");
+    let events = directory.join("events.ndjson");
+    fs::create_dir(&input_directory).expect("DXF directory should be created");
+    fs::write(input_directory.join("part.dxf"), rectangle_dxf(80, 40))
+        .expect("DXF should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run-dxf",
+            "--input-dir",
+            input_directory.to_str().expect("input path is UTF-8"),
+            "--sheet",
+            "200x200",
+            "--profile",
+            "compact-short-side",
+            "--allow-mirror",
+            "false",
+            "--request-file",
+            request.to_str().expect("request path is UTF-8"),
+            "--result-file",
+            output.to_str().expect("result path is UTF-8"),
+            "--events",
+            events.to_str().expect("events path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert!(
+        process.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&process.stderr)
+    );
+    let request: Value = serde_json::from_slice(&fs::read(&request).expect("request should exist"))
+        .expect("request should be valid JSON");
+    assert_eq!(request["profile"], "compact-short-side");
+    assert_eq!(request["pieces"][0]["id"], "part#1");
+    assert_eq!(request["pieces"][0]["allowMirror"], false);
+    assert_eq!(request["settings"]["allowGlobalMirror"], false);
+    let outcome: Value = serde_json::from_slice(&fs::read(&output).expect("result should exist"))
+        .expect("result should be valid JSON");
+    assert_eq!(outcome["outcome"]["status"], "success");
+    assert!(events.is_file());
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn run_dxf_rejects_an_empty_directory_with_a_typed_outcome() {
+    let directory = temporary_directory("run-dxf-empty");
+    let input_directory = directory.join("dxfs");
+    let request = directory.join("request.json");
+    let output = directory.join("result.json");
+    fs::create_dir(&input_directory).expect("DXF directory should be created");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run-dxf",
+            "--input-dir",
+            input_directory.to_str().expect("input path is UTF-8"),
+            "--sheet",
+            "200x200",
+            "--request-file",
+            request.to_str().expect("request path is UTF-8"),
+            "--result-file",
+            output.to_str().expect("result path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert!(!request.exists());
+    let outcome: Value = serde_json::from_slice(&fs::read(&output).expect("result should exist"))
+        .expect("result should be valid JSON");
+    assert_eq!(outcome["outcome"]["error"]["category"], "malformed_input");
+    assert_eq!(outcome["outcome"]["error"]["operation"], "import-dxf");
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn run_dxf_rejects_request_and_result_path_aliasing() {
+    let directory = temporary_directory("run-dxf-alias");
+    let input_directory = directory.join("dxfs");
+    let shared = directory.join("shared.json");
+    fs::create_dir(&input_directory).expect("DXF directory should be created");
+    fs::write(input_directory.join("part.dxf"), rectangle_dxf(80, 40))
+        .expect("DXF should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run-dxf",
+            "--input-dir",
+            input_directory.to_str().expect("input path is UTF-8"),
+            "--sheet",
+            "200x200",
+            "--request-file",
+            shared.to_str().expect("request path is UTF-8"),
+            "--result-file",
+            shared.to_str().expect("result path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert!(!shared.exists());
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn run_dxf_rejects_artifacts_inside_the_source_directory() {
+    let directory = temporary_directory("run-dxf-source-overwrite");
+    let input_directory = directory.join("dxfs");
+    let request = directory.join("request.json");
+    let source = input_directory.join("part.dxf");
+    let source_bytes = rectangle_dxf(80, 40);
+    fs::create_dir(&input_directory).expect("DXF directory should be created");
+    fs::write(&source, &source_bytes).expect("DXF should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run-dxf",
+            "--input-dir",
+            input_directory.to_str().expect("input path is UTF-8"),
+            "--sheet",
+            "200x200",
+            "--request-file",
+            request.to_str().expect("request path is UTF-8"),
+            "--result-file",
+            source.to_str().expect("source path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert!(!request.exists());
+    assert_eq!(
+        fs::read_to_string(&source).expect("source should remain"),
+        source_bytes
+    );
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn malformed_run_dxf_cannot_overwrite_a_source_file() {
+    let directory = temporary_directory("malformed-run-dxf-source-overwrite");
+    let input_directory = directory.join("dxfs");
+    let request = directory.join("request.json");
+    let source = input_directory.join("part.dxf");
+    let source_bytes = rectangle_dxf(80, 40);
+    fs::create_dir(&input_directory).expect("DXF directory should be created");
+    fs::write(&source, &source_bytes).expect("DXF should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run-dxf",
+            "--input-dir",
+            input_directory.to_str().expect("input path is UTF-8"),
+            "--sheet",
+            "not-a-sheet",
+            "--request-file",
+            request.to_str().expect("request path is UTF-8"),
+            "--result-file",
+            source.to_str().expect("source path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert!(!request.exists());
+    assert_eq!(
+        fs::read_to_string(&source).expect("source should remain"),
+        source_bytes
+    );
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn malformed_run_dxf_with_non_utf8_inline_directory_cannot_overwrite_a_source_file() {
+    use std::ffi::OsString;
+    use std::os::unix::ffi::OsStringExt;
+
+    let directory = temporary_directory("malformed-run-dxf-non-utf8-source-overwrite");
+    let input_directory = directory.join(OsString::from_vec(b"dxfs-\x80".to_vec()));
+    let source = input_directory.join("part.dxf");
+    let source_bytes = rectangle_dxf(80, 40);
+    fs::create_dir(&input_directory).expect("DXF directory should be created");
+    fs::write(&source, &source_bytes).expect("DXF should be written");
+    let mut inline_input = OsString::from("--input-dir=");
+    inline_input.push(&input_directory);
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .arg("run-dxf")
+        .arg(inline_input)
+        .args(["--sheet", "not-a-sheet", "--result-file"])
+        .arg(&source)
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert_eq!(
+        fs::read_to_string(&source).expect("source should remain"),
+        source_bytes
+    );
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn info_run_dxf_conflict_cannot_overwrite_a_source_file() {
+    let directory = temporary_directory("info-run-dxf-source-overwrite");
+    let input_directory = directory.join("dxfs");
+    let request = directory.join("request.json");
+    let source = input_directory.join("part.dxf");
+    let source_bytes = rectangle_dxf(80, 40);
+    fs::create_dir(&input_directory).expect("DXF directory should be created");
+    fs::write(&source, &source_bytes).expect("DXF should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "--info",
+            "run-dxf",
+            "--input-dir",
+            input_directory.to_str().expect("input path is UTF-8"),
+            "--sheet",
+            "200x200",
+            "--request-file",
+            request.to_str().expect("request path is UTF-8"),
+            "--result-file",
+            source.to_str().expect("source path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert!(!request.exists());
+    assert_eq!(
+        fs::read_to_string(&source).expect("source should remain"),
+        source_bytes
+    );
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn run_dxf_rejects_an_artifact_hardlinked_to_a_source_file() {
+    let directory = temporary_directory("run-dxf-source-hardlink");
+    let input_directory = directory.join("dxfs");
+    let request = directory.join("request.json");
+    let output = directory.join("result.dxf");
+    let source = input_directory.join("part.dxf");
+    let source_bytes = rectangle_dxf(80, 40);
+    fs::create_dir(&input_directory).expect("DXF directory should be created");
+    fs::write(&source, &source_bytes).expect("DXF should be written");
+    fs::hard_link(&source, &output).expect("hard link should be created");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run-dxf",
+            "--input-dir",
+            input_directory.to_str().expect("input path is UTF-8"),
+            "--sheet",
+            "200x200",
+            "--request-file",
+            request.to_str().expect("request path is UTF-8"),
+            "--result-file",
+            output.to_str().expect("result path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert!(!request.exists());
+    assert_eq!(
+        fs::read_to_string(&source).expect("source should remain"),
+        source_bytes
+    );
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn run_dxf_rejects_odd_padding_with_a_typed_outcome() {
+    let directory = temporary_directory("run-dxf-odd-padding");
+    let input_directory = directory.join("dxfs");
+    let request = directory.join("request.json");
+    let output = directory.join("result.json");
+    fs::create_dir(&input_directory).expect("DXF directory should be created");
+    fs::write(input_directory.join("part.dxf"), rectangle_dxf(80, 40))
+        .expect("DXF should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run-dxf",
+            "--input-dir",
+            input_directory.to_str().expect("input path is UTF-8"),
+            "--sheet",
+            "200x200",
+            "--padding",
+            "1",
+            "--request-file",
+            request.to_str().expect("request path is UTF-8"),
+            "--result-file",
+            output.to_str().expect("result path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert!(!request.exists());
+    let outcome: Value = serde_json::from_slice(&fs::read(&output).expect("result should exist"))
+        .expect("result should be valid JSON");
+    assert_eq!(outcome["outcome"]["error"]["category"], "malformed_input");
+    assert_eq!(outcome["outcome"]["error"]["operation"], "import-dxf");
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
 #[test]
 fn run_writes_a_versioned_success_outcome_and_ordered_events() {
     let directory = temporary_directory("success");
@@ -1130,7 +1462,7 @@ fn output_write_failure_uses_the_write_failure_exit() {
     assert_eq!(process.status.code(), Some(5));
     assert_eq!(
         String::from_utf8(process.stderr).expect("stderr should be UTF-8"),
-        "polygon-nesting: output or event write failure\n"
+        "polygon-nesting: artifact write failure\n"
     );
 
     fs::remove_dir_all(directory).expect("temporary directory should be removed");
@@ -1175,7 +1507,7 @@ fn event_write_failure_uses_the_write_failure_exit() {
     );
     assert_eq!(
         String::from_utf8(process.stderr).expect("stderr should be UTF-8"),
-        "polygon-nesting: output or event write failure\n"
+        "polygon-nesting: artifact write failure\n"
     );
     let temporary_prefix = format!(
         ".{}.",

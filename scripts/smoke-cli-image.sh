@@ -60,6 +60,33 @@ assert events
 assert [event["ordinal"] for event in events] == list(range(len(events)))
 PY
 
+mkdir "$workspace/dxfs"
+cp "$repository_root/tests/fixtures/dxf/shapes-17/3268390_1.dxf" "$workspace/dxfs/part.dxf"
+docker run --rm \
+  --platform linux/amd64 \
+  --user "$host_uid:$host_gid" \
+  --mount "type=bind,src=$workspace,dst=/work" \
+  "$image" run-dxf \
+  --input-dir /work/dxfs \
+  --sheet 2000x2700 \
+  --allow-mirror false \
+  --request-file /work/dxf-request.json \
+  --result-file /work/dxf-result.json
+
+test -s "$workspace/dxf-request.json"
+test -s "$workspace/dxf-result.json"
+python3 - "$workspace/dxf-request.json" "$workspace/dxf-result.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as request_file:
+    request = json.load(request_file)
+assert len(request["pieces"]) == 1
+assert request["pieces"][0]["allowMirror"] is False
+with open(sys.argv[2], encoding="utf-8") as result_file:
+    assert json.load(result_file)["outcome"]["status"] == "success"
+PY
+
 printf '{' > "$workspace/malformed.json"
 if docker run --rm --platform linux/amd64 --user "$host_uid:$host_gid" --mount "type=bind,src=$workspace,dst=/work" "$image" run --input /work/malformed.json --result-file /work/malformed-result.json; then
   exit 1

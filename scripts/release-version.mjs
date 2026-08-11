@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
 const SEMVER = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/
-const WORKSPACE_PACKAGE = /^polygon-nesting-(?:cli|core|napi|protocol)$/
+const WORKSPACE_PACKAGE = /^polygon-nesting-(?:cli|core|dxf|napi|protocol)$/
 
 function paths(root) {
   return {
@@ -40,7 +40,7 @@ export function validateReleaseVersion(root = ROOT) {
   const npmManifest = JSON.parse(readFileSync(releasePaths.npmManifest, 'utf8'))
   if (npmManifest.version !== version) throw new Error(`npm package metadata version must be ${version}`)
   const workspacePackages = workspaceLockPackages(readFileSync(releasePaths.cargoLock, 'utf8'))
-  if (workspacePackages.length !== 4 || workspacePackages.some((item) => item.version !== version)) {
+  if (workspacePackages.length !== 5 || workspacePackages.some((item) => item.version !== version)) {
     throw new Error(`Cargo.lock workspace package metadata version must be ${version}`)
   }
   return version
@@ -54,7 +54,7 @@ export function synchronizeReleaseVersion(root = ROOT) {
   npmManifest.version = version
   writeFileSync(releasePaths.npmManifest, `${JSON.stringify(npmManifest, null, 2)}\n`)
   const lock = readFileSync(releasePaths.cargoLock, 'utf8').replace(
-    /(\[\[package\]\]\nname = "polygon-nesting-(?:cli|core|napi|protocol)"\nversion = ")[^"]+("\n)/g,
+    /(\[\[package\]\]\nname = "polygon-nesting-(?:cli|core|dxf|napi|protocol)"\nversion = ")[^"]+("\n)/g,
     `$1${version}$2`
   )
   writeFileSync(releasePaths.cargoLock, lock)

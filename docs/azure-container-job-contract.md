@@ -29,6 +29,8 @@ docker run --rm --volume "$PWD:/work" "$IMAGE" run \
 
 Azure Container Jobs must use the verified runtime image by immutable digest, not a mutable tag. Running the image without the `run` invocation is malformed and exits with the documented status `2`.
 
+The image also exposes `run-dxf` for manual and third-party tests that start from a directory of quantity-one DXF files. It writes the generated `EngineRequest` before executing it. Azure and Configurator integrations that already own quantities, customer metadata, DXF parsing, and request construction should continue using the canonical `run --input request.json` boundary.
+
 `request.json` is a single protocol v1 `EngineRequest`. Production jobs that do not need state snapshots or detailed algorithm traces should set both controls explicitly:
 
 ```json
@@ -46,7 +48,7 @@ The backend must use the platform-managed Azure Files `/work` mount for all thre
 
 Start one container execution for each nesting job. Do not multiplex customer jobs through one running container. The core creates a job-owned Rayon pool. It first honors a positive `MIN_PLANE_IRREGULAR_NATIVE_THREADS` value; otherwise it uses one fewer than the OS-visible logical CPU count, clamped to one. Allocate CPU and memory for that execution accordingly. `SIGTERM` and `SIGINT` request cooperative cancellation, so the backend should allow its Container Job termination grace period before forcing termination.
 
-A nonzero exit uses the stable statuses in [the CLI contract](cli-contract.md): `1` is an internal failure, `2` is malformed input or invocation, `3` is a typed domain failure, `4` is cancellation or deadline, and `5` is an output artifact failure. A process exit status alone is not a substitute for collecting `result.json` when the documented outcome was written.
+A nonzero exit uses the stable statuses in [the CLI contract](cli-contract.md): `1` is an internal failure, `2` is malformed input or invocation, `3` is a typed domain failure, `4` is cancellation or deadline, and `5` is an artifact write failure. A process exit status alone is not a substitute for collecting `result.json` when the documented outcome was written.
 
 ## Image scope and platform
 

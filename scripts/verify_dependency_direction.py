@@ -7,6 +7,7 @@ import sys
 WORKSPACE_CRATES = {
     "polygon-nesting-protocol",
     "polygon-nesting-core",
+    "polygon-nesting-dxf",
     "polygon-nesting-cli",
     "polygon-nesting-napi",
 }
@@ -14,9 +15,11 @@ WORKSPACE_CRATES = {
 ALLOWED_WORKSPACE_DEPENDENCIES = {
     "polygon-nesting-protocol": set(),
     "polygon-nesting-core": {"polygon-nesting-protocol"},
+    "polygon-nesting-dxf": {"polygon-nesting-protocol"},
     "polygon-nesting-cli": {
         "polygon-nesting-protocol",
         "polygon-nesting-core",
+        "polygon-nesting-dxf",
     },
     "polygon-nesting-napi": {
         "polygon-nesting-protocol",

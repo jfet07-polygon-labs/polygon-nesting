@@ -15,7 +15,7 @@ function fixture(t, { cargoVersion = '1.2.3', npmVersion = '0.0.0', lockVersion 
   mkdirSync(join(root, 'packages/polygon-nesting'), { recursive: true })
   writeFileSync(join(root, 'Cargo.toml'), `[workspace]\nmembers = []\n\n[workspace.package]\nversion = "${cargoVersion}"\nedition = "2024"\n`)
   writeFileSync(join(root, 'packages/polygon-nesting/package.json'), `${JSON.stringify({ name: '@scope/package', version: npmVersion }, null, 2)}\n`)
-  writeFileSync(join(root, 'Cargo.lock'), `version = 4\n\n${['cli', 'core', 'napi', 'protocol'].map((name) => `[[package]]\nname = "polygon-nesting-${name}"\nversion = "${lockVersion}"\n`).join('\n')}\n[[package]]\nname = "dependency"\nversion = "9.9.9"\n`)
+  writeFileSync(join(root, 'Cargo.lock'), `version = 4\n\n${['cli', 'core', 'dxf', 'napi', 'protocol'].map((name) => `[[package]]\nname = "polygon-nesting-${name}"\nversion = "${lockVersion}"\n`).join('\n')}\n[[package]]\nname = "dependency"\nversion = "9.9.9"\n`)
   t.after(() => rmSync(root, { recursive: true, force: true }))
   return root
 }

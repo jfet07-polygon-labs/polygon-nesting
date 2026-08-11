@@ -11,6 +11,7 @@ path = "src/main.rs"
 clap = { version = "4", features = ["derive"] }
 nix = { version = "0.31", features = ["fs", "resource", "user"] }
 polygon-nesting-core = { path = "../polygon-nesting-core" }
+polygon-nesting-dxf = { path = "../polygon-nesting-dxf" }
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }
 serde_json = "1"
 

@@ -10,19 +10,19 @@ The engine supports the `compact` and `compact-short-side` profiles. Archive-ine
 ## Architecture
 
 ```text
-polygon-nesting-protocol
-        ^
-        |
-polygon-nesting-core
-     ^          ^
-     |          |
-polygon-nesting-cli  polygon-nesting-napi
-     |                      |
- OCI image          @jfet07-polygon-labs/polygon-nesting
-                    @jfet97/polygon-nesting
+                polygon-nesting-protocol
+                  ^        ^       ^
+                  |        |       |
+polygon-nesting-dxf        |       polygon-nesting-napi
+          ^                |                 |
+          |        polygon-nesting-core      +-- npm packages
+          |                ^
+          +--- polygon-nesting-cli
+                       |
+                   OCI image
 ```
 
-`protocol` owns versioned request, outcome, error, and semantic event data. `core` owns deterministic computation, job-local Rayon pools, caches, cancellation checkpoints, and event ordering. The CLI owns command parsing, deadline shortening, artifact-path safety, signal handling, atomic writes, and exit mapping. N-API owns desktop compatibility conversion, adapter validation, error projection, invocation registration, callback acknowledgement, and environment cleanup. The core has no dependency on N-API, Node, Electron, libuv, CLI parsing, Azure SDKs, HTTP servers, or application persistence.
+`protocol` owns versioned request, outcome, error, and semantic event data. `core` owns deterministic computation, job-local Rayon pools, caches, cancellation checkpoints, and event ordering. `dxf` converts a deterministic directory of raw DXF files into a protocol request. The CLI owns command parsing, deadline shortening, artifact-path safety, signal handling, atomic writes, and exit mapping. N-API owns desktop compatibility conversion, adapter validation, error projection, invocation registration, callback acknowledgement, and environment cleanup. The core has no dependency on DXF parsing, N-API, Node, Electron, libuv, CLI parsing, Azure SDKs, HTTP servers, or application persistence.
 
 See [architecture](docs/architecture.md), [protocol compatibility](docs/protocol-compatibility.md), [N-API compatibility](docs/napi-compatibility.md), [CLI contract](docs/cli-contract.md), [Azure Container Jobs contract](docs/azure-container-job-contract.md), and [migration and release gates](docs/migration-from-min-plane-dfx.md).
 
@@ -37,6 +37,21 @@ polygon-nesting run \
 ```
 
 The CLI reads one protocol v1 request and writes one protocol outcome. It exits with `0` for success, `1` for internal failure, `2` for malformed input or invocation, `3` for a typed domain failure, `4` for cancellation or deadline, and `5` for artifact-write failure.
+
+For standalone tests that begin with raw DXFs, the same image can construct and preserve the exact request before running it:
+
+```sh
+polygon-nesting run-dxf \
+  --input-dir /work/dxfs \
+  --sheet 2000x2700 \
+  --padding 10 \
+  --profile compact \
+  --allow-mirror false \
+  --request-file /work/request.json \
+  --result-file /work/result.json
+```
+
+Each regular `.dxf` file is one quantity-one piece. Files are sorted by filename, dimensions are millimetres, and model-space `LINE`, `ARC`, `CIRCLE`, and `ELLIPSE` entities retain the curve metadata consumed by the engine. CSV/customer semantics remain application-owned; applications such as Configurator that already construct an `EngineRequest` continue to use `run`.
 
 ## Request trace controls
 
@@ -70,7 +85,7 @@ The same prebuilt addon payload is published in two packages at the canonical wo
 
 ## OCI image
 
-The OCI image supports only `linux/amd64` and runs as the non-root `polygon` user. It accepts one request per process and has no Azure credentials or storage SDK. A consuming backend owns durable storage, execution orchestration, and outcome handling.
+The OCI image supports only `linux/amd64` and runs as the non-root `polygon` user. It accepts either one existing request with `run` or a directory of quantity-one DXFs with `run-dxf`, and has no Azure credentials or storage SDK. A consuming backend owns durable storage, quantities and customer metadata, execution orchestration, and outcome handling.
 
 ## Provenance and release state
 

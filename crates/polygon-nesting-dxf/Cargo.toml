@@ -1,0 +1,10 @@
+[package]
+name = "polygon-nesting-dxf"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"

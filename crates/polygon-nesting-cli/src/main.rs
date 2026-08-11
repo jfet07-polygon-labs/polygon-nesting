@@ -1,14 +1,19 @@
 use std::panic::{catch_unwind, AssertUnwindSafe, PanicHookInfo};
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::str::FromStr;
 use std::sync::Arc;
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use polygon_nesting_cli::{
-    run_with_deadline, write_malformed_invocation, write_malformed_output,
-    write_signal_registration_failure, ExitStatus, RunPaths,
+    artifacts_overlap_inputs, artifacts_within_directory, path_within_directory, paths_alias,
+    run_with_deadline, write_dxf_import_failure, write_malformed_invocation,
+    write_malformed_output, write_request_and_run, write_signal_registration_failure, ExitStatus,
+    RunPaths,
 };
 use polygon_nesting_core::{CancelReason, CancellationControl};
+use polygon_nesting_dxf::{discover_directory, import_files, ImportOptions};
+use polygon_nesting_protocol::EngineProfile;
 
 #[derive(Debug, Parser)]
 #[command(version, about = "Deterministic polygon nesting engine")]
@@ -22,6 +27,7 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Command {
     Run(RunArguments),
+    RunDxf(RunDxfArguments),
 }
 
 #[derive(Debug, Args)]
@@ -34,6 +40,71 @@ struct RunArguments {
     events: Option<PathBuf>,
     #[arg(long)]
     deadline_ms: Option<f64>,
+}
+
+#[derive(Debug, Args)]
+struct RunDxfArguments {
+    #[arg(long = "input-dir")]
+    input_dir: PathBuf,
+    #[arg(long, value_parser = SheetDimensions::from_str)]
+    sheet: SheetDimensions,
+    #[arg(long, default_value_t = 10)]
+    padding: u64,
+    #[arg(long, value_enum, default_value_t = ProfileArgument::Compact)]
+    profile: ProfileArgument,
+    #[arg(long, default_value_t = true, action = clap::ArgAction::Set)]
+    allow_mirror: bool,
+    #[arg(long, default_value_t = 300_000)]
+    timeout_ms: u64,
+    #[arg(long = "request-file")]
+    request_file: PathBuf,
+    #[arg(long = "result-file")]
+    output: PathBuf,
+    #[arg(long)]
+    events: Option<PathBuf>,
+    #[arg(long)]
+    deadline_ms: Option<f64>,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum ProfileArgument {
+    Compact,
+    CompactShortSide,
+}
+
+impl From<ProfileArgument> for EngineProfile {
+    fn from(profile: ProfileArgument) -> Self {
+        match profile {
+            ProfileArgument::Compact => Self::Compact,
+            ProfileArgument::CompactShortSide => Self::CompactShortSide,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct SheetDimensions {
+    width: f64,
+    height: f64,
+}
+
+impl FromStr for SheetDimensions {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        let (width, height) = value
+            .split_once(['x', 'X', '×'])
+            .ok_or_else(|| "sheet must use WIDTHxHEIGHT, for example 2000x2700".to_owned())?;
+        let width = width
+            .parse::<f64>()
+            .map_err(|_| "sheet width must be numeric".to_owned())?;
+        let height = height
+            .parse::<f64>()
+            .map_err(|_| "sheet height must be numeric".to_owned())?;
+        if !width.is_finite() || width <= 0.0 || !height.is_finite() || height <= 0.0 {
+            return Err("sheet dimensions must be positive finite numbers".to_owned());
+        }
+        Ok(Self { width, height })
+    }
 }
 
 type PanicHook = Box<dyn Fn(&PanicHookInfo<'_>) + Send + Sync + 'static>;
@@ -116,42 +187,110 @@ fn run_parsed(
     cli: Cli,
     install_signal_handler: impl FnOnce(Arc<CancellationControl>) -> bool,
 ) -> ExitStatus {
+    let dxf_source_paths = match &cli.command {
+        Some(Command::RunDxf(arguments)) => {
+            let paths = run_dxf_paths(arguments);
+            if artifacts_within_directory(&arguments.input_dir, &paths) {
+                return ExitStatus::MalformedInput;
+            }
+            let source_paths = match discover_directory(&arguments.input_dir) {
+                Ok(paths) => paths,
+                Err(_) if cli.info => return write_malformed_invocation(paths),
+                Err(error) => return write_dxf_import_failure(paths, error.to_string()),
+            };
+            if artifacts_overlap_inputs(&paths, &source_paths) {
+                return ExitStatus::MalformedInput;
+            }
+            Some(source_paths)
+        }
+        _ => None,
+    };
+
     if cli.info {
-        let Some(Command::Run(arguments)) = cli.command else {
-            return print_info();
+        return match cli.command {
+            None => print_info(),
+            Some(Command::Run(arguments)) => write_malformed_invocation(RunPaths {
+                input: &arguments.input,
+                output: &arguments.output,
+                events: arguments.events.as_deref(),
+            }),
+            Some(Command::RunDxf(arguments)) => {
+                write_malformed_invocation(run_dxf_paths(&arguments))
+            }
         };
-        return write_malformed_invocation(RunPaths {
-            input: &arguments.input,
-            output: &arguments.output,
-            events: arguments.events.as_deref(),
-        });
     }
-    let Some(Command::Run(arguments)) = cli.command else {
+    let Some(command) = cli.command else {
         return ExitStatus::MalformedInput;
     };
 
     let control = Arc::new(CancellationControl::new());
     if !install_signal_handler(Arc::clone(&control)) {
-        return write_signal_registration_failure(RunPaths {
-            input: &arguments.input,
-            output: &arguments.output,
-            events: arguments.events.as_deref(),
-        });
+        return match command {
+            Command::Run(arguments) => write_signal_registration_failure(RunPaths {
+                input: &arguments.input,
+                output: &arguments.output,
+                events: arguments.events.as_deref(),
+            }),
+            Command::RunDxf(arguments) => {
+                write_signal_registration_failure(run_dxf_paths(&arguments))
+            }
+        };
     }
 
-    run_with_deadline(
-        RunPaths {
-            input: &arguments.input,
-            output: &arguments.output,
-            events: arguments.events.as_deref(),
+    match command {
+        Command::Run(arguments) => run_with_deadline(
+            RunPaths {
+                input: &arguments.input,
+                output: &arguments.output,
+                events: arguments.events.as_deref(),
+            },
+            &control,
+            arguments.deadline_ms,
+        ),
+        Command::RunDxf(arguments) => run_dxf(
+            arguments,
+            dxf_source_paths.expect("run-dxf source paths were prepared"),
+            &control,
+        ),
+    }
+}
+
+fn run_dxf_paths(arguments: &RunDxfArguments) -> RunPaths<'_> {
+    RunPaths {
+        input: &arguments.request_file,
+        output: &arguments.output,
+        events: arguments.events.as_deref(),
+    }
+}
+
+fn run_dxf(
+    arguments: RunDxfArguments,
+    source_paths: Vec<PathBuf>,
+    control: &CancellationControl,
+) -> ExitStatus {
+    let paths = run_dxf_paths(&arguments);
+    let request = match import_files(
+        &source_paths,
+        &ImportOptions {
+            sheet_width: arguments.sheet.width,
+            sheet_height: arguments.sheet.height,
+            padding: arguments.padding,
+            profile: arguments.profile.into(),
+            allow_mirror: arguments.allow_mirror,
+            timeout_ms: arguments.timeout_ms as f64,
         },
-        &control,
-        arguments.deadline_ms,
-    )
+    ) {
+        Ok(request) => request,
+        Err(error) => return write_dxf_import_failure(paths, error.to_string()),
+    };
+    write_request_and_run(&request, paths, control, arguments.deadline_ms)
 }
 
 fn recover_malformed_invocation() -> ExitStatus {
     let paths = recover_artifact_paths();
+    if paths.overlaps_dxf_sources() {
+        return ExitStatus::MalformedInput;
+    }
     if let Some((input, output, events)) = paths.unique_run_paths() {
         return write_malformed_invocation(RunPaths {
             input,
@@ -170,6 +309,7 @@ struct RecoveredArtifactPaths {
     inputs: Vec<PathBuf>,
     outputs: Vec<PathBuf>,
     events: Vec<PathBuf>,
+    dxf_directories: Vec<PathBuf>,
 }
 
 impl RecoveredArtifactPaths {
@@ -196,6 +336,29 @@ impl RecoveredArtifactPaths {
         };
         Some(output)
     }
+
+    fn overlaps_dxf_sources(&self) -> bool {
+        let artifacts = self
+            .inputs
+            .iter()
+            .chain(&self.outputs)
+            .chain(&self.events)
+            .collect::<Vec<_>>();
+        self.dxf_directories.iter().any(|directory| {
+            if artifacts
+                .iter()
+                .any(|artifact| path_within_directory(directory, artifact))
+            {
+                return true;
+            }
+            match discover_directory(directory) {
+                Ok(sources) => artifacts
+                    .iter()
+                    .any(|artifact| sources.iter().any(|source| paths_alias(artifact, source))),
+                Err(_) => directory.exists(),
+            }
+        })
+    }
 }
 
 fn recover_artifact_paths() -> RecoveredArtifactPaths {
@@ -211,15 +374,17 @@ fn recover_artifact_paths_from(arguments: &[std::ffi::OsString]) -> RecoveredArt
     let mut paths = RecoveredArtifactPaths::default();
     let mut index = run_position + 1;
     while index < arguments.len() {
-        let Some(argument) = arguments[index].to_str() else {
-            index += 1;
-            continue;
-        };
-        let (flag, value, consumed) = if let Some((flag, value)) = argument.split_once('=') {
-            (flag, Some(PathBuf::from(value)), 1)
-        } else if matches!(argument, "--input" | "--result-file" | "--events") {
+        let argument = &arguments[index];
+        let (flag, value, consumed) = if let Some((flag, value)) = inline_path_argument(argument) {
+            (flag, Some(value), 1)
+        } else if matches!(
+            argument.to_str(),
+            Some("--input" | "--input-dir" | "--request-file" | "--result-file" | "--events")
+        ) {
             (
-                argument,
+                argument
+                    .to_str()
+                    .expect("matched path option must be valid UTF-8"),
                 arguments.get(index + 1).cloned().map(PathBuf::from),
                 2,
             )
@@ -229,7 +394,8 @@ fn recover_artifact_paths_from(arguments: &[std::ffi::OsString]) -> RecoveredArt
         };
         if let Some(value) = value {
             match flag {
-                "--input" => paths.inputs.push(value),
+                "--input" | "--request-file" => paths.inputs.push(value),
+                "--input-dir" => paths.dxf_directories.push(value),
                 "--result-file" => paths.outputs.push(value),
                 "--events" => paths.events.push(value),
                 _ => {}
@@ -240,23 +406,76 @@ fn recover_artifact_paths_from(arguments: &[std::ffi::OsString]) -> RecoveredArt
     paths
 }
 
+fn inline_path_argument(argument: &std::ffi::OsStr) -> Option<(&'static str, PathBuf)> {
+    const FLAGS: [&str; 5] = [
+        "--input",
+        "--input-dir",
+        "--request-file",
+        "--result-file",
+        "--events",
+    ];
+    FLAGS.into_iter().find_map(|flag| {
+        strip_os_prefix(argument, &format!("{flag}=")).map(|value| (flag, PathBuf::from(value)))
+    })
+}
+
+#[cfg(unix)]
+fn strip_os_prefix(value: &std::ffi::OsStr, prefix: &str) -> Option<std::ffi::OsString> {
+    use std::os::unix::ffi::{OsStrExt, OsStringExt};
+
+    value
+        .as_bytes()
+        .strip_prefix(prefix.as_bytes())
+        .map(|suffix| std::ffi::OsString::from_vec(suffix.to_vec()))
+}
+
+#[cfg(windows)]
+fn strip_os_prefix(value: &std::ffi::OsStr, prefix: &str) -> Option<std::ffi::OsString> {
+    use std::os::windows::ffi::{OsStrExt, OsStringExt};
+
+    let value = value.encode_wide().collect::<Vec<_>>();
+    let prefix = prefix.encode_utf16().collect::<Vec<_>>();
+    value
+        .strip_prefix(prefix.as_slice())
+        .map(std::ffi::OsString::from_wide)
+}
+
+#[cfg(not(any(unix, windows)))]
+fn strip_os_prefix(value: &std::ffi::OsStr, prefix: &str) -> Option<std::ffi::OsString> {
+    value
+        .to_str()
+        .and_then(|value| value.strip_prefix(prefix))
+        .map(std::ffi::OsString::from)
+}
+
 fn recover_run_position(arguments: &[std::ffi::OsString]) -> Option<usize> {
     let mut index = 0;
     while index < arguments.len() {
         let argument = arguments[index].to_string_lossy();
-        if argument == "run" {
+        if matches!(argument.as_ref(), "run" | "run-dxf") {
+            let command = argument.into_owned();
             let run_position = index;
             index += 1;
             while index < arguments.len() {
                 let argument = arguments[index].to_string_lossy();
                 if matches!(
                     argument.as_ref(),
-                    "--input" | "--result-file" | "--events" | "--deadline-ms"
+                    "--input"
+                        | "--input-dir"
+                        | "--sheet"
+                        | "--padding"
+                        | "--profile"
+                        | "--allow-mirror"
+                        | "--timeout-ms"
+                        | "--request-file"
+                        | "--result-file"
+                        | "--events"
+                        | "--deadline-ms"
                 ) {
                     index += 2;
                     continue;
                 }
-                if argument == "run" {
+                if argument == command {
                     return None;
                 }
                 index += 1;
@@ -342,6 +561,29 @@ mod tests {
         assert!(paths.unique_run_paths().is_some());
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn malformed_recovery_preserves_a_non_utf8_inline_input_directory() {
+        use std::os::unix::ffi::OsStringExt;
+
+        let inline_directory = OsString::from_vec(b"--input-dir=/tmp/dxfs-\x80".to_vec());
+        let expected_directory = OsString::from_vec(b"/tmp/dxfs-\x80".to_vec());
+        let arguments = [
+            OsString::from("run-dxf"),
+            inline_directory,
+            OsString::from("--result-file"),
+            OsString::from("result.json"),
+            OsString::from("--padding"),
+        ];
+
+        let paths = recover_artifact_paths_from(&arguments);
+
+        assert_eq!(
+            paths.dxf_directories,
+            vec![std::path::PathBuf::from(expected_directory)]
+        );
+    }
+
     #[test]
     fn panic_hook_guard_restores_the_original_hook() {
         let original = std::panic::take_hook();
@@ -369,6 +611,6 @@ fn status_message(status: ExitStatus) -> &'static str {
         ExitStatus::MalformedInput => "malformed input or invocation",
         ExitStatus::TypedDomainFailure => "typed domain failure",
         ExitStatus::CancellationOrDeadline => "cancelled or deadline exceeded",
-        ExitStatus::WriteFailure => "output or event write failure",
+        ExitStatus::WriteFailure => "artifact write failure",
     }
 }

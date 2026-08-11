@@ -14,8 +14,8 @@ use std::os::fd::AsFd;
 
 use polygon_nesting_core::{CancellationControl, EngineEventSink};
 use polygon_nesting_protocol::{
-    decode_request, encode_event, encode_outcome, EngineError, EngineErrorCode, EngineOutcome,
-    ExecutionDiagnostics, SequencedEngineEvent,
+    decode_request, encode_event, encode_outcome, encode_request, EngineError, EngineErrorCode,
+    EngineOutcome, EngineRequest, ExecutionDiagnostics, SequencedEngineEvent,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -50,6 +50,26 @@ pub struct RunPaths<'a> {
     pub input: &'a Path,
     pub output: &'a Path,
     pub events: Option<&'a Path>,
+}
+
+pub fn artifacts_within_directory(directory: &Path, paths: &RunPaths<'_>) -> bool {
+    [Some(paths.input), Some(paths.output), paths.events]
+        .into_iter()
+        .flatten()
+        .any(|artifact| path_within_directory(directory, artifact))
+}
+
+pub fn artifacts_overlap_inputs(paths: &RunPaths<'_>, inputs: &[PathBuf]) -> bool {
+    [Some(paths.input), Some(paths.output), paths.events]
+        .into_iter()
+        .flatten()
+        .any(|artifact| inputs.iter().any(|input| paths_alias(artifact, input)))
+}
+
+pub fn path_within_directory(directory: &Path, path: &Path) -> bool {
+    let directory = path_identity(directory);
+    let path = path_identity(path);
+    path == directory || path.starts_with(&directory)
 }
 
 pub fn run(paths: RunPaths<'_>, control: &CancellationControl) -> ExitStatus {
@@ -88,6 +108,55 @@ pub fn write_malformed_invocation(paths: RunPaths<'_>) -> ExitStatus {
         Vec::new(),
         ExitStatus::MalformedInput,
     )
+}
+
+pub fn write_dxf_import_failure(paths: RunPaths<'_>, message: impl Into<String>) -> ExitStatus {
+    if paths_overlap(&paths) {
+        return ExitStatus::MalformedInput;
+    }
+    finish_outcome(
+        paths.output,
+        paths.events,
+        EngineOutcome::Failure {
+            error: EngineError::new(EngineErrorCode::MalformedInput, "import-dxf", message),
+            diagnostics: ExecutionDiagnostics::default(),
+        },
+        Vec::new(),
+        ExitStatus::MalformedInput,
+    )
+}
+
+pub fn write_request_and_run(
+    request: &EngineRequest,
+    paths: RunPaths<'_>,
+    control: &CancellationControl,
+    deadline_ms: Option<f64>,
+) -> ExitStatus {
+    if paths_overlap(&paths) {
+        return ExitStatus::MalformedInput;
+    }
+    let encoded = match encode_request(request) {
+        Ok(encoded) => encoded,
+        Err(_) => {
+            return finish_outcome(
+                paths.output,
+                paths.events,
+                malformed_request_outcome(),
+                Vec::new(),
+                ExitStatus::MalformedInput,
+            );
+        }
+    };
+    if write_atomically(paths.input, &encoded).is_err() {
+        return finish_outcome(
+            paths.output,
+            paths.events,
+            request_write_failure_outcome(),
+            Vec::new(),
+            ExitStatus::WriteFailure,
+        );
+    }
+    run_with_deadline(paths, control, deadline_ms)
 }
 
 pub fn write_signal_registration_failure(paths: RunPaths<'_>) -> ExitStatus {
@@ -170,7 +239,7 @@ fn paths_overlap(paths: &RunPaths<'_>) -> bool {
         })
 }
 
-fn paths_alias(first: &Path, second: &Path) -> bool {
+pub fn paths_alias(first: &Path, second: &Path) -> bool {
     if path_identity(first) == path_identity(second) {
         return true;
     }
@@ -322,6 +391,17 @@ fn event_write_failure_outcome() -> EngineOutcome {
             EngineErrorCode::IoFailure,
             "write-events",
             "event artifact could not be written",
+        ),
+        diagnostics: ExecutionDiagnostics::default(),
+    }
+}
+
+fn request_write_failure_outcome() -> EngineOutcome {
+    EngineOutcome::Failure {
+        error: EngineError::new(
+            EngineErrorCode::IoFailure,
+            "write-request",
+            "generated request artifact could not be written",
         ),
         diagnostics: ExecutionDiagnostics::default(),
     }
