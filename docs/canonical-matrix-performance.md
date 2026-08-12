@@ -190,6 +190,64 @@ Cumulative after stages 1–10 (mixed-61-2000x2700-compact, 5-run medians):
 all with the quality golden byte-identical across the 18 rows and the
 full workspace release suite green at every stage.
 
+### Stage 11 (kept) — immutable periodic and capacity payload sharing
+
+The 74-piece quantity-expanded workload exposed a separate memory
+ceiling in the periodic source-survival audit. Each derived periodic cell
+deep-cloned the same immutable transformed members, the cell-front
+builder cloned the complete pre-front vectors, canonical crop-cache hits
+cloned their crop vectors, and capacity candidate references cloned the
+same transformed moving geometry. These values now use Rust `Arc`
+ownership where TypeScript already retained object references; the front
+builder moves its source cells into the audit result, and the redundant
+source-key crop cache is gone. Selection order, checkpoints, counters,
+serialized values, and the eventual owned successor geometry are
+unchanged.
+
+The reproducible workload is
+`tests/fixtures/performance/quantity-expanded-74-request.json` (SHA-256
+`081a51f436293d96d4609e9667208206190cf82b0f6fc424fefd54f81c603dcb`):
+74 instances expanded from 15 source pieces on a 2400×1500 sheet, Compact,
+10 mm padding, rotation and mirroring enabled, diagnostics/history off,
+and 15 requested/actual workers. Measurements used a Mac Studio `Mac16,9`
+(Apple M4 Max, 16 cores, 64 GB), arm64 macOS, and project toolchain
+`rustc 1.95.0`.
+
+The baseline was a clean `d5c109d` worktree; the candidate was this stage's
+worktree. Each was built and measured with:
+
+```sh
+nix develop -c cargo build --locked --release \
+  --package polygon-nesting-cli --bin polygon-nesting
+
+/usr/bin/time -lp ./target/release/polygon-nesting run \
+  --input tests/fixtures/performance/quantity-expanded-74-request.json \
+  --result-file /tmp/quantity-expanded-74-result.json \
+  --events /tmp/quantity-expanded-74-events.ndjson
+```
+
+Raw results (`/usr/bin/time -lp` byte counters):
+
+```text
+                     real (s)        maximum RSS (B)       peak footprint (B)
+baseline d5c109d     76.28 76.18 76.74  3653763072 3430023168 3645243392  2532149936 2364885560 2530052760
+stage 11             75.34 75.75 76.82  2144960512 2154463232 2311553024  1189938880 1185728192 1348077392
+median               76.28 -> 75.75    3645243392 -> 2154463232             2530052760 -> 1189938880
+change               -0.7%             -40.9%                              -53.0%
+```
+
+Maximum RSS is the resident-set high-water mark reported by macOS; peak
+memory footprint is its separate process-footprint ledger. They are kept
+as distinct raw metrics. Every candidate result matched the baseline after
+removing only `outcome.diagnostics.elapsedMs`.
+
+For scope checking, one alternating baseline/candidate sample of each roomy
+canonical Compact row produced: Triangle-20 1.97 → 1.82 s and 69.6 →
+64.6 MB maximum RSS; Mixed-61 14.96 → 14.86 s and 287.7 → 268.3 MB;
+Shapes-17 2.07 → 2.05 s and 75.6 → 74.1 MB. These single samples are
+directional checks, not standalone performance claims. The full 18-row
+quality golden remained identical.
+
 ## Remaining opportunities (profile-ranked, deferred)
 
 - Candidate-generation memo key, moving half: Stage 9 prepared the

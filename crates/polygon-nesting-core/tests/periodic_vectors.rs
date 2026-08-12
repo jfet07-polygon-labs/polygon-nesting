@@ -469,11 +469,11 @@ fn synthetic_periodic_crop_fixture(
     let cell = IntrinsicPeriodicCell {
         role: IntrinsicPeriodicRole::P1,
         family_key: "periodic-crop-family".to_string(),
-        members: vec![IntrinsicPeriodicBaseMember {
+        members: Arc::new(vec![IntrinsicPeriodicBaseMember {
             piece: Arc::new(prepared.clone()),
             geometry,
             point: IrregularPoint::new(0.0, 0.0),
-        }],
+        }]),
         v1: IntrinsicPeriodicVector { x: 2.0, y: 0.0 },
         v2: IntrinsicPeriodicVector { x: 0.0, y: 2.0 },
         determinant_grid2: "4000000".to_string(),
