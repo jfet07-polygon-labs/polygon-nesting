@@ -317,7 +317,8 @@ pub struct IntrinsicPeriodicBaseMember {
 pub struct IntrinsicPeriodicCell {
     pub role: IntrinsicPeriodicRole,
     pub family_key: String,
-    pub members: Vec<IntrinsicPeriodicBaseMember>,
+    /// shared by cells emitted from the same immutable derivation input.
+    pub members: Arc<Vec<IntrinsicPeriodicBaseMember>>,
     pub v1: IntrinsicPeriodicVector,
     pub v2: IntrinsicPeriodicVector,
     pub determinant_grid2: String,
@@ -1658,21 +1659,29 @@ fn enumerate_intrinsic_periodic_family(
         }
     }
 
-    let p1_front = periodic_cell_front(p1.clone(), options.maximum_cells_per_family_role);
-    let p2_front = periodic_cell_front(p2.clone(), options.maximum_cells_per_family_role);
-    let mut cells = p1_front.cells.clone();
-    cells.extend(p2_front.cells.clone());
+    let p1_front = periodic_cell_front(p1, options.maximum_cells_per_family_role);
+    let p2_front = periodic_cell_front(p2, options.maximum_cells_per_family_role);
+    let source_survival = summarize_periodic_cell_source_survival(
+        &p1_front.pre_front,
+        &p1_front.cells,
+        &p2_front.pre_front,
+        &p2_front.cells,
+    );
+    let p1_coverage_complete = p1_front.coverage_complete;
+    let p2_coverage_complete = p2_front.coverage_complete;
+    let mut cells = p1_front.cells;
+    cells.extend(p2_front.cells);
     let source_audit_cells = if options.capture_source_survival_audit {
-        let mut all_cells = p1;
-        all_cells.extend(p2);
+        let mut all_cells = p1_front.pre_front;
+        all_cells.extend(p2_front.pre_front);
         Some(rank_intrinsic_periodic_cells(all_cells))
     } else {
         None
     };
-    if !p1_front.coverage_complete {
+    if !p1_coverage_complete {
         rejected.set("p1FrontierTruncated".to_string(), 1.0);
     }
-    if !p2_front.coverage_complete {
+    if !p2_coverage_complete {
         rejected.set("p2FrontierTruncated".to_string(), 1.0);
     }
 
@@ -1689,14 +1698,9 @@ fn enumerate_intrinsic_periodic_family(
         edge_contact_diagnostics,
         cell_coverage_complete: runtime_coverage_complete
             && pair_coverage_complete
-            && p1_front.coverage_complete
-            && p2_front.coverage_complete,
-        source_survival: summarize_periodic_cell_source_survival(
-            &p1_front.pre_front,
-            &p1_front.cells,
-            &p2_front.pre_front,
-            &p2_front.cells,
-        ),
+            && p1_coverage_complete
+            && p2_coverage_complete,
+        source_survival,
         source_audit_cells,
         cells: rank_intrinsic_periodic_cells(cells),
         rejected: sort_rejected_entries(rejected.entries()),
@@ -1851,10 +1855,11 @@ fn periodic_cell_front(
     cells: Vec<IntrinsicPeriodicCell>,
     maximum_cells: usize,
 ) -> PeriodicCellFrontResult {
-    let pre_front = cells.clone();
+    // preserve the source-audit cells while cloning only canonical-front candidates.
+    let pre_front = cells;
     let mut unique = OrderedMap::<IntrinsicPeriodicCell>::new();
-    for cell in cells {
-        unique.set(cell.canonical_key.clone(), cell);
+    for cell in &pre_front {
+        unique.set(cell.canonical_key.clone(), cell.clone());
     }
     let mut by_source_kind = OrderedMap::<Vec<IntrinsicPeriodicCell>>::new();
     for cell in unique.into_values() {
@@ -2013,7 +2018,7 @@ pub fn enumerate_intrinsic_periodic_cell_crops(
                 let mut legal = true;
                 'coord: for coordinate in &coordinates {
                     checkpoint(control)?;
-                    for base in &cell.members {
+                    for base in cell.members.iter() {
                         let piece = match family_members.get(source_index) {
                             Some(value) => value,
                             None => break,
@@ -2487,6 +2492,7 @@ fn derive_cells(
                 .as_ref()
                 .map(|canonical| diagnose_lattice(members, canonical))
         });
+    let mut shared_members: Option<Arc<Vec<IntrinsicPeriodicBaseMember>>> = None;
     for (prepared, lattice) in prepared_bases.into_iter().zip(lattice_diagnostics) {
         let candidate = prepared.candidate;
         if let Some(telemetry) = telemetry.as_deref_mut() {
@@ -2542,7 +2548,7 @@ fn derive_cells(
         result.push(IntrinsicPeriodicCell {
             role,
             family_key: family_key.to_string(),
-            members: members.to_vec(),
+            members: Arc::clone(shared_members.get_or_insert_with(|| Arc::new(members.to_vec()))),
             v1: vector_from_grid(&from_grid_point(&canonical.0)),
             v2: vector_from_grid(&from_grid_point(&canonical.1)),
             determinant_grid2: determinant_grid2.to_string(),

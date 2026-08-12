@@ -727,7 +727,7 @@ enum CandidateEvaluationOutcome {
 /// shape once ported).
 #[derive(Clone, Debug)]
 struct EvaluatedCandidateReference {
-    moving: TransformedCollisionGeometry,
+    moving: Arc<TransformedCollisionGeometry>,
     candidate: IrregularPlacementCandidate,
     maximum_side_grid: f64,
     envelope_area_grid2: BigInt,
@@ -1177,12 +1177,12 @@ pub fn run_intrinsic_capacity_cold_search(
                 control
                     .checkpoint(NfpIfpCheckpointPhase::CandidatePoints)
                     .map_err(CapacitySearchError::Abort)?;
-                let moving = transform_collision_geometry(
+                let moving = Arc::new(transform_collision_geometry(
                     &piece.collision_geometry,
                     transform,
                     &settings.geometry,
                     geometry_cache,
-                )?;
+                )?);
                 let legal_candidates: Vec<IrregularPlacementCandidate> =
                     if entry.state.placed_collision_geometries.is_empty() {
                         origin_anchor_candidates(&moving)
@@ -1380,7 +1380,7 @@ pub fn run_intrinsic_capacity_cold_search(
                     remaining_prepared_pieces: remaining_prepared_pieces.clone(),
                     placed_collision_geometry: Arc::new(IrregularPlacedPiece {
                         placement: make_capacity_placement(piece, &reference.candidate),
-                        collision_geometry: reference.moving.clone(),
+                        collision_geometry: reference.moving.as_ref().clone(),
                     }),
                     placement_order_piece_id: piece_id.clone(),
                     on_phase_timings: None,
@@ -3289,7 +3289,7 @@ fn intrinsic_capacity_successor_identity(successor: &CapacityBeamEntry) -> Strin
 /// anchored rebuild is constructed for candidates that are not selected.
 fn evaluate_candidate(
     entry: &CapacityBeamEntry,
-    moving: &TransformedCollisionGeometry,
+    moving: &Arc<TransformedCollisionGeometry>,
     candidate: &IrregularPlacementCandidate,
     transform_ordinal: f64,
 ) -> Option<EvaluatedCandidateReference> {
@@ -3318,7 +3318,7 @@ fn evaluate_candidate(
     let width_grid = max_x_grid - min_x_grid;
     let height_grid = max_y_grid - min_y_grid;
     Some(EvaluatedCandidateReference {
-        moving: moving.clone(),
+        moving: Arc::clone(moving),
         candidate: candidate.clone(),
         maximum_side_grid: js_math::max(width_grid, height_grid),
         envelope_area_grid2: f64_to_bigint(width_grid) * f64_to_bigint(height_grid),

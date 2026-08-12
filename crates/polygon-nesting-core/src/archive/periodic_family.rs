@@ -1346,21 +1346,8 @@ fn validate_source_audit_replay_envelope(
 }
 
 // ===========================================================================
-// Continuation identity/ordering helpers (`PORTFOLIO:1434-1472`).
+// Continuation ordering helpers (`PORTFOLIO:1438-1472`).
 // ===========================================================================
-
-/// TS: `periodicSourceCellKey` (`PORTFOLIO:1434-1436`).
-fn periodic_source_cell_key(cell: &IntrinsicPeriodicCell) -> String {
-    format!(
-        "{}:{}:{}",
-        cell.role.as_str(),
-        cell.basis_provenance
-            .as_ref()
-            .map(|p| p.source_key.as_str())
-            .unwrap_or("unprovenanced"),
-        cell.canonical_key
-    )
-}
 
 /// TS: `rankContinuations` (`PORTFOLIO:1438-1452`).
 fn rank_continuations(
@@ -1508,11 +1495,9 @@ fn select_intrinsic_periodic_continuations(
             continue;
         };
         let mut continuations: Vec<IntrinsicPeriodicContinuation> = Vec::new();
-        let mut direct_valid_crops_by_cell: HashMap<String, Vec<IntrinsicPeriodicSeed>> =
-            HashMap::new();
         let mut direct_valid_crops_by_canonical_cell: HashMap<
             String,
-            (Vec<IntrinsicPeriodicSeed>, f64),
+            (Arc<Vec<IntrinsicPeriodicSeed>>, f64),
         > = HashMap::new();
 
         // TS: `enumerateCrops` closure (`PORTFOLIO:708-746`), inlined as a
@@ -1527,7 +1512,7 @@ fn select_intrinsic_periodic_continuations(
                             source_audit_logical_crop_attempt_count += *attempt_count;
                             source_audit_canonical_cell_replay_count += 1.0;
                         }
-                        Ok(crops.clone())
+                        Ok(Arc::clone(crops))
                     }
                     None => {
                         let mut attempt_count = 0.0_f64;
@@ -1553,9 +1538,10 @@ fn select_intrinsic_periodic_continuations(
                                         retained_crop_enumeration_ms += elapsed;
                                     }
                                 }
+                                let crops = Arc::new(crops);
                                 direct_valid_crops_by_canonical_cell.insert(
                                     cell.canonical_key.clone(),
-                                    (crops.clone(), attempt_count),
+                                    (Arc::clone(&crops), attempt_count),
                                 );
                                 if $phase_is_source_audit {
                                     source_audit_logical_crop_attempt_count += attempt_count;
@@ -1615,7 +1601,7 @@ fn select_intrinsic_periodic_continuations(
                     }
                 }
                 if let Some(provenance) = cell.basis_provenance.as_ref() {
-                    for seed in &direct_valid_crops {
+                    for seed in direct_valid_crops.iter() {
                         let future_key = periodic_continuation_future_key(pieces, seed);
                         let replace = match source_audit_witnesses.get(&future_key) {
                             None => true,
@@ -1635,8 +1621,6 @@ fn select_intrinsic_periodic_continuations(
                         }
                     }
                 }
-                direct_valid_crops_by_cell
-                    .insert(periodic_source_cell_key(cell), direct_valid_crops);
             }
         }
 
@@ -1672,18 +1656,14 @@ fn select_intrinsic_periodic_continuations(
                     accum.retained_cell_count += 1.0;
                 }
             }
-            let direct_valid_crops =
-                match direct_valid_crops_by_cell.get(&periodic_source_cell_key(cell)) {
-                    Some(crops) => crops.clone(),
-                    None => enumerate_crops!(cell, false)?,
-                };
+            let direct_valid_crops = enumerate_crops!(cell, false)?;
             let crop_front_started_at = if capture_phase_timings {
                 default_timing_now()
             } else {
                 0.0
             };
             let crops = select_intrinsic_periodic_seed_front(
-                direct_valid_crops.clone(),
+                direct_valid_crops.as_ref().clone(),
                 maximum_crops_per_cell,
             );
             if capture_phase_timings {
