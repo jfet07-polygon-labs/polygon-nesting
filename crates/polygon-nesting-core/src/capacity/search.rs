@@ -1522,9 +1522,33 @@ pub fn run_intrinsic_capacity_cold_search(
         }
 
         let topology_measurements_holder = if capture_topology_retention {
-            Some(CapacityTopologyMeasurements::new(
-                trusted_topology_cache.clone(),
-            ))
+            let measurements =
+                CapacityTopologyMeasurements::new(trusted_topology_cache.clone());
+            // The exact topology of each survivor is a pure function of its
+            // placed set; precompute the whole depth's survivor topologies
+            // on the job pool and seed them, so the retention comparators'
+            // memo misses consume seeded values instead of computing on the
+            // coordinator. Which survivors get measured — and every
+            // count/clock effect of measuring them — is still decided
+            // solely by the serial comparator flow (see
+            // `CapacityTopologyMeasurements::precomputed_by_identity`).
+            let precomputed_survivor_topologies =
+                crate::parallel::map_slice_with_job_pool(&measured_survivors, |entry| {
+                    if entry.state.placed_collision_geometries.is_empty() {
+                        None
+                    } else {
+                        measure_canonical_layout_topology_exact(&cloned_placed(
+                            &entry.state.placed_collision_geometries,
+                        ))
+                    }
+                });
+            for (entry, topology) in measured_survivors
+                .iter()
+                .zip(precomputed_survivor_topologies)
+            {
+                measurements.seed_precomputed(entry.successor_identity.clone(), topology);
+            }
+            Some(measurements)
         } else {
             None
         };
@@ -3895,6 +3919,16 @@ fn retain_capacity_cohesion_frontier(
 struct CapacityTopologyMeasurements {
     topology_by_identity: RefCell<HashMap<String, Option<CanonicalLayoutTopologyExact>>>,
     trusted_topology_cache: Option<TrustedTopologyCache>,
+    /// Pure topology values precomputed on the job pool for the depth's
+    /// survivor set ([`Self::seed_precomputed`]). Consumed by
+    /// [`Self::measure`] on a memo miss *in place of* the inline
+    /// computation only — the miss's checkpoint-visible `count` increment
+    /// and both bracket observations of the (injectable, possibly
+    /// stateful) clock happen at exactly the sites and ordinals the
+    /// computing form used, so seeding is bit-invisible to the
+    /// integrity-hash preimage; entries never measured are pure wasted
+    /// worker-side compute.
+    precomputed_by_identity: RefCell<HashMap<String, Option<CanonicalLayoutTopologyExact>>>,
     count: RefCell<f64>,
     elapsed_ms: RefCell<f64>,
 }
@@ -3904,9 +3938,16 @@ impl CapacityTopologyMeasurements {
         Self {
             topology_by_identity: RefCell::new(HashMap::new()),
             trusted_topology_cache,
+            precomputed_by_identity: RefCell::new(HashMap::new()),
             count: RefCell::new(0.0),
             elapsed_ms: RefCell::new(0.0),
         }
+    }
+
+    fn seed_precomputed(&self, identity: String, value: Option<CanonicalLayoutTopologyExact>) {
+        self.precomputed_by_identity
+            .borrow_mut()
+            .insert(identity, value);
     }
 
     fn measure(
@@ -3930,12 +3971,18 @@ impl CapacityTopologyMeasurements {
                     .cloned()
             })
             .unwrap_or_else(|| {
-                let measured = if entry.state.placed_collision_geometries.is_empty() {
-                    None
-                } else {
-                    measure_canonical_layout_topology_exact(&cloned_placed(
-                        &entry.state.placed_collision_geometries,
-                    ))
+                let precomputed = self.precomputed_by_identity.borrow_mut().remove(identity);
+                let measured = match precomputed {
+                    Some(value) => value,
+                    None => {
+                        if entry.state.placed_collision_geometries.is_empty() {
+                            None
+                        } else {
+                            measure_canonical_layout_topology_exact(&cloned_placed(
+                                &entry.state.placed_collision_geometries,
+                            ))
+                        }
+                    }
                 };
                 if let Some(cache) = &self.trusted_topology_cache {
                     cache
