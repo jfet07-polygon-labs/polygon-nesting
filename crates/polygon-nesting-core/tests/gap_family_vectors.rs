@@ -127,7 +127,8 @@ fn decode_placed_piece(value: &Value) -> IrregularPlacedPiece {
             },
             polygon,
             bounds: IrregularBounds::new(0.0, 0.0, 1.0, 1.0),
-        },
+        }
+        .into(),
     }
 }
 

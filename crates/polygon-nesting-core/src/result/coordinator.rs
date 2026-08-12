@@ -979,7 +979,7 @@ fn coordinate_intrinsic_shared_archive(
                                     let state =
                                         crate::search::beam_state::IrregularBeamState::from_input(
                                             crate::search::beam_state::IrregularBeamStateInput {
-                                                remaining_prepared_pieces: Vec::new(),
+                                                remaining_prepared_pieces: Vec::new().into(),
                                                 placed_collision_geometries: run
                                                     .placed_collision_geometries
                                                     .clone(),
@@ -1457,7 +1457,7 @@ fn materialize_capacity_result(
     let placement_order = endpoint.placed_prepared_ids.clone();
     let state = crate::search::beam_state::IrregularBeamState::from_input(
         crate::search::beam_state::IrregularBeamStateInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometries: placed_collision_geometries.clone(),
             unplaced_piece_ids: Some(endpoint.unplaced_prepared_ids.clone()),
             unplaced_source_piece_ids: None,

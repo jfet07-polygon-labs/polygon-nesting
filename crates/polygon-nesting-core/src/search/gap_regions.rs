@@ -86,7 +86,7 @@ use crate::checkpoints::canonical_json::locale_compare_keys;
 use crate::clipper::core::{ClipType, FillRule, Path64, Paths64, Point64};
 use crate::clipper::engine::{boolean_op_with_poly_tree, poly_tree_to_paths64, PolyTree64};
 use crate::domain::{IrregularPlacedPiece, IrregularPoint, TransformedCollisionGeometry};
-use crate::js_number::{cmp_js_code_units, js_math, number_to_js_string};
+use crate::js_number::{canonical_bidirectional_cyclic_key, js_math, number_to_js_string};
 
 // ===========================================================================
 // Output types (TS: `intrinsicGapRegions.ts:26-39`).
@@ -342,14 +342,13 @@ fn collect_regions(
                 let boundary = boundary.expect("checked above");
 
                 let holes_len = holes.len();
-                let mut ordered_holes: Vec<CanonicalGridPath> = holes
+                let mut keyed_holes: Vec<(String, CanonicalGridPath)> = holes
                     .into_iter()
                     .filter_map(|path| canonical_grid_clockwise(&path))
+                    .map(|path| (canonical_ring(&path), path))
                     .collect();
-                ordered_holes.sort_by(|first, second| {
-                    locale_compare_keys(&canonical_ring(first), &canonical_ring(second))
-                });
-                if ordered_holes.len() != holes_len {
+                keyed_holes.sort_by(|first, second| locale_compare_keys(&first.0, &second.0));
+                if keyed_holes.len() != holes_len {
                     return false;
                 }
 
@@ -358,15 +357,14 @@ fn collect_regions(
                 } else {
                     CanonicalIntrinsicGapRegionKind::EnclosedCavity
                 };
-                let canonical_key = format!(
-                    "{}|{}",
-                    canonical_ring(&boundary),
-                    ordered_holes
-                        .iter()
-                        .map(|hole| canonical_ring(hole))
-                        .collect::<Vec<_>>()
-                        .join("|")
-                );
+                let boundary_key = canonical_ring(&boundary);
+                let hole_keys = keyed_holes
+                    .iter()
+                    .map(|(key, _)| key.as_str())
+                    .collect::<Vec<_>>()
+                    .join("|");
+                let canonical_key = format!("{boundary_key}|{hole_keys}");
+                let ordered_holes = keyed_holes.into_iter().map(|(_, path)| path).collect();
                 result.push(CanonicalIntrinsicGapRegion {
                     kind,
                     boundary,
@@ -466,42 +464,22 @@ fn path_bounds(path: &[CanonicalGridPoint]) -> Option<CanonicalIntrinsicGapRegio
     })
 }
 
-/// TS: `intrinsicGapRegions.ts:229-238` (`canonicalRing`). Enumerates every
-/// rotation x direction variant of the ring's point list and keeps the
-/// **default**-sorted (ordinal, not locale-aware — characterization doc §12
-/// hazard 4) smallest one; distinct from, and not to be confused with,
-/// `crate::canonical_grid::layout`'s own (differently-implemented)
-/// `canonical_ring` helper for a different TS source file.
+/// TS: `intrinsicGapRegions.ts:229-238` (`canonicalRing`). Keeps the
+/// code-unit-smallest rotation across both directions. Tokens are rendered
+/// once and the shared virtual-rotation helper avoids materializing all `2n`
+/// complete strings while preserving the default ordinal comparison.
 fn canonical_ring(path: &[CanonicalGridPoint]) -> String {
-    let reversed: CanonicalGridPath = path.iter().rev().copied().collect();
-    let mut best: Option<String> = None;
-    for sequence in [path, reversed.as_slice()] {
-        for offset in 0..sequence.len() {
-            let joined = sequence[offset..]
-                .iter()
-                .chain(sequence[..offset].iter())
-                .map(|point| {
-                    format!(
-                        "{},{}",
-                        number_to_js_string(point.x),
-                        number_to_js_string(point.y)
-                    )
-                })
-                .collect::<Vec<_>>()
-                .join(";");
-            best = Some(match best {
-                None => joined,
-                Some(current) => {
-                    if cmp_js_code_units(&joined, &current) == Ordering::Less {
-                        joined
-                    } else {
-                        current
-                    }
-                }
-            });
-        }
-    }
-    best.unwrap_or_default()
+    let tokens: Vec<String> = path
+        .iter()
+        .map(|point| {
+            format!(
+                "{},{}",
+                number_to_js_string(point.x),
+                number_to_js_string(point.y)
+            )
+        })
+        .collect();
+    canonical_bidirectional_cyclic_key(&tokens)
 }
 
 #[cfg(test)]
@@ -552,7 +530,8 @@ mod tests {
                 },
                 polygon,
                 bounds,
-            },
+            }
+            .into(),
         }
     }
 
@@ -775,5 +754,57 @@ mod tests {
         let key = canonical_ring(&square);
         assert_eq!(key, canonical_ring(&rotated));
         assert_eq!(key, canonical_ring(&reversed));
+    }
+
+    fn canonical_ring_materialized_oracle(path: &[CanonicalGridPoint]) -> String {
+        let reversed: CanonicalGridPath = path.iter().rev().copied().collect();
+        let mut keys = Vec::with_capacity(path.len() * 2);
+        for sequence in [path, reversed.as_slice()] {
+            for offset in 0..sequence.len() {
+                keys.push(
+                    sequence[offset..]
+                        .iter()
+                        .chain(sequence[..offset].iter())
+                        .map(|point| {
+                            format!(
+                                "{},{}",
+                                number_to_js_string(point.x),
+                                number_to_js_string(point.y)
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join(";"),
+                );
+            }
+        }
+        keys.into_iter()
+            .min_by(|first, second| crate::js_number::cmp_js_code_units(first, second))
+            .unwrap_or_default()
+    }
+
+    #[test]
+    fn canonical_ring_matches_materialized_rotation_oracle() {
+        let cases = [
+            Vec::new(),
+            vec![CanonicalGridPoint::new(0.0, 0.0)],
+            vec![
+                CanonicalGridPoint::new(-10.0, 2.0),
+                CanonicalGridPoint::new(1.0, 20.0),
+                CanonicalGridPoint::new(1.0, 2.0),
+            ],
+            vec![
+                CanonicalGridPoint::new(12.0, -0.0),
+                CanonicalGridPoint::new(1.0, 2.0),
+                CanonicalGridPoint::new(12.0, 0.0),
+                CanonicalGridPoint::new(1.0, 20.0),
+            ],
+        ];
+
+        for path in cases {
+            assert_eq!(
+                canonical_ring(&path),
+                canonical_ring_materialized_oracle(&path)
+            );
+        }
     }
 }

@@ -477,7 +477,8 @@ fn decode_placed_piece(value: &Value) -> Arc<IrregularPlacedPiece> {
             },
             polygon: polygon.clone(),
             bounds: IrregularBounds::new(0.0, 0.0, width, height),
-        },
+        }
+        .into(),
     })
 }
 
@@ -667,7 +668,7 @@ fn endpoint_vectors_match() {
         }
 
         let state = IrregularBeamState::from_input(IrregularBeamStateInput {
-            remaining_prepared_pieces: vec![],
+            remaining_prepared_pieces: vec![].into(),
             placed_collision_geometries: placed,
             unplaced_piece_ids: None,
             unplaced_source_piece_ids: None,

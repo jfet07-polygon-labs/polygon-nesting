@@ -1102,8 +1102,7 @@ pub fn run_intrinsic_capacity_cold_search(
                 ))
             }
         };
-        let remaining_prepared_pieces: Vec<Arc<IrregularPreparedPiece>> =
-            prepared_pieces[(depth_usize + 1)..].to_vec();
+        let remaining_prepared_pieces = Arc::new(prepared_pieces[(depth_usize + 1)..].to_vec());
 
         let mut successors: Vec<CapacityBeamEntry> = Vec::new();
         let mut successor_keys: HashSet<String> = HashSet::new();
@@ -1114,7 +1113,7 @@ pub fn run_intrinsic_capacity_cold_search(
         // this depth's placement quota.
         for entry in &beam {
             let skip_state = Arc::clone(&entry.state).with_unplaced_piece(WithUnplacedPieceInput {
-                remaining_prepared_pieces: remaining_prepared_pieces.clone(),
+                remaining_prepared_pieces: Arc::clone(&remaining_prepared_pieces),
                 unplaced_piece_id: piece_id.clone(),
             });
             let observer_transition = if capture_topology_retention {
@@ -1377,10 +1376,10 @@ pub fn run_intrinsic_capacity_cold_search(
                     .borrow_mut()
                     .insert(capacity_candidate_reference_identity(reference));
                 let placed_state = Arc::clone(&entry.state).with_placement(WithPlacementInput {
-                    remaining_prepared_pieces: remaining_prepared_pieces.clone(),
+                    remaining_prepared_pieces: Arc::clone(&remaining_prepared_pieces),
                     placed_collision_geometry: Arc::new(IrregularPlacedPiece {
                         placement: make_capacity_placement(piece, &reference.candidate),
-                        collision_geometry: reference.moving.as_ref().clone(),
+                        collision_geometry: Arc::clone(&reference.moving),
                     }),
                     placement_order_piece_id: piece_id.clone(),
                     on_phase_timings: None,

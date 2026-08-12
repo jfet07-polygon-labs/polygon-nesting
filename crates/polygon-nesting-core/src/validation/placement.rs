@@ -33,6 +33,7 @@
 //! plus its own boolean parameter -- the two must never be collapsed into
 //! one flag.
 
+use std::borrow::Cow;
 use std::sync::Arc;
 
 use crate::domain::{
@@ -106,8 +107,8 @@ pub struct AssessPlacementInput<'a> {
     pub candidate_point: IrregularPoint,
 }
 
-struct ValidatedPolygonWithBounds {
-    polygon: IrregularPolygon,
+struct ValidatedPolygonWithBounds<'a> {
+    polygon: Cow<'a, IrregularPolygon>,
     bounds: IrregularBounds,
     winding: ConvexPolygonWinding,
 }
@@ -142,25 +143,27 @@ pub fn assess_placement(
         Ok(polygon) => polygon,
     };
 
-    let mut placed_polygons: Vec<ValidatedPolygonWithBounds> = Vec::new();
+    let mut placed_polygons: Vec<ValidatedPolygonWithBounds<'_>> = Vec::new();
 
     // TS: `placementValidation.ts:85-89`.
     let indexed_entries = input
         .placed_collision_index
         .filter(|spatial_index| spatial_index.matches(input.placed))
-        .map(|spatial_index| spatial_index.query(Some(&moving_polygon.bounds)));
+        .map(|spatial_index| spatial_index.query_refs(Some(&moving_polygon.bounds)));
 
     match indexed_entries {
         // TS: `placementValidation.ts:90-103`.
         Some(entries) => {
             for entry in entries {
-                match entry.validation {
+                match &entry.validation {
                     PlacedCollisionValidation::Invalid { message } => {
-                        return AssessPlacementOutcome::Failure(invalid_geometry_failure(message));
+                        return AssessPlacementOutcome::Failure(invalid_geometry_failure(
+                            message.clone(),
+                        ));
                     }
                     PlacedCollisionValidation::Valid(valid) => {
                         placed_polygons.push(ValidatedPolygonWithBounds {
-                            polygon: valid.polygon_with_bounds.polygon,
+                            polygon: Cow::Borrowed(&valid.polygon_with_bounds.polygon),
                             bounds: valid.polygon_with_bounds.bounds,
                             winding: valid.winding,
                         });
@@ -307,8 +310,8 @@ fn is_inside_sheet(points: &[IrregularPoint], sheet_width: f64, sheet_height: f6
 /// only if every point of `first` lies on `second`'s boundary and vice versa
 /// (coincident rings).
 fn polygons_have_positive_area_overlap(
-    first: &ValidatedPolygonWithBounds,
-    second: &ValidatedPolygonWithBounds,
+    first: &ValidatedPolygonWithBounds<'_>,
+    second: &ValidatedPolygonWithBounds<'_>,
 ) -> Result<bool, String> {
     // (1)
     if are_disjoint(&first.bounds, &second.bounds) {
@@ -369,14 +372,14 @@ fn translate_and_validate_polygon(
     polygon: &IrregularPolygon,
     translation: IrregularPoint,
     label: &str,
-) -> Result<ValidatedPolygonWithBounds, String> {
+) -> Result<ValidatedPolygonWithBounds<'static>, String> {
     let translated = translate_polygon_with_bounds(polygon, translation)
         .ok_or_else(|| format!("{label} translation must produce finite polygon coordinates."))?;
 
     match validate_strict_boundary(&translated.polygon.points) {
         StrictConvexBoundaryValidation::Invalid { message } => Err(message),
         StrictConvexBoundaryValidation::Valid { winding } => Ok(ValidatedPolygonWithBounds {
-            polygon: translated.polygon,
+            polygon: Cow::Owned(translated.polygon),
             bounds: translated.bounds,
             winding,
         }),
@@ -547,16 +550,15 @@ struct PolygonEdge {
     end: IrregularPoint,
 }
 
-/// TS source: `placementValidation.ts:382-390` (`polygonEdges`).
-fn polygon_edges(polygon: &IrregularPolygon) -> Vec<PolygonEdge> {
+/// TS source: `placementValidation.ts:382-390` (`polygonEdges`). Produces
+/// the same source-order edge sequence without allocating a temporary Vec.
+fn polygon_edges(polygon: &IrregularPolygon) -> impl Iterator<Item = PolygonEdge> + '_ {
     let len = polygon.points.len();
-    let mut edges = Vec::with_capacity(len);
-    for index in 0..len {
+    (0..len).map(move |index| {
         let start = polygon.points[index];
         let end = polygon.points[(index + 1) % len];
-        edges.push(PolygonEdge { start, end });
-    }
-    edges
+        PolygonEdge { start, end }
+    })
 }
 
 /// TS source: `placementValidation.ts:392-402` (`isStrictlyInside`).
@@ -667,7 +669,8 @@ mod tests {
                 },
                 polygon,
                 bounds: IrregularBounds::new(0.0, 0.0, 1.0, 1.0),
-            },
+            }
+            .into(),
         })
     }
 

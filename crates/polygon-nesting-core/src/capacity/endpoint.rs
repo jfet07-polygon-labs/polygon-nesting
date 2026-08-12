@@ -687,7 +687,8 @@ mod tests {
                 },
                 polygon: square(10.0),
                 bounds: IrregularBounds::new(x, y, x + 10.0, y + 10.0),
-            },
+            }
+            .into(),
         })
     }
 
@@ -739,7 +740,7 @@ mod tests {
         let empty = IrregularBeamState::empty(vec![Arc::clone(&prepared)]);
         let placed_geometry = placed(0.0, 0.0, "piece-1");
         let with_placement = empty.with_placement(crate::search::beam_state::WithPlacementInput {
-            remaining_prepared_pieces: vec![],
+            remaining_prepared_pieces: vec![].into(),
             placed_collision_geometry: placed_geometry,
             placement_order_piece_id: PieceId::new("piece-1"),
             on_phase_timings: None,

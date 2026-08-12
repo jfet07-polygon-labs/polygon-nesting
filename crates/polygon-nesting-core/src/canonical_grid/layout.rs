@@ -1639,7 +1639,8 @@ mod tests {
                 },
                 polygon,
                 bounds: crate::domain::IrregularBounds::new(min_x, min_y, max_x, max_y),
-            },
+            }
+            .into(),
         }
     }
 

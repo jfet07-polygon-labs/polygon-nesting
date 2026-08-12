@@ -1519,7 +1519,8 @@ mod tests {
                 },
                 polygon: polygon.clone(),
                 bounds: IrregularBounds::new(x, y, x + side, y + side),
-            },
+            }
+            .into(),
         })
     }
 
@@ -1695,7 +1696,7 @@ mod tests {
     // -----------------------------------------------------------------
     fn empty_beam_state() -> Arc<IrregularBeamState> {
         IrregularBeamState::from_input(IrregularBeamStateInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometries: Vec::new(),
             unplaced_piece_ids: None,
             unplaced_source_piece_ids: None,
@@ -1778,7 +1779,7 @@ mod tests {
             priority_order_key: None,
         });
         let state = IrregularBeamState::from_input(IrregularBeamStateInput {
-            remaining_prepared_pieces: vec![piece],
+            remaining_prepared_pieces: vec![piece].into(),
             placed_collision_geometries: Vec::new(),
             unplaced_piece_ids: None,
             unplaced_source_piece_ids: None,
@@ -1803,7 +1804,7 @@ mod tests {
     fn normalize_constructed_run_reports_completed_for_an_exact_sheetless_layout() {
         let placed = placed_piece("solo", 0.0, 0.0, 10.0);
         let state = Arc::clone(&empty_beam_state()).with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: placed,
             placement_order_piece_id: PieceId::new("solo"),
             on_phase_timings: None,
@@ -1831,7 +1832,7 @@ mod tests {
     fn requested_sheet_fit_selects_q0_when_it_fits() {
         let placed = placed_piece("solo", 0.0, 0.0, 10.0);
         let state = Arc::clone(&empty_beam_state()).with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: placed,
             placement_order_piece_id: PieceId::new("solo"),
             on_phase_timings: None,
@@ -1851,7 +1852,7 @@ mod tests {
     fn requested_sheet_fit_reports_no_fit_when_sheet_too_small() {
         let placed = placed_piece("solo", 0.0, 0.0, 10.0);
         let state = Arc::clone(&empty_beam_state()).with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: placed,
             placement_order_piece_id: PieceId::new("solo"),
             on_phase_timings: None,

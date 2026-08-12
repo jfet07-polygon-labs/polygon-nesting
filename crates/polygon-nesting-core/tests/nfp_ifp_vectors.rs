@@ -481,7 +481,8 @@ fn pairwise_nfp_matches_ts_computation() {
                 transform: decode_transform(&case.fixed_transform),
                 polygon: IrregularPolygon::new(decode_points(&case.fixed_polygon)),
                 bounds: placeholder_bounds(),
-            },
+            }
+            .into(),
         };
         let moving = TransformedCollisionGeometry {
             source_piece_id: PieceId::new("moving"),
@@ -716,7 +717,8 @@ fn generated_candidates_match_ts_ordered_output() {
                         },
                         polygon: IrregularPolygon::new(decode_points(&p.points)),
                         bounds: placeholder_bounds(),
-                    },
+                    }
+                    .into(),
                 })
             })
             .collect();
@@ -859,7 +861,8 @@ fn rejection_cases_match_ts_error_taxonomy_and_abort_phases() {
                             IrregularPoint::new(1.0, 1.0),
                         ]),
                         bounds: placeholder_bounds(),
-                    },
+                    }
+                    .into(),
                 };
                 let moving = TransformedCollisionGeometry {
                     source_piece_id: PieceId::new("rejection-moving"),
@@ -949,7 +952,8 @@ fn rejection_cases_match_ts_error_taxonomy_and_abort_phases() {
                             IrregularPoint::new(1.0, 1.0),
                         ]),
                         bounds: placeholder_bounds(),
-                    },
+                    }
+                    .into(),
                 });
                 let moving = TransformedCollisionGeometry {
                     source_piece_id: PieceId::new("degenerate-loop-moving"),
@@ -1104,7 +1108,7 @@ fn placed_square(piece_id: &str, translate_x: f64, translate_y: f64) -> Irregula
                 mirrored: false,
             },
         },
-        collision_geometry: square_geometry(piece_id),
+        collision_geometry: square_geometry(piece_id).into(),
     }
 }
 
@@ -1273,7 +1277,8 @@ fn placed_piece_for_cache_test() -> IrregularPlacedPiece {
                 IrregularPoint::new(0.0, 4.0),
             ]),
             bounds: placeholder_bounds(),
-        },
+        }
+        .into(),
     }
 }
 

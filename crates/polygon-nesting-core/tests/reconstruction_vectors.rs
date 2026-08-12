@@ -225,7 +225,8 @@ fn rect_place(prepared: &Arc<IrregularPreparedPiece>, x: f64, y: f64) -> Arc<Irr
             transform,
             polygon: prepared.collision_geometry.collision_polygon.clone(),
             bounds: prepared.collision_geometry.source_bounds,
-        },
+        }
+        .into(),
     })
 }
 
@@ -1070,7 +1071,8 @@ fn seed_placement_from_json(
             transform,
             polygon: prepared.collision_geometry.collision_polygon.clone(),
             bounds: prepared.collision_geometry.source_bounds,
-        },
+        }
+        .into(),
     })
 }
 

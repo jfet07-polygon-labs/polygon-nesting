@@ -926,7 +926,7 @@ struct StrictScoringInput {
     piece: Arc<IrregularPreparedPiece>,
     moving: Arc<TransformedCollisionGeometry>,
     candidate: IrregularPlacementCandidate,
-    remaining_prepared_pieces: Vec<Arc<IrregularPreparedPiece>>,
+    remaining_prepared_pieces: Arc<Vec<Arc<IrregularPreparedPiece>>>,
     transform_family: String,
     moving_collision_area_mm2: f64,
     moving_collision_doubled_area_grid2: String,
@@ -1180,7 +1180,7 @@ fn score_candidate(
     piece: &IrregularPreparedPiece,
     moving: &TransformedCollisionGeometry,
     candidate: &IrregularPlacementCandidate,
-    remaining_prepared_pieces: Vec<Arc<IrregularPreparedPiece>>,
+    remaining_prepared_pieces: Arc<Vec<Arc<IrregularPreparedPiece>>>,
     transform_family: &str,
     moving_collision_area_mm2: f64,
     moving_collision_doubled_area_grid2: &str,
@@ -1238,7 +1238,7 @@ fn score_candidate_body(
     piece: &IrregularPreparedPiece,
     moving: &TransformedCollisionGeometry,
     candidate: &IrregularPlacementCandidate,
-    remaining_prepared_pieces: Vec<Arc<IrregularPreparedPiece>>,
+    remaining_prepared_pieces: Arc<Vec<Arc<IrregularPreparedPiece>>>,
     transform_family: &str,
     moving_collision_area_mm2: f64,
     moving_collision_doubled_area_grid2: &str,
@@ -1253,7 +1253,7 @@ fn score_candidate_body(
     let placement = make_placement(piece, candidate);
     let placed = Arc::new(IrregularPlacedPiece {
         placement,
-        collision_geometry: moving.clone(),
+        collision_geometry: Arc::new(moving.clone()),
     });
     if let Some(pt) = reborrow_phase_timings(&mut phase_timings) {
         pt.placement_object_ms += timing_now() - placement_started_at;
@@ -2184,7 +2184,7 @@ fn validate_intrinsic_strict_direct_checkpoint_lineage(
         return Some(error);
     }
     let anchored_frozen = IrregularBeamState::from_input(IrregularBeamStateInput {
-        remaining_prepared_pieces: remaining_prepared_pieces.to_vec(),
+        remaining_prepared_pieces: remaining_prepared_pieces.to_vec().into(),
         placed_collision_geometries: frozen_placed.to_vec(),
         unplaced_piece_ids: None,
         unplaced_source_piece_ids: None,
@@ -3347,7 +3347,7 @@ pub fn construct_intrinsic_strict_state(
             Some(state) => state,
             None => {
                 let seed = IrregularBeamState::from_input(IrregularBeamStateInput {
-                    remaining_prepared_pieces: input.remaining_prepared_pieces.to_vec(),
+                    remaining_prepared_pieces: input.remaining_prepared_pieces.to_vec().into(),
                     placed_collision_geometries: input.frozen_placed.to_vec(),
                     unplaced_piece_ids: None,
                     unplaced_source_piece_ids: None,
@@ -3458,8 +3458,8 @@ pub fn construct_intrinsic_strict_state(
         let prepared_placed_memo_parts =
             crate::caches::prepare_placed_memo_parts(&placed_memo_key_inputs);
         drop(placed_memo_key_inputs);
-        let remaining_prepared_pieces: Vec<Arc<IrregularPreparedPiece>> =
-            input.remaining_prepared_pieces[(piece_index + 1)..].to_vec();
+        let remaining_prepared_pieces =
+            Arc::new(input.remaining_prepared_pieces[(piece_index + 1)..].to_vec());
         let mut candidates_by_family: Vec<(String, ScoredCandidate)> = Vec::new();
         let mut contained_candidates_by_family: Vec<(String, ScoredCandidate)> = Vec::new();
         let gap_regions: Option<Arc<Vec<CanonicalIntrinsicGapRegion>>> = if matches!(
@@ -3596,7 +3596,7 @@ pub fn construct_intrinsic_strict_state(
                             piece,
                             &moving,
                             candidate,
-                            remaining_prepared_pieces.clone(),
+                            Arc::clone(&remaining_prepared_pieces),
                             &family,
                             moving_collision_area_mm2,
                             &moving_collision_doubled_area_grid2,
@@ -3653,7 +3653,9 @@ pub fn construct_intrinsic_strict_state(
                                     piece: Arc::clone(piece),
                                     moving: Arc::clone(&moving),
                                     candidate,
-                                    remaining_prepared_pieces: remaining_prepared_pieces.clone(),
+                                    remaining_prepared_pieces: Arc::clone(
+                                        &remaining_prepared_pieces,
+                                    ),
                                     transform_family: family.clone(),
                                     moving_collision_area_mm2,
                                     moving_collision_doubled_area_grid2:

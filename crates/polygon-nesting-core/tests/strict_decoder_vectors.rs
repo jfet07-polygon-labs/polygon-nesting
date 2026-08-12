@@ -253,7 +253,8 @@ fn decode_envelope_placed_piece(
             },
             polygon,
             bounds,
-        },
+        }
+        .into(),
     }
 }
 

@@ -1035,7 +1035,7 @@ fn create_placed_piece(
                 mirrored: selected.geometry.transform.mirrored,
             },
         },
-        collision_geometry: selected.geometry.clone(),
+        collision_geometry: selected.geometry.clone().into(),
     }
 }
 
@@ -1994,7 +1994,7 @@ fn finalize_placed_layout(
         );
     }
     let normalized_state = IrregularBeamState::from_input(IrregularBeamStateInput {
-        remaining_prepared_pieces: Vec::new(),
+        remaining_prepared_pieces: Vec::new().into(),
         placed_collision_geometries: params.placed,
         unplaced_piece_ids: None,
         unplaced_source_piece_ids: None,

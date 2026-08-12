@@ -241,7 +241,8 @@ fn placed_piece_from_json(value: &Value) -> Arc<IrregularPlacedPiece> {
                 decode_f64_bits(bounds_json, "maxX"),
                 decode_f64_bits(bounds_json, "maxY"),
             ),
-        },
+        }
+        .into(),
     })
 }
 

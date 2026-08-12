@@ -423,7 +423,8 @@ fn dummy_placed_piece() -> IrregularPlacedPiece {
             },
             polygon: polygon.clone(),
             bounds: bounds_of(&polygon.points),
-        },
+        }
+        .into(),
     }
 }
 

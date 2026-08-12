@@ -198,7 +198,7 @@ fn default_timing_now() -> f64 {
 /// every direct `new IrregularBeamState({...})` call site
 /// `search-scoring.md` §2.2 inventories.
 pub struct IrregularBeamStateInput {
-    pub remaining_prepared_pieces: Vec<Arc<IrregularPreparedPiece>>,
+    pub remaining_prepared_pieces: Arc<Vec<Arc<IrregularPreparedPiece>>>,
     pub placed_collision_geometries: Vec<Arc<IrregularPlacedPiece>>,
     pub unplaced_piece_ids: Option<Vec<PieceId>>,
     pub unplaced_source_piece_ids: Option<Vec<PieceId>>,
@@ -210,7 +210,7 @@ pub struct IrregularBeamStateInput {
 /// TS: `irregularBeamState.ts:172-178`'s inline input object type for
 /// `withPlacement`.
 pub struct WithPlacementInput<'a> {
-    pub remaining_prepared_pieces: Vec<Arc<IrregularPreparedPiece>>,
+    pub remaining_prepared_pieces: Arc<Vec<Arc<IrregularPreparedPiece>>>,
     pub placed_collision_geometry: Arc<IrregularPlacedPiece>,
     pub placement_order_piece_id: PieceId,
     pub on_phase_timings: Option<&'a mut dyn FnMut(IrregularBeamStatePlacementPhaseTimings)>,
@@ -220,7 +220,7 @@ pub struct WithPlacementInput<'a> {
 /// TS: `irregularBeamState.ts:255-258`'s inline input object type for
 /// `withUnplacedPiece`.
 pub struct WithUnplacedPieceInput {
-    pub remaining_prepared_pieces: Vec<Arc<IrregularPreparedPiece>>,
+    pub remaining_prepared_pieces: Arc<Vec<Arc<IrregularPreparedPiece>>>,
     pub unplaced_piece_id: PieceId,
 }
 
@@ -263,7 +263,7 @@ struct DerivedMetadata {
 #[derive(Debug)]
 pub struct IrregularBeamState {
     /// Prepared pieces that have not yet been attempted by this state.
-    pub remaining_prepared_pieces: Vec<Arc<IrregularPreparedPiece>>,
+    pub remaining_prepared_pieces: Arc<Vec<Arc<IrregularPreparedPiece>>>,
     /// Collision geometries committed to this state, in placement order.
     /// `Arc`-wrapped (not a plain `Vec<IrregularPlacedPiece>`) so this
     /// array's elements and [`Self::placed_collision_index`]'s entries can
@@ -388,7 +388,7 @@ impl IrregularBeamState {
     ) -> Arc<IrregularBeamState> {
         Arc::new(IrregularBeamState::construct(
             IrregularBeamStateInput {
-                remaining_prepared_pieces,
+                remaining_prepared_pieces: Arc::new(remaining_prepared_pieces),
                 placed_collision_geometries: Vec::new(),
                 unplaced_piece_ids: None,
                 unplaced_source_piece_ids: Some(Vec::new()),
@@ -734,7 +734,7 @@ impl IrregularBeamState {
             placement.transform.translate_y = next_translate_y;
             placed_collision_geometries.push(Arc::new(IrregularPlacedPiece {
                 placement,
-                collision_geometry: placed.collision_geometry.clone(),
+                collision_geometry: Arc::clone(&placed.collision_geometry),
             }));
         }
 
@@ -964,12 +964,12 @@ impl IrregularBeamState {
 
             placed_collision_geometries.push(Arc::new(IrregularPlacedPiece {
                 placement,
-                collision_geometry: TransformedCollisionGeometry {
+                collision_geometry: Arc::new(TransformedCollisionGeometry {
                     source_piece_id: placed.collision_geometry.source_piece_id.clone(),
                     transform: rotated_transform,
                     polygon: IrregularPolygon::new(rotated_points),
                     bounds: rotated_bounds,
-                },
+                }),
             }));
         }
 
@@ -1105,8 +1105,8 @@ fn extend_shared_collision_boundary_metrics(
         PlacedCollisionValidation::Invalid { .. } => return None,
     };
 
-    let query_result = existing_index.query(Some(&added_translated.bounds));
-    let additional = shared_boundary_with_entries(added_entry, &query_result)?;
+    let query_result = existing_index.query_refs(Some(&added_translated.bounds));
+    let additional = shared_boundary_with_entries(added_entry, query_result)?;
 
     let new_length_mm = length_mm + additional.length_mm;
     let new_normalized_units = normalized_units + additional.normalized_units;
@@ -1135,9 +1135,9 @@ fn extend_shared_collision_boundary_metrics(
 }
 
 /// TS: `irregularBeamState.ts:638-682` `sharedBoundaryWithEntries`.
-fn shared_boundary_with_entries(
+fn shared_boundary_with_entries<'a>(
     added_entry: &PlacedCollisionSpatialEntry,
-    existing_entries: &[PlacedCollisionSpatialEntry],
+    existing_entries: impl IntoIterator<Item = &'a PlacedCollisionSpatialEntry>,
 ) -> Option<SharedCollisionBoundaryMetricsInternal> {
     let added_translated = match &added_entry.validation {
         PlacedCollisionValidation::Valid(valid) => &valid.polygon_with_bounds,
@@ -1682,7 +1682,8 @@ mod tests {
                 },
                 polygon,
                 bounds: IrregularBounds::new(0.0, 0.0, side, side),
-            },
+            }
+            .into(),
         })
     }
 
@@ -1710,7 +1711,7 @@ mod tests {
         id: &str,
     ) -> Arc<IrregularBeamState> {
         state.with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: Arc::clone(piece),
             placement_order_piece_id: PieceId::new(id),
             on_phase_timings: None,
@@ -1805,7 +1806,7 @@ mod tests {
         let state = IrregularBeamState::empty(Vec::new());
         let piece = square_piece("piece-a", 0.0, 0.0, 4.0);
         let next = state.with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: Arc::clone(&piece),
             placement_order_piece_id: PieceId::new("piece-a"),
             on_phase_timings: None,
@@ -1885,7 +1886,7 @@ mod tests {
     fn with_unplaced_piece_carries_bounds_and_index_through_unchanged() {
         let piece = square_piece("piece-a", 0.0, 0.0, 4.0);
         let state = IrregularBeamState::empty(Vec::new()).with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: piece,
             placement_order_piece_id: PieceId::new("piece-a"),
             on_phase_timings: None,
@@ -1893,7 +1894,7 @@ mod tests {
         });
         let bounds_before = state.translated_collision_bounds;
         let next = state.with_unplaced_piece(WithUnplacedPieceInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             unplaced_piece_id: PieceId::new("skipped"),
         });
         assert_eq!(next.translated_collision_bounds, bounds_before);
@@ -1910,7 +1911,7 @@ mod tests {
         // SAME instance, not `undefined`/`None`.
         let piece = square_piece("piece-a", f64::INFINITY, 0.0, 4.0);
         let state = IrregularBeamState::empty(Vec::new()).with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: piece,
             placement_order_piece_id: PieceId::new("piece-a"),
             on_phase_timings: None,
@@ -1929,7 +1930,7 @@ mod tests {
         // for the read-only projection.
         let piece = square_piece("piece-a", f64::INFINITY, 0.0, 4.0);
         let state = IrregularBeamState::empty(Vec::new()).with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: piece,
             placement_order_piece_id: PieceId::new("piece-a"),
             on_phase_timings: None,
@@ -1946,7 +1947,7 @@ mod tests {
     fn with_bottom_left_anchored_is_a_noop_when_already_anchored() {
         let piece = square_piece("piece-a", 0.0, 0.0, 4.0);
         let state = IrregularBeamState::empty(Vec::new()).with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: piece,
             placement_order_piece_id: PieceId::new("piece-a"),
             on_phase_timings: None,
@@ -1961,7 +1962,7 @@ mod tests {
     fn with_bottom_left_anchored_translates_to_origin() {
         let piece = square_piece("piece-a", 5.0, 3.0, 4.0);
         let state = IrregularBeamState::empty(Vec::new()).with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: piece,
             placement_order_piece_id: PieceId::new("piece-a"),
             on_phase_timings: None,
@@ -2001,14 +2002,14 @@ mod tests {
         let piece_b = square_piece("piece-b", 12.0, 8.0, 2.0);
         let state = IrregularBeamState::empty(Vec::new())
             .with_placement(WithPlacementInput {
-                remaining_prepared_pieces: Vec::new(),
+                remaining_prepared_pieces: Vec::new().into(),
                 placed_collision_geometry: piece_a,
                 placement_order_piece_id: PieceId::new("piece-a"),
                 on_phase_timings: None,
                 timing_now: None,
             })
             .with_placement(WithPlacementInput {
-                remaining_prepared_pieces: Vec::new(),
+                remaining_prepared_pieces: Vec::new().into(),
                 placed_collision_geometry: piece_b,
                 placement_order_piece_id: PieceId::new("piece-b"),
                 on_phase_timings: None,
@@ -2026,7 +2027,7 @@ mod tests {
     fn with_quarter_turn_bottom_left_zero_degrees_delegates_to_anchor() {
         let piece = square_piece("piece-a", 5.0, 3.0, 4.0);
         let state = IrregularBeamState::empty(Vec::new()).with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: piece,
             placement_order_piece_id: PieceId::new("piece-a"),
             on_phase_timings: None,
@@ -2046,7 +2047,7 @@ mod tests {
     fn with_quarter_turn_bottom_left_90_rotates_and_anchors() {
         let piece = square_piece("piece-a", 0.0, 0.0, 4.0);
         let state = IrregularBeamState::empty(Vec::new()).with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: piece,
             placement_order_piece_id: PieceId::new("piece-a"),
             on_phase_timings: None,
@@ -2182,7 +2183,8 @@ mod tests {
                 },
                 polygon,
                 bounds: IrregularBounds::new(0.0, 0.0, 0.0, 0.0),
-            },
+            }
+            .into(),
         })
     }
 
@@ -2194,7 +2196,7 @@ mod tests {
         // structurally-invalid placed piece is enough to make the whole
         // state's shared-boundary metrics (and thus this identity) `None`.
         let state = IrregularBeamState::empty(Vec::new()).with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: invalid_piece("invalid"),
             placement_order_piece_id: PieceId::new("invalid"),
             on_phase_timings: None,
@@ -2211,7 +2213,7 @@ mod tests {
         let state = IrregularBeamState::empty(Vec::new());
         let piece = square_piece("piece-a", 0.0, 0.0, 4.0);
         let next = Arc::clone(&state).with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: piece,
             placement_order_piece_id: PieceId::new("piece-a"),
             on_phase_timings: None,
@@ -2229,12 +2231,32 @@ mod tests {
     }
 
     #[test]
+    fn sibling_states_share_the_remaining_piece_allocation() {
+        let state = IrregularBeamState::empty(Vec::new());
+        let remaining = Arc::new(Vec::new());
+        let placed = Arc::clone(&state).with_placement(WithPlacementInput {
+            remaining_prepared_pieces: Arc::clone(&remaining),
+            placed_collision_geometry: square_piece("placed", 0.0, 0.0, 4.0),
+            placement_order_piece_id: PieceId::new("placed"),
+            on_phase_timings: None,
+            timing_now: None,
+        });
+        let skipped = state.with_unplaced_piece(WithUnplacedPieceInput {
+            remaining_prepared_pieces: Arc::clone(&remaining),
+            unplaced_piece_id: PieceId::new("skipped"),
+        });
+
+        assert!(Arc::ptr_eq(&placed.remaining_prepared_pieces, &remaining));
+        assert!(Arc::ptr_eq(&skipped.remaining_prepared_pieces, &remaining));
+    }
+
+    #[test]
     fn with_placement_phase_timings_callback_reports_a_total() {
         let state = IrregularBeamState::empty(Vec::new());
         let piece = square_piece("piece-a", 0.0, 0.0, 4.0);
         let mut observed: Option<IrregularBeamStatePlacementPhaseTimings> = None;
         let _next = state.with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: piece,
             placement_order_piece_id: PieceId::new("piece-a"),
             on_phase_timings: Some(&mut |timings| observed = Some(timings)),
@@ -2254,7 +2276,7 @@ mod tests {
         let piece_b = square_piece("piece-b", 10.0, 10.0, 2.0);
         let stale_index = make_placed_collision_spatial_index(&[Arc::clone(&piece_a)], None);
         let state = IrregularBeamState::from_input(IrregularBeamStateInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometries: vec![piece_a, piece_b],
             unplaced_piece_ids: None,
             unplaced_source_piece_ids: None,
