@@ -83,3 +83,22 @@ prove elsewhere in this crate.
   deterministic clock — the parity gate — sees identical sequences).
 - Remaining from the plan: successor-construction pure parts via the same
   replay pattern; early-abort waste on erroring prefixes (nit).
+
+## Clean-machine definitive numbers (load < 2, 5×/3× runs)
+
+mixed-61-2000x2700-compact, this branch head:
+
+| pool workers | wall (median) | user |
+| --- | --- | --- |
+| 15 (default = available−1) | **13.16 s** | 36.2 s |
+| 12 (`MIN_PLANE_IRREGULAR_NATIVE_THREADS=12`) | **12.88 s** | 31.7 s |
+| 16 | 13.29 s | 37.7 s |
+
+- Branch cumulative at the default: post-#24 ≈ 14.4 s → **13.16 s (−8.6 %)**;
+  campaign total 16.03 s → 13.16 s (**−17.9 %**).
+- The scouted "coordinator occupies a pool worker, so available−1 wastes a
+  core" hypothesis is **refuted by measurement**: 16 workers is worse than
+  15, and 12 beats both (less idle steal-spin, ample parallelism). The
+  default stays untouched — one workload/machine is not enough evidence to
+  retune it — but the existing `MIN_PLANE_IRREGULAR_NATIVE_THREADS` knob
+  measurably helps on hosts like this one and is now documented here.
