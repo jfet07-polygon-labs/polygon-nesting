@@ -102,3 +102,22 @@ mixed-61-2000x2700-compact, this branch head:
   default stays untouched — one workload/machine is not enough evidence to
   retune it — but the existing `MIN_PLANE_IRREGULAR_NATIVE_THREADS` knob
   measurably helps on hosts like this one and is now documented here.
+
+## Production-shape measurements (pinned CPUs, quiet machine)
+
+| shape | workers | wall (median) |
+| --- | --- | --- |
+| 2 CPUs pinned | 1 (old default) | 18.80 s |
+| 2 CPUs pinned | 2 | **15.96 s (−15 %)** |
+| 8 CPUs pinned (production container) | 7 (old default) | 12.99 s |
+| 8 CPUs pinned | **8 (new default)** | **12.78 s (−1.6 %)** |
+| 8 CPUs pinned | 6 | 13.09 s |
+| 16 CPUs free | 15 (default, kept) | 13.05 s |
+| 16 CPUs free | 12 | 12.88 s |
+| 16 CPUs free | 16 | 13.29 s |
+
+The automatic default now uses every CPU on hosts up to 8 cores (the
+coordinator executes on the pool; the one-CPU reservation only starved
+small hosts) and keeps `available − 1` above that. Also landed: the
+successor-build anchored keys reuse the per-parent memo per entry
+(16-core clean median 13.16 → 13.05 s).
