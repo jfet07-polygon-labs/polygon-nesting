@@ -1532,21 +1532,30 @@ pub fn run_intrinsic_capacity_cold_search(
             // count/clock effect of measuring them — is still decided
             // solely by the serial comparator flow (see
             // `CapacityTopologyMeasurements::precomputed_by_identity`).
-            let precomputed_survivor_topologies =
-                crate::parallel::map_slice_with_job_pool(&measured_survivors, |entry| {
-                    if entry.state.placed_collision_geometries.is_empty() {
-                        None
-                    } else {
-                        measure_canonical_layout_topology_exact(&cloned_placed(
-                            &entry.state.placed_collision_geometries,
-                        ))
-                    }
-                });
-            for (entry, topology) in measured_survivors
-                .iter()
-                .zip(precomputed_survivor_topologies)
-            {
-                measurements.seed_precomputed(entry.successor_identity.clone(), topology);
+            //
+            // Speculative-only pacing gate: with fewer than two workers the
+            // whole batch would run on the coordinator anyway, turning the
+            // never-measured survivors' pure waste into critical-path wall
+            // time (the accounting short-circuit deliberately measures a
+            // strict subset). Skipping is byte-invisible: an unseeded miss
+            // computes the identical value inline.
+            if crate::parallel::job_pool_width().unwrap_or(0) >= 2 {
+                let precomputed_survivor_topologies =
+                    crate::parallel::map_slice_with_job_pool(&measured_survivors, |entry| {
+                        if entry.state.placed_collision_geometries.is_empty() {
+                            None
+                        } else {
+                            measure_canonical_layout_topology_exact(&cloned_placed(
+                                &entry.state.placed_collision_geometries,
+                            ))
+                        }
+                    });
+                for (entry, topology) in measured_survivors
+                    .iter()
+                    .zip(precomputed_survivor_topologies)
+                {
+                    measurements.seed_precomputed(entry.successor_identity.clone(), topology);
+                }
             }
             Some(measurements)
         } else {
@@ -3925,9 +3934,12 @@ struct CapacityTopologyMeasurements {
     /// computation only — the miss's checkpoint-visible `count` increment
     /// and both bracket observations of the (injectable, possibly
     /// stateful) clock happen at exactly the sites and ordinals the
-    /// computing form used, so seeding is bit-invisible to the
-    /// integrity-hash preimage; entries never measured are pure wasted
-    /// worker-side compute.
+    /// computing form used, so seeding is bit-invisible to the byte-parity
+    /// gates (thread-equality and the injected deterministic clock's
+    /// integrity-hash preimages; under the production wall clock the
+    /// hash-visible ms values measure the seeded lookup instead of the
+    /// moved compute, like every timing field on a moved-compute path);
+    /// entries never measured are pure wasted worker-side compute.
     precomputed_by_identity: RefCell<HashMap<String, Option<CanonicalLayoutTopologyExact>>>,
     count: RefCell<f64>,
     elapsed_ms: RefCell<f64>,

@@ -287,6 +287,20 @@ pub(crate) fn has_job_pool() -> bool {
     JOB_POOL.with(|slot| slot.borrow().is_some())
 }
 
+/// The installed job pool's worker count, or `None` when no pool is
+/// installed. Lets speculative pure precomputation sites skip dispatch
+/// entirely when it could not overlap anything (no pool, or a
+/// single-worker pool where the coordinator itself executes the batch) —
+/// a pacing decision only, never observable in outputs: callers must fall
+/// back to computing the same pure values lazily inline.
+pub(crate) fn job_pool_width() -> Option<usize> {
+    JOB_POOL.with(|slot| {
+        slot.borrow()
+            .as_ref()
+            .map(|pool| pool.current_num_threads())
+    })
+}
+
 /// Runs `body` on this OS thread's currently-installed job pool
 /// (`ThreadPool::install`), or inline on the calling thread if no pool is
 /// installed (see this module's top doc, third bullet). Every Rayon
