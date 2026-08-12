@@ -129,8 +129,8 @@ use crate::nfp_ifp::{
     LegalCandidateMemo, NfpIfpCheckpointPhase, NfpIfpControl, NfpIfpControlAbortError, NfpIfpError,
 };
 use crate::search::beam_state::{
-    IrregularBeamState, IrregularBeamStateInput, IrregularCollisionBounds, TimingNowFn,
-    WithPlacementInput, WithUnplacedPieceInput,
+    AnchoredParentKeysMemo, IrregularBeamState, IrregularBeamStateInput, IrregularCollisionBounds,
+    TimingNowFn, WithPlacementInput, WithUnplacedPieceInput,
 };
 use crate::search::placement_scorer::{score_candidate, ScoreIrregularPlacementCandidateInput};
 use crate::search::strict_decoder::{
@@ -1361,6 +1361,11 @@ pub fn run_intrinsic_capacity_cold_search(
             // that intervening read, which the borrow checker rejects even
             // though the two accesses never actually overlap in time.
             let built_candidate_keys: RefCell<HashSet<String>> = RefCell::new(HashSet::new());
+            // Every successor built below is a child of this one entry's
+            // state, so the anchored occupied key's parent half recurs
+            // across successors; the memo lives for this entry's build
+            // phase only (the parent state never advances within it).
+            let successor_anchored_parent_keys: AnchoredParentKeysMemo = Mutex::new(HashMap::new());
 
             let mut build_reference = |reference: &EvaluatedCandidateReference,
                                        proposal_role: IntrinsicCapacityProposalRole|
@@ -1392,7 +1397,11 @@ pub fn run_intrinsic_capacity_cold_search(
                     return (false, None);
                 }
                 let Some(anchored_occupied_key) =
-                    placed_state.bottom_left_anchored_canonical_occupied_geometry_key()
+                    IrregularBeamState::bottom_left_anchored_key_via_parent_memo(
+                        &placed_state,
+                        &entry.state,
+                        &successor_anchored_parent_keys,
+                    )
                 else {
                     invalid_candidates += 1.0;
                     return (false, None);
