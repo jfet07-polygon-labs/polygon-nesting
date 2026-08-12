@@ -14,11 +14,11 @@ outcomes in deterministic order.
 
 ## Target
 
-Evaluate capacity beam candidates on the job-owned rayon pool in bounded
-chunks, then replay outcomes serially in source-ordinal order — the exact
-compute-then-replay contract `parallel::for_each_chunked_outcome` and
-`strict_decoder::replay_admitted_scoring_inputs` already implement and
-prove elsewhere in this crate.
+Evaluate the cap-admitted prefix of capacity beam candidates on the job-owned
+rayon pool, then replay outcomes serially in source-ordinal order. This uses
+the same pure-compute/ordered-replay principle already proved by the strict
+decoder without adding candidate-level checkpoint observations that the
+serial capacity loop never had.
 
 ## Invariants that must be preserved bit-for-bit
 
@@ -34,16 +34,16 @@ prove elsewhere in this crate.
    used for pairwise NFPs (pure compute on workers, serial publication in
    first-encounter order), then the serial replay performs the real
    resolver calls as warm hits.
-3. **Cancellation/checkpoint observation ordinals**: the serial loop
-   observes checkpoints at exact per-candidate ordinals; the chunked form
-   must reproduce those observation ordinals exactly
-   (`for_each_chunked_outcome` encodes precisely this contract).
+3. **Cancellation/checkpoint observation ordinals**: the existing capacity
+   checkpoint before candidate generation stays at the same site. Worker-side
+   candidate evaluation is pure and does not add, move, or remove control
+   observations.
 4. **Checkpoint-visible counters** (fanout traces, per-phase timings that
    feed integrity-hash preimages): increments must keep their serial
    pattern — count-bearing steps stay in the serial replay, never in
    worker closures (lesson pinned by the Stage-4 retention-cache work).
 5. **Mid-loop resume**: checkpoint resume re-enters the loop at a piece
-   index; chunking must not change what a resumed run computes.
+   index; admitted-prefix dispatch must not change what a resumed run computes.
 
 ## Plan of record
 
@@ -58,9 +58,9 @@ prove elsewhere in this crate.
 3. **Stage 2 — cache pre-pass**: extend the NFP precompute pre-pass so the
    pure half finds only warm hits (measure first: it may already cover
    everything the evaluation path resolves).
-4. **Stage 3 — chunked dispatch**: evaluate candidates through
-   `for_each_chunked_outcome` (chunk size = the serial loop's historical
-   checkpoint stride), serial replay owning every effect. Thread-equality,
+4. **Stage 3 — admitted-prefix dispatch**: derive the deterministic prefix
+   allowed by both evaluation caps, evaluate that whole prefix through the job
+   pool, and keep every observable effect in the serial replay. Thread-equality,
    golden, vectors after each stage; wall/user benchmarks 5× per row.
 5. **Honest exit rule**: if measurement shows the parallel evaluation not
    paying (contention, small per-candidate cost after PR #24's
@@ -84,9 +84,10 @@ prove elsewhere in this crate.
 - Remaining from the plan: successor-construction pure parts via the same
   replay pattern; early-abort waste on erroring prefixes (nit).
 
-## Clean-machine definitive numbers (load < 2, 5×/3× runs)
+## Pre-successor-key clean-machine numbers (load < 2, 5×/3× runs)
 
-mixed-61-2000x2700-compact, this branch head:
+mixed-61-2000x2700-compact, after survivor-topology precompute and before the
+successor-key memoization reported below:
 
 | pool workers | wall (median) | user |
 | --- | --- | --- |
@@ -94,7 +95,8 @@ mixed-61-2000x2700-compact, this branch head:
 | 12 (`MIN_PLANE_IRREGULAR_NATIVE_THREADS=12`) | **12.88 s** | 31.7 s |
 | 16 | 13.29 s | 37.7 s |
 
-- Branch cumulative at the default: post-#24 ≈ 14.4 s → **13.16 s (−8.6 %)**;
+- At that snapshot, cumulative wall at the default was post-#24 ≈ 14.4 s →
+  **13.16 s (−8.6 %)**;
   campaign total 16.03 s → 13.16 s (**−17.9 %**).
 - On this 16-CPU machine the scouted "coordinator occupies a pool worker, so
   available−1 wastes a core" hypothesis is **refuted by measurement**: 16
