@@ -53,7 +53,7 @@
 //! 2. the `MIN_PLANE_IRREGULAR_NATIVE_THREADS` process environment
 //!    variable, parsed as a positive integer;
 //! 3. one fewer than the OS-visible logical CPU count, clamped to `1` —
-//!    except on exactly-2-CPU hosts, which use both CPUs: the coordinator
+//!    except on hosts with at most 8 CPUs, which use every CPU: the coordinator
 //!    executes the job body ON a pool worker (`JobPool::run_scoped`), so
 //!    the historical one-CPU reservation starves 2-CPU containers for no
 //!    benefit (see `default_thread_count_from_available`'s measured
@@ -444,7 +444,7 @@ mod tests {
     }
 
     #[test]
-    fn automatic_thread_count_reserves_one_cpu_without_dropping_below_one() {
+    fn automatic_thread_count_uses_small_hosts_fully_and_reserves_on_wide_hosts() {
         assert_eq!(default_thread_count_from_available(1), 1);
         // hosts up to 8 CPUs run a worker per CPU: the coordinator
         // executes on the pool, and the measured pinned-shape gains are

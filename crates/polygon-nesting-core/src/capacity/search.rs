@@ -141,7 +141,7 @@ use crate::validation::placement::IrregularGeometryInputError;
 use super::endpoint::{
     compare_intrinsic_capacity_endpoints, intrinsic_capacity_span_fits_sheet,
     intrinsic_capacity_state_grid_span, materialize_intrinsic_capacity_endpoint,
-    measure_intrinsic_capacity_cavities, measure_intrinsic_capacity_cavities_deriving_key,
+    measure_intrinsic_capacity_cavities, measure_intrinsic_capacity_cavities_with_key,
     IntrinsicCapacityCavityCache, IntrinsicCapacityCavityMetrics, IntrinsicCapacityEndpoint,
     IntrinsicCapacityEndpointOrigin, IntrinsicCapacityGridSpan,
     MaterializeIntrinsicCapacityEndpointInput,
@@ -1518,7 +1518,7 @@ pub fn run_intrinsic_capacity_cold_search(
                 measured_survivors.push(successor);
                 continue;
             }
-            match measure_intrinsic_capacity_cavities(
+            match measure_intrinsic_capacity_cavities_with_key(
                 &successor.state,
                 &successor.anchored_occupied_key,
                 cavity_cache,
@@ -1997,9 +1997,7 @@ fn validate_warm_prefix_seed(
             message: "warm prefix has no anchored occupied identity.".to_string(),
         };
     };
-    let Some(cavities) =
-        measure_intrinsic_capacity_cavities_deriving_key(&seed.state, cavity_cache)
-    else {
+    let Some(cavities) = measure_intrinsic_capacity_cavities(&seed.state, cavity_cache) else {
         return WarmPrefixValidation::Invalid {
             message: "warm prefix cavity measurement failed.".to_string(),
         };
@@ -2446,7 +2444,7 @@ fn validate_intrinsic_capacity_checkpoint(input: ValidateCheckpointInput<'_>) ->
             );
         }
 
-        let Some(cavities) = measure_intrinsic_capacity_cavities(
+        let Some(cavities) = measure_intrinsic_capacity_cavities_with_key(
             &entry.state,
             &entry.anchored_occupied_key,
             &mut validation_cavity_cache,

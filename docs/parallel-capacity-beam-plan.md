@@ -96,12 +96,13 @@ mixed-61-2000x2700-compact, this branch head:
 
 - Branch cumulative at the default: post-#24 ≈ 14.4 s → **13.16 s (−8.6 %)**;
   campaign total 16.03 s → 13.16 s (**−17.9 %**).
-- The scouted "coordinator occupies a pool worker, so available−1 wastes a
-  core" hypothesis is **refuted by measurement**: 16 workers is worse than
-  15, and 12 beats both (less idle steal-spin, ample parallelism). The
-  default stays untouched — one workload/machine is not enough evidence to
-  retune it — but the existing `MIN_PLANE_IRREGULAR_NATIVE_THREADS` knob
-  measurably helps on hosts like this one and is now documented here.
+- On this 16-CPU machine the scouted "coordinator occupies a pool worker, so
+  available−1 wastes a core" hypothesis is **refuted by measurement**: 16
+  workers is worse than 15, and 12 beats both (less idle steal-spin, ample
+  parallelism). The wide-host default therefore stays untouched, while the
+  production-shape measurements below justify using every CPU on hosts with
+  at most 8 CPUs. The existing `MIN_PLANE_IRREGULAR_NATIVE_THREADS` knob still
+  allows workload-specific tuning.
 
 ## Production-shape measurements (pinned CPUs, quiet machine)
 
