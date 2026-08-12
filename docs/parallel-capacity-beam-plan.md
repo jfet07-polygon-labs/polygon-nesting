@@ -66,3 +66,20 @@ prove elsewhere in this crate.
    paying (contention, small per-candidate cost after PR #24's
    reductions), record the numbers and stop — the harness and purity
    split remain independently valuable.
+
+## Delivered (updates)
+
+- **Candidate evaluation dispatch** (`73514c6`): pure triple on the pool,
+  serial replay with every effect at unchanged sites/ordinals. Gates all
+  green (thread-equality 6/6, hash preimages 3/3, golden 18/18). Wall
+  median ~14.4 → 14.17 s.
+- **Survivor topology precompute** (this commit): per-depth pure topology
+  values computed on the pool and seeded; measure() consumes seeds on
+  memo misses with count/clock sites unchanged. Wall median
+  14.17 → 13.16 s. **Cumulative on this branch: ≈ −8.6 % wall** vs the
+  post-#24 baseline.
+- Review-confirmed diagnostic trade: wall-clock `contactMeasurementMs` /
+  `topologyMeasurementMs` now record replay bookkeeping (the injected
+  deterministic clock — the parity gate — sees identical sequences).
+- Remaining from the plan: successor-construction pure parts via the same
+  replay pattern; early-abort waste on erroring prefixes (nit).
