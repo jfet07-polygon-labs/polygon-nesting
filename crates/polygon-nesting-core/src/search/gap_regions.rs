@@ -214,6 +214,38 @@ pub fn candidate_contained_in_intrinsic_gap(
     point: IrregularPoint,
     region: &CanonicalIntrinsicGapRegion,
 ) -> bool {
+    candidate_contained_in_intrinsic_gap_impl(moving, point, region)
+}
+
+pub(crate) fn candidate_contained_in_intrinsic_gap_prechecked(
+    moving: &TransformedCollisionGeometry,
+    point: IrregularPoint,
+    region: &CanonicalIntrinsicGapRegion,
+) -> bool {
+    let candidate_aabb = [
+        to_grid_mm(moving.bounds.min_x + point.x),
+        to_grid_mm(moving.bounds.min_y + point.y),
+        to_grid_mm(moving.bounds.max_x + point.x),
+        to_grid_mm(moving.bounds.max_y + point.y),
+    ];
+    let [Some(min_x), Some(min_y), Some(max_x), Some(max_y)] = candidate_aabb else {
+        return false;
+    };
+    if min_x < region.aabb.min_x
+        || min_y < region.aabb.min_y
+        || max_x > region.aabb.max_x
+        || max_y > region.aabb.max_y
+    {
+        return false;
+    }
+    candidate_contained_in_intrinsic_gap_impl(moving, point, region)
+}
+
+fn candidate_contained_in_intrinsic_gap_impl(
+    moving: &TransformedCollisionGeometry,
+    point: IrregularPoint,
+    region: &CanonicalIntrinsicGapRegion,
+) -> bool {
     let mut candidate_path: CanonicalGridPath = Vec::with_capacity(moving.polygon.points.len());
     for source_point in &moving.polygon.points {
         let Some(x) = to_grid_mm(source_point.x + point.x) else {
@@ -681,6 +713,44 @@ mod tests {
             IrregularPoint::new(0.0, 1.0),
             region
         ));
+    }
+
+    #[test]
+    fn candidate_gap_aabb_prefilter_matches_exact_difference() {
+        let placed = vec![
+            square_piece("a", 0.0, 0.0, 10.0),
+            square_piece("b", 20.0, 20.0, 10.0),
+        ];
+        let regions = derive_canonical_intrinsic_gap_regions(&placed).expect("must succeed");
+        let moving = TransformedCollisionGeometry {
+            source_piece_id: PieceId::new("candidate"),
+            transform: IrregularTransformCandidate {
+                index: 0.0,
+                rotation_deg: 0.0,
+                mirrored: false,
+                reason: IrregularTransformReason::Configured,
+            },
+            polygon: IrregularPolygon::new(vec![
+                IrregularPoint::new(0.0, 0.0),
+                IrregularPoint::new(4.0, 0.0),
+                IrregularPoint::new(4.0, 3.0),
+                IrregularPoint::new(0.0, 3.0),
+            ]),
+            bounds: crate::domain::IrregularBounds::new(0.0, 0.0, 4.0, 3.0),
+        };
+
+        for region in &regions {
+            for x in (-10..=40).step_by(2) {
+                for y in (-10..=40).step_by(2) {
+                    let point = IrregularPoint::new(x as f64, y as f64);
+                    assert_eq!(
+                        candidate_contained_in_intrinsic_gap_prechecked(&moving, point, region),
+                        candidate_contained_in_intrinsic_gap_impl(&moving, point, region),
+                        "point ({x}, {y})",
+                    );
+                }
+            }
+        }
     }
 
     #[test]

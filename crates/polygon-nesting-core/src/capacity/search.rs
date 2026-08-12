@@ -100,7 +100,7 @@
 use std::cell::{OnceCell, RefCell};
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, LazyLock};
+use std::sync::{Arc, LazyLock, Mutex};
 use std::time::Instant;
 
 use num_bigint::BigInt;
@@ -395,6 +395,10 @@ pub enum IntrinsicAnytimeCheckpointCensoring {
 /// TS: `intrinsicCapacitySearch.ts:154-172` `IntrinsicAnytimeCheckpoint`.
 #[derive(Clone, Debug)]
 pub struct IntrinsicAnytimeCheckpoint {
+    /// private in-process continuations may reuse validated immutable state.
+    pub(crate) trusted_internal: bool,
+    trusted_topology_cache: Option<TrustedTopologyCache>,
+    pub(crate) trusted_cavity_cache: Option<TrustedCavityCache>,
     pub version: String,
     pub request_fingerprint: String,
     pub producer_role: IntrinsicAnytimeProducerRole,
@@ -412,6 +416,20 @@ pub struct IntrinsicAnytimeCheckpoint {
     pub counters: IntrinsicCapacitySearchCounters,
     pub topology_retention_depths: Vec<IntrinsicCapacityTopologyRetentionDepthTrace>,
     pub integrity_hash: String,
+}
+
+type TrustedTopologyCache = Arc<Mutex<HashMap<String, Option<CanonicalLayoutTopologyExact>>>>;
+pub(crate) type TrustedCavityCache = Arc<Mutex<IntrinsicCapacityCavityCache>>;
+
+impl IntrinsicAnytimeCheckpoint {
+    /// marks a checkpoint after its externally validated creation boundary.
+    pub(crate) fn trust_for_internal_resume(&mut self) {
+        self.trusted_internal = true;
+        self.trusted_topology_cache
+            .get_or_insert_with(|| Arc::new(Mutex::new(HashMap::new())));
+        self.trusted_cavity_cache
+            .get_or_insert_with(|| Arc::new(Mutex::new(IntrinsicCapacityCavityCache::new())));
+    }
 }
 
 /// TS: `intrinsicCapacitySearch.ts:174-196` `IntrinsicCapacitySearchTrace`.
@@ -885,17 +903,31 @@ pub fn run_intrinsic_capacity_cold_search(
             ));
         }
     }
+    let trusted_checkpoint_chain = checkpoint
+        .as_ref()
+        .is_some_and(|checkpoint| checkpoint.trusted_internal);
+    let trusted_topology_cache = checkpoint
+        .as_ref()
+        .and_then(|checkpoint| checkpoint.trusted_topology_cache.clone());
+    let trusted_cavity_cache = checkpoint
+        .as_ref()
+        .and_then(|checkpoint| checkpoint.trusted_cavity_cache.clone());
     let checkpoint_enabled = checkpoint.is_some() || maximum_depth_boundaries.is_some();
     let request_fingerprint: Option<String> = if checkpoint_enabled {
-        Some(intrinsic_capacity_request_fingerprint(
-            sheet,
-            prepared_pieces,
-            material_areas_by_piece_id,
-            incumbent,
-            warm_prefix_seed.as_ref(),
-            scheduler_deficit,
-            retention_mode,
-        ))
+        Some(match checkpoint.as_ref() {
+            Some(checkpoint) if checkpoint.trusted_internal => {
+                checkpoint.request_fingerprint.clone()
+            }
+            _ => intrinsic_capacity_request_fingerprint(
+                sheet,
+                prepared_pieces,
+                material_areas_by_piece_id,
+                incumbent,
+                warm_prefix_seed.as_ref(),
+                scheduler_deficit,
+                retention_mode,
+            ),
+        })
     } else {
         None
     };
@@ -1403,7 +1435,9 @@ pub fn run_intrinsic_capacity_cold_search(
         }
 
         let topology_measurements_holder = if capture_topology_retention {
-            Some(CapacityTopologyMeasurements::new())
+            Some(CapacityTopologyMeasurements::new(
+                trusted_topology_cache.clone(),
+            ))
         } else {
             None
         };
@@ -1483,6 +1517,9 @@ pub fn run_intrinsic_capacity_cold_search(
                 };
                 let incumbent_binding = intrinsic_capacity_incumbent_binding(incumbent);
                 let checkpoint_out = make_intrinsic_capacity_checkpoint(MakeCheckpointInput {
+                    trusted_internal: trusted_checkpoint_chain,
+                    trusted_topology_cache: trusted_topology_cache.clone(),
+                    trusted_cavity_cache: trusted_cavity_cache.clone(),
                     request_fingerprint: fingerprint.clone(),
                     incumbent_binding,
                     beam: &beam,
@@ -1841,6 +1878,9 @@ fn validate_warm_prefix_seed(
 
 #[allow(clippy::too_many_arguments)]
 struct MakeCheckpointInput<'a> {
+    trusted_internal: bool,
+    trusted_topology_cache: Option<TrustedTopologyCache>,
+    trusted_cavity_cache: Option<TrustedCavityCache>,
     request_fingerprint: String,
     incumbent_binding: Option<IntrinsicAnytimeIncumbentBinding>,
     beam: &'a [CapacityBeamEntry],
@@ -1903,6 +1943,9 @@ fn make_intrinsic_capacity_checkpoint(
         })
         .collect();
     let mut checkpoint = IntrinsicAnytimeCheckpoint {
+        trusted_internal: input.trusted_internal,
+        trusted_topology_cache: input.trusted_topology_cache,
+        trusted_cavity_cache: input.trusted_cavity_cache,
         version: INTRINSIC_ANYTIME_CHECKPOINT_VERSION.to_string(),
         request_fingerprint: input.request_fingerprint,
         producer_role: input.producer_role,
@@ -1930,7 +1973,9 @@ fn make_intrinsic_capacity_checkpoint(
         topology_retention_depths: input.topology_retention_depths.to_vec(),
         integrity_hash: String::new(),
     };
-    checkpoint.integrity_hash = intrinsic_capacity_checkpoint_integrity_hash(&checkpoint);
+    if !checkpoint.trusted_internal {
+        checkpoint.integrity_hash = intrinsic_capacity_checkpoint_integrity_hash(&checkpoint);
+    }
     checkpoint
 }
 
@@ -1958,6 +2003,9 @@ fn validate_intrinsic_capacity_checkpoint(input: ValidateCheckpointInput<'_>) ->
             "unsupported checkpoint version {}.",
             checkpoint.version
         ));
+    }
+    if checkpoint.trusted_internal {
+        return None;
     }
     let expected_integrity_hash = intrinsic_capacity_checkpoint_integrity_hash(checkpoint);
     if checkpoint.integrity_hash != expected_integrity_hash {
@@ -3447,7 +3495,7 @@ fn retain_capacity_beam_entries(
             } else {
                 None
             };
-            let fresh = CapacityTopologyMeasurements::new();
+            let fresh = CapacityTopologyMeasurements::new(None);
             let topology_measurements = topology_measurements.unwrap_or(&fresh);
             retain_capacity_cohesion_frontier(
                 entries,
@@ -3759,14 +3807,16 @@ fn retain_capacity_cohesion_frontier(
 /// top doc for the analogous `CapacitySearchControl` reasoning).
 struct CapacityTopologyMeasurements {
     topology_by_identity: RefCell<HashMap<String, Option<CanonicalLayoutTopologyExact>>>,
+    trusted_topology_cache: Option<TrustedTopologyCache>,
     count: RefCell<f64>,
     elapsed_ms: RefCell<f64>,
 }
 
 impl CapacityTopologyMeasurements {
-    fn new() -> Self {
+    fn new(trusted_topology_cache: Option<TrustedTopologyCache>) -> Self {
         Self {
             topology_by_identity: RefCell::new(HashMap::new()),
+            trusted_topology_cache,
             count: RefCell::new(0.0),
             elapsed_ms: RefCell::new(0.0),
         }
@@ -3782,13 +3832,32 @@ impl CapacityTopologyMeasurements {
             return cached.clone();
         }
         let started_at = timing_now();
-        let measured = if entry.state.placed_collision_geometries.is_empty() {
-            None
-        } else {
-            measure_canonical_layout_topology_exact(&cloned_placed(
-                &entry.state.placed_collision_geometries,
-            ))
-        };
+        let measured = self
+            .trusted_topology_cache
+            .as_ref()
+            .and_then(|cache| {
+                cache
+                    .lock()
+                    .expect("trusted topology cache lock")
+                    .get(identity)
+                    .cloned()
+            })
+            .unwrap_or_else(|| {
+                let measured = if entry.state.placed_collision_geometries.is_empty() {
+                    None
+                } else {
+                    measure_canonical_layout_topology_exact(&cloned_placed(
+                        &entry.state.placed_collision_geometries,
+                    ))
+                };
+                if let Some(cache) = &self.trusted_topology_cache {
+                    cache
+                        .lock()
+                        .expect("trusted topology cache lock")
+                        .insert(identity.clone(), measured.clone());
+                }
+                measured
+            });
         *self.count.borrow_mut() += 1.0;
         *self.elapsed_ms.borrow_mut() += js_math::max(0.0, timing_now() - started_at);
         self.topology_by_identity

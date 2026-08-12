@@ -675,6 +675,12 @@ fn coordinate_intrinsic_shared_archive(
             )
             .map_err(map_capacity_search_error)?,
         );
+        if let Some(checkpoint) = scheduled_cold_start
+            .as_mut()
+            .and_then(|search| search.checkpoint.as_mut())
+        {
+            checkpoint.trust_for_internal_resume();
+        }
         let mut scheduled_cold_checkpoint_reused = false;
 
         if let Some(cold_start) = &scheduled_cold_start {

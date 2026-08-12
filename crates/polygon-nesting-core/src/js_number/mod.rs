@@ -86,6 +86,12 @@ const MAX_SAFE_INTEGER: f64 = 9_007_199_254_740_991.0;
 ///   dropping the `Object.is` special case from the ported code's visible
 ///   structure).
 pub fn number_to_js_string(value: f64) -> String {
+    // safe integers use the same ordinary decimal representation in Rust
+    // and ECMAScript, while avoiding the general binary-float formatter on
+    // canonical grid coordinates and integer counters
+    if is_safe_integer(value) {
+        return (value as i64).to_string();
+    }
     let mut buffer = ryu_js::Buffer::new();
     buffer.format(value).to_string()
 }
@@ -315,6 +321,40 @@ mod tests {
         assert_eq!(number_to_js_string(1e-6), "0.000001");
         assert_eq!(number_to_js_string(622.202), "622.202");
         assert_eq!(number_to_js_string(391605.850174), "391605.850174");
+    }
+
+    #[test]
+    fn safe_integer_fast_path_matches_general_js_formatter() {
+        let general = |value: f64| {
+            let mut buffer = ryu_js::Buffer::new();
+            buffer.format(value).to_string()
+        };
+        for value in [
+            -0.0,
+            0.0,
+            1.0,
+            -1.0,
+            999_999.0,
+            -999_999.0,
+            MAX_SAFE_INTEGER,
+            -MAX_SAFE_INTEGER,
+        ] {
+            assert_eq!(number_to_js_string(value), general(value));
+        }
+
+        let mut state = 0x4d59_5df4_d0f3_3173_u64;
+        for _ in 0..10_000 {
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            let magnitude = state % (MAX_SAFE_INTEGER as u64 + 1);
+            let value = if state & 1 == 0 {
+                magnitude as f64
+            } else {
+                -(magnitude as f64)
+            };
+            assert_eq!(number_to_js_string(value), general(value));
+        }
     }
 
     #[test]
