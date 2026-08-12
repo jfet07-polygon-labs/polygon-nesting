@@ -141,9 +141,10 @@ use crate::validation::placement::IrregularGeometryInputError;
 use super::endpoint::{
     compare_intrinsic_capacity_endpoints, intrinsic_capacity_span_fits_sheet,
     intrinsic_capacity_state_grid_span, materialize_intrinsic_capacity_endpoint,
-    measure_intrinsic_capacity_cavities, IntrinsicCapacityCavityCache,
-    IntrinsicCapacityCavityMetrics, IntrinsicCapacityEndpoint, IntrinsicCapacityEndpointOrigin,
-    IntrinsicCapacityGridSpan, MaterializeIntrinsicCapacityEndpointInput,
+    measure_intrinsic_capacity_cavities, measure_intrinsic_capacity_cavities_deriving_key,
+    IntrinsicCapacityCavityCache, IntrinsicCapacityCavityMetrics, IntrinsicCapacityEndpoint,
+    IntrinsicCapacityEndpointOrigin, IntrinsicCapacityGridSpan,
+    MaterializeIntrinsicCapacityEndpointInput,
 };
 use super::material::intrinsic_capacity_prepared_piece_id;
 use super::preflight::IntrinsicCapacityError;
@@ -1141,6 +1142,10 @@ pub fn run_intrinsic_capacity_cold_search(
 
         let mut consumed_at_depth: f64 = 0.0;
         let mut depth_quota_exhausted = false;
+        // Depth-invariant: the transform order depends only on `piece`,
+        // not on the entry; previously re-cloned and re-sorted per entry.
+        let mut sorted_transforms: Vec<IrregularTransformCandidate> = piece.transforms.clone();
+        sorted_transforms.sort_by(transform_candidate_order);
         for entry in &beam {
             if depth_quota_exhausted {
                 break;
@@ -1163,8 +1168,6 @@ pub fn run_intrinsic_capacity_cold_search(
                 crate::caches::prepare_placed_memo_parts(&entry_placed_memo_key_inputs);
             drop(entry_placed_memo_key_inputs);
             let mut scored: Vec<EvaluatedCandidateReference> = Vec::new();
-            let mut sorted_transforms: Vec<IrregularTransformCandidate> = piece.transforms.clone();
-            sorted_transforms.sort_by(transform_candidate_order);
 
             for (transform_ordinal, transform) in sorted_transforms.iter().enumerate() {
                 if depth_quota_exhausted {
@@ -1515,7 +1518,11 @@ pub fn run_intrinsic_capacity_cold_search(
                 measured_survivors.push(successor);
                 continue;
             }
-            match measure_intrinsic_capacity_cavities(&successor.state, cavity_cache) {
+            match measure_intrinsic_capacity_cavities(
+                &successor.state,
+                &successor.anchored_occupied_key,
+                cavity_cache,
+            ) {
                 Some(cavities) => {
                     let mut updated = successor;
                     updated.cavities = cavities;
@@ -1981,7 +1988,9 @@ fn validate_warm_prefix_seed(
             message: "warm prefix has no anchored occupied identity.".to_string(),
         };
     };
-    let Some(cavities) = measure_intrinsic_capacity_cavities(&seed.state, cavity_cache) else {
+    let Some(cavities) =
+        measure_intrinsic_capacity_cavities_deriving_key(&seed.state, cavity_cache)
+    else {
         return WarmPrefixValidation::Invalid {
             message: "warm prefix cavity measurement failed.".to_string(),
         };
@@ -2428,9 +2437,11 @@ fn validate_intrinsic_capacity_checkpoint(input: ValidateCheckpointInput<'_>) ->
             );
         }
 
-        let Some(cavities) =
-            measure_intrinsic_capacity_cavities(&entry.state, &mut validation_cavity_cache)
-        else {
+        let Some(cavities) = measure_intrinsic_capacity_cavities(
+            &entry.state,
+            &entry.anchored_occupied_key,
+            &mut validation_cavity_cache,
+        ) else {
             return Some(
                 "checkpoint cavity objective does not match its exact geometry payload."
                     .to_string(),

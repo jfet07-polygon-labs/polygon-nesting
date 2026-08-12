@@ -180,6 +180,7 @@ pub type IntrinsicCapacityCavityCache = HashMap<String, IntrinsicCapacityCavityM
 /// then get-before-compute, invalid results never cached).
 pub fn measure_intrinsic_capacity_cavities(
     state: &IrregularBeamState,
+    anchored_occupied_key: &str,
     cache: &mut IntrinsicCapacityCavityCache,
 ) -> Option<IntrinsicCapacityCavityMetrics> {
     if state.placed_collision_geometries.is_empty() {
@@ -189,8 +190,12 @@ pub fn measure_intrinsic_capacity_cavities(
             total_doubled_area_grid2: "0".to_string(),
         });
     }
-    let occupied_key = state.bottom_left_anchored_canonical_occupied_geometry_key()?;
-    if let Some(cached) = cache.get(&occupied_key) {
+    // Callers pass the entry's stored anchored occupied key — derived from
+    // this same state at construction (and only constructed when the
+    // derivation was `Some`), so re-rendering it here per measurement was
+    // pure repeated work: every placed piece's canonical key, a sort, and
+    // a multi-KB join per call, hit or miss.
+    if let Some(cached) = cache.get(anchored_occupied_key) {
         return Some(cached.clone());
     }
     let owned_placed = to_owned_placed(&state.placed_collision_geometries);
@@ -200,8 +205,22 @@ pub fn measure_intrinsic_capacity_cavities(
         total_area_mm2: measured.total_area_mm2,
         total_doubled_area_grid2: measured.total_doubled_area_grid2,
     };
-    cache.insert(occupied_key, metrics.clone());
+    cache.insert(anchored_occupied_key.to_string(), metrics.clone());
     Some(metrics)
+}
+
+/// [`measure_intrinsic_capacity_cavities`] for callers without a stored
+/// anchored key: derives it exactly as the pre-refactor form did (after
+/// the empty-placement fast path, `None` on a failed derivation).
+pub fn measure_intrinsic_capacity_cavities_deriving_key(
+    state: &IrregularBeamState,
+    cache: &mut IntrinsicCapacityCavityCache,
+) -> Option<IntrinsicCapacityCavityMetrics> {
+    if state.placed_collision_geometries.is_empty() {
+        return measure_intrinsic_capacity_cavities(state, "", cache);
+    }
+    let occupied_key = state.bottom_left_anchored_canonical_occupied_geometry_key()?;
+    measure_intrinsic_capacity_cavities(state, &occupied_key, cache)
 }
 
 /// TS: `intrinsicCapacityEndpoint.ts:111-114` `IntrinsicCapacityGridSpan`.
@@ -273,7 +292,8 @@ pub fn materialize_intrinsic_capacity_endpoint(
         ));
     }
 
-    let cavities = measure_intrinsic_capacity_cavities(&input.state, input.cavity_cache)?;
+    let cavities =
+        measure_intrinsic_capacity_cavities_deriving_key(&input.state, input.cavity_cache)?;
     let placed_doubled_material_area_grid2 =
         sum_material_areas(&placed_prepared_ids, input.material_areas_by_piece_id)?;
     let placed_count = placed_prepared_ids.len() as f64;
