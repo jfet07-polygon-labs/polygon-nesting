@@ -705,6 +705,22 @@ struct CapacityObserverTransition {
 }
 
 /// TS: `intrinsicCapacitySearch.ts:300-309`/`1671-1675`
+/// The pure per-candidate evaluation outcome of the capacity beam loop
+/// (evaluate + sheet-fit + optional contact score), computed on the job
+/// pool and replayed serially in candidate order — every counter, trace,
+/// clock observation, and error propagation stays with the replay, so the
+/// dispatch is bit-invisible at every thread count (`tests/thread_equality.rs`,
+/// `capacity_search_vectors`' integrity-hash preimages).
+enum CandidateEvaluationOutcome {
+    Invalid,
+    FitRejected,
+    Scored(EvaluatedCandidateReference),
+    ContactScored {
+        shared_boundary_length_mm: f64,
+        evaluated: EvaluatedCandidateReference,
+    },
+}
+
 /// `ScoredCandidateReference`/`EvaluatedCandidateReference` collapsed into
 /// one concrete struct (TS's `extends` relationship has no distinct runtime
 /// shape once ported).
@@ -1198,7 +1214,76 @@ pub fn run_intrinsic_capacity_cold_search(
                 }
 
                 let evaluation_started_at = if capture { timing_now() } else { 0.0 };
-                for candidate in &legal_candidates {
+                // Pure per-candidate work (evaluate + fit + contact score)
+                // dispatched over the job pool, then replayed serially in
+                // candidate order with every effect — cap checks, hash-
+                // visible counters, contact-trace clock observations, error
+                // propagation — exactly where the serial loop performed it.
+                // The admitted prefix is deterministic because the cap check
+                // consumes exactly one evaluation per candidate before any
+                // outcome branch; any candidate past the conservative
+                // prefix estimate (or when no pool is installed) falls back
+                // to the identical pure closure inline.
+                let evaluation_coordinate_domain = intrinsic_coordinate_domain();
+                let evaluate_candidate_outcome = |candidate: &IrregularPlacementCandidate| -> Result<
+                    CandidateEvaluationOutcome,
+                    String,
+                > {
+                    let Some(evaluated) =
+                        evaluate_candidate(entry, &moving, candidate, transform_ordinal as f64)
+                    else {
+                        return Ok(CandidateEvaluationOutcome::Invalid);
+                    };
+                    let fits = intrinsic_capacity_span_fits_sheet(
+                        IntrinsicCapacityGridSpan {
+                            width_grid: evaluated.width_grid,
+                            height_grid: evaluated.height_grid,
+                        },
+                        sheet_width_grid,
+                        sheet_height_grid,
+                    );
+                    if !fits.0 && !fits.1 {
+                        return Ok(CandidateEvaluationOutcome::FitRejected);
+                    }
+                    if capture_topology_retention {
+                        let score_input = ScoreIrregularPlacementCandidateInput {
+                            sheet: &evaluation_coordinate_domain,
+                            placed: &entry_placed_owned,
+                            moving: &moving,
+                            candidate,
+                            policy_id: None,
+                        };
+                        let contact_score =
+                            score_candidate(&score_input).map_err(|error| error.message)?;
+                        Ok(CandidateEvaluationOutcome::ContactScored {
+                            shared_boundary_length_mm: contact_score
+                                .shared_collision_boundary_length_mm,
+                            evaluated,
+                        })
+                    } else {
+                        Ok(CandidateEvaluationOutcome::Scored(evaluated))
+                    }
+                };
+                let admitted_candidate_count = {
+                    let remaining = js_math::max(
+                        0.0,
+                        js_math::min(
+                            placement_evaluation_quota_per_depth - consumed_at_depth,
+                            placement_evaluation_cap - consumed_placement_evaluations,
+                        ),
+                    );
+                    js_math::min(legal_candidates.len() as f64, remaining) as usize
+                };
+                let mut precomputed_outcomes: Vec<
+                    Option<Result<CandidateEvaluationOutcome, String>>,
+                > = crate::parallel::map_slice_with_job_pool(
+                    &legal_candidates[..admitted_candidate_count],
+                    evaluate_candidate_outcome,
+                )
+                .into_iter()
+                .map(Some)
+                .collect();
+                for (candidate_ordinal, candidate) in legal_candidates.iter().enumerate() {
                     if consumed_at_depth >= placement_evaluation_quota_per_depth
                         || consumed_placement_evaluations >= placement_evaluation_cap
                     {
@@ -1211,51 +1296,53 @@ pub fn run_intrinsic_capacity_cold_search(
                     }
                     consumed_at_depth += 1.0;
                     consumed_placement_evaluations += 1.0;
-                    let Some(evaluated) =
-                        evaluate_candidate(entry, &moving, candidate, transform_ordinal as f64)
-                    else {
-                        invalid_candidates += 1.0;
-                        continue;
+                    let outcome = match precomputed_outcomes
+                        .get_mut(candidate_ordinal)
+                        .and_then(Option::take)
+                    {
+                        Some(outcome) => outcome,
+                        None => evaluate_candidate_outcome(candidate),
                     };
-                    let fits = intrinsic_capacity_span_fits_sheet(
-                        IntrinsicCapacityGridSpan {
-                            width_grid: evaluated.width_grid,
-                            height_grid: evaluated.height_grid,
-                        },
-                        sheet_width_grid,
-                        sheet_height_grid,
-                    );
-                    if !fits.0 && !fits.1 {
-                        fit_rejected_candidates += 1.0;
-                        continue;
-                    }
-                    if capture_topology_retention {
-                        let contact_started_at = timing_now();
-                        let coordinate_domain = intrinsic_coordinate_domain();
-                        let score_input = ScoreIrregularPlacementCandidateInput {
-                            sheet: &coordinate_domain,
-                            placed: &entry_placed_owned,
-                            moving: &moving,
-                            candidate,
-                            policy_id: None,
-                        };
-                        let contact_score = score_candidate(&score_input).map_err(|error| {
-                            capacity_error("capacityContactFanout", error.message)
-                        })?;
-                        contact_fanout_trace.measured_candidate_count += 1.0;
-                        contact_fanout_trace.measurement_ms +=
-                            js_math::max(0.0, timing_now() - contact_started_at);
-                        if contact_score.shared_collision_boundary_length_mm > 0.0 {
-                            contact_fanout_trace.positive_candidate_count += 1.0;
+                    match outcome {
+                        Ok(CandidateEvaluationOutcome::Invalid) => {
+                            invalid_candidates += 1.0;
+                            continue;
                         }
-                        scored.push(EvaluatedCandidateReference {
-                            shared_boundary_length_mm: Some(
-                                contact_score.shared_collision_boundary_length_mm,
-                            ),
-                            ..evaluated
-                        });
-                    } else {
-                        scored.push(evaluated);
+                        Ok(CandidateEvaluationOutcome::FitRejected) => {
+                            fit_rejected_candidates += 1.0;
+                            continue;
+                        }
+                        Ok(CandidateEvaluationOutcome::Scored(evaluated)) => {
+                            scored.push(evaluated);
+                        }
+                        Ok(CandidateEvaluationOutcome::ContactScored {
+                            shared_boundary_length_mm,
+                            evaluated,
+                        }) => {
+                            // Both bracket observations of the (injectable,
+                            // possibly stateful) clock stay here, at the
+                            // same per-candidate ordinals as the serial
+                            // form; the measured compute ran on the pool.
+                            let contact_started_at = timing_now();
+                            contact_fanout_trace.measured_candidate_count += 1.0;
+                            contact_fanout_trace.measurement_ms +=
+                                js_math::max(0.0, timing_now() - contact_started_at);
+                            if shared_boundary_length_mm > 0.0 {
+                                contact_fanout_trace.positive_candidate_count += 1.0;
+                            }
+                            scored.push(EvaluatedCandidateReference {
+                                shared_boundary_length_mm: Some(shared_boundary_length_mm),
+                                ..evaluated
+                            });
+                        }
+                        Err(message) => {
+                            // The serial form observed the clock once
+                            // (contact_started_at) before the scoring error
+                            // surfaced; reproduce that observation, then
+                            // propagate the first error in candidate order.
+                            let _contact_started_at = timing_now();
+                            return Err(capacity_error("capacityContactFanout", message));
+                        }
                     }
                 }
                 if capture {
