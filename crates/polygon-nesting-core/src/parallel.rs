@@ -123,7 +123,7 @@ fn default_thread_count_from_available(available_cpu_count: usize) -> usize {
     // 12.99 s vs 8 workers 12.78 s (−1.6 %, 6 workers worse). Wide hosts
     // keep the reservation (16 CPUs measured: 16 workers is worse than
     // 15), and a true single-CPU host stays at 1 (no oversubscription).
-    // Thread count never affects output bytes
+    // thread count never affects output bytes
     // (`tests/thread_equality.rs`).
     match available_cpu_count {
         0 | 1 => 1,
@@ -446,7 +446,7 @@ mod tests {
     #[test]
     fn automatic_thread_count_reserves_one_cpu_without_dropping_below_one() {
         assert_eq!(default_thread_count_from_available(1), 1);
-        // Hosts up to 8 CPUs run a worker per CPU: the coordinator
+        // hosts up to 8 CPUs run a worker per CPU: the coordinator
         // executes on the pool, and the measured pinned-shape gains are
         // −15 % wall at 2 CPUs and −1.6 % at 8.
         assert_eq!(default_thread_count_from_available(2), 2);

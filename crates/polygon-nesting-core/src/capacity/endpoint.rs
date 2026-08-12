@@ -190,7 +190,7 @@ pub fn measure_intrinsic_capacity_cavities(
             total_doubled_area_grid2: "0".to_string(),
         });
     }
-    // Callers pass the entry's stored anchored occupied key — derived from
+    // callers pass the entry's stored anchored occupied key — derived from
     // this same state at construction (and only constructed when the
     // derivation was `Some`), so re-rendering it here per measurement was
     // pure repeated work: every placed piece's canonical key, a sort, and

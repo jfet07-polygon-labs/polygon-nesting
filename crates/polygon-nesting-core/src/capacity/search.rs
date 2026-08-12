@@ -1142,7 +1142,7 @@ pub fn run_intrinsic_capacity_cold_search(
 
         let mut consumed_at_depth: f64 = 0.0;
         let mut depth_quota_exhausted = false;
-        // Depth-invariant: the transform order depends only on `piece`,
+        // depth-invariant: the transform order depends only on `piece`,
         // not on the entry; previously re-cloned and re-sorted per entry.
         let mut sorted_transforms: Vec<IrregularTransformCandidate> = piece.transforms.clone();
         sorted_transforms.sort_by(transform_candidate_order);
@@ -1217,12 +1217,12 @@ pub fn run_intrinsic_capacity_cold_search(
                 }
 
                 let evaluation_started_at = if capture { timing_now() } else { 0.0 };
-                // Pure per-candidate work (evaluate + fit + contact score)
+                // pure per-candidate work (evaluate + fit + contact score)
                 // dispatched over the job pool, then replayed serially in
                 // candidate order with every effect — cap checks, hash-
                 // visible counters, contact-trace clock observations, error
                 // propagation — exactly where the serial loop performed it.
-                // The admitted prefix is deterministic because the cap check
+                // the admitted prefix is deterministic because the cap check
                 // consumes exactly one evaluation per candidate before any
                 // outcome branch; any candidate past the conservative
                 // prefix estimate (or when no pool is installed) falls back
@@ -1322,7 +1322,7 @@ pub fn run_intrinsic_capacity_cold_search(
                             shared_boundary_length_mm,
                             evaluated,
                         }) => {
-                            // Both bracket observations of the (injectable,
+                            // both bracket observations of the (injectable,
                             // possibly stateful) clock stay here, at the
                             // same per-candidate ordinals as the serial
                             // form; the measured compute ran on the pool.
@@ -1339,7 +1339,7 @@ pub fn run_intrinsic_capacity_cold_search(
                             });
                         }
                         Err(message) => {
-                            // The serial form observed the clock once
+                            // the serial form observed the clock once
                             // (contact_started_at) before the scoring error
                             // surfaced; reproduce that observation, then
                             // propagate the first error in candidate order.
@@ -1364,7 +1364,7 @@ pub fn run_intrinsic_capacity_cold_search(
             // that intervening read, which the borrow checker rejects even
             // though the two accesses never actually overlap in time.
             let built_candidate_keys: RefCell<HashSet<String>> = RefCell::new(HashSet::new());
-            // Every successor built below is a child of this one entry's
+            // every successor built below is a child of this one entry's
             // state, so the anchored occupied key's parent half recurs
             // across successors; the memo lives for this entry's build
             // phase only (the parent state never advances within it).
@@ -1538,9 +1538,8 @@ pub fn run_intrinsic_capacity_cold_search(
         }
 
         let topology_measurements_holder = if capture_topology_retention {
-            let measurements =
-                CapacityTopologyMeasurements::new(trusted_topology_cache.clone());
-            // The exact topology of each survivor is a pure function of its
+            let measurements = CapacityTopologyMeasurements::new(trusted_topology_cache.clone());
+            // the exact topology of each survivor is a pure function of its
             // placed set; precompute the whole depth's survivor topologies
             // on the job pool and seed them, so the retention comparators'
             // memo misses consume seeded values instead of computing on the
@@ -1549,15 +1548,25 @@ pub fn run_intrinsic_capacity_cold_search(
             // solely by the serial comparator flow (see
             // `CapacityTopologyMeasurements::precomputed_by_identity`).
             //
-            // Speculative-only pacing gate: with fewer than two workers the
+            // speculative-only pacing gate: with fewer than two workers the
             // whole batch would run on the coordinator anyway, turning the
             // never-measured survivors' pure waste into critical-path wall
             // time (the accounting short-circuit deliberately measures a
             // strict subset). Skipping is byte-invisible: an unseeded miss
             // computes the identical value inline.
             if crate::parallel::job_pool_width().unwrap_or(0) >= 2 {
+                let survivors_to_precompute: Vec<&CapacityBeamEntry> =
+                    if let Some(cache) = &trusted_topology_cache {
+                        let cache = cache.lock().expect("trusted topology cache lock");
+                        measured_survivors
+                            .iter()
+                            .filter(|entry| !cache.contains_key(&entry.successor_identity))
+                            .collect()
+                    } else {
+                        measured_survivors.iter().collect()
+                    };
                 let precomputed_survivor_topologies =
-                    crate::parallel::map_slice_with_job_pool(&measured_survivors, |entry| {
+                    crate::parallel::map_slice_with_job_pool(&survivors_to_precompute, |entry| {
                         if entry.state.placed_collision_geometries.is_empty() {
                             None
                         } else {
@@ -1566,7 +1575,7 @@ pub fn run_intrinsic_capacity_cold_search(
                             ))
                         }
                     });
-                for (entry, topology) in measured_survivors
+                for (entry, topology) in survivors_to_precompute
                     .iter()
                     .zip(precomputed_survivor_topologies)
                 {
