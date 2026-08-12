@@ -183,14 +183,27 @@ pub fn measure_intrinsic_capacity_cavities(
     cache: &mut IntrinsicCapacityCavityCache,
 ) -> Option<IntrinsicCapacityCavityMetrics> {
     if state.placed_collision_geometries.is_empty() {
+        return measure_intrinsic_capacity_cavities_with_key(state, "", cache);
+    }
+    let occupied_key = state.bottom_left_anchored_canonical_occupied_geometry_key()?;
+    measure_intrinsic_capacity_cavities_with_key(state, &occupied_key, cache)
+}
+
+/// Measures cavities with a key already derived from `state` by a trusted
+/// capacity-search entry constructor.
+pub(crate) fn measure_intrinsic_capacity_cavities_with_key(
+    state: &IrregularBeamState,
+    anchored_occupied_key: &str,
+    cache: &mut IntrinsicCapacityCavityCache,
+) -> Option<IntrinsicCapacityCavityMetrics> {
+    if state.placed_collision_geometries.is_empty() {
         return Some(IntrinsicCapacityCavityMetrics {
             count: 0.0,
             total_area_mm2: 0.0,
             total_doubled_area_grid2: "0".to_string(),
         });
     }
-    let occupied_key = state.bottom_left_anchored_canonical_occupied_geometry_key()?;
-    if let Some(cached) = cache.get(&occupied_key) {
+    if let Some(cached) = cache.get(anchored_occupied_key) {
         return Some(cached.clone());
     }
     let owned_placed = to_owned_placed(&state.placed_collision_geometries);
@@ -200,7 +213,7 @@ pub fn measure_intrinsic_capacity_cavities(
         total_area_mm2: measured.total_area_mm2,
         total_doubled_area_grid2: measured.total_doubled_area_grid2,
     };
-    cache.insert(occupied_key, metrics.clone());
+    cache.insert(anchored_occupied_key.to_string(), metrics.clone());
     Some(metrics)
 }
 

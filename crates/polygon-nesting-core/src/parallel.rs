@@ -52,10 +52,12 @@
 //!    production callers always pass `None` here;
 //! 2. the `MIN_PLANE_IRREGULAR_NATIVE_THREADS` process environment
 //!    variable, parsed as a positive integer;
-//! 3. one fewer than the OS-visible logical CPU count, clamped to `1`.
-//!    Rayon workers execute parallel work while the job coordinator runs on
-//!    its own thread, so the automatic default leaves one CPU available to
-//!    the coordinator. Per `cache-concurrency-design.md` §7, this resolved
+//! 3. one fewer than the OS-visible logical CPU count, clamped to `1` —
+//!    except on hosts with at most 8 CPUs, which use every CPU: the coordinator
+//!    executes the job body ON a pool worker (`JobPool::run_scoped`), so
+//!    the historical one-CPU reservation starves 2-CPU containers for no
+//!    benefit (see `default_thread_count_from_available`'s measured
+//!    rationale). Per `cache-concurrency-design.md` §7, this resolved
 //!    value is diagnostics-only: it is reported through job diagnostics and
 //!    never reaches the result DTO, a checkpoint, or any hashed surface.
 
@@ -112,7 +114,22 @@ fn automatic_thread_count() -> usize {
 }
 
 fn default_thread_count_from_available(available_cpu_count: usize) -> usize {
-    available_cpu_count.saturating_sub(1).max(1)
+    // `available - 1` reserved a CPU for the coordinator back when it ran
+    // outside the pool; since `JobPool::run_scoped` executes the whole job
+    // body ON a pool worker, small hosts resolving to `available - 1`
+    // starve the parallel sites for no benefit. Measured on pinned-CPU
+    // container shapes (mixed-61-2000x2700-compact wall): 2 CPUs — 1
+    // worker 18.8 s vs 2 workers 15.9 s (−15 %); 8 CPUs — 7 workers
+    // 12.99 s vs 8 workers 12.78 s (−1.6 %, 6 workers worse). Wide hosts
+    // keep the reservation (16 CPUs measured: 16 workers is worse than
+    // 15), and a true single-CPU host stays at 1 (no oversubscription).
+    // thread count never affects output bytes
+    // (`tests/thread_equality.rs`).
+    match available_cpu_count {
+        0 | 1 => 1,
+        n if n <= 8 => n,
+        n => n - 1,
+    }
 }
 
 /// Builds a job-owned `rayon::ThreadPool` sized to `thread_count`. Falls
@@ -287,6 +304,20 @@ pub(crate) fn has_job_pool() -> bool {
     JOB_POOL.with(|slot| slot.borrow().is_some())
 }
 
+/// The installed job pool's worker count, or `None` when no pool is
+/// installed. Lets speculative pure precomputation sites skip dispatch
+/// entirely when it could not overlap anything (no pool, or a
+/// single-worker pool where the coordinator itself executes the batch) —
+/// a pacing decision only, never observable in outputs: callers must fall
+/// back to computing the same pure values lazily inline.
+pub(crate) fn job_pool_width() -> Option<usize> {
+    JOB_POOL.with(|slot| {
+        slot.borrow()
+            .as_ref()
+            .map(|pool| pool.current_num_threads())
+    })
+}
+
 /// Runs `body` on this OS thread's currently-installed job pool
 /// (`ThreadPool::install`), or inline on the calling thread if no pool is
 /// installed (see this module's top doc, third bullet). Every Rayon
@@ -413,10 +444,15 @@ mod tests {
     }
 
     #[test]
-    fn automatic_thread_count_reserves_one_cpu_without_dropping_below_one() {
+    fn automatic_thread_count_uses_small_hosts_fully_and_reserves_on_wide_hosts() {
         assert_eq!(default_thread_count_from_available(1), 1);
-        assert_eq!(default_thread_count_from_available(2), 1);
-        assert_eq!(default_thread_count_from_available(4), 3);
+        // hosts up to 8 CPUs run a worker per CPU: the coordinator
+        // executes on the pool, and the measured pinned-shape gains are
+        // −15 % wall at 2 CPUs and −1.6 % at 8.
+        assert_eq!(default_thread_count_from_available(2), 2);
+        assert_eq!(default_thread_count_from_available(4), 4);
+        assert_eq!(default_thread_count_from_available(8), 8);
+        assert_eq!(default_thread_count_from_available(9), 8);
         assert_eq!(default_thread_count_from_available(16), 15);
     }
 

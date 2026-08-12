@@ -129,8 +129,8 @@ use crate::nfp_ifp::{
     LegalCandidateMemo, NfpIfpCheckpointPhase, NfpIfpControl, NfpIfpControlAbortError, NfpIfpError,
 };
 use crate::search::beam_state::{
-    IrregularBeamState, IrregularBeamStateInput, IrregularCollisionBounds, TimingNowFn,
-    WithPlacementInput, WithUnplacedPieceInput,
+    AnchoredParentKeysMemo, IrregularBeamState, IrregularBeamStateInput, IrregularCollisionBounds,
+    TimingNowFn, WithPlacementInput, WithUnplacedPieceInput,
 };
 use crate::search::placement_scorer::{score_candidate, ScoreIrregularPlacementCandidateInput};
 use crate::search::strict_decoder::{
@@ -141,9 +141,10 @@ use crate::validation::placement::IrregularGeometryInputError;
 use super::endpoint::{
     compare_intrinsic_capacity_endpoints, intrinsic_capacity_span_fits_sheet,
     intrinsic_capacity_state_grid_span, materialize_intrinsic_capacity_endpoint,
-    measure_intrinsic_capacity_cavities, IntrinsicCapacityCavityCache,
-    IntrinsicCapacityCavityMetrics, IntrinsicCapacityEndpoint, IntrinsicCapacityEndpointOrigin,
-    IntrinsicCapacityGridSpan, MaterializeIntrinsicCapacityEndpointInput,
+    measure_intrinsic_capacity_cavities, measure_intrinsic_capacity_cavities_with_key,
+    IntrinsicCapacityCavityCache, IntrinsicCapacityCavityMetrics, IntrinsicCapacityEndpoint,
+    IntrinsicCapacityEndpointOrigin, IntrinsicCapacityGridSpan,
+    MaterializeIntrinsicCapacityEndpointInput,
 };
 use super::material::intrinsic_capacity_prepared_piece_id;
 use super::preflight::IntrinsicCapacityError;
@@ -705,6 +706,22 @@ struct CapacityObserverTransition {
 }
 
 /// TS: `intrinsicCapacitySearch.ts:300-309`/`1671-1675`
+/// The pure per-candidate evaluation outcome of the capacity beam loop
+/// (evaluate + sheet-fit + optional contact score), computed on the job
+/// pool and replayed serially in candidate order — every counter, trace,
+/// clock observation, and error propagation stays with the replay, so the
+/// dispatch is bit-invisible at every thread count (`tests/thread_equality.rs`,
+/// `capacity_search_vectors`' integrity-hash preimages).
+enum CandidateEvaluationOutcome {
+    Invalid,
+    FitRejected,
+    Scored(EvaluatedCandidateReference),
+    ContactScored {
+        shared_boundary_length_mm: f64,
+        evaluated: EvaluatedCandidateReference,
+    },
+}
+
 /// `ScoredCandidateReference`/`EvaluatedCandidateReference` collapsed into
 /// one concrete struct (TS's `extends` relationship has no distinct runtime
 /// shape once ported).
@@ -1125,6 +1142,10 @@ pub fn run_intrinsic_capacity_cold_search(
 
         let mut consumed_at_depth: f64 = 0.0;
         let mut depth_quota_exhausted = false;
+        // depth-invariant: the transform order depends only on `piece`,
+        // not on the entry; previously re-cloned and re-sorted per entry.
+        let mut sorted_transforms: Vec<IrregularTransformCandidate> = piece.transforms.clone();
+        sorted_transforms.sort_by(transform_candidate_order);
         for entry in &beam {
             if depth_quota_exhausted {
                 break;
@@ -1147,8 +1168,6 @@ pub fn run_intrinsic_capacity_cold_search(
                 crate::caches::prepare_placed_memo_parts(&entry_placed_memo_key_inputs);
             drop(entry_placed_memo_key_inputs);
             let mut scored: Vec<EvaluatedCandidateReference> = Vec::new();
-            let mut sorted_transforms: Vec<IrregularTransformCandidate> = piece.transforms.clone();
-            sorted_transforms.sort_by(transform_candidate_order);
 
             for (transform_ordinal, transform) in sorted_transforms.iter().enumerate() {
                 if depth_quota_exhausted {
@@ -1198,7 +1217,76 @@ pub fn run_intrinsic_capacity_cold_search(
                 }
 
                 let evaluation_started_at = if capture { timing_now() } else { 0.0 };
-                for candidate in &legal_candidates {
+                // pure per-candidate work (evaluate + fit + contact score)
+                // dispatched over the job pool, then replayed serially in
+                // candidate order with every effect — cap checks, hash-
+                // visible counters, contact-trace clock observations, error
+                // propagation — exactly where the serial loop performed it.
+                // the admitted prefix is deterministic because the cap check
+                // consumes exactly one evaluation per candidate before any
+                // outcome branch; any candidate past the conservative
+                // prefix estimate (or when no pool is installed) falls back
+                // to the identical pure closure inline.
+                let evaluation_coordinate_domain = intrinsic_coordinate_domain();
+                let evaluate_candidate_outcome = |candidate: &IrregularPlacementCandidate| -> Result<
+                    CandidateEvaluationOutcome,
+                    String,
+                > {
+                    let Some(evaluated) =
+                        evaluate_candidate(entry, &moving, candidate, transform_ordinal as f64)
+                    else {
+                        return Ok(CandidateEvaluationOutcome::Invalid);
+                    };
+                    let fits = intrinsic_capacity_span_fits_sheet(
+                        IntrinsicCapacityGridSpan {
+                            width_grid: evaluated.width_grid,
+                            height_grid: evaluated.height_grid,
+                        },
+                        sheet_width_grid,
+                        sheet_height_grid,
+                    );
+                    if !fits.0 && !fits.1 {
+                        return Ok(CandidateEvaluationOutcome::FitRejected);
+                    }
+                    if capture_topology_retention {
+                        let score_input = ScoreIrregularPlacementCandidateInput {
+                            sheet: &evaluation_coordinate_domain,
+                            placed: &entry_placed_owned,
+                            moving: &moving,
+                            candidate,
+                            policy_id: None,
+                        };
+                        let contact_score =
+                            score_candidate(&score_input).map_err(|error| error.message)?;
+                        Ok(CandidateEvaluationOutcome::ContactScored {
+                            shared_boundary_length_mm: contact_score
+                                .shared_collision_boundary_length_mm,
+                            evaluated,
+                        })
+                    } else {
+                        Ok(CandidateEvaluationOutcome::Scored(evaluated))
+                    }
+                };
+                let admitted_candidate_count = {
+                    let remaining = js_math::max(
+                        0.0,
+                        js_math::min(
+                            placement_evaluation_quota_per_depth - consumed_at_depth,
+                            placement_evaluation_cap - consumed_placement_evaluations,
+                        ),
+                    );
+                    js_math::min(legal_candidates.len() as f64, remaining) as usize
+                };
+                let mut precomputed_outcomes: Vec<
+                    Option<Result<CandidateEvaluationOutcome, String>>,
+                > = crate::parallel::map_slice_with_job_pool(
+                    &legal_candidates[..admitted_candidate_count],
+                    evaluate_candidate_outcome,
+                )
+                .into_iter()
+                .map(Some)
+                .collect();
+                for (candidate_ordinal, candidate) in legal_candidates.iter().enumerate() {
                     if consumed_at_depth >= placement_evaluation_quota_per_depth
                         || consumed_placement_evaluations >= placement_evaluation_cap
                     {
@@ -1211,51 +1299,53 @@ pub fn run_intrinsic_capacity_cold_search(
                     }
                     consumed_at_depth += 1.0;
                     consumed_placement_evaluations += 1.0;
-                    let Some(evaluated) =
-                        evaluate_candidate(entry, &moving, candidate, transform_ordinal as f64)
-                    else {
-                        invalid_candidates += 1.0;
-                        continue;
+                    let outcome = match precomputed_outcomes
+                        .get_mut(candidate_ordinal)
+                        .and_then(Option::take)
+                    {
+                        Some(outcome) => outcome,
+                        None => evaluate_candidate_outcome(candidate),
                     };
-                    let fits = intrinsic_capacity_span_fits_sheet(
-                        IntrinsicCapacityGridSpan {
-                            width_grid: evaluated.width_grid,
-                            height_grid: evaluated.height_grid,
-                        },
-                        sheet_width_grid,
-                        sheet_height_grid,
-                    );
-                    if !fits.0 && !fits.1 {
-                        fit_rejected_candidates += 1.0;
-                        continue;
-                    }
-                    if capture_topology_retention {
-                        let contact_started_at = timing_now();
-                        let coordinate_domain = intrinsic_coordinate_domain();
-                        let score_input = ScoreIrregularPlacementCandidateInput {
-                            sheet: &coordinate_domain,
-                            placed: &entry_placed_owned,
-                            moving: &moving,
-                            candidate,
-                            policy_id: None,
-                        };
-                        let contact_score = score_candidate(&score_input).map_err(|error| {
-                            capacity_error("capacityContactFanout", error.message)
-                        })?;
-                        contact_fanout_trace.measured_candidate_count += 1.0;
-                        contact_fanout_trace.measurement_ms +=
-                            js_math::max(0.0, timing_now() - contact_started_at);
-                        if contact_score.shared_collision_boundary_length_mm > 0.0 {
-                            contact_fanout_trace.positive_candidate_count += 1.0;
+                    match outcome {
+                        Ok(CandidateEvaluationOutcome::Invalid) => {
+                            invalid_candidates += 1.0;
+                            continue;
                         }
-                        scored.push(EvaluatedCandidateReference {
-                            shared_boundary_length_mm: Some(
-                                contact_score.shared_collision_boundary_length_mm,
-                            ),
-                            ..evaluated
-                        });
-                    } else {
-                        scored.push(evaluated);
+                        Ok(CandidateEvaluationOutcome::FitRejected) => {
+                            fit_rejected_candidates += 1.0;
+                            continue;
+                        }
+                        Ok(CandidateEvaluationOutcome::Scored(evaluated)) => {
+                            scored.push(evaluated);
+                        }
+                        Ok(CandidateEvaluationOutcome::ContactScored {
+                            shared_boundary_length_mm,
+                            evaluated,
+                        }) => {
+                            // both bracket observations of the (injectable,
+                            // possibly stateful) clock stay here, at the
+                            // same per-candidate ordinals as the serial
+                            // form; the measured compute ran on the pool.
+                            let contact_started_at = timing_now();
+                            contact_fanout_trace.measured_candidate_count += 1.0;
+                            contact_fanout_trace.measurement_ms +=
+                                js_math::max(0.0, timing_now() - contact_started_at);
+                            if shared_boundary_length_mm > 0.0 {
+                                contact_fanout_trace.positive_candidate_count += 1.0;
+                            }
+                            scored.push(EvaluatedCandidateReference {
+                                shared_boundary_length_mm: Some(shared_boundary_length_mm),
+                                ..evaluated
+                            });
+                        }
+                        Err(message) => {
+                            // the serial form observed the clock once
+                            // (contact_started_at) before the scoring error
+                            // surfaced; reproduce that observation, then
+                            // propagate the first error in candidate order.
+                            let _contact_started_at = timing_now();
+                            return Err(capacity_error("capacityContactFanout", message));
+                        }
                     }
                 }
                 if capture {
@@ -1274,6 +1364,11 @@ pub fn run_intrinsic_capacity_cold_search(
             // that intervening read, which the borrow checker rejects even
             // though the two accesses never actually overlap in time.
             let built_candidate_keys: RefCell<HashSet<String>> = RefCell::new(HashSet::new());
+            // every successor built below is a child of this one entry's
+            // state, so the anchored occupied key's parent half recurs
+            // across successors; the memo lives for this entry's build
+            // phase only (the parent state never advances within it).
+            let successor_anchored_parent_keys: AnchoredParentKeysMemo = Mutex::new(HashMap::new());
 
             let mut build_reference = |reference: &EvaluatedCandidateReference,
                                        proposal_role: IntrinsicCapacityProposalRole|
@@ -1305,7 +1400,11 @@ pub fn run_intrinsic_capacity_cold_search(
                     return (false, None);
                 }
                 let Some(anchored_occupied_key) =
-                    placed_state.bottom_left_anchored_canonical_occupied_geometry_key()
+                    IrregularBeamState::bottom_left_anchored_key_via_parent_memo(
+                        &placed_state,
+                        &entry.state,
+                        &successor_anchored_parent_keys,
+                    )
                 else {
                     invalid_candidates += 1.0;
                     return (false, None);
@@ -1419,7 +1518,11 @@ pub fn run_intrinsic_capacity_cold_search(
                 measured_survivors.push(successor);
                 continue;
             }
-            match measure_intrinsic_capacity_cavities(&successor.state, cavity_cache) {
+            match measure_intrinsic_capacity_cavities_with_key(
+                &successor.state,
+                &successor.anchored_occupied_key,
+                cavity_cache,
+            ) {
                 Some(cavities) => {
                     let mut updated = successor;
                     updated.cavities = cavities;
@@ -1435,9 +1538,51 @@ pub fn run_intrinsic_capacity_cold_search(
         }
 
         let topology_measurements_holder = if capture_topology_retention {
-            Some(CapacityTopologyMeasurements::new(
-                trusted_topology_cache.clone(),
-            ))
+            let measurements = CapacityTopologyMeasurements::new(trusted_topology_cache.clone());
+            // the exact topology of each survivor is a pure function of its
+            // placed set; precompute the whole depth's survivor topologies
+            // on the job pool and seed them, so the retention comparators'
+            // memo misses consume seeded values instead of computing on the
+            // coordinator. Which survivors get measured — and every
+            // count/clock effect of measuring them — is still decided
+            // solely by the serial comparator flow (see
+            // `CapacityTopologyMeasurements::precomputed_by_identity`).
+            //
+            // speculative-only pacing gate: with fewer than two workers the
+            // whole batch would run on the coordinator anyway, turning the
+            // never-measured survivors' pure waste into critical-path wall
+            // time (the accounting short-circuit deliberately measures a
+            // strict subset). Skipping is byte-invisible: an unseeded miss
+            // computes the identical value inline.
+            if crate::parallel::job_pool_width().unwrap_or(0) >= 2 {
+                let survivors_to_precompute: Vec<&CapacityBeamEntry> =
+                    if let Some(cache) = &trusted_topology_cache {
+                        let cache = cache.lock().expect("trusted topology cache lock");
+                        measured_survivors
+                            .iter()
+                            .filter(|entry| !cache.contains_key(&entry.successor_identity))
+                            .collect()
+                    } else {
+                        measured_survivors.iter().collect()
+                    };
+                let precomputed_survivor_topologies =
+                    crate::parallel::map_slice_with_job_pool(&survivors_to_precompute, |entry| {
+                        if entry.state.placed_collision_geometries.is_empty() {
+                            None
+                        } else {
+                            measure_canonical_layout_topology_exact(&cloned_placed(
+                                &entry.state.placed_collision_geometries,
+                            ))
+                        }
+                    });
+                for (entry, topology) in survivors_to_precompute
+                    .iter()
+                    .zip(precomputed_survivor_topologies)
+                {
+                    measurements.seed_precomputed(entry.successor_identity.clone(), topology);
+                }
+            }
+            Some(measurements)
         } else {
             None
         };
@@ -2299,9 +2444,11 @@ fn validate_intrinsic_capacity_checkpoint(input: ValidateCheckpointInput<'_>) ->
             );
         }
 
-        let Some(cavities) =
-            measure_intrinsic_capacity_cavities(&entry.state, &mut validation_cavity_cache)
-        else {
+        let Some(cavities) = measure_intrinsic_capacity_cavities_with_key(
+            &entry.state,
+            &entry.anchored_occupied_key,
+            &mut validation_cavity_cache,
+        ) else {
             return Some(
                 "checkpoint cavity objective does not match its exact geometry payload."
                     .to_string(),
@@ -3808,6 +3955,19 @@ fn retain_capacity_cohesion_frontier(
 struct CapacityTopologyMeasurements {
     topology_by_identity: RefCell<HashMap<String, Option<CanonicalLayoutTopologyExact>>>,
     trusted_topology_cache: Option<TrustedTopologyCache>,
+    /// Pure topology values precomputed on the job pool for the depth's
+    /// survivor set ([`Self::seed_precomputed`]). Consumed by
+    /// [`Self::measure`] on a memo miss *in place of* the inline
+    /// computation only — the miss's checkpoint-visible `count` increment
+    /// and both bracket observations of the (injectable, possibly
+    /// stateful) clock happen at exactly the sites and ordinals the
+    /// computing form used, so seeding is bit-invisible to the byte-parity
+    /// gates (thread-equality and the injected deterministic clock's
+    /// integrity-hash preimages; under the production wall clock the
+    /// hash-visible ms values measure the seeded lookup instead of the
+    /// moved compute, like every timing field on a moved-compute path);
+    /// entries never measured are pure wasted worker-side compute.
+    precomputed_by_identity: RefCell<HashMap<String, Option<CanonicalLayoutTopologyExact>>>,
     count: RefCell<f64>,
     elapsed_ms: RefCell<f64>,
 }
@@ -3817,9 +3977,16 @@ impl CapacityTopologyMeasurements {
         Self {
             topology_by_identity: RefCell::new(HashMap::new()),
             trusted_topology_cache,
+            precomputed_by_identity: RefCell::new(HashMap::new()),
             count: RefCell::new(0.0),
             elapsed_ms: RefCell::new(0.0),
         }
+    }
+
+    fn seed_precomputed(&self, identity: String, value: Option<CanonicalLayoutTopologyExact>) {
+        self.precomputed_by_identity
+            .borrow_mut()
+            .insert(identity, value);
     }
 
     fn measure(
@@ -3843,12 +4010,18 @@ impl CapacityTopologyMeasurements {
                     .cloned()
             })
             .unwrap_or_else(|| {
-                let measured = if entry.state.placed_collision_geometries.is_empty() {
-                    None
-                } else {
-                    measure_canonical_layout_topology_exact(&cloned_placed(
-                        &entry.state.placed_collision_geometries,
-                    ))
+                let precomputed = self.precomputed_by_identity.borrow_mut().remove(identity);
+                let measured = match precomputed {
+                    Some(value) => value,
+                    None => {
+                        if entry.state.placed_collision_geometries.is_empty() {
+                            None
+                        } else {
+                            measure_canonical_layout_topology_exact(&cloned_placed(
+                                &entry.state.placed_collision_geometries,
+                            ))
+                        }
+                    }
                 };
                 if let Some(cache) = &self.trusted_topology_cache {
                     cache
