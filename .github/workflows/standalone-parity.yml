@@ -30,7 +30,7 @@ jobs:
       matrix:
         include:
           - key: darwin-arm64
-            runner: blacksmith-6vcpu-macos-15
+            runner: macos-15
             target: aarch64-apple-darwin
             executable-suffix: ''
     runs-on: ${{ matrix.runner }}

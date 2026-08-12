@@ -688,7 +688,12 @@ pub fn run_intrinsic_shared_archive_direct_portfolio(
             if next_checkpoint.is_none() {
                 break;
             }
-            checkpoint = next_checkpoint;
+            checkpoint = next_checkpoint.map(|mut checkpoint| {
+                // callbacks are an external observation boundary: expose only
+                // a hash-bearing checkpoint that takes the full validation path.
+                checkpoint.trusted_internal = false;
+                checkpoint
+            });
             if let Some(callback) = options.on_canonical_grid_checkpointed.as_deref_mut() {
                 // `attempt_direct_construct`'s own borrow of `control` and
                 // `geometry_cache` above has already ended (the call
@@ -702,6 +707,11 @@ pub fn run_intrinsic_shared_archive_direct_portfolio(
                     Some(&mut control),
                     geometry_cache,
                 )?;
+            }
+            // only the private continuation retained by this loop may skip
+            // repeated validation.
+            if let Some(checkpoint) = checkpoint.as_mut() {
+                checkpoint.trusted_internal = true;
             }
         }
 

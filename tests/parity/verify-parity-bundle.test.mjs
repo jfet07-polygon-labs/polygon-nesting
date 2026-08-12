@@ -331,7 +331,7 @@ test('defines the three exact local parity target runner pairs', () => {
   assert.deepEqual(PARITY_TARGETS.map(({ runner, target }) => ({ runner, target })), [
     { runner: 'blacksmith-2vcpu-ubuntu-2404', target: 'x86_64-unknown-linux-gnu' },
     { runner: 'blacksmith-2vcpu-windows-2025', target: 'x86_64-pc-windows-msvc' },
-    { runner: 'blacksmith-6vcpu-macos-15', target: 'aarch64-apple-darwin' },
+    { runner: 'macos-15', target: 'aarch64-apple-darwin' },
   ]);
   assert.ok(PARITY_TARGETS.every(({ profile, features, rustVersion }) => profile === 'release' && features.length === 0 && rustVersion === '1.95.0'));
 });
@@ -361,8 +361,8 @@ test('standalone parity matrix rejects swapped target runner assignments', async
   const workflow = await readFile(new URL('../../.github/workflows/standalone-parity.yml', import.meta.url), 'utf8');
   const swappedRunners = workflow
     .replace('runner: blacksmith-2vcpu-ubuntu-2404', 'runner: temporary-runner')
-    .replace('runner: blacksmith-6vcpu-macos-15', 'runner: blacksmith-2vcpu-ubuntu-2404')
-    .replace('runner: temporary-runner', 'runner: blacksmith-6vcpu-macos-15');
+    .replace('runner: macos-15', 'runner: blacksmith-2vcpu-ubuntu-2404')
+    .replace('runner: temporary-runner', 'runner: macos-15');
   assert.throws(() => assertStandaloneParityMatrixContract(swappedRunners), /strictly deep-equal/);
   const addedTarget = workflow.replace(
     '    runs-on: ${{ matrix.runner }}',

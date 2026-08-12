@@ -144,7 +144,7 @@ use super::beam_state::{
 };
 
 use super::gap_regions::{
-    candidate_contained_in_intrinsic_gap, derive_canonical_intrinsic_gap_regions,
+    candidate_contained_in_intrinsic_gap_prechecked, derive_canonical_intrinsic_gap_regions,
     CanonicalIntrinsicGapRegion,
 };
 
@@ -744,6 +744,8 @@ pub struct IntrinsicStrictDirectCheckpoint {
     pub candidate_evaluation_count: f64,
     pub active_runtime_ms: f64,
     pub phase_ledger: Option<IntrinsicStrictDirectPhaseLedger>,
+    /// private in-process continuations may reuse validated immutable state.
+    pub(crate) trusted_internal: bool,
 }
 
 impl PartialEq for IntrinsicStrictDirectCheckpoint {
@@ -759,6 +761,7 @@ impl PartialEq for IntrinsicStrictDirectCheckpoint {
             && self.candidate_evaluation_count == other.candidate_evaluation_count
             && self.active_runtime_ms == other.active_runtime_ms
             && self.phase_ledger == other.phase_ledger
+            && self.trusted_internal == other.trusted_internal
     }
 }
 
@@ -1330,7 +1333,9 @@ fn score_candidate_body(
     let containing_gap = gap_regions.and_then(|regions| {
         let mut contained: Vec<&CanonicalIntrinsicGapRegion> = regions
             .iter()
-            .filter(|region| candidate_contained_in_intrinsic_gap(moving, candidate.point, region))
+            .filter(|region| {
+                candidate_contained_in_intrinsic_gap_prechecked(moving, candidate.point, region)
+            })
             .collect();
         contained.sort_by(|first, second| {
             asc_cmp(first.area_mm2, second.area_mm2)
@@ -2012,6 +2017,7 @@ fn make_intrinsic_strict_direct_checkpoint(
     candidate_evaluation_count: f64,
     active_runtime_ms: f64,
     phase_ledger: Option<IntrinsicStrictDirectPhaseLedger>,
+    trusted_internal: bool,
 ) -> IntrinsicStrictDirectCheckpoint {
     let state_lineage =
         collect_intrinsic_strict_direct_state_lineage(&state, (next_piece_index as usize) + 1)
@@ -2040,6 +2046,7 @@ fn make_intrinsic_strict_direct_checkpoint(
         candidate_evaluation_count,
         active_runtime_ms,
         phase_ledger,
+        trusted_internal,
     }
 }
 
@@ -2249,6 +2256,9 @@ fn validate_intrinsic_strict_direct_checkpoint(
         return Some(
             "direct checkpoint is not positioned at a valid committed piece boundary.".to_string(),
         );
+    }
+    if checkpoint.trusted_internal {
+        return None;
     }
     let state_lineage = collect_intrinsic_strict_direct_state_lineage(
         &checkpoint.state,
@@ -3289,7 +3299,16 @@ pub fn construct_intrinsic_strict_state(
         .producer_role
         .clone()
         .unwrap_or_else(|| "intrinsic-strict".to_string());
-    let request_fingerprint = if checkpointing_enabled {
+    let trusted_checkpoint = input
+        .checkpoint
+        .as_ref()
+        .is_some_and(|checkpoint| checkpoint.trusted_internal);
+    let request_fingerprint = if trusted_checkpoint {
+        input
+            .checkpoint
+            .as_ref()
+            .map(|checkpoint| checkpoint.request_fingerprint.clone())
+    } else if checkpointing_enabled {
         Some(intrinsic_strict_direct_request_fingerprint(
             input.all_prepared_pieces,
             input.remaining_prepared_pieces,
@@ -3819,6 +3838,7 @@ pub fn construct_intrinsic_strict_state(
                 candidate_evaluation_count,
                 runtime_ms,
                 phase_ledger,
+                trusted_checkpoint,
             )
         })
     } else {

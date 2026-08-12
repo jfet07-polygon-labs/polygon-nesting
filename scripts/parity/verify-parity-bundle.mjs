@@ -37,7 +37,7 @@ export const CANONICAL_ROW_IDS = CURRENT_CANONICAL_ROW_IDS;
 export const PARITY_TARGETS = Object.freeze([
   Object.freeze({ key: 'linux-x64', runner: 'blacksmith-2vcpu-ubuntu-2404', target: 'x86_64-unknown-linux-gnu', profile: 'release', features: [], rustVersion: RUST_VERSION, artifact: 'old-rust-parity-capture-x86_64-unknown-linux-gnu' }),
   Object.freeze({ key: 'win32-x64', runner: 'blacksmith-2vcpu-windows-2025', target: 'x86_64-pc-windows-msvc', profile: 'release', features: [], rustVersion: RUST_VERSION, artifact: 'old-rust-parity-capture-x86_64-pc-windows-msvc' }),
-  Object.freeze({ key: 'darwin-arm64', runner: 'blacksmith-6vcpu-macos-15', target: 'aarch64-apple-darwin', profile: 'release', features: [], rustVersion: RUST_VERSION, artifact: 'old-rust-parity-capture-aarch64-apple-darwin' }),
+  Object.freeze({ key: 'darwin-arm64', runner: 'macos-15', target: 'aarch64-apple-darwin', profile: 'release', features: [], rustVersion: RUST_VERSION, artifact: 'old-rust-parity-capture-aarch64-apple-darwin' }),
 ]);
 
 export function parityTarget(target) {

@@ -116,9 +116,30 @@ use super::search::{
     materialize_intrinsic_capacity_checkpoint_endpoints, run_intrinsic_capacity_cold_search,
     CapacitySearchError, IntrinsicAnytimeCheckpoint, IntrinsicCapacityRetentionMode,
     IntrinsicCapacitySearchResult, IntrinsicCapacitySearchStatus, IntrinsicCapacitySettlement,
-    IntrinsicCapacityWarmPrefixSeed, RunIntrinsicCapacityColdSearchInput,
+    IntrinsicCapacityWarmPrefixSeed, RunIntrinsicCapacityColdSearchInput, TrustedCavityCache,
     INTRINSIC_CAPACITY_V1_BOUNDS,
 };
+
+fn checkpoint_cavity_cache(checkpoint: &IntrinsicAnytimeCheckpoint) -> Option<TrustedCavityCache> {
+    checkpoint
+        .trusted_internal
+        .then(|| checkpoint.trusted_cavity_cache.clone())
+        .flatten()
+}
+
+fn with_checkpoint_cavity_cache<T>(
+    trusted_cache: Option<TrustedCavityCache>,
+    operation: impl FnOnce(&mut IntrinsicCapacityCavityCache) -> T,
+) -> T {
+    let mut local_cache = IntrinsicCapacityCavityCache::new();
+    let mut trusted_cache_guard = trusted_cache
+        .as_ref()
+        .map(|cache| cache.lock().expect("trusted cavity cache lock"));
+    operation(match trusted_cache_guard.as_deref_mut() {
+        Some(cache) => cache,
+        None => &mut local_cache,
+    })
+}
 
 /// TS: `intrinsicCapacityMode.ts:335-343`
 /// `intrinsicCapacityQualityStrictlyImprovesPlacedCount`.
@@ -1067,23 +1088,25 @@ pub fn run_intrinsic_capacity_scheduler_cold_quantum<'a, 'c, 'g>(
         .as_ref()
         .map(|checkpoint| checkpoint.scheduler_deficit)
         .unwrap_or(1.0);
-    let mut cavity_cache = IntrinsicCapacityCavityCache::new();
-    run_intrinsic_capacity_cold_search(RunIntrinsicCapacityColdSearchInput {
-        sheet: input.sheet,
-        prepared_pieces: input.prepared_pieces,
-        material_areas_by_piece_id: &areas_by_piece_id,
-        cavity_cache: &mut cavity_cache,
-        incumbent: None,
-        control: reborrow_control(&mut control),
-        capture_phase_timings: false,
-        checkpoint: input.checkpoint,
-        maximum_depth_boundaries: Some(maximum_depth_boundaries),
-        warm_prefix_seed: None,
-        scheduler_deficit: Some(scheduler_deficit),
-        retention_mode: input.retention_mode,
-        settings,
-        geometry_cache,
-        timing_now,
+    let trusted_cavity_cache = input.checkpoint.as_ref().and_then(checkpoint_cavity_cache);
+    with_checkpoint_cavity_cache(trusted_cavity_cache, |cavity_cache| {
+        run_intrinsic_capacity_cold_search(RunIntrinsicCapacityColdSearchInput {
+            sheet: input.sheet,
+            prepared_pieces: input.prepared_pieces,
+            material_areas_by_piece_id: &areas_by_piece_id,
+            cavity_cache,
+            incumbent: None,
+            control: reborrow_control(&mut control),
+            capture_phase_timings: false,
+            checkpoint: input.checkpoint,
+            maximum_depth_boundaries: Some(maximum_depth_boundaries),
+            warm_prefix_seed: None,
+            scheduler_deficit: Some(scheduler_deficit),
+            retention_mode: input.retention_mode,
+            settings,
+            geometry_cache,
+            timing_now,
+        })
     })
 }
 
@@ -1319,23 +1342,26 @@ fn run_protected_capacity_lane_coordinator<'a>(
         let initial_completed_depths = lanes[0].result.trace.completed_depths;
         let initial_consumed = lanes[0].result.trace.consumed_placement_evaluations;
         let scheduler_deficit = checkpoint.scheduler_deficit;
+        let trusted_cavity_cache = checkpoint_cavity_cache(&checkpoint);
         let resumed_at = Instant::now();
-        let resumed = run_intrinsic_capacity_cold_search(RunIntrinsicCapacityColdSearchInput {
-            sheet: input.sheet,
-            prepared_pieces: input.prepared_pieces,
-            material_areas_by_piece_id: input.material_areas_by_piece_id,
-            cavity_cache: &mut IntrinsicCapacityCavityCache::new(),
-            incumbent: None,
-            control: reborrow_control(&mut control),
-            capture_phase_timings: false,
-            checkpoint: Some(checkpoint),
-            maximum_depth_boundaries: None,
-            warm_prefix_seed: None,
-            scheduler_deficit: Some(scheduler_deficit),
-            retention_mode: input.retention_mode,
-            settings,
-            geometry_cache: &mut *geometry_cache,
-            timing_now,
+        let resumed = with_checkpoint_cavity_cache(trusted_cavity_cache, |cavity_cache| {
+            run_intrinsic_capacity_cold_search(RunIntrinsicCapacityColdSearchInput {
+                sheet: input.sheet,
+                prepared_pieces: input.prepared_pieces,
+                material_areas_by_piece_id: input.material_areas_by_piece_id,
+                cavity_cache,
+                incumbent: None,
+                control: reborrow_control(&mut control),
+                capture_phase_timings: false,
+                checkpoint: Some(checkpoint),
+                maximum_depth_boundaries: None,
+                warm_prefix_seed: None,
+                scheduler_deficit: Some(scheduler_deficit),
+                retention_mode: input.retention_mode,
+                settings,
+                geometry_cache: &mut *geometry_cache,
+                timing_now,
+            })
         })?;
         let resumed_status = resumed.status;
         let resumed_completed_depths = resumed.trace.completed_depths;
@@ -1477,13 +1503,14 @@ fn run_protected_capacity_lane_coordinator<'a>(
             let previous_completed_depths = lanes[selected_index].result.trace.completed_depths;
             let previous_elapsed_ms = lanes[selected_index].elapsed_ms;
             let scheduler_deficit = checkpoint.scheduler_deficit;
+            let trusted_cavity_cache = checkpoint_cavity_cache(&checkpoint);
             let resumed_at = Instant::now();
-            let resumed =
+            let resumed = with_checkpoint_cavity_cache(trusted_cavity_cache, |cavity_cache| {
                 run_intrinsic_capacity_cold_search(RunIntrinsicCapacityColdSearchInput {
                     sheet: input.sheet,
                     prepared_pieces: input.prepared_pieces,
                     material_areas_by_piece_id: input.material_areas_by_piece_id,
-                    cavity_cache: &mut IntrinsicCapacityCavityCache::new(),
+                    cavity_cache,
                     incumbent: None,
                     control: reborrow_control(&mut control),
                     capture_phase_timings: false,
@@ -1495,7 +1522,8 @@ fn run_protected_capacity_lane_coordinator<'a>(
                     settings,
                     geometry_cache: &mut *geometry_cache,
                     timing_now,
-                })?;
+                })
+            })?;
             let consumed_delta = resumed.trace.consumed_placement_evaluations - previous_consumed;
             warm_consumed_placement_evaluations += js_math::max(0.0, consumed_delta);
             let resumed_status = resumed.status;
@@ -1612,12 +1640,13 @@ fn run_protected_capacity_lane_coordinator<'a>(
             let previous_depth = quality_result.trace.completed_depths;
             let previous_evaluations = quality_result.trace.consumed_placement_evaluations;
             let scheduler_deficit = checkpoint.scheduler_deficit;
-            quality_result =
+            let trusted_cavity_cache = checkpoint_cavity_cache(&checkpoint);
+            quality_result = with_checkpoint_cavity_cache(trusted_cavity_cache, |cavity_cache| {
                 run_intrinsic_capacity_cold_search(RunIntrinsicCapacityColdSearchInput {
                     sheet: input.sheet,
                     prepared_pieces: input.prepared_pieces,
                     material_areas_by_piece_id: input.material_areas_by_piece_id,
-                    cavity_cache: &mut IntrinsicCapacityCavityCache::new(),
+                    cavity_cache,
                     incumbent: None,
                     control: reborrow_control(&mut control),
                     capture_phase_timings: false,
@@ -1629,7 +1658,8 @@ fn run_protected_capacity_lane_coordinator<'a>(
                     settings,
                     geometry_cache: &mut *geometry_cache,
                     timing_now,
-                })?;
+                })
+            })?;
             quality_continued = true;
             push_lane_coordinator_quantum(
                 &mut coordinator_quanta,

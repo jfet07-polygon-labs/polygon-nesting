@@ -1979,6 +1979,7 @@ pub fn enumerate_intrinsic_periodic_cell_crops(
     }
     let mut candidates: Vec<IntrinsicPeriodicSeed> = Vec::new();
     let mut identities: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut successful_coordinate_layouts: HashSet<Vec<(i64, i64)>> = HashSet::new();
     for rows in 1..=q {
         checkpoint(control)?;
         let columns = (q + rows - 1) / rows;
@@ -1990,6 +1991,23 @@ pub fn enumerate_intrinsic_periodic_cell_crops(
                 checkpoint(control)?;
                 on_crop_attempt();
                 let coordinates = crop_coordinates(rows, columns, q, traversal, corner);
+                let minimum_row = coordinates.iter().map(|point| point.row).min().unwrap_or(0);
+                let minimum_column = coordinates
+                    .iter()
+                    .map(|point| point.column)
+                    .min()
+                    .unwrap_or(0);
+                let mut coordinate_layout: Vec<(i64, i64)> = coordinates
+                    .iter()
+                    .map(|point| (point.row - minimum_row, point.column - minimum_column))
+                    .collect();
+                coordinate_layout.sort_unstable();
+                // failed representatives must not suppress a later legal
+                // traversal. a layout enters this set only after its first
+                // successful construction, preserving the original winner.
+                if successful_coordinate_layouts.contains(&coordinate_layout) {
+                    continue;
+                }
                 let mut placed: Vec<IrregularPlacedPiece> = Vec::new();
                 let mut source_index: usize = 0;
                 let mut legal = true;
@@ -2030,6 +2048,7 @@ pub fn enumerate_intrinsic_periodic_cell_crops(
                 if !legal || placed.len() != (q as usize) * member_count {
                     continue;
                 }
+                successful_coordinate_layouts.insert(coordinate_layout);
                 let normalized = normalize_placed_bottom_left(&placed);
                 let identity = canonical_collision_layout_identity(&normalized);
                 let topology = measure_canonical_layout_topology(&normalized);
@@ -2329,6 +2348,11 @@ struct IntrinsicPeriodicBasisCandidate {
     )>,
 }
 
+struct PreparedPeriodicBasisCandidate {
+    candidate: IntrinsicPeriodicBasisCandidate,
+    canonical: Option<(GridPoint, GridPoint)>,
+}
+
 fn derive_cells(
     role: IntrinsicPeriodicRole,
     family_key: &str,
@@ -2446,12 +2470,30 @@ fn derive_cells(
     let mut far_neighbor_maximum: Option<Option<BigInt>> = None;
     let mut member_doubled_area: Option<BigInt> = None;
     let mut base_cell_shape: Option<Option<(f64, f64)>> = None;
-    for candidate in bases {
+    let prepared_bases: Vec<PreparedPeriodicBasisCandidate> = bases
+        .into_iter()
+        .map(|candidate| PreparedPeriodicBasisCandidate {
+            canonical: canonicalize_basis(&candidate.basis.0, &candidate.basis.1),
+            candidate,
+        })
+        .collect();
+    // lattice diagnoses are pure and independent for every basis. The job
+    // pool preserves source order in this result vector, so replay below
+    // keeps the original rejection, error, and output ordering exactly.
+    let lattice_diagnostics =
+        crate::parallel::map_slice_with_job_pool(&prepared_bases, |prepared| {
+            prepared
+                .canonical
+                .as_ref()
+                .map(|canonical| diagnose_lattice(members, canonical))
+        });
+    for (prepared, lattice) in prepared_bases.into_iter().zip(lattice_diagnostics) {
+        let candidate = prepared.candidate;
         if let Some(telemetry) = telemetry.as_deref_mut() {
             telemetry.record_basis_candidate();
         }
         let (raw_v1, raw_v2) = (candidate.basis.0.clone(), candidate.basis.1.clone());
-        let canonical = match canonicalize_basis(&raw_v1, &raw_v2) {
+        let canonical = match prepared.canonical {
             Some(value) => value,
             None => {
                 reject(
@@ -2471,7 +2513,7 @@ fn derive_cells(
         if let Some(telemetry) = telemetry.as_deref_mut() {
             telemetry.record_lattice_diagnosis_request(false);
         }
-        let lattice = diagnose_lattice(members, &canonical)?;
+        let lattice = lattice.expect("canonical bases have a lattice diagnosis")?;
         let determinant_grid2 = abs_bigint(&cross_grid(&canonical.0, &canonical.1));
         let member_doubled_area_grid2 = member_doubled_area
             .get_or_insert_with(|| {
@@ -2582,6 +2624,14 @@ struct EdgeContactRelation {
     provenance: IntrinsicPeriodicEdgeContactProvenance,
 }
 
+struct EdgeContactRelationProbe {
+    vector: GridPoint,
+    fixed_member_index: usize,
+    fixed_edge_index: usize,
+    moving_member_index: usize,
+    moving_edge_index: usize,
+}
+
 impl Clone for EdgeContactRelation {
     fn clone(&self) -> Self {
         Self {
@@ -2663,16 +2713,14 @@ struct EdgeContactDerivation {
 fn derive_edge_contact_basis_candidates(
     members: &[IntrinsicPeriodicBaseMember],
 ) -> Result<EdgeContactDerivation, IrregularGeometryInputError> {
-    let mut relations = OrderedMap::<EdgeContactRelation>::new();
-    for fixed_member_index in 0..members.len() {
-        let fixed_member = &members[fixed_member_index];
+    let mut probes = Vec::new();
+    for (fixed_member_index, fixed_member) in members.iter().enumerate() {
         let fixed_point = grid_point(fixed_member.point);
         let fixed_edges = match &fixed_point {
             Some(point) => translated_grid_edges(&fixed_member.geometry.polygon.points, point),
             None => Vec::new(),
         };
-        for moving_member_index in 0..members.len() {
-            let moving_member = &members[moving_member_index];
+        for (moving_member_index, moving_member) in members.iter().enumerate() {
             let moving_point = match grid_point(moving_member.point) {
                 Some(value) => value,
                 None => continue,
@@ -2697,35 +2745,49 @@ fn derive_edge_contact_basis_candidates(
                         if !is_canonical_positive_vector(&vector) {
                             continue;
                         }
-                        let relation = validate_edge_contact_relation(
-                            members,
-                            &vector,
+                        probes.push(EdgeContactRelationProbe {
+                            vector,
                             fixed_member_index,
-                            fixed_edge.index,
+                            fixed_edge_index: fixed_edge.index,
                             moving_member_index,
-                            moving_edge.index,
-                        )?;
-                        let relation = match relation {
-                            Some(value) => value,
-                            None => continue,
-                        };
-                        let key = format!("{},{}", vector.x, vector.y);
-                        let replace = match relations.get(&key) {
-                            None => true,
-                            Some(current) => {
-                                relation.provenance.length_mm > current.provenance.length_mm
-                                    || (relation.provenance.length_mm
-                                        == current.provenance.length_mm
-                                        && edge_contact_provenance_key(&relation.provenance)
-                                            < edge_contact_provenance_key(&current.provenance))
-                            }
-                        };
-                        if replace {
-                            relations.set(key, relation);
-                        }
+                            moving_edge_index: moving_edge.index,
+                        });
                     }
                 }
             }
+        }
+    }
+
+    // validation is pure for each probe. Ordered collection and serial
+    // replay preserve the original first-error and replacement semantics.
+    let validated = crate::parallel::map_slice_with_job_pool(&probes, |probe| {
+        validate_edge_contact_relation(
+            members,
+            &probe.vector,
+            probe.fixed_member_index,
+            probe.fixed_edge_index,
+            probe.moving_member_index,
+            probe.moving_edge_index,
+        )
+    });
+    let mut relations = OrderedMap::<EdgeContactRelation>::new();
+    for (probe, relation) in probes.into_iter().zip(validated) {
+        let relation = match relation? {
+            Some(value) => value,
+            None => continue,
+        };
+        let key = format!("{},{}", probe.vector.x, probe.vector.y);
+        let replace = match relations.get(&key) {
+            None => true,
+            Some(current) => {
+                relation.provenance.length_mm > current.provenance.length_mm
+                    || (relation.provenance.length_mm == current.provenance.length_mm
+                        && edge_contact_provenance_key(&relation.provenance)
+                            < edge_contact_provenance_key(&current.provenance))
+            }
+        };
+        if replace {
+            relations.set(key, relation);
         }
     }
 

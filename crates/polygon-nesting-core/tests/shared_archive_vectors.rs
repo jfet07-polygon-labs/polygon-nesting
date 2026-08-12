@@ -820,6 +820,10 @@ fn checkpoint_chronology_cases_match_ts() {
                                   _control: Option<&mut dyn polygon_nesting_core::nfp_ifp::NfpIfpControl>,
                                   _geometry_cache: &mut GeometryCacheStore|
          -> Result<(), SharedArchiveError> {
+            assert!(
+                !checkpoint.integrity_hash.is_empty(),
+                "{case_id}: callback checkpoint must remain externally resumable"
+            );
             producer_roles.push(checkpoint.producer_role.clone());
             next_piece_indices.push(checkpoint.next_piece_index);
             Ok(())

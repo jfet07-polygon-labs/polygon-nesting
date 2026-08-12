@@ -218,7 +218,7 @@ function assertCiRunnerContract(workflow) {
     },
     {
       'target-key': 'darwin-arm64',
-      runner: 'blacksmith-6vcpu-macos-15',
+      runner: 'macos-15',
       platform: 'darwin',
       arch: 'arm64',
       'cargo-target': 'aarch64-apple-darwin'
