@@ -194,7 +194,8 @@ fn build_placed_piece(
             },
             polygon: IrregularPolygon::new(points),
             bounds,
-        },
+        }
+        .into(),
     })
 }
 

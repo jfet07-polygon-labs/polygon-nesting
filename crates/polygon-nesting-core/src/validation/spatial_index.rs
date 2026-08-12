@@ -31,17 +31,17 @@
 //! document, since a `Vec`/owned-struct representation has no native notion
 //! of "the same instance" to check at all.
 //!
-//! # `HashMap` for `buckets`/`selected`, not a sorted map
+//! # Unordered buckets and ordinal selection
 //!
 //! Per §5 item 4 / §12 hazard 6: `query()`'s output order is never derived
 //! from `Map`/`Set` iteration order in TS -- it only tests membership, then
-//! filters the ordinal-ordered `entries` array. `std::collections::HashMap`/
-//! `HashSet` are therefore safe (and match the source's own indifference to
-//! bucket iteration order) for `buckets`/`selected` here; only
+//! filters the ordinal-ordered `entries` array. `HashMap` is therefore safe
+//! for buckets, and the selection set is represented by an ordinal-indexed
+//! bitmap rather than iterated directly. Only
 //! `continuation_identity()` needs an explicit total order, which it applies
 //! itself (see that method's doc comment).
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::checkpoints::canonical_json::{json_number_token, locale_compare_keys};
@@ -321,11 +321,20 @@ impl PlacedCollisionSpatialIndex {
     /// `selected` membership plus, for valid entries only, a precise
     /// `!areDisjoint` re-check against `bounds`.
     pub fn query(&self, bounds: Option<&IrregularBounds>) -> Vec<PlacedCollisionSpatialEntry> {
-        let mut selected: HashSet<usize> = self
-            .fallback_entries
-            .iter()
-            .map(|entry| entry.ordinal)
-            .collect();
+        self.query_refs(bounds).into_iter().cloned().collect()
+    }
+
+    /// Borrowing form of [`Self::query`] for hot validation paths that only
+    /// inspect the selected entries. Selection and source ordering remain
+    /// identical while indexed polygon storage stays shared with the index.
+    pub fn query_refs(
+        &self,
+        bounds: Option<&IrregularBounds>,
+    ) -> Vec<&PlacedCollisionSpatialEntry> {
+        let mut selected = vec![false; self.entries.len()];
+        for entry in &self.fallback_entries {
+            selected[entry.ordinal] = true;
+        }
 
         let cell_range =
             bounds.and_then(|b| grid_cell_range(b, self.cell_size_mm, MAX_GRID_CELLS_PER_QUERY));
@@ -333,7 +342,7 @@ impl PlacedCollisionSpatialIndex {
         match (bounds, cell_range) {
             (None, _) | (Some(_), None) => {
                 for entry in &self.entries {
-                    selected.insert(entry.ordinal);
+                    selected[entry.ordinal] = true;
                 }
             }
             (Some(_), Some(range)) => {
@@ -341,7 +350,7 @@ impl PlacedCollisionSpatialIndex {
                     for cell_y in range.min_y..=range.max_y {
                         if let Some(bucket) = self.buckets.get(&cell_key(cell_x, cell_y)) {
                             for entry in bucket.iter() {
-                                selected.insert(entry.ordinal);
+                                selected[entry.ordinal] = true;
                             }
                         }
                     }
@@ -352,15 +361,14 @@ impl PlacedCollisionSpatialIndex {
         self.entries
             .iter()
             .filter(|entry| match &entry.validation {
-                PlacedCollisionValidation::Invalid { .. } => selected.contains(&entry.ordinal),
+                PlacedCollisionValidation::Invalid { .. } => selected[entry.ordinal],
                 PlacedCollisionValidation::Valid(valid) => {
-                    selected.contains(&entry.ordinal)
+                    selected[entry.ordinal]
                         && bounds
                             .map(|b| !are_disjoint(&valid.polygon_with_bounds.bounds, b))
                             .unwrap_or(true)
                 }
             })
-            .cloned()
             .collect()
     }
 }
@@ -530,7 +538,8 @@ mod tests {
                 },
                 polygon,
                 bounds: IrregularBounds::new(0.0, 0.0, side, side),
-            },
+            }
+            .into(),
         })
     }
 
@@ -561,7 +570,8 @@ mod tests {
                 },
                 polygon,
                 bounds: IrregularBounds::new(0.0, 0.0, 0.0, 0.0),
-            },
+            }
+            .into(),
         })
     }
 
@@ -668,6 +678,35 @@ mod tests {
             "exactly-touching entry must survive (areDisjoint uses strict <)"
         );
         assert!(!ordinals.contains(&2), "far entry must be pruned");
+    }
+
+    #[test]
+    fn borrowing_query_matches_owned_query_in_source_order() {
+        let pieces = vec![
+            square_piece(0.0, 0.0, 4.0),
+            invalid_piece(),
+            square_piece(4.0, 0.0, 4.0),
+            square_piece(1000.0, 1000.0, 4.0),
+        ];
+        let index = make_placed_collision_spatial_index(&pieces, Some(4.0));
+
+        for bounds in [
+            None,
+            Some(IrregularBounds::new(0.0, 0.0, 4.0, 4.0)),
+            Some(IrregularBounds::new(10_000.0, 10_000.0, 10_001.0, 10_001.0)),
+        ] {
+            let owned_ordinals: Vec<_> = index
+                .query(bounds.as_ref())
+                .iter()
+                .map(|entry| entry.ordinal)
+                .collect();
+            let borrowed_ordinals: Vec<_> = index
+                .query_refs(bounds.as_ref())
+                .iter()
+                .map(|entry| entry.ordinal)
+                .collect();
+            assert_eq!(borrowed_ordinals, owned_ordinals);
+        }
     }
 
     #[test]

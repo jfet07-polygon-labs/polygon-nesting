@@ -360,7 +360,8 @@ mod tests {
                 },
                 polygon: square(10.0),
                 bounds: IrregularBounds::new(x, 0.0, x + 10.0, 10.0),
-            },
+            }
+            .into(),
         })
     }
 
@@ -384,7 +385,7 @@ mod tests {
             .collect();
         let empty = IrregularBeamState::empty(pieces.clone());
         let one = empty.with_placement(WithPlacementInput {
-            remaining_prepared_pieces: pieces[1..].to_vec(),
+            remaining_prepared_pieces: pieces[1..].to_vec().into(),
             placed_collision_geometry: placed_piece("piece-0", 0.0),
             placement_order_piece_id: PieceId::new("piece-0"),
             on_phase_timings: None,
@@ -415,11 +416,11 @@ mod tests {
         let empty = IrregularBeamState::empty(pieces.clone());
         let skipped =
             empty.with_unplaced_piece(crate::search::beam_state::WithUnplacedPieceInput {
-                remaining_prepared_pieces: pieces[1..].to_vec(),
+                remaining_prepared_pieces: pieces[1..].to_vec().into(),
                 unplaced_piece_id: PieceId::new("piece-0"),
             });
         let one = skipped.with_placement(WithPlacementInput {
-            remaining_prepared_pieces: pieces[2..].to_vec(),
+            remaining_prepared_pieces: pieces[2..].to_vec().into(),
             placed_collision_geometry: placed_piece("piece-1", 0.0),
             placement_order_piece_id: PieceId::new("piece-1"),
             on_phase_timings: None,
@@ -450,7 +451,7 @@ mod tests {
         for index in 0..9 {
             let remaining = pieces[(index + 1)..].to_vec();
             state = state.with_placement(WithPlacementInput {
-                remaining_prepared_pieces: remaining,
+                remaining_prepared_pieces: remaining.into(),
                 placed_collision_geometry: placed_piece(
                     &format!("piece-{index}"),
                     index as f64 * 20.0,

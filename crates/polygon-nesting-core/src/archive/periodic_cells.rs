@@ -3730,7 +3730,7 @@ fn make_placed(
                 mirrored: geometry.transform.mirrored,
             },
         },
-        collision_geometry: geometry.clone(),
+        collision_geometry: geometry.clone().into(),
     }
 }
 

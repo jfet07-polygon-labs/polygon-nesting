@@ -476,19 +476,21 @@ fn build_memo_key(
             height: input.sheet.height,
         })
     };
-    let placed_key_inputs: Vec<PlacedPieceKeyInput<'_>> = input
-        .placed
-        .iter()
-        .map(|placed| PlacedPieceKeyInput {
-            collision_polygon_points: &placed.collision_geometry.polygon.points,
-            translate_x: placed.placement.transform.translate_x,
-            translate_y: placed.placement.transform.translate_y,
-        })
-        .collect();
+    let placed_key_inputs = prepared_placed_memo_parts.is_none().then(|| {
+        input
+            .placed
+            .iter()
+            .map(|placed| PlacedPieceKeyInput {
+                collision_polygon_points: &placed.collision_geometry.polygon.points,
+                translate_x: placed.placement.transform.translate_x,
+                translate_y: placed.placement.transform.translate_y,
+            })
+            .collect::<Vec<_>>()
+    });
     let moving_bounds = input.moving.bounds;
     let key_input = LegalPlacementCandidateMemoKeyInput {
         sheet,
-        placed: &placed_key_inputs,
+        placed: placed_key_inputs.as_deref().unwrap_or(&[]),
         moving_polygon_points: &input.moving.polygon.points,
         moving_bounds: &moving_bounds,
         settings: &input.settings.geometry,
@@ -560,7 +562,8 @@ mod tests {
                 transform: transform_candidate(),
                 polygon,
                 bounds: IrregularBounds::new(0.0, 0.0, 4.0, 4.0),
-            },
+            }
+            .into(),
         }
     }
 

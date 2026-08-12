@@ -2,6 +2,8 @@
 //!
 //! TS source: `src/shared/irregular/domain.ts:468-783`.
 
+use std::sync::Arc;
+
 use serde::{Deserialize, Serialize};
 
 use super::collision::{
@@ -92,7 +94,7 @@ pub struct IrregularPlacement {
 #[serde(rename_all = "camelCase")]
 pub struct IrregularPlacedPiece {
     pub placement: IrregularPlacement,
-    pub collision_geometry: TransformedCollisionGeometry,
+    pub collision_geometry: Arc<TransformedCollisionGeometry>,
 }
 
 /// TS: `domain.ts:766-783` `class IrregularPlacementCandidate`.
@@ -249,7 +251,8 @@ mod tests {
                 },
                 polygon: IrregularPolygon::new(vec![IrregularPoint::new(0.0, 0.0)]),
                 bounds: IrregularBounds::new(0.0, 0.0, 1.0, 1.0),
-            },
+            }
+            .into(),
         };
         let json = serde_json::to_string(&placed).expect("placed piece serializes");
         let decoded: IrregularPlacedPiece =

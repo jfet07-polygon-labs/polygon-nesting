@@ -844,7 +844,8 @@ mod tests {
                 transform: transform_candidate(),
                 polygon: IrregularPolygon::new(polygon.clone()),
                 bounds: IrregularBounds::new(0.0, 0.0, 4.0, 4.0),
-            },
+            }
+            .into(),
         }
     }
 

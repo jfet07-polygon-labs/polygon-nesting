@@ -738,7 +738,8 @@ mod tests {
                 },
                 polygon,
                 bounds: piece_bounds,
-            },
+            }
+            .into(),
         }
     }
 

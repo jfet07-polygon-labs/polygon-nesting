@@ -137,7 +137,7 @@ pub fn selected_layout_reveal_snapshots(
                 .collect();
 
             let state = IrregularBeamState::from_input(IrregularBeamStateInput {
-                remaining_prepared_pieces,
+                remaining_prepared_pieces: remaining_prepared_pieces.into(),
                 placed_collision_geometries: placed,
                 unplaced_piece_ids: Some(unplaced_piece_ids.to_vec()),
                 unplaced_source_piece_ids: None,

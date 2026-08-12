@@ -889,7 +889,7 @@ struct ObserveEndpointInput<'a> {
 /// TS: `intrinsicShortSideObserver.ts:281-323` (`observeEndpoint`).
 fn observe_endpoint(input: ObserveEndpointInput<'_>) -> IntrinsicShortSideEndpointObservation {
     let state = IrregularBeamState::from_input(IrregularBeamStateInput {
-        remaining_prepared_pieces: Vec::new(),
+        remaining_prepared_pieces: Vec::new().into(),
         placed_collision_geometries: input.endpoint.placed_collision_geometries.clone(),
         unplaced_piece_ids: Some(Vec::new()),
         unplaced_source_piece_ids: None,
@@ -1173,7 +1173,7 @@ fn directional_reference(
     }
     let short_axis_is_height = input.axes.short_axis == ShortSideAxisDimension::Height;
     let state = IrregularBeamState::from_input(IrregularBeamStateInput {
-        remaining_prepared_pieces: Vec::new(),
+        remaining_prepared_pieces: Vec::new().into(),
         placed_collision_geometries: input.placed_collision_geometries.to_vec(),
         unplaced_piece_ids: None,
         unplaced_source_piece_ids: None,

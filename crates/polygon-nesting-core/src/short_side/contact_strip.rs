@@ -536,7 +536,7 @@ fn candidate_contact_axis_units(
 ) -> (Option<ContactScore>, Option<BoundedStatus>) {
     let placed_piece = IrregularPlacedPiece {
         placement: make_strip_placement(piece, anchored),
-        collision_geometry: anchored.moving.clone(),
+        collision_geometry: anchored.moving.clone().into(),
     };
     let Some(world_path) = placed_collision_world_grid_path(&placed_piece) else {
         return (None, None);
@@ -1115,7 +1115,7 @@ fn construct_strip(
                 }
                 let placed_piece = Arc::new(IrregularPlacedPiece {
                     placement: make_strip_placement(&piece, &selection.winner),
-                    collision_geometry: selection.winner.moving.clone(),
+                    collision_geometry: selection.winner.moving.clone().into(),
                 });
                 if selection.selection_changed {
                     checkpoints.push(ContactDecisionCheckpoint {
@@ -1124,7 +1124,7 @@ fn construct_strip(
                         collision_index_before: placed_collision_index.clone(),
                         baseline_piece: Arc::new(IrregularPlacedPiece {
                             placement: make_strip_placement(&piece, &selection.baseline_winner),
-                            collision_geometry: selection.baseline_winner.moving.clone(),
+                            collision_geometry: selection.baseline_winner.moving.clone().into(),
                         }),
                     });
                 }

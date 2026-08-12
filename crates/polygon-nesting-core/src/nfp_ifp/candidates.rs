@@ -236,12 +236,27 @@ pub struct CanonicalCandidatePoint {
 pub fn canonical_placement_point_alternatives(
     raw_point: IrregularPoint,
 ) -> Vec<CanonicalCandidatePoint> {
+    let (alternatives, len) = canonical_placement_point_alternatives_inline(raw_point);
+    alternatives[..len].to_vec()
+}
+
+fn canonical_placement_point_alternatives_inline(
+    raw_point: IrregularPoint,
+) -> ([CanonicalCandidatePoint; 9], usize) {
+    let empty = CanonicalCandidatePoint {
+        x: 0.0,
+        y: 0.0,
+        squared_distance: 0.0,
+        grid_x: 0,
+        grid_y: 0,
+    };
+    let mut alternatives = [empty; 9];
+    let mut len = 0;
     let (Some(center_x), Some(center_y)) = (to_grid_mm(raw_point.x), to_grid_mm(raw_point.y))
     else {
-        return Vec::new();
+        return (alternatives, len);
     };
 
-    let mut alternatives = Vec::with_capacity(9);
     for delta_x in -1..=1 {
         for delta_y in -1..=1 {
             let grid_x = center_x + delta_x as f64;
@@ -253,17 +268,18 @@ pub fn canonical_placement_point_alternatives(
             let y = from_grid(grid_y);
             let squared_distance =
                 (x - raw_point.x) * (x - raw_point.x) + (y - raw_point.y) * (y - raw_point.y);
-            alternatives.push(CanonicalCandidatePoint {
+            alternatives[len] = CanonicalCandidatePoint {
                 x,
                 y,
                 squared_distance,
                 grid_x: grid_x as i64,
                 grid_y: grid_y as i64,
-            });
+            };
+            len += 1;
         }
     }
-    alternatives.sort_by(compare_canonical_candidate_points);
-    alternatives
+    alternatives[..len].sort_by(compare_canonical_candidate_points);
+    (alternatives, len)
 }
 
 /// TS: `nfpIfpService.ts:595-604` (`compareCanonicalCandidatePoints`).
@@ -1032,7 +1048,9 @@ fn assess_candidate_point(
         winner: None,
     };
 
-    for candidate in canonical_placement_point_alternatives(raw_point) {
+    let (alternatives, alternative_count) =
+        canonical_placement_point_alternatives_inline(raw_point);
+    for candidate in alternatives.into_iter().take(alternative_count) {
         let candidate_point = IrregularPoint::new(candidate.x, candidate.y);
         if !sheetless_nfp {
             match ifp_bounds {

@@ -273,3 +273,27 @@ quality golden remained identical.
   mixed workloads needs either less serial work per beam entry or a
   deterministic parallelization of that loop — a design-level change, not
   a local optimization.
+
+## 0.2.6 canonicalization and immutable-state pass
+
+This pass removes repeated cyclic-key materialization from gap-region
+canonicalization and shares immutable remaining-piece and placed-geometry
+state across sibling beam successors. Smaller allocation reductions avoid
+cloning spatial-index query results, the prepared placed memo payload, and
+the fixed-size canonical placement alternatives.
+
+Two alternating samples of the 74-piece stress fixture measured 76.48 →
+55.39 seconds and 76.37 → 55.56 seconds. Normalized result JSON and event
+streams remained byte-identical. In the second alternating sample, peak
+footprint fell from 1,349,764,896 to 1,242,269,688 bytes. A separate sample
+of the completed sharing pass reported 2,165,096,448 bytes maximum RSS and
+1,238,484,960 bytes peak footprint; memory counters are noisy and are kept
+as directional evidence rather than a precise percentage claim.
+
+Across the complete 18-row canonical matrix, the frozen 0.2.5 CLI took
+62.16 seconds and the candidate took 58.22 seconds, a 6.3% wall-time
+reduction. Every golden result remained unchanged.
+
+Deterministic parallel construction of beam successors and more extensive
+derived-metadata caches remain deferred: both can change scheduling or
+ordering semantics and require a separate design and proof pass.

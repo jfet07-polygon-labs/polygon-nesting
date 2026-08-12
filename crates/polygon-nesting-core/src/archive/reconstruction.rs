@@ -1314,7 +1314,8 @@ mod tests {
                 transform,
                 polygon: prepared.collision_geometry.collision_polygon.clone(),
                 bounds: prepared.collision_geometry.source_bounds,
-            },
+            }
+            .into(),
         })
     }
 

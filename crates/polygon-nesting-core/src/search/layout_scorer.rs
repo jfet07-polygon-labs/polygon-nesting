@@ -1235,7 +1235,8 @@ mod tests {
                 },
                 polygon: square(10.0),
                 bounds: IrregularBounds::new(0.0, 0.0, 10.0, 10.0),
-            },
+            }
+            .into(),
         })
     }
 

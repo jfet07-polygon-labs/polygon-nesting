@@ -235,7 +235,7 @@ pub fn materialize_shared_archive_result(
 
     let state =
         IrregularBeamState::from_input(crate::search::beam_state::IrregularBeamStateInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometries: placed_collision_geometries.clone(),
             unplaced_piece_ids: Some(Vec::new()),
             unplaced_source_piece_ids: None,
@@ -360,7 +360,7 @@ pub fn materialize_intrinsic_short_side_profile_result(
         .collect();
     let state =
         IrregularBeamState::from_input(crate::search::beam_state::IrregularBeamStateInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometries: input.placed_collision_geometries.clone(),
             unplaced_piece_ids: Some(unplaced_piece_ids.clone()),
             unplaced_source_piece_ids: None,

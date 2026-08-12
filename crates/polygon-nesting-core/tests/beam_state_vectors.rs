@@ -261,7 +261,8 @@ fn decode_placed_piece(value: &Value) -> Arc<IrregularPlacedPiece> {
                 // asserting on a field this cluster never reads.
                 polygon_nesting_core::domain::IrregularBounds::new(0.0, 0.0, 0.0, 0.0)
             },
-        },
+        }
+        .into(),
     })
 }
 
@@ -630,7 +631,7 @@ fn state_chains_replay_incrementally_and_match_every_recorded_snapshot() {
                             .expect("placementOrderPieceId present"),
                     );
                     state.with_placement(WithPlacementInput {
-                        remaining_prepared_pieces: Vec::new(),
+                        remaining_prepared_pieces: Vec::new().into(),
                         placed_collision_geometry: piece,
                         placement_order_piece_id,
                         on_phase_timings: None,
@@ -644,7 +645,7 @@ fn state_chains_replay_incrementally_and_match_every_recorded_snapshot() {
                             .expect("unplacedPieceId present"),
                     );
                     state.with_unplaced_piece(WithUnplacedPieceInput {
-                        remaining_prepared_pieces: Vec::new(),
+                        remaining_prepared_pieces: Vec::new().into(),
                         unplaced_piece_id,
                     })
                 }
@@ -707,7 +708,7 @@ fn replay_order_key(pieces: &[Value]) -> String {
         let piece = decode_placed_piece(piece_value);
         let placement_order_piece_id = piece.placement.source_piece_id.clone();
         state = state.with_placement(WithPlacementInput {
-            remaining_prepared_pieces: Vec::new(),
+            remaining_prepared_pieces: Vec::new().into(),
             placed_collision_geometry: piece,
             placement_order_piece_id,
             on_phase_timings: None,
@@ -778,7 +779,7 @@ fn from_input_raw_construction_matches_incremental_construction_for_the_same_geo
             let piece = decode_placed_piece(&step["placedPiece"]);
             let placement_order_piece_id = piece.placement.source_piece_id.clone();
             incremental = incremental.with_placement(WithPlacementInput {
-                remaining_prepared_pieces: Vec::new(),
+                remaining_prepared_pieces: Vec::new().into(),
                 placed_collision_geometry: Arc::clone(&piece),
                 placement_order_piece_id,
                 on_phase_timings: None,
@@ -789,7 +790,7 @@ fn from_input_raw_construction_matches_incremental_construction_for_the_same_geo
     }
 
     let raw = IrregularBeamState::from_input(IrregularBeamStateInput {
-        remaining_prepared_pieces: Vec::new(),
+        remaining_prepared_pieces: Vec::new().into(),
         placed_collision_geometries: placed_pieces,
         unplaced_piece_ids: None,
         unplaced_source_piece_ids: None,

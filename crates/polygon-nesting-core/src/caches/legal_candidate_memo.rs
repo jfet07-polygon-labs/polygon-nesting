@@ -20,6 +20,8 @@
 //! module ports `nfpIfpService.ts`'s `makeGeneratePlacementCandidates` — the
 //! `nfp_ifp` cluster, out of this module's scope).
 
+use std::borrow::Cow;
+
 use crate::domain::{IrregularBounds, IrregularGeometrySettings, IrregularPoint};
 
 use super::nfp_cache_key::geometry_settings_parts;
@@ -200,8 +202,8 @@ pub(crate) fn legal_placement_candidate_memo_key_with_prepared_placed(
     };
 
     let placed_joined = match prepared_placed {
-        Some(prepared) => prepared.joined.clone(),
-        None => join_placed_memo_parts(input.placed),
+        Some(prepared) => Cow::Borrowed(prepared.joined.as_str()),
+        None => Cow::Owned(join_placed_memo_parts(input.placed)),
     };
 
     let mut array_elements: Vec<String> = Vec::with_capacity(9);
@@ -418,5 +420,44 @@ mod tests {
         // (same square) so the only thing distinguishing them is the
         // translation suffix and their relative order.
         assert_eq!(key.matches("0,0;1,0;1,1;0,1").count(), 3);
+    }
+
+    #[test]
+    fn prepared_placed_parts_preserve_exact_key_bytes() {
+        let settings = IrregularGeometrySettings {
+            flattening_sag_tolerance_mm: 0.25,
+            clearance_safety_margin_mm: 0.25,
+            geometry_backend_id: "irregular-convex-v2-default".to_string(),
+            geometry_backend_version: "0".to_string(),
+        };
+        let bounds = IrregularBounds::new(-0.0, 0.0, 2.0, 3.0);
+        let moving = [p(-0.0, 0.0), p(2.0, 0.0), p(1.0, 3.0)];
+        let placed = [PlacedPieceKeyInput {
+            collision_polygon_points: &moving,
+            translate_x: -0.0,
+            translate_y: 4.0,
+        }];
+        let input = LegalPlacementCandidateMemoKeyInput {
+            sheet: None,
+            placed: &placed,
+            moving_polygon_points: &moving,
+            moving_bounds: &bounds,
+            settings: &settings,
+            candidate_domain: CandidateDomain::SheetlessNfp,
+        };
+        let expected = legal_placement_candidate_memo_key(
+            &input,
+            NfpConstructionAlgorithm::VertexPairHull,
+            NfpCandidatePruningMode::Indexed,
+        );
+        let prepared_placed = prepare_placed_memo_parts(&placed);
+        let actual = legal_placement_candidate_memo_key_with_prepared_placed(
+            &input,
+            Some(&prepared_placed),
+            NfpConstructionAlgorithm::VertexPairHull,
+            NfpCandidatePruningMode::Indexed,
+        );
+
+        assert_eq!(actual, expected);
     }
 }
