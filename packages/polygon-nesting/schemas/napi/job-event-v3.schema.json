@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jfet07-polygon-labs/polygon-nesting/schemas/napi/job-event-v3.schema.json",
+  "title": "Polygon nesting N-API event frame v3",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ordinal", "progress"],
+      "properties": {
+        "kind": { "const": "portfolio-progress" },
+        "ordinal": { "type": "integer", "minimum": 0 },
+        "progress": { "$ref": "../cli/engine-event-v1.schema.json#/$defs/portfolioProgress" }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ordinal", "snapshot", "beamWidth"],
+      "properties": {
+        "kind": { "const": "state-snapshot" },
+        "ordinal": { "type": "integer", "minimum": 0 },
+        "snapshot": { "$ref": "../cli/engine-outcome-v1.schema.json#/$defs/stateSnapshot" },
+        "beamWidth": { "type": "number", "minimum": 0 }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ordinal"],
+      "properties": {
+        "kind": { "const": "terminal" },
+        "ordinal": { "type": "integer", "minimum": 0 }
+      }
+    }
+  ]
+}

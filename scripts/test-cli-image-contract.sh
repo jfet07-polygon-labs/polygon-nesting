@@ -42,6 +42,7 @@ grep -Fq "grep -Eq '^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-
 grep -Fq 'test "$SOURCE_COMMIT" != "unknown"' "$dockerfile"
 test "$(grep -Fc 'org.opencontainers.image.source="https://github.com/jfet07-polygon-labs/polygon-nesting"' "$dockerfile")" = 2
 grep -Fq 'org.opencontainers.image.licenses="NOASSERTION"' "$dockerfile"
+grep -Fqx 'COPY packages/polygon-nesting/schemas /usr/share/doc/polygon-nesting/schemas' "$dockerfile"
 grep -Fqx 'USER polygon' "$dockerfile"
 grep -Fq 'docker image inspect --format' "$smoke"
 grep -Fqx 'expected_version=${2:-$(node "$repository_root/scripts/release-version.mjs" --check)}' "$smoke"
@@ -51,5 +52,8 @@ grep -Fqx 'host_uid=$(id -u)' "$smoke"
 grep -Fqx 'host_gid=$(id -g)' "$smoke"
 grep -Fqx 'case "$host_uid:$host_gid" in' "$smoke"
 grep -Fqx '  *[!0-9:]*|:*|*:|*:*:*|0*:*) exit 1 ;;' "$smoke"
-test "$(grep -Fc -- '--user "$host_uid:$host_gid"' "$smoke")" = 4
+test "$(grep -Fc -- '--user "$host_uid:$host_gid"' "$smoke")" = 5
 grep -Fq '"$image" run-dxf' "$smoke"
+grep -Fq '"$image" run-polygons' "$smoke"
+grep -Fq -- '--report-file /work/polygon-report.json' "$smoke"
+grep -Fq '/usr/share/doc/polygon-nesting/schemas/cli/benchmark-report-v1.schema.json' "$smoke"

@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jfet07-polygon-labs/polygon-nesting/schemas/napi/last-job-diagnostics-v1.schema.json",
+  "title": "Polygon nesting N-API last job diagnostics v1",
+  "oneOf": [
+    { "type": "null" },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["backendVersion", "threadCountUsed", "threadCountRequested", "wallClockMs", "cacheTelemetry", "freeMaterialCacheTelemetry", "processLifecycle"],
+      "properties": {
+        "backendVersion": { "type": "string", "minLength": 1 },
+        "threadCountUsed": { "type": "integer", "minimum": 1 },
+        "threadCountRequested": { "type": "integer", "minimum": 1 },
+        "wallClockMs": { "type": "number", "minimum": 0 },
+        "cacheTelemetry": { "$ref": "#/$defs/cacheTelemetry" },
+        "freeMaterialCacheTelemetry": { "$ref": "#/$defs/freeMaterialCacheTelemetry" },
+        "processLifecycle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["terminalCleanupHooksFired", "terminalLatchCloseRequestsByCleanup"],
+          "properties": {
+            "terminalCleanupHooksFired": { "$ref": "#/$defs/count" },
+            "terminalLatchCloseRequestsByCleanup": { "$ref": "#/$defs/count" }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "count": { "type": "integer", "minimum": 0 },
+    "namespaceTelemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lookups", "hits", "misses", "stores", "staleDetections", "staleRemovals", "duplicateComputations", "singleFlightWaits", "shardLockWaitNanos", "shardLockContendedAcquisitions", "frontCacheHits", "backingCacheHits", "cloningHits", "capBytes", "admissions", "replacements", "evictions", "evictedBytes", "oversizedRejections", "entries", "approxBytes", "peakBytes", "computationTimeNanos"],
+      "properties": {
+        "lookups": { "$ref": "#/$defs/count" },
+        "hits": { "$ref": "#/$defs/count" },
+        "misses": { "$ref": "#/$defs/count" },
+        "stores": { "$ref": "#/$defs/count" },
+        "staleDetections": { "$ref": "#/$defs/count" },
+        "staleRemovals": { "$ref": "#/$defs/count" },
+        "duplicateComputations": { "$ref": "#/$defs/count" },
+        "singleFlightWaits": { "$ref": "#/$defs/count" },
+        "shardLockWaitNanos": { "$ref": "#/$defs/count" },
+        "shardLockContendedAcquisitions": { "$ref": "#/$defs/count" },
+        "frontCacheHits": { "$ref": "#/$defs/count" },
+        "backingCacheHits": { "$ref": "#/$defs/count" },
+        "cloningHits": { "$ref": "#/$defs/count" },
+        "capBytes": { "$ref": "#/$defs/count" },
+        "admissions": { "$ref": "#/$defs/count" },
+        "replacements": { "$ref": "#/$defs/count" },
+        "evictions": { "$ref": "#/$defs/count" },
+        "evictedBytes": { "$ref": "#/$defs/count" },
+        "oversizedRejections": { "$ref": "#/$defs/count" },
+        "entries": { "$ref": "#/$defs/count" },
+        "approxBytes": { "$ref": "#/$defs/count" },
+        "peakBytes": { "$ref": "#/$defs/count" },
+        "computationTimeNanos": { "$ref": "#/$defs/count" }
+      }
+    },
+    "cacheTelemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["namespaces", "capBytes", "currentBytes", "peakBytes", "admissions", "replacements", "evictions", "evictedBytes", "oversizedRejections", "cacheInstances"],
+      "properties": {
+        "namespaces": { "type": "object", "additionalProperties": { "$ref": "#/$defs/namespaceTelemetry" } },
+        "capBytes": { "$ref": "#/$defs/count" },
+        "currentBytes": { "$ref": "#/$defs/count" },
+        "peakBytes": { "$ref": "#/$defs/count" },
+        "admissions": { "$ref": "#/$defs/count" },
+        "replacements": { "$ref": "#/$defs/count" },
+        "evictions": { "$ref": "#/$defs/count" },
+        "evictedBytes": { "$ref": "#/$defs/count" },
+        "oversizedRejections": { "$ref": "#/$defs/count" },
+        "cacheInstances": { "$ref": "#/$defs/count" }
+      }
+    },
+    "freeMaterialCacheTelemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capBytes", "currentBytes", "peakBytes", "entries", "admissions", "replacements", "evictions", "evictedBytes", "oversizedRejections", "hits", "misses"],
+      "properties": {
+        "capBytes": { "$ref": "#/$defs/count" },
+        "currentBytes": { "$ref": "#/$defs/count" },
+        "peakBytes": { "$ref": "#/$defs/count" },
+        "entries": { "$ref": "#/$defs/count" },
+        "admissions": { "$ref": "#/$defs/count" },
+        "replacements": { "$ref": "#/$defs/count" },
+        "evictions": { "$ref": "#/$defs/count" },
+        "evictedBytes": { "$ref": "#/$defs/count" },
+        "oversizedRejections": { "$ref": "#/$defs/count" },
+        "hits": { "$ref": "#/$defs/count" },
+        "misses": { "$ref": "#/$defs/count" }
+      }
+    }
+  }
+}

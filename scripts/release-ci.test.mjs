@@ -35,12 +35,17 @@ function makePackageFixture(root) {
   for (const relative of ['npm/index.cjs', 'npm/target.cjs', 'NOTICE', 'LICENSES/clipper2-ts-BSL-1.0.txt']) {
     cpSync(join(REPOSITORY_ROOT, 'packages/polygon-nesting', relative), join(packageRoot, relative))
   }
+  cpSync(
+    join(REPOSITORY_ROOT, 'packages/polygon-nesting/schemas'),
+    join(packageRoot, 'schemas'),
+    { recursive: true }
+  )
   writeJson(join(packageRoot, 'package.json'), {
     name: '@jfet07-polygon-labs/polygon-nesting',
     version: RELEASE_VERSION,
     publishConfig: { registry: 'https://npm.pkg.github.com' },
     main: 'npm/index.cjs',
-    files: ['npm/index.cjs', 'npm/target.cjs', 'npm/*.node', 'NOTICE', 'LICENSES/**'],
+    files: ['npm/index.cjs', 'npm/target.cjs', 'npm/*.node', 'schemas/**', 'NOTICE', 'LICENSES/**'],
     scripts: { test: 'node package-check.mjs' }
   })
   writeFileSync(join(packageRoot, 'package-check.mjs'), [

@@ -1,0 +1,332 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jfet07-polygon-labs/polygon-nesting/schemas/cli/engine-outcome-v1.schema.json",
+  "title": "Polygon nesting CLI EngineOutcome envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "outcome"],
+  "properties": {
+    "version": { "const": 1 },
+    "outcome": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "result"],
+          "properties": {
+            "status": { "const": "success" },
+            "result": { "$ref": "#/$defs/engineResult" },
+            "diagnostics": { "$ref": "#/$defs/executionDiagnostics" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "error"],
+          "properties": {
+            "status": { "const": "failure" },
+            "error": { "$ref": "#/$defs/engineError" },
+            "diagnostics": { "$ref": "#/$defs/executionDiagnostics" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reason", "error"],
+          "properties": {
+            "status": { "const": "archive-ineligible" },
+            "reason": { "enum": ["archive-disabled", "short-side-fill", "ga-active"] },
+            "error": { "$ref": "#/$defs/engineError" },
+            "diagnostics": { "$ref": "#/$defs/executionDiagnostics" }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "count": { "type": "integer", "minimum": 0 },
+    "number": { "type": "number" },
+    "stringArray": { "type": "array", "items": { "type": "string" } },
+    "executionDiagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requestedWorkers": { "$ref": "#/$defs/count" },
+        "actualWorkers": { "$ref": "#/$defs/count" },
+        "elapsedMs": { "type": "number", "minimum": 0 },
+        "counters": { "type": "object", "additionalProperties": { "$ref": "#/$defs/count" } }
+      }
+    },
+    "engineError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "operation", "message"],
+      "properties": {
+        "category": { "enum": ["malformed_input", "protocol_version_mismatch", "archive_ineligible", "invalid_geometry", "cancelled", "deadline_exceeded", "engine_failure", "internal_failure", "io_failure"] },
+        "operation": { "type": "string", "minLength": 1 },
+        "message": { "type": "string" },
+        "context": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "$ref": "#/$defs/number" },
+        "y": { "$ref": "#/$defs/number" }
+      }
+    },
+    "polygon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["points"],
+      "properties": {
+        "points": { "type": "array", "items": { "$ref": "#/$defs/point" } }
+      }
+    },
+    "bounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minX", "minY", "maxX", "maxY"],
+      "properties": {
+        "minX": { "$ref": "#/$defs/number" },
+        "minY": { "$ref": "#/$defs/number" },
+        "maxX": { "$ref": "#/$defs/number" },
+        "maxY": { "$ref": "#/$defs/number" }
+      }
+    },
+    "placementReference": { "$ref": "#/$defs/point" },
+    "placementTransform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["translateX", "translateY", "rotationDeg", "mirrored"],
+      "properties": {
+        "translateX": { "$ref": "#/$defs/number" },
+        "translateY": { "$ref": "#/$defs/number" },
+        "rotationDeg": { "$ref": "#/$defs/number" },
+        "mirrored": { "type": "boolean" }
+      }
+    },
+    "placement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourcePieceId", "transform"],
+      "properties": {
+        "pieceId": { "type": "string" },
+        "sourcePieceId": { "type": "string", "minLength": 1 },
+        "placementReference": { "$ref": "#/$defs/placementReference" },
+        "transform": { "$ref": "#/$defs/placementTransform" }
+      }
+    },
+    "collisionTransform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "rotationDeg", "mirrored", "reason"],
+      "properties": {
+        "index": { "$ref": "#/$defs/number" },
+        "rotationDeg": { "$ref": "#/$defs/number" },
+        "mirrored": { "type": "boolean" },
+        "reason": { "enum": ["orthogonal", "edge_alignment", "configured"] }
+      }
+    },
+    "collisionGeometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourcePieceId", "transform", "polygon", "bounds"],
+      "properties": {
+        "sourcePieceId": { "type": "string", "minLength": 1 },
+        "transform": { "$ref": "#/$defs/collisionTransform" },
+        "polygon": { "$ref": "#/$defs/polygon" },
+        "bounds": { "$ref": "#/$defs/bounds" }
+      }
+    },
+    "placedCollisionGeometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["placement", "collisionGeometry"],
+      "properties": {
+        "placement": { "$ref": "#/$defs/placement" },
+        "collisionGeometry": { "$ref": "#/$defs/collisionGeometry" }
+      }
+    },
+    "resultDiagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "pieceId": { "type": "string" }
+      }
+    },
+    "freeMaterialRegion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["boundary", "holes"],
+      "properties": {
+        "boundary": { "$ref": "#/$defs/polygon" },
+        "holes": { "type": "array", "items": { "$ref": "#/$defs/polygon" } }
+      }
+    },
+    "freeMaterialSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sheet", "regions", "diagnostics"],
+      "properties": {
+        "sheet": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height", "label"],
+          "properties": {
+            "width": { "$ref": "#/$defs/number" },
+            "height": { "$ref": "#/$defs/number" },
+            "label": { "type": "string" }
+          }
+        },
+        "regions": { "type": "array", "items": { "$ref": "#/$defs/freeMaterialRegion" } },
+        "diagnostics": { "type": "array", "items": { "$ref": "#/$defs/resultDiagnostic" } }
+      }
+    },
+    "layoutScoreSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unplacedCount", "largestNetFreeMaterialRegionAreaMm2", "freeMaterialRegionCount", "freeMaterialHoleCount", "freeMaterialSliverMetric", "collisionBoundsWorstNormalizedSheetConsumption", "collisionBoundsNormalizedSpanSum", "collisionBoundsAreaMm2", "collisionBoundsSpanMm"],
+      "properties": {
+        "unplacedCount": { "$ref": "#/$defs/number" },
+        "sharedCollisionBoundaryLengthMm": { "$ref": "#/$defs/number" },
+        "sharedCollisionBoundaryContactUnits": { "$ref": "#/$defs/number" },
+        "sharedCollisionBoundaryContactBand": { "$ref": "#/$defs/number" },
+        "nearCompleteStructuralContactCount": { "$ref": "#/$defs/number" },
+        "dominantNearCompleteStructuralContactCount": { "$ref": "#/$defs/number" },
+        "largestNetFreeMaterialRegionAreaMm2": { "$ref": "#/$defs/number" },
+        "freeMaterialRegionCount": { "$ref": "#/$defs/number" },
+        "freeMaterialHoleCount": { "$ref": "#/$defs/number" },
+        "canonicalEnclosedCavityCount": { "$ref": "#/$defs/number" },
+        "freeMaterialSliverMetric": { "$ref": "#/$defs/number" },
+        "collisionBoundsWorstNormalizedSheetConsumption": { "$ref": "#/$defs/number" },
+        "collisionBoundsNormalizedSpanSum": { "$ref": "#/$defs/number" },
+        "collisionBoundsAreaMm2": { "$ref": "#/$defs/number" },
+        "collisionBoundsSpanMm": { "$ref": "#/$defs/number" }
+      }
+    },
+    "layoutScore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unplacedCount", "sharedCollisionBoundaryLengthMm", "sharedCollisionBoundaryContactUnits", "sharedCollisionBoundaryContactBand", "nearCompleteStructuralContactCount", "dominantNearCompleteStructuralContactCount", "largestNetFreeMaterialRegionAreaMm2", "freeMaterialRegionCount", "freeMaterialHoleCount", "freeMaterialSliverMetric", "collisionBoundsWorstNormalizedSheetConsumption", "collisionBoundsNormalizedSpanSum", "collisionBoundsAreaMm2", "collisionBoundsSpanMm", "occupiedHullWasteRatio", "collisionBoundsBottomMm", "collisionBoundsLeftMm", "freeMaterialSnapshot", "placementOrder", "unplacedSourcePieceIds"],
+      "properties": {
+        "unplacedCount": { "$ref": "#/$defs/number" },
+        "sharedCollisionBoundaryLengthMm": { "$ref": "#/$defs/number" },
+        "sharedCollisionBoundaryContactUnits": { "$ref": "#/$defs/number" },
+        "sharedCollisionBoundaryContactBand": { "$ref": "#/$defs/number" },
+        "nearCompleteStructuralContactCount": { "$ref": "#/$defs/number" },
+        "dominantNearCompleteStructuralContactCount": { "$ref": "#/$defs/number" },
+        "largestNetFreeMaterialRegionAreaMm2": { "$ref": "#/$defs/number" },
+        "freeMaterialRegionCount": { "$ref": "#/$defs/number" },
+        "freeMaterialHoleCount": { "$ref": "#/$defs/number" },
+        "freeMaterialSliverMetric": { "$ref": "#/$defs/number" },
+        "collisionBoundsWorstNormalizedSheetConsumption": { "$ref": "#/$defs/number" },
+        "collisionBoundsNormalizedSpanSum": { "$ref": "#/$defs/number" },
+        "collisionBoundsAreaMm2": { "$ref": "#/$defs/number" },
+        "collisionBoundsSpanMm": { "$ref": "#/$defs/number" },
+        "occupiedHullWasteRatio": { "$ref": "#/$defs/number" },
+        "collisionBoundsBottomMm": { "$ref": "#/$defs/number" },
+        "collisionBoundsLeftMm": { "$ref": "#/$defs/number" },
+        "freeMaterialSnapshot": { "$ref": "#/$defs/freeMaterialSnapshot" },
+        "placementOrder": { "$ref": "#/$defs/stringArray" },
+        "unplacedSourcePieceIds": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "preparedCollisionGeometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourcePieceId", "sourceBounds", "sampledPoints", "convexHull", "collisionPolygon", "placementReference", "diagnostics"],
+      "properties": {
+        "sourcePieceId": { "type": "string", "minLength": 1 },
+        "sourceBounds": { "$ref": "#/$defs/bounds" },
+        "sampledPoints": { "type": "array", "items": { "$ref": "#/$defs/point" } },
+        "convexHull": { "$ref": "#/$defs/polygon" },
+        "collisionPolygon": { "$ref": "#/$defs/polygon" },
+        "placementReference": { "$ref": "#/$defs/point" },
+        "diagnostics": { "type": "array", "items": { "$ref": "#/$defs/resultDiagnostic" } }
+      }
+    },
+    "priorityOrderKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["longSideMm", "areaMm2", "imbalanceMm"],
+      "properties": {
+        "longSideMm": { "$ref": "#/$defs/number" },
+        "areaMm2": { "$ref": "#/$defs/number" },
+        "imbalanceMm": { "$ref": "#/$defs/number" }
+      }
+    },
+    "snapshotPreparedPiece": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "allowMirror", "collisionGeometry", "transforms"],
+      "properties": {
+        "pieceId": { "type": "string" },
+        "interchangeabilityKey": { "type": "string" },
+        "source": { "$ref": "engine-request-v1.schema.json#/$defs/sourcePiece" },
+        "allowMirror": { "type": "boolean" },
+        "collisionGeometry": { "$ref": "#/$defs/preparedCollisionGeometry" },
+        "transforms": { "type": "array", "items": { "$ref": "#/$defs/collisionTransform" } },
+        "priorityOrderKey": { "$ref": "#/$defs/priorityOrderKey" }
+      }
+    },
+    "stateSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stepIndex", "beamRank", "candidateCount", "placements", "remainingPreparedPieces", "unplacedPieceIds"],
+      "properties": {
+        "stepIndex": { "$ref": "#/$defs/number" },
+        "beamRank": { "$ref": "#/$defs/number" },
+        "candidateCount": { "$ref": "#/$defs/number" },
+        "source": { "enum": ["beam", "shared-archive"] },
+        "placements": { "type": "array", "items": { "$ref": "#/$defs/placedCollisionGeometry" } },
+        "remainingPreparedPieces": { "type": "array", "items": { "$ref": "#/$defs/snapshotPreparedPiece" } },
+        "unplacedPieceIds": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "portfolioResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "terminationReason", "source", "placements", "unplacedPieceIds", "score", "diagnostics"],
+      "properties": {
+        "status": { "const": "completed" },
+        "terminationReason": { "enum": ["capacity_subset_settled", "shared_archive_completed"] },
+        "source": { "const": "shared-archive" },
+        "placements": { "type": "array", "items": { "$ref": "#/$defs/placement" } },
+        "unplacedPieceIds": { "$ref": "#/$defs/stringArray" },
+        "score": { "$ref": "#/$defs/layoutScoreSummary" },
+        "diagnostics": { "type": "array", "items": { "$ref": "#/$defs/resultDiagnostic" } }
+      }
+    },
+    "diagnosticTrace": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Versioned diagnostic trace payload. Trace fields are observer-only and may grow additively within protocol v1."
+    },
+    "engineResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["placedCollisionGeometries", "score", "unplacedPieceIds", "diagnostics", "sortedPieceIds", "stateSnapshots", "beamWidth", "portfolio"],
+      "properties": {
+        "placedCollisionGeometries": { "type": "array", "items": { "$ref": "#/$defs/placedCollisionGeometry" } },
+        "score": { "$ref": "#/$defs/layoutScore" },
+        "unplacedPieceIds": { "$ref": "#/$defs/stringArray" },
+        "diagnostics": { "type": "array", "items": { "$ref": "#/$defs/resultDiagnostic" } },
+        "sortedPieceIds": { "$ref": "#/$defs/stringArray" },
+        "stateSnapshots": { "type": "array", "items": { "$ref": "#/$defs/stateSnapshot" } },
+        "beamWidth": { "$ref": "#/$defs/number" },
+        "portfolio": { "$ref": "#/$defs/portfolioResult" },
+        "capacityTrace": { "$ref": "#/$defs/diagnosticTrace" },
+        "intrinsicAnytimeSchedulerTrace": { "$ref": "#/$defs/diagnosticTrace" },
+        "focusedCompleteReconstructionTrace": { "$ref": "#/$defs/diagnosticTrace" },
+        "intrinsicShortSideObserverTrace": { "$ref": "#/$defs/diagnosticTrace" },
+        "intrinsicShortSidePairFoldTrace": { "$ref": "#/$defs/diagnosticTrace" }
+      }
+    }
+  }
+}

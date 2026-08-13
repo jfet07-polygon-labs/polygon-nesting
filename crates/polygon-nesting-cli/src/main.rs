@@ -1,3 +1,4 @@
+use std::io::Read;
 use std::panic::{catch_unwind, AssertUnwindSafe, PanicHookInfo};
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -7,13 +8,19 @@ use std::sync::Arc;
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use polygon_nesting_cli::{
     artifacts_overlap_inputs, artifacts_within_directory, path_within_directory, paths_alias,
-    run_with_deadline, write_dxf_import_failure, write_malformed_invocation,
-    write_malformed_output, write_request_and_run, write_signal_registration_failure, ExitStatus,
+    run_with_deadline_observed, write_artifact_atomically, write_dxf_import_failure,
+    write_malformed_invocation, write_malformed_output, write_polygon_import_failure,
+    write_request_and_run_observed, write_signal_registration_failure, ExitStatus, RunCompletion,
     RunPaths,
 };
 use polygon_nesting_core::{CancelReason, CancellationControl};
 use polygon_nesting_dxf::{discover_directory, import_files, ImportOptions};
 use polygon_nesting_protocol::EngineProfile;
+
+mod benchmark_report;
+mod polygon_input;
+
+use polygon_input::{import_polygon_json, PolygonImportOptions, MAX_POLYGON_INPUT_BYTES};
 
 #[derive(Debug, Parser)]
 #[command(version, about = "Deterministic polygon nesting engine")]
@@ -28,6 +35,7 @@ struct Cli {
 enum Command {
     Run(RunArguments),
     RunDxf(RunDxfArguments),
+    RunPolygons(RunPolygonArguments),
 }
 
 #[derive(Debug, Args)]
@@ -40,6 +48,10 @@ struct RunArguments {
     events: Option<PathBuf>,
     #[arg(long)]
     deadline_ms: Option<f64>,
+    #[arg(long = "report-file")]
+    report: Option<PathBuf>,
+    #[arg(long, value_parser = parse_percentage, requires = "report")]
+    best_known_utilization_percent: Option<f64>,
 }
 
 #[derive(Debug, Args)]
@@ -64,6 +76,38 @@ struct RunDxfArguments {
     events: Option<PathBuf>,
     #[arg(long)]
     deadline_ms: Option<f64>,
+    #[arg(long = "report-file")]
+    report: Option<PathBuf>,
+    #[arg(long, value_parser = parse_percentage, requires = "report")]
+    best_known_utilization_percent: Option<f64>,
+}
+
+#[derive(Debug, Args)]
+struct RunPolygonArguments {
+    #[arg(long = "polygons-file")]
+    polygons_file: PathBuf,
+    #[arg(long, value_parser = SheetDimensions::from_str)]
+    sheet: SheetDimensions,
+    #[arg(long, default_value_t = 10)]
+    padding: u64,
+    #[arg(long, value_enum, default_value_t = ProfileArgument::Compact)]
+    profile: ProfileArgument,
+    #[arg(long, default_value_t = true, action = clap::ArgAction::Set)]
+    allow_mirror: bool,
+    #[arg(long, default_value_t = 300_000)]
+    timeout_ms: u64,
+    #[arg(long = "request-file")]
+    request_file: PathBuf,
+    #[arg(long = "result-file")]
+    output: PathBuf,
+    #[arg(long)]
+    events: Option<PathBuf>,
+    #[arg(long)]
+    deadline_ms: Option<f64>,
+    #[arg(long = "report-file")]
+    report: Option<PathBuf>,
+    #[arg(long, value_parser = parse_percentage, requires = "report")]
+    best_known_utilization_percent: Option<f64>,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -105,6 +149,16 @@ impl FromStr for SheetDimensions {
         }
         Ok(Self { width, height })
     }
+}
+
+fn parse_percentage(value: &str) -> Result<f64, String> {
+    let value = value
+        .parse::<f64>()
+        .map_err(|_| "percentage must be numeric".to_owned())?;
+    if !value.is_finite() || !(0.0..=100.0).contains(&value) {
+        return Err("percentage must be a finite number from 0 through 100".to_owned());
+    }
+    Ok(value)
 }
 
 type PanicHook = Box<dyn Fn(&PanicHookInfo<'_>) + Send + Sync + 'static>;
@@ -187,6 +241,12 @@ fn run_parsed(
     cli: Cli,
     install_signal_handler: impl FnOnce(Arc<CancellationControl>) -> bool,
 ) -> ExitStatus {
+    if let Some(Command::RunPolygons(arguments)) = &cli.command {
+        let paths = run_polygon_paths(arguments);
+        if artifacts_overlap_inputs(&paths, std::slice::from_ref(&arguments.polygons_file)) {
+            return ExitStatus::MalformedInput;
+        }
+    }
     let dxf_source_paths = match &cli.command {
         Some(Command::RunDxf(arguments)) => {
             let paths = run_dxf_paths(arguments);
@@ -213,9 +273,13 @@ fn run_parsed(
                 input: &arguments.input,
                 output: &arguments.output,
                 events: arguments.events.as_deref(),
+                report: arguments.report.as_deref(),
             }),
             Some(Command::RunDxf(arguments)) => {
                 write_malformed_invocation(run_dxf_paths(&arguments))
+            }
+            Some(Command::RunPolygons(arguments)) => {
+                write_malformed_invocation(run_polygon_paths(&arguments))
             }
         };
     }
@@ -230,28 +294,38 @@ fn run_parsed(
                 input: &arguments.input,
                 output: &arguments.output,
                 events: arguments.events.as_deref(),
+                report: arguments.report.as_deref(),
             }),
             Command::RunDxf(arguments) => {
                 write_signal_registration_failure(run_dxf_paths(&arguments))
+            }
+            Command::RunPolygons(arguments) => {
+                write_signal_registration_failure(run_polygon_paths(&arguments))
             }
         };
     }
 
     match command {
-        Command::Run(arguments) => run_with_deadline(
-            RunPaths {
+        Command::Run(arguments) => {
+            let paths = RunPaths {
                 input: &arguments.input,
                 output: &arguments.output,
                 events: arguments.events.as_deref(),
-            },
-            &control,
-            arguments.deadline_ms,
-        ),
+                report: arguments.report.as_deref(),
+            };
+            let completion = run_with_deadline_observed(paths, &control, arguments.deadline_ms);
+            finish_benchmark_report(
+                completion,
+                arguments.report.as_deref(),
+                arguments.best_known_utilization_percent,
+            )
+        }
         Command::RunDxf(arguments) => run_dxf(
             arguments,
             dxf_source_paths.expect("run-dxf source paths were prepared"),
             &control,
         ),
+        Command::RunPolygons(arguments) => run_polygons(arguments, &control),
     }
 }
 
@@ -260,6 +334,7 @@ fn run_dxf_paths(arguments: &RunDxfArguments) -> RunPaths<'_> {
         input: &arguments.request_file,
         output: &arguments.output,
         events: arguments.events.as_deref(),
+        report: arguments.report.as_deref(),
     }
 }
 
@@ -283,24 +358,128 @@ fn run_dxf(
         Ok(request) => request,
         Err(error) => return write_dxf_import_failure(paths, error.to_string()),
     };
-    write_request_and_run(&request, paths, control, arguments.deadline_ms)
+    let completion =
+        write_request_and_run_observed(&request, paths, control, arguments.deadline_ms);
+    finish_benchmark_report(
+        completion,
+        arguments.report.as_deref(),
+        arguments.best_known_utilization_percent,
+    )
+}
+
+fn run_polygon_paths(arguments: &RunPolygonArguments) -> RunPaths<'_> {
+    RunPaths {
+        input: &arguments.request_file,
+        output: &arguments.output,
+        events: arguments.events.as_deref(),
+        report: arguments.report.as_deref(),
+    }
+}
+
+fn run_polygons(arguments: RunPolygonArguments, control: &CancellationControl) -> ExitStatus {
+    let paths = run_polygon_paths(&arguments);
+    if artifacts_overlap_inputs(&paths, std::slice::from_ref(&arguments.polygons_file)) {
+        return ExitStatus::MalformedInput;
+    }
+    let input = match read_polygon_input(&arguments.polygons_file) {
+        Ok(input) => input,
+        Err(error) => {
+            return write_polygon_import_failure(
+                paths,
+                format!(
+                    "{}: polygon input file could not be read: {error}",
+                    arguments.polygons_file.display()
+                ),
+            );
+        }
+    };
+    let request = match import_polygon_json(
+        &input,
+        &PolygonImportOptions {
+            sheet_width: arguments.sheet.width,
+            sheet_height: arguments.sheet.height,
+            padding: arguments.padding,
+            profile: arguments.profile.into(),
+            allow_mirror: arguments.allow_mirror,
+            timeout_ms: arguments.timeout_ms as f64,
+        },
+    ) {
+        Ok(request) => request,
+        Err(error) => return write_polygon_import_failure(paths, error.to_string()),
+    };
+    let completion =
+        write_request_and_run_observed(&request, paths, control, arguments.deadline_ms);
+    finish_benchmark_report(
+        completion,
+        arguments.report.as_deref(),
+        arguments.best_known_utilization_percent,
+    )
+}
+
+fn finish_benchmark_report(
+    completion: RunCompletion,
+    report_path: Option<&std::path::Path>,
+    best_known_utilization_percent: Option<f64>,
+) -> ExitStatus {
+    let status = completion.status;
+    let Some(report_path) = report_path else {
+        return status;
+    };
+    let Some(completed) = completion.completed else {
+        return status;
+    };
+    let report = benchmark_report::build_benchmark_report(
+        &completed.request,
+        &completed.outcome,
+        best_known_utilization_percent,
+    );
+    let Ok(bytes) = serde_json::to_vec(&report) else {
+        return ExitStatus::WriteFailure;
+    };
+    if write_artifact_atomically(report_path, &bytes).is_err() {
+        return ExitStatus::WriteFailure;
+    }
+    status
+}
+
+fn read_polygon_input(path: &std::path::Path) -> std::io::Result<Vec<u8>> {
+    let file = std::fs::File::open(path)?;
+    let mut input = Vec::new();
+    file.take(MAX_POLYGON_INPUT_BYTES + 1)
+        .read_to_end(&mut input)?;
+    if input.len() as u64 > MAX_POLYGON_INPUT_BYTES {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("polygon input must not exceed {MAX_POLYGON_INPUT_BYTES} bytes"),
+        ));
+    }
+    Ok(input)
 }
 
 fn recover_malformed_invocation() -> ExitStatus {
     let paths = recover_artifact_paths();
-    if paths.overlaps_dxf_sources() {
+    if paths.overlaps_dxf_sources() || paths.overlaps_polygon_sources() {
         return ExitStatus::MalformedInput;
     }
-    if let Some((input, output, events)) = paths.unique_run_paths() {
+    if let Some((input, output, events, report)) = paths.unique_run_paths() {
         return write_malformed_invocation(RunPaths {
             input,
             output,
             events,
+            report,
         });
     }
     paths
         .unique_output()
-        .map(|output| write_malformed_output(output, &paths.inputs, &paths.events))
+        .map(|output| {
+            let other_artifacts = paths
+                .events
+                .iter()
+                .chain(&paths.reports)
+                .cloned()
+                .collect::<Vec<_>>();
+            write_malformed_output(output, &paths.inputs, &other_artifacts)
+        })
         .unwrap_or(ExitStatus::MalformedInput)
 }
 
@@ -309,13 +488,20 @@ struct RecoveredArtifactPaths {
     inputs: Vec<PathBuf>,
     outputs: Vec<PathBuf>,
     events: Vec<PathBuf>,
+    reports: Vec<PathBuf>,
     dxf_directories: Vec<PathBuf>,
+    polygon_sources: Vec<PathBuf>,
 }
 
 impl RecoveredArtifactPaths {
     fn unique_run_paths(
         &self,
-    ) -> Option<(&std::path::Path, &std::path::Path, Option<&std::path::Path>)> {
+    ) -> Option<(
+        &std::path::Path,
+        &std::path::Path,
+        Option<&std::path::Path>,
+        Option<&std::path::Path>,
+    )> {
         let [input] = self.inputs.as_slice() else {
             return None;
         };
@@ -327,7 +513,12 @@ impl RecoveredArtifactPaths {
             [events] => Some(events.as_path()),
             _ => return None,
         };
-        Some((input, output, events))
+        let report = match self.reports.as_slice() {
+            [] => None,
+            [report] => Some(report.as_path()),
+            _ => return None,
+        };
+        Some((input, output, events, report))
     }
 
     fn unique_output(&self) -> Option<&std::path::Path> {
@@ -343,6 +534,7 @@ impl RecoveredArtifactPaths {
             .iter()
             .chain(&self.outputs)
             .chain(&self.events)
+            .chain(&self.reports)
             .collect::<Vec<_>>();
         self.dxf_directories.iter().any(|directory| {
             if artifacts
@@ -357,6 +549,20 @@ impl RecoveredArtifactPaths {
                     .any(|artifact| sources.iter().any(|source| paths_alias(artifact, source))),
                 Err(_) => directory.exists(),
             }
+        })
+    }
+
+    fn overlaps_polygon_sources(&self) -> bool {
+        let artifacts = self
+            .inputs
+            .iter()
+            .chain(&self.outputs)
+            .chain(&self.events)
+            .chain(&self.reports);
+        artifacts.into_iter().any(|artifact| {
+            self.polygon_sources
+                .iter()
+                .any(|source| paths_alias(artifact, source))
         })
     }
 }
@@ -379,7 +585,15 @@ fn recover_artifact_paths_from(arguments: &[std::ffi::OsString]) -> RecoveredArt
             (flag, Some(value), 1)
         } else if matches!(
             argument.to_str(),
-            Some("--input" | "--input-dir" | "--request-file" | "--result-file" | "--events")
+            Some(
+                "--input"
+                    | "--input-dir"
+                    | "--polygons-file"
+                    | "--request-file"
+                    | "--result-file"
+                    | "--events"
+                    | "--report-file"
+            )
         ) {
             (
                 argument
@@ -396,8 +610,10 @@ fn recover_artifact_paths_from(arguments: &[std::ffi::OsString]) -> RecoveredArt
             match flag {
                 "--input" | "--request-file" => paths.inputs.push(value),
                 "--input-dir" => paths.dxf_directories.push(value),
+                "--polygons-file" => paths.polygon_sources.push(value),
                 "--result-file" => paths.outputs.push(value),
                 "--events" => paths.events.push(value),
+                "--report-file" => paths.reports.push(value),
                 _ => {}
             }
         }
@@ -407,12 +623,14 @@ fn recover_artifact_paths_from(arguments: &[std::ffi::OsString]) -> RecoveredArt
 }
 
 fn inline_path_argument(argument: &std::ffi::OsStr) -> Option<(&'static str, PathBuf)> {
-    const FLAGS: [&str; 5] = [
+    const FLAGS: [&str; 7] = [
         "--input",
         "--input-dir",
+        "--polygons-file",
         "--request-file",
         "--result-file",
         "--events",
+        "--report-file",
     ];
     FLAGS.into_iter().find_map(|flag| {
         strip_os_prefix(argument, &format!("{flag}=")).map(|value| (flag, PathBuf::from(value)))
@@ -452,7 +670,7 @@ fn recover_run_position(arguments: &[std::ffi::OsString]) -> Option<usize> {
     let mut index = 0;
     while index < arguments.len() {
         let argument = arguments[index].to_string_lossy();
-        if matches!(argument.as_ref(), "run" | "run-dxf") {
+        if matches!(argument.as_ref(), "run" | "run-dxf" | "run-polygons") {
             let command = argument.into_owned();
             let run_position = index;
             index += 1;
@@ -462,6 +680,7 @@ fn recover_run_position(arguments: &[std::ffi::OsString]) -> Option<usize> {
                     argument.as_ref(),
                     "--input"
                         | "--input-dir"
+                        | "--polygons-file"
                         | "--sheet"
                         | "--padding"
                         | "--profile"
@@ -471,6 +690,8 @@ fn recover_run_position(arguments: &[std::ffi::OsString]) -> Option<usize> {
                         | "--result-file"
                         | "--events"
                         | "--deadline-ms"
+                        | "--report-file"
+                        | "--best-known-utilization-percent"
                 ) {
                     index += 2;
                     continue;
@@ -531,6 +752,8 @@ mod tests {
                     output: output.clone(),
                     events: None,
                     deadline_ms: None,
+                    report: None,
+                    best_known_utilization_percent: None,
                 })),
             },
             |_| false,

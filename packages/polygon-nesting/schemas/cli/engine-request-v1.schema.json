@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jfet07-polygon-labs/polygon-nesting/schemas/cli/engine-request-v1.schema.json",
+  "title": "Polygon nesting EngineRequest v1",
+  "$ref": "#/$defs/engineRequest",
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "finiteNumber": { "type": "number" },
+    "nonNegative": { "type": "number", "minimum": 0 },
+    "positive": { "type": "number", "exclusiveMinimum": 0 },
+    "safeInteger": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "positiveSafeInteger": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+    "sheet": {
+      "type": "object",
+      "required": ["width", "height", "label"],
+      "properties": {
+        "width": { "$ref": "#/$defs/positiveSafeInteger" },
+        "height": { "$ref": "#/$defs/positiveSafeInteger" },
+        "label": { "type": "string" }
+      }
+    },
+    "rect": {
+      "type": "object",
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "$ref": "#/$defs/safeInteger" },
+        "y": { "$ref": "#/$defs/safeInteger" },
+        "width": { "$ref": "#/$defs/positiveSafeInteger" },
+        "height": { "$ref": "#/$defs/positiveSafeInteger" }
+      }
+    },
+    "rectWithMetrics": {
+      "type": "object",
+      "required": ["x", "y", "width", "height", "longestEdge", "area", "imbalance"],
+      "properties": {
+        "x": { "$ref": "#/$defs/safeInteger" },
+        "y": { "$ref": "#/$defs/safeInteger" },
+        "width": { "$ref": "#/$defs/positiveSafeInteger" },
+        "height": { "$ref": "#/$defs/positiveSafeInteger" },
+        "longestEdge": { "$ref": "#/$defs/positiveSafeInteger" },
+        "area": { "$ref": "#/$defs/positiveSafeInteger" },
+        "imbalance": { "$ref": "#/$defs/safeInteger" }
+      }
+    },
+    "preparedPiece": {
+      "type": "object",
+      "required": ["id", "sourcePieceId", "realBounds", "paddedBounds", "padding", "allowRotation"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "sourcePieceId": { "$ref": "#/$defs/nonEmptyString" },
+        "interchangeabilityKey": { "$ref": "#/$defs/nonEmptyString" },
+        "realBounds": { "$ref": "#/$defs/rect" },
+        "paddedBounds": { "$ref": "#/$defs/rectWithMetrics" },
+        "padding": { "$ref": "#/$defs/safeInteger" },
+        "allowRotation": { "type": "boolean" },
+        "allowMirror": { "type": "boolean", "default": true },
+        "cutRowRef": {
+          "type": "object",
+          "required": ["reference", "customerName", "csvRowId"],
+          "properties": {
+            "reference": { "type": "string" },
+            "customerName": { "type": "string" },
+            "csvRowId": { "type": "string" }
+          }
+        }
+      }
+    },
+    "lineSegment": {
+      "type": "object",
+      "required": ["kind", "x1", "y1", "x2", "y2"],
+      "properties": {
+        "kind": { "const": "line" },
+        "x1": { "$ref": "#/$defs/finiteNumber" },
+        "y1": { "$ref": "#/$defs/finiteNumber" },
+        "x2": { "$ref": "#/$defs/finiteNumber" },
+        "y2": { "$ref": "#/$defs/finiteNumber" },
+        "bulge": { "$ref": "#/$defs/finiteNumber" },
+        "sourceCurve": { "type": "object" }
+      }
+    },
+    "arcSegment": {
+      "type": "object",
+      "required": ["kind", "x1", "y1", "x2", "y2", "cx", "cy", "radius", "startAngle", "endAngle"],
+      "properties": {
+        "kind": { "const": "arc" },
+        "x1": { "$ref": "#/$defs/finiteNumber" },
+        "y1": { "$ref": "#/$defs/finiteNumber" },
+        "x2": { "$ref": "#/$defs/finiteNumber" },
+        "y2": { "$ref": "#/$defs/finiteNumber" },
+        "cx": { "$ref": "#/$defs/finiteNumber" },
+        "cy": { "$ref": "#/$defs/finiteNumber" },
+        "radius": { "$ref": "#/$defs/positive" },
+        "startAngle": { "$ref": "#/$defs/finiteNumber" },
+        "endAngle": { "$ref": "#/$defs/finiteNumber" }
+      }
+    },
+    "sourcePiece": {
+      "type": "object",
+      "required": ["id", "sourceFileId", "label", "realBounds", "geometry", "warnings"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "sourceFileId": { "$ref": "#/$defs/nonEmptyString" },
+        "sourceLayer": { "type": "string" },
+        "label": { "type": "string" },
+        "realBounds": { "$ref": "#/$defs/rect" },
+        "geometry": {
+          "type": "object",
+          "required": ["entityType", "closed", "segments"],
+          "properties": {
+            "entityType": { "enum": ["LINE", "LWPOLYLINE", "POLYLINE", "CIRCLE", "ARC", "ELLIPSE", "DXF_SHAPE", "PRESET_SHAPE"] },
+            "closed": { "type": "boolean" },
+            "segments": {
+              "type": "array",
+              "items": { "oneOf": [{ "$ref": "#/$defs/lineSegment" }, { "$ref": "#/$defs/arcSegment" }] }
+            }
+          }
+        },
+        "warnings": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "geometrySettings": {
+      "type": "object",
+      "required": ["flatteningSagToleranceMm", "clearanceSafetyMarginMm", "geometryBackendId", "geometryBackendVersion"],
+      "properties": {
+        "flatteningSagToleranceMm": { "$ref": "#/$defs/positive" },
+        "clearanceSafetyMarginMm": { "$ref": "#/$defs/nonNegative" },
+        "geometryBackendId": { "$ref": "#/$defs/nonEmptyString" },
+        "geometryBackendVersion": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "optimizerSettings": {
+      "type": "object",
+      "required": ["orderWindow", "beamWidth", "transformCap", "gaPopulation", "gaTimeBudgetMs", "gaSeed"],
+      "properties": {
+        "orderWindow": { "$ref": "#/$defs/positiveSafeInteger" },
+        "beamWidth": { "$ref": "#/$defs/positiveSafeInteger" },
+        "localCandidateFanout": { "$ref": "#/$defs/positiveSafeInteger" },
+        "localRepairBudget": { "$ref": "#/$defs/safeInteger" },
+        "intrinsicSharedArchiveEnabled": { "type": "boolean" },
+        "transformCap": { "$ref": "#/$defs/positiveSafeInteger" },
+        "transformMinimumEdgeLengthMm": { "$ref": "#/$defs/nonNegative" },
+        "transformAngleDeduplicationToleranceDeg": { "$ref": "#/$defs/positive" },
+        "configuredRotationEnabled": { "type": "boolean" },
+        "edgeAlignmentEnabled": { "type": "boolean" },
+        "configuredRotationDeg": { "type": "array", "items": { "$ref": "#/$defs/finiteNumber" } },
+        "gaEnabled": { "type": "boolean" },
+        "baselineOnly": { "type": "boolean" },
+        "gaPopulation": { "$ref": "#/$defs/positiveSafeInteger" },
+        "gaGenerationBudget": { "$ref": "#/$defs/safeInteger" },
+        "gaEvaluationBudget": { "$ref": "#/$defs/safeInteger" },
+        "gaTimeBudgetMs": { "$ref": "#/$defs/safeInteger" },
+        "gaSeed": { "$ref": "#/$defs/nonEmptyString" },
+        "priorityOrderMutationEnabled": { "type": "boolean" },
+        "transformPreferenceMutationEnabled": { "type": "boolean" },
+        "placementPolicyMutationEnabled": { "type": "boolean" },
+        "placementPolicyId": { "$ref": "#/$defs/placementPolicy" },
+        "placementPolicyIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/placementPolicy" } }
+      }
+    },
+    "placementPolicy": { "enum": ["balanced-compactness", "short-side-fill", "edge-contact-then-balanced-compactness"] },
+    "engineRequest": {
+      "type": "object",
+      "required": ["version", "timeoutMs", "profile", "sheet", "pieces", "settings", "historyMode"],
+      "properties": {
+        "version": { "const": 1 },
+        "timeoutMs": { "$ref": "#/$defs/positive" },
+        "profile": { "enum": ["compact", "compact-short-side"] },
+        "sheet": { "$ref": "#/$defs/sheet" },
+        "pieces": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/preparedPiece" } },
+        "sourcePieces": { "type": "array", "items": { "$ref": "#/$defs/sourcePiece" } },
+        "settings": {
+          "type": "object",
+          "required": ["padding", "allowGlobalRotation", "geometry", "optimizer"],
+          "properties": {
+            "padding": { "$ref": "#/$defs/safeInteger" },
+            "allowGlobalRotation": { "type": "boolean" },
+            "allowGlobalMirror": { "type": "boolean", "default": true },
+            "geometry": { "$ref": "#/$defs/geometrySettings" },
+            "optimizer": { "$ref": "#/$defs/optimizerSettings" }
+          }
+        },
+        "historyMode": { "enum": ["stream", "final", "off"] },
+        "diagnosticTraceMode": { "enum": ["full", "off"], "default": "full" }
+      }
+    }
+  }
+}

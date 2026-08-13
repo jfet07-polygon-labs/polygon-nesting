@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "polygons": [
+    {
+      "id": "rectangle",
+      "quantity": 2,
+      "points": [
+        [0, 0],
+        [80, 0],
+        [80, 40],
+        [0, 40]
+      ]
+    },
+    {
+      "id": "triangle",
+      "allowRotation": true,
+      "allowMirror": false,
+      "points": [
+        { "x": 10, "y": 20 },
+        { "x": 70, "y": 20 },
+        { "x": 40, "y": 60 }
+      ]
+    }
+  ]
+}

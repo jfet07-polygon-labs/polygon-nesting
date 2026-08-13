@@ -1,0 +1,16 @@
+{
+  "schemaSetVersion": 1,
+  "draft": "https://json-schema.org/draft/2020-12/schema",
+  "schemas": {
+    "cli.engineRequest.v1": "cli/engine-request-v1.schema.json",
+    "cli.engineOutcome.v1": "cli/engine-outcome-v1.schema.json",
+    "cli.engineEvent.v1": "cli/engine-event-v1.schema.json",
+    "cli.polygonInput.v1": "cli/polygon-input-v1.schema.json",
+    "cli.benchmarkReport.v1": "cli/benchmark-report-v1.schema.json",
+    "napi.desktopRequest.v1": "napi/desktop-request-v1.schema.json",
+    "napi.jobResult.v3": "napi/job-result-v3.schema.json",
+    "napi.jobEvent.v3": "napi/job-event-v3.schema.json",
+    "napi.nativeCapability.v3": "napi/native-capability-v3.schema.json",
+    "napi.lastJobDiagnostics.v1": "napi/last-job-diagnostics-v1.schema.json"
+  }
+}

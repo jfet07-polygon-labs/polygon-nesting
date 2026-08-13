@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jfet07-polygon-labs/polygon-nesting/schemas/napi/native-capability-v3.schema.json",
+  "title": "Polygon nesting N-API native capability v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "crateVersion", "targetTriple", "profiles"],
+  "properties": {
+    "apiVersion": { "const": 3 },
+    "crateVersion": { "type": "string", "minLength": 1 },
+    "targetTriple": { "type": "string", "minLength": 1 },
+    "profiles": {
+      "const": ["compact", "compact-short-side"]
+    }
+  }
+}

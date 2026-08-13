@@ -27,6 +27,25 @@ fn rectangle_dxf(width: u32, height: u32) -> String {
     )
 }
 
+fn polygon_document() -> &'static str {
+    r#"{
+      "version": 1,
+      "polygons": [
+        {
+          "id": "triangle",
+          "quantity": 2,
+          "allowRotation": false,
+          "allowMirror": false,
+          "points": [[10, 20], [70, 20], {"x": 40, "y": 60}, [10, 20]]
+        },
+        {
+          "id": "rectangle",
+          "points": [[0, 0], [80, 0], [80, 40], [0, 40]]
+        }
+      ]
+    }"#
+}
+
 #[test]
 fn run_dxf_writes_the_generated_request_and_runs_it() {
     let directory = temporary_directory("run-dxf-success");
@@ -34,6 +53,7 @@ fn run_dxf_writes_the_generated_request_and_runs_it() {
     let request = directory.join("request.json");
     let output = directory.join("result.json");
     let events = directory.join("events.ndjson");
+    let report = directory.join("report.json");
     fs::create_dir(&input_directory).expect("DXF directory should be created");
     fs::write(input_directory.join("part.dxf"), rectangle_dxf(80, 40))
         .expect("DXF should be written");
@@ -55,6 +75,10 @@ fn run_dxf_writes_the_generated_request_and_runs_it() {
             output.to_str().expect("result path is UTF-8"),
             "--events",
             events.to_str().expect("events path is UTF-8"),
+            "--report-file",
+            report.to_str().expect("report path is UTF-8"),
+            "--best-known-utilization-percent",
+            "20",
         ])
         .output()
         .expect("CLI should start");
@@ -74,6 +98,157 @@ fn run_dxf_writes_the_generated_request_and_runs_it() {
         .expect("result should be valid JSON");
     assert_eq!(outcome["outcome"]["status"], "success");
     assert!(events.is_file());
+    let report: Value = serde_json::from_slice(&fs::read(&report).expect("report should exist"))
+        .expect("report should be valid JSON");
+    assert_eq!(report["version"], 1);
+    assert_eq!(report["engine"]["version"], env!("CARGO_PKG_VERSION"));
+    assert_eq!(report["instance"]["partCount"], 1);
+    assert_eq!(report["instance"]["sourcePieceCount"], 1);
+    assert_eq!(report["instance"]["sourcePolygonVertexCount"], 4);
+    assert_eq!(report["instance"]["instancePolygonVertexCount"], 4);
+    assert_eq!(report["instance"]["geometry"]["convexPartCount"], 1);
+    assert_eq!(report["run"]["complete"], true);
+    assert_eq!(report["run"]["placedPartCount"], 1);
+    assert_eq!(report["run"]["bestKnownSheetUtilizationPercent"], 20.0);
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn run_polygons_writes_the_generated_request_and_runs_it() {
+    let directory = temporary_directory("run-polygons-success");
+    let polygons = directory.join("polygons.json");
+    let request = directory.join("request.json");
+    let output = directory.join("result.json");
+    let events = directory.join("events.ndjson");
+    let report = directory.join("report.json");
+    fs::write(&polygons, polygon_document()).expect("polygon input should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run-polygons",
+            "--polygons-file",
+            polygons.to_str().expect("polygon path is UTF-8"),
+            "--sheet",
+            "200x200",
+            "--profile",
+            "compact-short-side",
+            "--allow-mirror",
+            "false",
+            "--request-file",
+            request.to_str().expect("request path is UTF-8"),
+            "--result-file",
+            output.to_str().expect("result path is UTF-8"),
+            "--events",
+            events.to_str().expect("events path is UTF-8"),
+            "--report-file",
+            report.to_str().expect("report path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert!(
+        process.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&process.stderr)
+    );
+    let request: Value = serde_json::from_slice(&fs::read(&request).expect("request should exist"))
+        .expect("request should be valid JSON");
+    assert_eq!(request["profile"], "compact-short-side");
+    assert_eq!(request["pieces"].as_array().map(Vec::len), Some(3));
+    assert_eq!(request["pieces"][0]["id"], "rectangle#1");
+    assert_eq!(request["pieces"][1]["id"], "triangle#1");
+    assert_eq!(request["pieces"][2]["id"], "triangle#2");
+    assert_eq!(request["pieces"][1]["allowRotation"], false);
+    assert_eq!(request["pieces"][1]["allowMirror"], false);
+    assert_eq!(request["settings"]["allowGlobalMirror"], false);
+    assert_eq!(request["sourcePieces"][1]["realBounds"]["x"], 0.0);
+    assert_eq!(request["sourcePieces"][1]["realBounds"]["y"], 0.0);
+    assert_eq!(request["sourcePieces"][1]["realBounds"]["width"], 60.0);
+    assert_eq!(request["sourcePieces"][1]["realBounds"]["height"], 40.0);
+    let outcome: Value = serde_json::from_slice(&fs::read(&output).expect("result should exist"))
+        .expect("result should be valid JSON");
+    assert_eq!(outcome["outcome"]["status"], "success");
+    assert!(events.is_file());
+    let report: Value = serde_json::from_slice(&fs::read(&report).expect("report should exist"))
+        .expect("report should be valid JSON");
+    assert_eq!(report["instance"]["partCount"], 3);
+    assert_eq!(report["instance"]["sourcePieceCount"], 2);
+    assert_eq!(report["instance"]["sourcePolygonVertexCount"], 7);
+    assert_eq!(report["instance"]["instancePolygonVertexCount"], 10);
+    assert_eq!(report["instance"]["geometry"]["convexPartCount"], 3);
+    assert_eq!(report["run"]["complete"], true);
+    assert_eq!(report["run"]["placedPartCount"], 3);
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn run_polygons_rejects_invalid_geometry_with_a_typed_outcome() {
+    let directory = temporary_directory("run-polygons-invalid");
+    let polygons = directory.join("polygons.json");
+    let request = directory.join("request.json");
+    let output = directory.join("result.json");
+    fs::write(
+        &polygons,
+        r#"{"version":1,"polygons":[{"id":"line","points":[[0,0],[10,10],[20,20]]}]}"#,
+    )
+    .expect("polygon input should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run-polygons",
+            "--polygons-file",
+            polygons.to_str().expect("polygon path is UTF-8"),
+            "--sheet",
+            "200x200",
+            "--request-file",
+            request.to_str().expect("request path is UTF-8"),
+            "--result-file",
+            output.to_str().expect("result path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert!(!request.exists());
+    let outcome: Value = serde_json::from_slice(&fs::read(&output).expect("result should exist"))
+        .expect("result should be valid JSON");
+    assert_eq!(outcome["outcome"]["error"]["category"], "malformed_input");
+    assert_eq!(outcome["outcome"]["error"]["operation"], "import-polygons");
+
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn run_polygons_cannot_overwrite_its_source_even_when_invocation_is_malformed() {
+    let directory = temporary_directory("run-polygons-source-overwrite");
+    let polygons = directory.join("polygons.json");
+    let request = directory.join("request.json");
+    let source = polygon_document();
+    fs::write(&polygons, source).expect("polygon input should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run-polygons",
+            "--polygons-file",
+            polygons.to_str().expect("polygon path is UTF-8"),
+            "--sheet",
+            "not-a-sheet",
+            "--request-file",
+            request.to_str().expect("request path is UTF-8"),
+            "--result-file",
+            polygons.to_str().expect("polygon path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert!(!request.exists());
+    assert_eq!(
+        fs::read_to_string(&polygons).expect("polygon source should remain"),
+        source
+    );
 
     fs::remove_dir_all(directory).expect("temporary directory should be removed");
 }
@@ -1260,6 +1435,67 @@ fn malformed_recovery_does_not_overwrite_a_hardlinked_input_alias() {
 }
 
 #[test]
+fn run_rejects_a_report_path_that_would_replace_the_input() {
+    let directory = temporary_directory("report-input-alias");
+    let input = directory.join("request.json");
+    let output = directory.join("result.json");
+    let original = include_bytes!("../../../tests/fixtures/cli/request-v1.json");
+    fs::write(&input, original).expect("fixture input should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run",
+            "--input",
+            input.to_str().expect("input path is UTF-8"),
+            "--result-file",
+            output.to_str().expect("output path is UTF-8"),
+            "--report-file",
+            input.to_str().expect("report path is UTF-8"),
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    assert_eq!(
+        fs::read(&input).expect("input should remain intact"),
+        original
+    );
+    assert!(!output.exists());
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
+fn best_known_utilization_requires_a_report_file() {
+    let directory = temporary_directory("best-known-requires-report");
+    let input = directory.join("request.json");
+    let output = directory.join("result.json");
+    fs::write(
+        &input,
+        include_bytes!("../../../tests/fixtures/cli/request-v1.json"),
+    )
+    .expect("fixture input should be written");
+
+    let process = Command::new(env!("CARGO_BIN_EXE_polygon-nesting"))
+        .args([
+            "run",
+            "--input",
+            input.to_str().expect("input path is UTF-8"),
+            "--result-file",
+            output.to_str().expect("output path is UTF-8"),
+            "--best-known-utilization-percent",
+            "50",
+        ])
+        .output()
+        .expect("CLI should start");
+
+    assert_eq!(process.status.code(), Some(2));
+    let outcome: Value = serde_json::from_slice(&fs::read(&output).expect("outcome should exist"))
+        .expect("outcome should be JSON");
+    assert_eq!(outcome["outcome"]["error"]["category"], "malformed_input");
+    fs::remove_dir_all(directory).expect("temporary directory should be removed");
+}
+
+#[test]
 fn huge_finite_request_timeout_remains_a_valid_success() {
     let directory = temporary_directory("huge-timeout");
     let input = directory.join("request.json");
@@ -1565,6 +1801,7 @@ fn run_uses_the_supplied_control_for_deterministic_cancellation() {
             input: &input,
             output: &output,
             events: None,
+            report: None,
         },
         &control,
     );

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jfet07-polygon-labs/polygon-nesting/schemas/napi/desktop-request-v1.schema.json",
+  "title": "Polygon nesting N-API desktop request v1",
+  "type": "object",
+  "required": ["version", "jobId", "sheet", "padding", "pieces", "options"],
+  "properties": {
+    "version": { "const": 1 },
+    "jobId": { "type": "string", "minLength": 1 },
+    "strategyRunId": { "type": "string", "minLength": 1 },
+    "sheet": { "$ref": "../cli/engine-request-v1.schema.json#/$defs/sheet" },
+    "padding": { "$ref": "../cli/engine-request-v1.schema.json#/$defs/safeInteger" },
+    "pieces": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "../cli/engine-request-v1.schema.json#/$defs/preparedPiece" }
+    },
+    "sourcePieces": {
+      "type": "array",
+      "items": { "$ref": "../cli/engine-request-v1.schema.json#/$defs/sourcePiece" }
+    },
+    "options": {
+      "type": "object",
+      "required": ["allowGlobalRotation", "timeoutMs", "workerMode", "historyMode", "irregularSettings"],
+      "properties": {
+        "allowGlobalRotation": { "type": "boolean" },
+        "allowGlobalMirror": { "type": "boolean", "default": true },
+        "timeoutMs": { "$ref": "../cli/engine-request-v1.schema.json#/$defs/positive" },
+        "workerMode": { "const": "irregular-convex-v2" },
+        "historyMode": { "enum": ["stream", "final", "off"] },
+        "diagnosticTraceMode": { "enum": ["full", "off"], "default": "full" },
+        "irregularSettings": {
+          "type": "object",
+          "required": ["geometry", "optimizer"],
+          "properties": {
+            "geometry": { "$ref": "../cli/engine-request-v1.schema.json#/$defs/geometrySettings" },
+            "optimizer": {
+              "allOf": [
+                { "$ref": "../cli/engine-request-v1.schema.json#/$defs/optimizerSettings" },
+                {
+                  "type": "object",
+                  "required": ["intrinsicObjectiveProfileId"],
+                  "properties": {
+                    "intrinsicObjectiveProfileId": { "enum": ["compact", "short-side"] }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

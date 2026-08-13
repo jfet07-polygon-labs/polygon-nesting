@@ -104,6 +104,7 @@ COPY --from=builder /workspace/target/release/polygon-nesting /usr/local/bin/pol
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY NOTICE /usr/share/doc/polygon-nesting/NOTICE
 COPY LICENSES/clipper2-ts-BSL-1.0.txt /usr/share/doc/polygon-nesting/LICENSES/clipper2-ts-BSL-1.0.txt
+COPY packages/polygon-nesting/schemas /usr/share/doc/polygon-nesting/schemas
 
 USER polygon
 ENTRYPOINT ["/usr/local/bin/polygon-nesting"]

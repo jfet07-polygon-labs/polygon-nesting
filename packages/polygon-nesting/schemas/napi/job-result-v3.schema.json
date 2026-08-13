@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jfet07-polygon-labs/polygon-nesting/schemas/napi/job-result-v3.schema.json",
+  "title": "Polygon nesting N-API runIrregularJob result v3",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ok", "result"],
+      "properties": {
+        "ok": { "const": true },
+        "result": { "$ref": "../cli/engine-outcome-v1.schema.json#/$defs/engineResult" }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ok", "error"],
+      "properties": {
+        "ok": { "const": false },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["category", "operation", "message"],
+          "properties": {
+            "category": { "type": "string", "minLength": 1 },
+            "operation": { "type": "string", "minLength": 1 },
+            "message": { "type": "string" },
+            "context": { "type": "object", "additionalProperties": { "type": "string" } }
+          }
+        }
+      }
+    }
+  ]
+}

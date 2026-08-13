@@ -1,6 +1,6 @@
 {
   "name": "@jfet07-polygon-labs/polygon-nesting",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jfet07-polygon-labs/polygon-nesting.git"
@@ -10,11 +10,16 @@
     "registry": "https://npm.pkg.github.com"
   },
   "main": "npm/index.cjs",
-  "exports": "./npm/index.cjs",
+  "exports": {
+    ".": "./npm/index.cjs",
+    "./schemas": "./schemas/index.json",
+    "./schemas/*": "./schemas/*"
+  },
   "files": [
     "npm/index.cjs",
     "npm/target.cjs",
     "npm/*.node",
+    "schemas/**",
     "NOTICE",
     "LICENSES/**"
   ],

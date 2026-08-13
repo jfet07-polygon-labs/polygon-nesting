@@ -50,20 +50,41 @@ pub struct RunPaths<'a> {
     pub input: &'a Path,
     pub output: &'a Path,
     pub events: Option<&'a Path>,
+    pub report: Option<&'a Path>,
+}
+
+pub struct CompletedRun {
+    pub request: EngineRequest,
+    pub outcome: EngineOutcome,
+}
+
+pub struct RunCompletion {
+    pub status: ExitStatus,
+    pub completed: Option<CompletedRun>,
 }
 
 pub fn artifacts_within_directory(directory: &Path, paths: &RunPaths<'_>) -> bool {
-    [Some(paths.input), Some(paths.output), paths.events]
-        .into_iter()
-        .flatten()
-        .any(|artifact| path_within_directory(directory, artifact))
+    [
+        Some(paths.input),
+        Some(paths.output),
+        paths.events,
+        paths.report,
+    ]
+    .into_iter()
+    .flatten()
+    .any(|artifact| path_within_directory(directory, artifact))
 }
 
 pub fn artifacts_overlap_inputs(paths: &RunPaths<'_>, inputs: &[PathBuf]) -> bool {
-    [Some(paths.input), Some(paths.output), paths.events]
-        .into_iter()
-        .flatten()
-        .any(|artifact| inputs.iter().any(|input| paths_alias(artifact, input)))
+    [
+        Some(paths.input),
+        Some(paths.output),
+        paths.events,
+        paths.report,
+    ]
+    .into_iter()
+    .flatten()
+    .any(|artifact| inputs.iter().any(|input| paths_alias(artifact, input)))
 }
 
 pub fn path_within_directory(directory: &Path, path: &Path) -> bool {
@@ -111,6 +132,18 @@ pub fn write_malformed_invocation(paths: RunPaths<'_>) -> ExitStatus {
 }
 
 pub fn write_dxf_import_failure(paths: RunPaths<'_>, message: impl Into<String>) -> ExitStatus {
+    write_import_failure(paths, "import-dxf", message)
+}
+
+pub fn write_polygon_import_failure(paths: RunPaths<'_>, message: impl Into<String>) -> ExitStatus {
+    write_import_failure(paths, "import-polygons", message)
+}
+
+fn write_import_failure(
+    paths: RunPaths<'_>,
+    operation: &'static str,
+    message: impl Into<String>,
+) -> ExitStatus {
     if paths_overlap(&paths) {
         return ExitStatus::MalformedInput;
     }
@@ -118,7 +151,7 @@ pub fn write_dxf_import_failure(paths: RunPaths<'_>, message: impl Into<String>)
         paths.output,
         paths.events,
         EngineOutcome::Failure {
-            error: EngineError::new(EngineErrorCode::MalformedInput, "import-dxf", message),
+            error: EngineError::new(EngineErrorCode::MalformedInput, operation, message),
             diagnostics: ExecutionDiagnostics::default(),
         },
         Vec::new(),
@@ -132,31 +165,49 @@ pub fn write_request_and_run(
     control: &CancellationControl,
     deadline_ms: Option<f64>,
 ) -> ExitStatus {
+    write_request_and_run_observed(request, paths, control, deadline_ms).status
+}
+
+pub fn write_request_and_run_observed(
+    request: &EngineRequest,
+    paths: RunPaths<'_>,
+    control: &CancellationControl,
+    deadline_ms: Option<f64>,
+) -> RunCompletion {
     if paths_overlap(&paths) {
-        return ExitStatus::MalformedInput;
+        return RunCompletion {
+            status: ExitStatus::MalformedInput,
+            completed: None,
+        };
     }
     let encoded = match encode_request(request) {
         Ok(encoded) => encoded,
         Err(_) => {
-            return finish_outcome(
-                paths.output,
-                paths.events,
-                malformed_request_outcome(),
-                Vec::new(),
-                ExitStatus::MalformedInput,
-            );
+            return RunCompletion {
+                status: finish_outcome(
+                    paths.output,
+                    paths.events,
+                    malformed_request_outcome(),
+                    Vec::new(),
+                    ExitStatus::MalformedInput,
+                ),
+                completed: None,
+            };
         }
     };
     if write_atomically(paths.input, &encoded).is_err() {
-        return finish_outcome(
-            paths.output,
-            paths.events,
-            request_write_failure_outcome(),
-            Vec::new(),
-            ExitStatus::WriteFailure,
-        );
+        return RunCompletion {
+            status: finish_outcome(
+                paths.output,
+                paths.events,
+                request_write_failure_outcome(),
+                Vec::new(),
+                ExitStatus::WriteFailure,
+            ),
+            completed: None,
+        };
     }
-    run_with_deadline(paths, control, deadline_ms)
+    run_with_deadline_observed(paths, control, deadline_ms)
 }
 
 pub fn write_signal_registration_failure(paths: RunPaths<'_>) -> ExitStatus {
@@ -184,8 +235,19 @@ pub fn run_with_deadline(
     control: &CancellationControl,
     deadline_ms: Option<f64>,
 ) -> ExitStatus {
+    run_with_deadline_observed(paths, control, deadline_ms).status
+}
+
+pub fn run_with_deadline_observed(
+    paths: RunPaths<'_>,
+    control: &CancellationControl,
+    deadline_ms: Option<f64>,
+) -> RunCompletion {
     if paths_overlap(&paths) {
-        return ExitStatus::MalformedInput;
+        return RunCompletion {
+            status: ExitStatus::MalformedInput,
+            completed: None,
+        };
     }
 
     let mut request = match fs::read(paths.input)
@@ -194,25 +256,31 @@ pub fn run_with_deadline(
     {
         Some(request) => request,
         None => {
-            return finish_outcome(
-                paths.output,
-                paths.events,
-                malformed_request_outcome(),
-                Vec::new(),
-                ExitStatus::MalformedInput,
-            );
+            return RunCompletion {
+                status: finish_outcome(
+                    paths.output,
+                    paths.events,
+                    malformed_request_outcome(),
+                    Vec::new(),
+                    ExitStatus::MalformedInput,
+                ),
+                completed: None,
+            };
         }
     };
 
     if let Some(deadline_ms) = deadline_ms {
         if !deadline_ms.is_finite() || deadline_ms <= 0.0 {
-            return finish_outcome(
-                paths.output,
-                paths.events,
-                malformed_deadline_outcome(),
-                Vec::new(),
-                ExitStatus::MalformedInput,
-            );
+            return RunCompletion {
+                status: finish_outcome(
+                    paths.output,
+                    paths.events,
+                    malformed_deadline_outcome(),
+                    Vec::new(),
+                    ExitStatus::MalformedInput,
+                ),
+                completed: None,
+            };
         }
         request.timeout_ms = request.timeout_ms.min(deadline_ms);
     }
@@ -229,7 +297,10 @@ pub fn run_with_deadline(
         Ok(Err(_)) | Err(_) => internal_failure_outcome(),
     };
     let status = outcome_exit_status(&outcome);
-    finish_outcome(paths.output, paths.events, outcome, events.events, status)
+    let status = finish_outcome_ref(paths.output, paths.events, &outcome, events.events, status);
+    let completed =
+        (status != ExitStatus::WriteFailure).then_some(CompletedRun { request, outcome });
+    RunCompletion { status, completed }
 }
 
 fn paths_overlap(paths: &RunPaths<'_>) -> bool {
@@ -237,6 +308,17 @@ fn paths_overlap(paths: &RunPaths<'_>) -> bool {
         || paths.events.is_some_and(|events| {
             paths_alias(paths.input, events) || paths_alias(paths.output, events)
         })
+        || paths.report.is_some_and(|report| {
+            paths_alias(paths.input, report)
+                || paths_alias(paths.output, report)
+                || paths
+                    .events
+                    .is_some_and(|events| paths_alias(events, report))
+        })
+}
+
+pub fn write_artifact_atomically(path: &Path, bytes: &[u8]) -> io::Result<()> {
+    write_atomically(path, bytes)
 }
 
 pub fn paths_alias(first: &Path, second: &Path) -> bool {
@@ -292,7 +374,17 @@ fn finish_outcome(
     events: Vec<SequencedEngineEvent>,
     status: ExitStatus,
 ) -> ExitStatus {
-    finish_outcome_with_writer(
+    finish_outcome_ref(output, events_path, &outcome, events, status)
+}
+
+fn finish_outcome_ref(
+    output: &Path,
+    events_path: Option<&Path>,
+    outcome: &EngineOutcome,
+    events: Vec<SequencedEngineEvent>,
+    status: ExitStatus,
+) -> ExitStatus {
+    finish_outcome_ref_with_writer(
         output,
         events_path,
         outcome,
@@ -302,6 +394,7 @@ fn finish_outcome(
     )
 }
 
+#[cfg(test)]
 fn finish_outcome_with_writer(
     output: &Path,
     events_path: Option<&Path>,
@@ -310,7 +403,18 @@ fn finish_outcome_with_writer(
     status: ExitStatus,
     mut write: impl FnMut(&Path, &[u8]) -> io::Result<()>,
 ) -> ExitStatus {
-    let outcome = match encode_outcome(&outcome) {
+    finish_outcome_ref_with_writer(output, events_path, &outcome, events, status, &mut write)
+}
+
+fn finish_outcome_ref_with_writer(
+    output: &Path,
+    events_path: Option<&Path>,
+    outcome: &EngineOutcome,
+    events: Vec<SequencedEngineEvent>,
+    status: ExitStatus,
+    mut write: impl FnMut(&Path, &[u8]) -> io::Result<()>,
+) -> ExitStatus {
+    let outcome = match encode_outcome(outcome) {
         Ok(outcome) => outcome,
         Err(_) => return ExitStatus::WriteFailure,
     };
@@ -438,6 +542,7 @@ mod tests {
             input: &input,
             output: &output,
             events: None,
+            report: None,
         });
 
         assert_eq!(status, ExitStatus::InternalFailure);

@@ -29,7 +29,7 @@ docker run --rm --volume "$PWD:/work" "$IMAGE" run \
 
 Azure Container Jobs must use the verified runtime image by immutable digest, not a mutable tag. Running the image without the `run` invocation is malformed and exits with the documented status `2`.
 
-The image also exposes `run-dxf` for manual and third-party tests that start from a directory of quantity-one DXF files. It writes the generated `EngineRequest` before executing it. Azure and Configurator integrations that already own quantities, customer metadata, DXF parsing, and request construction should continue using the canonical `run --input request.json` boundary.
+The image also exposes `run-dxf` for manual and third-party tests that start from a directory of quantity-one DXF files, plus `run-polygons` for tests that already have ordered polygon coordinates and quantities. Both commands write their generated `EngineRequest` before executing it. Azure and Configurator integrations that already own customer metadata and complete request construction should continue using the canonical `run --input request.json` boundary.
 
 `request.json` is a single protocol v1 `EngineRequest`. Production jobs that do not need state snapshots or detailed algorithm traces should set both controls explicitly:
 

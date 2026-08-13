@@ -315,7 +315,8 @@ fn build_request(
             width: source.real_width,
             height: source.real_height,
         };
-        let interchangeability_key = geometry_key(&real_bounds, &source.segments)?;
+        let interchangeability_key =
+            geometry_key(&real_bounds, &source.segments, true, options.allow_mirror)?;
         let padded_width = source.real_width + side_padding * 2.0;
         let padded_height = source.real_height + side_padding * 2.0;
         pieces.push(PreparedPiece {
@@ -432,6 +433,8 @@ struct GeometryKeyBounds {
 fn geometry_key(
     real_bounds: &Rect,
     segments: &[SourceGeometrySegment],
+    allow_rotation: bool,
+    allow_mirror: bool,
 ) -> Result<String, DxfImportError> {
     let bytes = serde_json::to_vec(&GeometryKey {
         real_bounds: GeometryKeyBounds {
@@ -443,7 +446,13 @@ fn geometry_key(
     .map_err(|error| {
         DxfImportError::new(format!("geometry identity could not be encoded: {error}"))
     })?;
-    let hash = Sha256::digest(bytes);
+    let mut digest = Sha256::new();
+    digest.update(bytes);
+    if !allow_rotation || !allow_mirror {
+        digest.update(b"\0transform-permissions-v1\0");
+        digest.update([u8::from(allow_rotation), u8::from(allow_mirror)]);
+    }
+    let hash = digest.finalize();
     Ok(hash.iter().map(|byte| format!("{byte:02x}")).collect())
 }
 

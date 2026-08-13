@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jfet07-polygon-labs/polygon-nesting/schemas/cli/engine-event-v1.schema.json",
+  "title": "Polygon nesting CLI sequenced event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ordinal", "event"],
+  "properties": {
+    "ordinal": { "type": "integer", "minimum": 0 },
+    "event": { "$ref": "#/$defs/engineEvent" }
+  },
+  "$defs": {
+    "portfolioProgress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "elapsedMs"],
+      "properties": {
+        "phase": { "enum": ["shared_archive", "short_side_profile", "completed"] },
+        "bestScore": { "$ref": "engine-outcome-v1.schema.json#/$defs/layoutScoreSummary" },
+        "elapsedMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "engineEvent": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "progress"],
+          "properties": {
+            "kind": { "const": "portfolio-progress" },
+            "progress": { "$ref": "#/$defs/portfolioProgress" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "snapshot", "beamWidth"],
+          "properties": {
+            "kind": { "const": "state-snapshot" },
+            "snapshot": { "$ref": "engine-outcome-v1.schema.json#/$defs/stateSnapshot" },
+            "beamWidth": { "type": "number", "minimum": 0 }
+          }
+        }
+      ]
+    }
+  }
+}

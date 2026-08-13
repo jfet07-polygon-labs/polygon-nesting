@@ -24,7 +24,7 @@ polygon-nesting-dxf        |       polygon-nesting-napi
 
 `protocol` owns versioned request, outcome, error, and semantic event data. `core` owns deterministic computation, job-local Rayon pools, caches, cancellation checkpoints, and event ordering. `dxf` converts a deterministic directory of raw DXF files into a protocol request. The CLI owns command parsing, deadline shortening, artifact-path safety, signal handling, atomic writes, and exit mapping. N-API owns desktop compatibility conversion, adapter validation, error projection, invocation registration, callback acknowledgement, and environment cleanup. The core has no dependency on DXF parsing, N-API, Node, Electron, libuv, CLI parsing, Azure SDKs, HTTP servers, or application persistence.
 
-See [architecture](docs/architecture.md), [protocol compatibility](docs/protocol-compatibility.md), [N-API compatibility](docs/napi-compatibility.md), [CLI contract](docs/cli-contract.md), [Azure Container Jobs contract](docs/azure-container-job-contract.md), and [migration and release gates](docs/migration-from-min-plane-dfx.md).
+See [architecture](docs/architecture.md), [protocol compatibility](docs/protocol-compatibility.md), [N-API compatibility](docs/napi-compatibility.md), [CLI contract](docs/cli-contract.md), [polygon input v1](docs/polygon-input-v1.md), [Azure Container Jobs contract](docs/azure-container-job-contract.md), and [migration and release gates](docs/migration-from-min-plane-dfx.md).
 
 ## CLI
 
@@ -52,6 +52,24 @@ polygon-nesting run-dxf \
 ```
 
 Each regular `.dxf` file is one quantity-one piece. Files are sorted by filename, dimensions are millimetres, and model-space `LINE`, `ARC`, `CIRCLE`, and `ELLIPSE` entities retain the curve metadata consumed by the engine. CSV/customer semantics remain application-owned; applications such as Configurator that already construct an `EngineRequest` continue to use `run`.
+
+For standalone tests that already have polygon coordinates, the image can instead construct the same request shape from a versioned polygon document:
+
+```sh
+polygon-nesting run-polygons \
+  --polygons-file /work/polygons.json \
+  --sheet 2000x2700 \
+  --padding 10 \
+  --profile compact \
+  --allow-mirror false \
+  --request-file /work/request.json \
+  --result-file /work/result.json \
+  --report-file /work/report.json
+```
+
+The [polygon input v1 contract](docs/polygon-input-v1.md) accepts ordered millimetre coordinates, per-polygon quantities, and rotation/mirror permissions. It is an additive convenience boundary; `run` remains the complete protocol boundary and `run-dxf` remains available unchanged.
+
+For comparative runs, every CLI command accepts `--report-file` and an optional `--best-known-utilization-percent`. The report adds instance descriptors, engine runtime, worker counts, completion, area utilization, and occupied-envelope density without changing `result.json`. Versioned JSON Schemas for both CLI and N-API boundaries ship under the npm package's `schemas` export and in the OCI image at `/usr/share/doc/polygon-nesting/schemas`.
 
 ## Request trace controls
 
@@ -85,7 +103,7 @@ The same prebuilt addon payload is published in two packages at the canonical wo
 
 ## OCI image
 
-The OCI image supports only `linux/amd64` and runs as the non-root `polygon` user. It accepts either one existing request with `run` or a directory of quantity-one DXFs with `run-dxf`, and has no Azure credentials or storage SDK. A consuming backend owns durable storage, quantities and customer metadata, execution orchestration, and outcome handling.
+The OCI image supports only `linux/amd64` and runs as the non-root `polygon` user. It accepts an existing request with `run`, a directory of quantity-one DXFs with `run-dxf`, or a versioned polygon-coordinate document with `run-polygons`, and has no Azure credentials or storage SDK. A consuming backend owns durable storage, customer metadata, execution orchestration, and outcome handling.
 
 ## Provenance and release state
 

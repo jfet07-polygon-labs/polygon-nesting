@@ -32,6 +32,7 @@ test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainer
 
 test "$(docker run --rm --platform linux/amd64 --entrypoint sha256sum "$image" /usr/share/doc/polygon-nesting/NOTICE | cut -d ' ' -f 1)" = 1fa11aadfd5f98d734cbaced1fa10d525fd85565c560044734db4ce752037c1d
 test "$(docker run --rm --platform linux/amd64 --entrypoint sha256sum "$image" /usr/share/doc/polygon-nesting/LICENSES/clipper2-ts-BSL-1.0.txt | cut -d ' ' -f 1)" = ea056d2c64294936b226f7360c265e77c52adc4ba171ee61029357f101f439cf
+docker run --rm --platform linux/amd64 --entrypoint test "$image" -f /usr/share/doc/polygon-nesting/schemas/cli/benchmark-report-v1.schema.json
 
 cp "$repository_root/tests/fixtures/cli/request-v1.json" "$workspace/request.json"
 chmod 777 "$workspace"
@@ -85,6 +86,40 @@ assert len(request["pieces"]) == 1
 assert request["pieces"][0]["allowMirror"] is False
 with open(sys.argv[2], encoding="utf-8") as result_file:
     assert json.load(result_file)["outcome"]["status"] == "success"
+PY
+
+cp "$repository_root/tests/fixtures/cli/polygons-v1.json" "$workspace/polygons.json"
+docker run --rm \
+  --platform linux/amd64 \
+  --user "$host_uid:$host_gid" \
+  --mount "type=bind,src=$workspace,dst=/work" \
+  "$image" run-polygons \
+  --polygons-file /work/polygons.json \
+  --sheet 2000x2700 \
+  --allow-mirror false \
+  --request-file /work/polygon-request.json \
+  --result-file /work/polygon-result.json \
+  --report-file /work/polygon-report.json \
+  --best-known-utilization-percent 1
+
+test -s "$workspace/polygon-request.json"
+test -s "$workspace/polygon-result.json"
+test -s "$workspace/polygon-report.json"
+python3 - "$workspace/polygon-request.json" "$workspace/polygon-result.json" "$workspace/polygon-report.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as request_file:
+    request = json.load(request_file)
+assert [piece["id"] for piece in request["pieces"]] == ["rectangle#1", "rectangle#2", "triangle#1"]
+assert request["pieces"][2]["allowMirror"] is False
+with open(sys.argv[2], encoding="utf-8") as result_file:
+    assert json.load(result_file)["outcome"]["status"] == "success"
+with open(sys.argv[3], encoding="utf-8") as report_file:
+    report = json.load(report_file)
+assert report["version"] == 1
+assert report["instance"]["partCount"] == 3
+assert report["run"]["bestKnownSheetUtilizationPercent"] == 1
 PY
 
 printf '{' > "$workspace/malformed.json"

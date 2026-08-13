@@ -620,7 +620,7 @@ test('vendored Clipper headers resolve to authoritative license bytes', () => {
   }
 })
 
-test('package manifest publishes only the addon loader, binaries, and notices', () => {
+test('package manifest publishes only the addon loader, binaries, schemas, and notices', () => {
   const manifest = JSON.parse(readFileSync(resolve(PACKAGE_ROOT, 'package.json'), 'utf8'))
   assert.equal(manifest.name, '@jfet07-polygon-labs/polygon-nesting')
   assert.deepEqual(manifest.repository, {
@@ -630,14 +630,61 @@ test('package manifest publishes only the addon loader, binaries, and notices', 
   assert.equal(manifest.private, false)
   assert.equal(manifest.publishConfig.registry, 'https://npm.pkg.github.com')
   assert.equal(manifest.main, 'npm/index.cjs')
-  assert.equal(manifest.exports, './npm/index.cjs')
+  assert.deepEqual(manifest.exports, {
+    '.': './npm/index.cjs',
+    './schemas': './schemas/index.json',
+    './schemas/*': './schemas/*'
+  })
   assert.deepEqual(manifest.files, [
     'npm/index.cjs',
     'npm/target.cjs',
     'npm/*.node',
+    'schemas/**',
     'NOTICE',
     'LICENSES/**'
   ])
+})
+
+test('publishes a complete versioned CLI and N-API schema manifest', () => {
+  const schemaRoot = resolve(PACKAGE_ROOT, 'schemas')
+  const manifest = JSON.parse(readFileSync(resolve(schemaRoot, 'index.json'), 'utf8'))
+  assert.equal(manifest.schemaSetVersion, 1)
+  assert.equal(manifest.draft, 'https://json-schema.org/draft/2020-12/schema')
+  assert.deepEqual(Object.keys(manifest.schemas).sort(), [
+    'cli.benchmarkReport.v1',
+    'cli.engineEvent.v1',
+    'cli.engineOutcome.v1',
+    'cli.engineRequest.v1',
+    'cli.polygonInput.v1',
+    'napi.desktopRequest.v1',
+    'napi.jobEvent.v3',
+    'napi.jobResult.v3',
+    'napi.lastJobDiagnostics.v1',
+    'napi.nativeCapability.v3'
+  ])
+
+  const visit = (value, schemaPath) => {
+    if (Array.isArray(value)) {
+      for (const entry of value) visit(entry, schemaPath)
+      return
+    }
+    if (value === null || typeof value !== 'object') return
+    for (const [key, entry] of Object.entries(value)) {
+      if (key === '$ref' && typeof entry === 'string' && !entry.startsWith('#') && !entry.startsWith('https://')) {
+        const [relativePath] = entry.split('#', 1)
+        assert.equal(existsSync(resolve(dirname(schemaPath), relativePath)), true, `missing schema reference ${entry}`)
+      }
+      visit(entry, schemaPath)
+    }
+  }
+
+  for (const relativePath of Object.values(manifest.schemas)) {
+    const schemaPath = resolve(schemaRoot, relativePath)
+    const schema = JSON.parse(readFileSync(schemaPath, 'utf8'))
+    assert.equal(schema.$schema, manifest.draft)
+    assert.match(schema.$id, /\/schemas\/(cli|napi)\/.+\.schema\.json$/)
+    visit(schema, schemaPath)
+  }
 })
 
 test('publishes two native targets while retaining local Windows build support', () => {
@@ -666,7 +713,18 @@ test('validates local package subsets and complete two-target release candidates
     'NOTICE',
     'npm/index.cjs',
     'npm/target.cjs',
-    'package.json'
+    'package.json',
+    'schemas/index.json',
+    'schemas/cli/benchmark-report-v1.schema.json',
+    'schemas/cli/engine-event-v1.schema.json',
+    'schemas/cli/engine-outcome-v1.schema.json',
+    'schemas/cli/engine-request-v1.schema.json',
+    'schemas/cli/polygon-input-v1.schema.json',
+    'schemas/napi/desktop-request-v1.schema.json',
+    'schemas/napi/job-event-v3.schema.json',
+    'schemas/napi/job-result-v3.schema.json',
+    'schemas/napi/last-job-diagnostics-v1.schema.json',
+    'schemas/napi/native-capability-v3.schema.json'
   ]
   const publishedFiles = Object.values(target.PUBLISHED_NATIVE_TARGETS)
     .map(({ platform, arch }) => `npm/irregular-nesting-native.${platform}-${arch}.node`)

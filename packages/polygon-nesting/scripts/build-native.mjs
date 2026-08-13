@@ -22,7 +22,18 @@ const REQUIRED_PACKAGE_FILES = Object.freeze([
   'NOTICE',
   'npm/index.cjs',
   'npm/target.cjs',
-  'package.json'
+  'package.json',
+  'schemas/index.json',
+  'schemas/cli/benchmark-report-v1.schema.json',
+  'schemas/cli/engine-event-v1.schema.json',
+  'schemas/cli/engine-outcome-v1.schema.json',
+  'schemas/cli/engine-request-v1.schema.json',
+  'schemas/cli/polygon-input-v1.schema.json',
+  'schemas/napi/desktop-request-v1.schema.json',
+  'schemas/napi/job-event-v3.schema.json',
+  'schemas/napi/job-result-v3.schema.json',
+  'schemas/napi/last-job-diagnostics-v1.schema.json',
+  'schemas/napi/native-capability-v3.schema.json'
 ])
 const STAGED_ADDON_FILES = Object.freeze(
   Object.values(target.NATIVE_TARGETS).map(({ platform, arch }) => `npm/${stagedAddonFileName(platform, arch)}`)

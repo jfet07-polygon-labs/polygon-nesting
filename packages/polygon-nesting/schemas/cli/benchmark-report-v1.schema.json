@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jfet07-polygon-labs/polygon-nesting/schemas/cli/benchmark-report-v1.schema.json",
+  "title": "Polygon nesting CLI benchmark report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "engine", "instance", "run"],
+  "properties": {
+    "version": { "const": 1 },
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "const": "polygon-nesting" },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "instance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["partCount", "sourcePieceCount", "sheet", "profile", "paddingMm", "sourceBoundarySegmentCount", "instanceBoundarySegmentCount", "rotationAllowedPartCount", "mirrorAllowedPartCount", "geometry"],
+      "properties": {
+        "partCount": { "$ref": "#/$defs/count" },
+        "sourcePieceCount": { "$ref": "#/$defs/count" },
+        "sheet": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["widthMm", "heightMm", "areaMm2"],
+          "properties": {
+            "widthMm": { "$ref": "#/$defs/nonNegative" },
+            "heightMm": { "$ref": "#/$defs/nonNegative" },
+            "areaMm2": { "$ref": "#/$defs/nonNegative" }
+          }
+        },
+        "profile": { "enum": ["compact", "compact-short-side"] },
+        "paddingMm": { "$ref": "#/$defs/nonNegative" },
+        "sourceBoundarySegmentCount": { "$ref": "#/$defs/count" },
+        "instanceBoundarySegmentCount": { "$ref": "#/$defs/count" },
+        "sourcePolygonVertexCount": { "$ref": "#/$defs/count" },
+        "instancePolygonVertexCount": { "$ref": "#/$defs/count" },
+        "rotationAllowedPartCount": { "$ref": "#/$defs/count" },
+        "mirrorAllowedPartCount": { "$ref": "#/$defs/count" },
+        "geometry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["convexPartCount", "concavePartCount", "curvedOrUnknownPartCount"],
+          "properties": {
+            "convexPartCount": { "$ref": "#/$defs/count" },
+            "concavePartCount": { "$ref": "#/$defs/count" },
+            "curvedOrUnknownPartCount": { "$ref": "#/$defs/count" }
+          }
+        }
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["success", "failure", "archive-ineligible"] },
+        "placedPartCount": { "$ref": "#/$defs/count" },
+        "unplacedPartCount": { "$ref": "#/$defs/count" },
+        "complete": { "type": "boolean" },
+        "engineElapsedMs": { "$ref": "#/$defs/nonNegative" },
+        "requestedWorkers": { "$ref": "#/$defs/count" },
+        "actualWorkers": { "$ref": "#/$defs/count" },
+        "placedPolygonAreaMm2": { "$ref": "#/$defs/nonNegative" },
+        "sheetUtilizationPercent": { "$ref": "#/$defs/percentage" },
+        "occupiedEnvelopeAreaMm2": { "$ref": "#/$defs/nonNegative" },
+        "occupiedEnvelopeDensityPercent": { "$ref": "#/$defs/nonNegative" },
+        "bestKnownSheetUtilizationPercent": { "$ref": "#/$defs/percentage" },
+        "gapToBestKnownPercentagePoints": { "type": "number" }
+      }
+    }
+  },
+  "$defs": {
+    "count": { "type": "integer", "minimum": 0 },
+    "nonNegative": { "type": "number", "minimum": 0 },
+    "percentage": { "type": "number", "minimum": 0, "maximum": 100 }
+  }
+}
