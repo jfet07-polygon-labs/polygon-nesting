@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "experiment": "non-monotone-lns-screen",
+  "recordedAtUtc": "2026-08-15T00:00:00Z",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "parent": {
+    "fixture": "docs/experiments/persistent-vacancy-descent/chain/parent-hop003.json",
+    "independentDepthMm": 168.277
+  },
+  "mode15GreedyExactLns": {
+    "mechanism": "lift frontier piece + adaptive nearest neighborhood (4-24), diagonal resettle of survivors, greedy lowest-fit exact reinsertion with hazard screening at full-sheet working settings, lexicographic (frontier, total-depth-sum) acceptance with snapshot revert",
+    "outcome": "REJECTED: zero accepted rounds at every neighborhood size; 100 reinsertions, zero failures - every round ties or worsens the acceptance key. Greedy-exact multi-piece reinsertion is closed at any K up to 24 on the settled incumbent",
+    "raw": {
+      "path": "docs/experiments/persistent-vacancy-descent/lns/mode15-fixpoint-t168.600.json",
+      "sha256": "ad4f7658567beb290552c2117a86dc426701f758f62c74392c4e530a2a3db50f"
+    }
+  },
+  "mode16OverlapMediatedLns": {
+    "mechanism": "removed pieces return at their old poses with overlaps permitted; bounded deterministic descent of the grid-quantized total exact overlap moves the worst soft piece along a compass ladder, recruits the worst-overlap anchor when stuck (bilateral), and competes for acceptance only from zero-overlap endpoints; frontier selection rotates across the four deepest pieces per round",
+    "outcome": "FIRST ACCEPTED NON-MONOTONE ROUNDS in the program: one accepted round per hop for three consecutive chained hops (168.277 -> 168.275, plateau moves on the depth-sum key), then the translation-only separation operator saturates: 7 of 8 rounds stuck even with bilateral recruiting, frontier unmoved at grid 166031",
+    "chainedBestState": {
+      "path": "docs/experiments/persistent-vacancy-descent/lns/best-chained-state-168.275.json",
+      "sha256": "f1055e13dc5461d9b51a79c4a31c41779bcec55b0a146528c7df6b5020fc7954",
+      "independentDepthMm": 168.275
+    },
+    "raw": {
+      "path": "docs/experiments/persistent-vacancy-descent/lns/mode16-fixpoint-t168.600.json",
+      "sha256": "ae287e244db4e92b3e4b5a1e64888b9cc6e58b509f9a3f1ae0c76d9b7ff254cd"
+    }
+  },
+  "causalReading": "overlap mediation is the correct family - it is the only operator class that has produced accepted non-monotone rounds on the settled incumbent - but compass translation alone cannot resolve squeezed configurations; the next operators inside the same lifecycle are rotational separation probes and coordinated simultaneous pair moves",
+  "commands": "canonical benchmark invocation with MODE=15 or 16, a pinned parent fixture, and a target; chained hops feed each output back as the next parent fixture",
+  "provenance": {
+    "engineCommit": "f4b5ca66cadcad6b6fe29ac34d062f1f293976bd",
+    "executableSha256": "0979b8805d3d58eb10411da0f15177387f171c53531a9c073c663619ac4c4e37",
+    "relevantSourceTreeSha256": "51842848b28b7871275ea804b149f0c8e03185aef9193ebfbb205877dd37ace7",
+    "targetArchitecture": "x86_64"
+  }
+}
