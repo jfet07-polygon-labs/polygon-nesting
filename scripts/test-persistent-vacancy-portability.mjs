@@ -87,6 +87,28 @@ const runMode = (mode) => {
   return runBenchmark(benchmarkArguments, `persistent-vacancy mode ${mode}`)
 }
 
+const assertBoundedPartialTerminal = (candidate, label) => {
+  if (!candidate?.attempted) {
+    throw new Error(`${label} did not execute: ${candidate?.failureReason ?? 'missing diagnostics'}`)
+  }
+  if (candidate.capExhausted !== null) {
+    throw new Error(`${label} exhausted a cap: ${candidate.capExhausted}`)
+  }
+  if (
+    candidate.exactValid !== false ||
+    candidate.layersCompleted !== 40 ||
+    candidate.layers.length !== 40 ||
+    candidate.failureReason !==
+      'persistent vacancy population exhausted its bounded layers without a complete state' ||
+    candidate.publicationRejections !== 0 ||
+    candidate.work.partialAudits !== 41 ||
+    candidate.work.completeAudits !== 0 ||
+    candidate.layers.some((layer) => layer.retainedStates !== 8)
+  ) {
+    throw new Error(`${label} did not reach the expected exact-valid bounded partial terminal`)
+  }
+}
+
 const missingFixture = spawnSync(executable, arguments_.slice(0, -1), {
   cwd: root,
   encoding: 'utf8',
@@ -172,6 +194,7 @@ if (!population?.attempted) {
     `persistent-vacancy arm was not attempted: ${population?.failureReason ?? 'missing diagnostics'}`,
   )
 }
+assertBoundedPartialTerminal(population, 'persistent-vacancy mode 3')
 if (
   population.parentFingerprint !==
   'b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5'
@@ -204,12 +227,11 @@ const mode8 =
   runMode(8).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
 const mode9 =
   runMode(9).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
-if (!mode8?.attempted || !mode9?.attempted) {
-  throw new Error('macro control or treatment did not execute')
-}
-if (mode8.capExhausted !== null || mode9.capExhausted !== null) {
-  throw new Error(`macro screen exhausted a cap: ${mode8.capExhausted ?? mode9.capExhausted}`)
-}
+const mode10 =
+  runMode(10).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
+assertBoundedPartialTerminal(mode8, 'persistent-vacancy mode 8')
+assertBoundedPartialTerminal(mode9, 'persistent-vacancy mode 9')
+assertBoundedPartialTerminal(mode10, 'persistent-vacancy mode 10')
 const populationHistory = (candidate) =>
   candidate.layers.map((layer) => ({
     enteringPopulationHash: layer.elite.enteringPopulationHash,
@@ -278,6 +300,70 @@ if (
 ) {
   throw new Error('macro treatment did not preserve count and strictly improve inactive area')
 }
+const preservedBest = mode10.layers.at(-1).elite
+const firstPreservedParentLayer = mode10.layers.findIndex(
+  (layer) =>
+    layer.macroExpansion.parentOrigin === 'bestEverArea' &&
+    layer.macroExpansion.preservedParentAbsentFromOrdinary === true,
+)
+if (firstPreservedParentLayer <= 0) {
+  throw new Error('preserved-best macro treatment never expanded an absent incumbent')
+}
+const mode9ByEntering = new Map(
+  mode9.layers.map((layer) => [layer.elite.enteringPopulationHash, layer]),
+)
+for (const treatmentLayer of mode10.layers.slice(0, firstPreservedParentLayer)) {
+  const controlLayer = mode9ByEntering.get(treatmentLayer.elite.enteringPopulationHash)
+  if (!controlLayer) {
+    throw new Error('mode 10 diverged before its first absent-preserved-parent expansion')
+  }
+  const controlMacro = structuredClone(controlLayer.macroExpansion)
+  const treatmentMacro = structuredClone(treatmentLayer.macroExpansion)
+  delete treatmentMacro.parentOrigin
+  delete treatmentMacro.preservedParentAbsentFromOrdinary
+  if (
+    controlLayer.elite.ordinaryChildOrderHash !==
+      treatmentLayer.elite.ordinaryChildOrderHash ||
+    controlLayer.elite.completeCandidateOrderHash !==
+      treatmentLayer.elite.completeCandidateOrderHash ||
+    JSON.stringify(controlLayer.elite.preCarryoverWork) !==
+      JSON.stringify(treatmentLayer.elite.preCarryoverWork) ||
+    JSON.stringify(controlMacro) !== JSON.stringify(treatmentMacro) ||
+    controlLayer.bestStateFingerprint !== treatmentLayer.bestStateFingerprint
+  ) {
+    throw new Error('mode 10 changed the mode-9 stream before its active treatment layer')
+  }
+}
+const firstTreatmentLayer = mode10.layers[firstPreservedParentLayer]
+const firstTreatmentControl = mode9ByEntering.get(
+  firstTreatmentLayer.elite.enteringPopulationHash,
+)
+if (
+  !firstTreatmentControl ||
+  firstTreatmentControl.elite.ordinaryChildOrderHash !==
+    firstTreatmentLayer.elite.ordinaryChildOrderHash
+) {
+  throw new Error('mode 10 changed the ordinary stream at its first active treatment layer')
+}
+for (const key of [
+  'selectedPieceSlots',
+  'orientationStreams',
+  'exactFinalistRows',
+  'partialAudits',
+  'completeAudits',
+]) {
+  if (mode10.work[key] !== mode9.work[key]) {
+    throw new Error(`preserved-best macro treatment changed bounded work counter ${key}`)
+  }
+}
+if (
+  preservedBest.bestEverAreaEliteInactivePieceCount >
+    treatmentBest.bestEverAreaEliteInactivePieceCount ||
+  BigInt(preservedBest.bestEverAreaEliteInactiveAreaGrid2) >=
+    BigInt(treatmentBest.bestEverAreaEliteInactiveAreaGrid2)
+) {
+  throw new Error('preserved-best macro treatment did not preserve count and improve mode 9')
+}
 process.stdout.write(
-  `persistent-vacancy portability: ok (${populationSha256}; ${mode9RetainedNovel} retained macro states)\n`,
+  `persistent-vacancy portability: ok (${populationSha256}; ${mode9RetainedNovel} retained macro states; first preserved-parent layer ${firstPreservedParentLayer})\n`,
 )

@@ -404,6 +404,10 @@ pub struct GeneralPersistentVacancyLayerDiagnostics {
 #[serde(rename_all = "camelCase")]
 pub struct GeneralPersistentVacancyMacroExpansionDiagnostics {
     pub parent_state_fingerprint: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent_origin: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preserved_parent_absent_from_ordinary: Option<bool>,
     pub generated_children: usize,
     pub child_order_hash: String,
     pub novel_child_fingerprints: Vec<String>,
