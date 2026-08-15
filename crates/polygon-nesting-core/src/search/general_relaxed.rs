@@ -322,6 +322,21 @@ pub struct GeneralCoupledSeparatorDiagnostics {
     pub persistent_vacancy_population: Option<GeneralPersistentVacancyDiagnostics>,
 }
 
+/// A pinned persistent-vacancy parent layout loaded from a committed fixture.
+///
+/// The frozen `b9335a72...` parent is a fingerprint of the boundary-projection
+/// trajectory on the canonical Apple M4 Max platform. Arbitrary-angle
+/// trigonometry is not promised byte-identical across numeric platforms, so a
+/// different machine cannot reproduce that parent in-run. The fixture supplies
+/// the identical placements explicitly; every frozen fingerprint, depth, and
+/// dual-validation check still runs against the compiled-in constants.
+#[derive(Clone, Debug)]
+pub struct GeneralPersistentVacancyPinnedParent {
+    pub placements: Vec<GeneralFastPlacement>,
+    pub source: String,
+    pub source_sha256: String,
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GeneralPersistentVacancyDiagnostics {
@@ -329,6 +344,8 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub attempted: bool,
     pub seed_domain: u64,
     pub target_depth_mm: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent_source: Option<String>,
     pub parent_fingerprint: Option<String>,
     pub initial_state_fingerprint: Option<String>,
     pub initial_active_piece_ids: Vec<String>,
@@ -348,8 +365,42 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub final_placements: Vec<GeneralCoupledSeparatorPlacementDiagnostics>,
     pub work: GeneralPersistentVacancyWorkDiagnostics,
     pub layers: Vec<GeneralPersistentVacancyLayerDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub archive: Option<GeneralPersistentVacancyArchiveDiagnostics>,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyArchiveDiagnostics {
+    pub stagnation_threshold_layers: usize,
+    pub revival_cooldown_layers: usize,
+    pub max_revival_expansions: usize,
+    pub revival_policy: String,
+    pub revivals_expanded: usize,
+    pub revivals_skipped: usize,
+    pub revival_children_generated: usize,
+    pub revival_children_retained: usize,
+    pub archive_peak_bytes: usize,
+    pub final_archived_area_fingerprint: Option<String>,
+    pub final_archived_count_fingerprint: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyArchiveLayerDiagnostics {
+    pub layers_since_improvement: usize,
+    pub revival_attempted: bool,
+    pub revival_expanded: bool,
+    pub revival_kind: Option<String>,
+    pub revived_state_fingerprint: Option<String>,
+    pub replaced_state_fingerprint: Option<String>,
+    pub skipped_reason: Option<String>,
+    pub revival_children_generated: usize,
+    pub revival_children_retained: usize,
+    pub archived_area_updated: bool,
+    pub archived_count_updated: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
@@ -395,6 +446,8 @@ pub struct GeneralPersistentVacancyLayerDiagnostics {
     pub best_state_fingerprint: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub elite: Option<GeneralPersistentVacancyEliteLayerDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub archive: Option<GeneralPersistentVacancyArchiveLayerDiagnostics>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
@@ -432,6 +485,8 @@ pub struct GeneralPersistentVacancyParentSelectionDiagnostics {
     pub rotation_start_index: Option<usize>,
     pub coverage_piece_id: Option<String>,
     pub transition_seed: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub revived: Option<bool>,
     pub slots: Vec<GeneralPersistentVacancySelectionSlotDiagnostics>,
 }
 
@@ -1578,6 +1633,22 @@ pub fn improve_complete_layout(
     relaxed_settings: GeneralRelaxedSettings,
     incumbent: &GeneralFastResult,
 ) -> Result<GeneralRelaxedOutcome, GeneralFastError> {
+    improve_complete_layout_with_pinned_vacancy_parent(
+        pieces,
+        fast_settings,
+        relaxed_settings,
+        incumbent,
+        None,
+    )
+}
+
+pub fn improve_complete_layout_with_pinned_vacancy_parent(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    incumbent: &GeneralFastResult,
+    pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
+) -> Result<GeneralRelaxedOutcome, GeneralFastError> {
     validate_relaxed_settings(relaxed_settings)?;
     let mut diagnostics = GeneralRelaxedDiagnostics::default();
     if pieces.is_empty() {
@@ -1602,6 +1673,7 @@ pub fn improve_complete_layout(
                 fast_settings,
                 relaxed_settings,
                 incumbent,
+                pinned_vacancy_parent,
             ));
         }
         return Ok(GeneralRelaxedOutcome {
@@ -1954,6 +2026,7 @@ pub fn improve_complete_layout(
             fast_settings,
             relaxed_settings,
             &protected,
+            pinned_vacancy_parent,
         ));
     }
     Ok(GeneralRelaxedOutcome {
@@ -2046,6 +2119,7 @@ fn run_coupled_dynamic_separator_experiment<'a>(
     fast_settings: GeneralFastSettings,
     relaxed_settings: GeneralRelaxedSettings,
     protected: &GeneralFastResult,
+    pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
 ) -> GeneralCoupledSeparatorDiagnostics {
     let skipped = coupled_separator_configuration_error(relaxed_settings);
     if let Some(reason) = skipped {
@@ -2144,11 +2218,25 @@ fn run_coupled_dynamic_separator_experiment<'a>(
             });
         let persistent_vacancy_population =
             (relaxed_settings.persistent_vacancy_mode > 0).then(|| {
+                // A pinned fixture parent replaces only the parent-layout
+                // source; the compiled-in frozen fingerprint, depth, and dual
+                // validation checks still gate the arm.
+                let pinned_arm =
+                    pinned_vacancy_parent.map(|pinned| GeneralCoupledSeparatorArmDiagnostics {
+                        final_placements: coupled_placement_diagnostics(&pinned.placements),
+                        ..GeneralCoupledSeparatorArmDiagnostics::default()
+                    });
+                let parent_source = pinned_vacancy_parent.map(|pinned| {
+                    format!("pinnedFixture:{}#{}", pinned.source, pinned.source_sha256)
+                });
                 persistent_vacancy::run_persistent_vacancy_population(
                     pieces,
                     fast_settings,
                     relaxed_settings,
-                    &boundary_projection_treatment.diagnostics,
+                    pinned_arm
+                        .as_ref()
+                        .unwrap_or(&boundary_projection_treatment.diagnostics),
+                    parent_source,
                     relaxed_settings.persistent_vacancy_mode,
                 )
             });
@@ -2164,7 +2252,7 @@ fn run_coupled_dynamic_separator_experiment<'a>(
     }
     #[cfg(not(feature = "jagua-experimental"))]
     {
-        let _ = (pieces, fast_settings);
+        let _ = (pieces, fast_settings, pinned_vacancy_parent);
         let reason = "coupled dynamic separator requires the jagua-experimental feature".to_owned();
         GeneralCoupledSeparatorDiagnostics {
             seed_domain: COUPLED_SEPARATOR_SEED_DOMAIN,
@@ -12252,10 +12340,22 @@ mod tests {
         settings.focused_samples_per_move = 10;
         settings.refinement_rounds = 5;
         let single = JobPool::new(Some(1)).run_scoped(|| {
-            run_coupled_dynamic_separator_experiment(&pieces, fast_settings, settings, &protected)
+            run_coupled_dynamic_separator_experiment(
+                &pieces,
+                fast_settings,
+                settings,
+                &protected,
+                None,
+            )
         });
         let parallel = JobPool::new(Some(4)).run_scoped(|| {
-            run_coupled_dynamic_separator_experiment(&pieces, fast_settings, settings, &protected)
+            run_coupled_dynamic_separator_experiment(
+                &pieces,
+                fast_settings,
+                settings,
+                &protected,
+                None,
+            )
         });
         assert_eq!(single, parallel);
         for arm in [&single.control, &single.treatment] {
@@ -12297,8 +12397,13 @@ mod tests {
         let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
         let protected = construct_short_side_first(&pieces, fast_settings).unwrap();
         let settings = coupled_experiment_test_settings(37);
-        let result =
-            run_coupled_dynamic_separator_experiment(&pieces, fast_settings, settings, &protected);
+        let result = run_coupled_dynamic_separator_experiment(
+            &pieces,
+            fast_settings,
+            settings,
+            &protected,
+            None,
+        );
 
         for arm in [&result.control, &result.treatment] {
             assert_eq!(arm.catalog_builds, 1);
@@ -12327,6 +12432,7 @@ mod tests {
             fast_settings,
             coupled_experiment_test_settings(41),
             &protected,
+            None,
         );
         let protected_fingerprint = coupled_fast_placement_fingerprint(&protected.placements);
 

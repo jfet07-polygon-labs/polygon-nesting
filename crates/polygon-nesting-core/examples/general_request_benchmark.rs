@@ -11,13 +11,15 @@ use polygon_nesting_core::domain::ImportedPiece;
 use polygon_nesting_core::geometry::general_polygon::PolygonSet;
 use polygon_nesting_core::geometry::general_source::polygon_set_from_imported_piece;
 use polygon_nesting_core::parallel::JobPool;
+use polygon_nesting_core::search::general_fast::GeneralFastPlacement;
 use polygon_nesting_core::search::general_fast::{
     construct_short_side_first, diagnose_congruent_pair_constructor,
     diagnose_congruent_pair_templates, GeneralFastPiece, GeneralFastSettings,
     GeneralPairClusterArmDiagnostics,
 };
 use polygon_nesting_core::search::general_relaxed::{
-    improve_complete_layout, GeneralAngularRepairSettings, GeneralRelaxedAngleSeedPolicy,
+    improve_complete_layout_with_pinned_vacancy_parent, GeneralAngularRepairSettings,
+    GeneralPersistentVacancyPinnedParent, GeneralRelaxedAngleSeedPolicy,
     GeneralRelaxedCollisionBackend, GeneralRelaxedDiagnostics, GeneralRelaxedPressureModel,
     GeneralRelaxedSettings,
 };
@@ -100,7 +102,7 @@ struct OwnedPiece {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut arguments = env::args().skip(1);
     let request_path = arguments.next().ok_or(
-        "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy]",
+        "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy] [persistent-vacancy-parent-fixture]",
     )?;
     let runs = parse_optional(&mut arguments, 1)?;
     let order_variants = parse_optional(&mut arguments, 1)?;
@@ -163,15 +165,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if persistent_vacancy_mode > 6 {
-        return Err("persistent vacancy mode must be 0, 1, 2, 3, 4, 5, or 6".into());
+    if persistent_vacancy_mode > 8 {
+        return Err("persistent vacancy mode must be 0, 1, 2, 3, 4, 5, 6, 7, or 8".into());
     }
+    let persistent_vacancy_parent_fixture = arguments.next();
     if runs == 0 || arguments.next().is_some() {
         return Err("runs must be positive and no extra arguments are accepted".into());
     }
 
     let bytes = fs::read(Path::new(&request_path))?;
     let request_sha256 = format!("{:x}", Sha256::digest(&bytes));
+    let pinned_vacancy_parent = persistent_vacancy_parent_fixture
+        .as_deref()
+        .map(|path| load_pinned_vacancy_parent(path, &request_sha256))
+        .transpose()?;
     let request: Request = serde_json::from_slice(&bytes)?;
     let (request_total_padding_mm, allow_global_rotation, allow_global_mirror, geometry) =
         effective_request_settings(&request)?;
@@ -328,8 +335,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 relaxed_settings.precompression_frontier_vacancy_mode =
                     precompression_frontier_vacancy_mode;
                 relaxed_settings.persistent_vacancy_mode = persistent_vacancy_mode;
-                let outcome =
-                    improve_complete_layout(&pieces, settings, relaxed_settings, &constructed)?;
+                let outcome = improve_complete_layout_with_pinned_vacancy_parent(
+                    &pieces,
+                    settings,
+                    relaxed_settings,
+                    &constructed,
+                    pinned_vacancy_parent.as_ref(),
+                )?;
                 Ok((
                     outcome.result,
                     Some(outcome.diagnostics),
@@ -450,9 +462,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let machine_architecture = command_output("uname", &["-m"]);
     let cpu_model = command_output("sysctl", &["-n", "machdep.cpu.brand_string"])
         .or_else(|| command_output("sh", &["-c", "grep -m1 'model name' /proc/cpuinfo"]));
-    println!(
-        "{}",
-        serde_json::to_string_pretty(&json!({
+    let mut output = json!({
             "request": request_path,
             "requestSha256": request_sha256,
             "engineCommit": git_commit,
@@ -579,9 +589,78 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "translateShortAxis": placement.translate_short_axis,
                 "translateLongAxis": placement.translate_long_axis,
             })).collect::<Vec<_>>(),
-        }))?
-    );
+    });
+    if let Some(pinned) = &pinned_vacancy_parent {
+        output["quota"]["persistentVacancyParentFixture"] = json!({
+            "path": pinned.source,
+            "sha256": pinned.source_sha256,
+        });
+    }
+    println!("{}", serde_json::to_string_pretty(&output)?);
     Ok(())
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PinnedVacancyParentFixture {
+    #[serde(rename = "schemaVersion")]
+    _schema_version: u64,
+    #[serde(rename = "description")]
+    _description: String,
+    request_sha256: String,
+    #[serde(rename = "expectedPlacementFingerprint")]
+    _expected_placement_fingerprint: String,
+    #[serde(rename = "reportedDepthMm")]
+    _reported_depth_mm: f64,
+    #[serde(rename = "independentDepthMm")]
+    _independent_depth_mm: f64,
+    #[serde(rename = "provenance")]
+    _provenance: serde_json::Value,
+    placements: Vec<PinnedVacancyPlacementFixture>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PinnedVacancyPlacementFixture {
+    piece_id: String,
+    rotation_deg: f64,
+    mirrored: bool,
+    translate_short_axis: f64,
+    translate_long_axis: f64,
+}
+
+/// Loads a committed persistent-vacancy parent fixture. The fixture only
+/// supplies parent placements; the engine's compiled-in frozen fingerprint and
+/// depth checks remain the acceptance authority for the loaded layout.
+fn load_pinned_vacancy_parent(
+    path: &str,
+    request_sha256: &str,
+) -> Result<GeneralPersistentVacancyPinnedParent, Box<dyn std::error::Error>> {
+    let bytes = fs::read(Path::new(path))?;
+    let source_sha256 = format!("{:x}", Sha256::digest(&bytes));
+    let fixture: PinnedVacancyParentFixture = serde_json::from_slice(&bytes)?;
+    if fixture.request_sha256 != request_sha256 {
+        return Err(format!(
+            "persistent vacancy parent fixture {} pins request {}, but the current request hashes to {}",
+            path, fixture.request_sha256, request_sha256
+        )
+        .into());
+    }
+    Ok(GeneralPersistentVacancyPinnedParent {
+        placements: fixture
+            .placements
+            .into_iter()
+            .map(|placement| GeneralFastPlacement {
+                piece_id: placement.piece_id,
+                rotation_deg: placement.rotation_deg,
+                mirrored: placement.mirrored,
+                translate_short_axis: placement.translate_short_axis,
+                translate_long_axis: placement.translate_long_axis,
+            })
+            .collect(),
+        source: path.to_owned(),
+        source_sha256,
+    })
 }
 
 fn independently_measure_coupled_depth(

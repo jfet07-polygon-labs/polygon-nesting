@@ -16,20 +16,41 @@ const FINALISTS_PER_PIECE: usize = 8;
 const MAX_INACTIVE_PIECES: usize = 32;
 const MAX_SOURCE_FEATURES: usize = 512;
 const MAX_COLLISION_VERTICES: usize = 512;
-const MAX_SELECTED_PIECE_SLOTS: usize = 640;
-const MAX_ORIENTATION_STREAMS: usize = 7_680;
-const MAX_SOURCE_FEATURE_VISITS: usize = 655_360;
-const MAX_POSITION_SOURCE_ATTEMPTS: usize = 4_062_720;
-const MAX_RETURNED_POSITIONS: usize = 245_760;
-const MAX_HAZARD_QUERIES: usize = 245_760;
-const MAX_PROXY_PRESSURE_VISITS: usize = 14_991_360;
-const MAX_EXACT_FINALIST_ROWS: usize = 5_120;
-const MAX_EXPERIMENTAL_COLLISION_BUILDS: usize = 12_861;
+// Modes 7 and 8 revive one archived elite topology on deterministically
+// detected stagnation. A revival may fire no earlier than layer
+// ARCHIVE_STAGNATION_LAYERS and at least ARCHIVE_REVIVAL_COOLDOWN layers after
+// the previous expanded revival, so at most
+// 1 + (MAX_LAYERS - 1 - ARCHIVE_STAGNATION_LAYERS) / ARCHIVE_REVIVAL_COOLDOWN
+// revival expansions exist. Mode 7 expands the revived state as an extra
+// parent; the quota formulas below fund that lane explicitly on top of the
+// ordinary 8-parent schedule. Mode 8 swaps the revived state into the
+// comparator-worst entering slot and adds no work.
+const ARCHIVE_STAGNATION_LAYERS: usize = 3;
+const ARCHIVE_REVIVAL_COOLDOWN: usize = 3;
+const MAX_ARCHIVE_REVIVALS: usize =
+    1 + (MAX_LAYERS - 1 - ARCHIVE_STAGNATION_LAYERS) / ARCHIVE_REVIVAL_COOLDOWN;
+const ORDINARY_SELECTED_PIECE_SLOTS: usize = MAX_LAYERS * BEAM_WIDTH * SELECTED_PIECES_PER_PARENT;
+const ARCHIVE_SELECTED_PIECE_SLOTS: usize = MAX_ARCHIVE_REVIVALS * SELECTED_PIECES_PER_PARENT;
+const MAX_SELECTED_PIECE_SLOTS: usize =
+    ORDINARY_SELECTED_PIECE_SLOTS + ARCHIVE_SELECTED_PIECE_SLOTS;
+const MAX_ORIENTATION_STREAMS: usize = MAX_SELECTED_PIECE_SLOTS * ORIENTATIONS_PER_PIECE;
+const MAX_SOURCE_FEATURE_VISITS: usize = MAX_SELECTED_PIECE_SLOTS * 2 * MAX_SOURCE_FEATURES;
+const POSITION_SOURCE_ATTEMPTS_PER_ORIENTATION: usize = 529;
+const MAX_POSITION_SOURCE_ATTEMPTS: usize =
+    MAX_ORIENTATION_STREAMS * POSITION_SOURCE_ATTEMPTS_PER_ORIENTATION;
+const MAX_RETURNED_POSITIONS: usize = MAX_ORIENTATION_STREAMS * POSITIONS_PER_ORIENTATION;
+const MAX_HAZARD_QUERIES: usize = MAX_RETURNED_POSITIONS;
+const MAX_PROXY_PRESSURE_VISITS: usize = MAX_RETURNED_POSITIONS * 61;
+const MAX_EXACT_FINALIST_ROWS: usize = MAX_SELECTED_PIECE_SLOTS * FINALISTS_PER_PIECE;
+const MAX_EXPERIMENTAL_COLLISION_BUILDS: usize =
+    61 + MAX_ORIENTATION_STREAMS + MAX_EXACT_FINALIST_ROWS;
 const MAX_VALIDATOR_COLLISION_BUILDS: usize = 12_810;
-const MAX_EXPERIMENTAL_PAIR_VISITS: usize = 309_030;
+const MAX_EXPERIMENTAL_PAIR_VISITS: usize = 1_830 + MAX_EXACT_FINALIST_ROWS * 60;
 const MAX_VALIDATOR_PAIR_VISITS: usize = 384_300;
-const MAX_TRANSFORMED_COLLISION_VERTICES: usize = 13_143_552;
-const MAX_CLIPPER_INPUT_VERTICES: usize = 709_969_920;
+const MAX_TRANSFORMED_COLLISION_VERTICES: usize =
+    (MAX_EXPERIMENTAL_COLLISION_BUILDS + MAX_VALIDATOR_COLLISION_BUILDS) * MAX_COLLISION_VERTICES;
+const MAX_CLIPPER_INPUT_VERTICES: usize =
+    2 * MAX_COLLISION_VERTICES * (MAX_EXPERIMENTAL_PAIR_VISITS + MAX_VALIDATOR_PAIR_VISITS);
 const MAX_CLIPPER_OUTPUT_VERTICES: usize = 4_000_000;
 const MAX_PARTIAL_AUDITS: usize = 41;
 const MAX_COMPLETE_AUDITS: usize = 64;
@@ -100,6 +121,171 @@ struct EliteSnapshot {
     ejected_piece_count: usize,
     active_frontier_grid: i64,
     identity: VacancyStateIdentity,
+}
+
+/// Bounded out-of-beam topology archive for modes 7 and 8.
+///
+/// The archive stores full clones of the best-ever area-first and count-first
+/// elite states. It never occupies an ordinary beam slot; a revived state is
+/// either expanded as one extra parent (mode 7) or swapped into the
+/// comparator-worst entering slot (mode 8) on deterministically detected
+/// stagnation layers only. Every decision derives from the run's own layer
+/// history and semantic state identities; no wall clock, platform, or
+/// population-ordinal information enters the schedule.
+struct TopologyArchive {
+    area: Option<(EliteSnapshot, VacancyState)>,
+    count: Option<(EliteSnapshot, VacancyState)>,
+    last_improvement_layer: usize,
+    last_revival_layer: Option<usize>,
+    revivals_expanded: usize,
+    revivals_skipped: usize,
+    revival_ordinal: usize,
+    peak_bytes: usize,
+    revival_children_generated: usize,
+    revival_children_retained: usize,
+}
+
+enum RevivalDecision {
+    NotStagnant,
+    Skipped(&'static str),
+    Revive {
+        kind: &'static str,
+        state: VacancyState,
+        fingerprint: String,
+    },
+}
+
+impl TopologyArchive {
+    fn new() -> Self {
+        Self {
+            area: None,
+            count: None,
+            last_improvement_layer: 0,
+            last_revival_layer: None,
+            revivals_expanded: 0,
+            revivals_skipped: 0,
+            revival_ordinal: 0,
+            peak_bytes: 0,
+            revival_children_generated: 0,
+            revival_children_retained: 0,
+        }
+    }
+
+    fn bytes(&self) -> usize {
+        [self.area.as_ref(), self.count.as_ref()]
+            .into_iter()
+            .flatten()
+            .map(|(snapshot, state)| {
+                size_of::<EliteSnapshot>()
+                    .saturating_add(elite_snapshot_heap_bytes(snapshot))
+                    .saturating_add(size_of::<VacancyState>())
+                    .saturating_add(state_heap_bytes(state))
+            })
+            .sum()
+    }
+
+    fn charge_peak(&mut self) {
+        self.peak_bytes = self.peak_bytes.max(self.bytes());
+    }
+
+    fn plan_revival(
+        &self,
+        layer: usize,
+        population: &[VacancyState],
+        pieces: &[GeneralFastPiece<'_>],
+        difficulty: &[PieceDifficulty],
+        mode: usize,
+    ) -> RevivalDecision {
+        if self.area.is_none() && self.count.is_none() {
+            return RevivalDecision::NotStagnant;
+        }
+        if layer.saturating_sub(self.last_improvement_layer) < ARCHIVE_STAGNATION_LAYERS {
+            return RevivalDecision::NotStagnant;
+        }
+        if let Some(last) = self.last_revival_layer {
+            if layer.saturating_sub(last) < ARCHIVE_REVIVAL_COOLDOWN {
+                return RevivalDecision::NotStagnant;
+            }
+        }
+        if self.revivals_expanded >= MAX_ARCHIVE_REVIVALS {
+            return RevivalDecision::Skipped("revivalBudgetExhausted");
+        }
+        if mode == 8 && population.len() < 2 {
+            return RevivalDecision::Skipped("populationTooSmall");
+        }
+        let candidates: [(&'static str, Option<&(EliteSnapshot, VacancyState)>); 2] =
+            if self.revival_ordinal.is_multiple_of(2) {
+                [("area", self.area.as_ref()), ("count", self.count.as_ref())]
+            } else {
+                [("count", self.count.as_ref()), ("area", self.area.as_ref())]
+            };
+        let mut last_reason = "archiveEmpty";
+        for (kind, entry) in candidates {
+            let Some((snapshot, state)) = entry else {
+                continue;
+            };
+            if population
+                .iter()
+                .any(|member| same_state_identity(member, state))
+            {
+                last_reason = "inPopulation";
+                continue;
+            }
+            if mode == 8 {
+                let worst = population
+                    .last()
+                    .expect("a mode-8 revival population has at least two states");
+                let better = if kind == "area" {
+                    compare_states(state, worst, pieces, difficulty).is_lt()
+                } else {
+                    compare_count_states(state, worst, pieces, difficulty).is_lt()
+                };
+                if !better {
+                    last_reason = "notBetterThanWorst";
+                    continue;
+                }
+            }
+            return RevivalDecision::Revive {
+                kind,
+                state: state.clone(),
+                fingerprint: snapshot.fingerprint.clone(),
+            };
+        }
+        RevivalDecision::Skipped(last_reason)
+    }
+}
+
+fn elite_snapshot_heap_bytes(snapshot: &EliteSnapshot) -> usize {
+    snapshot
+        .fingerprint
+        .capacity()
+        .saturating_add(
+            snapshot
+                .inactive_difficulty_sequence
+                .capacity()
+                .saturating_mul(size_of::<(i128, i128, i64, String)>()),
+        )
+        .saturating_add(
+            snapshot
+                .inactive_difficulty_sequence
+                .iter()
+                .map(|(_, _, _, id)| id.capacity())
+                .sum::<usize>(),
+        )
+        .saturating_add(
+            snapshot
+                .identity
+                .active_placements
+                .capacity()
+                .saturating_mul(size_of::<(usize, i64, bool, i64, i64)>()),
+        )
+        .saturating_add(
+            snapshot
+                .identity
+                .inactive
+                .capacity()
+                .saturating_mul(size_of::<usize>()),
+        )
 }
 
 #[derive(Default)]
@@ -204,12 +390,14 @@ pub(super) fn run_persistent_vacancy_population(
     fast_settings: GeneralFastSettings,
     _relaxed_settings: GeneralRelaxedSettings,
     parent: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_source: Option<String>,
     mode: usize,
 ) -> GeneralPersistentVacancyDiagnostics {
     let mut diagnostics = GeneralPersistentVacancyDiagnostics {
         mode,
         seed_domain: PERSISTENT_VACANCY_SEED_DOMAIN,
         target_depth_mm: TARGET_DEPTH_MM,
+        parent_source,
         ..GeneralPersistentVacancyDiagnostics::default()
     };
     let mut work = RunWork::default();
@@ -252,8 +440,8 @@ fn run_population(
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<Option<(VacancyState, f64)>, String> {
-    if !matches!(mode, 1 | 2 | 3 | 4 | 5 | 6) {
-        return Err("persistent vacancy mode must be 1, 2, 3, 4, 5, or 6".to_owned());
+    if !matches!(mode, 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8) {
+        return Err("persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 7, or 8".to_owned());
     }
     if pieces.len() != 61 {
         return Err("persistent vacancy experiment is pinned to Mixed-61".to_owned());
@@ -313,7 +501,53 @@ fn run_population(
     let mut best_ever_area: Option<EliteSnapshot> = None;
     let mut best_ever_count: Option<EliteSnapshot> = None;
     let mut retained_carryovers = BTreeSet::new();
+    let mut archive = matches!(mode, 7 | 8).then(TopologyArchive::new);
     for layer in 0..MAX_LAYERS {
+        // Modes 7/8 plan a revival before the entering-population hash so the
+        // hash always reflects the population that is actually expanded
+        // (mode 8 swaps the comparator-worst entering slot in place).
+        let mut layer_archive = None;
+        let mut revival_parent: Option<VacancyState> = None;
+        if let Some(archive_state) = archive.as_mut() {
+            let layers_since_improvement =
+                layer.saturating_sub(archive_state.last_improvement_layer);
+            let mut row = GeneralPersistentVacancyArchiveLayerDiagnostics {
+                layers_since_improvement,
+                ..GeneralPersistentVacancyArchiveLayerDiagnostics::default()
+            };
+            match archive_state.plan_revival(layer, &population, pieces, &difficulty, mode) {
+                RevivalDecision::NotStagnant => {}
+                RevivalDecision::Skipped(reason) => {
+                    archive_state.revivals_skipped =
+                        archive_state.revivals_skipped.saturating_add(1);
+                    row.revival_attempted = true;
+                    row.skipped_reason = Some(reason.to_owned());
+                }
+                RevivalDecision::Revive {
+                    kind,
+                    state,
+                    fingerprint,
+                } => {
+                    archive_state.revivals_expanded =
+                        archive_state.revivals_expanded.saturating_add(1);
+                    archive_state.last_revival_layer = Some(layer);
+                    archive_state.revival_ordinal = archive_state.revival_ordinal.saturating_add(1);
+                    row.revival_attempted = true;
+                    row.revival_expanded = true;
+                    row.revival_kind = Some(kind.to_owned());
+                    row.revived_state_fingerprint = Some(fingerprint);
+                    if mode == 8 {
+                        let replaced_index = population.len() - 1;
+                        row.replaced_state_fingerprint =
+                            Some(state_fingerprint(&population[replaced_index], pieces));
+                        population[replaced_index] = state;
+                    } else {
+                        revival_parent = Some(state);
+                    }
+                }
+            }
+            layer_archive = Some(row);
+        }
         let layer_entry_work = generation_work_snapshot(work.diagnostics);
         let entering_population_hash = population_hash(&population, pieces);
         let expanded_carryover_fingerprints = population
@@ -352,6 +586,39 @@ fn run_population(
                 &mut children,
             )?;
         }
+        let ordinary_children_count = children.len();
+        if let Some(revived_state) = &revival_parent {
+            let revival_row_index = parent_selections.len();
+            expand_parent(
+                revived_state,
+                &baseline_placements,
+                pieces,
+                target_settings,
+                &difficulty,
+                &hazard_catalog,
+                layer,
+                mode,
+                diagnostics,
+                work,
+                &mut selected_piece_ids,
+                &mut parent_selections,
+                &mut children,
+            )?;
+            if let Some(row) = parent_selections.get_mut(revival_row_index) {
+                row.revived = Some(true);
+            }
+        }
+        let revival_child_fingerprints = children[ordinary_children_count..]
+            .iter()
+            .map(|state| state_fingerprint(state, pieces))
+            .collect::<BTreeSet<_>>();
+        if let (Some(archive_state), Some(row)) = (archive.as_mut(), layer_archive.as_mut()) {
+            let generated = children.len().saturating_sub(ordinary_children_count);
+            row.revival_children_generated = generated;
+            archive_state.revival_children_generated = archive_state
+                .revival_children_generated
+                .saturating_add(generated);
+        }
         if children.is_empty() {
             return Err(format!(
                 "persistent vacancy layer {layer} produced no exact-valid child"
@@ -376,11 +643,16 @@ fn run_population(
             carryover_live_state_bytes,
             retained_clone_bytes,
             combined_pool_backing_bytes,
+            archive.as_ref().map_or(0, TopologyArchive::bytes),
             &selected_piece_ids,
             &parent_selections,
             diagnostics,
             work,
         )?;
+        // The ordinary child-order hash keeps its cross-mode meaning: it
+        // covers exactly the ordinary parents' children. Mode-7 revival
+        // children are merged only after that hash is taken.
+        let mut revival_children = children.split_off(ordinary_children_count);
         children.sort_by(|first, second| compare_states(first, second, pieces, &difficulty));
         let before_dedup = children.len();
         children.dedup_by(|first, second| same_state_identity(first, second));
@@ -388,6 +660,15 @@ fn run_population(
             .deduplicated_states
             .saturating_add(before_dedup.saturating_sub(children.len()));
         let ordinary_child_order_hash = child_order_hash(&children, pieces);
+        if !revival_children.is_empty() {
+            children.append(&mut revival_children);
+            children.sort_by(|first, second| compare_states(first, second, pieces, &difficulty));
+            let before_merge_dedup = children.len();
+            children.dedup_by(|first, second| same_state_identity(first, second));
+            diagnostics.deduplicated_states = diagnostics
+                .deduplicated_states
+                .saturating_add(before_merge_dedup.saturating_sub(children.len()));
+        }
 
         let complete_count = children
             .iter()
@@ -469,11 +750,41 @@ fn run_population(
         } else {
             Vec::new()
         };
+        if let (Some(archive_state), Some(row)) = (archive.as_mut(), layer_archive.as_mut()) {
+            if !revival_child_fingerprints.is_empty() {
+                let retained = next
+                    .iter()
+                    .filter(|state| {
+                        revival_child_fingerprints.contains(&state_fingerprint(state, pieces))
+                    })
+                    .count();
+                row.revival_children_retained = retained;
+                archive_state.revival_children_retained = archive_state
+                    .revival_children_retained
+                    .saturating_add(retained);
+            }
+        }
         let (area_elite, count_elite) = population_elites(&next, pieces, &difficulty);
         let area_snapshot = elite_snapshot(area_elite, pieces, &difficulty);
         let count_snapshot = elite_snapshot(count_elite, pieces, &difficulty);
-        update_best_area(&mut best_ever_area, &area_snapshot);
-        update_best_count(&mut best_ever_count, &count_snapshot);
+        let area_improved = update_best_area(&mut best_ever_area, &area_snapshot);
+        let count_improved = update_best_count(&mut best_ever_count, &count_snapshot);
+        if let Some(archive_state) = archive.as_mut() {
+            if area_improved {
+                archive_state.area = Some((area_snapshot.clone(), area_elite.clone()));
+            }
+            if count_improved {
+                archive_state.count = Some((count_snapshot.clone(), count_elite.clone()));
+            }
+            if area_improved || count_improved {
+                archive_state.last_improvement_layer = layer;
+            }
+            archive_state.charge_peak();
+            if let Some(row) = layer_archive.as_mut() {
+                row.archived_area_updated = area_improved;
+                row.archived_count_updated = count_improved;
+            }
+        }
         let best_ever_area_snapshot = best_ever_area
             .as_ref()
             .expect("the current area elite initializes best-ever history");
@@ -529,6 +840,7 @@ fn run_population(
                 retained_carryover_fingerprints: retained_carryover_fingerprints.clone(),
                 expanded_carryover_fingerprints,
             }),
+            archive: layer_archive,
         };
         preflight_live_memory(
             &population,
@@ -536,13 +848,45 @@ fn run_population(
             carryover_live_state_bytes,
             retained_clone_bytes,
             combined_pool_backing_bytes,
+            archive.as_ref().map_or(0, TopologyArchive::bytes),
             diagnostics,
             &layer_diagnostics,
             work,
         )?;
-        charge_retained_memory(&next, diagnostics, &layer_diagnostics, work)?;
+        charge_retained_memory(
+            &next,
+            archive.as_ref().map_or(0, TopologyArchive::bytes),
+            diagnostics,
+            &layer_diagnostics,
+            work,
+        )?;
         diagnostics.layers.push(layer_diagnostics);
         diagnostics.layers_completed = layer + 1;
+        if let Some(archive_state) = archive.as_ref() {
+            diagnostics.archive = Some(GeneralPersistentVacancyArchiveDiagnostics {
+                stagnation_threshold_layers: ARCHIVE_STAGNATION_LAYERS,
+                revival_cooldown_layers: ARCHIVE_REVIVAL_COOLDOWN,
+                max_revival_expansions: MAX_ARCHIVE_REVIVALS,
+                revival_policy: if mode == 7 {
+                    "extraParent".to_owned()
+                } else {
+                    "swapWorstEntering".to_owned()
+                },
+                revivals_expanded: archive_state.revivals_expanded,
+                revivals_skipped: archive_state.revivals_skipped,
+                revival_children_generated: archive_state.revival_children_generated,
+                revival_children_retained: archive_state.revival_children_retained,
+                archive_peak_bytes: archive_state.peak_bytes,
+                final_archived_area_fingerprint: archive_state
+                    .area
+                    .as_ref()
+                    .map(|(snapshot, _)| snapshot.fingerprint.clone()),
+                final_archived_count_fingerprint: archive_state
+                    .count
+                    .as_ref()
+                    .map(|(snapshot, _)| snapshot.fingerprint.clone()),
+            });
+        }
         if let Some(complete) = accepted_complete {
             return Ok(Some(complete));
         }
@@ -676,6 +1020,7 @@ fn expand_parent(
         rotation_start_index: selection.rotation_start_index,
         coverage_piece_id,
         transition_seed,
+        revived: None,
         slots: Vec::with_capacity(selection.indices.len()),
     };
     for (selected_ordinal, piece_index) in selection.indices.into_iter().enumerate() {
@@ -1053,7 +1398,7 @@ fn retain_population(
     difficulty: &[PieceDifficulty],
     mode: usize,
 ) -> (Vec<VacancyState>, usize) {
-    if matches!(mode, 1 | 3) {
+    if matches!(mode, 1 | 3 | 7 | 8) {
         let retained = sorted.into_iter().take(BEAM_WIDTH).collect::<Vec<_>>();
         let signatures = retained
             .iter()
@@ -1456,7 +1801,7 @@ fn selected_inactive_pieces(
             })
             .then_with(|| pieces[*first].id.cmp(pieces[*second].id))
     });
-    if !matches!(mode, 3 | 4 | 5 | 6) || inactive.len() <= 1 {
+    if !matches!(mode, 3 | 4 | 5 | 6 | 7 | 8) || inactive.len() <= 1 {
         inactive.truncate(SELECTED_PIECES_PER_PARENT);
         return SelectedInactivePieces {
             indices: inactive,
@@ -1485,7 +1830,7 @@ fn stable_inactive_order(state: &VacancyState, pieces: &[GeneralFastPiece<'_>]) 
 }
 
 fn scheduler_family(mode: usize) -> &'static str {
-    if matches!(mode, 3 | 4 | 5 | 6) {
+    if matches!(mode, 3 | 4 | 5 | 6 | 7 | 8) {
         "hardPlusStatelessRotation"
     } else {
         "twoHardest"
@@ -1811,20 +2156,24 @@ fn compare_count_snapshots(first: &EliteSnapshot, second: &EliteSnapshot) -> Ord
         .then_with(|| first.identity.cmp(&second.identity))
 }
 
-fn update_best_area(best: &mut Option<EliteSnapshot>, candidate: &EliteSnapshot) {
+fn update_best_area(best: &mut Option<EliteSnapshot>, candidate: &EliteSnapshot) -> bool {
     if best.as_ref().map_or(true, |current| {
         compare_area_snapshots(candidate, current).is_lt()
     }) {
         *best = Some(candidate.clone());
+        return true;
     }
+    false
 }
 
-fn update_best_count(best: &mut Option<EliteSnapshot>, candidate: &EliteSnapshot) {
+fn update_best_count(best: &mut Option<EliteSnapshot>, candidate: &EliteSnapshot) -> bool {
     if best.as_ref().map_or(true, |current| {
         compare_count_snapshots(candidate, current).is_lt()
     }) {
         *best = Some(candidate.clone());
+        return true;
     }
+    false
 }
 
 fn parent_seed_key(state: &VacancyState, pieces: &[GeneralFastPiece<'_>]) -> u64 {
@@ -1967,6 +2316,7 @@ fn contact_signature_hash(signature: &ContactSignature) -> String {
 
 fn charge_retained_memory(
     population: &[VacancyState],
+    archive_bytes: usize,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     pending_layer: &GeneralPersistentVacancyLayerDiagnostics,
     work: &mut RunWork,
@@ -1977,7 +2327,9 @@ fn charge_retained_memory(
         .saturating_add(population.len().saturating_mul(size_of::<VacancyState>()));
     let diagnostic_bytes = persistent_diagnostic_bytes(diagnostics)
         .saturating_add(layer_diagnostic_heap_bytes(pending_layer));
-    let total_bytes = state_bytes.saturating_add(diagnostic_bytes);
+    let total_bytes = state_bytes
+        .saturating_add(diagnostic_bytes)
+        .saturating_add(archive_bytes);
     work.diagnostics.retained_peak_bytes =
         work.diagnostics.retained_peak_bytes.max(legacy_state_bytes);
     work.diagnostics.selector_diagnostic_peak_bytes = work
@@ -1998,6 +2350,7 @@ fn preflight_live_memory(
     carryover_live_state_bytes: usize,
     retained_clone_bytes: usize,
     combined_pool_backing_bytes: usize,
+    archive_bytes: usize,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     pending_layer: &GeneralPersistentVacancyLayerDiagnostics,
     work: &mut RunWork,
@@ -2010,6 +2363,7 @@ fn preflight_live_memory(
         .saturating_add(carryover_live_state_bytes)
         .saturating_add(retained_clone_bytes)
         .saturating_add(combined_pool_backing_bytes)
+        .saturating_add(archive_bytes)
         .saturating_add(diagnostic_bytes);
     work.diagnostics.selector_diagnostic_peak_bytes = work
         .diagnostics
@@ -2029,6 +2383,7 @@ fn preflight_raw_live_memory(
     carryover_live_state_bytes: usize,
     retained_clone_bytes: usize,
     combined_pool_backing_bytes: usize,
+    archive_bytes: usize,
     selected_piece_ids: &[String],
     parent_selections: &[GeneralPersistentVacancyParentSelectionDiagnostics],
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
@@ -2065,6 +2420,7 @@ fn preflight_raw_live_memory(
         .saturating_add(carryover_live_state_bytes)
         .saturating_add(retained_clone_bytes)
         .saturating_add(combined_pool_backing_bytes)
+        .saturating_add(archive_bytes)
         .saturating_add(diagnostic_bytes);
     work.diagnostics.selector_diagnostic_peak_bytes = work
         .diagnostics
@@ -2249,6 +2605,32 @@ fn layer_diagnostic_heap_bytes(layer: &GeneralPersistentVacancyLayerDiagnostics)
             .as_ref()
             .map_or(0, elite_layer_diagnostic_heap_bytes),
     )
+    .saturating_add(
+        layer
+            .archive
+            .as_ref()
+            .map_or(0, archive_layer_diagnostic_heap_bytes),
+    )
+}
+
+fn archive_layer_diagnostic_heap_bytes(
+    archive: &GeneralPersistentVacancyArchiveLayerDiagnostics,
+) -> usize {
+    size_of::<GeneralPersistentVacancyArchiveLayerDiagnostics>()
+        .saturating_add(archive.revival_kind.as_ref().map_or(0, String::capacity))
+        .saturating_add(
+            archive
+                .revived_state_fingerprint
+                .as_ref()
+                .map_or(0, String::capacity),
+        )
+        .saturating_add(
+            archive
+                .replaced_state_fingerprint
+                .as_ref()
+                .map_or(0, String::capacity),
+        )
+        .saturating_add(archive.skipped_reason.as_ref().map_or(0, String::capacity))
 }
 
 fn elite_layer_diagnostic_heap_bytes(
@@ -2592,7 +2974,7 @@ mod tests {
             ..GeneralPersistentVacancyLayerDiagnostics::default()
         };
         let mut work = RunWork::default();
-        charge_retained_memory(&[], &mut diagnostics, &pending, &mut work).unwrap();
+        charge_retained_memory(&[], 0, &mut diagnostics, &pending, &mut work).unwrap();
         assert_eq!(work.diagnostics.retained_peak_bytes, 0);
         assert!(work.diagnostics.selector_diagnostic_peak_bytes > 0);
         assert_eq!(
@@ -2750,6 +3132,7 @@ mod tests {
             0,
             0,
             0,
+            0,
             &mut without_diagnostics,
             &pending,
             &mut without_work,
@@ -2761,6 +3144,7 @@ mod tests {
             &entering,
             0,
             state_vec_bytes(&vec![state]),
+            0,
             0,
             0,
             &mut with_diagnostics,
@@ -2893,6 +3277,7 @@ mod tests {
             0,
             0,
             0,
+            0,
             &[],
             &[],
             &mut diagnostics,
@@ -2923,13 +3308,297 @@ mod tests {
 
     #[test]
     fn aggregate_quota_formulas_match_the_reviewed_contract() {
-        assert_eq!(MAX_EXPERIMENTAL_COLLISION_BUILDS, 61 + 7_680 + 5_120);
-        assert_eq!(MAX_EXPERIMENTAL_PAIR_VISITS, 1_830 + 307_200);
+        // The ordinary 8-parent, 40-layer schedule funds 640 selected-piece
+        // slots; the archive revival lane of modes 7/8 adds at most 13
+        // expansions of 2 slots each, so every downstream ceiling carries the
+        // ordinary term plus the revival-lane term.
+        assert_eq!(MAX_ARCHIVE_REVIVALS, 13);
+        assert_eq!(ORDINARY_SELECTED_PIECE_SLOTS, 640);
+        assert_eq!(ARCHIVE_SELECTED_PIECE_SLOTS, 26);
+        assert_eq!(MAX_SELECTED_PIECE_SLOTS, 640 + 26);
+        assert_eq!(MAX_ORIENTATION_STREAMS, 7_680 + 312);
+        assert_eq!(MAX_POSITION_SOURCE_ATTEMPTS, (7_680 + 312) * 529);
+        assert_eq!(MAX_RETURNED_POSITIONS, 245_760 + 9_984);
+        assert_eq!(MAX_HAZARD_QUERIES, 245_760 + 9_984);
+        assert_eq!(MAX_PROXY_PRESSURE_VISITS, (245_760 + 9_984) * 61);
+        assert_eq!(MAX_EXACT_FINALIST_ROWS, 5_120 + 208);
+        assert_eq!(
+            MAX_EXPERIMENTAL_COLLISION_BUILDS,
+            61 + (7_680 + 312) + (5_120 + 208)
+        );
+        assert_eq!(MAX_EXPERIMENTAL_PAIR_VISITS, 1_830 + (5_120 + 208) * 60);
         assert_eq!(MAX_VALIDATOR_COLLISION_BUILDS, 105 * 122);
         assert_eq!(MAX_VALIDATOR_PAIR_VISITS, 105 * 3_660);
         assert_eq!(
             MAX_TRANSFORMED_COLLISION_VERTICES,
             (MAX_EXPERIMENTAL_COLLISION_BUILDS + MAX_VALIDATOR_COLLISION_BUILDS) * 512
+        );
+        assert_eq!(
+            MAX_CLIPPER_INPUT_VERTICES,
+            2 * 512 * (MAX_EXPERIMENTAL_PAIR_VISITS + MAX_VALIDATOR_PAIR_VISITS)
+        );
+    }
+
+    fn archived_entry(state: &VacancyState, fingerprint: &str) -> (EliteSnapshot, VacancyState) {
+        (
+            EliteSnapshot {
+                fingerprint: fingerprint.to_owned(),
+                inactive_piece_count: state.active.iter().filter(|active| !**active).count(),
+                inactive_area_grid2: 0,
+                inactive_difficulty_sequence: Vec::new(),
+                ejected_material_area_grid2: 0,
+                ejected_piece_count: 0,
+                active_frontier_grid: 0,
+                identity: state_identity(state),
+            },
+            state.clone(),
+        )
+    }
+
+    fn archive_test_pieces_and_difficulty(
+        polygons: &[PolygonSet],
+    ) -> (Vec<GeneralFastPiece<'_>>, Vec<PieceDifficulty>) {
+        let pieces = polygons
+            .iter()
+            .enumerate()
+            .map(|(index, polygon)| GeneralFastPiece {
+                id: ["a", "b", "c", "d"][index],
+                polygon,
+                allow_rotation: true,
+                allow_mirror: true,
+            })
+            .collect::<Vec<_>>();
+        let difficulty = polygons
+            .iter()
+            .map(|_| PieceDifficulty {
+                expanded_area_grid2: 100,
+                hull_deficit_grid2: 100,
+                minimum_side_grid: 100,
+                material_area_grid2: 100,
+            })
+            .collect::<Vec<_>>();
+        (pieces, difficulty)
+    }
+
+    #[test]
+    fn archive_revival_schedule_is_deterministic_and_bounded() {
+        let polygons = vec![square(10.0), square(10.0), square(10.0)];
+        let (pieces, difficulty) = archive_test_pieces_and_difficulty(&polygons);
+        let population = vec![state_with_active_mask(vec![true, true, false])];
+        let archived = state_with_active_mask(vec![true, false, true]);
+        let mut archive = TopologyArchive::new();
+
+        // An empty archive never plans a revival.
+        assert!(matches!(
+            archive.plan_revival(10, &population, &pieces, &difficulty, 7),
+            RevivalDecision::NotStagnant
+        ));
+
+        archive.area = Some(archived_entry(&archived, "area-fp"));
+        // Below the stagnation threshold nothing fires.
+        assert!(matches!(
+            archive.plan_revival(
+                ARCHIVE_STAGNATION_LAYERS - 1,
+                &population,
+                &pieces,
+                &difficulty,
+                7
+            ),
+            RevivalDecision::NotStagnant
+        ));
+        // At the threshold the area elite is revived.
+        match archive.plan_revival(
+            ARCHIVE_STAGNATION_LAYERS,
+            &population,
+            &pieces,
+            &difficulty,
+            7,
+        ) {
+            RevivalDecision::Revive {
+                kind, fingerprint, ..
+            } => {
+                assert_eq!(kind, "area");
+                assert_eq!(fingerprint, "area-fp");
+            }
+            _ => panic!("expected a revival at the stagnation threshold"),
+        }
+        // Cooldown suppresses the next firing until it elapses.
+        archive.revivals_expanded = 1;
+        archive.revival_ordinal = 1;
+        archive.last_revival_layer = Some(ARCHIVE_STAGNATION_LAYERS);
+        assert!(matches!(
+            archive.plan_revival(
+                ARCHIVE_STAGNATION_LAYERS + ARCHIVE_REVIVAL_COOLDOWN - 1,
+                &population,
+                &pieces,
+                &difficulty,
+                7
+            ),
+            RevivalDecision::NotStagnant
+        ));
+        assert!(matches!(
+            archive.plan_revival(
+                ARCHIVE_STAGNATION_LAYERS + ARCHIVE_REVIVAL_COOLDOWN,
+                &population,
+                &pieces,
+                &difficulty,
+                7
+            ),
+            RevivalDecision::Revive { .. }
+        ));
+        // The expansion budget rejects further revivals explicitly.
+        archive.revivals_expanded = MAX_ARCHIVE_REVIVALS;
+        assert!(matches!(
+            archive.plan_revival(30, &population, &pieces, &difficulty, 7),
+            RevivalDecision::Skipped("revivalBudgetExhausted")
+        ));
+    }
+
+    #[test]
+    fn archive_revival_alternates_between_area_and_count() {
+        let polygons = vec![square(10.0), square(10.0), square(10.0)];
+        let (pieces, difficulty) = archive_test_pieces_and_difficulty(&polygons);
+        let population = vec![state_with_active_mask(vec![true, true, false])];
+        let area_state = state_with_active_mask(vec![true, false, true]);
+        let count_state = state_with_active_mask(vec![false, true, true]);
+        let mut archive = TopologyArchive::new();
+        archive.area = Some(archived_entry(&area_state, "area-fp"));
+        archive.count = Some(archived_entry(&count_state, "count-fp"));
+
+        match archive.plan_revival(10, &population, &pieces, &difficulty, 7) {
+            RevivalDecision::Revive { kind, .. } => assert_eq!(kind, "area"),
+            _ => panic!("expected an even-ordinal area revival"),
+        }
+        archive.revival_ordinal = 1;
+        match archive.plan_revival(10, &population, &pieces, &difficulty, 7) {
+            RevivalDecision::Revive { kind, .. } => assert_eq!(kind, "count"),
+            _ => panic!("expected an odd-ordinal count revival"),
+        }
+        // A candidate whose identity is already in the population falls
+        // through to the other elite.
+        archive.revival_ordinal = 0;
+        let population = vec![area_state.clone()];
+        match archive.plan_revival(10, &population, &pieces, &difficulty, 7) {
+            RevivalDecision::Revive { kind, .. } => assert_eq!(kind, "count"),
+            _ => panic!("expected fallthrough to the count elite"),
+        }
+        // Both candidates in the population produce an explicit skip.
+        let population = vec![area_state, count_state];
+        assert!(matches!(
+            archive.plan_revival(10, &population, &pieces, &difficulty, 7),
+            RevivalDecision::Skipped("inPopulation")
+        ));
+    }
+
+    #[test]
+    fn mode_eight_revival_requires_strict_improvement_over_the_worst_slot() {
+        let polygons = vec![square(10.0), square(10.0), square(10.0)];
+        let (pieces, difficulty) = archive_test_pieces_and_difficulty(&polygons);
+        // Two inactive pieces make the archived state worse under the
+        // area-first comparator than both population states (one inactive).
+        let worse_archived = state_with_active_mask(vec![false, false, true]);
+        let mut archive = TopologyArchive::new();
+        archive.area = Some(archived_entry(&worse_archived, "area-fp"));
+        let population = vec![
+            state_with_active_mask(vec![true, true, false]),
+            state_with_active_mask(vec![true, false, true]),
+        ];
+        assert!(matches!(
+            archive.plan_revival(10, &population, &pieces, &difficulty, 8),
+            RevivalDecision::Skipped("notBetterThanWorst")
+        ));
+        // A single-state population cannot be swapped.
+        let single = vec![state_with_active_mask(vec![true, true, false])];
+        assert!(matches!(
+            archive.plan_revival(10, &single, &pieces, &difficulty, 8),
+            RevivalDecision::Skipped("populationTooSmall")
+        ));
+        // A strictly better archived state is swapped in under mode 8.
+        let better_archived = state_with_active_mask(vec![true, true, true]);
+        archive.area = Some(archived_entry(&better_archived, "better-fp"));
+        assert!(matches!(
+            archive.plan_revival(10, &population, &pieces, &difficulty, 8),
+            RevivalDecision::Revive { kind: "area", .. }
+        ));
+    }
+
+    #[test]
+    fn modes_seven_and_eight_reuse_the_rotating_scheduler_and_area_retention() {
+        assert_eq!(scheduler_family(7), "hardPlusStatelessRotation");
+        assert_eq!(scheduler_family(8), "hardPlusStatelessRotation");
+        assert_eq!(selector_ids(&["a", "b", "c", "d"], 0, 7), vec!["b", "a"]);
+        assert_eq!(selector_ids(&["a", "b", "c", "d"], 1, 7), vec!["b", "c"]);
+        assert_eq!(selector_ids(&["a", "b", "c", "d"], 1, 8), vec!["b", "c"]);
+
+        let (_, first) = state_with_two_squares(20.0, 0.0);
+        let (_, second) = state_with_two_squares(25.0, 0.0);
+        let (_, third) = state_with_two_squares(30.0, 0.0);
+        let polygons = vec![square(10.0), square(10.0)];
+        let polygons = polygons[..2].to_vec();
+        let (pieces, difficulty) = archive_test_pieces_and_difficulty(&polygons);
+        let sorted = vec![first, second, third];
+        let (mode3, signatures3) = retain_population(sorted.clone(), &pieces, &difficulty, 3);
+        let (mode7, signatures7) = retain_population(sorted.clone(), &pieces, &difficulty, 7);
+        let (mode8, signatures8) = retain_population(sorted, &pieces, &difficulty, 8);
+        assert_eq!(mode3.len(), mode7.len());
+        assert_eq!(signatures3, signatures7);
+        assert_eq!(signatures3, signatures8);
+        for (left, right) in mode3.iter().zip(mode7.iter()) {
+            assert!(same_state_identity(left, right));
+        }
+        for (left, right) in mode3.iter().zip(mode8.iter()) {
+            assert!(same_state_identity(left, right));
+        }
+    }
+
+    #[test]
+    fn archive_bytes_charge_grows_with_archived_states() {
+        let mut archive = TopologyArchive::new();
+        assert_eq!(archive.bytes(), 0);
+        let (_, state) = state_with_two_squares(20.0, 0.0);
+        archive.area = Some(archived_entry(&state, "area-fp"));
+        let with_area = archive.bytes();
+        assert!(with_area > 0);
+        archive.count = Some(archived_entry(&state, "count-fp"));
+        assert!(archive.bytes() > with_area);
+        archive.charge_peak();
+        assert_eq!(archive.peak_bytes, archive.bytes());
+    }
+
+    #[test]
+    fn pinned_parent_fixture_reproduces_the_frozen_fingerprint() {
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json"
+        );
+        let bytes = std::fs::read(path).expect("the pinned parent fixture is committed");
+        let fixture: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(
+            fixture["requestSha256"],
+            "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1"
+        );
+        assert_eq!(fixture["reportedDepthMm"], 168.625);
+        assert_eq!(fixture["independentDepthMm"], 168.361);
+        let placements = fixture["placements"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|placement| GeneralFastPlacement {
+                piece_id: placement["pieceId"].as_str().unwrap().to_owned(),
+                rotation_deg: placement["rotationDeg"].as_f64().unwrap(),
+                mirrored: placement["mirrored"].as_bool().unwrap(),
+                translate_short_axis: placement["translateShortAxis"].as_f64().unwrap(),
+                translate_long_axis: placement["translateLongAxis"].as_f64().unwrap(),
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(placements.len(), 61);
+        assert_eq!(
+            coupled_fast_placement_fingerprint(&placements),
+            EXPECTED_PARENT_FINGERPRINT
+        );
+        assert_eq!(
+            fixture["expectedPlacementFingerprint"],
+            EXPECTED_PARENT_FINGERPRINT
         );
     }
 }
