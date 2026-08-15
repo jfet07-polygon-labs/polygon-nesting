@@ -1485,6 +1485,7 @@ fn lift_resettle_reinsert(
         separation_probes: 0,
         separation_zero_overlap: 0,
         separation_recruits: 0,
+        separation_pair_moves: 0,
         frontier_before_grid: settle.frontier_before_grid,
         frontier_after_grid: 0,
     };
@@ -1761,6 +1762,7 @@ fn overlap_mediated_reinsert(
     let mut soft = removed.to_vec();
     soft.sort_by(|first, second| pieces[*first].id.cmp(pieces[*second].id));
     for _move in 0..SEPARATION_MOVES_PER_ROUND {
+        let pair_moves_before = lns.separation_pair_moves;
         // Pick the soft piece with the largest current overlap, ties by ID.
         let mut worst: Option<(i128, usize)> = None;
         for index in &soft {
@@ -1790,19 +1792,32 @@ fn overlap_mediated_reinsert(
             lns.separation_zero_overlap = lns.separation_zero_overlap.saturating_add(1);
             return Ok(true);
         };
-        // Best strict-improvement probe over the compass ladder.
+        // Best strict-improvement probe: rotational deltas first (they
+        // resolve squeezed configurations translations cannot), then the
+        // compass translation ladder, all under one probe budget.
+        const SEPARATION_ROTATIONS_DEG: [f64; 8] = [-0.5, 0.5, -1.0, 1.0, -2.5, 2.5, -5.0, 5.0];
         let mut best: Option<(i128, RelaxedPlacement, PolygonSet)> = None;
         let mut probes = 0usize;
-        'probe: for radius in SEPARATION_RADII_MM {
+        let mut candidates_iter: Vec<(f64, f64, f64)> = SEPARATION_ROTATIONS_DEG
+            .iter()
+            .map(|delta| (0.0, 0.0, *delta))
+            .collect();
+        for radius in SEPARATION_RADII_MM {
             for (direction_x, direction_y) in SEPARATION_DIRECTIONS {
+                candidates_iter.push((radius * direction_x, radius * direction_y, 0.0));
+            }
+        }
+        'probe: for (offset_x, offset_y, rotation_delta) in candidates_iter {
+            {
                 if probes >= SEPARATION_PROBES_PER_MOVE {
                     break 'probe;
                 }
                 probes += 1;
                 lns.separation_probes = lns.separation_probes.saturating_add(1);
                 let mut candidate = state.placements[index].clone();
-                candidate.translate_x += radius * direction_x;
-                candidate.translate_y += radius * direction_y;
+                candidate.translate_x += offset_x;
+                candidate.translate_y += offset_y;
+                candidate.rotation_deg += rotation_delta;
                 let collision = build_collision(pieces[index], &candidate, settings, work)?;
                 if !collision.fits_rect(
                     inset,
@@ -1825,7 +1840,141 @@ fn overlap_mediated_reinsert(
                 }
             }
         }
+        // Coordinated pair fallback: before recruiting, try moving the stuck
+        // piece and its worst-overlap partner simultaneously in opposite
+        // directions along their centroid axis - the move that resolves two
+        // pieces squeezed between anchors, which no unilateral probe can.
+        let mut best = best;
+        if best.is_none() {
+            let stuck_collision = state.collisions[index]
+                .as_ref()
+                .ok_or_else(|| "separation missing stuck collision".to_owned())?
+                .clone();
+            let mut worst_partner: Option<(i128, usize)> = None;
+            for other in 0..pieces.len() {
+                if other == index || !state.active[other] {
+                    continue;
+                }
+                work.charge_experimental_pair()?;
+                let fixed = state.collisions[other]
+                    .as_ref()
+                    .ok_or_else(|| "separation missing partner collision".to_owned())?;
+                let overlap = quantized(exact_intersection_area(&stuck_collision, fixed, work)?);
+                if overlap > 0 {
+                    let candidate = (overlap, other);
+                    worst_partner = Some(match worst_partner {
+                        None => candidate,
+                        Some(current) if candidate.0 > current.0 => candidate,
+                        Some(current) => current,
+                    });
+                }
+            }
+            if let Some((_, partner)) = worst_partner {
+                let center = |collision: &PolygonSet| {
+                    collision.bounds().map(|bounds| {
+                        (
+                            (bounds.min_x + bounds.max_x) * 0.5,
+                            (bounds.min_y + bounds.max_y) * 0.5,
+                        )
+                    })
+                };
+                let partner_collision = state.collisions[partner]
+                    .as_ref()
+                    .ok_or_else(|| "separation missing partner collision".to_owned())?
+                    .clone();
+                if let (Some(stuck_center), Some(partner_center)) =
+                    (center(&stuck_collision), center(&partner_collision))
+                {
+                    let axis_x = stuck_center.0 - partner_center.0;
+                    let axis_y = stuck_center.1 - partner_center.1;
+                    let norm = (axis_x * axis_x + axis_y * axis_y).sqrt();
+                    if norm > 1e-9 {
+                        let unit = (axis_x / norm, axis_y / norm);
+                        let pair_total = |a: &PolygonSet,
+                                          b: &PolygonSet,
+                                          work: &mut RunWork|
+                         -> Result<i128, String> {
+                            let mut total = 0i128;
+                            for other in 0..pieces.len() {
+                                if other == index || other == partner || !state.active[other] {
+                                    continue;
+                                }
+                                work.charge_experimental_pair()?;
+                                let fixed = state.collisions[other]
+                                    .as_ref()
+                                    .ok_or_else(|| "separation missing collision".to_owned())?;
+                                total += quantized(exact_intersection_area(a, fixed, work)?);
+                                work.charge_experimental_pair()?;
+                                total += quantized(exact_intersection_area(b, fixed, work)?);
+                            }
+                            work.charge_experimental_pair()?;
+                            total += quantized(exact_intersection_area(a, b, work)?);
+                            Ok(total)
+                        };
+                        let entry_pair_total =
+                            pair_total(&stuck_collision, &partner_collision, work)?;
+                        'pair: for radius in SEPARATION_RADII_MM {
+                            if probes >= SEPARATION_PROBES_PER_MOVE {
+                                break;
+                            }
+                            probes += 1;
+                            lns.separation_probes = lns.separation_probes.saturating_add(1);
+                            let half = radius * 0.5;
+                            let mut moved_a = state.placements[index].clone();
+                            moved_a.translate_x += unit.0 * half;
+                            moved_a.translate_y += unit.1 * half;
+                            let mut moved_b = state.placements[partner].clone();
+                            moved_b.translate_x -= unit.0 * half;
+                            moved_b.translate_y -= unit.1 * half;
+                            let collision_a =
+                                build_collision(pieces[index], &moved_a, settings, work)?;
+                            let collision_b =
+                                build_collision(pieces[partner], &moved_b, settings, work)?;
+                            let bounds_ok = |collision: &PolygonSet| {
+                                collision.fits_rect(
+                                    inset,
+                                    inset,
+                                    settings.sheet_short_axis_mm - inset,
+                                    settings.sheet_long_axis_mm - inset,
+                                )
+                            };
+                            if !bounds_ok(&collision_a) || !bounds_ok(&collision_b) {
+                                continue;
+                            }
+                            let total = pair_total(&collision_a, &collision_b, work)?;
+                            if total < entry_pair_total {
+                                state.placements[index] = moved_a;
+                                state.collisions[index] = Some(Arc::new(collision_a));
+                                state.placements[partner] = moved_b;
+                                state.collisions[partner] = Some(Arc::new(collision_b));
+                                if !soft.contains(&partner) {
+                                    soft.push(partner);
+                                    soft.sort_by(|first, second| {
+                                        pieces[*first].id.cmp(pieces[*second].id)
+                                    });
+                                }
+                                lns.separation_pair_moves =
+                                    lns.separation_pair_moves.saturating_add(1);
+                                lns.separation_moves = lns.separation_moves.saturating_add(1);
+                                best = None;
+                                break 'pair;
+                            }
+                        }
+                        if lns.separation_pair_moves > 0 {
+                            // A committed pair move restarts the outer loop.
+                        }
+                    }
+                }
+            }
+        }
+        let committed_pair_move_this_iteration = false;
+        let _ = committed_pair_move_this_iteration;
         let Some((_, placement, collision)) = best else {
+            // A pair move may have just been committed; if so, resume the
+            // outer descent from the updated state instead of recruiting.
+            if lns.separation_pair_moves > pair_moves_before {
+                continue;
+            }
             // No strict soft-piece improvement anywhere on the ladder: recruit
             // the anchor contributing the largest exact overlap against the
             // stuck piece into the soft set (bilateral separation). If it is
