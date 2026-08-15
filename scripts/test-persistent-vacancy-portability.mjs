@@ -229,27 +229,9 @@ const mode9 =
   runMode(9).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
 const mode10 =
   runMode(10).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
-const mode12 =
-  runMode(12).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
-const mode13 =
-  runMode(13).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
-const mode12Replay =
-  runMode(12).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
-const mode13Replay =
-  runMode(13).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
 assertBoundedPartialTerminal(mode8, 'persistent-vacancy mode 8')
 assertBoundedPartialTerminal(mode9, 'persistent-vacancy mode 9')
 assertBoundedPartialTerminal(mode10, 'persistent-vacancy mode 10')
-assertBoundedPartialTerminal(mode12, 'persistent-vacancy mode 12')
-assertBoundedPartialTerminal(mode13, 'persistent-vacancy mode 13')
-assertBoundedPartialTerminal(mode12Replay, 'persistent-vacancy mode 12 replay')
-assertBoundedPartialTerminal(mode13Replay, 'persistent-vacancy mode 13 replay')
-if (JSON.stringify(canonical(mode12Replay)) !== JSON.stringify(canonical(mode12))) {
-  throw new Error('persistent-vacancy mode 12 replay is not byte-identical')
-}
-if (JSON.stringify(canonical(mode13Replay)) !== JSON.stringify(canonical(mode13))) {
-  throw new Error('persistent-vacancy mode 13 replay is not byte-identical')
-}
 const populationHistory = (candidate) =>
   candidate.layers.map((layer) => ({
     enteringPopulationHash: layer.elite.enteringPopulationHash,
@@ -323,12 +305,6 @@ const mode10Trajectory = structuredClone(mode10)
 delete mode10Trajectory.work.retainedPeakBytes
 delete mode10Trajectory.work.selectorDiagnosticPeakBytes
 delete mode10Trajectory.work.totalRetainedPeakBytes
-delete mode10Trajectory.behavioralHistorySha256
-delete mode10Trajectory.bestEverAreaComparator
-delete mode10Trajectory.bestEverCountComparator
-for (const layer of mode10Trajectory.layers) {
-  delete layer.retainedPopulationHash
-}
 const mode10TrajectorySha256 = createHash('sha256')
   .update(JSON.stringify(canonical(mode10Trajectory)))
   .digest('hex')
@@ -406,127 +382,6 @@ if (
 ) {
   throw new Error('preserved-best macro treatment did not preserve count and improve mode 9')
 }
-if (mode12.behavioralHistorySha256 !== mode10.behavioralHistorySha256) {
-  throw new Error('complementary compute-and-discard control changed mode-10 behavior')
-}
-const mode12SupplementaryLayers = mode12.layers.filter(
-  (layer) => layer.supplementaryExpansion !== undefined,
-)
-if (mode12SupplementaryLayers.length === 0) {
-  throw new Error('complementary control never exercised the supplementary expansion')
-}
-if (
-  mode12SupplementaryLayers.some(
-    (layer) =>
-      layer.supplementaryExpansion.admittedChildren !== 0 ||
-      layer.supplementaryExpansion.retainedChildFingerprints.length !== 0 ||
-      layer.supplementaryExpansion.acceptedChildFingerprint !== undefined,
-  )
-) {
-  throw new Error('complementary control admitted a supplementary-only identity')
-}
-if (
-  !mode12.layers.some(
-    (layer) =>
-      layer.elite.bestEverAreaEliteFingerprint !== layer.elite.bestEverCountEliteFingerprint,
-  )
-) {
-  throw new Error('complementary control never exercised divergent area/count incumbents')
-}
-if (
-  mode12.bestEverAreaComparator.fingerprint !==
-    mode12.layers.at(-1).elite.bestEverAreaEliteFingerprint ||
-  mode12.bestEverCountComparator.fingerprint !==
-    mode12.layers.at(-1).elite.bestEverCountEliteFingerprint
-) {
-  throw new Error('complementary control sidecars diverged from their comparator snapshots')
-}
-let sharedComplementaryPopulations = 0
-let treatmentHasActivated = false
-for (const [index, treatmentLayer] of mode13.layers.entries()) {
-  if (treatmentHasActivated) break
-  const controlLayer = mode12.layers[index]
-  if (
-    controlLayer.elite.enteringPopulationHash !==
-    treatmentLayer.elite.enteringPopulationHash
-  ) {
-    throw new Error('complementary treatment diverged before a treatment-only admission')
-  }
-  sharedComplementaryPopulations += 1
-  const controlPrimary = structuredClone(controlLayer.macroExpansion)
-  const treatmentPrimary = structuredClone(treatmentLayer.macroExpansion)
-  for (const expansion of [controlPrimary, treatmentPrimary]) {
-    delete expansion.retainedChildFingerprints
-    delete expansion.acceptedChildFingerprint
-  }
-  const controlSupplementary = structuredClone(controlLayer.supplementaryExpansion)
-  const treatmentSupplementary = structuredClone(treatmentLayer.supplementaryExpansion)
-  for (const expansion of [controlSupplementary, treatmentSupplementary]) {
-    if (expansion === undefined) continue
-    delete expansion.admittedChildren
-    delete expansion.retainedChildFingerprints
-    delete expansion.acceptedChildFingerprint
-  }
-  if (
-    controlLayer.elite.ordinaryChildOrderHash !==
-      treatmentLayer.elite.ordinaryChildOrderHash ||
-    JSON.stringify(controlPrimary) !== JSON.stringify(treatmentPrimary) ||
-    JSON.stringify(controlLayer.preSupplementaryWork) !==
-      JSON.stringify(treatmentLayer.preSupplementaryWork) ||
-    JSON.stringify(controlSupplementary) !== JSON.stringify(treatmentSupplementary) ||
-    controlLayer.finalShadowPoolOrderHash !== treatmentLayer.finalShadowPoolOrderHash
-  ) {
-    const mismatches = [
-      [
-        'ordinaryChildOrderHash',
-        controlLayer.elite.ordinaryChildOrderHash ===
-          treatmentLayer.elite.ordinaryChildOrderHash,
-      ],
-      [
-        'macroExpansion',
-        JSON.stringify(controlPrimary) === JSON.stringify(treatmentPrimary),
-      ],
-      [
-        'preSupplementaryWork',
-        JSON.stringify(controlLayer.preSupplementaryWork) ===
-          JSON.stringify(treatmentLayer.preSupplementaryWork),
-      ],
-      [
-        'supplementaryExpansion',
-        JSON.stringify(controlSupplementary) === JSON.stringify(treatmentSupplementary),
-      ],
-      [
-        'finalShadowPoolOrderHash',
-        controlLayer.finalShadowPoolOrderHash === treatmentLayer.finalShadowPoolOrderHash,
-      ],
-    ]
-      .filter(([, matches]) => !matches)
-      .map(([name]) => name)
-      .join(', ')
-    throw new Error(
-      `complementary control and treatment differ before admission at shared population ${treatmentLayer.elite.enteringPopulationHash} (layer ${treatmentLayer.layer}): ${mismatches}`,
-    )
-  }
-  treatmentHasActivated =
-    (treatmentLayer.supplementaryExpansion?.retainedChildFingerprints.length ?? 0) > 0 ||
-    treatmentLayer.supplementaryExpansion?.acceptedChildFingerprint !== undefined
-}
-if (sharedComplementaryPopulations === 0) {
-  throw new Error('complementary control and treatment share no causal prefix')
-}
-if (!treatmentHasActivated) {
-  throw new Error('complementary treatment never crossed its admission boundary')
-}
-const mode13Activation = mode13.layers.reduce(
-  (total, layer) =>
-    total +
-    (layer.supplementaryExpansion?.retainedChildFingerprints.length ?? 0) +
-    (layer.supplementaryExpansion?.acceptedChildFingerprint === undefined ? 0 : 1),
-  0,
-)
-if (mode13Activation === 0) {
-  throw new Error('complementary treatment admitted no supplementary-only identity')
-}
 process.stdout.write(
-  `persistent-vacancy portability: ok (${populationSha256}; ${mode9RetainedNovel} retained macro states; first preserved-parent layer ${firstPreservedParentLayer}; ${mode13Activation} complementary activations)\n`,
+  `persistent-vacancy portability: ok (${populationSha256}; ${mode9RetainedNovel} retained macro states; first preserved-parent layer ${firstPreservedParentLayer})\n`,
 )

@@ -17,18 +17,32 @@ const FINALISTS_PER_PIECE: usize = 8;
 const MACRO_CONTROL_MODE: usize = 8;
 const MACRO_TREATMENT_MODE: usize = 9;
 const PRESERVED_BEST_MACRO_MODE: usize = 10;
-const COMPLEMENTARY_MACRO_CONTROL_MODE: usize = 12;
-const COMPLEMENTARY_MACRO_TREATMENT_MODE: usize = 13;
 const MAX_INACTIVE_PIECES: usize = 32;
 const MAX_SOURCE_FEATURES: usize = 512;
 const MAX_COLLISION_VERTICES: usize = 512;
 const MAX_PARENT_EXPANSIONS: usize = MAX_LAYERS * (BEAM_WIDTH + 1);
-const COMPLEMENTARY_MAX_PARENT_EXPANSIONS: usize = MAX_LAYERS * (BEAM_WIDTH + 2);
+const MAX_SELECTED_PIECE_SLOTS: usize = MAX_PARENT_EXPANSIONS * SELECTED_PIECES_PER_PARENT;
+const MAX_ORIENTATION_STREAMS: usize = MAX_SELECTED_PIECE_SLOTS * ORIENTATIONS_PER_PIECE;
+const MAX_SOURCE_FEATURE_VISITS: usize = MAX_SELECTED_PIECE_SLOTS * 2 * MAX_SOURCE_FEATURES;
 const MAX_POSITION_SOURCES_PER_ORIENTATION: usize = 1 + 8 + MIXED_PIECE_COUNT * 8 + 16 + 16;
+const MAX_POSITION_SOURCE_ATTEMPTS: usize =
+    MAX_ORIENTATION_STREAMS * MAX_POSITION_SOURCES_PER_ORIENTATION;
+const MAX_RETURNED_POSITIONS: usize = MAX_ORIENTATION_STREAMS * POSITIONS_PER_ORIENTATION;
+const MAX_HAZARD_QUERIES: usize = MAX_RETURNED_POSITIONS;
+const MAX_PROXY_PRESSURE_VISITS: usize = MAX_HAZARD_QUERIES * MIXED_PIECE_COUNT;
+const MAX_EXACT_FINALIST_ROWS: usize = MAX_SELECTED_PIECE_SLOTS * FINALISTS_PER_PIECE;
+const MAX_EXPERIMENTAL_COLLISION_BUILDS: usize =
+    MIXED_PIECE_COUNT + MAX_ORIENTATION_STREAMS + MAX_EXACT_FINALIST_ROWS;
 const MAX_VALIDATOR_AUDITS: usize = MAX_PARTIAL_AUDITS + MAX_COMPLETE_AUDITS;
 const MAX_VALIDATOR_COLLISION_BUILDS: usize = MAX_VALIDATOR_AUDITS * MIXED_PIECE_COUNT * 2;
+const MAX_EXPERIMENTAL_PAIR_VISITS: usize = MIXED_PIECE_COUNT * (MIXED_PIECE_COUNT - 1) / 2
+    + MAX_EXACT_FINALIST_ROWS * (MIXED_PIECE_COUNT - 1);
 const MAX_VALIDATOR_PAIR_VISITS: usize =
     MAX_VALIDATOR_AUDITS * MIXED_PIECE_COUNT * (MIXED_PIECE_COUNT - 1);
+const MAX_TRANSFORMED_COLLISION_VERTICES: usize =
+    (MAX_EXPERIMENTAL_COLLISION_BUILDS + MAX_VALIDATOR_COLLISION_BUILDS) * MAX_COLLISION_VERTICES;
+const MAX_CLIPPER_INPUT_VERTICES: usize =
+    (MAX_EXPERIMENTAL_PAIR_VISITS + MAX_VALIDATOR_PAIR_VISITS) * 2 * MAX_COLLISION_VERTICES;
 const MAX_CLIPPER_OUTPUT_VERTICES: usize = 4_000_000;
 const MAX_PARTIAL_AUDITS: usize = 41;
 const MAX_COMPLETE_AUDITS: usize = 64;
@@ -101,64 +115,12 @@ struct EliteSnapshot {
     identity: VacancyStateIdentity,
 }
 
+#[derive(Default)]
 struct RunWork {
     diagnostics: GeneralPersistentVacancyWorkDiagnostics,
-    max_parent_expansions: usize,
-}
-
-impl Default for RunWork {
-    fn default() -> Self {
-        Self {
-            diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
-            max_parent_expansions: MAX_PARENT_EXPANSIONS,
-        }
-    }
 }
 
 impl RunWork {
-    fn for_mode(mode: usize) -> Self {
-        Self {
-            max_parent_expansions: if uses_complementary_macro(mode) {
-                COMPLEMENTARY_MAX_PARENT_EXPANSIONS
-            } else {
-                MAX_PARENT_EXPANSIONS
-            },
-            ..Self::default()
-        }
-    }
-
-    fn max_selected_piece_slots(&self) -> usize {
-        self.max_parent_expansions * SELECTED_PIECES_PER_PARENT
-    }
-
-    fn max_orientation_streams(&self) -> usize {
-        self.max_selected_piece_slots() * ORIENTATIONS_PER_PIECE
-    }
-
-    fn max_exact_finalist_rows(&self) -> usize {
-        self.max_selected_piece_slots() * FINALISTS_PER_PIECE
-    }
-
-    fn max_experimental_collision_builds(&self) -> usize {
-        MIXED_PIECE_COUNT + self.max_orientation_streams() + self.max_exact_finalist_rows()
-    }
-
-    fn max_experimental_pair_visits(&self) -> usize {
-        MIXED_PIECE_COUNT * (MIXED_PIECE_COUNT - 1) / 2
-            + self.max_exact_finalist_rows() * (MIXED_PIECE_COUNT - 1)
-    }
-
-    fn max_transformed_collision_vertices(&self) -> usize {
-        (self.max_experimental_collision_builds() + MAX_VALIDATOR_COLLISION_BUILDS)
-            * MAX_COLLISION_VERTICES
-    }
-
-    fn max_clipper_input_vertices(&self) -> usize {
-        (self.max_experimental_pair_visits() + MAX_VALIDATOR_PAIR_VISITS)
-            * 2
-            * MAX_COLLISION_VERTICES
-    }
-
     fn cap(&self, reason: &str) -> String {
         format!("cap: {reason}")
     }
@@ -168,8 +130,7 @@ impl RunWork {
             .diagnostics
             .source_feature_visits
             .saturating_add(amount);
-        let maximum = self.max_selected_piece_slots() * 2 * MAX_SOURCE_FEATURES;
-        if self.diagnostics.source_feature_visits > maximum {
+        if self.diagnostics.source_feature_visits > MAX_SOURCE_FEATURE_VISITS {
             return Err(self.cap("source-feature visit budget exhausted"));
         }
         Ok(())
@@ -180,8 +141,7 @@ impl RunWork {
             .diagnostics
             .position_source_attempts
             .saturating_add(amount);
-        let maximum = self.max_orientation_streams() * MAX_POSITION_SOURCES_PER_ORIENTATION;
-        if self.diagnostics.position_source_attempts > maximum {
+        if self.diagnostics.position_source_attempts > MAX_POSITION_SOURCE_ATTEMPTS {
             return Err(self.cap("position-source attempt budget exhausted"));
         }
         Ok(())
@@ -190,7 +150,7 @@ impl RunWork {
     fn charge_experimental_pair(&mut self) -> Result<(), String> {
         self.diagnostics.experimental_pair_visits =
             self.diagnostics.experimental_pair_visits.saturating_add(1);
-        if self.diagnostics.experimental_pair_visits > self.max_experimental_pair_visits() {
+        if self.diagnostics.experimental_pair_visits > MAX_EXPERIMENTAL_PAIR_VISITS {
             return Err(self.cap("experimental pair-visit budget exhausted"));
         }
         Ok(())
@@ -232,7 +192,7 @@ impl RunWork {
             .diagnostics
             .transformed_collision_vertices
             .saturating_add(collision_vertices)
-            > self.max_transformed_collision_vertices()
+            > MAX_TRANSFORMED_COLLISION_VERTICES
         {
             return Err(self.cap("transformed collision-vertex budget exhausted"));
         }
@@ -240,7 +200,7 @@ impl RunWork {
             .diagnostics
             .clipper_input_vertices
             .saturating_add(input_vertices)
-            > self.max_clipper_input_vertices()
+            > MAX_CLIPPER_INPUT_VERTICES
         {
             return Err(self.cap("validator Clipper input-vertex budget exhausted"));
         }
@@ -255,42 +215,12 @@ impl RunWork {
 fn uses_macro_expansion(mode: usize) -> bool {
     matches!(
         mode,
-        MACRO_CONTROL_MODE
-            | MACRO_TREATMENT_MODE
-            | PRESERVED_BEST_MACRO_MODE
-            | COMPLEMENTARY_MACRO_CONTROL_MODE
-            | COMPLEMENTARY_MACRO_TREATMENT_MODE
+        MACRO_CONTROL_MODE | MACRO_TREATMENT_MODE | PRESERVED_BEST_MACRO_MODE
     )
 }
 
 fn admits_macro_children(mode: usize) -> bool {
-    matches!(
-        mode,
-        MACRO_TREATMENT_MODE
-            | PRESERVED_BEST_MACRO_MODE
-            | COMPLEMENTARY_MACRO_CONTROL_MODE
-            | COMPLEMENTARY_MACRO_TREATMENT_MODE
-    )
-}
-
-fn uses_preserved_best_macro(mode: usize) -> bool {
-    matches!(
-        mode,
-        PRESERVED_BEST_MACRO_MODE
-            | COMPLEMENTARY_MACRO_CONTROL_MODE
-            | COMPLEMENTARY_MACRO_TREATMENT_MODE
-    )
-}
-
-fn uses_complementary_macro(mode: usize) -> bool {
-    matches!(
-        mode,
-        COMPLEMENTARY_MACRO_CONTROL_MODE | COMPLEMENTARY_MACRO_TREATMENT_MODE
-    )
-}
-
-fn admits_supplementary_children(mode: usize) -> bool {
-    mode == COMPLEMENTARY_MACRO_TREATMENT_MODE
+    matches!(mode, MACRO_TREATMENT_MODE | PRESERVED_BEST_MACRO_MODE)
 }
 
 struct MacroParentChoice<'a> {
@@ -307,7 +237,7 @@ fn select_macro_parent<'a>(
     let ordinary = ordinary_children
         .iter()
         .find(|state| state.active.iter().any(|active| !*active))?;
-    if !uses_preserved_best_macro(mode) {
+    if mode != PRESERVED_BEST_MACRO_MODE {
         return Some(MacroParentChoice {
             state: ordinary,
             origin: None,
@@ -352,7 +282,7 @@ pub(super) fn run_persistent_vacancy_population(
         target_depth_mm: TARGET_DEPTH_MM,
         ..GeneralPersistentVacancyDiagnostics::default()
     };
-    let mut work = RunWork::for_mode(mode);
+    let mut work = RunWork::default();
     match run_population(
         pieces,
         fast_settings,
@@ -402,11 +332,9 @@ fn run_population(
             | MACRO_CONTROL_MODE
             | MACRO_TREATMENT_MODE
             | PRESERVED_BEST_MACRO_MODE
-            | COMPLEMENTARY_MACRO_CONTROL_MODE
-            | COMPLEMENTARY_MACRO_TREATMENT_MODE
     ) {
         return Err(
-            "persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 8, 9, 10, 12, or 13; retired modes 7 and 11 are unavailable"
+            "persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 8, 9, or 10; retired mode 7 is unavailable"
                 .to_owned(),
         );
     }
@@ -468,12 +396,6 @@ fn run_population(
     let mut best_ever_area: Option<EliteSnapshot> = None;
     let mut best_ever_count: Option<EliteSnapshot> = None;
     let mut best_ever_area_state: Option<VacancyState> = None;
-    let mut best_ever_count_state: Option<VacancyState> = None;
-    let mut behavioral_history = uses_preserved_best_macro(mode).then(|| {
-        let mut digest = Sha256::new();
-        digest.update(b"persistent-vacancy-behavioral-history-v1\0");
-        digest
-    });
     let mut retained_carryovers = BTreeSet::new();
     for layer in 0..MAX_LAYERS {
         let layer_entry_work = generation_work_snapshot(work.diagnostics);
@@ -532,10 +454,7 @@ fn run_population(
             largest_clone_bytes = largest_clone_bytes.max(bytes);
         }
         let mut retained_clone_bytes = largest_clone_bytes.saturating_mul(2);
-        let preserved_best_live_state_bytes = distinct_sidecar_bytes(
-            best_ever_area_state.as_ref(),
-            best_ever_count_state.as_ref(),
-        );
+        let preserved_best_live_state_bytes = owned_state_bytes(best_ever_area_state.as_ref());
         preflight_raw_live_memory(
             &population,
             preserved_best_live_state_bytes,
@@ -559,17 +478,9 @@ fn run_population(
 
         let mut macro_expansion = None;
         let mut combined_macro_children = None;
-        let mut primary_macro_parent_matches_count = false;
         if uses_macro_expansion(mode) {
             let macro_parent = select_macro_parent(&children, best_ever_area_state.as_ref(), mode);
             if let Some(macro_parent) = macro_parent {
-                primary_macro_parent_matches_count = resolved_count_sidecar(
-                    best_ever_area_state.as_ref(),
-                    best_ever_count_state.as_ref(),
-                    best_ever_area.as_ref(),
-                    best_ever_count.as_ref(),
-                )
-                .is_some_and(|count| same_state_identity(count, macro_parent.state));
                 let parent_origin = macro_parent.origin.map(str::to_owned);
                 let preserved_parent_absent_from_ordinary =
                     macro_parent.preserved_parent_absent_from_ordinary;
@@ -671,7 +582,6 @@ fn run_population(
                     novel_child_fingerprints,
                     admitted_children,
                     retained_child_fingerprints: Vec::new(),
-                    accepted_child_fingerprint: None,
                     direct_insertions: diagnostics
                         .direct_insertions
                         .saturating_sub(macro_direct_before),
@@ -729,185 +639,7 @@ fn run_population(
             }
         }
 
-        let pre_supplementary_work = uses_complementary_macro(mode)
-            .then(|| work_delta(generation_work_snapshot(work.diagnostics), layer_entry_work));
-        let mut supplementary_expansion = None;
-        let mut final_shadow_children = None;
-        if uses_complementary_macro(mode) {
-            let non_supplementary = combined_macro_children.as_ref().unwrap_or(&children);
-            let count_parent = resolved_count_sidecar(
-                best_ever_area_state.as_ref(),
-                best_ever_count_state.as_ref(),
-                best_ever_area.as_ref(),
-                best_ever_count.as_ref(),
-            );
-            let count_is_strictly_lower = best_ever_count
-                .as_ref()
-                .zip(best_ever_area.as_ref())
-                .is_some_and(|(count, area)| {
-                    count.inactive_piece_count < area.inactive_piece_count
-                });
-            let eligible_count_parent = count_parent.filter(|count| {
-                count_is_strictly_lower
-                    && count.active.iter().any(|active| !*active)
-                    && !primary_macro_parent_matches_count
-                    && population
-                        .iter()
-                        .all(|state| !same_state_identity(state, count))
-                    && non_supplementary
-                        .iter()
-                        .all(|state| !same_state_identity(state, count))
-            });
-            if let Some(count_parent) = eligible_count_parent {
-                let parent_clone_bytes = owned_state_bytes(Some(count_parent));
-                let prospective_live_state_bytes =
-                    generated_live_state_bytes.saturating_add(parent_clone_bytes);
-                preflight_raw_live_memory(
-                    &population,
-                    preserved_best_live_state_bytes,
-                    prospective_live_state_bytes,
-                    carryover_live_state_bytes,
-                    retained_clone_bytes,
-                    combined_pool_backing_bytes,
-                    &selected_piece_ids,
-                    &parent_selections,
-                    macro_expansion
-                        .as_ref()
-                        .map_or(0, macro_expansion_diagnostic_heap_bytes),
-                    diagnostics,
-                    work,
-                )?;
-                let count_parent = count_parent.clone();
-                let parent_fingerprint = state_fingerprint(&count_parent, pieces);
-                let work_before = generation_work_snapshot(work.diagnostics);
-                let direct_before = diagnostics.direct_insertions;
-                let ejections_before = diagnostics.ejection_insertions;
-                let mut supplementary_selected_ids = BTreeSet::new();
-                let mut supplementary_parent_selections = Vec::new();
-                let mut supplementary_children = Vec::new();
-                expand_parent(
-                    &count_parent,
-                    &baseline_placements,
-                    pieces,
-                    target_settings,
-                    &difficulty,
-                    &hazard_catalog,
-                    layer,
-                    mode,
-                    diagnostics,
-                    work,
-                    &mut supplementary_selected_ids,
-                    &mut supplementary_parent_selections,
-                    &mut supplementary_children,
-                )?;
-                if supplementary_parent_selections.len() != 1 {
-                    return Err(format!(
-                        "persistent vacancy layer {layer} recorded {} supplementary parent selections",
-                        supplementary_parent_selections.len()
-                    ));
-                }
-                supplementary_children
-                    .sort_by(|first, second| compare_states(first, second, pieces, &difficulty));
-                let before_dedup = supplementary_children.len();
-                supplementary_children.dedup_by(|first, second| same_state_identity(first, second));
-                diagnostics.deduplicated_states = diagnostics
-                    .deduplicated_states
-                    .saturating_add(before_dedup.saturating_sub(supplementary_children.len()));
-                let child_order_hash = child_order_hash(&supplementary_children, pieces);
-                let novel_child_fingerprints = novel_macro_child_fingerprints(
-                    non_supplementary,
-                    &supplementary_children,
-                    pieces,
-                );
-                let generated_children = supplementary_children.len();
-                for state in &supplementary_children {
-                    let bytes = size_of::<VacancyState>().saturating_add(state_heap_bytes(state));
-                    largest_clone_bytes = largest_clone_bytes.max(bytes);
-                }
-                retained_clone_bytes = largest_clone_bytes.saturating_mul(2);
-                let final_capacity = non_supplementary
-                    .len()
-                    .saturating_add(supplementary_children.len());
-                let prospective_final_clone_bytes = final_capacity
-                    .saturating_mul(size_of::<VacancyState>())
-                    .saturating_add(state_slice_bytes(non_supplementary));
-                let raw_supplementary_live_state_bytes = generated_live_state_bytes
-                    .saturating_add(state_vec_bytes(&supplementary_children))
-                    .saturating_add(parent_clone_bytes)
-                    .saturating_add(prospective_final_clone_bytes);
-                generated_live_state_bytes =
-                    generated_live_state_bytes.max(raw_supplementary_live_state_bytes);
-                combined_pool_backing_bytes = combined_pool_backing_bytes.max(
-                    final_capacity
-                        .saturating_add(carryover_states.len())
-                        .saturating_mul(size_of::<VacancyState>()),
-                );
-                let supplementary_selected_ids =
-                    supplementary_selected_ids.into_iter().collect::<Vec<_>>();
-                let pending_supplementary_diagnostics = pending_selection_diagnostic_bytes(
-                    &supplementary_selected_ids,
-                    &supplementary_parent_selections,
-                );
-                preflight_raw_live_memory(
-                    &population,
-                    preserved_best_live_state_bytes,
-                    raw_supplementary_live_state_bytes,
-                    carryover_live_state_bytes,
-                    retained_clone_bytes,
-                    combined_pool_backing_bytes,
-                    &selected_piece_ids,
-                    &parent_selections,
-                    macro_expansion
-                        .as_ref()
-                        .map_or(0, macro_expansion_diagnostic_heap_bytes)
-                        .saturating_add(pending_supplementary_diagnostics),
-                    diagnostics,
-                    work,
-                )?;
-                let admitted_children = if admits_supplementary_children(mode) {
-                    novel_child_fingerprints.len()
-                } else {
-                    0
-                };
-                supplementary_expansion = Some(GeneralPersistentVacancyMacroExpansionDiagnostics {
-                    parent_state_fingerprint: parent_fingerprint,
-                    parent_origin: Some("bestEverCount".to_owned()),
-                    preserved_parent_absent_from_ordinary: Some(true),
-                    generated_children,
-                    child_order_hash,
-                    novel_child_fingerprints,
-                    admitted_children,
-                    retained_child_fingerprints: Vec::new(),
-                    accepted_child_fingerprint: None,
-                    direct_insertions: diagnostics.direct_insertions.saturating_sub(direct_before),
-                    ejection_insertions: diagnostics
-                        .ejection_insertions
-                        .saturating_sub(ejections_before),
-                    selected_piece_ids: supplementary_selected_ids,
-                    parent_selection: supplementary_parent_selections.remove(0),
-                    work: work_delta(generation_work_snapshot(work.diagnostics), work_before),
-                });
-                let mut final_children = Vec::with_capacity(final_capacity);
-                final_children.extend(non_supplementary.iter().cloned());
-                final_children.append(&mut supplementary_children);
-                final_children
-                    .sort_by(|first, second| compare_states(first, second, pieces, &difficulty));
-                let before_dedup = final_children.len();
-                final_children.dedup_by(|first, second| same_state_identity(first, second));
-                diagnostics.deduplicated_states = diagnostics
-                    .deduplicated_states
-                    .saturating_add(before_dedup.saturating_sub(final_children.len()));
-                final_shadow_children = Some(final_children);
-            }
-        }
-
-        let final_shadow_pool_order_hash = final_shadow_children
-            .as_ref()
-            .map(|states| child_order_hash(states, pieces));
-        let non_supplementary_candidates = combined_macro_children.as_ref().unwrap_or(&children);
-        let complete_candidates = final_shadow_children
-            .as_ref()
-            .unwrap_or(non_supplementary_candidates);
+        let complete_candidates = combined_macro_children.as_ref().unwrap_or(&children);
         let complete_count = complete_candidates
             .iter()
             .take_while(|state| state.active.iter().all(|active| *active))
@@ -915,22 +647,7 @@ fn run_population(
         let complete_candidate_order_hash =
             child_order_hash(&complete_candidates[..complete_count], pieces);
         diagnostics.complete_states = diagnostics.complete_states.saturating_add(complete_count);
-        let (accepted_complete, accepted_non_supplementary) = if uses_complementary_macro(mode) {
-            let (shadow_accepted, non_supplementary_accepted) = audit_macro_complete_candidates(
-                &complete_candidates[..complete_count],
-                non_supplementary_candidates,
-                pieces,
-                target_settings,
-                diagnostics,
-                work,
-            )?;
-            let accepted = select_supplementary_completion(
-                shadow_accepted,
-                non_supplementary_accepted.clone(),
-                mode,
-            );
-            (accepted, non_supplementary_accepted)
-        } else if uses_macro_expansion(mode) {
+        let accepted_complete = if uses_macro_expansion(mode) {
             let (combined_accepted, ordinary_accepted) = audit_macro_complete_candidates(
                 &complete_candidates[..complete_count],
                 &children,
@@ -939,40 +656,25 @@ fn run_population(
                 diagnostics,
                 work,
             )?;
-            let accepted = if admits_macro_children(mode) {
+            if admits_macro_children(mode) {
                 combined_accepted
             } else {
                 ordinary_accepted
-            };
-            (accepted.clone(), accepted)
+            }
         } else {
-            let accepted = audit_first_complete_candidate(
+            audit_first_complete_candidate(
                 &complete_candidates[..complete_count],
                 pieces,
                 target_settings,
                 diagnostics,
                 work,
-            )?;
-            (accepted.clone(), accepted)
+            )?
         };
-        if admits_supplementary_children(mode) {
-            if let (Some((accepted, _)), Some(supplementary_diagnostics)) =
-                (&accepted_complete, &mut supplementary_expansion)
-            {
-                supplementary_diagnostics.accepted_child_fingerprint =
-                    supplementary_only_fingerprint(accepted, non_supplementary_candidates, pieces);
-            }
-        }
         children.retain(|state| state.active.iter().any(|active| !*active));
         if let Some(combined_children) = &mut combined_macro_children {
             combined_children.retain(|state| state.active.iter().any(|active| !*active));
         }
-        if let Some(final_children) = &mut final_shadow_children {
-            final_children.retain(|state| state.active.iter().any(|active| !*active));
-        }
         children = select_macro_retention_children(children, combined_macro_children.take(), mode);
-        children =
-            select_supplementary_retention_children(children, final_shadow_children.take(), mode);
         if children.is_empty() && accepted_complete.is_none() {
             return Err(format!(
                 "persistent vacancy layer {layer} retained only publication-invalid complete states"
@@ -1027,20 +729,6 @@ fn run_population(
                     .collect();
             }
         }
-        if admits_supplementary_children(mode) {
-            if let Some(supplementary_diagnostics) = &mut supplementary_expansion {
-                supplementary_diagnostics.retained_child_fingerprints = next
-                    .iter()
-                    .filter_map(|state| {
-                        let fingerprint = state_fingerprint(state, pieces);
-                        supplementary_diagnostics
-                            .novel_child_fingerprints
-                            .contains(&fingerprint)
-                            .then_some(fingerprint)
-                    })
-                    .collect();
-            }
-        }
         enforce_population_width(mode, accepted_complete.is_some(), next.len(), layer)?;
         diagnostics.distinct_signatures_retained = diagnostics
             .distinct_signatures_retained
@@ -1059,22 +747,12 @@ fn run_population(
         let (area_elite, count_elite) = population_elites(&next, pieces, &difficulty);
         let area_snapshot = elite_snapshot(area_elite, pieces, &difficulty);
         let count_snapshot = elite_snapshot(count_elite, pieces, &difficulty);
-        let area_improved = best_ever_area
-            .as_ref()
-            .is_none_or(|current| compare_area_snapshots(&area_snapshot, current).is_lt());
-        let count_improved = best_ever_count
-            .as_ref()
-            .is_none_or(|current| compare_count_snapshots(&count_snapshot, current).is_lt());
-        if uses_preserved_best_macro(mode)
-            && accepted_complete.is_none()
-            && (area_improved || (uses_complementary_macro(mode) && count_improved))
-        {
-            let transient_sidecar_bytes = transient_sidecar_peak_bytes(
-                best_ever_area_state.as_ref(),
-                best_ever_count_state.as_ref(),
-                area_improved.then_some(area_elite),
-                (uses_complementary_macro(mode) && count_improved).then_some(count_elite),
-            );
+        let area_improved = best_ever_area.as_ref().map_or(true, |current| {
+            compare_area_snapshots(&area_snapshot, current).is_lt()
+        });
+        if mode == PRESERVED_BEST_MACRO_MODE && area_improved && accepted_complete.is_none() {
+            let transient_sidecar_bytes =
+                preserved_best_live_state_bytes.saturating_add(owned_state_bytes(Some(area_elite)));
             preflight_raw_live_memory(
                 &population,
                 transient_sidecar_bytes,
@@ -1090,16 +768,7 @@ fn run_population(
                 diagnostics,
                 work,
             )?;
-            apply_sidecar_updates(
-                &mut best_ever_area_state,
-                &mut best_ever_count_state,
-                best_ever_area.as_ref(),
-                best_ever_count.as_ref(),
-                area_improved,
-                uses_complementary_macro(mode) && count_improved,
-                area_elite,
-                count_elite,
-            );
+            best_ever_area_state = Some(area_elite.clone());
         }
         update_best_area(&mut best_ever_area, &area_snapshot);
         update_best_count(&mut best_ever_count, &count_snapshot);
@@ -1109,12 +778,7 @@ fn run_population(
         let best_ever_count_snapshot = best_ever_count
             .as_ref()
             .expect("the current count elite initializes best-ever history");
-        if uses_complementary_macro(mode)
-            && best_ever_area_snapshot.fingerprint == best_ever_count_snapshot.fingerprint
-        {
-            best_ever_count_state = None;
-        }
-        if uses_preserved_best_macro(mode)
+        if mode == PRESERVED_BEST_MACRO_MODE
             && accepted_complete.is_none()
             && best_ever_area_state
                 .as_ref()
@@ -1125,42 +789,6 @@ fn run_population(
             return Err(format!(
                 "persistent vacancy layer {layer} diverged preserved best-area state from diagnostics"
             ));
-        }
-        if uses_complementary_macro(mode)
-            && accepted_complete.is_none()
-            && resolved_count_sidecar(
-                best_ever_area_state.as_ref(),
-                best_ever_count_state.as_ref(),
-                best_ever_area.as_ref(),
-                best_ever_count.as_ref(),
-            )
-            .map(|state| state_fingerprint(state, pieces))
-            .as_deref()
-                != Some(best_ever_count_snapshot.fingerprint.as_str())
-        {
-            return Err(format!(
-                "persistent vacancy layer {layer} diverged preserved best-count state from diagnostics"
-            ));
-        }
-        if let Some(history) = &mut behavioral_history {
-            update_behavioral_history(
-                history,
-                layer,
-                &population,
-                &ordinary_child_order_hash,
-                macro_expansion.as_ref(),
-                accepted_non_supplementary.as_ref().map(|(state, _)| state),
-                &next,
-                best_ever_area_snapshot,
-                best_ever_count_snapshot,
-                pieces,
-            );
-        }
-        if uses_preserved_best_macro(mode) {
-            diagnostics.best_ever_area_comparator =
-                Some(elite_comparator_diagnostics(best_ever_area_snapshot));
-            diagnostics.best_ever_count_comparator =
-                Some(elite_comparator_diagnostics(best_ever_count_snapshot));
         }
         let best_identity = state_identity(&next[0]);
         let layer_diagnostics = GeneralPersistentVacancyLayerDiagnostics {
@@ -1184,11 +812,6 @@ fn run_population(
             best_inactive_area_grid2: inactive_area(&next[0], &difficulty).to_string(),
             best_state_fingerprint: state_fingerprint(&next[0], pieces),
             macro_expansion,
-            supplementary_expansion,
-            pre_supplementary_work,
-            final_shadow_pool_order_hash,
-            retained_population_hash: uses_preserved_best_macro(mode)
-                .then(|| population_hash(&next, pieces)),
             elite: Some(GeneralPersistentVacancyEliteLayerDiagnostics {
                 entering_population_hash,
                 ordinary_child_order_hash,
@@ -1220,10 +843,7 @@ fn run_population(
         };
         preflight_live_memory(
             &population,
-            distinct_sidecar_bytes(
-                best_ever_area_state.as_ref(),
-                best_ever_count_state.as_ref(),
-            ),
+            owned_state_bytes(best_ever_area_state.as_ref()),
             generated_live_state_bytes,
             carryover_live_state_bytes,
             retained_clone_bytes,
@@ -1234,13 +854,7 @@ fn run_population(
         )?;
         charge_retained_memory(
             &next,
-            best_ever_area_state
-                .as_ref()
-                .map_or(0, legacy_state_heap_bytes),
-            distinct_sidecar_bytes(
-                best_ever_area_state.as_ref(),
-                best_ever_count_state.as_ref(),
-            ),
+            best_ever_area_state.as_ref(),
             diagnostics,
             &layer_diagnostics,
             work,
@@ -1248,13 +862,11 @@ fn run_population(
         diagnostics.layers.push(layer_diagnostics);
         diagnostics.layers_completed = layer + 1;
         if let Some(complete) = accepted_complete {
-            finish_behavioral_history(&mut behavioral_history, diagnostics);
             return Ok(Some(complete));
         }
         retained_carryovers = retained_carryover_fingerprints.into_iter().collect();
         population = next;
     }
-    finish_behavioral_history(&mut behavioral_history, diagnostics);
     Ok(None)
 }
 
@@ -1388,7 +1000,7 @@ fn expand_parent(
         selected_piece_ids.insert(pieces[piece_index].id.to_owned());
         work.diagnostics.selected_piece_slots =
             work.diagnostics.selected_piece_slots.saturating_add(1);
-        if work.diagnostics.selected_piece_slots > work.max_selected_piece_slots() {
+        if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
             return Err(work.cap("selected-piece slot budget exhausted"));
         }
         work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
@@ -1417,7 +1029,7 @@ fn expand_parent(
         {
             work.diagnostics.orientation_streams =
                 work.diagnostics.orientation_streams.saturating_add(1);
-            if work.diagnostics.orientation_streams > work.max_orientation_streams() {
+            if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
                 return Err(work.cap("orientation-stream budget exhausted"));
             }
             let orientation = RelaxedPlacement {
@@ -1448,9 +1060,7 @@ fn expand_parent(
             let mut ranked = Vec::new();
             for placement in proposals {
                 work.diagnostics.hazard_queries = work.diagnostics.hazard_queries.saturating_add(1);
-                let maximum_hazard_queries =
-                    work.max_orientation_streams() * POSITIONS_PER_ORIENTATION;
-                if work.diagnostics.hazard_queries > maximum_hazard_queries {
+                if work.diagnostics.hazard_queries > MAX_HAZARD_QUERIES {
                     return Err(work.cap("hazard-query budget exhausted"));
                 }
                 let pose = hazard_pose(&placement);
@@ -1476,11 +1086,7 @@ fn expand_parent(
                     }
                     work.diagnostics.proxy_pressure_visits =
                         work.diagnostics.proxy_pressure_visits.saturating_add(1);
-                    let maximum_proxy_visits = work
-                        .max_orientation_streams()
-                        .saturating_mul(POSITIONS_PER_ORIENTATION)
-                        .saturating_mul(MIXED_PIECE_COUNT);
-                    if work.diagnostics.proxy_pressure_visits > maximum_proxy_visits {
+                    if work.diagnostics.proxy_pressure_visits > MAX_PROXY_PRESSURE_VISITS {
                         return Err(work.cap("proxy-pressure visit budget exhausted"));
                     }
                     proxy_loss += index
@@ -1505,7 +1111,7 @@ fn expand_parent(
         for finalist in merged {
             work.diagnostics.exact_finalist_rows =
                 work.diagnostics.exact_finalist_rows.saturating_add(1);
-            if work.diagnostics.exact_finalist_rows > work.max_exact_finalist_rows() {
+            if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
                 return Err(work.cap("exact-finalist row budget exhausted"));
             }
             if let Some(child) = exact_vacancy_child(
@@ -1575,18 +1181,6 @@ fn audit_first_complete_candidate(
 }
 
 type AcceptedVacancyState = Option<(VacancyState, f64)>;
-
-fn select_supplementary_completion(
-    shadow_accepted: AcceptedVacancyState,
-    non_supplementary_accepted: AcceptedVacancyState,
-    mode: usize,
-) -> AcceptedVacancyState {
-    if admits_supplementary_children(mode) {
-        shadow_accepted
-    } else {
-        non_supplementary_accepted
-    }
-}
 
 fn audit_macro_complete_candidates(
     candidates: &[VacancyState],
@@ -1804,8 +1398,7 @@ fn vacancy_positions(
         .diagnostics
         .returned_positions
         .saturating_add(placements.len());
-    let maximum_returned_positions = work.max_orientation_streams() * POSITIONS_PER_ORIENTATION;
-    if work.diagnostics.returned_positions > maximum_returned_positions {
+    if work.diagnostics.returned_positions > MAX_RETURNED_POSITIONS {
         return Err(work.cap("returned-position budget exhausted"));
     }
     Ok(placements)
@@ -1838,17 +1431,12 @@ fn enforce_population_width(
     if !terminal_complete
         && matches!(
             mode,
-            5 | 6
-                | MACRO_CONTROL_MODE
-                | MACRO_TREATMENT_MODE
-                | PRESERVED_BEST_MACRO_MODE
-                | COMPLEMENTARY_MACRO_CONTROL_MODE
-                | COMPLEMENTARY_MACRO_TREATMENT_MODE
+            5 | 6 | MACRO_CONTROL_MODE | MACRO_TREATMENT_MODE | PRESERVED_BEST_MACRO_MODE
         )
         && retained != BEAM_WIDTH
     {
         return Err(format!(
-            "persistent vacancy layer {layer} changed fixed population width: expected {BEAM_WIDTH}, got {retained}"
+            "persistent vacancy layer {layer} changed dual-objective width: expected {BEAM_WIDTH}, got {retained}"
         ));
     }
     Ok(())
@@ -2019,7 +1607,7 @@ fn build_collision(
         .diagnostics
         .experimental_collision_builds
         .saturating_add(1);
-    if work.diagnostics.experimental_collision_builds > work.max_experimental_collision_builds() {
+    if work.diagnostics.experimental_collision_builds > MAX_EXPERIMENTAL_COLLISION_BUILDS {
         return Err(work.cap("experimental collision-build budget exhausted"));
     }
     let collision = piece
@@ -2042,7 +1630,7 @@ fn build_collision(
         .diagnostics
         .transformed_collision_vertices
         .saturating_add(collision.vertex_count());
-    if work.diagnostics.transformed_collision_vertices > work.max_transformed_collision_vertices() {
+    if work.diagnostics.transformed_collision_vertices > MAX_TRANSFORMED_COLLISION_VERTICES {
         return Err(work.cap("transformed collision-vertex budget exhausted"));
     }
     Ok(collision)
@@ -2061,7 +1649,7 @@ fn exact_intersection_area(
         .diagnostics
         .clipper_input_vertices
         .saturating_add(input_vertices)
-        > work.max_clipper_input_vertices()
+        > MAX_CLIPPER_INPUT_VERTICES
     {
         return Err(work.cap("Clipper input-vertex budget exhausted"));
     }
@@ -2560,29 +2148,6 @@ fn select_macro_retention_children(
     }
 }
 
-fn select_supplementary_retention_children(
-    non_supplementary_children: Vec<VacancyState>,
-    final_shadow_children: Option<Vec<VacancyState>>,
-    mode: usize,
-) -> Vec<VacancyState> {
-    if admits_supplementary_children(mode) {
-        final_shadow_children.unwrap_or(non_supplementary_children)
-    } else {
-        non_supplementary_children
-    }
-}
-
-fn supplementary_only_fingerprint(
-    candidate: &VacancyState,
-    non_supplementary_candidates: &[VacancyState],
-    pieces: &[GeneralFastPiece<'_>],
-) -> Option<String> {
-    non_supplementary_candidates
-        .iter()
-        .all(|other| !same_state_identity(other, candidate))
-        .then(|| state_fingerprint(candidate, pieces))
-}
-
 fn population_elites<'a>(
     population: &'a [VacancyState],
     pieces: &[GeneralFastPiece<'_>],
@@ -2682,138 +2247,6 @@ fn update_best_count(best: &mut Option<EliteSnapshot>, candidate: &EliteSnapshot
         compare_count_snapshots(candidate, current).is_lt()
     }) {
         *best = Some(candidate.clone());
-    }
-}
-
-fn elite_comparator_diagnostics(
-    snapshot: &EliteSnapshot,
-) -> GeneralPersistentVacancyEliteComparatorDiagnostics {
-    GeneralPersistentVacancyEliteComparatorDiagnostics {
-        fingerprint: snapshot.fingerprint.clone(),
-        inactive_piece_count: snapshot.inactive_piece_count,
-        inactive_area_grid2: snapshot.inactive_area_grid2.to_string(),
-        inactive_difficulty_sequence: snapshot
-            .inactive_difficulty_sequence
-            .iter()
-            .map(|(area, hull_deficit, minimum_side, id)| {
-                format!("{area}:{hull_deficit}:{minimum_side}:{id}")
-            })
-            .collect(),
-        ejected_material_area_grid2: snapshot.ejected_material_area_grid2.to_string(),
-        ejected_piece_count: snapshot.ejected_piece_count,
-        active_frontier_grid: snapshot.active_frontier_grid,
-        state_identity_sha256: snapshot.fingerprint.clone(),
-    }
-}
-
-#[allow(clippy::too_many_arguments)]
-fn update_behavioral_history(
-    digest: &mut Sha256,
-    layer: usize,
-    entering_population: &[VacancyState],
-    ordinary_child_order_hash: &str,
-    primary_macro: Option<&GeneralPersistentVacancyMacroExpansionDiagnostics>,
-    accepted_non_supplementary: Option<&VacancyState>,
-    retained_population: &[VacancyState],
-    best_area: &EliteSnapshot,
-    best_count: &EliteSnapshot,
-    pieces: &[GeneralFastPiece<'_>],
-) {
-    digest.update((layer as u32).to_be_bytes());
-    update_behavioral_state_sequence(digest, entering_population, pieces);
-    update_framed_bytes(digest, ordinary_child_order_hash.as_bytes());
-    match primary_macro {
-        Some(primary_macro) => {
-            digest.update([1]);
-            update_framed_bytes(digest, primary_macro.parent_state_fingerprint.as_bytes());
-            update_framed_bytes(digest, primary_macro.child_order_hash.as_bytes());
-        }
-        None => digest.update([0]),
-    }
-    match accepted_non_supplementary {
-        Some(state) => {
-            digest.update([1]);
-            digest.update(state_digest(state, pieces));
-        }
-        None => digest.update([0]),
-    }
-    update_behavioral_state_sequence(digest, retained_population, pieces);
-    update_behavioral_elite(digest, best_area, pieces);
-    update_behavioral_elite(digest, best_count, pieces);
-}
-
-fn update_behavioral_state_sequence(
-    digest: &mut Sha256,
-    states: &[VacancyState],
-    pieces: &[GeneralFastPiece<'_>],
-) {
-    digest.update((states.len() as u32).to_be_bytes());
-    for state in states {
-        digest.update(state_digest(state, pieces));
-    }
-}
-
-fn update_behavioral_elite(
-    digest: &mut Sha256,
-    snapshot: &EliteSnapshot,
-    pieces: &[GeneralFastPiece<'_>],
-) {
-    digest.update(snapshot.inactive_area_grid2.to_be_bytes());
-    digest.update((snapshot.inactive_difficulty_sequence.len() as u32).to_be_bytes());
-    for (area, hull_deficit, minimum_side, id) in &snapshot.inactive_difficulty_sequence {
-        digest.update(area.to_be_bytes());
-        digest.update(hull_deficit.to_be_bytes());
-        digest.update(minimum_side.to_be_bytes());
-        update_framed_bytes(digest, id.as_bytes());
-    }
-    digest.update((snapshot.inactive_piece_count as u32).to_be_bytes());
-    digest.update(snapshot.ejected_material_area_grid2.to_be_bytes());
-    digest.update((snapshot.ejected_piece_count as u32).to_be_bytes());
-    digest.update(snapshot.active_frontier_grid.to_be_bytes());
-    update_behavioral_identity(digest, &snapshot.identity, pieces);
-}
-
-fn update_behavioral_identity(
-    digest: &mut Sha256,
-    identity: &VacancyStateIdentity,
-    pieces: &[GeneralFastPiece<'_>],
-) {
-    digest.update((identity.active_placements.len() as u32).to_be_bytes());
-    for (index, angle, mirrored, x, y) in &identity.active_placements {
-        update_framed_bytes(digest, pieces[*index].id.as_bytes());
-        digest.update(angle.to_be_bytes());
-        digest.update([u8::from(*mirrored)]);
-        digest.update(x.to_be_bytes());
-        digest.update(y.to_be_bytes());
-    }
-    digest.update((identity.inactive.len() as u32).to_be_bytes());
-    for index in &identity.inactive {
-        update_framed_bytes(digest, pieces[*index].id.as_bytes());
-    }
-    match &identity.last_transition {
-        Some(transition) => {
-            digest.update([1]);
-            update_framed_bytes(digest, pieces[transition.inserted].id.as_bytes());
-            digest.update((transition.ejected.len() as u32).to_be_bytes());
-            for index in &transition.ejected {
-                update_framed_bytes(digest, pieces[*index].id.as_bytes());
-            }
-        }
-        None => digest.update([0]),
-    }
-}
-
-fn update_framed_bytes(digest: &mut Sha256, value: &[u8]) {
-    digest.update((value.len() as u32).to_be_bytes());
-    digest.update(value);
-}
-
-fn finish_behavioral_history(
-    history: &mut Option<Sha256>,
-    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
-) {
-    if let Some(history) = history.take() {
-        diagnostics.behavioral_history_sha256 = Some(format!("{:x}", history.finalize()));
     }
 }
 
@@ -2957,18 +2390,17 @@ fn contact_signature_hash(signature: &ContactSignature) -> String {
 
 fn charge_retained_memory(
     population: &[VacancyState],
-    legacy_preserved_area_heap_bytes: usize,
-    complete_sidecar_bytes: usize,
+    preserved_best: Option<&VacancyState>,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     pending_layer: &GeneralPersistentVacancyLayerDiagnostics,
     work: &mut RunWork,
 ) -> Result<(), String> {
     diagnostics.layers.reserve(1);
-    let legacy_state_bytes =
-        legacy_state_slice_bytes(population).saturating_add(legacy_preserved_area_heap_bytes);
+    let legacy_state_bytes = legacy_state_slice_bytes(population)
+        .saturating_add(preserved_best.map_or(0, legacy_state_heap_bytes));
     let state_bytes = state_slice_bytes(population)
         .saturating_add(population.len().saturating_mul(size_of::<VacancyState>()))
-        .saturating_add(complete_sidecar_bytes);
+        .saturating_add(owned_state_bytes(preserved_best));
     let diagnostic_bytes = persistent_diagnostic_bytes(diagnostics)
         .saturating_add(layer_diagnostic_heap_bytes(pending_layer));
     let total_bytes = state_bytes.saturating_add(diagnostic_bytes);
@@ -3109,109 +2541,6 @@ fn owned_state_bytes(state: Option<&VacancyState>) -> usize {
     })
 }
 
-fn distinct_sidecar_bytes(area: Option<&VacancyState>, count: Option<&VacancyState>) -> usize {
-    let area_bytes = owned_state_bytes(area);
-    let count_bytes = count.map_or(0, |count| {
-        if area.is_some_and(|area| same_state_identity(area, count)) {
-            0
-        } else {
-            owned_state_bytes(Some(count))
-        }
-    });
-    area_bytes.saturating_add(count_bytes)
-}
-
-fn transient_sidecar_peak_bytes(
-    current_area: Option<&VacancyState>,
-    current_count: Option<&VacancyState>,
-    candidate_area: Option<&VacancyState>,
-    candidate_count: Option<&VacancyState>,
-) -> usize {
-    let current_bytes =
-        owned_state_bytes(current_area).saturating_add(owned_state_bytes(current_count));
-    let candidates = [candidate_area, candidate_count];
-    let mut candidate_bytes = 0usize;
-    for (index, state) in candidates.iter().enumerate() {
-        let Some(state) = state else {
-            continue;
-        };
-        if candidates[..index]
-            .iter()
-            .flatten()
-            .any(|other| same_state_identity(other, state))
-        {
-            continue;
-        }
-        candidate_bytes = candidate_bytes.saturating_add(owned_state_bytes(Some(state)));
-    }
-    current_bytes.saturating_add(candidate_bytes)
-}
-
-fn apply_sidecar_updates(
-    area_state: &mut Option<VacancyState>,
-    count_state: &mut Option<VacancyState>,
-    previous_area_snapshot: Option<&EliteSnapshot>,
-    previous_count_snapshot: Option<&EliteSnapshot>,
-    area_improved: bool,
-    count_improved: bool,
-    area_candidate: &VacancyState,
-    count_candidate: &VacancyState,
-) {
-    let previously_shared = previous_area_snapshot
-        .zip(previous_count_snapshot)
-        .is_some_and(|(area, count)| area.fingerprint == count.fingerprint);
-    let mut previous_area = area_state.take();
-    let previous_count = count_state.take();
-
-    let mut next_count = if count_improved {
-        None
-    } else if previously_shared {
-        previous_area.take()
-    } else {
-        previous_count
-    };
-    let next_area = if area_improved {
-        Some(area_candidate.clone())
-    } else {
-        previous_area
-    };
-
-    if count_improved
-        && !next_area
-            .as_ref()
-            .is_some_and(|area| same_state_identity(area, count_candidate))
-    {
-        next_count = Some(count_candidate.clone());
-    }
-    if next_area
-        .as_ref()
-        .zip(next_count.as_ref())
-        .is_some_and(|(area, count)| same_state_identity(area, count))
-    {
-        next_count = None;
-    }
-
-    *area_state = next_area;
-    *count_state = next_count;
-}
-
-fn resolved_count_sidecar<'a>(
-    area_state: Option<&'a VacancyState>,
-    count_state: Option<&'a VacancyState>,
-    area_snapshot: Option<&EliteSnapshot>,
-    count_snapshot: Option<&EliteSnapshot>,
-) -> Option<&'a VacancyState> {
-    match (area_snapshot, count_snapshot) {
-        (Some(area_snapshot), Some(count_snapshot))
-            if area_snapshot.fingerprint == count_snapshot.fingerprint =>
-        {
-            area_state
-        }
-        (Some(_), Some(_)) => count_state,
-        _ => None,
-    }
-}
-
 fn state_slice_bytes(states: &[VacancyState]) -> usize {
     states.iter().map(state_heap_bytes).sum()
 }
@@ -3323,19 +2652,6 @@ fn persistent_diagnostic_bytes(diagnostics: &GeneralPersistentVacancyDiagnostics
         .saturating_add(option_string_bytes(
             &diagnostics.final_placement_fingerprint,
         ))
-        .saturating_add(option_string_bytes(&diagnostics.behavioral_history_sha256))
-        .saturating_add(
-            diagnostics
-                .best_ever_area_comparator
-                .as_ref()
-                .map_or(0, elite_comparator_diagnostic_heap_bytes),
-        )
-        .saturating_add(
-            diagnostics
-                .best_ever_count_comparator
-                .as_ref()
-                .map_or(0, elite_comparator_diagnostic_heap_bytes),
-        )
         .saturating_add(
             diagnostics.final_placements.capacity()
                 * size_of::<GeneralCoupledSeparatorPlacementDiagnostics>(),
@@ -3391,43 +2707,10 @@ fn layer_diagnostic_heap_bytes(layer: &GeneralPersistentVacancyLayerDiagnostics)
     )
     .saturating_add(
         layer
-            .supplementary_expansion
-            .as_ref()
-            .map_or(0, macro_expansion_diagnostic_heap_bytes),
-    )
-    .saturating_add(
-        layer
-            .final_shadow_pool_order_hash
-            .as_ref()
-            .map_or(0, String::capacity),
-    )
-    .saturating_add(
-        layer
-            .retained_population_hash
-            .as_ref()
-            .map_or(0, String::capacity),
-    )
-    .saturating_add(
-        layer
             .elite
             .as_ref()
             .map_or(0, elite_layer_diagnostic_heap_bytes),
     )
-}
-
-fn elite_comparator_diagnostic_heap_bytes(
-    comparator: &GeneralPersistentVacancyEliteComparatorDiagnostics,
-) -> usize {
-    comparator
-        .fingerprint
-        .capacity()
-        .saturating_add(comparator.inactive_area_grid2.capacity())
-        .saturating_add(string_vec_bytes(
-            &comparator.inactive_difficulty_sequence,
-            comparator.inactive_difficulty_sequence.capacity(),
-        ))
-        .saturating_add(comparator.ejected_material_area_grid2.capacity())
-        .saturating_add(comparator.state_identity_sha256.capacity())
 }
 
 fn macro_expansion_diagnostic_heap_bytes(
@@ -3450,9 +2733,6 @@ fn macro_expansion_diagnostic_heap_bytes(
         .saturating_add(string_vec_bytes(
             &macro_expansion.retained_child_fingerprints,
             macro_expansion.retained_child_fingerprints.capacity(),
-        ))
-        .saturating_add(option_string_bytes(
-            &macro_expansion.accepted_child_fingerprint,
         ))
         .saturating_add(string_vec_bytes(
             &macro_expansion.selected_piece_ids,
@@ -3764,14 +3044,6 @@ mod tests {
             selector_ids(&ids, 2, 3),
             selector_ids(&ids, 2, PRESERVED_BEST_MACRO_MODE)
         );
-        assert_eq!(
-            selector_ids(&ids, 2, 3),
-            selector_ids(&ids, 2, COMPLEMENTARY_MACRO_CONTROL_MODE)
-        );
-        assert_eq!(
-            selector_ids(&ids, 2, 3),
-            selector_ids(&ids, 2, COMPLEMENTARY_MACRO_TREATMENT_MODE)
-        );
     }
 
     #[test]
@@ -3824,7 +3096,7 @@ mod tests {
             ..GeneralPersistentVacancyLayerDiagnostics::default()
         };
         let mut work = RunWork::default();
-        charge_retained_memory(&[], 0, 0, &mut diagnostics, &pending, &mut work).unwrap();
+        charge_retained_memory(&[], None, &mut diagnostics, &pending, &mut work).unwrap();
         assert_eq!(work.diagnostics.retained_peak_bytes, 0);
         assert!(work.diagnostics.selector_diagnostic_peak_bytes > 0);
         assert_eq!(
@@ -4014,325 +3286,6 @@ mod tests {
     }
 
     #[test]
-    fn supplementary_control_discards_only_supplementary_only_identities() {
-        let ordinary = state_with_active_mask(vec![true, false]);
-        let supplementary_only = state_with_active_mask(vec![false, true]);
-        let shadow = vec![ordinary.clone(), supplementary_only.clone()];
-        let control = select_supplementary_retention_children(
-            vec![ordinary.clone()],
-            Some(shadow.clone()),
-            COMPLEMENTARY_MACRO_CONTROL_MODE,
-        );
-        let treatment = select_supplementary_retention_children(
-            vec![ordinary.clone()],
-            Some(shadow),
-            COMPLEMENTARY_MACRO_TREATMENT_MODE,
-        );
-        assert_eq!(control.len(), 1);
-        assert!(same_state_identity(&control[0], &ordinary));
-        assert_eq!(treatment.len(), 2);
-        assert!(treatment
-            .iter()
-            .any(|state| same_state_identity(state, &ordinary)));
-        assert!(treatment
-            .iter()
-            .any(|state| same_state_identity(state, &supplementary_only)));
-    }
-
-    #[test]
-    fn supplementary_completion_provenance_uses_semantic_membership() {
-        let polygons = vec![square(10.0), square(10.0)];
-        let pieces = [
-            GeneralFastPiece {
-                id: "a",
-                polygon: &polygons[0],
-                allow_rotation: true,
-                allow_mirror: true,
-            },
-            GeneralFastPiece {
-                id: "b",
-                polygon: &polygons[1],
-                allow_rotation: true,
-                allow_mirror: true,
-            },
-        ];
-        let shared = state_with_active_mask(vec![true, false]);
-        let supplementary_only = state_with_active_mask(vec![false, true]);
-        assert_eq!(
-            supplementary_only_fingerprint(&shared, &[shared.clone()], &pieces),
-            None
-        );
-        assert_eq!(
-            supplementary_only_fingerprint(&supplementary_only, &[shared], &pieces),
-            Some(state_fingerprint(&supplementary_only, &pieces))
-        );
-    }
-
-    #[test]
-    fn shared_sidecar_identity_is_charged_once_and_resolves_to_area_storage() {
-        let shared = state_with_active_mask(vec![true, false]);
-        let distinct = state_with_active_mask(vec![false, true]);
-        assert_eq!(
-            distinct_sidecar_bytes(Some(&shared), Some(&shared)),
-            owned_state_bytes(Some(&shared))
-        );
-        assert_eq!(
-            distinct_sidecar_bytes(Some(&shared), Some(&distinct)),
-            owned_state_bytes(Some(&shared)).saturating_add(owned_state_bytes(Some(&distinct)))
-        );
-
-        let polygons = vec![square(10.0), square(10.0)];
-        let pieces = [
-            GeneralFastPiece {
-                id: "a",
-                polygon: &polygons[0],
-                allow_rotation: true,
-                allow_mirror: true,
-            },
-            GeneralFastPiece {
-                id: "b",
-                polygon: &polygons[1],
-                allow_rotation: true,
-                allow_mirror: true,
-            },
-        ];
-        let difficulty = test_difficulties(&[1, 2]);
-        let snapshot = elite_snapshot(&shared, &pieces, &difficulty);
-        assert!(std::ptr::eq(
-            resolved_count_sidecar(Some(&shared), None, Some(&snapshot), Some(&snapshot)).unwrap(),
-            &shared
-        ));
-    }
-
-    #[test]
-    fn area_only_sidecar_update_preserves_a_previously_shared_count_incumbent() {
-        let polygons = (0..3).map(|_| square(10.0)).collect::<Vec<_>>();
-        let ids = ["a", "b", "c"];
-        let pieces = ids
-            .iter()
-            .enumerate()
-            .map(|(index, id)| GeneralFastPiece {
-                id,
-                polygon: &polygons[index],
-                allow_rotation: true,
-                allow_mirror: true,
-            })
-            .collect::<Vec<_>>();
-        let difficulty = test_difficulties(&[1, 2, 3]);
-        let shared = state_with_active_mask(vec![true, false, false]);
-        let new_area = state_with_active_mask(vec![false, true, false]);
-        let previous_snapshot = elite_snapshot(&shared, &pieces, &difficulty);
-        let new_area_snapshot = elite_snapshot(&new_area, &pieces, &difficulty);
-        let mut area_state = Some(shared.clone());
-        let mut count_state = None;
-
-        apply_sidecar_updates(
-            &mut area_state,
-            &mut count_state,
-            Some(&previous_snapshot),
-            Some(&previous_snapshot),
-            true,
-            false,
-            &new_area,
-            &new_area,
-        );
-
-        assert!(same_state_identity(area_state.as_ref().unwrap(), &new_area));
-        assert!(same_state_identity(count_state.as_ref().unwrap(), &shared));
-        assert!(same_state_identity(
-            resolved_count_sidecar(
-                area_state.as_ref(),
-                count_state.as_ref(),
-                Some(&new_area_snapshot),
-                Some(&previous_snapshot),
-            )
-            .unwrap(),
-            &shared,
-        ));
-    }
-
-    #[test]
-    fn simultaneous_shared_sidecar_update_stores_one_candidate_clone() {
-        let polygons = vec![square(10.0), square(10.0)];
-        let pieces = [
-            GeneralFastPiece {
-                id: "a",
-                polygon: &polygons[0],
-                allow_rotation: true,
-                allow_mirror: true,
-            },
-            GeneralFastPiece {
-                id: "b",
-                polygon: &polygons[1],
-                allow_rotation: true,
-                allow_mirror: true,
-            },
-        ];
-        let difficulty = test_difficulties(&[1, 2]);
-        let previous = state_with_active_mask(vec![true, false]);
-        let replacement = state_with_active_mask(vec![false, true]);
-        let previous_snapshot = elite_snapshot(&previous, &pieces, &difficulty);
-        let mut area_state = Some(previous.clone());
-        let mut count_state = None;
-
-        assert_eq!(
-            transient_sidecar_peak_bytes(
-                area_state.as_ref(),
-                count_state.as_ref(),
-                Some(&previous),
-                Some(&previous),
-            ),
-            owned_state_bytes(Some(&previous)).saturating_mul(2),
-        );
-        apply_sidecar_updates(
-            &mut area_state,
-            &mut count_state,
-            Some(&previous_snapshot),
-            Some(&previous_snapshot),
-            true,
-            true,
-            &replacement,
-            &replacement,
-        );
-        assert!(same_state_identity(
-            area_state.as_ref().unwrap(),
-            &replacement
-        ));
-        assert!(count_state.is_none());
-        assert_eq!(
-            distinct_sidecar_bytes(area_state.as_ref(), count_state.as_ref()),
-            owned_state_bytes(Some(&replacement)),
-        );
-    }
-
-    #[test]
-    fn sidecar_memory_cap_failure_leaves_incumbents_unchanged() {
-        let area = state_with_active_mask(vec![true, false]);
-        let count = state_with_active_mask(vec![false, true]);
-        let area_identity = state_identity(&area);
-        let count_identity = state_identity(&count);
-        let area_state = Some(area);
-        let count_state = Some(count);
-        let mut diagnostics = GeneralPersistentVacancyDiagnostics::default();
-        let mut work = RunWork::for_mode(COMPLEMENTARY_MACRO_TREATMENT_MODE);
-        let entering = Vec::new();
-        let error = preflight_raw_live_memory(
-            &entering,
-            MAX_RETAINED_BYTES,
-            0,
-            0,
-            0,
-            0,
-            &[],
-            &[],
-            0,
-            &mut diagnostics,
-            &mut work,
-        )
-        .unwrap_err();
-        assert!(error.starts_with("cap:"));
-        assert_eq!(state_identity(area_state.as_ref().unwrap()), area_identity);
-        assert_eq!(
-            state_identity(count_state.as_ref().unwrap()),
-            count_identity
-        );
-    }
-
-    #[test]
-    fn legacy_retained_peak_excludes_the_new_count_sidecar() {
-        let area = state_with_active_mask(vec![true, false]);
-        let count = state_with_active_mask(vec![false, true]);
-        let legacy_area_bytes = legacy_state_heap_bytes(&area);
-        let complete_sidecar_bytes = distinct_sidecar_bytes(Some(&area), Some(&count));
-        let mut diagnostics = GeneralPersistentVacancyDiagnostics::default();
-        let pending = GeneralPersistentVacancyLayerDiagnostics::default();
-        let mut work = RunWork::default();
-        charge_retained_memory(
-            &[],
-            legacy_area_bytes,
-            complete_sidecar_bytes,
-            &mut diagnostics,
-            &pending,
-            &mut work,
-        )
-        .unwrap();
-        assert_eq!(work.diagnostics.retained_peak_bytes, legacy_area_bytes);
-        assert!(work.diagnostics.total_retained_peak_bytes >= complete_sidecar_bytes);
-    }
-
-    #[test]
-    fn behavioral_history_excludes_supplementary_diagnostics_but_tracks_retention() {
-        let polygons = vec![square(10.0), square(10.0)];
-        let pieces = [
-            GeneralFastPiece {
-                id: "a",
-                polygon: &polygons[0],
-                allow_rotation: true,
-                allow_mirror: true,
-            },
-            GeneralFastPiece {
-                id: "b",
-                polygon: &polygons[1],
-                allow_rotation: true,
-                allow_mirror: true,
-            },
-        ];
-        let difficulty = test_difficulties(&[1, 2]);
-        let entering = vec![state_with_active_mask(vec![true, false])];
-        let retained = vec![state_with_active_mask(vec![false, true])];
-        let area = elite_snapshot(&retained[0], &pieces, &difficulty);
-        let count = area.clone();
-        let primary = GeneralPersistentVacancyMacroExpansionDiagnostics {
-            parent_state_fingerprint: "parent".to_owned(),
-            child_order_hash: "children".to_owned(),
-            ..GeneralPersistentVacancyMacroExpansionDiagnostics::default()
-        };
-        let mut first = Sha256::new();
-        let mut second = Sha256::new();
-        update_behavioral_history(
-            &mut first,
-            3,
-            &entering,
-            "ordinary",
-            Some(&primary),
-            None,
-            &retained,
-            &area,
-            &count,
-            &pieces,
-        );
-        update_behavioral_history(
-            &mut second,
-            3,
-            &entering,
-            "ordinary",
-            Some(&primary),
-            None,
-            &retained,
-            &area,
-            &count,
-            &pieces,
-        );
-        let first_hash = format!("{:x}", first.finalize());
-        assert_eq!(first_hash, format!("{:x}", second.finalize()));
-
-        let mut changed = Sha256::new();
-        update_behavioral_history(
-            &mut changed,
-            3,
-            &entering,
-            "ordinary",
-            Some(&primary),
-            None,
-            &entering,
-            &area,
-            &count,
-            &pieces,
-        );
-        assert_ne!(first_hash, format!("{:x}", changed.finalize()));
-    }
-
-    #[test]
     fn preserved_best_macro_parent_is_used_only_when_absent_from_ordinary_children() {
         let ordinary = state_with_active_mask(vec![true, false]);
         let preserved = state_with_active_mask(vec![false, true]);
@@ -4371,7 +3324,7 @@ mod tests {
     }
 
     #[test]
-    fn shadow_pool_completion_is_audited_once_and_only_treatment_accepts_it() {
+    fn macro_complete_candidate_is_audited_but_not_accepted_by_control() {
         let (polygons, mut complete) = state_with_two_squares(10.0, 0.0);
         complete.placements[0].translate_x = 1.0;
         complete.placements[0].translate_y = 1.0;
@@ -4418,19 +3371,6 @@ mod tests {
         assert!(ordinary_accepted.is_none());
         assert_eq!(work.diagnostics.complete_audits, 1);
         assert_eq!(diagnostics.publication_rejections, 0);
-        let control = select_supplementary_completion(
-            combined_accepted.clone(),
-            ordinary_accepted.clone(),
-            COMPLEMENTARY_MACRO_CONTROL_MODE,
-        );
-        let treatment = select_supplementary_completion(
-            combined_accepted,
-            ordinary_accepted,
-            COMPLEMENTARY_MACRO_TREATMENT_MODE,
-        );
-        assert!(control.is_none());
-        assert!(treatment.is_some());
-        assert_eq!(work.diagnostics.complete_audits, 1);
     }
 
     #[test]
@@ -4670,63 +3610,35 @@ mod tests {
         assert!(enforce_population_width(MACRO_CONTROL_MODE, false, BEAM_WIDTH - 1, 4).is_err());
         assert!(enforce_population_width(MACRO_TREATMENT_MODE, false, BEAM_WIDTH - 1, 4).is_err());
         assert!(enforce_population_width(PRESERVED_BEST_MACRO_MODE, false, BEAM_WIDTH, 4).is_ok());
-        assert!(enforce_population_width(
-            COMPLEMENTARY_MACRO_CONTROL_MODE,
-            false,
-            BEAM_WIDTH - 1,
-            4
-        )
-        .is_err());
-        assert!(
-            enforce_population_width(COMPLEMENTARY_MACRO_TREATMENT_MODE, false, BEAM_WIDTH, 4)
-                .is_ok()
-        );
         assert!(enforce_population_width(3, false, BEAM_WIDTH - 1, 4).is_ok());
     }
 
     #[test]
     fn mirrored_source_budget_funds_both_traversals() {
-        let base = RunWork::default();
         assert_eq!(
-            base.max_selected_piece_slots() * 2 * MAX_SOURCE_FEATURES,
-            720 * 2 * MAX_SOURCE_FEATURES
+            MAX_SOURCE_FEATURE_VISITS,
+            MAX_SELECTED_PIECE_SLOTS * 2 * MAX_SOURCE_FEATURES
         );
     }
 
     #[test]
     fn aggregate_quota_formulas_match_the_reviewed_contract() {
-        let base = RunWork::default();
         assert_eq!(MAX_PARENT_EXPANSIONS, 360);
-        assert_eq!(base.max_selected_piece_slots(), 720);
-        assert_eq!(base.max_orientation_streams(), 8_640);
-        assert_eq!(base.max_exact_finalist_rows(), 5_760);
-        assert_eq!(base.max_experimental_collision_builds(), 61 + 8_640 + 5_760);
-        assert_eq!(base.max_experimental_pair_visits(), 1_830 + 345_600);
+        assert_eq!(MAX_SELECTED_PIECE_SLOTS, 720);
+        assert_eq!(MAX_ORIENTATION_STREAMS, 8_640);
+        assert_eq!(MAX_EXACT_FINALIST_ROWS, 5_760);
+        assert_eq!(MAX_EXPERIMENTAL_COLLISION_BUILDS, 61 + 8_640 + 5_760);
+        assert_eq!(MAX_EXPERIMENTAL_PAIR_VISITS, 1_830 + 345_600);
         assert_eq!(MAX_VALIDATOR_COLLISION_BUILDS, 105 * 122);
         assert_eq!(MAX_VALIDATOR_PAIR_VISITS, 105 * 3_660);
         assert_eq!(
-            base.max_transformed_collision_vertices(),
-            (base.max_experimental_collision_builds() + MAX_VALIDATOR_COLLISION_BUILDS)
+            MAX_TRANSFORMED_COLLISION_VERTICES,
+            (MAX_EXPERIMENTAL_COLLISION_BUILDS + MAX_VALIDATOR_COLLISION_BUILDS)
                 * MAX_COLLISION_VERTICES
         );
         assert_eq!(
-            base.max_clipper_input_vertices(),
-            (base.max_experimental_pair_visits() + MAX_VALIDATOR_PAIR_VISITS)
-                * 2
-                * MAX_COLLISION_VERTICES
-        );
-        let complementary = RunWork::for_mode(COMPLEMENTARY_MACRO_TREATMENT_MODE);
-        assert_eq!(complementary.max_parent_expansions, 400);
-        assert_eq!(complementary.max_selected_piece_slots(), 800);
-        assert_eq!(complementary.max_orientation_streams(), 9_600);
-        assert_eq!(complementary.max_exact_finalist_rows(), 6_400);
-        assert_eq!(
-            complementary.max_experimental_collision_builds(),
-            61 + 9_600 + 6_400
-        );
-        assert_eq!(
-            complementary.max_experimental_pair_visits(),
-            1_830 + 384_000
+            MAX_CLIPPER_INPUT_VERTICES,
+            (MAX_EXPERIMENTAL_PAIR_VISITS + MAX_VALIDATOR_PAIR_VISITS) * 2 * MAX_COLLISION_VERTICES
         );
     }
 }

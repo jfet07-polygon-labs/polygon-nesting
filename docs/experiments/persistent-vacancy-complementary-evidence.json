@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "experiment": "persistent-vacancy-complementary-macro-parent-screen",
+  "recordedAtUtc": "2026-08-15T21:20:26Z",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "parentFixtureSha256": "18e0b052997d1251573fa35679c9fcf1d5e796acf771ec48f320ce4e9bf0081d",
+  "parentPlacementFingerprint": "b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5",
+  "targetStripDepthMm": 165,
+  "populationWidth": 8,
+  "layerLimit": 40,
+  "pairedRunOrder": ["mode10", "mode12", "mode13", "mode13", "mode12", "mode10"],
+  "canonicalCommand": "target/release/examples/general_request_benchmark tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 MODE tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+  "normalization": "recursively delete keys matching elapsedMs, ElapsedMs, wallSeconds, maximumResidentSetBytes, or phaseElapsedMs",
+  "provenance": {
+    "engineCommit": "6b2d1e061b150bbb952819cd2821b8878b5275e9",
+    "engineWorktreeDirty": false,
+    "engineWorktreeStatus": "",
+    "relevantSourceTreeSha256": "2ab586803e633b21ad192db3ab4ba3573cb9fb46d67a23969f738472db9b1bb9",
+    "executableSha256": "c15e545f29a45a0639def80fe9bcc7e4fc619a439e74dad14410d739bae5e770",
+    "cpuModel": "Apple M4 Max",
+    "target": "aarch64-apple-darwin",
+    "requestedThreads": 8,
+    "actualThreads": 8,
+    "rustflags": null,
+    "rustc": {
+      "version": "1.95.0",
+      "commitHash": "59807616e1fa2540724bfbac14d7976d7e4a3860",
+      "commitDate": "2026-04-14",
+      "host": "aarch64-apple-darwin",
+      "llvmVersion": "22.1.2",
+      "captureSha256": "e61cba8ded8c60e985f759f74a221c4773649021477d00b44c7af411eb8c218c",
+      "raw": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: aarch64-apple-darwin\nrelease: 1.95.0\nLLVM version: 22.1.2\n"
+    },
+    "cargo": {
+      "version": "1.95.0",
+      "commitHash": "f2d3ce0bd7f24a49f8f72d9000448f8838c4e850",
+      "commitDate": "2026-03-21",
+      "host": "aarch64-apple-darwin",
+      "captureSha256": "108b8fa1b7a021bb80355bb365673910c0d858a21be19126ac18adcc1bef97bc",
+      "raw": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)\nrelease: 1.95.0\ncommit-hash: f2d3ce0bd7f24a49f8f72d9000448f8838c4e850\ncommit-date: 2026-03-21\nhost: aarch64-apple-darwin\nlibgit2: 1.9.2 (sys:0.20.4 vendored)\nlibcurl: 8.21.0 (sys:0.4.83+curl-8.15.0 system ssl:OpenSSL/3.6.3)\nssl: OpenSSL 3.5.4 30 Sep 2025\nos: Mac OS 26.5.2 [64-bit]\n"
+    }
+  },
+  "compatibility": {
+    "mode10SemanticTrajectorySha256": "1edb02e2fcacfa5c3d749cb228eee735744171f5c25993c09daa9cd8054b7709",
+    "mode10BehavioralHistorySha256": "b459ac24ec09b00325b623ebb67013b176cde9cbf48e5d75401930fcf80ca037",
+    "mode12BehavioralHistorySha256": "b459ac24ec09b00325b623ebb67013b176cde9cbf48e5d75401930fcf80ca037",
+    "portabilityHarnessPassed": true,
+    "sharedCausalPrefixPassed": true,
+    "exactShadowCompletionControlTestPassed": true
+  },
+  "gates": {
+    "sameModeNormalizedReplayPassed": true,
+    "controlBehavioralReplayPassed": true,
+    "treatmentActivated": true,
+    "wallElapsedLimitSeconds": 7.0,
+    "wallElapsedPassed": true,
+    "maximumResidentSetLimitBytes": 67108864,
+    "maximumResidentSetPassed": true,
+    "populationWidthPassed": true,
+    "capsPassed": true,
+    "auditAgreementPassed": true,
+    "publicationGateReached": false,
+    "partialQualityGatePassed": false
+  },
+  "referenceBestAreaComparator": {
+    "activeFrontierGrid": 159747,
+    "ejectedMaterialAreaGrid2": "4200000000",
+    "ejectedPieceCount": 1,
+    "fingerprint": "298992902c1be345f72821956aff46bd88e7775feaea54d55e20a6d1abf7f606",
+    "inactiveAreaGrid2": "47975977789",
+    "inactiveDifficultySequence": [
+      "5410927954:0:72427:d06db288-d2d6-4f40-874e-98287f516d93-copy-13",
+      "5410842906:0:70829:d06db288-d2d6-4f40-874e-98287f516d93-copy-18",
+      "5410837712:0:71602:d06db288-d2d6-4f40-874e-98287f516d93-copy-5",
+      "4483811133:2853707048:48202:25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
+      "4483791554:2853709219:57137:25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+      "4433438526:2708865395:53232:b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+      "4433412386:2708943293:47637:b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
+      "4433403916:2709039917:53001:b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
+      "4433334154:2709006474:47987:b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4",
+      "2521106154:0:50185:e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
+      "2521071394:0:35545:e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6"
+    ],
+    "inactivePieceCount": 11,
+    "stateIdentitySha256": "298992902c1be345f72821956aff46bd88e7775feaea54d55e20a6d1abf7f606"
+  },
+  "arms": {
+    "mode10": {
+      "role": "preserved-best single-macro baseline",
+      "normalizedReplaySha256": "de326d6ec7bac2dc3cf54d06851e87dc9494b31778ac4e9ad17e2fe376942976",
+      "rawOutputSha256": [
+        "6e7e8c33b576b587a29976fca17c3f1b8af65c1c213a339493ad6565b8617ac8",
+        "133e55b837791b91f7419baa354a65547c6786b0607cf7187994c88251cc9bca"
+      ],
+      "engineElapsedMs": [6323.730041, 6311.640542],
+      "wallSeconds": [6.75, 6.36],
+      "maximumResidentSetBytes": [47841280, 47890432],
+      "layersCompleted": 40,
+      "capExhausted": null,
+      "completeStates": 0,
+      "publicationRejections": 0,
+      "behavioralHistorySha256": "b459ac24ec09b00325b623ebb67013b176cde9cbf48e5d75401930fcf80ca037",
+      "bestEverAreaElite": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "47975977789",
+        "fingerprint": "298992902c1be345f72821956aff46bd88e7775feaea54d55e20a6d1abf7f606"
+      },
+      "bestEverCountElite": {
+        "inactivePieceCount": 10,
+        "inactiveAreaGrid2": "50292939713",
+        "fingerprint": "1b2fd098813d00f01067e2ea95ad494c41b5126cc48da0df26c147bf6601c0df"
+      },
+      "finalAreaElite": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "47975977789",
+        "fingerprint": "298992902c1be345f72821956aff46bd88e7775feaea54d55e20a6d1abf7f606"
+      },
+      "work": {
+        "clipperInputVertices": 153868927,
+        "clipperOutputVertices": 45262,
+        "completeAudits": 0,
+        "exactFinalistRows": 5648,
+        "experimentalCollisionBuilds": 14181,
+        "experimentalPairVisits": 255265,
+        "hazardQueries": 271104,
+        "orientationStreams": 8472,
+        "partialAudits": 41,
+        "positionSourceAttempts": 3479064,
+        "proxyPressureVisits": 349318,
+        "retainedPeakBytes": 78485,
+        "returnedPositions": 271104,
+        "selectedPieceSlots": 706,
+        "selectorDiagnosticPeakBytes": 462150,
+        "sourceFeatureVisits": 6418,
+        "totalRetainedPeakBytes": 2571329,
+        "transformedCollisionVertices": 2653721,
+        "validatorCollisionBuilds": 5002,
+        "validatorPairVisits": 150060
+      }
+    },
+    "mode12": {
+      "role": "complementary compute-and-discard control",
+      "normalizedReplaySha256": "39f80ca24773e2e982a61886ce7f1ac7e15b3dc5182a8894249543917627dc96",
+      "rawOutputSha256": [
+        "3f94ed5649d3757f9abc67114b46f02dd5992d72f7937563a38af79631f21f2b",
+        "5f223033b667ece094927174151763e07db5b6aa7222603a4c5cd2071e75b717"
+      ],
+      "engineElapsedMs": [6298.3679170000005, 6395.711167],
+      "wallSeconds": [6.35, 6.44],
+      "maximumResidentSetBytes": [47775744, 49430528],
+      "layersCompleted": 40,
+      "capExhausted": null,
+      "completeStates": 0,
+      "publicationRejections": 0,
+      "behavioralHistorySha256": "b459ac24ec09b00325b623ebb67013b176cde9cbf48e5d75401930fcf80ca037",
+      "supplementaryExpansionLayers": 7,
+      "supplementaryRetainedIdentities": 0,
+      "bestEverAreaElite": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "47975977789",
+        "fingerprint": "298992902c1be345f72821956aff46bd88e7775feaea54d55e20a6d1abf7f606"
+      },
+      "bestEverCountElite": {
+        "inactivePieceCount": 10,
+        "inactiveAreaGrid2": "50292939713",
+        "fingerprint": "1b2fd098813d00f01067e2ea95ad494c41b5126cc48da0df26c147bf6601c0df"
+      },
+      "finalAreaElite": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "47975977789",
+        "fingerprint": "298992902c1be345f72821956aff46bd88e7775feaea54d55e20a6d1abf7f606"
+      },
+      "work": {
+        "clipperInputVertices": 153875437,
+        "clipperOutputVertices": 46527,
+        "completeAudits": 0,
+        "exactFinalistRows": 5760,
+        "experimentalCollisionBuilds": 14461,
+        "experimentalPairVisits": 260619,
+        "hazardQueries": 276480,
+        "orientationStreams": 8640,
+        "partialAudits": 41,
+        "positionSourceAttempts": 3552960,
+        "proxyPressureVisits": 356275,
+        "retainedPeakBytes": 78485,
+        "returnedPositions": 276480,
+        "selectedPieceSlots": 720,
+        "selectorDiagnosticPeakBytes": 474582,
+        "sourceFeatureVisits": 6574,
+        "totalRetainedPeakBytes": 3698617,
+        "transformedCollisionVertices": 2656061,
+        "validatorCollisionBuilds": 5002,
+        "validatorPairVisits": 150060
+      }
+    },
+    "mode13": {
+      "role": "complementary admission treatment",
+      "normalizedReplaySha256": "ce2089538fa8b826b47b109cec0dd2ffd6f6e14f68054fb095396d1ff96cac92",
+      "rawOutputSha256": [
+        "e3cd0927c31e58e929399e9b6bcb5993a5310827e60d4e7a2c02d14c3a6ec6a5",
+        "32b087d055e3da4e4bfae883545e06c2e7795ce59dd58923cf8df0507cb60e09"
+      ],
+      "engineElapsedMs": [6274.956792, 6293.091875],
+      "wallSeconds": [6.32, 6.34],
+      "maximumResidentSetBytes": [47955968, 48627712],
+      "layersCompleted": 40,
+      "capExhausted": null,
+      "completeStates": 0,
+      "publicationRejections": 0,
+      "behavioralHistorySha256": "c9624d4d2cfff6ea05ccc6a1062fa163fa7a6e8077f79cc23ce485c95deb2586",
+      "supplementaryExpansionLayers": 10,
+      "supplementaryRetainedIdentities": 7,
+      "bestEverAreaElite": {
+        "inactivePieceCount": 13,
+        "inactiveAreaGrid2": "55908065396",
+        "fingerprint": "2fa2b435ee3af01c65d6aab39f6d031c54c62ac74ffed71b15e7abf74d47d00f"
+      },
+      "bestEverCountElite": {
+        "inactivePieceCount": 12,
+        "inactiveAreaGrid2": "56276676607",
+        "fingerprint": "55905b585c24ed76e678166fec380a0e8bee36d1a3e5c973c713ee8242fa48dd"
+      },
+      "finalAreaElite": {
+        "inactivePieceCount": 13,
+        "inactiveAreaGrid2": "55908257842",
+        "fingerprint": "ffa0563e71eef90d510cc47a0d3ddf572e9402b242df82a8c1eed8bc709e71cf"
+      },
+      "work": {
+        "clipperInputVertices": 153863194,
+        "clipperOutputVertices": 44231,
+        "completeAudits": 0,
+        "exactFinalistRows": 5808,
+        "experimentalCollisionBuilds": 14581,
+        "experimentalPairVisits": 262245,
+        "hazardQueries": 278784,
+        "orientationStreams": 8712,
+        "partialAudits": 41,
+        "positionSourceAttempts": 3565320,
+        "proxyPressureVisits": 356835,
+        "retainedPeakBytes": 77749,
+        "returnedPositions": 278784,
+        "selectedPieceSlots": 726,
+        "selectorDiagnosticPeakBytes": 478690,
+        "sourceFeatureVisits": 6246,
+        "totalRetainedPeakBytes": 3770945,
+        "transformedCollisionVertices": 2650801,
+        "validatorCollisionBuilds": 5002,
+        "validatorPairVisits": 150060
+      }
+    }
+  },
+  "causalChecks": {
+    "mode12BehaviorMatchesMode10": true,
+    "supplementaryControlExecuted": true,
+    "supplementaryControlAdmittedIdentityCount": 0,
+    "treatmentSupplementaryOnlyAdmissions": 7,
+    "ordinaryAndPrimaryStreamsMatchThroughFirstAdmission": true,
+    "preSupplementaryWorkMatchesThroughFirstAdmission": true,
+    "supplementaryStreamMatchesAtAdmissionBoundary": true,
+    "finalShadowPoolMatchesAtAdmissionBoundary": true,
+    "realizedGeometryWorkDiffersAfterAdmission": true,
+    "bestEverInactivePieceCountDelta": 2,
+    "bestEverInactiveAreaGrid2Delta": "7932087607"
+  },
+  "decision": {
+    "mode13": "rejected_and_removed",
+    "reason": "The treatment activated and retained seven supplementary-only identities, but it regressed the best-ever area objective from 11 inactive pieces / 47975977789 grid-area units to 13 / 55908065396 and the best-ever count objective from 10 inactive pieces to 12. It produced no complete state. All causal, replay, audit, cap, time, and memory gates passed, so the quality failure is attributable to this admission policy rather than an invalid experiment.",
+    "supportedInference": "A separately expanded lower-count incumbent can generate novel exact-valid topologies cheaply, but admitting those children directly into the existing area-first beam displaces more productive lineages.",
+    "unsupportedInference": "This screen does not close multiobjective lifecycle search, topology archives, or a nonterminal ruin-and-recreate phase with its own acceptance policy."
+  }
+}
