@@ -301,6 +301,16 @@ if (
   throw new Error('macro treatment did not preserve count and strictly improve inactive area')
 }
 const preservedBest = mode10.layers.at(-1).elite
+const mode10Trajectory = structuredClone(mode10)
+delete mode10Trajectory.work.retainedPeakBytes
+delete mode10Trajectory.work.selectorDiagnosticPeakBytes
+delete mode10Trajectory.work.totalRetainedPeakBytes
+const mode10TrajectorySha256 = createHash('sha256')
+  .update(JSON.stringify(canonical(mode10Trajectory)))
+  .digest('hex')
+if (mode10TrajectorySha256 !== '1edb02e2fcacfa5c3d749cb228eee735744171f5c25993c09daa9cd8054b7709') {
+  throw new Error(`preserved-best trajectory changed: ${mode10TrajectorySha256}`)
+}
 const firstPreservedParentLayer = mode10.layers.findIndex(
   (layer) =>
     layer.macroExpansion.parentOrigin === 'bestEverArea' &&
@@ -355,6 +365,14 @@ for (const key of [
   if (mode10.work[key] !== mode9.work[key]) {
     throw new Error(`preserved-best macro treatment changed bounded work counter ${key}`)
   }
+}
+if (
+  preservedBest.bestEverAreaEliteInactivePieceCount !== 11 ||
+  preservedBest.bestEverAreaEliteInactiveAreaGrid2 !== '47975977789'
+) {
+  throw new Error(
+    `preserved-best endpoint changed: ${preservedBest.bestEverAreaEliteInactivePieceCount}/${preservedBest.bestEverAreaEliteInactiveAreaGrid2}`,
+  )
 }
 if (
   preservedBest.bestEverAreaEliteInactivePieceCount >

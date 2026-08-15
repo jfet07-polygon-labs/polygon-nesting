@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "experiment": "persistent-vacancy-preserved-best-macro-parent-screen",
+  "recordedAtUtc": "2026-08-15T19:04:41Z",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "parentFixtureSha256": "18e0b052997d1251573fa35679c9fcf1d5e796acf771ec48f320ce4e9bf0081d",
+  "parentPlacementFingerprint": "b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5",
+  "targetStripDepthMm": 165,
+  "populationWidth": 8,
+  "layerLimit": 40,
+  "pairedRunOrder": ["mode9", "mode10", "mode10", "mode9"],
+  "canonicalCommand": "target/release/examples/general_request_benchmark tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 MODE tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+  "normalization": "recursively delete keys matching elapsedMs, ElapsedMs, wallSeconds, maximumResidentSetBytes, or phaseElapsedMs",
+  "provenance": {
+    "engineCommit": "449fc0aa89e7fa0d4ff05b7daf808ac45588cb28",
+    "engineWorktreeDirty": false,
+    "engineWorktreeStatus": "",
+    "relevantSourceTreeSha256": "4e02066ca2168fc7b61231cefb6a147b4f5136e939b3bbb972ffa8b19849088d",
+    "executableSha256": "323fbc031ab04988b287b8828851609a9b1b763f78d567fee85604b2efa24fd5",
+    "cpuModel": "Apple M4 Max",
+    "target": "aarch64-apple-darwin",
+    "requestedThreads": 8,
+    "actualThreads": 8,
+    "rustflags": null,
+    "rustc": {
+      "version": "1.95.0",
+      "commitHash": "59807616e1fa2540724bfbac14d7976d7e4a3860",
+      "commitDate": "2026-04-14",
+      "host": "aarch64-apple-darwin",
+      "llvmVersion": "22.1.2"
+    },
+    "cargo": {
+      "version": "1.95.0",
+      "commitHash": "f2d3ce0bd7f24a49f8f72d9000448f8838c4e850",
+      "commitDate": "2026-03-21",
+      "host": "aarch64-apple-darwin"
+    }
+  },
+  "compatibility": {
+    "mode3SemanticTrajectorySha256": "6f074367e6c665f5d93d4f1de0a1e7911a4a3557f312b423107c96a2fe9d46f2",
+    "mode10SemanticTrajectorySha256": "1edb02e2fcacfa5c3d749cb228eee735744171f5c25993c09daa9cd8054b7709",
+    "portabilityHarnessPassed": true,
+    "firstPreservedParentLayer": 1,
+    "preTreatmentCausalMismatches": 0,
+    "firstTreatmentOrdinaryChildOrderMismatch": false
+  },
+  "gates": {
+    "sameModeNormalizedReplayPassed": true,
+    "wallElapsedLimitSeconds": 7.0,
+    "wallElapsedPassed": true,
+    "maximumResidentSetLimitBytes": 67108864,
+    "maximumResidentSetPassed": true,
+    "populationWidthPassed": true,
+    "capsPassed": true,
+    "auditAgreementPassed": true,
+    "publicationGateReached": false
+  },
+  "arms": {
+    "mode9": {
+      "role": "ordinary-best macro-parent control",
+      "normalizedReplaySha256": "cba8ecf4e81b0ec6c9ba1a6de38e4916af9f1d48d4bd2413c58945ecae1a2e2b",
+      "rawOutputSha256": [
+        "8a1bd2a5b968862af261503c3e3b03c2b8b3b94a23fa284494b27ff173d0dd44",
+        "05f24067de68c0da044cfd34279a742bb64fcb905f93705564ff37a64ed5b6b1"
+      ],
+      "engineElapsedMs": [6143.145458, 6050.374374999999],
+      "wallSeconds": [6.51, 6.10],
+      "maximumResidentSetBytes": [47251456, 47611904],
+      "layersCompleted": 40,
+      "capExhausted": null,
+      "completeStates": 0,
+      "publicationRejections": 0,
+      "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+      "finalAreaElite": {
+        "inactivePieceCount": 12,
+        "inactiveAreaGrid2": "56276626808",
+        "fingerprint": "77f7edf4a9a5e2d95f15e5a17b19997053e77d893dd79af4190de70666de175a"
+      },
+      "bestEverAreaElite": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "53755610030",
+        "fingerprint": "3f424b1588016656b01b05d12f60fb8fcffb07fb678bdfc6455278756009b723"
+      },
+      "retainedNovelMacroStates": 126,
+      "layersWithRetainedNovelMacroStates": 34,
+      "work": {
+        "exactFinalistRows": 5648,
+        "partialAudits": 41,
+        "completeAudits": 0,
+        "selectedPieceSlots": 706,
+        "orientationStreams": 8472,
+        "retainedPeakBytes": 68112,
+        "selectorDiagnosticPeakBytes": 444628,
+        "totalRetainedPeakBytes": 2367321
+      }
+    },
+    "mode10": {
+      "role": "preserved-best macro-parent treatment",
+      "normalizedReplaySha256": "52f54b4cf3a4cd132efd66b6ae6f061e63c2b1cde74ee4a418b4b7fa171aef0b",
+      "rawOutputSha256": [
+        "33facdda9cbcf69c5e27e77a133d62d045acc72f5d91763204fceffb0cb7e42e",
+        "8f13cadc8d0d68dbfa1056782bfff6e8b6c1e0460d786eb1d192710ee2a2e320"
+      ],
+      "engineElapsedMs": [6336.328082999999, 6279.755],
+      "wallSeconds": [6.38, 6.32],
+      "maximumResidentSetBytes": [48496640, 47988736],
+      "layersCompleted": 40,
+      "capExhausted": null,
+      "completeStates": 0,
+      "publicationRejections": 0,
+      "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+      "finalAreaElite": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "47975977789",
+        "fingerprint": "298992902c1be345f72821956aff46bd88e7775feaea54d55e20a6d1abf7f606"
+      },
+      "bestEverAreaElite": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "47975977789",
+        "fingerprint": "298992902c1be345f72821956aff46bd88e7775feaea54d55e20a6d1abf7f606"
+      },
+      "bestEverCountElite": {
+        "inactivePieceCount": 10,
+        "inactiveAreaGrid2": "50292939713",
+        "fingerprint": "1b2fd098813d00f01067e2ea95ad494c41b5126cc48da0df26c147bf6601c0df"
+      },
+      "preservedParentLayers": 39,
+      "retainedNovelMacroStates": 32,
+      "layersWithRetainedNovelMacroStates": 12,
+      "work": {
+        "exactFinalistRows": 5648,
+        "partialAudits": 41,
+        "completeAudits": 0,
+        "selectedPieceSlots": 706,
+        "orientationStreams": 8472,
+        "retainedPeakBytes": 78485,
+        "selectorDiagnosticPeakBytes": 407552,
+        "totalRetainedPeakBytes": 2533680
+      }
+    }
+  },
+  "causalChecks": {
+    "sharedEnteringPopulations": 2,
+    "preTreatmentLayers": 1,
+    "preTreatmentOrdinaryChildOrderMismatches": 0,
+    "preTreatmentCompleteCandidateOrderMismatches": 0,
+    "preTreatmentWorkMismatches": 0,
+    "preTreatmentMacroDiagnosticMismatches": 0,
+    "firstTreatmentOrdinaryChildOrderMismatches": 0,
+    "boundedWorkCounterMismatches": 0,
+    "bestEverInactivePieceCountDelta": 0,
+    "bestEverInactiveAreaGrid2Reduction": "5779632241",
+    "bestEverInactiveAreaReductionPercent": 10.7517
+  },
+  "decision": {
+    "mode10": "retained_for_next_iteration",
+    "reason": "At equal best-ever inactive-piece count and identical bounded-work counters, mode 10 reduced unresolved grid area by 10.7517%, replayed deterministically, and passed the causal, time, memory, width, cap, and audit gates. It did not complete the 165 mm strip, so it is evidence for the preserved nonterminal lifecycle rather than a promotable engine result.",
+    "supportedInference": "Using a pruned exact-valid best-area topology as the already-budgeted macro parent reaches a materially better partial topology than repeatedly expanding the ordinary-best child.",
+    "unsupportedInference": "The screen does not establish a complete 165 mm layout, a sub-160 mm result, or a production-ready engine."
+  }
+}
