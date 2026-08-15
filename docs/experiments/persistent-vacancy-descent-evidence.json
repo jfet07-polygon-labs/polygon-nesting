@@ -141,5 +141,132 @@
     "the gain over the protected endpoint is 0.084 mm; the operator family (insertion/ejection population, blocker relocation, vertical exact settling) is exhausted at target 168.526 on this parent",
     "the result is a chained multi-run artifact, not a single 6-second engine run; per-hop determinism and validity are machine-checkable from the committed artifacts",
     "approaching the demonstrated 154-155 mm band requires topology-scale rearrangement, not micro-moves"
-  ]
+  ],
+  "failedAttempts": {
+    "summary": "docs/experiments/persistent-vacancy-descent/chain/chain-failures.json",
+    "note": "every failed attempt of the replayed target sequence is summarized with its raw-output SHA-256; the two stall-defining raw outputs at the minimum delta (attempts 12 and 13, targets 168.526 and 168.527) are committed verbatim, and the remaining raw outputs are reproducible by the fail-closed replay command, which writes them all",
+    "committedRawOutputs": {
+      "fail012-t168.526": {
+        "path": "docs/experiments/persistent-vacancy-descent/chain/fail012-t168.526.json",
+        "sha256": "5281ab12cdf807d9da339945848b2f8e020a06020fc9904e6ea2c5b638b453fd"
+      },
+      "fail013-t168.527": {
+        "path": "docs/experiments/persistent-vacancy-descent/chain/fail013-t168.527.json",
+        "sha256": "7a2d879b1defaa47666876fb46353265ce86d2c22b9d437574856792e7abf61a"
+      }
+    },
+    "attempts": [
+      {
+        "attempt": 1,
+        "targetDepthMm": 168.45,
+        "afterHop": 1,
+        "rawOutput": "fail001-t168.450.json",
+        "rawOutputSha256": "63d3304d181df080c3571fb33be006e7066c0dfe6037b3183f9adad743fe2146",
+        "settleAcceptedMoves": 0,
+        "initialInactivePieces": 3,
+        "terminalBestInactivePieces": 2,
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+      },
+      {
+        "attempt": 2,
+        "targetDepthMm": 168.45,
+        "afterHop": 1,
+        "rawOutput": "fail002-t168.450.json",
+        "rawOutputSha256": "869dd2a236beecc5f4c3ce76fcfd5a539e2b40f9a47363531de40e66f7e6f057",
+        "settleAcceptedMoves": 0,
+        "initialInactivePieces": 3,
+        "terminalBestInactivePieces": 2,
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+      },
+      {
+        "attempt": 3,
+        "targetDepthMm": 168.5,
+        "afterHop": 1,
+        "rawOutput": "fail003-t168.500.json",
+        "rawOutputSha256": "a94e40316dbdde075a1430ae8dc820913aa6e1749c82de11427207f82c501b0b",
+        "settleAcceptedMoves": 0,
+        "initialInactivePieces": 3,
+        "terminalBestInactivePieces": 3,
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+      },
+      {
+        "attempt": 4,
+        "targetDepthMm": 168.525,
+        "afterHop": 1,
+        "rawOutput": "fail004-t168.525.json",
+        "rawOutputSha256": "762c783cb98d16cbea433ffab1b397e5f24201f3d4f7b0cc3b19a3e58edb3b3d",
+        "settleAcceptedMoves": 0,
+        "initialInactivePieces": 3,
+        "terminalBestInactivePieces": 2,
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+      },
+      {
+        "attempt": 5,
+        "targetDepthMm": 168.538,
+        "afterHop": 1,
+        "rawOutput": "fail005-t168.538.json",
+        "rawOutputSha256": "aa3ef2339bdeceecdcbde3efa130cc87caad8d4944a2e8e993e7e52e8257c159",
+        "settleAcceptedMoves": 0,
+        "initialInactivePieces": 2,
+        "terminalBestInactivePieces": 2,
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+      },
+      {
+        "attempt": 8,
+        "targetDepthMm": 168.526,
+        "afterHop": 3,
+        "rawOutput": "fail008-t168.526.json",
+        "rawOutputSha256": "6d2f369a0597483fc58777a1efd60938825f013aaa6019e1270f50ba4901cbbd",
+        "settleAcceptedMoves": 0,
+        "initialInactivePieces": 2,
+        "terminalBestInactivePieces": 1,
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+      },
+      {
+        "attempt": 9,
+        "targetDepthMm": 168.526,
+        "afterHop": 3,
+        "rawOutput": "fail009-t168.526.json",
+        "rawOutputSha256": "77a094b4ec67da70854fa1aa856b7df4bb0db4ef32bc95198a10cdc8a7850b1d",
+        "settleAcceptedMoves": 0,
+        "initialInactivePieces": 2,
+        "terminalBestInactivePieces": 1,
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+      },
+      {
+        "attempt": 11,
+        "targetDepthMm": 168.526,
+        "afterHop": 4,
+        "rawOutput": "fail011-t168.526.json",
+        "rawOutputSha256": "0bcf22eeae91cc849daaa898d0b6d8923e661b4cb8595a45fbd12d7e0a10bf21",
+        "settleAcceptedMoves": 0,
+        "initialInactivePieces": 2,
+        "terminalBestInactivePieces": 1,
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+      },
+      {
+        "attempt": 12,
+        "targetDepthMm": 168.526,
+        "afterHop": 4,
+        "rawOutput": "fail012-t168.526.json",
+        "rawOutputSha256": "5281ab12cdf807d9da339945848b2f8e020a06020fc9904e6ea2c5b638b453fd",
+        "settleAcceptedMoves": 0,
+        "initialInactivePieces": 2,
+        "terminalBestInactivePieces": 1,
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+      },
+      {
+        "attempt": 13,
+        "targetDepthMm": 168.527,
+        "afterHop": 4,
+        "rawOutput": "fail013-t168.527.json",
+        "rawOutputSha256": "7a2d879b1defaa47666876fb46353265ce86d2c22b9d437574856792e7abf61a",
+        "settleAcceptedMoves": 0,
+        "initialInactivePieces": 2,
+        "terminalBestInactivePieces": 2,
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+      }
+    ],
+    "producedAtCommitNote": "failure artifacts were produced at the follow-up commit; their engine provenance fields name that commit while the hop artifacts remain bound to the descent-lane commit that produced them \u2014 both semantically replay at either commit as the engine source is unchanged between them"
+  }
 }
