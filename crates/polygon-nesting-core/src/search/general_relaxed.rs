@@ -347,6 +347,12 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub independent_depth_mm: Option<f64>,
     pub final_placement_fingerprint: Option<String>,
     pub final_placements: Vec<GeneralCoupledSeparatorPlacementDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub behavioral_history_sha256: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub best_ever_area_comparator: Option<GeneralPersistentVacancyEliteComparatorDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub best_ever_count_comparator: Option<GeneralPersistentVacancyEliteComparatorDiagnostics>,
     pub work: GeneralPersistentVacancyWorkDiagnostics,
     pub layers: Vec<GeneralPersistentVacancyLayerDiagnostics>,
     pub cap_exhausted: Option<String>,
@@ -397,7 +403,28 @@ pub struct GeneralPersistentVacancyLayerDiagnostics {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub macro_expansion: Option<GeneralPersistentVacancyMacroExpansionDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub supplementary_expansion: Option<GeneralPersistentVacancyMacroExpansionDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pre_supplementary_work: Option<GeneralPersistentVacancyWorkDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub final_shadow_pool_order_hash: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retained_population_hash: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub elite: Option<GeneralPersistentVacancyEliteLayerDiagnostics>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyEliteComparatorDiagnostics {
+    pub fingerprint: String,
+    pub inactive_piece_count: usize,
+    pub inactive_area_grid2: String,
+    pub inactive_difficulty_sequence: Vec<String>,
+    pub ejected_material_area_grid2: String,
+    pub ejected_piece_count: usize,
+    pub active_frontier_grid: i64,
+    pub state_identity_sha256: String,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
@@ -413,6 +440,8 @@ pub struct GeneralPersistentVacancyMacroExpansionDiagnostics {
     pub novel_child_fingerprints: Vec<String>,
     pub admitted_children: usize,
     pub retained_child_fingerprints: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_child_fingerprint: Option<String>,
     pub direct_insertions: usize,
     pub ejection_insertions: usize,
     pub selected_piece_ids: Vec<String>,
