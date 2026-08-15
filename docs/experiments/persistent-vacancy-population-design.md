@@ -137,7 +137,7 @@ Before any benchmark result is interpreted, focused unit and integration tests m
 - complete-audit ordering is comparator-stable and the sixty-fifth complete child exhausts the arm before validation;
 - every pre-operation ceiling and the post-operation Clipper output ceiling fails atomically without committing a candidate, layer, audit, or publication state;
 - the aggregate quota formulas equal the declared constants, mirror-enabled orientation generation charges both source-feature traversals, and phase counters sum to the aggregate counters;
-- the literal mode-zero compatibility projection reproduces SHA-256 `0f39c64a58b43158506319bf9d6907fc78b9fa9978887c386820bea2779a40fb`;
+- the stable mode-zero compatibility projection reproduces SHA-256 `f51f8d4e767c4828430af4f154616b9c73aa237f1cbfbf0cc3e04d6cadfe85d0`;
 - one fixed concave source piece completes an insertion/ejection lifecycle and passes both source and canonical validation.
 
 ## Reproducibility and gates
@@ -174,6 +174,7 @@ jq -S '
       .quota.persistentVacancyMode,
       .relaxedDiagnostics.coupledDynamicSeparator.precompressionFrontierVacancy,
       .relaxedDiagnostics.coupledDynamicSeparator.persistentVacancyPopulation,
+      .engineCommit,
       .engineWorktreeDirty,
       .engineWorktreeStatus,
       .executableSha256,
@@ -182,7 +183,7 @@ jq -S '
 ' INPUT.json
 ```
 
-The projected mode-`0` JSON must hash exactly to `0f39c64a58b43158506319bf9d6907fc78b9fa9978887c386820bea2779a40fb` with SHA-256.
+The projected mode-`0` JSON must hash exactly to `f51f8d4e767c4828430af4f154616b9c73aa237f1cbfbf0cc3e04d6cadfe85d0` with SHA-256. The earlier `0f39c64...` projection included the then-current commit and was therefore commit-bound rather than a stable compatibility hash; deleting `engineCommit` is the only projection correction, and the old and new same-layout outputs both reproduce `f51f8d4...` under it.
 
 Normalize each treatment/control replay with this exact projection:
 
@@ -261,7 +262,7 @@ For every expanded parent, diagnostics record an ordered row containing the laye
 
 Interpret the screen in stages. First, modes `3` and `4` must replay deterministically, remain under the existing time and memory gates, preserve the mode-zero compatibility hash, and reproduce contemporaneous modes `1` and `2` byte-for-byte after the declared normalization. Mode `3` must beat mode `1`, and mode `4` must beat mode `2`, with neither member capped, incomplete, or validation-disagreeing. A paired win is either unique exact-valid completion, strictly lower independently validated complete depth when both complete, or—when neither completes—a comparator-best partial with strictly lower inactive area and no more inactive pieces. If a rotating mode only exchanges which IDs churn without improving that paired objective, this stateless rotating selector is closed; selector coverage in general is not. If it improves the partial but does not complete, record the residual family distribution before changing candidate geometry; neither extra layers nor a larger beam is authorized by this screen.
 
-The completed screen is pinned in `persistent-vacancy-selector-evidence.json`. All four arms replayed byte-identically after timing normalization, the old semantic modes reproduced their frozen hashes, the mode-zero projection remained `0f39c64...`, and shared-parent selector rows had zero mismatches. Mode `3` passed its paired partial gate, improving mode `1` from 15 inactive pieces / `69619646821` inactive grid-area units to 12 / `60144097737`. Mode `4` failed its paired gate: it tied mode `2` at 13 inactive pieces but regressed inactive grid area from `58797801045` to `62614709968`. Every arm remained below 5.81 seconds wall time and 48.4 MiB RSS. Stateless rotation is therefore retained as a useful scheduler under comparator retention, while its direct combination with first-contact-signature reservation is closed. The next screen must preserve the complementary low-count and low-area basins explicitly; it may not spend more work on the same single global ordering.
+The completed screen is pinned in `persistent-vacancy-selector-evidence.json`. All four arms replayed byte-identically after timing normalization, the old semantic modes reproduced their frozen hashes, the then-used legacy commit-bound mode-zero projection remained `0f39c64...`, and shared-parent selector rows had zero mismatches. Mode `3` passed its paired partial gate, improving mode `1` from 15 inactive pieces / `69619646821` inactive grid-area units to 12 / `60144097737`. Mode `4` failed its paired gate: it tied mode `2` at 13 inactive pieces but regressed inactive grid area from `58797801045` to `62614709968`. Every arm remained below 5.81 seconds wall time and 48.4 MiB RSS. Stateless rotation is therefore retained as a useful scheduler under comparator retention, while its direct combination with first-contact-signature reservation is closed. The next screen must preserve the complementary low-count and low-area basins explicitly; it may not spend more work on the same single global ordering.
 
 ## Follow-up dual-objective elite screen
 
@@ -282,3 +283,5 @@ First run the instrumented mode `3` twice and pin its true best-ever area-first 
 Then use one unmeasured release build for two paired screens. Run `MODE=3,6,6,3` to isolate dual-objective retention among ordinary children, followed by `MODE=6,5,5,6` to isolate incumbent carryover under the identical dual-objective policy. Same-mode normalized replays must be byte-identical, contemporaneous controls must match fully, all processes must share provenance, and mode zero must retain the protected hash. Mode `6` beats mode `3`, and mode `5` beats mode `6`, only by unique exact-valid completion, strictly lower independently validated complete depth, or—if neither completes—final area-elite inactive area no greater than the paired control's best-ever area-first value and final count-elite inactive count no greater than its best-ever count-first value, with at least one strict improvement and no regression in the other elite's corresponding objective.
 
 Mode `5` additionally requires at least one offered carryover to survive retention and later appear as an expanded parent; otherwise it must match mode `6` and cannot claim a carryover result. Whenever the paired arms share an entering-population hash, their ordinary child/order hashes and work snapshots must match. A cap, audit disagreement, width change, shared-population pre-carryover mismatch, wall time over 6.5 seconds, RSS over 64 MiB, or mere preservation without strict progress rejects the relevant arm. Failure of mode `6` closes this dual-objective reservation policy. A mode-`6` win followed by mode-`5` failure closes this two-elite carryover policy while retaining the multiobjective result.
+
+The completed screen is pinned in `persistent-vacancy-elite-evidence.json`. After Cargo reached terminal completion, one unchanged release executable ran the required `MODE=3,6,6,3` sequence. Same-mode replays were byte-identical after timing normalization, mode `3` reproduced the pre-elite semantic hash, and all three shared entering populations had identical ordinary-child hashes, complete-candidate hashes, and pre-carryover work. Mode `3` retained a best-ever state with 11 inactive pieces and `59571041296` inactive grid-area units. Mode `6` regressed both best-ever objectives to 13 inactive pieces and `64577591268` units at essentially equal runtime and memory. All four engine samples also exceeded the provisional `6000 ms` diagnostic gate by `27-138 ms`, while the `6.5 s` wall and `64 MiB` RSS gates passed. Mode `6` is rejected. Mode `5` was deliberately not run because its carryover treatment depends on the failed reservation policy and would not isolate a useful causal variable. It remains untested rather than causally closed; carryover may be reconsidered under a retention lifecycle that does not reserve permanent beam slots. Persistent exact-valid partial populations and the stateless rotating scheduler remain supported.

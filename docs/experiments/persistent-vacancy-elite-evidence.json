@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 2,
+  "experiment": "persistent-vacancy-dual-objective-retention-screen",
+  "recordedAtUtc": "2026-08-15T15:40:00Z",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "parentPlacementFingerprint": "b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5",
+  "targetStripDepthMm": 165,
+  "seedDomain": {
+    "hex": "0x56504f5030303031",
+    "decimal": "6219558291223097393"
+  },
+  "populationWidth": 8,
+  "layerLimit": 40,
+  "canonicalCommand": "nix develop -c cargo run --release --locked -p polygon-nesting-core --features jagua-experimental --example general_request_benchmark -- tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 MODE",
+  "pairedRunOrder": ["mode3", "mode6", "mode6", "mode3"],
+  "provenance": {
+    "engineCommit": "d702069d6fb1dde80466d947643d2a313a096583",
+    "engineWorktreeDirty": false,
+    "engineWorktreeStatus": "",
+    "relevantSourceTreeSha256": "225e61cbfb9cd2cf383d866c8cd415628d3dffae8df61699581c32d000c45a6e",
+    "executableSha256": "7575b2f19239bf9870edf9421cab34b665a05b985a2883ec264c95a90fef5e9f",
+    "cpuModel": "Apple M4 Max",
+    "target": "aarch64-apple-darwin",
+    "requestedThreads": 8,
+    "actualThreads": 8,
+    "rustflags": null,
+    "rustc": {
+      "version": "1.95.0",
+      "commitHash": "59807616e1fa2540724bfbac14d7976d7e4a3860",
+      "commitDate": "2026-04-14",
+      "host": "aarch64-apple-darwin",
+      "llvmVersion": "22.1.2"
+    },
+    "cargo": {
+      "version": "1.95.0",
+      "commitHash": "f2d3ce0bd7f24a49f8f72d9000448f8838c4e850",
+      "commitDate": "2026-03-21",
+      "host": "aarch64-apple-darwin"
+    }
+  },
+  "compatibility": {
+    "preEliteMode3SemanticSha256": "72c959094e6a1f0f76d139e798167775c62909a0a8dc3e0785c665751dd10f3d",
+    "stableProjectionSha256": "f51f8d4e767c4828430af4f154616b9c73aa237f1cbfbf0cc3e04d6cadfe85d0",
+    "legacyCommitBoundProjectionSha256": "0f39c64a58b43158506319bf9d6907fc78b9fa9978887c386820bea2779a40fb",
+    "oldObservation": {
+      "retainedRawOutput": "mode-zero-old.json",
+      "engineCommit": "c3977ca262ebd8f68e8f2914c6c8a3be446b38b6",
+      "engineWorktreeDirty": true,
+      "rawOutputSha256": "db6b5a00611a80cbdc6e6bd3e330b9d875afee42fc5812a64b63dedab6235424",
+      "legacyCommitBoundProjectionSha256": "0f39c64a58b43158506319bf9d6907fc78b9fa9978887c386820bea2779a40fb",
+      "stableProjectionSha256": "f51f8d4e767c4828430af4f154616b9c73aa237f1cbfbf0cc3e04d6cadfe85d0"
+    },
+    "newObservation": {
+      "retainedRawOutput": "mode-zero-new.json",
+      "engineCommit": "d702069d6fb1dde80466d947643d2a313a096583",
+      "engineWorktreeDirty": false,
+      "rawOutputSha256": "e090668a0a7bf554375e38f0a3a03872595f6cb7112a1f29daefe0c373f73c9c",
+      "legacyProjectionWithCurrentCommitSha256": "a3465f9b3b97d75a872c82ab18d9f3ec9e2aed4e7a622bff9097444754353a7a",
+      "stableProjectionSha256": "f51f8d4e767c4828430af4f154616b9c73aa237f1cbfbf0cc3e04d6cadfe85d0"
+    }
+  },
+  "gates": {
+    "engineElapsedLimitMs": 6000,
+    "engineElapsedPassed": false,
+    "wallElapsedLimitSeconds": 6.5,
+    "wallElapsedPassed": true,
+    "maximumResidentSetLimitBytes": 67108864,
+    "maximumResidentSetPassed": true,
+    "populationWidthPassed": true,
+    "capsPassed": true,
+    "auditAgreementPassed": true,
+    "publicationGateReached": false,
+    "note": "Every engine sample exceeded the provisional 6000 ms diagnostic gate by 27.091375 to 138.119417 ms. This independently rejects promotion even though the much larger quality regression already decides the comparison."
+  },
+  "arms": {
+    "mode3": {
+      "scheduler": "hardPlusStatelessRotation",
+      "retention": "areaFirstComparator",
+      "normalizedReplaySha256": "eda9295399410913092f2f012b64dcc766de8f09f4211f2b853df0572b38acf2",
+      "rawOutputSha256": [
+        "8c6c057dd3b630bc9e55c01c77ee193f21754739b5d759453c3708eea641e162",
+        "6251a015c765d2e19a196dc8ca111f023c1f0b8c7f28585541f12bb9743e42be"
+      ],
+      "engineElapsedMs": [6110.311125, 6065.173125],
+      "wallSeconds": [6.16, 6.11],
+      "maximumResidentSetBytes": [47087616, 44711936],
+      "layersCompleted": 40,
+      "retainedStatesPerLayer": [8],
+      "capExhausted": null,
+      "completeStates": 0,
+      "exactValid": false,
+      "publicationRejections": 0,
+      "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+      "finalAreaElite": {
+        "inactivePieceCount": 12,
+        "inactiveAreaGrid2": "60144097737",
+        "fingerprint": "d12e7ee31330d9cd67643a5051ee2549b9e67cfb097300decc59766cedc15007"
+      },
+      "bestEverAreaElite": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "59571041296",
+        "fingerprint": "c23292443bc0e5984eb37ff193df97df88ffeb624858a2cb315eda2b08e06380"
+      },
+      "bestEverCountElite": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "59571041296",
+        "fingerprint": "c23292443bc0e5984eb37ff193df97df88ffeb624858a2cb315eda2b08e06380"
+      },
+      "work": {
+        "clipperInputVertices": 153889807,
+        "clipperOutputVertices": 42531,
+        "completeAudits": 0,
+        "exactFinalistRows": 5008,
+        "experimentalCollisionBuilds": 12581,
+        "experimentalPairVisits": 220351,
+        "hazardQueries": 240384,
+        "orientationStreams": 7512,
+        "partialAudits": 41,
+        "positionSourceAttempts": 3039192,
+        "proxyPressureVisits": 315616,
+        "retainedPeakBytes": 69808,
+        "returnedPositions": 240384,
+        "selectedPieceSlots": 626,
+        "selectorDiagnosticPeakBytes": 325348,
+        "sourceFeatureVisits": 6444,
+        "totalRetainedPeakBytes": 1350040,
+        "transformedCollisionVertices": 2654121,
+        "validatorCollisionBuilds": 5002,
+        "validatorPairVisits": 150060
+      }
+    },
+    "mode6": {
+      "scheduler": "hardPlusStatelessRotation",
+      "retention": "reservedAreaAndCountElites",
+      "normalizedReplaySha256": "a13340d608fe28ce029b05beca865c6157e0d2afdd6de9e53d56bf761285c1cd",
+      "rawOutputSha256": [
+        "880a538ca80c8959aedf5b14ea7cbf7ad8af8115f8e4da00db9772f4f6cfe479",
+        "a95d25514219e6205dd040edcde57219243564668480320ea3bc08c636ba60e0"
+      ],
+      "engineElapsedMs": [6027.091375, 6138.119417],
+      "wallSeconds": [6.07, 6.19],
+      "maximumResidentSetBytes": [50184192, 46579712],
+      "layersCompleted": 40,
+      "retainedStatesPerLayer": [8],
+      "capExhausted": null,
+      "completeStates": 0,
+      "exactValid": false,
+      "publicationRejections": 0,
+      "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+      "finalAreaElite": {
+        "inactivePieceCount": 13,
+        "inactiveAreaGrid2": "64577647123",
+        "fingerprint": "59816e8ab21b88cb7c29ae973ab67f32ca04b479cbd3067f83f5a5c35ad7aa52"
+      },
+      "bestEverAreaElite": {
+        "inactivePieceCount": 13,
+        "inactiveAreaGrid2": "64577591268",
+        "fingerprint": "d7f10c50eced777062064527a9514ba263033a671754ff9f72bc00e43abc642c"
+      },
+      "bestEverCountElite": {
+        "inactivePieceCount": 13,
+        "inactiveAreaGrid2": "64577591268",
+        "fingerprint": "d7f10c50eced777062064527a9514ba263033a671754ff9f72bc00e43abc642c"
+      },
+      "work": {
+        "clipperInputVertices": 153839725,
+        "clipperOutputVertices": 36449,
+        "completeAudits": 0,
+        "exactFinalistRows": 5008,
+        "experimentalCollisionBuilds": 12581,
+        "experimentalPairVisits": 219739,
+        "hazardQueries": 240384,
+        "orientationStreams": 7512,
+        "partialAudits": 41,
+        "positionSourceAttempts": 3012312,
+        "proxyPressureVisits": 318056,
+        "retainedPeakBytes": 67160,
+        "returnedPositions": 240384,
+        "selectedPieceSlots": 626,
+        "selectorDiagnosticPeakBytes": 327898,
+        "sourceFeatureVisits": 5460,
+        "totalRetainedPeakBytes": 1319072,
+        "transformedCollisionVertices": 2639801,
+        "validatorCollisionBuilds": 5002,
+        "validatorPairVisits": 150060
+      }
+    }
+  },
+  "causalChecks": {
+    "sharedEnteringPopulations": 3,
+    "ordinaryChildOrderMismatches": 0,
+    "completeCandidateOrderMismatches": 0,
+    "preCarryoverWorkMismatches": 0,
+    "sharedPopulationHashes": [
+      "36e9ef29e28c1fbe955e63d0f678ef6b28c65904fc09c33fb0a1c27f7e3e2ac3",
+      "5bdff018493d33fc2a3aee78d7bb510f95f1be0b6fdd62a215b3571bfdedfe49",
+      "be64e872c671e808c31c40089acad1577f58aa9d11fd161f8ee3ff1aa2200570"
+    ]
+  },
+  "decision": {
+    "mode6": "rejected",
+    "mode5": "not_run_due_failed_prerequisite",
+    "reason": "Mode 6 regressed both best-ever objectives from 11 inactive pieces and 59571041296 grid-area units to 13 and 64577591268 at equal width and essentially equal runtime. All samples also missed the provisional 6000 ms engine gate.",
+    "closedMechanisms": [
+      "fixed-slot area/count elite reservation under the stateless rotating scheduler"
+    ],
+    "deferredMechanisms": [
+      "two-elite incumbent carryover under a retention policy that does not consume fixed beam slots"
+    ]
+  }
+}
