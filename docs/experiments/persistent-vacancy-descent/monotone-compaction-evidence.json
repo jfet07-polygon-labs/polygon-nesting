@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "experiment": "monotone-exact-compaction-screen",
+  "recordedAtUtc": "2026-08-15T00:00:00Z",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "hypotheses": {
+    "guillotineGroupDrop": "mutually wedged clusters can harvest vertical slack by translating every piece above a horizontal cut as one rigid body",
+    "diagonalSettle": "45-degree strict-descent probes can slide pieces along slopes that block the straight drop and route interior slack to the frontier"
+  },
+  "outcome": "BOTH REJECTED as depth mechanisms at the converged chain fixpoint; diagonal settling is retained as a marginally deeper compactor from unconverged parents",
+  "results": {
+    "groupDropAtFixpoint": {
+      "cuts": 129,
+      "probes": 1290,
+      "acceptedDrops": 0,
+      "explanation": "every settled layout rests transitively on the floor, so every horizontal cut crosses at least one exact contact pair and no cut group can descend; group drops were zero on every probed parent"
+    },
+    "diagonalSettleAtFixpoint": {
+      "acceptedMoves": 83,
+      "frontierBeforeGrid": 166032,
+      "frontierAfterGrid": 166031,
+      "explanation": "83 interior moves prove distributed diagonal slack exists at the fixpoint, but the frontier moved 0.001 mm and no micro-contraction completed: monotone per-piece descent cannot route interior slack to a frontier piece whose entire descent cone is blocked"
+    },
+    "diagonalSettleFromRoot": {
+      "exactValid": true,
+      "independentDepthMm": 168.289,
+      "settleAccepted": 108,
+      "note": "168.289 mm versus mode 11's 168.291 mm from the same root: diagonal settling compacts marginally deeper from unconverged parents"
+    }
+  },
+  "ladder": {
+    "attempt": "mode-14 descent ladder from the 168.277 fixpoint at targets 168.507-168.527",
+    "outcome": "no completion at any target down to delta 0.005 mm",
+    "commands": "canonical benchmark invocation with MODE=14, the chain parent fixture, and the target"
+  },
+  "conclusion": "translation-only exact compaction is closed in every monotone direction at this parent: vertical per-piece, vertical rigid-group at every horizontal cut, and 45-degree strict-descent all fail to move the frontier, while 83 accepted interior moves prove the slack exists. Routing distributed interior slack to a blocked frontier requires non-monotone coordinated motion - pieces must temporarily rise or swap pockets - which is exactly the coupled exact-valid/infeasible lifecycle (separator inside partial states) or bounded multi-piece remove/reinsert with lateral freedom",
+  "rawOutputs": {
+    "fixpoint": {
+      "path": "docs/experiments/persistent-vacancy-descent/monotone-compaction/mode14-fixpoint-t168.527.json",
+      "sha256": "77db7f0c1e290ba35012a86f94c9d6a0e47b1e2dd496497cb123990374e47f76"
+    },
+    "root": {
+      "path": "docs/experiments/persistent-vacancy-descent/monotone-compaction/mode14-root-t168.550.json",
+      "sha256": "d8c4ebfc235bd24f66a85c57538bdeceff4a7b0cccc858fb8c72761c9e3902f6"
+    }
+  },
+  "provenance": {
+    "engineCommit": "cd29e5b9996af6f8ba132faddd7e1777828be8a9",
+    "executableSha256": "8706a6664972130fa869c8d4732443751c3290a013bf4e70b9265b78df486411",
+    "relevantSourceTreeSha256": "8068361d2ac3a432ae08d5e321b86ab76ecb1f54cd28fbc1e15a09a81a031aee",
+    "targetArchitecture": "x86_64",
+    "requestedThreads": 8
+  }
+}
