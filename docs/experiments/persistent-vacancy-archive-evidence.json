@@ -1,0 +1,291 @@
+{
+  "schemaVersion": 1,
+  "experiment": "persistent-vacancy-out-of-beam-topology-archive-screen",
+  "recordedAtUtc": "2026-08-15T00:00:00Z",
+  "note": "recordedAtUtc is the evidence-authoring date at day precision; run identity is proven by the pinned hashes below, not by this timestamp",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "parentPlacementFingerprint": "b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5",
+  "parentFixture": {
+    "path": "tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+    "sha256": "1555988f2faee58091e29c196f4f48659b7124a63fa27789f8aad2473ae11700",
+    "reason": "The frozen parent is a fingerprint of the boundary-projection trajectory on the canonical Apple M4 Max platform. On x86_64-unknown-linux-gnu the in-run trajectory converges to an independently valid 181.938 mm endpoint whose projection fingerprints as 51b77c0f23d9bb1d1efa2e9c24780e3f67732c87ba9a81c874df117a43c20b97, so without the fixture every nonzero mode skips before any experimental work. The engine's compiled-in frozen fingerprint, parent-depth, and dual-validation checks still gate the loaded fixture layout."
+  },
+  "targetStripDepthMm": 165.0,
+  "populationWidth": 8,
+  "layerLimit": 40,
+  "archivePolicy": {
+    "stagnationThresholdLayers": 3,
+    "revivalCooldownLayers": 3,
+    "maxRevivalExpansions": 13,
+    "mode7": "extraParent (revived elite expanded as one additional funded parent)",
+    "mode8": "swapWorstEntering (revived elite replaces the comparator-worst entering slot under a strict-improvement guard; no added work)"
+  },
+  "canonicalCommand": "cargo run --release --locked -p polygon-nesting-core --features jagua-experimental --example general_request_benchmark -- tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 MODE tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+  "modeZeroCommandNote": "mode 0 runs omit the fixture argument entirely; their output is byte-identical to the checkpoint build under the timing+provenance projection",
+  "pairedRunOrder": [
+    "mode0",
+    "mode0",
+    "mode3",
+    "mode7",
+    "mode7",
+    "mode3",
+    "mode8",
+    "mode8"
+  ],
+  "normalizationProjection": "jq -S 'walk(if type==\"object\" then with_entries(select((.key|test(\"(?:^elapsedMs$|ElapsedMs$|^wallSeconds$|^maximumResidentSetBytes$|^phaseElapsedMs$)\"))|not)) else . end)'",
+  "modeZeroCheckpointCompatibility": {
+    "projection": "timing projection above followed by del(.engineCommit,.engineWorktreeDirty,.engineWorktreeStatus,.executableSha256,.relevantSourceTreeSha256)",
+    "sha256": "f2eb08418f23bd446c695d1b178e620e48fb56c4dc9f4a3e93c64338159569fc",
+    "matchesCheckpointBuild": true,
+    "checkpointCommit": "c05a4e96130c3a51d6145a708d23d6cc8053d275",
+    "note": "identical hash from the unmodified checkpoint build and this branch's build on this machine; the Apple-platform stable projection f51f8d4e... is platform-bound and is not reproducible on x86_64 (documented replay-identity limitation, not a regression)"
+  },
+  "provenance": {
+    "engineCommit": "38677842bd0736f7878fe3a26b0a110a1e92f2b1",
+    "engineWorktreeDirty": false,
+    "executableSha256": "7e05818b855112ff9f68fceaf324c983aafd2bca64bf8d10a42528e1adccc51c",
+    "relevantSourceTreeSha256": "7877cd1f2757e7f4d70ebd021428b57b65375c482f4a163bb946649c9726b5c6",
+    "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+    "targetArchitecture": "x86_64",
+    "targetOperatingSystem": "linux",
+    "machineArchitecture": "x86_64",
+    "requestedThreads": 8,
+    "actualThreads": 8,
+    "rustflags": null,
+    "buildProfile": "release",
+    "cpuModel": "Intel(R) Core(TM) Ultra 7 270K Plus",
+    "rustcVersion": "rustc 1.97.1 (8bab26f4f 2026-07-14)"
+  },
+  "runs": {
+    "mode0-r1": {
+      "rawSha256": "1b7d2a2ffaed3df6c6a1c9f7bbe94e1e5f99b91765d0fb7ed6ce193d2a184fe2",
+      "normalizedSha256": "3e1b75483b299c7fe4758c8f61097fef8c6de874a3bdb2adcebab9b3d2eb630e",
+      "engineMedianElapsedMs": 2570.897852,
+      "wallSeconds": 2.6,
+      "maximumResidentSetBytes": 37924864
+    },
+    "mode0-r2": {
+      "rawSha256": "6989ff52ed4c84f022cd576d83a69bf59d9e22ad5b7de35967b826c171633881",
+      "normalizedSha256": "3e1b75483b299c7fe4758c8f61097fef8c6de874a3bdb2adcebab9b3d2eb630e",
+      "engineMedianElapsedMs": 2544.163607,
+      "wallSeconds": 2.57,
+      "maximumResidentSetBytes": 37916672
+    },
+    "mode3-r1": {
+      "rawSha256": "bda79685fd56140107533ff101c9d4b8a8e28cab5947210b03573ff959105000",
+      "normalizedSha256": "8269ace8c12056d0496d2f857bf2667b799777d65ddd90c770b93f92ea947216",
+      "engineMedianElapsedMs": 3606.042694,
+      "wallSeconds": 3.64,
+      "maximumResidentSetBytes": 38944768
+    },
+    "mode3-r2": {
+      "rawSha256": "d78d84f617d231ca357dea9b6e8db5a436bc469d176c765b53ecd612324df7b4",
+      "normalizedSha256": "8269ace8c12056d0496d2f857bf2667b799777d65ddd90c770b93f92ea947216",
+      "engineMedianElapsedMs": 3603.965991,
+      "wallSeconds": 3.63,
+      "maximumResidentSetBytes": 38793216
+    },
+    "mode7-r1": {
+      "rawSha256": "b6cbac14195260bbb8ee106823135344a8030540aa458a3a779b12adbe329115",
+      "normalizedSha256": "7f4f3c22f3355469dd1e65e2ce4303f557c8bbdb3c74d2f73a83b267dce2fd30",
+      "engineMedianElapsedMs": 3628.4162850000002,
+      "wallSeconds": 3.66,
+      "maximumResidentSetBytes": 39260160
+    },
+    "mode7-r2": {
+      "rawSha256": "7bae5446b9ba591e0da8fb453aaee6b765e2aaa25775aab2052212ccf72c1c57",
+      "normalizedSha256": "7f4f3c22f3355469dd1e65e2ce4303f557c8bbdb3c74d2f73a83b267dce2fd30",
+      "engineMedianElapsedMs": 3583.4694360000003,
+      "wallSeconds": 3.61,
+      "maximumResidentSetBytes": 39313408
+    },
+    "mode8-r1": {
+      "rawSha256": "2553909993c7dce5a7dadc31d8d7fd27a67bf110e76c2664c86cdf52e565a305",
+      "normalizedSha256": "008cbb8555efdfb370dc0ebf25b546b08711cf909908ef6ced27c2d9686513c8",
+      "engineMedianElapsedMs": 3612.90224,
+      "wallSeconds": 3.65,
+      "maximumResidentSetBytes": 38907904
+    },
+    "mode8-r2": {
+      "rawSha256": "55d920ac634173b04a39aaae1ce6a1485606225a78d03f73ee717aacc27aad29",
+      "normalizedSha256": "008cbb8555efdfb370dc0ebf25b546b08711cf909908ef6ced27c2d9686513c8",
+      "engineMedianElapsedMs": 3610.021508,
+      "wallSeconds": 3.64,
+      "maximumResidentSetBytes": 39067648
+    }
+  },
+  "rawOutputs": {
+    "mode0": "docs/experiments/persistent-vacancy-archive/mode0.json",
+    "mode3": "docs/experiments/persistent-vacancy-archive/mode3.json",
+    "mode7": "docs/experiments/persistent-vacancy-archive/mode7.json",
+    "mode8": "docs/experiments/persistent-vacancy-archive/mode8.json",
+    "note": "first replay of each arm committed verbatim; second replays are proven identical by the pinned normalized hashes"
+  },
+  "crossPlatformReplication": {
+    "claim": "With the pinned parent, mode 3 on x86_64-unknown-linux-gnu reproduces the canonical Apple M4 Max semantic trajectory exactly",
+    "initializerInactivePieces": 25,
+    "bestEverAreaElite": {
+      "inactivePieceCount": 11,
+      "inactiveAreaGrid2": "59571041296",
+      "fingerprint": "c23292443bc0e5984eb37ff193df97df88ffeb624858a2cb315eda2b08e06380"
+    },
+    "finalAreaElite": {
+      "inactivePieceCount": 12,
+      "inactiveAreaGrid2": "60144097737",
+      "fingerprint": "d12e7ee31330d9cd67643a5051ee2549b9e67cfb097300decc59766cedc15007"
+    },
+    "matchesPinnedM4Evidence": "persistent-vacancy-elite-evidence.json arms.mode3 best-ever and final states, and work.exactFinalistRows 5008"
+  },
+  "causalChecks": {
+    "mode7FirstLayerSignatureDivergence": 18,
+    "mode8FirstLayerSignatureDivergence": 18,
+    "firstRevivalLayer": 18,
+    "layersWithSharedEnteringPopulationButDifferentOrdinaryChildren": 0,
+    "mode7RevivalEvents": [
+      {
+        "layer": 18,
+        "kind": "area",
+        "childrenGenerated": 14,
+        "childrenRetained": 0
+      },
+      {
+        "layer": 22,
+        "kind": "count",
+        "childrenGenerated": 16,
+        "childrenRetained": 1
+      },
+      {
+        "layer": 35,
+        "kind": "area",
+        "childrenGenerated": 8,
+        "childrenRetained": 2
+      },
+      {
+        "layer": 38,
+        "kind": "count",
+        "childrenGenerated": 6,
+        "childrenRetained": 2
+      }
+    ],
+    "mode8RevivalEvents": [
+      {
+        "layer": 18,
+        "kind": "area"
+      },
+      {
+        "layer": 22,
+        "kind": "count"
+      },
+      {
+        "layer": 35,
+        "kind": "area"
+      },
+      {
+        "layer": 38,
+        "kind": "count"
+      }
+    ],
+    "note": "layer signatures compare enteringPopulationHash, ordinaryChildOrderHash, and preCarryoverWork; both treatments are byte-identical to the contemporaneous mode 3 for layers 0-17 and diverge exactly at the first revival"
+  },
+  "arms": {
+    "mode3": {
+      "finalComparatorBest": {
+        "inactivePieceCount": 12,
+        "inactiveAreaGrid2": "60144097737",
+        "fingerprint": "d12e7ee31330d9cd67643a5051ee2549b9e67cfb097300decc59766cedc15007"
+      },
+      "bestEver": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "59571041296",
+        "fingerprint": "c23292443bc0e5984eb37ff193df97df88ffeb624858a2cb315eda2b08e06380"
+      },
+      "work": {
+        "selectedPieceSlots": 626,
+        "exactFinalistRows": 5008,
+        "hazardQueries": 240384,
+        "partialAudits": 41,
+        "totalRetainedPeakBytes": 1355896
+      }
+    },
+    "mode7": {
+      "finalComparatorBest": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "59571224242",
+        "fingerprint": "5d6a6d268c904d17840db5832dbfa64bae5751658c007e0032d06f31dd067448"
+      },
+      "bestEver": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "59571041296",
+        "fingerprint": "c23292443bc0e5984eb37ff193df97df88ffeb624858a2cb315eda2b08e06380"
+      },
+      "work": {
+        "selectedPieceSlots": 634,
+        "exactFinalistRows": 5072,
+        "hazardQueries": 243456,
+        "partialAudits": 41,
+        "totalRetainedPeakBytes": 1440591
+      },
+      "revivals": {
+        "expanded": 4,
+        "skipped": 0,
+        "childrenGenerated": 44,
+        "childrenRetained": 5
+      },
+      "archivePeakBytes": 24766
+    },
+    "mode8": {
+      "finalComparatorBest": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "59571224242",
+        "fingerprint": "5d6a6d268c904d17840db5832dbfa64bae5751658c007e0032d06f31dd067448"
+      },
+      "bestEver": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "59571041296",
+        "fingerprint": "c23292443bc0e5984eb37ff193df97df88ffeb624858a2cb315eda2b08e06380"
+      },
+      "work": {
+        "selectedPieceSlots": 626,
+        "exactFinalistRows": 5008,
+        "hazardQueries": 240384,
+        "partialAudits": 41,
+        "totalRetainedPeakBytes": 1384483
+      },
+      "revivals": {
+        "expanded": 4,
+        "skipped": 0
+      },
+      "archivePeakBytes": 24766,
+      "note": "mode-8 revival children are ordinary children by construction (the swap precedes expansion), so revival child counters are structurally zero; the effect is visible in the trajectory and terminal state"
+    }
+  },
+  "gates": {
+    "sameModeReplaysByteIdentical": true,
+    "capFallback": false,
+    "auditDisagreement": false,
+    "populationWidthPassed": true,
+    "engineElapsedLimitMs": 6000,
+    "engineElapsedPassed": true,
+    "wallElapsedLimitSeconds": 6.5,
+    "wallElapsedPassed": true,
+    "maximumResidentSetLimitBytes": 67108864,
+    "maximumResidentSetPassed": true,
+    "completionReached": false,
+    "partialGate": {
+      "definition": "terminal comparator-best partial with strictly lower inactive grid area and no more inactive pieces than the control's terminal comparator-best, with best-ever objectives not regressing (declared in persistent-vacancy-population-design.md before these runs)",
+      "mode7VersusMode3": "PASS: 11/59571224242 vs 12/60144097737, best-ever equal",
+      "mode8VersusMode3": "PASS: 11/59571224242 vs 12/60144097737, best-ever equal"
+    }
+  },
+  "decision": {
+    "mode7": "retained-directional: out-of-beam archive revival preserves the elite basin through the terminal layers at +8 selected slots (~+1.3% work, ~+20 ms engine median); it did not extend best-ever objectives",
+    "mode8": "retained-directional: the equal-work swap variant reaches the same improved terminal state with work counters identical to control; preferred over mode 7 on cost grounds pending a completion-capable lifecycle",
+    "honestLimits": [
+      "neither arm completes 61/61, so no depth claim toward 154.44858 mm is made",
+      "best-ever objectives did not improve: the win is preservation of the terminal population under the ledger's established partial-gate form, not discovery of a new basin",
+      "single machine (x86_64-unknown-linux-gnu); the canonical M4 gates, including the 6000 ms engine gate the elite screen already missed there, must be re-evaluated on that platform before promotion"
+    ],
+    "closedByThisScreen": [],
+    "nextExperiment": "the archive preserves but does not extend: successor generation from the revived elite reuses the same insertion/ejection operator that plateaued at 11 inactive pieces. The next causal variable is a materially different transition from archived states, for example bounded multi-piece remove/reinsert around the inactive pieces' blocker neighborhoods, or coupling the archive to a relocation-capable operator, with modes 7/8 as the control"
+  }
+}
