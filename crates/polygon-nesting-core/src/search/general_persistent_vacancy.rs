@@ -1486,6 +1486,7 @@ fn lift_resettle_reinsert(
         separation_zero_overlap: 0,
         separation_recruits: 0,
         separation_pair_moves: 0,
+        separation_weight_bumps: 0,
         frontier_before_grid: settle.frontier_before_grid,
         frontier_after_grid: 0,
     };
@@ -1741,12 +1742,24 @@ fn overlap_mediated_reinsert(
         lns.reinsertions += 1;
     }
     let quantized = |area: f64| -> i128 { (area * 1_000_000.0).round() as i128 };
+    // Guided pair weights: pairs that stay overlapping when the descent has
+    // no strictly improving move get their weight incremented, so later
+    // moves may trade a low-weight overlap increase for a high-weight
+    // decrease and cross ridges the unweighted objective cannot. Overlap
+    // zero remains the only publication condition and is weight-independent.
+    let mut pair_weights: BTreeMap<(usize, usize), i128> = BTreeMap::new();
+    let weight_of = |weights: &BTreeMap<(usize, usize), i128>, a: usize, b: usize| -> i128 {
+        let key = if a < b { (a, b) } else { (b, a) };
+        *weights.get(&key).unwrap_or(&1)
+    };
     let piece_overlap = |state: &VacancyState,
                          index: usize,
                          collision: &PolygonSet,
+                         weights: &BTreeMap<(usize, usize), i128>,
                          work: &mut RunWork|
-     -> Result<i128, String> {
-        let mut total = 0i128;
+     -> Result<(i128, i128), String> {
+        let mut weighted = 0i128;
+        let mut raw = 0i128;
         for other in 0..pieces.len() {
             if other == index || !state.active[other] {
                 continue;
@@ -1755,9 +1768,11 @@ fn overlap_mediated_reinsert(
             let fixed = state.collisions[other]
                 .as_ref()
                 .ok_or_else(|| "separation missing collision".to_owned())?;
-            total += quantized(exact_intersection_area(collision, fixed, work)?);
+            let overlap = quantized(exact_intersection_area(collision, fixed, work)?);
+            raw += overlap;
+            weighted += overlap.saturating_mul(weight_of(weights, index, other));
         }
-        Ok(total)
+        Ok((weighted, raw))
     };
     let mut soft = removed.to_vec();
     soft.sort_by(|first, second| pieces[*first].id.cmp(pieces[*second].id));
@@ -1770,7 +1785,7 @@ fn overlap_mediated_reinsert(
                 .as_ref()
                 .ok_or_else(|| "separation missing soft collision".to_owned())?
                 .clone();
-            let overlap = piece_overlap(state, *index, &collision, work)?;
+            let (overlap, _raw) = piece_overlap(state, *index, &collision, &pair_weights, work)?;
             if overlap > 0 {
                 let candidate = (overlap, *index);
                 worst = Some(match worst {
@@ -1827,7 +1842,7 @@ fn overlap_mediated_reinsert(
                 ) {
                     continue;
                 }
-                let overlap = piece_overlap(state, index, &collision, work)?;
+                let (overlap, _raw) = piece_overlap(state, index, &collision, &pair_weights, work)?;
                 if overlap < current_overlap
                     && best
                         .as_ref()
@@ -2011,6 +2026,39 @@ fn overlap_mediated_reinsert(
                 }
             }
             let Some((_, recruit)) = worst_anchor else {
+                // Weight escalation: no anchor to recruit; increment the
+                // weights of every currently overlapping pair touching the
+                // stuck piece and retry, allowing ridge-crossing trades. Cap
+                // escalations through the shared move budget.
+                let stuck = state.collisions[index]
+                    .as_ref()
+                    .ok_or_else(|| "separation missing stuck collision".to_owned())?
+                    .clone();
+                let mut bumped = false;
+                for other in 0..pieces.len() {
+                    if other == index || !state.active[other] {
+                        continue;
+                    }
+                    work.charge_experimental_pair()?;
+                    let fixed = state.collisions[other]
+                        .as_ref()
+                        .ok_or_else(|| "separation missing collision".to_owned())?;
+                    if exact_intersection_area(&stuck, fixed, work)? > 0.0 {
+                        let key = if index < other {
+                            (index, other)
+                        } else {
+                            (other, index)
+                        };
+                        *pair_weights.entry(key).or_insert(1) += 1;
+                        bumped = true;
+                    }
+                }
+                if bumped {
+                    lns.separation_weight_bumps = lns.separation_weight_bumps.saturating_add(1);
+                    if lns.separation_weight_bumps <= 40 {
+                        continue;
+                    }
+                }
                 return Ok(false);
             };
             soft.push(recruit);
@@ -2028,7 +2076,8 @@ fn overlap_mediated_reinsert(
             .as_ref()
             .ok_or_else(|| "separation missing soft collision".to_owned())?
             .clone();
-        if piece_overlap(state, *index, &collision, work)? > 0 {
+        let (_weighted, raw) = piece_overlap(state, *index, &collision, &pair_weights, work)?;
+        if raw > 0 {
             return Ok(false);
         }
     }

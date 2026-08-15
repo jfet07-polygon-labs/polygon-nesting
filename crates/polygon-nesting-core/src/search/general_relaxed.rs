@@ -408,6 +408,7 @@ pub struct GeneralPersistentVacancyLnsDiagnostics {
     pub separation_zero_overlap: usize,
     pub separation_recruits: usize,
     pub separation_pair_moves: usize,
+    pub separation_weight_bumps: usize,
     pub frontier_before_grid: i64,
     pub frontier_after_grid: i64,
 }
