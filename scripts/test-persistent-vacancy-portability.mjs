@@ -363,7 +363,7 @@ for (const key of [
   'completeAudits',
 ]) {
   if (mode10.work[key] !== mode9.work[key]) {
-    throw new Error(`preserved-best macro treatment changed bounded work counter ${key}`)
+    throw new Error(`preserved-best macro treatment changed fixed work counter ${key}`)
   }
 }
 if (

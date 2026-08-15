@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "experiment": "persistent-vacancy-preserved-best-macro-parent-screen",
-  "recordedAtUtc": "2026-08-15T19:04:41Z",
+  "recordedAtUtc": "2026-08-15T19:15:39Z",
   "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
   "parentFixtureSha256": "18e0b052997d1251573fa35679c9fcf1d5e796acf771ec48f320ce4e9bf0081d",
   "parentPlacementFingerprint": "b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5",
@@ -12,7 +12,7 @@
   "canonicalCommand": "target/release/examples/general_request_benchmark tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 MODE tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
   "normalization": "recursively delete keys matching elapsedMs, ElapsedMs, wallSeconds, maximumResidentSetBytes, or phaseElapsedMs",
   "provenance": {
-    "engineCommit": "449fc0aa89e7fa0d4ff05b7daf808ac45588cb28",
+    "engineCommit": "5dcd8ca3ebc885500bf320089b21b59b134bc997",
     "engineWorktreeDirty": false,
     "engineWorktreeStatus": "",
     "relevantSourceTreeSha256": "4e02066ca2168fc7b61231cefb6a147b4f5136e939b3bbb972ffa8b19849088d",
@@ -27,13 +27,17 @@
       "commitHash": "59807616e1fa2540724bfbac14d7976d7e4a3860",
       "commitDate": "2026-04-14",
       "host": "aarch64-apple-darwin",
-      "llvmVersion": "22.1.2"
+      "llvmVersion": "22.1.2",
+      "captureSha256": "e61cba8ded8c60e985f759f74a221c4773649021477d00b44c7af411eb8c218c",
+      "raw": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: aarch64-apple-darwin\nrelease: 1.95.0\nLLVM version: 22.1.2\n"
     },
     "cargo": {
       "version": "1.95.0",
       "commitHash": "f2d3ce0bd7f24a49f8f72d9000448f8838c4e850",
       "commitDate": "2026-03-21",
-      "host": "aarch64-apple-darwin"
+      "host": "aarch64-apple-darwin",
+      "captureSha256": "108b8fa1b7a021bb80355bb365673910c0d858a21be19126ac18adcc1bef97bc",
+      "raw": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)\nrelease: 1.95.0\ncommit-hash: f2d3ce0bd7f24a49f8f72d9000448f8838c4e850\ncommit-date: 2026-03-21\nhost: aarch64-apple-darwin\nlibgit2: 1.9.2 (sys:0.20.4 vendored)\nlibcurl: 8.21.0 (sys:0.4.83+curl-8.15.0 system ssl:OpenSSL/3.6.3)\nssl: OpenSSL 3.5.4 30 Sep 2025\nos: Mac OS 26.5.2 [64-bit]\n"
     }
   },
   "compatibility": {
@@ -58,14 +62,14 @@
   "arms": {
     "mode9": {
       "role": "ordinary-best macro-parent control",
-      "normalizedReplaySha256": "cba8ecf4e81b0ec6c9ba1a6de38e4916af9f1d48d4bd2413c58945ecae1a2e2b",
+      "normalizedReplaySha256": "c1d0decdbc284b4907799f85e2ece9dfeb3afc7d40ed4fea31d2ab63e0ec56fe",
       "rawOutputSha256": [
-        "8a1bd2a5b968862af261503c3e3b03c2b8b3b94a23fa284494b27ff173d0dd44",
-        "05f24067de68c0da044cfd34279a742bb64fcb905f93705564ff37a64ed5b6b1"
+        "483baca9049ea8c9a45ed1e79b6a2b8110e6f9a4f05e3e244cc837e7ac95f100",
+        "839b41a974689c798f79e702cbb503c4c3e285116da31189c74dff713bd0b51f"
       ],
-      "engineElapsedMs": [6143.145458, 6050.374374999999],
-      "wallSeconds": [6.51, 6.10],
-      "maximumResidentSetBytes": [47251456, 47611904],
+      "engineElapsedMs": [6072.181167, 6273.165917],
+      "wallSeconds": [6.18, 6.33],
+      "maximumResidentSetBytes": [46972928, 46235648],
       "layersCompleted": 40,
       "capExhausted": null,
       "completeStates": 0,
@@ -84,26 +88,38 @@
       "retainedNovelMacroStates": 126,
       "layersWithRetainedNovelMacroStates": 34,
       "work": {
-        "exactFinalistRows": 5648,
-        "partialAudits": 41,
+        "clipperInputVertices": 153874130,
+        "clipperOutputVertices": 48019,
         "completeAudits": 0,
-        "selectedPieceSlots": 706,
+        "exactFinalistRows": 5648,
+        "experimentalCollisionBuilds": 14181,
+        "experimentalPairVisits": 256905,
+        "hazardQueries": 271104,
         "orientationStreams": 8472,
+        "partialAudits": 41,
+        "positionSourceAttempts": 3511896,
+        "proxyPressureVisits": 352277,
         "retainedPeakBytes": 68112,
+        "returnedPositions": 271104,
+        "selectedPieceSlots": 706,
         "selectorDiagnosticPeakBytes": 444628,
-        "totalRetainedPeakBytes": 2367321
+        "sourceFeatureVisits": 6390,
+        "totalRetainedPeakBytes": 2367321,
+        "transformedCollisionVertices": 2653481,
+        "validatorCollisionBuilds": 5002,
+        "validatorPairVisits": 150060
       }
     },
     "mode10": {
       "role": "preserved-best macro-parent treatment",
-      "normalizedReplaySha256": "52f54b4cf3a4cd132efd66b6ae6f061e63c2b1cde74ee4a418b4b7fa171aef0b",
+      "normalizedReplaySha256": "6929314cd2bdd88bda1e392bddb805df6cb43cae2f87ab359dc7762660de4d39",
       "rawOutputSha256": [
-        "33facdda9cbcf69c5e27e77a133d62d045acc72f5d91763204fceffb0cb7e42e",
-        "8f13cadc8d0d68dbfa1056782bfff6e8b6c1e0460d786eb1d192710ee2a2e320"
+        "55178c29ac9d0d482845567bf5806e628858a08fd30398211e54958fd636f11b",
+        "8e7017e20905b1bbac281dc4b1b6b0521d70873fab31d5050da742a0cded48ea"
       ],
-      "engineElapsedMs": [6336.328082999999, 6279.755],
-      "wallSeconds": [6.38, 6.32],
-      "maximumResidentSetBytes": [48496640, 47988736],
+      "engineElapsedMs": [6302.781834, 6250.678083000001],
+      "wallSeconds": [6.36, 6.31],
+      "maximumResidentSetBytes": [47005696, 46923776],
       "layersCompleted": 40,
       "capExhausted": null,
       "completeStates": 0,
@@ -128,14 +144,26 @@
       "retainedNovelMacroStates": 32,
       "layersWithRetainedNovelMacroStates": 12,
       "work": {
-        "exactFinalistRows": 5648,
-        "partialAudits": 41,
+        "clipperInputVertices": 153868927,
+        "clipperOutputVertices": 45262,
         "completeAudits": 0,
-        "selectedPieceSlots": 706,
+        "exactFinalistRows": 5648,
+        "experimentalCollisionBuilds": 14181,
+        "experimentalPairVisits": 255265,
+        "hazardQueries": 271104,
         "orientationStreams": 8472,
+        "partialAudits": 41,
+        "positionSourceAttempts": 3479064,
+        "proxyPressureVisits": 349318,
         "retainedPeakBytes": 78485,
+        "returnedPositions": 271104,
+        "selectedPieceSlots": 706,
         "selectorDiagnosticPeakBytes": 407552,
-        "totalRetainedPeakBytes": 2533680
+        "sourceFeatureVisits": 6418,
+        "totalRetainedPeakBytes": 2533680,
+        "transformedCollisionVertices": 2653721,
+        "validatorCollisionBuilds": 5002,
+        "validatorPairVisits": 150060
       }
     }
   },
@@ -147,14 +175,15 @@
     "preTreatmentWorkMismatches": 0,
     "preTreatmentMacroDiagnosticMismatches": 0,
     "firstTreatmentOrdinaryChildOrderMismatches": 0,
-    "boundedWorkCounterMismatches": 0,
+    "fixedScheduleAuditCounterMismatches": 0,
+    "realizedGeometryWorkDiffers": true,
     "bestEverInactivePieceCountDelta": 0,
     "bestEverInactiveAreaGrid2Reduction": "5779632241",
     "bestEverInactiveAreaReductionPercent": 10.7517
   },
   "decision": {
     "mode10": "retained_for_next_iteration",
-    "reason": "At equal best-ever inactive-piece count and identical bounded-work counters, mode 10 reduced unresolved grid area by 10.7517%, replayed deterministically, and passed the causal, time, memory, width, cap, and audit gates. It did not complete the 165 mm strip, so it is evidence for the preserved nonterminal lifecycle rather than a promotable engine result.",
+    "reason": "At equal best-ever inactive-piece count and identical fixed schedule and audit counters, mode 10 reduced unresolved grid area by 10.7517%, replayed deterministically, and passed the causal, time, memory, width, cap, and audit gates. Realized geometry work differed after the trajectories diverged. It did not complete the 165 mm strip, so it is evidence for the preserved nonterminal lifecycle rather than a promotable engine result.",
     "supportedInference": "Using a pruned exact-valid best-area topology as the already-budgeted macro parent reaches a materially better partial topology than repeatedly expanding the ordinary-best child.",
     "unsupportedInference": "The screen does not establish a complete 165 mm layout, a sub-160 mm result, or a production-ready engine."
   }
