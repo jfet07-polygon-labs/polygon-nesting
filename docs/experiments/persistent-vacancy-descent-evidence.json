@@ -34,8 +34,8 @@
     168.526,
     168.527
   ],
-  "replayCommand": "python3 docs/experiments/persistent-vacancy-descent/run-descent.py OUTPUT_DIR --targets 168.55,168.45,168.45,168.50,168.525,168.538,168.544,168.538,168.526,168.526,168.532,168.526,168.526,168.527 --require-hops 4 --require-final-depth 168.277",
-  "replayFailsClosed": "the driver exits nonzero when the required hop count or final depth is not reproduced",
+  "replayCommand": "python3 docs/experiments/persistent-vacancy-descent/run-descent.py OUTPUT_DIR --targets 168.55,168.45,168.45,168.50,168.525,168.538,168.544,168.538,168.526,168.526,168.532,168.526,168.526,168.527 --require-hops 4 --require-final-depth 168.277 --require-chain docs/experiments/persistent-vacancy-descent/chain/chain.json",
+  "replayFailsClosed": "the driver exits nonzero unless the run reproduces the recorded chain exactly: hop count, per-hop targets, independent depths, and placement fingerprints",
   "chain": [
     {
       "hop": 0,
@@ -105,14 +105,55 @@
       "hop003": "43afb765e804380de3d6130aeeaf186ca840c90ddc57e512515962a5d9f98821"
     },
     "normalization": "timing projection plus nulling quota.persistentVacancyParentFixture.path and persistentVacancyPopulation.parentSource (absolute fixture paths are recorded verbatim; content identity is pinned by the fixture SHA-256 embedded in parentSource)",
-    "note": "both replays produced byte-identical per-hop outputs under this projection and identical chain.json apart from raw output hashes that embed the output directory path"
+    "note": "both replays on the producing machine yielded byte-identical per-hop outputs under the declared projection; second-replay artifacts are not committed \u2014 verify by running the replay command twice and comparing, which the --require-chain flag automates for the semantic content"
   },
   "settlingContract": "endpoint-exact re-placement, not swept motion: near-tangent neighbors can form forbidden bands thinner than one 0.512 mm step, so a probe may land beyond a band no continuous slide could cross, matching the discontinuous relocation semantics of every other operator in this experiment; validity rests on the per-probe exact gates and the final dual publication audit",
   "negativeScreens": {
-    "mode9PopulationOnly": "no completion at any probed target from 168.62 down to 168.1; two offenders churn without homes even at a 0.005 mm contraction",
-    "mode10BlockerRelocation": "no completion; final inactive count no better than mode 9",
-    "mode11LateralSettleVariant": "bottom-left ladder rejected: it loses the completions the vertical ladder achieves",
-    "mode12SettlePlusRelocation": "does not break the 168.526 stall (settle slack exhausted, population plateaus at 1-2 inactive)"
+    "note": "raw at-HEAD outputs for every negative claim are committed under docs/experiments/persistent-vacancy-descent/negative-screens/ with their commands",
+    "command": "target/release/examples/general_request_benchmark tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 <MODE> <PARENT_FIXTURE> <TARGET>",
+    "screens": [
+      {
+        "mode": 9,
+        "parent": "tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+        "target": 168.62,
+        "initialInactive": 2,
+        "terminalBestInactive": 1,
+        "raw": "docs/experiments/persistent-vacancy-descent/negative-screens/negative-mode9-t168.620.json",
+        "rawSha256": "d373327856138d9abe0abd98eccc04ff2af52623126ab60381af023758868cdf",
+        "normalizedSha256": "2c3ece66712e102184626e4d69f3117db2e5689ecf45ba3612a2066bb1d95cc1"
+      },
+      {
+        "mode": 9,
+        "parent": "tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+        "target": 168.5,
+        "initialInactive": 10,
+        "terminalBestInactive": 5,
+        "raw": "docs/experiments/persistent-vacancy-descent/negative-screens/negative-mode9-t168.500.json",
+        "rawSha256": "756748748e6a66fa032456256a8657d80dbbb186c056f06c943d81db7d24c965",
+        "normalizedSha256": "cc78a62afcdb1720930e60bab589a018a0dc12d7a58272c7679cf8c414c8e46a"
+      },
+      {
+        "mode": 10,
+        "parent": "tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+        "target": 168.5,
+        "initialInactive": 10,
+        "terminalBestInactive": 6,
+        "raw": "docs/experiments/persistent-vacancy-descent/negative-screens/negative-mode10-t168.500.json",
+        "rawSha256": "b26271aedbcfda8be022962787e61febf323d7b99f0da46d15b29362743e2e48",
+        "normalizedSha256": "fc909fb14cf273d1235897fbf9b9fee72a93dfa2601ba7bcc5fd84a74efc99b3"
+      },
+      {
+        "mode": 12,
+        "parent": "docs/experiments/persistent-vacancy-descent/chain/parent-hop003.json",
+        "target": 168.527,
+        "initialInactive": 2,
+        "terminalBestInactive": 1,
+        "raw": "docs/experiments/persistent-vacancy-descent/negative-screens/negative-mode12-t168.527.json",
+        "rawSha256": "3bd96066b51e374486b493db077d7fa0ab76a5ea3824eedb3ebee0eb31f9185c",
+        "normalizedSha256": "5feb8cd9045de39a2ffcb15cbe608eba50eee0cf0d39b4cd4b2e27e0f84846fa"
+      }
+    ],
+    "lateralSettleVariant": "narrative only, deliberately not evidence-grade: an intermediate bottom-left ladder variant was tested before the descent commit and regressed hop-zero completion; the variant is not present at HEAD and its outputs were not retained"
   },
   "provenance": {
     "engineCommit": "e7d733212b989d570ab65397f76fb6421a26f0b2",
@@ -144,17 +185,8 @@
   ],
   "failedAttempts": {
     "summary": "docs/experiments/persistent-vacancy-descent/chain/chain-failures.json",
-    "note": "every failed attempt of the replayed target sequence is summarized with its raw-output SHA-256; the two stall-defining raw outputs at the minimum delta (attempts 12 and 13, targets 168.526 and 168.527) are committed verbatim, and the remaining raw outputs are reproducible by the fail-closed replay command, which writes them all",
-    "committedRawOutputs": {
-      "fail012-t168.526": {
-        "path": "docs/experiments/persistent-vacancy-descent/chain/fail012-t168.526.json",
-        "sha256": "5281ab12cdf807d9da339945848b2f8e020a06020fc9904e6ea2c5b638b453fd"
-      },
-      "fail013-t168.527": {
-        "path": "docs/experiments/persistent-vacancy-descent/chain/fail013-t168.527.json",
-        "sha256": "7a2d879b1defaa47666876fb46353265ce86d2c22b9d437574856792e7abf61a"
-      }
-    },
+    "note": "every failed attempt of the replayed target sequence is committed verbatim under chain/ together with a normalized hash under the provenance-stripped path-normalizing projection; raw hashes bind to the producing directory, commit, and machine and are informational only",
+    "normalization": "timing projection + null quota.persistentVacancyParentFixture.path and persistentVacancyPopulation.parentSource + delete engineCommit/engineWorktreeDirty/engineWorktreeStatus/executableSha256/relevantSourceTreeSha256",
     "attempts": [
       {
         "attempt": 1,
@@ -165,7 +197,9 @@
         "settleAcceptedMoves": 0,
         "initialInactivePieces": 3,
         "terminalBestInactivePieces": 2,
-        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+        "committed": true,
+        "normalizedSha256": "75f227594baaa52b5acc6bd1856d640c86d50ec715b644412590b27456d5d259"
       },
       {
         "attempt": 2,
@@ -176,7 +210,9 @@
         "settleAcceptedMoves": 0,
         "initialInactivePieces": 3,
         "terminalBestInactivePieces": 2,
-        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+        "committed": true,
+        "normalizedSha256": "75f227594baaa52b5acc6bd1856d640c86d50ec715b644412590b27456d5d259"
       },
       {
         "attempt": 3,
@@ -187,7 +223,9 @@
         "settleAcceptedMoves": 0,
         "initialInactivePieces": 3,
         "terminalBestInactivePieces": 3,
-        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+        "committed": true,
+        "normalizedSha256": "40a6573367a4be4ead630a453ec23c7cdef48d4f02dc18ca2a329ffa5f2e3189"
       },
       {
         "attempt": 4,
@@ -198,7 +236,9 @@
         "settleAcceptedMoves": 0,
         "initialInactivePieces": 3,
         "terminalBestInactivePieces": 2,
-        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+        "committed": true,
+        "normalizedSha256": "f713928626ff8222e3f0f5a8090c9ba49c1fd61c48d17454b961eaf565f84835"
       },
       {
         "attempt": 5,
@@ -209,7 +249,9 @@
         "settleAcceptedMoves": 0,
         "initialInactivePieces": 2,
         "terminalBestInactivePieces": 2,
-        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+        "committed": true,
+        "normalizedSha256": "6272d8264e97afba0e6b3f63ddf89a1bb43f9c77778aaa6ce684f35e2b395b4b"
       },
       {
         "attempt": 8,
@@ -220,7 +262,9 @@
         "settleAcceptedMoves": 0,
         "initialInactivePieces": 2,
         "terminalBestInactivePieces": 1,
-        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+        "committed": true,
+        "normalizedSha256": "442ee10f8edf4e8eb13314aa75179ec6fcab83a7221eea8406e5282da22edc94"
       },
       {
         "attempt": 9,
@@ -231,7 +275,9 @@
         "settleAcceptedMoves": 0,
         "initialInactivePieces": 2,
         "terminalBestInactivePieces": 1,
-        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+        "committed": true,
+        "normalizedSha256": "442ee10f8edf4e8eb13314aa75179ec6fcab83a7221eea8406e5282da22edc94"
       },
       {
         "attempt": 11,
@@ -242,7 +288,9 @@
         "settleAcceptedMoves": 0,
         "initialInactivePieces": 2,
         "terminalBestInactivePieces": 1,
-        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+        "committed": true,
+        "normalizedSha256": "458c907a33835f2315c215769e66c1f37d6dc117dbca1adfdfe810a014662f81"
       },
       {
         "attempt": 12,
@@ -253,7 +301,9 @@
         "settleAcceptedMoves": 0,
         "initialInactivePieces": 2,
         "terminalBestInactivePieces": 1,
-        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+        "committed": true,
+        "normalizedSha256": "458c907a33835f2315c215769e66c1f37d6dc117dbca1adfdfe810a014662f81"
       },
       {
         "attempt": 13,
@@ -264,9 +314,13 @@
         "settleAcceptedMoves": 0,
         "initialInactivePieces": 2,
         "terminalBestInactivePieces": 2,
-        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+        "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+        "committed": true,
+        "normalizedSha256": "b5aa2e95ae9159e9d1e29aa9b34df529f97ec27e56627e521cff930acf2c01e0"
       }
-    ],
-    "producedAtCommitNote": "failure artifacts were produced at the follow-up commit; their engine provenance fields name that commit while the hop artifacts remain bound to the descent-lane commit that produced them \u2014 both semantically replay at either commit as the engine source is unchanged between them"
-  }
+    ]
+  },
+  "buildCommand": "cargo build --release --locked -p polygon-nesting-core --features jagua-experimental --example general_request_benchmark",
+  "toolchainNote": "evidence was produced with the recorded rustc identity in provenance (1.97.1, x86_64-unknown-linux-gnu); the flake pins 1.95.0 for the canonical Apple platform. Semantic replay of these artifacts requires the recorded machine/toolchain identity per the engine's replay contract; on any other identity, verify via the semantic fields (fingerprints, depths, counters) rather than raw or normalized output hashes",
+  "timingMeasurement": "wall time and peak RSS measured externally with GNU time: command time -v <command>, fields 'Elapsed (wall clock) time' and 'Maximum resident set size'"
 }

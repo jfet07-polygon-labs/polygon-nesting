@@ -20,7 +20,7 @@
     "mode7": "extraParent (revived elite expanded as one additional funded parent)",
     "mode8": "swapWorstEntering (revived elite replaces the comparator-worst entering slot under a strict-improvement guard; no added work)"
   },
-  "canonicalCommand": "cargo run --release --locked -p polygon-nesting-core --features jagua-experimental --example general_request_benchmark -- tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 MODE tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+  "canonicalCommand": "target/release/examples/general_request_benchmark tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 <MODE> tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json  # substitute <MODE> with 3, 7, or 8; omit the fixture argument for mode 0",
   "modeZeroCommandNote": "mode 0 runs omit the fixture argument entirely; their output is byte-identical to the checkpoint build under the timing+provenance projection",
   "pairedRunOrder": [
     "mode0",
@@ -38,7 +38,9 @@
     "sha256": "f2eb08418f23bd446c695d1b178e620e48fb56c4dc9f4a3e93c64338159569fc",
     "matchesCheckpointBuild": true,
     "checkpointCommit": "c05a4e96130c3a51d6145a708d23d6cc8053d275",
-    "note": "identical hash from the unmodified checkpoint build and this branch's build on this machine; the Apple-platform stable projection f51f8d4e... is platform-bound and is not reproducible on x86_64 (documented replay-identity limitation, not a regression)"
+    "note": "the committed checkpoint-build raw output was produced by the unmodified checkpoint commit c05a4e96 binary on this machine; applying the declared projection to it and to mode0.json yields the same f2eb0841... hash. The Apple-platform stable projection f51f8d4e... is platform-bound and is not reproducible on x86_64 (documented replay-identity limitation, not a regression)",
+    "checkpointBuildRawOutput": "docs/experiments/persistent-vacancy-archive/mode0-checkpoint-build.json",
+    "checkpointBuildRawSha256": "bf4ea7c7675d43f995a5b04bfd1de9714316b056db0b81250e2dad6ca8f0491e"
   },
   "provenance": {
     "engineCommit": "e7d733212b989d570ab65397f76fb6421a26f0b2",
@@ -119,10 +121,10 @@
     "mode3": "docs/experiments/persistent-vacancy-archive/mode3.json",
     "mode7": "docs/experiments/persistent-vacancy-archive/mode7.json",
     "mode8": "docs/experiments/persistent-vacancy-archive/mode8.json",
-    "note": "first replay of each arm committed verbatim; second replays are proven identical by the pinned normalized hashes"
+    "note": "first replay of each arm committed verbatim; second replays were observed byte-identical on the producing machine under the timing projection \u2014 verify by running the canonical command twice and comparing normalized outputs"
   },
   "crossPlatformReplication": {
-    "claim": "With the pinned parent, mode 3 on x86_64-unknown-linux-gnu reproduces the canonical Apple M4 Max semantic trajectory exactly",
+    "claim": "With the pinned parent, mode 3 on x86_64-unknown-linux-gnu reproduces the canonical Apple M4 Max endpoint facts exactly: the same 25-piece initializer, best-ever and final elite states (fingerprints, counts, areas), and exact finalist-row count. Per-layer M4 trajectory artifacts are not committed, so full-trajectory equality is not independently demonstrated; the endpoint claim is what the pinned M4 evidence supports",
     "initializerInactivePieces": 25,
     "bestEverAreaElite": {
       "inactivePieceCount": 11,
@@ -185,7 +187,7 @@
         "kind": "count"
       }
     ],
-    "note": "layer signatures compare enteringPopulationHash, ordinaryChildOrderHash, and preCarryoverWork; both treatments are byte-identical to the contemporaneous mode 3 for layers 0-17 and diverge exactly at the first revival"
+    "note": "layer signatures compare enteringPopulationHash, ordinaryChildOrderHash, and preCarryoverWork; both treatments are signature-identical to the contemporaneous mode 3 for layers 0-17 (treatment layer objects additionally carry archive diagnostics) and diverge exactly at the first revival"
   },
   "arms": {
     "mode3": {
@@ -278,8 +280,8 @@
     }
   },
   "decision": {
-    "mode7": "retained-directional: out-of-beam archive revival preserves the elite basin through the terminal layers at +8 selected slots (~+1.3% work, ~+20 ms engine median); it did not extend best-ever objectives",
-    "mode8": "retained-directional: the equal-work swap variant reaches the same improved terminal state with work counters identical to control; preferred over mode 7 on cost grounds pending a completion-capable lifecycle",
+    "mode7": "retained-directional: out-of-beam archive revival preserves the elite basin through the terminal layers at +8 selected slots and +64 finalist rows of funded work; measured engine medians on this machine are statistically indistinguishable from control (mode 3 3629 ms, mode 7 3616 ms across two replays); it did not extend best-ever objectives",
+    "mode8": "retained-directional: the equal-slot swap variant reaches the same improved terminal state with the same funded slot and finalist quotas as control; realized downstream work naturally differs once trajectories diverge at the first revival. Preferred over mode 7 on funded-cost grounds pending a completion-capable lifecycle",
     "honestLimits": [
       "neither arm completes 61/61, so no depth claim toward 154.44858 mm is made",
       "best-ever objectives did not improve: the win is preservation of the terminal population under the ledger's established partial-gate form, not discovery of a new basin",
@@ -288,5 +290,53 @@
     "closedByThisScreen": [],
     "nextExperiment": "the archive preserves but does not extend: successor generation from the revived elite reuses the same insertion/ejection operator that plateaued at 11 inactive pieces. The next causal variable is a materially different transition from archived states, for example bounded multi-piece remove/reinsert around the inactive pieces' blocker neighborhoods, or coupling the archive to a relocation-capable operator, with modes 7/8 as the control"
   },
-  "refreshNote": "Re-run at the descent-lane commit with the adversarial-review accounting fixes: semantic trajectories, layer identities, decision-relevant work counters, and every gate outcome are identical to the original screen at commit 3867784; only memory-accounting values changed because later modes grew two diagnostic structs and the archive byte accounting was corrected (heap-only archive rows, parent-source and archive strings included, archived transition buffers included)."
+  "refreshNote": "Re-run at the descent-lane commit with the adversarial-review accounting fixes: semantic trajectories, layer identities, decision-relevant work counters, and every gate outcome are identical to the original screen at commit 3867784; only memory-accounting values changed because later modes grew two diagnostic structs and the archive byte accounting was corrected (heap-only archive rows, parent-source and archive strings included, archived transition buffers included).",
+  "buildCommand": "cargo build --release --locked -p polygon-nesting-core --features jagua-experimental --example general_request_benchmark",
+  "toolchainNote": "evidence was produced with the recorded rustc identity in provenance (1.97.1, x86_64-unknown-linux-gnu); the flake pins 1.95.0 for the canonical Apple platform. Semantic replay of these artifacts requires the recorded machine/toolchain identity per the engine's replay contract; on any other identity, verify via the semantic fields (fingerprints, depths, counters) rather than raw or normalized output hashes",
+  "timingMeasurement": "wall time and peak RSS measured externally with GNU time: command time -v <command>",
+  "frozenModesAtHead": {
+    "note": "one at-HEAD run per frozen mode with the pinned parent fixture, proving the frozen contracts still execute and reproduce their historical terminal semantics (mode 1: 15/69619646821, mode 2: 13/58797801045, mode 4: 13/62614709968, mode 5: 13/65555001586, mode 6: 13/64577647123)",
+    "runs": {
+      "mode1": {
+        "raw": "docs/experiments/persistent-vacancy-archive/frozen-modes/frozen-mode1.json",
+        "rawSha256": "8e34efeec084ed7f3dd2763fc4371aea85eaca8019f3d364dbd2bf38a0fa43e3",
+        "normalizedSha256": "1f0e386e2da3254fcfbd4f414e44ee6ff28f9d72d56d3a3e6a7c738406285c9e",
+        "layersCompleted": 40,
+        "terminalBestInactivePieceCount": 15,
+        "terminalBestInactiveAreaGrid2": "69619646821"
+      },
+      "mode2": {
+        "raw": "docs/experiments/persistent-vacancy-archive/frozen-modes/frozen-mode2.json",
+        "rawSha256": "a1987c716dc1d07cf193cc29960cc084e52515e5e659fdf6da256d5aaa1feda7",
+        "normalizedSha256": "a1976710011b2f243a8b912c903e69ed6c06b0a9205e76fb7826d7c588849881",
+        "layersCompleted": 40,
+        "terminalBestInactivePieceCount": 13,
+        "terminalBestInactiveAreaGrid2": "58797801045"
+      },
+      "mode4": {
+        "raw": "docs/experiments/persistent-vacancy-archive/frozen-modes/frozen-mode4.json",
+        "rawSha256": "2c50054fdddf4c5783923c6903f1d451937e8d2cd98f5e670cbf3f3af3a072b4",
+        "normalizedSha256": "c11aaddd2b53c85e81e61605652774a800e07f05c887ebef3e2a4c73871baea5",
+        "layersCompleted": 40,
+        "terminalBestInactivePieceCount": 13,
+        "terminalBestInactiveAreaGrid2": "62614709968"
+      },
+      "mode5": {
+        "raw": "docs/experiments/persistent-vacancy-archive/frozen-modes/frozen-mode5.json",
+        "rawSha256": "d75d4ab6349dfb763a11d13b276ea60064eced6763717ac07fa3680e99e60da9",
+        "normalizedSha256": "645e6018515da991bd8514e46e53dce919030d8837b97ba4c4701b333d267b99",
+        "layersCompleted": 40,
+        "terminalBestInactivePieceCount": 13,
+        "terminalBestInactiveAreaGrid2": "65555001586"
+      },
+      "mode6": {
+        "raw": "docs/experiments/persistent-vacancy-archive/frozen-modes/frozen-mode6.json",
+        "rawSha256": "40cc141e661c883540c5604c7e81d3c6f6a8d56bf888caa9c81a9882f43c43ff",
+        "normalizedSha256": "580c699d7651a2187f611281fd118dab07d256750452a16fa5113ea46e37a453",
+        "layersCompleted": 40,
+        "terminalBestInactivePieceCount": 13,
+        "terminalBestInactiveAreaGrid2": "64577647123"
+      }
+    }
+  }
 }

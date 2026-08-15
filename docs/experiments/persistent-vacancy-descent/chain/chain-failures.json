@@ -8,7 +8,9 @@
     "settleAcceptedMoves": 0,
     "initialInactivePieces": 3,
     "terminalBestInactivePieces": 2,
-    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+    "committed": true,
+    "normalizedSha256": "75f227594baaa52b5acc6bd1856d640c86d50ec715b644412590b27456d5d259"
   },
   {
     "attempt": 2,
@@ -19,7 +21,9 @@
     "settleAcceptedMoves": 0,
     "initialInactivePieces": 3,
     "terminalBestInactivePieces": 2,
-    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+    "committed": true,
+    "normalizedSha256": "75f227594baaa52b5acc6bd1856d640c86d50ec715b644412590b27456d5d259"
   },
   {
     "attempt": 3,
@@ -30,7 +34,9 @@
     "settleAcceptedMoves": 0,
     "initialInactivePieces": 3,
     "terminalBestInactivePieces": 3,
-    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+    "committed": true,
+    "normalizedSha256": "40a6573367a4be4ead630a453ec23c7cdef48d4f02dc18ca2a329ffa5f2e3189"
   },
   {
     "attempt": 4,
@@ -41,7 +47,9 @@
     "settleAcceptedMoves": 0,
     "initialInactivePieces": 3,
     "terminalBestInactivePieces": 2,
-    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+    "committed": true,
+    "normalizedSha256": "f713928626ff8222e3f0f5a8090c9ba49c1fd61c48d17454b961eaf565f84835"
   },
   {
     "attempt": 5,
@@ -52,7 +60,9 @@
     "settleAcceptedMoves": 0,
     "initialInactivePieces": 2,
     "terminalBestInactivePieces": 2,
-    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+    "committed": true,
+    "normalizedSha256": "6272d8264e97afba0e6b3f63ddf89a1bb43f9c77778aaa6ce684f35e2b395b4b"
   },
   {
     "attempt": 8,
@@ -63,7 +73,9 @@
     "settleAcceptedMoves": 0,
     "initialInactivePieces": 2,
     "terminalBestInactivePieces": 1,
-    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+    "committed": true,
+    "normalizedSha256": "442ee10f8edf4e8eb13314aa75179ec6fcab83a7221eea8406e5282da22edc94"
   },
   {
     "attempt": 9,
@@ -74,7 +86,9 @@
     "settleAcceptedMoves": 0,
     "initialInactivePieces": 2,
     "terminalBestInactivePieces": 1,
-    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+    "committed": true,
+    "normalizedSha256": "442ee10f8edf4e8eb13314aa75179ec6fcab83a7221eea8406e5282da22edc94"
   },
   {
     "attempt": 11,
@@ -85,7 +99,9 @@
     "settleAcceptedMoves": 0,
     "initialInactivePieces": 2,
     "terminalBestInactivePieces": 1,
-    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+    "committed": true,
+    "normalizedSha256": "458c907a33835f2315c215769e66c1f37d6dc117dbca1adfdfe810a014662f81"
   },
   {
     "attempt": 12,
@@ -96,7 +112,9 @@
     "settleAcceptedMoves": 0,
     "initialInactivePieces": 2,
     "terminalBestInactivePieces": 1,
-    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+    "committed": true,
+    "normalizedSha256": "458c907a33835f2315c215769e66c1f37d6dc117dbca1adfdfe810a014662f81"
   },
   {
     "attempt": 13,
@@ -107,6 +125,8 @@
     "settleAcceptedMoves": 0,
     "initialInactivePieces": 2,
     "terminalBestInactivePieces": 2,
-    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state"
+    "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+    "committed": true,
+    "normalizedSha256": "b5aa2e95ae9159e9d1e29aa9b34df529f97ec27e56627e521cff930acf2c01e0"
   }
 ]

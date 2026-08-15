@@ -88,6 +88,15 @@ def main():
         default=None,
         help="fail unless the final independent depth matches to 1e-9 mm",
     )
+    parser.add_argument(
+        "--require-chain",
+        default=None,
+        help=(
+            "path to a recorded chain.json; fail unless this run reproduces "
+            "exactly the same hop count, targets, independent depths, and "
+            "placement fingerprints"
+        ),
+    )
     args = parser.parse_args()
     if args.require_hops is not None and args.require_hops < 0:
         parser.error("--require-hops must be non-negative")
@@ -222,6 +231,25 @@ def main():
             observed = chain[-1]["independentDepthMm"] if chain else None
             print(
                 f"VERIFICATION FAILED: final depth {observed} != {args.require_final_depth}",
+                file=sys.stderr,
+            )
+            return 2
+    if args.require_chain is not None:
+        with open(args.require_chain) as handle:
+            recorded = json.load(handle)
+        semantic = lambda entries: [
+            (
+                entry["hop"],
+                entry["targetDepthMm"],
+                entry["independentDepthMm"],
+                entry["placementFingerprint"],
+            )
+            for entry in entries
+        ]
+        if semantic(chain) != semantic(recorded):
+            print(
+                "VERIFICATION FAILED: reproduced chain does not match the "
+                f"recorded chain in {args.require_chain}",
                 file=sys.stderr,
             )
             return 2
