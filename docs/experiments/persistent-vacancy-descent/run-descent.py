@@ -89,6 +89,13 @@ def main():
         help="fail unless the final independent depth matches to 1e-9 mm",
     )
     args = parser.parse_args()
+    if args.require_hops is not None and args.require_hops < 0:
+        parser.error("--require-hops must be non-negative")
+    if args.require_final_depth is not None and not (
+        args.require_final_depth == args.require_final_depth
+        and abs(args.require_final_depth) != float("inf")
+    ):
+        parser.error("--require-final-depth must be a finite number")
 
     os.makedirs(args.output_dir, exist_ok=True)
     binary = os.path.join(REPO, args.binary)
@@ -103,6 +110,7 @@ def main():
     hop = 0
     attempt = 0
     chain = []
+    failures = []
     while hop < args.max_hops:
         if replay_targets is not None:
             if attempt >= len(replay_targets):
@@ -163,6 +171,28 @@ def main():
                 target = round(target - delta, 3)
                 delta = min(delta * 2, args.max_delta)
         else:
+            fail_raw = os.path.join(
+                args.output_dir, f"fail{attempt - 1:03d}-t{target:.3f}.json"
+            )
+            with open(fail_raw, "w") as handle:
+                handle.write(result.stdout)
+            failures.append(
+                {
+                    "attempt": attempt - 1,
+                    "targetDepthMm": round(target, 3),
+                    "afterHop": hop,
+                    "rawOutput": os.path.basename(fail_raw),
+                    "rawOutputSha256": sha256(fail_raw),
+                    "settleAcceptedMoves": vacancy.get("settle", {}).get("acceptedMoves"),
+                    "initialInactivePieces": len(
+                        vacancy.get("initialInactivePieceIds") or []
+                    ),
+                    "terminalBestInactivePieces": (
+                        (vacancy.get("layers") or [{}])[-1].get("bestInactivePieceCount")
+                    ),
+                    "failureReason": vacancy.get("failureReason"),
+                }
+            )
             print(f"hop {hop}: fail target {target:.3f} delta {delta}", flush=True)
             if replay_targets is None:
                 if delta <= args.min_delta + 1e-12:
@@ -172,6 +202,9 @@ def main():
                 target = round(last - delta, 3)
     with open(os.path.join(args.output_dir, "chain.json"), "w") as handle:
         json.dump(chain, handle, indent=2)
+        handle.write("\n")
+    with open(os.path.join(args.output_dir, "chain-failures.json"), "w") as handle:
+        json.dump(failures, handle, indent=2)
         handle.write("\n")
     if chain:
         print(
