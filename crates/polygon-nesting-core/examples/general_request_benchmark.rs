@@ -165,8 +165,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if persistent_vacancy_mode > 13 {
-        return Err("persistent vacancy mode must be between 0 and 13".into());
+    if persistent_vacancy_mode > 14 {
+        return Err("persistent vacancy mode must be between 0 and 14".into());
     }
     let persistent_vacancy_parent_fixture = arguments.next();
     let persistent_vacancy_target_depth_mm = arguments

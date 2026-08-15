@@ -45,6 +45,16 @@ const SETTLE_SELECTED_PIECE_SLOTS: usize = SETTLE_SWEEPS * 61;
 // RECONSTRUCTION_ROWS_PER_PIECE exact confirmations per piece.
 const RECONSTRUCTION_SELECTED_PIECE_SLOTS: usize = 2 * 61;
 const RECONSTRUCTION_ROWS_PER_PIECE: usize = 192;
+// Mode 14 alternates one settle sweep with one guillotine group-drop pass per
+// compaction round: for a descending ladder of horizontal cuts, every active
+// piece above the cut translates downward as one rigid group, so pairs inside
+// the group need no re-checking and mutually wedged clusters can harvest
+// slack no single-piece move reaches.
+const COMPACTION_ROUNDS: usize = 3;
+const GROUP_DROP_CUTS: usize = 61;
+const GROUP_DROP_PROBES_PER_CUT: usize = 64;
+const GROUP_DROP_PAIR_VISITS: usize =
+    COMPACTION_ROUNDS * GROUP_DROP_CUTS * GROUP_DROP_PROBES_PER_CUT * 61;
 const ORDINARY_SELECTED_PIECE_SLOTS: usize = MAX_LAYERS * BEAM_WIDTH * SELECTED_PIECES_PER_PARENT;
 const ARCHIVE_SELECTED_PIECE_SLOTS: usize = MAX_ARCHIVE_REVIVALS * SELECTED_PIECES_PER_PARENT;
 const POPULATION_SELECTED_PIECE_SLOTS: usize =
@@ -68,12 +78,16 @@ const MAX_EXACT_FINALIST_ROWS: usize = POPULATION_SELECTED_PIECE_SLOTS * FINALIS
 // rebuilds it once.
 // The reconstruction lane also builds one hint-orientation collision per
 // selected slot for shelf anchoring.
-const MAX_EXPERIMENTAL_COLLISION_BUILDS: usize = 2 * 61
+// Three full-state 61-piece collision builds are funded: the settle or
+// compaction prelude, the target initializer, and the mode-14 exact
+// re-anchor after group drops.
+const MAX_EXPERIMENTAL_COLLISION_BUILDS: usize = 3 * 61
     + MAX_ORIENTATION_STREAMS
     + MAX_EXACT_FINALIST_ROWS
     + RECONSTRUCTION_SELECTED_PIECE_SLOTS;
 const MAX_VALIDATOR_COLLISION_BUILDS: usize = 12_810;
-const MAX_EXPERIMENTAL_PAIR_VISITS: usize = 1_830 + MAX_EXACT_FINALIST_ROWS * 60;
+const MAX_EXPERIMENTAL_PAIR_VISITS: usize =
+    1_830 + MAX_EXACT_FINALIST_ROWS * 60 + GROUP_DROP_PAIR_VISITS;
 const MAX_VALIDATOR_PAIR_VISITS: usize = 384_300;
 const MAX_TRANSFORMED_COLLISION_VERTICES: usize =
     (MAX_EXPERIMENTAL_COLLISION_BUILDS + MAX_VALIDATOR_COLLISION_BUILDS) * MAX_COLLISION_VERTICES;
@@ -238,7 +252,7 @@ impl TopologyArchive {
         if self.revivals_expanded >= MAX_ARCHIVE_REVIVALS {
             return RevivalDecision::Skipped("revivalBudgetExhausted");
         }
-        if matches!(mode, 8 | 9 | 10 | 11 | 12) && population.len() < 2 {
+        if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14) && population.len() < 2 {
             return RevivalDecision::Skipped("populationTooSmall");
         }
         let candidates: [(&'static str, Option<&(EliteSnapshot, VacancyState)>); 2] =
@@ -259,7 +273,7 @@ impl TopologyArchive {
                 last_reason = "inPopulation";
                 continue;
             }
-            if matches!(mode, 8 | 9 | 10 | 11 | 12) {
+            if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14) {
                 let worst = population
                     .last()
                     .expect("a mode-8 revival population has at least two states");
@@ -485,8 +499,11 @@ fn run_population(
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<Option<(VacancyState, f64)>, String> {
-    if !matches!(mode, 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13) {
-        return Err("persistent vacancy mode must be between 1 and 13".to_owned());
+    if !matches!(
+        mode,
+        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14
+    ) {
+        return Err("persistent vacancy mode must be between 1 and 14".to_owned());
     }
     // Modes 1-8 are the frozen diagnostic screens: their 165.0 mm target and
     // b9335a72 parent identity are part of the pinned experiment contract.
@@ -495,7 +512,7 @@ fn run_population(
     // and skips only the frozen fingerprint/depth equality pins while keeping
     // full parent validation.
     let target_depth_mm = match (mode, target_override_mm) {
-        (9 | 10 | 11 | 12 | 13, Some(target)) => {
+        (9 | 10 | 11 | 12 | 13 | 14, Some(target)) => {
             if !target.is_finite() || target <= 0.0 {
                 return Err(
                     "persistent vacancy target depth must be a positive finite value".to_owned(),
@@ -503,18 +520,18 @@ fn run_population(
             }
             target
         }
-        (9 | 10 | 11 | 12 | 13, None) => {
+        (9 | 10 | 11 | 12 | 13 | 14, None) => {
             return Err(
-                "persistent vacancy modes 9-13 require an explicit target depth".to_owned(),
+                "persistent vacancy modes 9-14 require an explicit target depth".to_owned(),
             );
         }
         (_, Some(_)) => {
-            return Err("persistent vacancy target depth overrides require modes 9-13".to_owned());
+            return Err("persistent vacancy target depth overrides require modes 9-14".to_owned());
         }
         (_, None) => TARGET_DEPTH_MM,
     };
-    if matches!(mode, 9 | 10 | 11 | 12 | 13) && !parent_is_pinned {
-        return Err("persistent vacancy modes 9-13 require a pinned parent fixture".to_owned());
+    if matches!(mode, 9 | 10 | 11 | 12 | 13 | 14) && !parent_is_pinned {
+        return Err("persistent vacancy modes 9-14 require a pinned parent fixture".to_owned());
     }
     diagnostics.target_depth_mm = target_depth_mm;
     if pieces.len() != 61 {
@@ -530,7 +547,9 @@ fn run_population(
     }
     let parent_fingerprint = coupled_fast_placement_fingerprint(&parent_fast);
     diagnostics.parent_fingerprint = Some(parent_fingerprint.clone());
-    if !matches!(mode, 9 | 10 | 11 | 12 | 13) && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT {
+    if !matches!(mode, 9 | 10 | 11 | 12 | 13 | 14)
+        && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT
+    {
         return Err(format!(
             "persistent vacancy parent fingerprint mismatch: expected {EXPECTED_PARENT_FINGERPRINT}, got {parent_fingerprint}"
         ));
@@ -538,10 +557,10 @@ fn run_population(
     if mode != 13 {
         let parent_depth = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
             .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
-        if matches!(mode, 9 | 10 | 11 | 12) {
+        if matches!(mode, 9 | 10 | 11 | 12 | 14) {
             diagnostics.parent_independent_depth_mm = Some(parent_depth);
         }
-        if !matches!(mode, 9 | 10 | 11 | 12)
+        if !matches!(mode, 9 | 10 | 11 | 12 | 14)
             && grid_key(parent_depth) != grid_key(EXPECTED_PARENT_DEPTH_MM)
         {
             return Err(format!(
@@ -582,13 +601,16 @@ fn run_population(
     if matches!(mode, 11 | 12) {
         baseline = settle_baseline(pieces, fast_settings, baseline, diagnostics, work)?;
     }
+    if mode == 14 {
+        baseline = compact_baseline(pieces, fast_settings, baseline, diagnostics, work)?;
+    }
     let (initial, difficulty, inactive_order) = initial_vacancy_state(
         pieces,
         target_settings,
         baseline,
         diagnostics,
         work,
-        matches!(mode, 11 | 12),
+        matches!(mode, 11 | 12 | 14),
     )?;
     diagnostics.initial_state_fingerprint = Some(state_fingerprint(&initial, pieces));
     diagnostics.initial_active_piece_ids = active_ids(&initial, pieces);
@@ -627,7 +649,7 @@ fn run_population(
     let mut best_ever_area: Option<EliteSnapshot> = None;
     let mut best_ever_count: Option<EliteSnapshot> = None;
     let mut retained_carryovers = BTreeSet::new();
-    let mut archive = matches!(mode, 7 | 8 | 9 | 10 | 11 | 12).then(TopologyArchive::new);
+    let mut archive = matches!(mode, 7 | 8 | 9 | 10 | 11 | 12 | 14).then(TopologyArchive::new);
     for layer in 0..MAX_LAYERS {
         // Modes 7/8 plan a revival before the entering-population hash so the
         // hash always reflects the population that is actually expanded
@@ -662,7 +684,7 @@ fn run_population(
                     row.revival_expanded = true;
                     row.revival_kind = Some(kind.to_owned());
                     row.revived_state_fingerprint = Some(fingerprint);
-                    if matches!(mode, 8 | 9 | 10 | 11 | 12) {
+                    if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14) {
                         let replaced_index = population.len() - 1;
                         row.replaced_state_fingerprint =
                             Some(state_fingerprint(&population[replaced_index], pieces));
@@ -1061,6 +1083,10 @@ fn settle_key_less(first: SettleKey, second: SettleKey) -> bool {
 /// in this experiment, all of which relocate pieces discontinuously; validity
 /// rests entirely on the per-probe exact gates and the final dual
 /// publication audit, never on motion continuity.
+const SETTLE_STEP_LADDER_MM: [f64; 10] = [
+    0.512, 0.256, 0.128, 0.064, 0.032, 0.016, 0.008, 0.004, 0.002, 0.001,
+];
+
 fn settle_baseline(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
@@ -1068,9 +1094,6 @@ fn settle_baseline(
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<RelaxedState, String> {
-    const SETTLE_STEP_LADDER_MM: [f64; 10] = [
-        0.512, 0.256, 0.128, 0.064, 0.032, 0.016, 0.008, 0.004, 0.002, 0.001,
-    ];
     let mut state = VacancyState {
         collisions: baseline
             .placements
@@ -1105,58 +1128,311 @@ fn settle_baseline(
     };
     let inset = collision_sheet_inset_mm(fast_settings);
     for _sweep in 0..SETTLE_SWEEPS {
-        let mut order = (0..pieces.len()).collect::<Vec<_>>();
-        order.sort_by_key(|index| {
-            let min_y = state.collisions[*index]
+        settle_sweep(
+            &mut state,
+            pieces,
+            fast_settings,
+            inset,
+            false,
+            &mut settle,
+            work,
+        )?;
+    }
+    settle.frontier_after_grid = frontier(&state);
+    diagnostics.settle = Some(settle);
+    Ok(RelaxedState {
+        placements: state.placements,
+        strip_depth_mm: baseline.strip_depth_mm,
+    })
+}
+
+/// Mode-14 compaction prelude: alternates one per-piece settle sweep with
+/// one guillotine group-drop pass per round, then exactly re-anchors the
+/// state by rebuilding every collision from its placement and re-verifying
+/// all pairs, failing closed on any disagreement. Group drops translate every
+/// active piece above a horizontal cut downward as one rigid body, so pairs
+/// inside the group are preserved by construction and only group-versus-rest
+/// pairs plus containment need exact confirmation.
+fn compact_baseline(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    baseline: RelaxedState,
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    work: &mut RunWork,
+) -> Result<RelaxedState, String> {
+    let mut state = VacancyState {
+        collisions: baseline
+            .placements
+            .iter()
+            .enumerate()
+            .map(|(index, placement)| {
+                build_collision(pieces[index], placement, fast_settings, work)
+                    .map(|collision| Some(Arc::new(collision)))
+            })
+            .collect::<Result<Vec<_>, _>>()?,
+        placements: baseline.placements.clone(),
+        active: vec![true; pieces.len()],
+        last_transition: None,
+    };
+    let frontier = |state: &VacancyState| -> i64 {
+        state
+            .collisions
+            .iter()
+            .flatten()
+            .filter_map(|collision| collision.bounds())
+            .map(|bounds| grid_key(bounds.max_y))
+            .max()
+            .unwrap_or(i64::MIN)
+    };
+    let mut settle = GeneralPersistentVacancySettleDiagnostics {
+        sweeps: COMPACTION_ROUNDS,
+        attempts: 0,
+        accepted_moves: 0,
+        exact_rows: 0,
+        frontier_before_grid: frontier(&state),
+        frontier_after_grid: 0,
+    };
+    let mut group_drop = GeneralPersistentVacancyGroupDropDiagnostics {
+        rounds: COMPACTION_ROUNDS,
+        cuts_evaluated: 0,
+        probes: 0,
+        accepted_drops: 0,
+        frontier_before_grid: settle.frontier_before_grid,
+        frontier_after_grid: 0,
+    };
+    let inset = collision_sheet_inset_mm(fast_settings);
+    for _round in 0..COMPACTION_ROUNDS {
+        settle_sweep(
+            &mut state,
+            pieces,
+            fast_settings,
+            inset,
+            true,
+            &mut settle,
+            work,
+        )?;
+        group_drop_pass(&mut state, fast_settings, inset, &mut group_drop, work)?;
+    }
+    settle.frontier_after_grid = frontier(&state);
+    group_drop.frontier_after_grid = settle.frontier_after_grid;
+    diagnostics.settle = Some(settle);
+    diagnostics.group_drop = Some(group_drop);
+    // Exact re-anchor: incremental group translations accumulate f64 sums, so
+    // every collision is rebuilt from its placement and every pair re-proved
+    // before the compacted state is trusted.
+    for index in 0..pieces.len() {
+        let rebuilt =
+            build_collision(pieces[index], &state.placements[index], fast_settings, work)?;
+        if !rebuilt.fits_rect(
+            inset,
+            inset,
+            fast_settings.sheet_short_axis_mm - inset,
+            fast_settings.sheet_long_axis_mm - inset,
+        ) {
+            return Err(format!(
+                "compaction re-anchor: piece {} escaped containment",
+                pieces[index].id
+            ));
+        }
+        state.collisions[index] = Some(Arc::new(rebuilt));
+    }
+    for first in 0..pieces.len() {
+        for second in (first + 1)..pieces.len() {
+            work.charge_experimental_pair()?;
+            let a = state.collisions[first]
                 .as_ref()
-                .and_then(|collision| collision.bounds())
-                .map(|bounds| grid_key(bounds.min_y))
-                .unwrap_or(i64::MAX);
-            (min_y, pieces[*index].id)
-        });
-        for piece_index in order {
-            settle.attempts += 1;
-            work.diagnostics.selected_piece_slots =
-                work.diagnostics.selected_piece_slots.saturating_add(1);
-            if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
-                return Err(work.cap("selected-piece slot budget exhausted"));
+                .ok_or_else(|| "re-anchor missing collision".to_owned())?;
+            let b = state.collisions[second]
+                .as_ref()
+                .ok_or_else(|| "re-anchor missing collision".to_owned())?;
+            if exact_intersection_area(a, b, work)? > 0.0 {
+                return Err(format!(
+                    "compaction re-anchor: pieces {} and {} overlap after group drops",
+                    pieces[first].id, pieces[second].id
+                ));
             }
-            work.charge_source_features(
-                pieces[piece_index].polygon.vertex_count().saturating_mul(2),
-            )?;
-            work.diagnostics.orientation_streams =
-                work.diagnostics.orientation_streams.saturating_add(1);
-            if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
-                return Err(work.cap("orientation-stream budget exhausted"));
+        }
+    }
+    Ok(RelaxedState {
+        placements: state.placements,
+        strip_depth_mm: baseline.strip_depth_mm,
+    })
+}
+
+/// One guillotine pass: for each distinct active min-y cut in descending
+/// order, the rigid group of all pieces at or above the cut slides downward
+/// with the settle step ladder. A probe is legal when every group piece stays
+/// inside the full-sheet inset rectangle and no translated group piece
+/// exactly intersects any piece outside the group.
+fn group_drop_pass(
+    state: &mut VacancyState,
+    settings: GeneralFastSettings,
+    inset: f64,
+    diagnostics: &mut GeneralPersistentVacancyGroupDropDiagnostics,
+    work: &mut RunWork,
+) -> Result<(), String> {
+    let min_y_of = |state: &VacancyState, index: usize| -> Option<i64> {
+        state.collisions[index]
+            .as_ref()
+            .and_then(|collision| collision.bounds())
+            .map(|bounds| grid_key(bounds.min_y))
+    };
+    let mut cuts = (0..state.active.len())
+        .filter(|index| state.active[*index])
+        .filter_map(|index| min_y_of(state, index))
+        .collect::<Vec<_>>();
+    cuts.sort_unstable();
+    cuts.dedup();
+    cuts.reverse();
+    cuts.truncate(GROUP_DROP_CUTS);
+    for cut in cuts {
+        diagnostics.cuts_evaluated += 1;
+        let group = (0..state.active.len())
+            .filter(|index| state.active[*index])
+            .filter(|index| min_y_of(state, *index).is_some_and(|min_y| min_y >= cut))
+            .collect::<Vec<_>>();
+        if group.is_empty() {
+            continue;
+        }
+        let in_group = {
+            let mut mask = vec![false; state.active.len()];
+            for index in &group {
+                mask[*index] = true;
             }
-            let mut temp = state.clone();
-            temp.active[piece_index] = false;
-            temp.collisions[piece_index] = None;
-            // FIX 3: the settle phase owns a full collision state plus one
-            // temporary clone per attempt; charge that live set against the
-            // retained-memory gate exactly like the population phases.
-            let live_bytes = state_slice_bytes(std::slice::from_ref(&state))
-                .saturating_add(state_slice_bytes(std::slice::from_ref(&temp)))
-                .saturating_add(2usize.saturating_mul(size_of::<VacancyState>()));
-            work.diagnostics.total_retained_peak_bytes =
-                work.diagnostics.total_retained_peak_bytes.max(live_bytes);
-            if live_bytes > MAX_RETAINED_BYTES {
-                return Err(work.cap("settle live-state memory budget exhausted"));
+            mask
+        };
+        let mut probes = 0usize;
+        'ladder: for step in SETTLE_STEP_LADDER_MM {
+            loop {
+                if probes >= GROUP_DROP_PROBES_PER_CUT {
+                    break 'ladder;
+                }
+                probes += 1;
+                diagnostics.probes += 1;
+                let mut legal = true;
+                let mut translated = Vec::with_capacity(group.len());
+                for index in &group {
+                    let collision = state.collisions[*index]
+                        .as_ref()
+                        .ok_or_else(|| "group drop missing collision".to_owned())?;
+                    let bounds = collision
+                        .bounds()
+                        .ok_or_else(|| "group drop empty collision".to_owned())?;
+                    if bounds.min_y - step < inset {
+                        legal = false;
+                        break;
+                    }
+                    let moved = collision
+                        .translated(0.0, -step)
+                        .map_err(|error| format!("group drop translation: {error}"))?;
+                    translated.push((*index, moved));
+                }
+                if legal {
+                    'pairs: for (_, moved) in &translated {
+                        for fixed_index in 0..state.active.len() {
+                            if !state.active[fixed_index] || in_group[fixed_index] {
+                                continue;
+                            }
+                            work.charge_experimental_pair()?;
+                            let fixed = state.collisions[fixed_index]
+                                .as_ref()
+                                .ok_or_else(|| "group drop missing fixed collision".to_owned())?;
+                            if exact_intersection_area(moved, fixed, work)? > 0.0 {
+                                legal = false;
+                                break 'pairs;
+                            }
+                        }
+                    }
+                }
+                if !legal {
+                    break;
+                }
+                for (index, moved) in translated {
+                    state.placements[index].translate_y -= step;
+                    state.collisions[index] = Some(Arc::new(moved));
+                }
+                diagnostics.accepted_drops += 1;
             }
-            let mut best_placement = state.placements[piece_index].clone();
-            let mut best_collision: Option<Arc<PolygonSet>> = None;
-            let mut probes = 0usize;
-            // A single downward ladder per attempt: every accepted probe
-            // strictly lowers the piece, so the compaction is monotone. A
-            // lateral phase was tried and rejected: left-compaction disturbs
-            // the vertical channels the boundary offenders need.
-            'ladder: for step in SETTLE_STEP_LADDER_MM {
+        }
+    }
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn settle_sweep(
+    state: &mut VacancyState,
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    inset: f64,
+    diagonal: bool,
+    settle: &mut GeneralPersistentVacancySettleDiagnostics,
+    work: &mut RunWork,
+) -> Result<(), String> {
+    let mut order = (0..pieces.len()).collect::<Vec<_>>();
+    order.sort_by_key(|index| {
+        let min_y = state.collisions[*index]
+            .as_ref()
+            .and_then(|collision| collision.bounds())
+            .map(|bounds| grid_key(bounds.min_y))
+            .unwrap_or(i64::MAX);
+        (min_y, pieces[*index].id)
+    });
+    for piece_index in order {
+        settle.attempts += 1;
+        work.diagnostics.selected_piece_slots =
+            work.diagnostics.selected_piece_slots.saturating_add(1);
+        if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
+            return Err(work.cap("selected-piece slot budget exhausted"));
+        }
+        work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
+        work.diagnostics.orientation_streams =
+            work.diagnostics.orientation_streams.saturating_add(1);
+        if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
+            return Err(work.cap("orientation-stream budget exhausted"));
+        }
+        let mut temp = state.clone();
+        temp.active[piece_index] = false;
+        temp.collisions[piece_index] = None;
+        // FIX 3: the settle phase owns a full collision state plus one
+        // temporary clone per attempt; charge that live set against the
+        // retained-memory gate exactly like the population phases.
+        let live_bytes = state_slice_bytes(std::slice::from_ref(state))
+            .saturating_add(state_slice_bytes(std::slice::from_ref(&temp)))
+            .saturating_add(2usize.saturating_mul(size_of::<VacancyState>()));
+        work.diagnostics.total_retained_peak_bytes =
+            work.diagnostics.total_retained_peak_bytes.max(live_bytes);
+        if live_bytes > MAX_RETAINED_BYTES {
+            return Err(work.cap("settle live-state memory budget exhausted"));
+        }
+        let mut best_placement = state.placements[piece_index].clone();
+        let mut best_collision: Option<Arc<PolygonSet>> = None;
+        let mut probes = 0usize;
+        // Every accepted probe strictly lowers the piece, so the compaction
+        // is monotone. The plain settle keeps the single downward ladder; a
+        // purely lateral phase was tried and rejected. Diagonal settling
+        // (mode 14) additionally probes the two 45-degree descent
+        // directions, which can slide a piece along a slope that blocks the
+        // straight drop; acceptance still requires strict descent, so no
+        // lateral drift without depth progress is possible.
+        const DESCENT_DIRECTIONS: [(f64, f64); 3] = [
+            (0.0, -1.0),
+            (-0.7071067811865476, -0.7071067811865476),
+            (0.7071067811865476, -0.7071067811865476),
+        ];
+        let directions: &[(f64, f64)] = if diagonal {
+            &DESCENT_DIRECTIONS
+        } else {
+            &DESCENT_DIRECTIONS[..1]
+        };
+        'ladder: for (direction_x, direction_y) in directions.iter().copied() {
+            for step in SETTLE_STEP_LADDER_MM {
                 loop {
                     if probes >= SETTLE_PROBES_PER_ATTEMPT {
                         break 'ladder;
                     }
                     let mut candidate = best_placement.clone();
-                    candidate.translate_y -= step;
+                    candidate.translate_x += step * direction_x;
+                    candidate.translate_y += step * direction_y;
                     probes += 1;
                     settle.exact_rows += 1;
                     work.diagnostics.exact_finalist_rows =
@@ -1165,13 +1441,18 @@ fn settle_baseline(
                         return Err(work.cap("exact-finalist row budget exhausted"));
                     }
                     let collision =
-                        build_collision(pieces[piece_index], &candidate, fast_settings, work)?;
+                        build_collision(pieces[piece_index], &candidate, settings, work)?;
                     if !collision.fits_rect(
                         inset,
                         inset,
-                        fast_settings.sheet_short_axis_mm - inset,
-                        fast_settings.sheet_long_axis_mm - inset,
+                        settings.sheet_short_axis_mm - inset,
+                        settings.sheet_long_axis_mm - inset,
                     ) {
+                        break;
+                    }
+                    let descended =
+                        grid_key(candidate.translate_y) < grid_key(best_placement.translate_y);
+                    if !descended {
                         break;
                     }
                     let mut overlapping = false;
@@ -1195,19 +1476,14 @@ fn settle_baseline(
                     best_collision = Some(Arc::new(collision));
                 }
             }
-            if let Some(collision) = best_collision {
-                state.placements[piece_index] = best_placement;
-                state.collisions[piece_index] = Some(collision);
-                settle.accepted_moves += 1;
-            }
+        }
+        if let Some(collision) = best_collision {
+            state.placements[piece_index] = best_placement;
+            state.collisions[piece_index] = Some(collision);
+            settle.accepted_moves += 1;
         }
     }
-    settle.frontier_after_grid = frontier(&state);
-    diagnostics.settle = Some(settle);
-    Ok(RelaxedState {
-        placements: state.placements,
-        strip_depth_mm: baseline.strip_depth_mm,
-    })
+    Ok(())
 }
 
 /// Mode-13 guided reconstruction: rebuilds the layout from an external hint
@@ -2174,7 +2450,7 @@ fn retain_population(
     difficulty: &[PieceDifficulty],
     mode: usize,
 ) -> (Vec<VacancyState>, usize) {
-    if matches!(mode, 1 | 3 | 7 | 8 | 9 | 10 | 11 | 12) {
+    if matches!(mode, 1 | 3 | 7 | 8 | 9 | 10 | 11 | 12 | 14) {
         let retained = sorted.into_iter().take(BEAM_WIDTH).collect::<Vec<_>>();
         let signatures = retained
             .iter()
@@ -2578,7 +2854,7 @@ fn selected_inactive_pieces(
             })
             .then_with(|| pieces[*first].id.cmp(pieces[*second].id))
     });
-    if !matches!(mode, 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12) || inactive.len() <= 1 {
+    if !matches!(mode, 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14) || inactive.len() <= 1 {
         inactive.truncate(SELECTED_PIECES_PER_PARENT);
         return SelectedInactivePieces {
             indices: inactive,
@@ -2607,7 +2883,7 @@ fn stable_inactive_order(state: &VacancyState, pieces: &[GeneralFastPiece<'_>]) 
 }
 
 fn scheduler_family(mode: usize) -> &'static str {
-    if matches!(mode, 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12) {
+    if matches!(mode, 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14) {
         "hardPlusStatelessRotation"
     } else {
         "twoHardest"
@@ -4130,13 +4406,17 @@ mod tests {
             MAX_EXACT_FINALIST_ROWS,
             (640 + 26) * 8 + 183 * 64 + 122 * 192
         );
+        assert_eq!(COMPACTION_ROUNDS, 3);
+        assert_eq!(GROUP_DROP_CUTS, 61);
+        assert_eq!(GROUP_DROP_PROBES_PER_CUT, 64);
+        assert_eq!(GROUP_DROP_PAIR_VISITS, 3 * 61 * 64 * 61);
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
-            2 * 61 + (640 + 26 + 183 + 122) * 12 + ((640 + 26) * 8 + 183 * 64 + 122 * 192) + 122
+            3 * 61 + (640 + 26 + 183 + 122) * 12 + ((640 + 26) * 8 + 183 * 64 + 122 * 192) + 122
         );
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
-            1_830 + ((640 + 26) * 8 + 183 * 64 + 122 * 192) * 60
+            1_830 + ((640 + 26) * 8 + 183 * 64 + 122 * 192) * 60 + 3 * 61 * 64 * 61
         );
         assert_eq!(MAX_VALIDATOR_COLLISION_BUILDS, 105 * 122);
         assert_eq!(MAX_VALIDATOR_PAIR_VISITS, 105 * 3_660);
@@ -4448,7 +4728,7 @@ mod tests {
         assert!(result
             .failure_reason
             .unwrap()
-            .contains("target depth overrides require modes 9-13"));
+            .contains("target depth overrides require modes 9-14"));
 
         // Non-finite and non-positive targets fail closed.
         relaxed.persistent_vacancy_target_depth_mm = Some(f64::NAN);
