@@ -376,6 +376,8 @@ pub struct GeneralPersistentVacancyDiagnostics {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub group_drop: Option<GeneralPersistentVacancyGroupDropDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub lns: Option<GeneralPersistentVacancyLnsDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub archive: Option<GeneralPersistentVacancyArchiveDiagnostics>,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
@@ -391,6 +393,18 @@ pub struct GeneralPersistentVacancyReconstructionDiagnostics {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failed_piece_id: Option<String>,
     pub failed_piece_count: usize,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyLnsDiagnostics {
+    pub rounds: usize,
+    pub rounds_accepted: usize,
+    pub rounds_reverted: usize,
+    pub reinsertions: usize,
+    pub reinsert_failures: usize,
+    pub frontier_before_grid: i64,
+    pub frontier_after_grid: i64,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]

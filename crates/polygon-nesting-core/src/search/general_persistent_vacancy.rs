@@ -55,13 +55,27 @@ const GROUP_DROP_CUTS: usize = 61;
 const GROUP_DROP_PROBES_PER_CUT: usize = 64;
 const GROUP_DROP_PAIR_VISITS: usize =
     COMPACTION_ROUNDS * GROUP_DROP_CUTS * GROUP_DROP_PROBES_PER_CUT * 61;
+// Mode 15 runs a non-monotone lift/resettle/reinsert lifecycle: each round
+// removes the frontier piece plus its nearest neighbors (an adaptive
+// neighborhood schedule), lets the survivors resettle into the vacated
+// space, reinserts the removed pieces with full orientation freedom, and
+// accepts only rounds whose complete result strictly lowers the frontier,
+// reverting to the snapshot otherwise. Two settle sweeps run per round (one
+// before removal, one on the survivors) plus one initial sweep.
+const LNS_ROUNDS: usize = 8;
+const LNS_NEIGHBORHOOD_SCHEDULE: [usize; LNS_ROUNDS] = [4, 6, 8, 10, 12, 16, 20, 24];
+const LNS_SETTLE_SWEEPS: usize = 2 * LNS_ROUNDS + 1;
+const LNS_REINSERT_SLOTS: usize = 4 + 6 + 8 + 10 + 12 + 16 + 20 + 24;
 const ORDINARY_SELECTED_PIECE_SLOTS: usize = MAX_LAYERS * BEAM_WIDTH * SELECTED_PIECES_PER_PARENT;
 const ARCHIVE_SELECTED_PIECE_SLOTS: usize = MAX_ARCHIVE_REVIVALS * SELECTED_PIECES_PER_PARENT;
 const POPULATION_SELECTED_PIECE_SLOTS: usize =
     ORDINARY_SELECTED_PIECE_SLOTS + ARCHIVE_SELECTED_PIECE_SLOTS;
+const LNS_SETTLE_SELECTED_PIECE_SLOTS: usize = LNS_SETTLE_SWEEPS * 61;
 const MAX_SELECTED_PIECE_SLOTS: usize = POPULATION_SELECTED_PIECE_SLOTS
     + SETTLE_SELECTED_PIECE_SLOTS
-    + RECONSTRUCTION_SELECTED_PIECE_SLOTS;
+    + RECONSTRUCTION_SELECTED_PIECE_SLOTS
+    + LNS_SETTLE_SELECTED_PIECE_SLOTS
+    + LNS_REINSERT_SLOTS;
 const MAX_ORIENTATION_STREAMS: usize = MAX_SELECTED_PIECE_SLOTS * ORIENTATIONS_PER_PIECE;
 const MAX_SOURCE_FEATURE_VISITS: usize = MAX_SELECTED_PIECE_SLOTS * 2 * MAX_SOURCE_FEATURES;
 const POSITION_SOURCE_ATTEMPTS_PER_ORIENTATION: usize = 529;
@@ -72,7 +86,9 @@ const MAX_HAZARD_QUERIES: usize = MAX_RETURNED_POSITIONS;
 const MAX_PROXY_PRESSURE_VISITS: usize = MAX_RETURNED_POSITIONS * 61;
 const MAX_EXACT_FINALIST_ROWS: usize = POPULATION_SELECTED_PIECE_SLOTS * FINALISTS_PER_PIECE
     + SETTLE_SELECTED_PIECE_SLOTS * SETTLE_PROBES_PER_ATTEMPT
-    + RECONSTRUCTION_SELECTED_PIECE_SLOTS * RECONSTRUCTION_ROWS_PER_PIECE;
+    + RECONSTRUCTION_SELECTED_PIECE_SLOTS * RECONSTRUCTION_ROWS_PER_PIECE
+    + LNS_SETTLE_SELECTED_PIECE_SLOTS * SETTLE_PROBES_PER_ATTEMPT
+    + LNS_REINSERT_SLOTS * RECONSTRUCTION_ROWS_PER_PIECE;
 // Two initial 61-piece collision builds are funded: the mode-11 settle
 // prelude builds the full active state once, and the target initializer
 // rebuilds it once.
@@ -84,7 +100,8 @@ const MAX_EXACT_FINALIST_ROWS: usize = POPULATION_SELECTED_PIECE_SLOTS * FINALIS
 const MAX_EXPERIMENTAL_COLLISION_BUILDS: usize = 3 * 61
     + MAX_ORIENTATION_STREAMS
     + MAX_EXACT_FINALIST_ROWS
-    + RECONSTRUCTION_SELECTED_PIECE_SLOTS;
+    + RECONSTRUCTION_SELECTED_PIECE_SLOTS
+    + LNS_REINSERT_SLOTS;
 const MAX_VALIDATOR_COLLISION_BUILDS: usize = 12_810;
 const MAX_EXPERIMENTAL_PAIR_VISITS: usize =
     1_830 + MAX_EXACT_FINALIST_ROWS * 60 + GROUP_DROP_PAIR_VISITS;
@@ -252,7 +269,7 @@ impl TopologyArchive {
         if self.revivals_expanded >= MAX_ARCHIVE_REVIVALS {
             return RevivalDecision::Skipped("revivalBudgetExhausted");
         }
-        if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14) && population.len() < 2 {
+        if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15) && population.len() < 2 {
             return RevivalDecision::Skipped("populationTooSmall");
         }
         let candidates: [(&'static str, Option<&(EliteSnapshot, VacancyState)>); 2] =
@@ -273,7 +290,7 @@ impl TopologyArchive {
                 last_reason = "inPopulation";
                 continue;
             }
-            if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14) {
+            if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15) {
                 let worst = population
                     .last()
                     .expect("a mode-8 revival population has at least two states");
@@ -501,9 +518,9 @@ fn run_population(
 ) -> Result<Option<(VacancyState, f64)>, String> {
     if !matches!(
         mode,
-        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14
+        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
     ) {
-        return Err("persistent vacancy mode must be between 1 and 14".to_owned());
+        return Err("persistent vacancy mode must be between 1 and 15".to_owned());
     }
     // Modes 1-8 are the frozen diagnostic screens: their 165.0 mm target and
     // b9335a72 parent identity are part of the pinned experiment contract.
@@ -512,7 +529,7 @@ fn run_population(
     // and skips only the frozen fingerprint/depth equality pins while keeping
     // full parent validation.
     let target_depth_mm = match (mode, target_override_mm) {
-        (9 | 10 | 11 | 12 | 13 | 14, Some(target)) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15, Some(target)) => {
             if !target.is_finite() || target <= 0.0 {
                 return Err(
                     "persistent vacancy target depth must be a positive finite value".to_owned(),
@@ -520,18 +537,18 @@ fn run_population(
             }
             target
         }
-        (9 | 10 | 11 | 12 | 13 | 14, None) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15, None) => {
             return Err(
-                "persistent vacancy modes 9-14 require an explicit target depth".to_owned(),
+                "persistent vacancy modes 9-15 require an explicit target depth".to_owned(),
             );
         }
         (_, Some(_)) => {
-            return Err("persistent vacancy target depth overrides require modes 9-14".to_owned());
+            return Err("persistent vacancy target depth overrides require modes 9-15".to_owned());
         }
         (_, None) => TARGET_DEPTH_MM,
     };
-    if matches!(mode, 9 | 10 | 11 | 12 | 13 | 14) && !parent_is_pinned {
-        return Err("persistent vacancy modes 9-14 require a pinned parent fixture".to_owned());
+    if matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15) && !parent_is_pinned {
+        return Err("persistent vacancy modes 9-15 require a pinned parent fixture".to_owned());
     }
     diagnostics.target_depth_mm = target_depth_mm;
     if pieces.len() != 61 {
@@ -547,7 +564,7 @@ fn run_population(
     }
     let parent_fingerprint = coupled_fast_placement_fingerprint(&parent_fast);
     diagnostics.parent_fingerprint = Some(parent_fingerprint.clone());
-    if !matches!(mode, 9 | 10 | 11 | 12 | 13 | 14)
+    if !matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15)
         && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT
     {
         return Err(format!(
@@ -557,10 +574,10 @@ fn run_population(
     if mode != 13 {
         let parent_depth = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
             .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
-        if matches!(mode, 9 | 10 | 11 | 12 | 14) {
+        if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15) {
             diagnostics.parent_independent_depth_mm = Some(parent_depth);
         }
-        if !matches!(mode, 9 | 10 | 11 | 12 | 14)
+        if !matches!(mode, 9 | 10 | 11 | 12 | 14 | 15)
             && grid_key(parent_depth) != grid_key(EXPECTED_PARENT_DEPTH_MM)
         {
             return Err(format!(
@@ -604,13 +621,23 @@ fn run_population(
     if mode == 14 {
         baseline = compact_baseline(pieces, fast_settings, baseline, diagnostics, work)?;
     }
+    if mode == 15 {
+        baseline = lift_resettle_reinsert(
+            pieces,
+            fast_settings,
+            target_depth_mm,
+            baseline,
+            diagnostics,
+            work,
+        )?;
+    }
     let (initial, difficulty, inactive_order) = initial_vacancy_state(
         pieces,
         target_settings,
         baseline,
         diagnostics,
         work,
-        matches!(mode, 11 | 12 | 14),
+        matches!(mode, 11 | 12 | 14 | 15),
     )?;
     diagnostics.initial_state_fingerprint = Some(state_fingerprint(&initial, pieces));
     diagnostics.initial_active_piece_ids = active_ids(&initial, pieces);
@@ -649,7 +676,7 @@ fn run_population(
     let mut best_ever_area: Option<EliteSnapshot> = None;
     let mut best_ever_count: Option<EliteSnapshot> = None;
     let mut retained_carryovers = BTreeSet::new();
-    let mut archive = matches!(mode, 7 | 8 | 9 | 10 | 11 | 12 | 14).then(TopologyArchive::new);
+    let mut archive = matches!(mode, 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15).then(TopologyArchive::new);
     for layer in 0..MAX_LAYERS {
         // Modes 7/8 plan a revival before the entering-population hash so the
         // hash always reflects the population that is actually expanded
@@ -684,7 +711,7 @@ fn run_population(
                     row.revival_expanded = true;
                     row.revival_kind = Some(kind.to_owned());
                     row.revived_state_fingerprint = Some(fingerprint);
-                    if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14) {
+                    if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15) {
                         let replaced_index = population.len() - 1;
                         row.replaced_state_fingerprint =
                             Some(state_fingerprint(&population[replaced_index], pieces));
@@ -1359,6 +1386,280 @@ fn group_drop_pass(
 }
 
 #[allow(clippy::too_many_arguments)]
+/// Mode-15 non-monotone lifecycle: lift the frontier piece with its nearest
+/// neighborhood, resettle the survivors into the vacated space, reinsert the
+/// removed pieces with full orientation freedom, and accept only rounds
+/// whose complete result strictly lowers the frontier, reverting to the
+/// round snapshot otherwise. Every intermediate state is exact-valid
+/// (removal cannot invalidate, every reinsertion passes the exact gates),
+/// motion is deliberately non-monotone for the lifted pieces, and every
+/// selection derives from geometry and stable identifiers only.
+fn lift_resettle_reinsert(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    target_depth_mm: f64,
+    baseline: RelaxedState,
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    work: &mut RunWork,
+) -> Result<RelaxedState, String> {
+    // The lifecycle works at full-sheet settings so lifted pieces can park
+    // high transiently inside a round (the essential non-monotone freedom);
+    // the requested target only gates the downstream deactivation and the
+    // dual publication audit. The explicit target still parameterizes the
+    // caller's descent schedule.
+    let _ = target_depth_mm;
+    let work_settings = fast_settings;
+    let mut state = VacancyState {
+        collisions: baseline
+            .placements
+            .iter()
+            .enumerate()
+            .map(|(index, placement)| {
+                build_collision(pieces[index], placement, work_settings, work)
+                    .map(|collision| Some(Arc::new(collision)))
+            })
+            .collect::<Result<Vec<_>, _>>()?,
+        placements: baseline.placements.clone(),
+        active: vec![true; pieces.len()],
+        last_transition: None,
+    };
+    let frontier = |state: &VacancyState| -> i64 {
+        state
+            .collisions
+            .iter()
+            .flatten()
+            .filter_map(|collision| collision.bounds())
+            .map(|bounds| grid_key(bounds.max_y))
+            .max()
+            .unwrap_or(i64::MIN)
+    };
+    // Lexicographic acceptance key: the frontier first, then the sum of all
+    // piece frontiers. Plateau rounds that keep the frontier but thin the
+    // top band are accepted, progressively draining the band until the
+    // frontier itself can drop; the pair strictly decreases on every
+    // accepted round, so the walk terminates.
+    let depth_key = |state: &VacancyState| -> (i64, i128) {
+        let mut sum: i128 = 0;
+        let mut max = i64::MIN;
+        for collision in state.collisions.iter().flatten() {
+            if let Some(bounds) = collision.bounds() {
+                let key = grid_key(bounds.max_y);
+                sum += i128::from(key);
+                max = max.max(key);
+            }
+        }
+        (max, sum)
+    };
+    let mut settle = GeneralPersistentVacancySettleDiagnostics {
+        sweeps: LNS_SETTLE_SWEEPS,
+        attempts: 0,
+        accepted_moves: 0,
+        exact_rows: 0,
+        frontier_before_grid: frontier(&state),
+        frontier_after_grid: 0,
+    };
+    let mut lns = GeneralPersistentVacancyLnsDiagnostics {
+        rounds: LNS_ROUNDS,
+        rounds_accepted: 0,
+        rounds_reverted: 0,
+        reinsertions: 0,
+        reinsert_failures: 0,
+        frontier_before_grid: settle.frontier_before_grid,
+        frontier_after_grid: 0,
+    };
+    let inset = collision_sheet_inset_mm(work_settings);
+    let hazard_catalog = Arc::new(
+        JaguaHazardCatalog::new(pieces, work_settings)
+            .map_err(|error| format!("lns hazard catalog: {error}"))?,
+    );
+    let lns_seed = parent_seed_key(&state, pieces);
+    settle_sweep(
+        &mut state,
+        pieces,
+        work_settings,
+        inset,
+        true,
+        &mut settle,
+        work,
+    )?;
+    let mut recon = GeneralPersistentVacancyReconstructionDiagnostics::default();
+    recon.rows_per_piece_cap = RECONSTRUCTION_ROWS_PER_PIECE;
+    for (round, neighborhood) in LNS_NEIGHBORHOOD_SCHEDULE.into_iter().enumerate() {
+        let snapshot = state.clone();
+        let entry_key = depth_key(&state);
+        // Frontier piece: deepest collision maximum, ties by stable ID.
+        let Some(frontier_piece) = (0..pieces.len())
+            .filter(|index| state.active[*index])
+            .filter_map(|index| {
+                state.collisions[index]
+                    .as_ref()
+                    .and_then(|collision| collision.bounds())
+                    .map(|bounds| (grid_key(bounds.max_y), index))
+            })
+            .max_by(|first, second| {
+                first
+                    .0
+                    .cmp(&second.0)
+                    .then_with(|| pieces[second.1].id.cmp(pieces[first.1].id))
+            })
+            .map(|(_, index)| index)
+        else {
+            break;
+        };
+        let frontier_center = state.collisions[frontier_piece]
+            .as_ref()
+            .and_then(|collision| collision.bounds())
+            .map(|bounds| {
+                (
+                    grid_key((bounds.min_x + bounds.max_x) * 0.5),
+                    grid_key((bounds.min_y + bounds.max_y) * 0.5),
+                )
+            })
+            .ok_or_else(|| "frontier piece has no bounds".to_owned())?;
+        let mut by_distance = (0..pieces.len())
+            .filter(|index| state.active[*index] && *index != frontier_piece)
+            .filter_map(|index| {
+                state.collisions[index]
+                    .as_ref()
+                    .and_then(|collision| collision.bounds())
+                    .map(|bounds| {
+                        let center_x = grid_key((bounds.min_x + bounds.max_x) * 0.5);
+                        let center_y = grid_key((bounds.min_y + bounds.max_y) * 0.5);
+                        let distance = center_x
+                            .abs_diff(frontier_center.0)
+                            .saturating_add(center_y.abs_diff(frontier_center.1));
+                        (distance, index)
+                    })
+            })
+            .collect::<Vec<_>>();
+        by_distance.sort_by(|first, second| {
+            first
+                .0
+                .cmp(&second.0)
+                .then_with(|| pieces[first.1].id.cmp(pieces[second.1].id))
+        });
+        let mut removed = vec![frontier_piece];
+        removed.extend(
+            by_distance
+                .into_iter()
+                .take(neighborhood.saturating_sub(1))
+                .map(|(_, index)| index),
+        );
+        // Old poses are the reinsertion hints; removal itself cannot
+        // invalidate the remaining exact-valid layout.
+        let hints = RelaxedState {
+            placements: state.placements.clone(),
+            strip_depth_mm: work_settings.sheet_long_axis_mm,
+        };
+        for index in &removed {
+            state.active[*index] = false;
+            state.collisions[*index] = None;
+        }
+        settle_sweep(
+            &mut state,
+            pieces,
+            work_settings,
+            inset,
+            true,
+            &mut settle,
+            work,
+        )?;
+        // Reinsert in descending material area, ties by stable ID, so large
+        // pieces claim space first.
+        let mut reinsert_order = removed.clone();
+        reinsert_order.sort_by(|first, second| {
+            let area = |index: usize| grid_key(pieces[index].polygon.area_mm2());
+            area(*second)
+                .cmp(&area(*first))
+                .then_with(|| pieces[*first].id.cmp(pieces[*second].id))
+        });
+        let mut failed = false;
+        for (slot, piece_index) in reinsert_order.into_iter().enumerate() {
+            let mut screen = JaguaHazardIndex::from_catalog_active(
+                pieces,
+                work_settings,
+                work_settings.sheet_long_axis_mm,
+                &state.placements.iter().map(hazard_pose).collect::<Vec<_>>(),
+                &state.active,
+                &hazard_catalog,
+            )
+            .map_err(|error| format!("lns hazard screen index: {error}"))?;
+            let placed = reconstruct_insert_piece(
+                pieces,
+                work_settings,
+                &hints,
+                &mut state,
+                lns_seed,
+                200 + round * 32 + slot,
+                piece_index,
+                true,
+                Some(&mut screen),
+                &mut recon,
+                work,
+            )?;
+            if placed {
+                lns.reinsertions += 1;
+            } else {
+                failed = true;
+                lns.reinsert_failures += 1;
+                break;
+            }
+        }
+        let improved = !failed && depth_key(&state) < entry_key;
+        if improved {
+            lns.rounds_accepted += 1;
+        } else {
+            state = snapshot;
+            lns.rounds_reverted += 1;
+        }
+    }
+    settle.frontier_after_grid = frontier(&state);
+    lns.frontier_after_grid = settle.frontier_after_grid;
+    diagnostics.settle = Some(settle);
+    diagnostics.lns = Some(lns);
+    if recon.insertions > 0 || recon.exact_rows > 0 {
+        diagnostics.reconstruction = Some(recon.clone());
+    }
+    // Exact re-anchor before the state is trusted, mirroring mode 14.
+    for index in 0..pieces.len() {
+        let rebuilt =
+            build_collision(pieces[index], &state.placements[index], work_settings, work)?;
+        if !rebuilt.fits_rect(
+            inset,
+            inset,
+            work_settings.sheet_short_axis_mm - inset,
+            work_settings.sheet_long_axis_mm - inset,
+        ) {
+            return Err(format!(
+                "lns re-anchor: piece {} escaped containment",
+                pieces[index].id
+            ));
+        }
+        state.collisions[index] = Some(Arc::new(rebuilt));
+    }
+    for first in 0..pieces.len() {
+        for second in (first + 1)..pieces.len() {
+            work.charge_experimental_pair()?;
+            let a = state.collisions[first]
+                .as_ref()
+                .ok_or_else(|| "lns re-anchor missing collision".to_owned())?;
+            let b = state.collisions[second]
+                .as_ref()
+                .ok_or_else(|| "lns re-anchor missing collision".to_owned())?;
+            if exact_intersection_area(a, b, work)? > 0.0 {
+                return Err(format!(
+                    "lns re-anchor: pieces {} and {} overlap",
+                    pieces[first].id, pieces[second].id
+                ));
+            }
+        }
+    }
+    Ok(RelaxedState {
+        placements: state.placements,
+        strip_depth_mm: baseline.strip_depth_mm,
+    })
+}
+
 fn settle_sweep(
     state: &mut VacancyState,
     pieces: &[GeneralFastPiece<'_>],
@@ -1550,6 +1851,8 @@ fn reconstruct_from_hints(
             reconstruction_seed,
             ordinal,
             piece_index,
+            false,
+            None,
             &mut recon,
             work,
         )?;
@@ -1571,6 +1874,8 @@ fn reconstruct_from_hints(
             reconstruction_seed,
             61 + retry_ordinal,
             piece_index,
+            false,
+            None,
             &mut recon,
             work,
         )?;
@@ -1612,6 +1917,8 @@ fn reconstruct_insert_piece(
     reconstruction_seed: u64,
     ordinal: usize,
     piece_index: usize,
+    rank_by_depth: bool,
+    hazard_screen: Option<&mut JaguaHazardIndex>,
     recon: &mut GeneralPersistentVacancyReconstructionDiagnostics,
     work: &mut RunWork,
 ) -> Result<bool, String> {
@@ -1661,23 +1968,6 @@ fn reconstruct_insert_piece(
         (0.7071067811865476, -0.7071067811865476),
         (-0.7071067811865476, -0.7071067811865476),
     ];
-    candidates.push((0u64, 0usize, hint.clone()));
-    for radius in PROBE_RADII_MM {
-        for (direction_x, direction_y) in PROBE_DIRECTIONS {
-            let mut probe = hint.clone();
-            probe.translate_x += radius * direction_x;
-            probe.translate_y += radius * direction_y;
-            let distance = grid_key(probe.translate_x)
-                .abs_diff(hint_x)
-                .saturating_add(grid_key(probe.translate_y).abs_diff(hint_y));
-            candidates.push((distance, 0usize, probe));
-        }
-    }
-    // Upward shelf fallback: the region above the current frontier is empty
-    // during bottom-up reconstruction, so a piece whose hint pocket is
-    // laterally closed under the tighter engine contract can escape upward;
-    // the later settling ladder recompacts the layout. Shelf poses anchor
-    // the piece's hint-orientation material bottom just above the frontier.
     let hint_orientation = RelaxedPlacement {
         input_index: piece_index,
         rotation_deg: hint.rotation_deg,
@@ -1691,10 +1981,36 @@ fn reconstruct_insert_piece(
         target_settings,
         work,
     )?;
-    let hint_local_min_y = hint_local
+    let hint_local_bounds = hint_local
         .bounds()
-        .ok_or_else(|| "reconstruction hint orientation has empty geometry".to_owned())?
-        .min_y;
+        .ok_or_else(|| "reconstruction hint orientation has empty geometry".to_owned())?;
+    let hint_local_min_y = hint_local_bounds.min_y;
+    let hint_local_max_y = hint_local_bounds.max_y;
+    let probe_key = |probe: &RelaxedPlacement| -> u64 {
+        if rank_by_depth {
+            grid_key(hint_local_max_y + probe.translate_y)
+                .max(0)
+                .unsigned_abs()
+        } else {
+            grid_key(probe.translate_x)
+                .abs_diff(hint_x)
+                .saturating_add(grid_key(probe.translate_y).abs_diff(hint_y))
+        }
+    };
+    candidates.push((probe_key(hint), 0usize, hint.clone()));
+    for radius in PROBE_RADII_MM {
+        for (direction_x, direction_y) in PROBE_DIRECTIONS {
+            let mut probe = hint.clone();
+            probe.translate_x += radius * direction_x;
+            probe.translate_y += radius * direction_y;
+            candidates.push((probe_key(&probe), 0usize, probe));
+        }
+    }
+    // Upward shelf fallback: the region above the current frontier is empty
+    // during bottom-up reconstruction, so a piece whose hint pocket is
+    // laterally closed under the tighter engine contract can escape upward;
+    // the later settling ladder recompacts the layout. Shelf poses anchor
+    // the piece's hint-orientation material bottom just above the frontier.
     let frontier_y = state
         .collisions
         .iter()
@@ -1742,11 +2058,24 @@ fn reconstruct_insert_piece(
             position_seed,
             work,
         )?;
+        let local_max_y = local_collision
+            .bounds()
+            .ok_or_else(|| "reconstruction orientation has empty geometry".to_owned())?
+            .max_y;
         for placement in proposals {
-            let distance = grid_key(placement.translate_x)
-                .abs_diff(hint_x)
-                .saturating_add(grid_key(placement.translate_y).abs_diff(hint_y));
-            candidates.push((distance, orientation_ordinal, placement));
+            let key = if rank_by_depth {
+                // Lowest-fit: rank by the approximate landing frontier so a
+                // lifted piece claims the deepest pocket anywhere on the
+                // sheet rather than returning near its old pose.
+                grid_key(local_max_y + placement.translate_y)
+                    .max(0)
+                    .unsigned_abs()
+            } else {
+                grid_key(placement.translate_x)
+                    .abs_diff(hint_x)
+                    .saturating_add(grid_key(placement.translate_y).abs_diff(hint_y))
+            };
+            candidates.push((key, orientation_ordinal, placement));
         }
     }
     candidates.sort_by(|first, second| {
@@ -1772,12 +2101,34 @@ fn reconstruct_insert_piece(
                 .map(|candidate| (true, 0usize, candidate)),
         )
         .collect::<Vec<_>>();
+    let mut hazard_screen = hazard_screen;
     for (is_shelf, orientation_ordinal, candidate) in ranked {
         if rows >= RECONSTRUCTION_ROWS_PER_PIECE {
             break;
         }
         if !is_shelf && rows >= local_row_cap {
             continue;
+        }
+        if let Some(index) = hazard_screen.as_deref_mut() {
+            work.diagnostics.hazard_queries = work.diagnostics.hazard_queries.saturating_add(1);
+            if work.diagnostics.hazard_queries > MAX_HAZARD_QUERIES {
+                return Err(work.cap("hazard-query budget exhausted"));
+            }
+            match index.query_unplaced(piece_index, hazard_pose(&candidate)) {
+                Ok(GeneralHazardQuery::Complete {
+                    boundary,
+                    colliding_piece_ids,
+                }) => {
+                    if boundary || !colliding_piece_ids.is_empty() {
+                        continue;
+                    }
+                }
+                Ok(_) => {}
+                Err(error) if error.to_string().contains("query envelope") => continue,
+                Err(error) => {
+                    return Err(format!("reconstruction hazard screen: {error}"));
+                }
+            }
         }
         let bucket = (
             orientation_ordinal,
@@ -2450,7 +2801,7 @@ fn retain_population(
     difficulty: &[PieceDifficulty],
     mode: usize,
 ) -> (Vec<VacancyState>, usize) {
-    if matches!(mode, 1 | 3 | 7 | 8 | 9 | 10 | 11 | 12 | 14) {
+    if matches!(mode, 1 | 3 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15) {
         let retained = sorted.into_iter().take(BEAM_WIDTH).collect::<Vec<_>>();
         let signatures = retained
             .iter()
@@ -2854,7 +3205,7 @@ fn selected_inactive_pieces(
             })
             .then_with(|| pieces[*first].id.cmp(pieces[*second].id))
     });
-    if !matches!(mode, 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14) || inactive.len() <= 1 {
+    if !matches!(mode, 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15) || inactive.len() <= 1 {
         inactive.truncate(SELECTED_PIECES_PER_PARENT);
         return SelectedInactivePieces {
             indices: inactive,
@@ -2883,7 +3234,7 @@ fn stable_inactive_order(state: &VacancyState, pieces: &[GeneralFastPiece<'_>]) 
 }
 
 fn scheduler_family(mode: usize) -> &'static str {
-    if matches!(mode, 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14) {
+    if matches!(mode, 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15) {
         "hardPlusStatelessRotation"
     } else {
         "twoHardest"
@@ -4390,21 +4741,36 @@ mod tests {
         assert_eq!(SETTLE_SELECTED_PIECE_SLOTS, 3 * 61);
         assert_eq!(RECONSTRUCTION_SELECTED_PIECE_SLOTS, 2 * 61);
         assert_eq!(POPULATION_SELECTED_PIECE_SLOTS, 640 + 26);
-        assert_eq!(MAX_SELECTED_PIECE_SLOTS, 640 + 26 + 183 + 122);
-        assert_eq!(MAX_ORIENTATION_STREAMS, (640 + 26 + 183 + 122) * 12);
+        assert_eq!(LNS_SETTLE_SWEEPS, 17);
+        assert_eq!(LNS_SETTLE_SELECTED_PIECE_SLOTS, 17 * 61);
+        assert_eq!(LNS_REINSERT_SLOTS, 100);
+        assert_eq!(
+            MAX_SELECTED_PIECE_SLOTS,
+            640 + 26 + 183 + 122 + 17 * 61 + 100
+        );
+        assert_eq!(
+            MAX_ORIENTATION_STREAMS,
+            (640 + 26 + 183 + 122 + 17 * 61 + 100) * 12
+        );
         assert_eq!(
             MAX_POSITION_SOURCE_ATTEMPTS,
-            (640 + 26 + 183 + 122) * 12 * 529
+            (640 + 26 + 183 + 122 + 17 * 61 + 100) * 12 * 529
         );
-        assert_eq!(MAX_RETURNED_POSITIONS, (640 + 26 + 183 + 122) * 12 * 32);
-        assert_eq!(MAX_HAZARD_QUERIES, (640 + 26 + 183 + 122) * 12 * 32);
+        assert_eq!(
+            MAX_RETURNED_POSITIONS,
+            (640 + 26 + 183 + 122 + 17 * 61 + 100) * 12 * 32
+        );
+        assert_eq!(
+            MAX_HAZARD_QUERIES,
+            (640 + 26 + 183 + 122 + 17 * 61 + 100) * 12 * 32
+        );
         assert_eq!(
             MAX_PROXY_PRESSURE_VISITS,
-            (640 + 26 + 183 + 122) * 12 * 32 * 61
+            (640 + 26 + 183 + 122 + 17 * 61 + 100) * 12 * 32 * 61
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 100 * 192
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -4412,11 +4778,17 @@ mod tests {
         assert_eq!(GROUP_DROP_PAIR_VISITS, 3 * 61 * 64 * 61);
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
-            3 * 61 + (640 + 26 + 183 + 122) * 12 + ((640 + 26) * 8 + 183 * 64 + 122 * 192) + 122
+            3 * 61
+                + (640 + 26 + 183 + 122 + 17 * 61 + 100) * 12
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 100 * 192)
+                + 122
+                + 100
         );
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
-            1_830 + ((640 + 26) * 8 + 183 * 64 + 122 * 192) * 60 + 3 * 61 * 64 * 61
+            1_830
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 100 * 192) * 60
+                + 3 * 61 * 64 * 61
         );
         assert_eq!(MAX_VALIDATOR_COLLISION_BUILDS, 105 * 122);
         assert_eq!(MAX_VALIDATOR_PAIR_VISITS, 105 * 3_660);
@@ -4728,7 +5100,7 @@ mod tests {
         assert!(result
             .failure_reason
             .unwrap()
-            .contains("target depth overrides require modes 9-14"));
+            .contains("target depth overrides require modes 9-15"));
 
         // Non-finite and non-positive targets fail closed.
         relaxed.persistent_vacancy_target_depth_mm = Some(f64::NAN);
