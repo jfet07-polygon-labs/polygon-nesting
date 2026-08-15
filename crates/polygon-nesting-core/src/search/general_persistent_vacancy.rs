@@ -66,6 +66,17 @@ const LNS_ROUNDS: usize = 8;
 const LNS_NEIGHBORHOOD_SCHEDULE: [usize; LNS_ROUNDS] = [4, 6, 8, 10, 12, 16, 20, 24];
 const LNS_SETTLE_SWEEPS: usize = 2 * LNS_ROUNDS + 1;
 const LNS_REINSERT_SLOTS: usize = 4 + 6 + 8 + 10 + 12 + 16 + 20 + 24;
+// Mode 16 replaces greedy reinsertion with overlap-mediated separation:
+// removed pieces return at their old poses (overlaps permitted), then a
+// bounded deterministic descent moves one overlapping soft piece at a time
+// along the compass ladder, accepting only strict decreases of the
+// grid-quantized total exact overlap area, until overlap reaches zero or the
+// move budget is exhausted. Only a zero-overlap endpoint may compete for
+// acceptance.
+const SEPARATION_MOVES_PER_ROUND: usize = 200;
+const SEPARATION_PROBES_PER_MOVE: usize = 96;
+const SEPARATION_PAIR_VISITS: usize =
+    LNS_ROUNDS * SEPARATION_MOVES_PER_ROUND * SEPARATION_PROBES_PER_MOVE * 61;
 const ORDINARY_SELECTED_PIECE_SLOTS: usize = MAX_LAYERS * BEAM_WIDTH * SELECTED_PIECES_PER_PARENT;
 const ARCHIVE_SELECTED_PIECE_SLOTS: usize = MAX_ARCHIVE_REVIVALS * SELECTED_PIECES_PER_PARENT;
 const POPULATION_SELECTED_PIECE_SLOTS: usize =
@@ -97,14 +108,17 @@ const MAX_EXACT_FINALIST_ROWS: usize = POPULATION_SELECTED_PIECE_SLOTS * FINALIS
 // Three full-state 61-piece collision builds are funded: the settle or
 // compaction prelude, the target initializer, and the mode-14 exact
 // re-anchor after group drops.
+const SEPARATION_COLLISION_BUILDS: usize =
+    LNS_ROUNDS * (LNS_REINSERT_SLOTS / 2 + SEPARATION_MOVES_PER_ROUND * SEPARATION_PROBES_PER_MOVE);
 const MAX_EXPERIMENTAL_COLLISION_BUILDS: usize = 3 * 61
     + MAX_ORIENTATION_STREAMS
     + MAX_EXACT_FINALIST_ROWS
     + RECONSTRUCTION_SELECTED_PIECE_SLOTS
-    + LNS_REINSERT_SLOTS;
+    + LNS_REINSERT_SLOTS
+    + SEPARATION_COLLISION_BUILDS;
 const MAX_VALIDATOR_COLLISION_BUILDS: usize = 12_810;
 const MAX_EXPERIMENTAL_PAIR_VISITS: usize =
-    1_830 + MAX_EXACT_FINALIST_ROWS * 60 + GROUP_DROP_PAIR_VISITS;
+    1_830 + MAX_EXACT_FINALIST_ROWS * 60 + GROUP_DROP_PAIR_VISITS + SEPARATION_PAIR_VISITS;
 const MAX_VALIDATOR_PAIR_VISITS: usize = 384_300;
 const MAX_TRANSFORMED_COLLISION_VERTICES: usize =
     (MAX_EXPERIMENTAL_COLLISION_BUILDS + MAX_VALIDATOR_COLLISION_BUILDS) * MAX_COLLISION_VERTICES;
@@ -269,7 +283,7 @@ impl TopologyArchive {
         if self.revivals_expanded >= MAX_ARCHIVE_REVIVALS {
             return RevivalDecision::Skipped("revivalBudgetExhausted");
         }
-        if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15) && population.len() < 2 {
+        if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16) && population.len() < 2 {
             return RevivalDecision::Skipped("populationTooSmall");
         }
         let candidates: [(&'static str, Option<&(EliteSnapshot, VacancyState)>); 2] =
@@ -290,7 +304,7 @@ impl TopologyArchive {
                 last_reason = "inPopulation";
                 continue;
             }
-            if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15) {
+            if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16) {
                 let worst = population
                     .last()
                     .expect("a mode-8 revival population has at least two states");
@@ -518,9 +532,9 @@ fn run_population(
 ) -> Result<Option<(VacancyState, f64)>, String> {
     if !matches!(
         mode,
-        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
+        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16
     ) {
-        return Err("persistent vacancy mode must be between 1 and 15".to_owned());
+        return Err("persistent vacancy mode must be between 1 and 16".to_owned());
     }
     // Modes 1-8 are the frozen diagnostic screens: their 165.0 mm target and
     // b9335a72 parent identity are part of the pinned experiment contract.
@@ -529,7 +543,7 @@ fn run_population(
     // and skips only the frozen fingerprint/depth equality pins while keeping
     // full parent validation.
     let target_depth_mm = match (mode, target_override_mm) {
-        (9 | 10 | 11 | 12 | 13 | 14 | 15, Some(target)) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16, Some(target)) => {
             if !target.is_finite() || target <= 0.0 {
                 return Err(
                     "persistent vacancy target depth must be a positive finite value".to_owned(),
@@ -537,18 +551,18 @@ fn run_population(
             }
             target
         }
-        (9 | 10 | 11 | 12 | 13 | 14 | 15, None) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16, None) => {
             return Err(
-                "persistent vacancy modes 9-15 require an explicit target depth".to_owned(),
+                "persistent vacancy modes 9-16 require an explicit target depth".to_owned(),
             );
         }
         (_, Some(_)) => {
-            return Err("persistent vacancy target depth overrides require modes 9-15".to_owned());
+            return Err("persistent vacancy target depth overrides require modes 9-16".to_owned());
         }
         (_, None) => TARGET_DEPTH_MM,
     };
-    if matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15) && !parent_is_pinned {
-        return Err("persistent vacancy modes 9-15 require a pinned parent fixture".to_owned());
+    if matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16) && !parent_is_pinned {
+        return Err("persistent vacancy modes 9-16 require a pinned parent fixture".to_owned());
     }
     diagnostics.target_depth_mm = target_depth_mm;
     if pieces.len() != 61 {
@@ -564,7 +578,7 @@ fn run_population(
     }
     let parent_fingerprint = coupled_fast_placement_fingerprint(&parent_fast);
     diagnostics.parent_fingerprint = Some(parent_fingerprint.clone());
-    if !matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15)
+    if !matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16)
         && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT
     {
         return Err(format!(
@@ -574,10 +588,10 @@ fn run_population(
     if mode != 13 {
         let parent_depth = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
             .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
-        if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15) {
+        if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16) {
             diagnostics.parent_independent_depth_mm = Some(parent_depth);
         }
-        if !matches!(mode, 9 | 10 | 11 | 12 | 14 | 15)
+        if !matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16)
             && grid_key(parent_depth) != grid_key(EXPECTED_PARENT_DEPTH_MM)
         {
             return Err(format!(
@@ -621,12 +635,13 @@ fn run_population(
     if mode == 14 {
         baseline = compact_baseline(pieces, fast_settings, baseline, diagnostics, work)?;
     }
-    if mode == 15 {
+    if matches!(mode, 15 | 16) {
         baseline = lift_resettle_reinsert(
             pieces,
             fast_settings,
             target_depth_mm,
             baseline,
+            mode == 16,
             diagnostics,
             work,
         )?;
@@ -637,7 +652,7 @@ fn run_population(
         baseline,
         diagnostics,
         work,
-        matches!(mode, 11 | 12 | 14 | 15),
+        matches!(mode, 11 | 12 | 14 | 15 | 16),
     )?;
     diagnostics.initial_state_fingerprint = Some(state_fingerprint(&initial, pieces));
     diagnostics.initial_active_piece_ids = active_ids(&initial, pieces);
@@ -676,7 +691,8 @@ fn run_population(
     let mut best_ever_area: Option<EliteSnapshot> = None;
     let mut best_ever_count: Option<EliteSnapshot> = None;
     let mut retained_carryovers = BTreeSet::new();
-    let mut archive = matches!(mode, 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15).then(TopologyArchive::new);
+    let mut archive =
+        matches!(mode, 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16).then(TopologyArchive::new);
     for layer in 0..MAX_LAYERS {
         // Modes 7/8 plan a revival before the entering-population hash so the
         // hash always reflects the population that is actually expanded
@@ -711,7 +727,7 @@ fn run_population(
                     row.revival_expanded = true;
                     row.revival_kind = Some(kind.to_owned());
                     row.revived_state_fingerprint = Some(fingerprint);
-                    if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15) {
+                    if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16) {
                         let replaced_index = population.len() - 1;
                         row.replaced_state_fingerprint =
                             Some(state_fingerprint(&population[replaced_index], pieces));
@@ -1399,6 +1415,7 @@ fn lift_resettle_reinsert(
     fast_settings: GeneralFastSettings,
     target_depth_mm: f64,
     baseline: RelaxedState,
+    separation: bool,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<RelaxedState, String> {
@@ -1464,6 +1481,10 @@ fn lift_resettle_reinsert(
         rounds_reverted: 0,
         reinsertions: 0,
         reinsert_failures: 0,
+        separation_moves: 0,
+        separation_probes: 0,
+        separation_zero_overlap: 0,
+        separation_recruits: 0,
         frontier_before_grid: settle.frontier_before_grid,
         frontier_after_grid: 0,
     };
@@ -1487,8 +1508,10 @@ fn lift_resettle_reinsert(
     for (round, neighborhood) in LNS_NEIGHBORHOOD_SCHEDULE.into_iter().enumerate() {
         let snapshot = state.clone();
         let entry_key = depth_key(&state);
-        // Frontier piece: deepest collision maximum, ties by stable ID.
-        let Some(frontier_piece) = (0..pieces.len())
+        // Frontier piece: the round-th deepest active piece (modulo four),
+        // ties by stable ID, so consecutive rounds attack different members
+        // of the frontier band instead of retrying one piece.
+        let mut by_depth = (0..pieces.len())
             .filter(|index| state.active[*index])
             .filter_map(|index| {
                 state.collisions[index]
@@ -1496,13 +1519,17 @@ fn lift_resettle_reinsert(
                     .and_then(|collision| collision.bounds())
                     .map(|bounds| (grid_key(bounds.max_y), index))
             })
-            .max_by(|first, second| {
-                first
-                    .0
-                    .cmp(&second.0)
-                    .then_with(|| pieces[second.1].id.cmp(pieces[first.1].id))
-            })
-            .map(|(_, index)| index)
+            .collect::<Vec<_>>();
+        by_depth.sort_by(|first, second| {
+            second
+                .0
+                .cmp(&first.0)
+                .then_with(|| pieces[first.1].id.cmp(pieces[second.1].id))
+        });
+        let Some(frontier_piece) = by_depth
+            .get(round % 4)
+            .or_else(|| by_depth.first())
+            .map(|(_, index)| *index)
         else {
             break;
         };
@@ -1574,35 +1601,47 @@ fn lift_resettle_reinsert(
                 .then_with(|| pieces[*first].id.cmp(pieces[*second].id))
         });
         let mut failed = false;
-        for (slot, piece_index) in reinsert_order.into_iter().enumerate() {
-            let mut screen = JaguaHazardIndex::from_catalog_active(
-                pieces,
-                work_settings,
-                work_settings.sheet_long_axis_mm,
-                &state.placements.iter().map(hazard_pose).collect::<Vec<_>>(),
-                &state.active,
-                &hazard_catalog,
-            )
-            .map_err(|error| format!("lns hazard screen index: {error}"))?;
-            let placed = reconstruct_insert_piece(
+        if separation {
+            failed = !overlap_mediated_reinsert(
                 pieces,
                 work_settings,
                 &hints,
                 &mut state,
-                lns_seed,
-                200 + round * 32 + slot,
-                piece_index,
-                true,
-                Some(&mut screen),
-                &mut recon,
+                &removed,
+                &mut lns,
                 work,
             )?;
-            if placed {
-                lns.reinsertions += 1;
-            } else {
-                failed = true;
-                lns.reinsert_failures += 1;
-                break;
+        } else {
+            for (slot, piece_index) in reinsert_order.into_iter().enumerate() {
+                let mut screen = JaguaHazardIndex::from_catalog_active(
+                    pieces,
+                    work_settings,
+                    work_settings.sheet_long_axis_mm,
+                    &state.placements.iter().map(hazard_pose).collect::<Vec<_>>(),
+                    &state.active,
+                    &hazard_catalog,
+                )
+                .map_err(|error| format!("lns hazard screen index: {error}"))?;
+                let placed = reconstruct_insert_piece(
+                    pieces,
+                    work_settings,
+                    &hints,
+                    &mut state,
+                    lns_seed,
+                    200 + round * 32 + slot,
+                    piece_index,
+                    true,
+                    Some(&mut screen),
+                    &mut recon,
+                    work,
+                )?;
+                if placed {
+                    lns.reinsertions += 1;
+                } else {
+                    failed = true;
+                    lns.reinsert_failures += 1;
+                    break;
+                }
             }
         }
         let improved = !failed && depth_key(&state) < entry_key;
@@ -1658,6 +1697,194 @@ fn lift_resettle_reinsert(
         placements: state.placements,
         strip_depth_mm: baseline.strip_depth_mm,
     })
+}
+
+/// Mode-16 overlap-mediated reinsertion: removed pieces return at their old
+/// poses with overlaps permitted, then a bounded deterministic descent moves
+/// one overlapping soft piece at a time along the compass ladder, accepting
+/// only strict decreases of the grid-quantized total exact overlap area.
+/// Returns true only when total overlap reaches exactly zero, so every
+/// competing endpoint is exact-valid; a nonzero residual reports failure and
+/// the caller reverts the round snapshot.
+#[allow(clippy::too_many_arguments)]
+fn overlap_mediated_reinsert(
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    hints: &RelaxedState,
+    state: &mut VacancyState,
+    removed: &[usize],
+    lns: &mut GeneralPersistentVacancyLnsDiagnostics,
+    work: &mut RunWork,
+) -> Result<bool, String> {
+    const SEPARATION_DIRECTIONS: [(f64, f64); 8] = [
+        (0.0, -1.0),
+        (0.0, 1.0),
+        (-1.0, 0.0),
+        (1.0, 0.0),
+        (0.7071067811865476, 0.7071067811865476),
+        (-0.7071067811865476, 0.7071067811865476),
+        (0.7071067811865476, -0.7071067811865476),
+        (-0.7071067811865476, -0.7071067811865476),
+    ];
+    const SEPARATION_RADII_MM: [f64; 12] = [
+        0.256, 0.512, 1.024, 2.048, 3.072, 4.096, 6.144, 8.192, 12.288, 16.384, 24.576, 32.768,
+    ];
+    let inset = collision_sheet_inset_mm(settings);
+    // Soft pieces return at their hint poses, overlaps permitted.
+    for index in removed {
+        let placement = hints.placements[*index].clone();
+        let collision = build_collision(pieces[*index], &placement, settings, work)?;
+        state.placements[*index] = placement;
+        state.active[*index] = true;
+        state.collisions[*index] = Some(Arc::new(collision));
+        lns.reinsertions += 1;
+    }
+    let quantized = |area: f64| -> i128 { (area * 1_000_000.0).round() as i128 };
+    let piece_overlap = |state: &VacancyState,
+                         index: usize,
+                         collision: &PolygonSet,
+                         work: &mut RunWork|
+     -> Result<i128, String> {
+        let mut total = 0i128;
+        for other in 0..pieces.len() {
+            if other == index || !state.active[other] {
+                continue;
+            }
+            work.charge_experimental_pair()?;
+            let fixed = state.collisions[other]
+                .as_ref()
+                .ok_or_else(|| "separation missing collision".to_owned())?;
+            total += quantized(exact_intersection_area(collision, fixed, work)?);
+        }
+        Ok(total)
+    };
+    let mut soft = removed.to_vec();
+    soft.sort_by(|first, second| pieces[*first].id.cmp(pieces[*second].id));
+    for _move in 0..SEPARATION_MOVES_PER_ROUND {
+        // Pick the soft piece with the largest current overlap, ties by ID.
+        let mut worst: Option<(i128, usize)> = None;
+        for index in &soft {
+            let collision = state.collisions[*index]
+                .as_ref()
+                .ok_or_else(|| "separation missing soft collision".to_owned())?
+                .clone();
+            let overlap = piece_overlap(state, *index, &collision, work)?;
+            if overlap > 0 {
+                let candidate = (overlap, *index);
+                worst = Some(match worst {
+                    None => candidate,
+                    Some(current) => {
+                        if candidate.0 > current.0
+                            || (candidate.0 == current.0
+                                && pieces[candidate.1].id < pieces[current.1].id)
+                        {
+                            candidate
+                        } else {
+                            current
+                        }
+                    }
+                });
+            }
+        }
+        let Some((current_overlap, index)) = worst else {
+            lns.separation_zero_overlap = lns.separation_zero_overlap.saturating_add(1);
+            return Ok(true);
+        };
+        // Best strict-improvement probe over the compass ladder.
+        let mut best: Option<(i128, RelaxedPlacement, PolygonSet)> = None;
+        let mut probes = 0usize;
+        'probe: for radius in SEPARATION_RADII_MM {
+            for (direction_x, direction_y) in SEPARATION_DIRECTIONS {
+                if probes >= SEPARATION_PROBES_PER_MOVE {
+                    break 'probe;
+                }
+                probes += 1;
+                lns.separation_probes = lns.separation_probes.saturating_add(1);
+                let mut candidate = state.placements[index].clone();
+                candidate.translate_x += radius * direction_x;
+                candidate.translate_y += radius * direction_y;
+                let collision = build_collision(pieces[index], &candidate, settings, work)?;
+                if !collision.fits_rect(
+                    inset,
+                    inset,
+                    settings.sheet_short_axis_mm - inset,
+                    settings.sheet_long_axis_mm - inset,
+                ) {
+                    continue;
+                }
+                let overlap = piece_overlap(state, index, &collision, work)?;
+                if overlap < current_overlap
+                    && best
+                        .as_ref()
+                        .is_none_or(|(best_overlap, _, _)| overlap < *best_overlap)
+                {
+                    best = Some((overlap, candidate, collision));
+                    if overlap == 0 {
+                        break 'probe;
+                    }
+                }
+            }
+        }
+        let Some((_, placement, collision)) = best else {
+            // No strict soft-piece improvement anywhere on the ladder: recruit
+            // the anchor contributing the largest exact overlap against the
+            // stuck piece into the soft set (bilateral separation). If it is
+            // already soft, the configuration is genuinely stuck.
+            let stuck_collision = state.collisions[index]
+                .as_ref()
+                .ok_or_else(|| "separation missing stuck collision".to_owned())?
+                .clone();
+            let mut worst_anchor: Option<(i128, usize)> = None;
+            for other in 0..pieces.len() {
+                if other == index || !state.active[other] || soft.contains(&other) {
+                    continue;
+                }
+                work.charge_experimental_pair()?;
+                let fixed = state.collisions[other]
+                    .as_ref()
+                    .ok_or_else(|| "separation missing anchor collision".to_owned())?;
+                let overlap = quantized(exact_intersection_area(&stuck_collision, fixed, work)?);
+                if overlap > 0 {
+                    let candidate = (overlap, other);
+                    worst_anchor = Some(match worst_anchor {
+                        None => candidate,
+                        Some(current) => {
+                            if candidate.0 > current.0
+                                || (candidate.0 == current.0
+                                    && pieces[candidate.1].id < pieces[current.1].id)
+                            {
+                                candidate
+                            } else {
+                                current
+                            }
+                        }
+                    });
+                }
+            }
+            let Some((_, recruit)) = worst_anchor else {
+                return Ok(false);
+            };
+            soft.push(recruit);
+            soft.sort_by(|first, second| pieces[*first].id.cmp(pieces[*second].id));
+            lns.separation_recruits = lns.separation_recruits.saturating_add(1);
+            continue;
+        };
+        state.placements[index] = placement;
+        state.collisions[index] = Some(Arc::new(collision));
+        lns.separation_moves = lns.separation_moves.saturating_add(1);
+    }
+    // Move budget exhausted; check the residual.
+    for index in &soft {
+        let collision = state.collisions[*index]
+            .as_ref()
+            .ok_or_else(|| "separation missing soft collision".to_owned())?
+            .clone();
+        if piece_overlap(state, *index, &collision, work)? > 0 {
+            return Ok(false);
+        }
+    }
+    lns.separation_zero_overlap = lns.separation_zero_overlap.saturating_add(1);
+    Ok(true)
 }
 
 fn settle_sweep(
@@ -2801,7 +3028,7 @@ fn retain_population(
     difficulty: &[PieceDifficulty],
     mode: usize,
 ) -> (Vec<VacancyState>, usize) {
-    if matches!(mode, 1 | 3 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15) {
+    if matches!(mode, 1 | 3 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16) {
         let retained = sorted.into_iter().take(BEAM_WIDTH).collect::<Vec<_>>();
         let signatures = retained
             .iter()
@@ -3205,7 +3432,11 @@ fn selected_inactive_pieces(
             })
             .then_with(|| pieces[*first].id.cmp(pieces[*second].id))
     });
-    if !matches!(mode, 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15) || inactive.len() <= 1 {
+    if !matches!(
+        mode,
+        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16
+    ) || inactive.len() <= 1
+    {
         inactive.truncate(SELECTED_PIECES_PER_PARENT);
         return SelectedInactivePieces {
             indices: inactive,
@@ -3234,7 +3465,10 @@ fn stable_inactive_order(state: &VacancyState, pieces: &[GeneralFastPiece<'_>]) 
 }
 
 fn scheduler_family(mode: usize) -> &'static str {
-    if matches!(mode, 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15) {
+    if matches!(
+        mode,
+        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16
+    ) {
         "hardPlusStatelessRotation"
     } else {
         "twoHardest"
@@ -4776,6 +5010,10 @@ mod tests {
         assert_eq!(GROUP_DROP_CUTS, 61);
         assert_eq!(GROUP_DROP_PROBES_PER_CUT, 64);
         assert_eq!(GROUP_DROP_PAIR_VISITS, 3 * 61 * 64 * 61);
+        assert_eq!(SEPARATION_MOVES_PER_ROUND, 200);
+        assert_eq!(SEPARATION_PROBES_PER_MOVE, 96);
+        assert_eq!(SEPARATION_PAIR_VISITS, 8 * 200 * 96 * 61);
+        assert_eq!(SEPARATION_COLLISION_BUILDS, 8 * (100 / 2 + 200 * 96));
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
             3 * 61
@@ -4783,12 +5021,14 @@ mod tests {
                 + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 100 * 192)
                 + 122
                 + 100
+                + 8 * (100 / 2 + 200 * 96)
         );
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
             1_830
                 + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 100 * 192) * 60
                 + 3 * 61 * 64 * 61
+                + 8 * 200 * 96 * 61
         );
         assert_eq!(MAX_VALIDATOR_COLLISION_BUILDS, 105 * 122);
         assert_eq!(MAX_VALIDATOR_PAIR_VISITS, 105 * 3_660);
@@ -5100,7 +5340,7 @@ mod tests {
         assert!(result
             .failure_reason
             .unwrap()
-            .contains("target depth overrides require modes 9-15"));
+            .contains("target depth overrides require modes 9-16"));
 
         // Non-finite and non-positive targets fail closed.
         relaxed.persistent_vacancy_target_depth_mm = Some(f64::NAN);

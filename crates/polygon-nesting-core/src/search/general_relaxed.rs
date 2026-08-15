@@ -403,6 +403,10 @@ pub struct GeneralPersistentVacancyLnsDiagnostics {
     pub rounds_reverted: usize,
     pub reinsertions: usize,
     pub reinsert_failures: usize,
+    pub separation_moves: usize,
+    pub separation_probes: usize,
+    pub separation_zero_overlap: usize,
+    pub separation_recruits: usize,
     pub frontier_before_grid: i64,
     pub frontier_after_grid: i64,
 }
