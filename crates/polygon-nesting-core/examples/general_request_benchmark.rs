@@ -207,8 +207,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if persistent_vacancy_mode > 6 {
-        return Err("persistent vacancy mode must be 0, 1, 2, 3, 4, 5, or 6".into());
+    if !matches!(persistent_vacancy_mode, 0..=6 | 8 | 9) {
+        return Err(
+            "persistent vacancy mode must be 0, 1, 2, 3, 4, 5, 6, 8, or 9; retired mode 7 is unavailable"
+                .into(),
+        );
     }
     let persistent_vacancy_parent_path = arguments.next();
     if runs == 0 || arguments.next().is_some() {

@@ -2,7 +2,7 @@
 
 ## Decision boundary
 
-This is a diagnostic-only Mixed-61 experiment behind a mode argument and a required frozen-parent fixture path, after the retained zero-valued retired-terminal argument. Mode `0` disables it and accepts no parent path. Modes `1` and `2` use the reviewed two-hardest scheduler with comparator and contact-signature retention respectively. Modes `3` and `4` use the stateless rotating scheduler defined below with those same two retention policies respectively. Mode `6` applies dual-objective retention to mode `3` without carryover, and mode `5` adds the bounded elite carryover to that mode-`6` policy. Nonzero modes must not change the protected constructor, relaxed search, coupled separator, public profiles, or returned result. A diagnostic candidate is reported separately until every promotion gate passes.
+This is a diagnostic-only Mixed-61 experiment behind a mode argument and a required frozen-parent fixture path, after the retained zero-valued retired-terminal argument. Mode `0` disables it and accepts no parent path. Modes `1` and `2` use the reviewed two-hardest scheduler with comparator and contact-signature retention respectively. Modes `3` and `4` use the stateless rotating scheduler defined below with those same two retention policies respectively. Mode `6` applies dual-objective retention to mode `3` without carryover, and mode `5` adds the bounded elite carryover to that mode-`6` policy. Historical mode `7` is retired and unavailable. Modes `8` and `9` form the bounded macro-successor control and treatment described below. Nonzero modes must not change the protected constructor, relaxed search, coupled separator, public profiles, or returned result. A diagnostic candidate is reported separately until every promotion gate passes.
 
 The frozen request SHA-256 is `dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1`. The required retained boundary-projection placement fingerprint is `b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5`, with reported depth `168.625 mm` and independently rebuilt source depth `168.361 mm`. The canonical placements live in `tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json`; they are input to the vacancy lifecycle rather than regenerated from the platform-sensitive continuous separator trajectory. The fixture's raw SHA-256, request hash, effective sheet and clearance settings, placement count, exact placement fingerprint, full canonical validation, independent source validation, and grid depth are all checked before `attempted` becomes true. This prevents sub-grid placement edits or geometry-setting overrides from reusing the same rounded placement fingerprint while changing the successor trajectory. A requested nonzero mode that does not reach `attempted: true` makes both the core wrapper and benchmark process fail instead of emitting a successful-looking no-op result. The experiment searches a fixed `165.000 mm` strip.
 
@@ -88,23 +88,23 @@ A complete state beats an incomplete state. Between complete states, lower indep
 
 ## Hard quotas
 
-Each arm has its own nontransferable ceilings. The declared worst-case schedule is funded as follows:
+Each arm has its own nontransferable ceilings. The global ceilings fund the new modes `8` and `9`, which add at most one bounded macro-parent expansion per layer to the original eight-parent schedule. Modes `1` through `6` retain their smaller realized work. The declared worst case is:
 
 - layers: `40`;
-- parent slots: `40 * 8 = 320`;
-- selected-piece slots: `320 * 2 = 640`;
-- orientation streams and collision builds: `640 * 12 = 7,680`;
-- canonical source-feature visits across both mirror traversals: `640 * 2 * 512 = 655,360`;
+- parent expansions: `40 * (8 + 1) = 360`;
+- selected-piece slots: `360 * 2 = 720`;
+- orientation streams and collision builds: `720 * 12 = 8,640`;
+- canonical source-feature visits across both mirror traversals: `720 * 2 * 512 = 737,280`;
 - pre-deduplication position-source attempts per orientation: `1 + 8 + 61 * 8 + 16 + 16 = 529`;
-- total pre-deduplication position-source attempts: `7,680 * 529 = 4,062,720`;
-- returned positions, hazard queries, and placement attempts: `7,680 * 32 = 245,760`;
-- proxy-pressure visits: `245,760 * 61 = 14,991,360`;
-- exact finalist rows and finalist collision builds: `640 * 8 = 5,120`;
+- total pre-deduplication position-source attempts: `8,640 * 529 = 4,570,560`;
+- returned positions, hazard queries, and placement attempts: `8,640 * 32 = 276,480`;
+- proxy-pressure visits: `276,480 * 61 = 16,865,280`;
+- exact finalist rows and finalist collision builds: `720 * 8 = 5,760`;
 - initializer collision builds: `61`;
-- experimental collision builds: `61 + 7,680 + 5,120 = 12,861`;
+- experimental collision builds: `61 + 8,640 + 5,760 = 14,461`;
 - initializer exact pair rows: `61 * 60 / 2 = 1,830`;
-- finalist pair visits: `5,120 * 60 = 307,200`;
-- experimental pair visits: `1,830 + 307,200 = 309,030`;
+- finalist pair visits: `5,760 * 60 = 345,600`;
+- experimental pair visits: `1,830 + 345,600 = 347,430`;
 - partial dual audits: `41`;
 - complete dual publication audits: `64`;
 - total dual audits: `41 + 64 = 105`;
@@ -112,10 +112,10 @@ Each arm has its own nontransferable ceilings. The declared worst-case schedule 
 - validator collision builds: `105 * 122 = 12,810`;
 - validator pair visits per dual audit: `2 * 1,830 = 3,660`;
 - validator pair visits: `105 * 3,660 = 384,300`;
-- aggregate collision-build ceiling: `12,861 + 12,810 = 25,671`;
-- aggregate pair-visit ceiling: `309,030 + 384,300 = 693,330`.
+- aggregate collision-build ceiling: `14,461 + 12,810 = 27,271`;
+- aggregate pair-visit ceiling: `347,430 + 384,300 = 731,730`.
 
-Reject an input piece whose canonical source representation exceeds 512 features. Check every rebuilt expanded collision immediately and reject the arm if it exceeds 512 vertices. The resulting transformed-collision vertex ceiling is `25,671 * 512 = 13,143,552`. AABB-disjoint pair visits still consume the logical pair-visit ceiling but skip Clipper. Before each pair operation, charge its actual two input vertex counts; the conservative aggregate Clipper input ceiling is `2 * 512 * 693,330 = 709,969,920` vertices. This is a monotonic work counter, not a simultaneous-memory allowance.
+Reject an input piece whose canonical source representation exceeds 512 features. Check every rebuilt expanded collision immediately and reject the arm if it exceeds 512 vertices. The resulting transformed-collision vertex ceiling is `27,271 * 512 = 13,962,752`. AABB-disjoint pair visits still consume the logical pair-visit ceiling but skip Clipper. Before each pair operation, charge its actual two input vertex counts; the conservative aggregate Clipper input ceiling is `2 * 512 * 731,730 = 749,291,520` vertices. This is a monotonic work counter, not a simultaneous-memory allowance.
 
 Clipper output vertices are unknowable before an intersection. Charge them immediately after the operation and before committing any candidate, audit, layer, or publication state, against a 4,000,000-vertex ceiling. If the charge exceeds the ceiling, discard the uncommitted result and incomplete layer, mark that arm cap-exhausted, and prohibit experimental publication. Work already performed remains in diagnostics. The runtime and RSS gates remain mandatory; the large deterministic counter ceilings do not excuse a slow or memory-heavy run.
 
@@ -137,6 +137,7 @@ Before any benchmark result is interpreted, focused unit and integration tests m
 - complete-audit ordering is comparator-stable and the sixty-fifth complete child exhausts the arm before validation;
 - every pre-operation ceiling and the post-operation Clipper output ceiling fails atomically without committing a candidate, layer, audit, or publication state;
 - the aggregate quota formulas equal the declared constants, mirror-enabled orientation generation charges both source-feature traversals, and phase counters sum to the aggregate counters;
+- modes `8` and `9` build and audit the same combined macro pool, mode `8` preserves mode `3`'s population history, only mode `9` admits novel macro identities, retained-novel fingerprints are truthful, a complete macro child is audited in both arms but ignored by the control, and raw macro/combined memory failure is atomic;
 - the stable mode-zero compatibility projection reproduces SHA-256 `f51f8d4e767c4828430af4f154616b9c73aa237f1cbfbf0cc3e04d6cadfe85d0`;
 - one fixed concave source piece completes an insertion/ejection lifecycle and passes both source and canonical validation.
 
@@ -292,3 +293,11 @@ The completed screen is pinned in `persistent-vacancy-elite-evidence.json`. Afte
 The completed mode-`7` screen is summarized in `persistent-vacancy-archive-evidence.json`. It kept the mode-`3` generator, scheduler, width, and ordinary retention unchanged, but after three stagnant layers replaced the eighth beam slot for one generation with one never-before-revived member of a bounded 16-state archive. The mechanism was active: four distinct archived states survived retention and were expanded. It nevertheless regressed the best-ever partial from mode `3`'s 11 inactive pieces / `59571041296` inactive grid-area units to 13 / `65555025691`. The first revival preceded the treatment's divergence from the control, and the treatment then missed the control's layer-23-through-29 gains. Both arms passed exact-validity, width, cap, wall-time, and RSS gates; both missed the provisional `6000 ms` engine diagnostic gate.
 
 No stagnation-threshold retuning was run after observing this fixture, because that would be post-hoc tuning rather than a causal screen. The evidence also records that the experimental implementation undercounted archive-only bookkeeping: persistent revived-fingerprint strings, a pending fingerprint string, transient fingerprint/signature sets, and archive hash/signature pair scans were absent from retained-memory or work counters. That limitation does not rescue the quality regression, but it prevents using the recorded incremental accounting as a complete cost claim. The exact dirty patch, executable bytes, raw output bytes, and complete toolchain identity were not retained before source removal, so this record is explicitly a non-reproducible historical summary rather than a pinned replay oracle. Mode `7` was removed from source. This result closes only the tested three-layer, one-slot archive-revival policy; it does not close archives in general or a bounded nonterminal ruin/recreate lifecycle that reconstructs and accepts a whole candidate without sacrificing a productive beam lineage merely to try it.
+
+## Bounded macro-successor screen
+
+Modes `8` and `9` preserve mode `3`'s ordinary population, stateless rotating selector, generator, comparator, and eight-state retention. After ordinary children are sorted and deduplicated, both modes select the comparator-best incomplete ordinary child and expand it once more with the same bounded transition operator at the same layer. The child identity changes the seed, so the second transition has its own deterministic stream without adding a hidden random phase. The selected intermediate would normally survive mode `3`'s beam, so this screen isolates same-layer depth-two lookahead and admission rather than claiming rescue of a pruned state.
+
+Both modes clone the ordinary pool, append the macro children, charge the raw simultaneous ordinary/macro/combined state and diagnostic allocations, sort and deduplicate the combined shadow pool, and run every combined complete candidate through the same publication-audit schedule. Mode `8` then ignores the shadow result and retains from the untouched ordinary pool; a valid macro-only complete candidate is diagnosed but cannot terminate the control. Mode `9` uses the combined pool for the unchanged mode-`3` retention. Both modes record the macro parent fingerprint, selected-piece row, child-order hash, generated count, fingerprints absent from the ordinary pool, admitted count, retained novel fingerprints, insertion classes, and exact work delta. `admittedChildren` counts only macro identities absent from the ordinary pool, and `retainedChildFingerprints` proves whether those identities survived the beam. Existing `ordinaryChildOrderHash` continues to describe only the untouched ordinary child stream.
+
+The paired sequence is `MODE=8,9,9,8` from one unmeasured release executable and the same frozen parent. When entering-population hashes match, ordinary child hashes and macro parent, selection, child hash, and work must match exactly; only `admittedChildren` may differ. Mode `8` must reproduce mode `3`'s population and best-state history after deleting the additive macro diagnostic and macro-only work. Mode `9` earns another iteration only if it completes the exact-valid 165 mm strip uniquely or improves the best-ever partial in one objective without regressing the other: fewer inactive pieces with no greater inactive area, or lower inactive area with no more inactive pieces. Exact completion at 165 mm is an architectural milestone, not the final quality target; the broader engine still aims below 160 mm and eventually toward the approximately 150 mm external reference. Any cap, validation disagreement, causal mismatch, RSS above 64 MiB, or wall time above 7 seconds rejects the arm. The 7-second bound is specific to this diagnostic screen and does not relax production runtime gates.

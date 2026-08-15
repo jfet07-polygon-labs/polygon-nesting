@@ -68,6 +68,25 @@ const arguments_ = [
   fixture,
 ]
 
+const runBenchmark = (benchmarkArguments, label) => {
+  const result = spawnSync(executable, benchmarkArguments, {
+    cwd: root,
+    encoding: 'utf8',
+    maxBuffer: 8 * 1024 * 1024,
+  })
+  if (result.error) throw result.error
+  if (result.status !== 0) {
+    throw new Error(`${label} failed (${result.status}): ${result.stderr}`)
+  }
+  return JSON.parse(result.stdout)
+}
+
+const runMode = (mode) => {
+  const benchmarkArguments = [...arguments_]
+  benchmarkArguments[benchmarkArguments.length - 2] = String(mode)
+  return runBenchmark(benchmarkArguments, `persistent-vacancy mode ${mode}`)
+}
+
 const missingFixture = spawnSync(executable, arguments_.slice(0, -1), {
   cwd: root,
   encoding: 'utf8',
@@ -138,16 +157,7 @@ if (Object.hasOwn(modeZeroOutput, 'persistentVacancyParentFixture')) {
   throw new Error('mode-zero output gained persistentVacancyParentFixture')
 }
 
-const result = spawnSync(executable, arguments_, {
-  cwd: root,
-  encoding: 'utf8',
-  maxBuffer: 4 * 1024 * 1024,
-})
-if (result.error) throw result.error
-if (result.status !== 0) {
-  throw new Error(`persistent-vacancy benchmark failed (${result.status}): ${result.stderr}`)
-}
-const output = JSON.parse(result.stdout)
+const output = runMode(3)
 const fixtureSha256 = createHash('sha256').update(readFileSync(fixture)).digest('hex')
 if (fixtureSha256 !== '18e0b052997d1251573fa35679c9fcf1d5e796acf771ec48f320ce4e9bf0081d') {
   throw new Error(`persistent-vacancy fixture hash changed: ${fixtureSha256}`)
@@ -179,10 +189,95 @@ const canonical = (value) => {
   }
   return value
 }
+const trajectory = structuredClone(population)
+delete trajectory.work.retainedPeakBytes
+delete trajectory.work.selectorDiagnosticPeakBytes
+delete trajectory.work.totalRetainedPeakBytes
 const populationSha256 = createHash('sha256')
-  .update(JSON.stringify(canonical(population)))
+  .update(JSON.stringify(canonical(trajectory)))
   .digest('hex')
-if (populationSha256 !== 'eeddb6241d98ac94cbf378a5f03cfa0173b87755feb8ccac4235cb46689b6efa') {
+if (populationSha256 !== '6f074367e6c665f5d93d4f1de0a1e7911a4a3557f312b423107c96a2fe9d46f2') {
   throw new Error(`persistent-vacancy trajectory changed: ${populationSha256}`)
 }
-process.stdout.write(`persistent-vacancy portability: ok (${populationSha256})\n`)
+
+const mode8 =
+  runMode(8).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
+const mode9 =
+  runMode(9).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
+if (!mode8?.attempted || !mode9?.attempted) {
+  throw new Error('macro control or treatment did not execute')
+}
+if (mode8.capExhausted !== null || mode9.capExhausted !== null) {
+  throw new Error(`macro screen exhausted a cap: ${mode8.capExhausted ?? mode9.capExhausted}`)
+}
+const populationHistory = (candidate) =>
+  candidate.layers.map((layer) => ({
+    enteringPopulationHash: layer.elite.enteringPopulationHash,
+    ordinaryChildOrderHash: layer.elite.ordinaryChildOrderHash,
+    bestStateFingerprint: layer.bestStateFingerprint,
+    bestInactivePieceCount: layer.bestInactivePieceCount,
+    bestInactiveAreaGrid2: layer.bestInactiveAreaGrid2,
+    bestEverAreaEliteFingerprint: layer.elite.bestEverAreaEliteFingerprint,
+    bestEverCountEliteFingerprint: layer.elite.bestEverCountEliteFingerprint,
+  }))
+if (JSON.stringify(populationHistory(population)) !== JSON.stringify(populationHistory(mode8))) {
+  throw new Error('macro compute-but-discard control changed the mode-3 population history')
+}
+if (
+  mode8.layers.some(
+    (layer) =>
+      layer.macroExpansion.admittedChildren !== 0 ||
+      layer.macroExpansion.retainedChildFingerprints.length !== 0,
+  )
+) {
+  throw new Error('macro control admitted or retained a treatment child')
+}
+const mode9RetainedNovel = mode9.layers.reduce(
+  (total, layer) => total + layer.macroExpansion.retainedChildFingerprints.length,
+  0,
+)
+if (mode9RetainedNovel === 0) {
+  throw new Error('macro treatment retained no novel depth-two child')
+}
+const mode8ByEntering = new Map(
+  mode8.layers.map((layer) => [layer.elite.enteringPopulationHash, layer]),
+)
+let sharedEnteringPopulations = 0
+for (const treatmentLayer of mode9.layers) {
+  const controlLayer = mode8ByEntering.get(treatmentLayer.elite.enteringPopulationHash)
+  if (!controlLayer) continue
+  sharedEnteringPopulations += 1
+  const controlMacro = structuredClone(controlLayer.macroExpansion)
+  const treatmentMacro = structuredClone(treatmentLayer.macroExpansion)
+  delete controlMacro.admittedChildren
+  delete treatmentMacro.admittedChildren
+  delete controlMacro.retainedChildFingerprints
+  delete treatmentMacro.retainedChildFingerprints
+  if (
+    controlLayer.elite.ordinaryChildOrderHash !==
+      treatmentLayer.elite.ordinaryChildOrderHash ||
+    controlLayer.elite.completeCandidateOrderHash !==
+      treatmentLayer.elite.completeCandidateOrderHash ||
+    JSON.stringify(controlLayer.elite.preCarryoverWork) !==
+      JSON.stringify(treatmentLayer.elite.preCarryoverWork) ||
+    JSON.stringify(controlMacro) !== JSON.stringify(treatmentMacro)
+  ) {
+    throw new Error('macro control and treatment differ before admission at a shared population')
+  }
+}
+if (sharedEnteringPopulations === 0) {
+  throw new Error('macro control and treatment share no entering population')
+}
+const controlBest = mode8.layers.at(-1).elite
+const treatmentBest = mode9.layers.at(-1).elite
+if (
+  treatmentBest.bestEverAreaEliteInactivePieceCount >
+    controlBest.bestEverAreaEliteInactivePieceCount ||
+  BigInt(treatmentBest.bestEverAreaEliteInactiveAreaGrid2) >=
+    BigInt(controlBest.bestEverAreaEliteInactiveAreaGrid2)
+) {
+  throw new Error('macro treatment did not preserve count and strictly improve inactive area')
+}
+process.stdout.write(
+  `persistent-vacancy portability: ok (${populationSha256}; ${mode9RetainedNovel} retained macro states)\n`,
+)

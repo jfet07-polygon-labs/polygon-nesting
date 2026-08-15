@@ -395,7 +395,25 @@ pub struct GeneralPersistentVacancyLayerDiagnostics {
     pub best_inactive_area_grid2: String,
     pub best_state_fingerprint: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub macro_expansion: Option<GeneralPersistentVacancyMacroExpansionDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub elite: Option<GeneralPersistentVacancyEliteLayerDiagnostics>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyMacroExpansionDiagnostics {
+    pub parent_state_fingerprint: String,
+    pub generated_children: usize,
+    pub child_order_hash: String,
+    pub novel_child_fingerprints: Vec<String>,
+    pub admitted_children: usize,
+    pub retained_child_fingerprints: Vec<String>,
+    pub direct_insertions: usize,
+    pub ejection_insertions: usize,
+    pub selected_piece_ids: Vec<String>,
+    pub parent_selection: GeneralPersistentVacancyParentSelectionDiagnostics,
+    pub work: GeneralPersistentVacancyWorkDiagnostics,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
