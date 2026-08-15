@@ -421,15 +421,19 @@ fn run_population(
         }
 
         let generated_children = children.len();
-        let ordinary_partial_fingerprints = children
-            .iter()
-            .map(|state| state_fingerprint(state, pieces))
-            .collect::<BTreeSet<_>>();
-        let effective_carryover_fingerprints = carryover_states
-            .iter()
-            .map(|state| state_fingerprint(state, pieces))
-            .filter(|fingerprint| !ordinary_partial_fingerprints.contains(fingerprint))
-            .collect::<BTreeSet<_>>();
+        let effective_carryover_fingerprints = if mode == 5 {
+            let ordinary_partial_fingerprints = children
+                .iter()
+                .map(|state| state_fingerprint(state, pieces))
+                .collect::<BTreeSet<_>>();
+            carryover_states
+                .iter()
+                .map(|state| state_fingerprint(state, pieces))
+                .filter(|fingerprint| !ordinary_partial_fingerprints.contains(fingerprint))
+                .collect::<BTreeSet<_>>()
+        } else {
+            BTreeSet::new()
+        };
         let pre_carryover_work =
             work_delta(generation_work_snapshot(work.diagnostics), layer_entry_work);
         if accepted_complete.is_none() {
@@ -457,11 +461,14 @@ fn run_population(
         if accepted_complete.is_none() {
             audit_state(&next[0], pieces, target_settings, false, work)?;
         }
-        let retained_carryover_fingerprints = next
-            .iter()
-            .map(|state| state_fingerprint(state, pieces))
-            .filter(|fingerprint| effective_carryover_fingerprints.contains(fingerprint))
-            .collect::<Vec<_>>();
+        let retained_carryover_fingerprints = if mode == 5 {
+            next.iter()
+                .map(|state| state_fingerprint(state, pieces))
+                .filter(|fingerprint| effective_carryover_fingerprints.contains(fingerprint))
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
         let (area_elite, count_elite) = population_elites(&next, pieces, &difficulty);
         let area_snapshot = elite_snapshot(area_elite, pieces, &difficulty);
         let count_snapshot = elite_snapshot(count_elite, pieces, &difficulty);
@@ -1826,22 +1833,32 @@ fn parent_seed_key(state: &VacancyState, pieces: &[GeneralFastPiece<'_>]) -> u64
 }
 
 fn state_digest(state: &VacancyState, pieces: &[GeneralFastPiece<'_>]) -> [u8; 32] {
-    let identity = state_identity(state);
     let mut digest = Sha256::new();
     digest.update(b"persistent-vacancy-state-v1\0");
-    digest.update((identity.active_placements.len() as u32).to_be_bytes());
-    for (index, angle, mirrored, x, y) in &identity.active_placements {
-        update_framed_id(&mut digest, pieces[*index].id);
+    let active_placement_count = state
+        .placements
+        .iter()
+        .filter(|placement| state.active[placement.input_index])
+        .count();
+    digest.update((active_placement_count as u32).to_be_bytes());
+    for (index, angle, mirrored, x, y) in state
+        .placements
+        .iter()
+        .filter(|placement| state.active[placement.input_index])
+        .map(placement_key)
+    {
+        update_framed_id(&mut digest, pieces[index].id);
         digest.update(angle.to_be_bytes());
-        digest.update([u8::from(*mirrored)]);
+        digest.update([u8::from(mirrored)]);
         digest.update(x.to_be_bytes());
         digest.update(y.to_be_bytes());
     }
-    digest.update((identity.inactive.len() as u32).to_be_bytes());
-    for index in &identity.inactive {
-        update_framed_id(&mut digest, pieces[*index].id);
+    let inactive_count = inactive_piece_count(state);
+    digest.update((inactive_count as u32).to_be_bytes());
+    for index in (0..state.active.len()).filter(|index| !state.active[*index]) {
+        update_framed_id(&mut digest, pieces[index].id);
     }
-    match &identity.last_transition {
+    match &state.last_transition {
         None => digest.update([0]),
         Some(transition) => {
             digest.update([1]);
