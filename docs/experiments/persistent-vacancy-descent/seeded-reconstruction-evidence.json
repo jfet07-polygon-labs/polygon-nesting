@@ -5,7 +5,7 @@
   "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
   "hypothesis": "the committed Sparrow 154.44858 mm calibration layout can seed a complete engine-contract-valid layout via mode-13 guided reconstruction, unlocking the demonstrated band for the descent ladder",
   "outcome": "REJECTED with a contract-level causal mechanism",
-  "mechanism": "the Sparrow layout is packed at 5.0 mm separation across the full 2000 mm width, while the engine's publication validators enforce totalPaddingMm + 2*sag = 5.5 mm pair separation and 5.25 mm boundary clearance; re-separating the same topology needs +0.5 mm per gap that width-saturated piece runs cannot supply. Guided reconstruction with displacement probes, upward shelf fallbacks, and a deferred second pass re-places at most 43 of 61 pieces even from a 12% depth-stretched hint field; the remaining pieces overflow every shelf at any probed target up to 172 mm",
+  "mechanism": "the Sparrow layout is packed at 5.0 mm separation across the full 2000 mm width, while the engine's publication validators enforce totalPaddingMm + 2*sag = 5.5 mm pair separation and 5.25 mm boundary clearance; re-separating the same topology needs +0.5 mm per gap that width-saturated piece runs cannot supply. Guided reconstruction with displacement probes, upward shelf fallbacks, and a completed deferred second pass places 39 of 61 pieces from the unstretched hint field (all 22 deferred pieces fail their retries) and 42 of 61 from a 12% depth-stretched field (all 19 deferred pieces fail), at probed targets up to 172 mm",
   "programLevelCorrection": "the 154-155 mm demonstrated band compares Sparrow's 5.0 mm contract against this engine's 5.5 mm contract and therefore overstates the reachable gap by an unmeasured amount; a contract-native upstream calibration at 5.5 mm separation is required before that band can gate promotion decisions",
   "hintFixture": {
     "path": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/sparrow-hints.json",
@@ -17,30 +17,108 @@
     {
       "label": "mode13 unstretched, target 168",
       "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/mode13-unstretched-t168.json",
-      "rawSha256": "86be277f3760122edb86e4b3d2f181a725a77fc1d12c4e665bf4edc57b081a94",
+      "rawSha256": "3ad821590a748d36cd2f364e71526957b61836eeea605f345aa94215906581fa",
       "insertions": 39,
       "deferredFirstPass": 22,
-      "failedPiece": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3"
+      "failedPieceCount": 22
     },
     {
       "label": "mode13 depth-stretch 1.12, target 172",
       "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/mode13-stretch1.12-t172.json",
-      "rawSha256": "0bebfa3387bac7d902bc6671cc7b70cdd366cc17136dba38196662c59fff2942",
+      "rawSha256": "2cc99dcc1bd99673fecfff11e18b100f29caf82fb3139178e4dba394dae87ab0",
       "insertions": 42,
       "deferredFirstPass": 19,
-      "failedPiece": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3"
+      "failedPieceCount": 19
     }
   ],
-  "probedMatrix": "stretch factors 1.0/1.04/1.08/1.12 at targets 158-172: best 43/61 pieces re-placed; every run failed closed with a structured reason; commands are the canonical benchmark invocation with MODE=13, the hint fixture, and the target",
+  "probedMatrix": "stretch factors 1.0/1.04/1.08/1.12 at targets 158-172: 37-43 of 61 pieces re-placed; the two committed screens use the completed-deferred-pass build whose diagnostics record the full unplaced set; every run failed closed with a structured reason",
   "nativeSeedPortfolio": {
     "hypothesis": "seed diversity of the unchanged pipeline might reach a basin near or below the frozen-parent chain on this machine",
-    "outcome": "REJECTED: independent depths for seeds 1-15 span 177.205-184.476 mm, all far above 168.277 mm",
+    "outcome": "REJECTED: independent depths for seeds 1-15 span 177.205-184.476 mm, all far above 168.277 mm; every raw output committed",
     "bestSeed": {
       "seed": 11,
       "independentDepthMm": 177.205,
       "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/native-seed11.json",
       "rawSha256": "a80e1b141fb8a13cb26e3f291e1f93e934794a9ad1476d809ac310235b8dc909"
     },
-    "command": "canonical benchmark command with relaxed-seed set to 1..15 and MODE=0"
-  }
+    "command": "canonical benchmark command with relaxed-seed set to 1..15 and MODE=0",
+    "runs": {
+      "seed1": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed1.json",
+        "rawSha256": "927941ef60c1d7fe5b946969682c424e182eea375d1c009f548c4021a4a7b6d3",
+        "independentDepthMm": 181.929
+      },
+      "seed2": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed2.json",
+        "rawSha256": "16d35698bc4da387168cbfd21c4c5805b4db7a84affab82f137447df6e7b4ded",
+        "independentDepthMm": 179.907
+      },
+      "seed3": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed3.json",
+        "rawSha256": "65d5cb51c9318592c905f787d8f3dc0b0735ef0eb63990c1e14a71298fad5fb1",
+        "independentDepthMm": 180.563
+      },
+      "seed4": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed4.json",
+        "rawSha256": "7deb32abd31d1195f8fb4c0cb37cbac397764d5661f9bed91a8b8207ebf71f92",
+        "independentDepthMm": 184.476
+      },
+      "seed5": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed5.json",
+        "rawSha256": "17aef356c2da11ce00688e071ea9b9f26f221c986870eaeb1881f2fb1ab342e1",
+        "independentDepthMm": 182.666
+      },
+      "seed6": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed6.json",
+        "rawSha256": "15115d94a0c2d19f88185b63c3f74efa7dedddf75e29e4b724790a70277f05dd",
+        "independentDepthMm": 181.941
+      },
+      "seed7": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed7.json",
+        "rawSha256": "add683225036f100f4a07f8ad2ca4ddb040185776e0425dc51b4ac5da6025618",
+        "independentDepthMm": 182.034
+      },
+      "seed8": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed8.json",
+        "rawSha256": "9d588b951686679895abdcf3e708d326425affe84f16945df786cff42dfb593a",
+        "independentDepthMm": 182.078
+      },
+      "seed9": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed9.json",
+        "rawSha256": "73ee5dd5eca234779569b7e8ea0ca7837889394514e4be884115e2376cf5d7a2",
+        "independentDepthMm": 181.952
+      },
+      "seed10": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed10.json",
+        "rawSha256": "de90507fe8cd7f126e3450f72ac9cf761f52a1e6d506cf63e1d0306d40eb9ca0",
+        "independentDepthMm": 182.079
+      },
+      "seed11": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed11.json",
+        "rawSha256": "a80e1b141fb8a13cb26e3f291e1f93e934794a9ad1476d809ac310235b8dc909",
+        "independentDepthMm": 177.205
+      },
+      "seed12": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed12.json",
+        "rawSha256": "8f8b33a63d343bdaa3e8984bc1c6f1851e488a57e3782bff61783948afd5bf37",
+        "independentDepthMm": 182.03
+      },
+      "seed13": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed13.json",
+        "rawSha256": "cd881e842a87fd8592b4f777457cfe5c4b6d59248d1428bbfcd71343c1183f58",
+        "independentDepthMm": 178.441
+      },
+      "seed14": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed14.json",
+        "rawSha256": "6ed4b18128118f8229b769e253146d9a4ab12af869ce14e224f46f01e413a543",
+        "independentDepthMm": 181.977
+      },
+      "seed15": {
+        "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/seed-portfolio/seed15.json",
+        "rawSha256": "8379f02840fb72c7ccbbe029c216c25d84d310af10b699db79e5228e9d9fb5e4",
+        "independentDepthMm": 180.514
+      }
+    }
+  },
+  "determinismNote": "mode-13 candidate generation quantizes platform trigonometry onto the canonical grid like the rest of the engine; replay identity is promised only on the recorded machine/toolchain identity"
 }

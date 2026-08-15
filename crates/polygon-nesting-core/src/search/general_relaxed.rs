@@ -388,6 +388,7 @@ pub struct GeneralPersistentVacancyReconstructionDiagnostics {
     pub deferred_first_pass: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failed_piece_id: Option<String>,
+    pub failed_piece_count: usize,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]

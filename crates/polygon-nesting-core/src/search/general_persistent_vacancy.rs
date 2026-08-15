@@ -43,7 +43,7 @@ const SETTLE_SELECTED_PIECE_SLOTS: usize = SETTLE_SWEEPS * 61;
 // Mode 13 rebuilds the layout from an external hint fixture: one guided
 // insertion per piece, ranked by grid distance to the hint pose, with at most
 // RECONSTRUCTION_ROWS_PER_PIECE exact confirmations per piece.
-const RECONSTRUCTION_SELECTED_PIECE_SLOTS: usize = 61;
+const RECONSTRUCTION_SELECTED_PIECE_SLOTS: usize = 2 * 61;
 const RECONSTRUCTION_ROWS_PER_PIECE: usize = 192;
 const ORDINARY_SELECTED_PIECE_SLOTS: usize = MAX_LAYERS * BEAM_WIDTH * SELECTED_PIECES_PER_PARENT;
 const ARCHIVE_SELECTED_PIECE_SLOTS: usize = MAX_ARCHIVE_REVIVALS * SELECTED_PIECES_PER_PARENT;
@@ -1218,8 +1218,12 @@ fn settle_baseline(
 /// first pose with full-strip containment and zero exact pair intersection
 /// against every already-placed piece. Pieces whose pockets are closed
 /// during the first pass are deferred and retried after every other piece
-/// has settled. The hints are never trusted: the completed state must pass
-/// the unchanged dual publication audit.
+/// has settled; the deferred pass completes every retry before failing so
+/// the diagnostics record the true unplaced set. The hints are never
+/// trusted: the completed state must pass the unchanged dual publication
+/// audit. Like the rest of the engine, candidate generation quantizes
+/// platform trigonometry onto the canonical grid, so replay identity is
+/// promised only on the recorded machine/toolchain identity.
 fn reconstruct_from_hints(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
@@ -1258,6 +1262,7 @@ fn reconstruct_from_hints(
         rows_per_piece_cap: RECONSTRUCTION_ROWS_PER_PIECE,
         deferred_first_pass: 0,
         failed_piece_id: None,
+        failed_piece_count: 0,
     };
     let mut deferred = Vec::new();
     for (ordinal, piece_index) in order.into_iter().enumerate() {
@@ -1280,6 +1285,7 @@ fn reconstruct_from_hints(
     // Deferred second pass: pieces whose hint pockets were closed during the
     // first pass retry after every other piece has settled, when the shelf
     // region and any reopened pockets are maximally available.
+    let mut still_failed = Vec::new();
     for (retry_ordinal, piece_index) in deferred.into_iter().enumerate() {
         let placed = reconstruct_insert_piece(
             pieces,
@@ -1293,13 +1299,18 @@ fn reconstruct_from_hints(
             work,
         )?;
         if !placed {
-            recon.failed_piece_id = Some(pieces[piece_index].id.to_owned());
-            diagnostics.reconstruction = Some(recon.clone());
-            return Err(format!(
-                "seeded reconstruction found no exact-valid pose for piece {} within {} exact rows",
-                pieces[piece_index].id, RECONSTRUCTION_ROWS_PER_PIECE
-            ));
+            still_failed.push(pieces[piece_index].id.to_owned());
         }
+    }
+    if let Some(first_failed) = still_failed.first() {
+        recon.failed_piece_id = Some(first_failed.clone());
+        recon.failed_piece_count = still_failed.len();
+        diagnostics.reconstruction = Some(recon.clone());
+        return Err(format!(
+            "seeded reconstruction left {} pieces without an exact-valid pose after the deferred pass, first {}",
+            still_failed.len(),
+            first_failed
+        ));
     }
     diagnostics.reconstruction = Some(recon.clone());
     diagnostics.complete_states = diagnostics.complete_states.saturating_add(1);
@@ -1333,8 +1344,13 @@ fn reconstruct_insert_piece(
         return Err(work.cap("selected-piece slot budget exhausted"));
     }
     work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
+    // Conservative fixed bound for the per-attempt transient buffers
+    // (candidate rows, shelf poses, ranked vector, bucket set); they are
+    // structurally bounded far below this figure.
+    const RECONSTRUCTION_TRANSIENT_BYTES: usize = 96 * 1024;
     let live_bytes = state_slice_bytes(std::slice::from_ref(state))
-        .saturating_add(2usize.saturating_mul(size_of::<VacancyState>()));
+        .saturating_add(2usize.saturating_mul(size_of::<VacancyState>()))
+        .saturating_add(RECONSTRUCTION_TRANSIENT_BYTES);
     work.diagnostics.total_retained_peak_bytes =
         work.diagnostics.total_retained_peak_bytes.max(live_bytes);
     if live_bytes > MAX_RETAINED_BYTES {
@@ -4096,31 +4112,31 @@ mod tests {
         assert_eq!(ORDINARY_SELECTED_PIECE_SLOTS, 640);
         assert_eq!(ARCHIVE_SELECTED_PIECE_SLOTS, 26);
         assert_eq!(SETTLE_SELECTED_PIECE_SLOTS, 3 * 61);
-        assert_eq!(RECONSTRUCTION_SELECTED_PIECE_SLOTS, 61);
+        assert_eq!(RECONSTRUCTION_SELECTED_PIECE_SLOTS, 2 * 61);
         assert_eq!(POPULATION_SELECTED_PIECE_SLOTS, 640 + 26);
-        assert_eq!(MAX_SELECTED_PIECE_SLOTS, 640 + 26 + 183 + 61);
-        assert_eq!(MAX_ORIENTATION_STREAMS, (640 + 26 + 183 + 61) * 12);
+        assert_eq!(MAX_SELECTED_PIECE_SLOTS, 640 + 26 + 183 + 122);
+        assert_eq!(MAX_ORIENTATION_STREAMS, (640 + 26 + 183 + 122) * 12);
         assert_eq!(
             MAX_POSITION_SOURCE_ATTEMPTS,
-            (640 + 26 + 183 + 61) * 12 * 529
+            (640 + 26 + 183 + 122) * 12 * 529
         );
-        assert_eq!(MAX_RETURNED_POSITIONS, (640 + 26 + 183 + 61) * 12 * 32);
-        assert_eq!(MAX_HAZARD_QUERIES, (640 + 26 + 183 + 61) * 12 * 32);
+        assert_eq!(MAX_RETURNED_POSITIONS, (640 + 26 + 183 + 122) * 12 * 32);
+        assert_eq!(MAX_HAZARD_QUERIES, (640 + 26 + 183 + 122) * 12 * 32);
         assert_eq!(
             MAX_PROXY_PRESSURE_VISITS,
-            (640 + 26 + 183 + 61) * 12 * 32 * 61
+            (640 + 26 + 183 + 122) * 12 * 32 * 61
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 61 * 192
+            (640 + 26) * 8 + 183 * 64 + 122 * 192
         );
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
-            2 * 61 + (640 + 26 + 183 + 61) * 12 + ((640 + 26) * 8 + 183 * 64 + 61 * 192) + 61
+            2 * 61 + (640 + 26 + 183 + 122) * 12 + ((640 + 26) * 8 + 183 * 64 + 122 * 192) + 122
         );
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
-            1_830 + ((640 + 26) * 8 + 183 * 64 + 61 * 192) * 60
+            1_830 + ((640 + 26) * 8 + 183 * 64 + 122 * 192) * 60
         );
         assert_eq!(MAX_VALIDATOR_COLLISION_BUILDS, 105 * 122);
         assert_eq!(MAX_VALIDATOR_PAIR_VISITS, 105 * 3_660);

@@ -52,6 +52,7 @@ def main():
         "docs",
         "experiments",
         "persistent-vacancy-descent",
+        "seeded-reconstruction",
         "sparrow-hints.json",
     )
     request = json.load(open(REQUEST))
