@@ -1,0 +1,50 @@
+[
+  {
+    "hop": 0,
+    "targetDepthMm": 168.55,
+    "independentDepthMm": 168.291,
+    "placementFingerprint": "cc0a700bd5e5474a6cff4fc692366116a6b1db7d6ebec419125df440da2f1a07",
+    "settleAcceptedMoves": 66,
+    "populationLayers": 0,
+    "rawOutput": "hop000-t168.550.json",
+    "rawOutputSha256": "045108a34d243b9448e26df8b506a784696219f61853969b58a0e42037b20b71",
+    "parentFixture": "parent-hop000.json",
+    "parentFixtureSha256": "6add69600c40b1b14e3237377694b4369870892b6505c5583427a87188f641d5"
+  },
+  {
+    "hop": 1,
+    "targetDepthMm": 168.544,
+    "independentDepthMm": 168.291,
+    "placementFingerprint": "4fba3dba8d90219983d93fa4e32e352898ad4d01c19cb05165fe3c1bbd0504d6",
+    "settleAcceptedMoves": 0,
+    "populationLayers": 2,
+    "rawOutput": "hop001-t168.544.json",
+    "rawOutputSha256": "9e042de4c6226073eeb971a4f09620836e7435c7fe6f7d63e15ee8c9b00435ec",
+    "parentFixture": "parent-hop001.json",
+    "parentFixtureSha256": "9deaa410b4f0422b6ce5d9ab79fe16651e3f480ed31fe92c83fb87880b107cb3"
+  },
+  {
+    "hop": 2,
+    "targetDepthMm": 168.538,
+    "independentDepthMm": 168.277,
+    "placementFingerprint": "bf8d8e4a4bddbb734f26bcb39f4256398d827d2c9c53898308b31334693c17e1",
+    "settleAcceptedMoves": 2,
+    "populationLayers": 0,
+    "rawOutput": "hop002-t168.538.json",
+    "rawOutputSha256": "ee6d8fb3c30bfb965424a0b42d45947d469ecc19a21823804be413a747d42e29",
+    "parentFixture": "parent-hop002.json",
+    "parentFixtureSha256": "d16262ac703cb2637dc9f683031f325e4d9bd2863b22a185617219198497bd10"
+  },
+  {
+    "hop": 3,
+    "targetDepthMm": 168.532,
+    "independentDepthMm": 168.277,
+    "placementFingerprint": "bf8d8e4a4bddbb734f26bcb39f4256398d827d2c9c53898308b31334693c17e1",
+    "settleAcceptedMoves": 0,
+    "populationLayers": 0,
+    "rawOutput": "hop003-t168.532.json",
+    "rawOutputSha256": "cbf72b702aa3168190228963a2f8a5758ebd24699d621b177d3b3f6395d37cd5",
+    "parentFixture": "parent-hop003.json",
+    "parentFixtureSha256": "f83c0cf2fb642d17f4285ee549206e9a73d2c3942a1b03303a392a545a97e178"
+  }
+]

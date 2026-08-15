@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "experiment": "persistent-vacancy-descending-target-contraction",
+  "recordedAtUtc": "2026-08-15T00:00:00Z",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "rootParent": {
+    "fixture": "tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+    "placementFingerprint": "b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5",
+    "independentDepthMm": 168.361
+  },
+  "result": {
+    "independentDepthMm": 168.277,
+    "placedCount": 61,
+    "strictlyBelowProtectedEndpoint": true,
+    "depthGainMm": 0.084,
+    "finalPlacementFingerprint": "bf8d8e4a4bddbb734f26bcb39f4256398d827d2c9c53898308b31334693c17e1",
+    "finalLayoutFixture": "docs/experiments/persistent-vacancy-descent/chain/parent-hop003.json",
+    "validation": "every hop passed both unchanged publication gates (canonical grid validation and the independent source-ring validator); independentDepthMm is the independent source-based measurement"
+  },
+  "driver": "docs/experiments/persistent-vacancy-descent/run-descent.py",
+  "replayTargetSequence": [
+    168.55,
+    168.45,
+    168.45,
+    168.5,
+    168.525,
+    168.538,
+    168.544,
+    168.538,
+    168.526,
+    168.526,
+    168.532,
+    168.526,
+    168.526,
+    168.527
+  ],
+  "replayCommand": "python3 docs/experiments/persistent-vacancy-descent/run-descent.py OUTPUT_DIR --targets 168.55,168.45,168.45,168.50,168.525,168.538,168.544,168.538,168.526,168.526,168.532,168.526,168.526,168.527 --require-hops 4 --require-final-depth 168.277",
+  "replayFailsClosed": "the driver exits nonzero when the required hop count or final depth is not reproduced",
+  "chain": [
+    {
+      "hop": 0,
+      "targetDepthMm": 168.55,
+      "independentDepthMm": 168.291,
+      "placementFingerprint": "cc0a700bd5e5474a6cff4fc692366116a6b1db7d6ebec419125df440da2f1a07",
+      "settleAcceptedMoves": 66,
+      "populationLayers": 0,
+      "rawOutput": "hop000-t168.550.json",
+      "rawOutputSha256": "045108a34d243b9448e26df8b506a784696219f61853969b58a0e42037b20b71",
+      "parentFixture": "parent-hop000.json",
+      "parentFixtureSha256": "6add69600c40b1b14e3237377694b4369870892b6505c5583427a87188f641d5"
+    },
+    {
+      "hop": 1,
+      "targetDepthMm": 168.544,
+      "independentDepthMm": 168.291,
+      "placementFingerprint": "4fba3dba8d90219983d93fa4e32e352898ad4d01c19cb05165fe3c1bbd0504d6",
+      "settleAcceptedMoves": 0,
+      "populationLayers": 2,
+      "rawOutput": "hop001-t168.544.json",
+      "rawOutputSha256": "9e042de4c6226073eeb971a4f09620836e7435c7fe6f7d63e15ee8c9b00435ec",
+      "parentFixture": "parent-hop001.json",
+      "parentFixtureSha256": "9deaa410b4f0422b6ce5d9ab79fe16651e3f480ed31fe92c83fb87880b107cb3"
+    },
+    {
+      "hop": 2,
+      "targetDepthMm": 168.538,
+      "independentDepthMm": 168.277,
+      "placementFingerprint": "bf8d8e4a4bddbb734f26bcb39f4256398d827d2c9c53898308b31334693c17e1",
+      "settleAcceptedMoves": 2,
+      "populationLayers": 0,
+      "rawOutput": "hop002-t168.538.json",
+      "rawOutputSha256": "ee6d8fb3c30bfb965424a0b42d45947d469ecc19a21823804be413a747d42e29",
+      "parentFixture": "parent-hop002.json",
+      "parentFixtureSha256": "d16262ac703cb2637dc9f683031f325e4d9bd2863b22a185617219198497bd10"
+    },
+    {
+      "hop": 3,
+      "targetDepthMm": 168.532,
+      "independentDepthMm": 168.277,
+      "placementFingerprint": "bf8d8e4a4bddbb734f26bcb39f4256398d827d2c9c53898308b31334693c17e1",
+      "settleAcceptedMoves": 0,
+      "populationLayers": 0,
+      "rawOutput": "hop003-t168.532.json",
+      "rawOutputSha256": "cbf72b702aa3168190228963a2f8a5758ebd24699d621b177d3b3f6395d37cd5",
+      "parentFixture": "parent-hop003.json",
+      "parentFixtureSha256": "f83c0cf2fb642d17f4285ee549206e9a73d2c3942a1b03303a392a545a97e178"
+    }
+  ],
+  "chainWallSeconds": 49.31,
+  "chainPeakResidentSetBytes": 39079936,
+  "settleTelemetryHop0": {
+    "sweeps": 3,
+    "attempts": 183,
+    "acceptedMoves": 66,
+    "exactRows": 2185,
+    "orientationStreamsCharged": 183,
+    "totalRetainedPeakBytes": 21114
+  },
+  "determinism": {
+    "replays": 2,
+    "perHopNormalizedSha256": {
+      "hop000": "ded35f7119d36e4274e24f5891817a1430d68cc5cbb67fd040f9a9c829c18b04",
+      "hop001": "73f9da8d91ee2de26aed667fbc25de09f8546482c0274d3810a41cfe08b67bff",
+      "hop002": "ba6c6e64a38223b451a3f19b62496cd590642f978aee7c9e23536a5b832f57d6",
+      "hop003": "43afb765e804380de3d6130aeeaf186ca840c90ddc57e512515962a5d9f98821"
+    },
+    "normalization": "timing projection plus nulling quota.persistentVacancyParentFixture.path and persistentVacancyPopulation.parentSource (absolute fixture paths are recorded verbatim; content identity is pinned by the fixture SHA-256 embedded in parentSource)",
+    "note": "both replays produced byte-identical per-hop outputs under this projection and identical chain.json apart from raw output hashes that embed the output directory path"
+  },
+  "settlingContract": "endpoint-exact re-placement, not swept motion: near-tangent neighbors can form forbidden bands thinner than one 0.512 mm step, so a probe may land beyond a band no continuous slide could cross, matching the discontinuous relocation semantics of every other operator in this experiment; validity rests on the per-probe exact gates and the final dual publication audit",
+  "negativeScreens": {
+    "mode9PopulationOnly": "no completion at any probed target from 168.62 down to 168.1; two offenders churn without homes even at a 0.005 mm contraction",
+    "mode10BlockerRelocation": "no completion; final inactive count no better than mode 9",
+    "mode11LateralSettleVariant": "bottom-left ladder rejected: it loses the completions the vertical ladder achieves",
+    "mode12SettlePlusRelocation": "does not break the 168.526 stall (settle slack exhausted, population plateaus at 1-2 inactive)"
+  },
+  "provenance": {
+    "engineCommit": "e7d733212b989d570ab65397f76fb6421a26f0b2",
+    "engineWorktreeDirty": false,
+    "executableSha256": "683ba8fe4de67b8cfbe5395268ebb8e532b893f7aee6f1b3faf3297efa4c2824",
+    "relevantSourceTreeSha256": "4cc6d42520a31a982f90f487eae803d0365ddfefba77a6f04c0ee09be4b16e54",
+    "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+    "targetArchitecture": "x86_64",
+    "targetOperatingSystem": "linux",
+    "machineArchitecture": "x86_64",
+    "requestedThreads": 8,
+    "actualThreads": 8,
+    "rustflags": null,
+    "buildProfile": "release",
+    "cpuModel": "Intel(R) Core(TM) Ultra 7 270K Plus",
+    "rustcVersion": "rustc 1.97.1 (8bab26f4f 2026-07-14)"
+  },
+  "gates": {
+    "everyHopDualGateValid": true,
+    "perHopWallSecondsUnder": 4.0,
+    "chainWallSecondsTotal": 49.31,
+    "peakResidentSetBytesUnder": 67108864,
+    "note": "each hop is one deterministic cold engine invocation within the same wall/RSS envelope as the frozen screens; the chain total is offline orchestration cost, reported explicitly as a time/quality trade-off rather than a single-run product claim"
+  },
+  "honestLimits": [
+    "the gain over the protected endpoint is 0.084 mm; the operator family (insertion/ejection population, blocker relocation, vertical exact settling) is exhausted at target 168.526 on this parent",
+    "the result is a chained multi-run artifact, not a single 6-second engine run; per-hop determinism and validity are machine-checkable from the committed artifacts",
+    "approaching the demonstrated 154-155 mm band requires topology-scale rearrangement, not micro-moves"
+  ]
+}

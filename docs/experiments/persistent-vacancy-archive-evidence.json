@@ -41,10 +41,10 @@
     "note": "identical hash from the unmodified checkpoint build and this branch's build on this machine; the Apple-platform stable projection f51f8d4e... is platform-bound and is not reproducible on x86_64 (documented replay-identity limitation, not a regression)"
   },
   "provenance": {
-    "engineCommit": "38677842bd0736f7878fe3a26b0a110a1e92f2b1",
+    "engineCommit": "e7d733212b989d570ab65397f76fb6421a26f0b2",
     "engineWorktreeDirty": false,
-    "executableSha256": "7e05818b855112ff9f68fceaf324c983aafd2bca64bf8d10a42528e1adccc51c",
-    "relevantSourceTreeSha256": "7877cd1f2757e7f4d70ebd021428b57b65375c482f4a163bb946649c9726b5c6",
+    "executableSha256": "683ba8fe4de67b8cfbe5395268ebb8e532b893f7aee6f1b3faf3297efa4c2824",
+    "relevantSourceTreeSha256": "4cc6d42520a31a982f90f487eae803d0365ddfefba77a6f04c0ee09be4b16e54",
     "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
     "targetArchitecture": "x86_64",
     "targetOperatingSystem": "linux",
@@ -58,60 +58,60 @@
   },
   "runs": {
     "mode0-r1": {
-      "rawSha256": "1b7d2a2ffaed3df6c6a1c9f7bbe94e1e5f99b91765d0fb7ed6ce193d2a184fe2",
-      "normalizedSha256": "3e1b75483b299c7fe4758c8f61097fef8c6de874a3bdb2adcebab9b3d2eb630e",
-      "engineMedianElapsedMs": 2570.897852,
-      "wallSeconds": 2.6,
-      "maximumResidentSetBytes": 37924864
+      "rawSha256": "a15f54c8be3a3574e102100d82460b0210b91e11924e8a72a0343707c12a4e1a",
+      "normalizedSha256": "564e4bae2d9737d49d259668a2b0ea00cbc57302dca73b82fbc68e1b8d95827c",
+      "engineMedianElapsedMs": 2579.403177,
+      "wallSeconds": 2.61,
+      "maximumResidentSetBytes": 38051840
     },
     "mode0-r2": {
-      "rawSha256": "6989ff52ed4c84f022cd576d83a69bf59d9e22ad5b7de35967b826c171633881",
-      "normalizedSha256": "3e1b75483b299c7fe4758c8f61097fef8c6de874a3bdb2adcebab9b3d2eb630e",
-      "engineMedianElapsedMs": 2544.163607,
-      "wallSeconds": 2.57,
-      "maximumResidentSetBytes": 37916672
+      "rawSha256": "26bc501845aeafa76e455bdd5f8bc9f30d3af4a3b3dc7eb8b196e887e8422458",
+      "normalizedSha256": "564e4bae2d9737d49d259668a2b0ea00cbc57302dca73b82fbc68e1b8d95827c",
+      "engineMedianElapsedMs": 2574.913848,
+      "wallSeconds": 2.6,
+      "maximumResidentSetBytes": 38060032
     },
     "mode3-r1": {
-      "rawSha256": "bda79685fd56140107533ff101c9d4b8a8e28cab5947210b03573ff959105000",
-      "normalizedSha256": "8269ace8c12056d0496d2f857bf2667b799777d65ddd90c770b93f92ea947216",
-      "engineMedianElapsedMs": 3606.042694,
-      "wallSeconds": 3.64,
-      "maximumResidentSetBytes": 38944768
+      "rawSha256": "7fc017ba01140daf021f37b7c14eee30b7b2ddc9d84434c18365f30970aaea82",
+      "normalizedSha256": "e406ac56bcfaaab6211e35db718dc8d7a50a6d9a5c5e282bc1b06ea8f2d08da8",
+      "engineMedianElapsedMs": 3640.19548,
+      "wallSeconds": 3.67,
+      "maximumResidentSetBytes": 38686720
     },
     "mode3-r2": {
-      "rawSha256": "d78d84f617d231ca357dea9b6e8db5a436bc469d176c765b53ecd612324df7b4",
-      "normalizedSha256": "8269ace8c12056d0496d2f857bf2667b799777d65ddd90c770b93f92ea947216",
-      "engineMedianElapsedMs": 3603.965991,
-      "wallSeconds": 3.63,
-      "maximumResidentSetBytes": 38793216
+      "rawSha256": "dd10c3f2fa5ea2a2b88b294085dc0f2440a4afae7d14fa3adf502aa6effd1e0f",
+      "normalizedSha256": "e406ac56bcfaaab6211e35db718dc8d7a50a6d9a5c5e282bc1b06ea8f2d08da8",
+      "engineMedianElapsedMs": 3617.832493,
+      "wallSeconds": 3.65,
+      "maximumResidentSetBytes": 39186432
     },
     "mode7-r1": {
-      "rawSha256": "b6cbac14195260bbb8ee106823135344a8030540aa458a3a779b12adbe329115",
-      "normalizedSha256": "7f4f3c22f3355469dd1e65e2ce4303f557c8bbdb3c74d2f73a83b267dce2fd30",
-      "engineMedianElapsedMs": 3628.4162850000002,
-      "wallSeconds": 3.66,
-      "maximumResidentSetBytes": 39260160
+      "rawSha256": "4d8a9aa88d1e61fba72a97755aad9cc88d83cd429c248be3e36252c31b8956a9",
+      "normalizedSha256": "d9a0e476bcf47d3583b3e0475685854489ad156818722328926ed57d9c4272ec",
+      "engineMedianElapsedMs": 3637.190642,
+      "wallSeconds": 3.67,
+      "maximumResidentSetBytes": 39141376
     },
     "mode7-r2": {
-      "rawSha256": "7bae5446b9ba591e0da8fb453aaee6b765e2aaa25775aab2052212ccf72c1c57",
-      "normalizedSha256": "7f4f3c22f3355469dd1e65e2ce4303f557c8bbdb3c74d2f73a83b267dce2fd30",
-      "engineMedianElapsedMs": 3583.4694360000003,
-      "wallSeconds": 3.61,
-      "maximumResidentSetBytes": 39313408
+      "rawSha256": "0dcac31833e41af3d4104c77f18946a0855cea29a44fd733cb02b51dcdf3d89f",
+      "normalizedSha256": "d9a0e476bcf47d3583b3e0475685854489ad156818722328926ed57d9c4272ec",
+      "engineMedianElapsedMs": 3594.8665909999995,
+      "wallSeconds": 3.63,
+      "maximumResidentSetBytes": 39337984
     },
     "mode8-r1": {
-      "rawSha256": "2553909993c7dce5a7dadc31d8d7fd27a67bf110e76c2664c86cdf52e565a305",
-      "normalizedSha256": "008cbb8555efdfb370dc0ebf25b546b08711cf909908ef6ced27c2d9686513c8",
-      "engineMedianElapsedMs": 3612.90224,
-      "wallSeconds": 3.65,
-      "maximumResidentSetBytes": 38907904
+      "rawSha256": "a3801a8999130024879c888634ee79aa9c90c791015b29e9ffb3fd32a127d4eb",
+      "normalizedSha256": "6610da647957304e0dcdef8d09994d899738fc2a094453b5487c652f62a93250",
+      "engineMedianElapsedMs": 3601.9327690000005,
+      "wallSeconds": 3.63,
+      "maximumResidentSetBytes": 38985728
     },
     "mode8-r2": {
-      "rawSha256": "55d920ac634173b04a39aaae1ce6a1485606225a78d03f73ee717aacc27aad29",
-      "normalizedSha256": "008cbb8555efdfb370dc0ebf25b546b08711cf909908ef6ced27c2d9686513c8",
-      "engineMedianElapsedMs": 3610.021508,
-      "wallSeconds": 3.64,
-      "maximumResidentSetBytes": 39067648
+      "rawSha256": "a6df34a91e04c745f5f98116bb4413115582668426d28824f888b11152bb5423",
+      "normalizedSha256": "6610da647957304e0dcdef8d09994d899738fc2a094453b5487c652f62a93250",
+      "engineMedianElapsedMs": 3587.3438,
+      "wallSeconds": 3.61,
+      "maximumResidentSetBytes": 38948864
     }
   },
   "rawOutputs": {
@@ -204,7 +204,7 @@
         "exactFinalistRows": 5008,
         "hazardQueries": 240384,
         "partialAudits": 41,
-        "totalRetainedPeakBytes": 1355896
+        "totalRetainedPeakBytes": 1361330
       }
     },
     "mode7": {
@@ -223,7 +223,7 @@
         "exactFinalistRows": 5072,
         "hazardQueries": 243456,
         "partialAudits": 41,
-        "totalRetainedPeakBytes": 1440591
+        "totalRetainedPeakBytes": 1442620
       },
       "revivals": {
         "expanded": 4,
@@ -249,7 +249,7 @@
         "exactFinalistRows": 5008,
         "hazardQueries": 240384,
         "partialAudits": 41,
-        "totalRetainedPeakBytes": 1384483
+        "totalRetainedPeakBytes": 1386606
       },
       "revivals": {
         "expanded": 4,
@@ -287,5 +287,6 @@
     ],
     "closedByThisScreen": [],
     "nextExperiment": "the archive preserves but does not extend: successor generation from the revived elite reuses the same insertion/ejection operator that plateaued at 11 inactive pieces. The next causal variable is a materially different transition from archived states, for example bounded multi-piece remove/reinsert around the inactive pieces' blocker neighborhoods, or coupling the archive to a relocation-capable operator, with modes 7/8 as the control"
-  }
+  },
+  "refreshNote": "Re-run at the descent-lane commit with the adversarial-review accounting fixes: semantic trajectories, layer identities, decision-relevant work counters, and every gate outcome are identical to the original screen at commit 3867784; only memory-accounting values changed because later modes grew two diagnostic structs and the archive byte accounting was corrected (heap-only archive rows, parent-source and archive strings included, archived transition buffers included)."
 }
