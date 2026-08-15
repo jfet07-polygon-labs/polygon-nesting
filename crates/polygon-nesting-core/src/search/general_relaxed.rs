@@ -209,6 +209,7 @@ pub struct GeneralRelaxedSettings {
     pub coupled_dynamic_separator: bool,
     pub precompression_frontier_vacancy_mode: usize,
     pub persistent_vacancy_mode: usize,
+    pub persistent_vacancy_target_depth_mm: Option<f64>,
 }
 
 impl GeneralRelaxedSettings {
@@ -231,6 +232,7 @@ impl GeneralRelaxedSettings {
             coupled_dynamic_separator: false,
             precompression_frontier_vacancy_mode: 0,
             persistent_vacancy_mode: 0,
+            persistent_vacancy_target_depth_mm: None,
         }
     }
 
@@ -347,6 +349,8 @@ pub struct GeneralPersistentVacancyDiagnostics {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent_source: Option<String>,
     pub parent_fingerprint: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent_independent_depth_mm: Option<f64>,
     pub initial_state_fingerprint: Option<String>,
     pub initial_active_piece_ids: Vec<String>,
     pub initial_inactive_piece_ids: Vec<String>,
@@ -366,9 +370,22 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub work: GeneralPersistentVacancyWorkDiagnostics,
     pub layers: Vec<GeneralPersistentVacancyLayerDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub settle: Option<GeneralPersistentVacancySettleDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub archive: Option<GeneralPersistentVacancyArchiveDiagnostics>,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancySettleDiagnostics {
+    pub sweeps: usize,
+    pub attempts: usize,
+    pub accepted_moves: usize,
+    pub exact_rows: usize,
+    pub frontier_before_grid: i64,
+    pub frontier_after_grid: i64,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
@@ -487,6 +504,8 @@ pub struct GeneralPersistentVacancyParentSelectionDiagnostics {
     pub transition_seed: u64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub revived: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub relocated_piece_id: Option<String>,
     pub slots: Vec<GeneralPersistentVacancySelectionSlotDiagnostics>,
 }
 

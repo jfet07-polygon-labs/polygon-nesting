@@ -102,7 +102,7 @@ struct OwnedPiece {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut arguments = env::args().skip(1);
     let request_path = arguments.next().ok_or(
-        "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy] [persistent-vacancy-parent-fixture]",
+        "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy] [persistent-vacancy-parent-fixture] [persistent-vacancy-target-depth-mm]",
     )?;
     let runs = parse_optional(&mut arguments, 1)?;
     let order_variants = parse_optional(&mut arguments, 1)?;
@@ -165,10 +165,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if persistent_vacancy_mode > 8 {
-        return Err("persistent vacancy mode must be 0, 1, 2, 3, 4, 5, 6, 7, or 8".into());
+    if persistent_vacancy_mode > 12 {
+        return Err("persistent vacancy mode must be between 0 and 12".into());
     }
     let persistent_vacancy_parent_fixture = arguments.next();
+    let persistent_vacancy_target_depth_mm = arguments
+        .next()
+        .map(|value| value.parse::<f64>())
+        .transpose()
+        .map_err(|error| format!("persistent vacancy target depth: {error}"))?;
     if runs == 0 || arguments.next().is_some() {
         return Err("runs must be positive and no extra arguments are accepted".into());
     }
@@ -335,6 +340,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 relaxed_settings.precompression_frontier_vacancy_mode =
                     precompression_frontier_vacancy_mode;
                 relaxed_settings.persistent_vacancy_mode = persistent_vacancy_mode;
+                relaxed_settings.persistent_vacancy_target_depth_mm =
+                    persistent_vacancy_target_depth_mm;
                 let outcome = improve_complete_layout_with_pinned_vacancy_parent(
                     &pieces,
                     settings,
@@ -595,6 +602,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "path": pinned.source,
             "sha256": pinned.source_sha256,
         });
+    }
+    if let Some(target) = persistent_vacancy_target_depth_mm {
+        output["quota"]["persistentVacancyTargetDepthMm"] = json!(target);
     }
     println!("{}", serde_json::to_string_pretty(&output)?);
     Ok(())

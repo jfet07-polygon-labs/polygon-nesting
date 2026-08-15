@@ -29,10 +29,23 @@ const ARCHIVE_STAGNATION_LAYERS: usize = 3;
 const ARCHIVE_REVIVAL_COOLDOWN: usize = 3;
 const MAX_ARCHIVE_REVIVALS: usize =
     1 + (MAX_LAYERS - 1 - ARCHIVE_STAGNATION_LAYERS) / ARCHIVE_REVIVAL_COOLDOWN;
+// Mode 11 runs a translation-only exact settling prelude before the target
+// initializer: SETTLE_SWEEPS bottom-up passes over all 61 pieces, each
+// attempt exploring one orientation stream and exact-confirming candidate
+// positions in ascending settle-key order until the first strictly lower
+// valid pose. Each settle attempt may exact-confirm up to
+// POSITIONS_PER_ORIENTATION candidate rows, so the finalist-row and pair
+// ceilings carry an explicit settle term instead of the 8-per-slot
+// population term.
+const SETTLE_SWEEPS: usize = 3;
+const SETTLE_PROBES_PER_ATTEMPT: usize = 64;
+const SETTLE_SELECTED_PIECE_SLOTS: usize = SETTLE_SWEEPS * 61;
 const ORDINARY_SELECTED_PIECE_SLOTS: usize = MAX_LAYERS * BEAM_WIDTH * SELECTED_PIECES_PER_PARENT;
 const ARCHIVE_SELECTED_PIECE_SLOTS: usize = MAX_ARCHIVE_REVIVALS * SELECTED_PIECES_PER_PARENT;
-const MAX_SELECTED_PIECE_SLOTS: usize =
+const POPULATION_SELECTED_PIECE_SLOTS: usize =
     ORDINARY_SELECTED_PIECE_SLOTS + ARCHIVE_SELECTED_PIECE_SLOTS;
+const MAX_SELECTED_PIECE_SLOTS: usize =
+    POPULATION_SELECTED_PIECE_SLOTS + SETTLE_SELECTED_PIECE_SLOTS;
 const MAX_ORIENTATION_STREAMS: usize = MAX_SELECTED_PIECE_SLOTS * ORIENTATIONS_PER_PIECE;
 const MAX_SOURCE_FEATURE_VISITS: usize = MAX_SELECTED_PIECE_SLOTS * 2 * MAX_SOURCE_FEATURES;
 const POSITION_SOURCE_ATTEMPTS_PER_ORIENTATION: usize = 529;
@@ -41,9 +54,13 @@ const MAX_POSITION_SOURCE_ATTEMPTS: usize =
 const MAX_RETURNED_POSITIONS: usize = MAX_ORIENTATION_STREAMS * POSITIONS_PER_ORIENTATION;
 const MAX_HAZARD_QUERIES: usize = MAX_RETURNED_POSITIONS;
 const MAX_PROXY_PRESSURE_VISITS: usize = MAX_RETURNED_POSITIONS * 61;
-const MAX_EXACT_FINALIST_ROWS: usize = MAX_SELECTED_PIECE_SLOTS * FINALISTS_PER_PIECE;
+const MAX_EXACT_FINALIST_ROWS: usize = POPULATION_SELECTED_PIECE_SLOTS * FINALISTS_PER_PIECE
+    + SETTLE_SELECTED_PIECE_SLOTS * SETTLE_PROBES_PER_ATTEMPT;
+// Two initial 61-piece collision builds are funded: the mode-11 settle
+// prelude builds the full active state once, and the target initializer
+// rebuilds it once.
 const MAX_EXPERIMENTAL_COLLISION_BUILDS: usize =
-    61 + MAX_ORIENTATION_STREAMS + MAX_EXACT_FINALIST_ROWS;
+    2 * 61 + MAX_ORIENTATION_STREAMS + MAX_EXACT_FINALIST_ROWS;
 const MAX_VALIDATOR_COLLISION_BUILDS: usize = 12_810;
 const MAX_EXPERIMENTAL_PAIR_VISITS: usize = 1_830 + MAX_EXACT_FINALIST_ROWS * 60;
 const MAX_VALIDATOR_PAIR_VISITS: usize = 384_300;
@@ -210,7 +227,7 @@ impl TopologyArchive {
         if self.revivals_expanded >= MAX_ARCHIVE_REVIVALS {
             return RevivalDecision::Skipped("revivalBudgetExhausted");
         }
-        if mode == 8 && population.len() < 2 {
+        if matches!(mode, 8 | 9 | 10 | 11 | 12) && population.len() < 2 {
             return RevivalDecision::Skipped("populationTooSmall");
         }
         let candidates: [(&'static str, Option<&(EliteSnapshot, VacancyState)>); 2] =
@@ -231,7 +248,7 @@ impl TopologyArchive {
                 last_reason = "inPopulation";
                 continue;
             }
-            if mode == 8 {
+            if matches!(mode, 8 | 9 | 10 | 11 | 12) {
                 let worst = population
                     .last()
                     .expect("a mode-8 revival population has at least two states");
@@ -285,6 +302,18 @@ fn elite_snapshot_heap_bytes(snapshot: &EliteSnapshot) -> usize {
                 .inactive
                 .capacity()
                 .saturating_mul(size_of::<usize>()),
+        )
+        .saturating_add(
+            snapshot
+                .identity
+                .last_transition
+                .as_ref()
+                .map_or(0, |transition| {
+                    transition
+                        .ejected
+                        .capacity()
+                        .saturating_mul(size_of::<usize>())
+                }),
         )
 }
 
@@ -388,11 +417,12 @@ impl RunWork {
 pub(super) fn run_persistent_vacancy_population(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
-    _relaxed_settings: GeneralRelaxedSettings,
+    relaxed_settings: GeneralRelaxedSettings,
     parent: &GeneralCoupledSeparatorArmDiagnostics,
     parent_source: Option<String>,
     mode: usize,
 ) -> GeneralPersistentVacancyDiagnostics {
+    let parent_is_pinned = parent_source.is_some();
     let mut diagnostics = GeneralPersistentVacancyDiagnostics {
         mode,
         seed_domain: PERSISTENT_VACANCY_SEED_DOMAIN,
@@ -404,7 +434,9 @@ pub(super) fn run_persistent_vacancy_population(
     match run_population(
         pieces,
         fast_settings,
+        relaxed_settings.persistent_vacancy_target_depth_mm,
         parent,
+        parent_is_pinned,
         mode,
         &mut diagnostics,
         &mut work,
@@ -435,14 +467,45 @@ pub(super) fn run_persistent_vacancy_population(
 fn run_population(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
+    target_override_mm: Option<f64>,
     parent: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_is_pinned: bool,
     mode: usize,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<Option<(VacancyState, f64)>, String> {
-    if !matches!(mode, 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8) {
-        return Err("persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 7, or 8".to_owned());
+    if !matches!(mode, 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12) {
+        return Err("persistent vacancy mode must be between 1 and 12".to_owned());
     }
+    // Modes 1-8 are the frozen diagnostic screens: their 165.0 mm target and
+    // b9335a72 parent identity are part of the pinned experiment contract.
+    // Mode 9 is the descending-target contraction lane: it requires an
+    // explicitly pinned exact-valid parent fixture plus an explicit target,
+    // and skips only the frozen fingerprint/depth equality pins while keeping
+    // full parent validation.
+    let target_depth_mm = match (mode, target_override_mm) {
+        (9 | 10 | 11 | 12, Some(target)) => {
+            if !target.is_finite() || target <= 0.0 {
+                return Err(
+                    "persistent vacancy target depth must be a positive finite value".to_owned(),
+                );
+            }
+            target
+        }
+        (9 | 10 | 11 | 12, None) => {
+            return Err(
+                "persistent vacancy modes 9-12 require an explicit target depth".to_owned(),
+            );
+        }
+        (_, Some(_)) => {
+            return Err("persistent vacancy target depth overrides require modes 9-12".to_owned());
+        }
+        (_, None) => TARGET_DEPTH_MM,
+    };
+    if matches!(mode, 9 | 10 | 11 | 12) && !parent_is_pinned {
+        return Err("persistent vacancy modes 9-12 require a pinned parent fixture".to_owned());
+    }
+    diagnostics.target_depth_mm = target_depth_mm;
     if pieces.len() != 61 {
         return Err("persistent vacancy experiment is pinned to Mixed-61".to_owned());
     }
@@ -454,14 +517,19 @@ fn run_population(
         .map_err(|error| format!("persistent vacancy parent validation: {error}"))?;
     let parent_fingerprint = coupled_fast_placement_fingerprint(&parent_fast);
     diagnostics.parent_fingerprint = Some(parent_fingerprint.clone());
-    if parent_fingerprint != EXPECTED_PARENT_FINGERPRINT {
+    if !matches!(mode, 9 | 10 | 11 | 12) && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT {
         return Err(format!(
             "persistent vacancy parent fingerprint mismatch: expected {EXPECTED_PARENT_FINGERPRINT}, got {parent_fingerprint}"
         ));
     }
     let parent_depth = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
         .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
-    if grid_key(parent_depth) != grid_key(EXPECTED_PARENT_DEPTH_MM) {
+    if matches!(mode, 9 | 10 | 11 | 12) {
+        diagnostics.parent_independent_depth_mm = Some(parent_depth);
+    }
+    if !matches!(mode, 9 | 10 | 11 | 12)
+        && grid_key(parent_depth) != grid_key(EXPECTED_PARENT_DEPTH_MM)
+    {
         return Err(format!(
             "persistent vacancy parent depth mismatch: expected {EXPECTED_PARENT_DEPTH_MM}, got {parent_depth}"
         ));
@@ -477,12 +545,25 @@ fn run_population(
 
     diagnostics.attempted = true;
     let target_settings = GeneralFastSettings {
-        sheet_long_axis_mm: TARGET_DEPTH_MM,
+        sheet_long_axis_mm: target_depth_mm,
         ..fast_settings
     };
-    let baseline = relaxed_state_from_diagnostics(pieces, &parent.final_placements)?;
-    let (initial, difficulty, inactive_order) =
-        initial_vacancy_state(pieces, target_settings, baseline, diagnostics, work)?;
+    let mut baseline = relaxed_state_from_diagnostics_with_target(
+        pieces,
+        &parent.final_placements,
+        target_depth_mm,
+    )?;
+    if matches!(mode, 11 | 12) {
+        baseline = settle_baseline(pieces, fast_settings, baseline, diagnostics, work)?;
+    }
+    let (initial, difficulty, inactive_order) = initial_vacancy_state(
+        pieces,
+        target_settings,
+        baseline,
+        diagnostics,
+        work,
+        matches!(mode, 11 | 12),
+    )?;
     diagnostics.initial_state_fingerprint = Some(state_fingerprint(&initial, pieces));
     diagnostics.initial_active_piece_ids = active_ids(&initial, pieces);
     diagnostics.initial_inactive_piece_ids = inactive_order
@@ -490,6 +571,25 @@ fn run_population(
         .map(|index| pieces[*index].id.to_owned())
         .collect();
     diagnostics.initial_inactive_order_hash = Some(id_order_hash(&inactive_order, pieces));
+    if inactive_order.is_empty() {
+        // Modes 11/12 only: the settling prelude already pulled every piece
+        // inside the target strip, so the settled state is a complete
+        // candidate. It is counted before the audit, must still pass the
+        // unchanged dual publication audit, and a non-cap audit failure is
+        // recorded as a publication rejection before the arm fails.
+        diagnostics.complete_states = diagnostics.complete_states.saturating_add(1);
+        if let Err(reason) = audit_state(&initial, pieces, target_settings, true, work) {
+            if !reason.starts_with("cap: ") {
+                diagnostics.publication_rejections =
+                    diagnostics.publication_rejections.saturating_add(1);
+            }
+            return Err(reason);
+        }
+        let placements = fast_placements(&initial, pieces, false);
+        let independent = coupled_independent_source_depth(pieces, &placements, target_settings)
+            .map_err(|error| format!("persistent vacancy settled depth: {error}"))?;
+        return Ok(Some((initial, independent)));
+    }
     audit_state(&initial, pieces, target_settings, false, work)?;
 
     let hazard_catalog = Arc::new(
@@ -501,7 +601,7 @@ fn run_population(
     let mut best_ever_area: Option<EliteSnapshot> = None;
     let mut best_ever_count: Option<EliteSnapshot> = None;
     let mut retained_carryovers = BTreeSet::new();
-    let mut archive = matches!(mode, 7 | 8).then(TopologyArchive::new);
+    let mut archive = matches!(mode, 7 | 8 | 9 | 10 | 11 | 12).then(TopologyArchive::new);
     for layer in 0..MAX_LAYERS {
         // Modes 7/8 plan a revival before the entering-population hash so the
         // hash always reflects the population that is actually expanded
@@ -536,7 +636,7 @@ fn run_population(
                     row.revival_expanded = true;
                     row.revival_kind = Some(kind.to_owned());
                     row.revived_state_fingerprint = Some(fingerprint);
-                    if mode == 8 {
+                    if matches!(mode, 8 | 9 | 10 | 11 | 12) {
                         let replaced_index = population.len() - 1;
                         row.replaced_state_fingerprint =
                             Some(state_fingerprint(&population[replaced_index], pieces));
@@ -896,12 +996,201 @@ fn run_population(
     Ok(None)
 }
 
+#[derive(Clone, Copy)]
+struct SettleKey {
+    max_y: i64,
+    translate_y: i64,
+    translate_x: i64,
+}
+
+fn settle_key_for(
+    collision: &PolygonSet,
+    placement: &RelaxedPlacement,
+) -> Result<SettleKey, String> {
+    let bounds = collision
+        .bounds()
+        .ok_or_else(|| "settle candidate has empty collision geometry".to_owned())?;
+    Ok(SettleKey {
+        max_y: grid_key(bounds.max_y),
+        translate_y: grid_key(placement.translate_y),
+        translate_x: grid_key(placement.translate_x),
+    })
+}
+
+fn settle_key_less(first: SettleKey, second: SettleKey) -> bool {
+    (first.max_y, first.translate_y, first.translate_x)
+        < (second.max_y, second.translate_y, second.translate_x)
+}
+
+/// Mode-11 exact settling prelude: translation-only, bottom-up drop
+/// compaction over every piece of the full exact-valid parent layout, before
+/// any target deactivation. Each attempt keeps the piece's current
+/// orientation and horizontal position and lowers the piece with a
+/// decreasing step ladder (0.512 mm down to 0.001 mm), exact-confirming every
+/// probe with full-sheet containment plus zero exact pair intersection
+/// against every other piece. This is an endpoint-exact re-placement move,
+/// not a swept-motion contract: near-tangent neighbors can form forbidden
+/// bands thinner than one step, so a probe may land beyond a band no
+/// continuous slide could cross. That matches every other placement operator
+/// in this experiment, all of which relocate pieces discontinuously; validity
+/// rests entirely on the per-probe exact gates and the final dual
+/// publication audit, never on motion continuity.
+fn settle_baseline(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    baseline: RelaxedState,
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    work: &mut RunWork,
+) -> Result<RelaxedState, String> {
+    const SETTLE_STEP_LADDER_MM: [f64; 10] = [
+        0.512, 0.256, 0.128, 0.064, 0.032, 0.016, 0.008, 0.004, 0.002, 0.001,
+    ];
+    let mut state = VacancyState {
+        collisions: baseline
+            .placements
+            .iter()
+            .enumerate()
+            .map(|(index, placement)| {
+                build_collision(pieces[index], placement, fast_settings, work)
+                    .map(|collision| Some(Arc::new(collision)))
+            })
+            .collect::<Result<Vec<_>, _>>()?,
+        placements: baseline.placements.clone(),
+        active: vec![true; pieces.len()],
+        last_transition: None,
+    };
+    let frontier = |state: &VacancyState| -> i64 {
+        state
+            .collisions
+            .iter()
+            .flatten()
+            .filter_map(|collision| collision.bounds())
+            .map(|bounds| grid_key(bounds.max_y))
+            .max()
+            .unwrap_or(i64::MIN)
+    };
+    let mut settle = GeneralPersistentVacancySettleDiagnostics {
+        sweeps: SETTLE_SWEEPS,
+        attempts: 0,
+        accepted_moves: 0,
+        exact_rows: 0,
+        frontier_before_grid: frontier(&state),
+        frontier_after_grid: 0,
+    };
+    let inset = collision_sheet_inset_mm(fast_settings);
+    for _sweep in 0..SETTLE_SWEEPS {
+        let mut order = (0..pieces.len()).collect::<Vec<_>>();
+        order.sort_by_key(|index| {
+            let min_y = state.collisions[*index]
+                .as_ref()
+                .and_then(|collision| collision.bounds())
+                .map(|bounds| grid_key(bounds.min_y))
+                .unwrap_or(i64::MAX);
+            (min_y, pieces[*index].id)
+        });
+        for piece_index in order {
+            settle.attempts += 1;
+            work.diagnostics.selected_piece_slots =
+                work.diagnostics.selected_piece_slots.saturating_add(1);
+            if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
+                return Err(work.cap("selected-piece slot budget exhausted"));
+            }
+            work.charge_source_features(
+                pieces[piece_index].polygon.vertex_count().saturating_mul(2),
+            )?;
+            work.diagnostics.orientation_streams =
+                work.diagnostics.orientation_streams.saturating_add(1);
+            if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
+                return Err(work.cap("orientation-stream budget exhausted"));
+            }
+            let mut temp = state.clone();
+            temp.active[piece_index] = false;
+            temp.collisions[piece_index] = None;
+            // FIX 3: the settle phase owns a full collision state plus one
+            // temporary clone per attempt; charge that live set against the
+            // retained-memory gate exactly like the population phases.
+            let live_bytes = state_slice_bytes(std::slice::from_ref(&state))
+                .saturating_add(state_slice_bytes(std::slice::from_ref(&temp)))
+                .saturating_add(2usize.saturating_mul(size_of::<VacancyState>()));
+            work.diagnostics.total_retained_peak_bytes =
+                work.diagnostics.total_retained_peak_bytes.max(live_bytes);
+            if live_bytes > MAX_RETAINED_BYTES {
+                return Err(work.cap("settle live-state memory budget exhausted"));
+            }
+            let mut best_placement = state.placements[piece_index].clone();
+            let mut best_collision: Option<Arc<PolygonSet>> = None;
+            let mut probes = 0usize;
+            // A single downward ladder per attempt: every accepted probe
+            // strictly lowers the piece, so the compaction is monotone. A
+            // lateral phase was tried and rejected: left-compaction disturbs
+            // the vertical channels the boundary offenders need.
+            'ladder: for step in SETTLE_STEP_LADDER_MM {
+                loop {
+                    if probes >= SETTLE_PROBES_PER_ATTEMPT {
+                        break 'ladder;
+                    }
+                    let mut candidate = best_placement.clone();
+                    candidate.translate_y -= step;
+                    probes += 1;
+                    settle.exact_rows += 1;
+                    work.diagnostics.exact_finalist_rows =
+                        work.diagnostics.exact_finalist_rows.saturating_add(1);
+                    if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
+                        return Err(work.cap("exact-finalist row budget exhausted"));
+                    }
+                    let collision =
+                        build_collision(pieces[piece_index], &candidate, fast_settings, work)?;
+                    if !collision.fits_rect(
+                        inset,
+                        inset,
+                        fast_settings.sheet_short_axis_mm - inset,
+                        fast_settings.sheet_long_axis_mm - inset,
+                    ) {
+                        break;
+                    }
+                    let mut overlapping = false;
+                    for fixed_index in 0..pieces.len() {
+                        if fixed_index == piece_index || !temp.active[fixed_index] {
+                            continue;
+                        }
+                        work.charge_experimental_pair()?;
+                        let fixed = temp.collisions[fixed_index].as_ref().ok_or_else(|| {
+                            format!("active piece {fixed_index} has no collision")
+                        })?;
+                        if exact_intersection_area(&collision, fixed, work)? > 0.0 {
+                            overlapping = true;
+                            break;
+                        }
+                    }
+                    if overlapping {
+                        break;
+                    }
+                    best_placement = candidate;
+                    best_collision = Some(Arc::new(collision));
+                }
+            }
+            if let Some(collision) = best_collision {
+                state.placements[piece_index] = best_placement;
+                state.collisions[piece_index] = Some(collision);
+                settle.accepted_moves += 1;
+            }
+        }
+    }
+    settle.frontier_after_grid = frontier(&state);
+    diagnostics.settle = Some(settle);
+    Ok(RelaxedState {
+        placements: state.placements,
+        strip_depth_mm: baseline.strip_depth_mm,
+    })
+}
+
 fn initial_vacancy_state(
     pieces: &[GeneralFastPiece<'_>],
     settings: GeneralFastSettings,
     baseline: RelaxedState,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
+    allow_complete: bool,
 ) -> Result<(VacancyState, Vec<PieceDifficulty>, Vec<usize>), String> {
     let mut collisions = Vec::with_capacity(pieces.len());
     let mut difficulty = Vec::with_capacity(pieces.len());
@@ -921,7 +1210,7 @@ fn initial_vacancy_state(
             inset,
             inset,
             settings.sheet_short_axis_mm - inset,
-            TARGET_DEPTH_MM - inset,
+            settings.sheet_long_axis_mm - inset,
         ) {
             let overflow = boundary_overflow_grid(collision, settings)?;
             if overflow <= 0 {
@@ -943,7 +1232,7 @@ fn initial_vacancy_state(
         .into_iter()
         .map(|(index, _)| index)
         .collect::<Vec<_>>();
-    if inactive_order.is_empty() {
+    if inactive_order.is_empty() && !allow_complete {
         return Err("target initializer removed no boundary offender".to_owned());
     }
     if inactive_order.len() > MAX_INACTIVE_PIECES
@@ -985,23 +1274,16 @@ fn expand_parent(
     parent_selections: &mut Vec<GeneralPersistentVacancyParentSelectionDiagnostics>,
     children: &mut Vec<VacancyState>,
 ) -> Result<(), String> {
-    let poses = parent
-        .placements
-        .iter()
-        .map(hazard_pose)
-        .collect::<Vec<_>>();
-    let mut index = JaguaHazardIndex::from_catalog_active(
-        pieces,
-        settings,
-        TARGET_DEPTH_MM,
-        &poses,
-        &parent.active,
-        hazard_catalog,
-    )
-    .map_err(|error| format!("persistent vacancy partial hazard index: {error}"))?;
+    let mut index = build_active_hazard_index(parent, pieces, settings, hazard_catalog)?;
     let parent_seed = parent_seed_key(parent, pieces);
     let transition_seed = derive_seed(PERSISTENT_VACANCY_SEED_DOMAIN ^ parent_seed, layer, 0);
-    let selection = selected_inactive_pieces(parent, pieces, difficulty, layer, mode);
+    let mut selection = selected_inactive_pieces(parent, pieces, difficulty, layer, mode);
+    // Mode 10 replaces the odd-layer coverage-insertion slot with a blocker
+    // relocation slot driven by slot zero's observed ejection sets.
+    let relocation_layer = matches!(mode, 10 | 12) && !layer.is_multiple_of(2);
+    if relocation_layer {
+        selection.indices.truncate(1);
+    }
     let hardest_piece_id = selection
         .indices
         .first()
@@ -1021,140 +1303,265 @@ fn expand_parent(
         coverage_piece_id,
         transition_seed,
         revived: None,
+        relocated_piece_id: None,
         slots: Vec::with_capacity(selection.indices.len()),
     };
+    let children_before_slot_zero = children.len();
     for (selected_ordinal, piece_index) in selection.indices.into_iter().enumerate() {
-        selected_piece_ids.insert(pieces[piece_index].id.to_owned());
-        work.diagnostics.selected_piece_slots =
-            work.diagnostics.selected_piece_slots.saturating_add(1);
-        if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
-            return Err(work.cap("selected-piece slot budget exhausted"));
-        }
-        work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
-        let angle_seed = derive_seed(
-            transition_seed ^ CONFLICT_RUIN_ANGLE_SEED_DOMAIN,
+        expand_selected_piece(
+            parent,
+            &baseline[piece_index],
+            pieces,
+            settings,
+            &mut index,
+            transition_seed,
             selected_ordinal,
             piece_index,
-        );
-        let orientations =
-            conflict_ruin_orientations(pieces[piece_index], &baseline[piece_index], angle_seed);
-        let diversity_seed = derive_seed(
-            transition_seed ^ CONFLICT_RUIN_DIVERSITY_SEED_DOMAIN,
-            selected_ordinal,
-            piece_index,
-        );
-        selection_diagnostics
-            .slots
-            .push(GeneralPersistentVacancySelectionSlotDiagnostics {
-                selected_ordinal,
-                piece_id: pieces[piece_index].id.to_owned(),
-                angle_seed,
-                diversity_seed,
-            });
-        let mut merged = Vec::new();
-        for (orientation_ordinal, (rotation_deg, mirrored)) in orientations.into_iter().enumerate()
-        {
-            work.diagnostics.orientation_streams =
-                work.diagnostics.orientation_streams.saturating_add(1);
-            if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
-                return Err(work.cap("orientation-stream budget exhausted"));
-            }
-            let orientation = RelaxedPlacement {
-                input_index: piece_index,
-                rotation_deg,
-                mirrored,
-                translate_x: 0.0,
-                translate_y: 0.0,
-            };
-            let local_collision =
-                build_collision(pieces[piece_index], &orientation, settings, work)?;
-            let position_seed = derive_seed(
-                transition_seed ^ CONFLICT_RUIN_POSITION_SEED_DOMAIN,
-                selected_ordinal
-                    .saturating_mul(ORIENTATIONS_PER_PIECE)
-                    .saturating_add(orientation_ordinal),
-                piece_index,
-            );
-            let proposals = vacancy_positions(
-                &baseline[piece_index],
-                &orientation,
-                &local_collision,
-                parent,
-                settings,
-                position_seed,
-                work,
-            )?;
-            let mut ranked = Vec::new();
-            for placement in proposals {
-                work.diagnostics.hazard_queries = work.diagnostics.hazard_queries.saturating_add(1);
-                if work.diagnostics.hazard_queries > MAX_HAZARD_QUERIES {
-                    return Err(work.cap("hazard-query budget exhausted"));
-                }
-                let pose = hazard_pose(&placement);
-                let query = match index.query_unplaced(piece_index, pose) {
-                    Ok(query) => query,
-                    Err(error) if error.to_string().contains("query envelope") => continue,
-                    Err(error) => return Err(format!("persistent vacancy hazard query: {error}")),
-                };
-                let GeneralHazardQuery::Complete {
-                    boundary,
-                    colliding_piece_ids,
-                } = query
-                else {
-                    return Err("persistent vacancy unplaced query unexpectedly pruned".to_owned());
-                };
-                if boundary {
-                    continue;
-                }
-                let mut proxy_loss = 0.0;
-                for fixed_piece_id in colliding_piece_ids {
-                    if !parent.active[fixed_piece_id] {
-                        return Err("inactive hazard leaked into vacancy query".to_owned());
-                    }
-                    work.diagnostics.proxy_pressure_visits =
-                        work.diagnostics.proxy_pressure_visits.saturating_add(1);
-                    if work.diagnostics.proxy_pressure_visits > MAX_PROXY_PRESSURE_VISITS {
-                        return Err(work.cap("proxy-pressure visit budget exhausted"));
-                    }
-                    proxy_loss += index
-                        .collision_pressure(piece_index, pose, fixed_piece_id)
-                        .map_err(|error| format!("persistent vacancy pressure: {error}"))?;
-                }
-                ranked.push(RankedProposal {
-                    diversity_key: conflict_ruin_diversity_key(&placement, diversity_seed),
-                    placement,
-                    proxy_loss,
-                    orientation_ordinal,
-                });
-            }
-            ranked.sort_by(compare_proposals);
-            ranked.truncate(2);
-            merged.extend(ranked);
-        }
-        merged.sort_by(compare_proposals);
-        let mut placement_keys = BTreeSet::new();
-        merged.retain(|proposal| placement_keys.insert(placement_key(&proposal.placement)));
-        merged.truncate(FINALISTS_PER_PIECE);
-        for finalist in merged {
-            work.diagnostics.exact_finalist_rows =
-                work.diagnostics.exact_finalist_rows.saturating_add(1);
-            if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
-                return Err(work.cap("exact-finalist row budget exhausted"));
-            }
-            if let Some(child) = exact_vacancy_child(
-                parent,
+            diagnostics,
+            work,
+            selected_piece_ids,
+            &mut selection_diagnostics,
+            children,
+        )?;
+    }
+    if relocation_layer {
+        let relocated =
+            select_relocation_piece(parent, pieces, &children[children_before_slot_zero..]);
+        if let Some(relocated_index) = relocated {
+            selection_diagnostics.relocated_piece_id = Some(pieces[relocated_index].id.to_owned());
+            let mut temp = parent.clone();
+            temp.active[relocated_index] = false;
+            temp.collisions[relocated_index] = None;
+            let mut temp_index =
+                build_active_hazard_index(&temp, pieces, settings, hazard_catalog)?;
+            expand_selected_piece(
+                &temp,
+                &parent.placements[relocated_index],
                 pieces,
-                piece_index,
-                finalist.placement,
                 settings,
+                &mut temp_index,
+                transition_seed,
+                1,
+                relocated_index,
                 diagnostics,
                 work,
-            )? {
-                children.push(child);
-            }
+                selected_piece_ids,
+                &mut selection_diagnostics,
+                children,
+            )?;
         }
     }
     parent_selections.push(selection_diagnostics);
+    Ok(())
+}
+
+fn build_active_hazard_index(
+    parent: &VacancyState,
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    hazard_catalog: &Arc<JaguaHazardCatalog>,
+) -> Result<JaguaHazardIndex, String> {
+    let poses = parent
+        .placements
+        .iter()
+        .map(hazard_pose)
+        .collect::<Vec<_>>();
+    JaguaHazardIndex::from_catalog_active(
+        pieces,
+        settings,
+        settings.sheet_long_axis_mm,
+        &poses,
+        &parent.active,
+        hazard_catalog,
+    )
+    .map_err(|error| format!("persistent vacancy partial hazard index: {error}"))
+}
+
+/// Chooses the active piece a mode-10 relocation slot moves: the piece most
+/// often named as an ejected blocker by slot zero's children, ties broken by
+/// stable ID; when slot zero produced no ejection children, the active piece
+/// whose expanded collision reaches deepest into the strip.
+fn select_relocation_piece(
+    parent: &VacancyState,
+    pieces: &[GeneralFastPiece<'_>],
+    slot_zero_children: &[VacancyState],
+) -> Option<usize> {
+    let mut blocker_counts: BTreeMap<usize, usize> = BTreeMap::new();
+    for child in slot_zero_children {
+        if let Some(transition) = &child.last_transition {
+            for blocker in &transition.ejected {
+                *blocker_counts.entry(*blocker).or_insert(0) += 1;
+            }
+        }
+    }
+    if let Some(best) = blocker_counts
+        .iter()
+        .max_by(|(first_index, first_count), (second_index, second_count)| {
+            first_count
+                .cmp(second_count)
+                .then_with(|| pieces[**second_index].id.cmp(pieces[**first_index].id))
+        })
+        .map(|(index, _)| *index)
+    {
+        return Some(best);
+    }
+    (0..parent.active.len())
+        .filter(|index| parent.active[*index])
+        .filter_map(|index| {
+            parent.collisions[index]
+                .as_ref()
+                .and_then(|collision| collision.bounds())
+                .map(|bounds| (index, grid_key(bounds.max_y)))
+        })
+        .max_by(|(first_index, first_max), (second_index, second_max)| {
+            first_max
+                .cmp(second_max)
+                .then_with(|| pieces[*second_index].id.cmp(pieces[*first_index].id))
+        })
+        .map(|(index, _)| index)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn expand_selected_piece(
+    parent: &VacancyState,
+    hint: &RelaxedPlacement,
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    index: &mut JaguaHazardIndex,
+    transition_seed: u64,
+    selected_ordinal: usize,
+    piece_index: usize,
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    work: &mut RunWork,
+    selected_piece_ids: &mut BTreeSet<String>,
+    selection_diagnostics: &mut GeneralPersistentVacancyParentSelectionDiagnostics,
+    children: &mut Vec<VacancyState>,
+) -> Result<(), String> {
+    selected_piece_ids.insert(pieces[piece_index].id.to_owned());
+    work.diagnostics.selected_piece_slots = work.diagnostics.selected_piece_slots.saturating_add(1);
+    if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
+        return Err(work.cap("selected-piece slot budget exhausted"));
+    }
+    work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
+    let angle_seed = derive_seed(
+        transition_seed ^ CONFLICT_RUIN_ANGLE_SEED_DOMAIN,
+        selected_ordinal,
+        piece_index,
+    );
+    let orientations = conflict_ruin_orientations(pieces[piece_index], hint, angle_seed);
+    let diversity_seed = derive_seed(
+        transition_seed ^ CONFLICT_RUIN_DIVERSITY_SEED_DOMAIN,
+        selected_ordinal,
+        piece_index,
+    );
+    selection_diagnostics
+        .slots
+        .push(GeneralPersistentVacancySelectionSlotDiagnostics {
+            selected_ordinal,
+            piece_id: pieces[piece_index].id.to_owned(),
+            angle_seed,
+            diversity_seed,
+        });
+    let mut merged = Vec::new();
+    for (orientation_ordinal, (rotation_deg, mirrored)) in orientations.into_iter().enumerate() {
+        work.diagnostics.orientation_streams =
+            work.diagnostics.orientation_streams.saturating_add(1);
+        if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
+            return Err(work.cap("orientation-stream budget exhausted"));
+        }
+        let orientation = RelaxedPlacement {
+            input_index: piece_index,
+            rotation_deg,
+            mirrored,
+            translate_x: 0.0,
+            translate_y: 0.0,
+        };
+        let local_collision = build_collision(pieces[piece_index], &orientation, settings, work)?;
+        let position_seed = derive_seed(
+            transition_seed ^ CONFLICT_RUIN_POSITION_SEED_DOMAIN,
+            selected_ordinal
+                .saturating_mul(ORIENTATIONS_PER_PIECE)
+                .saturating_add(orientation_ordinal),
+            piece_index,
+        );
+        let proposals = vacancy_positions(
+            hint,
+            &orientation,
+            &local_collision,
+            parent,
+            settings,
+            position_seed,
+            work,
+        )?;
+        let mut ranked = Vec::new();
+        for placement in proposals {
+            work.diagnostics.hazard_queries = work.diagnostics.hazard_queries.saturating_add(1);
+            if work.diagnostics.hazard_queries > MAX_HAZARD_QUERIES {
+                return Err(work.cap("hazard-query budget exhausted"));
+            }
+            let pose = hazard_pose(&placement);
+            let query = match index.query_unplaced(piece_index, pose) {
+                Ok(query) => query,
+                Err(error) if error.to_string().contains("query envelope") => continue,
+                Err(error) => return Err(format!("persistent vacancy hazard query: {error}")),
+            };
+            let GeneralHazardQuery::Complete {
+                boundary,
+                colliding_piece_ids,
+            } = query
+            else {
+                return Err("persistent vacancy unplaced query unexpectedly pruned".to_owned());
+            };
+            if boundary {
+                continue;
+            }
+            let mut proxy_loss = 0.0;
+            for fixed_piece_id in colliding_piece_ids {
+                if !parent.active[fixed_piece_id] {
+                    return Err("inactive hazard leaked into vacancy query".to_owned());
+                }
+                work.diagnostics.proxy_pressure_visits =
+                    work.diagnostics.proxy_pressure_visits.saturating_add(1);
+                if work.diagnostics.proxy_pressure_visits > MAX_PROXY_PRESSURE_VISITS {
+                    return Err(work.cap("proxy-pressure visit budget exhausted"));
+                }
+                proxy_loss += index
+                    .collision_pressure(piece_index, pose, fixed_piece_id)
+                    .map_err(|error| format!("persistent vacancy pressure: {error}"))?;
+            }
+            ranked.push(RankedProposal {
+                diversity_key: conflict_ruin_diversity_key(&placement, diversity_seed),
+                placement,
+                proxy_loss,
+                orientation_ordinal,
+            });
+        }
+        ranked.sort_by(compare_proposals);
+        ranked.truncate(2);
+        merged.extend(ranked);
+    }
+    merged.sort_by(compare_proposals);
+    let mut placement_keys = BTreeSet::new();
+    merged.retain(|proposal| placement_keys.insert(placement_key(&proposal.placement)));
+    merged.truncate(FINALISTS_PER_PIECE);
+    for finalist in merged {
+        work.diagnostics.exact_finalist_rows =
+            work.diagnostics.exact_finalist_rows.saturating_add(1);
+        if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
+            return Err(work.cap("exact-finalist row budget exhausted"));
+        }
+        if let Some(child) = exact_vacancy_child(
+            parent,
+            pieces,
+            piece_index,
+            finalist.placement,
+            settings,
+            diagnostics,
+            work,
+        )? {
+            children.push(child);
+        }
+    }
     Ok(())
 }
 
@@ -1187,7 +1594,7 @@ fn exact_vacancy_child(
         inset,
         inset,
         settings.sheet_short_axis_mm - inset,
-        TARGET_DEPTH_MM - inset,
+        settings.sheet_long_axis_mm - inset,
     ) {
         return Ok(None);
     }
@@ -1258,7 +1665,7 @@ fn vacancy_positions(
     let min_x = inset - bounds.min_x;
     let max_x = settings.sheet_short_axis_mm - inset - bounds.max_x;
     let min_y = inset - bounds.min_y;
-    let max_y = TARGET_DEPTH_MM - inset - bounds.max_y;
+    let max_y = settings.sheet_long_axis_mm - inset - bounds.max_y;
     if min_x > max_x || min_y > max_y {
         return Ok(Vec::new());
     }
@@ -1398,7 +1805,7 @@ fn retain_population(
     difficulty: &[PieceDifficulty],
     mode: usize,
 ) -> (Vec<VacancyState>, usize) {
-    if matches!(mode, 1 | 3 | 7 | 8) {
+    if matches!(mode, 1 | 3 | 7 | 8 | 9 | 10 | 11 | 12) {
         let retained = sorted.into_iter().take(BEAM_WIDTH).collect::<Vec<_>>();
         let signatures = retained
             .iter()
@@ -1634,9 +2041,10 @@ fn bounds_are_disjoint(first: &PolygonSet, second: &PolygonSet) -> Result<bool, 
         || grid_key(second.max_y) <= grid_key(first.min_y))
 }
 
-fn relaxed_state_from_diagnostics(
+fn relaxed_state_from_diagnostics_with_target(
     pieces: &[GeneralFastPiece<'_>],
     placements: &[GeneralCoupledSeparatorPlacementDiagnostics],
+    target_depth_mm: f64,
 ) -> Result<RelaxedState, String> {
     let by_id = pieces
         .iter()
@@ -1668,7 +2076,7 @@ fn relaxed_state_from_diagnostics(
         .collect::<Result<Vec<_>, _>>()?;
     Ok(RelaxedState {
         placements,
-        strip_depth_mm: TARGET_DEPTH_MM,
+        strip_depth_mm: target_depth_mm,
     })
 }
 
@@ -1763,7 +2171,7 @@ fn boundary_overflow_grid(
     let min_x = grid_key(inset);
     let min_y = grid_key(inset);
     let max_x = grid_key(settings.sheet_short_axis_mm - inset);
-    let max_y = grid_key(TARGET_DEPTH_MM - inset);
+    let max_y = grid_key(settings.sheet_long_axis_mm - inset);
     Ok([
         min_x.saturating_sub(grid_key(bounds.min_x)),
         min_y.saturating_sub(grid_key(bounds.min_y)),
@@ -1801,7 +2209,7 @@ fn selected_inactive_pieces(
             })
             .then_with(|| pieces[*first].id.cmp(pieces[*second].id))
     });
-    if !matches!(mode, 3 | 4 | 5 | 6 | 7 | 8) || inactive.len() <= 1 {
+    if !matches!(mode, 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12) || inactive.len() <= 1 {
         inactive.truncate(SELECTED_PIECES_PER_PARENT);
         return SelectedInactivePieces {
             indices: inactive,
@@ -1830,7 +2238,7 @@ fn stable_inactive_order(state: &VacancyState, pieces: &[GeneralFastPiece<'_>]) 
 }
 
 fn scheduler_family(mode: usize) -> &'static str {
-    if matches!(mode, 3 | 4 | 5 | 6 | 7 | 8) {
+    if matches!(mode, 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12) {
         "hardPlusStatelessRotation"
     } else {
         "twoHardest"
@@ -2575,6 +2983,18 @@ fn persistent_diagnostic_bytes(diagnostics: &GeneralPersistentVacancyDiagnostics
         )
         .saturating_add(option_string_bytes(&diagnostics.cap_exhausted))
         .saturating_add(option_string_bytes(&diagnostics.failure_reason))
+        .saturating_add(option_string_bytes(&diagnostics.parent_source))
+        .saturating_add(diagnostics.archive.as_ref().map_or(0, |archive| {
+            archive
+                .revival_policy
+                .capacity()
+                .saturating_add(option_string_bytes(
+                    &archive.final_archived_area_fingerprint,
+                ))
+                .saturating_add(option_string_bytes(
+                    &archive.final_archived_count_fingerprint,
+                ))
+        }))
 }
 
 fn layer_diagnostic_heap_bytes(layer: &GeneralPersistentVacancyLayerDiagnostics) -> usize {
@@ -2616,8 +3036,9 @@ fn layer_diagnostic_heap_bytes(layer: &GeneralPersistentVacancyLayerDiagnostics)
 fn archive_layer_diagnostic_heap_bytes(
     archive: &GeneralPersistentVacancyArchiveLayerDiagnostics,
 ) -> usize {
-    size_of::<GeneralPersistentVacancyArchiveLayerDiagnostics>()
-        .saturating_add(archive.revival_kind.as_ref().map_or(0, String::capacity))
+    // Heap buffers only: the inline struct storage is already covered by the
+    // containing layer row's capacity term.
+    (archive.revival_kind.as_ref().map_or(0, String::capacity))
         .saturating_add(
             archive
                 .revived_state_fingerprint
@@ -2675,6 +3096,12 @@ fn parent_selection_heap_bytes(
         .saturating_add(
             selection
                 .coverage_piece_id
+                .as_ref()
+                .map_or(0, String::capacity),
+        )
+        .saturating_add(
+            selection
+                .relocated_piece_id
                 .as_ref()
                 .map_or(0, String::capacity),
         )
@@ -3315,18 +3742,23 @@ mod tests {
         assert_eq!(MAX_ARCHIVE_REVIVALS, 13);
         assert_eq!(ORDINARY_SELECTED_PIECE_SLOTS, 640);
         assert_eq!(ARCHIVE_SELECTED_PIECE_SLOTS, 26);
-        assert_eq!(MAX_SELECTED_PIECE_SLOTS, 640 + 26);
-        assert_eq!(MAX_ORIENTATION_STREAMS, 7_680 + 312);
-        assert_eq!(MAX_POSITION_SOURCE_ATTEMPTS, (7_680 + 312) * 529);
-        assert_eq!(MAX_RETURNED_POSITIONS, 245_760 + 9_984);
-        assert_eq!(MAX_HAZARD_QUERIES, 245_760 + 9_984);
-        assert_eq!(MAX_PROXY_PRESSURE_VISITS, (245_760 + 9_984) * 61);
-        assert_eq!(MAX_EXACT_FINALIST_ROWS, 5_120 + 208);
+        assert_eq!(SETTLE_SELECTED_PIECE_SLOTS, 3 * 61);
+        assert_eq!(POPULATION_SELECTED_PIECE_SLOTS, 640 + 26);
+        assert_eq!(MAX_SELECTED_PIECE_SLOTS, 640 + 26 + 183);
+        assert_eq!(MAX_ORIENTATION_STREAMS, (640 + 26 + 183) * 12);
+        assert_eq!(MAX_POSITION_SOURCE_ATTEMPTS, (640 + 26 + 183) * 12 * 529);
+        assert_eq!(MAX_RETURNED_POSITIONS, (640 + 26 + 183) * 12 * 32);
+        assert_eq!(MAX_HAZARD_QUERIES, (640 + 26 + 183) * 12 * 32);
+        assert_eq!(MAX_PROXY_PRESSURE_VISITS, (640 + 26 + 183) * 12 * 32 * 61);
+        assert_eq!(MAX_EXACT_FINALIST_ROWS, (640 + 26) * 8 + 183 * 64);
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
-            61 + (7_680 + 312) + (5_120 + 208)
+            2 * 61 + (640 + 26 + 183) * 12 + ((640 + 26) * 8 + 183 * 64)
         );
-        assert_eq!(MAX_EXPERIMENTAL_PAIR_VISITS, 1_830 + (5_120 + 208) * 60);
+        assert_eq!(
+            MAX_EXPERIMENTAL_PAIR_VISITS,
+            1_830 + ((640 + 26) * 8 + 183 * 64) * 60
+        );
         assert_eq!(MAX_VALIDATOR_COLLISION_BUILDS, 105 * 122);
         assert_eq!(MAX_VALIDATOR_PAIR_VISITS, 105 * 3_660);
         assert_eq!(
@@ -3599,6 +4031,135 @@ mod tests {
         assert_eq!(
             fixture["expectedPlacementFingerprint"],
             EXPECTED_PARENT_FINGERPRINT
+        );
+    }
+
+    #[test]
+    fn descent_modes_enforce_target_and_pinned_parent_requirements() {
+        let polygons = vec![square(10.0)];
+        let pieces = vec![GeneralFastPiece {
+            id: "a",
+            polygon: &polygons[0],
+            allow_rotation: true,
+            allow_mirror: true,
+        }];
+        let fast = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let mut relaxed = GeneralRelaxedSettings::mixed_61_probe(0, 1);
+        let parent = GeneralCoupledSeparatorArmDiagnostics::default();
+
+        // Mode 9 without an explicit target is rejected before any work.
+        let result =
+            run_persistent_vacancy_population(&pieces, fast, relaxed, &parent, Some("f".into()), 9);
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("require an explicit target depth"));
+
+        // Mode 9 with a target but no pinned parent fixture is rejected.
+        relaxed.persistent_vacancy_target_depth_mm = Some(90.0);
+        let result = run_persistent_vacancy_population(&pieces, fast, relaxed, &parent, None, 9);
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("require a pinned parent fixture"));
+
+        // Frozen modes reject target overrides outright.
+        let result =
+            run_persistent_vacancy_population(&pieces, fast, relaxed, &parent, Some("f".into()), 3);
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("target depth overrides require modes 9-12"));
+
+        // Non-finite and non-positive targets fail closed.
+        relaxed.persistent_vacancy_target_depth_mm = Some(f64::NAN);
+        let result = run_persistent_vacancy_population(
+            &pieces,
+            fast,
+            relaxed,
+            &parent,
+            Some("f".into()),
+            11,
+        );
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("positive finite value"));
+    }
+
+    #[test]
+    fn settle_key_orders_by_frontier_then_translation() {
+        let low = SettleKey {
+            max_y: 10,
+            translate_y: 5,
+            translate_x: 5,
+        };
+        let high = SettleKey {
+            max_y: 11,
+            translate_y: 0,
+            translate_x: 0,
+        };
+        assert!(settle_key_less(low, high));
+        assert!(!settle_key_less(high, low));
+        let same_frontier_lower_y = SettleKey {
+            max_y: 10,
+            translate_y: 4,
+            translate_x: 9,
+        };
+        assert!(settle_key_less(same_frontier_lower_y, low));
+    }
+
+    #[test]
+    fn settle_baseline_drops_a_floating_square_onto_the_floor() {
+        let polygons = vec![square(10.0), square(10.0)];
+        let pieces = polygons
+            .iter()
+            .enumerate()
+            .map(|(index, polygon)| GeneralFastPiece {
+                id: ["a", "b"][index],
+                polygon,
+                allow_rotation: true,
+                allow_mirror: true,
+            })
+            .collect::<Vec<_>>();
+        let fast = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let baseline = RelaxedState {
+            placements: vec![
+                RelaxedPlacement {
+                    input_index: 0,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 20.0,
+                    translate_y: 0.1,
+                },
+                RelaxedPlacement {
+                    input_index: 1,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 20.0,
+                    translate_y: 40.0,
+                },
+            ],
+            strip_depth_mm: 100.0,
+        };
+        let mut diagnostics = GeneralPersistentVacancyDiagnostics::default();
+        let mut work = RunWork::default();
+        let settled =
+            settle_baseline(&pieces, fast, baseline, &mut diagnostics, &mut work).unwrap();
+        let settle = diagnostics.settle.expect("settle diagnostics recorded");
+        let ys = settled
+            .placements
+            .iter()
+            .map(|placement| placement.translate_y)
+            .collect::<Vec<_>>();
+        assert!(settle.accepted_moves >= 1, "settle: {settle:?} ys: {ys:?}");
+        assert!(settle.frontier_after_grid < settle.frontier_before_grid);
+        // Down-only settling drops the floating square toward the first
+        // square; the exact pair gate keeps the result overlap-free and the
+        // expanded-collision allowance retains a tiny gap above it.
+        assert!(settled.placements[1].translate_y < 40.0);
+        assert!(
+            settled.placements[1].translate_y >= settled.placements[0].translate_y + 10.0 - 1e-9
         );
     }
 }
