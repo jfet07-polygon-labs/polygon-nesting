@@ -3,13 +3,23 @@ name = "polygon-nesting-core"
 version.workspace = true
 edition.workspace = true
 
+[features]
+default = []
+jagua-experimental = ["dep:jagua-rs"]
+
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }
 num-bigint = "0.4"
 libm = "0.2"
+jagua-rs = { version = "=0.7.2", optional = true }
 rayon = "1"
 robust = "1.2.0"
 ryu-js = "1"
 serde = { version = "1", features = ["derive", "rc"] }
 serde_json = { version = "1", features = ["float_roundtrip"] }
 sha2 = "0.10"
+
+[[example]]
+name = "general_hazard_benchmark"
+path = "examples/general_hazard_benchmark.rs"
+required-features = ["jagua-experimental"]

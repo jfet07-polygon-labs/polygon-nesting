@@ -130,6 +130,18 @@ pub mod arc {
         points
     }
 
+    /// Samples an arc only when its deterministic output fits `max_points`.
+    pub fn sample_points_bounded(
+        arc: DxfArcSegment,
+        sag_tolerance_mm: f64,
+        max_points: usize,
+    ) -> Option<Vec<IrregularPoint>> {
+        if max_points < 2 || compute_sample_count(arc, sag_tolerance_mm) > (max_points - 1) as f64 {
+            return None;
+        }
+        Some(sample_points(arc, sag_tolerance_mm))
+    }
+
     /// TS: `arcFlattening.ts:54-76` `sampleBulgePoints`. Samples an
     /// LWPOLYLINE/POLYLINE bulge chord using its signed analytic arc.
     ///
@@ -165,6 +177,29 @@ pub mod arc {
         }
         points.push(IrregularPoint::new(segment.x2, segment.y2));
         points
+    }
+
+    /// Samples a bulge chord only when its deterministic output fits `max_points`.
+    pub fn sample_bulge_points_bounded(
+        segment: &DxfLineSegment,
+        sag_tolerance_mm: f64,
+        max_points: usize,
+    ) -> Option<Vec<IrregularPoint>> {
+        if max_points < 2 {
+            return None;
+        }
+        let Some(arc) = bulge_arc_parameters(segment) else {
+            return Some(vec![
+                IrregularPoint::new(segment.x1, segment.y1),
+                IrregularPoint::new(segment.x2, segment.y2),
+            ]);
+        };
+        let sample_count =
+            compute_sample_count_for_sweep(arc.radius, arc.sweep.abs(), sag_tolerance_mm);
+        if sample_count > (max_points - 1) as f64 {
+            return None;
+        }
+        Some(sample_bulge_points(segment, sag_tolerance_mm))
     }
 
     /// TS: `arcFlattening.ts:78-84` `BulgeArcParameters` (private interface).
@@ -498,6 +533,120 @@ pub mod ellipse {
         }
 
         points
+    }
+
+    /// Samples an ellipse with an output cap for untrusted general geometry.
+    pub fn sample_points_bounded(
+        ellipse: &DxfEllipseSource,
+        sag_tolerance_mm: f64,
+        max_points: usize,
+    ) -> Option<Vec<IrregularPoint>> {
+        if max_points == 0 {
+            return None;
+        }
+        let sweep =
+            ellipse_end_parameter(ellipse.start_angle, ellipse.end_angle) - ellipse.start_angle;
+        let major_axis_length = js_math::hypot(ellipse.major_axis_x, ellipse.major_axis_y);
+        if !sweep.is_finite()
+            || sweep <= 0.0
+            || !major_axis_length.is_finite()
+            || major_axis_length <= 0.0
+        {
+            return Some(Vec::new());
+        }
+
+        let initial_segment_count =
+            js_math::max(1.0, js_math::ceil(sweep / INITIAL_MAX_SWEEP_RADIANS));
+        let start_point = ellipse_point(ellipse, ellipse.start_angle);
+        let mut points = vec![start_point];
+        let is_full_ellipse = (sweep - FULL_TURN_RADIANS).abs() <= 1e-9;
+        let mut segment_index = 0.0;
+        while segment_index < initial_segment_count {
+            let interval_start =
+                ellipse.start_angle + (sweep * segment_index) / initial_segment_count;
+            let interval_end =
+                ellipse.start_angle + (sweep * (segment_index + 1.0)) / initial_segment_count;
+            let interval_start_point = if segment_index == 0.0 {
+                start_point
+            } else {
+                ellipse_point(ellipse, interval_start)
+            };
+            let interval_end_point =
+                if segment_index == initial_segment_count - 1.0 && is_full_ellipse {
+                    start_point
+                } else {
+                    ellipse_point(ellipse, interval_end)
+                };
+            if !append_flattened_interval_bounded(
+                &mut points,
+                ellipse,
+                interval_start,
+                interval_end,
+                interval_start_point,
+                interval_end_point,
+                sag_tolerance_mm,
+                0,
+                max_points,
+            ) {
+                return None;
+            }
+            segment_index += 1.0;
+        }
+        Some(points)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn append_flattened_interval_bounded(
+        output: &mut Vec<IrregularPoint>,
+        ellipse: &DxfEllipseSource,
+        interval_start: f64,
+        interval_end: f64,
+        start_point: IrregularPoint,
+        end_point: IrregularPoint,
+        sag_tolerance_mm: f64,
+        recursion_depth: u32,
+        max_points: usize,
+    ) -> bool {
+        if output.len() >= max_points {
+            return false;
+        }
+        if recursion_depth >= MAX_RECURSION_DEPTH
+            || !needs_subdivision(
+                ellipse,
+                interval_start,
+                interval_end,
+                start_point,
+                end_point,
+                sag_tolerance_mm,
+            )
+        {
+            output.push(end_point);
+            return true;
+        }
+
+        let interval_middle = (interval_start + interval_end) / 2.0;
+        let middle_point = ellipse_point(ellipse, interval_middle);
+        append_flattened_interval_bounded(
+            output,
+            ellipse,
+            interval_start,
+            interval_middle,
+            start_point,
+            middle_point,
+            sag_tolerance_mm,
+            recursion_depth + 1,
+            max_points,
+        ) && append_flattened_interval_bounded(
+            output,
+            ellipse,
+            interval_middle,
+            interval_end,
+            middle_point,
+            end_point,
+            sag_tolerance_mm,
+            recursion_depth + 1,
+            max_points,
+        )
     }
 
     /// TS: `ellipseFlattening.ts:64-105` `appendFlattenedInterval` (private).

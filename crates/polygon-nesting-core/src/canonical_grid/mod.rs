@@ -19,4 +19,6 @@ pub use math::{
     canonical_grid_signed_doubled_area, doubled_grid_area_to_mm2, CanonicalGridPath,
     CanonicalGridPoint, CANONICAL_GRID_EXACT_NUMBER_CROSS_LIMIT,
 };
+#[cfg(feature = "jagua-experimental")]
+pub(crate) use offset_policy::CLIPPER2_OFFSET_SCALE;
 pub use offset_policy::{from_grid, to_grid_mm};

@@ -1,0 +1,64 @@
+{
+  "experiment": "exact-coupled-projection",
+  "status": "rejected",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "checkpointFingerprint": "d8e1330e39ec322fdc399110a957c25066019bb567dc529724cdb851f818f91d",
+  "backgroundFingerprint": "32e6db54e34792d368891c7534be6065757aa3ae09c642e463e1aac437a6e80f",
+  "selectedParentFingerprint": "fb0a4e7fec44c9e0812e895f847e96bd3dbf47128ba10017f3ac0edf8d7dd279",
+  "selectedPairRowHash": "ac07df4a7e9041d256c0828daa546f00e07ca4c86b3e9f3dae29986e78ae2048",
+  "targetDepthMm": 168.456375,
+  "initialExactOverlapAreaMm2": 0.031953,
+  "initialPositivePairs": 3,
+  "fixedFactorControl": {
+    "mode": 1,
+    "legacyStructuralTracePreserved": true,
+    "factorOneBestExactOverlapAreaMm2": 0.0018675,
+    "factorOneRemainingPositivePairs": 2,
+    "factorFiveQuartersBestExactOverlapAreaMm2": 0.001025,
+    "factorFiveQuartersRemainingPositivePairs": 2,
+    "engineElapsedMs": 5011.805082999999,
+    "peakResidentBytes": 50921472
+  },
+  "sharedCurrentSelector": {
+    "mode": 2,
+    "completeRounds": 28,
+    "stopReason": "cap: selector cannot fund a complete four-proposal intersection round",
+    "firstRoundMatchesControl": true,
+    "selectedFactorEveryRound": "1/1",
+    "bestStateFingerprint": "c489e401722043c714402b438181e8956f6de95b8abc8b93fc9e850bd80793ff",
+    "bestPairRowHash": "fc6d56a94c4519ad057ed9c0375426f952ca85cdfa7630f128eba660210f2561",
+    "bestExactOverlapAreaMm2": 0.0004375,
+    "bestMaximumPairAreaMm2": 0.0003375,
+    "remainingPositivePairs": 2,
+    "mechanismPassed": false,
+    "work": {
+      "nfpBuilds": 58,
+      "nfpComponents": 920,
+      "nfpComponentVertices": 5520,
+      "edgeVisits": 5520,
+      "intervalVisits": 50592,
+      "translationTests": 5212,
+      "translatedOutputVertices": 22368,
+      "aabbPairVisits": 204960,
+      "aabbExactSkips": 193906,
+      "exactPairIntersections": 16266,
+      "clipperInputVertices": 242676,
+      "clipperOutputVertices": 2834
+    },
+    "coldReplays": [
+      {
+        "engineElapsedMs": 4905.886166,
+        "peakResidentBytes": 53886976,
+        "includedReleaseRebuild": true
+      },
+      {
+        "engineElapsedMs": 4983.207167,
+        "wallElapsedSeconds": 7.36,
+        "peakResidentBytes": 53002240,
+        "includedReleaseRebuild": false
+      }
+    ],
+    "normalizedReplayByteIdentical": true
+  },
+  "conclusion": "Exact simultaneous complete-layout projection reduces microscopic overlap but remains trapped in a two-constraint Jacobi oscillation. Per-round factor selection never changes the chosen unit factor and does not reach feasibility. Complete-layout terminal separation is closed; the next experiment must change topology through persistent partial or infeasible states."
+}

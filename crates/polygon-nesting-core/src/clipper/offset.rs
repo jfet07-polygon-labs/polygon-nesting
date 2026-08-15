@@ -54,6 +54,8 @@ pub enum ClipperError {
     /// A `core::CoreError` propagated from a Core.ts guard function reached
     /// transitively (e.g. `Point64Utils.fromPointD` inside `doSquare`).
     Core(core::CoreError),
+    /// The boolean cleanup engine reported an unsuccessful execution.
+    BooleanOperationFailed,
 }
 
 impl From<core::CoreError> for ClipperError {
@@ -422,6 +424,50 @@ impl ClipperOffset {
         let mut tree = engine::PolyTree64::new();
         c.execute_poly_tree(core::ClipType::Union, fill_rule, &mut tree, None);
         Ok(engine::poly_tree_to_paths64(&tree))
+    }
+
+    /// Executes the topology-preserving `PolyTree64` overload without
+    /// flattening outer/hole ownership back into `Paths64`.
+    ///
+    /// The legacy offset adapter intentionally continues to use
+    /// [`Self::execute`]. The general-polygon kernel uses this entry point so
+    /// split outers, surviving holes, and nested islands remain attached to
+    /// their Clipper ancestry.
+    pub fn execute_poly_tree(&mut self, delta: f64) -> Result<engine::PolyTree64, ClipperError> {
+        self.solution_tree_requested = true;
+        let pre = self.execute_pre_cleanup(delta)?;
+        let mut tree = engine::PolyTree64::new();
+        if self.group_list.is_empty() {
+            return Ok(tree);
+        }
+
+        let paths_reversed = self.check_paths_reversed();
+        let fill_rule = if paths_reversed {
+            core::FillRule::Negative
+        } else {
+            core::FillRule::Positive
+        };
+        let mut clipper = engine::Clipper64::new();
+        clipper.preserve_collinear = self.preserve_collinear;
+        clipper.reverse_solution = self.reverse_solution != paths_reversed;
+        let user_z_callback = self.z_callback.take();
+        let engine_z_callback: core::ZCallback64 =
+            Box::new(move |bot1, top1, bot2, top2, intersect_pt| {
+                zcb_apply(
+                    bot1,
+                    top1,
+                    bot2,
+                    top2,
+                    intersect_pt,
+                    user_z_callback.as_ref(),
+                );
+            });
+        clipper.z_callback = Some(engine_z_callback);
+        clipper.add_paths(&pre, core::PathType::Subject);
+        if !clipper.execute_poly_tree(core::ClipType::Union, fill_rule, &mut tree, None) {
+            return Err(ClipperError::BooleanOperationFailed);
+        }
+        Ok(tree)
     }
 
     /// TS: Offset.ts:225-228 `executeWithCallback`.

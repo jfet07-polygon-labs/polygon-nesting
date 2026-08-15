@@ -1,0 +1,117 @@
+{
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "engineCommit": "c3977ca262ebd8f68e8f2914c6c8a3be446b38b6",
+  "relevantSourceTreeSha256": "b8b895383e2c71f98daa5305e9621f282e8f593b432897278a99d4a42d60106c",
+  "executableSha256": "d67b97eedd7a0d85e6e4b6d52acd13e66f3853e5159e541c65a105310cc17888",
+  "target": "aarch64-apple-darwin",
+  "machine": "Apple M4 Max",
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14), LLVM 22.1.2",
+  "threads": 8,
+  "baselineIndependentDepthMm": 172.669,
+  "coupledTreatmentIndependentDepthMm": 170.097,
+  "precompressionIncumbentDepthMm": 168.625,
+  "precompressionTargetDepthMm": 168.456375,
+  "failedCheckpointSource": {
+    "normalizedOutputSha256": "002f7d3b0974a74094003508411d7eac720ef741766ff9b0b881f9aad2d45736",
+    "rawOutputSha256": "fdc55f2e5d4eb1c58e4b3183db18281ae4057b5aab91e4d5c1ff6cc9fb00238a",
+    "checkpointFingerprint": "d8e1330e39ec322fdc399110a957c25066019bb567dc529724cdb851f818f91d",
+    "targetOrdinal": 24,
+    "targetDepthMm": 168.456375,
+    "projectedBoundaryOffenders": [
+      "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+      "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+      "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6"
+    ]
+  },
+  "rebuiltChildren": [
+    {
+      "fingerprint": "7a59b95d19601dc707fa1bd52ddc3dc60e5f759787bf212334e83eec92d4bed1",
+      "origin": "direct",
+      "publicationValid": true,
+      "freshSurrogateFeasible": false
+    },
+    {
+      "fingerprint": "db2489fa5709df88056fcfbda2f69fa591f0774a5e60c1b180ca03ecd1a39e58",
+      "origin": "incumbent",
+      "publicationValid": true,
+      "freshSurrogateFeasible": false
+    },
+    {
+      "fingerprint": "0f5207051266e02beb44495de924c9488b090a7f0eeebcfc25855f920f6d165b",
+      "origin": "direct",
+      "publicationValid": true,
+      "freshSurrogateFeasible": false
+    },
+    {
+      "fingerprint": "cda6c172e1b29c0ae37e33dd28eebe935ce5d790734593bdc4096dce775b86e5",
+      "origin": "repair-required",
+      "publicationValid": false,
+      "freshSurrogateFeasible": false
+    }
+  ],
+  "mode1": {
+    "outputSha256": "a09f7ff4932349103a104086f3a4c55e325035af3c33e7b1d754bd73454c315a",
+    "selectedParentFingerprint": "7a59b95d19601dc707fa1bd52ddc3dc60e5f759787bf212334e83eec92d4bed1",
+    "eligibleParentFingerprints": [
+      "7a59b95d19601dc707fa1bd52ddc3dc60e5f759787bf212334e83eec92d4bed1",
+      "0f5207051266e02beb44495de924c9488b090a7f0eeebcfc25855f920f6d165b"
+    ]
+  },
+  "mode2": {
+    "outputSha256": "0a03f14c30febc61136bf97b94e585bfa39f403c97a6f4f25ecc3c539c9876d4",
+    "selectedParentFingerprint": "7a59b95d19601dc707fa1bd52ddc3dc60e5f759787bf212334e83eec92d4bed1",
+    "selectedCompressedRawLoss": 4140.005266919047,
+    "rounds": 40,
+    "rollbacks": 2,
+    "minimumRawLoss": 1010.8935506900488,
+    "finalStateFingerprint": "860eed1b5dec8f9fab020dbe7e4eedc82114137fcd21a8d4c714727c602b887f",
+    "feasible": false,
+    "exactValid": false,
+    "exactAccepted": false,
+    "failureReason": null,
+    "capExhausted": null
+  },
+  "mode3": {
+    "outputSha256": "80697982909088da0c553a88f9e93ec72c91a2f238ce3db808d1f57a7fb2c4c4",
+    "rebuiltChildRecordHash": "9d5090ee607b991683bd37b8c00dfcf69885b393a22da6328ce8fcb6e848c44c",
+    "selectedParentFingerprint": "cda6c172e1b29c0ae37e33dd28eebe935ce5d790734593bdc4096dce775b86e5",
+    "stageAIndependentAuditValid": true,
+    "stageAIndependentDepthMm": 168.625,
+    "stageAAuditedPlacementFingerprint": "e71a11335a4cf9164d277392df84309a24b609941299c7ae18a7f48b8ff3042b",
+    "stageBRounds": 40,
+    "stageBRollbacks": 2,
+    "stageBMinimumRawLoss": 1639.8386495144705,
+    "stageBExactValid": false,
+    "stageBExactAccepted": false,
+    "stageBFailureReason": null,
+    "stageBCapExhausted": null,
+    "aggregateCapReason": "cap: pre-compression handoff layout-load budget exhausted"
+  },
+  "mode4RemovedSecondDirectParentScreen": {
+    "rawOutputSha256": [
+      "fdc55f2e5d4eb1c58e4b3183db18281ae4057b5aab91e4d5c1ff6cc9fb00238a",
+      "147944d02190d5ce96acfbcf2a71dbf2400adfdbcb2c07f67161fb61548f03ea"
+    ],
+    "normalizedOutputSha256": "002f7d3b0974a74094003508411d7eac720ef741766ff9b0b881f9aad2d45736",
+    "executableSha256": "b32381f6e02a6154147086ff6c84050561b790596b9a0d4c8a5dd8b75d3ab137",
+    "relevantSourceTreeSha256": "4ddeb5a3422a66de608b88becde37b8283ae1ddeeec1a19fe6c1159540f33109",
+    "selectedParentFingerprint": "0f5207051266e02beb44495de924c9488b090a7f0eeebcfc25855f920f6d165b",
+    "incumbentCompressedFingerprint": "2cb4c5ae4578e53d10deceb1cb6ec32f3704a3dfc1ee793bde1f81f48caa42c2",
+    "mode2CompressedFingerprint": "c109c5daa859658b25e4f3b987ec4066ef14d9a57f1620c4e2ef94c1100e66ff",
+    "selectedCompressedFingerprint": "ec78ac5e6d8635a64ec9faf2ed976018a7a8f69283ef85db1b518cc860f96c20",
+    "selectedCompressedRawLoss": 4147.186754956157,
+    "rounds": 40,
+    "rollbacks": 3,
+    "minimumRawLoss": 1010.8935506900488,
+    "finalStateFingerprint": "f9b0c84a379f9b71f51ce891d9d9a538fabe13a92848b3b13640a10013234252",
+    "feasible": false,
+    "exactValid": false,
+    "exactAccepted": false,
+    "failureReason": null,
+    "capExhausted": null,
+    "wallSeconds": [5.39, 5.03],
+    "maximumResidentSetBytes": [50987008, 50888704],
+    "actualThreads": 8,
+    "removedAfterNegativeGate": true
+  }
+}

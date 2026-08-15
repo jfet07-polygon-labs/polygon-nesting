@@ -1,0 +1,27 @@
+{
+  "experiment": "exact-pair-terminal-repair",
+  "status": "rejected",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "checkpointFingerprint": "d8e1330e39ec322fdc399110a957c25066019bb567dc529724cdb851f818f91d",
+  "targetDepthMm": 168.456375,
+  "selectedParentFingerprint": "fb0a4e7fec44c9e0812e895f847e96bd3dbf47128ba10017f3ac0edf8d7dd279",
+  "selectedPairRowHash": "ac07df4a7e9041d256c0828daa546f00e07ca4c86b3e9f3dae29986e78ae2048",
+  "initialExactOverlapAreaMm2": 0.031953,
+  "initialPositivePairs": 3,
+  "monotoneLocalDescent": {
+    "bestExactOverlapAreaMm2": 0.0313595,
+    "remainingPositivePairs": 3
+  },
+  "forcedPairElimination": {
+    "layerBestExactOverlapAreaMm2": [3.548009, 0.088821, 6.244761, 0.31855900000000004],
+    "remainingPositivePairs": 3,
+    "generatedPlacements": 336,
+    "collisionBuilds": 336,
+    "repairExactPairIntersections": 15600,
+    "repairClipperInputVertices": 159380,
+    "repairClipperOutputVertices": 1047,
+    "elapsedSeconds": 5.36,
+    "peakResidentBytes": 48873472
+  },
+  "conclusion": "Independent one-pair terminal moves do not escape the coupled complete-layout local minimum."
+}

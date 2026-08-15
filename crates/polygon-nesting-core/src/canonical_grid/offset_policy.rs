@@ -9,7 +9,7 @@
 use super::js_local::{is_finite, math_sign};
 
 /// TS source: `clipper2OffsetPolicy.ts:11` (`CLIPPER2_OFFSET_POLICY.scale`).
-const CLIPPER2_OFFSET_SCALE: f64 = 1000.0;
+pub(crate) const CLIPPER2_OFFSET_SCALE: f64 = 1000.0;
 
 /// Quantizes millimeters to the adapter grid using nearest rounding with ties
 /// away from zero. `None` means the value cannot be represented safely.

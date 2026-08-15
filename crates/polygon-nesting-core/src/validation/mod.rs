@@ -17,6 +17,7 @@
 //! `geometry::convex::{validate_strict_boundary, bounds_for_points,
 //! translate_polygon_with_bounds, are_disjoint}`, `js_number::js_math`.
 
+pub mod general_polygon;
 pub mod placement;
 pub mod sat;
 pub mod spatial_index;

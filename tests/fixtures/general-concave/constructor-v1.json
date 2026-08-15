@@ -1,0 +1,62 @@
+{
+  "name": "general-concave-constructor-v1",
+  "sheetShortAxisMm": 20,
+  "sheetLongAxisMm": 60,
+  "totalPaddingMm": 0,
+  "clearanceSafetyMarginMm": 0,
+  "flatteningSagToleranceMm": 0,
+  "bestKnownDepthMm": 16.008,
+  "expectedPlaced": 8,
+  "expectGeneralBeatsHull": true,
+  "pieces": [
+    {
+      "id": "l-shape",
+      "allowRotation": true,
+      "allowMirror": true,
+      "outer": [[0, 0], [8, 0], [8, 2], [2, 2], [2, 8], [0, 8]]
+    },
+    {
+      "id": "t-shape",
+      "allowRotation": true,
+      "allowMirror": true,
+      "outer": [[0, 0], [8, 0], [8, 2], [5, 2], [5, 8], [3, 8], [3, 2], [0, 2]]
+    },
+    {
+      "id": "star",
+      "allowRotation": true,
+      "allowMirror": true,
+      "outer": [[4, 0], [4.9, 2.8], [8, 2.8], [5.5, 4.6], [6.5, 8], [4, 6], [1.5, 8], [2.5, 4.6], [0, 2.8], [3.1, 2.8]]
+    },
+    {
+      "id": "narrow-cavity",
+      "allowRotation": true,
+      "allowMirror": true,
+      "outer": [[0, 0], [8, 0], [8, 1], [1, 1], [1, 7], [8, 7], [8, 8], [0, 8]]
+    },
+    {
+      "id": "donut",
+      "allowRotation": true,
+      "allowMirror": false,
+      "outer": [[0, 0], [6, 0], [6, 6], [0, 6]],
+      "holes": [[[2, 2], [2, 4], [4, 4], [4, 2]]]
+    },
+    {
+      "id": "square",
+      "allowRotation": true,
+      "allowMirror": false,
+      "outer": [[0, 0], [3, 0], [3, 3], [0, 3]]
+    },
+    {
+      "id": "rectangle",
+      "allowRotation": true,
+      "allowMirror": false,
+      "outer": [[0, 0], [4, 0], [4, 2], [0, 2]]
+    },
+    {
+      "id": "triangle",
+      "allowRotation": true,
+      "allowMirror": true,
+      "outer": [[0, 4], [2, 0], [4, 4]]
+    }
+  ]
+}

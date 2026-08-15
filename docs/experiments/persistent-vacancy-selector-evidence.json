@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "experiment": "persistent-vacancy-stateless-rotation-screen",
+  "recordedAtUtc": "2026-08-15T14:36:00Z",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "engineCommit": "c3977ca262ebd8f68e8f2914c6c8a3be446b38b6",
+  "relevantSourceTreeSha256": "c1d74910f5b1873804f5c0285d0dd9b47bdce265e4fffbe33c97d10376f233d2",
+  "executableSha256": "d979bbf65edcf5327afa77d42d3d9a279a79503f9ca82279d021852fff6392b2",
+  "parentFingerprint": "b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5",
+  "requestedThreads": 8,
+  "actualThreads": 8,
+  "modeZeroProjectedSha256": "0f39c64a58b43158506319bf9d6907fc78b9fa9978887c386820bea2779a40fb",
+  "legacySemanticCompatibility": {
+    "mode1Sha256": "b2d5ce99ecf31848abfcc5f08e8f0970168abdde939934067541bbb8fed3eaf7",
+    "mode2Sha256": "603477dc250252930a3dfe9cd9c2109be6969ec3d4b5ef3bb9a314b8688374c8",
+    "mode3PreEliteSemanticSha256": "72c959094e6a1f0f76d139e798167775c62909a0a8dc3e0785c665751dd10f3d"
+  },
+  "sharedParentSelectorRows": {
+    "mode1Mode2": {
+      "shared": 18,
+      "mismatches": 0
+    },
+    "mode3Mode4": {
+      "shared": 10,
+      "mismatches": 0
+    }
+  },
+  "arms": {
+    "mode1": {
+      "scheduler": "twoHardest",
+      "retention": "comparator",
+      "normalizedReplaySha256": "f3a4495984c6f8a142f682901ef2254e94da5269a601c1f2a104dcd86affc908",
+      "rawOutputSha256": [
+        "94b8b518d865eb45d90362906f5315add5c9d9d3552a83eb075b957acdea85ce",
+        "58b2b23d533d6e77a31ad1e01eca0b4999810173a12a2ca1e93a127fb39e686d"
+      ],
+      "wallSeconds": [5.81, 5.49],
+      "maximumResidentSetBytes": [48300032, 45711360],
+      "completeStates": 0,
+      "bestInactivePieceCount": 15,
+      "bestInactiveAreaGrid2": "69619646821",
+      "bestStateFingerprint": "51b9f62686f202ff6298f03647b3717e0e302b8ee325d7ffb469cb778549f7b9",
+      "directInsertions": 238,
+      "ejectionInsertions": 3946,
+      "experimentalPairVisits": 217850,
+      "clipperInputVertices": 153804747,
+      "clipperOutputVertices": 31977,
+      "stateRetainedPeakBytes": 65720,
+      "selectorDiagnosticPeakBytes": 244017,
+      "totalRetainedPeakBytes": 309017
+    },
+    "mode3": {
+      "scheduler": "hardPlusStatelessRotation",
+      "retention": "comparator",
+      "normalizedReplaySha256": "3115e85db19e17eb8d69fc57fa76f45f7e8efcc401637e521f1c53ababeb804c",
+      "rawOutputSha256": [
+        "f322cfb65e407bb29be58b5de63f6e8a736b83598a0db9230101c2a522c75718",
+        "4594dd624b76481f37caa7e2c59839059d6c0021bda99e5370b7ce463e22650f"
+      ],
+      "wallSeconds": [5.56, 5.54],
+      "maximumResidentSetBytes": [45400064, 47857664],
+      "completeStates": 0,
+      "bestInactivePieceCount": 12,
+      "bestInactiveAreaGrid2": "60144097737",
+      "bestStateFingerprint": "d12e7ee31330d9cd67643a5051ee2549b9e67cfb097300decc59766cedc15007",
+      "observedAreaFirstHistory": {
+        "minimumReportedInactiveCount": 11,
+        "firstMinimumCountLayer": 29,
+        "firstMinimumCountAreaGrid2": "59571124704",
+        "firstMinimumCountFingerprint": "101d2edcd54f05e6b340943b96dddffc7f12d219ef76a9b5645a27fe7fe3a579",
+        "minimumAreaLayer": 32,
+        "minimumAreaInactiveCount": 11,
+        "minimumAreaGrid2": "59571041296",
+        "minimumAreaFingerprint": "c23292443bc0e5984eb37ff193df97df88ffeb624858a2cb315eda2b08e06380",
+        "lastElevenPieceLayer": 35,
+        "lastElevenPieceAreaGrid2": "60498293033",
+        "lastElevenPieceFingerprint": "913100ac97ed63f51b27dcc614f5d6aa7606d409c9c43ad8397b67dc818b73e5",
+        "scope": "area-first layer winner only; not the minimum-count state among all retained parents"
+      },
+      "directInsertions": 225,
+      "ejectionInsertions": 3666,
+      "experimentalPairVisits": 220351,
+      "clipperInputVertices": 153889807,
+      "clipperOutputVertices": 42531,
+      "stateRetainedPeakBytes": 69808,
+      "selectorDiagnosticPeakBytes": 260208,
+      "totalRetainedPeakBytes": 329512,
+      "pairedOutcome": "passes partial gate versus mode1"
+    },
+    "mode2": {
+      "scheduler": "twoHardest",
+      "retention": "contactSignature",
+      "normalizedReplaySha256": "aaa51ca70b04583c5960f9642f9089a576f71f17dcaee1c574b8718ef43a464f",
+      "rawOutputSha256": [
+        "ce4d8e6a649e7c2bdbfef6e4e11abe3aa1d0ae428fe97510ecff80e2ec793dac",
+        "e2415e9d2b38862c7e75ce6012f5531dba9e04c1b746e13079b779e3aba15efc"
+      ],
+      "wallSeconds": [5.42, 5.45],
+      "maximumResidentSetBytes": [44957696, 46039040],
+      "completeStates": 0,
+      "bestInactivePieceCount": 13,
+      "bestInactiveAreaGrid2": "58797801045",
+      "bestStateFingerprint": "9110931c91d69e6ddb3e1b41e4da7c9ef9a5fcf7c403ec65af4815ea38fa635a",
+      "directInsertions": 183,
+      "ejectionInsertions": 4011,
+      "experimentalPairVisits": 217938,
+      "clipperInputVertices": 153813562,
+      "clipperOutputVertices": 35081,
+      "stateRetainedPeakBytes": 66664,
+      "selectorDiagnosticPeakBytes": 249944,
+      "totalRetainedPeakBytes": 316608
+    },
+    "mode4": {
+      "scheduler": "hardPlusStatelessRotation",
+      "retention": "contactSignature",
+      "normalizedReplaySha256": "955a76237f30b920328f9d6f11bbdb3fd1361509899b25d3ecfb30dd80e13e0a",
+      "rawOutputSha256": [
+        "89f73670f43fb1cd5afd60bf1cb72d5b9ebb9c43d0fd645a8e7ca42bc64f169b",
+        "3a4672a127c87176342604c22322a5cd16a61d60d8101d31cb9f4489b1d9dc5b"
+      ],
+      "wallSeconds": [5.49, 5.48],
+      "maximumResidentSetBytes": [45973504, 47841280],
+      "completeStates": 0,
+      "bestInactivePieceCount": 13,
+      "bestInactiveAreaGrid2": "62614709968",
+      "bestStateFingerprint": "272cb2b15da321a63708949ed7ba860835dca6a3a2269ef59b397c29d34748a4",
+      "directInsertions": 173,
+      "ejectionInsertions": 4018,
+      "experimentalPairVisits": 218321,
+      "clipperInputVertices": 153835903,
+      "clipperOutputVertices": 39335,
+      "stateRetainedPeakBytes": 68136,
+      "selectorDiagnosticPeakBytes": 266846,
+      "totalRetainedPeakBytes": 333542,
+      "pairedOutcome": "fails partial gate versus mode2"
+    }
+  },
+  "conclusion": "Stateless rotation improves comparator retention but conflicts with contact-signature retention. Preserve both basins in the next retention experiment instead of increasing layers or beam width."
+}
