@@ -372,9 +372,22 @@ pub struct GeneralPersistentVacancyDiagnostics {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub settle: Option<GeneralPersistentVacancySettleDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub reconstruction: Option<GeneralPersistentVacancyReconstructionDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub archive: Option<GeneralPersistentVacancyArchiveDiagnostics>,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyReconstructionDiagnostics {
+    pub insertions: usize,
+    pub exact_rows: usize,
+    pub rows_per_piece_cap: usize,
+    pub deferred_first_pass: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failed_piece_id: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]

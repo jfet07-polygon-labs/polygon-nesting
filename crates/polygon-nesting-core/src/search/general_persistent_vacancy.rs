@@ -40,12 +40,18 @@ const MAX_ARCHIVE_REVIVALS: usize =
 const SETTLE_SWEEPS: usize = 3;
 const SETTLE_PROBES_PER_ATTEMPT: usize = 64;
 const SETTLE_SELECTED_PIECE_SLOTS: usize = SETTLE_SWEEPS * 61;
+// Mode 13 rebuilds the layout from an external hint fixture: one guided
+// insertion per piece, ranked by grid distance to the hint pose, with at most
+// RECONSTRUCTION_ROWS_PER_PIECE exact confirmations per piece.
+const RECONSTRUCTION_SELECTED_PIECE_SLOTS: usize = 61;
+const RECONSTRUCTION_ROWS_PER_PIECE: usize = 192;
 const ORDINARY_SELECTED_PIECE_SLOTS: usize = MAX_LAYERS * BEAM_WIDTH * SELECTED_PIECES_PER_PARENT;
 const ARCHIVE_SELECTED_PIECE_SLOTS: usize = MAX_ARCHIVE_REVIVALS * SELECTED_PIECES_PER_PARENT;
 const POPULATION_SELECTED_PIECE_SLOTS: usize =
     ORDINARY_SELECTED_PIECE_SLOTS + ARCHIVE_SELECTED_PIECE_SLOTS;
-const MAX_SELECTED_PIECE_SLOTS: usize =
-    POPULATION_SELECTED_PIECE_SLOTS + SETTLE_SELECTED_PIECE_SLOTS;
+const MAX_SELECTED_PIECE_SLOTS: usize = POPULATION_SELECTED_PIECE_SLOTS
+    + SETTLE_SELECTED_PIECE_SLOTS
+    + RECONSTRUCTION_SELECTED_PIECE_SLOTS;
 const MAX_ORIENTATION_STREAMS: usize = MAX_SELECTED_PIECE_SLOTS * ORIENTATIONS_PER_PIECE;
 const MAX_SOURCE_FEATURE_VISITS: usize = MAX_SELECTED_PIECE_SLOTS * 2 * MAX_SOURCE_FEATURES;
 const POSITION_SOURCE_ATTEMPTS_PER_ORIENTATION: usize = 529;
@@ -55,12 +61,17 @@ const MAX_RETURNED_POSITIONS: usize = MAX_ORIENTATION_STREAMS * POSITIONS_PER_OR
 const MAX_HAZARD_QUERIES: usize = MAX_RETURNED_POSITIONS;
 const MAX_PROXY_PRESSURE_VISITS: usize = MAX_RETURNED_POSITIONS * 61;
 const MAX_EXACT_FINALIST_ROWS: usize = POPULATION_SELECTED_PIECE_SLOTS * FINALISTS_PER_PIECE
-    + SETTLE_SELECTED_PIECE_SLOTS * SETTLE_PROBES_PER_ATTEMPT;
+    + SETTLE_SELECTED_PIECE_SLOTS * SETTLE_PROBES_PER_ATTEMPT
+    + RECONSTRUCTION_SELECTED_PIECE_SLOTS * RECONSTRUCTION_ROWS_PER_PIECE;
 // Two initial 61-piece collision builds are funded: the mode-11 settle
 // prelude builds the full active state once, and the target initializer
 // rebuilds it once.
-const MAX_EXPERIMENTAL_COLLISION_BUILDS: usize =
-    2 * 61 + MAX_ORIENTATION_STREAMS + MAX_EXACT_FINALIST_ROWS;
+// The reconstruction lane also builds one hint-orientation collision per
+// selected slot for shelf anchoring.
+const MAX_EXPERIMENTAL_COLLISION_BUILDS: usize = 2 * 61
+    + MAX_ORIENTATION_STREAMS
+    + MAX_EXACT_FINALIST_ROWS
+    + RECONSTRUCTION_SELECTED_PIECE_SLOTS;
 const MAX_VALIDATOR_COLLISION_BUILDS: usize = 12_810;
 const MAX_EXPERIMENTAL_PAIR_VISITS: usize = 1_830 + MAX_EXACT_FINALIST_ROWS * 60;
 const MAX_VALIDATOR_PAIR_VISITS: usize = 384_300;
@@ -474,8 +485,8 @@ fn run_population(
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<Option<(VacancyState, f64)>, String> {
-    if !matches!(mode, 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12) {
-        return Err("persistent vacancy mode must be between 1 and 12".to_owned());
+    if !matches!(mode, 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13) {
+        return Err("persistent vacancy mode must be between 1 and 13".to_owned());
     }
     // Modes 1-8 are the frozen diagnostic screens: their 165.0 mm target and
     // b9335a72 parent identity are part of the pinned experiment contract.
@@ -484,7 +495,7 @@ fn run_population(
     // and skips only the frozen fingerprint/depth equality pins while keeping
     // full parent validation.
     let target_depth_mm = match (mode, target_override_mm) {
-        (9 | 10 | 11 | 12, Some(target)) => {
+        (9 | 10 | 11 | 12 | 13, Some(target)) => {
             if !target.is_finite() || target <= 0.0 {
                 return Err(
                     "persistent vacancy target depth must be a positive finite value".to_owned(),
@@ -492,18 +503,18 @@ fn run_population(
             }
             target
         }
-        (9 | 10 | 11 | 12, None) => {
+        (9 | 10 | 11 | 12 | 13, None) => {
             return Err(
-                "persistent vacancy modes 9-12 require an explicit target depth".to_owned(),
+                "persistent vacancy modes 9-13 require an explicit target depth".to_owned(),
             );
         }
         (_, Some(_)) => {
-            return Err("persistent vacancy target depth overrides require modes 9-12".to_owned());
+            return Err("persistent vacancy target depth overrides require modes 9-13".to_owned());
         }
         (_, None) => TARGET_DEPTH_MM,
     };
-    if matches!(mode, 9 | 10 | 11 | 12) && !parent_is_pinned {
-        return Err("persistent vacancy modes 9-12 require a pinned parent fixture".to_owned());
+    if matches!(mode, 9 | 10 | 11 | 12 | 13) && !parent_is_pinned {
+        return Err("persistent vacancy modes 9-13 require a pinned parent fixture".to_owned());
     }
     diagnostics.target_depth_mm = target_depth_mm;
     if pieces.len() != 61 {
@@ -513,26 +524,30 @@ fn run_population(
         return Err("persistent vacancy parent is not a complete exact-valid layout".to_owned());
     }
     let parent_fast = diagnostic_fast_placements(&parent.final_placements);
-    validate_and_measure_placements(pieces, &parent_fast, fast_settings)
-        .map_err(|error| format!("persistent vacancy parent validation: {error}"))?;
+    if mode != 13 {
+        validate_and_measure_placements(pieces, &parent_fast, fast_settings)
+            .map_err(|error| format!("persistent vacancy parent validation: {error}"))?;
+    }
     let parent_fingerprint = coupled_fast_placement_fingerprint(&parent_fast);
     diagnostics.parent_fingerprint = Some(parent_fingerprint.clone());
-    if !matches!(mode, 9 | 10 | 11 | 12) && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT {
+    if !matches!(mode, 9 | 10 | 11 | 12 | 13) && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT {
         return Err(format!(
             "persistent vacancy parent fingerprint mismatch: expected {EXPECTED_PARENT_FINGERPRINT}, got {parent_fingerprint}"
         ));
     }
-    let parent_depth = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
-        .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
-    if matches!(mode, 9 | 10 | 11 | 12) {
-        diagnostics.parent_independent_depth_mm = Some(parent_depth);
-    }
-    if !matches!(mode, 9 | 10 | 11 | 12)
-        && grid_key(parent_depth) != grid_key(EXPECTED_PARENT_DEPTH_MM)
-    {
-        return Err(format!(
-            "persistent vacancy parent depth mismatch: expected {EXPECTED_PARENT_DEPTH_MM}, got {parent_depth}"
-        ));
+    if mode != 13 {
+        let parent_depth = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
+            .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
+        if matches!(mode, 9 | 10 | 11 | 12) {
+            diagnostics.parent_independent_depth_mm = Some(parent_depth);
+        }
+        if !matches!(mode, 9 | 10 | 11 | 12)
+            && grid_key(parent_depth) != grid_key(EXPECTED_PARENT_DEPTH_MM)
+        {
+            return Err(format!(
+                "persistent vacancy parent depth mismatch: expected {EXPECTED_PARENT_DEPTH_MM}, got {parent_depth}"
+            ));
+        }
     }
     for piece in pieces {
         if piece.polygon.vertex_count() > MAX_SOURCE_FEATURES {
@@ -553,6 +568,17 @@ fn run_population(
         &parent.final_placements,
         target_depth_mm,
     )?;
+    if mode == 13 {
+        let (state, independent) = reconstruct_from_hints(
+            pieces,
+            fast_settings,
+            target_depth_mm,
+            &baseline,
+            diagnostics,
+            work,
+        )?;
+        return Ok(Some((state, independent)));
+    }
     if matches!(mode, 11 | 12) {
         baseline = settle_baseline(pieces, fast_settings, baseline, diagnostics, work)?;
     }
@@ -1182,6 +1208,333 @@ fn settle_baseline(
         placements: state.placements,
         strip_depth_mm: baseline.strip_depth_mm,
     })
+}
+
+/// Mode-13 guided reconstruction: rebuilds the layout from an external hint
+/// fixture under the engine's own exact contract. Pieces are inserted in
+/// ascending hint-depth order; each insertion ranks displacement probes,
+/// generator candidates, and upward shelf fallbacks by canonical-grid L1
+/// distance from the hint pose and exact-confirms them in order until the
+/// first pose with full-strip containment and zero exact pair intersection
+/// against every already-placed piece. Pieces whose pockets are closed
+/// during the first pass are deferred and retried after every other piece
+/// has settled. The hints are never trusted: the completed state must pass
+/// the unchanged dual publication audit.
+fn reconstruct_from_hints(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    target_depth_mm: f64,
+    hints: &RelaxedState,
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    work: &mut RunWork,
+) -> Result<(VacancyState, f64), String> {
+    let target_settings = GeneralFastSettings {
+        sheet_long_axis_mm: target_depth_mm,
+        ..fast_settings
+    };
+    let mut state = VacancyState {
+        placements: hints.placements.clone(),
+        active: vec![false; pieces.len()],
+        collisions: vec![None; pieces.len()],
+        last_transition: None,
+    };
+    let hint_state = VacancyState {
+        placements: hints.placements.clone(),
+        active: vec![true; pieces.len()],
+        collisions: vec![None; pieces.len()],
+        last_transition: None,
+    };
+    let reconstruction_seed = parent_seed_key(&hint_state, pieces);
+    let mut order = (0..pieces.len()).collect::<Vec<_>>();
+    order.sort_by_key(|index| {
+        (
+            grid_key(hints.placements[*index].translate_y),
+            pieces[*index].id,
+        )
+    });
+    let mut recon = GeneralPersistentVacancyReconstructionDiagnostics {
+        insertions: 0,
+        exact_rows: 0,
+        rows_per_piece_cap: RECONSTRUCTION_ROWS_PER_PIECE,
+        deferred_first_pass: 0,
+        failed_piece_id: None,
+    };
+    let mut deferred = Vec::new();
+    for (ordinal, piece_index) in order.into_iter().enumerate() {
+        let placed = reconstruct_insert_piece(
+            pieces,
+            target_settings,
+            hints,
+            &mut state,
+            reconstruction_seed,
+            ordinal,
+            piece_index,
+            &mut recon,
+            work,
+        )?;
+        if !placed {
+            deferred.push(piece_index);
+            recon.deferred_first_pass = recon.deferred_first_pass.saturating_add(1);
+        }
+    }
+    // Deferred second pass: pieces whose hint pockets were closed during the
+    // first pass retry after every other piece has settled, when the shelf
+    // region and any reopened pockets are maximally available.
+    for (retry_ordinal, piece_index) in deferred.into_iter().enumerate() {
+        let placed = reconstruct_insert_piece(
+            pieces,
+            target_settings,
+            hints,
+            &mut state,
+            reconstruction_seed,
+            61 + retry_ordinal,
+            piece_index,
+            &mut recon,
+            work,
+        )?;
+        if !placed {
+            recon.failed_piece_id = Some(pieces[piece_index].id.to_owned());
+            diagnostics.reconstruction = Some(recon.clone());
+            return Err(format!(
+                "seeded reconstruction found no exact-valid pose for piece {} within {} exact rows",
+                pieces[piece_index].id, RECONSTRUCTION_ROWS_PER_PIECE
+            ));
+        }
+    }
+    diagnostics.reconstruction = Some(recon.clone());
+    diagnostics.complete_states = diagnostics.complete_states.saturating_add(1);
+    if let Err(reason) = audit_state(&state, pieces, target_settings, true, work) {
+        if !reason.starts_with("cap: ") {
+            diagnostics.publication_rejections =
+                diagnostics.publication_rejections.saturating_add(1);
+        }
+        return Err(reason);
+    }
+    let placements = fast_placements(&state, pieces, false);
+    let independent = coupled_independent_source_depth(pieces, &placements, target_settings)
+        .map_err(|error| format!("persistent vacancy reconstructed depth: {error}"))?;
+    Ok((state, independent))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn reconstruct_insert_piece(
+    pieces: &[GeneralFastPiece<'_>],
+    target_settings: GeneralFastSettings,
+    hints: &RelaxedState,
+    state: &mut VacancyState,
+    reconstruction_seed: u64,
+    ordinal: usize,
+    piece_index: usize,
+    recon: &mut GeneralPersistentVacancyReconstructionDiagnostics,
+    work: &mut RunWork,
+) -> Result<bool, String> {
+    work.diagnostics.selected_piece_slots = work.diagnostics.selected_piece_slots.saturating_add(1);
+    if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
+        return Err(work.cap("selected-piece slot budget exhausted"));
+    }
+    work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
+    let live_bytes = state_slice_bytes(std::slice::from_ref(state))
+        .saturating_add(2usize.saturating_mul(size_of::<VacancyState>()));
+    work.diagnostics.total_retained_peak_bytes =
+        work.diagnostics.total_retained_peak_bytes.max(live_bytes);
+    if live_bytes > MAX_RETAINED_BYTES {
+        return Err(work.cap("reconstruction live-state memory budget exhausted"));
+    }
+    let inset = collision_sheet_inset_mm(target_settings);
+    let hint = &hints.placements[piece_index];
+    let hint_x = grid_key(hint.translate_x);
+    let hint_y = grid_key(hint.translate_y);
+    let angle_seed = derive_seed(
+        reconstruction_seed ^ CONFLICT_RUIN_ANGLE_SEED_DOMAIN,
+        ordinal,
+        piece_index,
+    );
+    let orientations = conflict_ruin_orientations(pieces[piece_index], hint, angle_seed);
+    let mut candidates = Vec::new();
+    // Deterministic displacement probes around the hint at the hint
+    // orientation: the reconstruction usually needs a sub-millimetre shift
+    // away from neighbors that sit at the hint contract's tighter
+    // separation, and the general position generator's position cap crowds
+    // those poses out.
+    const PROBE_RADII_MM: [f64; 12] = [
+        0.128, 0.256, 0.384, 0.512, 0.768, 1.024, 1.536, 2.048, 3.072, 4.096, 6.144, 8.192,
+    ];
+    const PROBE_DIRECTIONS: [(f64, f64); 8] = [
+        (1.0, 0.0),
+        (-1.0, 0.0),
+        (0.0, 1.0),
+        (0.0, -1.0),
+        (0.7071067811865476, 0.7071067811865476),
+        (-0.7071067811865476, 0.7071067811865476),
+        (0.7071067811865476, -0.7071067811865476),
+        (-0.7071067811865476, -0.7071067811865476),
+    ];
+    candidates.push((0u64, 0usize, hint.clone()));
+    for radius in PROBE_RADII_MM {
+        for (direction_x, direction_y) in PROBE_DIRECTIONS {
+            let mut probe = hint.clone();
+            probe.translate_x += radius * direction_x;
+            probe.translate_y += radius * direction_y;
+            let distance = grid_key(probe.translate_x)
+                .abs_diff(hint_x)
+                .saturating_add(grid_key(probe.translate_y).abs_diff(hint_y));
+            candidates.push((distance, 0usize, probe));
+        }
+    }
+    // Upward shelf fallback: the region above the current frontier is empty
+    // during bottom-up reconstruction, so a piece whose hint pocket is
+    // laterally closed under the tighter engine contract can escape upward;
+    // the later settling ladder recompacts the layout. Shelf poses anchor
+    // the piece's hint-orientation material bottom just above the frontier.
+    let hint_orientation = RelaxedPlacement {
+        input_index: piece_index,
+        rotation_deg: hint.rotation_deg,
+        mirrored: hint.mirrored,
+        translate_x: 0.0,
+        translate_y: 0.0,
+    };
+    let hint_local = build_collision(
+        pieces[piece_index],
+        &hint_orientation,
+        target_settings,
+        work,
+    )?;
+    let hint_local_min_y = hint_local
+        .bounds()
+        .ok_or_else(|| "reconstruction hint orientation has empty geometry".to_owned())?
+        .min_y;
+    let frontier_y = state
+        .collisions
+        .iter()
+        .flatten()
+        .filter_map(|collision| collision.bounds())
+        .map(|bounds| bounds.max_y)
+        .fold(0.0f64, f64::max);
+    let mut shelf_candidates = Vec::new();
+    for step in 1..=12u32 {
+        for lateral in [0.0f64, -4.0, 4.0, -8.0, 8.0] {
+            let mut probe = hint.clone();
+            probe.translate_x += lateral;
+            probe.translate_y = frontier_y - hint_local_min_y + 0.6 * f64::from(step);
+            shelf_candidates.push(probe);
+        }
+    }
+    for (orientation_ordinal, (rotation_deg, mirrored)) in orientations.into_iter().enumerate() {
+        work.diagnostics.orientation_streams =
+            work.diagnostics.orientation_streams.saturating_add(1);
+        if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
+            return Err(work.cap("orientation-stream budget exhausted"));
+        }
+        let orientation = RelaxedPlacement {
+            input_index: piece_index,
+            rotation_deg,
+            mirrored,
+            translate_x: 0.0,
+            translate_y: 0.0,
+        };
+        let local_collision =
+            build_collision(pieces[piece_index], &orientation, target_settings, work)?;
+        let position_seed = derive_seed(
+            reconstruction_seed ^ CONFLICT_RUIN_POSITION_SEED_DOMAIN,
+            ordinal
+                .saturating_mul(ORIENTATIONS_PER_PIECE)
+                .saturating_add(orientation_ordinal),
+            piece_index,
+        );
+        let proposals = vacancy_positions(
+            hint,
+            &orientation,
+            &local_collision,
+            state,
+            target_settings,
+            position_seed,
+            work,
+        )?;
+        for placement in proposals {
+            let distance = grid_key(placement.translate_x)
+                .abs_diff(hint_x)
+                .saturating_add(grid_key(placement.translate_y).abs_diff(hint_y));
+            candidates.push((distance, orientation_ordinal, placement));
+        }
+    }
+    candidates.sort_by(|first, second| {
+        first
+            .0
+            .cmp(&second.0)
+            .then_with(|| first.1.cmp(&second.1))
+            .then_with(|| placement_key(&first.2).cmp(&placement_key(&second.2)))
+    });
+    // The last RECONSTRUCTION_SHELF_ROWS of the per-piece budget are
+    // reserved for the shelf fallback so local congestion can never starve
+    // it.
+    const RECONSTRUCTION_SHELF_ROWS: usize = 60;
+    let local_row_cap = RECONSTRUCTION_ROWS_PER_PIECE - RECONSTRUCTION_SHELF_ROWS;
+    let mut rows = 0usize;
+    let mut tried_buckets = BTreeSet::new();
+    let ranked = candidates
+        .into_iter()
+        .map(|(_, orientation_ordinal, candidate)| (false, orientation_ordinal, candidate))
+        .chain(
+            shelf_candidates
+                .into_iter()
+                .map(|candidate| (true, 0usize, candidate)),
+        )
+        .collect::<Vec<_>>();
+    for (is_shelf, orientation_ordinal, candidate) in ranked {
+        if rows >= RECONSTRUCTION_ROWS_PER_PIECE {
+            break;
+        }
+        if !is_shelf && rows >= local_row_cap {
+            continue;
+        }
+        let bucket = (
+            orientation_ordinal,
+            grid_key(candidate.translate_x).div_euclid(256),
+            grid_key(candidate.translate_y).div_euclid(256),
+        );
+        if !tried_buckets.insert(bucket) {
+            continue;
+        }
+        rows += 1;
+        recon.exact_rows += 1;
+        work.diagnostics.exact_finalist_rows =
+            work.diagnostics.exact_finalist_rows.saturating_add(1);
+        if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
+            return Err(work.cap("exact-finalist row budget exhausted"));
+        }
+        let collision = build_collision(pieces[piece_index], &candidate, target_settings, work)?;
+        if !collision.fits_rect(
+            inset,
+            inset,
+            target_settings.sheet_short_axis_mm - inset,
+            target_settings.sheet_long_axis_mm - inset,
+        ) {
+            continue;
+        }
+        let mut overlapping = false;
+        for fixed_index in 0..pieces.len() {
+            if !state.active[fixed_index] {
+                continue;
+            }
+            work.charge_experimental_pair()?;
+            let fixed = state.collisions[fixed_index]
+                .as_ref()
+                .ok_or_else(|| format!("active piece {fixed_index} has no collision"))?;
+            if exact_intersection_area(&collision, fixed, work)? > 0.0 {
+                overlapping = true;
+                break;
+            }
+        }
+        if overlapping {
+            continue;
+        }
+        state.placements[piece_index] = candidate;
+        state.active[piece_index] = true;
+        state.collisions[piece_index] = Some(Arc::new(collision));
+        recon.insertions += 1;
+        return Ok(true);
+    }
+    Ok(false)
 }
 
 fn initial_vacancy_state(
@@ -3743,21 +4096,31 @@ mod tests {
         assert_eq!(ORDINARY_SELECTED_PIECE_SLOTS, 640);
         assert_eq!(ARCHIVE_SELECTED_PIECE_SLOTS, 26);
         assert_eq!(SETTLE_SELECTED_PIECE_SLOTS, 3 * 61);
+        assert_eq!(RECONSTRUCTION_SELECTED_PIECE_SLOTS, 61);
         assert_eq!(POPULATION_SELECTED_PIECE_SLOTS, 640 + 26);
-        assert_eq!(MAX_SELECTED_PIECE_SLOTS, 640 + 26 + 183);
-        assert_eq!(MAX_ORIENTATION_STREAMS, (640 + 26 + 183) * 12);
-        assert_eq!(MAX_POSITION_SOURCE_ATTEMPTS, (640 + 26 + 183) * 12 * 529);
-        assert_eq!(MAX_RETURNED_POSITIONS, (640 + 26 + 183) * 12 * 32);
-        assert_eq!(MAX_HAZARD_QUERIES, (640 + 26 + 183) * 12 * 32);
-        assert_eq!(MAX_PROXY_PRESSURE_VISITS, (640 + 26 + 183) * 12 * 32 * 61);
-        assert_eq!(MAX_EXACT_FINALIST_ROWS, (640 + 26) * 8 + 183 * 64);
+        assert_eq!(MAX_SELECTED_PIECE_SLOTS, 640 + 26 + 183 + 61);
+        assert_eq!(MAX_ORIENTATION_STREAMS, (640 + 26 + 183 + 61) * 12);
+        assert_eq!(
+            MAX_POSITION_SOURCE_ATTEMPTS,
+            (640 + 26 + 183 + 61) * 12 * 529
+        );
+        assert_eq!(MAX_RETURNED_POSITIONS, (640 + 26 + 183 + 61) * 12 * 32);
+        assert_eq!(MAX_HAZARD_QUERIES, (640 + 26 + 183 + 61) * 12 * 32);
+        assert_eq!(
+            MAX_PROXY_PRESSURE_VISITS,
+            (640 + 26 + 183 + 61) * 12 * 32 * 61
+        );
+        assert_eq!(
+            MAX_EXACT_FINALIST_ROWS,
+            (640 + 26) * 8 + 183 * 64 + 61 * 192
+        );
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
-            2 * 61 + (640 + 26 + 183) * 12 + ((640 + 26) * 8 + 183 * 64)
+            2 * 61 + (640 + 26 + 183 + 61) * 12 + ((640 + 26) * 8 + 183 * 64 + 61 * 192) + 61
         );
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
-            1_830 + ((640 + 26) * 8 + 183 * 64) * 60
+            1_830 + ((640 + 26) * 8 + 183 * 64 + 61 * 192) * 60
         );
         assert_eq!(MAX_VALIDATOR_COLLISION_BUILDS, 105 * 122);
         assert_eq!(MAX_VALIDATOR_PAIR_VISITS, 105 * 3_660);
@@ -4069,7 +4432,7 @@ mod tests {
         assert!(result
             .failure_reason
             .unwrap()
-            .contains("target depth overrides require modes 9-12"));
+            .contains("target depth overrides require modes 9-13"));
 
         // Non-finite and non-positive targets fail closed.
         relaxed.persistent_vacancy_target_depth_mm = Some(f64::NAN);

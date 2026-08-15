@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "experiment": "sparrow-seeded-reconstruction-and-native-seed-portfolio",
+  "recordedAtUtc": "2026-08-15T00:00:00Z",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "hypothesis": "the committed Sparrow 154.44858 mm calibration layout can seed a complete engine-contract-valid layout via mode-13 guided reconstruction, unlocking the demonstrated band for the descent ladder",
+  "outcome": "REJECTED with a contract-level causal mechanism",
+  "mechanism": "the Sparrow layout is packed at 5.0 mm separation across the full 2000 mm width, while the engine's publication validators enforce totalPaddingMm + 2*sag = 5.5 mm pair separation and 5.25 mm boundary clearance; re-separating the same topology needs +0.5 mm per gap that width-saturated piece runs cannot supply. Guided reconstruction with displacement probes, upward shelf fallbacks, and a deferred second pass re-places at most 43 of 61 pieces even from a 12% depth-stretched hint field; the remaining pieces overflow every shelf at any probed target up to 172 mm",
+  "programLevelCorrection": "the 154-155 mm demonstrated band compares Sparrow's 5.0 mm contract against this engine's 5.5 mm contract and therefore overstates the reachable gap by an unmeasured amount; a contract-native upstream calibration at 5.5 mm separation is required before that band can gate promotion decisions",
+  "hintFixture": {
+    "path": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/sparrow-hints.json",
+    "sha256": "c28a014637b37f96635501401a4ebe9ec301b214c644490c6c60d616deea6579",
+    "converter": "docs/experiments/persistent-vacancy-descent/sparrow-to-hint-fixture.py",
+    "mapping": "(x_e, y_e) = (2000 - y_s, x_s); rotation + 90 degrees; no mirror (all pieces reflection-equivalent by rotation); mapping identity verified to 3e-13 mm over all vertices"
+  },
+  "screens": [
+    {
+      "label": "mode13 unstretched, target 168",
+      "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/mode13-unstretched-t168.json",
+      "rawSha256": "86be277f3760122edb86e4b3d2f181a725a77fc1d12c4e665bf4edc57b081a94",
+      "insertions": 39,
+      "deferredFirstPass": 22,
+      "failedPiece": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3"
+    },
+    {
+      "label": "mode13 depth-stretch 1.12, target 172",
+      "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/mode13-stretch1.12-t172.json",
+      "rawSha256": "0bebfa3387bac7d902bc6671cc7b70cdd366cc17136dba38196662c59fff2942",
+      "insertions": 42,
+      "deferredFirstPass": 19,
+      "failedPiece": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3"
+    }
+  ],
+  "probedMatrix": "stretch factors 1.0/1.04/1.08/1.12 at targets 158-172: best 43/61 pieces re-placed; every run failed closed with a structured reason; commands are the canonical benchmark invocation with MODE=13, the hint fixture, and the target",
+  "nativeSeedPortfolio": {
+    "hypothesis": "seed diversity of the unchanged pipeline might reach a basin near or below the frozen-parent chain on this machine",
+    "outcome": "REJECTED: independent depths for seeds 1-15 span 177.205-184.476 mm, all far above 168.277 mm",
+    "bestSeed": {
+      "seed": 11,
+      "independentDepthMm": 177.205,
+      "raw": "docs/experiments/persistent-vacancy-descent/seeded-reconstruction/native-seed11.json",
+      "rawSha256": "a80e1b141fb8a13cb26e3f291e1f93e934794a9ad1476d809ac310235b8dc909"
+    },
+    "command": "canonical benchmark command with relaxed-seed set to 1..15 and MODE=0"
+  }
+}
