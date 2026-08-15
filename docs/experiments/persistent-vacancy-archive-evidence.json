@@ -1,0 +1,680 @@
+{
+  "schemaVersion": 1,
+  "experiment": "persistent-vacancy-stagnation-archive-screen",
+  "recordedAtUtc": "2026-08-15T16:29:04Z",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "parentPlacementFingerprint": "b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5",
+  "targetStripDepthMm": 165,
+  "populationWidth": 8,
+  "layerLimit": 40,
+  "pairedRunOrder": [
+    "mode3",
+    "mode7",
+    "mode7",
+    "mode3"
+  ],
+  "canonicalCommand": "target/release/examples/general_request_benchmark tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 MODE",
+  "normalization": "jq -S walk remove elapsedMs, *ElapsedMs, wallSeconds, maximumResidentSetBytes, and phaseElapsedMs fields",
+  "provenance": {
+    "engineCommit": "c05a4e96130c3a51d6145a708d23d6cc8053d275",
+    "engineWorktreeDirty": true,
+    "engineWorktreeStatus": "M crates/polygon-nesting-core/examples/general_request_benchmark.rs\n M crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs\n M crates/polygon-nesting-core/src/search/general_relaxed.rs",
+    "relevantSourceTreeSha256": "b56e7c726246602482aeb1357853c74deabba784b5bdca8f0f930e36e5e8d21c",
+    "executableSha256": "9c9de8ed399187870ecdd45b9f39681afbd36be049c8c08b6bdbb87a83d205e6",
+    "cpuModel": "Apple M4 Max",
+    "target": "aarch64-apple-darwin",
+    "requestedThreads": 8,
+    "actualThreads": 8,
+    "rustflags": null
+  },
+  "reproducibility": {
+    "classification": "non_reproducible_historical_summary",
+    "reason": "The rejected mode-7 implementation existed only in a dirty worktree. Its exact patch, executable bytes, raw output bytes, and complete rustc/Cargo/LLVM identity were not retained before source removal.",
+    "permittedUse": "Internal historical evidence for the scoped negative decision and for avoiding repetition of the same mechanism.",
+    "prohibitedUse": "Do not treat this file as a replay oracle, independently reproducible benchmark, or portable validation proof. The recorded raw and normalized hashes identify outputs observed during the original run but cannot reconstruct them."
+  },
+  "gates": {
+    "engineElapsedLimitMs": 6000,
+    "engineElapsedPassed": false,
+    "wallElapsedLimitSeconds": 6.5,
+    "wallElapsedPassed": true,
+    "maximumResidentSetLimitBytes": 67108864,
+    "maximumResidentSetPassed": true,
+    "populationWidthPassed": true,
+    "capsPassed": true,
+    "partialAuditsPerArm": 41,
+    "completeAuditsPerArm": 0,
+    "publicationGateReached": false
+  },
+  "arms": {
+    "mode3": {
+      "scheduler": "hardPlusStatelessRotation",
+      "retention": "areaFirstComparator",
+      "normalizedReplaySha256": "825b1b767e7c1fe9face0f7195ad37bee65e0a91b424039b80192d59e26cec57",
+      "rawOutputSha256": [
+        "33fa62950b70bbd0b3728377a237689554390ea3a148308c416473d5103324b6",
+        "867660010120edb30cf2b31eac0b0000004086d7f1d01b59c948cf0add37c212"
+      ],
+      "engineElapsedMs": [
+        6097.020125,
+        6094.543125
+      ],
+      "wallSeconds": [
+        6.50,
+        6.14
+      ],
+      "maximumResidentSetBytes": [
+        46841856,
+        46809088
+      ],
+      "layersCompleted": 40,
+      "capExhausted": null,
+      "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+      "bestEverAreaElite": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "59571041296",
+        "fingerprint": "c23292443bc0e5984eb37ff193df97df88ffeb624858a2cb315eda2b08e06380"
+      },
+      "work": {
+        "clipperInputVertices": 153889807,
+        "clipperOutputVertices": 42531,
+        "completeAudits": 0,
+        "exactFinalistRows": 5008,
+        "experimentalCollisionBuilds": 12581,
+        "experimentalPairVisits": 220351,
+        "hazardQueries": 240384,
+        "orientationStreams": 7512,
+        "partialAudits": 41,
+        "positionSourceAttempts": 3039192,
+        "proxyPressureVisits": 315616,
+        "retainedPeakBytes": 69808,
+        "returnedPositions": 240384,
+        "selectedPieceSlots": 626,
+        "selectorDiagnosticPeakBytes": 325348,
+        "sourceFeatureVisits": 6444,
+        "totalRetainedPeakBytes": 1350040,
+        "transformedCollisionVertices": 2654121,
+        "validatorCollisionBuilds": 5002,
+        "validatorPairVisits": 150060
+      }
+    },
+    "mode7": {
+      "scheduler": "hardPlusStatelessRotation",
+      "retention": "areaFirstComparatorWithThreeLayerStagnationArchiveRevival",
+      "normalizedReplaySha256": "8451cda1c560020c877e8533455aac6a15ef50667f4d9650f57d3f671495bf1c",
+      "rawOutputSha256": [
+        "bc44dd4f8320b8676646cab414e03cfe62a93dbf16c4cfa6e5f928bb198f969c",
+        "5d01d2ca28c18259c5fffbb794d27fcb88613f7ebd881739651501d287895391"
+      ],
+      "engineElapsedMs": [
+        6217.3505000000005,
+        6201.794042
+      ],
+      "wallSeconds": [
+        6.26,
+        6.25
+      ],
+      "maximumResidentSetBytes": [
+        46956544,
+        46825472
+      ],
+      "layersCompleted": 40,
+      "capExhausted": null,
+      "failureReason": "persistent vacancy population exhausted its bounded layers without a complete state",
+      "bestEverAreaElite": {
+        "inactivePieceCount": 13,
+        "inactiveAreaGrid2": "65555025691",
+        "fingerprint": "c6ebe65d509fe4a84fa7b67a1757e73958ad62c2d00d3bff3f1f46a910133ab0"
+      },
+      "work": {
+        "clipperInputVertices": 153836946,
+        "clipperOutputVertices": 35249,
+        "completeAudits": 0,
+        "exactFinalistRows": 5008,
+        "experimentalCollisionBuilds": 12581,
+        "experimentalPairVisits": 220696,
+        "hazardQueries": 240384,
+        "orientationStreams": 7512,
+        "partialAudits": 41,
+        "positionSourceAttempts": 3006168,
+        "proxyPressureVisits": 317557,
+        "retainedPeakBytes": 67992,
+        "returnedPositions": 240384,
+        "selectedPieceSlots": 626,
+        "selectorDiagnosticPeakBytes": 335377,
+        "sourceFeatureVisits": 5222,
+        "totalRetainedPeakBytes": 1587812,
+        "transformedCollisionVertices": 2637521,
+        "validatorCollisionBuilds": 5002,
+        "validatorPairVisits": 150060
+      },
+      "archiveSummary": {
+        "admissions": 335,
+        "capacity": 16,
+        "evictions": 315,
+        "expandedRevivals": 4,
+        "peakStates": 16,
+        "replacements": 3,
+        "revivalAttempts": 4,
+        "revivalsRetained": 4,
+        "revivedFingerprints": [
+          "9e41a9b8ae4c73c44f922828db79aee7cad17ab63c349e2be64721aaad1402d6",
+          "2b93bfd75361b1bdfd6819eeaf6055d37d7dc479ef784d244c594ed124c02e21",
+          "d095be19a99b14607d7b25bf61051c5d9643dd15394482d387f9ef3bc40c97b3",
+          "0dad949bc490054d59e6105698f5796fa30e40fa6442f5b4da7f5a3c536f65e4"
+        ],
+        "stagnationThreshold": 3
+      },
+      "archiveLayers": [
+        {
+          "admissions": 6,
+          "endingArchiveStates": 6,
+          "enteringArchiveStates": 0,
+          "evictions": 0,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 0
+        },
+        {
+          "admissions": 18,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 6,
+          "evictions": 8,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 1
+        },
+        {
+          "admissions": 19,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 19,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 2
+        },
+        {
+          "admissions": 11,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 11,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 3
+        },
+        {
+          "admissions": 11,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 11,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 4
+        },
+        {
+          "admissions": 17,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 17,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 5
+        },
+        {
+          "admissions": 12,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 12,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 6
+        },
+        {
+          "admissions": 12,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 12,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 7
+        },
+        {
+          "admissions": 17,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 17,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 8
+        },
+        {
+          "admissions": 14,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 14,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 9
+        },
+        {
+          "admissions": 16,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 16,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 10
+        },
+        {
+          "admissions": 13,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 13,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 11
+        },
+        {
+          "admissions": 16,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 16,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 12
+        },
+        {
+          "admissions": 16,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 16,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 13
+        },
+        {
+          "admissions": 11,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 11,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 14
+        },
+        {
+          "admissions": 13,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 13,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 15
+        },
+        {
+          "admissions": 2,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 2,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 1,
+          "layer": 16
+        },
+        {
+          "admissions": 0,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 0,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 2,
+          "layer": 17
+        },
+        {
+          "admissions": 1,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 0,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": "9e41a9b8ae4c73c44f922828db79aee7cad17ab63c349e2be64721aaad1402d6",
+          "replacements": 0,
+          "retainedRevival": true,
+          "stagnationLayers": 3,
+          "layer": 18
+        },
+        {
+          "admissions": 1,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 1,
+          "expandedRevivalFingerprints": [
+            "9e41a9b8ae4c73c44f922828db79aee7cad17ab63c349e2be64721aaad1402d6"
+          ],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 19
+        },
+        {
+          "admissions": 0,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 0,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 1,
+          "layer": 20
+        },
+        {
+          "admissions": 0,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 0,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 2,
+          "layer": 21
+        },
+        {
+          "admissions": 7,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 7,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 22
+        },
+        {
+          "admissions": 3,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 3,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 23
+        },
+        {
+          "admissions": 4,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 4,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 24
+        },
+        {
+          "admissions": 4,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 4,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 1,
+          "layer": 25
+        },
+        {
+          "admissions": 7,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 7,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 2,
+          "layer": 26
+        },
+        {
+          "admissions": 19,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 19,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 1,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 27
+        },
+        {
+          "admissions": 17,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 17,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 28
+        },
+        {
+          "admissions": 14,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 14,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 0,
+          "layer": 29
+        },
+        {
+          "admissions": 8,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 8,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 1,
+          "layer": 30
+        },
+        {
+          "admissions": 1,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 1,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 2,
+          "layer": 31
+        },
+        {
+          "admissions": 9,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 8,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": "2b93bfd75361b1bdfd6819eeaf6055d37d7dc479ef784d244c594ed124c02e21",
+          "replacements": 0,
+          "retainedRevival": true,
+          "stagnationLayers": 3,
+          "layer": 32
+        },
+        {
+          "admissions": 5,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 5,
+          "expandedRevivalFingerprints": [
+            "2b93bfd75361b1bdfd6819eeaf6055d37d7dc479ef784d244c594ed124c02e21"
+          ],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 1,
+          "layer": 33
+        },
+        {
+          "admissions": 5,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 5,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 2,
+          "layer": 34
+        },
+        {
+          "admissions": 2,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 1,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": "d095be19a99b14607d7b25bf61051c5d9643dd15394482d387f9ef3bc40c97b3",
+          "replacements": 0,
+          "retainedRevival": true,
+          "stagnationLayers": 3,
+          "layer": 35
+        },
+        {
+          "admissions": 2,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 2,
+          "expandedRevivalFingerprints": [
+            "d095be19a99b14607d7b25bf61051c5d9643dd15394482d387f9ef3bc40c97b3"
+          ],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 1,
+          "layer": 36
+        },
+        {
+          "admissions": 1,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 1,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": null,
+          "replacements": 2,
+          "retainedRevival": false,
+          "stagnationLayers": 2,
+          "layer": 37
+        },
+        {
+          "admissions": 1,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 0,
+          "expandedRevivalFingerprints": [],
+          "offeredRevivalFingerprint": "0dad949bc490054d59e6105698f5796fa30e40fa6442f5b4da7f5a3c536f65e4",
+          "replacements": 0,
+          "retainedRevival": true,
+          "stagnationLayers": 3,
+          "layer": 38
+        },
+        {
+          "admissions": 0,
+          "endingArchiveStates": 16,
+          "enteringArchiveStates": 16,
+          "evictions": 0,
+          "expandedRevivalFingerprints": [
+            "0dad949bc490054d59e6105698f5796fa30e40fa6442f5b4da7f5a3c536f65e4"
+          ],
+          "offeredRevivalFingerprint": null,
+          "replacements": 0,
+          "retainedRevival": false,
+          "stagnationLayers": 1,
+          "layer": 39
+        }
+      ],
+      "firstRevivalLayer": 18,
+      "firstBestEverFingerprintDivergenceLayer": 22
+    }
+  },
+  "evidenceLimitations": [
+    "Mode 7 totalRetainedPeakBytes omits the revived-fingerprint set, pending revival string, and transient full-child fingerprint/signature sets, so it is a lower bound rather than a complete live-allocation proof.",
+    "Mode 7 work counters omit archive fingerprinting and contact-signature pair scans. The screen remains causally informative for quality because those operations consume no RNG, but its work comparison is incomplete.",
+    "Neither arm reached a complete state or publication gate; comparison is limited to exact-valid partial populations."
+  ],
+  "decision": {
+    "mode7": "rejected_and_removed",
+    "reason": "Four distinct archive states were retained and expanded, but the best partial regressed from 11 inactive pieces and 59571041296 grid-area units to 13 and 65555025691. The first revival ultimately displaced a productive control lineage before the control improvements at layers 23-29.",
+    "closedMechanisms": [
+      "three-layer stagnation-triggered one-slot revival from a 16-state contact-signature archive ranked count-first then area-first"
+    ],
+    "notClosed": [
+      "all possible archives",
+      "bounded nonterminal ruin/recreate",
+      "large-neighborhood search"
+    ],
+    "thresholdRetuning": "not_run_to_avoid_fixture_specific_post_hoc_tuning"
+  }
+}
