@@ -1955,12 +1955,14 @@ fn charge_retained_memory(
     work: &mut RunWork,
 ) -> Result<(), String> {
     diagnostics.layers.reserve(1);
+    let legacy_state_bytes = legacy_state_slice_bytes(population);
     let state_bytes = state_slice_bytes(population)
         .saturating_add(population.len().saturating_mul(size_of::<VacancyState>()));
     let diagnostic_bytes = persistent_diagnostic_bytes(diagnostics)
         .saturating_add(layer_diagnostic_heap_bytes(pending_layer));
     let total_bytes = state_bytes.saturating_add(diagnostic_bytes);
-    work.diagnostics.retained_peak_bytes = work.diagnostics.retained_peak_bytes.max(state_bytes);
+    work.diagnostics.retained_peak_bytes =
+        work.diagnostics.retained_peak_bytes.max(legacy_state_bytes);
     work.diagnostics.selector_diagnostic_peak_bytes = work
         .diagnostics
         .selector_diagnostic_peak_bytes
@@ -2070,7 +2072,11 @@ fn state_slice_bytes(states: &[VacancyState]) -> usize {
     states.iter().map(state_heap_bytes).sum()
 }
 
-fn state_heap_bytes(state: &VacancyState) -> usize {
+fn legacy_state_slice_bytes(states: &[VacancyState]) -> usize {
+    states.iter().map(legacy_state_heap_bytes).sum()
+}
+
+fn legacy_state_heap_bytes(state: &VacancyState) -> usize {
     state.placements.capacity() * size_of::<RelaxedPlacement>()
         + state.active.capacity() * size_of::<bool>()
         + state.collisions.capacity() * size_of::<Option<Arc<PolygonSet>>>()
@@ -2082,6 +2088,10 @@ fn state_heap_bytes(state: &VacancyState) -> usize {
                 collision.vertex_count() * size_of::<IrregularPoint>() + size_of::<PolygonSet>()
             })
             .sum::<usize>()
+}
+
+fn state_heap_bytes(state: &VacancyState) -> usize {
+    legacy_state_heap_bytes(state)
         + state.last_transition.as_ref().map_or(0, |transition| {
             transition.ejected.capacity() * size_of::<usize>()
         })
