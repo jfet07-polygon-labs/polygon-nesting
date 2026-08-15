@@ -17,13 +17,17 @@ use polygon_nesting_core::search::general_fast::{
     GeneralPairClusterArmDiagnostics,
 };
 use polygon_nesting_core::search::general_relaxed::{
-    improve_complete_layout, GeneralAngularRepairSettings, GeneralRelaxedAngleSeedPolicy,
-    GeneralRelaxedCollisionBackend, GeneralRelaxedDiagnostics, GeneralRelaxedPressureModel,
-    GeneralRelaxedSettings,
+    improve_complete_layout, improve_complete_layout_with_persistent_vacancy_parent,
+    GeneralAngularRepairSettings, GeneralCoupledSeparatorPlacementDiagnostics,
+    GeneralRelaxedAngleSeedPolicy, GeneralRelaxedCollisionBackend, GeneralRelaxedDiagnostics,
+    GeneralRelaxedPressureModel, GeneralRelaxedSettings,
 };
 use serde::Deserialize;
 use serde_json::json;
 use sha2::{Digest, Sha256};
+
+const PERSISTENT_VACANCY_PARENT_FIXTURE_SHA256: &str =
+    "18e0b052997d1251573fa35679c9fcf1d5e796acf771ec48f320ce4e9bf0081d";
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -73,6 +77,46 @@ struct GeometrySettings {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PersistentVacancyParentFixture {
+    schema_version: u32,
+    request_sha256: String,
+    settings: PersistentVacancyParentSettings,
+    placements: Vec<GeneralCoupledSeparatorPlacementDiagnostics>,
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+struct PersistentVacancyParentSettings {
+    sheet_short_axis_mm: f64,
+    sheet_long_axis_mm: f64,
+    total_padding_mm: f64,
+    sheet_edge_clearance_mm: Option<f64>,
+    clearance_safety_margin_mm: f64,
+    flattening_sag_tolerance_mm: f64,
+}
+
+impl From<GeneralFastSettings> for PersistentVacancyParentSettings {
+    fn from(settings: GeneralFastSettings) -> Self {
+        Self {
+            sheet_short_axis_mm: settings.sheet_short_axis_mm,
+            sheet_long_axis_mm: settings.sheet_long_axis_mm,
+            total_padding_mm: settings.total_padding_mm,
+            sheet_edge_clearance_mm: settings.sheet_edge_clearance_mm,
+            clearance_safety_margin_mm: settings.clearance_safety_margin_mm,
+            flattening_sag_tolerance_mm: settings.flattening_sag_tolerance_mm,
+        }
+    }
+}
+
+struct LoadedPersistentVacancyParent {
+    schema_version: u32,
+    sha256: String,
+    settings: PersistentVacancyParentSettings,
+    placements: Vec<GeneralCoupledSeparatorPlacementDiagnostics>,
+}
+
+#[derive(Deserialize)]
 struct Sheet {
     width: f64,
     height: f64,
@@ -100,7 +144,7 @@ struct OwnedPiece {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut arguments = env::args().skip(1);
     let request_path = arguments.next().ok_or(
-        "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy]",
+        "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy] [persistent-vacancy-parent.json (required iff persistent-vacancy > 0)]",
     )?;
     let runs = parse_optional(&mut arguments, 1)?;
     let order_variants = parse_optional(&mut arguments, 1)?;
@@ -166,13 +210,60 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if persistent_vacancy_mode > 6 {
         return Err("persistent vacancy mode must be 0, 1, 2, 3, 4, 5, or 6".into());
     }
+    let persistent_vacancy_parent_path = arguments.next();
     if runs == 0 || arguments.next().is_some() {
         return Err("runs must be positive and no extra arguments are accepted".into());
+    }
+    if persistent_vacancy_mode > 0 && persistent_vacancy_parent_path.is_none() {
+        return Err(
+            "a persistent-vacancy parent fixture path is required when persistent vacancy mode is nonzero"
+                .into(),
+        );
+    }
+    if persistent_vacancy_mode == 0 && persistent_vacancy_parent_path.is_some() {
+        return Err(
+            "a persistent-vacancy parent fixture path is accepted only when persistent vacancy mode is nonzero"
+                .into(),
+        );
     }
 
     let bytes = fs::read(Path::new(&request_path))?;
     let request_sha256 = format!("{:x}", Sha256::digest(&bytes));
     let request: Request = serde_json::from_slice(&bytes)?;
+    let persistent_vacancy_parent = persistent_vacancy_parent_path
+        .map(|path| {
+            let fixture_bytes = fs::read(Path::new(&path))?;
+            let fixture_sha256 = format!("{:x}", Sha256::digest(&fixture_bytes));
+            if fixture_sha256 != PERSISTENT_VACANCY_PARENT_FIXTURE_SHA256 {
+                return Err(format!(
+                    "persistent-vacancy parent fixture hash mismatch: expected {PERSISTENT_VACANCY_PARENT_FIXTURE_SHA256}, got {fixture_sha256}"
+                )
+                .into());
+            }
+            let fixture: PersistentVacancyParentFixture =
+                serde_json::from_slice(&fixture_bytes)?;
+            if fixture.schema_version != 1 {
+                return Err(format!(
+                    "persistent-vacancy parent fixture schema must be 1, got {}",
+                    fixture.schema_version
+                )
+                .into());
+            }
+            if fixture.request_sha256 != request_sha256 {
+                return Err(format!(
+                    "persistent-vacancy parent fixture request mismatch: expected {request_sha256}, got {}",
+                    fixture.request_sha256
+                )
+                .into());
+            }
+            Ok::<_, Box<dyn std::error::Error>>(LoadedPersistentVacancyParent {
+                schema_version: fixture.schema_version,
+                sha256: fixture_sha256,
+                settings: fixture.settings,
+                placements: fixture.placements,
+            })
+        })
+        .transpose()?;
     let (request_total_padding_mm, allow_global_rotation, allow_global_mirror, geometry) =
         effective_request_settings(&request)?;
     let total_padding_mm = pair_clearance_mm.unwrap_or(request_total_padding_mm);
@@ -240,6 +331,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     settings.max_local_angle_refinement_evaluations_per_piece = local_angle_evaluations;
     if sheet_long_axis_override_mm > 0.0 {
         settings.sheet_long_axis_mm = sheet_long_axis_override_mm;
+    }
+    if let Some(parent) = &persistent_vacancy_parent {
+        let effective_settings = PersistentVacancyParentSettings::from(settings);
+        if parent.settings != effective_settings {
+            return Err(format!(
+                "persistent-vacancy parent fixture settings mismatch: expected {:?}, got {:?}",
+                parent.settings, effective_settings
+            )
+            .into());
+        }
     }
     let pair_template_probe = if pair_template_diagnostics {
         let started = Instant::now();
@@ -328,14 +429,40 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 relaxed_settings.precompression_frontier_vacancy_mode =
                     precompression_frontier_vacancy_mode;
                 relaxed_settings.persistent_vacancy_mode = persistent_vacancy_mode;
-                let outcome =
-                    improve_complete_layout(&pieces, settings, relaxed_settings, &constructed)?;
+                let outcome = if let Some(parent) = &persistent_vacancy_parent {
+                    improve_complete_layout_with_persistent_vacancy_parent(
+                        &pieces,
+                        settings,
+                        relaxed_settings,
+                        &constructed,
+                        &parent.placements,
+                    )?
+                } else {
+                    improve_complete_layout(&pieces, settings, relaxed_settings, &constructed)?
+                };
                 Ok((
                     outcome.result,
                     Some(outcome.diagnostics),
                     constructed_depth_mm,
                 ))
             })?;
+        if persistent_vacancy_mode > 0 {
+            let persistent = current_relaxed_diagnostics
+                .as_ref()
+                .and_then(|diagnostics| diagnostics.coupled_dynamic_separator.as_ref())
+                .and_then(|diagnostics| diagnostics.persistent_vacancy_population.as_ref())
+                .ok_or("requested persistent-vacancy diagnostics are missing")?;
+            if !persistent.attempted {
+                return Err(format!(
+                    "requested persistent-vacancy experiment did not run: {}",
+                    persistent
+                        .failure_reason
+                        .as_deref()
+                        .unwrap_or("no failure reason was recorded")
+                )
+                .into());
+            }
+        }
         elapsed_ms.push(started.elapsed().as_secs_f64() * 1_000.0);
         constructed_depth_mm.get_or_insert(current_constructed_depth_mm);
         if let Some(reference) = &result {
@@ -450,137 +577,148 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let machine_architecture = command_output("uname", &["-m"]);
     let cpu_model = command_output("sysctl", &["-n", "machdep.cpu.brand_string"])
         .or_else(|| command_output("sh", &["-c", "grep -m1 'model name' /proc/cpuinfo"]));
-    println!(
-        "{}",
-        serde_json::to_string_pretty(&json!({
-            "request": request_path,
-            "requestSha256": request_sha256,
-            "engineCommit": git_commit,
-            "engineWorktreeDirty": git_dirty,
-            "engineWorktreeStatus": git_status,
-            "executableSha256": executable_sha256,
-            "relevantSourceTreeSha256": relevant_source_tree_sha256,
-            "profile": "general-fast-experimental",
-            "buildProfile": if cfg!(debug_assertions) { "debug" } else { "release" },
-            "targetArchitecture": std::env::consts::ARCH,
-            "targetOperatingSystem": std::env::consts::OS,
-            "machineArchitecture": machine_architecture,
-            "cpuModel": cpu_model,
-            "rustcVersion": rustc_version,
-            "rustflags": env::var("RUSTFLAGS").ok(),
-            "budgetMode": "deterministic-work-quota",
-            "seed": serde_json::Value::Null,
-            "pieceCount": pieces.len(),
-            "sourcePieceCount": source_by_id.len(),
-            "totalVertices": owned.iter().map(|piece| piece.polygon.vertex_count()).sum::<usize>(),
-            "concavePieceCount": owned.iter().filter(|piece| piece.polygon.regions().iter().any(|region| !region.outer.is_convex())).count(),
-            "sheetShortAxisMm": settings.sheet_short_axis_mm,
-            "sheetLongAxisMm": settings.sheet_long_axis_mm,
-            "requestTotalPaddingMm": request_total_padding_mm,
-            "pairClearanceMm": settings.total_padding_mm,
-            "sheetEdgeClearanceMm": settings.sheet_edge_clearance_mm.unwrap_or(settings.total_padding_mm / 2.0),
-            "flatteningSagToleranceMm": settings.flattening_sag_tolerance_mm,
-            "clearanceSafetyMarginMm": settings.clearance_safety_margin_mm,
-            "requestedThreads": job_pool.requested_thread_count(),
-            "actualThreads": job_pool.actual_thread_count(),
-            "quota": {
-                "orderVariants": order_variants,
-                "exploratoryEvaluationsPerPiece": exploratory_evaluations,
-                "repairTargets": repair_targets,
-                "repairEvaluationsPerPiece": repair_evaluations,
-                "localAngleEvaluationsPerPiece": local_angle_evaluations,
-                "catalogVariants": catalog_variants,
-                "catalogEvaluationsPerPiece": catalog_evaluations,
-                "pairingEvaluationsPerPiece": pairing_evaluations,
-                "pairingBandVariants": pairing_band_variants,
-                "partialLayouts": partial_layouts,
-                "beamEvaluationsPerState": beam_evaluations,
-                "angleSeedCount": angle_seed_count,
-                "maxAnglesPerPiece": max_angles_per_piece,
-                "tighteningPasses": tightening_passes,
-                "relaxedEpochs": relaxed_epochs,
-                "relaxedLanes": relaxed_lanes,
-                "relaxedSweepsPerEpoch": relaxed_sweeps,
-                "relaxedGlobalSamplesPerMove": relaxed_global_samples,
-                "relaxedFocusedSamplesPerMove": relaxed_focused_samples,
-                "relaxedRefinementRounds": relaxed_refinement_rounds,
-                "relaxedSeed": relaxed_seed,
-                "relaxedInitialShrinkRatio": relaxed_initial_shrink_ratio,
-                "relaxedMinimumShrinkRatio": relaxed_minimum_shrink_ratio,
-                "relaxedFailedAttemptsPerDepth": relaxed_failed_attempts_per_depth,
-                "relaxedInfeasiblePoolSize": relaxed_infeasible_pool_size,
-                "relaxedInfeasiblePoolArgumentsIgnored": true,
-                "relaxedSynchronizeLanes": relaxed_synchronize_lanes,
-                "relaxedDynamicHazard": relaxed_dynamic_hazard,
-                "relaxedAngleSeedPolicy": if relaxed_continuous_seeds { "continuousUniform" } else { "structuredGrid" },
-                "relaxedPressureModel": pressure_model_name(relaxed_pressure_model),
-                "relaxedAngularRepair": relaxed_angular_repair,
-                "relaxedRepairNeighborhood": relaxed_repair_neighborhood,
-                "pairTemplateDiagnostics": pair_template_diagnostics,
-                "pairConstructorDiagnostics": pair_constructor_diagnostics,
-                "precompressionFrontierVacancyMode": precompression_frontier_vacancy_mode,
-                "exactPairTerminalMode": retired_exact_pair_terminal_mode,
-                "persistentVacancyMode": persistent_vacancy_mode,
-            },
-            "pairTemplateProbe": pair_template_probe,
-            "pairConstructorProbe": pair_constructor_probe,
-            "relaxedDiagnostics": relaxed_diagnostics,
-            "placed": result.placements.len(),
-            "unplaced": result.unplaced_piece_ids.len(),
-            "constructedLongAxisDepthMm": constructed_depth_mm,
-            "usedLongAxisDepthMm": result.used_long_axis_depth_mm,
-            "independentUsedLongAxisDepthMm": independent_used_long_axis_depth_mm,
-            "coupledTreatmentIndependentUsedLongAxisDepthMm": coupled_treatment_independent_used_long_axis_depth_mm,
-            "placedMaterialAreaMm2": placed_area_mm2,
-            "expandedCollisionAreaMm2": expanded_collision_area_mm2,
-            "areaLowerBoundDepthMm": area_lower_bound_depth_mm,
-            "depthOverAreaLowerBound": result.used_long_axis_depth_mm / area_lower_bound_depth_mm,
-            "usedStripAreaMm2": strip_area_mm2,
-            "usedStripUtilizationPercent": if strip_area_mm2 > 0.0 { placed_area_mm2 / strip_area_mm2 * 100.0 } else { 0.0 },
-            "exactEvaluations": result.exact_evaluations,
-            "primaryExactEvaluations": result.primary_exact_evaluations,
-            "orderPortfolioExactEvaluations": result.order_portfolio_exact_evaluations,
-            "catalogPortfolioExactEvaluations": result.catalog_portfolio_exact_evaluations,
-            "pairingExactEvaluations": result.pairing_exact_evaluations,
-            "beamExactEvaluations": result.beam_exact_evaluations,
-            "tighteningExactEvaluations": result.tightening_exact_evaluations,
-            "tighteningPassesAttempted": result.tightening_passes_attempted,
-            "tighteningPassesImproved": result.tightening_passes_improved,
-            "catalogCandidatePlacedCount": result.catalog_candidate_placed_count,
-            "catalogCandidateDepthMm": result.catalog_candidate_depth_mm,
-            "pairingCandidatePlacedCount": result.pairing_candidate_placed_count,
-            "pairingCandidateDepthMm": result.pairing_candidate_depth_mm,
-            "beamCandidatePlacedCount": result.beam_candidate_placed_count,
-            "beamCandidateDepthMm": result.beam_candidate_depth_mm,
-            "exploratoryExactEvaluations": result.exploratory_exact_evaluations,
-            "repairExactEvaluations": result.repair_exact_evaluations,
-            "localAngleRefinementExactEvaluations": result.local_angle_refinement_exact_evaluations,
-            "orderVariantsAttempted": result.order_variants_attempted,
-            "catalogVariantsAttempted": result.catalog_variants_attempted,
-            "repairTargetsConsidered": result.repair_targets_considered,
-            "orderPortfolioFailed": result.order_portfolio_failed,
-            "catalogPortfolioFailed": result.catalog_portfolio_failed,
-            "pairingFailed": result.pairing_failed,
-            "beamFailed": result.beam_failed,
-            "exploratoryFailed": result.exploratory_failed,
-            "repairFailed": result.repair_failed,
-            "medianElapsedMs": elapsed_ms[elapsed_ms.len() / 2],
-            "firstQuartileElapsedMs": first_quartile_elapsed_ms,
-            "thirdQuartileElapsedMs": third_quartile_elapsed_ms,
-            "interquartileRangeElapsedMs": third_quartile_elapsed_ms - first_quartile_elapsed_ms,
-            "minElapsedMs": elapsed_ms[0],
-            "maxElapsedMs": elapsed_ms[elapsed_ms.len() - 1],
-            "elapsedMs": elapsed_ms,
-            "ignoredRequestMetadataFields": request.extra.keys().collect::<Vec<_>>(),
-            "placements": result.placements.iter().map(|placement| json!({
-                "pieceId": placement.piece_id,
-                "rotationDeg": placement.rotation_deg,
-                "mirrored": placement.mirrored,
-                "translateShortAxis": placement.translate_short_axis,
-                "translateLongAxis": placement.translate_long_axis,
-            })).collect::<Vec<_>>(),
-        }))?
-    );
+    let mut output = json!({
+        "request": request_path,
+        "requestSha256": request_sha256,
+        "engineCommit": git_commit,
+        "engineWorktreeDirty": git_dirty,
+        "engineWorktreeStatus": git_status,
+        "executableSha256": executable_sha256,
+        "relevantSourceTreeSha256": relevant_source_tree_sha256,
+        "profile": "general-fast-experimental",
+        "buildProfile": if cfg!(debug_assertions) { "debug" } else { "release" },
+        "targetArchitecture": std::env::consts::ARCH,
+        "targetOperatingSystem": std::env::consts::OS,
+        "machineArchitecture": machine_architecture,
+        "cpuModel": cpu_model,
+        "rustcVersion": rustc_version,
+        "rustflags": env::var("RUSTFLAGS").ok(),
+        "budgetMode": "deterministic-work-quota",
+        "seed": serde_json::Value::Null,
+        "pieceCount": pieces.len(),
+        "sourcePieceCount": source_by_id.len(),
+        "totalVertices": owned.iter().map(|piece| piece.polygon.vertex_count()).sum::<usize>(),
+        "concavePieceCount": owned.iter().filter(|piece| piece.polygon.regions().iter().any(|region| !region.outer.is_convex())).count(),
+        "sheetShortAxisMm": settings.sheet_short_axis_mm,
+        "sheetLongAxisMm": settings.sheet_long_axis_mm,
+        "requestTotalPaddingMm": request_total_padding_mm,
+        "pairClearanceMm": settings.total_padding_mm,
+        "sheetEdgeClearanceMm": settings.sheet_edge_clearance_mm.unwrap_or(settings.total_padding_mm / 2.0),
+        "flatteningSagToleranceMm": settings.flattening_sag_tolerance_mm,
+        "clearanceSafetyMarginMm": settings.clearance_safety_margin_mm,
+        "requestedThreads": job_pool.requested_thread_count(),
+        "actualThreads": job_pool.actual_thread_count(),
+        "quota": {
+            "orderVariants": order_variants,
+            "exploratoryEvaluationsPerPiece": exploratory_evaluations,
+            "repairTargets": repair_targets,
+            "repairEvaluationsPerPiece": repair_evaluations,
+            "localAngleEvaluationsPerPiece": local_angle_evaluations,
+            "catalogVariants": catalog_variants,
+            "catalogEvaluationsPerPiece": catalog_evaluations,
+            "pairingEvaluationsPerPiece": pairing_evaluations,
+            "pairingBandVariants": pairing_band_variants,
+            "partialLayouts": partial_layouts,
+            "beamEvaluationsPerState": beam_evaluations,
+            "angleSeedCount": angle_seed_count,
+            "maxAnglesPerPiece": max_angles_per_piece,
+            "tighteningPasses": tightening_passes,
+            "relaxedEpochs": relaxed_epochs,
+            "relaxedLanes": relaxed_lanes,
+            "relaxedSweepsPerEpoch": relaxed_sweeps,
+            "relaxedGlobalSamplesPerMove": relaxed_global_samples,
+            "relaxedFocusedSamplesPerMove": relaxed_focused_samples,
+            "relaxedRefinementRounds": relaxed_refinement_rounds,
+            "relaxedSeed": relaxed_seed,
+            "relaxedInitialShrinkRatio": relaxed_initial_shrink_ratio,
+            "relaxedMinimumShrinkRatio": relaxed_minimum_shrink_ratio,
+            "relaxedFailedAttemptsPerDepth": relaxed_failed_attempts_per_depth,
+            "relaxedInfeasiblePoolSize": relaxed_infeasible_pool_size,
+            "relaxedInfeasiblePoolArgumentsIgnored": true,
+            "relaxedSynchronizeLanes": relaxed_synchronize_lanes,
+            "relaxedDynamicHazard": relaxed_dynamic_hazard,
+            "relaxedAngleSeedPolicy": if relaxed_continuous_seeds { "continuousUniform" } else { "structuredGrid" },
+            "relaxedPressureModel": pressure_model_name(relaxed_pressure_model),
+            "relaxedAngularRepair": relaxed_angular_repair,
+            "relaxedRepairNeighborhood": relaxed_repair_neighborhood,
+            "pairTemplateDiagnostics": pair_template_diagnostics,
+            "pairConstructorDiagnostics": pair_constructor_diagnostics,
+            "precompressionFrontierVacancyMode": precompression_frontier_vacancy_mode,
+            "exactPairTerminalMode": retired_exact_pair_terminal_mode,
+            "persistentVacancyMode": persistent_vacancy_mode,
+        },
+        "pairTemplateProbe": pair_template_probe,
+        "pairConstructorProbe": pair_constructor_probe,
+        "relaxedDiagnostics": relaxed_diagnostics,
+        "placed": result.placements.len(),
+        "unplaced": result.unplaced_piece_ids.len(),
+        "constructedLongAxisDepthMm": constructed_depth_mm,
+        "usedLongAxisDepthMm": result.used_long_axis_depth_mm,
+        "independentUsedLongAxisDepthMm": independent_used_long_axis_depth_mm,
+        "coupledTreatmentIndependentUsedLongAxisDepthMm": coupled_treatment_independent_used_long_axis_depth_mm,
+        "placedMaterialAreaMm2": placed_area_mm2,
+        "expandedCollisionAreaMm2": expanded_collision_area_mm2,
+        "areaLowerBoundDepthMm": area_lower_bound_depth_mm,
+        "depthOverAreaLowerBound": result.used_long_axis_depth_mm / area_lower_bound_depth_mm,
+        "usedStripAreaMm2": strip_area_mm2,
+        "usedStripUtilizationPercent": if strip_area_mm2 > 0.0 { placed_area_mm2 / strip_area_mm2 * 100.0 } else { 0.0 },
+        "exactEvaluations": result.exact_evaluations,
+        "primaryExactEvaluations": result.primary_exact_evaluations,
+        "orderPortfolioExactEvaluations": result.order_portfolio_exact_evaluations,
+        "catalogPortfolioExactEvaluations": result.catalog_portfolio_exact_evaluations,
+        "pairingExactEvaluations": result.pairing_exact_evaluations,
+        "beamExactEvaluations": result.beam_exact_evaluations,
+        "tighteningExactEvaluations": result.tightening_exact_evaluations,
+        "tighteningPassesAttempted": result.tightening_passes_attempted,
+        "tighteningPassesImproved": result.tightening_passes_improved,
+        "catalogCandidatePlacedCount": result.catalog_candidate_placed_count,
+        "catalogCandidateDepthMm": result.catalog_candidate_depth_mm,
+        "pairingCandidatePlacedCount": result.pairing_candidate_placed_count,
+        "pairingCandidateDepthMm": result.pairing_candidate_depth_mm,
+        "beamCandidatePlacedCount": result.beam_candidate_placed_count,
+        "beamCandidateDepthMm": result.beam_candidate_depth_mm,
+        "exploratoryExactEvaluations": result.exploratory_exact_evaluations,
+        "repairExactEvaluations": result.repair_exact_evaluations,
+        "localAngleRefinementExactEvaluations": result.local_angle_refinement_exact_evaluations,
+        "orderVariantsAttempted": result.order_variants_attempted,
+        "catalogVariantsAttempted": result.catalog_variants_attempted,
+        "repairTargetsConsidered": result.repair_targets_considered,
+        "orderPortfolioFailed": result.order_portfolio_failed,
+        "catalogPortfolioFailed": result.catalog_portfolio_failed,
+        "pairingFailed": result.pairing_failed,
+        "beamFailed": result.beam_failed,
+        "exploratoryFailed": result.exploratory_failed,
+        "repairFailed": result.repair_failed,
+        "medianElapsedMs": elapsed_ms[elapsed_ms.len() / 2],
+        "firstQuartileElapsedMs": first_quartile_elapsed_ms,
+        "thirdQuartileElapsedMs": third_quartile_elapsed_ms,
+        "interquartileRangeElapsedMs": third_quartile_elapsed_ms - first_quartile_elapsed_ms,
+        "minElapsedMs": elapsed_ms[0],
+        "maxElapsedMs": elapsed_ms[elapsed_ms.len() - 1],
+        "elapsedMs": elapsed_ms,
+        "ignoredRequestMetadataFields": request.extra.keys().collect::<Vec<_>>(),
+        "placements": result.placements.iter().map(|placement| json!({
+            "pieceId": placement.piece_id,
+            "rotationDeg": placement.rotation_deg,
+            "mirrored": placement.mirrored,
+            "translateShortAxis": placement.translate_short_axis,
+            "translateLongAxis": placement.translate_long_axis,
+        })).collect::<Vec<_>>(),
+    });
+    if let Some(parent) = &persistent_vacancy_parent {
+        output
+            .as_object_mut()
+            .expect("the benchmark output is an object")
+            .insert(
+                "persistentVacancyParentFixture".to_owned(),
+                json!({
+                    "schemaVersion": parent.schema_version,
+                    "sha256": parent.sha256,
+                    "placementCount": parent.placements.len(),
+                }),
+            );
+    }
+    println!("{}", serde_json::to_string_pretty(&output)?);
     Ok(())
 }
 

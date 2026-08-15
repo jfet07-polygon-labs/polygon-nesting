@@ -42,6 +42,10 @@ jobs:
         run: cargo test --workspace --release --locked
       - name: Protect general-polygon constructor evidence
         run: cargo test --release --locked -p polygon-nesting-core --example general_fast_benchmark
+      - name: Protect persistent-vacancy portability
+        run: |
+          cargo build --release --locked -p polygon-nesting-core --features jagua-experimental --example general_request_benchmark
+          node scripts/test-persistent-vacancy-portability.mjs
       - name: Run current canonical semantic and quality matrix
         run: |
           cargo build --release --locked --package polygon-nesting-cli --bin polygon-nesting

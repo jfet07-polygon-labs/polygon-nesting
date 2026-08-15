@@ -203,7 +203,7 @@ pub(super) fn run_persistent_vacancy_population(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
     _relaxed_settings: GeneralRelaxedSettings,
-    parent: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_placements: &[GeneralCoupledSeparatorPlacementDiagnostics],
     mode: usize,
 ) -> GeneralPersistentVacancyDiagnostics {
     let mut diagnostics = GeneralPersistentVacancyDiagnostics {
@@ -216,7 +216,7 @@ pub(super) fn run_persistent_vacancy_population(
     match run_population(
         pieces,
         fast_settings,
-        parent,
+        parent_placements,
         mode,
         &mut diagnostics,
         &mut work,
@@ -247,7 +247,7 @@ pub(super) fn run_persistent_vacancy_population(
 fn run_population(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
-    parent: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_placements: &[GeneralCoupledSeparatorPlacementDiagnostics],
     mode: usize,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
@@ -258,10 +258,10 @@ fn run_population(
     if pieces.len() != 61 {
         return Err("persistent vacancy experiment is pinned to Mixed-61".to_owned());
     }
-    if parent.final_placements.len() != pieces.len() {
+    if parent_placements.len() != pieces.len() {
         return Err("persistent vacancy parent is not a complete exact-valid layout".to_owned());
     }
-    let parent_fast = diagnostic_fast_placements(&parent.final_placements);
+    let parent_fast = diagnostic_fast_placements(parent_placements);
     validate_and_measure_placements(pieces, &parent_fast, fast_settings)
         .map_err(|error| format!("persistent vacancy parent validation: {error}"))?;
     let parent_fingerprint = coupled_fast_placement_fingerprint(&parent_fast);
@@ -292,7 +292,7 @@ fn run_population(
         sheet_long_axis_mm: TARGET_DEPTH_MM,
         ..fast_settings
     };
-    let baseline = relaxed_state_from_diagnostics(pieces, &parent.final_placements)?;
+    let baseline = relaxed_state_from_diagnostics(pieces, parent_placements)?;
     let (initial, difficulty, inactive_order) =
         initial_vacancy_state(pieces, target_settings, baseline, diagnostics, work)?;
     diagnostics.initial_state_fingerprint = Some(state_fingerprint(&initial, pieces));

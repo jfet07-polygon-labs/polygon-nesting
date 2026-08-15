@@ -8,9 +8,10 @@
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex};
+#[cfg(feature = "jagua-experimental")]
 use std::time::Instant;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::canonical_grid::{from_grid, to_grid_mm};
@@ -665,7 +666,7 @@ pub struct GeneralCoupledSeparatorArmDiagnostics {
     pub targets: Vec<GeneralCoupledSeparatorTargetDiagnostics>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GeneralCoupledSeparatorPlacementDiagnostics {
     pub piece_id: String,
@@ -1335,7 +1336,6 @@ impl CoupledSeparatorArm {
         self == Self::Treatment
     }
 
-    #[cfg(feature = "jagua-experimental")]
     fn label(self) -> &'static str {
         match self {
             Self::Control => "dynamicCoveragePolesTranslationOnly",
@@ -1962,6 +1962,55 @@ pub fn improve_complete_layout(
     })
 }
 
+#[cfg(feature = "jagua-experimental")]
+pub fn improve_complete_layout_with_persistent_vacancy_parent(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    incumbent: &GeneralFastResult,
+    parent_placements: &[GeneralCoupledSeparatorPlacementDiagnostics],
+) -> Result<GeneralRelaxedOutcome, GeneralFastError> {
+    if relaxed_settings.persistent_vacancy_mode == 0 || !relaxed_settings.coupled_dynamic_separator
+    {
+        return Err(GeneralFastError::InvalidSettings(
+            "a frozen persistent-vacancy parent requires a nonzero persistent-vacancy mode and the coupled separator diagnostics"
+                .to_owned(),
+        ));
+    }
+    let persistent_vacancy_mode = relaxed_settings.persistent_vacancy_mode;
+    let mut upstream_settings = relaxed_settings;
+    upstream_settings.persistent_vacancy_mode = 0;
+    let mut outcome = improve_complete_layout(pieces, fast_settings, upstream_settings, incumbent)?;
+    let persistent_vacancy_population = persistent_vacancy::run_persistent_vacancy_population(
+        pieces,
+        fast_settings,
+        relaxed_settings,
+        parent_placements,
+        persistent_vacancy_mode,
+    );
+    if !persistent_vacancy_population.attempted {
+        return Err(GeneralFastError::InvalidInput(format!(
+            "requested persistent-vacancy experiment did not run: {}",
+            persistent_vacancy_population
+                .failure_reason
+                .as_deref()
+                .unwrap_or("no failure reason was recorded")
+        )));
+    }
+    let coupled = outcome
+        .diagnostics
+        .coupled_dynamic_separator
+        .as_mut()
+        .ok_or_else(|| {
+            GeneralFastError::InvalidSettings(
+                "the coupled separator did not produce diagnostics for the frozen persistent-vacancy parent"
+                    .to_owned(),
+            )
+        })?;
+    coupled.persistent_vacancy_population = Some(persistent_vacancy_population);
+    Ok(outcome)
+}
+
 fn run_bounded_repair_experiment<'a>(
     pieces: &'a [GeneralFastPiece<'a>],
     fast_settings: GeneralFastSettings,
@@ -2148,7 +2197,7 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                     pieces,
                     fast_settings,
                     relaxed_settings,
-                    &boundary_projection_treatment.diagnostics,
+                    &boundary_projection_treatment.diagnostics.final_placements,
                     relaxed_settings.persistent_vacancy_mode,
                 )
             });
@@ -6144,7 +6193,6 @@ impl<'a> LaneSearch<'a> {
         self.relaxed_settings.collision_backend == GeneralRelaxedCollisionBackend::DynamicHazard
     }
 
-    #[cfg(feature = "jagua-experimental")]
     fn uses_dynamic_pressure(&self) -> bool {
         self.uses_dynamic_hazard()
             && self.relaxed_settings.pressure_model == GeneralRelaxedPressureModel::DynamicPoles

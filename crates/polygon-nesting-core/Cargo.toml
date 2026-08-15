@@ -23,3 +23,8 @@ sha2 = "0.10"
 name = "general_hazard_benchmark"
 path = "examples/general_hazard_benchmark.rs"
 required-features = ["jagua-experimental"]
+
+[[example]]
+name = "general_request_benchmark"
+path = "examples/general_request_benchmark.rs"
+required-features = ["jagua-experimental"]

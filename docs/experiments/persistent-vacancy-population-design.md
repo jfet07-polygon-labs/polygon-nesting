@@ -2,9 +2,9 @@
 
 ## Decision boundary
 
-This is a diagnostic-only Mixed-61 experiment behind a new final benchmark argument, after the retained zero-valued retired-terminal argument. Mode `0` disables it. Modes `1` and `2` use the reviewed two-hardest scheduler with comparator and contact-signature retention respectively. Modes `3` and `4` use the stateless rotating scheduler defined below with those same two retention policies respectively. Mode `6` applies dual-objective retention to mode `3` without carryover, and mode `5` adds the bounded elite carryover to that mode-`6` policy. Nonzero modes must not change the protected constructor, relaxed search, coupled separator, public profiles, or returned result. A diagnostic candidate is reported separately until every promotion gate passes.
+This is a diagnostic-only Mixed-61 experiment behind a mode argument and a required frozen-parent fixture path, after the retained zero-valued retired-terminal argument. Mode `0` disables it and accepts no parent path. Modes `1` and `2` use the reviewed two-hardest scheduler with comparator and contact-signature retention respectively. Modes `3` and `4` use the stateless rotating scheduler defined below with those same two retention policies respectively. Mode `6` applies dual-objective retention to mode `3` without carryover, and mode `5` adds the bounded elite carryover to that mode-`6` policy. Nonzero modes must not change the protected constructor, relaxed search, coupled separator, public profiles, or returned result. A diagnostic candidate is reported separately until every promotion gate passes.
 
-The frozen request SHA-256 is `dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1`. The required retained boundary-projection placement fingerprint is `b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5`, with reported depth `168.625 mm` and independently rebuilt source depth `168.361 mm`. The experiment searches a fixed `165.000 mm` strip. An identity mismatch skips the arm before any experimental work.
+The frozen request SHA-256 is `dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1`. The required retained boundary-projection placement fingerprint is `b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5`, with reported depth `168.625 mm` and independently rebuilt source depth `168.361 mm`. The canonical placements live in `tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json`; they are input to the vacancy lifecycle rather than regenerated from the platform-sensitive continuous separator trajectory. The fixture's raw SHA-256, request hash, effective sheet and clearance settings, placement count, exact placement fingerprint, full canonical validation, independent source validation, and grid depth are all checked before `attempted` becomes true. This prevents sub-grid placement edits or geometry-setting overrides from reusing the same rounded placement fingerprint while changing the successor trajectory. A requested nonzero mode that does not reach `attempted: true` makes both the core wrapper and benchmark process fail instead of emitting a successful-looking no-op result. The experiment searches a fixed `165.000 mm` strip.
 
 ## Non-duplication map
 
@@ -150,10 +150,11 @@ nix develop -c cargo run --release --locked -p polygon-nesting-core \
   tests/fixtures/mixed-61/mixed61-request.json \
   1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 \
   24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured \
-  0 10 1 0 0 0 0 MODE
+  0 10 1 0 0 0 0 MODE \
+  tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json
 ```
 
-Run four cold processes after one unmeasured release build in the order control, treatment, treatment, control, with `MODE=1,2,2,1`. The canonical identity is Apple M4 Max, `aarch64-apple-darwin`, eight requested and actual threads, rustc `1.95.0 (59807616e 2026-04-14)`, LLVM `22.1.2`, locked dependencies, and no `RUSTFLAGS`. Every output records the engine commit, dirty status, relevant-source-tree hash, executable hash, full rustc identity, machine, thread counts, request hash, frozen parent fingerprint, mode, seed domain, and exact command. The two outputs for each arm must match those identities.
+Run four cold processes after one unmeasured release build in the order control, treatment, treatment, control, with `MODE=1,2,2,1`. The canonical identity is Apple M4 Max, `aarch64-apple-darwin`, eight requested and actual threads, rustc `1.95.0 (59807616e 2026-04-14)`, LLVM `22.1.2`, locked dependencies, and no `RUSTFLAGS`. Every output records the engine commit, dirty status, relevant-source-tree hash, executable hash, full rustc identity, machine, thread counts, request hash, frozen-parent fixture hash, frozen parent fingerprint, mode, seed domain, and exact command. The two outputs for each arm must match those identities. Cross-platform comparisons start from this identical frozen parent; the upstream mode-zero separator output remains platform-bound and is not a portability oracle.
 
 The follow-up scheduler screen uses the same single unmeasured release build for every arm. Run `MODE=1,3,3,1` to isolate the scheduler under comparator retention, then `MODE=2,4,4,2` to isolate it under contact-signature retention. Every invocation uses the canonical command above with only `MODE` changed. Both replays of each mode must be byte-identical after the declared treatment/control normalization. Before comparing a new scheduler pair, its contemporaneous modes `1` and `2` must also match the normalized hashes and semantic evidence pinned by `persistent-vacancy-initial-evidence.json`; an implementation change that perturbs the old arms invalidates the screen instead of silently establishing a new control. All eight processes must report the same executable, relevant-source-tree, request, parent, toolchain, machine, and thread identities.
 
@@ -183,7 +184,7 @@ jq -S '
 ' INPUT.json
 ```
 
-The projected mode-`0` JSON must hash exactly to `f51f8d4e767c4828430af4f154616b9c73aa237f1cbfbf0cc3e04d6cadfe85d0` with SHA-256. The earlier `0f39c64...` projection included the then-current commit and was therefore commit-bound rather than a stable compatibility hash; deleting `engineCommit` is the only projection correction, and the old and new same-layout outputs both reproduce `f51f8d4...` under it.
+The projected mode-`0` JSON must hash exactly to `f51f8d4e767c4828430af4f154616b9c73aa237f1cbfbf0cc3e04d6cadfe85d0` with SHA-256. Mode `0` omits `persistentVacancyParentFixture` entirely, preserving its pre-fixture output shape. The earlier `0f39c64...` projection included the then-current commit and was therefore commit-bound rather than a stable compatibility hash; deleting `engineCommit` is the only projection correction, and the old and new same-layout outputs both reproduce `f51f8d4...` under it.
 
 Normalize each treatment/control replay with this exact projection:
 
