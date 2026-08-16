@@ -4620,8 +4620,8 @@
     "topN": 3,
     "irregularSettings": {
       "geometry": {
-        "flatteningSagToleranceMm": 0.001,
-        "clearanceSafetyMarginMm": 0.001,
+        "flatteningSagToleranceMm": 0.0,
+        "clearanceSafetyMarginMm": 0.0,
         "geometryBackendId": "irregular-convex-v2-default",
         "geometryBackendVersion": "0"
       },
