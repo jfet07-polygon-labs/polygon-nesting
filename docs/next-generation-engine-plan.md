@@ -726,3 +726,23 @@ lifting that cap is an engine-side change to the frozen experiment
 configuration, not a harness flag. The anchor-swap probe (constructing
 with the 179.756 layout as orientation prior) lands in-band at
 206.7-210.0 and is rejected without descents.
+
+The contract recalibration is authorized and executed. By explicit product
+decision (2026-08-16, session owner): a user-requested 5 mm pair spacing
+and 5 mm border must not be inflated to 5.5 and 5.25 - the sag and safety
+additions are dropped. Implementation is fixture-level and code-free: the
+Mixed-61 pieces are pure segment loops (no arcs), so
+flatteningSagToleranceMm and clearanceSafetyMarginMm collapse to the
+0.001 mm validation minimum and the effective contract becomes
+5.002 mm pair / 5.001 mm border - within two microns of the user's
+intent, with every engine validator unchanged and the legacy 5.5-contract
+request untouched alongside
+(tests/fixtures/mixed-61/mixed61-request-exact-clearance.json,
+sha 1bb90567...). The first native run under the exact contract lands at
+175.112 mm against 182.196 on the old contract - the ~7 mm bound-level
+overhead realized almost exactly - and the external references
+(Sparrow 154.449 at 3 s, the recorded product run) are now directly
+comparable for the first time. The deep 5.5-contract states are feasible
+under the exact contract with half a millimetre of recoverable slack per
+pair, and the alternation now runs from 168.275, 179.756, and the fresh
+175.112 native.
