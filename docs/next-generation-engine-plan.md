@@ -677,3 +677,14 @@ lacks, and an optional seed input preserves every protected default), and
 full NFP paired with placement scoring - noting honestly that both of its
 ingredients were individually rejected at insertion time, so its value
 must come from the pairing or not at all.
+
+The fifth family exists and it is the hybrid. Warm-starting the legacy
+continuous separator from the constructed-line record improves on the
+separator's own native control twin (180.708 vs 182.196 on identical
+settings), the descent machinery then extracts what the separator cannot
+(180.384), and one more round of each confirms a joint fixpoint - the two
+engines have complementary locks, exactly as the architecture evidence
+predicted. The alternation record stands at 180.384 mm from a 2.6-second
+separator budget (artifacts and the native control twin under
+constructed-basin/alternation/); the immediate scaling axes are the
+separator's relaxed budget and seed, both untouched.

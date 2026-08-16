@@ -1,0 +1,2593 @@
+{
+  "actualThreads": 8,
+  "areaLowerBoundDepthMm": 132.46158966215552,
+  "beamCandidateDepthMm": null,
+  "beamCandidatePlacedCount": null,
+  "beamExactEvaluations": 0,
+  "beamFailed": false,
+  "budgetMode": "deterministic-work-quota",
+  "buildProfile": "release",
+  "catalogCandidateDepthMm": null,
+  "catalogCandidatePlacedCount": null,
+  "catalogPortfolioExactEvaluations": 0,
+  "catalogPortfolioFailed": false,
+  "catalogVariantsAttempted": 1,
+  "clearanceSafetyMarginMm": 0.25,
+  "concavePieceCount": 9,
+  "constructedLongAxisDepthMm": 180.384,
+  "coupledTreatmentIndependentUsedLongAxisDepthMm": 180.384,
+  "cpuModel": "model name\t: Intel(R) Core(TM) Ultra 7 270K Plus",
+  "depthOverAreaLowerBound": 1.3617834457526217,
+  "elapsedMs": [
+    2709.467788
+  ],
+  "engineCommit": "e74dbd96be220329dc14331d968768144529badd",
+  "engineWorktreeDirty": false,
+  "engineWorktreeStatus": "",
+  "exactEvaluations": 520141,
+  "executableSha256": "8f8a4313cdab39338e5f016369b7567f21d0203ae33b02cd1b4bb905bee38beb",
+  "expandedCollisionAreaMm2": 254285.8713760003,
+  "exploratoryExactEvaluations": 0,
+  "exploratoryFailed": false,
+  "firstQuartileElapsedMs": 2709.467788,
+  "flatteningSagToleranceMm": 0.25,
+  "ignoredRequestMetadataFields": [
+    "jobId",
+    "version"
+  ],
+  "independentUsedLongAxisDepthMm": 180.384,
+  "interquartileRangeElapsedMs": 0.0,
+  "localAngleRefinementExactEvaluations": 0,
+  "machineArchitecture": "x86_64",
+  "maxElapsedMs": 2709.467788,
+  "medianElapsedMs": 2709.467788,
+  "minElapsedMs": 2709.467788,
+  "orderPortfolioExactEvaluations": 379009,
+  "orderPortfolioFailed": false,
+  "orderVariantsAttempted": 4,
+  "pairClearanceMm": 5.0,
+  "pairConstructorProbe": null,
+  "pairTemplateProbe": null,
+  "pairingCandidateDepthMm": null,
+  "pairingCandidatePlacedCount": null,
+  "pairingExactEvaluations": 0,
+  "pairingFailed": false,
+  "pieceCount": 61,
+  "placed": 61,
+  "placedMaterialAreaMm2": 210619.025747,
+  "placements": [
+    {
+      "mirrored": true,
+      "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+      "rotationDeg": 180.0,
+      "translateLongAxis": 65.252,
+      "translateShortAxis": 726.486
+    },
+    {
+      "mirrored": true,
+      "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 108.74417157287525,
+      "translateShortAxis": 1942.6288284271247
+    },
+    {
+      "mirrored": false,
+      "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 114.756,
+      "translateShortAxis": 945.222
+    },
+    {
+      "mirrored": false,
+      "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 114.75600000000001,
+      "translateShortAxis": 10.27
+    },
+    {
+      "mirrored": false,
+      "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 115.374,
+      "translateShortAxis": 1115.967
+    },
+    {
+      "mirrored": false,
+      "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 114.75608784768671,
+      "translateShortAxis": 240.0060878476866
+    },
+    {
+      "mirrored": true,
+      "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-2",
+      "rotationDeg": 180.0,
+      "translateLongAxis": 155.018,
+      "translateShortAxis": 319.408
+    },
+    {
+      "mirrored": false,
+      "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+      "rotationDeg": 180.0,
+      "translateLongAxis": 116.26,
+      "translateShortAxis": 1751.137
+    },
+    {
+      "mirrored": false,
+      "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 113.42927543901546,
+      "translateShortAxis": 1373.6879588335062
+    },
+    {
+      "mirrored": true,
+      "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
+      "rotationDeg": 172.5,
+      "translateLongAxis": 169.50300000000001,
+      "translateShortAxis": 1669.101
+    },
+    {
+      "mirrored": true,
+      "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
+      "rotationDeg": 265.0,
+      "translateLongAxis": 26.514292893218816,
+      "translateShortAxis": 469.3942928932188
+    },
+    {
+      "mirrored": false,
+      "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
+      "rotationDeg": 255.0,
+      "translateLongAxis": 106.499,
+      "translateShortAxis": 612.874
+    },
+    {
+      "mirrored": false,
+      "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+      "rotationDeg": 5.0,
+      "translateLongAxis": 114.998876167094,
+      "translateShortAxis": 1209.5372675784672
+    },
+    {
+      "mirrored": false,
+      "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4",
+      "rotationDeg": 187.5,
+      "translateLongAxis": 172.74324783999765,
+      "translateShortAxis": 506.1847521600023
+    },
+    {
+      "mirrored": false,
+      "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+      "rotationDeg": 297.5,
+      "translateLongAxis": 76.57245931032982,
+      "translateShortAxis": 1432.7634593103303
+    },
+    {
+      "mirrored": false,
+      "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+      "rotationDeg": 357.5,
+      "translateLongAxis": 73.018,
+      "translateShortAxis": 716.758
+    },
+    {
+      "mirrored": false,
+      "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+      "rotationDeg": 327.5,
+      "translateLongAxis": 38.213100505063395,
+      "translateShortAxis": 491.3621005050634
+    },
+    {
+      "mirrored": false,
+      "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
+      "rotationDeg": 80.0,
+      "translateLongAxis": 0.35,
+      "translateShortAxis": 433.658
+    },
+    {
+      "mirrored": false,
+      "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+      "rotationDeg": 177.5,
+      "translateLongAxis": 105.3182928932188,
+      "translateShortAxis": 1458.6642928932188
+    },
+    {
+      "mirrored": true,
+      "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-1",
+      "rotationDeg": 75.0,
+      "translateLongAxis": 66.66900000000001,
+      "translateShortAxis": 1917.048
+    },
+    {
+      "mirrored": false,
+      "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-2",
+      "rotationDeg": 215.537678,
+      "translateLongAxis": 106.9682928932188,
+      "translateShortAxis": 690.5012928932188
+    },
+    {
+      "mirrored": false,
+      "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-3",
+      "rotationDeg": 212.5,
+      "translateLongAxis": 108.49629289321881,
+      "translateShortAxis": 1954.120292893219
+    },
+    {
+      "mirrored": false,
+      "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+      "rotationDeg": 95.0,
+      "translateLongAxis": 11.901230447378298,
+      "translateShortAxis": 1661.7896446609407
+    },
+    {
+      "mirrored": false,
+      "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      "rotationDeg": 210.0,
+      "translateLongAxis": 140.508,
+      "translateShortAxis": 1234.923
+    },
+    {
+      "mirrored": false,
+      "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2",
+      "rotationDeg": 270.0,
+      "translateLongAxis": 157.14341533392107,
+      "translateShortAxis": 1033.470264322519
+    },
+    {
+      "mirrored": false,
+      "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+      "rotationDeg": 90.0,
+      "translateLongAxis": 5.252,
+      "translateShortAxis": 474.868
+    },
+    {
+      "mirrored": true,
+      "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-2",
+      "rotationDeg": 75.0,
+      "translateLongAxis": 34.84758578643763,
+      "translateShortAxis": 867.5025857864376
+    },
+    {
+      "mirrored": true,
+      "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
+      "rotationDeg": 180.0,
+      "translateLongAxis": 144.756,
+      "translateShortAxis": 110.681
+    },
+    {
+      "mirrored": true,
+      "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4",
+      "rotationDeg": 212.5,
+      "translateLongAxis": 141.82044365081387,
+      "translateShortAxis": 800.6665563491862
+    },
+    {
+      "mirrored": false,
+      "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5",
+      "rotationDeg": 92.5,
+      "translateLongAxis": 6.677292893218813,
+      "translateShortAxis": 527.8102928932188
+    },
+    {
+      "mirrored": false,
+      "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6",
+      "rotationDeg": 84.373737,
+      "translateLongAxis": 91.88799999999999,
+      "translateShortAxis": 709.029
+    },
+    {
+      "mirrored": false,
+      "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 129.17310703499362,
+      "translateShortAxis": 1320.9588169952372
+    },
+    {
+      "mirrored": true,
+      "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 92.12899999999999,
+      "translateShortAxis": 670.524
+    },
+    {
+      "mirrored": true,
+      "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1",
+      "rotationDeg": 270.0,
+      "translateLongAxis": 40.75600000000001,
+      "translateShortAxis": 1666.654
+    },
+    {
+      "mirrored": false,
+      "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-2",
+      "rotationDeg": 85.0,
+      "translateLongAxis": 129.9185857864376,
+      "translateShortAxis": 731.9995857864376
+    },
+    {
+      "mirrored": false,
+      "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3",
+      "rotationDeg": 270.0,
+      "translateLongAxis": 173.51100000000002,
+      "translateShortAxis": 1516.061
+    },
+    {
+      "mirrored": false,
+      "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-4",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 5.251999999999997,
+      "translateShortAxis": 1762.194
+    },
+    {
+      "mirrored": true,
+      "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5",
+      "rotationDeg": 90.0,
+      "translateLongAxis": 35.252,
+      "translateShortAxis": 1749.529
+    },
+    {
+      "mirrored": false,
+      "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 5.252,
+      "translateShortAxis": 173.122
+    },
+    {
+      "mirrored": false,
+      "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 5.252000000000001,
+      "translateShortAxis": 5.32
+    },
+    {
+      "mirrored": false,
+      "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 5.252000000000001,
+      "translateShortAxis": 873.796
+    },
+    {
+      "mirrored": true,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-1",
+      "rotationDeg": 310.0,
+      "translateLongAxis": -20.801,
+      "translateShortAxis": 1370.205
+    },
+    {
+      "mirrored": true,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-2",
+      "rotationDeg": 190.0,
+      "translateLongAxis": 141.81129289321876,
+      "translateShortAxis": 1330.156292893219
+    },
+    {
+      "mirrored": false,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+      "rotationDeg": 352.5,
+      "translateLongAxis": 115.03499285732507,
+      "translateShortAxis": 130.99969134213492
+    },
+    {
+      "mirrored": true,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-4",
+      "rotationDeg": 270.0,
+      "translateLongAxis": 78.317,
+      "translateShortAxis": 1934.748
+    },
+    {
+      "mirrored": true,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-5",
+      "rotationDeg": 327.5,
+      "translateLongAxis": 51.05729289321882,
+      "translateShortAxis": 1830.0862928932188
+    },
+    {
+      "mirrored": false,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-6",
+      "rotationDeg": 10.0,
+      "translateLongAxis": 72.63034906293618,
+      "translateShortAxis": 1604.2264305909534
+    },
+    {
+      "mirrored": false,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-7",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 86.81852165103997,
+      "translateShortAxis": 566.5624783489602
+    },
+    {
+      "mirrored": false,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-8",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 107.67290602486692,
+      "translateShortAxis": 1742.9899720420447
+    },
+    {
+      "mirrored": false,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+      "rotationDeg": 300.0,
+      "translateLongAxis": 145.38329289321882,
+      "translateShortAxis": 860.1002928932188
+    },
+    {
+      "mirrored": false,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+      "rotationDeg": 72.5,
+      "translateLongAxis": 88.81829289321881,
+      "translateShortAxis": 561.0332928932188
+    },
+    {
+      "mirrored": false,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-11",
+      "rotationDeg": 357.5,
+      "translateLongAxis": 110.77819279063935,
+      "translateShortAxis": 827.3412097372285
+    },
+    {
+      "mirrored": false,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-12",
+      "rotationDeg": 0.0,
+      "translateLongAxis": 49.513999999999996,
+      "translateShortAxis": 335.022
+    },
+    {
+      "mirrored": true,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-13",
+      "rotationDeg": 122.5,
+      "translateLongAxis": 130.55245166004056,
+      "translateShortAxis": 843.0259137802864
+    },
+    {
+      "mirrored": true,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+      "rotationDeg": 300.0,
+      "translateLongAxis": 84.762,
+      "translateShortAxis": 203.859
+    },
+    {
+      "mirrored": false,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-15",
+      "rotationDeg": 352.5,
+      "translateLongAxis": 70.00729289321882,
+      "translateShortAxis": 1265.9582928932189
+    },
+    {
+      "mirrored": false,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-16",
+      "rotationDeg": 177.5,
+      "translateLongAxis": 165.59258578643764,
+      "translateShortAxis": 1524.0645857864376
+    },
+    {
+      "mirrored": false,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
+      "rotationDeg": 60.0,
+      "translateLongAxis": -24.74149033200812,
+      "translateShortAxis": 1288.726490332008
+    },
+    {
+      "mirrored": true,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-18",
+      "rotationDeg": 175.0,
+      "translateLongAxis": 113.29125422125128,
+      "translateShortAxis": 403.23533156518636
+    },
+    {
+      "mirrored": true,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-19",
+      "rotationDeg": 75.0,
+      "translateLongAxis": 122.16229289321879,
+      "translateShortAxis": 1616.9292928932189
+    },
+    {
+      "mirrored": false,
+      "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-20",
+      "rotationDeg": 262.5,
+      "translateLongAxis": 86.68132380976677,
+      "translateShortAxis": 1292.4507035354436
+    }
+  ],
+  "primaryExactEvaluations": 141132,
+  "profile": "general-fast-experimental",
+  "quota": {
+    "angleSeedCount": 16,
+    "beamEvaluationsPerState": 0,
+    "catalogEvaluationsPerPiece": 0,
+    "catalogVariants": 1,
+    "exactPairTerminalMode": 0,
+    "exploratoryEvaluationsPerPiece": 0,
+    "localAngleEvaluationsPerPiece": 0,
+    "maxAnglesPerPiece": 4,
+    "orderVariants": 4,
+    "pairConstructorDiagnostics": false,
+    "pairTemplateDiagnostics": false,
+    "pairingBandVariants": 1,
+    "pairingEvaluationsPerPiece": 0,
+    "partialLayouts": 1,
+    "persistentVacancyMode": 0,
+    "persistentVacancyParentFixture": {
+      "path": "/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+      "sha256": "1555988f2faee58091e29c196f4f48659b7124a63fa27789f8aad2473ae11700"
+    },
+    "persistentVacancyTargetDepthMm": 200.0,
+    "precompressionFrontierVacancyMode": 0,
+    "relaxedAngleSeedPolicy": "structuredGrid",
+    "relaxedAngularRepair": false,
+    "relaxedDynamicHazard": false,
+    "relaxedEpochs": 24,
+    "relaxedFailedAttemptsPerDepth": 1,
+    "relaxedFocusedSamplesPerMove": 10,
+    "relaxedGlobalSamplesPerMove": 10,
+    "relaxedInfeasiblePoolArgumentsIgnored": true,
+    "relaxedInfeasiblePoolSize": 6,
+    "relaxedInitialShrinkRatio": 0.005,
+    "relaxedLanes": 8,
+    "relaxedMinimumShrinkRatio": 0.001,
+    "relaxedPressureModel": "structuredTrianglePoles",
+    "relaxedRefinementRounds": 5,
+    "relaxedRepairNeighborhood": 10,
+    "relaxedSeed": 0,
+    "relaxedSweepsPerEpoch": 40,
+    "relaxedSynchronizeLanes": false,
+    "repairEvaluationsPerPiece": 0,
+    "repairTargets": 0,
+    "tighteningPasses": 0,
+    "warmStartFixture": {
+      "depthMm": 180.384,
+      "path": "/var/lib/t3/tmp/pv22-alt/des0-hop001.json",
+      "sha256": "abcccea67b9ca3128f71ef6383917a67f15f05d0fdd01f2fc7cf86dc32f16746"
+    }
+  },
+  "relaxedDiagnostics": {
+    "acceptedMoves": 12921,
+    "angularRepairBaseLoss": null,
+    "angularRepairControlLoss": null,
+    "angularRepairImprovements": 0,
+    "angularRepairQueries": 0,
+    "angularRepairRotationLoss": null,
+    "angularRepairSuccessors": 0,
+    "axisCandidateEvaluations": 0,
+    "axisEvents": 0,
+    "cellIndexProbes": 19827835,
+    "confirmedPairAdditions": 0,
+    "confirmedPairRemovals": 0,
+    "coupledDynamicSeparator": {
+      "boundaryProjectionTreatment": {
+        "attempted": true,
+        "auditorDynamicQueries": 0,
+        "auditorFullScorePairVisits": 7320,
+        "auditorIndexBuilds": 1,
+        "auditorLayoutLoads": 4,
+        "auditorPressureEvaluations": 47,
+        "catalogBuilds": 1,
+        "dynamicQueries": 208181,
+        "finalDepthMm": 180.384,
+        "finalPlacementFingerprint": "1662d5e91776b1fbe627ae737724c0a5468534fcdd5ea1925bfab26dbf3e6497",
+        "finalPlacements": [
+          {
+            "mirrored": true,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 65.252,
+            "translateShortAxis": 726.486
+          },
+          {
+            "mirrored": true,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 108.74417157287525,
+            "translateShortAxis": 1942.6288284271247
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 114.756,
+            "translateShortAxis": 945.222
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 114.75600000000001,
+            "translateShortAxis": 10.27
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 115.374,
+            "translateShortAxis": 1115.967
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 114.75608784768671,
+            "translateShortAxis": 240.0060878476866
+          },
+          {
+            "mirrored": true,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-2",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 155.018,
+            "translateShortAxis": 319.408
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 116.26,
+            "translateShortAxis": 1751.137
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 113.42927543901546,
+            "translateShortAxis": 1373.6879588335062
+          },
+          {
+            "mirrored": true,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
+            "rotationDeg": 172.5,
+            "translateLongAxis": 169.50300000000001,
+            "translateShortAxis": 1669.101
+          },
+          {
+            "mirrored": true,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
+            "rotationDeg": 265.0,
+            "translateLongAxis": 26.514292893218816,
+            "translateShortAxis": 469.3942928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
+            "rotationDeg": 255.0,
+            "translateLongAxis": 106.499,
+            "translateShortAxis": 612.874
+          },
+          {
+            "mirrored": false,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+            "rotationDeg": 5.0,
+            "translateLongAxis": 114.998876167094,
+            "translateShortAxis": 1209.5372675784672
+          },
+          {
+            "mirrored": false,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4",
+            "rotationDeg": 187.5,
+            "translateLongAxis": 172.74324783999765,
+            "translateShortAxis": 506.1847521600023
+          },
+          {
+            "mirrored": false,
+            "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+            "rotationDeg": 297.5,
+            "translateLongAxis": 76.57245931032982,
+            "translateShortAxis": 1432.7634593103303
+          },
+          {
+            "mirrored": false,
+            "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+            "rotationDeg": 357.5,
+            "translateLongAxis": 73.018,
+            "translateShortAxis": 716.758
+          },
+          {
+            "mirrored": false,
+            "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "rotationDeg": 327.5,
+            "translateLongAxis": 38.213100505063395,
+            "translateShortAxis": 491.3621005050634
+          },
+          {
+            "mirrored": false,
+            "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
+            "rotationDeg": 80.0,
+            "translateLongAxis": 0.35,
+            "translateShortAxis": 433.658
+          },
+          {
+            "mirrored": false,
+            "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+            "rotationDeg": 177.5,
+            "translateLongAxis": 105.3182928932188,
+            "translateShortAxis": 1458.6642928932188
+          },
+          {
+            "mirrored": true,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-1",
+            "rotationDeg": 75.0,
+            "translateLongAxis": 66.66900000000001,
+            "translateShortAxis": 1917.048
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-2",
+            "rotationDeg": 215.537678,
+            "translateLongAxis": 106.9682928932188,
+            "translateShortAxis": 690.5012928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-3",
+            "rotationDeg": 212.5,
+            "translateLongAxis": 108.49629289321881,
+            "translateShortAxis": 1954.120292893219
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+            "rotationDeg": 95.0,
+            "translateLongAxis": 11.901230447378298,
+            "translateShortAxis": 1661.7896446609407
+          },
+          {
+            "mirrored": false,
+            "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+            "rotationDeg": 210.0,
+            "translateLongAxis": 140.508,
+            "translateShortAxis": 1234.923
+          },
+          {
+            "mirrored": false,
+            "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2",
+            "rotationDeg": 270.0,
+            "translateLongAxis": 157.14341533392107,
+            "translateShortAxis": 1033.470264322519
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 5.252,
+            "translateShortAxis": 474.868
+          },
+          {
+            "mirrored": true,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-2",
+            "rotationDeg": 75.0,
+            "translateLongAxis": 34.84758578643763,
+            "translateShortAxis": 867.5025857864376
+          },
+          {
+            "mirrored": true,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 144.756,
+            "translateShortAxis": 110.681
+          },
+          {
+            "mirrored": true,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4",
+            "rotationDeg": 212.5,
+            "translateLongAxis": 141.82044365081387,
+            "translateShortAxis": 800.6665563491862
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5",
+            "rotationDeg": 92.5,
+            "translateLongAxis": 6.677292893218813,
+            "translateShortAxis": 527.8102928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6",
+            "rotationDeg": 84.373737,
+            "translateLongAxis": 91.88799999999999,
+            "translateShortAxis": 709.029
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 129.17310703499362,
+            "translateShortAxis": 1320.9588169952372
+          },
+          {
+            "mirrored": true,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 92.12899999999999,
+            "translateShortAxis": 670.524
+          },
+          {
+            "mirrored": true,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1",
+            "rotationDeg": 270.0,
+            "translateLongAxis": 40.75600000000001,
+            "translateShortAxis": 1666.654
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-2",
+            "rotationDeg": 85.0,
+            "translateLongAxis": 129.9185857864376,
+            "translateShortAxis": 731.9995857864376
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3",
+            "rotationDeg": 270.0,
+            "translateLongAxis": 173.51100000000002,
+            "translateShortAxis": 1516.061
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-4",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.251999999999997,
+            "translateShortAxis": 1762.194
+          },
+          {
+            "mirrored": true,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 35.252,
+            "translateShortAxis": 1749.529
+          },
+          {
+            "mirrored": false,
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.252,
+            "translateShortAxis": 173.122
+          },
+          {
+            "mirrored": false,
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.252000000000001,
+            "translateShortAxis": 5.32
+          },
+          {
+            "mirrored": false,
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.252000000000001,
+            "translateShortAxis": 873.796
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-1",
+            "rotationDeg": 310.0,
+            "translateLongAxis": -20.801,
+            "translateShortAxis": 1370.205
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-2",
+            "rotationDeg": 190.0,
+            "translateLongAxis": 141.81129289321876,
+            "translateShortAxis": 1330.156292893219
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+            "rotationDeg": 352.5,
+            "translateLongAxis": 115.03499285732507,
+            "translateShortAxis": 130.99969134213492
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-4",
+            "rotationDeg": 270.0,
+            "translateLongAxis": 78.317,
+            "translateShortAxis": 1934.748
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-5",
+            "rotationDeg": 327.5,
+            "translateLongAxis": 51.05729289321882,
+            "translateShortAxis": 1830.0862928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-6",
+            "rotationDeg": 10.0,
+            "translateLongAxis": 72.63034906293618,
+            "translateShortAxis": 1604.2264305909534
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-7",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 86.81852165103997,
+            "translateShortAxis": 566.5624783489602
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-8",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 107.67290602486692,
+            "translateShortAxis": 1742.9899720420447
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "rotationDeg": 300.0,
+            "translateLongAxis": 145.38329289321882,
+            "translateShortAxis": 860.1002928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+            "rotationDeg": 72.5,
+            "translateLongAxis": 88.81829289321881,
+            "translateShortAxis": 561.0332928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-11",
+            "rotationDeg": 357.5,
+            "translateLongAxis": 110.77819279063935,
+            "translateShortAxis": 827.3412097372285
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-12",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 49.513999999999996,
+            "translateShortAxis": 335.022
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-13",
+            "rotationDeg": 122.5,
+            "translateLongAxis": 130.55245166004056,
+            "translateShortAxis": 843.0259137802864
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+            "rotationDeg": 300.0,
+            "translateLongAxis": 84.762,
+            "translateShortAxis": 203.859
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-15",
+            "rotationDeg": 352.5,
+            "translateLongAxis": 70.00729289321882,
+            "translateShortAxis": 1265.9582928932189
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-16",
+            "rotationDeg": 177.5,
+            "translateLongAxis": 165.59258578643764,
+            "translateShortAxis": 1524.0645857864376
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
+            "rotationDeg": 60.0,
+            "translateLongAxis": -24.74149033200812,
+            "translateShortAxis": 1288.726490332008
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-18",
+            "rotationDeg": 175.0,
+            "translateLongAxis": 113.29125422125128,
+            "translateShortAxis": 403.23533156518636
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-19",
+            "rotationDeg": 75.0,
+            "translateLongAxis": 122.16229289321879,
+            "translateShortAxis": 1616.9292928932189
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-20",
+            "rotationDeg": 262.5,
+            "translateLongAxis": 86.68132380976677,
+            "translateShortAxis": 1292.4507035354436
+          }
+        ],
+        "hazardUpdates": 1535,
+        "immutableVariantBuilds": 22,
+        "independentlyMeasuredFinalDepthMm": 180.384,
+        "indexBuilds": 8,
+        "initialDepthMm": 180.384,
+        "layoutLoads": 324,
+        "pressureEvaluations": 281356,
+        "pressureModel": "dynamicCoveragePolesRigidDescent",
+        "retainedConfirmations": 1535,
+        "skippedReason": null,
+        "targets": [
+          {
+            "acceptedDepthMm": null,
+            "boundaryProjection": {
+              "attempted": true,
+              "exactAccepted": false,
+              "exactDepthMm": null,
+              "exactValid": false,
+              "projectedPieces": [
+                {
+                  "mirrored": false,
+                  "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+                  "rotationDeg": 300.241277,
+                  "translateLongAxis": 144.722,
+                  "translateShortAxis": 873.167
+                },
+                {
+                  "mirrored": true,
+                  "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+                  "rotationDeg": 300.25,
+                  "translateLongAxis": 84.246,
+                  "translateShortAxis": 199.973
+                },
+                {
+                  "mirrored": true,
+                  "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5",
+                  "rotationDeg": 89.946993,
+                  "translateLongAxis": 35.257,
+                  "translateShortAxis": 1750.751
+                }
+              ],
+              "projectedPose": {
+                "mirrored": false,
+                "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+                "rotationDeg": 300.241277,
+                "translateLongAxis": 144.722,
+                "translateShortAxis": 873.167
+              },
+              "rejectionReason": "pieces 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1 and d06db288-d2d6-4f40-874e-98287f516d93-copy-14 overlap on the canonical collision grid",
+              "rootBoundaryLoss": 708.7939529916378,
+              "rootPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+              "stateFingerprint": "6dcd86708ca80c556c75a47bd414cfc0151b55f08ed0b6d75b010d7629a4bca2"
+            },
+            "capExhausted": null,
+            "compressionSeed": 12303222596661238,
+            "compressionSplitMm": 90.192,
+            "exactAccepted": false,
+            "exactRejectionReason": null,
+            "exactValid": false,
+            "failureReason": null,
+            "feasible": false,
+            "finalRawLoss": 1482.2231571278785,
+            "finalStateFingerprint": "c6ff9601a1a6d7b32a3264c354d3cf14058f612ed47d067e837a553d6916b09f",
+            "finalWeightedLoss": 1482.2231571278785,
+            "fullRescoreAgreements": 3,
+            "initialRawLoss": 36888.92844588183,
+            "initialStateFingerprint": "ad718a7c68b6c927945e593c556f41118da7f18e9d4311786958a31ebc6c2562",
+            "minimumRawLoss": 1482.2231571278785,
+            "ordinal": 0,
+            "rollbacks": 3,
+            "rounds": 40,
+            "strikes": 2,
+            "targetDepthMm": 180.20361599999998,
+            "targetSeed": 3009971423783550518,
+            "workerSeeds": [
+              3009971423783550518,
+              10853066397292239759,
+              6301978256542807364,
+              1715105410548977437,
+              15322526569308776658,
+              10771752888960647851,
+              6184635814021733472,
+              1345559189609756217
+            ]
+          }
+        ],
+        "targetsAccepted": 0,
+        "targetsAttempted": 1,
+        "workerFullScorePairVisits": 585600,
+        "workerSweeps": 320
+      },
+      "conflictRuinRecreate": {
+        "attempted": false,
+        "checkpointFingerprint": "d1920f01254d1e4cae9d2b46ed27eb93f60cb91abcb515c0340c360ace84c484",
+        "rebuild": {
+          "capExhausted": null,
+          "cheapQueries": 0,
+          "clipperInputVertices": 0,
+          "clipperOutputVertices": 0,
+          "deduplicatedProposals": 0,
+          "elapsedMs": 0.0,
+          "exactFinalists": 0,
+          "exactPairIntersectionLimit": 0,
+          "exactPairIntersections": 0,
+          "featureVisits": 0,
+          "initialExactOverlapAreaMm2": 0.0,
+          "initialPositiveOverlapPairs": 0,
+          "orientationBuildLimit": 0,
+          "orientationBuilds": 0,
+          "parentOrientationStreams": 0,
+          "partialsRetained": 0,
+          "preDedupContactAttempts": 0,
+          "requiredCurrentFinalists": 0,
+          "selectedExactOverlapAreaMm2": null,
+          "selectedPositiveOverlapPairs": null,
+          "selectedStateFingerprint": null,
+          "transformedOutputVertices": 0
+        },
+        "removalOrderPieceIds": [],
+        "removedPieceIds": [],
+        "retryControl": {
+          "acceptedDepthMm": null,
+          "appliedRebuild": false,
+          "attempted": false,
+          "elapsedMs": 0.0,
+          "exactValid": false,
+          "failureReason": null,
+          "finalPlacementFingerprint": null,
+          "finalPlacements": [],
+          "finalStateFingerprint": null,
+          "initialStateFingerprint": null,
+          "target": null,
+          "work": {
+            "auditorDynamicQueries": 0,
+            "auditorFullScorePairVisits": 0,
+            "auditorIndexBuilds": 0,
+            "auditorLayoutLoads": 0,
+            "auditorPressureEvaluations": 0,
+            "dynamicQueries": 0,
+            "hazardUpdates": 0,
+            "indexBuilds": 0,
+            "layoutLoads": 0,
+            "pressureEvaluations": 0,
+            "retainedConfirmations": 0,
+            "workerFullScorePairVisits": 0,
+            "workerSweeps": 0
+          }
+        },
+        "rootBoundaryLoss": 845.1881360869102,
+        "rootPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+        "rootProbeBlockers": [
+          {
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+            "proxyPressure": 1441.1982421875
+          }
+        ],
+        "rootProbeExactDepthMm": null,
+        "rootProbeExactRejectionReason": "piece 3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5 violates the canonical-grid sheet boundary",
+        "rootProbeExactValid": false,
+        "rootProbeImprovesIncumbent": false,
+        "rootProbePose": {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+          "rotationDeg": 300.0,
+          "translateLongAxis": 144.947,
+          "translateShortAxis": 872.606
+        },
+        "rootProbeStateFingerprint": "2c76f15629450180b45864264592473d564ad06ea3beb9e0bb92236da7fd0525",
+        "rootProbeTrackerBoundaryLoss": 2218.3212657933127,
+        "rootProbeTrackerFeasible": false,
+        "rootProbeTrackerLoss": 3659.51987419175,
+        "rootProbeTrackerPositivePairs": 1,
+        "seedDomain": 4851033521967288881,
+        "selectorMode": "boundaryBlockerProbe",
+        "skippedReason": "boundary projection audited; publication remains disabled pending causal review",
+        "targetDepthMm": 180.20361599999998,
+        "treatment": {
+          "acceptedDepthMm": null,
+          "appliedRebuild": false,
+          "attempted": false,
+          "elapsedMs": 0.0,
+          "exactValid": false,
+          "failureReason": null,
+          "finalPlacementFingerprint": null,
+          "finalPlacements": [],
+          "finalStateFingerprint": null,
+          "initialStateFingerprint": null,
+          "target": null,
+          "work": {
+            "auditorDynamicQueries": 0,
+            "auditorFullScorePairVisits": 0,
+            "auditorIndexBuilds": 0,
+            "auditorLayoutLoads": 0,
+            "auditorPressureEvaluations": 0,
+            "dynamicQueries": 0,
+            "hazardUpdates": 0,
+            "indexBuilds": 0,
+            "layoutLoads": 0,
+            "pressureEvaluations": 0,
+            "retainedConfirmations": 0,
+            "workerFullScorePairVisits": 0,
+            "workerSweeps": 0
+          }
+        }
+      },
+      "control": {
+        "attempted": true,
+        "auditorDynamicQueries": 0,
+        "auditorFullScorePairVisits": 7320,
+        "auditorIndexBuilds": 1,
+        "auditorLayoutLoads": 4,
+        "auditorPressureEvaluations": 47,
+        "catalogBuilds": 1,
+        "dynamicQueries": 233638,
+        "finalDepthMm": 180.384,
+        "finalPlacementFingerprint": "1662d5e91776b1fbe627ae737724c0a5468534fcdd5ea1925bfab26dbf3e6497",
+        "finalPlacements": [
+          {
+            "mirrored": true,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 65.252,
+            "translateShortAxis": 726.486
+          },
+          {
+            "mirrored": true,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 108.74417157287525,
+            "translateShortAxis": 1942.6288284271247
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 114.756,
+            "translateShortAxis": 945.222
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 114.75600000000001,
+            "translateShortAxis": 10.27
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 115.374,
+            "translateShortAxis": 1115.967
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 114.75608784768671,
+            "translateShortAxis": 240.0060878476866
+          },
+          {
+            "mirrored": true,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-2",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 155.018,
+            "translateShortAxis": 319.408
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 116.26,
+            "translateShortAxis": 1751.137
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 113.42927543901546,
+            "translateShortAxis": 1373.6879588335062
+          },
+          {
+            "mirrored": true,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
+            "rotationDeg": 172.5,
+            "translateLongAxis": 169.50300000000001,
+            "translateShortAxis": 1669.101
+          },
+          {
+            "mirrored": true,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
+            "rotationDeg": 265.0,
+            "translateLongAxis": 26.514292893218816,
+            "translateShortAxis": 469.3942928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
+            "rotationDeg": 255.0,
+            "translateLongAxis": 106.499,
+            "translateShortAxis": 612.874
+          },
+          {
+            "mirrored": false,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+            "rotationDeg": 5.0,
+            "translateLongAxis": 114.998876167094,
+            "translateShortAxis": 1209.5372675784672
+          },
+          {
+            "mirrored": false,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4",
+            "rotationDeg": 187.5,
+            "translateLongAxis": 172.74324783999765,
+            "translateShortAxis": 506.1847521600023
+          },
+          {
+            "mirrored": false,
+            "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+            "rotationDeg": 297.5,
+            "translateLongAxis": 76.57245931032982,
+            "translateShortAxis": 1432.7634593103303
+          },
+          {
+            "mirrored": false,
+            "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+            "rotationDeg": 357.5,
+            "translateLongAxis": 73.018,
+            "translateShortAxis": 716.758
+          },
+          {
+            "mirrored": false,
+            "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "rotationDeg": 327.5,
+            "translateLongAxis": 38.213100505063395,
+            "translateShortAxis": 491.3621005050634
+          },
+          {
+            "mirrored": false,
+            "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
+            "rotationDeg": 80.0,
+            "translateLongAxis": 0.35,
+            "translateShortAxis": 433.658
+          },
+          {
+            "mirrored": false,
+            "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+            "rotationDeg": 177.5,
+            "translateLongAxis": 105.3182928932188,
+            "translateShortAxis": 1458.6642928932188
+          },
+          {
+            "mirrored": true,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-1",
+            "rotationDeg": 75.0,
+            "translateLongAxis": 66.66900000000001,
+            "translateShortAxis": 1917.048
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-2",
+            "rotationDeg": 215.537678,
+            "translateLongAxis": 106.9682928932188,
+            "translateShortAxis": 690.5012928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-3",
+            "rotationDeg": 212.5,
+            "translateLongAxis": 108.49629289321881,
+            "translateShortAxis": 1954.120292893219
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+            "rotationDeg": 95.0,
+            "translateLongAxis": 11.901230447378298,
+            "translateShortAxis": 1661.7896446609407
+          },
+          {
+            "mirrored": false,
+            "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+            "rotationDeg": 210.0,
+            "translateLongAxis": 140.508,
+            "translateShortAxis": 1234.923
+          },
+          {
+            "mirrored": false,
+            "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2",
+            "rotationDeg": 270.0,
+            "translateLongAxis": 157.14341533392107,
+            "translateShortAxis": 1033.470264322519
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 5.252,
+            "translateShortAxis": 474.868
+          },
+          {
+            "mirrored": true,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-2",
+            "rotationDeg": 75.0,
+            "translateLongAxis": 34.84758578643763,
+            "translateShortAxis": 867.5025857864376
+          },
+          {
+            "mirrored": true,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 144.756,
+            "translateShortAxis": 110.681
+          },
+          {
+            "mirrored": true,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4",
+            "rotationDeg": 212.5,
+            "translateLongAxis": 141.82044365081387,
+            "translateShortAxis": 800.6665563491862
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5",
+            "rotationDeg": 92.5,
+            "translateLongAxis": 6.677292893218813,
+            "translateShortAxis": 527.8102928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6",
+            "rotationDeg": 84.373737,
+            "translateLongAxis": 91.88799999999999,
+            "translateShortAxis": 709.029
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 129.17310703499362,
+            "translateShortAxis": 1320.9588169952372
+          },
+          {
+            "mirrored": true,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 92.12899999999999,
+            "translateShortAxis": 670.524
+          },
+          {
+            "mirrored": true,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1",
+            "rotationDeg": 270.0,
+            "translateLongAxis": 40.75600000000001,
+            "translateShortAxis": 1666.654
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-2",
+            "rotationDeg": 85.0,
+            "translateLongAxis": 129.9185857864376,
+            "translateShortAxis": 731.9995857864376
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3",
+            "rotationDeg": 270.0,
+            "translateLongAxis": 173.51100000000002,
+            "translateShortAxis": 1516.061
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-4",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.251999999999997,
+            "translateShortAxis": 1762.194
+          },
+          {
+            "mirrored": true,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 35.252,
+            "translateShortAxis": 1749.529
+          },
+          {
+            "mirrored": false,
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.252,
+            "translateShortAxis": 173.122
+          },
+          {
+            "mirrored": false,
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.252000000000001,
+            "translateShortAxis": 5.32
+          },
+          {
+            "mirrored": false,
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.252000000000001,
+            "translateShortAxis": 873.796
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-1",
+            "rotationDeg": 310.0,
+            "translateLongAxis": -20.801,
+            "translateShortAxis": 1370.205
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-2",
+            "rotationDeg": 190.0,
+            "translateLongAxis": 141.81129289321876,
+            "translateShortAxis": 1330.156292893219
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+            "rotationDeg": 352.5,
+            "translateLongAxis": 115.03499285732507,
+            "translateShortAxis": 130.99969134213492
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-4",
+            "rotationDeg": 270.0,
+            "translateLongAxis": 78.317,
+            "translateShortAxis": 1934.748
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-5",
+            "rotationDeg": 327.5,
+            "translateLongAxis": 51.05729289321882,
+            "translateShortAxis": 1830.0862928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-6",
+            "rotationDeg": 10.0,
+            "translateLongAxis": 72.63034906293618,
+            "translateShortAxis": 1604.2264305909534
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-7",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 86.81852165103997,
+            "translateShortAxis": 566.5624783489602
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-8",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 107.67290602486692,
+            "translateShortAxis": 1742.9899720420447
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "rotationDeg": 300.0,
+            "translateLongAxis": 145.38329289321882,
+            "translateShortAxis": 860.1002928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+            "rotationDeg": 72.5,
+            "translateLongAxis": 88.81829289321881,
+            "translateShortAxis": 561.0332928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-11",
+            "rotationDeg": 357.5,
+            "translateLongAxis": 110.77819279063935,
+            "translateShortAxis": 827.3412097372285
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-12",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 49.513999999999996,
+            "translateShortAxis": 335.022
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-13",
+            "rotationDeg": 122.5,
+            "translateLongAxis": 130.55245166004056,
+            "translateShortAxis": 843.0259137802864
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+            "rotationDeg": 300.0,
+            "translateLongAxis": 84.762,
+            "translateShortAxis": 203.859
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-15",
+            "rotationDeg": 352.5,
+            "translateLongAxis": 70.00729289321882,
+            "translateShortAxis": 1265.9582928932189
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-16",
+            "rotationDeg": 177.5,
+            "translateLongAxis": 165.59258578643764,
+            "translateShortAxis": 1524.0645857864376
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
+            "rotationDeg": 60.0,
+            "translateLongAxis": -24.74149033200812,
+            "translateShortAxis": 1288.726490332008
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-18",
+            "rotationDeg": 175.0,
+            "translateLongAxis": 113.29125422125128,
+            "translateShortAxis": 403.23533156518636
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-19",
+            "rotationDeg": 75.0,
+            "translateLongAxis": 122.16229289321879,
+            "translateShortAxis": 1616.9292928932189
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-20",
+            "rotationDeg": 262.5,
+            "translateLongAxis": 86.68132380976677,
+            "translateShortAxis": 1292.4507035354436
+          }
+        ],
+        "hazardUpdates": 2146,
+        "immutableVariantBuilds": 22,
+        "independentlyMeasuredFinalDepthMm": 180.384,
+        "indexBuilds": 8,
+        "initialDepthMm": 180.384,
+        "layoutLoads": 324,
+        "pressureEvaluations": 386056,
+        "pressureModel": "dynamicCoveragePolesTranslationOnly",
+        "retainedConfirmations": 2146,
+        "skippedReason": null,
+        "targets": [
+          {
+            "acceptedDepthMm": null,
+            "capExhausted": null,
+            "compressionSeed": 12303222596661238,
+            "compressionSplitMm": 90.192,
+            "exactAccepted": false,
+            "exactRejectionReason": null,
+            "exactValid": false,
+            "failureReason": null,
+            "feasible": false,
+            "finalRawLoss": 2950.955786164626,
+            "finalStateFingerprint": "5c865e8f41f997496e07fbd1c6bf554f380749d1a9ca5d67fed1039aa495273d",
+            "finalWeightedLoss": 2950.955786164626,
+            "fullRescoreAgreements": 3,
+            "initialRawLoss": 36888.92844588183,
+            "initialStateFingerprint": "ad718a7c68b6c927945e593c556f41118da7f18e9d4311786958a31ebc6c2562",
+            "minimumRawLoss": 2950.955786164626,
+            "ordinal": 0,
+            "rollbacks": 3,
+            "rounds": 40,
+            "strikes": 2,
+            "targetDepthMm": 180.20361599999998,
+            "targetSeed": 3009971423783550518,
+            "workerSeeds": [
+              3009971423783550518,
+              10853066397292239759,
+              6301978256542807364,
+              1715105410548977437,
+              15322526569308776658,
+              10771752888960647851,
+              6184635814021733472,
+              1345559189609756217
+            ]
+          }
+        ],
+        "targetsAccepted": 0,
+        "targetsAttempted": 1,
+        "workerFullScorePairVisits": 585600,
+        "workerSweeps": 320
+      },
+      "seedDomain": 4850460655017284145,
+      "treatment": {
+        "attempted": true,
+        "auditorDynamicQueries": 0,
+        "auditorFullScorePairVisits": 7320,
+        "auditorIndexBuilds": 1,
+        "auditorLayoutLoads": 4,
+        "auditorPressureEvaluations": 47,
+        "catalogBuilds": 1,
+        "dynamicQueries": 208181,
+        "finalDepthMm": 180.384,
+        "finalPlacementFingerprint": "1662d5e91776b1fbe627ae737724c0a5468534fcdd5ea1925bfab26dbf3e6497",
+        "finalPlacements": [
+          {
+            "mirrored": true,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 65.252,
+            "translateShortAxis": 726.486
+          },
+          {
+            "mirrored": true,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 108.74417157287525,
+            "translateShortAxis": 1942.6288284271247
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 114.756,
+            "translateShortAxis": 945.222
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 114.75600000000001,
+            "translateShortAxis": 10.27
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 115.374,
+            "translateShortAxis": 1115.967
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 114.75608784768671,
+            "translateShortAxis": 240.0060878476866
+          },
+          {
+            "mirrored": true,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-2",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 155.018,
+            "translateShortAxis": 319.408
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 116.26,
+            "translateShortAxis": 1751.137
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 113.42927543901546,
+            "translateShortAxis": 1373.6879588335062
+          },
+          {
+            "mirrored": true,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
+            "rotationDeg": 172.5,
+            "translateLongAxis": 169.50300000000001,
+            "translateShortAxis": 1669.101
+          },
+          {
+            "mirrored": true,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
+            "rotationDeg": 265.0,
+            "translateLongAxis": 26.514292893218816,
+            "translateShortAxis": 469.3942928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
+            "rotationDeg": 255.0,
+            "translateLongAxis": 106.499,
+            "translateShortAxis": 612.874
+          },
+          {
+            "mirrored": false,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+            "rotationDeg": 5.0,
+            "translateLongAxis": 114.998876167094,
+            "translateShortAxis": 1209.5372675784672
+          },
+          {
+            "mirrored": false,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4",
+            "rotationDeg": 187.5,
+            "translateLongAxis": 172.74324783999765,
+            "translateShortAxis": 506.1847521600023
+          },
+          {
+            "mirrored": false,
+            "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+            "rotationDeg": 297.5,
+            "translateLongAxis": 76.57245931032982,
+            "translateShortAxis": 1432.7634593103303
+          },
+          {
+            "mirrored": false,
+            "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+            "rotationDeg": 357.5,
+            "translateLongAxis": 73.018,
+            "translateShortAxis": 716.758
+          },
+          {
+            "mirrored": false,
+            "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "rotationDeg": 327.5,
+            "translateLongAxis": 38.213100505063395,
+            "translateShortAxis": 491.3621005050634
+          },
+          {
+            "mirrored": false,
+            "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
+            "rotationDeg": 80.0,
+            "translateLongAxis": 0.35,
+            "translateShortAxis": 433.658
+          },
+          {
+            "mirrored": false,
+            "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+            "rotationDeg": 177.5,
+            "translateLongAxis": 105.3182928932188,
+            "translateShortAxis": 1458.6642928932188
+          },
+          {
+            "mirrored": true,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-1",
+            "rotationDeg": 75.0,
+            "translateLongAxis": 66.66900000000001,
+            "translateShortAxis": 1917.048
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-2",
+            "rotationDeg": 215.537678,
+            "translateLongAxis": 106.9682928932188,
+            "translateShortAxis": 690.5012928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-3",
+            "rotationDeg": 212.5,
+            "translateLongAxis": 108.49629289321881,
+            "translateShortAxis": 1954.120292893219
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+            "rotationDeg": 95.0,
+            "translateLongAxis": 11.901230447378298,
+            "translateShortAxis": 1661.7896446609407
+          },
+          {
+            "mirrored": false,
+            "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+            "rotationDeg": 210.0,
+            "translateLongAxis": 140.508,
+            "translateShortAxis": 1234.923
+          },
+          {
+            "mirrored": false,
+            "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2",
+            "rotationDeg": 270.0,
+            "translateLongAxis": 157.14341533392107,
+            "translateShortAxis": 1033.470264322519
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 5.252,
+            "translateShortAxis": 474.868
+          },
+          {
+            "mirrored": true,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-2",
+            "rotationDeg": 75.0,
+            "translateLongAxis": 34.84758578643763,
+            "translateShortAxis": 867.5025857864376
+          },
+          {
+            "mirrored": true,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 144.756,
+            "translateShortAxis": 110.681
+          },
+          {
+            "mirrored": true,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4",
+            "rotationDeg": 212.5,
+            "translateLongAxis": 141.82044365081387,
+            "translateShortAxis": 800.6665563491862
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5",
+            "rotationDeg": 92.5,
+            "translateLongAxis": 6.677292893218813,
+            "translateShortAxis": 527.8102928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6",
+            "rotationDeg": 84.373737,
+            "translateLongAxis": 91.88799999999999,
+            "translateShortAxis": 709.029
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 129.17310703499362,
+            "translateShortAxis": 1320.9588169952372
+          },
+          {
+            "mirrored": true,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 92.12899999999999,
+            "translateShortAxis": 670.524
+          },
+          {
+            "mirrored": true,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1",
+            "rotationDeg": 270.0,
+            "translateLongAxis": 40.75600000000001,
+            "translateShortAxis": 1666.654
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-2",
+            "rotationDeg": 85.0,
+            "translateLongAxis": 129.9185857864376,
+            "translateShortAxis": 731.9995857864376
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3",
+            "rotationDeg": 270.0,
+            "translateLongAxis": 173.51100000000002,
+            "translateShortAxis": 1516.061
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-4",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.251999999999997,
+            "translateShortAxis": 1762.194
+          },
+          {
+            "mirrored": true,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 35.252,
+            "translateShortAxis": 1749.529
+          },
+          {
+            "mirrored": false,
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.252,
+            "translateShortAxis": 173.122
+          },
+          {
+            "mirrored": false,
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.252000000000001,
+            "translateShortAxis": 5.32
+          },
+          {
+            "mirrored": false,
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.252000000000001,
+            "translateShortAxis": 873.796
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-1",
+            "rotationDeg": 310.0,
+            "translateLongAxis": -20.801,
+            "translateShortAxis": 1370.205
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-2",
+            "rotationDeg": 190.0,
+            "translateLongAxis": 141.81129289321876,
+            "translateShortAxis": 1330.156292893219
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+            "rotationDeg": 352.5,
+            "translateLongAxis": 115.03499285732507,
+            "translateShortAxis": 130.99969134213492
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-4",
+            "rotationDeg": 270.0,
+            "translateLongAxis": 78.317,
+            "translateShortAxis": 1934.748
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-5",
+            "rotationDeg": 327.5,
+            "translateLongAxis": 51.05729289321882,
+            "translateShortAxis": 1830.0862928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-6",
+            "rotationDeg": 10.0,
+            "translateLongAxis": 72.63034906293618,
+            "translateShortAxis": 1604.2264305909534
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-7",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 86.81852165103997,
+            "translateShortAxis": 566.5624783489602
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-8",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 107.67290602486692,
+            "translateShortAxis": 1742.9899720420447
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "rotationDeg": 300.0,
+            "translateLongAxis": 145.38329289321882,
+            "translateShortAxis": 860.1002928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+            "rotationDeg": 72.5,
+            "translateLongAxis": 88.81829289321881,
+            "translateShortAxis": 561.0332928932188
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-11",
+            "rotationDeg": 357.5,
+            "translateLongAxis": 110.77819279063935,
+            "translateShortAxis": 827.3412097372285
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-12",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 49.513999999999996,
+            "translateShortAxis": 335.022
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-13",
+            "rotationDeg": 122.5,
+            "translateLongAxis": 130.55245166004056,
+            "translateShortAxis": 843.0259137802864
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+            "rotationDeg": 300.0,
+            "translateLongAxis": 84.762,
+            "translateShortAxis": 203.859
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-15",
+            "rotationDeg": 352.5,
+            "translateLongAxis": 70.00729289321882,
+            "translateShortAxis": 1265.9582928932189
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-16",
+            "rotationDeg": 177.5,
+            "translateLongAxis": 165.59258578643764,
+            "translateShortAxis": 1524.0645857864376
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
+            "rotationDeg": 60.0,
+            "translateLongAxis": -24.74149033200812,
+            "translateShortAxis": 1288.726490332008
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-18",
+            "rotationDeg": 175.0,
+            "translateLongAxis": 113.29125422125128,
+            "translateShortAxis": 403.23533156518636
+          },
+          {
+            "mirrored": true,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-19",
+            "rotationDeg": 75.0,
+            "translateLongAxis": 122.16229289321879,
+            "translateShortAxis": 1616.9292928932189
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-20",
+            "rotationDeg": 262.5,
+            "translateLongAxis": 86.68132380976677,
+            "translateShortAxis": 1292.4507035354436
+          }
+        ],
+        "hazardUpdates": 1535,
+        "immutableVariantBuilds": 22,
+        "independentlyMeasuredFinalDepthMm": 180.384,
+        "indexBuilds": 8,
+        "initialDepthMm": 180.384,
+        "layoutLoads": 324,
+        "pressureEvaluations": 281356,
+        "pressureModel": "dynamicCoveragePolesRigidDescent",
+        "retainedConfirmations": 1535,
+        "skippedReason": null,
+        "targets": [
+          {
+            "acceptedDepthMm": null,
+            "capExhausted": null,
+            "compressionSeed": 12303222596661238,
+            "compressionSplitMm": 90.192,
+            "exactAccepted": false,
+            "exactRejectionReason": null,
+            "exactValid": false,
+            "failureReason": null,
+            "feasible": false,
+            "finalRawLoss": 1482.2231571278785,
+            "finalStateFingerprint": "c6ff9601a1a6d7b32a3264c354d3cf14058f612ed47d067e837a553d6916b09f",
+            "finalWeightedLoss": 1482.2231571278785,
+            "fullRescoreAgreements": 3,
+            "initialRawLoss": 36888.92844588183,
+            "initialStateFingerprint": "ad718a7c68b6c927945e593c556f41118da7f18e9d4311786958a31ebc6c2562",
+            "minimumRawLoss": 1482.2231571278785,
+            "ordinal": 0,
+            "rollbacks": 3,
+            "rounds": 40,
+            "strikes": 2,
+            "targetDepthMm": 180.20361599999998,
+            "targetSeed": 3009971423783550518,
+            "workerSeeds": [
+              3009971423783550518,
+              10853066397292239759,
+              6301978256542807364,
+              1715105410548977437,
+              15322526569308776658,
+              10771752888960647851,
+              6184635814021733472,
+              1345559189609756217
+            ]
+          }
+        ],
+        "targetsAccepted": 0,
+        "targetsAttempted": 1,
+        "workerFullScorePairVisits": 585600,
+        "workerSweeps": 320
+      }
+    },
+    "directionalAcceptedBoundaryLoss": {
+      "maximum": null,
+      "minimum": null,
+      "samples": 0,
+      "sum": 0.0
+    },
+    "directionalAcceptedPairLoss": {
+      "maximum": null,
+      "minimum": null,
+      "samples": 0,
+      "sum": 0.0
+    },
+    "directionalCacheHits": 0,
+    "directionalCacheMisses": 0,
+    "directionalComponentVisits": 0,
+    "directionalContainmentRejections": 0,
+    "directionalExactConfirmations": 0,
+    "directionalInitialBoundaryLoss": {
+      "maximum": null,
+      "minimum": null,
+      "samples": 0,
+      "sum": 0.0
+    },
+    "directionalInitialPairLoss": {
+      "maximum": null,
+      "minimum": null,
+      "samples": 0,
+      "sum": 0.0
+    },
+    "directionalIntervalsMerged": 0,
+    "directionalIntervalsProduced": 0,
+    "directionalLaneRejections": 0,
+    "directionalOverBudgetCandidates": 0,
+    "directionalPairEvaluations": 0,
+    "directionalRejectedContractions": 0,
+    "directionalRelocations": 0,
+    "directionalZeroPenetrationInconsistencies": 0,
+    "dynamicHazardQueries": 0,
+    "dynamicHazardUpdates": 0,
+    "dynamicPressureEvaluations": 0,
+    "ejectionChainAccepts": 0,
+    "ejectionChainEvaluations": 0,
+    "epochs": [
+      {
+        "acceptedMoves": 2120,
+        "blockingPairs": [
+          {
+            "firstPieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+            "guidedWeight": 1.8707075300675398,
+            "rawPenalty": 768.3801904562159,
+            "secondPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+            "weightedPressure": 1437.4146082411735
+          },
+          {
+            "firstPieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+            "guidedWeight": 1.4609105109819926,
+            "rawPenalty": 745.3642233345523,
+            "secondPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+            "weightedPressure": 1088.910428379377
+          },
+          {
+            "firstPieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+            "guidedWeight": 1.3432247796116932,
+            "rawPenalty": 455.240897775425,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+            "weightedPressure": 611.4908545846246
+          },
+          {
+            "firstPieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4",
+            "guidedWeight": 1.2965088813163606,
+            "rawPenalty": 435.6102256495018,
+            "secondPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "weightedPressure": 564.7725263468029
+          },
+          {
+            "firstPieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-4",
+            "guidedWeight": 3.0450477635621764,
+            "rawPenalty": 156.7800148705944,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
+            "weightedPressure": 477.4026336529483
+          },
+          {
+            "firstPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+            "guidedWeight": 1.1926928363014997,
+            "rawPenalty": 383.0441260483539,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+            "weightedPressure": 456.8539851252404
+          }
+        ],
+        "boundaryPieceIds": [],
+        "boundaryViolations": 0,
+        "collisionPairs": 6,
+        "completeQueries": 0,
+        "epoch": 0,
+        "exactAccepted": false,
+        "exactValid": false,
+        "incumbentDepthAfterMm": 180.384,
+        "incumbentDepthBeforeMm": 180.384,
+        "incumbentDepthDeltaMm": 0.0,
+        "restartDisruptions": 1,
+        "retainedF64Confirmations": 0,
+        "rotationEvaluations": 90222,
+        "selectedLane": 1,
+        "surrogateFeasible": false,
+        "targetDepthMm": 179.48208,
+        "translationEvaluations": 422420,
+        "weightedLoss": 4636.845036330167
+      },
+      {
+        "acceptedMoves": 2172,
+        "blockingPairs": [
+          {
+            "firstPieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+            "guidedWeight": 2.5937424601000023,
+            "rawPenalty": 695.4981720436402,
+            "secondPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "weightedPressure": 1803.9431397515261
+          },
+          {
+            "firstPieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+            "guidedWeight": 1.8517102072869318,
+            "rawPenalty": 598.1115639671975,
+            "secondPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+            "weightedPressure": 1107.5292880944103
+          },
+          {
+            "firstPieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+            "guidedWeight": 1.749046763828725,
+            "rawPenalty": 541.0568239248023,
+            "secondPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+            "weightedPressure": 946.3336869331238
+          },
+          {
+            "firstPieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+            "guidedWeight": 1.7640372323223479,
+            "rawPenalty": 349.17708528503687,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+            "weightedPressure": 615.9613791166008
+          },
+          {
+            "firstPieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-2",
+            "guidedWeight": 1.7060805600060915,
+            "rawPenalty": 328.07347862171565,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "weightedPressure": 559.7197841300831
+          }
+        ],
+        "boundaryPieceIds": [],
+        "boundaryViolations": 0,
+        "collisionPairs": 5,
+        "completeQueries": 0,
+        "epoch": 1,
+        "exactAccepted": false,
+        "exactValid": false,
+        "incumbentDepthAfterMm": 180.384,
+        "incumbentDepthBeforeMm": 180.384,
+        "incumbentDepthDeltaMm": 0.0,
+        "restartDisruptions": 2,
+        "retainedF64Confirmations": 0,
+        "rotationEvaluations": 87674,
+        "selectedLane": 5,
+        "surrogateFeasible": false,
+        "targetDepthMm": 179.70755999999997,
+        "translationEvaluations": 415622,
+        "weightedLoss": 5033.487278025744
+      },
+      {
+        "acceptedMoves": 2658,
+        "blockingPairs": [
+          {
+            "firstPieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+            "guidedWeight": 1.3908064822287272,
+            "rawPenalty": 529.7589196517737,
+            "secondPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+            "weightedPressure": 736.7921394701742
+          },
+          {
+            "firstPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+            "guidedWeight": 1.0481584993043644,
+            "rawPenalty": 447.968891236066,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "weightedPressure": 469.54240077303496
+          },
+          {
+            "firstPieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+            "guidedWeight": 1.4439217720130255,
+            "rawPenalty": 276.388739982598,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
+            "weightedPressure": 399.08371920012024
+          },
+          {
+            "firstPieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3",
+            "guidedWeight": 1.9300129663252288,
+            "rawPenalty": 177.78371703115303,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-4",
+            "weightedPressure": 343.12487907162074
+          },
+          {
+            "firstPieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
+            "guidedWeight": 1.7035807822774285,
+            "rawPenalty": 200.98365807888118,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-5",
+            "weightedPressure": 342.3918974549996
+          },
+          {
+            "firstPieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5",
+            "guidedWeight": 1.3246590005432306,
+            "rawPenalty": 186.0809544689804,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
+            "weightedPressure": 246.49381116700997
+          },
+          {
+            "firstPieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+            "guidedWeight": 1.0,
+            "rawPenalty": 156.7480551424155,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "weightedPressure": 156.7480551424155
+          }
+        ],
+        "boundaryPieceIds": [
+          "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3"
+        ],
+        "boundaryViolations": 1,
+        "collisionPairs": 7,
+        "completeQueries": 0,
+        "epoch": 2,
+        "exactAccepted": false,
+        "exactValid": false,
+        "incumbentDepthAfterMm": 180.384,
+        "incumbentDepthBeforeMm": 180.384,
+        "incumbentDepthDeltaMm": 0.0,
+        "restartDisruptions": 1,
+        "retainedF64Confirmations": 0,
+        "rotationEvaluations": 106787,
+        "selectedLane": 7,
+        "surrogateFeasible": false,
+        "targetDepthMm": 179.87667,
+        "translationEvaluations": 509107,
+        "weightedLoss": 3348.130215116418
+      },
+      {
+        "acceptedMoves": 2438,
+        "blockingPairs": [
+          {
+            "firstPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "guidedWeight": 2.02275166740302,
+            "rawPenalty": 486.523222196194,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+            "weightedPressure": 984.1156589276414
+          },
+          {
+            "firstPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+            "guidedWeight": 1.0890744444042637,
+            "rawPenalty": 408.5214054460465,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "weightedPressure": 444.91022266340207
+          }
+        ],
+        "boundaryPieceIds": [
+          "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+          "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4"
+        ],
+        "boundaryViolations": 2,
+        "collisionPairs": 2,
+        "completeQueries": 0,
+        "epoch": 3,
+        "exactAccepted": false,
+        "exactValid": false,
+        "incumbentDepthAfterMm": 180.384,
+        "incumbentDepthBeforeMm": 180.384,
+        "incumbentDepthDeltaMm": 0.0,
+        "restartDisruptions": 0,
+        "retainedF64Confirmations": 0,
+        "rotationEvaluations": 96526,
+        "selectedLane": 0,
+        "surrogateFeasible": false,
+        "targetDepthMm": 180.0035025,
+        "translationEvaluations": 459580,
+        "weightedLoss": 1795.2874232721329
+      },
+      {
+        "acceptedMoves": 1583,
+        "blockingPairs": [
+          {
+            "firstPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+            "guidedWeight": 2.1435888100000016,
+            "rawPenalty": 409.0382121916147,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "weightedPressure": 876.8097345163516
+          }
+        ],
+        "boundaryPieceIds": [
+          "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1"
+        ],
+        "boundaryViolations": 1,
+        "collisionPairs": 1,
+        "completeQueries": 0,
+        "epoch": 4,
+        "exactAccepted": false,
+        "exactValid": false,
+        "incumbentDepthAfterMm": 180.384,
+        "incumbentDepthBeforeMm": 180.384,
+        "incumbentDepthDeltaMm": 0.0,
+        "restartDisruptions": 0,
+        "retainedF64Confirmations": 0,
+        "rotationEvaluations": 60530,
+        "selectedLane": 0,
+        "surrogateFeasible": false,
+        "targetDepthMm": 180.09862687499998,
+        "translationEvaluations": 291462,
+        "weightedLoss": 1017.8215053963518
+      },
+      {
+        "acceptedMoves": 1950,
+        "blockingPairs": [
+          {
+            "firstPieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+            "guidedWeight": 2.513092748201433,
+            "rawPenalty": 407.74717475841004,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-20",
+            "weightedPressure": 1024.7064679849827
+          },
+          {
+            "firstPieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4",
+            "guidedWeight": 1.4828280268205745,
+            "rawPenalty": 279.14069886286256,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "weightedPressure": 413.9176517001347
+          },
+          {
+            "firstPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "guidedWeight": 1.3245439340914142,
+            "rawPenalty": 200.7413430001434,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-18",
+            "weightedPressure": 265.8907281922039
+          },
+          {
+            "firstPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
+            "guidedWeight": 1.3431808588784844,
+            "rawPenalty": 165.31270610152185,
+            "secondPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-18",
+            "weightedPressure": 222.04486256496858
+          }
+        ],
+        "boundaryPieceIds": [],
+        "boundaryViolations": 0,
+        "collisionPairs": 4,
+        "completeQueries": 0,
+        "epoch": 5,
+        "exactAccepted": false,
+        "exactValid": false,
+        "incumbentDepthAfterMm": 180.384,
+        "incumbentDepthBeforeMm": 180.384,
+        "incumbentDepthDeltaMm": 0.0,
+        "restartDisruptions": 1,
+        "retainedF64Confirmations": 0,
+        "rotationEvaluations": 78933,
+        "selectedLane": 1,
+        "surrogateFeasible": false,
+        "targetDepthMm": 180.16997015624997,
+        "translationEvaluations": 379513,
+        "weightedLoss": 1926.5597104422898
+      }
+    ],
+    "epochsAttempted": 6,
+    "epochsImproved": 0,
+    "exactRejectedStates": 0,
+    "exactRejectionReasons": [],
+    "exactValidNonImprovements": 0,
+    "generatedCells": 16992,
+    "orientedSurrogateBuilds": 3168,
+    "pairNfpBuilds": 0,
+    "pairNfpComponents": 0,
+    "pieceBroadPhaseProbes": 13033023,
+    "retainedF64Confirmations": 0,
+    "rotationEvaluations": 520672,
+    "satTests": 20407557,
+    "sharedPairNfpAdoptions": 0,
+    "sharedPairNfpComponents": 0,
+    "sharedPairNfpEntries": 0,
+    "sharedPairNfpEstimatedBytes": 0,
+    "skippedReason": null,
+    "surrogateEvaluations": 3025598,
+    "surrogateFeasibleStates": 0,
+    "translationEvaluations": 2477704
+  },
+  "relevantSourceTreeSha256": "7305273594f68e04fb9528a7bbc3963850318f4677c3a87de80c4f09205814db",
+  "repairExactEvaluations": 0,
+  "repairFailed": false,
+  "repairTargetsConsidered": 0,
+  "request": "/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/tests/fixtures/mixed-61/mixed61-request.json",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "requestTotalPaddingMm": 10.0,
+  "requestedThreads": 8,
+  "rustcVersion": "rustc 1.97.1 (8bab26f4f 2026-07-14)\nbinary: rustc\ncommit-hash: 8bab26f4f68e0e26f0bb7960be334d5b520ea452\ncommit-date: 2026-07-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.1\nLLVM version: 22.1.6",
+  "rustflags": null,
+  "seed": null,
+  "sheetEdgeClearanceMm": 5.0,
+  "sheetLongAxisMm": 2700.0,
+  "sheetShortAxisMm": 2000.0,
+  "sourcePieceCount": 61,
+  "targetArchitecture": "x86_64",
+  "targetOperatingSystem": "linux",
+  "thirdQuartileElapsedMs": 2709.467788,
+  "tighteningExactEvaluations": 0,
+  "tighteningPassesAttempted": 0,
+  "tighteningPassesImproved": 0,
+  "totalVertices": 290,
+  "unplaced": 0,
+  "usedLongAxisDepthMm": 180.384,
+  "usedStripAreaMm2": 360768.0,
+  "usedStripUtilizationPercent": 58.380739352437026
+}
