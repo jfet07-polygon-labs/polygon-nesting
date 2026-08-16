@@ -445,3 +445,13 @@ the binding constraint is pose quality - the bounding-box skyline never
 proposes interlock poses, and only a polygon-profile skyline or NFP-grade
 contact generation at insertion can. That is the constructor's next
 structural increment.
+
+The constructed-basin endpoint is operator-locked. A remodel chain rotating
+band ruin, vacancy-transport walks, and settle (modes 19/17/11) against the
+211.734 mm state accepted nothing across twelve salted attempts: the
+layered basin the v1 constructor produces is terminal for the entire
+current operator family, exactly as the 168.x basin was. Meanwhile the
+six-slot beam basin (270.288 mm) descends past the four-slot endpoint
+(202.204 mm and falling at hop six) - constructor quality propagates
+through the descent, which is the causal signature the program needs: the
+way down runs through better construction, not more post-hoc budget.
