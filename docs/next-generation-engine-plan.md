@@ -788,3 +788,20 @@ at the pre-contract-change isolated binary, which rejects a zero sag
 tolerance, so every hop crashed and the eight constructions
 (197.3-207.1) never descended - the resumed pipeline runs on the HEAD
 binary now, and its fixpoint remains the acceptance-criterion number.
+
+The from-scratch pipeline completes on the true contract: eight
+constructions (197.3-207.1) descend to 185.9-202.5 (best yields 19.2 mm
+on the 205.1 start), and the alternation hybrid takes the best three to
+179.629 / 179.006 / 189.006 - the from-scratch fixpoint on the honest
+contract is 179.006 mm. The striking finding: that number equals the
+recompressed-old-endpoint fixpoint exactly, yet the two layouts share
+0 of 61 placements - 179.006 is a structural depth plateau of the
+instance, a common binding stack that disjoint basins hit
+independently, not a coincidence of convergence. The from-scratch line
+therefore stands 14.5 mm above the imported record (164.470) and the
+acceptance criterion (168-family unaided) remains open; the binding
+constraint is unchanged - constructor structure quality - and three
+mechanism increments (pocket-refill coupled insertion, gap stations
+under overhangs, mating orientation prior) are being implemented and
+band-measured in parallel isolated worktrees. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/from-scratch-179.006/.

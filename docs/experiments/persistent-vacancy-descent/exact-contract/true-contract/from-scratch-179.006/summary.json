@@ -1,0 +1,32 @@
+{
+ "contract": "true 5.0/5.0 exact, request sha ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "pipeline": "8 mode-20 constructions (anchor ex5-seed-native) -> 8 band descents (m11/m17 salted, HEAD binary) -> alternation hybrid of best 3",
+ "constructions": {
+  "320.000": 206.869,
+  "320.001": 197.328,
+  "320.002": 207.117,
+  "320.003": 198.427,
+  "320.004": 201.097,
+  "320.005": 205.061,
+  "320.006": 205.139,
+  "320.007": 198.008
+ },
+ "descents": {
+  "320.000": 195.993,
+  "320.001": 194.01,
+  "320.002": 202.473,
+  "320.003": 194.01,
+  "320.004": 192.004,
+  "320.005": 194.184,
+  "320.006": 185.899,
+  "320.007": 188.432
+ },
+ "alternations": {
+  "fsalt0 (from 320.006 @185.899)": 179.629,
+  "fsalt1 (from 320.007 @188.432)": 179.006,
+  "fsalt2 (from 320.004 @192.004)": 189.006
+ },
+ "fromScratchFixpointMm": 179.006,
+ "plateauFinding": "fsalt1 fixpoint depth equals the recompressed-old-endpoint fixpoint (179.006) with 0/61 shared placements: 179.006 is a structural depth plateau of the instance, reached independently by disjoint basins",
+ "note": "first pipeline attempt crashed silently: descent driver pointed at a pre-contract-change binary rejecting sag=0; resumed on HEAD binary"
+}

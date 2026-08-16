@@ -1,0 +1,18 @@
+hop 0: m11 t=201.897 -> 200.976 best=201.097 fresh=True
+hop 1: m11 t=201.776 -> 200.976 best=200.976 fresh=False
+hop 1: m17 t=201.777 -> 197.477 best=200.976 fresh=True
+hop 2: m11 t=198.278 -> 197.477 best=197.477 fresh=False
+hop 2: m17 t=198.279 -> 197.477 best=197.477 fresh=True
+hop 2: m17 t=198.280 -> 197.477 best=197.477 fresh=True
+hop 2: m17 t=198.281 -> 192.004 best=197.477 fresh=True
+hop 3: m11 t=192.808 -> 192.004 best=192.004 fresh=True
+hop 3: m17 t=192.809 -> 192.004 best=192.004 fresh=True
+hop 3: m17 t=192.810 -> 192.004 best=192.004 fresh=True
+hop 3: m17 t=192.811 -> 192.004 best=192.004 fresh=True
+hop 3: m17 t=192.812 -> 192.004 best=192.004 fresh=True
+hop 3: m17 t=192.813 -> 192.004 best=192.004 fresh=True
+hop 3: m17 t=192.814 -> 192.004 best=192.004 fresh=True
+hop 3: m17 t=192.815 -> 192.004 best=192.004 fresh=True
+hop 3: m17 t=192.816 -> 192.004 best=192.004 fresh=True
+hop 3: m17 t=192.817 -> 192.004 best=192.004 fresh=True
+CONSTRUCTED START: 201.097 BEST: 192.004 YIELD: 9.093
