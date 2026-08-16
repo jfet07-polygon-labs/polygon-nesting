@@ -805,3 +805,16 @@ mechanism increments (pocket-refill coupled insertion, gap stations
 under overhangs, mating orientation prior) are being implemented and
 band-measured in parallel isolated worktrees. Evidence:
 docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/from-scratch-179.006/.
+
+Salted alternation portfolios split the two lines. The imported record
+is seed-locked: seeds 1-3 all return 164.470 unchanged - the fixpoint
+is robust to chain salting, so advancing the absolute record now
+requires new machinery, not more variance. The from-scratch plateau
+BREAKS: seed 1 restructures 179.006 to 174.254 in a single separator
+pass and the alternation refines to a 173.783 fixpoint (seed 2 stays
+locked at 179.006 - tails again, exactly as the variance meta-lesson
+predicts). The from-scratch line built entirely inside the honest
+contract now stands at 173.783 mm, 5.5 mm from the 168-family
+acceptance criterion; a second salted wave runs from the new state.
+Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/from-scratch-173.783/.
