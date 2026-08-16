@@ -297,7 +297,7 @@ impl TopologyArchive {
         if self.revivals_expanded >= MAX_ARCHIVE_REVIVALS {
             return RevivalDecision::Skipped("revivalBudgetExhausted");
         }
-        if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17) && population.len() < 2 {
+        if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18) && population.len() < 2 {
             return RevivalDecision::Skipped("populationTooSmall");
         }
         let candidates: [(&'static str, Option<&(EliteSnapshot, VacancyState)>); 2] =
@@ -318,7 +318,7 @@ impl TopologyArchive {
                 last_reason = "inPopulation";
                 continue;
             }
-            if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17) {
+            if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18) {
                 let worst = population
                     .last()
                     .expect("a mode-8 revival population has at least two states");
@@ -546,9 +546,9 @@ fn run_population(
 ) -> Result<Option<(VacancyState, f64)>, String> {
     if !matches!(
         mode,
-        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17
+        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18
     ) {
-        return Err("persistent vacancy mode must be between 1 and 17".to_owned());
+        return Err("persistent vacancy mode must be between 1 and 18".to_owned());
     }
     // Modes 1-8 are the frozen diagnostic screens: their 165.0 mm target and
     // b9335a72 parent identity are part of the pinned experiment contract.
@@ -557,7 +557,7 @@ fn run_population(
     // and skips only the frozen fingerprint/depth equality pins while keeping
     // full parent validation.
     let target_depth_mm = match (mode, target_override_mm) {
-        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17, Some(target)) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18, Some(target)) => {
             if !target.is_finite() || target <= 0.0 {
                 return Err(
                     "persistent vacancy target depth must be a positive finite value".to_owned(),
@@ -565,18 +565,18 @@ fn run_population(
             }
             target
         }
-        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17, None) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18, None) => {
             return Err(
-                "persistent vacancy modes 9-17 require an explicit target depth".to_owned(),
+                "persistent vacancy modes 9-18 require an explicit target depth".to_owned(),
             );
         }
         (_, Some(_)) => {
-            return Err("persistent vacancy target depth overrides require modes 9-17".to_owned());
+            return Err("persistent vacancy target depth overrides require modes 9-18".to_owned());
         }
         (_, None) => TARGET_DEPTH_MM,
     };
-    if matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17) && !parent_is_pinned {
-        return Err("persistent vacancy modes 9-17 require a pinned parent fixture".to_owned());
+    if matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18) && !parent_is_pinned {
+        return Err("persistent vacancy modes 9-18 require a pinned parent fixture".to_owned());
     }
     diagnostics.target_depth_mm = target_depth_mm;
     if pieces.len() != 61 {
@@ -592,7 +592,7 @@ fn run_population(
     }
     let parent_fingerprint = coupled_fast_placement_fingerprint(&parent_fast);
     diagnostics.parent_fingerprint = Some(parent_fingerprint.clone());
-    if !matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17)
+    if !matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18)
         && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT
     {
         return Err(format!(
@@ -602,10 +602,10 @@ fn run_population(
     if mode != 13 {
         let parent_depth = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
             .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
-        if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17) {
+        if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18) {
             diagnostics.parent_independent_depth_mm = Some(parent_depth);
         }
-        if !matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17)
+        if !matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18)
             && grid_key(parent_depth) != grid_key(EXPECTED_PARENT_DEPTH_MM)
         {
             return Err(format!(
@@ -649,6 +649,9 @@ fn run_population(
     if mode == 14 {
         baseline = compact_baseline(pieces, fast_settings, baseline, diagnostics, work)?;
     }
+    if mode == 18 {
+        baseline = frontier_band_feasibility(pieces, fast_settings, baseline, diagnostics, work)?;
+    }
     if matches!(mode, 15 | 16 | 17) {
         baseline = lift_resettle_reinsert(
             pieces,
@@ -667,7 +670,7 @@ fn run_population(
         baseline,
         diagnostics,
         work,
-        matches!(mode, 11 | 12 | 14 | 15 | 16 | 17),
+        matches!(mode, 11 | 12 | 14 | 15 | 16 | 17 | 18),
     )?;
     diagnostics.initial_state_fingerprint = Some(state_fingerprint(&initial, pieces));
     diagnostics.initial_active_piece_ids = active_ids(&initial, pieces);
@@ -706,8 +709,8 @@ fn run_population(
     let mut best_ever_area: Option<EliteSnapshot> = None;
     let mut best_ever_count: Option<EliteSnapshot> = None;
     let mut retained_carryovers = BTreeSet::new();
-    let mut archive =
-        matches!(mode, 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17).then(TopologyArchive::new);
+    let mut archive = matches!(mode, 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18)
+        .then(TopologyArchive::new);
     for layer in 0..MAX_LAYERS {
         // Modes 7/8 plan a revival before the entering-population hash so the
         // hash always reflects the population that is actually expanded
@@ -742,7 +745,7 @@ fn run_population(
                     row.revival_expanded = true;
                     row.revival_kind = Some(kind.to_owned());
                     row.revived_state_fingerprint = Some(fingerprint);
-                    if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17) {
+                    if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18) {
                         let replaced_index = population.len() - 1;
                         row.replaced_state_fingerprint =
                             Some(state_fingerprint(&population[replaced_index], pieces));
@@ -2390,6 +2393,205 @@ fn trapped_void_cells(
         .count()
 }
 
+/// Mode-18 frontier-band feasibility diagnostic: for each of the deepest
+/// FRONTIER_BAND_PIECES pieces, remove the piece and sweep a deterministic
+/// lattice of candidate poses (all conflict-ruin orientations crossed with an
+/// 8 mm translation lattice over the sub-frontier strip), hazard-screening
+/// each pose and exactly confirming survivors, searching for ANY exact-valid
+/// pose whose collision frontier lies strictly below the current global
+/// frontier. The result converts the open search question into a measured
+/// fact: either a sub-frontier pose exists that the search misses, or the
+/// incumbent is certified one-piece locally optimal at this resolution.
+fn frontier_band_feasibility(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    baseline: RelaxedState,
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    work: &mut RunWork,
+) -> Result<RelaxedState, String> {
+    const FRONTIER_BAND_PIECES: usize = 5;
+    const LATTICE_MM: f64 = 8.0;
+    let settings = fast_settings;
+    let mut state = VacancyState {
+        collisions: baseline
+            .placements
+            .iter()
+            .enumerate()
+            .map(|(index, placement)| {
+                build_collision(pieces[index], placement, settings, work)
+                    .map(|collision| Some(Arc::new(collision)))
+            })
+            .collect::<Result<Vec<_>, _>>()?,
+        placements: baseline.placements.clone(),
+        active: vec![true; pieces.len()],
+        last_transition: None,
+    };
+    let hazard_catalog = Arc::new(
+        JaguaHazardCatalog::new(pieces, settings)
+            .map_err(|error| format!("feasibility hazard catalog: {error}"))?,
+    );
+    let frontier_grid = state
+        .collisions
+        .iter()
+        .flatten()
+        .filter_map(|collision| collision.bounds())
+        .map(|bounds| grid_key(bounds.max_y))
+        .max()
+        .unwrap_or(0);
+    let mut by_depth = (0..pieces.len())
+        .filter_map(|index| {
+            state.collisions[index]
+                .as_ref()
+                .and_then(|collision| collision.bounds())
+                .map(|bounds| (grid_key(bounds.max_y), index))
+        })
+        .collect::<Vec<_>>();
+    by_depth.sort_by(|first, second| {
+        second
+            .0
+            .cmp(&first.0)
+            .then_with(|| pieces[first.1].id.cmp(pieces[second.1].id))
+    });
+    let inset = collision_sheet_inset_mm(settings);
+    let seed = parent_seed_key(&state, pieces);
+    let mut rows = Vec::new();
+    for (piece_depth, index) in by_depth.into_iter().take(FRONTIER_BAND_PIECES) {
+        let saved_placement = state.placements[index].clone();
+        let saved_collision = state.collisions[index].clone();
+        state.active[index] = false;
+        state.collisions[index] = None;
+        let mut screen = JaguaHazardIndex::from_catalog_active(
+            pieces,
+            settings,
+            settings.sheet_long_axis_mm,
+            &state.placements.iter().map(hazard_pose).collect::<Vec<_>>(),
+            &state.active,
+            &hazard_catalog,
+        )
+        .map_err(|error| format!("feasibility screen index: {error}"))?;
+        let orientations = conflict_ruin_orientations(
+            pieces[index],
+            &saved_placement,
+            derive_seed(seed, 0, index),
+        );
+        let mut screened = 0usize;
+        let mut confirmed = 0usize;
+        let mut best_sub_frontier: Option<(i64, RelaxedPlacement)> = None;
+        for (rotation_deg, mirrored) in orientations {
+            let orientation = RelaxedPlacement {
+                input_index: index,
+                rotation_deg,
+                mirrored,
+                translate_x: 0.0,
+                translate_y: 0.0,
+            };
+            let local = build_collision(pieces[index], &orientation, settings, work)?;
+            let Some(local_bounds) = local.bounds() else {
+                continue;
+            };
+            let min_x = inset - local_bounds.min_x;
+            let max_x = settings.sheet_short_axis_mm - inset - local_bounds.max_x;
+            let min_y = inset - local_bounds.min_y;
+            // The pose frontier must land strictly below the global frontier.
+            let max_y = (frontier_grid as f64) / 1000.0 - 0.001 - local_bounds.max_y;
+            if min_x > max_x || min_y > max_y {
+                continue;
+            }
+            let steps_x = ((max_x - min_x) / LATTICE_MM).floor() as usize + 1;
+            let steps_y = ((max_y - min_y) / LATTICE_MM).floor() as usize + 1;
+            for step_y in 0..steps_y {
+                for step_x in 0..steps_x {
+                    let candidate = RelaxedPlacement {
+                        input_index: index,
+                        rotation_deg,
+                        mirrored,
+                        translate_x: min_x + step_x as f64 * LATTICE_MM,
+                        translate_y: min_y + step_y as f64 * LATTICE_MM,
+                    };
+                    screened += 1;
+                    work.diagnostics.hazard_queries =
+                        work.diagnostics.hazard_queries.saturating_add(1);
+                    if work.diagnostics.hazard_queries > MAX_HAZARD_QUERIES {
+                        return Err(work.cap("hazard-query budget exhausted"));
+                    }
+                    match screen.query_unplaced(index, hazard_pose(&candidate)) {
+                        Ok(GeneralHazardQuery::Complete {
+                            boundary,
+                            colliding_piece_ids,
+                        }) => {
+                            if boundary || !colliding_piece_ids.is_empty() {
+                                continue;
+                            }
+                        }
+                        Ok(_) => {}
+                        Err(error) if error.to_string().contains("query envelope") => continue,
+                        Err(error) => {
+                            return Err(format!("feasibility screen: {error}"));
+                        }
+                    }
+                    work.diagnostics.exact_finalist_rows =
+                        work.diagnostics.exact_finalist_rows.saturating_add(1);
+                    if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
+                        return Err(work.cap("exact-finalist row budget exhausted"));
+                    }
+                    let collision = build_collision(pieces[index], &candidate, settings, work)?;
+                    if !collision.fits_rect(
+                        inset,
+                        inset,
+                        settings.sheet_short_axis_mm - inset,
+                        settings.sheet_long_axis_mm - inset,
+                    ) {
+                        continue;
+                    }
+                    let Some(bounds) = collision.bounds() else {
+                        continue;
+                    };
+                    let pose_frontier = grid_key(bounds.max_y);
+                    if pose_frontier >= frontier_grid {
+                        continue;
+                    }
+                    let mut overlapping = false;
+                    for other in 0..pieces.len() {
+                        if other == index || !state.active[other] {
+                            continue;
+                        }
+                        work.charge_experimental_pair()?;
+                        let fixed = state.collisions[other]
+                            .as_ref()
+                            .ok_or_else(|| "feasibility missing collision".to_owned())?;
+                        if exact_intersection_area(&collision, fixed, work)? > 0.0 {
+                            overlapping = true;
+                            break;
+                        }
+                    }
+                    if overlapping {
+                        continue;
+                    }
+                    confirmed += 1;
+                    if best_sub_frontier
+                        .as_ref()
+                        .is_none_or(|(best, _)| pose_frontier < *best)
+                    {
+                        best_sub_frontier = Some((pose_frontier, candidate.clone()));
+                    }
+                }
+            }
+        }
+        rows.push(GeneralPersistentVacancyFeasibilityRow {
+            piece_id: pieces[index].id.to_owned(),
+            piece_frontier_grid: piece_depth,
+            lattice_poses_screened: screened,
+            exact_valid_sub_frontier_poses: confirmed,
+            best_sub_frontier_grid: best_sub_frontier.as_ref().map(|(depth, _)| *depth),
+        });
+        state.placements[index] = saved_placement;
+        state.collisions[index] = saved_collision;
+        state.active[index] = true;
+    }
+    diagnostics.frontier_feasibility = Some(rows);
+    Ok(baseline)
+}
+
 fn settle_sweep(
     state: &mut VacancyState,
     pieces: &[GeneralFastPiece<'_>],
@@ -3531,7 +3733,10 @@ fn retain_population(
     difficulty: &[PieceDifficulty],
     mode: usize,
 ) -> (Vec<VacancyState>, usize) {
-    if matches!(mode, 1 | 3 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17) {
+    if matches!(
+        mode,
+        1 | 3 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18
+    ) {
         let retained = sorted.into_iter().take(BEAM_WIDTH).collect::<Vec<_>>();
         let signatures = retained
             .iter()
@@ -3937,7 +4142,7 @@ fn selected_inactive_pieces(
     });
     if !matches!(
         mode,
-        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17
+        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18
     ) || inactive.len() <= 1
     {
         inactive.truncate(SELECTED_PIECES_PER_PARENT);
@@ -3970,7 +4175,7 @@ fn stable_inactive_order(state: &VacancyState, pieces: &[GeneralFastPiece<'_>]) 
 fn scheduler_family(mode: usize) -> &'static str {
     if matches!(
         mode,
-        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17
+        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18
     ) {
         "hardPlusStatelessRotation"
     } else {
@@ -5845,7 +6050,7 @@ mod tests {
         assert!(result
             .failure_reason
             .unwrap()
-            .contains("target depth overrides require modes 9-17"));
+            .contains("target depth overrides require modes 9-18"));
 
         // Non-finite and non-positive targets fail closed.
         relaxed.persistent_vacancy_target_depth_mm = Some(f64::NAN);

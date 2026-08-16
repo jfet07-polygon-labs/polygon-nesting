@@ -378,6 +378,8 @@ pub struct GeneralPersistentVacancyDiagnostics {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lns: Option<GeneralPersistentVacancyLnsDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub frontier_feasibility: Option<Vec<GeneralPersistentVacancyFeasibilityRow>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub archive: Option<GeneralPersistentVacancyArchiveDiagnostics>,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
@@ -393,6 +395,17 @@ pub struct GeneralPersistentVacancyReconstructionDiagnostics {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failed_piece_id: Option<String>,
     pub failed_piece_count: usize,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyFeasibilityRow {
+    pub piece_id: String,
+    pub piece_frontier_grid: i64,
+    pub lattice_poses_screened: usize,
+    pub exact_valid_sub_frontier_poses: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub best_sub_frontier_grid: Option<i64>,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
