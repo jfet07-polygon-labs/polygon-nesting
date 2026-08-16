@@ -99,6 +99,17 @@ const ALTERNATION_MAX_CYCLES: usize = 6;
 // introducing a new tuned literal.
 #[cfg(feature = "jagua-experimental")]
 const ALTERNATION_DESCENT_TARGET_STEP_MM: f64 = persistent_vacancy::CONSTRUCTION_DROP_LADDER_MM[1];
+// Mode 26 (clamped-sheet ladder compression) removes the depth-ward room the
+// separator otherwise relaxes into. It is the same plain deterministic
+// orchestration over the mode-0 pipeline that mode 22 is; the only new idea is
+// that every step hands that pipeline a *shorter sheet* instead of a lower
+// objective.
+#[cfg(feature = "jagua-experimental")]
+const LADDER_COMPRESSION_SEED_DOMAIN: u64 = 0x4C41_4444_4552_3236;
+// Bounds between the parent depth and the requested final bound are walked in
+// at most this many steps, each warm-started from the previous step's state.
+#[cfg(feature = "jagua-experimental")]
+const LADDER_COMPRESSION_STEPS: usize = 8;
 // Mode 24 (bounded-depth reinsertion) tests compression by ejection and
 // reconstruction rather than compression by overlap: it ejects exactly the
 // pieces that stick out past a hard bound and rebuilds them with the
@@ -416,7 +427,113 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub recombination: Option<GeneralPersistentVacancyRecombinationDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bounded_reinsertion: Option<GeneralPersistentVacancyBoundedReinsertionDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ladder_compression: Option<GeneralPersistentVacancyLadderCompressionDiagnostics>,
     pub cap_exhausted: Option<String>,
+    pub failure_reason: Option<String>,
+}
+
+/// Mode-26 (clamped-sheet ladder compression) diagnostics: the ladder of
+/// effective sheet long-axis bounds walked from the parent's own depth down to
+/// the requested final bound, one row per step.
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyLadderCompressionDiagnostics {
+    /// The parent's independently measured depth, i.e. the ladder's top rung.
+    pub parent_depth_mm: f64,
+    /// The requested final bound (CLI arg 45), i.e. the ladder's bottom rung.
+    pub final_bound_mm: f64,
+    /// The uniform bound decrement actually used between consecutive rungs.
+    pub step_mm: f64,
+    pub steps_planned: usize,
+    pub steps_run: usize,
+    /// The step whose state was published, or `None` when no step beat the
+    /// parent and the parent itself is published.
+    pub published_step: Option<usize>,
+    /// The published state's own bound, when a step produced it.
+    pub published_bound_mm: Option<f64>,
+    pub steps: Vec<GeneralPersistentVacancyLadderStepDiagnostics>,
+}
+
+/// One rung of the mode-26 ladder. Each rung runs the clamped pipeline from
+/// up to two warm starts (see `GeneralPersistentVacancyLadderArmDiagnostics`)
+/// and keeps the best of both.
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyLadderStepDiagnostics {
+    pub step: usize,
+    /// The effective sheet long axis this rung handed the search.
+    pub bound_mm: f64,
+    /// The strip depth the warm-start incumbents were handed at, one separator
+    /// contraction above `bound_mm`.
+    pub seed_depth_mm: f64,
+    pub arms: Vec<GeneralPersistentVacancyLadderArmDiagnostics>,
+    /// Whether this rung produced a new deepest exact-valid publication.
+    pub improved_publication: bool,
+    /// The deepest exact-valid depth known after this rung.
+    pub published_depth_mm_after: f64,
+    /// The compression frontier's measured depth after this rung, feasible or
+    /// not.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub chained_depth_mm_after: Option<f64>,
+    /// Whether the rung moved the compression frontier at all.
+    pub chain_advanced: bool,
+}
+
+/// One warm start of one mode-26 rung.
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyLadderArmDiagnostics {
+    /// `feasible` for the arm warm-started from the deepest exact-valid state
+    /// known, `compression` for the arm warm-started from the (possibly
+    /// infeasible) compression frontier.
+    pub role: String,
+    /// Provenance of the warm-start state: `parent`, `step{k}` for a rung's
+    /// exact-accepted state, or `step{k}:terminal` for a rung's terminal
+    /// minimum-loss state.
+    pub warm_start_source: String,
+    /// The warm-start state's own measured depth under the real request, which
+    /// exceeds `bound_mm` whenever the clamp is doing work.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub warm_start_depth_mm: Option<f64>,
+    pub separator_attempted: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separator_skipped_reason: Option<String>,
+    /// The clamped arm's own reported final depth.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub arm_final_depth_mm: Option<f64>,
+    /// How many contraction targets the clamped arm attempted and accepted,
+    /// and how many epochs of the legacy relaxed loop improved before it.
+    /// Together these say whether a failed arm stalled in the separator or
+    /// never got a foothold at all.
+    pub arm_targets_attempted: usize,
+    pub arm_targets_accepted: usize,
+    pub epochs_improved: usize,
+    /// Residual loss of the arm's terminal state, when it ended on a failed
+    /// target.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub terminal_collision_pairs: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub terminal_boundary_violations: Option<usize>,
+    /// Whether the state this arm produced is the separator's terminal
+    /// (generally infeasible) state rather than an exact-accepted one.
+    pub from_terminal: bool,
+    /// The arm's resulting state re-measured against the real request.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub converged_depth_mm: Option<f64>,
+    /// How far that state still protrudes past the rung's bound; `0.0` means
+    /// the clamp was fully honoured.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bound_excess_mm: Option<f64>,
+    /// Exact pairwise source-polygon overlap residue in that state.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub overlap_pairs: Option<usize>,
+    /// Whether that state validates against the real request.
+    pub exact_valid: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exact_rejection_reason: Option<String>,
+    pub state_fingerprint: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub failure_reason: Option<String>,
 }
 
@@ -974,6 +1091,26 @@ pub struct GeneralCoupledSeparatorArmDiagnostics {
     pub independently_measured_final_depth_mm: Option<f64>,
     pub final_placement_fingerprint: Option<String>,
     pub final_placements: Vec<GeneralCoupledSeparatorPlacementDiagnostics>,
+    /// The minimum-loss state of the arm's last, failed contraction target.
+    ///
+    /// `final_placements` only ever reflects *exact-accepted* states, so an
+    /// arm whose first target fails reports its own input back unchanged and
+    /// the compression work that target actually did is invisible from
+    /// outside. This records that terminal state instead. It is generally
+    /// *infeasible* - it is precisely the state the arm could not legalize -
+    /// so it is diagnostics and warm-start material only, never a publication
+    /// candidate. Empty whenever the arm ended without a failed-target
+    /// checkpoint.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub terminal_placements: Vec<GeneralCoupledSeparatorPlacementDiagnostics>,
+    /// The strip depth that terminal state was scored against.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub terminal_strip_depth_mm: Option<f64>,
+    /// Residual collision and boundary loss of that terminal state.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub terminal_collision_pairs: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub terminal_boundary_violations: Option<usize>,
     pub skipped_reason: Option<String>,
     pub targets: Vec<GeneralCoupledSeparatorTargetDiagnostics>,
 }
@@ -2521,6 +2658,13 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                         effective_parent,
                         parent_source,
                     ),
+                    26 => run_ladder_compression(
+                        pieces,
+                        fast_settings,
+                        relaxed_settings,
+                        effective_parent,
+                        parent_source,
+                    ),
                     mode => persistent_vacancy::run_persistent_vacancy_population(
                         pieces,
                         fast_settings,
@@ -2883,6 +3027,380 @@ fn run_alternation_fixpoint(
         cycles: cycle_rows,
     });
     diagnostics
+}
+
+/// Builds the mode-26 ladder of effective sheet long-axis bounds.
+///
+/// The rungs run from just below `parent_depth_mm` down to `final_bound_mm`
+/// in at most `LADDER_COMPRESSION_STEPS` uniform decrements. A rung smaller
+/// than the separator's own single-target contraction
+/// (`COUPLED_SEPARATOR_CONTRACTION_RATIO` of the parent depth) asks the
+/// pipeline for less than one contraction step and would only burn a full
+/// pipeline run for nothing, so that ratio is the step floor: it is
+/// scale-free, so the ladder is instance-agnostic, and it is an existing
+/// constant rather than a new tuned literal. When the floor binds, the ladder
+/// simply uses fewer rungs; the last rung is always exactly `final_bound_mm`.
+#[cfg(feature = "jagua-experimental")]
+fn ladder_compression_bounds(parent_depth_mm: f64, final_bound_mm: f64) -> (f64, Vec<f64>) {
+    let span_mm = parent_depth_mm - final_bound_mm;
+    let floor_mm = parent_depth_mm * COUPLED_SEPARATOR_CONTRACTION_RATIO;
+    let step_mm = (span_mm / LADDER_COMPRESSION_STEPS as f64).max(floor_mm);
+    let steps = ((span_mm / step_mm).ceil() as usize).clamp(1, LADDER_COMPRESSION_STEPS);
+    let bounds = (0..steps)
+        .map(|step| {
+            if step + 1 == steps {
+                final_bound_mm
+            } else {
+                (parent_depth_mm - step_mm * (step + 1) as f64).max(final_bound_mm)
+            }
+        })
+        .collect();
+    (step_mm, bounds)
+}
+
+/// Mode 26: clamped-sheet ladder compression.
+///
+/// Every measured negative in this experiment family shares one shape: the
+/// separator treats depth as an *objective* while the real sheet leaves
+/// unlimited depth-ward room, so legalizing a deep layout relaxes it back out
+/// to a shallow shelf instead of compressing it. This mode removes that room
+/// instead of penalizing its use. Given parent `P` and a final bound
+/// `D_final`, it walks a ladder of bounds from `P`'s own measured depth down
+/// to `D_final` and, at each rung `bound_k`, hands the ordinary mode-0
+/// pipeline a sheet whose long axis *is* `bound_k`:
+///
+/// * `fast_settings.sheet_long_axis_mm = bound_k` is the geometric clamp. It
+///   is the only place the long axis bounds anything: every acceptance in the
+///   pipeline runs through `validate_and_measure_placements`, whose
+///   `collision_fits_sheet` check rejects any pose past
+///   `bound_k - collision_sheet_inset_mm`. Depth-ward relaxation therefore
+///   becomes impossible rather than merely expensive. That check runs on the
+///   collision polygon, which carries the conservative search allowance the
+///   reported source measure does not, so the clamp is stricter than
+///   `bound_k` by exactly that allowance and can never admit a state the
+///   explicit re-measure below would reject.
+/// * the warm-start incumbent's `used_long_axis_depth_mm` is set to `bound_k`
+///   too, because that (not the sheet) is what seeds `RelaxedState`'s
+///   `strip_depth_mm` and the separator's contraction targets. Handing the
+///   pipeline the parent's own poses under that depth is precisely a state
+///   whose protruding pieces carry positive boundary loss, which is what the
+///   coupled separator and the boundary-projection terminal are built to work
+///   off.
+///
+/// Out-of-sheet warm starts need no relaxation anywhere: nothing on the path
+/// into the pipeline validates the incumbent, and `compress_state_at_split`
+/// already produces out-of-strip poses by construction. Only *publication* is
+/// gated, which is the intended asymmetry.
+///
+/// Chaining policy: each rung warm-starts from the previous rung's final
+/// state, feasible or not - the arm's exact-accepted state when the rung
+/// legalized something, otherwise the arm's terminal minimum-loss state, which
+/// is the compressed-but-infeasible layout the rung reached and could not
+/// legalize. Reverting to the last exact-valid state instead would discard the
+/// partial compression a failed rung achieved and, since every rung is
+/// deterministic, would replay the same failure at every remaining rung; that
+/// policy was measured and the chain provably never moves under it. A rung
+/// that produces no usable complete state at all leaves the chain untouched,
+/// which the next rung records in its `warmStartSource`. Publication is
+/// independent of the chain: the deepest exact-valid state seen over the whole
+/// ladder wins, with the parent itself as the floor, so mode 26 can never
+/// publish something worse than its parent.
+///
+/// Every rung is re-validated and re-measured against the *real* request, not
+/// the clamped one, so the publication contract is exactly the requested one.
+#[cfg(feature = "jagua-experimental")]
+fn run_ladder_compression(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    parent: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_source: Option<String>,
+) -> GeneralPersistentVacancyDiagnostics {
+    let mut diagnostics = GeneralPersistentVacancyDiagnostics {
+        mode: 26,
+        seed_domain: LADDER_COMPRESSION_SEED_DOMAIN,
+        parent_source,
+        ..GeneralPersistentVacancyDiagnostics::default()
+    };
+    let Some(final_bound_mm) = relaxed_settings.persistent_vacancy_target_depth_mm else {
+        diagnostics.failure_reason =
+            Some("persistent vacancy mode 26 requires an explicit final bound".to_owned());
+        return diagnostics;
+    };
+    if !final_bound_mm.is_finite() || final_bound_mm <= 0.0 {
+        diagnostics.failure_reason = Some(
+            "persistent vacancy mode 26 final bound must be a positive finite value".to_owned(),
+        );
+        return diagnostics;
+    }
+    diagnostics.target_depth_mm = final_bound_mm;
+    if pieces.is_empty() {
+        diagnostics.failure_reason =
+            Some("persistent vacancy experiment requires at least one piece".to_owned());
+        return diagnostics;
+    }
+    if parent.final_placements.len() != pieces.len() {
+        diagnostics.failure_reason =
+            Some("persistent vacancy parent is not a complete exact-valid layout".to_owned());
+        return diagnostics;
+    }
+
+    let parent_placements = fast_placements_from_coupled_diagnostics(&parent.final_placements);
+    diagnostics.parent_fingerprint = Some(coupled_fast_placement_fingerprint(&parent_placements));
+    if let Err(error) = validate_and_measure_placements(pieces, &parent_placements, fast_settings) {
+        diagnostics.failure_reason = Some(format!("persistent vacancy parent validation: {error}"));
+        return diagnostics;
+    }
+    let parent_depth_mm =
+        match coupled_independent_source_depth(pieces, &parent_placements, fast_settings) {
+            Ok(depth) => depth,
+            Err(error) => {
+                diagnostics.failure_reason =
+                    Some(format!("persistent vacancy parent depth: {error}"));
+                return diagnostics;
+            }
+        };
+    diagnostics.parent_independent_depth_mm = Some(parent_depth_mm);
+    diagnostics.initial_state_fingerprint = diagnostics.parent_fingerprint.clone();
+    if grid_key(final_bound_mm) >= grid_key(parent_depth_mm) {
+        diagnostics.failure_reason = Some(
+            "persistent vacancy mode 26 final bound must be below the parent depth".to_owned(),
+        );
+        return diagnostics;
+    }
+
+    diagnostics.attempted = true;
+    let (step_mm, bounds) = ladder_compression_bounds(parent_depth_mm, final_bound_mm);
+    let mut ladder = GeneralPersistentVacancyLadderCompressionDiagnostics {
+        parent_depth_mm,
+        final_bound_mm,
+        step_mm,
+        steps_planned: bounds.len(),
+        ..GeneralPersistentVacancyLadderCompressionDiagnostics::default()
+    };
+
+    // Two carried states. `published` is the deepest exact-valid layout known
+    // and is the ladder's answer; `chain` is the compression frontier, which
+    // is generally infeasible. They start equal, at the parent.
+    let mut published_placements = parent_placements.clone();
+    let mut published_depth_mm = parent_depth_mm;
+    let mut published_source = "parent".to_owned();
+    let mut chain_placements = parent_placements;
+    let mut chain_depth_mm = Some(parent_depth_mm);
+    let mut chain_source = "parent".to_owned();
+
+    let mut separator_settings = relaxed_settings;
+    separator_settings.persistent_vacancy_mode = 0;
+    for (step, bound_mm) in bounds.iter().copied().enumerate() {
+        // The seed carries the warm-start poses at a strip depth one separator
+        // contraction *above* the bound, so the arm's first contraction target
+        // lands exactly on `bound_mm` instead of 0.1% below it: the rung asks
+        // the pipeline for precisely its own bound and nothing more. This is
+        // the same seed-depth headroom mode 23 uses so that a pipeline which
+        // only accepts strict improvements can publish at all, sized here to
+        // the separator's own single-target step rather than to the epoch
+        // ladder, so the strip depth stays tight enough for the boundary
+        // penalty to keep pulling protruding pieces inward.
+        let seed_depth_mm = bound_mm / (1.0 - COUPLED_SEPARATOR_CONTRACTION_RATIO);
+        let mut row = GeneralPersistentVacancyLadderStepDiagnostics {
+            step,
+            bound_mm,
+            seed_depth_mm,
+            ..GeneralPersistentVacancyLadderStepDiagnostics::default()
+        };
+        ladder.steps_run = step + 1;
+
+        // The clamp: the search believes in a sheet exactly `bound_mm` deep.
+        let step_settings = GeneralFastSettings {
+            sheet_long_axis_mm: bound_mm,
+            ..fast_settings
+        };
+        let chain_fingerprint = coupled_fast_placement_fingerprint(&chain_placements);
+        let published_fingerprint = coupled_fast_placement_fingerprint(&published_placements);
+        let mut warm_starts = vec![(
+            "feasible",
+            published_source.clone(),
+            Some(published_depth_mm),
+            published_placements.clone(),
+        )];
+        if chain_fingerprint != published_fingerprint {
+            warm_starts.push((
+                "compression",
+                chain_source.clone(),
+                chain_depth_mm,
+                chain_placements.clone(),
+            ));
+        }
+
+        for (role, warm_start_source, warm_start_depth_mm, warm_placements) in warm_starts {
+            let (arm_row, produced) = run_ladder_compression_arm(
+                pieces,
+                fast_settings,
+                step_settings,
+                separator_settings,
+                bound_mm,
+                seed_depth_mm,
+                role,
+                warm_start_source,
+                warm_start_depth_mm,
+                warm_placements,
+            );
+            if let Some((placements, depth_mm, exact_valid)) = produced {
+                if exact_valid && grid_key(depth_mm) < grid_key(published_depth_mm) {
+                    published_depth_mm = depth_mm;
+                    published_placements = placements.clone();
+                    published_source = format!("step{step}");
+                    ladder.published_step = Some(step);
+                    ladder.published_bound_mm = Some(bound_mm);
+                    row.improved_publication = true;
+                }
+                // The compression frontier is the deepest state seen, feasible
+                // or not: that is the material the next, tighter rung works
+                // off.
+                if chain_depth_mm.is_none_or(|current| grid_key(depth_mm) < grid_key(current)) {
+                    chain_depth_mm = Some(depth_mm);
+                    chain_placements = placements;
+                    chain_source = if arm_row.from_terminal {
+                        format!("step{step}:terminal")
+                    } else {
+                        format!("step{step}")
+                    };
+                    row.chain_advanced = true;
+                }
+            }
+            row.arms.push(arm_row);
+        }
+
+        row.published_depth_mm_after = published_depth_mm;
+        row.chained_depth_mm_after = chain_depth_mm;
+        ladder.steps.push(row);
+    }
+
+    diagnostics.exact_valid = true;
+    diagnostics.independent_depth_mm = Some(published_depth_mm);
+    diagnostics.final_placement_fingerprint =
+        Some(coupled_fast_placement_fingerprint(&published_placements));
+    diagnostics.final_placements = coupled_placement_diagnostics(&published_placements);
+    diagnostics.ladder_compression = Some(ladder);
+    diagnostics
+}
+
+/// Runs one mode-26 rung from one warm start: the ordinary mode-0 pipeline
+/// under the rung's clamped sheet, then the rung's own measurements of what
+/// came back, always against the *real* request rather than the clamped one.
+///
+/// Returns the arm's diagnostics row plus, when the arm produced a usable
+/// complete state, that state with its measured depth and exact validity.
+#[allow(clippy::too_many_arguments)]
+#[cfg(feature = "jagua-experimental")]
+fn run_ladder_compression_arm(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    step_settings: GeneralFastSettings,
+    separator_settings: GeneralRelaxedSettings,
+    bound_mm: f64,
+    seed_depth_mm: f64,
+    role: &str,
+    warm_start_source: String,
+    warm_start_depth_mm: Option<f64>,
+    warm_placements: Vec<GeneralFastPlacement>,
+) -> (
+    GeneralPersistentVacancyLadderArmDiagnostics,
+    Option<(Vec<GeneralFastPlacement>, f64, bool)>,
+) {
+    let mut row = GeneralPersistentVacancyLadderArmDiagnostics {
+        role: role.to_owned(),
+        warm_start_source,
+        warm_start_depth_mm,
+        ..GeneralPersistentVacancyLadderArmDiagnostics::default()
+    };
+    let seed = general_fast_result_seed(warm_placements, seed_depth_mm);
+    let candidate = match improve_complete_layout_with_pinned_vacancy_parent(
+        pieces,
+        step_settings,
+        separator_settings,
+        &seed,
+        None,
+        None,
+    ) {
+        Ok(outcome) => {
+            row.epochs_improved = outcome.diagnostics.epochs_improved;
+            let arm = outcome
+                .diagnostics
+                .coupled_dynamic_separator
+                .as_ref()
+                .and_then(|coupled| coupled.boundary_projection_treatment.as_ref());
+            match arm {
+                Some(arm) => {
+                    row.separator_attempted = true;
+                    row.arm_final_depth_mm = Some(arm.final_depth_mm);
+                    row.arm_targets_attempted = arm.targets_attempted;
+                    row.arm_targets_accepted = arm.targets_accepted;
+                    row.separator_skipped_reason = arm.skipped_reason.clone();
+                    row.terminal_collision_pairs = arm.terminal_collision_pairs;
+                    row.terminal_boundary_violations = arm.terminal_boundary_violations;
+                    // The arm's exact-accepted state when it legalized
+                    // something, otherwise its terminal minimum-loss state:
+                    // the compressed-but-infeasible layout the arm reached and
+                    // could not legalize is exactly the material a tighter
+                    // rung is meant to keep working off.
+                    let (placements, from_terminal) = if arm.targets_accepted > 0 {
+                        (
+                            fast_placements_from_coupled_diagnostics(&arm.final_placements),
+                            false,
+                        )
+                    } else {
+                        (
+                            fast_placements_from_coupled_diagnostics(&arm.terminal_placements),
+                            true,
+                        )
+                    };
+                    if placements.len() == pieces.len() {
+                        row.from_terminal = from_terminal;
+                        Some(placements)
+                    } else {
+                        row.failure_reason = Some(
+                            "clamped separator arm produced no usable complete state".to_owned(),
+                        );
+                        None
+                    }
+                }
+                None => {
+                    row.failure_reason = Some(
+                        "clamped separator arm produced no boundary-projection arm".to_owned(),
+                    );
+                    None
+                }
+            }
+        }
+        Err(error) => {
+            row.failure_reason = Some(error.to_string());
+            None
+        }
+    };
+
+    let Some(placements) = candidate else {
+        return (row, None);
+    };
+    row.state_fingerprint = Some(coupled_fast_placement_fingerprint(&placements));
+    let depth_mm = match coupled_independent_source_depth(pieces, &placements, fast_settings) {
+        Ok(depth) => {
+            row.converged_depth_mm = Some(depth);
+            row.bound_excess_mm = Some((depth - bound_mm).max(0.0));
+            depth
+        }
+        Err(error) => {
+            row.failure_reason = Some(error.to_string());
+            return (row, None);
+        }
+    };
+    row.overlap_pairs = count_exact_overlap_pairs(pieces, &placements).ok();
+    match validate_and_measure_placements(pieces, &placements, fast_settings) {
+        Ok(_) => row.exact_valid = true,
+        Err(error) => row.exact_rejection_reason = Some(error.to_string()),
+    }
+    let exact_valid = row.exact_valid;
+    (row, Some((placements, depth_mm, exact_valid)))
 }
 
 /// Mode 23: recombination. Crosses parent A (`pinned_vacancy_parent`) with
@@ -3408,10 +3926,45 @@ fn run_coupled_separator_arm<'a>(
         diagnostics.final_placements = coupled_placement_diagnostics(&accepted.placements);
         incumbent = accepted;
     }
+    // Record the terminal state of a failed last target. Pure bookkeeping: the
+    // checkpoint is already computed above and nothing below reads these
+    // fields back, so every arm's control flow, acceptance and reported depths
+    // are unchanged.
+    if let Some(checkpoint) = checkpoint.as_ref() {
+        diagnostics.terminal_placements =
+            relaxed_placement_diagnostics(&checkpoint.minimum.state, pieces);
+        diagnostics.terminal_strip_depth_mm = Some(checkpoint.minimum.state.strip_depth_mm);
+        diagnostics.terminal_collision_pairs = Some(checkpoint.minimum.score.collision_pairs.len());
+        diagnostics.terminal_boundary_violations =
+            Some(checkpoint.minimum.score.boundary_violations);
+    }
     CoupledArmOutcome {
         diagnostics,
         checkpoint,
     }
+}
+
+/// Renders a relaxed state's poses in the shared placement-diagnostics shape.
+#[cfg(feature = "jagua-experimental")]
+fn relaxed_placement_diagnostics(
+    state: &RelaxedState,
+    pieces: &[GeneralFastPiece<'_>],
+) -> Vec<GeneralCoupledSeparatorPlacementDiagnostics> {
+    state
+        .placements
+        .iter()
+        .filter_map(|placement| {
+            pieces.get(placement.input_index).map(|piece| {
+                GeneralCoupledSeparatorPlacementDiagnostics {
+                    piece_id: piece.id.to_owned(),
+                    rotation_deg: placement.rotation_deg,
+                    mirrored: placement.mirrored,
+                    translate_short_axis: placement.translate_x,
+                    translate_long_axis: placement.translate_y,
+                }
+            })
+        })
+        .collect()
 }
 
 #[cfg(feature = "jagua-experimental")]
@@ -12283,6 +12836,261 @@ mod tests {
         let second = JobPool::new(Some(1)).run_scoped(|| {
             run_alternation_fixpoint(&pieces, fast_settings, settings, &parent, None)
         });
+        assert_eq!(first, second);
+    }
+
+    /// Two squares in a 100x100 sheet, constructed short-side-first, wrapped
+    /// as a mode-26 parent. Small enough that a whole ladder runs in a test.
+    #[cfg(feature = "jagua-experimental")]
+    fn two_piece_ladder_fixture() -> ([PolygonSet; 2], GeneralFastSettings) {
+        (
+            [square(10.0), square(8.0)],
+            GeneralFastSettings::deterministic_test(100.0, 100.0),
+        )
+    }
+
+    #[cfg(feature = "jagua-experimental")]
+    fn two_piece_ladder_parent(
+        polygons: &[PolygonSet; 2],
+        fast_settings: GeneralFastSettings,
+    ) -> GeneralCoupledSeparatorArmDiagnostics {
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let constructed = JobPool::new(Some(1))
+            .run_scoped(|| construct_short_side_first(&pieces, fast_settings))
+            .unwrap();
+        GeneralCoupledSeparatorArmDiagnostics {
+            final_placements: coupled_placement_diagnostics(&constructed.placements),
+            ..GeneralCoupledSeparatorArmDiagnostics::default()
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn ladder_bounds_reach_the_requested_final_bound_in_bounded_steps() {
+        // The ordinary case: the span is wide enough that the step floor does
+        // not bind, so the ladder uses every rung and lands exactly on the
+        // requested bound.
+        let (step_mm, bounds) = ladder_compression_bounds(167.846, 164.0);
+        assert_eq!(bounds.len(), LADDER_COMPRESSION_STEPS);
+        assert!((step_mm - (167.846 - 164.0) / LADDER_COMPRESSION_STEPS as f64).abs() < 1e-12);
+        assert!((bounds[bounds.len() - 1] - 164.0).abs() < 1e-12);
+        for window in bounds.windows(2) {
+            assert!(window[1] < window[0], "rungs must descend");
+        }
+        assert!(
+            bounds[0] < 167.846,
+            "the first rung must clamp below the parent"
+        );
+
+        // The floor case: a span narrower than one separator contraction
+        // collapses to a single rung, still exactly at the requested bound.
+        let (floor_step_mm, floor_bounds) = ladder_compression_bounds(100.0, 99.99);
+        assert_eq!(floor_bounds, vec![99.99]);
+        assert!((floor_step_mm - 100.0 * COUPLED_SEPARATOR_CONTRACTION_RATIO).abs() < 1e-12);
+
+        // Scale-freedom: the same relative request produces the same relative
+        // ladder at any instance size.
+        let (small_step, small) = ladder_compression_bounds(10.0, 9.0);
+        let (large_step, large) = ladder_compression_bounds(1000.0, 900.0);
+        assert_eq!(small.len(), large.len());
+        assert!((large_step / small_step - 100.0).abs() < 1e-9);
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn ladder_compression_requires_an_explicit_final_bound() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let settings = coupled_experiment_test_settings(3);
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+        let result = run_ladder_compression(&pieces, fast_settings, settings, &parent, None);
+        assert!(!result.attempted);
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("requires an explicit final bound"));
+        assert!(result.ladder_compression.is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn ladder_compression_rejects_a_bound_at_or_above_the_parent_depth() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let mut settings = coupled_experiment_test_settings(3);
+        // Far above any layout this fixture can produce, so the clamp would be
+        // vacuous. The mode must say so instead of burning a ladder.
+        settings.persistent_vacancy_target_depth_mm = Some(90.0);
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+        let result = JobPool::new(Some(1))
+            .run_scoped(|| run_ladder_compression(&pieces, fast_settings, settings, &parent, None));
+        assert!(!result.attempted);
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("must be below the parent depth"));
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn ladder_compression_requires_a_complete_parent() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let mut settings = coupled_experiment_test_settings(3);
+        settings.persistent_vacancy_target_depth_mm = Some(10.0);
+        let parent = GeneralCoupledSeparatorArmDiagnostics::default();
+        let result = run_ladder_compression(&pieces, fast_settings, settings, &parent, None);
+        assert!(!result.attempted);
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("not a complete exact-valid layout"));
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn ladder_compression_walks_every_rung_and_never_publishes_worse_than_its_parent() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let mut settings = coupled_experiment_test_settings(5);
+        // A bound the fixture cannot possibly honour: the largest piece alone
+        // is deeper than this. The ladder must still run to completion, report
+        // every rung, and fall back to publishing its own parent.
+        settings.persistent_vacancy_target_depth_mm = Some(1.0);
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+        let result = JobPool::new(Some(1)).run_scoped(|| {
+            run_ladder_compression(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent,
+                Some("test-parent".to_owned()),
+            )
+        });
+        assert!(result.attempted);
+        assert_eq!(result.mode, 26);
+        assert!(result.exact_valid, "the parent floor is always publishable");
+        assert_eq!(result.final_placements.len(), pieces.len());
+        let ladder = result.ladder_compression.clone().unwrap();
+        assert_eq!(ladder.steps_run, ladder.steps_planned);
+        assert_eq!(ladder.steps.len(), ladder.steps_run);
+        assert!(ladder.steps_planned <= LADDER_COMPRESSION_STEPS);
+        assert_eq!(ladder.final_bound_mm, 1.0);
+        assert_eq!(
+            ladder.published_step, None,
+            "an impossible bound publishes nothing new"
+        );
+        assert_eq!(
+            result.independent_depth_mm, result.parent_independent_depth_mm,
+            "publication falls back to the parent"
+        );
+        for (index, step) in ladder.steps.iter().enumerate() {
+            assert_eq!(step.step, index);
+            assert!(!step.arms.is_empty(), "every rung runs at least one arm");
+            assert!(step.bound_mm >= ladder.final_bound_mm);
+            assert!(
+                step.seed_depth_mm > step.bound_mm,
+                "the seed carries headroom"
+            );
+            assert!(!step.improved_publication);
+            assert_eq!(step.published_depth_mm_after, ladder.parent_depth_mm);
+            assert_eq!(step.arms[0].role, "feasible");
+        }
+        // The clamp is real: nothing the ladder ever published sits past the
+        // parent's own depth.
+        assert!(result.independent_depth_mm.unwrap() <= ladder.parent_depth_mm);
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn ladder_compression_is_deterministic_across_repeated_runs() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let mut settings = coupled_experiment_test_settings(9);
+        settings.persistent_vacancy_target_depth_mm = Some(20.0);
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+        let first = JobPool::new(Some(1))
+            .run_scoped(|| run_ladder_compression(&pieces, fast_settings, settings, &parent, None));
+        let second = JobPool::new(Some(1))
+            .run_scoped(|| run_ladder_compression(&pieces, fast_settings, settings, &parent, None));
         assert_eq!(first, second);
     }
 
