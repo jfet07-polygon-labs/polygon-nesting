@@ -1017,3 +1017,42 @@ search progress. With the local, ejective and envelope classes all
 measured out, the remaining open class is gradual overlap-tolerant
 compression under a clamped sheet - the separator constrained so it
 cannot relax depth-ward - which goes to implementation next.
+
+Clamped-sheet ladder compression (persistent-vacancy mode 26) is that
+operator, and it is the first mechanism in this family to move a
+certified lock by search rather than by slack release. A rung hands
+the ordinary mode-0 pipeline a `sheet_long_axis_mm` equal to the
+rung's bound and a warm-start incumbent carried at one separator
+contraction above it, so depth-ward relaxation stops being expensive
+and becomes geometrically impossible: `collision_fits_sheet` is the
+only place the long axis bounds anything, and it gates every
+acceptance. Bounds walk from the parent's own depth to the requested
+final bound in at most eight uniform rungs, floored at the
+separator's own single-target contraction ratio so the ladder is
+scale-free.
+
+The measured obstacle is not the clamp - out-of-sheet warm starts are
+tolerated everywhere on the path in - but that an arm's
+`final_placements` only ever reflect exact-accepted states, so a rung
+whose single contraction target fails reports its own input back and
+the ladder provably never moves (measured: every rung `stateChanged
+= false` on both locks and on triangle-20). The arm's terminal
+minimum-loss state is now recorded additively alongside it, which is
+pure bookkeeping and leaves every existing arm's control flow,
+acceptance and depths untouched. Each rung then runs two warm starts,
+the deepest exact-valid state and the compression frontier, and keeps
+the best of both.
+
+Result on the from-scratch front: 167.846 -> 166.968 exact-valid at
+seed 1 (rungs 1 and 2 of the ladder to 166.0), re-settling under mode
+22 to 166.855, which is a joint mode-22 / mode-26 fixpoint - a
+0.991 mm improvement on a state five prior mechanisms could not move,
+and one mode 22 does not reach from the same parent at either seed.
+The record state 164.465 does not move: its compression frontier
+reaches 160.499 under the clamp but never legalizes. That is the
+shape of the residual everywhere the mechanism fails - the frontier
+compresses freely (A: 165.977 at bound 166.0; B: 160.499 at bound
+160.558; triangle-20: 70.512) and is rejected by one to five
+clearance-violating pairs, never by depth. Gradual overlap-tolerant
+compression is therefore live but bottlenecked on legalizing a
+near-feasible dense front, not on reaching one.
