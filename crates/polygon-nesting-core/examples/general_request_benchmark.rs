@@ -207,9 +207,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if !matches!(persistent_vacancy_mode, 0..=6 | 8 | 9 | 10 | 14..=19) {
+    if !matches!(persistent_vacancy_mode, 0..=6 | 8 | 9 | 10 | 14..=22) {
         return Err(
-            "persistent vacancy mode must be 0 through 6, 8, 9, 10, or 14 through 19; retired modes 7 and 11 through 13 are unavailable"
+            "persistent vacancy mode must be 0 through 6, 8, 9, 10, or 14 through 22; retired modes 7 and 11 through 13 are unavailable"
                 .into(),
         );
     }
@@ -477,6 +477,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     return Err(
                         "requested vacancy-topology probe did not reach its bounded terminal"
                             .into(),
+                    );
+                }
+            }
+            if matches!(persistent_vacancy_mode, 20..=22) {
+                let probe = persistent
+                    .blocker_burden_probe
+                    .as_ref()
+                    .ok_or("requested blocker-burden probe diagnostics are missing")?;
+                if let Some(reason) = probe.failure_reason.as_deref() {
+                    return Err(format!("requested blocker-burden probe failed: {reason}").into());
+                }
+                if !probe.attempted
+                    || !probe.base_projection_matched
+                    || probe.visited_parent_rows != probe.parent_row_limit
+                {
+                    return Err(
+                        "requested blocker-burden probe did not reach its bounded terminal".into(),
                     );
                 }
             }

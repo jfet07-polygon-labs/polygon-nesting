@@ -23,6 +23,58 @@ const REPAIR_RESTART_ROOT_CONTROL_MODE: usize = 16;
 const REPAIR_RESTART_STATE_TREATMENT_MODE: usize = 17;
 const REPAIR_RESTART_QUEUE_TREATMENT_MODE: usize = 18;
 const VACANCY_TOPOLOGY_PROBE_MODE: usize = 19;
+const BLOCKER_PROBE_ROOT_MODE: usize = 20;
+const BLOCKER_PROBE_STATE_MODE: usize = 21;
+const BLOCKER_PROBE_QUEUE_MODE: usize = 22;
+const BLOCKER_PROBE_PARENT_ROWS: usize = 48;
+const BLOCKER_PROBE_SIGNALS: usize = BLOCKER_PROBE_PARENT_ROWS * 2;
+const BLOCKER_PROBE_TRANSIENT_RESERVATION_BYTES: usize = 16 * 1024 * 1024;
+const BLOCKER_PROBE_RETAINED_RESERVATION_BYTES: usize = 2 * 1024 * 1024;
+const BLOCKER_PROBE_SIGNAL_SELECTED_PIECE_SLOTS: usize = 1;
+const BLOCKER_PROBE_SIGNAL_ORIENTATION_STREAMS: usize = ORIENTATIONS_PER_PIECE;
+const BLOCKER_PROBE_SIGNAL_SOURCE_FEATURE_VISITS: usize = 2 * MAX_SOURCE_FEATURES;
+const BLOCKER_PROBE_SIGNAL_POSITION_SOURCE_ATTEMPTS: usize =
+    ORIENTATIONS_PER_PIECE * MAX_POSITION_SOURCES_PER_ORIENTATION;
+const BLOCKER_PROBE_SIGNAL_RETURNED_POSITIONS: usize =
+    ORIENTATIONS_PER_PIECE * POSITIONS_PER_ORIENTATION;
+const BLOCKER_PROBE_SIGNAL_HAZARD_QUERIES: usize = BLOCKER_PROBE_SIGNAL_RETURNED_POSITIONS;
+const BLOCKER_PROBE_SIGNAL_PROXY_PRESSURE_VISITS: usize =
+    BLOCKER_PROBE_SIGNAL_HAZARD_QUERIES * MIXED_PIECE_COUNT;
+const BLOCKER_PROBE_SIGNAL_EXACT_FINALIST_ROWS: usize = FINALISTS_PER_PIECE;
+const BLOCKER_PROBE_SIGNAL_EXPERIMENTAL_COLLISION_BUILDS: usize =
+    BLOCKER_PROBE_SIGNAL_ORIENTATION_STREAMS + BLOCKER_PROBE_SIGNAL_EXACT_FINALIST_ROWS;
+const BLOCKER_PROBE_SIGNAL_EXPERIMENTAL_PAIR_VISITS: usize =
+    BLOCKER_PROBE_SIGNAL_EXACT_FINALIST_ROWS * (MIXED_PIECE_COUNT - 1);
+const BLOCKER_PROBE_SIGNAL_TRANSFORMED_COLLISION_VERTICES: usize =
+    BLOCKER_PROBE_SIGNAL_EXPERIMENTAL_COLLISION_BUILDS * MAX_COLLISION_VERTICES;
+const BLOCKER_PROBE_SIGNAL_CLIPPER_INPUT_VERTICES: usize =
+    BLOCKER_PROBE_SIGNAL_EXPERIMENTAL_PAIR_VISITS * 2 * MAX_COLLISION_VERTICES;
+const BLOCKER_PROBE_MAX_SELECTED_PIECE_SLOTS: usize = BLOCKER_PROBE_SIGNALS;
+const BLOCKER_PROBE_MAX_ORIENTATION_STREAMS: usize = BLOCKER_PROBE_SIGNALS * ORIENTATIONS_PER_PIECE;
+const BLOCKER_PROBE_MAX_SOURCE_FEATURE_VISITS: usize =
+    BLOCKER_PROBE_SIGNALS * 2 * MAX_SOURCE_FEATURES;
+const BLOCKER_PROBE_MAX_POSITION_SOURCE_ATTEMPTS: usize =
+    BLOCKER_PROBE_MAX_ORIENTATION_STREAMS * MAX_POSITION_SOURCES_PER_ORIENTATION;
+const BLOCKER_PROBE_MAX_RETURNED_POSITIONS: usize =
+    BLOCKER_PROBE_MAX_ORIENTATION_STREAMS * POSITIONS_PER_ORIENTATION;
+const BLOCKER_PROBE_MAX_HAZARD_QUERIES: usize = BLOCKER_PROBE_MAX_RETURNED_POSITIONS;
+const BLOCKER_PROBE_MAX_PROXY_PRESSURE_VISITS: usize =
+    BLOCKER_PROBE_MAX_HAZARD_QUERIES * MIXED_PIECE_COUNT;
+const BLOCKER_PROBE_MAX_EXACT_FINALIST_ROWS: usize = BLOCKER_PROBE_SIGNALS * FINALISTS_PER_PIECE;
+const BLOCKER_PROBE_MAX_EXPERIMENTAL_COLLISION_BUILDS: usize =
+    BLOCKER_PROBE_MAX_ORIENTATION_STREAMS + BLOCKER_PROBE_MAX_EXACT_FINALIST_ROWS;
+const BLOCKER_PROBE_MAX_EXPERIMENTAL_PAIR_VISITS: usize =
+    BLOCKER_PROBE_MAX_EXACT_FINALIST_ROWS * (MIXED_PIECE_COUNT - 1);
+const BLOCKER_PROBE_MAX_TRANSFORMED_COLLISION_VERTICES: usize =
+    BLOCKER_PROBE_MAX_EXPERIMENTAL_COLLISION_BUILDS * MAX_COLLISION_VERTICES;
+const BLOCKER_PROBE_MAX_CLIPPER_INPUT_VERTICES: usize =
+    BLOCKER_PROBE_MAX_EXPERIMENTAL_PAIR_VISITS * 2 * MAX_COLLISION_VERTICES;
+const EXPECTED_BLOCKER_PROBE_ROOT_BASE_SHA256: &str =
+    "3f4cf4496d5fe3e7470ce407a6b4e3f5546b8d4c8bbe5f7afb3b4f8c1766c846";
+const EXPECTED_BLOCKER_PROBE_STATE_BASE_SHA256: &str =
+    "8f91c7fe755e1fac1dc237dda09f53a58fd538ff5decbc7df7a693f09cab135a";
+const EXPECTED_BLOCKER_PROBE_QUEUE_BASE_SHA256: &str =
+    "d1b00626b54ce8587c5322be46706d22898d4b4a11e4ff10defd2cb0e6754769";
 const VACANCY_TOPOLOGY_CLEARANCE_MM: [f64; 6] = [0.0, 1.0, 2.5, 5.0, 10.0, 15.0];
 const VACANCY_TOPOLOGY_STATE_COUNT: usize = 3;
 const VACANCY_TOPOLOGY_SNAPSHOT_COUNT: usize =
@@ -211,6 +263,28 @@ struct SelectedPieceExpansion {
     generated_child_order_hash: String,
 }
 
+struct BlockerProbeCollector {
+    diagnostics: GeneralPersistentVacancyBlockerProbeDiagnostics,
+    work: RunWork,
+    enabled: bool,
+}
+
+type BlockerProbeOrigins = BTreeMap<RepairNodeIdentity, BTreeSet<RepairNodeIdentity>>;
+type BlockerProbeSurvivors = BTreeMap<RepairNodeIdentity, (String, Vec<RepairNode>)>;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct TransitionBurden {
+    minimum_ejected_piece_count: Option<usize>,
+    distinct_children_at_minimum: usize,
+    direct_children: usize,
+    one_ejection_children: usize,
+    two_ejection_children: usize,
+    generated_child_count: usize,
+    proposal_order_hash: String,
+    exact_row_order_hash: String,
+    generated_child_order_hash: String,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct ContactEdge {
     first_id: String,
@@ -306,6 +380,27 @@ impl Default for WorkLimits {
 }
 
 impl WorkLimits {
+    fn blocker_probe() -> Self {
+        Self {
+            selected_piece_slots: BLOCKER_PROBE_MAX_SELECTED_PIECE_SLOTS,
+            orientation_streams: BLOCKER_PROBE_MAX_ORIENTATION_STREAMS,
+            source_feature_visits: BLOCKER_PROBE_MAX_SOURCE_FEATURE_VISITS,
+            position_source_attempts: BLOCKER_PROBE_MAX_POSITION_SOURCE_ATTEMPTS,
+            returned_positions: BLOCKER_PROBE_MAX_RETURNED_POSITIONS,
+            hazard_queries: BLOCKER_PROBE_MAX_HAZARD_QUERIES,
+            proxy_pressure_visits: BLOCKER_PROBE_MAX_PROXY_PRESSURE_VISITS,
+            exact_finalist_rows: BLOCKER_PROBE_MAX_EXACT_FINALIST_ROWS,
+            experimental_collision_builds: BLOCKER_PROBE_MAX_EXPERIMENTAL_COLLISION_BUILDS,
+            validator_collision_builds: 0,
+            experimental_pair_visits: BLOCKER_PROBE_MAX_EXPERIMENTAL_PAIR_VISITS,
+            validator_pair_visits: 0,
+            transformed_collision_vertices: BLOCKER_PROBE_MAX_TRANSFORMED_COLLISION_VERTICES,
+            clipper_input_vertices: BLOCKER_PROBE_MAX_CLIPPER_INPUT_VERTICES,
+            partial_audits: 0,
+            complete_audits: 0,
+        }
+    }
+
     fn repair() -> Self {
         Self {
             selected_piece_slots: REPAIR_MAX_SELECTED_PIECE_SLOTS,
@@ -509,6 +604,9 @@ fn uses_macro_expansion(mode: usize) -> bool {
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
             | VACANCY_TOPOLOGY_PROBE_MODE
+            | BLOCKER_PROBE_ROOT_MODE
+            | BLOCKER_PROBE_STATE_MODE
+            | BLOCKER_PROBE_QUEUE_MODE
     )
 }
 
@@ -523,6 +621,9 @@ fn admits_macro_children(mode: usize) -> bool {
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
             | VACANCY_TOPOLOGY_PROBE_MODE
+            | BLOCKER_PROBE_ROOT_MODE
+            | BLOCKER_PROBE_STATE_MODE
+            | BLOCKER_PROBE_QUEUE_MODE
     )
 }
 
@@ -536,6 +637,9 @@ fn uses_preserved_best_macro(mode: usize) -> bool {
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
             | VACANCY_TOPOLOGY_PROBE_MODE
+            | BLOCKER_PROBE_ROOT_MODE
+            | BLOCKER_PROBE_STATE_MODE
+            | BLOCKER_PROBE_QUEUE_MODE
     )
 }
 
@@ -548,6 +652,9 @@ fn uses_repair_expedition(mode: usize) -> bool {
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
             | VACANCY_TOPOLOGY_PROBE_MODE
+            | BLOCKER_PROBE_ROOT_MODE
+            | BLOCKER_PROBE_STATE_MODE
+            | BLOCKER_PROBE_QUEUE_MODE
     )
 }
 
@@ -558,7 +665,124 @@ fn uses_repair_restart_screen(mode: usize) -> bool {
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
             | VACANCY_TOPOLOGY_PROBE_MODE
+            | BLOCKER_PROBE_ROOT_MODE
+            | BLOCKER_PROBE_STATE_MODE
+            | BLOCKER_PROBE_QUEUE_MODE
     )
+}
+
+fn blocker_probe_base_mode(mode: usize) -> Option<usize> {
+    match mode {
+        BLOCKER_PROBE_ROOT_MODE => Some(REPAIR_RESTART_ROOT_CONTROL_MODE),
+        BLOCKER_PROBE_STATE_MODE => Some(REPAIR_RESTART_STATE_TREATMENT_MODE),
+        BLOCKER_PROBE_QUEUE_MODE => Some(REPAIR_RESTART_QUEUE_TREATMENT_MODE),
+        _ => None,
+    }
+}
+
+fn blocker_probe_expected_base_sha256(mode: usize) -> Option<&'static str> {
+    match mode {
+        BLOCKER_PROBE_ROOT_MODE => Some(EXPECTED_BLOCKER_PROBE_ROOT_BASE_SHA256),
+        BLOCKER_PROBE_STATE_MODE => Some(EXPECTED_BLOCKER_PROBE_STATE_BASE_SHA256),
+        BLOCKER_PROBE_QUEUE_MODE => Some(EXPECTED_BLOCKER_PROBE_QUEUE_BASE_SHA256),
+        _ => None,
+    }
+}
+
+fn blocker_probe_base_projection(
+    diagnostics: &GeneralPersistentVacancyDiagnostics,
+    base_mode: usize,
+) -> GeneralPersistentVacancyDiagnostics {
+    let mut projected = diagnostics.clone();
+    projected.mode = base_mode;
+    projected.blocker_burden_probe = None;
+    projected
+}
+
+fn finalize_blocker_probe_base_projection(diagnostics: &mut GeneralPersistentVacancyDiagnostics) {
+    let experimental_mode = diagnostics.mode;
+    let Some(base_mode) = blocker_probe_base_mode(experimental_mode) else {
+        return;
+    };
+    let expected = blocker_probe_expected_base_sha256(experimental_mode)
+        .expect("blocker-probe mode has an expected base hash");
+    if diagnostics.blocker_burden_probe.is_none() {
+        let mut collector = BlockerProbeCollector::new(base_mode, 0);
+        collector.fail("blocker-probe diagnostics were not constructed".to_owned());
+        diagnostics.blocker_burden_probe = Some(collector.finish());
+    }
+    let probe_heap_bytes = diagnostics
+        .blocker_burden_probe
+        .as_ref()
+        .map_or(0, blocker_probe_diagnostic_heap_bytes);
+    let diagnostic_heap_bytes = persistent_diagnostic_bytes(diagnostics);
+    let projection_scratch_upper_bound = diagnostic_heap_bytes
+        .checked_mul(4)
+        .and_then(|bytes| bytes.checked_add(64 * 1024));
+    let memory_failure = if probe_heap_bytes > BLOCKER_PROBE_RETAINED_RESERVATION_BYTES {
+        Some("blocker-probe retained-memory reservation exhausted".to_owned())
+    } else if projection_scratch_upper_bound
+        .is_none_or(|bytes| bytes > BLOCKER_PROBE_TRANSIENT_RESERVATION_BYTES)
+    {
+        Some("blocker-probe projection scratch reservation exhausted".to_owned())
+    } else if diagnostics
+        .work
+        .total_retained_peak_bytes
+        .checked_add(BLOCKER_PROBE_TRANSIENT_RESERVATION_BYTES)
+        .and_then(|bytes| bytes.checked_add(BLOCKER_PROBE_RETAINED_RESERVATION_BYTES))
+        .is_none_or(|bytes| bytes > MAX_RETAINED_BYTES)
+    {
+        Some("blocker-probe completed memory budget exhausted".to_owned())
+    } else {
+        None
+    };
+    if let Some(reason) = memory_failure {
+        let probe = diagnostics
+            .blocker_burden_probe
+            .as_mut()
+            .expect("blocker-probe diagnostics were initialized");
+        invalidate_blocker_probe_diagnostics(probe, format!("cap: {reason}"));
+        return;
+    }
+    let projected = blocker_probe_base_projection(diagnostics, base_mode);
+    let projection = exact_diagnostic_sha256(&projected);
+    let probe = diagnostics
+        .blocker_burden_probe
+        .as_mut()
+        .expect("blocker-probe diagnostics were initialized");
+    match projection {
+        Ok(actual) => {
+            probe.actual_base_projection_sha256 = Some(actual.clone());
+            probe.base_projection_matched = actual == expected;
+            if !probe.base_projection_matched {
+                invalidate_blocker_probe_diagnostics(
+                    probe,
+                    format!(
+                        "blocker-probe base projection mismatch: expected {expected}, got {actual}"
+                    ),
+                );
+            }
+        }
+        Err(reason) => {
+            invalidate_blocker_probe_diagnostics(
+                probe,
+                format!("blocker-probe base projection serialization failed: {reason}"),
+            );
+        }
+    }
+}
+
+fn invalidate_blocker_probe_diagnostics(
+    probe: &mut GeneralPersistentVacancyBlockerProbeDiagnostics,
+    reason: String,
+) {
+    probe.rows.clear();
+    probe.visited_parent_rows = 0;
+    probe.preselected_pairs = 0;
+    probe.non_tied_pairs = 0;
+    probe.comparator_opposing_pairs = 0;
+    probe.cap_exhausted = reason.strip_prefix("cap: ").map(str::to_owned);
+    probe.failure_reason = Some(reason);
 }
 
 struct MacroParentChoice<'a> {
@@ -649,6 +873,7 @@ pub(super) fn run_persistent_vacancy_population(
         }
     }
     diagnostics.work = work.diagnostics;
+    finalize_blocker_probe_base_projection(&mut diagnostics);
     diagnostics
 }
 
@@ -676,9 +901,12 @@ fn run_population(
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
             | VACANCY_TOPOLOGY_PROBE_MODE
+            | BLOCKER_PROBE_ROOT_MODE
+            | BLOCKER_PROBE_STATE_MODE
+            | BLOCKER_PROBE_QUEUE_MODE
     ) {
         return Err(
-            "persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 8, 9, 10, or 14 through 19; retired modes 7 and 11 through 13 are unavailable"
+            "persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 8, 9, 10, or 14 through 22; retired modes 7 and 11 through 13 are unavailable"
                 .to_owned(),
         );
     }
@@ -1306,6 +1534,7 @@ fn run_population(
         &mut expedition_events,
         &mut repair_root_dual_valid,
         &mut expedition_work,
+        None,
     );
     let outcome = match outcome {
         Ok(success) => success,
@@ -1410,6 +1639,7 @@ fn run_repair_restart_screen(
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<Option<(VacancyState, f64)>, String> {
+    let restart_mode = blocker_probe_base_mode(mode).unwrap_or(mode);
     let work_before = generation_work_snapshot(work.diagnostics);
     let mut round_zero_events = GeneralPersistentVacancyDiagnostics::default();
     let mut round_zero_work = RunWork {
@@ -1431,6 +1661,7 @@ fn run_repair_restart_screen(
         &mut round_zero_events,
         &mut round_zero_root_valid,
         &mut round_zero_work,
+        None,
     ) {
         Ok(outcome) => outcome,
         Err(reason) => {
@@ -1550,7 +1781,7 @@ fn run_repair_restart_screen(
         return Err(reason);
     }
 
-    let (round_one_origin, round_one_state, preserve_round_zero_queue) = match mode {
+    let (round_one_origin, round_one_state, preserve_round_zero_queue) = match restart_mode {
         REPAIR_RESTART_ROOT_CONTROL_MODE => ("originalBestCount", root, false),
         REPAIR_RESTART_STATE_TREATMENT_MODE => (
             "roundZeroEndpointRebuiltQueue",
@@ -1680,6 +1911,12 @@ fn run_repair_restart_screen(
     };
     let mut round_one_events = GeneralPersistentVacancyDiagnostics::default();
     let mut round_one_root_valid = false;
+    let mut blocker_probe = blocker_probe_base_mode(mode).map(|base_mode| {
+        BlockerProbeCollector::new(
+            base_mode,
+            round_one_work.diagnostics.total_retained_peak_bytes,
+        )
+    });
     let round_one = match run_repair_expedition(
         &round_one_node.state,
         Some(&round_one_node.queue),
@@ -1694,6 +1931,7 @@ fn run_repair_restart_screen(
         &mut round_one_events,
         &mut round_one_root_valid,
         &mut round_one_work,
+        blocker_probe.as_mut(),
     ) {
         Ok(outcome) => outcome,
         Err(reason) => {
@@ -1721,6 +1959,7 @@ fn run_repair_restart_screen(
                 round_one_work.diagnostics,
             );
             diagnostics.repair_restart_screen = Some(screen);
+            diagnostics.blocker_burden_probe = blocker_probe.map(BlockerProbeCollector::finish);
             return Err(reason);
         }
     };
@@ -1764,7 +2003,7 @@ fn run_repair_restart_screen(
         None
     };
     let screen = GeneralPersistentVacancyRepairRestartDiagnostics {
-        arm_family: restart_arm_family(mode).to_owned(),
+        arm_family: restart_arm_family(restart_mode).to_owned(),
         round_zero_replay_sha256: Some(round_zero_hash),
         round_zero_endpoint_state_fingerprint: Some(state_fingerprint(
             &round_zero.best_partial.node.state,
@@ -1795,6 +2034,7 @@ fn run_repair_restart_screen(
     );
     diagnostics.repair_restart_screen = Some(screen);
     diagnostics.vacancy_topology_probe = topology_probe;
+    diagnostics.blocker_burden_probe = blocker_probe.map(BlockerProbeCollector::finish);
     Ok(round_one.accepted_complete)
 }
 
@@ -1826,7 +2066,7 @@ fn failed_restart_screen(
     round_zero_endpoint_identity: Option<String>,
 ) -> GeneralPersistentVacancyRepairRestartDiagnostics {
     GeneralPersistentVacancyRepairRestartDiagnostics {
-        arm_family: restart_arm_family(mode).to_owned(),
+        arm_family: restart_arm_family(blocker_probe_base_mode(mode).unwrap_or(mode)).to_owned(),
         round_zero_replay_sha256: round_zero_hash,
         round_zero_endpoint_state_fingerprint: round_zero_endpoint_state,
         round_zero_endpoint_augmented_identity_hash: round_zero_endpoint_identity,
@@ -1997,6 +2237,530 @@ fn merge_repair_work(work: &mut RunWork, repair: GeneralPersistentVacancyWorkDia
         .max(repair.total_retained_peak_bytes);
 }
 
+impl BlockerProbeCollector {
+    fn new(base_mode: usize, base_retained_peak_bytes: usize) -> Self {
+        let expected_base_projection_sha256 = match base_mode {
+            REPAIR_RESTART_ROOT_CONTROL_MODE => EXPECTED_BLOCKER_PROBE_ROOT_BASE_SHA256,
+            REPAIR_RESTART_STATE_TREATMENT_MODE => EXPECTED_BLOCKER_PROBE_STATE_BASE_SHA256,
+            REPAIR_RESTART_QUEUE_TREATMENT_MODE => EXPECTED_BLOCKER_PROBE_QUEUE_BASE_SHA256,
+            _ => "",
+        };
+        let mut collector = Self {
+            diagnostics: GeneralPersistentVacancyBlockerProbeDiagnostics::default(),
+            work: RunWork {
+                diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
+                limits: WorkLimits::blocker_probe(),
+            },
+            enabled: true,
+        };
+        if let Err(reason) = collector.preflight_memory(base_retained_peak_bytes) {
+            collector.fail(reason);
+            return collector;
+        }
+        collector.diagnostics.attempted = true;
+        collector.diagnostics.base_mode = base_mode;
+        collector.diagnostics.expected_base_projection_sha256 =
+            expected_base_projection_sha256.to_owned();
+        collector.diagnostics.parent_row_limit = BLOCKER_PROBE_PARENT_ROWS;
+        collector.diagnostics.transient_memory_reservation_bytes =
+            BLOCKER_PROBE_TRANSIENT_RESERVATION_BYTES;
+        collector.diagnostics.retained_memory_reservation_bytes =
+            BLOCKER_PROBE_RETAINED_RESERVATION_BYTES;
+        collector.diagnostics.rows = Vec::with_capacity(BLOCKER_PROBE_PARENT_ROWS);
+        collector
+    }
+
+    fn has_parent_capacity(&self) -> bool {
+        self.diagnostics.visited_parent_rows < BLOCKER_PROBE_PARENT_ROWS
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn observe_depth(
+        &mut self,
+        expansion_depth: usize,
+        surviving_by_parent: BlockerProbeSurvivors,
+        baseline: &[RelaxedPlacement],
+        pieces: &[GeneralFastPiece<'_>],
+        settings: GeneralFastSettings,
+        difficulty: &[PieceDifficulty],
+        hazard_catalog: &Arc<JaguaHazardCatalog>,
+        seed_schedule: RepairSeedSchedule,
+        base_retained_peak_bytes: usize,
+    ) {
+        if !self.enabled {
+            return;
+        }
+        let remaining =
+            BLOCKER_PROBE_PARENT_ROWS.saturating_sub(self.diagnostics.visited_parent_rows);
+        for (_parent_identity, (parent_hash, mut candidates)) in
+            take_blocker_probe_parent_rows(surviving_by_parent, remaining)
+        {
+            if let Err(reason) = self.preflight_memory(base_retained_peak_bytes) {
+                self.fail(reason);
+                return;
+            }
+            self.diagnostics.visited_parent_rows += 1;
+            candidates.sort_by_key(repair_node_identity);
+            let row_work_before = generation_work_snapshot(self.work.diagnostics);
+            let mut row = GeneralPersistentVacancyBlockerProbeRowDiagnostics {
+                parent_ordinal: self.diagnostics.visited_parent_rows - 1,
+                expansion_depth,
+                parent_augmented_identity_hash: parent_hash,
+                candidate_count_after_transposition: candidates.len(),
+                ..GeneralPersistentVacancyBlockerProbeRowDiagnostics::default()
+            };
+            let pair = match first_blocker_probe_pair(&candidates, pieces) {
+                Ok(pair) => pair,
+                Err(reason) => {
+                    self.fail(reason);
+                    return;
+                }
+            };
+            let Some((first, second)) = pair else {
+                row.invalidation_reason = Some("noComparatorPrefixMatchedPair".to_owned());
+                self.diagnostics.rows.push(row);
+                continue;
+            };
+            self.diagnostics.preselected_pairs += 1;
+            let first_sibling_hash = repair_node_hash(first, pieces);
+            let second_sibling_hash = repair_node_hash(second, pieces);
+            row.row_key_sha256 = Some(blocker_probe_row_key(
+                &row.parent_augmented_identity_hash,
+                &first_sibling_hash,
+                &second_sibling_hash,
+            ));
+            row.first_sibling_augmented_identity_hash = Some(first_sibling_hash);
+            row.second_sibling_augmented_identity_hash = Some(second_sibling_hash);
+            let Some(first_piece_index) = first.queue.first().copied() else {
+                row.invalidation_reason = Some("firstSiblingHasNoNextHead".to_owned());
+                self.diagnostics.rows.push(row);
+                continue;
+            };
+            let Some(second_piece_index) = second.queue.first().copied() else {
+                row.invalidation_reason = Some("secondSiblingHasNoNextHead".to_owned());
+                self.diagnostics.rows.push(row);
+                continue;
+            };
+            if first_piece_index != second_piece_index {
+                self.fail(
+                    "blocker-probe matched siblings have different selected heads".to_owned(),
+                );
+                return;
+            }
+            row.selected_piece_id = Some(pieces[first_piece_index].id.to_owned());
+            let first_signal = match measure_transition_burden(
+                first,
+                baseline,
+                pieces,
+                settings,
+                difficulty,
+                hazard_catalog,
+                seed_schedule,
+                base_retained_peak_bytes,
+                self,
+            ) {
+                Ok(signal) => signal,
+                Err(reason) => {
+                    self.fail(reason);
+                    return;
+                }
+            };
+            let second_signal = match measure_transition_burden(
+                second,
+                baseline,
+                pieces,
+                settings,
+                difficulty,
+                hazard_catalog,
+                seed_schedule,
+                base_retained_peak_bytes,
+                self,
+            ) {
+                Ok(signal) => signal,
+                Err(reason) => {
+                    self.fail(reason);
+                    return;
+                }
+            };
+            let signal_ordering = compare_transition_burden(&first_signal, &second_signal);
+            let comparator_ordering = compare_repair_nodes(first, second, pieces, difficulty);
+            row.first_signal = Some(first_signal.into());
+            row.second_signal = Some(second_signal.into());
+            row.signal_ordering = Some(ordering_label(signal_ordering).to_owned());
+            row.comparator_ordering = Some(ordering_label(comparator_ordering).to_owned());
+            if signal_ordering == Ordering::Equal {
+                row.invalidation_reason = Some("equalSignal".to_owned());
+            } else {
+                self.diagnostics.non_tied_pairs += 1;
+                row.comparator_opposed = signal_ordering.reverse() == comparator_ordering;
+                if row.comparator_opposed {
+                    self.diagnostics.comparator_opposing_pairs += 1;
+                } else {
+                    row.invalidation_reason = Some("agreesWithExistingComparator".to_owned());
+                }
+            }
+            row.work = work_delta(
+                generation_work_snapshot(self.work.diagnostics),
+                row_work_before,
+            );
+            self.diagnostics.rows.push(row);
+        }
+    }
+
+    fn preflight_memory(&mut self, base_retained_peak_bytes: usize) -> Result<(), String> {
+        let selector_bytes = BLOCKER_PROBE_RETAINED_RESERVATION_BYTES;
+        let total_bytes = base_retained_peak_bytes
+            .checked_add(BLOCKER_PROBE_TRANSIENT_RESERVATION_BYTES)
+            .and_then(|bytes| bytes.checked_add(selector_bytes))
+            .ok_or_else(|| self.work.cap("blocker-probe memory accounting overflow"))?;
+        self.work.diagnostics.selector_diagnostic_peak_bytes = self
+            .work
+            .diagnostics
+            .selector_diagnostic_peak_bytes
+            .max(selector_bytes);
+        self.work.diagnostics.total_retained_peak_bytes = self
+            .work
+            .diagnostics
+            .total_retained_peak_bytes
+            .max(total_bytes);
+        if total_bytes > MAX_RETAINED_BYTES {
+            return Err(self.work.cap("blocker-probe memory budget exhausted"));
+        }
+        Ok(())
+    }
+
+    fn preflight_signal(&mut self, base_retained_peak_bytes: usize) -> Result<(), String> {
+        self.preflight_memory(base_retained_peak_bytes)?;
+        let checks = [
+            (
+                self.work.diagnostics.selected_piece_slots,
+                BLOCKER_PROBE_SIGNAL_SELECTED_PIECE_SLOTS,
+                self.work.limits.selected_piece_slots,
+                "selected-piece slot",
+            ),
+            (
+                self.work.diagnostics.orientation_streams,
+                BLOCKER_PROBE_SIGNAL_ORIENTATION_STREAMS,
+                self.work.limits.orientation_streams,
+                "orientation-stream",
+            ),
+            (
+                self.work.diagnostics.source_feature_visits,
+                BLOCKER_PROBE_SIGNAL_SOURCE_FEATURE_VISITS,
+                self.work.limits.source_feature_visits,
+                "source-feature visit",
+            ),
+            (
+                self.work.diagnostics.position_source_attempts,
+                BLOCKER_PROBE_SIGNAL_POSITION_SOURCE_ATTEMPTS,
+                self.work.limits.position_source_attempts,
+                "position-source attempt",
+            ),
+            (
+                self.work.diagnostics.returned_positions,
+                BLOCKER_PROBE_SIGNAL_RETURNED_POSITIONS,
+                self.work.limits.returned_positions,
+                "returned-position",
+            ),
+            (
+                self.work.diagnostics.hazard_queries,
+                BLOCKER_PROBE_SIGNAL_HAZARD_QUERIES,
+                self.work.limits.hazard_queries,
+                "hazard-query",
+            ),
+            (
+                self.work.diagnostics.proxy_pressure_visits,
+                BLOCKER_PROBE_SIGNAL_PROXY_PRESSURE_VISITS,
+                self.work.limits.proxy_pressure_visits,
+                "proxy-pressure visit",
+            ),
+            (
+                self.work.diagnostics.exact_finalist_rows,
+                BLOCKER_PROBE_SIGNAL_EXACT_FINALIST_ROWS,
+                self.work.limits.exact_finalist_rows,
+                "exact-finalist row",
+            ),
+            (
+                self.work.diagnostics.experimental_collision_builds,
+                BLOCKER_PROBE_SIGNAL_EXPERIMENTAL_COLLISION_BUILDS,
+                self.work.limits.experimental_collision_builds,
+                "experimental collision-build",
+            ),
+            (
+                self.work.diagnostics.experimental_pair_visits,
+                BLOCKER_PROBE_SIGNAL_EXPERIMENTAL_PAIR_VISITS,
+                self.work.limits.experimental_pair_visits,
+                "experimental pair-visit",
+            ),
+            (
+                self.work.diagnostics.transformed_collision_vertices,
+                BLOCKER_PROBE_SIGNAL_TRANSFORMED_COLLISION_VERTICES,
+                self.work.limits.transformed_collision_vertices,
+                "transformed collision-vertex",
+            ),
+            (
+                self.work.diagnostics.clipper_input_vertices,
+                BLOCKER_PROBE_SIGNAL_CLIPPER_INPUT_VERTICES,
+                self.work.limits.clipper_input_vertices,
+                "Clipper input-vertex",
+            ),
+        ];
+        for (current, increment, limit, label) in checks {
+            let prospective = current.checked_add(increment).ok_or_else(|| {
+                self.work
+                    .cap(&format!("blocker-probe {label} accounting overflow"))
+            })?;
+            if prospective > limit {
+                return Err(self
+                    .work
+                    .cap(&format!("blocker-probe {label} budget exhausted")));
+            }
+        }
+        if self.work.diagnostics.clipper_output_vertices > MAX_CLIPPER_OUTPUT_VERTICES {
+            return Err(self
+                .work
+                .cap("blocker-probe Clipper output-vertex budget exhausted"));
+        }
+        Ok(())
+    }
+
+    fn fail(&mut self, reason: String) {
+        self.enabled = false;
+        invalidate_blocker_probe_diagnostics(&mut self.diagnostics, reason);
+    }
+
+    fn finish(mut self) -> GeneralPersistentVacancyBlockerProbeDiagnostics {
+        self.diagnostics.work = self.work.diagnostics;
+        let retained_bytes = blocker_probe_diagnostic_heap_bytes(&self.diagnostics);
+        if retained_bytes > BLOCKER_PROBE_RETAINED_RESERVATION_BYTES {
+            self.fail(
+                self.work.cap(
+                    "blocker-probe completed diagnostic exceeds its retained-memory reservation",
+                ),
+            );
+            self.diagnostics.work = self.work.diagnostics;
+        }
+        self.diagnostics
+    }
+}
+
+impl From<TransitionBurden> for GeneralPersistentVacancyTransitionBurdenDiagnostics {
+    fn from(signal: TransitionBurden) -> Self {
+        Self {
+            minimum_ejected_piece_count: signal.minimum_ejected_piece_count,
+            distinct_children_at_minimum: signal.distinct_children_at_minimum,
+            direct_children: signal.direct_children,
+            one_ejection_children: signal.one_ejection_children,
+            two_ejection_children: signal.two_ejection_children,
+            generated_child_count: signal.generated_child_count,
+            proposal_order_hash: signal.proposal_order_hash,
+            exact_row_order_hash: signal.exact_row_order_hash,
+            generated_child_order_hash: signal.generated_child_order_hash,
+        }
+    }
+}
+
+fn ordering_label(ordering: Ordering) -> &'static str {
+    match ordering {
+        Ordering::Less => "firstBetter",
+        Ordering::Equal => "equal",
+        Ordering::Greater => "secondBetter",
+    }
+}
+
+fn blocker_probe_row_key(parent_hash: &str, first_hash: &str, second_hash: &str) -> String {
+    let mut digest = Sha256::new();
+    digest.update(b"persistent-vacancy-blocker-probe-row-v1\0");
+    for value in [parent_hash, first_hash, second_hash] {
+        digest.update((value.len() as u32).to_be_bytes());
+        digest.update(value.as_bytes());
+    }
+    format!("{:x}", digest.finalize())
+}
+
+fn compare_transition_burden(first: &TransitionBurden, second: &TransitionBurden) -> Ordering {
+    first
+        .minimum_ejected_piece_count
+        .unwrap_or(usize::MAX)
+        .cmp(&second.minimum_ejected_piece_count.unwrap_or(usize::MAX))
+        .then_with(|| {
+            second
+                .distinct_children_at_minimum
+                .cmp(&first.distinct_children_at_minimum)
+        })
+}
+
+fn sibling_ejected_ids(
+    node: &RepairNode,
+    pieces: &[GeneralFastPiece<'_>],
+) -> Result<Vec<String>, String> {
+    let transition = node
+        .state
+        .last_transition
+        .as_ref()
+        .ok_or_else(|| "blocker-probe child has no transition".to_owned())?;
+    let mut ids = transition
+        .ejected
+        .iter()
+        .map(|index| pieces[*index].id.to_owned())
+        .collect::<Vec<_>>();
+    ids.sort();
+    Ok(ids)
+}
+
+fn first_blocker_probe_pair<'a>(
+    candidates: &'a [RepairNode],
+    pieces: &[GeneralFastPiece<'_>],
+) -> Result<Option<(&'a RepairNode, &'a RepairNode)>, String> {
+    for first_index in 0..candidates.len() {
+        for second_index in (first_index + 1)..candidates.len() {
+            let first = &candidates[first_index];
+            let second = &candidates[second_index];
+            if stable_inactive_order(&first.state, pieces)
+                != stable_inactive_order(&second.state, pieces)
+                || sibling_ejected_ids(first, pieces)? != sibling_ejected_ids(second, pieces)?
+            {
+                continue;
+            }
+            if first.queue != second.queue {
+                return Err(
+                    "blocker-probe comparator-prefix match did not preserve the queue".to_owned(),
+                );
+            }
+            return Ok(Some((first, second)));
+        }
+    }
+    Ok(None)
+}
+
+fn group_blocker_probe_survivors(
+    parents: Vec<(RepairNodeIdentity, String)>,
+    origins: &BlockerProbeOrigins,
+    surviving: &[RepairNode],
+) -> BlockerProbeSurvivors {
+    let mut by_parent = BlockerProbeSurvivors::new();
+    for (parent_identity, parent_hash) in parents {
+        by_parent
+            .entry(parent_identity)
+            .or_insert_with(|| (parent_hash, Vec::new()));
+    }
+    for node in surviving {
+        let identity = repair_node_identity(node);
+        let Some(parent_identity) = origins
+            .get(&identity)
+            .and_then(|parent_identities| parent_identities.iter().next())
+        else {
+            continue;
+        };
+        if let Some((_parent_hash, candidates)) = by_parent.get_mut(parent_identity) {
+            candidates.push(node.clone());
+        }
+    }
+    by_parent
+}
+
+fn take_blocker_probe_parent_rows(
+    surviving_by_parent: BlockerProbeSurvivors,
+    remaining: usize,
+) -> Vec<(RepairNodeIdentity, (String, Vec<RepairNode>))> {
+    surviving_by_parent.into_iter().take(remaining).collect()
+}
+
+#[allow(clippy::too_many_arguments)]
+fn measure_transition_burden(
+    node: &RepairNode,
+    baseline: &[RelaxedPlacement],
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    difficulty: &[PieceDifficulty],
+    hazard_catalog: &Arc<JaguaHazardCatalog>,
+    seed_schedule: RepairSeedSchedule,
+    base_retained_peak_bytes: usize,
+    probe: &mut BlockerProbeCollector,
+) -> Result<TransitionBurden, String> {
+    probe.preflight_signal(base_retained_peak_bytes)?;
+    let piece_index = *node
+        .queue
+        .first()
+        .ok_or_else(|| "blocker-probe sibling has no selected head".to_owned())?;
+    let poses = node
+        .state
+        .placements
+        .iter()
+        .map(hazard_pose)
+        .collect::<Vec<_>>();
+    let mut index = JaguaHazardIndex::from_catalog_active(
+        pieces,
+        settings,
+        TARGET_DEPTH_MM,
+        &poses,
+        &node.state.active,
+        hazard_catalog,
+    )
+    .map_err(|error| format!("blocker-probe hazard index: {error}"))?;
+    let transition_seed = repair_transition_seed(&node.state, piece_index, pieces, seed_schedule);
+    let mut private_events = GeneralPersistentVacancyDiagnostics::default();
+    let mut children = Vec::with_capacity(FINALISTS_PER_PIECE);
+    let expansion = expand_selected_piece(
+        &node.state,
+        baseline,
+        pieces,
+        settings,
+        &mut index,
+        transition_seed,
+        0,
+        piece_index,
+        &mut private_events,
+        &mut probe.work,
+        &mut children,
+    )?;
+    let mut distinct = BTreeMap::<RepairNodeIdentity, usize>::new();
+    for child in children {
+        let ejected = child
+            .last_transition
+            .as_ref()
+            .ok_or_else(|| "blocker-probe exact child has no transition".to_owned())?
+            .ejected
+            .len();
+        if ejected > 2 {
+            return Err("blocker-probe exact child exceeds the two-ejection cap".to_owned());
+        }
+        let queue = repair_child_queue(
+            node,
+            &child,
+            piece_index,
+            pieces,
+            difficulty,
+            REPAIR_TREATMENT_MODE,
+        )?;
+        distinct.insert(
+            repair_node_identity(&RepairNode {
+                state: child,
+                queue,
+            }),
+            ejected,
+        );
+    }
+    let direct_children = distinct.values().filter(|count| **count == 0).count();
+    let one_ejection_children = distinct.values().filter(|count| **count == 1).count();
+    let two_ejection_children = distinct.values().filter(|count| **count == 2).count();
+    let minimum_ejected_piece_count = distinct.values().copied().min();
+    let distinct_children_at_minimum = minimum_ejected_piece_count.map_or(0, |minimum| {
+        distinct.values().filter(|count| **count == minimum).count()
+    });
+    Ok(TransitionBurden {
+        minimum_ejected_piece_count,
+        distinct_children_at_minimum,
+        direct_children,
+        one_ejection_children,
+        two_ejection_children,
+        generated_child_count: distinct.len(),
+        proposal_order_hash: expansion.proposal_order_hash,
+        exact_row_order_hash: expansion.exact_row_order_hash,
+        generated_child_order_hash: expansion.generated_child_order_hash,
+    })
+}
+
 #[allow(clippy::too_many_arguments)]
 fn run_repair_expedition(
     root: &VacancyState,
@@ -2012,6 +2776,7 @@ fn run_repair_expedition(
     expedition_events: &mut GeneralPersistentVacancyDiagnostics,
     root_dual_valid: &mut bool,
     work: &mut RunWork,
+    mut blocker_probe: Option<&mut BlockerProbeCollector>,
 ) -> Result<RepairRoundOutcome, String> {
     preflight_repair_memory(root, pieces, base_diagnostics, "root", work)?;
     let work_before = generation_work_snapshot(work.diagnostics);
@@ -2056,7 +2821,28 @@ fn run_repair_expedition(
         let expanded_parents = frontier.len();
         let mut raw = Vec::with_capacity(REPAIR_BEAM_WIDTH * FINALISTS_PER_PIECE);
         let mut expansion_diagnostics = Vec::with_capacity(expanded_parents);
+        let track_probe_provenance = if let Some(probe) = blocker_probe.as_deref_mut() {
+            if probe.enabled && probe.has_parent_capacity() {
+                match probe.preflight_memory(work.diagnostics.total_retained_peak_bytes) {
+                    Ok(()) => true,
+                    Err(reason) => {
+                        probe.fail(reason);
+                        false
+                    }
+                }
+            } else {
+                false
+            }
+        } else {
+            false
+        };
+        let mut probe_parents = Vec::<(RepairNodeIdentity, String)>::new();
+        let mut probe_origins = BlockerProbeOrigins::new();
         for parent in &frontier {
+            let parent_hash = repair_node_hash(parent, pieces);
+            if track_probe_provenance {
+                probe_parents.push((repair_node_identity(parent), parent_hash.clone()));
+            }
             let piece_index = *parent
                 .queue
                 .first()
@@ -2094,7 +2880,7 @@ fn run_repair_expedition(
                 &mut children,
             )?;
             expansion_diagnostics.push(GeneralPersistentVacancyRepairExpansionDiagnostics {
-                parent_augmented_identity_hash: repair_node_hash(parent, pieces),
+                parent_augmented_identity_hash: parent_hash.clone(),
                 parent_state_fingerprint: state_fingerprint(&parent.state, pieces),
                 parent_queue_piece_ids: queue_piece_ids(&parent.queue, pieces),
                 selected_piece_id: pieces[piece_index].id.to_owned(),
@@ -2112,10 +2898,17 @@ fn run_repair_expedition(
             for child in children {
                 let queue =
                     repair_child_queue(parent, &child, piece_index, pieces, difficulty, mode)?;
-                raw.push(RepairNode {
+                let node = RepairNode {
                     state: child,
                     queue,
-                });
+                };
+                if track_probe_provenance {
+                    probe_origins
+                        .entry(repair_node_identity(&node))
+                        .or_default()
+                        .insert(repair_node_identity(parent));
+                }
+                raw.push(node);
             }
         }
         let generated_children = raw.len();
@@ -2126,6 +2919,21 @@ fn run_repair_expedition(
         let before_transposition = raw.len();
         raw.retain(|node| seen.insert(repair_node_identity(node)));
         let transposed_children = before_transposition.saturating_sub(raw.len());
+        if let Some(probe) = blocker_probe.as_deref_mut() {
+            let surviving_by_parent =
+                group_blocker_probe_survivors(probe_parents, &probe_origins, &raw);
+            probe.observe_depth(
+                expansion_depth,
+                surviving_by_parent,
+                baseline,
+                pieces,
+                settings,
+                difficulty,
+                hazard_catalog,
+                seed_schedule,
+                work.diagnostics.total_retained_peak_bytes,
+            );
+        }
 
         let mut complete = Vec::new();
         let mut incomplete = Vec::with_capacity(raw.len());
@@ -3431,18 +4239,22 @@ fn exact_intersection_area(
     let result = first
         .intersection_area_with_complexity(second)
         .map_err(|error| format!("persistent vacancy exact intersection: {error}"))?;
+    let next_input = work
+        .diagnostics
+        .clipper_input_vertices
+        .saturating_add(result.input_vertices);
     let next_output = work
         .diagnostics
         .clipper_output_vertices
         .saturating_add(result.output_vertices);
+    work.diagnostics.clipper_input_vertices = next_input;
+    work.diagnostics.clipper_output_vertices = next_output;
+    if next_input > work.limits.clipper_input_vertices {
+        return Err(work.cap("Clipper input-vertex budget exhausted"));
+    }
     if next_output > MAX_CLIPPER_OUTPUT_VERTICES {
         return Err(work.cap("Clipper output-vertex budget exhausted"));
     }
-    work.diagnostics.clipper_input_vertices = work
-        .diagnostics
-        .clipper_input_vertices
-        .saturating_add(result.input_vertices);
-    work.diagnostics.clipper_output_vertices = next_output;
     Ok(result.area_mm2)
 }
 
@@ -4786,8 +5598,74 @@ fn persistent_diagnostic_bytes(diagnostics: &GeneralPersistentVacancyDiagnostics
                 .as_ref()
                 .map_or(0, vacancy_topology_diagnostic_heap_bytes),
         )
+        .saturating_add(
+            diagnostics
+                .blocker_burden_probe
+                .as_ref()
+                .map_or(0, blocker_probe_diagnostic_heap_bytes),
+        )
         .saturating_add(option_string_bytes(&diagnostics.cap_exhausted))
         .saturating_add(option_string_bytes(&diagnostics.failure_reason))
+}
+
+fn blocker_probe_diagnostic_heap_bytes(
+    probe: &GeneralPersistentVacancyBlockerProbeDiagnostics,
+) -> usize {
+    probe
+        .expected_base_projection_sha256
+        .capacity()
+        .saturating_add(option_string_bytes(&probe.actual_base_projection_sha256))
+        .saturating_add(
+            probe
+                .rows
+                .capacity()
+                .saturating_mul(size_of::<GeneralPersistentVacancyBlockerProbeRowDiagnostics>()),
+        )
+        .saturating_add(
+            probe
+                .rows
+                .iter()
+                .map(blocker_probe_row_heap_bytes)
+                .sum::<usize>(),
+        )
+        .saturating_add(option_string_bytes(&probe.cap_exhausted))
+        .saturating_add(option_string_bytes(&probe.failure_reason))
+}
+
+fn blocker_probe_row_heap_bytes(row: &GeneralPersistentVacancyBlockerProbeRowDiagnostics) -> usize {
+    row.parent_augmented_identity_hash
+        .capacity()
+        .saturating_add(option_string_bytes(
+            &row.first_sibling_augmented_identity_hash,
+        ))
+        .saturating_add(option_string_bytes(
+            &row.second_sibling_augmented_identity_hash,
+        ))
+        .saturating_add(option_string_bytes(&row.row_key_sha256))
+        .saturating_add(option_string_bytes(&row.selected_piece_id))
+        .saturating_add(
+            row.first_signal
+                .as_ref()
+                .map_or(0, blocker_probe_signal_heap_bytes),
+        )
+        .saturating_add(
+            row.second_signal
+                .as_ref()
+                .map_or(0, blocker_probe_signal_heap_bytes),
+        )
+        .saturating_add(option_string_bytes(&row.signal_ordering))
+        .saturating_add(option_string_bytes(&row.comparator_ordering))
+        .saturating_add(option_string_bytes(&row.invalidation_reason))
+}
+
+fn blocker_probe_signal_heap_bytes(
+    signal: &GeneralPersistentVacancyTransitionBurdenDiagnostics,
+) -> usize {
+    signal
+        .proposal_order_hash
+        .capacity()
+        .saturating_add(signal.exact_row_order_hash.capacity())
+        .saturating_add(signal.generated_child_order_hash.capacity())
 }
 
 fn vacancy_topology_diagnostic_heap_bytes(
@@ -5213,6 +6091,37 @@ mod tests {
         )
     }
 
+    fn blocker_test_node(
+        translate_x: f64,
+        active: Vec<bool>,
+        queue: Vec<usize>,
+        ejected: Vec<usize>,
+    ) -> RepairNode {
+        let placements = active
+            .iter()
+            .enumerate()
+            .map(|(input_index, _)| RelaxedPlacement {
+                input_index,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: if input_index == 0 { translate_x } else { 0.0 },
+                translate_y: 0.0,
+            })
+            .collect::<Vec<_>>();
+        RepairNode {
+            state: VacancyState {
+                collisions: vec![None; active.len()],
+                placements,
+                active,
+                last_transition: Some(VacancyTransition {
+                    inserted: 0,
+                    ejected,
+                }),
+            },
+            queue,
+        }
+    }
+
     #[test]
     fn vacancy_topology_snapshot_separates_internal_slack_from_frontier_vacancy() {
         let barrier = PolygonSet::from_outer(vec![
@@ -5284,6 +6193,230 @@ mod tests {
             restart_arm_family(VACANCY_TOPOLOGY_PROBE_MODE),
             "continuedStateRebuiltQueueTopologyProbe"
         );
+    }
+
+    #[test]
+    fn blocker_probe_modes_project_to_the_three_frozen_restart_arms() {
+        assert_eq!(
+            blocker_probe_base_mode(BLOCKER_PROBE_ROOT_MODE),
+            Some(REPAIR_RESTART_ROOT_CONTROL_MODE)
+        );
+        assert_eq!(
+            blocker_probe_base_mode(BLOCKER_PROBE_STATE_MODE),
+            Some(REPAIR_RESTART_STATE_TREATMENT_MODE)
+        );
+        assert_eq!(
+            blocker_probe_base_mode(BLOCKER_PROBE_QUEUE_MODE),
+            Some(REPAIR_RESTART_QUEUE_TREATMENT_MODE)
+        );
+        for mode in [
+            BLOCKER_PROBE_ROOT_MODE,
+            BLOCKER_PROBE_STATE_MODE,
+            BLOCKER_PROBE_QUEUE_MODE,
+        ] {
+            assert!(uses_repair_restart_screen(mode));
+            assert!(blocker_probe_expected_base_sha256(mode).is_some());
+        }
+    }
+
+    #[test]
+    fn blocker_probe_limits_match_the_predeclared_stage_a_formulas() {
+        let limits = WorkLimits::blocker_probe();
+        assert_eq!(limits.selected_piece_slots, 96);
+        assert_eq!(limits.orientation_streams, 1_152);
+        assert_eq!(limits.source_feature_visits, 98_304);
+        assert_eq!(limits.position_source_attempts, 609_408);
+        assert_eq!(limits.returned_positions, 36_864);
+        assert_eq!(limits.hazard_queries, 36_864);
+        assert_eq!(limits.proxy_pressure_visits, 2_248_704);
+        assert_eq!(limits.exact_finalist_rows, 768);
+        assert_eq!(limits.experimental_collision_builds, 1_920);
+        assert_eq!(limits.experimental_pair_visits, 46_080);
+        assert_eq!(limits.transformed_collision_vertices, 983_040);
+        assert_eq!(limits.clipper_input_vertices, 47_185_920);
+        assert_eq!(limits.partial_audits, 0);
+        assert_eq!(limits.complete_audits, 0);
+    }
+
+    #[test]
+    fn transition_burden_prefers_fewer_ejections_then_more_children() {
+        let signal = |minimum_ejected_piece_count, distinct_children_at_minimum| TransitionBurden {
+            minimum_ejected_piece_count,
+            distinct_children_at_minimum,
+            direct_children: 0,
+            one_ejection_children: 0,
+            two_ejection_children: 0,
+            generated_child_count: distinct_children_at_minimum,
+            proposal_order_hash: String::new(),
+            exact_row_order_hash: String::new(),
+            generated_child_order_hash: String::new(),
+        };
+        assert!(compare_transition_burden(&signal(Some(0), 1), &signal(Some(1), 8)).is_lt());
+        assert!(compare_transition_burden(&signal(Some(1), 4), &signal(Some(1), 2)).is_lt());
+        assert!(compare_transition_burden(&signal(Some(2), 1), &signal(None, 0)).is_lt());
+        assert_eq!(
+            compare_transition_burden(&signal(None, 0), &signal(None, 0)),
+            Ordering::Equal
+        );
+    }
+
+    #[test]
+    fn blocker_probe_preselects_the_first_identity_pair_without_substitution() {
+        let polygons = vec![square(10.0), square(10.0), square(10.0)];
+        let pieces = [
+            GeneralFastPiece {
+                id: "a",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "b",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "c",
+                polygon: &polygons[2],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let candidates = vec![
+            blocker_test_node(1.0, vec![true, false, false], vec![1, 2], Vec::new()),
+            blocker_test_node(2.0, vec![true, false, false], vec![1, 2], Vec::new()),
+            blocker_test_node(3.0, vec![true, false, false], vec![1, 2], Vec::new()),
+        ];
+        let (first, second) = first_blocker_probe_pair(&candidates, &pieces)
+            .unwrap()
+            .expect("the first comparator-prefix pair exists");
+        assert_eq!(
+            repair_node_identity(first),
+            repair_node_identity(&candidates[0])
+        );
+        assert_eq!(
+            repair_node_identity(second),
+            repair_node_identity(&candidates[1])
+        );
+    }
+
+    #[test]
+    fn blocker_probe_groups_multi_origin_children_by_full_parent_identity() {
+        let lower_parent = blocker_test_node(1.0, vec![true, false, false], vec![1, 2], Vec::new());
+        let higher_parent =
+            blocker_test_node(2.0, vec![true, false, false], vec![1, 2], Vec::new());
+        let child = blocker_test_node(3.0, vec![true, false, false], vec![1, 2], Vec::new());
+        let lower_identity = repair_node_identity(&lower_parent);
+        let higher_identity = repair_node_identity(&higher_parent);
+        assert!(lower_identity < higher_identity);
+        let child_identity = repair_node_identity(&child);
+        let mut origins = BlockerProbeOrigins::new();
+        origins.insert(
+            child_identity,
+            BTreeSet::from([higher_identity.clone(), lower_identity.clone()]),
+        );
+        let groups = group_blocker_probe_survivors(
+            vec![
+                (higher_identity.clone(), "a-hash".to_owned()),
+                (lower_identity.clone(), "z-hash".to_owned()),
+            ],
+            &origins,
+            &[child],
+        );
+        let ordered = groups.into_iter().collect::<Vec<_>>();
+        assert_eq!(ordered[0].0, lower_identity);
+        assert_eq!(ordered[0].1 .0, "z-hash");
+        assert_eq!(ordered[0].1 .1.len(), 1);
+        assert_eq!(ordered[1].0, higher_identity);
+        assert_eq!(ordered[1].1 .0, "a-hash");
+        assert!(ordered[1].1 .1.is_empty());
+    }
+
+    #[test]
+    fn blocker_probe_parent_cutoff_uses_identity_order() {
+        let mut survivors = BlockerProbeSurvivors::new();
+        for ordinal in (0..49).rev() {
+            let node = blocker_test_node(
+                ordinal as f64,
+                vec![true, false, false],
+                vec![1, 2],
+                Vec::new(),
+            );
+            survivors.insert(
+                repair_node_identity(&node),
+                (format!("hash-{ordinal:02}"), Vec::new()),
+            );
+        }
+        let selected = take_blocker_probe_parent_rows(survivors, 48);
+        assert_eq!(selected.len(), 48);
+        assert_eq!(selected.first().unwrap().1 .0, "hash-00");
+        assert_eq!(selected.last().unwrap().1 .0, "hash-47");
+    }
+
+    #[test]
+    fn blocker_probe_failure_clears_progress_but_retains_consumed_work() {
+        let mut collector = BlockerProbeCollector::new(REPAIR_RESTART_ROOT_CONTROL_MODE, 0);
+        collector
+            .diagnostics
+            .rows
+            .push(GeneralPersistentVacancyBlockerProbeRowDiagnostics::default());
+        collector.diagnostics.visited_parent_rows = 1;
+        collector.diagnostics.preselected_pairs = 1;
+        collector.work.diagnostics.selected_piece_slots = 1;
+        collector.fail("cap: injected blocker-probe failure".to_owned());
+        let diagnostics = collector.finish();
+        assert!(diagnostics.rows.is_empty());
+        assert_eq!(diagnostics.visited_parent_rows, 0);
+        assert_eq!(diagnostics.preselected_pairs, 0);
+        assert_eq!(diagnostics.work.selected_piece_slots, 1);
+        assert_eq!(
+            diagnostics.cap_exhausted.as_deref(),
+            Some("injected blocker-probe failure")
+        );
+    }
+
+    #[test]
+    fn blocker_probe_memory_preflight_fails_before_retained_allocations() {
+        let collector =
+            BlockerProbeCollector::new(REPAIR_RESTART_ROOT_CONTROL_MODE, MAX_RETAINED_BYTES);
+        assert!(!collector.enabled);
+        assert_eq!(collector.diagnostics.rows.capacity(), 0);
+        assert!(collector.diagnostics.failure_reason.is_some());
+        assert!(collector.diagnostics.cap_exhausted.is_some());
+    }
+
+    #[test]
+    fn exact_intersection_output_cap_retains_consumed_input_and_output_work() {
+        let first = square(10.0);
+        let second = square(10.0);
+        let mut work = RunWork::default();
+        work.diagnostics.clipper_output_vertices = MAX_CLIPPER_OUTPUT_VERTICES;
+        let error = exact_intersection_area(&first, &second, &mut work).unwrap_err();
+        assert_eq!(error, "cap: Clipper output-vertex budget exhausted");
+        assert!(work.diagnostics.clipper_input_vertices > 0);
+        assert!(work.diagnostics.clipper_output_vertices > MAX_CLIPPER_OUTPUT_VERTICES);
+    }
+
+    #[test]
+    fn blocker_probe_base_projection_maps_only_mode_and_additive_probe() {
+        let diagnostics = GeneralPersistentVacancyDiagnostics {
+            mode: BLOCKER_PROBE_STATE_MODE,
+            blocker_burden_probe: Some(GeneralPersistentVacancyBlockerProbeDiagnostics {
+                attempted: true,
+                base_mode: REPAIR_RESTART_STATE_TREATMENT_MODE,
+                ..GeneralPersistentVacancyBlockerProbeDiagnostics::default()
+            }),
+            layers_completed: 7,
+            direct_insertions: 11,
+            ..GeneralPersistentVacancyDiagnostics::default()
+        };
+        let projected =
+            blocker_probe_base_projection(&diagnostics, REPAIR_RESTART_STATE_TREATMENT_MODE);
+        assert_eq!(projected.mode, REPAIR_RESTART_STATE_TREATMENT_MODE);
+        assert!(projected.blocker_burden_probe.is_none());
+        assert_eq!(projected.layers_completed, diagnostics.layers_completed);
+        assert_eq!(projected.direct_insertions, diagnostics.direct_insertions);
     }
 
     fn selector_ids(ids: &[&str], layer: usize, mode: usize) -> Vec<String> {
