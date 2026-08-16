@@ -357,8 +357,6 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub repair_restart_screen: Option<GeneralPersistentVacancyRepairRestartDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vacancy_topology_probe: Option<GeneralPersistentVacancyTopologyProbeDiagnostics>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub blocker_burden_probe: Option<GeneralPersistentVacancyBlockerProbeDiagnostics>,
     pub work: GeneralPersistentVacancyWorkDiagnostics,
     pub layers: Vec<GeneralPersistentVacancyLayerDiagnostics>,
     pub cap_exhausted: Option<String>,
@@ -568,73 +566,6 @@ pub struct GeneralPersistentVacancyTopologySnapshotDiagnostics {
     pub frontier_contact_grid: String,
     pub clipper_input_vertices: usize,
     pub clipper_output_vertices: usize,
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GeneralPersistentVacancyBlockerProbeDiagnostics {
-    pub attempted: bool,
-    pub base_mode: usize,
-    pub expected_base_projection_sha256: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub actual_base_projection_sha256: Option<String>,
-    pub base_projection_matched: bool,
-    pub parent_row_limit: usize,
-    pub visited_parent_rows: usize,
-    pub preselected_pairs: usize,
-    pub non_tied_pairs: usize,
-    pub comparator_opposing_pairs: usize,
-    pub transient_memory_reservation_bytes: usize,
-    pub retained_memory_reservation_bytes: usize,
-    pub rows: Vec<GeneralPersistentVacancyBlockerProbeRowDiagnostics>,
-    pub work: GeneralPersistentVacancyWorkDiagnostics,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub cap_exhausted: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub failure_reason: Option<String>,
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GeneralPersistentVacancyBlockerProbeRowDiagnostics {
-    pub parent_ordinal: usize,
-    pub expansion_depth: usize,
-    pub parent_augmented_identity_hash: String,
-    pub candidate_count_after_transposition: usize,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub first_sibling_augmented_identity_hash: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub second_sibling_augmented_identity_hash: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub row_key_sha256: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub selected_piece_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub first_signal: Option<GeneralPersistentVacancyTransitionBurdenDiagnostics>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub second_signal: Option<GeneralPersistentVacancyTransitionBurdenDiagnostics>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub signal_ordering: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub comparator_ordering: Option<String>,
-    pub comparator_opposed: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub invalidation_reason: Option<String>,
-    pub work: GeneralPersistentVacancyWorkDiagnostics,
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GeneralPersistentVacancyTransitionBurdenDiagnostics {
-    pub minimum_ejected_piece_count: Option<usize>,
-    pub distinct_children_at_minimum: usize,
-    pub direct_children: usize,
-    pub one_ejection_children: usize,
-    pub two_ejection_children: usize,
-    pub generated_child_count: usize,
-    pub proposal_order_hash: String,
-    pub exact_row_order_hash: String,
-    pub generated_child_order_hash: String,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
