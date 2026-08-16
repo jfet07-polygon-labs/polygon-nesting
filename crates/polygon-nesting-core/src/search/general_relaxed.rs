@@ -542,6 +542,12 @@ pub struct GeneralPersistentVacancyConstructionDiagnostics {
     pub zero_prior_finalists: usize,
     pub complete_candidates: usize,
     pub audited_candidates: usize,
+    /// Mode 25 only: the off-beam best-ever expansion parent is armed.
+    pub best_ever_parent_enabled: bool,
+    /// Extra expansions spent on an elite the retention step did not keep.
+    pub best_ever_parent_expansions: usize,
+    /// Children of those expansions that won a beam slot on their own merits.
+    pub best_ever_parent_children_retained: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub published_restart_ordinal: Option<usize>,
     pub restart_rows: Vec<GeneralPersistentVacancyConstructionRestartRow>,
@@ -552,6 +558,9 @@ pub struct GeneralPersistentVacancyConstructionDiagnostics {
 pub struct GeneralPersistentVacancyConstructionRestartRow {
     pub order: String,
     pub complete: bool,
+    /// Layers of this restart whose elite was off-beam and therefore funded
+    /// the extra best-ever parent expansion (mode 25 only).
+    pub best_ever_parent_layers: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub frontier_grid: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
