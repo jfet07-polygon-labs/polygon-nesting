@@ -3,6 +3,7 @@
 use std::collections::BTreeMap;
 use std::env;
 use std::fs;
+use std::io::{self, Write};
 use std::path::Path;
 use std::process::Command;
 use std::time::Instant;
@@ -22,12 +23,15 @@ use polygon_nesting_core::search::general_relaxed::{
     GeneralRelaxedAngleSeedPolicy, GeneralRelaxedCollisionBackend, GeneralRelaxedDiagnostics,
     GeneralRelaxedPressureModel, GeneralRelaxedSettings,
 };
-use serde::Deserialize;
+use serde::ser::{SerializeSeq, Serializer};
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 
 const PERSISTENT_VACANCY_PARENT_FIXTURE_SHA256: &str =
     "18e0b052997d1251573fa35679c9fcf1d5e796acf771ec48f320ce4e9bf0081d";
+const VACANCY_ARTICULATION_JSON_CAP_BYTES: usize = 4 * 1024 * 1024;
+const VACANCY_BRIDGE_JSON_CAP_BYTES: usize = 4 * 1024 * 1024;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -141,6 +145,240 @@ struct OwnedPiece {
     allow_mirror: bool,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PairTemplateProbeOutput {
+    elapsed_ms: f64,
+    eligible_pairs: usize,
+    pairs_with_templates: usize,
+    fallback_pairs: usize,
+    orientation_tuples: usize,
+    contact_attempts: usize,
+    exact_pair_rows: usize,
+    retained_templates: usize,
+    transformed_source_vertices: usize,
+    offset_output_vertices: usize,
+    intersection_input_vertices: usize,
+    intersection_output_vertices: usize,
+    transient_rejected_output_vertices: usize,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PairTemplateSummaryOutput {
+    eligible_pairs: usize,
+    pairs_with_templates: usize,
+    fallback_pairs: usize,
+    retained_templates: usize,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PairClusterArmOutput {
+    placed: Option<usize>,
+    used_long_axis_depth_mm: Option<f64>,
+    band_variants_attempted: usize,
+    completed_bands: usize,
+    band_failures: Vec<String>,
+    proposal_attempts: usize,
+    generated_proposals: usize,
+    exact_child_fixed_visits: usize,
+    exact_candidate_rows: usize,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PairConstructorProbeOutput {
+    elapsed_ms: f64,
+    templates: PairTemplateSummaryOutput,
+    control: PairClusterArmOutput,
+    treatment: PairClusterArmOutput,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct QuotaOutput {
+    order_variants: usize,
+    exploratory_evaluations_per_piece: usize,
+    repair_targets: usize,
+    repair_evaluations_per_piece: usize,
+    local_angle_evaluations_per_piece: usize,
+    catalog_variants: usize,
+    catalog_evaluations_per_piece: usize,
+    pairing_evaluations_per_piece: usize,
+    pairing_band_variants: usize,
+    partial_layouts: usize,
+    beam_evaluations_per_state: usize,
+    angle_seed_count: usize,
+    max_angles_per_piece: usize,
+    tightening_passes: usize,
+    relaxed_epochs: usize,
+    relaxed_lanes: usize,
+    relaxed_sweeps_per_epoch: usize,
+    relaxed_global_samples_per_move: usize,
+    relaxed_focused_samples_per_move: usize,
+    relaxed_refinement_rounds: usize,
+    relaxed_seed: u64,
+    relaxed_initial_shrink_ratio: f64,
+    relaxed_minimum_shrink_ratio: f64,
+    relaxed_failed_attempts_per_depth: usize,
+    relaxed_infeasible_pool_size: usize,
+    relaxed_infeasible_pool_arguments_ignored: bool,
+    relaxed_synchronize_lanes: bool,
+    relaxed_dynamic_hazard: bool,
+    relaxed_angle_seed_policy: &'static str,
+    relaxed_pressure_model: &'static str,
+    relaxed_angular_repair: bool,
+    relaxed_repair_neighborhood: usize,
+    pair_template_diagnostics: bool,
+    pair_constructor_diagnostics: bool,
+    precompression_frontier_vacancy_mode: usize,
+    exact_pair_terminal_mode: usize,
+    persistent_vacancy_mode: usize,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ParentFixtureOutput<'a> {
+    schema_version: u32,
+    sha256: &'a str,
+    placement_count: usize,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PlacementOutput<'a> {
+    piece_id: &'a str,
+    rotation_deg: f64,
+    mirrored: bool,
+    translate_short_axis: f64,
+    translate_long_axis: f64,
+}
+
+struct PlacementList<'a>(&'a [polygon_nesting_core::search::general_fast::GeneralFastPlacement]);
+
+impl Serialize for PlacementList<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut sequence = serializer.serialize_seq(Some(self.0.len()))?;
+        for placement in self.0 {
+            sequence.serialize_element(&PlacementOutput {
+                piece_id: &placement.piece_id,
+                rotation_deg: placement.rotation_deg,
+                mirrored: placement.mirrored,
+                translate_short_axis: placement.translate_short_axis,
+                translate_long_axis: placement.translate_long_axis,
+            })?;
+        }
+        sequence.end()
+    }
+}
+
+struct MetadataKeys<'a>(&'a BTreeMap<String, serde_json::Value>);
+
+impl Serialize for MetadataKeys<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut sequence = serializer.serialize_seq(Some(self.0.len()))?;
+        for key in self.0.keys() {
+            sequence.serialize_element(key)?;
+        }
+        sequence.end()
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Mode25Output<'a> {
+    request: &'a str,
+    request_sha256: &'a str,
+    engine_commit: &'a Option<String>,
+    engine_worktree_dirty: &'a Option<bool>,
+    engine_worktree_status: &'a Option<String>,
+    executable_sha256: &'a Option<String>,
+    relevant_source_tree_sha256: &'a Option<String>,
+    profile: &'static str,
+    build_profile: &'static str,
+    target_architecture: &'static str,
+    target_operating_system: &'static str,
+    machine_architecture: &'a Option<String>,
+    cpu_model: &'a Option<String>,
+    rustc_version: &'a Option<String>,
+    rustflags: &'a Option<String>,
+    budget_mode: &'static str,
+    seed: (),
+    piece_count: usize,
+    source_piece_count: usize,
+    total_vertices: usize,
+    concave_piece_count: usize,
+    sheet_short_axis_mm: f64,
+    sheet_long_axis_mm: f64,
+    request_total_padding_mm: f64,
+    pair_clearance_mm: f64,
+    sheet_edge_clearance_mm: f64,
+    flattening_sag_tolerance_mm: f64,
+    clearance_safety_margin_mm: f64,
+    requested_threads: usize,
+    actual_threads: usize,
+    quota: &'a QuotaOutput,
+    pair_template_probe: &'a Option<PairTemplateProbeOutput>,
+    pair_constructor_probe: &'a Option<PairConstructorProbeOutput>,
+    relaxed_diagnostics: Option<GeneralRelaxedDiagnostics>,
+    placed: usize,
+    unplaced: usize,
+    constructed_long_axis_depth_mm: Option<f64>,
+    used_long_axis_depth_mm: f64,
+    independent_used_long_axis_depth_mm: f64,
+    coupled_treatment_independent_used_long_axis_depth_mm: Option<f64>,
+    placed_material_area_mm2: f64,
+    expanded_collision_area_mm2: f64,
+    area_lower_bound_depth_mm: f64,
+    depth_over_area_lower_bound: f64,
+    used_strip_area_mm2: f64,
+    used_strip_utilization_percent: f64,
+    exact_evaluations: usize,
+    primary_exact_evaluations: usize,
+    order_portfolio_exact_evaluations: usize,
+    catalog_portfolio_exact_evaluations: usize,
+    pairing_exact_evaluations: usize,
+    beam_exact_evaluations: usize,
+    tightening_exact_evaluations: usize,
+    tightening_passes_attempted: usize,
+    tightening_passes_improved: usize,
+    catalog_candidate_placed_count: Option<usize>,
+    catalog_candidate_depth_mm: Option<f64>,
+    pairing_candidate_placed_count: Option<usize>,
+    pairing_candidate_depth_mm: Option<f64>,
+    beam_candidate_placed_count: Option<usize>,
+    beam_candidate_depth_mm: Option<f64>,
+    exploratory_exact_evaluations: usize,
+    repair_exact_evaluations: usize,
+    local_angle_refinement_exact_evaluations: usize,
+    order_variants_attempted: usize,
+    catalog_variants_attempted: usize,
+    repair_targets_considered: usize,
+    order_portfolio_failed: bool,
+    catalog_portfolio_failed: bool,
+    pairing_failed: bool,
+    beam_failed: bool,
+    exploratory_failed: bool,
+    repair_failed: bool,
+    median_elapsed_ms: f64,
+    first_quartile_elapsed_ms: f64,
+    third_quartile_elapsed_ms: f64,
+    interquartile_range_elapsed_ms: f64,
+    min_elapsed_ms: f64,
+    max_elapsed_ms: f64,
+    elapsed_ms: &'a [f64],
+    ignored_request_metadata_fields: MetadataKeys<'a>,
+    placements: PlacementList<'a>,
+    persistent_vacancy_parent_fixture: Option<ParentFixtureOutput<'a>>,
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut arguments = env::args().skip(1);
     let request_path = arguments.next().ok_or(
@@ -207,9 +445,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if !matches!(persistent_vacancy_mode, 0..=6 | 8 | 9 | 10 | 14..=19) {
+    if !matches!(persistent_vacancy_mode, 0..=6 | 8 | 9 | 10 | 14..=19 | 25 | 26) {
         return Err(
-            "persistent vacancy mode must be 0 through 6, 8, 9, 10, or 14 through 19; retired modes 7 and 11 through 13 are unavailable"
+            "persistent vacancy mode must be 0 through 6, 8, 9, 10, 14 through 19, or 25 through 26; retired modes 7 and 11 through 13 are unavailable"
                 .into(),
         );
     }
@@ -348,38 +586,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pair_template_probe = if pair_template_diagnostics {
         let started = Instant::now();
         let diagnostics = diagnose_congruent_pair_templates(&pieces, settings)?;
-        Some(json!({
-            "elapsedMs": started.elapsed().as_secs_f64() * 1_000.0,
-            "eligiblePairs": diagnostics.eligible_pairs,
-            "pairsWithTemplates": diagnostics.pairs_with_templates,
-            "fallbackPairs": diagnostics.fallback_pairs,
-            "orientationTuples": diagnostics.orientation_tuples,
-            "contactAttempts": diagnostics.contact_attempts,
-            "exactPairRows": diagnostics.exact_pair_rows,
-            "retainedTemplates": diagnostics.retained_templates,
-            "transformedSourceVertices": diagnostics.transformed_source_vertices,
-            "offsetOutputVertices": diagnostics.offset_output_vertices,
-            "intersectionInputVertices": diagnostics.intersection_input_vertices,
-            "intersectionOutputVertices": diagnostics.intersection_output_vertices,
-            "transientRejectedOutputVertices": diagnostics.transient_rejected_output_vertices,
-        }))
+        Some(PairTemplateProbeOutput {
+            elapsed_ms: started.elapsed().as_secs_f64() * 1_000.0,
+            eligible_pairs: diagnostics.eligible_pairs,
+            pairs_with_templates: diagnostics.pairs_with_templates,
+            fallback_pairs: diagnostics.fallback_pairs,
+            orientation_tuples: diagnostics.orientation_tuples,
+            contact_attempts: diagnostics.contact_attempts,
+            exact_pair_rows: diagnostics.exact_pair_rows,
+            retained_templates: diagnostics.retained_templates,
+            transformed_source_vertices: diagnostics.transformed_source_vertices,
+            offset_output_vertices: diagnostics.offset_output_vertices,
+            intersection_input_vertices: diagnostics.intersection_input_vertices,
+            intersection_output_vertices: diagnostics.intersection_output_vertices,
+            transient_rejected_output_vertices: diagnostics.transient_rejected_output_vertices,
+        })
     } else {
         None
     };
     let pair_constructor_probe = if pair_constructor_diagnostics {
         let started = Instant::now();
         let experiment = diagnose_congruent_pair_constructor(&pieces, settings)?;
-        Some(json!({
-            "elapsedMs": started.elapsed().as_secs_f64() * 1_000.0,
-            "templates": {
-                "eligiblePairs": experiment.templates.eligible_pairs,
-                "pairsWithTemplates": experiment.templates.pairs_with_templates,
-                "fallbackPairs": experiment.templates.fallback_pairs,
-                "retainedTemplates": experiment.templates.retained_templates,
+        Some(PairConstructorProbeOutput {
+            elapsed_ms: started.elapsed().as_secs_f64() * 1_000.0,
+            templates: PairTemplateSummaryOutput {
+                eligible_pairs: experiment.templates.eligible_pairs,
+                pairs_with_templates: experiment.templates.pairs_with_templates,
+                fallback_pairs: experiment.templates.fallback_pairs,
+                retained_templates: experiment.templates.retained_templates,
             },
-            "control": pair_cluster_arm_json(&experiment.control),
-            "treatment": pair_cluster_arm_json(&experiment.treatment),
-        }))
+            control: pair_cluster_arm_output(&experiment.control),
+            treatment: pair_cluster_arm_output(&experiment.treatment),
+        })
     } else {
         None
     };
@@ -388,6 +626,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut result = None;
     let mut relaxed_diagnostics = None::<GeneralRelaxedDiagnostics>;
     let mut constructed_depth_mm = None;
+    let mut post_output_failure = None::<String>;
     let job_pool = JobPool::new(Some(threads));
     for _ in 0..runs {
         let started = Instant::now();
@@ -477,6 +716,83 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     return Err(
                         "requested vacancy-topology probe did not reach its bounded terminal"
                             .into(),
+                    );
+                }
+            }
+            if persistent_vacancy_mode == 25 {
+                let probe = persistent
+                    .vacancy_articulation_probe
+                    .as_ref()
+                    .ok_or("requested vacancy-articulation probe diagnostics are missing")?;
+                if let Some(reason) = probe.failure_reason.as_deref() {
+                    post_output_failure = Some(format!(
+                        "requested vacancy-articulation probe failed: {reason}"
+                    ));
+                } else if !probe.attempted
+                    || probe.rows.len() != 765
+                    || probe.baselines.len() != 15
+                    || probe.states.len() != 3
+                    || probe.work.topology_calls != 780
+                    || probe.work.component_graph_node_pairs == 0
+                    || probe.work.component_graph_node_pairs
+                        > probe.work.component_graph_node_pair_cap
+                    || probe.work.component_graph_edge_checks
+                        > probe.work.component_graph_edge_check_cap
+                    || probe.work.component_graph_scratch_peak_bytes
+                        > probe.work.component_graph_scratch_cap_bytes
+                {
+                    post_output_failure = Some(
+                        "requested vacancy-articulation probe did not reach its bounded terminal"
+                            .to_owned(),
+                    );
+                }
+            }
+            if persistent_vacancy_mode == 26 {
+                let probe = persistent
+                    .vacancy_bridge_relocation
+                    .as_ref()
+                    .ok_or("requested vacancy-bridge relocation diagnostics are missing")?;
+                if probe.inconclusive {
+                    if !probe.attempted
+                        || probe.failure_reason.is_some()
+                        || probe.terminal_status != "generatorInconclusive"
+                        || probe.generated_candidates > probe.candidate_cap
+                        || probe.legal_candidates > probe.generated_candidates
+                        || probe.control.is_some()
+                        || probe.treatment.is_some()
+                        || probe.promotion_gate_passed
+                    {
+                        post_output_failure = Some(
+                            "requested vacancy-bridge generator inconclusive terminal is invalid"
+                                .to_owned(),
+                        );
+                    }
+                } else if let Some(reason) = probe.failure_reason.as_deref() {
+                    post_output_failure = Some(format!(
+                        "requested vacancy-bridge relocation failed: {reason}"
+                    ));
+                } else if !probe.attempted
+                    || probe.generated_candidates > probe.candidate_cap
+                    || probe.legal_candidates > probe.generated_candidates
+                    || probe.control.is_none()
+                    || probe.treatment.is_none()
+                    || !probe
+                        .candidates
+                        .iter()
+                        .any(|candidate| candidate.selected_control)
+                    || !probe
+                        .candidates
+                        .iter()
+                        .any(|candidate| candidate.selected_treatment)
+                {
+                    post_output_failure = Some(
+                        "requested vacancy-bridge relocation did not reach its bounded terminal"
+                            .to_owned(),
+                    );
+                } else if !probe.promotion_gate_passed {
+                    post_output_failure = Some(
+                        "requested vacancy-bridge relocation failed its strict promotion gate"
+                            .to_owned(),
                     );
                 }
             }
@@ -595,149 +911,544 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let machine_architecture = command_output("uname", &["-m"]);
     let cpu_model = command_output("sysctl", &["-n", "machdep.cpu.brand_string"])
         .or_else(|| command_output("sh", &["-c", "grep -m1 'model name' /proc/cpuinfo"]));
-    let mut output = json!({
-        "request": request_path,
-        "requestSha256": request_sha256,
-        "engineCommit": git_commit,
-        "engineWorktreeDirty": git_dirty,
-        "engineWorktreeStatus": git_status,
-        "executableSha256": executable_sha256,
-        "relevantSourceTreeSha256": relevant_source_tree_sha256,
-        "profile": "general-fast-experimental",
-        "buildProfile": if cfg!(debug_assertions) { "debug" } else { "release" },
-        "targetArchitecture": std::env::consts::ARCH,
-        "targetOperatingSystem": std::env::consts::OS,
-        "machineArchitecture": machine_architecture,
-        "cpuModel": cpu_model,
-        "rustcVersion": rustc_version,
-        "rustflags": env::var("RUSTFLAGS").ok(),
-        "budgetMode": "deterministic-work-quota",
-        "seed": serde_json::Value::Null,
-        "pieceCount": pieces.len(),
-        "sourcePieceCount": source_by_id.len(),
-        "totalVertices": owned.iter().map(|piece| piece.polygon.vertex_count()).sum::<usize>(),
-        "concavePieceCount": owned.iter().filter(|piece| piece.polygon.regions().iter().any(|region| !region.outer.is_convex())).count(),
-        "sheetShortAxisMm": settings.sheet_short_axis_mm,
-        "sheetLongAxisMm": settings.sheet_long_axis_mm,
-        "requestTotalPaddingMm": request_total_padding_mm,
-        "pairClearanceMm": settings.total_padding_mm,
-        "sheetEdgeClearanceMm": settings.sheet_edge_clearance_mm.unwrap_or(settings.total_padding_mm / 2.0),
-        "flatteningSagToleranceMm": settings.flattening_sag_tolerance_mm,
-        "clearanceSafetyMarginMm": settings.clearance_safety_margin_mm,
-        "requestedThreads": job_pool.requested_thread_count(),
-        "actualThreads": job_pool.actual_thread_count(),
-        "quota": {
-            "orderVariants": order_variants,
-            "exploratoryEvaluationsPerPiece": exploratory_evaluations,
-            "repairTargets": repair_targets,
-            "repairEvaluationsPerPiece": repair_evaluations,
-            "localAngleEvaluationsPerPiece": local_angle_evaluations,
-            "catalogVariants": catalog_variants,
-            "catalogEvaluationsPerPiece": catalog_evaluations,
-            "pairingEvaluationsPerPiece": pairing_evaluations,
-            "pairingBandVariants": pairing_band_variants,
-            "partialLayouts": partial_layouts,
-            "beamEvaluationsPerState": beam_evaluations,
-            "angleSeedCount": angle_seed_count,
-            "maxAnglesPerPiece": max_angles_per_piece,
-            "tighteningPasses": tightening_passes,
-            "relaxedEpochs": relaxed_epochs,
-            "relaxedLanes": relaxed_lanes,
-            "relaxedSweepsPerEpoch": relaxed_sweeps,
-            "relaxedGlobalSamplesPerMove": relaxed_global_samples,
-            "relaxedFocusedSamplesPerMove": relaxed_focused_samples,
-            "relaxedRefinementRounds": relaxed_refinement_rounds,
-            "relaxedSeed": relaxed_seed,
-            "relaxedInitialShrinkRatio": relaxed_initial_shrink_ratio,
-            "relaxedMinimumShrinkRatio": relaxed_minimum_shrink_ratio,
-            "relaxedFailedAttemptsPerDepth": relaxed_failed_attempts_per_depth,
-            "relaxedInfeasiblePoolSize": relaxed_infeasible_pool_size,
-            "relaxedInfeasiblePoolArgumentsIgnored": true,
-            "relaxedSynchronizeLanes": relaxed_synchronize_lanes,
-            "relaxedDynamicHazard": relaxed_dynamic_hazard,
-            "relaxedAngleSeedPolicy": if relaxed_continuous_seeds { "continuousUniform" } else { "structuredGrid" },
-            "relaxedPressureModel": pressure_model_name(relaxed_pressure_model),
-            "relaxedAngularRepair": relaxed_angular_repair,
-            "relaxedRepairNeighborhood": relaxed_repair_neighborhood,
-            "pairTemplateDiagnostics": pair_template_diagnostics,
-            "pairConstructorDiagnostics": pair_constructor_diagnostics,
-            "precompressionFrontierVacancyMode": precompression_frontier_vacancy_mode,
-            "exactPairTerminalMode": retired_exact_pair_terminal_mode,
-            "persistentVacancyMode": persistent_vacancy_mode,
+    let rustflags = env::var("RUSTFLAGS").ok();
+    let quota = QuotaOutput {
+        order_variants,
+        exploratory_evaluations_per_piece: exploratory_evaluations,
+        repair_targets,
+        repair_evaluations_per_piece: repair_evaluations,
+        local_angle_evaluations_per_piece: local_angle_evaluations,
+        catalog_variants,
+        catalog_evaluations_per_piece: catalog_evaluations,
+        pairing_evaluations_per_piece: pairing_evaluations,
+        pairing_band_variants,
+        partial_layouts,
+        beam_evaluations_per_state: beam_evaluations,
+        angle_seed_count,
+        max_angles_per_piece,
+        tightening_passes,
+        relaxed_epochs,
+        relaxed_lanes,
+        relaxed_sweeps_per_epoch: relaxed_sweeps,
+        relaxed_global_samples_per_move: relaxed_global_samples,
+        relaxed_focused_samples_per_move: relaxed_focused_samples,
+        relaxed_refinement_rounds,
+        relaxed_seed,
+        relaxed_initial_shrink_ratio,
+        relaxed_minimum_shrink_ratio,
+        relaxed_failed_attempts_per_depth,
+        relaxed_infeasible_pool_size,
+        relaxed_infeasible_pool_arguments_ignored: true,
+        relaxed_synchronize_lanes,
+        relaxed_dynamic_hazard,
+        relaxed_angle_seed_policy: if relaxed_continuous_seeds {
+            "continuousUniform"
+        } else {
+            "structuredGrid"
         },
-        "pairTemplateProbe": pair_template_probe,
-        "pairConstructorProbe": pair_constructor_probe,
-        "relaxedDiagnostics": relaxed_diagnostics,
-        "placed": result.placements.len(),
-        "unplaced": result.unplaced_piece_ids.len(),
-        "constructedLongAxisDepthMm": constructed_depth_mm,
-        "usedLongAxisDepthMm": result.used_long_axis_depth_mm,
-        "independentUsedLongAxisDepthMm": independent_used_long_axis_depth_mm,
-        "coupledTreatmentIndependentUsedLongAxisDepthMm": coupled_treatment_independent_used_long_axis_depth_mm,
-        "placedMaterialAreaMm2": placed_area_mm2,
-        "expandedCollisionAreaMm2": expanded_collision_area_mm2,
-        "areaLowerBoundDepthMm": area_lower_bound_depth_mm,
-        "depthOverAreaLowerBound": result.used_long_axis_depth_mm / area_lower_bound_depth_mm,
-        "usedStripAreaMm2": strip_area_mm2,
-        "usedStripUtilizationPercent": if strip_area_mm2 > 0.0 { placed_area_mm2 / strip_area_mm2 * 100.0 } else { 0.0 },
-        "exactEvaluations": result.exact_evaluations,
-        "primaryExactEvaluations": result.primary_exact_evaluations,
-        "orderPortfolioExactEvaluations": result.order_portfolio_exact_evaluations,
-        "catalogPortfolioExactEvaluations": result.catalog_portfolio_exact_evaluations,
-        "pairingExactEvaluations": result.pairing_exact_evaluations,
-        "beamExactEvaluations": result.beam_exact_evaluations,
-        "tighteningExactEvaluations": result.tightening_exact_evaluations,
-        "tighteningPassesAttempted": result.tightening_passes_attempted,
-        "tighteningPassesImproved": result.tightening_passes_improved,
-        "catalogCandidatePlacedCount": result.catalog_candidate_placed_count,
-        "catalogCandidateDepthMm": result.catalog_candidate_depth_mm,
-        "pairingCandidatePlacedCount": result.pairing_candidate_placed_count,
-        "pairingCandidateDepthMm": result.pairing_candidate_depth_mm,
-        "beamCandidatePlacedCount": result.beam_candidate_placed_count,
-        "beamCandidateDepthMm": result.beam_candidate_depth_mm,
-        "exploratoryExactEvaluations": result.exploratory_exact_evaluations,
-        "repairExactEvaluations": result.repair_exact_evaluations,
-        "localAngleRefinementExactEvaluations": result.local_angle_refinement_exact_evaluations,
-        "orderVariantsAttempted": result.order_variants_attempted,
-        "catalogVariantsAttempted": result.catalog_variants_attempted,
-        "repairTargetsConsidered": result.repair_targets_considered,
-        "orderPortfolioFailed": result.order_portfolio_failed,
-        "catalogPortfolioFailed": result.catalog_portfolio_failed,
-        "pairingFailed": result.pairing_failed,
-        "beamFailed": result.beam_failed,
-        "exploratoryFailed": result.exploratory_failed,
-        "repairFailed": result.repair_failed,
-        "medianElapsedMs": elapsed_ms[elapsed_ms.len() / 2],
-        "firstQuartileElapsedMs": first_quartile_elapsed_ms,
-        "thirdQuartileElapsedMs": third_quartile_elapsed_ms,
-        "interquartileRangeElapsedMs": third_quartile_elapsed_ms - first_quartile_elapsed_ms,
-        "minElapsedMs": elapsed_ms[0],
-        "maxElapsedMs": elapsed_ms[elapsed_ms.len() - 1],
-        "elapsedMs": elapsed_ms,
-        "ignoredRequestMetadataFields": request.extra.keys().collect::<Vec<_>>(),
-        "placements": result.placements.iter().map(|placement| json!({
-            "pieceId": placement.piece_id,
-            "rotationDeg": placement.rotation_deg,
-            "mirrored": placement.mirrored,
-            "translateShortAxis": placement.translate_short_axis,
-            "translateLongAxis": placement.translate_long_axis,
-        })).collect::<Vec<_>>(),
-    });
-    if let Some(parent) = &persistent_vacancy_parent {
-        output
-            .as_object_mut()
-            .expect("the benchmark output is an object")
-            .insert(
-                "persistentVacancyParentFixture".to_owned(),
-                json!({
-                    "schemaVersion": parent.schema_version,
-                    "sha256": parent.sha256,
-                    "placementCount": parent.placements.len(),
-                }),
-            );
+        relaxed_pressure_model: pressure_model_name(relaxed_pressure_model),
+        relaxed_angular_repair,
+        relaxed_repair_neighborhood,
+        pair_template_diagnostics,
+        pair_constructor_diagnostics,
+        precompression_frontier_vacancy_mode,
+        exact_pair_terminal_mode: retired_exact_pair_terminal_mode,
+        persistent_vacancy_mode,
+    };
+    let (serialized, serialization_fallback_used) = if matches!(persistent_vacancy_mode, 25 | 26) {
+        let parent_fixture = persistent_vacancy_parent
+            .as_ref()
+            .map(|parent| ParentFixtureOutput {
+                schema_version: parent.schema_version,
+                sha256: parent.sha256.as_str(),
+                placement_count: parent.placements.len(),
+            });
+        let mut output = Mode25Output {
+            request: &request_path,
+            request_sha256: &request_sha256,
+            engine_commit: &git_commit,
+            engine_worktree_dirty: &git_dirty,
+            engine_worktree_status: &git_status,
+            executable_sha256: &executable_sha256,
+            relevant_source_tree_sha256: &relevant_source_tree_sha256,
+            profile: "general-fast-experimental",
+            build_profile: if cfg!(debug_assertions) {
+                "debug"
+            } else {
+                "release"
+            },
+            target_architecture: std::env::consts::ARCH,
+            target_operating_system: std::env::consts::OS,
+            machine_architecture: &machine_architecture,
+            cpu_model: &cpu_model,
+            rustc_version: &rustc_version,
+            rustflags: &rustflags,
+            budget_mode: "deterministic-work-quota",
+            seed: (),
+            piece_count: pieces.len(),
+            source_piece_count: source_by_id.len(),
+            total_vertices: owned
+                .iter()
+                .map(|piece| piece.polygon.vertex_count())
+                .sum::<usize>(),
+            concave_piece_count: owned
+                .iter()
+                .filter(|piece| {
+                    piece
+                        .polygon
+                        .regions()
+                        .iter()
+                        .any(|region| !region.outer.is_convex())
+                })
+                .count(),
+            sheet_short_axis_mm: settings.sheet_short_axis_mm,
+            sheet_long_axis_mm: settings.sheet_long_axis_mm,
+            request_total_padding_mm,
+            pair_clearance_mm: settings.total_padding_mm,
+            sheet_edge_clearance_mm: settings
+                .sheet_edge_clearance_mm
+                .unwrap_or(settings.total_padding_mm / 2.0),
+            flattening_sag_tolerance_mm: settings.flattening_sag_tolerance_mm,
+            clearance_safety_margin_mm: settings.clearance_safety_margin_mm,
+            requested_threads: job_pool.requested_thread_count(),
+            actual_threads: job_pool.actual_thread_count(),
+            quota: &quota,
+            pair_template_probe: &pair_template_probe,
+            pair_constructor_probe: &pair_constructor_probe,
+            relaxed_diagnostics,
+            placed: result.placements.len(),
+            unplaced: result.unplaced_piece_ids.len(),
+            constructed_long_axis_depth_mm: constructed_depth_mm,
+            used_long_axis_depth_mm: result.used_long_axis_depth_mm,
+            independent_used_long_axis_depth_mm,
+            coupled_treatment_independent_used_long_axis_depth_mm,
+            placed_material_area_mm2: placed_area_mm2,
+            expanded_collision_area_mm2,
+            area_lower_bound_depth_mm,
+            depth_over_area_lower_bound: result.used_long_axis_depth_mm / area_lower_bound_depth_mm,
+            used_strip_area_mm2: strip_area_mm2,
+            used_strip_utilization_percent: if strip_area_mm2 > 0.0 {
+                placed_area_mm2 / strip_area_mm2 * 100.0
+            } else {
+                0.0
+            },
+            exact_evaluations: result.exact_evaluations,
+            primary_exact_evaluations: result.primary_exact_evaluations,
+            order_portfolio_exact_evaluations: result.order_portfolio_exact_evaluations,
+            catalog_portfolio_exact_evaluations: result.catalog_portfolio_exact_evaluations,
+            pairing_exact_evaluations: result.pairing_exact_evaluations,
+            beam_exact_evaluations: result.beam_exact_evaluations,
+            tightening_exact_evaluations: result.tightening_exact_evaluations,
+            tightening_passes_attempted: result.tightening_passes_attempted,
+            tightening_passes_improved: result.tightening_passes_improved,
+            catalog_candidate_placed_count: result.catalog_candidate_placed_count,
+            catalog_candidate_depth_mm: result.catalog_candidate_depth_mm,
+            pairing_candidate_placed_count: result.pairing_candidate_placed_count,
+            pairing_candidate_depth_mm: result.pairing_candidate_depth_mm,
+            beam_candidate_placed_count: result.beam_candidate_placed_count,
+            beam_candidate_depth_mm: result.beam_candidate_depth_mm,
+            exploratory_exact_evaluations: result.exploratory_exact_evaluations,
+            repair_exact_evaluations: result.repair_exact_evaluations,
+            local_angle_refinement_exact_evaluations: result
+                .local_angle_refinement_exact_evaluations,
+            order_variants_attempted: result.order_variants_attempted,
+            catalog_variants_attempted: result.catalog_variants_attempted,
+            repair_targets_considered: result.repair_targets_considered,
+            order_portfolio_failed: result.order_portfolio_failed,
+            catalog_portfolio_failed: result.catalog_portfolio_failed,
+            pairing_failed: result.pairing_failed,
+            beam_failed: result.beam_failed,
+            exploratory_failed: result.exploratory_failed,
+            repair_failed: result.repair_failed,
+            median_elapsed_ms: elapsed_ms[elapsed_ms.len() / 2],
+            first_quartile_elapsed_ms,
+            third_quartile_elapsed_ms,
+            interquartile_range_elapsed_ms: third_quartile_elapsed_ms - first_quartile_elapsed_ms,
+            min_elapsed_ms: elapsed_ms[0],
+            max_elapsed_ms: elapsed_ms[elapsed_ms.len() - 1],
+            elapsed_ms: &elapsed_ms,
+            ignored_request_metadata_fields: MetadataKeys(&request.extra),
+            placements: PlacementList(&result.placements),
+            persistent_vacancy_parent_fixture: parent_fixture,
+        };
+        if persistent_vacancy_mode == 25 {
+            let bounded =
+                serialize_mode25_output(&mut output, VACANCY_ARTICULATION_JSON_CAP_BYTES)?;
+            (bounded.bytes, bounded.fallback_used)
+        } else {
+            (
+                serialize_pretty_bounded(&output, VACANCY_BRIDGE_JSON_CAP_BYTES)?,
+                false,
+            )
+        }
+    } else {
+        let mut output = json!({
+            "request": request_path,
+            "requestSha256": request_sha256,
+            "engineCommit": git_commit,
+            "engineWorktreeDirty": git_dirty,
+            "engineWorktreeStatus": git_status,
+            "executableSha256": executable_sha256,
+            "relevantSourceTreeSha256": relevant_source_tree_sha256,
+            "profile": "general-fast-experimental",
+            "buildProfile": if cfg!(debug_assertions) { "debug" } else { "release" },
+            "targetArchitecture": std::env::consts::ARCH,
+            "targetOperatingSystem": std::env::consts::OS,
+            "machineArchitecture": machine_architecture,
+            "cpuModel": cpu_model,
+            "rustcVersion": rustc_version,
+            "rustflags": rustflags,
+            "budgetMode": "deterministic-work-quota",
+            "seed": serde_json::Value::Null,
+            "pieceCount": pieces.len(),
+            "sourcePieceCount": source_by_id.len(),
+            "totalVertices": owned.iter().map(|piece| piece.polygon.vertex_count()).sum::<usize>(),
+            "concavePieceCount": owned.iter().filter(|piece| piece.polygon.regions().iter().any(|region| !region.outer.is_convex())).count(),
+            "sheetShortAxisMm": settings.sheet_short_axis_mm,
+            "sheetLongAxisMm": settings.sheet_long_axis_mm,
+            "requestTotalPaddingMm": request_total_padding_mm,
+            "pairClearanceMm": settings.total_padding_mm,
+            "sheetEdgeClearanceMm": settings.sheet_edge_clearance_mm.unwrap_or(settings.total_padding_mm / 2.0),
+            "flatteningSagToleranceMm": settings.flattening_sag_tolerance_mm,
+            "clearanceSafetyMarginMm": settings.clearance_safety_margin_mm,
+            "requestedThreads": job_pool.requested_thread_count(),
+            "actualThreads": job_pool.actual_thread_count(),
+            "quota": quota,
+            "pairTemplateProbe": pair_template_probe,
+            "pairConstructorProbe": pair_constructor_probe,
+            "relaxedDiagnostics": relaxed_diagnostics,
+            "placed": result.placements.len(),
+            "unplaced": result.unplaced_piece_ids.len(),
+            "constructedLongAxisDepthMm": constructed_depth_mm,
+            "usedLongAxisDepthMm": result.used_long_axis_depth_mm,
+            "independentUsedLongAxisDepthMm": independent_used_long_axis_depth_mm,
+            "coupledTreatmentIndependentUsedLongAxisDepthMm": coupled_treatment_independent_used_long_axis_depth_mm,
+            "placedMaterialAreaMm2": placed_area_mm2,
+            "expandedCollisionAreaMm2": expanded_collision_area_mm2,
+            "areaLowerBoundDepthMm": area_lower_bound_depth_mm,
+            "depthOverAreaLowerBound": result.used_long_axis_depth_mm / area_lower_bound_depth_mm,
+            "usedStripAreaMm2": strip_area_mm2,
+            "usedStripUtilizationPercent": if strip_area_mm2 > 0.0 { placed_area_mm2 / strip_area_mm2 * 100.0 } else { 0.0 },
+            "exactEvaluations": result.exact_evaluations,
+            "primaryExactEvaluations": result.primary_exact_evaluations,
+            "orderPortfolioExactEvaluations": result.order_portfolio_exact_evaluations,
+            "catalogPortfolioExactEvaluations": result.catalog_portfolio_exact_evaluations,
+            "pairingExactEvaluations": result.pairing_exact_evaluations,
+            "beamExactEvaluations": result.beam_exact_evaluations,
+            "tighteningExactEvaluations": result.tightening_exact_evaluations,
+            "tighteningPassesAttempted": result.tightening_passes_attempted,
+            "tighteningPassesImproved": result.tightening_passes_improved,
+            "catalogCandidatePlacedCount": result.catalog_candidate_placed_count,
+            "catalogCandidateDepthMm": result.catalog_candidate_depth_mm,
+            "pairingCandidatePlacedCount": result.pairing_candidate_placed_count,
+            "pairingCandidateDepthMm": result.pairing_candidate_depth_mm,
+            "beamCandidatePlacedCount": result.beam_candidate_placed_count,
+            "beamCandidateDepthMm": result.beam_candidate_depth_mm,
+            "exploratoryExactEvaluations": result.exploratory_exact_evaluations,
+            "repairExactEvaluations": result.repair_exact_evaluations,
+            "localAngleRefinementExactEvaluations": result.local_angle_refinement_exact_evaluations,
+            "orderVariantsAttempted": result.order_variants_attempted,
+            "catalogVariantsAttempted": result.catalog_variants_attempted,
+            "repairTargetsConsidered": result.repair_targets_considered,
+            "orderPortfolioFailed": result.order_portfolio_failed,
+            "catalogPortfolioFailed": result.catalog_portfolio_failed,
+            "pairingFailed": result.pairing_failed,
+            "beamFailed": result.beam_failed,
+            "exploratoryFailed": result.exploratory_failed,
+            "repairFailed": result.repair_failed,
+            "medianElapsedMs": elapsed_ms[elapsed_ms.len() / 2],
+            "firstQuartileElapsedMs": first_quartile_elapsed_ms,
+            "thirdQuartileElapsedMs": third_quartile_elapsed_ms,
+            "interquartileRangeElapsedMs": third_quartile_elapsed_ms - first_quartile_elapsed_ms,
+            "minElapsedMs": elapsed_ms[0],
+            "maxElapsedMs": elapsed_ms[elapsed_ms.len() - 1],
+            "elapsedMs": elapsed_ms,
+            "ignoredRequestMetadataFields": request.extra.keys().collect::<Vec<_>>(),
+            "placements": result.placements.iter().map(|placement| json!({
+                "pieceId": placement.piece_id,
+                "rotationDeg": placement.rotation_deg,
+                "mirrored": placement.mirrored,
+                "translateShortAxis": placement.translate_short_axis,
+                "translateLongAxis": placement.translate_long_axis,
+            })).collect::<Vec<_>>(),
+        });
+        if let Some(parent) = &persistent_vacancy_parent {
+            output
+                .as_object_mut()
+                .expect("the benchmark output is an object")
+                .insert(
+                    "persistentVacancyParentFixture".to_owned(),
+                    json!({
+                        "schemaVersion": parent.schema_version,
+                        "sha256": parent.sha256,
+                        "placementCount": parent.placements.len(),
+                    }),
+                );
+        }
+        (serde_json::to_vec_pretty(&output)?, false)
+    };
+    let mut stdout = io::stdout().lock();
+    stdout.write_all(&serialized)?;
+    stdout.write_all(b"\n")?;
+    stdout.flush()?;
+    if serialization_fallback_used {
+        post_output_failure.get_or_insert_with(|| {
+            "vacancy-articulation output exceeded its bounded JSON serialization cap".to_owned()
+        });
     }
-    println!("{}", serde_json::to_string_pretty(&output)?);
+    if let Some(reason) = post_output_failure {
+        return Err(reason.into());
+    }
     Ok(())
+}
+
+struct FixedCapacityJsonBuffer {
+    bytes: Vec<u8>,
+    capacity: usize,
+    overflowed: bool,
+}
+
+impl FixedCapacityJsonBuffer {
+    fn new(capacity: usize) -> Self {
+        Self {
+            bytes: Vec::with_capacity(capacity),
+            capacity,
+            overflowed: false,
+        }
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        self.bytes
+    }
+}
+
+impl Write for FixedCapacityJsonBuffer {
+    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+        let Some(required) = self.bytes.len().checked_add(bytes.len()) else {
+            self.overflowed = true;
+            return Err(io::Error::new(
+                io::ErrorKind::WriteZero,
+                "JSON serialization size overflow",
+            ));
+        };
+        if required > self.capacity {
+            self.overflowed = true;
+            return Err(io::Error::new(
+                io::ErrorKind::WriteZero,
+                "JSON serialization cap exceeded",
+            ));
+        }
+        self.bytes.extend_from_slice(bytes);
+        Ok(bytes.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+fn serialize_pretty_bounded<T: Serialize>(
+    value: &T,
+    capacity: usize,
+) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let mut buffer = FixedCapacityJsonBuffer::new(capacity);
+    match serde_json::to_writer_pretty(&mut buffer, value) {
+        Ok(()) => Ok(buffer.into_bytes()),
+        Err(_error) if buffer.overflowed => {
+            Err(format!("JSON serialization exceeded its {capacity}-byte cap").into())
+        }
+        Err(error) => Err(error.into()),
+    }
+}
+
+#[derive(Debug)]
+struct BoundedMode25Output {
+    bytes: Vec<u8>,
+    fallback_used: bool,
+}
+
+fn serialize_mode25_output(
+    output: &mut Mode25Output<'_>,
+    capacity: usize,
+) -> Result<BoundedMode25Output, Box<dyn std::error::Error>> {
+    match serialize_pretty_bounded(output, capacity) {
+        Ok(bytes) => Ok(BoundedMode25Output {
+            bytes,
+            fallback_used: false,
+        }),
+        Err(primary_error)
+            if primary_error
+                .to_string()
+                .contains("serialization exceeded its") =>
+        {
+            let reason = primary_error.to_string();
+            replace_vacancy_articulation_sidecar(
+                &mut output.relaxed_diagnostics,
+                capacity,
+                &reason,
+            )?;
+            match serialize_pretty_bounded(output, capacity) {
+                Ok(bytes) => Ok(BoundedMode25Output {
+                    bytes,
+                    fallback_used: true,
+                }),
+                Err(fallback_error) => Err(format!(
+                    "the intact base result exceeded the {capacity}-byte cap even after replacing the vacancy-articulation sidecar: {fallback_error}"
+                )
+                .into()),
+            }
+        }
+        Err(error) => Err(error),
+    }
+}
+
+fn replace_vacancy_articulation_sidecar(
+    diagnostics: &mut Option<GeneralRelaxedDiagnostics>,
+    capacity: usize,
+    primary_error: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let probe = diagnostics
+        .as_mut()
+        .and_then(|diagnostics| diagnostics.coupled_dynamic_separator.as_mut())
+        .and_then(|diagnostics| diagnostics.persistent_vacancy_population.as_mut())
+        .and_then(|population| population.vacancy_articulation_probe.as_mut())
+        .ok_or_else(|| {
+            format!(
+                "the vacancy-articulation sidecar was missing after primary serialization overflow: {primary_error}"
+            )
+        })?;
+    *probe = Default::default();
+    probe.attempted = true;
+    probe.failure_reason = Some(format!(
+        "primary output serialization exceeded the {capacity}-byte cap: {primary_error}"
+    ));
+    probe.serialization_cap_bytes = Some(capacity);
+    Ok(())
+}
+
+#[cfg(test)]
+mod bounded_json_tests {
+    use super::*;
+    use polygon_nesting_core::search::general_relaxed::{
+        GeneralCoupledSeparatorDiagnostics, GeneralPersistentVacancyArticulationProbeDiagnostics,
+        GeneralPersistentVacancyDiagnostics,
+    };
+
+    #[test]
+    fn bounded_pretty_serialization_matches_unbounded_output() {
+        let value = json!({
+            "message": "fixed-capacity output",
+            "values": [1, 2, 3, 4],
+            "nested": {"enabled": true},
+        });
+
+        assert_eq!(
+            serialize_pretty_bounded(&value, 1024).unwrap(),
+            serde_json::to_vec_pretty(&value).unwrap()
+        );
+    }
+
+    #[test]
+    fn bounded_writer_rejects_without_growing_past_the_cap() {
+        let mut buffer = FixedCapacityJsonBuffer::new(3);
+        buffer.write_all(b"abc").unwrap();
+        assert!(buffer.write_all(b"d").is_err());
+        assert!(buffer.overflowed);
+        assert_eq!(buffer.bytes.len(), 3);
+        assert!(buffer.bytes.capacity() <= 3);
+    }
+
+    #[test]
+    fn bounded_pretty_serialization_rejects_overflow() {
+        let value = json!({"payload": "x".repeat(128)});
+        let error = serialize_pretty_bounded(&value, 32).unwrap_err();
+
+        assert_eq!(
+            error.to_string(),
+            "JSON serialization exceeded its 32-byte cap"
+        );
+    }
+
+    #[test]
+    fn mode25_overflow_replaces_only_the_additive_typed_sidecar() {
+        let mut probe = GeneralPersistentVacancyArticulationProbeDiagnostics::default();
+        probe.attempted = true;
+        probe.rows = vec![Default::default(); 765];
+        let mut population = GeneralPersistentVacancyDiagnostics::default();
+        population.mode = 25;
+        population.vacancy_articulation_probe = Some(probe);
+        let mut coupled = GeneralCoupledSeparatorDiagnostics {
+            seed_domain: 0,
+            control: Default::default(),
+            treatment: Default::default(),
+            boundary_projection_treatment: None,
+            conflict_ruin_recreate: None,
+            precompression_frontier_vacancy: None,
+            persistent_vacancy_population: Some(population),
+        };
+        let mut diagnostics = Some(GeneralRelaxedDiagnostics {
+            coupled_dynamic_separator: Some(coupled.clone()),
+            ..Default::default()
+        });
+
+        replace_vacancy_articulation_sidecar(&mut diagnostics, 4 * 1024, "cap").unwrap();
+        coupled = diagnostics
+            .as_ref()
+            .unwrap()
+            .coupled_dynamic_separator
+            .as_ref()
+            .unwrap()
+            .clone();
+        let population = coupled.persistent_vacancy_population.as_ref().unwrap();
+        let sidecar = population.vacancy_articulation_probe.as_ref().unwrap();
+        assert_eq!(population.mode, 25);
+        assert!(sidecar.attempted);
+        assert!(sidecar.rows.is_empty());
+        assert_eq!(sidecar.serialization_cap_bytes, Some(4 * 1024));
+        assert!(sidecar.failure_reason.as_deref().unwrap().contains("cap"));
+
+        let bytes = serialize_pretty_bounded(sidecar, 4 * 1024).unwrap();
+        let parsed: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(parsed["rows"], json!([]));
+        assert_eq!(parsed["serializationCapBytes"], 4 * 1024);
+    }
+
+    #[test]
+    fn mode25_typed_failure_sidecar_stays_bounded_after_replacement() {
+        let mut probe = GeneralPersistentVacancyArticulationProbeDiagnostics::default();
+        probe.rows = vec![Default::default(); 765];
+        let before = serialize_pretty_bounded(&probe, 4 * 1024).unwrap_err();
+        assert!(before.to_string().contains("exceeded"));
+
+        let mut population = GeneralPersistentVacancyDiagnostics::default();
+        population.vacancy_articulation_probe = Some(probe);
+        let mut diagnostics = Some(GeneralRelaxedDiagnostics {
+            coupled_dynamic_separator: Some(GeneralCoupledSeparatorDiagnostics {
+                seed_domain: 0,
+                control: Default::default(),
+                treatment: Default::default(),
+                boundary_projection_treatment: None,
+                conflict_ruin_recreate: None,
+                precompression_frontier_vacancy: None,
+                persistent_vacancy_population: Some(population),
+            }),
+            ..Default::default()
+        });
+        replace_vacancy_articulation_sidecar(&mut diagnostics, 4 * 1024, "cap").unwrap();
+        let sidecar = diagnostics
+            .as_ref()
+            .unwrap()
+            .coupled_dynamic_separator
+            .as_ref()
+            .unwrap()
+            .persistent_vacancy_population
+            .as_ref()
+            .unwrap()
+            .vacancy_articulation_probe
+            .as_ref()
+            .unwrap();
+        assert!(serialize_pretty_bounded(sidecar, 4 * 1024).is_ok());
+    }
 }
 
 fn independently_measure_coupled_depth(
@@ -769,18 +1480,24 @@ fn independently_measure_coupled_depth(
         .ok_or_else(|| "coupled diagnostics must retain at least one placement".into())
 }
 
-fn pair_cluster_arm_json(diagnostics: &GeneralPairClusterArmDiagnostics) -> serde_json::Value {
-    json!({
-        "placed": diagnostics.result.as_ref().map(|result| result.placements.len()),
-        "usedLongAxisDepthMm": diagnostics.result.as_ref().map(|result| result.used_long_axis_depth_mm),
-        "bandVariantsAttempted": diagnostics.band_variants_attempted,
-        "completedBands": diagnostics.completed_bands,
-        "bandFailures": diagnostics.band_failures,
-        "proposalAttempts": diagnostics.proposal_attempts,
-        "generatedProposals": diagnostics.generated_proposals,
-        "exactChildFixedVisits": diagnostics.exact_child_fixed_visits,
-        "exactCandidateRows": diagnostics.exact_candidate_rows,
-    })
+fn pair_cluster_arm_output(diagnostics: &GeneralPairClusterArmDiagnostics) -> PairClusterArmOutput {
+    PairClusterArmOutput {
+        placed: diagnostics
+            .result
+            .as_ref()
+            .map(|result| result.placements.len()),
+        used_long_axis_depth_mm: diagnostics
+            .result
+            .as_ref()
+            .map(|result| result.used_long_axis_depth_mm),
+        band_variants_attempted: diagnostics.band_variants_attempted,
+        completed_bands: diagnostics.completed_bands,
+        band_failures: diagnostics.band_failures.clone(),
+        proposal_attempts: diagnostics.proposal_attempts,
+        generated_proposals: diagnostics.generated_proposals,
+        exact_child_fixed_visits: diagnostics.exact_child_fixed_visits,
+        exact_candidate_rows: diagnostics.exact_candidate_rows,
+    }
 }
 
 fn ordered_f64_bits(value: f64) -> u64 {

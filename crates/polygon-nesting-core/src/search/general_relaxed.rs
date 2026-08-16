@@ -357,6 +357,10 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub repair_restart_screen: Option<GeneralPersistentVacancyRepairRestartDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vacancy_topology_probe: Option<GeneralPersistentVacancyTopologyProbeDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vacancy_articulation_probe: Option<GeneralPersistentVacancyArticulationProbeDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vacancy_bridge_relocation: Option<GeneralPersistentVacancyBridgeRelocationDiagnostics>,
     pub work: GeneralPersistentVacancyWorkDiagnostics,
     pub layers: Vec<GeneralPersistentVacancyLayerDiagnostics>,
     pub cap_exhausted: Option<String>,
@@ -566,6 +570,232 @@ pub struct GeneralPersistentVacancyTopologySnapshotDiagnostics {
     pub frontier_contact_grid: String,
     pub clipper_input_vertices: usize,
     pub clipper_output_vertices: usize,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyArticulationProbeDiagnostics {
+    pub attempted: bool,
+    pub geometry_domain: String,
+    pub clearance_mm: Vec<String>,
+    pub actionable_clearance_mm: String,
+    pub baselines: Vec<GeneralPersistentVacancyArticulationBaselineDiagnostics>,
+    pub rows: Vec<GeneralPersistentVacancyArticulationRowDiagnostics>,
+    pub states: Vec<GeneralPersistentVacancyArticulationStateDiagnostics>,
+    pub qualifying_state_count: usize,
+    pub mechanism_gate_passed: bool,
+    pub work: GeneralPersistentVacancyArticulationWorkDiagnostics,
+    pub transient_memory_reservation_bytes: usize,
+    pub retained_memory_reservation_bytes: usize,
+    pub protected_population_peak_bytes: usize,
+    pub total_reserved_bytes: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failure_reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub serialization_cap_bytes: Option<usize>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyArticulationBaselineDiagnostics {
+    pub label: String,
+    pub clearance_mm: String,
+    pub state_fingerprint: String,
+    pub active_piece_count: usize,
+    pub inactive_piece_count: usize,
+    pub active_piece_ids_sha256: String,
+    pub inactive_piece_ids_sha256: String,
+    pub minimum_inactive_collision_doubled_area_grid2: String,
+    pub free_region_count: usize,
+    pub frontier_connected_region_count: usize,
+    pub disconnected_region_count: usize,
+    pub total_free_doubled_area_grid2: String,
+    pub frontier_connected_free_doubled_area_grid2: String,
+    pub disconnected_free_doubled_area_grid2: String,
+    pub topology_input_vertices: usize,
+    pub topology_output_vertices: usize,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyArticulationRowDiagnostics {
+    pub label: String,
+    pub clearance_mm: String,
+    pub omitted_piece_id: String,
+    pub actionable_scale: bool,
+    pub material_articulation: bool,
+    pub omitted_expanded_doubled_area_grid2: String,
+    pub counterfactual_total_free_doubled_area_grid2: String,
+    pub counterfactual_frontier_connected_free_doubled_area_grid2: String,
+    pub counterfactual_disconnected_free_doubled_area_grid2: String,
+    pub unlocked_baseline_disconnected_doubled_area_grid2: String,
+    pub residual_baseline_disconnected_doubled_area_grid2: String,
+    pub counterfactual_free_region_count: usize,
+    pub counterfactual_frontier_connected_region_count: usize,
+    pub counterfactual_disconnected_region_count: usize,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyArticulationStateDiagnostics {
+    pub label: String,
+    pub state_fingerprint: String,
+    pub material_articulation_rows: usize,
+    pub actionable_material_articulation_rows: usize,
+    pub best_piece_id: Option<String>,
+    pub best_clearance_mm: Option<String>,
+    pub best_unlocked_doubled_area_grid2: Option<String>,
+    pub qualifies: bool,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyArticulationWorkDiagnostics {
+    pub active_offset_build_cap: usize,
+    pub active_offset_builds: usize,
+    pub active_offset_input_vertex_cap: usize,
+    pub active_offset_input_vertices: usize,
+    pub active_offset_output_vertex_cap: usize,
+    pub active_offset_output_vertices: usize,
+    pub inactive_collision_build_cap: usize,
+    pub inactive_collision_builds: usize,
+    pub inactive_collision_input_vertex_cap: usize,
+    pub inactive_collision_input_vertices: usize,
+    pub inactive_collision_output_vertex_cap: usize,
+    pub inactive_collision_output_vertices: usize,
+    pub topology_call_cap: usize,
+    pub topology_calls: usize,
+    pub topology_input_vertex_cap: usize,
+    pub topology_input_vertices: usize,
+    pub topology_output_vertex_cap: usize,
+    pub topology_output_vertices: usize,
+    pub component_graph_node_pair_cap: usize,
+    pub component_graph_node_pairs: usize,
+    pub component_graph_broad_phase_rejection_cap: usize,
+    pub component_graph_broad_phase_rejections: usize,
+    pub component_graph_edge_check_cap: u64,
+    pub component_graph_edge_checks: u64,
+    pub component_graph_scratch_cap_bytes: usize,
+    pub component_graph_scratch_peak_bytes: usize,
+    pub exact_area_vertex_visit_cap: usize,
+    pub exact_area_vertex_visits: usize,
+    pub retained_diagnostic_peak_bytes: usize,
+    pub expanded_polygon_cache_peak_bytes: usize,
+    pub baseline_topology_peak_bytes: usize,
+    pub counterfactual_topology_peak_bytes: usize,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyBridgeRelocationDiagnostics {
+    pub attempted: bool,
+    pub bridge_piece_id: String,
+    pub source_state_fingerprint: Option<String>,
+    pub source_augmented_identity_hash: Option<String>,
+    pub source_queue_piece_ids: Vec<String>,
+    pub topology_clearance_mm: String,
+    pub candidate_cap: usize,
+    pub positions_per_orientation_cap: usize,
+    pub orientation_count: usize,
+    pub generated_candidates: usize,
+    pub deduplicated_candidates: usize,
+    pub current_pose_rejections: usize,
+    pub illegal_candidates: usize,
+    pub topology_decreasing_rejections: usize,
+    pub legal_candidates: usize,
+    pub treatment_eligible_candidates: usize,
+    pub candidate_order_hash: Option<String>,
+    pub source_frontier_connected_free_doubled_area_grid2: Option<String>,
+    pub source_frontier_contact_grid: Option<String>,
+    pub topology_work: GeneralPersistentVacancyBridgeTopologyWorkDiagnostics,
+    pub candidate_summary_retained_cap_bytes: usize,
+    pub external_owner_reservation_bytes: usize,
+    pub json_buffer_reservation_bytes: usize,
+    pub candidate_work: GeneralPersistentVacancyWorkDiagnostics,
+    pub candidate_work_cap: GeneralPersistentVacancyWorkDiagnostics,
+    pub control_materialization_work: GeneralPersistentVacancyWorkDiagnostics,
+    pub treatment_materialization_work: GeneralPersistentVacancyWorkDiagnostics,
+    pub arm_work_cap: GeneralPersistentVacancyWorkDiagnostics,
+    pub total_work_cap: GeneralPersistentVacancyWorkDiagnostics,
+    pub work: GeneralPersistentVacancyWorkDiagnostics,
+    pub control: Option<GeneralPersistentVacancyBridgeArmDiagnostics>,
+    pub treatment: Option<GeneralPersistentVacancyBridgeArmDiagnostics>,
+    pub candidates: Vec<GeneralPersistentVacancyBridgeCandidateDiagnostics>,
+    pub strict_partial_improvement: bool,
+    pub promotion_gate_passed: bool,
+    pub acceptance_reason: Option<String>,
+    pub terminal_status: String,
+    pub inconclusive: bool,
+    pub causal_comparability_passed: bool,
+    pub matched_continuation_work: bool,
+    pub control_work_signature: Option<String>,
+    pub treatment_work_signature: Option<String>,
+    pub fixed_repair_seed_domain: String,
+    pub fixed_repair_horizon: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failure_reason: Option<String>,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyBridgeTopologyWorkDiagnostics {
+    pub topology_call_cap: usize,
+    pub topology_calls: usize,
+    pub topology_input_vertex_cap: usize,
+    pub topology_input_vertices: usize,
+    pub topology_output_vertex_cap: usize,
+    pub topology_output_vertices: usize,
+    pub transient_reservation_bytes: usize,
+    pub retained_reservation_bytes: usize,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyBridgeArmDiagnostics {
+    pub attempted: bool,
+    pub bridge_piece_id: String,
+    pub source_state_fingerprint: String,
+    pub source_augmented_identity_hash: String,
+    pub queue_piece_ids: Vec<String>,
+    pub selected_candidate_ordinal: Option<usize>,
+    pub selected_candidate_key: Option<String>,
+    pub selected_candidate_state_fingerprint: Option<String>,
+    pub endpoint_state_fingerprint: Option<String>,
+    pub endpoint_augmented_identity_hash: Option<String>,
+    pub endpoint_inactive_piece_count: Option<usize>,
+    pub endpoint_inactive_area_grid2: Option<String>,
+    pub endpoint_pareto_improves_source: bool,
+    pub complete_endpoint: bool,
+    pub independent_depth_mm: Option<f64>,
+    pub final_placement_fingerprint: Option<String>,
+    pub work_limit_fingerprint: String,
+    pub materialization_work: GeneralPersistentVacancyWorkDiagnostics,
+    pub continuation_work_signature: String,
+    pub continuation_work: GeneralPersistentVacancyWorkDiagnostics,
+    pub failure_reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyBridgeCandidateDiagnostics {
+    pub ordinal: usize,
+    pub orientation_ordinal: usize,
+    pub position_ordinal: usize,
+    pub rotation_deg: f64,
+    pub mirrored: bool,
+    pub translate_short_axis: f64,
+    pub translate_long_axis: f64,
+    pub state_fingerprint: String,
+    pub frontier_connected_free_doubled_area_grid2: String,
+    pub frontier_contact_grid: String,
+    pub disconnected_free_doubled_area_grid2: String,
+    pub largest_disconnected_free_doubled_area_grid2: String,
+    pub legal: bool,
+    pub topology_eligible: bool,
+    pub selected_control: bool,
+    pub selected_treatment: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejection_reason: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]

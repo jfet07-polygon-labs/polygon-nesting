@@ -23,6 +23,26 @@ const REPAIR_RESTART_ROOT_CONTROL_MODE: usize = 16;
 const REPAIR_RESTART_STATE_TREATMENT_MODE: usize = 17;
 const REPAIR_RESTART_QUEUE_TREATMENT_MODE: usize = 18;
 const VACANCY_TOPOLOGY_PROBE_MODE: usize = 19;
+const VACANCY_ARTICULATION_PROBE_MODE: usize = 25;
+const VACANCY_BRIDGE_RELOCATION_MODE: usize = 26;
+const VACANCY_BRIDGE_PIECE_ID: &str = "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3";
+const VACANCY_BRIDGE_CANDIDATE_CAP: usize = 96;
+const VACANCY_BRIDGE_POSITIONS_PER_ORIENTATION_CAP: usize = 8;
+const VACANCY_BRIDGE_TOPOLOGY_CLEARANCE_MM: f64 = 2.752;
+const VACANCY_BRIDGE_TOPOLOGY_CALL_CAP: usize = 1 + VACANCY_BRIDGE_CANDIDATE_CAP;
+const VACANCY_BRIDGE_TOPOLOGY_INPUT_VERTEX_CAP: usize =
+    VACANCY_BRIDGE_TOPOLOGY_CALL_CAP * VACANCY_TOPOLOGY_INPUT_VERTICES_PER_SNAPSHOT;
+const VACANCY_BRIDGE_TOPOLOGY_OUTPUT_VERTEX_CAP: usize =
+    VACANCY_BRIDGE_TOPOLOGY_CALL_CAP * VACANCY_TOPOLOGY_OUTPUT_VERTICES_PER_SNAPSHOT;
+const VACANCY_BRIDGE_TOPOLOGY_TRANSIENT_RESERVATION_BYTES: usize =
+    VACANCY_TOPOLOGY_TRANSIENT_RESERVATION_BYTES;
+const VACANCY_BRIDGE_TOPOLOGY_RETAINED_RESERVATION_BYTES: usize =
+    VACANCY_TOPOLOGY_RETAINED_RESERVATION_BYTES;
+const VACANCY_BRIDGE_CANDIDATE_SUMMARY_RETAINED_CAP_BYTES: usize = 2 * 1024 * 1024;
+const VACANCY_BRIDGE_EXTERNAL_OWNER_RESERVATION_BYTES: usize = 8 * 1024 * 1024;
+const VACANCY_BRIDGE_JSON_BUFFER_RESERVATION_BYTES: usize = 4 * 1024 * 1024;
+const VACANCY_BRIDGE_FAILURE_CANDIDATE_PREFIX_CAP: usize = 8;
+const VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES: usize = 256;
 const VACANCY_TOPOLOGY_CLEARANCE_MM: [f64; 6] = [0.0, 1.0, 2.5, 5.0, 10.0, 15.0];
 const VACANCY_TOPOLOGY_STATE_COUNT: usize = 3;
 const VACANCY_TOPOLOGY_SNAPSHOT_COUNT: usize =
@@ -39,6 +59,77 @@ const VACANCY_TOPOLOGY_CUMULATIVE_OUTPUT_VERTICES: usize =
     VACANCY_TOPOLOGY_SNAPSHOT_COUNT * VACANCY_TOPOLOGY_OUTPUT_VERTICES_PER_SNAPSHOT;
 const VACANCY_TOPOLOGY_TRANSIENT_RESERVATION_BYTES: usize = 48 * 1024 * 1024;
 const VACANCY_TOPOLOGY_RETAINED_RESERVATION_BYTES: usize = 128 * 1024;
+const VACANCY_ARTICULATION_CLEARANCE_MM: [f64; 5] = [1.0, 2.5, 2.752, 10.0, 15.0];
+const VACANCY_ARTICULATION_STATE_COUNT: usize = 3;
+const VACANCY_ARTICULATION_ACTIVE_PIECES: usize = 51;
+const VACANCY_ARTICULATION_INACTIVE_PIECES: usize = 10;
+const VACANCY_ARTICULATION_ROW_COUNT: usize = VACANCY_ARTICULATION_STATE_COUNT
+    * VACANCY_ARTICULATION_CLEARANCE_MM.len()
+    * VACANCY_ARTICULATION_ACTIVE_PIECES;
+const VACANCY_ARTICULATION_BASELINE_COUNT: usize =
+    VACANCY_ARTICULATION_STATE_COUNT * VACANCY_ARTICULATION_CLEARANCE_MM.len();
+const VACANCY_ARTICULATION_TOPOLOGY_CALL_CAP: usize =
+    VACANCY_ARTICULATION_ROW_COUNT + VACANCY_ARTICULATION_BASELINE_COUNT;
+const VACANCY_ARTICULATION_TOPOLOGY_OUTPUT_PER_CALL: usize = 4_096;
+const VACANCY_ARTICULATION_ACTIVE_OFFSET_BUILD_CAP: usize = VACANCY_ARTICULATION_ROW_COUNT;
+const VACANCY_ARTICULATION_ACTIVE_OFFSET_VERTEX_CAP: usize =
+    VACANCY_ARTICULATION_ACTIVE_OFFSET_BUILD_CAP * MAX_COLLISION_VERTICES;
+const VACANCY_ARTICULATION_INACTIVE_COLLISION_BUILD_CAP: usize =
+    VACANCY_ARTICULATION_STATE_COUNT * VACANCY_ARTICULATION_INACTIVE_PIECES;
+const VACANCY_ARTICULATION_INACTIVE_COLLISION_VERTEX_CAP: usize =
+    VACANCY_ARTICULATION_INACTIVE_COLLISION_BUILD_CAP * MAX_COLLISION_VERTICES;
+const VACANCY_ARTICULATION_TOPOLOGY_INPUT_VERTEX_CAP: usize = VACANCY_ARTICULATION_BASELINE_COUNT
+    * (4 + VACANCY_ARTICULATION_ACTIVE_PIECES * MAX_COLLISION_VERTICES)
+    + VACANCY_ARTICULATION_ROW_COUNT
+        * (4 + (VACANCY_ARTICULATION_ACTIVE_PIECES - 1) * MAX_COLLISION_VERTICES);
+const VACANCY_ARTICULATION_TOPOLOGY_OUTPUT_VERTEX_CAP: usize =
+    VACANCY_ARTICULATION_TOPOLOGY_CALL_CAP * VACANCY_ARTICULATION_TOPOLOGY_OUTPUT_PER_CALL;
+const VACANCY_ARTICULATION_MAX_COMPONENTS_PER_TOPOLOGY: usize =
+    VACANCY_ARTICULATION_TOPOLOGY_OUTPUT_PER_CALL / 3;
+const VACANCY_ARTICULATION_COMPONENT_GRAPH_NODE_PAIR_CAP: usize = VACANCY_ARTICULATION_ROW_COUNT
+    * VACANCY_ARTICULATION_MAX_COMPONENTS_PER_TOPOLOGY
+    * VACANCY_ARTICULATION_MAX_COMPONENTS_PER_TOPOLOGY;
+const VACANCY_ARTICULATION_COMPONENT_GRAPH_EDGE_CHECK_CAP: u64 = VACANCY_ARTICULATION_ROW_COUNT
+    as u64
+    * VACANCY_ARTICULATION_TOPOLOGY_OUTPUT_PER_CALL as u64
+    * VACANCY_ARTICULATION_TOPOLOGY_OUTPUT_PER_CALL as u64;
+const VACANCY_ARTICULATION_COMPONENT_GRAPH_SCRATCH_RESERVATION_BYTES: usize = 256 * 1024;
+const VACANCY_ARTICULATION_EXACT_AREA_VERTEX_VISIT_CAP: usize = 9_868_800;
+const VACANCY_ARTICULATION_POLYGON_HEAP_CAP: usize = 64 * 1024;
+const VACANCY_ARTICULATION_EXPANDED_CACHE_RESERVATION_BYTES: usize =
+    size_of::<Vec<(usize, PolygonSet)>>()
+        + VACANCY_ARTICULATION_ACTIVE_PIECES
+            * (size_of::<(usize, PolygonSet)>() + VACANCY_ARTICULATION_POLYGON_HEAP_CAP);
+const VACANCY_ARTICULATION_TOPOLOGY_HEAP_CAP: usize = 8 * 1024 * 1024;
+const VACANCY_ARTICULATION_BASELINE_TOPOLOGY_RESERVATION_BYTES: usize = 8 * 1024 * 1024;
+const VACANCY_ARTICULATION_COUNTERFACTUAL_TOPOLOGY_RESERVATION_BYTES: usize = 8 * 1024 * 1024;
+const VACANCY_ARTICULATION_CLIPPER_OPERATION_RESERVATION_BYTES: usize = 16 * 1024 * 1024;
+const VACANCY_ARTICULATION_JSON_BUFFER_RESERVATION_BYTES: usize = 4 * 1024 * 1024;
+const VACANCY_ARTICULATION_TRANSIENT_RESERVATION_BYTES: usize =
+    VACANCY_ARTICULATION_EXPANDED_CACHE_RESERVATION_BYTES
+        + VACANCY_ARTICULATION_BASELINE_TOPOLOGY_RESERVATION_BYTES
+        + VACANCY_ARTICULATION_COUNTERFACTUAL_TOPOLOGY_RESERVATION_BYTES
+        + VACANCY_ARTICULATION_COMPONENT_GRAPH_SCRATCH_RESERVATION_BYTES
+        + VACANCY_ARTICULATION_CLIPPER_OPERATION_RESERVATION_BYTES
+        + VACANCY_ARTICULATION_JSON_BUFFER_RESERVATION_BYTES;
+const VACANCY_ARTICULATION_RETAINED_RESERVATION_BYTES: usize = 1024 * 1024;
+const VACANCY_ARTICULATION_PROTECTED_PEAK_BYTES: usize = 6_353_345;
+const VACANCY_ARTICULATION_TOTAL_RESERVED_BYTES: usize = 48_756_793;
+const VACANCY_ARTICULATION_EXPECTED_STATE_FINGERPRINTS: [&str; 3] = [
+    "1b2fd098813d00f01067e2ea95ad494c41b5126cc48da0df26c147bf6601c0df",
+    "bed29b45996a6bcccc5dad8f498f7522711976bd6d26e26ae78da18d99935da1",
+    "6b42ff5e85749e4e3ce00bc36e6462f29a61290c74cd0bdfc5ae328ab5e16d28",
+];
+const VACANCY_ARTICULATION_EXPECTED_ACTIVE_HASHES: [&str; 3] = [
+    "73f2ad8c818bef0413bd04ede31a5634d6c0cdaea593f6a4ac2808eea66cc70a",
+    "e4a5cbd61cbf2b7e136018898bc104139f43c58796aa17145d1d6799cc714ead",
+    "baad00c34b65c4fca296fa15d3488d5d03799cc3830e12acae524f2c880900f0",
+];
+const VACANCY_ARTICULATION_EXPECTED_INACTIVE_HASHES: [&str; 3] = [
+    "c49ce0549e87d8b2734e6a37fe4228ccb03d108b70105c1e0859e72a6269ddd8",
+    "fe3f1dace6e47b36dfb9515901c9909dc63bee2e886019a7349e4806a711196a",
+    "9485763978e17bbb3992b6a63a210aec9fdb5f2c5d565109c9f50159bdbf9873",
+];
 const REPAIR_HORIZON: usize = 16;
 const REPAIR_BEAM_WIDTH: usize = 4;
 const REPAIR_RESTART_ROUNDS: usize = 2;
@@ -153,6 +244,19 @@ const RESTART_MAX_CLIPPER_INPUT_VERTICES_U64: u64 = (RESTART_MAX_EXPERIMENTAL_PA
     * 2
     * MAX_COLLISION_VERTICES as u64;
 
+const BRIDGE_CANDIDATE_SELECTED_PIECE_SLOTS_U64: u64 = 1;
+const BRIDGE_CANDIDATE_ORIENTATION_STREAMS_U64: u64 = ORIENTATIONS_PER_PIECE as u64;
+const BRIDGE_CANDIDATE_SOURCE_FEATURE_VISITS_U64: u64 =
+    ORIENTATIONS_PER_PIECE as u64 * MIXED_PIECE_COUNT as u64 * 2 * MAX_SOURCE_FEATURES as u64;
+const BRIDGE_CANDIDATE_POSITION_SOURCE_ATTEMPTS_U64: u64 =
+    ORIENTATIONS_PER_PIECE as u64 * MAX_POSITION_SOURCES_PER_ORIENTATION as u64;
+const BRIDGE_CANDIDATE_RETURNED_POSITIONS_U64: u64 =
+    ORIENTATIONS_PER_PIECE as u64 * POSITIONS_PER_ORIENTATION as u64;
+const BRIDGE_CANDIDATE_EXPERIMENTAL_COLLISION_BUILDS_U64: u64 =
+    ORIENTATIONS_PER_PIECE as u64 + VACANCY_BRIDGE_CANDIDATE_CAP as u64;
+const BRIDGE_CANDIDATE_EXPERIMENTAL_PAIR_VISITS_U64: u64 =
+    VACANCY_BRIDGE_CANDIDATE_CAP as u64 * (MIXED_PIECE_COUNT as u64 - 1);
+
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct VacancyTransition {
     inserted: usize,
@@ -262,7 +366,7 @@ struct RunWork {
     limits: WorkLimits,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct WorkLimits {
     selected_piece_slots: usize,
     orientation_streams: usize,
@@ -278,6 +382,7 @@ struct WorkLimits {
     validator_pair_visits: usize,
     transformed_collision_vertices: usize,
     clipper_input_vertices: usize,
+    clipper_output_vertices: usize,
     partial_audits: usize,
     complete_audits: usize,
 }
@@ -299,6 +404,7 @@ impl Default for WorkLimits {
             validator_pair_visits: MAX_VALIDATOR_PAIR_VISITS,
             transformed_collision_vertices: MAX_TRANSFORMED_COLLISION_VERTICES,
             clipper_input_vertices: MAX_CLIPPER_INPUT_VERTICES,
+            clipper_output_vertices: MAX_CLIPPER_OUTPUT_VERTICES,
             partial_audits: MAX_PARTIAL_AUDITS,
             complete_audits: MAX_COMPLETE_AUDITS,
         }
@@ -322,6 +428,7 @@ impl WorkLimits {
             validator_pair_visits: REPAIR_MAX_VALIDATOR_PAIR_VISITS,
             transformed_collision_vertices: REPAIR_MAX_TRANSFORMED_COLLISION_VERTICES,
             clipper_input_vertices: REPAIR_MAX_CLIPPER_INPUT_VERTICES,
+            clipper_output_vertices: MAX_CLIPPER_OUTPUT_VERTICES,
             partial_audits: REPAIR_MAX_PARTIAL_AUDITS,
             complete_audits: REPAIR_MAX_COMPLETE_AUDITS,
         }
@@ -383,8 +490,167 @@ impl WorkLimits {
                 "Clipper input vertices",
                 RESTART_MAX_CLIPPER_INPUT_VERTICES_U64,
             )?,
+            clipper_output_vertices: MAX_CLIPPER_OUTPUT_VERTICES,
             partial_audits: checked("partial audits", RESTART_MAX_PARTIAL_AUDITS_U64)?,
             complete_audits: checked("complete audits", RESTART_MAX_COMPLETE_AUDITS_U64)?,
+        })
+    }
+
+    fn bridge_candidates() -> Self {
+        Self {
+            selected_piece_slots: BRIDGE_CANDIDATE_SELECTED_PIECE_SLOTS_U64 as usize,
+            orientation_streams: BRIDGE_CANDIDATE_ORIENTATION_STREAMS_U64 as usize,
+            source_feature_visits: BRIDGE_CANDIDATE_SOURCE_FEATURE_VISITS_U64 as usize,
+            position_source_attempts: BRIDGE_CANDIDATE_POSITION_SOURCE_ATTEMPTS_U64 as usize,
+            returned_positions: BRIDGE_CANDIDATE_RETURNED_POSITIONS_U64 as usize,
+            experimental_collision_builds: BRIDGE_CANDIDATE_EXPERIMENTAL_COLLISION_BUILDS_U64
+                as usize,
+            experimental_pair_visits: BRIDGE_CANDIDATE_EXPERIMENTAL_PAIR_VISITS_U64 as usize,
+            transformed_collision_vertices: (BRIDGE_CANDIDATE_EXPERIMENTAL_COLLISION_BUILDS_U64
+                * MAX_COLLISION_VERTICES as u64)
+                as usize,
+            clipper_input_vertices: (BRIDGE_CANDIDATE_EXPERIMENTAL_PAIR_VISITS_U64
+                * 2
+                * MAX_COLLISION_VERTICES as u64) as usize,
+            clipper_output_vertices: MAX_CLIPPER_OUTPUT_VERTICES,
+            ..Self::default_zero()
+        }
+    }
+
+    fn bridge_arm() -> Result<Self, String> {
+        let mut limits = Self::repair();
+        limits.experimental_collision_builds = limits
+            .experimental_collision_builds
+            .checked_add(1)
+            .ok_or_else(|| "persistent vacancy bridge arm collision cap overflow".to_owned())?;
+        limits.experimental_pair_visits = limits
+            .experimental_pair_visits
+            .checked_add(MIXED_PIECE_COUNT - 1)
+            .ok_or_else(|| "persistent vacancy bridge arm pair cap overflow".to_owned())?;
+        limits.transformed_collision_vertices = limits
+            .transformed_collision_vertices
+            .checked_add(MAX_COLLISION_VERTICES)
+            .ok_or_else(|| "persistent vacancy bridge arm vertex cap overflow".to_owned())?;
+        limits.clipper_input_vertices = limits
+            .clipper_input_vertices
+            .checked_add((MIXED_PIECE_COUNT - 1) * 2 * MAX_COLLISION_VERTICES)
+            .ok_or_else(|| "persistent vacancy bridge arm Clipper cap overflow".to_owned())?;
+        Ok(limits)
+    }
+
+    fn repair_bridge() -> Result<Self, String> {
+        Self::repair()
+            .checked_add(Self::bridge_candidates(), "round-zero plus candidates")?
+            .checked_add(Self::bridge_arm()?, "first bridge arm")?
+            .checked_add(Self::bridge_arm()?, "second bridge arm")
+    }
+
+    fn default_zero() -> Self {
+        Self {
+            selected_piece_slots: 0,
+            orientation_streams: 0,
+            source_feature_visits: 0,
+            position_source_attempts: 0,
+            returned_positions: 0,
+            hazard_queries: 0,
+            proxy_pressure_visits: 0,
+            exact_finalist_rows: 0,
+            experimental_collision_builds: 0,
+            validator_collision_builds: 0,
+            experimental_pair_visits: 0,
+            validator_pair_visits: 0,
+            transformed_collision_vertices: 0,
+            clipper_input_vertices: 0,
+            clipper_output_vertices: 0,
+            partial_audits: 0,
+            complete_audits: 0,
+        }
+    }
+
+    fn checked_add(self, other: Self, label: &str) -> Result<Self, String> {
+        let add = |name: &str, first: usize, second: usize| {
+            first
+                .checked_add(second)
+                .ok_or_else(|| format!("persistent vacancy bridge {label} {name} cap overflow"))
+        };
+        Ok(Self {
+            selected_piece_slots: add(
+                "selected-piece slots",
+                self.selected_piece_slots,
+                other.selected_piece_slots,
+            )?,
+            orientation_streams: add(
+                "orientation streams",
+                self.orientation_streams,
+                other.orientation_streams,
+            )?,
+            source_feature_visits: add(
+                "source-feature visits",
+                self.source_feature_visits,
+                other.source_feature_visits,
+            )?,
+            position_source_attempts: add(
+                "position-source attempts",
+                self.position_source_attempts,
+                other.position_source_attempts,
+            )?,
+            returned_positions: add(
+                "returned positions",
+                self.returned_positions,
+                other.returned_positions,
+            )?,
+            hazard_queries: add("hazard queries", self.hazard_queries, other.hazard_queries)?,
+            proxy_pressure_visits: add(
+                "proxy-pressure visits",
+                self.proxy_pressure_visits,
+                other.proxy_pressure_visits,
+            )?,
+            exact_finalist_rows: add(
+                "exact-finalist rows",
+                self.exact_finalist_rows,
+                other.exact_finalist_rows,
+            )?,
+            experimental_collision_builds: add(
+                "experimental collision builds",
+                self.experimental_collision_builds,
+                other.experimental_collision_builds,
+            )?,
+            validator_collision_builds: add(
+                "validator collision builds",
+                self.validator_collision_builds,
+                other.validator_collision_builds,
+            )?,
+            experimental_pair_visits: add(
+                "experimental pair visits",
+                self.experimental_pair_visits,
+                other.experimental_pair_visits,
+            )?,
+            validator_pair_visits: add(
+                "validator pair visits",
+                self.validator_pair_visits,
+                other.validator_pair_visits,
+            )?,
+            transformed_collision_vertices: add(
+                "transformed collision vertices",
+                self.transformed_collision_vertices,
+                other.transformed_collision_vertices,
+            )?,
+            clipper_input_vertices: add(
+                "Clipper input vertices",
+                self.clipper_input_vertices,
+                other.clipper_input_vertices,
+            )?,
+            clipper_output_vertices: add(
+                "Clipper output vertices",
+                self.clipper_output_vertices,
+                other.clipper_output_vertices,
+            )?,
+            partial_audits: add("partial audits", self.partial_audits, other.partial_audits)?,
+            complete_audits: add(
+                "complete audits",
+                self.complete_audits,
+                other.complete_audits,
+            )?,
         })
     }
 }
@@ -417,6 +683,24 @@ impl RunWork {
             .saturating_add(amount);
         if self.diagnostics.source_feature_visits > self.limits.source_feature_visits {
             return Err(self.cap("source-feature visit budget exhausted"));
+        }
+        Ok(())
+    }
+
+    fn charge_selected_piece_slots(&mut self, amount: usize) -> Result<(), String> {
+        self.diagnostics.selected_piece_slots =
+            self.diagnostics.selected_piece_slots.saturating_add(amount);
+        if self.diagnostics.selected_piece_slots > self.limits.selected_piece_slots {
+            return Err(self.cap("selected-piece slot budget exhausted"));
+        }
+        Ok(())
+    }
+
+    fn charge_orientation_streams(&mut self, amount: usize) -> Result<(), String> {
+        self.diagnostics.orientation_streams =
+            self.diagnostics.orientation_streams.saturating_add(amount);
+        if self.diagnostics.orientation_streams > self.limits.orientation_streams {
+            return Err(self.cap("orientation-stream budget exhausted"));
         }
         Ok(())
     }
@@ -509,6 +793,8 @@ fn uses_macro_expansion(mode: usize) -> bool {
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
             | VACANCY_TOPOLOGY_PROBE_MODE
+            | VACANCY_ARTICULATION_PROBE_MODE
+            | VACANCY_BRIDGE_RELOCATION_MODE
     )
 }
 
@@ -523,6 +809,8 @@ fn admits_macro_children(mode: usize) -> bool {
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
             | VACANCY_TOPOLOGY_PROBE_MODE
+            | VACANCY_ARTICULATION_PROBE_MODE
+            | VACANCY_BRIDGE_RELOCATION_MODE
     )
 }
 
@@ -536,6 +824,8 @@ fn uses_preserved_best_macro(mode: usize) -> bool {
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
             | VACANCY_TOPOLOGY_PROBE_MODE
+            | VACANCY_ARTICULATION_PROBE_MODE
+            | VACANCY_BRIDGE_RELOCATION_MODE
     )
 }
 
@@ -548,6 +838,8 @@ fn uses_repair_expedition(mode: usize) -> bool {
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
             | VACANCY_TOPOLOGY_PROBE_MODE
+            | VACANCY_ARTICULATION_PROBE_MODE
+            | VACANCY_BRIDGE_RELOCATION_MODE
     )
 }
 
@@ -558,6 +850,7 @@ fn uses_repair_restart_screen(mode: usize) -> bool {
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
             | VACANCY_TOPOLOGY_PROBE_MODE
+            | VACANCY_ARTICULATION_PROBE_MODE
     )
 }
 
@@ -638,10 +931,17 @@ pub(super) fn run_persistent_vacancy_population(
             diagnostics.final_placements = coupled_placement_diagnostics(&placements);
         }
         Ok(None) => {
-            diagnostics.failure_reason = Some(
-                "persistent vacancy population exhausted its bounded layers without a complete state"
-                    .to_owned(),
-            );
+            let bridge_inconclusive = mode == VACANCY_BRIDGE_RELOCATION_MODE
+                && diagnostics
+                    .vacancy_bridge_relocation
+                    .as_ref()
+                    .is_some_and(|bridge| bridge.inconclusive);
+            if !bridge_inconclusive {
+                diagnostics.failure_reason = Some(
+                    "persistent vacancy population exhausted its bounded layers without a complete state"
+                        .to_owned(),
+                );
+            }
         }
         Err(reason) => {
             diagnostics.cap_exhausted = reason.strip_prefix("cap: ").map(str::to_owned);
@@ -676,9 +976,11 @@ fn run_population(
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
             | VACANCY_TOPOLOGY_PROBE_MODE
+            | VACANCY_ARTICULATION_PROBE_MODE
+            | VACANCY_BRIDGE_RELOCATION_MODE
     ) {
         return Err(
-            "persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 8, 9, 10, or 14 through 19; retired modes 7 and 11 through 13 are unavailable"
+            "persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 8, 9, 10, 14 through 19, or 25 through 26; retired modes 7 and 11 through 13 are unavailable"
                 .to_owned(),
         );
     }
@@ -1285,6 +1587,18 @@ fn run_population(
             work,
         );
     }
+    if mode == VACANCY_BRIDGE_RELOCATION_MODE {
+        return run_bridge_relocation_experiment(
+            root,
+            &baseline_placements,
+            pieces,
+            target_settings,
+            &difficulty,
+            &hazard_catalog,
+            diagnostics,
+            work,
+        );
+    }
     let mut expedition_events = GeneralPersistentVacancyDiagnostics::default();
     let mut expedition_work = RunWork {
         diagnostics: repair_generation_work_start(work.diagnostics),
@@ -1562,7 +1876,7 @@ fn run_repair_restart_screen(
             &round_zero.best_partial.node.state,
             true,
         ),
-        VACANCY_TOPOLOGY_PROBE_MODE => (
+        VACANCY_TOPOLOGY_PROBE_MODE | VACANCY_ARTICULATION_PROBE_MODE => (
             "roundZeroEndpointRebuiltQueue",
             &round_zero.best_partial.node.state,
             false,
@@ -1763,6 +2077,21 @@ fn run_repair_restart_screen(
     } else {
         None
     };
+    let protected_population_peak_bytes = work
+        .diagnostics
+        .total_retained_peak_bytes
+        .max(round_zero_work.diagnostics.total_retained_peak_bytes)
+        .max(round_one_work.diagnostics.total_retained_peak_bytes);
+    let articulation_probe = (mode == VACANCY_ARTICULATION_PROBE_MODE).then(|| {
+        vacancy_articulation_probe(
+            &original_root,
+            &round_zero.best_partial.node,
+            &round_one.best_partial.node,
+            pieces,
+            settings,
+            protected_population_peak_bytes,
+        )
+    });
     let screen = GeneralPersistentVacancyRepairRestartDiagnostics {
         arm_family: restart_arm_family(mode).to_owned(),
         round_zero_replay_sha256: Some(round_zero_hash),
@@ -1795,7 +2124,1873 @@ fn run_repair_restart_screen(
     );
     diagnostics.repair_restart_screen = Some(screen);
     diagnostics.vacancy_topology_probe = topology_probe;
+    diagnostics.vacancy_articulation_probe = articulation_probe;
     Ok(round_one.accepted_complete)
+}
+
+#[derive(Clone)]
+struct BridgeRelocationCandidate {
+    placement: RelaxedPlacement,
+    orientation_ordinal: usize,
+    position_ordinal: usize,
+    topology: GeneralPersistentVacancyTopologySnapshotDiagnostics,
+    topology_eligible: bool,
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+struct VacancyTopologyCallWork {
+    input_vertices: usize,
+    output_vertices: usize,
+}
+
+#[derive(Debug)]
+struct VacancyTopologySnapshotFailure {
+    reason: String,
+    work: VacancyTopologyCallWork,
+}
+
+impl VacancyTopologySnapshotFailure {
+    fn new(reason: impl Into<String>, work: VacancyTopologyCallWork) -> Self {
+        Self {
+            reason: reason.into(),
+            work,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct BridgeTopologyLedger {
+    diagnostics: GeneralPersistentVacancyBridgeTopologyWorkDiagnostics,
+}
+
+impl BridgeTopologyLedger {
+    fn new() -> Self {
+        Self {
+            diagnostics: GeneralPersistentVacancyBridgeTopologyWorkDiagnostics {
+                topology_call_cap: VACANCY_BRIDGE_TOPOLOGY_CALL_CAP,
+                topology_input_vertex_cap: VACANCY_BRIDGE_TOPOLOGY_INPUT_VERTEX_CAP,
+                topology_output_vertex_cap: VACANCY_BRIDGE_TOPOLOGY_OUTPUT_VERTEX_CAP,
+                transient_reservation_bytes: VACANCY_BRIDGE_TOPOLOGY_TRANSIENT_RESERVATION_BYTES,
+                retained_reservation_bytes: VACANCY_BRIDGE_TOPOLOGY_RETAINED_RESERVATION_BYTES,
+                ..GeneralPersistentVacancyBridgeTopologyWorkDiagnostics::default()
+            },
+        }
+    }
+
+    fn record_attempt(&mut self, work: VacancyTopologyCallWork) -> Result<(), String> {
+        let next_calls = self
+            .diagnostics
+            .topology_calls
+            .checked_add(1)
+            .ok_or_else(|| "cap: bridge topology-call ledger overflow".to_owned())?;
+        let next_input = self
+            .diagnostics
+            .topology_input_vertices
+            .checked_add(work.input_vertices)
+            .ok_or_else(|| "cap: bridge topology input ledger overflow".to_owned())?;
+        let next_output = self
+            .diagnostics
+            .topology_output_vertices
+            .checked_add(work.output_vertices)
+            .ok_or_else(|| "cap: bridge topology output ledger overflow".to_owned())?;
+        // record the consumed geometry before checking the declared caps so a
+        // failed call remains auditable instead of disappearing from the ledger.
+        self.diagnostics.topology_calls = next_calls;
+        self.diagnostics.topology_input_vertices = next_input;
+        self.diagnostics.topology_output_vertices = next_output;
+        if next_calls > self.diagnostics.topology_call_cap {
+            return Err("cap: bridge topology-call budget exhausted".to_owned());
+        }
+        if next_input > self.diagnostics.topology_input_vertex_cap {
+            return Err("cap: bridge topology input-vertex budget exhausted".to_owned());
+        }
+        if next_output > self.diagnostics.topology_output_vertex_cap {
+            return Err("cap: bridge topology output-vertex budget exhausted".to_owned());
+        }
+        Ok(())
+    }
+
+    fn record(
+        &mut self,
+        snapshot: &GeneralPersistentVacancyTopologySnapshotDiagnostics,
+    ) -> Result<(), String> {
+        self.record_attempt(VacancyTopologyCallWork {
+            input_vertices: snapshot.clipper_input_vertices,
+            output_vertices: snapshot.clipper_output_vertices,
+        })
+    }
+}
+
+fn copy_bridge_topology_ledger_diagnostics(
+    bridge: &mut GeneralPersistentVacancyBridgeRelocationDiagnostics,
+    ledger: &BridgeTopologyLedger,
+) {
+    bridge.topology_work = ledger.diagnostics;
+}
+
+fn bridge_diagnostics_skeleton(
+    total_limits: WorkLimits,
+    candidate_limits: WorkLimits,
+    arm_limits: WorkLimits,
+) -> GeneralPersistentVacancyBridgeRelocationDiagnostics {
+    GeneralPersistentVacancyBridgeRelocationDiagnostics {
+        attempted: true,
+        bridge_piece_id: VACANCY_BRIDGE_PIECE_ID.to_owned(),
+        topology_clearance_mm: VACANCY_BRIDGE_TOPOLOGY_CLEARANCE_MM.to_string(),
+        candidate_cap: VACANCY_BRIDGE_CANDIDATE_CAP,
+        positions_per_orientation_cap: VACANCY_BRIDGE_POSITIONS_PER_ORIENTATION_CAP,
+        candidate_work_cap: work_diagnostics_from_limits(candidate_limits),
+        arm_work_cap: work_diagnostics_from_limits(arm_limits),
+        total_work_cap: work_diagnostics_from_limits(total_limits),
+        fixed_repair_seed_domain: REPAIR_RESTART_SEED_DOMAIN.to_owned(),
+        fixed_repair_horizon: REPAIR_HORIZON,
+        candidate_summary_retained_cap_bytes: VACANCY_BRIDGE_CANDIDATE_SUMMARY_RETAINED_CAP_BYTES,
+        external_owner_reservation_bytes: VACANCY_BRIDGE_EXTERNAL_OWNER_RESERVATION_BYTES,
+        json_buffer_reservation_bytes: VACANCY_BRIDGE_JSON_BUFFER_RESERVATION_BYTES,
+        terminal_status: "failed".to_owned(),
+        failure_reason: None,
+        ..GeneralPersistentVacancyBridgeRelocationDiagnostics::default()
+    }
+}
+
+fn truncate_bridge_string(value: &mut String, cap_bytes: usize) {
+    if value.len() > cap_bytes {
+        *value = value.chars().take(cap_bytes).collect();
+    }
+}
+
+fn truncate_bridge_failure_diagnostics(
+    bridge: &mut GeneralPersistentVacancyBridgeRelocationDiagnostics,
+) {
+    bridge
+        .candidates
+        .truncate(VACANCY_BRIDGE_FAILURE_CANDIDATE_PREFIX_CAP);
+    bridge.candidates.shrink_to_fit();
+    for candidate in &mut bridge.candidates {
+        truncate_bridge_string(
+            &mut candidate.state_fingerprint,
+            VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES,
+        );
+        truncate_bridge_string(
+            &mut candidate.frontier_connected_free_doubled_area_grid2,
+            VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES,
+        );
+        truncate_bridge_string(
+            &mut candidate.frontier_contact_grid,
+            VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES,
+        );
+        truncate_bridge_string(
+            &mut candidate.disconnected_free_doubled_area_grid2,
+            VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES,
+        );
+        truncate_bridge_string(
+            &mut candidate.largest_disconnected_free_doubled_area_grid2,
+            VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES,
+        );
+        if let Some(reason) = candidate.rejection_reason.as_mut() {
+            truncate_bridge_string(reason, VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES);
+        }
+    }
+    if let Some(reason) = bridge.acceptance_reason.as_mut() {
+        truncate_bridge_string(reason, VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES);
+    }
+    if let Some(reason) = bridge.failure_reason.as_mut() {
+        truncate_bridge_string(reason, VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES);
+    }
+    if let Some(control) = bridge.control.as_mut() {
+        truncate_bridge_string(
+            &mut control.source_state_fingerprint,
+            VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES,
+        );
+        truncate_bridge_string(
+            &mut control.source_augmented_identity_hash,
+            VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES,
+        );
+        if let Some(reason) = control.failure_reason.as_mut() {
+            truncate_bridge_string(reason, VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES);
+        }
+    }
+    if let Some(treatment) = bridge.treatment.as_mut() {
+        truncate_bridge_string(
+            &mut treatment.source_state_fingerprint,
+            VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES,
+        );
+        truncate_bridge_string(
+            &mut treatment.source_augmented_identity_hash,
+            VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES,
+        );
+        if let Some(reason) = treatment.failure_reason.as_mut() {
+            truncate_bridge_string(reason, VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES);
+        }
+    }
+}
+
+fn publish_bridge_failure(
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    work: &mut RunWork,
+    mut bridge: GeneralPersistentVacancyBridgeRelocationDiagnostics,
+    reason: String,
+    phase_work: GeneralPersistentVacancyWorkDiagnostics,
+) {
+    bridge.failure_reason = Some(reason.chars().take(1024).collect());
+    truncate_bridge_failure_diagnostics(&mut bridge);
+    bridge.terminal_status = "failed".to_owned();
+    bridge.inconclusive = false;
+    bridge.work = phase_work;
+    diagnostics.vacancy_bridge_relocation = Some(bridge);
+    add_work_diagnostics(&mut work.diagnostics, phase_work);
+}
+
+fn bridge_candidate_summary_heap_bytes(candidates: &Vec<BridgeRelocationCandidate>) -> usize {
+    candidates
+        .capacity()
+        .saturating_mul(size_of::<BridgeRelocationCandidate>())
+        .saturating_add(
+            candidates
+                .iter()
+                .map(|candidate| {
+                    candidate
+                        .topology
+                        .label
+                        .capacity()
+                        .saturating_add(candidate.topology.clearance_mm.capacity())
+                        .saturating_add(candidate.topology.state_fingerprint.capacity())
+                        .saturating_add(candidate.topology.total_free_doubled_area_grid2.capacity())
+                        .saturating_add(
+                            candidate
+                                .topology
+                                .frontier_connected_free_doubled_area_grid2
+                                .capacity(),
+                        )
+                        .saturating_add(
+                            candidate
+                                .topology
+                                .disconnected_free_doubled_area_grid2
+                                .capacity(),
+                        )
+                        .saturating_add(
+                            candidate
+                                .topology
+                                .largest_disconnected_free_doubled_area_grid2
+                                .capacity(),
+                        )
+                        .saturating_add(candidate.topology.frontier_contact_grid.capacity())
+                })
+                .sum::<usize>(),
+        )
+}
+
+fn bridge_worst_case_state_bytes(piece_count: usize) -> usize {
+    let maximum_collision_heap_bytes =
+        size_of::<PolygonSet>() + MAX_COLLISION_VERTICES * size_of::<IrregularPoint>();
+    size_of::<VacancyState>()
+        .saturating_add(piece_count.saturating_mul(size_of::<RelaxedPlacement>()))
+        .saturating_add(piece_count.saturating_mul(size_of::<bool>()))
+        .saturating_add(piece_count.saturating_mul(size_of::<Option<Arc<PolygonSet>>>()))
+        .saturating_add(piece_count.saturating_mul(maximum_collision_heap_bytes))
+        .saturating_add(MAX_INACTIVE_PIECES.saturating_mul(size_of::<usize>()))
+}
+
+fn bridge_worst_case_node_bytes(piece_count: usize) -> usize {
+    size_of::<RepairNode>()
+        .saturating_add(bridge_worst_case_state_bytes(piece_count))
+        .saturating_add(piece_count.saturating_mul(size_of::<usize>()))
+}
+
+fn bridge_candidate_rows_reserved_bytes() -> usize {
+    size_of::<Vec<GeneralPersistentVacancyBridgeCandidateDiagnostics>>()
+        .saturating_add(
+            VACANCY_BRIDGE_CANDIDATE_CAP
+                .saturating_mul(size_of::<GeneralPersistentVacancyBridgeCandidateDiagnostics>()),
+        )
+        .saturating_add(
+            VACANCY_BRIDGE_CANDIDATE_CAP.saturating_mul(
+                5 * 64 + VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES + size_of::<String>(),
+            ),
+        )
+}
+
+fn bridge_arm_diagnostics_reserved_bytes() -> usize {
+    size_of::<GeneralPersistentVacancyBridgeArmDiagnostics>()
+        .saturating_add(MAX_INACTIVE_PIECES.saturating_mul(size_of::<String>() + 64))
+        .saturating_add(8 * 1024)
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct BridgePreflightOwners {
+    source_owned_bytes: usize,
+    round_zero_owned_bytes: usize,
+    candidate_summary_bytes: usize,
+    candidate_rows_bytes: usize,
+    control_node_bytes: usize,
+    treatment_node_bytes: usize,
+    control_repair_peak_bytes: usize,
+    treatment_repair_peak_bytes: usize,
+    control_outcome_bytes: usize,
+    treatment_outcome_bytes: usize,
+    arm_diagnostics_bytes: usize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum BridgePreflightPhase {
+    SourceAllocation,
+    Source,
+    CandidateGeneration,
+    SelectedCandidates,
+    ControlContinuation,
+    TreatmentContinuation,
+    Publication,
+}
+
+fn bridge_phase_live_bytes(phase: BridgePreflightPhase, owners: BridgePreflightOwners) -> usize {
+    let external_owner_bytes = VACANCY_BRIDGE_EXTERNAL_OWNER_RESERVATION_BYTES;
+    match phase {
+        BridgePreflightPhase::SourceAllocation => owners
+            .round_zero_owned_bytes
+            .saturating_add(owners.source_owned_bytes)
+            .saturating_add(external_owner_bytes),
+        BridgePreflightPhase::Source => owners
+            .source_owned_bytes
+            .saturating_add(VACANCY_BRIDGE_TOPOLOGY_TRANSIENT_RESERVATION_BYTES)
+            .saturating_add(VACANCY_BRIDGE_TOPOLOGY_RETAINED_RESERVATION_BYTES)
+            .saturating_add(external_owner_bytes),
+        BridgePreflightPhase::CandidateGeneration => owners
+            .source_owned_bytes
+            .saturating_add(owners.candidate_summary_bytes)
+            .saturating_add(owners.candidate_rows_bytes)
+            .saturating_add(VACANCY_BRIDGE_TOPOLOGY_TRANSIENT_RESERVATION_BYTES)
+            .saturating_add(VACANCY_BRIDGE_TOPOLOGY_RETAINED_RESERVATION_BYTES)
+            .saturating_add(external_owner_bytes),
+        BridgePreflightPhase::SelectedCandidates => owners
+            .source_owned_bytes
+            .saturating_add(owners.candidate_summary_bytes)
+            .saturating_add(owners.candidate_rows_bytes)
+            .saturating_add(owners.control_node_bytes)
+            .saturating_add(owners.treatment_node_bytes)
+            .saturating_add(VACANCY_BRIDGE_TOPOLOGY_RETAINED_RESERVATION_BYTES)
+            .saturating_add(external_owner_bytes),
+        BridgePreflightPhase::ControlContinuation => owners
+            .source_owned_bytes
+            .saturating_add(owners.control_node_bytes)
+            .saturating_add(owners.treatment_node_bytes)
+            .saturating_add(owners.control_repair_peak_bytes)
+            .saturating_add(owners.arm_diagnostics_bytes)
+            .saturating_add(external_owner_bytes),
+        BridgePreflightPhase::TreatmentContinuation => owners
+            .source_owned_bytes
+            .saturating_add(owners.control_node_bytes)
+            .saturating_add(owners.treatment_node_bytes)
+            .saturating_add(owners.control_outcome_bytes)
+            .saturating_add(owners.treatment_repair_peak_bytes)
+            .saturating_add(owners.arm_diagnostics_bytes)
+            .saturating_add(external_owner_bytes),
+        BridgePreflightPhase::Publication => owners
+            .source_owned_bytes
+            .saturating_add(owners.control_node_bytes)
+            .saturating_add(owners.treatment_node_bytes)
+            .saturating_add(owners.control_outcome_bytes)
+            .saturating_add(owners.treatment_outcome_bytes)
+            .saturating_add(owners.arm_diagnostics_bytes)
+            .saturating_add(VACANCY_BRIDGE_JSON_BUFFER_RESERVATION_BYTES),
+    }
+}
+
+fn preflight_bridge_phase(
+    phase: BridgePreflightPhase,
+    diagnostics: &GeneralPersistentVacancyDiagnostics,
+    bridge: &GeneralPersistentVacancyBridgeRelocationDiagnostics,
+    owners: BridgePreflightOwners,
+) -> Result<(), String> {
+    if matches!(
+        phase,
+        BridgePreflightPhase::CandidateGeneration | BridgePreflightPhase::SelectedCandidates
+    ) && owners.candidate_summary_bytes > VACANCY_BRIDGE_CANDIDATE_SUMMARY_RETAINED_CAP_BYTES
+    {
+        return Err("cap: bridge candidate-summary retained-memory budget exhausted".to_owned());
+    }
+    let retained = persistent_diagnostic_bytes(diagnostics)
+        .saturating_add(bridge_relocation_diagnostic_heap_bytes(bridge))
+        .saturating_add(bridge_phase_live_bytes(phase, owners));
+    if retained > MAX_RETAINED_BYTES {
+        return Err(format!(
+            "cap: bridge {phase:?} simultaneous-owner memory budget exhausted"
+        ));
+    }
+    Ok(())
+}
+
+fn repair_outcome_owned_bytes(outcome: &RepairRoundOutcome) -> usize {
+    size_of::<RepairRoundOutcome>()
+        .saturating_add(repair_diagnostic_heap_bytes(&outcome.diagnostics))
+        .saturating_add(repair_node_owned_bytes(&outcome.best_partial.node))
+        .saturating_add(
+            outcome
+                .accepted_complete
+                .as_ref()
+                .map_or(0, |(state, _)| owned_state_bytes(Some(state))),
+        )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn run_bridge_relocation_experiment(
+    root: &VacancyState,
+    baseline: &[RelaxedPlacement],
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    difficulty: &[PieceDifficulty],
+    hazard_catalog: &Arc<JaguaHazardCatalog>,
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    work: &mut RunWork,
+) -> Result<Option<(VacancyState, f64)>, String> {
+    let bridge_index = pieces
+        .iter()
+        .position(|piece| piece.id == VACANCY_BRIDGE_PIECE_ID)
+        .ok_or_else(|| format!("bridge piece {VACANCY_BRIDGE_PIECE_ID} is missing"))?;
+    let candidate_limits = WorkLimits::bridge_candidates();
+    let arm_limits = match WorkLimits::bridge_arm() {
+        Ok(limits) => limits,
+        Err(reason) => {
+            let bridge = bridge_diagnostics_skeleton(
+                WorkLimits::default_zero(),
+                candidate_limits,
+                WorkLimits::default_zero(),
+            );
+            let phase_work = work.diagnostics;
+            publish_bridge_failure(diagnostics, work, bridge, reason.clone(), phase_work);
+            return Err(reason);
+        }
+    };
+    let total_limits = match WorkLimits::repair_bridge() {
+        Ok(limits) => limits,
+        Err(reason) => {
+            let bridge = bridge_diagnostics_skeleton(
+                WorkLimits::default_zero(),
+                candidate_limits,
+                arm_limits,
+            );
+            let phase_work = work.diagnostics;
+            publish_bridge_failure(diagnostics, work, bridge, reason.clone(), phase_work);
+            return Err(reason);
+        }
+    };
+    let population_work = work.diagnostics;
+    let population_work_before = generation_work_snapshot(population_work);
+    let mut round_zero_events = GeneralPersistentVacancyDiagnostics::default();
+    let mut round_zero_work = RunWork {
+        diagnostics: repair_generation_work_start(population_work),
+        limits: WorkLimits::repair(),
+    };
+    let mut round_zero_root_valid = false;
+    let round_zero = match run_repair_expedition(
+        root,
+        None,
+        baseline,
+        pieces,
+        settings,
+        difficulty,
+        hazard_catalog,
+        REPAIR_TREATMENT_MODE,
+        RepairSeedSchedule::Legacy,
+        diagnostics,
+        &mut round_zero_events,
+        &mut round_zero_root_valid,
+        &mut round_zero_work,
+    ) {
+        Ok(outcome) => outcome,
+        Err(reason) => {
+            let bridge = bridge_diagnostics_skeleton(total_limits, candidate_limits, arm_limits);
+            let phase_work = repair_work_delta(
+                generation_work_snapshot(round_zero_work.diagnostics),
+                population_work_before,
+                round_zero_work.diagnostics,
+            );
+            publish_bridge_failure(diagnostics, work, bridge, reason.clone(), phase_work);
+            return Err(reason);
+        }
+    };
+    if round_zero.accepted_complete.is_some() {
+        let reason =
+            "persistent vacancy bridge relocation round zero unexpectedly completed".to_owned();
+        let bridge = bridge_diagnostics_skeleton(total_limits, candidate_limits, arm_limits);
+        let phase_work = repair_work_delta(
+            generation_work_snapshot(round_zero_work.diagnostics),
+            population_work_before,
+            round_zero_work.diagnostics,
+        );
+        publish_bridge_failure(diagnostics, work, bridge, reason.clone(), phase_work);
+        return Err(reason);
+    }
+    let round_zero_hash = match exact_diagnostic_sha256(&round_zero.diagnostics) {
+        Ok(hash) => hash,
+        Err(reason) => {
+            let bridge = bridge_diagnostics_skeleton(total_limits, candidate_limits, arm_limits);
+            let phase_work = round_zero.diagnostics.work;
+            publish_bridge_failure(diagnostics, work, bridge, reason.clone(), phase_work);
+            return Err(reason);
+        }
+    };
+    let round_zero_endpoint_hash = repair_node_hash(&round_zero.best_partial.node, pieces);
+    let round_zero_endpoint_state = state_fingerprint(&round_zero.best_partial.node.state, pieces);
+    let round_zero_endpoint_count = inactive_piece_count(&round_zero.best_partial.node.state);
+    let round_zero_endpoint_area = inactive_area(&round_zero.best_partial.node.state, difficulty);
+    if round_zero_hash != EXPECTED_ROUND_ZERO_REPAIR_SHA256
+        || round_zero_endpoint_state != EXPECTED_ROUND_ZERO_ENDPOINT_FINGERPRINT
+        || round_zero_endpoint_hash != EXPECTED_ROUND_ZERO_ENDPOINT_AUGMENTED_IDENTITY
+        || round_zero_endpoint_count != EXPECTED_ROUND_ZERO_ENDPOINT_COUNT
+        || round_zero_endpoint_area != EXPECTED_ROUND_ZERO_ENDPOINT_AREA
+    {
+        let reason = format!(
+            "persistent vacancy bridge relocation round-zero activation mismatch: repair {round_zero_hash}, endpoint {round_zero_endpoint_hash}, count {round_zero_endpoint_count}, area {round_zero_endpoint_area}"
+        );
+        let mut bridge = bridge_diagnostics_skeleton(total_limits, candidate_limits, arm_limits);
+        bridge.source_state_fingerprint = Some(round_zero_endpoint_state);
+        bridge.source_augmented_identity_hash = Some(round_zero_endpoint_hash);
+        bridge.source_queue_piece_ids =
+            queue_piece_ids(&round_zero.best_partial.node.queue, pieces);
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            bridge,
+            reason.clone(),
+            round_zero.diagnostics.work,
+        );
+        return Err(reason);
+    }
+
+    let source_preflight = bridge_diagnostics_skeleton(total_limits, candidate_limits, arm_limits);
+    if let Err(reason) = preflight_bridge_phase(
+        BridgePreflightPhase::SourceAllocation,
+        diagnostics,
+        &source_preflight,
+        BridgePreflightOwners {
+            source_owned_bytes: bridge_worst_case_node_bytes(pieces.len()),
+            round_zero_owned_bytes: repair_outcome_owned_bytes(&round_zero),
+            ..BridgePreflightOwners::default()
+        },
+    ) {
+        let phase_work = round_zero.diagnostics.work;
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            source_preflight,
+            reason.clone(),
+            phase_work,
+        );
+        return Err(reason);
+    }
+    let source = round_zero.best_partial.node.clone();
+    let round_zero_work_delta = round_zero.diagnostics.work;
+    drop(round_zero);
+    let mut bridge_diagnostics = GeneralPersistentVacancyBridgeRelocationDiagnostics {
+        attempted: true,
+        bridge_piece_id: VACANCY_BRIDGE_PIECE_ID.to_owned(),
+        source_state_fingerprint: Some(state_fingerprint(&source.state, pieces)),
+        source_augmented_identity_hash: Some(repair_node_hash(&source, pieces)),
+        source_queue_piece_ids: source
+            .queue
+            .iter()
+            .map(|index| pieces[*index].id.to_owned())
+            .collect(),
+        topology_clearance_mm: VACANCY_BRIDGE_TOPOLOGY_CLEARANCE_MM.to_string(),
+        candidate_cap: VACANCY_BRIDGE_CANDIDATE_CAP,
+        positions_per_orientation_cap: VACANCY_BRIDGE_POSITIONS_PER_ORIENTATION_CAP,
+        candidate_work_cap: work_diagnostics_from_limits(candidate_limits),
+        arm_work_cap: work_diagnostics_from_limits(arm_limits),
+        total_work_cap: work_diagnostics_from_limits(total_limits),
+        fixed_repair_seed_domain: REPAIR_RESTART_SEED_DOMAIN.to_owned(),
+        fixed_repair_horizon: REPAIR_HORIZON,
+        candidate_summary_retained_cap_bytes: VACANCY_BRIDGE_CANDIDATE_SUMMARY_RETAINED_CAP_BYTES,
+        external_owner_reservation_bytes: VACANCY_BRIDGE_EXTERNAL_OWNER_RESERVATION_BYTES,
+        json_buffer_reservation_bytes: VACANCY_BRIDGE_JSON_BUFFER_RESERVATION_BYTES,
+        terminal_status: "candidateGenerationRunning".to_owned(),
+        ..GeneralPersistentVacancyBridgeRelocationDiagnostics::default()
+    };
+    if let Err(reason) = preflight_bridge_phase(
+        BridgePreflightPhase::Source,
+        diagnostics,
+        &bridge_diagnostics,
+        BridgePreflightOwners {
+            source_owned_bytes: repair_node_owned_bytes(&source),
+            ..BridgePreflightOwners::default()
+        },
+    ) {
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            bridge_diagnostics,
+            reason.clone(),
+            round_zero_work_delta,
+        );
+        return Err(reason);
+    }
+    let mut topology_ledger = BridgeTopologyLedger::new();
+    let source_topology = match vacancy_topology_snapshot_metered(
+        "bridgeSource",
+        &source.state,
+        pieces,
+        settings,
+        VACANCY_BRIDGE_TOPOLOGY_CLEARANCE_MM,
+    ) {
+        Ok(snapshot) => snapshot,
+        Err(failure) => {
+            let ledger_reason = topology_ledger.record_attempt(failure.work).err();
+            copy_bridge_topology_ledger_diagnostics(&mut bridge_diagnostics, &topology_ledger);
+            let phase_work = round_zero_work_delta;
+            let reason = match ledger_reason {
+                Some(ledger_reason) => format!("{}; {ledger_reason}", failure.reason),
+                None => failure.reason,
+            };
+            publish_bridge_failure(
+                diagnostics,
+                work,
+                bridge_diagnostics,
+                reason.clone(),
+                phase_work,
+            );
+            return Err(reason);
+        }
+    };
+    if let Err(reason) = topology_ledger.record(&source_topology) {
+        bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            bridge_diagnostics,
+            reason.clone(),
+            round_zero_work_delta,
+        );
+        return Err(reason);
+    }
+    bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+    bridge_diagnostics.source_frontier_connected_free_doubled_area_grid2 = Some(
+        source_topology
+            .frontier_connected_free_doubled_area_grid2
+            .clone(),
+    );
+    bridge_diagnostics.source_frontier_contact_grid =
+        Some(source_topology.frontier_contact_grid.clone());
+    if let Err(reason) = preflight_bridge_phase(
+        BridgePreflightPhase::CandidateGeneration,
+        diagnostics,
+        &bridge_diagnostics,
+        BridgePreflightOwners {
+            source_owned_bytes: repair_node_owned_bytes(&source),
+            candidate_summary_bytes: VACANCY_BRIDGE_CANDIDATE_SUMMARY_RETAINED_CAP_BYTES,
+            candidate_rows_bytes: bridge_candidate_rows_reserved_bytes(),
+            ..BridgePreflightOwners::default()
+        },
+    ) {
+        let phase_work = round_zero_work_delta;
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            bridge_diagnostics,
+            reason.clone(),
+            phase_work,
+        );
+        return Err(reason);
+    }
+    let mut candidate_work = RunWork {
+        diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
+        limits: candidate_limits,
+    };
+    let generated = generate_bridge_relocation_candidates(
+        &source,
+        bridge_index,
+        pieces,
+        settings,
+        &source_topology,
+        &mut topology_ledger,
+        &mut bridge_diagnostics,
+        &mut candidate_work,
+    );
+    let mut generated = match generated {
+        Ok(generated) => generated,
+        Err(reason) => {
+            bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+            bridge_diagnostics.candidate_work = candidate_work.diagnostics;
+            let mut phase_work = round_zero_work_delta;
+            add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+            publish_bridge_failure(
+                diagnostics,
+                work,
+                bridge_diagnostics,
+                reason.clone(),
+                phase_work,
+            );
+            return Err(reason);
+        }
+    };
+    drop(source_topology);
+    bridge_diagnostics.orientation_count = generated.orientation_count;
+    bridge_diagnostics.generated_candidates = generated.generated_candidates;
+    bridge_diagnostics.deduplicated_candidates = generated.deduplicated_candidates;
+    bridge_diagnostics.current_pose_rejections = generated.current_pose_rejections;
+    bridge_diagnostics.illegal_candidates = generated.illegal_candidates;
+    bridge_diagnostics.topology_decreasing_rejections = generated.topology_decreasing_rejections;
+    bridge_diagnostics.legal_candidates = generated.candidates.len();
+    bridge_diagnostics.treatment_eligible_candidates = generated
+        .candidates
+        .iter()
+        .filter(|candidate| candidate.topology_eligible)
+        .count();
+    bridge_diagnostics.candidate_order_hash = Some(bridge_candidate_order_hash(&generated.rows));
+    bridge_diagnostics.candidates = std::mem::take(&mut generated.rows);
+    bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+    bridge_diagnostics.candidate_work = candidate_work.diagnostics;
+    if let Err(reason) = preflight_bridge_phase(
+        BridgePreflightPhase::SelectedCandidates,
+        diagnostics,
+        &bridge_diagnostics,
+        BridgePreflightOwners {
+            source_owned_bytes: repair_node_owned_bytes(&source),
+            candidate_summary_bytes: bridge_candidate_summary_heap_bytes(&generated.candidates),
+            ..BridgePreflightOwners::default()
+        },
+    ) {
+        let mut phase_work = round_zero_work_delta;
+        add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            bridge_diagnostics,
+            reason.clone(),
+            phase_work,
+        );
+        return Err(reason);
+    }
+    if generated.candidates.is_empty() {
+        bridge_diagnostics.terminal_status = "generatorInconclusive".to_owned();
+        bridge_diagnostics.inconclusive = true;
+        bridge_diagnostics.acceptance_reason = Some(
+            "no exact-legal bridge relocation was generated within the bounded candidate terminal"
+                .to_owned(),
+        );
+        let mut phase_work = round_zero_work_delta;
+        add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+        if bridge_work_exceeds_limit(phase_work, total_limits) {
+            let reason = "cap: bridge cumulative work budget exhausted".to_owned();
+            bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+            publish_bridge_failure(
+                diagnostics,
+                work,
+                bridge_diagnostics,
+                reason.clone(),
+                phase_work,
+            );
+            return Err(reason);
+        }
+        bridge_diagnostics.work = phase_work;
+        diagnostics.vacancy_bridge_relocation = Some(bridge_diagnostics);
+        commit_bridge_events(
+            diagnostics,
+            [
+                &round_zero_events,
+                &GeneralPersistentVacancyDiagnostics::default(),
+                &GeneralPersistentVacancyDiagnostics::default(),
+            ],
+        );
+        add_work_diagnostics(&mut work.diagnostics, phase_work);
+        return Ok(None);
+    }
+
+    let control_ordinal = generated
+        .candidates
+        .iter()
+        .enumerate()
+        .min_by(|(_, first), (_, second)| {
+            compare_bridge_candidates(&source, bridge_index, first, second, pieces, difficulty)
+        })
+        .map(|(ordinal, _)| ordinal)
+        .expect("non-empty bridge candidates have a comparator winner");
+    let treatment_ordinal = generated
+        .candidates
+        .iter()
+        .enumerate()
+        .filter(|(_, candidate)| candidate.topology_eligible)
+        .min_by(|(_, first), (_, second)| {
+            compare_bridge_topology_candidates(
+                &source,
+                bridge_index,
+                first,
+                second,
+                pieces,
+                difficulty,
+            )
+        })
+        .map(|(ordinal, _)| ordinal);
+    let Some(treatment_ordinal) = treatment_ordinal else {
+        bridge_diagnostics.terminal_status = "generatorInconclusive".to_owned();
+        bridge_diagnostics.inconclusive = true;
+        bridge_diagnostics.acceptance_reason = Some(
+            "exact-legal candidates exist but none preserve frontier-connected free area"
+                .to_owned(),
+        );
+        let mut phase_work = round_zero_work_delta;
+        add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+        if bridge_work_exceeds_limit(phase_work, total_limits) {
+            let reason = "cap: bridge cumulative work budget exhausted".to_owned();
+            bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+            publish_bridge_failure(
+                diagnostics,
+                work,
+                bridge_diagnostics,
+                reason.clone(),
+                phase_work,
+            );
+            return Err(reason);
+        }
+        bridge_diagnostics.work = phase_work;
+        diagnostics.vacancy_bridge_relocation = Some(bridge_diagnostics);
+        commit_bridge_events(
+            diagnostics,
+            [
+                &round_zero_events,
+                &GeneralPersistentVacancyDiagnostics::default(),
+                &GeneralPersistentVacancyDiagnostics::default(),
+            ],
+        );
+        add_work_diagnostics(&mut work.diagnostics, phase_work);
+        return Ok(None);
+    };
+    if let Err(reason) = preflight_bridge_phase(
+        BridgePreflightPhase::SelectedCandidates,
+        diagnostics,
+        &bridge_diagnostics,
+        BridgePreflightOwners {
+            source_owned_bytes: repair_node_owned_bytes(&source),
+            candidate_summary_bytes: bridge_candidate_summary_heap_bytes(&generated.candidates),
+            control_node_bytes: bridge_worst_case_node_bytes(pieces.len()),
+            treatment_node_bytes: bridge_worst_case_node_bytes(pieces.len()),
+            ..BridgePreflightOwners::default()
+        },
+    ) {
+        let mut phase_work = round_zero_work_delta;
+        add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            bridge_diagnostics,
+            reason.clone(),
+            phase_work,
+        );
+        return Err(reason);
+    }
+    let control = generated.candidates[control_ordinal].clone();
+    let treatment = generated.candidates[treatment_ordinal].clone();
+    drop(generated);
+    let mut control_marked = false;
+    let mut treatment_marked = false;
+    for row in &mut bridge_diagnostics.candidates {
+        if !control_marked && row.legal && bridge_candidate_row_matches(row, &control.placement) {
+            row.selected_control = true;
+            control_marked = true;
+        }
+        if !treatment_marked && row.legal && bridge_candidate_row_matches(row, &treatment.placement)
+        {
+            row.selected_treatment = true;
+            treatment_marked = true;
+        }
+    }
+    let mut control_work = RunWork {
+        diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
+        limits: arm_limits,
+    };
+    let mut treatment_work = RunWork {
+        diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
+        limits: arm_limits,
+    };
+    let control_node = match materialize_bridge_candidate(
+        &source,
+        bridge_index,
+        &control,
+        pieces,
+        settings,
+        &mut control_work,
+    ) {
+        Ok(Some(node)) => node,
+        Ok(None) => {
+            let reason = "selected control candidate failed exact rematerialization".to_owned();
+            bridge_diagnostics.control_materialization_work = control_work.diagnostics;
+            bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+            let mut phase_work = round_zero_work_delta;
+            add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+            add_work_diagnostics(&mut phase_work, control_work.diagnostics);
+            publish_bridge_failure(
+                diagnostics,
+                work,
+                bridge_diagnostics,
+                reason.clone(),
+                phase_work,
+            );
+            return Err(reason);
+        }
+        Err(reason) => {
+            bridge_diagnostics.control_materialization_work = control_work.diagnostics;
+            bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+            let mut phase_work = round_zero_work_delta;
+            add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+            add_work_diagnostics(&mut phase_work, control_work.diagnostics);
+            publish_bridge_failure(
+                diagnostics,
+                work,
+                bridge_diagnostics,
+                reason.clone(),
+                phase_work,
+            );
+            return Err(reason);
+        }
+    };
+    let control_materialization_work = control_work.diagnostics;
+    bridge_diagnostics.control_materialization_work = control_materialization_work;
+    let treatment_node = match materialize_bridge_candidate(
+        &source,
+        bridge_index,
+        &treatment,
+        pieces,
+        settings,
+        &mut treatment_work,
+    ) {
+        Ok(Some(node)) => node,
+        Ok(None) => {
+            let reason = "selected treatment candidate failed exact rematerialization".to_owned();
+            bridge_diagnostics.control_materialization_work = control_materialization_work;
+            bridge_diagnostics.treatment_materialization_work = treatment_work.diagnostics;
+            bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+            let mut phase_work = round_zero_work_delta;
+            add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+            add_work_diagnostics(&mut phase_work, control_work.diagnostics);
+            add_work_diagnostics(&mut phase_work, treatment_work.diagnostics);
+            publish_bridge_failure(
+                diagnostics,
+                work,
+                bridge_diagnostics,
+                reason.clone(),
+                phase_work,
+            );
+            return Err(reason);
+        }
+        Err(reason) => {
+            bridge_diagnostics.control_materialization_work = control_materialization_work;
+            bridge_diagnostics.treatment_materialization_work = treatment_work.diagnostics;
+            bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+            let mut phase_work = round_zero_work_delta;
+            add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+            add_work_diagnostics(&mut phase_work, control_work.diagnostics);
+            add_work_diagnostics(&mut phase_work, treatment_work.diagnostics);
+            publish_bridge_failure(
+                diagnostics,
+                work,
+                bridge_diagnostics,
+                reason.clone(),
+                phase_work,
+            );
+            return Err(reason);
+        }
+    };
+    let treatment_materialization_work = treatment_work.diagnostics;
+    bridge_diagnostics.control_materialization_work = control_materialization_work;
+    bridge_diagnostics.treatment_materialization_work = treatment_materialization_work;
+    if let Err(reason) = preflight_repair_memory(
+        &control_node.state,
+        pieces,
+        diagnostics,
+        "bridge control continuation",
+        &mut control_work,
+    ) {
+        let mut phase_work = round_zero_work_delta;
+        add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+        add_work_diagnostics(&mut phase_work, control_work.diagnostics);
+        add_work_diagnostics(&mut phase_work, treatment_work.diagnostics);
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            bridge_diagnostics,
+            reason.clone(),
+            phase_work,
+        );
+        return Err(reason);
+    }
+    if let Err(reason) = preflight_repair_memory(
+        &treatment_node.state,
+        pieces,
+        diagnostics,
+        "bridge treatment continuation",
+        &mut treatment_work,
+    ) {
+        let mut phase_work = round_zero_work_delta;
+        add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+        add_work_diagnostics(&mut phase_work, control_work.diagnostics);
+        add_work_diagnostics(&mut phase_work, treatment_work.diagnostics);
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            bridge_diagnostics,
+            reason.clone(),
+            phase_work,
+        );
+        return Err(reason);
+    }
+    if let Err(reason) = preflight_bridge_phase(
+        BridgePreflightPhase::ControlContinuation,
+        diagnostics,
+        &bridge_diagnostics,
+        BridgePreflightOwners {
+            source_owned_bytes: repair_node_owned_bytes(&source),
+            control_node_bytes: repair_node_owned_bytes(&control_node),
+            treatment_node_bytes: repair_node_owned_bytes(&treatment_node),
+            control_repair_peak_bytes: control_work.diagnostics.total_retained_peak_bytes,
+            arm_diagnostics_bytes: 2 * bridge_arm_diagnostics_reserved_bytes(),
+            ..BridgePreflightOwners::default()
+        },
+    ) {
+        let mut phase_work = round_zero_work_delta;
+        add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+        add_work_diagnostics(&mut phase_work, control_work.diagnostics);
+        add_work_diagnostics(&mut phase_work, treatment_work.diagnostics);
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            bridge_diagnostics,
+            reason.clone(),
+            phase_work,
+        );
+        return Err(reason);
+    }
+    let control_arm_limit_fingerprint = work_limit_fingerprint(control_work.limits);
+    let treatment_arm_limit_fingerprint = work_limit_fingerprint(treatment_work.limits);
+    let mut control_events = GeneralPersistentVacancyDiagnostics::default();
+    let mut treatment_events = GeneralPersistentVacancyDiagnostics::default();
+    let mut control_root_valid = false;
+    let mut treatment_root_valid = false;
+    let control_outcome = match run_bridge_repair_arm(
+        "control",
+        &control,
+        &control_node,
+        &source,
+        pieces,
+        baseline,
+        settings,
+        difficulty,
+        hazard_catalog,
+        diagnostics,
+        &mut control_events,
+        &mut control_root_valid,
+        &mut control_work,
+    ) {
+        Ok(outcome) => outcome,
+        Err(reason) => {
+            bridge_diagnostics.control_materialization_work = control_materialization_work;
+            bridge_diagnostics.treatment_materialization_work = treatment_materialization_work;
+            bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+            let mut phase_work = round_zero_work_delta;
+            add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+            add_work_diagnostics(&mut phase_work, control_work.diagnostics);
+            add_work_diagnostics(&mut phase_work, treatment_work.diagnostics);
+            publish_bridge_failure(
+                diagnostics,
+                work,
+                bridge_diagnostics,
+                reason.clone(),
+                phase_work,
+            );
+            return Err(reason);
+        }
+    };
+    if let Err(reason) = preflight_bridge_phase(
+        BridgePreflightPhase::TreatmentContinuation,
+        diagnostics,
+        &bridge_diagnostics,
+        BridgePreflightOwners {
+            source_owned_bytes: repair_node_owned_bytes(&source),
+            control_node_bytes: repair_node_owned_bytes(&control_node),
+            treatment_node_bytes: repair_node_owned_bytes(&treatment_node),
+            control_outcome_bytes: repair_outcome_owned_bytes(&control_outcome),
+            treatment_repair_peak_bytes: treatment_work.diagnostics.total_retained_peak_bytes,
+            arm_diagnostics_bytes: 2 * bridge_arm_diagnostics_reserved_bytes(),
+            ..BridgePreflightOwners::default()
+        },
+    ) {
+        bridge_diagnostics.control_materialization_work = control_materialization_work;
+        bridge_diagnostics.treatment_materialization_work = treatment_materialization_work;
+        let mut phase_work = round_zero_work_delta;
+        add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+        add_work_diagnostics(&mut phase_work, control_work.diagnostics);
+        add_work_diagnostics(&mut phase_work, treatment_work.diagnostics);
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            bridge_diagnostics,
+            reason.clone(),
+            phase_work,
+        );
+        return Err(reason);
+    }
+    let treatment_outcome = match run_bridge_repair_arm(
+        "treatment",
+        &treatment,
+        &treatment_node,
+        &source,
+        pieces,
+        baseline,
+        settings,
+        difficulty,
+        hazard_catalog,
+        diagnostics,
+        &mut treatment_events,
+        &mut treatment_root_valid,
+        &mut treatment_work,
+    ) {
+        Ok(outcome) => outcome,
+        Err(reason) => {
+            bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+            let mut phase_work = round_zero_work_delta;
+            add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+            add_work_diagnostics(&mut phase_work, control_work.diagnostics);
+            add_work_diagnostics(&mut phase_work, treatment_work.diagnostics);
+            publish_bridge_failure(
+                diagnostics,
+                work,
+                bridge_diagnostics,
+                reason.clone(),
+                phase_work,
+            );
+            return Err(reason);
+        }
+    };
+    let control_work_signature = bridge_continuation_work_signature(&control_outcome);
+    let treatment_work_signature = bridge_continuation_work_signature(&treatment_outcome);
+    bridge_diagnostics.control_work_signature = Some(control_work_signature.clone());
+    bridge_diagnostics.treatment_work_signature = Some(treatment_work_signature.clone());
+    let matched_continuation_work = control_work_signature == treatment_work_signature;
+    let causal_comparability_passed = control_work.limits == treatment_work.limits
+        && control_arm_limit_fingerprint == treatment_arm_limit_fingerprint
+        && matched_continuation_work;
+    bridge_diagnostics.matched_continuation_work = matched_continuation_work;
+    bridge_diagnostics.control = Some(bridge_arm_diagnostics(
+        VACANCY_BRIDGE_PIECE_ID,
+        &control,
+        control_ordinal,
+        &source,
+        &control_node,
+        &control_arm_limit_fingerprint,
+        control_materialization_work,
+        &control_work_signature,
+        &control_outcome,
+        pieces,
+        difficulty,
+    ));
+    bridge_diagnostics.treatment = Some(bridge_arm_diagnostics(
+        VACANCY_BRIDGE_PIECE_ID,
+        &treatment,
+        treatment_ordinal,
+        &source,
+        &treatment_node,
+        &treatment_arm_limit_fingerprint,
+        treatment_materialization_work,
+        &treatment_work_signature,
+        &treatment_outcome,
+        pieces,
+        difficulty,
+    ));
+    if let Err(reason) = preflight_bridge_phase(
+        BridgePreflightPhase::Publication,
+        diagnostics,
+        &bridge_diagnostics,
+        BridgePreflightOwners {
+            source_owned_bytes: repair_node_owned_bytes(&source),
+            control_node_bytes: repair_node_owned_bytes(&control_node),
+            treatment_node_bytes: repair_node_owned_bytes(&treatment_node),
+            control_outcome_bytes: repair_outcome_owned_bytes(&control_outcome),
+            treatment_outcome_bytes: repair_outcome_owned_bytes(&treatment_outcome),
+            arm_diagnostics_bytes: 2 * bridge_arm_diagnostics_reserved_bytes(),
+            ..BridgePreflightOwners::default()
+        },
+    ) {
+        let mut phase_work = round_zero_work_delta;
+        add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+        add_work_diagnostics(&mut phase_work, control_work.diagnostics);
+        add_work_diagnostics(&mut phase_work, treatment_work.diagnostics);
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            bridge_diagnostics,
+            reason.clone(),
+            phase_work,
+        );
+        return Err(reason);
+    }
+    let control_partial = &control_outcome.best_partial.node;
+    let treatment_partial = &treatment_outcome.best_partial.node;
+    bridge_diagnostics.strict_partial_improvement =
+        compare_repair_nodes(treatment_partial, control_partial, pieces, difficulty).is_lt()
+            && inactive_piece_count(&treatment_partial.state)
+                <= inactive_piece_count(&control_partial.state)
+            && inactive_area(&treatment_partial.state, difficulty)
+                <= inactive_area(&control_partial.state, difficulty);
+    bridge_diagnostics.causal_comparability_passed = causal_comparability_passed;
+    let treatment_depth = treatment_outcome
+        .accepted_complete
+        .as_ref()
+        .map(|(_, depth)| *depth);
+    bridge_diagnostics.promotion_gate_passed = bridge_promotion_passes(
+        treatment_depth,
+        bridge_diagnostics.strict_partial_improvement,
+        causal_comparability_passed,
+    );
+    bridge_diagnostics.acceptance_reason = if treatment_depth
+        .is_some_and(|depth| depth.total_cmp(&EXPECTED_PARENT_DEPTH_MM).is_lt())
+    {
+        Some("treatment independent complete depth is strictly below 168.361 mm".to_owned())
+    } else if bridge_diagnostics.strict_partial_improvement {
+        Some("treatment strictly improves the existing partial comparator without inactive-count or inactive-area worsening".to_owned())
+    } else {
+        Some("treatment depth and partial comparator are equal or worse".to_owned())
+    };
+    bridge_diagnostics.terminal_status = "pairedContinuationComplete".to_owned();
+    let mut phase_work = round_zero_work_delta;
+    add_work_diagnostics(&mut phase_work, candidate_work.diagnostics);
+    add_work_diagnostics(&mut phase_work, control_work.diagnostics);
+    add_work_diagnostics(&mut phase_work, treatment_work.diagnostics);
+    if bridge_work_exceeds_limit(phase_work, total_limits) {
+        let reason = "cap: bridge cumulative work budget exhausted".to_owned();
+        bridge_diagnostics.topology_work = topology_ledger.diagnostics;
+        publish_bridge_failure(
+            diagnostics,
+            work,
+            bridge_diagnostics,
+            reason.clone(),
+            phase_work,
+        );
+        return Err(reason);
+    }
+    bridge_diagnostics.work = phase_work;
+    commit_bridge_events(
+        diagnostics,
+        [&round_zero_events, &control_events, &treatment_events],
+    );
+    diagnostics.vacancy_bridge_relocation = Some(bridge_diagnostics);
+    add_work_diagnostics(&mut work.diagnostics, phase_work);
+    let _ = (
+        round_zero_root_valid,
+        control_root_valid,
+        treatment_root_valid,
+    );
+    if bridge_diagnostics_promotion(diagnostics) {
+        if let Some((state, depth)) = treatment_outcome.accepted_complete {
+            return Ok(Some((state, depth)));
+        }
+    }
+    Ok(None)
+}
+
+struct GeneratedBridgeCandidates {
+    orientation_count: usize,
+    generated_candidates: usize,
+    deduplicated_candidates: usize,
+    current_pose_rejections: usize,
+    illegal_candidates: usize,
+    topology_decreasing_rejections: usize,
+    candidates: Vec<BridgeRelocationCandidate>,
+    rows: Vec<GeneralPersistentVacancyBridgeCandidateDiagnostics>,
+}
+
+fn generate_bridge_relocation_candidates(
+    source: &RepairNode,
+    bridge_index: usize,
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    source_topology: &GeneralPersistentVacancyTopologySnapshotDiagnostics,
+    topology_ledger: &mut BridgeTopologyLedger,
+    diagnostics: &mut GeneralPersistentVacancyBridgeRelocationDiagnostics,
+    work: &mut RunWork,
+) -> Result<GeneratedBridgeCandidates, String> {
+    let current = source.state.placements[bridge_index].clone();
+    let current_key = placement_key(&current);
+    let transition_seed = repair_transition_seed(
+        &source.state,
+        bridge_index,
+        pieces,
+        RepairSeedSchedule::Restart { round_ordinal: 1 },
+    );
+    let angle_seed = derive_seed(
+        transition_seed ^ CONFLICT_RUIN_ANGLE_SEED_DOMAIN,
+        0,
+        bridge_index,
+    );
+    let orientations = conflict_ruin_orientations(pieces[bridge_index], &current, angle_seed);
+    let mut output = GeneratedBridgeCandidates {
+        orientation_count: orientations.len(),
+        generated_candidates: 0,
+        deduplicated_candidates: 0,
+        current_pose_rejections: 0,
+        illegal_candidates: 0,
+        topology_decreasing_rejections: 0,
+        candidates: Vec::new(),
+        rows: Vec::new(),
+    };
+    work.charge_selected_piece_slots(1)?;
+    work.charge_source_features(
+        pieces
+            .iter()
+            .map(|piece| piece.polygon.vertex_count().saturating_mul(2))
+            .sum(),
+    )?;
+    let mut seen = BTreeSet::new();
+    'orientations: for (orientation_ordinal, (rotation_deg, mirrored)) in
+        orientations.into_iter().enumerate()
+    {
+        work.charge_orientation_streams(1)?;
+        let orientation = RelaxedPlacement {
+            input_index: bridge_index,
+            rotation_deg,
+            mirrored,
+            translate_x: 0.0,
+            translate_y: 0.0,
+        };
+        let local_collision = build_collision(pieces[bridge_index], &orientation, settings, work)?;
+        let position_seed = derive_seed(
+            transition_seed ^ CONFLICT_RUIN_POSITION_SEED_DOMAIN,
+            orientation_ordinal,
+            bridge_index,
+        );
+        let proposals = vacancy_positions(
+            &current,
+            &orientation,
+            &local_collision,
+            &source.state,
+            Some(bridge_index),
+            settings,
+            position_seed,
+            work,
+        )?;
+        for (position_ordinal, placement) in proposals
+            .into_iter()
+            .take(VACANCY_BRIDGE_POSITIONS_PER_ORIENTATION_CAP)
+            .enumerate()
+        {
+            if output.generated_candidates == VACANCY_BRIDGE_CANDIDATE_CAP {
+                break 'orientations;
+            }
+            output.generated_candidates += 1;
+            let key = placement_key(&placement);
+            if key == current_key {
+                output.current_pose_rejections += 1;
+                output.rows.push(bridge_candidate_row(
+                    output.generated_candidates - 1,
+                    orientation_ordinal,
+                    position_ordinal,
+                    &placement,
+                    None,
+                    "current pose",
+                    false,
+                    false,
+                ));
+                continue;
+            }
+            if !seen.insert(key) {
+                output.deduplicated_candidates += 1;
+                output.rows.push(bridge_candidate_row(
+                    output.generated_candidates - 1,
+                    orientation_ordinal,
+                    position_ordinal,
+                    &placement,
+                    None,
+                    "duplicate first-seen pose",
+                    false,
+                    false,
+                ));
+                continue;
+            }
+            let Some(state) = exact_bridge_relocation_state(
+                &source.state,
+                bridge_index,
+                pieces,
+                placement.clone(),
+                settings,
+                work,
+            )?
+            else {
+                output.illegal_candidates += 1;
+                output.rows.push(bridge_candidate_row(
+                    output.generated_candidates - 1,
+                    orientation_ordinal,
+                    position_ordinal,
+                    &placement,
+                    None,
+                    "positive blocker or out of bounds",
+                    false,
+                    false,
+                ));
+                continue;
+            };
+            let topology = match vacancy_topology_snapshot_metered(
+                "bridgeCandidate",
+                &state,
+                pieces,
+                settings,
+                VACANCY_BRIDGE_TOPOLOGY_CLEARANCE_MM,
+            ) {
+                Ok(topology) => {
+                    topology_ledger.record(&topology).map_err(|ledger_reason| {
+                        format!("bridge candidate topology ledger: {ledger_reason}")
+                    })?;
+                    topology
+                }
+                Err(failure) => {
+                    let ledger_reason = topology_ledger.record_attempt(failure.work).err();
+                    return Err(match ledger_reason {
+                        Some(ledger_reason) => format!("{}; {ledger_reason}", failure.reason),
+                        None => failure.reason,
+                    });
+                }
+            };
+            let topology_eligible = topology
+                .frontier_connected_free_doubled_area_grid2
+                .parse::<i128>()
+                .map_err(|error| format!("bridge topology frontier area: {error}"))?
+                >= source_topology
+                    .frontier_connected_free_doubled_area_grid2
+                    .parse::<i128>()
+                    .map_err(|error| format!("bridge source frontier area: {error}"))?;
+            if !topology_eligible {
+                output.topology_decreasing_rejections += 1;
+            }
+            let candidate_ordinal = output.candidates.len();
+            output.rows.push(bridge_candidate_row(
+                output.generated_candidates - 1,
+                orientation_ordinal,
+                position_ordinal,
+                &placement,
+                Some(&topology),
+                "",
+                true,
+                topology_eligible,
+            ));
+            output.candidates.push(BridgeRelocationCandidate {
+                placement,
+                orientation_ordinal,
+                position_ordinal,
+                topology,
+                topology_eligible,
+            });
+            debug_assert_eq!(candidate_ordinal, output.candidates.len() - 1);
+        }
+    }
+    diagnostics.orientation_count = output.orientation_count;
+    Ok(output)
+}
+
+fn exact_bridge_relocation_state(
+    source: &VacancyState,
+    bridge_index: usize,
+    pieces: &[GeneralFastPiece<'_>],
+    placement: RelaxedPlacement,
+    settings: GeneralFastSettings,
+    work: &mut RunWork,
+) -> Result<Option<VacancyState>, String> {
+    let collision = Arc::new(build_collision(
+        pieces[bridge_index],
+        &placement,
+        settings,
+        work,
+    )?);
+    let inset = collision_sheet_inset_mm(settings);
+    if !collision.fits_rect(
+        inset,
+        inset,
+        settings.sheet_short_axis_mm - inset,
+        TARGET_DEPTH_MM - inset,
+    ) {
+        return Ok(None);
+    }
+    for fixed_index in 0..pieces.len() {
+        if fixed_index == bridge_index || !source.active[fixed_index] {
+            continue;
+        }
+        work.charge_experimental_pair()?;
+        let fixed = source.collisions[fixed_index]
+            .as_ref()
+            .ok_or_else(|| format!("active piece {fixed_index} has no collision"))?;
+        if exact_intersection_area(&collision, fixed, work)? > 0.0 {
+            return Ok(None);
+        }
+    }
+    let mut candidate = source.clone();
+    candidate.placements[bridge_index] = placement;
+    candidate.collisions[bridge_index] = Some(collision);
+    candidate.last_transition = None;
+    if candidate.active != source.active
+        || candidate
+            .collisions
+            .iter()
+            .enumerate()
+            .any(|(index, collision)| {
+                index != bridge_index
+                    && collision.as_ref().map(Arc::as_ptr)
+                        != source.collisions[index].as_ref().map(Arc::as_ptr)
+            })
+    {
+        return Err("bridge relocation changed non-bridge active or collision state".to_owned());
+    }
+    Ok(Some(candidate))
+}
+
+fn bridge_candidate_row(
+    ordinal: usize,
+    orientation_ordinal: usize,
+    position_ordinal: usize,
+    placement: &RelaxedPlacement,
+    topology: Option<&GeneralPersistentVacancyTopologySnapshotDiagnostics>,
+    rejection_reason: &str,
+    legal: bool,
+    topology_eligible: bool,
+) -> GeneralPersistentVacancyBridgeCandidateDiagnostics {
+    GeneralPersistentVacancyBridgeCandidateDiagnostics {
+        ordinal,
+        orientation_ordinal,
+        position_ordinal,
+        rotation_deg: placement.rotation_deg,
+        mirrored: placement.mirrored,
+        translate_short_axis: placement.translate_x,
+        translate_long_axis: placement.translate_y,
+        state_fingerprint: topology
+            .map(|topology| topology.state_fingerprint.clone())
+            .unwrap_or_default(),
+        frontier_connected_free_doubled_area_grid2: topology
+            .map(|topology| topology.frontier_connected_free_doubled_area_grid2.clone())
+            .unwrap_or_default(),
+        frontier_contact_grid: topology
+            .map(|topology| topology.frontier_contact_grid.clone())
+            .unwrap_or_default(),
+        disconnected_free_doubled_area_grid2: topology
+            .map(|topology| topology.disconnected_free_doubled_area_grid2.clone())
+            .unwrap_or_default(),
+        largest_disconnected_free_doubled_area_grid2: topology
+            .map(|topology| {
+                topology
+                    .largest_disconnected_free_doubled_area_grid2
+                    .clone()
+            })
+            .unwrap_or_default(),
+        legal,
+        topology_eligible,
+        rejection_reason: (!rejection_reason.is_empty()).then(|| rejection_reason.to_owned()),
+        ..GeneralPersistentVacancyBridgeCandidateDiagnostics::default()
+    }
+}
+
+fn bridge_candidate_row_matches(
+    row: &GeneralPersistentVacancyBridgeCandidateDiagnostics,
+    placement: &RelaxedPlacement,
+) -> bool {
+    row.rotation_deg.to_bits() == placement.rotation_deg.to_bits()
+        && row.mirrored == placement.mirrored
+        && row.translate_short_axis.to_bits() == placement.translate_x.to_bits()
+        && row.translate_long_axis.to_bits() == placement.translate_y.to_bits()
+}
+
+fn bridge_candidate_order_hash(
+    candidates: &[GeneralPersistentVacancyBridgeCandidateDiagnostics],
+) -> String {
+    let mut digest = Sha256::new();
+    digest.update(b"persistent-vacancy-bridge-candidate-order-v2\0");
+    digest.update((candidates.len() as u32).to_be_bytes());
+    for candidate in candidates {
+        digest.update((candidate.ordinal as u32).to_be_bytes());
+        digest.update((candidate.orientation_ordinal as u32).to_be_bytes());
+        digest.update((candidate.position_ordinal as u32).to_be_bytes());
+        digest.update(candidate.rotation_deg.to_bits().to_be_bytes());
+        digest.update([u8::from(candidate.mirrored)]);
+        digest.update(candidate.translate_short_axis.to_bits().to_be_bytes());
+        digest.update(candidate.translate_long_axis.to_bits().to_be_bytes());
+        for value in [
+            &candidate.state_fingerprint,
+            &candidate.frontier_connected_free_doubled_area_grid2,
+            &candidate.frontier_contact_grid,
+            &candidate.disconnected_free_doubled_area_grid2,
+            &candidate.largest_disconnected_free_doubled_area_grid2,
+        ] {
+            digest.update((value.len() as u32).to_be_bytes());
+            digest.update(value.as_bytes());
+        }
+        if let Some(reason) = &candidate.rejection_reason {
+            digest.update([1]);
+            digest.update((reason.len() as u32).to_be_bytes());
+            digest.update(reason.as_bytes());
+        } else {
+            digest.update([0]);
+        }
+    }
+    format!("{:x}", digest.finalize())
+}
+
+fn compare_bridge_topology_candidates(
+    source: &RepairNode,
+    bridge_index: usize,
+    first: &BridgeRelocationCandidate,
+    second: &BridgeRelocationCandidate,
+    pieces: &[GeneralFastPiece<'_>],
+    difficulty: &[PieceDifficulty],
+) -> Ordering {
+    let first_frontier = first
+        .topology
+        .frontier_connected_free_doubled_area_grid2
+        .parse::<i128>()
+        .unwrap_or(i128::MIN);
+    let second_frontier = second
+        .topology
+        .frontier_connected_free_doubled_area_grid2
+        .parse::<i128>()
+        .unwrap_or(i128::MIN);
+    let first_contact = first
+        .topology
+        .frontier_contact_grid
+        .parse::<i128>()
+        .unwrap_or(i128::MIN);
+    let second_contact = second
+        .topology
+        .frontier_contact_grid
+        .parse::<i128>()
+        .unwrap_or(i128::MIN);
+    let first_disconnected = first
+        .topology
+        .disconnected_free_doubled_area_grid2
+        .parse::<i128>()
+        .unwrap_or(i128::MAX);
+    let second_disconnected = second
+        .topology
+        .disconnected_free_doubled_area_grid2
+        .parse::<i128>()
+        .unwrap_or(i128::MAX);
+    let first_largest = first
+        .topology
+        .largest_disconnected_free_doubled_area_grid2
+        .parse::<i128>()
+        .unwrap_or(i128::MAX);
+    let second_largest = second
+        .topology
+        .largest_disconnected_free_doubled_area_grid2
+        .parse::<i128>()
+        .unwrap_or(i128::MAX);
+    second_frontier
+        .cmp(&first_frontier)
+        .then_with(|| second_contact.cmp(&first_contact))
+        .then_with(|| first_disconnected.cmp(&second_disconnected))
+        .then_with(|| first_largest.cmp(&second_largest))
+        .then_with(|| {
+            compare_bridge_candidates(source, bridge_index, first, second, pieces, difficulty)
+        })
+}
+
+fn compare_bridge_candidates(
+    source: &RepairNode,
+    bridge_index: usize,
+    first: &BridgeRelocationCandidate,
+    second: &BridgeRelocationCandidate,
+    pieces: &[GeneralFastPiece<'_>],
+    difficulty: &[PieceDifficulty],
+) -> Ordering {
+    let first_node = bridge_candidate_node(source, bridge_index, &first.placement);
+    let second_node = bridge_candidate_node(source, bridge_index, &second.placement);
+    compare_repair_nodes(&first_node, &second_node, pieces, difficulty)
+        .then_with(|| placement_key(&first.placement).cmp(&placement_key(&second.placement)))
+        .then_with(|| first.orientation_ordinal.cmp(&second.orientation_ordinal))
+        .then_with(|| first.position_ordinal.cmp(&second.position_ordinal))
+}
+
+fn bridge_candidate_node(
+    source: &RepairNode,
+    bridge_index: usize,
+    placement: &RelaxedPlacement,
+) -> RepairNode {
+    let mut state = source.state.clone();
+    state.placements[bridge_index] = placement.clone();
+    state.last_transition = None;
+    RepairNode {
+        state,
+        queue: source.queue.clone(),
+    }
+}
+
+fn materialize_bridge_candidate(
+    source: &RepairNode,
+    bridge_index: usize,
+    candidate: &BridgeRelocationCandidate,
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    work: &mut RunWork,
+) -> Result<Option<RepairNode>, String> {
+    let Some(state) = exact_bridge_relocation_state(
+        &source.state,
+        bridge_index,
+        pieces,
+        candidate.placement.clone(),
+        settings,
+        work,
+    )?
+    else {
+        return Ok(None);
+    };
+    Ok(Some(RepairNode {
+        state,
+        queue: source.queue.clone(),
+    }))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn run_bridge_repair_arm(
+    _arm: &str,
+    _candidate: &BridgeRelocationCandidate,
+    candidate_node: &RepairNode,
+    source: &RepairNode,
+    pieces: &[GeneralFastPiece<'_>],
+    baseline: &[RelaxedPlacement],
+    settings: GeneralFastSettings,
+    difficulty: &[PieceDifficulty],
+    hazard_catalog: &Arc<JaguaHazardCatalog>,
+    diagnostics: &GeneralPersistentVacancyDiagnostics,
+    events: &mut GeneralPersistentVacancyDiagnostics,
+    root_dual_valid: &mut bool,
+    work: &mut RunWork,
+) -> Result<RepairRoundOutcome, String> {
+    if candidate_node.queue != source.queue {
+        return Err("bridge relocation changed the repair queue".to_owned());
+    }
+    if candidate_node.state.active != source.state.active {
+        return Err("bridge relocation changed the active set".to_owned());
+    }
+    let before = generation_work_snapshot(work.diagnostics);
+    let outcome = run_repair_expedition(
+        &candidate_node.state,
+        Some(&candidate_node.queue),
+        baseline,
+        pieces,
+        settings,
+        difficulty,
+        hazard_catalog,
+        REPAIR_TREATMENT_MODE,
+        RepairSeedSchedule::Restart { round_ordinal: 1 },
+        diagnostics,
+        events,
+        root_dual_valid,
+        work,
+    )?;
+    let _ = work_delta(generation_work_snapshot(work.diagnostics), before);
+    Ok(outcome)
+}
+
+fn bridge_arm_diagnostics(
+    bridge_piece_id: &str,
+    candidate: &BridgeRelocationCandidate,
+    ordinal: usize,
+    source: &RepairNode,
+    candidate_node: &RepairNode,
+    work_limit_fingerprint: &str,
+    materialization_work: GeneralPersistentVacancyWorkDiagnostics,
+    continuation_work_signature: &str,
+    outcome: &RepairRoundOutcome,
+    pieces: &[GeneralFastPiece<'_>],
+    difficulty: &[PieceDifficulty],
+) -> GeneralPersistentVacancyBridgeArmDiagnostics {
+    let endpoint = outcome
+        .accepted_complete
+        .as_ref()
+        .map(|(state, _)| RepairNode {
+            state: state.clone(),
+            queue: Vec::new(),
+        });
+    let endpoint = endpoint.as_ref().unwrap_or(&outcome.best_partial.node);
+    let endpoint_count = inactive_piece_count(&endpoint.state);
+    let endpoint_area = inactive_area(&endpoint.state, difficulty);
+    let endpoint_pareto = endpoint_count <= inactive_piece_count(&source.state)
+        && endpoint_area <= inactive_area(&source.state, difficulty)
+        && (endpoint_count < inactive_piece_count(&source.state)
+            || endpoint_area < inactive_area(&source.state, difficulty));
+    let selected_candidate_key = format!("{:?}", placement_key(&candidate.placement));
+    let (independent_depth_mm, final_placement_fingerprint, complete_endpoint) = outcome
+        .accepted_complete
+        .as_ref()
+        .map(|(state, depth)| {
+            (
+                Some(*depth),
+                Some(coupled_fast_placement_fingerprint(&fast_placements(
+                    state, pieces, false,
+                ))),
+                true,
+            )
+        })
+        .unwrap_or((None, None, false));
+    GeneralPersistentVacancyBridgeArmDiagnostics {
+        attempted: true,
+        bridge_piece_id: bridge_piece_id.to_owned(),
+        source_state_fingerprint: state_fingerprint(&candidate_node.state, pieces),
+        source_augmented_identity_hash: repair_node_hash(candidate_node, pieces),
+        queue_piece_ids: source
+            .queue
+            .iter()
+            .map(|index| pieces[*index].id.to_owned())
+            .collect(),
+        selected_candidate_ordinal: Some(ordinal),
+        selected_candidate_key: Some(selected_candidate_key),
+        selected_candidate_state_fingerprint: Some(state_fingerprint(
+            &candidate_node.state,
+            pieces,
+        )),
+        work_limit_fingerprint: work_limit_fingerprint.to_owned(),
+        endpoint_state_fingerprint: Some(state_fingerprint(&endpoint.state, pieces)),
+        endpoint_augmented_identity_hash: Some(repair_node_hash(endpoint, pieces)),
+        endpoint_inactive_piece_count: Some(endpoint_count),
+        endpoint_inactive_area_grid2: Some(endpoint_area.to_string()),
+        endpoint_pareto_improves_source: endpoint_pareto,
+        complete_endpoint,
+        independent_depth_mm,
+        final_placement_fingerprint,
+        materialization_work,
+        continuation_work_signature: continuation_work_signature.to_owned(),
+        continuation_work: outcome.diagnostics.work,
+        failure_reason: outcome.diagnostics.failure_reason.clone(),
+    }
+}
+
+fn commit_bridge_events(
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    events: [&GeneralPersistentVacancyDiagnostics; 3],
+) {
+    for event in events {
+        diagnostics.direct_insertions = diagnostics
+            .direct_insertions
+            .saturating_add(event.direct_insertions);
+        diagnostics.ejection_insertions = diagnostics
+            .ejection_insertions
+            .saturating_add(event.ejection_insertions);
+        diagnostics.immediate_reversals_rejected = diagnostics
+            .immediate_reversals_rejected
+            .saturating_add(event.immediate_reversals_rejected);
+        diagnostics.complete_states = diagnostics
+            .complete_states
+            .saturating_add(event.complete_states);
+        diagnostics.publication_rejections = diagnostics
+            .publication_rejections
+            .saturating_add(event.publication_rejections);
+    }
+}
+
+fn bridge_diagnostics_promotion(diagnostics: &GeneralPersistentVacancyDiagnostics) -> bool {
+    diagnostics
+        .vacancy_bridge_relocation
+        .as_ref()
+        .is_some_and(|bridge| bridge.promotion_gate_passed)
+}
+
+fn bridge_promotion_passes(
+    treatment_depth: Option<f64>,
+    strict_partial_improvement: bool,
+    causal_comparability_passed: bool,
+) -> bool {
+    causal_comparability_passed
+        && (treatment_depth.is_some_and(|depth| depth.total_cmp(&EXPECTED_PARENT_DEPTH_MM).is_lt())
+            || strict_partial_improvement)
 }
 
 trait RestartFailureRoot {
@@ -1845,6 +4040,7 @@ fn restart_arm_family(mode: usize) -> &'static str {
         REPAIR_RESTART_STATE_TREATMENT_MODE => "continuedStateRebuiltQueue",
         REPAIR_RESTART_QUEUE_TREATMENT_MODE => "continuedStatePreservedQueue",
         VACANCY_TOPOLOGY_PROBE_MODE => "continuedStateRebuiltQueueTopologyProbe",
+        VACANCY_ARTICULATION_PROBE_MODE => "continuedStateRebuiltQueueArticulationProbe",
         _ => "unsupported",
     }
 }
@@ -2797,6 +4993,7 @@ fn expand_selected_piece(
             &orientation,
             &local_collision,
             parent,
+            None,
             settings,
             position_seed,
             work,
@@ -3065,6 +5262,7 @@ fn vacancy_positions(
     orientation: &RelaxedPlacement,
     local_collision: &PolygonSet,
     parent: &VacancyState,
+    skip_index: Option<usize>,
     settings: GeneralFastSettings,
     seed: u64,
     work: &mut RunWork,
@@ -3097,7 +5295,7 @@ fn vacancy_positions(
         (center_x, max_y),
     ]);
     for (fixed_index, fixed_collision) in parent.collisions.iter().enumerate() {
-        if !parent.active[fixed_index] {
+        if !parent.active[fixed_index] || Some(fixed_index) == skip_index {
             continue;
         }
         let fixed_bounds = fixed_collision
@@ -3819,7 +6017,20 @@ fn vacancy_topology_snapshot(
     settings: GeneralFastSettings,
     clearance_mm: f64,
 ) -> Result<GeneralPersistentVacancyTopologySnapshotDiagnostics, String> {
-    validate_state_structure(state, pieces.len())?;
+    vacancy_topology_snapshot_metered(label, state, pieces, settings, clearance_mm)
+        .map_err(|failure| failure.reason)
+}
+
+fn vacancy_topology_snapshot_metered(
+    label: &str,
+    state: &VacancyState,
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    clearance_mm: f64,
+) -> Result<GeneralPersistentVacancyTopologySnapshotDiagnostics, VacancyTopologySnapshotFailure> {
+    let mut work = VacancyTopologyCallWork::default();
+    validate_state_structure(state, pieces.len())
+        .map_err(|reason| VacancyTopologySnapshotFailure::new(reason, work))?;
     let base_occupied = state
         .active
         .iter()
@@ -3830,18 +6041,27 @@ fn vacancy_topology_snapshot(
                 .as_deref()
                 .ok_or_else(|| format!("active piece {index} has no collision"))
         })
-        .collect::<Result<Vec<_>, _>>()?;
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|reason| VacancyTopologySnapshotFailure::new(reason, work))?;
     if let Some(vertex_count) = base_occupied
         .iter()
         .map(|polygon| polygon.vertex_count())
         .find(|vertex_count| *vertex_count > MAX_COLLISION_VERTICES)
     {
-        return Err(format!(
-            "vacancy topology {label} offset input has {vertex_count} vertices, exceeding the {MAX_COLLISION_VERTICES}-vertex cap"
+        work.input_vertices = base_occupied
+            .iter()
+            .map(|polygon| polygon.vertex_count())
+            .try_fold(0_usize, |total, vertex_count| {
+                total.checked_add(vertex_count)
+            })
+            .unwrap_or(usize::MAX);
+        return Err(VacancyTopologySnapshotFailure::new(
+            format!(
+                "vacancy topology {label} offset input has {vertex_count} vertices, exceeding the {MAX_COLLISION_VERTICES}-vertex cap"
+            ),
+            work,
         ));
     }
-    let mut offset_input_vertices = 0_usize;
-    let mut offset_output_vertices = 0_usize;
     let expanded_occupied;
     let occupied = if clearance_mm == 0.0 {
         base_occupied
@@ -3849,42 +6069,71 @@ fn vacancy_topology_snapshot(
         expanded_occupied = base_occupied
             .iter()
             .map(|polygon| {
+                let polygon_input_vertices = polygon.vertex_count();
+                work.input_vertices = work
+                    .input_vertices
+                    .checked_add(polygon_input_vertices)
+                    .ok_or_else(|| {
+                        VacancyTopologySnapshotFailure::new(
+                            "vacancy topology offset input-vertex overflow",
+                            work,
+                        )
+                    })?;
                 let (expanded, input_vertices, output_vertices) = polygon
                     .offset_with_vertex_counts(clearance_mm)
                     .map_err(|error| {
-                        format!("vacancy topology {label} clearance offset: {error}")
+                        VacancyTopologySnapshotFailure::new(
+                            format!("vacancy topology {label} clearance offset: {error}"),
+                            work,
+                        )
                     })?;
-                if input_vertices != polygon.vertex_count() {
-                    return Err(format!(
-                        "vacancy topology {label} offset input accounting changed"
+                if input_vertices != polygon_input_vertices {
+                    return Err(VacancyTopologySnapshotFailure::new(
+                        format!("vacancy topology {label} offset input accounting changed"),
+                        work,
                     ));
                 }
-                if output_vertices > MAX_COLLISION_VERTICES {
-                    return Err(format!(
-                        "vacancy topology {label} clearance offset produced {output_vertices} vertices, exceeding the {MAX_COLLISION_VERTICES}-vertex cap"
-                    ));
-                }
-                offset_input_vertices = offset_input_vertices
-                    .checked_add(input_vertices)
-                    .ok_or_else(|| "vacancy topology offset input-vertex overflow".to_owned())?;
-                offset_output_vertices = offset_output_vertices
+                work.output_vertices = work
+                    .output_vertices
                     .checked_add(output_vertices)
-                    .ok_or_else(|| "vacancy topology offset output-vertex overflow".to_owned())?;
+                    .ok_or_else(|| {
+                        VacancyTopologySnapshotFailure::new(
+                            "vacancy topology offset output-vertex overflow",
+                            work,
+                        )
+                    })?;
+                if output_vertices > MAX_COLLISION_VERTICES {
+                    return Err(VacancyTopologySnapshotFailure::new(
+                        format!(
+                            "vacancy topology {label} clearance offset produced {output_vertices} vertices, exceeding the {MAX_COLLISION_VERTICES}-vertex cap"
+                        ),
+                        work,
+                    ));
+                }
                 Ok(expanded)
             })
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Result<Vec<_>, VacancyTopologySnapshotFailure>>()?;
         expanded_occupied.iter().collect()
     };
-    let difference_input_vertices = occupied.iter().try_fold(4_usize, |total, polygon| {
-        total
-            .checked_add(polygon.vertex_count())
-            .ok_or_else(|| "vacancy topology input-vertex overflow".to_owned())
-    })?;
-    let input_vertices = offset_input_vertices
+    let difference_input_vertices = occupied
+        .iter()
+        .try_fold(4_usize, |total, polygon| {
+            total
+                .checked_add(polygon.vertex_count())
+                .ok_or_else(|| "vacancy topology input-vertex overflow".to_owned())
+        })
+        .map_err(|reason| VacancyTopologySnapshotFailure::new(reason, work))?;
+    work.input_vertices = work
+        .input_vertices
         .checked_add(difference_input_vertices)
-        .ok_or_else(|| "vacancy topology input-vertex overflow".to_owned())?;
-    if input_vertices > VACANCY_TOPOLOGY_INPUT_VERTICES_PER_SNAPSHOT {
-        return Err("cap: vacancy topology per-snapshot input-vertex budget exhausted".to_owned());
+        .ok_or_else(|| {
+            VacancyTopologySnapshotFailure::new("vacancy topology input-vertex overflow", work)
+        })?;
+    if work.input_vertices > VACANCY_TOPOLOGY_INPUT_VERTICES_PER_SNAPSHOT {
+        return Err(VacancyTopologySnapshotFailure::new(
+            "cap: vacancy topology per-snapshot input-vertex budget exhausted",
+            work,
+        ));
     }
     let inset = collision_sheet_inset_mm(settings);
     let topology = PolygonSet::rectangular_free_space_topology(
@@ -3894,21 +6143,35 @@ fn vacancy_topology_snapshot(
         settings.sheet_short_axis_mm - inset - clearance_mm,
         TARGET_DEPTH_MM - inset - clearance_mm,
     )
-    .map_err(|error| format!("vacancy topology {label}: {error}"))?;
+    .map_err(|error| {
+        VacancyTopologySnapshotFailure::new(format!("vacancy topology {label}: {error}"), work)
+    })?;
     if topology.input_vertices != difference_input_vertices {
-        return Err(format!(
-            "vacancy topology {label} difference input accounting changed from {difference_input_vertices} to {} vertices",
-            topology.input_vertices
+        return Err(VacancyTopologySnapshotFailure::new(
+            format!(
+                "vacancy topology {label} difference input accounting changed from {difference_input_vertices} to {} vertices",
+                topology.input_vertices
+            ),
+            work,
         ));
     }
-    if topology.output_vertices > VACANCY_TOPOLOGY_DIFFERENCE_OUTPUT_VERTICES_PER_SNAPSHOT {
-        return Err("cap: vacancy topology difference output-vertex budget exhausted".to_owned());
-    }
-    let output_vertices = offset_output_vertices
+    work.output_vertices = work
+        .output_vertices
         .checked_add(topology.output_vertices)
-        .ok_or_else(|| "vacancy topology output-vertex overflow".to_owned())?;
-    if output_vertices > VACANCY_TOPOLOGY_OUTPUT_VERTICES_PER_SNAPSHOT {
-        return Err("cap: vacancy topology per-snapshot output-vertex budget exhausted".to_owned());
+        .ok_or_else(|| {
+            VacancyTopologySnapshotFailure::new("vacancy topology output-vertex overflow", work)
+        })?;
+    if topology.output_vertices > VACANCY_TOPOLOGY_DIFFERENCE_OUTPUT_VERTICES_PER_SNAPSHOT {
+        return Err(VacancyTopologySnapshotFailure::new(
+            "cap: vacancy topology difference output-vertex budget exhausted",
+            work,
+        ));
+    }
+    if work.output_vertices > VACANCY_TOPOLOGY_OUTPUT_VERTICES_PER_SNAPSHOT {
+        return Err(VacancyTopologySnapshotFailure::new(
+            "cap: vacancy topology per-snapshot output-vertex budget exhausted",
+            work,
+        ));
     }
 
     let mut total_free_area = 0_i128;
@@ -3921,27 +6184,54 @@ fn vacancy_topology_snapshot(
     for region in &topology.regions {
         total_free_area = total_free_area
             .checked_add(region.doubled_area_grid2)
-            .ok_or_else(|| format!("vacancy topology {label} free-area overflow"))?;
+            .ok_or_else(|| {
+                VacancyTopologySnapshotFailure::new(
+                    format!("vacancy topology {label} free-area overflow"),
+                    work,
+                )
+            })?;
         if region.frontier_contact_grid > 0 {
-            frontier_connected_regions = frontier_connected_regions
-                .checked_add(1)
-                .ok_or_else(|| format!("vacancy topology {label} region-count overflow"))?;
+            frontier_connected_regions =
+                frontier_connected_regions.checked_add(1).ok_or_else(|| {
+                    VacancyTopologySnapshotFailure::new(
+                        format!("vacancy topology {label} region-count overflow"),
+                        work,
+                    )
+                })?;
             frontier_connected_area = frontier_connected_area
                 .checked_add(region.doubled_area_grid2)
                 .ok_or_else(|| {
-                    format!("vacancy topology {label} frontier-connected area overflow")
+                    VacancyTopologySnapshotFailure::new(
+                        format!("vacancy topology {label} frontier-connected area overflow"),
+                        work,
+                    )
                 })?;
             frontier_contact = frontier_contact
                 .checked_add(i128::from(region.frontier_contact_grid))
-                .ok_or_else(|| format!("vacancy topology {label} frontier-contact overflow"))?;
+                .ok_or_else(|| {
+                    VacancyTopologySnapshotFailure::new(
+                        format!("vacancy topology {label} frontier-contact overflow"),
+                        work,
+                    )
+                })?;
         } else {
             disconnected_area = disconnected_area
                 .checked_add(region.doubled_area_grid2)
-                .ok_or_else(|| format!("vacancy topology {label} disconnected-area overflow"))?;
+                .ok_or_else(|| {
+                    VacancyTopologySnapshotFailure::new(
+                        format!("vacancy topology {label} disconnected-area overflow"),
+                        work,
+                    )
+                })?;
             largest_disconnected_area = largest_disconnected_area.max(region.doubled_area_grid2);
             point_contact_only_regions = point_contact_only_regions
                 .checked_add(usize::from(region.frontier_point_contact_only))
-                .ok_or_else(|| format!("vacancy topology {label} region-count overflow"))?;
+                .ok_or_else(|| {
+                    VacancyTopologySnapshotFailure::new(
+                        format!("vacancy topology {label} region-count overflow"),
+                        work,
+                    )
+                })?;
         }
     }
     if frontier_connected_area
@@ -3949,8 +6239,9 @@ fn vacancy_topology_snapshot(
         .filter(|partitioned| *partitioned == total_free_area)
         .is_none()
     {
-        return Err(format!(
-            "vacancy topology {label} free-area partition is inconsistent"
+        return Err(VacancyTopologySnapshotFailure::new(
+            format!("vacancy topology {label} free-area partition is inconsistent"),
+            work,
         ));
     }
 
@@ -3968,9 +6259,954 @@ fn vacancy_topology_snapshot(
         disconnected_free_doubled_area_grid2: disconnected_area.to_string(),
         largest_disconnected_free_doubled_area_grid2: largest_disconnected_area.to_string(),
         frontier_contact_grid: frontier_contact.to_string(),
-        clipper_input_vertices: input_vertices,
-        clipper_output_vertices: output_vertices,
+        clipper_input_vertices: work.input_vertices,
+        clipper_output_vertices: work.output_vertices,
     })
+}
+
+struct ArticulationTopology {
+    topology: crate::geometry::general_polygon::RectangularFreeSpaceTopology,
+    total_area: i128,
+    frontier_area: i128,
+    disconnected_area: i128,
+    frontier_count: usize,
+    disconnected_count: usize,
+}
+
+impl ArticulationTopology {
+    fn heap_bytes(&self) -> usize {
+        self.topology.heap_bytes()
+    }
+}
+
+impl GeneralPersistentVacancyArticulationWorkDiagnostics {
+    fn bounded() -> Self {
+        Self {
+            active_offset_build_cap: VACANCY_ARTICULATION_ACTIVE_OFFSET_BUILD_CAP,
+            active_offset_input_vertex_cap: VACANCY_ARTICULATION_ACTIVE_OFFSET_VERTEX_CAP,
+            active_offset_output_vertex_cap: VACANCY_ARTICULATION_ACTIVE_OFFSET_VERTEX_CAP,
+            inactive_collision_build_cap: VACANCY_ARTICULATION_INACTIVE_COLLISION_BUILD_CAP,
+            inactive_collision_input_vertex_cap: VACANCY_ARTICULATION_INACTIVE_COLLISION_VERTEX_CAP,
+            inactive_collision_output_vertex_cap:
+                VACANCY_ARTICULATION_INACTIVE_COLLISION_VERTEX_CAP,
+            topology_call_cap: VACANCY_ARTICULATION_TOPOLOGY_CALL_CAP,
+            topology_input_vertex_cap: VACANCY_ARTICULATION_TOPOLOGY_INPUT_VERTEX_CAP,
+            topology_output_vertex_cap: VACANCY_ARTICULATION_TOPOLOGY_OUTPUT_VERTEX_CAP,
+            component_graph_node_pair_cap: VACANCY_ARTICULATION_COMPONENT_GRAPH_NODE_PAIR_CAP,
+            component_graph_broad_phase_rejection_cap:
+                VACANCY_ARTICULATION_COMPONENT_GRAPH_NODE_PAIR_CAP,
+            component_graph_edge_check_cap: VACANCY_ARTICULATION_COMPONENT_GRAPH_EDGE_CHECK_CAP,
+            component_graph_scratch_cap_bytes:
+                VACANCY_ARTICULATION_COMPONENT_GRAPH_SCRATCH_RESERVATION_BYTES,
+            exact_area_vertex_visit_cap: VACANCY_ARTICULATION_EXACT_AREA_VERTEX_VISIT_CAP,
+            ..Self::default()
+        }
+    }
+
+    fn preflight_active_offset(&mut self, input: usize) -> Result<(), String> {
+        checked_charge(
+            &mut self.active_offset_builds,
+            1,
+            self.active_offset_build_cap,
+            "articulation active-offset build",
+        )?;
+        checked_charge(
+            &mut self.active_offset_input_vertices,
+            input,
+            self.active_offset_input_vertex_cap,
+            "articulation active-offset input vertices",
+        )
+    }
+
+    fn charge_active_offset_output(&mut self, output: usize) -> Result<(), String> {
+        checked_charge(
+            &mut self.active_offset_output_vertices,
+            output,
+            self.active_offset_output_vertex_cap,
+            "articulation active-offset output vertices",
+        )
+    }
+
+    fn preflight_inactive_collision(&mut self, input: usize) -> Result<(), String> {
+        checked_charge(
+            &mut self.inactive_collision_builds,
+            1,
+            self.inactive_collision_build_cap,
+            "articulation inactive-collision build",
+        )?;
+        checked_charge(
+            &mut self.inactive_collision_input_vertices,
+            input,
+            self.inactive_collision_input_vertex_cap,
+            "articulation inactive-collision input vertices",
+        )
+    }
+
+    fn charge_inactive_collision_output(&mut self, output: usize) -> Result<(), String> {
+        checked_charge(
+            &mut self.inactive_collision_output_vertices,
+            output,
+            self.inactive_collision_output_vertex_cap,
+            "articulation inactive-collision output vertices",
+        )
+    }
+
+    fn preflight_topology(&mut self, input: usize) -> Result<(), String> {
+        checked_charge(
+            &mut self.topology_calls,
+            1,
+            self.topology_call_cap,
+            "articulation topology calls",
+        )?;
+        checked_charge(
+            &mut self.topology_input_vertices,
+            input,
+            self.topology_input_vertex_cap,
+            "articulation topology input vertices",
+        )
+    }
+
+    fn charge_topology_output(&mut self, output: usize) -> Result<(), String> {
+        let charge_result = checked_charge(
+            &mut self.topology_output_vertices,
+            output,
+            self.topology_output_vertex_cap,
+            "articulation topology output vertices",
+        );
+        let area_result = self.charge_exact_area_vertices(output);
+        if output > VACANCY_ARTICULATION_TOPOLOGY_OUTPUT_PER_CALL {
+            return Err(format!(
+                "cap: articulation topology produced {output} vertices, exceeding the {}-vertex per-call cap",
+                VACANCY_ARTICULATION_TOPOLOGY_OUTPUT_PER_CALL
+            ));
+        }
+        charge_result?;
+        area_result
+    }
+
+    fn charge_component_graph_node_pairs(&mut self, amount: usize) -> Result<(), String> {
+        checked_charge(
+            &mut self.component_graph_node_pairs,
+            amount,
+            self.component_graph_node_pair_cap,
+            "articulation component graph node pairs",
+        )
+    }
+
+    fn charge_component_graph_edge_checks(&mut self, amount: usize) -> Result<(), String> {
+        checked_charge_u64(
+            &mut self.component_graph_edge_checks,
+            u64::try_from(amount)
+                .map_err(|_| "cap: articulation graph edge work exceeds u64".to_owned())?,
+            self.component_graph_edge_check_cap,
+            "articulation component graph edge checks",
+        )
+    }
+
+    fn charge_component_graph_broad_phase_rejection(&mut self) -> Result<(), String> {
+        checked_charge(
+            &mut self.component_graph_broad_phase_rejections,
+            1,
+            self.component_graph_broad_phase_rejection_cap,
+            "articulation component graph broad-phase rejections",
+        )
+    }
+
+    fn charge_component_graph_scratch(&mut self, amount: usize) -> Result<(), String> {
+        self.component_graph_scratch_peak_bytes =
+            self.component_graph_scratch_peak_bytes.max(amount);
+        if amount > self.component_graph_scratch_cap_bytes {
+            return Err(format!(
+                "cap: articulation component graph scratch requires {amount} bytes, exceeding the {}-byte cap",
+                self.component_graph_scratch_cap_bytes
+            ));
+        }
+        Ok(())
+    }
+
+    fn charge_exact_area_vertices(&mut self, vertices: usize) -> Result<(), String> {
+        checked_charge(
+            &mut self.exact_area_vertex_visits,
+            vertices,
+            self.exact_area_vertex_visit_cap,
+            "articulation exact-area vertex visits",
+        )
+    }
+}
+
+fn checked_charge(
+    consumed: &mut usize,
+    amount: usize,
+    cap: usize,
+    label: &str,
+) -> Result<(), String> {
+    let Some(charged) = consumed.checked_add(amount) else {
+        *consumed = usize::MAX;
+        return Err(format!("cap: {label} overflow"));
+    };
+    if charged > cap {
+        // preserve the attempted work in the failure sidecar. a rejected
+        // operation must not look as though it stopped exactly at the cap.
+        *consumed = charged;
+        return Err(format!("cap: {label} budget exhausted"));
+    }
+    *consumed = charged;
+    Ok(())
+}
+
+fn checked_charge_u64(
+    consumed: &mut u64,
+    amount: u64,
+    cap: u64,
+    label: &str,
+) -> Result<(), String> {
+    let Some(charged) = consumed.checked_add(amount) else {
+        *consumed = u64::MAX;
+        return Err(format!("cap: {label} overflow"));
+    };
+    if charged > cap {
+        // preserve the attempted work in the failure sidecar. a rejected
+        // operation must not look as though it stopped exactly at the cap.
+        *consumed = charged;
+        return Err(format!("cap: {label} budget exhausted"));
+    }
+    *consumed = charged;
+    Ok(())
+}
+
+fn vacancy_articulation_probe(
+    root: &RepairNode,
+    round_zero: &RepairNode,
+    round_one: &RepairNode,
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    protected_population_peak_bytes: usize,
+) -> GeneralPersistentVacancyArticulationProbeDiagnostics {
+    let max_piece_id_bytes = pieces.iter().map(|piece| piece.id.len()).max().unwrap_or(0);
+    let retained_preflight = articulation_diagnostic_reservation_bytes(max_piece_id_bytes);
+    let retained_preflight_failure =
+        (retained_preflight > VACANCY_ARTICULATION_RETAINED_RESERVATION_BYTES).then(|| {
+            "cap: articulation retained-diagnostic reservation exhausted before allocation"
+                .to_owned()
+        });
+    let mut diagnostics = GeneralPersistentVacancyArticulationProbeDiagnostics {
+        attempted: true,
+        geometry_domain: vacancy_topology_geometry_domain().to_owned(),
+        clearance_mm: VACANCY_ARTICULATION_CLEARANCE_MM
+            .iter()
+            .map(ToString::to_string)
+            .collect(),
+        actionable_clearance_mm: collision_expansion_mm(settings).to_string(),
+        baselines: retained_preflight_failure
+            .is_none()
+            .then(|| Vec::with_capacity(VACANCY_ARTICULATION_BASELINE_COUNT))
+            .unwrap_or_default(),
+        rows: retained_preflight_failure
+            .is_none()
+            .then(|| Vec::with_capacity(VACANCY_ARTICULATION_ROW_COUNT))
+            .unwrap_or_default(),
+        states: retained_preflight_failure
+            .is_none()
+            .then(|| Vec::with_capacity(VACANCY_ARTICULATION_STATE_COUNT))
+            .unwrap_or_default(),
+        transient_memory_reservation_bytes: VACANCY_ARTICULATION_TRANSIENT_RESERVATION_BYTES,
+        retained_memory_reservation_bytes: VACANCY_ARTICULATION_RETAINED_RESERVATION_BYTES,
+        protected_population_peak_bytes,
+        total_reserved_bytes: protected_population_peak_bytes
+            .saturating_add(VACANCY_ARTICULATION_TRANSIENT_RESERVATION_BYTES)
+            .saturating_add(VACANCY_ARTICULATION_RETAINED_RESERVATION_BYTES),
+        ..GeneralPersistentVacancyArticulationProbeDiagnostics::default()
+    };
+    let mut work = GeneralPersistentVacancyArticulationWorkDiagnostics::bounded();
+    if let Some(reason) = retained_preflight_failure {
+        diagnostics.failure_reason = Some(reason);
+    } else if let Err(reason) = run_vacancy_articulation_probe(
+        root,
+        round_zero,
+        round_one,
+        pieces,
+        settings,
+        &mut diagnostics,
+        &mut work,
+    ) {
+        diagnostics.failure_reason = Some(reason);
+    }
+    let retained_peak_bytes = articulation_diagnostic_heap_bytes(&diagnostics);
+    if retained_peak_bytes > VACANCY_ARTICULATION_RETAINED_RESERVATION_BYTES {
+        diagnostics.baselines.clear();
+        diagnostics.baselines.shrink_to_fit();
+        diagnostics.rows.clear();
+        diagnostics.rows.shrink_to_fit();
+        diagnostics.states.clear();
+        diagnostics.states.shrink_to_fit();
+        if diagnostics.failure_reason.is_none() {
+            diagnostics.failure_reason =
+                Some("cap: articulation retained-diagnostic reservation exhausted".to_owned());
+        }
+    }
+    work.retained_diagnostic_peak_bytes = retained_peak_bytes;
+    diagnostics.work = work;
+    diagnostics
+}
+
+#[allow(clippy::too_many_arguments)]
+fn run_vacancy_articulation_probe(
+    root: &RepairNode,
+    round_zero: &RepairNode,
+    round_one: &RepairNode,
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    diagnostics: &mut GeneralPersistentVacancyArticulationProbeDiagnostics,
+    work: &mut GeneralPersistentVacancyArticulationWorkDiagnostics,
+) -> Result<(), String> {
+    if grid_key(collision_expansion_mm(settings)) != grid_key(2.752) {
+        return Err(format!(
+            "articulation collision-expansion mismatch: expected 2.752, got {}",
+            collision_expansion_mm(settings)
+        ));
+    }
+    if diagnostics.total_reserved_bytes != VACANCY_ARTICULATION_TOTAL_RESERVED_BYTES
+        || diagnostics.protected_population_peak_bytes != VACANCY_ARTICULATION_PROTECTED_PEAK_BYTES
+        || diagnostics.total_reserved_bytes > MAX_RETAINED_BYTES
+    {
+        return Err(format!(
+            "cap: articulation memory reservation mismatch: protected {}, total {}",
+            diagnostics.protected_population_peak_bytes, diagnostics.total_reserved_bytes
+        ));
+    }
+    if articulation_diagnostic_reservation_bytes(
+        pieces.iter().map(|piece| piece.id.len()).max().unwrap_or(0),
+    ) > VACANCY_ARTICULATION_RETAINED_RESERVATION_BYTES
+    {
+        return Err("cap: articulation retained-diagnostic reservation exhausted".to_owned());
+    }
+
+    for (state_ordinal, (label, node)) in [
+        ("repairRoot", root),
+        ("roundZeroBestPartial", round_zero),
+        ("roundOneBestPartial", round_one),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        verify_articulation_state(state_ordinal, label, node, pieces)?;
+        let threshold = canonical_inactive_collision_threshold(node, pieces, settings, work)?;
+        let state_row_start = diagnostics.rows.len();
+        let mut total_unlocked_by_piece = vec![0_i128; pieces.len()];
+        let mut best_by_piece = vec![None::<(i64, i128, String)>; pieces.len()];
+        for clearance_mm in VACANCY_ARTICULATION_CLEARANCE_MM {
+            let expanded = articulation_expanded_cache(node, clearance_mm, work)?;
+            let occupied = expanded
+                .iter()
+                .map(|(_, polygon)| polygon)
+                .collect::<Vec<_>>();
+            let baseline = articulation_topology(&occupied, settings, clearance_mm, work)?;
+            work.baseline_topology_peak_bytes =
+                work.baseline_topology_peak_bytes.max(baseline.heap_bytes());
+            if work.baseline_topology_peak_bytes > VACANCY_ARTICULATION_TOPOLOGY_HEAP_CAP {
+                return Err("cap: articulation baseline-topology memory exhausted".to_owned());
+            }
+            diagnostics
+                .baselines
+                .push(articulation_baseline_diagnostics(
+                    label,
+                    node,
+                    pieces,
+                    clearance_mm,
+                    threshold,
+                    &baseline,
+                )?);
+
+            for (omitted_ordinal, (piece_index, omitted)) in expanded.iter().enumerate() {
+                let counter_occupied = expanded
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(ordinal, (_, polygon))| {
+                        (ordinal != omitted_ordinal).then_some(polygon)
+                    })
+                    .collect::<Vec<_>>();
+                let counter =
+                    articulation_topology(&counter_occupied, settings, clearance_mm, work)?;
+                work.counterfactual_topology_peak_bytes = work
+                    .counterfactual_topology_peak_bytes
+                    .max(counter.heap_bytes());
+                if work.counterfactual_topology_peak_bytes > VACANCY_ARTICULATION_TOPOLOGY_HEAP_CAP
+                {
+                    return Err(
+                        "cap: articulation counterfactual-topology memory exhausted".to_owned()
+                    );
+                }
+                let (unlocked, residual) =
+                    articulation_component_correspondence(&baseline, &counter, work)?;
+                total_unlocked_by_piece[*piece_index] = total_unlocked_by_piece[*piece_index]
+                    .checked_add(unlocked)
+                    .ok_or_else(|| "articulation cumulative unlocked-area overflow".to_owned())?;
+                let omitted_area = omitted
+                    .exact_doubled_area_grid2()
+                    .map_err(|error| format!("articulation omitted area: {error}"))?;
+                work.charge_exact_area_vertices(omitted.vertex_count())?;
+                verify_articulation_identities(
+                    &baseline,
+                    &counter,
+                    omitted_area,
+                    unlocked,
+                    residual,
+                )
+                .map_err(|reason| {
+                    format!(
+                        "{label} clearance {clearance_mm} omitted {}: {reason}",
+                        pieces[*piece_index].id
+                    )
+                })?;
+                let actionable =
+                    grid_key(clearance_mm) >= grid_key(collision_expansion_mm(settings));
+                let material = unlocked >= threshold;
+                if actionable && material {
+                    let candidate = (grid_key(clearance_mm), unlocked, clearance_mm.to_string());
+                    if best_by_piece[*piece_index].as_ref().is_none_or(|current| {
+                        candidate.0 > current.0
+                            || (candidate.0 == current.0 && candidate.1 > current.1)
+                    }) {
+                        best_by_piece[*piece_index] = Some(candidate);
+                    }
+                }
+                diagnostics
+                    .rows
+                    .push(GeneralPersistentVacancyArticulationRowDiagnostics {
+                        label: label.to_owned(),
+                        clearance_mm: clearance_mm.to_string(),
+                        omitted_piece_id: pieces[*piece_index].id.to_owned(),
+                        actionable_scale: actionable,
+                        material_articulation: material,
+                        omitted_expanded_doubled_area_grid2: omitted_area.to_string(),
+                        counterfactual_total_free_doubled_area_grid2: counter
+                            .total_area
+                            .to_string(),
+                        counterfactual_frontier_connected_free_doubled_area_grid2: counter
+                            .frontier_area
+                            .to_string(),
+                        counterfactual_disconnected_free_doubled_area_grid2: counter
+                            .disconnected_area
+                            .to_string(),
+                        unlocked_baseline_disconnected_doubled_area_grid2: unlocked.to_string(),
+                        residual_baseline_disconnected_doubled_area_grid2: residual.to_string(),
+                        counterfactual_free_region_count: counter.topology.regions.len(),
+                        counterfactual_frontier_connected_region_count: counter.frontier_count,
+                        counterfactual_disconnected_region_count: counter.disconnected_count,
+                    });
+            }
+        }
+        let best = best_by_piece
+            .into_iter()
+            .enumerate()
+            .filter_map(|(piece_index, candidate)| {
+                candidate.map(|(clearance, unlocked, clearance_text)| {
+                    (
+                        clearance,
+                        unlocked,
+                        total_unlocked_by_piece[piece_index],
+                        pieces[piece_index].id.to_owned(),
+                        clearance_text,
+                    )
+                })
+            })
+            .max_by(|first, second| {
+                first
+                    .0
+                    .cmp(&second.0)
+                    .then_with(|| first.1.cmp(&second.1))
+                    .then_with(|| first.2.cmp(&second.2))
+                    .then_with(|| second.3.cmp(&first.3))
+            });
+        let state_rows = &diagnostics.rows[state_row_start..];
+        let actionable_rows = state_rows
+            .iter()
+            .filter(|row| row.material_articulation && row.actionable_scale)
+            .count();
+        diagnostics
+            .states
+            .push(GeneralPersistentVacancyArticulationStateDiagnostics {
+                label: label.to_owned(),
+                state_fingerprint: state_fingerprint(&node.state, pieces),
+                material_articulation_rows: state_rows
+                    .iter()
+                    .filter(|row| row.material_articulation)
+                    .count(),
+                actionable_material_articulation_rows: actionable_rows,
+                best_piece_id: best.as_ref().map(|candidate| candidate.3.clone()),
+                best_clearance_mm: best.as_ref().map(|candidate| candidate.4.clone()),
+                best_unlocked_doubled_area_grid2: best
+                    .as_ref()
+                    .map(|candidate| candidate.1.to_string()),
+                qualifies: actionable_rows > 0,
+            });
+    }
+    if diagnostics.rows.len() != VACANCY_ARTICULATION_ROW_COUNT
+        || diagnostics.baselines.len() != VACANCY_ARTICULATION_BASELINE_COUNT
+        || diagnostics.states.len() != VACANCY_ARTICULATION_STATE_COUNT
+    {
+        return Err(format!(
+            "articulation terminal cardinality mismatch: rows {}, baselines {}, states {}",
+            diagnostics.rows.len(),
+            diagnostics.baselines.len(),
+            diagnostics.states.len()
+        ));
+    }
+    diagnostics.qualifying_state_count = diagnostics
+        .states
+        .iter()
+        .filter(|state| state.qualifies)
+        .count();
+    diagnostics.mechanism_gate_passed = diagnostics.qualifying_state_count >= 2;
+    Ok(())
+}
+
+fn verify_articulation_state(
+    ordinal: usize,
+    label: &str,
+    node: &RepairNode,
+    pieces: &[GeneralFastPiece<'_>],
+) -> Result<(), String> {
+    validate_state_structure(&node.state, pieces.len())?;
+    validate_repair_queue(&node.state, &node.queue)?;
+    let fingerprint = state_fingerprint(&node.state, pieces);
+    let active = active_ids(&node.state, pieces);
+    let inactive = queue_piece_ids(&node.queue, pieces);
+    let active_hash = exact_diagnostic_sha256(&active)?;
+    let inactive_hash = exact_diagnostic_sha256(&inactive)?;
+    if fingerprint != VACANCY_ARTICULATION_EXPECTED_STATE_FINGERPRINTS[ordinal]
+        || active.len() != VACANCY_ARTICULATION_ACTIVE_PIECES
+        || inactive.len() != VACANCY_ARTICULATION_INACTIVE_PIECES
+        || active_hash != VACANCY_ARTICULATION_EXPECTED_ACTIVE_HASHES[ordinal]
+        || inactive_hash != VACANCY_ARTICULATION_EXPECTED_INACTIVE_HASHES[ordinal]
+    {
+        return Err(format!(
+            "articulation {label} identity mismatch: state {fingerprint}, active {} {active_hash}, inactive {} {inactive_hash}",
+            active.len(),
+            inactive.len()
+        ));
+    }
+    Ok(())
+}
+
+fn canonical_inactive_collision_threshold(
+    node: &RepairNode,
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    work: &mut GeneralPersistentVacancyArticulationWorkDiagnostics,
+) -> Result<i128, String> {
+    let mut minimum: Option<i128> = None;
+    for piece_index in &node.queue {
+        let input_vertices = pieces[*piece_index].polygon.vertex_count();
+        work.preflight_inactive_collision(input_vertices)?;
+        let transformed = pieces[*piece_index]
+            .polygon
+            .transformed(0.0, false, 0.0, 0.0)
+            .map_err(|error| format!("articulation inactive transform: {error}"))?;
+        let (collision, input, output) = transformed
+            .offset_with_vertex_counts(collision_expansion_mm(settings))
+            .map_err(|error| format!("articulation inactive collision: {error}"))?;
+        if input != input_vertices {
+            return Err("articulation inactive collision input accounting changed".to_owned());
+        }
+        work.charge_inactive_collision_output(output)?;
+        if output > MAX_COLLISION_VERTICES {
+            return Err(format!(
+                    "articulation inactive collision produced {output} vertices, exceeding the {MAX_COLLISION_VERTICES}-vertex cap"
+                ));
+        }
+        let area = collision
+            .exact_doubled_area_grid2()
+            .map_err(|error| format!("articulation inactive area: {error}"))?;
+        work.charge_exact_area_vertices(collision.vertex_count())?;
+        minimum = Some(minimum.map_or(area, |current| current.min(area)));
+    }
+    minimum.ok_or_else(|| "articulation state has no inactive collision threshold".to_owned())
+}
+
+fn articulation_expanded_cache(
+    node: &RepairNode,
+    clearance_mm: f64,
+    work: &mut GeneralPersistentVacancyArticulationWorkDiagnostics,
+) -> Result<Vec<(usize, PolygonSet)>, String> {
+    let active_count = node.state.active.iter().filter(|active| **active).count();
+    let cache_entry_bytes =
+        size_of::<(usize, PolygonSet)>().saturating_add(VACANCY_ARTICULATION_POLYGON_HEAP_CAP);
+    let cache_reservation = size_of::<Vec<(usize, PolygonSet)>>()
+        .saturating_add(active_count.saturating_mul(cache_entry_bytes));
+    if cache_reservation > VACANCY_ARTICULATION_EXPANDED_CACHE_RESERVATION_BYTES {
+        return Err(
+            "cap: articulation expanded-cache memory exhausted before allocation".to_owned(),
+        );
+    }
+    let mut cache = Vec::with_capacity(active_count);
+    let mut heap_bytes = 0_usize;
+    for piece_index in 0..node.state.active.len() {
+        if !node.state.active[piece_index] {
+            continue;
+        }
+        let collision = node.state.collisions[piece_index]
+            .as_deref()
+            .ok_or_else(|| format!("articulation active piece {piece_index} has no collision"))?;
+        let input_vertices = collision.vertex_count();
+        work.preflight_active_offset(input_vertices)?;
+        let (expanded, input, output) = collision
+            .offset_with_vertex_counts(clearance_mm)
+            .map_err(|error| format!("articulation active offset: {error}"))?;
+        if input != input_vertices {
+            return Err("articulation active offset input accounting changed".to_owned());
+        }
+        let entry_bytes =
+            size_of::<(usize, PolygonSet)>().saturating_add(VACANCY_ARTICULATION_POLYGON_HEAP_CAP);
+        if heap_bytes
+            .checked_add(entry_bytes)
+            .is_none_or(|bytes| bytes > VACANCY_ARTICULATION_TOPOLOGY_HEAP_CAP)
+        {
+            return Err(
+                "cap: articulation expanded-cache memory exhausted before allocation".to_owned(),
+            );
+        }
+        let polygon_bytes = size_of::<PolygonSet>().saturating_add(expanded.heap_bytes());
+        if polygon_bytes > VACANCY_ARTICULATION_POLYGON_HEAP_CAP {
+            return Err("cap: articulation expanded-polygon memory exhausted".to_owned());
+        }
+        heap_bytes = heap_bytes
+            .checked_add(entry_bytes)
+            .ok_or_else(|| "cap: articulation expanded-cache memory overflow".to_owned())?;
+        work.charge_active_offset_output(output)?;
+        if output > MAX_COLLISION_VERTICES {
+            return Err(format!(
+                "articulation active offset produced {output} vertices, exceeding the {MAX_COLLISION_VERTICES}-vertex cap"
+            ));
+        }
+        cache.push((piece_index, expanded));
+    }
+    if cache.len() != VACANCY_ARTICULATION_ACTIVE_PIECES {
+        return Err(format!(
+            "articulation expanded cache has {} pieces instead of {}",
+            cache.len(),
+            VACANCY_ARTICULATION_ACTIVE_PIECES
+        ));
+    }
+    work.expanded_polygon_cache_peak_bytes = work.expanded_polygon_cache_peak_bytes.max(heap_bytes);
+    Ok(cache)
+}
+
+fn articulation_topology(
+    occupied: &[&PolygonSet],
+    settings: GeneralFastSettings,
+    clearance_mm: f64,
+    work: &mut GeneralPersistentVacancyArticulationWorkDiagnostics,
+) -> Result<ArticulationTopology, String> {
+    let input_vertices = occupied.iter().try_fold(4_usize, |total, polygon| {
+        total
+            .checked_add(polygon.vertex_count())
+            .ok_or_else(|| "cap: articulation topology input overflow".to_owned())
+    })?;
+    work.preflight_topology(input_vertices)?;
+    let inset = collision_sheet_inset_mm(settings);
+    let topology = PolygonSet::rectangular_free_space_topology(
+        occupied,
+        inset + clearance_mm,
+        inset + clearance_mm,
+        settings.sheet_short_axis_mm - inset - clearance_mm,
+        TARGET_DEPTH_MM - inset - clearance_mm,
+    )
+    .map_err(|error| format!("articulation free-space topology: {error}"))?;
+    if topology.input_vertices != input_vertices {
+        return Err(format!(
+            "articulation topology input accounting changed from {input_vertices} to {}",
+            topology.input_vertices
+        ));
+    }
+    work.charge_topology_output(topology.output_vertices)?;
+    summarize_articulation_topology(topology)
+}
+
+fn summarize_articulation_topology(
+    topology: crate::geometry::general_polygon::RectangularFreeSpaceTopology,
+) -> Result<ArticulationTopology, String> {
+    let frontier_area = topology
+        .regions
+        .iter()
+        .filter(|region| region.frontier_contact_grid > 0)
+        .try_fold(0_i128, |total, region| {
+            total
+                .checked_add(region.doubled_area_grid2)
+                .ok_or_else(|| "articulation frontier-area overflow".to_owned())
+        })?;
+    let disconnected_area = topology
+        .regions
+        .iter()
+        .filter(|region| region.frontier_contact_grid == 0)
+        .try_fold(0_i128, |total, region| {
+            total
+                .checked_add(region.doubled_area_grid2)
+                .ok_or_else(|| "articulation disconnected-area overflow".to_owned())
+        })?;
+    let total_area = frontier_area
+        .checked_add(disconnected_area)
+        .ok_or_else(|| "articulation total free-area overflow".to_owned())?;
+    let region_total = topology.regions.iter().try_fold(0_i128, |total, region| {
+        total
+            .checked_add(region.doubled_area_grid2)
+            .ok_or_else(|| "articulation region-area overflow".to_owned())
+    })?;
+    if region_total != total_area {
+        return Err("articulation free-region area partition is inconsistent".to_owned());
+    }
+    let frontier_count = topology
+        .regions
+        .iter()
+        .filter(|region| region.frontier_contact_grid > 0)
+        .count();
+    let disconnected_count = topology.regions.len() - frontier_count;
+    Ok(ArticulationTopology {
+        topology,
+        total_area,
+        frontier_area,
+        disconnected_area,
+        frontier_count,
+        disconnected_count,
+    })
+}
+
+fn articulation_component_frontier_graph(
+    baseline: &ArticulationTopology,
+    counter: &ArticulationTopology,
+    work: &mut GeneralPersistentVacancyArticulationWorkDiagnostics,
+) -> Result<Vec<bool>, String> {
+    let baseline_count = baseline.topology.regions.len();
+    let counter_count = counter.topology.regions.len();
+    let node_count = baseline_count
+        .checked_add(counter_count)
+        .ok_or_else(|| "articulation component graph node overflow".to_owned())?;
+    let graph_scratch_bytes = size_of::<Vec<usize>>()
+        .saturating_add(size_of::<Vec<u8>>().saturating_mul(2))
+        .saturating_add(size_of::<Vec<bool>>())
+        .saturating_add(
+            size_of::<Vec<crate::geometry::general_polygon::ExactGridBounds>>().saturating_mul(2),
+        )
+        .saturating_add(
+            node_count
+                .saturating_mul(
+                    size_of::<usize>()
+                        .saturating_add(2)
+                        .saturating_add(
+                            size_of::<crate::geometry::general_polygon::ExactGridBounds>(),
+                        ),
+                )
+                .saturating_add(baseline_count),
+        );
+    work.charge_component_graph_scratch(graph_scratch_bytes)?;
+
+    let baseline_bounds = baseline
+        .topology
+        .regions
+        .iter()
+        .map(|region| region.polygon.exact_grid_bounds())
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| format!("articulation baseline graph bounds: {error}"))?;
+    let counter_bounds = counter
+        .topology
+        .regions
+        .iter()
+        .map(|region| region.polygon.exact_grid_bounds())
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| format!("articulation counter graph bounds: {error}"))?;
+
+    let mut parent = (0..node_count).collect::<Vec<_>>();
+    let mut frontier = Vec::with_capacity(node_count);
+    frontier.extend(
+        baseline
+            .topology
+            .regions
+            .iter()
+            .chain(counter.topology.regions.iter())
+            .map(|region| u8::from(region.frontier_contact_grid > 0)),
+    );
+    for (baseline_index, baseline_region) in baseline.topology.regions.iter().enumerate() {
+        for (counter_index, counter_region) in counter.topology.regions.iter().enumerate() {
+            work.charge_component_graph_node_pairs(1)?;
+            if !baseline_bounds[baseline_index].may_overlap_or_touch(counter_bounds[counter_index])
+            {
+                work.charge_component_graph_broad_phase_rejection()?;
+                continue;
+            }
+            let (connected, edge_checks) = baseline_region
+                .polygon
+                .material_overlap_or_shared_segment(&counter_region.polygon)
+                .map_err(|error| format!("articulation component graph relation: {error}"))?;
+            work.charge_component_graph_edge_checks(edge_checks)?;
+            if connected {
+                union_component_graph_nodes(
+                    &mut parent,
+                    baseline_index,
+                    baseline_count + counter_index,
+                );
+            }
+        }
+    }
+
+    let mut root_frontier = vec![0_u8; node_count];
+    for node in 0..node_count {
+        let root = find_component_graph_root(&mut parent, node);
+        root_frontier[root] |= frontier[node];
+    }
+    let mut baseline_frontier_connected = Vec::with_capacity(baseline_count);
+    for node in 0..baseline_count {
+        let root = find_component_graph_root(&mut parent, node);
+        baseline_frontier_connected.push(root_frontier[root] != 0);
+    }
+    Ok(baseline_frontier_connected)
+}
+
+fn find_component_graph_root(parent: &mut [usize], mut node: usize) -> usize {
+    while parent[node] != node {
+        parent[node] = parent[parent[node]];
+        node = parent[node];
+    }
+    node
+}
+
+fn union_component_graph_nodes(parent: &mut [usize], first: usize, second: usize) {
+    let first_root = find_component_graph_root(parent, first);
+    let second_root = find_component_graph_root(parent, second);
+    if first_root != second_root {
+        parent[second_root] = first_root;
+    }
+}
+
+fn articulation_component_correspondence(
+    baseline: &ArticulationTopology,
+    counter: &ArticulationTopology,
+    work: &mut GeneralPersistentVacancyArticulationWorkDiagnostics,
+) -> Result<(i128, i128), String> {
+    let baseline_frontier_connected =
+        articulation_component_frontier_graph(baseline, counter, work)?;
+    let mut unlocked = 0_i128;
+    let mut residual = 0_i128;
+    for (baseline_region_index, baseline_region) in baseline
+        .topology
+        .regions
+        .iter()
+        .enumerate()
+        .filter(|(_, region)| region.frontier_contact_grid == 0)
+    {
+        let connected = baseline_frontier_connected
+            .get(baseline_region_index)
+            .copied()
+            .ok_or_else(|| "articulation component graph baseline node disappeared".to_owned())?;
+        if connected {
+            unlocked = unlocked
+                .checked_add(baseline_region.doubled_area_grid2)
+                .ok_or_else(|| "articulation unlocked-area overflow".to_owned())?;
+        } else {
+            residual = residual
+                .checked_add(baseline_region.doubled_area_grid2)
+                .ok_or_else(|| "articulation residual-area overflow".to_owned())?;
+        }
+    }
+    Ok((unlocked, residual))
+}
+
+fn verify_articulation_identities(
+    baseline: &ArticulationTopology,
+    counter: &ArticulationTopology,
+    omitted_area: i128,
+    unlocked: i128,
+    residual: i128,
+) -> Result<(), String> {
+    let total_delta = counter
+        .total_area
+        .checked_sub(baseline.total_area)
+        .ok_or_else(|| "articulation total-area delta overflow".to_owned())?;
+    let frontier_delta = counter
+        .frontier_area
+        .checked_sub(baseline.frontier_area)
+        .ok_or_else(|| "articulation frontier-area delta overflow".to_owned())?;
+    let disconnected_reduction = baseline
+        .disconnected_area
+        .checked_sub(counter.disconnected_area)
+        .ok_or_else(|| "articulation disconnected-area delta overflow".to_owned())?;
+    let baseline_partition = baseline.frontier_area + baseline.disconnected_area;
+    let counter_partition = counter.frontier_area + counter.disconnected_area;
+    let delta_partition = total_delta + disconnected_reduction;
+    let correspondence_partition = unlocked.checked_add(residual);
+    if baseline.total_area != baseline_partition
+        || counter.total_area != counter_partition
+        || total_delta < 0
+        || total_delta > omitted_area
+        || frontier_delta != delta_partition
+        || unlocked < 0
+        || unlocked > baseline.disconnected_area
+        || residual < 0
+        || residual > baseline.disconnected_area
+        || correspondence_partition != Some(baseline.disconnected_area)
+        || baseline.frontier_count + baseline.disconnected_count != baseline.topology.regions.len()
+        || counter.frontier_count + counter.disconnected_count != counter.topology.regions.len()
+    {
+        return Err(format!(
+            "articulation exact area identity failed: baseline T/F/D {}/{}/{}, counter {}/{}/{}, omitted {omitted_area}, totalDelta {total_delta}, frontierDelta {frontier_delta}, disconnectedReduction {disconnected_reduction}, unlocked {unlocked}, residual {residual}, correspondence {:?}, counts {}/{} and {}/{}",
+            baseline.total_area,
+            baseline.frontier_area,
+            baseline.disconnected_area,
+            counter.total_area,
+            counter.frontier_area,
+            counter.disconnected_area,
+            correspondence_partition,
+            baseline.frontier_count + baseline.disconnected_count,
+            baseline.topology.regions.len(),
+            counter.frontier_count + counter.disconnected_count,
+            counter.topology.regions.len(),
+        ));
+    }
+    Ok(())
+}
+
+fn articulation_baseline_diagnostics(
+    label: &str,
+    node: &RepairNode,
+    pieces: &[GeneralFastPiece<'_>],
+    clearance_mm: f64,
+    threshold: i128,
+    baseline: &ArticulationTopology,
+) -> Result<GeneralPersistentVacancyArticulationBaselineDiagnostics, String> {
+    Ok(GeneralPersistentVacancyArticulationBaselineDiagnostics {
+        label: label.to_owned(),
+        clearance_mm: clearance_mm.to_string(),
+        state_fingerprint: state_fingerprint(&node.state, pieces),
+        active_piece_count: active_ids(&node.state, pieces).len(),
+        inactive_piece_count: node.queue.len(),
+        active_piece_ids_sha256: exact_diagnostic_sha256(&active_ids(&node.state, pieces))?,
+        inactive_piece_ids_sha256: exact_diagnostic_sha256(&queue_piece_ids(&node.queue, pieces))?,
+        minimum_inactive_collision_doubled_area_grid2: threshold.to_string(),
+        free_region_count: baseline.topology.regions.len(),
+        frontier_connected_region_count: baseline.frontier_count,
+        disconnected_region_count: baseline.disconnected_count,
+        total_free_doubled_area_grid2: baseline.total_area.to_string(),
+        frontier_connected_free_doubled_area_grid2: baseline.frontier_area.to_string(),
+        disconnected_free_doubled_area_grid2: baseline.disconnected_area.to_string(),
+        topology_input_vertices: baseline.topology.input_vertices,
+        topology_output_vertices: baseline.topology.output_vertices,
+    })
+}
+
+fn articulation_diagnostic_reservation_bytes(max_piece_id_bytes: usize) -> usize {
+    const SCALAR_STRING_BYTES: usize = 48;
+    let row = size_of::<GeneralPersistentVacancyArticulationRowDiagnostics>()
+        .saturating_add(9 * SCALAR_STRING_BYTES)
+        .saturating_add(max_piece_id_bytes);
+    let baseline = size_of::<GeneralPersistentVacancyArticulationBaselineDiagnostics>()
+        .saturating_add(8 * SCALAR_STRING_BYTES);
+    let state = size_of::<GeneralPersistentVacancyArticulationStateDiagnostics>()
+        .saturating_add(4 * SCALAR_STRING_BYTES)
+        .saturating_add(max_piece_id_bytes);
+    size_of::<GeneralPersistentVacancyArticulationProbeDiagnostics>()
+        .saturating_add(VACANCY_ARTICULATION_ROW_COUNT.saturating_mul(row))
+        .saturating_add(VACANCY_ARTICULATION_BASELINE_COUNT.saturating_mul(baseline))
+        .saturating_add(VACANCY_ARTICULATION_STATE_COUNT.saturating_mul(state))
+        .saturating_add(16 * SCALAR_STRING_BYTES)
 }
 
 fn ejected_piece_count(state: &VacancyState) -> usize {
@@ -4731,6 +7967,196 @@ fn repair_work_delta(
     delta
 }
 
+fn work_diagnostics_from_limits(limits: WorkLimits) -> GeneralPersistentVacancyWorkDiagnostics {
+    GeneralPersistentVacancyWorkDiagnostics {
+        selected_piece_slots: limits.selected_piece_slots,
+        orientation_streams: limits.orientation_streams,
+        source_feature_visits: limits.source_feature_visits,
+        position_source_attempts: limits.position_source_attempts,
+        returned_positions: limits.returned_positions,
+        hazard_queries: limits.hazard_queries,
+        proxy_pressure_visits: limits.proxy_pressure_visits,
+        exact_finalist_rows: limits.exact_finalist_rows,
+        experimental_collision_builds: limits.experimental_collision_builds,
+        validator_collision_builds: limits.validator_collision_builds,
+        experimental_pair_visits: limits.experimental_pair_visits,
+        validator_pair_visits: limits.validator_pair_visits,
+        transformed_collision_vertices: limits.transformed_collision_vertices,
+        clipper_input_vertices: limits.clipper_input_vertices,
+        clipper_output_vertices: limits.clipper_output_vertices,
+        partial_audits: limits.partial_audits,
+        complete_audits: limits.complete_audits,
+        retained_peak_bytes: 0,
+        selector_diagnostic_peak_bytes: 0,
+        total_retained_peak_bytes: 0,
+    }
+}
+
+fn add_work_diagnostics(
+    total: &mut GeneralPersistentVacancyWorkDiagnostics,
+    phase: GeneralPersistentVacancyWorkDiagnostics,
+) {
+    total.selected_piece_slots = total
+        .selected_piece_slots
+        .saturating_add(phase.selected_piece_slots);
+    total.orientation_streams = total
+        .orientation_streams
+        .saturating_add(phase.orientation_streams);
+    total.source_feature_visits = total
+        .source_feature_visits
+        .saturating_add(phase.source_feature_visits);
+    total.position_source_attempts = total
+        .position_source_attempts
+        .saturating_add(phase.position_source_attempts);
+    total.returned_positions = total
+        .returned_positions
+        .saturating_add(phase.returned_positions);
+    total.hazard_queries = total.hazard_queries.saturating_add(phase.hazard_queries);
+    total.proxy_pressure_visits = total
+        .proxy_pressure_visits
+        .saturating_add(phase.proxy_pressure_visits);
+    total.exact_finalist_rows = total
+        .exact_finalist_rows
+        .saturating_add(phase.exact_finalist_rows);
+    total.experimental_collision_builds = total
+        .experimental_collision_builds
+        .saturating_add(phase.experimental_collision_builds);
+    total.validator_collision_builds = total
+        .validator_collision_builds
+        .saturating_add(phase.validator_collision_builds);
+    total.experimental_pair_visits = total
+        .experimental_pair_visits
+        .saturating_add(phase.experimental_pair_visits);
+    total.validator_pair_visits = total
+        .validator_pair_visits
+        .saturating_add(phase.validator_pair_visits);
+    total.transformed_collision_vertices = total
+        .transformed_collision_vertices
+        .saturating_add(phase.transformed_collision_vertices);
+    total.clipper_input_vertices = total
+        .clipper_input_vertices
+        .saturating_add(phase.clipper_input_vertices);
+    total.clipper_output_vertices = total
+        .clipper_output_vertices
+        .saturating_add(phase.clipper_output_vertices);
+    total.partial_audits = total.partial_audits.saturating_add(phase.partial_audits);
+    total.complete_audits = total.complete_audits.saturating_add(phase.complete_audits);
+    total.retained_peak_bytes = total.retained_peak_bytes.max(phase.retained_peak_bytes);
+    total.selector_diagnostic_peak_bytes = total
+        .selector_diagnostic_peak_bytes
+        .max(phase.selector_diagnostic_peak_bytes);
+    total.total_retained_peak_bytes = total
+        .total_retained_peak_bytes
+        .max(phase.total_retained_peak_bytes);
+}
+
+fn bridge_work_exceeds_limit(
+    used: GeneralPersistentVacancyWorkDiagnostics,
+    limits: WorkLimits,
+) -> bool {
+    used.selected_piece_slots > limits.selected_piece_slots
+        || used.orientation_streams > limits.orientation_streams
+        || used.source_feature_visits > limits.source_feature_visits
+        || used.position_source_attempts > limits.position_source_attempts
+        || used.returned_positions > limits.returned_positions
+        || used.hazard_queries > limits.hazard_queries
+        || used.proxy_pressure_visits > limits.proxy_pressure_visits
+        || used.exact_finalist_rows > limits.exact_finalist_rows
+        || used.experimental_collision_builds > limits.experimental_collision_builds
+        || used.validator_collision_builds > limits.validator_collision_builds
+        || used.experimental_pair_visits > limits.experimental_pair_visits
+        || used.validator_pair_visits > limits.validator_pair_visits
+        || used.transformed_collision_vertices > limits.transformed_collision_vertices
+        || used.clipper_input_vertices > limits.clipper_input_vertices
+        || used.clipper_output_vertices > limits.clipper_output_vertices
+        || used.partial_audits > limits.partial_audits
+        || used.complete_audits > limits.complete_audits
+}
+
+fn work_limit_fingerprint(limits: WorkLimits) -> String {
+    let mut digest = Sha256::new();
+    digest.update(b"persistent-vacancy-bridge-work-limits-v1\0");
+    for value in [
+        limits.selected_piece_slots,
+        limits.orientation_streams,
+        limits.source_feature_visits,
+        limits.position_source_attempts,
+        limits.returned_positions,
+        limits.hazard_queries,
+        limits.proxy_pressure_visits,
+        limits.exact_finalist_rows,
+        limits.experimental_collision_builds,
+        limits.validator_collision_builds,
+        limits.experimental_pair_visits,
+        limits.validator_pair_visits,
+        limits.transformed_collision_vertices,
+        limits.clipper_input_vertices,
+        limits.clipper_output_vertices,
+        limits.partial_audits,
+        limits.complete_audits,
+    ] {
+        digest.update((value as u64).to_be_bytes());
+    }
+    format!("{:x}", digest.finalize())
+}
+
+fn update_work_signature(digest: &mut Sha256, work: GeneralPersistentVacancyWorkDiagnostics) {
+    for value in [
+        work.selected_piece_slots,
+        work.orientation_streams,
+        work.source_feature_visits,
+        work.position_source_attempts,
+        work.returned_positions,
+        work.hazard_queries,
+        work.proxy_pressure_visits,
+        work.exact_finalist_rows,
+        work.experimental_collision_builds,
+        work.validator_collision_builds,
+        work.experimental_pair_visits,
+        work.validator_pair_visits,
+        work.transformed_collision_vertices,
+        work.clipper_input_vertices,
+        work.clipper_output_vertices,
+        work.partial_audits,
+        work.complete_audits,
+    ] {
+        digest.update((value as u64).to_be_bytes());
+    }
+}
+
+fn bridge_continuation_work_signature(outcome: &RepairRoundOutcome) -> String {
+    let mut digest = Sha256::new();
+    digest.update(b"persistent-vacancy-bridge-continuation-work-v1\0");
+    digest.update((outcome.diagnostics.depths.len() as u64).to_be_bytes());
+    for depth in &outcome.diagnostics.depths {
+        for value in [
+            depth.expansion_depth,
+            depth.expanded_parents,
+            depth.generated_children,
+            depth.deduplicated_children,
+            depth.transposed_children,
+            depth.complete_candidates,
+            depth.direct_insertions,
+            depth.ejection_insertions,
+            depth.expansions.len(),
+            depth.frontier.len(),
+        ] {
+            digest.update((value as u64).to_be_bytes());
+        }
+        update_work_signature(&mut digest, depth.work);
+    }
+    update_work_signature(&mut digest, outcome.diagnostics.work);
+    digest.update([u8::from(outcome.accepted_complete.is_some())]);
+    digest.update(
+        (outcome
+            .best_partial
+            .first_seen_expansion_depth
+            .unwrap_or(usize::MAX) as u64)
+            .to_be_bytes(),
+    );
+    format!("{:x}", digest.finalize())
+}
+
 fn persistent_diagnostic_bytes(diagnostics: &GeneralPersistentVacancyDiagnostics) -> usize {
     option_string_bytes(&diagnostics.parent_fingerprint)
         .saturating_add(option_string_bytes(&diagnostics.initial_state_fingerprint))
@@ -4790,6 +8216,18 @@ fn persistent_diagnostic_bytes(diagnostics: &GeneralPersistentVacancyDiagnostics
                 .as_ref()
                 .map_or(0, vacancy_topology_diagnostic_heap_bytes),
         )
+        .saturating_add(
+            diagnostics
+                .vacancy_articulation_probe
+                .as_ref()
+                .map_or(0, articulation_diagnostic_heap_bytes),
+        )
+        .saturating_add(
+            diagnostics
+                .vacancy_bridge_relocation
+                .as_ref()
+                .map_or(0, bridge_relocation_diagnostic_heap_bytes),
+        )
         .saturating_add(option_string_bytes(&diagnostics.cap_exhausted))
         .saturating_add(option_string_bytes(&diagnostics.failure_reason))
 }
@@ -4833,6 +8271,191 @@ fn vacancy_topology_diagnostic_heap_bytes(
                 .sum::<usize>(),
         )
         .saturating_add(option_string_bytes(&topology.failure_reason))
+}
+
+fn articulation_diagnostic_heap_bytes(
+    articulation: &GeneralPersistentVacancyArticulationProbeDiagnostics,
+) -> usize {
+    articulation
+        .geometry_domain
+        .capacity()
+        .saturating_add(string_vec_bytes(
+            &articulation.clearance_mm,
+            articulation.clearance_mm.capacity(),
+        ))
+        .saturating_add(articulation.actionable_clearance_mm.capacity())
+        .saturating_add(articulation.baselines.capacity().saturating_mul(size_of::<
+            GeneralPersistentVacancyArticulationBaselineDiagnostics,
+        >()))
+        .saturating_add(
+            articulation
+                .baselines
+                .iter()
+                .map(|baseline| {
+                    baseline
+                        .label
+                        .capacity()
+                        .saturating_add(baseline.clearance_mm.capacity())
+                        .saturating_add(baseline.state_fingerprint.capacity())
+                        .saturating_add(baseline.active_piece_ids_sha256.capacity())
+                        .saturating_add(baseline.inactive_piece_ids_sha256.capacity())
+                        .saturating_add(
+                            baseline
+                                .minimum_inactive_collision_doubled_area_grid2
+                                .capacity(),
+                        )
+                        .saturating_add(baseline.total_free_doubled_area_grid2.capacity())
+                        .saturating_add(
+                            baseline
+                                .frontier_connected_free_doubled_area_grid2
+                                .capacity(),
+                        )
+                        .saturating_add(baseline.disconnected_free_doubled_area_grid2.capacity())
+                })
+                .sum::<usize>(),
+        )
+        .saturating_add(
+            articulation
+                .rows
+                .capacity()
+                .saturating_mul(size_of::<GeneralPersistentVacancyArticulationRowDiagnostics>()),
+        )
+        .saturating_add(
+            articulation
+                .rows
+                .iter()
+                .map(|row| {
+                    row.label
+                        .capacity()
+                        .saturating_add(row.clearance_mm.capacity())
+                        .saturating_add(row.omitted_piece_id.capacity())
+                        .saturating_add(row.omitted_expanded_doubled_area_grid2.capacity())
+                        .saturating_add(row.counterfactual_total_free_doubled_area_grid2.capacity())
+                        .saturating_add(
+                            row.counterfactual_frontier_connected_free_doubled_area_grid2
+                                .capacity(),
+                        )
+                        .saturating_add(
+                            row.counterfactual_disconnected_free_doubled_area_grid2
+                                .capacity(),
+                        )
+                        .saturating_add(
+                            row.unlocked_baseline_disconnected_doubled_area_grid2
+                                .capacity(),
+                        )
+                        .saturating_add(
+                            row.residual_baseline_disconnected_doubled_area_grid2
+                                .capacity(),
+                        )
+                })
+                .sum::<usize>(),
+        )
+        .saturating_add(articulation.states.capacity().saturating_mul(size_of::<
+            GeneralPersistentVacancyArticulationStateDiagnostics,
+        >()))
+        .saturating_add(
+            articulation
+                .states
+                .iter()
+                .map(|state| {
+                    state
+                        .label
+                        .capacity()
+                        .saturating_add(state.state_fingerprint.capacity())
+                        .saturating_add(option_string_bytes(&state.best_piece_id))
+                        .saturating_add(option_string_bytes(&state.best_clearance_mm))
+                        .saturating_add(option_string_bytes(
+                            &state.best_unlocked_doubled_area_grid2,
+                        ))
+                })
+                .sum::<usize>(),
+        )
+        .saturating_add(option_string_bytes(&articulation.failure_reason))
+}
+
+fn bridge_relocation_diagnostic_heap_bytes(
+    bridge: &GeneralPersistentVacancyBridgeRelocationDiagnostics,
+) -> usize {
+    bridge
+        .bridge_piece_id
+        .capacity()
+        .saturating_add(option_string_bytes(&bridge.source_state_fingerprint))
+        .saturating_add(option_string_bytes(&bridge.source_augmented_identity_hash))
+        .saturating_add(string_vec_bytes(
+            &bridge.source_queue_piece_ids,
+            bridge.source_queue_piece_ids.capacity(),
+        ))
+        .saturating_add(bridge.topology_clearance_mm.capacity())
+        .saturating_add(option_string_bytes(&bridge.candidate_order_hash))
+        .saturating_add(option_string_bytes(
+            &bridge.source_frontier_connected_free_doubled_area_grid2,
+        ))
+        .saturating_add(option_string_bytes(&bridge.source_frontier_contact_grid))
+        .saturating_add(bridge.fixed_repair_seed_domain.capacity())
+        .saturating_add(
+            bridge
+                .candidates
+                .capacity()
+                .saturating_mul(size_of::<GeneralPersistentVacancyBridgeCandidateDiagnostics>()),
+        )
+        .saturating_add(
+            bridge
+                .candidates
+                .iter()
+                .map(|candidate| {
+                    candidate.state_fingerprint.capacity()
+                        + candidate
+                            .frontier_connected_free_doubled_area_grid2
+                            .capacity()
+                        + candidate.frontier_contact_grid.capacity()
+                        + candidate.disconnected_free_doubled_area_grid2.capacity()
+                        + candidate
+                            .largest_disconnected_free_doubled_area_grid2
+                            .capacity()
+                        + candidate
+                            .rejection_reason
+                            .as_ref()
+                            .map_or(0, String::capacity)
+                })
+                .sum::<usize>(),
+        )
+        .saturating_add(
+            bridge
+                .control
+                .as_ref()
+                .map_or(0, bridge_arm_diagnostic_heap_bytes),
+        )
+        .saturating_add(
+            bridge
+                .treatment
+                .as_ref()
+                .map_or(0, bridge_arm_diagnostic_heap_bytes),
+        )
+        .saturating_add(option_string_bytes(&bridge.acceptance_reason))
+        .saturating_add(option_string_bytes(&bridge.control_work_signature))
+        .saturating_add(option_string_bytes(&bridge.treatment_work_signature))
+        .saturating_add(option_string_bytes(&bridge.failure_reason))
+}
+
+fn bridge_arm_diagnostic_heap_bytes(arm: &GeneralPersistentVacancyBridgeArmDiagnostics) -> usize {
+    arm.bridge_piece_id
+        .capacity()
+        .saturating_add(arm.source_state_fingerprint.capacity())
+        .saturating_add(arm.source_augmented_identity_hash.capacity())
+        .saturating_add(string_vec_bytes(
+            &arm.queue_piece_ids,
+            arm.queue_piece_ids.capacity(),
+        ))
+        .saturating_add(option_string_bytes(&arm.selected_candidate_key))
+        .saturating_add(option_string_bytes(
+            &arm.selected_candidate_state_fingerprint,
+        ))
+        .saturating_add(option_string_bytes(&arm.endpoint_state_fingerprint))
+        .saturating_add(option_string_bytes(&arm.endpoint_augmented_identity_hash))
+        .saturating_add(option_string_bytes(&arm.endpoint_inactive_area_grid2))
+        .saturating_add(option_string_bytes(&arm.final_placement_fingerprint))
+        .saturating_add(arm.continuation_work_signature.capacity())
+        .saturating_add(option_string_bytes(&arm.failure_reason))
 }
 
 fn preflight_vacancy_topology_probe(
@@ -5180,6 +8803,16 @@ mod tests {
         .unwrap()
     }
 
+    fn rectangle(min_x: f64, min_y: f64, max_x: f64, max_y: f64) -> PolygonSet {
+        PolygonSet::from_outer(vec![
+            IrregularPoint::new(min_x, min_y),
+            IrregularPoint::new(max_x, min_y),
+            IrregularPoint::new(max_x, max_y),
+            IrregularPoint::new(min_x, max_y),
+        ])
+        .unwrap()
+    }
+
     fn state_with_two_squares(second_x: f64, second_y: f64) -> (Vec<PolygonSet>, VacancyState) {
         let polygons = vec![square(10.0), square(10.0)];
         let placements = vec![
@@ -5288,6 +8921,119 @@ mod tests {
             restart_arm_family(VACANCY_TOPOLOGY_PROBE_MODE),
             "continuedStateRebuiltQueueTopologyProbe"
         );
+    }
+
+    #[test]
+    fn articulation_probe_mode_reuses_the_rebuilt_queue_trajectory() {
+        assert!(uses_repair_restart_screen(VACANCY_ARTICULATION_PROBE_MODE));
+        assert_eq!(
+            restart_arm_family(VACANCY_ARTICULATION_PROBE_MODE),
+            "continuedStateRebuiltQueueArticulationProbe"
+        );
+    }
+
+    #[test]
+    fn articulation_contract_caps_match_the_frozen_design() {
+        assert_eq!(VACANCY_ARTICULATION_ROW_COUNT, 765);
+        assert_eq!(VACANCY_ARTICULATION_BASELINE_COUNT, 15);
+        assert_eq!(VACANCY_ARTICULATION_TOPOLOGY_CALL_CAP, 780);
+        assert_eq!(VACANCY_ARTICULATION_ACTIVE_OFFSET_VERTEX_CAP, 391_680);
+        assert_eq!(VACANCY_ARTICULATION_INACTIVE_COLLISION_VERTEX_CAP, 15_360);
+        assert_eq!(VACANCY_ARTICULATION_TOPOLOGY_INPUT_VERTEX_CAP, 19_978_800);
+        assert_eq!(VACANCY_ARTICULATION_TOPOLOGY_OUTPUT_VERTEX_CAP, 3_194_880);
+        assert_eq!(
+            VACANCY_ARTICULATION_COMPONENT_GRAPH_NODE_PAIR_CAP,
+            1_425_367_125
+        );
+        assert_eq!(
+            GeneralPersistentVacancyArticulationWorkDiagnostics::bounded()
+                .component_graph_broad_phase_rejection_cap,
+            VACANCY_ARTICULATION_COMPONENT_GRAPH_NODE_PAIR_CAP
+        );
+        assert_eq!(
+            VACANCY_ARTICULATION_COMPONENT_GRAPH_EDGE_CHECK_CAP,
+            12_834_570_240
+        );
+        assert_eq!(
+            VACANCY_ARTICULATION_TRANSIENT_RESERVATION_BYTES,
+            VACANCY_ARTICULATION_EXPANDED_CACHE_RESERVATION_BYTES
+                + VACANCY_ARTICULATION_BASELINE_TOPOLOGY_RESERVATION_BYTES
+                + VACANCY_ARTICULATION_COUNTERFACTUAL_TOPOLOGY_RESERVATION_BYTES
+                + VACANCY_ARTICULATION_COMPONENT_GRAPH_SCRATCH_RESERVATION_BYTES
+                + VACANCY_ARTICULATION_CLIPPER_OPERATION_RESERVATION_BYTES
+                + VACANCY_ARTICULATION_JSON_BUFFER_RESERVATION_BYTES
+        );
+        assert_eq!(VACANCY_ARTICULATION_TRANSIENT_RESERVATION_BYTES, 41_354_872);
+        assert_eq!(VACANCY_ARTICULATION_TOTAL_RESERVED_BYTES, 48_756_793);
+        assert_eq!(
+            VACANCY_ARTICULATION_TOTAL_RESERVED_BYTES,
+            VACANCY_ARTICULATION_PROTECTED_PEAK_BYTES
+                + VACANCY_ARTICULATION_TRANSIENT_RESERVATION_BYTES
+                + VACANCY_ARTICULATION_RETAINED_RESERVATION_BYTES
+        );
+        assert!(VACANCY_ARTICULATION_TOTAL_RESERVED_BYTES < MAX_RETAINED_BYTES);
+        assert!(
+            articulation_diagnostic_reservation_bytes(64)
+                <= VACANCY_ARTICULATION_RETAINED_RESERVATION_BYTES
+        );
+    }
+
+    #[test]
+    fn articulation_component_correspondence_detects_a_true_bridge() {
+        let settings = GeneralFastSettings::deterministic_test(20.0, 200.0);
+        let barrier = rectangle(0.0, 50.0, 20.0, 60.0);
+        let mut work = GeneralPersistentVacancyArticulationWorkDiagnostics::bounded();
+        let baseline = articulation_topology(&[&barrier], settings, 0.0, &mut work).unwrap();
+        let counter = articulation_topology(&[], settings, 0.0, &mut work).unwrap();
+        let (unlocked, residual) =
+            articulation_component_correspondence(&baseline, &counter, &mut work).unwrap();
+        let omitted_area = barrier.exact_doubled_area_grid2().unwrap();
+        verify_articulation_identities(&baseline, &counter, omitted_area, unlocked, residual)
+            .unwrap();
+        assert_eq!(unlocked, baseline.disconnected_area);
+        assert_eq!(residual, 0);
+        assert!(
+            work.component_graph_node_pairs > 0
+                && work.component_graph_scratch_peak_bytes
+                    <= work.component_graph_scratch_cap_bytes
+        );
+    }
+
+    #[test]
+    fn articulation_component_correspondence_rejects_a_frontier_non_bridge() {
+        let settings = GeneralFastSettings::deterministic_test(20.0, 200.0);
+        let frontier_obstacle = rectangle(0.0, 150.0, 5.0, 160.0);
+        let mut work = GeneralPersistentVacancyArticulationWorkDiagnostics::bounded();
+        let baseline =
+            articulation_topology(&[&frontier_obstacle], settings, 0.0, &mut work).unwrap();
+        let counter = articulation_topology(&[], settings, 0.0, &mut work).unwrap();
+        let (unlocked, residual) =
+            articulation_component_correspondence(&baseline, &counter, &mut work).unwrap();
+        verify_articulation_identities(
+            &baseline,
+            &counter,
+            frontier_obstacle.exact_doubled_area_grid2().unwrap(),
+            unlocked,
+            residual,
+        )
+        .unwrap();
+        assert_eq!(baseline.disconnected_area, 0);
+        assert_eq!(unlocked, 0);
+        assert_eq!(residual, 0);
+    }
+
+    #[test]
+    fn articulation_offset_output_and_exact_area_work_are_charged_separately() {
+        let mut work = GeneralPersistentVacancyArticulationWorkDiagnostics::bounded();
+
+        work.charge_active_offset_output(7).unwrap();
+        work.charge_inactive_collision_output(5).unwrap();
+        assert_eq!(work.active_offset_output_vertices, 7);
+        assert_eq!(work.inactive_collision_output_vertices, 5);
+        assert_eq!(work.exact_area_vertex_visits, 0);
+
+        work.charge_exact_area_vertices(12).unwrap();
+        assert_eq!(work.exact_area_vertex_visits, 12);
     }
 
     #[test]
@@ -6504,5 +10250,571 @@ mod tests {
             repair_transition_seed(&second.state, 1, &pieces, RepairSeedSchedule::Legacy)
         );
         assert_ne!(repair_node_identity(&first), repair_node_identity(&second));
+    }
+
+    #[test]
+    fn bridge_relocation_caps_are_explicit_and_bounded() {
+        assert_eq!(VACANCY_BRIDGE_CANDIDATE_CAP, 96);
+        assert_eq!(VACANCY_BRIDGE_POSITIONS_PER_ORIENTATION_CAP, 8);
+        assert!(VACANCY_BRIDGE_POSITIONS_PER_ORIENTATION_CAP * 12 <= VACANCY_BRIDGE_CANDIDATE_CAP);
+        let candidate_limits = WorkLimits::bridge_candidates();
+        let arm_limits = WorkLimits::bridge_arm().unwrap();
+        let limits = WorkLimits::repair_bridge().unwrap();
+        assert_eq!(
+            candidate_limits.returned_positions,
+            ORIENTATIONS_PER_PIECE * POSITIONS_PER_ORIENTATION
+        );
+        assert!(arm_limits.complete_audits >= REPAIR_MAX_COMPLETE_AUDITS);
+        assert!(limits.returned_positions >= arm_limits.returned_positions * 2);
+        assert!(limits.experimental_pair_visits >= arm_limits.experimental_pair_visits * 2);
+    }
+
+    #[test]
+    fn bridge_topology_ledger_retains_failed_call_work() {
+        let mut ledger = BridgeTopologyLedger::new();
+        ledger.diagnostics.topology_input_vertex_cap = 3;
+        ledger.diagnostics.topology_output_vertex_cap = 2;
+        let error = ledger
+            .record_attempt(VacancyTopologyCallWork {
+                input_vertices: 4,
+                output_vertices: 3,
+            })
+            .unwrap_err();
+        assert!(error.contains("input-vertex"));
+        assert_eq!(ledger.diagnostics.topology_calls, 1);
+        assert_eq!(ledger.diagnostics.topology_input_vertices, 4);
+        assert_eq!(ledger.diagnostics.topology_output_vertices, 3);
+    }
+
+    #[test]
+    fn bridge_source_topology_failure_publishes_ledger_work() {
+        let mut ledger = BridgeTopologyLedger::new();
+        ledger.diagnostics.topology_input_vertex_cap = 3;
+        ledger.diagnostics.topology_output_vertex_cap = 2;
+        assert!(ledger
+            .record_attempt(VacancyTopologyCallWork {
+                input_vertices: 4,
+                output_vertices: 3,
+            })
+            .is_err());
+        let mut bridge = GeneralPersistentVacancyBridgeRelocationDiagnostics::default();
+        copy_bridge_topology_ledger_diagnostics(&mut bridge, &ledger);
+        assert_eq!(bridge.topology_work.topology_calls, 1);
+        assert_eq!(bridge.topology_work.topology_input_vertices, 4);
+        assert_eq!(bridge.topology_work.topology_output_vertices, 3);
+    }
+
+    #[test]
+    fn bridge_preflight_models_sequential_arm_liveness() {
+        let owners = BridgePreflightOwners {
+            control_repair_peak_bytes: MAX_RETAINED_BYTES / 2,
+            treatment_repair_peak_bytes: MAX_RETAINED_BYTES / 2,
+            ..BridgePreflightOwners::default()
+        };
+        let control_live =
+            bridge_phase_live_bytes(BridgePreflightPhase::ControlContinuation, owners);
+        let treatment_live =
+            bridge_phase_live_bytes(BridgePreflightPhase::TreatmentContinuation, owners);
+        assert!(control_live <= MAX_RETAINED_BYTES);
+        assert!(treatment_live <= MAX_RETAINED_BYTES);
+        assert!(
+            control_live.saturating_add(owners.treatment_repair_peak_bytes) > MAX_RETAINED_BYTES
+        );
+        assert!(
+            treatment_live.saturating_add(owners.control_repair_peak_bytes) > MAX_RETAINED_BYTES
+        );
+    }
+
+    #[test]
+    fn bridge_failure_diagnostics_keep_only_a_bounded_candidate_prefix() {
+        let mut bridge = GeneralPersistentVacancyBridgeRelocationDiagnostics {
+            candidates: (0..VACANCY_BRIDGE_CANDIDATE_CAP)
+                .map(
+                    |ordinal| GeneralPersistentVacancyBridgeCandidateDiagnostics {
+                        ordinal,
+                        state_fingerprint: "x".repeat(1024),
+                        rejection_reason: Some("y".repeat(1024)),
+                        ..GeneralPersistentVacancyBridgeCandidateDiagnostics::default()
+                    },
+                )
+                .collect(),
+            ..GeneralPersistentVacancyBridgeRelocationDiagnostics::default()
+        };
+        truncate_bridge_failure_diagnostics(&mut bridge);
+        assert_eq!(
+            bridge.candidates.len(),
+            VACANCY_BRIDGE_FAILURE_CANDIDATE_PREFIX_CAP
+        );
+        assert!(
+            bridge.candidates[0].state_fingerprint.len() <= VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES
+        );
+        assert!(bridge.candidates[0]
+            .rejection_reason
+            .as_ref()
+            .is_some_and(|reason| reason.len() <= VACANCY_BRIDGE_FAILURE_STRING_CAP_BYTES));
+    }
+
+    #[test]
+    fn bridge_relocation_candidate_generation_is_deterministic() {
+        let polygons = vec![square(10.0), square(10.0), square(10.0)];
+        let pieces = [
+            GeneralFastPiece {
+                id: "bridge",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "fixed",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "inactive",
+                polygon: &polygons[2],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let settings = GeneralFastSettings::deterministic_test(100.0, TARGET_DEPTH_MM);
+        let source_state = VacancyState {
+            placements: vec![
+                RelaxedPlacement {
+                    input_index: 0,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 10.0,
+                    translate_y: 10.0,
+                },
+                RelaxedPlacement {
+                    input_index: 1,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 30.0,
+                    translate_y: 10.0,
+                },
+                RelaxedPlacement {
+                    input_index: 2,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 0.0,
+                    translate_y: 0.0,
+                },
+            ],
+            active: vec![true, true, false],
+            collisions: vec![
+                Some(Arc::new(
+                    polygons[0].transformed(0.0, false, 10.0, 10.0).unwrap(),
+                )),
+                Some(Arc::new(
+                    polygons[1].transformed(0.0, false, 30.0, 10.0).unwrap(),
+                )),
+                None,
+            ],
+            last_transition: None,
+        };
+        let source = RepairNode {
+            state: source_state,
+            queue: vec![2],
+        };
+        let source_topology = vacancy_topology_snapshot(
+            "bridgeSource",
+            &source.state,
+            &pieces,
+            settings,
+            VACANCY_BRIDGE_TOPOLOGY_CLEARANCE_MM,
+        )
+        .unwrap();
+        let mut first_diagnostics = GeneralPersistentVacancyBridgeRelocationDiagnostics::default();
+        let mut first_work = RunWork {
+            diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
+            limits: WorkLimits::bridge_candidates(),
+        };
+        let mut first_ledger = BridgeTopologyLedger::new();
+        let first = generate_bridge_relocation_candidates(
+            &source,
+            0,
+            &pieces,
+            settings,
+            &source_topology,
+            &mut first_ledger,
+            &mut first_diagnostics,
+            &mut first_work,
+        )
+        .unwrap();
+        let mut second_diagnostics = GeneralPersistentVacancyBridgeRelocationDiagnostics::default();
+        let mut second_work = RunWork {
+            diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
+            limits: WorkLimits::bridge_candidates(),
+        };
+        let mut second_ledger = BridgeTopologyLedger::new();
+        let second = generate_bridge_relocation_candidates(
+            &source,
+            0,
+            &pieces,
+            settings,
+            &source_topology,
+            &mut second_ledger,
+            &mut second_diagnostics,
+            &mut second_work,
+        )
+        .unwrap();
+        assert!(first.generated_candidates <= VACANCY_BRIDGE_CANDIDATE_CAP);
+        assert_eq!(first.generated_candidates, second.generated_candidates);
+        assert_eq!(first.candidates.len(), second.candidates.len());
+        assert_eq!(
+            bridge_candidate_order_hash(&first.rows),
+            bridge_candidate_order_hash(&second.rows)
+        );
+        assert_eq!(
+            first
+                .candidates
+                .iter()
+                .map(|candidate| placement_key(&candidate.placement))
+                .collect::<Vec<_>>(),
+            second
+                .candidates
+                .iter()
+                .map(|candidate| placement_key(&candidate.placement))
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn bridge_relocation_replaces_only_the_bridge_pose_and_clears_transition() {
+        let polygons = vec![square(10.0), square(10.0), square(10.0)];
+        let pieces = [
+            GeneralFastPiece {
+                id: "bridge",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "fixed",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "inactive",
+                polygon: &polygons[2],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let bridge_collision = Arc::new(polygons[0].clone());
+        let fixed_collision = Arc::new(polygons[1].transformed(0.0, false, 30.0, 10.0).unwrap());
+        let source = VacancyState {
+            placements: vec![
+                RelaxedPlacement {
+                    input_index: 0,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 10.0,
+                    translate_y: 10.0,
+                },
+                RelaxedPlacement {
+                    input_index: 1,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 30.0,
+                    translate_y: 10.0,
+                },
+                RelaxedPlacement {
+                    input_index: 2,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 0.0,
+                    translate_y: 0.0,
+                },
+            ],
+            active: vec![true, true, false],
+            collisions: vec![Some(bridge_collision), Some(fixed_collision), None],
+            last_transition: Some(VacancyTransition {
+                inserted: 1,
+                ejected: vec![2],
+            }),
+        };
+        let settings = GeneralFastSettings::deterministic_test(100.0, TARGET_DEPTH_MM);
+        let moved = exact_bridge_relocation_state(
+            &source,
+            0,
+            &pieces,
+            RelaxedPlacement {
+                input_index: 0,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 60.0,
+                translate_y: 10.0,
+            },
+            settings,
+            &mut RunWork::default(),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(moved.active, source.active);
+        assert!(Arc::ptr_eq(
+            moved.collisions[1].as_ref().unwrap(),
+            source.collisions[1].as_ref().unwrap()
+        ));
+        assert!(moved.collisions[2].is_none());
+        assert_eq!(moved.last_transition, None);
+        assert_ne!(
+            placement_key(&moved.placements[0]),
+            placement_key(&source.placements[0])
+        );
+        assert_eq!(
+            placement_key(&moved.placements[1]),
+            placement_key(&source.placements[1])
+        );
+        assert_eq!(
+            placement_key(&moved.placements[2]),
+            placement_key(&source.placements[2])
+        );
+        assert!(source.last_transition.is_some());
+    }
+
+    #[test]
+    fn bridge_dual_arm_synthetic_path_completes_independently() {
+        let polygons = vec![square(10.0), square(10.0), square(10.0)];
+        let pieces = [
+            GeneralFastPiece {
+                id: "bridge",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "inactive-a",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "inactive-b",
+                polygon: &polygons[2],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let settings = GeneralFastSettings::deterministic_test(100.0, TARGET_DEPTH_MM);
+        let bridge_placement = RelaxedPlacement {
+            input_index: 0,
+            rotation_deg: 0.0,
+            mirrored: false,
+            translate_x: 60.0,
+            translate_y: 10.0,
+        };
+        let source = RepairNode {
+            state: VacancyState {
+                placements: vec![
+                    bridge_placement.clone(),
+                    RelaxedPlacement {
+                        input_index: 1,
+                        rotation_deg: 0.0,
+                        mirrored: false,
+                        translate_x: 0.0,
+                        translate_y: 0.0,
+                    },
+                    RelaxedPlacement {
+                        input_index: 2,
+                        rotation_deg: 0.0,
+                        mirrored: false,
+                        translate_x: 20.0,
+                        translate_y: 0.0,
+                    },
+                ],
+                active: vec![true, false, false],
+                collisions: vec![
+                    Some(Arc::new(
+                        polygons[0].transformed(0.0, false, 60.0, 10.0).unwrap(),
+                    )),
+                    None,
+                    None,
+                ],
+                last_transition: None,
+            },
+            queue: vec![1, 2],
+        };
+        let candidate = BridgeRelocationCandidate {
+            placement: bridge_placement,
+            orientation_ordinal: 0,
+            position_ordinal: 0,
+            topology: GeneralPersistentVacancyTopologySnapshotDiagnostics::default(),
+            topology_eligible: true,
+        };
+        let baseline = source.state.placements.clone();
+        let difficulty = test_difficulties(&[1, 1, 1]);
+        let hazard_catalog = Arc::new(JaguaHazardCatalog::new(&pieces, settings).unwrap());
+        let diagnostics = GeneralPersistentVacancyDiagnostics::default();
+        let bridge_diagnostics = GeneralPersistentVacancyBridgeRelocationDiagnostics::default();
+        assert!(preflight_bridge_phase(
+            BridgePreflightPhase::Source,
+            &diagnostics,
+            &bridge_diagnostics,
+            BridgePreflightOwners {
+                source_owned_bytes: repair_node_owned_bytes(&source),
+                ..BridgePreflightOwners::default()
+            },
+        )
+        .is_ok());
+        let mut source_topology_ledger = BridgeTopologyLedger::new();
+        let source_topology = vacancy_topology_snapshot_metered(
+            "syntheticBridgeSource",
+            &source.state,
+            &pieces,
+            settings,
+            VACANCY_BRIDGE_TOPOLOGY_CLEARANCE_MM,
+        )
+        .unwrap();
+        source_topology_ledger.record(&source_topology).unwrap();
+        drop(source_topology);
+        let mut control_events = GeneralPersistentVacancyDiagnostics::default();
+        let mut treatment_events = GeneralPersistentVacancyDiagnostics::default();
+        let mut control_root_valid = false;
+        let mut treatment_root_valid = false;
+        let candidate_node = materialize_bridge_candidate(
+            &source,
+            0,
+            &candidate,
+            &pieces,
+            settings,
+            &mut RunWork {
+                diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
+                limits: WorkLimits::bridge_arm().unwrap(),
+            },
+        )
+        .unwrap()
+        .unwrap();
+        let candidate_summaries = vec![candidate.clone()];
+        assert!(preflight_bridge_phase(
+            BridgePreflightPhase::SelectedCandidates,
+            &diagnostics,
+            &bridge_diagnostics,
+            BridgePreflightOwners {
+                source_owned_bytes: repair_node_owned_bytes(&source),
+                candidate_summary_bytes: bridge_candidate_summary_heap_bytes(&candidate_summaries),
+                control_node_bytes: repair_node_owned_bytes(&candidate_node),
+                treatment_node_bytes: repair_node_owned_bytes(&candidate_node),
+                ..BridgePreflightOwners::default()
+            },
+        )
+        .is_ok());
+        let mut control_work = RunWork {
+            diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
+            limits: WorkLimits::bridge_arm().unwrap(),
+        };
+        let mut treatment_work = RunWork {
+            diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
+            limits: control_work.limits,
+        };
+        assert!(preflight_repair_memory(
+            &candidate_node.state,
+            &pieces,
+            &diagnostics,
+            "synthetic bridge control",
+            &mut control_work,
+        )
+        .is_ok());
+        assert!(preflight_repair_memory(
+            &candidate_node.state,
+            &pieces,
+            &diagnostics,
+            "synthetic bridge treatment",
+            &mut treatment_work,
+        )
+        .is_ok());
+        assert!(preflight_bridge_phase(
+            BridgePreflightPhase::ControlContinuation,
+            &diagnostics,
+            &bridge_diagnostics,
+            BridgePreflightOwners {
+                source_owned_bytes: repair_node_owned_bytes(&source),
+                control_node_bytes: repair_node_owned_bytes(&candidate_node),
+                treatment_node_bytes: repair_node_owned_bytes(&candidate_node),
+                control_repair_peak_bytes: control_work.diagnostics.total_retained_peak_bytes,
+                arm_diagnostics_bytes: 2 * bridge_arm_diagnostics_reserved_bytes(),
+                ..BridgePreflightOwners::default()
+            },
+        )
+        .is_ok());
+        let control = run_bridge_repair_arm(
+            "control",
+            &candidate,
+            &candidate_node,
+            &source,
+            &pieces,
+            &baseline,
+            settings,
+            &difficulty,
+            &hazard_catalog,
+            &diagnostics,
+            &mut control_events,
+            &mut control_root_valid,
+            &mut control_work,
+        )
+        .unwrap();
+        assert!(preflight_bridge_phase(
+            BridgePreflightPhase::TreatmentContinuation,
+            &diagnostics,
+            &bridge_diagnostics,
+            BridgePreflightOwners {
+                source_owned_bytes: repair_node_owned_bytes(&source),
+                control_node_bytes: repair_node_owned_bytes(&candidate_node),
+                treatment_node_bytes: repair_node_owned_bytes(&candidate_node),
+                control_outcome_bytes: repair_outcome_owned_bytes(&control),
+                treatment_repair_peak_bytes: treatment_work.diagnostics.total_retained_peak_bytes,
+                arm_diagnostics_bytes: 2 * bridge_arm_diagnostics_reserved_bytes(),
+                ..BridgePreflightOwners::default()
+            },
+        )
+        .is_ok());
+        let treatment = run_bridge_repair_arm(
+            "treatment",
+            &candidate,
+            &candidate_node,
+            &source,
+            &pieces,
+            &baseline,
+            settings,
+            &difficulty,
+            &hazard_catalog,
+            &diagnostics,
+            &mut treatment_events,
+            &mut treatment_root_valid,
+            &mut treatment_work,
+        )
+        .unwrap();
+        assert!(preflight_bridge_phase(
+            BridgePreflightPhase::Publication,
+            &diagnostics,
+            &bridge_diagnostics,
+            BridgePreflightOwners {
+                source_owned_bytes: repair_node_owned_bytes(&source),
+                control_node_bytes: repair_node_owned_bytes(&candidate_node),
+                treatment_node_bytes: repair_node_owned_bytes(&candidate_node),
+                control_outcome_bytes: repair_outcome_owned_bytes(&control),
+                treatment_outcome_bytes: repair_outcome_owned_bytes(&treatment),
+                arm_diagnostics_bytes: 2 * bridge_arm_diagnostics_reserved_bytes(),
+                ..BridgePreflightOwners::default()
+            },
+        )
+        .is_ok());
+        assert!(control.accepted_complete.is_some());
+        assert!(treatment.accepted_complete.is_some());
+        assert_eq!(control_work.limits, treatment_work.limits);
+        assert_eq!(control_work.diagnostics, treatment_work.diagnostics);
+    }
+
+    #[test]
+    fn bridge_promotion_requires_strict_depth_or_partial_improvement() {
+        assert!(bridge_promotion_passes(Some(168.360_999), false, true));
+        assert!(!bridge_promotion_passes(Some(168.361), false, true));
+        assert!(!bridge_promotion_passes(Some(168.5), false, true));
+        assert!(bridge_promotion_passes(None, true, true));
+        assert!(!bridge_promotion_passes(None, false, true));
+        assert!(!bridge_promotion_passes(Some(168.0), false, false));
     }
 }
