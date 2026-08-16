@@ -501,3 +501,27 @@ quality. The deepest basin (salt 11, 208.782) descends only to 201.260
 the standing 191.572. Basin structure, not basin depth, determines what
 the descent machinery can extract, so the harvest protocol now descends
 across the band instead of cherry-picking the deepest screens.
+
+External observational evidence (a frame-by-frame recording of a reference
+product's fast mode on a 61-part any-angle instance at 5 mm / 5 mm
+clearances, 9.2 s reported optimize time) shows a phase-separated
+lifecycle: a complete feasible candidate appears early, an exploration
+phase replaces whole candidate layouts, then placement optimization,
+strip compression, and bounded fine-tuning. The recording proves no
+internals and no parity target, but two readings matter here. First, it
+independently converges on the architecture this program reached by
+measurement today - constructor portfolio producing complete candidates,
+whole-incumbent selection, then compression and fine-tuning - and against
+deep repair around a single trajectory, which our operator-lock and
+basin-dominance results had already rejected. Second, the visible
+clearances are the 5.0 mm contract again: every external reference point
+now sits on the looser contract, and the ~7 mm bound-level overhead stands
+between their numbers and ours. Alongside the recording, a read-only
+articulation probe over three frozen partial states repeatedly identifies
+one concave star as a free-space bridge whose omission reconnects about
+5,499.68 mm^2 of sealed vacancy - the unlock mechanism for exactly the
+sealed-void yield ceiling this program is measuring in the current batch.
+The next increment is the matched-arm bridge-relocation operator (mode 21):
+removal-set selection by maximal vacancy reconnection instead of frontier
+depth, identical budgets and seeds against the mode-17 control, promotion
+only on an independently validated complete improvement.
