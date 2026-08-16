@@ -62,11 +62,13 @@ const GROUP_DROP_PAIR_VISITS: usize =
 // accepts only rounds whose complete result strictly lowers the frontier,
 // reverting to the snapshot otherwise. Two settle sweeps run per round (one
 // before removal, one on the survivors) plus one initial sweep.
-const LNS_ROUNDS: usize = 8;
-const LNS_NEIGHBORHOOD_SCHEDULE: [usize; LNS_ROUNDS] = [4, 6, 8, 10, 12, 16, 20, 24];
+const LNS_ROUNDS: usize = 24;
+const LNS_NEIGHBORHOOD_SCHEDULE: [usize; LNS_ROUNDS] = [
+    4, 6, 8, 10, 12, 16, 20, 24, 4, 6, 8, 10, 12, 16, 20, 24, 4, 6, 8, 10, 12, 16, 20, 24,
+];
 const LNS_SETTLE_SWEEPS: usize = 2 * LNS_ROUNDS + 1;
 const LNS_REINSERT_SLOTS: usize =
-    4 + 6 + 8 + 10 + 12 + 16 + 20 + 24 + LNS_ROUNDS * SEPARATION_RELOCATIONS_PER_ROUND;
+    3 * (4 + 6 + 8 + 10 + 12 + 16 + 20 + 24) + LNS_ROUNDS * SEPARATION_RELOCATIONS_PER_ROUND;
 // Mode 16 replaces greedy reinsertion with overlap-mediated separation:
 // removed pieces return at their old poses (overlaps permitted), then a
 // bounded deterministic descent moves one overlapping soft piece at a time
@@ -1515,9 +1517,14 @@ fn lift_resettle_reinsert(
     // tolerance of the entry key is kept as the wander state so later rounds
     // explore from it, while the best state ever seen is tracked separately
     // and returned, so the published result can never regress.
-    const LNS_TOLERANCE_GRID: [i128; LNS_ROUNDS] = [0, 2_000, 4_000, 8_000, 0, 2_000, 4_000, 8_000];
-    const LNS_FRONTIER_TOLERANCE_GRID: [i64; LNS_ROUNDS] =
-        [0, 500, 1_000, 2_000, 0, 500, 1_000, 2_000];
+    const LNS_TOLERANCE_GRID: [i128; LNS_ROUNDS] = [
+        0, 2_000, 4_000, 8_000, 0, 2_000, 4_000, 8_000, 0, 2_000, 4_000, 8_000, 0, 2_000, 4_000,
+        8_000, 0, 2_000, 4_000, 8_000, 0, 2_000, 4_000, 8_000,
+    ];
+    const LNS_FRONTIER_TOLERANCE_GRID: [i64; LNS_ROUNDS] = [
+        0, 500, 1_000, 2_000, 0, 500, 1_000, 2_000, 0, 500, 1_000, 2_000, 0, 500, 1_000, 2_000, 0,
+        500, 1_000, 2_000, 0, 500, 1_000, 2_000,
+    ];
     let mut best_state = state.clone();
     let mut best_key = depth_key(&state);
     for (round, neighborhood) in LNS_NEIGHBORHOOD_SCHEDULE.into_iter().enumerate() {
@@ -5252,37 +5259,37 @@ mod tests {
         assert_eq!(SETTLE_SELECTED_PIECE_SLOTS, 3 * 61);
         assert_eq!(RECONSTRUCTION_SELECTED_PIECE_SLOTS, 2 * 61);
         assert_eq!(POPULATION_SELECTED_PIECE_SLOTS, 640 + 26);
-        assert_eq!(LNS_SETTLE_SWEEPS, 17);
-        assert_eq!(LNS_SETTLE_SELECTED_PIECE_SLOTS, 17 * 61);
+        assert_eq!(LNS_SETTLE_SWEEPS, 49);
+        assert_eq!(LNS_SETTLE_SELECTED_PIECE_SLOTS, 49 * 61);
         assert_eq!(SEPARATION_RELOCATIONS_PER_ROUND, 12);
-        assert_eq!(LNS_REINSERT_SLOTS, 100 + 8 * 12);
+        assert_eq!(LNS_REINSERT_SLOTS, 300 + 24 * 12);
         assert_eq!(
             MAX_SELECTED_PIECE_SLOTS,
-            640 + 26 + 183 + 122 + 17 * 61 + 196
+            640 + 26 + 183 + 122 + 49 * 61 + 588
         );
         assert_eq!(
             MAX_ORIENTATION_STREAMS,
-            (640 + 26 + 183 + 122 + 17 * 61 + 196) * 12
+            (640 + 26 + 183 + 122 + 49 * 61 + 588) * 12
         );
         assert_eq!(
             MAX_POSITION_SOURCE_ATTEMPTS,
-            (640 + 26 + 183 + 122 + 17 * 61 + 196) * 12 * 529
+            (640 + 26 + 183 + 122 + 49 * 61 + 588) * 12 * 529
         );
         assert_eq!(
             MAX_RETURNED_POSITIONS,
-            (640 + 26 + 183 + 122 + 17 * 61 + 196) * 12 * 32
+            (640 + 26 + 183 + 122 + 49 * 61 + 588) * 12 * 32
         );
         assert_eq!(
             MAX_HAZARD_QUERIES,
-            (640 + 26 + 183 + 122 + 17 * 61 + 196) * 12 * 32
+            (640 + 26 + 183 + 122 + 49 * 61 + 588) * 12 * 32
         );
         assert_eq!(
             MAX_PROXY_PRESSURE_VISITS,
-            (640 + 26 + 183 + 122 + 17 * 61 + 196) * 12 * 32 * 61
+            (640 + 26 + 183 + 122 + 49 * 61 + 588) * 12 * 32 * 61
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 196 * 192
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 49 * 61 * 64 + 588 * 192
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -5290,23 +5297,23 @@ mod tests {
         assert_eq!(GROUP_DROP_PAIR_VISITS, 3 * 61 * 64 * 61);
         assert_eq!(SEPARATION_MOVES_PER_ROUND, 200);
         assert_eq!(SEPARATION_PROBES_PER_MOVE, 96);
-        assert_eq!(SEPARATION_PAIR_VISITS, 8 * 200 * 96 * 61);
-        assert_eq!(SEPARATION_COLLISION_BUILDS, 8 * (196 / 2 + 200 * 96));
+        assert_eq!(SEPARATION_PAIR_VISITS, 24 * 200 * 96 * 61);
+        assert_eq!(SEPARATION_COLLISION_BUILDS, 24 * (588 / 2 + 200 * 96));
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
             3 * 61
-                + (640 + 26 + 183 + 122 + 17 * 61 + 196) * 12
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 196 * 192)
+                + (640 + 26 + 183 + 122 + 49 * 61 + 588) * 12
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 49 * 61 * 64 + 588 * 192)
                 + 122
-                + 196
-                + 8 * (196 / 2 + 200 * 96)
+                + 588
+                + 24 * (588 / 2 + 200 * 96)
         );
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
             1_830
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 196 * 192) * 60
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 49 * 61 * 64 + 588 * 192) * 60
                 + 3 * 61 * 64 * 61
-                + 8 * 200 * 96 * 61
+                + 24 * 200 * 96 * 61
         );
         assert_eq!(MAX_VALIDATOR_COLLISION_BUILDS, 105 * 122);
         assert_eq!(MAX_VALIDATOR_PAIR_VISITS, 105 * 3_660);
