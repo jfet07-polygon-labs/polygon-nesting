@@ -983,3 +983,21 @@ extraction also landed (settings-equality on replayed parents,
 fail-closed on unrun arms). Next matched arm in flight: the off-beam
 best-ever expansion parent (mode 25) against the mode-20 control at
 band + descent-endpoint level.
+
+The off-beam elite parent (mode 25) is matched-arm rejected on
+published depth. The collaborator's only clean matched-arm win
+(-10.75% surrogate area on incomplete partials) does not transfer:
+on the Mixed-61 band the treatment's min is 0.680 worse and its
+median 0.026 worse, the only two salts that move split -1.889/+3.902
+inside the ~10 mm reseeding spread, and the descent endpoints tie on
+bit-identical constructions. The mechanism fires in only 0.6-7.3% of
+layers and its children rarely win retention slots - the rank-
+synchronous beam with frontier banding loses depth-optimal partials
+far less often than the collaborator's lifecycle loses its elites.
+Mode 25 stays as an opt-in variant for reproducibility; mode 20
+remains the default. Sequencing consequence: the grandchild-admission
+variant (same budget slot) is deprioritized; next arms are the
+0.002 mm search-envelope allowance removal (enlarges the legal set
+without touching publication - a direct probe at the dense binding
+fronts of the locked states) and the gradual overlap-tolerant
+compression operator.
