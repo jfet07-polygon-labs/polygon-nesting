@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "experiment": "persistent-vacancy-displaced-first-repair-screen",
+  "recordedAtUtc": "2026-08-16T06:40:42Z",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "parentFixtureSha256": "18e0b052997d1251573fa35679c9fcf1d5e796acf771ec48f320ce4e9bf0081d",
+  "parentPlacementFingerprint": "b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5",
+  "targetStripDepthMm": 165,
+  "protectedPopulationWidth": 8,
+  "repairPopulationWidth": 4,
+  "repairHorizon": 16,
+  "pairedRunOrder": ["mode10", "mode14", "mode15", "mode15", "mode14", "mode10"],
+  "canonicalCommand": "target/release/examples/general_request_benchmark tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 MODE tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+  "populationNormalization": "canonical recursive object-key order with no removed fields; top-level timing and operating-system RSS are outside the population subtree",
+  "provenance": {
+    "engineCommit": "70431429940de49ed29dfd0c4375b6e930483f96",
+    "engineWorktreeDirty": false,
+    "engineWorktreeStatus": "",
+    "relevantSourceTreeSha256": "c51595a801ae4647a4367d085deabee26025b53eb9bfd4ddc734854462aea52c",
+    "executableSha256": "19664be46aaab678963c3d6cb51c96d354d64158d8ad4cbe73bcd7093c08d998",
+    "cpuModel": "Apple M4 Max",
+    "target": "aarch64-apple-darwin",
+    "requestedThreads": 8,
+    "actualThreads": 8,
+    "rustflags": null,
+    "rustc": {
+      "version": "1.95.0",
+      "commitHash": "59807616e1fa2540724bfbac14d7976d7e4a3860",
+      "commitDate": "2026-04-14",
+      "host": "aarch64-apple-darwin",
+      "llvmVersion": "22.1.2"
+    },
+    "cargo": {
+      "version": "1.95.0",
+      "commitHash": "f2d3ce0bd7f24a49f8f72d9000448f8838c4e850",
+      "commitDate": "2026-03-21",
+      "host": "aarch64-apple-darwin"
+    }
+  },
+  "compatibility": {
+    "mode10SemanticTrajectorySha256": "1edb02e2fcacfa5c3d749cb228eee735744171f5c25993c09daa9cd8054b7709",
+    "commonPreExpeditionBehaviorSha256": "a0043940706bda90b41b8901445503702a9dcd5fe13d048cbb7f7d00200ae403",
+    "portabilityHarnessPassed": true,
+    "sameModeFullPopulationReplayPassed": true,
+    "sharedSemanticStateAndHeadGeneratorRowsPassed": true,
+    "commonRootDualValidationPassed": true
+  },
+  "gates": {
+    "sameModeReplayPassed": true,
+    "protectedLifecycleReplayPassed": true,
+    "treatmentActivated": true,
+    "wallElapsedLimitSeconds": 7.0,
+    "wallElapsedPassed": true,
+    "maximumResidentSetLimitBytes": 67108864,
+    "maximumResidentSetPassed": true,
+    "populationWidthPassed": true,
+    "capsPassed": true,
+    "auditAgreementPassed": true,
+    "treatmentParetoImprovedRoot": true,
+    "treatmentStrictlyBeatControl": true,
+    "completeEndpointReached": false,
+    "productionPromotionPassed": false
+  },
+  "commonRoot": {
+    "inactivePieceCount": 10,
+    "inactiveAreaGrid2": "50292939713",
+    "stateFingerprint": "1b2fd098813d00f01067e2ea95ad494c41b5126cc48da0df26c147bf6601c0df"
+  },
+  "arms": {
+    "mode10": {
+      "role": "protected 40-layer lifecycle control",
+      "canonicalPopulationSha256": "c16b7da4a280629efa78a9e31f6ad07ea7cb67c0593421226be9ae5b2f3d1b77",
+      "rawOutputSha256": [
+        "6c85ed164252769708eed7308129fe97a4615e78227937cdba33edcdcc0957e7",
+        "a60aae4d44b7a995842b1403342b270784aa8a6d99bdbb07b14cab6dd4e2819b"
+      ],
+      "engineElapsedMs": [6351.937625, 6361.195667],
+      "wallSeconds": [6.56, 6.41],
+      "maximumResidentSetBytes": [47169536, 47448064],
+      "totalRetainedPeakBytes": 2535728,
+      "selectorDiagnosticPeakBytes": 411584,
+      "layersCompleted": 40,
+      "capExhausted": null,
+      "publicationRejections": 0,
+      "bestEverAreaElite": {
+        "inactivePieceCount": 11,
+        "inactiveAreaGrid2": "47975977789",
+        "fingerprint": "298992902c1be345f72821956aff46bd88e7775feaea54d55e20a6d1abf7f606"
+      },
+      "bestEverCountElite": {
+        "inactivePieceCount": 10,
+        "inactiveAreaGrid2": "50292939713",
+        "fingerprint": "1b2fd098813d00f01067e2ea95ad494c41b5126cc48da0df26c147bf6601c0df"
+      }
+    },
+    "mode14": {
+      "role": "one-slot global-hardest repair control",
+      "canonicalPopulationSha256": "0f07d554b86b1f38376871f2a6933e48d44ce806ce0d62679025d148d05dacab",
+      "rawOutputSha256": [
+        "3b3abedb6bce992796968b36d4a74911df46ab5eecbba30f1dfcf8f2fd214533",
+        "ad6fe9a3b696cec76355384a68a788daff798f51a384b8ed6260df3e4850c1f9"
+      ],
+      "engineElapsedMs": [6502.963833, 6475.6161250000005],
+      "wallSeconds": [6.55, 6.53],
+      "maximumResidentSetBytes": [48594944, 49070080],
+      "totalRetainedPeakBytes": 6160594,
+      "selectorDiagnosticPeakBytes": 749138,
+      "repairDepthsCompleted": 16,
+      "capExhausted": null,
+      "rootDualValid": true,
+      "completeEndpoint": false,
+      "endpointInactivePieceCount": 10,
+      "endpointInactiveAreaGrid2": "50292855011",
+      "endpointStateFingerprint": "e0c0cb9ca1e693a625dffd0035b9b69261d33c02222e1d00d2612f93106ab3c4",
+      "endpointParetoImprovesRoot": true,
+      "repairWork": {
+        "selectedPieceSlots": 61,
+        "orientationStreams": 732,
+        "sourceFeatureVisits": 460,
+        "positionSourceAttempts": 322908,
+        "returnedPositions": 23424,
+        "hazardQueries": 23424,
+        "proxyPressureVisits": 31955,
+        "exactFinalistRows": 488,
+        "experimentalCollisionBuilds": 1220,
+        "experimentalPairVisits": 23742,
+        "partialAudits": 17,
+        "completeAudits": 0,
+        "validatorCollisionBuilds": 2074,
+        "validatorPairVisits": 62220,
+        "transformedCollisionVertices": 1068948,
+        "clipperInputVertices": 63733089,
+        "clipperOutputVertices": 4056
+      }
+    },
+    "mode15": {
+      "role": "one-slot displaced-first repair treatment",
+      "canonicalPopulationSha256": "216445040ff4982d3ce5605a610c830f08ba243de9b09e543b15c0734c77490d",
+      "rawOutputSha256": [
+        "ccb14be434ea07c1007834c6c7443c25b32ea0464bb75a7cbdcf5ba4f94d575f",
+        "26d040a6a4440f47c55ebb0d30ef3a92e37933971d51c77001986ebe2e03c9f9"
+      ],
+      "engineElapsedMs": [6568.412333, 6476.496291],
+      "wallSeconds": [6.62, 6.53],
+      "maximumResidentSetBytes": [49135616, 48742400],
+      "totalRetainedPeakBytes": 6160594,
+      "selectorDiagnosticPeakBytes": 749138,
+      "repairDepthsCompleted": 16,
+      "capExhausted": null,
+      "rootDualValid": true,
+      "completeEndpoint": false,
+      "endpointInactivePieceCount": 10,
+      "endpointInactiveAreaGrid2": "45454946952",
+      "endpointStateFingerprint": "bed29b45996a6bcccc5dad8f498f7522711976bd6d26e26ae78da18d99935da1",
+      "endpointParetoImprovesRoot": true,
+      "inactiveAreaImprovementVersusControlPercent": 9.619473895,
+      "repairWork": {
+        "selectedPieceSlots": 61,
+        "orientationStreams": 732,
+        "sourceFeatureVisits": 640,
+        "positionSourceAttempts": 325212,
+        "returnedPositions": 23424,
+        "hazardQueries": 23424,
+        "proxyPressureVisits": 32813,
+        "exactFinalistRows": 488,
+        "experimentalCollisionBuilds": 1220,
+        "experimentalPairVisits": 23232,
+        "partialAudits": 17,
+        "completeAudits": 0,
+        "validatorCollisionBuilds": 2074,
+        "validatorPairVisits": 62220,
+        "transformedCollisionVertices": 1070608,
+        "clipperInputVertices": 63738003,
+        "clipperOutputVertices": 5040
+      }
+    }
+  },
+  "decision": {
+    "result": "directional_support_without_completion",
+    "supportedClaim": "Following newly displaced pieces is causally better than rebuilding a global-hardest queue inside the same bounded private repair lifecycle.",
+    "rejectedClaim": "A single width-four, horizon-sixteen repair expedition is sufficient to complete the 165 mm Mixed-61 strip.",
+    "nextExperiment": "Retain the displaced-first scheduler and test a bounded multi-round Pareto repair/restart lifecycle without changing the protected constructor or production publication path."
+  }
+}
