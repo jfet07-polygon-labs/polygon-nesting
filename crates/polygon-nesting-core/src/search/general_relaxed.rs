@@ -353,6 +353,8 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub pre_expedition_behavior_hash: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub repair_expedition: Option<GeneralPersistentVacancyRepairDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub repair_restart_screen: Option<GeneralPersistentVacancyRepairRestartDiagnostics>,
     pub work: GeneralPersistentVacancyWorkDiagnostics,
     pub layers: Vec<GeneralPersistentVacancyLayerDiagnostics>,
     pub cap_exhausted: Option<String>,
@@ -476,6 +478,54 @@ pub struct GeneralPersistentVacancyRepairNodeDiagnostics {
     pub queue_piece_ids: Vec<String>,
     pub inactive_piece_count: usize,
     pub inactive_area_grid2: String,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyRepairRestartDiagnostics {
+    pub arm_family: String,
+    pub round_zero_replay_sha256: Option<String>,
+    pub round_zero_endpoint_state_fingerprint: Option<String>,
+    pub round_zero_endpoint_augmented_identity_hash: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub round_zero: Option<GeneralPersistentVacancyRepairDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub round_one_root: Option<GeneralPersistentVacancyRepairRestartRootDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub round_one: Option<GeneralPersistentVacancyRepairDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub comparison_endpoint: Option<GeneralPersistentVacancyRepairRestartEndpointDiagnostics>,
+    pub work: GeneralPersistentVacancyWorkDiagnostics,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failed_round: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cap_exhausted: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failure_reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyRepairRestartRootDiagnostics {
+    pub origin: String,
+    pub state_fingerprint: String,
+    pub augmented_identity_hash: String,
+    pub queue_piece_ids: Vec<String>,
+    pub seed_domain: String,
+    pub round_ordinal: u32,
+    pub root_dual_valid: bool,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyRepairRestartEndpointDiagnostics {
+    pub origin: String,
+    pub state_fingerprint: String,
+    pub augmented_identity_hash: String,
+    pub queue_piece_ids: Vec<String>,
+    pub inactive_piece_count: usize,
+    pub inactive_area_grid2: String,
+    pub first_seen_expansion_depth: Option<usize>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]

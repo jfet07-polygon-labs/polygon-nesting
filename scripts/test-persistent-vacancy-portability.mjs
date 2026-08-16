@@ -277,6 +277,12 @@ const mode14Source = runModeSource(14)
 const mode15Source = runModeSource(15)
 const mode14ReplaySource = runModeSource(14)
 const mode15ReplaySource = runModeSource(15)
+const mode16Source = runModeSource(16)
+const mode17Source = runModeSource(17)
+const mode18Source = runModeSource(18)
+const mode16ReplaySource = runModeSource(16)
+const mode17ReplaySource = runModeSource(17)
+const mode18ReplaySource = runModeSource(18)
 const mode14 =
   JSON.parse(mode14Source).relaxedDiagnostics?.coupledDynamicSeparator
     ?.persistentVacancyPopulation
@@ -289,6 +295,16 @@ const mode14Replay =
 const mode15Replay =
   JSON.parse(mode15ReplaySource).relaxedDiagnostics?.coupledDynamicSeparator
     ?.persistentVacancyPopulation
+const restartModes = [
+  [16, mode16Source, mode16ReplaySource],
+  [17, mode17Source, mode17ReplaySource],
+  [18, mode18Source, mode18ReplaySource],
+].map(([mode, source, replaySource]) => [
+  mode,
+  JSON.parse(source).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation,
+  losslessPopulation(source),
+  losslessPopulation(replaySource),
+])
 assertBoundedPartialTerminal(mode8, 'persistent-vacancy mode 8')
 assertBoundedPartialTerminal(mode9, 'persistent-vacancy mode 9')
 assertBoundedPartialTerminal(mode10, 'persistent-vacancy mode 10')
@@ -308,6 +324,94 @@ for (const [mode, candidate] of [
   ) {
     throw new Error(`persistent-vacancy mode ${mode} did not reach its bounded repair terminal`)
   }
+}
+for (const [mode, candidate, exactCandidate, exactReplay] of restartModes) {
+  const screen = candidate?.repairRestartScreen
+  if (
+    !candidate?.attempted ||
+    candidate.capExhausted !== null ||
+    candidate.layersCompleted !== 40 ||
+    candidate.layers.length !== 40 ||
+    candidate.work.selectedPieceSlots !== 828 ||
+    candidate.work.exactFinalistRows !== 6_624 ||
+    candidate.work.partialAudits !== 75 ||
+    candidate.work.completeAudits !== 0 ||
+    !screen ||
+    screen.failedRound !== undefined ||
+    screen.capExhausted !== undefined ||
+    screen.failureReason !== undefined ||
+    screen.roundZeroReplaySha256 !==
+      '2350b92068d9aa71575db53aa25bd6b04984bd551d02e1ecc7e292692feec86d' ||
+    screen.roundZero?.depths.length !== 16 ||
+    screen.roundOne?.depths.length !== 16 ||
+    screen.roundOneRoot?.rootDualValid !== true ||
+    screen.roundOneRoot?.roundOrdinal !== 1 ||
+    screen.roundOneRoot?.seedDomain !== 'persistent-vacancy-repair-restart-v1' ||
+    screen.roundOne?.completeEndpoint !== false ||
+    screen.comparisonEndpoint?.inactivePieceCount !== 10
+  ) {
+    throw new Error(`persistent-vacancy mode ${mode} violated its restart lifecycle contract`)
+  }
+  if (losslessCanonicalJson(exactCandidate) !== losslessCanonicalJson(exactReplay)) {
+    throw new Error(`persistent-vacancy mode ${mode} replay changed`)
+  }
+  if (
+    exactSha256(exactCandidate.repairRestartScreen.roundZero) !==
+    '2350b92068d9aa71575db53aa25bd6b04984bd551d02e1ecc7e292692feec86d'
+  ) {
+    throw new Error(`persistent-vacancy mode ${mode} changed the round-zero replay`)
+  }
+}
+const restartByMode = new Map(restartModes.map(([mode, candidate]) => [mode, candidate]))
+const restart16 = restartByMode.get(16).repairRestartScreen
+const restart17 = restartByMode.get(17).repairRestartScreen
+const restart18 = restartByMode.get(18).repairRestartScreen
+if (
+  restart16.armFamily !== 'reseededOriginalRoot' ||
+  restart16.roundOneRoot.origin !== 'originalBestCount' ||
+  restart16.roundOneRoot.stateFingerprint !==
+    '1b2fd098813d00f01067e2ea95ad494c41b5126cc48da0df26c147bf6601c0df' ||
+  restart16.comparisonEndpoint.origin !== 'roundZero' ||
+  restart16.comparisonEndpoint.augmentedIdentityHash !==
+    '819e0fb0ee3dfab5806359ddbc86e3ad695ac2a65928d5bbc902849fb1f8ef33' ||
+  restart16.comparisonEndpoint.inactiveAreaGrid2 !== '45454946952'
+) {
+  throw new Error('restart original-root control oracle changed')
+}
+if (
+  restart17.armFamily !== 'continuedStateRebuiltQueue' ||
+  restart17.roundOneRoot.origin !== 'roundZeroEndpointRebuiltQueue' ||
+  restart17.roundOneRoot.augmentedIdentityHash !==
+    '2a2ea607710f33f1f44a8d6986df56a19881b08e7b8054abcf5f888fabceebec' ||
+  restart18.armFamily !== 'continuedStatePreservedQueue' ||
+  restart18.roundOneRoot.origin !== 'roundZeroEndpointPreservedQueue' ||
+  restart18.roundOneRoot.augmentedIdentityHash !==
+    '819e0fb0ee3dfab5806359ddbc86e3ad695ac2a65928d5bbc902849fb1f8ef33' ||
+  restart17.roundOneRoot.stateFingerprint !== restart18.roundOneRoot.stateFingerprint ||
+  JSON.stringify(restart17.roundOneRoot.queuePieceIds) ===
+    JSON.stringify(restart18.roundOneRoot.queuePieceIds) ||
+  restart17.roundOne.depths[0].expansions[0].selectedPieceId ===
+    restart18.roundOne.depths[0].expansions[0].selectedPieceId
+) {
+  throw new Error('restart state and queue treatments did not cross their causal boundaries')
+}
+if (
+  restart17.comparisonEndpoint.origin !== 'roundOne' ||
+  restart17.comparisonEndpoint.augmentedIdentityHash !==
+    '4d01deb09f184cb6451c6791b6fb1c8c35077cf653548ceaa79d0e0fd1ec43e4' ||
+  restart17.comparisonEndpoint.inactiveAreaGrid2 !== '45454905747' ||
+  BigInt(restart17.comparisonEndpoint.inactiveAreaGrid2) >=
+    BigInt(restart16.comparisonEndpoint.inactiveAreaGrid2)
+) {
+  throw new Error('continued-state rebuilt-queue endpoint oracle changed')
+}
+if (
+  restart18.comparisonEndpoint.origin !== 'roundZero' ||
+  restart18.comparisonEndpoint.augmentedIdentityHash !==
+    '819e0fb0ee3dfab5806359ddbc86e3ad695ac2a65928d5bbc902849fb1f8ef33' ||
+  restart18.comparisonEndpoint.inactiveAreaGrid2 !== '45454946952'
+) {
+  throw new Error('continued-state preserved-queue endpoint oracle changed')
 }
 const populationHistory = (candidate) =>
   candidate.layers.map((layer) => ({
@@ -396,7 +500,10 @@ const expectedPreExpeditionBehaviorHash =
 if (
   mode10.preExpeditionBehaviorHash !== expectedPreExpeditionBehaviorHash ||
   mode14.preExpeditionBehaviorHash !== mode10.preExpeditionBehaviorHash ||
-  mode15.preExpeditionBehaviorHash !== mode10.preExpeditionBehaviorHash
+  mode15.preExpeditionBehaviorHash !== mode10.preExpeditionBehaviorHash ||
+  restartModes.some(
+    ([, candidate]) => candidate.preExpeditionBehaviorHash !== expectedPreExpeditionBehaviorHash,
+  )
 ) {
   throw new Error('repair modes changed the protected pre-expedition behavior')
 }

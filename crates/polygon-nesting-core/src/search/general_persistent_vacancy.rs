@@ -19,10 +19,23 @@ const MACRO_TREATMENT_MODE: usize = 9;
 const PRESERVED_BEST_MACRO_MODE: usize = 10;
 const REPAIR_CONTROL_MODE: usize = 14;
 const REPAIR_TREATMENT_MODE: usize = 15;
+const REPAIR_RESTART_ROOT_CONTROL_MODE: usize = 16;
+const REPAIR_RESTART_STATE_TREATMENT_MODE: usize = 17;
+const REPAIR_RESTART_QUEUE_TREATMENT_MODE: usize = 18;
 const REPAIR_HORIZON: usize = 16;
 const REPAIR_BEAM_WIDTH: usize = 4;
+const REPAIR_RESTART_ROUNDS: usize = 2;
 const REPAIR_PARENT_EXPANSIONS: usize = 1 + (REPAIR_HORIZON - 1) * REPAIR_BEAM_WIDTH;
 const REPAIR_SEED_DOMAIN: u64 = 0x5650_5245_5041_4952;
+const REPAIR_RESTART_SEED_DOMAIN: &str = "persistent-vacancy-repair-restart-v1";
+const EXPECTED_ROUND_ZERO_REPAIR_SHA256: &str =
+    "2350b92068d9aa71575db53aa25bd6b04984bd551d02e1ecc7e292692feec86d";
+const EXPECTED_ROUND_ZERO_ENDPOINT_FINGERPRINT: &str =
+    "bed29b45996a6bcccc5dad8f498f7522711976bd6d26e26ae78da18d99935da1";
+const EXPECTED_ROUND_ZERO_ENDPOINT_AUGMENTED_IDENTITY: &str =
+    "819e0fb0ee3dfab5806359ddbc86e3ad695ac2a65928d5bbc902849fb1f8ef33";
+const EXPECTED_ROUND_ZERO_ENDPOINT_COUNT: usize = 10;
+const EXPECTED_ROUND_ZERO_ENDPOINT_AREA: i128 = 45_454_946_952;
 const MAX_INACTIVE_PIECES: usize = 32;
 const MAX_SOURCE_FEATURES: usize = 512;
 const MAX_COLLISION_VERTICES: usize = 512;
@@ -84,6 +97,44 @@ const REPAIR_MAX_CLIPPER_INPUT_VERTICES: usize = (REPAIR_MAX_EXPERIMENTAL_PAIR_V
     + REPAIR_MAX_VALIDATOR_PAIR_VISITS)
     * 2
     * MAX_COLLISION_VERTICES;
+const RESTART_MAX_SELECTED_PIECE_SLOTS_U64: u64 = MAX_SELECTED_PIECE_SLOTS as u64
+    + REPAIR_RESTART_ROUNDS as u64 * REPAIR_PARENT_EXPANSIONS as u64;
+const RESTART_MAX_ORIENTATION_STREAMS_U64: u64 =
+    RESTART_MAX_SELECTED_PIECE_SLOTS_U64 * ORIENTATIONS_PER_PIECE as u64;
+const RESTART_MAX_SOURCE_FEATURE_VISITS_U64: u64 =
+    RESTART_MAX_SELECTED_PIECE_SLOTS_U64 * 2 * MAX_SOURCE_FEATURES as u64;
+const RESTART_MAX_POSITION_SOURCE_ATTEMPTS_U64: u64 =
+    RESTART_MAX_ORIENTATION_STREAMS_U64 * MAX_POSITION_SOURCES_PER_ORIENTATION as u64;
+const RESTART_MAX_RETURNED_POSITIONS_U64: u64 =
+    RESTART_MAX_ORIENTATION_STREAMS_U64 * POSITIONS_PER_ORIENTATION as u64;
+const RESTART_MAX_HAZARD_QUERIES_U64: u64 = RESTART_MAX_RETURNED_POSITIONS_U64;
+const RESTART_MAX_PROXY_PRESSURE_VISITS_U64: u64 =
+    RESTART_MAX_HAZARD_QUERIES_U64 * MIXED_PIECE_COUNT as u64;
+const RESTART_MAX_EXACT_FINALIST_ROWS_U64: u64 =
+    RESTART_MAX_SELECTED_PIECE_SLOTS_U64 * FINALISTS_PER_PIECE as u64;
+const RESTART_MAX_EXPERIMENTAL_COLLISION_BUILDS_U64: u64 = MIXED_PIECE_COUNT as u64
+    + RESTART_MAX_ORIENTATION_STREAMS_U64
+    + RESTART_MAX_EXACT_FINALIST_ROWS_U64;
+const RESTART_MAX_PARTIAL_AUDITS_U64: u64 =
+    MAX_PARTIAL_AUDITS as u64 + REPAIR_RESTART_ROUNDS as u64 * (REPAIR_HORIZON as u64 + 1);
+const RESTART_MAX_COMPLETE_AUDITS_U64: u64 = MAX_COMPLETE_AUDITS as u64
+    + REPAIR_RESTART_ROUNDS as u64 * REPAIR_PARENT_EXPANSIONS as u64 * FINALISTS_PER_PIECE as u64;
+const RESTART_MAX_VALIDATOR_AUDITS_U64: u64 =
+    RESTART_MAX_PARTIAL_AUDITS_U64 + RESTART_MAX_COMPLETE_AUDITS_U64;
+const RESTART_MAX_VALIDATOR_COLLISION_BUILDS_U64: u64 =
+    RESTART_MAX_VALIDATOR_AUDITS_U64 * MIXED_PIECE_COUNT as u64 * 2;
+const RESTART_MAX_EXPERIMENTAL_PAIR_VISITS_U64: u64 = (MIXED_PIECE_COUNT * (MIXED_PIECE_COUNT - 1)
+    / 2) as u64
+    + RESTART_MAX_EXACT_FINALIST_ROWS_U64 * (MIXED_PIECE_COUNT - 1) as u64;
+const RESTART_MAX_VALIDATOR_PAIR_VISITS_U64: u64 =
+    RESTART_MAX_VALIDATOR_AUDITS_U64 * MIXED_PIECE_COUNT as u64 * (MIXED_PIECE_COUNT - 1) as u64;
+const RESTART_MAX_TRANSFORMED_COLLISION_VERTICES_U64: u64 =
+    (RESTART_MAX_EXPERIMENTAL_COLLISION_BUILDS_U64 + RESTART_MAX_VALIDATOR_COLLISION_BUILDS_U64)
+        * MAX_COLLISION_VERTICES as u64;
+const RESTART_MAX_CLIPPER_INPUT_VERTICES_U64: u64 = (RESTART_MAX_EXPERIMENTAL_PAIR_VISITS_U64
+    + RESTART_MAX_VALIDATOR_PAIR_VISITS_U64)
+    * 2
+    * MAX_COLLISION_VERTICES as u64;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct VacancyTransition {
@@ -116,6 +167,24 @@ struct RepairNode {
 struct RepairNodeIdentity {
     state: VacancyStateIdentity,
     queue: Vec<usize>,
+}
+
+#[derive(Clone)]
+struct AuditedRepairNode {
+    node: RepairNode,
+    first_seen_expansion_depth: Option<usize>,
+}
+
+struct RepairRoundOutcome {
+    accepted_complete: Option<(VacancyState, f64)>,
+    best_partial: AuditedRepairNode,
+    diagnostics: GeneralPersistentVacancyRepairDiagnostics,
+}
+
+#[derive(Clone, Copy)]
+enum RepairSeedSchedule {
+    Legacy,
+    Restart { round_ordinal: u32 },
 }
 
 struct SelectedPieceExpansion {
@@ -240,6 +309,67 @@ impl WorkLimits {
             complete_audits: REPAIR_MAX_COMPLETE_AUDITS,
         }
     }
+
+    fn repair_restart() -> Result<Self, String> {
+        let checked = |name: &str, value: u64| {
+            usize::try_from(value)
+                .map_err(|_| format!("persistent vacancy restart {name} exceeds usize"))
+        };
+        Ok(Self {
+            selected_piece_slots: checked(
+                "selected-piece slots",
+                RESTART_MAX_SELECTED_PIECE_SLOTS_U64,
+            )?,
+            orientation_streams: checked(
+                "orientation streams",
+                RESTART_MAX_ORIENTATION_STREAMS_U64,
+            )?,
+            source_feature_visits: checked(
+                "source-feature visits",
+                RESTART_MAX_SOURCE_FEATURE_VISITS_U64,
+            )?,
+            position_source_attempts: checked(
+                "position-source attempts",
+                RESTART_MAX_POSITION_SOURCE_ATTEMPTS_U64,
+            )?,
+            returned_positions: checked("returned positions", RESTART_MAX_RETURNED_POSITIONS_U64)?,
+            hazard_queries: checked("hazard queries", RESTART_MAX_HAZARD_QUERIES_U64)?,
+            proxy_pressure_visits: checked(
+                "proxy-pressure visits",
+                RESTART_MAX_PROXY_PRESSURE_VISITS_U64,
+            )?,
+            exact_finalist_rows: checked(
+                "exact-finalist rows",
+                RESTART_MAX_EXACT_FINALIST_ROWS_U64,
+            )?,
+            experimental_collision_builds: checked(
+                "experimental collision builds",
+                RESTART_MAX_EXPERIMENTAL_COLLISION_BUILDS_U64,
+            )?,
+            validator_collision_builds: checked(
+                "validator collision builds",
+                RESTART_MAX_VALIDATOR_COLLISION_BUILDS_U64,
+            )?,
+            experimental_pair_visits: checked(
+                "experimental pair visits",
+                RESTART_MAX_EXPERIMENTAL_PAIR_VISITS_U64,
+            )?,
+            validator_pair_visits: checked(
+                "validator pair visits",
+                RESTART_MAX_VALIDATOR_PAIR_VISITS_U64,
+            )?,
+            transformed_collision_vertices: checked(
+                "transformed collision vertices",
+                RESTART_MAX_TRANSFORMED_COLLISION_VERTICES_U64,
+            )?,
+            clipper_input_vertices: checked(
+                "Clipper input vertices",
+                RESTART_MAX_CLIPPER_INPUT_VERTICES_U64,
+            )?,
+            partial_audits: checked("partial audits", RESTART_MAX_PARTIAL_AUDITS_U64)?,
+            complete_audits: checked("complete audits", RESTART_MAX_COMPLETE_AUDITS_U64)?,
+        })
+    }
 }
 
 impl Default for RunWork {
@@ -358,6 +488,9 @@ fn uses_macro_expansion(mode: usize) -> bool {
             | PRESERVED_BEST_MACRO_MODE
             | REPAIR_CONTROL_MODE
             | REPAIR_TREATMENT_MODE
+            | REPAIR_RESTART_ROOT_CONTROL_MODE
+            | REPAIR_RESTART_STATE_TREATMENT_MODE
+            | REPAIR_RESTART_QUEUE_TREATMENT_MODE
     )
 }
 
@@ -368,18 +501,42 @@ fn admits_macro_children(mode: usize) -> bool {
             | PRESERVED_BEST_MACRO_MODE
             | REPAIR_CONTROL_MODE
             | REPAIR_TREATMENT_MODE
+            | REPAIR_RESTART_ROOT_CONTROL_MODE
+            | REPAIR_RESTART_STATE_TREATMENT_MODE
+            | REPAIR_RESTART_QUEUE_TREATMENT_MODE
     )
 }
 
 fn uses_preserved_best_macro(mode: usize) -> bool {
     matches!(
         mode,
-        PRESERVED_BEST_MACRO_MODE | REPAIR_CONTROL_MODE | REPAIR_TREATMENT_MODE
+        PRESERVED_BEST_MACRO_MODE
+            | REPAIR_CONTROL_MODE
+            | REPAIR_TREATMENT_MODE
+            | REPAIR_RESTART_ROOT_CONTROL_MODE
+            | REPAIR_RESTART_STATE_TREATMENT_MODE
+            | REPAIR_RESTART_QUEUE_TREATMENT_MODE
     )
 }
 
 fn uses_repair_expedition(mode: usize) -> bool {
-    matches!(mode, REPAIR_CONTROL_MODE | REPAIR_TREATMENT_MODE)
+    matches!(
+        mode,
+        REPAIR_CONTROL_MODE
+            | REPAIR_TREATMENT_MODE
+            | REPAIR_RESTART_ROOT_CONTROL_MODE
+            | REPAIR_RESTART_STATE_TREATMENT_MODE
+            | REPAIR_RESTART_QUEUE_TREATMENT_MODE
+    )
+}
+
+fn uses_repair_restart_screen(mode: usize) -> bool {
+    matches!(
+        mode,
+        REPAIR_RESTART_ROOT_CONTROL_MODE
+            | REPAIR_RESTART_STATE_TREATMENT_MODE
+            | REPAIR_RESTART_QUEUE_TREATMENT_MODE
+    )
 }
 
 struct MacroParentChoice<'a> {
@@ -493,9 +650,12 @@ fn run_population(
             | PRESERVED_BEST_MACRO_MODE
             | REPAIR_CONTROL_MODE
             | REPAIR_TREATMENT_MODE
+            | REPAIR_RESTART_ROOT_CONTROL_MODE
+            | REPAIR_RESTART_STATE_TREATMENT_MODE
+            | REPAIR_RESTART_QUEUE_TREATMENT_MODE
     ) {
         return Err(
-            "persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 8, 9, 10, 14, or 15; retired modes 7 and 11 through 13 are unavailable"
+            "persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 8, 9, 10, or 14 through 18; retired modes 7 and 11 through 13 are unavailable"
                 .to_owned(),
         );
     }
@@ -1089,6 +1249,19 @@ fn run_population(
     let root = best_ever_count_state
         .as_ref()
         .ok_or_else(|| "persistent vacancy repair has no preserved best-count root".to_owned())?;
+    if uses_repair_restart_screen(mode) {
+        return run_repair_restart_screen(
+            root,
+            &baseline_placements,
+            pieces,
+            target_settings,
+            &difficulty,
+            &hazard_catalog,
+            mode,
+            diagnostics,
+            work,
+        );
+    }
     let mut expedition_events = GeneralPersistentVacancyDiagnostics::default();
     let mut expedition_work = RunWork {
         diagnostics: repair_generation_work_start(work.diagnostics),
@@ -1098,18 +1271,20 @@ fn run_population(
     let expedition_work_before = generation_work_snapshot(work.diagnostics);
     let outcome = run_repair_expedition(
         root,
+        None,
         &baseline_placements,
         pieces,
         target_settings,
         &difficulty,
         &hazard_catalog,
         mode,
+        RepairSeedSchedule::Legacy,
         diagnostics,
         &mut expedition_events,
         &mut repair_root_dual_valid,
         &mut expedition_work,
     );
-    let (accepted, repair) = match outcome {
+    let outcome = match outcome {
         Ok(success) => success,
         Err(reason) => {
             let repair = failed_repair_diagnostics(
@@ -1130,12 +1305,13 @@ fn run_population(
             return Err(reason);
         }
     };
+    let accepted = outcome.accepted_complete;
     commit_repair_expedition(
         diagnostics,
         work,
         expedition_events,
         expedition_work,
-        repair,
+        outcome.diagnostics,
     );
     Ok(accepted)
 }
@@ -1199,6 +1375,542 @@ fn commit_repair_expedition(
     diagnostics.repair_expedition = Some(repair);
 }
 
+#[allow(clippy::too_many_arguments)]
+fn run_repair_restart_screen(
+    root: &VacancyState,
+    baseline: &[RelaxedPlacement],
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    difficulty: &[PieceDifficulty],
+    hazard_catalog: &Arc<JaguaHazardCatalog>,
+    mode: usize,
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    work: &mut RunWork,
+) -> Result<Option<(VacancyState, f64)>, String> {
+    let work_before = generation_work_snapshot(work.diagnostics);
+    let mut round_zero_events = GeneralPersistentVacancyDiagnostics::default();
+    let mut round_zero_work = RunWork {
+        diagnostics: repair_generation_work_start(work.diagnostics),
+        limits: WorkLimits::repair(),
+    };
+    let mut round_zero_root_valid = false;
+    let round_zero = match run_repair_expedition(
+        root,
+        None,
+        baseline,
+        pieces,
+        settings,
+        difficulty,
+        hazard_catalog,
+        REPAIR_TREATMENT_MODE,
+        RepairSeedSchedule::Legacy,
+        diagnostics,
+        &mut round_zero_events,
+        &mut round_zero_root_valid,
+        &mut round_zero_work,
+    ) {
+        Ok(outcome) => outcome,
+        Err(reason) => {
+            let screen = failed_restart_screen(
+                mode,
+                0,
+                &reason,
+                repair_work_delta(
+                    generation_work_snapshot(round_zero_work.diagnostics),
+                    work_before,
+                    round_zero_work.diagnostics,
+                ),
+                None,
+                None,
+                None,
+            );
+            merge_repair_work(work, round_zero_work.diagnostics);
+            diagnostics.repair_restart_screen = Some(screen);
+            return Err(reason);
+        }
+    };
+    if round_zero.accepted_complete.is_some() {
+        let reason = "persistent vacancy restart round zero unexpectedly completed before its pinned activation".to_owned();
+        let screen = failed_restart_screen(
+            mode,
+            0,
+            &reason,
+            repair_work_delta(
+                generation_work_snapshot(round_zero_work.diagnostics),
+                work_before,
+                round_zero_work.diagnostics,
+            ),
+            None,
+            None,
+            None,
+        );
+        merge_repair_work(work, round_zero_work.diagnostics);
+        diagnostics.repair_restart_screen = Some(screen);
+        return Err(reason);
+    }
+    if let Err(reason) = preflight_restart_hash_memory(
+        &round_zero.best_partial.node,
+        pieces,
+        diagnostics,
+        &round_zero.diagnostics,
+        &mut round_zero_work,
+    ) {
+        let screen = failed_restart_screen(
+            mode,
+            0,
+            &reason,
+            repair_work_delta(
+                generation_work_snapshot(round_zero_work.diagnostics),
+                work_before,
+                round_zero_work.diagnostics,
+            ),
+            None,
+            None,
+            None,
+        );
+        merge_repair_work(work, round_zero_work.diagnostics);
+        diagnostics.repair_restart_screen = Some(screen);
+        return Err(reason);
+    }
+    let round_zero_hash = match exact_diagnostic_sha256(&round_zero.diagnostics) {
+        Ok(hash) => hash,
+        Err(reason) => {
+            let screen = failed_restart_screen(
+                mode,
+                0,
+                &reason,
+                repair_work_delta(
+                    generation_work_snapshot(round_zero_work.diagnostics),
+                    work_before,
+                    round_zero_work.diagnostics,
+                ),
+                None,
+                None,
+                None,
+            );
+            merge_repair_work(work, round_zero_work.diagnostics);
+            diagnostics.repair_restart_screen = Some(screen);
+            return Err(reason);
+        }
+    };
+    let round_zero_endpoint_hash = repair_node_hash(&round_zero.best_partial.node, pieces);
+    let round_zero_endpoint_count = inactive_piece_count(&round_zero.best_partial.node.state);
+    let round_zero_endpoint_area = inactive_area(&round_zero.best_partial.node.state, difficulty);
+    if round_zero_hash != EXPECTED_ROUND_ZERO_REPAIR_SHA256
+        || state_fingerprint(&round_zero.best_partial.node.state, pieces)
+            != EXPECTED_ROUND_ZERO_ENDPOINT_FINGERPRINT
+        || round_zero_endpoint_hash != EXPECTED_ROUND_ZERO_ENDPOINT_AUGMENTED_IDENTITY
+        || round_zero_endpoint_count != EXPECTED_ROUND_ZERO_ENDPOINT_COUNT
+        || round_zero_endpoint_area != EXPECTED_ROUND_ZERO_ENDPOINT_AREA
+    {
+        let reason = format!(
+            "persistent vacancy restart round-zero activation mismatch: repair {round_zero_hash}, endpoint {round_zero_endpoint_hash}, count {round_zero_endpoint_count}, area {round_zero_endpoint_area}"
+        );
+        let screen = failed_restart_screen(
+            mode,
+            0,
+            &reason,
+            repair_work_delta(
+                generation_work_snapshot(round_zero_work.diagnostics),
+                work_before,
+                round_zero_work.diagnostics,
+            ),
+            Some(round_zero_hash),
+            Some(state_fingerprint(
+                &round_zero.best_partial.node.state,
+                pieces,
+            )),
+            Some(round_zero_endpoint_hash),
+        );
+        merge_repair_work(work, round_zero_work.diagnostics);
+        diagnostics.repair_restart_screen = Some(screen);
+        return Err(reason);
+    }
+
+    let (round_one_origin, round_one_state, preserve_round_zero_queue) = match mode {
+        REPAIR_RESTART_ROOT_CONTROL_MODE => ("originalBestCount", root, false),
+        REPAIR_RESTART_STATE_TREATMENT_MODE => (
+            "roundZeroEndpointRebuiltQueue",
+            &round_zero.best_partial.node.state,
+            false,
+        ),
+        REPAIR_RESTART_QUEUE_TREATMENT_MODE => (
+            "roundZeroEndpointPreservedQueue",
+            &round_zero.best_partial.node.state,
+            true,
+        ),
+        _ => return Err("unsupported persistent vacancy restart mode".to_owned()),
+    };
+    let restart_limits = match WorkLimits::repair_restart() {
+        Ok(limits) => limits,
+        Err(reason) => {
+            let screen = failed_restart_screen(
+                mode,
+                1,
+                &reason,
+                repair_work_delta(
+                    generation_work_snapshot(round_zero_work.diagnostics),
+                    work_before,
+                    round_zero_work.diagnostics,
+                ),
+                Some(round_zero_hash),
+                Some(state_fingerprint(
+                    &round_zero.best_partial.node.state,
+                    pieces,
+                )),
+                Some(round_zero_endpoint_hash),
+            );
+            merge_repair_work(work, round_zero_work.diagnostics);
+            diagnostics.repair_restart_screen = Some(screen);
+            return Err(reason);
+        }
+    };
+    let mut round_one_work = RunWork {
+        diagnostics: repair_generation_work_start(round_zero_work.diagnostics),
+        limits: restart_limits,
+    };
+    if let Err(reason) = preflight_repair_restart_memory(
+        root,
+        &round_zero.best_partial.node,
+        round_one_state,
+        inactive_piece_count(round_one_state),
+        pieces,
+        diagnostics,
+        &round_zero.diagnostics,
+        &mut round_one_work,
+    ) {
+        let screen = failed_restart_screen(
+            mode,
+            1,
+            &reason,
+            restart_screen_work(
+                work_before,
+                round_zero_work.diagnostics,
+                round_one_work.diagnostics,
+            ),
+            Some(round_zero_hash),
+            Some(state_fingerprint(
+                &round_zero.best_partial.node.state,
+                pieces,
+            )),
+            Some(round_zero_endpoint_hash),
+        );
+        merge_restart_work(
+            work,
+            round_zero_work.diagnostics,
+            round_one_work.diagnostics,
+        );
+        diagnostics.repair_restart_screen = Some(screen);
+        return Err(reason);
+    }
+    let original_root = RepairNode {
+        state: root.clone(),
+        queue: difficulty_inactive_order(root, pieces, difficulty),
+    };
+    let round_one_queue = if preserve_round_zero_queue {
+        round_zero.best_partial.node.queue.clone()
+    } else {
+        difficulty_inactive_order(round_one_state, pieces, difficulty)
+    };
+    let round_one_node = RepairNode {
+        state: round_one_state.clone(),
+        queue: round_one_queue,
+    };
+    if let Err(reason) = validate_repair_queue(&round_one_node.state, &round_one_node.queue) {
+        let screen = failed_restart_screen(
+            mode,
+            1,
+            &reason,
+            restart_screen_work(
+                work_before,
+                round_zero_work.diagnostics,
+                round_one_work.diagnostics,
+            ),
+            Some(round_zero_hash),
+            Some(state_fingerprint(
+                &round_zero.best_partial.node.state,
+                pieces,
+            )),
+            Some(round_zero_endpoint_hash),
+        );
+        merge_restart_work(
+            work,
+            round_zero_work.diagnostics,
+            round_one_work.diagnostics,
+        );
+        diagnostics.repair_restart_screen = Some(screen);
+        return Err(reason);
+    }
+    let mut round_one_root_diagnostics = GeneralPersistentVacancyRepairRestartRootDiagnostics {
+        origin: round_one_origin.to_owned(),
+        state_fingerprint: state_fingerprint(&round_one_node.state, pieces),
+        augmented_identity_hash: repair_node_hash(&round_one_node, pieces),
+        queue_piece_ids: queue_piece_ids(&round_one_node.queue, pieces),
+        seed_domain: REPAIR_RESTART_SEED_DOMAIN.to_owned(),
+        round_ordinal: 1,
+        root_dual_valid: false,
+    };
+    let mut round_one_events = GeneralPersistentVacancyDiagnostics::default();
+    let mut round_one_root_valid = false;
+    let round_one = match run_repair_expedition(
+        &round_one_node.state,
+        Some(&round_one_node.queue),
+        baseline,
+        pieces,
+        settings,
+        difficulty,
+        hazard_catalog,
+        REPAIR_TREATMENT_MODE,
+        RepairSeedSchedule::Restart { round_ordinal: 1 },
+        diagnostics,
+        &mut round_one_events,
+        &mut round_one_root_valid,
+        &mut round_one_work,
+    ) {
+        Ok(outcome) => outcome,
+        Err(reason) => {
+            round_one_root_diagnostics.root_dual_valid = round_one_root_valid;
+            let screen = failed_restart_screen(
+                mode,
+                1,
+                &reason,
+                restart_screen_work(
+                    work_before,
+                    round_zero_work.diagnostics,
+                    round_one_work.diagnostics,
+                ),
+                Some(round_zero_hash),
+                Some(state_fingerprint(
+                    &round_zero.best_partial.node.state,
+                    pieces,
+                )),
+                Some(round_zero_endpoint_hash),
+            )
+            .with_round_one_root(round_one_root_diagnostics);
+            merge_restart_work(
+                work,
+                round_zero_work.diagnostics,
+                round_one_work.diagnostics,
+            );
+            diagnostics.repair_restart_screen = Some(screen);
+            return Err(reason);
+        }
+    };
+    round_one_root_diagnostics.root_dual_valid = true;
+
+    let comparison_endpoint = restart_comparison_endpoint(
+        &original_root,
+        &round_zero.best_partial,
+        &round_one.best_partial,
+        pieces,
+        difficulty,
+    );
+    let screen_work = restart_screen_work(
+        work_before,
+        round_zero_work.diagnostics,
+        round_one_work.diagnostics,
+    );
+    let screen = GeneralPersistentVacancyRepairRestartDiagnostics {
+        arm_family: restart_arm_family(mode).to_owned(),
+        round_zero_replay_sha256: Some(round_zero_hash),
+        round_zero_endpoint_state_fingerprint: Some(state_fingerprint(
+            &round_zero.best_partial.node.state,
+            pieces,
+        )),
+        round_zero_endpoint_augmented_identity_hash: Some(round_zero_endpoint_hash),
+        round_zero: Some(round_zero.diagnostics),
+        round_one_root: Some(round_one_root_diagnostics),
+        round_one: Some(round_one.diagnostics),
+        comparison_endpoint: Some(comparison_endpoint),
+        work: screen_work,
+        ..GeneralPersistentVacancyRepairRestartDiagnostics::default()
+    };
+    commit_restart_events(diagnostics, round_zero_events, round_one_events);
+    merge_restart_work(
+        work,
+        round_zero_work.diagnostics,
+        round_one_work.diagnostics,
+    );
+    diagnostics.repair_restart_screen = Some(screen);
+    Ok(round_one.accepted_complete)
+}
+
+trait RestartFailureRoot {
+    fn with_round_one_root(
+        self,
+        root: GeneralPersistentVacancyRepairRestartRootDiagnostics,
+    ) -> Self;
+}
+
+impl RestartFailureRoot for GeneralPersistentVacancyRepairRestartDiagnostics {
+    fn with_round_one_root(
+        mut self,
+        root: GeneralPersistentVacancyRepairRestartRootDiagnostics,
+    ) -> Self {
+        self.round_one_root = Some(root);
+        self
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn failed_restart_screen(
+    mode: usize,
+    failed_round: usize,
+    reason: &str,
+    work: GeneralPersistentVacancyWorkDiagnostics,
+    round_zero_hash: Option<String>,
+    round_zero_endpoint_state: Option<String>,
+    round_zero_endpoint_identity: Option<String>,
+) -> GeneralPersistentVacancyRepairRestartDiagnostics {
+    GeneralPersistentVacancyRepairRestartDiagnostics {
+        arm_family: restart_arm_family(mode).to_owned(),
+        round_zero_replay_sha256: round_zero_hash,
+        round_zero_endpoint_state_fingerprint: round_zero_endpoint_state,
+        round_zero_endpoint_augmented_identity_hash: round_zero_endpoint_identity,
+        work,
+        failed_round: Some(failed_round),
+        cap_exhausted: reason.strip_prefix("cap: ").map(str::to_owned),
+        failure_reason: Some(reason.to_owned()),
+        round_one_root: None,
+        ..GeneralPersistentVacancyRepairRestartDiagnostics::default()
+    }
+}
+
+fn restart_arm_family(mode: usize) -> &'static str {
+    match mode {
+        REPAIR_RESTART_ROOT_CONTROL_MODE => "reseededOriginalRoot",
+        REPAIR_RESTART_STATE_TREATMENT_MODE => "continuedStateRebuiltQueue",
+        REPAIR_RESTART_QUEUE_TREATMENT_MODE => "continuedStatePreservedQueue",
+        _ => "unsupported",
+    }
+}
+
+fn restart_comparison_endpoint(
+    original: &RepairNode,
+    round_zero: &AuditedRepairNode,
+    round_one: &AuditedRepairNode,
+    pieces: &[GeneralFastPiece<'_>],
+    difficulty: &[PieceDifficulty],
+) -> GeneralPersistentVacancyRepairRestartEndpointDiagnostics {
+    let mut best = ("roundZero", round_zero);
+    if compare_repair_nodes(&round_one.node, &best.1.node, pieces, difficulty).is_lt() {
+        best = ("roundOne", round_one);
+    }
+    if compare_repair_nodes(original, &best.1.node, pieces, difficulty).is_lt() {
+        return restart_node_endpoint_diagnostics(
+            "originalRoot",
+            original,
+            None,
+            pieces,
+            difficulty,
+        );
+    }
+    restart_endpoint_diagnostics(best.0, best.1, pieces, difficulty)
+}
+
+fn restart_endpoint_diagnostics(
+    origin: &str,
+    endpoint: &AuditedRepairNode,
+    pieces: &[GeneralFastPiece<'_>],
+    difficulty: &[PieceDifficulty],
+) -> GeneralPersistentVacancyRepairRestartEndpointDiagnostics {
+    restart_node_endpoint_diagnostics(
+        origin,
+        &endpoint.node,
+        endpoint.first_seen_expansion_depth,
+        pieces,
+        difficulty,
+    )
+}
+
+fn restart_node_endpoint_diagnostics(
+    origin: &str,
+    endpoint: &RepairNode,
+    first_seen_expansion_depth: Option<usize>,
+    pieces: &[GeneralFastPiece<'_>],
+    difficulty: &[PieceDifficulty],
+) -> GeneralPersistentVacancyRepairRestartEndpointDiagnostics {
+    GeneralPersistentVacancyRepairRestartEndpointDiagnostics {
+        origin: origin.to_owned(),
+        state_fingerprint: state_fingerprint(&endpoint.state, pieces),
+        augmented_identity_hash: repair_node_hash(endpoint, pieces),
+        queue_piece_ids: queue_piece_ids(&endpoint.queue, pieces),
+        inactive_piece_count: inactive_piece_count(&endpoint.state),
+        inactive_area_grid2: inactive_area(&endpoint.state, difficulty).to_string(),
+        first_seen_expansion_depth,
+    }
+}
+
+fn commit_restart_events(
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    first: GeneralPersistentVacancyDiagnostics,
+    second: GeneralPersistentVacancyDiagnostics,
+) {
+    for events in [first, second] {
+        diagnostics.direct_insertions = diagnostics
+            .direct_insertions
+            .saturating_add(events.direct_insertions);
+        diagnostics.ejection_insertions = diagnostics
+            .ejection_insertions
+            .saturating_add(events.ejection_insertions);
+        diagnostics.immediate_reversals_rejected = diagnostics
+            .immediate_reversals_rejected
+            .saturating_add(events.immediate_reversals_rejected);
+        diagnostics.complete_states = diagnostics
+            .complete_states
+            .saturating_add(events.complete_states);
+        diagnostics.publication_rejections = diagnostics
+            .publication_rejections
+            .saturating_add(events.publication_rejections);
+    }
+}
+
+fn restart_screen_work(
+    before: GeneralPersistentVacancyWorkDiagnostics,
+    round_zero: GeneralPersistentVacancyWorkDiagnostics,
+    round_one: GeneralPersistentVacancyWorkDiagnostics,
+) -> GeneralPersistentVacancyWorkDiagnostics {
+    let mut work = work_delta(generation_work_snapshot(round_one), before);
+    work.retained_peak_bytes = round_zero
+        .retained_peak_bytes
+        .max(round_one.retained_peak_bytes);
+    work.selector_diagnostic_peak_bytes = round_zero
+        .selector_diagnostic_peak_bytes
+        .max(round_one.selector_diagnostic_peak_bytes);
+    work.total_retained_peak_bytes = round_zero
+        .total_retained_peak_bytes
+        .max(round_one.total_retained_peak_bytes);
+    work
+}
+
+fn merge_restart_work(
+    work: &mut RunWork,
+    round_zero: GeneralPersistentVacancyWorkDiagnostics,
+    round_one: GeneralPersistentVacancyWorkDiagnostics,
+) {
+    merge_repair_work(work, round_one);
+    work.diagnostics.retained_peak_bytes = work
+        .diagnostics
+        .retained_peak_bytes
+        .max(round_zero.retained_peak_bytes);
+    work.diagnostics.selector_diagnostic_peak_bytes = work
+        .diagnostics
+        .selector_diagnostic_peak_bytes
+        .max(round_zero.selector_diagnostic_peak_bytes);
+    work.diagnostics.total_retained_peak_bytes = work
+        .diagnostics
+        .total_retained_peak_bytes
+        .max(round_zero.total_retained_peak_bytes);
+}
+
+fn exact_diagnostic_sha256<T: serde::Serialize>(value: &T) -> Result<String, String> {
+    let value = serde_json::to_value(value)
+        .map_err(|error| format!("persistent vacancy exact diagnostic value: {error}"))?;
+    let bytes = serde_json::to_vec(&value)
+        .map_err(|error| format!("persistent vacancy exact diagnostic serialization: {error}"))?;
+    Ok(format!("{:x}", Sha256::digest(bytes)))
+}
+
 fn repair_generation_work_start(
     mut diagnostics: GeneralPersistentVacancyWorkDiagnostics,
 ) -> GeneralPersistentVacancyWorkDiagnostics {
@@ -1224,28 +1936,26 @@ fn merge_repair_work(work: &mut RunWork, repair: GeneralPersistentVacancyWorkDia
 #[allow(clippy::too_many_arguments)]
 fn run_repair_expedition(
     root: &VacancyState,
+    root_queue: Option<&[usize]>,
     baseline: &[RelaxedPlacement],
     pieces: &[GeneralFastPiece<'_>],
     settings: GeneralFastSettings,
     difficulty: &[PieceDifficulty],
     hazard_catalog: &Arc<JaguaHazardCatalog>,
     mode: usize,
+    seed_schedule: RepairSeedSchedule,
     base_diagnostics: &GeneralPersistentVacancyDiagnostics,
     expedition_events: &mut GeneralPersistentVacancyDiagnostics,
     root_dual_valid: &mut bool,
     work: &mut RunWork,
-) -> Result<
-    (
-        Option<(VacancyState, f64)>,
-        GeneralPersistentVacancyRepairDiagnostics,
-    ),
-    String,
-> {
+) -> Result<RepairRoundOutcome, String> {
     preflight_repair_memory(root, pieces, base_diagnostics, "root", work)?;
     let work_before = generation_work_snapshot(work.diagnostics);
     audit_state(root, pieces, settings, false, work)?;
     *root_dual_valid = true;
-    let root_queue = difficulty_inactive_order(root, pieces, difficulty);
+    let root_queue = root_queue
+        .map(<[usize]>::to_vec)
+        .unwrap_or_else(|| difficulty_inactive_order(root, pieces, difficulty));
     validate_repair_queue(root, &root_queue)?;
     let root_node = RepairNode {
         state: root.clone(),
@@ -1268,7 +1978,10 @@ fn run_repair_expedition(
     frontier.push(root_node.clone());
     let mut seen = BTreeSet::new();
     seen.insert(repair_node_identity(&root_node));
-    let mut best_partial = root_node;
+    let mut best_partial = AuditedRepairNode {
+        node: root_node,
+        first_seen_expansion_depth: None,
+    };
     let mut best_complete: Option<(VacancyState, f64, String)> = None;
 
     for expansion_depth in 0..REPAIR_HORIZON {
@@ -1299,7 +2012,8 @@ fn run_repair_expedition(
                 hazard_catalog,
             )
             .map_err(|error| format!("persistent vacancy repair hazard index: {error}"))?;
-            let transition_seed = repair_transition_seed(&parent.state, piece_index, pieces);
+            let transition_seed =
+                repair_transition_seed(&parent.state, piece_index, pieces, seed_schedule);
             let mut children = Vec::with_capacity(FINALISTS_PER_PIECE);
             let expansion_work_before = generation_work_snapshot(work.diagnostics);
             let expansion = expand_selected_piece(
@@ -1385,8 +2099,11 @@ fn run_repair_expedition(
         incomplete.truncate(REPAIR_BEAM_WIDTH);
         if let Some(best) = incomplete.first() {
             audit_state(&best.state, pieces, settings, false, work)?;
-            if compare_repair_nodes(best, &best_partial, pieces, difficulty).is_lt() {
-                best_partial = best.clone();
+            if compare_repair_nodes(best, &best_partial.node, pieces, difficulty).is_lt() {
+                best_partial = AuditedRepairNode {
+                    node: best.clone(),
+                    first_seen_expansion_depth: Some(expansion_depth),
+                };
             }
         }
         preflight_repair_memory(root, pieces, base_diagnostics, "depth diagnostics", work)?;
@@ -1437,9 +2154,10 @@ fn run_repair_expedition(
         repair.final_placement_fingerprint = Some(fingerprint);
         Some((state, independent_depth))
     } else {
-        let endpoint_count = inactive_piece_count(&best_partial.state);
-        let endpoint_area = inactive_area(&best_partial.state, difficulty);
-        repair.endpoint_state_fingerprint = Some(state_fingerprint(&best_partial.state, pieces));
+        let endpoint_count = inactive_piece_count(&best_partial.node.state);
+        let endpoint_area = inactive_area(&best_partial.node.state, difficulty);
+        repair.endpoint_state_fingerprint =
+            Some(state_fingerprint(&best_partial.node.state, pieces));
         repair.endpoint_inactive_piece_count = Some(endpoint_count);
         repair.endpoint_inactive_area_grid2 = Some(endpoint_area.to_string());
         repair.endpoint_pareto_improves_root = endpoint_count <= root_count
@@ -1452,7 +2170,11 @@ fn run_repair_expedition(
         work_before,
         work.diagnostics,
     );
-    Ok((accepted, repair))
+    Ok(RepairRoundOutcome {
+        accepted_complete: accepted,
+        best_partial,
+        diagnostics: repair,
+    })
 }
 
 fn difficulty_inactive_order(
@@ -1566,7 +2288,18 @@ fn repair_transition_seed(
     state: &VacancyState,
     piece_index: usize,
     pieces: &[GeneralFastPiece<'_>],
+    schedule: RepairSeedSchedule,
 ) -> u64 {
+    if let RepairSeedSchedule::Restart { round_ordinal } = schedule {
+        let mut digest = Sha256::new();
+        digest.update(REPAIR_RESTART_SEED_DOMAIN.as_bytes());
+        digest.update([0]);
+        digest.update(round_ordinal.to_be_bytes());
+        digest.update(state_digest(state, pieces));
+        update_framed_id(&mut digest, pieces[piece_index].id);
+        let bytes: [u8; 32] = digest.finalize().into();
+        return u64::from_be_bytes(bytes[..8].try_into().expect("SHA-256 has eight bytes"));
+    }
     let mut digest = Sha256::new();
     digest.update(b"persistent-vacancy-repair-expedition-v1\0");
     digest.update(state_digest(state, pieces));
@@ -1689,6 +2422,108 @@ fn preflight_repair_memory(
         return Err(work.cap(&format!(
             "repair-expedition {phase} memory budget exhausted"
         )));
+    }
+    Ok(())
+}
+
+fn preflight_restart_hash_memory(
+    round_zero_endpoint: &RepairNode,
+    pieces: &[GeneralFastPiece<'_>],
+    diagnostics: &GeneralPersistentVacancyDiagnostics,
+    round_zero: &GeneralPersistentVacancyRepairDiagnostics,
+    work: &mut RunWork,
+) -> Result<(), String> {
+    let round_zero_bytes = size_of::<GeneralPersistentVacancyRepairDiagnostics>()
+        .saturating_add(repair_diagnostic_heap_bytes(round_zero));
+    let hash_scratch_bytes = round_zero_bytes.saturating_mul(4).max(4 * 1024);
+    let endpoint_bytes = repair_node_owned_bytes(round_zero_endpoint);
+    let diagnostic_bytes = persistent_diagnostic_bytes(diagnostics)
+        .saturating_add(round_zero_bytes)
+        .saturating_add(hash_scratch_bytes);
+    let total_bytes = work
+        .diagnostics
+        .total_retained_peak_bytes
+        .max(diagnostic_bytes.saturating_add(endpoint_bytes));
+    work.diagnostics.selector_diagnostic_peak_bytes = work
+        .diagnostics
+        .selector_diagnostic_peak_bytes
+        .max(diagnostic_bytes);
+    work.diagnostics.total_retained_peak_bytes = total_bytes;
+    if total_bytes > MAX_RETAINED_BYTES {
+        return Err(work.cap("repair-restart round-zero hash memory budget exhausted"));
+    }
+    let maximum_id_bytes = pieces.iter().map(|piece| piece.id.len()).max().unwrap_or(0);
+    if maximum_id_bytes > u32::MAX as usize {
+        return Err(work.cap("repair-restart piece id exceeds seed framing budget"));
+    }
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn preflight_repair_restart_memory(
+    original_root: &VacancyState,
+    round_zero_endpoint: &RepairNode,
+    round_one_root: &VacancyState,
+    round_one_queue_len: usize,
+    pieces: &[GeneralFastPiece<'_>],
+    diagnostics: &GeneralPersistentVacancyDiagnostics,
+    round_zero: &GeneralPersistentVacancyRepairDiagnostics,
+    work: &mut RunWork,
+) -> Result<(), String> {
+    preflight_repair_memory(
+        round_one_root,
+        pieces,
+        diagnostics,
+        "restart round-one base",
+        work,
+    )?;
+    const HASH_BYTES: usize = 64;
+    const MAX_FAILURE_REASON_BYTES: usize = 1024;
+    let max_piece_id_bytes = pieces.iter().map(|piece| piece.id.len()).max().unwrap_or(0);
+    let round_zero_diagnostic_bytes = size_of::<GeneralPersistentVacancyRepairDiagnostics>()
+        .saturating_add(repair_diagnostic_heap_bytes(round_zero));
+    let restart_root_diagnostic_bytes = size_of::<
+        GeneralPersistentVacancyRepairRestartRootDiagnostics,
+    >()
+    .saturating_add(4 * HASH_BYTES)
+    .saturating_add(64)
+    .saturating_add(round_one_queue_len.saturating_mul(size_of::<String>() + max_piece_id_bytes));
+    let pending_endpoint_diagnostic_bytes = size_of::<
+        GeneralPersistentVacancyRepairRestartEndpointDiagnostics,
+    >()
+    .saturating_add(3 * HASH_BYTES)
+    .saturating_add(40)
+    .saturating_add(MAX_INACTIVE_PIECES.saturating_mul(size_of::<String>() + max_piece_id_bytes));
+    let restart_header_bytes = size_of::<GeneralPersistentVacancyRepairRestartDiagnostics>()
+        .saturating_add(7 * HASH_BYTES)
+        .saturating_add(3 * 40)
+        .saturating_add(MAX_FAILURE_REASON_BYTES);
+    let cross_round_diagnostic_bytes = round_zero_diagnostic_bytes
+        .saturating_add(restart_root_diagnostic_bytes)
+        .saturating_add(pending_endpoint_diagnostic_bytes)
+        .saturating_add(restart_header_bytes);
+    let original_root_bytes = size_of::<RepairNode>()
+        .saturating_add(state_heap_bytes(original_root))
+        .saturating_add(inactive_piece_count(original_root) * size_of::<usize>());
+    let round_one_root_bytes = size_of::<RepairNode>()
+        .saturating_add(state_heap_bytes(round_one_root))
+        .saturating_add(round_one_queue_len * size_of::<usize>());
+    let cross_round_node_bytes = original_root_bytes
+        .saturating_add(repair_node_owned_bytes(round_zero_endpoint))
+        .saturating_add(round_one_root_bytes);
+    let diagnostic_bytes = work
+        .diagnostics
+        .selector_diagnostic_peak_bytes
+        .saturating_add(cross_round_diagnostic_bytes);
+    let total_bytes = work
+        .diagnostics
+        .total_retained_peak_bytes
+        .saturating_add(cross_round_diagnostic_bytes)
+        .saturating_add(cross_round_node_bytes);
+    work.diagnostics.selector_diagnostic_peak_bytes = diagnostic_bytes;
+    work.diagnostics.total_retained_peak_bytes = total_bytes;
+    if total_bytes > MAX_RETAINED_BYTES {
+        return Err(work.cap("repair-restart cross-round memory budget exhausted"));
     }
     Ok(())
 }
@@ -3418,6 +4253,12 @@ fn owned_state_bytes(state: Option<&VacancyState>) -> usize {
     })
 }
 
+fn repair_node_owned_bytes(node: &RepairNode) -> usize {
+    size_of::<RepairNode>()
+        .saturating_add(state_heap_bytes(&node.state))
+        .saturating_add(node.queue.capacity() * size_of::<usize>())
+}
+
 fn sidecar_bytes(area: Option<&VacancyState>, count: Option<&VacancyState>) -> usize {
     owned_state_bytes(area).saturating_add(owned_state_bytes(count))
 }
@@ -3630,6 +4471,12 @@ fn persistent_diagnostic_bytes(diagnostics: &GeneralPersistentVacancyDiagnostics
                 .as_ref()
                 .map_or(0, repair_diagnostic_heap_bytes),
         )
+        .saturating_add(
+            diagnostics
+                .repair_restart_screen
+                .as_ref()
+                .map_or(0, repair_restart_diagnostic_heap_bytes),
+        )
         .saturating_add(option_string_bytes(&diagnostics.cap_exhausted))
         .saturating_add(option_string_bytes(&diagnostics.failure_reason))
 }
@@ -3754,6 +4601,76 @@ fn repair_node_diagnostic_heap_bytes(
             node.queue_piece_ids.capacity(),
         ))
         .saturating_add(node.inactive_area_grid2.capacity())
+}
+
+fn repair_restart_diagnostic_heap_bytes(
+    restart: &GeneralPersistentVacancyRepairRestartDiagnostics,
+) -> usize {
+    restart
+        .arm_family
+        .capacity()
+        .saturating_add(option_string_bytes(&restart.round_zero_replay_sha256))
+        .saturating_add(option_string_bytes(
+            &restart.round_zero_endpoint_state_fingerprint,
+        ))
+        .saturating_add(option_string_bytes(
+            &restart.round_zero_endpoint_augmented_identity_hash,
+        ))
+        .saturating_add(
+            restart
+                .round_zero
+                .as_ref()
+                .map_or(0, repair_diagnostic_heap_bytes),
+        )
+        .saturating_add(
+            restart
+                .round_one_root
+                .as_ref()
+                .map_or(0, restart_root_diagnostic_heap_bytes),
+        )
+        .saturating_add(
+            restart
+                .round_one
+                .as_ref()
+                .map_or(0, repair_diagnostic_heap_bytes),
+        )
+        .saturating_add(
+            restart
+                .comparison_endpoint
+                .as_ref()
+                .map_or(0, restart_endpoint_diagnostic_heap_bytes),
+        )
+        .saturating_add(option_string_bytes(&restart.cap_exhausted))
+        .saturating_add(option_string_bytes(&restart.failure_reason))
+}
+
+fn restart_root_diagnostic_heap_bytes(
+    root: &GeneralPersistentVacancyRepairRestartRootDiagnostics,
+) -> usize {
+    root.origin
+        .capacity()
+        .saturating_add(root.state_fingerprint.capacity())
+        .saturating_add(root.augmented_identity_hash.capacity())
+        .saturating_add(string_vec_bytes(
+            &root.queue_piece_ids,
+            root.queue_piece_ids.capacity(),
+        ))
+        .saturating_add(root.seed_domain.capacity())
+}
+
+fn restart_endpoint_diagnostic_heap_bytes(
+    endpoint: &GeneralPersistentVacancyRepairRestartEndpointDiagnostics,
+) -> usize {
+    endpoint
+        .origin
+        .capacity()
+        .saturating_add(endpoint.state_fingerprint.capacity())
+        .saturating_add(endpoint.augmented_identity_hash.capacity())
+        .saturating_add(string_vec_bytes(
+            &endpoint.queue_piece_ids,
+            endpoint.queue_piece_ids.capacity(),
+        ))
+        .saturating_add(endpoint.inactive_area_grid2.capacity())
 }
 
 fn macro_expansion_diagnostic_heap_bytes(
@@ -4337,6 +5254,59 @@ mod tests {
     }
 
     #[test]
+    fn restart_failure_prefix_omits_uncommitted_rounds_and_endpoints() {
+        let work = GeneralPersistentVacancyWorkDiagnostics {
+            selected_piece_slots: 7,
+            total_retained_peak_bytes: 4_096,
+            ..GeneralPersistentVacancyWorkDiagnostics::default()
+        };
+        let failed = failed_restart_screen(
+            REPAIR_RESTART_STATE_TREATMENT_MODE,
+            1,
+            "cap: synthetic restart failure",
+            work,
+            Some("round-zero".to_owned()),
+            Some("state".to_owned()),
+            Some("identity".to_owned()),
+        );
+        assert_eq!(failed.failed_round, Some(1));
+        assert_eq!(
+            failed.cap_exhausted.as_deref(),
+            Some("synthetic restart failure")
+        );
+        assert_eq!(
+            failed.failure_reason.as_deref(),
+            Some("cap: synthetic restart failure")
+        );
+        assert_eq!(failed.work, work);
+        assert!(failed.round_zero.is_none());
+        assert!(failed.round_one.is_none());
+        assert!(failed.round_one_root.is_none());
+        assert!(failed.comparison_endpoint.is_none());
+
+        let root = GeneralPersistentVacancyRepairRestartRootDiagnostics {
+            origin: "constructed".to_owned(),
+            root_dual_valid: false,
+            ..GeneralPersistentVacancyRepairRestartRootDiagnostics::default()
+        };
+        let failed_after_construction = failed.with_round_one_root(root);
+        assert_eq!(
+            failed_after_construction
+                .round_one_root
+                .as_ref()
+                .map(|root| root.origin.as_str()),
+            Some("constructed")
+        );
+        assert!(
+            !failed_after_construction
+                .round_one_root
+                .as_ref()
+                .unwrap()
+                .root_dual_valid
+        );
+    }
+
+    #[test]
     fn count_comparator_prefers_fewer_inactive_pieces_over_lower_area() {
         let polygons = (0..3).map(|_| square(10.0)).collect::<Vec<_>>();
         let ids = ["a", "b", "c"];
@@ -4902,6 +5872,57 @@ mod tests {
     }
 
     #[test]
+    fn repair_restart_quota_formulas_match_the_reviewed_contract() {
+        assert_eq!(RESTART_MAX_SELECTED_PIECE_SLOTS_U64, 842);
+        assert_eq!(RESTART_MAX_ORIENTATION_STREAMS_U64, 10_104);
+        assert_eq!(RESTART_MAX_SOURCE_FEATURE_VISITS_U64, 862_208);
+        assert_eq!(RESTART_MAX_POSITION_SOURCE_ATTEMPTS_U64, 5_345_016);
+        assert_eq!(RESTART_MAX_RETURNED_POSITIONS_U64, 323_328);
+        assert_eq!(RESTART_MAX_HAZARD_QUERIES_U64, 323_328);
+        assert_eq!(RESTART_MAX_PROXY_PRESSURE_VISITS_U64, 19_723_008);
+        assert_eq!(RESTART_MAX_EXACT_FINALIST_ROWS_U64, 6_736);
+        assert_eq!(RESTART_MAX_EXPERIMENTAL_COLLISION_BUILDS_U64, 16_901);
+        assert_eq!(RESTART_MAX_PARTIAL_AUDITS_U64, 75);
+        assert_eq!(RESTART_MAX_COMPLETE_AUDITS_U64, 1_040);
+        assert_eq!(RESTART_MAX_VALIDATOR_AUDITS_U64, 1_115);
+        assert_eq!(RESTART_MAX_VALIDATOR_COLLISION_BUILDS_U64, 136_030);
+        assert_eq!(RESTART_MAX_EXPERIMENTAL_PAIR_VISITS_U64, 405_990);
+        assert_eq!(RESTART_MAX_VALIDATOR_PAIR_VISITS_U64, 4_080_900);
+        assert_eq!(RESTART_MAX_TRANSFORMED_COLLISION_VERTICES_U64, 78_300_672);
+        assert_eq!(RESTART_MAX_CLIPPER_INPUT_VERTICES_U64, 4_594_575_360);
+        let limits = WorkLimits::repair_restart().unwrap();
+        assert_eq!(limits.selected_piece_slots, 842);
+        assert_eq!(limits.clipper_input_vertices as u64, 4_594_575_360);
+        assert!(RESTART_MAX_CLIPPER_INPUT_VERTICES_U64 > u32::MAX as u64);
+    }
+
+    #[test]
+    fn restart_seed_uses_the_reviewed_domain_and_byte_framing() {
+        let polygons = vec![square(10.0), square(10.0), square(10.0), square(10.0)];
+        let ids = ["a", "b", "c", "d"];
+        let pieces = ids
+            .iter()
+            .enumerate()
+            .map(|(index, id)| GeneralFastPiece {
+                id,
+                polygon: &polygons[index],
+                allow_rotation: true,
+                allow_mirror: true,
+            })
+            .collect::<Vec<_>>();
+        let state = state_with_active_mask(vec![true, false, false, false]);
+        assert_eq!(
+            repair_transition_seed(
+                &state,
+                1,
+                &pieces,
+                RepairSeedSchedule::Restart { round_ordinal: 1 },
+            ),
+            9_779_104_251_877_286_619
+        );
+    }
+
+    #[test]
     fn displaced_queue_prepends_blockers_while_control_rebuilds_global_order() {
         let polygons = vec![square(10.0), square(10.0), square(10.0)];
         let pieces = [
@@ -5000,8 +6021,8 @@ mod tests {
             queue: vec![1, 3, 2],
         };
         assert_eq!(
-            repair_transition_seed(&first.state, 1, &pieces),
-            repair_transition_seed(&second.state, 1, &pieces)
+            repair_transition_seed(&first.state, 1, &pieces, RepairSeedSchedule::Legacy),
+            repair_transition_seed(&second.state, 1, &pieces, RepairSeedSchedule::Legacy)
         );
         assert_ne!(repair_node_identity(&first), repair_node_identity(&second));
     }

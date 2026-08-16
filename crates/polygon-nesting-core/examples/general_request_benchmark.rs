@@ -207,9 +207,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if !matches!(persistent_vacancy_mode, 0..=6 | 8 | 9 | 10 | 14 | 15) {
+    if !matches!(persistent_vacancy_mode, 0..=6 | 8 | 9 | 10 | 14..=18) {
         return Err(
-            "persistent vacancy mode must be 0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 14, or 15; retired modes 7 and 11 through 13 are unavailable"
+            "persistent vacancy mode must be 0 through 6, 8, 9, 10, or 14 through 18; retired modes 7 and 11 through 13 are unavailable"
                 .into(),
         );
     }
