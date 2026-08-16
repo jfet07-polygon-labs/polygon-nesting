@@ -71,6 +71,19 @@ const CONSTRUCTION_BEAM_CHILDREN_PER_PARENT: usize = 2;
 const CONSTRUCTION_FRONTIER_BAND_GRID: i64 = 500;
 const CONSTRUCTION_SKYLINE_COLUMNS: usize = 64;
 const CONSTRUCTION_SEED_DOMAIN: u64 = 0x534B_594C_3230_3330;
+// Mode 25 is mode 20's constructor plus the off-beam best-ever expansion
+// parent: every layer keeps a sidecar copy of the pool elite under
+// `construction_elite_key` (the retention key with the frontier banding
+// removed), and whenever that elite is *not* one of the retained beam states
+// it funds exactly one extra bounded expansion as an additional parent. The
+// elite is never given a beam slot - it competes for retention only through
+// its children - so the beam width, the per-parent diversity quota and the
+// retention rule are all unchanged. One extra parent per (restart, rank) is
+// the entire additional cost, which is why the per-piece construction term
+// funds `CONSTRUCTION_BEAM_WIDTH + CONSTRUCTION_BEST_EVER_PARENTS` expansions
+// per restart and rank. Mode 20 leaves the sidecar permanently empty and is
+// bit-identical to the pre-mode-25 constructor.
+const CONSTRUCTION_BEST_EVER_PARENTS: usize = 1;
 // Mode 24 reuses the construction insertion machinery from a different
 // starting point (a partially ejected parent rather than an empty sheet), so
 // it takes its own seed domain: identical piece/ordinal pairs in the two
@@ -207,8 +220,11 @@ impl VacancyQuotas {
         let settle_selected_piece_slots = scale(SETTLE_SWEEPS);
         let reconstruction_selected_piece_slots = scale(RECONSTRUCTION_PASSES_PER_PIECE);
         let lns_settle_selected_piece_slots = scale(LNS_SETTLE_SWEEPS);
-        let construction_selected_piece_slots =
-            scale(CONSTRUCTION_RESTARTS * CONSTRUCTION_BEAM_WIDTH);
+        // One expansion per (restart, rank, beam slot), plus the one off-beam
+        // best-ever parent expansion mode 25 may add at every (restart, rank).
+        let construction_selected_piece_slots = scale(
+            CONSTRUCTION_RESTARTS * (CONSTRUCTION_BEAM_WIDTH + CONSTRUCTION_BEST_EVER_PARENTS),
+        );
 
         let max_selected_piece_slots = POPULATION_SELECTED_PIECE_SLOTS
             .saturating_add(settle_selected_piece_slots)
@@ -1026,8 +1042,9 @@ fn run_population(
             | 19
             | 20
             | 21
+            | 25
     ) {
-        return Err("persistent vacancy mode must be between 1 and 21".to_owned());
+        return Err("persistent vacancy mode must be between 1 and 21, or 25".to_owned());
     }
     // Modes 1-8 are the frozen diagnostic screens: their 165.0 mm target and
     // b9335a72 parent identity are part of the pinned experiment contract.
@@ -1036,7 +1053,7 @@ fn run_population(
     // and skips only the frozen fingerprint/depth equality pins while keeping
     // full parent validation.
     let target_depth_mm = match (mode, target_override_mm) {
-        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21, Some(target)) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 25, Some(target)) => {
             if !target.is_finite() || target <= 0.0 {
                 return Err(
                     "persistent vacancy target depth must be a positive finite value".to_owned(),
@@ -1044,37 +1061,42 @@ fn run_population(
             }
             target
         }
-        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21, None) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 25, None) => {
             return Err(
-                "persistent vacancy modes 9-21 require an explicit target depth".to_owned(),
+                "persistent vacancy modes 9-21 and 25 require an explicit target depth".to_owned(),
             );
         }
         (_, Some(_)) => {
-            return Err("persistent vacancy target depth overrides require modes 9-21".to_owned());
+            return Err(
+                "persistent vacancy target depth overrides require modes 9-21 and 25".to_owned(),
+            );
         }
         (_, None) => TARGET_DEPTH_MM,
     };
     if matches!(
         mode,
-        9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21
+        9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 25
     ) && !parent_is_pinned
     {
-        return Err("persistent vacancy modes 9-21 require a pinned parent fixture".to_owned());
+        return Err(
+            "persistent vacancy modes 9-21 and 25 require a pinned parent fixture".to_owned(),
+        );
     }
     diagnostics.target_depth_mm = target_depth_mm;
     if pieces.is_empty() {
         return Err("persistent vacancy experiment requires at least one piece".to_owned());
     }
-    // Mode 20 builds every pose itself, so it is the one lane that accepts an
-    // anchor with no placements: each piece then falls back to its catalog
-    // identity pose as the sole orientation prior. Every other lane derives
-    // its starting layout from the parent and still requires a complete one.
-    let anchor_is_synthetic = mode == 20 && parent.final_placements.is_empty();
+    // Modes 20/25 build every pose themselves, so they are the lanes that
+    // accept an anchor with no placements: each piece then falls back to its
+    // catalog identity pose as the sole orientation prior. Every other lane
+    // derives its starting layout from the parent and still requires a
+    // complete one.
+    let anchor_is_synthetic = matches!(mode, 20 | 25) && parent.final_placements.is_empty();
     if !anchor_is_synthetic && parent.final_placements.len() != pieces.len() {
         return Err("persistent vacancy parent is not a complete exact-valid layout".to_owned());
     }
     let parent_fast = diagnostic_fast_placements(&parent.final_placements);
-    if !matches!(mode, 13 | 20) {
+    if !matches!(mode, 13 | 20 | 25) {
         validate_and_measure_placements(pieces, &parent_fast, fast_settings)
             .map_err(|error| format!("persistent vacancy parent validation: {error}"))?;
     }
@@ -1082,14 +1104,14 @@ fn run_population(
     diagnostics.parent_fingerprint = Some(parent_fingerprint.clone());
     if !matches!(
         mode,
-        9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21
+        9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 25
     ) && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT
     {
         return Err(format!(
             "persistent vacancy parent fingerprint mismatch: expected {EXPECTED_PARENT_FINGERPRINT}, got {parent_fingerprint}"
         ));
     }
-    if !matches!(mode, 13 | 20) {
+    if !matches!(mode, 13 | 20 | 25) {
         let parent_depth = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
             .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
         if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19 | 21) {
@@ -1137,12 +1159,13 @@ fn run_population(
         )?;
         return Ok(Some((state, independent)));
     }
-    if mode == 20 {
+    if matches!(mode, 20 | 25) {
         let (state, independent) = construct_skyline_beam(
             pieces,
             fast_settings,
             target_depth_mm,
             &baseline,
+            mode == 25,
             diagnostics,
             work,
         )?;
@@ -3321,11 +3344,16 @@ fn settle_sweep(
 /// landing-frontier order through the unchanged collision machinery. Only
 /// complete candidates that pass the unchanged dual publication gates under
 /// the target settings may publish.
+///
+/// Mode 20 (`best_ever_parent = false`) and mode 25 (`best_ever_parent =
+/// true`) share this constructor; see `CONSTRUCTION_BEST_EVER_PARENTS` for the
+/// off-beam best-ever parent mechanism mode 25 adds.
 fn construct_skyline_beam(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
     target_depth_mm: f64,
     anchor: &RelaxedState,
+    best_ever_parent: bool,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<(VacancyState, f64), String> {
@@ -3335,6 +3363,7 @@ fn construct_skyline_beam(
         hint_stations_per_slot: CONSTRUCTION_HINT_STATIONS,
         rows_per_piece_cap: CONSTRUCTION_ROWS_PER_PIECE,
         finalists_per_slot: CONSTRUCTION_FINALISTS_PER_SLOT,
+        best_ever_parent_enabled: best_ever_parent,
         ..GeneralPersistentVacancyConstructionDiagnostics::default()
     };
     let result = construct_skyline_beam_inner(
@@ -3342,6 +3371,7 @@ fn construct_skyline_beam(
         fast_settings,
         target_depth_mm,
         anchor,
+        best_ever_parent,
         diagnostics,
         &mut construction,
         work,
@@ -3350,11 +3380,13 @@ fn construct_skyline_beam(
     result
 }
 
+#[allow(clippy::too_many_arguments)]
 fn construct_skyline_beam_inner(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
     target_depth_mm: f64,
     anchor: &RelaxedState,
+    best_ever_parent: bool,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     construction: &mut GeneralPersistentVacancyConstructionDiagnostics,
     work: &mut RunWork,
@@ -3400,14 +3432,38 @@ fn construct_skyline_beam_inner(
             collisions: vec![None; pieces.len()],
             last_transition: None,
         }];
+        // Off-beam best-ever expansion parent (mode 25 only): a full sidecar
+        // copy of the pool elite of the previous layer, kept live as an extra
+        // expansion parent whenever the retention step did not keep it.
+        let mut sidecar: Option<VacancyState> = None;
         let mut starved = None;
         for (rank, piece_index) in order.iter().copied().enumerate() {
             let mut children: Vec<(ConstructionChildKey, usize, VacancyState)> = Vec::new();
             let mut children_bytes = 0usize;
             let mut seen_children = BTreeSet::new();
-            for slot in 0..beam.len() {
-                let ordinal = (restart * pieces.len() + rank) * CONSTRUCTION_BEAM_WIDTH + slot;
+            // The sidecar earns its extra expansion only while it is absent
+            // from the beam: an elite the beam already carries is expanded by
+            // its own slot, and reserving a beam slot for an elite is the
+            // measured-negative variant this mechanism deliberately avoids.
+            let sidecar_parent = sidecar.as_ref().filter(|elite| {
+                !beam
+                    .iter()
+                    .any(|retained| same_state_identity(retained, elite))
+            });
+            let beam_slots = beam.len();
+            let parent_slots = beam_slots.saturating_add(usize::from(sidecar_parent.is_some()));
+            for slot in 0..parent_slots {
+                let (parent_state, ordinal) = match sidecar_parent {
+                    Some(elite) if slot == beam_slots => {
+                        (elite, best_ever_parent_ordinal(pieces.len(), restart, rank))
+                    }
+                    _ => (
+                        &beam[slot],
+                        (restart * pieces.len() + rank) * CONSTRUCTION_BEAM_WIDTH + slot,
+                    ),
+                };
                 let live_bytes = state_slice_bytes(&beam)
+                    .saturating_add(sidecar.as_ref().map_or(0, state_heap_bytes))
                     .saturating_add(children_bytes)
                     .saturating_add(2usize.saturating_mul(size_of::<VacancyState>()))
                     .saturating_add(CONSTRUCTION_TRANSIENT_BYTES);
@@ -3416,11 +3472,16 @@ fn construct_skyline_beam_inner(
                 if live_bytes > MAX_RETAINED_BYTES {
                     return Err(work.cap("construction live-state memory budget exhausted"));
                 }
+                if slot == beam_slots {
+                    construction.best_ever_parent_expansions =
+                        construction.best_ever_parent_expansions.saturating_add(1);
+                    row.best_ever_parent_layers = row.best_ever_parent_layers.saturating_add(1);
+                }
                 let finalists = construct_candidate_poses(
                     pieces,
                     work_settings,
                     anchor,
-                    &beam[slot],
+                    parent_state,
                     construction_seed,
                     ordinal,
                     piece_index,
@@ -3428,7 +3489,7 @@ fn construct_skyline_beam_inner(
                     work,
                 )?;
                 for (candidate, collision, zero_prior) in finalists {
-                    let mut child = beam[slot].clone();
+                    let mut child = parent_state.clone();
                     child.placements[piece_index] = candidate;
                     child.active[piece_index] = true;
                     child.collisions[piece_index] = Some(collision);
@@ -3461,10 +3522,26 @@ fn construct_skyline_beam_inner(
                 break;
             }
             children.sort_by(|first, second| first.0.cmp(&second.0).then(first.1.cmp(&second.1)));
+            // Sidecar refresh (mode 25): the strict minimum of this layer's
+            // whole child pool - the sidecar's own children included - under
+            // the elite comparator. Children are deduplicated by identity and
+            // the identity anchors the comparator, so the minimum is unique
+            // and the refresh is a strict comparator improvement over every
+            // other partial the layer produced.
+            let elite = best_ever_parent
+                .then(|| {
+                    children
+                        .iter()
+                        .min_by(|first, second| {
+                            construction_elite_key(&first.0).cmp(&construction_elite_key(&second.0))
+                        })
+                        .map(|(_, _, child)| child.clone())
+                })
+                .flatten();
             // Diversity quota: at most CONSTRUCTION_BEAM_CHILDREN_PER_PARENT
             // survivors per parent, backfilled from the remaining children in
             // key order when the quota-constrained pool runs short.
-            let mut per_parent = vec![0usize; beam.len()];
+            let mut per_parent = vec![0usize; parent_slots];
             let mut next = Vec::with_capacity(CONSTRUCTION_BEAM_WIDTH);
             let mut leftovers = Vec::new();
             for (_, slot, child) in children {
@@ -3473,18 +3550,31 @@ fn construct_skyline_beam_inner(
                 }
                 if per_parent[slot] < CONSTRUCTION_BEAM_CHILDREN_PER_PARENT {
                     per_parent[slot] += 1;
+                    if slot == beam_slots {
+                        construction.best_ever_parent_children_retained = construction
+                            .best_ever_parent_children_retained
+                            .saturating_add(1);
+                    }
                     next.push(child);
                 } else {
-                    leftovers.push(child);
+                    leftovers.push((slot, child));
                 }
             }
-            for child in leftovers {
+            for (slot, child) in leftovers {
                 if next.len() == CONSTRUCTION_BEAM_WIDTH {
                     break;
+                }
+                if slot == beam_slots {
+                    construction.best_ever_parent_children_retained = construction
+                        .best_ever_parent_children_retained
+                        .saturating_add(1);
                 }
                 next.push(child);
             }
             beam = next;
+            if best_ever_parent {
+                sidecar = elite;
+            }
         }
         if let Some(reason) = starved {
             row.rejection = Some(reason);
@@ -3586,6 +3676,41 @@ fn construction_child_key(
         frontier_sum,
         state_identity(child),
     )
+}
+
+/// Elite comparator for the off-beam best-ever expansion parent: the same
+/// terms as the retention key, reordered so the *exact* landing frontier leads
+/// instead of its `CONSTRUCTION_FRONTIER_BAND_GRID` band. The banding is
+/// deliberate - it keeps the trapped-void term live across frontier-raising
+/// commits - but it is also exactly what lets a strictly shallower partial be
+/// out-ranked and pruned. This comparator names that partial: the globally
+/// best-ever state under the quantity the search actually minimizes (depth),
+/// with voids, compactness and the identity anchor as the deterministic tail.
+/// It is derived from the already-computed child key, so naming the elite
+/// costs no additional geometry.
+///
+/// The comparator is only meaningful between states of the same construction
+/// rank: the constructor's beam is rank-synchronous (every state at layer `r`
+/// holds exactly the first `r` pieces of that restart's insertion order), a
+/// partial from an earlier rank is missing pieces the later layers insert and
+/// can never be a legal parent there, and every term of the key grows with the
+/// number of placed pieces. "Best-ever" is therefore scoped to the frontier
+/// rank and refreshed once per layer.
+fn construction_elite_key(key: &ConstructionChildKey) -> (i64, usize, i128, &VacancyStateIdentity) {
+    (key.2, key.1, key.3, &key.4)
+}
+
+/// Ordinal domain of the off-beam best-ever parent expansion. The ordinary
+/// beam expansions consume `[0, CONSTRUCTION_RESTARTS * pieces *
+/// CONSTRUCTION_BEAM_WIDTH)`; the one sidecar expansion of each
+/// `(restart, rank)` is placed strictly above that range, so it never draws
+/// the same seeded orientation and position streams as a beam slot and mode
+/// 20's ordinals are left exactly as they are.
+fn best_ever_parent_ordinal(piece_count: usize, restart: usize, rank: usize) -> usize {
+    CONSTRUCTION_RESTARTS
+        .saturating_mul(piece_count)
+        .saturating_mul(CONSTRUCTION_BEAM_WIDTH)
+        .saturating_add(restart.saturating_mul(piece_count).saturating_add(rank))
 }
 
 /// Seeded insertion-order portfolio: one deterministic descending key per
@@ -7174,6 +7299,111 @@ mod tests {
     }
 
     #[test]
+    fn best_ever_parent_expansion_fits_the_construction_budget() {
+        // Mode 25 spends at most one extra expansion per (restart, rank), so
+        // its worst case is CONSTRUCTION_RESTARTS * (CONSTRUCTION_BEAM_WIDTH +
+        // CONSTRUCTION_BEST_EVER_PARENTS) expansions per piece - exactly what
+        // the generalized construction term funds, on any instance.
+        for piece_count in [1usize, 2, 3, 17, 20, 61, 137, 400] {
+            let quotas = VacancyQuotas::for_piece_count(piece_count);
+            let beam_slots = CONSTRUCTION_RESTARTS * CONSTRUCTION_BEAM_WIDTH * piece_count;
+            let sidecar_slots =
+                CONSTRUCTION_RESTARTS * CONSTRUCTION_BEST_EVER_PARENTS * piece_count;
+            assert_eq!(
+                quotas.construction_selected_piece_slots,
+                beam_slots + sidecar_slots,
+                "piece count {piece_count}"
+            );
+            assert!(
+                beam_slots + sidecar_slots <= quotas.max_selected_piece_slots,
+                "piece count {piece_count}"
+            );
+            // Every expansion may burn the full construction row cap and one
+            // hint-prior collision build per prior, and every child it keeps
+            // costs one trapped-void flood fill.
+            assert!(
+                (beam_slots + sidecar_slots).saturating_mul(CONSTRUCTION_ROWS_PER_PIECE)
+                    <= quotas.max_exact_finalist_rows,
+                "piece count {piece_count}"
+            );
+            assert!(
+                (beam_slots + sidecar_slots).saturating_mul(CONSTRUCTION_HINT_PRIORS)
+                    <= quotas.max_experimental_collision_builds,
+                "piece count {piece_count}"
+            );
+            assert!(
+                (beam_slots + sidecar_slots)
+                    .saturating_mul(CONSTRUCTION_FINALISTS_PER_SLOT)
+                    .saturating_add(CONSTRUCTION_RESTARTS)
+                    <= quotas.construction_void_scan_cap,
+                "piece count {piece_count}"
+            );
+        }
+    }
+
+    #[test]
+    fn best_ever_parent_ordinals_never_collide_with_beam_ordinals() {
+        // The sidecar expansion must not draw a beam slot's seeded
+        // orientation and position streams, and mode 20's ordinals must stay
+        // exactly where they are.
+        for piece_count in [1usize, 2, 3, 17, 61] {
+            let mut beam_ordinals = BTreeSet::new();
+            let mut sidecar_ordinals = BTreeSet::new();
+            for restart in 0..CONSTRUCTION_RESTARTS {
+                for rank in 0..piece_count {
+                    for slot in 0..CONSTRUCTION_BEAM_WIDTH {
+                        beam_ordinals.insert(
+                            (restart * piece_count + rank) * CONSTRUCTION_BEAM_WIDTH + slot,
+                        );
+                    }
+                    assert!(
+                        sidecar_ordinals.insert(best_ever_parent_ordinal(
+                            piece_count,
+                            restart,
+                            rank
+                        )),
+                        "piece count {piece_count}"
+                    );
+                }
+            }
+            assert!(
+                beam_ordinals.is_disjoint(&sidecar_ordinals),
+                "piece count {piece_count}"
+            );
+            assert_eq!(
+                sidecar_ordinals.len(),
+                CONSTRUCTION_RESTARTS * piece_count,
+                "piece count {piece_count}"
+            );
+        }
+    }
+
+    #[test]
+    fn construction_elite_key_leads_with_the_exact_frontier() {
+        // The retention key bands the frontier and then prefers the fewer
+        // trapped voids; the elite comparator drops the banding, so the
+        // strictly shallower partial leads even when it carries more voids.
+        // That disagreement is exactly when the sidecar is off-beam.
+        let shallow_state = state_with_active_mask(vec![true, false]);
+        let deep_state = state_with_active_mask(vec![false, true]);
+        let shallow: ConstructionChildKey = (0, 9, 100, 100, state_identity(&shallow_state));
+        let deep: ConstructionChildKey = (0, 2, 400, 400, state_identity(&deep_state));
+        assert!(
+            shallow.0 == deep.0 && shallow.2 < deep.2,
+            "the two children must share a frontier band"
+        );
+        assert!(deep < shallow, "retention prefers the fewer-void child");
+        assert!(
+            construction_elite_key(&shallow) < construction_elite_key(&deep),
+            "the elite comparator prefers the strictly shallower child"
+        );
+        // Inside one band the elite comparator still falls back to the void
+        // count only after the exact frontier ties.
+        let tied: ConstructionChildKey = (0, 1, 100, 100, state_identity(&deep_state));
+        assert!(construction_elite_key(&tied) < construction_elite_key(&shallow));
+    }
+
+    #[test]
     fn bounded_reinsertion_fits_the_construction_budget() {
         // Mode 24 charges one construction slot expansion per reinserted
         // piece and one collision build per kept piece. A run ejects at most
@@ -7231,6 +7461,10 @@ mod tests {
         assert_eq!(LNS_ROUNDS, 24);
         assert_eq!(CONSTRUCTION_RESTARTS, 8);
         assert_eq!(CONSTRUCTION_BEAM_WIDTH, 6);
+        // Mode 25's off-beam best-ever parent is one extra expansion per
+        // (restart, rank): the construction term funds 7, not 6, expansions
+        // per restart and rank.
+        assert_eq!(CONSTRUCTION_BEST_EVER_PARENTS, 1);
         assert_eq!(CONSTRUCTION_ROWS_PER_PIECE, 320);
         assert_eq!(CONSTRUCTION_HINT_PRIORS, 2);
         assert_eq!(CONSTRUCTION_FINALISTS_PER_SLOT, 4);
@@ -7257,7 +7491,7 @@ mod tests {
             let settle = 3 * pieces;
             let reconstruction = 2 * pieces;
             let lns_settle = 73 * pieces;
-            let construction = 8 * 6 * pieces;
+            let construction = 8 * (6 + 1) * pieces;
             let reinsert = 4_040;
             let slots = population + settle + reconstruction + lns_settle + reinsert + construction;
             let streams = slots * 12;
@@ -7396,61 +7630,71 @@ mod tests {
         // generalized to any instance; they are asserted here - and nowhere in
         // engine code - to prove the formulas above reproduce the frozen
         // 61-piece budgets bit for bit.
+        //
+        // One term has moved since that certification: the construction lane
+        // now funds CONSTRUCTION_BEAM_WIDTH + CONSTRUCTION_BEST_EVER_PARENTS
+        // expansions per (restart, rank) instead of CONSTRUCTION_BEAM_WIDTH,
+        // so mode 25's off-beam best-ever parent is charged to the same ledger
+        // as every ordinary beam expansion. At 61 pieces that is 8 * 7 * 61 =
+        // 3_416 construction slots in place of 8 * 6 * 61 = 2_928, and every
+        // ceiling derived from it grows by the same 488 slots. Raising a
+        // ceiling can only turn a `cap:` failure into a completed run, so no
+        // run that already completed - mode 20's included - changes behavior.
         let mixed61 = VacancyQuotas::for_piece_count(61);
         assert_eq!(mixed61.settle_selected_piece_slots, 183);
         assert_eq!(mixed61.reconstruction_selected_piece_slots, 122);
         assert_eq!(mixed61.lns_settle_selected_piece_slots, 73 * 61);
-        assert_eq!(mixed61.construction_selected_piece_slots, 2_928);
+        assert_eq!(mixed61.construction_selected_piece_slots, 3_416);
         assert_eq!(
             CONSTRUCTION_HINT_PRIORS * mixed61.construction_selected_piece_slots,
-            5_856
+            6_832
         );
-        assert_eq!(mixed61.construction_void_scan_cap, 8 * 61 * 6 * 4 + 8);
+        assert_eq!(mixed61.construction_void_scan_cap, 8 * 61 * 7 * 4 + 8);
         assert_eq!(mixed61.group_drop_cuts, 61);
         assert_eq!(mixed61.group_drop_pair_visits, 3 * 61 * 64 * 61);
         assert_eq!(mixed61.bridge_void_scan_cap, 24 * 62);
         assert_eq!(mixed61.separation_pair_visits, 24 * 200 * 96 * 61);
         assert_eq!(
             mixed61.max_selected_piece_slots,
-            640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928
+            640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 3_416
         );
         assert_eq!(
             mixed61.max_orientation_streams,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 3_416) * 12
         );
         assert_eq!(
             mixed61.max_position_source_attempts,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 529
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 3_416) * 12 * 529
         );
         assert_eq!(
             mixed61.max_returned_positions,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 3_416) * 12 * 32
         );
         assert_eq!(
             mixed61.max_hazard_queries,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 3_416) * 12 * 32
         );
         assert_eq!(
             mixed61.max_proxy_pressure_visits,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 32 * 61
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 3_416) * 12 * 32 * 61
         );
         assert_eq!(
             mixed61.max_exact_finalist_rows,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 2_928 * 320
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 3_416 * 320
         );
         assert_eq!(
             mixed61.max_experimental_collision_builds,
             3 * 61
-                + (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12
+                + (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 3_416) * 12
                 + ((640 + 26) * 8
                     + 183 * 64
                     + 122 * 192
                     + 73 * 61 * 64
                     + 4_040 * 192
-                    + 2_928 * 320)
+                    + 3_416 * 320)
                 + 122
                 + 4_040
-                + 2 * 2_928
+                + 2 * 3_416
                 + 24 * (4_040 / 2 + 200 * 96)
         );
         assert_eq!(
@@ -7461,7 +7705,7 @@ mod tests {
                     + 122 * 192
                     + 73 * 61 * 64
                     + 4_040 * 192
-                    + 2_928 * 320)
+                    + 3_416 * 320)
                     * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61

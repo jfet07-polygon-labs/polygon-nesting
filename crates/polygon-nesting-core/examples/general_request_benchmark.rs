@@ -165,8 +165,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if persistent_vacancy_mode > 24 {
-        return Err("persistent vacancy mode must be between 0 and 24".into());
+    if persistent_vacancy_mode > 25 {
+        return Err("persistent vacancy mode must be between 0 and 25".into());
     }
     let persistent_vacancy_parent_fixture = arguments.next();
     // Modes 22 (alternation fixpoint), 23 (recombination) and 24
@@ -176,7 +176,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // measured short-axis span; mode 24 treats it as an absolute depth bound
     // (mm) that no reinserted pose may exceed, which is only meaningful
     // below the parent layout's own depth. Every other mode treats it as an
-    // absolute target depth (mm), unchanged.
+    // absolute target depth (mm), unchanged. Mode 25 is mode 20's skyline
+    // constructor with the off-beam best-ever expansion parent armed and
+    // takes the same arguments as mode 20.
     let persistent_vacancy_target_depth_mm = arguments
         .next()
         .map(|value| value.parse::<f64>())
