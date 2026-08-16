@@ -492,3 +492,12 @@ attempts), placing it in the same terminal class as every converged basin
 this program has produced. The polygon-profile skyline (committed) then
 shifts the typical constructor band from 215.8 to 214.3 median with best
 typical 211.297: the luck-harvest now runs on the strictly better family.
+
+The sixteen-salt harvest on the profile constructor decouples two
+quantities the program had been conflating: constructor depth and endpoint
+quality. The deepest basin (salt 11, 208.782) descends only to 201.260
+(yield 7.5), while a mid-band basin (salt 1, 211.297) descends to 195.260
+(yield 16.0) - the second-best endpoint the program has produced, behind
+the standing 191.572. Basin structure, not basin depth, determines what
+the descent machinery can extract, so the harvest protocol now descends
+across the band instead of cherry-picking the deepest screens.

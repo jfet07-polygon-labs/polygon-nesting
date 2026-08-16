@@ -1,0 +1,22 @@
+salt 0 target 320.000: 216.848
+salt 1 target 320.001: 211.297
+salt 2 target 320.002: 215.825
+salt 3 target 320.003: 214.251
+salt 4 target 320.004: 212.235
+salt 5 target 320.005: 215.948
+salt 6 target 320.006: 216.852
+salt 7 target 320.007: 212.952
+salt 8 target 320.008: 215.870
+salt 9 target 320.009: 218.082
+salt 10 target 320.010: 214.521
+salt 11 target 320.011: 208.782
+salt 12 target 320.012: 215.633
+salt 13 target 320.013: 217.409
+salt 14 target 320.014: 217.157
+salt 15 target 320.015: 213.262
+BEST SALTS: [('208.782', 11), ('211.297', 1), ('212.235', 4)]
+descending salt 11 (208.782)
+salt 11: CONSTRUCTED START: 208.782 BEST: 201.260 YIELD: 7.522
+descending salt 1 (211.297)
+salt 1: CONSTRUCTED START: 211.297 BEST: 195.260 YIELD: 16.037
+PORTFOLIO DONE
