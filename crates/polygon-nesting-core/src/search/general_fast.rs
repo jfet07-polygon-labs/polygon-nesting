@@ -33,7 +33,13 @@ const DEFAULT_MAX_PAIRING_BAND_VARIANTS: usize = 4;
 const DEFAULT_MAX_PARTIAL_LAYOUTS: usize = 16;
 const DEFAULT_MAX_TIGHTENING_PASSES: usize = 4;
 const DEFAULT_MAX_REPAIR_TARGETS: usize = 64;
-const CONSERVATIVE_OFFSET_ALLOWANCE_MM: f64 = 0.002;
+/// Default width of the conservative allowance the *search* envelope adds on
+/// top of the requested clearances (see
+/// [`GeneralFastSettings::search_offset_allowance_mm`]). It is a search-side
+/// safety buffer only: publication is always validated against the exact
+/// requested clearances by [`validate_publication`], which this constant never
+/// feeds.
+pub const DEFAULT_SEARCH_OFFSET_ALLOWANCE_MM: f64 = 0.002;
 const PROPOSAL_BUDGET_MULTIPLIER: usize = 8;
 const PRIMARY_ORIENTATION_EVALUATION_NUMERATOR: usize = 1;
 const PRIMARY_ORIENTATION_EVALUATION_DENOMINATOR: usize = 2;
@@ -55,6 +61,18 @@ pub struct GeneralFastSettings {
     pub sheet_edge_clearance_mm: Option<f64>,
     pub clearance_safety_margin_mm: f64,
     pub flattening_sag_tolerance_mm: f64,
+    /// Extra width added to the collision offset used by the *search*
+    /// envelope, on top of `total_padding_mm / 2 + clearance_safety_margin_mm`.
+    ///
+    /// The envelope is a conservative superset of the exact clearance
+    /// contract: a pose that clears the envelope always clears the requested
+    /// clearances, so search never has to run the exact validator to reject an
+    /// obviously illegal pose. Publication is validated separately and
+    /// exactly, so shrinking this allowance only widens the set of legal
+    /// placements search may visit; it never relaxes what may be published.
+    /// `0.0` removes the allowance, making the search envelope coincide with
+    /// the requested clearances.
+    pub search_offset_allowance_mm: f64,
     pub angle_seed_count: usize,
     pub max_angles_per_piece: usize,
     pub max_evaluations_per_piece: usize,
@@ -81,6 +99,7 @@ impl GeneralFastSettings {
             sheet_edge_clearance_mm: None,
             clearance_safety_margin_mm: 0.0,
             flattening_sag_tolerance_mm: 0.0,
+            search_offset_allowance_mm: DEFAULT_SEARCH_OFFSET_ALLOWANCE_MM,
             angle_seed_count: DEFAULT_ANGLE_SEED_COUNT,
             max_angles_per_piece: DEFAULT_MAX_ANGLES_PER_PIECE,
             max_evaluations_per_piece: DEFAULT_MAX_EVALUATIONS_PER_PIECE,
@@ -2104,7 +2123,7 @@ fn effective_sheet_edge_clearance_mm(settings: GeneralFastSettings) -> f64 {
 pub(crate) fn collision_expansion_mm(settings: GeneralFastSettings) -> f64 {
     settings.total_padding_mm / 2.0
         + settings.clearance_safety_margin_mm
-        + CONSERVATIVE_OFFSET_ALLOWANCE_MM
+        + settings.search_offset_allowance_mm
 }
 
 fn oriented_collision(
@@ -2188,6 +2207,10 @@ fn validate_settings(settings: GeneralFastSettings) -> Result<(), GeneralFastErr
         (
             "flattening sag tolerance",
             settings.flattening_sag_tolerance_mm,
+        ),
+        (
+            "search offset allowance",
+            settings.search_offset_allowance_mm,
         ),
     ] {
         if !value.is_finite() || value < 0.0 {

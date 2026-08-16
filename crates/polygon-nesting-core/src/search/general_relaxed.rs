@@ -12560,7 +12560,7 @@ mod tests {
         // `max_y`: the large square reaches `large_long_axis + 10`, the small
         // one reaches 48. Both poses are held a millimetre off the sheet
         // edge, since the collision offset an exact validation rebuilds adds
-        // `CONSERVATIVE_OFFSET_ALLOWANCE_MM` in every direction.
+        // `search_offset_allowance_mm` in every direction.
         let polygons = [square(10.0), square(8.0)];
         let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
         let parent = GeneralCoupledSeparatorArmDiagnostics {
