@@ -771,3 +771,20 @@ records are kept with their exact request hashes. The full from-scratch
 pipeline on the true contract - eight constructions, band descents, then
 alternation of the best three - runs alongside, and its fixpoint is the
 number the session owner's acceptance criterion will be judged against.
+
+The 165.231 reseed converges to 164.470 mm on the true 5.0/5.0 contract -
+the new absolute record on the honest scale. The alternation chain from
+the 5.002-track layout ran two productive cycles (separator 165.024 ->
+descent 164.777 -> separator 164.598 -> descent 164.470) before the
+joint fixpoint certified against both machines; the pinned parent
+replays exact-valid at 164.470 with independent source-ring depth and
+fingerprint ecabb250... under request sha ecfe126f.... Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/record-164.470/
+(seed, full chain, pinned parent, revalidation replay). The gap to the
+Sparrow 3-second calibration (154.449) is now 10.02 mm on an identical
+clearance contract. The first from-scratch run of the same pipeline
+stalled at the construction band: the band-descent driver still pointed
+at the pre-contract-change isolated binary, which rejects a zero sag
+tolerance, so every hop crashed and the eight constructions
+(197.3-207.1) never descended - the resumed pipeline runs on the HEAD
+binary now, and its fixpoint remains the acceptance-criterion number.
