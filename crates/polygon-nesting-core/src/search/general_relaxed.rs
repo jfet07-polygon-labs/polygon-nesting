@@ -99,6 +99,13 @@ const ALTERNATION_MAX_CYCLES: usize = 6;
 // introducing a new tuned literal.
 #[cfg(feature = "jagua-experimental")]
 const ALTERNATION_DESCENT_TARGET_STEP_MM: f64 = persistent_vacancy::CONSTRUCTION_DROP_LADDER_MM[1];
+// Mode 24 (bounded-depth reinsertion) tests compression by ejection and
+// reconstruction rather than compression by overlap: it ejects exactly the
+// pieces that stick out past a hard bound and rebuilds them with the
+// construction insertion machinery under a sheet clamped to that bound, so a
+// pose that would exceed the bound is never confirmed in the first place.
+// The mechanism lives in the persistent-vacancy module beside the
+// construction primitives it reuses; only the mode dispatch is here.
 #[cfg(feature = "jagua-experimental")]
 const COUPLED_SEPARATOR_TARGETS: usize = 32;
 const COUPLED_SEPARATOR_WORKERS: usize = 8;
@@ -407,6 +414,8 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub alternation: Option<GeneralPersistentVacancyAlternationDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub recombination: Option<GeneralPersistentVacancyRecombinationDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bounded_reinsertion: Option<GeneralPersistentVacancyBoundedReinsertionDiagnostics>,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
 }
@@ -457,6 +466,50 @@ pub struct GeneralPersistentVacancyRecombinationDiagnostics {
     pub hybrid_independent_depth_mm: f64,
     pub legalization_seed_depth_mm: f64,
     pub legalized_depth_mm: f64,
+}
+
+/// Mode-24 (bounded-depth reinsertion) diagnostics: the hard bound, the
+/// ejection/reinsertion census it induced on the parent, one row per
+/// reinserted piece in the order they were replaced, and the final measured
+/// depth when every ejected piece found a pose inside the bound.
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyBoundedReinsertionDiagnostics {
+    pub bound_mm: f64,
+    pub parent_depth_mm: f64,
+    pub kept_count: usize,
+    pub ejected_count: usize,
+    pub reinserted_count: usize,
+    /// Reinsertion attempts in the order they ran (displaced pieces by
+    /// descending area, `pieceId` breaking ties). A failing run stops at the
+    /// first piece with no in-bound pose, so this is a prefix of the
+    /// ejected set rather than a permutation of it.
+    pub pieces: Vec<GeneralPersistentVacancyBoundedReinsertionPieceRow>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failed_piece_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub final_depth_mm: Option<f64>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyBoundedReinsertionPieceRow {
+    pub piece_id: String,
+    /// The piece's own long-axis extent in the parent layout, which is what
+    /// put it over the bound and got it ejected.
+    pub parent_extent_mm: f64,
+    /// Exact-valid poses the construction machinery returned for this slot.
+    pub candidates_considered: usize,
+    /// Candidates discarded because their measured extent exceeded the bound.
+    /// The insertion sheet is already clamped to the bound, so this counting
+    /// only ever fires if the two measures disagree; it is the explicit
+    /// contract check behind the geometric one.
+    pub bound_rejections: usize,
+    pub reinserted: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub placed_extent_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failure_reason: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
@@ -2452,6 +2505,13 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                         parent_source,
                         secondary_pinned_vacancy_parent,
                     ),
+                    24 => persistent_vacancy::run_bounded_reinsertion(
+                        pieces,
+                        fast_settings,
+                        relaxed_settings,
+                        effective_parent,
+                        parent_source,
+                    ),
                     mode => persistent_vacancy::run_persistent_vacancy_population(
                         pieces,
                         fast_settings,
@@ -2623,16 +2683,14 @@ fn run_alternation_fixpoint(
         parent_source,
         ..GeneralPersistentVacancyDiagnostics::default()
     };
-    let Some(starting_target_depth_mm) = relaxed_settings.persistent_vacancy_target_depth_mm
-    else {
+    let Some(starting_target_depth_mm) = relaxed_settings.persistent_vacancy_target_depth_mm else {
         diagnostics.failure_reason =
             Some("persistent vacancy mode 22 requires an explicit target depth".to_owned());
         return diagnostics;
     };
     if !starting_target_depth_mm.is_finite() || starting_target_depth_mm <= 0.0 {
-        diagnostics.failure_reason = Some(
-            "persistent vacancy target depth must be a positive finite value".to_owned(),
-        );
+        diagnostics.failure_reason =
+            Some("persistent vacancy target depth must be a positive finite value".to_owned());
         return diagnostics;
     }
     diagnostics.target_depth_mm = starting_target_depth_mm;
@@ -2644,10 +2702,8 @@ fn run_alternation_fixpoint(
 
     let parent_placements = fast_placements_from_coupled_diagnostics(&parent.final_placements);
     diagnostics.parent_fingerprint = Some(coupled_fast_placement_fingerprint(&parent_placements));
-    if let Err(error) = validate_and_measure_placements(pieces, &parent_placements, fast_settings)
-    {
-        diagnostics.failure_reason =
-            Some(format!("persistent vacancy parent validation: {error}"));
+    if let Err(error) = validate_and_measure_placements(pieces, &parent_placements, fast_settings) {
+        diagnostics.failure_reason = Some(format!("persistent vacancy parent validation: {error}"));
         return diagnostics;
     }
     let mut current_best =
@@ -2990,8 +3046,8 @@ fn run_recombination(
     // it is the depth the fixed epoch budget could theoretically contract
     // back down to the hybrid's own tight bound, using the run's own
     // existing epoch count and shrink ratio (no new absolute-mm literal).
-    let epoch_contraction_reach = (1.0 - relaxed_settings.initial_shrink_ratio)
-        .powf(relaxed_settings.epochs as f64);
+    let epoch_contraction_reach =
+        (1.0 - relaxed_settings.initial_shrink_ratio).powf(relaxed_settings.epochs as f64);
     let seed_depth_mm = if epoch_contraction_reach.is_finite() && epoch_contraction_reach > 0.0 {
         hybrid_independent_depth_mm / epoch_contraction_reach
     } else {
@@ -12457,10 +12513,314 @@ mod tests {
         let mut settings = coupled_experiment_test_settings(23);
         settings.persistent_vacancy_target_depth_mm = Some(0.5);
         let first = JobPool::new(Some(1)).run_scoped(|| {
-            run_recombination(&pieces, fast_settings, settings, &parent_a, None, Some(&parent_b))
+            run_recombination(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent_a,
+                None,
+                Some(&parent_b),
+            )
         });
         let second = JobPool::new(Some(1)).run_scoped(|| {
-            run_recombination(&pieces, fast_settings, settings, &parent_a, None, Some(&parent_b))
+            run_recombination(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent_a,
+                None,
+                Some(&parent_b),
+            )
+        });
+        assert_eq!(first, second);
+    }
+
+    /// Two squares whose parent poses both sit deep in the sheet. `long_axis`
+    /// picks the large piece's long-axis anchor, which is what decides
+    /// whether a given bound ejects one piece or both.
+    #[cfg(feature = "jagua-experimental")]
+    fn two_piece_bounded_reinsertion_fixture(
+        large_long_axis: f64,
+    ) -> (
+        [PolygonSet; 2],
+        GeneralFastSettings,
+        GeneralCoupledSeparatorArmDiagnostics,
+    ) {
+        // `deterministic_test` leaves padding and edge clearance at zero, so
+        // a piece's measured long-axis extent is exactly its transformed
+        // `max_y`: the large square reaches `large_long_axis + 10`, the small
+        // one reaches 48. Both poses are held a millimetre off the sheet
+        // edge, since the collision offset an exact validation rebuilds adds
+        // `CONSERVATIVE_OFFSET_ALLOWANCE_MM` in every direction.
+        let polygons = [square(10.0), square(8.0)];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let parent = GeneralCoupledSeparatorArmDiagnostics {
+            final_placements: vec![
+                GeneralCoupledSeparatorPlacementDiagnostics {
+                    piece_id: "large".to_owned(),
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_short_axis: 1.0,
+                    translate_long_axis: large_long_axis,
+                },
+                GeneralCoupledSeparatorPlacementDiagnostics {
+                    piece_id: "small".to_owned(),
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_short_axis: 30.0,
+                    translate_long_axis: 40.0,
+                },
+            ],
+            ..GeneralCoupledSeparatorArmDiagnostics::default()
+        };
+        (polygons, fast_settings, parent)
+    }
+
+    #[cfg(feature = "jagua-experimental")]
+    fn bounded_reinsertion_test_pieces(polygons: &[PolygonSet; 2]) -> [GeneralFastPiece<'_>; 2] {
+        [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ]
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn bounded_reinsertion_requires_a_positive_finite_bound() {
+        let (polygons, fast_settings, parent) = two_piece_bounded_reinsertion_fixture(0.0);
+        let pieces = bounded_reinsertion_test_pieces(&polygons);
+        let mut settings = coupled_experiment_test_settings(29);
+
+        settings.persistent_vacancy_target_depth_mm = None;
+        let missing = persistent_vacancy::run_bounded_reinsertion(
+            &pieces,
+            fast_settings,
+            settings,
+            &parent,
+            None,
+        );
+        assert!(!missing.attempted);
+        assert_eq!(missing.mode, 24);
+        assert!(missing
+            .failure_reason
+            .as_deref()
+            .is_some_and(|reason| reason.contains("requires an explicit depth bound")));
+        assert!(missing.bounded_reinsertion.is_none());
+
+        for bad_bound in [0.0, -1.0, f64::NAN, f64::INFINITY] {
+            settings.persistent_vacancy_target_depth_mm = Some(bad_bound);
+            let result = persistent_vacancy::run_bounded_reinsertion(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent,
+                None,
+            );
+            assert!(!result.attempted, "bound {bad_bound} unexpectedly accepted");
+            assert!(
+                result
+                    .failure_reason
+                    .as_deref()
+                    .is_some_and(|reason| reason.contains("positive finite value")),
+                "bound {bad_bound} unexpectedly accepted"
+            );
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn bounded_reinsertion_requires_a_complete_parent() {
+        let polygons = [square(10.0), square(8.0)];
+        let pieces = bounded_reinsertion_test_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let mut settings = coupled_experiment_test_settings(31);
+        settings.persistent_vacancy_target_depth_mm = Some(30.0);
+        let result = persistent_vacancy::run_bounded_reinsertion(
+            &pieces,
+            fast_settings,
+            settings,
+            &GeneralCoupledSeparatorArmDiagnostics::default(),
+            None,
+        );
+        assert!(!result.attempted);
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("not a complete exact-valid layout"));
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn bounded_reinsertion_ejects_only_the_pieces_past_the_bound() {
+        // The large square ends at 11 mm and the small one at 48 mm, so a
+        // 30 mm bound ejects exactly the small piece and pins the large one.
+        let (polygons, fast_settings, parent) = two_piece_bounded_reinsertion_fixture(1.0);
+        let pieces = bounded_reinsertion_test_pieces(&polygons);
+        let mut settings = coupled_experiment_test_settings(37);
+        settings.persistent_vacancy_target_depth_mm = Some(30.0);
+        let result = JobPool::new(Some(1)).run_scoped(|| {
+            persistent_vacancy::run_bounded_reinsertion(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent,
+                None,
+            )
+        });
+        assert!(result.attempted, "{:?}", result.failure_reason);
+        assert!(result.exact_valid, "{:?}", result.failure_reason);
+        assert_eq!(result.mode, 24);
+        assert_eq!(result.final_placements.len(), pieces.len());
+
+        let bounded = result.bounded_reinsertion.clone().unwrap();
+        assert_eq!(bounded.bound_mm, 30.0);
+        assert_eq!(bounded.parent_depth_mm, 48.0);
+        assert_eq!(bounded.kept_count, 1);
+        assert_eq!(bounded.ejected_count, 1);
+        assert_eq!(bounded.reinserted_count, 1);
+        assert_eq!(bounded.pieces.len(), 1);
+        assert_eq!(bounded.pieces[0].piece_id, "small");
+        assert_eq!(bounded.pieces[0].parent_extent_mm, 48.0);
+        assert!(bounded.pieces[0].reinserted);
+        assert!(bounded.failed_piece_id.is_none());
+        // The whole point of the mode: the published layout is inside the
+        // bound, so it is strictly shallower than the parent it compressed.
+        let final_depth_mm = bounded.final_depth_mm.unwrap();
+        assert!(
+            final_depth_mm <= 30.0,
+            "final depth {final_depth_mm} exceeded the bound"
+        );
+        assert_eq!(result.independent_depth_mm, Some(final_depth_mm));
+        assert!(final_depth_mm < bounded.parent_depth_mm);
+        // The kept piece never moved.
+        let large = result
+            .final_placements
+            .iter()
+            .find(|placement| placement.piece_id == "large")
+            .unwrap();
+        assert_eq!(large.translate_short_axis, 1.0);
+        assert_eq!(large.translate_long_axis, 1.0);
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn bounded_reinsertion_replaces_displaced_pieces_by_descending_area() {
+        // Both squares now end past a 20 mm bound (the large one at 50 mm,
+        // the small one at 48 mm), so both are ejected and the reinsertion
+        // order is observable: the 100 mm2 square before the 64 mm2 one.
+        let (polygons, fast_settings, parent) = two_piece_bounded_reinsertion_fixture(40.0);
+        let pieces = bounded_reinsertion_test_pieces(&polygons);
+        let mut settings = coupled_experiment_test_settings(41);
+        settings.persistent_vacancy_target_depth_mm = Some(20.0);
+        let result = JobPool::new(Some(1)).run_scoped(|| {
+            persistent_vacancy::run_bounded_reinsertion(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent,
+                None,
+            )
+        });
+        assert!(result.attempted, "{:?}", result.failure_reason);
+        assert!(result.exact_valid, "{:?}", result.failure_reason);
+
+        let bounded = result.bounded_reinsertion.clone().unwrap();
+        assert_eq!(bounded.parent_depth_mm, 50.0);
+        assert_eq!(bounded.kept_count, 0);
+        assert_eq!(bounded.ejected_count, 2);
+        assert_eq!(bounded.reinserted_count, 2);
+        assert_eq!(
+            bounded
+                .pieces
+                .iter()
+                .map(|row| row.piece_id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["large", "small"]
+        );
+        assert_eq!(
+            result.initial_inactive_piece_ids,
+            vec!["large".to_owned(), "small".to_owned()]
+        );
+        for row in &bounded.pieces {
+            let placed = row.placed_extent_mm.unwrap();
+            assert!(placed <= 20.0, "piece {} placed at {placed}", row.piece_id);
+        }
+        assert!(bounded.final_depth_mm.unwrap() <= 20.0);
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn bounded_reinsertion_fails_cleanly_under_an_impossible_bound() {
+        // No pose of a 10 mm square fits a 5 mm strip, so the bound is
+        // unreachable. The mode must report that, not exceed it.
+        let (polygons, fast_settings, parent) = two_piece_bounded_reinsertion_fixture(40.0);
+        let pieces = bounded_reinsertion_test_pieces(&polygons);
+        let mut settings = coupled_experiment_test_settings(43);
+        settings.persistent_vacancy_target_depth_mm = Some(5.0);
+        let result = JobPool::new(Some(1)).run_scoped(|| {
+            persistent_vacancy::run_bounded_reinsertion(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent,
+                None,
+            )
+        });
+        assert!(result.attempted, "{:?}", result.failure_reason);
+        assert!(!result.exact_valid);
+        assert!(result.independent_depth_mm.is_none());
+        assert!(result.final_placements.is_empty());
+        assert!(result
+            .failure_reason
+            .as_deref()
+            .is_some_and(|reason| reason.contains("within the 5 mm bound")));
+
+        let bounded = result.bounded_reinsertion.clone().unwrap();
+        assert_eq!(bounded.ejected_count, 2);
+        assert_eq!(bounded.reinserted_count, 0);
+        assert_eq!(bounded.failed_piece_id.as_deref(), Some("large"));
+        assert!(bounded.final_depth_mm.is_none());
+        // The run stops at the first unplaceable piece rather than working
+        // through the rest of the ejected set.
+        assert_eq!(bounded.pieces.len(), 1);
+        assert!(!bounded.pieces[0].reinserted);
+        assert!(bounded.pieces[0].failure_reason.is_some());
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn bounded_reinsertion_is_deterministic_across_repeated_runs() {
+        let (polygons, fast_settings, parent) = two_piece_bounded_reinsertion_fixture(1.0);
+        let pieces = bounded_reinsertion_test_pieces(&polygons);
+        let mut settings = coupled_experiment_test_settings(47);
+        settings.persistent_vacancy_target_depth_mm = Some(30.0);
+        let first = JobPool::new(Some(1)).run_scoped(|| {
+            persistent_vacancy::run_bounded_reinsertion(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent,
+                None,
+            )
+        });
+        let second = JobPool::new(Some(1)).run_scoped(|| {
+            persistent_vacancy::run_bounded_reinsertion(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent,
+                None,
+            )
         });
         assert_eq!(first, second);
     }
