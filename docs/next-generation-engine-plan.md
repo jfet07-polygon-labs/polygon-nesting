@@ -759,3 +759,15 @@ band (200.6-208.8 over six salts) is descending now. The session owner's
 acceptance criterion is recorded: the from-scratch line must reach the
 168-family on its own for the program to count as complete; the imported
 line serves as the measuring stick, not the destination.
+
+First fixpoints on the true 5.0/5.0 contract, now that the engine honors
+requested clearances exactly: the imported line lands at 166.832 mm, the
+recompressed old endpoint at 179.006, a native single-run seed at
+181.469. Trajectory chaos spans several millimetres across contract
+micro-variants (the 5.002 track had compressed the same imported state to
+165.231, and that layout is feasible under 5.0 too - its reseed runs
+now), so state-seeded alternation remains the instrument and per-track
+records are kept with their exact request hashes. The full from-scratch
+pipeline on the true contract - eight constructions, band descents, then
+alternation of the best three - runs alongside, and its fixpoint is the
+number the session owner's acceptance criterion will be judged against.
