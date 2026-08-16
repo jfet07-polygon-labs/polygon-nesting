@@ -910,3 +910,24 @@ basin-diversity generator this is two benchmark runs versus a
 and waves from the hybrid basins run next, alongside a third
 16-salt widening. Evidence:
 docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/crossover-recombination/.
+
+THE FROM-SCRATCH LINE REACHES THE ACCEPTANCE CRITERION: 167.849 mm,
+below the 168-family, with no imported basin anywhere in the lineage.
+The break belongs to crossover descendants. The certified pure locks
+(169.658/169.731) could not move, but recombining them minted basins
+whose waves escape lower, and two recombined lineages descended in
+parallel: A (170.840 -> 168.824 -> 168.459, now locked x4) and B
+(170.515 -> 169.087 -> 168.531 -> 167.849). Replay-validated
+(exactValid, 167.849). Full lineage: salt 320.011 -> 202.275 ->
+descent 190.010 -> alternation 179.006 -> wave 171.238 -> 169.731 ->
+sibling 169.658 -> crossover 175.363 -> 170.840/170.515 -> waves ->
+167.849. Meanwhile the forced-compression class closes as matched
+negatives: the separator target is passive (165/167/169 all return
+incumbent), uniform squeeze (0.5-4%) and binding-stack nudges (1-4
+mm, 3-10 pieces) all relegalize to the ~179 shelf, and alternations
+from shelf-relaxed states are absorbed by the 179.006 attractor. The
+distinguishing variable is whether a perturbed state legalizes BELOW
+the plateau with inherited structure - crossover's midpoint cut is
+the only perturbation measured to do so. Cascade continues from
+167.849; next references are 164.470 and the 155 goal. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/{from-scratch-167.849,compression-negatives}/.

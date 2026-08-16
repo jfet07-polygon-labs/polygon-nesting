@@ -1,0 +1,11 @@
+{
+  "experiment": "forced-compression probes on deep layouts: can deliberate overlap + separator legalization compress below the incumbent?",
+  "probes": {
+    "separator-target": "targets 165/167/169 passed to the warm-started separator from the 169.658 state all return 169.658 - the target is passive for mode 0, no compression semantics (pv33-septgt.log)",
+    "uniform-squeeze": "affine anchor compression along the depth axis, factors 0.995/0.99/0.98/0.96 from 169.658 -> separator relegalizes to 179.591/180.359/180.063/179.200 (pv34): even 0.9 mm of squeeze costs ~10 mm",
+    "binding-stack-nudge": "shift only the k deepest pieces inward (k=3 d=2, k=6 d=2, k=3 d=4, k=10 d=1) from 168.824 -> 179.094/179.800/180.354/179.472 (pv35): the separator repairs globally, never locally",
+    "nudge-state-alternation": "alternations from the best nudge-relaxed state (179.094, seeds 0,1) both terminate at 179.006 - perturb-relax states that land ON the shelf are absorbed by the attractor (pv25-nda*.log)"
+  },
+  "verdict": "MATCHED NEGATIVES, mechanism class closed: any deliberate overlap triggers global re-treatment back to the ~179 relaxation shelf. Crossover is NOT a counterexample - it also pays the shelf toll on bad cuts (176.6-181.3) - but its best hybrid legalizes BELOW the plateau (175.363) with real mixed structure, which alternation converts into new deep basins. The distinguishing variable is whether the legalized state lands below the 179.006 attractor, not the perturbation style per se.",
+  "drivers": "pv34-squeeze.py, pv35-nudge.py pinned here"
+}

@@ -1,0 +1,26 @@
+{
+  "milestone": "FROM-SCRATCH ACCEPTANCE CRITERION REACHED: 167.849 mm, below the 168-family (168.275/168.277) that the owner set as the bar for the from-scratch line. Entire lineage from the HEAD mode-20 constructor, no imported basin anywhere.",
+  "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+  "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+  "fullLineage": [
+    "HEAD mode-20 constructor salt 320.011 -> 202.275",
+    "pv26 descent -> 190.010",
+    "alternation seed 1 -> 179.006 (structural plateau)",
+    "salted wave seed 3 -> 171.238 (first separator-driven plateau break)",
+    "wave seed 2 -> 169.731 (locked); sibling move -> 169.658 (locked)",
+    "CROSSOVER of the two locks (midpoint cut) -> legalized 175.363",
+    "alternations -> 170.515 / 170.840 (mixed-gene basins)",
+    "waves -> 168.824 (A-lineage) and 169.087 (B-lineage)",
+    "waves -> 168.459 (A, then locked x4) and 168.531 (B)",
+    "wave from 168.531 seed 2 -> separator 168.353 -> descent 167.849, fixpoint"
+  ],
+  "cascadeLogs": "cascade-logs/ holds all wave logs from the crossover basins down; waypoint fixtures pinned for 168.824 and 168.459",
+  "pinnedParent": {"file": "pinned-parent-167.849.json", "reportedDepthMm": 167.849, "independentDepthMm": 167.849},
+  "replayRevalidation": {
+    "file": "replay-revalidation.json",
+    "method": "HEAD binary, mode 11, warm-start from pinned parent, target 168.649 (= 167.849 + 0.8)",
+    "result": "exactValid true, independentDepthMm 167.849 (equal-depth sibling fingerprint, no improvement - depth independently confirmed)"
+  },
+  "mechanismCredit": "the break came from crossover DESCENDANTS: pure-lineage locks were certified unbreakable (seeds x4 + wide rungs), but recombining them minted basins whose waves escape lower - two independent recombined lineages descended in parallel (A: 170.840->168.824->168.459-locked; B: 170.515->169.087->168.531->167.849)",
+  "status": "cascade continues from 167.849 (seeds 0,1,3,4); next reference is the imported-line record 164.470, then the 155 goal"
+}
