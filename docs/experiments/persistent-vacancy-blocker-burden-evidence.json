@@ -8,9 +8,10 @@
   "targetStripDepthMm": 165,
   "pairedRunOrder": ["mode20", "mode21", "mode22", "mode22", "mode21", "mode20"],
   "canonicalCommand": "target/release/examples/general_request_benchmark tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 MODE tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+  "probeHashCanonicalization": "jq -S '.relaxedDiagnostics.coupledDynamicSeparator.persistentVacancyPopulation.blockerBurdenProbe' RUN.json | shasum -a 256; hash the exact jq UTF-8 output including its trailing newline",
   "causalContract": {
     "signal": "minimum exact-valid ejection count, then descending distinct augmented children at that minimum",
-    "comparison": "first eligible comparator-adjacent sibling pair from the first 48 globally ordered, identity-deduplicated, expedition-wide-transposition-filtered parent rows",
+    "comparison": "first eligible pair from the lexicographic enumeration of augmented-identity-sorted siblings for each of the first 48 globally ordered, identity-deduplicated, expedition-wide-transposition-filtered parent rows",
     "requiredOwnedComparatorOpposingPairsPerMode": 30,
     "crossArmOwnership": "lowest mode ordinal owns a repeated domain-framed row key",
     "stageBPermittedOnlyIfEveryModePasses": true
@@ -33,13 +34,17 @@
       "commitHash": "59807616e1fa2540724bfbac14d7976d7e4a3860",
       "commitDate": "2026-04-14",
       "host": "aarch64-apple-darwin",
-      "llvmVersion": "22.1.2"
+      "llvmVersion": "22.1.2",
+      "captureSha256": "e61cba8ded8c60e985f759f74a221c4773649021477d00b44c7af411eb8c218c",
+      "raw": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: aarch64-apple-darwin\nrelease: 1.95.0\nLLVM version: 22.1.2\n"
     },
     "cargo": {
       "version": "1.95.0",
       "commitHash": "f2d3ce0bd7f24a49f8f72d9000448f8838c4e850",
       "commitDate": "2026-03-21",
-      "host": "aarch64-apple-darwin"
+      "host": "aarch64-apple-darwin",
+      "captureSha256": "108b8fa1b7a021bb80355bb365673910c0d858a21be19126ac18adcc1bef97bc",
+      "raw": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)\nrelease: 1.95.0\ncommit-hash: f2d3ce0bd7f24a49f8f72d9000448f8838c4e850\ncommit-date: 2026-03-21\nhost: aarch64-apple-darwin\nlibgit2: 1.9.2 (sys:0.20.4 vendored)\nlibcurl: 8.21.0 (sys:0.4.83+curl-8.15.0 system ssl:OpenSSL/3.6.3)\nssl: OpenSSL 3.5.4 30 Sep 2025\nos: Mac OS 26.5.2 [64-bit]\n"
     }
   },
   "verification": {
@@ -53,8 +58,16 @@
   },
   "arms": {
     "mode20": {
+      "attempted": true,
+      "failureReason": null,
+      "capExhausted": null,
       "baseMode": 16,
       "baseProjectionSha256": "3f4cf4496d5fe3e7470ce407a6b4e3f5546b8d4c8bbe5f7afb3b4f8c1766c846",
+      "actualBaseProjectionSha256": "3f4cf4496d5fe3e7470ce407a6b4e3f5546b8d4c8bbe5f7afb3b4f8c1766c846",
+      "baseProjectionMatched": true,
+      "parentRowLimit": 48,
+      "transientMemoryReservationBytes": 16777216,
+      "retainedMemoryReservationBytes": 2097152,
       "probeSha256": "55740ff0f97353a404d93a7adf736701149b1edf6c86922b6c0af2d7a8c3578b",
       "rawOutputSha256": [
         "1c953fee318a0bfd04acd5ab88da52725f123c0202bafc65af4b942dc45c16e3",
@@ -74,23 +87,37 @@
       "work": {
         "clipperInputVertices": 19600,
         "clipperOutputVertices": 3625,
+        "completeAudits": 0,
         "exactFinalistRows": 432,
         "experimentalCollisionBuilds": 1080,
         "experimentalPairVisits": 19806,
         "hazardQueries": 20736,
         "orientationStreams": 648,
+        "partialAudits": 0,
         "positionSourceAttempts": 280392,
         "proxyPressureVisits": 27993,
+        "retainedPeakBytes": 0,
         "returnedPositions": 20736,
         "selectedPieceSlots": 54,
+        "selectorDiagnosticPeakBytes": 2097152,
         "sourceFeatureVisits": 532,
         "totalRetainedPeakBytes": 25226401,
-        "transformedCollisionVertices": 7640
+        "transformedCollisionVertices": 7640,
+        "validatorCollisionBuilds": 0,
+        "validatorPairVisits": 0
       }
     },
     "mode21": {
+      "attempted": true,
+      "failureReason": null,
+      "capExhausted": null,
       "baseMode": 17,
       "baseProjectionSha256": "8f91c7fe755e1fac1dc237dda09f53a58fd538ff5decbc7df7a693f09cab135a",
+      "actualBaseProjectionSha256": "8f91c7fe755e1fac1dc237dda09f53a58fd538ff5decbc7df7a693f09cab135a",
+      "baseProjectionMatched": true,
+      "parentRowLimit": 48,
+      "transientMemoryReservationBytes": 16777216,
+      "retainedMemoryReservationBytes": 2097152,
       "probeSha256": "8246f7613428b369723078a7c95f8cafe666c5f54708d02059b53f0cb1c1e642",
       "rawOutputSha256": [
         "ae874fb5f0f0c15ac6769699bf1928c55ac9e56e6b304892c581fed2ff7a62d1",
@@ -110,23 +137,37 @@
       "work": {
         "clipperInputVertices": 18676,
         "clipperOutputVertices": 3799,
+        "completeAudits": 0,
         "exactFinalistRows": 528,
         "experimentalCollisionBuilds": 1320,
         "experimentalPairVisits": 26490,
         "hazardQueries": 25344,
         "orientationStreams": 792,
+        "partialAudits": 0,
         "positionSourceAttempts": 354456,
         "proxyPressureVisits": 35014,
+        "retainedPeakBytes": 0,
         "returnedPositions": 25344,
         "selectedPieceSlots": 66,
+        "selectorDiagnosticPeakBytes": 2097152,
         "sourceFeatureVisits": 460,
         "totalRetainedPeakBytes": 25227713,
-        "transformedCollisionVertices": 7320
+        "transformedCollisionVertices": 7320,
+        "validatorCollisionBuilds": 0,
+        "validatorPairVisits": 0
       }
     },
     "mode22": {
+      "attempted": true,
+      "failureReason": null,
+      "capExhausted": null,
       "baseMode": 18,
       "baseProjectionSha256": "d1b00626b54ce8587c5322be46706d22898d4b4a11e4ff10defd2cb0e6754769",
+      "actualBaseProjectionSha256": "d1b00626b54ce8587c5322be46706d22898d4b4a11e4ff10defd2cb0e6754769",
+      "baseProjectionMatched": true,
+      "parentRowLimit": 48,
+      "transientMemoryReservationBytes": 16777216,
+      "retainedMemoryReservationBytes": 2097152,
       "probeSha256": "0ac0c432476911670b19e68994928674fc7e333515b0592a8c44ac5aefc98310",
       "rawOutputSha256": [
         "1c39ec6f215ff16eb517129566a4953b1e2561066a5cb0d0cb1905f74baddc7f",
@@ -146,18 +187,24 @@
       "work": {
         "clipperInputVertices": 19940,
         "clipperOutputVertices": 3713,
+        "completeAudits": 0,
         "exactFinalistRows": 400,
         "experimentalCollisionBuilds": 1000,
         "experimentalPairVisits": 18998,
         "hazardQueries": 19200,
         "orientationStreams": 600,
+        "partialAudits": 0,
         "positionSourceAttempts": 265560,
         "proxyPressureVisits": 28777,
+        "retainedPeakBytes": 0,
         "returnedPositions": 19200,
         "selectedPieceSlots": 50,
+        "selectorDiagnosticPeakBytes": 2097152,
         "sourceFeatureVisits": 648,
         "totalRetainedPeakBytes": 25227713,
-        "transformedCollisionVertices": 8120
+        "transformedCollisionVertices": 8120,
+        "validatorCollisionBuilds": 0,
+        "validatorPairVisits": 0
       }
     }
   },
@@ -182,9 +229,9 @@
     "productionPromotionPassed": false
   },
   "interpretation": {
-    "exactTransitionBurdenSignalSupported": false,
+    "exactTransitionBurdenSignalSupportedForTheseMixed61RestartTrajectories": false,
     "broaderVacancyTransportHypothesisClosed": false,
-    "reason": "The exact signal was deterministic and behavior-preserving but produced only 9, 13, and 4 independently owned comparator-opposing rows against a predeclared requirement of 30 in every arm. It is too sparse or redundant to justify changing sibling order, so the causal continuation stage was not run.",
-    "nextDecision": "Close this endpoint scalar and retain the broader architectural hypothesis only for an explicit persistent nonterminal vacancy lifecycle that changes which legal intermediate states survive, rather than another post-hoc scalar reranker."
+    "reason": "On the three related Mixed-61 restart trajectories, the exact signal was deterministic and behavior-preserving but produced only 9, 13, and 4 independently owned comparator-opposing rows against a predeclared requirement of 30 in every arm. It is too sparse or redundant to justify changing sibling order in this lifecycle, so the causal continuation stage was not run.",
+    "nextDecision": "Close this signal for these Mixed-61 restart trajectories under the unchanged lifecycle. Prioritize, without treating it as a consequence proved by this screen, an explicit persistent nonterminal vacancy lifecycle that changes which legal intermediate states survive. Other independently justified scalar signals remain open."
   }
 }
