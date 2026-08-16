@@ -59,7 +59,7 @@ const RECONSTRUCTION_ROWS_PER_PIECE: usize = 192;
 // parent at CONSTRUCTION_BEAM_CHILDREN_PER_PARENT and bands the frontier key
 // at CONSTRUCTION_FRONTIER_BAND_GRID so the trapped-void term stays active
 // on frontier-raising commits.
-const CONSTRUCTION_RESTARTS: usize = 4;
+const CONSTRUCTION_RESTARTS: usize = 8;
 const CONSTRUCTION_BEAM_WIDTH: usize = 6;
 const CONSTRUCTION_HINT_STATIONS: usize = 3;
 const CONSTRUCTION_HINT_PRIORS: usize = 2;
@@ -2874,6 +2874,10 @@ fn construct_skyline_beam_inner(
         "max-dimension",
         "semi-perimeter",
         "banded-area-shuffle",
+        "height",
+        "width",
+        "vertex-count",
+        "padded-bbox-area-reshuffled",
     ];
     let mut best: Option<(i64, usize, VacancyState, f64)> = None;
     for restart in 0..CONSTRUCTION_RESTARTS {
@@ -3106,7 +3110,17 @@ fn construction_order(
             0 => padded_area,
             1 => width.max(height),
             2 => width + height,
-            _ => (padded_area * 4) / (max_area + 1),
+            3 => (padded_area * 4) / (max_area + 1),
+            4 => height,
+            5 => width,
+            // Interlock-carriers first: source vertex count is the cheap
+            // deterministic proxy for non-convexity, so the stars reach the
+            // floor while the drop-settle can still nest them into each
+            // other.
+            6 => pieces[index].polygon.vertex_count() as i128,
+            // Same key as restart 0 under a different seeded tie-noise
+            // permutation of the identical clones.
+            _ => padded_area,
         };
         rows.push((primary, derive_seed(order_seed, 0, index), index));
     }
@@ -6538,46 +6552,46 @@ mod tests {
         assert_eq!(SEPARATION_RELOCATIONS_PER_ROUND, 12);
         assert_eq!(LNS_SCHEDULE_TOTAL, 536);
         assert_eq!(LNS_REINSERT_SLOTS, 536 + 24 * 12 + 2 * 3 * 536);
-        assert_eq!(CONSTRUCTION_RESTARTS, 4);
+        assert_eq!(CONSTRUCTION_RESTARTS, 8);
         assert_eq!(CONSTRUCTION_BEAM_WIDTH, 6);
-        assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 4 * 6 * 61);
-        assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 1_464);
+        assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 8 * 6 * 61);
+        assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 2_928);
         assert_eq!(CONSTRUCTION_ROWS_PER_PIECE, 160);
         assert_eq!(
             CONSTRUCTION_HINT_PRIORS * CONSTRUCTION_SELECTED_PIECE_SLOTS,
-            2_928
+            5_856
         );
-        assert_eq!(CONSTRUCTION_VOID_SCAN_CAP, 4 * 61 * 6 * 4 + 4);
+        assert_eq!(CONSTRUCTION_VOID_SCAN_CAP, 8 * 61 * 6 * 4 + 8);
         assert!(CONSTRUCTION_RESTARTS <= MAX_COMPLETE_AUDITS);
         assert!(CONSTRUCTION_SHELF_ROWS < CONSTRUCTION_ROWS_PER_PIECE);
         assert!(CONSTRUCTION_BEAM_CHILDREN_PER_PARENT <= CONSTRUCTION_BEAM_WIDTH);
         assert_eq!(
             MAX_SELECTED_PIECE_SLOTS,
-            640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464
+            640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928
         );
         assert_eq!(
             MAX_ORIENTATION_STREAMS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12
         );
         assert_eq!(
             MAX_POSITION_SOURCE_ATTEMPTS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12 * 529
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 529
         );
         assert_eq!(
             MAX_RETURNED_POSITIONS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 32
         );
         assert_eq!(
             MAX_HAZARD_QUERIES,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 32
         );
         assert_eq!(
             MAX_PROXY_PRESSURE_VISITS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12 * 32 * 61
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 32 * 61
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 1_464 * 160
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 2_928 * 160
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -6590,16 +6604,16 @@ mod tests {
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
             3 * 61
-                + (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12
+                + (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12
                 + ((640 + 26) * 8
                     + 183 * 64
                     + 122 * 192
                     + 73 * 61 * 64
                     + 4_040 * 192
-                    + 1_464 * 160)
+                    + 2_928 * 160)
                 + 122
                 + 4_040
-                + 2 * 1_464
+                + 2 * 2_928
                 + 24 * (4_040 / 2 + 200 * 96)
         );
         assert_eq!(
@@ -6610,7 +6624,7 @@ mod tests {
                     + 122 * 192
                     + 73 * 61 * 64
                     + 4_040 * 192
-                    + 1_464 * 160)
+                    + 2_928 * 160)
                     * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
