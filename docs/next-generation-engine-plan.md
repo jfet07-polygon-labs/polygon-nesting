@@ -628,3 +628,20 @@ tail candidate below the record path, and every background harvest has
 now naturally terminated. The program is single-threaded on the fifth
 family jump: exact contact-pose enumeration (NFP-grade candidates) inside
 the existing rank-confirm-walk pipeline.
+
+Contact-pose enumeration - the planned fifth family - is measured and
+rejected in both of its bounded forms. Naive vertex-and-midpoint
+enumeration floods the ranked rows with mostly-intersecting poses
+(constructor collapses to 220-231); support-mapped sampling with outward
+normals and a 0.01 mm backoff generates geometrically correct touches and
+still loses (214.8-220.5 against the walk's 195.6-207.2). The mechanism is
+now understood: enumeration is context-blind - it produces poses touching
+ONE neighbor while ignoring every other constraint, and the landing key
+cannot distinguish a well-seated pose from a deep overhang, so enumerated
+contacts displace the station-anchored candidates that the walk then
+finishes properly. The translation-only contact walk already reaches the
+NFP boundary from inside the context, which is why it wins. Within this
+insertion framework the walk stands as the measured optimum of candidate
+generation; closing the remaining gap to the 177/168 references requires
+either full NFP paired with a context-aware scoring (a multi-day build)
+or a structurally different exploration paradigm.
