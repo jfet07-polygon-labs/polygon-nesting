@@ -411,3 +411,21 @@ Sparrow 3-second calibration (154.449 mm) at the bound level - the
 geometry-side confirmation of the mode-13 recalibration finding. The
 155 mm session target is not excluded by area: the residual gap is packing
 structure, which is exactly what the mode-20 constructor now attacks.
+
+The second structural exit is now built and measured end to end. Mode 20 -
+the skyline beam constructor - produces complete exact-valid dual-gate
+Mixed-61 layouts from an empty sheet in twelve seconds (four seeded order
+restarts, width-aware lowest-fitting skyline windows, valley-local and
+global escape ladders, per-parent beam diversity, trapped-void child
+scoring), deterministically under the runs=2 replay gate, publishing at
+271.716 mm. Fed to the accumulated descent machinery the constructed basin
+yielded 59.982 mm in five accepted hops - two orders of magnitude beyond
+the 0.299-0.614 mm pipeline-basin yields - converging at 211.734 mm
+(evidence under docs/experiments/persistent-vacancy-descent/
+constructed-basin/). The measurement isolates the remaining loss precisely:
+bounding-box-level skyline placement forfeits the non-convex star
+interlocking that the pipeline separator finds natively, leaving the
+constructed family about 35 mm above the 177.081 mm native floor. The next
+lever is therefore sub-bbox interlock at insertion time - negative contact
+rungs and polygon-profile stations that let exact confirmation, not the
+bbox overestimate, decide how deep a piece may nest.

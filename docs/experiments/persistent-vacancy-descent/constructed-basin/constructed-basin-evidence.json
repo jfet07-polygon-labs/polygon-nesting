@@ -1,0 +1,42 @@
+{
+  "experiment": "mode-20 skyline beam constructor + descent machinery on the constructed virgin basin",
+  "constructorRun": {
+    "file": "mode20-run.json",
+    "targetDepthMm": 320.0,
+    "publishedDepthMm": 271.716,
+    "restartDepthsMm": {
+      "padded-bbox-area": 281.077,
+      "max-dimension": 290.757,
+      "semi-perimeter": 271.716,
+      "banded-area-shuffle": 307.124
+    },
+    "wallSeconds": 11.83,
+    "peakRssKb": 38464
+  },
+  "replayGate": {
+    "file": "mode20-replay-runs2.json",
+    "runs": 2,
+    "result": "identical diagnostics, exactValid, 271.716 mm, same placement fingerprint"
+  },
+  "descentChain": {
+    "driver": "descend-driver.py",
+    "log": "chain.log",
+    "startDepthMm": 271.716,
+    "bestDepthMm": 211.734,
+    "yieldMm": 59.982,
+    "acceptedHops": 5,
+    "termination": "10 salted stalls at 211.734"
+  },
+  "comparison": {
+    "pipelineNativeFloorMm": 177.081,
+    "pipelineBasinYieldRangeMm": [
+      0.299,
+      0.614
+    ],
+    "branchRecordMm": 168.277
+  },
+  "engineCommit": "ae262c9decc5f0c76a8fe3a0afa19bf2a224c2a9",
+  "toolchain": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "settingsArgs": "<runs> 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 20 tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json 320.0",
+  "conclusion": "The constructor produces complete exact-valid dual-gate layouts from an empty sheet in 12 seconds, deterministically (runs=2 identical). Its basins carry two orders of magnitude more recoverable slack than pipeline basins (59.982 mm vs 0.3-0.6 mm machinery yield), converging at 211.734 mm: the constructor+descent pipeline works end to end but the bbox-level skyline loses the non-convex star interlocking (~35 mm above the pipeline native floor). Next measured lever: sub-bbox interlock candidates at insertion (negative contact rungs / polygon-profile stations)."
+}
