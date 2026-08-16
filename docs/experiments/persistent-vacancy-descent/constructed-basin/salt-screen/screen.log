@@ -1,0 +1,10 @@
+salt 0 target 320.000: 203.208
+salt 1 target 320.001: 215.825
+salt 2 target 320.002: 215.790
+salt 3 target 320.003: 215.300
+salt 4 target 320.004: 215.545
+salt 5 target 320.005: 215.329
+salt 6 target 320.006: 218.237
+salt 7 target 320.007: 216.833
+BEST SALTS: [('203.208', 0), ('215.300', 3), ('215.329', 5)]
+descending salt 0 (203.208)

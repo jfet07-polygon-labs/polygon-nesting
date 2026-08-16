@@ -469,3 +469,14 @@ costs exactly when it spends ranked rows on speculative poses (negative
 rungs, extra stations, deep rungs, lookahead in every form, left-compact
 key). The remaining loss to the 168.x family is now split between residual
 constructor quality and the descent family's known operator locks.
+
+The eight-salt screen on the bottom-left constructor calibrates its
+variance: salts one through seven land in a tight 215.3-218.2 mm band
+while the base salt's 203.208 is a five-sigma outlier trajectory - the
+committed baseline is lucky, not typical, and single-trajectory variant
+judgments below ~7 mm are statistically void. The rotation-nudge variant
+(218.011) is rejected on exactly those grounds: within the typical band,
+no demonstrated value, and it spends confirmation rows. Two consequences
+are now explicit: cheap salt exploration is the correct way to harvest
+constructor luck, and any future variant must either beat the 215-218
+typical band systematically or beat 203.208 on the base salt to count.
