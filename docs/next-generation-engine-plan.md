@@ -618,3 +618,13 @@ portfolio regresses ten millimeters. Every record this program has
 produced came from the tail of a high-variance family; rotations trade
 tail for median, which is the wrong trade for record hunting. The
 translation-only contact walk stands.
+
+The deep-budget continuation converts once more before the family dries:
+from 187.463 the tripled salted ladder extracts a further 2.704 mm and
+terminates at 184.759 mm - the constructed line's standing record
+(artifacts alongside the salt0 chain under contact-walk/salt0-record/).
+The walk-family screens (salts 8-23) complete in the 202-209 band with no
+tail candidate below the record path, and every background harvest has
+now naturally terminated. The program is single-threaded on the fifth
+family jump: exact contact-pose enumeration (NFP-grade candidates) inside
+the existing rank-confirm-walk pipeline.

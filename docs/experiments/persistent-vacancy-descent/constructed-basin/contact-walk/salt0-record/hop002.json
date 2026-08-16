@@ -19,9 +19,9 @@
   "cpuModel": "model name\t: Intel(R) Core(TM) Ultra 7 270K Plus",
   "depthOverAreaLowerBound": 1.375462882973793,
   "elapsedMs": [
-    16916.113473999998
+    15696.743065
   ],
-  "engineCommit": "da900169eaad5be45d9eef731cef2dc0808152f0",
+  "engineCommit": "ceaedda7928e82f8cf566fb260844244593720f4",
   "engineWorktreeDirty": true,
   "engineWorktreeStatus": "M crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs",
   "exactEvaluations": 520141,
@@ -29,7 +29,7 @@
   "expandedCollisionAreaMm2": 254285.8713760003,
   "exploratoryExactEvaluations": 0,
   "exploratoryFailed": false,
-  "firstQuartileElapsedMs": 16916.113473999998,
+  "firstQuartileElapsedMs": 15696.743065,
   "flatteningSagToleranceMm": 0.25,
   "ignoredRequestMetadataFields": [
     "jobId",
@@ -39,9 +39,9 @@
   "interquartileRangeElapsedMs": 0.0,
   "localAngleRefinementExactEvaluations": 0,
   "machineArchitecture": "x86_64",
-  "maxElapsedMs": 16916.113473999998,
-  "medianElapsedMs": 16916.113473999998,
-  "minElapsedMs": 16916.113473999998,
+  "maxElapsedMs": 15696.743065,
+  "medianElapsedMs": 15696.743065,
+  "minElapsedMs": 15696.743065,
   "orderPortfolioExactEvaluations": 379009,
   "orderPortfolioFailed": false,
   "orderVariantsAttempted": 4,
@@ -503,10 +503,10 @@
     "partialLayouts": 1,
     "persistentVacancyMode": 17,
     "persistentVacancyParentFixture": {
-      "path": "/var/lib/t3/tmp/pv20-walk-320.000/parent-hop001.json",
-      "sha256": "ecfd40755b58f776442db2445641decec9c2d85c8227e804951ac9aed3d79926"
+      "path": "/var/lib/t3/tmp/pv20-deep-187/parent-hop001.json",
+      "sha256": "52bd1b4224218a768543591f8b0c4b94a7be68ae15c2e0c0c21cb55540ee84c7"
     },
-    "persistentVacancyTargetDepthMm": 204.316,
+    "persistentVacancyTargetDepthMm": 185.953,
     "precompressionFrontierVacancyMode": 0,
     "relaxedAngleSeedPolicy": "structuredGrid",
     "relaxedAngularRepair": false,
@@ -1667,16 +1667,29 @@
         "workerSweeps": 320
       },
       "persistentVacancyPopulation": {
+        "archive": {
+          "archivePeakBytes": 26576,
+          "finalArchivedAreaFingerprint": "c07d18bf625aefc5197ee7753532257a0247140e4c37434521751757a68a8edf",
+          "finalArchivedCountFingerprint": "c07d18bf625aefc5197ee7753532257a0247140e4c37434521751757a68a8edf",
+          "maxRevivalExpansions": 13,
+          "revivalChildrenGenerated": 0,
+          "revivalChildrenRetained": 0,
+          "revivalCooldownLayers": 3,
+          "revivalPolicy": "swapWorstEntering",
+          "revivalsExpanded": 0,
+          "revivalsSkipped": 0,
+          "stagnationThresholdLayers": 3
+        },
         "attempted": true,
         "capExhausted": null,
-        "completeStates": 1,
+        "completeStates": 3,
         "deduplicatedStates": 0,
-        "directInsertions": 0,
-        "distinctSignaturesRetained": 0,
-        "ejectionInsertions": 0,
+        "directInsertions": 7,
+        "distinctSignaturesRetained": 5,
+        "ejectionInsertions": 37,
         "exactValid": true,
         "failureReason": null,
-        "finalPlacementFingerprint": "266752352b97e326b602efd404d3ef83683db994f2419085d4614ba0cd052344",
+        "finalPlacementFingerprint": "8c9361b8d35737491cc90c24a0b31e639a826beca40ae8d425ff3fd11348f349",
         "finalPlacements": [
           {
             "mirrored": false,
@@ -1689,7 +1702,7 @@
             "mirrored": false,
             "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
             "rotationDeg": 0.0,
-            "translateLongAxis": 89.049,
+            "translateLongAxis": 53.22999999999998,
             "translateShortAxis": 332.134
           },
           {
@@ -1717,15 +1730,15 @@
             "mirrored": false,
             "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
             "rotationDeg": 0.0,
-            "translateLongAxis": 126.63800906800145,
-            "translateShortAxis": 235.17716352010234
+            "translateLongAxis": 114.75649984603993,
+            "translateShortAxis": 245.29161891819496
           },
           {
-            "mirrored": false,
+            "mirrored": true,
             "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-2",
-            "rotationDeg": 0.0,
-            "translateLongAxis": 154.553,
-            "translateShortAxis": 328.876
+            "rotationDeg": 180.0,
+            "translateLongAxis": 158.73399999999998,
+            "translateShortAxis": 332.87
           },
           {
             "mirrored": false,
@@ -1738,29 +1751,29 @@
             "mirrored": false,
             "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
             "rotationDeg": 0.0,
-            "translateLongAxis": 112.66590190983932,
-            "translateShortAxis": 1368.342248732065
+            "translateLongAxis": 112.38376630414591,
+            "translateShortAxis": 1368.1774928520483
           },
           {
             "mirrored": true,
             "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
             "rotationDeg": 180.0,
             "translateLongAxis": 161.76399999999998,
-            "translateShortAxis": 1670.288
+            "translateShortAxis": 1657.872
           },
           {
             "mirrored": false,
             "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
             "rotationDeg": 0.0,
-            "translateLongAxis": 140.15325289063148,
-            "translateShortAxis": 1888.279090255118
+            "translateLongAxis": 139.60693413149863,
+            "translateShortAxis": 1887.3427714959853
           },
           {
-            "mirrored": true,
+            "mirrored": false,
             "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
-            "rotationDeg": 0.0,
-            "translateLongAxis": 142.46329289321883,
-            "translateShortAxis": 572.3832928932188
+            "rotationDeg": 180.0,
+            "translateLongAxis": 177.4402928932188,
+            "translateShortAxis": 558.1022928932188
           },
           {
             "mirrored": false,
@@ -1773,7 +1786,7 @@
             "mirrored": false,
             "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4",
             "rotationDeg": 180.0,
-            "translateLongAxis": 139.6408786796564,
+            "translateLongAxis": 138.4478786796564,
             "translateShortAxis": 715.8728786796564
           },
           {
@@ -1800,9 +1813,9 @@
           {
             "mirrored": false,
             "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
-            "rotationDeg": 90.0,
-            "translateLongAxis": 6.647,
-            "translateShortAxis": 428.526
+            "rotationDeg": 83.447622,
+            "translateLongAxis": 2.523,
+            "translateShortAxis": 424.653
           },
           {
             "mirrored": false,
@@ -1823,7 +1836,7 @@
             "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-2",
             "rotationDeg": 215.537678,
             "translateLongAxis": 106.9682928932188,
-            "translateShortAxis": 688.1202928932188
+            "translateShortAxis": 686.2902928932189
           },
           {
             "mirrored": false,
@@ -1856,9 +1869,9 @@
           {
             "mirrored": false,
             "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
-            "rotationDeg": 52.125,
-            "translateLongAxis": 138.11298402509283,
-            "translateShortAxis": 190.1324479400265
+            "rotationDeg": 0.0,
+            "translateLongAxis": 142.901,
+            "translateShortAxis": 165.926
           },
           {
             "mirrored": true,
@@ -1871,15 +1884,15 @@
             "mirrored": false,
             "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
             "rotationDeg": 90.0,
-            "translateLongAxis": 143.825,
-            "translateShortAxis": 1559.651
+            "translateLongAxis": 108.32080490705889,
+            "translateShortAxis": 1557.4348049070588
           },
           {
-            "mirrored": false,
+            "mirrored": true,
             "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4",
             "rotationDeg": 270.0,
-            "translateLongAxis": 138.321,
-            "translateShortAxis": 1525.998
+            "translateLongAxis": 40.756,
+            "translateShortAxis": 860.332
           },
           {
             "mirrored": false,
@@ -1899,14 +1912,14 @@
             "mirrored": false,
             "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7",
             "rotationDeg": 0.0,
-            "translateLongAxis": 135.38970996024366,
+            "translateLongAxis": 133.68170996024364,
             "translateShortAxis": 1321.2367099602436
           },
           {
             "mirrored": false,
             "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8",
             "rotationDeg": 0.0,
-            "translateLongAxis": 118.112,
+            "translateLongAxis": 116.63,
             "translateShortAxis": 737.788
           },
           {
@@ -1920,15 +1933,15 @@
             "mirrored": false,
             "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-2",
             "rotationDeg": 90.0,
-            "translateLongAxis": 146.5339999999999,
+            "translateLongAxis": 145.34099999999992,
             "translateShortAxis": 714.034
           },
           {
             "mirrored": false,
             "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3",
             "rotationDeg": 270.0,
-            "translateLongAxis": 83.545,
-            "translateShortAxis": 324.438
+            "translateLongAxis": 178.969,
+            "translateShortAxis": 1569.203
           },
           {
             "mirrored": false,
@@ -1976,14 +1989,14 @@
             "mirrored": true,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-2",
             "rotationDeg": 180.0,
-            "translateLongAxis": 133.46560780916903,
-            "translateShortAxis": 1339.4476078091732
+            "translateLongAxis": 133.128607809169,
+            "translateShortAxis": 1339.3196078091732
           },
           {
-            "mirrored": false,
+            "mirrored": true,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
-            "rotationDeg": 300.256437,
-            "translateLongAxis": 144.988,
+            "rotationDeg": 180.0,
+            "translateLongAxis": 177.991,
             "translateShortAxis": 96.395
           },
           {
@@ -1996,9 +2009,9 @@
           {
             "mirrored": false,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-5",
-            "rotationDeg": 0.0,
-            "translateLongAxis": 62.36555149077546,
-            "translateShortAxis": 1786.2293063735985
+            "rotationDeg": 90.0,
+            "translateLongAxis": 58.242000000000004,
+            "translateShortAxis": 1860.15
           },
           {
             "mirrored": false,
@@ -2018,22 +2031,22 @@
             "mirrored": false,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-8",
             "rotationDeg": 0.0,
-            "translateLongAxis": 130.579,
-            "translateShortAxis": 1750.201
+            "translateLongAxis": 103.46453953323628,
+            "translateShortAxis": 1742.451816784977
           },
           {
             "mirrored": false,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
             "rotationDeg": 0.0,
-            "translateLongAxis": 123.109,
-            "translateShortAxis": 1020.897
+            "translateLongAxis": 119.75879617995716,
+            "translateShortAxis": 1018.0657444481291
           },
           {
             "mirrored": false,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
             "rotationDeg": 90.0,
-            "translateLongAxis": 85.17287867965643,
-            "translateShortAxis": 506.0348786796564
+            "translateLongAxis": 74.54994826817187,
+            "translateShortAxis": 498.86192893218805
           },
           {
             "mirrored": false,
@@ -2046,29 +2059,29 @@
             "mirrored": false,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-12",
             "rotationDeg": 0.0,
-            "translateLongAxis": 52.60782997547655,
-            "translateShortAxis": 699.2300788667775
+            "translateLongAxis": 51.12639101635905,
+            "translateShortAxis": 698.3659943801674
           },
           {
             "mirrored": false,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-13",
-            "rotationDeg": 0.0,
-            "translateLongAxis": 7.962450670320977,
-            "translateShortAxis": 1334.0998531110986
+            "rotationDeg": 59.743563,
+            "translateLongAxis": -24.980707106781185,
+            "translateShortAxis": 1382.0322928932187
           },
           {
             "mirrored": true,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
             "rotationDeg": 301.390181,
-            "translateLongAxis": 84.97029289321881,
-            "translateShortAxis": 208.17429289321882
+            "translateLongAxis": 84.9708025612107,
+            "translateShortAxis": 208.2648025612107
           },
           {
             "mirrored": false,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-15",
             "rotationDeg": 0.0,
-            "translateLongAxis": 69.88614063828985,
-            "translateShortAxis": 1293.8394450865621
+            "translateLongAxis": 68.17779565430543,
+            "translateShortAxis": 1295.0577900705466
           },
           {
             "mirrored": false,
@@ -2081,22 +2094,22 @@
             "mirrored": true,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
             "rotationDeg": 270.0,
-            "translateLongAxis": 61.631585786437626,
-            "translateShortAxis": 476.60341421356236
+            "translateLongAxis": 56.70700040248392,
+            "translateShortAxis": 485.0459995975161
           },
           {
             "mirrored": false,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-18",
-            "rotationDeg": -1.0,
-            "translateLongAxis": 124.49783159597796,
-            "translateShortAxis": 1826.709185314538
+            "rotationDeg": 0.0,
+            "translateLongAxis": 107.06798753484654,
+            "translateShortAxis": 1817.0994188436766
           },
           {
             "mirrored": false,
             "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-19",
-            "rotationDeg": 180.0,
-            "translateLongAxis": 140.756,
-            "translateShortAxis": 1619.171
+            "rotationDeg": 300.256437,
+            "translateLongAxis": 110.988,
+            "translateShortAxis": 1534.949
           },
           {
             "mirrored": false,
@@ -2106,8 +2119,8 @@
             "translateShortAxis": 1222.687
           }
         ],
-        "immediateReversalsRejected": 0,
-        "independentDepthMm": 199.553,
+        "immediateReversalsRejected": 42,
+        "independentDepthMm": 184.759,
         "initialActivePieceIds": [
           "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
           "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
@@ -2134,7 +2147,6 @@
           "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
           "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
           "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2",
-          "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
           "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-2",
           "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
           "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4",
@@ -2171,72 +2183,393 @@
           "d06db288-d2d6-4f40-874e-98287f516d93-copy-19",
           "d06db288-d2d6-4f40-874e-98287f516d93-copy-20"
         ],
-        "initialInactiveOrderHash": "619f222b9f35e5e62a15dbb3b9038348b6162ad763704756a9c7b786b5db99e8",
-        "initialInactivePieceIds": [],
-        "initialStateFingerprint": "e89e1dd390af885e090adb94c044928f2f3c2b637a667563870931b4ee375208",
-        "layers": [],
-        "layersCompleted": 0,
+        "initialInactiveOrderHash": "08c5b71856e788236c4135b9fbbc59aea77d67db6cb382f0529dac761d08ecc6",
+        "initialInactivePieceIds": [
+          "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1"
+        ],
+        "initialStateFingerprint": "f8519c812e338454d1e3dcb0a15e9d0a3dbb66857520039a288434c64247a88c",
+        "layers": [
+          {
+            "archive": {
+              "archivedAreaUpdated": true,
+              "archivedCountUpdated": true,
+              "layersSinceImprovement": 0,
+              "replacedStateFingerprint": null,
+              "revivalAttempted": false,
+              "revivalChildrenGenerated": 0,
+              "revivalChildrenRetained": 0,
+              "revivalExpanded": false,
+              "revivalKind": null,
+              "revivedStateFingerprint": null,
+              "skippedReason": null
+            },
+            "bestInactiveAreaGrid2": "2521068032",
+            "bestInactivePieceCount": 1,
+            "bestInactivePieceIds": [
+              "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8"
+            ],
+            "bestStateFingerprint": "2d2915009291285d7636eb6642029a2a1002af88b54fe50de9bde4ea16669ced",
+            "directInsertions": 0,
+            "distinctContactSignatures": 4,
+            "ejectionInsertions": 8,
+            "elite": {
+              "areaEliteFingerprint": "2d2915009291285d7636eb6642029a2a1002af88b54fe50de9bde4ea16669ced",
+              "areaEliteInactiveAreaGrid2": "2521068032",
+              "areaEliteInactivePieceCount": 1,
+              "bestEverAreaEliteFingerprint": "2d2915009291285d7636eb6642029a2a1002af88b54fe50de9bde4ea16669ced",
+              "bestEverAreaEliteInactiveAreaGrid2": "2521068032",
+              "bestEverAreaEliteInactivePieceCount": 1,
+              "bestEverCountEliteFingerprint": "2d2915009291285d7636eb6642029a2a1002af88b54fe50de9bde4ea16669ced",
+              "bestEverCountEliteInactiveAreaGrid2": "2521068032",
+              "bestEverCountEliteInactivePieceCount": 1,
+              "completeCandidateOrderHash": "2f4393082333e7b4b1685863d1da3440230699028c9885ebc1b46e62a52df34b",
+              "countEliteFingerprint": "2d2915009291285d7636eb6642029a2a1002af88b54fe50de9bde4ea16669ced",
+              "countEliteInactiveAreaGrid2": "2521068032",
+              "countEliteInactivePieceCount": 1,
+              "enteringPopulationHash": "bff955f6a53515fbeb0d0f612bc07e4d20c4fb2767d8e9dfb12aa87258253ce9",
+              "expandedCarryoverFingerprints": [],
+              "offeredCarryoverFingerprints": [],
+              "offeredCarryoversDistinct": false,
+              "ordinaryChildOrderHash": "d35f7f8c34871e1ffec41a6b0ba4869e319b5a09008c0a7e0bd38fbfc559e168",
+              "preCarryoverWork": {
+                "clipperInputVertices": 142,
+                "clipperOutputVertices": 33,
+                "completeAudits": 0,
+                "exactFinalistRows": 8,
+                "experimentalCollisionBuilds": 20,
+                "experimentalPairVisits": 480,
+                "hazardQueries": 384,
+                "orientationStreams": 12,
+                "partialAudits": 0,
+                "positionSourceAttempts": 6252,
+                "proxyPressureVisits": 441,
+                "retainedPeakBytes": 0,
+                "returnedPositions": 384,
+                "selectedPieceSlots": 1,
+                "selectorDiagnosticPeakBytes": 0,
+                "sourceFeatureVisits": 8,
+                "totalRetainedPeakBytes": 0,
+                "transformedCollisionVertices": 80,
+                "validatorCollisionBuilds": 0,
+                "validatorPairVisits": 0
+              },
+              "retainedCarryoverFingerprints": []
+            },
+            "generatedChildren": 8,
+            "layer": 0,
+            "parentSelections": [
+              {
+                "coveragePieceId": null,
+                "hardestPieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+                "inactiveOrderHash": "08c5b71856e788236c4135b9fbbc59aea77d67db6cb382f0529dac761d08ecc6",
+                "parentStateFingerprint": "f8519c812e338454d1e3dcb0a15e9d0a3dbb66857520039a288434c64247a88c",
+                "rotationStartIndex": null,
+                "schedulerFamily": "hardPlusStatelessRotation",
+                "slots": [
+                  {
+                    "angleSeed": 4813643487470066245,
+                    "diversitySeed": 4813643487470067525,
+                    "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+                    "selectedOrdinal": 0
+                  }
+                ],
+                "transitionSeed": 12538535732681356389
+              }
+            ],
+            "parents": 1,
+            "retainedStates": 8,
+            "selectedPieceIds": [
+              "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1"
+            ]
+          },
+          {
+            "archive": {
+              "archivedAreaUpdated": true,
+              "archivedCountUpdated": true,
+              "layersSinceImprovement": 1,
+              "replacedStateFingerprint": null,
+              "revivalAttempted": false,
+              "revivalChildrenGenerated": 0,
+              "revivalChildrenRetained": 0,
+              "revivalExpanded": false,
+              "revivalKind": null,
+              "revivedStateFingerprint": null,
+              "skippedReason": null
+            },
+            "bestInactiveAreaGrid2": "0",
+            "bestInactivePieceCount": 0,
+            "bestInactivePieceIds": [],
+            "bestStateFingerprint": "c07d18bf625aefc5197ee7753532257a0247140e4c37434521751757a68a8edf",
+            "directInsertions": 7,
+            "distinctContactSignatures": 1,
+            "ejectionInsertions": 29,
+            "elite": {
+              "areaEliteFingerprint": "c07d18bf625aefc5197ee7753532257a0247140e4c37434521751757a68a8edf",
+              "areaEliteInactiveAreaGrid2": "0",
+              "areaEliteInactivePieceCount": 0,
+              "bestEverAreaEliteFingerprint": "c07d18bf625aefc5197ee7753532257a0247140e4c37434521751757a68a8edf",
+              "bestEverAreaEliteInactiveAreaGrid2": "0",
+              "bestEverAreaEliteInactivePieceCount": 0,
+              "bestEverCountEliteFingerprint": "c07d18bf625aefc5197ee7753532257a0247140e4c37434521751757a68a8edf",
+              "bestEverCountEliteInactiveAreaGrid2": "0",
+              "bestEverCountEliteInactivePieceCount": 0,
+              "completeCandidateOrderHash": "7e64bb2238fa464510e246b1a0faf2a1f92dd254f70a6516e72a61a087a6be23",
+              "countEliteFingerprint": "c07d18bf625aefc5197ee7753532257a0247140e4c37434521751757a68a8edf",
+              "countEliteInactiveAreaGrid2": "0",
+              "countEliteInactivePieceCount": 0,
+              "enteringPopulationHash": "b6fbc4d5c5f264adaf25c439ff0b3fbf449901228e9e0a06cb182e92dc982518",
+              "expandedCarryoverFingerprints": [],
+              "offeredCarryoverFingerprints": [],
+              "offeredCarryoversDistinct": false,
+              "ordinaryChildOrderHash": "7b2b98a8e5b4f54e1e81b4d4934b7dbe08659879d2dca3063c716a0c5775ee6c",
+              "preCarryoverWork": {
+                "clipperInputVertices": 3749708,
+                "clipperOutputVertices": 382,
+                "completeAudits": 1,
+                "exactFinalistRows": 80,
+                "experimentalCollisionBuilds": 200,
+                "experimentalPairVisits": 4717,
+                "hazardQueries": 3840,
+                "orientationStreams": 120,
+                "partialAudits": 0,
+                "positionSourceAttempts": 62136,
+                "proxyPressureVisits": 5548,
+                "retainedPeakBytes": 0,
+                "returnedPositions": 3840,
+                "selectedPieceSlots": 10,
+                "selectorDiagnosticPeakBytes": 0,
+                "sourceFeatureVisits": 76,
+                "totalRetainedPeakBytes": 0,
+                "transformedCollisionVertices": 63624,
+                "validatorCollisionBuilds": 122,
+                "validatorPairVisits": 3660
+              },
+              "retainedCarryoverFingerprints": []
+            },
+            "generatedChildren": 33,
+            "layer": 1,
+            "parentSelections": [
+              {
+                "coveragePieceId": null,
+                "hardestPieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8",
+                "inactiveOrderHash": "4ff2e94d562e88ec6432630bef27769b3ada8ee38da7da1bdff37c2a97ee1cd4",
+                "parentStateFingerprint": "2d2915009291285d7636eb6642029a2a1002af88b54fe50de9bde4ea16669ced",
+                "rotationStartIndex": null,
+                "schedulerFamily": "hardPlusStatelessRotation",
+                "slots": [
+                  {
+                    "angleSeed": 5554234677896188520,
+                    "diversitySeed": 5554234677896189800,
+                    "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8",
+                    "selectedOrdinal": 0
+                  }
+                ],
+                "transitionSeed": 16523183570226472057
+              },
+              {
+                "coveragePieceId": null,
+                "hardestPieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+                "inactiveOrderHash": "9ffb8c30a5804343e813506472f94f06130a3a149ba0746a975dfc316fe3cade",
+                "parentStateFingerprint": "15aceea9749e6723fe1b3b46a7bc0af52dff52df8eb785b67e6eabbd40103361",
+                "rotationStartIndex": null,
+                "schedulerFamily": "hardPlusStatelessRotation",
+                "slots": [
+                  {
+                    "angleSeed": 7402462120689905306,
+                    "diversitySeed": 7402462120689904538,
+                    "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+                    "selectedOrdinal": 0
+                  }
+                ],
+                "transitionSeed": 15982105473048652551
+              },
+              {
+                "coveragePieceId": null,
+                "hardestPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+                "inactiveOrderHash": "64138d44084bb5691cfc14ebe47fcec1fabad94d563787d63d08f508462aa896",
+                "parentStateFingerprint": "318f959905143503eeb1400c9f4f44e20d5852806030ee3a5da9cdf3e5f6244d",
+                "rotationStartIndex": null,
+                "schedulerFamily": "hardPlusStatelessRotation",
+                "slots": [
+                  {
+                    "angleSeed": 11054377114957753861,
+                    "diversitySeed": 11054377114957753093,
+                    "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+                    "selectedOrdinal": 0
+                  }
+                ],
+                "transitionSeed": 18007822812721346855
+              },
+              {
+                "coveragePieceId": null,
+                "hardestPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+                "inactiveOrderHash": "64138d44084bb5691cfc14ebe47fcec1fabad94d563787d63d08f508462aa896",
+                "parentStateFingerprint": "34432db195c5660e21026b2844cb20b986c2ee68f641348deda0d8f207eeb253",
+                "rotationStartIndex": null,
+                "schedulerFamily": "hardPlusStatelessRotation",
+                "slots": [
+                  {
+                    "angleSeed": 11287622939418230024,
+                    "diversitySeed": 11287622939418228744,
+                    "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+                    "selectedOrdinal": 0
+                  }
+                ],
+                "transitionSeed": 18168676865160456746
+              },
+              {
+                "coveragePieceId": null,
+                "hardestPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+                "inactiveOrderHash": "64138d44084bb5691cfc14ebe47fcec1fabad94d563787d63d08f508462aa896",
+                "parentStateFingerprint": "7bdaef7b95bff1416021fe66bb4ce0f7fa79489c1089268a255e34a67c8b06b7",
+                "rotationStartIndex": null,
+                "schedulerFamily": "hardPlusStatelessRotation",
+                "slots": [
+                  {
+                    "angleSeed": 15221167869882034759,
+                    "diversitySeed": 15221167869882036039,
+                    "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+                    "selectedOrdinal": 0
+                  }
+                ],
+                "transitionSeed": 12951747328146259301
+              },
+              {
+                "coveragePieceId": null,
+                "hardestPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+                "inactiveOrderHash": "64138d44084bb5691cfc14ebe47fcec1fabad94d563787d63d08f508462aa896",
+                "parentStateFingerprint": "6649cb3cb5668fa1c3b393a4daaa06ae459641035140b3302aa15a07a1f42308",
+                "rotationStartIndex": null,
+                "schedulerFamily": "hardPlusStatelessRotation",
+                "slots": [
+                  {
+                    "angleSeed": 14893219041156076711,
+                    "diversitySeed": 14893219041156075943,
+                    "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+                    "selectedOrdinal": 0
+                  }
+                ],
+                "transitionSeed": 12551248306994201477
+              },
+              {
+                "coveragePieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+                "hardestPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+                "inactiveOrderHash": "ecf01aca57d4aca8ae141d14f5fdd40015192ebd376790bd073e9692a36d9914",
+                "parentStateFingerprint": "b9c30096502d5cacc721c133f253e9b38db328c78846a6beacd1507192a28476",
+                "rotationStartIndex": 1,
+                "schedulerFamily": "hardPlusStatelessRotation",
+                "slots": [
+                  {
+                    "angleSeed": 1235565632728778666,
+                    "diversitySeed": 1235565632728777386,
+                    "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+                    "selectedOrdinal": 0
+                  },
+                  {
+                    "angleSeed": 17320293909448513706,
+                    "diversitySeed": 17320293909448514986,
+                    "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+                    "selectedOrdinal": 1
+                  }
+                ],
+                "transitionSeed": 8188729942080950408
+              },
+              {
+                "coveragePieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+                "hardestPieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+                "inactiveOrderHash": "ecf01aca57d4aca8ae141d14f5fdd40015192ebd376790bd073e9692a36d9914",
+                "parentStateFingerprint": "e80f060992a6cbc19b88e066e67dee2a3caf6498c4aaf47556c1973045f0b1ac",
+                "rotationStartIndex": 1,
+                "schedulerFamily": "hardPlusStatelessRotation",
+                "slots": [
+                  {
+                    "angleSeed": 4677440087774023879,
+                    "diversitySeed": 4677440087774025159,
+                    "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+                    "selectedOrdinal": 0
+                  },
+                  {
+                    "angleSeed": 11642382370358808519,
+                    "diversitySeed": 11642382370358807239,
+                    "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+                    "selectedOrdinal": 1
+                  }
+                ],
+                "transitionSeed": 2335170149144627173
+              }
+            ],
+            "parents": 8,
+            "retainedStates": 1,
+            "selectedPieceIds": [
+              "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+              "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+              "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+              "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8"
+            ]
+          }
+        ],
+        "layersCompleted": 2,
         "lns": {
-          "frontierAfterGrid": 197305,
-          "frontierBeforeGrid": 201677,
-          "optimizerImprovements": 42,
+          "frontierAfterGrid": 183991,
+          "frontierBeforeGrid": 183991,
+          "optimizerImprovements": 69,
           "reinsertFailures": 0,
           "reinsertions": 536,
           "rounds": 24,
-          "roundsAccepted": 8,
-          "roundsReverted": 15,
-          "roundsWandered": 1,
-          "separationMoves": 17,
+          "roundsAccepted": 1,
+          "roundsReverted": 23,
+          "roundsWandered": 0,
+          "separationMoves": 48,
           "separationPairMoves": 0,
-          "separationProbes": 1551,
+          "separationProbes": 5160,
           "separationRecruits": 0,
-          "separationRelocations": 2,
+          "separationRelocations": 7,
           "separationWeightBumps": 0,
           "separationZeroOverlap": 24
         },
         "mode": 17,
-        "parentFingerprint": "045147eb177a23c3f395e0a2e8b06ba4865c39ab432363138f0959fbb832b46c",
-        "parentIndependentDepthMm": 203.514,
-        "parentSource": "pinnedFixture:/var/lib/t3/tmp/pv20-walk-320.000/parent-hop001.json#ecfd40755b58f776442db2445641decec9c2d85c8227e804951ac9aed3d79926",
+        "parentFingerprint": "cc72a001f35bc53f1cbb74cb1342f419afc3e8aa57e6c87984e38a29a92df59b",
+        "parentIndependentDepthMm": 185.129,
+        "parentSource": "pinnedFixture:/var/lib/t3/tmp/pv20-deep-187/parent-hop001.json#52bd1b4224218a768543591f8b0c4b94a7be68ae15c2e0c0c21cb55540ee84c7",
         "publicationRejections": 0,
         "reconstruction": {
           "deferredFirstPass": 0,
-          "exactRows": 2828,
+          "exactRows": 2431,
           "failedPieceCount": 0,
-          "insertions": 2828,
+          "insertions": 2431,
           "rowsPerPieceCap": 192
         },
         "seedDomain": 6219558291223097393,
         "settle": {
-          "acceptedMoves": 436,
+          "acceptedMoves": 433,
           "attempts": 2989,
-          "exactRows": 102259,
-          "frontierAfterGrid": 197305,
-          "frontierBeforeGrid": 201677,
+          "exactRows": 102999,
+          "frontierAfterGrid": 183991,
+          "frontierBeforeGrid": 183991,
           "sweeps": 73
         },
-        "targetDepthMm": 204.316,
+        "targetDepthMm": 185.953,
         "work": {
-          "clipperInputVertices": 5094455,
-          "clipperOutputVertices": 188196,
+          "clipperInputVertices": 12887732,
+          "clipperOutputVertices": 224990,
           "completeAudits": 1,
-          "exactFinalistRows": 105087,
-          "experimentalCollisionBuilds": 144121,
-          "experimentalPairVisits": 2342188,
-          "hazardQueries": 625145,
-          "orientationStreams": 36925,
-          "partialAudits": 0,
-          "positionSourceAttempts": 17680656,
-          "proxyPressureVisits": 0,
-          "retainedPeakBytes": 0,
-          "returnedPositions": 1085952,
-          "selectedPieceSlots": 5817,
-          "selectorDiagnosticPeakBytes": 0,
-          "sourceFeatureVisits": 54822,
-          "totalRetainedPeakBytes": 108917,
-          "transformedCollisionVertices": 945762,
-          "validatorCollisionBuilds": 122,
-          "validatorPairVisits": 3660
+          "exactFinalistRows": 105518,
+          "experimentalCollisionBuilds": 143132,
+          "experimentalPairVisits": 2555897,
+          "hazardQueries": 534798,
+          "orientationStreams": 32293,
+          "partialAudits": 2,
+          "positionSourceAttempts": 15267000,
+          "proxyPressureVisits": 5989,
+          "retainedPeakBytes": 82712,
+          "returnedPositions": 937728,
+          "selectedPieceSlots": 5431,
+          "selectorDiagnosticPeakBytes": 22728,
+          "sourceFeatureVisits": 51412,
+          "totalRetainedPeakBytes": 536998,
+          "transformedCollisionVertices": 1083490,
+          "validatorCollisionBuilds": 366,
+          "validatorPairVisits": 10980
         }
       },
       "seedDomain": 4850460655017284145,
@@ -3109,7 +3442,7 @@
     "surrogateFeasibleStates": 3,
     "translationEvaluations": 2568130
   },
-  "relevantSourceTreeSha256": "48419dec5f92c2a15a41552d6471e19f82546c59496ae8d45b4ef3a86356b068",
+  "relevantSourceTreeSha256": "a1677a8174d701a918a4e7dcea7f7b48b96d799131df911fa043467ef05a1ffe",
   "repairExactEvaluations": 0,
   "repairFailed": false,
   "repairTargetsConsidered": 0,
@@ -3126,7 +3459,7 @@
   "sourcePieceCount": 61,
   "targetArchitecture": "x86_64",
   "targetOperatingSystem": "linux",
-  "thirdQuartileElapsedMs": 16916.113473999998,
+  "thirdQuartileElapsedMs": 15696.743065,
   "tighteningExactEvaluations": 0,
   "tighteningPassesAttempted": 0,
   "tighteningPassesImproved": 0,
