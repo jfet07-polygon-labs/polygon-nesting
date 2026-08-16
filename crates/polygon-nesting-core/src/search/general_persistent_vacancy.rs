@@ -3765,7 +3765,7 @@ fn construction_confirm_row(
     Ok(Some(collision))
 }
 
-const CONSTRUCTION_DROP_LADDER_MM: [f64; 6] = [0.4, 0.8, 1.6, 3.2, 6.4, 12.8];
+pub(super) const CONSTRUCTION_DROP_LADDER_MM: [f64; 6] = [0.4, 0.8, 1.6, 3.2, 6.4, 12.8];
 
 const CONSTRUCTION_PROBE_RADII_MM: [f64; 12] = [
     0.128, 0.256, 0.384, 0.512, 0.768, 1.024, 1.536, 2.048, 3.072, 4.096, 6.144, 8.192,

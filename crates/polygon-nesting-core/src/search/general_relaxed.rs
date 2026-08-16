@@ -79,6 +79,26 @@ const CONFLICT_RUIN_RETRY_SEED_DOMAIN: u64 = 0x4352_5549_4E5F_5331;
 const PRECOMPRESSION_FRONTIER_SEED_DOMAIN: u64 = 0x5052_4543_4F4D_5031;
 #[cfg(feature = "jagua-experimental")]
 const PRECOMPRESSION_HANDOFF_SEED_DOMAIN: u64 = 0x5052_4548_414E_4431;
+// Mode 22 (alternation fixpoint) and mode 23 (recombination) promote two
+// mechanisms that were previously driven from outside the engine by an
+// external process alternating/crossing CLI invocations. Both are plain
+// deterministic orchestration over the existing separator (mode 0) and
+// descent (mode 11) machinery; neither introduces new search primitives.
+#[cfg(feature = "jagua-experimental")]
+const ALTERNATION_SEED_DOMAIN: u64 = 0x414C_5445_524E_3232;
+#[cfg(feature = "jagua-experimental")]
+const RECOMBINATION_SEED_DOMAIN: u64 = 0x5245_434F_4D42_3233;
+// The alternation loop runs at most this many separator/descent cycles
+// before it is declared non-convergent; a joint fixpoint (neither arm
+// improves) may stop it earlier.
+#[cfg(feature = "jagua-experimental")]
+const ALTERNATION_MAX_CYCLES: usize = 6;
+// Each descent-arm target steps the current best by the same rung already
+// used elsewhere in this experiment family for a bounded escape hop
+// (`persistent_vacancy::CONSTRUCTION_DROP_LADDER_MM[1]`), rather than
+// introducing a new tuned literal.
+#[cfg(feature = "jagua-experimental")]
+const ALTERNATION_DESCENT_TARGET_STEP_MM: f64 = persistent_vacancy::CONSTRUCTION_DROP_LADDER_MM[1];
 #[cfg(feature = "jagua-experimental")]
 const COUPLED_SEPARATOR_TARGETS: usize = 32;
 const COUPLED_SEPARATOR_WORKERS: usize = 8;
@@ -383,8 +403,60 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub frontier_feasibility: Option<Vec<GeneralPersistentVacancyFeasibilityRow>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub archive: Option<GeneralPersistentVacancyArchiveDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alternation: Option<GeneralPersistentVacancyAlternationDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recombination: Option<GeneralPersistentVacancyRecombinationDiagnostics>,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
+}
+
+/// Mode-22 (alternation fixpoint) diagnostics: one row per cycle of the
+/// separator/descent alternation, plus the total cycle count.
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyAlternationDiagnostics {
+    pub cycles_run: usize,
+    pub cycles: Vec<GeneralPersistentVacancyAlternationCycleDiagnostics>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyAlternationCycleDiagnostics {
+    pub cycle: usize,
+    pub separator_attempted: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separator_depth_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separator_independent_depth_mm: Option<f64>,
+    pub separator_improved: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separator_failure_reason: Option<String>,
+    pub descent_attempted: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub descent_target_depth_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub descent_independent_depth_mm: Option<f64>,
+    pub descent_improved: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub descent_failure_reason: Option<String>,
+}
+
+/// Mode-23 (recombination) diagnostics: the scale-free cut applied to
+/// parent A's measured short-axis span, the resulting seam composition, and
+/// the legalized outcome.
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyRecombinationDiagnostics {
+    pub cut_fraction: f64,
+    pub short_axis_threshold_mm: f64,
+    pub pieces_from_parent_a: usize,
+    pub pieces_from_parent_b: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hybrid_overlap_pairs: Option<usize>,
+    pub hybrid_independent_depth_mm: f64,
+    pub legalization_seed_depth_mm: f64,
+    pub legalized_depth_mm: f64,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
@@ -1763,15 +1835,20 @@ pub fn improve_complete_layout(
         relaxed_settings,
         incumbent,
         None,
+        None,
     )
 }
 
+/// `secondary_pinned_vacancy_parent` supplies the second-parent fixture (the
+/// warm-start slot) that mode 23 (recombination) crosses with
+/// `pinned_vacancy_parent`. Every other mode ignores it.
 pub fn improve_complete_layout_with_pinned_vacancy_parent(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
     relaxed_settings: GeneralRelaxedSettings,
     incumbent: &GeneralFastResult,
     pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
+    secondary_pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
 ) -> Result<GeneralRelaxedOutcome, GeneralFastError> {
     validate_relaxed_settings(relaxed_settings)?;
     let mut diagnostics = GeneralRelaxedDiagnostics::default();
@@ -1798,6 +1875,7 @@ pub fn improve_complete_layout_with_pinned_vacancy_parent(
                 relaxed_settings,
                 incumbent,
                 pinned_vacancy_parent,
+                secondary_pinned_vacancy_parent,
             ));
         }
         return Ok(GeneralRelaxedOutcome {
@@ -2151,6 +2229,7 @@ pub fn improve_complete_layout_with_pinned_vacancy_parent(
             relaxed_settings,
             &protected,
             pinned_vacancy_parent,
+            secondary_pinned_vacancy_parent,
         ));
     }
     Ok(GeneralRelaxedOutcome {
@@ -2244,6 +2323,7 @@ fn run_coupled_dynamic_separator_experiment<'a>(
     relaxed_settings: GeneralRelaxedSettings,
     protected: &GeneralFastResult,
     pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
+    secondary_pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
 ) -> GeneralCoupledSeparatorDiagnostics {
     let skipped = coupled_separator_configuration_error(relaxed_settings);
     if let Some(reason) = skipped {
@@ -2353,16 +2433,34 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                 let parent_source = pinned_vacancy_parent.map(|pinned| {
                     format!("pinnedFixture:{}#{}", pinned.source, pinned.source_sha256)
                 });
-                persistent_vacancy::run_persistent_vacancy_population(
-                    pieces,
-                    fast_settings,
-                    relaxed_settings,
-                    pinned_arm
-                        .as_ref()
-                        .unwrap_or(&boundary_projection_treatment.diagnostics),
-                    parent_source,
-                    relaxed_settings.persistent_vacancy_mode,
-                )
+                let effective_parent = pinned_arm
+                    .as_ref()
+                    .unwrap_or(&boundary_projection_treatment.diagnostics);
+                match relaxed_settings.persistent_vacancy_mode {
+                    22 => run_alternation_fixpoint(
+                        pieces,
+                        fast_settings,
+                        relaxed_settings,
+                        effective_parent,
+                        parent_source,
+                    ),
+                    23 => run_recombination(
+                        pieces,
+                        fast_settings,
+                        relaxed_settings,
+                        effective_parent,
+                        parent_source,
+                        secondary_pinned_vacancy_parent,
+                    ),
+                    mode => persistent_vacancy::run_persistent_vacancy_population(
+                        pieces,
+                        fast_settings,
+                        relaxed_settings,
+                        effective_parent,
+                        parent_source,
+                        mode,
+                    ),
+                }
             });
         GeneralCoupledSeparatorDiagnostics {
             seed_domain: COUPLED_SEPARATOR_SEED_DOMAIN,
@@ -2376,7 +2474,12 @@ fn run_coupled_dynamic_separator_experiment<'a>(
     }
     #[cfg(not(feature = "jagua-experimental"))]
     {
-        let _ = (pieces, fast_settings, pinned_vacancy_parent);
+        let _ = (
+            pieces,
+            fast_settings,
+            pinned_vacancy_parent,
+            secondary_pinned_vacancy_parent,
+        );
         let reason = "coupled dynamic separator requires the jagua-experimental feature".to_owned();
         GeneralCoupledSeparatorDiagnostics {
             seed_domain: COUPLED_SEPARATOR_SEED_DOMAIN,
@@ -2396,6 +2499,554 @@ fn run_coupled_dynamic_separator_experiment<'a>(
             persistent_vacancy_population: None,
         }
     }
+}
+
+/// Builds a `GeneralFastResult` suitable as a relaxed-search incumbent from
+/// placements that may or may not currently be exact-valid (the whole point
+/// of this engine is to legalize temporarily infeasible complete states).
+/// Only `.placements` and `.used_long_axis_depth_mm` drive the downstream
+/// search; the remaining bookkeeping fields are unused by that path and are
+/// left at their neutral defaults.
+#[cfg(feature = "jagua-experimental")]
+fn general_fast_result_seed(
+    placements: Vec<GeneralFastPlacement>,
+    used_long_axis_depth_mm: f64,
+) -> GeneralFastResult {
+    GeneralFastResult {
+        placements,
+        unplaced_piece_ids: Vec::new(),
+        exact_evaluations: 0,
+        primary_exact_evaluations: 0,
+        order_portfolio_exact_evaluations: 0,
+        catalog_portfolio_exact_evaluations: 0,
+        pairing_exact_evaluations: 0,
+        beam_exact_evaluations: 0,
+        tightening_exact_evaluations: 0,
+        tightening_passes_attempted: 0,
+        tightening_passes_improved: 0,
+        catalog_candidate_placed_count: None,
+        catalog_candidate_depth_mm: None,
+        pairing_candidate_placed_count: None,
+        pairing_candidate_depth_mm: None,
+        beam_candidate_placed_count: None,
+        beam_candidate_depth_mm: None,
+        exploratory_exact_evaluations: 0,
+        repair_exact_evaluations: 0,
+        local_angle_refinement_exact_evaluations: 0,
+        repair_targets_considered: 0,
+        order_variants_attempted: 0,
+        catalog_variants_attempted: 0,
+        order_portfolio_failed: false,
+        catalog_portfolio_failed: false,
+        pairing_failed: false,
+        beam_failed: false,
+        exploratory_failed: false,
+        repair_failed: false,
+        used_short_axis_span_mm: 0.0,
+        used_long_axis_depth_mm,
+        unused_short_axis_projection_mm: 0.0,
+        occupied_envelope_area_mm2: 0.0,
+    }
+}
+
+#[cfg(feature = "jagua-experimental")]
+fn fast_placements_from_coupled_diagnostics(
+    placements: &[GeneralCoupledSeparatorPlacementDiagnostics],
+) -> Vec<GeneralFastPlacement> {
+    placements
+        .iter()
+        .map(|placement| GeneralFastPlacement {
+            piece_id: placement.piece_id.clone(),
+            rotation_deg: placement.rotation_deg,
+            mirrored: placement.mirrored,
+            translate_short_axis: placement.translate_short_axis,
+            translate_long_axis: placement.translate_long_axis,
+        })
+        .collect()
+}
+
+/// Counts pairwise exact polygon overlaps in a (possibly infeasible)
+/// placement set. Used only for mode 23's cheap seam diagnostic; the
+/// authoritative exact-valid gate remains `validate_and_measure_placements`.
+#[cfg(feature = "jagua-experimental")]
+fn count_exact_overlap_pairs(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+) -> Result<usize, GeneralFastError> {
+    let by_id = pieces
+        .iter()
+        .map(|piece| (piece.id, piece))
+        .collect::<BTreeMap<_, _>>();
+    let mut transformed = Vec::with_capacity(placements.len());
+    for placement in placements {
+        let piece = by_id.get(placement.piece_id.as_str()).ok_or_else(|| {
+            GeneralFastError::InvalidInput(format!(
+                "recombination hybrid references unknown piece {}",
+                placement.piece_id
+            ))
+        })?;
+        transformed.push(piece.polygon.transformed(
+            placement.rotation_deg,
+            placement.mirrored,
+            placement.translate_short_axis,
+            placement.translate_long_axis,
+        )?);
+    }
+    let mut overlaps = 0usize;
+    for first in 0..transformed.len() {
+        for second in (first + 1)..transformed.len() {
+            if polygons_overlap_exact(&transformed[first], &transformed[second])? {
+                overlaps += 1;
+            }
+        }
+    }
+    Ok(overlaps)
+}
+
+/// Mode 22: alternation fixpoint. Alternates the legacy separator treatment
+/// (the same pipeline mode 0 exercises, warm-started in-process from the
+/// current state) with the persistent-vacancy descent (the same machinery
+/// mode 11 exercises, targeting `current_best + rung`) for up to
+/// `ALTERNATION_MAX_CYCLES` cycles, accepting only strict, exact-valid
+/// improvements from either arm, until neither arm improves.
+#[cfg(feature = "jagua-experimental")]
+fn run_alternation_fixpoint(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    parent: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_source: Option<String>,
+) -> GeneralPersistentVacancyDiagnostics {
+    let mut diagnostics = GeneralPersistentVacancyDiagnostics {
+        mode: 22,
+        seed_domain: ALTERNATION_SEED_DOMAIN,
+        parent_source,
+        ..GeneralPersistentVacancyDiagnostics::default()
+    };
+    let Some(starting_target_depth_mm) = relaxed_settings.persistent_vacancy_target_depth_mm
+    else {
+        diagnostics.failure_reason =
+            Some("persistent vacancy mode 22 requires an explicit target depth".to_owned());
+        return diagnostics;
+    };
+    if !starting_target_depth_mm.is_finite() || starting_target_depth_mm <= 0.0 {
+        diagnostics.failure_reason = Some(
+            "persistent vacancy target depth must be a positive finite value".to_owned(),
+        );
+        return diagnostics;
+    }
+    diagnostics.target_depth_mm = starting_target_depth_mm;
+    if parent.final_placements.len() != pieces.len() {
+        diagnostics.failure_reason =
+            Some("persistent vacancy parent is not a complete exact-valid layout".to_owned());
+        return diagnostics;
+    }
+
+    let parent_placements = fast_placements_from_coupled_diagnostics(&parent.final_placements);
+    diagnostics.parent_fingerprint = Some(coupled_fast_placement_fingerprint(&parent_placements));
+    if let Err(error) = validate_and_measure_placements(pieces, &parent_placements, fast_settings)
+    {
+        diagnostics.failure_reason =
+            Some(format!("persistent vacancy parent validation: {error}"));
+        return diagnostics;
+    }
+    let mut current_best =
+        match coupled_independent_source_depth(pieces, &parent_placements, fast_settings) {
+            Ok(depth) => depth,
+            Err(error) => {
+                diagnostics.failure_reason =
+                    Some(format!("persistent vacancy parent depth: {error}"));
+                return diagnostics;
+            }
+        };
+    diagnostics.parent_independent_depth_mm = Some(current_best);
+    diagnostics.initial_state_fingerprint = diagnostics.parent_fingerprint.clone();
+    let mut current = general_fast_result_seed(parent_placements, current_best);
+
+    diagnostics.attempted = true;
+    let mut cycle_rows = Vec::with_capacity(ALTERNATION_MAX_CYCLES);
+    let mut cycles_run = 0usize;
+    for cycle in 0..ALTERNATION_MAX_CYCLES {
+        cycles_run = cycle + 1;
+        let mut row = GeneralPersistentVacancyAlternationCycleDiagnostics {
+            cycle,
+            ..GeneralPersistentVacancyAlternationCycleDiagnostics::default()
+        };
+
+        // (a) legacy separator treatment, warm-started in-process from the
+        // current state (the same pipeline mode 0 exercises via the
+        // warm-start incumbent, just supplied directly instead of through a
+        // fixture file).
+        let mut separator_settings = relaxed_settings;
+        separator_settings.persistent_vacancy_mode = 0;
+        let separator_improved = match improve_complete_layout_with_pinned_vacancy_parent(
+            pieces,
+            fast_settings,
+            separator_settings,
+            &current,
+            None,
+            None,
+        ) {
+            Ok(outcome) => {
+                let arm = outcome
+                    .diagnostics
+                    .coupled_dynamic_separator
+                    .as_ref()
+                    .and_then(|coupled| coupled.boundary_projection_treatment.as_ref());
+                match arm {
+                    Some(arm) => {
+                        row.separator_attempted = true;
+                        row.separator_depth_mm = Some(arm.final_depth_mm);
+                        let candidate_placements =
+                            fast_placements_from_coupled_diagnostics(&arm.final_placements);
+                        match validate_and_measure_placements(
+                            pieces,
+                            &candidate_placements,
+                            fast_settings,
+                        ) {
+                            Ok(_) => match coupled_independent_source_depth(
+                                pieces,
+                                &candidate_placements,
+                                fast_settings,
+                            ) {
+                                Ok(depth) => {
+                                    row.separator_independent_depth_mm = Some(depth);
+                                    if grid_key(depth) < grid_key(current_best) {
+                                        current_best = depth;
+                                        current =
+                                            general_fast_result_seed(candidate_placements, depth);
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                }
+                                Err(error) => {
+                                    row.separator_failure_reason = Some(error.to_string());
+                                    false
+                                }
+                            },
+                            Err(error) => {
+                                row.separator_failure_reason = Some(error.to_string());
+                                false
+                            }
+                        }
+                    }
+                    None => {
+                        row.separator_failure_reason = Some(
+                            "separator sub-step produced no boundary-projection arm".to_owned(),
+                        );
+                        false
+                    }
+                }
+            }
+            Err(error) => {
+                row.separator_failure_reason = Some(error.to_string());
+                false
+            }
+        };
+        row.separator_improved = separator_improved;
+
+        // (b) persistent-vacancy descent (mode 11 machinery) from the
+        // (possibly separator-improved) current state, targeting
+        // current_best plus the shared descent rung.
+        let descent_target = current_best + ALTERNATION_DESCENT_TARGET_STEP_MM;
+        row.descent_target_depth_mm = Some(descent_target);
+        let mut descent_settings = relaxed_settings;
+        descent_settings.persistent_vacancy_mode = 11;
+        descent_settings.persistent_vacancy_target_depth_mm = Some(descent_target);
+        let descent_parent = GeneralCoupledSeparatorArmDiagnostics {
+            final_placements: coupled_placement_diagnostics(&current.placements),
+            ..GeneralCoupledSeparatorArmDiagnostics::default()
+        };
+        let descent_diagnostics = persistent_vacancy::run_persistent_vacancy_population(
+            pieces,
+            fast_settings,
+            descent_settings,
+            &descent_parent,
+            Some(format!("alternationCycle{cycle}")),
+            11,
+        );
+        row.descent_attempted = descent_diagnostics.attempted;
+        let descent_improved = if descent_diagnostics.exact_valid {
+            match descent_diagnostics.independent_depth_mm {
+                Some(depth) => {
+                    row.descent_independent_depth_mm = Some(depth);
+                    if grid_key(depth) < grid_key(current_best) {
+                        let descent_placements = fast_placements_from_coupled_diagnostics(
+                            &descent_diagnostics.final_placements,
+                        );
+                        match validate_and_measure_placements(
+                            pieces,
+                            &descent_placements,
+                            fast_settings,
+                        ) {
+                            Ok(_) => {
+                                current_best = depth;
+                                current = general_fast_result_seed(descent_placements, depth);
+                                true
+                            }
+                            Err(error) => {
+                                row.descent_failure_reason = Some(error.to_string());
+                                false
+                            }
+                        }
+                    } else {
+                        false
+                    }
+                }
+                None => false,
+            }
+        } else {
+            row.descent_failure_reason = descent_diagnostics.failure_reason.clone();
+            false
+        };
+        row.descent_improved = descent_improved;
+
+        cycle_rows.push(row);
+        if !separator_improved && !descent_improved {
+            break;
+        }
+    }
+
+    diagnostics.exact_valid = true;
+    diagnostics.independent_depth_mm = Some(current_best);
+    diagnostics.final_placement_fingerprint =
+        Some(coupled_fast_placement_fingerprint(&current.placements));
+    diagnostics.final_placements = coupled_placement_diagnostics(&current.placements);
+    diagnostics.alternation = Some(GeneralPersistentVacancyAlternationDiagnostics {
+        cycles_run,
+        cycles: cycle_rows,
+    });
+    diagnostics
+}
+
+/// Mode 23: recombination. Crosses parent A (`pinned_vacancy_parent`) with
+/// parent B (`secondary_pinned_vacancy_parent`, the warm-start slot) at a
+/// scale-free cut fraction of parent A's own measured short-axis span, then
+/// legalizes the resulting hybrid through the same separator treatment
+/// mode 0 uses.
+#[cfg(feature = "jagua-experimental")]
+fn run_recombination(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    parent_a: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_a_source: Option<String>,
+    parent_b: Option<&GeneralPersistentVacancyPinnedParent>,
+) -> GeneralPersistentVacancyDiagnostics {
+    let mut diagnostics = GeneralPersistentVacancyDiagnostics {
+        mode: 23,
+        seed_domain: RECOMBINATION_SEED_DOMAIN,
+        parent_source: parent_a_source,
+        ..GeneralPersistentVacancyDiagnostics::default()
+    };
+    let Some(cut_fraction) = relaxed_settings.persistent_vacancy_target_depth_mm else {
+        diagnostics.failure_reason =
+            Some("persistent vacancy mode 23 requires an explicit cut fraction".to_owned());
+        return diagnostics;
+    };
+    if !(cut_fraction.is_finite() && cut_fraction > 0.0 && cut_fraction < 1.0) {
+        diagnostics.failure_reason = Some(
+            "persistent vacancy mode 23 cut fraction must be strictly between 0 and 1".to_owned(),
+        );
+        return diagnostics;
+    }
+    diagnostics.target_depth_mm = cut_fraction;
+    let Some(parent_b) = parent_b else {
+        diagnostics.failure_reason = Some(
+            "persistent vacancy mode 23 requires a second parent fixture in the warm-start slot"
+                .to_owned(),
+        );
+        return diagnostics;
+    };
+    if parent_a.final_placements.len() != pieces.len() {
+        diagnostics.failure_reason =
+            Some("persistent vacancy parent A is not a complete exact-valid layout".to_owned());
+        return diagnostics;
+    }
+    if parent_b.placements.len() != pieces.len() {
+        diagnostics.failure_reason =
+            Some("persistent vacancy parent B is not a complete exact-valid layout".to_owned());
+        return diagnostics;
+    }
+
+    let mut placements_a = BTreeMap::new();
+    for placement in &parent_a.final_placements {
+        if placements_a
+            .insert(placement.piece_id.as_str(), placement)
+            .is_some()
+        {
+            diagnostics.failure_reason = Some(format!(
+                "persistent vacancy parent A has duplicate piece {}",
+                placement.piece_id
+            ));
+            return diagnostics;
+        }
+    }
+    let mut placements_b = BTreeMap::new();
+    for placement in &parent_b.placements {
+        if placements_b
+            .insert(placement.piece_id.as_str(), placement)
+            .is_some()
+        {
+            diagnostics.failure_reason = Some(format!(
+                "persistent vacancy parent B has duplicate piece {}",
+                placement.piece_id
+            ));
+            return diagnostics;
+        }
+    }
+    let piece_ids = pieces.iter().map(|piece| piece.id).collect::<BTreeSet<_>>();
+    let ids_a = placements_a.keys().copied().collect::<BTreeSet<_>>();
+    let ids_b = placements_b.keys().copied().collect::<BTreeSet<_>>();
+    if ids_a != piece_ids || ids_b != piece_ids {
+        diagnostics.failure_reason = Some(
+            "persistent vacancy mode 23 requires both parents to cover exactly the request's pieceId set"
+                .to_owned(),
+        );
+        return diagnostics;
+    }
+
+    diagnostics.attempted = true;
+    let short_axis_values = pieces
+        .iter()
+        .map(|piece| {
+            placements_a
+                .get(piece.id)
+                .expect("validated piece id set")
+                .translate_short_axis
+        })
+        .collect::<Vec<_>>();
+    let min_short = short_axis_values
+        .iter()
+        .copied()
+        .fold(f64::INFINITY, f64::min);
+    let max_short = short_axis_values
+        .iter()
+        .copied()
+        .fold(f64::NEG_INFINITY, f64::max);
+    if !min_short.is_finite() || !max_short.is_finite() || max_short <= min_short {
+        diagnostics.failure_reason = Some(
+            "persistent vacancy mode 23 requires parent A to span a positive short-axis range"
+                .to_owned(),
+        );
+        return diagnostics;
+    }
+    let threshold = min_short + cut_fraction * (max_short - min_short);
+
+    let mut hybrid = Vec::with_capacity(pieces.len());
+    let mut pieces_from_parent_a = 0usize;
+    let mut pieces_from_parent_b = 0usize;
+    for piece in pieces {
+        let pose_a = placements_a.get(piece.id).expect("validated piece id set");
+        let (rotation_deg, mirrored, translate_short_axis, translate_long_axis) =
+            if pose_a.translate_short_axis < threshold {
+                pieces_from_parent_a += 1;
+                (
+                    pose_a.rotation_deg,
+                    pose_a.mirrored,
+                    pose_a.translate_short_axis,
+                    pose_a.translate_long_axis,
+                )
+            } else {
+                pieces_from_parent_b += 1;
+                let pose_b = placements_b.get(piece.id).expect("validated piece id set");
+                (
+                    pose_b.rotation_deg,
+                    pose_b.mirrored,
+                    pose_b.translate_short_axis,
+                    pose_b.translate_long_axis,
+                )
+            };
+        hybrid.push(GeneralFastPlacement {
+            piece_id: piece.id.to_owned(),
+            rotation_deg,
+            mirrored,
+            translate_short_axis,
+            translate_long_axis,
+        });
+    }
+    diagnostics.parent_fingerprint = Some(coupled_fast_placement_fingerprint(
+        &fast_placements_from_coupled_diagnostics(&parent_a.final_placements),
+    ));
+    diagnostics.initial_state_fingerprint = Some(coupled_fast_placement_fingerprint(&hybrid));
+
+    let hybrid_overlap_pairs = count_exact_overlap_pairs(pieces, &hybrid).ok();
+    let hybrid_independent_depth_mm =
+        match coupled_independent_source_depth(pieces, &hybrid, fast_settings) {
+            Ok(depth) => depth,
+            Err(error) => {
+                diagnostics.failure_reason = Some(format!("recombination hybrid depth: {error}"));
+                return diagnostics;
+            }
+        };
+    // The legalization pipeline (both the epoch lane search and the coupled
+    // separator's target loop) only ever accepts a *strict* depth decrease
+    // at a fixed piece count, so a seed incumbent pinned exactly at the raw
+    // hybrid's tight geometric bound can never be published even if a
+    // seam-clearing rearrangement exists at that same footprint. Seeding a
+    // looser nominal depth gives the strict-improvement search room to find
+    // and publish that rearrangement. The headroom is derived, not tuned:
+    // it is the depth the fixed epoch budget could theoretically contract
+    // back down to the hybrid's own tight bound, using the run's own
+    // existing epoch count and shrink ratio (no new absolute-mm literal).
+    let epoch_contraction_reach = (1.0 - relaxed_settings.initial_shrink_ratio)
+        .powf(relaxed_settings.epochs as f64);
+    let seed_depth_mm = if epoch_contraction_reach.is_finite() && epoch_contraction_reach > 0.0 {
+        hybrid_independent_depth_mm / epoch_contraction_reach
+    } else {
+        hybrid_independent_depth_mm
+    };
+    let seed_incumbent = general_fast_result_seed(hybrid, seed_depth_mm);
+
+    let mut legalize_settings = relaxed_settings;
+    legalize_settings.persistent_vacancy_mode = 0;
+    let legalized = match improve_complete_layout_with_pinned_vacancy_parent(
+        pieces,
+        fast_settings,
+        legalize_settings,
+        &seed_incumbent,
+        None,
+        None,
+    ) {
+        Ok(outcome) => outcome,
+        Err(error) => {
+            diagnostics.failure_reason = Some(format!("recombination legalization: {error}"));
+            return diagnostics;
+        }
+    };
+    let Some(legal_arm) = legalized
+        .diagnostics
+        .coupled_dynamic_separator
+        .as_ref()
+        .and_then(|coupled| coupled.boundary_projection_treatment.as_ref())
+    else {
+        diagnostics.failure_reason =
+            Some("recombination legalization produced no boundary-projection arm".to_owned());
+        return diagnostics;
+    };
+    let final_placements = fast_placements_from_coupled_diagnostics(&legal_arm.final_placements);
+    let exact_valid =
+        validate_and_measure_placements(pieces, &final_placements, fast_settings).is_ok();
+    let independent_depth_mm =
+        coupled_independent_source_depth(pieces, &final_placements, fast_settings).ok();
+
+    diagnostics.exact_valid = exact_valid;
+    diagnostics.independent_depth_mm = independent_depth_mm;
+    diagnostics.final_placement_fingerprint =
+        Some(coupled_fast_placement_fingerprint(&final_placements));
+    diagnostics.final_placements = coupled_placement_diagnostics(&final_placements);
+    diagnostics.recombination = Some(GeneralPersistentVacancyRecombinationDiagnostics {
+        cut_fraction,
+        short_axis_threshold_mm: threshold,
+        pieces_from_parent_a,
+        pieces_from_parent_b,
+        hybrid_overlap_pairs,
+        hybrid_independent_depth_mm,
+        legalization_seed_depth_mm: seed_depth_mm,
+        legalized_depth_mm: legal_arm.final_depth_mm,
+    });
+    diagnostics
 }
 
 fn coupled_separator_configuration_error(settings: GeneralRelaxedSettings) -> Option<String> {
@@ -11416,6 +12067,409 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn alternation_requires_an_explicit_target_depth() {
+        let polygons = [square(10.0), square(8.0)];
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let settings = coupled_experiment_test_settings(3);
+        let constructed = JobPool::new(Some(1))
+            .run_scoped(|| construct_short_side_first(&pieces, fast_settings))
+            .unwrap();
+        let parent = GeneralCoupledSeparatorArmDiagnostics {
+            final_placements: coupled_placement_diagnostics(&constructed.placements),
+            ..GeneralCoupledSeparatorArmDiagnostics::default()
+        };
+        let result = run_alternation_fixpoint(&pieces, fast_settings, settings, &parent, None);
+        assert!(!result.attempted);
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("requires an explicit target depth"));
+        assert!(result.alternation.is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn alternation_requires_a_complete_parent() {
+        let polygons = [square(10.0), square(8.0)];
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let mut settings = coupled_experiment_test_settings(3);
+        settings.persistent_vacancy_target_depth_mm = Some(50.0);
+        let parent = GeneralCoupledSeparatorArmDiagnostics::default();
+        let result = run_alternation_fixpoint(&pieces, fast_settings, settings, &parent, None);
+        assert!(!result.attempted);
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("not a complete exact-valid layout"));
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn alternation_runs_to_a_fixpoint_and_reports_diagnostics() {
+        let polygons = [square(10.0), square(8.0)];
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let mut settings = coupled_experiment_test_settings(5);
+        settings.persistent_vacancy_target_depth_mm = Some(50.0);
+        let constructed = JobPool::new(Some(1))
+            .run_scoped(|| construct_short_side_first(&pieces, fast_settings))
+            .unwrap();
+        let parent = GeneralCoupledSeparatorArmDiagnostics {
+            final_placements: coupled_placement_diagnostics(&constructed.placements),
+            ..GeneralCoupledSeparatorArmDiagnostics::default()
+        };
+        let result = JobPool::new(Some(1)).run_scoped(|| {
+            run_alternation_fixpoint(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent,
+                Some("test-parent".to_owned()),
+            )
+        });
+        assert!(result.attempted);
+        assert!(result.exact_valid);
+        assert_eq!(result.mode, 22);
+        assert_eq!(result.final_placements.len(), pieces.len());
+        let alternation = result.alternation.clone().unwrap();
+        assert!(alternation.cycles_run >= 1);
+        assert!(alternation.cycles_run <= ALTERNATION_MAX_CYCLES);
+        assert_eq!(alternation.cycles.len(), alternation.cycles_run);
+        // With only two pieces, the descent arm (pinned to Mixed-61) always
+        // fails cleanly and never improves; the loop still terminates.
+        for cycle in &alternation.cycles {
+            assert!(!cycle.descent_improved);
+            assert!(cycle
+                .descent_failure_reason
+                .as_deref()
+                .is_some_and(|reason| reason.contains("Mixed-61")));
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn alternation_is_deterministic_across_repeated_runs() {
+        let polygons = [square(10.0), square(8.0)];
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let mut settings = coupled_experiment_test_settings(9);
+        settings.persistent_vacancy_target_depth_mm = Some(50.0);
+        let constructed = JobPool::new(Some(1))
+            .run_scoped(|| construct_short_side_first(&pieces, fast_settings))
+            .unwrap();
+        let parent = GeneralCoupledSeparatorArmDiagnostics {
+            final_placements: coupled_placement_diagnostics(&constructed.placements),
+            ..GeneralCoupledSeparatorArmDiagnostics::default()
+        };
+        let first = JobPool::new(Some(1)).run_scoped(|| {
+            run_alternation_fixpoint(&pieces, fast_settings, settings, &parent, None)
+        });
+        let second = JobPool::new(Some(1)).run_scoped(|| {
+            run_alternation_fixpoint(&pieces, fast_settings, settings, &parent, None)
+        });
+        assert_eq!(first, second);
+    }
+
+    fn two_piece_recombination_fixture() -> (
+        [PolygonSet; 2],
+        GeneralFastSettings,
+        GeneralCoupledSeparatorArmDiagnostics,
+        GeneralPersistentVacancyPinnedParent,
+    ) {
+        let polygons = [square(10.0), square(8.0)];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let parent_a = GeneralCoupledSeparatorArmDiagnostics {
+            final_placements: vec![
+                GeneralCoupledSeparatorPlacementDiagnostics {
+                    piece_id: "large".to_owned(),
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_short_axis: 0.0,
+                    translate_long_axis: 0.0,
+                },
+                GeneralCoupledSeparatorPlacementDiagnostics {
+                    piece_id: "small".to_owned(),
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_short_axis: 30.0,
+                    translate_long_axis: 0.0,
+                },
+            ],
+            ..GeneralCoupledSeparatorArmDiagnostics::default()
+        };
+        let parent_b = GeneralPersistentVacancyPinnedParent {
+            placements: vec![
+                GeneralFastPlacement {
+                    piece_id: "large".to_owned(),
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_short_axis: 20.0,
+                    translate_long_axis: 15.0,
+                },
+                GeneralFastPlacement {
+                    piece_id: "small".to_owned(),
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_short_axis: 0.0,
+                    translate_long_axis: 15.0,
+                },
+            ],
+            source: "test-parent-b".to_owned(),
+            source_sha256: "deadbeef".to_owned(),
+        };
+        (polygons, fast_settings, parent_a, parent_b)
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn recombination_requires_a_secondary_parent() {
+        let (polygons, fast_settings, parent_a, _) = two_piece_recombination_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let mut settings = coupled_experiment_test_settings(11);
+        settings.persistent_vacancy_target_depth_mm = Some(0.5);
+        let result = run_recombination(&pieces, fast_settings, settings, &parent_a, None, None);
+        assert!(!result.attempted);
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("second parent fixture"));
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn recombination_requires_cut_fraction_in_open_unit_interval() {
+        let (polygons, fast_settings, parent_a, parent_b) = two_piece_recombination_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let mut settings = coupled_experiment_test_settings(13);
+        for bad_fraction in [0.0, 1.0, -0.1, 1.1, f64::NAN] {
+            settings.persistent_vacancy_target_depth_mm = Some(bad_fraction);
+            let result = run_recombination(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent_a,
+                None,
+                Some(&parent_b),
+            );
+            assert!(!result.attempted);
+            assert!(
+                result
+                    .failure_reason
+                    .as_deref()
+                    .is_some_and(|reason| reason.contains("cut fraction")),
+                "fraction {bad_fraction} unexpectedly accepted"
+            );
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn recombination_requires_matching_piece_id_sets() {
+        let (polygons, fast_settings, parent_a, _) = two_piece_recombination_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let mismatched_parent_b = GeneralPersistentVacancyPinnedParent {
+            placements: vec![
+                GeneralFastPlacement {
+                    piece_id: "large".to_owned(),
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_short_axis: 0.0,
+                    translate_long_axis: 0.0,
+                },
+                GeneralFastPlacement {
+                    piece_id: "other".to_owned(),
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_short_axis: 30.0,
+                    translate_long_axis: 0.0,
+                },
+            ],
+            source: "mismatched".to_owned(),
+            source_sha256: "deadbeef".to_owned(),
+        };
+        let mut settings = coupled_experiment_test_settings(17);
+        settings.persistent_vacancy_target_depth_mm = Some(0.5);
+        let result = run_recombination(
+            &pieces,
+            fast_settings,
+            settings,
+            &parent_a,
+            None,
+            Some(&mismatched_parent_b),
+        );
+        assert!(!result.attempted);
+        assert!(result.failure_reason.unwrap().contains("pieceId set"));
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn recombination_crosses_and_legalizes_two_parents() {
+        let (polygons, fast_settings, parent_a, parent_b) = two_piece_recombination_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let mut settings = coupled_experiment_test_settings(19);
+        settings.persistent_vacancy_target_depth_mm = Some(0.5);
+        let result = JobPool::new(Some(1)).run_scoped(|| {
+            run_recombination(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent_a,
+                Some("parent-a".to_owned()),
+                Some(&parent_b),
+            )
+        });
+        assert!(result.attempted);
+        assert_eq!(result.mode, 23);
+        assert_eq!(result.final_placements.len(), pieces.len());
+        let recombination = result.recombination.clone().unwrap();
+        assert!((recombination.cut_fraction - 0.5).abs() < 1e-12);
+        assert_eq!(
+            recombination.pieces_from_parent_a + recombination.pieces_from_parent_b,
+            2
+        );
+        // The large piece's short-axis anchor (0.0) is below the threshold
+        // (15.0 = min 0.0 + 0.5 * span 30.0), so it keeps parent A's pose.
+        assert_eq!(recombination.pieces_from_parent_a, 1);
+        assert_eq!(recombination.pieces_from_parent_b, 1);
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn recombination_is_deterministic_across_repeated_runs() {
+        let (polygons, fast_settings, parent_a, parent_b) = two_piece_recombination_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let mut settings = coupled_experiment_test_settings(23);
+        settings.persistent_vacancy_target_depth_mm = Some(0.5);
+        let first = JobPool::new(Some(1)).run_scoped(|| {
+            run_recombination(&pieces, fast_settings, settings, &parent_a, None, Some(&parent_b))
+        });
+        let second = JobPool::new(Some(1)).run_scoped(|| {
+            run_recombination(&pieces, fast_settings, settings, &parent_a, None, Some(&parent_b))
+        });
+        assert_eq!(first, second);
+    }
+
+    #[test]
     fn rollback_backend_rejects_non_rollback_pressure_models() {
         for pressure_model in [
             GeneralRelaxedPressureModel::ContinuousTrianglePoles,
@@ -12470,6 +13524,7 @@ mod tests {
                 settings,
                 &protected,
                 None,
+                None,
             )
         });
         let parallel = JobPool::new(Some(4)).run_scoped(|| {
@@ -12478,6 +13533,7 @@ mod tests {
                 fast_settings,
                 settings,
                 &protected,
+                None,
                 None,
             )
         });
@@ -12527,6 +13583,7 @@ mod tests {
             settings,
             &protected,
             None,
+            None,
         );
 
         for arm in [&result.control, &result.treatment] {
@@ -12556,6 +13613,7 @@ mod tests {
             fast_settings,
             coupled_experiment_test_settings(41),
             &protected,
+            None,
             None,
         );
         let protected_fingerprint = coupled_fast_placement_fingerprint(&protected.placements);
