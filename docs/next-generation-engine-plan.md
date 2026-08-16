@@ -553,3 +553,15 @@ premise fails: sealed vacancy stays sealed because no exact-valid
 relocation of the bridge piece exists within the operator budget. The
 program's productive direction stays constructor-side: the salt-tail
 harvest that produced 190.737 continues on wider screens.
+
+The record falls again inside the same harvest. Completing the sixteen
+first-harvest descents, salt 6 - a mediocre 216.852 mm constructor with
+767 sealed-void cells - yields 27.489 mm, the largest extraction the
+machinery has produced, and lands at 189.363 mm: the first endpoint below
+190 and the new constructed-line record (artifacts under
+profile-harvest/salt6-record/). This is the terminal exhibit for both
+rejected predictors: the best endpoint of the program now comes from a
+bottom-quartile constructor with the second-highest sealed-void count in
+the band. Endpoint quality is a property of basin structure that no cheap
+observable measured so far anticipates; wide sampling with band-wide
+descent is not a fallback protocol but the correct one.
