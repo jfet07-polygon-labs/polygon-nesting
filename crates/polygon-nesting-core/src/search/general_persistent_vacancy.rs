@@ -3121,12 +3121,19 @@ fn construction_order(
     Ok(rows.into_iter().map(|(_, _, index)| index).collect())
 }
 
-/// Bounding-box skyline over CONSTRUCTION_SKYLINE_COLUMNS columns: each
-/// station is the center of one of the CONSTRUCTION_HINT_STATIONS lowest
-/// columns with pairwise spacing of at least 8 columns (ties by column
-/// index), paired with that column's current top. On an empty state this
-/// degenerates to the sheet floor.
-fn skyline_hint_stations(state: &VacancyState, settings: GeneralFastSettings) -> Vec<(f64, f64)> {
+/// Width-aware bounding-box skyline over CONSTRUCTION_SKYLINE_COLUMNS
+/// columns: each station is the center of one of the
+/// CONSTRUCTION_HINT_STATIONS lowest sliding windows wide enough for the
+/// requesting piece (window top = max column top inside the window, ties by
+/// window start, pairwise start spacing of at least 8 columns), paired with
+/// that window's top. This is the classical lowest-fitting skyline
+/// position: a station is only proposed where the piece actually fits
+/// laterally. On an empty state it degenerates to the sheet floor.
+fn skyline_hint_stations(
+    state: &VacancyState,
+    settings: GeneralFastSettings,
+    required_width_mm: f64,
+) -> Vec<(f64, f64)> {
     let inset = collision_sheet_inset_mm(settings);
     let usable = settings.sheet_short_axis_mm - 2.0 * inset;
     let column_width = usable / CONSTRUCTION_SKYLINE_COLUMNS as f64;
@@ -3147,28 +3154,37 @@ fn skyline_hint_stations(state: &VacancyState, settings: GeneralFastSettings) ->
             *top = top.max(bounds.max_y);
         }
     }
-    let mut ranked = tops
-        .iter()
-        .enumerate()
-        .map(|(column, top)| (grid_key(*top), column))
-        .collect::<Vec<_>>();
+    let window = ((required_width_mm / column_width).ceil().max(1.0) as usize)
+        .min(CONSTRUCTION_SKYLINE_COLUMNS);
+    let mut ranked = Vec::with_capacity(CONSTRUCTION_SKYLINE_COLUMNS - window + 1);
+    for start in 0..=(CONSTRUCTION_SKYLINE_COLUMNS - window) {
+        let top = tops[start..start + window]
+            .iter()
+            .fold(f64::MIN, |acc, value| acc.max(*value));
+        ranked.push((grid_key(top), start));
+    }
     ranked.sort();
     let mut stations = Vec::with_capacity(CONSTRUCTION_HINT_STATIONS);
-    for (_, column) in ranked {
+    for (top_key, start) in ranked {
         if stations
             .iter()
-            .any(|(existing, _)| column.abs_diff(*existing) < 8)
+            .any(|(existing, _)| start.abs_diff(*existing) < 8)
         {
             continue;
         }
-        stations.push((column, tops[column]));
+        stations.push((start, (top_key as f64) / 1_000.0));
         if stations.len() == CONSTRUCTION_HINT_STATIONS {
             break;
         }
     }
     stations
         .into_iter()
-        .map(|(column, top)| (inset + (column as f64 + 0.5) * column_width, top))
+        .map(|(start, top)| {
+            (
+                inset + (start as f64 + window as f64 * 0.5) * column_width,
+                top,
+            )
+        })
         .collect()
 }
 
@@ -3198,10 +3214,6 @@ fn construct_candidate_poses(
     }
     work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
     let inset = collision_sheet_inset_mm(work_settings);
-    let stations = skyline_hint_stations(parent, work_settings);
-    if stations.is_empty() {
-        return Err("skyline produced no hint stations".to_owned());
-    }
     let frontier_y = parent
         .collisions
         .iter()
@@ -3237,16 +3249,35 @@ fn construct_candidate_poses(
             .bounds()
             .ok_or_else(|| "construction prior orientation has empty geometry".to_owned())?;
         let prior_center_x = (prior_bounds.min_x + prior_bounds.max_x) * 0.5;
+        // Clamp every synthetic translation into the piece-feasible band so
+        // a station near the sheet edge cannot strand a wide piece off the
+        // strip (the vacancy position generator applies the same clamp to
+        // its own baseline).
+        let feasible_min_x = inset - prior_bounds.min_x;
+        let feasible_max_x = work_settings.sheet_short_axis_mm - inset - prior_bounds.max_x;
+        if feasible_min_x > feasible_max_x {
+            continue;
+        }
+        let stations = skyline_hint_stations(
+            parent,
+            work_settings,
+            prior_bounds.max_x - prior_bounds.min_x,
+        );
+        if stations.is_empty() {
+            continue;
+        }
         let bucket_ordinal = ORIENTATIONS_PER_PIECE + prior_index;
         for (station_index, (station_x, station_top)) in stations.iter().copied().enumerate() {
             let hint = RelaxedPlacement {
                 input_index: piece_index,
                 rotation_deg,
                 mirrored,
-                translate_x: snap_mm(station_x - prior_center_x),
+                translate_x: snap_mm(
+                    (station_x - prior_center_x).clamp(feasible_min_x, feasible_max_x),
+                ),
                 translate_y: snap_mm(station_top - prior_bounds.min_y + 0.6),
             };
-            if station_index == 0 && !zero_prior {
+            if station_index == 0 && station_zero_hint.is_none() {
                 station_zero_hint = Some(hint.clone());
             }
             let landing = |probe: &RelaxedPlacement| -> u64 {
@@ -3254,26 +3285,64 @@ fn construct_candidate_poses(
                     .max(0)
                     .unsigned_abs()
             };
+            // Vertical contact ladder at the station: several epsilon
+            // offsets above the valley top so the ranked confirmation can
+            // settle on the lowest valid clearance instead of a single
+            // fixed hover.
+            for epsilon in [0.05f64, 0.3, 1.2, 2.4] {
+                let mut probe = hint.clone();
+                probe.translate_y = snap_mm(station_top - prior_bounds.min_y + epsilon);
+                candidates.push((landing(&probe), bucket_ordinal, zero_prior, probe));
+            }
             candidates.push((landing(&hint), bucket_ordinal, zero_prior, hint.clone()));
             for radius in CONSTRUCTION_PROBE_RADII_MM {
                 for (direction_x, direction_y) in CONSTRUCTION_PROBE_DIRECTIONS {
                     let mut probe = hint.clone();
                     probe.translate_x += radius * direction_x;
                     probe.translate_y += radius * direction_y;
+                    probe.translate_x =
+                        snap_mm(probe.translate_x.clamp(feasible_min_x, feasible_max_x));
                     candidates.push((landing(&probe), bucket_ordinal, zero_prior, probe));
                 }
             }
         }
-        for step in 1..=12u32 {
-            for lateral in [0.0f64, -4.0, 4.0, -8.0, 8.0] {
+        // Interleaved escape ladders: the station-local ladder stacks in the
+        // lowest valley from its own top upward (filling valleys instead of
+        // ratcheting the global frontier), while the global-frontier ladder
+        // is the guaranteed-empty escape; interleaving keeps the global rung
+        // inside the reserved shelf rows even when the valley ladder is
+        // fully congested.
+        const STATION_LADDER_RUNGS_MM: [f64; 8] = [0.05, 0.3, 0.6, 1.2, 1.8, 2.4, 3.6, 4.8];
+        for (step, rung) in STATION_LADDER_RUNGS_MM.into_iter().enumerate() {
+            for lateral in [0.0f64, -2.0, 2.0, -6.0, 6.0] {
                 let probe = RelaxedPlacement {
                     input_index: piece_index,
                     rotation_deg,
                     mirrored,
-                    translate_x: snap_mm(stations[0].0 - prior_center_x + lateral),
-                    translate_y: snap_mm(frontier_y - prior_bounds.min_y + 0.6 * f64::from(step)),
+                    translate_x: snap_mm(
+                        (stations[0].0 - prior_center_x + lateral)
+                            .clamp(feasible_min_x, feasible_max_x),
+                    ),
+                    translate_y: snap_mm(stations[0].1 - prior_bounds.min_y + rung),
                 };
                 shelf_candidates.push((bucket_ordinal, zero_prior, probe));
+            }
+            if step < 4 {
+                for lateral in [0.0f64, -2.0, 2.0, -6.0, 6.0] {
+                    let probe = RelaxedPlacement {
+                        input_index: piece_index,
+                        rotation_deg,
+                        mirrored,
+                        translate_x: snap_mm(
+                            (stations[0].0 - prior_center_x + lateral)
+                                .clamp(feasible_min_x, feasible_max_x),
+                        ),
+                        translate_y: snap_mm(
+                            frontier_y - prior_bounds.min_y + 0.6 * (step as f64 + 1.0),
+                        ),
+                    };
+                    shelf_candidates.push((bucket_ordinal, zero_prior, probe));
+                }
             }
         }
     }
