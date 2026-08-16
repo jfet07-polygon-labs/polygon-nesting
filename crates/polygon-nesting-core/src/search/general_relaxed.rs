@@ -452,6 +452,8 @@ pub struct GeneralPersistentVacancyFeasibilityRow {
 #[serde(rename_all = "camelCase")]
 pub struct GeneralPersistentVacancyLnsDiagnostics {
     pub rounds: usize,
+    pub bridge_void_scans: usize,
+    pub bridge_selections: usize,
     pub rounds_accepted: usize,
     pub rounds_reverted: usize,
     pub reinsertions: usize,

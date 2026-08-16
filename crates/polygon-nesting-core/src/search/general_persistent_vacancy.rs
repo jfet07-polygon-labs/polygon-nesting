@@ -115,6 +115,10 @@ const LNS_REINSERT_SLOTS: usize = LNS_SCHEDULE_TOTAL
 // move budget is exhausted. Only a zero-overlap endpoint may compete for
 // acceptance.
 const SEPARATION_MOVES_PER_ROUND: usize = 200;
+// Mode-21 bridge selection probes every active piece once per round with an
+// uncharged trapped-void flood fill (plus one baseline scan), counted in the
+// LNS diagnostics and structurally bounded by the schedule.
+const BRIDGE_VOID_SCAN_CAP: usize = LNS_ROUNDS * 62;
 const SEPARATION_RELOCATIONS_PER_ROUND: usize = 12;
 // Mode-17 endpoint optimizer: after a round's endpoint is feasible, up to
 // OPTIMIZER_CYCLES steepest-descent passes re-place each lifted piece at the
@@ -586,9 +590,28 @@ fn run_population(
 ) -> Result<Option<(VacancyState, f64)>, String> {
     if !matches!(
         mode,
-        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20
+        1 | 2
+            | 3
+            | 4
+            | 5
+            | 6
+            | 7
+            | 8
+            | 9
+            | 10
+            | 11
+            | 12
+            | 13
+            | 14
+            | 15
+            | 16
+            | 17
+            | 18
+            | 19
+            | 20
+            | 21
     ) {
-        return Err("persistent vacancy mode must be between 1 and 20".to_owned());
+        return Err("persistent vacancy mode must be between 1 and 21".to_owned());
     }
     // Modes 1-8 are the frozen diagnostic screens: their 165.0 mm target and
     // b9335a72 parent identity are part of the pinned experiment contract.
@@ -597,7 +620,7 @@ fn run_population(
     // and skips only the frozen fingerprint/depth equality pins while keeping
     // full parent validation.
     let target_depth_mm = match (mode, target_override_mm) {
-        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20, Some(target)) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21, Some(target)) => {
             if !target.is_finite() || target <= 0.0 {
                 return Err(
                     "persistent vacancy target depth must be a positive finite value".to_owned(),
@@ -605,22 +628,22 @@ fn run_population(
             }
             target
         }
-        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20, None) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21, None) => {
             return Err(
-                "persistent vacancy modes 9-20 require an explicit target depth".to_owned(),
+                "persistent vacancy modes 9-21 require an explicit target depth".to_owned(),
             );
         }
         (_, Some(_)) => {
-            return Err("persistent vacancy target depth overrides require modes 9-20".to_owned());
+            return Err("persistent vacancy target depth overrides require modes 9-21".to_owned());
         }
         (_, None) => TARGET_DEPTH_MM,
     };
     if matches!(
         mode,
-        9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20
+        9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21
     ) && !parent_is_pinned
     {
-        return Err("persistent vacancy modes 9-20 require a pinned parent fixture".to_owned());
+        return Err("persistent vacancy modes 9-21 require a pinned parent fixture".to_owned());
     }
     diagnostics.target_depth_mm = target_depth_mm;
     if pieces.len() != 61 {
@@ -638,7 +661,7 @@ fn run_population(
     diagnostics.parent_fingerprint = Some(parent_fingerprint.clone());
     if !matches!(
         mode,
-        9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20
+        9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21
     ) && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT
     {
         return Err(format!(
@@ -648,10 +671,10 @@ fn run_population(
     if !matches!(mode, 13 | 20) {
         let parent_depth = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
             .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
-        if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19) {
+        if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19 | 21) {
             diagnostics.parent_independent_depth_mm = Some(parent_depth);
         }
-        if !matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19)
+        if !matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19 | 21)
             && grid_key(parent_depth) != grid_key(EXPECTED_PARENT_DEPTH_MM)
         {
             return Err(format!(
@@ -709,15 +732,16 @@ fn run_population(
     if mode == 18 {
         baseline = frontier_band_feasibility(pieces, fast_settings, baseline, diagnostics, work)?;
     }
-    if matches!(mode, 15 | 16 | 17 | 19) {
+    if matches!(mode, 15 | 16 | 17 | 19 | 21) {
         baseline = lift_resettle_reinsert(
             pieces,
             fast_settings,
             target_depth_mm,
             baseline,
-            matches!(mode, 16 | 17 | 19),
-            matches!(mode, 17 | 19),
+            matches!(mode, 16 | 17 | 19 | 21),
+            matches!(mode, 17 | 19 | 21),
             mode == 19,
+            mode == 21,
             diagnostics,
             work,
         )?;
@@ -728,7 +752,7 @@ fn run_population(
         baseline,
         diagnostics,
         work,
-        matches!(mode, 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19),
+        matches!(mode, 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19 | 21),
     )?;
     diagnostics.initial_state_fingerprint = Some(state_fingerprint(&initial, pieces));
     diagnostics.initial_active_piece_ids = active_ids(&initial, pieces);
@@ -767,8 +791,11 @@ fn run_population(
     let mut best_ever_area: Option<EliteSnapshot> = None;
     let mut best_ever_count: Option<EliteSnapshot> = None;
     let mut retained_carryovers = BTreeSet::new();
-    let mut archive = matches!(mode, 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19)
-        .then(TopologyArchive::new);
+    let mut archive = matches!(
+        mode,
+        7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19 | 21
+    )
+    .then(TopologyArchive::new);
     for layer in 0..MAX_LAYERS {
         // Modes 7/8 plan a revival before the entering-population hash so the
         // hash always reflects the population that is actually expanded
@@ -1494,6 +1521,7 @@ fn lift_resettle_reinsert(
     separation: bool,
     vacancy_transport: bool,
     band_ruin: bool,
+    bridge_ruin: bool,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<RelaxedState, String> {
@@ -1566,6 +1594,8 @@ fn lift_resettle_reinsert(
     };
     let mut lns = GeneralPersistentVacancyLnsDiagnostics {
         rounds: LNS_ROUNDS,
+        bridge_void_scans: 0,
+        bridge_selections: 0,
         rounds_accepted: 0,
         rounds_reverted: 0,
         reinsertions: 0,
@@ -1621,6 +1651,57 @@ fn lift_resettle_reinsert(
     for (round, neighborhood) in LNS_NEIGHBORHOOD_SCHEDULE.into_iter().enumerate() {
         let snapshot = state.clone();
         let entry_key = depth_key(&state);
+        // Bridge selection (mode 21): probe every active piece for the
+        // vacancy its removal would reconnect (uncharged flood fills,
+        // counted and structurally bounded like the acceptance-key scans)
+        // and seed the ruin on the strongest free-space bridge instead of
+        // the deepest frontier piece. Everything downstream - neighborhood,
+        // budgets, streams, acceptance - is identical to the mode-17
+        // control, so the arms differ only in removal selection.
+        let mut bridge_piece = None;
+        if bridge_ruin {
+            let baseline_frontier = (0..pieces.len())
+                .filter(|index| state.active[*index])
+                .filter_map(|index| {
+                    state.collisions[index]
+                        .as_ref()
+                        .and_then(|collision| collision.bounds())
+                        .map(|bounds| grid_key(bounds.max_y))
+                })
+                .max()
+                .unwrap_or(0);
+            lns.bridge_void_scans = lns.bridge_void_scans.saturating_add(1);
+            let baseline_voids = trapped_void_cells(&state, work_settings, baseline_frontier);
+            if baseline_voids > 0 {
+                let mut best: Option<(usize, usize)> = None;
+                let actives = (0..pieces.len())
+                    .filter(|index| state.active[*index])
+                    .collect::<Vec<_>>();
+                for index in actives {
+                    state.active[index] = false;
+                    lns.bridge_void_scans = lns.bridge_void_scans.saturating_add(1);
+                    let voids_without =
+                        trapped_void_cells(&state, work_settings, baseline_frontier);
+                    state.active[index] = true;
+                    let reconnected = baseline_voids.saturating_sub(voids_without);
+                    let better = match &best {
+                        None => reconnected > 0,
+                        Some((best_reconnected, best_index)) => {
+                            reconnected > *best_reconnected
+                                || (reconnected == *best_reconnected
+                                    && pieces[index].id < pieces[*best_index].id)
+                        }
+                    };
+                    if better {
+                        best = Some((reconnected, index));
+                    }
+                }
+                if let Some((_, index)) = best {
+                    lns.bridge_selections = lns.bridge_selections.saturating_add(1);
+                    bridge_piece = Some(index);
+                }
+            }
+        }
         // Frontier piece: the round-th deepest active piece (modulo four),
         // ties by stable ID, so consecutive rounds attack different members
         // of the frontier band instead of retrying one piece.
@@ -1639,11 +1720,12 @@ fn lift_resettle_reinsert(
                 .cmp(&first.0)
                 .then_with(|| pieces[first.1].id.cmp(pieces[second.1].id))
         });
-        let Some(frontier_piece) = by_depth
-            .get(round % 4)
-            .or_else(|| by_depth.first())
-            .map(|(_, index)| *index)
-        else {
+        let Some(frontier_piece) = bridge_piece.or_else(|| {
+            by_depth
+                .get(round % 4)
+                .or_else(|| by_depth.first())
+                .map(|(_, index)| *index)
+        }) else {
             break;
         };
         let frontier_center = state.collisions[frontier_piece]
@@ -6689,6 +6771,7 @@ mod tests {
         assert_eq!(GROUP_DROP_PROBES_PER_CUT, 64);
         assert_eq!(GROUP_DROP_PAIR_VISITS, 3 * 61 * 64 * 61);
         assert_eq!(SEPARATION_MOVES_PER_ROUND, 200);
+        assert_eq!(BRIDGE_VOID_SCAN_CAP, 24 * 62);
         assert_eq!(SEPARATION_PROBES_PER_MOVE, 96);
         assert_eq!(SEPARATION_PAIR_VISITS, 24 * 200 * 96 * 61);
         assert_eq!(SEPARATION_COLLISION_BUILDS, 24 * (4_040 / 2 + 200 * 96));
@@ -7052,7 +7135,7 @@ mod tests {
         assert!(result
             .failure_reason
             .unwrap()
-            .contains("target depth overrides require modes 9-20"));
+            .contains("target depth overrides require modes 9-21"));
 
         // Non-finite and non-positive targets fail closed.
         relaxed.persistent_vacancy_target_depth_mm = Some(f64::NAN);
