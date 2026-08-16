@@ -697,3 +697,20 @@ starts and with structurally different layouts at the same grid depth),
 band is barely a millimetre wide (portfolio artifacts under
 alternation/portfolio/). Two distinct sub-180 layouts now seed the next
 round: a separator-seed sweep from both.
+
+The hybrid closes the day by certifying the deepest attractor and moving
+the absolute record by its final two microns. The seeded sweep is
+unanimous - eight alternations across two sub-180 layouts and four
+separator seeds all hold 179.756, so the hybrid attractor is
+seed-invariant. Against the imported M4 basin the separator alone holds
+168.277, the descent arm re-extracts the known 168.275, and the separator
+then holds that too: 168.275 mm now stands as the branch's absolute
+record and as a certified joint fixpoint of both machines - the first
+state this program has produced that neither engine can improve at any
+tested budget, seed, or operator (artifacts under
+alternation/m4-record/). The day's ledger is complete: five constructor
+families built and measured, the hybrid as the fifth, every record
+replayable, every negative carrying its matched verdict, and the honest
+distances standing at 2.7 mm from the native floor for the from-scratch
+line and 13.3 mm of measured contract-and-structure gap between the
+absolute record and the recalibrated external reference band.
