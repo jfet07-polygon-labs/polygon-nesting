@@ -964,3 +964,22 @@ plus Sol's repair-order rule: bounded-depth reinsertion (eject the
 pieces protruding beyond a depth bound and reinsert them
 displaced-first through the construction insertion machinery -
 reconstruction under a hard bound instead of overlap legalization).
+
+Bounded-depth reinsertion (mode 24) is a clean negative that closes
+the second compression class and maps the binding front. The
+mechanism is correct - the control bound reproduces the 167.849
+parent byte-for-byte - but at every bound below the incumbent
+(167.8 down to 165.0, ejecting 1 to 13 pieces) the largest ejected
+piece finds zero candidate poses in the vacated space: genuine
+geometric congestion, not budget. Together with the
+overlap-legalization negatives this establishes that a converged
+deep layout's binding structure is a dense front (7 pieces beyond
+167.0, 13 beyond 165.0), which is why local compression cannot work:
+the slack needed to re-place one piece is distributed across the
+whole front. The mode itself is general (runtime bound, any piece
+count - verified on triangle-20) and stays in the engine as
+reusable machinery. Replay-integrity guards from the collaborator
+extraction also landed (settings-equality on replayed parents,
+fail-closed on unrun arms). Next matched arm in flight: the off-beam
+best-ever expansion parent (mode 25) against the mode-20 control at
+band + descent-endpoint level.
