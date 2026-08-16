@@ -594,3 +594,17 @@ architecture. The measured next steps are pose-generation quality
 both are engineering, and the ledger now carries every calibration a
 successor needs (typical band 213-218, endpoint tail floor 189-191,
 yield spread 5-27 unpredicted by any cheap observable).
+
+The contact walk sets a new record and sharpens the architecture's central
+tension. Its eight matched descents split four-four against the baseline
+twins and the band median worsens slightly (198.3 vs 196.9): in-run
+contact compaction does consume descent slack, exactly as the
+checkpoint-settle rejection warned, and the deepest raw basin (195.645,
+salt 2) yields almost nothing (0.385). But the metric the program actually
+optimizes is best-of-portfolio, and there the walk wins outright: salt 0
+descends 207.162 to 187.463 mm (yield 19.699), beating 189.363 (chain
+artifacts under contact-walk/salt0-record/). The walk is retained on that
+verdict. The tension is now explicit and measured: raw constructor depth
+and descent yield trade against each other, and the portfolio tail - not
+the band average - is where records come from. The harvest widens on the
+walk family next.
