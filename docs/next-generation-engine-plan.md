@@ -565,3 +565,16 @@ bottom-quartile constructor with the second-highest sealed-void count in
 the band. Endpoint quality is a property of basin structure that no cheap
 observable measured so far anticipates; wide sampling with band-wide
 descent is not a fallback protocol but the correct one.
+
+The thirty-two-basin table closes the sampling question. The second
+sixteen-salt harvest descends to a best of 191.260 (salt 22) with the same
+5-27 mm yield spread; best-of-32 equals best-of-16 at 189.363, so the
+endpoint tail of this constructor family saturates at 189-191 and further
+brute sampling is waste (full table under salt-harvest-2/). Per the
+pre-declared fork, the program moves to the next structural increment:
+checkpoint settling inside construction - running the exact settle ladder
+on the beam leader mid-order, at thirty and forty-five placed pieces, so
+every subsequent insertion builds on a compacted profile instead of
+leaving all compaction to the post-hoc descent. A deep-budget continuation
+of the record chain (salted stall budget tripled) runs alongside as the
+zero-code control on the same question.

@@ -1,0 +1,230 @@
+{
+  "experiment": "32-basin band-wide descent of the polygon-profile constructor (salts 0-31)",
+  "verdict": "best-of-32 (189.363, salt 6) equals best-of-16: the endpoint tail saturates at 189-191 for this constructor family; doubling the sample bought nothing. Per the pre-declared decision fork, effort moves from brute sampling to the next structural constructor increment.",
+  "endpointDistribution": [
+    {
+      "salt": 6,
+      "harvest": "h1",
+      "constructorMm": 216.852,
+      "endpointMm": 189.363,
+      "yieldMm": 27.489
+    },
+    {
+      "salt": 3,
+      "harvest": "h1",
+      "constructorMm": 214.251,
+      "endpointMm": 190.737,
+      "yieldMm": 23.514
+    },
+    {
+      "salt": 22,
+      "harvest": "h2",
+      "constructorMm": 215.514,
+      "endpointMm": 191.26,
+      "yieldMm": 24.254
+    },
+    {
+      "salt": 15,
+      "harvest": "h1",
+      "constructorMm": 213.262,
+      "endpointMm": 193.969,
+      "yieldMm": 19.293
+    },
+    {
+      "salt": 17,
+      "harvest": "h2",
+      "constructorMm": 217.842,
+      "endpointMm": 194.556,
+      "yieldMm": 23.286
+    },
+    {
+      "salt": 12,
+      "harvest": "h1",
+      "constructorMm": 215.633,
+      "endpointMm": 194.58,
+      "yieldMm": 21.053
+    },
+    {
+      "salt": 18,
+      "harvest": "h2",
+      "constructorMm": 210.564,
+      "endpointMm": 195.033,
+      "yieldMm": 15.531
+    },
+    {
+      "salt": 1,
+      "harvest": "h1",
+      "constructorMm": 211.297,
+      "endpointMm": 195.26,
+      "yieldMm": 16.037
+    },
+    {
+      "salt": 23,
+      "harvest": "h2",
+      "constructorMm": 215.368,
+      "endpointMm": 195.26,
+      "yieldMm": 20.108
+    },
+    {
+      "salt": 5,
+      "harvest": "h1",
+      "constructorMm": 215.948,
+      "endpointMm": 196.494,
+      "yieldMm": 19.454
+    },
+    {
+      "salt": 0,
+      "harvest": "h1",
+      "constructorMm": 216.848,
+      "endpointMm": 197.233,
+      "yieldMm": 19.615
+    },
+    {
+      "salt": 10,
+      "harvest": "h1",
+      "constructorMm": 214.521,
+      "endpointMm": 197.238,
+      "yieldMm": 17.283
+    },
+    {
+      "salt": 24,
+      "harvest": "h2",
+      "constructorMm": 218.061,
+      "endpointMm": 197.579,
+      "yieldMm": 20.482
+    },
+    {
+      "salt": 27,
+      "harvest": "h2",
+      "constructorMm": 213.185,
+      "endpointMm": 199.075,
+      "yieldMm": 14.11
+    },
+    {
+      "salt": 30,
+      "harvest": "h2",
+      "constructorMm": 214.031,
+      "endpointMm": 199.233,
+      "yieldMm": 14.798
+    },
+    {
+      "salt": 13,
+      "harvest": "h1",
+      "constructorMm": 217.409,
+      "endpointMm": 199.238,
+      "yieldMm": 18.171
+    },
+    {
+      "salt": 21,
+      "harvest": "h2",
+      "constructorMm": 215.398,
+      "endpointMm": 200.808,
+      "yieldMm": 14.59
+    },
+    {
+      "salt": 14,
+      "harvest": "h1",
+      "constructorMm": 217.157,
+      "endpointMm": 201.073,
+      "yieldMm": 16.084
+    },
+    {
+      "salt": 7,
+      "harvest": "h1",
+      "constructorMm": 212.952,
+      "endpointMm": 201.26,
+      "yieldMm": 11.692
+    },
+    {
+      "salt": 11,
+      "harvest": "h1",
+      "constructorMm": 208.782,
+      "endpointMm": 201.26,
+      "yieldMm": 7.522
+    },
+    {
+      "salt": 29,
+      "harvest": "h2",
+      "constructorMm": 215.368,
+      "endpointMm": 201.26,
+      "yieldMm": 14.108
+    },
+    {
+      "salt": 31,
+      "harvest": "h2",
+      "constructorMm": 216.897,
+      "endpointMm": 201.493,
+      "yieldMm": 15.404
+    },
+    {
+      "salt": 8,
+      "harvest": "h1",
+      "constructorMm": 215.87,
+      "endpointMm": 201.734,
+      "yieldMm": 14.136
+    },
+    {
+      "salt": 26,
+      "harvest": "h2",
+      "constructorMm": 216.901,
+      "endpointMm": 202.509,
+      "yieldMm": 14.392
+    },
+    {
+      "salt": 4,
+      "harvest": "h1",
+      "constructorMm": 212.235,
+      "endpointMm": 202.686,
+      "yieldMm": 9.549
+    },
+    {
+      "salt": 9,
+      "harvest": "h1",
+      "constructorMm": 218.082,
+      "endpointMm": 204.444,
+      "yieldMm": 13.638
+    },
+    {
+      "salt": 19,
+      "harvest": "h2",
+      "constructorMm": 212.268,
+      "endpointMm": 204.771,
+      "yieldMm": 7.497
+    },
+    {
+      "salt": 25,
+      "harvest": "h2",
+      "constructorMm": 213.659,
+      "endpointMm": 204.912,
+      "yieldMm": 8.747
+    },
+    {
+      "salt": 28,
+      "harvest": "h2",
+      "constructorMm": 214.896,
+      "endpointMm": 208.686,
+      "yieldMm": 6.21
+    },
+    {
+      "salt": 16,
+      "harvest": "h2",
+      "constructorMm": 215.856,
+      "endpointMm": 209.756,
+      "yieldMm": 6.1
+    },
+    {
+      "salt": 2,
+      "harvest": "h1",
+      "constructorMm": 215.825,
+      "endpointMm": 210.619,
+      "yieldMm": 5.206
+    },
+    {
+      "salt": 20,
+      "harvest": "h2",
+      "constructorMm": 217.164,
+      "endpointMm": 211.26,
+      "yieldMm": 5.904
+    }
+  ]
+}
