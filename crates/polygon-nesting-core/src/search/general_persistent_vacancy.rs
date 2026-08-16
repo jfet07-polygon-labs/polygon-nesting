@@ -66,7 +66,7 @@ const LNS_ROUNDS: usize = 24;
 const LNS_NEIGHBORHOOD_SCHEDULE: [usize; LNS_ROUNDS] = [
     4, 6, 8, 10, 12, 16, 20, 24, 4, 6, 8, 10, 12, 16, 20, 24, 4, 6, 8, 10, 12, 16, 20, 24,
 ];
-const LNS_SETTLE_SWEEPS: usize = 2 * LNS_ROUNDS + 1;
+const LNS_SETTLE_SWEEPS: usize = 3 * LNS_ROUNDS + 1;
 const LNS_REINSERT_SLOTS: usize =
     3 * (4 + 6 + 8 + 10 + 12 + 16 + 20 + 24) + LNS_ROUNDS * SEPARATION_RELOCATIONS_PER_ROUND;
 // Mode 16 replaces greedy reinsertion with overlap-mediated separation:
@@ -287,7 +287,7 @@ impl TopologyArchive {
         if self.revivals_expanded >= MAX_ARCHIVE_REVIVALS {
             return RevivalDecision::Skipped("revivalBudgetExhausted");
         }
-        if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16) && population.len() < 2 {
+        if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17) && population.len() < 2 {
             return RevivalDecision::Skipped("populationTooSmall");
         }
         let candidates: [(&'static str, Option<&(EliteSnapshot, VacancyState)>); 2] =
@@ -308,7 +308,7 @@ impl TopologyArchive {
                 last_reason = "inPopulation";
                 continue;
             }
-            if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16) {
+            if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17) {
                 let worst = population
                     .last()
                     .expect("a mode-8 revival population has at least two states");
@@ -536,9 +536,9 @@ fn run_population(
 ) -> Result<Option<(VacancyState, f64)>, String> {
     if !matches!(
         mode,
-        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16
+        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17
     ) {
-        return Err("persistent vacancy mode must be between 1 and 16".to_owned());
+        return Err("persistent vacancy mode must be between 1 and 17".to_owned());
     }
     // Modes 1-8 are the frozen diagnostic screens: their 165.0 mm target and
     // b9335a72 parent identity are part of the pinned experiment contract.
@@ -547,7 +547,7 @@ fn run_population(
     // and skips only the frozen fingerprint/depth equality pins while keeping
     // full parent validation.
     let target_depth_mm = match (mode, target_override_mm) {
-        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16, Some(target)) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17, Some(target)) => {
             if !target.is_finite() || target <= 0.0 {
                 return Err(
                     "persistent vacancy target depth must be a positive finite value".to_owned(),
@@ -555,18 +555,18 @@ fn run_population(
             }
             target
         }
-        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16, None) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17, None) => {
             return Err(
-                "persistent vacancy modes 9-16 require an explicit target depth".to_owned(),
+                "persistent vacancy modes 9-17 require an explicit target depth".to_owned(),
             );
         }
         (_, Some(_)) => {
-            return Err("persistent vacancy target depth overrides require modes 9-16".to_owned());
+            return Err("persistent vacancy target depth overrides require modes 9-17".to_owned());
         }
         (_, None) => TARGET_DEPTH_MM,
     };
-    if matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16) && !parent_is_pinned {
-        return Err("persistent vacancy modes 9-16 require a pinned parent fixture".to_owned());
+    if matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17) && !parent_is_pinned {
+        return Err("persistent vacancy modes 9-17 require a pinned parent fixture".to_owned());
     }
     diagnostics.target_depth_mm = target_depth_mm;
     if pieces.len() != 61 {
@@ -582,7 +582,7 @@ fn run_population(
     }
     let parent_fingerprint = coupled_fast_placement_fingerprint(&parent_fast);
     diagnostics.parent_fingerprint = Some(parent_fingerprint.clone());
-    if !matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16)
+    if !matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17)
         && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT
     {
         return Err(format!(
@@ -592,10 +592,10 @@ fn run_population(
     if mode != 13 {
         let parent_depth = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
             .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
-        if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16) {
+        if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17) {
             diagnostics.parent_independent_depth_mm = Some(parent_depth);
         }
-        if !matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16)
+        if !matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17)
             && grid_key(parent_depth) != grid_key(EXPECTED_PARENT_DEPTH_MM)
         {
             return Err(format!(
@@ -639,13 +639,14 @@ fn run_population(
     if mode == 14 {
         baseline = compact_baseline(pieces, fast_settings, baseline, diagnostics, work)?;
     }
-    if matches!(mode, 15 | 16) {
+    if matches!(mode, 15 | 16 | 17) {
         baseline = lift_resettle_reinsert(
             pieces,
             fast_settings,
             target_depth_mm,
             baseline,
-            mode == 16,
+            matches!(mode, 16 | 17),
+            mode == 17,
             diagnostics,
             work,
         )?;
@@ -656,7 +657,7 @@ fn run_population(
         baseline,
         diagnostics,
         work,
-        matches!(mode, 11 | 12 | 14 | 15 | 16),
+        matches!(mode, 11 | 12 | 14 | 15 | 16 | 17),
     )?;
     diagnostics.initial_state_fingerprint = Some(state_fingerprint(&initial, pieces));
     diagnostics.initial_active_piece_ids = active_ids(&initial, pieces);
@@ -696,7 +697,7 @@ fn run_population(
     let mut best_ever_count: Option<EliteSnapshot> = None;
     let mut retained_carryovers = BTreeSet::new();
     let mut archive =
-        matches!(mode, 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16).then(TopologyArchive::new);
+        matches!(mode, 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17).then(TopologyArchive::new);
     for layer in 0..MAX_LAYERS {
         // Modes 7/8 plan a revival before the entering-population hash so the
         // hash always reflects the population that is actually expanded
@@ -731,7 +732,7 @@ fn run_population(
                     row.revival_expanded = true;
                     row.revival_kind = Some(kind.to_owned());
                     row.revived_state_fingerprint = Some(fingerprint);
-                    if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16) {
+                    if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17) {
                         let replaced_index = population.len() - 1;
                         row.replaced_state_fingerprint =
                             Some(state_fingerprint(&population[replaced_index], pieces));
@@ -1420,6 +1421,7 @@ fn lift_resettle_reinsert(
     target_depth_mm: f64,
     baseline: RelaxedState,
     separation: bool,
+    vacancy_transport: bool,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<RelaxedState, String> {
@@ -1459,7 +1461,7 @@ fn lift_resettle_reinsert(
     // top band are accepted, progressively draining the band until the
     // frontier itself can drop; the pair strictly decreases on every
     // accepted round, so the walk terminates.
-    let depth_key = |state: &VacancyState| -> (i64, i128) {
+    let depth_key = |state: &VacancyState| -> (i64, i128, i128) {
         let mut sum: i128 = 0;
         let mut max = i64::MIN;
         for collision in state.collisions.iter().flatten() {
@@ -1469,7 +1471,16 @@ fn lift_resettle_reinsert(
                 max = max.max(key);
             }
         }
-        (max, sum)
+        // Vacancy-transport signal: trapped-void cells become the middle key
+        // so an endpoint that lifts a piece but drains a trapped void toward
+        // the top-connected region reads as progress; the piece-centric keys
+        // cannot see that trade.
+        let voids = if vacancy_transport {
+            i128::try_from(trapped_void_cells(state, fast_settings, max)).unwrap_or(i128::MAX)
+        } else {
+            0
+        };
+        (max, voids, sum)
     };
     let mut settle = GeneralPersistentVacancySettleDiagnostics {
         sweeps: LNS_SETTLE_SWEEPS,
@@ -1675,6 +1686,20 @@ fn lift_resettle_reinsert(
             lns.rounds_reverted += 1;
             continue;
         }
+        // Post-endpoint settle: shelved and separated pieces drop into the
+        // voids the rearrangement drained toward the top-connected region
+        // before the acceptance key is measured; without this, every shelf
+        // landing reads as a frontier regression and vacancy transport is
+        // invisible to the key.
+        settle_sweep(
+            &mut state,
+            pieces,
+            work_settings,
+            inset,
+            true,
+            &mut settle,
+            work,
+        )?;
         let endpoint_key = depth_key(&state);
         if endpoint_key < best_key {
             best_state = state.clone();
@@ -1682,8 +1707,12 @@ fn lift_resettle_reinsert(
         }
         let tolerance = LNS_TOLERANCE_GRID[round];
         let frontier_tolerance = LNS_FRONTIER_TOLERANCE_GRID[round];
+        // Trapped-void wander tolerance: up to 50 cells (about 200 mm2 at
+        // the 2 mm raster) of transient void regression per tolerant round.
+        let void_tolerance: i128 = if LNS_TOLERANCE_GRID[round] > 0 { 50 } else { 0 };
         let within_tolerance = endpoint_key.0 <= entry_key.0.saturating_add(frontier_tolerance)
-            && endpoint_key.1 <= entry_key.1.saturating_add(tolerance);
+            && endpoint_key.1 <= entry_key.1.saturating_add(void_tolerance)
+            && endpoint_key.2 <= entry_key.2.saturating_add(tolerance);
         if endpoint_key < entry_key {
             lns.rounds_accepted += 1;
         } else if within_tolerance {
@@ -2169,6 +2198,96 @@ fn overlap_mediated_reinsert(
     }
     lns.separation_zero_overlap = lns.separation_zero_overlap.saturating_add(1);
     Ok(true)
+}
+
+/// Deterministic trapped-void raster for the mode-17 vacancy-transport
+/// acceptance signal. The strip up to the current frontier is rasterized at
+/// a fixed cell size; a cell is free when its center lies inside no active
+/// expanded collision, and free cells flood-fill four-connected from the
+/// above-frontier band. The returned value counts free cells NOT connected
+/// to that band - the trapped voids whose drainage upward is exactly the
+/// slack routing the piece-centric keys cannot see. Guidance only: validity
+/// still rests entirely on the exact gates.
+fn trapped_void_cells(
+    state: &VacancyState,
+    settings: GeneralFastSettings,
+    frontier_grid: i64,
+) -> usize {
+    const CELL_MM: f64 = 2.0;
+    let width = settings.sheet_short_axis_mm;
+    let depth = (frontier_grid as f64) / 1000.0 + 2.0 * CELL_MM;
+    let columns = (width / CELL_MM).ceil() as usize;
+    let rows = (depth / CELL_MM).ceil() as usize;
+    if columns == 0 || rows == 0 {
+        return 0;
+    }
+    let actives = state
+        .collisions
+        .iter()
+        .enumerate()
+        .filter(|(index, _)| state.active[*index])
+        .filter_map(|(_, collision)| collision.as_ref())
+        .map(|collision| (collision.bounds(), collision))
+        .collect::<Vec<_>>();
+    let mut free = vec![true; columns * rows];
+    for row in 0..rows {
+        let y = (row as f64 + 0.5) * CELL_MM;
+        for column in 0..columns {
+            let x = (column as f64 + 0.5) * CELL_MM;
+            for (bounds, collision) in &actives {
+                if let Some(bounds) = bounds {
+                    if x < bounds.min_x || x > bounds.max_x || y < bounds.min_y || y > bounds.max_y
+                    {
+                        continue;
+                    }
+                }
+                if !matches!(
+                    collision.contains_point(IrregularPoint::new(x, y)),
+                    PointInPolygonResult::IsOutside
+                ) {
+                    free[row * columns + column] = false;
+                    break;
+                }
+            }
+        }
+    }
+    // Flood-fill four-connected from the top row (the above-frontier band).
+    let mut reachable = vec![false; columns * rows];
+    let mut stack = Vec::new();
+    let top = rows - 1;
+    for column in 0..columns {
+        let cell = top * columns + column;
+        if free[cell] {
+            reachable[cell] = true;
+            stack.push(cell);
+        }
+    }
+    while let Some(cell) = stack.pop() {
+        let row = cell / columns;
+        let column = cell % columns;
+        let mut push = |candidate: usize| {
+            if free[candidate] && !reachable[candidate] {
+                reachable[candidate] = true;
+                stack.push(candidate);
+            }
+        };
+        if column > 0 {
+            push(cell - 1);
+        }
+        if column + 1 < columns {
+            push(cell + 1);
+        }
+        if row > 0 {
+            push(cell - columns);
+        }
+        if row + 1 < rows {
+            push(cell + columns);
+        }
+    }
+    free.iter()
+        .zip(reachable.iter())
+        .filter(|(is_free, is_reachable)| **is_free && !**is_reachable)
+        .count()
 }
 
 fn settle_sweep(
@@ -3312,7 +3431,7 @@ fn retain_population(
     difficulty: &[PieceDifficulty],
     mode: usize,
 ) -> (Vec<VacancyState>, usize) {
-    if matches!(mode, 1 | 3 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16) {
+    if matches!(mode, 1 | 3 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17) {
         let retained = sorted.into_iter().take(BEAM_WIDTH).collect::<Vec<_>>();
         let signatures = retained
             .iter()
@@ -3718,7 +3837,7 @@ fn selected_inactive_pieces(
     });
     if !matches!(
         mode,
-        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16
+        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17
     ) || inactive.len() <= 1
     {
         inactive.truncate(SELECTED_PIECES_PER_PARENT);
@@ -3751,7 +3870,7 @@ fn stable_inactive_order(state: &VacancyState, pieces: &[GeneralFastPiece<'_>]) 
 fn scheduler_family(mode: usize) -> &'static str {
     if matches!(
         mode,
-        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16
+        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17
     ) {
         "hardPlusStatelessRotation"
     } else {
@@ -5259,37 +5378,37 @@ mod tests {
         assert_eq!(SETTLE_SELECTED_PIECE_SLOTS, 3 * 61);
         assert_eq!(RECONSTRUCTION_SELECTED_PIECE_SLOTS, 2 * 61);
         assert_eq!(POPULATION_SELECTED_PIECE_SLOTS, 640 + 26);
-        assert_eq!(LNS_SETTLE_SWEEPS, 49);
-        assert_eq!(LNS_SETTLE_SELECTED_PIECE_SLOTS, 49 * 61);
+        assert_eq!(LNS_SETTLE_SWEEPS, 73);
+        assert_eq!(LNS_SETTLE_SELECTED_PIECE_SLOTS, 73 * 61);
         assert_eq!(SEPARATION_RELOCATIONS_PER_ROUND, 12);
         assert_eq!(LNS_REINSERT_SLOTS, 300 + 24 * 12);
         assert_eq!(
             MAX_SELECTED_PIECE_SLOTS,
-            640 + 26 + 183 + 122 + 49 * 61 + 588
+            640 + 26 + 183 + 122 + 73 * 61 + 588
         );
         assert_eq!(
             MAX_ORIENTATION_STREAMS,
-            (640 + 26 + 183 + 122 + 49 * 61 + 588) * 12
+            (640 + 26 + 183 + 122 + 73 * 61 + 588) * 12
         );
         assert_eq!(
             MAX_POSITION_SOURCE_ATTEMPTS,
-            (640 + 26 + 183 + 122 + 49 * 61 + 588) * 12 * 529
+            (640 + 26 + 183 + 122 + 73 * 61 + 588) * 12 * 529
         );
         assert_eq!(
             MAX_RETURNED_POSITIONS,
-            (640 + 26 + 183 + 122 + 49 * 61 + 588) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 588) * 12 * 32
         );
         assert_eq!(
             MAX_HAZARD_QUERIES,
-            (640 + 26 + 183 + 122 + 49 * 61 + 588) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 588) * 12 * 32
         );
         assert_eq!(
             MAX_PROXY_PRESSURE_VISITS,
-            (640 + 26 + 183 + 122 + 49 * 61 + 588) * 12 * 32 * 61
+            (640 + 26 + 183 + 122 + 73 * 61 + 588) * 12 * 32 * 61
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 49 * 61 * 64 + 588 * 192
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 588 * 192
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -5302,8 +5421,8 @@ mod tests {
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
             3 * 61
-                + (640 + 26 + 183 + 122 + 49 * 61 + 588) * 12
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 49 * 61 * 64 + 588 * 192)
+                + (640 + 26 + 183 + 122 + 73 * 61 + 588) * 12
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 588 * 192)
                 + 122
                 + 588
                 + 24 * (588 / 2 + 200 * 96)
@@ -5311,7 +5430,7 @@ mod tests {
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
             1_830
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 49 * 61 * 64 + 588 * 192) * 60
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 588 * 192) * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
         );
@@ -5625,7 +5744,7 @@ mod tests {
         assert!(result
             .failure_reason
             .unwrap()
-            .contains("target depth overrides require modes 9-16"));
+            .contains("target depth overrides require modes 9-17"));
 
         // Non-finite and non-positive targets fail closed.
         relaxed.persistent_vacancy_target_depth_mm = Some(f64::NAN);
