@@ -397,3 +397,17 @@ basin reaches 176.5 mm (evidence and every chain artifact under
 docs/experiments/persistent-vacancy-descent/basin-harvest/). The harvest
 hypothesis is closed: the program's next increment must be a structurally
 different constructor, and that constructor is now in design.
+
+The program now carries a defensible depth floor. A certified area bound
+(docs/experiments/depth-lower-bound/) inflates every piece by half the
+5.5 mm pair separation (exact Steiner areas for convex pieces, certified
+0.02 mm grid lower bounds for the nine non-convex stars) and divides by the
+1995 mm usable width: no exact-valid Mixed-61 layout under this engine's
+contract can be shallower than 131.978 mm (127.228 mm without the
+depth-metric strengthening). The same construction at Sparrow's 5.0 mm
+contract gives 124.887 mm, so contract overhead alone explains about
+7.09 mm of the 13.83 mm gap between the engine record (168.277 mm) and the
+Sparrow 3-second calibration (154.449 mm) at the bound level - the
+geometry-side confirmation of the mode-13 recalibration finding. The
+155 mm session target is not excluded by area: the residual gap is packing
+structure, which is exactly what the mode-20 constructor now attacks.

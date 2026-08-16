@@ -1,0 +1,26 @@
+{
+  "experiment": "contract-native area lower bound for Mixed-61 strip depth",
+  "question": "what depth is provably unreachable under THIS engine's clearance contract (5.5 mm pair separation, 5.25 mm boundary clearance, 2000 mm width), and how much of the engine-vs-Sparrow gap is contract overhead rather than search quality?",
+  "method": "shoelace raw areas from tests/fixtures/mixed-61/mixed61-request.json (61 pieces, 11 distinct all-segment shapes); Minkowski inflation by half the pair separation (r=2.75 mm): exact Steiner formula for convex pieces, certified 0.02 mm grid LOWER bound for the 9 non-convex stars (Steiner is an upper bound there and is never used in the bound); inflated pieces have pairwise-disjoint interiors and fit a 1995 mm strip; the strengthened variant adds the code-verified depth metric (coupled_independent_source_depth = max real y + 5.0) and the enforced 5.25 mm bottom clearance.",
+  "script": "docs/experiments/depth-lower-bound/mixed61-lower-bound.py",
+  "numbers": {
+    "raw_area_sum_mm2": 210619.03259454283,
+    "usable_width_mm": 1995.0,
+    "naive_bound_mm": 105.30951629727141,
+    "contract_bound_plain_mm": 127.22838540260464,
+    "contract_bound_strengthened_mm": 131.97838540260466,
+    "sparrow_bound_mm": 124.88690242765017,
+    "sparrow_bound_zero_clearance_mm": 119.5754637682296
+  },
+  "keyFindings": [
+    "TRUE contract-native lower bound: depth >= 131.978 mm (plain variant without depth-metric argument: 127.228 mm).",
+    "Sparrow's 5.0 mm-contract bound is 124.887 mm: contract overhead alone explains ~7.09 mm of the 13.83 mm engine-best (168.277) vs Sparrow-3s (154.449) gap at the bound level, confirming the mode-13 recalibration finding from the geometry side.",
+    "The session target 155 mm is NOT excluded by area bounds (23 mm of headroom): the remaining gap is packing structure, not area."
+  ],
+  "reference": {
+    "sparrow3sMm": 154.44858,
+    "engineBestMm": 168.277,
+    "nativeFloorMm": 177.081,
+    "sessionTargetMm": 155.0
+  }
+}
