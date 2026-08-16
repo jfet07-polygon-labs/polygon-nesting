@@ -1490,6 +1490,7 @@ fn lift_resettle_reinsert(
         separation_pair_moves: 0,
         separation_weight_bumps: 0,
         separation_relocations: 0,
+        rounds_wandered: 0,
         frontier_before_grid: settle.frontier_before_grid,
         frontier_after_grid: 0,
     };
@@ -1510,6 +1511,15 @@ fn lift_resettle_reinsert(
     )?;
     let mut recon = GeneralPersistentVacancyReconstructionDiagnostics::default();
     recon.rows_per_piece_cap = RECONSTRUCTION_ROWS_PER_PIECE;
+    // Record-to-record travel: a round endpoint within the deterministic
+    // tolerance of the entry key is kept as the wander state so later rounds
+    // explore from it, while the best state ever seen is tracked separately
+    // and returned, so the published result can never regress.
+    const LNS_TOLERANCE_GRID: [i128; LNS_ROUNDS] = [0, 2_000, 4_000, 8_000, 0, 2_000, 4_000, 8_000];
+    const LNS_FRONTIER_TOLERANCE_GRID: [i64; LNS_ROUNDS] =
+        [0, 500, 1_000, 2_000, 0, 500, 1_000, 2_000];
+    let mut best_state = state.clone();
+    let mut best_key = depth_key(&state);
     for (round, neighborhood) in LNS_NEIGHBORHOOD_SCHEDULE.into_iter().enumerate() {
         let snapshot = state.clone();
         let entry_key = depth_key(&state);
@@ -1653,14 +1663,30 @@ fn lift_resettle_reinsert(
                 }
             }
         }
-        let improved = !failed && depth_key(&state) < entry_key;
-        if improved {
+        if failed {
+            state = snapshot;
+            lns.rounds_reverted += 1;
+            continue;
+        }
+        let endpoint_key = depth_key(&state);
+        if endpoint_key < best_key {
+            best_state = state.clone();
+            best_key = endpoint_key;
+        }
+        let tolerance = LNS_TOLERANCE_GRID[round];
+        let frontier_tolerance = LNS_FRONTIER_TOLERANCE_GRID[round];
+        let within_tolerance = endpoint_key.0 <= entry_key.0.saturating_add(frontier_tolerance)
+            && endpoint_key.1 <= entry_key.1.saturating_add(tolerance);
+        if endpoint_key < entry_key {
             lns.rounds_accepted += 1;
+        } else if within_tolerance {
+            lns.rounds_wandered = lns.rounds_wandered.saturating_add(1);
         } else {
             state = snapshot;
             lns.rounds_reverted += 1;
         }
     }
+    state = best_state;
     settle.frontier_after_grid = frontier(&state);
     lns.frontier_after_grid = settle.frontier_after_grid;
     diagnostics.settle = Some(settle);
