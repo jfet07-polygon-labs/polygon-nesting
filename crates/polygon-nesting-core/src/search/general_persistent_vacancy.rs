@@ -45,6 +45,41 @@ const SETTLE_SELECTED_PIECE_SLOTS: usize = SETTLE_SWEEPS * 61;
 // RECONSTRUCTION_ROWS_PER_PIECE exact confirmations per piece.
 const RECONSTRUCTION_SELECTED_PIECE_SLOTS: usize = 2 * 61;
 const RECONSTRUCTION_ROWS_PER_PIECE: usize = 192;
+// Mode 20 constructs complete layouts from scratch with a skyline beam:
+// CONSTRUCTION_RESTARTS independent beam passes (one seeded insertion order
+// each) keep CONSTRUCTION_BEAM_WIDTH partial layouts per rank. Every
+// (restart, rank, parent) expansion funds one selected slot whose candidate
+// poses come from synthetic hints planted at the CONSTRUCTION_HINT_STATIONS
+// deepest skyline valleys under CONSTRUCTION_HINT_PRIORS orientation priors
+// (the pinned fixture's pose and the unrotated catalog pose), plus the full
+// orientation/position streams, exact-confirmed in landing-frontier order up
+// to CONSTRUCTION_ROWS_PER_PIECE rows with the last CONSTRUCTION_SHELF_ROWS
+// reserved for the upward shelf escape, collecting at most
+// CONSTRUCTION_FINALISTS_PER_SLOT children. Beam pruning caps survivors per
+// parent at CONSTRUCTION_BEAM_CHILDREN_PER_PARENT and bands the frontier key
+// at CONSTRUCTION_FRONTIER_BAND_GRID so the trapped-void term stays active
+// on frontier-raising commits.
+const CONSTRUCTION_RESTARTS: usize = 4;
+const CONSTRUCTION_BEAM_WIDTH: usize = 4;
+const CONSTRUCTION_HINT_STATIONS: usize = 3;
+const CONSTRUCTION_HINT_PRIORS: usize = 2;
+const CONSTRUCTION_ROWS_PER_PIECE: usize = 96;
+const CONSTRUCTION_SHELF_ROWS: usize = 24;
+const CONSTRUCTION_FINALISTS_PER_SLOT: usize = 4;
+const CONSTRUCTION_BEAM_CHILDREN_PER_PARENT: usize = 2;
+const CONSTRUCTION_FRONTIER_BAND_GRID: i64 = 500;
+const CONSTRUCTION_SKYLINE_COLUMNS: usize = 64;
+const CONSTRUCTION_SELECTED_PIECE_SLOTS: usize =
+    CONSTRUCTION_RESTARTS * CONSTRUCTION_BEAM_WIDTH * 61;
+const CONSTRUCTION_SEED_DOMAIN: u64 = 0x534B_594C_3230_3330;
+const CONSTRUCTION_TRANSIENT_BYTES: usize = 192 * 1024;
+// Child-scoring flood fills follow the reviewed-contract precedent of the
+// uncharged LNS depth-key scans: the structural ceiling below is asserted in
+// the quota test and the realized count is reported in the construction
+// diagnostics (voidScans).
+const CONSTRUCTION_VOID_SCAN_CAP: usize =
+    CONSTRUCTION_RESTARTS * 61 * CONSTRUCTION_BEAM_WIDTH * CONSTRUCTION_FINALISTS_PER_SLOT
+        + CONSTRUCTION_RESTARTS;
 // Mode 14 alternates one settle sweep with one guillotine group-drop pass per
 // compaction round: for a descending ladder of horizontal cuts, every active
 // piece above the cut translates downward as one rigid group, so pairs inside
@@ -100,7 +135,8 @@ const MAX_SELECTED_PIECE_SLOTS: usize = POPULATION_SELECTED_PIECE_SLOTS
     + SETTLE_SELECTED_PIECE_SLOTS
     + RECONSTRUCTION_SELECTED_PIECE_SLOTS
     + LNS_SETTLE_SELECTED_PIECE_SLOTS
-    + LNS_REINSERT_SLOTS;
+    + LNS_REINSERT_SLOTS
+    + CONSTRUCTION_SELECTED_PIECE_SLOTS;
 const MAX_ORIENTATION_STREAMS: usize = MAX_SELECTED_PIECE_SLOTS * ORIENTATIONS_PER_PIECE;
 const MAX_SOURCE_FEATURE_VISITS: usize = MAX_SELECTED_PIECE_SLOTS * 2 * MAX_SOURCE_FEATURES;
 const POSITION_SOURCE_ATTEMPTS_PER_ORIENTATION: usize = 529;
@@ -113,7 +149,8 @@ const MAX_EXACT_FINALIST_ROWS: usize = POPULATION_SELECTED_PIECE_SLOTS * FINALIS
     + SETTLE_SELECTED_PIECE_SLOTS * SETTLE_PROBES_PER_ATTEMPT
     + RECONSTRUCTION_SELECTED_PIECE_SLOTS * RECONSTRUCTION_ROWS_PER_PIECE
     + LNS_SETTLE_SELECTED_PIECE_SLOTS * SETTLE_PROBES_PER_ATTEMPT
-    + LNS_REINSERT_SLOTS * RECONSTRUCTION_ROWS_PER_PIECE;
+    + LNS_REINSERT_SLOTS * RECONSTRUCTION_ROWS_PER_PIECE
+    + CONSTRUCTION_SELECTED_PIECE_SLOTS * CONSTRUCTION_ROWS_PER_PIECE;
 // Two initial 61-piece collision builds are funded: the mode-11 settle
 // prelude builds the full active state once, and the target initializer
 // rebuilds it once.
@@ -129,6 +166,7 @@ const MAX_EXPERIMENTAL_COLLISION_BUILDS: usize = 3 * 61
     + MAX_EXACT_FINALIST_ROWS
     + RECONSTRUCTION_SELECTED_PIECE_SLOTS
     + LNS_REINSERT_SLOTS
+    + CONSTRUCTION_HINT_PRIORS * CONSTRUCTION_SELECTED_PIECE_SLOTS
     + SEPARATION_COLLISION_BUILDS;
 const MAX_VALIDATOR_COLLISION_BUILDS: usize = 12_810;
 const MAX_EXPERIMENTAL_PAIR_VISITS: usize =
@@ -548,9 +586,9 @@ fn run_population(
 ) -> Result<Option<(VacancyState, f64)>, String> {
     if !matches!(
         mode,
-        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19
+        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20
     ) {
-        return Err("persistent vacancy mode must be between 1 and 19".to_owned());
+        return Err("persistent vacancy mode must be between 1 and 20".to_owned());
     }
     // Modes 1-8 are the frozen diagnostic screens: their 165.0 mm target and
     // b9335a72 parent identity are part of the pinned experiment contract.
@@ -559,7 +597,7 @@ fn run_population(
     // and skips only the frozen fingerprint/depth equality pins while keeping
     // full parent validation.
     let target_depth_mm = match (mode, target_override_mm) {
-        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19, Some(target)) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20, Some(target)) => {
             if !target.is_finite() || target <= 0.0 {
                 return Err(
                     "persistent vacancy target depth must be a positive finite value".to_owned(),
@@ -567,18 +605,22 @@ fn run_population(
             }
             target
         }
-        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19, None) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20, None) => {
             return Err(
-                "persistent vacancy modes 9-19 require an explicit target depth".to_owned(),
+                "persistent vacancy modes 9-20 require an explicit target depth".to_owned(),
             );
         }
         (_, Some(_)) => {
-            return Err("persistent vacancy target depth overrides require modes 9-19".to_owned());
+            return Err("persistent vacancy target depth overrides require modes 9-20".to_owned());
         }
         (_, None) => TARGET_DEPTH_MM,
     };
-    if matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19) && !parent_is_pinned {
-        return Err("persistent vacancy modes 9-19 require a pinned parent fixture".to_owned());
+    if matches!(
+        mode,
+        9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20
+    ) && !parent_is_pinned
+    {
+        return Err("persistent vacancy modes 9-20 require a pinned parent fixture".to_owned());
     }
     diagnostics.target_depth_mm = target_depth_mm;
     if pieces.len() != 61 {
@@ -588,20 +630,22 @@ fn run_population(
         return Err("persistent vacancy parent is not a complete exact-valid layout".to_owned());
     }
     let parent_fast = diagnostic_fast_placements(&parent.final_placements);
-    if mode != 13 {
+    if !matches!(mode, 13 | 20) {
         validate_and_measure_placements(pieces, &parent_fast, fast_settings)
             .map_err(|error| format!("persistent vacancy parent validation: {error}"))?;
     }
     let parent_fingerprint = coupled_fast_placement_fingerprint(&parent_fast);
     diagnostics.parent_fingerprint = Some(parent_fingerprint.clone());
-    if !matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19)
-        && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT
+    if !matches!(
+        mode,
+        9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20
+    ) && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT
     {
         return Err(format!(
             "persistent vacancy parent fingerprint mismatch: expected {EXPECTED_PARENT_FINGERPRINT}, got {parent_fingerprint}"
         ));
     }
-    if mode != 13 {
+    if !matches!(mode, 13 | 20) {
         let parent_depth = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
             .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
         if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19) {
@@ -636,6 +680,17 @@ fn run_population(
     )?;
     if mode == 13 {
         let (state, independent) = reconstruct_from_hints(
+            pieces,
+            fast_settings,
+            target_depth_mm,
+            &baseline,
+            diagnostics,
+            work,
+        )?;
+        return Ok(Some((state, independent)));
+    }
+    if mode == 20 {
+        let (state, independent) = construct_skyline_beam(
             pieces,
             fast_settings,
             target_depth_mm,
@@ -2750,6 +2805,623 @@ fn settle_sweep(
 /// audit. Like the rest of the engine, candidate generation quantizes
 /// platform trigonometry onto the canonical grid, so replay identity is
 /// promised only on the recorded machine/toolchain identity.
+/// Mode-20 skyline beam constructor: builds complete exact-valid layouts
+/// from scratch, using the pinned parent fixture only as a deterministic
+/// seed anchor and per-piece orientation prior (mode-13-style: never
+/// validated, never trusted). Each restart runs one seeded insertion order
+/// through a beam of partial layouts; every expansion plants synthetic hints
+/// at the deepest skyline valleys and exact-confirms candidates in
+/// landing-frontier order through the unchanged collision machinery. Only
+/// complete candidates that pass the unchanged dual publication gates under
+/// the target settings may publish.
+fn construct_skyline_beam(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    target_depth_mm: f64,
+    anchor: &RelaxedState,
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    work: &mut RunWork,
+) -> Result<(VacancyState, f64), String> {
+    let mut construction = GeneralPersistentVacancyConstructionDiagnostics {
+        restarts: CONSTRUCTION_RESTARTS,
+        beam_width: CONSTRUCTION_BEAM_WIDTH,
+        hint_stations_per_slot: CONSTRUCTION_HINT_STATIONS,
+        rows_per_piece_cap: CONSTRUCTION_ROWS_PER_PIECE,
+        finalists_per_slot: CONSTRUCTION_FINALISTS_PER_SLOT,
+        ..GeneralPersistentVacancyConstructionDiagnostics::default()
+    };
+    let result = construct_skyline_beam_inner(
+        pieces,
+        fast_settings,
+        target_depth_mm,
+        anchor,
+        diagnostics,
+        &mut construction,
+        work,
+    );
+    diagnostics.construction = Some(construction);
+    result
+}
+
+fn construct_skyline_beam_inner(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    target_depth_mm: f64,
+    anchor: &RelaxedState,
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    construction: &mut GeneralPersistentVacancyConstructionDiagnostics,
+    work: &mut RunWork,
+) -> Result<(VacancyState, f64), String> {
+    // Construction inserts at the full-sheet settings so the upward shelf
+    // escape always admits a pose; only the publication audit runs under the
+    // target settings (the lift/resettle precedent).
+    let work_settings = fast_settings;
+    let target_settings = GeneralFastSettings {
+        sheet_long_axis_mm: target_depth_mm,
+        ..fast_settings
+    };
+    let anchor_state = VacancyState {
+        placements: anchor.placements.clone(),
+        active: vec![true; pieces.len()],
+        collisions: vec![None; pieces.len()],
+        last_transition: None,
+    };
+    let construction_seed = parent_seed_key(&anchor_state, pieces)
+        ^ CONSTRUCTION_SEED_DOMAIN
+        ^ (grid_key(target_depth_mm) as u64);
+    const ORDER_NAMES: [&str; CONSTRUCTION_RESTARTS] = [
+        "padded-bbox-area",
+        "max-dimension",
+        "semi-perimeter",
+        "banded-area-shuffle",
+    ];
+    let mut best: Option<(i64, usize, VacancyState, f64)> = None;
+    for restart in 0..CONSTRUCTION_RESTARTS {
+        let order_seed = derive_seed(construction_seed, restart, 0);
+        let order = construction_order(pieces, work_settings, restart, order_seed)?;
+        let mut row = GeneralPersistentVacancyConstructionRestartRow {
+            order: ORDER_NAMES[restart].to_owned(),
+            ..GeneralPersistentVacancyConstructionRestartRow::default()
+        };
+        let mut beam = vec![VacancyState {
+            placements: anchor.placements.clone(),
+            active: vec![false; pieces.len()],
+            collisions: vec![None; pieces.len()],
+            last_transition: None,
+        }];
+        let mut starved = None;
+        for (rank, piece_index) in order.iter().copied().enumerate() {
+            let mut children: Vec<(ConstructionChildKey, usize, VacancyState)> = Vec::new();
+            let mut children_bytes = 0usize;
+            let mut seen_children = BTreeSet::new();
+            for slot in 0..beam.len() {
+                let ordinal = (restart * 61 + rank) * CONSTRUCTION_BEAM_WIDTH + slot;
+                let live_bytes = state_slice_bytes(&beam)
+                    .saturating_add(children_bytes)
+                    .saturating_add(2usize.saturating_mul(size_of::<VacancyState>()))
+                    .saturating_add(CONSTRUCTION_TRANSIENT_BYTES);
+                work.diagnostics.total_retained_peak_bytes =
+                    work.diagnostics.total_retained_peak_bytes.max(live_bytes);
+                if live_bytes > MAX_RETAINED_BYTES {
+                    return Err(work.cap("construction live-state memory budget exhausted"));
+                }
+                let finalists = construct_candidate_poses(
+                    pieces,
+                    work_settings,
+                    anchor,
+                    &beam[slot],
+                    construction_seed,
+                    ordinal,
+                    piece_index,
+                    construction,
+                    work,
+                )?;
+                for (candidate, collision, zero_prior) in finalists {
+                    let mut child = beam[slot].clone();
+                    child.placements[piece_index] = candidate;
+                    child.active[piece_index] = true;
+                    child.collisions[piece_index] = Some(collision);
+                    child.last_transition = None;
+                    construction.children_generated =
+                        construction.children_generated.saturating_add(1);
+                    if zero_prior {
+                        construction.zero_prior_finalists =
+                            construction.zero_prior_finalists.saturating_add(1);
+                    } else {
+                        construction.fixture_prior_finalists =
+                            construction.fixture_prior_finalists.saturating_add(1);
+                    }
+                    let identity = state_identity(&child);
+                    if !seen_children.insert(identity) {
+                        construction.children_deduplicated =
+                            construction.children_deduplicated.saturating_add(1);
+                        continue;
+                    }
+                    let key = construction_child_key(&child, work_settings, construction);
+                    children_bytes = children_bytes.saturating_add(state_heap_bytes(&child));
+                    children.push((key, slot, child));
+                }
+            }
+            if children.is_empty() {
+                starved = Some(format!(
+                    "no exact-valid children at rank {rank} for piece {}",
+                    pieces[piece_index].id
+                ));
+                break;
+            }
+            children.sort_by(|first, second| first.0.cmp(&second.0).then(first.1.cmp(&second.1)));
+            // Diversity quota: at most CONSTRUCTION_BEAM_CHILDREN_PER_PARENT
+            // survivors per parent, backfilled from the remaining children in
+            // key order when the quota-constrained pool runs short.
+            let mut per_parent = vec![0usize; beam.len()];
+            let mut next = Vec::with_capacity(CONSTRUCTION_BEAM_WIDTH);
+            let mut leftovers = Vec::new();
+            for (_, slot, child) in children {
+                if next.len() == CONSTRUCTION_BEAM_WIDTH {
+                    break;
+                }
+                if per_parent[slot] < CONSTRUCTION_BEAM_CHILDREN_PER_PARENT {
+                    per_parent[slot] += 1;
+                    next.push(child);
+                } else {
+                    leftovers.push(child);
+                }
+            }
+            for child in leftovers {
+                if next.len() == CONSTRUCTION_BEAM_WIDTH {
+                    break;
+                }
+                next.push(child);
+            }
+            beam = next;
+        }
+        if let Some(reason) = starved {
+            row.rejection = Some(reason);
+            construction.restart_rows.push(row);
+            continue;
+        }
+        let candidate = beam
+            .first()
+            .ok_or_else(|| "construction beam emptied without starvation".to_owned())?;
+        row.complete = candidate.active.iter().all(|active| *active);
+        if !row.complete {
+            row.rejection = Some("constructed state is not complete".to_owned());
+            construction.restart_rows.push(row);
+            continue;
+        }
+        construction.complete_candidates = construction.complete_candidates.saturating_add(1);
+        let frontier_grid = candidate
+            .collisions
+            .iter()
+            .enumerate()
+            .filter(|(index, _)| candidate.active[*index])
+            .filter_map(|(_, collision)| collision.as_ref())
+            .filter_map(|collision| collision.bounds())
+            .map(|bounds| grid_key(bounds.max_y))
+            .max()
+            .unwrap_or(0);
+        row.frontier_grid = Some(frontier_grid);
+        construction.void_scans = construction.void_scans.saturating_add(1);
+        row.trapped_void_cells = Some(trapped_void_cells(candidate, work_settings, frontier_grid));
+        diagnostics.complete_states = diagnostics.complete_states.saturating_add(1);
+        construction.audited_candidates = construction.audited_candidates.saturating_add(1);
+        match audit_state(candidate, pieces, target_settings, true, work) {
+            Err(reason) if reason.starts_with("cap: ") => return Err(reason),
+            Err(reason) => {
+                diagnostics.publication_rejections =
+                    diagnostics.publication_rejections.saturating_add(1);
+                row.rejection = Some(reason);
+                construction.restart_rows.push(row);
+                continue;
+            }
+            Ok(_) => {}
+        }
+        let placements = fast_placements(candidate, pieces, false);
+        let independent = coupled_independent_source_depth(pieces, &placements, target_settings)
+            .map_err(|error| format!("persistent vacancy constructed depth: {error}"))?;
+        row.independent_depth_mm = Some(independent);
+        construction.restart_rows.push(row);
+        let key = (grid_key(independent), restart);
+        if best
+            .as_ref()
+            .map(|(depth, ordinal, _, _)| key < (*depth, *ordinal))
+            .unwrap_or(true)
+        {
+            best = Some((key.0, restart, candidate.clone(), independent));
+        }
+    }
+    match best {
+        Some((_, restart, state, independent)) => {
+            construction.published_restart_ordinal = Some(restart);
+            Ok((state, independent))
+        }
+        None => Err(
+            "skyline construction produced no publishable layout within the target depth"
+                .to_owned(),
+        ),
+    }
+}
+
+type ConstructionChildKey = (i64, usize, i64, i128, VacancyStateIdentity);
+
+/// Child acceptance key: banded resulting frontier first (so the trapped-void
+/// term stays active across frontier-raising commits inside the same band),
+/// then the trapped-void flood-fill count, then the exact frontier, then the
+/// summed per-piece frontiers (compactness), then the full placement identity
+/// as the deterministic tie anchor.
+fn construction_child_key(
+    child: &VacancyState,
+    settings: GeneralFastSettings,
+    construction: &mut GeneralPersistentVacancyConstructionDiagnostics,
+) -> ConstructionChildKey {
+    let mut frontier_grid = 0i64;
+    let mut frontier_sum = 0i128;
+    for (index, collision) in child.collisions.iter().enumerate() {
+        if !child.active[index] {
+            continue;
+        }
+        if let Some(bounds) = collision.as_ref().and_then(|collision| collision.bounds()) {
+            let piece_frontier = grid_key(bounds.max_y);
+            frontier_grid = frontier_grid.max(piece_frontier);
+            frontier_sum += i128::from(piece_frontier);
+        }
+    }
+    construction.void_scans = construction.void_scans.saturating_add(1);
+    let voids = trapped_void_cells(child, settings, frontier_grid);
+    (
+        frontier_grid.div_euclid(CONSTRUCTION_FRONTIER_BAND_GRID),
+        voids,
+        frontier_grid,
+        frontier_sum,
+        state_identity(child),
+    )
+}
+
+/// Seeded insertion-order portfolio: one deterministic descending key per
+/// restart over uncharged source-polygon bounds, with seeded tie-noise that
+/// permutes identical clones (and, for the banded restart, the whole band).
+fn construction_order(
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    restart: usize,
+    order_seed: u64,
+) -> Result<Vec<usize>, String> {
+    let pad = grid_key(settings.total_padding_mm).max(0) as i128;
+    let mut dimensions = Vec::with_capacity(pieces.len());
+    let mut max_area = 0i128;
+    for (index, piece) in pieces.iter().enumerate() {
+        let bounds = piece
+            .polygon
+            .bounds()
+            .ok_or_else(|| format!("piece {} has empty geometry", piece.id))?;
+        let width = grid_key(bounds.max_x - bounds.min_x).max(0) as i128;
+        let height = grid_key(bounds.max_y - bounds.min_y).max(0) as i128;
+        let padded_area = (width + pad) * (height + pad);
+        max_area = max_area.max(padded_area);
+        dimensions.push((index, width, height, padded_area));
+    }
+    let mut rows = Vec::with_capacity(pieces.len());
+    for (index, width, height, padded_area) in dimensions {
+        let primary = match restart {
+            0 => padded_area,
+            1 => width.max(height),
+            2 => width + height,
+            _ => (padded_area * 4) / (max_area + 1),
+        };
+        rows.push((primary, derive_seed(order_seed, 0, index), index));
+    }
+    rows.sort_by(|first, second| {
+        second
+            .0
+            .cmp(&first.0)
+            .then(first.1.cmp(&second.1))
+            .then_with(|| pieces[first.2].id.cmp(pieces[second.2].id))
+            .then(first.2.cmp(&second.2))
+    });
+    Ok(rows.into_iter().map(|(_, _, index)| index).collect())
+}
+
+/// Bounding-box skyline over CONSTRUCTION_SKYLINE_COLUMNS columns: each
+/// station is the center of one of the CONSTRUCTION_HINT_STATIONS lowest
+/// columns with pairwise spacing of at least 8 columns (ties by column
+/// index), paired with that column's current top. On an empty state this
+/// degenerates to the sheet floor.
+fn skyline_hint_stations(state: &VacancyState, settings: GeneralFastSettings) -> Vec<(f64, f64)> {
+    let inset = collision_sheet_inset_mm(settings);
+    let usable = settings.sheet_short_axis_mm - 2.0 * inset;
+    let column_width = usable / CONSTRUCTION_SKYLINE_COLUMNS as f64;
+    let last_column = CONSTRUCTION_SKYLINE_COLUMNS - 1;
+    let mut tops = vec![inset; CONSTRUCTION_SKYLINE_COLUMNS];
+    for (index, collision) in state.collisions.iter().enumerate() {
+        if !state.active[index] {
+            continue;
+        }
+        let Some(bounds) = collision.as_ref().and_then(|collision| collision.bounds()) else {
+            continue;
+        };
+        let first =
+            (((bounds.min_x - inset) / column_width).floor().max(0.0) as usize).min(last_column);
+        let last =
+            (((bounds.max_x - inset) / column_width).floor().max(0.0) as usize).min(last_column);
+        for top in tops.iter_mut().take(last + 1).skip(first) {
+            *top = top.max(bounds.max_y);
+        }
+    }
+    let mut ranked = tops
+        .iter()
+        .enumerate()
+        .map(|(column, top)| (grid_key(*top), column))
+        .collect::<Vec<_>>();
+    ranked.sort();
+    let mut stations = Vec::with_capacity(CONSTRUCTION_HINT_STATIONS);
+    for (_, column) in ranked {
+        if stations
+            .iter()
+            .any(|(existing, _)| column.abs_diff(*existing) < 8)
+        {
+            continue;
+        }
+        stations.push((column, tops[column]));
+        if stations.len() == CONSTRUCTION_HINT_STATIONS {
+            break;
+        }
+    }
+    stations
+        .into_iter()
+        .map(|(column, top)| (inset + (column as f64 + 0.5) * column_width, top))
+        .collect()
+}
+
+/// Non-mutating expansion sibling of reconstruct_insert_piece: generates up
+/// to CONSTRUCTION_FINALISTS_PER_SLOT exact-valid poses for one piece
+/// against one beam parent. Candidates come from synthetic station hints
+/// under both orientation priors (97-pose displacement cloud each), the full
+/// orientation/position streams anchored at station zero, and the upward
+/// shelf ladder; all are ranked by the landing-frontier key and confirmed at
+/// the full-sheet settings. Returns (pose, collision, from-zero-prior).
+#[allow(clippy::too_many_arguments)]
+fn construct_candidate_poses(
+    pieces: &[GeneralFastPiece<'_>],
+    work_settings: GeneralFastSettings,
+    anchor: &RelaxedState,
+    parent: &VacancyState,
+    construction_seed: u64,
+    ordinal: usize,
+    piece_index: usize,
+    construction: &mut GeneralPersistentVacancyConstructionDiagnostics,
+    work: &mut RunWork,
+) -> Result<Vec<(RelaxedPlacement, Arc<PolygonSet>, bool)>, String> {
+    construction.slots = construction.slots.saturating_add(1);
+    work.diagnostics.selected_piece_slots = work.diagnostics.selected_piece_slots.saturating_add(1);
+    if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
+        return Err(work.cap("selected-piece slot budget exhausted"));
+    }
+    work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
+    let inset = collision_sheet_inset_mm(work_settings);
+    let stations = skyline_hint_stations(parent, work_settings);
+    if stations.is_empty() {
+        return Err("skyline produced no hint stations".to_owned());
+    }
+    let frontier_y = parent
+        .collisions
+        .iter()
+        .enumerate()
+        .filter(|(index, _)| parent.active[*index])
+        .filter_map(|(_, collision)| collision.as_ref())
+        .filter_map(|collision| collision.bounds())
+        .map(|bounds| bounds.max_y)
+        .fold(0.0f64, f64::max);
+    let anchor_pose = &anchor.placements[piece_index];
+    let mut priors = vec![(anchor_pose.rotation_deg, anchor_pose.mirrored)];
+    if (angle_key(anchor_pose.rotation_deg), anchor_pose.mirrored) != (angle_key(0.0), false) {
+        priors.push((0.0, false));
+    }
+    let mut candidates = Vec::new();
+    let mut shelf_candidates = Vec::new();
+    let mut station_zero_hint: Option<RelaxedPlacement> = None;
+    for (prior_index, (rotation_deg, mirrored)) in priors.iter().copied().enumerate() {
+        let zero_prior = prior_index > 0;
+        let prior_orientation = RelaxedPlacement {
+            input_index: piece_index,
+            rotation_deg,
+            mirrored,
+            translate_x: 0.0,
+            translate_y: 0.0,
+        };
+        // One hint-orientation collision build per prior, funded by the
+        // standalone CONSTRUCTION_HINT_PRIORS * CONSTRUCTION_SELECTED_PIECE_SLOTS
+        // term of the experimental-build ceiling.
+        let prior_local =
+            build_collision(pieces[piece_index], &prior_orientation, work_settings, work)?;
+        let prior_bounds = prior_local
+            .bounds()
+            .ok_or_else(|| "construction prior orientation has empty geometry".to_owned())?;
+        let prior_center_x = (prior_bounds.min_x + prior_bounds.max_x) * 0.5;
+        let bucket_ordinal = ORIENTATIONS_PER_PIECE + prior_index;
+        for (station_index, (station_x, station_top)) in stations.iter().copied().enumerate() {
+            let hint = RelaxedPlacement {
+                input_index: piece_index,
+                rotation_deg,
+                mirrored,
+                translate_x: snap_mm(station_x - prior_center_x),
+                translate_y: snap_mm(station_top - prior_bounds.min_y + 0.6),
+            };
+            if station_index == 0 && !zero_prior {
+                station_zero_hint = Some(hint.clone());
+            }
+            let landing = |probe: &RelaxedPlacement| -> u64 {
+                grid_key(prior_bounds.max_y + probe.translate_y)
+                    .max(0)
+                    .unsigned_abs()
+            };
+            candidates.push((landing(&hint), bucket_ordinal, zero_prior, hint.clone()));
+            for radius in CONSTRUCTION_PROBE_RADII_MM {
+                for (direction_x, direction_y) in CONSTRUCTION_PROBE_DIRECTIONS {
+                    let mut probe = hint.clone();
+                    probe.translate_x += radius * direction_x;
+                    probe.translate_y += radius * direction_y;
+                    candidates.push((landing(&probe), bucket_ordinal, zero_prior, probe));
+                }
+            }
+        }
+        for step in 1..=12u32 {
+            for lateral in [0.0f64, -4.0, 4.0, -8.0, 8.0] {
+                let probe = RelaxedPlacement {
+                    input_index: piece_index,
+                    rotation_deg,
+                    mirrored,
+                    translate_x: snap_mm(stations[0].0 - prior_center_x + lateral),
+                    translate_y: snap_mm(frontier_y - prior_bounds.min_y + 0.6 * f64::from(step)),
+                };
+                shelf_candidates.push((bucket_ordinal, zero_prior, probe));
+            }
+        }
+    }
+    let station_zero_hint =
+        station_zero_hint.ok_or_else(|| "construction produced no station-zero hint".to_owned())?;
+    let angle_seed = derive_seed(
+        construction_seed ^ CONFLICT_RUIN_ANGLE_SEED_DOMAIN,
+        ordinal,
+        piece_index,
+    );
+    let orientations =
+        conflict_ruin_orientations(pieces[piece_index], &station_zero_hint, angle_seed);
+    for (orientation_ordinal, (rotation_deg, mirrored)) in orientations.into_iter().enumerate() {
+        work.diagnostics.orientation_streams =
+            work.diagnostics.orientation_streams.saturating_add(1);
+        if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
+            return Err(work.cap("orientation-stream budget exhausted"));
+        }
+        let orientation = RelaxedPlacement {
+            input_index: piece_index,
+            rotation_deg,
+            mirrored,
+            translate_x: 0.0,
+            translate_y: 0.0,
+        };
+        let local_collision =
+            build_collision(pieces[piece_index], &orientation, work_settings, work)?;
+        let local_max_y = local_collision
+            .bounds()
+            .ok_or_else(|| "construction orientation has empty geometry".to_owned())?
+            .max_y;
+        let position_seed = derive_seed(
+            construction_seed ^ CONFLICT_RUIN_POSITION_SEED_DOMAIN,
+            ordinal
+                .saturating_mul(ORIENTATIONS_PER_PIECE)
+                .saturating_add(orientation_ordinal),
+            piece_index,
+        );
+        let proposals = vacancy_positions(
+            &station_zero_hint,
+            &orientation,
+            &local_collision,
+            parent,
+            work_settings,
+            position_seed,
+            work,
+        )?;
+        for placement in proposals {
+            let key = grid_key(local_max_y + placement.translate_y)
+                .max(0)
+                .unsigned_abs();
+            candidates.push((key, orientation_ordinal, false, placement));
+        }
+    }
+    candidates.sort_by(|first, second| {
+        first
+            .0
+            .cmp(&second.0)
+            .then_with(|| first.1.cmp(&second.1))
+            .then_with(|| placement_key(&first.3).cmp(&placement_key(&second.3)))
+    });
+    let local_row_cap = CONSTRUCTION_ROWS_PER_PIECE - CONSTRUCTION_SHELF_ROWS;
+    let mut rows = 0usize;
+    let mut tried_buckets = BTreeSet::new();
+    let mut finalists = Vec::with_capacity(CONSTRUCTION_FINALISTS_PER_SLOT);
+    let ranked = candidates
+        .into_iter()
+        .map(|(_, bucket_ordinal, zero_prior, candidate)| {
+            (false, bucket_ordinal, zero_prior, candidate)
+        })
+        .chain(
+            shelf_candidates
+                .into_iter()
+                .map(|(bucket_ordinal, zero_prior, candidate)| {
+                    (true, bucket_ordinal, zero_prior, candidate)
+                }),
+        );
+    for (is_shelf, bucket_ordinal, zero_prior, candidate) in ranked {
+        if finalists.len() == CONSTRUCTION_FINALISTS_PER_SLOT || rows >= CONSTRUCTION_ROWS_PER_PIECE
+        {
+            break;
+        }
+        if !is_shelf && rows >= local_row_cap {
+            continue;
+        }
+        let bucket = (
+            bucket_ordinal,
+            grid_key(candidate.translate_x).div_euclid(256),
+            grid_key(candidate.translate_y).div_euclid(256),
+        );
+        if !tried_buckets.insert(bucket) {
+            continue;
+        }
+        rows += 1;
+        construction.exact_rows = construction.exact_rows.saturating_add(1);
+        work.diagnostics.exact_finalist_rows =
+            work.diagnostics.exact_finalist_rows.saturating_add(1);
+        if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
+            return Err(work.cap("exact-finalist row budget exhausted"));
+        }
+        let collision = build_collision(pieces[piece_index], &candidate, work_settings, work)?;
+        if !collision.fits_rect(
+            inset,
+            inset,
+            work_settings.sheet_short_axis_mm - inset,
+            work_settings.sheet_long_axis_mm - inset,
+        ) {
+            continue;
+        }
+        let mut overlapping = false;
+        for fixed_index in 0..pieces.len() {
+            if !parent.active[fixed_index] {
+                continue;
+            }
+            work.charge_experimental_pair()?;
+            let fixed = parent.collisions[fixed_index]
+                .as_ref()
+                .ok_or_else(|| format!("active piece {fixed_index} has no collision"))?;
+            if exact_intersection_area(&collision, fixed, work)? > 0.0 {
+                overlapping = true;
+                break;
+            }
+        }
+        if overlapping {
+            continue;
+        }
+        if is_shelf {
+            construction.shelf_finalists = construction.shelf_finalists.saturating_add(1);
+        }
+        finalists.push((candidate, Arc::new(collision), zero_prior));
+    }
+    Ok(finalists)
+}
+
+const CONSTRUCTION_PROBE_RADII_MM: [f64; 12] = [
+    0.128, 0.256, 0.384, 0.512, 0.768, 1.024, 1.536, 2.048, 3.072, 4.096, 6.144, 8.192,
+];
+const CONSTRUCTION_PROBE_DIRECTIONS: [(f64, f64); 8] = [
+    (1.0, 0.0),
+    (-1.0, 0.0),
+    (0.0, 1.0),
+    (0.0, -1.0),
+    (0.7071067811865476, 0.7071067811865476),
+    (-0.7071067811865476, 0.7071067811865476),
+    (0.7071067811865476, -0.7071067811865476),
+    (-0.7071067811865476, -0.7071067811865476),
+];
+
 fn reconstruct_from_hints(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
@@ -5705,33 +6377,46 @@ mod tests {
         assert_eq!(SEPARATION_RELOCATIONS_PER_ROUND, 12);
         assert_eq!(LNS_SCHEDULE_TOTAL, 536);
         assert_eq!(LNS_REINSERT_SLOTS, 536 + 24 * 12 + 2 * 3 * 536);
+        assert_eq!(CONSTRUCTION_RESTARTS, 4);
+        assert_eq!(CONSTRUCTION_BEAM_WIDTH, 4);
+        assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 4 * 4 * 61);
+        assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 976);
+        assert_eq!(CONSTRUCTION_ROWS_PER_PIECE, 96);
+        assert_eq!(
+            CONSTRUCTION_HINT_PRIORS * CONSTRUCTION_SELECTED_PIECE_SLOTS,
+            1_952
+        );
+        assert_eq!(CONSTRUCTION_VOID_SCAN_CAP, 4 * 61 * 4 * 4 + 4);
+        assert!(CONSTRUCTION_RESTARTS <= MAX_COMPLETE_AUDITS);
+        assert!(CONSTRUCTION_SHELF_ROWS < CONSTRUCTION_ROWS_PER_PIECE);
+        assert!(CONSTRUCTION_BEAM_CHILDREN_PER_PARENT <= CONSTRUCTION_BEAM_WIDTH);
         assert_eq!(
             MAX_SELECTED_PIECE_SLOTS,
-            640 + 26 + 183 + 122 + 73 * 61 + 4_040
+            640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976
         );
         assert_eq!(
             MAX_ORIENTATION_STREAMS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040) * 12
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976) * 12
         );
         assert_eq!(
             MAX_POSITION_SOURCE_ATTEMPTS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040) * 12 * 529
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976) * 12 * 529
         );
         assert_eq!(
             MAX_RETURNED_POSITIONS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976) * 12 * 32
         );
         assert_eq!(
             MAX_HAZARD_QUERIES,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976) * 12 * 32
         );
         assert_eq!(
             MAX_PROXY_PRESSURE_VISITS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040) * 12 * 32 * 61
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976) * 12 * 32 * 61
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 976 * 96
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -5744,16 +6429,18 @@ mod tests {
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
             3 * 61
-                + (640 + 26 + 183 + 122 + 73 * 61 + 4_040) * 12
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192)
+                + (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976) * 12
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 976 * 96)
                 + 122
                 + 4_040
+                + 2 * 976
                 + 24 * (4_040 / 2 + 200 * 96)
         );
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
             1_830
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192) * 60
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 976 * 96)
+                    * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
         );
@@ -6061,13 +6748,35 @@ mod tests {
             .unwrap()
             .contains("require a pinned parent fixture"));
 
+        // Mode 20 enforces the same target and fixture requirements as the
+        // rest of the descent lane.
+        let mut without_target = relaxed;
+        without_target.persistent_vacancy_target_depth_mm = None;
+        let result = run_persistent_vacancy_population(
+            &pieces,
+            fast,
+            without_target,
+            &parent,
+            Some("f".into()),
+            20,
+        );
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("require an explicit target depth"));
+        let result = run_persistent_vacancy_population(&pieces, fast, relaxed, &parent, None, 20);
+        assert!(result
+            .failure_reason
+            .unwrap()
+            .contains("require a pinned parent fixture"));
+
         // Frozen modes reject target overrides outright.
         let result =
             run_persistent_vacancy_population(&pieces, fast, relaxed, &parent, Some("f".into()), 3);
         assert!(result
             .failure_reason
             .unwrap()
-            .contains("target depth overrides require modes 9-19"));
+            .contains("target depth overrides require modes 9-20"));
 
         // Non-finite and non-positive targets fail closed.
         relaxed.persistent_vacancy_target_depth_mm = Some(f64::NAN);
@@ -6083,6 +6792,40 @@ mod tests {
             .failure_reason
             .unwrap()
             .contains("positive finite value"));
+    }
+
+    #[test]
+    fn construction_order_is_deterministic_and_ranks_area_descending() {
+        let polygons = vec![square(10.0), square(20.0), square(15.0), square(5.0)];
+        let pieces = polygons
+            .iter()
+            .enumerate()
+            .map(|(index, polygon)| GeneralFastPiece {
+                id: ["a", "b", "c", "d"][index],
+                polygon,
+                allow_rotation: true,
+                allow_mirror: true,
+            })
+            .collect::<Vec<_>>();
+        let fast = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let first = construction_order(&pieces, fast, 0, 7).unwrap();
+        let second = construction_order(&pieces, fast, 0, 7).unwrap();
+        assert_eq!(first, second);
+        assert_eq!(first, vec![1, 2, 0, 3]);
+        for restart in 0..CONSTRUCTION_RESTARTS {
+            let mut order = construction_order(&pieces, fast, restart, 7).unwrap();
+            order.sort_unstable();
+            assert_eq!(order, vec![0, 1, 2, 3]);
+        }
+    }
+
+    #[test]
+    fn construction_diagnostics_stay_absent_from_legacy_serializations() {
+        // "construction" is also a substring of "reconstruction", so this
+        // guards both optional lanes staying skipped on legacy-mode output.
+        let serialized =
+            serde_json::to_string(&GeneralPersistentVacancyDiagnostics::default()).unwrap();
+        assert!(!serialized.contains("construction"));
     }
 
     #[test]

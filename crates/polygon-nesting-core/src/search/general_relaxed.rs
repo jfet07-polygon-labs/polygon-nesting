@@ -374,6 +374,8 @@ pub struct GeneralPersistentVacancyDiagnostics {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reconstruction: Option<GeneralPersistentVacancyReconstructionDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub construction: Option<GeneralPersistentVacancyConstructionDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub group_drop: Option<GeneralPersistentVacancyGroupDropDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lns: Option<GeneralPersistentVacancyLnsDiagnostics>,
@@ -395,6 +397,44 @@ pub struct GeneralPersistentVacancyReconstructionDiagnostics {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failed_piece_id: Option<String>,
     pub failed_piece_count: usize,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyConstructionDiagnostics {
+    pub restarts: usize,
+    pub beam_width: usize,
+    pub hint_stations_per_slot: usize,
+    pub rows_per_piece_cap: usize,
+    pub finalists_per_slot: usize,
+    pub slots: usize,
+    pub exact_rows: usize,
+    pub children_generated: usize,
+    pub children_deduplicated: usize,
+    pub shelf_finalists: usize,
+    pub void_scans: usize,
+    pub fixture_prior_finalists: usize,
+    pub zero_prior_finalists: usize,
+    pub complete_candidates: usize,
+    pub audited_candidates: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub published_restart_ordinal: Option<usize>,
+    pub restart_rows: Vec<GeneralPersistentVacancyConstructionRestartRow>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyConstructionRestartRow {
+    pub order: String,
+    pub complete: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub frontier_grid: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trapped_void_cells: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub independent_depth_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejection: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
