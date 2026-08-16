@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "experiment": "temporary-debt-transport-development-observation",
+  "status": "inadmissible-negative-observation",
+  "decision": "discard-implementation-without-promoting-a-causal-conclusion",
+  "recordedAtUtc": "2026-08-16T12:45:00Z",
+  "designCommit": "8895ff2cdc8e4a0c4e3c20064498ef333beb4684",
+  "targetStripDepthMm": 165,
+  "pairedRunOrder": [23, 24, 24, 23],
+  "canonicalCommand": "target/release/examples/general_request_benchmark tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 MODE tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+  "normalization": {
+    "removedFieldNameRegex": "(?:^elapsedMs$|ElapsedMs$|^wallSeconds$|^maximumResidentSetBytes$|^phaseElapsedMs$)",
+    "scope": "recursive object fields",
+    "objectKeyOrder": "ascending at every depth",
+    "serialization": "JSON.stringify(value, null, 2) followed by one LF byte",
+    "numericTransform": "none"
+  },
+  "provenance": {
+    "engineCommit": "8895ff2cdc8e4a0c4e3c20064498ef333beb4684",
+    "engineWorktreeDirty": true,
+    "engineWorktreeStatus": "M crates/polygon-nesting-core/examples/general_request_benchmark.rs\n M crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs\n M crates/polygon-nesting-core/src/search/general_relaxed.rs",
+    "relevantSourceTreeSha256": "0c6bf4f32f4925a49a75d07893c8d8ef2365a842b54e9048ba0777a2769c8c6d",
+    "executableSha256": "81d827d08965da4031ad1ed5216bc81ed89857648e0fbf73907ba5ba34c36dda",
+    "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+    "parentFixtureSha256": "18e0b052997d1251573fa35679c9fcf1d5e796acf771ec48f320ce4e9bf0081d",
+    "machineArchitecture": "arm64",
+    "targetArchitecture": "aarch64",
+    "targetOperatingSystem": "macos",
+    "requestedThreads": 8,
+    "actualThreads": 8
+  },
+  "observedChecks": {
+    "sameModeReplayAfterDeclaredTimingProjection": true,
+    "sameBuildObserverProjectionMatchedMode17": true,
+    "frozenMode17ReplayOracleSatisfied": false,
+    "treatmentSubstitutedAtDepth": 0,
+    "treatmentExpandedProtectedOwnerAtDepth": 1,
+    "treatmentReportedActivation": true,
+    "completedDepthsPerRun": 16,
+    "wallTimeCapSeconds": 7.5,
+    "residentMemoryCapBytes": 67108864,
+    "allObservedRunsWithinTimeAndMemoryCaps": true,
+    "qualityGatePassed": false,
+    "fullCausalContractSatisfied": false
+  },
+  "arms": {
+    "observer": {
+      "mode": 23,
+      "outputSha256": [
+        "75f8d0b6f3fb264fbaceeafae83f7296c1ac90540d7bb3a135a2eca8afd82fe2",
+        "77ce45f69fdc99beeaa3f4be741b76b1913990c5444d15a3de6efa9a44999035"
+      ],
+      "normalizedSha256": "c3f95f81ab995a71b3205a49bcb7181c4fcbb9fea4a175376ba0eb8fa83f2d12",
+      "engineElapsedMs": [6588.5885, 6709.394667],
+      "wallSeconds": [6.64, 6.76],
+      "maximumResidentSetBytes": [50184192, 50659328],
+      "timingCaptureSha256": [
+        "6cde712de6e62bd710f42fb01f557dbfc39350c05d450856d5287fc8d42a1364",
+        "391288c815553d9e7b72b1671bf7027bc11e8fda0bcaef2398fcf3c68bb87240"
+      ],
+      "activated": false,
+      "startedTokens": 62,
+      "inheritedTransitions": 5,
+      "repaidTokens": 0,
+      "terminatedTokens": 41,
+      "completeCandidates": 0,
+      "comparisonEndpoint": {
+        "inactivePieceCount": 10,
+        "inactiveAreaGrid2": "45454905747",
+        "stateFingerprint": "6b42ff5e85749e4e3ce00bc36e6462f29a61290c74cd0bdfc5ae328ab5e16d28"
+      }
+    },
+    "treatment": {
+      "mode": 24,
+      "outputSha256": [
+        "7f381f56c930e7ef0ad41f8a54657de4f33b1b8c20675d0fd4a804c00178bed0",
+        "17b1bf693694f3adb553dbe614e8307d953cf9f1149e8abdd40eb71c4b88adff"
+      ],
+      "normalizedSha256": "52a413a7976c99fcba826368dcc49ae1119d866a461192779692357e04f9b010",
+      "engineElapsedMs": [6604.3362910000005, 6616.910791],
+      "wallSeconds": [6.65, 6.67],
+      "maximumResidentSetBytes": [54689792, 49954816],
+      "timingCaptureSha256": [
+        "84b062ac934d7fd16413c2e7262f6f2a752a625ff311ecd696611602f31bf38c",
+        "2b8b6f58dab5dc70b5307bc90d611e06f1c1b76739f88649a24879e2cd697bb3"
+      ],
+      "activated": true,
+      "activationTokenHash": "5354e7f35d80987fd70eea4a23f0025e7e7ef0dbd9c12d1425ad8ce58d1cb27e",
+      "startedTokens": 48,
+      "inheritedTransitions": 70,
+      "repaidTokens": 0,
+      "terminatedTokens": 29,
+      "completeCandidates": 0,
+      "comparisonEndpoint": {
+        "inactivePieceCount": 10,
+        "inactiveAreaGrid2": "45454905747",
+        "stateFingerprint": "6be541b60e117f63141b32a1df81278e4367a4d95842e7759d8b788b4189c085"
+      }
+    }
+  },
+  "reviewFindings": [
+    "the treatment could replace an active lineage already surviving in the ordinary fourth slot",
+    "observer sidecar failure did not preserve and publish the protected base trajectory",
+    "transport memory accounting omitted simultaneously live allocations and was not pre-allocation complete",
+    "the checker replaced rather than satisfied the frozen mode-17 replay oracle",
+    "the checker did not prove the full declared prefix, activation lineage, or exact-completion path",
+    "owner exhaustion collapsed multiple physical owners of one token",
+    "width and matched-schedule rejection were not enforced"
+  ],
+  "interpretation": {
+    "supported": "In these deterministic development runs, reserving one unguided temporary-debt lane changed the physical trajectory but produced no repayment, no complete candidate, and no comparator-quality gain.",
+    "notSupported": "The run cannot formally close temporary-debt transport because the reviewed implementation and evidence checker did not satisfy the complete predeclared causal contract.",
+    "nextBoundary": "The rejected implementation was removed. Spatially guided vacancy transport and other nonterminal lifecycles remain open, but require a new reviewed design and independent validation."
+  }
+}
