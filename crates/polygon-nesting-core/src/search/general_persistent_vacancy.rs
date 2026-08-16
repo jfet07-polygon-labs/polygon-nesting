@@ -30,20 +30,21 @@ const ARCHIVE_REVIVAL_COOLDOWN: usize = 3;
 const MAX_ARCHIVE_REVIVALS: usize =
     1 + (MAX_LAYERS - 1 - ARCHIVE_STAGNATION_LAYERS) / ARCHIVE_REVIVAL_COOLDOWN;
 // Mode 11 runs a translation-only exact settling prelude before the target
-// initializer: SETTLE_SWEEPS bottom-up passes over all 61 pieces, each
-// attempt exploring one orientation stream and exact-confirming candidate
-// positions in ascending settle-key order until the first strictly lower
-// valid pose. Each settle attempt may exact-confirm up to
-// POSITIONS_PER_ORIENTATION candidate rows, so the finalist-row and pair
-// ceilings carry an explicit settle term instead of the 8-per-slot
-// population term.
+// initializer: SETTLE_SWEEPS bottom-up passes over every piece of the
+// instance, each attempt exploring one orientation stream and
+// exact-confirming candidate positions in ascending settle-key order until
+// the first strictly lower valid pose. Each settle attempt may exact-confirm
+// up to POSITIONS_PER_ORIENTATION candidate rows, so the finalist-row and
+// pair ceilings carry an explicit settle term instead of the 8-per-slot
+// population term. The resulting slot ceiling is SETTLE_SWEEPS per piece and
+// therefore lives in `VacancyQuotas`.
 const SETTLE_SWEEPS: usize = 3;
 const SETTLE_PROBES_PER_ATTEMPT: usize = 64;
-const SETTLE_SELECTED_PIECE_SLOTS: usize = SETTLE_SWEEPS * 61;
 // Mode 13 rebuilds the layout from an external hint fixture: one guided
 // insertion per piece, ranked by grid distance to the hint pose, with at most
-// RECONSTRUCTION_ROWS_PER_PIECE exact confirmations per piece.
-const RECONSTRUCTION_SELECTED_PIECE_SLOTS: usize = 2 * 61;
+// RECONSTRUCTION_ROWS_PER_PIECE exact confirmations per piece, plus one
+// deferred retry pass over the pieces the first pass could not place.
+const RECONSTRUCTION_PASSES_PER_PIECE: usize = 2;
 const RECONSTRUCTION_ROWS_PER_PIECE: usize = 192;
 // Mode 20 constructs complete layouts from scratch with a skyline beam:
 // CONSTRUCTION_RESTARTS independent beam passes (one seeded insertion order
@@ -69,27 +70,20 @@ const CONSTRUCTION_FINALISTS_PER_SLOT: usize = 4;
 const CONSTRUCTION_BEAM_CHILDREN_PER_PARENT: usize = 2;
 const CONSTRUCTION_FRONTIER_BAND_GRID: i64 = 500;
 const CONSTRUCTION_SKYLINE_COLUMNS: usize = 64;
-const CONSTRUCTION_SELECTED_PIECE_SLOTS: usize =
-    CONSTRUCTION_RESTARTS * CONSTRUCTION_BEAM_WIDTH * 61;
 const CONSTRUCTION_SEED_DOMAIN: u64 = 0x534B_594C_3230_3330;
 const CONSTRUCTION_TRANSIENT_BYTES: usize = 192 * 1024;
 // Child-scoring flood fills follow the reviewed-contract precedent of the
-// uncharged LNS depth-key scans: the structural ceiling below is asserted in
-// the quota test and the realized count is reported in the construction
-// diagnostics (voidScans).
-const CONSTRUCTION_VOID_SCAN_CAP: usize =
-    CONSTRUCTION_RESTARTS * 61 * CONSTRUCTION_BEAM_WIDTH * CONSTRUCTION_FINALISTS_PER_SLOT
-        + CONSTRUCTION_RESTARTS;
+// uncharged LNS depth-key scans: the structural ceiling (`VacancyQuotas::
+// construction_void_scan_cap`) is asserted in the quota test and the realized
+// count is reported in the construction diagnostics (voidScans).
 // Mode 14 alternates one settle sweep with one guillotine group-drop pass per
-// compaction round: for a descending ladder of horizontal cuts, every active
-// piece above the cut translates downward as one rigid group, so pairs inside
-// the group need no re-checking and mutually wedged clusters can harvest
-// slack no single-piece move reaches.
+// compaction round: for a descending ladder of horizontal cuts - at most one
+// cut per piece, since the ladder is built from the distinct lower bounds of
+// the active pieces - every active piece above the cut translates downward as
+// one rigid group, so pairs inside the group need no re-checking and mutually
+// wedged clusters can harvest slack no single-piece move reaches.
 const COMPACTION_ROUNDS: usize = 3;
-const GROUP_DROP_CUTS: usize = 61;
 const GROUP_DROP_PROBES_PER_CUT: usize = 64;
-const GROUP_DROP_PAIR_VISITS: usize =
-    COMPACTION_ROUNDS * GROUP_DROP_CUTS * GROUP_DROP_PROBES_PER_CUT * 61;
 // Mode 15 runs a non-monotone lift/resettle/reinsert lifecycle: each round
 // removes the frontier piece plus its nearest neighbors (an adaptive
 // neighborhood schedule), lets the survivors resettle into the vacated
@@ -117,8 +111,8 @@ const LNS_REINSERT_SLOTS: usize = LNS_SCHEDULE_TOTAL
 const SEPARATION_MOVES_PER_ROUND: usize = 200;
 // Mode-21 bridge selection probes every active piece once per round with an
 // uncharged trapped-void flood fill (plus one baseline scan), counted in the
-// LNS diagnostics and structurally bounded by the schedule.
-const BRIDGE_VOID_SCAN_CAP: usize = LNS_ROUNDS * 62;
+// LNS diagnostics and structurally bounded by the schedule
+// (`VacancyQuotas::bridge_void_scan_cap`).
 const SEPARATION_RELOCATIONS_PER_ROUND: usize = 12;
 // Mode-17 endpoint optimizer: after a round's endpoint is feasible, up to
 // OPTIMIZER_CYCLES steepest-descent passes re-place each lifted piece at the
@@ -128,62 +122,179 @@ const SEPARATION_RELOCATIONS_PER_ROUND: usize = 12;
 const OPTIMIZER_CYCLES: usize = 2;
 const OPTIMIZER_CANDIDATES_PER_PIECE: usize = 3;
 const SEPARATION_PROBES_PER_MOVE: usize = 96;
-const SEPARATION_PAIR_VISITS: usize =
-    LNS_ROUNDS * SEPARATION_MOVES_PER_ROUND * SEPARATION_PROBES_PER_MOVE * 61;
 const ORDINARY_SELECTED_PIECE_SLOTS: usize = MAX_LAYERS * BEAM_WIDTH * SELECTED_PIECES_PER_PARENT;
 const ARCHIVE_SELECTED_PIECE_SLOTS: usize = MAX_ARCHIVE_REVIVALS * SELECTED_PIECES_PER_PARENT;
 const POPULATION_SELECTED_PIECE_SLOTS: usize =
     ORDINARY_SELECTED_PIECE_SLOTS + ARCHIVE_SELECTED_PIECE_SLOTS;
-const LNS_SETTLE_SELECTED_PIECE_SLOTS: usize = LNS_SETTLE_SWEEPS * 61;
-const MAX_SELECTED_PIECE_SLOTS: usize = POPULATION_SELECTED_PIECE_SLOTS
-    + SETTLE_SELECTED_PIECE_SLOTS
-    + RECONSTRUCTION_SELECTED_PIECE_SLOTS
-    + LNS_SETTLE_SELECTED_PIECE_SLOTS
-    + LNS_REINSERT_SLOTS
-    + CONSTRUCTION_SELECTED_PIECE_SLOTS;
-const MAX_ORIENTATION_STREAMS: usize = MAX_SELECTED_PIECE_SLOTS * ORIENTATIONS_PER_PIECE;
-const MAX_SOURCE_FEATURE_VISITS: usize = MAX_SELECTED_PIECE_SLOTS * 2 * MAX_SOURCE_FEATURES;
 const POSITION_SOURCE_ATTEMPTS_PER_ORIENTATION: usize = 529;
-const MAX_POSITION_SOURCE_ATTEMPTS: usize =
-    MAX_ORIENTATION_STREAMS * POSITION_SOURCE_ATTEMPTS_PER_ORIENTATION;
-const MAX_RETURNED_POSITIONS: usize = MAX_ORIENTATION_STREAMS * POSITIONS_PER_ORIENTATION;
-const MAX_HAZARD_QUERIES: usize = MAX_RETURNED_POSITIONS;
-const MAX_PROXY_PRESSURE_VISITS: usize = MAX_RETURNED_POSITIONS * 61;
-const MAX_EXACT_FINALIST_ROWS: usize = POPULATION_SELECTED_PIECE_SLOTS * FINALISTS_PER_PIECE
-    + SETTLE_SELECTED_PIECE_SLOTS * SETTLE_PROBES_PER_ATTEMPT
-    + RECONSTRUCTION_SELECTED_PIECE_SLOTS * RECONSTRUCTION_ROWS_PER_PIECE
-    + LNS_SETTLE_SELECTED_PIECE_SLOTS * SETTLE_PROBES_PER_ATTEMPT
-    + LNS_REINSERT_SLOTS * RECONSTRUCTION_ROWS_PER_PIECE
-    + CONSTRUCTION_SELECTED_PIECE_SLOTS * CONSTRUCTION_ROWS_PER_PIECE;
-// Two initial 61-piece collision builds are funded: the mode-11 settle
-// prelude builds the full active state once, and the target initializer
-// rebuilds it once.
-// The reconstruction lane also builds one hint-orientation collision per
-// selected slot for shelf anchoring.
-// Three full-state 61-piece collision builds are funded: the settle or
-// compaction prelude, the target initializer, and the mode-14 exact
-// re-anchor after group drops.
 const SEPARATION_COLLISION_BUILDS: usize =
     LNS_ROUNDS * (LNS_REINSERT_SLOTS / 2 + SEPARATION_MOVES_PER_ROUND * SEPARATION_PROBES_PER_MOVE);
-const MAX_EXPERIMENTAL_COLLISION_BUILDS: usize = 3 * 61
-    + MAX_ORIENTATION_STREAMS
-    + MAX_EXACT_FINALIST_ROWS
-    + RECONSTRUCTION_SELECTED_PIECE_SLOTS
-    + LNS_REINSERT_SLOTS
-    + CONSTRUCTION_HINT_PRIORS * CONSTRUCTION_SELECTED_PIECE_SLOTS
-    + SEPARATION_COLLISION_BUILDS;
-const MAX_VALIDATOR_COLLISION_BUILDS: usize = 12_810;
-const MAX_EXPERIMENTAL_PAIR_VISITS: usize =
-    1_830 + MAX_EXACT_FINALIST_ROWS * 60 + GROUP_DROP_PAIR_VISITS + SEPARATION_PAIR_VISITS;
-const MAX_VALIDATOR_PAIR_VISITS: usize = 384_300;
-const MAX_TRANSFORMED_COLLISION_VERTICES: usize =
-    (MAX_EXPERIMENTAL_COLLISION_BUILDS + MAX_VALIDATOR_COLLISION_BUILDS) * MAX_COLLISION_VERTICES;
-const MAX_CLIPPER_INPUT_VERTICES: usize =
-    2 * MAX_COLLISION_VERTICES * (MAX_EXPERIMENTAL_PAIR_VISITS + MAX_VALIDATOR_PAIR_VISITS);
+// Full-state collision-build passes funded outside the per-slot lanes: the
+// settle or compaction prelude, the target initializer, and the mode-14 exact
+// re-anchor after the group drops. Each pass rebuilds one collision per piece.
+const PRELUDE_COLLISION_BUILD_PASSES: usize = 3;
+// Every publication audit runs the dual validator: two passes that each
+// rebuild one collision per piece and re-check every active pair once.
+const VALIDATOR_PASSES_PER_AUDIT: usize = 2;
 const MAX_CLIPPER_OUTPUT_VERTICES: usize = 4_000_000;
 const MAX_PARTIAL_AUDITS: usize = 41;
 const MAX_COMPLETE_AUDITS: usize = 64;
+const MAX_AUDITS: usize = MAX_PARTIAL_AUDITS + MAX_COMPLETE_AUDITS;
 const MAX_RETAINED_BYTES: usize = 64 * 1024 * 1024;
+
+/// Instance-scaled aggregate ceilings.
+///
+/// Every constant above is either per-piece, per-slot or per-round and is
+/// therefore instance-independent; the aggregate ceilings below multiply those
+/// rates by the piece count of the request under test, so the machinery funds
+/// the same *per-piece* work on any instance. The formulas are asserted in
+/// `aggregate_quota_formulas_match_the_reviewed_contract`, which additionally
+/// pins the historical Mixed-61 values they reproduce at 61 pieces.
+///
+/// All products saturate: an instance large enough to overflow `usize` gets a
+/// ceiling of `usize::MAX` rather than a wrapped (and far too small) budget.
+// No `Default`: a zero-quota ledger would silently starve every lane, so the
+// only way to obtain quotas is to state the instance's piece count.
+#[derive(Clone, Copy, Debug)]
+struct VacancyQuotas {
+    piece_count: usize,
+    /// Distinct guillotine cuts a single mode-14 group-drop pass may evaluate;
+    /// the ladder is built from the distinct active lower bounds, so it can
+    /// never exceed one cut per piece.
+    group_drop_cuts: usize,
+    settle_selected_piece_slots: usize,
+    reconstruction_selected_piece_slots: usize,
+    lns_settle_selected_piece_slots: usize,
+    construction_selected_piece_slots: usize,
+    construction_void_scan_cap: usize,
+    bridge_void_scan_cap: usize,
+    group_drop_pair_visits: usize,
+    separation_pair_visits: usize,
+    max_selected_piece_slots: usize,
+    max_orientation_streams: usize,
+    max_source_feature_visits: usize,
+    max_position_source_attempts: usize,
+    max_returned_positions: usize,
+    max_hazard_queries: usize,
+    max_proxy_pressure_visits: usize,
+    max_exact_finalist_rows: usize,
+    max_experimental_collision_builds: usize,
+    max_experimental_pair_visits: usize,
+    /// Collision rebuilds and pair re-checks charged by one publication audit.
+    validator_collision_builds_per_audit: usize,
+    validator_pair_visits_per_audit: usize,
+    max_validator_collision_builds: usize,
+    max_validator_pair_visits: usize,
+    max_transformed_collision_vertices: usize,
+    max_clipper_input_vertices: usize,
+}
+
+impl VacancyQuotas {
+    fn for_piece_count(piece_count: usize) -> Self {
+        let scale = |rate: usize| rate.saturating_mul(piece_count);
+        // Pairs of distinct pieces in a complete state.
+        let complete_pairs = piece_count
+            .saturating_mul(piece_count.saturating_sub(1))
+            .saturating_div(2);
+        // Active pieces a single candidate row is checked against.
+        let peers = piece_count.saturating_sub(1);
+
+        let settle_selected_piece_slots = scale(SETTLE_SWEEPS);
+        let reconstruction_selected_piece_slots = scale(RECONSTRUCTION_PASSES_PER_PIECE);
+        let lns_settle_selected_piece_slots = scale(LNS_SETTLE_SWEEPS);
+        let construction_selected_piece_slots =
+            scale(CONSTRUCTION_RESTARTS * CONSTRUCTION_BEAM_WIDTH);
+
+        let max_selected_piece_slots = POPULATION_SELECTED_PIECE_SLOTS
+            .saturating_add(settle_selected_piece_slots)
+            .saturating_add(reconstruction_selected_piece_slots)
+            .saturating_add(lns_settle_selected_piece_slots)
+            .saturating_add(LNS_REINSERT_SLOTS)
+            .saturating_add(construction_selected_piece_slots);
+        let max_orientation_streams =
+            max_selected_piece_slots.saturating_mul(ORIENTATIONS_PER_PIECE);
+        let max_returned_positions =
+            max_orientation_streams.saturating_mul(POSITIONS_PER_ORIENTATION);
+        let max_exact_finalist_rows = POPULATION_SELECTED_PIECE_SLOTS
+            .saturating_mul(FINALISTS_PER_PIECE)
+            .saturating_add(settle_selected_piece_slots.saturating_mul(SETTLE_PROBES_PER_ATTEMPT))
+            .saturating_add(
+                reconstruction_selected_piece_slots.saturating_mul(RECONSTRUCTION_ROWS_PER_PIECE),
+            )
+            .saturating_add(
+                lns_settle_selected_piece_slots.saturating_mul(SETTLE_PROBES_PER_ATTEMPT),
+            )
+            .saturating_add(LNS_REINSERT_SLOTS.saturating_mul(RECONSTRUCTION_ROWS_PER_PIECE))
+            .saturating_add(
+                construction_selected_piece_slots.saturating_mul(CONSTRUCTION_ROWS_PER_PIECE),
+            );
+
+        let group_drop_pair_visits = scale(COMPACTION_ROUNDS)
+            .saturating_mul(GROUP_DROP_PROBES_PER_CUT)
+            .saturating_mul(piece_count);
+        let separation_pair_visits =
+            scale(LNS_ROUNDS * SEPARATION_MOVES_PER_ROUND * SEPARATION_PROBES_PER_MOVE);
+
+        let max_experimental_collision_builds = scale(PRELUDE_COLLISION_BUILD_PASSES)
+            .saturating_add(max_orientation_streams)
+            .saturating_add(max_exact_finalist_rows)
+            .saturating_add(reconstruction_selected_piece_slots)
+            .saturating_add(LNS_REINSERT_SLOTS)
+            .saturating_add(
+                construction_selected_piece_slots.saturating_mul(CONSTRUCTION_HINT_PRIORS),
+            )
+            .saturating_add(SEPARATION_COLLISION_BUILDS);
+        let max_experimental_pair_visits = complete_pairs
+            .saturating_add(max_exact_finalist_rows.saturating_mul(peers))
+            .saturating_add(group_drop_pair_visits)
+            .saturating_add(separation_pair_visits);
+
+        let validator_collision_builds_per_audit = scale(VALIDATOR_PASSES_PER_AUDIT);
+        let validator_pair_visits_per_audit =
+            complete_pairs.saturating_mul(VALIDATOR_PASSES_PER_AUDIT);
+        let max_validator_collision_builds =
+            validator_collision_builds_per_audit.saturating_mul(MAX_AUDITS);
+        let max_validator_pair_visits = validator_pair_visits_per_audit.saturating_mul(MAX_AUDITS);
+
+        Self {
+            piece_count,
+            group_drop_cuts: piece_count,
+            settle_selected_piece_slots,
+            reconstruction_selected_piece_slots,
+            lns_settle_selected_piece_slots,
+            construction_selected_piece_slots,
+            construction_void_scan_cap: construction_selected_piece_slots
+                .saturating_mul(CONSTRUCTION_FINALISTS_PER_SLOT)
+                .saturating_add(CONSTRUCTION_RESTARTS),
+            bridge_void_scan_cap: LNS_ROUNDS.saturating_mul(piece_count.saturating_add(1)),
+            group_drop_pair_visits,
+            separation_pair_visits,
+            max_selected_piece_slots,
+            max_orientation_streams,
+            max_source_feature_visits: max_selected_piece_slots
+                .saturating_mul(2)
+                .saturating_mul(MAX_SOURCE_FEATURES),
+            max_position_source_attempts: max_orientation_streams
+                .saturating_mul(POSITION_SOURCE_ATTEMPTS_PER_ORIENTATION),
+            max_returned_positions,
+            max_hazard_queries: max_returned_positions,
+            max_proxy_pressure_visits: max_returned_positions.saturating_mul(piece_count),
+            max_exact_finalist_rows,
+            max_experimental_collision_builds,
+            max_experimental_pair_visits,
+            validator_collision_builds_per_audit,
+            validator_pair_visits_per_audit,
+            max_validator_collision_builds,
+            max_validator_pair_visits,
+            max_transformed_collision_vertices: max_experimental_collision_builds
+                .saturating_add(max_validator_collision_builds)
+                .saturating_mul(MAX_COLLISION_VERTICES),
+            max_clipper_input_vertices: max_experimental_pair_visits
+                .saturating_add(max_validator_pair_visits)
+                .saturating_mul(2 * MAX_COLLISION_VERTICES),
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct VacancyTransition {
@@ -431,12 +542,19 @@ fn elite_snapshot_heap_bytes(snapshot: &EliteSnapshot) -> usize {
         )
 }
 
-#[derive(Default)]
 struct RunWork {
     diagnostics: GeneralPersistentVacancyWorkDiagnostics,
+    quotas: VacancyQuotas,
 }
 
 impl RunWork {
+    fn new(piece_count: usize) -> Self {
+        Self {
+            diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
+            quotas: VacancyQuotas::for_piece_count(piece_count),
+        }
+    }
+
     fn cap(&self, reason: &str) -> String {
         format!("cap: {reason}")
     }
@@ -446,7 +564,7 @@ impl RunWork {
             .diagnostics
             .source_feature_visits
             .saturating_add(amount);
-        if self.diagnostics.source_feature_visits > MAX_SOURCE_FEATURE_VISITS {
+        if self.diagnostics.source_feature_visits > self.quotas.max_source_feature_visits {
             return Err(self.cap("source-feature visit budget exhausted"));
         }
         Ok(())
@@ -457,7 +575,7 @@ impl RunWork {
             .diagnostics
             .position_source_attempts
             .saturating_add(amount);
-        if self.diagnostics.position_source_attempts > MAX_POSITION_SOURCE_ATTEMPTS {
+        if self.diagnostics.position_source_attempts > self.quotas.max_position_source_attempts {
             return Err(self.cap("position-source attempt budget exhausted"));
         }
         Ok(())
@@ -466,7 +584,7 @@ impl RunWork {
     fn charge_experimental_pair(&mut self) -> Result<(), String> {
         self.diagnostics.experimental_pair_visits =
             self.diagnostics.experimental_pair_visits.saturating_add(1);
-        if self.diagnostics.experimental_pair_visits > MAX_EXPERIMENTAL_PAIR_VISITS {
+        if self.diagnostics.experimental_pair_visits > self.quotas.max_experimental_pair_visits {
             return Err(self.cap("experimental pair-visit budget exhausted"));
         }
         Ok(())
@@ -484,15 +602,15 @@ impl RunWork {
             }
             self.diagnostics.partial_audits += 1;
         }
-        let collision_builds = 2usize.saturating_mul(61);
-        let pair_visits = 2usize.saturating_mul(61 * 60 / 2);
+        let collision_builds = self.quotas.validator_collision_builds_per_audit;
+        let pair_visits = self.quotas.validator_pair_visits_per_audit;
         let collision_vertices = collision_builds.saturating_mul(MAX_COLLISION_VERTICES);
         let input_vertices = pair_visits.saturating_mul(2 * MAX_COLLISION_VERTICES);
         if self
             .diagnostics
             .validator_collision_builds
             .saturating_add(collision_builds)
-            > MAX_VALIDATOR_COLLISION_BUILDS
+            > self.quotas.max_validator_collision_builds
         {
             return Err(self.cap("validator collision-build budget exhausted"));
         }
@@ -500,7 +618,7 @@ impl RunWork {
             .diagnostics
             .validator_pair_visits
             .saturating_add(pair_visits)
-            > MAX_VALIDATOR_PAIR_VISITS
+            > self.quotas.max_validator_pair_visits
         {
             return Err(self.cap("validator pair-visit budget exhausted"));
         }
@@ -508,7 +626,7 @@ impl RunWork {
             .diagnostics
             .transformed_collision_vertices
             .saturating_add(collision_vertices)
-            > MAX_TRANSFORMED_COLLISION_VERTICES
+            > self.quotas.max_transformed_collision_vertices
         {
             return Err(self.cap("transformed collision-vertex budget exhausted"));
         }
@@ -516,7 +634,7 @@ impl RunWork {
             .diagnostics
             .clipper_input_vertices
             .saturating_add(input_vertices)
-            > MAX_CLIPPER_INPUT_VERTICES
+            > self.quotas.max_clipper_input_vertices
         {
             return Err(self.cap("validator Clipper input-vertex budget exhausted"));
         }
@@ -544,7 +662,7 @@ pub(super) fn run_persistent_vacancy_population(
         parent_source,
         ..GeneralPersistentVacancyDiagnostics::default()
     };
-    let mut work = RunWork::default();
+    let mut work = RunWork::new(pieces.len());
     match run_population(
         pieces,
         fast_settings,
@@ -646,10 +764,15 @@ fn run_population(
         return Err("persistent vacancy modes 9-21 require a pinned parent fixture".to_owned());
     }
     diagnostics.target_depth_mm = target_depth_mm;
-    if pieces.len() != 61 {
-        return Err("persistent vacancy experiment is pinned to Mixed-61".to_owned());
+    if pieces.is_empty() {
+        return Err("persistent vacancy experiment requires at least one piece".to_owned());
     }
-    if parent.final_placements.len() != pieces.len() {
+    // Mode 20 builds every pose itself, so it is the one lane that accepts an
+    // anchor with no placements: each piece then falls back to its catalog
+    // identity pose as the sole orientation prior. Every other lane derives
+    // its starting layout from the parent and still requires a complete one.
+    let anchor_is_synthetic = mode == 20 && parent.final_placements.is_empty();
+    if !anchor_is_synthetic && parent.final_placements.len() != pieces.len() {
         return Err("persistent vacancy parent is not a complete exact-valid layout".to_owned());
     }
     let parent_fast = diagnostic_fast_placements(&parent.final_placements);
@@ -696,11 +819,15 @@ fn run_population(
         sheet_long_axis_mm: target_depth_mm,
         ..fast_settings
     };
-    let mut baseline = relaxed_state_from_diagnostics_with_target(
-        pieces,
-        &parent.final_placements,
-        target_depth_mm,
-    )?;
+    let mut baseline = if anchor_is_synthetic {
+        identity_relaxed_state(pieces, target_depth_mm)
+    } else {
+        relaxed_state_from_diagnostics_with_target(
+            pieces,
+            &parent.final_placements,
+            target_depth_mm,
+        )?
+    };
     if mode == 13 {
         let (state, independent) = reconstruct_from_hints(
             pieces,
@@ -1430,7 +1557,7 @@ fn group_drop_pass(
     cuts.sort_unstable();
     cuts.dedup();
     cuts.reverse();
-    cuts.truncate(GROUP_DROP_CUTS);
+    cuts.truncate(work.quotas.group_drop_cuts);
     for cut in cuts {
         diagnostics.cuts_evaluated += 1;
         let group = (0..state.active.len())
@@ -2665,7 +2792,7 @@ fn frontier_band_feasibility(
                     screened += 1;
                     work.diagnostics.hazard_queries =
                         work.diagnostics.hazard_queries.saturating_add(1);
-                    if work.diagnostics.hazard_queries > MAX_HAZARD_QUERIES {
+                    if work.diagnostics.hazard_queries > work.quotas.max_hazard_queries {
                         return Err(work.cap("hazard-query budget exhausted"));
                     }
                     match screen.query_unplaced(index, hazard_pose(&candidate)) {
@@ -2685,7 +2812,7 @@ fn frontier_band_feasibility(
                     }
                     work.diagnostics.exact_finalist_rows =
                         work.diagnostics.exact_finalist_rows.saturating_add(1);
-                    if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
+                    if work.diagnostics.exact_finalist_rows > work.quotas.max_exact_finalist_rows {
                         return Err(work.cap("exact-finalist row budget exhausted"));
                     }
                     let collision = build_collision(pieces[index], &candidate, settings, work)?;
@@ -2768,13 +2895,13 @@ fn settle_sweep(
         settle.attempts += 1;
         work.diagnostics.selected_piece_slots =
             work.diagnostics.selected_piece_slots.saturating_add(1);
-        if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
+        if work.diagnostics.selected_piece_slots > work.quotas.max_selected_piece_slots {
             return Err(work.cap("selected-piece slot budget exhausted"));
         }
         work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
         work.diagnostics.orientation_streams =
             work.diagnostics.orientation_streams.saturating_add(1);
-        if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
+        if work.diagnostics.orientation_streams > work.quotas.max_orientation_streams {
             return Err(work.cap("orientation-stream budget exhausted"));
         }
         let mut temp = state.clone();
@@ -2824,7 +2951,7 @@ fn settle_sweep(
                     settle.exact_rows += 1;
                     work.diagnostics.exact_finalist_rows =
                         work.diagnostics.exact_finalist_rows.saturating_add(1);
-                    if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
+                    if work.diagnostics.exact_finalist_rows > work.quotas.max_exact_finalist_rows {
                         return Err(work.cap("exact-finalist row budget exhausted"));
                     }
                     let collision =
@@ -2981,7 +3108,7 @@ fn construct_skyline_beam_inner(
             let mut children_bytes = 0usize;
             let mut seen_children = BTreeSet::new();
             for slot in 0..beam.len() {
-                let ordinal = (restart * 61 + rank) * CONSTRUCTION_BEAM_WIDTH + slot;
+                let ordinal = (restart * pieces.len() + rank) * CONSTRUCTION_BEAM_WIDTH + slot;
                 let live_bytes = state_slice_bytes(&beam)
                     .saturating_add(children_bytes)
                     .saturating_add(2usize.saturating_mul(size_of::<VacancyState>()))
@@ -3334,7 +3461,7 @@ fn construct_candidate_poses(
 ) -> Result<Vec<(RelaxedPlacement, Arc<PolygonSet>, bool)>, String> {
     construction.slots = construction.slots.saturating_add(1);
     work.diagnostics.selected_piece_slots = work.diagnostics.selected_piece_slots.saturating_add(1);
-    if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
+    if work.diagnostics.selected_piece_slots > work.quotas.max_selected_piece_slots {
         return Err(work.cap("selected-piece slot budget exhausted"));
     }
     work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
@@ -3483,7 +3610,7 @@ fn construct_candidate_poses(
     for (orientation_ordinal, (rotation_deg, mirrored)) in orientations.into_iter().enumerate() {
         work.diagnostics.orientation_streams =
             work.diagnostics.orientation_streams.saturating_add(1);
-        if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
+        if work.diagnostics.orientation_streams > work.quotas.max_orientation_streams {
             return Err(work.cap("orientation-stream budget exhausted"));
         }
         let orientation = RelaxedPlacement {
@@ -3738,7 +3865,7 @@ fn construction_confirm_row(
 ) -> Result<Option<PolygonSet>, String> {
     construction.exact_rows = construction.exact_rows.saturating_add(1);
     work.diagnostics.exact_finalist_rows = work.diagnostics.exact_finalist_rows.saturating_add(1);
-    if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
+    if work.diagnostics.exact_finalist_rows > work.quotas.max_exact_finalist_rows {
         return Err(work.cap("exact-finalist row budget exhausted"));
     }
     let collision = build_collision(pieces[piece_index], candidate, work_settings, work)?;
@@ -3852,7 +3979,9 @@ fn reconstruct_from_hints(
             hints,
             &mut state,
             reconstruction_seed,
-            61 + retry_ordinal,
+            // The deferred pass continues the first pass's ordinal stream, so
+            // its seeds never collide with the one-ordinal-per-piece prefix.
+            pieces.len() + retry_ordinal,
             piece_index,
             false,
             None,
@@ -3903,7 +4032,7 @@ fn reconstruct_insert_piece(
     work: &mut RunWork,
 ) -> Result<bool, String> {
     work.diagnostics.selected_piece_slots = work.diagnostics.selected_piece_slots.saturating_add(1);
-    if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
+    if work.diagnostics.selected_piece_slots > work.quotas.max_selected_piece_slots {
         return Err(work.cap("selected-piece slot budget exhausted"));
     }
     work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
@@ -4010,7 +4139,7 @@ fn reconstruct_insert_piece(
     for (orientation_ordinal, (rotation_deg, mirrored)) in orientations.into_iter().enumerate() {
         work.diagnostics.orientation_streams =
             work.diagnostics.orientation_streams.saturating_add(1);
-        if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
+        if work.diagnostics.orientation_streams > work.quotas.max_orientation_streams {
             return Err(work.cap("orientation-stream budget exhausted"));
         }
         let orientation = RelaxedPlacement {
@@ -4091,7 +4220,7 @@ fn reconstruct_insert_piece(
         }
         if let Some(index) = hazard_screen.as_deref_mut() {
             work.diagnostics.hazard_queries = work.diagnostics.hazard_queries.saturating_add(1);
-            if work.diagnostics.hazard_queries > MAX_HAZARD_QUERIES {
+            if work.diagnostics.hazard_queries > work.quotas.max_hazard_queries {
                 return Err(work.cap("hazard-query budget exhausted"));
             }
             match index.query_unplaced(piece_index, hazard_pose(&candidate)) {
@@ -4122,7 +4251,7 @@ fn reconstruct_insert_piece(
         recon.exact_rows += 1;
         work.diagnostics.exact_finalist_rows =
             work.diagnostics.exact_finalist_rows.saturating_add(1);
-        if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
+        if work.diagnostics.exact_finalist_rows > work.quotas.max_exact_finalist_rows {
             return Err(work.cap("exact-finalist row budget exhausted"));
         }
         let collision = build_collision(pieces[piece_index], &candidate, target_settings, work)?;
@@ -4415,7 +4544,7 @@ fn expand_selected_piece(
 ) -> Result<(), String> {
     selected_piece_ids.insert(pieces[piece_index].id.to_owned());
     work.diagnostics.selected_piece_slots = work.diagnostics.selected_piece_slots.saturating_add(1);
-    if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
+    if work.diagnostics.selected_piece_slots > work.quotas.max_selected_piece_slots {
         return Err(work.cap("selected-piece slot budget exhausted"));
     }
     work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
@@ -4442,7 +4571,7 @@ fn expand_selected_piece(
     for (orientation_ordinal, (rotation_deg, mirrored)) in orientations.into_iter().enumerate() {
         work.diagnostics.orientation_streams =
             work.diagnostics.orientation_streams.saturating_add(1);
-        if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
+        if work.diagnostics.orientation_streams > work.quotas.max_orientation_streams {
             return Err(work.cap("orientation-stream budget exhausted"));
         }
         let orientation = RelaxedPlacement {
@@ -4472,7 +4601,7 @@ fn expand_selected_piece(
         let mut ranked = Vec::new();
         for placement in proposals {
             work.diagnostics.hazard_queries = work.diagnostics.hazard_queries.saturating_add(1);
-            if work.diagnostics.hazard_queries > MAX_HAZARD_QUERIES {
+            if work.diagnostics.hazard_queries > work.quotas.max_hazard_queries {
                 return Err(work.cap("hazard-query budget exhausted"));
             }
             let pose = hazard_pose(&placement);
@@ -4498,7 +4627,7 @@ fn expand_selected_piece(
                 }
                 work.diagnostics.proxy_pressure_visits =
                     work.diagnostics.proxy_pressure_visits.saturating_add(1);
-                if work.diagnostics.proxy_pressure_visits > MAX_PROXY_PRESSURE_VISITS {
+                if work.diagnostics.proxy_pressure_visits > work.quotas.max_proxy_pressure_visits {
                     return Err(work.cap("proxy-pressure visit budget exhausted"));
                 }
                 proxy_loss += index
@@ -4523,7 +4652,7 @@ fn expand_selected_piece(
     for finalist in merged {
         work.diagnostics.exact_finalist_rows =
             work.diagnostics.exact_finalist_rows.saturating_add(1);
-        if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
+        if work.diagnostics.exact_finalist_rows > work.quotas.max_exact_finalist_rows {
             return Err(work.cap("exact-finalist row budget exhausted"));
         }
         if let Some(child) = exact_vacancy_child(
@@ -4737,7 +4866,7 @@ fn vacancy_positions(
         .diagnostics
         .returned_positions
         .saturating_add(placements.len());
-    if work.diagnostics.returned_positions > MAX_RETURNED_POSITIONS {
+    if work.diagnostics.returned_positions > work.quotas.max_returned_positions {
         return Err(work.cap("returned-position budget exhausted"));
     }
     Ok(placements)
@@ -4943,7 +5072,9 @@ fn build_collision(
         .diagnostics
         .experimental_collision_builds
         .saturating_add(1);
-    if work.diagnostics.experimental_collision_builds > MAX_EXPERIMENTAL_COLLISION_BUILDS {
+    if work.diagnostics.experimental_collision_builds
+        > work.quotas.max_experimental_collision_builds
+    {
         return Err(work.cap("experimental collision-build budget exhausted"));
     }
     let collision = piece
@@ -4966,7 +5097,9 @@ fn build_collision(
         .diagnostics
         .transformed_collision_vertices
         .saturating_add(collision.vertex_count());
-    if work.diagnostics.transformed_collision_vertices > MAX_TRANSFORMED_COLLISION_VERTICES {
+    if work.diagnostics.transformed_collision_vertices
+        > work.quotas.max_transformed_collision_vertices
+    {
         return Err(work.cap("transformed collision-vertex budget exhausted"));
     }
     Ok(collision)
@@ -4985,7 +5118,7 @@ fn exact_intersection_area(
         .diagnostics
         .clipper_input_vertices
         .saturating_add(input_vertices)
-        > MAX_CLIPPER_INPUT_VERTICES
+        > work.quotas.max_clipper_input_vertices
     {
         return Err(work.cap("Clipper input-vertex budget exhausted"));
     }
@@ -5018,6 +5151,25 @@ fn bounds_are_disjoint(first: &PolygonSet, second: &PolygonSet) -> Result<bool, 
         || grid_key(second.max_x) <= grid_key(first.min_x)
         || grid_key(first.max_y) <= grid_key(second.min_y)
         || grid_key(second.max_y) <= grid_key(first.min_y))
+}
+
+/// Anchor of last resort for the from-scratch constructor: every piece sits at
+/// its unrotated catalog pose at the strip origin. It carries no positional
+/// information - it only gives the construction lane a well-defined identity
+/// prior per piece when no parent layout was supplied.
+fn identity_relaxed_state(pieces: &[GeneralFastPiece<'_>], target_depth_mm: f64) -> RelaxedState {
+    RelaxedState {
+        placements: (0..pieces.len())
+            .map(|index| RelaxedPlacement {
+                input_index: index,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 0.0,
+                translate_y: 0.0,
+            })
+            .collect(),
+        strip_depth_mm: target_depth_mm,
+    }
 }
 
 fn relaxed_state_from_diagnostics_with_target(
@@ -6386,7 +6538,7 @@ mod tests {
             }],
             ..GeneralPersistentVacancyLayerDiagnostics::default()
         };
-        let mut work = RunWork::default();
+        let mut work = RunWork::new(2);
         charge_retained_memory(&[], 0, &mut diagnostics, &pending, &mut work).unwrap();
         assert_eq!(work.diagnostics.retained_peak_bytes, 0);
         assert!(work.diagnostics.selector_diagnostic_peak_bytes > 0);
@@ -6538,7 +6690,7 @@ mod tests {
         let entering = vec![state.clone()];
         let pending = GeneralPersistentVacancyLayerDiagnostics::default();
         let mut without_diagnostics = GeneralPersistentVacancyDiagnostics::default();
-        let mut without_work = RunWork::default();
+        let mut without_work = RunWork::new(2);
         preflight_live_memory(
             &entering,
             0,
@@ -6552,7 +6704,7 @@ mod tests {
         )
         .unwrap();
         let mut with_diagnostics = GeneralPersistentVacancyDiagnostics::default();
-        let mut with_work = RunWork::default();
+        let mut with_work = RunWork::new(2);
         preflight_live_memory(
             &entering,
             0,
@@ -6683,7 +6835,7 @@ mod tests {
     #[test]
     fn raw_live_pool_cap_failure_is_atomic() {
         let mut diagnostics = GeneralPersistentVacancyDiagnostics::default();
-        let mut work = RunWork::default();
+        let mut work = RunWork::new(2);
         let result = preflight_raw_live_memory(
             &Vec::new(),
             MAX_RETAINED_BYTES,
@@ -6713,81 +6865,248 @@ mod tests {
 
     #[test]
     fn mirrored_source_budget_funds_both_traversals() {
-        assert_eq!(
-            MAX_SOURCE_FEATURE_VISITS,
-            MAX_SELECTED_PIECE_SLOTS * 2 * MAX_SOURCE_FEATURES
-        );
+        for piece_count in [1usize, 2, 17, 20, 61, 400] {
+            let quotas = VacancyQuotas::for_piece_count(piece_count);
+            assert_eq!(
+                quotas.max_source_feature_visits,
+                quotas.max_selected_piece_slots * 2 * MAX_SOURCE_FEATURES,
+                "piece count {piece_count}"
+            );
+        }
     }
 
     #[test]
     fn aggregate_quota_formulas_match_the_reviewed_contract() {
-        // The ordinary 8-parent, 40-layer schedule funds 640 selected-piece
-        // slots; the archive revival lane of modes 7/8 adds at most 13
-        // expansions of 2 slots each, so every downstream ceiling carries the
-        // ordinary term plus the revival-lane term.
+        // Instance-independent rates. The ordinary 8-parent, 40-layer
+        // schedule funds 640 selected-piece slots; the archive revival lane of
+        // modes 7/8 adds at most 13 expansions of 2 slots each, so every
+        // downstream ceiling carries the ordinary term plus the revival-lane
+        // term. None of these terms scales with the piece count.
         assert_eq!(MAX_ARCHIVE_REVIVALS, 13);
         assert_eq!(ORDINARY_SELECTED_PIECE_SLOTS, 640);
         assert_eq!(ARCHIVE_SELECTED_PIECE_SLOTS, 26);
-        assert_eq!(SETTLE_SELECTED_PIECE_SLOTS, 3 * 61);
-        assert_eq!(RECONSTRUCTION_SELECTED_PIECE_SLOTS, 2 * 61);
         assert_eq!(POPULATION_SELECTED_PIECE_SLOTS, 640 + 26);
+        assert_eq!(SETTLE_SWEEPS, 3);
+        assert_eq!(SETTLE_PROBES_PER_ATTEMPT, 64);
+        assert_eq!(RECONSTRUCTION_PASSES_PER_PIECE, 2);
+        assert_eq!(RECONSTRUCTION_ROWS_PER_PIECE, 192);
         assert_eq!(LNS_SETTLE_SWEEPS, 73);
-        assert_eq!(LNS_SETTLE_SELECTED_PIECE_SLOTS, 73 * 61);
         assert_eq!(SEPARATION_RELOCATIONS_PER_ROUND, 12);
         assert_eq!(LNS_SCHEDULE_TOTAL, 536);
         assert_eq!(LNS_REINSERT_SLOTS, 536 + 24 * 12 + 2 * 3 * 536);
+        assert_eq!(LNS_REINSERT_SLOTS, 4_040);
+        assert_eq!(LNS_ROUNDS, 24);
         assert_eq!(CONSTRUCTION_RESTARTS, 8);
         assert_eq!(CONSTRUCTION_BEAM_WIDTH, 6);
-        assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 8 * 6 * 61);
-        assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 2_928);
         assert_eq!(CONSTRUCTION_ROWS_PER_PIECE, 320);
-        assert_eq!(
-            CONSTRUCTION_HINT_PRIORS * CONSTRUCTION_SELECTED_PIECE_SLOTS,
-            5_856
-        );
-        assert_eq!(CONSTRUCTION_VOID_SCAN_CAP, 8 * 61 * 6 * 4 + 8);
+        assert_eq!(CONSTRUCTION_HINT_PRIORS, 2);
+        assert_eq!(CONSTRUCTION_FINALISTS_PER_SLOT, 4);
+        assert_eq!(COMPACTION_ROUNDS, 3);
+        assert_eq!(GROUP_DROP_PROBES_PER_CUT, 64);
+        assert_eq!(SEPARATION_MOVES_PER_ROUND, 200);
+        assert_eq!(SEPARATION_PROBES_PER_MOVE, 96);
+        assert_eq!(SEPARATION_COLLISION_BUILDS, 24 * (4_040 / 2 + 200 * 96));
+        assert_eq!(PRELUDE_COLLISION_BUILD_PASSES, 3);
+        assert_eq!(VALIDATOR_PASSES_PER_AUDIT, 2);
+        assert_eq!(MAX_AUDITS, 41 + 64);
         assert!(CONSTRUCTION_RESTARTS <= MAX_COMPLETE_AUDITS);
         assert!(CONSTRUCTION_SHELF_ROWS < CONSTRUCTION_ROWS_PER_PIECE);
         assert!(CONSTRUCTION_BEAM_CHILDREN_PER_PARENT <= CONSTRUCTION_BEAM_WIDTH);
+
+        // Every aggregate ceiling is a per-piece (or per-pair) rate times the
+        // piece count of the instance under test. The reference arithmetic
+        // below is written out independently of
+        // `VacancyQuotas::for_piece_count` so this test verifies the formulas
+        // rather than restating the implementation.
+        for pieces in [1usize, 2, 3, 17, 20, 61, 137, 400] {
+            let quotas = VacancyQuotas::for_piece_count(pieces);
+            let population = 640 + 26;
+            let settle = 3 * pieces;
+            let reconstruction = 2 * pieces;
+            let lns_settle = 73 * pieces;
+            let construction = 8 * 6 * pieces;
+            let reinsert = 4_040;
+            let slots = population + settle + reconstruction + lns_settle + reinsert + construction;
+            let streams = slots * 12;
+            let positions = streams * 32;
+            let rows = population * 8
+                + settle * 64
+                + reconstruction * 192
+                + lns_settle * 64
+                + reinsert * 192
+                + construction * 320;
+            // Distinct pairs of a complete state, and the peers one candidate
+            // row is exact-checked against.
+            let complete_pairs = pieces * (pieces - 1) / 2;
+            let peers = pieces - 1;
+            let group_drop_pairs = 3 * pieces * 64 * pieces;
+            let separation_pairs = 24 * 200 * 96 * pieces;
+            let experimental_builds = 3 * pieces
+                + streams
+                + rows
+                + reconstruction
+                + reinsert
+                + 2 * construction
+                + 24 * (4_040 / 2 + 200 * 96);
+            let experimental_pairs =
+                complete_pairs + rows * peers + group_drop_pairs + separation_pairs;
+            let validator_builds_per_audit = 2 * pieces;
+            let validator_pairs_per_audit = 2 * complete_pairs;
+
+            assert_eq!(quotas.piece_count, pieces, "piece count {pieces}");
+            assert_eq!(quotas.group_drop_cuts, pieces, "piece count {pieces}");
+            assert_eq!(
+                quotas.settle_selected_piece_slots, settle,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.reconstruction_selected_piece_slots, reconstruction,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.lns_settle_selected_piece_slots, lns_settle,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.construction_selected_piece_slots, construction,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.construction_void_scan_cap,
+                construction * 4 + 8,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.bridge_void_scan_cap,
+                24 * (pieces + 1),
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.group_drop_pair_visits, group_drop_pairs,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.separation_pair_visits, separation_pairs,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.max_selected_piece_slots, slots,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.max_orientation_streams, streams,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.max_source_feature_visits,
+                slots * 2 * 512,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.max_position_source_attempts,
+                streams * 529,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.max_returned_positions, positions,
+                "piece count {pieces}"
+            );
+            assert_eq!(quotas.max_hazard_queries, positions, "piece count {pieces}");
+            assert_eq!(
+                quotas.max_proxy_pressure_visits,
+                positions * pieces,
+                "piece count {pieces}"
+            );
+            assert_eq!(quotas.max_exact_finalist_rows, rows, "piece count {pieces}");
+            assert_eq!(
+                quotas.max_experimental_collision_builds, experimental_builds,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.max_experimental_pair_visits, experimental_pairs,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.validator_collision_builds_per_audit, validator_builds_per_audit,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.validator_pair_visits_per_audit, validator_pairs_per_audit,
+                "piece count {pieces}"
+            );
+            // The validator ceilings fund exactly MAX_AUDITS publications on
+            // any instance.
+            assert_eq!(
+                quotas.max_validator_collision_builds,
+                validator_builds_per_audit * 105,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.max_validator_pair_visits,
+                validator_pairs_per_audit * 105,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.max_transformed_collision_vertices,
+                (experimental_builds + validator_builds_per_audit * 105) * 512,
+                "piece count {pieces}"
+            );
+            assert_eq!(
+                quotas.max_clipper_input_vertices,
+                2 * 512 * (experimental_pairs + validator_pairs_per_audit * 105),
+                "piece count {pieces}"
+            );
+        }
+
+        // Historical Mixed-61 ceilings. These are the exact literals the
+        // reviewed contract was certified against, before the machinery was
+        // generalized to any instance; they are asserted here - and nowhere in
+        // engine code - to prove the formulas above reproduce the frozen
+        // 61-piece budgets bit for bit.
+        let mixed61 = VacancyQuotas::for_piece_count(61);
+        assert_eq!(mixed61.settle_selected_piece_slots, 183);
+        assert_eq!(mixed61.reconstruction_selected_piece_slots, 122);
+        assert_eq!(mixed61.lns_settle_selected_piece_slots, 73 * 61);
+        assert_eq!(mixed61.construction_selected_piece_slots, 2_928);
         assert_eq!(
-            MAX_SELECTED_PIECE_SLOTS,
+            CONSTRUCTION_HINT_PRIORS * mixed61.construction_selected_piece_slots,
+            5_856
+        );
+        assert_eq!(mixed61.construction_void_scan_cap, 8 * 61 * 6 * 4 + 8);
+        assert_eq!(mixed61.group_drop_cuts, 61);
+        assert_eq!(mixed61.group_drop_pair_visits, 3 * 61 * 64 * 61);
+        assert_eq!(mixed61.bridge_void_scan_cap, 24 * 62);
+        assert_eq!(mixed61.separation_pair_visits, 24 * 200 * 96 * 61);
+        assert_eq!(
+            mixed61.max_selected_piece_slots,
             640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928
         );
         assert_eq!(
-            MAX_ORIENTATION_STREAMS,
+            mixed61.max_orientation_streams,
             (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12
         );
         assert_eq!(
-            MAX_POSITION_SOURCE_ATTEMPTS,
+            mixed61.max_position_source_attempts,
             (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 529
         );
         assert_eq!(
-            MAX_RETURNED_POSITIONS,
+            mixed61.max_returned_positions,
             (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 32
         );
         assert_eq!(
-            MAX_HAZARD_QUERIES,
+            mixed61.max_hazard_queries,
             (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 32
         );
         assert_eq!(
-            MAX_PROXY_PRESSURE_VISITS,
+            mixed61.max_proxy_pressure_visits,
             (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 32 * 61
         );
         assert_eq!(
-            MAX_EXACT_FINALIST_ROWS,
+            mixed61.max_exact_finalist_rows,
             (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 2_928 * 320
         );
-        assert_eq!(COMPACTION_ROUNDS, 3);
-        assert_eq!(GROUP_DROP_CUTS, 61);
-        assert_eq!(GROUP_DROP_PROBES_PER_CUT, 64);
-        assert_eq!(GROUP_DROP_PAIR_VISITS, 3 * 61 * 64 * 61);
-        assert_eq!(SEPARATION_MOVES_PER_ROUND, 200);
-        assert_eq!(BRIDGE_VOID_SCAN_CAP, 24 * 62);
-        assert_eq!(SEPARATION_PROBES_PER_MOVE, 96);
-        assert_eq!(SEPARATION_PAIR_VISITS, 24 * 200 * 96 * 61);
-        assert_eq!(SEPARATION_COLLISION_BUILDS, 24 * (4_040 / 2 + 200 * 96));
         assert_eq!(
-            MAX_EXPERIMENTAL_COLLISION_BUILDS,
+            mixed61.max_experimental_collision_builds,
             3 * 61
                 + (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12
                 + ((640 + 26) * 8
@@ -6802,7 +7121,7 @@ mod tests {
                 + 24 * (4_040 / 2 + 200 * 96)
         );
         assert_eq!(
-            MAX_EXPERIMENTAL_PAIR_VISITS,
+            mixed61.max_experimental_pair_visits,
             1_830
                 + ((640 + 26) * 8
                     + 183 * 64
@@ -6814,15 +7133,17 @@ mod tests {
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
         );
-        assert_eq!(MAX_VALIDATOR_COLLISION_BUILDS, 105 * 122);
-        assert_eq!(MAX_VALIDATOR_PAIR_VISITS, 105 * 3_660);
+        assert_eq!(mixed61.validator_collision_builds_per_audit, 122);
+        assert_eq!(mixed61.validator_pair_visits_per_audit, 3_660);
+        assert_eq!(mixed61.max_validator_collision_builds, 12_810);
+        assert_eq!(mixed61.max_validator_pair_visits, 384_300);
         assert_eq!(
-            MAX_TRANSFORMED_COLLISION_VERTICES,
-            (MAX_EXPERIMENTAL_COLLISION_BUILDS + MAX_VALIDATOR_COLLISION_BUILDS) * 512
+            mixed61.max_transformed_collision_vertices,
+            (mixed61.max_experimental_collision_builds + 12_810) * 512
         );
         assert_eq!(
-            MAX_CLIPPER_INPUT_VERTICES,
-            2 * 512 * (MAX_EXPERIMENTAL_PAIR_VISITS + MAX_VALIDATOR_PAIR_VISITS)
+            mixed61.max_clipper_input_vertices,
+            2 * 512 * (mixed61.max_experimental_pair_visits + 384_300)
         );
     }
 
@@ -7254,7 +7575,7 @@ mod tests {
             strip_depth_mm: 100.0,
         };
         let mut diagnostics = GeneralPersistentVacancyDiagnostics::default();
-        let mut work = RunWork::default();
+        let mut work = RunWork::new(2);
         let settled =
             settle_baseline(&pieces, fast, baseline, &mut diagnostics, &mut work).unwrap();
         let settle = diagnostics.settle.expect("settle diagnostics recorded");
