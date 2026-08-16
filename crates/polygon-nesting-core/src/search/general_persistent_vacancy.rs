@@ -1428,9 +1428,11 @@ fn lift_resettle_reinsert(
     // The lifecycle works at full-sheet settings so lifted pieces can park
     // high transiently inside a round (the essential non-monotone freedom);
     // the requested target only gates the downstream deactivation and the
-    // dual publication audit. The explicit target still parameterizes the
-    // caller's descent schedule.
-    let _ = target_depth_mm;
+    // dual publication audit. The target's grid value additionally salts the
+    // walk seed, so a caller can restart a stalled parent onto a distinct
+    // deterministic walk by micro-varying the target - a replayable
+    // multi-start without any hidden state.
+    let target_salt = grid_key(target_depth_mm) as u64;
     let work_settings = fast_settings;
     let mut state = VacancyState {
         collisions: baseline
@@ -1512,7 +1514,7 @@ fn lift_resettle_reinsert(
         JaguaHazardCatalog::new(pieces, work_settings)
             .map_err(|error| format!("lns hazard catalog: {error}"))?,
     );
-    let lns_seed = parent_seed_key(&state, pieces);
+    let lns_seed = parent_seed_key(&state, pieces) ^ target_salt;
     settle_sweep(
         &mut state,
         pieces,
@@ -1538,6 +1540,11 @@ fn lift_resettle_reinsert(
     ];
     let mut best_state = state.clone();
     let mut best_key = depth_key(&state);
+    // Tabu memory: wander endpoints whose semantic fingerprint was already
+    // visited in this walk are reverted, breaking the deterministic limit
+    // cycles that otherwise trap the record-to-record traversal.
+    let mut visited = BTreeSet::new();
+    visited.insert(state_fingerprint(&state, pieces));
     for (round, neighborhood) in LNS_NEIGHBORHOOD_SCHEDULE.into_iter().enumerate() {
         let snapshot = state.clone();
         let entry_key = depth_key(&state);
@@ -1713,9 +1720,10 @@ fn lift_resettle_reinsert(
         let within_tolerance = endpoint_key.0 <= entry_key.0.saturating_add(frontier_tolerance)
             && endpoint_key.1 <= entry_key.1.saturating_add(void_tolerance)
             && endpoint_key.2 <= entry_key.2.saturating_add(tolerance);
-        if endpoint_key < entry_key {
+        let fresh = visited.insert(state_fingerprint(&state, pieces));
+        if endpoint_key < entry_key && fresh {
             lns.rounds_accepted += 1;
-        } else if within_tolerance {
+        } else if within_tolerance && fresh {
             lns.rounds_wandered = lns.rounds_wandered.saturating_add(1);
         } else {
             state = snapshot;
