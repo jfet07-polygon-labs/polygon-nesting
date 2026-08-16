@@ -63,7 +63,7 @@ const CONSTRUCTION_RESTARTS: usize = 4;
 const CONSTRUCTION_BEAM_WIDTH: usize = 6;
 const CONSTRUCTION_HINT_STATIONS: usize = 3;
 const CONSTRUCTION_HINT_PRIORS: usize = 2;
-const CONSTRUCTION_ROWS_PER_PIECE: usize = 96;
+const CONSTRUCTION_ROWS_PER_PIECE: usize = 160;
 const CONSTRUCTION_SHELF_ROWS: usize = 24;
 const CONSTRUCTION_FINALISTS_PER_SLOT: usize = 4;
 const CONSTRUCTION_BEAM_CHILDREN_PER_PARENT: usize = 2;
@@ -3437,45 +3437,137 @@ fn construct_candidate_poses(
             continue;
         }
         rows += 1;
-        construction.exact_rows = construction.exact_rows.saturating_add(1);
-        work.diagnostics.exact_finalist_rows =
-            work.diagnostics.exact_finalist_rows.saturating_add(1);
-        if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
-            return Err(work.cap("exact-finalist row budget exhausted"));
-        }
-        let collision = build_collision(pieces[piece_index], &candidate, work_settings, work)?;
-        if !collision.fits_rect(
+        let Some(collision) = construction_confirm_row(
+            pieces,
+            work_settings,
+            parent,
+            piece_index,
+            &candidate,
             inset,
-            inset,
-            work_settings.sheet_short_axis_mm - inset,
-            work_settings.sheet_long_axis_mm - inset,
-        ) {
+            construction,
+            work,
+        )?
+        else {
             continue;
-        }
-        let mut overlapping = false;
-        for fixed_index in 0..pieces.len() {
-            if !parent.active[fixed_index] {
-                continue;
+        };
+        // Exact drop-settle: descend the confirmed pose along the REAL
+        // polygons with a geometric ladder plus two bisection refinements,
+        // stopping at the first contact. This is the sub-bbox interlock
+        // generator: the skyline proposes at the box top, the drop lets the
+        // exact gate carry the piece past it into any pocket the true
+        // profiles admit, and every subsequent piece builds on the settled
+        // profile.
+        let mut settled_pose = candidate.clone();
+        let mut settled_collision = collision;
+        let mut last_valid_drop = 0.0f64;
+        let mut first_invalid_drop = None;
+        for delta in CONSTRUCTION_DROP_LADDER_MM {
+            let mut probe = candidate.clone();
+            probe.translate_y = snap_mm(candidate.translate_y - delta);
+            rows += 1;
+            match construction_confirm_row(
+                pieces,
+                work_settings,
+                parent,
+                piece_index,
+                &probe,
+                inset,
+                construction,
+                work,
+            )? {
+                Some(dropped) => {
+                    settled_pose = probe;
+                    settled_collision = dropped;
+                    last_valid_drop = delta;
+                }
+                None => {
+                    first_invalid_drop = Some(delta);
+                    break;
+                }
             }
-            work.charge_experimental_pair()?;
-            let fixed = parent.collisions[fixed_index]
-                .as_ref()
-                .ok_or_else(|| format!("active piece {fixed_index} has no collision"))?;
-            if exact_intersection_area(&collision, fixed, work)? > 0.0 {
-                overlapping = true;
-                break;
-            }
         }
-        if overlapping {
-            continue;
+        if let Some(invalid) = first_invalid_drop {
+            let mut low = last_valid_drop;
+            let mut high = invalid;
+            for _ in 0..2 {
+                let mid = (low + high) * 0.5;
+                let mut probe = candidate.clone();
+                probe.translate_y = snap_mm(candidate.translate_y - mid);
+                rows += 1;
+                match construction_confirm_row(
+                    pieces,
+                    work_settings,
+                    parent,
+                    piece_index,
+                    &probe,
+                    inset,
+                    construction,
+                    work,
+                )? {
+                    Some(dropped) => {
+                        settled_pose = probe;
+                        settled_collision = dropped;
+                        low = mid;
+                    }
+                    None => {
+                        high = mid;
+                    }
+                }
+            }
         }
         if is_shelf {
             construction.shelf_finalists = construction.shelf_finalists.saturating_add(1);
         }
-        finalists.push((candidate, Arc::new(collision), zero_prior));
+        finalists.push((settled_pose, Arc::new(settled_collision), zero_prior));
     }
     Ok(finalists)
 }
+
+/// One exact confirmation row: charges the finalist-row budget, builds the
+/// pose collision, and checks full-sheet containment plus zero exact
+/// overlap against the parent's active pieces. Returns the collision when
+/// the pose is exact-valid.
+#[allow(clippy::too_many_arguments)]
+fn construction_confirm_row(
+    pieces: &[GeneralFastPiece<'_>],
+    work_settings: GeneralFastSettings,
+    parent: &VacancyState,
+    piece_index: usize,
+    candidate: &RelaxedPlacement,
+    inset: f64,
+    construction: &mut GeneralPersistentVacancyConstructionDiagnostics,
+    work: &mut RunWork,
+) -> Result<Option<PolygonSet>, String> {
+    construction.exact_rows = construction.exact_rows.saturating_add(1);
+    work.diagnostics.exact_finalist_rows = work.diagnostics.exact_finalist_rows.saturating_add(1);
+    if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
+        return Err(work.cap("exact-finalist row budget exhausted"));
+    }
+    let collision = build_collision(pieces[piece_index], candidate, work_settings, work)?;
+    if !collision.fits_rect(
+        inset,
+        inset,
+        work_settings.sheet_short_axis_mm - inset,
+        work_settings.sheet_long_axis_mm - inset,
+    ) {
+        return Ok(None);
+    }
+    for fixed_index in 0..pieces.len() {
+        if !parent.active[fixed_index] {
+            continue;
+        }
+        work.charge_experimental_pair()?;
+        let fixed = parent.collisions[fixed_index]
+            .as_ref()
+            .ok_or_else(|| format!("active piece {fixed_index} has no collision"))?;
+        if exact_intersection_area(&collision, fixed, work)? > 0.0 {
+            return Ok(None);
+        }
+    }
+    Ok(Some(collision))
+}
+
+const CONSTRUCTION_DROP_LADDER_MM: [f64; 6] = [0.4, 0.8, 1.6, 3.2, 6.4, 12.8];
 
 const CONSTRUCTION_PROBE_RADII_MM: [f64; 12] = [
     0.128, 0.256, 0.384, 0.512, 0.768, 1.024, 1.536, 2.048, 3.072, 4.096, 6.144, 8.192,
@@ -6450,7 +6542,7 @@ mod tests {
         assert_eq!(CONSTRUCTION_BEAM_WIDTH, 6);
         assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 4 * 6 * 61);
         assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 1_464);
-        assert_eq!(CONSTRUCTION_ROWS_PER_PIECE, 96);
+        assert_eq!(CONSTRUCTION_ROWS_PER_PIECE, 160);
         assert_eq!(
             CONSTRUCTION_HINT_PRIORS * CONSTRUCTION_SELECTED_PIECE_SLOTS,
             2_928
@@ -6485,7 +6577,7 @@ mod tests {
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 1_464 * 96
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 1_464 * 160
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -6499,7 +6591,12 @@ mod tests {
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
             3 * 61
                 + (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 1_464 * 96)
+                + ((640 + 26) * 8
+                    + 183 * 64
+                    + 122 * 192
+                    + 73 * 61 * 64
+                    + 4_040 * 192
+                    + 1_464 * 160)
                 + 122
                 + 4_040
                 + 2 * 1_464
@@ -6508,7 +6605,12 @@ mod tests {
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
             1_830
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 1_464 * 96)
+                + ((640 + 26) * 8
+                    + 183 * 64
+                    + 122 * 192
+                    + 73 * 61 * 64
+                    + 4_040 * 192
+                    + 1_464 * 160)
                     * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
