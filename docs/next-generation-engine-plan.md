@@ -383,3 +383,17 @@ cargo run --release -p polygon-nesting-core --example general_fast_benchmark -- 
 ```
 
 The JSON report includes the request hash, engine commit, internal profile, deterministic seed state, worker count, budget mode, hardware and compiler identity, instance descriptor, topology counts, exact-evaluation quota, every placement, independent placed-material score, used strip depth, strip utilization, and min/median/interquartile/max elapsed time. Repeated results must be identical. The CI-protected fixture fails unless all pieces are placed, the best-known depth is preserved or improved, and the topology-preserving constructor beats the same constructor run over convex-hull geometry. Peak resident memory remains an external process measurement (for example `/usr/bin/time -l` on macOS) until the delivery boundary owns a portable sampler.
+
+The long-horizon basin harvest closed the remaining budget question on the
+native portfolio. Five further pinned-parent descent chains (mode-11 settle
+prelude, then salted mode-17 vacancy-transport walks, eight-stall
+termination) ran against the strongest committed native basins: seed13
+178.373 to 177.937 (yield 0.436 mm), seed2 180.207 to 179.756 (0.451 mm),
+seed15 180.605 to 180.306 (0.299 mm), seed3 180.640 to 180.291 (0.349 mm),
+seed12 182.095 to 181.733 (0.362 mm). With seed11 (177.205 to 176.591,
+0.614 mm) that is six independent basins whose machinery yield is bounded in
+0.299-0.614 mm and does not scale with additional salted budget; no native
+basin reaches 176.5 mm (evidence and every chain artifact under
+docs/experiments/persistent-vacancy-descent/basin-harvest/). The harvest
+hypothesis is closed: the program's next increment must be a structurally
+different constructor, and that constructor is now in design.

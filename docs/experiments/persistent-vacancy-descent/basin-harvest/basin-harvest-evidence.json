@@ -1,0 +1,56 @@
+{
+  "experiment": "long-horizon basin harvest across the committed native seed portfolio",
+  "question": "does the accumulated descent machinery (mode-11 settle prelude + mode-17 vacancy-transport walks, salted target ladder) pull ANY native x86_64 basin materially below the seed11 record of 176.591 mm, and how does basin yield scale?",
+  "method": "for each portfolio basin: extract boundaryProjectionTreatment.finalPlacements into a pinned parent fixture; chain mode 11 until stall, then mode 17 walks with target = best+0.8+salt*0.001; accept only fresh fingerprints with strictly lower independent depth; stop after 8 consecutive stalls or 30 hops. Driver mirrors docs/experiments/persistent-vacancy-descent/run-descent.py semantics (fail-closed on crash).",
+  "engineCommit": "6b3990f8773466cc713ff85d877305f7977ca244",
+  "toolchain": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "settingsArgs": "1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 <mode> <fixture> <target>",
+  "basins": [
+    {
+      "seed": "seed11",
+      "startDepthMm": 177.205,
+      "bestDepthMm": 176.591,
+      "yieldMm": 0.614,
+      "artifacts": "docs/experiments/persistent-vacancy-descent/virgin-basin/",
+      "note": "measured in the prior virgin-basin experiment (target ladder 178.000+salt)"
+    },
+    {
+      "seed": "seed13",
+      "startDepthMm": 178.373,
+      "bestDepthMm": 177.937,
+      "yieldMm": 0.436,
+      "artifacts": "docs/experiments/persistent-vacancy-descent/basin-harvest/seed13/"
+    },
+    {
+      "seed": "seed2",
+      "startDepthMm": 180.207,
+      "bestDepthMm": 179.756,
+      "yieldMm": 0.451,
+      "artifacts": "docs/experiments/persistent-vacancy-descent/basin-harvest/seed2/"
+    },
+    {
+      "seed": "seed15",
+      "startDepthMm": 180.605,
+      "bestDepthMm": 180.306,
+      "yieldMm": 0.299,
+      "artifacts": "docs/experiments/persistent-vacancy-descent/basin-harvest/seed15/"
+    },
+    {
+      "seed": "seed3",
+      "startDepthMm": 180.64,
+      "bestDepthMm": 180.291,
+      "yieldMm": 0.349,
+      "artifacts": "docs/experiments/persistent-vacancy-descent/basin-harvest/seed3/"
+    },
+    {
+      "seed": "seed12",
+      "startDepthMm": 182.095,
+      "bestDepthMm": 181.733,
+      "yieldMm": 0.362,
+      "artifacts": "docs/experiments/persistent-vacancy-descent/basin-harvest/seed12/"
+    }
+  ],
+  "conclusion": "Six independent native basins measured (incl. seed11): per-basin yield is bounded in 0.299-0.614 mm and does not scale with additional salted budget; no native basin reaches 176.5 mm. Combined with the mode-18 certificate and the well-walling result, this closes the long-horizon-harvest hypothesis: better complete layouts require a structurally different CONSTRUCTOR, not more descent budget on pipeline basins.",
+  "engineWorktreeDirtyAtRun": false,
+  "worktreeNote": "all benchmark runs executed against the release binary built at engineCommit with a clean worktree; the dirty flag observed at evidence-assembly time reflects only the untracked evidence files being added by this commit"
+}

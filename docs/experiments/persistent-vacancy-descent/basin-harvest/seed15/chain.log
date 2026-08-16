@@ -1,0 +1,12 @@
+hop 0: m11 t=181.405 -> 180.307 best=180.605 fresh=True
+hop 1: m11 t=181.107 -> 180.307 best=180.307 fresh=False
+hop 1: m17 t=181.108 -> 180.306 best=180.307 fresh=True
+hop 2: m11 t=181.107 -> 180.306 best=180.306 fresh=True
+hop 2: m17 t=181.108 -> 180.306 best=180.306 fresh=True
+hop 2: m17 t=181.109 -> 180.306 best=180.306 fresh=True
+hop 2: m17 t=181.110 -> 180.306 best=180.306 fresh=True
+hop 2: m17 t=181.111 -> 180.306 best=180.306 fresh=True
+hop 2: m17 t=181.112 -> 180.306 best=180.306 fresh=True
+hop 2: m17 t=181.113 -> 180.306 best=180.306 fresh=True
+hop 2: m17 t=181.114 -> 180.306 best=180.306 fresh=True
+seed15 START: 180.605 BEST: 180.306 YIELD: 0.299
