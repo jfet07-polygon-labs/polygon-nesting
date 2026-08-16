@@ -65,7 +65,8 @@ const GROUP_DROP_PAIR_VISITS: usize =
 const LNS_ROUNDS: usize = 8;
 const LNS_NEIGHBORHOOD_SCHEDULE: [usize; LNS_ROUNDS] = [4, 6, 8, 10, 12, 16, 20, 24];
 const LNS_SETTLE_SWEEPS: usize = 2 * LNS_ROUNDS + 1;
-const LNS_REINSERT_SLOTS: usize = 4 + 6 + 8 + 10 + 12 + 16 + 20 + 24;
+const LNS_REINSERT_SLOTS: usize =
+    4 + 6 + 8 + 10 + 12 + 16 + 20 + 24 + LNS_ROUNDS * SEPARATION_RELOCATIONS_PER_ROUND;
 // Mode 16 replaces greedy reinsertion with overlap-mediated separation:
 // removed pieces return at their old poses (overlaps permitted), then a
 // bounded deterministic descent moves one overlapping soft piece at a time
@@ -74,6 +75,7 @@ const LNS_REINSERT_SLOTS: usize = 4 + 6 + 8 + 10 + 12 + 16 + 20 + 24;
 // move budget is exhausted. Only a zero-overlap endpoint may compete for
 // acceptance.
 const SEPARATION_MOVES_PER_ROUND: usize = 200;
+const SEPARATION_RELOCATIONS_PER_ROUND: usize = 12;
 const SEPARATION_PROBES_PER_MOVE: usize = 96;
 const SEPARATION_PAIR_VISITS: usize =
     LNS_ROUNDS * SEPARATION_MOVES_PER_ROUND * SEPARATION_PROBES_PER_MOVE * 61;
@@ -1487,6 +1489,7 @@ fn lift_resettle_reinsert(
         separation_recruits: 0,
         separation_pair_moves: 0,
         separation_weight_bumps: 0,
+        separation_relocations: 0,
         frontier_before_grid: settle.frontier_before_grid,
         frontier_after_grid: 0,
     };
@@ -1610,6 +1613,10 @@ fn lift_resettle_reinsert(
                 &hints,
                 &mut state,
                 &removed,
+                &hazard_catalog,
+                round,
+                lns_seed,
+                &mut recon,
                 &mut lns,
                 work,
             )?;
@@ -1715,6 +1722,10 @@ fn overlap_mediated_reinsert(
     hints: &RelaxedState,
     state: &mut VacancyState,
     removed: &[usize],
+    hazard_catalog: &Arc<JaguaHazardCatalog>,
+    round: usize,
+    lns_seed: u64,
+    recon: &mut GeneralPersistentVacancyReconstructionDiagnostics,
     lns: &mut GeneralPersistentVacancyLnsDiagnostics,
     work: &mut RunWork,
 ) -> Result<bool, String> {
@@ -1776,6 +1787,7 @@ fn overlap_mediated_reinsert(
     };
     let mut soft = removed.to_vec();
     soft.sort_by(|first, second| pieces[*first].id.cmp(pieces[*second].id));
+    let mut relocations = 0usize;
     for _move in 0..SEPARATION_MOVES_PER_ROUND {
         let pair_moves_before = lns.separation_pair_moves;
         // Pick the soft piece with the largest current overlap, ties by ID.
@@ -2024,6 +2036,47 @@ fn overlap_mediated_reinsert(
                         }
                     });
                 }
+            }
+            // Global relocation escape: deactivate the stuck piece and
+            // reinsert it anywhere through the depth-ranked, hazard-screened
+            // generator. A successful relocation zeroes that piece's overlap
+            // without touching any other pair, so total raw overlap strictly
+            // decreases and the descent resumes with global progress.
+            if relocations < SEPARATION_RELOCATIONS_PER_ROUND {
+                let saved_placement = state.placements[index].clone();
+                let saved_collision = state.collisions[index].clone();
+                state.active[index] = false;
+                state.collisions[index] = None;
+                let mut screen = JaguaHazardIndex::from_catalog_active(
+                    pieces,
+                    settings,
+                    settings.sheet_long_axis_mm,
+                    &state.placements.iter().map(hazard_pose).collect::<Vec<_>>(),
+                    &state.active,
+                    hazard_catalog,
+                )
+                .map_err(|error| format!("separation relocation index: {error}"))?;
+                let placed = reconstruct_insert_piece(
+                    pieces,
+                    settings,
+                    hints,
+                    state,
+                    lns_seed,
+                    400 + round * SEPARATION_RELOCATIONS_PER_ROUND + relocations,
+                    index,
+                    true,
+                    Some(&mut screen),
+                    recon,
+                    work,
+                )?;
+                relocations += 1;
+                if placed {
+                    lns.separation_relocations = lns.separation_relocations.saturating_add(1);
+                    continue;
+                }
+                state.placements[index] = saved_placement;
+                state.collisions[index] = saved_collision;
+                state.active[index] = true;
             }
             let Some((_, recruit)) = worst_anchor else {
                 // Weight escalation: no anchor to recruit; increment the
@@ -5175,34 +5228,35 @@ mod tests {
         assert_eq!(POPULATION_SELECTED_PIECE_SLOTS, 640 + 26);
         assert_eq!(LNS_SETTLE_SWEEPS, 17);
         assert_eq!(LNS_SETTLE_SELECTED_PIECE_SLOTS, 17 * 61);
-        assert_eq!(LNS_REINSERT_SLOTS, 100);
+        assert_eq!(SEPARATION_RELOCATIONS_PER_ROUND, 12);
+        assert_eq!(LNS_REINSERT_SLOTS, 100 + 8 * 12);
         assert_eq!(
             MAX_SELECTED_PIECE_SLOTS,
-            640 + 26 + 183 + 122 + 17 * 61 + 100
+            640 + 26 + 183 + 122 + 17 * 61 + 196
         );
         assert_eq!(
             MAX_ORIENTATION_STREAMS,
-            (640 + 26 + 183 + 122 + 17 * 61 + 100) * 12
+            (640 + 26 + 183 + 122 + 17 * 61 + 196) * 12
         );
         assert_eq!(
             MAX_POSITION_SOURCE_ATTEMPTS,
-            (640 + 26 + 183 + 122 + 17 * 61 + 100) * 12 * 529
+            (640 + 26 + 183 + 122 + 17 * 61 + 196) * 12 * 529
         );
         assert_eq!(
             MAX_RETURNED_POSITIONS,
-            (640 + 26 + 183 + 122 + 17 * 61 + 100) * 12 * 32
+            (640 + 26 + 183 + 122 + 17 * 61 + 196) * 12 * 32
         );
         assert_eq!(
             MAX_HAZARD_QUERIES,
-            (640 + 26 + 183 + 122 + 17 * 61 + 100) * 12 * 32
+            (640 + 26 + 183 + 122 + 17 * 61 + 196) * 12 * 32
         );
         assert_eq!(
             MAX_PROXY_PRESSURE_VISITS,
-            (640 + 26 + 183 + 122 + 17 * 61 + 100) * 12 * 32 * 61
+            (640 + 26 + 183 + 122 + 17 * 61 + 196) * 12 * 32 * 61
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 100 * 192
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 196 * 192
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -5211,20 +5265,20 @@ mod tests {
         assert_eq!(SEPARATION_MOVES_PER_ROUND, 200);
         assert_eq!(SEPARATION_PROBES_PER_MOVE, 96);
         assert_eq!(SEPARATION_PAIR_VISITS, 8 * 200 * 96 * 61);
-        assert_eq!(SEPARATION_COLLISION_BUILDS, 8 * (100 / 2 + 200 * 96));
+        assert_eq!(SEPARATION_COLLISION_BUILDS, 8 * (196 / 2 + 200 * 96));
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
             3 * 61
-                + (640 + 26 + 183 + 122 + 17 * 61 + 100) * 12
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 100 * 192)
+                + (640 + 26 + 183 + 122 + 17 * 61 + 196) * 12
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 196 * 192)
                 + 122
                 + 100
-                + 8 * (100 / 2 + 200 * 96)
+                + 8 * (196 / 2 + 200 * 96)
         );
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
             1_830
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 100 * 192) * 60
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 17 * 61 * 64 + 196 * 192) * 60
                 + 3 * 61 * 64 * 61
                 + 8 * 200 * 96 * 61
         );
