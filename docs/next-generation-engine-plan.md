@@ -688,3 +688,12 @@ predicted. The alternation record stands at 180.384 mm from a 2.6-second
 separator budget (artifacts and the native control twin under
 constructed-basin/alternation/); the immediate scaling axes are the
 separator's relaxed budget and seed, both untouched.
+
+The hybrid's fixpoint distribution is tight and sub-180. Six alternations
+from banked constructed basins land at 179.756 (twice, from different
+starts and with structurally different layouts at the same grid depth),
+180.280, 180.387, 180.496, and 182.465 - the alternation record moves to
+179.756 mm, 2.7 mm above the native pipeline floor, and the attractor
+band is barely a millimetre wide (portfolio artifacts under
+alternation/portfolio/). Two distinct sub-180 layouts now seed the next
+round: a separator-seed sweep from both.
