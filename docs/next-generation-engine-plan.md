@@ -455,3 +455,17 @@ six-slot beam basin (270.288 mm) descends past the four-slot endpoint
 (202.204 mm and falling at hop six) - constructor quality propagates
 through the descent, which is the causal signature the program needs: the
 way down runs through better construction, not more post-hoc budget.
+
+The insertion-settle family is compounding. Generalizing the vertical drop
+into a full bottom-left push (drop to contact, slide left to contact, drop
+again - every attempt an exact charged row starting from an already-valid
+pose) moved the raw constructor from 229.121 to 203.208 mm, and its basin
+descends to 191.572 mm - the constructed line has closed the gap to the
+pipeline-native floor from 35 mm to under 15 in four measured increments
+(211.734, 202.204, 201.626, 191.572). The variant discipline that got it
+there is now explicit in the evidence: an insertion-time push pays exactly
+when it starts from a confirmed-valid pose (drop-settle, bottom-left), and
+costs exactly when it spends ranked rows on speculative poses (negative
+rungs, extra stations, deep rungs, lookahead in every form, left-compact
+key). The remaining loss to the 168.x family is now split between residual
+constructor quality and the descent family's known operator locks.

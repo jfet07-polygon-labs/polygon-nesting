@@ -60,6 +60,13 @@
       "descentEndpointMm": 201.626,
       "yieldMm": 27.495,
       "artifacts": "drop-settle/"
+    },
+    {
+      "constructor": "bottom-left settle (commit bb44704)",
+      "constructorDepthMm": 203.208,
+      "descentEndpointMm": 191.572,
+      "yieldMm": 11.636,
+      "artifacts": "bottom-left/"
     }
   ],
   "rejectedVariants": [
@@ -93,6 +100,19 @@
     {
       "variant": "modes 19/17/11 remodel on 211.734",
       "result": "zero acceptances over 12 salted stalls: constructed basins are operator-locked"
+    },
+    {
+      "variant": "left-compact child key term",
+      "publishedDepthMm": 216.105,
+      "note": "overrides productive identity ties"
+    },
+    {
+      "variant": "8-salt portfolio on pre-BL constructor",
+      "spreadMm": [
+        229.121,
+        234.159
+      ],
+      "note": "base salt best; superseded by BL"
     }
   ],
   "engineCommitLatest": "261bb73b129c7a90b4504a06a34f7775173a5471"
