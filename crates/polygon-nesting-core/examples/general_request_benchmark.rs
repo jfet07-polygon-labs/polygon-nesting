@@ -165,15 +165,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if persistent_vacancy_mode > 23 {
-        return Err("persistent vacancy mode must be between 0 and 23".into());
+    if persistent_vacancy_mode > 24 {
+        return Err("persistent vacancy mode must be between 0 and 24".into());
     }
     let persistent_vacancy_parent_fixture = arguments.next();
-    // Modes 22 (alternation fixpoint) and 23 (recombination) reinterpret
-    // this argument: mode 22 treats it as the starting target depth (mm)
-    // for the descent arm; mode 23 treats it as a scale-free cut fraction
-    // in (0, 1) of parent A's own measured short-axis span. Every other
-    // mode treats it as an absolute target depth (mm), unchanged.
+    // Modes 22 (alternation fixpoint), 23 (recombination) and 24
+    // (bounded-depth reinsertion) reinterpret this argument: mode 22 treats
+    // it as the starting target depth (mm) for the descent arm; mode 23
+    // treats it as a scale-free cut fraction in (0, 1) of parent A's own
+    // measured short-axis span; mode 24 treats it as an absolute depth bound
+    // (mm) that no reinserted pose may exceed, which is only meaningful
+    // below the parent layout's own depth. Every other mode treats it as an
+    // absolute target depth (mm), unchanged.
     let persistent_vacancy_target_depth_mm = arguments
         .next()
         .map(|value| value.parse::<f64>())

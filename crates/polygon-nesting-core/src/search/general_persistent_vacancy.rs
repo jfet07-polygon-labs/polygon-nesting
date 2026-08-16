@@ -71,6 +71,11 @@ const CONSTRUCTION_BEAM_CHILDREN_PER_PARENT: usize = 2;
 const CONSTRUCTION_FRONTIER_BAND_GRID: i64 = 500;
 const CONSTRUCTION_SKYLINE_COLUMNS: usize = 64;
 const CONSTRUCTION_SEED_DOMAIN: u64 = 0x534B_594C_3230_3330;
+// Mode 24 reuses the construction insertion machinery from a different
+// starting point (a partially ejected parent rather than an empty sheet), so
+// it takes its own seed domain: identical piece/ordinal pairs in the two
+// modes must not draw the same orientation and position streams.
+const BOUNDED_REINSERTION_SEED_DOMAIN: u64 = 0x424E_4452_494E_3234;
 const CONSTRUCTION_TRANSIENT_BYTES: usize = 192 * 1024;
 // Child-scoring flood fills follow the reviewed-contract precedent of the
 // uncharged LNS depth-key scans: the structural ceiling (`VacancyQuotas::
@@ -694,6 +699,299 @@ pub(super) fn run_persistent_vacancy_population(
     }
     diagnostics.work = work.diagnostics;
     diagnostics
+}
+
+/// Mode 24: bounded-depth reinsertion.
+///
+/// Compression by *ejection and reconstruction* under a hard bound, as
+/// opposed to compression by overlap (deliberately overlapping a deep layout
+/// and legalizing through the separator), which is a measured negative: it
+/// always relaxes back to a worse depth.
+///
+/// Given a complete exact-valid parent and an absolute bound `D` (mm):
+///
+/// 1. Every placed piece's own extent along the depth (long) axis is measured
+///    on the real transformed source polygon, using the same
+///    `max_y + edge clearance` quantity `coupled_independent_source_depth`
+///    maximizes over. A layout's depth is by definition the largest such
+///    extent, so `D` is meaningful exactly when it is below the parent's.
+/// 2. Every piece whose extent exceeds `D` is ejected; all others stay
+///    pinned at their parent poses and form the fixed occupancy.
+/// 3. The ejected pieces are reinserted one at a time by the construction
+///    insertion machinery (`construct_candidate_poses`: skyline stations,
+///    orientation priors, epsilon rungs, charged confirm rows, the
+///    drop/slide/re-drop `construction_slide` contact walk). The bound is
+///    enforced *geometrically* by handing that machinery a sheet whose long
+///    axis is `D`, the same way mode 13 restricts reconstruction to its
+///    target depth: `construction_confirm_row`'s `fits_rect` check then
+///    rejects any out-of-bound pose before it is ever confirmed. Each
+///    accepted pose is re-measured against `D` as an explicit contract check.
+/// 4. If some piece has no in-bound pose the attempt fails cleanly for that
+///    bound - reported, never exceeded. Otherwise the completed layout goes
+///    through the standard exact validation and is reported in the ordinary
+///    persistent-vacancy shape.
+///
+/// Reinsertion order is displaced-first by descending piece area (only
+/// displaced pieces are reinserted, so that is the whole order), with the
+/// `pieceId` breaking ties deterministically.
+///
+/// Budget: each reinserted piece costs exactly one `construct_candidate_poses`
+/// call, i.e. one construction slot expansion charged to the shared
+/// `VacancyQuotas` ledger, plus one collision build per kept piece to seed the
+/// occupancy. A run therefore charges at most `piece_count` slot expansions,
+/// which the existing per-piece construction term
+/// (`construction_selected_piece_slots = CONSTRUCTION_RESTARTS *
+/// CONSTRUCTION_BEAM_WIDTH * piece_count`) already funds many times over at
+/// every piece count - so this mode needs no new aggregate term, and the
+/// headroom is asserted in `bounded_reinsertion_fits_the_construction_budget`.
+pub(super) fn run_bounded_reinsertion(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    parent: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_source: Option<String>,
+) -> GeneralPersistentVacancyDiagnostics {
+    let mut diagnostics = GeneralPersistentVacancyDiagnostics {
+        mode: 24,
+        seed_domain: BOUNDED_REINSERTION_SEED_DOMAIN,
+        parent_source,
+        ..GeneralPersistentVacancyDiagnostics::default()
+    };
+    let Some(bound_mm) = relaxed_settings.persistent_vacancy_target_depth_mm else {
+        diagnostics.failure_reason =
+            Some("persistent vacancy mode 24 requires an explicit depth bound".to_owned());
+        return diagnostics;
+    };
+    if !bound_mm.is_finite() || bound_mm <= 0.0 {
+        diagnostics.failure_reason = Some(
+            "persistent vacancy mode 24 depth bound must be a positive finite value".to_owned(),
+        );
+        return diagnostics;
+    }
+    diagnostics.target_depth_mm = bound_mm;
+    if pieces.is_empty() {
+        diagnostics.failure_reason =
+            Some("persistent vacancy experiment requires at least one piece".to_owned());
+        return diagnostics;
+    }
+    if parent.final_placements.len() != pieces.len() {
+        diagnostics.failure_reason =
+            Some("persistent vacancy parent is not a complete exact-valid layout".to_owned());
+        return diagnostics;
+    }
+
+    let mut work = RunWork::new(pieces.len());
+    let mut bounded = GeneralPersistentVacancyBoundedReinsertionDiagnostics {
+        bound_mm,
+        ..GeneralPersistentVacancyBoundedReinsertionDiagnostics::default()
+    };
+    if let Err(reason) = bounded_reinsertion_inner(
+        pieces,
+        fast_settings,
+        bound_mm,
+        parent,
+        &mut diagnostics,
+        &mut bounded,
+        &mut work,
+    ) {
+        diagnostics.cap_exhausted = reason.strip_prefix("cap: ").map(str::to_owned);
+        diagnostics.failure_reason = Some(reason);
+    }
+    diagnostics.bounded_reinsertion = Some(bounded);
+    diagnostics.work = work.diagnostics;
+    diagnostics
+}
+
+/// One piece's extent along the depth (long) axis, measured on the real
+/// transformed source polygon. This is the per-placement term of
+/// `coupled_independent_source_depth`, which reports the maximum of exactly
+/// this quantity over a layout - so a layout is within a bound precisely when
+/// every piece is.
+fn placement_long_axis_extent_mm(
+    piece: GeneralFastPiece<'_>,
+    placement: &RelaxedPlacement,
+    settings: GeneralFastSettings,
+) -> f64 {
+    let edge_clearance_mm = settings
+        .sheet_edge_clearance_mm
+        .unwrap_or(settings.total_padding_mm / 2.0);
+    transformed_source_max_y(piece, placement) + edge_clearance_mm
+}
+
+#[allow(clippy::too_many_arguments)]
+fn bounded_reinsertion_inner(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    bound_mm: f64,
+    parent: &GeneralCoupledSeparatorArmDiagnostics,
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    bounded: &mut GeneralPersistentVacancyBoundedReinsertionDiagnostics,
+    work: &mut RunWork,
+) -> Result<(), String> {
+    let parent_fast = diagnostic_fast_placements(&parent.final_placements);
+    validate_and_measure_placements(pieces, &parent_fast, fast_settings)
+        .map_err(|error| format!("persistent vacancy parent validation: {error}"))?;
+    diagnostics.parent_fingerprint = Some(coupled_fast_placement_fingerprint(&parent_fast));
+    let parent_depth_mm = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
+        .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
+    diagnostics.parent_independent_depth_mm = Some(parent_depth_mm);
+    bounded.parent_depth_mm = parent_depth_mm;
+    for piece in pieces {
+        if piece.polygon.vertex_count() > MAX_SOURCE_FEATURES {
+            return Err(format!(
+                "piece {} exceeds the {MAX_SOURCE_FEATURES}-feature experiment cap",
+                piece.id
+            ));
+        }
+    }
+
+    diagnostics.attempted = true;
+
+    // The insertion sheet is clamped to the bound, so `fits_rect` inside
+    // every charged confirm row rejects an out-of-bound pose before it can
+    // be confirmed. That clamp runs on the collision polygon, which carries
+    // the conservative offset allowance the reported source measure does
+    // not, so it is stricter than the bound by exactly that allowance: it
+    // can never admit a pose the explicit re-measure below would reject.
+    let bound_settings = GeneralFastSettings {
+        sheet_long_axis_mm: bound_mm,
+        ..fast_settings
+    };
+    let anchor =
+        relaxed_state_from_diagnostics_with_target(pieces, &parent.final_placements, bound_mm)?;
+    let bound_grid = grid_key(bound_mm);
+
+    let mut state = VacancyState {
+        placements: anchor.placements.clone(),
+        active: vec![true; pieces.len()],
+        collisions: vec![None; pieces.len()],
+        last_transition: None,
+    };
+    let mut extents = Vec::with_capacity(pieces.len());
+    let mut ejected = Vec::new();
+    for (index, piece) in pieces.iter().enumerate() {
+        let extent = placement_long_axis_extent_mm(*piece, &state.placements[index], fast_settings);
+        if grid_key(extent) > bound_grid {
+            state.active[index] = false;
+            ejected.push(index);
+        }
+        extents.push(extent);
+    }
+    bounded.ejected_count = ejected.len();
+    bounded.kept_count = pieces.len() - ejected.len();
+
+    // Fixed occupancy: one charged collision build per kept piece.
+    for index in 0..pieces.len() {
+        if state.active[index] {
+            let collision = build_collision(
+                pieces[index],
+                &state.placements[index],
+                bound_settings,
+                work,
+            )?;
+            state.collisions[index] = Some(Arc::new(collision));
+        }
+    }
+    diagnostics.initial_state_fingerprint = Some(state_fingerprint(&state, pieces));
+    diagnostics.initial_active_piece_ids = active_ids(&state, pieces);
+
+    // Displaced-first by descending piece area; `pieceId` breaks ties. Only
+    // displaced pieces are reinserted, so this is the whole order.
+    ejected.sort_by(|first, second| {
+        doubled_area_grid2(pieces[*second].polygon.area_mm2())
+            .cmp(&doubled_area_grid2(pieces[*first].polygon.area_mm2()))
+            .then_with(|| pieces[*first].id.cmp(pieces[*second].id))
+    });
+    diagnostics.initial_inactive_piece_ids = ejected
+        .iter()
+        .map(|index| pieces[*index].id.to_owned())
+        .collect();
+    diagnostics.initial_inactive_order_hash = Some(id_order_hash(&ejected, pieces));
+
+    let reinsertion_seed =
+        parent_seed_key(&state, pieces) ^ BOUNDED_REINSERTION_SEED_DOMAIN ^ (bound_grid as u64);
+    let mut construction = GeneralPersistentVacancyConstructionDiagnostics {
+        hint_stations_per_slot: CONSTRUCTION_HINT_STATIONS,
+        rows_per_piece_cap: CONSTRUCTION_ROWS_PER_PIECE,
+        finalists_per_slot: CONSTRUCTION_FINALISTS_PER_SLOT,
+        ..GeneralPersistentVacancyConstructionDiagnostics::default()
+    };
+
+    for (ordinal, index) in ejected.iter().copied().enumerate() {
+        let mut row = GeneralPersistentVacancyBoundedReinsertionPieceRow {
+            piece_id: pieces[index].id.to_owned(),
+            parent_extent_mm: extents[index],
+            ..GeneralPersistentVacancyBoundedReinsertionPieceRow::default()
+        };
+        let finalists = construct_candidate_poses(
+            pieces,
+            bound_settings,
+            &anchor,
+            &state,
+            reinsertion_seed,
+            ordinal,
+            index,
+            &mut construction,
+            work,
+        )?;
+        row.candidates_considered = finalists.len();
+        // The finalists arrive ranked by the landing-frontier key, so the
+        // first one still inside the bound is the shallowest confirmed pose.
+        let mut chosen = None;
+        for (pose, collision, _) in finalists {
+            let extent = placement_long_axis_extent_mm(pieces[index], &pose, fast_settings);
+            if grid_key(extent) <= bound_grid {
+                chosen = Some((pose, collision, extent));
+                break;
+            }
+            row.bound_rejections = row.bound_rejections.saturating_add(1);
+        }
+        match chosen {
+            Some((pose, collision, extent)) => {
+                state.placements[index] = pose;
+                state.active[index] = true;
+                state.collisions[index] = Some(collision);
+                row.reinserted = true;
+                row.placed_extent_mm = Some(extent);
+                bounded.reinserted_count = bounded.reinserted_count.saturating_add(1);
+                bounded.pieces.push(row);
+            }
+            None => {
+                // A clean per-bound failure: the bound is reported as
+                // unreachable for this piece rather than exceeded.
+                row.failure_reason = Some(format!(
+                    "no exact-valid pose for piece {} within the {bound_mm} mm bound",
+                    pieces[index].id
+                ));
+                bounded.failed_piece_id = Some(pieces[index].id.to_owned());
+                bounded.pieces.push(row);
+                diagnostics.construction = Some(construction);
+                diagnostics.publication_rejections =
+                    diagnostics.publication_rejections.saturating_add(1);
+                diagnostics.failure_reason = Some(format!(
+                    "bounded reinsertion could not place piece {} within the {bound_mm} mm bound",
+                    pieces[index].id
+                ));
+                return Ok(());
+            }
+        }
+    }
+    diagnostics.construction = Some(construction);
+    diagnostics.direct_insertions = bounded.reinserted_count;
+    diagnostics.complete_states = diagnostics.complete_states.saturating_add(1);
+
+    let final_placements = fast_placements(&state, pieces, false);
+    validate_and_measure_placements(pieces, &final_placements, fast_settings)
+        .map_err(|error| format!("bounded reinsertion final validation: {error}"))?;
+    let final_depth_mm = coupled_independent_source_depth(pieces, &final_placements, fast_settings)
+        .map_err(|error| format!("bounded reinsertion final depth: {error}"))?;
+    diagnostics.exact_valid = true;
+    diagnostics.independent_depth_mm = Some(final_depth_mm);
+    diagnostics.final_placement_fingerprint =
+        Some(coupled_fast_placement_fingerprint(&final_placements));
+    diagnostics.final_placements = coupled_placement_diagnostics(&final_placements);
+    bounded.final_depth_mm = Some(final_depth_mm);
+    Ok(())
 }
 
 fn run_population(
@@ -6876,6 +7174,41 @@ mod tests {
     }
 
     #[test]
+    fn bounded_reinsertion_fits_the_construction_budget() {
+        // Mode 24 charges one construction slot expansion per reinserted
+        // piece and one collision build per kept piece. A run ejects at most
+        // every piece, so its worst case is `piece_count` slot expansions and
+        // `piece_count` seeding builds - both strictly funded by the existing
+        // per-piece construction term, which is why the mode needs no new
+        // aggregate quota term and the frozen ceilings are untouched.
+        for piece_count in [1usize, 2, 3, 17, 20, 61, 137, 400] {
+            let quotas = VacancyQuotas::for_piece_count(piece_count);
+            let worst_case_slots = piece_count;
+            assert!(
+                worst_case_slots <= quotas.construction_selected_piece_slots,
+                "piece count {piece_count}"
+            );
+            assert!(
+                worst_case_slots <= quotas.max_selected_piece_slots,
+                "piece count {piece_count}"
+            );
+            // Each of those slots may burn the full construction row cap, and
+            // each row is one collision build plus one pair visit per peer.
+            assert!(
+                worst_case_slots.saturating_mul(CONSTRUCTION_ROWS_PER_PIECE)
+                    <= quotas.max_exact_finalist_rows,
+                "piece count {piece_count}"
+            );
+            assert!(
+                piece_count
+                    .saturating_add(worst_case_slots.saturating_mul(CONSTRUCTION_ROWS_PER_PIECE))
+                    <= quotas.max_experimental_collision_builds,
+                "piece count {piece_count}"
+            );
+        }
+    }
+
+    #[test]
     fn aggregate_quota_formulas_match_the_reviewed_contract() {
         // Instance-independent rates. The ordinary 8-parent, 40-layer
         // schedule funds 640 selected-piece slots; the archive revival lane of
@@ -7517,6 +7850,8 @@ mod tests {
         let serialized =
             serde_json::to_string(&GeneralPersistentVacancyDiagnostics::default()).unwrap();
         assert!(!serialized.contains("construction"));
+        // The mode-24 block is optional on the same terms.
+        assert!(!serialized.contains("boundedReinsertion"));
     }
 
     #[test]
