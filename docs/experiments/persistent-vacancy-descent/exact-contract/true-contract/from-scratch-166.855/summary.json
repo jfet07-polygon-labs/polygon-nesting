@@ -1,0 +1,15 @@
+{
+ "milestone": "from-scratch best 166.855 mm - the first lock broken by search (mode 26 clamped-sheet ladder compression), not by slack release or basin lottery",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "lineage": "167.849 certified lock -> 167.846 (envelope slack release) -> mode 26 ladder to 166.0 seed 1, published at rung 2 -> 166.968 -> mode 22 re-settle -> 166.855 (joint mode-22/mode-26 fixpoint)",
+ "attribution": "mode 22 alone on the same parent and seed stays at 167.846 - the gain is the sheet clamp",
+ "pinnedParent": {
+  "file": "pinned-parent-166.855.json",
+  "independentDepthMm": 166.855,
+  "fingerprint": "36f69be7f7e04636..."
+ },
+ "residueFinding": "everywhere mode 26 fails, the frontier compresses PAST the requested bound (record chain to 160.5) and only exact legalization misses by 1-5 clearance pairs at ~0.001mm scale - the open problem is legalizing a near-feasible dense front",
+ "note": "parents produced at search allowance 0.0005 must be replayed with that allowance (CLI slot 48); at the 0.002 default they fail the canonical-grid sheet gate"
+}
