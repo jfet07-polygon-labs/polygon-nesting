@@ -936,7 +936,9 @@ pub(super) fn run_persistent_vacancy_population(
                     .vacancy_bridge_relocation
                     .as_ref()
                     .is_some_and(|bridge| bridge.inconclusive);
-            if !bridge_inconclusive {
+            let bridge_promoted_partial =
+                bridge_population_terminal_is_accepted(mode, &diagnostics);
+            if !bridge_inconclusive && !bridge_promoted_partial {
                 diagnostics.failure_reason = Some(
                     "persistent vacancy population exhausted its bounded layers without a complete state"
                         .to_owned(),
@@ -3981,6 +3983,17 @@ fn bridge_diagnostics_promotion(diagnostics: &GeneralPersistentVacancyDiagnostic
         .vacancy_bridge_relocation
         .as_ref()
         .is_some_and(|bridge| bridge.promotion_gate_passed)
+}
+
+fn bridge_population_terminal_is_accepted(
+    mode: usize,
+    diagnostics: &GeneralPersistentVacancyDiagnostics,
+) -> bool {
+    mode == VACANCY_BRIDGE_RELOCATION_MODE
+        && diagnostics
+            .vacancy_bridge_relocation
+            .as_ref()
+            .is_some_and(|bridge| bridge.promotion_gate_passed)
 }
 
 fn bridge_promotion_passes(
@@ -10816,5 +10829,20 @@ mod tests {
         assert!(bridge_promotion_passes(None, true, true));
         assert!(!bridge_promotion_passes(None, false, true));
         assert!(!bridge_promotion_passes(Some(168.0), false, false));
+    }
+
+    #[test]
+    fn bridge_partial_promotion_is_not_reported_as_population_failure() {
+        let mut diagnostics = GeneralPersistentVacancyDiagnostics::default();
+        diagnostics.vacancy_bridge_relocation =
+            Some(GeneralPersistentVacancyBridgeRelocationDiagnostics {
+                promotion_gate_passed: true,
+                ..GeneralPersistentVacancyBridgeRelocationDiagnostics::default()
+            });
+        assert!(bridge_population_terminal_is_accepted(
+            VACANCY_BRIDGE_RELOCATION_MODE,
+            &diagnostics
+        ));
+        assert!(!bridge_population_terminal_is_accepted(17, &diagnostics));
     }
 }
