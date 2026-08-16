@@ -280,9 +280,11 @@ const mode15ReplaySource = runModeSource(15)
 const mode16Source = runModeSource(16)
 const mode17Source = runModeSource(17)
 const mode18Source = runModeSource(18)
+const mode19Source = runModeSource(19)
 const mode16ReplaySource = runModeSource(16)
 const mode17ReplaySource = runModeSource(17)
 const mode18ReplaySource = runModeSource(18)
+const mode19ReplaySource = runModeSource(19)
 const mode14 =
   JSON.parse(mode14Source).relaxedDiagnostics?.coupledDynamicSeparator
     ?.persistentVacancyPopulation
@@ -299,6 +301,7 @@ const restartModes = [
   [16, mode16Source, mode16ReplaySource],
   [17, mode17Source, mode17ReplaySource],
   [18, mode18Source, mode18ReplaySource],
+  [19, mode19Source, mode19ReplaySource],
 ].map(([mode, source, replaySource]) => [
   mode,
   JSON.parse(source).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation,
@@ -366,6 +369,8 @@ const restartByMode = new Map(restartModes.map(([mode, candidate]) => [mode, can
 const restart16 = restartByMode.get(16).repairRestartScreen
 const restart17 = restartByMode.get(17).repairRestartScreen
 const restart18 = restartByMode.get(18).repairRestartScreen
+const restart19Candidate = restartByMode.get(19)
+const restart19 = restart19Candidate.repairRestartScreen
 if (
   restart16.armFamily !== 'reseededOriginalRoot' ||
   restart16.roundOneRoot.origin !== 'originalBestCount' ||
@@ -412,6 +417,32 @@ if (
   restart18.comparisonEndpoint.inactiveAreaGrid2 !== '45454946952'
 ) {
   throw new Error('continued-state preserved-queue endpoint oracle changed')
+}
+if (
+  restart19.armFamily !== 'continuedStateRebuiltQueueTopologyProbe' ||
+  restart19.roundOneRoot.origin !== restart17.roundOneRoot.origin ||
+  restart19.comparisonEndpoint.augmentedIdentityHash !==
+    restart17.comparisonEndpoint.augmentedIdentityHash ||
+  restart19.comparisonEndpoint.inactiveAreaGrid2 !==
+    restart17.comparisonEndpoint.inactiveAreaGrid2 ||
+  restart19Candidate.vacancyTopologyProbe?.attempted !== true ||
+  restart19Candidate.vacancyTopologyProbe?.failureReason !== undefined ||
+  restart19Candidate.vacancyTopologyProbe?.snapshots.length !== 18
+) {
+  throw new Error('vacancy-topology probe did not reach its bounded terminal')
+}
+const rebuiltQueueProjection = losslessPopulation(mode17Source)
+const topologyProbeProjection = losslessPopulation(mode19Source)
+delete rebuiltQueueProjection.mode
+delete topologyProbeProjection.mode
+delete topologyProbeProjection.vacancyTopologyProbe
+delete rebuiltQueueProjection.repairRestartScreen.armFamily
+delete topologyProbeProjection.repairRestartScreen.armFamily
+if (
+  losslessCanonicalJson(rebuiltQueueProjection) !==
+  losslessCanonicalJson(topologyProbeProjection)
+) {
+  throw new Error('vacancy-topology probe changed the mode-17 search trajectory or work')
 }
 const populationHistory = (candidate) =>
   candidate.layers.map((layer) => ({

@@ -22,6 +22,23 @@ const REPAIR_TREATMENT_MODE: usize = 15;
 const REPAIR_RESTART_ROOT_CONTROL_MODE: usize = 16;
 const REPAIR_RESTART_STATE_TREATMENT_MODE: usize = 17;
 const REPAIR_RESTART_QUEUE_TREATMENT_MODE: usize = 18;
+const VACANCY_TOPOLOGY_PROBE_MODE: usize = 19;
+const VACANCY_TOPOLOGY_CLEARANCE_MM: [f64; 6] = [0.0, 1.0, 2.5, 5.0, 10.0, 15.0];
+const VACANCY_TOPOLOGY_STATE_COUNT: usize = 3;
+const VACANCY_TOPOLOGY_SNAPSHOT_COUNT: usize =
+    VACANCY_TOPOLOGY_STATE_COUNT * VACANCY_TOPOLOGY_CLEARANCE_MM.len();
+const VACANCY_TOPOLOGY_INPUT_VERTICES_PER_SNAPSHOT: usize =
+    4 + 2 * MIXED_PIECE_COUNT * MAX_COLLISION_VERTICES;
+const VACANCY_TOPOLOGY_DIFFERENCE_OUTPUT_VERTICES_PER_SNAPSHOT: usize = 65_536;
+const VACANCY_TOPOLOGY_OUTPUT_VERTICES_PER_SNAPSHOT: usize = MIXED_PIECE_COUNT
+    * MAX_COLLISION_VERTICES
+    + VACANCY_TOPOLOGY_DIFFERENCE_OUTPUT_VERTICES_PER_SNAPSHOT;
+const VACANCY_TOPOLOGY_CUMULATIVE_INPUT_VERTICES: usize =
+    VACANCY_TOPOLOGY_SNAPSHOT_COUNT * VACANCY_TOPOLOGY_INPUT_VERTICES_PER_SNAPSHOT;
+const VACANCY_TOPOLOGY_CUMULATIVE_OUTPUT_VERTICES: usize =
+    VACANCY_TOPOLOGY_SNAPSHOT_COUNT * VACANCY_TOPOLOGY_OUTPUT_VERTICES_PER_SNAPSHOT;
+const VACANCY_TOPOLOGY_TRANSIENT_RESERVATION_BYTES: usize = 48 * 1024 * 1024;
+const VACANCY_TOPOLOGY_RETAINED_RESERVATION_BYTES: usize = 128 * 1024;
 const REPAIR_HORIZON: usize = 16;
 const REPAIR_BEAM_WIDTH: usize = 4;
 const REPAIR_RESTART_ROUNDS: usize = 2;
@@ -491,6 +508,7 @@ fn uses_macro_expansion(mode: usize) -> bool {
             | REPAIR_RESTART_ROOT_CONTROL_MODE
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
+            | VACANCY_TOPOLOGY_PROBE_MODE
     )
 }
 
@@ -504,6 +522,7 @@ fn admits_macro_children(mode: usize) -> bool {
             | REPAIR_RESTART_ROOT_CONTROL_MODE
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
+            | VACANCY_TOPOLOGY_PROBE_MODE
     )
 }
 
@@ -516,6 +535,7 @@ fn uses_preserved_best_macro(mode: usize) -> bool {
             | REPAIR_RESTART_ROOT_CONTROL_MODE
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
+            | VACANCY_TOPOLOGY_PROBE_MODE
     )
 }
 
@@ -527,6 +547,7 @@ fn uses_repair_expedition(mode: usize) -> bool {
             | REPAIR_RESTART_ROOT_CONTROL_MODE
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
+            | VACANCY_TOPOLOGY_PROBE_MODE
     )
 }
 
@@ -536,6 +557,7 @@ fn uses_repair_restart_screen(mode: usize) -> bool {
         REPAIR_RESTART_ROOT_CONTROL_MODE
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
+            | VACANCY_TOPOLOGY_PROBE_MODE
     )
 }
 
@@ -653,9 +675,10 @@ fn run_population(
             | REPAIR_RESTART_ROOT_CONTROL_MODE
             | REPAIR_RESTART_STATE_TREATMENT_MODE
             | REPAIR_RESTART_QUEUE_TREATMENT_MODE
+            | VACANCY_TOPOLOGY_PROBE_MODE
     ) {
         return Err(
-            "persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 8, 9, 10, or 14 through 18; retired modes 7 and 11 through 13 are unavailable"
+            "persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 8, 9, 10, or 14 through 19; retired modes 7 and 11 through 13 are unavailable"
                 .to_owned(),
         );
     }
@@ -1539,6 +1562,11 @@ fn run_repair_restart_screen(
             &round_zero.best_partial.node.state,
             true,
         ),
+        VACANCY_TOPOLOGY_PROBE_MODE => (
+            "roundZeroEndpointRebuiltQueue",
+            &round_zero.best_partial.node.state,
+            false,
+        ),
         _ => return Err("unsupported persistent vacancy restart mode".to_owned()),
     };
     let restart_limits = match WorkLimits::repair_restart() {
@@ -1710,6 +1738,31 @@ fn run_repair_restart_screen(
         round_zero_work.diagnostics,
         round_one_work.diagnostics,
     );
+    let topology_probe = if mode == VACANCY_TOPOLOGY_PROBE_MODE {
+        if let Err(reason) =
+            preflight_vacancy_topology_probe(work, &round_zero_work, &round_one_work)
+        {
+            diagnostics.vacancy_topology_probe =
+                Some(failed_vacancy_topology_probe(reason.clone()));
+            return Err(reason);
+        }
+        match vacancy_topology_probe(
+            root,
+            &round_zero.best_partial.node.state,
+            &round_one.best_partial.node.state,
+            pieces,
+            settings,
+        ) {
+            Ok(probe) => Some(probe),
+            Err(reason) => {
+                diagnostics.vacancy_topology_probe =
+                    Some(failed_vacancy_topology_probe(reason.clone()));
+                return Err(reason);
+            }
+        }
+    } else {
+        None
+    };
     let screen = GeneralPersistentVacancyRepairRestartDiagnostics {
         arm_family: restart_arm_family(mode).to_owned(),
         round_zero_replay_sha256: Some(round_zero_hash),
@@ -1725,6 +1778,15 @@ fn run_repair_restart_screen(
         work: screen_work,
         ..GeneralPersistentVacancyRepairRestartDiagnostics::default()
     };
+    if let Some(probe) = topology_probe.as_ref() {
+        if let Err(reason) =
+            preflight_completed_topology_diagnostics(diagnostics, &screen, probe, work)
+        {
+            diagnostics.vacancy_topology_probe =
+                Some(failed_vacancy_topology_probe(reason.clone()));
+            return Err(reason);
+        }
+    }
     commit_restart_events(diagnostics, round_zero_events, round_one_events);
     merge_restart_work(
         work,
@@ -1732,6 +1794,7 @@ fn run_repair_restart_screen(
         round_one_work.diagnostics,
     );
     diagnostics.repair_restart_screen = Some(screen);
+    diagnostics.vacancy_topology_probe = topology_probe;
     Ok(round_one.accepted_complete)
 }
 
@@ -1781,6 +1844,7 @@ fn restart_arm_family(mode: usize) -> &'static str {
         REPAIR_RESTART_ROOT_CONTROL_MODE => "reseededOriginalRoot",
         REPAIR_RESTART_STATE_TREATMENT_MODE => "continuedStateRebuiltQueue",
         REPAIR_RESTART_QUEUE_TREATMENT_MODE => "continuedStatePreservedQueue",
+        VACANCY_TOPOLOGY_PROBE_MODE => "continuedStateRebuiltQueueTopologyProbe",
         _ => "unsupported",
     }
 }
@@ -3666,6 +3730,245 @@ fn inactive_piece_count(state: &VacancyState) -> usize {
     state.active.iter().filter(|active| !**active).count()
 }
 
+fn vacancy_topology_probe(
+    root: &VacancyState,
+    round_zero: &VacancyState,
+    round_one: &VacancyState,
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+) -> Result<GeneralPersistentVacancyTopologyProbeDiagnostics, String> {
+    let mut diagnostics = GeneralPersistentVacancyTopologyProbeDiagnostics {
+        attempted: true,
+        geometry_domain: vacancy_topology_geometry_domain().to_owned(),
+        input_vertex_cap_per_snapshot: VACANCY_TOPOLOGY_INPUT_VERTICES_PER_SNAPSHOT,
+        output_vertex_cap_per_snapshot: VACANCY_TOPOLOGY_OUTPUT_VERTICES_PER_SNAPSHOT,
+        cumulative_input_vertex_cap: VACANCY_TOPOLOGY_CUMULATIVE_INPUT_VERTICES,
+        cumulative_output_vertex_cap: VACANCY_TOPOLOGY_CUMULATIVE_OUTPUT_VERTICES,
+        transient_memory_reservation_bytes: VACANCY_TOPOLOGY_TRANSIENT_RESERVATION_BYTES,
+        retained_memory_reservation_bytes: VACANCY_TOPOLOGY_RETAINED_RESERVATION_BYTES,
+        ..GeneralPersistentVacancyTopologyProbeDiagnostics::default()
+    };
+    for (label, state) in [
+        ("repairRoot", root),
+        ("roundZeroBestPartial", round_zero),
+        ("roundOneBestPartial", round_one),
+    ] {
+        for clearance_mm in VACANCY_TOPOLOGY_CLEARANCE_MM {
+            let snapshot = vacancy_topology_snapshot(label, state, pieces, settings, clearance_mm)?;
+            let input_vertices = diagnostics
+                .clipper_input_vertices
+                .checked_add(snapshot.clipper_input_vertices)
+                .ok_or_else(|| "vacancy topology aggregate input-vertex overflow".to_owned())?;
+            let output_vertices = diagnostics
+                .clipper_output_vertices
+                .checked_add(snapshot.clipper_output_vertices)
+                .ok_or_else(|| "vacancy topology aggregate output-vertex overflow".to_owned())?;
+            if input_vertices > VACANCY_TOPOLOGY_CUMULATIVE_INPUT_VERTICES {
+                return Err(
+                    "cap: vacancy topology cumulative input-vertex budget exhausted".to_owned(),
+                );
+            }
+            if output_vertices > VACANCY_TOPOLOGY_CUMULATIVE_OUTPUT_VERTICES {
+                return Err(
+                    "cap: vacancy topology cumulative output-vertex budget exhausted".to_owned(),
+                );
+            }
+            diagnostics.clipper_input_vertices = input_vertices;
+            diagnostics.clipper_output_vertices = output_vertices;
+            diagnostics.snapshots.push(snapshot);
+        }
+    }
+    if diagnostics.snapshots.len() != VACANCY_TOPOLOGY_SNAPSHOT_COUNT {
+        return Err(format!(
+            "vacancy topology produced {} snapshots instead of {VACANCY_TOPOLOGY_SNAPSHOT_COUNT}",
+            diagnostics.snapshots.len()
+        ));
+    }
+    Ok(diagnostics)
+}
+
+fn vacancy_topology_geometry_domain() -> &'static str {
+    "expandedCollisionExactGridClearanceFiltrationWithinTargetStripV1"
+}
+
+fn failed_vacancy_topology_probe(
+    reason: String,
+) -> GeneralPersistentVacancyTopologyProbeDiagnostics {
+    GeneralPersistentVacancyTopologyProbeDiagnostics {
+        attempted: true,
+        geometry_domain: vacancy_topology_geometry_domain().to_owned(),
+        input_vertex_cap_per_snapshot: VACANCY_TOPOLOGY_INPUT_VERTICES_PER_SNAPSHOT,
+        output_vertex_cap_per_snapshot: VACANCY_TOPOLOGY_OUTPUT_VERTICES_PER_SNAPSHOT,
+        cumulative_input_vertex_cap: VACANCY_TOPOLOGY_CUMULATIVE_INPUT_VERTICES,
+        cumulative_output_vertex_cap: VACANCY_TOPOLOGY_CUMULATIVE_OUTPUT_VERTICES,
+        transient_memory_reservation_bytes: VACANCY_TOPOLOGY_TRANSIENT_RESERVATION_BYTES,
+        retained_memory_reservation_bytes: VACANCY_TOPOLOGY_RETAINED_RESERVATION_BYTES,
+        failure_reason: Some(reason),
+        ..GeneralPersistentVacancyTopologyProbeDiagnostics::default()
+    }
+}
+
+fn vacancy_topology_snapshot(
+    label: &str,
+    state: &VacancyState,
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    clearance_mm: f64,
+) -> Result<GeneralPersistentVacancyTopologySnapshotDiagnostics, String> {
+    validate_state_structure(state, pieces.len())?;
+    let base_occupied = state
+        .active
+        .iter()
+        .enumerate()
+        .filter_map(|(index, active)| active.then_some(index))
+        .map(|index| {
+            state.collisions[index]
+                .as_deref()
+                .ok_or_else(|| format!("active piece {index} has no collision"))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if let Some(vertex_count) = base_occupied
+        .iter()
+        .map(|polygon| polygon.vertex_count())
+        .find(|vertex_count| *vertex_count > MAX_COLLISION_VERTICES)
+    {
+        return Err(format!(
+            "vacancy topology {label} offset input has {vertex_count} vertices, exceeding the {MAX_COLLISION_VERTICES}-vertex cap"
+        ));
+    }
+    let mut offset_input_vertices = 0_usize;
+    let mut offset_output_vertices = 0_usize;
+    let expanded_occupied;
+    let occupied = if clearance_mm == 0.0 {
+        base_occupied
+    } else {
+        expanded_occupied = base_occupied
+            .iter()
+            .map(|polygon| {
+                let (expanded, input_vertices, output_vertices) = polygon
+                    .offset_with_vertex_counts(clearance_mm)
+                    .map_err(|error| {
+                        format!("vacancy topology {label} clearance offset: {error}")
+                    })?;
+                if input_vertices != polygon.vertex_count() {
+                    return Err(format!(
+                        "vacancy topology {label} offset input accounting changed"
+                    ));
+                }
+                if output_vertices > MAX_COLLISION_VERTICES {
+                    return Err(format!(
+                        "vacancy topology {label} clearance offset produced {output_vertices} vertices, exceeding the {MAX_COLLISION_VERTICES}-vertex cap"
+                    ));
+                }
+                offset_input_vertices = offset_input_vertices
+                    .checked_add(input_vertices)
+                    .ok_or_else(|| "vacancy topology offset input-vertex overflow".to_owned())?;
+                offset_output_vertices = offset_output_vertices
+                    .checked_add(output_vertices)
+                    .ok_or_else(|| "vacancy topology offset output-vertex overflow".to_owned())?;
+                Ok(expanded)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        expanded_occupied.iter().collect()
+    };
+    let difference_input_vertices = occupied.iter().try_fold(4_usize, |total, polygon| {
+        total
+            .checked_add(polygon.vertex_count())
+            .ok_or_else(|| "vacancy topology input-vertex overflow".to_owned())
+    })?;
+    let input_vertices = offset_input_vertices
+        .checked_add(difference_input_vertices)
+        .ok_or_else(|| "vacancy topology input-vertex overflow".to_owned())?;
+    if input_vertices > VACANCY_TOPOLOGY_INPUT_VERTICES_PER_SNAPSHOT {
+        return Err("cap: vacancy topology per-snapshot input-vertex budget exhausted".to_owned());
+    }
+    let inset = collision_sheet_inset_mm(settings);
+    let topology = PolygonSet::rectangular_free_space_topology(
+        &occupied,
+        inset + clearance_mm,
+        inset + clearance_mm,
+        settings.sheet_short_axis_mm - inset - clearance_mm,
+        TARGET_DEPTH_MM - inset - clearance_mm,
+    )
+    .map_err(|error| format!("vacancy topology {label}: {error}"))?;
+    if topology.input_vertices != difference_input_vertices {
+        return Err(format!(
+            "vacancy topology {label} difference input accounting changed from {difference_input_vertices} to {} vertices",
+            topology.input_vertices
+        ));
+    }
+    if topology.output_vertices > VACANCY_TOPOLOGY_DIFFERENCE_OUTPUT_VERTICES_PER_SNAPSHOT {
+        return Err("cap: vacancy topology difference output-vertex budget exhausted".to_owned());
+    }
+    let output_vertices = offset_output_vertices
+        .checked_add(topology.output_vertices)
+        .ok_or_else(|| "vacancy topology output-vertex overflow".to_owned())?;
+    if output_vertices > VACANCY_TOPOLOGY_OUTPUT_VERTICES_PER_SNAPSHOT {
+        return Err("cap: vacancy topology per-snapshot output-vertex budget exhausted".to_owned());
+    }
+
+    let mut total_free_area = 0_i128;
+    let mut frontier_connected_area = 0_i128;
+    let mut disconnected_area = 0_i128;
+    let mut largest_disconnected_area = 0_i128;
+    let mut frontier_contact = 0_i128;
+    let mut frontier_connected_regions = 0_usize;
+    let mut point_contact_only_regions = 0_usize;
+    for region in &topology.regions {
+        total_free_area = total_free_area
+            .checked_add(region.doubled_area_grid2)
+            .ok_or_else(|| format!("vacancy topology {label} free-area overflow"))?;
+        if region.frontier_contact_grid > 0 {
+            frontier_connected_regions = frontier_connected_regions
+                .checked_add(1)
+                .ok_or_else(|| format!("vacancy topology {label} region-count overflow"))?;
+            frontier_connected_area = frontier_connected_area
+                .checked_add(region.doubled_area_grid2)
+                .ok_or_else(|| {
+                    format!("vacancy topology {label} frontier-connected area overflow")
+                })?;
+            frontier_contact = frontier_contact
+                .checked_add(i128::from(region.frontier_contact_grid))
+                .ok_or_else(|| format!("vacancy topology {label} frontier-contact overflow"))?;
+        } else {
+            disconnected_area = disconnected_area
+                .checked_add(region.doubled_area_grid2)
+                .ok_or_else(|| format!("vacancy topology {label} disconnected-area overflow"))?;
+            largest_disconnected_area = largest_disconnected_area.max(region.doubled_area_grid2);
+            point_contact_only_regions = point_contact_only_regions
+                .checked_add(usize::from(region.frontier_point_contact_only))
+                .ok_or_else(|| format!("vacancy topology {label} region-count overflow"))?;
+        }
+    }
+    if frontier_connected_area
+        .checked_add(disconnected_area)
+        .filter(|partitioned| *partitioned == total_free_area)
+        .is_none()
+    {
+        return Err(format!(
+            "vacancy topology {label} free-area partition is inconsistent"
+        ));
+    }
+
+    Ok(GeneralPersistentVacancyTopologySnapshotDiagnostics {
+        label: label.to_owned(),
+        clearance_mm: clearance_mm.to_string(),
+        state_fingerprint: state_fingerprint(state, pieces),
+        active_piece_count: state.active.len() - inactive_piece_count(state),
+        inactive_piece_count: inactive_piece_count(state),
+        free_region_count: topology.regions.len(),
+        frontier_connected_region_count: frontier_connected_regions,
+        frontier_point_contact_only_region_count: point_contact_only_regions,
+        total_free_doubled_area_grid2: total_free_area.to_string(),
+        frontier_connected_free_doubled_area_grid2: frontier_connected_area.to_string(),
+        disconnected_free_doubled_area_grid2: disconnected_area.to_string(),
+        largest_disconnected_free_doubled_area_grid2: largest_disconnected_area.to_string(),
+        frontier_contact_grid: frontier_contact.to_string(),
+        clipper_input_vertices: input_vertices,
+        clipper_output_vertices: output_vertices,
+    })
+}
+
 fn ejected_piece_count(state: &VacancyState) -> usize {
     state
         .last_transition
@@ -4477,8 +4780,95 @@ fn persistent_diagnostic_bytes(diagnostics: &GeneralPersistentVacancyDiagnostics
                 .as_ref()
                 .map_or(0, repair_restart_diagnostic_heap_bytes),
         )
+        .saturating_add(
+            diagnostics
+                .vacancy_topology_probe
+                .as_ref()
+                .map_or(0, vacancy_topology_diagnostic_heap_bytes),
+        )
         .saturating_add(option_string_bytes(&diagnostics.cap_exhausted))
         .saturating_add(option_string_bytes(&diagnostics.failure_reason))
+}
+
+fn vacancy_topology_diagnostic_heap_bytes(
+    topology: &GeneralPersistentVacancyTopologyProbeDiagnostics,
+) -> usize {
+    topology
+        .geometry_domain
+        .capacity()
+        .saturating_add(
+            topology
+                .snapshots
+                .capacity()
+                .saturating_mul(size_of::<GeneralPersistentVacancyTopologySnapshotDiagnostics>()),
+        )
+        .saturating_add(
+            topology
+                .snapshots
+                .iter()
+                .map(|snapshot| {
+                    snapshot
+                        .label
+                        .capacity()
+                        .saturating_add(snapshot.clearance_mm.capacity())
+                        .saturating_add(snapshot.state_fingerprint.capacity())
+                        .saturating_add(snapshot.total_free_doubled_area_grid2.capacity())
+                        .saturating_add(
+                            snapshot
+                                .frontier_connected_free_doubled_area_grid2
+                                .capacity(),
+                        )
+                        .saturating_add(snapshot.disconnected_free_doubled_area_grid2.capacity())
+                        .saturating_add(
+                            snapshot
+                                .largest_disconnected_free_doubled_area_grid2
+                                .capacity(),
+                        )
+                        .saturating_add(snapshot.frontier_contact_grid.capacity())
+                })
+                .sum::<usize>(),
+        )
+        .saturating_add(option_string_bytes(&topology.failure_reason))
+}
+
+fn preflight_vacancy_topology_probe(
+    work: &RunWork,
+    round_zero_work: &RunWork,
+    round_one_work: &RunWork,
+) -> Result<(), String> {
+    let staged_peak = work
+        .diagnostics
+        .total_retained_peak_bytes
+        .max(round_zero_work.diagnostics.total_retained_peak_bytes)
+        .max(round_one_work.diagnostics.total_retained_peak_bytes);
+    let reserved_peak = staged_peak
+        .checked_add(VACANCY_TOPOLOGY_TRANSIENT_RESERVATION_BYTES)
+        .and_then(|bytes| bytes.checked_add(VACANCY_TOPOLOGY_RETAINED_RESERVATION_BYTES))
+        .ok_or_else(|| "cap: vacancy topology memory reservation overflow".to_owned())?;
+    if reserved_peak > MAX_RETAINED_BYTES {
+        return Err(work.cap("vacancy topology memory reservation exhausted"));
+    }
+    Ok(())
+}
+
+fn preflight_completed_topology_diagnostics(
+    diagnostics: &GeneralPersistentVacancyDiagnostics,
+    screen: &GeneralPersistentVacancyRepairRestartDiagnostics,
+    topology: &GeneralPersistentVacancyTopologyProbeDiagnostics,
+    work: &RunWork,
+) -> Result<(), String> {
+    let topology_bytes = vacancy_topology_diagnostic_heap_bytes(topology);
+    if topology_bytes > VACANCY_TOPOLOGY_RETAINED_RESERVATION_BYTES {
+        return Err(work.cap("vacancy topology retained-memory reservation exhausted"));
+    }
+    let completed_diagnostic_bytes = persistent_diagnostic_bytes(diagnostics)
+        .checked_add(repair_restart_diagnostic_heap_bytes(screen))
+        .and_then(|bytes| bytes.checked_add(topology_bytes))
+        .ok_or_else(|| "cap: completed topology diagnostic-memory overflow".to_owned())?;
+    if completed_diagnostic_bytes > MAX_RETAINED_BYTES {
+        return Err(work.cap("completed topology diagnostic-memory budget exhausted"));
+    }
+    Ok(())
 }
 
 fn layer_diagnostic_heap_bytes(layer: &GeneralPersistentVacancyLayerDiagnostics) -> usize {
@@ -4821,6 +5211,79 @@ mod tests {
                 last_transition: None,
             },
         )
+    }
+
+    #[test]
+    fn vacancy_topology_snapshot_separates_internal_slack_from_frontier_vacancy() {
+        let barrier = PolygonSet::from_outer(vec![
+            IrregularPoint::new(0.0, 50.0),
+            IrregularPoint::new(20.0, 50.0),
+            IrregularPoint::new(20.0, 60.0),
+            IrregularPoint::new(0.0, 60.0),
+        ])
+        .unwrap();
+        let state = VacancyState {
+            placements: vec![RelaxedPlacement {
+                input_index: 0,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 0.0,
+                translate_y: 0.0,
+            }],
+            active: vec![true],
+            collisions: vec![Some(Arc::new(barrier.clone()))],
+            last_transition: None,
+        };
+        let pieces = [GeneralFastPiece {
+            id: "barrier",
+            polygon: &barrier,
+            allow_rotation: true,
+            allow_mirror: false,
+        }];
+        let snapshot = vacancy_topology_snapshot(
+            "barrier",
+            &state,
+            &pieces,
+            GeneralFastSettings::deterministic_test(20.0, 200.0),
+            0.0,
+        )
+        .unwrap();
+        assert_eq!(snapshot.active_piece_count, 1);
+        assert_eq!(snapshot.inactive_piece_count, 0);
+        assert_eq!(snapshot.free_region_count, 2);
+        assert_eq!(snapshot.frontier_connected_region_count, 1);
+        assert_eq!(
+            snapshot.frontier_connected_free_doubled_area_grid2,
+            "4200000000"
+        );
+        assert_eq!(snapshot.disconnected_free_doubled_area_grid2, "2000000000");
+        assert_eq!(snapshot.frontier_contact_grid, "20000");
+
+        let filtered = vacancy_topology_snapshot(
+            "barrier",
+            &state,
+            &pieces,
+            GeneralFastSettings::deterministic_test(20.0, 200.0),
+            1.0,
+        )
+        .unwrap();
+        assert_eq!(filtered.clearance_mm, "1");
+        assert_eq!(filtered.free_region_count, 2);
+        assert_eq!(
+            filtered.frontier_connected_free_doubled_area_grid2,
+            "3708000000"
+        );
+        assert_eq!(filtered.disconnected_free_doubled_area_grid2, "1728000000");
+        assert_eq!(filtered.frontier_contact_grid, "18000");
+    }
+
+    #[test]
+    fn topology_probe_mode_reuses_the_rebuilt_queue_trajectory() {
+        assert!(uses_repair_restart_screen(VACANCY_TOPOLOGY_PROBE_MODE));
+        assert_eq!(
+            restart_arm_family(VACANCY_TOPOLOGY_PROBE_MODE),
+            "continuedStateRebuiltQueueTopologyProbe"
+        );
     }
 
     fn selector_ids(ids: &[&str], layer: usize, mode: usize) -> Vec<String> {

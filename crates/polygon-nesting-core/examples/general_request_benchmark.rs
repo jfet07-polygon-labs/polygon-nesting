@@ -207,9 +207,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if !matches!(persistent_vacancy_mode, 0..=6 | 8 | 9 | 10 | 14..=18) {
+    if !matches!(persistent_vacancy_mode, 0..=6 | 8 | 9 | 10 | 14..=19) {
         return Err(
-            "persistent vacancy mode must be 0 through 6, 8, 9, 10, or 14 through 18; retired modes 7 and 11 through 13 are unavailable"
+            "persistent vacancy mode must be 0 through 6, 8, 9, 10, or 14 through 19; retired modes 7 and 11 through 13 are unavailable"
                 .into(),
         );
     }
@@ -464,6 +464,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .unwrap_or("no failure reason was recorded")
                 )
                 .into());
+            }
+            if persistent_vacancy_mode == 19 {
+                let probe = persistent
+                    .vacancy_topology_probe
+                    .as_ref()
+                    .ok_or("requested vacancy-topology probe diagnostics are missing")?;
+                if let Some(reason) = probe.failure_reason.as_deref() {
+                    return Err(format!("requested vacancy-topology probe failed: {reason}").into());
+                }
+                if !probe.attempted || probe.snapshots.len() != 18 {
+                    return Err(
+                        "requested vacancy-topology probe did not reach its bounded terminal"
+                            .into(),
+                    );
+                }
             }
         }
         elapsed_ms.push(started.elapsed().as_secs_f64() * 1_000.0);

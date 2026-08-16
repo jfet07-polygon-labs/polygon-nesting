@@ -355,6 +355,8 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub repair_expedition: Option<GeneralPersistentVacancyRepairDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub repair_restart_screen: Option<GeneralPersistentVacancyRepairRestartDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vacancy_topology_probe: Option<GeneralPersistentVacancyTopologyProbeDiagnostics>,
     pub work: GeneralPersistentVacancyWorkDiagnostics,
     pub layers: Vec<GeneralPersistentVacancyLayerDiagnostics>,
     pub cap_exhausted: Option<String>,
@@ -526,6 +528,44 @@ pub struct GeneralPersistentVacancyRepairRestartEndpointDiagnostics {
     pub inactive_piece_count: usize,
     pub inactive_area_grid2: String,
     pub first_seen_expansion_depth: Option<usize>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyTopologyProbeDiagnostics {
+    pub attempted: bool,
+    pub geometry_domain: String,
+    pub snapshots: Vec<GeneralPersistentVacancyTopologySnapshotDiagnostics>,
+    pub input_vertex_cap_per_snapshot: usize,
+    pub output_vertex_cap_per_snapshot: usize,
+    pub cumulative_input_vertex_cap: usize,
+    pub cumulative_output_vertex_cap: usize,
+    pub clipper_input_vertices: usize,
+    pub clipper_output_vertices: usize,
+    pub transient_memory_reservation_bytes: usize,
+    pub retained_memory_reservation_bytes: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failure_reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyTopologySnapshotDiagnostics {
+    pub label: String,
+    pub clearance_mm: String,
+    pub state_fingerprint: String,
+    pub active_piece_count: usize,
+    pub inactive_piece_count: usize,
+    pub free_region_count: usize,
+    pub frontier_connected_region_count: usize,
+    pub frontier_point_contact_only_region_count: usize,
+    pub total_free_doubled_area_grid2: String,
+    pub frontier_connected_free_doubled_area_grid2: String,
+    pub disconnected_free_doubled_area_grid2: String,
+    pub largest_disconnected_free_doubled_area_grid2: String,
+    pub frontier_contact_grid: String,
+    pub clipper_input_vertices: usize,
+    pub clipper_output_vertices: usize,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]

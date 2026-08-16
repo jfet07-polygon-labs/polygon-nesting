@@ -230,6 +230,20 @@ pub(crate) struct IntersectionAreaComplexity {
     pub output_vertices: usize,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct RectangularFreeSpaceRegion {
+    pub doubled_area_grid2: i128,
+    pub frontier_contact_grid: i64,
+    pub frontier_point_contact_only: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct RectangularFreeSpaceTopology {
+    pub regions: Vec<RectangularFreeSpaceRegion>,
+    pub input_vertices: usize,
+    pub output_vertices: usize,
+}
+
 impl PolygonSet {
     pub fn from_outer(points: Vec<IrregularPoint>) -> Result<Self, GeneralPolygonError> {
         Self::new(vec![PolygonRegion::new(points, Vec::new())?])
@@ -352,6 +366,14 @@ impl PolygonSet {
     }
 
     pub fn offset(&self, distance_mm: f64) -> Result<Self, GeneralPolygonError> {
+        self.offset_with_vertex_counts(distance_mm)
+            .map(|(polygon, _, _)| polygon)
+    }
+
+    pub(crate) fn offset_with_vertex_counts(
+        &self,
+        distance_mm: f64,
+    ) -> Result<(Self, usize, usize), GeneralPolygonError> {
         if !distance_mm.is_finite() {
             return Err(GeneralPolygonError::new("offset distance must be finite"));
         }
@@ -361,10 +383,11 @@ impl PolygonSet {
             ));
         };
         if distance_grid == 0.0 {
-            return Ok(self.clone());
+            return Ok((self.clone(), self.vertex_count(), self.vertex_count()));
         }
 
         let paths = self.paths();
+        let input_vertices = self.vertex_count();
         let mut offset =
             ClipperOffset::new(CLIPPER_MITER_LIMIT, CLIPPER_ARC_TOLERANCE, false, false);
         offset.add_paths(&paths, JoinType::Miter, EndType::Polygon);
@@ -377,7 +400,8 @@ impl PolygonSet {
                 "an outward offset of non-empty material returned no geometry",
             ));
         }
-        Ok(result)
+        let output_vertices = result.vertex_count();
+        Ok((result, input_vertices, output_vertices))
     }
 
     pub fn intersection_area_mm2(&self, other: &Self) -> Result<f64, GeneralPolygonError> {
@@ -480,6 +504,87 @@ impl PolygonSet {
         PointInPolygonResult::IsOutside
     }
 
+    /// derives exact connected free-space regions inside one grid-aligned rectangle.
+    pub(crate) fn rectangular_free_space_topology(
+        occupied: &[&Self],
+        min_x_mm: f64,
+        min_y_mm: f64,
+        max_x_mm: f64,
+        max_y_mm: f64,
+    ) -> Result<RectangularFreeSpaceTopology, GeneralPolygonError> {
+        let (Some(min_x), Some(min_y), Some(max_x), Some(max_y)) = (
+            to_grid_mm(min_x_mm),
+            to_grid_mm(min_y_mm),
+            to_grid_mm(max_x_mm),
+            to_grid_mm(max_y_mm),
+        ) else {
+            return Err(GeneralPolygonError::new(
+                "free-space rectangle is outside the contractual grid",
+            ));
+        };
+        if min_x >= max_x || min_y >= max_y {
+            return Err(GeneralPolygonError::new(
+                "free-space rectangle must have positive width and height",
+            ));
+        }
+        let rectangle = vec![
+            Point64::new(min_x, min_y, 0.0),
+            Point64::new(max_x, min_y, 0.0),
+            Point64::new(max_x, max_y, 0.0),
+            Point64::new(min_x, max_y, 0.0),
+        ];
+        let input_vertices = occupied
+            .iter()
+            .try_fold(rectangle.len(), |total, polygon| {
+                total
+                    .checked_add(polygon.vertex_count())
+                    .ok_or_else(|| GeneralPolygonError::new("free-space input-vertex overflow"))
+            })?;
+        let mut engine = Clipper64::new();
+        let subject = vec![rectangle];
+        engine.add_paths(&subject, PathType::Subject);
+        for polygon in occupied {
+            engine.add_paths(&polygon.paths(), PathType::Clip);
+        }
+        let mut free_tree = PolyTree64::new();
+        if !engine.execute_poly_tree(
+            ClipType::Difference,
+            FillRule::NonZero,
+            &mut free_tree,
+            None,
+        ) {
+            return Err(GeneralPolygonError::new(
+                "Clipper free-space difference failed",
+            ));
+        }
+        let frontier_y = exact_grid_coordinate(max_y)?;
+        let mut regions = Vec::new();
+        let mut output_vertices = 0;
+        collect_rectangular_free_space_regions(
+            &free_tree,
+            PolyTree64::ROOT,
+            frontier_y,
+            &mut regions,
+            &mut output_vertices,
+        )?;
+        regions.sort_by(|first, second| {
+            second
+                .frontier_contact_grid
+                .cmp(&first.frontier_contact_grid)
+                .then_with(|| second.doubled_area_grid2.cmp(&first.doubled_area_grid2))
+                .then_with(|| {
+                    first
+                        .frontier_point_contact_only
+                        .cmp(&second.frontier_point_contact_only)
+                })
+        });
+        Ok(RectangularFreeSpaceTopology {
+            regions,
+            input_vertices,
+            output_vertices,
+        })
+    }
+
     fn paths(&self) -> Paths64 {
         let mut paths = Vec::new();
         for region in &self.regions {
@@ -488,6 +593,120 @@ impl PolygonSet {
         }
         paths
     }
+}
+
+fn exact_path_doubled_area_grid2(path: &Path64) -> Result<i128, GeneralPolygonError> {
+    path.iter()
+        .zip(path.iter().cycle().skip(1))
+        .take(path.len())
+        .try_fold(0_i128, |total, (first, second)| {
+            let first_x = exact_grid_coordinate(first.x)? as i128;
+            let first_y = exact_grid_coordinate(first.y)? as i128;
+            let second_x = exact_grid_coordinate(second.x)? as i128;
+            let second_y = exact_grid_coordinate(second.y)? as i128;
+            let term = first_x
+                .checked_mul(second_y)
+                .and_then(|left| {
+                    second_x
+                        .checked_mul(first_y)
+                        .and_then(|right| left.checked_sub(right))
+                })
+                .ok_or_else(|| GeneralPolygonError::new("exact grid area overflow"))?;
+            total
+                .checked_add(term)
+                .ok_or_else(|| GeneralPolygonError::new("exact grid area overflow"))
+        })
+}
+
+fn exact_grid_coordinate(value: f64) -> Result<i64, GeneralPolygonError> {
+    if !value.is_finite()
+        || value.fract() != 0.0
+        || value < i64::MIN as f64
+        || value > i64::MAX as f64
+    {
+        return Err(GeneralPolygonError::new(
+            "Clipper output left the exact integer grid",
+        ));
+    }
+    Ok(value as i64)
+}
+
+fn collect_rectangular_free_space_regions(
+    tree: &PolyTree64,
+    parent: usize,
+    frontier_y: i64,
+    regions: &mut Vec<RectangularFreeSpaceRegion>,
+    output_vertices: &mut usize,
+) -> Result<(), GeneralPolygonError> {
+    for index in 0..tree.count(parent) {
+        let child = tree.child(parent, index);
+        if let Some(path) = tree.poly(child) {
+            *output_vertices = output_vertices
+                .checked_add(path.len())
+                .ok_or_else(|| GeneralPolygonError::new("free-space output-vertex overflow"))?;
+        }
+        if !tree.is_hole(child) {
+            let outer = tree
+                .poly(child)
+                .ok_or_else(|| GeneralPolygonError::new("Clipper returned an empty free region"))?;
+            let mut doubled_area_grid2 = exact_path_doubled_area_grid2(outer)?.abs();
+            let (mut frontier_contact_grid, mut frontier_touches) =
+                frontier_contact(outer, frontier_y)?;
+            for hole_index in 0..tree.count(child) {
+                let hole = tree.child(child, hole_index);
+                if tree.is_hole(hole) {
+                    let path = tree.poly(hole).ok_or_else(|| {
+                        GeneralPolygonError::new("Clipper returned an empty free-space hole")
+                    })?;
+                    doubled_area_grid2 = doubled_area_grid2
+                        .checked_sub(exact_path_doubled_area_grid2(path)?.abs())
+                        .ok_or_else(|| GeneralPolygonError::new("exact grid area overflow"))?;
+                    let (contact, touches) = frontier_contact(path, frontier_y)?;
+                    frontier_contact_grid =
+                        frontier_contact_grid.checked_add(contact).ok_or_else(|| {
+                            GeneralPolygonError::new("free-space frontier-contact overflow")
+                        })?;
+                    frontier_touches |= touches;
+                }
+            }
+            if doubled_area_grid2 <= 0 {
+                return Err(GeneralPolygonError::new(
+                    "free-space region must have positive exact grid area",
+                ));
+            }
+            regions.push(RectangularFreeSpaceRegion {
+                doubled_area_grid2,
+                frontier_contact_grid,
+                frontier_point_contact_only: frontier_touches && frontier_contact_grid == 0,
+            });
+        }
+        collect_rectangular_free_space_regions(tree, child, frontier_y, regions, output_vertices)?;
+    }
+    Ok(())
+}
+
+fn frontier_contact(path: &Path64, frontier_y: i64) -> Result<(i64, bool), GeneralPolygonError> {
+    let mut contact = 0_i64;
+    let mut touches = false;
+    for (first, second) in path
+        .iter()
+        .zip(path.iter().cycle().skip(1))
+        .take(path.len())
+    {
+        let first_x = exact_grid_coordinate(first.x)?;
+        let first_y = exact_grid_coordinate(first.y)?;
+        let second_x = exact_grid_coordinate(second.x)?;
+        let second_y = exact_grid_coordinate(second.y)?;
+        touches |= first_y == frontier_y || second_y == frontier_y;
+        if first_y == frontier_y && second_y == frontier_y {
+            let length = i64::try_from(first_x.abs_diff(second_x))
+                .map_err(|_| GeneralPolygonError::new("free-space frontier-contact overflow"))?;
+            contact = contact
+                .checked_add(length)
+                .ok_or_else(|| GeneralPolygonError::new("free-space frontier-contact overflow"))?;
+        }
+    }
+    Ok((contact, touches))
 }
 
 fn polygon_set_from_tree(tree: &PolyTree64) -> Result<PolygonSet, GeneralPolygonError> {
@@ -839,6 +1058,78 @@ mod tests {
             point(0.0, 4.0),
         ])
         .unwrap()
+    }
+
+    fn rectangle(min_x: f64, min_y: f64, max_x: f64, max_y: f64) -> PolygonSet {
+        PolygonSet::from_outer(vec![
+            point(min_x, min_y),
+            point(max_x, min_y),
+            point(max_x, max_y),
+            point(min_x, max_y),
+        ])
+        .unwrap()
+    }
+
+    #[test]
+    fn rectangular_free_space_reports_one_frontier_connected_empty_region() {
+        let topology =
+            PolygonSet::rectangular_free_space_topology(&[], 0.0, 0.0, 10.0, 10.0).unwrap();
+        assert_eq!(topology.input_vertices, 4);
+        assert_eq!(topology.output_vertices, 4);
+        assert_eq!(topology.regions.len(), 1);
+        assert_eq!(topology.regions[0].doubled_area_grid2, 200_000_000);
+        assert_eq!(topology.regions[0].frontier_contact_grid, 10_000);
+        assert!(!topology.regions[0].frontier_point_contact_only);
+    }
+
+    #[test]
+    fn rectangular_free_space_distinguishes_a_frontier_region_across_a_barrier() {
+        let barrier = rectangle(0.0, 4.0, 10.0, 6.0);
+        let topology =
+            PolygonSet::rectangular_free_space_topology(&[&barrier], 0.0, 0.0, 10.0, 10.0).unwrap();
+        assert_eq!(topology.regions.len(), 2);
+        assert_eq!(topology.regions[0].doubled_area_grid2, 80_000_000);
+        assert_eq!(topology.regions[0].frontier_contact_grid, 10_000);
+        assert_eq!(topology.regions[1].doubled_area_grid2, 80_000_000);
+        assert_eq!(topology.regions[1].frontier_contact_grid, 0);
+    }
+
+    #[test]
+    fn rectangular_free_space_retains_an_enclosed_vacancy_component() {
+        let left = rectangle(3.0, 3.0, 4.0, 7.0);
+        let right = rectangle(6.0, 3.0, 7.0, 7.0);
+        let bottom = rectangle(3.0, 3.0, 7.0, 4.0);
+        let top = rectangle(3.0, 6.0, 7.0, 7.0);
+        let topology = PolygonSet::rectangular_free_space_topology(
+            &[&left, &right, &bottom, &top],
+            0.0,
+            0.0,
+            10.0,
+            10.0,
+        )
+        .unwrap();
+        assert_eq!(topology.regions.len(), 2);
+        assert_eq!(topology.regions[0].doubled_area_grid2, 168_000_000);
+        assert_eq!(topology.regions[0].frontier_contact_grid, 10_000);
+        assert_eq!(topology.regions[1].doubled_area_grid2, 8_000_000);
+        assert_eq!(topology.regions[1].frontier_contact_grid, 0);
+    }
+
+    #[test]
+    fn frontier_contact_distinguishes_a_point_from_a_segment() {
+        let point_only = vec![
+            Point64::new(0.0, 0.0, 0.0),
+            Point64::new(5_000.0, 10_000.0, 0.0),
+            Point64::new(10_000.0, 0.0, 0.0),
+        ];
+        let segment = vec![
+            Point64::new(0.0, 0.0, 0.0),
+            Point64::new(0.0, 10_000.0, 0.0),
+            Point64::new(10_000.0, 10_000.0, 0.0),
+            Point64::new(10_000.0, 0.0, 0.0),
+        ];
+        assert_eq!(frontier_contact(&point_only, 10_000).unwrap(), (0, true));
+        assert_eq!(frontier_contact(&segment, 10_000).unwrap(), (10_000, true));
     }
 
     #[test]
