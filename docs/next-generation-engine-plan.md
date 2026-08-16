@@ -429,3 +429,19 @@ constructed family about 35 mm above the 177.081 mm native floor. The next
 lever is therefore sub-bbox interlock at insertion time - negative contact
 rungs and polygon-profile stations that let exact confirmation, not the
 bbox overestimate, decide how deep a piece may nest.
+
+Four constructor variants were then measured against the 271.716 mm v1
+baseline on the identical protocol (target 320, pinned b9335a72 anchor).
+Negative interlock rungs below the box top (278.312 mm) displace productive
+confirmation rows with poses the exact gate almost always rejects. Free
+lookahead piece selection (315.407 mm) is a pathology: under a
+frontier-first key the beam defers every large piece into the saturated
+endgame, where three of four restarts fail even the 320 mm audit.
+Fallback-gated lookahead (276.857 mm) still loses: deferral without a
+debt term degrades the layer structure even when limited to shelf-only
+ranks. Only capacity scaling helped: a six-slot beam reaches 270.288 mm
+(-1.428 mm) and is retained. The order-side hypothesis family is closed;
+the binding constraint is pose quality - the bounding-box skyline never
+proposes interlock poses, and only a polygon-profile skyline or NFP-grade
+contact generation at insertion can. That is the constructor's next
+structural increment.
