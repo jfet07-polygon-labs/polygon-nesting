@@ -3153,19 +3153,48 @@ fn skyline_hint_stations(
     let column_width = usable / CONSTRUCTION_SKYLINE_COLUMNS as f64;
     let last_column = CONSTRUCTION_SKYLINE_COLUMNS - 1;
     let mut tops = vec![inset; CONSTRUCTION_SKYLINE_COLUMNS];
+    let column_of = |x: f64| -> usize {
+        (((x - inset) / column_width).floor().max(0.0) as usize).min(last_column)
+    };
     for (index, collision) in state.collisions.iter().enumerate() {
         if !state.active[index] {
             continue;
         }
-        let Some(bounds) = collision.as_ref().and_then(|collision| collision.bounds()) else {
+        let Some(collision) = collision.as_ref() else {
             continue;
         };
-        let first =
-            (((bounds.min_x - inset) / column_width).floor().max(0.0) as usize).min(last_column);
-        let last =
-            (((bounds.max_x - inset) / column_width).floor().max(0.0) as usize).min(last_column);
-        for top in tops.iter_mut().take(last + 1).skip(first) {
-            *top = top.max(bounds.max_y);
+        // Real-polygon profile instead of the bounding box: every boundary
+        // vertex raises its own column, and every edge raises the columns
+        // whose centers it crosses at the interpolated height. The station
+        // tops then sit on the true material profile, which is at or below
+        // the box top everywhere - so the ranked candidates start closer to
+        // any interlock pocket and the drop ladder finishes the descent.
+        for region in collision.regions() {
+            let points = region.outer.source_points();
+            for index in 0..points.len() {
+                let first = points[index];
+                let second = points[(index + 1) % points.len()];
+                let first_column = column_of(first.x);
+                tops[first_column] = tops[first_column].max(first.y);
+                let (low_x, high_x) = if first.x <= second.x {
+                    (first.x, second.x)
+                } else {
+                    (second.x, first.x)
+                };
+                let low_column = column_of(low_x);
+                let high_column = column_of(high_x);
+                if high_column > low_column && (second.x - first.x).abs() > f64::EPSILON {
+                    for column in low_column..=high_column {
+                        let center = inset + (column as f64 + 0.5) * column_width;
+                        if center < low_x || center > high_x {
+                            continue;
+                        }
+                        let t = (center - first.x) / (second.x - first.x);
+                        let y = first.y + t * (second.y - first.y);
+                        tops[column] = tops[column].max(y);
+                    }
+                }
+            }
         }
     }
     let window = ((required_width_mm / column_width).ceil().max(1.0) as usize)
