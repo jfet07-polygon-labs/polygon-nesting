@@ -38,5 +38,62 @@
   "engineCommit": "ae262c9decc5f0c76a8fe3a0afa19bf2a224c2a9",
   "toolchain": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
   "settingsArgs": "<runs> 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 20 tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json 320.0",
-  "conclusion": "The constructor produces complete exact-valid dual-gate layouts from an empty sheet in 12 seconds, deterministically (runs=2 identical). Its basins carry two orders of magnitude more recoverable slack than pipeline basins (59.982 mm vs 0.3-0.6 mm machinery yield), converging at 211.734 mm: the constructor+descent pipeline works end to end but the bbox-level skyline loses the non-convex star interlocking (~35 mm above the pipeline native floor). Next measured lever: sub-bbox interlock candidates at insertion (negative contact rungs / polygon-profile stations)."
+  "conclusion": "The constructor produces complete exact-valid dual-gate layouts from an empty sheet in 12 seconds, deterministically (runs=2 identical). Its basins carry two orders of magnitude more recoverable slack than pipeline basins (59.982 mm vs 0.3-0.6 mm machinery yield), converging at 211.734 mm: the constructor+descent pipeline works end to end but the bbox-level skyline loses the non-convex star interlocking (~35 mm above the pipeline native floor). Next measured lever: sub-bbox interlock candidates at insertion (negative contact rungs / polygon-profile stations). Iteration update: beam-6 (202.204) and exact drop-settle at insertion (constructor 229.121, endpoint 201.626) confirm that constructor quality propagates through descent nearly 1:1; order-side and candidate-tuning families are closed by measurement.",
+  "iterations": [
+    {
+      "constructor": "v1 beam-4 (commit ae262c9)",
+      "constructorDepthMm": 271.716,
+      "descentEndpointMm": 211.734,
+      "yieldMm": 59.982,
+      "artifacts": "(this directory root)"
+    },
+    {
+      "constructor": "beam-6 (commit a77c13b/8771367)",
+      "constructorDepthMm": 270.288,
+      "descentEndpointMm": 202.204,
+      "yieldMm": 68.084,
+      "artifacts": "beam6/"
+    },
+    {
+      "constructor": "drop-settle (commit 6be742d)",
+      "constructorDepthMm": 229.121,
+      "descentEndpointMm": 201.626,
+      "yieldMm": 27.495,
+      "artifacts": "drop-settle/"
+    }
+  ],
+  "rejectedVariants": [
+    {
+      "variant": "negative interlock rungs",
+      "constructorDepthMm": 278.312
+    },
+    {
+      "variant": "free lookahead piece selection",
+      "constructorDepthMm": 315.407
+    },
+    {
+      "variant": "fallback-gated lookahead",
+      "constructorDepthMm": 276.857
+    },
+    {
+      "variant": "stars-first vertex-count order",
+      "constructorDepthMm": 267.256,
+      "note": "kept in the 8-order portfolio for descent diversity, never wins"
+    },
+    {
+      "variant": "five hint stations",
+      "publishedDepthMm": 237.019,
+      "note": "row-budget dilution"
+    },
+    {
+      "variant": "25.6mm deep drop rung",
+      "publishedDepthMm": 235.625,
+      "note": "row waste per finalist"
+    },
+    {
+      "variant": "modes 19/17/11 remodel on 211.734",
+      "result": "zero acceptances over 12 salted stalls: constructed basins are operator-locked"
+    }
+  ],
+  "engineCommitLatest": "261bb73b129c7a90b4504a06a34f7775173a5471"
 }
