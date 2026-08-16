@@ -63,7 +63,7 @@ const CONSTRUCTION_RESTARTS: usize = 8;
 const CONSTRUCTION_BEAM_WIDTH: usize = 6;
 const CONSTRUCTION_HINT_STATIONS: usize = 3;
 const CONSTRUCTION_HINT_PRIORS: usize = 2;
-const CONSTRUCTION_ROWS_PER_PIECE: usize = 160;
+const CONSTRUCTION_ROWS_PER_PIECE: usize = 224;
 const CONSTRUCTION_SHELF_ROWS: usize = 24;
 const CONSTRUCTION_FINALISTS_PER_SLOT: usize = 4;
 const CONSTRUCTION_BEAM_CHILDREN_PER_PARENT: usize = 2;
@@ -3464,21 +3464,117 @@ fn construct_candidate_poses(
         else {
             continue;
         };
-        // Exact drop-settle: descend the confirmed pose along the REAL
-        // polygons with a geometric ladder plus two bisection refinements,
-        // stopping at the first contact. This is the sub-bbox interlock
-        // generator: the skyline proposes at the box top, the drop lets the
-        // exact gate carry the piece past it into any pocket the true
-        // profiles admit, and every subsequent piece builds on the settled
-        // profile.
-        let mut settled_pose = candidate.clone();
-        let mut settled_collision = collision;
-        let mut last_valid_drop = 0.0f64;
-        let mut first_invalid_drop = None;
-        for delta in CONSTRUCTION_DROP_LADDER_MM {
-            let mut probe = candidate.clone();
-            probe.translate_y = snap_mm(candidate.translate_y - delta);
-            rows += 1;
+        // Exact bottom-left settle: drop the confirmed pose to first
+        // contact along the REAL polygons, slide it left to contact, then
+        // drop once more. The skyline proposes at the box top; these
+        // directional contact pushes let the exact gate carry the piece
+        // past the box into any pocket the true profiles admit, and every
+        // subsequent piece builds on the settled profile. Each push starts
+        // from an already-valid pose, so every charged row has high yield.
+        let (dropped_pose, dropped_collision) = construction_slide(
+            pieces,
+            work_settings,
+            parent,
+            piece_index,
+            candidate.clone(),
+            collision,
+            (0.0, -1.0),
+            inset,
+            &mut rows,
+            construction,
+            work,
+        )?;
+        let (slid_pose, slid_collision) = construction_slide(
+            pieces,
+            work_settings,
+            parent,
+            piece_index,
+            dropped_pose,
+            dropped_collision,
+            (-1.0, 0.0),
+            inset,
+            &mut rows,
+            construction,
+            work,
+        )?;
+        let (settled_pose, settled_collision) = construction_slide(
+            pieces,
+            work_settings,
+            parent,
+            piece_index,
+            slid_pose,
+            slid_collision,
+            (0.0, -1.0),
+            inset,
+            &mut rows,
+            construction,
+            work,
+        )?;
+        if is_shelf {
+            construction.shelf_finalists = construction.shelf_finalists.saturating_add(1);
+        }
+        finalists.push((settled_pose, Arc::new(settled_collision), zero_prior));
+    }
+    Ok(finalists)
+}
+
+/// Maximal-contact push: translates an already-valid pose along one axis
+/// direction with the geometric ladder plus two bisection refinements,
+/// stopping at the first exact contact, and returns the furthest valid
+/// (pose, collision). Every attempt is a charged confirmation row.
+#[allow(clippy::too_many_arguments)]
+fn construction_slide(
+    pieces: &[GeneralFastPiece<'_>],
+    work_settings: GeneralFastSettings,
+    parent: &VacancyState,
+    piece_index: usize,
+    start_pose: RelaxedPlacement,
+    start_collision: PolygonSet,
+    direction: (f64, f64),
+    inset: f64,
+    rows: &mut usize,
+    construction: &mut GeneralPersistentVacancyConstructionDiagnostics,
+    work: &mut RunWork,
+) -> Result<(RelaxedPlacement, PolygonSet), String> {
+    let mut settled_pose = start_pose.clone();
+    let mut settled_collision = start_collision;
+    let mut last_valid = 0.0f64;
+    let mut first_invalid = None;
+    for delta in CONSTRUCTION_DROP_LADDER_MM {
+        let mut probe = start_pose.clone();
+        probe.translate_x = snap_mm(start_pose.translate_x + delta * direction.0);
+        probe.translate_y = snap_mm(start_pose.translate_y + delta * direction.1);
+        *rows += 1;
+        match construction_confirm_row(
+            pieces,
+            work_settings,
+            parent,
+            piece_index,
+            &probe,
+            inset,
+            construction,
+            work,
+        )? {
+            Some(pushed) => {
+                settled_pose = probe;
+                settled_collision = pushed;
+                last_valid = delta;
+            }
+            None => {
+                first_invalid = Some(delta);
+                break;
+            }
+        }
+    }
+    if let Some(invalid) = first_invalid {
+        let mut low = last_valid;
+        let mut high = invalid;
+        for _ in 0..2 {
+            let mid = (low + high) * 0.5;
+            let mut probe = start_pose.clone();
+            probe.translate_x = snap_mm(start_pose.translate_x + mid * direction.0);
+            probe.translate_y = snap_mm(start_pose.translate_y + mid * direction.1);
+            *rows += 1;
             match construction_confirm_row(
                 pieces,
                 work_settings,
@@ -3489,52 +3585,18 @@ fn construct_candidate_poses(
                 construction,
                 work,
             )? {
-                Some(dropped) => {
+                Some(pushed) => {
                     settled_pose = probe;
-                    settled_collision = dropped;
-                    last_valid_drop = delta;
+                    settled_collision = pushed;
+                    low = mid;
                 }
                 None => {
-                    first_invalid_drop = Some(delta);
-                    break;
+                    high = mid;
                 }
             }
         }
-        if let Some(invalid) = first_invalid_drop {
-            let mut low = last_valid_drop;
-            let mut high = invalid;
-            for _ in 0..2 {
-                let mid = (low + high) * 0.5;
-                let mut probe = candidate.clone();
-                probe.translate_y = snap_mm(candidate.translate_y - mid);
-                rows += 1;
-                match construction_confirm_row(
-                    pieces,
-                    work_settings,
-                    parent,
-                    piece_index,
-                    &probe,
-                    inset,
-                    construction,
-                    work,
-                )? {
-                    Some(dropped) => {
-                        settled_pose = probe;
-                        settled_collision = dropped;
-                        low = mid;
-                    }
-                    None => {
-                        high = mid;
-                    }
-                }
-            }
-        }
-        if is_shelf {
-            construction.shelf_finalists = construction.shelf_finalists.saturating_add(1);
-        }
-        finalists.push((settled_pose, Arc::new(settled_collision), zero_prior));
     }
-    Ok(finalists)
+    Ok((settled_pose, settled_collision))
 }
 
 /// One exact confirmation row: charges the finalist-row budget, builds the
@@ -6556,7 +6618,7 @@ mod tests {
         assert_eq!(CONSTRUCTION_BEAM_WIDTH, 6);
         assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 8 * 6 * 61);
         assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 2_928);
-        assert_eq!(CONSTRUCTION_ROWS_PER_PIECE, 160);
+        assert_eq!(CONSTRUCTION_ROWS_PER_PIECE, 224);
         assert_eq!(
             CONSTRUCTION_HINT_PRIORS * CONSTRUCTION_SELECTED_PIECE_SLOTS,
             5_856
@@ -6591,7 +6653,7 @@ mod tests {
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 2_928 * 160
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 2_928 * 224
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -6610,7 +6672,7 @@ mod tests {
                     + 122 * 192
                     + 73 * 61 * 64
                     + 4_040 * 192
-                    + 2_928 * 160)
+                    + 2_928 * 224)
                 + 122
                 + 4_040
                 + 2 * 2_928
@@ -6624,7 +6686,7 @@ mod tests {
                     + 122 * 192
                     + 73 * 61 * 64
                     + 4_040 * 192
-                    + 2_928 * 160)
+                    + 2_928 * 224)
                     * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
