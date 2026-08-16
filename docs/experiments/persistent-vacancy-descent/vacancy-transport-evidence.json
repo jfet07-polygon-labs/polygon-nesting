@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "experiment": "vacancy-transport-acceptance-evaluation",
+  "recordedAtUtc": "2026-08-16T00:00:00Z",
+  "suggestion": "reframe the search around routing free-space pockets: trapped-void raster as the acceptance signal, post-endpoint settling to convert drained voids into measurable progress",
+  "verdict": "mechanism CONFIRMED, outcome NEGATIVE at the evaluated scales",
+  "mechanismEvidence": {
+    "trappedVoidKey": "2 mm raster, four-connected flood fill from the above-frontier band, middle component of the lexicographic acceptance key (guidance only; validity stays with the exact gates)",
+    "postEndpointSettle": "one diagonal settle sweep pulls shelved pieces into drained voids before the key is measured; without it no endpoint ever entered any wander tolerance, with it wander engaged (up to 3 wandered rounds per hop)",
+    "walkTabu": "within-walk fingerprint memory breaks intra-walk limit cycles",
+    "targetSaltedMultiStart": "the target grid value salts the walk seed, giving replayable distinct walks from the same parent"
+  },
+  "outcomeEvidence": {
+    "limitCycle": "the first sixty-hop chain settled into a deterministic cross-hop cycle of three wander states with the frontier unmoved (limit-cycle-chain.log)",
+    "multiStart": "after three productive hops, twenty salted restarts times twenty-four rounds each - roughly 480 diverse feasible non-monotone rearrangements - were all rejected by the (frontier, trapped-voids, depth-sum) acceptance even with tolerances; every output equalled its parent (multi-start-chain.log)",
+    "conclusion": "the 166031-grid frontier basin of the settled incumbent is profoundly stable under neighborhood ruins up to K=24; endpoint diversity is no longer the binding constraint, endpoint QUALITY under any static acceptance key is"
+  },
+  "artifacts": {
+    "singleRun": {
+      "path": "docs/experiments/persistent-vacancy-descent/vacancy-transport/mode17-fixpoint-single-run.json",
+      "sha256": "b7a1ddd9db3d7e08a551517940600bc315c9608f26437ee20dc9503902abcef4"
+    },
+    "limitCycleLog": {
+      "path": "docs/experiments/persistent-vacancy-descent/vacancy-transport/limit-cycle-chain.log",
+      "sha256": "a3a459543cd081841de16a190ecccc5d902196517007d4ba8a6318aac891cbe6"
+    },
+    "multiStartLog": {
+      "path": "docs/experiments/persistent-vacancy-descent/vacancy-transport/multi-start-chain.log",
+      "sha256": "e84e88cf6f7abfb38a9eb71fac0afe1a91c4ea3bf1db77c31f39c8f073b8f489"
+    }
+  },
+  "nextLevers": "population of parents over salted-walk endpoints held in the existing archive (breadth instead of a single trajectory), larger ruin neighborhoods (K beyond 24 with funding), and separator-guided endpoint generation; all inside the elitism-protected accepted-round framework"
+}

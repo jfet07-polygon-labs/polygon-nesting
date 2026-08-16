@@ -1,0 +1,24 @@
+hop 0: t=168.600 168.275 acc=2 wander=1 frontier=166031 fresh=True
+hop 1: t=168.600 168.275 acc=1 wander=1 frontier=166031 fresh=True
+hop 2: t=168.600 168.275 acc=1 wander=0 frontier=166031 fresh=True
+hop 3: t=168.600 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.601 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.602 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.603 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.604 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.605 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.606 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.607 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.608 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.609 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.610 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.611 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.612 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.613 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.614 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.615 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.616 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.617 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.618 168.275 acc=0 wander=0 frontier=166031 fresh=False
+hop 3: t=168.619 168.275 acc=0 wander=0 frontier=166031 fresh=False
+BEST: 168.275
