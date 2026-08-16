@@ -165,10 +165,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if persistent_vacancy_mode > 21 {
-        return Err("persistent vacancy mode must be between 0 and 21".into());
+    if persistent_vacancy_mode > 23 {
+        return Err("persistent vacancy mode must be between 0 and 23".into());
     }
     let persistent_vacancy_parent_fixture = arguments.next();
+    // Modes 22 (alternation fixpoint) and 23 (recombination) reinterpret
+    // this argument: mode 22 treats it as the starting target depth (mm)
+    // for the descent arm; mode 23 treats it as a scale-free cut fraction
+    // in (0, 1) of parent A's own measured short-axis span. Every other
+    // mode treats it as an absolute target depth (mm), unchanged.
     let persistent_vacancy_target_depth_mm = arguments
         .next()
         .map(|value| value.parse::<f64>())
@@ -178,7 +183,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // replace the short-side-first construction as the incumbent handed to
     // the relaxed engine, so the legacy continuous separator explores from
     // an externally constructed complete layout. Absent, behavior is
-    // byte-identical to the protected default.
+    // byte-identical to the protected default. Mode 23 (recombination) also
+    // reuses this same fixture as parent B for the crossover.
     let warm_start_fixture_path = arguments.next();
     if runs == 0 || arguments.next().is_some() {
         return Err("runs must be positive and no extra arguments are accepted".into());
@@ -371,6 +377,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     relaxed_settings,
                     &constructed,
                     pinned_vacancy_parent.as_ref(),
+                    warm_start_incumbent.as_ref().map(|(parent, _)| parent),
                 )?;
                 Ok((
                     outcome.result,
