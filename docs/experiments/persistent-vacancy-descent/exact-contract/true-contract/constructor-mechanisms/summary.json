@@ -1,0 +1,52 @@
+{
+  "experiment": "three mode-20 constructor mechanisms, implemented in parallel isolated worktrees (workflow wf_4e65b4b5-a24, sonnet agents), band-measured on salts 320.000-320.007 against the HEAD control and endpoint-screened after full pv26 descent with the HEAD binary",
+  "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+  "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+  "controlBandHead": {
+    "salts": ["320.000","320.001","320.002","320.003","320.004","320.005","320.006","320.007"],
+    "constructionDepthMm": [206.869, 197.328, 207.117, 198.427, 201.097, 205.061, 205.139, 198.008],
+    "min": 197.328, "median": 203.079,
+    "descentEndpointsMm": [195.993, 194.010, 202.473, 194.010, 192.004, 194.184, 185.899, 188.432],
+    "bestEndpoint": 185.899
+  },
+  "variants": {
+    "gap-stations": {
+      "worktreeCommit": "25d01068ff7eb3ddf51f137175f3973a9e0cc4b4",
+      "bandDepthMm": [208.966, 211.297, 206.777, 203.435, 207.608, 208.780, 204.477, 203.231],
+      "min": 203.231, "median": 207.193,
+      "endpointScreen": {
+        "salts": ["320.001","320.003","320.006","320.007"],
+        "variantEndpointsMm": [202.381, 191.653, 196.280, 194.010],
+        "controlEndpointsMm": [194.010, 194.010, 185.899, 188.432],
+        "tally": "1 better / 3 worse"
+      },
+      "verdict": "REJECTED - band worse on every salt AND endpoints worse 1-3"
+    },
+    "mating-orientation-prior": {
+      "worktreeCommit": "841a5e3ec6b374694ac9b4ca559f7d50f250a13c",
+      "bandDepthMm": [204.963, 203.147, 202.995, 203.654, 207.441, 203.577, 199.093, 199.936],
+      "min": 199.093, "median": 203.362,
+      "endpointScreen": {
+        "salts": ["320.002","320.004","320.006","320.007"],
+        "variantEndpointsMm": [195.273, 186.936, 191.635, 190.010],
+        "controlEndpointsMm": [202.473, 192.004, 185.899, 188.432],
+        "tally": "2 better / 2 worse"
+      },
+      "verdict": "NEUTRAL, not adopted - band slightly worse, endpoints mixed 2-2 within noise. Its best endpoint (186.936, salt 320.004) fed two alternation chains that both landed on the 179.006 structural plateau as independent layouts (see plateau-179.006/), so the variant contributed basin diversity even though the mechanism itself was not adopted."
+    },
+    "pocket-refill": {
+      "worktreeCommit": "3a62e7640fdaaf7f1c816c7657cd256ccd4c2ada",
+      "bandDepthMm": [206.869, 197.328, 207.117, 198.427, 201.097, 205.061, 205.139, 198.008],
+      "min": 197.328, "median": 203.079,
+      "refillCounters": {
+        "attempts": [545, 14, 30, 1241, 187, 116, 27, 67],
+        "confirms": [0, 10, 0, 15, 5, 0, 19, 0],
+        "passthroughs": [0, 0, 0, 6, 0, 0, 0, 0]
+      },
+      "outputIdentity": "final placements verified 61/61 identical to the HEAD control construction on ALL 8 salts (including 320.003 with 15 confirms and 6 passthroughs) - refill-bearing beam children never survive final beam selection",
+      "endpointScreen": "unnecessary - constructions identical to control, descents would be identical",
+      "verdict": "NOT ADOPTED as-is - mechanism is real (fires on 4/8 salts, up to 19 confirmed coordinated two-piece insertions) but the children carrying fillers always rank below filler-free children at final selection. Mechanism finding: trapped-void components in this concave-heavy fixture are rarely rectangular (median fill_ratio 0.47, max ~0.70), so a rigid bbox-anchored filler is a poor fit; when a refill does confirm, the resulting sealed layout scores worse than leaving the void open for later pieces."
+    }
+  },
+  "protocolNote": "bands measured by each agent with its own worktree binary (isolated CARGO_TARGET_DIR); endpoint screens ran the variant constructions through the unmodified HEAD pv26 descent driver so descent machinery is matched; gap-stations constructions were regenerated deterministically with the agent binary because raw outputs were not retained"
+}

@@ -1,0 +1,12 @@
+{
+  "finding": "179.006 mm is a structural attractor of the Mixed-61 exact-clearance instance: five independent from-scratch lines have now terminated at exactly this depth with mutually unrelated layouts",
+  "arrivals": [
+    {"id": "fs-fixpoint", "lineage": "original from-scratch alternation fixpoint (see from-scratch-179.006/)", "note": "first arrival; the salted-wave cascade later escaped it to 173.783 -> 172.861"},
+    {"id": "fs-second", "lineage": "second layout at 179.006 found during the original plateau analysis, 0/61 shared placements with fs-fixpoint (see from-scratch-179.006/summary.json)"},
+    {"id": "ex6alt2s1", "lineage": "HEAD salt 320.011 -> descent 190.010 -> alternation seed 1", "file": "layout-ex6alt2s1.json"},
+    {"id": "matalt-s0", "lineage": "mating-prior variant salt 320.004 -> descent 186.936 -> alternation seed 0", "file": "layout-matalt-s0.json"},
+    {"id": "matalt-s1", "lineage": "mating-prior variant salt 320.004 -> descent 186.936 -> alternation seed 1", "file": "layout-matalt-s1.json"}
+  ],
+  "verification": "the three new layouts are pairwise 0/61 shared placements (same 61 piece ids, placements compared at 3-decimal precision) and 0/61 against the archived fsalt chain states; orientation multisets are entirely different (e.g. matalt-s0 and matalt-s1 descend from the SAME parent layout with different seeds and still share zero placements). Both reported and independent depth are exactly 179.006 in every case.",
+  "exploitation": "multiple independent layouts at the same locked depth multiply salted-wave escape tickets. 12 wave chains (3 new layouts x seeds 2-5) produced exactly one escape: ex6alt2s1 + seed 3, where the separator arm jumped 179.006 -> 171.568 in a single pass. See from-scratch-171.238/."
+}

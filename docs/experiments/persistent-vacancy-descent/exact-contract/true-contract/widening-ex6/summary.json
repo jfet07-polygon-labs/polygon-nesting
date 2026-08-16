@@ -1,0 +1,22 @@
+{
+  "experiment": "constructor widening: 16 fresh HEAD mode-20 salts (320.008-320.023) -> pv26 descent -> alternation hybrid on the best 3 endpoints x seeds {0,1}",
+  "constructions": {
+    "saltRange": "320.008-320.023",
+    "depthRangeMm": [198.791, 209.910],
+    "note": "band consistent with the 320.000-320.007 control band (197.3-207.1); widening did not surface a better construction regime"
+  },
+  "descents": {
+    "best3": [
+      {"salt": "320.022", "constructed": 201.232, "endpoint": 186.143},
+      {"salt": "320.017", "constructed": 200.186, "endpoint": 188.185},
+      {"salt": "320.011", "constructed": 202.275, "endpoint": 190.010}
+    ],
+    "note": "186.143 is the best fresh-construction descent endpoint measured to date (previous best 185.899 from the control band)"
+  },
+  "alternations": {
+    "ex6alt0 (186.143)": {"s0": 180.614, "s1": 179.632},
+    "ex6alt1 (188.185)": {"s0": 180.010, "s1": 179.633},
+    "ex6alt2 (190.010)": {"s0": 180.010, "s1": 179.006}
+  },
+  "outcome": "no direct new from-scratch best from the widening itself: all six alternations funnel into the 179.0-180.6 shelf. But ex6alt2s1 landed EXACTLY on 179.006 as a new independent plateau layout, and the salted wave launched from that layout (seed 3) broke through to 171.238 - see from-scratch-171.238/"
+}

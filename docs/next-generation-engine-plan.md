@@ -830,3 +830,55 @@ best+1.6 and best+3.2 instead of +0.8, admitting deeper non-monotonic
 detours before reconvergence) while the three constructor mechanisms
 build in parallel worktrees. Evidence:
 docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/from-scratch-172.861/.
+
+The wide-rung experiment is a matched negative and the three
+constructor mechanisms return their verdicts. Wide rungs (+1.6/+3.2)
+leave both locked states untouched across six chains (164.470 x2,
+172.861 x4): the locks are structural, not rung-width artifacts.
+Constructor mechanisms, each implemented by an isolated-worktree agent
+and measured band + descent-endpoint against the HEAD control:
+gap-stations REJECTED (band worse on every salt, endpoints 1-3
+against); mating-orientation-prior NEUTRAL and not adopted (band
+slightly worse, endpoints 2-2 within noise) though its best endpoint
+seeded useful basin diversity; pocket-refill NOT ADOPTED in its
+current form but instructive - the coordinated two-piece insertion is
+real (fires on 4/8 salts, up to 19 confirmed refills, honest
+diagnostics counters) yet its filler-bearing beam children never
+survive final selection, and the final constructions are verified
+61/61 placement-identical to control on all 8 salts. The trapped
+voids of this concave-heavy instance are simply too irregular for a
+rigid bbox-anchored filler (median fill ratio 0.47). Meta-lesson
+reconfirmed: band-level neutrality can still contribute (mating's
+186.936 endpoint), and a mechanism can work exactly as designed and
+still lose to the incumbent ranking. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/{wide-rung-negative,constructor-mechanisms}/.
+
+The 179.006 plateau reveals itself as a five-fold structural attractor
+and hands the from-scratch line its next break: 171.238 mm. The
+16-salt widening (320.008-320.023) stays inside the known band and
+its six alternations all funnel into the 179.0-180.6 shelf - but one
+lands EXACTLY on 179.006, and both alternations from the mating
+variant's 186.936 endpoint do the same, giving five independent
+layouts (pairwise 0/61 shared placements) at the identical depth.
+Exploiting the multiplicity: salted waves from the three new plateau
+layouts (12 chains) produce exactly one escape - ex6alt2s1 + seed 3,
+where the separator arm itself jumps 179.006 -> 171.568 in a single
+warm-started pass (the first separator-driven plateau break; all
+prior escapes came from salted descent targets) and the descent arm
+settles a 171.238 fixpoint, independently replay-validated
+(exactValid, 171.238). Full from-scratch lineage: salt 320.011 ->
+202.275 -> descent 190.010 -> alternation 179.006 -> wave 171.238.
+The from-scratch line is now 3.0 mm from the 168-family acceptance
+criterion; the cascade continues from 171.238. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/{widening-ex6,plateau-179.006,from-scratch-171.238}/.
+
+Wave 2 of the new cascade improves on all four seeds and the
+from-scratch line breaks below 170: 169.731 mm. From the 171.238
+state, seeds 0/1/2/4 return 170.317 / 170.221 / 169.731 / 170.010 -
+a second all-seeds-productive state, mirroring 173.783. The winning
+chain is genuine two-arm alternation over two full cycles (separator
+171.238 -> 170.119, descent -> 170.010, separator -> 169.831,
+descent -> 169.731). The from-scratch line now stands 1.5 mm from the
+168-family acceptance criterion, entirely inside the honest contract
+and entirely from HEAD code; wave 3 runs from 169.731. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/from-scratch-169.731/.

@@ -1,0 +1,14 @@
+{
+  "milestone": "from-scratch best 169.731 mm on the true 5.0/5.0 exact-clearance contract - the from-scratch line breaks below 170",
+  "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+  "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+  "wave": "salted wave from the 171.238 state (seeds 0,1,2,4, logs in wave-171.238/): ALL FOUR seeds improved - 170.317 (s0), 170.221 (s1), 169.731 (s2), 170.010 (s4). An unusually productive state, mirroring the 173.783 wave that improved on all seeds.",
+  "winningChain": "seed 2 alternated productively over two full cycles, both arms contributing: separator 171.238 -> 170.119, descent -> 170.010, separator -> 169.831, descent -> 169.731, fixpoint at cycle 2",
+  "pinnedParent": {
+    "file": "pinned-parent-169.731.json",
+    "reportedDepthMm": 169.731,
+    "independentDepthMm": 169.731
+  },
+  "lineage": "salt 320.011 -> 202.275 -> descent 190.010 -> alternation 179.006 (plateau) -> wave seed 3 -> 171.238 -> wave seed 2 -> 169.731",
+  "status": "cascade continuing: next wave (seeds 0,1,3,4) launched from this state; 1.5 mm from the 168-family acceptance criterion, 5.3 mm from the imported-line record 164.470"
+}

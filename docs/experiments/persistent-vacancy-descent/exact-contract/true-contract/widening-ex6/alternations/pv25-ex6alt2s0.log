@@ -1,0 +1,6 @@
+cycle 0: separator -> 180.225
+cycle 0: descent -> 180.010
+cycle 1: separator -> 180.010
+cycle 1: descent -> 180.010
+cycle 1: fixpoint at 180.010
+ALTERNATION BEST: 180.010

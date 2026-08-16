@@ -1,0 +1,23 @@
+{
+  "milestone": "new from-scratch best on the true 5.0/5.0 exact-clearance contract: 171.238 mm (previous from-scratch best 172.861, absolute imported-line record 164.470)",
+  "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+  "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+  "lineage": [
+    "HEAD mode-20 constructor, salt 320.011 -> constructed 202.275",
+    "pv26 descent -> 190.010",
+    "alternation hybrid seed 1 (ex6alt2s1) -> 179.006 structural plateau (independent layout, 0/61 shared with all prior plateau arrivals)",
+    "salted wave seed 3 (pwas3): separator arm jumped 179.006 -> 171.568 in a single warm-started pass, descent arm -> 171.238, fixpoint at cycle 1"
+  ],
+  "waveStatistics": "12 chains total (3 independent plateau layouts x seeds 2-5, logs in plateau-waves/): 11 chains returned the 179.006 incumbent, 1 escaped. The escape came from the separator arm, the first separator-driven plateau break observed (previous escapes came from salted descent targets).",
+  "pinnedParent": {
+    "file": "pinned-parent-171.238.json",
+    "reportedDepthMm": 171.238,
+    "independentDepthMm": 171.238
+  },
+  "replayRevalidation": {
+    "file": "replay-revalidation.json",
+    "method": "HEAD binary, mode 11, warm-start from the pinned parent, target 172.038 (= 171.238 + 0.8)",
+    "result": "exactValid true, independentDepthMm 171.238. The hop landed on an equal-depth sibling layout (parentFingerprint 734aa0d87cc54107..., finalFingerprint 7cdaa1191411e2b9...) - no improvement, depth independently confirmed at 171.238."
+  },
+  "status": "cascade continuing: salted wave (seeds 0,1,2,4) launched from this state; gap to the 168-family acceptance criterion is now 3.0 mm, gap to the imported-line record 6.8 mm"
+}
