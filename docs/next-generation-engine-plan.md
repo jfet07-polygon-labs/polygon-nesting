@@ -525,3 +525,17 @@ The next increment is the matched-arm bridge-relocation operator (mode 21):
 removal-set selection by maximal vacancy reconnection instead of frontier
 depth, identical budgets and seeds against the mode-17 control, promotion
 only on an independently validated complete improvement.
+
+The band-wide batch descent sets a new constructed-line record and returns
+an honest negative on the pre-registered predictor. Eight profile basins
+descended: salt 3 (214.251, 5 sealed-void cells) reaches 190.737 mm with
+the largest yield the machinery has ever produced (23.514 mm), beating the
+191.572 record; salts 15/12/10/1 land 193.969/194.580/197.238/195.260 and
+salts 7/4/11 trail at 201.3-202.7. The pre-registered prediction - sealed
+voids suppress yield - is NOT confirmed: low-void basins average more
+yield (18.0 vs 15.3 mm) but salt 12 (822 cells, 21.1 mm) and salt 7 (34
+cells, 11.7 mm) break the pattern in both directions. Neither constructor
+depth nor sealed-void count predicts endpoint quality; band-wide descent
+remains the correct harvest protocol, and the record chain (all artifacts
+under profile-harvest/salt3-record/) is the program's new reference at
+190.737 mm.
