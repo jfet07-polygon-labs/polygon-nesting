@@ -578,3 +578,19 @@ every subsequent insertion builds on a compacted profile instead of
 leaving all compaction to the post-hoc descent. A deep-budget continuation
 of the record chain (salted stall budget tripled) runs alongside as the
 zero-code control on the same question.
+
+Two terminal verdicts close the day's second engineering round. Checkpoint
+settling inside construction is rejected by matched endpoints - every
+settled basin loses to its baseline twin after descent (209.756 vs
+197.233, 203.167 vs 190.737, 190.925 vs 189.363) even though the raw
+constructor improved: in-run compaction spends the very slack the descent
+machinery converts better, the fourth distinct form of the same lesson
+(the post-hoc machinery must be fed structure, not pre-chewed layouts).
+And the deep-budget continuation of the record chain is dry - thirty
+salted stalls without one acceptance from 189.363 - so the record stands
+as the terminal endpoint of the current constructor-plus-descent
+architecture. The measured next steps are pose-generation quality
+(NFP-grade contacts) or a structurally different exploration paradigm;
+both are engineering, and the ledger now carries every calibration a
+successor needs (typical band 213-218, endpoint tail floor 189-191,
+yield spread 5-27 unpredicted by any cheap observable).
