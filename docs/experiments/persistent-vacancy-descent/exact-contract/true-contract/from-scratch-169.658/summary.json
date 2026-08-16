@@ -1,0 +1,11 @@
+{
+  "milestone": "from-scratch best 169.658 mm, found by the sibling-multiplicity move and now fully lock-certified",
+  "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+  "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+  "siblingWaves": "after 169.731 locked, waves ran from the three sibling states of the 171.238 wave (170.317 / 170.221 / 170.010, seeds 2 and 5 each, logs in sibling-waves/): the 170.010 sibling + seed 2 dropped into a DIFFERENT basin at 169.658 (0.073 mm below the lock); 170.317 + seed 2 improved to 170.012; the rest returned incumbents. Near-equal-depth independent layouts multiply escape tickets one level below the 179.006 plateau exactly as they did at the plateau itself.",
+  "lockCertification": "seeds 0,1,3,4 all return the incumbent and both wide rungs (+1.6/+3.2) return the incumbent (logs in lock-certification/): 169.658 is seed-locked x4 (x5 counting producing seed 2) and wide-rung-locked, same protocol as 172.861 and 164.470",
+  "pinnedParent": {"file": "pinned-parent-169.658.json", "reportedDepthMm": 169.658, "independentDepthMm": 169.658},
+  "lineage": "salt 320.011 -> 202.275 -> descent 190.010 -> alternation 179.006 -> wave 171.238 -> wave sibling 170.010 -> 169.658",
+  "note": "the from-scratch deep shelf now holds two certified near-degenerate locked basins (169.658, 169.731) plus 170.012/170.010/170.221/170.317 and the two crossover basins 170.515/170.840 - structural multiplicity mirroring the 179.006 attractor",
+  "status": "1.4 mm from the 168-family acceptance criterion, 5.2 mm from the imported-line record"
+}

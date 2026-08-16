@@ -1,0 +1,17 @@
+{
+  "mechanism": "layout recombination (crossover): build a hybrid of two independent near-degenerate locked layouts by cutting the strip along the short axis (each piece takes its pose from parent A left of the cut, parent B right of it), legalize the seam overlaps with the warm-started legacy separator, then refine with the alternation hybrid. Implemented entirely with existing engine modes + the pv31 driver (pinned here).",
+  "parents": {
+    "A": "169.658 (from-scratch-169.658/pinned-parent-169.658.json)",
+    "B": "169.731 (from-scratch-169.731/pinned-parent-169.731.json)",
+    "sharedPlacements": "0/61"
+  },
+  "legalizationCosts": [
+    {"tag": "x1010ab", "cut": 1010, "direction": "A-left B-right", "fromLeft": 32, "legalizedDepthMm": 175.363},
+    {"tag": "x690ab",  "cut": 690,  "direction": "A-left B-right", "fromLeft": 19, "legalizedDepthMm": 178.172},
+    {"tag": "x1330ba", "cut": 1330, "direction": "B-left A-right", "fromLeft": 39, "legalizedDepthMm": 179.526},
+    {"tag": "x1010ba", "cut": 1010, "direction": "B-left A-right", "fromLeft": 31, "legalizedDepthMm": 181.281}
+  ],
+  "alternationsFromBestHybrid": {"x1010ab seed 0": 170.840, "x1010ab seed 1": 170.515},
+  "firstVerdict": "the seam costs 5.7-11.6 mm of legalization, but the best hybrid (midpoint cut, A-left) legalizes at 175.363 - 3.6 mm BELOW the 179.006 entry plateau every fresh from-scratch line must otherwise cross - and its alternations land directly in the deep shelf as two NEW basins (170.515 / 170.840, mixed-gene layouts). Crossover has not yet beaten the 169.658 best but is a cheaper basin-diversity generator than the full construct->descend->escape pipeline (2 benchmark runs vs a full 16-salt campaign). Refined cuts and waves from the hybrid basins are the follow-up.",
+  "note": "first attempt failed with a fixture-parse crash: the parent-fixture CLI slot must carry a STATE fixture (any valid one), not the request file - same trap class as the stale-binary incident"
+}

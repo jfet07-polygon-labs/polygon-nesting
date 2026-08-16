@@ -882,3 +882,31 @@ descent -> 169.731). The from-scratch line now stands 1.5 mm from the
 168-family acceptance criterion, entirely inside the honest contract
 and entirely from HEAD code; wave 3 runs from 169.731. Evidence:
 docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/from-scratch-169.731/.
+
+The deep shelf mirrors the plateau: sibling multiplicity yields
+169.658 and both new locks certify, while the record absorbs four
+more seeds. Wave 3 seed-locks 169.731; wide rungs confirm
+(+1.6/+3.2 both incumbent). The sibling move - waves from the three
+non-winning states of the 171.238 wave - drops the 170.010 sibling
+into a DIFFERENT basin at 169.658, which then certifies its own lock
+(4 seeds + both wide rungs). Two near-degenerate certified basins
+0.073 mm apart, plus four more layouts within 0.7 mm: the deep shelf
+has the same multiplicity structure as the 179.006 attractor, one
+level down. The imported record meanwhile survives seeds 4-7 (7-seed
+lock + wide rungs): the separator-escape lottery that broke the
+plateau does not fire in that basin. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/{from-scratch-169.731,from-scratch-169.658,record-164.470}/.
+
+Layout recombination (crossover) joins the mechanism roster: seam
+legalization costs 5.7-11.6 mm, but the best hybrid enters BELOW the
+plateau and mints new deep-shelf basins. Cutting the strip at the
+short-axis midpoint and taking the 169.658 layout's left half with
+the 169.731 layout's right half, the warm-started separator resolves
+the seam to an exact-valid 175.363 - beneath the 179.006 entry
+plateau - and alternations from it land at 170.515 / 170.840, two
+mixed-gene basins the constructor pipeline has never produced. As a
+basin-diversity generator this is two benchmark runs versus a
+16-salt campaign. Crossover has not yet beaten 169.658; refined cuts
+and waves from the hybrid basins run next, alongside a third
+16-salt widening. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/crossover-recombination/.

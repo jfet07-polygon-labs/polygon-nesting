@@ -1,0 +1,8 @@
+cycle 0: separator -> 172.092
+cycle 0: descent -> 171.392
+cycle 1: separator -> 171.037
+cycle 1: descent -> 170.515
+cycle 2: separator -> 170.515
+cycle 2: descent -> 170.515
+cycle 2: fixpoint at 170.515
+ALTERNATION BEST: 170.515
