@@ -480,3 +480,15 @@ no demonstrated value, and it spends confirmation rows. Two consequences
 are now explicit: cheap salt exploration is the correct way to harvest
 constructor luck, and any future variant must either beat the 215-218
 typical band systematically or beat 203.208 on the base salt to count.
+
+Three closures land together. The 191.572 mm record chain replayed
+end-to-end bit-exactly in an independent portfolio run (203.208
+construction and every descent hop identical). A typical-band basin
+(215.300, salt 3) descends to 202.502 mm, so seed luck is worth about
+11 mm at the endpoint and the descent yield is stable at 11-13 mm per
+constructed basin. And the 191.572 endpoint is operator-locked (band ruin,
+vacancy transport, and settle all accept nothing across twelve salted
+attempts), placing it in the same terminal class as every converged basin
+this program has produced. The polygon-profile skyline (committed) then
+shifts the typical constructor band from 215.8 to 214.3 median with best
+typical 211.297: the luck-harvest now runs on the strictly better family.
