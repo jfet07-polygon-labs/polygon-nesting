@@ -539,3 +539,17 @@ depth nor sealed-void count predicts endpoint quality; band-wide descent
 remains the correct harvest protocol, and the record chain (all artifacts
 under profile-harvest/salt3-record/) is the program's new reference at
 190.737 mm.
+
+The bridge operator's matched-arm verdict is negative and clean. Mode 21
+attacked both standing records (191.572 and the new 190.737) through the
+full salted ladder: the connectivity probe found and seeded a bridge piece
+in all twenty-four rounds of every attempt (1,488 scans per run, the
+structural cap exactly), and not one round was accepted on either state.
+Selection is not the binding constraint - no removal choice rescues the
+ruin-recreate family on a converged basin, which is now a four-way
+replicated result (frontier, band, remodel rotation, bridge). The
+articulation probe's reconnection signal is real but its legal-relocation
+premise fails: sealed vacancy stays sealed because no exact-valid
+relocation of the bridge piece exists within the operator budget. The
+program's productive direction stays constructor-side: the salt-tail
+harvest that produced 190.737 continues on wider screens.
