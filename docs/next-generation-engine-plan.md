@@ -1001,3 +1001,19 @@ variant (same budget slot) is deprioritized; next arms are the
 without touching publication - a direct probe at the dense binding
 fronts of the locked states) and the gradual overlap-tolerant
 compression operator.
+
+The search-envelope allowance probe closes with a two-sided finding:
+the 0.002 mm is one-quarter load-bearing, and the released slack is
+noise-scale. Below ~0.0005 mm the search envelope stops being a
+superset of the exact publication contract and even the constructor's
+own output is rejected fail-closed; at the measured floor both
+certified locks re-settle to contract-comparable exact-valid states
+exactly one slack-release deeper (167.846 / 164.465, identical
+orientations, max translation 0.023 mm, re-locked under 5 matched
+arms each). The allowance is now an explicit runtime parameter with
+the default unchanged. The micro-states are pinned as the numerically
+best published layouts, honestly labeled slack-release rather than
+search progress. With the local, ejective and envelope classes all
+measured out, the remaining open class is gradual overlap-tolerant
+compression under a clamped sheet - the separator constrained so it
+cannot relax depth-ward - which goes to implementation next.
