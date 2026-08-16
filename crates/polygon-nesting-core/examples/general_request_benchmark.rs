@@ -174,6 +174,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map(|value| value.parse::<f64>())
         .transpose()
         .map_err(|error| format!("persistent vacancy target depth: {error}"))?;
+    // Optional warm-start fixture (arg 46): when present, its placements
+    // replace the short-side-first construction as the incumbent handed to
+    // the relaxed engine, so the legacy continuous separator explores from
+    // an externally constructed complete layout. Absent, behavior is
+    // byte-identical to the protected default.
+    let warm_start_fixture_path = arguments.next();
     if runs == 0 || arguments.next().is_some() {
         return Err("runs must be positive and no extra arguments are accepted".into());
     }
@@ -183,6 +189,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pinned_vacancy_parent = persistent_vacancy_parent_fixture
         .as_deref()
         .map(|path| load_pinned_vacancy_parent(path, &request_sha256))
+        .transpose()?;
+    let warm_start_incumbent = warm_start_fixture_path
+        .as_deref()
+        .map(|path| -> Result<_, Box<dyn std::error::Error>> {
+            let parent = load_pinned_vacancy_parent(path, &request_sha256)?;
+            let raw: serde_json::Value = serde_json::from_slice(&fs::read(Path::new(path))?)?;
+            let depth = raw
+                .get("independentDepthMm")
+                .and_then(serde_json::Value::as_f64)
+                .ok_or("warm-start fixture is missing independentDepthMm")?;
+            Ok((parent, depth))
+        })
         .transpose()?;
     let request: Request = serde_json::from_slice(&bytes)?;
     let (request_total_padding_mm, allow_global_rotation, allow_global_mirror, geometry) =
@@ -301,7 +319,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let started = Instant::now();
         let (current, current_relaxed_diagnostics, current_constructed_depth_mm) = job_pool
             .run_scoped(|| {
-                let constructed = construct_short_side_first(&pieces, settings)?;
+                let mut constructed = construct_short_side_first(&pieces, settings)?;
+                if let Some((warm, warm_depth)) = warm_start_incumbent.as_ref() {
+                    constructed.placements = warm.placements.clone();
+                    constructed.unplaced_piece_ids.clear();
+                    constructed.used_long_axis_depth_mm = *warm_depth;
+                }
                 let constructed_depth_mm = constructed.used_long_axis_depth_mm;
                 if relaxed_epochs == 0 {
                     return Ok::<_, polygon_nesting_core::search::general_fast::GeneralFastError>(
@@ -605,6 +628,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(target) = persistent_vacancy_target_depth_mm {
         output["quota"]["persistentVacancyTargetDepthMm"] = json!(target);
+    }
+    if let Some((warm, warm_depth)) = &warm_start_incumbent {
+        output["quota"]["warmStartFixture"] = json!({
+            "path": warm.source,
+            "sha256": warm.source_sha256,
+            "depthMm": warm_depth,
+        });
     }
     println!("{}", serde_json::to_string_pretty(&output)?);
     Ok(())
