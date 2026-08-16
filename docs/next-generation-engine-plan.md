@@ -818,3 +818,15 @@ contract now stands at 173.783 mm, 5.5 mm from the 168-family
 acceptance criterion; a second salted wave runs from the new state.
 Evidence:
 docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/from-scratch-173.783/.
+
+The salted-wave cascade carries the from-scratch line to 172.861 mm and
+then locks. Wave 2 from 173.783 improves on all four seeds (172.861 /
+173.231 / 173.296 / 173.472 - an unusually productive state), wave 3
+from 172.861 returns the incumbent on all four seeds: the from-scratch
+line is now operator-locked at 172.861, 4.6 mm from the 168-family
+criterion, mirroring the imported record's seed-lock at 164.470. Both
+locked states now face the wide-rung experiment (descent targets
+best+1.6 and best+3.2 instead of +0.8, admitting deeper non-monotonic
+detours before reconvergence) while the three constructor mechanisms
+build in parallel worktrees. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/from-scratch-172.861/.
