@@ -68,7 +68,7 @@ const arguments_ = [
   fixture,
 ]
 
-const runBenchmark = (benchmarkArguments, label) => {
+const runBenchmarkSource = (benchmarkArguments, label) => {
   const result = spawnSync(executable, benchmarkArguments, {
     cwd: root,
     encoding: 'utf8',
@@ -78,13 +78,57 @@ const runBenchmark = (benchmarkArguments, label) => {
   if (result.status !== 0) {
     throw new Error(`${label} failed (${result.status}): ${result.stderr}`)
   }
-  return JSON.parse(result.stdout)
+  return result.stdout
+}
+
+const runBenchmark = (benchmarkArguments, label) => {
+  return JSON.parse(runBenchmarkSource(benchmarkArguments, label))
+}
+
+const runModeSource = (mode) => {
+  const benchmarkArguments = [...arguments_]
+  benchmarkArguments[benchmarkArguments.length - 2] = String(mode)
+  return runBenchmarkSource(benchmarkArguments, `persistent-vacancy mode ${mode}`)
 }
 
 const runMode = (mode) => {
-  const benchmarkArguments = [...arguments_]
-  benchmarkArguments[benchmarkArguments.length - 2] = String(mode)
-  return runBenchmark(benchmarkArguments, `persistent-vacancy mode ${mode}`)
+  return JSON.parse(runModeSource(mode))
+}
+
+const losslessNumber = Symbol('losslessNumber')
+const parseLosslessJson = (source) =>
+  JSON.parse(source, (_key, value, context) =>
+    typeof value === 'number' ? { [losslessNumber]: context.source } : value,
+  )
+const losslessCanonicalJson = (value) => {
+  if (value && typeof value === 'object' && losslessNumber in value) {
+    return value[losslessNumber]
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(losslessCanonicalJson).join(',')}]`
+  }
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${losslessCanonicalJson(value[key])}`)
+      .join(',')}}`
+  }
+  return JSON.stringify(value)
+}
+const exactSha256 = (value) =>
+  createHash('sha256').update(losslessCanonicalJson(value)).digest('hex')
+const losslessPopulation = (source) =>
+  parseLosslessJson(source).relaxedDiagnostics?.coupledDynamicSeparator
+    ?.persistentVacancyPopulation
+
+const adjacentUnsafeIntegers = parseLosslessJson(
+  '{"first":9007199254740992,"second":9007199254740993}',
+)
+if (
+  losslessCanonicalJson(adjacentUnsafeIntegers.first) ===
+  losslessCanonicalJson(adjacentUnsafeIntegers.second)
+) {
+  throw new Error('lossless JSON replay aliases adjacent unsafe integers')
 }
 
 const assertBoundedPartialTerminal = (candidate, label) => {
@@ -229,14 +273,22 @@ const mode9 =
   runMode(9).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
 const mode10 =
   runMode(10).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
+const mode14Source = runModeSource(14)
+const mode15Source = runModeSource(15)
+const mode14ReplaySource = runModeSource(14)
+const mode15ReplaySource = runModeSource(15)
 const mode14 =
-  runMode(14).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
+  JSON.parse(mode14Source).relaxedDiagnostics?.coupledDynamicSeparator
+    ?.persistentVacancyPopulation
 const mode15 =
-  runMode(15).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
+  JSON.parse(mode15Source).relaxedDiagnostics?.coupledDynamicSeparator
+    ?.persistentVacancyPopulation
 const mode14Replay =
-  runMode(14).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
+  JSON.parse(mode14ReplaySource).relaxedDiagnostics?.coupledDynamicSeparator
+    ?.persistentVacancyPopulation
 const mode15Replay =
-  runMode(15).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
+  JSON.parse(mode15ReplaySource).relaxedDiagnostics?.coupledDynamicSeparator
+    ?.persistentVacancyPopulation
 assertBoundedPartialTerminal(mode8, 'persistent-vacancy mode 8')
 assertBoundedPartialTerminal(mode9, 'persistent-vacancy mode 9')
 assertBoundedPartialTerminal(mode10, 'persistent-vacancy mode 10')
@@ -348,14 +400,30 @@ if (
 ) {
   throw new Error('repair modes changed the protected pre-expedition behavior')
 }
-const canonicalRepairPopulation = (candidate) => {
-  return JSON.stringify(canonical(candidate))
-}
+const exactMode14 = losslessPopulation(mode14Source)
+const exactMode15 = losslessPopulation(mode15Source)
+const exactMode14Replay = losslessPopulation(mode14ReplaySource)
+const exactMode15Replay = losslessPopulation(mode15ReplaySource)
 if (
-  canonicalRepairPopulation(mode14) !== canonicalRepairPopulation(mode14Replay) ||
-  canonicalRepairPopulation(mode15) !== canonicalRepairPopulation(mode15Replay)
+  losslessCanonicalJson(exactMode14) !== losslessCanonicalJson(exactMode14Replay) ||
+  losslessCanonicalJson(exactMode15) !== losslessCanonicalJson(exactMode15Replay)
 ) {
   throw new Error('repair mode replay changed, including its deterministic memory peaks')
+}
+const exactLegacyHashes = {
+  mode14Population: exactSha256(exactMode14),
+  mode14Repair: exactSha256(exactMode14.repairExpedition),
+  mode15Population: exactSha256(exactMode15),
+  mode15Repair: exactSha256(exactMode15.repairExpedition),
+}
+const expectedLegacyHashes = {
+  mode14Population: '0f07d554b86b1f38376871f2a6933e48d44ce806ce0d62679025d148d05dacab',
+  mode14Repair: '79c9fee76ffba4fb9c8a3489c191acd742b8d63cbb14a5708d3258818358f618',
+  mode15Population: '216445040ff4982d3ce5605a610c830f08ba243de9b09e543b15c0734c77490d',
+  mode15Repair: '2350b92068d9aa71575db53aa25bd6b04984bd551d02e1ecc7e292692feec86d',
+}
+if (JSON.stringify(exactLegacyHashes) !== JSON.stringify(expectedLegacyHashes)) {
+  throw new Error(`repair legacy replay oracle changed: ${JSON.stringify(exactLegacyHashes)}`)
 }
 const controlDepthZero = mode14.repairExpedition.depths[0]
 const treatmentDepthZero = mode15.repairExpedition.depths[0]
