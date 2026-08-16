@@ -714,3 +714,15 @@ replayable, every negative carrying its matched verdict, and the honest
 distances standing at 2.7 mm from the native floor for the from-scratch
 line and 13.3 mm of measured contract-and-structure gap between the
 absolute record and the recalibrated external reference band.
+
+Correction on the scaling claim, for the record's integrity: the
+double-budget separator runs did not measure anything - the frozen
+coupled-experiment configuration guard silently skips arms whose settings
+exceed the admitted probe (the arms return the incumbent unchanged, which
+is exactly what the outputs showed). The 179.756 and 168.275 fixpoints
+therefore stand certified at the canonical separator budget only;
+separator-budget scaling remains contract-capped and untested, and
+lifting that cap is an engine-side change to the frozen experiment
+configuration, not a harness flag. The anchor-swap probe (constructing
+with the 179.756 layout as orientation prior) lands in-band at
+206.7-210.0 and is rejected without descents.
