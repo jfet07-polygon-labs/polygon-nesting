@@ -60,7 +60,7 @@ const RECONSTRUCTION_ROWS_PER_PIECE: usize = 192;
 // at CONSTRUCTION_FRONTIER_BAND_GRID so the trapped-void term stays active
 // on frontier-raising commits.
 const CONSTRUCTION_RESTARTS: usize = 4;
-const CONSTRUCTION_BEAM_WIDTH: usize = 4;
+const CONSTRUCTION_BEAM_WIDTH: usize = 6;
 const CONSTRUCTION_HINT_STATIONS: usize = 3;
 const CONSTRUCTION_HINT_PRIORS: usize = 2;
 const CONSTRUCTION_ROWS_PER_PIECE: usize = 96;
@@ -6447,45 +6447,45 @@ mod tests {
         assert_eq!(LNS_SCHEDULE_TOTAL, 536);
         assert_eq!(LNS_REINSERT_SLOTS, 536 + 24 * 12 + 2 * 3 * 536);
         assert_eq!(CONSTRUCTION_RESTARTS, 4);
-        assert_eq!(CONSTRUCTION_BEAM_WIDTH, 4);
-        assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 4 * 4 * 61);
-        assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 976);
+        assert_eq!(CONSTRUCTION_BEAM_WIDTH, 6);
+        assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 4 * 6 * 61);
+        assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 1_464);
         assert_eq!(CONSTRUCTION_ROWS_PER_PIECE, 96);
         assert_eq!(
             CONSTRUCTION_HINT_PRIORS * CONSTRUCTION_SELECTED_PIECE_SLOTS,
             1_952
         );
-        assert_eq!(CONSTRUCTION_VOID_SCAN_CAP, 4 * 61 * 4 * 4 + 4);
+        assert_eq!(CONSTRUCTION_VOID_SCAN_CAP, 4 * 61 * 6 * 4 + 4);
         assert!(CONSTRUCTION_RESTARTS <= MAX_COMPLETE_AUDITS);
         assert!(CONSTRUCTION_SHELF_ROWS < CONSTRUCTION_ROWS_PER_PIECE);
         assert!(CONSTRUCTION_BEAM_CHILDREN_PER_PARENT <= CONSTRUCTION_BEAM_WIDTH);
         assert_eq!(
             MAX_SELECTED_PIECE_SLOTS,
-            640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976
+            640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464
         );
         assert_eq!(
             MAX_ORIENTATION_STREAMS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976) * 12
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12
         );
         assert_eq!(
             MAX_POSITION_SOURCE_ATTEMPTS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976) * 12 * 529
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12 * 529
         );
         assert_eq!(
             MAX_RETURNED_POSITIONS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12 * 32
         );
         assert_eq!(
             MAX_HAZARD_QUERIES,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12 * 32
         );
         assert_eq!(
             MAX_PROXY_PRESSURE_VISITS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976) * 12 * 32 * 61
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12 * 32 * 61
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 976 * 96
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 1_464 * 96
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -6498,17 +6498,17 @@ mod tests {
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
             3 * 61
-                + (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 976) * 12
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 976 * 96)
+                + (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 1_464) * 12
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 1_464 * 96)
                 + 122
                 + 4_040
-                + 2 * 976
+                + 2 * 1_464
                 + 24 * (4_040 / 2 + 200 * 96)
         );
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
             1_830
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 976 * 96)
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 1_464 * 96)
                     * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
