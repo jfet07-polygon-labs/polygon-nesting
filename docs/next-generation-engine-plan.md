@@ -658,3 +658,22 @@ operator family). What remains within this architecture are multi-day
 builds - full NFP with context-aware scoring - or a structurally new
 exploration paradigm; every hour-scale hypothesis in the map has a
 measured verdict attached.
+
+Support-aware ranking closes the smarter-ranking family the same way its
+siblings closed. Penalizing overhang candidates by their unsupported width
+fraction lands 205.3-208.9 against the walk's 195.6-207.2, improves one
+salt of four, and destroys the tail outlier again. Eight consecutive
+same-family refinements have now been rejected by matched measurement
+(negative rungs, both lookaheads, stations, deep rung, left-compact key,
+rotation in two sizes, contact enumeration in two forms, support
+ranking): the plain landing key over station-anchored candidates plus the
+translation-only contact walk is measured as the local optimum of this
+insertion architecture, and its variance is not noise to be engineered
+away but the mechanism that produces records. Two structurally different
+builds remain live, in causal-evidence order: warm-starting the legacy
+continuous separator from a constructed basin (the separator co-optimizes
+all pieces globally, which is exactly the capability sequential insertion
+lacks, and an optional seed input preserves every protected default), and
+full NFP paired with placement scoring - noting honestly that both of its
+ingredients were individually rejected at insertion time, so its value
+must come from the pairing or not at all.
