@@ -645,3 +645,16 @@ insertion framework the walk stands as the measured optimum of candidate
 generation; closing the remaining gap to the 177/168 references requires
 either full NFP paired with a context-aware scoring (a multi-day build)
 or a structurally different exploration paradigm.
+
+Both descent-side budget axes are measured dry on the record state. A
+wide-target ladder (best plus five millimetres, ten-fold salt steps,
+thirty attempts) accepts nothing from 184.759; doubling the internal LNS
+schedule to forty-eight rounds churns four to seven accepted interior
+rounds per walk and still returns the identical endpoint on every salt,
+so the doubled runtime buys nothing where it matters and the schedule
+stays at twenty-four. The record basin is now exhausted across four
+independent axes (driver salt budget, target width, interior rounds,
+operator family). What remains within this architecture are multi-day
+builds - full NFP with context-aware scoring - or a structurally new
+exploration paradigm; every hour-scale hypothesis in the map has a
+measured verdict attached.
