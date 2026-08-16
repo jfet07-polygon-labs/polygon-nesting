@@ -71,6 +71,13 @@ const CONSTRUCTION_FRONTIER_BAND_GRID: i64 = 500;
 const CONSTRUCTION_SKYLINE_COLUMNS: usize = 64;
 const CONSTRUCTION_SELECTED_PIECE_SLOTS: usize =
     CONSTRUCTION_RESTARTS * CONSTRUCTION_BEAM_WIDTH * 61;
+// Checkpoint settling: at the CONSTRUCTION_SETTLE_CHECKPOINT_RANKS ranks the
+// beam leader takes one exact settle sweep, so every subsequent insertion
+// builds on a compacted profile instead of leaving all compaction to the
+// post-hoc descent; funded exactly like the mode-11 settle lane.
+const CONSTRUCTION_SETTLE_CHECKPOINT_RANKS: [usize; 2] = [29, 44];
+const CONSTRUCTION_SETTLE_SLOTS: usize =
+    CONSTRUCTION_RESTARTS * CONSTRUCTION_SETTLE_CHECKPOINT_RANKS.len() * 61;
 const CONSTRUCTION_SEED_DOMAIN: u64 = 0x534B_594C_3230_3330;
 const CONSTRUCTION_TRANSIENT_BYTES: usize = 192 * 1024;
 // Child-scoring flood fills follow the reviewed-contract precedent of the
@@ -140,7 +147,8 @@ const MAX_SELECTED_PIECE_SLOTS: usize = POPULATION_SELECTED_PIECE_SLOTS
     + RECONSTRUCTION_SELECTED_PIECE_SLOTS
     + LNS_SETTLE_SELECTED_PIECE_SLOTS
     + LNS_REINSERT_SLOTS
-    + CONSTRUCTION_SELECTED_PIECE_SLOTS;
+    + CONSTRUCTION_SELECTED_PIECE_SLOTS
+    + CONSTRUCTION_SETTLE_SLOTS;
 const MAX_ORIENTATION_STREAMS: usize = MAX_SELECTED_PIECE_SLOTS * ORIENTATIONS_PER_PIECE;
 const MAX_SOURCE_FEATURE_VISITS: usize = MAX_SELECTED_PIECE_SLOTS * 2 * MAX_SOURCE_FEATURES;
 const POSITION_SOURCE_ATTEMPTS_PER_ORIENTATION: usize = 529;
@@ -154,7 +162,8 @@ const MAX_EXACT_FINALIST_ROWS: usize = POPULATION_SELECTED_PIECE_SLOTS * FINALIS
     + RECONSTRUCTION_SELECTED_PIECE_SLOTS * RECONSTRUCTION_ROWS_PER_PIECE
     + LNS_SETTLE_SELECTED_PIECE_SLOTS * SETTLE_PROBES_PER_ATTEMPT
     + LNS_REINSERT_SLOTS * RECONSTRUCTION_ROWS_PER_PIECE
-    + CONSTRUCTION_SELECTED_PIECE_SLOTS * CONSTRUCTION_ROWS_PER_PIECE;
+    + CONSTRUCTION_SELECTED_PIECE_SLOTS * CONSTRUCTION_ROWS_PER_PIECE
+    + CONSTRUCTION_SETTLE_SLOTS * SETTLE_PROBES_PER_ATTEMPT;
 // Two initial 61-piece collision builds are funded: the mode-11 settle
 // prelude builds the full active state once, and the target initializer
 // rebuilds it once.
@@ -2962,6 +2971,15 @@ fn construct_skyline_beam_inner(
         "padded-bbox-area-reshuffled",
     ];
     let mut best: Option<(i64, usize, VacancyState, f64)> = None;
+    let sheet_inset = collision_sheet_inset_mm(work_settings);
+    let mut checkpoint_settle = GeneralPersistentVacancySettleDiagnostics {
+        sweeps: CONSTRUCTION_RESTARTS * CONSTRUCTION_SETTLE_CHECKPOINT_RANKS.len(),
+        attempts: 0,
+        accepted_moves: 0,
+        exact_rows: 0,
+        frontier_before_grid: 0,
+        frontier_after_grid: 0,
+    };
     for restart in 0..CONSTRUCTION_RESTARTS {
         let order_seed = derive_seed(construction_seed, restart, 0);
         let order = construction_order(pieces, work_settings, restart, order_seed)?;
@@ -3060,6 +3078,21 @@ fn construct_skyline_beam_inner(
                 next.push(child);
             }
             beam = next;
+            // Checkpoint settle: compact the beam leader so the remaining
+            // insertions build on a settled profile.
+            if CONSTRUCTION_SETTLE_CHECKPOINT_RANKS.contains(&rank) {
+                if let Some(leader) = beam.first_mut() {
+                    settle_sweep(
+                        leader,
+                        pieces,
+                        work_settings,
+                        sheet_inset,
+                        true,
+                        &mut checkpoint_settle,
+                        work,
+                    )?;
+                }
+            }
         }
         if let Some(reason) = starved {
             row.rejection = Some(reason);
@@ -3115,6 +3148,9 @@ fn construct_skyline_beam_inner(
         {
             best = Some((key.0, restart, candidate.clone(), independent));
         }
+    }
+    if checkpoint_settle.attempts > 0 {
+        diagnostics.settle = Some(checkpoint_settle);
     }
     match best {
         Some((_, restart, state, independent)) => {
@@ -6735,36 +6771,43 @@ mod tests {
             5_856
         );
         assert_eq!(CONSTRUCTION_VOID_SCAN_CAP, 8 * 61 * 6 * 4 + 8);
+        assert_eq!(CONSTRUCTION_SETTLE_SLOTS, 8 * 2 * 61);
         assert!(CONSTRUCTION_RESTARTS <= MAX_COMPLETE_AUDITS);
         assert!(CONSTRUCTION_SHELF_ROWS < CONSTRUCTION_ROWS_PER_PIECE);
         assert!(CONSTRUCTION_BEAM_CHILDREN_PER_PARENT <= CONSTRUCTION_BEAM_WIDTH);
         assert_eq!(
             MAX_SELECTED_PIECE_SLOTS,
-            640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928
+            640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928 + 976
         );
         assert_eq!(
             MAX_ORIENTATION_STREAMS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928 + 976) * 12
         );
         assert_eq!(
             MAX_POSITION_SOURCE_ATTEMPTS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 529
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928 + 976) * 12 * 529
         );
         assert_eq!(
             MAX_RETURNED_POSITIONS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928 + 976) * 12 * 32
         );
         assert_eq!(
             MAX_HAZARD_QUERIES,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928 + 976) * 12 * 32
         );
         assert_eq!(
             MAX_PROXY_PRESSURE_VISITS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12 * 32 * 61
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928 + 976) * 12 * 32 * 61
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 2_928 * 224
+            (640 + 26) * 8
+                + 183 * 64
+                + 122 * 192
+                + 73 * 61 * 64
+                + 4_040 * 192
+                + 2_928 * 224
+                + 976 * 64
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -6778,13 +6821,14 @@ mod tests {
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
             3 * 61
-                + (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928) * 12
+                + (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 2_928 + 976) * 12
                 + ((640 + 26) * 8
                     + 183 * 64
                     + 122 * 192
                     + 73 * 61 * 64
                     + 4_040 * 192
-                    + 2_928 * 224)
+                    + 2_928 * 224
+                    + 976 * 64)
                 + 122
                 + 4_040
                 + 2 * 2_928
@@ -6798,7 +6842,8 @@ mod tests {
                     + 122 * 192
                     + 73 * 61 * 64
                     + 4_040 * 192
-                    + 2_928 * 224)
+                    + 2_928 * 224
+                    + 976 * 64)
                     * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
