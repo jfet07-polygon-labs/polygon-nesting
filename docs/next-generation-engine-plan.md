@@ -608,3 +608,13 @@ verdict. The tension is now explicit and measured: raw constructor depth
 and descent yield trade against each other, and the portfolio tail - not
 the band average - is where records come from. The harvest widens on the
 walk family next.
+
+Contact micro-rotation is measured and rejected in both sizes. Adding a
+plus-minus two-degree (then five-degree) tilt with a short re-walk to
+every settled finalist pulls all four probed salts into a tight
+205.5-206.1 attractor: it stabilizes the constructor median slightly but
+destroys the tail - the 195.645 salt-2 outlier disappears, and best-of-
+portfolio regresses ten millimeters. Every record this program has
+produced came from the tail of a high-variance family; rotations trade
+tail for median, which is the wrong trade for record hunting. The
+translation-only contact walk stands.
