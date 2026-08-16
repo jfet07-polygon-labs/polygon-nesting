@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "experiment": "persistent-vacancy-exact-transition-burden-screen",
+  "recordedAtUtc": "2026-08-16T11:17:11Z",
+  "requestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+  "parentFixtureSha256": "18e0b052997d1251573fa35679c9fcf1d5e796acf771ec48f320ce4e9bf0081d",
+  "parentPlacementFingerprint": "b9335a72cdcdd8df29be21450818f4ab1766ea1ea0b16765ad3998942a2ea6c5",
+  "targetStripDepthMm": 165,
+  "pairedRunOrder": ["mode20", "mode21", "mode22", "mode22", "mode21", "mode20"],
+  "canonicalCommand": "target/release/examples/general_request_benchmark tests/fixtures/mixed-61/mixed61-request.json 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 0 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 MODE tests/fixtures/mixed-61/persistent-vacancy-parent-b9335a72.json",
+  "causalContract": {
+    "signal": "minimum exact-valid ejection count, then descending distinct augmented children at that minimum",
+    "comparison": "first eligible comparator-adjacent sibling pair from the first 48 globally ordered, identity-deduplicated, expedition-wide-transposition-filtered parent rows",
+    "requiredOwnedComparatorOpposingPairsPerMode": 30,
+    "crossArmOwnership": "lowest mode ordinal owns a repeated domain-framed row key",
+    "stageBPermittedOnlyIfEveryModePasses": true
+  },
+  "provenance": {
+    "engineCommit": "2b71cfc249b8074f756129d622dc353c89df37fb",
+    "engineWorktreeDirty": false,
+    "relevantSourceTreeSha256": "b2dca76c8dced96f23a015dd0cd63bacbd4af59eab5cbbd78cd67a49f052d015",
+    "executableSha256": "ad292e0595ec2bd220b79f2d0e7f0f6249561a0e7c26ba1e5a9df697d7122f71",
+    "cpuModel": "Apple M4 Max",
+    "target": "aarch64-apple-darwin",
+    "targetOperatingSystem": "macos",
+    "machineArchitecture": "arm64",
+    "buildProfile": "release",
+    "requestedThreads": 8,
+    "actualThreads": 8,
+    "rustflags": null,
+    "rustc": {
+      "version": "1.95.0",
+      "commitHash": "59807616e1fa2540724bfbac14d7976d7e4a3860",
+      "commitDate": "2026-04-14",
+      "host": "aarch64-apple-darwin",
+      "llvmVersion": "22.1.2"
+    },
+    "cargo": {
+      "version": "1.95.0",
+      "commitHash": "f2d3ce0bd7f24a49f8f72d9000448f8838c4e850",
+      "commitDate": "2026-03-21",
+      "host": "aarch64-apple-darwin"
+    }
+  },
+  "verification": {
+    "sameModeProbeReplayPassed": true,
+    "allBaseProjectionsMatched": true,
+    "ownershipHarnessReplayPassed": true,
+    "cleanCoreSuitePassed": true,
+    "coreUnitTestsPassed": 730,
+    "threadCountInvariantTwentyPieceFixturePassed": true,
+    "coreTestLogSha256": "aac820d7a9339aafaf8d6a5bcfd9da426b194e9b77e8efe0d7b7f949db374e8d"
+  },
+  "arms": {
+    "mode20": {
+      "baseMode": 16,
+      "baseProjectionSha256": "3f4cf4496d5fe3e7470ce407a6b4e3f5546b8d4c8bbe5f7afb3b4f8c1766c846",
+      "probeSha256": "55740ff0f97353a404d93a7adf736701149b1edf6c86922b6c0af2d7a8c3578b",
+      "rawOutputSha256": [
+        "1c953fee318a0bfd04acd5ab88da52725f123c0202bafc65af4b942dc45c16e3",
+        "ab9135cb4d9b3b5edf659e6e439cce917476bb6e869195c463b317ab55234556"
+      ],
+      "timeCaptureSha256": [
+        "ba0cd2ea571c02272dd794ab89c8167efbf4911d8621a6a5c88c6e57eb36a89c",
+        "c52329e9a79e89c5dcf7cbe5f27d5f41d5c8df5a702a9b5885ea71ccee35f923"
+      ],
+      "engineElapsedMs": [6651.528958, 6761.945959000001],
+      "wallSeconds": [7.05, 6.81],
+      "maximumResidentSetBytes": [51216384, 51429376],
+      "visitedParentRows": 48,
+      "preselectedPairs": 27,
+      "nonTiedPairs": 18,
+      "comparatorOpposingPairs": 9,
+      "work": {
+        "clipperInputVertices": 19600,
+        "clipperOutputVertices": 3625,
+        "exactFinalistRows": 432,
+        "experimentalCollisionBuilds": 1080,
+        "experimentalPairVisits": 19806,
+        "hazardQueries": 20736,
+        "orientationStreams": 648,
+        "positionSourceAttempts": 280392,
+        "proxyPressureVisits": 27993,
+        "returnedPositions": 20736,
+        "selectedPieceSlots": 54,
+        "sourceFeatureVisits": 532,
+        "totalRetainedPeakBytes": 25226401,
+        "transformedCollisionVertices": 7640
+      }
+    },
+    "mode21": {
+      "baseMode": 17,
+      "baseProjectionSha256": "8f91c7fe755e1fac1dc237dda09f53a58fd538ff5decbc7df7a693f09cab135a",
+      "probeSha256": "8246f7613428b369723078a7c95f8cafe666c5f54708d02059b53f0cb1c1e642",
+      "rawOutputSha256": [
+        "ae874fb5f0f0c15ac6769699bf1928c55ac9e56e6b304892c581fed2ff7a62d1",
+        "87c511013b502c2aa06052ae6767de4853732b06fbe9266ff363c40918dbf2c0"
+      ],
+      "timeCaptureSha256": [
+        "9add25a58744156c5765bc1c0535f6a56c617acd27ffc046073cb2048377c510",
+        "fb96f2c13b4eef0029a5901a932fcf9698e51a35c06dd0667cfbbbc3bf8424cb"
+      ],
+      "engineElapsedMs": [6622.400333, 6680.159625],
+      "wallSeconds": [6.68, 6.73],
+      "maximumResidentSetBytes": [50380800, 50675712],
+      "visitedParentRows": 48,
+      "preselectedPairs": 33,
+      "nonTiedPairs": 24,
+      "comparatorOpposingPairs": 13,
+      "work": {
+        "clipperInputVertices": 18676,
+        "clipperOutputVertices": 3799,
+        "exactFinalistRows": 528,
+        "experimentalCollisionBuilds": 1320,
+        "experimentalPairVisits": 26490,
+        "hazardQueries": 25344,
+        "orientationStreams": 792,
+        "positionSourceAttempts": 354456,
+        "proxyPressureVisits": 35014,
+        "returnedPositions": 25344,
+        "selectedPieceSlots": 66,
+        "sourceFeatureVisits": 460,
+        "totalRetainedPeakBytes": 25227713,
+        "transformedCollisionVertices": 7320
+      }
+    },
+    "mode22": {
+      "baseMode": 18,
+      "baseProjectionSha256": "d1b00626b54ce8587c5322be46706d22898d4b4a11e4ff10defd2cb0e6754769",
+      "probeSha256": "0ac0c432476911670b19e68994928674fc7e333515b0592a8c44ac5aefc98310",
+      "rawOutputSha256": [
+        "1c39ec6f215ff16eb517129566a4953b1e2561066a5cb0d0cb1905f74baddc7f",
+        "812cbfcd9692172c6aeedbe509bfd40e7fcf2f301d4bdf570fa5e97744f970e6"
+      ],
+      "timeCaptureSha256": [
+        "93684523356a4835f71483327a8b858a5a5ab769ab6cdb016ca24c44bb6fcb2d",
+        "c38ef5dcce5cda4575d0f0434018c90cecc359a7653a4f09ca4d669eac5b8a58"
+      ],
+      "engineElapsedMs": [6630.729667, 6638.554875],
+      "wallSeconds": [6.68, 6.69],
+      "maximumResidentSetBytes": [50921472, 50724864],
+      "visitedParentRows": 48,
+      "preselectedPairs": 25,
+      "nonTiedPairs": 8,
+      "comparatorOpposingPairs": 4,
+      "work": {
+        "clipperInputVertices": 19940,
+        "clipperOutputVertices": 3713,
+        "exactFinalistRows": 400,
+        "experimentalCollisionBuilds": 1000,
+        "experimentalPairVisits": 18998,
+        "hazardQueries": 19200,
+        "orientationStreams": 600,
+        "positionSourceAttempts": 265560,
+        "proxyPressureVisits": 28777,
+        "returnedPositions": 19200,
+        "selectedPieceSlots": 50,
+        "sourceFeatureVisits": 648,
+        "totalRetainedPeakBytes": 25227713,
+        "transformedCollisionVertices": 8120
+      }
+    }
+  },
+  "ownership": {
+    "firstReportSha256": "64cbbc0d543e534e635dbb58aae4c2bba52e3b7434c4acd83ac322d38801f671",
+    "secondReportSha256": "3372d7c5c615a38830841f51bb76d823115425f618931f51b8a738a6bb1d8e8f",
+    "uniquePreselectedRowKeys": 85,
+    "withinArmDuplicatePairs": 0,
+    "crossArmDuplicatePairs": 0,
+    "ownedComparatorOpposingPairs": {
+      "mode20": 9,
+      "mode21": 13,
+      "mode22": 4
+    }
+  },
+  "gates": {
+    "mode20IndependentGatePassed": false,
+    "mode21IndependentGatePassed": false,
+    "mode22IndependentGatePassed": false,
+    "stageAPassed": false,
+    "stageBExecuted": false,
+    "productionPromotionPassed": false
+  },
+  "interpretation": {
+    "exactTransitionBurdenSignalSupported": false,
+    "broaderVacancyTransportHypothesisClosed": false,
+    "reason": "The exact signal was deterministic and behavior-preserving but produced only 9, 13, and 4 independently owned comparator-opposing rows against a predeclared requirement of 30 in every arm. It is too sparse or redundant to justify changing sibling order, so the causal continuation stage was not run.",
+    "nextDecision": "Close this endpoint scalar and retain the broader architectural hypothesis only for an explicit persistent nonterminal vacancy lifecycle that changes which legal intermediate states survive, rather than another post-hoc scalar reranker."
+  }
+}
