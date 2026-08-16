@@ -6453,7 +6453,7 @@ mod tests {
         assert_eq!(CONSTRUCTION_ROWS_PER_PIECE, 96);
         assert_eq!(
             CONSTRUCTION_HINT_PRIORS * CONSTRUCTION_SELECTED_PIECE_SLOTS,
-            1_952
+            2_928
         );
         assert_eq!(CONSTRUCTION_VOID_SCAN_CAP, 4 * 61 * 6 * 4 + 4);
         assert!(CONSTRUCTION_RESTARTS <= MAX_COMPLETE_AUDITS);
