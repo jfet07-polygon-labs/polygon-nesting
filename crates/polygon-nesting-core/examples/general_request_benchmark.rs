@@ -19,9 +19,9 @@ use polygon_nesting_core::search::general_fast::{
 };
 use polygon_nesting_core::search::general_relaxed::{
     improve_complete_layout_with_pinned_vacancy_parent, GeneralAngularRepairSettings,
-    GeneralPersistentVacancyPinnedParent, GeneralRelaxedAngleSeedPolicy,
-    GeneralRelaxedCollisionBackend, GeneralRelaxedDiagnostics, GeneralRelaxedPressureModel,
-    GeneralRelaxedSettings,
+    GeneralPersistentVacancyDiagnostics, GeneralPersistentVacancyPinnedParent,
+    GeneralRelaxedAngleSeedPolicy, GeneralRelaxedCollisionBackend, GeneralRelaxedDiagnostics,
+    GeneralRelaxedPressureModel, GeneralRelaxedSettings,
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -192,22 +192,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let bytes = fs::read(Path::new(&request_path))?;
     let request_sha256 = format!("{:x}", Sha256::digest(&bytes));
-    let pinned_vacancy_parent = persistent_vacancy_parent_fixture
-        .as_deref()
-        .map(|path| load_pinned_vacancy_parent(path, &request_sha256))
-        .transpose()?;
-    let warm_start_incumbent = warm_start_fixture_path
-        .as_deref()
-        .map(|path| -> Result<_, Box<dyn std::error::Error>> {
-            let parent = load_pinned_vacancy_parent(path, &request_sha256)?;
-            let raw: serde_json::Value = serde_json::from_slice(&fs::read(Path::new(path))?)?;
-            let depth = raw
-                .get("independentDepthMm")
-                .and_then(serde_json::Value::as_f64)
-                .ok_or("warm-start fixture is missing independentDepthMm")?;
-            Ok((parent, depth))
-        })
-        .transpose()?;
     let request: Request = serde_json::from_slice(&bytes)?;
     let (request_total_padding_mm, allow_global_rotation, allow_global_mirror, geometry) =
         effective_request_settings(&request)?;
@@ -277,6 +261,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if sheet_long_axis_override_mm > 0.0 {
         settings.sheet_long_axis_mm = sheet_long_axis_override_mm;
     }
+    let effective_edge_clearance_mm = settings
+        .sheet_edge_clearance_mm
+        .unwrap_or(settings.total_padding_mm / 2.0);
+    let effective_parent_settings = PinnedVacancyEffectiveSettings {
+        sheet_short_axis_mm: settings.sheet_short_axis_mm,
+        sheet_long_axis_mm: settings.sheet_long_axis_mm,
+        total_padding_mm: settings.total_padding_mm,
+        sheet_edge_clearance_mm: effective_edge_clearance_mm,
+        clearance_safety_margin_mm: settings.clearance_safety_margin_mm,
+        flattening_sag_tolerance_mm: settings.flattening_sag_tolerance_mm,
+    };
+    let pinned_vacancy_parent = persistent_vacancy_parent_fixture
+        .as_deref()
+        .map(|path| load_pinned_vacancy_parent(path, &request_sha256, &effective_parent_settings))
+        .transpose()?;
+    let warm_start_incumbent = warm_start_fixture_path
+        .as_deref()
+        .map(|path| -> Result<_, Box<dyn std::error::Error>> {
+            let parent =
+                load_pinned_vacancy_parent(path, &request_sha256, &effective_parent_settings)?;
+            let raw: serde_json::Value = serde_json::from_slice(&fs::read(Path::new(path))?)?;
+            let depth = raw
+                .get("independentDepthMm")
+                .and_then(serde_json::Value::as_f64)
+                .ok_or("warm-start fixture is missing independentDepthMm")?;
+            Ok((parent, depth))
+        })
+        .transpose()?;
     let pair_template_probe = if pair_template_diagnostics {
         let started = Instant::now();
         let diagnostics = diagnose_congruent_pair_templates(&pieces, settings)?;
@@ -423,9 +435,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             area + piece.polygon.offset(collision_expansion_mm)?.area_mm2(),
         )
     })?;
-    let effective_edge_clearance_mm = settings
-        .sheet_edge_clearance_mm
-        .unwrap_or(settings.total_padding_mm / 2.0);
     let collision_sheet_inset_mm = effective_edge_clearance_mm - settings.total_padding_mm / 2.0;
     let collision_sheet_width_mm = settings.sheet_short_axis_mm - 2.0 * collision_sheet_inset_mm;
     let area_lower_bound_depth_mm =
@@ -499,6 +508,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let machine_architecture = command_output("uname", &["-m"]);
     let cpu_model = command_output("sysctl", &["-n", "machdep.cpu.brand_string"])
         .or_else(|| command_output("sh", &["-c", "grep -m1 'model name' /proc/cpuinfo"]));
+    // Computed before `relaxed_diagnostics` is moved into the JSON output
+    // below: when a persistent-vacancy mode was requested but the arm
+    // declined to run, the process must fail closed even though the JSON is
+    // still emitted on stdout (see the exit-code check after printing).
+    let persistent_vacancy_unrun_reason = (persistent_vacancy_mode > 0)
+        .then(|| {
+            persistent_vacancy_unrun_reason(
+                relaxed_diagnostics
+                    .as_ref()
+                    .and_then(|diagnostics| diagnostics.coupled_dynamic_separator.as_ref())
+                    .and_then(|diagnostics| diagnostics.persistent_vacancy_population.as_ref()),
+            )
+        })
+        .flatten();
     let mut output = json!({
             "request": request_path,
             "requestSha256": request_sha256,
@@ -644,6 +667,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         });
     }
     println!("{}", serde_json::to_string_pretty(&output)?);
+    // Fail closed: a requested persistent-vacancy mode that never ran (the
+    // machinery declined the arm, e.g. invalid parent or failed validation)
+    // must not exit 0. Callers that only check depth fields for null would
+    // otherwise silently treat a skipped arm as a completed one.
+    if let Some(reason) = persistent_vacancy_unrun_reason {
+        eprintln!(
+            "requested persistent-vacancy mode {persistent_vacancy_mode} did not run: {reason}"
+        );
+        std::process::exit(1);
+    }
     Ok(())
 }
 
@@ -663,7 +696,37 @@ struct PinnedVacancyParentFixture {
     _independent_depth_mm: f64,
     #[serde(rename = "provenance")]
     _provenance: serde_json::Value,
+    // Optional geometry-contract pin. Fixtures written today omit this
+    // entirely and load exactly as before; fixture-writing tools should
+    // start emitting it so future fixtures are checked automatically. The
+    // schema, when present, is:
+    //   "settings": {
+    //     "sheetShortAxisMm": <f64>,
+    //     "sheetLongAxisMm": <f64>,
+    //     "totalPaddingMm": <f64>,
+    //     "sheetEdgeClearanceMm": <f64>,
+    //     "clearanceSafetyMarginMm": <f64>,
+    //     "flatteningSagToleranceMm": <f64>
+    //   }
+    // Every field, when the block is present, must equal the harness's
+    // effective settings for the current request or loading is a hard
+    // error: a fixture recorded under a different geometry contract (e.g. a
+    // margin/sag pair from a legacy request) must not silently replay a
+    // wrong trajectory.
+    #[serde(default)]
+    settings: Option<PinnedVacancyParentSettingsFixture>,
     placements: Vec<PinnedVacancyPlacementFixture>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PinnedVacancyParentSettingsFixture {
+    sheet_short_axis_mm: f64,
+    sheet_long_axis_mm: f64,
+    total_padding_mm: f64,
+    sheet_edge_clearance_mm: f64,
+    clearance_safety_margin_mm: f64,
+    flattening_sag_tolerance_mm: f64,
 }
 
 #[derive(Deserialize)]
@@ -676,12 +739,32 @@ struct PinnedVacancyPlacementFixture {
     translate_long_axis: f64,
 }
 
+/// The current run's effective geometry-relevant settings, used to validate
+/// a persistent-vacancy parent fixture's optional settings block (see
+/// `PinnedVacancyParentFixture`) against the geometry contract the current
+/// request and CLI arguments actually produce.
+struct PinnedVacancyEffectiveSettings {
+    sheet_short_axis_mm: f64,
+    sheet_long_axis_mm: f64,
+    total_padding_mm: f64,
+    sheet_edge_clearance_mm: f64,
+    clearance_safety_margin_mm: f64,
+    flattening_sag_tolerance_mm: f64,
+}
+
+/// Absolute tolerance (mm) for comparing a fixture's recorded settings
+/// against the current run's effective settings. JSON round-trips f64
+/// exactly, so this only absorbs floating-point noise from arithmetic (e.g.
+/// halving a padding value), not any real geometry drift.
+const PARENT_FIXTURE_SETTINGS_TOLERANCE_MM: f64 = 1e-9;
+
 /// Loads a committed persistent-vacancy parent fixture. The fixture only
 /// supplies parent placements; the engine's compiled-in frozen fingerprint and
 /// depth checks remain the acceptance authority for the loaded layout.
 fn load_pinned_vacancy_parent(
     path: &str,
     request_sha256: &str,
+    effective_settings: &PinnedVacancyEffectiveSettings,
 ) -> Result<GeneralPersistentVacancyPinnedParent, Box<dyn std::error::Error>> {
     let bytes = fs::read(Path::new(path))?;
     let source_sha256 = format!("{:x}", Sha256::digest(&bytes));
@@ -692,6 +775,9 @@ fn load_pinned_vacancy_parent(
             path, fixture.request_sha256, request_sha256
         )
         .into());
+    }
+    if let Some(recorded) = &fixture.settings {
+        check_parent_fixture_settings(recorded, effective_settings)?;
     }
     Ok(GeneralPersistentVacancyPinnedParent {
         placements: fixture
@@ -708,6 +794,56 @@ fn load_pinned_vacancy_parent(
         source: path.to_owned(),
         source_sha256,
     })
+}
+
+/// Compares a fixture's recorded geometry settings against the current
+/// run's effective settings field-by-field, hard-erroring with a clear
+/// `<field> fixture=<v> effective=<v>` message on the first mismatch.
+fn check_parent_fixture_settings(
+    recorded: &PinnedVacancyParentSettingsFixture,
+    effective: &PinnedVacancyEffectiveSettings,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let fields: [(&str, f64, f64); 6] = [
+        (
+            "sheetShortAxisMm",
+            recorded.sheet_short_axis_mm,
+            effective.sheet_short_axis_mm,
+        ),
+        (
+            "sheetLongAxisMm",
+            recorded.sheet_long_axis_mm,
+            effective.sheet_long_axis_mm,
+        ),
+        (
+            "totalPaddingMm",
+            recorded.total_padding_mm,
+            effective.total_padding_mm,
+        ),
+        (
+            "sheetEdgeClearanceMm",
+            recorded.sheet_edge_clearance_mm,
+            effective.sheet_edge_clearance_mm,
+        ),
+        (
+            "clearanceSafetyMarginMm",
+            recorded.clearance_safety_margin_mm,
+            effective.clearance_safety_margin_mm,
+        ),
+        (
+            "flatteningSagToleranceMm",
+            recorded.flattening_sag_tolerance_mm,
+            effective.flattening_sag_tolerance_mm,
+        ),
+    ];
+    for (field, fixture_value, effective_value) in fields {
+        if (fixture_value - effective_value).abs() > PARENT_FIXTURE_SETTINGS_TOLERANCE_MM {
+            return Err(format!(
+                "parent fixture settings mismatch: {field} fixture={fixture_value} effective={effective_value}"
+            )
+            .into());
+        }
+    }
+    Ok(())
 }
 
 fn independently_measure_coupled_depth(
@@ -751,6 +887,28 @@ fn pair_cluster_arm_json(diagnostics: &GeneralPairClusterArmDiagnostics) -> serd
         "exactChildFixedVisits": diagnostics.exact_child_fixed_visits,
         "exactCandidateRows": diagnostics.exact_candidate_rows,
     })
+}
+
+/// Returns the reason a CLI-requested persistent-vacancy mode failed to run
+/// when it should have: either the population diagnostics block is absent
+/// entirely, or it is present but `attempted` is false (the machinery
+/// declined the arm, e.g. an invalid parent or failed validation). Returns
+/// `None` when the arm actually ran, in which case its own `exactValid` and
+/// depth fields are the authority on whether it *succeeded*, not whether it
+/// *ran*; only the latter is this function's concern.
+fn persistent_vacancy_unrun_reason(
+    population: Option<&GeneralPersistentVacancyDiagnostics>,
+) -> Option<String> {
+    match population {
+        None => Some("persistent-vacancy population diagnostics were not produced".to_owned()),
+        Some(diagnostics) if !diagnostics.attempted => Some(
+            diagnostics
+                .failure_reason
+                .clone()
+                .unwrap_or_else(|| "no failure reason was recorded".to_owned()),
+        ),
+        Some(_) => None,
+    }
 }
 
 fn ordered_f64_bits(value: f64) -> u64 {
@@ -1049,5 +1207,137 @@ mod tests {
         assert!(!mirror);
         assert_eq!(geometry.flattening_sag_tolerance_mm, 0.1);
         assert_eq!(geometry.clearance_safety_margin_mm, 0.2);
+    }
+
+    fn write_temp_fixture(name: &str, contents: &serde_json::Value) -> std::path::PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "general_request_benchmark_test_{name}_{}.json",
+            std::process::id()
+        ));
+        std::fs::write(&path, serde_json::to_vec(contents).unwrap()).unwrap();
+        path
+    }
+
+    fn sample_pinned_vacancy_fixture(settings: Option<serde_json::Value>) -> serde_json::Value {
+        let mut fixture = json!({
+            "schemaVersion": 1,
+            "description": "test fixture",
+            "requestSha256": "deadbeef",
+            "expectedPlacementFingerprint": "fingerprint",
+            "reportedDepthMm": 10.0,
+            "independentDepthMm": 10.0,
+            "provenance": {},
+            "placements": [],
+        });
+        if let Some(settings) = settings {
+            fixture["settings"] = settings;
+        }
+        fixture
+    }
+
+    fn sample_effective_settings() -> PinnedVacancyEffectiveSettings {
+        PinnedVacancyEffectiveSettings {
+            sheet_short_axis_mm: 300.0,
+            sheet_long_axis_mm: 400.0,
+            total_padding_mm: 5.0,
+            sheet_edge_clearance_mm: 2.5,
+            clearance_safety_margin_mm: 0.001,
+            flattening_sag_tolerance_mm: 0.005,
+        }
+    }
+
+    #[test]
+    fn parent_fixture_without_settings_block_loads_unchanged() {
+        let fixture = sample_pinned_vacancy_fixture(None);
+        let path = write_temp_fixture("no_settings", &fixture);
+        let result = load_pinned_vacancy_parent(
+            path.to_str().unwrap(),
+            "deadbeef",
+            &sample_effective_settings(),
+        );
+        std::fs::remove_file(&path).ok();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn parent_fixture_matching_settings_block_loads() {
+        let effective = sample_effective_settings();
+        let fixture = sample_pinned_vacancy_fixture(Some(json!({
+            "sheetShortAxisMm": effective.sheet_short_axis_mm,
+            "sheetLongAxisMm": effective.sheet_long_axis_mm,
+            "totalPaddingMm": effective.total_padding_mm,
+            "sheetEdgeClearanceMm": effective.sheet_edge_clearance_mm,
+            "clearanceSafetyMarginMm": effective.clearance_safety_margin_mm,
+            "flatteningSagToleranceMm": effective.flattening_sag_tolerance_mm,
+        })));
+        let path = write_temp_fixture("matching_settings", &fixture);
+        let result = load_pinned_vacancy_parent(path.to_str().unwrap(), "deadbeef", &effective);
+        std::fs::remove_file(&path).ok();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn parent_fixture_mismatched_settings_block_hard_errors() {
+        let effective = sample_effective_settings();
+        let fixture = sample_pinned_vacancy_fixture(Some(json!({
+            "sheetShortAxisMm": effective.sheet_short_axis_mm,
+            "sheetLongAxisMm": effective.sheet_long_axis_mm,
+            "totalPaddingMm": 0.0,
+            "sheetEdgeClearanceMm": effective.sheet_edge_clearance_mm,
+            "clearanceSafetyMarginMm": effective.clearance_safety_margin_mm,
+            "flatteningSagToleranceMm": effective.flattening_sag_tolerance_mm,
+        })));
+        let path = write_temp_fixture("mismatched_settings", &fixture);
+        let error =
+            load_pinned_vacancy_parent(path.to_str().unwrap(), "deadbeef", &effective).unwrap_err();
+        std::fs::remove_file(&path).ok();
+        let expected = format!(
+            "parent fixture settings mismatch: totalPaddingMm fixture={} effective={}",
+            0.0_f64, effective.total_padding_mm
+        );
+        assert_eq!(error.to_string(), expected);
+    }
+
+    #[test]
+    fn persistent_vacancy_unrun_reason_flags_missing_population_block() {
+        assert_eq!(
+            persistent_vacancy_unrun_reason(None),
+            Some("persistent-vacancy population diagnostics were not produced".to_owned())
+        );
+    }
+
+    #[test]
+    fn persistent_vacancy_unrun_reason_flags_unattempted_arm() {
+        let diagnostics = GeneralPersistentVacancyDiagnostics {
+            attempted: false,
+            failure_reason: Some("invalid parent".to_owned()),
+            ..GeneralPersistentVacancyDiagnostics::default()
+        };
+        assert_eq!(
+            persistent_vacancy_unrun_reason(Some(&diagnostics)),
+            Some("invalid parent".to_owned())
+        );
+    }
+
+    #[test]
+    fn persistent_vacancy_unrun_reason_defaults_message_when_reason_absent() {
+        let diagnostics = GeneralPersistentVacancyDiagnostics {
+            attempted: false,
+            failure_reason: None,
+            ..GeneralPersistentVacancyDiagnostics::default()
+        };
+        assert_eq!(
+            persistent_vacancy_unrun_reason(Some(&diagnostics)),
+            Some("no failure reason was recorded".to_owned())
+        );
+    }
+
+    #[test]
+    fn persistent_vacancy_unrun_reason_is_none_when_arm_ran() {
+        let diagnostics = GeneralPersistentVacancyDiagnostics {
+            attempted: true,
+            ..GeneralPersistentVacancyDiagnostics::default()
+        };
+        assert_eq!(persistent_vacancy_unrun_reason(Some(&diagnostics)), None);
     }
 }
