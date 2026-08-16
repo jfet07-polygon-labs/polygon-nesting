@@ -17,6 +17,12 @@ const FINALISTS_PER_PIECE: usize = 8;
 const MACRO_CONTROL_MODE: usize = 8;
 const MACRO_TREATMENT_MODE: usize = 9;
 const PRESERVED_BEST_MACRO_MODE: usize = 10;
+const REPAIR_CONTROL_MODE: usize = 14;
+const REPAIR_TREATMENT_MODE: usize = 15;
+const REPAIR_HORIZON: usize = 16;
+const REPAIR_BEAM_WIDTH: usize = 4;
+const REPAIR_PARENT_EXPANSIONS: usize = 1 + (REPAIR_HORIZON - 1) * REPAIR_BEAM_WIDTH;
+const REPAIR_SEED_DOMAIN: u64 = 0x5650_5245_5041_4952;
 const MAX_INACTIVE_PIECES: usize = 32;
 const MAX_SOURCE_FEATURES: usize = 512;
 const MAX_COLLISION_VERTICES: usize = 512;
@@ -47,6 +53,37 @@ const MAX_CLIPPER_OUTPUT_VERTICES: usize = 4_000_000;
 const MAX_PARTIAL_AUDITS: usize = 41;
 const MAX_COMPLETE_AUDITS: usize = 64;
 const MAX_RETAINED_BYTES: usize = 64 * 1024 * 1024;
+const REPAIR_MAX_SELECTED_PIECE_SLOTS: usize = MAX_SELECTED_PIECE_SLOTS + REPAIR_PARENT_EXPANSIONS;
+const REPAIR_MAX_ORIENTATION_STREAMS: usize =
+    REPAIR_MAX_SELECTED_PIECE_SLOTS * ORIENTATIONS_PER_PIECE;
+const REPAIR_MAX_SOURCE_FEATURE_VISITS: usize =
+    REPAIR_MAX_SELECTED_PIECE_SLOTS * 2 * MAX_SOURCE_FEATURES;
+const REPAIR_MAX_POSITION_SOURCE_ATTEMPTS: usize =
+    REPAIR_MAX_ORIENTATION_STREAMS * MAX_POSITION_SOURCES_PER_ORIENTATION;
+const REPAIR_MAX_RETURNED_POSITIONS: usize =
+    REPAIR_MAX_ORIENTATION_STREAMS * POSITIONS_PER_ORIENTATION;
+const REPAIR_MAX_HAZARD_QUERIES: usize = REPAIR_MAX_RETURNED_POSITIONS;
+const REPAIR_MAX_PROXY_PRESSURE_VISITS: usize = REPAIR_MAX_HAZARD_QUERIES * MIXED_PIECE_COUNT;
+const REPAIR_MAX_EXACT_FINALIST_ROWS: usize = REPAIR_MAX_SELECTED_PIECE_SLOTS * FINALISTS_PER_PIECE;
+const REPAIR_MAX_EXPERIMENTAL_COLLISION_BUILDS: usize =
+    MIXED_PIECE_COUNT + REPAIR_MAX_ORIENTATION_STREAMS + REPAIR_MAX_EXACT_FINALIST_ROWS;
+const REPAIR_MAX_PARTIAL_AUDITS: usize = MAX_PARTIAL_AUDITS + REPAIR_HORIZON + 1;
+const REPAIR_MAX_COMPLETE_AUDITS: usize =
+    MAX_COMPLETE_AUDITS + REPAIR_PARENT_EXPANSIONS * FINALISTS_PER_PIECE;
+const REPAIR_MAX_VALIDATOR_AUDITS: usize = REPAIR_MAX_PARTIAL_AUDITS + REPAIR_MAX_COMPLETE_AUDITS;
+const REPAIR_MAX_VALIDATOR_COLLISION_BUILDS: usize =
+    REPAIR_MAX_VALIDATOR_AUDITS * MIXED_PIECE_COUNT * 2;
+const REPAIR_MAX_EXPERIMENTAL_PAIR_VISITS: usize = MIXED_PIECE_COUNT * (MIXED_PIECE_COUNT - 1) / 2
+    + REPAIR_MAX_EXACT_FINALIST_ROWS * (MIXED_PIECE_COUNT - 1);
+const REPAIR_MAX_VALIDATOR_PAIR_VISITS: usize =
+    REPAIR_MAX_VALIDATOR_AUDITS * MIXED_PIECE_COUNT * (MIXED_PIECE_COUNT - 1);
+const REPAIR_MAX_TRANSFORMED_COLLISION_VERTICES: usize = (REPAIR_MAX_EXPERIMENTAL_COLLISION_BUILDS
+    + REPAIR_MAX_VALIDATOR_COLLISION_BUILDS)
+    * MAX_COLLISION_VERTICES;
+const REPAIR_MAX_CLIPPER_INPUT_VERTICES: usize = (REPAIR_MAX_EXPERIMENTAL_PAIR_VISITS
+    + REPAIR_MAX_VALIDATOR_PAIR_VISITS)
+    * 2
+    * MAX_COLLISION_VERTICES;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct VacancyTransition {
@@ -67,6 +104,25 @@ struct VacancyStateIdentity {
     active_placements: Vec<(usize, i64, bool, i64, i64)>,
     inactive: Vec<usize>,
     last_transition: Option<VacancyTransition>,
+}
+
+#[derive(Clone)]
+struct RepairNode {
+    state: VacancyState,
+    queue: Vec<usize>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct RepairNodeIdentity {
+    state: VacancyStateIdentity,
+    queue: Vec<usize>,
+}
+
+struct SelectedPieceExpansion {
+    selection: GeneralPersistentVacancySelectionSlotDiagnostics,
+    proposal_order_hash: String,
+    exact_row_order_hash: String,
+    generated_child_order_hash: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -115,12 +171,94 @@ struct EliteSnapshot {
     identity: VacancyStateIdentity,
 }
 
-#[derive(Default)]
 struct RunWork {
     diagnostics: GeneralPersistentVacancyWorkDiagnostics,
+    limits: WorkLimits,
+}
+
+#[derive(Clone, Copy)]
+struct WorkLimits {
+    selected_piece_slots: usize,
+    orientation_streams: usize,
+    source_feature_visits: usize,
+    position_source_attempts: usize,
+    returned_positions: usize,
+    hazard_queries: usize,
+    proxy_pressure_visits: usize,
+    exact_finalist_rows: usize,
+    experimental_collision_builds: usize,
+    validator_collision_builds: usize,
+    experimental_pair_visits: usize,
+    validator_pair_visits: usize,
+    transformed_collision_vertices: usize,
+    clipper_input_vertices: usize,
+    partial_audits: usize,
+    complete_audits: usize,
+}
+
+impl Default for WorkLimits {
+    fn default() -> Self {
+        Self {
+            selected_piece_slots: MAX_SELECTED_PIECE_SLOTS,
+            orientation_streams: MAX_ORIENTATION_STREAMS,
+            source_feature_visits: MAX_SOURCE_FEATURE_VISITS,
+            position_source_attempts: MAX_POSITION_SOURCE_ATTEMPTS,
+            returned_positions: MAX_RETURNED_POSITIONS,
+            hazard_queries: MAX_HAZARD_QUERIES,
+            proxy_pressure_visits: MAX_PROXY_PRESSURE_VISITS,
+            exact_finalist_rows: MAX_EXACT_FINALIST_ROWS,
+            experimental_collision_builds: MAX_EXPERIMENTAL_COLLISION_BUILDS,
+            validator_collision_builds: MAX_VALIDATOR_COLLISION_BUILDS,
+            experimental_pair_visits: MAX_EXPERIMENTAL_PAIR_VISITS,
+            validator_pair_visits: MAX_VALIDATOR_PAIR_VISITS,
+            transformed_collision_vertices: MAX_TRANSFORMED_COLLISION_VERTICES,
+            clipper_input_vertices: MAX_CLIPPER_INPUT_VERTICES,
+            partial_audits: MAX_PARTIAL_AUDITS,
+            complete_audits: MAX_COMPLETE_AUDITS,
+        }
+    }
+}
+
+impl WorkLimits {
+    fn repair() -> Self {
+        Self {
+            selected_piece_slots: REPAIR_MAX_SELECTED_PIECE_SLOTS,
+            orientation_streams: REPAIR_MAX_ORIENTATION_STREAMS,
+            source_feature_visits: REPAIR_MAX_SOURCE_FEATURE_VISITS,
+            position_source_attempts: REPAIR_MAX_POSITION_SOURCE_ATTEMPTS,
+            returned_positions: REPAIR_MAX_RETURNED_POSITIONS,
+            hazard_queries: REPAIR_MAX_HAZARD_QUERIES,
+            proxy_pressure_visits: REPAIR_MAX_PROXY_PRESSURE_VISITS,
+            exact_finalist_rows: REPAIR_MAX_EXACT_FINALIST_ROWS,
+            experimental_collision_builds: REPAIR_MAX_EXPERIMENTAL_COLLISION_BUILDS,
+            validator_collision_builds: REPAIR_MAX_VALIDATOR_COLLISION_BUILDS,
+            experimental_pair_visits: REPAIR_MAX_EXPERIMENTAL_PAIR_VISITS,
+            validator_pair_visits: REPAIR_MAX_VALIDATOR_PAIR_VISITS,
+            transformed_collision_vertices: REPAIR_MAX_TRANSFORMED_COLLISION_VERTICES,
+            clipper_input_vertices: REPAIR_MAX_CLIPPER_INPUT_VERTICES,
+            partial_audits: REPAIR_MAX_PARTIAL_AUDITS,
+            complete_audits: REPAIR_MAX_COMPLETE_AUDITS,
+        }
+    }
+}
+
+impl Default for RunWork {
+    fn default() -> Self {
+        Self {
+            diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
+            limits: WorkLimits::default(),
+        }
+    }
 }
 
 impl RunWork {
+    fn for_mode(_mode: usize) -> Self {
+        Self {
+            diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
+            limits: WorkLimits::default(),
+        }
+    }
+
     fn cap(&self, reason: &str) -> String {
         format!("cap: {reason}")
     }
@@ -130,7 +268,7 @@ impl RunWork {
             .diagnostics
             .source_feature_visits
             .saturating_add(amount);
-        if self.diagnostics.source_feature_visits > MAX_SOURCE_FEATURE_VISITS {
+        if self.diagnostics.source_feature_visits > self.limits.source_feature_visits {
             return Err(self.cap("source-feature visit budget exhausted"));
         }
         Ok(())
@@ -141,7 +279,7 @@ impl RunWork {
             .diagnostics
             .position_source_attempts
             .saturating_add(amount);
-        if self.diagnostics.position_source_attempts > MAX_POSITION_SOURCE_ATTEMPTS {
+        if self.diagnostics.position_source_attempts > self.limits.position_source_attempts {
             return Err(self.cap("position-source attempt budget exhausted"));
         }
         Ok(())
@@ -150,7 +288,7 @@ impl RunWork {
     fn charge_experimental_pair(&mut self) -> Result<(), String> {
         self.diagnostics.experimental_pair_visits =
             self.diagnostics.experimental_pair_visits.saturating_add(1);
-        if self.diagnostics.experimental_pair_visits > MAX_EXPERIMENTAL_PAIR_VISITS {
+        if self.diagnostics.experimental_pair_visits > self.limits.experimental_pair_visits {
             return Err(self.cap("experimental pair-visit budget exhausted"));
         }
         Ok(())
@@ -158,12 +296,12 @@ impl RunWork {
 
     fn charge_validator_audit(&mut self, complete: bool) -> Result<(), String> {
         if complete {
-            if self.diagnostics.complete_audits >= MAX_COMPLETE_AUDITS {
+            if self.diagnostics.complete_audits >= self.limits.complete_audits {
                 return Err(self.cap("complete-audit budget exhausted"));
             }
             self.diagnostics.complete_audits += 1;
         } else {
-            if self.diagnostics.partial_audits >= MAX_PARTIAL_AUDITS {
+            if self.diagnostics.partial_audits >= self.limits.partial_audits {
                 return Err(self.cap("partial-audit budget exhausted"));
             }
             self.diagnostics.partial_audits += 1;
@@ -176,7 +314,7 @@ impl RunWork {
             .diagnostics
             .validator_collision_builds
             .saturating_add(collision_builds)
-            > MAX_VALIDATOR_COLLISION_BUILDS
+            > self.limits.validator_collision_builds
         {
             return Err(self.cap("validator collision-build budget exhausted"));
         }
@@ -184,7 +322,7 @@ impl RunWork {
             .diagnostics
             .validator_pair_visits
             .saturating_add(pair_visits)
-            > MAX_VALIDATOR_PAIR_VISITS
+            > self.limits.validator_pair_visits
         {
             return Err(self.cap("validator pair-visit budget exhausted"));
         }
@@ -192,7 +330,7 @@ impl RunWork {
             .diagnostics
             .transformed_collision_vertices
             .saturating_add(collision_vertices)
-            > MAX_TRANSFORMED_COLLISION_VERTICES
+            > self.limits.transformed_collision_vertices
         {
             return Err(self.cap("transformed collision-vertex budget exhausted"));
         }
@@ -200,7 +338,7 @@ impl RunWork {
             .diagnostics
             .clipper_input_vertices
             .saturating_add(input_vertices)
-            > MAX_CLIPPER_INPUT_VERTICES
+            > self.limits.clipper_input_vertices
         {
             return Err(self.cap("validator Clipper input-vertex budget exhausted"));
         }
@@ -215,12 +353,33 @@ impl RunWork {
 fn uses_macro_expansion(mode: usize) -> bool {
     matches!(
         mode,
-        MACRO_CONTROL_MODE | MACRO_TREATMENT_MODE | PRESERVED_BEST_MACRO_MODE
+        MACRO_CONTROL_MODE
+            | MACRO_TREATMENT_MODE
+            | PRESERVED_BEST_MACRO_MODE
+            | REPAIR_CONTROL_MODE
+            | REPAIR_TREATMENT_MODE
     )
 }
 
 fn admits_macro_children(mode: usize) -> bool {
-    matches!(mode, MACRO_TREATMENT_MODE | PRESERVED_BEST_MACRO_MODE)
+    matches!(
+        mode,
+        MACRO_TREATMENT_MODE
+            | PRESERVED_BEST_MACRO_MODE
+            | REPAIR_CONTROL_MODE
+            | REPAIR_TREATMENT_MODE
+    )
+}
+
+fn uses_preserved_best_macro(mode: usize) -> bool {
+    matches!(
+        mode,
+        PRESERVED_BEST_MACRO_MODE | REPAIR_CONTROL_MODE | REPAIR_TREATMENT_MODE
+    )
+}
+
+fn uses_repair_expedition(mode: usize) -> bool {
+    matches!(mode, REPAIR_CONTROL_MODE | REPAIR_TREATMENT_MODE)
 }
 
 struct MacroParentChoice<'a> {
@@ -237,7 +396,7 @@ fn select_macro_parent<'a>(
     let ordinary = ordinary_children
         .iter()
         .find(|state| state.active.iter().any(|active| !*active))?;
-    if mode != PRESERVED_BEST_MACRO_MODE {
+    if !uses_preserved_best_macro(mode) {
         return Some(MacroParentChoice {
             state: ordinary,
             origin: None,
@@ -282,7 +441,7 @@ pub(super) fn run_persistent_vacancy_population(
         target_depth_mm: TARGET_DEPTH_MM,
         ..GeneralPersistentVacancyDiagnostics::default()
     };
-    let mut work = RunWork::default();
+    let mut work = RunWork::for_mode(mode);
     match run_population(
         pieces,
         fast_settings,
@@ -332,9 +491,11 @@ fn run_population(
             | MACRO_CONTROL_MODE
             | MACRO_TREATMENT_MODE
             | PRESERVED_BEST_MACRO_MODE
+            | REPAIR_CONTROL_MODE
+            | REPAIR_TREATMENT_MODE
     ) {
         return Err(
-            "persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 8, 9, or 10; retired mode 7 is unavailable"
+            "persistent vacancy mode must be 1, 2, 3, 4, 5, 6, 8, 9, 10, 14, or 15; retired modes 7 and 11 through 13 are unavailable"
                 .to_owned(),
         );
     }
@@ -396,6 +557,7 @@ fn run_population(
     let mut best_ever_area: Option<EliteSnapshot> = None;
     let mut best_ever_count: Option<EliteSnapshot> = None;
     let mut best_ever_area_state: Option<VacancyState> = None;
+    let mut best_ever_count_state: Option<VacancyState> = None;
     let mut retained_carryovers = BTreeSet::new();
     for layer in 0..MAX_LAYERS {
         let layer_entry_work = generation_work_snapshot(work.diagnostics);
@@ -454,7 +616,10 @@ fn run_population(
             largest_clone_bytes = largest_clone_bytes.max(bytes);
         }
         let mut retained_clone_bytes = largest_clone_bytes.saturating_mul(2);
-        let preserved_best_live_state_bytes = owned_state_bytes(best_ever_area_state.as_ref());
+        let preserved_best_live_state_bytes = sidecar_bytes(
+            best_ever_area_state.as_ref(),
+            best_ever_count_state.as_ref(),
+        );
         preflight_raw_live_memory(
             &population,
             preserved_best_live_state_bytes,
@@ -750,9 +915,25 @@ fn run_population(
         let area_improved = best_ever_area.as_ref().map_or(true, |current| {
             compare_area_snapshots(&area_snapshot, current).is_lt()
         });
-        if mode == PRESERVED_BEST_MACRO_MODE && area_improved && accepted_complete.is_none() {
-            let transient_sidecar_bytes =
-                preserved_best_live_state_bytes.saturating_add(owned_state_bytes(Some(area_elite)));
+        let count_improved = best_ever_count.as_ref().map_or(true, |current| {
+            compare_count_snapshots(&count_snapshot, current).is_lt()
+        });
+        let replace_area =
+            uses_preserved_best_macro(mode) && area_improved && accepted_complete.is_none();
+        let replace_count =
+            uses_repair_expedition(mode) && count_improved && accepted_complete.is_none();
+        if replace_area || replace_count {
+            let transient_sidecar_bytes = preserved_best_live_state_bytes
+                .saturating_add(
+                    replace_area
+                        .then(|| owned_state_bytes(Some(area_elite)))
+                        .unwrap_or(0),
+                )
+                .saturating_add(
+                    replace_count
+                        .then(|| owned_state_bytes(Some(count_elite)))
+                        .unwrap_or(0),
+                );
             preflight_raw_live_memory(
                 &population,
                 transient_sidecar_bytes,
@@ -768,7 +949,14 @@ fn run_population(
                 diagnostics,
                 work,
             )?;
-            best_ever_area_state = Some(area_elite.clone());
+            let next_area = replace_area.then(|| area_elite.clone());
+            let next_count = replace_count.then(|| count_elite.clone());
+            if let Some(next_area) = next_area {
+                best_ever_area_state = Some(next_area);
+            }
+            if let Some(next_count) = next_count {
+                best_ever_count_state = Some(next_count);
+            }
         }
         update_best_area(&mut best_ever_area, &area_snapshot);
         update_best_count(&mut best_ever_count, &count_snapshot);
@@ -778,7 +966,7 @@ fn run_population(
         let best_ever_count_snapshot = best_ever_count
             .as_ref()
             .expect("the current count elite initializes best-ever history");
-        if mode == PRESERVED_BEST_MACRO_MODE
+        if uses_preserved_best_macro(mode)
             && accepted_complete.is_none()
             && best_ever_area_state
                 .as_ref()
@@ -788,6 +976,18 @@ fn run_population(
         {
             return Err(format!(
                 "persistent vacancy layer {layer} diverged preserved best-area state from diagnostics"
+            ));
+        }
+        if uses_repair_expedition(mode)
+            && accepted_complete.is_none()
+            && best_ever_count_state
+                .as_ref()
+                .map(|state| state_fingerprint(state, pieces))
+                .as_deref()
+                != Some(best_ever_count_snapshot.fingerprint.as_str())
+        {
+            return Err(format!(
+                "persistent vacancy layer {layer} diverged preserved best-count state from diagnostics"
             ));
         }
         let best_identity = state_identity(&next[0]);
@@ -811,6 +1011,8 @@ fn run_population(
                 .collect(),
             best_inactive_area_grid2: inactive_area(&next[0], &difficulty).to_string(),
             best_state_fingerprint: state_fingerprint(&next[0], pieces),
+            retained_population_hash: uses_preserved_best_macro(mode)
+                .then(|| population_hash(&next, pieces)),
             macro_expansion,
             elite: Some(GeneralPersistentVacancyEliteLayerDiagnostics {
                 entering_population_hash,
@@ -843,7 +1045,10 @@ fn run_population(
         };
         preflight_live_memory(
             &population,
-            owned_state_bytes(best_ever_area_state.as_ref()),
+            sidecar_bytes(
+                best_ever_area_state.as_ref(),
+                best_ever_count_state.as_ref(),
+            ),
             generated_live_state_bytes,
             carryover_live_state_bytes,
             retained_clone_bytes,
@@ -855,6 +1060,10 @@ fn run_population(
         charge_retained_memory(
             &next,
             best_ever_area_state.as_ref(),
+            sidecar_bytes(
+                best_ever_area_state.as_ref(),
+                best_ever_count_state.as_ref(),
+            ),
             diagnostics,
             &layer_diagnostics,
             work,
@@ -867,7 +1076,621 @@ fn run_population(
         retained_carryovers = retained_carryover_fingerprints.into_iter().collect();
         population = next;
     }
-    Ok(None)
+    let pre_expedition_work = generation_work_snapshot(work.diagnostics);
+    if uses_preserved_best_macro(mode) {
+        diagnostics.pre_expedition_work = Some(pre_expedition_work);
+        diagnostics.pre_expedition_behavior_hash = Some(pre_expedition_behavior_hash(diagnostics)?);
+    }
+    if !uses_repair_expedition(mode) {
+        return Ok(None);
+    }
+    drop(population);
+    drop(best_ever_area_state);
+    let root = best_ever_count_state
+        .as_ref()
+        .ok_or_else(|| "persistent vacancy repair has no preserved best-count root".to_owned())?;
+    let mut expedition_events = GeneralPersistentVacancyDiagnostics::default();
+    let mut expedition_work = RunWork {
+        diagnostics: repair_generation_work_start(work.diagnostics),
+        limits: WorkLimits::repair(),
+    };
+    let mut repair_root_dual_valid = false;
+    let expedition_work_before = generation_work_snapshot(work.diagnostics);
+    let outcome = run_repair_expedition(
+        root,
+        &baseline_placements,
+        pieces,
+        target_settings,
+        &difficulty,
+        &hazard_catalog,
+        mode,
+        diagnostics,
+        &mut expedition_events,
+        &mut repair_root_dual_valid,
+        &mut expedition_work,
+    );
+    let (accepted, repair) = match outcome {
+        Ok(success) => success,
+        Err(reason) => {
+            let repair = failed_repair_diagnostics(
+                root,
+                pieces,
+                &difficulty,
+                mode,
+                repair_root_dual_valid,
+                &reason,
+                repair_work_delta(
+                    generation_work_snapshot(expedition_work.diagnostics),
+                    expedition_work_before,
+                    expedition_work.diagnostics,
+                ),
+            );
+            merge_repair_work(work, expedition_work.diagnostics);
+            diagnostics.repair_expedition = Some(repair);
+            return Err(reason);
+        }
+    };
+    commit_repair_expedition(
+        diagnostics,
+        work,
+        expedition_events,
+        expedition_work,
+        repair,
+    );
+    Ok(accepted)
+}
+
+fn failed_repair_diagnostics(
+    root: &VacancyState,
+    pieces: &[GeneralFastPiece<'_>],
+    difficulty: &[PieceDifficulty],
+    mode: usize,
+    root_dual_valid: bool,
+    reason: &str,
+    work: GeneralPersistentVacancyWorkDiagnostics,
+) -> GeneralPersistentVacancyRepairDiagnostics {
+    let root_queue = difficulty_inactive_order(root, pieces, difficulty);
+    GeneralPersistentVacancyRepairDiagnostics {
+        scheduler_family: repair_scheduler_family(mode).to_owned(),
+        seed_domain: REPAIR_SEED_DOMAIN,
+        root_state_fingerprint: state_fingerprint(root, pieces),
+        root_inactive_piece_count: inactive_piece_count(root),
+        root_inactive_area_grid2: inactive_area(root, difficulty).to_string(),
+        root_queue_piece_ids: queue_piece_ids(&root_queue, pieces),
+        root_dual_valid,
+        work,
+        cap_exhausted: reason.strip_prefix("cap: ").map(str::to_owned),
+        failure_reason: Some(reason.to_owned()),
+        ..GeneralPersistentVacancyRepairDiagnostics::default()
+    }
+}
+
+fn repair_scheduler_family(mode: usize) -> &'static str {
+    if mode == REPAIR_CONTROL_MODE {
+        "oneSlotGlobalHardest"
+    } else {
+        "oneSlotDisplacedFirst"
+    }
+}
+
+fn commit_repair_expedition(
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    work: &mut RunWork,
+    events: GeneralPersistentVacancyDiagnostics,
+    expedition_work: RunWork,
+    repair: GeneralPersistentVacancyRepairDiagnostics,
+) {
+    diagnostics.direct_insertions = diagnostics
+        .direct_insertions
+        .saturating_add(events.direct_insertions);
+    diagnostics.ejection_insertions = diagnostics
+        .ejection_insertions
+        .saturating_add(events.ejection_insertions);
+    diagnostics.immediate_reversals_rejected = diagnostics
+        .immediate_reversals_rejected
+        .saturating_add(events.immediate_reversals_rejected);
+    diagnostics.complete_states = diagnostics
+        .complete_states
+        .saturating_add(events.complete_states);
+    diagnostics.publication_rejections = diagnostics
+        .publication_rejections
+        .saturating_add(events.publication_rejections);
+    merge_repair_work(work, expedition_work.diagnostics);
+    diagnostics.repair_expedition = Some(repair);
+}
+
+fn repair_generation_work_start(
+    mut diagnostics: GeneralPersistentVacancyWorkDiagnostics,
+) -> GeneralPersistentVacancyWorkDiagnostics {
+    diagnostics.retained_peak_bytes = 0;
+    diagnostics.selector_diagnostic_peak_bytes = 0;
+    diagnostics.total_retained_peak_bytes = 0;
+    diagnostics
+}
+
+fn merge_repair_work(work: &mut RunWork, repair: GeneralPersistentVacancyWorkDiagnostics) {
+    let previous = work.diagnostics;
+    work.diagnostics = repair;
+    work.diagnostics.retained_peak_bytes =
+        previous.retained_peak_bytes.max(repair.retained_peak_bytes);
+    work.diagnostics.selector_diagnostic_peak_bytes = previous
+        .selector_diagnostic_peak_bytes
+        .max(repair.selector_diagnostic_peak_bytes);
+    work.diagnostics.total_retained_peak_bytes = previous
+        .total_retained_peak_bytes
+        .max(repair.total_retained_peak_bytes);
+}
+
+#[allow(clippy::too_many_arguments)]
+fn run_repair_expedition(
+    root: &VacancyState,
+    baseline: &[RelaxedPlacement],
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    difficulty: &[PieceDifficulty],
+    hazard_catalog: &Arc<JaguaHazardCatalog>,
+    mode: usize,
+    base_diagnostics: &GeneralPersistentVacancyDiagnostics,
+    expedition_events: &mut GeneralPersistentVacancyDiagnostics,
+    root_dual_valid: &mut bool,
+    work: &mut RunWork,
+) -> Result<
+    (
+        Option<(VacancyState, f64)>,
+        GeneralPersistentVacancyRepairDiagnostics,
+    ),
+    String,
+> {
+    preflight_repair_memory(root, pieces, base_diagnostics, "root", work)?;
+    let work_before = generation_work_snapshot(work.diagnostics);
+    audit_state(root, pieces, settings, false, work)?;
+    *root_dual_valid = true;
+    let root_queue = difficulty_inactive_order(root, pieces, difficulty);
+    validate_repair_queue(root, &root_queue)?;
+    let root_node = RepairNode {
+        state: root.clone(),
+        queue: root_queue.clone(),
+    };
+    let root_count = inactive_piece_count(root);
+    let root_area = inactive_area(root, difficulty);
+    let mut repair = GeneralPersistentVacancyRepairDiagnostics {
+        scheduler_family: repair_scheduler_family(mode).to_owned(),
+        seed_domain: REPAIR_SEED_DOMAIN,
+        root_state_fingerprint: state_fingerprint(root, pieces),
+        root_inactive_piece_count: root_count,
+        root_inactive_area_grid2: root_area.to_string(),
+        root_queue_piece_ids: queue_piece_ids(&root_queue, pieces),
+        root_dual_valid: true,
+        depths: Vec::with_capacity(REPAIR_HORIZON),
+        ..GeneralPersistentVacancyRepairDiagnostics::default()
+    };
+    let mut frontier = Vec::with_capacity(REPAIR_BEAM_WIDTH);
+    frontier.push(root_node.clone());
+    let mut seen = BTreeSet::new();
+    seen.insert(repair_node_identity(&root_node));
+    let mut best_partial = root_node;
+    let mut best_complete: Option<(VacancyState, f64, String)> = None;
+
+    for expansion_depth in 0..REPAIR_HORIZON {
+        preflight_repair_memory(root, pieces, base_diagnostics, "depth allocation", work)?;
+        let depth_work_before = generation_work_snapshot(work.diagnostics);
+        let direct_before = expedition_events.direct_insertions;
+        let ejection_before = expedition_events.ejection_insertions;
+        let expanded_parents = frontier.len();
+        let mut raw = Vec::with_capacity(REPAIR_BEAM_WIDTH * FINALISTS_PER_PIECE);
+        let mut expansion_diagnostics = Vec::with_capacity(expanded_parents);
+        for parent in &frontier {
+            let piece_index = *parent
+                .queue
+                .first()
+                .ok_or_else(|| "repair frontier contains a complete node".to_owned())?;
+            let poses = parent
+                .state
+                .placements
+                .iter()
+                .map(hazard_pose)
+                .collect::<Vec<_>>();
+            let mut index = JaguaHazardIndex::from_catalog_active(
+                pieces,
+                settings,
+                TARGET_DEPTH_MM,
+                &poses,
+                &parent.state.active,
+                hazard_catalog,
+            )
+            .map_err(|error| format!("persistent vacancy repair hazard index: {error}"))?;
+            let transition_seed = repair_transition_seed(&parent.state, piece_index, pieces);
+            let mut children = Vec::with_capacity(FINALISTS_PER_PIECE);
+            let expansion_work_before = generation_work_snapshot(work.diagnostics);
+            let expansion = expand_selected_piece(
+                &parent.state,
+                baseline,
+                pieces,
+                settings,
+                &mut index,
+                transition_seed,
+                0,
+                piece_index,
+                expedition_events,
+                work,
+                &mut children,
+            )?;
+            expansion_diagnostics.push(GeneralPersistentVacancyRepairExpansionDiagnostics {
+                parent_augmented_identity_hash: repair_node_hash(parent, pieces),
+                parent_state_fingerprint: state_fingerprint(&parent.state, pieces),
+                parent_queue_piece_ids: queue_piece_ids(&parent.queue, pieces),
+                selected_piece_id: pieces[piece_index].id.to_owned(),
+                transition_seed,
+                angle_seed: expansion.selection.angle_seed,
+                diversity_seed: expansion.selection.diversity_seed,
+                proposal_order_hash: expansion.proposal_order_hash,
+                exact_row_order_hash: expansion.exact_row_order_hash,
+                generated_child_order_hash: expansion.generated_child_order_hash,
+                work: work_delta(
+                    generation_work_snapshot(work.diagnostics),
+                    expansion_work_before,
+                ),
+            });
+            for child in children {
+                let queue =
+                    repair_child_queue(parent, &child, piece_index, pieces, difficulty, mode)?;
+                raw.push(RepairNode {
+                    state: child,
+                    queue,
+                });
+            }
+        }
+        let generated_children = raw.len();
+        raw.sort_by(|first, second| compare_repair_nodes(first, second, pieces, difficulty));
+        let before_dedup = raw.len();
+        raw.dedup_by(|first, second| repair_node_identity(first) == repair_node_identity(second));
+        let deduplicated_children = before_dedup.saturating_sub(raw.len());
+        let before_transposition = raw.len();
+        raw.retain(|node| seen.insert(repair_node_identity(node)));
+        let transposed_children = before_transposition.saturating_sub(raw.len());
+
+        let mut complete = Vec::new();
+        let mut incomplete = Vec::with_capacity(raw.len());
+        for node in raw {
+            if node.queue.is_empty() {
+                complete.push(node);
+            } else {
+                incomplete.push(node);
+            }
+        }
+        expedition_events.complete_states = expedition_events
+            .complete_states
+            .saturating_add(complete.len());
+        for node in &complete {
+            if let Some((state, independent_depth)) =
+                audit_complete_candidate(&node.state, pieces, settings, expedition_events, work)?
+            {
+                let fingerprint =
+                    coupled_fast_placement_fingerprint(&fast_placements(&state, pieces, false));
+                let replace =
+                    best_complete
+                        .as_ref()
+                        .is_none_or(|(_, current_depth, current_fp)| {
+                            independent_depth
+                                .total_cmp(current_depth)
+                                .then_with(|| fingerprint.cmp(current_fp))
+                                .is_lt()
+                        });
+                if replace {
+                    best_complete = Some((state, independent_depth, fingerprint));
+                }
+            }
+        }
+        incomplete.sort_by(|first, second| compare_repair_nodes(first, second, pieces, difficulty));
+        incomplete.truncate(REPAIR_BEAM_WIDTH);
+        if let Some(best) = incomplete.first() {
+            audit_state(&best.state, pieces, settings, false, work)?;
+            if compare_repair_nodes(best, &best_partial, pieces, difficulty).is_lt() {
+                best_partial = best.clone();
+            }
+        }
+        preflight_repair_memory(root, pieces, base_diagnostics, "depth diagnostics", work)?;
+        let frontier_hash = repair_frontier_hash(&incomplete, pieces);
+        let frontier_diagnostics = incomplete
+            .iter()
+            .map(|node| repair_node_diagnostics(node, pieces, difficulty))
+            .collect::<Vec<_>>();
+        repair
+            .depths
+            .push(GeneralPersistentVacancyRepairDepthDiagnostics {
+                expansion_depth,
+                expanded_parents,
+                generated_children,
+                deduplicated_children,
+                transposed_children,
+                complete_candidates: complete.len(),
+                direct_insertions: expedition_events
+                    .direct_insertions
+                    .saturating_sub(direct_before),
+                ejection_insertions: expedition_events
+                    .ejection_insertions
+                    .saturating_sub(ejection_before),
+                expansions: expansion_diagnostics,
+                frontier_hash,
+                best_inactive_piece_count: incomplete
+                    .first()
+                    .map(|node| inactive_piece_count(&node.state)),
+                best_inactive_area_grid2: incomplete
+                    .first()
+                    .map(|node| inactive_area(&node.state, difficulty).to_string()),
+                frontier: frontier_diagnostics,
+                work: work_delta(
+                    generation_work_snapshot(work.diagnostics),
+                    depth_work_before,
+                ),
+            });
+        frontier = incomplete;
+    }
+
+    let accepted = if let Some((state, independent_depth, fingerprint)) = best_complete {
+        repair.endpoint_state_fingerprint = Some(state_fingerprint(&state, pieces));
+        repair.endpoint_inactive_piece_count = Some(0);
+        repair.endpoint_inactive_area_grid2 = Some("0".to_owned());
+        repair.endpoint_pareto_improves_root = true;
+        repair.complete_endpoint = true;
+        repair.independent_depth_mm = Some(independent_depth);
+        repair.final_placement_fingerprint = Some(fingerprint);
+        Some((state, independent_depth))
+    } else {
+        let endpoint_count = inactive_piece_count(&best_partial.state);
+        let endpoint_area = inactive_area(&best_partial.state, difficulty);
+        repair.endpoint_state_fingerprint = Some(state_fingerprint(&best_partial.state, pieces));
+        repair.endpoint_inactive_piece_count = Some(endpoint_count);
+        repair.endpoint_inactive_area_grid2 = Some(endpoint_area.to_string());
+        repair.endpoint_pareto_improves_root = endpoint_count <= root_count
+            && endpoint_area <= root_area
+            && (endpoint_count < root_count || endpoint_area < root_area);
+        None
+    };
+    repair.work = repair_work_delta(
+        generation_work_snapshot(work.diagnostics),
+        work_before,
+        work.diagnostics,
+    );
+    Ok((accepted, repair))
+}
+
+fn difficulty_inactive_order(
+    state: &VacancyState,
+    pieces: &[GeneralFastPiece<'_>],
+    difficulty: &[PieceDifficulty],
+) -> Vec<usize> {
+    let mut inactive = (0..state.active.len())
+        .filter(|index| !state.active[*index])
+        .collect::<Vec<_>>();
+    inactive.sort_by(|first, second| {
+        difficulty[*second]
+            .expanded_area_grid2
+            .cmp(&difficulty[*first].expanded_area_grid2)
+            .then_with(|| {
+                difficulty[*second]
+                    .hull_deficit_grid2
+                    .cmp(&difficulty[*first].hull_deficit_grid2)
+            })
+            .then_with(|| {
+                difficulty[*second]
+                    .minimum_side_grid
+                    .cmp(&difficulty[*first].minimum_side_grid)
+            })
+            .then_with(|| pieces[*first].id.cmp(pieces[*second].id))
+    });
+    inactive
+}
+
+fn repair_child_queue(
+    parent: &RepairNode,
+    child: &VacancyState,
+    inserted: usize,
+    pieces: &[GeneralFastPiece<'_>],
+    difficulty: &[PieceDifficulty],
+    mode: usize,
+) -> Result<Vec<usize>, String> {
+    let queue = if mode == REPAIR_CONTROL_MODE {
+        difficulty_inactive_order(child, pieces, difficulty)
+    } else {
+        let transition = child
+            .last_transition
+            .as_ref()
+            .ok_or_else(|| "repair child has no transition".to_owned())?;
+        if transition.inserted != inserted || parent.queue.first().copied() != Some(inserted) {
+            return Err("repair child transition does not match its queue head".to_owned());
+        }
+        let mut displaced = transition.ejected.clone();
+        displaced.sort_by(|first, second| {
+            difficulty[*second]
+                .expanded_area_grid2
+                .cmp(&difficulty[*first].expanded_area_grid2)
+                .then_with(|| {
+                    difficulty[*second]
+                        .hull_deficit_grid2
+                        .cmp(&difficulty[*first].hull_deficit_grid2)
+                })
+                .then_with(|| {
+                    difficulty[*second]
+                        .minimum_side_grid
+                        .cmp(&difficulty[*first].minimum_side_grid)
+                })
+                .then_with(|| pieces[*first].id.cmp(pieces[*second].id))
+        });
+        displaced.extend(
+            parent
+                .queue
+                .iter()
+                .copied()
+                .filter(|index| *index != inserted),
+        );
+        displaced
+    };
+    validate_repair_queue(child, &queue)?;
+    Ok(queue)
+}
+
+fn validate_repair_queue(state: &VacancyState, queue: &[usize]) -> Result<(), String> {
+    let expected = state
+        .active
+        .iter()
+        .enumerate()
+        .filter_map(|(index, active)| (!*active).then_some(index))
+        .collect::<BTreeSet<_>>();
+    let actual = queue.iter().copied().collect::<BTreeSet<_>>();
+    if actual.len() != queue.len() || actual != expected {
+        return Err("repair queue does not contain every inactive piece exactly once".to_owned());
+    }
+    Ok(())
+}
+
+fn repair_node_identity(node: &RepairNode) -> RepairNodeIdentity {
+    RepairNodeIdentity {
+        state: state_identity(&node.state),
+        queue: node.queue.clone(),
+    }
+}
+
+fn compare_repair_nodes(
+    first: &RepairNode,
+    second: &RepairNode,
+    pieces: &[GeneralFastPiece<'_>],
+    difficulty: &[PieceDifficulty],
+) -> Ordering {
+    compare_count_states(&first.state, &second.state, pieces, difficulty).then_with(|| {
+        queue_piece_ids(&first.queue, pieces).cmp(&queue_piece_ids(&second.queue, pieces))
+    })
+}
+
+fn repair_transition_seed(
+    state: &VacancyState,
+    piece_index: usize,
+    pieces: &[GeneralFastPiece<'_>],
+) -> u64 {
+    let mut digest = Sha256::new();
+    digest.update(b"persistent-vacancy-repair-expedition-v1\0");
+    digest.update(state_digest(state, pieces));
+    update_framed_id(&mut digest, pieces[piece_index].id);
+    let bytes: [u8; 32] = digest.finalize().into();
+    let key = u64::from_be_bytes(bytes[..8].try_into().expect("SHA-256 has eight bytes"));
+    derive_seed(REPAIR_SEED_DOMAIN ^ key, 0, piece_index)
+}
+
+fn queue_piece_ids(queue: &[usize], pieces: &[GeneralFastPiece<'_>]) -> Vec<String> {
+    queue
+        .iter()
+        .map(|index| pieces[*index].id.to_owned())
+        .collect()
+}
+
+fn repair_node_hash(node: &RepairNode, pieces: &[GeneralFastPiece<'_>]) -> String {
+    let mut digest = Sha256::new();
+    digest.update(b"persistent-vacancy-repair-node-v1\0");
+    digest.update(state_digest(&node.state, pieces));
+    digest.update((node.queue.len() as u32).to_be_bytes());
+    for index in &node.queue {
+        update_framed_id(&mut digest, pieces[*index].id);
+    }
+    format!("{:x}", digest.finalize())
+}
+
+fn repair_frontier_hash(frontier: &[RepairNode], pieces: &[GeneralFastPiece<'_>]) -> String {
+    let mut digest = Sha256::new();
+    digest.update(b"persistent-vacancy-repair-frontier-v1\0");
+    digest.update((frontier.len() as u32).to_be_bytes());
+    for node in frontier {
+        let hash = repair_node_hash(node, pieces);
+        digest.update((hash.len() as u32).to_be_bytes());
+        digest.update(hash.as_bytes());
+    }
+    format!("{:x}", digest.finalize())
+}
+
+fn repair_node_diagnostics(
+    node: &RepairNode,
+    pieces: &[GeneralFastPiece<'_>],
+    difficulty: &[PieceDifficulty],
+) -> GeneralPersistentVacancyRepairNodeDiagnostics {
+    GeneralPersistentVacancyRepairNodeDiagnostics {
+        augmented_identity_hash: repair_node_hash(node, pieces),
+        state_fingerprint: state_fingerprint(&node.state, pieces),
+        queue_piece_ids: queue_piece_ids(&node.queue, pieces),
+        inactive_piece_count: inactive_piece_count(&node.state),
+        inactive_area_grid2: inactive_area(&node.state, difficulty).to_string(),
+    }
+}
+
+fn preflight_repair_memory(
+    root: &VacancyState,
+    pieces: &[GeneralFastPiece<'_>],
+    diagnostics: &GeneralPersistentVacancyDiagnostics,
+    phase: &str,
+    work: &mut RunWork,
+) -> Result<(), String> {
+    const RAW_NODE_CAPACITY: usize = REPAIR_BEAM_WIDTH * FINALISTS_PER_PIECE;
+    const MAX_DIAGNOSTIC_NODES: usize = REPAIR_HORIZON * REPAIR_BEAM_WIDTH;
+    const MAX_TRANSITION_IDENTITIES: usize = 1 + REPAIR_PARENT_EXPANSIONS * FINALISTS_PER_PIECE;
+    const MAX_LIVE_NODE_OWNERS: usize = RAW_NODE_CAPACITY + REPAIR_BEAM_WIDTH + 4;
+    const NODE_VECTOR_BACKING: usize = REPAIR_BEAM_WIDTH + 3 * RAW_NODE_CAPACITY;
+    const HASH_BYTES: usize = 64;
+    let max_piece_id_bytes = pieces.iter().map(|piece| piece.id.len()).max().unwrap_or(0);
+    let maximum_collision_heap_bytes = size_of::<PolygonSet>()
+        .saturating_add(MAX_COLLISION_VERTICES * size_of::<IrregularPoint>());
+    let maximum_state_heap_bytes = state_heap_bytes(root)
+        .saturating_add(inactive_piece_count(root).saturating_mul(maximum_collision_heap_bytes));
+    let state_bytes = size_of::<VacancyState>().saturating_add(maximum_state_heap_bytes);
+    let node_bytes = state_bytes
+        .saturating_add(size_of::<Vec<usize>>())
+        .saturating_add(MAX_INACTIVE_PIECES * size_of::<usize>());
+    let identity_bytes = size_of::<RepairNodeIdentity>()
+        .saturating_add(pieces.len() * size_of::<(usize, i64, bool, i64, i64)>())
+        .saturating_add(pieces.len() * size_of::<usize>())
+        .saturating_add(MAX_INACTIVE_PIECES * size_of::<usize>())
+        .saturating_add(MAX_INACTIVE_PIECES * size_of::<usize>())
+        .saturating_add(4 * size_of::<usize>());
+    let diagnostic_node_bytes = size_of::<GeneralPersistentVacancyRepairNodeDiagnostics>()
+        .saturating_add(2 * HASH_BYTES)
+        .saturating_add(40)
+        .saturating_add(MAX_INACTIVE_PIECES * (size_of::<String>() + max_piece_id_bytes));
+    let expansion_diagnostic_bytes =
+        size_of::<GeneralPersistentVacancyRepairExpansionDiagnostics>()
+            .saturating_add(5 * HASH_BYTES)
+            .saturating_add(max_piece_id_bytes)
+            .saturating_add(MAX_INACTIVE_PIECES * (size_of::<String>() + max_piece_id_bytes));
+    let comparator_queue_key_bytes =
+        2usize.saturating_mul(MAX_INACTIVE_PIECES * (size_of::<String>() + max_piece_id_bytes));
+    let repair_header_bytes = size_of::<GeneralPersistentVacancyRepairDiagnostics>()
+        .saturating_add(32)
+        .saturating_add(3 * HASH_BYTES)
+        .saturating_add(2 * 40)
+        .saturating_add(2 * (512 + max_piece_id_bytes))
+        .saturating_add(MAX_INACTIVE_PIECES * (size_of::<String>() + max_piece_id_bytes));
+    let depth_scalar_string_bytes = REPAIR_HORIZON * (HASH_BYTES + 40);
+    let diagnostic_reserved = persistent_diagnostic_bytes(diagnostics)
+        .saturating_add(MAX_DIAGNOSTIC_NODES * diagnostic_node_bytes)
+        .saturating_add(REPAIR_PARENT_EXPANSIONS * expansion_diagnostic_bytes)
+        .saturating_add(repair_header_bytes)
+        .saturating_add(depth_scalar_string_bytes)
+        .saturating_add(
+            REPAIR_HORIZON * size_of::<GeneralPersistentVacancyRepairDepthDiagnostics>(),
+        );
+    let reserved = diagnostic_reserved
+        .saturating_add(MAX_LIVE_NODE_OWNERS * node_bytes)
+        .saturating_add(NODE_VECTOR_BACKING * size_of::<RepairNode>())
+        .saturating_add(MAX_TRANSITION_IDENTITIES * identity_bytes)
+        .saturating_add(comparator_queue_key_bytes);
+    work.diagnostics.selector_diagnostic_peak_bytes = work
+        .diagnostics
+        .selector_diagnostic_peak_bytes
+        .max(diagnostic_reserved);
+    work.diagnostics.total_retained_peak_bytes =
+        work.diagnostics.total_retained_peak_bytes.max(reserved);
+    if reserved > MAX_RETAINED_BYTES {
+        return Err(work.cap(&format!(
+            "repair-expedition {phase} memory budget exhausted"
+        )));
+    }
+    Ok(())
 }
 
 fn initial_vacancy_state(
@@ -998,137 +1821,189 @@ fn expand_parent(
     };
     for (selected_ordinal, piece_index) in selection.indices.into_iter().enumerate() {
         selected_piece_ids.insert(pieces[piece_index].id.to_owned());
-        work.diagnostics.selected_piece_slots =
-            work.diagnostics.selected_piece_slots.saturating_add(1);
-        if work.diagnostics.selected_piece_slots > MAX_SELECTED_PIECE_SLOTS {
-            return Err(work.cap("selected-piece slot budget exhausted"));
-        }
-        work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
-        let angle_seed = derive_seed(
-            transition_seed ^ CONFLICT_RUIN_ANGLE_SEED_DOMAIN,
+        let expansion = expand_selected_piece(
+            parent,
+            baseline,
+            pieces,
+            settings,
+            &mut index,
+            transition_seed,
             selected_ordinal,
             piece_index,
-        );
-        let orientations =
-            conflict_ruin_orientations(pieces[piece_index], &baseline[piece_index], angle_seed);
-        let diversity_seed = derive_seed(
-            transition_seed ^ CONFLICT_RUIN_DIVERSITY_SEED_DOMAIN,
-            selected_ordinal,
-            piece_index,
-        );
-        selection_diagnostics
-            .slots
-            .push(GeneralPersistentVacancySelectionSlotDiagnostics {
-                selected_ordinal,
-                piece_id: pieces[piece_index].id.to_owned(),
-                angle_seed,
-                diversity_seed,
-            });
-        let mut merged = Vec::new();
-        for (orientation_ordinal, (rotation_deg, mirrored)) in orientations.into_iter().enumerate()
-        {
-            work.diagnostics.orientation_streams =
-                work.diagnostics.orientation_streams.saturating_add(1);
-            if work.diagnostics.orientation_streams > MAX_ORIENTATION_STREAMS {
-                return Err(work.cap("orientation-stream budget exhausted"));
-            }
-            let orientation = RelaxedPlacement {
-                input_index: piece_index,
-                rotation_deg,
-                mirrored,
-                translate_x: 0.0,
-                translate_y: 0.0,
-            };
-            let local_collision =
-                build_collision(pieces[piece_index], &orientation, settings, work)?;
-            let position_seed = derive_seed(
-                transition_seed ^ CONFLICT_RUIN_POSITION_SEED_DOMAIN,
-                selected_ordinal
-                    .saturating_mul(ORIENTATIONS_PER_PIECE)
-                    .saturating_add(orientation_ordinal),
-                piece_index,
-            );
-            let proposals = vacancy_positions(
-                &baseline[piece_index],
-                &orientation,
-                &local_collision,
-                parent,
-                settings,
-                position_seed,
-                work,
-            )?;
-            let mut ranked = Vec::new();
-            for placement in proposals {
-                work.diagnostics.hazard_queries = work.diagnostics.hazard_queries.saturating_add(1);
-                if work.diagnostics.hazard_queries > MAX_HAZARD_QUERIES {
-                    return Err(work.cap("hazard-query budget exhausted"));
-                }
-                let pose = hazard_pose(&placement);
-                let query = match index.query_unplaced(piece_index, pose) {
-                    Ok(query) => query,
-                    Err(error) if error.to_string().contains("query envelope") => continue,
-                    Err(error) => return Err(format!("persistent vacancy hazard query: {error}")),
-                };
-                let GeneralHazardQuery::Complete {
-                    boundary,
-                    colliding_piece_ids,
-                } = query
-                else {
-                    return Err("persistent vacancy unplaced query unexpectedly pruned".to_owned());
-                };
-                if boundary {
-                    continue;
-                }
-                let mut proxy_loss = 0.0;
-                for fixed_piece_id in colliding_piece_ids {
-                    if !parent.active[fixed_piece_id] {
-                        return Err("inactive hazard leaked into vacancy query".to_owned());
-                    }
-                    work.diagnostics.proxy_pressure_visits =
-                        work.diagnostics.proxy_pressure_visits.saturating_add(1);
-                    if work.diagnostics.proxy_pressure_visits > MAX_PROXY_PRESSURE_VISITS {
-                        return Err(work.cap("proxy-pressure visit budget exhausted"));
-                    }
-                    proxy_loss += index
-                        .collision_pressure(piece_index, pose, fixed_piece_id)
-                        .map_err(|error| format!("persistent vacancy pressure: {error}"))?;
-                }
-                ranked.push(RankedProposal {
-                    diversity_key: conflict_ruin_diversity_key(&placement, diversity_seed),
-                    placement,
-                    proxy_loss,
-                    orientation_ordinal,
-                });
-            }
-            ranked.sort_by(compare_proposals);
-            ranked.truncate(2);
-            merged.extend(ranked);
-        }
-        merged.sort_by(compare_proposals);
-        let mut placement_keys = BTreeSet::new();
-        merged.retain(|proposal| placement_keys.insert(placement_key(&proposal.placement)));
-        merged.truncate(FINALISTS_PER_PIECE);
-        for finalist in merged {
-            work.diagnostics.exact_finalist_rows =
-                work.diagnostics.exact_finalist_rows.saturating_add(1);
-            if work.diagnostics.exact_finalist_rows > MAX_EXACT_FINALIST_ROWS {
-                return Err(work.cap("exact-finalist row budget exhausted"));
-            }
-            if let Some(child) = exact_vacancy_child(
-                parent,
-                pieces,
-                piece_index,
-                finalist.placement,
-                settings,
-                diagnostics,
-                work,
-            )? {
-                children.push(child);
-            }
-        }
+            diagnostics,
+            work,
+            children,
+        )?;
+        selection_diagnostics.slots.push(expansion.selection);
     }
     parent_selections.push(selection_diagnostics);
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn expand_selected_piece(
+    parent: &VacancyState,
+    baseline: &[RelaxedPlacement],
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    index: &mut JaguaHazardIndex,
+    transition_seed: u64,
+    selected_ordinal: usize,
+    piece_index: usize,
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    work: &mut RunWork,
+    children: &mut Vec<VacancyState>,
+) -> Result<SelectedPieceExpansion, String> {
+    work.diagnostics.selected_piece_slots = work.diagnostics.selected_piece_slots.saturating_add(1);
+    if work.diagnostics.selected_piece_slots > work.limits.selected_piece_slots {
+        return Err(work.cap("selected-piece slot budget exhausted"));
+    }
+    work.charge_source_features(pieces[piece_index].polygon.vertex_count().saturating_mul(2))?;
+    let angle_seed = derive_seed(
+        transition_seed ^ CONFLICT_RUIN_ANGLE_SEED_DOMAIN,
+        selected_ordinal,
+        piece_index,
+    );
+    let orientations =
+        conflict_ruin_orientations(pieces[piece_index], &baseline[piece_index], angle_seed);
+    let diversity_seed = derive_seed(
+        transition_seed ^ CONFLICT_RUIN_DIVERSITY_SEED_DOMAIN,
+        selected_ordinal,
+        piece_index,
+    );
+    let mut merged = Vec::new();
+    for (orientation_ordinal, (rotation_deg, mirrored)) in orientations.into_iter().enumerate() {
+        work.diagnostics.orientation_streams =
+            work.diagnostics.orientation_streams.saturating_add(1);
+        if work.diagnostics.orientation_streams > work.limits.orientation_streams {
+            return Err(work.cap("orientation-stream budget exhausted"));
+        }
+        let orientation = RelaxedPlacement {
+            input_index: piece_index,
+            rotation_deg,
+            mirrored,
+            translate_x: 0.0,
+            translate_y: 0.0,
+        };
+        let local_collision = build_collision(pieces[piece_index], &orientation, settings, work)?;
+        let position_seed = derive_seed(
+            transition_seed ^ CONFLICT_RUIN_POSITION_SEED_DOMAIN,
+            selected_ordinal
+                .saturating_mul(ORIENTATIONS_PER_PIECE)
+                .saturating_add(orientation_ordinal),
+            piece_index,
+        );
+        let proposals = vacancy_positions(
+            &baseline[piece_index],
+            &orientation,
+            &local_collision,
+            parent,
+            settings,
+            position_seed,
+            work,
+        )?;
+        let mut ranked = Vec::new();
+        for placement in proposals {
+            work.diagnostics.hazard_queries = work.diagnostics.hazard_queries.saturating_add(1);
+            if work.diagnostics.hazard_queries > work.limits.hazard_queries {
+                return Err(work.cap("hazard-query budget exhausted"));
+            }
+            let pose = hazard_pose(&placement);
+            let query = match index.query_unplaced(piece_index, pose) {
+                Ok(query) => query,
+                Err(error) if error.to_string().contains("query envelope") => continue,
+                Err(error) => return Err(format!("persistent vacancy hazard query: {error}")),
+            };
+            let GeneralHazardQuery::Complete {
+                boundary,
+                colliding_piece_ids,
+            } = query
+            else {
+                return Err("persistent vacancy unplaced query unexpectedly pruned".to_owned());
+            };
+            if boundary {
+                continue;
+            }
+            let mut proxy_loss = 0.0;
+            for fixed_piece_id in colliding_piece_ids {
+                if !parent.active[fixed_piece_id] {
+                    return Err("inactive hazard leaked into vacancy query".to_owned());
+                }
+                work.diagnostics.proxy_pressure_visits =
+                    work.diagnostics.proxy_pressure_visits.saturating_add(1);
+                if work.diagnostics.proxy_pressure_visits > work.limits.proxy_pressure_visits {
+                    return Err(work.cap("proxy-pressure visit budget exhausted"));
+                }
+                proxy_loss += index
+                    .collision_pressure(piece_index, pose, fixed_piece_id)
+                    .map_err(|error| format!("persistent vacancy pressure: {error}"))?;
+            }
+            ranked.push(RankedProposal {
+                diversity_key: conflict_ruin_diversity_key(&placement, diversity_seed),
+                placement,
+                proxy_loss,
+                orientation_ordinal,
+            });
+        }
+        ranked.sort_by(compare_proposals);
+        ranked.truncate(2);
+        merged.extend(ranked);
+    }
+    merged.sort_by(compare_proposals);
+    let proposal_order_hash =
+        ranked_proposal_order_hash(b"persistent-vacancy-proposal-order-v1\0", &merged);
+    let mut placement_keys = BTreeSet::new();
+    merged.retain(|proposal| placement_keys.insert(placement_key(&proposal.placement)));
+    merged.truncate(FINALISTS_PER_PIECE);
+    let exact_row_order_hash =
+        ranked_proposal_order_hash(b"persistent-vacancy-exact-row-order-v1\0", &merged);
+    let child_start = children.len();
+    for finalist in merged {
+        work.diagnostics.exact_finalist_rows =
+            work.diagnostics.exact_finalist_rows.saturating_add(1);
+        if work.diagnostics.exact_finalist_rows > work.limits.exact_finalist_rows {
+            return Err(work.cap("exact-finalist row budget exhausted"));
+        }
+        if let Some(child) = exact_vacancy_child(
+            parent,
+            pieces,
+            piece_index,
+            finalist.placement,
+            settings,
+            diagnostics,
+            work,
+        )? {
+            children.push(child);
+        }
+    }
+    Ok(SelectedPieceExpansion {
+        selection: GeneralPersistentVacancySelectionSlotDiagnostics {
+            selected_ordinal,
+            piece_id: pieces[piece_index].id.to_owned(),
+            angle_seed,
+            diversity_seed,
+        },
+        proposal_order_hash,
+        exact_row_order_hash,
+        generated_child_order_hash: child_order_hash(&children[child_start..], pieces),
+    })
+}
+
+fn ranked_proposal_order_hash(domain: &[u8], proposals: &[RankedProposal]) -> String {
+    let mut digest = Sha256::new();
+    digest.update(domain);
+    digest.update((proposals.len() as u32).to_be_bytes());
+    for proposal in proposals {
+        let (index, angle, mirrored, x, y) = placement_key(&proposal.placement);
+        digest.update((index as u32).to_be_bytes());
+        digest.update(angle.to_be_bytes());
+        digest.update([u8::from(mirrored)]);
+        digest.update(x.to_be_bytes());
+        digest.update(y.to_be_bytes());
+        digest.update((proposal.orientation_ordinal as u32).to_be_bytes());
+        digest.update(proposal.diversity_key.to_be_bytes());
+    }
+    format!("{:x}", digest.finalize())
 }
 
 fn compare_proposals(first: &RankedProposal, second: &RankedProposal) -> Ordering {
@@ -1398,7 +2273,7 @@ fn vacancy_positions(
         .diagnostics
         .returned_positions
         .saturating_add(placements.len());
-    if work.diagnostics.returned_positions > MAX_RETURNED_POSITIONS {
+    if work.diagnostics.returned_positions > work.limits.returned_positions {
         return Err(work.cap("returned-position budget exhausted"));
     }
     Ok(placements)
@@ -1607,7 +2482,7 @@ fn build_collision(
         .diagnostics
         .experimental_collision_builds
         .saturating_add(1);
-    if work.diagnostics.experimental_collision_builds > MAX_EXPERIMENTAL_COLLISION_BUILDS {
+    if work.diagnostics.experimental_collision_builds > work.limits.experimental_collision_builds {
         return Err(work.cap("experimental collision-build budget exhausted"));
     }
     let collision = piece
@@ -1630,7 +2505,8 @@ fn build_collision(
         .diagnostics
         .transformed_collision_vertices
         .saturating_add(collision.vertex_count());
-    if work.diagnostics.transformed_collision_vertices > MAX_TRANSFORMED_COLLISION_VERTICES {
+    if work.diagnostics.transformed_collision_vertices > work.limits.transformed_collision_vertices
+    {
         return Err(work.cap("transformed collision-vertex budget exhausted"));
     }
     Ok(collision)
@@ -1649,7 +2525,7 @@ fn exact_intersection_area(
         .diagnostics
         .clipper_input_vertices
         .saturating_add(input_vertices)
-        > MAX_CLIPPER_INPUT_VERTICES
+        > work.limits.clipper_input_vertices
     {
         return Err(work.cap("Clipper input-vertex budget exhausted"));
     }
@@ -2391,6 +3267,7 @@ fn contact_signature_hash(signature: &ContactSignature) -> String {
 fn charge_retained_memory(
     population: &[VacancyState],
     preserved_best: Option<&VacancyState>,
+    complete_sidecar_bytes: usize,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     pending_layer: &GeneralPersistentVacancyLayerDiagnostics,
     work: &mut RunWork,
@@ -2400,7 +3277,7 @@ fn charge_retained_memory(
         .saturating_add(preserved_best.map_or(0, legacy_state_heap_bytes));
     let state_bytes = state_slice_bytes(population)
         .saturating_add(population.len().saturating_mul(size_of::<VacancyState>()))
-        .saturating_add(owned_state_bytes(preserved_best));
+        .saturating_add(complete_sidecar_bytes);
     let diagnostic_bytes = persistent_diagnostic_bytes(diagnostics)
         .saturating_add(layer_diagnostic_heap_bytes(pending_layer));
     let total_bytes = state_bytes.saturating_add(diagnostic_bytes);
@@ -2541,6 +3418,10 @@ fn owned_state_bytes(state: Option<&VacancyState>) -> usize {
     })
 }
 
+fn sidecar_bytes(area: Option<&VacancyState>, count: Option<&VacancyState>) -> usize {
+    owned_state_bytes(area).saturating_add(owned_state_bytes(count))
+}
+
 fn state_slice_bytes(states: &[VacancyState]) -> usize {
     states.iter().map(state_heap_bytes).sum()
 }
@@ -2577,6 +3458,61 @@ fn generation_work_snapshot(
     diagnostics.selector_diagnostic_peak_bytes = 0;
     diagnostics.total_retained_peak_bytes = 0;
     diagnostics
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PreExpeditionBehaviorRecord<'a> {
+    seed_domain: u64,
+    target_depth_mm: f64,
+    parent_fingerprint: &'a Option<String>,
+    initial_state_fingerprint: &'a Option<String>,
+    initial_active_piece_ids: &'a [String],
+    initial_inactive_piece_ids: &'a [String],
+    initial_inactive_order_hash: &'a Option<String>,
+    layers_completed: usize,
+    direct_insertions: usize,
+    ejection_insertions: usize,
+    immediate_reversals_rejected: usize,
+    deduplicated_states: usize,
+    distinct_signatures_retained: usize,
+    complete_states: usize,
+    publication_rejections: usize,
+    pre_expedition_work: GeneralPersistentVacancyWorkDiagnostics,
+    layers: &'a [GeneralPersistentVacancyLayerDiagnostics],
+}
+
+fn pre_expedition_behavior_hash(
+    diagnostics: &GeneralPersistentVacancyDiagnostics,
+) -> Result<String, String> {
+    let pre_expedition_work = diagnostics
+        .pre_expedition_work
+        .ok_or_else(|| "pre-expedition work snapshot is missing".to_owned())?;
+    let record = PreExpeditionBehaviorRecord {
+        seed_domain: diagnostics.seed_domain,
+        target_depth_mm: diagnostics.target_depth_mm,
+        parent_fingerprint: &diagnostics.parent_fingerprint,
+        initial_state_fingerprint: &diagnostics.initial_state_fingerprint,
+        initial_active_piece_ids: &diagnostics.initial_active_piece_ids,
+        initial_inactive_piece_ids: &diagnostics.initial_inactive_piece_ids,
+        initial_inactive_order_hash: &diagnostics.initial_inactive_order_hash,
+        layers_completed: diagnostics.layers_completed,
+        direct_insertions: diagnostics.direct_insertions,
+        ejection_insertions: diagnostics.ejection_insertions,
+        immediate_reversals_rejected: diagnostics.immediate_reversals_rejected,
+        deduplicated_states: diagnostics.deduplicated_states,
+        distinct_signatures_retained: diagnostics.distinct_signatures_retained,
+        complete_states: diagnostics.complete_states,
+        publication_rejections: diagnostics.publication_rejections,
+        pre_expedition_work,
+        layers: &diagnostics.layers,
+    };
+    let json = serde_json::to_vec(&record)
+        .map_err(|error| format!("pre-expedition behavior serialization: {error}"))?;
+    let mut digest = Sha256::new();
+    digest.update(b"persistent-vacancy-pre-expedition-v1\0");
+    digest.update(json);
+    Ok(format!("{:x}", digest.finalize()))
 }
 
 fn work_delta(
@@ -2635,6 +3571,18 @@ fn work_delta(
     }
 }
 
+fn repair_work_delta(
+    after: GeneralPersistentVacancyWorkDiagnostics,
+    before: GeneralPersistentVacancyWorkDiagnostics,
+    peaks: GeneralPersistentVacancyWorkDiagnostics,
+) -> GeneralPersistentVacancyWorkDiagnostics {
+    let mut delta = work_delta(after, before);
+    delta.retained_peak_bytes = peaks.retained_peak_bytes;
+    delta.selector_diagnostic_peak_bytes = peaks.selector_diagnostic_peak_bytes;
+    delta.total_retained_peak_bytes = peaks.total_retained_peak_bytes;
+    delta
+}
+
 fn persistent_diagnostic_bytes(diagnostics: &GeneralPersistentVacancyDiagnostics) -> usize {
     option_string_bytes(&diagnostics.parent_fingerprint)
         .saturating_add(option_string_bytes(&diagnostics.initial_state_fingerprint))
@@ -2673,6 +3621,15 @@ fn persistent_diagnostic_bytes(diagnostics: &GeneralPersistentVacancyDiagnostics
                 .map(layer_diagnostic_heap_bytes)
                 .sum::<usize>(),
         )
+        .saturating_add(option_string_bytes(
+            &diagnostics.pre_expedition_behavior_hash,
+        ))
+        .saturating_add(
+            diagnostics
+                .repair_expedition
+                .as_ref()
+                .map_or(0, repair_diagnostic_heap_bytes),
+        )
         .saturating_add(option_string_bytes(&diagnostics.cap_exhausted))
         .saturating_add(option_string_bytes(&diagnostics.failure_reason))
 }
@@ -2699,6 +3656,7 @@ fn layer_diagnostic_heap_bytes(layer: &GeneralPersistentVacancyLayerDiagnostics)
     ))
     .saturating_add(layer.best_inactive_area_grid2.capacity())
     .saturating_add(layer.best_state_fingerprint.capacity())
+    .saturating_add(option_string_bytes(&layer.retained_population_hash))
     .saturating_add(
         layer
             .macro_expansion
@@ -2711,6 +3669,91 @@ fn layer_diagnostic_heap_bytes(layer: &GeneralPersistentVacancyLayerDiagnostics)
             .as_ref()
             .map_or(0, elite_layer_diagnostic_heap_bytes),
     )
+}
+
+fn repair_diagnostic_heap_bytes(repair: &GeneralPersistentVacancyRepairDiagnostics) -> usize {
+    repair
+        .scheduler_family
+        .capacity()
+        .saturating_add(repair.root_state_fingerprint.capacity())
+        .saturating_add(repair.root_inactive_area_grid2.capacity())
+        .saturating_add(string_vec_bytes(
+            &repair.root_queue_piece_ids,
+            repair.root_queue_piece_ids.capacity(),
+        ))
+        .saturating_add(
+            repair.depths.capacity() * size_of::<GeneralPersistentVacancyRepairDepthDiagnostics>(),
+        )
+        .saturating_add(
+            repair
+                .depths
+                .iter()
+                .map(repair_depth_diagnostic_heap_bytes)
+                .sum::<usize>(),
+        )
+        .saturating_add(option_string_bytes(&repair.endpoint_state_fingerprint))
+        .saturating_add(option_string_bytes(&repair.endpoint_inactive_area_grid2))
+        .saturating_add(option_string_bytes(&repair.final_placement_fingerprint))
+        .saturating_add(option_string_bytes(&repair.cap_exhausted))
+        .saturating_add(option_string_bytes(&repair.failure_reason))
+}
+
+fn repair_depth_diagnostic_heap_bytes(
+    depth: &GeneralPersistentVacancyRepairDepthDiagnostics,
+) -> usize {
+    depth
+        .expansions
+        .capacity()
+        .saturating_mul(size_of::<GeneralPersistentVacancyRepairExpansionDiagnostics>())
+        .saturating_add(
+            depth
+                .expansions
+                .iter()
+                .map(repair_expansion_diagnostic_heap_bytes)
+                .sum::<usize>(),
+        )
+        .saturating_add(depth.frontier_hash.capacity())
+        .saturating_add(
+            depth.frontier.capacity() * size_of::<GeneralPersistentVacancyRepairNodeDiagnostics>(),
+        )
+        .saturating_add(
+            depth
+                .frontier
+                .iter()
+                .map(repair_node_diagnostic_heap_bytes)
+                .sum::<usize>(),
+        )
+        .saturating_add(option_string_bytes(&depth.best_inactive_area_grid2))
+}
+
+fn repair_expansion_diagnostic_heap_bytes(
+    expansion: &GeneralPersistentVacancyRepairExpansionDiagnostics,
+) -> usize {
+    expansion
+        .parent_augmented_identity_hash
+        .capacity()
+        .saturating_add(expansion.parent_state_fingerprint.capacity())
+        .saturating_add(string_vec_bytes(
+            &expansion.parent_queue_piece_ids,
+            expansion.parent_queue_piece_ids.capacity(),
+        ))
+        .saturating_add(expansion.selected_piece_id.capacity())
+        .saturating_add(expansion.proposal_order_hash.capacity())
+        .saturating_add(expansion.exact_row_order_hash.capacity())
+        .saturating_add(expansion.generated_child_order_hash.capacity())
+}
+
+fn repair_node_diagnostic_heap_bytes(
+    node: &GeneralPersistentVacancyRepairNodeDiagnostics,
+) -> usize {
+    node.augmented_identity_hash
+        .capacity()
+        .saturating_add(node.state_fingerprint.capacity())
+        .saturating_add(string_vec_bytes(
+            &node.queue_piece_ids,
+            node.queue_piece_ids.capacity(),
+        ))
+        .saturating_add(node.inactive_area_grid2.capacity())
 }
 
 fn macro_expansion_diagnostic_heap_bytes(
@@ -2960,7 +4003,7 @@ mod tests {
 
     #[test]
     fn last_transition_remains_part_of_semantic_identity() {
-        let (_, mut first) = state_with_two_squares(10.0, 0.0);
+        let (polygons, mut first) = state_with_two_squares(10.0, 0.0);
         let mut second = first.clone();
         first.last_transition = Some(VacancyTransition {
             inserted: 0,
@@ -2971,6 +4014,28 @@ mod tests {
             ejected: vec![0],
         });
         assert_ne!(state_identity(&first), state_identity(&second));
+        let pieces = [
+            GeneralFastPiece {
+                id: "a",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "b",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        assert_ne!(
+            state_fingerprint(&first, &pieces),
+            state_fingerprint(&second, &pieces)
+        );
+        assert_eq!(
+            coupled_fast_placement_fingerprint(&fast_placements(&first, &pieces, false)),
+            coupled_fast_placement_fingerprint(&fast_placements(&second, &pieces, false))
+        );
     }
 
     #[test]
@@ -3096,13 +4161,179 @@ mod tests {
             ..GeneralPersistentVacancyLayerDiagnostics::default()
         };
         let mut work = RunWork::default();
-        charge_retained_memory(&[], None, &mut diagnostics, &pending, &mut work).unwrap();
+        charge_retained_memory(&[], None, 0, &mut diagnostics, &pending, &mut work).unwrap();
         assert_eq!(work.diagnostics.retained_peak_bytes, 0);
         assert!(work.diagnostics.selector_diagnostic_peak_bytes > 0);
         assert_eq!(
             work.diagnostics.total_retained_peak_bytes,
             work.diagnostics.selector_diagnostic_peak_bytes
         );
+    }
+
+    #[test]
+    fn repair_and_population_hash_diagnostics_are_charged() {
+        let mut diagnostics = GeneralPersistentVacancyDiagnostics::default();
+        let baseline = persistent_diagnostic_bytes(&diagnostics);
+        diagnostics.pre_expedition_behavior_hash = Some("p".repeat(64));
+        diagnostics
+            .layers
+            .push(GeneralPersistentVacancyLayerDiagnostics {
+                retained_population_hash: Some("r".repeat(64)),
+                ..GeneralPersistentVacancyLayerDiagnostics::default()
+            });
+        diagnostics.repair_expedition = Some(GeneralPersistentVacancyRepairDiagnostics {
+            scheduler_family: "oneSlotDisplacedFirst".to_owned(),
+            root_state_fingerprint: "s".repeat(64),
+            root_inactive_area_grid2: "123".to_owned(),
+            root_queue_piece_ids: vec!["piece".to_owned()],
+            depths: vec![GeneralPersistentVacancyRepairDepthDiagnostics {
+                expansions: vec![GeneralPersistentVacancyRepairExpansionDiagnostics {
+                    parent_augmented_identity_hash: "a".repeat(64),
+                    parent_state_fingerprint: "b".repeat(64),
+                    parent_queue_piece_ids: vec!["piece".to_owned()],
+                    selected_piece_id: "piece".to_owned(),
+                    proposal_order_hash: "c".repeat(64),
+                    exact_row_order_hash: "d".repeat(64),
+                    generated_child_order_hash: "e".repeat(64),
+                    ..GeneralPersistentVacancyRepairExpansionDiagnostics::default()
+                }],
+                frontier_hash: "f".repeat(64),
+                frontier: vec![GeneralPersistentVacancyRepairNodeDiagnostics {
+                    augmented_identity_hash: "g".repeat(64),
+                    state_fingerprint: "h".repeat(64),
+                    queue_piece_ids: vec!["piece".to_owned()],
+                    inactive_area_grid2: "456".to_owned(),
+                    ..GeneralPersistentVacancyRepairNodeDiagnostics::default()
+                }],
+                ..GeneralPersistentVacancyRepairDepthDiagnostics::default()
+            }],
+            ..GeneralPersistentVacancyRepairDiagnostics::default()
+        });
+        assert!(persistent_diagnostic_bytes(&diagnostics) > baseline + 9 * 64);
+    }
+
+    #[test]
+    fn repair_memory_preflight_accounts_full_piece_id_capacity() {
+        let (polygons, root) = state_with_two_squares(10.0, 0.0);
+        let short_ids = ["a", "b"];
+        let long_ids = [
+            "piece-with-a-frozen-identifier-that-is-longer-than-thirty-two-a",
+            "piece-with-a-frozen-identifier-that-is-longer-than-thirty-two-b",
+        ];
+        let short_pieces = short_ids
+            .iter()
+            .enumerate()
+            .map(|(index, id)| GeneralFastPiece {
+                id,
+                polygon: &polygons[index],
+                allow_rotation: true,
+                allow_mirror: true,
+            })
+            .collect::<Vec<_>>();
+        let long_pieces = long_ids
+            .iter()
+            .enumerate()
+            .map(|(index, id)| GeneralFastPiece {
+                id,
+                polygon: &polygons[index],
+                allow_rotation: true,
+                allow_mirror: true,
+            })
+            .collect::<Vec<_>>();
+        let diagnostics = GeneralPersistentVacancyDiagnostics::default();
+        let mut short_work = RunWork::for_mode(REPAIR_CONTROL_MODE);
+        preflight_repair_memory(&root, &short_pieces, &diagnostics, "test", &mut short_work)
+            .unwrap();
+        let mut long_work = RunWork::for_mode(REPAIR_CONTROL_MODE);
+        preflight_repair_memory(&root, &long_pieces, &diagnostics, "test", &mut long_work).unwrap();
+        assert!(
+            long_work.diagnostics.total_retained_peak_bytes
+                > short_work.diagnostics.total_retained_peak_bytes
+        );
+        assert!(long_work.diagnostics.selector_diagnostic_peak_bytes > 0);
+    }
+
+    #[test]
+    fn repair_expedition_events_publish_only_at_commit() {
+        let mut diagnostics = GeneralPersistentVacancyDiagnostics {
+            direct_insertions: 7,
+            ..GeneralPersistentVacancyDiagnostics::default()
+        };
+        let mut work = RunWork::for_mode(REPAIR_CONTROL_MODE);
+        work.diagnostics.selected_piece_slots = 11;
+        let events = GeneralPersistentVacancyDiagnostics {
+            direct_insertions: 3,
+            ejection_insertions: 2,
+            complete_states: 1,
+            publication_rejections: 1,
+            ..GeneralPersistentVacancyDiagnostics::default()
+        };
+        let mut staged_work = RunWork::for_mode(REPAIR_CONTROL_MODE);
+        staged_work.diagnostics.selected_piece_slots = 19;
+        assert_eq!(diagnostics.direct_insertions, 7);
+        assert_eq!(work.diagnostics.selected_piece_slots, 11);
+        commit_repair_expedition(
+            &mut diagnostics,
+            &mut work,
+            events,
+            staged_work,
+            GeneralPersistentVacancyRepairDiagnostics::default(),
+        );
+        assert_eq!(diagnostics.direct_insertions, 10);
+        assert_eq!(diagnostics.ejection_insertions, 2);
+        assert_eq!(diagnostics.complete_states, 1);
+        assert_eq!(diagnostics.publication_rejections, 1);
+        assert_eq!(work.diagnostics.selected_piece_slots, 19);
+        assert!(diagnostics.repair_expedition.is_some());
+    }
+
+    #[test]
+    fn failed_repair_record_retains_work_without_semantic_events() {
+        let (polygons, root) = state_with_two_squares(10.0, 0.0);
+        let pieces = [
+            GeneralFastPiece {
+                id: "a",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "b",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let difficulty = test_difficulties(&[1, 2]);
+        let consumed = GeneralPersistentVacancyWorkDiagnostics {
+            selected_piece_slots: 1,
+            total_retained_peak_bytes: 1234,
+            ..GeneralPersistentVacancyWorkDiagnostics::default()
+        };
+        let failed = failed_repair_diagnostics(
+            &root,
+            &pieces,
+            &difficulty,
+            REPAIR_TREATMENT_MODE,
+            false,
+            "cap: test failure",
+            consumed,
+        );
+        assert_eq!(failed.cap_exhausted.as_deref(), Some("test failure"));
+        assert_eq!(failed.failure_reason.as_deref(), Some("cap: test failure"));
+        assert_eq!(failed.work, consumed);
+        assert!(failed.depths.is_empty());
+        assert!(!failed.root_dual_valid);
+        let failed_after_root_audit = failed_repair_diagnostics(
+            &root,
+            &pieces,
+            &difficulty,
+            REPAIR_TREATMENT_MODE,
+            true,
+            "cap: later failure",
+            consumed,
+        );
+        assert!(failed_after_root_audit.root_dual_valid);
     }
 
     #[test]
@@ -3640,5 +4871,138 @@ mod tests {
             MAX_CLIPPER_INPUT_VERTICES,
             (MAX_EXPERIMENTAL_PAIR_VISITS + MAX_VALIDATOR_PAIR_VISITS) * 2 * MAX_COLLISION_VERTICES
         );
+    }
+
+    #[test]
+    fn repair_quota_formulas_match_the_reviewed_contract() {
+        assert_eq!(REPAIR_PARENT_EXPANSIONS, 61);
+        assert_eq!(REPAIR_MAX_SELECTED_PIECE_SLOTS, 781);
+        assert_eq!(REPAIR_MAX_ORIENTATION_STREAMS, 9_372);
+        assert_eq!(REPAIR_MAX_SOURCE_FEATURE_VISITS, 799_744);
+        assert_eq!(REPAIR_MAX_POSITION_SOURCE_ATTEMPTS, 4_957_788);
+        assert_eq!(REPAIR_MAX_RETURNED_POSITIONS, 299_904);
+        assert_eq!(REPAIR_MAX_HAZARD_QUERIES, 299_904);
+        assert_eq!(REPAIR_MAX_PROXY_PRESSURE_VISITS, 18_294_144);
+        assert_eq!(REPAIR_MAX_EXACT_FINALIST_ROWS, 6_248);
+        assert_eq!(REPAIR_MAX_EXPERIMENTAL_COLLISION_BUILDS, 15_681);
+        assert_eq!(REPAIR_MAX_EXPERIMENTAL_PAIR_VISITS, 376_710);
+        assert_eq!(REPAIR_MAX_PARTIAL_AUDITS, 58);
+        assert_eq!(REPAIR_MAX_COMPLETE_AUDITS, 552);
+        assert_eq!(REPAIR_MAX_VALIDATOR_AUDITS, 610);
+        assert_eq!(REPAIR_MAX_VALIDATOR_COLLISION_BUILDS, 74_420);
+        assert_eq!(REPAIR_MAX_VALIDATOR_PAIR_VISITS, 2_232_600);
+        assert_eq!(REPAIR_MAX_TRANSFORMED_COLLISION_VERTICES, 46_131_712);
+        assert_eq!(REPAIR_MAX_CLIPPER_INPUT_VERTICES, 2_671_933_440);
+        let protected_phase = RunWork::for_mode(REPAIR_TREATMENT_MODE);
+        assert_eq!(protected_phase.limits.selected_piece_slots, 720);
+        let repair = WorkLimits::repair();
+        assert_eq!(repair.selected_piece_slots, 781);
+        let legacy = RunWork::for_mode(PRESERVED_BEST_MACRO_MODE);
+        assert_eq!(legacy.limits.selected_piece_slots, 720);
+    }
+
+    #[test]
+    fn displaced_queue_prepends_blockers_while_control_rebuilds_global_order() {
+        let polygons = vec![square(10.0), square(10.0), square(10.0)];
+        let pieces = [
+            GeneralFastPiece {
+                id: "a",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "b",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "c",
+                polygon: &polygons[2],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let difficulty = test_difficulties(&[2, 3, 4]);
+        let parent = RepairNode {
+            state: state_with_active_mask(vec![true, false, false]),
+            queue: vec![2, 1],
+        };
+        let mut child = state_with_active_mask(vec![false, false, true]);
+        child.active[1] = false;
+        child.last_transition = Some(VacancyTransition {
+            inserted: 2,
+            ejected: vec![0],
+        });
+        assert_eq!(
+            repair_child_queue(
+                &parent,
+                &child,
+                2,
+                &pieces,
+                &difficulty,
+                REPAIR_CONTROL_MODE,
+            )
+            .unwrap(),
+            vec![1, 0]
+        );
+        assert_eq!(
+            repair_child_queue(
+                &parent,
+                &child,
+                2,
+                &pieces,
+                &difficulty,
+                REPAIR_TREATMENT_MODE,
+            )
+            .unwrap(),
+            vec![0, 1]
+        );
+    }
+
+    #[test]
+    fn repair_seed_ignores_queue_tail_but_augmented_identity_does_not() {
+        let polygons = vec![square(10.0), square(10.0), square(10.0), square(10.0)];
+        let pieces = [
+            GeneralFastPiece {
+                id: "a",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "b",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "c",
+                polygon: &polygons[2],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "d",
+                polygon: &polygons[3],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let state = state_with_active_mask(vec![true, false, false, false]);
+        let first = RepairNode {
+            state: state.clone(),
+            queue: vec![1, 2, 3],
+        };
+        let second = RepairNode {
+            state,
+            queue: vec![1, 3, 2],
+        };
+        assert_eq!(
+            repair_transition_seed(&first.state, 1, &pieces),
+            repair_transition_seed(&second.state, 1, &pieces)
+        );
+        assert_ne!(repair_node_identity(&first), repair_node_identity(&second));
     }
 }

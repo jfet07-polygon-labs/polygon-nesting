@@ -229,9 +229,34 @@ const mode9 =
   runMode(9).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
 const mode10 =
   runMode(10).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
+const mode14 =
+  runMode(14).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
+const mode15 =
+  runMode(15).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
+const mode14Replay =
+  runMode(14).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
+const mode15Replay =
+  runMode(15).relaxedDiagnostics?.coupledDynamicSeparator?.persistentVacancyPopulation
 assertBoundedPartialTerminal(mode8, 'persistent-vacancy mode 8')
 assertBoundedPartialTerminal(mode9, 'persistent-vacancy mode 9')
 assertBoundedPartialTerminal(mode10, 'persistent-vacancy mode 10')
+for (const [mode, candidate] of [
+  [14, mode14],
+  [15, mode15],
+]) {
+  if (
+    !candidate?.attempted ||
+    candidate.capExhausted !== null ||
+    candidate.layersCompleted !== 40 ||
+    candidate.layers.length !== 40 ||
+    candidate.work.partialAudits !== 58 ||
+    candidate.work.completeAudits !== 0 ||
+    candidate.repairExpedition?.depths.length !== 16 ||
+    candidate.repairExpedition?.completeEndpoint !== false
+  ) {
+    throw new Error(`persistent-vacancy mode ${mode} did not reach its bounded repair terminal`)
+  }
+}
 const populationHistory = (candidate) =>
   candidate.layers.map((layer) => ({
     enteringPopulationHash: layer.elite.enteringPopulationHash,
@@ -305,11 +330,116 @@ const mode10Trajectory = structuredClone(mode10)
 delete mode10Trajectory.work.retainedPeakBytes
 delete mode10Trajectory.work.selectorDiagnosticPeakBytes
 delete mode10Trajectory.work.totalRetainedPeakBytes
+delete mode10Trajectory.preExpeditionWork
+delete mode10Trajectory.preExpeditionBehaviorHash
+for (const layer of mode10Trajectory.layers) delete layer.retainedPopulationHash
 const mode10TrajectorySha256 = createHash('sha256')
   .update(JSON.stringify(canonical(mode10Trajectory)))
   .digest('hex')
 if (mode10TrajectorySha256 !== '1edb02e2fcacfa5c3d749cb228eee735744171f5c25993c09daa9cd8054b7709') {
   throw new Error(`preserved-best trajectory changed: ${mode10TrajectorySha256}`)
+}
+const expectedPreExpeditionBehaviorHash =
+  'a0043940706bda90b41b8901445503702a9dcd5fe13d048cbb7f7d00200ae403'
+if (
+  mode10.preExpeditionBehaviorHash !== expectedPreExpeditionBehaviorHash ||
+  mode14.preExpeditionBehaviorHash !== mode10.preExpeditionBehaviorHash ||
+  mode15.preExpeditionBehaviorHash !== mode10.preExpeditionBehaviorHash
+) {
+  throw new Error('repair modes changed the protected pre-expedition behavior')
+}
+const canonicalRepairPopulation = (candidate) => {
+  return JSON.stringify(canonical(candidate))
+}
+if (
+  canonicalRepairPopulation(mode14) !== canonicalRepairPopulation(mode14Replay) ||
+  canonicalRepairPopulation(mode15) !== canonicalRepairPopulation(mode15Replay)
+) {
+  throw new Error('repair mode replay changed, including its deterministic memory peaks')
+}
+const controlDepthZero = mode14.repairExpedition.depths[0]
+const treatmentDepthZero = mode15.repairExpedition.depths[0]
+for (const key of [
+  'expandedParents',
+  'generatedChildren',
+  'deduplicatedChildren',
+  'transposedChildren',
+  'completeCandidates',
+  'directInsertions',
+  'ejectionInsertions',
+]) {
+  if (controlDepthZero[key] !== treatmentDepthZero[key]) {
+    throw new Error(`repair modes diverged before queue admission at ${key}`)
+  }
+}
+if (JSON.stringify(controlDepthZero.work) !== JSON.stringify(treatmentDepthZero.work)) {
+  throw new Error('repair modes changed generator work before queue admission')
+}
+if (
+  JSON.stringify(controlDepthZero.expansions) !== JSON.stringify(treatmentDepthZero.expansions)
+) {
+  throw new Error('repair modes changed the root expansion before queue admission')
+}
+if (controlDepthZero.frontierHash === treatmentDepthZero.frontierHash) {
+  throw new Error('repair scheduler treatment never crossed its augmented-queue boundary')
+}
+const generatorProjection = (expansion) => ({
+  parentStateFingerprint: expansion.parentStateFingerprint,
+  selectedPieceId: expansion.selectedPieceId,
+  transitionSeed: expansion.transitionSeed,
+  angleSeed: expansion.angleSeed,
+  diversitySeed: expansion.diversitySeed,
+  proposalOrderHash: expansion.proposalOrderHash,
+  exactRowOrderHash: expansion.exactRowOrderHash,
+  generatedChildOrderHash: expansion.generatedChildOrderHash,
+  work: expansion.work,
+})
+const sharedGeneratorRows = new Map()
+for (const [arm, candidate] of [
+  ['control', mode14],
+  ['treatment', mode15],
+]) {
+  for (const depth of candidate.repairExpedition.depths) {
+    for (const expansion of depth.expansions) {
+      const key = `${expansion.parentStateFingerprint}\0${expansion.selectedPieceId}`
+      const entry = sharedGeneratorRows.get(key) ?? { arms: new Set(), projections: new Set() }
+      entry.arms.add(arm)
+      entry.projections.add(JSON.stringify(generatorProjection(expansion)))
+      sharedGeneratorRows.set(key, entry)
+    }
+  }
+}
+let sharedSemanticHeadRows = 0
+for (const entry of sharedGeneratorRows.values()) {
+  if (entry.arms.size !== 2) continue
+  sharedSemanticHeadRows += 1
+  if (entry.projections.size !== 1) {
+    throw new Error('shared repair semantic-state/head pair changed its generator stream')
+  }
+}
+if (sharedSemanticHeadRows === 0) {
+  throw new Error('repair arms share no semantic-state/head generator row')
+}
+const controlRepair = mode14.repairExpedition
+const treatmentRepair = mode15.repairExpedition
+if (
+  controlRepair.rootStateFingerprint !== treatmentRepair.rootStateFingerprint ||
+  controlRepair.rootInactivePieceCount !== 10 ||
+  treatmentRepair.rootInactivePieceCount !== 10 ||
+  treatmentRepair.endpointInactivePieceCount > controlRepair.endpointInactivePieceCount ||
+  BigInt(treatmentRepair.endpointInactiveAreaGrid2) >=
+    BigInt(controlRepair.endpointInactiveAreaGrid2) ||
+  !treatmentRepair.endpointParetoImprovesRoot
+) {
+  throw new Error('displaced-first repair did not strictly beat its global-hardest control')
+}
+if (
+  controlRepair.endpointInactivePieceCount !== 10 ||
+  controlRepair.endpointInactiveAreaGrid2 !== '50292855011' ||
+  treatmentRepair.endpointInactivePieceCount !== 10 ||
+  treatmentRepair.endpointInactiveAreaGrid2 !== '45454946952'
+) {
+  throw new Error('repair endpoint oracle changed')
 }
 const firstPreservedParentLayer = mode10.layers.findIndex(
   (layer) =>

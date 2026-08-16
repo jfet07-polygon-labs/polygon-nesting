@@ -347,6 +347,12 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub independent_depth_mm: Option<f64>,
     pub final_placement_fingerprint: Option<String>,
     pub final_placements: Vec<GeneralCoupledSeparatorPlacementDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pre_expedition_work: Option<GeneralPersistentVacancyWorkDiagnostics>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pre_expedition_behavior_hash: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub repair_expedition: Option<GeneralPersistentVacancyRepairDiagnostics>,
     pub work: GeneralPersistentVacancyWorkDiagnostics,
     pub layers: Vec<GeneralPersistentVacancyLayerDiagnostics>,
     pub cap_exhausted: Option<String>,
@@ -395,9 +401,81 @@ pub struct GeneralPersistentVacancyLayerDiagnostics {
     pub best_inactive_area_grid2: String,
     pub best_state_fingerprint: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub retained_population_hash: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub macro_expansion: Option<GeneralPersistentVacancyMacroExpansionDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub elite: Option<GeneralPersistentVacancyEliteLayerDiagnostics>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyRepairDiagnostics {
+    pub scheduler_family: String,
+    pub seed_domain: u64,
+    pub root_state_fingerprint: String,
+    pub root_inactive_piece_count: usize,
+    pub root_inactive_area_grid2: String,
+    pub root_queue_piece_ids: Vec<String>,
+    pub root_dual_valid: bool,
+    pub depths: Vec<GeneralPersistentVacancyRepairDepthDiagnostics>,
+    pub endpoint_state_fingerprint: Option<String>,
+    pub endpoint_inactive_piece_count: Option<usize>,
+    pub endpoint_inactive_area_grid2: Option<String>,
+    pub endpoint_pareto_improves_root: bool,
+    pub complete_endpoint: bool,
+    pub independent_depth_mm: Option<f64>,
+    pub final_placement_fingerprint: Option<String>,
+    pub work: GeneralPersistentVacancyWorkDiagnostics,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cap_exhausted: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failure_reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyRepairDepthDiagnostics {
+    pub expansion_depth: usize,
+    pub expanded_parents: usize,
+    pub generated_children: usize,
+    pub deduplicated_children: usize,
+    pub transposed_children: usize,
+    pub complete_candidates: usize,
+    pub direct_insertions: usize,
+    pub ejection_insertions: usize,
+    pub expansions: Vec<GeneralPersistentVacancyRepairExpansionDiagnostics>,
+    pub frontier_hash: String,
+    pub frontier: Vec<GeneralPersistentVacancyRepairNodeDiagnostics>,
+    pub best_inactive_piece_count: Option<usize>,
+    pub best_inactive_area_grid2: Option<String>,
+    pub work: GeneralPersistentVacancyWorkDiagnostics,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyRepairExpansionDiagnostics {
+    pub parent_augmented_identity_hash: String,
+    pub parent_state_fingerprint: String,
+    pub parent_queue_piece_ids: Vec<String>,
+    pub selected_piece_id: String,
+    pub transition_seed: u64,
+    pub angle_seed: u64,
+    pub diversity_seed: u64,
+    pub proposal_order_hash: String,
+    pub exact_row_order_hash: String,
+    pub generated_child_order_hash: String,
+    pub work: GeneralPersistentVacancyWorkDiagnostics,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyRepairNodeDiagnostics {
+    pub augmented_identity_hash: String,
+    pub state_fingerprint: String,
+    pub queue_piece_ids: Vec<String>,
+    pub inactive_piece_count: usize,
+    pub inactive_area_grid2: String,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
