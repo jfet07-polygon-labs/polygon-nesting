@@ -931,3 +931,36 @@ the plateau with inherited structure - crossover's midpoint cut is
 the only perturbation measured to do so. Cascade continues from
 167.849; next references are 164.470 and the 155 goal. Evidence:
 docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/{from-scratch-167.849,compression-negatives}/.
+
+THE ENGINE GOES GENERAL: the 61-piece gate falls, and the proven
+drivers become engine modes. The transfer test exposed the honest
+truth behind the owner's overfitting concern: every persistent-vacancy
+mode (1-21) was source-gated to pieces.len()==61, so nothing built
+this cycle ran on shapes-17 or triangle-20. The generalization commit
+converts every 61-derived aggregate quota into
+VacancyQuotas::for_piece_count(n) (formula-verified for piece counts
+1..400), removes the gate, and proves Mixed-61 behavior byte-identical
+to the frozen binary (construction 206.869 / fingerprint 8a7737...,
+descent hop fingerprint match, full diagnostic blocks equal) while the
+constructor now produces exact-valid layouts on shapes-17 (200.651,
+17 pieces) and triangle-20 (70.716, 20 pieces) with formula-scaled
+work counters. Modes 22 (in-process separator/descent alternation to
+joint fixpoint) and 23 (two-parent recombination with a scale-free
+fractional cut) land as general engine modes with unit tests and
+determinism gates - the alternation and crossover mechanisms that
+carried the from-scratch line to 167.849 are now engine capabilities,
+not python scripts. Meanwhile the three-lens critical extraction of
+Sol's 26-commit branch graded every mechanism by evidence quality:
+adopt-after-matched-arm = off-beam best-ever expansion parent
+(-10.75% surrogate, the branch's only clean matched-arm), displaced-
+first repair queue (-9.6%, cleanest experiment, no analogue on our
+line), depth-two grandchild admission (-9.76%); adopt-as-guards =
+geometry-settings equality on replayed parents and fail-closed on
+unrun arms; rejected with numbers = the vacancy bridges (0 legal
+candidates in 96 proposals), and Sol's 168.361/165 figures are
+contract-incomparable (collision expansion 2.752 vs our 2.5,
+aarch64). Next mechanism, synthesized from our compression negatives
+plus Sol's repair-order rule: bounded-depth reinsertion (eject the
+pieces protruding beyond a depth bound and reinsert them
+displaced-first through the construction insertion machinery -
+reconstruction under a hard bound instead of overlap legalization).
