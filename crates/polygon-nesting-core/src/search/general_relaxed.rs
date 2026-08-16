@@ -411,6 +411,7 @@ pub struct GeneralPersistentVacancyLnsDiagnostics {
     pub separation_weight_bumps: usize,
     pub separation_relocations: usize,
     pub rounds_wandered: usize,
+    pub optimizer_improvements: usize,
     pub frontier_before_grid: i64,
     pub frontier_after_grid: i64,
 }

@@ -67,9 +67,11 @@ const LNS_NEIGHBORHOOD_SCHEDULE: [usize; LNS_ROUNDS] = [
     4, 6, 8, 10, 12, 16, 20, 24, 4, 6, 8, 10, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56,
 ];
 const LNS_SETTLE_SWEEPS: usize = 3 * LNS_ROUNDS + 1;
-const LNS_REINSERT_SLOTS: usize = 2 * (4 + 6 + 8 + 10 + 12 + 16 + 20 + 24)
-    + (28 + 32 + 36 + 40 + 44 + 48 + 52 + 56)
-    + LNS_ROUNDS * SEPARATION_RELOCATIONS_PER_ROUND;
+const LNS_SCHEDULE_TOTAL: usize =
+    2 * (4 + 6 + 8 + 10 + 12 + 16 + 20 + 24) + (28 + 32 + 36 + 40 + 44 + 48 + 52 + 56);
+const LNS_REINSERT_SLOTS: usize = LNS_SCHEDULE_TOTAL
+    + LNS_ROUNDS * SEPARATION_RELOCATIONS_PER_ROUND
+    + OPTIMIZER_CYCLES * OPTIMIZER_CANDIDATES_PER_PIECE * LNS_SCHEDULE_TOTAL;
 // Mode 16 replaces greedy reinsertion with overlap-mediated separation:
 // removed pieces return at their old poses (overlaps permitted), then a
 // bounded deterministic descent moves one overlapping soft piece at a time
@@ -79,6 +81,13 @@ const LNS_REINSERT_SLOTS: usize = 2 * (4 + 6 + 8 + 10 + 12 + 16 + 20 + 24)
 // acceptance.
 const SEPARATION_MOVES_PER_ROUND: usize = 200;
 const SEPARATION_RELOCATIONS_PER_ROUND: usize = 12;
+// Mode-17 endpoint optimizer: after a round's endpoint is feasible, up to
+// OPTIMIZER_CYCLES steepest-descent passes re-place each lifted piece at the
+// best of its top OPTIMIZER_CANDIDATES_PER_PIECE candidate poses under the
+// full acceptance key, so the endpoint generator optimizes rather than
+// merely places.
+const OPTIMIZER_CYCLES: usize = 2;
+const OPTIMIZER_CANDIDATES_PER_PIECE: usize = 3;
 const SEPARATION_PROBES_PER_MOVE: usize = 96;
 const SEPARATION_PAIR_VISITS: usize =
     LNS_ROUNDS * SEPARATION_MOVES_PER_ROUND * SEPARATION_PROBES_PER_MOVE * 61;
@@ -1507,6 +1516,7 @@ fn lift_resettle_reinsert(
         separation_weight_bumps: 0,
         separation_relocations: 0,
         rounds_wandered: 0,
+        optimizer_improvements: 0,
         frontier_before_grid: settle.frontier_before_grid,
         frontier_after_grid: 0,
     };
@@ -1693,6 +1703,87 @@ fn lift_resettle_reinsert(
             state = snapshot;
             lns.rounds_reverted += 1;
             continue;
+        }
+        // Endpoint optimizer: steepest-descent re-placement of the lifted
+        // pieces under the full acceptance key. Each pass removes one lifted
+        // piece, evaluates its top candidate poses by the complete key, and
+        // keeps the best strictly improving pose; passes repeat until no
+        // piece improves or the cycle budget is exhausted.
+        if vacancy_transport {
+            for _cycle in 0..OPTIMIZER_CYCLES {
+                let mut any_improved = false;
+                for lifted in &removed {
+                    let index = *lifted;
+                    if !state.active[index] {
+                        continue;
+                    }
+                    let entry = depth_key(&state);
+                    let saved_placement = state.placements[index].clone();
+                    let saved_collision = state.collisions[index].clone();
+                    state.active[index] = false;
+                    state.collisions[index] = None;
+                    let mut screen = JaguaHazardIndex::from_catalog_active(
+                        pieces,
+                        work_settings,
+                        work_settings.sheet_long_axis_mm,
+                        &state.placements.iter().map(hazard_pose).collect::<Vec<_>>(),
+                        &state.active,
+                        &hazard_catalog,
+                    )
+                    .map_err(|error| format!("optimizer screen index: {error}"))?;
+                    let mut best_pose: Option<((i64, i128, i128), RelaxedPlacement, PolygonSet)> =
+                        None;
+                    for attempt in 0..OPTIMIZER_CANDIDATES_PER_PIECE {
+                        let placed = reconstruct_insert_piece(
+                            pieces,
+                            work_settings,
+                            &hints,
+                            &mut state,
+                            lns_seed,
+                            1_000 + round * 64 + attempt * 8,
+                            index,
+                            true,
+                            Some(&mut screen),
+                            &mut recon,
+                            work,
+                        )?;
+                        if !placed {
+                            break;
+                        }
+                        let key = depth_key(&state);
+                        let placement = state.placements[index].clone();
+                        let collision = state.collisions[index]
+                            .clone()
+                            .ok_or_else(|| "optimizer missing collision".to_owned())?;
+                        if best_pose
+                            .as_ref()
+                            .is_none_or(|(best_key, _, _)| key < *best_key)
+                        {
+                            best_pose = Some((key, placement, Arc::unwrap_or_clone(collision)));
+                        }
+                        state.active[index] = false;
+                        state.collisions[index] = None;
+                    }
+                    match best_pose {
+                        Some((key, placement, collision)) if key < entry => {
+                            state.placements[index] = placement;
+                            state.collisions[index] = Some(Arc::new(collision));
+                            state.active[index] = true;
+                            any_improved = true;
+                            lns.optimizer_improvements =
+                                lns.optimizer_improvements.saturating_add(1);
+                        }
+                        _ => {
+                            state.placements[index] = saved_placement;
+                            state.collisions[index] = saved_collision;
+                            state.active[index] = true;
+                        }
+                    }
+                }
+                if !any_improved {
+                    break;
+                }
+            }
         }
         // Post-endpoint settle: shelved and separated pieces drop into the
         // voids the rearrangement drained toward the top-connected region
@@ -5390,34 +5481,35 @@ mod tests {
         assert_eq!(LNS_SETTLE_SWEEPS, 73);
         assert_eq!(LNS_SETTLE_SELECTED_PIECE_SLOTS, 73 * 61);
         assert_eq!(SEPARATION_RELOCATIONS_PER_ROUND, 12);
-        assert_eq!(LNS_REINSERT_SLOTS, 200 + 336 + 24 * 12);
+        assert_eq!(LNS_SCHEDULE_TOTAL, 536);
+        assert_eq!(LNS_REINSERT_SLOTS, 536 + 24 * 12 + 2 * 3 * 536);
         assert_eq!(
             MAX_SELECTED_PIECE_SLOTS,
-            640 + 26 + 183 + 122 + 73 * 61 + 824
+            640 + 26 + 183 + 122 + 73 * 61 + 4_040
         );
         assert_eq!(
             MAX_ORIENTATION_STREAMS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 824) * 12
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040) * 12
         );
         assert_eq!(
             MAX_POSITION_SOURCE_ATTEMPTS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 824) * 12 * 529
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040) * 12 * 529
         );
         assert_eq!(
             MAX_RETURNED_POSITIONS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 824) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040) * 12 * 32
         );
         assert_eq!(
             MAX_HAZARD_QUERIES,
-            (640 + 26 + 183 + 122 + 73 * 61 + 824) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040) * 12 * 32
         );
         assert_eq!(
             MAX_PROXY_PRESSURE_VISITS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 824) * 12 * 32 * 61
+            (640 + 26 + 183 + 122 + 73 * 61 + 4_040) * 12 * 32 * 61
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 824 * 192
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -5426,20 +5518,20 @@ mod tests {
         assert_eq!(SEPARATION_MOVES_PER_ROUND, 200);
         assert_eq!(SEPARATION_PROBES_PER_MOVE, 96);
         assert_eq!(SEPARATION_PAIR_VISITS, 24 * 200 * 96 * 61);
-        assert_eq!(SEPARATION_COLLISION_BUILDS, 24 * (824 / 2 + 200 * 96));
+        assert_eq!(SEPARATION_COLLISION_BUILDS, 24 * (4_040 / 2 + 200 * 96));
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
             3 * 61
-                + (640 + 26 + 183 + 122 + 73 * 61 + 824) * 12
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 824 * 192)
+                + (640 + 26 + 183 + 122 + 73 * 61 + 4_040) * 12
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192)
                 + 122
-                + 824
-                + 24 * (824 / 2 + 200 * 96)
+                + 4_040
+                + 24 * (4_040 / 2 + 200 * 96)
         );
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
             1_830
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 824 * 192) * 60
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192) * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
         );
