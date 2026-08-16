@@ -63,7 +63,7 @@ const CONSTRUCTION_RESTARTS: usize = 8;
 const CONSTRUCTION_BEAM_WIDTH: usize = 6;
 const CONSTRUCTION_HINT_STATIONS: usize = 3;
 const CONSTRUCTION_HINT_PRIORS: usize = 2;
-const CONSTRUCTION_ROWS_PER_PIECE: usize = 224;
+const CONSTRUCTION_ROWS_PER_PIECE: usize = 320;
 const CONSTRUCTION_SHELF_ROWS: usize = 24;
 const CONSTRUCTION_FINALISTS_PER_SLOT: usize = 4;
 const CONSTRUCTION_BEAM_CHILDREN_PER_PARENT: usize = 2;
@@ -3575,56 +3575,67 @@ fn construct_candidate_poses(
         else {
             continue;
         };
-        // Exact bottom-left settle: drop the confirmed pose to first
-        // contact along the REAL polygons, slide it left to contact, then
-        // drop once more. The skyline proposes at the box top; these
-        // directional contact pushes let the exact gate carry the piece
-        // past the box into any pocket the true profiles admit, and every
-        // subsequent piece builds on the settled profile. Each push starts
-        // from an already-valid pose, so every charged row has high yield.
-        let (dropped_pose, dropped_collision) = construction_slide(
-            pieces,
-            work_settings,
-            parent,
-            piece_index,
-            candidate.clone(),
-            collision,
-            (0.0, -1.0),
-            inset,
-            &mut rows,
-            construction,
-            work,
-        )?;
-        let (slid_pose, slid_collision) = construction_slide(
-            pieces,
-            work_settings,
-            parent,
-            piece_index,
-            dropped_pose,
-            dropped_collision,
-            (-1.0, 0.0),
-            inset,
-            &mut rows,
-            construction,
-            work,
-        )?;
-        let (settled_pose, settled_collision) = construction_slide(
-            pieces,
-            work_settings,
-            parent,
-            piece_index,
-            slid_pose,
-            slid_collision,
-            (0.0, -1.0),
-            inset,
-            &mut rows,
-            construction,
-            work,
-        )?;
+        // Multi-directional contact walk (the bounded NFP surrogate): the
+        // confirmed pose alternates gravity, tangential, and diagonal
+        // contact pushes along the REAL polygons, walking the contact
+        // boundary into notches no single axis push reaches. Each push
+        // starts from an already-valid pose, so every charged row keeps the
+        // high yield that separates this family from speculative-row
+        // variants; the walk stops when a full cycle moves nothing or the
+        // per-slot row cap is reached.
+        let mut walk_pose = candidate.clone();
+        let mut walk_collision = collision;
+        for _cycle in 0..2 {
+            let entry = placement_key(&walk_pose);
+            for direction in [
+                (0.0, -1.0),
+                (-1.0, 0.0),
+                (-0.7071067811865476, -0.7071067811865476),
+            ] {
+                if rows >= CONSTRUCTION_ROWS_PER_PIECE {
+                    break;
+                }
+                let (pushed_pose, pushed_collision) = construction_slide(
+                    pieces,
+                    work_settings,
+                    parent,
+                    piece_index,
+                    walk_pose,
+                    walk_collision,
+                    direction,
+                    inset,
+                    &mut rows,
+                    construction,
+                    work,
+                )?;
+                walk_pose = pushed_pose;
+                walk_collision = pushed_collision;
+            }
+            if placement_key(&walk_pose) == entry {
+                break;
+            }
+        }
+        if rows < CONSTRUCTION_ROWS_PER_PIECE {
+            let (final_pose, final_collision) = construction_slide(
+                pieces,
+                work_settings,
+                parent,
+                piece_index,
+                walk_pose,
+                walk_collision,
+                (0.0, -1.0),
+                inset,
+                &mut rows,
+                construction,
+                work,
+            )?;
+            walk_pose = final_pose;
+            walk_collision = final_collision;
+        }
         if is_shelf {
             construction.shelf_finalists = construction.shelf_finalists.saturating_add(1);
         }
-        finalists.push((settled_pose, Arc::new(settled_collision), zero_prior));
+        finalists.push((walk_pose, Arc::new(walk_collision), zero_prior));
     }
     Ok(finalists)
 }
@@ -6729,7 +6740,7 @@ mod tests {
         assert_eq!(CONSTRUCTION_BEAM_WIDTH, 6);
         assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 8 * 6 * 61);
         assert_eq!(CONSTRUCTION_SELECTED_PIECE_SLOTS, 2_928);
-        assert_eq!(CONSTRUCTION_ROWS_PER_PIECE, 224);
+        assert_eq!(CONSTRUCTION_ROWS_PER_PIECE, 320);
         assert_eq!(
             CONSTRUCTION_HINT_PRIORS * CONSTRUCTION_SELECTED_PIECE_SLOTS,
             5_856
@@ -6764,7 +6775,7 @@ mod tests {
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 2_928 * 224
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 2_928 * 320
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -6784,7 +6795,7 @@ mod tests {
                     + 122 * 192
                     + 73 * 61 * 64
                     + 4_040 * 192
-                    + 2_928 * 224)
+                    + 2_928 * 320)
                 + 122
                 + 4_040
                 + 2 * 2_928
@@ -6798,7 +6809,7 @@ mod tests {
                     + 122 * 192
                     + 73 * 61 * 64
                     + 4_040 * 192
-                    + 2_928 * 224)
+                    + 2_928 * 320)
                     * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
