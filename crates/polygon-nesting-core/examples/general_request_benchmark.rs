@@ -15,7 +15,7 @@ use polygon_nesting_core::search::general_fast::GeneralFastPlacement;
 use polygon_nesting_core::search::general_fast::{
     construct_short_side_first, diagnose_congruent_pair_constructor,
     diagnose_congruent_pair_templates, GeneralFastPiece, GeneralFastSettings,
-    GeneralPairClusterArmDiagnostics,
+    GeneralPairClusterArmDiagnostics, DEFAULT_SEARCH_OFFSET_ALLOWANCE_MM,
 };
 use polygon_nesting_core::search::general_relaxed::{
     improve_complete_layout_with_pinned_vacancy_parent, GeneralAngularRepairSettings,
@@ -102,7 +102,7 @@ struct OwnedPiece {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut arguments = env::args().skip(1);
     let request_path = arguments.next().ok_or(
-        "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy] [persistent-vacancy-parent-fixture] [persistent-vacancy-target-depth-mm]",
+        "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy] [persistent-vacancy-parent-fixture] [persistent-vacancy-target-depth-mm] [warm-start-fixture] [search-offset-allowance-mm]",
     )?;
     let runs = parse_optional(&mut arguments, 1)?;
     let order_variants = parse_optional(&mut arguments, 1)?;
@@ -190,7 +190,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // an externally constructed complete layout. Absent, behavior is
     // byte-identical to the protected default. Mode 23 (recombination) also
     // reuses this same fixture as parent B for the crossover.
-    let warm_start_fixture_path = arguments.next();
+    //
+    // An empty string means "no warm start", which lets a later positional
+    // argument be supplied without arming this one. An empty path was never a
+    // loadable fixture, so no previously valid invocation changes meaning.
+    let warm_start_fixture_path = arguments.next().filter(|value| !value.is_empty());
+    // Optional search-envelope allowance (arg 47), in millimetres. The search
+    // envelope offsets every collision polygon by
+    // `total_padding / 2 + clearance_safety_margin + allowance`; the allowance
+    // is a conservative buffer that makes the envelope a strict superset of
+    // the requested clearance contract. Publication is validated separately
+    // and exactly, so lowering this only widens the set of legal placements
+    // search may visit - it never relaxes what may be published. `0` removes
+    // the allowance entirely. Absent, it defaults to the historical
+    // `DEFAULT_SEARCH_OFFSET_ALLOWANCE_MM`, so every existing invocation is
+    // unchanged.
+    let search_offset_allowance_mm =
+        parse_optional_f64(&mut arguments, DEFAULT_SEARCH_OFFSET_ALLOWANCE_MM)?;
+    if !search_offset_allowance_mm.is_finite() || search_offset_allowance_mm < 0.0 {
+        return Err("search offset allowance must be finite and non-negative".into());
+    }
     if runs == 0 || arguments.next().is_some() {
         return Err("runs must be positive and no extra arguments are accepted".into());
     }
@@ -249,6 +268,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     settings.sheet_edge_clearance_mm = sheet_edge_clearance_mm;
     settings.clearance_safety_margin_mm = clearance_safety_margin_mm;
     settings.flattening_sag_tolerance_mm = flattening_sag_tolerance_mm;
+    settings.search_offset_allowance_mm = search_offset_allowance_mm;
     settings.angle_seed_count = angle_seed_count;
     settings.max_angles_per_piece = max_angles_per_piece;
     settings.max_order_variants = order_variants;
@@ -433,8 +453,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .area_mm2()
         })
         .sum::<f64>();
-    let collision_expansion_mm =
-        settings.total_padding_mm / 2.0 + settings.clearance_safety_margin_mm + 0.002;
+    let collision_expansion_mm = settings.total_padding_mm / 2.0
+        + settings.clearance_safety_margin_mm
+        + settings.search_offset_allowance_mm;
     let expanded_collision_area_mm2 = owned.iter().try_fold(0.0, |area, piece| {
         Ok::<_, Box<dyn std::error::Error>>(
             area + piece.polygon.offset(collision_expansion_mm)?.area_mm2(),
@@ -596,6 +617,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "precompressionFrontierVacancyMode": precompression_frontier_vacancy_mode,
                 "exactPairTerminalMode": retired_exact_pair_terminal_mode,
                 "persistentVacancyMode": persistent_vacancy_mode,
+                "searchOffsetAllowanceMm": settings.search_offset_allowance_mm,
             },
             "pairTemplateProbe": pair_template_probe,
             "pairConstructorProbe": pair_constructor_probe,
