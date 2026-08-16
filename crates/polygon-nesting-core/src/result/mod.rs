@@ -111,6 +111,9 @@ use crate::validation::placement::IrregularGeometryInputError;
 #[derive(Clone, Debug, PartialEq)]
 pub struct NestingOptions {
     pub allow_global_rotation: bool,
+    /// Explicit sheet-edge clearance from the public request, if supplied.
+    /// `None` preserves the historical half-padding default at consumers.
+    pub sheet_edge_clearance_mm: Option<f64>,
     /// TS: `options.allowGlobalMirror ?? true` (`:407`) -- `None` mirrors
     /// the TS field being absent (defaults `true` at the one read site).
     pub allow_global_mirror: Option<bool>,

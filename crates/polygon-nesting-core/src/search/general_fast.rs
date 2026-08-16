@@ -17,6 +17,7 @@ use crate::geometry::general_polygon::{
 };
 use crate::parallel::map_slice_with_job_pool;
 use crate::validation::general_polygon::{
+    transformed_material_set_fits_sheet, transformed_material_sets_meet_clearance,
     validate_publication, GeneralPlacement, PublicationValidationError,
     PublicationValidationSettings,
 };
@@ -33,7 +34,6 @@ const DEFAULT_MAX_PAIRING_BAND_VARIANTS: usize = 4;
 const DEFAULT_MAX_PARTIAL_LAYOUTS: usize = 16;
 const DEFAULT_MAX_TIGHTENING_PASSES: usize = 4;
 const DEFAULT_MAX_REPAIR_TARGETS: usize = 64;
-const CONSERVATIVE_OFFSET_ALLOWANCE_MM: f64 = 0.002;
 const PROPOSAL_BUDGET_MULTIPLIER: usize = 8;
 const PRIMARY_ORIENTATION_EVALUATION_NUMERATOR: usize = 1;
 const PRIMARY_ORIENTATION_EVALUATION_DENOMINATOR: usize = 2;
@@ -661,6 +661,7 @@ fn run_constructor_arm(
         if let Some(candidate) = run_constructor_step(
             piece,
             &placed,
+            prepared,
             settings,
             arm,
             fixed_piece_order_strategy,
@@ -721,6 +722,7 @@ fn run_constructor_arm(
 fn run_constructor_step(
     piece: &PreparedGeneralPiece<'_>,
     placed: &[PlacedState],
+    prepared: &[PreparedGeneralPiece<'_>],
     settings: GeneralFastSettings,
     arm: ConstructorArm,
     fixed_piece_order_strategy: FixedPieceOrder,
@@ -820,25 +822,13 @@ fn run_constructor_step(
             translate_y: proposal.translate_y,
             collision,
         };
-        if !collision_fits_sheet(&candidate.collision, settings) {
-            continue;
-        }
-        if placed
-            .iter()
-            .map(|fixed| polygons_overlap_exact(&candidate.collision, &fixed.collision))
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .any(std::convert::identity)
-        {
-            continue;
-        }
         let score = score_candidate(placed, &candidate, settings);
         if best.as_ref().is_none_or(|(incumbent, incumbent_score)| {
             compare_candidate_scores(score, candidate.key, *incumbent_score, incumbent.key)
                 == Ordering::Less
         }) {
             let Some(candidate) =
-                publication_confirmed_candidate(piece, candidate, placed, settings)?
+                publication_confirmed_candidate(piece, candidate, placed, prepared, settings)?
             else {
                 continue;
             };
@@ -919,6 +909,7 @@ fn run_partial_layout_beam(
             let search = best_candidate_for_orientations(
                 piece,
                 &state.placed,
+                prepared,
                 settings,
                 &orientations,
                 settings.max_beam_evaluations_per_state,
@@ -1010,6 +1001,7 @@ fn retry_skipped_pieces(
             let search = best_candidate_for_orientations(
                 piece,
                 &state.placed,
+                prepared,
                 settings,
                 &orientations,
                 settings.max_beam_evaluations_per_state,
@@ -1545,6 +1537,7 @@ fn attempt_repair_result(
             target,
             &incumbent_state,
             &placed,
+            prepared,
             settings,
             &mut diagnostics.exact_evaluations,
             &mut diagnostics.local_angle_exact_evaluations,
@@ -1655,6 +1648,7 @@ fn search_reinsert_candidate(
     target: &PreparedGeneralPiece<'_>,
     incumbent: &PlacedState,
     fixed: &[PlacedState],
+    prepared: &[PreparedGeneralPiece<'_>],
     settings: GeneralFastSettings,
     repair_exact_evaluations: &mut usize,
     local_angle_refinement_exact_evaluations: &mut usize,
@@ -1680,6 +1674,7 @@ fn search_reinsert_candidate(
     let coarse = best_candidate_for_orientations(
         target,
         fixed,
+        prepared,
         settings,
         &coarse_orientations,
         coarse_budget,
@@ -1704,7 +1699,7 @@ fn search_reinsert_candidate(
         translate_y: incumbent.placement.translate_long_axis,
         collision: incumbent.collision.clone(),
     };
-    let mut best = candidate_is_feasible(&incumbent_candidate, fixed, settings)?
+    let mut best = candidate_is_feasible(target, &incumbent_candidate, fixed, prepared, settings)?
         .then_some(incumbent_candidate);
     if let Some(candidate) = coarse.candidates.into_iter().next() {
         if best.as_ref().is_none_or(|incumbent| {
@@ -1728,6 +1723,7 @@ fn search_reinsert_candidate(
             let local = best_candidate_for_orientations(
                 target,
                 fixed,
+                prepared,
                 settings,
                 &local_orientations,
                 local_budget,
@@ -1755,15 +1751,55 @@ fn search_reinsert_candidate(
 }
 
 fn candidate_is_feasible(
+    moving_piece: &PreparedGeneralPiece<'_>,
     candidate: &Candidate,
     fixed: &[PlacedState],
+    prepared: &[PreparedGeneralPiece<'_>],
     settings: GeneralFastSettings,
 ) -> Result<bool, GeneralFastError> {
-    if !collision_fits_sheet(&candidate.collision, settings) {
+    let moving = GeneralPlacement {
+        piece_id: moving_piece.input.id,
+        polygon: moving_piece.input.polygon,
+        rotation_deg: candidate.rotation_deg,
+        mirrored: candidate.mirrored,
+        translate_x: candidate.translate_x,
+        translate_y: candidate.translate_y,
+    };
+    if !transformed_material_set_fits_sheet(
+        moving,
+        settings.sheet_short_axis_mm,
+        settings.sheet_long_axis_mm,
+        effective_sheet_edge_clearance_mm(settings),
+        settings.flattening_sag_tolerance_mm,
+    )? {
         return Ok(false);
     }
     for placed in fixed {
-        if polygons_overlap_exact(&candidate.collision, &placed.collision)? {
+        let fixed_piece = prepared
+            .iter()
+            .find(|piece| piece.input_index == placed.input_index)
+            .ok_or_else(|| {
+                GeneralFastError::InvalidInput(
+                    "a placed state references an unknown prepared piece".to_owned(),
+                )
+            })?;
+        let fixed_geometry = GeneralPlacement {
+            piece_id: fixed_piece.input.id,
+            polygon: fixed_piece.input.polygon,
+            rotation_deg: placed.placement.rotation_deg,
+            mirrored: placed.placement.mirrored,
+            translate_x: placed.placement.translate_short_axis,
+            translate_y: placed.placement.translate_long_axis,
+        };
+        if !transformed_material_sets_meet_clearance(
+            moving,
+            fixed_geometry,
+            settings.total_padding_mm,
+            settings.flattening_sag_tolerance_mm,
+        )? {
+            // Collision offsets are deliberately only a proposal/broad-phase
+            // structure. Miter corners can reject a valid Euclidean clearance,
+            // so admission is decided by the independent source validator.
             return Ok(false);
         }
     }
@@ -1774,6 +1810,7 @@ fn publication_confirmed_candidate(
     piece: &PreparedGeneralPiece<'_>,
     mut candidate: Candidate,
     fixed: &[PlacedState],
+    prepared: &[PreparedGeneralPiece<'_>],
     settings: GeneralFastSettings,
 ) -> Result<Option<Candidate>, GeneralFastError> {
     candidate.collision = transformed_collision(
@@ -1784,7 +1821,8 @@ fn publication_confirmed_candidate(
         candidate.translate_y,
         settings,
     )?;
-    candidate_is_feasible(&candidate, fixed, settings).map(|feasible| feasible.then_some(candidate))
+    candidate_is_feasible(piece, &candidate, fixed, prepared, settings)
+        .map(|feasible| feasible.then_some(candidate))
 }
 
 struct CandidateSearch {
@@ -1795,6 +1833,7 @@ struct CandidateSearch {
 fn best_candidate_for_orientations(
     target: &PreparedGeneralPiece<'_>,
     fixed: &[PlacedState],
+    prepared: &[PreparedGeneralPiece<'_>],
     settings: GeneralFastSettings,
     orientations: &[(f64, bool)],
     exact_budget: usize,
@@ -1878,18 +1917,6 @@ fn best_candidate_for_orientations(
             translate_y: proposal.translate_y,
             collision,
         };
-        if !collision_fits_sheet(&candidate.collision, settings) {
-            continue;
-        }
-        if fixed
-            .iter()
-            .map(|placed| polygons_overlap_exact(&candidate.collision, &placed.collision))
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .any(std::convert::identity)
-        {
-            continue;
-        }
         candidates.push(candidate);
     }
     candidates.sort_by(|first, second| {
@@ -1906,7 +1933,8 @@ fn best_candidate_for_orientations(
     candidates = candidates
         .into_iter()
         .filter_map(|candidate| {
-            publication_confirmed_candidate(target, candidate, fixed, settings).transpose()
+            publication_confirmed_candidate(target, candidate, fixed, prepared, settings)
+                .transpose()
         })
         .collect::<Result<Vec<_>, _>>()?;
     candidates.sort_by(|first, second| {
@@ -2102,9 +2130,10 @@ fn effective_sheet_edge_clearance_mm(settings: GeneralFastSettings) -> f64 {
 }
 
 pub(crate) fn collision_expansion_mm(settings: GeneralFastSettings) -> f64 {
+    // expand each side by half of the requested pair clearance. Flattening
+    // and grid safety stay internal to source preparation and validation;
+    // neither may silently turn a requested 5 mm gap into a larger gap.
     settings.total_padding_mm / 2.0
-        + settings.clearance_safety_margin_mm
-        + CONSERVATIVE_OFFSET_ALLOWANCE_MM
 }
 
 fn oriented_collision(
@@ -2145,12 +2174,19 @@ pub(crate) fn collision_sheet_long_axis_mm(settings: GeneralFastSettings) -> f64
 
 fn collision_fits_sheet(polygon: &PolygonSet, settings: GeneralFastSettings) -> bool {
     let inset = collision_sheet_inset_mm(settings);
-    polygon.fits_rect(
-        inset,
-        inset,
-        settings.sheet_short_axis_mm - inset,
-        settings.sheet_long_axis_mm - inset,
-    )
+    let min_x = inset;
+    let min_y = inset;
+    let max_x = settings.sheet_short_axis_mm - inset;
+    let max_y = settings.sheet_long_axis_mm - inset;
+    if settings.total_padding_mm == 0.0 {
+        let fits = polygon.regions.iter().all(|region| {
+            region.outer.points().iter().all(|point| {
+                point.x >= min_x && point.y >= min_y && point.x <= max_x && point.y <= max_y
+            })
+        });
+        return fits;
+    }
+    polygon.fits_rect(min_x, min_y, max_x, max_y)
 }
 
 pub(crate) fn polygons_overlap_exact(
@@ -3313,12 +3349,6 @@ pub(crate) fn validate_and_measure_placements(
                     placement.translate_long_axis,
                 )?
                 .offset(expansion)?;
-            if !collision_fits_sheet(&collision, settings) {
-                return Err(GeneralFastError::InvalidInput(format!(
-                    "piece {} violates the canonical-grid sheet boundary",
-                    placement.piece_id
-                )));
-            }
             Ok(PlacedState {
                 input_index,
                 placement: placement.clone(),
@@ -3326,21 +3356,6 @@ pub(crate) fn validate_and_measure_placements(
             })
         })
         .collect::<Result<Vec<_>, GeneralFastError>>()?;
-
-    for first_index in 0..rebuilt.len() {
-        for second_index in (first_index + 1)..rebuilt.len() {
-            if polygons_overlap_exact(
-                &rebuilt[first_index].collision,
-                &rebuilt[second_index].collision,
-            )? {
-                return Err(GeneralFastError::InvalidInput(format!(
-                    "pieces {} and {} overlap on the canonical collision grid",
-                    rebuilt[first_index].placement.piece_id,
-                    rebuilt[second_index].placement.piece_id
-                )));
-            }
-        }
-    }
 
     let independent = rebuilt
         .iter()
@@ -3968,6 +3983,16 @@ mod tests {
     }
 
     #[test]
+    fn collision_expansion_is_exactly_half_the_requested_pair_clearance() {
+        let mut settings = GeneralFastSettings::deterministic_test(10.0, 20.0);
+        settings.total_padding_mm = 5.0;
+        settings.flattening_sag_tolerance_mm = 0.25;
+        settings.clearance_safety_margin_mm = 0.25;
+
+        assert_eq!(collision_expansion_mm(settings), 2.5);
+    }
+
+    #[test]
     fn tightening_is_bounded_and_never_discards_the_incumbent() {
         let wide = rectangle(3.0, 1.0);
         let tall = rectangle(1.0, 2.0);
@@ -4306,7 +4331,7 @@ mod tests {
         assert_eq!(result.placements.len(), 3);
         assert!(result.unplaced_piece_ids.is_empty());
         assert_eq!(result.primary_exact_evaluations, 8);
-        assert!((result.used_long_axis_depth_mm - 3.012).abs() < 1e-9);
+        assert!((result.used_long_axis_depth_mm - 3.0).abs() < 1e-9);
     }
 
     #[test]

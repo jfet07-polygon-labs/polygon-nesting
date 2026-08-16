@@ -471,6 +471,7 @@ fn valid_request() -> EngineRequest {
         }],
         settings: EngineSettings {
             padding: 0.0,
+            sheet_edge_clearance_mm: None,
             allow_global_rotation: true,
             allow_global_mirror: false,
             geometry: GeometrySettings {

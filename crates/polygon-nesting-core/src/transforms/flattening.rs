@@ -130,6 +130,39 @@ pub mod arc {
         points
     }
 
+    /// Returns the largest endpoint displacement between the imported arc
+    /// endpoints and the circle described by its center, radius, and angles.
+    /// DXF roundoff is retained in the sampled endpoints; callers that publish
+    /// a sag certificate must account for this displacement explicitly.
+    pub fn endpoint_mismatch_mm(arc: DxfArcSegment) -> f64 {
+        let expected_start = point_on_circle(arc, arc.start_angle);
+        let expected_end = point_on_circle(arc, arc.end_angle);
+        let start_mismatch = js_math::hypot(arc.x1 - expected_start.x, arc.y1 - expected_start.y);
+        let end_mismatch = js_math::hypot(arc.x2 - expected_end.x, arc.y2 - expected_end.y);
+        let mismatch = js_math::max(start_mismatch, end_mismatch);
+        if mismatch.is_finite() {
+            mismatch
+        } else {
+            f64::INFINITY
+        }
+    }
+
+    /// Returns a conservative certificate for a sampled arc boundary. The
+    /// configured chord sag bounds the analytic interior; the endpoint
+    /// displacement is an independent error term because imported endpoints
+    /// are intentionally preserved exactly for contour connectivity.
+    pub fn certified_sag_bound_mm(arc: DxfArcSegment, sag_tolerance_mm: f64) -> f64 {
+        if sag_tolerance_mm.is_nan() || sag_tolerance_mm < 0.0 {
+            return f64::INFINITY;
+        }
+        let bound = endpoint_mismatch_mm(arc) + sag_tolerance_mm;
+        if bound.is_finite() {
+            bound
+        } else {
+            f64::INFINITY
+        }
+    }
+
     /// Samples an arc only when its deterministic output fits `max_points`.
     pub fn sample_points_bounded(
         arc: DxfArcSegment,
@@ -281,6 +314,14 @@ pub mod arc {
         arc.start_angle + compute_counter_clockwise_sweep_degrees(arc) * sample_ratio
     }
 
+    fn point_on_circle(arc: DxfArcSegment, angle_deg: f64) -> IrregularPoint {
+        let angle_rad = degrees_to_radians(angle_deg);
+        IrregularPoint::new(
+            arc.cx + libm::cos(angle_rad) * arc.radius,
+            arc.cy + libm::sin(angle_rad) * arc.radius,
+        )
+    }
+
     /// TS: `arcFlattening.ts:142-157` `computeCounterClockwiseSweepDegrees`
     /// (private).
     fn compute_counter_clockwise_sweep_degrees(arc: DxfArcSegment) -> f64 {
@@ -357,14 +398,44 @@ pub mod arc {
         }
 
         #[test]
-        fn sample_points_preserves_imported_endpoints_exactly_even_off_circle() {
-            // Deliberately off-analytic-circle endpoints (a real DXF can have
-            // rounding drift between its stored endpoints and its
-            // center/radius/angle triple); the port must never "fix" them.
-            let a = arc(0.1, 0.2, 9.9, -0.3, 5.0, 0.0, 5.0, 0.0, 180.0);
+        fn sample_points_preserves_roundoff_endpoints_and_certifies_the_mismatch() {
+            // A valid DXF may carry an endpoint one representable float away
+            // from the analytic circle. Preserve that endpoint for contour
+            // connectivity, but expose the displacement to the publication
+            // certificate instead of silently claiming only chord sag.
+            let rounded_start = f64::from_bits(10.0f64.to_bits() + 1);
+            let rounded_end = f64::from_bits(0.0f64.to_bits() + 1);
+            let a = arc(
+                rounded_start,
+                0.0,
+                rounded_end,
+                0.0,
+                5.0,
+                0.0,
+                5.0,
+                0.0,
+                180.0,
+            );
             let points = sample_points(a, 0.1);
-            assert_eq!(points.first().copied(), Some(IrregularPoint::new(0.1, 0.2)));
-            assert_eq!(points.last().copied(), Some(IrregularPoint::new(9.9, -0.3)));
+            assert_eq!(
+                points.first().copied(),
+                Some(IrregularPoint::new(rounded_start, 0.0))
+            );
+            assert_eq!(
+                points.last().copied(),
+                Some(IrregularPoint::new(rounded_end, 0.0))
+            );
+            let mismatch = endpoint_mismatch_mm(a);
+            assert!(mismatch > 0.0);
+            assert_eq!(certified_sag_bound_mm(a, 0.1), mismatch + 0.1);
+        }
+
+        #[test]
+        fn inconsistent_arc_endpoints_are_not_hidden_by_the_sag_certificate() {
+            let a = arc(0.1, 0.2, 9.9, -0.3, 5.0, 0.0, 5.0, 0.0, 180.0);
+            let mismatch = endpoint_mismatch_mm(a);
+            assert!(mismatch > 9.0);
+            assert!(certified_sag_bound_mm(a, 0.1) > mismatch);
         }
 
         #[test]
@@ -610,18 +681,14 @@ pub mod ellipse {
         if output.len() >= max_points {
             return false;
         }
-        if recursion_depth >= MAX_RECURSION_DEPTH
-            || !needs_subdivision(
-                ellipse,
-                interval_start,
-                interval_end,
-                start_point,
-                end_point,
-                sag_tolerance_mm,
-            )
-        {
+        let should_subdivide =
+            needs_subdivision(ellipse, interval_start, interval_end, sag_tolerance_mm);
+        if !should_subdivide {
             output.push(end_point);
             return true;
+        }
+        if recursion_depth >= MAX_RECURSION_DEPTH {
+            return false;
         }
 
         let interval_middle = (interval_start + interval_end) / 2.0;
@@ -671,14 +738,7 @@ pub mod ellipse {
     ) {
         if recursion_depth >= MAX_RECURSION_DEPTH
             || output.len() >= MAX_SAMPLE_POINTS
-            || !needs_subdivision(
-                ellipse,
-                interval_start,
-                interval_end,
-                start_point,
-                end_point,
-                sag_tolerance_mm,
-            )
+            || !needs_subdivision(ellipse, interval_start, interval_end, sag_tolerance_mm)
         {
             output.push(end_point);
             return;
@@ -708,40 +768,57 @@ pub mod ellipse {
         );
     }
 
-    /// TS: `ellipseFlattening.ts:108-133` `needsSubdivision` (private). Uses
-    /// a conservative analytic bound and sampled deviations before
-    /// subdivision.
+    /// TS: `ellipseFlattening.ts:108-133` `needsSubdivision` (private). The
+    /// interval curvature bound is sufficient to certify the chord sag; the
+    /// sampled deviations are intentionally not used as an acceptance test.
+    ///
+    /// For `p(t) = c + u*cos(t) + v*sin(t)`, `||p''(t)||` is bounded by the
+    /// larger of `||u||` and `||v||`. The interpolation error between the
+    /// curve and its endpoint chord is therefore bounded by
+    /// `max(||u||, ||v||) * h² / 8`, for parameter span `h`. This bound does
+    /// not depend on where the interval lies on the ellipse or on a finite
+    /// set of sampled points.
     fn needs_subdivision(
         ellipse: &DxfEllipseSource,
         interval_start: f64,
         interval_end: f64,
-        start_point: IrregularPoint,
-        end_point: IrregularPoint,
         sag_tolerance_mm: f64,
     ) -> bool {
-        let interval_length = interval_end - interval_start;
-        // TS calls `Math.hypot(majorAxisX, majorAxisY)` twice inline
-        // (`ellipseFlattening.ts:118-119`); hoisted here into one call since
-        // it is a pure, side-effect-free function of the same two fields
-        // both times — not a behavior change.
-        let major_axis_length = js_math::hypot(ellipse.major_axis_x, ellipse.major_axis_y);
-        let maximum_axis_length =
-            js_math::max(major_axis_length, major_axis_length * ellipse.axis_ratio);
-        let conservative_deviation_bound =
-            (maximum_axis_length * interval_length * interval_length) / 8.0;
-        if conservative_deviation_bound <= sag_tolerance_mm {
+        if sag_tolerance_mm.is_nan() {
+            return true;
+        }
+        if sag_tolerance_mm == f64::INFINITY {
             return false;
         }
+        conservative_sag_bound_mm(ellipse, interval_start, interval_end) > sag_tolerance_mm
+    }
 
-        let quarter_point = ellipse_point(ellipse, interval_start + interval_length * 0.25);
-        let middle_point = ellipse_point(ellipse, interval_start + interval_length * 0.5);
-        let three_quarter_point = ellipse_point(ellipse, interval_start + interval_length * 0.75);
-        let maximum_deviation = js_math::max_all(&[
-            distance_to_chord(quarter_point, start_point, end_point),
-            distance_to_chord(middle_point, start_point, end_point),
-            distance_to_chord(three_quarter_point, start_point, end_point),
-        ]);
-        maximum_deviation > sag_tolerance_mm
+    /// Returns a conservative upper bound for the maximum distance from an
+    /// ellipse interval to its endpoint chord.
+    fn conservative_sag_bound_mm(
+        ellipse: &DxfEllipseSource,
+        interval_start: f64,
+        interval_end: f64,
+    ) -> f64 {
+        let interval_length = interval_end - interval_start;
+        let major_axis_length = js_math::hypot(ellipse.major_axis_x, ellipse.major_axis_y);
+        let minor_axis_length = major_axis_length * ellipse.axis_ratio.abs();
+        if !interval_length.is_finite()
+            || interval_length < 0.0
+            || !major_axis_length.is_finite()
+            || !minor_axis_length.is_finite()
+        {
+            return f64::INFINITY;
+        }
+
+        let maximum_axis_length = js_math::max(major_axis_length, minor_axis_length);
+        let interval_length_squared = interval_length * interval_length;
+        let bound = maximum_axis_length * interval_length_squared / 8.0;
+        if bound.is_finite() {
+            bound
+        } else {
+            f64::INFINITY
+        }
     }
 
     /// TS: `ellipseFlattening.ts:136-143` `ellipsePoint` (private). Evaluates
@@ -757,33 +834,6 @@ pub mod ellipse {
                 + ellipse.major_axis_y * libm::cos(parameter)
                 + minor_axis_y * libm::sin(parameter),
         )
-    }
-
-    /// TS: `ellipseFlattening.ts:146-166` `distanceToChord` (private).
-    /// Measures a point's shortest distance to a finite chord segment.
-    fn distance_to_chord(
-        point: IrregularPoint,
-        start_point: IrregularPoint,
-        end_point: IrregularPoint,
-    ) -> f64 {
-        let delta_x = end_point.x - start_point.x;
-        let delta_y = end_point.y - start_point.y;
-        let length_squared = delta_x * delta_x + delta_y * delta_y;
-        if length_squared <= 0.0 {
-            return js_math::hypot(point.x - start_point.x, point.y - start_point.y);
-        }
-
-        let projection = js_math::max(
-            0.0,
-            js_math::min(
-                1.0,
-                ((point.x - start_point.x) * delta_x + (point.y - start_point.y) * delta_y)
-                    / length_squared,
-            ),
-        );
-        let closest_x = start_point.x + projection * delta_x;
-        let closest_y = start_point.y + projection * delta_y;
-        js_math::hypot(point.x - closest_x, point.y - closest_y)
     }
 
     /// TS: `ellipseFlattening.ts:169-171` `ellipseEndParameter` (private).
@@ -821,15 +871,6 @@ pub mod ellipse {
                 start_angle,
                 end_angle,
             }
-        }
-
-        #[test]
-        fn degenerate_chord_distance_uses_node_compatible_hypot() {
-            let point = IrregularPoint::new(5000.0, 5000.0);
-            let origin = IrregularPoint::new(0.0, 0.0);
-            let actual = distance_to_chord(point, origin, origin);
-            let expected = js_math::hypot(5000.0, 5000.0);
-            assert_eq!(actual.to_bits(), expected.to_bits());
         }
 
         #[test]
@@ -923,6 +964,31 @@ pub mod ellipse {
             let points = sample_points(&e, 0.01);
             assert!(!points.is_empty());
             assert!(points.len() < MAX_SAMPLE_POINTS);
+        }
+
+        #[test]
+        fn sample_points_extreme_eccentricity_certifies_every_interval() {
+            let sag = 0.001;
+            let start_angle = 169.0;
+            let sweep = 90.0;
+            let e = ellipse_source(0.0, 0.0, 1.0, 0.0, 1e-6, start_angle, start_angle + sweep);
+            let points = sample_points(&e, sag);
+
+            // the source angles are radians; these deliberately large
+            // unwrapped values reproduce the major=1, ratio=1e-6,
+            // start=169, sweep=90 regression directly.
+            let initial_segment_count = (sweep / INITIAL_MAX_SWEEP_RADIANS).ceil() as usize;
+            assert_eq!(initial_segment_count, 58);
+            let interval_length = sweep / initial_segment_count as f64;
+            assert!(
+                conservative_sag_bound_mm(&e, 0.0, interval_length / 32.0) <= sag,
+                "the depth-5 interval must be certified"
+            );
+            assert!(
+                conservative_sag_bound_mm(&e, 0.0, interval_length / 16.0) > sag,
+                "the depth-4 interval must still require subdivision"
+            );
+            assert_eq!(points.len(), 1 + initial_segment_count * 32);
         }
     }
 }

@@ -18,9 +18,11 @@ pub fn polygon_set_from_imported_piece(
     piece: &ImportedPiece,
     flattening_sag_tolerance_mm: f64,
 ) -> Result<PolygonSet, GeneralPolygonError> {
-    if !flattening_sag_tolerance_mm.is_finite() || flattening_sag_tolerance_mm <= 0.0 {
+    // zero sag is exact for pure segment geometry and is only rejected when
+    // a curved segment actually needs sampling.
+    if !flattening_sag_tolerance_mm.is_finite() || flattening_sag_tolerance_mm < 0.0 {
         return Err(error(
-            "flattening sag tolerance must be finite and positive",
+            "flattening sag tolerance must be finite and non-negative",
         ));
     }
     if !piece.geometry.closed {
@@ -35,6 +37,7 @@ pub fn polygon_set_from_imported_piece(
     }
 
     let mut sampled_curves = BTreeMap::<String, DxfEllipseSource>::new();
+    let mut analytic_segments = Vec::new();
     let mut chains = Vec::<Vec<IrregularPoint>>::new();
     let mut sampled_vertices = 0usize;
     for segment in &piece.geometry.segments {
@@ -57,7 +60,13 @@ pub fn polygon_set_from_imported_piece(
                         }
                         continue;
                     }
+                    analytic_segments.push(segment.clone());
                     sampled_curves.insert(source_curve.source_id.clone(), source_curve.clone());
+                    if flattening_sag_tolerance_mm <= 0.0 {
+                        return Err(error(
+                            "flattening sag tolerance must be positive when curved segments are present",
+                        ));
+                    }
                     ellipse::sample_points_bounded(
                         source_curve,
                         flattening_sag_tolerance_mm,
@@ -69,6 +78,12 @@ pub fn polygon_set_from_imported_piece(
                         ))
                     })?
                 } else if line.bulge.is_some_and(|bulge| bulge != 0.0) {
+                    analytic_segments.push(segment.clone());
+                    if flattening_sag_tolerance_mm <= 0.0 {
+                        return Err(error(
+                            "flattening sag tolerance must be positive when curved segments are present",
+                        ));
+                    }
                     arc::sample_bulge_points_bounded(
                         line,
                         flattening_sag_tolerance_mm,
@@ -80,22 +95,31 @@ pub fn polygon_set_from_imported_piece(
                         ))
                     })?
                 } else {
+                    analytic_segments.push(segment.clone());
                     vec![
                         IrregularPoint::new(line.x1, line.y1),
                         IrregularPoint::new(line.x2, line.y2),
                     ]
                 }
             }
-            DxfGeometrySegment::Arc(segment_arc) => arc::sample_points_bounded(
-                *segment_arc,
-                flattening_sag_tolerance_mm,
-                max_segment_points,
-            )
-            .ok_or_else(|| {
-                error(format!(
-                    "sampled source cycle exceeds the {GENERAL_MAX_RING_VERTICES}-vertex limit"
-                ))
-            })?,
+            DxfGeometrySegment::Arc(segment_arc) => {
+                analytic_segments.push(segment.clone());
+                if flattening_sag_tolerance_mm <= 0.0 {
+                    return Err(error(
+                        "flattening sag tolerance must be positive when curved segments are present",
+                    ));
+                }
+                arc::sample_points_bounded(
+                    *segment_arc,
+                    flattening_sag_tolerance_mm,
+                    max_segment_points,
+                )
+                .ok_or_else(|| {
+                    error(format!(
+                        "sampled source cycle exceeds the {GENERAL_MAX_RING_VERTICES}-vertex limit"
+                    ))
+                })?
+            }
         };
         if points.len() < 2 {
             return Err(error(
@@ -117,7 +141,9 @@ pub fn polygon_set_from_imported_piece(
         (Ok(forward), Ok(reversed)) if forward != reversed => Err(error(
             "source cycle has an ambiguous first-segment orientation after snapping",
         )),
-        (Ok(polygon), _) | (_, Ok(polygon)) => Ok(polygon),
+        (Ok(polygon), _) | (_, Ok(polygon)) => {
+            Ok(polygon.with_analytic_segments(analytic_segments))
+        }
         (Err(error), Err(_)) => Err(error),
     }
 }
@@ -243,6 +269,47 @@ mod tests {
         let polygon = polygon_set_from_imported_piece(&source, 0.01).unwrap();
         assert_eq!(polygon.area_mm2(), 7.0);
         assert!(!polygon.regions[0].outer.is_convex());
+    }
+
+    #[test]
+    fn accepts_zero_sag_for_segment_only_geometry() {
+        let source = piece(vec![
+            line(0.0, 0.0, 4.0, 0.0),
+            line(4.0, 0.0, 4.0, 4.0),
+            line(4.0, 4.0, 0.0, 4.0),
+            line(0.0, 4.0, 0.0, 0.0),
+        ]);
+
+        assert_eq!(
+            polygon_set_from_imported_piece(&source, 0.0)
+                .unwrap()
+                .area_mm2(),
+            16.0
+        );
+    }
+
+    #[test]
+    fn rejects_zero_sag_when_curved_geometry_requires_sampling() {
+        let source = piece(vec![DxfGeometrySegment::Arc(
+            crate::domain::DxfArcSegment {
+                x1: 1.0,
+                y1: 0.0,
+                x2: 0.0,
+                y2: 1.0,
+                cx: 0.0,
+                cy: 0.0,
+                radius: 1.0,
+                start_angle: 0.0,
+                end_angle: 90.0,
+            },
+        )]);
+
+        assert_eq!(
+            polygon_set_from_imported_piece(&source, 0.0)
+                .unwrap_err()
+                .message(),
+            "flattening sag tolerance must be positive when curved segments are present"
+        );
     }
 
     #[test]

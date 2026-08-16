@@ -236,6 +236,7 @@ fn roomy_sheet() -> SheetSpec {
 fn default_options() -> NestingOptions {
     NestingOptions {
         allow_global_rotation: true,
+        sheet_edge_clearance_mm: None,
         allow_global_mirror: Some(true),
         history_mode: HistoryMode::Stream,
         diagnostic_trace_mode: polygon_nesting_protocol::DiagnosticTraceMode::Full,
@@ -387,6 +388,294 @@ fn two_small_squares_on_a_roomy_sheet_settle_through_the_shared_archive_winner_p
     // `selectedLayoutRevealSnapshots`, one snapshot per placement-count
     // prefix, so `placed_collision_geometries.len() + 1` snapshots).
     assert_eq!(*sink.snapshot_count.lock().unwrap(), 3);
+}
+
+#[test]
+fn explicit_sheet_edge_clearance_insets_published_layout_without_changing_pair_padding() {
+    let mut settings = compact_settings();
+    settings.optimizer.configured_rotation_enabled = false;
+    settings.optimizer.edge_alignment_enabled = false;
+    let mut request_options = default_options();
+    request_options.allow_global_rotation = false;
+    request_options.allow_global_mirror = Some(false);
+    request_options.history_mode = HistoryMode::Off;
+    let sheet = SheetSpec {
+        width: 95.0,
+        height: 30.0,
+        label: "exact-edge-sheet".to_string(),
+    };
+    let mut first = rect_prepared_piece("square-a", 40.0, 20.0);
+    first.allow_rotation = false;
+    first.allow_mirror = false;
+    let mut second = rect_prepared_piece("square-b", 40.0, 20.0);
+    second.allow_rotation = false;
+    second.allow_mirror = false;
+    let mut request = NestingRequest {
+        sheet,
+        padding: 5.0,
+        pieces: vec![first, second],
+        source_pieces: vec![
+            rect_source_piece("square-a", 40.0, 20.0),
+            rect_source_piece("square-b", 40.0, 20.0),
+        ],
+        options: request_options,
+    };
+    request.options.sheet_edge_clearance_mm = Some(5.0);
+
+    let mut explicit_options = ComputeIrregularNestingOptions::default();
+    let mut explicit_geometry_cache = GeometryCacheStore::new();
+    let mut explicit_free_material_cache = FreeMaterialCache::new();
+    let explicit = compute_irregular_nesting(
+        &request,
+        &settings,
+        &mut explicit_options,
+        &mut explicit_geometry_cache,
+        &mut explicit_free_material_cache,
+    )
+    .expect("exact edge request must fit the exactly dimensioned sheet");
+    assert_eq!(explicit.placed_collision_geometries.len(), 2);
+
+    let source_bounds = |result: &IrregularComputeResult, request: &NestingRequest| {
+        result
+            .portfolio
+            .placements
+            .iter()
+            .map(|placement| {
+                let source = request
+                    .source_pieces
+                    .iter()
+                    .find(|source| source.id == placement.source_piece_id)
+                    .expect("published placement source");
+                let reference = placement
+                    .placement_reference
+                    .expect("published placement reference");
+                let radians = placement.transform.rotation_deg.to_radians();
+                let (sin, cos) = radians.sin_cos();
+                let transformed = [
+                    (source.real_bounds.x, source.real_bounds.y),
+                    (
+                        source.real_bounds.x + source.real_bounds.width,
+                        source.real_bounds.y,
+                    ),
+                    (
+                        source.real_bounds.x + source.real_bounds.width,
+                        source.real_bounds.y + source.real_bounds.height,
+                    ),
+                    (
+                        source.real_bounds.x,
+                        source.real_bounds.y + source.real_bounds.height,
+                    ),
+                ]
+                .into_iter()
+                .map(|(x, y)| {
+                    let x = if placement.transform.mirrored { -x } else { x } - reference.x;
+                    let y = y - reference.y;
+                    (
+                        x * cos - y * sin + placement.transform.translate_x,
+                        x * sin + y * cos + placement.transform.translate_y,
+                    )
+                })
+                .collect::<Vec<_>>();
+                (
+                    transformed
+                        .iter()
+                        .map(|(x, _)| *x)
+                        .fold(f64::INFINITY, f64::min),
+                    transformed
+                        .iter()
+                        .map(|(_, y)| *y)
+                        .fold(f64::INFINITY, f64::min),
+                    transformed
+                        .iter()
+                        .map(|(x, _)| *x)
+                        .fold(f64::NEG_INFINITY, f64::max)
+                        - transformed
+                            .iter()
+                            .map(|(x, _)| *x)
+                            .fold(f64::INFINITY, f64::min),
+                    transformed
+                        .iter()
+                        .map(|(_, y)| *y)
+                        .fold(f64::NEG_INFINITY, f64::max)
+                        - transformed
+                            .iter()
+                            .map(|(_, y)| *y)
+                            .fold(f64::INFINITY, f64::min),
+                )
+            })
+            .collect::<Vec<_>>()
+    };
+    let mut explicit_bounds = source_bounds(&explicit, &request);
+    explicit_bounds.sort_by(|left, right| left.0.total_cmp(&right.0));
+    assert_eq!(explicit_bounds[0].0, 5.0);
+    assert_eq!(explicit_bounds[0].1, 5.0);
+    assert_eq!(
+        explicit_bounds[1].0 - (explicit_bounds[0].0 + explicit_bounds[0].2),
+        5.0
+    );
+
+    // Omitting the explicit option remains the historical half-padding path:
+    // the pair gap stays five millimeters while the source edge is 2.5 mm.
+    request.options.sheet_edge_clearance_mm = None;
+    let mut legacy_options = ComputeIrregularNestingOptions::default();
+    let mut legacy_geometry_cache = GeometryCacheStore::new();
+    let mut legacy_free_material_cache = FreeMaterialCache::new();
+    let legacy = compute_irregular_nesting(
+        &request,
+        &settings,
+        &mut legacy_options,
+        &mut legacy_geometry_cache,
+        &mut legacy_free_material_cache,
+    )
+    .expect("legacy no-edge request must retain its historical output path");
+    let mut legacy_bounds = source_bounds(&legacy, &request);
+    legacy_bounds.sort_by(|left, right| left.0.total_cmp(&right.0));
+    assert_eq!(legacy_bounds[0].0, 2.5);
+    assert_eq!(
+        legacy_bounds[1].0 - (legacy_bounds[0].0 + legacy_bounds[0].2),
+        5.0
+    );
+    let explicit_hash = explicit
+        .focused_complete_reconstruction_trace
+        .as_ref()
+        .and_then(|trace| trace.selected_canonical_geometry_hash.clone());
+    let legacy_hash = legacy
+        .focused_complete_reconstruction_trace
+        .as_ref()
+        .and_then(|trace| trace.selected_canonical_geometry_hash.clone());
+    assert_eq!(legacy_hash, explicit_hash);
+}
+
+#[test]
+fn explicit_edge_below_half_padding_uses_exact_edge_and_preserves_pair_padding() {
+    let mut settings = compact_settings();
+    settings.optimizer.configured_rotation_enabled = false;
+    settings.optimizer.edge_alignment_enabled = false;
+    let mut options = default_options();
+    options.allow_global_rotation = false;
+    options.allow_global_mirror = Some(false);
+    options.history_mode = HistoryMode::Off;
+    let request = NestingRequest {
+        sheet: SheetSpec {
+            width: 94.0,
+            height: 30.0,
+            label: "below-half-padding-edge-sheet".to_string(),
+        },
+        padding: 10.0,
+        pieces: vec![
+            rect_prepared_piece("edge-a", 40.0, 20.0),
+            rect_prepared_piece("edge-b", 40.0, 20.0),
+        ],
+        source_pieces: vec![
+            rect_source_piece("edge-a", 40.0, 20.0),
+            rect_source_piece("edge-b", 40.0, 20.0),
+        ],
+        options: NestingOptions {
+            sheet_edge_clearance_mm: Some(2.0),
+            ..options
+        },
+    };
+
+    let mut compute_options = ComputeIrregularNestingOptions::default();
+    let mut geometry_cache = GeometryCacheStore::new();
+    let mut free_material_cache = FreeMaterialCache::new();
+    let result = compute_irregular_nesting(
+        &request,
+        &settings,
+        &mut compute_options,
+        &mut geometry_cache,
+        &mut free_material_cache,
+    )
+    .expect("an exact 2 mm edge request must fit the virtual enlarged sheet");
+
+    assert_eq!(result.placed_collision_geometries.len(), 2);
+    let mut min_x_by_piece = result
+        .portfolio
+        .placements
+        .iter()
+        .map(|placement| {
+            let source = request
+                .source_pieces
+                .iter()
+                .find(|source| source.id == placement.source_piece_id)
+                .expect("published placement source");
+            let reference = placement
+                .placement_reference
+                .expect("published placement reference");
+            let radians = placement.transform.rotation_deg.to_radians();
+            let (sin, cos) = radians.sin_cos();
+            let corners = [
+                (source.real_bounds.x, source.real_bounds.y),
+                (
+                    source.real_bounds.x + source.real_bounds.width,
+                    source.real_bounds.y,
+                ),
+                (
+                    source.real_bounds.x + source.real_bounds.width,
+                    source.real_bounds.y + source.real_bounds.height,
+                ),
+                (
+                    source.real_bounds.x,
+                    source.real_bounds.y + source.real_bounds.height,
+                ),
+            ];
+            corners
+                .into_iter()
+                .map(|(x, y)| {
+                    let x = if placement.transform.mirrored { -x } else { x } - reference.x;
+                    let y = y - reference.y;
+                    x * cos - y * sin + placement.transform.translate_x
+                })
+                .fold(f64::INFINITY, f64::min)
+        })
+        .collect::<Vec<_>>();
+    min_x_by_piece.sort_by(f64::total_cmp);
+    assert_eq!(min_x_by_piece[0], 2.0);
+    assert_eq!(min_x_by_piece[1] - min_x_by_piece[0], 50.0);
+}
+
+#[test]
+fn non_grid_line_geometry_is_not_published_with_under_clearance() {
+    let mut settings = compact_settings();
+    settings.optimizer.configured_rotation_enabled = false;
+    settings.optimizer.edge_alignment_enabled = false;
+    let mut options = default_options();
+    options.allow_global_rotation = false;
+    options.allow_global_mirror = Some(false);
+    options.history_mode = HistoryMode::Off;
+    let request = NestingRequest {
+        sheet: SheetSpec {
+            width: 12.0004,
+            height: 12.0004,
+            label: "non-grid-line-sheet".to_string(),
+        },
+        padding: 5.0,
+        pieces: vec![
+            rect_prepared_piece("non-grid-a", 1.0004, 1.0004),
+            rect_prepared_piece("non-grid-b", 1.0004, 1.0004),
+        ],
+        source_pieces: vec![
+            rect_source_piece("non-grid-a", 1.0004, 1.0004),
+            rect_source_piece("non-grid-b", 1.0004, 1.0004),
+        ],
+        options,
+    };
+
+    let mut compute_options = ComputeIrregularNestingOptions::default();
+    let mut geometry_cache = GeometryCacheStore::new();
+    let mut free_material_cache = FreeMaterialCache::new();
+    let result = compute_irregular_nesting(
+        &request,
+        &settings,
+        &mut compute_options,
+        &mut geometry_cache,
+        &mut free_material_cache,
+    );
+
+    assert!(matches!(
+        result,
+        Err(IrregularComputeErrorType::NoValidResult(_))
+    ));
 }
 
 #[test]
@@ -608,6 +897,7 @@ fn decode_request(case: &Value) -> (NestingRequest, IrregularNestingSettings) {
             allow_global_rotation: request_value["allowGlobalRotation"]
                 .as_bool()
                 .expect("allowGlobalRotation"),
+            sheet_edge_clearance_mm: None,
             allow_global_mirror: request_value["allowGlobalMirror"].as_bool(),
             history_mode,
             diagnostic_trace_mode: polygon_nesting_protocol::DiagnosticTraceMode::Full,
@@ -1409,6 +1699,7 @@ fn cancellation_scenario_request(vectors: &Value) -> (NestingRequest, IrregularN
         source_pieces,
         options: NestingOptions {
             allow_global_rotation: true,
+            sheet_edge_clearance_mm: None,
             allow_global_mirror: Some(true),
             history_mode: HistoryMode::Off,
             diagnostic_trace_mode: polygon_nesting_protocol::DiagnosticTraceMode::Full,

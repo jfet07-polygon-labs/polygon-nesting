@@ -828,8 +828,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .area_mm2()
         })
         .sum::<f64>();
-    let collision_expansion_mm =
-        settings.total_padding_mm / 2.0 + settings.clearance_safety_margin_mm + 0.002;
+    // keep the search envelope equal to the requested pair clearance. Curve
+    // flattening and grid safety are internal and must not add visible gap.
+    let collision_expansion_mm = settings.total_padding_mm / 2.0;
     let expanded_collision_area_mm2 = owned.iter().try_fold(0.0, |area, piece| {
         Ok::<_, Box<dyn std::error::Error>>(
             area + piece.polygon.offset(collision_expansion_mm)?.area_mm2(),

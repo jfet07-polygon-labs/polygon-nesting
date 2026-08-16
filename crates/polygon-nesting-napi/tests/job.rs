@@ -221,6 +221,36 @@ fn n_api_full_and_off_requests_have_equivalent_results() {
 }
 
 #[test]
+fn n_api_applies_an_explicit_sheet_edge_clearance_to_the_legacy_placement() {
+    let mut request: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/fixtures/mixed-61/300x300-compact/request.json"
+    ))
+    .expect("compact fixture JSON");
+    request["pieces"]
+        .as_array_mut()
+        .expect("pieces array")
+        .truncate(1);
+    request["sourcePieces"]
+        .as_array_mut()
+        .expect("source pieces array")
+        .truncate(1);
+    request["padding"] = serde_json::json!(5.0);
+    request["sheetEdgeClearanceMm"] = serde_json::json!(5.0);
+    request["allowGlobalRotation"] = serde_json::json!(false);
+    request["allowGlobalMirror"] = serde_json::json!(false);
+    request["pieces"][0]["allowRotation"] = serde_json::json!(false);
+    request["pieces"][0]["allowMirror"] = serde_json::json!(false);
+    request["options"]["historyMode"] = serde_json::json!("off");
+    request["options"]["diagnosticTraceMode"] = serde_json::json!("off");
+
+    let result = run_desktop_request(&request);
+    assert_eq!(result["ok"], true);
+    let placement = &result["result"]["portfolio"]["placements"][0];
+    assert_eq!(placement["transform"]["translateX"], serde_json::json!(2.5));
+    assert_eq!(placement["transform"]["translateY"], serde_json::json!(2.5));
+}
+
+#[test]
 fn shapes_17_result_is_independent_of_production_upload_order() {
     const PRODUCTION_ORDER: [&str; 17] = [
         "shapes-17-15",

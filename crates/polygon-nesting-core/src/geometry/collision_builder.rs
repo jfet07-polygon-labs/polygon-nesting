@@ -129,8 +129,6 @@ use crate::transforms::generator::IrregularGeometryInputError;
 /// (`clipper2OffsetAdapter.ts:72`); the grid quantization itself is owned by
 /// [`to_grid_mm`]/[`from_grid`].
 const CLIPPER2_OFFSET_SCALE: f64 = 1000.0;
-/// TS: `clipper2OffsetPolicy.ts:14` `conservativeOffsetAllowanceMm`.
-const CONSERVATIVE_OFFSET_ALLOWANCE_MM: f64 = 0.002;
 /// TS: `clipper2OffsetPolicy.ts:16` `miterLimit`.
 const CLIPPER2_MITER_LIMIT: f64 = 10.0;
 /// TS: `clipper2OffsetPolicy.ts:18` `futureRoundJoinArcToleranceMm`.
@@ -138,12 +136,11 @@ const FUTURE_ROUND_JOIN_ARC_TOLERANCE_MM: f64 = 0.01;
 /// TS: `clipper2OffsetPolicy.ts:21` `maxScaledCoordinate`.
 const MAX_SCALED_COORDINATE: f64 = 1_000_000_000.0;
 
-/// TS: `clipper2OffsetPolicy.ts:36-38` `conservativeOffsetMm`. Adds the fixed
-/// allowance required to preserve the requested real-valued collision
-/// envelope after nearest-grid coordinate and offset rounding (derivation:
-/// collision-prep.md §7, "The `0.002mm` conservative offset allowance").
+/// Quantizes the requested offset without changing the user-visible
+/// clearance. Numerical safety belongs to the grid predicate and publication
+/// validator; it must not be represented as extra material spacing.
 fn conservative_offset_mm(distance_mm: f64) -> f64 {
-    distance_mm + CONSERVATIVE_OFFSET_ALLOWANCE_MM
+    distance_mm
 }
 
 // ============================================================================
@@ -474,9 +471,9 @@ fn restore_input_winding(
 fn offset_convex_polygon(
     polygon: &IrregularPolygon,
     total_padding_mm: f64,
-    geometry_settings: &IrregularGeometrySettings,
+    _geometry_settings: &IrregularGeometrySettings,
 ) -> Result<IrregularPolygon, IrregularGeometryInputError> {
-    let distance_mm = total_padding_mm / 2.0 + geometry_settings.clearance_safety_margin_mm;
+    let distance_mm = total_padding_mm / 2.0;
     if !distance_mm.is_finite() {
         return Err(IrregularGeometryInputError {
             operation: "offsetConvexPolygon".to_string(),
@@ -868,7 +865,7 @@ mod tests {
             geometry.source_bounds,
             IrregularBounds::new(10.0, 20.0, 14.0, 23.0)
         );
-        assert_eq!(geometry.placement_reference, point(8.748, 18.748));
+        assert_eq!(geometry.placement_reference, point(9.0, 19.0));
         assert_eq!(
             geometry.sampled_points,
             vec![
@@ -881,19 +878,19 @@ mod tests {
         assert_eq!(
             geometry.convex_hull.points,
             vec![
-                point(1.252, 1.252),
-                point(5.252, 1.252),
-                point(5.252, 4.252),
-                point(1.252, 4.252),
+                point(1.0, 1.0),
+                point(5.0, 1.0),
+                point(5.0, 4.0),
+                point(1.0, 4.0),
             ]
         );
         assert_eq!(
             geometry.collision_polygon.points,
             vec![
                 point(0.0, 0.0),
-                point(6.504, 0.0),
-                point(6.504, 5.504),
-                point(0.0, 5.504),
+                point(6.0, 0.0),
+                point(6.0, 5.0),
+                point(0.0, 5.0),
             ]
         );
         assert_eq!(
@@ -906,10 +903,10 @@ mod tests {
         );
     }
 
-    /// TS test: `tests/unit/collisionGeometryBuilder.test.ts:159-178` ("uses
-    /// the geometry settings service when deriving the collision offset").
+    /// verifies that internal geometry safety settings do not inflate the
+    /// user-requested collision offset.
     #[test]
-    fn build_piece_derives_offset_from_the_supplied_geometry_settings() {
+    fn build_piece_does_not_add_geometry_safety_margin_to_requested_offset() {
         let settings = IrregularGeometrySettings {
             flattening_sag_tolerance_mm: 0.25,
             clearance_safety_margin_mm: 0.5,
@@ -928,9 +925,9 @@ mod tests {
             geometry.collision_polygon.points,
             vec![
                 point(0.0, 0.0),
-                point(7.004, 0.0),
-                point(7.004, 6.004),
-                point(0.0, 6.004),
+                point(6.0, 0.0),
+                point(6.0, 5.0),
+                point(0.0, 5.0),
             ]
         );
     }
@@ -1011,17 +1008,15 @@ mod tests {
             point(10.0, 10.0),
             point(0.0, 10.0),
         ]);
-        // `distance_mm = 1.0` grows by the fixed `0.002mm` conservative
-        // allowance inside `compute` (see [`conservative_offset_mm`]), so the
-        // realized offset is `1.002`, not `1.0`.
+        // the realized offset is exactly the requested one millimeter.
         let result = clipper2_offset_adapter_compute(&square, 1.0).expect("valid convex offset");
         assert_eq!(
             result.points,
             vec![
-                point(-1.002, -1.002),
-                point(11.002, -1.002),
-                point(11.002, 11.002),
-                point(-1.002, 11.002),
+                point(-1.0, -1.0),
+                point(11.0, -1.0),
+                point(11.0, 11.0),
+                point(-1.0, 11.0),
             ]
         );
     }
@@ -1053,16 +1048,14 @@ mod tests {
         let result =
             convex_polygon_offset_compute(&polygon, 1.0).expect("valid clockwise convex offset");
 
-        // CCW adapter output rotated back into CW order via `restoreInputWinding`;
-        // see the sibling `clipper2_offset_adapter_compute` test for why the
-        // realized offset is `1.002`, not `1.0`.
+        // CCW adapter output rotated back into CW order via `restoreInputWinding`.
         assert_eq!(
             result.points,
             vec![
-                point(-1.002, -1.002),
-                point(-1.002, 11.002),
-                point(11.002, 11.002),
-                point(11.002, -1.002),
+                point(-1.0, -1.0),
+                point(-1.0, 11.0),
+                point(11.0, 11.0),
+                point(11.0, -1.0),
             ]
         );
     }
@@ -1079,8 +1072,8 @@ mod tests {
     }
 
     #[test]
-    fn conservative_offset_mm_adds_the_fixed_allowance() {
-        assert_eq!(conservative_offset_mm(1.25), 1.252);
+    fn conservative_offset_mm_preserves_the_requested_distance() {
+        assert_eq!(conservative_offset_mm(1.25), 1.25);
     }
 
     #[test]

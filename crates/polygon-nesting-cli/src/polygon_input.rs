@@ -550,6 +550,7 @@ fn build_request(
         source_pieces,
         settings: EngineSettings {
             padding: options.padding as f64,
+            sheet_edge_clearance_mm: None,
             allow_global_rotation: true,
             allow_global_mirror: options.allow_mirror,
             geometry: GeometrySettings {

@@ -59,6 +59,7 @@ fn prepare_nesting_request(request: &EngineRequest) -> NestingRequest {
             .collect(),
         options: NestingOptions {
             allow_global_rotation: request.settings.allow_global_rotation,
+            sheet_edge_clearance_mm: request.settings.sheet_edge_clearance_mm,
             allow_global_mirror: Some(request.settings.allow_global_mirror),
             history_mode: history_mode_from_engine(request.history_mode),
             diagnostic_trace_mode: request.diagnostic_trace_mode,
@@ -3328,6 +3329,7 @@ mod tests {
             ],
             settings: protocol::EngineSettings {
                 padding: 2.0,
+                sheet_edge_clearance_mm: None,
                 allow_global_rotation: false,
                 allow_global_mirror: false,
                 geometry: protocol::GeometrySettings {

@@ -92,12 +92,14 @@ pub fn default_irregular_placement_policy_ids() -> Vec<IrregularPlacementPolicyI
 ///
 /// Cross-field invariant checked by the TS schema at decode time
 /// (`domain.ts:285-294`, not re-checked by this trusted carrier):
-/// `clearanceSafetyMarginMm >= flatteningSagToleranceMm`, so inward
-/// curve-flattening sag is always covered by the collision offset.
+/// `clearanceSafetyMarginMm >= flatteningSagToleranceMm`. Pure segment
+/// geometry may use zero for both values; curved geometry still requires a
+/// positive flattening tolerance so its source contour can be sampled safely.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IrregularGeometrySettings {
-    /// TS: `domain.ts:281` `PositiveFiniteMillimeters` (`> 0`).
+    /// TS: `domain.ts:281` `NonNegativeFiniteMillimeters` (`>= 0`). Curved
+    /// source segments require a positive value during source preparation.
     pub flattening_sag_tolerance_mm: f64,
     /// TS: `domain.ts:282` `NonNegativeFiniteMillimeters` (`>= 0`), and
     /// `>= flattening_sag_tolerance_mm` (see cross-field invariant above).

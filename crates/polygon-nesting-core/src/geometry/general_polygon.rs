@@ -10,6 +10,7 @@ use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::fmt::{Display, Formatter};
 use std::mem::size_of;
+use std::sync::Arc;
 
 use crate::canonical_grid::{from_grid, to_grid_mm};
 use crate::clipper::core::{
@@ -18,7 +19,7 @@ use crate::clipper::core::{
 };
 use crate::clipper::engine::{Clipper64, PolyTree64};
 use crate::clipper::offset::{ClipperOffset, EndType, JoinType};
-use crate::domain::{IrregularBounds, IrregularPoint};
+use crate::domain::{DxfGeometrySegment, IrregularBounds, IrregularPoint};
 use crate::geometry::predicates::orientation;
 
 pub const GENERAL_MAX_RING_VERTICES: usize = 2_048;
@@ -235,6 +236,7 @@ impl PolygonRegion {
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolygonSet {
     pub(crate) regions: Vec<PolygonRegion>,
+    pub(crate) analytic_segments: Option<Arc<Vec<DxfGeometrySegment>>>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -331,13 +333,22 @@ impl PolygonSet {
         }
         validate_regions(&regions)?;
         regions.sort_by(|first, second| compare_rings(&first.outer, &second.outer));
-        Ok(Self { regions })
+        Ok(Self {
+            regions,
+            analytic_segments: None,
+        })
     }
 
     pub(crate) fn empty() -> Self {
         Self {
             regions: Vec::new(),
+            analytic_segments: None,
         }
+    }
+
+    pub(crate) fn with_analytic_segments(mut self, segments: Vec<DxfGeometrySegment>) -> Self {
+        self.analytic_segments = Some(Arc::new(segments));
+        self
     }
 
     pub(crate) fn exact_doubled_area_grid2(&self) -> Result<i128, GeneralPolygonError> {
@@ -652,6 +663,7 @@ impl PolygonSet {
         for region in &self.regions {
             let witness = PolygonSet {
                 regions: vec![region.clone()],
+                analytic_segments: None,
             }
             .strict_interior_witness()?;
             if container.exact_rational_location(witness) != ExactRationalPointLocation::Inside {
@@ -1092,6 +1104,7 @@ fn collect_rectangular_free_space_regions(
                         outer: outer_ring,
                         holes: hole_rings,
                     }],
+                    analytic_segments: None,
                 },
             });
         }

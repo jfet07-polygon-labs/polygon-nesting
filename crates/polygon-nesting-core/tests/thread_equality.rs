@@ -305,6 +305,7 @@ fn engine_request_from_frozen(frozen: FrozenRequest) -> EngineRequest {
             .collect(),
         settings: EngineSettings {
             padding: frozen.padding,
+            sheet_edge_clearance_mm: None,
             allow_global_rotation: frozen.options.allow_global_rotation,
             allow_global_mirror: frozen.options.allow_global_mirror,
             geometry: geometry_settings_from_frozen(frozen.options.irregular_settings.geometry),

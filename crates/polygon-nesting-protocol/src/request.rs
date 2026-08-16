@@ -128,6 +128,21 @@ impl EngineRequest {
         }
 
         self.settings.validate()?;
+        if self.settings.geometry.flattening_sag_tolerance_mm == 0.0
+            && self.pieces.iter().any(|prepared| {
+                find_reachable_source_piece(
+                    &prepared.source_piece_id,
+                    &prepared.id,
+                    &self.source_pieces,
+                )
+                .is_some_and(|source| source.geometry.contains_analytic_curve())
+            })
+        {
+            return Err(ProtocolError::validation(
+                "settings.geometry.flatteningSagToleranceMm",
+                "must be positive when sourcePieces contains arcs, bulges, or ellipses",
+            ));
+        }
         Ok(())
     }
 
@@ -153,6 +168,41 @@ impl EngineRequest {
                 diagnostics: ExecutionDiagnostics::default(),
             })
     }
+}
+
+/// Resolves a prepared piece's imported geometry using the same precedence as
+/// the production coordinator: exact source id, exact prepared id, then the
+/// `-copy-N` base of each id. Keeping this lookup at the protocol boundary
+/// prevents zero-sag admission from disagreeing with the execution path.
+fn find_reachable_source_piece<'a>(
+    source_piece_id: &str,
+    prepared_piece_id: &str,
+    source_pieces: &'a [SourcePiece],
+) -> Option<&'a SourcePiece> {
+    if let Some(direct) = source_pieces
+        .iter()
+        .find(|source| source.id == source_piece_id || source.id == prepared_piece_id)
+    {
+        return Some(direct);
+    }
+
+    let source_base_id = strip_copy_suffix(source_piece_id);
+    let prepared_base_id = strip_copy_suffix(prepared_piece_id);
+    source_pieces
+        .iter()
+        .find(|source| source.id == source_base_id || source.id == prepared_base_id)
+}
+
+/// Mirrors the production `/-copy-\d+$/` normalization without changing ids
+/// that merely contain the text `-copy-` in their middle.
+fn strip_copy_suffix(id: &str) -> &str {
+    if let Some(dash_copy) = id.rfind("-copy-") {
+        let suffix = &id[dash_copy + "-copy-".len()..];
+        if !suffix.is_empty() && suffix.bytes().all(|byte| byte.is_ascii_digit()) {
+            return &id[..dash_copy];
+        }
+    }
+    id
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -352,6 +402,10 @@ impl SourceGeometry {
         }
         Ok(())
     }
+
+    fn contains_analytic_curve(&self) -> bool {
+        self.segments.iter().any(SourceGeometrySegment::is_curve)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -366,6 +420,15 @@ impl SourceGeometrySegment {
         match self {
             Self::Line(line) => line.validate(prefix),
             Self::Arc(arc) => arc.validate(prefix),
+        }
+    }
+
+    fn is_curve(&self) -> bool {
+        match self {
+            Self::Line(line) => {
+                line.bulge.is_some_and(|bulge| bulge != 0.0) || line.source_curve.is_some()
+            }
+            Self::Arc(_) => true,
         }
     }
 }
@@ -483,6 +546,10 @@ impl EllipseSource {
 #[serde(rename_all = "camelCase")]
 pub struct EngineSettings {
     pub padding: f64,
+    /// Optional material-to-sheet-edge clearance. Absent retains the legacy
+    /// half-padding default for backwards compatibility.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sheet_edge_clearance_mm: Option<f64>,
     pub allow_global_rotation: bool,
     #[serde(default = "default_true")]
     pub allow_global_mirror: bool,
@@ -493,6 +560,9 @@ pub struct EngineSettings {
 impl EngineSettings {
     fn validate(&self) -> Result<(), ProtocolError> {
         require_non_negative_safe_integer("settings.padding", self.padding)?;
+        if let Some(clearance) = self.sheet_edge_clearance_mm {
+            require_non_negative_finite("settings.sheetEdgeClearanceMm", clearance)?;
+        }
         self.geometry.validate()?;
         self.optimizer.validate()
     }
@@ -509,7 +579,7 @@ pub struct GeometrySettings {
 
 impl GeometrySettings {
     fn validate(&self) -> Result<(), ProtocolError> {
-        require_positive_finite(
+        require_non_negative_finite(
             "settings.geometry.flatteningSagToleranceMm",
             self.flattening_sag_tolerance_mm,
         )?;

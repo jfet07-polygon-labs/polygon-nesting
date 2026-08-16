@@ -89,6 +89,8 @@ struct DesktopRequestDto {
     job_id: String,
     sheet: SheetSpec,
     padding: f64,
+    #[serde(default)]
+    sheet_edge_clearance_mm: Option<f64>,
     pieces: Vec<PreparedPiece>,
     #[serde(default)]
     source_pieces: Vec<SourcePiece>,
@@ -212,6 +214,7 @@ impl DesktopRequestDto {
             source_pieces: self.source_pieces,
             settings: EngineSettings {
                 padding: self.padding,
+                sheet_edge_clearance_mm: self.sheet_edge_clearance_mm,
                 allow_global_rotation: self.options.allow_global_rotation,
                 allow_global_mirror: self.options.allow_global_mirror,
                 geometry: self.options.irregular_settings.geometry,
