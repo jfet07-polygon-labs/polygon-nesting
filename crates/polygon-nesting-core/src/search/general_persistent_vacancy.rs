@@ -64,11 +64,12 @@ const GROUP_DROP_PAIR_VISITS: usize =
 // before removal, one on the survivors) plus one initial sweep.
 const LNS_ROUNDS: usize = 24;
 const LNS_NEIGHBORHOOD_SCHEDULE: [usize; LNS_ROUNDS] = [
-    4, 6, 8, 10, 12, 16, 20, 24, 4, 6, 8, 10, 12, 16, 20, 24, 4, 6, 8, 10, 12, 16, 20, 24,
+    4, 6, 8, 10, 12, 16, 20, 24, 4, 6, 8, 10, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56,
 ];
 const LNS_SETTLE_SWEEPS: usize = 3 * LNS_ROUNDS + 1;
-const LNS_REINSERT_SLOTS: usize =
-    3 * (4 + 6 + 8 + 10 + 12 + 16 + 20 + 24) + LNS_ROUNDS * SEPARATION_RELOCATIONS_PER_ROUND;
+const LNS_REINSERT_SLOTS: usize = 2 * (4 + 6 + 8 + 10 + 12 + 16 + 20 + 24)
+    + (28 + 32 + 36 + 40 + 44 + 48 + 52 + 56)
+    + LNS_ROUNDS * SEPARATION_RELOCATIONS_PER_ROUND;
 // Mode 16 replaces greedy reinsertion with overlap-mediated separation:
 // removed pieces return at their old poses (overlaps permitted), then a
 // bounded deterministic descent moves one overlapping soft piece at a time
@@ -5389,34 +5390,34 @@ mod tests {
         assert_eq!(LNS_SETTLE_SWEEPS, 73);
         assert_eq!(LNS_SETTLE_SELECTED_PIECE_SLOTS, 73 * 61);
         assert_eq!(SEPARATION_RELOCATIONS_PER_ROUND, 12);
-        assert_eq!(LNS_REINSERT_SLOTS, 300 + 24 * 12);
+        assert_eq!(LNS_REINSERT_SLOTS, 200 + 336 + 24 * 12);
         assert_eq!(
             MAX_SELECTED_PIECE_SLOTS,
-            640 + 26 + 183 + 122 + 73 * 61 + 588
+            640 + 26 + 183 + 122 + 73 * 61 + 824
         );
         assert_eq!(
             MAX_ORIENTATION_STREAMS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 588) * 12
+            (640 + 26 + 183 + 122 + 73 * 61 + 824) * 12
         );
         assert_eq!(
             MAX_POSITION_SOURCE_ATTEMPTS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 588) * 12 * 529
+            (640 + 26 + 183 + 122 + 73 * 61 + 824) * 12 * 529
         );
         assert_eq!(
             MAX_RETURNED_POSITIONS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 588) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 824) * 12 * 32
         );
         assert_eq!(
             MAX_HAZARD_QUERIES,
-            (640 + 26 + 183 + 122 + 73 * 61 + 588) * 12 * 32
+            (640 + 26 + 183 + 122 + 73 * 61 + 824) * 12 * 32
         );
         assert_eq!(
             MAX_PROXY_PRESSURE_VISITS,
-            (640 + 26 + 183 + 122 + 73 * 61 + 588) * 12 * 32 * 61
+            (640 + 26 + 183 + 122 + 73 * 61 + 824) * 12 * 32 * 61
         );
         assert_eq!(
             MAX_EXACT_FINALIST_ROWS,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 588 * 192
+            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 824 * 192
         );
         assert_eq!(COMPACTION_ROUNDS, 3);
         assert_eq!(GROUP_DROP_CUTS, 61);
@@ -5425,20 +5426,20 @@ mod tests {
         assert_eq!(SEPARATION_MOVES_PER_ROUND, 200);
         assert_eq!(SEPARATION_PROBES_PER_MOVE, 96);
         assert_eq!(SEPARATION_PAIR_VISITS, 24 * 200 * 96 * 61);
-        assert_eq!(SEPARATION_COLLISION_BUILDS, 24 * (588 / 2 + 200 * 96));
+        assert_eq!(SEPARATION_COLLISION_BUILDS, 24 * (824 / 2 + 200 * 96));
         assert_eq!(
             MAX_EXPERIMENTAL_COLLISION_BUILDS,
             3 * 61
-                + (640 + 26 + 183 + 122 + 73 * 61 + 588) * 12
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 588 * 192)
+                + (640 + 26 + 183 + 122 + 73 * 61 + 824) * 12
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 824 * 192)
                 + 122
-                + 588
-                + 24 * (588 / 2 + 200 * 96)
+                + 824
+                + 24 * (824 / 2 + 200 * 96)
         );
         assert_eq!(
             MAX_EXPERIMENTAL_PAIR_VISITS,
             1_830
-                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 588 * 192) * 60
+                + ((640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 824 * 192) * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
         );
