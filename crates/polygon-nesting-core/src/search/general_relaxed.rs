@@ -12177,15 +12177,11 @@ mod tests {
         assert!(alternation.cycles_run >= 1);
         assert!(alternation.cycles_run <= ALTERNATION_MAX_CYCLES);
         assert_eq!(alternation.cycles.len(), alternation.cycles_run);
-        // With only two pieces, the descent arm (pinned to Mixed-61) always
-        // fails cleanly and never improves; the loop still terminates.
-        for cycle in &alternation.cycles {
-            assert!(!cycle.descent_improved);
-            assert!(cycle
-                .descent_failure_reason
-                .as_deref()
-                .is_some_and(|reason| reason.contains("Mixed-61")));
-        }
+        // The descent arm runs on any piece count; on this tiny synthetic
+        // fixture it must either improve or report a clean non-improvement,
+        // and the loop must still terminate at a joint fixpoint.
+        let last = alternation.cycles.last().unwrap();
+        assert!(!last.separator_improved && !last.descent_improved);
     }
 
     #[test]
