@@ -44,9 +44,57 @@ fn public_adapter_serializes_the_production_desktop_decoder_output() {
 }
 
 #[test]
+fn public_adapter_preserves_an_exact_requested_five_millimetre_clearance() {
+    let mut desktop: serde_json::Value =
+        serde_json::from_str(COMPACT_REQUEST).expect("fixture JSON");
+    desktop["padding"] = serde_json::json!(5.0);
+    desktop["sheetEdgeClearanceMm"] = serde_json::json!(5.0);
+
+    let prepared = decode_desktop_request(&desktop.to_string()).expect("request decodes");
+    assert_eq!(prepared.request.settings.padding, 5.0);
+    assert_eq!(prepared.request.settings.sheet_edge_clearance_mm, Some(5.0));
+
+    let adapted: serde_json::Value = serde_json::from_str(
+        &adapt_desktop_request_to_engine_json(&desktop.to_string()).expect("request adapts"),
+    )
+    .expect("adapter output is neutral engine request JSON");
+    assert_eq!(adapted["settings"]["padding"], 5.0);
+    assert_eq!(adapted["settings"]["sheetEdgeClearanceMm"], 5.0);
+}
+
+#[test]
 fn public_adapter_rejects_desktop_request_with_job_id_only_after_decoding() {
     let invalid = r#"{"version":1,"jobId":"only-a-job"}"#;
     assert!(adapt_desktop_request_to_engine_json(invalid).is_err());
+}
+
+#[test]
+fn public_adapter_rejects_zero_sag_for_reachable_arc_source_geometry() {
+    let mut desktop: serde_json::Value =
+        serde_json::from_str(COMPACT_REQUEST).expect("fixture JSON");
+    desktop["options"]["irregularSettings"]["geometry"]["flatteningSagToleranceMm"] =
+        serde_json::json!(0.0);
+    desktop["options"]["irregularSettings"]["geometry"]["clearanceSafetyMarginMm"] =
+        serde_json::json!(0.0);
+    desktop["sourcePieces"][0]["geometry"] = serde_json::json!({
+        "entityType": "ARC",
+        "closed": true,
+        "segments": [{
+            "kind": "arc",
+            "x1": 10.0,
+            "y1": 0.0,
+            "x2": 0.0,
+            "y2": 10.0,
+            "cx": 0.0,
+            "cy": 0.0,
+            "radius": 10.0,
+            "startAngle": 0.0,
+            "endAngle": 90.0
+        }]
+    });
+
+    let error = decode_error(&desktop.to_string());
+    assert!(error.message.contains("must be positive"));
 }
 
 #[test]

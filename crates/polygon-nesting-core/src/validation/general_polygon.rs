@@ -7,9 +7,11 @@
 
 use std::fmt::{Display, Formatter};
 
-use crate::domain::IrregularPoint;
+use crate::canonical_grid::{from_grid, to_grid_mm};
+use crate::domain::{DxfGeometrySegment, IrregularPoint};
 use crate::geometry::general_polygon::{PolygonRing, PolygonSet};
 use crate::geometry::predicates::orientation;
+use crate::transforms::flattening::{arc, ellipse};
 
 #[derive(Clone, Copy, Debug)]
 pub struct GeneralPlacement<'a> {
@@ -65,6 +67,14 @@ struct MaterialRegion {
 #[derive(Clone)]
 struct MaterialSet {
     regions: Vec<MaterialRegion>,
+    boundaries: Vec<BoundarySegment>,
+}
+
+#[derive(Clone)]
+struct BoundarySegment {
+    points: Vec<IrregularPoint>,
+    point_sag_bounds_mm: Vec<f64>,
+    interior_sag_bound_mm: f64,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -81,17 +91,19 @@ pub fn validate_publication(
     validate_settings(settings)?;
     let transformed = placements
         .iter()
-        .map(transform_placement)
+        .map(|placement| transform_placement(placement, settings.flattening_sag_tolerance_mm))
         .collect::<Result<Vec<_>, _>>()?;
+    // the requested edge clearance is a public geometric contract. Curve
+    // flattening tolerance is kept as an internal source-ingress diagnostic;
+    // it must not silently increase the distance requested by the caller.
     let sheet_clearance = settings
         .sheet_edge_clearance_mm
-        .unwrap_or(settings.total_padding_mm / 2.0)
-        + settings.flattening_sag_tolerance_mm;
+        .unwrap_or(settings.total_padding_mm / 2.0);
     for (placement, geometry) in placements.iter().zip(&transformed) {
         validate_sheet(placement.piece_id, geometry, settings, sheet_clearance)?;
     }
 
-    let pair_clearance = settings.total_padding_mm + 2.0 * settings.flattening_sag_tolerance_mm;
+    let pair_clearance = settings.total_padding_mm;
     for first_index in 0..transformed.len() {
         for second_index in (first_index + 1)..transformed.len() {
             let first = &transformed[first_index];
@@ -102,8 +114,7 @@ pub fn validate_publication(
                     placements[first_index].piece_id, placements[second_index].piece_id
                 )));
             }
-            let distance = minimum_boundary_distance(first, second);
-            if !distance.is_finite() || distance < pair_clearance {
+            if !boundaries_meet_clearance(first, second, pair_clearance) {
                 return Err(PublicationValidationError::new(format!(
                     "pieces {} and {} violate the required clearance",
                     placements[first_index].piece_id, placements[second_index].piece_id
@@ -112,6 +123,69 @@ pub fn validate_publication(
         }
     }
     Ok(())
+}
+
+fn boundaries_meet_clearance(first: &MaterialSet, second: &MaterialSet, clearance_mm: f64) -> bool {
+    if !clearance_mm.is_finite() || clearance_mm < 0.0 {
+        return false;
+    }
+    for first_segment in &first.boundaries {
+        for second_segment in &second.boundaries {
+            for (first_index, first_pair) in first_segment.points.windows(2).enumerate() {
+                for (second_index, second_pair) in second_segment.points.windows(2).enumerate() {
+                    if !segment_meets_clearance_with_sag(
+                        first_pair[0],
+                        first_pair[1],
+                        second_pair[0],
+                        second_pair[1],
+                        clearance_mm,
+                        first_segment.point_sag_bounds_mm[first_index],
+                        first_segment.point_sag_bounds_mm[first_index + 1],
+                        first_segment.interior_sag_bound_mm,
+                        second_segment.point_sag_bounds_mm[second_index],
+                        second_segment.point_sag_bounds_mm[second_index + 1],
+                        second_segment.interior_sag_bound_mm,
+                    ) {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    true
+}
+
+pub(crate) fn transformed_material_sets_meet_clearance(
+    first: GeneralPlacement<'_>,
+    second: GeneralPlacement<'_>,
+    clearance_mm: f64,
+    flattening_sag_tolerance_mm: f64,
+) -> Result<bool, PublicationValidationError> {
+    if !clearance_mm.is_finite() || clearance_mm < 0.0 {
+        return Ok(false);
+    }
+    let first = transform_placement(&first, flattening_sag_tolerance_mm)?;
+    let second = transform_placement(&second, flattening_sag_tolerance_mm)?;
+    if material_sets_overlap(&first, &second) {
+        return Ok(false);
+    }
+    Ok(boundaries_meet_clearance(&first, &second, clearance_mm))
+}
+
+pub(crate) fn transformed_material_set_fits_sheet(
+    placement: GeneralPlacement<'_>,
+    sheet_width_mm: f64,
+    sheet_height_mm: f64,
+    clearance_mm: f64,
+    flattening_sag_tolerance_mm: f64,
+) -> Result<bool, PublicationValidationError> {
+    let geometry = transform_placement(&placement, flattening_sag_tolerance_mm)?;
+    Ok(material_set_fits_sheet(
+        &geometry,
+        sheet_width_mm,
+        sheet_height_mm,
+        clearance_mm,
+    ))
 }
 
 fn validate_settings(
@@ -150,6 +224,7 @@ fn validate_settings(
 
 fn transform_placement(
     placement: &GeneralPlacement<'_>,
+    flattening_sag_tolerance_mm: f64,
 ) -> Result<MaterialSet, PublicationValidationError> {
     if placement.polygon.is_empty() {
         return Err(PublicationValidationError::new(format!(
@@ -196,32 +271,122 @@ fn transform_placement(
                 .collect()
         };
 
-    Ok(MaterialSet {
-        regions: placement
-            .polygon
-            .regions
+    let regions = placement
+        .polygon
+        .regions
+        .iter()
+        .map(|region| {
+            let mut transformed = MaterialRegion {
+                outer: transform_ring(&region.outer)?,
+                holes: region
+                    .holes
+                    .iter()
+                    .map(transform_ring)
+                    .collect::<Result<Vec<_>, _>>()?,
+                material_sample: None,
+            };
+            transformed.material_sample = interior_sample(&transformed);
+            if transformed.material_sample.is_none() {
+                return Err(PublicationValidationError::new(format!(
+                    "piece {} has no independently discoverable material interior",
+                    placement.piece_id
+                )));
+            }
+            Ok(transformed)
+        })
+        .collect::<Result<Vec<_>, PublicationValidationError>>()?;
+    let boundaries = if let Some(segments) = &placement.polygon.analytic_segments {
+        let sag = flattening_sag_tolerance_mm.max(1e-9);
+        segments
             .iter()
-            .map(|region| {
-                let mut transformed = MaterialRegion {
-                    outer: transform_ring(&region.outer)?,
-                    holes: region
-                        .holes
-                        .iter()
-                        .map(transform_ring)
-                        .collect::<Result<Vec<_>, _>>()?,
-                    material_sample: None,
+            .map(|segment| {
+                let (points, sag_bound_mm, endpoint_sag_bound_mm) = match segment {
+                    DxfGeometrySegment::Line(line) => {
+                        if let Some(source_curve) = &line.source_curve {
+                            (ellipse::sample_points(source_curve, sag), sag, 0.0)
+                        } else if line.bulge.is_some_and(|bulge| bulge != 0.0) {
+                            (arc::sample_bulge_points(line, sag), sag, 0.0)
+                        } else {
+                            (
+                                vec![
+                                    IrregularPoint::new(line.x1, line.y1),
+                                    IrregularPoint::new(line.x2, line.y2),
+                                ],
+                                0.0,
+                                0.0,
+                            )
+                        }
+                    }
+                    DxfGeometrySegment::Arc(arc_segment) => (
+                        arc::sample_points(*arc_segment, sag),
+                        arc::certified_sag_bound_mm(*arc_segment, sag),
+                        arc::endpoint_mismatch_mm(*arc_segment),
+                    ),
                 };
-                transformed.material_sample = interior_sample(&transformed);
-                if transformed.material_sample.is_none() {
+                if points.len() < 2 {
                     return Err(PublicationValidationError::new(format!(
-                        "piece {} has no independently discoverable material interior",
+                        "piece {} has an invalid analytic boundary segment",
                         placement.piece_id
                     )));
                 }
-                Ok(transformed)
+                let transformed = points
+                    .into_iter()
+                    .map(|point| transform_point(point, placement, sin, cos))
+                    .collect::<Result<Vec<_>, _>>()?;
+                let mut point_sag_bounds_mm = vec![sag_bound_mm; transformed.len()];
+                if let Some(first) = point_sag_bounds_mm.first_mut() {
+                    *first = endpoint_sag_bound_mm;
+                }
+                if let Some(last) = point_sag_bounds_mm.last_mut() {
+                    *last = endpoint_sag_bound_mm;
+                }
+                Ok(BoundarySegment {
+                    points: transformed,
+                    point_sag_bounds_mm,
+                    interior_sag_bound_mm: sag_bound_mm,
+                })
             })
-            .collect::<Result<Vec<_>, PublicationValidationError>>()?,
+            .collect::<Result<Vec<_>, _>>()?
+    } else {
+        regions
+            .iter()
+            .flat_map(|region| region_rings(region))
+            .map(|ring| BoundarySegment {
+                points: ring.to_vec(),
+                point_sag_bounds_mm: vec![0.0; ring.len()],
+                interior_sag_bound_mm: 0.0,
+            })
+            .collect()
+    };
+
+    Ok(MaterialSet {
+        regions,
+        boundaries,
     })
+}
+
+fn transform_point(
+    point: IrregularPoint,
+    placement: &GeneralPlacement<'_>,
+    sin: f64,
+    cos: f64,
+) -> Result<IrregularPoint, PublicationValidationError> {
+    let mirror_x = if placement.mirrored {
+        -point.x
+    } else {
+        point.x
+    };
+    let transformed = IrregularPoint::new(
+        mirror_x * cos - point.y * sin + placement.translate_x,
+        mirror_x * sin + point.y * cos + placement.translate_y,
+    );
+    if !transformed.x.is_finite() || !transformed.y.is_finite() {
+        return Err(PublicationValidationError::new(format!(
+            "piece {} transform produced a non-finite coordinate",
+            placement.piece_id
+        )));
+    }
+    Ok(transformed)
 }
 
 fn validate_sheet(
@@ -230,20 +395,73 @@ fn validate_sheet(
     settings: PublicationValidationSettings,
     clearance: f64,
 ) -> Result<(), PublicationValidationError> {
-    for region in &geometry.regions {
-        for point in &region.outer {
-            if point.x < clearance
-                || point.y < clearance
-                || point.x > settings.sheet_width_mm - clearance
-                || point.y > settings.sheet_height_mm - clearance
-            {
-                return Err(PublicationValidationError::new(format!(
-                    "piece {piece_id} crosses the sheet clearance boundary"
-                )));
-            }
-        }
+    if !outer_points_fit_sheet(
+        geometry,
+        settings.sheet_width_mm,
+        settings.sheet_height_mm,
+        clearance,
+    ) {
+        return Err(PublicationValidationError::new(format!(
+            "piece {piece_id} crosses the sheet clearance boundary"
+        )));
+    }
+    if !analytic_boundaries_fit_sheet(
+        geometry,
+        settings.sheet_width_mm,
+        settings.sheet_height_mm,
+        clearance,
+    ) {
+        return Err(PublicationValidationError::new(format!(
+            "piece {piece_id} crosses the analytic sheet clearance boundary"
+        )));
     }
     Ok(())
+}
+
+fn material_set_fits_sheet(
+    geometry: &MaterialSet,
+    sheet_width_mm: f64,
+    sheet_height_mm: f64,
+    clearance: f64,
+) -> bool {
+    outer_points_fit_sheet(geometry, sheet_width_mm, sheet_height_mm, clearance)
+        && analytic_boundaries_fit_sheet(geometry, sheet_width_mm, sheet_height_mm, clearance)
+}
+
+fn outer_points_fit_sheet(
+    geometry: &MaterialSet,
+    sheet_width_mm: f64,
+    sheet_height_mm: f64,
+    clearance: f64,
+) -> bool {
+    geometry.regions.iter().all(|region| {
+        region.outer.iter().all(|point| {
+            point.x >= clearance
+                && point.y >= clearance
+                && point.x <= sheet_width_mm - clearance
+                && point.y <= sheet_height_mm - clearance
+        })
+    })
+}
+
+fn analytic_boundaries_fit_sheet(
+    geometry: &MaterialSet,
+    sheet_width_mm: f64,
+    sheet_height_mm: f64,
+    clearance: f64,
+) -> bool {
+    geometry.boundaries.iter().all(|segment| {
+        segment
+            .points
+            .iter()
+            .zip(&segment.point_sag_bounds_mm)
+            .all(|(point, sag_bound_mm)| {
+                point.x - sag_bound_mm >= clearance
+                    && point.y - sag_bound_mm >= clearance
+                    && point.x + sag_bound_mm <= sheet_width_mm - clearance
+                    && point.y + sag_bound_mm <= sheet_height_mm - clearance
+            })
+    })
 }
 
 fn material_sets_overlap(first: &MaterialSet, second: &MaterialSet) -> bool {
@@ -412,46 +630,97 @@ fn rings_properly_cross(first: &[IrregularPoint], second: &[IrregularPoint]) -> 
     false
 }
 
-fn minimum_boundary_distance(first: &MaterialSet, second: &MaterialSet) -> f64 {
-    let mut minimum = f64::INFINITY;
-    for first_region in &first.regions {
-        for first_ring in region_rings(first_region) {
-            for second_region in &second.regions {
-                for second_ring in region_rings(second_region) {
-                    for first_index in 0..first_ring.len() {
-                        let first_start = first_ring[first_index];
-                        let first_end = first_ring[(first_index + 1) % first_ring.len()];
-                        for second_index in 0..second_ring.len() {
-                            let second_start = second_ring[second_index];
-                            let second_end = second_ring[(second_index + 1) % second_ring.len()];
-                            minimum = minimum.min(segment_distance(
-                                first_start,
-                                first_end,
-                                second_start,
-                                second_end,
-                            ));
-                        }
-                    }
-                }
-            }
-        }
-    }
-    minimum
-}
-
-fn segment_distance(
+#[cfg(test)]
+fn segment_meets_clearance(
     first_start: IrregularPoint,
     first_end: IrregularPoint,
     second_start: IrregularPoint,
     second_end: IrregularPoint,
-) -> f64 {
-    if segments_touch_or_cross(first_start, first_end, second_start, second_end) {
-        return 0.0;
+    clearance_mm: f64,
+) -> bool {
+    segment_meets_clearance_with_sag(
+        first_start,
+        first_end,
+        second_start,
+        second_end,
+        clearance_mm,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn segment_meets_clearance_with_sag(
+    first_start: IrregularPoint,
+    first_end: IrregularPoint,
+    second_start: IrregularPoint,
+    second_end: IrregularPoint,
+    clearance_mm: f64,
+    first_start_sag_mm: f64,
+    first_end_sag_mm: f64,
+    first_interior_sag_mm: f64,
+    second_start_sag_mm: f64,
+    second_end_sag_mm: f64,
+    second_interior_sag_mm: f64,
+) -> bool {
+    if [
+        clearance_mm,
+        first_start_sag_mm,
+        first_end_sag_mm,
+        first_interior_sag_mm,
+        second_start_sag_mm,
+        second_end_sag_mm,
+        second_interior_sag_mm,
+    ]
+    .iter()
+    .any(|value| !value.is_finite() || *value < 0.0)
+    {
+        return false;
     }
-    point_segment_distance(first_start, second_start, second_end)
-        .min(point_segment_distance(first_end, second_start, second_end))
-        .min(point_segment_distance(second_start, first_start, first_end))
-        .min(point_segment_distance(second_end, first_start, first_end))
+    if segments_touch_or_cross(first_start, first_end, second_start, second_end) {
+        return clearance_mm == 0.0;
+    }
+    point_segment_meets_clearance_with_sag(
+        first_start,
+        first_start_sag_mm,
+        second_start,
+        second_end,
+        second_start_sag_mm,
+        second_end_sag_mm,
+        second_interior_sag_mm,
+        clearance_mm,
+    ) && point_segment_meets_clearance_with_sag(
+        first_end,
+        first_end_sag_mm,
+        second_start,
+        second_end,
+        second_start_sag_mm,
+        second_end_sag_mm,
+        second_interior_sag_mm,
+        clearance_mm,
+    ) && point_segment_meets_clearance_with_sag(
+        second_start,
+        second_start_sag_mm,
+        first_start,
+        first_end,
+        first_start_sag_mm,
+        first_end_sag_mm,
+        first_interior_sag_mm,
+        clearance_mm,
+    ) && point_segment_meets_clearance_with_sag(
+        second_end,
+        second_end_sag_mm,
+        first_start,
+        first_end,
+        first_start_sag_mm,
+        first_end_sag_mm,
+        first_interior_sag_mm,
+        clearance_mm,
+    )
 }
 
 fn segments_touch_or_cross(
@@ -508,22 +777,275 @@ fn point_on_segment(point: IrregularPoint, start: IrregularPoint, end: Irregular
         && point.y <= start.y.max(end.y)
 }
 
-fn point_segment_distance(
+fn point_segment_meets_clearance_with_sag(
     point: IrregularPoint,
+    point_sag_mm: f64,
     start: IrregularPoint,
     end: IrregularPoint,
-) -> f64 {
+    start_sag_mm: f64,
+    end_sag_mm: f64,
+    interior_sag_mm: f64,
+    clearance_mm: f64,
+) -> bool {
     let dx = end.x - start.x;
     let dy = end.y - start.y;
-    let length_squared = dx * dx + dy * dy;
+    let length_squared = dx.mul_add(dx, dy * dy);
     if length_squared == 0.0 {
-        return (point.x - start.x).hypot(point.y - start.y);
+        return squared_distance_meets_clearance(
+            point,
+            start,
+            clearance_mm,
+            &[point_sag_mm, start_sag_mm],
+            exact_grid_point_distance(point, start, clearance_mm),
+        );
     }
     let projection =
         (((point.x - start.x) * dx + (point.y - start.y) * dy) / length_squared).clamp(0.0, 1.0);
+    if projection == 0.0 {
+        return squared_distance_meets_clearance(
+            point,
+            start,
+            clearance_mm,
+            &[point_sag_mm, start_sag_mm],
+            exact_grid_point_distance(point, start, clearance_mm),
+        );
+    }
+    if projection == 1.0 {
+        return squared_distance_meets_clearance(
+            point,
+            end,
+            clearance_mm,
+            &[point_sag_mm, end_sag_mm],
+            exact_grid_point_distance(point, end, clearance_mm),
+        );
+    }
     let closest_x = start.x + projection * dx;
     let closest_y = start.y + projection * dy;
-    (point.x - closest_x).hypot(point.y - closest_y)
+    let closest = IrregularPoint::new(closest_x, closest_y);
+    let exact = exact_grid_point_segment_distance(point, start, end, clearance_mm);
+    squared_distance_meets_clearance(
+        point,
+        closest,
+        clearance_mm,
+        &[point_sag_mm, interior_sag_mm],
+        exact,
+    )
+}
+
+fn squared_distance_meets_clearance(
+    first: IrregularPoint,
+    second: IrregularPoint,
+    clearance_mm: f64,
+    additional_clearance_terms: &[f64],
+    exact_grid_result: Option<bool>,
+) -> bool {
+    if additional_clearance_terms.iter().all(|term| *term == 0.0) {
+        if let Some(exact) = exact_grid_result {
+            return exact;
+        }
+    }
+    if !clearance_mm.is_finite()
+        || clearance_mm < 0.0
+        || additional_clearance_terms
+            .iter()
+            .any(|term| !term.is_finite() || *term < 0.0)
+    {
+        return false;
+    }
+    let mut clearance_terms = Vec::with_capacity(additional_clearance_terms.len() + 1);
+    clearance_terms.push(clearance_mm);
+    clearance_terms.extend_from_slice(additional_clearance_terms);
+    let Some(exact) = exact_squared_distance_meets_clearance(first, second, &clearance_terms)
+    else {
+        return false;
+    };
+    exact
+}
+
+fn exact_squared_distance_meets_clearance(
+    first: IrregularPoint,
+    second: IrregularPoint,
+    clearance_terms: &[f64],
+) -> Option<bool> {
+    let dx = exact_difference(first.x, second.x)?;
+    let dy = exact_difference(first.y, second.y)?;
+    let dx_squared = exact_product(&dx, &dx)?;
+    let dy_squared = exact_product(&dy, &dy)?;
+    let distance_squared = exact_sum_expansions(&[&dx_squared, &dy_squared])?;
+    let required = exact_sum(clearance_terms)?;
+    let required_squared = exact_product(&required, &required)?;
+    let difference = exact_difference_expansions(&distance_squared, &required_squared)?;
+    Some(expansion_sign(&difference) >= 0)
+}
+
+fn exact_difference(first: f64, second: f64) -> Option<Vec<f64>> {
+    if !first.is_finite() || !second.is_finite() {
+        return None;
+    }
+    let difference = first - second;
+    if !difference.is_finite() {
+        return None;
+    }
+    let second_virtual = first - difference;
+    let first_virtual = difference + second_virtual;
+    let second_roundoff = second_virtual - second;
+    let first_roundoff = first - first_virtual;
+    let error = first_roundoff + second_roundoff;
+    exact_sum(&[difference, error])
+}
+
+fn exact_product(first: &[f64], second: &[f64]) -> Option<Vec<f64>> {
+    let mut terms = Vec::with_capacity(first.len() * second.len() * 2);
+    for &left in first {
+        for &right in second {
+            let product = left * right;
+            if !product.is_finite() {
+                return None;
+            }
+            let error = left.mul_add(right, -product);
+            if !error.is_finite() {
+                return None;
+            }
+            terms.push(error);
+            terms.push(product);
+        }
+    }
+    exact_sum(&terms)
+}
+
+fn exact_difference_expansions(first: &[f64], second: &[f64]) -> Option<Vec<f64>> {
+    let mut terms = Vec::with_capacity(first.len() + second.len());
+    terms.extend_from_slice(first);
+    terms.extend(second.iter().map(|term| -*term));
+    exact_sum(&terms)
+}
+
+fn exact_sum_expansions(expansions: &[&[f64]]) -> Option<Vec<f64>> {
+    let terms = expansions
+        .iter()
+        .flat_map(|expansion| expansion.iter().copied())
+        .collect::<Vec<_>>();
+    exact_sum(&terms)
+}
+
+fn exact_sum(terms: &[f64]) -> Option<Vec<f64>> {
+    if terms.iter().any(|term| !term.is_finite()) {
+        return None;
+    }
+    let mut sorted = terms
+        .iter()
+        .copied()
+        .filter(|term| *term != 0.0)
+        .collect::<Vec<_>>();
+    sorted.sort_by(|first, second| first.abs().total_cmp(&second.abs()));
+
+    let mut expansion = Vec::new();
+    for term in sorted {
+        let mut next = Vec::with_capacity(expansion.len() + 1);
+        let mut accumulator = term;
+        for component in expansion {
+            let (sum, error) = two_sum(accumulator, component);
+            if error != 0.0 {
+                next.push(error);
+            }
+            accumulator = sum;
+        }
+        if accumulator != 0.0 {
+            next.push(accumulator);
+        }
+        expansion = next;
+    }
+    Some(expansion)
+}
+
+fn two_sum(first: f64, second: f64) -> (f64, f64) {
+    let sum = first + second;
+    let second_virtual = sum - first;
+    let first_virtual = sum - second_virtual;
+    let first_roundoff = first - first_virtual;
+    let second_roundoff = second - second_virtual;
+    (sum, first_roundoff + second_roundoff)
+}
+
+fn expansion_sign(expansion: &[f64]) -> i8 {
+    expansion
+        .iter()
+        .rev()
+        .find(|term| **term != 0.0)
+        .map_or(0, |term| if *term > 0.0 { 1 } else { -1 })
+}
+
+fn exact_grid_coordinate(value: f64) -> Option<i128> {
+    let grid = to_grid_mm(value)?;
+    if from_grid(grid) == value {
+        Some(grid as i128)
+    } else {
+        None
+    }
+}
+
+fn exact_grid_point_distance(
+    first: IrregularPoint,
+    second: IrregularPoint,
+    clearance_mm: f64,
+) -> Option<bool> {
+    let first_x = exact_grid_coordinate(first.x)?;
+    let first_y = exact_grid_coordinate(first.y)?;
+    let second_x = exact_grid_coordinate(second.x)?;
+    let second_y = exact_grid_coordinate(second.y)?;
+    let dx = first_x.checked_sub(second_x)?;
+    let dy = first_y.checked_sub(second_y)?;
+    let numerator = dx.checked_mul(dx)?.checked_add(dy.checked_mul(dy)?)?;
+    let required = exact_grid_coordinate(clearance_mm)?;
+    let required_squared = required.checked_mul(required)?;
+    Some(numerator >= required_squared)
+}
+
+fn exact_grid_point_segment_distance(
+    point: IrregularPoint,
+    start: IrregularPoint,
+    end: IrregularPoint,
+    clearance_mm: f64,
+) -> Option<bool> {
+    let px = exact_grid_coordinate(point.x)?;
+    let py = exact_grid_coordinate(point.y)?;
+    let ax = exact_grid_coordinate(start.x)?;
+    let ay = exact_grid_coordinate(start.y)?;
+    let bx = exact_grid_coordinate(end.x)?;
+    let by = exact_grid_coordinate(end.y)?;
+    let required = exact_grid_coordinate(clearance_mm)?;
+    let dx = bx.checked_sub(ax)?;
+    let dy = by.checked_sub(ay)?;
+    let point_dx = px.checked_sub(ax)?;
+    let point_dy = py.checked_sub(ay)?;
+    let length_squared = dx.checked_mul(dx)?.checked_add(dy.checked_mul(dy)?)?;
+    let dot = point_dx
+        .checked_mul(dx)?
+        .checked_add(point_dy.checked_mul(dy)?)?;
+    let distance_numerator = if dot <= 0 {
+        point_dx
+            .checked_mul(point_dx)?
+            .checked_add(point_dy.checked_mul(point_dy)?)?
+    } else if dot >= length_squared {
+        let end_dx = px.checked_sub(bx)?;
+        let end_dy = py.checked_sub(by)?;
+        end_dx
+            .checked_mul(end_dx)?
+            .checked_add(end_dy.checked_mul(end_dy)?)?
+    } else {
+        let cross = point_dx
+            .checked_mul(dy)?
+            .checked_sub(point_dy.checked_mul(dx)?)?;
+        cross.checked_mul(cross)?
+    };
+    let required_squared = required.checked_mul(required)?;
+    if dot > 0 && dot < length_squared {
+        required_squared
+            .checked_mul(length_squared)
+            .map(|threshold| distance_numerator >= threshold)
+    } else {
+        Some(distance_numerator >= required_squared)
+    }
 }
 
 fn region_rings(region: &MaterialRegion) -> impl Iterator<Item = &[IrregularPoint]> {
@@ -533,6 +1055,7 @@ fn region_rings(region: &MaterialRegion) -> impl Iterator<Item = &[IrregularPoin
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::{DxfArcSegment, DxfLineSegment};
 
     fn point(x: f64, y: f64) -> IrregularPoint {
         IrregularPoint::new(x, y)
@@ -631,6 +1154,209 @@ mod tests {
     }
 
     #[test]
+    fn requested_five_millimetres_is_exactly_accepted_for_non_grid_coordinates() {
+        let piece = square(2.0);
+        let placements = [
+            GeneralPlacement {
+                piece_id: "a",
+                polygon: &piece,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 5.0004,
+                translate_y: 5.0,
+            },
+            GeneralPlacement {
+                piece_id: "b",
+                polygon: &piece,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 12.0004,
+                translate_y: 5.0,
+            },
+        ];
+        let exact_settings = PublicationValidationSettings {
+            total_padding_mm: 5.0,
+            sheet_edge_clearance_mm: Some(5.0),
+            ..settings()
+        };
+
+        assert!(validate_publication(&placements, exact_settings).is_ok());
+    }
+
+    #[test]
+    fn candidate_sheet_check_includes_analytic_boundary_points() {
+        let piece =
+            square(2.0).with_analytic_segments(vec![DxfGeometrySegment::Line(DxfLineSegment {
+                x1: -1.0,
+                y1: 0.0,
+                x2: -1.0,
+                y2: 2.0,
+                bulge: None,
+                source_curve: None,
+            })]);
+        let placement = GeneralPlacement {
+            piece_id: "analytic-point",
+            polygon: &piece,
+            rotation_deg: 0.0,
+            mirrored: false,
+            translate_x: 1.0,
+            translate_y: 1.0,
+        };
+        let settings = PublicationValidationSettings {
+            sheet_width_mm: 10.0,
+            sheet_height_mm: 10.0,
+            sheet_edge_clearance_mm: Some(0.5),
+            ..settings()
+        };
+
+        assert!(!transformed_material_set_fits_sheet(
+            placement,
+            settings.sheet_width_mm,
+            settings.sheet_height_mm,
+            settings.sheet_edge_clearance_mm.unwrap(),
+            settings.flattening_sag_tolerance_mm,
+        )
+        .unwrap());
+        assert!(validate_publication(&[placement], settings).is_err());
+    }
+
+    #[test]
+    fn candidate_sheet_check_includes_analytic_sag_bounds() {
+        let piece =
+            square(2.0).with_analytic_segments(vec![DxfGeometrySegment::Arc(DxfArcSegment {
+                x1: 0.0,
+                y1: 2.0,
+                x2: 0.0,
+                y2: 0.0,
+                cx: 0.0,
+                cy: 1.0,
+                radius: 1.0,
+                start_angle: 90.0,
+                end_angle: 270.0,
+            })]);
+        let placement = GeneralPlacement {
+            piece_id: "analytic-sag",
+            polygon: &piece,
+            rotation_deg: 0.0,
+            mirrored: false,
+            translate_x: 1.0,
+            translate_y: 1.0,
+        };
+        let settings = PublicationValidationSettings {
+            sheet_width_mm: 10.0,
+            sheet_height_mm: 10.0,
+            sheet_edge_clearance_mm: Some(0.75),
+            flattening_sag_tolerance_mm: 0.5,
+            ..settings()
+        };
+
+        assert!(!transformed_material_set_fits_sheet(
+            placement,
+            settings.sheet_width_mm,
+            settings.sheet_height_mm,
+            settings.sheet_edge_clearance_mm.unwrap(),
+            settings.flattening_sag_tolerance_mm,
+        )
+        .unwrap());
+        assert!(validate_publication(&[placement], settings).is_err());
+    }
+
+    #[test]
+    fn exact_analytic_curve_endpoint_at_sheet_clearance_is_accepted() {
+        let start_angle = -90.0;
+        let end_angle = 90.0;
+        let start_radians = (start_angle * std::f64::consts::PI) / 180.0;
+        let end_radians = (end_angle * std::f64::consts::PI) / 180.0;
+        let piece =
+            square(2.0).with_analytic_segments(vec![DxfGeometrySegment::Arc(DxfArcSegment {
+                x1: libm::cos(start_radians),
+                y1: 1.0 + libm::sin(start_radians),
+                x2: libm::cos(end_radians),
+                y2: 1.0 + libm::sin(end_radians),
+                cx: 0.0,
+                cy: 1.0,
+                radius: 1.0,
+                start_angle,
+                end_angle,
+            })]);
+        let placement = GeneralPlacement {
+            piece_id: "analytic-endpoint",
+            polygon: &piece,
+            rotation_deg: 0.0,
+            mirrored: false,
+            translate_x: 1.0,
+            translate_y: 1.0,
+        };
+        let settings = PublicationValidationSettings {
+            sheet_width_mm: 10.0,
+            sheet_height_mm: 10.0,
+            sheet_edge_clearance_mm: Some(1.0),
+            flattening_sag_tolerance_mm: 0.5,
+            ..settings()
+        };
+
+        assert!(transformed_material_set_fits_sheet(
+            placement,
+            settings.sheet_width_mm,
+            settings.sheet_height_mm,
+            settings.sheet_edge_clearance_mm.unwrap(),
+            settings.flattening_sag_tolerance_mm,
+        )
+        .unwrap());
+        assert!(validate_publication(&[placement], settings).is_ok());
+    }
+
+    #[test]
+    fn pair_clearance_just_below_five_millimetres_is_rejected() {
+        let piece = square(2.0);
+        let placements = [
+            GeneralPlacement {
+                piece_id: "a",
+                polygon: &piece,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 5.0,
+                translate_y: 5.0,
+            },
+            GeneralPlacement {
+                piece_id: "b",
+                polygon: &piece,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 11.999,
+                translate_y: 5.0,
+            },
+        ];
+        let exact_settings = PublicationValidationSettings {
+            total_padding_mm: 5.0,
+            sheet_edge_clearance_mm: Some(5.0),
+            ..settings()
+        };
+
+        assert!(validate_publication(&placements, exact_settings).is_err());
+    }
+
+    #[test]
+    fn sheet_clearance_just_below_five_millimetres_is_rejected() {
+        let piece = square(2.0);
+        let placement = [GeneralPlacement {
+            piece_id: "edge",
+            polygon: &piece,
+            rotation_deg: 0.0,
+            mirrored: false,
+            translate_x: 4.999,
+            translate_y: 5.0,
+        }];
+        let exact_settings = PublicationValidationSettings {
+            total_padding_mm: 5.0,
+            sheet_edge_clearance_mm: Some(5.0),
+            ..settings()
+        };
+
+        assert!(validate_publication(&placement, exact_settings).is_err());
+    }
+
+    #[test]
     fn sheet_edge_clearance_is_independent_from_pair_clearance() {
         let piece = square(2.0);
         let placement = [GeneralPlacement {
@@ -656,6 +1382,38 @@ mod tests {
             }
         )
         .is_ok());
+    }
+
+    #[test]
+    fn exact_grid_three_four_five_clearance_accepts_equal_and_rejects_true_sub_five() {
+        let first_start = point(0.0, 0.0);
+        let first_end = first_start;
+        let second_start = point(3.0, 4.0);
+        let second_end = second_start;
+
+        assert!(segment_meets_clearance(
+            first_start,
+            first_end,
+            second_start,
+            second_end,
+            5.0
+        ));
+        let sub_five = point(3.0, f64::from_bits(4.0f64.to_bits() - 1));
+        assert!(!segment_meets_clearance(
+            first_start,
+            first_end,
+            sub_five,
+            sub_five,
+            5.0
+        ));
+    }
+
+    #[test]
+    fn non_grid_squared_distance_rounding_cannot_accept_a_true_under_clearance() {
+        let first = point(0.0, 0.0);
+        let second = point(4.940746071465481, 0.7674817634956626);
+
+        assert!(!segment_meets_clearance(first, first, second, second, 5.0));
     }
 
     #[test]

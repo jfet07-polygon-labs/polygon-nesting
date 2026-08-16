@@ -122,7 +122,7 @@
       "type": "object",
       "required": ["flatteningSagToleranceMm", "clearanceSafetyMarginMm", "geometryBackendId", "geometryBackendVersion"],
       "properties": {
-        "flatteningSagToleranceMm": { "$ref": "#/$defs/positive" },
+        "flatteningSagToleranceMm": { "$ref": "#/$defs/nonNegative" },
         "clearanceSafetyMarginMm": { "$ref": "#/$defs/nonNegative" },
         "geometryBackendId": { "$ref": "#/$defs/nonEmptyString" },
         "geometryBackendVersion": { "$ref": "#/$defs/nonEmptyString" }
@@ -173,6 +173,7 @@
           "required": ["padding", "allowGlobalRotation", "geometry", "optimizer"],
           "properties": {
             "padding": { "$ref": "#/$defs/safeInteger" },
+            "sheetEdgeClearanceMm": { "$ref": "#/$defs/nonNegative" },
             "allowGlobalRotation": { "type": "boolean" },
             "allowGlobalMirror": { "type": "boolean", "default": true },
             "geometry": { "$ref": "#/$defs/geometrySettings" },

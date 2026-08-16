@@ -73,6 +73,7 @@ use crate::domain::{
     SheetSpec,
 };
 use crate::geometry::collision_builder::{build_piece, BuildCollisionGeometryInput};
+use crate::geometry::general_source::polygon_set_from_imported_piece;
 use crate::nfp_ifp::{
     NfpIfpAbortReason, NfpIfpCheckpointPhase, NfpIfpControl, NfpIfpControlAbortError,
 };
@@ -81,6 +82,9 @@ use crate::search::layout_scorer::FreeMaterialCache;
 use crate::search::sort_pieces::{sort_pieces_for_nesting, PreparedPiece as SortedPreparedPiece};
 use crate::search::strict_decoder::IntrinsicStrictDecoderFailure;
 use crate::transforms::generator::{generate_transforms, GenerateTransformsInput};
+use crate::validation::general_polygon::{
+    validate_publication, GeneralPlacement, PublicationValidationSettings,
+};
 
 use super::materialize::{
     materialize_intrinsic_short_side_profile_result, materialize_shared_archive_result,
@@ -378,6 +382,7 @@ pub fn compute_irregular_nesting(
     geometry_cache: &mut GeometryCacheStore,
     free_material_cache: &mut FreeMaterialCache,
 ) -> Result<IrregularComputeResult, IrregularComputeErrorType> {
+    let (effective_request, sheet_inset_mm) = request_with_sheet_inset(request)?;
     let sorted_pieces = sort_pieces_for_nesting(&request.pieces);
 
     // PAR-GEOM-01 (parallelism-inventory.md §3.1): dispatch every prepared
@@ -393,7 +398,7 @@ pub fn compute_irregular_nesting(
     // `geometry_cache` and are not parallelized by this call).
     let per_piece_results: Vec<Result<PreparedPieceComputation, IrregularComputeErrorType>> =
         map_slice_with_job_pool(&sorted_pieces, |prepared| {
-            compute_prepared_piece(prepared, request, settings)
+            compute_prepared_piece(prepared, &effective_request, settings)
         });
 
     let mut prepared_pieces: Vec<Arc<IrregularPreparedPiece>> =
@@ -444,7 +449,9 @@ pub fn compute_irregular_nesting(
         sorted_pieces.iter().map(|piece| piece.id.clone()).collect();
 
     let input = CoordinateIntrinsicSharedArchiveInput {
-        request,
+        request: &effective_request,
+        original_sheet: &request.sheet,
+        sheet_inset_mm,
         settings,
         prepared_pieces: &prepared_pieces,
         diagnostics: &diagnostics,
@@ -473,6 +480,70 @@ pub fn compute_irregular_nesting(
         geometry_cache,
         free_material_cache,
     )
+}
+
+/// Builds the virtual sheet used by the legacy search while preserving the
+/// requested edge clearance. The signed delta is relative to the collision
+/// builder's historical half-padding inset: a positive delta shrinks the
+/// search sheet, while a negative delta enlarges it. Pair padding remains
+/// unchanged. Final publication adds the same delta back to every placement
+/// and proves the result against the original sheet.
+fn request_with_sheet_inset(
+    request: &NestingRequest,
+) -> Result<(NestingRequest, f64), IrregularComputeErrorType> {
+    let base_sheet_inset_mm = request.padding / 2.0;
+    let requested_sheet_edge_mm = request
+        .options
+        .sheet_edge_clearance_mm
+        .unwrap_or(base_sheet_inset_mm);
+    if !request.padding.is_finite()
+        || request.padding < 0.0
+        || !requested_sheet_edge_mm.is_finite()
+        || requested_sheet_edge_mm < 0.0
+    {
+        return Err(IrregularComputeErrorType::GeometryInput(
+            crate::validation::placement::IrregularGeometryInputError {
+                operation: "sheetInset".to_string(),
+                message: "padding and sheet edge clearance must be finite and non-negative"
+                    .to_string(),
+            },
+        ));
+    }
+    if !request.sheet.width.is_finite()
+        || !request.sheet.height.is_finite()
+        || request.sheet.width <= 0.0
+        || request.sheet.height <= 0.0
+    {
+        return Err(IrregularComputeErrorType::GeometryInput(
+            crate::validation::placement::IrregularGeometryInputError {
+                operation: "sheetInset".to_string(),
+                message: "sheet dimensions must be finite and positive".to_string(),
+            },
+        ));
+    }
+    // The virtual-sheet delta is signed. A requested edge below the
+    // historical half-padding margin enlarges the search sheet and the
+    // publication translation brings the result back by the same amount;
+    // pair padding remains unchanged in both directions.
+    let sheet_delta_mm = requested_sheet_edge_mm - base_sheet_inset_mm;
+    let effective_width = request.sheet.width - 2.0 * sheet_delta_mm;
+    let effective_height = request.sheet.height - 2.0 * sheet_delta_mm;
+    if !effective_width.is_finite()
+        || !effective_height.is_finite()
+        || effective_width <= 0.0
+        || effective_height <= 0.0
+    {
+        return Err(IrregularComputeErrorType::NoValidResult(
+            IrregularNoValidResultError {
+                operation: "sheetInset".to_string(),
+                message: "requested sheet edge clearance leaves no positive sheet area".to_string(),
+            },
+        ));
+    }
+    let mut effective_request = request.clone();
+    effective_request.sheet.width = effective_width;
+    effective_request.sheet.height = effective_height;
+    Ok((effective_request, sheet_delta_mm))
 }
 
 /// TS: `computeIrregularNesting.ts:1906-1920` `findSourcePiece`.
@@ -514,6 +585,8 @@ fn strip_copy_suffix(id: &str) -> &str {
 /// why no mutable resource is ever a field here.
 struct CoordinateIntrinsicSharedArchiveInput<'a> {
     request: &'a NestingRequest,
+    original_sheet: &'a SheetSpec,
+    sheet_inset_mm: f64,
     settings: &'a IrregularNestingSettings,
     prepared_pieces: &'a [Arc<IrregularPreparedPiece>],
     diagnostics: &'a [CollisionGeometryDiagnostic],
@@ -1214,7 +1287,7 @@ fn coordinate_intrinsic_shared_archive(
                     },
                     &winner,
                     input.settings,
-                    free_material_cache,
+                    &mut *free_material_cache,
                 )?;
                 archive_diagnostics.push(crate::result::materialize::shared_archive_diagnostic(
                     "completed",
@@ -1276,7 +1349,7 @@ fn coordinate_intrinsic_shared_archive(
         });
     }
 
-    Ok(assemble_result(
+    assemble_result(
         input,
         selected,
         archive_diagnostics,
@@ -1286,7 +1359,8 @@ fn coordinate_intrinsic_shared_archive(
         None,
         None,
         event_sink,
-    ))
+        free_material_cache,
+    )
 }
 
 fn owned_prepared_pieces(pieces: &[Arc<IrregularPreparedPiece>]) -> Vec<IrregularPreparedPiece> {
@@ -1642,10 +1716,134 @@ fn lane_coordinator_outcome_to_scheduler(
     }
 }
 
+/// Re-validates the material geometry immediately before the public result is
+/// assembled. The archive/NFP path deliberately operates on padded convex
+/// collision polygons; those are sufficient for search, but they cannot prove
+/// the requested distance for a curved source contour after the hidden
+/// flattening margin has been removed. This final check transforms the
+/// original source contour and independently measures analytic boundaries.
+fn validate_publication_clearance(
+    input: &CoordinateIntrinsicSharedArchiveInput<'_>,
+    selected: &MaterializedDecode,
+) -> Result<(), IrregularComputeErrorType> {
+    let mut polygons = Vec::with_capacity(selected.placed_collision_geometries.len());
+    let mut piece_ids = Vec::with_capacity(selected.placed_collision_geometries.len());
+    let mut placements = Vec::with_capacity(selected.placed_collision_geometries.len());
+
+    for placed in &selected.placed_collision_geometries {
+        let prepared = input
+            .prepared_pieces
+            .iter()
+            .find(|piece| {
+                piece.source.id == placed.placement.source_piece_id
+                    || piece.piece_id.as_ref().is_some_and(|piece_id| {
+                        placed.placement.piece_id.as_ref() == Some(piece_id)
+                    })
+            })
+            .ok_or_else(|| {
+                IrregularComputeErrorType::Compute(IrregularComputeError {
+                    prepared_piece_id: placed
+                        .placement
+                        .piece_id
+                        .clone()
+                        .unwrap_or_else(|| placed.placement.source_piece_id.clone()),
+                    source_piece_id: placed.placement.source_piece_id.clone(),
+                    message: "a published placement references an unknown prepared source piece"
+                        .to_string(),
+                })
+            })?;
+        let polygon = polygon_set_from_imported_piece(
+            &prepared.source,
+            input.settings.geometry.flattening_sag_tolerance_mm,
+        )
+        .map_err(|error| {
+            IrregularComputeErrorType::GeometryInput(
+                crate::validation::placement::IrregularGeometryInputError {
+                    operation: "validatePublication".to_string(),
+                    message: error.message().to_string(),
+                },
+            )
+        })?;
+
+        let reference = placed
+            .placement
+            .placement_reference
+            .unwrap_or(prepared.collision_geometry.placement_reference);
+        let (reference_x, reference_y) = transformed_source_point(
+            reference,
+            placed.placement.transform.rotation_deg,
+            placed.placement.transform.mirrored,
+        );
+        piece_ids.push(
+            placed
+                .placement
+                .piece_id
+                .as_ref()
+                .unwrap_or(&placed.placement.source_piece_id)
+                .as_str()
+                .to_string(),
+        );
+        polygons.push(polygon);
+        placements.push((placed.placement.transform, reference_x, reference_y));
+    }
+
+    let general_placements: Vec<GeneralPlacement<'_>> = polygons
+        .iter()
+        .zip(&piece_ids)
+        .zip(&placements)
+        .map(
+            |((polygon, piece_id), (transform, reference_x, reference_y))| GeneralPlacement {
+                piece_id,
+                polygon,
+                rotation_deg: transform.rotation_deg,
+                mirrored: transform.mirrored,
+                translate_x: transform.translate_x + input.sheet_inset_mm - reference_x,
+                translate_y: transform.translate_y + input.sheet_inset_mm - reference_y,
+            },
+        )
+        .collect();
+
+    let sheet_edge_clearance_mm = input
+        .request
+        .options
+        .sheet_edge_clearance_mm
+        .unwrap_or(input.request.padding / 2.0);
+    validate_publication(
+        &general_placements,
+        PublicationValidationSettings {
+            sheet_width_mm: input.original_sheet.width,
+            sheet_height_mm: input.original_sheet.height,
+            total_padding_mm: input.request.padding,
+            sheet_edge_clearance_mm: Some(sheet_edge_clearance_mm),
+            flattening_sag_tolerance_mm: input.settings.geometry.flattening_sag_tolerance_mm,
+        },
+    )
+    .map_err(|error| {
+        IrregularComputeErrorType::NoValidResult(IrregularNoValidResultError {
+            operation: "validatePublication".to_string(),
+            message: error.message().to_string(),
+        })
+    })
+}
+
+fn transformed_source_point(
+    point: crate::domain::IrregularPoint,
+    rotation_deg: f64,
+    mirrored: bool,
+) -> (f64, f64) {
+    let radians = rotation_deg.to_radians();
+    let (sin, cos) = radians.sin_cos();
+    let mirror_x = if mirrored { -point.x } else { point.x };
+    (
+        mirror_x * cos - point.y * sin,
+        mirror_x * sin + point.y * cos,
+    )
+}
+
 #[allow(clippy::too_many_arguments)]
 fn assemble_result(
     input: &CoordinateIntrinsicSharedArchiveInput<'_>,
-    selected: MaterializedDecode,
+    mut selected: MaterializedDecode,
     archive_diagnostics: Vec<CollisionGeometryDiagnostic>,
     capacity_trace: Option<IntrinsicCapacityTrace>,
     intrinsic_anytime_scheduler_trace: Option<IntrinsicAnytimeSchedulerTrace>,
@@ -1657,12 +1855,16 @@ fn assemble_result(
         crate::short_side::pair_fold::IntrinsicShortSidePairFoldTrace,
     >,
     event_sink: &mut dyn IrregularComputeEventSink,
-) -> IrregularComputeResult {
+    free_material_cache: &mut FreeMaterialCache,
+) -> Result<IrregularComputeResult, IrregularComputeErrorType> {
+    validate_publication_clearance(input, &selected)?;
+    translate_materialized_result(&mut selected, input.sheet_inset_mm);
+    rebase_materialized_score(input, &mut selected, free_material_cache)?;
     for snapshot in &selected.state_snapshots {
         event_sink.emit_state_snapshot(snapshot, input.settings.optimizer.beam_width);
     }
 
-    IrregularComputeResult {
+    Ok(IrregularComputeResult {
         placed_collision_geometries: selected.placed_collision_geometries,
         score: selected.score.clone(),
         unplaced_piece_ids: selected.unplaced_piece_ids,
@@ -1689,7 +1891,123 @@ fn assemble_result(
         focused_complete_reconstruction_trace,
         intrinsic_short_side_observer_trace,
         intrinsic_short_side_pair_fold_trace,
+    })
+}
+
+fn translate_materialized_result(selected: &mut MaterializedDecode, inset_mm: f64) {
+    if inset_mm == 0.0 {
+        return;
     }
+    for placed in &mut selected.placed_collision_geometries {
+        let mut shifted = (**placed).clone();
+        shifted.placement.transform.translate_x += inset_mm;
+        shifted.placement.transform.translate_y += inset_mm;
+        *placed = Arc::new(shifted);
+    }
+    for placement in &mut selected.portfolio.placements {
+        placement.transform.translate_x += inset_mm;
+        placement.transform.translate_y += inset_mm;
+    }
+}
+
+fn rebase_materialized_score(
+    input: &CoordinateIntrinsicSharedArchiveInput<'_>,
+    selected: &mut MaterializedDecode,
+    free_material_cache: &mut FreeMaterialCache,
+) -> Result<(), IrregularComputeErrorType> {
+    if input.sheet_inset_mm == 0.0 {
+        return Ok(());
+    }
+
+    for snapshot in &mut selected.state_snapshots {
+        let state = &snapshot.state;
+        let placed = state
+            .placed_collision_geometries
+            .iter()
+            .map(|piece| {
+                let mut shifted = (**piece).clone();
+                shifted.placement.transform.translate_x += input.sheet_inset_mm;
+                shifted.placement.transform.translate_y += input.sheet_inset_mm;
+                Arc::new(shifted)
+            })
+            .collect();
+        snapshot.state = crate::search::beam_state::IrregularBeamState::from_input(
+            crate::search::beam_state::IrregularBeamStateInput {
+                remaining_prepared_pieces: state.remaining_prepared_pieces.clone(),
+                placed_collision_geometries: placed,
+                unplaced_piece_ids: Some(state.unplaced_piece_ids.clone()),
+                unplaced_source_piece_ids: Some(state.unplaced_source_piece_ids.clone()),
+                placement_order: state.placement_order.clone(),
+                parent: None,
+                placed_collision_index: None,
+            },
+        );
+    }
+
+    let placed_collision_geometries = selected.placed_collision_geometries.clone();
+    let placement_order = placed_collision_geometries
+        .iter()
+        .map(|placed| {
+            placed
+                .placement
+                .piece_id
+                .clone()
+                .unwrap_or_else(|| placed.placement.source_piece_id.clone())
+        })
+        .collect();
+    let state = crate::search::beam_state::IrregularBeamState::from_input(
+        crate::search::beam_state::IrregularBeamStateInput {
+            remaining_prepared_pieces: Vec::new().into(),
+            placed_collision_geometries,
+            unplaced_piece_ids: Some(selected.unplaced_piece_ids.clone()),
+            unplaced_source_piece_ids: Some(selected.unplaced_piece_ids.clone()),
+            placement_order,
+            parent: None,
+            placed_collision_index: None,
+        },
+    );
+    let mut rescored = crate::search::layout_scorer::score_state(
+        &crate::search::layout_scorer::ScoreIrregularLayoutInput {
+            sheet: input.original_sheet.clone(),
+            state: crate::result::materialize::layout_scorer_view(&state),
+        },
+        input.settings,
+        free_material_cache,
+    )
+    .map_err(IrregularComputeErrorType::from)?;
+
+    // Shared-archive endpoints carry exact contact metrics that are not
+    // recomputed by the public score pass. Keep those endpoint metrics while
+    // taking all sheet-relative and free-material fields from the rebased
+    // original-sheet score.
+    let previous_shared_collision_boundary_length_mm =
+        selected.score.shared_collision_boundary_length_mm;
+    let previous_shared_collision_boundary_contact_units =
+        selected.score.shared_collision_boundary_contact_units;
+    let previous_shared_collision_boundary_contact_band =
+        selected.score.shared_collision_boundary_contact_band;
+    let previous_near_complete_structural_contact_count =
+        selected.score.near_complete_structural_contact_count;
+    let previous_dominant_near_complete_structural_contact_count = selected
+        .score
+        .dominant_near_complete_structural_contact_count;
+    let previous_occupied_hull_waste_ratio = selected.score.occupied_hull_waste_ratio;
+    rescored.shared_collision_boundary_length_mm = previous_shared_collision_boundary_length_mm;
+    rescored.shared_collision_boundary_contact_units =
+        previous_shared_collision_boundary_contact_units;
+    rescored.shared_collision_boundary_contact_band =
+        previous_shared_collision_boundary_contact_band;
+    rescored.near_complete_structural_contact_count =
+        previous_near_complete_structural_contact_count;
+    rescored.dominant_near_complete_structural_contact_count =
+        previous_dominant_near_complete_structural_contact_count;
+    rescored.occupied_hull_waste_ratio = previous_occupied_hull_waste_ratio;
+    selected.score = rescored;
+    selected.portfolio.score = crate::result::materialize::layout_score_summary(
+        &selected.score,
+        selected.portfolio.score.canonical_enclosed_cavity_count,
+    );
+    Ok(())
 }
 
 // ===========================================================================
@@ -1853,7 +2171,7 @@ fn run_short_side_profile_block(
                         canonical_geometry_hash: pair_fold_outcome.trace.canonical_geometry_hash.clone(),
                     },
                     input.settings,
-                    free_material_cache,
+                    &mut *free_material_cache,
                 )?;
                 // See this function's `capacity_trace` doc comment above:
                 // this new `selected` never carries a capacity trace.
@@ -1907,7 +2225,7 @@ fn run_short_side_profile_block(
         None
     };
 
-    Ok(assemble_result(
+    assemble_result(
         input,
         selected,
         archive_diagnostics,
@@ -1917,7 +2235,8 @@ fn run_short_side_profile_block(
         intrinsic_short_side_observer_trace,
         intrinsic_short_side_pair_fold_trace,
         event_sink,
-    ))
+        free_material_cache,
+    )
 }
 
 fn project_endpoint_for_observer(

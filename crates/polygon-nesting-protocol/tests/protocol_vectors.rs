@@ -44,6 +44,28 @@ fn source_piece_value() -> Value {
     })
 }
 
+fn curved_source_piece_value(id: &str) -> Value {
+    let mut source = source_piece_value();
+    source["id"] = json!(id);
+    source["geometry"] = json!({
+        "entityType": "ARC",
+        "closed": true,
+        "segments": [{
+            "kind": "arc",
+            "x1": 10.0,
+            "y1": 0.0,
+            "x2": 0.0,
+            "y2": 10.0,
+            "cx": 0.0,
+            "cy": 0.0,
+            "radius": 10.0,
+            "startAngle": 0.0,
+            "endAngle": 90.0
+        }]
+    });
+    source
+}
+
 fn short_side_orientation_value(rotation_deg: f64, canonical_geometry_hash: Option<&str>) -> Value {
     let mut value = json!({
         "rotationDeg": rotation_deg,
@@ -111,6 +133,91 @@ where
 #[test]
 fn frozen_request_vector_preserves_source_sheet_label() {
     assert_eq!(request_value()["sheet"]["label"], json!("2000x2700"));
+}
+
+#[test]
+fn zero_geometry_tolerances_are_valid_for_segment_only_requests() {
+    let mut request = request_value();
+    request["settings"]["geometry"]["flatteningSagToleranceMm"] = json!(0.0);
+    request["settings"]["geometry"]["clearanceSafetyMarginMm"] = json!(0.0);
+
+    decode_value(&request).expect("zero internal tolerances are valid for segment ingress");
+}
+
+#[test]
+fn requested_five_millimetre_padding_round_trips_without_inflation() {
+    let mut request = request_value();
+    request["settings"]["padding"] = json!(5.0);
+
+    let decoded = decode_value(&request).expect("request with five millimetres decodes");
+    assert_eq!(decoded.settings.padding, 5.0);
+    assert_eq!(
+        serde_json::to_value(decoded).unwrap()["settings"]["padding"],
+        5.0
+    );
+}
+
+#[test]
+fn explicit_five_millimetre_sheet_edge_clearance_round_trips_without_inflation() {
+    let mut request = request_value();
+    request["settings"]["padding"] = json!(5.0);
+    request["settings"]["sheetEdgeClearanceMm"] = json!(5.0);
+
+    let decoded = decode_value(&request).expect("explicit edge clearance decodes");
+    assert_eq!(decoded.settings.sheet_edge_clearance_mm, Some(5.0));
+    let encoded = serde_json::to_value(decoded).expect("request re-encodes");
+    assert_eq!(encoded["settings"]["sheetEdgeClearanceMm"], json!(5.0));
+}
+
+#[test]
+fn zero_sag_ignores_an_unused_curved_source() {
+    let mut request = request_value();
+    request["settings"]["geometry"]["flatteningSagToleranceMm"] = json!(0.0);
+    request["settings"]["geometry"]["clearanceSafetyMarginMm"] = json!(0.0);
+    request["pieces"][0]["sourcePieceId"] = json!("source-1");
+    let curved_source = curved_source_piece_value("unused-curve");
+    request["sourcePieces"] = json!([source_piece_value(), curved_source]);
+
+    decode_value(&request).expect("unused curved source does not require flattening");
+}
+
+#[test]
+fn zero_sag_resolves_curves_by_prepared_piece_id_fallback() {
+    let mut request = request_value();
+    request["settings"]["geometry"]["flatteningSagToleranceMm"] = json!(0.0);
+    request["settings"]["geometry"]["clearanceSafetyMarginMm"] = json!(0.0);
+    request["pieces"][0]["id"] = json!("prepared-curve-copy-1");
+    request["pieces"][0]["sourcePieceId"] = json!("missing-source");
+    request["sourcePieces"] = json!([curved_source_piece_value("prepared-curve-copy-1")]);
+
+    let error = decode_value(&request).expect_err("prepared-id fallback must remain reachable");
+    assert!(error.to_string().contains("must be positive"));
+}
+
+#[test]
+fn zero_sag_resolves_curves_by_stripped_copy_suffix() {
+    let mut request = request_value();
+    request["settings"]["geometry"]["flatteningSagToleranceMm"] = json!(0.0);
+    request["settings"]["geometry"]["clearanceSafetyMarginMm"] = json!(0.0);
+    request["pieces"][0]["id"] = json!("prepared-copy-1");
+    request["pieces"][0]["sourcePieceId"] = json!("source-copy-7");
+    request["sourcePieces"] = json!([curved_source_piece_value("source")]);
+
+    let error = decode_value(&request).expect_err("copy suffix must remain reachable");
+    assert!(error.to_string().contains("must be positive"));
+}
+
+#[test]
+fn zero_sag_is_rejected_when_referenced_source_geometry_contains_an_arc() {
+    let mut request = request_value();
+    request["settings"]["geometry"]["flatteningSagToleranceMm"] = json!(0.0);
+    request["settings"]["geometry"]["clearanceSafetyMarginMm"] = json!(0.0);
+    request["pieces"][0]["sourcePieceId"] = json!("curved-source");
+    let curved_source = curved_source_piece_value("curved-source");
+    request["sourcePieces"] = json!([curved_source]);
+
+    let error = decode_value(&request).expect_err("zero sag must not flatten an arc");
+    assert!(error.to_string().contains("must be positive"));
 }
 
 #[test]

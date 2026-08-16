@@ -850,9 +850,13 @@ fn run_macro_beam(
         let mut successors = Vec::new();
         for state in &beam {
             let mut rows = match *unit {
-                ConstructionUnit::Singleton(input_index) => {
-                    singleton_successors(state, &prepared[input_index], settings, &mut ledger)?
-                }
+                ConstructionUnit::Singleton(input_index) => singleton_successors(
+                    state,
+                    &prepared[input_index],
+                    prepared,
+                    settings,
+                    &mut ledger,
+                )?,
                 ConstructionUnit::Pair(pair_index) => match arm {
                     MacroArm::UnbondedControl => control_pair_successors(
                         state,
@@ -926,6 +930,7 @@ fn run_macro_beam(
 fn singleton_successors(
     state: &PartialLayout,
     piece: &PreparedGeneralPiece<'_>,
+    prepared: &[PreparedGeneralPiece<'_>],
     settings: GeneralFastSettings,
     ledger: &mut ConstructionLedger,
 ) -> Result<Vec<PartialLayout>, GeneralFastError> {
@@ -933,6 +938,7 @@ fn singleton_successors(
     let search = best_candidate_for_orientations(
         piece,
         &state.placed,
+        prepared,
         settings,
         &orientations,
         SINGLETON_EXACT_ROWS,
@@ -959,22 +965,24 @@ fn control_pair_successors(
 ) -> Result<Vec<PartialLayout>, GeneralFastError> {
     let first = &prepared[pair.first_input_index];
     let second = &prepared[pair.second_input_index];
-    control_pair_without_templates(state, first, second, settings, ledger)
+    control_pair_without_templates(state, first, second, prepared, settings, ledger)
 }
 
 fn control_pair_without_templates(
     state: &PartialLayout,
     first: &PreparedGeneralPiece<'_>,
     second: &PreparedGeneralPiece<'_>,
+    prepared: &[PreparedGeneralPiece<'_>],
     settings: GeneralFastSettings,
     ledger: &mut ConstructionLedger,
 ) -> Result<Vec<PartialLayout>, GeneralFastError> {
-    let first_rows = singleton_successors(state, first, settings, ledger)?;
+    let first_rows = singleton_successors(state, first, prepared, settings, ledger)?;
     let mut successors = Vec::new();
     for first_state in first_rows {
         successors.extend(singleton_successors(
             &first_state,
             second,
+            prepared,
             settings,
             ledger,
         )?);
@@ -993,6 +1001,7 @@ fn treatment_pair_successors(
         state,
         &prepared[pair.first_input_index],
         &prepared[pair.second_input_index],
+        prepared,
         settings,
         ledger,
     )?;
