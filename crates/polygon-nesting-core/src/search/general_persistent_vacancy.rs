@@ -297,7 +297,9 @@ impl TopologyArchive {
         if self.revivals_expanded >= MAX_ARCHIVE_REVIVALS {
             return RevivalDecision::Skipped("revivalBudgetExhausted");
         }
-        if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18) && population.len() < 2 {
+        if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19)
+            && population.len() < 2
+        {
             return RevivalDecision::Skipped("populationTooSmall");
         }
         let candidates: [(&'static str, Option<&(EliteSnapshot, VacancyState)>); 2] =
@@ -318,7 +320,7 @@ impl TopologyArchive {
                 last_reason = "inPopulation";
                 continue;
             }
-            if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18) {
+            if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19) {
                 let worst = population
                     .last()
                     .expect("a mode-8 revival population has at least two states");
@@ -546,9 +548,9 @@ fn run_population(
 ) -> Result<Option<(VacancyState, f64)>, String> {
     if !matches!(
         mode,
-        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18
+        1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19
     ) {
-        return Err("persistent vacancy mode must be between 1 and 18".to_owned());
+        return Err("persistent vacancy mode must be between 1 and 19".to_owned());
     }
     // Modes 1-8 are the frozen diagnostic screens: their 165.0 mm target and
     // b9335a72 parent identity are part of the pinned experiment contract.
@@ -557,7 +559,7 @@ fn run_population(
     // and skips only the frozen fingerprint/depth equality pins while keeping
     // full parent validation.
     let target_depth_mm = match (mode, target_override_mm) {
-        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18, Some(target)) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19, Some(target)) => {
             if !target.is_finite() || target <= 0.0 {
                 return Err(
                     "persistent vacancy target depth must be a positive finite value".to_owned(),
@@ -565,18 +567,18 @@ fn run_population(
             }
             target
         }
-        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18, None) => {
+        (9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19, None) => {
             return Err(
-                "persistent vacancy modes 9-18 require an explicit target depth".to_owned(),
+                "persistent vacancy modes 9-19 require an explicit target depth".to_owned(),
             );
         }
         (_, Some(_)) => {
-            return Err("persistent vacancy target depth overrides require modes 9-18".to_owned());
+            return Err("persistent vacancy target depth overrides require modes 9-19".to_owned());
         }
         (_, None) => TARGET_DEPTH_MM,
     };
-    if matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18) && !parent_is_pinned {
-        return Err("persistent vacancy modes 9-18 require a pinned parent fixture".to_owned());
+    if matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19) && !parent_is_pinned {
+        return Err("persistent vacancy modes 9-19 require a pinned parent fixture".to_owned());
     }
     diagnostics.target_depth_mm = target_depth_mm;
     if pieces.len() != 61 {
@@ -592,7 +594,7 @@ fn run_population(
     }
     let parent_fingerprint = coupled_fast_placement_fingerprint(&parent_fast);
     diagnostics.parent_fingerprint = Some(parent_fingerprint.clone());
-    if !matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18)
+    if !matches!(mode, 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19)
         && parent_fingerprint != EXPECTED_PARENT_FINGERPRINT
     {
         return Err(format!(
@@ -602,10 +604,10 @@ fn run_population(
     if mode != 13 {
         let parent_depth = coupled_independent_source_depth(pieces, &parent_fast, fast_settings)
             .map_err(|error| format!("persistent vacancy parent depth: {error}"))?;
-        if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18) {
+        if matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19) {
             diagnostics.parent_independent_depth_mm = Some(parent_depth);
         }
-        if !matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18)
+        if !matches!(mode, 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19)
             && grid_key(parent_depth) != grid_key(EXPECTED_PARENT_DEPTH_MM)
         {
             return Err(format!(
@@ -652,14 +654,15 @@ fn run_population(
     if mode == 18 {
         baseline = frontier_band_feasibility(pieces, fast_settings, baseline, diagnostics, work)?;
     }
-    if matches!(mode, 15 | 16 | 17) {
+    if matches!(mode, 15 | 16 | 17 | 19) {
         baseline = lift_resettle_reinsert(
             pieces,
             fast_settings,
             target_depth_mm,
             baseline,
-            matches!(mode, 16 | 17),
-            mode == 17,
+            matches!(mode, 16 | 17 | 19),
+            matches!(mode, 17 | 19),
+            mode == 19,
             diagnostics,
             work,
         )?;
@@ -670,7 +673,7 @@ fn run_population(
         baseline,
         diagnostics,
         work,
-        matches!(mode, 11 | 12 | 14 | 15 | 16 | 17 | 18),
+        matches!(mode, 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19),
     )?;
     diagnostics.initial_state_fingerprint = Some(state_fingerprint(&initial, pieces));
     diagnostics.initial_active_piece_ids = active_ids(&initial, pieces);
@@ -709,7 +712,7 @@ fn run_population(
     let mut best_ever_area: Option<EliteSnapshot> = None;
     let mut best_ever_count: Option<EliteSnapshot> = None;
     let mut retained_carryovers = BTreeSet::new();
-    let mut archive = matches!(mode, 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18)
+    let mut archive = matches!(mode, 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19)
         .then(TopologyArchive::new);
     for layer in 0..MAX_LAYERS {
         // Modes 7/8 plan a revival before the entering-population hash so the
@@ -745,7 +748,7 @@ fn run_population(
                     row.revival_expanded = true;
                     row.revival_kind = Some(kind.to_owned());
                     row.revived_state_fingerprint = Some(fingerprint);
-                    if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18) {
+                    if matches!(mode, 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19) {
                         let replaced_index = population.len() - 1;
                         row.replaced_state_fingerprint =
                             Some(state_fingerprint(&population[replaced_index], pieces));
@@ -1435,6 +1438,7 @@ fn lift_resettle_reinsert(
     baseline: RelaxedState,
     separation: bool,
     vacancy_transport: bool,
+    band_ruin: bool,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<RelaxedState, String> {
@@ -1620,12 +1624,25 @@ fn lift_resettle_reinsert(
                 .then_with(|| pieces[first.1].id.cmp(pieces[second.1].id))
         });
         let mut removed = vec![frontier_piece];
-        removed.extend(
-            by_distance
-                .into_iter()
-                .take(neighborhood.saturating_sub(1))
-                .map(|(_, index)| index),
-        );
+        if band_ruin {
+            // Band ruin: remove the K deepest pieces as a set, regardless of
+            // adjacency. The frontier band's tops sit atop different columns
+            // spread across the width; spatial-neighborhood ruins never
+            // remove them together, and the mode-18 certificate proves no
+            // single one of them has a sub-frontier pose alone.
+            removed = by_depth
+                .iter()
+                .take(neighborhood)
+                .map(|(_, index)| *index)
+                .collect();
+        } else {
+            removed.extend(
+                by_distance
+                    .into_iter()
+                    .take(neighborhood.saturating_sub(1))
+                    .map(|(_, index)| index),
+            );
+        }
         // Old poses are the reinsertion hints; removal itself cannot
         // invalidate the remaining exact-valid layout.
         let hints = RelaxedState {
@@ -3735,7 +3752,7 @@ fn retain_population(
 ) -> (Vec<VacancyState>, usize) {
     if matches!(
         mode,
-        1 | 3 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18
+        1 | 3 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19
     ) {
         let retained = sorted.into_iter().take(BEAM_WIDTH).collect::<Vec<_>>();
         let signatures = retained
@@ -4142,7 +4159,7 @@ fn selected_inactive_pieces(
     });
     if !matches!(
         mode,
-        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18
+        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19
     ) || inactive.len() <= 1
     {
         inactive.truncate(SELECTED_PIECES_PER_PARENT);
@@ -4175,7 +4192,7 @@ fn stable_inactive_order(state: &VacancyState, pieces: &[GeneralFastPiece<'_>]) 
 fn scheduler_family(mode: usize) -> &'static str {
     if matches!(
         mode,
-        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18
+        3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 14 | 15 | 16 | 17 | 18 | 19
     ) {
         "hardPlusStatelessRotation"
     } else {
@@ -6050,7 +6067,7 @@ mod tests {
         assert!(result
             .failure_reason
             .unwrap()
-            .contains("target depth overrides require modes 9-18"));
+            .contains("target depth overrides require modes 9-19"));
 
         // Non-finite and non-positive targets fail closed.
         relaxed.persistent_vacancy_target_depth_mm = Some(f64::NAN);
