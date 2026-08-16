@@ -1,0 +1,440 @@
+{
+ "schemaVersion": 1,
+ "description": "alternation des0 hop0",
+ "requestSha256": "1bb905674beeaaa0f2cd4e50488daf25ac06c9279a7cd77db00cd8b730ba0161",
+ "expectedPlacementFingerprint": "alternation",
+ "reportedDepthMm": 175.009,
+ "independentDepthMm": 175.009,
+ "provenance": {
+  "producedBy": "alternation des0 hop0"
+ },
+ "placements": [
+  {
+   "mirrored": false,
+   "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+   "rotationDeg": 187.5,
+   "translateLongAxis": 77.974,
+   "translateShortAxis": 580.94
+  },
+  {
+   "mirrored": true,
+   "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
+   "rotationDeg": 12.5,
+   "translateLongAxis": 89.573,
+   "translateShortAxis": 802.802
+  },
+  {
+   "mirrored": false,
+   "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+   "rotationDeg": 255.0,
+   "translateLongAxis": 183.629,
+   "translateShortAxis": 814.313
+  },
+  {
+   "mirrored": false,
+   "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 5.003,
+   "translateShortAxis": 748.616
+  },
+  {
+   "mirrored": false,
+   "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+   "rotationDeg": 357.5,
+   "translateLongAxis": 35.7,
+   "translateShortAxis": 1091.288
+  },
+  {
+   "mirrored": false,
+   "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+   "rotationDeg": 170.0,
+   "translateLongAxis": 153.62400000000002,
+   "translateShortAxis": 487.507
+  },
+  {
+   "mirrored": false,
+   "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-2",
+   "rotationDeg": 65.0,
+   "translateLongAxis": 54.437,
+   "translateShortAxis": 529.952
+  },
+  {
+   "mirrored": true,
+   "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+   "rotationDeg": 355.0,
+   "translateLongAxis": 115.398,
+   "translateShortAxis": 1599.727
+  },
+  {
+   "mirrored": true,
+   "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+   "rotationDeg": 292.5,
+   "translateLongAxis": -10.043999999999999,
+   "translateShortAxis": 1080.614
+  },
+  {
+   "mirrored": false,
+   "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
+   "rotationDeg": 175.0,
+   "translateLongAxis": 44.973,
+   "translateShortAxis": 941.179
+  },
+  {
+   "mirrored": true,
+   "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
+   "rotationDeg": 357.5,
+   "translateLongAxis": 64.934,
+   "translateShortAxis": 1317.872
+  },
+  {
+   "mirrored": false,
+   "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
+   "rotationDeg": 7.5,
+   "translateLongAxis": 117.83100000000002,
+   "translateShortAxis": 192.268
+  },
+  {
+   "mirrored": true,
+   "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+   "rotationDeg": 265.0,
+   "translateLongAxis": 70.63000000000001,
+   "translateShortAxis": 1457.517
+  },
+  {
+   "mirrored": false,
+   "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4",
+   "rotationDeg": 90.0,
+   "translateLongAxis": 63.031,
+   "translateShortAxis": 1399.461
+  },
+  {
+   "mirrored": false,
+   "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+   "rotationDeg": 335.0,
+   "translateLongAxis": 26.645999999999997,
+   "translateShortAxis": 1572.584
+  },
+  {
+   "mirrored": false,
+   "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 12.297999999999998,
+   "translateShortAxis": 1490.659
+  },
+  {
+   "mirrored": false,
+   "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+   "rotationDeg": 20.0,
+   "translateLongAxis": -11.645,
+   "translateShortAxis": 1406.466
+  },
+  {
+   "mirrored": true,
+   "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
+   "rotationDeg": 100.0,
+   "translateLongAxis": 112.286,
+   "translateShortAxis": 104.276
+  },
+  {
+   "mirrored": false,
+   "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+   "rotationDeg": 97.5,
+   "translateLongAxis": 119.95899999999999,
+   "translateShortAxis": 381.173
+  },
+  {
+   "mirrored": false,
+   "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-1",
+   "rotationDeg": 90.0,
+   "translateLongAxis": 5.003,
+   "translateShortAxis": 1386.22
+  },
+  {
+   "mirrored": false,
+   "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-2",
+   "rotationDeg": 90.0,
+   "translateLongAxis": 5.003,
+   "translateShortAxis": 1279.948
+  },
+  {
+   "mirrored": true,
+   "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-3",
+   "rotationDeg": 340.0,
+   "translateLongAxis": 44.120000000000005,
+   "translateShortAxis": 914.861
+  },
+  {
+   "mirrored": true,
+   "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+   "rotationDeg": 87.5,
+   "translateLongAxis": 160.978,
+   "translateShortAxis": 1764.172
+  },
+  {
+   "mirrored": false,
+   "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+   "rotationDeg": 177.5,
+   "translateLongAxis": 102.006,
+   "translateShortAxis": 1995.958
+  },
+  {
+   "mirrored": false,
+   "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2",
+   "rotationDeg": 17.5,
+   "translateLongAxis": -16.014,
+   "translateShortAxis": 1719.065
+  },
+  {
+   "mirrored": false,
+   "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 5.002999999999998,
+   "translateShortAxis": 1458.502
+  },
+  {
+   "mirrored": false,
+   "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-2",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 5.003,
+   "translateShortAxis": 1496.536
+  },
+  {
+   "mirrored": false,
+   "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 5.0029999999999974,
+   "translateShortAxis": 1557.539
+  },
+  {
+   "mirrored": false,
+   "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4",
+   "rotationDeg": 57.5,
+   "translateLongAxis": 11.928,
+   "translateShortAxis": 685.64
+  },
+  {
+   "mirrored": false,
+   "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5",
+   "rotationDeg": 212.5,
+   "translateLongAxis": 115.06999999999998,
+   "translateShortAxis": 1606.393
+  },
+  {
+   "mirrored": false,
+   "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 98.08,
+   "translateShortAxis": 1958.451
+  },
+  {
+   "mirrored": false,
+   "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 111.06099999999999,
+   "translateShortAxis": 1287.848
+  },
+  {
+   "mirrored": false,
+   "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 104.949,
+   "translateShortAxis": 1770.601
+  },
+  {
+   "mirrored": false,
+   "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 80.009,
+   "translateShortAxis": 1324.033
+  },
+  {
+   "mirrored": false,
+   "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-2",
+   "rotationDeg": 90.0,
+   "translateLongAxis": 133.10299999999998,
+   "translateShortAxis": 1988.794
+  },
+  {
+   "mirrored": false,
+   "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 5.003,
+   "translateShortAxis": 131.102
+  },
+  {
+   "mirrored": false,
+   "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-4",
+   "rotationDeg": 90.0,
+   "translateLongAxis": 102.78400000000002,
+   "translateShortAxis": 1145.818
+  },
+  {
+   "mirrored": false,
+   "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5",
+   "rotationDeg": 90.0,
+   "translateLongAxis": 137.79000000000002,
+   "translateShortAxis": 1157.393
+  },
+  {
+   "mirrored": false,
+   "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+   "rotationDeg": 267.5,
+   "translateLongAxis": 164.74399999999997,
+   "translateShortAxis": 947.984
+  },
+  {
+   "mirrored": false,
+   "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 5.002999999999999,
+   "translateShortAxis": 166.699
+  },
+  {
+   "mirrored": false,
+   "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 5.003,
+   "translateShortAxis": 325.95
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-1",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 94.49600000000001,
+   "translateShortAxis": 1395.808
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-2",
+   "rotationDeg": 242.5,
+   "translateLongAxis": 196.496,
+   "translateShortAxis": 1242.436
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+   "rotationDeg": 177.5,
+   "translateLongAxis": 164.738,
+   "translateShortAxis": 1909.661
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-4",
+   "rotationDeg": 300.0,
+   "translateLongAxis": 126.00899999999999,
+   "translateShortAxis": 567.822
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-5",
+   "rotationDeg": 180.0,
+   "translateLongAxis": 65.00299999999999,
+   "translateShortAxis": 666.982
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-6",
+   "rotationDeg": 302.5,
+   "translateLongAxis": 34.687999999999995,
+   "translateShortAxis": 673.015
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-7",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 106.18800000000002,
+   "translateShortAxis": 461.814
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-8",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 99.072,
+   "translateShortAxis": 543.685
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 103.27699999999999,
+   "translateShortAxis": 627.867
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+   "rotationDeg": 50.0,
+   "translateLongAxis": 27.119,
+   "translateShortAxis": 684.722
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-11",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 105.57599999999998,
+   "translateShortAxis": 1607.227
+  },
+  {
+   "mirrored": true,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-12",
+   "rotationDeg": 112.5,
+   "translateLongAxis": 115.179,
+   "translateShortAxis": 625.231
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-13",
+   "rotationDeg": 317.5,
+   "translateLongAxis": 116.69999999999999,
+   "translateShortAxis": -19.913
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+   "rotationDeg": 300.0,
+   "translateLongAxis": 130.63599999999997,
+   "translateShortAxis": 70.458
+  },
+  {
+   "mirrored": true,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-15",
+   "rotationDeg": 135.0,
+   "translateLongAxis": 97.21799999999999,
+   "translateShortAxis": 100.161
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-16",
+   "rotationDeg": 297.5,
+   "translateLongAxis": 39.456,
+   "translateShortAxis": -8.166
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
+   "rotationDeg": 0.0,
+   "translateLongAxis": 105.663,
+   "translateShortAxis": 49.544
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-18",
+   "rotationDeg": 67.5,
+   "translateLongAxis": 75.39500000000001,
+   "translateShortAxis": 1206.95
+  },
+  {
+   "mirrored": true,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-19",
+   "rotationDeg": 357.5,
+   "translateLongAxis": 105.61399999999999,
+   "translateShortAxis": 1865.669
+  },
+  {
+   "mirrored": false,
+   "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-20",
+   "rotationDeg": 120.0,
+   "translateLongAxis": 139.338,
+   "translateShortAxis": 212.038
+  }
+ ]
+}

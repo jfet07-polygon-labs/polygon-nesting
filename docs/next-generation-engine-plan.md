@@ -746,3 +746,16 @@ comparable for the first time. The deep 5.5-contract states are feasible
 under the exact contract with half a millimetre of recoverable slack per
 pair, and the alternation now runs from 168.275, 179.756, and the fresh
 175.112 native.
+
+First fixpoints on the exact contract. The imported-M4 line compresses
+from 168.275 to 165.231 mm - the absolute record on the honest scale, and
+the first number directly comparable to the external references
+(Sparrow 3-second calibration 154.449). The from-scratch lines hold at
+175.009 (legacy-native) and 179.009 (the old-contract constructed
+endpoint recompressed): a layout structured for 5.5 mm contacts does not
+re-pack by compression alone, so the from-scratch answer on the new
+contract must be built inside it - the constructor's first exact-contract
+band (200.6-208.8 over six salts) is descending now. The session owner's
+acceptance criterion is recorded: the from-scratch line must reach the
+168-family on its own for the program to count as complete; the imported
+line serves as the measuring stick, not the destination.
