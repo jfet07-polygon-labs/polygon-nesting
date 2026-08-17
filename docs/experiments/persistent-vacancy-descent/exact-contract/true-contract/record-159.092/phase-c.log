@@ -1,0 +1,184 @@
+start 159.09262371460318 from /var/lib/t3/tmp/combo/pinned-159.092624.json
+  r0 r0-m31-direct-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-direct-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-direct-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-direct-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-direct-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-direct-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 6 violating pai
+  r0 r0-m22-s0: exactValid=True raw=159.09233022733062 <-- improves 
+  r0 r0-m22-s1: exactValid=True raw=159.09233022733062 <-- improves 
+  r0 r0-m22-s2: exactValid=True raw=159.09233022733062 <-- improves 
+  r0 r0-m22-s3: exactValid=True raw=159.09233022733062 <-- improves 
+  r0 r0-m26-0.3-s0: exactValid=True raw=159.09262371460318 
+  r0 r0-m26-0.3-s1: exactValid=True raw=159.09262371460318 
+  r0 r0-m26-0.55-s0: exactValid=True raw=159.09262371460318 
+  r0 r0-m26-0.55-s1: exactValid=True raw=159.09262371460318 
+  r0 r0-m26-1.0-s0: exactValid=True raw=159.09262371460318 
+  r0 r0-m26-1.0-s1: exactValid=True raw=159.09262371460318 
+  r0 r0-m26-1.6-s0: exactValid=True raw=159.09262371460318 
+  r0 r0-m26-1.6-s1: exactValid=True raw=159.09262371460318 
+  r0 r0-m31-k2-d1.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d1.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d1.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d1.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d1.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d1.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d2.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d2.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d2.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d2.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d2.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d2.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d3.5-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d3.5-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d3.5-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d3.5-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d3.5-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k2-d3.5-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d1.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d1.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d1.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d1.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d1.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d1.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d2.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d2.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d2.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d2.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d2.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d2.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d3.5-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d3.5-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d3.5-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d3.5-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d3.5-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k3-d3.5-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d1.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d1.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d1.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d1.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d1.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d1.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d2.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d2.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d2.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d2.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d2.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d2.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d3.5-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d3.5-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d3.5-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d3.5-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d3.5-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k4-d3.5-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d1.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d1.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d1.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d1.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d1.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d1.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d2.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d2.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d2.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d2.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d2.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d2.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d3.5-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d3.5-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d3.5-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d3.5-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d3.5-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r0 r0-m31-k6-d3.5-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+round 0: incumbent -> 159.09233022733062 via mode22 seed 0
+  r1 r1-m31-direct-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-direct-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-direct-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-direct-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-direct-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-direct-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 6 violating pai
+  r1 r1-m22-s0: exactValid=True raw=159.09233022733062 
+  r1 r1-m22-s1: exactValid=True raw=159.09233022733062 
+  r1 r1-m22-s2: exactValid=True raw=159.09233022733062 
+  r1 r1-m22-s3: exactValid=True raw=159.09233022733062 
+  r1 r1-m26-0.3-s0: exactValid=True raw=159.09233022733062 
+  r1 r1-m26-0.3-s1: exactValid=True raw=159.09233022733062 
+  r1 r1-m26-0.55-s0: exactValid=True raw=159.09233022733062 
+  r1 r1-m26-0.55-s1: exactValid=True raw=159.09233022733062 
+  r1 r1-m26-1.0-s0: exactValid=True raw=159.09233022733062 
+  r1 r1-m26-1.0-s1: exactValid=True raw=159.09233022733062 
+  r1 r1-m26-1.6-s0: exactValid=True raw=159.09233022733062 
+  r1 r1-m26-1.6-s1: exactValid=True raw=159.09233022733062 
+  r1 r1-m31-k2-d1.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d1.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d1.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d1.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d1.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d1.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d2.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d2.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d2.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d2.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d2.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d2.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d3.5-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d3.5-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d3.5-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d3.5-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d3.5-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k2-d3.5-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d1.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d1.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d1.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d1.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d1.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d1.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d2.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d2.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d2.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d2.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d2.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d2.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d3.5-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d3.5-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d3.5-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d3.5-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d3.5-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k3-d3.5-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d1.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d1.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d1.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d1.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d1.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d1.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d2.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d2.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d2.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d2.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d2.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d2.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d3.5-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d3.5-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d3.5-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d3.5-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d3.5-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k4-d3.5-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d1.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d1.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d1.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d1.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d1.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d1.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d2.0-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d2.0-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d2.0-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d2.0-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d2.0-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d2.0-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d3.5-s0.1: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d3.5-s0.06: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d3.5-s0.04: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d3.5-s0.02: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d3.5-s0.01: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+  r1 r1-m31-k6-d3.5-s0.005: exactValid=False raw=None global legalization did not reach a feasible fixpoint: 1 violating pai
+FIXPOINT at 159.09233022733062 after 2 rounds
+BEST 159.09233022733062 at /var/lib/t3/tmp/combo/joint/pinned-159.092330.json

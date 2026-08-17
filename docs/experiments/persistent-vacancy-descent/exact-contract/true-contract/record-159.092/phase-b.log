@@ -1,0 +1,31 @@
+start 159.1499863776172
+  i001-direct-s0.15: target=158.999986 exactValid=False raw=159.1499863776172 global legalization did not reach a feasible fixpoint: 1 vio
+  i001-direct-s0.1: target=159.049986 exactValid=False raw=159.1499863776172 global legalization did not reach a feasible fixpoint: 1 vio
+  i001-direct-s0.06: target=159.089986 exactValid=False raw=159.1499863776172 global legalization did not reach a feasible fixpoint: 0 vio
+  i001-direct-s0.04: target=159.109986 exactValid=True raw=159.11099885062 
+  ACCEPT 159.110999 via direct step 0.04
+  i002-direct-s0.15: target=158.960999 exactValid=False raw=159.11099885062 global legalization did not reach a feasible fixpoint: 26 vi
+  i002-direct-s0.1: target=159.010999 exactValid=False raw=159.11099885062 global legalization did not reach a feasible fixpoint: 1 vio
+  i002-direct-s0.06: target=159.050999 exactValid=False raw=159.11099885062 global legalization did not reach a feasible fixpoint: 1 vio
+  i002-direct-s0.04: target=159.070999 exactValid=False raw=159.11099885062 global legalization did not reach a feasible fixpoint: 1 vio
+  i002-direct-s0.02: target=159.090999 exactValid=False raw=159.11099885062 global legalization did not reach a feasible fixpoint: 0 vio
+  i002-direct-s0.01: target=159.100999 exactValid=True raw=159.10199885062 
+  ACCEPT 159.101999 via direct step 0.01
+  i003-direct-s0.15: target=158.951999 exactValid=False raw=159.10199885062 global legalization did not reach a feasible fixpoint: 38 vi
+  i003-direct-s0.1: target=159.001999 exactValid=False raw=159.10199885062 global legalization did not reach a feasible fixpoint: 1 vio
+  i003-direct-s0.06: target=159.041999 exactValid=False raw=159.10199885062 global legalization did not reach a feasible fixpoint: 1 vio
+  i003-direct-s0.04: target=159.061999 exactValid=False raw=159.10199885062 global legalization did not reach a feasible fixpoint: 1 vio
+  i003-direct-s0.02: target=159.081999 exactValid=False raw=159.10199885062 global legalization did not reach a feasible fixpoint: 1 vio
+  i003-direct-s0.01: target=159.091999 exactValid=True raw=159.09262371460318 
+  ACCEPT 159.092624 via direct step 0.01
+  i004-direct-s0.15: target=158.942624 exactValid=False raw=159.09262371460318 global legalization did not reach a feasible fixpoint: 44 vi
+  i004-direct-s0.1: target=158.992624 exactValid=False raw=159.09262371460318 global legalization did not reach a feasible fixpoint: 1 vio
+  i004-direct-s0.06: target=159.032624 exactValid=False raw=159.09262371460318 global legalization did not reach a feasible fixpoint: 1 vio
+  i004-direct-s0.04: target=159.052624 exactValid=False raw=159.09262371460318 global legalization did not reach a feasible fixpoint: 1 vio
+  i004-direct-s0.02: target=159.072624 exactValid=False raw=159.09262371460318 global legalization did not reach a feasible fixpoint: 1 vio
+  i004-direct-s0.01: target=159.082624 exactValid=False raw=159.09262371460318 global legalization did not reach a feasible fixpoint: 1 vio
+  i004-direct-s0.005: target=159.087624 exactValid=False raw=159.09262371460318 global legalization did not reach a feasible fixpoint: 6 vio
+FIXPOINT at 159.09262371460318 after iteration 4: no direct step and no perturbation cell moved it
+
+BEST 159.09262371460318 at /var/lib/t3/tmp/combo/descent/state-003-159.092624.json
+steps: 3, elapsed 514s

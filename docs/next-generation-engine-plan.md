@@ -1323,3 +1323,54 @@ variable per constraint. When a sequence of local mechanisms all fail
 on the same class, the next question to ask is not "what is a smarter
 local move" but "what degree of freedom does every one of these
 mechanisms lack".
+
+## The perturb-solver combo: two matched controls, two opposite verdicts
+
+The last untried mechanical combination was the corrected nudge
+(pv36's convention: the k deepest pieces by true transformed max-Y,
+moved d mm into the packed body) feeding the mode-31 global solver
+instead of the local ladder, cascaded with modes 26 and 22 and run with
+a k=0 matched control on every arm. It was run on both live lines at
+once, and the two controls returned opposite verdicts - which is
+exactly the kind of causal fact this ledger exists to keep.
+
+On the record line the perturbation is a placebo. The unperturbed
+control publishes 159.101999 at the same target as every perturbed
+cell; over a widened 320-arm sweep (k up to 16, d from 0.05 to 6.0 mm)
+the nudge contributes exactly one 0.0077 mm cell. What actually moved
+the record from 159.150 to 159.092 was the *step size*: the standing
+"infeasibility certificate" on this certified fixpoint had been
+measured at bounds 0.24-1.04 mm below the parent, and at steps of
+0.01-0.04 mm the same program on the same fixpoint simply publishes,
+three rungs in a row, before mode 22 shaves the last 0.3 micron. A
+certificate is a statement about the question asked, not about the
+state - re-ask with a smaller step before believing it.
+
+On the from-scratch line the perturbation is load-bearing, and the
+diagnostics say why: the solver's cumulative displacement cap is 8x the
+largest deficit asked of it, so an unperturbed run at a 0.006 mm bound
+starves under `displacementCapped=true` with six pairs left, while a
+2 mm nudge manufactures 2 mm deficits and buys a 16 mm cap. The control
+publishes nothing at any bound; ten of twelve perturbed cells publish,
+and the line moves 164.096 -> 164.040 with the perturbed cell as the
+largest single link. The same arithmetic explains the aggressive-end
+deaths (k=6, d=3.5 hands the solver more residue than the bound leaves
+room for) and pins the productive band at k=2-3, d=1-2 mm, eps in
+{0.006, 0.012, 0.025} - narrow, non-monotone, and now measured.
+
+Two structural facts came out with the data. Perturb -> mode 26 and
+perturb -> mode 22 are impossible by construction - both validate the
+parent on entry and reject the first overlapping pair, so 48/48 such
+arms are non-experiments, not negatives; infeasible states enter only
+through modes 27/28/29/30/31, and the only runnable cascade shape is
+perturb -> 31 -> legal state -> {26, 22} -> re-perturb. And both lines
+are now hard fixpoints of everything built so far: 159.092 survives 90
+arms plus the 320-arm sweep, 164.040 survives 238 runs. The dominant
+residue on the record line is always the same - exactly one violating
+pair, depth bound fully satisfied, zero boundary pieces - and it is a
+pair that no translation can separate. Every mechanism in the current
+cascade moves pieces without changing their poses. The degree of
+freedom the whole stack lacks is now the pose itself: rotation, mirror,
+re-placement *inside* the global solve rather than before or after it.
+Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/{record-159.092,from-scratch-164.040}/.

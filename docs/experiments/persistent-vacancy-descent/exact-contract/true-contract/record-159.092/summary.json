@@ -1,0 +1,51 @@
+{
+ "milestone": "ABSOLUTE RECORD on the true 5.0/5.0 exact-clearance contract: 159.092 mm, from 159.150 - a 0.058 mm move whose causal content matters more than its size: the productive lever on this frontier is the mode-31 bound STEP SIZE, not perturbation",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "binarySha256": "6e91c381f7e5c78542f78ae553e80a84b02623f424567c9b4bc56f46249f6d5b",
+ "machine": "x86_64, Intel(R) Core(TM) Ultra 7 270K Plus, 16 cores, runs pinned at 8 threads",
+ "experiment": "PERTURB (binding-stack nudge at true depth, corrected pv36 convention) -> mode 31 bounded global legalization, cascaded against mode 26 ladders and mode 22 alternation, with a k=0 matched control on every arm",
+ "parent": {
+  "file": "../record-159.150/pinned-parent-159.150.json",
+  "rawSourceDepthMm": 159.1499863776172,
+  "independentDepthMm": 159.15
+ },
+ "trajectory": [
+  {"rawSourceDepthMm": 159.1499863776172, "via": "parent (record-159.150)"},
+  {"rawSourceDepthMm": 159.11099885062, "via": "mode 31 direct, bound 159.112986 (step 0.04)"},
+  {"rawSourceDepthMm": 159.10199885062, "via": "mode 31 direct, bound 159.103999 (step 0.01)"},
+  {"rawSourceDepthMm": 159.09262371460318, "via": "mode 31 direct, bound 159.094999 (step 0.01)"},
+  {"rawSourceDepthMm": 159.09233022733062, "via": "mode 22 alternation, target 159.892624, all four seeds agree"}
+ ],
+ "pinnedParent": {
+  "file": "pinned-parent-159.092.json",
+  "independentDepthMm": 159.092,
+  "rawSourceDepthMm": 159.09233022733062,
+  "placementFingerprint": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+  "fixtureSha256": "0d062e743751d4566cfbaa39aef63367eabb51eb1a3562e28f1f9f6ef893a6d4"
+ },
+ "matchedControlFinding": {
+  "claim": "perturbation is NOT what unlocks the descent on the record line",
+  "evidence": "the k=0 unperturbed control publishes 159.101999 at the same target as every perturbed cell; the perturbation contributed exactly one 0.0077 mm cell (k=6) and was a clean negative in a widened 320-arm sweep (k in {2,3,4,6,8,10,12,16} x d in {0.05..6.0} x 5 targets, zero publications)",
+  "realLever": "step size: the prior 'infeasibility certificate' on this certified fixpoint was measured at bounds 0.24-1.04 mm below the parent; at steps of 0.01-0.04 mm the same mode-31 program on the same fixpoint publishes. The certificate was a statement about the step, not about the state."
+ },
+ "fixpoint": {
+  "arms": 90,
+  "composition": "mode 31 direct x6 targets, mode 31 on 12 perturbation cells x6 targets (72), mode 26 ladders at drops {0.3,0.55,1.0,1.6} x seeds {0,1} (8), mode 22 seeds 0-3 (4)",
+  "verdict": "all 90 return the incumbent; plus the widened 320-arm perturbation sweep with zero publications"
+ },
+ "failureClasses": {
+  "oneViolatingPairResidue": "dominant: 267/320 widened arms and every mode-31 direct arm at the fixpoint end with exactly 1 violating pair, 0 boundary pieces; the depth bound is always fully satisfied - one pair that translation alone cannot separate refuses publication",
+  "residueBlowUp": "at targets >=0.15 mm below the incumbent the SQP regeneration diverges to 59-73 violating pairs (65/103 assigned-grid arms)",
+  "boundaryNeverBinds": "boundaryPiecesAfter is 0 even at the 155.0 targets where 23 pieces start out of bound",
+  "trustRegionNeverExhausted": "displacement cap 0.05-66.3 mm, max observed displacement 12.7 mm; displacementCapped fires only on the tiny-deficit control",
+  "structural": "modes 26 and 22 validate the parent on entry, so a perturbed (infeasible) state can only enter through modes 31/27/28/29/30; the only runnable cascade shape is perturb -> 31 -> {26, 22}",
+  "determinism": "mode 31 is seed-invariant (seeds 0/1/2 byte-identical fingerprints); mode 22 agrees across all four seeds"
+ },
+ "replayValidation": "agent: modes 27 and 30 on the pinned state both exactValid AND contractValid, 0 violating pairs, 0 boundary pieces; independent session replay: mode 22 (target 159.892624) and mode 27 both return raw 159.09233022733062, fingerprint fa01012af1d559ae..., exactValid AND contractValid",
+ "verdict": "the nudge->31->22 cascade is a genuine 0.058 mm record but is now a hard 90-arm fixpoint blocked by a single unseparable pair; reaching 155.000 needs a mechanism that can change poses (rotation/mirror/re-placement), which translation-only global legalization structurally cannot express",
+ "goal": {"thresholdMm": 155.0, "gapMm": 4.09233022733062},
+ "runs": 797,
+ "evidence": "drivers/ (lib.py + phase_a..d.py), phase-a.log (assigned grid), phase-b.log (cascade), phase-c.log (90-arm fixpoint), phase-d2.log (widened 320-arm sweep)"
+}

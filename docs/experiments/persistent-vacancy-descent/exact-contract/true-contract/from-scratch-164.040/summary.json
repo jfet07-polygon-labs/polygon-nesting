@@ -1,0 +1,45 @@
+{
+ "milestone": "FROM-SCRATCH LINE at 164.040 mm on the true 5.0/5.0 exact-clearance contract, from 164.096 - and the matched-control proof that perturb -> mode-31 is a real mechanism on this basin: the unperturbed incumbent publishes NOTHING at any bound while 10 of 12 perturbed states publish",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "binarySha256": "6e91c381f7e5c78542f78ae553e80a84b02623f424567c9b4bc56f46249f6d5b",
+ "machine": "x86_64, Intel(R) Core(TM) Ultra 7 270K Plus, 16 cores, runs pinned at 8 threads",
+ "experiment": "PERTURB (binding-stack nudge at true depth) -> mode 31 bounded global legalization at six bounds (incumbent - eps, eps in {0.006, 0.012, 0.025, 0.05, 0.1, 0.2}), matched control bound-for-bound, cascaded against mode 26 and mode 22",
+ "parent": {
+  "file": "../from-scratch-164.096/pinned-parent-164.096.json",
+  "rawSourceDepthMm": 164.09558495038524,
+  "independentDepthMm": 164.096
+ },
+ "trajectory": [
+  {"rawSourceDepthMm": 164.09558495038524, "via": "parent (from-scratch-164.096)"},
+  {"rawSourceDepthMm": 164.0875677990678, "via": "mode 31 unperturbed, bound 164.090 (lineage/gl-164.088.json)"},
+  {"rawSourceDepthMm": 164.08456779906777, "via": "mode 22 alternation, all 4 seeds (lineage/alt-164.085.json)"},
+  {"rawSourceDepthMm": 164.05258495038524, "via": "PERTURB k=2 d=2.0 -> mode 31, bound = incumbent - 0.025 (lineage/perturb-m31-164.053.json)"},
+  {"rawSourceDepthMm": 164.042568, "via": "mode 31 unperturbed, bound = incumbent - 0.006 (lineage/m31-164.043.json)"},
+  {"rawSourceDepthMm": 164.03956779906775, "via": "mode 22 alternation, seed 0"}
+ ],
+ "pinnedParent": {
+  "file": "pinned-parent-164.040.json",
+  "independentDepthMm": 164.040,
+  "rawSourceDepthMm": 164.03956779906775,
+  "placementFingerprint": "85a1df686c83d93c787a5d1634c7427998543d6c97db32966591976bd4f5cf4d",
+  "fixtureSha256": "24d057bb76f55d584e70365aa9cdf96620f271c1b84bee3517893442317ece5b"
+ },
+ "matchedControlFinding": {
+  "claim": "on THIS basin the perturbation IS load-bearing, and the mechanism is visible in the diagnostics",
+  "evidence": "the unperturbed incumbent publishes nothing at any of the six bounds; 10 of 12 perturbed states publish, best gain 0.032 mm; session-wide over 504 perturbed mode-31 runs, k=2 and k=3 with d<=2.0 lead at 14.3% publication rate, k=4/d=3.5 and k=6/d=3.5 are dead at 0/42, control 1/30",
+  "mechanism": "the cumulative displacement cap is 8x the largest deficit asked for; the control fails with displacementCapped=true and only 6 pairs left, while a d-mm nudge manufactures d-mm deficits and so buys an 8d-mm cap - which is also why large d fails: it hands the solver more residue than the bound leaves room for",
+  "productiveBand": "narrow and non-monotone: eps in {0.006, 0.012, 0.025} publish (27.8/27.8/16.7%); fourteen other eps values from 0.001 to 0.2 are 0/276 combined; eps >= 0.035 is 0/336 across every case - the layout has no 0.05 mm of redistributable slack anywhere on this frontier"
+ },
+ "structuralFinding": "PERTURB -> mode 26 and PERTURB -> mode 22 are impossible by construction, 48/48 refused with attempted=false: run_alternation_fixpoint (general_relaxed.rs:3540) and run_ladder_compression (:3832) call validate_and_measure_placements on the parent and reject the first overlapping pair. Only mode 31, whose contract IS 'make an infeasible layout feasible', accepts a nudged state. These arms are non-experiments, not negatives. The working cascade shape is PERTURB -> 31 -> pinned legal state -> {26, 22} -> re-perturb.",
+ "harnessFinding": "pv36's declared-depth convention (independentDepthMm = parent depth / (1 - contraction)) is now rejected by check_parent_fixture_depths, which re-derives the field from the fixture's own placements within 0.002 mm; every fixture here declares its truthfully measured depth",
+ "fixpoint": {
+  "verdict": "164.040 is a hard fixpoint: 4/4 mode-22 seeds and 12/12 mode-26 ladders (drops 0.3-4.0, seeds 0 and 1) return the incumbent; 10/10 control and 120/120 perturbed mode-31 bounds return the infeasibility certificate; a further 108-run supplementary probe (finer bounds, k in {1,8,12}) published nothing",
+  "determinism": "re-run of the adopted k2-d2.0 case under concurrent load reproduces fingerprint and raw depth bit for bit; mode 31 is seed-independent"
+ },
+ "replayValidation": "agent: modes 27 and 30 both exactValid AND contractValid, 0 violating pairs, 0 boundary pieces; independent session replay: mode 22 (target 164.84) and mode 27 both return raw 164.03956779906775, fingerprint 85a1df686c83d93c..., exactValid AND contractValid",
+ "scopeCaveat": "this moves the from-scratch line only; the absolute record is 159.092 on the imported line. 164.040 sits just below the 164.042 stepping stone from which the record line's 4.892 mm mode-26 move launched, but that move does not reproduce here: the wide ladder at the record line's own scale is 12/12 incumbent on this basin",
+ "runs": 713,
+ "evidence": "drivers/ (base.py, perturb.py, sweep.py, cascade.py, ratchet.py, wide.py, table.py, aggregate.py), ratchet-A.log, cascade.log, wide.log, lineage/ fixtures; the shared run helper conventions live in ../record-159.092/drivers/lib.py"
+}

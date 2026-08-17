@@ -1,0 +1,66 @@
+incumbent 159.09233022733062
+k= 2 d=0.05  perturbedDepth=159.083624 best=None
+k= 2 d=0.1   perturbedDepth=159.083624 best=None
+k= 2 d=0.2   perturbedDepth=159.083624 best=None
+k= 2 d=0.5   perturbedDepth=159.083624 best=None
+k= 2 d=1.0   perturbedDepth=159.083624 best=None
+k= 2 d=2.0   perturbedDepth=159.083624 best=None
+k= 2 d=3.5   perturbedDepth=159.083624 best=None
+k= 2 d=6.0   perturbedDepth=159.083624 best=None
+k= 3 d=0.05  perturbedDepth=159.077999 best=None
+k= 3 d=0.1   perturbedDepth=159.077999 best=None
+k= 3 d=0.2   perturbedDepth=159.077999 best=None
+k= 3 d=0.5   perturbedDepth=159.077999 best=None
+k= 3 d=1.0   perturbedDepth=159.077999 best=None
+k= 3 d=2.0   perturbedDepth=159.077999 best=None
+k= 3 d=3.5   perturbedDepth=159.077999 best=None
+k= 3 d=6.0   perturbedDepth=159.077999 best=None
+k= 4 d=0.05  perturbedDepth=159.065523 best=None
+k= 4 d=0.1   perturbedDepth=159.065523 best=None
+k= 4 d=0.2   perturbedDepth=159.065523 best=None
+k= 4 d=0.5   perturbedDepth=159.065523 best=None
+k= 4 d=1.0   perturbedDepth=159.065523 best=None
+k= 4 d=2.0   perturbedDepth=159.065523 best=None
+k= 4 d=3.5   perturbedDepth=159.065523 best=None
+k= 4 d=6.0   perturbedDepth=159.065523 best=None
+k= 6 d=0.05  perturbedDepth=159.042330 best=None
+k= 6 d=0.1   perturbedDepth=159.034999 best=None
+k= 6 d=0.2   perturbedDepth=159.034999 best=None
+k= 6 d=0.5   perturbedDepth=159.034999 best=None
+k= 6 d=1.0   perturbedDepth=159.034999 best=None
+k= 6 d=2.0   perturbedDepth=159.034999 best=None
+k= 6 d=3.5   perturbedDepth=159.034999 best=None
+k= 6 d=6.0   perturbedDepth=159.034999 best=None
+k= 8 d=0.05  perturbedDepth=159.042330 best=None
+k= 8 d=0.1   perturbedDepth=158.992330 best=None
+k= 8 d=0.2   perturbedDepth=158.977922 best=None
+k= 8 d=0.5   perturbedDepth=158.977922 best=None
+k= 8 d=1.0   perturbedDepth=158.977922 best=None
+k= 8 d=2.0   perturbedDepth=158.977922 best=None
+k= 8 d=3.5   perturbedDepth=158.977922 best=None
+k= 8 d=6.0   perturbedDepth=158.977922 best=None
+k=10 d=0.05  perturbedDepth=159.042330 best=None
+k=10 d=0.1   perturbedDepth=158.992330 best=None
+k=10 d=0.2   perturbedDepth=158.945078 best=None
+k=10 d=0.5   perturbedDepth=158.945078 best=None
+k=10 d=1.0   perturbedDepth=158.945078 best=None
+k=10 d=2.0   perturbedDepth=158.945078 best=None
+k=10 d=3.5   perturbedDepth=158.945078 best=None
+k=10 d=6.0   perturbedDepth=158.945078 best=None
+k=12 d=0.05  perturbedDepth=159.042330 best=None
+k=12 d=0.1   perturbedDepth=158.992330 best=None
+k=12 d=0.2   perturbedDepth=158.892330 best=None
+k=12 d=0.5   perturbedDepth=158.749803 best=None
+k=12 d=1.0   perturbedDepth=158.749803 best=None
+k=12 d=2.0   perturbedDepth=158.749803 best=None
+k=12 d=3.5   perturbedDepth=158.749803 best=None
+k=12 d=6.0   perturbedDepth=158.749803 best=None
+k=16 d=0.05  perturbedDepth=159.042330 best=None
+k=16 d=0.1   perturbedDepth=158.992330 best=None
+k=16 d=0.2   perturbedDepth=158.892330 best=None
+k=16 d=0.5   perturbedDepth=158.592330 best=None
+k=16 d=1.0   perturbedDepth=158.092330 best=None
+k=16 d=2.0   perturbedDepth=157.575278 best=None
+k=16 d=3.5   perturbedDepth=157.575278 best=None
+k=16 d=6.0   perturbedDepth=157.575278 best=None
+publications below incumbent: 0

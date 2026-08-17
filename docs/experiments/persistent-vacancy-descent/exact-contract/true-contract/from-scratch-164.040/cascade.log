@@ -1,0 +1,129 @@
+cascade start 164.084568 from /var/lib/t3/tmp/combo/pinned/alt-164.085.json
+round 0: cheap arm (mode 31) at 164.084568
+  ADOPT k2-d2.0-b0.025: raw 164.052585 (published 164.053) [26 wins, 92s]
+round 1: cheap arm (mode 31) at 164.052585
+  ADOPT ctl-b0.006: raw 164.042568 (published 164.043) [1 wins, 93s]
+round 2: cheap arm (mode 31) at 164.042568
+  cheap arm fixpoint at 164.042568; escalating
+    ctl-alt-s0: mode=22 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parentDepth=164.043 fp=85a1df686c83d93c 
+    ctl-alt-s1: mode=22 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parentDepth=164.043 fp=85a1df686c83d93c 
+    ctl-alt-s2: mode=22 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parentDepth=164.043 fp=85a1df686c83d93c 
+    ctl-alt-s3: mode=22 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parentDepth=164.043 fp=85a1df686c83d93c 
+    ctl-lad-0.3-s0: mode=26 exactValid=True contractValid=True depth=164.043 raw=164.0425677990678 parentDepth=164.043 fp=16ee8008b24560f9 
+    ctl-lad-0.3-s1: mode=26 exactValid=True contractValid=True depth=164.043 raw=164.0425677990678 parentDepth=164.043 fp=16ee8008b24560f9 
+    ctl-lad-1.0-s0: mode=26 exactValid=True contractValid=True depth=164.043 raw=164.0425677990678 parentDepth=164.043 fp=16ee8008b24560f9 
+    ctl-lad-1.0-s1: mode=26 exactValid=True contractValid=True depth=164.043 raw=164.0425677990678 parentDepth=164.043 fp=16ee8008b24560f9 
+    k2-d1.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.04148639465848 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k2-d1.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.04148639465848 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k2-d1.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.04148639465848 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k2-d1.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.04148639465848 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k2-d2.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.04148639465848 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k2-d2.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.04148639465848 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k2-d2.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.04148639465848 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k2-d2.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.04148639465848 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k2-d3.5-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.04148639465848 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k2-d3.5-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.04148639465848 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k2-d3.5-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.04148639465848 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k2-d3.5-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.04148639465848 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k3-d1.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.04058495038524 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k3-d1.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.04058495038524 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k3-d1.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.04058495038524 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k3-d1.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.04058495038524 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k3-d2.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.04058495038524 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k3-d2.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.04058495038524 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k3-d2.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.04058495038524 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k3-d2.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.04058495038524 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k3-d3.5-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.04058495038524 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k3-d3.5-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.04058495038524 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k3-d3.5-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.04058495038524 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k3-d3.5-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.04058495038524 parentDepth=None fp= persistent vacancy parent validation: pieces 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1 and d06db288-d2d6-4f4
+    k4-d1.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k4-d1.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k4-d1.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k4-d1.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k4-d2.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k4-d2.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k4-d2.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k4-d2.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k4-d3.5-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k4-d3.5-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k4-d3.5-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k4-d3.5-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k6-d1.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.03375706202007 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d1.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.03375706202007 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d1.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.03375706202007 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d1.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.03375706202007 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d2.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.03375706202007 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d2.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.03375706202007 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d2.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.03375706202007 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d2.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.03375706202007 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d3.5-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.03375706202007 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d3.5-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.03375706202007 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d3.5-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.03375706202007 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d3.5-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.03375706202007 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+  ADOPT ctl-alt-s0: raw 164.039568 (published 164.04) [4 wins, 254s]
+round 3: cheap arm (mode 31) at 164.039568
+  cheap arm fixpoint at 164.039568; escalating
+    ctl-alt-s0: mode=22 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parentDepth=164.04 fp=85a1df686c83d93c 
+    ctl-alt-s1: mode=22 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parentDepth=164.04 fp=85a1df686c83d93c 
+    ctl-alt-s2: mode=22 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parentDepth=164.04 fp=85a1df686c83d93c 
+    ctl-alt-s3: mode=22 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parentDepth=164.04 fp=85a1df686c83d93c 
+    ctl-lad-0.3-s0: mode=26 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parentDepth=164.04 fp=85a1df686c83d93c 
+    ctl-lad-0.3-s1: mode=26 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parentDepth=164.04 fp=85a1df686c83d93c 
+    ctl-lad-1.0-s0: mode=26 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parentDepth=164.04 fp=85a1df686c83d93c 
+    ctl-lad-1.0-s1: mode=26 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parentDepth=164.04 fp=85a1df686c83d93c 
+    k2-d1.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k2-d1.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k2-d1.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k2-d1.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k2-d2.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k2-d2.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k2-d2.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k2-d2.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k2-d3.5-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k2-d3.5-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k2-d3.5-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k2-d3.5-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.0359918302575 parentDepth=None fp= persistent vacancy parent validation: pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and d06db288-d2d6-4f4
+    k3-d1.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.03399266157405 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k3-d1.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.03399266157405 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k3-d1.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.03399266157405 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k3-d1.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.03399266157405 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k3-d2.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.03399266157405 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k3-d2.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.03399266157405 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k3-d2.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.03399266157405 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k3-d2.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.03399266157405 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k3-d3.5-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.03399266157405 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k3-d3.5-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.03399266157405 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k3-d3.5-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.03399266157405 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k3-d3.5-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.03399266157405 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k4-d1.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.033977742483 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k4-d1.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.033977742483 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k4-d1.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.033977742483 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k4-d1.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.033977742483 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k4-d2.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.033977742483 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k4-d2.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.033977742483 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k4-d2.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.033977742483 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k4-d2.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.033977742483 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k4-d3.5-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.033977742483 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k4-d3.5-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.033977742483 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k4-d3.5-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.033977742483 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k4-d3.5-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.033977742483 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d1.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.01975706202006 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d1.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.01975706202006 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d1.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.01975706202006 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d1.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.01975706202006 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d2.0-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.01975706202006 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d2.0-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.01975706202006 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d2.0-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.01975706202006 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d2.0-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.01975706202006 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d3.5-alt-s0: mode=22 exactValid=False contractValid=False depth=None raw=164.01975706202006 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d3.5-alt-s1: mode=22 exactValid=False contractValid=False depth=None raw=164.01975706202006 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d3.5-lad-0.3-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.01975706202006 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+    k6-d3.5-lad-1.0-s0: mode=26 exactValid=False contractValid=False depth=None raw=164.01975706202006 parentDepth=None fp= persistent vacancy parent validation: piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2 violates the canonical
+FIXPOINT at raw 164.039568 after 3 rounds
+TRAJECTORY
+  164.084568  parent  /var/lib/t3/tmp/combo/pinned/alt-164.085.json
+  164.052585  r0 m31 k2-d2.0-b0.025  /var/lib/t3/tmp/combo/cascade/round0/cand-k2-d2.0-b0.025-164.052585.json
+  164.042568  r1 m31 ctl-b0.006  /var/lib/t3/tmp/combo/cascade/round1/cand-ctl-b0.006-164.042568.json
+  164.039568  r2 heavy ctl-alt-s0  /var/lib/t3/tmp/combo/cascade/round2/cand-ctl-alt-s0-164.039568.json
+FINAL /var/lib/t3/tmp/combo/cascade/round2/cand-ctl-alt-s0-164.039568.json raw=164.03956779906775
