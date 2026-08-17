@@ -1,0 +1,68 @@
+{
+ "label": "fs-flat0.001",
+ "mode": 33,
+ "fixture": "/var/lib/t3/tmp/orient-fine/fs-fix/flat-fs-0.001.json",
+ "target": 164.08856779906782,
+ "seed": 0,
+ "outcomeIdentical": true,
+ "base": {
+  "ladder": "base",
+  "published": 164.0375677990678,
+  "exactValid": true,
+  "contractValid": true,
+  "raw": 164.0375677990678,
+  "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+  "failureReason": "",
+  "attribution": {
+   "variants": 116,
+   "candidates": 8468,
+   "rows": 4536,
+   "finalists": 4,
+   "acceptedVacated": 2,
+   "acceptedAnchorLocal": 0,
+   "acceptedOrientation": 1,
+   "acceptedStation": 0
+  },
+  "rungs": {
+   "mirror:0": 1
+  },
+  "acceptedAngles": [
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.368799,
+    0.0,
+    true
+   ]
+  ]
+ },
+ "new": {
+  "ladder": "new",
+  "published": 164.0375677990678,
+  "exactValid": true,
+  "contractValid": true,
+  "raw": 164.0375677990678,
+  "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+  "failureReason": "",
+  "attribution": {
+   "variants": 148,
+   "candidates": 10804,
+   "rows": 5423,
+   "finalists": 4,
+   "acceptedVacated": 2,
+   "acceptedAnchorLocal": 0,
+   "acceptedOrientation": 1,
+   "acceptedStation": 0
+  },
+  "rungs": {
+   "mirror:0": 1
+  },
+  "acceptedAngles": [
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.368799,
+    0.0,
+    true
+   ]
+  ]
+ }
+}

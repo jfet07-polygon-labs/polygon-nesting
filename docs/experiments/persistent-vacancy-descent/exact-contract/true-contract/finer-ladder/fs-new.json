@@ -1,0 +1,421 @@
+{
+ "label": "new",
+ "binary": "/var/lib/t3/tmp/orient-fine/bench-new",
+ "arms": 24,
+ "publications": 14,
+ "belowIncumbent": 1,
+ "rungs": {
+  "mirror:0": 1,
+  "rot:0.0032": 1
+ },
+ "incumbent": 164.03856779906783,
+ "bestPublished": 164.0375677990678,
+ "rows": [
+  {
+   "tag": "fs-flat0.0005-m33-p0.05",
+   "published": null,
+   "belowIncumbent": false,
+   "exactValid": false,
+   "contractValid": true,
+   "raw": 164.03806779906785,
+   "attribution": {},
+   "rungs": {}
+  },
+  {
+   "tag": "fs-flat0.0005-m33-p2.0",
+   "published": null,
+   "belowIncumbent": false,
+   "exactValid": false,
+   "contractValid": true,
+   "raw": 164.03806779906785,
+   "attribution": {},
+   "rungs": {}
+  },
+  {
+   "tag": "fs-flat0.001-m33-p0.05",
+   "published": 164.0375677990678,
+   "belowIncumbent": true,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.0375677990678,
+   "attribution": {
+    "variants": 148,
+    "candidates": 10804,
+    "rows": 5423,
+    "finalists": 4,
+    "acceptedVacated": 2,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0
+   },
+   "rungs": {
+    "mirror:0": 1
+   }
+  },
+  {
+   "tag": "fs-flat0.001-m33-p2.0",
+   "published": 164.0755677990678,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.0755677990678,
+   "attribution": {
+    "variants": 74,
+    "candidates": 5402,
+    "rows": 21,
+    "finalists": 3,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-flat0.002-m33-p0.05",
+   "published": 164.03856779906783,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.03856779906783,
+   "attribution": {
+    "variants": 148,
+    "candidates": 19647,
+    "rows": 4551,
+    "finalists": 2,
+    "acceptedVacated": 2,
+    "acceptedAnchorLocal": 2,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-flat0.002-m33-p2.0",
+   "published": 164.03856779906783,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.03856779906783,
+   "attribution": {
+    "variants": 148,
+    "candidates": 19647,
+    "rows": 4551,
+    "finalists": 2,
+    "acceptedVacated": 2,
+    "acceptedAnchorLocal": 2,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-flat0.003-m33-p0.05",
+   "published": 164.0395677990678,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.0395677990678,
+   "attribution": {
+    "variants": 555,
+    "candidates": 74037,
+    "rows": 13653,
+    "finalists": 0,
+    "acceptedVacated": 5,
+    "acceptedAnchorLocal": 7,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-flat0.003-m33-p2.0",
+   "published": 164.0395677990678,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.0395677990678,
+   "attribution": {
+    "variants": 555,
+    "candidates": 74037,
+    "rows": 13653,
+    "finalists": 0,
+    "acceptedVacated": 5,
+    "acceptedAnchorLocal": 7,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-flat0.004-m33-p0.05",
+   "published": 164.04056779906784,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.04056779906784,
+   "attribution": {
+    "variants": 555,
+    "candidates": 74037,
+    "rows": 13653,
+    "finalists": 0,
+    "acceptedVacated": 5,
+    "acceptedAnchorLocal": 7,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-flat0.004-m33-p2.0",
+   "published": 164.04056779906784,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.04056779906784,
+   "attribution": {
+    "variants": 555,
+    "candidates": 74037,
+    "rows": 13653,
+    "finalists": 0,
+    "acceptedVacated": 5,
+    "acceptedAnchorLocal": 7,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-flat0.01-m33-p0.05",
+   "published": null,
+   "belowIncumbent": false,
+   "exactValid": false,
+   "contractValid": false,
+   "raw": 164.02856779906784,
+   "attribution": {
+    "variants": 3182,
+    "candidates": 422984,
+    "rows": 218085,
+    "finalists": 10,
+    "acceptedVacated": 34,
+    "acceptedAnchorLocal": 8,
+    "acceptedOrientation": 1,
+    "acceptedStation": 21
+   },
+   "rungs": {
+    "rot:0.0032": 1
+   }
+  },
+  {
+   "tag": "fs-flat0.01-m33-p2.0",
+   "published": null,
+   "belowIncumbent": false,
+   "exactValid": false,
+   "contractValid": false,
+   "raw": 164.02856779906784,
+   "attribution": {
+    "variants": 3700,
+    "candidates": 490842,
+    "rows": 239833,
+    "finalists": 18,
+    "acceptedVacated": 37,
+    "acceptedAnchorLocal": 15,
+    "acceptedOrientation": 0,
+    "acceptedStation": 26
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-nudge-r1-d0.002-m33",
+   "published": 164.03856779906783,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.03856779906783,
+   "attribution": {
+    "variants": 111,
+    "candidates": 14393,
+    "rows": 4514,
+    "finalists": 2,
+    "acceptedVacated": 2,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-nudge-r1-d0.006-m33",
+   "published": 164.04056779906784,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.04056779906784,
+   "attribution": {
+    "variants": 222,
+    "candidates": 28786,
+    "rows": 4556,
+    "finalists": 6,
+    "acceptedVacated": 3,
+    "acceptedAnchorLocal": 2,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-nudge-r1-d0.012-m33",
+   "published": 164.0425677990678,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.0425677990678,
+   "attribution": {
+    "variants": 148,
+    "candidates": 19314,
+    "rows": 40,
+    "finalists": 5,
+    "acceptedVacated": 3,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-nudge-r1-d0.02-m33",
+   "published": 164.05256779906784,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.05256779906784,
+   "attribution": {
+    "variants": 148,
+    "candidates": 19314,
+    "rows": 38,
+    "finalists": 5,
+    "acceptedVacated": 3,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-nudge-r2-d0.002-m33",
+   "published": 164.03856779906783,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.03856779906783,
+   "attribution": {
+    "variants": 74,
+    "candidates": 9361,
+    "rows": 0,
+    "finalists": 0,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-nudge-r2-d0.006-m33",
+   "published": 164.03856779906783,
+   "belowIncumbent": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 164.03856779906783,
+   "attribution": {
+    "variants": 74,
+    "candidates": 9361,
+    "rows": 0,
+    "finalists": 0,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-nudge-r2-d0.012-m33",
+   "published": null,
+   "belowIncumbent": false,
+   "exactValid": false,
+   "contractValid": true,
+   "raw": 164.03856779906783,
+   "attribution": {
+    "variants": 7770,
+    "candidates": 1012986,
+    "rows": 370666,
+    "finalists": 0,
+    "acceptedVacated": 39,
+    "acceptedAnchorLocal": 97,
+    "acceptedOrientation": 0,
+    "acceptedStation": 2
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-nudge-r2-d0.02-m33",
+   "published": null,
+   "belowIncumbent": false,
+   "exactValid": false,
+   "contractValid": true,
+   "raw": 164.03856779906783,
+   "attribution": {
+    "variants": 7770,
+    "candidates": 1012986,
+    "rows": 370666,
+    "finalists": 0,
+    "acceptedVacated": 39,
+    "acceptedAnchorLocal": 97,
+    "acceptedOrientation": 0,
+    "acceptedStation": 2
+   },
+   "rungs": {}
+  },
+  {
+   "tag": "fs-nudge-r3-d0.002-m33",
+   "published": null,
+   "belowIncumbent": false,
+   "exactValid": false,
+   "contractValid": true,
+   "raw": 164.03856779906783,
+   "attribution": {},
+   "rungs": {}
+  },
+  {
+   "tag": "fs-nudge-r3-d0.006-m33",
+   "published": null,
+   "belowIncumbent": false,
+   "exactValid": false,
+   "contractValid": false,
+   "raw": 164.03856779906783,
+   "attribution": {},
+   "rungs": {}
+  },
+  {
+   "tag": "fs-nudge-r3-d0.012-m33",
+   "published": null,
+   "belowIncumbent": false,
+   "exactValid": false,
+   "contractValid": false,
+   "raw": 164.03856779906783,
+   "attribution": {},
+   "rungs": {}
+  },
+  {
+   "tag": "fs-nudge-r3-d0.02-m33",
+   "published": null,
+   "belowIncumbent": false,
+   "exactValid": false,
+   "contractValid": false,
+   "raw": 164.03856779906783,
+   "attribution": {},
+   "rungs": {}
+  }
+ ]
+}

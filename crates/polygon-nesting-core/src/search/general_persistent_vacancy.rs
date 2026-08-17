@@ -244,14 +244,29 @@ const ANCHOR_LOCAL_FAN_DIRECTIONS: [(f64, f64); 16] = [
 //   re-centring shift.
 //
 // The ladder itself is scale-free: an angle carries no length, so a geometric
-// ladder is the general instrument. Ratio 5/2 from 0.02 degrees (below which a
-// rung cannot move a vertex of a hand-sized piece by even one placement-grid
-// quantum) to just under 5 degrees (above which "rotate in place" stops being
-// a local repair and becomes a re-orientation the station stream already
-// offers). Spelled out rather than computed so the pose stream does not depend
-// on the platform's `powf`.
-const ORIENTATION_PERTURBATION_LADDER_DEG: [f64; 7] =
-    [0.02, 0.05, 0.125, 0.3125, 0.78125, 1.953125, 4.8828125];
+// ladder is the general instrument. Ratio 5/2, topping out just under 5 degrees
+// (above which "rotate in place" stops being a local repair and becomes a
+// re-orientation the station stream already offers). Spelled out rather than
+// computed so the pose stream does not depend on the platform's `powf`.
+//
+// The floor was originally 0.02 degrees, on the argument that a finer rung
+// cannot move a vertex by even one pose-grid quantum. That argument was wrong
+// by a wide margin and the stream's own accepted poses are what showed it: a
+// rung `d` degrees moves a vertex sitting `r` from the rotation centre by
+// `r * d * pi/180`, so on a hand-sized `r` of 100 mm the old floor is 0.035 mm
+// - thirty-five 0.001 mm quanta, not one. The rung that stops being expressible
+// on that radius is nearer 6e-4 degrees. And the campaign's accepted rungs pile
+// up on the floor itself, which is the signature of a floor placed above the
+// useful band rather than at its edge.
+//
+// So the ladder is extended downward by two rungs of the same ratio. 0.0032
+// degrees still moves a 100 mm vertex by 0.0056 mm - five quanta, comfortably
+// expressible - while being a sixth of the old floor, and both new rungs are
+// exact on the 1e-6 degree angle key, so no rung collapses onto another and
+// re-spends the same charged rows.
+const ORIENTATION_PERTURBATION_LADDER_DEG: [f64; 9] = [
+    0.0032, 0.008, 0.02, 0.05, 0.125, 0.3125, 0.78125, 1.953125, 4.8828125,
+];
 // Orientation variants one perturbed re-insertion seeds per piece: the ladder
 // in both signs, the mirrored counterpart of the vacated orientation, and the
 // ladder in both signs mirrored. A piece whose request forbids rotation or
@@ -10506,10 +10521,10 @@ mod tests {
             // whole layout) times the stream's per-slot row budget, which is
             // itself the anchor-local budget once per orientation variant.
             let orientation_slots = (24 + 24) * pieces;
-            let orientation_rows = orientation_slots * (29 * 192);
-            let orientation_builds = 8 * pieces * 29;
-            assert_eq!(ORIENTATION_PERTURBATION_VARIANTS, 29);
-            assert_eq!(ORIENTATION_PERTURBATION_ROWS, 29 * 192);
+            let orientation_rows = orientation_slots * (37 * 192);
+            let orientation_builds = 8 * pieces * 37;
+            assert_eq!(ORIENTATION_PERTURBATION_VARIANTS, 37);
+            assert_eq!(ORIENTATION_PERTURBATION_ROWS, 37 * 192);
             assert_eq!(JOINT_REPLACEMENT_COMPONENT_PASSES, 8);
             let rows = population * 8
                 + settle * 64
@@ -10697,7 +10712,8 @@ mod tests {
         );
         // The orientation-perturbation lane (modes 32/33): 48 joint attempt
         // slots per piece times the stream's per-slot row budget of one
-        // anchor-local budget per orientation variant.
+        // anchor-local budget per orientation variant. 37 variants is the
+        // nine-rung ladder in both signs, mirrored, plus the pure mirror flip.
         assert_eq!(
             mixed61.max_exact_finalist_rows,
             (640 + 26) * 8
@@ -10706,7 +10722,7 @@ mod tests {
                 + 73 * 61 * 64
                 + 4_040 * 192
                 + 3_416 * 320
-                + 48 * 61 * (29 * 192)
+                + 48 * 61 * (37 * 192)
         );
         assert_eq!(
             mixed61.max_experimental_collision_builds,
@@ -10718,12 +10734,12 @@ mod tests {
                     + 73 * 61 * 64
                     + 4_040 * 192
                     + 3_416 * 320
-                    + 48 * 61 * (29 * 192))
+                    + 48 * 61 * (37 * 192))
                 + 122
                 + 4_040
                 + 2 * 3_416
                 + 24 * (4_040 / 2 + 200 * 96)
-                + 8 * 61 * 29
+                + 8 * 61 * 37
         );
         assert_eq!(
             mixed61.max_experimental_pair_visits,
@@ -10734,7 +10750,7 @@ mod tests {
                     + 73 * 61 * 64
                     + 4_040 * 192
                     + 3_416 * 320
-                    + 48 * 61 * (29 * 192))
+                    + 48 * 61 * (37 * 192))
                     * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
@@ -11562,6 +11578,18 @@ mod tests {
         let mut keys = ladder.iter().map(|rung| angle_key(*rung)).collect::<Vec<_>>();
         keys.dedup();
         assert_eq!(keys.len(), ladder.len(), "{ladder:?}");
+        // The floor's own justification, stated as arithmetic rather than as a
+        // comment: a rung `d` moves a vertex at radius `r` by `r * d * pi/180`,
+        // and the finest rung has to clear one 0.001 mm pose-grid quantum on a
+        // hand-sized radius or the pose stream emits angles the grid rounds
+        // away. 100 mm is the hand-sized radius the ladder is argued on.
+        const HAND_SIZED_RADIUS_MM: f64 = 100.0;
+        const POSE_GRID_QUANTUM_MM: f64 = 0.001;
+        let finest_travel_mm = HAND_SIZED_RADIUS_MM * ladder[0].to_radians();
+        assert!(
+            finest_travel_mm > POSE_GRID_QUANTUM_MM,
+            "{ladder:?} finest rung travels {finest_travel_mm} mm"
+        );
         assert_eq!(
             ORIENTATION_PERTURBATION_VARIANTS,
             4 * ladder.len() + 1,

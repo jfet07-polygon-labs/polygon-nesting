@@ -1,0 +1,14 @@
+== AB33 base bin=/var/lib/t3/tmp/orient-fine/bench-base parent=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_6d9d36cd-45f-1/docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/orientation-entry/pinned-parent-159.083.json raw=159.08263749731248
+-- flatten 0.003: depth 159.079637497, 2 moved
+[    3.2s] base-flat0.003-m33: mode=33 exactValid=True contractValid=True depth=159.083 raw=159.08263749731248 parent=159.08 fp=902d49c6421539eb | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=3 bnd=0 comp=2 maxComp=3 /7 ej=5 /7 att=True matDef=0.002129619035181385 orders=2/8 swaps=0 cRep=2 cRef=0 | acceptedAnchorLocal=3 acceptedOrientation=0 acceptedStation=0 acceptedVacated=2 candidates=17864 finalists=2 rows=943 variants=145
+   rungs {}
+-- flatten 0.001: depth 159.081637497, 1 moved
+[    3.3s] base-flat0.001-m33: mode=33 exactValid=False contractValid=False depth=None raw=159.08163749731247 parent=159.082 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 159.132637 mm bound
+   ~ pairs=1 bnd=0 comp=1 maxComp=2 /7 ej=2 /7 att=True matDef=0.00012961997538862846 orders=2/2 swaps=1 cRep=0 cRef=1 | acceptedAnchorLocal=4 acceptedAngles=[('28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3', 359.944444, 0.0, True), ('28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3', 359.944444, 0.0, True), ('28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3', 359.944444, 0.0, True), ('28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3', 359.944444, 0.0, True), ('28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3', 359.944444, 0.0, True), ('28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3', 359.944444, 0.0, True), ('28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3', 359.944444, 0.0, True), ('28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3', 359.944444, 0.0, True)] acceptedOrientation=8 acceptedStation=0 acceptedVacated=5 candidates=71572 finalists=32 rows=37302 variants=1015
+   rungs {"mirror0.0": 8}
+-- flatten 0.004: depth 159.078637497, 2 moved
+[    2.9s] base-flat0.004-m33: mode=33 exactValid=True contractValid=True depth=159.083 raw=159.08263749731248 parent=159.079 fp=e5a4238f9d8a0ae5 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=3 bnd=0 comp=2 maxComp=3 /7 ej=5 /7 att=True matDef=0.003129618565091974 orders=2/8 swaps=0 cRep=2 cRef=0 | acceptedAnchorLocal=3 acceptedOrientation=0 acceptedStation=0 acceptedVacated=2 candidates=17864 finalists=2 rows=943 variants=145
+   rungs {}
+== wrote /var/lib/t3/tmp/orient-fine/ab33-base.json

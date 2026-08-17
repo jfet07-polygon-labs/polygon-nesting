@@ -1,0 +1,163 @@
+{
+ "arms": 110,
+ "byTier": {
+  "A-flat": {
+   "arms": 43,
+   "variants": 20202,
+   "candidates": 1932288,
+   "rows": 662276,
+   "finalists": 323,
+   "acceptedVacated": 181,
+   "acceptedAnchorLocal": 115,
+   "acceptedOrientation": 64,
+   "acceptedStation": 7,
+   "publications": 30
+  },
+  "B-m22": {
+   "arms": 12,
+   "publications": 12
+  },
+  "C-m31": {
+   "arms": 12
+  },
+  "D-lineage": {
+   "arms": 25,
+   "variants": 10212,
+   "candidates": 781662,
+   "rows": 309181,
+   "finalists": 319,
+   "acceptedVacated": 63,
+   "acceptedAnchorLocal": 36,
+   "acceptedOrientation": 69,
+   "acceptedStation": 0,
+   "publications": 17
+  },
+  "E-nudge": {
+   "arms": 18,
+   "variants": 3256,
+   "candidates": 392348,
+   "rows": 71192,
+   "finalists": 40,
+   "acceptedVacated": 40,
+   "acceptedAnchorLocal": 26,
+   "acceptedOrientation": 6,
+   "acceptedStation": 0,
+   "publications": 18
+  }
+ },
+ "rungs": {
+  "mirror:0": 96,
+  "rot:0.0032": 27,
+  "rot:0.008": 13,
+  "mirror:0.008": 3
+ },
+ "adoptRungs": {
+  "rot:0.0032": 2,
+  "rot:0.008": 1
+ },
+ "attribution": {
+  "variants": 33670,
+  "candidates": 3106298,
+  "rows": 1042649,
+  "finalists": 682,
+  "acceptedVacated": 284,
+  "acceptedAnchorLocal": 177,
+  "acceptedOrientation": 139,
+  "acceptedStation": 7
+ },
+ "adoptions": [
+  {
+   "tier": "D-lineage",
+   "tag": "r0-lin-pin-159.083623715-flat0.001-m33",
+   "from": 159.08263749731248,
+   "to": 159.08262371460316,
+   "delta": -1.3782709316956243e-05,
+   "pin": "/var/lib/t3/tmp/orient-fine/pins/pin-159.082623715.json",
+   "sha256": "77a6709a21aca35760b619e8b8438dc5f5e03690d1b2b12312960671ab2ab685",
+   "fingerprint": "629cb487e120eabeadf8dc51bb29b6c73f7e57405edf3a7fb9f7a5c5ccf5e880",
+   "attribution": {
+    "variants": 74,
+    "candidates": 5180,
+    "rows": 607,
+    "finalists": 7,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0
+   },
+   "acceptedAngles": [
+    [
+     "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+     0.007471,
+     -0.0032,
+     false
+    ]
+   ],
+   "rungs": {
+    "rot:0.0032": 1
+   }
+  },
+  {
+   "tier": "E-nudge",
+   "tag": "r1-nudge-r1-d0.006-m33",
+   "from": 159.08262371460316,
+   "to": 159.08176040364793,
+   "delta": -0.0008633109552249607,
+   "pin": "/var/lib/t3/tmp/orient-fine/pins/pin-159.081760404.json",
+   "sha256": "bd38aa0d6d7cc3fa0040fe5d333e88641816fb86d9c508fd61faa79c229dcdbf",
+   "fingerprint": "097321d0616df7cde4b1955e0c6762031bfbd432a0f4c1b9dd1fdb351433fd3c",
+   "attribution": {
+    "variants": 74,
+    "candidates": 8991,
+    "rows": 280,
+    "finalists": 4,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0
+   },
+   "acceptedAngles": [
+    [
+     "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+     179.949611,
+     -0.008,
+     false
+    ]
+   ],
+   "rungs": {
+    "rot:0.008": 1
+   }
+  },
+  {
+   "tier": "A-flat",
+   "tag": "r2-flat0.003-m33-p0.05",
+   "from": 159.08176040364793,
+   "to": 159.07876040364795,
+   "delta": -0.002999999999985903,
+   "pin": "/var/lib/t3/tmp/orient-fine/pins/pin-159.078760404.json",
+   "sha256": "1535067297279e46680826b3e28d2f8ec635575d0324626b9168fca7fdf6145f",
+   "fingerprint": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {
+    "variants": 74,
+    "candidates": 5180,
+    "rows": 3174,
+    "finalists": 5,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0
+   },
+   "acceptedAngles": [
+    [
+     "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+     0.004271,
+     -0.0032,
+     false
+    ]
+   ],
+   "rungs": {
+    "rot:0.0032": 1
+   }
+  }
+ ]
+}
