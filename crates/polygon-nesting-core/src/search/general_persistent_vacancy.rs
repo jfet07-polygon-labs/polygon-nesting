@@ -2,6 +2,13 @@ use super::*;
 
 use std::mem::size_of;
 
+// The skyline constructor's trapped-void evaluator. Its default build is a
+// zero-sized forwarder to `trapped_void_cells` below; `fast-constructor-profile`
+// swaps in the incremental bit-grid evaluator.
+#[path = "construction_void_grid.rs"]
+mod construction_void_grid;
+use construction_void_grid::ConstructionVoidCache;
+
 const PERSISTENT_VACANCY_SEED_DOMAIN: u64 = 0x5650_4f50_3030_3031;
 const TARGET_DEPTH_MM: f64 = 165.0;
 const EXPECTED_PARENT_FINGERPRINT: &str =
@@ -5981,6 +5988,11 @@ fn construct_skyline_beam_inner(
         "vertex-count",
         "padded-bbox-area-reshuffled",
     ];
+    // The trapped-void evaluator. Off the `fast-constructor-profile` profile
+    // this is a zero-sized forwarder to `trapped_void_cells` and the
+    // constructor behaves exactly as before; on it, occupancy is carried
+    // incrementally down the beam. See `construction_void_grid`.
+    let mut voids = ConstructionVoidCache::new(pieces, work_settings);
     let mut best: Option<(i64, usize, VacancyState, f64)> = None;
     for restart in 0..CONSTRUCTION_RESTARTS {
         let order_seed = derive_seed(construction_seed, restart, 0);
@@ -6029,7 +6041,8 @@ fn construct_skyline_beam_inner(
                     .saturating_add(sidecar.as_ref().map_or(0, state_heap_bytes))
                     .saturating_add(children_bytes)
                     .saturating_add(2usize.saturating_mul(size_of::<VacancyState>()))
-                    .saturating_add(CONSTRUCTION_TRANSIENT_BYTES);
+                    .saturating_add(CONSTRUCTION_TRANSIENT_BYTES)
+                    .saturating_add(voids.retained_bytes());
                 work.diagnostics.total_retained_peak_bytes =
                     work.diagnostics.total_retained_peak_bytes.max(live_bytes);
                 if live_bytes > MAX_RETAINED_BYTES {
@@ -6040,6 +6053,10 @@ fn construct_skyline_beam_inner(
                         construction.best_ever_parent_expansions.saturating_add(1);
                     row.best_ever_parent_layers = row.best_ever_parent_layers.saturating_add(1);
                 }
+                // Every child of this slot is this parent plus one piece, so
+                // the evaluator resolves the parent's occupancy once here and
+                // each child costs one piece's raster. No-op off the profile.
+                voids.begin_parent(parent_state);
                 // A from-scratch construction has no vacated pose to seed from:
                 // its anchor is a pose *prior*, not a pocket a piece was just
                 // lifted out of. Skyline stations only, bit-identically.
@@ -6076,7 +6093,13 @@ fn construct_skyline_beam_inner(
                             construction.children_deduplicated.saturating_add(1);
                         continue;
                     }
-                    let key = construction_child_key(&child, work_settings, construction);
+                    let key = construction_child_key(
+                        &child,
+                        work_settings,
+                        construction,
+                        piece_index,
+                        &mut voids,
+                    );
                     children_bytes = children_bytes.saturating_add(state_heap_bytes(&child));
                     children.push((key, slot, child));
                 }
@@ -6170,7 +6193,8 @@ fn construct_skyline_beam_inner(
             .unwrap_or(0);
         row.frontier_grid = Some(frontier_grid);
         construction.void_scans = construction.void_scans.saturating_add(1);
-        row.trapped_void_cells = Some(trapped_void_cells(candidate, work_settings, frontier_grid));
+        row.trapped_void_cells =
+            Some(voids.state_trapped_cells(candidate, work_settings, frontier_grid));
         diagnostics.complete_states = diagnostics.complete_states.saturating_add(1);
         construction.audited_candidates = construction.audited_candidates.saturating_add(1);
         match audit_state(candidate, pieces, target_settings, true, work) {
@@ -6221,6 +6245,8 @@ fn construction_child_key(
     child: &VacancyState,
     settings: GeneralFastSettings,
     construction: &mut GeneralPersistentVacancyConstructionDiagnostics,
+    inserted: usize,
+    voids: &mut ConstructionVoidCache,
 ) -> ConstructionChildKey {
     let mut frontier_grid = 0i64;
     let mut frontier_sum = 0i128;
@@ -6235,7 +6261,7 @@ fn construction_child_key(
         }
     }
     construction.void_scans = construction.void_scans.saturating_add(1);
-    let voids = trapped_void_cells(child, settings, frontier_grid);
+    let voids = voids.child_trapped_cells(child, settings, inserted, frontier_grid);
     (
         frontier_grid.div_euclid(CONSTRUCTION_FRONTIER_BAND_GRID),
         voids,
