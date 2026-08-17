@@ -12501,6 +12501,20 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         first: &RelaxedPlacement,
         second: &RelaxedPlacement,
     ) -> Result<f64, GeneralFastError> {
+        // Deliberately *not* canonicalised here, even under
+        // `canonical-pair-order`. This tier's verdict is already symmetric — it
+        // transforms both operands into the world frame before testing, and the
+        // audit measured both orders agreeing bit for bit on every pair it
+        // disagreed about — so there is nothing for a swap to fix. Its
+        // magnitude reaches the canonical rule through
+        // [`Self::rollback_pair_pressure`], which resolves both shapes from the
+        // catalogue and can therefore be asked either way round.
+        //
+        // Its `DynamicPoles` branch below could not be canonicalised in any
+        // case: it asks the hazard index for one *explicit* pose against the
+        // committed layout, so the first operand must be the piece whose pose
+        // is being proposed. Swapping it would silently substitute that piece's
+        // committed pose for its candidate one.
         let first_key = (
             self.catalog.geometry_class_by_input[first.input_index],
             angle_key(0.0),
@@ -12798,6 +12812,9 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         let Some(second_shape) = self.catalog.orientations.get(&second_key) else {
             return Err(self.missing_orientation(second.input_index, second_key));
         };
+        #[cfg(feature = "canonical-pair-order")]
+        let (first_shape, first, second_shape, second) =
+            canonical_pair_operands(first_shape, first, second_shape, second);
         Ok(self.kernel.pair_pressure(
             PosedShape::new(first_shape, first.translate_x, first.translate_y),
             PosedShape::new(second_shape, second.translate_x, second.translate_y),
@@ -12951,6 +12968,12 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         first: &RelaxedPlacement,
         second: &RelaxedPlacement,
     ) -> Result<f64, GeneralFastError> {
+        #[cfg(feature = "canonical-pair-order")]
+        let (first, second) = if first.input_index <= second.input_index {
+            (first, second)
+        } else {
+            (second, first)
+        };
         if self.uses_continuous_triangle_pressure() {
             let first_shape = self.oriented(first.input_index, 0.0, first.mirrored)?;
             let second_shape = self.oriented(second.input_index, 0.0, second.mirrored)?;
@@ -13377,10 +13400,62 @@ fn resolved_pair_penalty<K: ExplorationKernel<Shape = OrientedSurrogate>>(
         return 0.0;
     }
     let _span = profiling::span(Phase::PairPressure);
+    // The pole series is accumulated with the first operand outermost, so it is
+    // order-dependent in its low bits for the same reason the collider is
+    // order-dependent in its verdict. A row that is owned by the index-ordered
+    // pair has to be quantified in that order too.
+    #[cfg(feature = "canonical-pair-order")]
+    let (first_shape, first, second_shape, second) =
+        canonical_pair_operands(first_shape, first, second_shape, second);
     kernel.pair_pressure(
         PosedShape::new(first_shape, first.translate_x, first.translate_y),
         PosedShape::new(second_shape, second.translate_x, second.translate_y),
     )
+}
+
+/// The two operands of a pair question, in the order the *pair* owns rather
+/// than the order the caller happened to ask in.
+///
+/// The proxy tier is not a function of the unordered pair. Its narrow phase
+/// tests the first operand's precomputed cell axes against the second operand's
+/// points taken in a frame relative to the first, so swapping the operands
+/// re-derives the same six separating axes through different subtractions and
+/// projects them at a negated offset. The two answers agree except when a
+/// contact is marginal, and there they can differ outright: on the
+/// `pinned-fs-parent-164.0376` stream the pair `(33, 51)` collides asked as
+/// `(33, 51)` and does not asked as `(51, 33)`.
+///
+/// That matters because two callers ask in two different orders. A candidate
+/// scan asks `(moving, fixed)`, so its answer depends on which piece moved
+/// last; a whole-layout score asks `(lower index, higher index)`, so its answer
+/// depends only on the layout. Only the second can be a *measurement of the
+/// layout*, which is what a tracker row has to be if a sweep is ever to inherit
+/// one instead of rescoring — so the canonical owner of a row is the
+/// index-ordered pair, and this is the function that enforces it.
+///
+/// Off by default, and it must stay off in anything that publishes a comparable
+/// number: enforcing the rule changes the value a candidate scan computes for a
+/// marginal pair, which moves the search's trajectory. See the row-ownership
+/// entry in `docs/next-generation-engine-plan.md` for the measurement and the
+/// price.
+#[cfg(feature = "canonical-pair-order")]
+#[inline(always)]
+fn canonical_pair_operands<'a>(
+    first_shape: &'a OrientedSurrogate,
+    first: &'a RelaxedPlacement,
+    second_shape: &'a OrientedSurrogate,
+    second: &'a RelaxedPlacement,
+) -> (
+    &'a OrientedSurrogate,
+    &'a RelaxedPlacement,
+    &'a OrientedSurrogate,
+    &'a RelaxedPlacement,
+) {
+    if first.input_index <= second.input_index {
+        (first_shape, first, second_shape, second)
+    } else {
+        (second_shape, second, first_shape, first)
+    }
 }
 
 /// Asks the kernel about one pair and folds its reported work into the lane
@@ -13405,6 +13480,13 @@ fn kernel_pair_collides<K: ExplorationKernel<Shape = OrientedSurrogate>>(
     second_shape: &OrientedSurrogate,
     second: &RelaxedPlacement,
 ) -> bool {
+    #[cfg(feature = "canonical-pair-order")]
+    let (first_shape, first, second_shape, second) = canonical_pair_operands(
+        first_shape,
+        first,
+        second_shape,
+        second,
+    );
     let mut probes = KernelProbes::default();
     let collides = kernel.pair_collides(
         PosedShape::new(first_shape, first.translate_x, first.translate_y),
@@ -16903,6 +16985,97 @@ mod tests {
     fn lane_seed_derivation_is_stable_and_distinct() {
         assert_eq!(derive_seed(7, 2, 3), derive_seed(7, 2, 3));
         assert_ne!(derive_seed(7, 2, 3), derive_seed(7, 2, 4));
+    }
+
+    /// Under `canonical-pair-order`, a pair question is a function of the
+    /// *unordered* pair: asking `(a, b)` and asking `(b, a)` returns the same
+    /// bits, verdict and magnitude alike.
+    ///
+    /// This is the row-ownership contract, and it is the one the default build
+    /// does not keep. The proxy tier's narrow phase tests the first operand's
+    /// precomputed cell axes against the second operand's points in a frame
+    /// relative to the first, and its pressure accumulates a pole series with
+    /// the first operand outermost, so both halves of the answer depend on
+    /// which operand was named first. A candidate scan names the moving piece
+    /// and a whole-layout score names the lower index, which is why the two
+    /// have never agreed. See `canonical_pair_operands`.
+    #[cfg(feature = "canonical-pair-order")]
+    #[test]
+    fn canonical_pair_order_makes_a_pair_question_order_free() {
+        let first_polygon = square(10.0);
+        let second_polygon = l_shape();
+        let pieces = [
+            GeneralFastPiece {
+                id: "first",
+                polygon: &first_polygon,
+                allow_rotation: true,
+                allow_mirror: false,
+            },
+            GeneralFastPiece {
+                id: "second",
+                polygon: &second_polygon,
+                allow_rotation: true,
+                allow_mirror: false,
+            },
+        ];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::ZeroDegreeOnly,
+            None,
+        )
+        .unwrap();
+        let shape = |index: usize| {
+            catalog
+                .orientations
+                .get(&(catalog.geometry_class_by_input[index], angle_key(0.0), false))
+                .expect("zero-degree surrogate")
+        };
+        let mut kernel = LegacyKernel::default();
+        let mut counters = WorkCounters::default();
+        // A ladder of offsets from deep overlap out to clear separation, so the
+        // sweep crosses the contact boundary where an order-dependent verdict
+        // would show up rather than only sampling the easy interior.
+        for step in 0..40 {
+            let offset = step as f64 * 0.25;
+            let first = RelaxedPlacement {
+                input_index: 0,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 20.0,
+                translate_y: 20.0,
+            };
+            let second = RelaxedPlacement {
+                input_index: 1,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 20.0 + offset,
+                translate_y: 20.0 + offset,
+            };
+            let forward = resolved_pair_penalty(
+                &mut kernel,
+                &mut counters,
+                shape(0),
+                &first,
+                shape(1),
+                &second,
+            );
+            let reverse = resolved_pair_penalty(
+                &mut kernel,
+                &mut counters,
+                shape(1),
+                &second,
+                shape(0),
+                &first,
+            );
+            assert_eq!(
+                forward.to_bits(),
+                reverse.to_bits(),
+                "pair question at offset {offset} answered {forward:.17e} as (0, 1) \
+                 and {reverse:.17e} as (1, 0)"
+            );
+        }
     }
 
     /// The proxy row cache is only sound if a hit returns exactly what the
