@@ -1,0 +1,28 @@
+start 164.105 from /var/lib/t3/tmp/mode31/pinned-scratch-164.105.json
+  round 0 mode 26 target 163.805 seed 0: 164.105
+  round 0 mode 26 target 163.805 seed 1: 164.105
+  round 0 mode 26 target 163.555 seed 0: 164.105
+  round 0 mode 26 target 163.555 seed 1: 164.105
+  round 0 mode 26 target 163.105 seed 0: 164.105
+  round 0 mode 26 target 163.105 seed 1: 164.105
+  round 0 mode 26 target 162.505 seed 0: 164.105
+  round 0 mode 26 target 162.505 seed 1: 164.105
+  round 0 mode 22 target 164.905 seed 0: 164.096 <-- improves
+  round 0 mode 22 target 164.905 seed 1: 164.096 <-- improves
+  round 0 mode 22 target 164.905 seed 2: 164.096 <-- improves
+  round 0 mode 22 target 164.905 seed 3: 164.096 <-- improves
+pinned /var/lib/t3/tmp/mode31/joint-scratch/pinned-164.096.json: depth=164.096 raw=164.09558495038524 fp=088d4cb6ed791d97 pieces=61
+round 0: incumbent -> 164.096
+  round 1 mode 26 target 163.796 seed 0: 164.096
+  round 1 mode 26 target 163.796 seed 1: 164.096
+  round 1 mode 26 target 163.546 seed 0: 164.096
+  round 1 mode 26 target 163.546 seed 1: 164.096
+  round 1 mode 26 target 163.096 seed 0: 164.096
+  round 1 mode 26 target 163.096 seed 1: 164.096
+  round 1 mode 26 target 162.496 seed 0: 164.096
+  round 1 mode 26 target 162.496 seed 1: 164.096
+  round 1 mode 22 target 164.896 seed 0: 164.096
+  round 1 mode 22 target 164.896 seed 1: 164.096
+  round 1 mode 22 target 164.896 seed 2: 164.096
+  round 1 mode 22 target 164.896 seed 3: 164.096
+FIXPOINT at 164.096 after 1 rounds

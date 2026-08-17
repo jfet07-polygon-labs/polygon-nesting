@@ -26,7 +26,9 @@ use crate::search::general_fast::{
     polygons_overlap_exact, validate_and_measure_placements, GeneralFastError, GeneralFastPiece,
     GeneralFastPlacement, GeneralFastResult, GeneralFastSettings, GeneralPlacementMetrics,
 };
-use crate::search::general_micro_legalization::GeneralMicroLegalizationDiagnostics;
+use crate::search::general_micro_legalization::{
+    GeneralGlobalLegalizationDiagnostics, GeneralMicroLegalizationDiagnostics,
+};
 // The added contract-validity and raw-depth reporting is reachable only through
 // the persistent-vacancy arms, which the experimental feature gates.
 #[cfg(feature = "jagua-experimental")]
@@ -37,8 +39,8 @@ use crate::validation::general_polygon::{raw_source_long_axis_depth_mm, GeneralP
 // is where the conflict-targeted re-placement repair consumes them.
 #[cfg(feature = "jagua-experimental")]
 use crate::search::general_micro_legalization::{
-    micro_legalization_component_limit, micro_legalize, replacement_ejection_limit,
-    separating_translation, survey_layout_violations, LayoutViolations,
+    global_legalize, micro_legalization_component_limit, micro_legalize,
+    replacement_ejection_limit, separating_translation, survey_layout_violations, LayoutViolations,
 };
 
 #[cfg(feature = "jagua-experimental")]
@@ -143,20 +145,29 @@ const LADDER_COMPRESSION_ATTEMPT_SLOT: usize = usize::MAX - 96;
 // the standalone instrument for the same pass mode 26 uses per rung.
 #[cfg(feature = "jagua-experimental")]
 const MICRO_LEGALIZATION_SEED_DOMAIN: u64 = 0x4D49_4352_4F4C_3237;
-// The three repair tiers a mode-26 rung may publish through, reported per rung
+// Modes 30 and 31 are the standalone global pressure-balanced legalization
+// probes: 30 measures and solves the parent under its own sheet, 31 under an
+// explicit depth bound, exactly the way mode 27 and modes 28/29 pair up.
+#[cfg(feature = "jagua-experimental")]
+const GLOBAL_LEGALIZATION_SEED_DOMAIN: u64 = 0x474C_4F42_414C_3330;
+// The four repair tiers a mode-26 rung may publish through, reported per rung
 // so a ladder table can say which mechanism reached which residue. Tier one is
 // mode 27's translation-only projection; tier two is mode 28's
 // conflict-targeted re-placement, attempted only when tier one produced
 // nothing; tier three is mode 29's joint multi-piece re-placement, attempted
-// only when tier two produced nothing either. The tiers run in strictly
-// increasing order of the correction they can express, so a later tier can only
-// ever *add* a publication to a rung an earlier one already failed.
+// only when tier two produced nothing either; tier four is mode 31's global
+// pressure-balanced legalization, attempted only when all three local tiers
+// produced nothing. The tiers run in strictly increasing order of the
+// correction they can express, so a later tier can only ever *add* a
+// publication to a rung an earlier one already failed.
 #[cfg(feature = "jagua-experimental")]
 const LADDER_REPAIR_TIER_MICRO: &str = "microLegalization";
 #[cfg(feature = "jagua-experimental")]
 const LADDER_REPAIR_TIER_REPLACEMENT: &str = "replacement";
 #[cfg(feature = "jagua-experimental")]
 const LADDER_REPAIR_TIER_JOINT: &str = "jointReplacement";
+#[cfg(feature = "jagua-experimental")]
+const LADDER_REPAIR_TIER_GLOBAL: &str = "globalLegalization";
 // Mode 24 (bounded-depth reinsertion) tests compression by ejection and
 // reconstruction rather than compression by overlap: it ejects exactly the
 // pieces that stick out past a hard bound and rebuilds them with the
@@ -557,6 +568,11 @@ pub struct GeneralPersistentVacancyDiagnostics {
     /// parent under the requested bound.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub joint_replacement: Option<GeneralJointReplacementDiagnostics>,
+    /// Modes 30 and 31: the standalone global pressure-balanced legalization
+    /// run on the parent, under the parent's own sheet (30) or under the
+    /// requested depth bound (31).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub global_legalization: Option<GeneralGlobalLegalizationDiagnostics>,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
 }
@@ -732,6 +748,17 @@ pub struct GeneralPersistentVacancyLadderArmDiagnostics {
     pub joint_replaced_depth_mm: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub joint_replaced_fingerprint: Option<String>,
+    /// The fourth-tier global pressure-balanced legalization, run on the arm's
+    /// rejected state only when all three local tiers refused or failed. Every
+    /// piece is a variable here, so this is the only tier that can answer a
+    /// residue whose room is somewhere else in the layout.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub global_legalization: Option<GeneralGlobalLegalizationDiagnostics>,
+    /// The depth of the globally legalized state, when that tier published one.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub global_legalized_depth_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub global_legalized_fingerprint: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failure_reason: Option<String>,
 }
@@ -3303,6 +3330,14 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                         effective_parent,
                         parent_source,
                     ),
+                    mode @ (30 | 31) => run_global_legalization_probe(
+                        pieces,
+                        fast_settings,
+                        relaxed_settings,
+                        effective_parent,
+                        parent_source,
+                        mode == 31,
+                    ),
                     mode => persistent_vacancy::run_persistent_vacancy_population(
                         pieces,
                         fast_settings,
@@ -3924,7 +3959,8 @@ fn run_ladder_compression(
                         })
                     };
                     if let Some((placements, depth_mm, tier)) = candidate {
-                        if grid_key(depth_mm) < grid_key(published_depth_mm) {
+                        let improved = grid_key(depth_mm) < grid_key(published_depth_mm);
+                        if improved {
                             published_depth_mm = depth_mm;
                             published_placements = placements;
                             published_source = format!("step{step}");
@@ -3935,7 +3971,14 @@ fn run_ladder_compression(
                                 tier == Some(LADDER_REPAIR_TIER_MICRO);
                             row.published_repair_tier = tier.map(str::to_owned);
                         }
-                        published_here = true;
+                        // A tier-four state that does not improve must not end
+                        // the rung's retry loop. Without the tier this arm
+                        // produced no candidate at all and the remaining
+                        // attempts were still spent looking, so consuming them
+                        // on a state that beats nothing would *remove* draws
+                        // rather than add publications - the one way a strictly
+                        // later tier could make the ladder worse.
+                        published_here = improved || tier != Some(LADDER_REPAIR_TIER_GLOBAL);
                     }
                     // The compression frontier is the deepest state seen,
                     // feasible or not: that is the material the next, tighter
@@ -4036,6 +4079,101 @@ fn run_micro_legalization_probe(
                 Some("micro-legalization did not produce an exact-valid state".to_owned());
         }
     }
+    diagnostics
+}
+
+/// Modes 30 and 31: the standalone global pressure-balanced legalization
+/// probes, and the fourth mode-26 repair tier run on its own.
+///
+/// Mode 30 takes the parent exactly as given and solves it under the request's
+/// own sheet - the direct global analogue of mode 27, and the instrument for
+/// asking "how much displacement, distributed over the whole layout, does this
+/// state actually need?". Mode 31 takes the same parent under an explicit depth
+/// bound (CLI argument 45), which enters the program as a hard containment
+/// constraint on every piece, and is the standalone form of the tier a mode-26
+/// rung runs.
+///
+/// Like modes 27 to 29 both are deliberately pointed at states that do *not*
+/// validate, so the parent is measured rather than gated on.
+#[cfg(feature = "jagua-experimental")]
+fn run_global_legalization_probe(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    parent: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_source: Option<String>,
+    bounded: bool,
+) -> GeneralPersistentVacancyDiagnostics {
+    let mode = if bounded { 31 } else { 30 };
+    let mut diagnostics = GeneralPersistentVacancyDiagnostics {
+        mode,
+        seed_domain: GLOBAL_LEGALIZATION_SEED_DOMAIN,
+        parent_source,
+        ..GeneralPersistentVacancyDiagnostics::default()
+    };
+    let bound_mm = if bounded {
+        let Some(bound_mm) = relaxed_settings.persistent_vacancy_target_depth_mm else {
+            diagnostics.failure_reason =
+                Some("persistent vacancy mode 31 requires an explicit depth bound".to_owned());
+            return diagnostics;
+        };
+        if !bound_mm.is_finite() || bound_mm <= 0.0 {
+            diagnostics.failure_reason = Some(
+                "persistent vacancy mode 31 depth bound must be a positive finite value".to_owned(),
+            );
+            return diagnostics;
+        }
+        diagnostics.target_depth_mm = bound_mm;
+        Some(bound_mm)
+    } else {
+        None
+    };
+    if pieces.is_empty() {
+        diagnostics.failure_reason =
+            Some("global legalization requires at least one piece".to_owned());
+        return diagnostics;
+    }
+    if parent.final_placements.len() != pieces.len() {
+        diagnostics.failure_reason =
+            Some("global legalization requires a complete parent layout".to_owned());
+        return diagnostics;
+    }
+
+    let parent_placements = fast_placements_from_coupled_diagnostics(&parent.final_placements);
+    diagnostics.parent_fingerprint = Some(coupled_fast_placement_fingerprint(&parent_placements));
+    diagnostics.initial_state_fingerprint = diagnostics.parent_fingerprint.clone();
+    diagnostics.parent_independent_depth_mm =
+        coupled_independent_source_depth(pieces, &parent_placements, fast_settings).ok();
+    diagnostics.attempted = true;
+
+    let (global_diagnostics, repaired) =
+        global_legalize(pieces, &parent_placements, fast_settings, bound_mm);
+    diagnostics.cap_exhausted = global_diagnostics.cap_exhausted.clone();
+    match repaired {
+        Some(repaired) => {
+            diagnostics.complete_states = 1;
+            diagnostics.direct_insertions = global_diagnostics.moved_pieces;
+            diagnostics.exact_valid = true;
+            diagnostics.independent_depth_mm =
+                coupled_independent_source_depth(pieces, &repaired, fast_settings).ok();
+            diagnostics.final_placement_fingerprint =
+                Some(coupled_fast_placement_fingerprint(&repaired));
+            diagnostics.final_placements = coupled_placement_diagnostics(&repaired);
+        }
+        None => {
+            diagnostics.publication_rejections = 1;
+            diagnostics.failure_reason = Some(
+                global_diagnostics
+                    .skipped_reason
+                    .clone()
+                    .or_else(|| global_diagnostics.rejection_reason.clone())
+                    .unwrap_or_else(|| {
+                        "global legalization produced no exact-valid state".to_owned()
+                    }),
+            );
+        }
+    }
+    diagnostics.global_legalization = Some(global_diagnostics);
     diagnostics
 }
 
@@ -4256,6 +4394,36 @@ fn run_ladder_compression_arm(
             }
         }
         row.joint_replacement = Some(outcome.diagnostics);
+    }
+    // Tier four. The three tiers above are all *local*: they move, eject or
+    // re-place the pieces incident to the conflict and hold the rest of the
+    // layout still. The per-component beam proved that on a deep frontier the
+    // pieces of a violation component individually have no in-bound pose - so
+    // the room the component needs is not inside it, and no amount of local
+    // search will find it. The global pass makes every piece a variable, adds
+    // the sheet and this rung's bound as hard constraints on all of them, and
+    // asks for the minimum-norm correction of the whole linearized system at
+    // once; pieces that violate nothing move to make room for pieces that do.
+    // It runs strictly after the local tiers have produced nothing, so like
+    // them it can only add publications to rungs that were already failing.
+    if !row.exact_valid && legalized.is_none() {
+        let (global_diagnostics, repaired) =
+            global_legalize(pieces, &placements, fast_settings, Some(bound_mm));
+        if let Some(repaired) = repaired {
+            match coupled_independent_source_depth(pieces, &repaired, fast_settings) {
+                Ok(repaired_depth_mm) => {
+                    row.global_legalized_depth_mm = Some(repaired_depth_mm);
+                    row.global_legalized_fingerprint =
+                        Some(coupled_fast_placement_fingerprint(&repaired));
+                    legalized = Some((repaired, repaired_depth_mm));
+                    repair_tier = Some(LADDER_REPAIR_TIER_GLOBAL);
+                }
+                Err(error) => {
+                    row.failure_reason = Some(format!("globally legalized state depth: {error}"));
+                }
+            }
+        }
+        row.global_legalization = Some(global_diagnostics);
     }
 
     let exact_valid = row.exact_valid;

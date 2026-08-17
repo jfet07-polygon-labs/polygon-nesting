@@ -1,0 +1,44 @@
+{
+ "milestone": "ABSOLUTE RECORD on the true 5.0/5.0 exact-clearance contract: 159.150 mm, from 164.042 - a 4.892 mm move, and the largest single-mechanism improvement recorded on this branch",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "mechanism": {
+  "name": "mode-26 clamped-sheet ladder compression with the GLOBAL PRESSURE-BALANCED LEGALIZATION fourth repair tier, cascaded and then jointly fixpointed against mode-22 alternation",
+  "step1": "the mode-26 rung runs the clamped separator, which compresses the layout past the rung bound into a state that carries a handful of clearance violations",
+  "step2": "the three local repair tiers - projection, conflict-targeted re-placement, joint per-component re-placement - each refuse it, exactly as the per-component beam certified they must: the violation component's own pieces have no in-bound pose",
+  "step3": "tier four makes the translation of EVERY piece a variable, linearizes each pair's separation requirement around its exact closest-approach witness, adds sheet containment and the rung bound as hard constraints on all 61 pieces, and solves the resulting quadratic program for the minimum-norm correction by Hildreth's method - projected Gauss-Seidel on the dual. Pieces that violate nothing move to make room for pieces that do; the median publishing pass moves 57 of the 61.",
+  "step4": "the state is re-measured exactly, the constraint set regenerated from that measurement, and the round repeated under a trust radius; publication is the authoritative validator's call against the real request",
+  "step5": "the cascade loop feeds each publication back as the next ladder's parent, and mode-22 alternation is interleaved until neither mechanism moves the state"
+ },
+ "lineage": [
+  {"depthMm": 164.042, "source": "record-164.042/pinned-parent-164.042.json"},
+  {"depthMm": 162.488, "via": "mode-26 ladder to 162.5, seed 0, published by tier four at step 7"},
+  {"depthMm": 161.486, "via": "mode-26 ladder to 161.488, seed 0"},
+  {"depthMm": 160.509, "via": "mode-26 ladder to 160.486, seed 0"},
+  {"depthMm": 159.958, "via": "mode-26 ladder to 159.959, seed 1"},
+  {"depthMm": 159.317, "via": "mode-26 ladder to 158.958, seed 1"},
+  {"depthMm": 159.155, "via": "mode-26 ladder to 158.767, seed 1"},
+  {"depthMm": 159.15, "via": "mode-22 alternation, all four seeds"}
+ ],
+ "firstPublication": {
+  "depthMm": 163.411,
+  "via": "mode-26 ladder to 163.5, seed 0",
+  "note": "the very first ladder run with the tier armed already published 0.631 mm below the standing record, on a parent that was a certified 8/8 fixpoint"
+ },
+ "pinnedParent": {
+  "file": "pinned-parent-159.150.json",
+  "independentDepthMm": 159.15,
+  "rawSourceDepthMm": 159.1499863776172,
+  "placementFingerprint": "e934f646912e1b5f741fd99f669c8f320ca461af5e5db4a8b420043eb5b3c154"
+ },
+ "fixpointArms": {
+  "mode26Ladders": {"bounds": [158.85, 158.6, 158.15, 157.55], "seeds": [0, 1], "published": "159.150 on all eight"},
+  "mode22Alternation": {"seeds": [0, 1, 2, 3], "published": "159.150 on all four"},
+  "verdict": "12/12 arms return the incumbent, with the fourth repair tier armed on every one of the ladder arms"
+ },
+ "replayValidation": "modes 27 and 30 on the pinned state both report 0 violating pairs, 0 boundary pieces, 0 material pairs and 0 collision pairs, exactValid AND contractValid, independent depth 159.150 and raw source depth 159.1499863776172",
+ "matchedControl": "every ladder that produced this lineage was run twice, once on the pre-change binary at dda427c and once with the tier armed. The pre-change arm returns the incumbent 164.042 at every bound and seed; the change is the only difference. See ../global-legalization/summary.json.",
+ "context": "gap to the 155 goal closes from 9.042 mm to 4.150 mm; gap to Sparrow's 154.449 on this same contract from 9.593 mm to 4.701 mm.",
+ "driver": "../global-legalization/joint.py, log in joint-cascade.log"
+}

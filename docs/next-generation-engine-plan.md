@@ -1221,3 +1221,105 @@ A perturb-relax experiment must state, and a reviewer must check, what
 the incumbent depth field was set to and what actually bounded the
 relaxation - and a refusal is only a negative when a certificate sits
 behind it.
+
+THE RECORD MOVES 4.892 MM, TO 159.150, AND THE THING THAT MOVED IT IS
+THE ONE MOVE NO REPAIR TIER ON THIS BRANCH COULD MAKE: ASKING A PIECE
+THAT VIOLATES NOTHING TO GET OUT OF THE WAY. The per-component beam's
+negative was correct and its certificate was the clue. Tier three
+proved that the pieces of a deep-frontier violation component
+individually have no in-bound pose - 256 component passes, 509 orders,
+254 swaps, 3810 beam combinations, one component repaired, zero
+publications. Read as a statement about the *layout* rather than about
+the tier, that says the room the component needs is not inside the
+component. Every repair tier the branch had built was local by
+construction: it moves, ejects or re-places the pieces that are
+themselves in conflict and holds the rest of the layout still. None of
+them can reach room three pieces away, at any magnitude, in any
+ordering, under any pose combination. That is not a search failure. It
+is a missing degree of freedom.
+
+Global pressure-balanced legalization (mode 30 unbounded, mode 31 under
+a depth bound, and the fourth mode-26 repair tier) supplies it. Every
+piece of the layout gets a translation variable - all 61, not the two
+or three in the component. Each pair inside a guard band contributes
+one linearized separation row `n_ij . (t_i - t_j) >= target - dist_ij`,
+with the normal taken from the exact closest-approach witness this
+repository already measures; a violating pair's row has a positive
+right-hand side and asks for correction, and a *legal* pair's row has a
+negative one and protects the clearance it already has, which is what
+makes it safe to let the whole layout move. Sheet containment is four
+exact rows per piece per gate - exact rather than linearized, because
+the outer bounds of a translated outline are the translated outer
+bounds - and the depth bound is simply the top row of every piece under
+a clamped sheet, a hard constraint of the program rather than a filter
+applied afterwards. The envelope gate keeps the branch's hard-won
+discipline: it is a boolean, so an overlapping pair's magnitude is
+recovered by bisecting against `polygons_overlap_exact` itself, and a
+pair that has ever overlapped keeps its row for the rest of the run.
+
+The solver is Hildreth's method - projected Gauss-Seidel on the dual of
+`min ||t||^2 subject to A t >= b`. One multiplier per row, swept in a
+fixed order, each moved by its own residual scaled by the row's squared
+norm and clipped at zero, with the primal iterate `t = sum lambda_k
+a_k` carried incrementally. No external solver, no factorization, no
+floating-point order that depends on anything but the layout. The
+non-negative multipliers are the whole mechanism: they *price the
+pressure* a blocked piece exerts on its neighbours, so when the piece
+that must move is wedged, the chain of rows behind it carries the
+correction outward until it reaches slack. The round then applies the
+step under a trust radius sized from the residue's own scale, snaps to
+the canonical grid, re-measures the true geometry, regenerates every
+row from that measurement and repeats - a trust-region SQP whose linear
+model is only ever used to pick a step, never propagated.
+
+It works, and the measurements say why rather than merely that. Over
+438 tier-four invocations this session it published 105 exact-valid
+states, and the shape of a winner is the finding: it moves a **median
+of 57 of the 61 pieces**, with a median worst displacement of 5.5 mm
+and a median mean displacement of 1.4 mm. That is not a repair of the
+violation component. It is a redistribution of the layout, and it is
+precisely the class of move the three local tiers cannot express. The
+matched arms are unambiguous - every record ladder was run twice, once
+on the dda427c binary and once with the tier armed. The base arm
+returns 164.042 at every bound and seed, because 164.042 was a
+certified 8/8 fixpoint; the treated arm publishes 163.411 at bound
+163.5 seed 0, 163.497 at seed 1, and 162.488 at bound 162.5. The very
+first run with the tier armed was already 0.631 mm below the standing
+absolute record, against a previous best increment of 0.016 mm.
+
+Cascaded and then jointly fixpointed against mode-22 alternation, the
+line runs 164.042 -> 162.488 -> 161.486 -> 160.509 -> 159.958 ->
+159.317 -> 159.155 -> **159.150**, and stops there on 12/12 arms: eight
+mode-26 ladders at four bounds and two seeds, with the tier armed on
+every one, plus four mode-22 alternation seeds. Modes 27 and 30 replay
+the pinned state to zero violating pairs, zero boundary pieces,
+`exactValid` and `contractValid`, raw source depth 159.1499863776172.
+The gap to the 155 goal closes from 9.042 mm to 4.150 mm, and the gap
+to Sparrow's 154.449 on this same contract from 9.593 to 4.701.
+
+Two limits are worth stating as plainly as the win. Standalone on a
+certified fixpoint the program is *infeasible* and says so with a
+certificate: mode 31 on the 164.042 record at bounds 163.8, 163.5 and
+163.0 drives all eight to ten boundary violations to zero - the depth
+bound is fully satisfied - and then stalls on two envelope pairs whose
+dual residual sits at exactly their own requirement, because the layout
+is already packed to the contract from the sheet's bottom edge to its
+frontier and there is no translation-only redistribution that reaches
+the bound. The tier is productive only where the *ladder* puts it, on a
+compressed frontier state where the separator has already spent the
+slack and left a repair problem behind. And the from-scratch line moves
+only 0.836 mm, to a 164.096 fixpoint: its 164.4 ladder is a clean
+tier-four negative and only the 164.0 rung breaks through. This is, so
+far, a mechanism for deepening an already deep basin far better than
+one for reaching it, which leaves the owner's from-scratch acceptance
+criterion exactly where it was. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/{global-legalization,record-159.150,from-scratch-164.096}/.
+
+The lesson generalizes past this mechanism. Three tiers of increasingly
+clever *local* search all bottomed out on the same residue, and each
+one's negative was clean, instrumented and correct. What was missing
+was never a better local search; it was a variable per piece and a dual
+variable per constraint. When a sequence of local mechanisms all fail
+on the same class, the next question to ask is not "what is a smarter
+local move" but "what degree of freedom does every one of these
+mechanisms lack".

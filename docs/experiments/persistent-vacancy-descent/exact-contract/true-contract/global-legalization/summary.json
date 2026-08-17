@@ -1,0 +1,120 @@
+{
+ "experiment": "GLOBAL PRESSURE-BALANCED LEGALIZATION: every piece a variable, the whole linearized separation system solved at once for the minimum-norm correction - the mechanism the external adversarial review proposed after the per-component beam proved the deep-frontier residue has no local answer",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "commitBase": "dda427c",
+ "premise": {
+  "whatWasStuck": "mode-26 clamped ladders compress the record layout's frontier to 158.9-163.5 mm, but every terminal state carries violation components the three local repair tiers refuse. The per-component beam (joint-replacement-per-component/) certified why: 104 tier-three invocations, 256 component passes, 509 orders, 254 swaps, 3810 beam combinations, ONE component repaired, zero publications. The pieces of a violation component individually have no in-bound pose.",
+  "whatThatImplies": "the room the component needs is not inside the component. Sequential repair - which by construction only ever moves pieces that are themselves in conflict - cannot find it at any magnitude, any ordering or any pose combination. Only a solver that can ask a piece violating NOTHING to move can.",
+  "reviewProposal": "linearize the separation constraints from exact closest-feature witnesses, make (dx, dy) of every piece a variable, add containment and the depth bound as hard constraints, and solve the resulting QP; re-measure exactly, regenerate constraints, iterate."
+ },
+ "implementation": {
+  "where": "crates/polygon-nesting-core/src/search/general_micro_legalization.rs, `global_legalize` - deliberately the same module as the local pass, sharing its witnesses, contracts, envelope predicate and grid discipline so the two can never disagree about what a violation is",
+  "variables": "a translation (dx_i, dy_i) for EVERY piece of the layout, 2n scalars; poses frozen (no rotation, no mirror)",
+  "separationRows": "for every pair inside a guard band, `n_ij . (t_i - t_j) >= target - dist_ij`, with n_ij the unit closest-approach witness measured exactly. A VIOLATING pair's row has a positive right-hand side and asks for correction; a LEGAL pair's row has a negative one and protects the clearance it already has. The guard band is the target plus twice the round's trust radius, so a pair outside it provably cannot be brought into contact by one round's step.",
+  "envelopeRows": "the collision gate is a boolean, so an overlapping pair's magnitude is recovered by bisecting against `polygons_overlap_exact` itself (24 steps), exactly as the local pass does. A pair that has ever overlapped keeps its row for the rest of the run - the pass's cutting-plane memory - held at the margin once it comes apart, which is what stops it oscillating back.",
+  "containmentRows": "four rows per piece per gate, EXACT rather than linearized: the outer bounds of a translated outline are the translated outer bounds. The depth bound is the `long axis, negative sign` row of every piece, entered by clamping the sheet long axis to the bound. Margin is applied per side and only to a side that actually overruns, so a piece resting legally against one edge is not dragged inward because the opposite edge needed repair.",
+  "solver": "Hildreth's method - projected Gauss-Seidel on the DUAL of `min ||t||^2 s.t. A t >= b`. One multiplier per row, swept in a fixed order, each moved by its own residual scaled by the row's squared norm and clipped at zero, with the primal iterate `t = sum_k lambda_k a_k` maintained incrementally. With the multipliers non-negative the fixpoint is the exact minimum-norm point of the polyhedron. No external solver, no matrix factorization, no floating-point order that depends on anything but the layout.",
+  "whyMinimumNormIsTheRedistribution": "when the piece that must move is blocked, the chain of rows behind it carries the correction outward and pieces that violate nothing move to make room. That is precisely the degree of freedom no sequential repair has, because nothing in a sequential repair ever asks a legal piece to move.",
+  "outerLoop": "trust-region SQP. Each round measures the true geometry, regenerates every row from that measurement, solves the QP once, scales the step uniformly to the trust radius, snaps to the canonical 0.001 mm grid, and re-measures. The linear model is never propagated - it only ever picks a step.",
+  "bounds": {
+   "GLOBAL_LEGALIZATION_ROUNDS": 24,
+   "GLOBAL_LEGALIZATION_DUAL_SWEEPS": 512,
+   "GLOBAL_LEGALIZATION_ESCALATIONS": 3,
+   "GLOBAL_LEGALIZATION_TRUST_FACTOR": "1.0 x the round's own worst deficit, floored on the contract",
+   "GLOBAL_LEGALIZATION_CAP_FACTOR": "16 x the initial worst deficit, cumulative per piece",
+   "noAdmissionBound": "there is deliberately NO deficit admission bound and NO component limit. Refusing a large residue is what the local pass is for; this one exists for exactly the residues the local pass refuses."
+  },
+  "budget": "`GlobalLegalizationBudget` charges each round its analytic worst case; the sum, `global_legalization_worst_case_pair_visits`, is asserted against `quotas.max_experimental_pair_visits` in `bounded_reinsertion_fits_the_construction_budget` in the same commit, as is the envelope-build ceiling. No new aggregate quota term. Measured spend on mixed-61: 209993 probes at the worst, against 11243520 funded - 1.9%.",
+  "publication": "never on its own authority. A layout comes back only after `validate_and_measure_placements` accepted it against the REAL request, not the clamped sheet."
+ },
+ "wiring": {
+  "tier4": "`run_ladder_compression_arm`, strictly after the micro-legalizer, the conflict-targeted re-placement and the joint per-component re-placement have all produced nothing. A tier-four state that does not IMPROVE the ladder's incumbent deliberately does not consume the rung's retry budget - without the tier the arm produced no candidate at all and those attempts were still spent looking, so consuming them on a state that beats nothing would REMOVE draws rather than add publications. That guard is the one way a strictly later tier could have made the ladder worse.",
+  "mode30": "standalone probe under the request's own sheet - the global analogue of mode 27",
+  "mode31": "standalone probe under an explicit depth bound (CLI argument 45) - the standalone form of the tier a mode-26 rung runs",
+  "modeCeiling": "raised from 29 to 31"
+ },
+ "measurements": {
+  "matchedLadderArms": {
+   "description": "every ladder run twice, once on the pre-change binary at dda427c and once with the tier armed, so any difference is attributable to the tier and nothing else",
+   "rows": [
+    {"parent": "record-164.042", "bound": 163.5, "seed": 0, "base": 164.042, "treat": 163.411, "frontierBase": 163.48, "frontierTreat": 163.411, "tier4": "8 invocations, 8 published"},
+    {"parent": "record-164.042", "bound": 163.5, "seed": 1, "base": 164.042, "treat": 163.497, "frontierBase": 163.468, "frontierTreat": 163.475, "tier4": "7 invocations, 7 published"},
+    {"parent": "record-164.042", "bound": 162.5, "seed": 0, "base": 164.042, "treat": 162.488, "frontierBase": 162.494, "frontierTreat": 162.488, "tier4": "16 invocations, 13 published"},
+    {"parent": "from-scratch-164.932", "bound": 164.4, "seed": 0, "base": 164.932, "treat": 164.932, "frontierBase": 164.392, "frontierTreat": 164.392, "tier4": "4 invocations, 0 published"},
+    {"parent": "from-scratch-164.932", "bound": 164.0, "seed": 0, "base": null, "treat": 164.105, "frontierTreat": 164.005, "tier4": "8 invocations, 2 published"}
+   ],
+   "verdict": "the base arm returns the incumbent on every one of the record ladders - 164.042, the certified 8/8 fixpoint - and the treated arm publishes below it on all three. The first tier-four publication, 163.411, was already 0.631 mm below the standing absolute record."
+  },
+  "standaloneProbes": {
+   "description": "mode 30 and mode 31 on the two pinned parents, before any cascade",
+   "record-mode30": "0 violating pairs, 0 boundary pieces, returns the incumbent 164.042 exact-valid - the instrument agrees the record is clean",
+   "record-mode31-163.8": "8 boundary pieces before (max deficit 0.303 mm), 0 after: the depth bound is fully satisfied. 2 envelope pairs appear that the program then cannot separate; the dual residual stalls at 0.3105 mm, which is exactly that pair's requirement (2 x 0.15125 push + 0.008 margin). No publication.",
+   "record-mode31-163.5": "9 boundary pieces before (0.603 mm), 0 after; 2 pairs, residual 0.6105 mm; 52 pieces moved, max displacement 0.821 mm. No publication.",
+   "record-mode31-163.0": "10 boundary pieces before (1.103 mm), 0 after; 2 pairs, residual 1.1105 mm; 56 pieces moved, max displacement 2.006 mm. No publication.",
+   "reading": "standalone, from a CERTIFIED FIXPOINT, the program is infeasible and says so with a certificate: the layout is already packed to the contract from the sheet's bottom edge to its frontier, so there is no translation-only redistribution that reaches the bound. The tier is productive only where the ladder puts it - on a COMPRESSED frontier state, where the separator has already spent the slack and the residue is a repair problem rather than a compression one."
+  },
+  "tierFourStatistics": {
+   "scope": "every mode-26 run of this session (required ladders, both cascades, both joint loops, certification arms)",
+   "invocations": 438,
+   "attempted": 438,
+   "geometryResolved": 105,
+   "exactValidPublications": 105,
+   "displacementCapped": 1,
+   "probeBudgetExhausted": 0,
+   "violatingPairsBefore": "min 0, p50 3, p90 5, max 8",
+   "boundaryPiecesBefore": "min 0, p50 2, p90 4, max 6",
+   "violatingPairsAfter": "min 0, p50 3, p90 63, max 73",
+   "boundaryPiecesAfter": "min 0, p50 0, p90 2, max 15",
+   "movedPieces": "min 3, p50 57, p90 59, max 61 of 61",
+   "maxDisplacementMm": "min 0.043, p50 5.506, p90 12.803, max 24.427",
+   "meanDisplacementMm": "min 0.002, p50 1.391, p90 3.659, max 11.355",
+   "maxDualResidualMm": "min 0.0, p50 0.2443, p90 1.0356, max 8.7445",
+   "rows": "505-688 per system, of which 17-200 are pair rows and 488 are containment rows (8 per piece)",
+   "pairVisits": "516-209993 against a funded ceiling of 11243520",
+   "reading": "a 24% hit rate, and the shape of the winners is the point: a publishing pass moves a MEDIAN OF 57 OF THE 61 PIECES, with a median worst displacement of 5.5 mm. That is not a repair of the violation component - it is a redistribution of the whole layout, and it is exactly the move class the three local tiers cannot express. On the 333 failures the residue can end up worse than it started (p90 63 violating pairs after); nothing is published in those cases, and the ladder's own state is untouched because the tier never writes back into the compression frontier."
+  }
+ },
+ "milestones": {
+  "absoluteRecord": {
+   "depthMm": 159.15,
+   "rawSourceDepthMm": 159.1499863776172,
+   "previous": 164.042,
+   "improvementMm": 4.892,
+   "lineage": [164.042, 162.488, 161.486, 160.509, 159.958, 159.317, 159.155, 159.15],
+   "pinned": "record-159.150/pinned-parent-159.150.json",
+   "fingerprint": "e934f646912e1b5f...",
+   "fixpoint": "12/12 arms - mode-26 ladders at four bounds (incumbent minus 0.3/0.55/1.0/1.6) x two seeds and mode-22 alternation at four seeds - all return the incumbent",
+   "replayValidation": "modes 27 and 30 both report 0 violating pairs, 0 boundary pieces, exactValid AND contractValid, independent depth 159.150 and raw source depth 159.1499863776172",
+   "gapToSparrow": "Sparrow 3 s on this same contract is 154.449; the gap closes from 9.593 mm to 4.701 mm"
+  },
+  "fromScratch": {
+   "depthMm": 164.096,
+   "rawSourceDepthMm": 164.09558495038524,
+   "previous": 164.932,
+   "improvementMm": 0.836,
+   "lineage": [164.932, 164.105, 164.096],
+   "pinned": "from-scratch-164.096/pinned-parent-164.096.json",
+   "fingerprint": "088d4cb6ed791d97...",
+   "fixpoint": "12/12 arms on the same schedule",
+   "note": "the from-scratch line moves, but by a fraction of what the record line moves. Its 164.4 ladder is a clean tier-four negative (4 invocations, 0 published) and only the 164.0 rung breaks through. The mechanism needs a compressed frontier to work on, and the from-scratch basin's frontier is shallower."
+  }
+ },
+ "regressions": {
+  "mode20Anchor": "salt 320.000 from /var/lib/t3/tmp/ex5-seed-native.json at the DEFAULT allowance -> 206.869, fingerprint 8a7737381238fa4d, on both binaries. (At allowance 0.0005 the same anchor reads 206.861 / 3b9ce275f4d6e6ec, also identical on both - the pinned anchor is a default-allowance number.)",
+  "mode22Record": "record parent, target 164.842, allowance 0.0005 -> 164.042, fingerprint e407a8984fb05517, on both binaries",
+  "bitIdentity": "13 matched pairs - modes 0, 11, 17, 20, 22, 23, 24, 27, 28, 29 on the record parent and 27, 28, 29 on the from-scratch parent - are byte-identical between the dda427c binary and this one, over the WHOLE run JSON, with only `executableSha256` and the wall-clock fields excluded. See parity.py / compare.py.",
+  "mode26": "changes only by adding publications, which is the one exception the contract allows. The base arm of every matched ladder above is unchanged."
+  },
+ "unitTests": {
+  "solvableTwoPiece": "a 2 mm shortfall - four times the micro-legalizer's admission bound, the residue class `a_millimetre_scale_pair_deficit_is_refused_by_projection` documents as unreachable. The global pass solves it and the correction is SHARED evenly between the two squares, which is what minimum-norm means.",
+  "solvableThreePieceViaANonViolatingPiece": "three 20x200 mm slabs in an 82 mm corridor. `a` and `b` are 3 mm apart against a 5 mm contract; `c` is 5.01 mm from `b` and violates nothing. The slabs are too tall to pass each other along the long axis and `a` is 0.5 mm off the sheet edge, so every feasible arrangement puts `c` at 55 mm or beyond - it MUST move by more than a millimetre although it is in no conflict. The pass solves it; a repair that only moves violating pieces cannot.",
+  "depthBoundIsHard": "two legal squares at a depth of 80 mm under a 60 mm bound. Neither violates anything; the bound alone makes it a repair problem and satisfying it needs both to move. The published depth is at or below the bound.",
+  "unsolvableCleanFailure": "two 20 mm squares in a 40 mm sheet, where separating them needs 25.001 mm along an axis with 29.999 mm of usable box. No publication, `resolved` false, a rejection reason naming the feasible fixpoint, displacement inside the cap, no cap exhaustion.",
+  "determinism": "the corridor case and the unsolvable case each run twice; diagnostics and placements compare equal.",
+  "alreadyLegal": "a legal state is reported legal and returned unchanged.",
+  "budgetLedger": "the probe ledger admits exactly (escalations + 1) x rounds charges and refuses the next, and equals the ceiling the quota test asserts."
+ },
+ "verdict": "GLOBAL REDISTRIBUTION REACHES WHAT SEQUENTIAL REPAIR CANNOT, and the margin is the largest single-mechanism move this branch has recorded: 164.042 -> 159.150 mm, 4.892 mm, against a 0.016 mm previous best increment. The reason is visible in the statistics rather than inferred: a publishing pass moves 57 of 61 pieces by a median 5.5 mm, and the pieces that move are overwhelmingly pieces that violate nothing. The per-component beam's negative is upheld and explained rather than overturned - the residue really does have no local answer, and what was missing was not a better local search but the DUAL VARIABLES, which price the pressure a blocked piece exerts on its neighbours and let it propagate outward until it reaches slack. Two honest limits: standalone on a certified fixpoint the program is infeasible and terminates with a certificate rather than a publication, so the tier needs a compressed frontier to work on; and the from-scratch line moves only 0.836 mm, so this is - so far - a mechanism for deepening an already deep basin rather than for reaching one."
+}

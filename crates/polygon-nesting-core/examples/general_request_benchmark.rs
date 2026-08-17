@@ -169,8 +169,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if persistent_vacancy_mode > 29 {
-        return Err("persistent vacancy mode must be between 0 and 29".into());
+    if persistent_vacancy_mode > 31 {
+        return Err("persistent vacancy mode must be between 0 and 31".into());
     }
     let persistent_vacancy_parent_fixture = arguments.next();
     // Modes 22 (alternation fixpoint), 23 (recombination), 24 (bounded-depth
@@ -194,7 +194,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // under that clamp. Mode 29 (standalone joint multi-piece re-placement)
     // reads it the same way as mode 28, but ejects every piece of each
     // pair-bearing violation component rather than a vertex cover of it and
-    // searches over the insertion orders of that whole set.
+    // searches over the insertion orders of that whole set. Mode 30 (global
+    // pressure-balanced legalization) ignores this argument the way mode 27
+    // does and solves the parent under the request's own sheet; mode 31 reads
+    // it as a hard depth bound that enters the global program as a containment
+    // constraint on every piece, which is the tier a mode-26 rung runs.
     let persistent_vacancy_target_depth_mm = arguments
         .next()
         .map(|value| value.parse::<f64>())
