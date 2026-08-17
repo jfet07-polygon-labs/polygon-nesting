@@ -1712,3 +1712,139 @@ its own change with its own outcome risk. The natural order is: settle
 which oracle owns a row (the hazard index or the surrogate collider),
 stop `tracked_piece_score` reinstalling an unmeasured row on a reverted
 move, and only then let a sweep inherit its predecessor's tracker.
+
+## The ladder's floor was in the wrong place, and moving it moved the record
+
+The previous entry ended with a lever and a reason to pull it: the
+accepted orientation rungs were piling up on the ladder's *finest*
+setting, and "a finer rung is the obvious next lever, and the ladder is
+one constant". Pulling it produced a new absolute record on the true
+5.0/5.0 exact-clearance contract - **159.078760 mm raw, from
+159.082637** - and, more usefully, an attribution clean enough that the
+mechanism is no longer in question.
+
+### The floor's justification did not survive arithmetic
+
+The floor was 0.02 degrees, defended on the ground that a finer rung
+"cannot move a vertex of a hand-sized piece by even one placement-grid
+quantum". That is checkable and it is wrong by a factor of thirty-five.
+A rung `d` degrees moves a vertex at radius `r` from the rotation centre
+by `r * d * pi/180`; on a hand-sized 100 mm radius the old floor travels
+0.035 mm against a 0.001 mm pose grid. The rung that actually stops
+being expressible on that radius is nearer 6e-4 degrees. The floor was
+sitting an order of magnitude above the band it was meant to bound, and
+the campaign's own accepted poses - overwhelmingly *at* the floor - were
+the symptom.
+
+So the ladder gained two rungs at the same 5/2 ratio, 0.008 and 0.0032
+degrees, still spelled out rather than computed. Nothing else moved:
+budgets, caps, ejection limits, insertion-order enumeration, the
+pose-swap round, the finalist beam, the bound contract and the exact
+validator are untouched, and the ordering rule is unchanged, so the new
+finest rungs simply lead. The single knock-on is derived, not tuned:
+`ORIENTATION_PERTURBATION_VARIANTS` goes 29 -> 37 and the charged-row
+budget follows it by the rule it already followed, one anchor-local
+budget per variant. Freezing the budget at the old length would truncate
+the stream, which is the failure the constant exists to prevent. The
+ladder test now states the expressibility claim as arithmetic instead of
+prose.
+
+### The A/B is decisive on the arm that matters
+
+A frontier flatten of 0.001 mm on the 159.083624 lineage pin, handed to
+mode 33 at a loose bound, run under both binaries:
+
+| ladder | variants | candidates | orientation acceptances | rungs accepted | published |
+|---|---:|---:|---:|---|---|
+| old (7 rungs) | 1015 | 71050 | 12 | 4x mirror, 4x 0.125, 4x mirror-0.125 | **nothing** |
+| new (9 rungs) | 74 | 5180 | 1 | 1x **0.0032** | **159.08262371460316** |
+
+The old ladder exhausts its insertion orders and fails with "no
+insertion order re-placed the 1 violation components inside the bound".
+The new ladder accepts one pose at a rung that did not previously exist
+and publishes an exact-valid, contract-valid state - on a *fourteenth*
+of the candidate volume, because it succeeds on the first insertion
+order instead of enumerating its way to a refusal. A finer rung is not a
+bigger search; it is a search that does not need to be big.
+
+### The descent, and where the improvement actually came from
+
+Cascading from 159.082637 with modes 33 (flatten and nudge entries),
+22 and 31, plus mode 33 on flattened states of the three lineage pins,
+reached a fixpoint in four rounds and 110 arms:
+
+| via | tier | raw | delta | accepted rung |
+|---|---|---:|---:|---|
+| flatten 0.001 of lineage pin 159.083624 | lineage | 159.08262371460316 | -0.000014 | -0.0032 |
+| nudge rank 1 by 0.006 | nudge | 159.08176040364793 | -0.000863 | -0.008 |
+| flatten 0.003 | flatten | 159.07876040364795 | -0.003000 | -0.0032 |
+
+Every adoption is one orientation acceptance at one of the two new
+rungs, with `acceptedAnchorLocal = 0` and `acceptedStation = 0` - the
+orientation stream did all of the work on all three, and the legacy
+streams none of it. Across all 110 arms the rotation family's accepted
+rungs are 27 at 0.0032 and 13 at 0.008 and **zero at 0.02 or coarser**.
+The distribution did not merely shift toward the new rungs; it vacated
+the old floor completely, which says the previous campaign's
+concentration at 0.02 was a boundary artefact rather than a preference.
+
+The geometric diff against the old record closes the argument. Two
+pieces rotate, both copies of `54345eb7-a37e-45eb-b0fd-eccffdfa14cc` -
+the depth-setting family - by -0.0064 and -0.008 degrees, with zero
+mirror flips and only two pieces translated. Both deltas are exact
+integer multiples of rungs the old ladder could not express: -0.0064 is
+two applications of the new floor, -0.008 is one application of the
+rung above it. There is no reading of that layout on which the old
+ladder could have produced it.
+
+Basin diversity paid, once and cheaply: the first adoption came from a
+*lineage* pin 0.001 mm worse than the incumbent, not from the incumbent
+itself. Carrying the runner-up basins forward cost four arms a round and
+supplied the entry that broke the round open.
+
+### A certified fixpoint, which the previous run could not claim
+
+The new state is pinned at
+`finer-ladder/pinned-parent-159.079.json`, sha256 `1535067297279e46...`,
+fingerprint `e28fba007f8031d4...`, and replays exactValid and
+contractValid reproducing raw 159.07876040364795 on modes 27, 30 and 22
+seeds 0-3. The full certification battery then ran 40 further probe
+arms on it - mode 22 seeds 0-3, mode 26 ladders x6, mode 31 tiny steps
+x4, mode 27, mode 30, and the whole frontier-flatten delta grid handed
+to mode 33 under *both* ladder generations - and **nothing published
+below the incumbent**. The previous entry had to qualify its fixpoint
+("of everything except the mode-26 ladder tier... stopped part-way
+through round four for time"); this one does not. Mode 26 was kept out
+of the descent rounds, where it had adopted nothing in four rounds at
+~48 s an arm, and spent only here, where its six arms all reproduce the
+incumbent exactly.
+
+### The from-scratch line moved, and not for the reason being tested
+
+The from-scratch basin at 164.038568 did finally produce a
+sub-incumbent publication, 164.037568, in 24 arms. It is not the
+rungs. The A/B says so: the base-commit binary reproduces that arm
+bit-identically, same raw and same fingerprint `49f094d7e59a9008`, and
+the accepted pose is a pure mirror flip the old ladder already carried.
+What unlocked it is the finer *flatten* delta grid - 0.001 mm, a
+perturbation this line had never been given, since the old grid ran
+0.002/0.004/0.01/0.02. That is worth recording precisely because it is
+the wrong answer to the question asked: a negative for the ladder and a
+positive for the entry grid, and conflating them would have credited the
+mechanism with someone else's result.
+
+### What is left
+
+Goal threshold 155.000 mm remains far off; 159.078760 is 0.003877 mm of
+absolute improvement and the honest framing is unchanged from the last
+entry - the value is in the mechanism, not the millimetre. Two things
+the evidence now points at. First, the ladder floor is still a floor:
+the accepted rungs have simply re-piled on the *new* finest rung, 27 of
+40 rotation acceptances, so the same argument that justified this change
+justifies testing another two rungs down, and the arithmetic says there
+is roughly a decade of headroom before 6e-4 degrees. Second, the entry
+grid is a lever in its own right and a cheaper one - the from-scratch
+result came from adding a single flatten delta, and the record line's
+first adoption came from perturbing a *runner-up* basin rather than the
+incumbent. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/finer-ladder/.
