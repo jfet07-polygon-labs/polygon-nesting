@@ -165,6 +165,36 @@ const COUPLED_SEPARATOR_STRIKE_LIMIT: usize = 3;
 const COUPLED_SEPARATOR_CONTRACTION_RATIO: f64 = 0.001;
 #[cfg(feature = "jagua-experimental")]
 const COUPLED_SEPARATOR_SUBSTANTIAL_RATIO: f64 = 0.98;
+/// How far two readings of one pole pressure may sit apart, in `f32` units in
+/// the last place, before a
+/// [`CoupledRollbackComparison::ToleratesPoleRounding`] arm calls them
+/// different measurements rather than one measurement rounded twice.
+///
+/// The pressure is an `f32` pole-pair series; reversing the summation order
+/// perturbs the last bits of the accumulator and of the pole coordinates
+/// feeding it, so the gap is a handful of ulps rather than exactly one, and it
+/// grows with the number of pole pairs summed.
+///
+/// The value is bracketed rather than guessed. Below it: the widest gap
+/// measured over ten mixed-61 mode-26 ladders was 7 ulps. Above it, by a wide
+/// margin: the only agreement the engine actually promises between the two
+/// readings is the `1e-3` *relative* bound pinned by
+/// `collision_pressure_is_direction_dependent_in_its_low_bits`, which is some
+/// 8000 ulps. Sitting at 64 leaves an order of magnitude over what the search
+/// produces while staying two orders inside what the geometry guarantees, so a
+/// genuine bookkeeping drift - which is a relative-`O(1)` disagreement, not a
+/// rounding one - is still refused.
+///
+/// It is measured, not assumed: every arm reports the widest gap it observed
+/// next to the count it tolerated, so a run that needs more than this says so
+/// instead of silently succeeding.
+#[cfg(feature = "jagua-experimental")]
+const COUPLED_ROLLBACK_PRESSURE_ULP_BUDGET: u32 = 64;
+/// The prefix a contraction target's failure reason carries when a rollback
+/// comparison refused the rescore. Shared so the ladder can recognise the abort
+/// it is measuring instead of matching a phrase by hand.
+#[cfg(feature = "jagua-experimental")]
+const ROLLBACK_DISAGREEMENT_ABORT: &str = "rollback tracker disagrees with a complete rescore";
 #[cfg(feature = "jagua-experimental")]
 const COUPLED_SEPARATOR_WORKER_QUERY_CAP: usize = 420_000;
 #[cfg(feature = "jagua-experimental")]
@@ -523,6 +553,16 @@ pub struct GeneralPersistentVacancyLadderStepDiagnostics {
     /// legalized the target itself.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub published_repair_tier: Option<String>,
+    /// How many rollback comparisons this rung's arms accepted as the same
+    /// reading despite a bitwise difference, summed over every arm and every
+    /// contraction target. Under the mode-26 clamp these are the rollbacks the
+    /// bit-exact rule used to abort the target over; see the
+    /// `CoupledRollbackComparison` policy.
+    #[serde(skip_serializing_if = "usize_is_zero")]
+    pub rollback_disagreements_tolerated: usize,
+    /// The widest `f32`-ulp gap any of those comparisons saw, tolerated or not.
+    #[serde(skip_serializing_if = "u32_is_zero")]
+    pub rollback_disagreement_max_pressure_ulps: u32,
     /// The deepest exact-valid depth known after this rung.
     pub published_depth_mm_after: f64,
     /// The compression frontier's measured depth after this rung, feasible or
@@ -562,6 +602,25 @@ pub struct GeneralPersistentVacancyLadderArmDiagnostics {
     pub arm_targets_attempted: usize,
     pub arm_targets_accepted: usize,
     pub epochs_improved: usize,
+    /// How many rollback comparisons this arm's contraction targets accepted as
+    /// the same reading despite a bitwise difference.
+    #[serde(skip_serializing_if = "usize_is_zero")]
+    pub rollback_disagreements_tolerated: usize,
+    /// The widest `f32`-ulp gap any of those comparisons saw, tolerated or not.
+    /// A value at or above `COUPLED_ROLLBACK_PRESSURE_ULP_BUDGET` means the
+    /// arm hit the edge of the budget and the budget is the thing under test.
+    #[serde(skip_serializing_if = "u32_is_zero")]
+    pub rollback_disagreement_max_pressure_ulps: u32,
+    /// Whether this arm's separator run ended on a rollback the comparison
+    /// refused. That is the abort the tolerant policy exists to remove, so it
+    /// is reported as its own flag rather than left inside the skip reason.
+    #[serde(skip_serializing_if = "bool_is_false")]
+    pub aborted_by_rollback_disagreement: bool,
+    /// Which rollback comparison the clamped separator ran under. Every mode-26
+    /// rung reports `toleratesPoleRounding`; the field is the ladder's own
+    /// record that the clamp, and only the clamp, opted in.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rollback_comparison: Option<String>,
     /// Residual loss of the arm's terminal state, when it ended on a failed
     /// target.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1303,6 +1362,13 @@ pub struct GeneralCoupledSeparatorArmDiagnostics {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub terminal_boundary_violations: Option<usize>,
     pub skipped_reason: Option<String>,
+    /// Which rollback comparison this arm's contraction targets ran under, when
+    /// it was anything other than the bit-exact default. `None` is the exact
+    /// comparison, which is every arm outside the
+    /// mode-26 sheet clamp, so the field never appears in those modes'
+    /// diagnostics.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rollback_comparison: Option<String>,
     pub targets: Vec<GeneralCoupledSeparatorTargetDiagnostics>,
 }
 
@@ -1314,6 +1380,21 @@ pub struct GeneralCoupledSeparatorPlacementDiagnostics {
     pub mirrored: bool,
     pub translate_short_axis: f64,
     pub translate_long_axis: f64,
+}
+
+/// Serialization guards for counters that are only ever non-zero on the
+/// mode-26 tolerant path, so every other mode's diagnostics stay byte-for-byte
+/// what they were before the counter existed.
+fn usize_is_zero(value: &usize) -> bool {
+    *value == 0
+}
+
+fn u32_is_zero(value: &u32) -> bool {
+    *value == 0
+}
+
+fn bool_is_false(value: &bool) -> bool {
+    !*value
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -1331,6 +1412,18 @@ pub struct GeneralCoupledSeparatorTargetDiagnostics {
     pub strikes: usize,
     pub rollbacks: usize,
     pub full_rescore_agreements: usize,
+    /// How many loss magnitudes this target's rollback comparisons accepted as
+    /// the same reading despite differing bitwise. Always `0` - and omitted
+    /// from the serialized diagnostics - for an arm running the default exact
+    /// comparison, which is every arm outside the mode-26 sheet clamp.
+    #[serde(skip_serializing_if = "usize_is_zero")]
+    pub rollback_disagreements_tolerated: usize,
+    /// The widest gap, in `f32` units in the last place, between two readings
+    /// of one magnitude that differed bitwise - whether or not it was
+    /// tolerated. This is what makes the tolerance budget measurable rather
+    /// than assumed.
+    #[serde(skip_serializing_if = "u32_is_zero")]
+    pub rollback_disagreement_max_pressure_ulps: u32,
     pub initial_raw_loss: f64,
     pub minimum_raw_loss: f64,
     pub final_raw_loss: f64,
@@ -1951,6 +2044,54 @@ enum CoupledSeparatorArm {
     Treatment,
 }
 
+/// How a coupled-separator arm compares its incremental rollback tracker
+/// against the complete rescore that authorises a rollback.
+///
+/// The two readings of one collision pair are the *same measurement* taken
+/// from opposite sides. [`JaguaHazardIndex::collision_pressure`] sums an `f32`
+/// pole-pair series over a freshly transformed scratch polygon for the moving
+/// piece and the committed layout shape for the fixed one; swapping the roles
+/// swaps which side comes from which pipeline and reverses the summation
+/// order. The incremental tracker keeps whichever reading the *last moved*
+/// piece produced, while a complete rescore always reads a pair from its
+/// lower-indexed piece, so the two can differ in the low `f32` bits of a value
+/// that is mathematically identical.
+///
+/// `Exact` demands bitwise equality anyway, which is how every arm outside the
+/// mode-26 sheet clamp has always behaved and is what keeps those modes'
+/// accepted states bit-identical. It is the default, and it is deliberately
+/// *not* something a caller can turn off globally: the variant is chosen at
+/// each arm invocation.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) enum CoupledRollbackComparison {
+    /// Bitwise equality on every field of the tracker. Any low-bit asymmetry
+    /// aborts the contraction target.
+    #[default]
+    Exact,
+    /// Structure exactly, magnitudes to within the pole-pressure rounding
+    /// floor: piece counts, row counts, pair indices and violation counts must
+    /// still match bit for bit, but two loss magnitudes that agree to within
+    /// [`COUPLED_ROLLBACK_PRESSURE_ULP_BUDGET`] `f32` units in the last place
+    /// are treated as the same reading.
+    ///
+    /// Only the mode-26 clamped-sheet ladder runs its arms this way. Tolerated
+    /// disagreements are counted into the ladder diagnostics rather than
+    /// swallowed.
+    ToleratesPoleRounding,
+}
+
+impl CoupledRollbackComparison {
+    /// The diagnostics label for a non-default comparison. `Exact` has no
+    /// label, so an arm that never opted in serializes exactly as it did
+    /// before the policy existed.
+    fn label(self) -> Option<&'static str> {
+        match self {
+            Self::Exact => None,
+            Self::ToleratesPoleRounding => Some("toleratesPoleRounding"),
+        }
+    }
+}
+
 #[cfg(feature = "jagua-experimental")]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum CoupledTerminalPolicy {
@@ -2240,6 +2381,35 @@ pub fn improve_complete_layout_with_pinned_vacancy_parent(
     pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
     secondary_pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
 ) -> Result<GeneralRelaxedOutcome, GeneralFastError> {
+    improve_complete_layout_under_rollback_comparison(
+        pieces,
+        fast_settings,
+        relaxed_settings,
+        incumbent,
+        pinned_vacancy_parent,
+        secondary_pinned_vacancy_parent,
+        CoupledRollbackComparison::Exact,
+    )
+}
+
+/// The relaxed entry point with the coupled separator's rollback comparison
+/// policy made explicit.
+///
+/// Every public caller goes through
+/// [`improve_complete_layout_with_pinned_vacancy_parent`], which pins
+/// [`CoupledRollbackComparison::Exact`]; the policy is a parameter rather than
+/// a setting precisely so that no configuration can widen it for a mode that
+/// did not ask. The one caller that asks is the mode-26 ladder, whose rungs run
+/// under their own sheet clamp.
+pub(crate) fn improve_complete_layout_under_rollback_comparison(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    incumbent: &GeneralFastResult,
+    pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
+    secondary_pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
+    rollback_comparison: CoupledRollbackComparison,
+) -> Result<GeneralRelaxedOutcome, GeneralFastError> {
     validate_relaxed_settings(relaxed_settings)?;
     let mut diagnostics = GeneralRelaxedDiagnostics::default();
     if pieces.is_empty() {
@@ -2266,6 +2436,7 @@ pub fn improve_complete_layout_with_pinned_vacancy_parent(
                 incumbent,
                 pinned_vacancy_parent,
                 secondary_pinned_vacancy_parent,
+                rollback_comparison,
             ));
         }
         return Ok(GeneralRelaxedOutcome {
@@ -2620,6 +2791,7 @@ pub fn improve_complete_layout_with_pinned_vacancy_parent(
             &protected,
             pinned_vacancy_parent,
             secondary_pinned_vacancy_parent,
+            rollback_comparison,
         ));
     }
     Ok(GeneralRelaxedOutcome {
@@ -2714,6 +2886,7 @@ fn run_coupled_dynamic_separator_experiment<'a>(
     protected: &GeneralFastResult,
     pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
     secondary_pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
+    rollback_comparison: CoupledRollbackComparison,
 ) -> GeneralCoupledSeparatorDiagnostics {
     let skipped = coupled_separator_configuration_error(relaxed_settings);
     if let Some(reason) = skipped {
@@ -2773,6 +2946,7 @@ fn run_coupled_dynamic_separator_experiment<'a>(
             protected,
             CoupledSeparatorArm::Control,
             CoupledTerminalPolicy::None,
+            rollback_comparison,
             catalog.clone(),
         );
         let treatment = run_coupled_separator_arm(
@@ -2782,6 +2956,7 @@ fn run_coupled_dynamic_separator_experiment<'a>(
             protected,
             CoupledSeparatorArm::Treatment,
             CoupledTerminalPolicy::None,
+            rollback_comparison,
             catalog.clone(),
         );
         let boundary_projection_treatment = run_coupled_separator_arm(
@@ -2791,6 +2966,7 @@ fn run_coupled_dynamic_separator_experiment<'a>(
             protected,
             CoupledSeparatorArm::Treatment,
             CoupledTerminalPolicy::ExactBoundaryProjection,
+            rollback_comparison,
             catalog,
         );
         let conflict_ruin_recreate = Some(run_conflict_ruin_recreate_experiment(
@@ -2896,6 +3072,7 @@ fn run_coupled_dynamic_separator_experiment<'a>(
             fast_settings,
             pinned_vacancy_parent,
             secondary_pinned_vacancy_parent,
+            rollback_comparison,
         );
         let reason = "coupled dynamic separator requires the jagua-experimental feature".to_owned();
         GeneralCoupledSeparatorDiagnostics {
@@ -3512,6 +3689,12 @@ fn run_ladder_compression(
                         row.chain_advanced = true;
                     }
                 }
+                row.rollback_disagreements_tolerated = row
+                    .rollback_disagreements_tolerated
+                    .saturating_add(arm_row.rollback_disagreements_tolerated);
+                row.rollback_disagreement_max_pressure_ulps = row
+                    .rollback_disagreement_max_pressure_ulps
+                    .max(arm_row.rollback_disagreement_max_pressure_ulps);
                 row.arms.push(arm_row);
                 if published_here {
                     break;
@@ -3621,13 +3804,19 @@ fn run_ladder_compression_arm(
         ..GeneralPersistentVacancyLadderArmDiagnostics::default()
     };
     let seed = general_fast_result_seed(warm_placements, seed_depth_mm);
-    let candidate = match improve_complete_layout_with_pinned_vacancy_parent(
+    // The one place the tolerant rollback comparison is armed. A rung runs the
+    // separator against a sheet that does not exist outside this ladder, so its
+    // accepted states are this mode's alone to change; every other caller of
+    // the pipeline keeps the bit-exact rule. See `CoupledRollbackComparison`
+    // for why the exact rule was rejecting rollbacks that were correct.
+    let candidate = match improve_complete_layout_under_rollback_comparison(
         pieces,
         step_settings,
         separator_settings,
         &seed,
         None,
         None,
+        CoupledRollbackComparison::ToleratesPoleRounding,
     ) {
         Ok(outcome) => {
             row.epochs_improved = outcome.diagnostics.epochs_improved;
@@ -3645,6 +3834,23 @@ fn run_ladder_compression_arm(
                     row.separator_skipped_reason = arm.skipped_reason.clone();
                     row.terminal_collision_pairs = arm.terminal_collision_pairs;
                     row.terminal_boundary_violations = arm.terminal_boundary_violations;
+                    row.rollback_disagreements_tolerated =
+                        arm.targets.iter().fold(0usize, |total, target| {
+                            total.saturating_add(target.rollback_disagreements_tolerated)
+                        });
+                    row.rollback_disagreement_max_pressure_ulps = arm
+                        .targets
+                        .iter()
+                        .map(|target| target.rollback_disagreement_max_pressure_ulps)
+                        .max()
+                        .unwrap_or(0);
+                    row.aborted_by_rollback_disagreement = arm.targets.iter().any(|target| {
+                        target
+                            .failure_reason
+                            .as_deref()
+                            .is_some_and(|reason| reason.starts_with(ROLLBACK_DISAGREEMENT_ABORT))
+                    });
+                    row.rollback_comparison = arm.rollback_comparison.clone();
                     // The arm's exact-accepted state when it legalized
                     // something, otherwise its terminal minimum-loss state:
                     // the compressed-but-infeasible layout the arm reached and
@@ -4060,6 +4266,7 @@ fn skipped_coupled_separator_arm(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 #[cfg(feature = "jagua-experimental")]
 fn run_coupled_separator_arm<'a>(
     pieces: &'a [GeneralFastPiece<'a>],
@@ -4068,6 +4275,7 @@ fn run_coupled_separator_arm<'a>(
     protected: &GeneralFastResult,
     arm: CoupledSeparatorArm,
     terminal_policy: CoupledTerminalPolicy,
+    rollback_comparison: CoupledRollbackComparison,
     catalog: Arc<SurrogateCatalog>,
 ) -> CoupledArmOutcome {
     let mut diagnostics = GeneralCoupledSeparatorArmDiagnostics {
@@ -4085,6 +4293,7 @@ fn run_coupled_separator_arm<'a>(
             &protected.placements,
         )),
         final_placements: coupled_placement_diagnostics(&protected.placements),
+        rollback_comparison: rollback_comparison.label().map(str::to_owned),
         ..GeneralCoupledSeparatorArmDiagnostics::default()
     };
     let experiment_seed = relaxed_settings.seed ^ COUPLED_SEPARATOR_SEED_DOMAIN;
@@ -4152,6 +4361,8 @@ fn run_coupled_separator_arm<'a>(
                         strikes: 0,
                         rollbacks: 0,
                         full_rescore_agreements: 0,
+                        rollback_disagreements_tolerated: 0,
+                        rollback_disagreement_max_pressure_ulps: 0,
                         initial_raw_loss: 0.0,
                         minimum_raw_loss: 0.0,
                         final_raw_loss: 0.0,
@@ -4192,6 +4403,7 @@ fn run_coupled_separator_arm<'a>(
             worker_seeds,
             arm,
             CoupledRollbackRescorePolicy::StrictDerivedAgreement,
+            rollback_comparison,
             false,
             catalog.clone(),
             hazard_catalog.clone(),
@@ -4511,7 +4723,14 @@ fn run_precompression_frontier_vacancy_experiment<'a>(
             return diagnostics;
         }
     };
-    if let Some(disagreement) = raw_tracker_disagreement(&failed_score, &checkpoint.minimum.score) {
+    // The precompression frontier experiment is not on the mode-26 path (its
+    // own CLI mode gates it), so it keeps the bit-exact rule.
+    if let Some(disagreement) = raw_tracker_disagreement(
+        &failed_score,
+        &checkpoint.minimum.score,
+        CoupledRollbackComparison::Exact,
+        &mut RollbackComparisonTally::default(),
+    ) {
         diagnostics.skipped_reason = Some(format!(
             "failed checkpoint disagrees with a complete rescore: {disagreement}"
         ));
@@ -4838,6 +5057,7 @@ fn run_precompression_infeasible_handoff<'a>(
         stage_a_worker_seeds,
         CoupledSeparatorArm::Treatment,
         CoupledRollbackRescorePolicy::CanonicalAuthoritativeRows,
+        CoupledRollbackComparison::Exact,
         true,
         checkpoint.catalog.clone(),
         checkpoint.hazard_catalog.clone(),
@@ -4945,6 +5165,7 @@ fn run_precompression_infeasible_handoff<'a>(
         checkpoint.attempt_diagnostics.worker_seeds.clone(),
         CoupledSeparatorArm::Treatment,
         CoupledRollbackRescorePolicy::CanonicalAuthoritativeRows,
+        CoupledRollbackComparison::Exact,
         false,
         checkpoint.catalog.clone(),
         checkpoint.hazard_catalog.clone(),
@@ -5119,6 +5340,7 @@ fn run_precompression_stage_b<'a>(
         checkpoint.attempt_diagnostics.worker_seeds.clone(),
         CoupledSeparatorArm::Treatment,
         CoupledRollbackRescorePolicy::StrictDerivedAgreement,
+        CoupledRollbackComparison::Exact,
         false,
         checkpoint.catalog.clone(),
         checkpoint.hazard_catalog.clone(),
@@ -6617,6 +6839,10 @@ fn run_conflict_ruin_retry<'a>(
         worker_seeds,
         CoupledSeparatorArm::Treatment,
         CoupledRollbackRescorePolicy::StrictDerivedAgreement,
+        // A mode-26 rung runs this side experiment too, but the ladder reads
+        // only the boundary-projection arm, so widening the comparison here
+        // would change nothing the ladder can see. It keeps the exact rule.
+        CoupledRollbackComparison::Exact,
         false,
         checkpoint.catalog.clone(),
         checkpoint.hazard_catalog.clone(),
@@ -6792,10 +7018,12 @@ fn run_coupled_separator_target<'a>(
     worker_seeds: Vec<u64>,
     arm: CoupledSeparatorArm,
     rollback_rescore_policy: CoupledRollbackRescorePolicy,
+    rollback_comparison: CoupledRollbackComparison,
     independent_final_audit: bool,
     catalog: Arc<SurrogateCatalog>,
     hazard_catalog: Arc<JaguaHazardCatalog>,
 ) -> Result<CoupledTargetOutcome, GeneralFastError> {
+    let mut rollback_tally = RollbackComparisonTally::default();
     let pair_visits_per_score = pieces.len().saturating_mul(pieces.len().saturating_sub(1)) / 2;
     let workers = worker_seeds
         .iter()
@@ -6845,6 +7073,8 @@ fn run_coupled_separator_target<'a>(
                     strikes: 0,
                     rollbacks: 0,
                     full_rescore_agreements: 0,
+                    rollback_disagreements_tolerated: 0,
+                    rollback_disagreement_max_pressure_ulps: 0,
                     initial_raw_loss: 0.0,
                     minimum_raw_loss: 0.0,
                     final_raw_loss: 0.0,
@@ -6996,12 +7226,14 @@ fn run_coupled_separator_target<'a>(
                             break;
                         }
                     };
-                    if let Some(disagreement) =
-                        raw_tracker_disagreement(&restored_score, &minimum_raw_score)
-                    {
-                        failure_reason = Some(format!(
-                            "rollback tracker disagrees with a complete rescore: {disagreement}"
-                        ));
+                    if let Some(disagreement) = raw_tracker_disagreement(
+                        &restored_score,
+                        &minimum_raw_score,
+                        rollback_comparison,
+                        &mut rollback_tally,
+                    ) {
+                        failure_reason =
+                            Some(format!("{ROLLBACK_DISAGREEMENT_ABORT}: {disagreement}"));
                         break;
                     }
                     master = LaneOutcome {
@@ -7029,12 +7261,14 @@ fn run_coupled_separator_target<'a>(
                             break;
                         }
                     };
-                    if let Some(disagreement) =
-                        authoritative_raw_tracker_disagreement(&restored_score, &minimum_raw_score)
-                    {
-                        failure_reason = Some(format!(
-                            "rollback tracker disagrees with a complete rescore: {disagreement}"
-                        ));
+                    if let Some(disagreement) = authoritative_raw_tracker_disagreement_under(
+                        &restored_score,
+                        &minimum_raw_score,
+                        rollback_comparison,
+                        &mut rollback_tally,
+                    ) {
+                        failure_reason =
+                            Some(format!("{ROLLBACK_DISAGREEMENT_ABORT}: {disagreement}"));
                         break;
                     }
                     reached_strike_limit = install_canonical_coupled_rollback(
@@ -7102,6 +7336,8 @@ fn run_coupled_separator_target<'a>(
                         &fresh_score,
                         &master.score,
                         rollback_rescore_policy,
+                        rollback_comparison,
+                        &mut rollback_tally,
                     ) {
                         audit_diagnostics.rejection_reason = Some(format!(
                             "final tracker disagrees with a complete rescore: {disagreement}"
@@ -7230,6 +7466,8 @@ fn run_coupled_separator_target<'a>(
         strikes,
         rollbacks,
         full_rescore_agreements,
+        rollback_disagreements_tolerated: rollback_tally.tolerated,
+        rollback_disagreement_max_pressure_ulps: rollback_tally.max_pressure_ulps,
         initial_raw_loss,
         minimum_raw_loss: minimum_raw_score.common_loss(),
         final_raw_loss: master.score.common_loss(),
@@ -7363,8 +7601,15 @@ fn install_canonical_coupled_rollback(
 }
 
 #[cfg(feature = "jagua-experimental")]
-fn raw_tracker_disagreement(first: &PairTracker, second: &PairTracker) -> Option<String> {
-    if let Some(disagreement) = authoritative_raw_tracker_disagreement(first, second) {
+fn raw_tracker_disagreement(
+    first: &PairTracker,
+    second: &PairTracker,
+    comparison: CoupledRollbackComparison,
+    tally: &mut RollbackComparisonTally,
+) -> Option<String> {
+    if let Some(disagreement) =
+        authoritative_raw_tracker_disagreement_under(first, second, comparison, tally)
+    {
         return Some(disagreement);
     }
     if first.incident_raw_loss.len() != second.incident_raw_loss.len()
@@ -7372,7 +7617,7 @@ fn raw_tracker_disagreement(first: &PairTracker, second: &PairTracker) -> Option
             .incident_raw_loss
             .iter()
             .zip(&second.incident_raw_loss)
-            .any(|(first, second)| !equal_within_one_ulp(*first, *second))
+            .any(|(first, second)| !derived_losses_agree(*first, *second, comparison, tally))
     {
         let difference = first
             .incident_raw_loss
@@ -7386,7 +7631,7 @@ fn raw_tracker_disagreement(first: &PairTracker, second: &PairTracker) -> Option
             .unwrap_or_else(|| "incident loss vector length differs".to_owned());
         return Some(difference);
     }
-    if !equal_within_one_ulp(first.boundary_loss, second.boundary_loss) {
+    if !derived_losses_agree(first.boundary_loss, second.boundary_loss, comparison, tally) {
         return Some(format!(
             "boundary loss {:.17e} != {:.17e}",
             first.boundary_loss, second.boundary_loss
@@ -7395,10 +7640,60 @@ fn raw_tracker_disagreement(first: &PairTracker, second: &PairTracker) -> Option
     None
 }
 
+/// Whether two *derived* rollback losses - the per-piece incident sums and the
+/// boundary total - may be treated as the same reading.
+///
+/// These have always been compared to within one `f64` ulp, because they are
+/// running sums whose last bit depends on accumulation order. `Exact` keeps
+/// precisely that rule, so no existing arm changes. A tolerant arm additionally
+/// admits the pole-rounding floor of the terms being summed.
 #[cfg(feature = "jagua-experimental")]
+fn derived_losses_agree(
+    first: f64,
+    second: f64,
+    comparison: CoupledRollbackComparison,
+    tally: &mut RollbackComparisonTally,
+) -> bool {
+    if equal_within_one_ulp(first, second) {
+        return true;
+    }
+    rollback_losses_agree(first, second, comparison, tally)
+}
+
+/// The authoritative comparison under the bit-exact rule, which is what every
+/// arm outside the mode-26 clamp runs. Used by the tests that pin that rule.
+#[cfg(all(test, feature = "jagua-experimental"))]
 fn authoritative_raw_tracker_disagreement(
     first: &PairTracker,
     second: &PairTracker,
+) -> Option<String> {
+    authoritative_raw_tracker_disagreement_under(
+        first,
+        second,
+        CoupledRollbackComparison::Exact,
+        &mut RollbackComparisonTally::default(),
+    )
+}
+
+/// The authoritative rollback comparison, under an explicit comparison policy.
+///
+/// The rows checked are the same ones `Exact` has always checked; `comparison`
+/// only decides how two *loss magnitudes* are judged equal. Everything that
+/// describes the shape of the state - piece count, row counts, pair indices,
+/// boundary violation counts - is compared bit for bit under either policy, so
+/// a tolerant arm can never accept a rollback that disagrees about which pairs
+/// collide or how many boundaries are violated.
+///
+/// `tally` records what the tolerance actually did: how many magnitudes were
+/// tolerated, and the widest `f32`-ulp gap seen across every magnitude
+/// comparison (including one that failed), so the budget stays measurable
+/// rather than assumed.
+#[cfg(feature = "jagua-experimental")]
+fn authoritative_raw_tracker_disagreement_under(
+    first: &PairTracker,
+    second: &PairTracker,
+    comparison: CoupledRollbackComparison,
+    tally: &mut RollbackComparisonTally,
 ) -> Option<String> {
     if first.piece_count != second.piece_count {
         return Some(format!(
@@ -7406,8 +7701,15 @@ fn authoritative_raw_tracker_disagreement(
             first.piece_count, second.piece_count
         ));
     }
-    if first.boundaries != second.boundaries {
+    if first.boundaries.len() != second.boundaries.len() {
         return Some("boundary rows differ".to_owned());
+    }
+    for (first, second) in first.boundaries.iter().zip(&second.boundaries) {
+        if first.violations != second.violations
+            || !rollback_losses_agree(first.raw_loss, second.raw_loss, comparison, tally)
+        {
+            return Some("boundary rows differ".to_owned());
+        }
     }
     if first.boundary_violations != second.boundary_violations {
         return Some(format!(
@@ -7415,22 +7717,93 @@ fn authoritative_raw_tracker_disagreement(
             first.boundary_violations, second.boundary_violations
         ));
     }
-    if first.collision_pairs != second.collision_pairs {
+    if first.collision_pairs.len() != second.collision_pairs.len() {
         return Some("collision rows differ".to_owned());
     }
-    if first.pairs.len() != second.pairs.len()
-        || first
-            .pairs
-            .iter()
-            .zip(&second.pairs)
-            .any(|(first, second)| {
-                first.raw_loss != second.raw_loss
-                    || first.normalization_scale != second.normalization_scale
-            })
-    {
+    for (first, second) in first.collision_pairs.iter().zip(&second.collision_pairs) {
+        if first.0 != second.0
+            || first.1 != second.1
+            || !rollback_losses_agree(first.2, second.2, comparison, tally)
+        {
+            return Some("collision rows differ".to_owned());
+        }
+    }
+    if first.pairs.len() != second.pairs.len() {
         return Some("pair rows differ".to_owned());
     }
+    for (first, second) in first.pairs.iter().zip(&second.pairs) {
+        if first.normalization_scale != second.normalization_scale
+            || !rollback_losses_agree(first.raw_loss, second.raw_loss, comparison, tally)
+        {
+            return Some("pair rows differ".to_owned());
+        }
+    }
     None
+}
+
+/// What a tolerant rollback comparison did, for the ladder diagnostics.
+#[cfg(feature = "jagua-experimental")]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct RollbackComparisonTally {
+    /// Magnitudes that differed bitwise but were accepted as the same reading.
+    tolerated: usize,
+    /// The widest `f32`-ulp gap observed across every magnitude that differed
+    /// bitwise, tolerated or not. `0` means nothing ever differed.
+    max_pressure_ulps: u32,
+}
+
+/// Whether two rollback loss magnitudes may be treated as the same reading.
+#[cfg(feature = "jagua-experimental")]
+fn rollback_losses_agree(
+    first: f64,
+    second: f64,
+    comparison: CoupledRollbackComparison,
+    tally: &mut RollbackComparisonTally,
+) -> bool {
+    if first == second {
+        return true;
+    }
+    let distance = pressure_ulp_distance(first, second);
+    tally.max_pressure_ulps = tally.max_pressure_ulps.max(distance);
+    match comparison {
+        CoupledRollbackComparison::Exact => false,
+        CoupledRollbackComparison::ToleratesPoleRounding => {
+            let tolerated = distance <= COUPLED_ROLLBACK_PRESSURE_ULP_BUDGET;
+            if tolerated {
+                tally.tolerated = tally.tolerated.saturating_add(1);
+            }
+            tolerated
+        }
+    }
+}
+
+/// The gap between two loss magnitudes in `f32` units in the last place.
+///
+/// The dynamic-pole pressure is an `f32` series widened to `f64`
+/// ([`JaguaHazardIndex::collision_pressure`] ends in `f64::from(..)`), so
+/// narrowing back is exact and the `f32` bit distance is the natural unit for
+/// a summation-order disagreement. A magnitude that is genuinely `f64`-native
+/// (a boundary penalty) and differs by an `f64` ulp collapses to the same
+/// `f32`, so it reports `0` and is likewise inside any budget.
+///
+/// Values that are not both finite, or that differ in sign, are infinitely far
+/// apart: those are real disagreements, not rounding.
+#[cfg(feature = "jagua-experimental")]
+fn pressure_ulp_distance(first: f64, second: f64) -> u32 {
+    if first == second {
+        return 0;
+    }
+    if !first.is_finite()
+        || !second.is_finite()
+        || first.is_sign_negative() != second.is_sign_negative()
+    {
+        return u32::MAX;
+    }
+    let (first, second) = (first as f32, second as f32);
+    if !first.is_finite() || !second.is_finite() {
+        return u32::MAX;
+    }
+    first.to_bits().abs_diff(second.to_bits())
 }
 
 #[cfg(feature = "jagua-experimental")]
@@ -7438,13 +7811,15 @@ fn coupled_tracker_disagreement(
     first: &PairTracker,
     second: &PairTracker,
     policy: CoupledRollbackRescorePolicy,
+    comparison: CoupledRollbackComparison,
+    tally: &mut RollbackComparisonTally,
 ) -> Option<String> {
     match policy {
         CoupledRollbackRescorePolicy::StrictDerivedAgreement => {
-            raw_tracker_disagreement(first, second)
+            raw_tracker_disagreement(first, second, comparison, tally)
         }
         CoupledRollbackRescorePolicy::CanonicalAuthoritativeRows => {
-            authoritative_raw_tracker_disagreement(first, second)
+            authoritative_raw_tracker_disagreement_under(first, second, comparison, tally)
         }
     }
 }
@@ -14581,7 +14956,13 @@ mod tests {
         derived_drift.weighted_loss =
             f64::from_bits(canonical.weighted_loss.to_bits().saturating_add(8));
         assert!(authoritative_raw_tracker_disagreement(&canonical, &derived_drift).is_none());
-        assert!(raw_tracker_disagreement(&canonical, &derived_drift).is_some());
+        assert!(raw_tracker_disagreement(
+            &canonical,
+            &derived_drift,
+            CoupledRollbackComparison::Exact,
+            &mut RollbackComparisonTally::default(),
+        )
+        .is_some());
 
         let mut changed = canonical.clone();
         changed.boundaries[0].raw_loss = 4.5;
@@ -14612,6 +14993,249 @@ mod tests {
         assert!(authoritative_raw_tracker_disagreement(&canonical, &changed)
             .as_deref()
             .is_some_and(|reason| reason.starts_with("boundary violation count")));
+    }
+
+    /// The tracker the incremental path builds when the *last moved* piece read
+    /// a pair, next to the one a complete rescore builds reading the same pair
+    /// from its lower-indexed side: one `f32` ulp apart in the pole pressure,
+    /// with every derived sum carrying that difference forward.
+    #[cfg(feature = "jagua-experimental")]
+    fn pole_rounding_pair(ulps: u32) -> (PairTracker, PairTracker) {
+        let pressure = f64::from(3.25f32);
+        let rounded = f64::from(f32::from_bits(3.25f32.to_bits() + ulps));
+        let mut canonical = feasible_tracker(2);
+        canonical.pairs[0].raw_loss = pressure;
+        canonical.incident_raw_loss = vec![pressure, pressure];
+        canonical.collision_pairs = vec![(0, 1, pressure)];
+        canonical.weighted_loss = pressure;
+
+        let mut drifted = canonical.clone();
+        drifted.pairs[0].raw_loss = rounded;
+        drifted.incident_raw_loss = vec![rounded, rounded];
+        drifted.collision_pairs = vec![(0, 1, rounded)];
+        drifted.weighted_loss = rounded;
+        (canonical, drifted)
+    }
+
+    /// The policy pin. The bit-exact rule is what every arm outside the mode-26
+    /// clamp is judged by, and it rejects the pole-rounding asymmetry; the
+    /// tolerant rule accepts it and says so in its tally.
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn rollback_comparison_separates_pole_rounding_from_real_disagreement() {
+        let (canonical, drifted) = pole_rounding_pair(1);
+
+        let mut exact_tally = RollbackComparisonTally::default();
+        assert_eq!(
+            authoritative_raw_tracker_disagreement_under(
+                &canonical,
+                &drifted,
+                CoupledRollbackComparison::Exact,
+                &mut exact_tally,
+            )
+            .as_deref(),
+            Some("collision rows differ"),
+            "the exact rule must keep rejecting the low-bit asymmetry"
+        );
+        assert_eq!(exact_tally.tolerated, 0);
+        assert_eq!(exact_tally.max_pressure_ulps, 1);
+
+        let mut tolerant_tally = RollbackComparisonTally::default();
+        assert!(
+            authoritative_raw_tracker_disagreement_under(
+                &canonical,
+                &drifted,
+                CoupledRollbackComparison::ToleratesPoleRounding,
+                &mut tolerant_tally,
+            )
+            .is_none(),
+            "the tolerant rule must accept one reading of one measurement"
+        );
+        assert!(tolerant_tally.tolerated > 0);
+        assert_eq!(tolerant_tally.max_pressure_ulps, 1);
+
+        // Derived sums travel the same way through the strict-derived variant.
+        assert!(raw_tracker_disagreement(
+            &canonical,
+            &drifted,
+            CoupledRollbackComparison::ToleratesPoleRounding,
+            &mut RollbackComparisonTally::default(),
+        )
+        .is_none());
+    }
+
+    /// Tolerance is a rounding allowance, not a licence. Structure is still
+    /// compared bit for bit, and a magnitude beyond the budget is still an
+    /// abort.
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn tolerant_rollback_comparison_still_rejects_structural_and_large_gaps() {
+        let (canonical, _) = pole_rounding_pair(1);
+        let tolerant = CoupledRollbackComparison::ToleratesPoleRounding;
+
+        let mut changed = canonical.clone();
+        changed.collision_pairs[0].1 = 2;
+        assert_eq!(
+            authoritative_raw_tracker_disagreement_under(
+                &canonical,
+                &changed,
+                tolerant,
+                &mut RollbackComparisonTally::default(),
+            )
+            .as_deref(),
+            Some("collision rows differ"),
+            "a different colliding pair is not rounding"
+        );
+
+        let mut changed = canonical.clone();
+        changed.collision_pairs.push((0, 2, 1.0));
+        assert_eq!(
+            authoritative_raw_tracker_disagreement_under(
+                &canonical,
+                &changed,
+                tolerant,
+                &mut RollbackComparisonTally::default(),
+            )
+            .as_deref(),
+            Some("collision rows differ")
+        );
+
+        let mut changed = canonical.clone();
+        changed.boundary_violations = 2;
+        assert!(authoritative_raw_tracker_disagreement_under(
+            &canonical,
+            &changed,
+            tolerant,
+            &mut RollbackComparisonTally::default(),
+        )
+        .as_deref()
+        .is_some_and(|reason| reason.starts_with("boundary violation count")));
+
+        let (canonical, far) = pole_rounding_pair(COUPLED_ROLLBACK_PRESSURE_ULP_BUDGET + 1);
+        let mut tally = RollbackComparisonTally::default();
+        assert_eq!(
+            authoritative_raw_tracker_disagreement_under(&canonical, &far, tolerant, &mut tally)
+                .as_deref(),
+            Some("collision rows differ"),
+            "a gap past the budget is a real disagreement"
+        );
+        assert_eq!(tally.tolerated, 0);
+        assert_eq!(
+            tally.max_pressure_ulps,
+            COUPLED_ROLLBACK_PRESSURE_ULP_BUDGET + 1,
+            "the observed gap is reported even when it is refused"
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn pressure_ulp_distance_measures_the_f32_floor() {
+        assert_eq!(pressure_ulp_distance(1.0, 1.0), 0);
+        // An `f64`-native quantity one `f64` ulp apart collapses to one `f32`.
+        assert_eq!(
+            pressure_ulp_distance(1.0, f64::from_bits(1.0f64.to_bits() + 1)),
+            0
+        );
+        assert_eq!(
+            pressure_ulp_distance(
+                f64::from(1.0f32),
+                f64::from(f32::from_bits(1.0f32.to_bits() + 3))
+            ),
+            3
+        );
+        assert_eq!(pressure_ulp_distance(1.0, -1.0), u32::MAX);
+        assert_eq!(pressure_ulp_distance(1.0, f64::NAN), u32::MAX);
+        assert_eq!(pressure_ulp_distance(1.0, f64::INFINITY), u32::MAX);
+    }
+
+    /// Where each policy is actually used. The clamped mode-26 rung labels its
+    /// arms `toleratesPoleRounding`; the ordinary relaxed entry point that
+    /// every other mode goes through labels nothing at all, which is the
+    /// serialized form of "bit-exact, as before".
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn only_the_clamped_ladder_arm_runs_the_tolerant_comparison() {
+        assert_eq!(
+            CoupledRollbackComparison::default(),
+            CoupledRollbackComparison::Exact
+        );
+        assert_eq!(CoupledRollbackComparison::Exact.label(), None);
+
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let mut settings = coupled_experiment_test_settings(9);
+        settings.persistent_vacancy_target_depth_mm = Some(1.0);
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+
+        let result = JobPool::new(Some(1))
+            .run_scoped(|| run_ladder_compression(&pieces, fast_settings, settings, &parent, None));
+        let ladder = result
+            .ladder_compression
+            .expect("the ladder runs on this fixture");
+        let mut attempted_arms = 0usize;
+        for step in &ladder.steps {
+            for arm in &step.arms {
+                if !arm.separator_attempted {
+                    continue;
+                }
+                attempted_arms += 1;
+                assert_eq!(
+                    arm.rollback_comparison.as_deref(),
+                    Some("toleratesPoleRounding"),
+                    "every clamped rung arm opts in"
+                );
+            }
+        }
+        assert!(
+            attempted_arms > 0,
+            "the ladder must attempt at least one clamped arm"
+        );
+
+        // The same pieces through the entry point every other mode uses.
+        let incumbent = JobPool::new(Some(1))
+            .run_scoped(|| construct_short_side_first(&pieces, fast_settings))
+            .unwrap();
+        let mut exact_settings = settings;
+        exact_settings.persistent_vacancy_mode = 0;
+        exact_settings.persistent_vacancy_target_depth_mm = None;
+        let coupled = JobPool::new(Some(1))
+            .run_scoped(|| {
+                improve_complete_layout(&pieces, fast_settings, exact_settings, &incumbent)
+            })
+            .expect("the relaxed entry point runs on this fixture")
+            .diagnostics
+            .coupled_dynamic_separator
+            .expect("the coupled separator is armed");
+        for arm in [
+            Some(&coupled.control),
+            Some(&coupled.treatment),
+            coupled.boundary_projection_treatment.as_ref(),
+        ]
+        .into_iter()
+        .flatten()
+        {
+            assert_eq!(
+                arm.rollback_comparison, None,
+                "the ordinary entry point never widens the comparison"
+            );
+            assert!(arm
+                .targets
+                .iter()
+                .all(|target| target.rollback_disagreements_tolerated == 0));
+        }
     }
 
     #[test]
@@ -14946,6 +15570,7 @@ mod tests {
             worker_seeds,
             CoupledSeparatorArm::Control,
             CoupledRollbackRescorePolicy::StrictDerivedAgreement,
+            CoupledRollbackComparison::Exact,
             false,
             catalog,
             hazard_catalog,
@@ -15083,6 +15708,7 @@ mod tests {
                 &protected,
                 None,
                 None,
+                CoupledRollbackComparison::Exact,
             )
         });
         let parallel = JobPool::new(Some(4)).run_scoped(|| {
@@ -15093,6 +15719,7 @@ mod tests {
                 &protected,
                 None,
                 None,
+                CoupledRollbackComparison::Exact,
             )
         });
         assert_eq!(single, parallel);
@@ -15142,6 +15769,7 @@ mod tests {
             &protected,
             None,
             None,
+            CoupledRollbackComparison::Exact,
         );
 
         for arm in [&result.control, &result.treatment] {
@@ -15173,6 +15801,7 @@ mod tests {
             &protected,
             None,
             None,
+            CoupledRollbackComparison::Exact,
         );
         let protected_fingerprint = coupled_fast_placement_fingerprint(&protected.placements);
 
