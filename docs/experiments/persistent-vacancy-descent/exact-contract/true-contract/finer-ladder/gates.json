@@ -1,0 +1,38 @@
+{
+ "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_6d9d36cd-45f-1/target/release/examples/general_request_benchmark",
+ "g1": {
+  "dt": 26.742352724075317,
+  "depths": [
+   206.869,
+   207.239,
+   211.194,
+   211.825,
+   213.073,
+   214.207,
+   214.738,
+   222.116
+  ],
+  "fingerprints": [
+   "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+   "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+  ],
+  "hit": true
+ },
+ "g2": {
+  "dt": 4.273828983306885,
+  "raw": 159.09233022733062,
+  "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+  "exactValid": true,
+  "contractValid": true,
+  "hit": true
+ },
+ "g3": {
+  "dt": 4.32173490524292,
+  "raw": 159.08263749731248,
+  "fp": "145d0ed4b2f53d3fa8f524af0da6875d351e4e82abd0c6252783cd6cd6032666",
+  "exactValid": true,
+  "contractValid": true,
+  "hit": true
+ },
+ "ALL_PASS": true
+}

@@ -1,0 +1,807 @@
+{
+ "pin": "/var/lib/t3/tmp/orient-fine/pins/pin-159.078760404.json",
+ "raw": 159.07876040364795,
+ "fingerprint": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+ "sha256": "1535067297279e46680826b3e28d2f8ec635575d0324626b9168fca7fdf6145f",
+ "replayPass": true,
+ "replay": [
+  [
+   "mode27",
+   {
+    "tag": "cert-replay-m27",
+    "mode": 27,
+    "ladder": "new",
+    "published": 159.07876040364795,
+    "below": false,
+    "exactValid": true,
+    "contractValid": true,
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "attribution": {}
+   }
+  ],
+  [
+   "mode30",
+   {
+    "tag": "cert-replay-m30",
+    "mode": 30,
+    "ladder": "new",
+    "published": 159.07876040364795,
+    "below": false,
+    "exactValid": true,
+    "contractValid": true,
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "attribution": {}
+   }
+  ],
+  [
+   "mode22-seed0",
+   {
+    "tag": "cert-replay-m22-s0",
+    "mode": 22,
+    "ladder": "new",
+    "published": 159.07876040364795,
+    "below": false,
+    "exactValid": true,
+    "contractValid": true,
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "attribution": {}
+   }
+  ],
+  [
+   "mode22-seed1",
+   {
+    "tag": "cert-replay-m22-s1",
+    "mode": 22,
+    "ladder": "new",
+    "published": 159.07876040364795,
+    "below": false,
+    "exactValid": true,
+    "contractValid": true,
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "attribution": {}
+   }
+  ],
+  [
+   "mode22-seed2",
+   {
+    "tag": "cert-replay-m22-s2",
+    "mode": 22,
+    "ladder": "new",
+    "published": 159.07876040364795,
+    "below": false,
+    "exactValid": true,
+    "contractValid": true,
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "attribution": {}
+   }
+  ],
+  [
+   "mode22-seed3",
+   {
+    "tag": "cert-replay-m22-s3",
+    "mode": 22,
+    "ladder": "new",
+    "published": 159.07876040364795,
+    "below": false,
+    "exactValid": true,
+    "contractValid": true,
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "attribution": {}
+   }
+  ]
+ ],
+ "probeArms": 40,
+ "belowIncumbent": 0,
+ "below": [],
+ "rungs": {
+  "rot:0.0032": 6,
+  "mirror:0": 16,
+  "rot:0.02": 1
+ },
+ "elapsedS": 428.7946729660034,
+ "fixpoint": true,
+ "probes": [
+  {
+   "tag": "cert-replay-m27",
+   "mode": 27,
+   "ladder": "new",
+   "published": 159.07876040364795,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {}
+  },
+  {
+   "tag": "cert-replay-m30",
+   "mode": 30,
+   "ladder": "new",
+   "published": 159.07876040364795,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {}
+  },
+  {
+   "tag": "cert-replay-m22-s0",
+   "mode": 22,
+   "ladder": "new",
+   "published": 159.07876040364795,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {}
+  },
+  {
+   "tag": "cert-replay-m22-s1",
+   "mode": 22,
+   "ladder": "new",
+   "published": 159.07876040364795,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {}
+  },
+  {
+   "tag": "cert-replay-m22-s2",
+   "mode": 22,
+   "ladder": "new",
+   "published": 159.07876040364795,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {}
+  },
+  {
+   "tag": "cert-replay-m22-s3",
+   "mode": 22,
+   "ladder": "new",
+   "published": 159.07876040364795,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {}
+  },
+  {
+   "tag": "cert-m31-e0.006",
+   "mode": 31,
+   "ladder": "new",
+   "published": null,
+   "below": false,
+   "exactValid": false,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": null,
+   "attribution": {}
+  },
+  {
+   "tag": "cert-m31-e0.012",
+   "mode": 31,
+   "ladder": "new",
+   "published": null,
+   "below": false,
+   "exactValid": false,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": null,
+   "attribution": {}
+  },
+  {
+   "tag": "cert-m31-e0.025",
+   "mode": 31,
+   "ladder": "new",
+   "published": null,
+   "below": false,
+   "exactValid": false,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": null,
+   "attribution": {}
+  },
+  {
+   "tag": "cert-m31-e0.04",
+   "mode": 31,
+   "ladder": "new",
+   "published": null,
+   "below": false,
+   "exactValid": false,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": null,
+   "attribution": {}
+  },
+  {
+   "tag": "cert-new-flat0.0005-m33-p0.05",
+   "mode": 33,
+   "ladder": "new",
+   "published": 159.07876040364792,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364792,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {
+    "variants": 74,
+    "candidates": 5217,
+    "rows": 77,
+    "finalists": 5,
+    "acceptedVacated": 2,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-new-flat0.0005-m33-p2.0",
+   "mode": 33,
+   "ladder": "new",
+   "published": 159.07876040364792,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364792,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {
+    "variants": 74,
+    "candidates": 5217,
+    "rows": 77,
+    "finalists": 5,
+    "acceptedVacated": 2,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-base-flat0.0005-m33-p0.05",
+   "mode": 33,
+   "ladder": "base",
+   "published": 159.07876040364792,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364792,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {
+    "variants": 58,
+    "candidates": 4089,
+    "rows": 2074,
+    "finalists": 3,
+    "acceptedVacated": 2,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-base-flat0.0005-m33-p2.0",
+   "mode": 33,
+   "ladder": "base",
+   "published": 159.07876040364792,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364792,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {
+    "variants": 58,
+    "candidates": 4089,
+    "rows": 2074,
+    "finalists": 3,
+    "acceptedVacated": 2,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-new-flat0.001-m33-p0.05",
+   "mode": 33,
+   "ladder": "new",
+   "published": 159.07980956584512,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07980956584512,
+   "fp": "e7ba4ccddcd5af54741c93fa4f38d835d71adc6e8ef1d8821a34f64efeb7be38",
+   "attribution": {
+    "variants": 74,
+    "candidates": 5217,
+    "rows": 2646,
+    "finalists": 4,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-new-flat0.001-m33-p2.0",
+   "mode": 33,
+   "ladder": "new",
+   "published": 159.07980956584512,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07980956584512,
+   "fp": "e7ba4ccddcd5af54741c93fa4f38d835d71adc6e8ef1d8821a34f64efeb7be38",
+   "attribution": {
+    "variants": 74,
+    "candidates": 5217,
+    "rows": 2646,
+    "finalists": 4,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-base-flat0.001-m33-p0.05",
+   "mode": 33,
+   "ladder": "base",
+   "published": null,
+   "below": false,
+   "exactValid": false,
+   "contractValid": false,
+   "raw": 159.07776040364794,
+   "fp": null,
+   "attribution": {
+    "variants": 1015,
+    "candidates": 71572,
+    "rows": 37302,
+    "finalists": 32,
+    "acceptedVacated": 5,
+    "acceptedAnchorLocal": 4,
+    "acceptedOrientation": 8,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-base-flat0.001-m33-p2.0",
+   "mode": 33,
+   "ladder": "base",
+   "published": null,
+   "below": false,
+   "exactValid": false,
+   "contractValid": false,
+   "raw": 159.07776040364794,
+   "fp": null,
+   "attribution": {
+    "variants": 1015,
+    "candidates": 71572,
+    "rows": 37302,
+    "finalists": 32,
+    "acceptedVacated": 5,
+    "acceptedAnchorLocal": 4,
+    "acceptedOrientation": 8,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-new-flat0.002-m33-p0.05",
+   "mode": 33,
+   "ladder": "new",
+   "published": 159.07876040364792,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364792,
+   "fp": "5ddb62de2c119d97a28c1d16f18f54b1136d3393d9bc2aafba8e024fdfb3a80d",
+   "attribution": {
+    "variants": 222,
+    "candidates": 19351,
+    "rows": 5180,
+    "finalists": 2,
+    "acceptedVacated": 3,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-new-flat0.002-m33-p2.0",
+   "mode": 33,
+   "ladder": "new",
+   "published": 159.17699885062,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.17699885062,
+   "fp": "94b23bee672ea2b0749127d5f89fd8e81a280907021eebfaee4c2cb895944e12",
+   "attribution": {
+    "variants": 222,
+    "candidates": 19351,
+    "rows": 2590,
+    "finalists": 0,
+    "acceptedVacated": 3,
+    "acceptedAnchorLocal": 2,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-base-flat0.002-m33-p0.05",
+   "mode": 33,
+   "ladder": "base",
+   "published": null,
+   "below": false,
+   "exactValid": false,
+   "contractValid": false,
+   "raw": 159.07676040364794,
+   "fp": null,
+   "attribution": {
+    "variants": 1102,
+    "candidates": 80127,
+    "rows": 38570,
+    "finalists": 0,
+    "acceptedVacated": 6,
+    "acceptedAnchorLocal": 13,
+    "acceptedOrientation": 0,
+    "acceptedStation": 1
+   }
+  },
+  {
+   "tag": "cert-base-flat0.002-m33-p2.0",
+   "mode": 33,
+   "ladder": "base",
+   "published": 159.17699885062,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.17699885062,
+   "fp": "94b23bee672ea2b0749127d5f89fd8e81a280907021eebfaee4c2cb895944e12",
+   "attribution": {
+    "variants": 174,
+    "candidates": 15167,
+    "rows": 2030,
+    "finalists": 0,
+    "acceptedVacated": 3,
+    "acceptedAnchorLocal": 2,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-new-flat0.003-m33-p0.05",
+   "mode": 33,
+   "ladder": "new",
+   "published": null,
+   "below": false,
+   "exactValid": false,
+   "contractValid": false,
+   "raw": 159.07576040364796,
+   "fp": null,
+   "attribution": {
+    "variants": 1517,
+    "candidates": 116032,
+    "rows": 49210,
+    "finalists": 0,
+    "acceptedVacated": 7,
+    "acceptedAnchorLocal": 15,
+    "acceptedOrientation": 0,
+    "acceptedStation": 1
+   }
+  },
+  {
+   "tag": "cert-new-flat0.003-m33-p2.0",
+   "mode": 33,
+   "ladder": "new",
+   "published": 159.17599885062,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.17599885062,
+   "fp": "892086df1b365dcd49357b292eab653b2c37ab45846b928712887088531abed0",
+   "attribution": {
+    "variants": 333,
+    "candidates": 33152,
+    "rows": 2590,
+    "finalists": 0,
+    "acceptedVacated": 4,
+    "acceptedAnchorLocal": 4,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-base-flat0.003-m33-p0.05",
+   "mode": 33,
+   "ladder": "base",
+   "published": null,
+   "below": false,
+   "exactValid": false,
+   "contractValid": false,
+   "raw": 159.07576040364796,
+   "fp": null,
+   "attribution": {
+    "variants": 1189,
+    "candidates": 90944,
+    "rows": 38570,
+    "finalists": 0,
+    "acceptedVacated": 7,
+    "acceptedAnchorLocal": 15,
+    "acceptedOrientation": 0,
+    "acceptedStation": 1
+   }
+  },
+  {
+   "tag": "cert-base-flat0.003-m33-p2.0",
+   "mode": 33,
+   "ladder": "base",
+   "published": 159.17599885062,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.17599885062,
+   "fp": "892086df1b365dcd49357b292eab653b2c37ab45846b928712887088531abed0",
+   "attribution": {
+    "variants": 261,
+    "candidates": 25984,
+    "rows": 2030,
+    "finalists": 0,
+    "acceptedVacated": 4,
+    "acceptedAnchorLocal": 4,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-new-flat0.004-m33-p0.05",
+   "mode": 33,
+   "ladder": "new",
+   "published": 159.08076040364793,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.08076040364793,
+   "fp": "9b9dc2434bec74ce1cb72ce6b9453cb08d6c266adb498a982a531d4633110168",
+   "attribution": {
+    "variants": 592,
+    "candidates": 66304,
+    "rows": 11626,
+    "finalists": 4,
+    "acceptedVacated": 7,
+    "acceptedAnchorLocal": 5,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-new-flat0.004-m33-p2.0",
+   "mode": 33,
+   "ladder": "new",
+   "published": 159.1289863776172,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.1289863776172,
+   "fp": "4b5248e3c7a613cdaf2706cf9403049a151799113f4fc96d314666392e5d1788",
+   "attribution": {
+    "variants": 592,
+    "candidates": 66304,
+    "rows": 11622,
+    "finalists": 2,
+    "acceptedVacated": 7,
+    "acceptedAnchorLocal": 6,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-base-flat0.004-m33-p0.05",
+   "mode": 33,
+   "ladder": "base",
+   "published": 159.08896860904164,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.08896860904164,
+   "fp": "e52a6ad48a81fdc927b1949f007b79cd8dbe65f68bd98ee00ea7edbe816f43d7",
+   "attribution": {
+    "variants": 464,
+    "candidates": 51968,
+    "rows": 9125,
+    "finalists": 4,
+    "acceptedVacated": 7,
+    "acceptedAnchorLocal": 5,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-base-flat0.004-m33-p2.0",
+   "mode": 33,
+   "ladder": "base",
+   "published": 159.1289863776172,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.1289863776172,
+   "fp": "4b5248e3c7a613cdaf2706cf9403049a151799113f4fc96d314666392e5d1788",
+   "attribution": {
+    "variants": 464,
+    "candidates": 51968,
+    "rows": 9110,
+    "finalists": 2,
+    "acceptedVacated": 7,
+    "acceptedAnchorLocal": 6,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   }
+  },
+  {
+   "tag": "cert-new-flat0.01-m33-p0.05",
+   "mode": 33,
+   "ladder": "new",
+   "published": 159.08445419009516,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.08445419009516,
+   "fp": "f9ca247ca8d1ab1bb426888a311a5ed66309df7e6c3acf622e1e74b1217f3bbb",
+   "attribution": {
+    "variants": 2183,
+    "candidates": 280571,
+    "rows": 104248,
+    "finalists": 23,
+    "acceptedVacated": 29,
+    "acceptedAnchorLocal": 11,
+    "acceptedOrientation": 1,
+    "acceptedStation": 3
+   }
+  },
+  {
+   "tag": "cert-new-flat0.01-m33-p2.0",
+   "mode": 33,
+   "ladder": "new",
+   "published": 159.08445419009516,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.08445419009516,
+   "fp": "f9ca247ca8d1ab1bb426888a311a5ed66309df7e6c3acf622e1e74b1217f3bbb",
+   "attribution": {
+    "variants": 2183,
+    "candidates": 280571,
+    "rows": 86476,
+    "finalists": 11,
+    "acceptedVacated": 30,
+    "acceptedAnchorLocal": 10,
+    "acceptedOrientation": 1,
+    "acceptedStation": 3
+   }
+  },
+  {
+   "tag": "cert-base-flat0.01-m33-p0.05",
+   "mode": 33,
+   "ladder": "base",
+   "published": null,
+   "below": false,
+   "exactValid": false,
+   "contractValid": false,
+   "raw": 159.06876040364796,
+   "fp": null,
+   "attribution": {
+    "variants": 2668,
+    "candidates": 336197,
+    "rows": 144417,
+    "finalists": 14,
+    "acceptedVacated": 34,
+    "acceptedAnchorLocal": 22,
+    "acceptedOrientation": 0,
+    "acceptedStation": 3
+   }
+  },
+  {
+   "tag": "cert-base-flat0.01-m33-p2.0",
+   "mode": 33,
+   "ladder": "base",
+   "published": null,
+   "below": false,
+   "exactValid": false,
+   "contractValid": false,
+   "raw": 159.06876040364796,
+   "fp": null,
+   "attribution": {
+    "variants": 2668,
+    "candidates": 336197,
+    "rows": 133375,
+    "finalists": 5,
+    "acceptedVacated": 34,
+    "acceptedAnchorLocal": 22,
+    "acceptedOrientation": 0,
+    "acceptedStation": 3
+   }
+  },
+  {
+   "tag": "cert-m26-d0.3-s0",
+   "mode": 26,
+   "ladder": "new",
+   "published": 159.07876040364795,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {}
+  },
+  {
+   "tag": "cert-m26-d0.3-s1",
+   "mode": 26,
+   "ladder": "new",
+   "published": 159.07876040364795,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {}
+  },
+  {
+   "tag": "cert-m26-d0.55-s0",
+   "mode": 26,
+   "ladder": "new",
+   "published": 159.07876040364795,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {}
+  },
+  {
+   "tag": "cert-m26-d0.55-s1",
+   "mode": 26,
+   "ladder": "new",
+   "published": 159.07876040364795,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {}
+  },
+  {
+   "tag": "cert-m26-d1.0-s0",
+   "mode": 26,
+   "ladder": "new",
+   "published": 159.07876040364795,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {}
+  },
+  {
+   "tag": "cert-m26-d1.0-s1",
+   "mode": 26,
+   "ladder": "new",
+   "published": 159.07876040364795,
+   "below": false,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "attribution": {}
+  }
+ ]
+}

@@ -1,0 +1,371 @@
+{
+ "milestone": "NEW ABSOLUTE RECORD on the true 5.0/5.0 exact-clearance contract: 159.078760 mm raw, from 159.082637. Two rungs added to the bottom of the orientation ladder (0.008 and 0.0032 degrees, same 5/2 ratio) and every one of the three adoptions is an orientation acceptance at one of the two NEW rungs - the accepted-rung distribution moved off the old floor entirely (27 acceptances at 0.0032, 13 at 0.008, none at 0.02 or coarser across 110 campaign arms). The incumbent is a certified fixpoint of 40 further probe arms including mode 26.",
+ "request": "fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "machine": "x86_64, 16 cores, runs pinned at 8 threads",
+ "binarySha256": "0ed9e2e30059355c758774c4dcd9fbd1ab7a8e5a424ac59ebd0dbc394da8d324",
+ "baseBinarySha256": "d47c6ff5c3c458937356eb09bbbe825991a2ba1ac52702d5971a50f5d30afa91",
+ "ladder": {
+  "base": [
+   0.02,
+   0.05,
+   0.125,
+   0.3125,
+   0.78125,
+   1.953125,
+   4.8828125
+  ],
+  "new": [
+   0.0032,
+   0.008,
+   0.02,
+   0.05,
+   0.125,
+   0.3125,
+   0.78125,
+   1.953125,
+   4.8828125
+  ],
+  "variants": {
+   "base": 29,
+   "new": 37
+  }
+ },
+ "gates": {
+  "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_6d9d36cd-45f-1/target/release/examples/general_request_benchmark",
+  "g1": {
+   "dt": 26.742352724075317,
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fingerprints": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ],
+   "hit": true
+  },
+  "g2": {
+   "dt": 4.273828983306885,
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true
+  },
+  "g3": {
+   "dt": 4.32173490524292,
+   "raw": 159.08263749731248,
+   "fp": "145d0ed4b2f53d3fa8f524af0da6875d351e4e82abd0c6252783cd6cd6032666",
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true
+  },
+  "ALL_PASS": true
+ },
+ "campaign": {
+  "startRaw": 159.08263749731248,
+  "startPin": "docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/orientation-entry/pinned-parent-159.083.json",
+  "finalRaw": 159.07876040364795,
+  "finalPin": "/var/lib/t3/tmp/orient-fine/pins/pin-159.078760404.json",
+  "fixpoint": true,
+  "arms": 110,
+  "byTier": {
+   "A-flat": {
+    "arms": 43,
+    "variants": 20202,
+    "candidates": 1932288,
+    "rows": 662276,
+    "finalists": 323,
+    "acceptedVacated": 181,
+    "acceptedAnchorLocal": 115,
+    "acceptedOrientation": 64,
+    "acceptedStation": 7,
+    "publications": 30
+   },
+   "B-m22": {
+    "arms": 12,
+    "publications": 12
+   },
+   "C-m31": {
+    "arms": 12
+   },
+   "D-lineage": {
+    "arms": 25,
+    "variants": 10212,
+    "candidates": 781662,
+    "rows": 309181,
+    "finalists": 319,
+    "acceptedVacated": 63,
+    "acceptedAnchorLocal": 36,
+    "acceptedOrientation": 69,
+    "acceptedStation": 0,
+    "publications": 17
+   },
+   "E-nudge": {
+    "arms": 18,
+    "variants": 3256,
+    "candidates": 392348,
+    "rows": 71192,
+    "finalists": 40,
+    "acceptedVacated": 40,
+    "acceptedAnchorLocal": 26,
+    "acceptedOrientation": 6,
+    "acceptedStation": 0,
+    "publications": 18
+   }
+  },
+  "rungsSeenAcrossAllArms": {
+   "mirror:0": 96,
+   "rot:0.0032": 27,
+   "rot:0.008": 13,
+   "mirror:0.008": 3
+  },
+  "rungsOnAdoptions": {
+   "rot:0.0032": 2,
+   "rot:0.008": 1
+  },
+  "attribution": {
+   "variants": 33670,
+   "candidates": 3106298,
+   "rows": 1042649,
+   "finalists": 682,
+   "acceptedVacated": 284,
+   "acceptedAnchorLocal": 177,
+   "acceptedOrientation": 139,
+   "acceptedStation": 7
+  },
+  "trajectory": [
+   {
+    "via": "r0-lin-pin-159.083623715-flat0.001-m33",
+    "tier": "D-lineage",
+    "rawSourceDepthMm": 159.08262371460316,
+    "deltaMm": -1.3782709316956243e-05,
+    "rungs": {
+     "rot:0.0032": 1
+    },
+    "acceptedAngles": [
+     [
+      "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+      0.007471,
+      -0.0032,
+      false
+     ]
+    ],
+    "attribution": {
+     "variants": 74,
+     "candidates": 5180,
+     "rows": 607,
+     "finalists": 7,
+     "acceptedVacated": 1,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 1,
+     "acceptedStation": 0
+    }
+   },
+   {
+    "via": "r1-nudge-r1-d0.006-m33",
+    "tier": "E-nudge",
+    "rawSourceDepthMm": 159.08176040364793,
+    "deltaMm": -0.0008633109552249607,
+    "rungs": {
+     "rot:0.008": 1
+    },
+    "acceptedAngles": [
+     [
+      "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+      179.949611,
+      -0.008,
+      false
+     ]
+    ],
+    "attribution": {
+     "variants": 74,
+     "candidates": 8991,
+     "rows": 280,
+     "finalists": 4,
+     "acceptedVacated": 1,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 1,
+     "acceptedStation": 0
+    }
+   },
+   {
+    "via": "r2-flat0.003-m33-p0.05",
+    "tier": "A-flat",
+    "rawSourceDepthMm": 159.07876040364795,
+    "deltaMm": -0.002999999999985903,
+    "rungs": {
+     "rot:0.0032": 1
+    },
+    "acceptedAngles": [
+     [
+      "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+      0.004271,
+      -0.0032,
+      false
+     ]
+    ],
+    "attribution": {
+     "variants": 74,
+     "candidates": 5180,
+     "rows": 3174,
+     "finalists": 5,
+     "acceptedVacated": 1,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 1,
+     "acceptedStation": 0
+    }
+   }
+  ]
+ },
+ "pinnedParent": {
+  "file": "pinned-parent-159.079.json",
+  "rawSourceDepthMm": 159.07876040364795,
+  "independentDepthMm": 159.079,
+  "placementFingerprint": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+  "fixtureSha256": "1535067297279e46680826b3e28d2f8ec635575d0324626b9168fca7fdf6145f"
+ },
+ "geometricDiffAgainstOldRecord": {
+  "pieces": 61,
+  "rotationChanges": 2,
+  "maxAbsRotationDeltaDeg": 0.008000000000038199,
+  "mirrorFlips": 0,
+  "translatedPieces": 2,
+  "rotated": [
+   {
+    "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+    "fromDeg": 0.010671,
+    "toDeg": 0.004271,
+    "deltaDeg": -0.006399999999985084
+   },
+   {
+    "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+    "fromDeg": 179.957611,
+    "toDeg": 179.949611,
+    "deltaDeg": -0.008000000000038199
+   }
+  ]
+ },
+ "certification": {
+  "replayPass": true,
+  "probeArms": 40,
+  "belowIncumbent": 0,
+  "fixpoint": true,
+  "rungs": {
+   "rot:0.0032": 6,
+   "mirror:0": 16,
+   "rot:0.02": 1
+  },
+  "elapsedS": 428.7946729660034
+ },
+ "abLadderGenerations": {
+  "decisiveArm": {
+   "fixture": "frontier flatten 0.001 of the 159.083624 lineage pin",
+   "mode": 33,
+   "outcomeIdentical": false,
+   "base": {
+    "published": null,
+    "exactValid": false,
+    "attribution": {
+     "variants": 1015,
+     "candidates": 71050,
+     "rows": 43836,
+     "finalists": 48,
+     "acceptedVacated": 5,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 12,
+     "acceptedStation": 0
+    },
+    "rungs": {
+     "mirror:0": 4,
+     "rot:0.125": 4,
+     "mirror:0.125": 4
+    },
+    "failureReason": "no insertion order re-placed the 1 violation components inside the 159.132637 mm bound"
+   },
+   "new": {
+    "published": 159.08262371460316,
+    "exactValid": true,
+    "attribution": {
+     "variants": 74,
+     "candidates": 5180,
+     "rows": 607,
+     "finalists": 7,
+     "acceptedVacated": 1,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 1,
+     "acceptedStation": 0
+    },
+    "rungs": {
+     "rot:0.0032": 1
+    }
+   }
+  },
+  "recordLineFlattenArms": [
+   {
+    "delta": 0.003,
+    "baseRaw": 159.08263749731248,
+    "newRaw": 159.08263749731248,
+    "baseFp": "902d49c6421539eb2059512cac1cd6f30216fff4c0ee02161e9e67d906764b91",
+    "newFp": "902d49c6421539eb2059512cac1cd6f30216fff4c0ee02161e9e67d906764b91",
+    "identical": true,
+    "baseCandidates": 17864,
+    "newCandidates": 22792,
+    "baseRungs": {},
+    "newRungs": {}
+   },
+   {
+    "delta": 0.001,
+    "baseRaw": 159.08163749731247,
+    "newRaw": 159.08163749731247,
+    "baseFp": null,
+    "newFp": null,
+    "identical": true,
+    "baseCandidates": 71572,
+    "newCandidates": 91316,
+    "baseRungs": {
+     "mirror0.0": 8
+    },
+    "newRungs": {
+     "mirror0.0": 8
+    }
+   },
+   {
+    "delta": 0.004,
+    "baseRaw": 159.08263749731248,
+    "newRaw": 159.08263749731248,
+    "baseFp": "e5a4238f9d8a0ae59e8237c331edadf24ebf26ac03a05d0425154397ea4262bc",
+    "newFp": "e5a4238f9d8a0ae59e8237c331edadf24ebf26ac03a05d0425154397ea4262bc",
+    "identical": true,
+    "baseCandidates": 17864,
+    "newCandidates": 22792,
+    "baseRungs": {},
+    "newRungs": {}
+   }
+  ]
+ },
+ "fromScratchLine": {
+  "parentRaw": 164.03856779906783,
+  "arms": 24,
+  "publications": 14,
+  "belowIncumbent": 1,
+  "bestPublished": 164.0375677990678,
+  "rungs": {
+   "mirror:0": 1,
+   "rot:0.0032": 1
+  },
+  "finerRungsUnlockedIt": false,
+  "attribution": "The one sub-incumbent arm (frontier flatten 0.001 -> mode 33) is reproduced bit-identically by the base-commit binary - same raw 164.0375677990678, same fingerprint 49f094d7e59a9008 - and its accepted orientation pose is a pure mirror flip, a variant the old ladder already carried. What unlocked the basin is the finer FLATTEN delta grid (0.001 was never tried on this line; the old grid ran 0.002/0.004/0.01/0.02), not the finer rungs.",
+  "abOutcomeIdentical": true
+ },
+ "finalBinarySha256": "df9e4e1e90f009360017ff72828cee6287df0e28a0f5ebf7fc15e0567231b500",
+ "gatesNote": "The campaign ran on bench-new (sha256 0ed9e2e3...), built before two test-only quota constants were carried 29 -> 37. The three gates were re-run on the final committed-tree binary (finalBinarySha256) and pass bit-identically there too; the test-module edits cannot reach the release binary, only its embedded build metadata."
+}

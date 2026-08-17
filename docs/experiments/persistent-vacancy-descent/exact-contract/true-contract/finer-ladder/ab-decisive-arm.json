@@ -1,0 +1,136 @@
+{
+ "label": "lin-flat0.001",
+ "mode": 33,
+ "fixture": "/var/lib/t3/tmp/orient-fine/campaign-fix/flat-r0-pin-159.083623715-0.001.json",
+ "target": 159.1326374973125,
+ "seed": 0,
+ "outcomeIdentical": false,
+ "base": {
+  "ladder": "base",
+  "published": null,
+  "exactValid": false,
+  "contractValid": true,
+  "raw": 159.0826237146032,
+  "fp": null,
+  "failureReason": "no insertion order re-placed the 1 violation components inside the 159.132637 mm bound",
+  "attribution": {
+   "variants": 1015,
+   "candidates": 71050,
+   "rows": 43836,
+   "finalists": 48,
+   "acceptedVacated": 5,
+   "acceptedAnchorLocal": 0,
+   "acceptedOrientation": 12,
+   "acceptedStation": 0
+  },
+  "rungs": {
+   "mirror:0": 4,
+   "rot:0.125": 4,
+   "mirror:0.125": 4
+  },
+  "acceptedAngles": [
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.5,
+    0.0,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.5,
+    0.0,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.5,
+    0.0,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.5,
+    0.0,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    true
+   ]
+  ]
+ },
+ "new": {
+  "ladder": "new",
+  "published": 159.08262371460316,
+  "exactValid": true,
+  "contractValid": true,
+  "raw": 159.08262371460316,
+  "fp": "629cb487e120eabeadf8dc51bb29b6c73f7e57405edf3a7fb9f7a5c5ccf5e880",
+  "failureReason": "",
+  "attribution": {
+   "variants": 74,
+   "candidates": 5180,
+   "rows": 607,
+   "finalists": 7,
+   "acceptedVacated": 1,
+   "acceptedAnchorLocal": 0,
+   "acceptedOrientation": 1,
+   "acceptedStation": 0
+  },
+  "rungs": {
+   "rot:0.0032": 1
+  },
+  "acceptedAngles": [
+   [
+    "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+    0.007471,
+    -0.0032,
+    false
+   ]
+  ]
+ }
+}
