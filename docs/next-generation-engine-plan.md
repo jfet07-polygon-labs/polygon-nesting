@@ -1713,6 +1713,15 @@ which oracle owns a row (the hazard index or the surrogate collider),
 stop `tracked_piece_score` reinstalling an unmeasured row on a reverted
 move, and only then let a sweep inherit its predecessor's tracker.
 
+> **Superseded.** Both mechanisms named above were inferred from
+> reading, and measuring them refuted both: the reverted reinstall is an
+> identity on every row it touches, and the hazard index is not in the
+> loop on the streams that disagree. The single cause is that a pair
+> question is not a function of the unordered pair - the proxy collider
+> answers differently asked `(moving, fixed)` and `(lower, higher)`. See
+> "Who owns a row: the pair question is not a function of the pair"
+> below for the census, the decision, and its measured price.
+
 ## The ladder's floor was in the wrong place, and moving it moved the record
 
 The previous entry ended with a lever and a reason to pull it: the
@@ -2013,3 +2022,181 @@ from the mask. Beyond those, the next measured centre is no longer in
 this file at all - on mode 20 it is `exactOverlapTest` at 19.8% of leaf,
 which is Clipper inside the deep operators, and that is PR6's port of
 the constructor and vacancy operators onto the shared proxy kernel.
+
+## Who owns a row: the pair question is not a function of the pair
+
+PR4's audit left the roadmap a three-step order: settle which oracle
+owns a tracker row, stop the reverted move reinstalling an unmeasured
+one, and only then let a sweep inherit its predecessor's tracker instead
+of rescoring. Step one is answered here, and answering it dissolved
+steps two and three into a single, different, and much sharper fact.
+
+### The two named causes were both wrong
+
+PR4 named two mechanisms for the structural disagreements and named them
+from reading rather than from measurement. Both are refuted.
+
+*A reverted dynamic move reinstalls its row from `tracked_piece_score`.*
+It does, and it is harmless. The reinstall writes back exactly the rows
+it read, so every row it touches is unchanged; the only quantities it
+perturbs are the running `f64` sums, through the `(x - a) + a` in the
+boundary total and the `.max(0.0)` clamp in `replace_pair`, and those
+are the audit's derived class by construction. The census confirms it
+from the other end: every structural disagreement on both affected
+streams is flagged `revert=false`.
+
+*The candidate scorer's colliding set comes from the hazard index while
+a complete score's comes from the surrogate collider.* On the streams
+that disagree, the hazard index is not in the loop at all. The census
+reports `confirmedRowLen -1` on every structural disagreement - no
+confirmation ran, because those lanes are not on the dynamic-hazard
+backend. Both the candidate scorer (`score_placement`) and the complete
+score (`score_state`) reach the *same* function, `resolved_pair_penalty`,
+over the same catalogue shapes.
+
+### What is actually happening
+
+They reach the same function with the operands the other way round, and
+the function is not symmetric in them.
+
+`surrogate_pair_collides` tests the first operand's *precomputed* cell
+axes (`CellAxes`, with its projections taken at catalogue-build time in
+local coordinates) against the second operand's points in a frame
+relative to the first. Swapping the operands re-derives the same six
+separating axes through different subtractions and projects them at a
+negated offset. The two answers agree wherever a contact is decisive and
+can differ outright where it is marginal - and the verdict is the whole
+of the question, because `pole_overlap_pressure` is strictly positive
+for *any* two shapes, so a row exists exactly when the collider says
+`true`. The pressure itself is order-dependent too, for the reason PR4
+already documented: the pole series accumulates with the first operand
+outermost.
+
+A candidate scan asks `(moving, fixed)`. A whole-layout score asks
+`(lower index, higher index)`. So the row a sweep installs depends on
+*which piece moved last*, and the row a rescore computes depends only on
+the layout. That is the entire structural class, and the census renders
+it in one line - here the first disagreement on the
+`pinned-fs-parent-164.0376` stream:
+
+```
+moved piece 51, revert=false, shadow rows 32, tracker rows 31,
+confirmedRowLen -1; shadow-only pair (33, 51) touchesMoved=true
+partnerInMovedBroadPhase=true
+proxyCollides(lower,higher)=true proxyCollides(higher,lower)=false
+```
+
+The broad-phase index did offer piece 33 to piece 51's scan
+(`partnerInMovedBroadPhase=true`), so no spatial index is at fault; the
+collider simply answered `false` asked as `(51, 33)` and `true` asked as
+`(33, 51)`. The row is lost at that move and stays lost until one of the
+two pieces moves again, which is why one dropped pair accounts for
+dozens of consecutive disagreements.
+
+### The decision
+
+**The index-ordered pair owns the row.** This is forced rather than
+chosen: a tracker row has to be a measurement of the layout if a sweep
+is ever to inherit one instead of rescoring, and `(moving, fixed)` is
+not a function of the layout - it is a function of the path taken to it.
+`(lower, higher)` is the only order a rescore can reproduce without
+knowing the move history.
+
+One tier cannot implement the decision at all, and that is worth stating
+plainly. The dynamic-pole tier answers
+`collision_pressure(piece, pose, other)` - one *explicit* pose against
+the committed layout - so its first operand must be the piece whose pose
+is being proposed. It cannot be asked an index-ordered question, and
+swapping its operands substitutes a piece's committed pose for its
+candidate one. It is therefore excluded from the rule, and it is the
+measured residue below.
+
+`canonical-pair-order` implements the decision, off by default, at the
+sites where the rule can be enforced: the kernel's proxy verdict
+(`kernel_pair_collides`) and both pole-pressure sites. The confirmation
+tier is deliberately left alone - the audit measured its verdict
+agreeing bit for bit in both orders, so there is nothing there to fix,
+and its magnitude reaches the rule through `rollback_pair_pressure`.
+
+### What the decision is worth, and what it costs
+
+Audited on the four regression streams, base against
+`canonical-pair-order` (both `shadow-rescore` builds, both deterministic
+- the base tallies reproduce exactly across repeat runs):
+
+| stream | audited moves | structural | magnitude-only | derived-gap only |
+|---|---:|---:|---:|---:|
+| mode 20 anchor, base | 36382 | 0 | 16807 | 15804 |
+| mode 20 anchor, canonical | 78094 | **0** | 113 | 75699 |
+| mode 22 record-159.092, base | 97424 | 0 | 63885 | 28750 |
+| mode 22 record-159.092, canonical | 139911 | **0** | 6438 | 125990 |
+| mode 22 finer-ladder 159.079, base | 103150 | **14** | 68215 | 27883 |
+| mode 22 finer-ladder 159.079, canonical | 145610 | **0** | 9588 | 126294 |
+| mode 22 from-scratch 164.0376, base | 95689 | **121** | 61207 | 28657 |
+| mode 22 from-scratch 164.0376, canonical | 138270 | **0** | 6745 | 123142 |
+
+Two things to read out of it. The structural class goes to zero on the
+two streams that had it, which is the diagnosis confirmed. And the
+magnitude class collapses with it - from 46-66% of audited moves to
+0.1-6.6% - because the same operand order governs the pole series. The
+residue is the dynamic-pole tier: its worst gaps are `f32`-representable
+values a relative 3e-7 apart, `4.12769409179687500e2` against
+`4.12769317626953125e2`, which is what an `f32` engine asked
+`(moving, fixed)` and `(lower, higher)` produces.
+
+The cost is that this is a **trajectory change, not a refactor**, and
+the numbers say so unambiguously. Audited move counts rise by 41-115%
+on every stream: enforcing the order makes the search *see* the marginal
+contacts it was previously dropping, so more pieces stay active and
+sweeps run longer. All four regression targets still reproduce - 206.869
+with fingerprint `8a773738…`, 159.09233022733062, 159.07876040364795,
+164.0375677990678, every arm `exactValid` and `contractValid` - but the
+mode-20 anchor's run reports a *different set* of lane fingerprints
+(three rather than two, `20f1eba0…` and `712733a7…` alongside the
+anchor's), so the runs are not the same search and must not be quoted as
+one.
+
+It costs time, and the cost is not marginal. On a ten-round interleaved
+A/B of the mode-22 record stream whose arms alternate order every round
+and whose statistic is the per-round paired ratio: 3.334 s median
+against 4.246 s, paired ratio median **1.286**, nine of ten rounds above
+parity, spread 0.860-1.329. The one round below parity is a round in
+which the default arm was disturbed (4.784 s against its own 3.2 s
+median). Extra work is exactly what the audited move counts predicted.
+
+### Why steps two and three were not delivered
+
+Step two's gate was "structural count to zero **with outcomes
+bit-identical**". Structural-zero is reachable and is demonstrated above;
+bit-identity is not, and the two are mutually exclusive rather than
+merely hard to achieve together. The disagreement *is* a value
+difference in the candidate scan - the pair `(33, 51)` either collides
+or does not - so any change that makes the tracker agree with a rescore
+necessarily changes what the search compared, and any change that
+preserves what the search compared necessarily preserves the
+disagreement. There is no third option to look for. Per the standing
+rule that byte-identity outranks gate numbers, the default path is
+unchanged and the rule ships off by default with its price measured.
+
+Step three - a sweep inheriting its predecessor's tracker - stays
+blocked, but the reason is now specific rather than general. It needs
+the tracker to equal a rescore bit for bit, and that needs the magnitude
+class at zero as well as the structural class. Under
+`canonical-pair-order` the magnitude class is no longer the engine's
+scoring being order-dependent; it is one tier, the dynamic-pole tier,
+which cannot express an index-ordered pair question at its interface.
+Closing it is a change to that tier's API, not to the tracker, and it
+should be priced as such.
+
+### What is left
+
+* The dynamic-pole tier's interface, if the inherited-tracker
+  optimisation is still wanted. Its upside is bounded by PR4's own
+  measurement - the whole-layout rescore is 0.86% of leaf time on mode
+  20 and 0.70% on mode 22 - so it should be ranked against that, and
+  the trajectory change above is not obviously worth 0.7%.
+* `canonical-pair-order` evaluated on a corpus rather than on four
+  fixtures. The honest claim today is that it makes the tracker a
+  measurement of the layout and that it costs time on these streams;
+  whether a search that stops dropping marginal contacts packs *better*
+  is a question four pinned regressions cannot answer.
