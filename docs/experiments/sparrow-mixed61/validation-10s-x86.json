@@ -1,0 +1,22 @@
+{
+  "placementCount": 61,
+  "expectedPlacementCount": 61,
+  "itemMultiplicityValid": true,
+  "itemMultiplicityMismatches": [],
+  "reportedStripWidth": 150.16547,
+  "occupiedBounds": {
+    "minimumX": 5.002254000000001,
+    "maximumX": 145.16451,
+    "minimumY": 5.011440089189676,
+    "maximumY": 1994.9937694148275
+  },
+  "minimumPairDistance": 5.000840472766719,
+  "minimumPair": [
+    38,
+    39
+  ],
+  "minimumBoundaryDistance": 5.000959999999992,
+  "requestedSeparation": 5,
+  "valid": true,
+  "outputPrecisionTolerance": 0.002
+}

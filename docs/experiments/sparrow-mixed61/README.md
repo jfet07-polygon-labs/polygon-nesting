@@ -53,3 +53,23 @@ node docs/experiments/sparrow-mixed61/validate-sparrow-solution.mjs \
 jq -cS '.solution.layout.placed_items | sort_by(.item_id)' \
   docs/experiments/sparrow-mixed61/solution-3s.json | shasum -a 256
 ```
+
+## x86_64 same-machine addendum (2026-08-17)
+
+Re-run on the project's x86_64 Linux box (16 cores, Linux 6.18, rustc
+1.93-era toolchain, `-C target-cpu=native`, dependencies resolved fresh -
+upstream checkout at the pinned revision carries no `Cargo.lock`, so
+`--locked` is not reproducible; deviation noted):
+
+- 3-second budget, seed 0, 8 workers: `157.97073 mm`, exact-valid
+  (61/61, minimum pair distance `5.003296 mm`) - `~3.5 mm` behind the
+  M4 calibration at the same budget, attributable to hardware/toolchain.
+- 10-second budget, seed 0, 8 workers: `150.16547 mm`, exact-valid
+  (61/61, pair distances >= 5.0), raw solution and validation RETAINED
+  (`solution-10s-x86.json`, `validation-10s-x86.json`) - this replaces
+  the unretained historical M4 ten-second observation as acceptance-grade
+  evidence that the ~150 mm band is reachable in seconds on this machine.
+- Measured throughput during the separation phase: `3742 K evals/s`,
+  `14.2 K moves/s`, `460 iter/s` across 8 workers - the
+  orders-of-magnitude per-iteration cost gap against our engine is the
+  production bottleneck, not mechanism quality.
