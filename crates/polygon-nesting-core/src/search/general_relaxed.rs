@@ -3050,6 +3050,18 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
     /// into. It is swapped with the incumbent list rather than copied, so after
     /// the first move of a lane neither list allocates again.
     collision_merge_scratch: Vec<(usize, usize, f64)>,
+    /// Whether the move the shadow-rescore audit is about to inspect was a
+    /// *revert* — a dynamic candidate the objective judged worse than the
+    /// incumbent, whose row is reinstalled out of the tracker rather than
+    /// measured. Diagnostic only, and compiled out with the audit.
+    #[cfg(feature = "shadow-rescore")]
+    audit_move_was_revert: bool,
+    /// The row [`Self::confirm_dynamic_replacement`] last produced, and the
+    /// piece it was produced for. Diagnostic only: it lets the audit tell a row
+    /// that was measured wrongly from a row that was measured rightly and then
+    /// lost on the way into the tracker.
+    #[cfg(feature = "shadow-rescore")]
+    audit_last_confirmed_row: Option<(usize, Vec<(usize, usize, f64)>)>,
     pair_nfp_cache: BTreeMap<PairNfpKey, Arc<PairNfp>>,
     pair_nfp_cache_components: usize,
     #[cfg(feature = "jagua-experimental")]
@@ -9656,6 +9668,10 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             proxy_rows: ProxyRowCache::new(pieces.len()),
             angle_keys: AngleKeyCache::new(pieces.len()),
             collision_merge_scratch: Vec::new(),
+            #[cfg(feature = "shadow-rescore")]
+            audit_move_was_revert: false,
+            #[cfg(feature = "shadow-rescore")]
+            audit_last_confirmed_row: None,
             pair_nfp_cache: BTreeMap::new(),
             pair_nfp_cache_components: 0,
             #[cfg(feature = "jagua-experimental")]
@@ -10478,11 +10494,19 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 } else {
                     replacement_score
                 };
+                #[cfg(feature = "shadow-rescore")]
+                {
+                    self.audit_move_was_revert = false;
+                }
                 if self.uses_dynamic_hazard() {
                     let current_score = tracked_piece_score(score, input_index, &self.weights);
                     if compare_score_objective(&replacement_score, &current_score)
                         == Ordering::Greater
                     {
+                        #[cfg(feature = "shadow-rescore")]
+                        {
+                            self.audit_move_was_revert = true;
+                        }
                         replacement = current.clone();
                         replacement_score = current_score;
                     }
@@ -10514,7 +10538,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     &self.weights,
                     &mut self.collision_merge_scratch,
                 );
-                self.audit_incremental_score(state, score)?;
+                self.audit_incremental_score(state, score, input_index, &piece_index)?;
             }
         }
         Ok(())
@@ -10549,6 +10573,8 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         &mut self,
         state: &RelaxedState,
         incremental: &PairTracker,
+        moved_index: usize,
+        piece_index: &PieceIndex,
     ) -> Result<(), GeneralFastError> {
         let saved_counters = self.counters;
         let shadow = self.score_state(state);
@@ -10560,7 +10586,11 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         // delta, not which of two orders `+` was applied in.
         refresh_weighted_loss(&mut shadow, &self.weights);
         match shadow_tracker_disagreement(&shadow, incremental) {
-            ShadowAgreement::Rows(rendered) => shadow_rescore::record_disagreement(rendered),
+            ShadowAgreement::Rows(rendered) => {
+                let detail = self
+                    .render_structural_detail(state, &shadow, incremental, moved_index, piece_index);
+                shadow_rescore::record_disagreement(rendered, detail);
+            }
             ShadowAgreement::MagnitudeOnly {
                 rendered,
                 worst_pressure_ulps,
@@ -10572,12 +10602,140 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         Ok(())
     }
 
+    /// Renders *why* one structural disagreement happened, for the audit's
+    /// census.
+    ///
+    /// The verdict alone says a row count differs. What settles the *mechanism*
+    /// is four further questions, and this asks all four of every pair the two
+    /// trackers disagree about:
+    ///
+    /// * **Was the move a revert?** A reverted move reinstalls its row out of
+    ///   the tracker instead of measuring one, which was a named suspect.
+    /// * **Did a confirmation run?** `confirmedRowLen` is `-1` when the lane is
+    ///   not on the dynamic-hazard backend, which rules the hazard index out of
+    ///   a disagreement rather than leaving it a suspect.
+    /// * **Did the broad phase offer the pair?** If the moved piece's own
+    ///   `PieceIndex` query does not contain the partner, the row never had the
+    ///   chance to record it and the defect is in the index; if it does, the
+    ///   defect is downstream of it.
+    /// * **Do the two proxy tiers answer the same asked either way round?**
+    ///   Both tiers are asked as `(i, j)` and as `(j, i)`. An asymmetric answer
+    ///   is a collider that is not a function of the unordered pair; a
+    ///   symmetric answer that the tracker's row contradicts is a stale row.
+    ///
+    /// That last question is the one that identified this defect - see
+    /// `canonical_pair_operands`.
+    ///
+    /// Diagnostic only, and it restores the lane's counters like its caller
+    /// does, so an audited run stays the same search.
+    #[cfg(feature = "shadow-rescore")]
+    fn render_structural_detail(
+        &mut self,
+        state: &RelaxedState,
+        shadow: &PairTracker,
+        incremental: &PairTracker,
+        moved_index: usize,
+        piece_index: &PieceIndex,
+    ) -> String {
+        let saved_counters = self.counters;
+        // What the moved piece's own broad phase would report right now. A pair
+        // the complete score sees and the tracker does not is either a pair the
+        // broad phase never offered the candidate scorer, or one it offered and
+        // the row dropped; those are different defects and this tells them
+        // apart.
+        let moved_bounds = self.placement_bounds(&state.placements[moved_index]).ok();
+        let broad_phase = moved_bounds.map(|bounds| {
+            let mut scratch = PieceQueryScratch::new(state.placements.len());
+            piece_index.query_into(bounds, &mut scratch);
+            scratch.selected.iter().copied().collect::<BTreeSet<_>>()
+        });
+        let shadow_rows = shadow
+            .collision_pairs
+            .iter()
+            .map(|(first, second, _)| (*first, *second))
+            .collect::<BTreeSet<_>>();
+        let incremental_rows = incremental
+            .collision_pairs
+            .iter()
+            .map(|(first, second, _)| (*first, *second))
+            .collect::<BTreeSet<_>>();
+        let confirmed_row_len = match &self.audit_last_confirmed_row {
+            Some((index, row)) if *index == moved_index => row.len() as i64,
+            _ => -1,
+        };
+        let mut rendered = format!(
+            "moved piece {moved_index} (inputIndex {}), revert={}, shadow rows {}, \
+             tracker rows {}, confirmedRowLen {confirmed_row_len}",
+            state.placements[moved_index].input_index,
+            self.audit_move_was_revert,
+            shadow.collision_pairs.len(),
+            incremental.collision_pairs.len()
+        );
+        let differing = shadow_rows
+            .symmetric_difference(&incremental_rows)
+            .copied()
+            .collect::<Vec<_>>();
+        for (first, second) in differing {
+            let side = if shadow_rows.contains(&(first, second)) {
+                "shadow-only"
+            } else {
+                "tracker-only"
+            };
+            let forward = self
+                .confirmed_pair_pressure(&state.placements[first], &state.placements[second])
+                .unwrap_or(f64::NAN);
+            let reverse = self
+                .confirmed_pair_pressure(&state.placements[second], &state.placements[first])
+                .unwrap_or(f64::NAN);
+            let tracked = incremental.pair(first, second).raw_loss;
+            let touches_moved = first == moved_index || second == moved_index;
+            let confirmed = match &self.audit_last_confirmed_row {
+                Some((index, row)) if *index == moved_index => {
+                    match row.iter().find(|(a, b, _)| (*a, *b) == (first, second)) {
+                        Some((_, _, penalty)) => format!("{penalty:.17e}"),
+                        None => "absent".to_owned(),
+                    }
+                }
+                _ => "no-confirm-for-this-move".to_owned(),
+            };
+            // The proxy collider actually in play on this backend, asked both
+            // ways round. `confirmed_pair_pressure` above is the *other* proxy
+            // tier (zero-degree cells transformed at query time); this one is
+            // the rotated-surrogate tier a candidate scan and a whole-layout
+            // score both run on, and it is the one whose verdict decides
+            // whether a row exists at all.
+            let proxy_forward = self
+                .pair_collides(&state.placements[first], &state.placements[second])
+                .unwrap_or(false);
+            let proxy_reverse = self
+                .pair_collides(&state.placements[second], &state.placements[first])
+                .unwrap_or(false);
+            let partner = if first == moved_index { second } else { first };
+            let in_broad_phase = match &broad_phase {
+                Some(selected) => format!("{}", selected.contains(&partner)),
+                None => "unknown".to_owned(),
+            };
+            rendered.push_str(&format!(
+                "; {side} pair ({first}, {second}) touchesMoved={touches_moved} \
+                 remeasured(lower,higher)={forward:.17e} remeasured(higher,lower)={reverse:.17e} \
+                 trackerPairRow={tracked:.17e} inConfirmedRow={confirmed} \
+                 partnerInMovedBroadPhase={in_broad_phase} \
+                 proxyCollides(lower,higher)={proxy_forward} \
+                 proxyCollides(higher,lower)={proxy_reverse}"
+            ));
+        }
+        self.counters = saved_counters;
+        rendered
+    }
+
     #[cfg(not(feature = "shadow-rescore"))]
     #[inline(always)]
     fn audit_incremental_score(
         &mut self,
         _state: &RelaxedState,
         _incremental: &PairTracker,
+        _moved_index: usize,
+        _piece_index: &PieceIndex,
     ) -> Result<(), GeneralFastError> {
         Ok(())
     }
@@ -12326,6 +12484,10 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             .counters
             .confirmed_pair_removals
             .saturating_add(removals);
+        #[cfg(feature = "shadow-rescore")]
+        {
+            self.audit_last_confirmed_row = Some((input_index, collision_pairs.clone()));
+        }
         Ok(PlacementScore {
             boundary_violations,
             boundary_loss,
