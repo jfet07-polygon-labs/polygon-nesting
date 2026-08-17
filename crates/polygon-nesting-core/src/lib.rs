@@ -13,6 +13,7 @@ pub mod js_number;
 pub mod nfp_ifp;
 pub mod parallel;
 pub mod profiling;
+pub mod quality_trace;
 pub mod result;
 pub mod search;
 pub mod short_side;

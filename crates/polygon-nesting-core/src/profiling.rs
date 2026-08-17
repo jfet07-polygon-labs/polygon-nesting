@@ -665,6 +665,33 @@ pub fn snapshot() -> ProfileSnapshot {
     }
 }
 
+/// Every counter's current total, without allocating.
+///
+/// [`snapshot`] is the reporting path: it builds the phase table too, and it
+/// allocates two `Vec`s to do so. This is the *sampling* path, for a caller
+/// that wants the work ordinals at a moment inside a run rather than the whole
+/// profile at the end of one — the quality frontier trace reads it once per
+/// event. Blocks are summed in registration-ordinal order for the same reason
+/// [`snapshot`] sorts them: integer sums of the same set are order-independent,
+/// but reading them in a stable order keeps the two functions comparable.
+pub fn counter_totals() -> [u64; Counter::COUNT] {
+    let mut totals = [0u64; Counter::COUNT];
+    totals[Counter::AllocationCount as usize] = ALLOCATION_COUNT.load(Ordering::Relaxed);
+    totals[Counter::AllocationBytes as usize] = ALLOCATION_BYTES.load(Ordering::Relaxed);
+    let Ok(blocks) = registry().lock() else {
+        return totals;
+    };
+    let mut ordered = blocks.iter().map(Arc::clone).collect::<Vec<_>>();
+    drop(blocks);
+    ordered.sort_by_key(|block| block.ordinal);
+    for block in &ordered {
+        for (index, total) in totals.iter_mut().enumerate() {
+            *total = total.wrapping_add(block.counters[index].load(Ordering::Relaxed));
+        }
+    }
+    totals
+}
+
 /// A `GlobalAlloc` wrapper that tallies allocations while profiling is on.
 ///
 /// Install it from a binary that wants heap numbers:

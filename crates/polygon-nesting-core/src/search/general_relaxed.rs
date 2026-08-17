@@ -22,6 +22,7 @@ use crate::geometry::predicates::orientation;
 use crate::nfp_ifp::compute_relative_nfp_boundary_reference;
 use crate::parallel::map_slice_with_job_pool;
 use crate::profiling::{self, Counter, Phase};
+use crate::quality_trace;
 use crate::search::general_fast::{
     collision_expansion_mm, collision_sheet_inset_mm, collision_sheet_short_axis_mm,
     polygons_overlap_exact, validate_and_measure_placements, GeneralFastError, GeneralFastPiece,
@@ -348,6 +349,24 @@ pub struct GeneralRelaxedSettings {
     pub precompression_frontier_vacancy_mode: usize,
     pub persistent_vacancy_mode: usize,
     pub persistent_vacancy_target_depth_mm: Option<f64>,
+    /// Lets the pinned-parent band (modes 9-21 and 25) descend from the
+    /// coupled arm this same process produced, instead of requiring a fixture.
+    ///
+    /// **Off by default, and it must stay off in anything that publishes a
+    /// comparable number.** The pin is what makes those modes' reported
+    /// numbers reproducible: a fixture carries a frozen fingerprint and depth,
+    /// and the arm re-derives both on load. An in-process parent carries
+    /// neither, so an arm run this way is a *measurement of a search*, not a
+    /// replay of a state, and its result may not be quoted against a pinned
+    /// one.
+    ///
+    /// It exists because the review's ten-second portfolio allocates a slice
+    /// to "one or two fast mode-20-derived basin constructors" from request
+    /// only, and that path is otherwise closed: `run_population` refuses an
+    /// unpinned parent before it does any work, so no single process can
+    /// currently measure what a from-request mode-20 basin costs or is worth.
+    /// Measuring that is the whole point of the quality frontier trace.
+    pub persistent_vacancy_allow_unpinned_parent: bool,
 }
 
 impl GeneralRelaxedSettings {
@@ -371,6 +390,7 @@ impl GeneralRelaxedSettings {
             precompression_frontier_vacancy_mode: 0,
             persistent_vacancy_mode: 0,
             persistent_vacancy_target_depth_mm: None,
+            persistent_vacancy_allow_unpinned_parent: false,
         }
     }
 
@@ -3283,7 +3303,28 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
     )?;
     let mut shrink_ratio = relaxed_settings.initial_shrink_ratio;
     let mut repair_successors_attempted = 0usize;
+    // The incumbent the constructor handed over is the curve's origin: without
+    // it a reader cannot tell a search that started at 206 mm from one that
+    // started at 180 mm, and the first improvement's delta is unattributable.
+    #[cfg(feature = "quality-trace")]
+    if quality_trace::active()
+        && !protected.placements.is_empty()
+        && protected.unplaced_piece_ids.is_empty()
+    {
+        quality_trace::incumbent(
+            protected.used_long_axis_depth_mm,
+            protected.placements.len(),
+            &general_placement_fingerprint(&protected.placements),
+            "constructor",
+        );
+    }
     for epoch in 0..relaxed_settings.epochs {
+        #[cfg(feature = "quality-trace")]
+        let _trace_epoch = quality_trace::scope(
+            format!("m0.epoch{epoch}"),
+            relaxed_settings.seed,
+            None,
+        );
         diagnostics.epochs_attempted += 1;
         let incumbent_depth_before_mm = protected.used_long_axis_depth_mm;
         let protected_depth = protected
@@ -3515,6 +3556,16 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
                     diagnostics.epochs_improved += 1;
                     exact_accepted = true;
                     shrink_ratio = relaxed_settings.initial_shrink_ratio;
+                    // The public-incumbent improvement: one point on the curve.
+                    #[cfg(feature = "quality-trace")]
+                    if quality_trace::active() {
+                        quality_trace::incumbent(
+                            protected.used_long_axis_depth_mm,
+                            protected.placements.len(),
+                            &general_placement_fingerprint(&protected.placements),
+                            "m0.relaxedEpoch",
+                        );
+                    }
                 }
                 ExactLaneValidation::Accepted { .. } => {
                     exact_valid = true;
@@ -3613,6 +3664,8 @@ fn relaxed_outcome(
     legacy: GeneralFastResult,
     diagnostics: GeneralRelaxedDiagnostics,
 ) -> GeneralRelaxedOutcome {
+    #[cfg(feature = "quality-trace")]
+    let _trace = quality_trace::scope("publication".to_owned(), 0, None);
     let result = adopt_published_layout(pieces, fast_settings, &diagnostics, legacy);
     GeneralRelaxedOutcome {
         result,
@@ -3645,6 +3698,32 @@ fn published_mode_placements(
     (!population.final_placements.is_empty())
         .then(|| fast_placements_from_coupled_diagnostics(&population.final_placements))
 }
+
+/// Records why the adoption rule declined a mode's publication.
+///
+/// The review's second finding was that "every adoption rejection silently
+/// returns legacy; production telemetry cannot distinguish incomplete,
+/// invalid, envelope-only rejection, or non-improvement". Under the trace the
+/// four refusals are distinct named events; without it this function has no
+/// body and the rule is byte-identical to the one that shipped.
+#[cfg(feature = "quality-trace")]
+#[allow(dead_code)]
+fn trace_publication_refusal(published_depth_mm: f64, legacy_depth_mm: f64, reason: &str) {
+    if quality_trace::active() {
+        quality_trace::publication(
+            quality_trace::Disposition::Discarded,
+            published_depth_mm,
+            legacy_depth_mm,
+            reason,
+        );
+    }
+}
+
+/// Records why the adoption rule declined a publication. Compiled out.
+#[cfg(not(feature = "quality-trace"))]
+#[allow(dead_code)]
+#[inline(always)]
+fn trace_publication_refusal(_published_depth_mm: f64, _legacy_depth_mm: f64, _reason: &str) {}
 
 /// Adopts a mode's publication as the engine's result when, and only when, it
 /// is both legal against the real request and strictly better than the legacy
@@ -3687,9 +3766,11 @@ fn adopt_published_layout(
         return legacy;
     };
     if published.len() != pieces.len() {
+        trace_publication_refusal(f64::NAN, f64::NAN, "incompleteCardinality");
         return legacy;
     }
     let Ok(published_depth_mm) = coupled_raw_source_depth(pieces, &published, fast_settings) else {
+        trace_publication_refusal(f64::NAN, f64::NAN, "publishedDepthUnmeasurable");
         return legacy;
     };
     let legacy_depth_mm = if legacy.unplaced_piece_ids.is_empty() {
@@ -3698,11 +3779,36 @@ fn adopt_published_layout(
         None
     };
     if legacy_depth_mm.is_some_and(|legacy_depth_mm| published_depth_mm >= legacy_depth_mm) {
+        trace_publication_refusal(
+            published_depth_mm,
+            legacy_depth_mm.unwrap_or(f64::NAN),
+            "notStrictlyBetterThanLegacy",
+        );
         return legacy;
     }
     let Ok(metrics) = validate_and_measure_placements(pieces, &published, fast_settings) else {
+        trace_publication_refusal(
+            published_depth_mm,
+            legacy_depth_mm.unwrap_or(f64::NAN),
+            "compositeValidatorRejected",
+        );
         return legacy;
     };
+    #[cfg(feature = "quality-trace")]
+    if quality_trace::active() {
+        quality_trace::publication(
+            quality_trace::Disposition::PublicIncumbent,
+            published_depth_mm,
+            legacy_depth_mm.unwrap_or(f64::NAN),
+            "adopted",
+        );
+        quality_trace::incumbent(
+            metrics.used_long_axis_depth_mm,
+            published.len(),
+            &general_placement_fingerprint(&published),
+            "modeAdoption",
+        );
+    }
     GeneralFastResult {
         placements: published,
         unplaced_piece_ids: Vec::new(),
@@ -3866,36 +3972,60 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                 };
             }
         };
-        let control = run_coupled_separator_arm(
-            pieces,
-            fast_settings,
-            relaxed_settings,
-            protected,
-            CoupledSeparatorArm::Control,
-            CoupledTerminalPolicy::None,
-            rollback_comparison,
-            catalog.clone(),
-        );
-        let treatment = run_coupled_separator_arm(
-            pieces,
-            fast_settings,
-            relaxed_settings,
-            protected,
-            CoupledSeparatorArm::Treatment,
-            CoupledTerminalPolicy::None,
-            rollback_comparison,
-            catalog.clone(),
-        );
-        let boundary_projection_treatment = run_coupled_separator_arm(
-            pieces,
-            fast_settings,
-            relaxed_settings,
-            protected,
-            CoupledSeparatorArm::Treatment,
-            CoupledTerminalPolicy::ExactBoundaryProjection,
-            rollback_comparison,
-            catalog,
-        );
+        let control = {
+            #[cfg(feature = "quality-trace")]
+            let _trace = quality_trace::scope(
+                "coupled.control".to_owned(),
+                relaxed_settings.seed,
+                None,
+            );
+            run_coupled_separator_arm(
+                pieces,
+                fast_settings,
+                relaxed_settings,
+                protected,
+                CoupledSeparatorArm::Control,
+                CoupledTerminalPolicy::None,
+                rollback_comparison,
+                catalog.clone(),
+            )
+        };
+        let treatment = {
+            #[cfg(feature = "quality-trace")]
+            let _trace = quality_trace::scope(
+                "coupled.treatment".to_owned(),
+                relaxed_settings.seed,
+                None,
+            );
+            run_coupled_separator_arm(
+                pieces,
+                fast_settings,
+                relaxed_settings,
+                protected,
+                CoupledSeparatorArm::Treatment,
+                CoupledTerminalPolicy::None,
+                rollback_comparison,
+                catalog.clone(),
+            )
+        };
+        let boundary_projection_treatment = {
+            #[cfg(feature = "quality-trace")]
+            let _trace = quality_trace::scope(
+                "coupled.boundaryProjection".to_owned(),
+                relaxed_settings.seed,
+                None,
+            );
+            run_coupled_separator_arm(
+                pieces,
+                fast_settings,
+                relaxed_settings,
+                protected,
+                CoupledSeparatorArm::Treatment,
+                CoupledTerminalPolicy::ExactBoundaryProjection,
+                rollback_comparison,
+                catalog,
+            )
+        };
         let conflict_ruin_recreate = Some(run_conflict_ruin_recreate_experiment(
             pieces,
             fast_settings,
@@ -3929,6 +4059,24 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                 let effective_parent = pinned_arm
                     .as_ref()
                     .unwrap_or(&boundary_projection_treatment.diagnostics);
+                // One scope per deep-operator dispatch, named by mode and
+                // rooted at the parent it descends from, so every exact-valid
+                // candidate the mode produces is attributed to both.
+                #[cfg(feature = "quality-trace")]
+                let _trace_mode = {
+                    let parent_fingerprint = quality_trace::active().then(|| {
+                        general_placement_fingerprint(
+                            &fast_placements_from_coupled_diagnostics(
+                                &effective_parent.final_placements,
+                            ),
+                        )
+                    });
+                    quality_trace::scope(
+                        format!("mode{}", relaxed_settings.persistent_vacancy_mode),
+                        relaxed_settings.seed,
+                        parent_fingerprint.as_deref(),
+                    )
+                };
                 let mut population = match relaxed_settings.persistent_vacancy_mode {
                     22 => run_alternation_fixpoint(
                         pieces,
@@ -4007,6 +4155,15 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                     pieces,
                     fast_settings,
                     effective_parent,
+                );
+                #[cfg(feature = "quality-trace")]
+                quality_trace::mode_result(
+                    population.mode,
+                    population.exact_valid,
+                    population.independent_depth_mm,
+                    population.parent_independent_depth_mm,
+                    population.final_placement_fingerprint.as_deref(),
+                    population.failure_reason.as_deref(),
                 );
                 population
             });
@@ -9494,6 +9651,10 @@ fn validate_selected_lane(
         return ExactLaneValidation::Infeasible;
     }
     diagnostics.surrogate_feasible_states = diagnostics.surrogate_feasible_states.saturating_add(1);
+    // The relaxed loop's proxy/exact boundary, matching the deep operators':
+    // a lane state the surrogate tier called feasible, offered to the exact
+    // validator.
+    quality_trace::proxy_survivors(1);
     let placements = to_fast_placements(&lane.state, pieces);
     match validate_and_measure_placements(pieces, &placements, fast_settings) {
         Ok(metrics) => ExactLaneValidation::Accepted {

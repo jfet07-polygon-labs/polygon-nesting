@@ -1,0 +1,128 @@
+{
+ "aLabel": "traceoff",
+ "bLabel": "countersonly",
+ "aBinary": "/var/lib/t3/tmp/qft/bin/trace",
+ "bBinary": "/var/lib/t3/tmp/qft/bin/trace",
+ "sinkB": null,
+ "profileB": true,
+ "rounds": 10,
+ "aMedianSeconds": 3.5364260350033874,
+ "bMedianSeconds": 4.693278995502624,
+ "pairedRatioMedian": 1.1748498983884743,
+ "pairedRatioMin": 1.0597431626889304,
+ "pairedRatioMax": 1.5947274173609012,
+ "roundsBelowParity": 0,
+ "allOutcomesIdentical": true,
+ "rows": [
+  {
+   "round": 0,
+   "firstArm": "a",
+   "aSeconds": 8.813964571018005,
+   "bSeconds": 9.846160318993498,
+   "ratio": 1.117109132860546,
+   "aRaw": 159.09233022733062,
+   "bRaw": 159.09233022733062,
+   "sameRaw": true,
+   "sameFingerprint": true
+  },
+  {
+   "round": 1,
+   "firstArm": "b",
+   "aSeconds": 8.530979597999249,
+   "bSeconds": 9.040647300018463,
+   "ratio": 1.0597431626889304,
+   "aRaw": 159.09233022733062,
+   "bRaw": 159.09233022733062,
+   "sameRaw": true,
+   "sameFingerprint": true
+  },
+  {
+   "round": 2,
+   "firstArm": "a",
+   "aSeconds": 8.610913048993098,
+   "bSeconds": 10.999307287012925,
+   "ratio": 1.2773682911940576,
+   "aRaw": 159.09233022733062,
+   "bRaw": 159.09233022733062,
+   "sameRaw": true,
+   "sameFingerprint": true
+  },
+  {
+   "round": 3,
+   "firstArm": "b",
+   "aSeconds": 3.613661012001103,
+   "bSeconds": 5.566332824004348,
+   "ratio": 1.5403583251219053,
+   "aRaw": 159.09233022733062,
+   "bRaw": 159.09233022733062,
+   "sameRaw": true,
+   "sameFingerprint": true
+  },
+  {
+   "round": 4,
+   "firstArm": "a",
+   "aSeconds": 3.690534845984075,
+   "bSeconds": 4.005235841992544,
+   "ratio": 1.0852724629740094,
+   "aRaw": 159.09233022733062,
+   "bRaw": 159.09233022733062,
+   "sameRaw": true,
+   "sameFingerprint": true
+  },
+  {
+   "round": 5,
+   "firstArm": "b",
+   "aSeconds": 3.309666668996215,
+   "bSeconds": 3.9498008679947816,
+   "ratio": 1.1934134953816096,
+   "aRaw": 159.09233022733062,
+   "bRaw": 159.09233022733062,
+   "sameRaw": true,
+   "sameFingerprint": true
+  },
+  {
+   "round": 6,
+   "firstArm": "a",
+   "aSeconds": 3.353447553003207,
+   "bSeconds": 3.8775454679853283,
+   "ratio": 1.156286301395339,
+   "aRaw": 159.09233022733062,
+   "bRaw": 159.09233022733062,
+   "sameRaw": true,
+   "sameFingerprint": true
+  },
+  {
+   "round": 7,
+   "firstArm": "b",
+   "aSeconds": 3.459191058005672,
+   "bSeconds": 3.800312945008045,
+   "ratio": 1.0986131963462695,
+   "aRaw": 159.09233022733062,
+   "bRaw": 159.09233022733062,
+   "sameRaw": true,
+   "sameFingerprint": true
+  },
+  {
+   "round": 8,
+   "firstArm": "a",
+   "aSeconds": 3.323063055984676,
+   "bSeconds": 5.299379764997866,
+   "ratio": 1.5947274173609012,
+   "aRaw": 159.09233022733062,
+   "bRaw": 159.09233022733062,
+   "sameRaw": true,
+   "sameFingerprint": true
+  },
+  {
+   "round": 9,
+   "firstArm": "b",
+   "aSeconds": 3.3945394349866547,
+   "bSeconds": 4.0871782260073815,
+   "ratio": 1.2040449976458882,
+   "aRaw": 159.09233022733062,
+   "bRaw": 159.09233022733062,
+   "sameRaw": true,
+   "sameFingerprint": true
+  }
+ ]
+}

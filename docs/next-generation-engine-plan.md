@@ -2550,3 +2550,180 @@ plausible optimisations were built and measured, one is arithmetically
 impossible and one is empirically worthless, and the third was already
 in the tree and has now been disqualified rather than deferred. The
 cheapest thing an engine can be given is a reason not to change it.
+
+## The quality curve exists now, and it is over in 1.4 seconds
+
+The third review's priority 0 was a *measurement*, not an optimisation:
+"build one event-driven, one-process, from-request-only quality frontier
+trace before doing more optimization", because "current evidence gives
+whole-arm totals from selected parents, not time-to-first-value, marginal
+delta-mm/ms, or the cost of the actual from-scratch ancestry inside one
+process. Until that curve exists, a ten-second portfolio allocation is
+informed engineering - but still storytelling."
+
+The curve exists. It is `docs/experiments/quality-frontier-trace/`, and
+what it says is not what the ten-second schedule assumed.
+
+### One choke point, not fifty-five
+
+The trace's unit is one **exact-valid candidate** - every layout the
+search proves legal, published or not - and there is exactly one place
+in this engine where that event happens: `validate_and_measure_placements`,
+the composite exact validator. Every mode's acceptance, every lane's
+publication check, every deep-operator dual audit passes through it. So
+the instrument is one `#[cfg]` block at one line, plus operator *scopes*
+that name the work an event belongs to, plus disposition events at the
+three sites that decide one. Fifty-five call sites needed no edits.
+
+The scopes are the second half of the design. A thread-local stack of
+`(operator, seed, parent fingerprint)` frames is pushed by the
+constructor, by each relaxed epoch, by each coupled arm, by the
+persistent-vacancy mode dispatch, and by each of mode 20's eight
+construction restarts; every event carries the innermost frame and a
+snapshot of the `profiling` counters, so the difference between a
+scope's enter and exit *is* its work attribution. On the mode-20 stream
+the leaf scopes account for 26.851 of the mode-20 run's 26.882
+seconds.
+
+`quality-trace` is off by default and empty when off - the `profiling::deep`
+pattern, for the same reason. Ten interleaved rounds on the mode-22 gate
+stream, arms alternating order, per-round paired ratio: **1.014**, spread
+0.980-1.044, four of ten rounds below parity, every outcome identical. An
+independent earlier ten-round set of the same pair read 0.995. Compiling it
+in is not distinguishable from not compiling it in.
+
+### What it costs when it is on, and what that cost actually is
+
+Arming the sink is not free, and the decomposition is the interesting
+part. Same A/B protocol, same stream:
+
+| comparison | paired median | spread | rounds below 1.0 | outcomes identical |
+|---|---:|---|---:|:--:|
+| base -> feature in, sink closed | **1.014** | 0.980-1.044 | 4/10 | yes |
+| sink closed -> sink open | 1.165 | 1.157-1.184 | 0/10 | yes |
+| sink closed -> counters only, no sink | 1.168 | 1.156-1.195 | 0/10 | yes |
+
+The third row is the whole of the second. The trace's own work -
+formatting a JSON line and writing it into a 1 MiB buffer, a few dozen
+times per run - is not separable from noise once the *counters* are
+armed; what costs 16.8% is `profiling::set_enabled(true)`, i.e. one
+thread-local add on each of 10.9M candidate queries. So the trace ships
+with `POLYGON_NESTING_QUALITY_TRACE_COUNTERS=0`, which leaves the
+counters alone and gives a run the clock the production build runs on
+with zero work ordinals. Every run header says which it was. A
+time-to-quality curve is drawn on the undistorted clock; a work
+attribution is read off the other run; no single artifact claims both.
+
+### The curve
+
+Four processes, Mixed-61 exact-clearance request, **from request only** -
+no pinned parent, no warm start, production default allowance, seeds 0
+and 1. Undistorted clock. Depth is raw source depth, joined to the
+public incumbent by placement fingerprint.
+
+| | m0+coupled s0 | m0+coupled s1 | mode 20 s0 | mode 20 s1 |
+|---|---:|---:|---:|---:|
+| first complete exact-valid layout | 0.535 s @ 231.570 | 0.546 s @ 231.570 | 0.541 s @ 231.570 | 0.546 s @ 231.570 |
+| <= 200 / 190 / 185 mm | 0.666 s @ 182.976 | 0.672 s @ 182.976 | 0.669 s @ 182.976 | 0.655 s @ 182.976 |
+| <= 182 mm | 0.980 s | 0.917 s | 0.977 s | 0.883 s |
+| <= 181.6 mm | 1.249 s | 1.148 s | 1.254 s | 1.121 s |
+| <= 180 mm | never | 1.350 s | never | 1.326 s |
+| final engine depth | 181.589 | 179.690 | 181.589 | 179.690 |
+| run end | 1.956 s | 1.981 s | 26.617 s | 26.960 s |
+| tail with zero incumbent gain | 0.707 s | 0.630 s | **25.363 s** | **25.635 s** |
+
+Read the first two rows together: the constructor produces a complete,
+exact-valid, contract-valid 231.570 mm layout in **0.535-0.546 seconds**,
+and its own portfolio has already reached 182.976 mm at 0.655-0.672 seconds - so
+three of the five depth milestones the review named are cleared before
+the relaxed loop's first accepted move. The relaxed loop then spends
+5.3M candidate queries and 48.2K effective moves to buy 1.387 mm (seed
+0) or 3.286 mm (seed 1), and it is finished by 1.35 seconds.
+
+Marginal delta-mm per second, first incumbent to last, then over the
+whole run:
+
+| run | gain | window | inside window | over whole run |
+|---|---:|---:|---:|---:|
+| m0+coupled s0 | 1.387 mm | 0.583 s | 2.378 mm/s | 0.709 mm/s |
+| m0+coupled s1 | 3.286 mm | 0.678 s | 4.845 mm/s | 1.659 mm/s |
+| mode 20 s0 | 1.387 mm | 0.585 s | 2.372 mm/s | **0.052 mm/s** |
+| mode 20 s1 | 3.286 mm | 0.671 s | 4.897 mm/s | **0.122 mm/s** |
+
+The mode-20 rows are the *same search* as the m0 rows - the two runs
+agree counter for counter through the m0 phase, 5,851,533 candidate
+queries and 52,313 effective moves on seed 0 - plus a 25-second tail
+whose marginal contribution to the published result is 0.000 mm.
+
+### Where the work went, and the number that reorders the board
+
+Per-scope, mode-20 seed 0, work-ordinal run:
+
+| scope | wall | candidate queries | effective moves | exact pair tests | collision builds | exact-valid candidates |
+|---|---:|---:|---:|---:|---:|---:|
+| `constructor` | 0.648 s | 0 | 0 | **584,671** | 2,913 | 1 |
+| 16x `m0.epoch*` | 1.193 s | 5,332,423 | 48,153 | 207 | 0 | 3 |
+| 3x `coupled.*` | 0.334 s | 519,110 | 4,160 | 63 | 0 | 0 |
+| 8x `mode20.restart*` | 24.676 s | 0 | 0 | 458 (non-deep only) | 0 | 8 |
+
+**The short-side-first constructor performs 584,671 of the run's 585,460
+exact Clipper pair tests - 99.87% - and all 2,913 collision polygon
+builds, inside its first 0.648 seconds.** The review's iteration target
+says "keep all optimizer-internal exact geometry below roughly 5% of the
+ten-second budget"; on this stream the optimizer's exact geometry is
+already 0.13% of the run's, and the constructor's is everything. That is
+a different target than the one the board was written against.
+
+Mode 20's eight restarts cost 3.0-3.2 s each, 24.676 s together, and produce exactly one
+exact-valid complete layout each: 204.070-217.202 mm on seed 0,
+204.272-228.112 mm on seed 1. Every one is deeper than the incumbent it
+was built alongside, and the adoption rule refuses all eight - now with
+a named reason, `notStrictlyBetterThanLegacy`, rather than a silent
+return of legacy.
+
+This is the review's own finding measured rather than argued: mode 20
+"is required in mechanism" and its "worse immediate depth must not
+disqualify its basin", but on this evidence the mechanism costs 93% of a
+27-second process and returns, as a published result, nothing. Whether
+those eight basins are worth their 24.7 seconds is a question about
+their *descendants*, and that is the second plot the review asked for -
+"structurally diverse archived basins versus time, with their eventual
+descendant depth under a fixed downstream work budget". This trace
+supplies its input (eight fingerprinted, depth-measured basins per seed,
+with creation timestamps) and deliberately not its answer.
+
+### Two things that had to be built to measure anything at all
+
+**Mode 20 had no from-request path.** `run_population` refuses an
+unpinned parent for the whole 9-21/25 band before it does any work, so
+no single process could measure a from-request mode-20 basin - the exact
+slice the ten-second schedule allocates 1.9-4.0 s to. It is now
+reachable behind `persistent_vacancy_allow_unpinned_parent`, off by
+default, reported in the result document when armed
+(`unpinnedVacancyParent: true`), and explicitly not quotable against any
+pinned number: a fixture carries a frozen fingerprint and depth that the
+arm re-derives on load, and an in-process parent carries neither.
+
+**Adoption refusals are named.** The review's second finding was that
+"every adoption rejection silently returns legacy; production telemetry
+cannot distinguish incomplete, invalid, envelope-only rejection, or
+non-improvement". Under the trace they are four distinct `publication`
+events: `incompleteCardinality`, `publishedDepthUnmeasurable`,
+`notStrictlyBetterThanLegacy`, `compositeValidatorRejected`.
+
+The mode-20 construction clamp this stage runs under is derived rather
+than pinned - twice the request's own area lower-bound depth, 130.399 mm
+-> 260.797 mm - per the review's instruction that scale-dependent
+thresholds come from geometry. No Mixed-61 constant enters the driver.
+
+### Evidence
+
+All four pinned regression gates reproduce on the worktree binary and
+again on the `quality-trace` binary **with the sink armed on every
+gate**, which is the harder half: recording the stream does not change
+the stream. Mode 20 at `independentDepthMm` 206.869 /
+`8a7737381238fa4d`, the mode-22 records at 159.09233022733062 /
+`fa01012af1d559ae`, 159.07876040364795 / `e28fba007f8031d4`, and
+164.0375677990678 / `49f094d7e59a9008`, every arm `exactValid` and
+`contractValid`. Artifacts, drivers and raw event streams:
+`docs/experiments/quality-frontier-trace/`.

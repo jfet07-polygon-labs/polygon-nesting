@@ -12,6 +12,7 @@ use polygon_nesting_core::geometry::general_polygon::PolygonSet;
 use polygon_nesting_core::geometry::general_source::polygon_set_from_imported_piece;
 use polygon_nesting_core::parallel::JobPool;
 use polygon_nesting_core::profiling::{self, ProfileSnapshot};
+use polygon_nesting_core::quality_trace;
 use polygon_nesting_core::search::general_fast::GeneralFastPlacement;
 use polygon_nesting_core::search::general_fast::{
     construct_short_side_first, diagnose_congruent_pair_constructor,
@@ -163,8 +164,24 @@ fn profiling_requested() -> bool {
         .unwrap_or(false)
 }
 
+/// Whether the pinned-parent band may descend from this process's own coupled
+/// arm instead of a fixture.
+///
+/// Read from the environment for the same reason profiling is: the positional
+/// argument list is a pinned contract that replay drivers depend on, and the
+/// meaning of a replayed command may not change. A run armed this way is a
+/// from-request measurement, not a replay, and it must never be quoted against
+/// a pinned number - see
+/// `GeneralRelaxedSettings::persistent_vacancy_allow_unpinned_parent`.
+fn unpinned_vacancy_parent_requested() -> bool {
+    env::var("POLYGON_NESTING_UNPINNED_VACANCY_PARENT")
+        .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+        .unwrap_or(false)
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let profiling_armed = profiling_requested();
+    let unpinned_vacancy_parent_armed = unpinned_vacancy_parent_requested();
     profiling::set_enabled(profiling_armed);
     let mut arguments = env::args().skip(1);
     let request_path = arguments.next().ok_or(
@@ -234,7 +251,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if persistent_vacancy_mode > 33 {
         return Err("persistent vacancy mode must be between 0 and 33".into());
     }
-    let persistent_vacancy_parent_fixture = arguments.next();
+    // An empty string means "no pinned parent", which is what a from-request
+    // run needs: the deep operators then descend from the coupled arm this
+    // same process produced instead of from a fixture. The filter follows the
+    // warm-start slot's precedent exactly - an empty path was never a loadable
+    // fixture, so no previously valid invocation changes meaning - and it is
+    // what lets a positional target be supplied without arming this slot.
+    let persistent_vacancy_parent_fixture = arguments.next().filter(|value| !value.is_empty());
     // Modes 22 (alternation fixpoint), 23 (recombination), 24 (bounded-depth
     // reinsertion) and 26 (clamped-sheet ladder compression) reinterpret this
     // argument: mode 22 treats it as the starting target depth (mm) for the
@@ -456,6 +479,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // starts here, so the profile starts here too.
     profiling::reset();
     shadow_rescore::reset();
+    // The quality frontier trace's clock starts on the same line, so `t = 0`
+    // in the event stream is the same instant the wall-clock measurement
+    // begins. Opening the sink switches profiling recording on, which is why
+    // it happens after `profiling::reset()` and not before.
+    let quality_trace_armed = quality_trace::init(&format!(
+        "\"request\":\"{request_sha256}\",\"pieces\":{},\"relaxedSeed\":{relaxed_seed},\
+         \"persistentVacancyMode\":{persistent_vacancy_mode},\"relaxedEpochs\":{relaxed_epochs},\
+         \"coupledDynamicSeparator\":{coupled_dynamic_separator},\"threads\":{threads},\
+         \"pinnedParent\":{},\"warmStart\":{},\"runs\":{runs}",
+        pieces.len(),
+        pinned_vacancy_parent.is_some(),
+        warm_start_incumbent.is_some(),
+    ));
     for _ in 0..runs {
         let started = Instant::now();
         let (current, current_relaxed_diagnostics, current_constructed_depth_mm) = job_pool
@@ -506,6 +542,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 relaxed_settings.persistent_vacancy_mode = persistent_vacancy_mode;
                 relaxed_settings.persistent_vacancy_target_depth_mm =
                     persistent_vacancy_target_depth_mm;
+                relaxed_settings.persistent_vacancy_allow_unpinned_parent =
+                    unpinned_vacancy_parent_armed;
                 let outcome = improve_complete_layout_with_pinned_vacancy_parent(
                     &pieces,
                     settings,
@@ -537,6 +575,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             relaxed_diagnostics = current_relaxed_diagnostics;
         }
     }
+    // The trace closes before any reporting work, so no event carries a
+    // timestamp that includes JSON serialisation of the result document.
+    quality_trace::finish();
     elapsed_ms.sort_by(f64::total_cmp);
     let result = result.expect("positive run count produces a result");
     let placed_area_mm2 = result
@@ -796,6 +837,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // harness existed and every pinned normalization keeps working.
     if profiling_armed {
         output["searchProfile"] = search_profile_json(&profiling::snapshot());
+    }
+    // A traced run says so in its own report, and says how much of the stream
+    // it saw. The block appears only when a sink was actually opened, so an
+    // untraced run's report is byte-identical either way - including in a
+    // build that carries the feature.
+    // A run that descended from an in-process parent says so in its own
+    // report, unconditionally, so no artifact of one can be read as a replay.
+    if unpinned_vacancy_parent_armed {
+        output["unpinnedVacancyParent"] = json!(true);
+    }
+    if quality_trace_armed {
+        output["qualityTrace"] = json!({
+            "schemaVersion": quality_trace::SCHEMA_VERSION,
+            "sink": env::var(quality_trace::SINK_ENV).unwrap_or_default(),
+            "proxySurvivors": quality_trace::proxy_survivor_total(),
+            "deepCountersCompiledIn": profiling::deep::COMPILED_IN,
+        });
     }
     // The shadow-rescore audit reports unconditionally in a build that carries
     // it, because its whole point is to be read: a run that audited and said
