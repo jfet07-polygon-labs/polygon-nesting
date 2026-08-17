@@ -923,7 +923,7 @@ pub(super) fn run_persistent_vacancy_population(
         fast_settings,
         relaxed_settings.persistent_vacancy_target_depth_mm,
         parent,
-        parent_is_pinned,
+        parent_is_pinned || relaxed_settings.persistent_vacancy_allow_unpinned_parent,
         mode,
         &mut diagnostics,
         &mut work,
@@ -3568,12 +3568,17 @@ fn relaxed_state_from_fast_placements(
     })
 }
 
+/// `parent_is_admissible` is `parent_is_pinned` unless the caller opted into an
+/// in-process parent through
+/// `GeneralRelaxedSettings::persistent_vacancy_allow_unpinned_parent`. The
+/// *reported* `parent_source` is unchanged either way, so a run that descended
+/// from an in-process arm can never be mistaken for a replay of a fixture.
 fn run_population(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
     target_override_mm: Option<f64>,
     parent: &GeneralCoupledSeparatorArmDiagnostics,
-    parent_is_pinned: bool,
+    parent_is_admissible: bool,
     mode: usize,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
@@ -3634,7 +3639,7 @@ fn run_population(
     if matches!(
         mode,
         9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 25
-    ) && !parent_is_pinned
+    ) && !parent_is_admissible
     {
         return Err(
             "persistent vacancy modes 9-21 and 25 require a pinned parent fixture".to_owned(),
@@ -11097,6 +11102,21 @@ mod tests {
             .failure_reason
             .unwrap()
             .contains("require a pinned parent fixture"));
+
+        // The opt-in admits an in-process parent, and only that: it moves the
+        // gate, it does not remove it, and it is off in the default settings.
+        assert!(!GeneralRelaxedSettings::mixed_61_probe(0, 1)
+            .persistent_vacancy_allow_unpinned_parent);
+        let mut unpinned = relaxed;
+        unpinned.persistent_vacancy_allow_unpinned_parent = true;
+        let result = run_persistent_vacancy_population(&pieces, fast, unpinned, &parent, None, 20);
+        assert!(!result
+            .failure_reason
+            .unwrap_or_default()
+            .contains("require a pinned parent fixture"));
+        // The report still describes the parent honestly: no fixture was read,
+        // so nothing may claim one was.
+        assert!(result.parent_source.is_none());
 
         // Frozen modes reject target overrides outright.
         let result =

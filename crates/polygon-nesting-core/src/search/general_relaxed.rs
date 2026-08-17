@@ -349,6 +349,24 @@ pub struct GeneralRelaxedSettings {
     pub precompression_frontier_vacancy_mode: usize,
     pub persistent_vacancy_mode: usize,
     pub persistent_vacancy_target_depth_mm: Option<f64>,
+    /// Lets the pinned-parent band (modes 9-21 and 25) descend from the
+    /// coupled arm this same process produced, instead of requiring a fixture.
+    ///
+    /// **Off by default, and it must stay off in anything that publishes a
+    /// comparable number.** The pin is what makes those modes' reported
+    /// numbers reproducible: a fixture carries a frozen fingerprint and depth,
+    /// and the arm re-derives both on load. An in-process parent carries
+    /// neither, so an arm run this way is a *measurement of a search*, not a
+    /// replay of a state, and its result may not be quoted against a pinned
+    /// one.
+    ///
+    /// It exists because the review's ten-second portfolio allocates a slice
+    /// to "one or two fast mode-20-derived basin constructors" from request
+    /// only, and that path is otherwise closed: `run_population` refuses an
+    /// unpinned parent before it does any work, so no single process can
+    /// currently measure what a from-request mode-20 basin costs or is worth.
+    /// Measuring that is the whole point of the quality frontier trace.
+    pub persistent_vacancy_allow_unpinned_parent: bool,
 }
 
 impl GeneralRelaxedSettings {
@@ -372,6 +390,7 @@ impl GeneralRelaxedSettings {
             precompression_frontier_vacancy_mode: 0,
             persistent_vacancy_mode: 0,
             persistent_vacancy_target_depth_mm: None,
+            persistent_vacancy_allow_unpinned_parent: false,
         }
     }
 
