@@ -148,9 +148,14 @@ fn validate_settings(
     Ok(())
 }
 
-fn transform_placement(
+/// Rejects a placement whose geometry or transform cannot be measured at all,
+/// and returns the rotation's `(sin, cos)`.
+///
+/// Shared by every raw-source measurement in this module so they agree on what
+/// "measurable" means before any of them reads a coordinate.
+fn placement_rotation(
     placement: &GeneralPlacement<'_>,
-) -> Result<MaterialSet, PublicationValidationError> {
+) -> Result<(f64, f64), PublicationValidationError> {
     if placement.polygon.is_empty() {
         return Err(PublicationValidationError::new(format!(
             "piece {} has empty material geometry",
@@ -169,31 +174,93 @@ fn transform_placement(
             )));
         }
     }
-    let radians = placement.rotation_deg.to_radians();
-    let (sin, cos) = radians.sin_cos();
+    Ok(placement.rotation_deg.to_radians().sin_cos())
+}
+
+/// Places one flattened source ring under a placement's transform, in `f64`
+/// throughout.
+///
+/// This reads [`PolygonRing::source_points`] - the untouched `f64` ring - and
+/// never the canonical integer-grid path, which is the whole point of this
+/// module: the search's own geometry is quantized to the grid, so a validator
+/// built on it could not see a sub-grid violation.
+fn transform_source_ring(
+    ring: &PolygonRing,
+    placement: &GeneralPlacement<'_>,
+    sin: f64,
+    cos: f64,
+) -> Result<Vec<IrregularPoint>, PublicationValidationError> {
+    ring.source_points()
+        .iter()
+        .map(|point| {
+            let mirror_x = if placement.mirrored {
+                -point.x
+            } else {
+                point.x
+            };
+            let transformed = IrregularPoint::new(
+                mirror_x * cos - point.y * sin + placement.translate_x,
+                mirror_x * sin + point.y * cos + placement.translate_y,
+            );
+            if !transformed.x.is_finite() || !transformed.y.is_finite() {
+                return Err(PublicationValidationError::new(format!(
+                    "piece {} transform produced a non-finite coordinate",
+                    placement.piece_id
+                )));
+            }
+            Ok(transformed)
+        })
+        .collect()
+}
+
+/// The layout's long-axis depth, measured on the untouched `f64` source rings.
+///
+/// This is the same `max_y + edge clearance` quantity the search reports as its
+/// independent depth, and it applies exactly the transform
+/// [`validate_publication`] validates under - but it never leaves `f64`. The
+/// search's own measurement goes through `PolygonSet::bounds`, which reads the
+/// canonical *integer-grid* path and therefore snaps to the 0.001 mm grid. At a
+/// hard threshold - a 155.000 mm goal, a ladder rung's bound - a layout whose
+/// true depth sits a hair above the line can snap a hair below it and appear to
+/// qualify. This measurement cannot round in either direction, so it is the one
+/// to quote whenever a depth is being compared against a threshold rather than
+/// against another snapped depth.
+///
+/// The maximum is taken over the outer rings only: a hole is contained in its
+/// own outer ring by construction, so it can never be the deepest point.
+pub fn raw_source_long_axis_depth_mm(
+    placements: &[GeneralPlacement<'_>],
+    sheet_edge_clearance_mm: f64,
+) -> Result<f64, PublicationValidationError> {
+    if !sheet_edge_clearance_mm.is_finite() {
+        return Err(PublicationValidationError::new(
+            "sheet edge clearance must be finite",
+        ));
+    }
+    let mut deepest = f64::NEG_INFINITY;
+    for placement in placements {
+        let (sin, cos) = placement_rotation(placement)?;
+        for region in &placement.polygon.regions {
+            for point in transform_source_ring(&region.outer, placement, sin, cos)? {
+                deepest = deepest.max(point.y + sheet_edge_clearance_mm);
+            }
+        }
+    }
+    if deepest == f64::NEG_INFINITY {
+        return Err(PublicationValidationError::new(
+            "a raw-source depth needs at least one placed ring to measure",
+        ));
+    }
+    Ok(deepest)
+}
+
+fn transform_placement(
+    placement: &GeneralPlacement<'_>,
+) -> Result<MaterialSet, PublicationValidationError> {
+    let (sin, cos) = placement_rotation(placement)?;
     let transform_ring =
         |ring: &PolygonRing| -> Result<Vec<IrregularPoint>, PublicationValidationError> {
-            ring.source_points()
-                .iter()
-                .map(|point| {
-                    let mirror_x = if placement.mirrored {
-                        -point.x
-                    } else {
-                        point.x
-                    };
-                    let transformed = IrregularPoint::new(
-                        mirror_x * cos - point.y * sin + placement.translate_x,
-                        mirror_x * sin + point.y * cos + placement.translate_y,
-                    );
-                    if !transformed.x.is_finite() || !transformed.y.is_finite() {
-                        return Err(PublicationValidationError::new(format!(
-                            "piece {} transform produced a non-finite coordinate",
-                            placement.piece_id
-                        )));
-                    }
-                    Ok(transformed)
-                })
-                .collect()
+            transform_source_ring(ring, placement, sin, cos)
         };
 
     Ok(MaterialSet {
@@ -782,6 +849,100 @@ mod tests {
             },
         ];
         assert!(validate_publication(&placements, settings()).is_err());
+    }
+
+    #[test]
+    fn raw_source_depth_does_not_snap_to_the_canonical_grid() {
+        // A ring whose top edge sits a third of a grid step above 2.000 mm.
+        // `PolygonSet::bounds` reads the integer-grid path and rounds it back
+        // down to 2.000; the raw-source measurement must keep the excess.
+        let piece = PolygonSet::from_outer(vec![
+            point(0.0, 0.0),
+            point(1.0, 0.0),
+            point(1.0, 2.0003),
+            point(0.0, 2.0003),
+        ])
+        .unwrap();
+        let placements = [GeneralPlacement {
+            piece_id: "sub_grid",
+            polygon: &piece,
+            rotation_deg: 0.0,
+            mirrored: false,
+            translate_x: 0.0,
+            translate_y: 0.0,
+        }];
+
+        let raw = raw_source_long_axis_depth_mm(&placements, 0.5).unwrap();
+        assert_eq!(raw, 2.5003);
+        assert!(
+            raw > piece.bounds().unwrap().max_y + 0.5,
+            "the snapped bound must not be able to hide the excess"
+        );
+    }
+
+    #[test]
+    fn raw_source_depth_maximizes_over_every_placement_under_its_own_transform() {
+        let piece = square(2.0);
+        let placements = [
+            GeneralPlacement {
+                piece_id: "shallow",
+                polygon: &piece,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 0.0,
+                translate_y: 0.0,
+            },
+            GeneralPlacement {
+                piece_id: "deep",
+                polygon: &piece,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 5.0,
+                translate_y: 3.25,
+            },
+        ];
+        assert_eq!(
+            raw_source_long_axis_depth_mm(&placements, 1.0).unwrap(),
+            2.0 + 3.25 + 1.0
+        );
+
+        // A 90-degree rotation of a 1x3 piece is 3 wide and 1 deep, so the
+        // measurement has to apply the rotation rather than read a bound.
+        let tall = PolygonSet::from_outer(vec![
+            point(0.0, 0.0),
+            point(1.0, 0.0),
+            point(1.0, 3.0),
+            point(0.0, 3.0),
+        ])
+        .unwrap();
+        let rotated = [GeneralPlacement {
+            piece_id: "rotated",
+            polygon: &tall,
+            rotation_deg: 90.0,
+            mirrored: false,
+            translate_x: 0.0,
+            translate_y: 0.0,
+        }];
+        let depth = raw_source_long_axis_depth_mm(&rotated, 0.0).unwrap();
+        assert!((depth - 1.0).abs() < 1e-12, "depth was {depth}");
+    }
+
+    #[test]
+    fn raw_source_depth_rejects_unmeasurable_input() {
+        let piece = square(2.0);
+        assert!(raw_source_long_axis_depth_mm(&[], 1.0).is_err());
+        assert!(raw_source_long_axis_depth_mm(
+            &[GeneralPlacement {
+                piece_id: "non_finite",
+                polygon: &piece,
+                rotation_deg: f64::NAN,
+                mirrored: false,
+                translate_x: 0.0,
+                translate_y: 0.0,
+            }],
+            1.0
+        )
+        .is_err());
     }
 
     #[test]

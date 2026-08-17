@@ -27,6 +27,12 @@ use crate::search::general_fast::{
     GeneralFastPlacement, GeneralFastResult, GeneralFastSettings, GeneralPlacementMetrics,
 };
 use crate::search::general_micro_legalization::GeneralMicroLegalizationDiagnostics;
+// The added contract-validity and raw-depth reporting is reachable only through
+// the persistent-vacancy arms, which the experimental feature gates.
+#[cfg(feature = "jagua-experimental")]
+use crate::search::general_fast::validate_placements_against_contract;
+#[cfg(feature = "jagua-experimental")]
+use crate::validation::general_polygon::{raw_source_long_axis_depth_mm, GeneralPlacement};
 // Re-exported into the persistent-vacancy module by its `use super::*`, which
 // is where the conflict-targeted re-placement repair consumes them.
 #[cfg(feature = "jagua-experimental")]
@@ -193,6 +199,12 @@ const COUPLED_SEPARATOR_SUBSTANTIAL_RATIO: f64 = 0.98;
 /// It is measured, not assumed: every arm reports the widest gap it observed
 /// next to the count it tolerated, so a run that needs more than this says so
 /// instead of silently succeeding.
+///
+/// The budget applies **only** to magnitudes that are pole pressures and are
+/// exactly `f32`-valued - see [`RollbackMagnitude`]. Boundary penalties and the
+/// running sums are `f64` all the way down and keep the one-`f64`-ulp rule;
+/// spending an `f32`-denominated budget on them would have admitted gaps some
+/// ten orders of magnitude wider than the rounding this constant describes.
 #[cfg(feature = "jagua-experimental")]
 const COUPLED_ROLLBACK_PRESSURE_ULP_BUDGET: u32 = 64;
 /// The prefix a contraction target's failure reason carries when a rollback
@@ -472,8 +484,42 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub distinct_signatures_retained: usize,
     pub complete_states: usize,
     pub publication_rejections: usize,
+    /// The *composite* verdict: the reported layout is admissible to this
+    /// run's search envelope **and** valid under the clearance contract (the
+    /// `validate_and_measure_placements` check).
+    ///
+    /// Unchanged in meaning; read it together with `contract_valid`, which
+    /// separates the two halves.
     pub exact_valid: bool,
+    /// The *contract* verdict for the layout this report describes: the
+    /// raw-source exact validator's answer alone, with no search envelope in
+    /// it (the `validate_placements_against_contract` check).
+    ///
+    /// The subject is the arm's published placements when it published, and
+    /// otherwise the parent layout `parent_fingerprint` names - i.e. always the
+    /// layout the rest of these fields are about. It is `false` when there is
+    /// no complete layout to judge, which is the same convention `exact_valid`
+    /// already follows.
+    ///
+    /// `exact_valid` additionally requires every canonical collision polygon,
+    /// expanded by `search_offset_allowance_mm` among other terms, to fit the
+    /// sheet and stay pairwise disjoint. So `contract_valid && !exact_valid` is
+    /// a real and unremarkable state: it is what a pinned record fixture found
+    /// under a narrow allowance looks like when it is replayed under a wider
+    /// one. Without this field that replay is indistinguishable from an
+    /// actually illegal layout.
+    ///
+    /// Reporting only. Acceptance keeps using `exact_valid`.
+    pub contract_valid: bool,
+    /// The reported layout's depth, measured through `PolygonSet::bounds` and
+    /// therefore snapped to the 0.001 mm canonical grid.
     pub independent_depth_mm: Option<f64>,
+    /// The same depth measured on the untouched `f64` source rings, which
+    /// cannot round in either direction. Compare *this* against a hard
+    /// threshold; `independent_depth_mm` can snap across one by up to half a
+    /// grid step. See
+    /// [`crate::validation::general_polygon::raw_source_long_axis_depth_mm`].
+    pub raw_source_depth_mm: Option<f64>,
     pub final_placement_fingerprint: Option<String>,
     pub final_placements: Vec<GeneralCoupledSeparatorPlacementDiagnostics>,
     pub work: GeneralPersistentVacancyWorkDiagnostics,
@@ -3136,7 +3182,7 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                 let effective_parent = pinned_arm
                     .as_ref()
                     .unwrap_or(&boundary_projection_treatment.diagnostics);
-                match relaxed_settings.persistent_vacancy_mode {
+                let mut population = match relaxed_settings.persistent_vacancy_mode {
                     22 => run_alternation_fixpoint(
                         pieces,
                         fast_settings,
@@ -3194,7 +3240,14 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                         parent_source,
                         mode,
                     ),
-                }
+                };
+                record_persistent_vacancy_contract_report(
+                    &mut population,
+                    pieces,
+                    fast_settings,
+                    effective_parent,
+                );
+                population
             });
         GeneralCoupledSeparatorDiagnostics {
             seed_domain: COUPLED_SEPARATOR_SEED_DOMAIN,
@@ -7812,10 +7865,12 @@ fn raw_tracker_disagreement(
 /// Whether two *derived* rollback losses - the per-piece incident sums and the
 /// boundary total - may be treated as the same reading.
 ///
-/// These have always been compared to within one `f64` ulp, because they are
-/// running sums whose last bit depends on accumulation order. `Exact` keeps
-/// precisely that rule, so no existing arm changes. A tolerant arm additionally
-/// admits the pole-rounding floor of the terms being summed.
+/// These are `f64` running sums whose last bit depends on accumulation order,
+/// so one `f64` ulp is the right and only tolerance for them under either
+/// policy. A sum of `f32`-valued pressure terms is not itself an `f32`, so
+/// there is no `f32` rounding floor here to widen to; the call below is
+/// [`RollbackMagnitude::NativeF64`] precisely to say so, and it also keeps the
+/// gap visible in the tally.
 #[cfg(feature = "jagua-experimental")]
 fn derived_losses_agree(
     first: f64,
@@ -7826,7 +7881,13 @@ fn derived_losses_agree(
     if equal_within_one_ulp(first, second) {
         return true;
     }
-    rollback_losses_agree(first, second, comparison, tally)
+    rollback_losses_agree(
+        first,
+        second,
+        RollbackMagnitude::NativeF64,
+        comparison,
+        tally,
+    )
 }
 
 /// The authoritative comparison under the bit-exact rule, which is what every
@@ -7875,7 +7936,13 @@ fn authoritative_raw_tracker_disagreement_under(
     }
     for (first, second) in first.boundaries.iter().zip(&second.boundaries) {
         if first.violations != second.violations
-            || !rollback_losses_agree(first.raw_loss, second.raw_loss, comparison, tally)
+            || !rollback_losses_agree(
+                first.raw_loss,
+                second.raw_loss,
+                RollbackMagnitude::NativeF64,
+                comparison,
+                tally,
+            )
         {
             return Some("boundary rows differ".to_owned());
         }
@@ -7892,7 +7959,13 @@ fn authoritative_raw_tracker_disagreement_under(
     for (first, second) in first.collision_pairs.iter().zip(&second.collision_pairs) {
         if first.0 != second.0
             || first.1 != second.1
-            || !rollback_losses_agree(first.2, second.2, comparison, tally)
+            || !rollback_losses_agree(
+                first.2,
+                second.2,
+                RollbackMagnitude::PairPressure,
+                comparison,
+                tally,
+            )
         {
             return Some("collision rows differ".to_owned());
         }
@@ -7902,7 +7975,13 @@ fn authoritative_raw_tracker_disagreement_under(
     }
     for (first, second) in first.pairs.iter().zip(&second.pairs) {
         if first.normalization_scale != second.normalization_scale
-            || !rollback_losses_agree(first.raw_loss, second.raw_loss, comparison, tally)
+            || !rollback_losses_agree(
+                first.raw_loss,
+                second.raw_loss,
+                RollbackMagnitude::PairPressure,
+                comparison,
+                tally,
+            )
         {
             return Some("pair rows differ".to_owned());
         }
@@ -7921,23 +8000,93 @@ struct RollbackComparisonTally {
     max_pressure_ulps: u32,
 }
 
+/// Where a rollback magnitude's low bits come from, which is what decides the
+/// unit its disagreements may be measured in.
+///
+/// [`COUPLED_ROLLBACK_PRESSURE_ULP_BUDGET`] is denominated in `f32` ulps
+/// because the rounding floor it absorbs is an `f32` one. Applying it to a
+/// magnitude that is `f64` all the way down is not a loose version of the same
+/// rule, it is a different and far weaker one: narrowing an `f64` to `f32`
+/// discards about 29 bits, so 64 `f32` ulps spans on the order of 1e10 `f64`
+/// ulps. Provenance therefore has to be carried to the comparison rather than
+/// inferred there.
+#[cfg(feature = "jagua-experimental")]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum RollbackMagnitude {
+    /// A per-pair collision pressure - the pair rows and the collision rows.
+    ///
+    /// Under the dynamic-pole model these arms run,
+    /// [`JaguaHazardIndex::collision_pressure`] ends in `f64::from(f32)`, so
+    /// the value *is* an `f32` and narrowing back is lossless: the `f32` bit
+    /// distance is the exact unit of a summation-order disagreement. The
+    /// `f64`-native pole models (`pole_overlap_pressure`) produce genuine
+    /// `f64`s through the same field, so the budget is additionally gated on
+    /// [`pressure_rounding_floor_applies`] rather than on an assumption about
+    /// which model is configured.
+    PairPressure,
+    /// A magnitude computed in `f64` throughout: the boundary penalty
+    /// (`boundary_penalty` is pure `f64` area arithmetic and never touches a
+    /// pole), and every running sum built from the terms above - the per-piece
+    /// incident totals and the boundary total. A sum of `f32`-valued terms is
+    /// not itself an `f32`, so none of these has an `f32` rounding floor to
+    /// absorb.
+    ///
+    /// These keep the one-`f64`-ulp accumulation-order rule the engine has
+    /// always applied to them.
+    NativeF64,
+}
+
+/// Whether narrowing both readings to `f32` is lossless, i.e. whether an `f32`
+/// ulp count is a real measurement of the gap between them rather than an
+/// artefact of throwing away 29 bits.
+///
+/// True for anything that reached `f64` through `f64::from(some_f32)`, which is
+/// what the dynamic-pole pressure path produces.
+#[cfg(feature = "jagua-experimental")]
+fn pressure_rounding_floor_applies(first: f64, second: f64) -> bool {
+    is_exactly_representable_as_f32(first) && is_exactly_representable_as_f32(second)
+}
+
+#[cfg(feature = "jagua-experimental")]
+fn is_exactly_representable_as_f32(value: f64) -> bool {
+    let narrowed = value as f32;
+    narrowed.is_finite() && f64::from(narrowed) == value
+}
+
 /// Whether two rollback loss magnitudes may be treated as the same reading.
+///
+/// `Exact` is untouched by the provenance scoping in every respect - it refuses
+/// any bitwise difference, and it records the same gap it always did - so every
+/// arm outside the mode-26 clamp stays bit-identical.
 #[cfg(feature = "jagua-experimental")]
 fn rollback_losses_agree(
     first: f64,
     second: f64,
+    magnitude: RollbackMagnitude,
     comparison: CoupledRollbackComparison,
     tally: &mut RollbackComparisonTally,
 ) -> bool {
     if first == second {
         return true;
     }
+    // Measured for every magnitude regardless of provenance: the diagnostic
+    // promises "the widest `f32`-ulp gap any comparison saw, tolerated or not",
+    // and a gap that is now refused is exactly the kind worth still seeing.
     let distance = pressure_ulp_distance(first, second);
     tally.max_pressure_ulps = tally.max_pressure_ulps.max(distance);
     match comparison {
         CoupledRollbackComparison::Exact => false,
         CoupledRollbackComparison::ToleratesPoleRounding => {
-            let tolerated = distance <= COUPLED_ROLLBACK_PRESSURE_ULP_BUDGET;
+            let tolerated = match magnitude {
+                RollbackMagnitude::PairPressure
+                    if pressure_rounding_floor_applies(first, second) =>
+                {
+                    distance <= COUPLED_ROLLBACK_PRESSURE_ULP_BUDGET
+                }
+                RollbackMagnitude::PairPressure | RollbackMagnitude::NativeF64 => {
+                    equal_within_one_ulp(first, second)
+                }
+            };
             if tolerated {
                 tally.tolerated = tally.tolerated.saturating_add(1);
             }
@@ -8103,6 +8252,19 @@ fn coupled_placement_diagnostics(
         .collect()
 }
 
+/// The canonical placement fingerprint the engine reports as
+/// `finalPlacementFingerprint` and `parentFingerprint`.
+///
+/// Exposed so an external fixture that *claims* a fingerprint can be checked
+/// against the placements it actually carries, without anyone reimplementing
+/// the digest and drifting from it. It is order-independent (placements are
+/// sorted by piece ID) and reads poses through the same angle/grid keys the
+/// search compares them with, so it identifies a layout rather than a
+/// serialization of one.
+pub fn general_placement_fingerprint(placements: &[GeneralFastPlacement]) -> String {
+    coupled_fast_placement_fingerprint(placements)
+}
+
 fn coupled_fast_placement_fingerprint(placements: &[GeneralFastPlacement]) -> String {
     let mut canonical = placements.iter().collect::<Vec<_>>();
     canonical.sort_by(|first, second| first.piece_id.cmp(&second.piece_id));
@@ -8163,6 +8325,97 @@ fn coupled_independent_source_depth(
                 "coupled diagnostics must retain at least one placement".to_owned(),
             )
         })
+}
+
+/// The unsnapped counterpart of [`coupled_independent_source_depth`].
+///
+/// Same layout, same `max_y + edge clearance` definition, same edge clearance -
+/// but measured on the untouched `f64` source rings rather than through
+/// `PolygonSet::bounds`, which reads the canonical integer-grid path and rounds
+/// to 0.001 mm. The two agree to within half a grid step; they can land on
+/// opposite sides of a hard threshold, which is the reason both are reported.
+#[cfg(feature = "jagua-experimental")]
+fn coupled_raw_source_depth(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+) -> Result<f64, GeneralFastError> {
+    let pieces_by_id = pieces
+        .iter()
+        .map(|piece| (piece.id, piece))
+        .collect::<BTreeMap<_, _>>();
+    let edge_clearance_mm = settings
+        .sheet_edge_clearance_mm
+        .unwrap_or(settings.total_padding_mm / 2.0);
+    let placements = placements
+        .iter()
+        .map(|placement| {
+            let piece = pieces_by_id
+                .get(placement.piece_id.as_str())
+                .ok_or_else(|| {
+                    GeneralFastError::InvalidInput(format!(
+                        "a coupled placement references unknown piece {}",
+                        placement.piece_id
+                    ))
+                })?;
+            Ok(GeneralPlacement {
+                piece_id: piece.id,
+                polygon: piece.polygon,
+                rotation_deg: placement.rotation_deg,
+                mirrored: placement.mirrored,
+                translate_x: placement.translate_short_axis,
+                translate_y: placement.translate_long_axis,
+            })
+        })
+        .collect::<Result<Vec<_>, GeneralFastError>>()?;
+    raw_source_long_axis_depth_mm(&placements, edge_clearance_mm)
+        .map_err(|error| GeneralFastError::InvalidInput(error.message().to_owned()))
+}
+
+/// The layout a persistent-vacancy arm's report is about: its published
+/// placements when it published one, and otherwise the parent it was handed.
+///
+/// An arm that declined - the parent failed the composite check, the target was
+/// unreachable - still reports `parent_fingerprint`, `target_depth_mm` and a
+/// failure reason about that parent, so the parent is what the added
+/// contract/raw-depth fields must describe for the report to be self-consistent.
+#[cfg(feature = "jagua-experimental")]
+fn persistent_vacancy_reported_layout(
+    diagnostics: &GeneralPersistentVacancyDiagnostics,
+    parent: &GeneralCoupledSeparatorArmDiagnostics,
+) -> Vec<GeneralFastPlacement> {
+    let subject = if diagnostics.final_placements.is_empty() {
+        &parent.final_placements
+    } else {
+        &diagnostics.final_placements
+    };
+    fast_placements_from_coupled_diagnostics(subject)
+}
+
+/// Fills in the two reporting-only fields that separate contract validity from
+/// search-envelope admissibility, and a depth that never rounds.
+///
+/// Computed once here, after the mode dispatch, rather than at each of the
+/// dozen sites that set `exact_valid`: every mode reaches this point, so one
+/// implementation covers all of them and no mode can forget to answer.
+///
+/// This changes no search behavior. It reads the layout the arm already
+/// reported and adds two measurements of it.
+#[cfg(feature = "jagua-experimental")]
+fn record_persistent_vacancy_contract_report(
+    diagnostics: &mut GeneralPersistentVacancyDiagnostics,
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    parent: &GeneralCoupledSeparatorArmDiagnostics,
+) {
+    let placements = persistent_vacancy_reported_layout(diagnostics, parent);
+    if placements.len() != pieces.len() {
+        return;
+    }
+    diagnostics.contract_valid =
+        validate_placements_against_contract(pieces, &placements, fast_settings).is_ok();
+    diagnostics.raw_source_depth_mm =
+        coupled_raw_source_depth(pieces, &placements, fast_settings).ok();
 }
 
 fn run_independent_lanes<'a>(
@@ -15223,14 +15476,116 @@ mod tests {
         assert!(tolerant_tally.tolerated > 0);
         assert_eq!(tolerant_tally.max_pressure_ulps, 1);
 
-        // Derived sums travel the same way through the strict-derived variant.
-        assert!(raw_tracker_disagreement(
-            &canonical,
-            &drifted,
-            CoupledRollbackComparison::ToleratesPoleRounding,
-            &mut RollbackComparisonTally::default(),
-        )
-        .is_none());
+        // The strict-derived variant additionally compares the per-piece
+        // incident *sums*, which are `f64` accumulations and so are held to one
+        // `f64` ulp under both policies. One `f32` ulp is about 2^29 of those,
+        // so the same drift that the pressure rows tolerate is refused here.
+        // See `RollbackMagnitude`.
+        assert_eq!(
+            raw_tracker_disagreement(
+                &canonical,
+                &drifted,
+                CoupledRollbackComparison::ToleratesPoleRounding,
+                &mut RollbackComparisonTally::default(),
+            )
+            .as_deref()
+            .map(|reason| reason.starts_with("incident loss 0")),
+            Some(true),
+        );
+    }
+
+    /// The scoping pin for the tolerant policy: the `f32`-denominated budget
+    /// reaches pole pressures and nothing else.
+    ///
+    /// A boundary penalty is `f64` area arithmetic all the way down, so an
+    /// `f32`-ulp budget spent on it would admit gaps of order 1e10 `f64` ulps -
+    /// which is why provenance is a parameter of the comparison rather than a
+    /// property inferred from the value.
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn tolerant_rollback_budget_is_scoped_to_pole_pressure_magnitudes() {
+        let tolerant = CoupledRollbackComparison::ToleratesPoleRounding;
+        let pressure = f64::from(3.25f32);
+        let one_f32_ulp_away = f64::from(f32::from_bits(3.25f32.to_bits() + 1));
+        let one_f64_ulp_away = f64::from_bits(pressure.to_bits() + 1);
+
+        // Pole pressure: the `f32` floor is real, so one `f32` ulp is rounding.
+        let mut tally = RollbackComparisonTally::default();
+        assert!(rollback_losses_agree(
+            pressure,
+            one_f32_ulp_away,
+            RollbackMagnitude::PairPressure,
+            tolerant,
+            &mut tally,
+        ));
+        assert_eq!(tally.tolerated, 1);
+
+        // The identical numbers, read as an `f64`-native magnitude: the same
+        // gap is now some 2^29 `f64` ulps and is refused.
+        let mut tally = RollbackComparisonTally::default();
+        assert!(!rollback_losses_agree(
+            pressure,
+            one_f32_ulp_away,
+            RollbackMagnitude::NativeF64,
+            tolerant,
+            &mut tally,
+        ));
+        assert_eq!(tally.tolerated, 0);
+        assert_eq!(
+            tally.max_pressure_ulps, 1,
+            "a refused gap is still measured and reported"
+        );
+
+        // An `f64`-native magnitude keeps its accumulation-order allowance.
+        let mut tally = RollbackComparisonTally::default();
+        assert!(rollback_losses_agree(
+            pressure,
+            one_f64_ulp_away,
+            RollbackMagnitude::NativeF64,
+            tolerant,
+            &mut tally,
+        ));
+        assert_eq!(tally.tolerated, 1);
+
+        // A pair row carrying a genuinely `f64`-native pressure - what the
+        // `pole_overlap_pressure` models produce - has no `f32` floor to widen
+        // to, and falls back to the same one-`f64`-ulp rule.
+        let native = 3.2500000000000004_f64;
+        assert!(!is_exactly_representable_as_f32(native));
+        let mut tally = RollbackComparisonTally::default();
+        assert!(!rollback_losses_agree(
+            native,
+            native + 1e-7,
+            RollbackMagnitude::PairPressure,
+            tolerant,
+            &mut tally,
+        ));
+        assert_eq!(tally.tolerated, 0);
+        let mut tally = RollbackComparisonTally::default();
+        assert!(rollback_losses_agree(
+            native,
+            f64::from_bits(native.to_bits() + 1),
+            RollbackMagnitude::PairPressure,
+            tolerant,
+            &mut tally,
+        ));
+
+        // `Exact` is unmoved by any of this, for either provenance.
+        for magnitude in [
+            RollbackMagnitude::PairPressure,
+            RollbackMagnitude::NativeF64,
+        ] {
+            let mut tally = RollbackComparisonTally::default();
+            assert!(!rollback_losses_agree(
+                pressure,
+                one_f32_ulp_away,
+                magnitude,
+                CoupledRollbackComparison::Exact,
+                &mut tally,
+            ));
+            assert_eq!(tally.tolerated, 0);
+            assert_eq!(tally.max_pressure_ulps, 1);
+        }
     }
 
     /// Tolerance is a rounding allowance, not a licence. Structure is still
