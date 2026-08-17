@@ -5983,6 +5983,16 @@ fn construct_skyline_beam_inner(
     ];
     let mut best: Option<(i64, usize, VacancyState, f64)> = None;
     for restart in 0..CONSTRUCTION_RESTARTS {
+        // One trace scope per construction restart. The restarts are the
+        // constructor's own basin generators - eight different insertion
+        // orders over the same pieces - so this is the granularity at which
+        // "which operator produced the layout" has an answer for mode 20.
+        #[cfg(feature = "quality-trace")]
+        let _trace_restart = crate::quality_trace::scope(
+            format!("mode20.restart{restart}.{}", ORDER_NAMES[restart]),
+            construction_seed,
+            None,
+        );
         let order_seed = derive_seed(construction_seed, restart, 0);
         let order = construction_order(pieces, work_settings, restart, order_seed)?;
         let mut row = GeneralPersistentVacancyConstructionRestartRow {
@@ -8293,6 +8303,11 @@ fn audit_state(
     if complete != state.active.iter().all(|active| *active) {
         return Err("audit completeness does not match the active set".to_owned());
     }
+    // The proxy/exact boundary for the deep operators: a state the proxy tier
+    // has already called feasible, now offered to the exact validator. This is
+    // the survivor count the frontier trace reports; it is not a hot site (the
+    // audit budget caps it) and it is compiled out with the feature.
+    crate::quality_trace::proxy_survivors(1);
     work.charge_validator_audit(complete)?;
     let active_pieces = pieces
         .iter()
