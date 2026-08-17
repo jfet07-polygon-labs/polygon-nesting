@@ -137,15 +137,20 @@ const LADDER_COMPRESSION_ATTEMPT_SLOT: usize = usize::MAX - 96;
 // the standalone instrument for the same pass mode 26 uses per rung.
 #[cfg(feature = "jagua-experimental")]
 const MICRO_LEGALIZATION_SEED_DOMAIN: u64 = 0x4D49_4352_4F4C_3237;
-// The two repair tiers a mode-26 rung may publish through, reported per rung so
-// a ladder table can say which mechanism reached which residue. Tier one is
+// The three repair tiers a mode-26 rung may publish through, reported per rung
+// so a ladder table can say which mechanism reached which residue. Tier one is
 // mode 27's translation-only projection; tier two is mode 28's
 // conflict-targeted re-placement, attempted only when tier one produced
-// nothing.
+// nothing; tier three is mode 29's joint multi-piece re-placement, attempted
+// only when tier two produced nothing either. The tiers run in strictly
+// increasing order of the correction they can express, so a later tier can only
+// ever *add* a publication to a rung an earlier one already failed.
 #[cfg(feature = "jagua-experimental")]
 const LADDER_REPAIR_TIER_MICRO: &str = "microLegalization";
 #[cfg(feature = "jagua-experimental")]
 const LADDER_REPAIR_TIER_REPLACEMENT: &str = "replacement";
+#[cfg(feature = "jagua-experimental")]
+const LADDER_REPAIR_TIER_JOINT: &str = "jointReplacement";
 // Mode 24 (bounded-depth reinsertion) tests compression by ejection and
 // reconstruction rather than compression by overlap: it ejects exactly the
 // pieces that stick out past a hard bound and rebuilds them with the
@@ -502,6 +507,10 @@ pub struct GeneralPersistentVacancyDiagnostics {
     /// the parent under the requested bound.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replacement_repair: Option<GeneralReplacementRepairDiagnostics>,
+    /// Mode 29: the standalone joint multi-piece re-placement repair run on the
+    /// parent under the requested bound.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub joint_replacement: Option<GeneralJointReplacementDiagnostics>,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
 }
@@ -667,6 +676,16 @@ pub struct GeneralPersistentVacancyLadderArmDiagnostics {
     pub replacement_repaired_depth_mm: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub replacement_repaired_fingerprint: Option<String>,
+    /// The third-tier joint multi-piece re-placement repair, run on the arm's
+    /// rejected state only when both the micro-legalizer and the single-piece
+    /// re-placement refused or failed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub joint_replacement: Option<GeneralJointReplacementDiagnostics>,
+    /// The depth of the jointly re-placed state, when that tier published one.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub joint_replaced_depth_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub joint_replaced_fingerprint: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failure_reason: Option<String>,
 }
@@ -841,6 +860,121 @@ pub struct GeneralReplacementRepairDiagnostics {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cap_exhausted: Option<String>,
     pub work: GeneralPersistentVacancyWorkDiagnostics,
+}
+
+/// Mode-29 (joint multi-piece re-placement) diagnostics: the violation graph
+/// the pass was pointed at, the whole-component ejection set it derived from
+/// it, and every insertion order it tried on that set.
+///
+/// Also carried per mode-26 rung arm, where this pass is the third repair
+/// tier: it runs only after both the micro-legalizer and the single-piece
+/// re-placement have refused or failed.
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralJointReplacementDiagnostics {
+    /// Whether the pass got past admission and actually re-placed anything.
+    pub attempted: bool,
+    /// The clamped sheet long axis every re-placed pose had to fit inside.
+    pub bound_mm: f64,
+    /// The input state's residue against the bare publication contracts.
+    pub violating_pairs: usize,
+    pub boundary_pieces: usize,
+    pub material_pairs: usize,
+    pub collision_pairs: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_material_deficit_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_envelope_push_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_boundary_deficit_mm: Option<f64>,
+    pub component_count: usize,
+    pub largest_component_pieces: usize,
+    pub component_limit: usize,
+    pub ejection_limit: usize,
+    /// The joint ejection set: every piece of every pair-bearing component,
+    /// in placement-slot order. This is what separates the tier from mode 28,
+    /// whose set is a vertex cover of the same graph.
+    pub ejected_count: usize,
+    pub ejected_piece_ids: Vec<String>,
+    /// Total violation mass incident to each ejected piece, aligned with
+    /// `ejectedPieceIds`. On the residue class this tier exists for, these are
+    /// millimetres rather than microns.
+    pub ejected_mass_mm: Vec<f64>,
+    /// The residue left once the whole set was removed. The pair count is zero
+    /// by construction - both endpoints of every violating pair are ejected -
+    /// and a boundary residue is handed to the micro-legalizer.
+    pub kept_violating_pairs: usize,
+    pub kept_boundary_pieces: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kept_micro_legalization: Option<GeneralMicroLegalizationDiagnostics>,
+    /// The anchor-local seeding's aimed input, as in mode 28: the length of
+    /// each ejected piece's single-piece separating projection, aligned with
+    /// the ejection set.
+    pub projected_displacements_mm: Vec<f64>,
+    pub projections_converged: usize,
+    pub projection_failures: usize,
+    /// The insertion orders the pass planned and the ones it actually spent.
+    /// `ordersExhaustive` says whether the plan was every permutation of the
+    /// set or the bounded rotation family a larger set falls back to.
+    pub orders_planned: usize,
+    pub orders_tried: usize,
+    pub orders_exhaustive: bool,
+    /// The pose-swap round: how many exchanges were available under the cap,
+    /// how many rounds ran, and how many exchanges were actually attempted.
+    pub swap_pairs_planned: usize,
+    pub swap_rounds_run: usize,
+    pub swap_attempts_tried: usize,
+    /// One row per attempted order, in the order they were attempted.
+    pub orders: Vec<GeneralJointReplacementOrderRow>,
+    /// The ordinal of the order that published, its hash, and whether it came
+    /// from the swap round rather than the plain enumeration.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_order: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_order_hash: Option<String>,
+    pub accepted_by_swap: bool,
+    /// Whether the authoritative validator accepted the jointly re-placed
+    /// state.
+    pub exact_valid: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub depth_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skipped_reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejection_reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cap_exhausted: Option<String>,
+    pub work: GeneralPersistentVacancyWorkDiagnostics,
+}
+
+/// One insertion order of one joint re-placement attempt.
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralJointReplacementOrderRow {
+    /// Position in the pass's own attempt sequence, counting the swap round's
+    /// attempts after the plain enumeration's.
+    pub ordinal: usize,
+    /// The order itself, and its hash - the determinism anchor, exactly as in
+    /// mode 28.
+    pub order_piece_ids: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub order_hash: Option<String>,
+    /// The two pieces whose vacated poses were exchanged before this attempt,
+    /// when it belongs to the swap round. `None` for a plain order.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub swap_pair: Option<Vec<String>>,
+    /// One row per attempted piece, in this order. A failing attempt stops at
+    /// the first piece with no in-bound pose, so this is a prefix of the
+    /// ejection set rather than a permutation of it.
+    pub pieces: Vec<GeneralReplacementRepairPieceRow>,
+    pub replaced_count: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failed_piece_id: Option<String>,
+    pub exact_valid: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub depth_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejection_reason: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
@@ -3045,6 +3179,13 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                         effective_parent,
                         parent_source,
                     ),
+                    29 => persistent_vacancy::run_joint_replacement_repair(
+                        pieces,
+                        fast_settings,
+                        relaxed_settings,
+                        effective_parent,
+                        parent_source,
+                    ),
                     mode => persistent_vacancy::run_persistent_vacancy_population(
                         pieces,
                         fast_settings,
@@ -3930,6 +4071,17 @@ fn run_ladder_compression_arm(
     // and rebuilt by the construction insertion machinery under this rung's
     // own clamped sheet. It runs only when tier one produced nothing, and it
     // likewise validates its own output before returning it.
+    //
+    // Tier three exists because tier two ejects a *vertex cover*: it leaves one
+    // endpoint of every conflict exactly where it was, so the re-placed piece
+    // has to find room against occupancy that is itself part of the conflict.
+    // The deep-frontier residue is multi-millimetre and sits in two- and
+    // three-piece components where no such single-piece pose exists at all, and
+    // tier two correctly refuses it. The joint pass ejects the whole component,
+    // searches over insertion order, and can seed a coordinated exchange - and
+    // like the other two it validates its own output before returning it. It
+    // runs strictly after tier two has produced nothing, so it can only add
+    // publications to rungs that were already failing.
     let mut legalized = None;
     let mut repair_tier = None;
     if !row.exact_valid {
@@ -3963,6 +4115,23 @@ fn run_ladder_compression_arm(
             }
         }
         row.replacement_repair = Some(outcome.diagnostics);
+    }
+    if !row.exact_valid && legalized.is_none() {
+        let outcome = persistent_vacancy::joint_replacement_repair(
+            pieces,
+            &placements,
+            fast_settings,
+            bound_mm,
+        );
+        if let Some(repaired) = &outcome.repaired {
+            if let Some(repaired_depth_mm) = outcome.diagnostics.depth_mm {
+                row.joint_replaced_depth_mm = Some(repaired_depth_mm);
+                row.joint_replaced_fingerprint = Some(coupled_fast_placement_fingerprint(repaired));
+                legalized = Some((repaired.clone(), repaired_depth_mm));
+                repair_tier = Some(LADDER_REPAIR_TIER_JOINT);
+            }
+        }
+        row.joint_replacement = Some(outcome.diagnostics);
     }
 
     let exact_valid = row.exact_valid;
