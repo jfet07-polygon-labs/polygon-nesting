@@ -1909,10 +1909,98 @@ impl Triangle {
     }
 }
 
+/// One cell's separating axes, precomputed for the *first* operand of a
+/// surrogate pair test.
+///
+/// [`triangle_penetration`] is called from the proxy collider with the first
+/// triangle at a zero translation, so everything it derives from that triangle
+/// alone - its three edge normals, and its own extent along each of them - is a
+/// function of the cell and nothing else. It was being re-derived on every one
+/// of the 80.4M narrow-phase tests a mode-22 stream runs, and the three
+/// `hypot` calls it needs are 68.6% of that stream's axis work.
+///
+/// Every field is the bit pattern the deriving path produced. `points` is the
+/// triangle after the `+ 0.0` the collider's translation applies (`x + 0.0` is
+/// `x` for every `x` except `-0.0`, so the normalisation is reproduced rather
+/// than assumed away), the edges are taken from those points in the same
+/// order, and `self_min`/`self_max` are that triangle's own projection onto its
+/// own axis. A `degenerate` edge is one whose length was exactly zero, which is
+/// the case the deriving path answered with `None`.
+#[derive(Clone, Copy)]
+struct CellAxes {
+    points: [IrregularPoint; 3],
+    edges: [CellEdge; 3],
+}
+
+#[derive(Clone, Copy)]
+struct CellEdge {
+    axis_x: f64,
+    axis_y: f64,
+    self_min: f64,
+    self_max: f64,
+    degenerate: bool,
+}
+
+impl CellAxes {
+    /// Derives one cell's axes exactly as [`triangle_penetration`] would, for a
+    /// first operand translated by `(0.0, 0.0)`.
+    fn new(cell: Triangle) -> Self {
+        let points = cell
+            .points
+            .map(|point| IrregularPoint::new(point.x + 0.0, point.y + 0.0));
+        let edges = std::array::from_fn(|index| {
+            let edge_x = points[(index + 1) % 3].x - points[index].x;
+            let edge_y = points[(index + 1) % 3].y - points[index].y;
+            let length = proxy_hypot(edge_x, edge_y);
+            if length == 0.0 {
+                return CellEdge {
+                    axis_x: 0.0,
+                    axis_y: 0.0,
+                    self_min: 0.0,
+                    self_max: 0.0,
+                    degenerate: true,
+                };
+            }
+            let axis_x = -edge_y / length;
+            let axis_y = edge_x / length;
+            let (self_min, self_max) = project_triangle(&points, axis_x, axis_y);
+            CellEdge {
+                axis_x,
+                axis_y,
+                self_min,
+                self_max,
+                degenerate: false,
+            }
+        });
+        Self { points, edges }
+    }
+}
+
+/// A bin grid over one shape's cells, stored as one bitmask per bin.
+///
+/// The membership lists used to be `Vec<Vec<usize>>`, and a query walked every
+/// list in the covered bin rectangle setting one bit per entry. On a mode-22
+/// stream that was 1.54 *billion* pointer-chased iterations to produce 157M
+/// distinct bits, because a cell sits in every bin its extent touches and a
+/// query covers 9.4 bins on average. The same answer is the OR of the bins'
+/// precomputed masks, which is the identical bit set - `|` is idempotent and
+/// commutative, so neither the duplication nor the visit order was ever
+/// observable - read from one contiguous array.
+///
+/// `words` is `ceil(cells / 64)`, and it is what a query zeroes and a caller
+/// scans. The declared cap is [`MAX_CELLS_PER_PIECE`] = 512, but real surrogates
+/// carry four or five cells, so the previous fixed eight-word mask spent seven
+/// eighths of its zeroing and scanning on words that no cell can ever occupy.
 #[derive(Clone)]
 struct CellIndex {
     bounds: IrregularBounds,
-    bins: Vec<Vec<usize>>,
+    /// `CELL_INDEX_SIDE * CELL_INDEX_SIDE * words` masks, bin-major.
+    bin_masks: Vec<u64>,
+    words: usize,
+    /// The bin spans [`bin_range`] derives from `bounds`, hoisted out of the
+    /// query: same expressions, same values, evaluated once per shape.
+    span_x: f64,
+    span_y: f64,
 }
 
 struct PieceIndex {
@@ -2091,42 +2179,214 @@ impl ProxyRowCache {
     }
 }
 
+/// The rotation half of a [`SurrogateKey`], memoised one slot per piece.
+///
+/// Deriving it is pure arithmetic, but the arithmetic is three `rem_euclid`
+/// calls - three out-of-line `fmod`s, none of which the compiler can hoist -
+/// and the proxy collider derives it for *two* poses on every pair question it
+/// is asked, which is 52.0M questions on a mode-22 stream.
+///
+/// The poses it is asked about barely change. A candidate scan holds one
+/// candidate pose fixed across every neighbour it queries, and a fixed piece's
+/// pose changes only when a move is accepted, so one slot per piece answers
+/// almost every question without touching `fmod`.
+///
+/// Keyed on the rotation's *bit pattern*, like [`ProxyRowPose`] and for the
+/// same reason: the derivation canonicalises, so two distinct bit patterns can
+/// share an answer, and comparing bits can therefore only cause an unnecessary
+/// recomputation, never a stale read. The value is whatever the deriving
+/// expression produced, so a hit and a miss are indistinguishable in the
+/// result.
+struct AngleKeyCache {
+    entries: Vec<Option<(u64, i64)>>,
+}
+
+impl AngleKeyCache {
+    fn new(piece_count: usize) -> Self {
+        Self {
+            entries: vec![None; piece_count],
+        }
+    }
+
+    /// The rotation key of `rotation_deg`, from the slot when the piece was
+    /// last asked about the same bits and from the deriving expression
+    /// otherwise.
+    ///
+    /// `directional` is the lane's `uses_directional_pressure()`, which is
+    /// constant for a lane; it selects the same branch the deriving path takes.
+    #[inline(always)]
+    fn rotation_key(&mut self, input_index: usize, rotation_deg: f64, directional: bool) -> i64 {
+        let bits = rotation_deg.to_bits();
+        if let Some(Some((stored_bits, key))) = self.entries.get(input_index).copied() {
+            if stored_bits == bits {
+                return key;
+            }
+        }
+        let key = derive_rotation_key(rotation_deg, directional);
+        if let Some(slot) = self.entries.get_mut(input_index) {
+            *slot = Some((bits, key));
+        }
+        key
+    }
+}
+
+/// The error a missing canonical orientation raises, verbatim.
+///
+/// A free function so a caller holding a catalogue borrow can raise it without
+/// re-borrowing the whole lane.
+fn missing_orientation_error(
+    pieces: &[GeneralFastPiece<'_>],
+    input_index: usize,
+    key: SurrogateKey,
+) -> GeneralFastError {
+    GeneralPolygonError::from_message(format!(
+        "relaxed surrogate catalog is missing canonical orientation {} for piece {}",
+        angle_from_key(key.1),
+        pieces[input_index].id
+    ))
+    .into()
+}
+
+/// The vector length the *proxy* tier measures with.
+///
+/// Every caller is a ranking or pruning question - a pole-pair separation, a
+/// separating-axis normalisation - and none of them can reach a published
+/// placement, which is why this knob exists at all and why it is confined to
+/// this function's callers.
+///
+/// The default is the platform's `hypot`, and the default is what every
+/// regression gate and every published number in this repository was measured
+/// against.
+///
+/// # Why the flag, and what it costs
+///
+/// After the collider's precomputation, `hypot` *is* the proxy tier: a mode-22
+/// stream runs 410M pole-pair separations and 83M axis normalisations through
+/// it, and a measured 7.7 ns/call against 1.3 ns/call for `sqrt(x*x + y*y)`
+/// says it is essentially all of what `pairPressure` costs. It is also the one
+/// thing here that cannot be made faster *and* bit-identical: the platform's
+/// `hypot` is correctly rounded, the naive form is not, and a 5M-sample probe
+/// at the magnitudes this engine works at puts them one unit in the last place
+/// apart on 16.9% of inputs. `libm`'s Rust port is not a way out either - it is
+/// 3.7x faster than the platform call and disagrees with it on 13.9% of the
+/// same inputs.
+///
+/// What that costs in *outcome* is a separate question from what it costs in
+/// arithmetic, and it was measured rather than assumed. On the three pinned
+/// regression streams the flagged build reproduces the unflagged one exactly -
+/// mode 20 at `independentDepthMm` 206.869 and fingerprint `8a7737381238fa4d`,
+/// the two mode-22 record replays at raw 159.09233022733062 and
+/// 159.08263749731248 at `fa01012af1d559ae` and `145d0ed4b2f53d3f`, all
+/// `exactValid` and `contractValid` - and so do the mode-26 ladder and the
+/// mode-31 arm, failure-reason text included, while the mode-22 stream runs
+/// 3.2 s against 3.7 s.
+///
+/// That is *evidence*, not a guarantee. A last-place difference in a ranking
+/// signal is not an error, but it can move a tie-break, and a moved tie-break
+/// is a different accepted move and therefore a different trajectory; five
+/// streams agreeing does not make the sixth agree, and no fingerprint this
+/// engine has ever published was measured under it. So it stays off, and it is
+/// delivered as a candidate for the anytime-coordinator era to evaluate on a
+/// corpus rather than as an optimisation to adopt on a fixture. The naive form
+/// additionally loses `hypot`'s overflow and underflow guards; at millimetre
+/// magnitudes on a sheet that is unreachable, but it is another reason this
+/// cannot be the default.
+#[inline(always)]
+fn proxy_hypot(x: f64, y: f64) -> f64 {
+    #[cfg(feature = "fast-proxy-hypot")]
+    {
+        (x * x + y * y).sqrt()
+    }
+    #[cfg(not(feature = "fast-proxy-hypot"))]
+    {
+        x.hypot(y)
+    }
+}
+
+/// The rotation half of a [`SurrogateKey`], derived.
+fn derive_rotation_key(rotation_deg: f64, directional: bool) -> i64 {
+    let angle = if directional {
+        continuous_angle(rotation_deg)
+    } else {
+        canonical_angle(rotation_deg)
+    };
+    angle_key(angle)
+}
+
 impl CellIndex {
     fn new(cells: &[Triangle], bounds: IrregularBounds) -> Self {
-        let mut bins = vec![Vec::new(); CELL_INDEX_SIDE * CELL_INDEX_SIDE];
+        let words = cells.len().div_ceil(64).max(1);
+        let mut bin_masks = vec![0_u64; CELL_INDEX_SIDE * CELL_INDEX_SIDE * words];
         for (cell_index, cell) in cells.iter().enumerate() {
             let (min_x, max_x, min_y, max_y) = cell_bin_range(cell.bounds, bounds);
             for y in min_y..=max_y {
                 for x in min_x..=max_x {
-                    bins[y * CELL_INDEX_SIDE + x].push(cell_index);
+                    bin_masks[(y * CELL_INDEX_SIDE + x) * words + cell_index / 64] |=
+                        1_u64 << (cell_index % 64);
                 }
             }
         }
-        Self { bounds, bins }
+        let (span_x, span_y) = bin_spans(bounds);
+        Self {
+            bounds,
+            bin_masks,
+            words,
+            span_x,
+            span_y,
+        }
     }
 
-    fn query_mask(
+    /// Writes the covered cells' bitmask into `selected` and returns how many
+    /// words of it are live.
+    ///
+    /// The bit set is the one the membership-list walk produced: a cell's bit is
+    /// set exactly when the query rectangle covers a bin the cell was inserted
+    /// into. Only the first `words` words are written, and only those are
+    /// meaningful; the caller scans the same prefix.
+    #[inline(always)]
+    fn query_mask_into(
         &self,
         bounds: IrregularBounds,
         translate_x: f64,
         translate_y: f64,
-    ) -> [u64; MAX_CELLS_PER_PIECE / 64] {
+        selected: &mut [u64; MAX_CELLS_PER_PIECE / 64],
+    ) -> usize {
         let local = IrregularBounds::new(
             bounds.min_x - translate_x,
             bounds.min_y - translate_y,
             bounds.max_x - translate_x,
             bounds.max_y - translate_y,
         );
-        let (min_x, max_x, min_y, max_y) = cell_bin_range(local, self.bounds);
-        let mut selected = [0_u64; MAX_CELLS_PER_PIECE / 64];
+        let (min_x, max_x, min_y, max_y) =
+            bin_range_within(local, self.bounds, self.span_x, self.span_y, CELL_INDEX_SIDE);
+        // One word covers every surrogate the catalogue actually builds; the
+        // general loop stays for the declared 512-cell ceiling.
+        if self.words == 1 {
+            let mut accumulated = 0_u64;
+            for y in min_y..=max_y {
+                let row = y * CELL_INDEX_SIDE;
+                for x in min_x..=max_x {
+                    accumulated |= self.bin_masks[row + x];
+                }
+            }
+            selected[0] = accumulated;
+            return 1;
+        }
+        let words = self.words;
+        selected[..words].fill(0);
         for y in min_y..=max_y {
+            let row = y * CELL_INDEX_SIDE;
             for x in min_x..=max_x {
-                for cell_index in self.bins[y * CELL_INDEX_SIDE + x].iter().copied() {
-                    selected[cell_index / 64] |= 1_u64 << (cell_index % 64);
+                let base = (row + x) * words;
+                for (word, mask) in selected[..words]
+                    .iter_mut()
+                    .zip(&self.bin_masks[base..base + words])
+                {
+                    *word |= *mask;
                 }
             }
         }
-        selected
+        words
     }
 }
 
@@ -2143,6 +2403,8 @@ impl CellIndex {
 pub struct OrientedSurrogate {
     collision: PolygonSet,
     cells: Vec<Triangle>,
+    /// One [`CellAxes`] per entry of `cells`, in the same order.
+    cell_axes: Vec<CellAxes>,
     poles: Vec<Pole>,
     bounds: IrregularBounds,
     cell_index: CellIndex,
@@ -2782,6 +3044,8 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
     piece_query_scratch: PieceQueryScratch,
     /// Per-piece proxy extents, kept in step with the layout one row per move.
     proxy_rows: ProxyRowCache,
+    /// Per-piece memo of the rotation half of a [`SurrogateKey`].
+    angle_keys: AngleKeyCache,
     /// Reusable buffer the accepted-move merge writes its new collision list
     /// into. It is swapped with the incumbent list rather than copied, so after
     /// the first move of a lane neither list allocates again.
@@ -9390,6 +9654,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             allow_worsening_chain: false,
             piece_query_scratch: PieceQueryScratch::new(pieces.len()),
             proxy_rows: ProxyRowCache::new(pieces.len()),
+            angle_keys: AngleKeyCache::new(pieces.len()),
             collision_merge_scratch: Vec::new(),
             pair_nfp_cache: BTreeMap::new(),
             pair_nfp_cache_components: 0,
@@ -11701,19 +11966,93 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             translated_bounds(shape_bounds, candidate.translate_x, candidate.translate_y);
         piece_index.query_into(candidate_bounds, &mut self.piece_query_scratch);
         let fixed_indices = std::mem::take(&mut self.piece_query_scratch.selected);
-        for fixed_index in fixed_indices.iter().copied() {
-            if fixed_index == input_index {
-                continue;
-            }
-            let penalty = self.pair_penalty(candidate, &state.placements[fixed_index])?;
-            if penalty > 0.0 {
-                let pair = ordered_pair(input_index, fixed_index);
-                collision_pairs.push((pair.0, pair.1, penalty));
-                weighted_loss += self.pair_weight(pair.0, pair.1) * penalty;
-                if upper_bound.is_some_and(|upper_bound| weighted_loss > upper_bound) {
-                    break;
+        // The scan runs over *disjoint field borrows* rather than `&mut self`.
+        //
+        // The candidate's shape is resolved once for the whole scan instead of
+        // once per neighbour, and a colliding pair no longer resolves both
+        // operands a second time to quantify its penalty: a scan of `k`
+        // neighbours descended the ordered catalogue `2k + 2c` times for `c`
+        // collisions and now descends it `k + 1`. Holding a resolved shape
+        // across the loop means the catalogue stays borrowed, so the loop
+        // cannot call `&mut self` methods - and taking a second `Arc` handle to
+        // dodge that was measurably worse than the descents it saved, because
+        // every lane bumps the *same* refcount and eight of them contend on one
+        // cache line. Destructuring gives the same freedom for nothing.
+        let mut failure = None;
+        {
+            let LaneSearch {
+                pieces,
+                catalog,
+                kernel,
+                counters,
+                angle_keys,
+                weights,
+                relaxed_settings,
+                ..
+            } = self;
+            let directional = relaxed_settings.collision_backend
+                == GeneralRelaxedCollisionBackend::RollbackTriangle
+                && relaxed_settings.pressure_model
+                    == GeneralRelaxedPressureModel::DirectionalPenetration;
+            let candidate_key = (
+                catalog.geometry_class_by_input[candidate.input_index],
+                angle_keys.rotation_key(candidate.input_index, candidate.rotation_deg, directional),
+                candidate.mirrored,
+            );
+            match catalog.orientations.get(&candidate_key) {
+                None => {
+                    failure = Some(missing_orientation_error(
+                        pieces,
+                        candidate.input_index,
+                        candidate_key,
+                    ))
+                }
+                Some(candidate_shape) => {
+                    for fixed_index in fixed_indices.iter().copied() {
+                        if fixed_index == input_index {
+                            continue;
+                        }
+                        let fixed = &state.placements[fixed_index];
+                        let fixed_key = (
+                            catalog.geometry_class_by_input[fixed.input_index],
+                            angle_keys.rotation_key(
+                                fixed.input_index,
+                                fixed.rotation_deg,
+                                directional,
+                            ),
+                            fixed.mirrored,
+                        );
+                        let Some(fixed_shape) = catalog.orientations.get(&fixed_key) else {
+                            failure = Some(missing_orientation_error(
+                                pieces,
+                                fixed.input_index,
+                                fixed_key,
+                            ));
+                            break;
+                        };
+                        let penalty = resolved_pair_penalty(
+                            kernel,
+                            counters,
+                            candidate_shape,
+                            candidate,
+                            fixed_shape,
+                            fixed,
+                        );
+                        if penalty > 0.0 {
+                            let pair = ordered_pair(input_index, fixed_index);
+                            collision_pairs.push((pair.0, pair.1, penalty));
+                            weighted_loss +=
+                                weights.get(&pair).copied().unwrap_or(1.0) * penalty;
+                            if upper_bound.is_some_and(|upper_bound| weighted_loss > upper_bound) {
+                                break;
+                            }
+                        }
+                    }
                 }
             }
+        }
+        if let Some(error) = failure {
+            return Err(error);
         }
         self.piece_query_scratch.selected = fixed_indices;
         collision_pairs.sort_by_key(|(first, second, _)| (*first, *second));
@@ -12287,9 +12626,10 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 "directional penetration requires candidate-scoped scoring".to_owned(),
             ));
         }
-        let first_key = self.surrogate_key(first.input_index, first.rotation_deg, first.mirrored);
+        let first_key =
+            self.memoised_surrogate_key(first.input_index, first.rotation_deg, first.mirrored);
         let second_key =
-            self.surrogate_key(second.input_index, second.rotation_deg, second.mirrored);
+            self.memoised_surrogate_key(second.input_index, second.rotation_deg, second.mirrored);
         let Some(first_shape) = self.catalog.orientations.get(&first_key) else {
             return Err(self.missing_orientation(first.input_index, first_key));
         };
@@ -12316,9 +12656,10 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         // was four descents where two answer the question. The failure branch
         // still raises the identical error, for the same pose, in the same
         // order.
-        let first_key = self.surrogate_key(first.input_index, first.rotation_deg, first.mirrored);
+        let first_key =
+            self.memoised_surrogate_key(first.input_index, first.rotation_deg, first.mirrored);
         let second_key =
-            self.surrogate_key(second.input_index, second.rotation_deg, second.mirrored);
+            self.memoised_surrogate_key(second.input_index, second.rotation_deg, second.mirrored);
         let Some(first_shape) = self.catalog.orientations.get(&first_key) else {
             return Err(self.missing_orientation(first.input_index, first_key));
         };
@@ -12411,10 +12752,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         second_shape: &OrientedSurrogate,
         second: &RelaxedPlacement,
     ) -> bool {
-        let _span = profiling::span(Phase::PairCollide);
-        profiling::count(Counter::NeighborTests, 1);
-        self.counters.piece_broad_phase_probes += 1;
-        kernel_pair_collides(
+        resolved_pair_collides(
             &mut self.kernel,
             &mut self.counters,
             first_shape,
@@ -12436,13 +12774,13 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         second_shape: &OrientedSurrogate,
         second: &RelaxedPlacement,
     ) -> f64 {
-        if !self.resolved_pair_collides(first_shape, first, second_shape, second) {
-            return 0.0;
-        }
-        let _span = profiling::span(Phase::PairPressure);
-        self.kernel.pair_pressure(
-            PosedShape::new(first_shape, first.translate_x, first.translate_y),
-            PosedShape::new(second_shape, second.translate_x, second.translate_y),
+        resolved_pair_penalty(
+            &mut self.kernel,
+            &mut self.counters,
+            first_shape,
+            first,
+            second_shape,
+            second,
         )
     }
 
@@ -12516,26 +12854,43 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
     /// with a single ordered-map descent instead of a `contains_key` probe
     /// followed by a `get` probe for the same key.
     fn surrogate_key(&self, input_index: usize, rotation_deg: f64, mirrored: bool) -> SurrogateKey {
-        let angle = if self.uses_directional_pressure() {
-            continuous_angle(rotation_deg)
-        } else {
-            canonical_angle(rotation_deg)
-        };
         (
             self.catalog.geometry_class_by_input[input_index],
-            angle_key(angle),
+            self.rotation_key(rotation_deg),
+            mirrored,
+        )
+    }
+
+    /// The rotation half of a [`Self::surrogate_key`].
+    fn rotation_key(&self, rotation_deg: f64) -> i64 {
+        derive_rotation_key(rotation_deg, self.uses_directional_pressure())
+    }
+
+    /// [`Self::surrogate_key`], answered from [`AngleKeyCache`] when the piece
+    /// was last asked about the same rotation bits.
+    ///
+    /// The cached value is the one [`Self::rotation_key`] returned for those
+    /// bits, so a hit and a miss are the same answer; only the three `fmod`s
+    /// differ. `inline(always)` because it sits inside the proxy collider.
+    #[inline(always)]
+    fn memoised_surrogate_key(
+        &mut self,
+        input_index: usize,
+        rotation_deg: f64,
+        mirrored: bool,
+    ) -> SurrogateKey {
+        let directional = self.uses_directional_pressure();
+        (
+            self.catalog.geometry_class_by_input[input_index],
+            self.angle_keys
+                .rotation_key(input_index, rotation_deg, directional),
             mirrored,
         )
     }
 
     /// The error a missing canonical orientation raises, verbatim.
     fn missing_orientation(&self, input_index: usize, key: SurrogateKey) -> GeneralFastError {
-        GeneralPolygonError::from_message(format!(
-            "relaxed surrogate catalog is missing canonical orientation {} for piece {}",
-            angle_from_key(key.1),
-            self.pieces[input_index].id
-        ))
-        .into()
+        missing_orientation_error(self.pieces, input_index, key)
     }
 
     fn ensure_oriented(
@@ -12639,10 +12994,12 @@ fn build_oriented_surrogate(
         .sqrt()
         .max(1.0);
     let poles = cells.iter().copied().map(triangle_pole).collect();
+    let cell_axes = cells.iter().copied().map(CellAxes::new).collect();
     let cell_index = CellIndex::new(&cells, bounds);
     Ok(OrientedSurrogate {
         collision: polygon,
         cells,
+        cell_axes,
         poles,
         bounds,
         cell_index,
@@ -12681,16 +13038,28 @@ pub(crate) fn surrogate_pair_collides(
     }
     let relative_x = second_translate_x - first_translate_x;
     let relative_y = second_translate_y - first_translate_y;
-    for first_cell in &first_shape.cells {
+    let mut cell_mask = [0_u64; MAX_CELLS_PER_PIECE / 64];
+    for (first_ordinal, first_cell) in first_shape.cells.iter().enumerate() {
         let first_cell_bounds =
             translated_bounds(first_cell.bounds, first_translate_x, first_translate_y);
         probes.cell_index_probes += 1;
-        let mut cell_mask = second_shape.cell_index.query_mask(
+        // A cell that misses the whole second shape cannot meet any of its
+        // cells: `second_shape.bounds` is the fold of the same ring points the
+        // cells are triangulated from, so every `second_cell.bounds` is inside
+        // it, and translating both by the same amount preserves that. Every
+        // reported cell would therefore have failed its own extent test below,
+        // so nothing downstream - not the narrow phase, not `sat_tests` - runs.
+        // 39.5% of a mode-22 stream's cell probes end here.
+        if !bounds_overlap(first_cell_bounds, second_bounds) {
+            continue;
+        }
+        let words = second_shape.cell_index.query_mask_into(
             first_cell_bounds,
             second_translate_x,
             second_translate_y,
+            &mut cell_mask,
         );
-        for (word_index, word) in cell_mask.iter_mut().enumerate() {
+        for (word_index, word) in cell_mask[..words].iter_mut().enumerate() {
             while *word != 0 {
                 let bit = word.trailing_zeros() as usize;
                 *word &= *word - 1;
@@ -12705,16 +13074,12 @@ pub(crate) fn surrogate_pair_collides(
                     continue;
                 }
                 probes.sat_tests += 1;
-                if triangle_penetration(
-                    *first_cell,
-                    0.0,
-                    0.0,
+                if oriented_cells_penetrate(
+                    &first_shape.cell_axes[first_ordinal],
                     second_cell,
                     relative_x,
                     relative_y,
-                )
-                .is_some()
-                {
+                ) {
                     return true;
                 }
             }
@@ -12744,8 +13109,10 @@ pub(crate) fn pole_overlap_pressure(
                 second_pole.center.x + second_translate_x,
                 second_pole.center.y + second_translate_y,
             );
-            let distance =
-                (first_center.x - second_center.x).hypot(first_center.y - second_center.y);
+            let distance = proxy_hypot(
+                first_center.x - second_center.x,
+                first_center.y - second_center.y,
+            );
             let penetration = first_pole.radius + second_pole.radius - distance;
             let decayed = if penetration >= epsilon {
                 penetration
@@ -12785,8 +13152,10 @@ fn continuous_pole_overlap_pressure(
         let first_center = first_transform.point(first_pole.center);
         for second_pole in &second_shape.poles {
             let second_center = second_transform.point(second_pole.center);
-            let distance =
-                (first_center.x - second_center.x).hypot(first_center.y - second_center.y);
+            let distance = proxy_hypot(
+                first_center.x - second_center.x,
+                first_center.y - second_center.y,
+            );
             let penetration = first_pole.radius + second_pole.radius - distance;
             let decayed = if penetration >= epsilon {
                 penetration
@@ -12806,6 +13175,50 @@ fn continuous_pole_overlap_pressure(
         .sqrt()
         .max(1.0);
     overlap_proxy.sqrt() * (first_difficulty * second_difficulty).sqrt()
+}
+
+/// The proxy collision verdict for two already resolved shapes, over the two
+/// lane fields it actually needs.
+///
+/// Same span, same counters, same kernel call as the method that forwards to
+/// it. It takes `kernel` and `counters` as disjoint borrows for the reason
+/// [`kernel_pair_collides`] does: the shapes a resolved caller holds are
+/// borrowed from the lane's catalogue, so a caller that keeps a shape alive
+/// across the call cannot also hand over `&mut self`.
+#[inline(always)]
+fn resolved_pair_collides<K: ExplorationKernel<Shape = OrientedSurrogate>>(
+    kernel: &mut K,
+    counters: &mut WorkCounters,
+    first_shape: &OrientedSurrogate,
+    first: &RelaxedPlacement,
+    second_shape: &OrientedSurrogate,
+    second: &RelaxedPlacement,
+) -> bool {
+    let _span = profiling::span(Phase::PairCollide);
+    profiling::count(Counter::NeighborTests, 1);
+    counters.piece_broad_phase_probes += 1;
+    kernel_pair_collides(kernel, counters, first_shape, first, second_shape, second)
+}
+
+/// The proxy pair penalty for two already resolved shapes: collision first,
+/// magnitude only for a pair the proxy has already reported.
+#[inline(always)]
+fn resolved_pair_penalty<K: ExplorationKernel<Shape = OrientedSurrogate>>(
+    kernel: &mut K,
+    counters: &mut WorkCounters,
+    first_shape: &OrientedSurrogate,
+    first: &RelaxedPlacement,
+    second_shape: &OrientedSurrogate,
+    second: &RelaxedPlacement,
+) -> f64 {
+    if !resolved_pair_collides(kernel, counters, first_shape, first, second_shape, second) {
+        return 0.0;
+    }
+    let _span = profiling::span(Phase::PairPressure);
+    kernel.pair_pressure(
+        PosedShape::new(first_shape, first.translate_x, first.translate_y),
+        PosedShape::new(second_shape, second.translate_x, second.translate_y),
+    )
 }
 
 /// Asks the kernel about one pair and folds its reported work into the lane
@@ -13493,6 +13906,64 @@ fn point_in_triangle(point: IrregularPoint, triangle: [IrregularPoint; 3]) -> bo
     })
 }
 
+/// Whether an oriented shape's cell, at a zero translation, penetrates a second
+/// cell translated by `(second_x, second_y)`.
+///
+/// This is [`triangle_penetration`] with `first_x = first_y = 0.0` and with
+/// everything that depends on the first triangle alone read out of
+/// [`CellAxes`] instead of re-derived. Same axes, in the same order, from the
+/// same bit patterns; the only thing dropped is the magnitude, which the proxy
+/// collider has never read - both of `triangle_penetration`'s callers ask it
+/// `.is_some()`.
+///
+/// The predicate the deriving path computes is "no edge of either triangle has
+/// zero length, and every one of the six axes shows positive overlap", and it
+/// short-circuits on the first edge that fails, in first-triangle-then-second
+/// order. This reproduces that order exactly, so a degenerate cell answers
+/// `false` at the same edge it used to answer `None` at.
+///
+/// `inline(always)` for the reason PR4 recorded: this is inside the hottest
+/// call in every measured stream - 80.4M invocations on a mode-22 stream - and
+/// a plain `#[inline]` on a factored hot helper cost that stage 0.9%.
+#[inline(always)]
+fn oriented_cells_penetrate(
+    first: &CellAxes,
+    second: Triangle,
+    second_x: f64,
+    second_y: f64,
+) -> bool {
+    let second_points = second
+        .points
+        .map(|point| IrregularPoint::new(point.x + second_x, point.y + second_y));
+    for edge in &first.edges {
+        if edge.degenerate {
+            return false;
+        }
+        let (second_min, second_max) = project_triangle(&second_points, edge.axis_x, edge.axis_y);
+        let overlap = edge.self_max.min(second_max) - edge.self_min.max(second_min);
+        if overlap <= 0.0 {
+            return false;
+        }
+    }
+    for index in 0..3 {
+        let edge_x = second_points[(index + 1) % 3].x - second_points[index].x;
+        let edge_y = second_points[(index + 1) % 3].y - second_points[index].y;
+        let length = proxy_hypot(edge_x, edge_y);
+        if length == 0.0 {
+            return false;
+        }
+        let axis_x = -edge_y / length;
+        let axis_y = edge_x / length;
+        let (first_min, first_max) = project_triangle(&first.points, axis_x, axis_y);
+        let (second_min, second_max) = project_triangle(&second_points, axis_x, axis_y);
+        let overlap = first_max.min(second_max) - first_min.max(second_min);
+        if overlap <= 0.0 {
+            return false;
+        }
+    }
+    true
+}
+
 fn triangle_penetration(
     first: Triangle,
     first_x: f64,
@@ -13512,7 +13983,7 @@ fn triangle_penetration(
         for index in 0..3 {
             let edge_x = polygon[(index + 1) % 3].x - polygon[index].x;
             let edge_y = polygon[(index + 1) % 3].y - polygon[index].y;
-            let length = edge_x.hypot(edge_y);
+            let length = proxy_hypot(edge_x, edge_y);
             if length == 0.0 {
                 return None;
             }
@@ -14750,18 +15221,40 @@ fn bin_range(
     shape_bounds: IrregularBounds,
     side: usize,
 ) -> (usize, usize, usize, usize) {
-    let width = (shape_bounds.max_x - shape_bounds.min_x).max(0.001);
-    let height = (shape_bounds.max_y - shape_bounds.min_y).max(0.001);
+    let (span_x, span_y) = bin_spans(shape_bounds);
+    bin_range_within(cell_bounds, shape_bounds, span_x, span_y, side)
+}
+
+/// The two bin spans of a shape's extent.
+///
+/// Split out of [`bin_range`] so an index that queries the same extent tens of
+/// millions of times can derive them once. The expressions are the ones
+/// [`bin_range`] evaluated inline, so the values are identical.
+fn bin_spans(shape_bounds: IrregularBounds) -> (f64, f64) {
+    (
+        (shape_bounds.max_x - shape_bounds.min_x).max(0.001),
+        (shape_bounds.max_y - shape_bounds.min_y).max(0.001),
+    )
+}
+
+#[inline(always)]
+fn bin_range_within(
+    cell_bounds: IrregularBounds,
+    shape_bounds: IrregularBounds,
+    span_x: f64,
+    span_y: f64,
+    side: usize,
+) -> (usize, usize, usize, usize) {
     let bin = |value: f64, min: f64, span: f64| {
         (((value - min) / span) * side as f64)
             .floor()
             .clamp(0.0, (side - 1) as f64) as usize
     };
     (
-        bin(cell_bounds.min_x, shape_bounds.min_x, width),
-        bin(cell_bounds.max_x, shape_bounds.min_x, width),
-        bin(cell_bounds.min_y, shape_bounds.min_y, height),
-        bin(cell_bounds.max_y, shape_bounds.min_y, height),
+        bin(cell_bounds.min_x, shape_bounds.min_x, span_x),
+        bin(cell_bounds.max_x, shape_bounds.min_x, span_x),
+        bin(cell_bounds.min_y, shape_bounds.min_y, span_y),
+        bin(cell_bounds.max_y, shape_bounds.min_y, span_y),
     )
 }
 
@@ -16054,6 +16547,136 @@ mod tests {
         let second = Triangle::new([point(0.0, 0.0), point(2.0, 0.0), point(0.0, 2.0)]);
         assert!(triangle_penetration(first, 0.0, 0.0, second, 1.0, 0.0).is_some());
         assert!(triangle_penetration(first, 0.0, 0.0, second, 2.0, 0.0).is_none());
+    }
+
+    /// The specialised proxy narrow phase answers the deriving path's question.
+    ///
+    /// [`oriented_cells_penetrate`] reads the first triangle's axes and its own
+    /// projections out of a [`CellAxes`] instead of deriving them, which is only
+    /// sound if the two agree on every input - including the ones that decide
+    /// the verdict on a rounding bit. The sweep is deliberately dense around
+    /// exact contact (`2.0` is the tangent offset for these cells) and includes
+    /// a degenerate cell, whose zero-length edge the deriving path answers
+    /// `None` to.
+    #[test]
+    fn specialised_cell_penetration_matches_the_deriving_path() {
+        let cells = [
+            Triangle::new([point(0.0, 0.0), point(2.0, 0.0), point(0.0, 2.0)]),
+            Triangle::new([point(0.0, 0.0), point(3.5, 0.25), point(1.25, 2.75)]),
+            Triangle::new([
+                point(-1.5, -0.75),
+                point(0.125, -1.875),
+                point(0.375, 0.625),
+            ]),
+            // Collinear points: every edge is non-zero but the triangle has no
+            // area, which is the boundary the strict test refuses.
+            Triangle::new([point(0.0, 0.0), point(1.0, 1.0), point(2.0, 2.0)]),
+            // A repeated vertex: edge 0 has length exactly zero.
+            Triangle::new([point(1.0, 1.0), point(1.0, 1.0), point(2.5, 0.5)]),
+        ];
+        let mut some = 0_usize;
+        let mut none = 0_usize;
+        for first in cells {
+            let axes = CellAxes::new(first);
+            for second in cells {
+                for step_x in -40_i32..=40 {
+                    for step_y in -40_i32..=40 {
+                        let second_x = f64::from(step_x) * 0.1;
+                        let second_y = f64::from(step_y) * 0.1;
+                        let derived =
+                            triangle_penetration(first, 0.0, 0.0, second, second_x, second_y);
+                        let specialised =
+                            oriented_cells_penetrate(&axes, second, second_x, second_y);
+                        assert_eq!(
+                            derived.is_some(),
+                            specialised,
+                            "disagreement at ({second_x}, {second_y})"
+                        );
+                        if derived.is_some() {
+                            some += 1;
+                        } else {
+                            none += 1;
+                        }
+                    }
+                }
+            }
+        }
+        // Both verdicts have to be represented or the sweep proves nothing.
+        assert!(some > 0 && none > 0, "sweep produced {some} / {none}");
+    }
+
+    /// A cell's bit is reported exactly when the membership walk reported it.
+    ///
+    /// The bin masks replace a `Vec<Vec<usize>>` walk, and the claim is that
+    /// the *set* is unchanged rather than merely that the answer is still
+    /// conservative - a lost bit would silently turn a collision into a miss.
+    #[test]
+    fn cell_index_masks_reproduce_the_membership_walk() {
+        let cells = triangulate_ring(l_shape().regions()[0].outer.points()).unwrap();
+        let bounds = l_shape().bounds().unwrap();
+        let index = CellIndex::new(&cells, bounds);
+        let mut walked = vec![Vec::new(); CELL_INDEX_SIDE * CELL_INDEX_SIDE];
+        for (cell_index, cell) in cells.iter().enumerate() {
+            let (min_x, max_x, min_y, max_y) = cell_bin_range(cell.bounds, bounds);
+            for y in min_y..=max_y {
+                for x in min_x..=max_x {
+                    walked[y * CELL_INDEX_SIDE + x].push(cell_index);
+                }
+            }
+        }
+        let mut probed = 0_usize;
+        for step_x in -12_i32..=12 {
+            for step_y in -12_i32..=12 {
+                let probe = translated_bounds(
+                    cells[0].bounds,
+                    f64::from(step_x) * 2.0,
+                    f64::from(step_y) * 2.0,
+                );
+                for translate in [0.0_f64, 7.5, -3.25] {
+                    let local = IrregularBounds::new(
+                        probe.min_x - translate,
+                        probe.min_y - translate,
+                        probe.max_x - translate,
+                        probe.max_y - translate,
+                    );
+                    let (min_x, max_x, min_y, max_y) = cell_bin_range(local, bounds);
+                    let mut expected = [0_u64; MAX_CELLS_PER_PIECE / 64];
+                    for y in min_y..=max_y {
+                        for x in min_x..=max_x {
+                            for cell_index in walked[y * CELL_INDEX_SIDE + x].iter().copied() {
+                                expected[cell_index / 64] |= 1_u64 << (cell_index % 64);
+                            }
+                        }
+                    }
+                    let mut actual = [u64::MAX; MAX_CELLS_PER_PIECE / 64];
+                    let words = index.query_mask_into(probe, translate, translate, &mut actual);
+                    assert_eq!(words, 1);
+                    assert_eq!(actual[..words], expected[..words]);
+                    probed += 1;
+                }
+            }
+        }
+        assert_eq!(probed, 25 * 25 * 3);
+    }
+
+    /// A cell never leaves the extent the surrogate advertises.
+    ///
+    /// This is the premise the whole-shape early-out in
+    /// [`surrogate_pair_collides`] rests on: a first cell that misses
+    /// `second_shape.bounds` can skip the index query because no cell of the
+    /// second shape can reach outside that extent.
+    #[test]
+    fn surrogate_cells_stay_inside_the_shape_extent() {
+        let polygon = l_shape();
+        let bounds = polygon.bounds().unwrap();
+        let cells = triangulate_ring(polygon.regions()[0].outer.points()).unwrap();
+        assert!(cells.len() >= 3);
+        for cell in cells {
+            assert!(cell.bounds.min_x >= bounds.min_x);
+            assert!(cell.bounds.min_y >= bounds.min_y);
+            assert!(cell.bounds.max_x <= bounds.max_x);
+            assert!(cell.bounds.max_y <= bounds.max_y);
+        }
     }
 
     #[test]
