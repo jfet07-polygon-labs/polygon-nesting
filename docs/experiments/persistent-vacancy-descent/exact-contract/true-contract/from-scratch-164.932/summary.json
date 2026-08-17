@@ -1,0 +1,13 @@
+{
+ "milestone": "from-scratch line breaks below 165: 164.932 mm certified fixpoint",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "lineage": "165.203 -> rung-scale/seed sweep: mode-26 ladder -0.3 seed 3 -> 165.111 -> cascade loop: mode-26 -0.3 seed 1 -> 164.940 -> mode-22 -> 164.932 -> FIXPOINT (8/8 arms)",
+ "pinnedParent": {
+  "file": "pinned-parent-164.932.json",
+  "independentDepthMm": 164.932
+ },
+ "pattern": "the -0.3 rung scale with rotating seeds has now produced four consecutive from-scratch publications (165.357 s2, 165.111 s3, 165.195 s5, 164.940 s1) - seed rotation at the productive scale is the active vein",
+ "context": "0.874 mm above the absolute record 164.058; from-scratch has closed 14.07 mm from the 179.006 entry plateau"
+}
