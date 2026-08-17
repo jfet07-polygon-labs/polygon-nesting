@@ -1,0 +1,12 @@
+{
+ "milestone": "from-scratch certified fixpoint 165.203 mm",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "lineage": "165.368 -> mode-26 short ladder published 165.357 -> cascade loop: mode-26(-0.3) seed 2 -> 165.211 -> mode-22 -> 165.203 -> FIXPOINT (8/8 arms)",
+ "pinnedParent": {
+  "file": "pinned-parent-165.203.json",
+  "independentDepthMm": 165.203
+ },
+ "context": "1.15 mm above the new absolute record; 13.8 mm below the 179.006 entry plateau, fully from-scratch lineage"
+}

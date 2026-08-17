@@ -1,0 +1,28 @@
+round 0: m26a-s2 -> 165.211
+round 0: m22-s0 -> 165.301
+round 0: m22-s1 -> 165.301
+round 0: m22-s2 -> 165.301
+round 0: m22-s3 -> 165.301
+round 0: m26a-s0 -> 165.357
+round 0: m26a-s1 -> 165.357
+round 0: m26b-s0 -> 165.357
+round 0: ADOPT 165.211 (m26a-s2) -> /var/lib/t3/tmp/casc-loop/parent-r0-165.211.json
+round 1: m22-s0 -> 165.203
+round 1: m22-s1 -> 165.203
+round 1: m22-s2 -> 165.203
+round 1: m22-s3 -> 165.203
+round 1: m26a-s0 -> 165.211
+round 1: m26a-s1 -> 165.211
+round 1: m26a-s2 -> 165.211
+round 1: m26b-s0 -> 165.211
+round 1: ADOPT 165.203 (m22-s0) -> /var/lib/t3/tmp/casc-loop/parent-r1-165.203.json
+round 2: m22-s0 -> 165.203
+round 2: m22-s1 -> 165.203
+round 2: m22-s2 -> 165.203
+round 2: m22-s3 -> 165.203
+round 2: m26a-s0 -> 165.203
+round 2: m26a-s1 -> 165.203
+round 2: m26a-s2 -> 165.203
+round 2: m26b-s0 -> 165.203
+FIXPOINT at 165.203
+CASCLOOP_DONE BEST: 165.203 PARENT: /var/lib/t3/tmp/casc-loop/parent-r1-165.203.json

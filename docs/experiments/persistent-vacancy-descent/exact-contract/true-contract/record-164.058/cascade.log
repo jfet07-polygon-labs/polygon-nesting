@@ -1,0 +1,19 @@
+round 0: m22-s0 -> 164.058
+round 0: m22-s1 -> 164.058
+round 0: m22-s2 -> 164.058
+round 0: m22-s3 -> 164.058
+round 0: m26a-s0 -> 164.112
+round 0: m26a-s1 -> 164.112
+round 0: m26a-s2 -> 164.112
+round 0: m26b-s0 -> 164.112
+round 0: ADOPT 164.058 (m22-s0) -> /var/lib/t3/tmp/casc-loop/parent-r0-164.058.json
+round 1: m22-s0 -> 164.058
+round 1: m22-s1 -> 164.058
+round 1: m22-s2 -> 164.058
+round 1: m22-s3 -> 164.058
+round 1: m26a-s0 -> 164.058
+round 1: m26a-s1 -> 164.058
+round 1: m26a-s2 -> 164.058
+round 1: m26b-s0 -> 164.058
+FIXPOINT at 164.058
+CASCLOOP_DONE BEST: 164.058 PARENT: /var/lib/t3/tmp/casc-loop/parent-r0-164.058.json

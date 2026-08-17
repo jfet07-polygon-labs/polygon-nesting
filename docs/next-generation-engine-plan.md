@@ -1083,3 +1083,19 @@ still kills 40-75% of rungs before they produce anything repairable
 (an ulp-tolerance scoped to the clamped arms is in flight), and the
 residue class above single-piece reach needs joint multi-piece
 re-placement.
+
+THE RECORD MOVES: 164.058 mm, and the from-scratch line follows to
+165.203. The rollback-tolerance measurement matrix tried short
+ladders at an intermediate rung scale (-0.27/-0.97) that no prior
+cascade configuration had used, and HEAD's compress-repair machinery
+published 164.112 from the record parent and 165.357 from the
+from-scratch parent. Alternation and the autonomous cascade loop
+settled certified fixpoints at 164.058 (8/8 arms) and 165.203 (8/8
+arms). The imported-line basin that had absorbed seven seeds, wide
+rungs and recombination without yielding a micron moved 0.407 mm
+under a mechanism stack - clamp, two repair tiers, anchor-local
+seeding, scoped rollback tolerance - in which every component is
+general engine code. Remaining gap to the 155 goal: 9.06 mm. The
+binding constraint is unchanged and precisely known: deep-frontier
+states carry multi-millimetre clearance deficits that single-piece
+repair refuses; joint multi-piece re-placement is the open build.

@@ -1,0 +1,12 @@
+{
+ "milestone": "ABSOLUTE RECORD on the true 5.0/5.0 contract: 164.058 mm - the first movement of the imported-line basin since it locked at 164.465 (7 seeds, wide rungs, recombination all incumbent)",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "lineage": "164.465 (envelope-allowance state) -> mode-26 short ladder to 164.2 (intermediate rung scale, first tried in the rollback-tolerance measurement matrix) published 164.112 -> mode-22 alternation -> 164.058 -> FIXPOINT (8/8 arms: mode-22 seeds 0-3, mode-26 ladders -0.3/-1.0)",
+ "pinnedParent": {
+  "file": "pinned-parent-164.058.json",
+  "independentDepthMm": 164.058
+ },
+ "context": "gap to the 155 goal: 9.06 mm; the compress-repair machinery (modes 26/27/28 + anchor-local seeding + scoped rollback tolerance) is what moved it"
+}
