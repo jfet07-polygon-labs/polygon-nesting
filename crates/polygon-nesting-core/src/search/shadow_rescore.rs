@@ -63,6 +63,18 @@
 //!   a running sum differed, and the widest such gap in `f64` ulps.
 //! * `firstStructuralDisagreement` / `firstMagnitudeDisagreement` — the first
 //!   of each, rendered.
+//! * `structuralDetails` — a bounded sample of structural disagreements
+//!   rendered as a *census* rather than as a count. A count says the delta has
+//!   lost the layout; the census says how. Each entry names the piece that
+//!   moved, whether that move was a revert, whether a confirmation ran for it,
+//!   whether the moved piece's broad phase offered the disagreeing pair at all,
+//!   and what each proxy tier answers about the pair asked `(lower, higher)`
+//!   and asked `(higher, lower)`. Those last two are what identified the
+//!   mechanism: the proxy collider is not symmetric in its operands, so a
+//!   candidate scan asking `(moving, fixed)` and a complete score asking
+//!   `(lower, higher)` can disagree about whether a marginal pair collides at
+//!   all. See the row-ownership entry in
+//!   `docs/next-generation-engine-plan.md`.
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
@@ -77,9 +89,21 @@ static MAX_MAGNITUDE_ULPS: AtomicU64 = AtomicU64::new(0);
 static DERIVED_GAP_AUDITS: AtomicU64 = AtomicU64::new(0);
 static MAX_DERIVED_ULPS: AtomicU64 = AtomicU64::new(0);
 
+/// How many rendered structural details the census keeps.
+///
+/// The census exists to identify a *mechanism*, and a mechanism repeats: a
+/// bounded sample says what the disagreements look like without turning a
+/// stream with thousands of them into a report nobody can read.
+const STRUCTURAL_DETAIL_SAMPLE: usize = 12;
+
 fn first_structural() -> &'static Mutex<Option<String>> {
     static FIRST: Mutex<Option<String>> = Mutex::new(None);
     &FIRST
+}
+
+fn structural_details() -> &'static Mutex<Vec<String>> {
+    static DETAILS: Mutex<Vec<String>> = Mutex::new(Vec::new());
+    &DETAILS
 }
 
 fn first_magnitude() -> &'static Mutex<Option<String>> {
@@ -107,11 +131,22 @@ pub fn record_magnitude_only(rendered: String, worst_ulps: u64) {
 }
 
 /// One audit whose two trackers described different layouts.
-pub fn record_disagreement(rendered: String) {
+///
+/// `detail` is the census entry: which pairs the two trackers disagree about,
+/// whether the move was a revert, whether the broad phase offered the pair to
+/// the scan that installed the row, and what each proxy tier says about the
+/// pair in *both* operand orders. A bounded sample of them is kept, because
+/// identifying the mechanism needs a handful of examples and not a transcript.
+pub fn record_disagreement(rendered: String, detail: String) {
     CHECKS.fetch_add(1, Ordering::Relaxed);
     STRUCTURAL_DISAGREEMENTS.fetch_add(1, Ordering::Relaxed);
     if let Ok(mut slot) = first_structural().lock() {
         slot.get_or_insert(rendered);
+    }
+    if let Ok(mut details) = structural_details().lock() {
+        if details.len() < STRUCTURAL_DETAIL_SAMPLE {
+            details.push(detail);
+        }
     }
 }
 
@@ -127,6 +162,9 @@ pub fn reset() {
         if let Ok(mut slot) = slot.lock() {
             *slot = None;
         }
+    }
+    if let Ok(mut details) = structural_details().lock() {
+        details.clear();
     }
 }
 
@@ -149,6 +187,10 @@ pub struct ShadowRescoreSnapshot {
     pub first_structural_disagreement: Option<String>,
     /// The first magnitude-only disagreement, rendered.
     pub first_magnitude_disagreement: Option<String>,
+    /// A bounded sample of structural disagreements, each rendered with the
+    /// pairs the two trackers differ about and a re-measurement of every such
+    /// pair in both operand orders.
+    pub structural_details: Vec<String>,
 }
 
 /// Reads the tallies. Safe to call at any time; call it at a barrier.
@@ -162,6 +204,10 @@ pub fn snapshot() -> ShadowRescoreSnapshot {
         max_derived_ulps: MAX_DERIVED_ULPS.load(Ordering::Relaxed),
         first_structural_disagreement: first_structural().lock().ok().and_then(|slot| slot.clone()),
         first_magnitude_disagreement: first_magnitude().lock().ok().and_then(|slot| slot.clone()),
+        structural_details: structural_details()
+            .lock()
+            .map(|details| details.clone())
+            .unwrap_or_default(),
     }
 }
 

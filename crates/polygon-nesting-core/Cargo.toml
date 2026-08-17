@@ -35,6 +35,25 @@ search-profiling = []
 # carries it reports a `fullRescores` count and a `fullRescore` phase that
 # describe the audit rather than the search.
 shadow-rescore = []
+# Makes a pair question a function of the *unordered* pair: whichever operand
+# has the lower input index is asked first, in both proxy tiers and in both the
+# collision verdict and the pressure magnitude.
+#
+# Off by default, and it must stay off in anything that publishes a comparable
+# number. The proxy collider's narrow phase is not symmetric in its two
+# operands - it tests the first operand's precomputed cell axes against the
+# second's points in a frame relative to the first - so a marginal contact can
+# collide asked one way round and not the other. A candidate scan asks
+# `(moving, fixed)` and a whole-layout score asks `(lower, higher)`, which is
+# why the incremental tracker has never equalled a from-scratch rescore.
+#
+# Enforcing one order is what makes a tracker row a measurement of the layout
+# rather than of the path taken to it - the precondition for a sweep inheriting
+# its predecessor's tracker - but it changes the value a candidate scan computes
+# for a marginal pair, and therefore the search's trajectory. See
+# `canonical_pair_operands` and the row-ownership entry in
+# docs/next-generation-engine-plan.md.
+canonical-pair-order = []
 # Replaces the *proxy* tier's vector length with `sqrt(x * x + y * y)`.
 #
 # Off by default and it must stay off in anything that publishes a comparable

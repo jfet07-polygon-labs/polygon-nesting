@@ -813,6 +813,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "maxDerivedUlps": audit.max_derived_ulps,
             "firstStructuralDisagreement": audit.first_structural_disagreement,
             "firstMagnitudeDisagreement": audit.first_magnitude_disagreement,
+            "structuralDetails": audit.structural_details,
         });
     }
     println!("{}", serde_json::to_string_pretty(&output)?);
