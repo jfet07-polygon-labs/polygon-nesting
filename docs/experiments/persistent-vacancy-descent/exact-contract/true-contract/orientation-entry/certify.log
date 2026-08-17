@@ -1,0 +1,15 @@
+=== CERTIFY /var/lib/t3/tmp/orient/pins/pin-159.082637497.json raw=159.08263749731248 fp=145d0ed4b2f53d3fa8f524af0da6875d351e4e82abd0c6252783cd6cd6032666 sha256=4923b49799f167d5a459a74a917642bc3edfca897fe4a5921240bef0de6c6ff9
+[    3.4s] cert-m27: mode=27 exactValid=True contractValid=True depth=159.083 raw=159.08263749731248 parent=159.083 fp=145d0ed4b2f53d3f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[    3.6s] cert-m30: mode=30 exactValid=True contractValid=True depth=159.083 raw=159.08263749731248 parent=159.083 fp=145d0ed4b2f53d3f | before 0p/0b after 0p/0b cap=0.0 maxDisp=None moved=0 resid=0.0 | 
+[    5.6s] cert-m22-s0: mode=22 exactValid=True contractValid=True depth=159.083 raw=159.08263749731248 parent=159.083 fp=145d0ed4b2f53d3f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[    4.6s] cert-m22-s1: mode=22 exactValid=True contractValid=True depth=159.083 raw=159.08263749731248 parent=159.083 fp=145d0ed4b2f53d3f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[    5.5s] cert-m22-s2: mode=22 exactValid=True contractValid=True depth=159.083 raw=159.08263749731248 parent=159.083 fp=145d0ed4b2f53d3f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[    4.4s] cert-m22-s3: mode=22 exactValid=True contractValid=True depth=159.083 raw=159.08263749731248 parent=159.083 fp=145d0ed4b2f53d3f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   mode27: exactValid=True contractValid=True raw=159.08263749731248 fp=145d0ed4b2f53d3f reproduces=True
+   mode30: exactValid=True contractValid=True raw=159.08263749731248 fp=145d0ed4b2f53d3f reproduces=True
+   mode22-seed0: exactValid=True contractValid=True raw=159.08263749731248 fp=145d0ed4b2f53d3f reproduces=True
+   mode22-seed1: exactValid=True contractValid=True raw=159.08263749731248 fp=145d0ed4b2f53d3f reproduces=True
+   mode22-seed2: exactValid=True contractValid=True raw=159.08263749731248 fp=145d0ed4b2f53d3f reproduces=True
+   mode22-seed3: exactValid=True contractValid=True raw=159.08263749731248 fp=145d0ed4b2f53d3f reproduces=True
+=== CERTIFY PASS
+[    3.2s] repin-m27: mode=27 exactValid=True contractValid=True depth=159.083 raw=159.08263749731248 parent=159.083 fp=145d0ed4b2f53d3f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 

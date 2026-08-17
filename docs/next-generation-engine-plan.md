@@ -1484,3 +1484,83 @@ at record density, inside the ejection-repair loop. Nothing in the
 current stack can express it; everything else has been eliminated with
 matched controls. Evidence:
 docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/{pose-entry-negative,from-scratch-164.038}/.
+
+## Continuous-angle re-insertion breaks the translation fixpoint
+
+The mechanism the previous entry called for now exists, as modes 32 and
+33 - modes 28 and 29 with one added degree of freedom and nothing else
+changed. Each ejected piece's candidate stream additionally carries
+orientation-perturbed variants of its own vacated pose: a geometric
+continuous-angle ladder in both signs and, where the request allows it,
+the mirror flip; each variant re-centred on the vacated footprint's own
+bounding-box centre so that a rung rotates the piece *in place*, and
+each searched over the same local translation neighbourhood the vacated
+pose gets. The ejection machinery, the component and ejection limits,
+the insertion-order enumeration, the pose-swap round, the finalist beam,
+the bound contract and the exact validator are reused verbatim.
+
+It works, and the record moved for the first time since 159.092. The
+record line's fixpoint - 149 arms across seven modes - fell on the first
+perturbed arm tried: a frontier flatten of 0.004 mm handed to mode 33
+published 159.089637, below the 159.092330 the whole previous campaign
+could not beat. Cascaded to 159.082637 over three rounds, a 0.009693 mm
+absolute improvement.
+
+The attribution is the finding, not the number. The pose-entry negative
+measured `maxdRot 0.000000` and `mirrorFlips 0` across every legal state
+modes 28 and 29 produced; the geometric diff of the new record against
+the old shows two pieces rotated by exactly -0.02 degrees - the ladder's
+finest rung - and one of them is
+`54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3`, the single piece that
+*sets the depth* and that the per-rank ejection sweep had measured as
+having zero re-placement freedom. On that piece the legacy anchor-local
+stream returned 0 exact-valid finalists out of 122 candidates, exactly
+as before; the orientation stream returned 2 out of 3509, and the pose
+the piece committed to was one of them. Every sub-record publication on
+the line carries `acceptedOrientation >= 1`. The frozen pieces are
+frozen in *translation*, not in pose.
+
+Three secondary measurements matter for what comes next. First, the
+accepted rung is overwhelmingly the ladder's finest: of the accepted
+orientation poses across the whole campaign the great majority are at
++/-0.02 degrees, with a minority at +/-0.125 degrees and a family of
+pure mirror flips. The mechanism's per-move quantum is now the ladder's
+finest rung, exactly as it used to be the 0.001 mm pose grid - a finer
+rung is the obvious next lever, and the ladder is one constant. Second,
+the row budget is load-bearing rather than incidental: at a budget that
+truncated the stream to its leading ranks the depth-setting piece
+produced no finalist at all, and at full coverage it produced two.
+Third, mode 33 is the productive tier and mode 32 is not - the joint
+pass ejects both endpoints of the conflict, and the orientation freedom
+only pays when the partner can move out of the way at the same time.
+
+Mode 33 is the productive tier and mode 32 is not: on the 64-arm record
+grid mode 33 took 4 of the 4 sub-record publications and mode 32 took
+none, though mode 32 did accept 2 orientation poses. The reason is the
+vertex cover - mode 32 leaves the conflict's partner in place, so the
+rotated piece still has to clear a neighbour that cannot move, and the
+tie-break that ejects the innocent neighbour of a nudged piece is still
+self-defeating. Mode 33 ejects both endpoints regardless.
+
+The from-scratch line at 164.038568 did not move: 64 grid arms plus 224
+launch-pad arms produced 15 orientation-accepted poses and 50
+publications below their own launch pad, but none below the incumbent.
+That is a real asymmetry and it is consistent with the earlier reading
+of the two basins - the from-scratch frontier's ranks 1-8 sit within
+0.0225 mm, so the pieces that would have to rotate are not the ones that
+set the depth.
+
+The new state is certified (modes 27, 30 and 22 seeds 0-3 all replay
+`exactValid` and `contractValid` and reproduce raw 159.08263749731248 at
+fingerprint `145d0ed4b2f53d3f...`, mode 30 reporting 0 violating pairs
+and 0 boundary pieces) and is again a fixpoint of 120 probe arms -
+though of everything *except* the mode-26 ladder tier, which adopted
+nothing in four cascade rounds and consumed most of the wall clock; the
+cascade was stopped part-way through round four for time rather than run
+to a certified fixpoint.
+
+Goal threshold 155.000 mm remains far off; the honest claim is narrower
+and more useful: the translation fixpoint is not a fixpoint, and the
+instrument that breaks it is continuous-angle re-insertion inside the
+ejection-repair loop. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/orientation-entry/.

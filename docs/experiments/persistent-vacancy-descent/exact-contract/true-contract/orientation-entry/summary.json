@@ -1,0 +1,938 @@
+{
+ "milestone": "NEW ABSOLUTE RECORD on the true 5.0/5.0 exact-clearance contract: 159.082637 mm, from 159.092330 - and, more importantly than the 0.009693 mm, the first move in the whole campaign whose accepted pose is a DIFFERENT ORIENTATION. Modes 32/33 (modes 28/29 plus a continuous-angle re-insertion stream) break the translation fixpoint that 149 arms across seven modes could not.",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "binarySha256": "3d2bd458eabd326f7f5b0f59509340390657a86e62e8a7fe574f6eef25cb73e6",
+ "machine": "x86_64, 16 cores, runs pinned at 8 threads",
+ "runs": 560,
+ "trajectory": [
+  {
+   "via": "r0-flat0.001-m33-p0.05",
+   "rawSourceDepthMm": 159.0849863776172
+  },
+  {
+   "via": "r1-m22-s0",
+   "rawSourceDepthMm": 159.08362371460316
+  },
+  {
+   "via": "r2-flat0.003-m33-p0.05",
+   "rawSourceDepthMm": 159.08263749731248
+  }
+ ],
+ "pinnedParent": {
+  "file": "pinned-parent-159.083.json",
+  "rawSourceDepthMm": 159.08263749731248,
+  "independentDepthMm": 159.083,
+  "placementFingerprint": "145d0ed4b2f53d3fa8f524af0da6875d351e4e82abd0c6252783cd6cd6032666",
+  "fixtureSha256": "4923b49799f167d5a459a74a917642bc3edfca897fe4a5921240bef0de6c6ff9"
+ },
+ "geometricDiffAgainstOldRecord": {
+  "pieces": 61,
+  "rotationChanges": 2,
+  "maxAbsRotationDeltaDeg": 0.01999999999998181,
+  "mirrorFlips": 0,
+  "translatedPieces": 7,
+  "rotated": [
+   {
+    "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+    "fromDeg": 179.977611,
+    "toDeg": 179.957611,
+    "deltaDeg": -0.01999999999998181
+   },
+   {
+    "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+    "fromDeg": 304.365571,
+    "toDeg": 304.345571,
+    "deltaDeg": -0.01999999999998181
+   }
+  ]
+ },
+ "resultsTable": {
+  "recordLine": {
+   "arms": 64,
+   "incumbent": 159.09233022733062,
+   "byMode": {
+    "28": {
+     "arms": 16,
+     "exactValidPublications": 4,
+     "publicationsBelowIncumbent": 0,
+     "orientationCandidates": 0,
+     "orientationRows": 0,
+     "orientationFinalists": 0,
+     "acceptedVacated": 0,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 0,
+     "acceptedStation": 0
+    },
+    "29": {
+     "arms": 16,
+     "exactValidPublications": 7,
+     "publicationsBelowIncumbent": 0,
+     "orientationCandidates": 0,
+     "orientationRows": 0,
+     "orientationFinalists": 0,
+     "acceptedVacated": 0,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 0,
+     "acceptedStation": 0
+    },
+    "32": {
+     "arms": 16,
+     "exactValidPublications": 6,
+     "publicationsBelowIncumbent": 0,
+     "orientationCandidates": 55071,
+     "orientationRows": 35106,
+     "orientationFinalists": 8,
+     "acceptedVacated": 0,
+     "acceptedAnchorLocal": 4,
+     "acceptedOrientation": 2,
+     "acceptedStation": 0
+    },
+    "33": {
+     "arms": 16,
+     "exactValidPublications": 13,
+     "publicationsBelowIncumbent": 4,
+     "orientationCandidates": 1255149,
+     "orientationRows": 461267,
+     "orientationFinalists": 61,
+     "acceptedVacated": 165,
+     "acceptedAnchorLocal": 46,
+     "acceptedOrientation": 12,
+     "acceptedStation": 23
+    }
+   },
+   "failureClasses": {
+    "no exact-valid pose for the ejected piece inside the bound": 22,
+    "no insertion order / swap / beam combination re-placed the component": 12
+   },
+   "acceptedOrientationAngles": [
+    [
+     "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+     179.957611,
+     -0.02,
+     false
+    ],
+    [
+     "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+     179.957611,
+     -0.02,
+     true
+    ],
+    [
+     "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+     304.345571,
+     -0.02,
+     false
+    ],
+    [
+     "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+     179.957611,
+     -0.02,
+     false
+    ],
+    [
+     "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+     304.345571,
+     -0.02,
+     false
+    ],
+    [
+     "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+     179.957611,
+     -0.02,
+     false
+    ],
+    [
+     "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+     304.345571,
+     -0.02,
+     false
+    ],
+    [
+     "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+     179.957611,
+     -0.02,
+     false
+    ],
+    [
+     "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+     179.957611,
+     -0.02,
+     false
+    ],
+    [
+     "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+     179.957611,
+     -0.02,
+     false
+    ],
+    [
+     "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+     304.345571,
+     -0.02,
+     false
+    ],
+    [
+     "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+     304.345571,
+     -0.02,
+     false
+    ],
+    [
+     "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+     304.345571,
+     -0.02,
+     false
+    ],
+    [
+     "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+     304.345571,
+     -0.02,
+     false
+    ]
+   ]
+  },
+  "fromScratchLine": {
+   "arms": 64,
+   "incumbent": 164.03856779906783,
+   "byMode": {
+    "28": {
+     "arms": 16,
+     "exactValidPublications": 5,
+     "publicationsBelowIncumbent": 0,
+     "orientationCandidates": 0,
+     "orientationRows": 0,
+     "orientationFinalists": 0,
+     "acceptedVacated": 0,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 0,
+     "acceptedStation": 0
+    },
+    "29": {
+     "arms": 16,
+     "exactValidPublications": 9,
+     "publicationsBelowIncumbent": 0,
+     "orientationCandidates": 0,
+     "orientationRows": 0,
+     "orientationFinalists": 0,
+     "acceptedVacated": 0,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 0,
+     "acceptedStation": 0
+    },
+    "32": {
+     "arms": 16,
+     "exactValidPublications": 11,
+     "publicationsBelowIncumbent": 0,
+     "orientationCandidates": 112259,
+     "orientationRows": 14494,
+     "orientationFinalists": 28,
+     "acceptedVacated": 3,
+     "acceptedAnchorLocal": 16,
+     "acceptedOrientation": 7,
+     "acceptedStation": 0
+    },
+    "33": {
+     "arms": 16,
+     "exactValidPublications": 9,
+     "publicationsBelowIncumbent": 0,
+     "orientationCandidates": 2217630,
+     "orientationRows": 895738,
+     "orientationFinalists": 70,
+     "acceptedVacated": 186,
+     "acceptedAnchorLocal": 166,
+     "acceptedOrientation": 0,
+     "acceptedStation": 72
+    }
+   },
+   "failureClasses": {
+    "perturbation produced no violating pair (structural non-experiment)": 12,
+    "no exact-valid pose for the ejected piece inside the bound": 10,
+    "no insertion order / swap / beam combination re-placed the component": 8
+   },
+   "acceptedOrientationAngles": [
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ],
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ],
+    [
+     "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+     329.273582,
+     0.02,
+     false
+    ],
+    [
+     "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-1",
+     27.868117,
+     -0.02,
+     false
+    ],
+    [
+     "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+     329.566082,
+     0.3125,
+     false
+    ],
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ],
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ]
+   ]
+  },
+  "fromScratchPads": {
+   "arms": 224,
+   "incumbent": 164.03856779906783,
+   "byMode": {
+    "28": {
+     "arms": 56,
+     "exactValidPublications": 18,
+     "publicationsBelowIncumbent": 0,
+     "orientationCandidates": 0,
+     "orientationRows": 0,
+     "orientationFinalists": 0,
+     "acceptedVacated": 0,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 0,
+     "acceptedStation": 0
+    },
+    "29": {
+     "arms": 56,
+     "exactValidPublications": 27,
+     "publicationsBelowIncumbent": 0,
+     "orientationCandidates": 0,
+     "orientationRows": 0,
+     "orientationFinalists": 0,
+     "acceptedVacated": 0,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 0,
+     "acceptedStation": 0
+    },
+    "32": {
+     "arms": 56,
+     "exactValidPublications": 26,
+     "publicationsBelowIncumbent": 0,
+     "orientationCandidates": 123250,
+     "orientationRows": 13157,
+     "orientationFinalists": 32,
+     "acceptedVacated": 0,
+     "acceptedAnchorLocal": 26,
+     "acceptedOrientation": 8,
+     "acceptedStation": 0
+    },
+    "33": {
+     "arms": 56,
+     "exactValidPublications": 27,
+     "publicationsBelowIncumbent": 0,
+     "orientationCandidates": 415541,
+     "orientationRows": 62724,
+     "orientationFinalists": 34,
+     "acceptedVacated": 48,
+     "acceptedAnchorLocal": 56,
+     "acceptedOrientation": 0,
+     "acceptedStation": 0
+    }
+   },
+   "failureClasses": {
+    "perturbation produced no violating pair (structural non-experiment)": 116,
+    "no exact-valid pose for the ejected piece inside the bound": 10
+   },
+   "acceptedOrientationAngles": [
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ],
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ],
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ],
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ],
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ],
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ],
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ],
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ]
+   ]
+  },
+  "recordCascade": {
+   "arms": 74,
+   "incumbent": 159.09233022733062,
+   "byMode": {
+    "28": {
+     "arms": 6,
+     "exactValidPublications": 2,
+     "publicationsBelowIncumbent": 2,
+     "orientationCandidates": 0,
+     "orientationRows": 0,
+     "orientationFinalists": 0,
+     "acceptedVacated": 0,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 0,
+     "acceptedStation": 0
+    },
+    "29": {
+     "arms": 6,
+     "exactValidPublications": 1,
+     "publicationsBelowIncumbent": 0,
+     "orientationCandidates": 0,
+     "orientationRows": 0,
+     "orientationFinalists": 0,
+     "acceptedVacated": 0,
+     "acceptedAnchorLocal": 0,
+     "acceptedOrientation": 0,
+     "acceptedStation": 0
+    },
+    "32": {
+     "arms": 6,
+     "exactValidPublications": 2,
+     "publicationsBelowIncumbent": 2,
+     "orientationCandidates": 12412,
+     "orientationRows": 10266,
+     "orientationFinalists": 1,
+     "acceptedVacated": 0,
+     "acceptedAnchorLocal": 2,
+     "acceptedOrientation": 0,
+     "acceptedStation": 0
+    },
+    "33": {
+     "arms": 9,
+     "exactValidPublications": 4,
+     "publicationsBelowIncumbent": 3,
+     "orientationCandidates": 461854,
+     "orientationRows": 237804,
+     "orientationFinalists": 237,
+     "acceptedVacated": 36,
+     "acceptedAnchorLocal": 21,
+     "acceptedOrientation": 57,
+     "acceptedStation": 0
+    }
+   },
+   "failureClasses": {
+    "global legalization did not reach a feasible fixpoint: 1 violating pai": 16,
+    "no insertion order / swap / beam combination re-placed the component": 10,
+    "no exact-valid pose for the ejected piece inside the bound": 8
+   },
+   "acceptedOrientationAngles": [
+    [
+     "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+     304.345571,
+     -0.02,
+     false
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.5,
+     0.0,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.5,
+     0.0,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.5,
+     0.0,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.5,
+     0.0,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     false
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     false
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     false
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     false
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.5,
+     0.0,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.5,
+     0.0,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.5,
+     0.0,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.5,
+     0.0,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     false
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     false
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     false
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     false
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     true
+    ],
+    [
+     "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+     240.375,
+     -0.125,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ],
+    [
+     "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+     359.944444,
+     0.0,
+     true
+    ]
+   ]
+  }
+ },
+ "fromScratchPads": {
+  "arms": 224,
+  "pads": 28,
+  "publicationsBelowIncumbent": 0,
+  "publicationsBelowOwnPad": 50,
+  "acceptedOrientation": 8,
+  "orientationFinalists": 66
+ },
+ "fixpointProbe": {
+  "pin": "pinned-parent-159.083.json",
+  "raw": 159.08263749731248,
+  "arms": 120,
+  "wins": [],
+  "composition": "mode 31 tiny steps {0.006, 0.012, 0.025, 0.04}, mode 22 seeds 0-3, frontier flatten {0.001, 0.002, 0.003, 0.004, 0.005, 0.008, 0.012, 0.02, 0.03} x modes {33, 32, 29, 28} x bound slack {0.05, 2.0}, single-piece nudges on frontier ranks 1-4 x d {0.002, 0.006, 0.012, 0.02} x modes {33, 32}, and rank-1+2 pair nudges x the same deltas x modes {33, 32}",
+  "caveat": "the mode-26 clamped-ladder tier is NOT in this probe. It ran in all four cascade rounds (drops {0.3, 0.55, 1.0} x seeds {0, 1}), adopted nothing, and consumed most of the wall clock; the cascade itself was stopped mid-round-4 for time rather than run to a certified fixpoint. So this is \"a fixpoint of everything except the mode-26 ladder tier\", measured over 120 arms."
+ },
+ "certification": {
+  "pin": "pinned-parent-159.083.json",
+  "raw": 159.08263749731248,
+  "fingerprint": "145d0ed4b2f53d3fa8f524af0da6875d351e4e82abd0c6252783cd6cd6032666",
+  "sha256": "4923b49799f167d5a459a74a917642bc3edfca897fe4a5921240bef0de6c6ff9",
+  "rows": [
+   [
+    "mode27",
+    true,
+    true,
+    159.08263749731248,
+    "145d0ed4b2f53d3fa8f524af0da6875d351e4e82abd0c6252783cd6cd6032666"
+   ],
+   [
+    "mode30",
+    true,
+    true,
+    159.08263749731248,
+    "145d0ed4b2f53d3fa8f524af0da6875d351e4e82abd0c6252783cd6cd6032666"
+   ],
+   [
+    "mode22-seed0",
+    true,
+    true,
+    159.08263749731248,
+    "145d0ed4b2f53d3fa8f524af0da6875d351e4e82abd0c6252783cd6cd6032666"
+   ],
+   [
+    "mode22-seed1",
+    true,
+    true,
+    159.08263749731248,
+    "145d0ed4b2f53d3fa8f524af0da6875d351e4e82abd0c6252783cd6cd6032666"
+   ],
+   [
+    "mode22-seed2",
+    true,
+    true,
+    159.08263749731248,
+    "145d0ed4b2f53d3fa8f524af0da6875d351e4e82abd0c6252783cd6cd6032666"
+   ],
+   [
+    "mode22-seed3",
+    true,
+    true,
+    159.08263749731248,
+    "145d0ed4b2f53d3fa8f524af0da6875d351e4e82abd0c6252783cd6cd6032666"
+   ]
+  ],
+  "pass": true
+ },
+ "parent": {
+  "file": "../record-159.092/pinned-parent-159.092.json",
+  "rawSourceDepthMm": 159.09233022733062,
+  "placementFingerprint": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc"
+ },
+ "improvementMm": 0.009692730018144857,
+ "modes": {
+  "32": "mode 28 (conflict ejection + anchor-local re-insertion) with the orientation-perturbation candidate stream armed",
+  "33": "mode 29 (joint whole-component re-placement) with the same stream armed",
+  "shared": "both share the legacy modes' seed domains, so the legacy part of the candidate stream is literally the same poses in the same order; the orientation candidates rank behind every anchor-local candidate and ahead of the station stream"
+ },
+ "mechanism": {
+  "ladder": "ORIENTATION_PERTURBATION_LADDER_DEG = [0.02, 0.05, 0.125, 0.3125, 0.78125, 1.953125, 4.8828125] - geometric, ratio 5/2, a named constant set rather than anything derived from this request; both signs, plus the mirror family where allowMirror is set, giving 29 variants",
+  "reCentring": "each variant's translation is shifted so that its collision bounding-box centre lands where the vacated pose's centre was, which is what makes a rung a rotation IN PLACE: rotation is applied about the source origin, so a 4.88-degree rung on a piece whose material sits 100 mm from that origin would otherwise be an 8.5 mm translation into a different pocket",
+  "neighbourhood": "each variant is searched over the SAME local translation neighbourhood the vacated pose gets (the separating projection's trajectory, the peers' vacated pockets, the aimed displacement cloud), rigidly carried along by that same re-centring shift",
+  "ordering": "rank-major - every variant's re-centred pose before any variant's first displacement - so the row budget divides across the orientation set instead of being spent by the first rung",
+  "budget": "ORIENTATION_PERTURBATION_ROWS = ORIENTATION_PERTURBATION_VARIANTS * ANCHOR_LOCAL_ROWS = 5568, derived from the stream it has to cover; load-bearing, see budgetIsLoadBearing below",
+  "reusedVerbatim": "violation survey, vertex-cover and whole-component ejection, kept-sub-layout micro-legalization, component limit, ejection limit of 7, insertion-order enumeration, pose-swap round, finalist beam, bound contract, and validate_and_measure_placements as sole publication authority"
+ },
+ "attribution": {
+  "why": "the mandatory measurement: which of the four candidate families the pose each re-placed piece actually committed to came from. Reported per piece in replacementRepair.pieces[].orientation / jointReplacement.orders[].pieces[].orientation as four mutually exclusive counters plus the accepted rotation and its signed offset from the vacated orientation.",
+  "headline": "EVERY sub-record publication on the record line carries acceptedOrientation >= 1. The depth-setting piece 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3 - measured by the pose-entry negative as having ZERO re-placement freedom - returned 0 anchor-local finalists out of 122 candidates (unchanged) and 2 orientation finalists out of 3509, and committed to one of them at rotation 179.957611 (delta -0.02 deg).",
+  "acceptedRungDistribution": "across the whole campaign the accepted orientation poses are overwhelmingly at the ladder's FINEST rung (+/-0.02 deg), with a minority at +/-0.125 deg and a family of pure mirror flips (delta 0.0, mirror flipped). The mechanism's per-move quantum is now the ladder's finest rung, exactly as it used to be the 0.001 mm pose grid."
+ },
+ "budgetIsLoadBearing": "at ORIENTATION_PERTURBATION_ROWS = 512 the stream was truncated to its leading ~17 neighbourhood ranks and the record basin's depth-setting piece produced 0 finalists from 3509 candidates; at full coverage (5568) the same piece produced 2, and mode 33 published below the record on the very next arm. Same binary, same fixture, same perturbation - only the row budget differed.",
+ "verdict": "YES, continuous-angle re-insertion breaks the translation fixpoint - on the record line. The 159.092330 fixpoint had survived 149 arms across seven modes; it fell to the first orientation-armed arm tried. The improvement is small (0.009693 mm, cascaded over three rounds) and the 155.000 goal threshold remains far off, but the qualitative barrier the whole campaign had measured is gone: the pieces that set the depth are frozen in TRANSLATION, not in pose. On the from-scratch line at 164.038568 the same mechanism produced accepted orientation poses but no publication below the incumbent across 288 arms, which is a real asymmetry: that frontier's ranks 1-8 sit within 0.0225 mm, so the pieces that would have to rotate are not the ones that set the depth.",
+ "tierAsymmetry": "mode 33 is the productive tier and mode 32 is not. Mode 32 ejects a vertex cover and leaves the partner in place, so the rotated piece still has to clear a neighbour that cannot move; mode 33 ejects both endpoints, and the orientation freedom pays only when the partner can move out of the way at the same time. On the record grid mode 33 took 4 of the 4 sub-record publications and mode 32 took none, though mode 32 did accept 2 orientation poses.",
+ "perturbationFindings": {
+  "productiveArms": "frontier flatten 0.004 (mode 33 -> 159.089637), single-piece nudge of the depth-setting piece at d=0.006 (159.089637) and d=0.02 (159.085986, the best single arm), and the rank-1+2 pair nudge at d=0.006 (159.089637)",
+  "boundIsLoose": "every publication used a bound of parent + 2.0 mm; the bound gates acceptance and does not drive descent, exactly as the from-scratch line had already measured",
+  "vertexCoverTieBreak": "still self-defeating for mode 32 - a single-piece nudge gets the INNOCENT NEIGHBOUR ejected - which is the second reason mode 33 is the productive tier: it ejects both endpoints regardless of the tie-break"
+ },
+ "cascadeCaveat": "the cascade ran 74 arms over three adopting rounds and was stopped part-way through round 4; the recordCascade block of resultsTable therefore counts publications against the ORIGINAL 159.092330 record rather than against the moving incumbent, and its publicationsBelowIncumbent is not a count of independent wins.",
+ "failureClasses": {
+  "recordLine": {
+   "no exact-valid pose for the ejected piece inside the bound": 22,
+   "no insertion order / swap / beam combination re-placed the component": 12
+  },
+  "fromScratchLine": {
+   "perturbation produced no violating pair (structural non-experiment)": 12,
+   "no exact-valid pose for the ejected piece inside the bound": 10,
+   "no insertion order / swap / beam combination re-placed the component": 8
+  },
+  "fromScratchPads": {
+   "perturbation produced no violating pair (structural non-experiment)": 116,
+   "no exact-valid pose for the ejected piece inside the bound": 10
+  },
+  "fixpointProbeAndCascade": {
+   "global legalization did not reach a feasible fixpoint: 1 violating pai": 16,
+   "no insertion order / swap / beam combination re-placed the component": 10,
+   "no exact-valid pose for the ejected piece inside the bound": 8
+  }
+ },
+ "regressionGates": {
+  "mode20": "independentDepthMm 206.869 at fingerprint 8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437 (default allowance)",
+  "mode22Record": "rawSourceDepthMm 159.09233022733062 at fingerprint fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc, exactValid and contractValid",
+  "modes2829AB": "16 arms (8 perturbed fixtures across both lines x modes 28 and 29) against the base-commit binary 3cc5376df2e03152: identical in every field except elapsed times, executable hash and worktree status",
+  "suite": "806 lib tests plus every other target green"
+ },
+ "evidence": "drivers/ (lib.py, drv.py, grid.py, cascade.py, pads.py, fixpoint.py, certify.py, gates.py, ab.py, geodiff.py), logs grid/cascade/pads/fixpoint/certify, lineage/ (the three intermediate cascade pins), pinned-parent-159.083.json; 560 run JSONs remain in /var/lib/t3/tmp/orient/runs/"
+}

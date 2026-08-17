@@ -1,0 +1,866 @@
+[
+ {
+  "line": "fs",
+  "perturbation": "flat0.002",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1 within the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.002",
+  "mode": 29,
+  "published": 164.03856779906783,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.002",
+  "mode": 32,
+  "published": 164.17556779906784,
+  "record": false,
+  "attribution": {
+   "variants": 58,
+   "candidates": 7888,
+   "rows": 1409,
+   "finalists": 4,
+   "acceptedVacated": 0,
+   "acceptedAnchorLocal": 1,
+   "acceptedOrientation": 1,
+   "acceptedStation": 0,
+   "acceptedAngles": [
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ]
+   ]
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.002",
+  "mode": 33,
+  "published": 164.03856779906783,
+  "record": false,
+  "attribution": {
+   "variants": 116,
+   "candidates": 15399,
+   "rows": 3567,
+   "finalists": 1,
+   "acceptedVacated": 2,
+   "acceptedAnchorLocal": 2,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.004",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1 within the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.004",
+  "mode": 29,
+  "published": 164.04056779906784,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.004",
+  "mode": 32,
+  "published": 164.1215677990678,
+  "record": false,
+  "attribution": {
+   "variants": 58,
+   "candidates": 8352,
+   "rows": 655,
+   "finalists": 4,
+   "acceptedVacated": 0,
+   "acceptedAnchorLocal": 1,
+   "acceptedOrientation": 1,
+   "acceptedStation": 0,
+   "acceptedAngles": [
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ]
+   ]
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.004",
+  "mode": 33,
+  "published": 164.04056779906784,
+  "record": false,
+  "attribution": {
+   "variants": 435,
+   "candidates": 58029,
+   "rows": 10701,
+   "finalists": 0,
+   "acceptedVacated": 5,
+   "acceptedAnchorLocal": 7,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.01",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece d06db288-d2d6-4f40-874e-98287f516d93-copy-10 within the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.01",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 3 violation components inside the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.01",
+  "mode": 32,
+  "published": 164.04458495038523,
+  "record": false,
+  "attribution": {
+   "variants": 145,
+   "candidates": 19691,
+   "rows": 828,
+   "finalists": 4,
+   "acceptedVacated": 1,
+   "acceptedAnchorLocal": 3,
+   "acceptedOrientation": 1,
+   "acceptedStation": 0,
+   "acceptedAngles": [
+    [
+     "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+     329.273582,
+     0.02,
+     false
+    ]
+   ]
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.01",
+  "mode": 33,
+  "published": null,
+  "record": false,
+  "attribution": {
+   "variants": 2900,
+   "candidates": 384714,
+   "rows": 191531,
+   "finalists": 17,
+   "acceptedVacated": 37,
+   "acceptedAnchorLocal": 15,
+   "acceptedOrientation": 0,
+   "acceptedStation": 26
+  },
+  "failure": "no insertion order re-placed the 3 violation components inside the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.02",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-1 within the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.02",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 3 violation components inside the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.02",
+  "mode": 32,
+  "published": 164.0515677990678,
+  "record": false,
+  "attribution": {
+   "variants": 174,
+   "candidates": 23606,
+   "rows": 2665,
+   "finalists": 8,
+   "acceptedVacated": 1,
+   "acceptedAnchorLocal": 3,
+   "acceptedOrientation": 2,
+   "acceptedStation": 0,
+   "acceptedAngles": [
+    [
+     "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-1",
+     27.868117,
+     -0.02,
+     false
+    ],
+    [
+     "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+     329.566082,
+     0.3125,
+     false
+    ]
+   ]
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "flat0.02",
+  "mode": 33,
+  "published": null,
+  "record": false,
+  "attribution": {
+   "variants": 3538,
+   "candidates": 484416,
+   "rows": 206456,
+   "finalists": 21,
+   "acceptedVacated": 52,
+   "acceptedAnchorLocal": 19,
+   "acceptedOrientation": 0,
+   "acceptedStation": 22
+  },
+  "failure": "no insertion order re-placed the 3 violation components inside the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r1-d0.002",
+  "mode": 28,
+  "published": 164.04156779906782,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r1-d0.002",
+  "mode": 29,
+  "published": 164.03856779906783,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r1-d0.002",
+  "mode": 32,
+  "published": 164.04156779906782,
+  "record": false,
+  "attribution": {
+   "variants": 29,
+   "candidates": 3915,
+   "rows": 0,
+   "finalists": 0,
+   "acceptedVacated": 0,
+   "acceptedAnchorLocal": 1,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r1-d0.002",
+  "mode": 33,
+  "published": 164.03856779906783,
+  "record": false,
+  "attribution": {
+   "variants": 87,
+   "candidates": 11281,
+   "rows": 3538,
+   "finalists": 1,
+   "acceptedVacated": 2,
+   "acceptedAnchorLocal": 1,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r1-d0.006",
+  "mode": 28,
+  "published": 164.04156779906782,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r1-d0.006",
+  "mode": 29,
+  "published": 164.04056779906784,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r1-d0.006",
+  "mode": 32,
+  "published": 164.04156779906782,
+  "record": false,
+  "attribution": {
+   "variants": 29,
+   "candidates": 3915,
+   "rows": 0,
+   "finalists": 0,
+   "acceptedVacated": 0,
+   "acceptedAnchorLocal": 1,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r1-d0.006",
+  "mode": 33,
+  "published": 164.04056779906784,
+  "record": false,
+  "attribution": {
+   "variants": 174,
+   "candidates": 22562,
+   "rows": 3862,
+   "finalists": 6,
+   "acceptedVacated": 3,
+   "acceptedAnchorLocal": 2,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r1-d0.02",
+  "mode": 28,
+  "published": 164.04156779906782,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r1-d0.02",
+  "mode": 29,
+  "published": 164.05256779906784,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r1-d0.02",
+  "mode": 32,
+  "published": 164.04156779906782,
+  "record": false,
+  "attribution": {
+   "variants": 29,
+   "candidates": 4118,
+   "rows": 0,
+   "finalists": 0,
+   "acceptedVacated": 0,
+   "acceptedAnchorLocal": 1,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r1-d0.02",
+  "mode": 33,
+  "published": 164.05256779906784,
+  "record": false,
+  "attribution": {
+   "variants": 116,
+   "candidates": 15138,
+   "rows": 510,
+   "finalists": 5,
+   "acceptedVacated": 3,
+   "acceptedAnchorLocal": 1,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r2-d0.002",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1 within the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r2-d0.002",
+  "mode": 29,
+  "published": 164.03856779906783,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r2-d0.002",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {
+   "variants": 29,
+   "candidates": 3828,
+   "rows": 3828,
+   "finalists": 0,
+   "acceptedVacated": 0,
+   "acceptedAnchorLocal": 0,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": "no exact-valid pose for piece c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1 within the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r2-d0.002",
+  "mode": 33,
+  "published": 164.03856779906783,
+  "record": false,
+  "attribution": {
+   "variants": 58,
+   "candidates": 7337,
+   "rows": 0,
+   "finalists": 0,
+   "acceptedVacated": 1,
+   "acceptedAnchorLocal": 1,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r2-d0.006",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1 within the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r2-d0.006",
+  "mode": 29,
+  "published": 164.03856779906783,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r2-d0.006",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {
+   "variants": 29,
+   "candidates": 3770,
+   "rows": 3770,
+   "finalists": 0,
+   "acceptedVacated": 0,
+   "acceptedAnchorLocal": 0,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": "no exact-valid pose for piece c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1 within the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r2-d0.006",
+  "mode": 33,
+  "published": 164.03856779906783,
+  "record": false,
+  "attribution": {
+   "variants": 58,
+   "candidates": 7337,
+   "rows": 0,
+   "finalists": 0,
+   "acceptedVacated": 1,
+   "acceptedAnchorLocal": 1,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r2-d0.02",
+  "mode": 28,
+  "published": 164.03958495038523,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r2-d0.02",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 1 violation components inside the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r2-d0.02",
+  "mode": 32,
+  "published": 164.03958495038523,
+  "record": false,
+  "attribution": {
+   "variants": 29,
+   "candidates": 4118,
+   "rows": 0,
+   "finalists": 0,
+   "acceptedVacated": 0,
+   "acceptedAnchorLocal": 1,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r2-d0.02",
+  "mode": 33,
+  "published": null,
+  "record": false,
+  "attribution": {
+   "variants": 6090,
+   "candidates": 793962,
+   "rows": 290522,
+   "finalists": 0,
+   "acceptedVacated": 39,
+   "acceptedAnchorLocal": 97,
+   "acceptedOrientation": 0,
+   "acceptedStation": 2
+  },
+  "failure": "no insertion order re-placed the 1 violation components inside the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r3-d0.002",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no violating pair to target with a re-placement"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r3-d0.002",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no violating pair to target with a joint re-placement"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r3-d0.002",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no violating pair to target with a re-placement"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r3-d0.002",
+  "mode": 33,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no violating pair to target with a joint re-placement"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r3-d0.006",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no violating pair to target with a re-placement"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r3-d0.006",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no violating pair to target with a joint re-placement"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r3-d0.006",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no violating pair to target with a re-placement"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r3-d0.006",
+  "mode": 33,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no violating pair to target with a joint re-placement"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r3-d0.02",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no violating pair to target with a re-placement"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r3-d0.02",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no violating pair to target with a joint re-placement"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r3-d0.02",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no violating pair to target with a re-placement"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-r3-d0.02",
+  "mode": 33,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no violating pair to target with a joint re-placement"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-pair12-d0.002",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1 within the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-pair12-d0.002",
+  "mode": 29,
+  "published": 164.03856779906783,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-pair12-d0.002",
+  "mode": 32,
+  "published": 164.17556779906784,
+  "record": false,
+  "attribution": {
+   "variants": 58,
+   "candidates": 8091,
+   "rows": 945,
+   "finalists": 4,
+   "acceptedVacated": 0,
+   "acceptedAnchorLocal": 1,
+   "acceptedOrientation": 1,
+   "acceptedStation": 0,
+   "acceptedAngles": [
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ]
+   ]
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-pair12-d0.002",
+  "mode": 33,
+  "published": 164.03856779906783,
+  "record": false,
+  "attribution": {
+   "variants": 116,
+   "candidates": 15399,
+   "rows": 3567,
+   "finalists": 1,
+   "acceptedVacated": 2,
+   "acceptedAnchorLocal": 2,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-pair12-d0.006",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1 within the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-pair12-d0.006",
+  "mode": 29,
+  "published": 164.0425677990678,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-pair12-d0.006",
+  "mode": 32,
+  "published": 164.13556779906781,
+  "record": false,
+  "attribution": {
+   "variants": 58,
+   "candidates": 8323,
+   "rows": 394,
+   "finalists": 4,
+   "acceptedVacated": 0,
+   "acceptedAnchorLocal": 1,
+   "acceptedOrientation": 1,
+   "acceptedStation": 0,
+   "acceptedAngles": [
+    [
+     "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+     9.348799,
+     -0.02,
+     false
+    ]
+   ]
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-pair12-d0.006",
+  "mode": 33,
+  "published": 164.0425677990678,
+  "record": false,
+  "attribution": {
+   "variants": 435,
+   "candidates": 58029,
+   "rows": 10701,
+   "finalists": 0,
+   "acceptedVacated": 5,
+   "acceptedAnchorLocal": 7,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-pair12-d0.02",
+  "mode": 28,
+  "published": 164.0545677990678,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-pair12-d0.02",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 1 violation components inside the 166.038568 mm bound"
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-pair12-d0.02",
+  "mode": 32,
+  "published": 164.0545677990678,
+  "record": false,
+  "attribution": {
+   "variants": 87,
+   "candidates": 12644,
+   "rows": 0,
+   "finalists": 0,
+   "acceptedVacated": 1,
+   "acceptedAnchorLocal": 2,
+   "acceptedOrientation": 0,
+   "acceptedStation": 0
+  },
+  "failure": null
+ },
+ {
+  "line": "fs",
+  "perturbation": "nudge-pair12-d0.02",
+  "mode": 33,
+  "published": null,
+  "record": false,
+  "attribution": {
+   "variants": 2552,
+   "candidates": 344027,
+   "rows": 170783,
+   "finalists": 18,
+   "acceptedVacated": 34,
+   "acceptedAnchorLocal": 11,
+   "acceptedOrientation": 0,
+   "acceptedStation": 22
+  },
+  "failure": "no insertion order re-placed the 1 violation components inside the 166.038568 mm bound"
+ }
+]
