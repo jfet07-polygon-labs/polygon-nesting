@@ -2717,6 +2717,10 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
     piece_query_scratch: PieceQueryScratch,
     /// Per-piece proxy extents, kept in step with the layout one row per move.
     proxy_rows: ProxyRowCache,
+    /// Reusable buffer the accepted-move merge writes its new collision list
+    /// into. It is swapped with the incumbent list rather than copied, so after
+    /// the first move of a lane neither list allocates again.
+    collision_merge_scratch: Vec<(usize, usize, f64)>,
     pair_nfp_cache: BTreeMap<PairNfpKey, Arc<PairNfp>>,
     pair_nfp_cache_components: usize,
     #[cfg(feature = "jagua-experimental")]
@@ -9306,6 +9310,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             allow_worsening_chain: false,
             piece_query_scratch: PieceQueryScratch::new(pieces.len()),
             proxy_rows: ProxyRowCache::new(pieces.len()),
+            collision_merge_scratch: Vec::new(),
             pair_nfp_cache: BTreeMap::new(),
             pair_nfp_cache_components: 0,
             #[cfg(feature = "jagua-experimental")]
@@ -10162,6 +10167,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     old_boundary,
                     replacement_score,
                     &self.weights,
+                    &mut self.collision_merge_scratch,
                 );
                 self.audit_incremental_score(state, score)?;
             }
@@ -13781,12 +13787,36 @@ fn shadow_tracker_disagreement(shadow: &PairTracker, incremental: &PairTracker) 
     ShadowAgreement::Agrees { derived_ulps }
 }
 
+/// Installs one accepted move into the incumbent score.
+///
+/// This is the delta the sweep runs on, and it is now bounded by the moved row
+/// plus the incumbent's collision list rather than by the layout:
+///
+/// * **The moved row is walked once, as a merge.** The `fixed` loop visits
+///   pairs in exactly `(first, second)` order — `(0, i), (1, i), ... (i - 1, i),
+///   (i, i + 1), ... (i, n - 1)` is ascending — and `replacement.collision_pairs`
+///   arrives sorted by the same key. One cursor over the row therefore answers
+///   every "what is this pair's new loss" question, where a linear `find` per
+///   piece used to rescan the whole row `n - 1` times.
+/// * **The collision list is rebuilt by merge, not by sort.** The rows that
+///   survive are the incumbent's minus the moved piece's, which is already
+///   sorted, and the incoming row is sorted; merging them into the caller's
+///   scratch and swapping produces exactly the order `sort_by_key` produced,
+///   without the `O(m log m)` and without an allocation once the scratch has
+///   grown.
+///
+/// The two running `f64` sums — the boundary total and the weighted total — are
+/// deliberately *not* turned into subtract-and-add deltas. Their accumulation
+/// order is observable in the last bit and the coupled rollback auditor compares
+/// them against a from-scratch score, so the weighted total keeps being summed
+/// over the whole ordered collision list exactly as it was.
 fn update_score_after_move(
     score: &mut PairTracker,
     input_index: usize,
     old_boundary: (usize, f64),
     replacement: PlacementScore,
     weights: &BTreeMap<(usize, usize), f64>,
+    merge_scratch: &mut Vec<(usize, usize, f64)>,
 ) {
     let _span = profiling::span(Phase::UpdateAfterMove);
     profiling::count(Counter::AcceptedMoves, 1);
@@ -13794,6 +13824,13 @@ fn update_score_after_move(
     let tracked_boundary = score.boundaries[input_index];
     debug_assert_eq!(tracked_boundary.violations, old_boundary.0);
     debug_assert!((tracked_boundary.raw_loss - old_boundary.1).abs() <= f64::EPSILON);
+    debug_assert!(
+        replacement
+            .collision_pairs
+            .windows(2)
+            .all(|window| (window[0].0, window[0].1) < (window[1].0, window[1].1)),
+        "the moved row reaches the delta sorted by pair"
+    );
     score.replace_boundary(
         input_index,
         BoundaryEntry {
@@ -13801,33 +13838,41 @@ fn update_score_after_move(
             raw_loss: replacement.boundary_loss,
         },
     );
+    let mut row_cursor = 0usize;
     for fixed in 0..score.piece_count {
         if fixed == input_index {
             continue;
         }
         let pair = ordered_pair(input_index, fixed);
+        while row_cursor < replacement.collision_pairs.len()
+            && (
+                replacement.collision_pairs[row_cursor].0,
+                replacement.collision_pairs[row_cursor].1,
+            ) < pair
+        {
+            row_cursor += 1;
+        }
         let raw_loss = replacement
             .collision_pairs
-            .iter()
-            .find(|(first, second, _)| (*first, *second) == pair)
+            .get(row_cursor)
+            .filter(|(first, second, _)| (*first, *second) == pair)
             .map(|(_, _, penalty)| *penalty)
             .unwrap_or(0.0);
         let guided_weight = weights.get(&pair).copied().unwrap_or(1.0);
         score.replace_pair(pair.0, pair.1, raw_loss, guided_weight);
     }
-    score
-        .collision_pairs
-        .retain(|(first, second, _)| *first != input_index && *second != input_index);
     score.boundary_violations = score
         .boundary_violations
         .saturating_sub(old_boundary.0)
         .saturating_add(replacement.boundary_violations);
     score.boundary_loss =
         (score.boundary_loss - old_boundary.1 + replacement.boundary_loss).max(0.0);
-    score.collision_pairs.extend(replacement.collision_pairs);
-    score
-        .collision_pairs
-        .sort_by_key(|(first, second, _)| (*first, *second));
+    merge_sorted_moved_row(
+        &mut score.collision_pairs,
+        input_index,
+        &replacement.collision_pairs,
+        merge_scratch,
+    );
     score.weighted_loss = score.boundary_loss
         + score
             .collision_pairs
@@ -13840,6 +13885,41 @@ fn update_score_after_move(
                     * *penalty
             })
             .sum::<f64>();
+}
+
+/// Replaces `input_index`'s rows in a sorted collision list with `row`.
+///
+/// `collision_pairs` and `row` are both sorted by `(first, second)`; `row`
+/// contains only pairs that mention `input_index`, and `collision_pairs` is the
+/// incumbent list. Dropping the old rows preserves sortedness, and the two key
+/// sets are disjoint by construction, so one linear merge reproduces the
+/// previous `retain` + `extend` + `sort_by_key` order exactly rather than merely
+/// up to ties — which matters, because the resulting list is compared
+/// element-wise against a from-scratch score.
+fn merge_sorted_moved_row(
+    collision_pairs: &mut Vec<(usize, usize, f64)>,
+    input_index: usize,
+    row: &[(usize, usize, f64)],
+    scratch: &mut Vec<(usize, usize, f64)>,
+) {
+    scratch.clear();
+    scratch.reserve(collision_pairs.len() + row.len());
+    let mut incoming = row.iter().copied().peekable();
+    for retained in collision_pairs
+        .iter()
+        .copied()
+        .filter(|(first, second, _)| *first != input_index && *second != input_index)
+    {
+        while incoming
+            .peek()
+            .is_some_and(|(first, second, _)| (*first, *second) < (retained.0, retained.1))
+        {
+            scratch.push(incoming.next().expect("peeked entry is present"));
+        }
+        scratch.push(retained);
+    }
+    scratch.extend(incoming);
+    std::mem::swap(collision_pairs, scratch);
 }
 
 fn tracked_piece_score(
@@ -16343,9 +16423,53 @@ mod tests {
                 weighted_loss: 0.0,
             },
             &BTreeMap::new(),
+            &mut Vec::new(),
         );
         assert_eq!(score.collision_pairs, vec![(1, 2, 1.0)]);
         assert_eq!(score.weighted_loss, 1.0);
+    }
+
+    /// The accepted-move merge has to reproduce `retain` + `extend` + sort, not
+    /// merely produce a sorted list: the sweep's collision list is compared
+    /// element-wise against a from-scratch score, so a permutation of equal
+    /// content would read as a real disagreement.
+    #[test]
+    fn moved_row_merge_reproduces_retain_extend_and_sort() {
+        let incumbent = vec![
+            (0usize, 3usize, 1.0f64),
+            (1, 2, 2.0),
+            (1, 4, 3.0),
+            (2, 3, 4.0),
+            (3, 5, 5.0),
+        ];
+        for input_index in 0..6usize {
+            let neighbour = (input_index + 1) % 6;
+            let single = ordered_pair(input_index, neighbour);
+            for row in [
+                Vec::new(),
+                vec![(single.0, single.1, 9.0)],
+                (0..6)
+                    .filter(|fixed| *fixed != input_index)
+                    .map(|fixed| {
+                        let pair = ordered_pair(input_index, fixed);
+                        (pair.0, pair.1, 7.0)
+                    })
+                    .collect::<Vec<_>>(),
+            ] {
+                let mut row = row;
+                row.sort_by_key(|(first, second, _)| (*first, *second));
+                let mut expected = incumbent.clone();
+                expected
+                    .retain(|(first, second, _)| *first != input_index && *second != input_index);
+                expected.extend(row.iter().copied());
+                expected.sort_by_key(|(first, second, _)| (*first, *second));
+
+                let mut actual = incumbent.clone();
+                let mut scratch = Vec::new();
+                merge_sorted_moved_row(&mut actual, input_index, &row, &mut scratch);
+                assert_eq!(actual, expected, "input index {input_index}");
+            }
+        }
     }
 
     #[test]
