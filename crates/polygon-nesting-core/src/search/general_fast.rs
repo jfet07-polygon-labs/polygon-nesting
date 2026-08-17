@@ -10,10 +10,11 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::fmt::{Display, Formatter};
 
 use crate::canonical_grid::{from_grid, to_grid_mm};
-use crate::domain::IrregularPoint;
+use crate::domain::{IrregularBounds, IrregularPoint};
 use crate::geometry::convex::compute_convex_hull;
 use crate::geometry::general_polygon::{
     GeneralPolygonError, PolygonRing, PolygonSet, GENERAL_MAX_JOB_VERTICES,
+    GENERAL_MAX_PAIR_QUERY_VERTICES,
 };
 use crate::parallel::map_slice_with_job_pool;
 use crate::profiling::{self, Counter, Phase};
@@ -258,11 +259,37 @@ struct PreparedGeneralPiece<'a> {
     shape_family_key: Vec<i64>,
 }
 
+/// A piece the constructor has committed to, with its collision polygon.
+///
+/// `collision_bounds` is a memo of `collision`, which is immutable for the
+/// state's whole lifetime, so it is always exactly `collision.bounds()`. It
+/// exists because [`PolygonSet::bounds`] walks a ring while the constructor
+/// asks a *placed* piece for its extent once per candidate it evaluates - in
+/// the all-fixed overlap scan, in the proposal generator, and again in the
+/// candidate scorer. One walk per commit replaces tens of thousands per step.
+///
+/// The memo deliberately lives here rather than inside `PolygonSet`: the deep
+/// operator retains hundreds of collision polygons under a hard byte budget it
+/// charges by `size_of::<PolygonSet>()`, so widening that type would move a
+/// reported memory figure for no gain there - the deep operator's own hot scan
+/// already hoists the extent it needs.
 #[derive(Clone)]
 struct PlacedState {
     input_index: usize,
     placement: GeneralFastPlacement,
     collision: PolygonSet,
+    collision_bounds: Option<IrregularBounds>,
+}
+
+impl PlacedState {
+    fn new(input_index: usize, placement: GeneralFastPlacement, collision: PolygonSet) -> Self {
+        Self {
+            input_index,
+            placement,
+            collision_bounds: collision.bounds(),
+            collision,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -843,13 +870,7 @@ fn run_constructor_step(
         if !collision_fits_sheet(&candidate.collision, settings) {
             continue;
         }
-        if placed
-            .iter()
-            .map(|fixed| polygons_overlap_exact(&candidate.collision, &fixed.collision))
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .any(std::convert::identity)
-        {
+        if any_exact_overlap(&candidate.collision, placed)? {
             continue;
         }
         let score = score_candidate(placed, &candidate, settings);
@@ -872,16 +893,18 @@ fn run_constructor_step(
         }
     }
 
-    Ok(best.map(|(candidate, _)| PlacedState {
-        input_index: piece.input_index,
-        placement: GeneralFastPlacement {
-            piece_id: piece.input.id.to_owned(),
-            rotation_deg: candidate.rotation_deg,
-            mirrored: candidate.mirrored,
-            translate_short_axis: candidate.translate_x,
-            translate_long_axis: candidate.translate_y,
-        },
-        collision: candidate.collision,
+    Ok(best.map(|(candidate, _)| {
+        PlacedState::new(
+            piece.input_index,
+            GeneralFastPlacement {
+                piece_id: piece.input.id.to_owned(),
+                rotation_deg: candidate.rotation_deg,
+                mirrored: candidate.mirrored,
+                translate_short_axis: candidate.translate_x,
+                translate_long_axis: candidate.translate_y,
+            },
+            candidate.collision,
+        )
     }))
 }
 
@@ -955,17 +978,17 @@ fn run_partial_layout_beam(
             }
             for candidate in search.candidates {
                 let mut successor = state.clone();
-                successor.placed.push(PlacedState {
-                    input_index: piece.input_index,
-                    placement: GeneralFastPlacement {
+                successor.placed.push(PlacedState::new(
+                    piece.input_index,
+                    GeneralFastPlacement {
                         piece_id: piece.input.id.to_owned(),
                         rotation_deg: candidate.rotation_deg,
                         mirrored: candidate.mirrored,
                         translate_short_axis: candidate.translate_x,
                         translate_long_axis: candidate.translate_y,
                     },
-                    collision: candidate.collision,
-                });
+                    candidate.collision,
+                ));
                 state_successors.push(successor);
             }
             Ok((state_successors, search.exact_evaluations))
@@ -1040,17 +1063,17 @@ fn retry_skipped_pieces(
                 next_remaining.push(piece_id);
                 continue;
             };
-            state.placed.push(PlacedState {
-                input_index: piece.input_index,
-                placement: GeneralFastPlacement {
+            state.placed.push(PlacedState::new(
+                piece.input_index,
+                GeneralFastPlacement {
                     piece_id,
                     rotation_deg: candidate.rotation_deg,
                     mirrored: candidate.mirrored,
                     translate_short_axis: candidate.translate_x,
                     translate_long_axis: candidate.translate_y,
                 },
-                collision: candidate.collision,
-            });
+                candidate.collision,
+            ));
             progress = true;
         }
         if !progress || next_remaining.is_empty() {
@@ -1161,7 +1184,7 @@ fn select_diverse_partial_layouts(
         let Some(last) = candidate.placed.last() else {
             continue;
         };
-        let Some(bounds) = last.collision.bounds() else {
+        let Some(bounds) = last.collision_bounds else {
             continue;
         };
         let center = (bounds.min_x + bounds.max_x) / 2.0;
@@ -1533,10 +1556,10 @@ fn attempt_repair_result(
                         "a result placement must reference a prepared piece",
                     ))
                 })?;
-            Ok(PlacedState {
-                input_index: piece.input_index,
-                placement: placement.clone(),
-                collision: transformed_collision(
+            Ok(PlacedState::new(
+                piece.input_index,
+                placement.clone(),
+                transformed_collision(
                     piece,
                     placement.rotation_deg,
                     placement.mirrored,
@@ -1544,7 +1567,7 @@ fn attempt_repair_result(
                     placement.translate_long_axis,
                     settings,
                 )?,
-            })
+            ))
         })
         .collect::<Result<Vec<_>, GeneralFastError>>()?;
     let target_input_indices = repair_target_input_indices(&placed, settings.max_repair_targets);
@@ -1577,17 +1600,17 @@ fn attempt_repair_result(
         let mut trial_placed = placed.clone();
         trial_placed.insert(
             target_position,
-            PlacedState {
-                input_index: target_input_index,
-                placement: GeneralFastPlacement {
+            PlacedState::new(
+                target_input_index,
+                GeneralFastPlacement {
                     piece_id: target.input.id.to_owned(),
                     rotation_deg: candidate.rotation_deg,
                     mirrored: candidate.mirrored,
                     translate_short_axis: candidate.translate_x,
                     translate_long_axis: candidate.translate_y,
                 },
-                collision: candidate.collision,
-            },
+                candidate.collision,
+            ),
         );
         if validate_result(pieces, &trial_placed, settings).is_err() {
             placed.insert(target_position, incumbent_state);
@@ -1635,7 +1658,7 @@ fn repair_target_input_indices(placed: &[PlacedState], max_targets: usize) -> Ve
             let without_depth = placed
                 .iter()
                 .filter(|candidate| candidate.input_index != state.input_index)
-                .filter_map(|candidate| candidate.collision.bounds())
+                .filter_map(|candidate| candidate.collision_bounds)
                 .map(|bounds| bounds.max_y)
                 .max_by(f64::total_cmp)
                 .unwrap_or(0.0);
@@ -1782,8 +1805,14 @@ fn candidate_is_feasible(
     if !collision_fits_sheet(&candidate.collision, settings) {
         return Ok(false);
     }
+    let candidate_bounds = candidate.collision.bounds();
     for placed in fixed {
-        if polygons_overlap_exact(&candidate.collision, &placed.collision)? {
+        if polygons_overlap_exact_within(
+            &candidate.collision,
+            candidate_bounds,
+            &placed.collision,
+            placed.collision_bounds,
+        )? {
             return Ok(false);
         }
     }
@@ -2104,7 +2133,7 @@ fn canonical_result_key(result: &GeneralFastResult) -> Vec<CanonicalPlacementKey
 }
 
 fn combined_bounds(placed: &[PlacedState]) -> Option<crate::domain::IrregularBounds> {
-    let mut bounds = placed.iter().filter_map(|state| state.collision.bounds());
+    let mut bounds = placed.iter().filter_map(|state| state.collision_bounds);
     let first = bounds.next()?;
     Some(bounds.fold(first, |combined, current| {
         crate::domain::IrregularBounds::new(
@@ -2177,11 +2206,106 @@ fn collision_fits_sheet(polygon: &PolygonSet, settings: GeneralFastSettings) -> 
     )
 }
 
+/// Whether `candidate` exactly overlaps any already-placed collision polygon.
+///
+/// # Why this may stop at the first overlap
+///
+/// The scan this replaces evaluated *every* fixed piece and only then reduced
+/// the resulting `Vec<bool>`, so a candidate rejected by the first fixed piece
+/// still paid for an exact Clipper intersection against all the others. Simply
+/// returning early would be a behaviour change in exactly one situation: a
+/// later pair that would have raised a geometry error instead goes unasked,
+/// turning an aborted constructor into a rejected candidate.
+///
+/// So this stops early only after proving no skipped pair could have raised
+/// one. [`polygons_overlap_exact`] has exactly two structural error causes -
+/// an empty operand, and a pair whose combined vertex count exceeds the
+/// pair-query ceiling - and both are decidable from bounds and vertex counts
+/// without touching Clipper. Any remaining piece that could still trip one is
+/// evaluated for real, so the error surfaces exactly as before. (A Clipper
+/// *execution* failure is not predictable without running Clipper; it is also
+/// not reachable for the validated, non-empty, in-budget operands this
+/// constructor builds.)
+///
+/// The candidate's own extent is derived once here rather than once per fixed
+/// piece inside the pair query, which is the same redundancy
+/// [`PlacedState::collision_bounds`] removes from the other side of the scan.
+fn any_exact_overlap(
+    candidate: &PolygonSet,
+    placed: &[PlacedState],
+) -> Result<bool, GeneralPolygonError> {
+    let candidate_bounds = candidate.bounds();
+    for (index, fixed) in placed.iter().enumerate() {
+        if !polygons_overlap_exact_within(
+            candidate,
+            candidate_bounds,
+            &fixed.collision,
+            fixed.collision_bounds,
+        )? {
+            continue;
+        }
+        let candidate_vertices = candidate.vertex_count();
+        for skipped in &placed[index + 1..] {
+            if exact_overlap_query_is_structurally_safe(
+                candidate_bounds,
+                candidate_vertices,
+                skipped.collision_bounds,
+                &skipped.collision,
+            ) {
+                continue;
+            }
+            polygons_overlap_exact_within(
+                candidate,
+                candidate_bounds,
+                &skipped.collision,
+                skipped.collision_bounds,
+            )?;
+        }
+        return Ok(true);
+    }
+    Ok(false)
+}
+
+/// Whether [`polygons_overlap_exact`] on this pair provably cannot raise one of
+/// its two structural errors.
+fn exact_overlap_query_is_structurally_safe(
+    first_bounds: Option<IrregularBounds>,
+    first_vertices: usize,
+    second_bounds: Option<IrregularBounds>,
+    second: &PolygonSet,
+) -> bool {
+    let (Some(first_bounds), Some(second_bounds)) = (first_bounds, second_bounds) else {
+        return false;
+    };
+    if !bounds_have_positive_overlap(first_bounds, second_bounds) {
+        // Disjoint bounds short-circuit before the pair query is ever built, so
+        // the vertex ceiling cannot be reached.
+        return true;
+    }
+    first_vertices.saturating_add(second.vertex_count()) <= GENERAL_MAX_PAIR_QUERY_VERTICES
+}
+
 pub(crate) fn polygons_overlap_exact(
     first: &PolygonSet,
     second: &PolygonSet,
 ) -> Result<bool, GeneralPolygonError> {
-    let (Some(first_bounds), Some(second_bounds)) = (first.bounds(), second.bounds()) else {
+    polygons_overlap_exact_within(first, first.bounds(), second, second.bounds())
+}
+
+/// [`polygons_overlap_exact`] with one or both extents already derived.
+///
+/// Callers that ask the same polygon about many partners - the constructor's
+/// all-fixed scan, and every scan over already-placed pieces - would otherwise
+/// re-walk a ring per pair to answer a question whose answer cannot have
+/// changed. Passing the extent in is the only difference; the broad-phase
+/// reject, the error on an empty operand, and the narrow phase are identical.
+fn polygons_overlap_exact_within(
+    first: &PolygonSet,
+    first_bounds: Option<IrregularBounds>,
+    second: &PolygonSet,
+    second_bounds: Option<IrregularBounds>,
+) -> Result<bool, GeneralPolygonError> {
+    let (Some(first_bounds), Some(second_bounds)) = (first_bounds, second_bounds) else {
         return Err(GeneralPolygonError::from_message(
             "an exact overlap query requires non-empty polygons",
         ));
@@ -3083,7 +3207,7 @@ fn push_translation_proposal(
         score: score_bounds(placed, translated_bounds, settings),
         broad_phase_overlap_count: placed
             .iter()
-            .filter_map(|state| state.collision.bounds())
+            .filter_map(|state| state.collision_bounds)
             .filter(|fixed_bounds| bounds_have_positive_overlap(translated_bounds, *fixed_bounds))
             .count(),
     });
@@ -3216,7 +3340,7 @@ fn score_bounds(
 ) -> CandidateScore {
     let mut bounds = placed
         .iter()
-        .filter_map(|state| state.collision.bounds())
+        .filter_map(|state| state.collision_bounds)
         .chain(std::iter::once(candidate_bounds));
     let first = bounds.next().expect("a candidate has non-empty geometry");
     let (min_x, min_y, max_x, max_y) = bounds.fold(
@@ -3429,11 +3553,7 @@ pub(crate) fn validate_and_measure_placements(
                     placement.piece_id
                 )));
             }
-            Ok(PlacedState {
-                input_index,
-                placement: placement.clone(),
-                collision,
-            })
+            Ok(PlacedState::new(input_index, placement.clone(), collision))
         })
         .collect::<Result<Vec<_>, GeneralFastError>>()?;
 
@@ -4277,17 +4397,17 @@ mod tests {
     fn partial_layout_identity_keeps_distinct_piece_assignments() {
         let polygon = square(1.0);
         let placed = |piece_id: &str, input_index: usize| PartialLayout {
-            placed: vec![PlacedState {
+            placed: vec![PlacedState::new(
                 input_index,
-                placement: GeneralFastPlacement {
+                GeneralFastPlacement {
                     piece_id: piece_id.to_owned(),
                     rotation_deg: 0.0,
                     mirrored: false,
                     translate_short_axis: 0.0,
                     translate_long_axis: 0.0,
                 },
-                collision: polygon.clone(),
-            }],
+                polygon.clone(),
+            )],
             unplaced_piece_ids: Vec::new(),
         };
 

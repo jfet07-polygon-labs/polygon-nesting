@@ -241,17 +241,17 @@ fn build_stable_pair_templates(
         let first_bounds = first_local
             .bounds()
             .expect("pair orientation geometry is non-empty");
-        let first_state = PlacedState {
-            input_index: first.input_index,
-            placement: GeneralFastPlacement {
+        let first_state = PlacedState::new(
+            first.input_index,
+            GeneralFastPlacement {
                 piece_id: first.input.id.to_owned(),
                 rotation_deg: first_rotation_deg,
                 mirrored: first_mirrored,
                 translate_short_axis: -first_bounds.min_x,
                 translate_long_axis: -first_bounds.min_y,
             },
-            collision: first_local,
-        };
+            first_local,
+        );
         let second_orientations = angle_candidates(
             second,
             std::slice::from_ref(&first_state),
@@ -1151,28 +1151,28 @@ fn template_pair_successors(
                 continue;
             }
             let mut successor = state.clone();
-            successor.placed.push(PlacedState {
-                input_index: template.first_input_index,
-                placement: GeneralFastPlacement {
+            successor.placed.push(PlacedState::new(
+                template.first_input_index,
+                GeneralFastPlacement {
                     piece_id: prepared[template.first_input_index].input.id.to_owned(),
                     rotation_deg: template.first_rotation_deg,
                     mirrored: template.first_mirrored,
                     translate_short_axis: template.first_translate_x + translate_x,
                     translate_long_axis: template.first_translate_y + translate_y,
                 },
-                collision: first_collision,
-            });
-            successor.placed.push(PlacedState {
-                input_index: template.second_input_index,
-                placement: GeneralFastPlacement {
+                first_collision,
+            ));
+            successor.placed.push(PlacedState::new(
+                template.second_input_index,
+                GeneralFastPlacement {
                     piece_id: prepared[template.second_input_index].input.id.to_owned(),
                     rotation_deg: template.second_rotation_deg,
                     mirrored: template.second_mirrored,
                     translate_short_axis: template.second_translate_x + translate_x,
                     translate_long_axis: template.second_translate_y + translate_y,
                 },
-                collision: second_collision,
-            });
+                second_collision,
+            ));
             ledger.rigid_successors += 1;
             successors.push(successor);
             feasible_rows += 1;
@@ -1190,17 +1190,17 @@ fn append_candidate(
     candidate: Candidate,
 ) -> PartialLayout {
     let mut successor = state.clone();
-    successor.placed.push(PlacedState {
-        input_index: piece.input_index,
-        placement: GeneralFastPlacement {
+    successor.placed.push(PlacedState::new(
+        piece.input_index,
+        GeneralFastPlacement {
             piece_id: piece.input.id.to_owned(),
             rotation_deg: candidate.rotation_deg,
             mirrored: candidate.mirrored,
             translate_short_axis: candidate.translate_x,
             translate_long_axis: candidate.translate_y,
         },
-        collision: candidate.collision,
-    });
+        candidate.collision,
+    ));
     successor
 }
 
