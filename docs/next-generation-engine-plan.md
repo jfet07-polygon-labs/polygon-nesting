@@ -2263,3 +2263,290 @@ should be priced as such.
   measurement of the layout and that it costs time on these streams;
   whether a search that stops dropping marginal contacts packs *better*
   is a question four pinned regressions cannot answer.
+
+## The pole loop has no bit-identical headroom, and the flag that would move it moves the search
+
+PR5 handed this stage two things: `pairPressure`, which its own work had
+pushed from 19.29% of mode-22 leaf time to 23.07% by making everything
+around it cheaper, and `fast-proxy-hypot`, an opt-in whose entire
+evidence was five agreeing Mixed-61 streams. Both were named as
+unfinished. This entry finishes them, and the answer on both is
+negative - the first because the loop has nothing left to give, the
+second because what it gives has a price that was not being measured.
+
+### What the pole loop actually does, counted
+
+A counting build of `pole_overlap_pressure`, on the two pinned gate
+streams - the mode-22 record replay at gate 2 and the mode-20 anchor at
+gate 1, which is a narrower pair of streams than PR5's table and so
+reports smaller totals for the same work:
+
+| quantity | mode 22 gate | mode 20 gate |
+|---|---:|---:|
+| `pole_overlap_pressure` calls | 17,139,907 | 6,363,087 |
+| pole pairs quantified | 330,270,986 | 106,492,468 |
+| ... penetrating (`penetration >= epsilon`) | 12,395,921 | 4,063,850 |
+| ... on the decay branch | 317,875,065 | 102,428,618 |
+| ... whose circles are disjoint | 315,450,166 | 101,655,245 |
+| ... whose gap exceeds 10 `epsilon` | 280,606,859 | 90,710,761 |
+| ... whose gap exceeds the shape's own diameter | 7,691,023 | 2,652,539 |
+| ... whose gap exceeds 1000 `epsilon` | 0 | 0 |
+| **... whose contribution rounds to nothing** | **0** | **0** |
+| poles per first operand, mean | 4.21 | 3.67 |
+| poles per second operand, mean | 4.63 | 4.40 |
+| poles, maximum | 13 | 13 |
+
+The last row of the pair block decides the stage. The obvious
+optimisation for a quadratic loop over circles is to bound the pair
+cheaply and skip the ones that cannot matter, and 95.5% of these pairs
+are disjoint circles - the shape of the data says the skip should pay.
+It cannot, and not because it is unprofitable: because there is nothing
+to skip. The decay branch contributes
+`pi * eps^2 * min(r) / (gap + 2 eps)`, which is positive for every gap,
+and the accumulator it lands in only ever grows. An addition is a no-op
+in binary64 only when the addend is below half an ulp of the
+accumulator, and since the accumulator starts at `eps^2` that needs
+`gap + 2 eps > pi min(r) 2^53` - at the smallest pole radius this engine
+generates, a separation upwards of `10^15` millimetres, and it only gets
+further away as the sum grows. The counting build agrees empirically: of
+436,763,454 pole pairs across the two streams, **zero** have a
+contribution the running sum would discard. Every pair is load-bearing
+in the last bit, so a bound that skips one changes the answer. That is
+not a tuning question, and no amount of instrumentation was going to
+turn it into one.
+
+What the counts *do* show is redundant arithmetic. The second operand's
+translated centre is derived inside the inner loop, so it is
+re-evaluated once per *first* pole - 4.21 times per call on mode 22.
+The stream performs 660.5 million of those additions where 158.8
+million would do, so 501.8 million are redundant. The operand-reuse
+probes say the same from the other side: the second operand's
+`(shape, translate)` is found in an 8192-entry direct-mapped cache on
+99.7% of calls, because it is a *fixed* neighbour and there are only
+sixty-one of them, while the whole-call argument tuple hits on 2.0%. So
+the pair result is not memoisable and the operand row is.
+
+### Removing the redundant additions buys nothing
+
+The hoist is arithmetically free - the same two additions produce the
+same two values, once instead of `n` times - and it was measured before
+it was believed. It was also *built*: an experiment binary that hoists
+the row for any operand with at most sixteen poles reproduces all four
+regression gates as whole documents, so what follows compares two
+engines that are known to compute the same thing.
+
+On a faithful reconstruction of the loop, at 21.69 pairs per call over
+pole-count and separation distributions calibrated to the counts above,
+best of fifteen interleaved rounds, with every variant asserted to
+produce a bit-identical sum:
+
+| variant | ns/pair | ratio |
+|---|---:|---:|
+| current, centre re-derived per pair | 8.985 | 1.0000 |
+| hoisted into a zero-initialised row | 9.271 | 1.0318 |
+| hoisted into an uninitialised row | 9.166 | 1.0201 |
+| hoisted, with `sqrt(x*x + y*y)` | 2.949 | 0.3283 |
+
+The hoist loses by 2.0% even when the row costs nothing to create. At
+4.63 inner iterations the buffer is a dependency the additions were
+not: the adds issue into slack the `hypot` call leaves behind, while
+the stores and reloads are real traffic on a loop that runs four times.
+The measurement that makes this legible is on the same real inputs: of
+the 8.58 ns a pair costs, 7.49 ns is `hypot` alone and 2.80 ns is
+everything else, and the two overlap. Arithmetic the machine was
+already hiding is not arithmetic worth removing - the same lesson PR5
+learned from its `Arc` handle, in a different register.
+
+Two *extra* additions in the same body cost 4.5%, so the effect is real
+and the sign is simply the other way: the loop is short enough that
+hoisting costs more than it saves.
+
+End to end, the engine agrees by declining to notice. Fifteen
+interleaved rounds against the gate-bit-identical experiment binary,
+arms alternating order, per-round paired ratios:
+
+| stream | base | hoisted | paired median | spread | rounds below 1.0 |
+|---|---:|---:|---:|---|---:|
+| mode 22 | 3.167 s | 3.157 s | 1.001 | 0.967-1.053 | 7/15 |
+| mode 0 | 1.562 s | 1.562 s | 1.004 | 0.984-1.030 | 5/15 |
+
+Half a billion additions removed from a mode-22 stream, and the paired
+median moves by one part in a thousand in the wrong direction. So the
+change is not taken. The honest statement of the result is that the
+loop's arithmetic is not its cost, and a count of removed operations was
+never going to establish that it was.
+
+### `hypot` is the loop, and it is already the right `hypot`
+
+Sampling one in 128 of the mode-22 gate stream's pole pairs gives two
+million real arguments, and on them:
+
+| what | ns/pair |
+|---|---:|
+| whole inner body, platform `hypot` | 8.58 |
+| whole inner body, `sqrt(x*x + y*y)` | 3.47 |
+| `hypot` alone | 7.49 |
+| `sqrt(x*x + y*y)` alone | 1.93 |
+| everything except the length | 2.80 |
+
+`pairPressure` costs 168.9 ns per call in the profiled mode-22 gate
+stream (2893.88 ms over 17,139,907 calls, 21.16% of leaf), and 19.27
+pole pairs at 8.58 ns is 165.3 ns of it. The span *is* the loop, to
+within 2%, and the loop is `hypot` to within 87%.
+
+So the question is whether the platform call can be beaten without
+changing an answer, and that turns on whether it is correctly rounded.
+It is, and this is now checked rather than assumed: for 200,000 of the
+sampled arguments the exact value of `dx^2 + dy^2` was formed as a
+rational and compared against the midpoints bounding each candidate's
+rounding interval, in exact arithmetic. glibc 2.42's `hypot` is the
+correctly rounded result on **0 failures out of 200,000**. The naive
+form is wrong on 33,310 of them - 16.655%, always by exactly one ulp,
+which is the 16.7% PR5 measured, now attributed to a specification
+rather than to a coincidence.
+
+Correct rounding is a *specification*, so "bit-identical" and "correctly
+rounded" are the same requirement here, and the platform already meets
+it. There is no faster answer to be had by being cleverer about the
+answer; only by being cleverer about reaching it.
+
+### What is left, sized
+
+There is exactly one bit-identical route left and it is a
+numerical-methods change, not a loop change: a fast path that computes
+the length in double-double with one Newton correction, emits a
+certificate that its result is the correctly rounded one, and falls back
+to the platform call when the certificate fails. Sized on the same two
+million real arguments:
+
+| length | ns/call | ratio | disagrees with platform |
+|---|---:|---:|---:|
+| platform `hypot` | 8.04 | 1.000 | - |
+| double-double + Newton, FMA enabled | 3.08 | 0.383 | 0.558% |
+| double-double + Newton, baseline target | 5.85 | 0.726 | 0.558% |
+| `sqrt(x*x + y*y)` | 1.82 | 0.226 | 16.729% |
+
+Two things that table says plainly. The prize is real - 2.6x on the call
+that is 87% of the loop that is 21% of mode-22 leaf - and it is entirely
+conditional on FMA, which the release profile does not enable, so it
+needs a runtime-dispatched `target_feature` path rather than a build
+flag. And the probe is a *sizing* probe, not a candidate: it disagrees
+with the platform on 0.558% of real inputs, which is exactly the
+population a certificate has to catch and hand to the fallback.
+Shipping it without a soundness argument for that certificate would be
+shipping a 0.558% chance of a different search, which is the mistake the
+next section is about.
+
+## The proxy tier's fast length changes outcomes, and the corpus says so
+
+`fast-proxy-hypot` shipped off by default with an honest caveat - "five
+agreeing streams is evidence and not a guarantee" - and an explicit
+instruction to evaluate it on a corpus rather than on a fixture.
+Evaluated on a corpus, it fails, and it fails in the specific way the
+caveat predicted.
+
+### The control first
+
+Every comparison below is against a same-binary control, because "the
+trajectories differ" is only a statement about the flag if the engine is
+deterministic. It is: the base binary run twice over the eight corpus
+streams is identical field for field, and run twice over the fourteen
+Mixed-61 arms is identical field for field. 22 of 22 controls clean, so
+every difference reported below is attributable to the flag.
+
+### What diverges
+
+Two corpora, compared as whole documents rather than as published
+fields:
+
+| streams | published outcome identical | whole document identical |
+|---|---:|---:|
+| shapes-17 / triangle-20, mode 20, 4 fixtures x 2 seeds | 8/8 | 2/8 |
+| Mixed-61: 4 gates, 4 mode-31 arms, 6 mode-26 ladder arms | 14/14 | **0/14** |
+
+The published outcome reproduces everywhere. Mode 20 replays at
+`independentDepthMm` 206.869 and fingerprint `8a7737381238fa4d`, the
+three mode-22 records at 159.09233022733062, 159.07876040364795 and
+164.0375677990678 at `fa01012af1d559ae`, `e28fba007f8031d4` and
+`49f094d7e59a9008`, every arm `exactValid` and `contractValid`, the
+mode-26 ladder and the mode-31 arms agreeing field for field including
+failure-reason text. That is the evidence PR5 had, reproduced and
+extended to a fourth gate and to a second family of requests.
+
+It is also not the whole document. Under the flag the relaxed search
+takes a different path on 20 of the 22 streams: last-place differences
+in `rawPenalty`, `weightedPressure` and `weightedLoss` propagate into
+different accepted moves (32,317 against 32,288 on one shapes-17
+stream), different rotation and translation evaluation counts, and
+different probe totals. The mechanism is exactly the documented one - a
+last-place difference in a ranking signal moves a tie-break, a moved
+tie-break is a different accepted move, and from there the two searches
+are different searches.
+
+### And on three arms it changes a reported layout
+
+On the three mode-26 arms at relaxed seed 1 the divergence is not
+confined to counters. The coupled dynamic separator's boundary
+projection treatment lands somewhere else:
+
+| | flag off | flag on |
+|---|---:|---:|
+| `boundaryProjectionTreatment.finalDepthMm` | 179.810 | **179.931** |
+| `coupledTreatmentIndependentUsedLongAxisDepthMm` | 179.809 | **179.930** |
+| `finalPlacementFingerprint` | `49516ab3d5f7013d` | `ea7e63871babd135` |
+
+A different layout, 0.121 mm deeper, on a reported depth field. The
+mode-26 publication above it still reproduces the incumbent, because a
+ladder arm replays a pinned parent and the parent is not what moved -
+but the engine's own from-scratch treatment in the same process did
+move, and it moved the wrong way. One arm is not a quality claim; it is
+a disproof of the claim that the flag is outcome-neutral, and that claim
+was the only thing keeping promotion open.
+
+### Verdict, and what would reopen it
+
+**Do not promote.** The default stays `hypot`, and the recommendation is
+stronger than "not yet": the evidence that would have justified
+promotion has now been gathered and it points the other way.
+
+The end-to-end win is real and was measured the same way every other
+number in this file is - ten interleaved rounds, arms alternating order,
+the statistic the per-round paired ratio:
+
+| stream | flag off | flag on | paired median | spread | rounds below 1.0 |
+|---|---:|---:|---:|---|---:|
+| mode 22 | 3.427 s | 3.095 s | **0.900** | 0.767-0.934 | 10/10 |
+| mode 0 | 1.653 s | 1.553 s | **0.913** | 0.869-1.001 | 9/10 |
+
+Ten percent, consistently. It is not worth a 0.121 mm regression on a
+reported depth, and it is certainly not worth a proxy tier whose answers
+are a function of which machine's `libm` compiled it.
+
+The flag should stay in the tree, off, for one reason: it is the
+cheapest available *measurement* of what the proxy tier's length costs,
+and this stage used it as exactly that. It should not acquire a default,
+a settings knob, or a coordinator that can reach it.
+
+What would reopen the question is not more streams of the same kind. It
+is a different argument: a fast length that is *certified* correctly
+rounded, per the sizing table above, so that the tie-break it feeds is
+the same tie-break. Such a change carries no corpus burden at all,
+because it does not change an answer - it only has to prove that it does
+not, and the four gates plus the shadow-rescore audit already exist to
+check that. Corpus evidence is the wrong instrument for a bit-identical
+change and an insufficient one for a non-bit-identical one; that is the
+general lesson here, and it is worth more than the flag was.
+
+Evidence: `docs/experiments/fast-proxy-hypot-corpus-evidence.json`.
+
+### What this stage shipped
+
+No engine behaviour. Every `.rs` line this stage changed is a doc
+comment, and the worktree binary reproduces the base binary as a whole
+document on all four gates, the four mode-31 arms and the six mode-26
+ladder arms - 14 of 14, which is the same comparison that finds 14 of 14
+*differences* under the flag. That is the point of the entry: two
+plausible optimisations were built and measured, one is arithmetically
+impossible and one is empirically worthless, and the third was already
+in the tree and has now been disqualified rather than deferred. The
+cheapest thing an engine can be given is a reason not to change it.
