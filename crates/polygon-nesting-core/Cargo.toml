@@ -35,6 +35,15 @@ search-profiling = []
 # carries it reports a `fullRescores` count and a `fullRescore` phase that
 # describe the audit rather than the search.
 shadow-rescore = []
+# Replaces the *proxy* tier's vector length with `sqrt(x * x + y * y)`.
+#
+# Off by default and it must stay off in anything that publishes a comparable
+# number, because it is the one measured optimisation in this area that is not
+# bit-identical: the platform's `hypot` is correctly rounded and the naive form
+# is not, so about one in six results differs in the last place, which moves the
+# search's trajectory. See `search::general_relaxed::proxy_hypot` for the
+# measurement and the scope.
+fast-proxy-hypot = []
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }

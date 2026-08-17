@@ -1951,7 +1951,7 @@ impl CellAxes {
         let edges = std::array::from_fn(|index| {
             let edge_x = points[(index + 1) % 3].x - points[index].x;
             let edge_y = points[(index + 1) % 3].y - points[index].y;
-            let length = edge_x.hypot(edge_y);
+            let length = proxy_hypot(edge_x, edge_y);
             if length == 0.0 {
                 return CellEdge {
                     axis_x: 0.0,
@@ -2245,6 +2245,62 @@ fn missing_orientation_error(
         pieces[input_index].id
     ))
     .into()
+}
+
+/// The vector length the *proxy* tier measures with.
+///
+/// Every caller is a ranking or pruning question - a pole-pair separation, a
+/// separating-axis normalisation - and none of them can reach a published
+/// placement, which is why this knob exists at all and why it is confined to
+/// this function's callers.
+///
+/// The default is the platform's `hypot`, and the default is what every
+/// regression gate and every published number in this repository was measured
+/// against.
+///
+/// # Why the flag, and what it costs
+///
+/// After the collider's precomputation, `hypot` *is* the proxy tier: a mode-22
+/// stream runs 410M pole-pair separations and 83M axis normalisations through
+/// it, and a measured 7.7 ns/call against 1.3 ns/call for `sqrt(x*x + y*y)`
+/// says it is essentially all of what `pairPressure` costs. It is also the one
+/// thing here that cannot be made faster *and* bit-identical: the platform's
+/// `hypot` is correctly rounded, the naive form is not, and a 5M-sample probe
+/// at the magnitudes this engine works at puts them one unit in the last place
+/// apart on 16.9% of inputs. `libm`'s Rust port is not a way out either - it is
+/// 3.7x faster than the platform call and disagrees with it on 13.9% of the
+/// same inputs.
+///
+/// What that costs in *outcome* is a separate question from what it costs in
+/// arithmetic, and it was measured rather than assumed. On the three pinned
+/// regression streams the flagged build reproduces the unflagged one exactly -
+/// mode 20 at `independentDepthMm` 206.869 and fingerprint `8a7737381238fa4d`,
+/// the two mode-22 record replays at raw 159.09233022733062 and
+/// 159.08263749731248 at `fa01012af1d559ae` and `145d0ed4b2f53d3f`, all
+/// `exactValid` and `contractValid` - and so do the mode-26 ladder and the
+/// mode-31 arm, failure-reason text included, while the mode-22 stream runs
+/// 3.2 s against 3.7 s.
+///
+/// That is *evidence*, not a guarantee. A last-place difference in a ranking
+/// signal is not an error, but it can move a tie-break, and a moved tie-break
+/// is a different accepted move and therefore a different trajectory; five
+/// streams agreeing does not make the sixth agree, and no fingerprint this
+/// engine has ever published was measured under it. So it stays off, and it is
+/// delivered as a candidate for the anytime-coordinator era to evaluate on a
+/// corpus rather than as an optimisation to adopt on a fixture. The naive form
+/// additionally loses `hypot`'s overflow and underflow guards; at millimetre
+/// magnitudes on a sheet that is unreachable, but it is another reason this
+/// cannot be the default.
+#[inline(always)]
+fn proxy_hypot(x: f64, y: f64) -> f64 {
+    #[cfg(feature = "fast-proxy-hypot")]
+    {
+        (x * x + y * y).sqrt()
+    }
+    #[cfg(not(feature = "fast-proxy-hypot"))]
+    {
+        x.hypot(y)
+    }
 }
 
 /// The rotation half of a [`SurrogateKey`], derived.
@@ -13053,8 +13109,10 @@ pub(crate) fn pole_overlap_pressure(
                 second_pole.center.x + second_translate_x,
                 second_pole.center.y + second_translate_y,
             );
-            let distance =
-                (first_center.x - second_center.x).hypot(first_center.y - second_center.y);
+            let distance = proxy_hypot(
+                first_center.x - second_center.x,
+                first_center.y - second_center.y,
+            );
             let penetration = first_pole.radius + second_pole.radius - distance;
             let decayed = if penetration >= epsilon {
                 penetration
@@ -13094,8 +13152,10 @@ fn continuous_pole_overlap_pressure(
         let first_center = first_transform.point(first_pole.center);
         for second_pole in &second_shape.poles {
             let second_center = second_transform.point(second_pole.center);
-            let distance =
-                (first_center.x - second_center.x).hypot(first_center.y - second_center.y);
+            let distance = proxy_hypot(
+                first_center.x - second_center.x,
+                first_center.y - second_center.y,
+            );
             let penetration = first_pole.radius + second_pole.radius - distance;
             let decayed = if penetration >= epsilon {
                 penetration
@@ -13888,7 +13948,7 @@ fn oriented_cells_penetrate(
     for index in 0..3 {
         let edge_x = second_points[(index + 1) % 3].x - second_points[index].x;
         let edge_y = second_points[(index + 1) % 3].y - second_points[index].y;
-        let length = edge_x.hypot(edge_y);
+        let length = proxy_hypot(edge_x, edge_y);
         if length == 0.0 {
             return false;
         }
@@ -13923,7 +13983,7 @@ fn triangle_penetration(
         for index in 0..3 {
             let edge_x = polygon[(index + 1) % 3].x - polygon[index].x;
             let edge_y = polygon[(index + 1) % 3].y - polygon[index].y;
-            let length = edge_x.hypot(edge_y);
+            let length = proxy_hypot(edge_x, edge_y);
             if length == 0.0 {
                 return None;
             }
