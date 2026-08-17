@@ -2179,6 +2179,84 @@ impl ProxyRowCache {
     }
 }
 
+/// The rotation half of a [`SurrogateKey`], memoised one slot per piece.
+///
+/// Deriving it is pure arithmetic, but the arithmetic is three `rem_euclid`
+/// calls - three out-of-line `fmod`s, none of which the compiler can hoist -
+/// and the proxy collider derives it for *two* poses on every pair question it
+/// is asked, which is 52.0M questions on a mode-22 stream.
+///
+/// The poses it is asked about barely change. A candidate scan holds one
+/// candidate pose fixed across every neighbour it queries, and a fixed piece's
+/// pose changes only when a move is accepted, so one slot per piece answers
+/// almost every question without touching `fmod`.
+///
+/// Keyed on the rotation's *bit pattern*, like [`ProxyRowPose`] and for the
+/// same reason: the derivation canonicalises, so two distinct bit patterns can
+/// share an answer, and comparing bits can therefore only cause an unnecessary
+/// recomputation, never a stale read. The value is whatever the deriving
+/// expression produced, so a hit and a miss are indistinguishable in the
+/// result.
+struct AngleKeyCache {
+    entries: Vec<Option<(u64, i64)>>,
+}
+
+impl AngleKeyCache {
+    fn new(piece_count: usize) -> Self {
+        Self {
+            entries: vec![None; piece_count],
+        }
+    }
+
+    /// The rotation key of `rotation_deg`, from the slot when the piece was
+    /// last asked about the same bits and from the deriving expression
+    /// otherwise.
+    ///
+    /// `directional` is the lane's `uses_directional_pressure()`, which is
+    /// constant for a lane; it selects the same branch the deriving path takes.
+    #[inline(always)]
+    fn rotation_key(&mut self, input_index: usize, rotation_deg: f64, directional: bool) -> i64 {
+        let bits = rotation_deg.to_bits();
+        if let Some(Some((stored_bits, key))) = self.entries.get(input_index).copied() {
+            if stored_bits == bits {
+                return key;
+            }
+        }
+        let key = derive_rotation_key(rotation_deg, directional);
+        if let Some(slot) = self.entries.get_mut(input_index) {
+            *slot = Some((bits, key));
+        }
+        key
+    }
+}
+
+/// The error a missing canonical orientation raises, verbatim.
+///
+/// A free function so a caller holding a catalogue borrow can raise it without
+/// re-borrowing the whole lane.
+fn missing_orientation_error(
+    pieces: &[GeneralFastPiece<'_>],
+    input_index: usize,
+    key: SurrogateKey,
+) -> GeneralFastError {
+    GeneralPolygonError::from_message(format!(
+        "relaxed surrogate catalog is missing canonical orientation {} for piece {}",
+        angle_from_key(key.1),
+        pieces[input_index].id
+    ))
+    .into()
+}
+
+/// The rotation half of a [`SurrogateKey`], derived.
+fn derive_rotation_key(rotation_deg: f64, directional: bool) -> i64 {
+    let angle = if directional {
+        continuous_angle(rotation_deg)
+    } else {
+        canonical_angle(rotation_deg)
+    };
+    angle_key(angle)
+}
+
 impl CellIndex {
     fn new(cells: &[Triangle], bounds: IrregularBounds) -> Self {
         let words = cells.len().div_ceil(64).max(1);
@@ -2910,6 +2988,8 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
     piece_query_scratch: PieceQueryScratch,
     /// Per-piece proxy extents, kept in step with the layout one row per move.
     proxy_rows: ProxyRowCache,
+    /// Per-piece memo of the rotation half of a [`SurrogateKey`].
+    angle_keys: AngleKeyCache,
     /// Reusable buffer the accepted-move merge writes its new collision list
     /// into. It is swapped with the incumbent list rather than copied, so after
     /// the first move of a lane neither list allocates again.
@@ -9518,6 +9598,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             allow_worsening_chain: false,
             piece_query_scratch: PieceQueryScratch::new(pieces.len()),
             proxy_rows: ProxyRowCache::new(pieces.len()),
+            angle_keys: AngleKeyCache::new(pieces.len()),
             collision_merge_scratch: Vec::new(),
             pair_nfp_cache: BTreeMap::new(),
             pair_nfp_cache_components: 0,
@@ -11829,19 +11910,93 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             translated_bounds(shape_bounds, candidate.translate_x, candidate.translate_y);
         piece_index.query_into(candidate_bounds, &mut self.piece_query_scratch);
         let fixed_indices = std::mem::take(&mut self.piece_query_scratch.selected);
-        for fixed_index in fixed_indices.iter().copied() {
-            if fixed_index == input_index {
-                continue;
-            }
-            let penalty = self.pair_penalty(candidate, &state.placements[fixed_index])?;
-            if penalty > 0.0 {
-                let pair = ordered_pair(input_index, fixed_index);
-                collision_pairs.push((pair.0, pair.1, penalty));
-                weighted_loss += self.pair_weight(pair.0, pair.1) * penalty;
-                if upper_bound.is_some_and(|upper_bound| weighted_loss > upper_bound) {
-                    break;
+        // The scan runs over *disjoint field borrows* rather than `&mut self`.
+        //
+        // The candidate's shape is resolved once for the whole scan instead of
+        // once per neighbour, and a colliding pair no longer resolves both
+        // operands a second time to quantify its penalty: a scan of `k`
+        // neighbours descended the ordered catalogue `2k + 2c` times for `c`
+        // collisions and now descends it `k + 1`. Holding a resolved shape
+        // across the loop means the catalogue stays borrowed, so the loop
+        // cannot call `&mut self` methods - and taking a second `Arc` handle to
+        // dodge that was measurably worse than the descents it saved, because
+        // every lane bumps the *same* refcount and eight of them contend on one
+        // cache line. Destructuring gives the same freedom for nothing.
+        let mut failure = None;
+        {
+            let LaneSearch {
+                pieces,
+                catalog,
+                kernel,
+                counters,
+                angle_keys,
+                weights,
+                relaxed_settings,
+                ..
+            } = self;
+            let directional = relaxed_settings.collision_backend
+                == GeneralRelaxedCollisionBackend::RollbackTriangle
+                && relaxed_settings.pressure_model
+                    == GeneralRelaxedPressureModel::DirectionalPenetration;
+            let candidate_key = (
+                catalog.geometry_class_by_input[candidate.input_index],
+                angle_keys.rotation_key(candidate.input_index, candidate.rotation_deg, directional),
+                candidate.mirrored,
+            );
+            match catalog.orientations.get(&candidate_key) {
+                None => {
+                    failure = Some(missing_orientation_error(
+                        pieces,
+                        candidate.input_index,
+                        candidate_key,
+                    ))
+                }
+                Some(candidate_shape) => {
+                    for fixed_index in fixed_indices.iter().copied() {
+                        if fixed_index == input_index {
+                            continue;
+                        }
+                        let fixed = &state.placements[fixed_index];
+                        let fixed_key = (
+                            catalog.geometry_class_by_input[fixed.input_index],
+                            angle_keys.rotation_key(
+                                fixed.input_index,
+                                fixed.rotation_deg,
+                                directional,
+                            ),
+                            fixed.mirrored,
+                        );
+                        let Some(fixed_shape) = catalog.orientations.get(&fixed_key) else {
+                            failure = Some(missing_orientation_error(
+                                pieces,
+                                fixed.input_index,
+                                fixed_key,
+                            ));
+                            break;
+                        };
+                        let penalty = resolved_pair_penalty(
+                            kernel,
+                            counters,
+                            candidate_shape,
+                            candidate,
+                            fixed_shape,
+                            fixed,
+                        );
+                        if penalty > 0.0 {
+                            let pair = ordered_pair(input_index, fixed_index);
+                            collision_pairs.push((pair.0, pair.1, penalty));
+                            weighted_loss +=
+                                weights.get(&pair).copied().unwrap_or(1.0) * penalty;
+                            if upper_bound.is_some_and(|upper_bound| weighted_loss > upper_bound) {
+                                break;
+                            }
+                        }
+                    }
                 }
             }
+        }
+        if let Some(error) = failure {
+            return Err(error);
         }
         self.piece_query_scratch.selected = fixed_indices;
         collision_pairs.sort_by_key(|(first, second, _)| (*first, *second));
@@ -12415,9 +12570,10 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 "directional penetration requires candidate-scoped scoring".to_owned(),
             ));
         }
-        let first_key = self.surrogate_key(first.input_index, first.rotation_deg, first.mirrored);
+        let first_key =
+            self.memoised_surrogate_key(first.input_index, first.rotation_deg, first.mirrored);
         let second_key =
-            self.surrogate_key(second.input_index, second.rotation_deg, second.mirrored);
+            self.memoised_surrogate_key(second.input_index, second.rotation_deg, second.mirrored);
         let Some(first_shape) = self.catalog.orientations.get(&first_key) else {
             return Err(self.missing_orientation(first.input_index, first_key));
         };
@@ -12444,9 +12600,10 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         // was four descents where two answer the question. The failure branch
         // still raises the identical error, for the same pose, in the same
         // order.
-        let first_key = self.surrogate_key(first.input_index, first.rotation_deg, first.mirrored);
+        let first_key =
+            self.memoised_surrogate_key(first.input_index, first.rotation_deg, first.mirrored);
         let second_key =
-            self.surrogate_key(second.input_index, second.rotation_deg, second.mirrored);
+            self.memoised_surrogate_key(second.input_index, second.rotation_deg, second.mirrored);
         let Some(first_shape) = self.catalog.orientations.get(&first_key) else {
             return Err(self.missing_orientation(first.input_index, first_key));
         };
@@ -12539,10 +12696,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         second_shape: &OrientedSurrogate,
         second: &RelaxedPlacement,
     ) -> bool {
-        let _span = profiling::span(Phase::PairCollide);
-        profiling::count(Counter::NeighborTests, 1);
-        self.counters.piece_broad_phase_probes += 1;
-        kernel_pair_collides(
+        resolved_pair_collides(
             &mut self.kernel,
             &mut self.counters,
             first_shape,
@@ -12564,13 +12718,13 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         second_shape: &OrientedSurrogate,
         second: &RelaxedPlacement,
     ) -> f64 {
-        if !self.resolved_pair_collides(first_shape, first, second_shape, second) {
-            return 0.0;
-        }
-        let _span = profiling::span(Phase::PairPressure);
-        self.kernel.pair_pressure(
-            PosedShape::new(first_shape, first.translate_x, first.translate_y),
-            PosedShape::new(second_shape, second.translate_x, second.translate_y),
+        resolved_pair_penalty(
+            &mut self.kernel,
+            &mut self.counters,
+            first_shape,
+            first,
+            second_shape,
+            second,
         )
     }
 
@@ -12644,26 +12798,43 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
     /// with a single ordered-map descent instead of a `contains_key` probe
     /// followed by a `get` probe for the same key.
     fn surrogate_key(&self, input_index: usize, rotation_deg: f64, mirrored: bool) -> SurrogateKey {
-        let angle = if self.uses_directional_pressure() {
-            continuous_angle(rotation_deg)
-        } else {
-            canonical_angle(rotation_deg)
-        };
         (
             self.catalog.geometry_class_by_input[input_index],
-            angle_key(angle),
+            self.rotation_key(rotation_deg),
+            mirrored,
+        )
+    }
+
+    /// The rotation half of a [`Self::surrogate_key`].
+    fn rotation_key(&self, rotation_deg: f64) -> i64 {
+        derive_rotation_key(rotation_deg, self.uses_directional_pressure())
+    }
+
+    /// [`Self::surrogate_key`], answered from [`AngleKeyCache`] when the piece
+    /// was last asked about the same rotation bits.
+    ///
+    /// The cached value is the one [`Self::rotation_key`] returned for those
+    /// bits, so a hit and a miss are the same answer; only the three `fmod`s
+    /// differ. `inline(always)` because it sits inside the proxy collider.
+    #[inline(always)]
+    fn memoised_surrogate_key(
+        &mut self,
+        input_index: usize,
+        rotation_deg: f64,
+        mirrored: bool,
+    ) -> SurrogateKey {
+        let directional = self.uses_directional_pressure();
+        (
+            self.catalog.geometry_class_by_input[input_index],
+            self.angle_keys
+                .rotation_key(input_index, rotation_deg, directional),
             mirrored,
         )
     }
 
     /// The error a missing canonical orientation raises, verbatim.
     fn missing_orientation(&self, input_index: usize, key: SurrogateKey) -> GeneralFastError {
-        GeneralPolygonError::from_message(format!(
-            "relaxed surrogate catalog is missing canonical orientation {} for piece {}",
-            angle_from_key(key.1),
-            self.pieces[input_index].id
-        ))
-        .into()
+        missing_orientation_error(self.pieces, input_index, key)
     }
 
     fn ensure_oriented(
@@ -12944,6 +13115,50 @@ fn continuous_pole_overlap_pressure(
         .sqrt()
         .max(1.0);
     overlap_proxy.sqrt() * (first_difficulty * second_difficulty).sqrt()
+}
+
+/// The proxy collision verdict for two already resolved shapes, over the two
+/// lane fields it actually needs.
+///
+/// Same span, same counters, same kernel call as the method that forwards to
+/// it. It takes `kernel` and `counters` as disjoint borrows for the reason
+/// [`kernel_pair_collides`] does: the shapes a resolved caller holds are
+/// borrowed from the lane's catalogue, so a caller that keeps a shape alive
+/// across the call cannot also hand over `&mut self`.
+#[inline(always)]
+fn resolved_pair_collides<K: ExplorationKernel<Shape = OrientedSurrogate>>(
+    kernel: &mut K,
+    counters: &mut WorkCounters,
+    first_shape: &OrientedSurrogate,
+    first: &RelaxedPlacement,
+    second_shape: &OrientedSurrogate,
+    second: &RelaxedPlacement,
+) -> bool {
+    let _span = profiling::span(Phase::PairCollide);
+    profiling::count(Counter::NeighborTests, 1);
+    counters.piece_broad_phase_probes += 1;
+    kernel_pair_collides(kernel, counters, first_shape, first, second_shape, second)
+}
+
+/// The proxy pair penalty for two already resolved shapes: collision first,
+/// magnitude only for a pair the proxy has already reported.
+#[inline(always)]
+fn resolved_pair_penalty<K: ExplorationKernel<Shape = OrientedSurrogate>>(
+    kernel: &mut K,
+    counters: &mut WorkCounters,
+    first_shape: &OrientedSurrogate,
+    first: &RelaxedPlacement,
+    second_shape: &OrientedSurrogate,
+    second: &RelaxedPlacement,
+) -> f64 {
+    if !resolved_pair_collides(kernel, counters, first_shape, first, second_shape, second) {
+        return 0.0;
+    }
+    let _span = profiling::span(Phase::PairPressure);
+    kernel.pair_pressure(
+        PosedShape::new(first_shape, first.translate_x, first.translate_y),
+        PosedShape::new(second_shape, second.translate_x, second.translate_y),
+    )
 }
 
 /// Asks the kernel about one pair and folds its reported work into the lane
