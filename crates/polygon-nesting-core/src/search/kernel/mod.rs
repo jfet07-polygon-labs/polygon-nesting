@@ -74,6 +74,8 @@
 //! PR4/PR6 work. [`JaguaKernel`] is that second kind, which is why it is built
 //! and tested standalone and is wired into no default path.
 
+use crate::profiling::{self, Phase};
+
 pub(crate) mod exact;
 pub mod legacy;
 
@@ -94,7 +96,6 @@ pub use jagua::{JaguaKernel, JaguaShape};
 /// mirror are baked into the prepared shape and only the translation varies per
 /// candidate. Keeping that split explicit in the argument type is what lets a
 /// kernel precompute whatever it wants per orientation.
-#[derive(Clone, Copy)]
 pub struct PosedShape<'a, S> {
     /// The prepared, already-oriented shape.
     pub shape: &'a S,
@@ -103,6 +104,24 @@ pub struct PosedShape<'a, S> {
     /// Translation along the sheet long axis, in millimetres.
     pub translate_y: f64,
 }
+
+// `Copy` by hand rather than by `derive`, and the difference is load-bearing.
+// A posed shape is a shared reference and two `f64`, so it is copyable for
+// *every* `S`; `derive` would nonetheless bound both impls on `S: Clone`, and
+// `Self::Shape` on a generic kernel carries no such bound. That would make
+// [`ExplorationKernel::pair_row`]'s default body — which presents the same two
+// operands to the verdict and then to the magnitude — fail to compile on a
+// kernel whose shape is not `Clone`, for a reason that has nothing to do with
+// the shape. Nothing is copied that was not copied before: the legacy
+// surrogate is `Clone`, so the derived impls applied to it too.
+impl<S> Clone for PosedShape<'_, S> {
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<S> Copy for PosedShape<'_, S> {}
 
 impl<'a, S> PosedShape<'a, S> {
     /// Poses `shape` at `(translate_x, translate_y)`.
@@ -167,6 +186,57 @@ impl KernelProbes {
     }
 }
 
+/// One candidate row: whether the pair collides, and by how much.
+///
+/// This is what a *single* pair question produces, and it is the unit the
+/// lane's moved-piece row set is assembled from. The two quantities travel
+/// together because they are one question: the magnitude is only defined for a
+/// colliding pair, and a separated pair contributes nothing to a score. Keeping
+/// them in one value is what lets a kernel answer both from one traversal if it
+/// can — see [`ExplorationKernel::pair_row`].
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct PairRow {
+    collides: bool,
+    pressure: f64,
+}
+
+impl PairRow {
+    /// The row of a pair the proxy reports as separated.
+    #[inline(always)]
+    pub fn separated() -> Self {
+        Self {
+            collides: false,
+            pressure: 0.0,
+        }
+    }
+
+    /// The row of a colliding pair, at the magnitude the proxy quantified.
+    #[inline(always)]
+    pub fn colliding(pressure: f64) -> Self {
+        Self {
+            collides: true,
+            pressure,
+        }
+    }
+
+    /// Whether the proxy reported a collision.
+    #[inline(always)]
+    pub fn collides(self) -> bool {
+        self.collides
+    }
+
+    /// The row's contribution to a score: the magnitude, or exactly zero when
+    /// the pair is separated.
+    ///
+    /// Zero is not a *measurement* of a separated pair — the pole series is
+    /// strictly positive for any two shapes — it is the additive identity a
+    /// score wants for a pair that has no row at all.
+    #[inline(always)]
+    pub fn penalty(self) -> f64 {
+        self.pressure
+    }
+}
+
 /// The **proxy** geometric services the exploration hot loop consumes.
 ///
 /// See the module documentation for the tier contract. In short: this tier is
@@ -208,4 +278,49 @@ pub trait ExplorationKernel {
         first: PosedShape<'_, Self::Shape>,
         second: PosedShape<'_, Self::Shape>,
     ) -> f64;
+
+    /// The whole row for one pair — verdict and magnitude — in one call.
+    ///
+    /// This is the fused entry Sol's fourth finding asks for. The two questions
+    /// above are one question at every call site that matters: a candidate scan
+    /// asks whether the pair collides and, if it does, immediately asks how
+    /// much. Splitting that across two trait entries forces every caller to
+    /// re-present both operands, and it forbids a kernel whose two answers
+    /// *share* a traversal from exploiting that.
+    ///
+    /// The provided body is the split, in the order the split has always run:
+    /// verdict first, magnitude only for a pair the verdict admitted, with the
+    /// same two profiling phases around the same two pieces of work. A kernel
+    /// that can do better overrides it; a kernel that cannot inherits today's
+    /// arithmetic exactly, which is why this method could be added without
+    /// moving a single bit on any gate.
+    ///
+    /// The legacy kernel is deliberately *not* one of the kernels that can do
+    /// better, and the reason is worth recording: its verdict walks a cell
+    /// index and its magnitude walks a pole series, and those are two disjoint
+    /// structures built at catalogue time. There is nothing between them to
+    /// share, so fusing the call saves one operand presentation and nothing
+    /// else — which is what the interleaved A/B behind `fused-pair-query`
+    /// measured, at paired medians within 0.7% of parity on both the mode-22
+    /// and mode-0 streams and with the mode-22 sign changing between two
+    /// samples. The entry earns its place as the seam a sharing kernel needs,
+    /// not as a speedup of this one. See the PR6 entry in
+    /// `docs/next-generation-engine-plan.md`.
+    #[inline(always)]
+    fn pair_row(
+        &mut self,
+        first: PosedShape<'_, Self::Shape>,
+        second: PosedShape<'_, Self::Shape>,
+        probes: &mut KernelProbes,
+    ) -> PairRow {
+        let collides = {
+            let _span = profiling::span(Phase::PairCollide);
+            self.pair_collides(first, second, probes)
+        };
+        if !collides {
+            return PairRow::separated();
+        }
+        let _span = profiling::span(Phase::PairPressure);
+        PairRow::colliding(self.pair_pressure(first, second))
+    }
 }

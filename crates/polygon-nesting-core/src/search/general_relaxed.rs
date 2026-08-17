@@ -31,7 +31,7 @@ use crate::search::general_micro_legalization::{
     GeneralGlobalLegalizationDiagnostics, GeneralMicroLegalizationDiagnostics,
 };
 use crate::search::kernel::{
-    ExplorationKernel, KernelPose, KernelProbes, LegacyKernel, PosedShape, LEGACY,
+    ExplorationKernel, KernelPose, KernelProbes, LegacyKernel, PairRow, PosedShape, LEGACY,
 };
 #[cfg(feature = "shadow-rescore")]
 use crate::search::shadow_rescore;
@@ -11988,12 +11988,14 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             weighted_loss += loss;
             let first_shape = shapes[index];
             for second in (index + 1)..state.placements.len() {
-                let penalty = self.resolved_pair_penalty(
-                    first_shape,
-                    placement,
-                    shapes[second],
-                    &state.placements[second],
-                );
+                let penalty = self
+                    .resolved_pair_row(
+                        first_shape,
+                        placement,
+                        shapes[second],
+                        &state.placements[second],
+                    )
+                    .penalty();
                 let guided_weight = self.pair_weight(index, second);
                 pairs[pair_slot(piece_count, index, second)] = PairEntry {
                     raw_loss: penalty,
@@ -12220,14 +12222,15 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                             ));
                             break;
                         };
-                        let penalty = resolved_pair_penalty(
+                        let penalty = resolved_pair_row(
                             kernel,
                             counters,
                             candidate_shape,
                             candidate,
                             fixed_shape,
                             fixed,
-                        );
+                        )
+                        .penalty();
                         if penalty > 0.0 {
                             let pair = ordered_pair(input_index, fixed_index);
                             collision_pairs.push((pair.0, pair.1, penalty));
@@ -12973,19 +12976,19 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         )
     }
 
-    /// The proxy pair penalty for two already resolved shapes.
+    /// The proxy row for two already resolved shapes.
     ///
     /// The resolved counterpart of [`Self::pair_penalty`]'s non-directional
     /// branch, asked in the same order: collision first, magnitude only for a
     /// pair the proxy has already reported.
-    fn resolved_pair_penalty(
+    fn resolved_pair_row(
         &mut self,
         first_shape: &OrientedSurrogate,
         first: &RelaxedPlacement,
         second_shape: &OrientedSurrogate,
         second: &RelaxedPlacement,
-    ) -> f64 {
-        resolved_pair_penalty(
+    ) -> PairRow {
+        resolved_pair_row(
             &mut self.kernel,
             &mut self.counters,
             first_shape,
@@ -13402,6 +13405,14 @@ fn continuous_pole_overlap_pressure(
 /// [`kernel_pair_collides`] does: the shapes a resolved caller holds are
 /// borrowed from the lane's catalogue, so a caller that keeps a shape alive
 /// across the call cannot also hand over `&mut self`.
+///
+/// Only the split arm of [`resolved_pair_row`] asks the verdict as its own
+/// step; the fused arm asks the kernel for the whole row at once and never
+/// reaches here, which leaves this the split arm's alone and therefore dead in
+/// a `fused-pair-query` build. It stays as written rather than being restated
+/// inside the split body, because it is the shape the caller of a *verdict*
+/// wants and the two arms are meant to differ in exactly one thing.
+#[cfg_attr(feature = "fused-pair-query", allow(dead_code))]
 #[inline(always)]
 fn resolved_pair_collides<K: ExplorationKernel<Shape = OrientedSurrogate>>(
     kernel: &mut K,
@@ -13417,19 +13428,28 @@ fn resolved_pair_collides<K: ExplorationKernel<Shape = OrientedSurrogate>>(
     kernel_pair_collides(kernel, counters, first_shape, first, second_shape, second)
 }
 
-/// The proxy pair penalty for two already resolved shapes: collision first,
-/// magnitude only for a pair the proxy has already reported.
+/// The proxy row for two already resolved shapes: collision first, magnitude
+/// only for a pair the proxy has already reported.
+///
+/// Two bodies, one contract. The default one asks the kernel the two questions
+/// separately, which is what every measured stream in this file was produced
+/// by; `fused-pair-query` asks [`ExplorationKernel::pair_row`] once instead.
+/// Both compute the same `f64` from the same operands in the same order — the
+/// fused arm reproduces all four regression gates as whole documents — so the
+/// feature is a *measurement* of what a second trait entry costs, not a change
+/// of answer. See the PR6 entry in `docs/next-generation-engine-plan.md`.
+#[cfg(not(feature = "fused-pair-query"))]
 #[inline(always)]
-fn resolved_pair_penalty<K: ExplorationKernel<Shape = OrientedSurrogate>>(
+fn resolved_pair_row<K: ExplorationKernel<Shape = OrientedSurrogate>>(
     kernel: &mut K,
     counters: &mut WorkCounters,
     first_shape: &OrientedSurrogate,
     first: &RelaxedPlacement,
     second_shape: &OrientedSurrogate,
     second: &RelaxedPlacement,
-) -> f64 {
+) -> PairRow {
     if !resolved_pair_collides(kernel, counters, first_shape, first, second_shape, second) {
-        return 0.0;
+        return PairRow::separated();
     }
     let _span = profiling::span(Phase::PairPressure);
     // The pole series is accumulated with the first operand outermost, so it is
@@ -13439,10 +13459,48 @@ fn resolved_pair_penalty<K: ExplorationKernel<Shape = OrientedSurrogate>>(
     #[cfg(feature = "canonical-pair-order")]
     let (first_shape, first, second_shape, second) =
         canonical_pair_operands(first_shape, first, second_shape, second);
-    kernel.pair_pressure(
+    PairRow::colliding(kernel.pair_pressure(
         PosedShape::new(first_shape, first.translate_x, first.translate_y),
         PosedShape::new(second_shape, second.translate_x, second.translate_y),
-    )
+    ))
+}
+
+/// [`resolved_pair_row`] over the fused kernel entry.
+///
+/// One [`ExplorationKernel::pair_row`] call carries both questions, so the
+/// operands are presented once and the index-ordered swap is derived once
+/// instead of twice. The two profiling phases move inside the kernel, where
+/// they still wrap the same two pieces of geometric work — the split arm's
+/// [`Phase::PairCollide`] span additionally encloses the lane's own counter
+/// bumps, which is the one attribution difference between the arms and is worth
+/// a few nanoseconds of nothing. The lane keeps those counters either way,
+/// because they are the lane's quotas and not the kernel's.
+#[cfg(feature = "fused-pair-query")]
+#[inline(always)]
+fn resolved_pair_row<K: ExplorationKernel<Shape = OrientedSurrogate>>(
+    kernel: &mut K,
+    counters: &mut WorkCounters,
+    first_shape: &OrientedSurrogate,
+    first: &RelaxedPlacement,
+    second_shape: &OrientedSurrogate,
+    second: &RelaxedPlacement,
+) -> PairRow {
+    profiling::count(Counter::NeighborTests, 1);
+    counters.piece_broad_phase_probes += 1;
+    #[cfg(feature = "canonical-pair-order")]
+    let (first_shape, first, second_shape, second) =
+        canonical_pair_operands(first_shape, first, second_shape, second);
+    let mut probes = KernelProbes::default();
+    let row = kernel.pair_row(
+        PosedShape::new(first_shape, first.translate_x, first.translate_y),
+        PosedShape::new(second_shape, second.translate_x, second.translate_y),
+        &mut probes,
+    );
+    counters.cell_index_probes = counters
+        .cell_index_probes
+        .wrapping_add(probes.cell_index_probes);
+    counters.sat_tests = counters.sat_tests.wrapping_add(probes.sat_tests);
+    row
 }
 
 /// The two operands of a pair question, in the order the *pair* owns rather
@@ -17085,22 +17143,24 @@ mod tests {
                 translate_x: 20.0 + offset,
                 translate_y: 20.0 + offset,
             };
-            let forward = resolved_pair_penalty(
+            let forward = resolved_pair_row(
                 &mut kernel,
                 &mut counters,
                 shape(0),
                 &first,
                 shape(1),
                 &second,
-            );
-            let reverse = resolved_pair_penalty(
+            )
+            .penalty();
+            let reverse = resolved_pair_row(
                 &mut kernel,
                 &mut counters,
                 shape(1),
                 &second,
                 shape(0),
                 &first,
-            );
+            )
+            .penalty();
             assert_eq!(
                 forward.to_bits(),
                 reverse.to_bits(),
@@ -17108,6 +17168,92 @@ mod tests {
                  and {reverse:.17e} as (1, 0)"
             );
         }
+    }
+
+    /// The fused kernel entry answers exactly what the two split entries
+    /// answer: same verdict, same magnitude bits, same reported probes.
+    ///
+    /// This is the equivalence the `fused-pair-query` arm rests on, and it is
+    /// asserted here rather than inferred from the trait's default body,
+    /// because the default body is what a *future* kernel is invited to
+    /// override. A kernel that overrides [`ExplorationKernel::pair_row`] to
+    /// share a traversal has to keep passing this, or the arm stops being a
+    /// measurement of the seam and becomes a change of answer.
+    ///
+    /// The ladder walks from deep overlap out to clear separation so the sweep
+    /// crosses the contact boundary, which is where a fused implementation that
+    /// reordered its work would first disagree.
+    #[test]
+    fn the_fused_pair_row_reproduces_the_split_pair_query() {
+        let first_polygon = square(10.0);
+        let second_polygon = l_shape();
+        let pieces = [
+            GeneralFastPiece {
+                id: "first",
+                polygon: &first_polygon,
+                allow_rotation: true,
+                allow_mirror: false,
+            },
+            GeneralFastPiece {
+                id: "second",
+                polygon: &second_polygon,
+                allow_rotation: true,
+                allow_mirror: false,
+            },
+        ];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::ZeroDegreeOnly,
+            None,
+        )
+        .unwrap();
+        let shape = |index: usize| {
+            catalog
+                .orientations
+                .get(&(catalog.geometry_class_by_input[index], angle_key(0.0), false))
+                .expect("zero-degree surrogate")
+        };
+        let mut kernel = LegacyKernel::default();
+        let mut separated = 0usize;
+        let mut colliding = 0usize;
+        for step in 0..40 {
+            let offset = step as f64 * 0.75;
+            let first = PosedShape::new(shape(0), 20.0, 20.0);
+            let second = PosedShape::new(shape(1), 20.0 + offset, 20.0);
+
+            let mut split_probes = KernelProbes::default();
+            let split_collides = kernel.pair_collides(first, second, &mut split_probes);
+            let split_pressure = split_collides.then(|| kernel.pair_pressure(first, second));
+
+            let mut fused_probes = KernelProbes::default();
+            let fused = kernel.pair_row(first, second, &mut fused_probes);
+
+            assert_eq!(
+                fused.collides(),
+                split_collides,
+                "verdict at offset {offset}"
+            );
+            assert_eq!(fused_probes, split_probes, "probes at offset {offset}");
+            assert_eq!(
+                fused.penalty().to_bits(),
+                split_pressure.unwrap_or(0.0).to_bits(),
+                "magnitude at offset {offset}: fused {:.17e} against split {:?}",
+                fused.penalty(),
+                split_pressure,
+            );
+            if split_collides {
+                colliding += 1;
+            } else {
+                separated += 1;
+            }
+        }
+        // A ladder that never crossed the boundary would pass vacuously.
+        assert!(
+            colliding > 0 && separated > 0,
+            "the ladder must cross contact: {colliding} colliding, {separated} separated"
+        );
     }
 
     /// The proxy row cache is only sound if a hit returns exactly what the
