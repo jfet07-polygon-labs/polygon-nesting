@@ -1932,6 +1932,100 @@ impl PieceQueryScratch {
     }
 }
 
+/// The pose a cached proxy row was derived at, compared by bit pattern.
+///
+/// Bits rather than values, deliberately. The derivation runs the pose through
+/// [`continuous_angle`], so two distinct `rotation_deg` bit patterns can produce
+/// the same transform; keying on the raw bits can therefore only ever cause an
+/// unnecessary recomputation, never a stale read. A key that compared canonical
+/// angles would have to prove the canonicalisation is injective on every input
+/// the search generates, which is a much stronger claim than this cache needs.
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct ProxyRowPose {
+    rotation_bits: u64,
+    translate_x_bits: u64,
+    translate_y_bits: u64,
+    mirrored: bool,
+}
+
+impl ProxyRowPose {
+    #[inline]
+    fn of(placement: &RelaxedPlacement) -> Self {
+        Self {
+            rotation_bits: placement.rotation_deg.to_bits(),
+            translate_x_bits: placement.translate_x.to_bits(),
+            translate_y_bits: placement.translate_y.to_bits(),
+            mirrored: placement.mirrored,
+        }
+    }
+}
+
+/// Dense per-piece proxy geometry, maintained one row at a time.
+///
+/// The confirmation collider ([`continuous_pair_collision`]) opens with a
+/// broad-phase reject against the two operands' transformed surrogate extents,
+/// and it used to derive both of them from scratch on every call — a walk over
+/// every cell vertex of both shapes. Asking one piece about all of its
+/// neighbours therefore re-derived the *same* extent for that piece once per
+/// neighbour, and a whole-layout score re-derived every piece's extent `n - 1`
+/// times.
+///
+/// This is the row storage that stops it. One entry per piece holds the pose
+/// the extent was taken at and the extent itself; a lookup that finds the same
+/// pose returns the stored extent, and a lookup that does not re-derives one
+/// row. A sweep that moves one piece therefore invalidates exactly one row,
+/// which is what delta scoring means for this quantity.
+///
+/// The cache is *self-invalidating*: it stores the pose alongside the extent
+/// and checks it on every read, so no call site has to remember to evict, and
+/// correctness does not depend on the search announcing a move. A candidate
+/// pose that is scored and then rejected simply leaves a row that the next
+/// reader recomputes.
+struct ProxyRowCache {
+    poses: Vec<Option<ProxyRowPose>>,
+    bounds: Vec<IrregularBounds>,
+}
+
+impl ProxyRowCache {
+    fn new(piece_count: usize) -> Self {
+        Self {
+            poses: vec![None; piece_count],
+            bounds: vec![IrregularBounds::new(0.0, 0.0, 0.0, 0.0); piece_count],
+        }
+    }
+
+    /// The transformed proxy extent of `placement`, derived once per pose.
+    ///
+    /// `shape` must be the same zero-degree confirmation surrogate the collider
+    /// would have used, which is what makes the stored extent bit-identical to
+    /// the one the deriving path computes.
+    #[inline]
+    fn bounds_for(
+        &mut self,
+        shape: &OrientedSurrogate,
+        placement: &RelaxedPlacement,
+    ) -> IrregularBounds {
+        let transform = || {
+            PoleTransform::new(
+                placement.rotation_deg,
+                placement.translate_x,
+                placement.translate_y,
+            )
+        };
+        let Some(slot) = self.poses.get_mut(placement.input_index) else {
+            return transformed_surrogate_bounds(shape, transform());
+        };
+        let pose = ProxyRowPose::of(placement);
+        if *slot == Some(pose) {
+            return self.bounds[placement.input_index];
+        }
+        let bounds = transformed_surrogate_bounds(shape, transform());
+        *slot = Some(pose);
+        self.bounds[placement.input_index] = bounds;
+        bounds
+    }
+}
+
 impl CellIndex {
     fn new(cells: &[Triangle], bounds: IrregularBounds) -> Self {
         let mut bins = vec![Vec::new(); CELL_INDEX_SIDE * CELL_INDEX_SIDE];
@@ -2621,6 +2715,8 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
     counters: WorkCounters,
     allow_worsening_chain: bool,
     piece_query_scratch: PieceQueryScratch,
+    /// Per-piece proxy extents, kept in step with the layout one row per move.
+    proxy_rows: ProxyRowCache,
     pair_nfp_cache: BTreeMap<PairNfpKey, Arc<PairNfp>>,
     pair_nfp_cache_components: usize,
     #[cfg(feature = "jagua-experimental")]
@@ -9209,6 +9305,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             counters: WorkCounters::default(),
             allow_worsening_chain: false,
             piece_query_scratch: PieceQueryScratch::new(pieces.len()),
+            proxy_rows: ProxyRowCache::new(pieces.len()),
             pair_nfp_cache: BTreeMap::new(),
             pair_nfp_cache_components: 0,
             #[cfg(feature = "jagua-experimental")]
@@ -11297,6 +11394,10 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         let piece_count = state.placements.len();
         let mut collision_pairs = Vec::new();
         let mut boundaries = Vec::with_capacity(piece_count);
+        // Every slot this vector declares is overwritten wholesale by the pair
+        // loop below, guided weight included, so the separate `pair_weight`
+        // sweep that used to run here answered `n * (n - 1) / 2` ordered-map
+        // lookups whose results were then discarded.
         let mut pairs = vec![
             PairEntry {
                 raw_loss: 0.0,
@@ -11305,11 +11406,23 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             };
             piece_count.saturating_mul(piece_count.saturating_sub(1)) / 2
         ];
-        for first in 0..piece_count {
-            for second in (first + 1)..piece_count {
-                pairs[pair_slot(piece_count, first, second)].guided_weight =
-                    self.pair_weight(first, second);
-            }
+        // One shape resolution per piece rather than two per pair. The
+        // catalogue is reached through a cloned handle so the resolved borrows
+        // outlive the `&mut self` calls in the loop below; that is one refcount
+        // bump per whole-layout score, against `n * (n - 1)` ordered-map
+        // descents saved.
+        let catalog = Arc::clone(&self.catalog);
+        let mut shapes = Vec::with_capacity(piece_count);
+        for placement in &state.placements {
+            let key = self.surrogate_key(
+                placement.input_index,
+                placement.rotation_deg,
+                placement.mirrored,
+            );
+            let Some(shape) = catalog.orientations.get(&key) else {
+                return Err(self.missing_orientation(placement.input_index, key));
+            };
+            shapes.push(shape);
         }
         let mut incident_raw_loss = vec![0.0; piece_count];
         let mut boundary_violations = 0usize;
@@ -11324,8 +11437,14 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             boundary_violations = boundary_violations.saturating_add(violations);
             boundary_loss += loss;
             weighted_loss += loss;
+            let first_shape = shapes[index];
             for second in (index + 1)..state.placements.len() {
-                let penalty = self.pair_penalty(placement, &state.placements[second])?;
+                let penalty = self.resolved_pair_penalty(
+                    first_shape,
+                    placement,
+                    shapes[second],
+                    &state.placements[second],
+                );
                 let guided_weight = self.pair_weight(index, second);
                 pairs[pair_slot(piece_count, index, second)] = PairEntry {
                     raw_loss: penalty,
@@ -11803,8 +11922,20 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         let second_shape = self.catalog.orientations.get(&second_key).ok_or_else(|| {
             GeneralPolygonError::from_message("missing zero-degree confirmation surrogate")
         })?;
-        let (collides, cell_probes, sat_tests) =
-            continuous_pair_collision(first_shape, first, second_shape, second);
+        // One row of proxy geometry per operand, derived once per pose rather
+        // than once per pair. `bounds_for` returns exactly what the deriving
+        // collider computed, so the verdict and both probe counts below are the
+        // ones the uncached call produced.
+        let first_bounds = self.proxy_rows.bounds_for(first_shape, first);
+        let second_bounds = self.proxy_rows.bounds_for(second_shape, second);
+        let (collides, cell_probes, sat_tests) = continuous_pair_collision(
+            first_shape,
+            first,
+            first_bounds,
+            second_shape,
+            second,
+            second_bounds,
+        );
         self.counters.piece_broad_phase_probes =
             self.counters.piece_broad_phase_probes.saturating_add(1);
         self.counters.cell_index_probes =
@@ -12157,18 +12288,68 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         // into another kernel, and `LegacyKernel::pair_collides` is the loop
         // this branch used to run inline; the probe totals it reports are
         // folded back into the lane quotas below.
-        let mut probes = KernelProbes::default();
-        let collides = self.kernel.pair_collides(
+        Ok(kernel_pair_collides(
+            &mut self.kernel,
+            &mut self.counters,
+            first_shape,
+            first,
+            second_shape,
+            second,
+        ))
+    }
+
+    /// The proxy collision verdict for two *already resolved* shapes.
+    ///
+    /// Same question, same counters, same span as [`Self::pair_collides`]; the
+    /// difference is that the caller has already resolved both operands' shapes
+    /// and does not want the catalogue consulted again. A whole-layout score
+    /// asks about `n * (n - 1) / 2` pairs over `n` distinct shapes, so resolving
+    /// per pair asked the ordered catalogue `n - 1` times for each answer it
+    /// needed once.
+    ///
+    /// Restricted to the non-directional proxy: the directional backend answers
+    /// a different question — a grid-relative SAT with an exact confirmation —
+    /// and keeps its own path in [`Self::pair_collides`].
+    fn resolved_pair_collides(
+        &mut self,
+        first_shape: &OrientedSurrogate,
+        first: &RelaxedPlacement,
+        second_shape: &OrientedSurrogate,
+        second: &RelaxedPlacement,
+    ) -> bool {
+        let _span = profiling::span(Phase::PairCollide);
+        profiling::count(Counter::NeighborTests, 1);
+        self.counters.piece_broad_phase_probes += 1;
+        kernel_pair_collides(
+            &mut self.kernel,
+            &mut self.counters,
+            first_shape,
+            first,
+            second_shape,
+            second,
+        )
+    }
+
+    /// The proxy pair penalty for two already resolved shapes.
+    ///
+    /// The resolved counterpart of [`Self::pair_penalty`]'s non-directional
+    /// branch, asked in the same order: collision first, magnitude only for a
+    /// pair the proxy has already reported.
+    fn resolved_pair_penalty(
+        &mut self,
+        first_shape: &OrientedSurrogate,
+        first: &RelaxedPlacement,
+        second_shape: &OrientedSurrogate,
+        second: &RelaxedPlacement,
+    ) -> f64 {
+        if !self.resolved_pair_collides(first_shape, first, second_shape, second) {
+            return 0.0;
+        }
+        let _span = profiling::span(Phase::PairPressure);
+        self.kernel.pair_pressure(
             PosedShape::new(first_shape, first.translate_x, first.translate_y),
             PosedShape::new(second_shape, second.translate_x, second.translate_y),
-            &mut probes,
-        );
-        self.counters.cell_index_probes = self
-            .counters
-            .cell_index_probes
-            .wrapping_add(probes.cell_index_probes);
-        self.counters.sat_tests = self.counters.sat_tests.wrapping_add(probes.sat_tests);
-        Ok(collides)
+        )
     }
 
     fn rollback_pair_pressure(
@@ -12533,21 +12714,59 @@ fn continuous_pole_overlap_pressure(
     overlap_proxy.sqrt() * (first_difficulty * second_difficulty).sqrt()
 }
 
-fn continuous_pair_collision(
+/// Asks the kernel about one pair and folds its reported work into the lane
+/// quotas.
+///
+/// The one place the kernel's proxy verdict is taken, so that a resolved caller
+/// and a resolving one cannot drift in how they charge for it. `kernel` and
+/// `counters` are passed as disjoint borrows rather than as `&mut self` because
+/// the shapes a resolved caller holds are borrowed from the lane's catalogue.
+#[inline]
+fn kernel_pair_collides<K: ExplorationKernel<Shape = OrientedSurrogate>>(
+    kernel: &mut K,
+    counters: &mut WorkCounters,
     first_shape: &OrientedSurrogate,
     first: &RelaxedPlacement,
     second_shape: &OrientedSurrogate,
     second: &RelaxedPlacement,
+) -> bool {
+    let mut probes = KernelProbes::default();
+    let collides = kernel.pair_collides(
+        PosedShape::new(first_shape, first.translate_x, first.translate_y),
+        PosedShape::new(second_shape, second.translate_x, second.translate_y),
+        &mut probes,
+    );
+    counters.cell_index_probes = counters
+        .cell_index_probes
+        .wrapping_add(probes.cell_index_probes);
+    counters.sat_tests = counters.sat_tests.wrapping_add(probes.sat_tests);
+    collides
+}
+
+/// The confirmation collider: whether two continuously posed surrogates
+/// overlap, with both broad-phase extents supplied by the caller.
+///
+/// The extents are the transformed cell-vertex extents of the two operands —
+/// exactly what this function used to derive itself, on both operands, on every
+/// call. The answer only ever depended on those extents and the cells, so
+/// hoisting them to the caller changes nothing about the verdict or either
+/// probe count; it only stops one piece's extent from being re-derived once per
+/// neighbour it is asked about. [`ProxyRowCache`] is where they come from.
+fn continuous_pair_collision(
+    first_shape: &OrientedSurrogate,
+    first: &RelaxedPlacement,
+    first_bounds: IrregularBounds,
+    second_shape: &OrientedSurrogate,
+    second: &RelaxedPlacement,
+    second_bounds: IrregularBounds,
 ) -> (bool, usize, usize) {
+    if !bounds_overlap(first_bounds, second_bounds) {
+        return (false, 0, 0);
+    }
     let first_transform =
         PoleTransform::new(first.rotation_deg, first.translate_x, first.translate_y);
     let second_transform =
         PoleTransform::new(second.rotation_deg, second.translate_x, second.translate_y);
-    let first_bounds = transformed_surrogate_bounds(first_shape, first_transform);
-    let second_bounds = transformed_surrogate_bounds(second_shape, second_transform);
-    if !bounds_overlap(first_bounds, second_bounds) {
-        return (false, 0, 0);
-    }
     let mut cell_probes = 0usize;
     let mut sat_tests = 0usize;
     for first_cell in first_shape.cells.iter().copied() {
