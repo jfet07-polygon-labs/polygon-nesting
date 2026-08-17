@@ -2550,3 +2550,203 @@ plausible optimisations were built and measured, one is arithmetically
 impossible and one is empirically worthless, and the third was already
 in the tree and has now been disqualified rather than deferred. The
 cheapest thing an engine can be given is a reason not to change it.
+
+## The constructor's void raster was 66.6% of mode 20, and the cell size it used is a lottery ticket
+
+Sol's portfolio gives mode-20 basin generation a two-second slice and
+prices the current implementation at 26.562 s, which needs roughly 13x.
+It also names the centre: `vacancyProxyRank` rasterises the whole strip,
+allocates three buffers, and runs a cell-by-cell point-in-polygon scan
+against the active collisions, and the instruction is to replace it -
+incremental occupancy, a bit-grid flood fill, reusable buffers,
+scale-derived resolution - rather than tune its loops. This entry does
+that, and the redesign turned out to be the smaller of its two findings.
+
+### What the phase was actually doing, counted
+
+A counting build of the legacy evaluator on the mode-20 gate-1 stream:
+
+| quantity | mode 20 gate |
+|---|---:|
+| `trapped_void_cells` calls | 11,281 |
+| grid columns (fixed 2.0 mm cell, 2000 mm strip) | 1,000 |
+| grid rows | 58-105 |
+| cells rasterised per call, mean | 83,613 |
+| active collisions per call, mean | 31.45 |
+| collision vertices per call, mean | 212.2 |
+| cells inside some collision's bounding box, mean | 65,896 |
+
+Profiled, the phase is 20,115.1 ms over those 11,281 calls - **1,783.10
+us each and 66.60% of leaf time**, against Sol's 57.5%. The cost is in
+the last row: the bounds prefilter still leaves about 65,896 cells per
+call that have to ask Clipper a point-in-polygon question, and the whole
+grid is rebuilt from nothing every time.
+
+None of that work is necessary, and each of four changes removes a
+different part of it:
+
+* **Incremental occupancy.** A constructor child is its parent plus
+  exactly one placed piece, and a piece's occupancy does not depend on
+  the pieces around it, so a child's grid is its parent's grid with one
+  raster OR-ed in. A 64-slot FIFO keyed by state identity retains the
+  grids a rank's children produce, which is more than the next rank's
+  six-or-seven parents need, so a slot expansion normally starts from a
+  hit. The rasteriser sees one piece per call instead of 31.
+* **Scanline rasterisation.** `O(rows x edges)` instead of
+  `O(cells x edges)`, by even-odd fill between sorted crossings of the
+  row's centre line. Spans are filled *closed*, and edges and vertices
+  lying exactly on the scanline are filled directly, because the legacy
+  rule is that Clipper's `IsOn` is occupied and this engine's
+  axis-aligned parts at integral translations put edges exactly on cell
+  centres constantly. Getting that rule wrong is worth about 3% of the
+  count on a complete 61-piece layout - measured, because the first
+  version got it wrong.
+* **Bit-grid flood fill.** `u64` words, one word-aligned stride per row.
+  Horizontal closure is a Kogge-Stone occluded fill with a cross-word
+  carry, vertical propagation is one `free & reach` per word, and the
+  per-cell `Vec<bool>` stack is gone. It agrees with a reference stack
+  walk on a 200-case pseudorandom corpus, which is the unit test.
+* **Scale-derived resolution**, below - the finding.
+
+### What it is worth, measured
+
+Ten interleaved rounds, arms alternating order every round, statistic
+the per-round paired ratio, on a box shared with two other benchmarking
+agents:
+
+| stream | flag off | flag on | paired median | spread | rounds below 1.0 |
+|---|---:|---:|---:|---|---:|
+| mode 20 gate 1, engine clock | 26.245 s | 6.223 s | **0.2375** | 0.2361-0.2389 | 10/10 |
+| mode 20 gate 1, process wall | 26.278 s | 6.255 s | **0.2384** | 0.2370-0.2399 | 10/10 |
+
+**4.21x on the whole stream.** The phase itself:
+
+| | flag off | flag on | ratio |
+|---|---:|---:|---:|
+| `vacancyProxyRank` | 20,115.1 ms | 225.9 ms | 0.0112 |
+| ... per call | 1783.10 us | 20.03 us | **89.0x faster** |
+| ... share of leaf | 66.60% | 2.24% | |
+
+Both arms make the same 11,281 calls, and every other leaf phase's call
+count is identical to the digit - `exactOverlapTest` 1,266,102,
+`collisionPolygonBuild` 750,434, `pairCollide` 15,562,760 - because the
+two arms are the same search. Those untouched phases drift 0.976x
+between the runs, so the normalised phase ratio is 0.0115.
+
+The honest multiplier against Sol's 13x is therefore **4.21x, and that
+is 96.6% of the entire headroom this phase can ever offer**: with
+`vacancyProxyRank` at exactly zero the stream would run 6.02 s, a 4.36x
+ceiling. The remaining 3.1x is not in this phase and never was. It is
+now `exactOverlapTest` at 33.1% of leaf plus `collisionPolygonBuild` at
+20.1% - the constructor's exact confirmation, 1.27M Clipper queries and
+750K offset builds - which is precisely PR6's port. Mode 20 goes from
+26.2 s to 6.2 s; a two-second slice needs that port.
+
+### The equivalence evidence
+
+The profile is opt-in and its contract is per-seed determinism plus
+unchanged exact-valid publication, not bit-identity. It delivered more
+than its contract:
+
+* **Flag off**, all four regression gates reproduce the pristine
+  `c9bfbd8` binary as **whole documents** - 206.869 at
+  `8a7737381238fa4d`, 159.09233022733062 at `fa01012af1d559ae`,
+  159.07876040364795 at `e28fba007f8031d4`, 164.0375677990678 at
+  `49f094d7e59a9008` - every counter, every restart row, every
+  diagnostic field.
+* **Flag on**, all four gates reproduce the same documents, with one
+  field different: `work.totalRetainedPeakBytes` rises from 468,898 to
+  1,977,858, which is the evaluator's own grid cache being honestly
+  charged against the 64 MiB ceiling it now shares.
+* Two flag-on runs of the mode-20 stream are identical field for field
+  apart from the elapsed clock.
+
+So the quality gate - descendant depth under a fixed downstream work
+budget, mode-20 endpoints for CLI seeds 0-3 given the identical short
+descent (mode 22, relaxed seeds 0 and 1, target endpoint + 0.8 mm) by
+the *default* binary so that only the parent differs - passes with a
+paired delta of exactly zero on all eight pairs, at identical descendant
+fingerprints. One caveat is worth recording rather than hiding: the
+mode-20 endpoint is invariant to the relaxed-seed argument, because
+`construction_seed` derives from the anchor fixture, the seed domain and
+the target depth. Seeds 0-3 are four replicas, not four samples. That
+was verified, not assumed.
+
+### The finding: the cell size is a lottery ticket
+
+The first version of this evaluator derived its cell as one sixteenth of
+the narrowest piece - 1.875 mm on Mixed-61 against the shipped 2.0 mm -
+and it **failed the quality gate by 7.44 and 8.62 mm**. That failure is
+the useful part of this entry, because chasing it produced a fact about
+the mechanism rather than about the rewrite.
+
+First, the rewrite was cleared. Run at a *matched* cell size, the
+bit-grid evaluator and the legacy raster produce the same constructor
+endpoint fingerprint and the same descended depths, at every one of five
+sizes:
+
+| cell | endpoint | fingerprint (both) | descend seed 0 | descend seed 1 |
+|---:|---:|---|---:|---:|
+| 1.875 mm | 205.096 | `c0174b0ce84667c3` | 180.491 | 179.272 |
+| 1.900 mm | 204.519 | `dbfcc7135049fbc8` | 180.632 | 179.486 |
+| 2.000 mm | 206.869 | `8a7737381238fa4d` | 173.047 | 170.648 |
+| 2.100 mm | 208.994 | `fb5436824e73e9c4` | 179.409 | 181.465 |
+| 2.500 mm | 204.914 | `73a7daf0bbae66b7` | 179.003 | 179.003 |
+
+The rewrite is not the variable. The cell size is - and the redesign is
+what made asking affordable, at 6.3 s an arm instead of 26.5 s. Eighteen
+cell sizes from 1.2 mm to 5.0 mm, every endpoint given the identical
+descent:
+
+| best of two descents | cell sizes |
+|---|---|
+| 169.5-174.3 mm | 1.4, 1.5, 1.6, **2.0**, 2.4, 5.0 |
+| 179.0-180.6 mm | 1.2, 1.7, 1.8, 1.875, 1.9, 1.95, 2.05, 2.1, 2.2, 2.5, 3.0, 3.75 |
+
+Eighteen distinct endpoint fingerprints; twelve land on a 179-181 mm
+plateau and six find a basin; the shipped 2.0 mm is the *second*-luckiest
+ticket at 170.648 while 1.4 mm reaches 169.501; and its two immediate
+neighbours, 1.95 mm and 2.05 mm, both land on the plateau. There is no
+region of good cell sizes. There is a coin.
+
+The same table prices Sol's other rule. Immediate constructor depth
+ranges over 202.615-208.994 across the eighteen arms, and its Pearson
+correlation with the descended depth is **-0.212**: the *deepest*
+immediate result, 2.0 mm's 206.869, produces the second-best descendant,
+while the two shallowest, 202.994 at 1.95 and 2.05 mm, produce 179.6 and
+180.0. "Worse constructor basins produce better descendants" is no
+longer a remembered anecdote in this ledger; it is a measured
+anti-correlation on eighteen paired samples.
+
+### What shipped, and the calibration
+
+Given that, `VOID_CELLS_PER_MIN_PIECE_EXTENT` is **15**, and the
+documentation says plainly that this is a calibration and not an
+optimisation. What the dimensionless divisor buys is scale covariance -
+scale a request by `k` and every cell, count and ranking is unchanged,
+which a fixed 2 mm cell cannot claim, being a fifteenth of a 30 mm part
+and a thousandth of a 2 m one. What the *value* 15 buys is that the
+derived cell is exactly the shipped 2.0 mm on the one stream whose
+quality is pinned, so this profile's first delivery is a pure speed
+change with an unchanged endpoint. The sweep is the argument that this
+costs nothing: there is no better value to have chosen. A grid budget
+coarsens the cell, and only coarsens it, when the derived resolution
+would exceed 2^21 cells.
+
+### What is left
+
+* The 169.5 mm basin at 1.4 mm is not a tuning opportunity - it is one
+  draw of the same coin, and treating it as a discovery would be exactly
+  the error this entry documents. What it *is* is an argument for the
+  archive: a coordinator that can afford several constructor arms at
+  6.2 s each should draw several tickets and keep the structurally
+  distinct ones, which is the `SearchArchive` Sol's review 3 asks for.
+* Mode 17's vacancy-transport call sites still use the legacy evaluator.
+  They are not on an incremental lineage - that mode ejects pieces as
+  well as inserting them - so they need the full-rebuild entry point,
+  and they are not on the measured critical path.
+* PR6's Clipper port owns the rest of mode 20. After this stage the
+  constructor's exact confirmation is 53% of its leaf time and 100% of
+  the remaining gap to a two-second slice.
+
+Evidence: `docs/experiments/fast-constructor-profile-evidence.json`.
