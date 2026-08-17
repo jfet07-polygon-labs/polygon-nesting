@@ -26,6 +26,16 @@ profiling-allocator = []
 # they perturb, which costs about 4.5% of a mode-20 stream even with recording
 # switched off. See `profiling::deep` for the measurement behind this.
 search-profiling = []
+# Compiles the quality frontier trace in: an event-driven JSONL record of every
+# exact-valid candidate the search sees, with elapsed time, work ordinals,
+# operator identity, parent fingerprint and disposition. See `quality_trace`.
+#
+# Off by default and empty when off - every entry point is a `#[cfg]` pair whose
+# disabled half has no body, so the default build's generated code is unchanged.
+# The armed build is a measurement build: it switches `profiling` recording on
+# so the work ordinals are live, and that cost is measured rather than assumed
+# in docs/experiments/quality-frontier-trace/.
+quality-trace = []
 # Compiles the shadow-rescore audit in: after every accepted move the relaxed
 # sweep recomputes the complete layout score and compares it against the
 # incrementally maintained one. See `search::shadow_rescore`.
