@@ -8377,12 +8377,13 @@ fn build_collision(
     {
         return Err(work.cap("experimental collision-build budget exhausted"));
     }
-    // The build itself is the kernel's exact tier, named rather than taken as a
-    // parameter: this polygon is what the deep operators' exact confirmation
-    // rows and the publication validator both measure, so no generic
-    // substitution may reroute it. The budget bookkeeping around it stays here,
-    // because it is this operator's quota, not the kernel's.
+    // The build itself is the exact tier, reached by naming the legacy kernel:
+    // this polygon is what the deep operators' exact confirmation rows and the
+    // publication validator both measure, so no generic substitution may
+    // reroute it. The budget bookkeeping around it stays here, because it is
+    // this operator's quota, not the kernel's.
     let collision = LEGACY
+        .exact_authority()
         .collision_polygon(
             piece.polygon,
             KernelPose {

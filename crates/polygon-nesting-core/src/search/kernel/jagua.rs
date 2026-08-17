@@ -28,14 +28,21 @@
 //!   symmetric two-shape verdict is what a parity test needs and an incremental
 //!   index is what PR4 is for. Do not read any throughput number off this file.
 //!
-//! # The exact tier is not jagua's
+//! # There is no jagua exact tier
 //!
-//! [`JaguaKernel`]'s exact tier forwards to
-//! [`LegacyKernel`](super::LegacyKernel) verbatim. This is the structural form
-//! of the roadmap's refusal to put `f32`, a tolerance, or jagua into
-//! publication authority: even if this kernel were wired in tomorrow, an exact
-//! overlap or collision-polygon build asked through it would still be the `f64`
-//! Clipper answer. Jagua's verdicts rank and prune; they never publish.
+//! [`JaguaKernel`] has no exact tier at all, and cannot acquire one: after PR6
+//! the exact services are not on [`ExplorationKernel`], and the only grant of
+//! [`ExactAuthority`](super::exact::ExactAuthority) is inherent to
+//! [`LegacyKernel`](super::LegacyKernel). This is the structural form of the
+//! roadmap's refusal to put `f32`, a tolerance, or jagua into publication
+//! authority: even if this kernel were wired in tomorrow, an exact overlap or
+//! collision-polygon build would still be the `f64` Clipper answer, because
+//! there is no other implementation for a caller to reach. Jagua's verdicts
+//! rank and prune; they never publish.
+//!
+//! The one place this file touches the exact tier is [`JaguaShape::prepare`],
+//! which names [`LEGACY`] to build the ring it converts — a preparation-time
+//! call on the same footing as the legacy surrogate builder's.
 //!
 //! # Ambiguity is a property of the proxy, not a bug in it
 //!
@@ -118,7 +125,7 @@ impl JaguaShape {
         expansion_mm: f64,
         allow_rotation: bool,
     ) -> Result<Self, GeneralPolygonError> {
-        let expanded = LEGACY.collision_polygon(
+        let expanded = LEGACY.exact_authority().collision_polygon(
             source,
             KernelPose::oriented(pose.rotation_deg, pose.mirrored),
             expansion_mm,
@@ -384,27 +391,6 @@ impl ExplorationKernel for JaguaKernel {
             }
         }
         pressure
-    }
-
-    fn collision_polygon(
-        &self,
-        source: &PolygonSet,
-        pose: KernelPose,
-        expansion_mm: f64,
-    ) -> Result<PolygonSet, GeneralPolygonError> {
-        // Not jagua's. See the module documentation: the exact tier is `f64`
-        // Clipper for every kernel, because it is what publication measures.
-        LEGACY.collision_polygon(source, pose, expansion_mm)
-    }
-
-    fn exact_pair_overlaps(
-        &self,
-        first: &PolygonSet,
-        first_bounds: Option<IrregularBounds>,
-        second: &PolygonSet,
-        second_bounds: Option<IrregularBounds>,
-    ) -> Result<bool, GeneralPolygonError> {
-        LEGACY.exact_pair_overlaps(first, first_bounds, second, second_bounds)
     }
 }
 

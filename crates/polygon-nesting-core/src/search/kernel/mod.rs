@@ -1,6 +1,6 @@
 //! The exploration-kernel seam.
 //!
-//! Every geometric service the exploration hot loop consumes is declared here
+//! The geometric services the exploration hot loop consumes are declared here
 //! as one trait, [`ExplorationKernel`], so that a faster implementation can be
 //! measured against the current one without editing a single line of search
 //! logic. The current code path is [`LegacyKernel`]; it is the default and the
@@ -22,40 +22,35 @@
 //! [`Phase::ExactOverlapTest`]: crate::profiling::Phase::ExactOverlapTest
 //! [`Phase::CollisionPolygonBuild`]: crate::profiling::Phase::CollisionPolygonBuild
 //!
-//! Those three, plus the proxy scoring hook that turns a reported collision
-//! into a magnitude, are exactly the trait's method set.
+//! The first of those, plus the proxy scoring hook that turns a reported
+//! collision into a magnitude, are exactly this trait's method set. The other
+//! two are the exact tier, and they are deliberately *not* on it.
 //!
-//! # Two tiers, and why they are not interchangeable
+//! # One tier on the trait, and where the other one went
 //!
-//! The trait declares two tiers, and the difference between them is a
-//! *contract*, not a performance note.
+//! [`ExplorationKernel`] is the **proxy tier** and nothing else:
+//! [`ExplorationKernel::pair_collides`] and
+//! [`ExplorationKernel::pair_pressure`] rank and prune candidates. They are
+//! allowed to be approximate, and a replacement kernel is expected to change
+//! their numeric representation. Search binds this tier *generically*:
+//! [`crate::search::general_relaxed`]'s lane search carries a
+//! `K: ExplorationKernel` type parameter that defaults to [`LegacyKernel`], so
+//! swapping a kernel in is a type substitution at the entry point.
 //!
-//! * **Proxy tier** — [`ExplorationKernel::pair_collides`] and
-//!   [`ExplorationKernel::pair_pressure`]. These rank and prune candidates.
-//!   They are allowed to be approximate, and a replacement kernel is expected
-//!   to change their numeric representation. Search binds this tier
-//!   *generically*: [`crate::search::general_relaxed`]'s lane search carries a
-//!   `K: ExplorationKernel` type parameter that defaults to [`LegacyKernel`],
-//!   so swapping a kernel in is a type substitution at the entry point.
+//! The **exact tier** — the `f64` Clipper collision-polygon build and pair
+//! overlap that publication-adjacent code consults — lives in [`exact`], a
+//! non-generic module, behind the [`ExactAuthority`](exact::ExactAuthority)
+//! token. PR3 declared it here and relied on a convention to keep it off a
+//! generic parameter; Sol's third review named that as this seam's fourth
+//! defect, because the convention was unenforced and a future generic function
+//! could still have written `K::exact_pair_overlaps`. It is now a compile
+//! error: the methods do not exist on the trait, and the one grant that mints
+//! the token is inherent to [`LegacyKernel`], so no code parameterised over `K`
+//! can reach an exact answer at all. See [`exact`] for the full statement of
+//! what that does and does not enforce.
 //!
-//! * **Exact tier** — [`ExplorationKernel::collision_polygon`] and
-//!   [`ExplorationKernel::exact_pair_overlaps`]. These are the `f64`
-//!   Clipper answers that publication-adjacent code consults. Every call site
-//!   that can reach a published placement binds this tier to the *named*
-//!   [`LegacyKernel`] through [`LEGACY`], never through a generic parameter.
-//!   That is deliberate and is the structural form of the roadmap's refusal to
-//!   "put `f32`, a tolerance, or Jagua in the publication authority": there is
-//!   no type substitution that can reroute an exact answer, because no exact
-//!   call site is generic. The independent validator in
-//!   [`crate::validation::general_polygon`] remains the sole publisher and is
-//!   not part of this seam at all.
-//!
-//!   The exact tier is still declared on the trait because a kernel has to be
-//!   able to *ask* the exact question — the deep operators confirm proxy
-//!   verdicts before they commit — and because a kernel that answered it
-//!   differently would be a bug we want the type system to make visible. The
-//!   experimental [`JaguaKernel`] therefore forwards its whole exact tier to
-//!   [`LegacyKernel`] verbatim.
+//! The independent validator in [`crate::validation::general_polygon`] remains
+//! the sole publisher and is not part of this seam at all.
 //!
 //! # Cost of the boundary
 //!
@@ -79,9 +74,7 @@
 //! PR4/PR6 work. [`JaguaKernel`] is that second kind, which is why it is built
 //! and tested standalone and is wired into no default path.
 
-use crate::domain::IrregularBounds;
-use crate::geometry::general_polygon::{GeneralPolygonError, PolygonSet};
-
+pub(crate) mod exact;
 pub mod legacy;
 
 #[cfg(feature = "jagua-experimental")]
@@ -174,11 +167,11 @@ impl KernelProbes {
     }
 }
 
-/// The geometric services the exploration hot loop consumes.
+/// The **proxy** geometric services the exploration hot loop consumes.
 ///
-/// See the module documentation for the two-tier contract. In short: the proxy
-/// tier is swappable and approximate, the exact tier is `f64` Clipper truth and
-/// is never bound through a generic parameter on a publication-adjacent path.
+/// See the module documentation for the tier contract. In short: this tier is
+/// swappable and approximate; the exact tier is `f64` Clipper truth, is not
+/// declared here, and cannot be reached from a generic parameter at all.
 pub trait ExplorationKernel {
     /// The kernel's own oriented-shape representation.
     ///
@@ -187,8 +180,6 @@ pub trait ExplorationKernel {
     /// be handed to the lane search, which still owns a concrete catalogue; see
     /// the module documentation.
     type Shape;
-
-    // ---- proxy tier ----------------------------------------------------
 
     /// Whether two posed shapes overlap, as the exploration tier sees it.
     ///
@@ -209,38 +200,12 @@ pub trait ExplorationKernel {
     ///
     /// This is a ranking signal only. It never decides feasibility, and it is
     /// never compared against a clearance: a zero here does not mean legal, and
-    /// only [`Self::exact_pair_overlaps`] and the independent validator can say
-    /// that a placement is publishable.
+    /// only the exact tier — reached through
+    /// [`LegacyKernel::exact_authority`], never through `Self` — and the
+    /// independent validator can say that a placement is publishable.
     fn pair_pressure(
         &self,
         first: PosedShape<'_, Self::Shape>,
         second: PosedShape<'_, Self::Shape>,
     ) -> f64;
-
-    // ---- exact tier ----------------------------------------------------
-
-    /// Builds the exact, expanded collision polygon for one pose.
-    ///
-    /// `expansion_mm` is the contract's collision expansion; the result is the
-    /// source ring transformed by `pose` and offset outward by it.
-    fn collision_polygon(
-        &self,
-        source: &PolygonSet,
-        pose: KernelPose,
-        expansion_mm: f64,
-    ) -> Result<PolygonSet, GeneralPolygonError>;
-
-    /// Whether two exact collision polygons overlap with positive area.
-    ///
-    /// `first_bounds`/`second_bounds` are the operands' already-derived
-    /// extents. Callers that ask the same polygon about many partners pass them
-    /// so the broad-phase reject does not re-walk a ring per pair; an empty
-    /// extent is an error, exactly as it is for a caller that derives it here.
-    fn exact_pair_overlaps(
-        &self,
-        first: &PolygonSet,
-        first_bounds: Option<IrregularBounds>,
-        second: &PolygonSet,
-        second_bounds: Option<IrregularBounds>,
-    ) -> Result<bool, GeneralPolygonError>;
 }
