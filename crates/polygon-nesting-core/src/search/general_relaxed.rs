@@ -32,7 +32,7 @@ use crate::search::general_micro_legalization::GeneralMicroLegalizationDiagnosti
 #[cfg(feature = "jagua-experimental")]
 use crate::search::general_micro_legalization::{
     micro_legalization_component_limit, micro_legalize, replacement_ejection_limit,
-    survey_layout_violations,
+    separating_translation, survey_layout_violations,
 };
 
 #[cfg(feature = "jagua-experimental")]
@@ -700,6 +700,10 @@ pub struct GeneralPersistentVacancyBoundedReinsertionPieceRow {
     pub reinserted: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub placed_extent_mm: Option<f64>,
+    /// Poses seeded at this piece's own vacated pose, and the exact-valid
+    /// finalists they produced.
+    pub anchor_local_candidates: usize,
+    pub anchor_local_finalists: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failure_reason: Option<String>,
 }
@@ -753,6 +757,13 @@ pub struct GeneralReplacementRepairDiagnostics {
     pub kept_boundary_pieces: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub kept_micro_legalization: Option<GeneralMicroLegalizationDiagnostics>,
+    /// The anchor-local seeding's aimed input: the length of the single-piece
+    /// separating projection computed for each ejected piece, aligned with the
+    /// re-placement order, plus how many of those projections reached a
+    /// fixpoint and how many could not be measured at all.
+    pub projected_displacements_mm: Vec<f64>,
+    pub projections_converged: usize,
+    pub projection_failures: usize,
     /// One row per attempted piece, in re-placement order. A failing pass
     /// stops at the first piece with no in-bound pose, so this is a prefix of
     /// the ejection set rather than a permutation of it.
@@ -792,6 +803,13 @@ pub struct GeneralReplacementRepairPieceRow {
     pub replaced: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub placed_extent_mm: Option<f64>,
+    /// Poses seeded at this piece's own vacated pose, and the exact-valid
+    /// finalists they produced. The interior-pocket instrument: a zero here
+    /// with a non-zero `candidatesConsidered` says the piece was re-placed
+    /// from the skyline, and a non-zero `anchorLocalFinalists` says the
+    /// pocket itself was reachable.
+    pub anchor_local_candidates: usize,
+    pub anchor_local_finalists: usize,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
@@ -824,6 +842,14 @@ pub struct GeneralPersistentVacancyConstructionDiagnostics {
     pub zero_prior_finalists: usize,
     pub complete_candidates: usize,
     pub audited_candidates: usize,
+    /// Anchor-local re-insertion (modes 24 and 28 only): candidate poses
+    /// seeded at a re-placed piece's own vacated pose, the charged
+    /// confirmation rows they spent, and the exact-valid finalists they
+    /// produced. A from-scratch construction has no vacated pose, so all three
+    /// stay zero there.
+    pub anchor_local_candidates: usize,
+    pub anchor_local_rows: usize,
+    pub anchor_local_finalists: usize,
     /// Mode 25 only: the off-beam best-ever expansion parent is armed.
     pub best_ever_parent_enabled: bool,
     /// Extra expansions spent on an elite the retention step did not keep.

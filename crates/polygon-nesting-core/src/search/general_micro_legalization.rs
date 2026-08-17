@@ -262,6 +262,16 @@ pub(crate) struct ViolationPair {
     /// apart, so taking the larger is what keeps a millimetre-scale envelope
     /// conflict from reading as a rounding-scale one.
     pub mass_mm: f64,
+    /// The unit direction `first` must travel to come apart from `second`:
+    /// the material closest-approach witness, falling back to the centroid
+    /// axis once the outlines have interpenetrated far enough to lose it.
+    /// `second` comes apart along its negation.
+    ///
+    /// This is the pair's own escape geometry, and it is what a repair that
+    /// re-places a piece has to aim along: in a record-density layout the
+    /// feasible set around a conflicting pose is a sliver, and a displacement
+    /// cloud that only samples the axes and diagonals misses it.
+    pub separation_direction: (f64, f64),
 }
 
 /// The violation graph of a layout, measured against the bare publication
@@ -362,6 +372,7 @@ pub(crate) fn survey_layout_violations(
                 first: *first,
                 second: *second,
                 mass_mm: *mass_mm,
+                separation_direction: separation_direction(&geometries, *first, *second, &zero),
             })
             .collect(),
         boundary_pieces: survey.boundary_pieces.clone(),
@@ -372,6 +383,205 @@ pub(crate) fn survey_layout_violations(
         max_boundary_deficit_mm: survey.max_boundary_deficit,
         components,
     })
+}
+
+/// Projects one slot of `placements` clear of everything it violates, with the
+/// rest of the layout held exactly where it is.
+///
+/// This is the micro-legalizer's projection restricted to a single movable
+/// piece, and it exists for a repair that *re-places* rather than translates:
+/// a candidate generator working from a piece's vacated pose knows the pose is
+/// in conflict but not which way out, and at record density the feasible set
+/// around that pose is a sliver that a displacement cloud on the axes and
+/// diagonals reliably misses. The projection is the one displacement that is
+/// derived from the conflict's own geometry rather than sampled near it.
+///
+/// It differs from [`micro_legalize`] in what it is for, and so in what it
+/// promises: nothing is published, nothing is admitted, no margin escalation
+/// is run, and no residue class is refused. It returns a *displacement to try*.
+/// The caller confirms the resulting pose through its own machinery or throws
+/// it away - which is why the round budget is the only thing bounding it.
+///
+/// Returns the projection's *trajectory* - the distinct accumulated
+/// translations it passed through, on the canonical grid, in round order and
+/// capped at `max_iterates` - together with whether it reached a fixpoint
+/// inside [`MICRO_LEGALIZATION_ROUNDS`].
+///
+/// The trajectory rather than the endpoint, because a single movable piece
+/// wedged between several neighbours makes Gauss-Seidel oscillate: clearing
+/// one pair walks into the next and back again, so the iteration can pass
+/// straight through a feasible pose without stopping on one. The caller
+/// confirms poses anyway, so handing it the whole trajectory costs a bounded
+/// number of charged rows and lets its own gate decide - which is strictly
+/// better than picking a favourite iterate here on a criterion this function
+/// cannot check. An empty trajectory means the slot was already clear.
+pub(crate) fn separating_translation(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+    slot: usize,
+    max_iterates: usize,
+) -> Result<(Vec<(f64, f64)>, bool), String> {
+    if slot >= placements.len() {
+        return Err("separating translation requires a surveyed slot".to_owned());
+    }
+    if placements.len() > pieces.len() {
+        return Err("separating translation requires a sub-layout of the request".to_owned());
+    }
+    let expansion_mm = collision_expansion_mm(settings);
+    let contracts = Contracts {
+        material_pair_mm: settings.total_padding_mm + 2.0 * settings.flattening_sag_tolerance_mm,
+        material_edge_mm: effective_sheet_edge_clearance_mm(settings)
+            + settings.flattening_sag_tolerance_mm,
+        collision_edge_mm: collision_sheet_inset_mm(settings),
+    };
+    if !contracts.material_pair_mm.is_finite()
+        || !contracts.material_edge_mm.is_finite()
+        || !contracts.collision_edge_mm.is_finite()
+        || !expansion_mm.is_finite()
+    {
+        return Err("separating translation requires a finite clearance contract".to_owned());
+    }
+    let pieces_by_id = pieces
+        .iter()
+        .enumerate()
+        .map(|(index, piece)| (piece.id, index))
+        .collect::<BTreeMap<_, _>>();
+    let geometries = placements
+        .iter()
+        .map(|placement| {
+            let piece = pieces_by_id
+                .get(placement.piece_id.as_str())
+                .map(|index| pieces[*index])
+                .ok_or_else(|| format!("unknown piece {}", placement.piece_id))?;
+            build_geometry(piece.polygon, placement, expansion_mm).ok_or_else(|| {
+                format!(
+                    "could not build an envelope for piece {}",
+                    placement.piece_id
+                )
+            })
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+
+    // Only `slot` moves, so it absorbs the whole separating travel of each
+    // constraint rather than the half a two-movable pair would share.
+    let mut translations = vec![(0.0f64, 0.0f64); placements.len()];
+    let ceiling_mm = displacement_ceiling(&contracts);
+    let margin_mm = MICRO_LEGALIZATION_MARGIN_MM;
+    let mut converged = false;
+    let mut trajectory: Vec<(f64, f64)> = Vec::new();
+    for _ in 0..MICRO_LEGALIZATION_ROUNDS {
+        if trajectory.len() >= max_iterates {
+            break;
+        }
+        let mut corrected = false;
+        for other in 0..placements.len() {
+            if other == slot {
+                continue;
+            }
+            for gate in GATES {
+                let target_mm = contracts.pair(gate) + margin_mm;
+                let (need, direction) = match gate {
+                    Gate::Collision => {
+                        if !envelopes_overlap(
+                            &geometries,
+                            slot,
+                            other,
+                            translations[slot],
+                            translations[other],
+                        ) {
+                            continue;
+                        }
+                        let push =
+                            separation_push(&geometries, slot, other, &translations, ceiling_mm);
+                        (
+                            push + margin_mm,
+                            separation_direction(&geometries, slot, other, &translations),
+                        )
+                    }
+                    Gate::Material => {
+                        let approach = measure_approach(
+                            &geometries[slot].material,
+                            translations[slot],
+                            &geometries[other].material,
+                            translations[other],
+                            target_mm.max(GRID_MM),
+                        );
+                        if approach.distance >= target_mm {
+                            continue;
+                        }
+                        let need = target_mm - approach.distance;
+                        if need <= MICRO_LEGALIZATION_SNAP_SLACK_MM {
+                            continue;
+                        }
+                        match approach.direction {
+                            Some(direction) => (need, direction),
+                            None => (
+                                need.max(GRID_MM),
+                                separation_direction(&geometries, slot, other, &translations),
+                            ),
+                        }
+                    }
+                };
+                if need > 0.0 {
+                    translations[slot].0 += direction.0 * need;
+                    translations[slot].1 += direction.1 * need;
+                    corrected = true;
+                }
+            }
+        }
+        // Containment, against the sheet the caller handed in - which for a
+        // bounded re-placement is the clamped one, so the projection cannot
+        // walk the piece out past the bound it is being re-placed under.
+        for gate in GATES {
+            let edge_mm = contracts.edge(gate) + margin_mm;
+            let bounds = geometries[slot]
+                .outline(gate)
+                .outer_bounds
+                .translated(translations[slot].0, translations[slot].1);
+            let left = edge_mm - bounds.min_x;
+            let bottom = edge_mm - bounds.min_y;
+            let right = bounds.max_x - (settings.sheet_short_axis_mm - edge_mm);
+            let top = bounds.max_y - (settings.sheet_long_axis_mm - edge_mm);
+            if left > MICRO_LEGALIZATION_SNAP_SLACK_MM {
+                translations[slot].0 += left;
+                corrected = true;
+            } else if right > MICRO_LEGALIZATION_SNAP_SLACK_MM {
+                translations[slot].0 -= right;
+                corrected = true;
+            }
+            if bottom > MICRO_LEGALIZATION_SNAP_SLACK_MM {
+                translations[slot].1 += bottom;
+                corrected = true;
+            } else if top > MICRO_LEGALIZATION_SNAP_SLACK_MM {
+                translations[slot].1 -= top;
+                corrected = true;
+            }
+        }
+        translations[slot].0 = snap_grid(translations[slot].0);
+        translations[slot].1 = snap_grid(translations[slot].1);
+        let iterate = translations[slot];
+        if grid_key_pair(iterate) != (0, 0)
+            && !trajectory
+                .iter()
+                .any(|kept| grid_key_pair(*kept) == grid_key_pair(iterate))
+        {
+            trajectory.push(iterate);
+        }
+        if !corrected {
+            converged = true;
+            break;
+        }
+    }
+    Ok((trajectory, converged))
+}
+
+/// A translation's identity on the canonical grid.
+fn grid_key_pair(translation: (f64, f64)) -> (i64, i64) {
+    (
+        (translation.0 / GRID_MM).round() as i64,
+        (translation.1 / GRID_MM).round() as i64,
+    )
 }
 
 /// Which of the two publication gates a constraint belongs to.

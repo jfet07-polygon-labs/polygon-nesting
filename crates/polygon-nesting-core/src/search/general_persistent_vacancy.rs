@@ -93,6 +93,81 @@ const BOUNDED_REINSERTION_SEED_DOMAIN: u64 = 0x424E_4452_494E_3234;
 // from a third starting point - a *rejected* compressed state with its
 // conflicting pieces removed - so it likewise takes its own seed domain.
 const REPLACEMENT_REPAIR_SEED_DOMAIN: u64 = 0x5245_504C_4143_3238;
+// Anchor-local re-insertion. The shared re-placement primitive's candidate
+// generator is a *top-frontier* drop constructor: it plants hints at skyline
+// valleys, drops, and slides. That is the right instrument for building a
+// layout upward from an empty sheet, and it structurally cannot see an
+// INTERIOR pocket - not even the pocket a piece was just lifted out of, whose
+// occupant provably fits because it was sitting there. So a piece that carries
+// a recorded prior pose gets its candidates seeded at that pose as well: the
+// vacated pose itself, a bounded displacement cloud around it, and the piece's
+// other admitted orientations at the vacated translation.
+//
+// The cloud's magnitudes are scale-free. Two families are unioned, deduplicated
+// on the placement grid and taken in ascending order:
+//
+// * dyadic fractions of the piece's own smaller bounding-box extent in the
+//   orientation being seeded, which is the only intrinsic length a general
+//   piece carries and the one that scales with the pocket it came out of;
+// * small multiples of the caller's measured residue scale, when the caller
+//   measured one - mode 28 passes the violation mass its ejection set carries,
+//   which is exactly how far the conflict has to travel to clear.
+//
+// Displacement directions lead with the piece's own escape geometry - the
+// projection's own answer, then the closest-approach witness of each violating
+// pair the piece is incident to, then their joint sum - and are backed by the
+// unaimed fan below. The aimed directions are what actually matters: at record
+// density the feasible set around a conflicting pose is a sliver, and a net of
+// axes and diagonals alone has 45-degree holes in it.
+//
+// So the cloud is at most
+// (4 + 3) magnitudes * (1 + 4 + 1 + 16) directions
+//   + 1 vacated + ANCHOR_LOCAL_PROJECTION_ITERATES projected = 179 poses per
+// piece, plus one vacated-translation pose per extra orientation prior; every
+// one of them a charged confirmation row inside the existing per-piece cap.
+const ANCHOR_LOCAL_EXTENT_FRACTIONS: [f64; 4] = [1.0 / 256.0, 1.0 / 64.0, 1.0 / 16.0, 1.0 / 4.0];
+const ANCHOR_LOCAL_RESIDUE_MULTIPLES: [f64; 3] = [1.0, 2.0, 4.0];
+const ANCHOR_LOCAL_MAGNITUDES: usize =
+    ANCHOR_LOCAL_EXTENT_FRACTIONS.len() + ANCHOR_LOCAL_RESIDUE_MULTIPLES.len();
+const ANCHOR_LOCAL_SEPARATION_DIRECTIONS: usize = 4;
+// Iterates kept from the single-piece separating projection. The projection
+// oscillates rather than settles when one piece has to satisfy several
+// neighbours at once, so it is read as a trajectory of poses to try rather
+// than as a solver with an answer; this is how many of those poses are worth
+// charged confirmation rows.
+const ANCHOR_LOCAL_PROJECTION_ITERATES: usize = 24;
+// The anchor-local stream's own charged-row budget, held apart from the
+// station stream's so that seeding a vacated pose can only ever *add*
+// candidates to a slot, never displace the ones the stations would have found.
+// Sized to cover the whole cloud, so nothing the primitive generates is
+// silently dropped, and funded alongside the per-piece construction row cap by
+// `bounded_reinsertion_fits_the_construction_budget`.
+const ANCHOR_LOCAL_ROWS: usize = 192;
+// The unaimed fallback fan: the eight construction probe directions, then the
+// eight half-octants between them. Angular resolution is what this cloud is
+// short of - the feasible set around a conflicting pose at record density is a
+// sliver, so a displacement that is right in length and 22.5 degrees off in
+// bearing lands outside it - and the half-octants halve that error for the
+// price of one more magnitude ladder. Spelled out rather than derived from
+// trigonometry so the pose stream does not depend on the platform's libm.
+const ANCHOR_LOCAL_FAN_DIRECTIONS: [(f64, f64); 16] = [
+    (1.0, 0.0),
+    (-1.0, 0.0),
+    (0.0, 1.0),
+    (0.0, -1.0),
+    (0.7071067811865476, 0.7071067811865476),
+    (-0.7071067811865476, 0.7071067811865476),
+    (0.7071067811865476, -0.7071067811865476),
+    (-0.7071067811865476, -0.7071067811865476),
+    (0.9238795325112867, 0.3826834323650898),
+    (0.9238795325112867, -0.3826834323650898),
+    (-0.9238795325112867, 0.3826834323650898),
+    (-0.9238795325112867, -0.3826834323650898),
+    (0.3826834323650898, 0.9238795325112867),
+    (0.3826834323650898, -0.9238795325112867),
+    (-0.3826834323650898, 0.9238795325112867),
+    (-0.3826834323650898, -0.9238795325112867),
+];
 const CONSTRUCTION_TRANSIENT_BYTES: usize = 192 * 1024;
 // Child-scoring flood fills follow the reviewed-contract precedent of the
 // uncharged LNS depth-key scans: the structural ceiling (`VacancyQuotas::
@@ -894,6 +969,16 @@ fn bounded_reinsertion_inner(
     bounded.ejected_count = ejected.len();
     bounded.kept_count = pieces.len() - ejected.len();
 
+    // Every piece mode 24 ejects protrudes past the bound, so each carries the
+    // pose it protruded from. That pose is out of bound and will be rejected
+    // by the clamped confirm row, but the cloud around it is exactly the set
+    // of small local corrections that could bring the piece back inside
+    // without giving up its neighbourhood. The bound overrun is the mode's
+    // measured residue scale, so the cloud is sized from it.
+    let overrun_mm = ejected
+        .iter()
+        .map(|index| extents[*index] - bound_mm)
+        .fold(0.0f64, f64::max);
     let pass = replace_ejected_under_bound(
         pieces,
         fast_settings,
@@ -902,6 +987,7 @@ fn bounded_reinsertion_inner(
         &anchor,
         &ejected,
         BOUNDED_REINSERTION_SEED_DOMAIN,
+        &AnchorLocalSeeding::with_residue_scale(Some(overrun_mm)),
         work,
     )?;
     diagnostics.initial_state_fingerprint = Some(pass.initial_state_fingerprint);
@@ -916,6 +1002,8 @@ fn bounded_reinsertion_inner(
             bound_rejections: outcome.bound_rejections,
             reinserted: outcome.placed_extent_mm.is_some(),
             placed_extent_mm: outcome.placed_extent_mm,
+            anchor_local_candidates: outcome.anchor_local_candidates,
+            anchor_local_finalists: outcome.anchor_local_finalists,
             ..GeneralPersistentVacancyBoundedReinsertionPieceRow::default()
         };
         if row.reinserted {
@@ -957,7 +1045,178 @@ fn bounded_reinsertion_inner(
     Ok(())
 }
 
+/// Whether the shared re-placement primitive seeds candidate poses at the
+/// piece's own vacated pose, and at what scale.
+///
+/// [`AnchorLocalSeeding::disabled`] reproduces the skyline-only generator
+/// exactly, which is what the from-scratch constructor asks for: there is no
+/// vacated pose on an empty sheet, and the anchor a construction carries is a
+/// pose *prior*, not a pose the piece was just lifted out of.
+#[derive(Clone, Debug, Default, PartialEq)]
+struct AnchorLocalSeeding {
+    /// Seed at the vacated pose in addition to - never instead of - the
+    /// skyline stations.
+    enabled: bool,
+    /// The caller's measured local residue scale, in millimetres. `None` when
+    /// the caller has no measure, in which case the cloud is sized from the
+    /// piece's own extent alone.
+    residue_scale_mm: Option<f64>,
+    /// Per piece index, the unit directions that piece must travel to come
+    /// apart from whatever it was in conflict with, in the caller's own
+    /// deterministic order. Empty for a caller whose ejection is not driven by
+    /// a pairwise conflict.
+    ///
+    /// These matter more than the magnitudes do. At record density the
+    /// feasible set around a conflicting pose is a sliver whose width is the
+    /// layout's slack, so a cloud that only samples the axes and the diagonals
+    /// is a net with 45-degree holes in it and reliably misses; aimed along
+    /// the pair's own closest-approach witness, the same magnitudes land.
+    separating_directions: BTreeMap<usize, Vec<(f64, f64)>>,
+    /// Per piece index, the translations a single-piece separating projection
+    /// passed through on its way to pulling that piece clear of everything it
+    /// violates - the displacements derived from the conflict rather than
+    /// sampled near it.
+    ///
+    /// A single witness direction clears one pair; a piece wedged by several
+    /// has to satisfy all of them at once, and the combination is not a
+    /// direction anything local can guess. These are those combinations - the
+    /// projection's whole trajectory, since a single movable piece makes the
+    /// iteration oscillate rather than settle - seeded as exact poses *and*,
+    /// through the final one, as the leading cloud direction.
+    projected_displacements: BTreeMap<usize, Vec<(f64, f64)>>,
+}
+
+/// Where a construction finalist's seed came from. Carried out of
+/// `construct_candidate_poses` so callers can attribute a placement without
+/// re-deriving it.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct CandidateProvenance {
+    /// Seeded under the unrotated catalog orientation prior rather than the
+    /// anchor's own orientation.
+    zero_prior: bool,
+    /// Seeded at the piece's vacated pose rather than at a skyline station.
+    anchor_local: bool,
+}
+
+impl AnchorLocalSeeding {
+    /// Skyline stations only.
+    fn disabled() -> Self {
+        Self::default()
+    }
+
+    /// Anchor-local seeding with the caller's measured residue scale, when it
+    /// is a usable positive length.
+    fn with_residue_scale(residue_scale_mm: Option<f64>) -> Self {
+        Self {
+            enabled: true,
+            residue_scale_mm: residue_scale_mm
+                .filter(|scale| scale.is_finite() && *scale > 0.0)
+                .map(snap_mm)
+                .filter(|scale| *scale > 0.0),
+            separating_directions: BTreeMap::new(),
+            projected_displacements: BTreeMap::new(),
+        }
+    }
+
+    /// The piece's projected separating displacements: the usable, non-zero
+    /// iterates of its projection trajectory, in the order the projection
+    /// produced them.
+    fn projected_displacements(&self, piece_index: usize) -> Vec<(f64, f64)> {
+        self.projected_displacements
+            .get(&piece_index)
+            .map(|trajectory| {
+                trajectory
+                    .iter()
+                    .copied()
+                    .filter(|(x, y)| {
+                        x.is_finite() && y.is_finite() && (grid_key(*x) != 0 || grid_key(*y) != 0)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
+    /// The displacement directions for one piece: its own escape directions
+    /// first, capped at [`ANCHOR_LOCAL_SEPARATION_DIRECTIONS`] and followed by
+    /// their normalized sum when there is more than one - a piece wedged by
+    /// two neighbours has to clear both at once - then the unaimed fan, which
+    /// is the general fallback and the only source for a caller with no
+    /// conflict geometry to offer.
+    fn directions(&self, piece_index: usize) -> Vec<(f64, f64)> {
+        let mut directions: Vec<(f64, f64)> = Vec::new();
+        if !self.enabled {
+            return directions;
+        }
+        let push = |direction: (f64, f64), directions: &mut Vec<(f64, f64)>| {
+            let (x, y) = direction;
+            if !x.is_finite() || !y.is_finite() {
+                return;
+            }
+            let length = x.hypot(y);
+            if length <= 0.0 {
+                return;
+            }
+            let unit = (x / length, y / length);
+            // Deduplicated on the placement grid so a repeated witness cannot
+            // re-spend the whole magnitude ladder.
+            if directions.iter().any(|kept| {
+                grid_key(kept.0) == grid_key(unit.0) && grid_key(kept.1) == grid_key(unit.1)
+            }) {
+                return;
+            }
+            directions.push(unit);
+        };
+        // The trajectory's endpoint is the projection's own best answer to
+        // "which way out", so it leads the magnitude ladder as well.
+        if let Some(projected) = self.projected_displacements(piece_index).last().copied() {
+            push(projected, &mut directions);
+        }
+        if let Some(separating) = self.separating_directions.get(&piece_index) {
+            let mut sum = (0.0f64, 0.0f64);
+            for direction in separating.iter().take(ANCHOR_LOCAL_SEPARATION_DIRECTIONS) {
+                push(*direction, &mut directions);
+                sum = (sum.0 + direction.0, sum.1 + direction.1);
+            }
+            if separating.len() > 1 {
+                push(sum, &mut directions);
+            }
+        }
+        for direction in ANCHOR_LOCAL_FAN_DIRECTIONS {
+            push(direction, &mut directions);
+        }
+        directions
+    }
+
+    /// The cloud's displacement magnitudes for a piece whose bounding box in
+    /// the seeded orientation is `width_mm` by `height_mm`: ascending, unique
+    /// on the placement grid, and never longer than [`ANCHOR_LOCAL_MAGNITUDES`].
+    fn magnitudes_mm(&self, width_mm: f64, height_mm: f64) -> Vec<f64> {
+        if !self.enabled {
+            return Vec::new();
+        }
+        let extent = width_mm.min(height_mm).max(0.0);
+        let mut magnitudes = Vec::with_capacity(ANCHOR_LOCAL_MAGNITUDES);
+        for fraction in ANCHOR_LOCAL_EXTENT_FRACTIONS {
+            magnitudes.push(extent * fraction);
+        }
+        if let Some(scale) = self.residue_scale_mm {
+            for multiple in ANCHOR_LOCAL_RESIDUE_MULTIPLES {
+                magnitudes.push(scale * multiple);
+            }
+        }
+        // Ascending on the placement grid, then deduplicated on it: a
+        // magnitude that snaps onto one already in the list would only re-spend
+        // charged confirmation rows on poses the primitive already tried.
+        magnitudes = magnitudes.into_iter().map(snap_mm).collect();
+        magnitudes.sort_by_key(|magnitude| grid_key(*magnitude));
+        magnitudes.dedup_by_key(|magnitude| grid_key(*magnitude));
+        magnitudes.retain(|magnitude| grid_key(*magnitude) > 0);
+        magnitudes
+    }
+}
+
 /// What the shared bounded re-placement primitive did to one ejected piece.
+#[derive(Debug)]
 struct ReplacedPieceOutcome {
     index: usize,
     piece_id: String,
@@ -966,6 +1225,11 @@ struct ReplacedPieceOutcome {
     /// The extent of the pose that was accepted, or `None` when the piece had
     /// no in-bound pose at all.
     placed_extent_mm: Option<f64>,
+    /// Anchor-local candidates seeded for this piece, and the exact-valid
+    /// finalists they produced. Both zero when the piece had no recorded prior
+    /// pose to seed from.
+    anchor_local_candidates: usize,
+    anchor_local_finalists: usize,
 }
 
 /// What one run of the shared bounded re-placement primitive produced.
@@ -1013,12 +1277,23 @@ impl BoundedReplacementPass {
 /// explicitly, because every confirmed pose is re-measured against `bound_mm`
 /// on the real transformed source polygon.
 ///
+/// Every ejected piece here has a *recorded prior pose* - the pose it is being
+/// lifted out of, which `anchor` still carries - so `anchor_local` is what both
+/// callers use to ask for anchor-local seeding on top of the skyline stations.
+/// A caller with no prior pose to offer passes
+/// [`AnchorLocalSeeding::disabled`] and gets exactly the skyline-only
+/// generator.
+///
 /// Budget: one charged collision build per kept piece plus one
 /// `construct_candidate_poses` call per ejected piece. Ejecting *every* piece
 /// is the worst case at both terms, which is what
 /// `bounded_reinsertion_fits_the_construction_budget` asserts against the
 /// existing per-piece construction quota - so neither caller needs a new
-/// aggregate term.
+/// aggregate term. Anchor-local candidates carry their own per-piece row
+/// budget on top of that cap, which the same assertion funds: seeding a
+/// vacated pose must be able to *add* candidates without spending the rows the
+/// stations would have used, or a piece that used to be re-placed from the
+/// skyline stops being re-placed at all.
 #[allow(clippy::too_many_arguments)]
 fn replace_ejected_under_bound(
     pieces: &[GeneralFastPiece<'_>],
@@ -1028,6 +1303,7 @@ fn replace_ejected_under_bound(
     anchor: &RelaxedState,
     ejected: &[usize],
     seed_domain: u64,
+    anchor_local: &AnchorLocalSeeding,
     work: &mut RunWork,
 ) -> Result<BoundedReplacementPass, String> {
     let bound_grid = grid_key(bound_mm);
@@ -1086,7 +1362,10 @@ fn replace_ejected_under_bound(
             candidates_considered: 0,
             bound_rejections: 0,
             placed_extent_mm: None,
+            anchor_local_candidates: 0,
+            anchor_local_finalists: 0,
         };
+        let seeded_before = construction.anchor_local_candidates;
         let finalists = construct_candidate_poses(
             pieces,
             bound_settings,
@@ -1095,10 +1374,18 @@ fn replace_ejected_under_bound(
             replacement_seed,
             ordinal,
             index,
+            anchor_local,
             &mut construction,
             work,
         )?;
         row.candidates_considered = finalists.len();
+        row.anchor_local_candidates = construction
+            .anchor_local_candidates
+            .saturating_sub(seeded_before);
+        row.anchor_local_finalists = finalists
+            .iter()
+            .filter(|(_, _, provenance)| provenance.anchor_local)
+            .count();
         // The finalists arrive ranked by the landing-frontier key, so the
         // first one still inside the bound is the shallowest confirmed pose.
         let mut chosen = None;
@@ -1466,6 +1753,77 @@ pub(crate) fn replacement_repair(
         }
     };
 
+    // Each ejected piece carries the pose it was in conflict at, and the
+    // conflict is millimetre-scale by construction, so the residue scale the
+    // anchor-local cloud is sized from is the ejection set's own violation
+    // mass: how far this conflict has to travel to clear. The directions come
+    // from the same survey - each ejected piece's own escape witness against
+    // every partner it violates, oriented away from that partner.
+    let residue_scale_mm = diagnostics
+        .ejected_mass_mm
+        .iter()
+        .copied()
+        .fold(0.0f64, f64::max);
+    let mut anchor_local = AnchorLocalSeeding::with_residue_scale(Some(residue_scale_mm));
+    for (slot, index) in ejected.iter().copied().zip(ejected_indices.iter().copied()) {
+        let mut directions = Vec::new();
+        for pair in &violations.pairs {
+            // `separation_direction` is the direction `first` travels; the
+            // other endpoint comes apart along its negation.
+            if pair.first == slot {
+                directions.push(pair.separation_direction);
+            } else if pair.second == slot {
+                directions.push((-pair.separation_direction.0, -pair.separation_direction.1));
+            }
+        }
+        if !directions.is_empty() {
+            anchor_local.separating_directions.insert(index, directions);
+        }
+        // The projection is measured against the occupancy this piece is
+        // actually re-placed into: the kept sub-layout it has to clear - after
+        // whatever the micro-legalizer did to it - with the piece itself
+        // appended so it is the single movable slot. The other ejected pieces
+        // are gone, so their conflicting poses do not constrain it.
+        let mut sub = base
+            .iter()
+            .enumerate()
+            .filter(|(other, _)| !ejected.contains(other))
+            .map(|(_, placement)| placement.clone())
+            .collect::<Vec<_>>();
+        sub.push(base[slot].clone());
+        let projection_slot = sub.len() - 1;
+        match separating_translation(
+            pieces,
+            &sub,
+            bound_settings,
+            projection_slot,
+            ANCHOR_LOCAL_PROJECTION_ITERATES,
+        ) {
+            Ok((trajectory, converged)) => {
+                if converged {
+                    diagnostics.projections_converged =
+                        diagnostics.projections_converged.saturating_add(1);
+                }
+                anchor_local
+                    .projected_displacements
+                    .insert(index, trajectory);
+            }
+            Err(_) => {
+                // A projection that cannot be measured is a missing seed, not
+                // a failed repair: the cloud and the stations still run.
+                diagnostics.projection_failures = diagnostics.projection_failures.saturating_add(1);
+            }
+        }
+    }
+    diagnostics.projected_displacements_mm = ejected_indices
+        .iter()
+        .map(|index| {
+            anchor_local
+                .projected_displacements(*index)
+                .last()
+                .map_or(0.0, |(x, y)| x.hypot(*y))
+        })
+        .collect();
     let mut work = RunWork::new(pieces.len());
     let pass = replace_ejected_under_bound(
         pieces,
@@ -1475,6 +1833,7 @@ pub(crate) fn replacement_repair(
         &anchor,
         &ejected_indices,
         REPLACEMENT_REPAIR_SEED_DOMAIN,
+        &anchor_local,
         &mut work,
     );
     diagnostics.work = work.diagnostics;
@@ -1499,6 +1858,8 @@ pub(crate) fn replacement_repair(
             bound_rejections: row.bound_rejections,
             replaced: row.placed_extent_mm.is_some(),
             placed_extent_mm: row.placed_extent_mm,
+            anchor_local_candidates: row.anchor_local_candidates,
+            anchor_local_finalists: row.anchor_local_finalists,
         })
         .collect();
     diagnostics.replaced_count = diagnostics.pieces.iter().filter(|row| row.replaced).count();
@@ -4042,6 +4403,9 @@ fn construct_skyline_beam_inner(
                         construction.best_ever_parent_expansions.saturating_add(1);
                     row.best_ever_parent_layers = row.best_ever_parent_layers.saturating_add(1);
                 }
+                // A from-scratch construction has no vacated pose to seed from:
+                // its anchor is a pose *prior*, not a pocket a piece was just
+                // lifted out of. Skyline stations only, bit-identically.
                 let finalists = construct_candidate_poses(
                     pieces,
                     work_settings,
@@ -4050,10 +4414,11 @@ fn construct_skyline_beam_inner(
                     construction_seed,
                     ordinal,
                     piece_index,
+                    &AnchorLocalSeeding::disabled(),
                     construction,
                     work,
                 )?;
-                for (candidate, collision, zero_prior) in finalists {
+                for (candidate, collision, provenance) in finalists {
                     let mut child = parent_state.clone();
                     child.placements[piece_index] = candidate;
                     child.active[piece_index] = true;
@@ -4061,7 +4426,7 @@ fn construct_skyline_beam_inner(
                     child.last_transition = None;
                     construction.children_generated =
                         construction.children_generated.saturating_add(1);
-                    if zero_prior {
+                    if provenance.zero_prior {
                         construction.zero_prior_finalists =
                             construction.zero_prior_finalists.saturating_add(1);
                     } else {
@@ -4434,7 +4799,19 @@ fn skyline_hint_stations(
 /// under both orientation priors (97-pose displacement cloud each), the full
 /// orientation/position streams anchored at station zero, and the upward
 /// shelf ladder; all are ranked by the landing-frontier key and confirmed at
-/// the full-sheet settings. Returns (pose, collision, from-zero-prior).
+/// the full-sheet settings.
+///
+/// When `anchor_local` is enabled the anchor pose is additionally read as a
+/// *vacated* pose and seeded directly - see [`AnchorLocalSeeding`]. Those
+/// candidates lead, in the order the primitive defines (the vacated pose, the
+/// projection's trajectory, then the cloud by ascending displacement), because
+/// the whole point is the interior pocket a top-frontier generator cannot
+/// reach. They are otherwise ordinary candidates: the same charged
+/// confirmation row, the same contact walk, the same finalist cap. Only their
+/// row budget is separate, so that leading cannot cost the station stream the
+/// rows it would have spent.
+///
+/// Returns (pose, collision, provenance).
 #[allow(clippy::too_many_arguments)]
 fn construct_candidate_poses(
     pieces: &[GeneralFastPiece<'_>],
@@ -4444,9 +4821,10 @@ fn construct_candidate_poses(
     construction_seed: u64,
     ordinal: usize,
     piece_index: usize,
+    anchor_local: &AnchorLocalSeeding,
     construction: &mut GeneralPersistentVacancyConstructionDiagnostics,
     work: &mut RunWork,
-) -> Result<Vec<(RelaxedPlacement, Arc<PolygonSet>, bool)>, String> {
+) -> Result<Vec<(RelaxedPlacement, Arc<PolygonSet>, CandidateProvenance)>, String> {
     construction.slots = construction.slots.saturating_add(1);
     work.diagnostics.selected_piece_slots = work.diagnostics.selected_piece_slots.saturating_add(1);
     if work.diagnostics.selected_piece_slots > work.quotas.max_selected_piece_slots {
@@ -4470,6 +4848,7 @@ fn construct_candidate_poses(
     }
     let mut candidates = Vec::new();
     let mut shelf_candidates = Vec::new();
+    let mut anchor_local_candidates = Vec::new();
     let mut station_zero_hint: Option<RelaxedPlacement> = None;
     for (prior_index, (rotation_deg, mirrored)) in priors.iter().copied().enumerate() {
         let zero_prior = prior_index > 0;
@@ -4497,6 +4876,78 @@ fn construct_candidate_poses(
         let feasible_max_x = work_settings.sheet_short_axis_mm - inset - prior_bounds.max_x;
         if feasible_min_x > feasible_max_x {
             continue;
+        }
+        // Anchor-local seeding. The anchor pose is a pose this piece actually
+        // occupied, so under the anchor's own orientation prior it is the one
+        // candidate whose feasibility is a matter of record rather than of
+        // search - and it sits wherever the piece sat, interior pockets
+        // included. Each cloud member gets its own bucket ordinal so the
+        // coarse spatial de-duplication downstream, which is sized for
+        // station hints, cannot collapse the fine end of the cloud.
+        if anchor_local.enabled {
+            let vacated = RelaxedPlacement {
+                input_index: piece_index,
+                rotation_deg,
+                mirrored,
+                translate_x: snap_mm(
+                    anchor_pose
+                        .translate_x
+                        .clamp(feasible_min_x, feasible_max_x),
+                ),
+                translate_y: snap_mm(anchor_pose.translate_y),
+            };
+            let base_ordinal = ORIENTATIONS_PER_PIECE + CONSTRUCTION_HINT_PRIORS;
+            anchor_local_candidates.push((
+                base_ordinal + anchor_local_candidates.len(),
+                zero_prior,
+                vacated.clone(),
+            ));
+            if !zero_prior {
+                // The projected poses: the vacated pose plus each translation
+                // the single-piece separating projection passed through. These
+                // are the anchor-local candidates that are *solved* rather
+                // than sampled, so they go in right behind the vacated pose
+                // itself.
+                for (shift_x, shift_y) in anchor_local.projected_displacements(piece_index) {
+                    let projected = RelaxedPlacement {
+                        translate_x: snap_mm(
+                            (vacated.translate_x + shift_x).clamp(feasible_min_x, feasible_max_x),
+                        ),
+                        translate_y: snap_mm(vacated.translate_y + shift_y),
+                        ..vacated.clone()
+                    };
+                    anchor_local_candidates.push((
+                        base_ordinal + anchor_local_candidates.len(),
+                        zero_prior,
+                        projected,
+                    ));
+                }
+                // The displacement cloud rides the anchor orientation only;
+                // the remaining priors contribute the vacated translation
+                // under their own orientation, which is item three of the
+                // primitive and not a second cloud.
+                let directions = anchor_local.directions(piece_index);
+                for magnitude in anchor_local.magnitudes_mm(
+                    prior_bounds.max_x - prior_bounds.min_x,
+                    prior_bounds.max_y - prior_bounds.min_y,
+                ) {
+                    for (direction_x, direction_y) in directions.iter().copied() {
+                        let probe = RelaxedPlacement {
+                            translate_x: snap_mm(
+                                (vacated.translate_x + magnitude * direction_x)
+                                    .clamp(feasible_min_x, feasible_max_x),
+                            ),
+                            translate_y: snap_mm(vacated.translate_y + magnitude * direction_y),
+                            ..vacated.clone()
+                        };
+                        anchor_local_candidates.push((
+                            base_ordinal + anchor_local_candidates.len(),
+                            zero_prior,
+                            probe,
+                        ));
+                    }
+                }
+            }
         }
         let stations = skyline_hint_stations(
             parent,
@@ -4586,55 +5037,66 @@ fn construct_candidate_poses(
             }
         }
     }
-    let station_zero_hint =
-        station_zero_hint.ok_or_else(|| "construction produced no station-zero hint".to_owned())?;
-    let angle_seed = derive_seed(
-        construction_seed ^ CONFLICT_RUIN_ANGLE_SEED_DOMAIN,
-        ordinal,
-        piece_index,
-    );
-    let orientations =
-        conflict_ruin_orientations(pieces[piece_index], &station_zero_hint, angle_seed);
-    for (orientation_ordinal, (rotation_deg, mirrored)) in orientations.into_iter().enumerate() {
-        work.diagnostics.orientation_streams =
-            work.diagnostics.orientation_streams.saturating_add(1);
-        if work.diagnostics.orientation_streams > work.quotas.max_orientation_streams {
-            return Err(work.cap("orientation-stream budget exhausted"));
-        }
-        let orientation = RelaxedPlacement {
-            input_index: piece_index,
-            rotation_deg,
-            mirrored,
-            translate_x: 0.0,
-            translate_y: 0.0,
-        };
-        let local_collision =
-            build_collision(pieces[piece_index], &orientation, work_settings, work)?;
-        let local_max_y = local_collision
-            .bounds()
-            .ok_or_else(|| "construction orientation has empty geometry".to_owned())?
-            .max_y;
-        let position_seed = derive_seed(
-            construction_seed ^ CONFLICT_RUIN_POSITION_SEED_DOMAIN,
-            ordinal
-                .saturating_mul(ORIENTATIONS_PER_PIECE)
-                .saturating_add(orientation_ordinal),
+    // The orientation and position streams are anchored at the station-zero
+    // hint, so a piece too wide for any skyline window has neither. That is
+    // fatal only when the stations are the sole source of candidates:
+    // anchor-local seeding needs no station, because the vacated pose is its
+    // own anchor.
+    let station_zero_hint = match station_zero_hint {
+        Some(hint) => Some(hint),
+        None if !anchor_local_candidates.is_empty() => None,
+        None => return Err("construction produced no station-zero hint".to_owned()),
+    };
+    if let Some(station_zero_hint) = station_zero_hint {
+        let angle_seed = derive_seed(
+            construction_seed ^ CONFLICT_RUIN_ANGLE_SEED_DOMAIN,
+            ordinal,
             piece_index,
         );
-        let proposals = vacancy_positions(
-            &station_zero_hint,
-            &orientation,
-            &local_collision,
-            parent,
-            work_settings,
-            position_seed,
-            work,
-        )?;
-        for placement in proposals {
-            let key = grid_key(local_max_y + placement.translate_y)
-                .max(0)
-                .unsigned_abs();
-            candidates.push((key, orientation_ordinal, false, placement));
+        let orientations =
+            conflict_ruin_orientations(pieces[piece_index], &station_zero_hint, angle_seed);
+        for (orientation_ordinal, (rotation_deg, mirrored)) in orientations.into_iter().enumerate()
+        {
+            work.diagnostics.orientation_streams =
+                work.diagnostics.orientation_streams.saturating_add(1);
+            if work.diagnostics.orientation_streams > work.quotas.max_orientation_streams {
+                return Err(work.cap("orientation-stream budget exhausted"));
+            }
+            let orientation = RelaxedPlacement {
+                input_index: piece_index,
+                rotation_deg,
+                mirrored,
+                translate_x: 0.0,
+                translate_y: 0.0,
+            };
+            let local_collision =
+                build_collision(pieces[piece_index], &orientation, work_settings, work)?;
+            let local_max_y = local_collision
+                .bounds()
+                .ok_or_else(|| "construction orientation has empty geometry".to_owned())?
+                .max_y;
+            let position_seed = derive_seed(
+                construction_seed ^ CONFLICT_RUIN_POSITION_SEED_DOMAIN,
+                ordinal
+                    .saturating_mul(ORIENTATIONS_PER_PIECE)
+                    .saturating_add(orientation_ordinal),
+                piece_index,
+            );
+            let proposals = vacancy_positions(
+                &station_zero_hint,
+                &orientation,
+                &local_collision,
+                parent,
+                work_settings,
+                position_seed,
+                work,
+            )?;
+            for placement in proposals {
+                let key = grid_key(local_max_y + placement.translate_y)
+                    .max(0)
+                    .unsigned_abs();
+                candidates.push((key, orientation_ordinal, false, placement));
+            }
         }
     }
     candidates.sort_by(|first, second| {
@@ -4646,26 +5108,75 @@ fn construct_candidate_poses(
     });
     let local_row_cap = CONSTRUCTION_ROWS_PER_PIECE - CONSTRUCTION_SHELF_ROWS;
     let mut rows = 0usize;
+    // Anchor-local candidates get their own charged-row budget rather than the
+    // station stream's. Leading with them and charging them to the shared cap
+    // would let a cloud that confirms nothing spend the rows the stations
+    // needed - which is exactly how a piece that used to be re-placed from the
+    // skyline stops being re-placed at all. The stream is additive by
+    // construction, so its budget is too.
+    let mut anchor_rows = 0usize;
     let mut tried_buckets = BTreeSet::new();
     let mut finalists = Vec::with_capacity(CONSTRUCTION_FINALISTS_PER_SLOT);
-    let ranked = candidates
+    construction.anchor_local_candidates = construction
+        .anchor_local_candidates
+        .saturating_add(anchor_local_candidates.len());
+    // Anchor-local candidates lead. They are the only ones that can reach an
+    // interior pocket, they are already ordered closest-displacement first,
+    // and they are bounded by the cloud's own size, so leading costs the
+    // station stream at most that many of its charged rows.
+    let ranked = anchor_local_candidates
         .into_iter()
-        .map(|(_, bucket_ordinal, zero_prior, candidate)| {
-            (false, bucket_ordinal, zero_prior, candidate)
+        .map(|(bucket_ordinal, zero_prior, candidate)| {
+            (
+                false,
+                bucket_ordinal,
+                CandidateProvenance {
+                    zero_prior,
+                    anchor_local: true,
+                },
+                candidate,
+            )
         })
+        .chain(
+            candidates
+                .into_iter()
+                .map(|(_, bucket_ordinal, zero_prior, candidate)| {
+                    (
+                        false,
+                        bucket_ordinal,
+                        CandidateProvenance {
+                            zero_prior,
+                            anchor_local: false,
+                        },
+                        candidate,
+                    )
+                }),
+        )
         .chain(
             shelf_candidates
                 .into_iter()
                 .map(|(bucket_ordinal, zero_prior, candidate)| {
-                    (true, bucket_ordinal, zero_prior, candidate)
+                    (
+                        true,
+                        bucket_ordinal,
+                        CandidateProvenance {
+                            zero_prior,
+                            anchor_local: false,
+                        },
+                        candidate,
+                    )
                 }),
         );
-    for (is_shelf, bucket_ordinal, zero_prior, candidate) in ranked {
+    for (is_shelf, bucket_ordinal, provenance, candidate) in ranked {
         if finalists.len() == CONSTRUCTION_FINALISTS_PER_SLOT || rows >= CONSTRUCTION_ROWS_PER_PIECE
         {
             break;
         }
-        if !is_shelf && rows >= local_row_cap {
+        if provenance.anchor_local {
+            if anchor_rows >= ANCHOR_LOCAL_ROWS {
+                continue;
+            }
+        } else if !is_shelf && rows >= local_row_cap {
             continue;
         }
         let bucket = (
@@ -4676,7 +5187,12 @@ fn construct_candidate_poses(
         if !tried_buckets.insert(bucket) {
             continue;
         }
-        rows += 1;
+        if provenance.anchor_local {
+            anchor_rows += 1;
+            construction.anchor_local_rows = construction.anchor_local_rows.saturating_add(1);
+        } else {
+            rows += 1;
+        }
         let Some(collision) = construction_confirm_row(
             pieces,
             work_settings,
@@ -4750,7 +5266,11 @@ fn construct_candidate_poses(
         if is_shelf {
             construction.shelf_finalists = construction.shelf_finalists.saturating_add(1);
         }
-        finalists.push((walk_pose, Arc::new(walk_collision), zero_prior));
+        if provenance.anchor_local {
+            construction.anchor_local_finalists =
+                construction.anchor_local_finalists.saturating_add(1);
+        }
+        finalists.push((walk_pose, Arc::new(walk_collision), provenance));
     }
     Ok(finalists)
 }
@@ -7997,16 +8517,16 @@ mod tests {
                 worst_case_slots <= quotas.max_selected_piece_slots,
                 "piece count {piece_count}"
             );
-            // Each of those slots may burn the full construction row cap, and
-            // each row is one collision build plus one pair visit per peer.
+            // Each of those slots may burn the full construction row cap plus
+            // the anchor-local stream's own budget, and each row is one
+            // collision build plus one pair visit per peer.
+            let rows_per_slot = CONSTRUCTION_ROWS_PER_PIECE + ANCHOR_LOCAL_ROWS;
             assert!(
-                worst_case_slots.saturating_mul(CONSTRUCTION_ROWS_PER_PIECE)
-                    <= quotas.max_exact_finalist_rows,
+                worst_case_slots.saturating_mul(rows_per_slot) <= quotas.max_exact_finalist_rows,
                 "piece count {piece_count}"
             );
             assert!(
-                piece_count
-                    .saturating_add(worst_case_slots.saturating_mul(CONSTRUCTION_ROWS_PER_PIECE))
+                piece_count.saturating_add(worst_case_slots.saturating_mul(rows_per_slot))
                     <= quotas.max_experimental_collision_builds,
                 "piece count {piece_count}"
             );
@@ -8948,6 +9468,298 @@ mod tests {
                 .as_deref()
                 .is_some_and(|reason| reason.contains("local-repair limit")),
             "{diagnostics:?}"
+        );
+    }
+
+    /// A layout with one piece sealed inside a genuine interior pocket: a
+    /// three-by-three grid of squares on a sheet cut to fit it exactly, so the
+    /// centre cell is bounded on all four sides by pieces and the strip has no
+    /// floor, no shoulder and - under the clamp - no shelf. `nudge_mm`
+    /// displaces the centre piece into its right-hand neighbour, which is the
+    /// layout's only violation.
+    ///
+    /// This is the miniature of the residue class the whole primitive exists
+    /// for. A top-frontier generator plants its hints at skyline valleys, and
+    /// the skyline over the centre column is the *top* row's upper edge, so no
+    /// station it can produce is anywhere near the pocket.
+    fn interior_pocket_layout(nudge_mm: f64) -> (Vec<PolygonSet>, Vec<GeneralFastPlacement>, f64) {
+        let polygons = (0..9).map(|_| square(20.0)).collect::<Vec<_>>();
+        // A 25.02 mm pitch under a 5 mm contract leaves 5.02 mm of clearance
+        // in both axes: legal, and record-tight - the centre cell's feasible
+        // translations are a 0.02 mm square. A generator that samples poses
+        // has to *hit* that square; a generator seeded at the pose the piece
+        // was lifted out of starts a nudge away from it. (Nine pieces is few
+        // enough that the position stream does hit it too, so this fixture
+        // proves the seeding reaches the pocket, not that nothing else can.)
+        let placements = POCKET_IDS
+            .iter()
+            .enumerate()
+            .map(|(slot, id)| {
+                let nudge = if slot == POCKET_SLOT { nudge_mm } else { 0.0 };
+                replacement_placement(
+                    id,
+                    20.0 + POCKET_PITCH_MM * (slot % 3) as f64 + nudge,
+                    20.0 + POCKET_PITCH_MM * (slot / 3) as f64,
+                )
+            })
+            .collect::<Vec<_>>();
+        (polygons, placements, POCKET_SHEET_SHORT_AXIS_MM)
+    }
+
+    /// The pocket sheet is cut to the grid plus the sheet edge clearance on
+    /// every side, in both axes. Used as the clamp too, so there is no shelf
+    /// above the frontier either.
+    const POCKET_PITCH_MM: f64 = 25.02;
+    // The trailing hundredth keeps the outermost pieces off the canonical
+    // grid's boundary rather than exactly on it.
+    const POCKET_SHEET_SHORT_AXIS_MM: f64 = 20.0 + 2.0 * POCKET_PITCH_MM + 20.0 + 5.01;
+    const POCKET_SLOT: usize = 4;
+
+    const POCKET_IDS: [&str; 9] = [
+        "r0-c0", "r0-c1", "r0-c2", "r1-c0", "pocket", "r1-c2", "r2-c0", "r2-c1", "r2-c2",
+    ];
+
+    /// Runs the shared re-placement primitive over the pocket layout with
+    /// anchor-local seeding either armed or disabled, and returns the pass.
+    fn pocket_pass(
+        pieces: &[GeneralFastPiece<'_>],
+        placements: &[GeneralFastPlacement],
+        settings: GeneralFastSettings,
+        bound_mm: f64,
+        anchor_local: &AnchorLocalSeeding,
+    ) -> BoundedReplacementPass {
+        let bound_settings = GeneralFastSettings {
+            sheet_long_axis_mm: bound_mm,
+            ..settings
+        };
+        let anchor = relaxed_state_from_fast_placements(pieces, placements, bound_mm)
+            .expect("an anchor state");
+        let mut work = RunWork::new(pieces.len());
+        replace_ejected_under_bound(
+            pieces,
+            settings,
+            bound_settings,
+            bound_mm,
+            &anchor,
+            &[POCKET_SLOT],
+            REPLACEMENT_REPAIR_SEED_DOMAIN,
+            anchor_local,
+            &mut work,
+        )
+        .expect("a completed pass")
+    }
+
+    #[test]
+    fn anchor_local_seeding_reaches_the_pocket_a_piece_was_lifted_out_of() {
+        // The nudge control, in miniature. `pocket` is displaced 1 mm into its
+        // right-hand neighbour and then ejected; every other piece is left
+        // exactly where it was, so the pose it was nudged out of provably
+        // still fits, and at this pitch it is one of a 0.02 mm square of poses
+        // that do.
+        let (polygons, placements, bound_mm) = interior_pocket_layout(1.0);
+        let pieces = replacement_pieces(&POCKET_IDS, &polygons);
+        let settings = replacement_settings(POCKET_SHEET_SHORT_AXIS_MM, 300.0);
+        let vacated = &placements[POCKET_SLOT];
+
+        // The control arm: exactly today's skyline-only generator, which is
+        // also the identity check that keeps the from-scratch constructor
+        // bit-identical - it must seed nothing anchor-locally.
+        let skyline_only = pocket_pass(
+            &pieces,
+            &placements,
+            settings,
+            bound_mm,
+            &AnchorLocalSeeding::disabled(),
+        );
+        let control = &skyline_only.pieces[0];
+        assert_eq!(control.anchor_local_candidates, 0, "{control:?}");
+        assert_eq!(control.anchor_local_finalists, 0, "{control:?}");
+
+        // The treatment arm: the same ejection, the same occupancy, the same
+        // confirmation machinery, seeded at the vacated pose as well. The
+        // conflict's own residue is the 1 mm the nudge cost the pair.
+        let pass = pocket_pass(
+            &pieces,
+            &placements,
+            settings,
+            bound_mm,
+            &AnchorLocalSeeding::with_residue_scale(Some(1.0)),
+        );
+        let row = &pass.pieces[0];
+        assert!(row.anchor_local_candidates > 0, "{row:?}");
+        assert!(
+            row.anchor_local_finalists > 0,
+            "the pocket must be reachable from the anchor: {row:?}"
+        );
+        assert!(row.placed_extent_mm.is_some(), "{row:?}");
+
+        // And it went back into the pocket rather than somewhere else: the
+        // placed pose is within the nudge of the pose it was lifted out of.
+        let repaired = fast_placements(&pass.state, &pieces, false);
+        let placed = repaired
+            .iter()
+            .find(|placement| placement.piece_id == "pocket")
+            .expect("the re-placed piece");
+        assert!(
+            (placed.translate_short_axis - vacated.translate_short_axis).abs() <= 1.0
+                && (placed.translate_long_axis - vacated.translate_long_axis).abs() <= 1.0,
+            "{placed:?} is not anchor-local to {vacated:?}"
+        );
+
+        // What it placed is a real layout, not just a confirmed row.
+        validate_and_measure_placements(&pieces, &repaired, settings)
+            .expect("the re-placed layout validates");
+        let depth_mm = coupled_independent_source_depth(&pieces, &repaired, settings)
+            .expect("a measurable depth");
+        assert!(depth_mm <= bound_mm, "{depth_mm} exceeds {bound_mm}");
+    }
+
+    #[test]
+    fn anchor_local_seeding_is_deterministic() {
+        let (polygons, placements, bound_mm) = interior_pocket_layout(1.0);
+        let pieces = replacement_pieces(&POCKET_IDS, &polygons);
+        let settings = replacement_settings(POCKET_SHEET_SHORT_AXIS_MM, 300.0);
+        let seeding = AnchorLocalSeeding::with_residue_scale(Some(1.0));
+
+        let first = pocket_pass(&pieces, &placements, settings, bound_mm, &seeding);
+        let second = pocket_pass(&pieces, &placements, settings, bound_mm, &seeding);
+        assert_eq!(first.order_hash, second.order_hash);
+        assert_eq!(
+            fast_placements(&first.state, &pieces, false),
+            fast_placements(&second.state, &pieces, false)
+        );
+        assert_eq!(
+            first.pieces[0].anchor_local_candidates,
+            second.pieces[0].anchor_local_candidates
+        );
+        assert_eq!(
+            first.pieces[0].anchor_local_finalists,
+            second.pieces[0].anchor_local_finalists
+        );
+    }
+
+    #[test]
+    fn anchor_local_cloud_stays_inside_its_declared_bounds() {
+        // Disabled is the identity: no magnitudes, so no cloud at all.
+        let disabled = AnchorLocalSeeding::disabled();
+        assert!(disabled.magnitudes_mm(40.0, 90.0).is_empty());
+        assert!(disabled.directions(0).is_empty());
+
+        // Magnitudes: derived from the smaller extent, ascending, unique on
+        // the placement grid, and never more than the declared count.
+        let mut seeding = AnchorLocalSeeding::with_residue_scale(Some(0.25));
+        let magnitudes = seeding.magnitudes_mm(40.0, 90.0);
+        assert!(
+            magnitudes.len() <= ANCHOR_LOCAL_MAGNITUDES,
+            "{magnitudes:?}"
+        );
+        assert!(magnitudes.iter().all(|magnitude| *magnitude > 0.0));
+        assert!(
+            magnitudes.windows(2).all(|pair| pair[0] < pair[1]),
+            "{magnitudes:?}"
+        );
+        // Scale-free: doubling the piece doubles every extent-derived rung.
+        let doubled = seeding.magnitudes_mm(80.0, 180.0);
+        for fraction in ANCHOR_LOCAL_EXTENT_FRACTIONS {
+            assert!(
+                doubled
+                    .iter()
+                    .any(|magnitude| grid_key(*magnitude) == grid_key(snap_mm(80.0 * fraction))),
+                "{doubled:?} is missing {fraction}"
+            );
+        }
+        // With no measured residue the cloud is sized from the piece alone.
+        let extent_only = AnchorLocalSeeding {
+            enabled: true,
+            ..AnchorLocalSeeding::default()
+        };
+        assert_eq!(
+            extent_only.magnitudes_mm(40.0, 90.0).len(),
+            ANCHOR_LOCAL_EXTENT_FRACTIONS.len()
+        );
+
+        // Directions: aimed ones first, then the fan, all unit, all distinct,
+        // and capped.
+        seeding
+            .separating_directions
+            .insert(3, vec![(1.0, 0.0), (0.0, 2.0), (1.0, 0.0)]);
+        seeding.projected_displacements.insert(3, vec![(0.0, -4.0)]);
+        let directions = seeding.directions(3);
+        assert_eq!(directions[0], (0.0, -1.0), "{directions:?}");
+        assert_eq!(directions[1], (1.0, 0.0), "{directions:?}");
+        assert!(
+            directions.len()
+                <= 1 + ANCHOR_LOCAL_SEPARATION_DIRECTIONS + 1 + ANCHOR_LOCAL_FAN_DIRECTIONS.len(),
+            "{directions:?}"
+        );
+        for (index, direction) in directions.iter().enumerate() {
+            assert!(
+                (direction.0.hypot(direction.1) - 1.0).abs() < 1e-9,
+                "{direction:?}"
+            );
+            assert!(
+                !directions[..index]
+                    .iter()
+                    .any(|kept| grid_key(kept.0) == grid_key(direction.0)
+                        && grid_key(kept.1) == grid_key(direction.1)),
+                "{directions:?} repeats at {index}"
+            );
+        }
+
+        // The whole cloud is bounded by the product of the two, plus the
+        // vacated pose and the projection trajectory.
+        let cloud = magnitudes.len() * directions.len()
+            + 1
+            + seeding.projected_displacements(3).len()
+            + CONSTRUCTION_HINT_PRIORS;
+        assert!(
+            cloud
+                <= ANCHOR_LOCAL_MAGNITUDES
+                    * (1 + ANCHOR_LOCAL_SEPARATION_DIRECTIONS
+                        + 1
+                        + ANCHOR_LOCAL_FAN_DIRECTIONS.len())
+                    + 1
+                    + ANCHOR_LOCAL_PROJECTION_ITERATES
+                    + CONSTRUCTION_HINT_PRIORS,
+            "{cloud}"
+        );
+    }
+
+    #[test]
+    fn separating_projection_aims_at_the_pocket_it_was_pushed_out_of() {
+        // The projection is the aimed input the cloud rides: it measures the
+        // conflict rather than sampling around it, so a piece nudged a
+        // millimetre into its neighbour must come back with a translation of
+        // about that size pointing the other way.
+        let (polygons, placements, _) = interior_pocket_layout(1.0);
+        let pieces = replacement_pieces(&POCKET_IDS, &polygons);
+        let settings = replacement_settings(POCKET_SHEET_SHORT_AXIS_MM, 300.0);
+        let kept = placements
+            .iter()
+            .enumerate()
+            .filter(|(slot, _)| *slot != POCKET_SLOT)
+            .map(|(_, placement)| placement.clone())
+            .chain(std::iter::once(placements[POCKET_SLOT].clone()))
+            .collect::<Vec<_>>();
+
+        let (trajectory, _) = separating_translation(
+            &pieces,
+            &kept,
+            settings,
+            kept.len() - 1,
+            ANCHOR_LOCAL_PROJECTION_ITERATES,
+        )
+        .expect("a measurable projection");
+        assert!(!trajectory.is_empty());
+        assert!(
+            trajectory.len() <= ANCHOR_LOCAL_PROJECTION_ITERATES,
+            "{trajectory:?}"
+        );
+        let (shift_x, shift_y) = trajectory[trajectory.len() - 1];
+        assert!(shift_x < 0.0, "the projection must aim back: {shift_x}");
+        assert!(
+            shift_y.abs() < 0.5,
+            "and stay in the pocket's row: {shift_y}"
         );
     }
 }
