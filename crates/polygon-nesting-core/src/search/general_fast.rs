@@ -451,6 +451,12 @@ pub fn construct_short_side_first(
     pieces: &[GeneralFastPiece<'_>],
     settings: GeneralFastSettings,
 ) -> Result<GeneralFastResult, GeneralFastError> {
+    // The short-side-first constructor is the engine's first complete layout
+    // and therefore the origin of every quality curve; naming its scope is
+    // what makes "time to first complete layout" readable off the trace
+    // instead of inferred from a gap before the first epoch.
+    #[cfg(feature = "quality-trace")]
+    let _trace = crate::quality_trace::scope("constructor".to_owned(), 0, None);
     validate_settings(settings)?;
     validate_piece_set(pieces)?;
     let prepared = prepare_general_pieces(pieces, settings)?;
@@ -3632,12 +3638,74 @@ pub(crate) fn validate_and_measure_placements(
 
     validate_placements_against_contract(pieces, placements, settings)?;
     let metrics = layout_metrics(&rebuilt, settings);
+    // The quality frontier trace's single choke point. Every exact-valid
+    // candidate the search sees reaches this line, published or not, complete
+    // or partial - which is precisely the population the depth-versus-time
+    // curve needs and the population a public-incumbent log does not have. The
+    // whole block is compiled out without the feature; with it, the extra work
+    // is one raw-source depth pass and one digest, next to a validation that
+    // has just rebuilt and pairwise-tested every collision polygon in the
+    // layout.
+    #[cfg(feature = "quality-trace")]
+    if crate::quality_trace::active() {
+        trace_exact_candidate(pieces, placements, settings, metrics.used_long_axis_depth_mm);
+    }
     Ok(GeneralPlacementMetrics {
         used_short_axis_span_mm: metrics.used_short_axis_span_mm,
         used_long_axis_depth_mm: metrics.used_long_axis_depth_mm,
         unused_short_axis_projection_mm: metrics.unused_short_axis_projection_mm,
         occupied_envelope_area_mm2: metrics.occupied_envelope_area_mm2,
     })
+}
+
+/// Emits one `exactCandidate` trace event for a layout the validator accepted.
+///
+/// The depth it reports is the *raw source* depth - the untouched `f64`
+/// reading over transformed source rings, the same quantity the adoption rule
+/// compares and the records in this repository are quoted in - not the
+/// canonical-grid `used_long_axis_depth_mm`, which is carried alongside it so
+/// the two bases stay distinguishable in the stream.
+#[cfg(feature = "quality-trace")]
+fn trace_exact_candidate(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+    envelope_depth_mm: f64,
+) {
+    let pieces_by_id = pieces
+        .iter()
+        .map(|piece| (piece.id, piece))
+        .collect::<BTreeMap<_, _>>();
+    let mut independent = Vec::with_capacity(placements.len());
+    for placement in placements {
+        let Some(piece) = pieces_by_id.get(placement.piece_id.as_str()).copied() else {
+            return;
+        };
+        independent.push(GeneralPlacement {
+            piece_id: piece.id,
+            polygon: piece.polygon,
+            rotation_deg: placement.rotation_deg,
+            mirrored: placement.mirrored,
+            translate_x: placement.translate_short_axis,
+            translate_y: placement.translate_long_axis,
+        });
+    }
+    let edge_clearance_mm = settings
+        .sheet_edge_clearance_mm
+        .unwrap_or(settings.total_padding_mm / 2.0);
+    let raw_depth_mm =
+        crate::validation::general_polygon::raw_source_long_axis_depth_mm(
+            &independent,
+            edge_clearance_mm,
+        )
+        .unwrap_or(f64::NAN);
+    let fingerprint = crate::search::general_relaxed::general_placement_fingerprint(placements);
+    crate::quality_trace::exact_candidate(
+        raw_depth_mm,
+        envelope_depth_mm,
+        placements.len(),
+        &fingerprint,
+    );
 }
 
 fn contour_points(polygon: &PolygonSet) -> Vec<IrregularPoint> {
