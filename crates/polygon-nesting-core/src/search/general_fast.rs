@@ -3277,6 +3277,77 @@ fn validate_result(
     Ok(())
 }
 
+/// The *contract* half of [`validate_and_measure_placements`]: the raw-source
+/// exact validator, and nothing else.
+///
+/// This answers one question - "is this layout legal?" - against the requested
+/// clearance contract, on the untouched `f64` source rings. No search envelope
+/// appears anywhere in it: no offset, no canonical grid, no
+/// `search_offset_allowance_mm`.
+///
+/// [`validate_and_measure_placements`] is a *composite* of this and a second,
+/// stricter question - "may the search visit this layout?" - which it asks
+/// first, on collision polygons expanded by [`collision_expansion_mm`]. Because
+/// that expansion includes the search allowance, the composite can reject a
+/// layout that this function accepts: a pinned fixture found under a narrow
+/// allowance is contract-valid but sits outside the wider envelope a later run
+/// searches in. Keeping the two separable is what lets a report say which of
+/// the two verdicts it means. Acceptance still uses the composite.
+pub(crate) fn validate_placements_against_contract(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+) -> Result<(), GeneralFastError> {
+    let pieces_by_id = pieces
+        .iter()
+        .map(|piece| (piece.id, piece))
+        .collect::<BTreeMap<_, _>>();
+    let independent = placements
+        .iter()
+        .map(|placement| {
+            let piece = pieces_by_id
+                .get(placement.piece_id.as_str())
+                .copied()
+                .ok_or_else(|| {
+                    GeneralFastError::InvalidInput(format!(
+                        "a result placement references unknown piece {}",
+                        placement.piece_id
+                    ))
+                })?;
+            Ok(GeneralPlacement {
+                piece_id: piece.id,
+                polygon: piece.polygon,
+                rotation_deg: placement.rotation_deg,
+                mirrored: placement.mirrored,
+                translate_x: placement.translate_short_axis,
+                translate_y: placement.translate_long_axis,
+            })
+        })
+        .collect::<Result<Vec<_>, GeneralFastError>>()?;
+    validate_publication(
+        &independent,
+        PublicationValidationSettings {
+            sheet_width_mm: settings.sheet_short_axis_mm,
+            sheet_height_mm: settings.sheet_long_axis_mm,
+            total_padding_mm: settings.total_padding_mm,
+            sheet_edge_clearance_mm: settings.sheet_edge_clearance_mm,
+            flattening_sag_tolerance_mm: settings.flattening_sag_tolerance_mm,
+        },
+    )?;
+    Ok(())
+}
+
+/// The composite acceptance check: search-envelope admissibility *and* contract
+/// validity, in that order.
+///
+/// The envelope half rebuilds every placement's canonical collision polygon -
+/// the source offset by [`collision_expansion_mm`], which folds in half the pair
+/// clearance, the safety margin, *and* `search_offset_allowance_mm` - and
+/// requires each to fit the sheet and to be pairwise disjoint on the canonical
+/// grid. The contract half is [`validate_placements_against_contract`].
+///
+/// A caller that wants only the legality verdict must call that function
+/// directly; a failure here does not distinguish the two.
 pub(crate) fn validate_and_measure_placements(
     pieces: &[GeneralFastPiece<'_>],
     placements: &[GeneralFastPlacement],
@@ -3365,27 +3436,7 @@ pub(crate) fn validate_and_measure_placements(
         }
     }
 
-    let independent = rebuilt
-        .iter()
-        .map(|state| GeneralPlacement {
-            piece_id: pieces[state.input_index].id,
-            polygon: pieces[state.input_index].polygon,
-            rotation_deg: state.placement.rotation_deg,
-            mirrored: state.placement.mirrored,
-            translate_x: state.placement.translate_short_axis,
-            translate_y: state.placement.translate_long_axis,
-        })
-        .collect::<Vec<_>>();
-    validate_publication(
-        &independent,
-        PublicationValidationSettings {
-            sheet_width_mm: settings.sheet_short_axis_mm,
-            sheet_height_mm: settings.sheet_long_axis_mm,
-            total_padding_mm: settings.total_padding_mm,
-            sheet_edge_clearance_mm: settings.sheet_edge_clearance_mm,
-            flattening_sag_tolerance_mm: settings.flattening_sag_tolerance_mm,
-        },
-    )?;
+    validate_placements_against_contract(pieces, placements, settings)?;
     let metrics = layout_metrics(&rebuilt, settings);
     Ok(GeneralPlacementMetrics {
         used_short_axis_span_mm: metrics.used_short_axis_span_mm,
@@ -3613,6 +3664,119 @@ mod tests {
             point(0.0, height),
         ])
         .unwrap()
+    }
+
+    /// The search-envelope half of the composite check is strictly stronger
+    /// than the contract half, and by exactly the search allowance: a layout
+    /// parked against the sheet's clearance boundary is contract-valid at every
+    /// allowance, but only admissible to a search whose envelope still fits.
+    ///
+    /// This is the split a `contractValid` report exists to make readable: a
+    /// composite rejection here says "this run may not visit that layout", not
+    /// "that layout is illegal".
+    #[test]
+    fn contract_validity_is_independent_from_search_envelope_admissibility() {
+        let piece = square(1.0);
+        let pieces = [GeneralFastPiece {
+            id: "boundary",
+            polygon: &piece,
+            allow_rotation: false,
+            allow_mirror: false,
+        }];
+        // Edge clearance defaults to half the pair clearance, so the contract
+        // admits an outer point sitting exactly on 1.0 mm.
+        let placements = [GeneralFastPlacement {
+            piece_id: "boundary".to_owned(),
+            rotation_deg: 0.0,
+            mirrored: false,
+            translate_short_axis: 1.0,
+            translate_long_axis: 1.0,
+        }];
+        let mut settings = GeneralFastSettings::deterministic_test(20.0, 20.0);
+        settings.total_padding_mm = 2.0;
+
+        settings.search_offset_allowance_mm = 0.0;
+        assert!(validate_placements_against_contract(&pieces, &placements, settings).is_ok());
+        assert!(validate_and_measure_placements(&pieces, &placements, settings).is_ok());
+
+        // The same layout, replayed under a wider envelope. The contract has
+        // not moved; only the envelope has.
+        settings.search_offset_allowance_mm = 0.5;
+        assert!(
+            validate_placements_against_contract(&pieces, &placements, settings).is_ok(),
+            "the clearance contract does not depend on the search allowance"
+        );
+        let composite = validate_and_measure_placements(&pieces, &placements, settings)
+            .expect_err("the widened envelope must leave the sheet");
+        assert_eq!(
+            composite.to_string(),
+            "piece boundary violates the canonical-grid sheet boundary"
+        );
+    }
+
+    /// The split must not have loosened the composite: a genuine contract
+    /// violation still fails it, and fails the contract validator alone.
+    #[test]
+    fn contract_validator_still_refuses_a_real_clearance_violation() {
+        let piece = square(2.0);
+        let pieces = [
+            GeneralFastPiece {
+                id: "a",
+                polygon: &piece,
+                allow_rotation: false,
+                allow_mirror: false,
+            },
+            GeneralFastPiece {
+                id: "b",
+                polygon: &piece,
+                allow_rotation: false,
+                allow_mirror: false,
+            },
+        ];
+        let placements = [
+            GeneralFastPlacement {
+                piece_id: "a".to_owned(),
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_short_axis: 5.0,
+                translate_long_axis: 5.0,
+            },
+            GeneralFastPlacement {
+                piece_id: "b".to_owned(),
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_short_axis: 6.0,
+                translate_long_axis: 5.0,
+            },
+        ];
+        let settings = GeneralFastSettings::deterministic_test(20.0, 20.0);
+        assert!(validate_placements_against_contract(&pieces, &placements, settings).is_err());
+        assert!(validate_and_measure_placements(&pieces, &placements, settings).is_err());
+    }
+
+    #[test]
+    fn contract_validator_rejects_an_unknown_piece_reference() {
+        let piece = square(1.0);
+        let pieces = [GeneralFastPiece {
+            id: "known",
+            polygon: &piece,
+            allow_rotation: false,
+            allow_mirror: false,
+        }];
+        let placements = [GeneralFastPlacement {
+            piece_id: "stranger".to_owned(),
+            rotation_deg: 0.0,
+            mirrored: false,
+            translate_short_axis: 5.0,
+            translate_long_axis: 5.0,
+        }];
+        let settings = GeneralFastSettings::deterministic_test(20.0, 20.0);
+        assert_eq!(
+            validate_placements_against_contract(&pieces, &placements, settings)
+                .unwrap_err()
+                .to_string(),
+            "a result placement references unknown piece stranger"
+        );
     }
 
     fn regular_polygon(vertex_count: usize, radius: f64) -> Vec<IrregularPoint> {

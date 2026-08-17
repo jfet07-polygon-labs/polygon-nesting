@@ -18,10 +18,14 @@ use polygon_nesting_core::search::general_fast::{
     GeneralPairClusterArmDiagnostics, DEFAULT_SEARCH_OFFSET_ALLOWANCE_MM,
 };
 use polygon_nesting_core::search::general_relaxed::{
-    improve_complete_layout_with_pinned_vacancy_parent, GeneralAngularRepairSettings,
-    GeneralPersistentVacancyDiagnostics, GeneralPersistentVacancyPinnedParent,
-    GeneralRelaxedAngleSeedPolicy, GeneralRelaxedCollisionBackend, GeneralRelaxedDiagnostics,
-    GeneralRelaxedPressureModel, GeneralRelaxedSettings,
+    general_placement_fingerprint, improve_complete_layout_with_pinned_vacancy_parent,
+    GeneralAngularRepairSettings, GeneralPersistentVacancyDiagnostics,
+    GeneralPersistentVacancyPinnedParent, GeneralRelaxedAngleSeedPolicy,
+    GeneralRelaxedCollisionBackend, GeneralRelaxedDiagnostics, GeneralRelaxedPressureModel,
+    GeneralRelaxedSettings,
+};
+use polygon_nesting_core::validation::general_polygon::{
+    raw_source_long_axis_depth_mm, GeneralPlacement,
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -308,16 +312,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         sheet_edge_clearance_mm: effective_edge_clearance_mm,
         clearance_safety_margin_mm: settings.clearance_safety_margin_mm,
         flattening_sag_tolerance_mm: settings.flattening_sag_tolerance_mm,
+        search_offset_allowance_mm: settings.search_offset_allowance_mm,
     };
     let pinned_vacancy_parent = persistent_vacancy_parent_fixture
         .as_deref()
-        .map(|path| load_pinned_vacancy_parent(path, &request_sha256, &effective_parent_settings))
+        .map(|path| {
+            load_pinned_vacancy_parent(path, &request_sha256, &effective_parent_settings, &owned)
+        })
         .transpose()?;
     let warm_start_incumbent = warm_start_fixture_path
         .as_deref()
         .map(|path| -> Result<_, Box<dyn std::error::Error>> {
-            let parent =
-                load_pinned_vacancy_parent(path, &request_sha256, &effective_parent_settings)?;
+            let parent = load_pinned_vacancy_parent(
+                path,
+                &request_sha256,
+                &effective_parent_settings,
+                &owned,
+            )?;
             let raw: serde_json::Value = serde_json::from_slice(&fs::read(Path::new(path))?)?;
             let depth = raw
                 .get("independentDepthMm")
@@ -719,6 +730,52 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// A committed persistent-vacancy parent fixture.
+///
+/// # What a fixture is allowed to claim, and what is checked
+///
+/// Writing fixtures is out of scope for this harness - external scripts do
+/// that - so every claim a fixture makes is re-derived here, on load, from the
+/// fixture's own placements and the current run's request and CLI arguments. A
+/// fixture that pins a request but replays under a different *contract* is the
+/// failure mode this guards: the request JSON's `padding` is not necessarily
+/// the clearance the run uses, because arguments 19/20 override the pair and
+/// edge clearances and argument 47 sets the search allowance.
+///
+/// ```text
+/// {
+///   "schemaVersion": <u64>,
+///   "description": <string>,
+///   "requestSha256": <hex>,                 // checked against the request
+///   "expectedPlacementFingerprint": <hex>,  // checked when it is a real digest
+///   "reportedDepthMm": <f64>,               // checked: may not understate
+///   "independentDepthMm": <f64>,            // checked: must land on a
+///                                           //   convention in MeasuredDepths
+///   "provenance": <any>,
+///   "settings": {                           // optional; every field checked
+///     "sheetShortAxisMm": <f64>,
+///     "sheetLongAxisMm": <f64>,
+///     "totalPaddingMm": <f64>,              // pair clearance
+///     "sheetEdgeClearanceMm": <f64>,        // edge clearance
+///     "clearanceSafetyMarginMm": <f64>,     // margin
+///     "flatteningSagToleranceMm": <f64>,    // sag
+///     "searchOffsetAllowanceMm": <f64>      // optional within the block
+///   },
+///   "placements": [ { "pieceId", "rotationDeg", "mirrored",
+///                     "translateShortAxis", "translateLongAxis" }, ... ]
+/// }
+/// ```
+///
+/// Fixtures that omit `settings` - which is every fixture written before the
+/// block existed - load exactly as they always did. Fixture-writing tools
+/// should emit it, and should emit `searchOffsetAllowanceMm` inside it, so that
+/// a replay under a different allowance is a hard error at load rather than a
+/// confusing rejection deep inside the arm.
+///
+/// The engine's own frozen fingerprint and depth checks remain the acceptance
+/// authority for the loaded layout; these checks only establish that the
+/// fixture describes the layout it says it does, under the contract it says it
+/// was recorded under.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct PinnedVacancyParentFixture {
@@ -727,31 +784,11 @@ struct PinnedVacancyParentFixture {
     #[serde(rename = "description")]
     _description: String,
     request_sha256: String,
-    #[serde(rename = "expectedPlacementFingerprint")]
-    _expected_placement_fingerprint: String,
-    #[serde(rename = "reportedDepthMm")]
-    _reported_depth_mm: f64,
-    #[serde(rename = "independentDepthMm")]
-    _independent_depth_mm: f64,
+    expected_placement_fingerprint: String,
+    reported_depth_mm: f64,
+    independent_depth_mm: f64,
     #[serde(rename = "provenance")]
     _provenance: serde_json::Value,
-    // Optional geometry-contract pin. Fixtures written today omit this
-    // entirely and load exactly as before; fixture-writing tools should
-    // start emitting it so future fixtures are checked automatically. The
-    // schema, when present, is:
-    //   "settings": {
-    //     "sheetShortAxisMm": <f64>,
-    //     "sheetLongAxisMm": <f64>,
-    //     "totalPaddingMm": <f64>,
-    //     "sheetEdgeClearanceMm": <f64>,
-    //     "clearanceSafetyMarginMm": <f64>,
-    //     "flatteningSagToleranceMm": <f64>
-    //   }
-    // Every field, when the block is present, must equal the harness's
-    // effective settings for the current request or loading is a hard
-    // error: a fixture recorded under a different geometry contract (e.g. a
-    // margin/sag pair from a legacy request) must not silently replay a
-    // wrong trajectory.
     #[serde(default)]
     settings: Option<PinnedVacancyParentSettingsFixture>,
     placements: Vec<PinnedVacancyPlacementFixture>,
@@ -766,6 +803,14 @@ struct PinnedVacancyParentSettingsFixture {
     sheet_edge_clearance_mm: f64,
     clearance_safety_margin_mm: f64,
     flattening_sag_tolerance_mm: f64,
+    /// Optional within the block so that fixtures written before the search
+    /// envelope was a tunable keep loading. When present it must equal the
+    /// run's effective allowance: a layout found under a narrow envelope is
+    /// still contract-valid under a wide one, but it is not *reachable* by the
+    /// wide one's search, so replaying it there silently measures a different
+    /// experiment.
+    #[serde(default)]
+    search_offset_allowance_mm: Option<f64>,
 }
 
 #[derive(Deserialize)]
@@ -789,6 +834,7 @@ struct PinnedVacancyEffectiveSettings {
     sheet_edge_clearance_mm: f64,
     clearance_safety_margin_mm: f64,
     flattening_sag_tolerance_mm: f64,
+    search_offset_allowance_mm: f64,
 }
 
 /// Absolute tolerance (mm) for comparing a fixture's recorded settings
@@ -797,13 +843,49 @@ struct PinnedVacancyEffectiveSettings {
 /// halving a padding value), not any real geometry drift.
 const PARENT_FIXTURE_SETTINGS_TOLERANCE_MM: f64 = 1e-9;
 
-/// Loads a committed persistent-vacancy parent fixture. The fixture only
-/// supplies parent placements; the engine's compiled-in frozen fingerprint and
-/// depth checks remain the acceptance authority for the loaded layout.
+/// Absolute tolerance (mm) between a fixture's recorded depth and the nearest
+/// depth its own placements actually measure.
+///
+/// This absorbs only the rounding a fixture writer applies when printing the
+/// value - the corpus records three decimals. It deliberately does *not* absorb
+/// the difference between the engine's depth conventions: those are enumerated
+/// exactly by [`MeasuredDepths`], so widening this to cover them would have hidden
+/// a genuinely wrong claim behind a fudge factor. Two canonical grid steps is
+/// comfortably above the printing effect and three orders of magnitude below a
+/// real disagreement, which is millimetres, not microns.
+const PARENT_FIXTURE_DEPTH_TOLERANCE_MM: f64 = 0.002;
+
+/// Whether a fixture's `expectedPlacementFingerprint` is an actual placement
+/// digest rather than a human label.
+///
+/// Fixture-writing scripts routinely store a provenance tag there instead - the
+/// committed corpus carries `alternation`, `crossover`, `hint-only`, `reseed`
+/// and `true-exact-native` - and those cannot be checked against anything. A
+/// real fingerprint is a SHA-256 in lowercase hex, so the shape alone
+/// distinguishes them, and a fixture that *does* claim a digest is always
+/// checked.
+fn is_placement_fingerprint(value: &str) -> bool {
+    value.len() == 64
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+}
+
+/// Loads a committed persistent-vacancy parent fixture, re-deriving every claim
+/// it makes from its own placements before accepting it.
+///
+/// The fixture only supplies parent placements; the engine's compiled-in frozen
+/// fingerprint and depth checks remain the acceptance authority for the loaded
+/// layout. What happens here is narrower and earlier: it establishes that the
+/// fixture's *metadata* describes the placements it carries, under the contract
+/// the current run is actually configured with. A mismatch is a hard error, not
+/// a warning - a fixture that pins the wrong thing produces a plausible-looking
+/// trajectory for a different experiment.
 fn load_pinned_vacancy_parent(
     path: &str,
     request_sha256: &str,
     effective_settings: &PinnedVacancyEffectiveSettings,
+    pieces: &[OwnedPiece],
 ) -> Result<GeneralPersistentVacancyPinnedParent, Box<dyn std::error::Error>> {
     let bytes = fs::read(Path::new(path))?;
     let source_sha256 = format!("{:x}", Sha256::digest(&bytes));
@@ -818,21 +900,228 @@ fn load_pinned_vacancy_parent(
     if let Some(recorded) = &fixture.settings {
         check_parent_fixture_settings(recorded, effective_settings)?;
     }
+    let placements = fixture
+        .placements
+        .into_iter()
+        .map(|placement| GeneralFastPlacement {
+            piece_id: placement.piece_id,
+            rotation_deg: placement.rotation_deg,
+            mirrored: placement.mirrored,
+            translate_short_axis: placement.translate_short_axis,
+            translate_long_axis: placement.translate_long_axis,
+        })
+        .collect::<Vec<_>>();
+    check_parent_fixture_fingerprint(path, &fixture.expected_placement_fingerprint, &placements)?;
+    check_parent_fixture_depths(
+        path,
+        fixture.reported_depth_mm,
+        fixture.independent_depth_mm,
+        &placements,
+        effective_settings,
+        pieces,
+    )?;
     Ok(GeneralPersistentVacancyPinnedParent {
-        placements: fixture
-            .placements
-            .into_iter()
-            .map(|placement| GeneralFastPlacement {
-                piece_id: placement.piece_id,
-                rotation_deg: placement.rotation_deg,
-                mirrored: placement.mirrored,
-                translate_short_axis: placement.translate_short_axis,
-                translate_long_axis: placement.translate_long_axis,
-            })
-            .collect(),
+        placements,
         source: path.to_owned(),
         source_sha256,
     })
+}
+
+/// Recomputes the placement fingerprint and hard-errors when the fixture claims
+/// a different one. Fixtures carrying a provenance label instead of a digest
+/// are left alone; see `is_placement_fingerprint`.
+fn check_parent_fixture_fingerprint(
+    path: &str,
+    claimed: &str,
+    placements: &[GeneralFastPlacement],
+) -> Result<(), Box<dyn std::error::Error>> {
+    if !is_placement_fingerprint(claimed) {
+        return Ok(());
+    }
+    let recomputed = general_placement_fingerprint(placements);
+    if recomputed != claimed {
+        return Err(format!(
+            "parent fixture {path} claims placement fingerprint {claimed}, but its placements fingerprint to {recomputed}"
+        )
+        .into());
+    }
+    Ok(())
+}
+
+/// A layout's long-axis depth under every convention this codebase reports it
+/// in, all taken from the same placements.
+///
+/// There are two independent axes of variation, and a fixture in the wild may
+/// have recorded any combination of them.
+///
+/// **Quantization.** `source_snapped_mm` is what
+/// `independentUsedLongAxisDepthMm` and the engine's own independent depth
+/// carry: `PolygonSet::transformed(..)` rotates the canonical *integer-grid*
+/// path and re-quantizes it, and `bounds()` then reads that grid.
+/// `source_raw_mm` applies the same transform to the untouched `f64` source
+/// rings and never quantizes. They differ by at most a couple of grid steps at
+/// the deepest vertex.
+///
+/// **Envelope.** `usedLongAxisDepthMm` is measured on the *collision* polygons
+/// rather than the source: each is the source offset by
+/// `total_padding / 2 + clearance_safety_margin + search_offset_allowance`, and
+/// the metric adds back the sheet inset `edge_clearance - total_padding / 2`.
+/// The two halves of the pair clearance cancel, leaving exactly
+///
+/// ```text
+/// usedLongAxisDepthMm = source depth + clearance_safety_margin + search_offset_allowance
+/// ```
+///
+/// which is `envelope_excess_mm`. This is not a fudge factor: it is an identity,
+/// and it is why an anchor recorded from `usedLongAxisDepthMm` reads 181.591
+/// where its own geometry measures 181.589 at a 0.002 allowance.
+///
+/// Checking a claim against the nearest of these asks the question that matters
+/// - "does this fixture describe the layout it carries" - instead of the one
+/// that does not - "which field did its author copy". A fixture describing a
+/// *different* layout is out by millimetres and is nowhere near any of them.
+struct MeasuredDepths {
+    source_snapped_mm: f64,
+    source_raw_mm: f64,
+    envelope_excess_mm: f64,
+}
+
+impl MeasuredDepths {
+    /// Every depth this layout can legitimately be reported as.
+    fn candidates(&self) -> [f64; 4] {
+        [
+            self.source_snapped_mm,
+            self.source_raw_mm,
+            self.source_snapped_mm + self.envelope_excess_mm,
+            self.source_raw_mm + self.envelope_excess_mm,
+        ]
+    }
+
+    /// How far a claimed depth sits from the nearest convention.
+    fn distance_from(&self, claimed_mm: f64) -> f64 {
+        self.candidates()
+            .into_iter()
+            .map(|candidate| (claimed_mm - candidate).abs())
+            .fold(f64::INFINITY, f64::min)
+    }
+
+    /// The shallowest depth the layout can honestly be reported as, which is
+    /// the floor `reportedDepthMm` may not sink below.
+    fn shallowest_mm(&self) -> f64 {
+        self.candidates().into_iter().fold(f64::INFINITY, f64::min)
+    }
+}
+
+/// Measures a fixture's placements under every convention against the current
+/// run's pieces and settings.
+fn measure_parent_fixture_depths(
+    path: &str,
+    placements: &[GeneralFastPlacement],
+    effective_settings: &PinnedVacancyEffectiveSettings,
+    pieces: &[OwnedPiece],
+) -> Result<MeasuredDepths, Box<dyn std::error::Error>> {
+    let edge_clearance_mm = effective_settings.sheet_edge_clearance_mm;
+    let pieces_by_id = pieces
+        .iter()
+        .map(|piece| (piece.id.as_str(), piece))
+        .collect::<BTreeMap<_, _>>();
+    let placed = placements
+        .iter()
+        .map(|placement| {
+            let piece = pieces_by_id
+                .get(placement.piece_id.as_str())
+                .copied()
+                .ok_or_else(|| {
+                    format!(
+                        "parent fixture {path} places unknown piece {}",
+                        placement.piece_id
+                    )
+                })?;
+            Ok::<_, Box<dyn std::error::Error>>((piece, placement))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let snapped_mm = placed
+        .iter()
+        .map(
+            |(piece, placement)| -> Result<f64, Box<dyn std::error::Error>> {
+                let transformed = piece.polygon.transformed(
+                    placement.rotation_deg,
+                    placement.mirrored,
+                    placement.translate_short_axis,
+                    placement.translate_long_axis,
+                )?;
+                let bounds = transformed
+                    .bounds()
+                    .ok_or("a fixture polygon must be non-empty")?;
+                Ok(bounds.max_y + edge_clearance_mm)
+            },
+        )
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
+        .max_by(f64::total_cmp)
+        .ok_or("a fixture depth needs at least one placement")?;
+    let raw_mm = raw_source_long_axis_depth_mm(
+        &placed
+            .iter()
+            .map(|(piece, placement)| GeneralPlacement {
+                piece_id: piece.id.as_str(),
+                polygon: &piece.polygon,
+                rotation_deg: placement.rotation_deg,
+                mirrored: placement.mirrored,
+                translate_x: placement.translate_short_axis,
+                translate_y: placement.translate_long_axis,
+            })
+            .collect::<Vec<_>>(),
+        edge_clearance_mm,
+    )?;
+    Ok(MeasuredDepths {
+        source_snapped_mm: snapped_mm,
+        source_raw_mm: raw_mm,
+        envelope_excess_mm: effective_settings.clearance_safety_margin_mm
+            + effective_settings.search_offset_allowance_mm,
+    })
+}
+
+/// Recomputes the layout's depth from the fixture's own placements and checks
+/// both recorded depth fields against it.
+///
+/// The two fields are not the same quantity and are not checked the same way:
+///
+/// - `independentDepthMm` claims to *be* the measured depth of these
+///   placements, so it must land on one of the conventions in
+///   [`MeasuredDepths`].
+/// - `reportedDepthMm` is the depth the engine reported for the run that found
+///   the layout, which is the strip it was found in. That is legitimately
+///   deeper than the layout itself - several committed fixtures sit 0.26 mm
+///   apart this way - so only the impossible direction is an error: a fixture
+///   may not claim to be shallower than its own geometry.
+fn check_parent_fixture_depths(
+    path: &str,
+    reported_depth_mm: f64,
+    independent_depth_mm: f64,
+    placements: &[GeneralFastPlacement],
+    effective_settings: &PinnedVacancyEffectiveSettings,
+    pieces: &[OwnedPiece],
+) -> Result<(), Box<dyn std::error::Error>> {
+    if placements.is_empty() {
+        return Ok(());
+    }
+    let measured = measure_parent_fixture_depths(path, placements, effective_settings, pieces)?;
+    if measured.distance_from(independent_depth_mm) > PARENT_FIXTURE_DEPTH_TOLERANCE_MM {
+        return Err(format!(
+            "parent fixture {path} claims independentDepthMm={independent_depth_mm}, but its placements measure {} (raw source {}, plus a {} mm search envelope)",
+            measured.source_snapped_mm, measured.source_raw_mm, measured.envelope_excess_mm
+        )
+        .into());
+    }
+    if reported_depth_mm < measured.shallowest_mm() - PARENT_FIXTURE_DEPTH_TOLERANCE_MM {
+        return Err(format!(
+            "parent fixture {path} claims reportedDepthMm={reported_depth_mm}, which is shallower than the {} its placements measure",
+            measured.shallowest_mm()
+        )
+        .into());
+    }
+    Ok(())
 }
 
 /// Compares a fixture's recorded geometry settings against the current
@@ -874,7 +1163,14 @@ fn check_parent_fixture_settings(
             effective.flattening_sag_tolerance_mm,
         ),
     ];
-    for (field, fixture_value, effective_value) in fields {
+    let allowance = recorded.search_offset_allowance_mm.map(|recorded| {
+        (
+            "searchOffsetAllowanceMm",
+            recorded,
+            effective.search_offset_allowance_mm,
+        )
+    });
+    for (field, fixture_value, effective_value) in fields.into_iter().chain(allowance) {
         if (fixture_value - effective_value).abs() > PARENT_FIXTURE_SETTINGS_TOLERANCE_MM {
             return Err(format!(
                 "parent fixture settings mismatch: {field} fixture={fixture_value} effective={effective_value}"
@@ -1282,20 +1578,56 @@ mod tests {
             sheet_edge_clearance_mm: 2.5,
             clearance_safety_margin_mm: 0.001,
             flattening_sag_tolerance_mm: 0.005,
+            search_offset_allowance_mm: DEFAULT_SEARCH_OFFSET_ALLOWANCE_MM,
         }
+    }
+
+    /// One 2x4 mm piece, placed by the fixtures below at a known offset so the
+    /// recomputed depth is arithmetic rather than a magic number.
+    fn sample_owned_pieces() -> Vec<OwnedPiece> {
+        vec![OwnedPiece {
+            id: "piece".to_owned(),
+            polygon: rectangle(2.0, 4.0),
+            allow_rotation: false,
+            allow_mirror: false,
+        }]
+    }
+
+    fn sample_placement(translate_long_axis: f64) -> serde_json::Value {
+        json!({
+            "pieceId": "piece",
+            "rotationDeg": 0.0,
+            "mirrored": false,
+            "translateShortAxis": 3.0,
+            "translateLongAxis": translate_long_axis,
+        })
+    }
+
+    /// The depth `sample_placement(y)` produces: the piece is 4 mm tall and the
+    /// sample edge clearance is 2.5 mm.
+    fn sample_depth(translate_long_axis: f64) -> f64 {
+        translate_long_axis + 4.0 + 2.5
+    }
+
+    fn load_sample(
+        path: &std::path::Path,
+        effective: &PinnedVacancyEffectiveSettings,
+    ) -> Result<GeneralPersistentVacancyPinnedParent, Box<dyn std::error::Error>> {
+        let result = load_pinned_vacancy_parent(
+            path.to_str().unwrap(),
+            "deadbeef",
+            effective,
+            &sample_owned_pieces(),
+        );
+        std::fs::remove_file(path).ok();
+        result
     }
 
     #[test]
     fn parent_fixture_without_settings_block_loads_unchanged() {
         let fixture = sample_pinned_vacancy_fixture(None);
         let path = write_temp_fixture("no_settings", &fixture);
-        let result = load_pinned_vacancy_parent(
-            path.to_str().unwrap(),
-            "deadbeef",
-            &sample_effective_settings(),
-        );
-        std::fs::remove_file(&path).ok();
-        assert!(result.is_ok());
+        assert!(load_sample(&path, &sample_effective_settings()).is_ok());
     }
 
     #[test]
@@ -1310,9 +1642,7 @@ mod tests {
             "flatteningSagToleranceMm": effective.flattening_sag_tolerance_mm,
         })));
         let path = write_temp_fixture("matching_settings", &fixture);
-        let result = load_pinned_vacancy_parent(path.to_str().unwrap(), "deadbeef", &effective);
-        std::fs::remove_file(&path).ok();
-        assert!(result.is_ok());
+        assert!(load_sample(&path, &effective).is_ok());
     }
 
     #[test]
@@ -1327,14 +1657,280 @@ mod tests {
             "flatteningSagToleranceMm": effective.flattening_sag_tolerance_mm,
         })));
         let path = write_temp_fixture("mismatched_settings", &fixture);
-        let error =
-            load_pinned_vacancy_parent(path.to_str().unwrap(), "deadbeef", &effective).unwrap_err();
-        std::fs::remove_file(&path).ok();
+        let error = load_sample(&path, &effective).unwrap_err();
         let expected = format!(
             "parent fixture settings mismatch: totalPaddingMm fixture={} effective={}",
             0.0_f64, effective.total_padding_mm
         );
         assert_eq!(error.to_string(), expected);
+    }
+
+    /// The allowance is the field that decides which layouts the search may
+    /// visit, so a fixture recorded under a different one is replaying a
+    /// different experiment even though every other setting agrees.
+    #[test]
+    fn parent_fixture_pins_the_search_offset_allowance_when_it_records_one() {
+        let effective = sample_effective_settings();
+        let settings_block = |allowance: serde_json::Value| {
+            let mut block = json!({
+                "sheetShortAxisMm": effective.sheet_short_axis_mm,
+                "sheetLongAxisMm": effective.sheet_long_axis_mm,
+                "totalPaddingMm": effective.total_padding_mm,
+                "sheetEdgeClearanceMm": effective.sheet_edge_clearance_mm,
+                "clearanceSafetyMarginMm": effective.clearance_safety_margin_mm,
+                "flatteningSagToleranceMm": effective.flattening_sag_tolerance_mm,
+            });
+            if !allowance.is_null() {
+                block["searchOffsetAllowanceMm"] = allowance;
+            }
+            sample_pinned_vacancy_fixture(Some(block))
+        };
+
+        // Absent: backward compatible, no opinion.
+        let path = write_temp_fixture("allowance_absent", &settings_block(json!(null)));
+        assert!(load_sample(&path, &effective).is_ok());
+
+        // Present and equal.
+        let path = write_temp_fixture(
+            "allowance_match",
+            &settings_block(json!(effective.search_offset_allowance_mm)),
+        );
+        assert!(load_sample(&path, &effective).is_ok());
+
+        // Present and different: this is the record-fixture replay the split
+        // exists to describe, and it must not load silently.
+        let path = write_temp_fixture("allowance_mismatch", &settings_block(json!(0.0005)));
+        let error = load_sample(&path, &effective).unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            format!(
+                "parent fixture settings mismatch: searchOffsetAllowanceMm fixture={} effective={}",
+                0.0005_f64, effective.search_offset_allowance_mm
+            )
+        );
+    }
+
+    #[test]
+    fn placement_fingerprint_labels_are_told_apart_from_digests() {
+        assert!(is_placement_fingerprint(&"a".repeat(64)));
+        assert!(is_placement_fingerprint(
+            "9dea3f0d263be2878b7bfca84705118aed9bee39420387a06f42278d3351e69d"
+        ));
+        for label in [
+            "alternation",
+            "crossover",
+            "hint-only",
+            "reseed",
+            "true-exact-native",
+            "",
+        ] {
+            assert!(!is_placement_fingerprint(label), "{label}");
+        }
+        // Right length, wrong alphabet.
+        assert!(!is_placement_fingerprint(&"A".repeat(64)));
+        assert!(!is_placement_fingerprint(&"g".repeat(64)));
+    }
+
+    /// A fixture that claims a real digest is checked against its own
+    /// placements; one that carries a provenance label is left alone.
+    #[test]
+    fn parent_fixture_placement_fingerprint_is_recomputed_when_it_is_a_digest() {
+        let effective = sample_effective_settings();
+        let mut fixture = sample_pinned_vacancy_fixture(None);
+        fixture["placements"] = json!([sample_placement(3.5)]);
+        fixture["reportedDepthMm"] = json!(sample_depth(3.5));
+        fixture["independentDepthMm"] = json!(sample_depth(3.5));
+
+        let truthful = general_placement_fingerprint(&[GeneralFastPlacement {
+            piece_id: "piece".to_owned(),
+            rotation_deg: 0.0,
+            mirrored: false,
+            translate_short_axis: 3.0,
+            translate_long_axis: 3.5,
+        }]);
+
+        let mut honest = fixture.clone();
+        honest["expectedPlacementFingerprint"] = json!(truthful);
+        let path = write_temp_fixture("fingerprint_honest", &honest);
+        assert!(load_sample(&path, &effective).is_ok());
+
+        let mut lying = fixture.clone();
+        lying["expectedPlacementFingerprint"] = json!("f".repeat(64));
+        let path = write_temp_fixture("fingerprint_lying", &lying);
+        let error = load_sample(&path, &effective).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains(&format!("its placements fingerprint to {truthful}")),
+            "{error}"
+        );
+
+        // A provenance label is unverifiable and must stay loadable.
+        let mut labelled = fixture;
+        labelled["expectedPlacementFingerprint"] = json!("alternation");
+        let path = write_temp_fixture("fingerprint_label", &labelled);
+        assert!(load_sample(&path, &effective).is_ok());
+    }
+
+    /// `independentDepthMm` claims to be the layout's measured depth, so it is
+    /// held to it in both directions.
+    #[test]
+    fn parent_fixture_independent_depth_is_recomputed_from_its_placements() {
+        let effective = sample_effective_settings();
+        let mut fixture = sample_pinned_vacancy_fixture(None);
+        fixture["placements"] = json!([sample_placement(3.5)]);
+        let truthful = sample_depth(3.5);
+
+        for (claimed, ok) in [
+            (truthful, true),
+            (truthful + 0.0015, true),
+            (truthful - 0.0015, true),
+            (truthful + 0.5, false),
+            (truthful - 0.5, false),
+        ] {
+            let mut candidate = fixture.clone();
+            candidate["independentDepthMm"] = json!(claimed);
+            candidate["reportedDepthMm"] = json!(truthful.max(claimed));
+            let path = write_temp_fixture("independent_depth", &candidate);
+            let result = load_sample(&path, &effective);
+            assert_eq!(result.is_ok(), ok, "claimed {claimed}: {result:?}");
+        }
+
+        let mut candidate = fixture;
+        candidate["independentDepthMm"] = json!(truthful + 0.5);
+        candidate["reportedDepthMm"] = json!(truthful + 0.5);
+        let path = write_temp_fixture("independent_depth_message", &candidate);
+        let error = load_sample(&path, &effective).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains(&format!("its placements measure {truthful}")),
+            "{error}"
+        );
+    }
+
+    /// `reportedDepthMm` is the strip the layout was found in, so it may sit
+    /// above the layout's own depth - several committed fixtures do. Only the
+    /// impossible direction is an error.
+    #[test]
+    fn parent_fixture_reported_depth_may_exceed_but_never_understate_the_layout() {
+        let effective = sample_effective_settings();
+        let mut fixture = sample_pinned_vacancy_fixture(None);
+        fixture["placements"] = json!([sample_placement(3.5)]);
+        fixture["independentDepthMm"] = json!(sample_depth(3.5));
+        let truthful = sample_depth(3.5);
+
+        let mut deeper = fixture.clone();
+        deeper["reportedDepthMm"] = json!(truthful + 0.264);
+        let path = write_temp_fixture("reported_depth_deeper", &deeper);
+        assert!(load_sample(&path, &effective).is_ok());
+
+        let mut shallower = fixture;
+        shallower["reportedDepthMm"] = json!(truthful - 0.5);
+        let path = write_temp_fixture("reported_depth_shallower", &shallower);
+        let error = load_sample(&path, &effective).unwrap_err();
+        assert!(
+            error.to_string().contains("which is shallower than"),
+            "{error}"
+        );
+    }
+
+    /// Every convention the engine reports a depth in is accepted - and nothing
+    /// else. The sub-grid placement below separates the snapped and raw
+    /// measurements, and the non-zero allowance separates the source and
+    /// envelope ones, so the test would not pass if the check collapsed them.
+    #[test]
+    fn parent_fixture_depth_accepts_every_reporting_convention_and_nothing_else() {
+        let effective = sample_effective_settings();
+        // A translation a third of a grid step above 3.500: the canonical grid
+        // rounds it back down, the raw source rings keep it.
+        let measured = measure_parent_fixture_depths(
+            "probe",
+            &[GeneralFastPlacement {
+                piece_id: "piece".to_owned(),
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_short_axis: 3.0,
+                translate_long_axis: 3.5003,
+            }],
+            &effective,
+            &sample_owned_pieces(),
+        )
+        .unwrap();
+        assert_eq!(measured.source_snapped_mm, sample_depth(3.5));
+        assert_eq!(measured.source_raw_mm, sample_depth(3.5003));
+        assert_eq!(
+            measured.envelope_excess_mm,
+            effective.clearance_safety_margin_mm + effective.search_offset_allowance_mm
+        );
+        assert!(measured.envelope_excess_mm > PARENT_FIXTURE_DEPTH_TOLERANCE_MM / 2.0);
+
+        let candidate = |claimed: f64| {
+            let mut fixture = sample_pinned_vacancy_fixture(None);
+            fixture["placements"] = json!([sample_placement(3.5003)]);
+            fixture["independentDepthMm"] = json!(claimed);
+            fixture["reportedDepthMm"] = json!(claimed.max(measured.shallowest_mm()));
+            fixture
+        };
+
+        let mut cases = measured
+            .candidates()
+            .map(|candidate| (candidate, true))
+            .to_vec();
+        cases.push((measured.source_raw_mm + 0.5, false));
+        cases.push((measured.source_snapped_mm - 0.5, false));
+        for (claimed, ok) in cases {
+            let path = write_temp_fixture("depth_convention", &candidate(claimed));
+            let result = load_sample(&path, &effective);
+            assert_eq!(result.is_ok(), ok, "claimed {claimed}: {result:?}");
+        }
+    }
+
+    /// The `usedLongAxisDepthMm` convention exceeds the source depth by exactly
+    /// the part of the collision expansion that is not half the pair clearance.
+    /// Anchors in the corpus were written from that field, so the identity has
+    /// to hold rather than be absorbed by a wide tolerance.
+    #[test]
+    fn envelope_depth_convention_is_margin_plus_allowance_above_the_source() {
+        let mut effective = sample_effective_settings();
+        effective.clearance_safety_margin_mm = 0.0;
+        effective.search_offset_allowance_mm = 0.002;
+        let measured = measure_parent_fixture_depths(
+            "probe",
+            &[GeneralFastPlacement {
+                piece_id: "piece".to_owned(),
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_short_axis: 3.0,
+                translate_long_axis: 3.5,
+            }],
+            &effective,
+            &sample_owned_pieces(),
+        )
+        .unwrap();
+        assert_eq!(measured.envelope_excess_mm, 0.002);
+        assert!(measured
+            .candidates()
+            .contains(&(measured.source_raw_mm + 0.002)));
+        // A claim 0.002 above the source depth - exactly what an anchor written
+        // from `usedLongAxisDepthMm` at the default allowance carries - lands on
+        // a convention rather than 0.002 away from the nearest one.
+        assert_eq!(measured.distance_from(measured.source_raw_mm + 0.002), 0.0);
+    }
+
+    #[test]
+    fn parent_fixture_placing_an_unknown_piece_hard_errors() {
+        let effective = sample_effective_settings();
+        let mut fixture = sample_pinned_vacancy_fixture(None);
+        let mut placement = sample_placement(3.5);
+        placement["pieceId"] = json!("stranger");
+        fixture["placements"] = json!([placement]);
+        let path = write_temp_fixture("unknown_piece", &fixture);
+        let error = load_sample(&path, &effective).unwrap_err();
+        assert!(
+            error.to_string().contains("places unknown piece stranger"),
+            "{error}"
+        );
     }
 
     #[test]
