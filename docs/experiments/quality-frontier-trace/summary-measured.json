@@ -1,0 +1,3512 @@
+{
+ "request": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cca19e2a-a47-1/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "areaLowerBoundDepthMm": 130.39872539649122,
+ "mode20ClampMm": 260.797,
+ "mode20ClampMultiple": 2.0,
+ "runs": {
+  "m0coupled-seed0-work": {
+   "config": "m0coupled",
+   "seed": 0,
+   "variant": "work",
+   "workOrdinalsArmed": true,
+   "wallSeconds": 2.221497922000708,
+   "traceEndSeconds": 2.189427437,
+   "engineDepthMm": 181.589,
+   "modeExactValid": null,
+   "modeDepthMm": null,
+   "exactValidCandidates": 7,
+   "completeExactValidCandidates": 7,
+   "milestones": {
+    "timeToFirstCompleteLayoutSeconds": 0.553847381,
+    "firstCompleteLayoutDepthMm": 231.57,
+    "timeToFirstPublicIncumbentSeconds": 0.670260607,
+    "depthMilestones": {
+     "200": {
+      "seconds": 0.670260607,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "190": {
+      "seconds": 0.670260607,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "185": {
+      "seconds": 0.670260607,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "182": {
+      "seconds": 1.057207017,
+      "depthMm": 181.874,
+      "candidateQueries": 1553851,
+      "effectiveMoves": 13999,
+      "source": "m0.relaxedEpoch"
+     },
+     "181.6": {
+      "seconds": 1.398151996,
+      "depthMm": 181.589,
+      "candidateQueries": 3185787,
+      "effectiveMoves": 28757,
+      "source": "m0.relaxedEpoch"
+     },
+     "180": null,
+     "175": null,
+     "170": null
+    }
+   },
+   "marginal": {
+    "segments": [
+     {
+      "fromSeconds": 0.670260607,
+      "toSeconds": 0.82709641,
+      "deltaMm": 0.6631067050885235,
+      "mmPerSecond": 4.228031434177843,
+      "deltaCandidateQueries": 568354,
+      "mmPerMillionQueries": 1.1667142398725505,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.82709641,
+      "toSeconds": 1.057207017,
+      "deltaMm": 0.4388932949114803,
+      "mmPerSecond": 1.9073144894684502,
+      "deltaCandidateQueries": 985497,
+      "mmPerMillionQueries": 0.44535223842536337,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 1.057207017,
+      "toSeconds": 1.398151996,
+      "deltaMm": 0.2849999999999966,
+      "mmPerSecond": 0.8359120020946157,
+      "deltaCandidateQueries": 1631936,
+      "mmPerMillionQueries": 0.17463920153731308,
+      "source": "m0.relaxedEpoch"
+     }
+    ],
+    "firstIncumbentDepthMm": 182.976,
+    "finalIncumbentDepthMm": 181.589,
+    "totalGainMm": 1.3870000000000005,
+    "gainWindowSeconds": 0.7278913889999999,
+    "overallMmPerSecondOverWholeRun": 0.6334989580200463,
+    "idleTailSeconds": 0.791275441,
+    "idleTailGainMm": 0.0
+   },
+   "endWork": {
+    "candidateQueries": 5851533,
+    "neighborTests": 23633659,
+    "effectiveMoves": 52313,
+    "acceptedMoves": 52313,
+    "fullRescores": 1101,
+    "publicationAttempts": 9,
+    "exactPairTests": 585002,
+    "collisionPolygonBuilds": 2913,
+    "proxySurvivors": 0
+   },
+   "scopes": [
+    {
+     "operator": "constructor",
+     "entries": 1,
+     "seconds": 0.64595992,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 584671,
+     "collisionPolygonBuilds": 2913,
+     "publicationAttempts": 4,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "coupled.treatment",
+     "entries": 1,
+     "seconds": 0.11215561799999985,
+     "candidateQueries": 197246,
+     "effectiveMoves": 1490,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.boundaryProjection",
+     "entries": 1,
+     "seconds": 0.11213697700000003,
+     "candidateQueries": 197246,
+     "effectiveMoves": 1490,
+     "exactPairTests": 63,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch13",
+     "entries": 1,
+     "seconds": 0.09865421000000008,
+     "candidateQueries": 472868,
+     "effectiveMoves": 4248,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch3",
+     "entries": 1,
+     "seconds": 0.09834240500000002,
+     "candidateQueries": 407215,
+     "effectiveMoves": 3693,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.control",
+     "entries": 1,
+     "seconds": 0.09722769900000006,
+     "candidateQueries": 124618,
+     "effectiveMoves": 1180,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch6",
+     "entries": 1,
+     "seconds": 0.09090333700000008,
+     "candidateQueries": 395075,
+     "effectiveMoves": 3535,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch0",
+     "entries": 1,
+     "seconds": 0.08874450300000003,
+     "candidateQueries": 306461,
+     "effectiveMoves": 2725,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch15",
+     "entries": 1,
+     "seconds": 0.07861133600000003,
+     "candidateQueries": 361393,
+     "effectiveMoves": 3249,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch10",
+     "entries": 1,
+     "seconds": 0.078200504,
+     "candidateQueries": 365742,
+     "effectiveMoves": 3326,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch5",
+     "entries": 1,
+     "seconds": 0.075374826,
+     "candidateQueries": 397554,
+     "effectiveMoves": 3566,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch2",
+     "entries": 1,
+     "seconds": 0.07423232000000002,
+     "candidateQueries": 351236,
+     "effectiveMoves": 3170,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch12",
+     "entries": 1,
+     "seconds": 0.07156259599999992,
+     "candidateQueries": 242023,
+     "effectiveMoves": 2209,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch11",
+     "entries": 1,
+     "seconds": 0.06997556900000013,
+     "candidateQueries": 370120,
+     "effectiveMoves": 3350,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch14",
+     "entries": 1,
+     "seconds": 0.06969213399999985,
+     "candidateQueries": 334490,
+     "effectiveMoves": 3014,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch1",
+     "entries": 1,
+     "seconds": 0.06809129000000003,
+     "candidateQueries": 261893,
+     "effectiveMoves": 2371,
+     "exactPairTests": 64,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch8",
+     "entries": 1,
+     "seconds": 0.06177525199999989,
+     "candidateQueries": 300792,
+     "effectiveMoves": 2752,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch9",
+     "entries": 1,
+     "seconds": 0.061216473999999854,
+     "candidateQueries": 246838,
+     "effectiveMoves": 2246,
+     "exactPairTests": 72,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch4",
+     "entries": 1,
+     "seconds": 0.05752627899999996,
+     "candidateQueries": 227046,
+     "effectiveMoves": 2040,
+     "exactPairTests": 71,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch7",
+     "entries": 1,
+     "seconds": 0.05165086399999996,
+     "candidateQueries": 291677,
+     "effectiveMoves": 2659,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "publication",
+     "entries": 1,
+     "seconds": 5.291999999990082e-06,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    }
+   ],
+   "publications": []
+  },
+  "mode20-seed0-work": {
+   "config": "mode20",
+   "seed": 0,
+   "variant": "work",
+   "workOrdinalsArmed": true,
+   "wallSeconds": 26.9175569099898,
+   "traceEndSeconds": 26.88228984,
+   "engineDepthMm": 181.589,
+   "modeExactValid": true,
+   "modeDepthMm": 204.07,
+   "exactValidCandidates": 15,
+   "completeExactValidCandidates": 15,
+   "milestones": {
+    "timeToFirstCompleteLayoutSeconds": 0.555670618,
+    "firstCompleteLayoutDepthMm": 231.57,
+    "timeToFirstPublicIncumbentSeconds": 0.672707221,
+    "depthMilestones": {
+     "200": {
+      "seconds": 0.672707221,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "190": {
+      "seconds": 0.672707221,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "185": {
+      "seconds": 0.672707221,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "182": {
+      "seconds": 1.049191245,
+      "depthMm": 181.874,
+      "candidateQueries": 1553851,
+      "effectiveMoves": 13999,
+      "source": "m0.relaxedEpoch"
+     },
+     "181.6": {
+      "seconds": 1.393103341,
+      "depthMm": 181.589,
+      "candidateQueries": 3185787,
+      "effectiveMoves": 28757,
+      "source": "m0.relaxedEpoch"
+     },
+     "180": null,
+     "175": null,
+     "170": null
+    }
+   },
+   "marginal": {
+    "segments": [
+     {
+      "fromSeconds": 0.672707221,
+      "toSeconds": 0.819290992,
+      "deltaMm": 0.6631067050885235,
+      "mmPerSecond": 4.523738887086782,
+      "deltaCandidateQueries": 568354,
+      "mmPerMillionQueries": 1.1667142398725505,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.819290992,
+      "toSeconds": 1.049191245,
+      "deltaMm": 0.4388932949114803,
+      "mmPerSecond": 1.9090596429725557,
+      "deltaCandidateQueries": 985497,
+      "mmPerMillionQueries": 0.44535223842536337,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 1.049191245,
+      "toSeconds": 1.393103341,
+      "deltaMm": 0.2849999999999966,
+      "mmPerSecond": 0.8287001338853653,
+      "deltaCandidateQueries": 1631936,
+      "mmPerMillionQueries": 0.17463920153731308,
+      "source": "m0.relaxedEpoch"
+     }
+    ],
+    "firstIncumbentDepthMm": 182.976,
+    "finalIncumbentDepthMm": 181.589,
+    "totalGainMm": 1.3870000000000005,
+    "gainWindowSeconds": 0.72039612,
+    "overallMmPerSecondOverWholeRun": 0.05159530710572833,
+    "idleTailSeconds": 25.489186499,
+    "idleTailGainMm": 0.0
+   },
+   "endWork": {
+    "candidateQueries": 5851533,
+    "neighborTests": 23633659,
+    "effectiveMoves": 52313,
+    "acceptedMoves": 52313,
+    "fullRescores": 1101,
+    "publicationAttempts": 17,
+    "exactPairTests": 585460,
+    "collisionPolygonBuilds": 2913,
+    "proxySurvivors": 8
+   },
+   "scopes": [
+    {
+     "operator": "mode20",
+     "entries": 1,
+     "seconds": 24.679273526,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 458,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 8,
+     "proxySurvivors": 8,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "mode20.restart6.vertex-count",
+     "entries": 1,
+     "seconds": 3.203534490999999,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 48,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart2.semi-perimeter",
+     "entries": 1,
+     "seconds": 3.1492713320000014,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 51,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart1.max-dimension",
+     "entries": 1,
+     "seconds": 3.141016735,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 62,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart3.banded-area-shuffle",
+     "entries": 1,
+     "seconds": 3.100159005,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 56,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart5.width",
+     "entries": 1,
+     "seconds": 3.0674512689999993,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 57,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart4.height",
+     "entries": 1,
+     "seconds": 3.0430709999999994,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 65,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart0.padded-bbox-area",
+     "entries": 1,
+     "seconds": 3.0035759530000004,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 57,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart7.padded-bbox-area-reshuffled",
+     "entries": 1,
+     "seconds": 2.9675987490000004,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 62,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "constructor",
+     "entries": 1,
+     "seconds": 0.648456598,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 584671,
+     "collisionPolygonBuilds": 2913,
+     "publicationAttempts": 4,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "coupled.boundaryProjection",
+     "entries": 1,
+     "seconds": 0.11952201000000029,
+     "candidateQueries": 197246,
+     "effectiveMoves": 1490,
+     "exactPairTests": 63,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.treatment",
+     "entries": 1,
+     "seconds": 0.11257672799999985,
+     "candidateQueries": 197246,
+     "effectiveMoves": 1490,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.control",
+     "entries": 1,
+     "seconds": 0.10204770799999996,
+     "candidateQueries": 124618,
+     "effectiveMoves": 1180,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch3",
+     "entries": 1,
+     "seconds": 0.098981541,
+     "candidateQueries": 407215,
+     "effectiveMoves": 3693,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch13",
+     "entries": 1,
+     "seconds": 0.09874727300000008,
+     "candidateQueries": 472868,
+     "effectiveMoves": 4248,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch6",
+     "entries": 1,
+     "seconds": 0.09099761800000006,
+     "candidateQueries": 395075,
+     "effectiveMoves": 3535,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch15",
+     "entries": 1,
+     "seconds": 0.085561899,
+     "candidateQueries": 361393,
+     "effectiveMoves": 3249,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch0",
+     "entries": 1,
+     "seconds": 0.078773922,
+     "candidateQueries": 306461,
+     "effectiveMoves": 2725,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch10",
+     "entries": 1,
+     "seconds": 0.07782901200000003,
+     "candidateQueries": 365742,
+     "effectiveMoves": 3326,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch5",
+     "entries": 1,
+     "seconds": 0.07689102399999981,
+     "candidateQueries": 397554,
+     "effectiveMoves": 3566,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch2",
+     "entries": 1,
+     "seconds": 0.07348933899999999,
+     "candidateQueries": 351236,
+     "effectiveMoves": 3170,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch12",
+     "entries": 1,
+     "seconds": 0.07153139200000003,
+     "candidateQueries": 242023,
+     "effectiveMoves": 2209,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch11",
+     "entries": 1,
+     "seconds": 0.07016055899999984,
+     "candidateQueries": 370120,
+     "effectiveMoves": 3350,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch14",
+     "entries": 1,
+     "seconds": 0.06882494699999997,
+     "candidateQueries": 334490,
+     "effectiveMoves": 3014,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch1",
+     "entries": 1,
+     "seconds": 0.06780949599999997,
+     "candidateQueries": 261893,
+     "effectiveMoves": 2371,
+     "exactPairTests": 64,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch8",
+     "entries": 1,
+     "seconds": 0.06243735199999989,
+     "candidateQueries": 300792,
+     "effectiveMoves": 2752,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch9",
+     "entries": 1,
+     "seconds": 0.06136001699999993,
+     "candidateQueries": 246838,
+     "effectiveMoves": 2246,
+     "exactPairTests": 72,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch4",
+     "entries": 1,
+     "seconds": 0.05742348099999994,
+     "candidateQueries": 227046,
+     "effectiveMoves": 2040,
+     "exactPairTests": 71,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch7",
+     "entries": 1,
+     "seconds": 0.05219807399999987,
+     "candidateQueries": 291677,
+     "effectiveMoves": 2659,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "publication",
+     "entries": 1,
+     "seconds": 3.308799999857115e-05,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    }
+   ],
+   "publications": [
+    {
+     "t": 26.880932708,
+     "reason": "notStrictlyBetterThanLegacy",
+     "disposition": "discarded",
+     "publishedDepthMm": 204.07,
+     "legacyDepthMm": 181.589
+    }
+   ]
+  },
+  "m0coupled-seed1-work": {
+   "config": "m0coupled",
+   "seed": 1,
+   "variant": "work",
+   "workOrdinalsArmed": true,
+   "wallSeconds": 2.3899294979928527,
+   "traceEndSeconds": 2.354817116,
+   "engineDepthMm": 179.69,
+   "modeExactValid": null,
+   "modeDepthMm": null,
+   "exactValidCandidates": 9,
+   "completeExactValidCandidates": 9,
+   "milestones": {
+    "timeToFirstCompleteLayoutSeconds": 0.543726296,
+    "firstCompleteLayoutDepthMm": 231.57,
+    "timeToFirstPublicIncumbentSeconds": 0.681213027,
+    "depthMilestones": {
+     "200": {
+      "seconds": 0.681213027,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "190": {
+      "seconds": 0.681213027,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "185": {
+      "seconds": 0.681213027,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "182": {
+      "seconds": 0.989736099,
+      "depthMm": 181.676,
+      "candidateQueries": 1309855,
+      "effectiveMoves": 11809,
+      "source": "m0.relaxedEpoch"
+     },
+     "181.6": {
+      "seconds": 1.291832091,
+      "depthMm": 181.284,
+      "candidateQueries": 2855006,
+      "effectiveMoves": 25708,
+      "source": "m0.relaxedEpoch"
+     },
+     "180": {
+      "seconds": 1.551323655,
+      "depthMm": 179.69,
+      "candidateQueries": 3936223,
+      "effectiveMoves": 35401,
+      "source": "m0.relaxedEpoch"
+     },
+     "175": null,
+     "170": null
+    }
+   },
+   "marginal": {
+    "segments": [
+     {
+      "fromSeconds": 0.681213027,
+      "toSeconds": 0.807840117,
+      "deltaMm": 0.6159999999999854,
+      "mmPerSecond": 4.864677850529339,
+      "deltaCandidateQueries": 572128,
+      "mmPerMillionQueries": 1.076682141059318,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.807840117,
+      "toSeconds": 0.989736099,
+      "deltaMm": 0.6840000000000259,
+      "mmPerSecond": 3.7603909249629597,
+      "deltaCandidateQueries": 737727,
+      "mmPerMillionQueries": 0.927172246644119,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.989736099,
+      "toSeconds": 1.291832091,
+      "deltaMm": 0.3919999999999959,
+      "mmPerSecond": 1.2976007970340628,
+      "deltaCandidateQueries": 1545151,
+      "mmPerMillionQueries": 0.2536968878769751,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 1.291832091,
+      "toSeconds": 1.459141487,
+      "deltaMm": 0.6872217350892811,
+      "mmPerSecond": 4.1074903832016805,
+      "deltaCandidateQueries": 710662,
+      "mmPerMillionQueries": 0.9670162961988696,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 1.459141487,
+      "toSeconds": 1.551323655,
+      "deltaMm": 0.906778264910713,
+      "mmPerSecond": 9.836807753433526,
+      "deltaCandidateQueries": 370555,
+      "mmPerMillionQueries": 2.4470814451585134,
+      "source": "m0.relaxedEpoch"
+     }
+    ],
+    "firstIncumbentDepthMm": 182.976,
+    "finalIncumbentDepthMm": 179.69,
+    "totalGainMm": 3.2860000000000014,
+    "gainWindowSeconds": 0.870110628,
+    "overallMmPerSecondOverWholeRun": 1.395437453581003,
+    "idleTailSeconds": 0.803493461,
+    "idleTailGainMm": 0.0
+   },
+   "endWork": {
+    "candidateQueries": 6701483,
+    "neighborTests": 27498006,
+    "effectiveMoves": 60207,
+    "acceptedMoves": 60207,
+    "fullRescores": 801,
+    "publicationAttempts": 10,
+    "exactPairTests": 585123,
+    "collisionPolygonBuilds": 2913,
+    "proxySurvivors": 0
+   },
+   "scopes": [
+    {
+     "operator": "constructor",
+     "entries": 1,
+     "seconds": 0.656927746,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 584671,
+     "collisionPolygonBuilds": 2913,
+     "publicationAttempts": 4,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch12",
+     "entries": 1,
+     "seconds": 0.1125383929999999,
+     "candidateQueries": 442178,
+     "effectiveMoves": 4028,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch14",
+     "entries": 1,
+     "seconds": 0.106108804,
+     "candidateQueries": 408054,
+     "effectiveMoves": 3696,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.control",
+     "entries": 1,
+     "seconds": 0.09739409299999968,
+     "candidateQueries": 102362,
+     "effectiveMoves": 1006,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch2",
+     "entries": 1,
+     "seconds": 0.0973463710000001,
+     "candidateQueries": 419291,
+     "effectiveMoves": 3813,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch11",
+     "entries": 1,
+     "seconds": 0.09485434100000001,
+     "candidateQueries": 427704,
+     "effectiveMoves": 3870,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch10",
+     "entries": 1,
+     "seconds": 0.0921807010000002,
+     "candidateQueries": 370555,
+     "effectiveMoves": 3323,
+     "exactPairTests": 85,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch15",
+     "entries": 1,
+     "seconds": 0.08806789799999981,
+     "candidateQueries": 423586,
+     "effectiveMoves": 3812,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch4",
+     "entries": 1,
+     "seconds": 0.08755698199999995,
+     "candidateQueries": 466152,
+     "effectiveMoves": 4176,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch13",
+     "entries": 1,
+     "seconds": 0.08580682999999989,
+     "candidateQueries": 404013,
+     "effectiveMoves": 3655,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch3",
+     "entries": 1,
+     "seconds": 0.08454847499999996,
+     "candidateQueries": 318436,
+     "effectiveMoves": 2884,
+     "exactPairTests": 68,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch8",
+     "entries": 1,
+     "seconds": 0.08421440000000002,
+     "candidateQueries": 384333,
+     "effectiveMoves": 3423,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch9",
+     "entries": 1,
+     "seconds": 0.0830898470000001,
+     "candidateQueries": 326329,
+     "effectiveMoves": 2947,
+     "exactPairTests": 88,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch7",
+     "entries": 1,
+     "seconds": 0.07541014900000009,
+     "candidateQueries": 382540,
+     "effectiveMoves": 3434,
+     "exactPairTests": 71,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "coupled.treatment",
+     "entries": 1,
+     "seconds": 0.07373846200000012,
+     "candidateQueries": 104705,
+     "effectiveMoves": 797,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.boundaryProjection",
+     "entries": 1,
+     "seconds": 0.07330555000000016,
+     "candidateQueries": 104705,
+     "effectiveMoves": 797,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch6",
+     "entries": 1,
+     "seconds": 0.07069341099999993,
+     "candidateQueries": 363990,
+     "effectiveMoves": 3326,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch16",
+     "entries": 1,
+     "seconds": 0.06845841299999966,
+     "candidateQueries": 347953,
+     "effectiveMoves": 3145,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch5",
+     "entries": 1,
+     "seconds": 0.06840851999999997,
+     "candidateQueries": 332469,
+     "effectiveMoves": 2963,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch1",
+     "entries": 1,
+     "seconds": 0.063806272,
+     "candidateQueries": 247406,
+     "effectiveMoves": 2226,
+     "exactPairTests": 62,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch0",
+     "entries": 1,
+     "seconds": 0.06281722199999995,
+     "candidateQueries": 324722,
+     "effectiveMoves": 2886,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "publication",
+     "entries": 1,
+     "seconds": 1.5540000002367549e-06,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    }
+   ],
+   "publications": []
+  },
+  "mode20-seed1-work": {
+   "config": "mode20",
+   "seed": 1,
+   "variant": "work",
+   "workOrdinalsArmed": true,
+   "wallSeconds": 27.51349433499854,
+   "traceEndSeconds": 27.482608162,
+   "engineDepthMm": 179.69,
+   "modeExactValid": true,
+   "modeDepthMm": 204.272,
+   "exactValidCandidates": 17,
+   "completeExactValidCandidates": 17,
+   "milestones": {
+    "timeToFirstCompleteLayoutSeconds": 0.546499886,
+    "firstCompleteLayoutDepthMm": 231.57,
+    "timeToFirstPublicIncumbentSeconds": 0.675624466,
+    "depthMilestones": {
+     "200": {
+      "seconds": 0.675624466,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "190": {
+      "seconds": 0.675624466,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "185": {
+      "seconds": 0.675624466,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "182": {
+      "seconds": 0.982380762,
+      "depthMm": 181.676,
+      "candidateQueries": 1309855,
+      "effectiveMoves": 11809,
+      "source": "m0.relaxedEpoch"
+     },
+     "181.6": {
+      "seconds": 1.310099525,
+      "depthMm": 181.284,
+      "candidateQueries": 2855006,
+      "effectiveMoves": 25708,
+      "source": "m0.relaxedEpoch"
+     },
+     "180": {
+      "seconds": 1.578367081,
+      "depthMm": 179.69,
+      "candidateQueries": 3936223,
+      "effectiveMoves": 35401,
+      "source": "m0.relaxedEpoch"
+     },
+     "175": null,
+     "170": null
+    }
+   },
+   "marginal": {
+    "segments": [
+     {
+      "fromSeconds": 0.675624466,
+      "toSeconds": 0.800513198,
+      "deltaMm": 0.6159999999999854,
+      "mmPerSecond": 4.932390537842803,
+      "deltaCandidateQueries": 572128,
+      "mmPerMillionQueries": 1.076682141059318,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.800513198,
+      "toSeconds": 0.982380762,
+      "deltaMm": 0.6840000000000259,
+      "mmPerSecond": 3.7609785107146747,
+      "deltaCandidateQueries": 737727,
+      "mmPerMillionQueries": 0.927172246644119,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.982380762,
+      "toSeconds": 1.310099525,
+      "deltaMm": 0.3919999999999959,
+      "mmPerSecond": 1.196147563879325,
+      "deltaCandidateQueries": 1545151,
+      "mmPerMillionQueries": 0.2536968878769751,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 1.310099525,
+      "toSeconds": 1.486065622,
+      "deltaMm": 0.6872217350892811,
+      "mmPerSecond": 3.905421253329734,
+      "deltaCandidateQueries": 710662,
+      "mmPerMillionQueries": 0.9670162961988696,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 1.486065622,
+      "toSeconds": 1.578367081,
+      "deltaMm": 0.906778264910713,
+      "mmPerSecond": 9.824094599747479,
+      "deltaCandidateQueries": 370555,
+      "mmPerMillionQueries": 2.4470814451585134,
+      "source": "m0.relaxedEpoch"
+     }
+    ],
+    "firstIncumbentDepthMm": 182.976,
+    "finalIncumbentDepthMm": 179.69,
+    "totalGainMm": 3.2860000000000014,
+    "gainWindowSeconds": 0.9027426149999999,
+    "overallMmPerSecondOverWholeRun": 0.11956652660585285,
+    "idleTailSeconds": 25.904241081,
+    "idleTailGainMm": 0.0
+   },
+   "endWork": {
+    "candidateQueries": 6701483,
+    "neighborTests": 27498006,
+    "effectiveMoves": 60207,
+    "acceptedMoves": 60207,
+    "fullRescores": 801,
+    "publicationAttempts": 18,
+    "exactPairTests": 585589,
+    "collisionPolygonBuilds": 2913,
+    "proxySurvivors": 8
+   },
+   "scopes": [
+    {
+     "operator": "mode20",
+     "entries": 1,
+     "seconds": 25.085831566,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 466,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 8,
+     "proxySurvivors": 8,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "mode20.restart6.vertex-count",
+     "entries": 1,
+     "seconds": 3.390613018,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 53,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart1.max-dimension",
+     "entries": 1,
+     "seconds": 3.158182333000001,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 55,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart0.padded-bbox-area",
+     "entries": 1,
+     "seconds": 3.143727211,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 61,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart3.banded-area-shuffle",
+     "entries": 1,
+     "seconds": 3.1433218059999994,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 60,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart2.semi-perimeter",
+     "entries": 1,
+     "seconds": 3.101044067,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 62,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart5.width",
+     "entries": 1,
+     "seconds": 3.076589591000001,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 59,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart7.padded-bbox-area-reshuffled",
+     "entries": 1,
+     "seconds": 3.064037085999999,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 53,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart4.height",
+     "entries": 1,
+     "seconds": 3.004745461999999,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 63,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "constructor",
+     "entries": 1,
+     "seconds": 0.650982229,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 584671,
+     "collisionPolygonBuilds": 2913,
+     "publicationAttempts": 4,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch14",
+     "entries": 1,
+     "seconds": 0.1154562320000001,
+     "candidateQueries": 408054,
+     "effectiveMoves": 3696,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch12",
+     "entries": 1,
+     "seconds": 0.11210036299999993,
+     "candidateQueries": 442178,
+     "effectiveMoves": 4028,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.control",
+     "entries": 1,
+     "seconds": 0.1023689929999998,
+     "candidateQueries": 102362,
+     "effectiveMoves": 1006,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch11",
+     "entries": 1,
+     "seconds": 0.0940423210000001,
+     "candidateQueries": 427704,
+     "effectiveMoves": 3870,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch2",
+     "entries": 1,
+     "seconds": 0.09320994199999999,
+     "candidateQueries": 419291,
+     "effectiveMoves": 3813,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch10",
+     "entries": 1,
+     "seconds": 0.09228657399999984,
+     "candidateQueries": 370555,
+     "effectiveMoves": 3323,
+     "exactPairTests": 85,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch4",
+     "entries": 1,
+     "seconds": 0.09087521100000007,
+     "candidateQueries": 466152,
+     "effectiveMoves": 4176,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch13",
+     "entries": 1,
+     "seconds": 0.08999028000000009,
+     "candidateQueries": 404013,
+     "effectiveMoves": 3655,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch9",
+     "entries": 1,
+     "seconds": 0.08928453599999986,
+     "candidateQueries": 326329,
+     "effectiveMoves": 2947,
+     "exactPairTests": 88,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch3",
+     "entries": 1,
+     "seconds": 0.08865459100000006,
+     "candidateQueries": 318436,
+     "effectiveMoves": 2884,
+     "exactPairTests": 68,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch8",
+     "entries": 1,
+     "seconds": 0.08668322899999992,
+     "candidateQueries": 384333,
+     "effectiveMoves": 3423,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch15",
+     "entries": 1,
+     "seconds": 0.08255926599999985,
+     "candidateQueries": 423586,
+     "effectiveMoves": 3812,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch7",
+     "entries": 1,
+     "seconds": 0.08162623700000005,
+     "candidateQueries": 382540,
+     "effectiveMoves": 3434,
+     "exactPairTests": 71,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch6",
+     "entries": 1,
+     "seconds": 0.07937203500000001,
+     "candidateQueries": 363990,
+     "effectiveMoves": 3326,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch5",
+     "entries": 1,
+     "seconds": 0.07582117399999988,
+     "candidateQueries": 332469,
+     "effectiveMoves": 2963,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.treatment",
+     "entries": 1,
+     "seconds": 0.07547934400000011,
+     "candidateQueries": 104705,
+     "effectiveMoves": 797,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.boundaryProjection",
+     "entries": 1,
+     "seconds": 0.07464379399999999,
+     "candidateQueries": 104705,
+     "effectiveMoves": 797,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch16",
+     "entries": 1,
+     "seconds": 0.06857938200000024,
+     "candidateQueries": 347953,
+     "effectiveMoves": 3145,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch1",
+     "entries": 1,
+     "seconds": 0.06343429900000008,
+     "candidateQueries": 247406,
+     "effectiveMoves": 2226,
+     "exactPairTests": 62,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 1,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch0",
+     "entries": 1,
+     "seconds": 0.06145377799999996,
+     "candidateQueries": 324722,
+     "effectiveMoves": 2886,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "publication",
+     "entries": 1,
+     "seconds": 3.2196999999456466e-05,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    }
+   ],
+   "publications": [
+    {
+     "t": 27.481228285,
+     "reason": "notStrictlyBetterThanLegacy",
+     "disposition": "discarded",
+     "publishedDepthMm": 204.272,
+     "legacyDepthMm": 179.69
+    }
+   ]
+  },
+  "m0coupled-seed0-clock": {
+   "config": "m0coupled",
+   "seed": 0,
+   "variant": "clock",
+   "workOrdinalsArmed": false,
+   "wallSeconds": 1.9888636980031151,
+   "traceEndSeconds": 1.955825112,
+   "engineDepthMm": 181.589,
+   "modeExactValid": null,
+   "modeDepthMm": null,
+   "exactValidCandidates": 7,
+   "completeExactValidCandidates": 7,
+   "milestones": {
+    "timeToFirstCompleteLayoutSeconds": 0.534610014,
+    "firstCompleteLayoutDepthMm": 231.57,
+    "timeToFirstPublicIncumbentSeconds": 0.66575436,
+    "depthMilestones": {
+     "200": {
+      "seconds": 0.66575436,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "190": {
+      "seconds": 0.66575436,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "185": {
+      "seconds": 0.66575436,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "182": {
+      "seconds": 0.98045504,
+      "depthMm": 181.874,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "m0.relaxedEpoch"
+     },
+     "181.6": {
+      "seconds": 1.248978159,
+      "depthMm": 181.589,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "m0.relaxedEpoch"
+     },
+     "180": null,
+     "175": null,
+     "170": null
+    }
+   },
+   "marginal": {
+    "segments": [
+     {
+      "fromSeconds": 0.66575436,
+      "toSeconds": 0.793753178,
+      "deltaMm": 0.6631067050885235,
+      "mmPerSecond": 5.180568972820698,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.793753178,
+      "toSeconds": 0.98045504,
+      "deltaMm": 0.4388932949114803,
+      "mmPerSecond": 2.3507708504346905,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.98045504,
+      "toSeconds": 1.248978159,
+      "deltaMm": 0.2849999999999966,
+      "mmPerSecond": 1.0613611262276328,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     }
+    ],
+    "firstIncumbentDepthMm": 182.976,
+    "finalIncumbentDepthMm": 181.589,
+    "totalGainMm": 1.3870000000000005,
+    "gainWindowSeconds": 0.583223799,
+    "overallMmPerSecondOverWholeRun": 0.7091636115571055,
+    "idleTailSeconds": 0.7068469530000001,
+    "idleTailGainMm": 0.0
+   },
+   "endWork": {
+    "candidateQueries": 0,
+    "neighborTests": 0,
+    "effectiveMoves": 0,
+    "acceptedMoves": 0,
+    "fullRescores": 0,
+    "publicationAttempts": 0,
+    "exactPairTests": 0,
+    "collisionPolygonBuilds": 0,
+    "proxySurvivors": 0
+   },
+   "scopes": [
+    {
+     "operator": "constructor",
+     "entries": 1,
+     "seconds": 0.64184275,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "coupled.treatment",
+     "entries": 1,
+     "seconds": 0.114482097,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.boundaryProjection",
+     "entries": 1,
+     "seconds": 0.1124229929999998,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.control",
+     "entries": 1,
+     "seconds": 0.10018367699999997,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch3",
+     "entries": 1,
+     "seconds": 0.07760816100000001,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch13",
+     "entries": 1,
+     "seconds": 0.07751166300000012,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch0",
+     "entries": 1,
+     "seconds": 0.07383227000000003,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch6",
+     "entries": 1,
+     "seconds": 0.0713116949999999,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch10",
+     "entries": 1,
+     "seconds": 0.06584854499999993,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch15",
+     "entries": 1,
+     "seconds": 0.06579025500000002,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch2",
+     "entries": 1,
+     "seconds": 0.06556264099999998,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch5",
+     "entries": 1,
+     "seconds": 0.062355634000000104,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch14",
+     "entries": 1,
+     "seconds": 0.05709113899999996,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch11",
+     "entries": 1,
+     "seconds": 0.05559343600000011,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch12",
+     "entries": 1,
+     "seconds": 0.054894361999999974,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch1",
+     "entries": 1,
+     "seconds": 0.05416233199999998,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch8",
+     "entries": 1,
+     "seconds": 0.048352319000000143,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch9",
+     "entries": 1,
+     "seconds": 0.047460503000000154,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch4",
+     "entries": 1,
+     "seconds": 0.04352833700000003,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch7",
+     "entries": 1,
+     "seconds": 0.03900411799999981,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "publication",
+     "entries": 1,
+     "seconds": 1.0679999999929635e-06,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    }
+   ],
+   "publications": []
+  },
+  "mode20-seed0-clock": {
+   "config": "mode20",
+   "seed": 0,
+   "variant": "clock",
+   "workOrdinalsArmed": false,
+   "wallSeconds": 26.650698353012558,
+   "traceEndSeconds": 26.617236597,
+   "engineDepthMm": 181.589,
+   "modeExactValid": true,
+   "modeDepthMm": 204.07,
+   "exactValidCandidates": 15,
+   "completeExactValidCandidates": 15,
+   "milestones": {
+    "timeToFirstCompleteLayoutSeconds": 0.540834707,
+    "firstCompleteLayoutDepthMm": 231.57,
+    "timeToFirstPublicIncumbentSeconds": 0.669438039,
+    "depthMilestones": {
+     "200": {
+      "seconds": 0.669438039,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "190": {
+      "seconds": 0.669438039,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "185": {
+      "seconds": 0.669438039,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "182": {
+      "seconds": 0.977360933,
+      "depthMm": 181.874,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "m0.relaxedEpoch"
+     },
+     "181.6": {
+      "seconds": 1.254062703,
+      "depthMm": 181.589,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "m0.relaxedEpoch"
+     },
+     "180": null,
+     "175": null,
+     "170": null
+    }
+   },
+   "marginal": {
+    "segments": [
+     {
+      "fromSeconds": 0.669438039,
+      "toSeconds": 0.796889577,
+      "deltaMm": 0.6631067050885235,
+      "mmPerSecond": 5.202814461827237,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.796889577,
+      "toSeconds": 0.977360933,
+      "deltaMm": 0.4388932949114803,
+      "mmPerSecond": 2.43192772880523,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.977360933,
+      "toSeconds": 1.254062703,
+      "deltaMm": 0.2849999999999966,
+      "mmPerSecond": 1.0299897973185954,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     }
+    ],
+    "firstIncumbentDepthMm": 182.976,
+    "finalIncumbentDepthMm": 181.589,
+    "totalGainMm": 1.3870000000000005,
+    "gainWindowSeconds": 0.584624664,
+    "overallMmPerSecondOverWholeRun": 0.05210909084966122,
+    "idleTailSeconds": 25.363173894000003,
+    "idleTailGainMm": 0.0
+   },
+   "endWork": {
+    "candidateQueries": 0,
+    "neighborTests": 0,
+    "effectiveMoves": 0,
+    "acceptedMoves": 0,
+    "fullRescores": 0,
+    "publicationAttempts": 0,
+    "exactPairTests": 0,
+    "collisionPolygonBuilds": 0,
+    "proxySurvivors": 8
+   },
+   "scopes": [
+    {
+     "operator": "mode20",
+     "entries": 1,
+     "seconds": 24.669293202000002,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 8,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "mode20.restart6.vertex-count",
+     "entries": 1,
+     "seconds": 3.1980031070000017,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart2.semi-perimeter",
+     "entries": 1,
+     "seconds": 3.147139677,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart1.max-dimension",
+     "entries": 1,
+     "seconds": 3.142149745,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart3.banded-area-shuffle",
+     "entries": 1,
+     "seconds": 3.1019174760000006,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart5.width",
+     "entries": 1,
+     "seconds": 3.0677525390000007,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart4.height",
+     "entries": 1,
+     "seconds": 3.0395214820000014,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart0.padded-bbox-area",
+     "entries": 1,
+     "seconds": 3.0049937609999997,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart7.padded-bbox-area-reshuffled",
+     "entries": 1,
+     "seconds": 2.96416898,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "constructor",
+     "entries": 1,
+     "seconds": 0.645230431,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "coupled.boundaryProjection",
+     "entries": 1,
+     "seconds": 0.11324647900000007,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.treatment",
+     "entries": 1,
+     "seconds": 0.11159270899999996,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.control",
+     "entries": 1,
+     "seconds": 0.097465001,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch13",
+     "entries": 1,
+     "seconds": 0.07447591000000009,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch0",
+     "entries": 1,
+     "seconds": 0.074257927,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch3",
+     "entries": 1,
+     "seconds": 0.07273753100000002,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch6",
+     "entries": 1,
+     "seconds": 0.06762899399999989,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch10",
+     "entries": 1,
+     "seconds": 0.06627564199999991,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch5",
+     "entries": 1,
+     "seconds": 0.06445022100000009,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch2",
+     "entries": 1,
+     "seconds": 0.06397352899999997,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch14",
+     "entries": 1,
+     "seconds": 0.06161330000000009,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch15",
+     "entries": 1,
+     "seconds": 0.06114256699999987,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch11",
+     "entries": 1,
+     "seconds": 0.055086725,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch1",
+     "entries": 1,
+     "seconds": 0.05319463099999999,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch8",
+     "entries": 1,
+     "seconds": 0.05182438499999997,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch12",
+     "entries": 1,
+     "seconds": 0.049937751999999946,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch9",
+     "entries": 1,
+     "seconds": 0.047147988000000085,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch7",
+     "entries": 1,
+     "seconds": 0.045619585000000074,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch4",
+     "entries": 1,
+     "seconds": 0.04375202,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "publication",
+     "entries": 1,
+     "seconds": 3.711800000161247e-05,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    }
+   ],
+   "publications": [
+    {
+     "t": 26.615891578,
+     "reason": "notStrictlyBetterThanLegacy",
+     "disposition": "discarded",
+     "publishedDepthMm": 204.07,
+     "legacyDepthMm": 181.589
+    }
+   ]
+  },
+  "m0coupled-seed1-clock": {
+   "config": "m0coupled",
+   "seed": 1,
+   "variant": "clock",
+   "workOrdinalsArmed": false,
+   "wallSeconds": 2.0126125979877543,
+   "traceEndSeconds": 1.980614402,
+   "engineDepthMm": 179.69,
+   "modeExactValid": null,
+   "modeDepthMm": null,
+   "exactValidCandidates": 9,
+   "completeExactValidCandidates": 9,
+   "milestones": {
+    "timeToFirstCompleteLayoutSeconds": 0.545977608,
+    "firstCompleteLayoutDepthMm": 231.57,
+    "timeToFirstPublicIncumbentSeconds": 0.672213803,
+    "depthMilestones": {
+     "200": {
+      "seconds": 0.672213803,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "190": {
+      "seconds": 0.672213803,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "185": {
+      "seconds": 0.672213803,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "182": {
+      "seconds": 0.917288758,
+      "depthMm": 181.676,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "m0.relaxedEpoch"
+     },
+     "181.6": {
+      "seconds": 1.148096268,
+      "depthMm": 181.284,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "m0.relaxedEpoch"
+     },
+     "180": {
+      "seconds": 1.350468834,
+      "depthMm": 179.69,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "m0.relaxedEpoch"
+     },
+     "175": null,
+     "170": null
+    }
+   },
+   "marginal": {
+    "segments": [
+     {
+      "fromSeconds": 0.672213803,
+      "toSeconds": 0.774598322,
+      "deltaMm": 0.6159999999999854,
+      "mmPerSecond": 6.016534589569986,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.774598322,
+      "toSeconds": 0.917288758,
+      "deltaMm": 0.6840000000000259,
+      "mmPerSecond": 4.793593874785175,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.917288758,
+      "toSeconds": 1.148096268,
+      "deltaMm": 0.3919999999999959,
+      "mmPerSecond": 1.6983849442333827,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 1.148096268,
+      "toSeconds": 1.279214067,
+      "deltaMm": 0.6872217350892811,
+      "mmPerSecond": 5.2412543554767925,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 1.279214067,
+      "toSeconds": 1.350468834,
+      "deltaMm": 0.906778264910713,
+      "mmPerSecond": 12.725861062891616,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     }
+    ],
+    "firstIncumbentDepthMm": 182.976,
+    "finalIncumbentDepthMm": 179.69,
+    "totalGainMm": 3.2860000000000014,
+    "gainWindowSeconds": 0.678255031,
+    "overallMmPerSecondOverWholeRun": 1.6590811400148555,
+    "idleTailSeconds": 0.6301455680000001,
+    "idleTailGainMm": 0.0
+   },
+   "endWork": {
+    "candidateQueries": 0,
+    "neighborTests": 0,
+    "effectiveMoves": 0,
+    "acceptedMoves": 0,
+    "fullRescores": 0,
+    "publicationAttempts": 0,
+    "exactPairTests": 0,
+    "collisionPolygonBuilds": 0,
+    "proxySurvivors": 0
+   },
+   "scopes": [
+    {
+     "operator": "constructor",
+     "entries": 1,
+     "seconds": 0.648010247,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "coupled.control",
+     "entries": 1,
+     "seconds": 0.09432535200000003,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch2",
+     "entries": 1,
+     "seconds": 0.07844896000000001,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch14",
+     "entries": 1,
+     "seconds": 0.07799435799999999,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch12",
+     "entries": 1,
+     "seconds": 0.0739915630000001,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.boundaryProjection",
+     "entries": 1,
+     "seconds": 0.07176948100000002,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch10",
+     "entries": 1,
+     "seconds": 0.07125403800000019,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch11",
+     "entries": 1,
+     "seconds": 0.069903716,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.treatment",
+     "entries": 1,
+     "seconds": 0.06947598300000002,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch9",
+     "entries": 1,
+     "seconds": 0.06766718499999991,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch4",
+     "entries": 1,
+     "seconds": 0.06667519300000002,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch3",
+     "entries": 1,
+     "seconds": 0.06423451300000005,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch7",
+     "entries": 1,
+     "seconds": 0.06345734199999997,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch8",
+     "entries": 1,
+     "seconds": 0.0634410729999999,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch13",
+     "entries": 1,
+     "seconds": 0.060514095999999906,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch15",
+     "entries": 1,
+     "seconds": 0.05946872400000003,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch1",
+     "entries": 1,
+     "seconds": 0.05238309299999999,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch6",
+     "entries": 1,
+     "seconds": 0.051113773000000196,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch0",
+     "entries": 1,
+     "seconds": 0.04999895300000001,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch16",
+     "entries": 1,
+     "seconds": 0.049627949000000005,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch5",
+     "entries": 1,
+     "seconds": 0.049536253000000086,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "publication",
+     "entries": 1,
+     "seconds": 1.1920000000387176e-06,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    }
+   ],
+   "publications": []
+  },
+  "mode20-seed1-clock": {
+   "config": "mode20",
+   "seed": 1,
+   "variant": "clock",
+   "workOrdinalsArmed": false,
+   "wallSeconds": 26.993381770007545,
+   "traceEndSeconds": 26.960451164,
+   "engineDepthMm": 179.69,
+   "modeExactValid": true,
+   "modeDepthMm": 204.272,
+   "exactValidCandidates": 17,
+   "completeExactValidCandidates": 17,
+   "milestones": {
+    "timeToFirstCompleteLayoutSeconds": 0.54606922,
+    "firstCompleteLayoutDepthMm": 231.57,
+    "timeToFirstPublicIncumbentSeconds": 0.654581359,
+    "depthMilestones": {
+     "200": {
+      "seconds": 0.654581359,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "190": {
+      "seconds": 0.654581359,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "185": {
+      "seconds": 0.654581359,
+      "depthMm": 182.976,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "constructor"
+     },
+     "182": {
+      "seconds": 0.883000938,
+      "depthMm": 181.676,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "m0.relaxedEpoch"
+     },
+     "181.6": {
+      "seconds": 1.120759994,
+      "depthMm": 181.284,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "m0.relaxedEpoch"
+     },
+     "180": {
+      "seconds": 1.32560025,
+      "depthMm": 179.69,
+      "candidateQueries": 0,
+      "effectiveMoves": 0,
+      "source": "m0.relaxedEpoch"
+     },
+     "175": null,
+     "170": null
+    }
+   },
+   "marginal": {
+    "segments": [
+     {
+      "fromSeconds": 0.654581359,
+      "toSeconds": 0.756796806,
+      "deltaMm": 0.6159999999999854,
+      "mmPerSecond": 6.0264863881090855,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.756796806,
+      "toSeconds": 0.883000938,
+      "deltaMm": 0.6840000000000259,
+      "mmPerSecond": 5.419790851222096,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 0.883000938,
+      "toSeconds": 1.120759994,
+      "deltaMm": 0.3919999999999959,
+      "mmPerSecond": 1.6487279458242636,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 1.120759994,
+      "toSeconds": 1.251673292,
+      "deltaMm": 0.6872217350892811,
+      "mmPerSecond": 5.249441772441489,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     },
+     {
+      "fromSeconds": 1.251673292,
+      "toSeconds": 1.32560025,
+      "deltaMm": 0.906778264910713,
+      "mmPerSecond": 12.265867410785573,
+      "deltaCandidateQueries": 0,
+      "mmPerMillionQueries": null,
+      "source": "m0.relaxedEpoch"
+     }
+    ],
+    "firstIncumbentDepthMm": 182.976,
+    "finalIncumbentDepthMm": 179.69,
+    "totalGainMm": 3.2860000000000014,
+    "gainWindowSeconds": 0.6710188909999999,
+    "overallMmPerSecondOverWholeRun": 0.12188223335029949,
+    "idleTailSeconds": 25.634850913999998,
+    "idleTailGainMm": 0.0
+   },
+   "endWork": {
+    "candidateQueries": 0,
+    "neighborTests": 0,
+    "effectiveMoves": 0,
+    "acceptedMoves": 0,
+    "fullRescores": 0,
+    "publicationAttempts": 0,
+    "exactPairTests": 0,
+    "collisionPolygonBuilds": 0,
+    "proxySurvivors": 8
+   },
+   "scopes": [
+    {
+     "operator": "mode20",
+     "entries": 1,
+     "seconds": 24.987460968999997,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 8,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "mode20.restart6.vertex-count",
+     "entries": 1,
+     "seconds": 3.32261879,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart1.max-dimension",
+     "entries": 1,
+     "seconds": 3.1571371800000003,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart0.padded-bbox-area",
+     "entries": 1,
+     "seconds": 3.141880594,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart3.banded-area-shuffle",
+     "entries": 1,
+     "seconds": 3.1406192179999994,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart2.semi-perimeter",
+     "entries": 1,
+     "seconds": 3.0983124679999996,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart5.width",
+     "entries": 1,
+     "seconds": 3.0633325399999976,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart7.padded-bbox-area-reshuffled",
+     "entries": 1,
+     "seconds": 3.061615861,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "mode20.restart4.height",
+     "entries": 1,
+     "seconds": 2.9983833729999994,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 1,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "constructor",
+     "entries": 1,
+     "seconds": 0.630504471,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "coupled.control",
+     "entries": 1,
+     "seconds": 0.09450424000000002,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch14",
+     "entries": 1,
+     "seconds": 0.08713472000000011,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch10",
+     "entries": 1,
+     "seconds": 0.07392447700000004,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch12",
+     "entries": 1,
+     "seconds": 0.07358389700000001,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.boundaryProjection",
+     "entries": 1,
+     "seconds": 0.07076629800000012,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "coupled.treatment",
+     "entries": 1,
+     "seconds": 0.07044231799999978,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch4",
+     "entries": 1,
+     "seconds": 0.069745222,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch11",
+     "entries": 1,
+     "seconds": 0.06929147599999985,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch9",
+     "entries": 1,
+     "seconds": 0.06907372300000003,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch15",
+     "entries": 1,
+     "seconds": 0.06807943099999991,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch2",
+     "entries": 1,
+     "seconds": 0.06545901999999992,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch7",
+     "entries": 1,
+     "seconds": 0.06223102899999988,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch8",
+     "entries": 1,
+     "seconds": 0.061828213000000076,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch3",
+     "entries": 1,
+     "seconds": 0.06073834899999997,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch13",
+     "entries": 1,
+     "seconds": 0.060733242999999826,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch5",
+     "entries": 1,
+     "seconds": 0.054113261000000135,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch1",
+     "entries": 1,
+     "seconds": 0.05383252900000002,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 1
+    },
+    {
+     "operator": "m0.epoch6",
+     "entries": 1,
+     "seconds": 0.051651734999999865,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch16",
+     "entries": 1,
+     "seconds": 0.049752387999999925,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "m0.epoch0",
+     "entries": 1,
+     "seconds": 0.04838028800000005,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    },
+    {
+     "operator": "publication",
+     "entries": 1,
+     "seconds": 2.4591999999046266e-05,
+     "candidateQueries": 0,
+     "effectiveMoves": 0,
+     "exactPairTests": 0,
+     "collisionPolygonBuilds": 0,
+     "publicationAttempts": 0,
+     "proxySurvivors": 0,
+     "exactValidCandidates": 0
+    }
+   ],
+   "publications": [
+    {
+     "t": 26.959092136,
+     "reason": "notStrictlyBetterThanLegacy",
+     "disposition": "discarded",
+     "publishedDepthMm": 204.272,
+     "legacyDepthMm": 179.69
+    }
+   ]
+  }
+ }
+}
