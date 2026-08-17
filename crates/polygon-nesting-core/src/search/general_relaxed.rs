@@ -21,6 +21,7 @@ use crate::geometry::general_polygon::{GeneralPolygonError, PolygonSet};
 use crate::geometry::predicates::orientation;
 use crate::nfp_ifp::compute_relative_nfp_boundary_reference;
 use crate::parallel::map_slice_with_job_pool;
+use crate::profiling::{self, Counter, Phase};
 use crate::search::general_fast::{
     collision_expansion_mm, collision_sheet_inset_mm, collision_sheet_short_axis_mm,
     polygons_overlap_exact, validate_and_measure_placements, GeneralFastError, GeneralFastPiece,
@@ -7413,6 +7414,7 @@ fn coupled_auditor_score(
     weights: &BTreeMap<(usize, usize), f64>,
     pair_visits_per_score: usize,
 ) -> (Result<PairTracker, GeneralFastError>, CoupledSeparatorWork) {
+    let _span = profiling::span(Phase::AuditorScore);
     let mut worker = match worker.lock() {
         Ok(worker) => worker,
         Err(_) => {
@@ -9800,6 +9802,7 @@ impl<'a> LaneSearch<'a> {
         score: &mut PairTracker,
         sweep: usize,
     ) -> Result<(), GeneralFastError> {
+        let _span = profiling::span(Phase::MoveSweep);
         if !score.feasible() {
             let mut forced = BTreeSet::new();
             let mut active = score
@@ -10920,22 +10923,31 @@ impl<'a> LaneSearch<'a> {
         rotation_step_limit_deg: f64,
         can_refine_rotation: bool,
     ) -> CoordinateAxis {
-        let mut axes = Vec::with_capacity(6);
+        // At most six candidates, chosen by index from a fixed-order list: a
+        // stack array carries them exactly as the `Vec` did, without asking the
+        // allocator once per refinement step.
+        let mut axes = [CoordinateAxis::Horizontal; 6];
+        let mut len = 0usize;
+        let mut push = |axis| {
+            axes[len] = axis;
+            len += 1;
+        };
         if step_x >= step_limit {
-            axes.push(CoordinateAxis::Horizontal);
+            push(CoordinateAxis::Horizontal);
         }
         if step_y >= step_limit {
-            axes.push(CoordinateAxis::Vertical);
+            push(CoordinateAxis::Vertical);
         }
         if step_x >= step_limit || step_y >= step_limit {
-            axes.push(CoordinateAxis::ForwardDiagonal);
-            axes.push(CoordinateAxis::BackwardDiagonal);
+            push(CoordinateAxis::ForwardDiagonal);
+            push(CoordinateAxis::BackwardDiagonal);
         }
         if can_refine_rotation && rotation_step_deg >= rotation_step_limit_deg {
-            axes.push(CoordinateAxis::Rotation);
-            axes.push(CoordinateAxis::Rotation);
+            push(CoordinateAxis::Rotation);
+            push(CoordinateAxis::Rotation);
         }
-        axes[(self.rng.next_u64() as usize) % axes.len()]
+        drop(push);
+        axes[(self.rng.next_u64() as usize) % len]
     }
 
     fn random_candidate(
@@ -11043,6 +11055,8 @@ impl<'a> LaneSearch<'a> {
     }
 
     fn score_state(&mut self, state: &RelaxedState) -> Result<PairTracker, GeneralFastError> {
+        let _span = profiling::span(Phase::FullRescore);
+        profiling::count(Counter::FullRescores, 1);
         if self.uses_directional_pressure() {
             return self.score_state_directional(state);
         }
@@ -11213,6 +11227,8 @@ impl<'a> LaneSearch<'a> {
         piece_index: &PieceIndex,
         upper_bound: Option<f64>,
     ) -> Result<PlacementScore, GeneralFastError> {
+        let _span = profiling::span(Phase::ScorePlacement);
+        profiling::count(Counter::CandidateQueries, 1);
         if self.uses_directional_pressure() {
             return self.score_placement_directional(
                 state,
@@ -11511,25 +11527,22 @@ impl<'a> LaneSearch<'a> {
             weighted_loss += self.pair_weight(pair.0, pair.1) * penalty;
         }
         collision_pairs.sort_by_key(|(first, second, _)| (*first, *second));
-        let searched = search_score
-            .collision_pairs
-            .iter()
-            .map(|(first, second, _)| (*first, *second))
-            .collect::<BTreeSet<_>>();
-        let confirmed = collision_pairs
-            .iter()
-            .map(|(first, second, _)| (*first, *second))
-            .collect::<BTreeSet<_>>();
+        // Both lists are sorted by `(first, second)` and carry each pair once,
+        // so their symmetric difference is a linear merge. The two `BTreeSet`s
+        // this replaces allocated a node per pair on every accepted move purely
+        // to feed these two diagnostic counters.
+        let (additions, removals) =
+            sorted_pair_difference_counts(&collision_pairs, &search_score.collision_pairs);
         self.counters.retained_f64_confirmations =
             self.counters.retained_f64_confirmations.saturating_add(1);
         self.counters.confirmed_pair_additions = self
             .counters
             .confirmed_pair_additions
-            .saturating_add(confirmed.difference(&searched).count());
+            .saturating_add(additions);
         self.counters.confirmed_pair_removals = self
             .counters
             .confirmed_pair_removals
-            .saturating_add(searched.difference(&confirmed).count());
+            .saturating_add(removals);
         Ok(PlacementScore {
             boundary_violations,
             boundary_loss,
@@ -11617,6 +11630,7 @@ impl<'a> LaneSearch<'a> {
     }
 
     fn build_piece_index(&mut self, state: &RelaxedState) -> Result<PieceIndex, GeneralFastError> {
+        let _span = profiling::span(Phase::PieceIndexBuild);
         let inset = collision_sheet_inset_mm(self.fast_settings);
         let mut index = PieceIndex::new(IrregularBounds::new(
             inset,
@@ -11651,6 +11665,7 @@ impl<'a> LaneSearch<'a> {
         placement: &RelaxedPlacement,
         strip_depth_mm: f64,
     ) -> Result<(usize, f64), GeneralFastError> {
+        let _span = profiling::span(Phase::BoundaryPenalty);
         let bounds = self.placement_bounds(placement)?;
         let inset = collision_sheet_inset_mm(self.fast_settings);
         let overflow = [
@@ -11807,25 +11822,24 @@ impl<'a> LaneSearch<'a> {
         if !self.pair_collides(first, second)? {
             return Ok(0.0);
         }
+        // Opened after the collision test so that the overwhelmingly common
+        // non-colliding answer costs nothing: this phase is the quantification
+        // of a collision that has already been reported.
+        let _span = profiling::span(Phase::PairPressure);
         if self.uses_directional_pressure() {
             return Err(GeneralFastError::InvalidSettings(
                 "directional penetration requires candidate-scoped scoring".to_owned(),
             ));
         }
-        let first_key =
-            self.ensure_oriented(first.input_index, first.rotation_deg, first.mirrored)?;
+        let first_key = self.surrogate_key(first.input_index, first.rotation_deg, first.mirrored);
         let second_key =
-            self.ensure_oriented(second.input_index, second.rotation_deg, second.mirrored)?;
-        let first_shape = self
-            .catalog
-            .orientations
-            .get(&first_key)
-            .expect("ensured first oriented surrogate");
-        let second_shape = self
-            .catalog
-            .orientations
-            .get(&second_key)
-            .expect("ensured second oriented surrogate");
+            self.surrogate_key(second.input_index, second.rotation_deg, second.mirrored);
+        let Some(first_shape) = self.catalog.orientations.get(&first_key) else {
+            return Err(self.missing_orientation(first.input_index, first_key));
+        };
+        let Some(second_shape) = self.catalog.orientations.get(&second_key) else {
+            return Err(self.missing_orientation(second.input_index, second_key));
+        };
         Ok(pole_overlap_pressure(
             first_shape,
             first.translate_x,
@@ -11841,21 +11855,24 @@ impl<'a> LaneSearch<'a> {
         first: &RelaxedPlacement,
         second: &RelaxedPlacement,
     ) -> Result<bool, GeneralFastError> {
+        let _span = profiling::span(Phase::PairCollide);
+        profiling::count(Counter::NeighborTests, 1);
         self.counters.piece_broad_phase_probes += 1;
-        let first_key =
-            self.ensure_oriented(first.input_index, first.rotation_deg, first.mirrored)?;
+        // Resolve each pose once. The `ensure_oriented`/`get` pairing this
+        // replaces asked the same ordered map for the same key twice per pose,
+        // which on this call - the single hottest in every measured stream -
+        // was four descents where two answer the question. The failure branch
+        // still raises the identical error, for the same pose, in the same
+        // order.
+        let first_key = self.surrogate_key(first.input_index, first.rotation_deg, first.mirrored);
         let second_key =
-            self.ensure_oriented(second.input_index, second.rotation_deg, second.mirrored)?;
-        let first_shape = self
-            .catalog
-            .orientations
-            .get(&first_key)
-            .expect("ensured first oriented surrogate");
-        let second_shape = self
-            .catalog
-            .orientations
-            .get(&second_key)
-            .expect("ensured second oriented surrogate");
+            self.surrogate_key(second.input_index, second.rotation_deg, second.mirrored);
+        let Some(first_shape) = self.catalog.orientations.get(&first_key) else {
+            return Err(self.missing_orientation(first.input_index, first_key));
+        };
+        let Some(second_shape) = self.catalog.orientations.get(&second_key) else {
+            return Err(self.missing_orientation(second.input_index, second_key));
+        };
         if self.uses_directional_pressure() {
             let relative_x = relative_grid_coordinate(first.translate_x, second.translate_x)
                 .ok_or_else(|| {
@@ -12014,12 +12031,41 @@ impl<'a> LaneSearch<'a> {
         rotation_deg: f64,
         mirrored: bool,
     ) -> Result<&OrientedSurrogate, GeneralFastError> {
-        let key = self.ensure_oriented(input_index, rotation_deg, mirrored)?;
-        Ok(self
-            .catalog
+        let key = self.surrogate_key(input_index, rotation_deg, mirrored);
+        self.catalog
             .orientations
             .get(&key)
-            .expect("surrogate catalog contains every canonical orientation"))
+            .ok_or_else(|| self.missing_orientation(input_index, key))
+    }
+
+    /// The canonical surrogate key of a pose.
+    ///
+    /// This is pure arithmetic over the pose and the piece's geometry class -
+    /// the catalog is never consulted - so it cannot fail. Splitting it out of
+    /// [`Self::ensure_oriented`] is what lets the pair hot loop resolve a pose
+    /// with a single ordered-map descent instead of a `contains_key` probe
+    /// followed by a `get` probe for the same key.
+    fn surrogate_key(&self, input_index: usize, rotation_deg: f64, mirrored: bool) -> SurrogateKey {
+        let angle = if self.uses_directional_pressure() {
+            continuous_angle(rotation_deg)
+        } else {
+            canonical_angle(rotation_deg)
+        };
+        (
+            self.catalog.geometry_class_by_input[input_index],
+            angle_key(angle),
+            mirrored,
+        )
+    }
+
+    /// The error a missing canonical orientation raises, verbatim.
+    fn missing_orientation(&self, input_index: usize, key: SurrogateKey) -> GeneralFastError {
+        GeneralPolygonError::from_message(format!(
+            "relaxed surrogate catalog is missing canonical orientation {} for piece {}",
+            angle_from_key(key.1),
+            self.pieces[input_index].id
+        ))
+        .into()
     }
 
     fn ensure_oriented(
@@ -12028,23 +12074,9 @@ impl<'a> LaneSearch<'a> {
         rotation_deg: f64,
         mirrored: bool,
     ) -> Result<SurrogateKey, GeneralFastError> {
-        let angle = if self.uses_directional_pressure() {
-            continuous_angle(rotation_deg)
-        } else {
-            canonical_angle(rotation_deg)
-        };
-        let key = (
-            self.catalog.geometry_class_by_input[input_index],
-            angle_key(angle),
-            mirrored,
-        );
+        let key = self.surrogate_key(input_index, rotation_deg, mirrored);
         if !self.catalog.orientations.contains_key(&key) {
-            return Err(GeneralPolygonError::from_message(format!(
-                "relaxed surrogate catalog is missing canonical orientation {} for piece {}",
-                angle_from_key(key.1),
-                self.pieces[input_index].id
-            ))
-            .into());
+            return Err(self.missing_orientation(input_index, key));
         }
         Ok(key)
     }
@@ -13055,6 +13087,9 @@ fn update_score_after_move(
     replacement: PlacementScore,
     weights: &BTreeMap<(usize, usize), f64>,
 ) {
+    let _span = profiling::span(Phase::UpdateAfterMove);
+    profiling::count(Counter::AcceptedMoves, 1);
+    profiling::count(Counter::EffectivePieceMoves, 1);
     let tracked_boundary = score.boundaries[input_index];
     debug_assert_eq!(tracked_boundary.violations, old_boundary.0);
     debug_assert!((tracked_boundary.raw_loss - old_boundary.1).abs() <= f64::EPSILON);
@@ -13525,6 +13560,44 @@ fn placement_key(placement: &RelaxedPlacement) -> (usize, i64, bool, i64, i64) {
         placement.mirrored,
         grid_key(placement.translate_x),
         grid_key(placement.translate_y),
+    )
+}
+
+/// Counts, without allocating, how many pairs appear only in `confirmed` and
+/// how many only in `searched`.
+///
+/// Both slices must be sorted by `(first, second)` and free of duplicates,
+/// which is what every producer of a [`PlacementScore`] guarantees: the pair
+/// list is built from a deduplicated neighbour set and sorted before it is
+/// returned. Under that precondition this is exactly the pair of
+/// `BTreeSet::difference` counts it replaces.
+fn sorted_pair_difference_counts(
+    confirmed: &[(usize, usize, f64)],
+    searched: &[(usize, usize, f64)],
+) -> (usize, usize) {
+    let (mut additions, mut removals) = (0usize, 0usize);
+    let (mut left, mut right) = (0usize, 0usize);
+    while left < confirmed.len() && right < searched.len() {
+        let first = (confirmed[left].0, confirmed[left].1);
+        let second = (searched[right].0, searched[right].1);
+        match first.cmp(&second) {
+            Ordering::Less => {
+                additions += 1;
+                left += 1;
+            }
+            Ordering::Greater => {
+                removals += 1;
+                right += 1;
+            }
+            Ordering::Equal => {
+                left += 1;
+                right += 1;
+            }
+        }
+    }
+    (
+        additions + (confirmed.len() - left),
+        removals + (searched.len() - right),
     )
 }
 

@@ -5063,12 +5063,14 @@ fn trapped_void_cells(
     settings: GeneralFastSettings,
     frontier_grid: i64,
 ) -> usize {
+    let void_span = profiling::deep::start(Phase::VacancyProxyRank);
     const CELL_MM: f64 = 2.0;
     let width = settings.sheet_short_axis_mm;
     let depth = (frontier_grid as f64) / 1000.0 + 2.0 * CELL_MM;
     let columns = (width / CELL_MM).ceil() as usize;
     let rows = (depth / CELL_MM).ceil() as usize;
     if columns == 0 || rows == 0 {
+        profiling::deep::finish(Phase::VacancyProxyRank, void_span);
         return 0;
     }
     let actives = state
@@ -5134,10 +5136,13 @@ fn trapped_void_cells(
             push(cell + columns);
         }
     }
-    free.iter()
+    let trapped = free
+        .iter()
         .zip(reachable.iter())
         .filter(|(is_free, is_reachable)| **is_free && !**is_reachable)
-        .count()
+        .count();
+    profiling::deep::finish(Phase::VacancyProxyRank, void_span);
+    trapped
 }
 
 /// Mode-18 frontier-band feasibility diagnostic: for each of the deepest
@@ -6044,6 +6049,7 @@ fn construct_candidate_poses(
     construction: &mut GeneralPersistentVacancyConstructionDiagnostics,
     work: &mut RunWork,
 ) -> Result<Vec<(RelaxedPlacement, Arc<PolygonSet>, CandidateProvenance)>, String> {
+    let proposal_span = profiling::deep::start(Phase::VacancyProposals);
     construction.slots = construction.slots.saturating_add(1);
     work.diagnostics.selected_piece_slots = work.diagnostics.selected_piece_slots.saturating_add(1);
     if work.diagnostics.selected_piece_slots > work.quotas.max_selected_piece_slots {
@@ -6510,6 +6516,7 @@ fn construct_candidate_poses(
         }
         finalists.push((walk_pose, Arc::new(walk_collision), provenance));
     }
+    profiling::deep::finish(Phase::VacancyProposals, proposal_span);
     Ok(finalists)
 }
 
@@ -6609,20 +6616,27 @@ fn construction_confirm_row(
     construction: &mut GeneralPersistentVacancyConstructionDiagnostics,
     work: &mut RunWork,
 ) -> Result<Option<PolygonSet>, String> {
+    let started = profiling::deep::start(Phase::VacancyExactRows);
     construction.exact_rows = construction.exact_rows.saturating_add(1);
+    profiling::deep::count(Counter::CollisionPolygonBuilds, 1);
     work.diagnostics.exact_finalist_rows = work.diagnostics.exact_finalist_rows.saturating_add(1);
     if work.diagnostics.exact_finalist_rows > work.quotas.max_exact_finalist_rows {
         return Err(work.cap("exact-finalist row budget exhausted"));
     }
+    let build_started = profiling::deep::start(Phase::CollisionPolygonBuild);
     let collision = build_collision(pieces[piece_index], candidate, work_settings, work)?;
+    profiling::deep::finish(Phase::CollisionPolygonBuild, build_started);
     if !collision.fits_rect(
         inset,
         inset,
         work_settings.sheet_short_axis_mm - inset,
         work_settings.sheet_long_axis_mm - inset,
     ) {
+        profiling::deep::finish(Phase::VacancyExactRows, started);
         return Ok(None);
     }
+    let pairs_started = profiling::deep::start(Phase::ExactOverlapTest);
+    profiling::deep::count(Counter::ExactPairTests, 1);
     for fixed_index in 0..pieces.len() {
         if !parent.active[fixed_index] {
             continue;
@@ -6632,9 +6646,13 @@ fn construction_confirm_row(
             .as_ref()
             .ok_or_else(|| format!("active piece {fixed_index} has no collision"))?;
         if exact_intersection_area(&collision, fixed, work)? > 0.0 {
+            profiling::deep::finish(Phase::ExactOverlapTest, pairs_started);
+            profiling::deep::finish(Phase::VacancyExactRows, started);
             return Ok(None);
         }
     }
+    profiling::deep::finish(Phase::ExactOverlapTest, pairs_started);
+    profiling::deep::finish(Phase::VacancyExactRows, started);
     Ok(Some(collision))
 }
 
@@ -7434,6 +7452,7 @@ fn exact_vacancy_child(
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<Option<VacancyState>, String> {
+    let child_span = profiling::deep::start(Phase::VacancyExactRows);
     let collision = Arc::new(build_collision(
         pieces[piece_index],
         &placement,
@@ -7447,6 +7466,7 @@ fn exact_vacancy_child(
         settings.sheet_short_axis_mm - inset,
         settings.sheet_long_axis_mm - inset,
     ) {
+        profiling::deep::finish(Phase::VacancyExactRows, child_span);
         return Ok(None);
     }
     let mut blockers = Vec::new();
@@ -7461,6 +7481,7 @@ fn exact_vacancy_child(
         if exact_intersection_area(&collision, fixed, work)? > 0.0 {
             blockers.push(fixed_index);
             if blockers.len() > 2 {
+                profiling::deep::finish(Phase::VacancyExactRows, child_span);
                 return Ok(None);
             }
         }
@@ -7470,6 +7491,7 @@ fn exact_vacancy_child(
         if previous.ejected.contains(&piece_index) && blockers.contains(&previous.inserted) {
             diagnostics.immediate_reversals_rejected =
                 diagnostics.immediate_reversals_rejected.saturating_add(1);
+            profiling::deep::finish(Phase::VacancyExactRows, child_span);
             return Ok(None);
         }
     }
@@ -7478,6 +7500,7 @@ fn exact_vacancy_child(
         .saturating_sub(1)
         .saturating_add(blockers.len());
     if inactive_after > MAX_INACTIVE_PIECES {
+        profiling::deep::finish(Phase::VacancyExactRows, child_span);
         return Ok(None);
     }
     let mut child = parent.clone();
@@ -7497,6 +7520,7 @@ fn exact_vacancy_child(
     } else {
         diagnostics.ejection_insertions = diagnostics.ejection_insertions.saturating_add(1);
     }
+    profiling::deep::finish(Phase::VacancyExactRows, child_span);
     Ok(Some(child))
 }
 

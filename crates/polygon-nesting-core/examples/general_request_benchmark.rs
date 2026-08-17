@@ -11,6 +11,7 @@ use polygon_nesting_core::domain::ImportedPiece;
 use polygon_nesting_core::geometry::general_polygon::PolygonSet;
 use polygon_nesting_core::geometry::general_source::polygon_set_from_imported_piece;
 use polygon_nesting_core::parallel::JobPool;
+use polygon_nesting_core::profiling::{self, ProfileSnapshot};
 use polygon_nesting_core::search::general_fast::GeneralFastPlacement;
 use polygon_nesting_core::search::general_fast::{
     construct_short_side_first, diagnose_congruent_pair_constructor,
@@ -103,7 +104,67 @@ struct OwnedPiece {
     allow_mirror: bool,
 }
 
+/// A counting allocator, installed only when the `profiling-allocator` feature
+/// is on, so that the default benchmark build allocates exactly as it always
+/// did and the phase-counter overhead can be measured on its own.
+#[cfg(feature = "profiling-allocator")]
+#[global_allocator]
+static ALLOCATOR: polygon_nesting_core::profiling::CountingAllocator<std::alloc::System> =
+    polygon_nesting_core::profiling::CountingAllocator::new(std::alloc::System);
+
+/// Renders a profile snapshot as the benchmark's `searchProfile` block.
+///
+/// Phase shares are quoted against the leaf-phase total (see
+/// [`ProfileSnapshot::leaf_nanos`]) because enclosing phases double-count the
+/// spans they contain; both are reported so the reader can check that.
+fn search_profile_json(snapshot: &ProfileSnapshot) -> serde_json::Value {
+    let leaf_nanos = snapshot.leaf_nanos();
+    let phases = snapshot
+        .phases
+        .iter()
+        .map(|sample| {
+            json!({
+                "phase": sample.phase.name(),
+                "enclosing": sample.phase.is_enclosing(),
+                "milliseconds": sample.nanos as f64 / 1_000_000.0,
+                "calls": sample.calls,
+                "leafSharePercent": if sample.phase.is_enclosing() || leaf_nanos == 0 {
+                    serde_json::Value::Null
+                } else {
+                    json!(sample.nanos as f64 * 100.0 / leaf_nanos as f64)
+                },
+            })
+        })
+        .collect::<Vec<_>>();
+    let counters = snapshot
+        .counters
+        .iter()
+        .map(|sample| (sample.counter.name().to_owned(), json!(sample.value)))
+        .collect::<serde_json::Map<_, _>>();
+    json!({
+        "threads": snapshot.threads,
+        "leafMilliseconds": leaf_nanos as f64 / 1_000_000.0,
+        "phases": phases,
+        "counters": counters,
+        "allocatorInstalled": cfg!(feature = "profiling-allocator"),
+        "deepOperatorsInstrumented": profiling::deep::COMPILED_IN,
+    })
+}
+
+/// Whether the harness should record a profile.
+///
+/// This is read from the environment rather than from a CLI slot on purpose:
+/// the positional argument list is a pinned contract that replay drivers
+/// depend on, and profiling must never change what a replayed command means.
+fn profiling_requested() -> bool {
+    env::var("POLYGON_NESTING_PROFILE")
+        .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+        .unwrap_or(false)
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let profiling_armed = profiling_requested();
+    profiling::set_enabled(profiling_armed);
     let mut arguments = env::args().skip(1);
     let request_path = arguments.next().ok_or(
         "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy] [persistent-vacancy-parent-fixture] [persistent-vacancy-target-depth-mm] [warm-start-fixture] [search-offset-allowance-mm]",
@@ -385,6 +446,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut relaxed_diagnostics = None::<GeneralRelaxedDiagnostics>;
     let mut constructed_depth_mm = None;
     let job_pool = JobPool::new(Some(threads));
+    // Everything above is request loading and probe setup; the measured stream
+    // starts here, so the profile starts here too.
+    profiling::reset();
     for _ in 0..runs {
         let started = Instant::now();
         let (current, current_relaxed_diagnostics, current_constructed_depth_mm) = job_pool
@@ -719,6 +783,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "sha256": warm.source_sha256,
             "depthMm": warm_depth,
         });
+    }
+    // The profile block is emitted only when profiling was armed, so an
+    // unprofiled run's report is byte-identical to what it was before this
+    // harness existed and every pinned normalization keeps working.
+    if profiling_armed {
+        output["searchProfile"] = search_profile_json(&profiling::snapshot());
     }
     println!("{}", serde_json::to_string_pretty(&output)?);
     // Fail closed: a requested persistent-vacancy mode that never ran (the

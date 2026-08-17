@@ -6,6 +6,15 @@ edition.workspace = true
 [features]
 default = []
 jagua-experimental = ["dep:jagua-rs"]
+# Installs the counting global allocator in the benchmark example. Off by
+# default so that a normal profiling run measures the phase counters alone and
+# heap numbers are collected in a separate, deliberately slower build.
+profiling-allocator = []
+# Compiles the deep-operator (`general_persistent_vacancy`) phase spans in.
+# Off by default: those sites sit inside a generated function whose inlining
+# they perturb, which costs about 4.5% of a mode-20 stream even with recording
+# switched off. See `profiling::deep` for the measurement behind this.
+search-profiling = []
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }
