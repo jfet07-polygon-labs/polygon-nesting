@@ -1,0 +1,10 @@
+round 0: m22-s0 -> 165.368
+round 0: m22-s1 -> 165.368
+round 0: m22-s2 -> 165.368
+round 0: m22-s3 -> 165.368
+round 0: m26a-s0 -> 165.368
+round 0: m26a-s1 -> 165.368
+round 0: m26a-s2 -> 165.368
+round 0: m26b-s0 -> 165.368
+FIXPOINT at 165.368
+CASCLOOP_DONE BEST: 165.368 PARENT: /var/lib/t3/tmp/casc165b/parent-165.368.json

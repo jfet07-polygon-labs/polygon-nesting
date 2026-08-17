@@ -1,0 +1,12 @@
+{
+ "milestone": "from-scratch certified fixpoint 165.368 mm after the compress-repair machinery landed",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "cascade": "165.484 (mode-27 publication) -> 165.446 (mode-22 waves, all 4 seeds) -> 165.407 (mode-26 ladder to 164, seed 2) -> 165.368 (mode-22 waves, all 4 seeds) -> FIXPOINT: 8/8 arms return incumbent (mode-22 seeds 0-3, mode-26 ladders to -1.5/-3.0 seeds 0-2+0)",
+ "pinnedParent": {
+  "file": "pinned-parent-165.368.json",
+  "independentDepthMm": 165.368
+ },
+ "context": "gap to imported-line record 164.465: 0.903 mm; from-scratch line has closed 13.6 mm from the 179.006 entry plateau, the last 2.5 of them by the deterministic compress-repair loop rather than basin lottery"
+}

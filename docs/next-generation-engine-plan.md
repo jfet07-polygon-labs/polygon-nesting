@@ -1056,3 +1056,14 @@ compresses freely (A: 165.977 at bound 166.0; B: 160.499 at bound
 clearance-violating pairs, never by depth. Gradual overlap-tolerant
 compression is therefore live but bottlenecked on legalizing a
 near-feasible dense front, not on reaching one.
+
+The compress-repair loop cascades to a certified 165.368 fixpoint.
+After mode 27's 165.484 publication, alternating mode-22 waves and
+mode-26/27 ladders trims 165.446 -> 165.407 -> 165.368, where all
+eight arms (four alternation seeds, four ladder configurations)
+return the incumbent. The from-scratch line now stands 0.903 mm from
+the imported-line record - 13.6 mm below the entry plateau every
+from-scratch lineage must cross, with the last 2.5 mm earned by the
+deterministic compress-repair machinery rather than basin lottery.
+Conflict-targeted re-placement (mode 28) is in flight against the
+record's compressed frontier.
