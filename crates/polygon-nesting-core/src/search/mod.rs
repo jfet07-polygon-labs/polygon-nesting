@@ -8,6 +8,7 @@ pub mod gap_regions;
 pub mod general_fast;
 #[cfg(feature = "jagua-experimental")]
 pub mod general_hazard;
+pub mod general_micro_legalization;
 pub mod general_relaxed;
 pub mod layout_scorer;
 pub mod placement_scorer;

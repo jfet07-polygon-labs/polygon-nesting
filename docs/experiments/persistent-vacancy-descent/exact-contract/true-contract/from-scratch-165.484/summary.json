@@ -1,0 +1,17 @@
+{
+ "milestone": "from-scratch best 165.484 mm - the 166.855 lock broken by micro-legalization of the clamped-sheet ladder's rejected terminal states",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "lineage": "166.855 pinned parent -> mode 26 ladder to 165.5, seed 1 -> 166.655 -> 166.488 -> 166.321 -> 166.205 -> 166.141 -> 166.074 -> 165.491 -> 165.484",
+ "pinnedParent": {
+  "file": "pinned-parent-165.484.json",
+  "independentDepthMm": 165.484,
+  "fingerprint": "cbb7dac8a6c59c35"
+ },
+ "attribution": "rungs 0-3 (166.655, 166.488, 166.321, 166.205) and rung 7 (165.484) were published by the micro-legalization pass; rungs 4-6 (166.141, 166.074, 165.491) by the separator legalizing a target itself. The separator's own publications warm-start from the micro-legalized state carried out of rung 3, so the whole descent below the lock is downstream of the repair pass: without it the ladder publishes nothing at rungs 0-3 and enters rung 4 still holding the 166.855 parent.",
+ "mechanism": "the ladder's rejected terminal states split into two residue classes. Boundary-only residues - one piece protruding past the canonical-grid sheet inset by 0.049 to 0.505 mm, no violating pair - are projected back inside by the repair pass in 7 of 8 attempts, moving one seed piece plus a two-piece one-hop neighbourhood by at most a few tenths of a millimetre. Pair residues are refused at admission: their envelopes need 0.9 to 4.3 mm of travel to come apart, which is not a rounding-scale miss.",
+ "residueFinding": "the ledger's characterisation of the residue as '1-5 clearance pairs at ~0.001 mm' holds only for the boundary class. Measured per gate, the pair class misses the requested clearance by up to 5 mm and needs whole millimetres of envelope separation, because the canonical-grid envelope is miter-joined and its spikes collide far from the material closest-approach point.",
+ "reproduce": "general_request_benchmark <request> 1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 1 0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0 26 <from-scratch-166.855/pinned-parent-166.855.json> 165.5 \"\" 0.0005",
+ "note": "parents produced at search allowance 0.0005 must be replayed with that allowance (CLI slot 48); at the 0.002 default they fail the canonical-grid sheet gate"
+}
