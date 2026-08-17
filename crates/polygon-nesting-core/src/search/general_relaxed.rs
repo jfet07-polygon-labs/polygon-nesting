@@ -16026,6 +16026,100 @@ mod tests {
         assert_ne!(derive_seed(7, 2, 3), derive_seed(7, 2, 4));
     }
 
+    /// The proxy row cache is only sound if a hit returns exactly what the
+    /// deriving path would have computed and a pose change is a miss. Both
+    /// halves are load-bearing: a hit that rounded differently would move a
+    /// collision verdict, and a stale hit would answer about the wrong pose.
+    #[test]
+    fn proxy_row_cache_hits_and_misses_match_the_deriving_path() {
+        let polygon = square(10.0);
+        let pieces = [GeneralFastPiece {
+            id: "first",
+            polygon: &polygon,
+            allow_rotation: true,
+            allow_mirror: false,
+        }];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::ZeroDegreeOnly,
+            None,
+        )
+        .unwrap();
+        let shape = catalog
+            .orientations
+            .get(&(catalog.geometry_class_by_input[0], angle_key(0.0), false))
+            .expect("zero-degree confirmation surrogate");
+
+        let mut cache = ProxyRowCache::new(pieces.len());
+        let poses = [
+            RelaxedPlacement {
+                input_index: 0,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 12.0,
+                translate_y: 30.0,
+            },
+            RelaxedPlacement {
+                input_index: 0,
+                rotation_deg: 37.5,
+                mirrored: false,
+                translate_x: 12.0,
+                translate_y: 30.0,
+            },
+            RelaxedPlacement {
+                input_index: 0,
+                rotation_deg: 37.5,
+                mirrored: false,
+                translate_x: 12.000_001,
+                translate_y: 30.0,
+            },
+        ];
+        // Every pose, then every pose again in the same order, so the second
+        // pass is served entirely from stored rows.
+        for placement in poses.iter().chain(poses.iter()) {
+            let derived = transformed_surrogate_bounds(
+                shape,
+                PoleTransform::new(
+                    placement.rotation_deg,
+                    placement.translate_x,
+                    placement.translate_y,
+                ),
+            );
+            let cached = cache.bounds_for(shape, placement);
+            assert_eq!(cached.min_x.to_bits(), derived.min_x.to_bits());
+            assert_eq!(cached.min_y.to_bits(), derived.min_y.to_bits());
+            assert_eq!(cached.max_x.to_bits(), derived.max_x.to_bits());
+            assert_eq!(cached.max_y.to_bits(), derived.max_y.to_bits());
+        }
+
+        // A repeated read of the pose the cache is holding is a hit, and a hit
+        // is the same value.
+        let held = cache.bounds_for(shape, &poses[2]);
+        assert_eq!(
+            held.min_x.to_bits(),
+            cache.bounds_for(shape, &poses[2]).min_x.to_bits()
+        );
+        // A piece index the cache was not sized for still answers, by deriving.
+        let unknown = RelaxedPlacement {
+            input_index: pieces.len(),
+            ..poses[0].clone()
+        };
+        let derived = transformed_surrogate_bounds(
+            shape,
+            PoleTransform::new(
+                unknown.rotation_deg,
+                unknown.translate_x,
+                unknown.translate_y,
+            ),
+        );
+        assert_eq!(
+            cache.bounds_for(shape, &unknown).max_y.to_bits(),
+            derived.max_y.to_bits()
+        );
+    }
+
     #[test]
     fn shared_pair_nfps_preserve_tracker_and_lane_budget_semantics() {
         let polygon = square(10.0);
