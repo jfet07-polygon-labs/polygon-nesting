@@ -14,6 +14,7 @@ pub mod kernel;
 pub mod layout_scorer;
 pub mod placement_scorer;
 pub mod score_grid;
+pub mod shadow_rescore;
 pub mod sort_pieces;
 pub mod strict_decoder;
 pub mod strict_family;

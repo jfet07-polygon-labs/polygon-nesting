@@ -25,6 +25,7 @@ use polygon_nesting_core::search::general_relaxed::{
     GeneralRelaxedCollisionBackend, GeneralRelaxedDiagnostics, GeneralRelaxedPressureModel,
     GeneralRelaxedSettings,
 };
+use polygon_nesting_core::search::shadow_rescore;
 use polygon_nesting_core::validation::general_polygon::{
     raw_source_long_axis_depth_mm, GeneralPlacement,
 };
@@ -449,6 +450,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Everything above is request loading and probe setup; the measured stream
     // starts here, so the profile starts here too.
     profiling::reset();
+    shadow_rescore::reset();
     for _ in 0..runs {
         let started = Instant::now();
         let (current, current_relaxed_diagnostics, current_constructed_depth_mm) = job_pool
@@ -789,6 +791,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // harness existed and every pinned normalization keeps working.
     if profiling_armed {
         output["searchProfile"] = search_profile_json(&profiling::snapshot());
+    }
+    // The shadow-rescore audit reports unconditionally in a build that carries
+    // it, because its whole point is to be read: a run that audited and said
+    // nothing would be indistinguishable from a run that never audited. A
+    // build without the feature emits nothing, so unprofiled default reports
+    // stay byte-identical.
+    if shadow_rescore::COMPILED_IN {
+        let audit = shadow_rescore::snapshot();
+        output["shadowRescore"] = json!({
+            "checks": audit.checks,
+            "structuralDisagreements": audit.structural_disagreements,
+            "magnitudeOnlyAudits": audit.magnitude_only_audits,
+            "maxMagnitudeUlps": audit.max_magnitude_ulps,
+            "derivedGapAudits": audit.derived_gap_audits,
+            "maxDerivedUlps": audit.max_derived_ulps,
+            "firstStructuralDisagreement": audit.first_structural_disagreement,
+            "firstMagnitudeDisagreement": audit.first_magnitude_disagreement,
+        });
     }
     println!("{}", serde_json::to_string_pretty(&output)?);
     // Fail closed: a requested persistent-vacancy mode that never ran (the

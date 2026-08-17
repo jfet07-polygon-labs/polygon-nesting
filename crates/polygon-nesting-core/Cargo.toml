@@ -26,6 +26,15 @@ profiling-allocator = []
 # they perturb, which costs about 4.5% of a mode-20 stream even with recording
 # switched off. See `profiling::deep` for the measurement behind this.
 search-profiling = []
+# Compiles the shadow-rescore audit in: after every accepted move the relaxed
+# sweep recomputes the complete layout score and compares it against the
+# incrementally maintained one. See `search::shadow_rescore`.
+#
+# Off by default, and it is a measurement build rather than a slow production
+# one: the audit roughly doubles a sweep's geometric work, and a build that
+# carries it reports a `fullRescores` count and a `fullRescore` phase that
+# describe the audit rather than the search.
+shadow-rescore = []
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }

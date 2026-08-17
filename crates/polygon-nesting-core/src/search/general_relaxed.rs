@@ -33,6 +33,8 @@ use crate::search::general_micro_legalization::{
 use crate::search::kernel::{
     ExplorationKernel, KernelPose, KernelProbes, LegacyKernel, PosedShape, LEGACY,
 };
+#[cfg(feature = "shadow-rescore")]
+use crate::search::shadow_rescore;
 // The added contract-validity and raw-depth reporting is reachable only through
 // the persistent-vacancy arms, which the experimental feature gates.
 #[cfg(feature = "jagua-experimental")]
@@ -10064,8 +10066,63 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     replacement_score,
                     &self.weights,
                 );
+                self.audit_incremental_score(state, score)?;
             }
         }
+        Ok(())
+    }
+
+    /// Compares the incrementally maintained score against a complete rescore
+    /// of the same state.
+    ///
+    /// Compiled out entirely unless the `shadow-rescore` feature is on, in
+    /// which case it runs after every accepted move. See
+    /// [`crate::search::shadow_rescore`] for the agreement rule and how to read
+    /// the report.
+    ///
+    /// The audit must not be able to change what the search does, so the lane's
+    /// work counters are saved and restored around it: the rescore's probes and
+    /// pressure evaluations feed deterministic quotas, and letting them land
+    /// would make the audited run a different search from the audited-out one.
+    /// The remaining state a rescore touches is read-only or idempotent — the
+    /// hazard index is only queried, and the pair-NFP cache the directional
+    /// backend fills is keyed by pose, so a rescore only ever refills entries
+    /// the sweep would have asked for.
+    #[cfg(feature = "shadow-rescore")]
+    fn audit_incremental_score(
+        &mut self,
+        state: &RelaxedState,
+        incremental: &PairTracker,
+    ) -> Result<(), GeneralFastError> {
+        let saved_counters = self.counters;
+        let shadow = self.score_state(state);
+        self.counters = saved_counters;
+        let mut shadow = shadow?;
+        // Same summation order in both paths: the complete score accumulates
+        // the weighted total interleaved with its boundary walk, so recompute
+        // it the way the delta does before comparing. What is under test is the
+        // delta, not which of two orders `+` was applied in.
+        refresh_weighted_loss(&mut shadow, &self.weights);
+        match shadow_tracker_disagreement(&shadow, incremental) {
+            ShadowAgreement::Rows(rendered) => shadow_rescore::record_disagreement(rendered),
+            ShadowAgreement::MagnitudeOnly {
+                rendered,
+                worst_pressure_ulps,
+            } => shadow_rescore::record_magnitude_only(rendered, worst_pressure_ulps),
+            ShadowAgreement::Agrees { derived_ulps } => {
+                shadow_rescore::record_agreement(derived_ulps)
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(not(feature = "shadow-rescore"))]
+    #[inline(always)]
+    fn audit_incremental_score(
+        &mut self,
+        _state: &RelaxedState,
+        _incremental: &PairTracker,
+    ) -> Result<(), GeneralFastError> {
         Ok(())
     }
 
@@ -13333,6 +13390,176 @@ fn same_piece_geometry(first: GeneralFastPiece<'_>, second: GeneralFastPiece<'_>
     (first.polygon.area_mm2() - second.polygon.area_mm2()).abs() <= area_scale * 0.001
         && (first_dimensions[0] - second_dimensions[0]).abs() <= 0.001
         && (first_dimensions[1] - second_dimensions[1]).abs() <= 0.001
+}
+
+/// The verdict of one shadow-rescore audit.
+#[cfg(feature = "shadow-rescore")]
+enum ShadowAgreement {
+    /// Every row matched bit for bit. `derived_ulps` is the widest gap any
+    /// running `f64` sum showed, in `f64` ulps; `0` means the whole tracker was
+    /// bit-identical.
+    Agrees { derived_ulps: u64 },
+    /// The two trackers describe the same layout — same colliding pairs, same
+    /// violation counts, same row *shape* — but at least one row's magnitude
+    /// differs bitwise.
+    MagnitudeOnly {
+        rendered: String,
+        worst_pressure_ulps: u64,
+    },
+    /// The two trackers disagree about the layout itself: a different set of
+    /// colliding pairs, a different violation count, a different row count.
+    Rows(String),
+}
+
+/// Compares a complete rescore against an incrementally maintained tracker.
+///
+/// The three verdicts are three different claims, and keeping them apart is the
+/// point of the audit:
+///
+/// * **Structure** — which pairs collide, how many rows there are, how many
+///   boundaries are violated. Nothing about evaluation order can change these,
+///   so any difference is a delta that has lost track of the layout. This is
+///   the class that must be empty.
+/// * **Magnitude** — the `f64` loss on a row whose structure matched. The proxy
+///   pressure kernels are not symmetric in their two operands: they accumulate
+///   a pole-pair series with the first operand outermost, so reading a pair as
+///   `(i, j)` and as `(j, i)` are two different summation orders over the same
+///   terms. A candidate scorer always reads a pair as `(moving, fixed)` and a
+///   complete score always reads it as `(lower index, higher index)`, so the
+///   two paths legitimately differ in the low bits of a magnitude whenever the
+///   moved piece is the higher-indexed one.
+/// * **Derived sums** — the running `f64` totals. Order-dependent by
+///   construction; see [`crate::search::shadow_rescore`].
+///
+/// `guided_weight` is deliberately not compared, for the same reason the
+/// coupled rollback auditor does not compare it: it is not a measurement of the
+/// layout but a copy of the guidance weight in force when the row was last
+/// written, and a complete score writes it for every pair while the delta
+/// writes it for the rows it touches. Every weight that reaches a score does so
+/// through the weighted total, which *is* compared.
+#[cfg(feature = "shadow-rescore")]
+fn shadow_tracker_disagreement(shadow: &PairTracker, incremental: &PairTracker) -> ShadowAgreement {
+    if shadow.piece_count != incremental.piece_count {
+        return ShadowAgreement::Rows(format!(
+            "piece count {} != {}",
+            shadow.piece_count, incremental.piece_count
+        ));
+    }
+    if shadow.boundaries.len() != incremental.boundaries.len() {
+        return ShadowAgreement::Rows("boundary row count differs".to_owned());
+    }
+    if shadow.boundary_violations != incremental.boundary_violations {
+        return ShadowAgreement::Rows(format!(
+            "boundary violation count {} != {}",
+            shadow.boundary_violations, incremental.boundary_violations
+        ));
+    }
+    if shadow.collision_pairs.len() != incremental.collision_pairs.len() {
+        return ShadowAgreement::Rows(format!(
+            "collision row count {} != {}",
+            shadow.collision_pairs.len(),
+            incremental.collision_pairs.len()
+        ));
+    }
+    if shadow.pairs.len() != incremental.pairs.len() {
+        return ShadowAgreement::Rows("pair row count differs".to_owned());
+    }
+    if shadow.incident_raw_loss.len() != incremental.incident_raw_loss.len() {
+        return ShadowAgreement::Rows("incident loss vector length differs".to_owned());
+    }
+    let mut magnitude = None::<(String, u64)>;
+    let mut note_magnitude = |rendered: String, first: f64, second: f64| {
+        let gap = shadow_rescore::derived_ulp_distance(first, second);
+        match &mut magnitude {
+            Some((_, worst)) => *worst = (*worst).max(gap),
+            slot @ None => *slot = Some((rendered, gap)),
+        }
+    };
+    for (index, (shadow, incremental)) in shadow
+        .boundaries
+        .iter()
+        .zip(&incremental.boundaries)
+        .enumerate()
+    {
+        if shadow.violations != incremental.violations {
+            return ShadowAgreement::Rows(format!(
+                "boundary row {index} violations {} != {}",
+                shadow.violations, incremental.violations
+            ));
+        }
+        if shadow.raw_loss != incremental.raw_loss {
+            note_magnitude(
+                format!(
+                    "boundary row {index}: {:.17e} != {:.17e}",
+                    shadow.raw_loss, incremental.raw_loss
+                ),
+                shadow.raw_loss,
+                incremental.raw_loss,
+            );
+        }
+    }
+    for (index, (shadow, incremental)) in shadow
+        .collision_pairs
+        .iter()
+        .zip(&incremental.collision_pairs)
+        .enumerate()
+    {
+        if (shadow.0, shadow.1) != (incremental.0, incremental.1) {
+            return ShadowAgreement::Rows(format!(
+                "collision row {index}: pair ({}, {}) != ({}, {})",
+                shadow.0, shadow.1, incremental.0, incremental.1
+            ));
+        }
+        if shadow.2 != incremental.2 {
+            note_magnitude(
+                format!(
+                    "collision row {index} pair ({}, {}): {:.17e} != {:.17e}",
+                    shadow.0, shadow.1, shadow.2, incremental.2
+                ),
+                shadow.2,
+                incremental.2,
+            );
+        }
+    }
+    for (slot, (shadow, incremental)) in shadow.pairs.iter().zip(&incremental.pairs).enumerate() {
+        if shadow.normalization_scale != incremental.normalization_scale
+            || (shadow.raw_loss > 0.0) != (incremental.raw_loss > 0.0)
+        {
+            return ShadowAgreement::Rows(format!(
+                "pair row {slot}: {:.17e} != {:.17e}",
+                shadow.raw_loss, incremental.raw_loss
+            ));
+        }
+        if shadow.raw_loss != incremental.raw_loss {
+            note_magnitude(
+                format!(
+                    "pair row {slot}: {:.17e} != {:.17e}",
+                    shadow.raw_loss, incremental.raw_loss
+                ),
+                shadow.raw_loss,
+                incremental.raw_loss,
+            );
+        }
+    }
+    if let Some((rendered, worst_pressure_ulps)) = magnitude {
+        return ShadowAgreement::MagnitudeOnly {
+            rendered,
+            worst_pressure_ulps,
+        };
+    }
+    let mut derived_ulps =
+        shadow_rescore::derived_ulp_distance(shadow.boundary_loss, incremental.boundary_loss).max(
+            shadow_rescore::derived_ulp_distance(shadow.weighted_loss, incremental.weighted_loss),
+        );
+    for (shadow, incremental) in shadow
+        .incident_raw_loss
+        .iter()
+        .zip(&incremental.incident_raw_loss)
+    {
+        derived_ulps =
+            derived_ulps.max(shadow_rescore::derived_ulp_distance(*shadow, *incremental));
+    }
+    ShadowAgreement::Agrees { derived_ulps }
 }
 
 fn update_score_after_move(
