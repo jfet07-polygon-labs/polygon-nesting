@@ -1,0 +1,43 @@
+parent depth 164.057993, warm-start depth 164.222216, clamp 164.05799340962
+control-parent: raw perturbed depth 164.0580
+  mode0  seed 0: separator targetsAccepted=0 stateDepth=164.058
+  mode0  seed 1: separator targetsAccepted=0 stateDepth=164.058
+  mode27 seed 0: mode 27 exactValid=True depth=164.058 parentDepth=164.058 
+  mode28 seed 0: mode 28 exactValid=False depth=None parentDepth=164.058 no violating pair to target with a re-placement
+  mode29 seed 0: mode 29 exactValid=False depth=None parentDepth=164.058 no violating pair to target with a joint re-placement
+squeeze-0.995: raw perturbed depth 163.5333
+  mode0  seed 0: separator targetsAccepted=0 stateDepth=163.533
+  mode0  seed 1: separator targetsAccepted=0 stateDepth=163.533
+  mode27 seed 0: mode 27 exactValid=False depth=None parentDepth=163.533 micro-legalization did not produce an exact-valid state
+  mode28 seed 0: mode 28 exactValid=False depth=None parentDepth=163.533 violation component spans 16 pieces, above the local-repair limit of 7
+  mode29 seed 0: mode 29 exactValid=False depth=None parentDepth=163.533 violation component spans 16 pieces, above the local-repair limit of 7
+squeeze-0.99: raw perturbed depth 163.0656
+  mode0  seed 0: separator targetsAccepted=0 stateDepth=163.066
+  mode0  seed 1: separator targetsAccepted=0 stateDepth=163.066
+  mode27 seed 0: mode 27 exactValid=False depth=None parentDepth=163.066 micro-legalization did not produce an exact-valid state
+  mode28 seed 0: mode 28 exactValid=False depth=None parentDepth=163.066 violation component spans 16 pieces, above the local-repair limit of 7
+  mode29 seed 0: mode 29 exactValid=False depth=None parentDepth=163.066 violation component spans 16 pieces, above the local-repair limit of 7
+squeeze-0.98: raw perturbed depth 162.1302
+  mode0  seed 0: separator targetsAccepted=0 stateDepth=162.13
+  mode0  seed 1: separator targetsAccepted=0 stateDepth=162.13
+  mode27 seed 0: mode 27 exactValid=False depth=None parentDepth=162.13 micro-legalization did not produce an exact-valid state
+  mode28 seed 0: mode 28 exactValid=False depth=None parentDepth=162.13 violation component spans 36 pieces, above the local-repair limit of 7
+  mode29 seed 0: mode 29 exactValid=False depth=None parentDepth=162.13 violation component spans 36 pieces, above the local-repair limit of 7
+nudge-k3-d2.0: raw perturbed depth 163.9645
+  mode0  seed 0: separator targetsAccepted=0 stateDepth=163.964
+  mode0  seed 1: separator targetsAccepted=0 stateDepth=163.964
+  mode27 seed 0: mode 27 exactValid=False depth=None parentDepth=163.964 micro-legalization did not produce an exact-valid state
+  mode28 seed 0: mode 28 exactValid=True depth=164.054 parentDepth=163.964 
+  mode29 seed 0: mode 29 exactValid=False depth=None parentDepth=163.964 no insertion order re-placed the 3 violation components inside the 164
+nudge-k6-d2.0: raw perturbed depth 163.8297
+  mode0  seed 0: separator targetsAccepted=0 stateDepth=163.83
+  mode0  seed 1: separator targetsAccepted=0 stateDepth=163.83
+  mode27 seed 0: mode 27 exactValid=False depth=None parentDepth=163.83 micro-legalization did not produce an exact-valid state
+  mode28 seed 0: mode 28 exactValid=False depth=None parentDepth=163.83 no exact-valid pose for piece d06db288-d2d6-4f40-874e-98287f516d93-cop
+  mode29 seed 0: mode 29 exactValid=False depth=None parentDepth=163.83 no insertion order re-placed the 5 violation components inside the 164
+nudge-k10-d1.0: raw perturbed depth 163.0580
+  mode0  seed 0: separator targetsAccepted=0 stateDepth=163.058
+  mode0  seed 1: separator targetsAccepted=0 stateDepth=163.058
+  mode27 seed 0: mode 27 exactValid=False depth=None parentDepth=163.058 micro-legalization did not produce an exact-valid state
+  mode28 seed 0: mode 28 exactValid=False depth=None parentDepth=163.058 ejection set of 9 pieces exceeds the local-repair limit of 7
+  mode29 seed 0: mode 29 exactValid=False depth=None parentDepth=163.058 no insertion order re-placed the 6 violation components inside the 164

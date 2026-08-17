@@ -32,7 +32,7 @@ use crate::search::general_micro_legalization::GeneralMicroLegalizationDiagnosti
 #[cfg(feature = "jagua-experimental")]
 use crate::search::general_micro_legalization::{
     micro_legalization_component_limit, micro_legalize, replacement_ejection_limit,
-    separating_translation, survey_layout_violations,
+    separating_translation, survey_layout_violations, LayoutViolations,
 };
 
 #[cfg(feature = "jagua-experimental")]
@@ -913,9 +913,10 @@ pub struct GeneralJointReplacementDiagnostics {
     pub projected_displacements_mm: Vec<f64>,
     pub projections_converged: usize,
     pub projection_failures: usize,
-    /// The insertion orders the pass planned and the ones it actually spent.
-    /// `ordersExhaustive` says whether the plan was every permutation of the
-    /// set or the bounded rotation family a larger set falls back to.
+    /// The insertion orders the pass planned and the ones it actually spent,
+    /// summed over every component pass. `ordersExhaustive` says whether the
+    /// plan was every permutation of the set or the bounded rotation family a
+    /// larger set falls back to.
     pub orders_planned: usize,
     pub orders_tried: usize,
     pub orders_exhaustive: bool,
@@ -924,15 +925,30 @@ pub struct GeneralJointReplacementDiagnostics {
     pub swap_pairs_planned: usize,
     pub swap_rounds_run: usize,
     pub swap_attempts_tried: usize,
-    /// One row per attempted order, in the order they were attempted.
+    /// The finalist-combination beam: how many non-greedy rank combinations the
+    /// pass actually spent, summed over every component pass. The beam runs
+    /// after the orders and the swap round, so it only ever reaches states
+    /// nothing before it could.
+    pub beam_combinations_tried: usize,
+    /// The connected components the pass worked through, one row each, in the
+    /// order it repaired them.
+    pub components: Vec<GeneralJointReplacementComponentRow>,
+    pub component_passes_run: usize,
+    pub components_repaired: usize,
+    pub components_refused: usize,
+    /// One row per attempted order, in the order they were attempted, across
+    /// every component pass.
     pub orders: Vec<GeneralJointReplacementOrderRow>,
-    /// The ordinal of the order that published, its hash, and whether it came
-    /// from the swap round rather than the plain enumeration.
+    /// The ordinal of the order that published, its hash, whether it came from
+    /// the swap round rather than the plain enumeration, and the finalist ranks
+    /// it committed when the beam produced it.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accepted_order: Option<usize>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accepted_order_hash: Option<String>,
     pub accepted_by_swap: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_finalist_ranks: Option<Vec<usize>>,
     /// Whether the authoritative validator accepted the jointly re-placed
     /// state.
     pub exact_valid: bool,
@@ -947,13 +963,63 @@ pub struct GeneralJointReplacementDiagnostics {
     pub work: GeneralPersistentVacancyWorkDiagnostics,
 }
 
+/// One connected violation component of one joint re-placement pass.
+///
+/// The tier repairs the violation graph one component at a time and re-surveys
+/// the whole layout between them, so this is where a multi-cluster residue
+/// becomes readable: which cluster was targeted, what it cost, and what the
+/// layout's residue was before and after it.
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralJointReplacementComponentRow {
+    /// Position in the pass's component sequence.
+    pub pass: usize,
+    /// The component's pieces, in placement-slot order, and the violation mass
+    /// incident to each.
+    pub piece_ids: Vec<String>,
+    pub incident_mass_mm: Vec<f64>,
+    /// The whole layout's residue as this pass found it and as it left it.
+    pub violating_pairs_before: usize,
+    pub violating_pairs_after: usize,
+    pub boundary_pieces_before: usize,
+    pub boundary_pieces_after: usize,
+    /// The residue left among the kept pieces once this component was removed.
+    /// A non-zero pair count here is another component's conflict, which a
+    /// later pass owns.
+    pub kept_violating_pairs: usize,
+    pub kept_boundary_pieces: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kept_micro_legalization: Option<GeneralMicroLegalizationDiagnostics>,
+    pub orders_planned: usize,
+    pub orders_tried: usize,
+    pub swap_attempts_tried: usize,
+    pub beam_combinations_planned: usize,
+    pub beam_combinations_tried: usize,
+    /// Whether this component's conflict was cleared, and by which attempt.
+    pub repaired: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_ordinal: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_order_hash: Option<String>,
+    pub accepted_by_swap: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_finalist_ranks: Option<Vec<usize>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skipped_reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejection_reason: Option<String>,
+}
+
 /// One insertion order of one joint re-placement attempt.
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GeneralJointReplacementOrderRow {
     /// Position in the pass's own attempt sequence, counting the swap round's
-    /// attempts after the plain enumeration's.
+    /// attempts after the plain enumeration's and the beam's after those,
+    /// across every component pass.
     pub ordinal: usize,
+    /// Which component pass this attempt belongs to.
+    pub component_pass: usize,
     /// The order itself, and its hash - the determinism anchor, exactly as in
     /// mode 28.
     pub order_piece_ids: Vec<String>,
@@ -963,6 +1029,11 @@ pub struct GeneralJointReplacementOrderRow {
     /// when it belongs to the swap round. `None` for a plain order.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub swap_pair: Option<Vec<String>>,
+    /// The finalist rank each piece committed, when this attempt came from the
+    /// combination beam. `None` is the greedy shallowest-first commit, which is
+    /// every order and every swap attempt.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub finalist_ranks: Option<Vec<usize>>,
     /// One row per attempted piece, in this order. A failing attempt stops at
     /// the first piece with no in-bound pose, so this is a prefix of the
     /// ejection set rather than a permutation of it.

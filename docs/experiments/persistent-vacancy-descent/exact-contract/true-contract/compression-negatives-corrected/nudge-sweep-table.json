@@ -1,0 +1,256 @@
+{
+ "experiment": "binding-stack nudge sweep from the 164.058 record, legalized by mode 28 under a 164.058 clamp",
+ "parent": "record-164.058/pinned-parent-164.058.json",
+ "parentDepthMm": 164.058,
+ "selector": "true transformed max-Y (high_frontier_blockers ordering)",
+ "declaredWarmDepthMm": 164.222216,
+ "exactValidPublications": 18,
+ "bestDepthMm": 164.053,
+ "rows": [
+  {
+   "case": "k1-d0.5",
+   "rawPerturbedDepthMm": 164.03596966100008,
+   "exactValid": true,
+   "publishedDepthMm": 164.053,
+   "reason": null
+  },
+  {
+   "case": "k1-d3.0",
+   "rawPerturbedDepthMm": 164.03596966100008,
+   "exactValid": true,
+   "publishedDepthMm": 164.053,
+   "reason": null
+  },
+  {
+   "case": "k2-d0.5",
+   "rawPerturbedDepthMm": 164.000934388054,
+   "exactValid": true,
+   "publishedDepthMm": 164.053,
+   "reason": null
+  },
+  {
+   "case": "k2-d3.0",
+   "rawPerturbedDepthMm": 164.000934388054,
+   "exactValid": true,
+   "publishedDepthMm": 164.053,
+   "reason": null
+  },
+  {
+   "case": "k3-d0.5",
+   "rawPerturbedDepthMm": 163.96449316600433,
+   "exactValid": true,
+   "publishedDepthMm": 164.053,
+   "reason": null
+  },
+  {
+   "case": "k3-d3.0",
+   "rawPerturbedDepthMm": 163.96449316600433,
+   "exactValid": true,
+   "publishedDepthMm": 164.053,
+   "reason": null
+  },
+  {
+   "case": "k4-d0.5",
+   "rawPerturbedDepthMm": 163.91563012271246,
+   "exactValid": true,
+   "publishedDepthMm": 164.053,
+   "reason": null
+  },
+  {
+   "case": "k4-d3.0",
+   "rawPerturbedDepthMm": 163.91563012271246,
+   "exactValid": true,
+   "publishedDepthMm": 164.053,
+   "reason": null
+  },
+  {
+   "case": "k1-d0.25",
+   "rawPerturbedDepthMm": 164.03596966100008,
+   "exactValid": true,
+   "publishedDepthMm": 164.054,
+   "reason": null
+  },
+  {
+   "case": "k1-d1.0",
+   "rawPerturbedDepthMm": 164.03596966100008,
+   "exactValid": true,
+   "publishedDepthMm": 164.054,
+   "reason": null
+  },
+  {
+   "case": "k1-d2.0",
+   "rawPerturbedDepthMm": 164.03596966100008,
+   "exactValid": true,
+   "publishedDepthMm": 164.054,
+   "reason": null
+  },
+  {
+   "case": "k2-d0.25",
+   "rawPerturbedDepthMm": 164.000934388054,
+   "exactValid": true,
+   "publishedDepthMm": 164.054,
+   "reason": null
+  },
+  {
+   "case": "k2-d1.0",
+   "rawPerturbedDepthMm": 164.000934388054,
+   "exactValid": true,
+   "publishedDepthMm": 164.054,
+   "reason": null
+  },
+  {
+   "case": "k2-d2.0",
+   "rawPerturbedDepthMm": 164.000934388054,
+   "exactValid": true,
+   "publishedDepthMm": 164.054,
+   "reason": null
+  },
+  {
+   "case": "k3-d1.0",
+   "rawPerturbedDepthMm": 163.96449316600433,
+   "exactValid": true,
+   "publishedDepthMm": 164.054,
+   "reason": null
+  },
+  {
+   "case": "k3-d2.0",
+   "rawPerturbedDepthMm": 163.96449316600433,
+   "exactValid": true,
+   "publishedDepthMm": 164.054,
+   "reason": null
+  },
+  {
+   "case": "k4-d1.0",
+   "rawPerturbedDepthMm": 163.91563012271246,
+   "exactValid": true,
+   "publishedDepthMm": 164.054,
+   "reason": null
+  },
+  {
+   "case": "k4-d2.0",
+   "rawPerturbedDepthMm": 163.91563012271246,
+   "exactValid": true,
+   "publishedDepthMm": 164.054,
+   "reason": null
+  },
+  {
+   "case": "k3-d0.25",
+   "rawPerturbedDepthMm": 163.96449316600433,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "no exact-valid pose for piece 25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1 within the 164.058 mm bound"
+  },
+  {
+   "case": "k4-d0.25",
+   "rawPerturbedDepthMm": 163.91563012271246,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "no exact-valid pose for piece 25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1 within the 164.058 mm bound"
+  },
+  {
+   "case": "k5-d0.25",
+   "rawPerturbedDepthMm": 163.84171442162204,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "no exact-valid pose for piece 3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3 within the 164.058 mm bound"
+  },
+  {
+   "case": "k5-d0.5",
+   "rawPerturbedDepthMm": 163.84171442162204,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "no exact-valid pose for piece 3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3 within the 164.058 mm bound"
+  },
+  {
+   "case": "k5-d1.0",
+   "rawPerturbedDepthMm": 163.84171442162204,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "no exact-valid pose for piece d06db288-d2d6-4f40-874e-98287f516d93-copy-17 within the 164.058 mm bound"
+  },
+  {
+   "case": "k5-d2.0",
+   "rawPerturbedDepthMm": 163.84171442162204,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "no exact-valid pose for piece d06db288-d2d6-4f40-874e-98287f516d93-copy-17 within the 164.058 mm bound"
+  },
+  {
+   "case": "k5-d3.0",
+   "rawPerturbedDepthMm": 163.84171442162204,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "no exact-valid pose for piece 3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5 within the 164.058 mm bound"
+  },
+  {
+   "case": "k6-d0.25",
+   "rawPerturbedDepthMm": 163.82972330990745,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "no exact-valid pose for piece 3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3 within the 164.058 mm bound"
+  },
+  {
+   "case": "k6-d0.5",
+   "rawPerturbedDepthMm": 163.82972330990745,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "no exact-valid pose for piece 3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3 within the 164.058 mm bound"
+  },
+  {
+   "case": "k6-d1.0",
+   "rawPerturbedDepthMm": 163.82972330990745,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "no exact-valid pose for piece d06db288-d2d6-4f40-874e-98287f516d93-copy-17 within the 164.058 mm bound"
+  },
+  {
+   "case": "k6-d2.0",
+   "rawPerturbedDepthMm": 163.82972330990745,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "no exact-valid pose for piece d06db288-d2d6-4f40-874e-98287f516d93-copy-17 within the 164.058 mm bound"
+  },
+  {
+   "case": "k6-d3.0",
+   "rawPerturbedDepthMm": 163.82972330990745,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "no exact-valid pose for piece 3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5 within the 164.058 mm bound"
+  },
+  {
+   "case": "k8-d0.25",
+   "rawPerturbedDepthMm": 163.80799340962452,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "ejection set of 8 pieces exceeds the local-repair limit of 7"
+  },
+  {
+   "case": "k8-d0.5",
+   "rawPerturbedDepthMm": 163.63042079038763,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "ejection set of 9 pieces exceeds the local-repair limit of 7"
+  },
+  {
+   "case": "k8-d1.0",
+   "rawPerturbedDepthMm": 163.63042079038763,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "ejection set of 9 pieces exceeds the local-repair limit of 7"
+  },
+  {
+   "case": "k8-d2.0",
+   "rawPerturbedDepthMm": 163.63042079038763,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "ejection set of 9 pieces exceeds the local-repair limit of 7"
+  },
+  {
+   "case": "k8-d3.0",
+   "rawPerturbedDepthMm": 163.63042079038763,
+   "exactValid": false,
+   "publishedDepthMm": null,
+   "reason": "ejection set of 10 pieces exceeds the local-repair limit of 7"
+  }
+ ]
+}

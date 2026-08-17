@@ -1,0 +1,47 @@
+{
+ "experiment": "overlap-then-legalize AT TRUE DEPTH: the corrected redo of pv34 (uniform squeeze) and pv35 (binding-stack nudge), which were both instrument failures",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "parent": "record-164.058/pinned-parent-164.058.json",
+ "parentDepthMm": 164.058,
+ "searchOffsetAllowanceMm": 0.0005,
+ "whatWasWrongWithTheOriginals": {
+  "fakeIncumbentDepth": "pv34/pv35 wrote reportedDepthMm = independentDepthMm = 200.0 into the perturbed warm-start fixture. general_request_benchmark.rs ~316/378 installs independentDepthMm as the incumbent's used_long_axis_depth_mm, and general_relaxed.rs ~2628 derives every epoch target from it (target = incumbent * (1 - shrink)). The separator was therefore handed ~36 mm of headroom above the real layout and relaxed into it; the reported '~179 shelf' measures the fake headroom, not the geometry.",
+  "fakeCliTarget": "both drivers also passed 200.0 as the CLI target depth, so nothing in the run was bounded by the parent's own depth.",
+  "wrongFrontierSelector": "pv35 ranked 'deepest pieces' by translateLongAxis. That is a post-rotation anchor offset: on the 164.058 record it ranges -25.184 to +175.724 on a layout 164.058 deep. The engine's own frontier ordering is high_frontier_blockers (general_relaxed.rs ~13165), by transformed source max-Y."
+ },
+ "correctedSetup": {
+  "perturbation": "squeeze anchored on the layout's true transformed depth floor; nudge selected by true transformed max-Y",
+  "declaredIncumbentDepth": "the parent's own depth carried at the mode-26 rung seed convention, parent_depth / (1 - COUPLED_SEPARATOR_CONTRACTION_RATIO) = 164.222216, so the separator's first contraction target lands exactly on 164.058",
+  "clamp": "sheet long axis overridden to the parent depth (CLI argument 17 = 164.05799340962). This is exactly the mode-26 rung clamp - GeneralFastSettings::sheet_long_axis_mm is what collision_fits_sheet gates every acceptance on - so the separator provably cannot relax depth-ward. Mode 26 itself refuses a final bound equal to the parent depth, which is why the clamp is applied through the existing CLI parameter to a mode-0 run instead.",
+  "rawPerturbedDepthsAlsoRecorded": "each perturbed state's own measured depth is logged for the record and cross-validated against mode 27's parentIndependentDepthMm, which agrees exactly"
+ },
+ "tiers": {
+  "mode0": "separator + boundary-projection terminal under the clamp, seeds 0 and 1, and additionally without the clamp",
+  "mode27": "micro-legalization probe (also the depth cross-validator)",
+  "mode28": "conflict-targeted re-placement, bound = parent depth",
+  "mode29": "joint multi-piece re-placement, bound = parent depth"
+ },
+ "results": {
+  "control-parent": {"rawDepthMm": 164.058, "mode0": "0 targets accepted at both seeds, clamped and unclamped", "mode27": "already exact-valid", "mode28": "no violating pair", "mode29": "no violating pair"},
+  "squeeze-0.995": {"rawDepthMm": 163.533, "residue": "50 violating pairs, 8 components, largest 16 pieces", "mode0": "0 targets accepted", "mode27": "no exact-valid state", "mode28": "refused: component of 16 above the local-repair limit of 7", "mode29": "refused: same"},
+  "squeeze-0.99": {"rawDepthMm": 163.066, "residue": "50 violating pairs, 9 components, largest 16 pieces", "mode0": "0 targets accepted", "mode27": "no exact-valid state", "mode28": "refused", "mode29": "refused"},
+  "squeeze-0.98": {"rawDepthMm": 162.13, "residue": "54 violating pairs, 9 components, largest 36 pieces", "mode0": "0 targets accepted", "mode27": "no exact-valid state", "mode28": "refused", "mode29": "refused"},
+  "nudge-k3-d2.0": {"rawDepthMm": 163.964, "residue": "4 violating pairs, 3 components, largest 3 pieces", "mode0": "0 targets accepted", "mode27": "no exact-valid state", "mode28": "EXACT-VALID 164.054 - below the 164.058 record", "mode29": "no order/beam legalized all three components"},
+  "nudge-k6-d2.0": {"rawDepthMm": 163.83, "residue": "10 violating pairs, 5 components, largest 4 pieces", "mode0": "0 targets accepted", "mode27": "no exact-valid state", "mode28": "no in-bound pose for one ejected piece", "mode29": "1 of 5 components repaired, no full legalization"},
+  "nudge-k10-d1.0": {"rawDepthMm": 163.058, "residue": "14 violating pairs, 6 components, largest 6 pieces", "mode0": "0 targets accepted", "mode27": "no exact-valid state", "mode28": "refused: vertex cover of 9 above the limit of 7", "mode29": "1 of 6 components repaired, no full legalization"}
+ },
+ "sweep": {
+  "description": "35 nudges (k in 1,2,3,4,5,6,8 x d in 0.25,0.5,1,2,3) from the 164.058 parent, each legalized by mode 28 under a 164.058 clamp",
+  "exactValidPublications": 18,
+  "bestDepthMm": 164.053,
+  "publicationDepths": "164.053 x8, 164.054 x10; every k <= 4 publishes at some d, k >= 5 does not"
+ },
+ "verdicts": {
+  "separatorAlone": "NEGATIVE, and now honestly so. At a truthful incumbent depth and under a clamp at the parent depth, the mode-0 separator accepts zero contraction targets on all seven states at both seeds - clamped and unclamped alike. The original '~179' figure was an artifact; the corrected figure is 'nothing at all'.",
+  "uniformSqueeze": "NEGATIVE, and the correction sharpens rather than overturns it. An affine depth-axis squeeze of even 0.5% shatters the layout into 8-9 violation components whose largest spans 16-36 pieces. That is above every local-repair limit by design (a residue involving more than an eighth of the layout is a search problem), so no repair tier will touch it. The class is closed for a *measured* reason now.",
+  "bindingStackNudge": "REFUTED. The negative does not survive correction. A local nudge of the true depth frontier plus conflict-targeted re-placement under a clamp at the incumbent produces exact-valid states BELOW the record, repeatably, at 18 of 35 (k,d) settings, and cascades 164.058 -> 164.054 -> 164.053 -> 164.043 -> 164.042. See record-164.042/."
+ },
+ "determinism": "the pinned driver was run twice end to end; every emitted run json is byte-identical outside wall-clock timing and environment provenance",
+ "drivers": "pv36-perturb.py pinned here; pv36-a.log / pv36-b.log are the two runs"
+}

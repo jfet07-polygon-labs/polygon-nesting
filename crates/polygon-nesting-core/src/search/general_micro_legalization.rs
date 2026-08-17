@@ -311,35 +311,38 @@ impl LayoutViolations {
         mass
     }
 
-    /// Every slot of every component that carries a violating *pair*, sorted
-    /// and deduplicated.
+    /// The slots of every component that carries a violating *pair*, each
+    /// component sorted and deduplicated, in `components` order.
     ///
     /// A repair that ejects a vertex cover of the violation graph leaves the
     /// other endpoint of every pair exactly where it was, so the re-placed
     /// piece has to find room against an occupancy that is itself part of the
-    /// conflict. Ejecting the whole component instead vacates both sides at
-    /// once, which is the only way a *coordinated* move - two pieces trading
-    /// pockets, say - can be expressed at all.
+    /// conflict. Ejecting a whole component instead vacates both sides at once,
+    /// which is the only way a *coordinated* move - two pieces trading pockets,
+    /// say - can be expressed at all. Components are returned separately rather
+    /// than unioned: independent conflicts are independent repairs, and pooling
+    /// them made a set of small clusters refuse on an ejection cap that none of
+    /// them individually trips.
     ///
     /// Boundary-only slots contribute singleton components to `components`;
     /// those are a projection problem, not a re-placement one, so they are not
     /// included here unless the same component also carries a pair.
-    pub(crate) fn pair_component_slots(&self) -> Vec<usize> {
+    pub(crate) fn pair_components(&self) -> Vec<Vec<usize>> {
         let mut incident = BTreeSet::new();
         for pair in &self.pairs {
             incident.insert(pair.first);
             incident.insert(pair.second);
         }
-        let mut slots = self
-            .components
+        self.components
             .iter()
             .filter(|component| component.iter().any(|slot| incident.contains(slot)))
-            .flatten()
-            .copied()
-            .collect::<Vec<_>>();
-        slots.sort_unstable();
-        slots.dedup();
-        slots
+            .map(|component| {
+                let mut slots = component.clone();
+                slots.sort_unstable();
+                slots.dedup();
+                slots
+            })
+            .collect()
     }
 }
 

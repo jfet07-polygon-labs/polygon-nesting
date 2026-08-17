@@ -1,0 +1,225 @@
+{
+ "experiment": "mode 29 standalone on identical inputs, pre-fix binary vs per-component binary",
+ "inputs": "the seven corrected perturbations of the 164.058 record (compression-negatives-corrected/pv36-perturb.py)",
+ "bound": 164.058,
+ "seed": 0,
+ "rows": [
+  {
+   "case": "control-parent",
+   "pre": {
+    "admitted": false,
+    "ejectedCount": 0,
+    "componentCount": 0,
+    "largestComponentPieces": 0,
+    "ejectionLimit": 7,
+    "componentPassesRun": null,
+    "componentsRepaired": null,
+    "ordersTried": 0,
+    "swapAttemptsTried": 0,
+    "beamCombinationsTried": null,
+    "exactValid": false,
+    "reason": "no violating pair to target with a joint re-placement"
+   },
+   "post": {
+    "admitted": false,
+    "ejectedCount": 0,
+    "componentCount": 0,
+    "largestComponentPieces": 0,
+    "ejectionLimit": 7,
+    "componentPassesRun": 0,
+    "componentsRepaired": 0,
+    "ordersTried": 0,
+    "swapAttemptsTried": 0,
+    "beamCombinationsTried": 0,
+    "exactValid": false,
+    "reason": "no violating pair to target with a joint re-placement"
+   }
+  },
+  {
+   "case": "squeeze-0.995",
+   "pre": {
+    "admitted": false,
+    "ejectedCount": 0,
+    "componentCount": 8,
+    "largestComponentPieces": 16,
+    "ejectionLimit": 7,
+    "componentPassesRun": null,
+    "componentsRepaired": null,
+    "ordersTried": 0,
+    "swapAttemptsTried": 0,
+    "beamCombinationsTried": null,
+    "exactValid": false,
+    "reason": "violation component spans 16 pieces, above the local-repair limit of 7"
+   },
+   "post": {
+    "admitted": false,
+    "ejectedCount": 0,
+    "componentCount": 8,
+    "largestComponentPieces": 16,
+    "ejectionLimit": 7,
+    "componentPassesRun": 0,
+    "componentsRepaired": 0,
+    "ordersTried": 0,
+    "swapAttemptsTried": 0,
+    "beamCombinationsTried": 0,
+    "exactValid": false,
+    "reason": "violation component spans 16 pieces, above the local-repair limit of 7"
+   }
+  },
+  {
+   "case": "squeeze-0.99",
+   "pre": {
+    "admitted": false,
+    "ejectedCount": 0,
+    "componentCount": 9,
+    "largestComponentPieces": 16,
+    "ejectionLimit": 7,
+    "componentPassesRun": null,
+    "componentsRepaired": null,
+    "ordersTried": 0,
+    "swapAttemptsTried": 0,
+    "beamCombinationsTried": null,
+    "exactValid": false,
+    "reason": "violation component spans 16 pieces, above the local-repair limit of 7"
+   },
+   "post": {
+    "admitted": false,
+    "ejectedCount": 0,
+    "componentCount": 9,
+    "largestComponentPieces": 16,
+    "ejectionLimit": 7,
+    "componentPassesRun": 0,
+    "componentsRepaired": 0,
+    "ordersTried": 0,
+    "swapAttemptsTried": 0,
+    "beamCombinationsTried": 0,
+    "exactValid": false,
+    "reason": "violation component spans 16 pieces, above the local-repair limit of 7"
+   }
+  },
+  {
+   "case": "squeeze-0.98",
+   "pre": {
+    "admitted": false,
+    "ejectedCount": 0,
+    "componentCount": 9,
+    "largestComponentPieces": 36,
+    "ejectionLimit": 7,
+    "componentPassesRun": null,
+    "componentsRepaired": null,
+    "ordersTried": 0,
+    "swapAttemptsTried": 0,
+    "beamCombinationsTried": null,
+    "exactValid": false,
+    "reason": "violation component spans 36 pieces, above the local-repair limit of 7"
+   },
+   "post": {
+    "admitted": false,
+    "ejectedCount": 0,
+    "componentCount": 9,
+    "largestComponentPieces": 36,
+    "ejectionLimit": 7,
+    "componentPassesRun": 0,
+    "componentsRepaired": 0,
+    "ordersTried": 0,
+    "swapAttemptsTried": 0,
+    "beamCombinationsTried": 0,
+    "exactValid": false,
+    "reason": "violation component spans 36 pieces, above the local-repair limit of 7"
+   }
+  },
+  {
+   "case": "nudge-k3-d2.0",
+   "pre": {
+    "admitted": true,
+    "ejectedCount": 7,
+    "componentCount": 3,
+    "largestComponentPieces": 3,
+    "ejectionLimit": 7,
+    "componentPassesRun": null,
+    "componentsRepaired": null,
+    "ordersTried": 7,
+    "swapAttemptsTried": 21,
+    "beamCombinationsTried": null,
+    "exactValid": false,
+    "reason": "no insertion order re-placed the 7-piece violation set inside the 164.058 mm bound"
+   },
+   "post": {
+    "admitted": true,
+    "ejectedCount": 7,
+    "componentCount": 3,
+    "largestComponentPieces": 3,
+    "ejectionLimit": 7,
+    "componentPassesRun": 3,
+    "componentsRepaired": 0,
+    "ordersTried": 10,
+    "swapAttemptsTried": 5,
+    "beamCombinationsTried": 93,
+    "exactValid": false,
+    "reason": "no insertion order re-placed the 3 violation components inside the 164.058 mm bound"
+   }
+  },
+  {
+   "case": "nudge-k6-d2.0",
+   "pre": {
+    "admitted": false,
+    "ejectedCount": 15,
+    "componentCount": 5,
+    "largestComponentPieces": 4,
+    "ejectionLimit": 7,
+    "componentPassesRun": null,
+    "componentsRepaired": null,
+    "ordersTried": 0,
+    "swapAttemptsTried": 0,
+    "beamCombinationsTried": null,
+    "exactValid": false,
+    "reason": "joint ejection set of 15 pieces exceeds the local-repair limit of 7"
+   },
+   "post": {
+    "admitted": true,
+    "ejectedCount": 15,
+    "componentCount": 5,
+    "largestComponentPieces": 4,
+    "ejectionLimit": 7,
+    "componentPassesRun": 5,
+    "componentsRepaired": 1,
+    "ordersTried": 42,
+    "swapAttemptsTried": 13,
+    "beamCombinationsTried": 141,
+    "exactValid": false,
+    "reason": "no insertion order re-placed the 5 violation components inside the 164.058 mm bound"
+   }
+  },
+  {
+   "case": "nudge-k10-d1.0",
+   "pre": {
+    "admitted": false,
+    "ejectedCount": 20,
+    "componentCount": 6,
+    "largestComponentPieces": 6,
+    "ejectionLimit": 7,
+    "componentPassesRun": null,
+    "componentsRepaired": null,
+    "ordersTried": 0,
+    "swapAttemptsTried": 0,
+    "beamCombinationsTried": null,
+    "exactValid": false,
+    "reason": "joint ejection set of 20 pieces exceeds the local-repair limit of 7"
+   },
+   "post": {
+    "admitted": true,
+    "ejectedCount": 20,
+    "componentCount": 6,
+    "largestComponentPieces": 6,
+    "ejectionLimit": 7,
+    "componentPassesRun": 6,
+    "componentsRepaired": 1,
+    "ordersTried": 46,
+    "swapAttemptsTried": 28,
+    "beamCombinationsTried": 141,
+    "exactValid": false,
+    "reason": "no insertion order re-placed the 6 violation components inside the 164.058 mm bound"
+   }
+  }
+ ]
+}

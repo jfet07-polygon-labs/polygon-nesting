@@ -1,0 +1,34 @@
+{
+ "milestone": "ABSOLUTE RECORD on the true 5.0/5.0 exact-clearance contract: 164.042 mm, from 164.058 - and the first movement of this basin by a mechanism the branch had already written off as a matched negative",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "mechanism": {
+  "name": "binding-stack nudge at true depth, legalized by conflict-targeted re-placement under a clamp at the parent's own depth",
+  "step1": "select the k pieces with the largest TRUE transformed max-Y (the high_frontier_blockers ordering, general_relaxed.rs ~13165) and translate them d mm inward along the depth axis, creating a small, local, deliberate overlap",
+  "step2": "hand that state to persistent-vacancy mode 28 with the depth bound set to the parent's own depth, so every re-placed pose must fit a sheet clamped at the incumbent and nothing depth-ward of it can be published",
+  "step3": "mode 28 ejects the pieces incident to the induced clearance violations and re-places them through the construction insertion machinery under that clamp; publication is the authoritative validator's call against the real request",
+  "whyItWasMissed": "the pv34/pv35 drivers wrote reportedDepthMm/independentDepthMm = 200.0 into the perturbed fixture and passed 200.0 as the CLI target, so the harness installed a 200 mm incumbent (general_request_benchmark.rs ~316/378) and every separator contraction target derived from it (general_relaxed.rs ~2628). The measured '~179 shelf' was that fake 36 mm of headroom relaxing, not the layout. pv35 also ranked pieces by the translateLongAxis anchor, which on this layout ranges -25.2..+175.7 and has nothing to do with the depth frontier."
+ },
+ "lineage": [
+  {"depthMm": 164.058, "source": "record-164.058/pinned-parent-164.058.json"},
+  {"depthMm": 164.054, "via": "nudge k=3 d=2.0 -> mode 28 under a 164.058 clamp"},
+  {"depthMm": 164.053, "via": "nudge k=1 d=0.25 -> mode 28 under a 164.054 clamp"},
+  {"depthMm": 164.043, "via": "nudge k=1 d=0.5 -> mode 28 under a 164.053 clamp"},
+  {"depthMm": 164.042, "via": "nudge k=1 d=0.25 -> mode 28 under a 164.043 clamp"}
+ ],
+ "pinnedParent": {
+  "file": "pinned-parent-164.042.json",
+  "independentDepthMm": 164.042,
+  "placementFingerprint": "e407a8984fb05517b598e30bb375f66e0324e117e96147bcab0ced862fc6f26e"
+ },
+ "fixpointArms": {
+  "mode22Alternation": {"seeds": [0, 1, 2, 3], "published": [164.042, 164.042, 164.042, 164.042]},
+  "mode26Ladders": {"bounds": [163.742, 163.042], "seeds": [0, 1], "published": [164.042, 164.042, 164.042, 164.042]},
+  "mode28NudgeCascade": "35 (k,d) perturbations, no exact-valid publication below the incumbent",
+  "mode29NudgeCascade": "35 (k,d) perturbations, no exact-valid publication below the incumbent",
+  "verdict": "8/8 established arms plus both perturb-repair cascades return the incumbent: certified fixpoint"
+ },
+ "replayValidation": "mode 27 on the pinned state reports zero violating pairs, zero boundary pieces and parentIndependentDepthMm = 164.042; the independent transformed-extent reconstruction agrees to the micron grid",
+ "context": "gap to the 155 goal: 9.04 mm. The 0.016 mm is small, but it is the first movement of the imported-line basin by a *reopened* mechanism rather than by new machinery, and the reopened mechanism is now a general engine mode composed with a local perturbation."
+}
