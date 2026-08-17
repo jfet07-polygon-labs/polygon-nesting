@@ -1475,4 +1475,65 @@ mod tests {
             .expect("collision pressure");
         assert!(pressure.is_finite() && pressure > 0.0);
     }
+
+    /// Collision pressure is *mathematically* symmetric but not *bitwise*
+    /// symmetric, and the difference is load-bearing for the coupled
+    /// separator.
+    ///
+    /// [`JaguaHazardIndex::collision_pressure`] evaluates a freshly transformed
+    /// scratch polygon for the moving piece against the committed layout shape
+    /// of the fixed one. Swapping the roles swaps which side comes from which
+    /// pipeline and reverses the order of the `f32` pole-pair summation in
+    /// `overlap_pressure`, so the two readings of one pair can differ in their
+    /// low bits.
+    ///
+    /// That matters because the coupled separator's incremental tracker records
+    /// whichever reading the *last moved* piece produced, while a full rescore
+    /// always reads a pair from its lower-indexed piece. When a rollback
+    /// compares the two with exact equality, a pair last updated from its
+    /// higher-indexed side can disagree purely through this asymmetry, and the
+    /// target aborts with "rollback tracker disagrees with a complete rescore:
+    /// collision rows differ".
+    ///
+    /// This test pins the *property*, not a particular discrepancy: the two
+    /// readings must agree to within a loose relative tolerance (they measure
+    /// the same thing) while exact equality is not something the separator may
+    /// assume.
+    #[test]
+    fn collision_pressure_is_direction_dependent_in_its_low_bits() {
+        let first = concave_piece();
+        let second = square_piece();
+        let pieces = [
+            GeneralFastPiece {
+                id: "first",
+                polygon: &first,
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "second",
+                polygon: &second,
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        // Overlapping poses, so both directions report a positive pressure.
+        let poses = [pose(20.0, 20.0), pose(26.0, 26.0)];
+        let mut index =
+            JaguaHazardIndex::new(&pieces, settings, 100.0, &poses).expect("build hazard index");
+
+        let forward = index
+            .collision_pressure(0, poses[0], 1)
+            .expect("forward collision pressure");
+        let reverse = index
+            .collision_pressure(1, poses[1], 0)
+            .expect("reverse collision pressure");
+        assert!(forward > 0.0 && reverse > 0.0);
+        // Same quantity, so they agree to well within the f32 noise floor.
+        assert!(
+            (forward - reverse).abs() <= 1e-3 * forward.max(reverse),
+            "forward {forward} and reverse {reverse} should measure the same overlap"
+        );
+    }
 }

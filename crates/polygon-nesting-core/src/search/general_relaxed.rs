@@ -26,6 +26,9 @@ use crate::search::general_fast::{
     polygons_overlap_exact, validate_and_measure_placements, GeneralFastError, GeneralFastPiece,
     GeneralFastPlacement, GeneralFastResult, GeneralFastSettings, GeneralPlacementMetrics,
 };
+#[cfg(feature = "jagua-experimental")]
+use crate::search::general_micro_legalization::micro_legalize;
+use crate::search::general_micro_legalization::GeneralMicroLegalizationDiagnostics;
 
 #[cfg(feature = "jagua-experimental")]
 #[path = "general_persistent_vacancy.rs"]
@@ -110,6 +113,25 @@ const LADDER_COMPRESSION_SEED_DOMAIN: u64 = 0x4C41_4444_4552_3236;
 // at most this many steps, each warm-started from the previous step's state.
 #[cfg(feature = "jagua-experimental")]
 const LADDER_COMPRESSION_STEPS: usize = 8;
+// How many times a single rung arm may be re-run before the rung gives up.
+// `run_coupled_separator_arm` breaks on its first failed target, so one
+// unlucky draw - a target that aborts on a rollback rescore disagreement, or a
+// terminal state whose residue is too coarse to project - otherwise costs the
+// whole rung. Attempts are salted into the seed derivation, so each retry is a
+// genuinely different deterministic draw rather than a repeat, and an attempt
+// that publishes ends the loop immediately, so the extra work is only spent on
+// rungs that would have failed outright.
+#[cfg(feature = "jagua-experimental")]
+const LADDER_COMPRESSION_RUNG_ATTEMPTS: usize = 3;
+// Seed slot for the attempt salt, kept clear of the target/worker slots
+// `run_coupled_separator_arm` derives from the same seed.
+#[cfg(feature = "jagua-experimental")]
+const LADDER_COMPRESSION_ATTEMPT_SLOT: usize = usize::MAX - 96;
+// Mode 27 (micro-legalization probe) runs the repair pass directly on its
+// parent fixture and reports what it found, with no ladder and no bound. It is
+// the standalone instrument for the same pass mode 26 uses per rung.
+#[cfg(feature = "jagua-experimental")]
+const MICRO_LEGALIZATION_SEED_DOMAIN: u64 = 0x4D49_4352_4F4C_3237;
 // Mode 24 (bounded-depth reinsertion) tests compression by ejection and
 // reconstruction rather than compression by overlap: it ejects exactly the
 // pieces that stick out past a hard bound and rebuilds them with the
@@ -429,6 +451,9 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub bounded_reinsertion: Option<GeneralPersistentVacancyBoundedReinsertionDiagnostics>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ladder_compression: Option<GeneralPersistentVacancyLadderCompressionDiagnostics>,
+    /// Mode 27: the standalone micro-legalization probe run on the parent.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub micro_legalization: Option<GeneralMicroLegalizationDiagnostics>,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
 }
@@ -468,8 +493,13 @@ pub struct GeneralPersistentVacancyLadderStepDiagnostics {
     /// contraction above `bound_mm`.
     pub seed_depth_mm: f64,
     pub arms: Vec<GeneralPersistentVacancyLadderArmDiagnostics>,
+    /// How many arm attempts this rung spent across both warm starts.
+    pub attempts_run: usize,
     /// Whether this rung produced a new deepest exact-valid publication.
     pub improved_publication: bool,
+    /// Whether that publication came from the micro-legalization pass rather
+    /// than from the separator legalizing a target on its own.
+    pub published_by_micro_legalization: bool,
     /// The deepest exact-valid depth known after this rung.
     pub published_depth_mm_after: f64,
     /// The compression frontier's measured depth after this rung, feasible or
@@ -533,6 +563,19 @@ pub struct GeneralPersistentVacancyLadderArmDiagnostics {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exact_rejection_reason: Option<String>,
     pub state_fingerprint: Option<String>,
+    /// Which retry of this rung arm produced the row, counting from zero.
+    pub attempt: usize,
+    /// The micro-legalization pass run on the arm's rejected state, when one
+    /// was attempted.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub micro_legalization: Option<GeneralMicroLegalizationDiagnostics>,
+    /// The depth of the micro-legalized state, when the pass published one.
+    /// This is the arm's publication candidate whenever `exact_valid` is
+    /// false.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub micro_legalized_depth_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub micro_legalized_fingerprint: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failure_reason: Option<String>,
 }
@@ -2665,6 +2708,12 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                         effective_parent,
                         parent_source,
                     ),
+                    27 => run_micro_legalization_probe(
+                        pieces,
+                        fast_settings,
+                        effective_parent,
+                        parent_source,
+                    ),
                     mode => persistent_vacancy::run_persistent_vacancy_population(
                         pieces,
                         fast_settings,
@@ -3233,42 +3282,85 @@ fn run_ladder_compression(
         }
 
         for (role, warm_start_source, warm_start_depth_mm, warm_placements) in warm_starts {
-            let (arm_row, produced) = run_ladder_compression_arm(
-                pieces,
-                fast_settings,
-                step_settings,
-                separator_settings,
-                bound_mm,
-                seed_depth_mm,
-                role,
-                warm_start_source,
-                warm_start_depth_mm,
-                warm_placements,
-            );
-            if let Some((placements, depth_mm, exact_valid)) = produced {
-                if exact_valid && grid_key(depth_mm) < grid_key(published_depth_mm) {
-                    published_depth_mm = depth_mm;
-                    published_placements = placements.clone();
-                    published_source = format!("step{step}");
-                    ladder.published_step = Some(step);
-                    ladder.published_bound_mm = Some(bound_mm);
-                    row.improved_publication = true;
+            // A rung arm gets a small deterministic retry budget. Each attempt
+            // salts the separator seed, so a rung that lost its single draw to
+            // an aborted target or an unprojectable residue gets genuinely
+            // different draws rather than a repeat, and an attempt that
+            // publishes ends the loop.
+            for attempt in 0..LADDER_COMPRESSION_RUNG_ATTEMPTS {
+                let mut attempt_settings = separator_settings;
+                if attempt > 0 {
+                    // The first attempt keeps the rung's own seed, so the
+                    // retry budget is a strict superset of the single-shot
+                    // behaviour rather than a reshuffle of it: whatever the
+                    // rung used to draw, it still draws first.
+                    attempt_settings.seed = derive_seed(
+                        separator_settings.seed,
+                        attempt,
+                        LADDER_COMPRESSION_ATTEMPT_SLOT,
+                    );
                 }
-                // The compression frontier is the deepest state seen, feasible
-                // or not: that is the material the next, tighter rung works
-                // off.
-                if chain_depth_mm.is_none_or(|current| grid_key(depth_mm) < grid_key(current)) {
-                    chain_depth_mm = Some(depth_mm);
-                    chain_placements = placements;
-                    chain_source = if arm_row.from_terminal {
-                        format!("step{step}:terminal")
+                let (mut arm_row, produced) = run_ladder_compression_arm(
+                    pieces,
+                    fast_settings,
+                    step_settings,
+                    attempt_settings,
+                    bound_mm,
+                    seed_depth_mm,
+                    role,
+                    warm_start_source.clone(),
+                    warm_start_depth_mm,
+                    warm_placements.clone(),
+                );
+                arm_row.attempt = attempt;
+                row.attempts_run = row.attempts_run.saturating_add(1);
+                let mut published_here = false;
+                if let Some(product) = produced {
+                    // Publication takes the arm's own exact-accepted state when
+                    // it has one, and otherwise whatever the micro-legalization
+                    // pass managed to project out of the rejected state.
+                    let candidate = if product.exact_valid {
+                        Some((product.placements.clone(), product.depth_mm, false))
                     } else {
-                        format!("step{step}")
+                        product
+                            .legalized
+                            .clone()
+                            .map(|(placements, depth_mm)| (placements, depth_mm, true))
                     };
-                    row.chain_advanced = true;
+                    if let Some((placements, depth_mm, by_micro_legalization)) = candidate {
+                        if grid_key(depth_mm) < grid_key(published_depth_mm) {
+                            published_depth_mm = depth_mm;
+                            published_placements = placements;
+                            published_source = format!("step{step}");
+                            ladder.published_step = Some(step);
+                            ladder.published_bound_mm = Some(bound_mm);
+                            row.improved_publication = true;
+                            row.published_by_micro_legalization = by_micro_legalization;
+                        }
+                        published_here = true;
+                    }
+                    // The compression frontier is the deepest state seen,
+                    // feasible or not: that is the material the next, tighter
+                    // rung works off. It always tracks the arm's own state, so
+                    // a micro-legalized publication never blunts the frontier.
+                    if chain_depth_mm
+                        .is_none_or(|current| grid_key(product.depth_mm) < grid_key(current))
+                    {
+                        chain_depth_mm = Some(product.depth_mm);
+                        chain_placements = product.placements;
+                        chain_source = if arm_row.from_terminal {
+                            format!("step{step}:terminal")
+                        } else {
+                            format!("step{step}")
+                        };
+                        row.chain_advanced = true;
+                    }
+                }
+                row.arms.push(arm_row);
+                if published_here {
+                    break;
                 }
             }
-            row.arms.push(arm_row);
         }
 
         row.published_depth_mm_after = published_depth_mm;
@@ -3282,6 +3374,64 @@ fn run_ladder_compression(
         Some(coupled_fast_placement_fingerprint(&published_placements));
     diagnostics.final_placements = coupled_placement_diagnostics(&published_placements);
     diagnostics.ladder_compression = Some(ladder);
+    diagnostics
+}
+
+/// Mode 27: the standalone micro-legalization probe.
+///
+/// Takes the parent exactly as given, measures its residue against the real
+/// request, and attempts the same repair pass mode 26 runs per rung. No bound,
+/// no ladder, no search: this is the instrument for asking "how far is this
+/// state from legal, and can projection close it?" of any state at all.
+#[cfg(feature = "jagua-experimental")]
+fn run_micro_legalization_probe(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    parent: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_source: Option<String>,
+) -> GeneralPersistentVacancyDiagnostics {
+    let mut diagnostics = GeneralPersistentVacancyDiagnostics {
+        mode: 27,
+        seed_domain: MICRO_LEGALIZATION_SEED_DOMAIN,
+        parent_source,
+        ..GeneralPersistentVacancyDiagnostics::default()
+    };
+    if pieces.is_empty() {
+        diagnostics.failure_reason =
+            Some("micro-legalization probe requires at least one piece".to_owned());
+        return diagnostics;
+    }
+    if parent.final_placements.len() != pieces.len() {
+        diagnostics.failure_reason =
+            Some("micro-legalization probe requires a complete parent layout".to_owned());
+        return diagnostics;
+    }
+
+    let parent_placements = fast_placements_from_coupled_diagnostics(&parent.final_placements);
+    diagnostics.parent_fingerprint = Some(coupled_fast_placement_fingerprint(&parent_placements));
+    diagnostics.initial_state_fingerprint = diagnostics.parent_fingerprint.clone();
+    // Unlike every other mode, this one is *meant* to be pointed at states that
+    // do not validate, so the parent is measured rather than gated on.
+    diagnostics.parent_independent_depth_mm =
+        coupled_independent_source_depth(pieces, &parent_placements, fast_settings).ok();
+    diagnostics.attempted = true;
+
+    let (micro_diagnostics, repaired) = micro_legalize(pieces, &parent_placements, fast_settings);
+    diagnostics.micro_legalization = Some(micro_diagnostics);
+    match repaired {
+        Some(repaired) => {
+            diagnostics.exact_valid = true;
+            diagnostics.independent_depth_mm =
+                coupled_independent_source_depth(pieces, &repaired, fast_settings).ok();
+            diagnostics.final_placement_fingerprint =
+                Some(coupled_fast_placement_fingerprint(&repaired));
+            diagnostics.final_placements = coupled_placement_diagnostics(&repaired);
+        }
+        None => {
+            diagnostics.failure_reason =
+                Some("micro-legalization did not produce an exact-valid state".to_owned());
+        }
+    }
     diagnostics
 }
 
@@ -3306,7 +3456,7 @@ fn run_ladder_compression_arm(
     warm_placements: Vec<GeneralFastPlacement>,
 ) -> (
     GeneralPersistentVacancyLadderArmDiagnostics,
-    Option<(Vec<GeneralFastPlacement>, f64, bool)>,
+    Option<LadderCompressionArmProduct>,
 ) {
     let mut row = GeneralPersistentVacancyLadderArmDiagnostics {
         role: role.to_owned(),
@@ -3399,8 +3549,56 @@ fn run_ladder_compression_arm(
         Ok(_) => row.exact_valid = true,
         Err(error) => row.exact_rejection_reason = Some(error.to_string()),
     }
+
+    // The residue this mode keeps producing is a compressed state that misses
+    // the contract by a handful of pairs at a rounding scale, with no source
+    // overlap anywhere. That is a projection problem, so try to project it
+    // before declaring the rung a loss. The pass validates its own output
+    // against the real request, so anything it returns here is publishable.
+    let mut legalized = None;
+    if !row.exact_valid {
+        let (micro_diagnostics, repaired) = micro_legalize(pieces, &placements, fast_settings);
+        if let Some(repaired) = repaired {
+            match coupled_independent_source_depth(pieces, &repaired, fast_settings) {
+                Ok(repaired_depth_mm) => {
+                    row.micro_legalized_depth_mm = Some(repaired_depth_mm);
+                    row.micro_legalized_fingerprint =
+                        Some(coupled_fast_placement_fingerprint(&repaired));
+                    legalized = Some((repaired, repaired_depth_mm));
+                }
+                Err(error) => {
+                    row.failure_reason = Some(format!("micro-legalized state depth: {error}"));
+                }
+            }
+        }
+        row.micro_legalization = Some(micro_diagnostics);
+    }
+
     let exact_valid = row.exact_valid;
-    (row, Some((placements, depth_mm, exact_valid)))
+    (
+        row,
+        Some(LadderCompressionArmProduct {
+            placements,
+            depth_mm,
+            exact_valid,
+            legalized,
+        }),
+    )
+}
+
+/// What one mode-26 rung arm produced.
+///
+/// `placements` is the arm's own state and is generally *infeasible* - it is
+/// the compression frontier the next rung works off. `legalized` is the
+/// exact-valid state the micro-legalization pass projected out of it, when it
+/// managed to, and is the arm's publication candidate whenever `exact_valid`
+/// is false.
+#[cfg(feature = "jagua-experimental")]
+struct LadderCompressionArmProduct {
+    placements: Vec<GeneralFastPlacement>,
+    depth_mm: f64,
+    exact_valid: bool,
+    legalized: Option<(Vec<GeneralFastPlacement>, f64)>,
 }
 
 /// Mode 23: recombination. Crosses parent A (`pinned_vacancy_parent`) with

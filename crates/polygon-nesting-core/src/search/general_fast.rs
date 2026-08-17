@@ -2114,7 +2114,7 @@ fn combined_bounds(placed: &[PlacedState]) -> Option<crate::domain::IrregularBou
     }))
 }
 
-fn effective_sheet_edge_clearance_mm(settings: GeneralFastSettings) -> f64 {
+pub(crate) fn effective_sheet_edge_clearance_mm(settings: GeneralFastSettings) -> f64 {
     settings
         .sheet_edge_clearance_mm
         .unwrap_or(settings.total_padding_mm / 2.0)
