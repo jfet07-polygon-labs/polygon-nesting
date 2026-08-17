@@ -1151,6 +1151,60 @@ pub struct GeneralReplacementRepairPieceRow {
     /// pocket itself was reachable.
     pub anchor_local_candidates: usize,
     pub anchor_local_finalists: usize,
+    /// Modes 32 and 33 only: the orientation-perturbation stream's own
+    /// candidates, rows, finalists and accepted-pose attribution for this
+    /// piece. Absent for every mode that does not arm the stream, which is what
+    /// keeps modes 24, 28 and 29 byte-identical.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub orientation: Option<GeneralOrientationSeedingRow>,
+}
+
+/// Orientation-perturbed re-insertion (modes 32 and 33): what the continuous
+/// angle ladder cost for one re-placed piece and, above all, whether the pose
+/// the piece actually committed to came from it.
+///
+/// The four `accepted*` counters are mutually exclusive and sum to 1 on a piece
+/// that found a pose and to 0 on a piece that did not, so summing them over a
+/// run's rows is the attribution the whole mechanism is judged on: a non-zero
+/// `acceptedOrientation` is the *only* evidence that continuous-angle
+/// re-insertion did work no translation could have done.
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralOrientationSeedingRow {
+    /// Orientation-perturbed variants of the vacated pose seeded for this
+    /// piece, the candidate poses they generated, the charged confirmation rows
+    /// those poses spent, and the exact-valid finalists they produced.
+    pub variants: usize,
+    pub candidates: usize,
+    pub rows: usize,
+    pub finalists: usize,
+    /// The vacated pose itself.
+    pub accepted_vacated: usize,
+    /// An anchor-local candidate that is not the vacated pose: the projection
+    /// trajectory, a peer's pocket, or the displacement cloud - all at the
+    /// vacated orientation.
+    pub accepted_anchor_local: usize,
+    /// An orientation-perturbed candidate.
+    pub accepted_orientation: usize,
+    /// A skyline-station or shelf candidate.
+    pub accepted_station: usize,
+    /// The accepted pose's own orientation, its signed offset from the vacated
+    /// orientation on the angle grid, and whether it flipped the mirror state.
+    /// Absent when the piece found no pose.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_rotation_deg: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_rotation_delta_deg: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accepted_mirror_flipped: Option<bool>,
+}
+
+/// Serialization guard for the orientation-perturbation counters: a mode that
+/// does not arm the stream must emit exactly the JSON it emitted before the
+/// stream existed.
+#[allow(clippy::trivially_copy_pass_by_ref)]
+fn is_zero_usize(value: &usize) -> bool {
+    *value == 0
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
@@ -1191,6 +1245,17 @@ pub struct GeneralPersistentVacancyConstructionDiagnostics {
     pub anchor_local_candidates: usize,
     pub anchor_local_rows: usize,
     pub anchor_local_finalists: usize,
+    /// Orientation-perturbed re-insertion (modes 32 and 33 only): candidate
+    /// poses seeded at a rotated or mirrored variant of the vacated pose, the
+    /// charged confirmation rows they spent, and the exact-valid finalists they
+    /// produced. All three stay zero for every mode that does not arm the
+    /// stream, which is what keeps their diagnostics byte-identical.
+    #[serde(skip_serializing_if = "is_zero_usize")]
+    pub orientation_candidates: usize,
+    #[serde(skip_serializing_if = "is_zero_usize")]
+    pub orientation_rows: usize,
+    #[serde(skip_serializing_if = "is_zero_usize")]
+    pub orientation_finalists: usize,
     /// Mode 25 only: the off-beam best-ever expansion parent is armed.
     pub best_ever_parent_enabled: bool,
     /// Extra expansions spent on an elite the retention step did not keep.
@@ -3490,19 +3555,25 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                         effective_parent,
                         parent_source,
                     ),
-                    28 => persistent_vacancy::run_replacement_repair(
+                    // Modes 32 and 33 are modes 28 and 29 with the
+                    // orientation-perturbation candidate stream armed; nothing
+                    // else about the two pipelines differs, which is why they
+                    // are the same two entry points with one flag.
+                    mode @ (28 | 32) => persistent_vacancy::run_replacement_repair(
                         pieces,
                         fast_settings,
                         relaxed_settings,
                         effective_parent,
                         parent_source,
+                        mode == 32,
                     ),
-                    29 => persistent_vacancy::run_joint_replacement_repair(
+                    mode @ (29 | 33) => persistent_vacancy::run_joint_replacement_repair(
                         pieces,
                         fast_settings,
                         relaxed_settings,
                         effective_parent,
                         parent_source,
+                        mode == 33,
                     ),
                     mode @ (30 | 31) => run_global_legalization_probe(
                         pieces,
@@ -4539,8 +4610,16 @@ fn run_ladder_compression_arm(
         row.micro_legalization = Some(micro_diagnostics);
     }
     if !row.exact_valid && legalized.is_none() {
-        let outcome =
-            persistent_vacancy::replacement_repair(pieces, &placements, fast_settings, bound_mm);
+        // Mode 26's repair tiers are protected legacy behaviour, so they stay
+        // on the legacy candidate stream: the orientation perturbation is
+        // reachable only through the modes that were built to measure it.
+        let outcome = persistent_vacancy::replacement_repair(
+            pieces,
+            &placements,
+            fast_settings,
+            bound_mm,
+            false,
+        );
         if let Some(repaired) = &outcome.repaired {
             if let Some(repaired_depth_mm) = outcome.diagnostics.depth_mm {
                 row.replacement_repaired_depth_mm = Some(repaired_depth_mm);
@@ -4558,6 +4637,7 @@ fn run_ladder_compression_arm(
             &placements,
             fast_settings,
             bound_mm,
+            false,
         );
         if let Some(repaired) = &outcome.repaired {
             if let Some(repaired_depth_mm) = outcome.diagnostics.depth_mm {

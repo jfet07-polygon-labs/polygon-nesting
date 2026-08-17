@@ -217,6 +217,75 @@ const ANCHOR_LOCAL_FAN_DIRECTIONS: [(f64, f64); 16] = [
     (-0.3826834323650898, 0.9238795325112867),
     (-0.3826834323650898, -0.9238795325112867),
 ];
+// Modes 32 and 33: orientation-perturbed re-insertion.
+//
+// The anchor-local stream above is a neighbourhood of exactly ONE pose - the
+// vacated one - carried under the anchor's *own* orientation prior, and the
+// only other orientations any re-insertion caller ever sees come from the
+// station stream, which is anchored at a skyline valley and cannot reach an
+// interior pocket. So a layout built from continuous fine angles admits no
+// alternative orientation at re-insertion density at all: the ejected piece
+// goes back at the angle it came out at, translated, or it does not go back.
+// That was measured rather than argued (the pose-entry negative: zero rotation
+// change and zero mirror flips across every legal state modes 28 and 29
+// produced on the record basin), and it is the degree of freedom this stream
+// adds.
+//
+// Two properties make it a *local* operator rather than a second constructor:
+//
+// * every variant is re-centred on the vacated footprint's own bounding-box
+//   centre, so a ladder rung rotates the piece **in place**. Rotation is
+//   applied about the source origin, so without re-centring a 5-degree rung on
+//   a piece whose material sits 100 mm from that origin is an 8.7 mm
+//   translation - a different pocket, not a different orientation;
+// * every variant is searched over the *same* local translation neighbourhood
+//   the vacated pose gets - the projection trajectory, the peers' pockets and
+//   the aimed displacement cloud - rigidly carried along by the same
+//   re-centring shift.
+//
+// The ladder itself is scale-free: an angle carries no length, so a geometric
+// ladder is the general instrument. Ratio 5/2 from 0.02 degrees (below which a
+// rung cannot move a vertex of a hand-sized piece by even one placement-grid
+// quantum) to just under 5 degrees (above which "rotate in place" stops being
+// a local repair and becomes a re-orientation the station stream already
+// offers). Spelled out rather than computed so the pose stream does not depend
+// on the platform's `powf`.
+const ORIENTATION_PERTURBATION_LADDER_DEG: [f64; 7] =
+    [0.02, 0.05, 0.125, 0.3125, 0.78125, 1.953125, 4.8828125];
+// Orientation variants one perturbed re-insertion seeds per piece: the ladder
+// in both signs, the mirrored counterpart of the vacated orientation, and the
+// ladder in both signs mirrored. A piece whose request forbids rotation or
+// mirroring contributes only the families it is allowed, and duplicates on the
+// angle grid are dropped, so this is a ceiling rather than a count.
+const ORIENTATION_PERTURBATION_VARIANTS: usize =
+    4 * ORIENTATION_PERTURBATION_LADDER_DEG.len() + 1;
+// The orientation stream's own charged-row budget, held apart from both the
+// station stream's and the anchor-local stream's for the same reason those two
+// are held apart: an additive degree of freedom must never be able to spend the
+// rows a legacy-reachable solution would have used.
+//
+// The stream is the anchor-local neighbourhood carried onto each variant, so
+// covering it whole costs exactly the anchor-local budget once per variant -
+// which is the same rule `ANCHOR_LOCAL_ROWS` follows ("sized to cover the whole
+// cloud, so nothing the primitive generates is silently dropped"). It is
+// derived rather than tuned, and it matters: at a budget that truncates the
+// stream to its leading ranks the record basin's depth-setting piece produced
+// no finalist at all, and at full coverage it produced two.
+const ORIENTATION_PERTURBATION_ROWS: usize =
+    ORIENTATION_PERTURBATION_VARIANTS * ANCHOR_LOCAL_ROWS;
+// Bucket ordinals the anchor-local stream may consume for one piece: its whole
+// cloud, plus one vacated-translation pose per orientation prior. The
+// orientation stream starts its own ordinals above this so the coarse spatial
+// de-duplication downstream can never collapse a rotated candidate onto an
+// unrotated one that happens to share a 256-grid cell.
+const ANCHOR_LOCAL_BUCKET_SPAN: usize = 1
+    + ANCHOR_LOCAL_PROJECTION_ITERATES
+    + JOINT_REPLACEMENT_PEER_POSES
+    + ANCHOR_LOCAL_MAGNITUDES
+        * (1 + ANCHOR_LOCAL_SEPARATION_DIRECTIONS + 1 + ANCHOR_LOCAL_FAN_DIRECTIONS.len())
+    + CONSTRUCTION_HINT_PRIORS;
+const ORIENTATION_PERTURBATION_BUCKET_BASE: usize =
+    ORIENTATIONS_PER_PIECE + CONSTRUCTION_HINT_PRIORS + ANCHOR_LOCAL_BUCKET_SPAN;
 const CONSTRUCTION_TRANSIENT_BYTES: usize = 192 * 1024;
 // Child-scoring flood fills follow the reviewed-contract precedent of the
 // uncharged LNS depth-key scans: the structural ceiling (`VacancyQuotas::
@@ -364,6 +433,26 @@ impl VacancyQuotas {
             max_selected_piece_slots.saturating_mul(ORIENTATIONS_PER_PIECE);
         let max_returned_positions =
             max_orientation_streams.saturating_mul(POSITIONS_PER_ORIENTATION);
+        // Modes 32 and 33 open a lane that did not exist before: the
+        // orientation-perturbation stream's charged confirmation rows, and one
+        // collision build per orientation variant per ejected piece per
+        // component pass. It is funded by its own term rather than squeezed
+        // into the construction term, for the same reason every other lane
+        // here has one - and because a ceiling that only grows for a lane no
+        // legacy mode can enter cannot change a legacy mode's behaviour. The
+        // slot factor is the joint pass's own worst case (every insertion
+        // order and every pose-swap attempt over an ejection set as large as
+        // the whole layout), which strictly covers the second tier's.
+        let orientation_perturbation_slots = JointReplacementBudget::slot_cap(piece_count);
+        let orientation_perturbation_rows =
+            orientation_perturbation_slots.saturating_mul(ORIENTATION_PERTURBATION_ROWS);
+        // The rows themselves are already funded through `max_exact_finalist_rows`,
+        // which the build ceiling adds wholesale; this term is the *extra*
+        // build the stream takes before any row runs, one per variant per
+        // ejected piece per component pass.
+        let orientation_perturbation_builds = JOINT_REPLACEMENT_COMPONENT_PASSES
+            .saturating_mul(piece_count)
+            .saturating_mul(ORIENTATION_PERTURBATION_VARIANTS);
         let max_exact_finalist_rows = POPULATION_SELECTED_PIECE_SLOTS
             .saturating_mul(FINALISTS_PER_PIECE)
             .saturating_add(settle_selected_piece_slots.saturating_mul(SETTLE_PROBES_PER_ATTEMPT))
@@ -376,7 +465,8 @@ impl VacancyQuotas {
             .saturating_add(LNS_REINSERT_SLOTS.saturating_mul(RECONSTRUCTION_ROWS_PER_PIECE))
             .saturating_add(
                 construction_selected_piece_slots.saturating_mul(CONSTRUCTION_ROWS_PER_PIECE),
-            );
+            )
+            .saturating_add(orientation_perturbation_rows);
 
         let group_drop_pair_visits = scale(COMPACTION_ROUNDS)
             .saturating_mul(GROUP_DROP_PROBES_PER_CUT)
@@ -392,7 +482,8 @@ impl VacancyQuotas {
             .saturating_add(
                 construction_selected_piece_slots.saturating_mul(CONSTRUCTION_HINT_PRIORS),
             )
-            .saturating_add(SEPARATION_COLLISION_BUILDS);
+            .saturating_add(SEPARATION_COLLISION_BUILDS)
+            .saturating_add(orientation_perturbation_builds);
         let max_experimental_pair_visits = complete_pairs
             .saturating_add(max_exact_finalist_rows.saturating_mul(peers))
             .saturating_add(group_drop_pair_visits)
@@ -1149,6 +1240,33 @@ struct AnchorLocalSeeding {
     /// Empty for every caller that ejects pieces one at a time, which is what
     /// keeps their candidate streams bit-identical.
     peer_poses: BTreeMap<usize, Vec<(f64, f64)>>,
+    /// Per piece index, the orientation-perturbed variants of that piece's
+    /// vacated pose - the continuous-angle ladder and, where the request allows
+    /// it, the mirror flip - each carrying the local bounding box that
+    /// re-centres it on the pocket the piece came out of.
+    ///
+    /// Empty for every caller but modes 32 and 33, which is what keeps every
+    /// other caller's candidate stream bit-identical: an empty map emits no
+    /// orientation candidate, spends no orientation row, and leaves the
+    /// attribution block off the diagnostics entirely.
+    orientation_variants: BTreeMap<usize, Vec<OrientationVariant>>,
+}
+
+/// One orientation-perturbed variant of a piece's vacated pose.
+///
+/// The bounding box is the piece's collision polygon at this orientation and
+/// zero translation, which is what both clamps the variant into the
+/// piece-feasible band and supplies the re-centring shift: matching this box's
+/// centre to the vacated box's centre is what makes the rung a rotation of the
+/// piece in place.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct OrientationVariant {
+    rotation_deg: f64,
+    mirrored: bool,
+    min_x: f64,
+    max_x: f64,
+    min_y: f64,
+    max_y: f64,
 }
 
 /// Where a construction finalist's seed came from. Carried out of
@@ -1161,6 +1279,14 @@ struct CandidateProvenance {
     zero_prior: bool,
     /// Seeded at the piece's vacated pose rather than at a skyline station.
     anchor_local: bool,
+    /// The vacated pose itself - the single candidate whose feasibility is a
+    /// matter of record rather than of search. Exactly one candidate per slot
+    /// carries this, and only when anchor-local seeding is on.
+    vacated: bool,
+    /// Seeded by the orientation-perturbation stream: the vacated pose's own
+    /// translation neighbourhood, carried onto a rotated or mirrored variant of
+    /// the vacated orientation and re-centred on the vacated footprint.
+    orientation_perturbed: bool,
 }
 
 impl AnchorLocalSeeding {
@@ -1181,7 +1307,20 @@ impl AnchorLocalSeeding {
             separating_directions: BTreeMap::new(),
             projected_displacements: BTreeMap::new(),
             peer_poses: BTreeMap::new(),
+            orientation_variants: BTreeMap::new(),
         }
+    }
+
+    /// The orientation-perturbed variants seeded for one piece, in the fixed
+    /// ladder order the builder produced. Empty for every caller that did not
+    /// arm the stream.
+    fn orientation_variants(&self, piece_index: usize) -> &[OrientationVariant] {
+        if !self.enabled {
+            return &[];
+        }
+        self.orientation_variants
+            .get(&piece_index)
+            .map_or(&[][..], Vec::as_slice)
     }
 
     /// The peer vacated translations seeded for one piece: finite, and never
@@ -1300,6 +1439,122 @@ impl AnchorLocalSeeding {
     }
 }
 
+/// The orientation-perturbed variants of one ejected piece's vacated pose, in
+/// the order the stream seeds them.
+///
+/// Rotation rungs lead, ascending in magnitude with the positive sign first;
+/// the mirror family follows, so a row-budget cut truncates the mirror variants
+/// before the rotation variants. The vacated orientation itself is never
+/// re-emitted here - it is the anchor-local stream's own leading candidate, and
+/// re-emitting it would spend an orientation row on a pose already tried.
+/// Orientations the request forbids (`allow_rotation`, `allow_mirror`) are not
+/// generated at all, so a fixed-orientation piece contributes nothing and a
+/// non-mirrorable one contributes only the ladder.
+///
+/// One charged collision build per surviving variant, taken once per ejected
+/// piece per pass rather than once per insertion order, which is why the
+/// builder lives here and its output is carried on [`AnchorLocalSeeding`].
+fn orientation_perturbation_variants(
+    piece: GeneralFastPiece<'_>,
+    vacated: &RelaxedPlacement,
+    settings: GeneralFastSettings,
+    work: &mut RunWork,
+) -> Result<Vec<OrientationVariant>, String> {
+    let vacated_key = (angle_key(vacated.rotation_deg), vacated.mirrored);
+    let mut orientations: Vec<(f64, bool)> = Vec::with_capacity(ORIENTATION_PERTURBATION_VARIANTS);
+    let push = |orientations: &mut Vec<(f64, bool)>, rotation_deg: f64, mirrored: bool| {
+        let rotation_deg = continuous_angle(rotation_deg);
+        let key = (angle_key(rotation_deg), mirrored);
+        if key == vacated_key {
+            return;
+        }
+        if orientations
+            .iter()
+            .any(|(angle, mirror)| (angle_key(*angle), *mirror) == key)
+        {
+            return;
+        }
+        orientations.push((rotation_deg, mirrored));
+    };
+    for mirrored in [vacated.mirrored, !vacated.mirrored] {
+        if mirrored != vacated.mirrored {
+            if !piece.allow_mirror {
+                continue;
+            }
+            // The pure mirror flip: no rotation at all, which is the one
+            // orientation change a fixed-orientation mirrorable piece can make.
+            push(&mut orientations, vacated.rotation_deg, mirrored);
+        }
+        if !piece.allow_rotation {
+            continue;
+        }
+        for delta_deg in ORIENTATION_PERTURBATION_LADDER_DEG {
+            for signed_deg in [delta_deg, -delta_deg] {
+                push(
+                    &mut orientations,
+                    vacated.rotation_deg + signed_deg,
+                    mirrored,
+                );
+            }
+        }
+    }
+    let mut variants = Vec::with_capacity(orientations.len());
+    for (rotation_deg, mirrored) in orientations {
+        let local = RelaxedPlacement {
+            input_index: vacated.input_index,
+            rotation_deg,
+            mirrored,
+            translate_x: 0.0,
+            translate_y: 0.0,
+        };
+        let collision = build_collision(piece, &local, settings, work)?;
+        // A variant whose collision polygon came back empty carries no
+        // geometry to re-centre; dropping it is the same refusal the priors
+        // make, except that a missing perturbation is never fatal.
+        let Some(bounds) = collision.bounds() else {
+            continue;
+        };
+        variants.push(OrientationVariant {
+            rotation_deg,
+            mirrored,
+            min_x: bounds.min_x,
+            max_x: bounds.max_x,
+            min_y: bounds.min_y,
+            max_y: bounds.max_y,
+        });
+    }
+    Ok(variants)
+}
+
+/// Arms the orientation-perturbed stream on `anchor_local` for every ejected
+/// piece, reading each piece's vacated pose off the anchor.
+///
+/// A variant build that trips a work cap is reported as a cap failure exactly
+/// like any other charged build; a variant set that comes back empty simply
+/// leaves that piece with the legacy stream, which is what a fixed-orientation
+/// non-mirrorable piece gets.
+fn arm_orientation_perturbation(
+    pieces: &[GeneralFastPiece<'_>],
+    anchor: &RelaxedState,
+    settings: GeneralFastSettings,
+    ejected_indices: &[usize],
+    anchor_local: &mut AnchorLocalSeeding,
+    work: &mut RunWork,
+) -> Result<(), String> {
+    for index in ejected_indices.iter().copied() {
+        let variants = orientation_perturbation_variants(
+            pieces[index],
+            &anchor.placements[index],
+            settings,
+            work,
+        )?;
+        if !variants.is_empty() {
+            anchor_local.orientation_variants.insert(index, variants);
+        }
+    }
+    Ok(())
+}
+
 /// What the shared bounded re-placement primitive did to one ejected piece.
 #[derive(Debug)]
 struct ReplacedPieceOutcome {
@@ -1315,6 +1570,10 @@ struct ReplacedPieceOutcome {
     /// pose to seed from.
     anchor_local_candidates: usize,
     anchor_local_finalists: usize,
+    /// The orientation-perturbed stream's own attribution for this piece.
+    /// `None` for every caller that did not arm it, which is what keeps the
+    /// legacy modes' diagnostics byte-identical.
+    orientation: Option<GeneralOrientationSeedingRow>,
 }
 
 /// What one run of the shared bounded re-placement primitive produced.
@@ -1473,8 +1732,12 @@ fn replace_ejected_under_bound(
             placed_extent_mm: None,
             anchor_local_candidates: 0,
             anchor_local_finalists: 0,
+            orientation: None,
         };
         let seeded_before = construction.anchor_local_candidates;
+        let orientation_seeded_before = construction.orientation_candidates;
+        let orientation_rows_before = construction.orientation_rows;
+        let orientation_variants = anchor_local.orientation_variants(index).len();
         let finalists = construct_candidate_poses(
             pieces,
             bound_settings,
@@ -1495,6 +1758,25 @@ fn replace_ejected_under_bound(
             .iter()
             .filter(|(_, _, provenance)| provenance.anchor_local)
             .count();
+        // The orientation stream's attribution block exists only for a caller
+        // that armed it, so that every other caller's diagnostics are the JSON
+        // they were before the stream existed.
+        if orientation_variants > 0 {
+            row.orientation = Some(GeneralOrientationSeedingRow {
+                variants: orientation_variants,
+                candidates: construction
+                    .orientation_candidates
+                    .saturating_sub(orientation_seeded_before),
+                rows: construction
+                    .orientation_rows
+                    .saturating_sub(orientation_rows_before),
+                finalists: finalists
+                    .iter()
+                    .filter(|(_, _, provenance)| provenance.orientation_perturbed)
+                    .count(),
+                ..GeneralOrientationSeedingRow::default()
+            });
+        }
         // The finalists arrive ranked by the landing-frontier key, so the
         // first one still inside the bound is the shallowest confirmed pose,
         // and rank zero - the default - commits it. A caller searching poses
@@ -1506,11 +1788,11 @@ fn replace_ejected_under_bound(
             .unwrap_or(0);
         let mut chosen = None;
         let mut in_bound_rank = 0usize;
-        for (pose, collision, _) in finalists {
+        for (pose, collision, provenance) in finalists {
             let extent = placement_long_axis_extent_mm(pieces[index], &pose, fast_settings);
             if grid_key(extent) <= bound_grid {
                 if in_bound_rank == wanted_rank {
-                    chosen = Some((pose, collision, extent));
+                    chosen = Some((pose, collision, extent, provenance));
                     break;
                 }
                 in_bound_rank = in_bound_rank.saturating_add(1);
@@ -1518,8 +1800,34 @@ fn replace_ejected_under_bound(
             }
             row.bound_rejections = row.bound_rejections.saturating_add(1);
         }
+        // The accepted-pose attribution: which of the four candidate families
+        // the pose this piece committed to actually came from. This is the
+        // measurement the orientation mechanism is judged on, so it is read off
+        // the committed finalist's own provenance rather than reconstructed
+        // from the pose - the contact walk translates a confirmed pose but
+        // never rotates it, so the orientation the finalist carries is the
+        // orientation it was seeded at.
+        if let (Some(orientation), Some((pose, _, _, provenance))) =
+            (row.orientation.as_mut(), chosen.as_ref())
+        {
+            if provenance.vacated {
+                orientation.accepted_vacated = 1;
+            } else if provenance.orientation_perturbed {
+                orientation.accepted_orientation = 1;
+            } else if provenance.anchor_local {
+                orientation.accepted_anchor_local = 1;
+            } else {
+                orientation.accepted_station = 1;
+            }
+            let vacated_pose = &anchor.placements[index];
+            orientation.accepted_rotation_deg = Some(pose.rotation_deg);
+            orientation.accepted_rotation_delta_deg = Some(
+                angle_from_key(angle_key(pose.rotation_deg) - angle_key(vacated_pose.rotation_deg)),
+            );
+            orientation.accepted_mirror_flipped = Some(pose.mirrored != vacated_pose.mirrored);
+        }
         match chosen {
-            Some((pose, collision, extent)) => {
+            Some((pose, collision, extent, _)) => {
                 state.placements[index] = pose;
                 state.active[index] = true;
                 state.collisions[index] = Some(collision);
@@ -1581,28 +1889,42 @@ fn replace_ejected_under_bound(
 ///
 /// The mode is deliberately pointed at states that do *not* validate, so - like
 /// mode 27 - it measures its parent rather than gating on it.
+///
+/// # Mode 32
+///
+/// Mode 32 is this pipeline with the orientation-perturbation stream armed: the
+/// same survey, the same vertex-cover ejection, the same kept-sub-layout
+/// micro-legalization, the same insertion order, the same bound contract and
+/// the same exact validator, with continuous-angle variants of each ejected
+/// piece's vacated pose added to its candidate stream *behind* every pose mode
+/// 28 could reach. It even shares mode 28's seed domain, so the legacy part of
+/// the candidate stream is literally the same poses in the same order; mode 32
+/// can therefore only find what mode 28 found, or find that and then more.
 pub(super) fn run_replacement_repair(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
     relaxed_settings: GeneralRelaxedSettings,
     parent: &GeneralCoupledSeparatorArmDiagnostics,
     parent_source: Option<String>,
+    orientation_perturbation: bool,
 ) -> GeneralPersistentVacancyDiagnostics {
+    let mode = if orientation_perturbation { 32 } else { 28 };
     let mut diagnostics = GeneralPersistentVacancyDiagnostics {
-        mode: 28,
+        mode,
         seed_domain: REPLACEMENT_REPAIR_SEED_DOMAIN,
         parent_source,
         ..GeneralPersistentVacancyDiagnostics::default()
     };
     let Some(bound_mm) = relaxed_settings.persistent_vacancy_target_depth_mm else {
-        diagnostics.failure_reason =
-            Some("persistent vacancy mode 28 requires an explicit depth bound".to_owned());
+        diagnostics.failure_reason = Some(format!(
+            "persistent vacancy mode {mode} requires an explicit depth bound"
+        ));
         return diagnostics;
     };
     if !bound_mm.is_finite() || bound_mm <= 0.0 {
-        diagnostics.failure_reason = Some(
-            "persistent vacancy mode 28 depth bound must be a positive finite value".to_owned(),
-        );
+        diagnostics.failure_reason = Some(format!(
+            "persistent vacancy mode {mode} depth bound must be a positive finite value"
+        ));
         return diagnostics;
     }
     diagnostics.target_depth_mm = bound_mm;
@@ -1626,7 +1948,13 @@ pub(super) fn run_replacement_repair(
         coupled_independent_source_depth(pieces, &parent_placements, fast_settings).ok();
     diagnostics.attempted = true;
 
-    let outcome = replacement_repair(pieces, &parent_placements, fast_settings, bound_mm);
+    let outcome = replacement_repair(
+        pieces,
+        &parent_placements,
+        fast_settings,
+        bound_mm,
+        orientation_perturbation,
+    );
     diagnostics.work = outcome.diagnostics.work;
     diagnostics.cap_exhausted = outcome.diagnostics.cap_exhausted.clone();
     match &outcome.repaired {
@@ -1699,28 +2027,41 @@ pub(super) fn run_replacement_repair(
 ///
 /// Like modes 27 and 28 it is deliberately pointed at states that do *not*
 /// validate, so it measures its parent rather than gating on it.
+///
+/// # Mode 33
+///
+/// Mode 33 is this pipeline with the orientation-perturbation stream armed.
+/// Every structural constant is unchanged - the component passes, the ejection
+/// limit, the order enumeration, the pose-swap round, the finalist beam - and
+/// the only difference is that each ejected piece's candidate stream carries
+/// continuous-angle variants of its own vacated pose behind every pose mode 29
+/// could reach. It shares mode 29's seed domain for the same reason mode 32
+/// shares mode 28's.
 pub(super) fn run_joint_replacement_repair(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
     relaxed_settings: GeneralRelaxedSettings,
     parent: &GeneralCoupledSeparatorArmDiagnostics,
     parent_source: Option<String>,
+    orientation_perturbation: bool,
 ) -> GeneralPersistentVacancyDiagnostics {
+    let mode = if orientation_perturbation { 33 } else { 29 };
     let mut diagnostics = GeneralPersistentVacancyDiagnostics {
-        mode: 29,
+        mode,
         seed_domain: JOINT_REPLACEMENT_SEED_DOMAIN,
         parent_source,
         ..GeneralPersistentVacancyDiagnostics::default()
     };
     let Some(bound_mm) = relaxed_settings.persistent_vacancy_target_depth_mm else {
-        diagnostics.failure_reason =
-            Some("persistent vacancy mode 29 requires an explicit depth bound".to_owned());
+        diagnostics.failure_reason = Some(format!(
+            "persistent vacancy mode {mode} requires an explicit depth bound"
+        ));
         return diagnostics;
     };
     if !bound_mm.is_finite() || bound_mm <= 0.0 {
-        diagnostics.failure_reason = Some(
-            "persistent vacancy mode 29 depth bound must be a positive finite value".to_owned(),
-        );
+        diagnostics.failure_reason = Some(format!(
+            "persistent vacancy mode {mode} depth bound must be a positive finite value"
+        ));
         return diagnostics;
     }
     diagnostics.target_depth_mm = bound_mm;
@@ -1742,7 +2083,13 @@ pub(super) fn run_joint_replacement_repair(
         coupled_independent_source_depth(pieces, &parent_placements, fast_settings).ok();
     diagnostics.attempted = true;
 
-    let outcome = joint_replacement_repair(pieces, &parent_placements, fast_settings, bound_mm);
+    let outcome = joint_replacement_repair(
+        pieces,
+        &parent_placements,
+        fast_settings,
+        bound_mm,
+        orientation_perturbation,
+    );
     diagnostics.work = outcome.diagnostics.work;
     diagnostics.cap_exhausted = outcome.diagnostics.cap_exhausted.clone();
     match &outcome.repaired {
@@ -1792,11 +2139,16 @@ pub(crate) struct ReplacementRepairOutcome {
 /// used both by mode 28 standalone and by mode 26 as its second-tier repair.
 /// Like the micro-legalizer, it never publishes on its own authority: a layout
 /// comes back only after [`validate_and_measure_placements`] accepted it.
+///
+/// `orientation_perturbation` is mode 32's single degree of freedom: it arms
+/// the continuous-angle candidate stream and changes nothing else. Every other
+/// caller passes `false` and gets the stream it always got.
 pub(crate) fn replacement_repair(
     pieces: &[GeneralFastPiece<'_>],
     placements: &[GeneralFastPlacement],
     fast_settings: GeneralFastSettings,
     bound_mm: f64,
+    orientation_perturbation: bool,
 ) -> ReplacementRepairOutcome {
     let mut diagnostics = GeneralReplacementRepairDiagnostics {
         bound_mm,
@@ -2063,6 +2415,25 @@ pub(crate) fn replacement_repair(
         })
         .collect();
     let mut work = RunWork::new(pieces.len());
+    // Mode 32's degree of freedom, armed once per pass: one charged collision
+    // build per orientation variant per ejected piece, taken here rather than
+    // inside the insertion primitive so a caller that runs the primitive
+    // repeatedly pays for the geometry once.
+    if orientation_perturbation {
+        if let Err(reason) = arm_orientation_perturbation(
+            pieces,
+            &anchor,
+            bound_settings,
+            &ejected_indices,
+            &mut anchor_local,
+            &mut work,
+        ) {
+            diagnostics.work = work.diagnostics;
+            diagnostics.cap_exhausted = reason.strip_prefix("cap: ").map(str::to_owned);
+            diagnostics.rejection_reason = Some(reason);
+            return refuse(diagnostics);
+        }
+    }
     let pass = replace_ejected_under_bound(
         pieces,
         fast_settings,
@@ -2100,6 +2471,7 @@ pub(crate) fn replacement_repair(
             placed_extent_mm: row.placed_extent_mm,
             anchor_local_candidates: row.anchor_local_candidates,
             anchor_local_finalists: row.anchor_local_finalists,
+            orientation: row.orientation.clone(),
         })
         .collect();
     diagnostics.replaced_count = diagnostics.pieces.iter().filter(|row| row.replaced).count();
@@ -2285,6 +2657,7 @@ fn joint_replacement_attempt(
             placed_extent_mm: piece.placed_extent_mm,
             anchor_local_candidates: piece.anchor_local_candidates,
             anchor_local_finalists: piece.anchor_local_finalists,
+            orientation: piece.orientation.clone(),
         })
         .collect();
     row.replaced_count = row.pieces.iter().filter(|piece| piece.replaced).count();
@@ -2411,11 +2784,16 @@ fn component_pass_cleared(
 /// pass, used both by mode 29 standalone and by mode 26 as its third-tier
 /// repair. Like the other two tiers it never publishes on its own authority: a
 /// layout comes back only after [`validate_and_measure_placements`] accepted it.
+///
+/// `orientation_perturbation` is mode 33's single degree of freedom, exactly as
+/// it is mode 32's in the second tier: it arms the continuous-angle candidate
+/// stream per component and changes nothing else.
 pub(crate) fn joint_replacement_repair(
     pieces: &[GeneralFastPiece<'_>],
     placements: &[GeneralFastPlacement],
     fast_settings: GeneralFastSettings,
     bound_mm: f64,
+    orientation_perturbation: bool,
 ) -> JointReplacementOutcome {
     let mut diagnostics = GeneralJointReplacementDiagnostics {
         bound_mm,
@@ -2574,6 +2952,7 @@ pub(crate) fn joint_replacement_repair(
             component_pass,
             &mut ordinal,
             &mut budget,
+            orientation_perturbation,
             &mut work,
             &mut diagnostics,
             &mut row,
@@ -2687,6 +3066,7 @@ fn repair_violation_component(
     component_pass: usize,
     ordinal: &mut usize,
     budget: &mut JointReplacementBudget,
+    orientation_perturbation: bool,
     work: &mut RunWork,
     diagnostics: &mut GeneralJointReplacementDiagnostics,
     row: &mut GeneralJointReplacementComponentRow,
@@ -2876,6 +3256,24 @@ fn repair_violation_component(
                 .last()
                 .map_or(0.0, |(x, y)| x.hypot(*y))
         }));
+    // Mode 33's degree of freedom, armed once per component: the orientation
+    // variants are a function of the piece and its vacated pose alone, so they
+    // are built here rather than inside the insertion primitive, which this
+    // pass runs once per insertion order, once per swap and once per beam
+    // combination.
+    if orientation_perturbation {
+        if let Err(reason) = arm_orientation_perturbation(
+            pieces,
+            &anchor,
+            bound_settings,
+            &ejected_indices,
+            &mut anchor_local,
+            work,
+        ) {
+            row.rejection_reason = Some(reason.clone());
+            return refuse(reason.strip_prefix("cap: ").map(str::to_owned));
+        }
+    }
 
     let canonical = bounded_replacement_order(pieces, &ejected_indices);
     let (orders, exhaustive) = joint_replacement_orders(&canonical);
@@ -6074,6 +6472,7 @@ fn construct_candidate_poses(
     let mut candidates = Vec::new();
     let mut shelf_candidates = Vec::new();
     let mut anchor_local_candidates = Vec::new();
+    let mut orientation_candidates: Vec<RelaxedPlacement> = Vec::new();
     let mut station_zero_hint: Option<RelaxedPlacement> = None;
     for (prior_index, (rotation_deg, mirrored)) in priors.iter().copied().enumerate() {
         let zero_prior = prior_index > 0;
@@ -6189,6 +6588,75 @@ fn construct_candidate_poses(
                             zero_prior,
                             probe,
                         ));
+                    }
+                }
+                // The orientation-perturbation stream (modes 32 and 33). Every
+                // candidate above shares one rotation and one mirror state -
+                // the ones the piece was lifted out of - so the whole
+                // anchor-local cloud is a *translation* neighbourhood, and a
+                // layout built from continuous fine angles has no other
+                // orientation stream that can reach an interior pocket. This
+                // adds one: each variant of the vacated orientation gets the
+                // neighbourhood just built, rigidly carried onto it by the
+                // shift that keeps the piece's own bounding-box centre where
+                // the vacated footprint's centre was. Nothing else changes -
+                // the same clamps, the same snap grid, the same charged
+                // confirmation row, the same contact walk, the same finalist
+                // cap.
+                let variants = anchor_local.orientation_variants(piece_index);
+                if !variants.is_empty() {
+                    // What has been pushed under this prior is exactly the
+                    // vacated pose's local translation neighbourhood: the
+                    // vacated pose, the projection trajectory, the peers'
+                    // pockets, then the aimed cloud.
+                    let neighbourhood = anchor_local_candidates
+                        .iter()
+                        .map(|(_, _, candidate)| (candidate.translate_x, candidate.translate_y))
+                        .collect::<Vec<(f64, f64)>>();
+                    let vacated_center_x =
+                        (prior_bounds.min_x + prior_bounds.max_x) * 0.5 + vacated.translate_x;
+                    let vacated_center_y =
+                        (prior_bounds.min_y + prior_bounds.max_y) * 0.5 + vacated.translate_y;
+                    let mut recentred = Vec::with_capacity(variants.len());
+                    for variant in variants {
+                        // The same piece-feasible band the priors are clamped
+                        // into, re-derived for this variant's own extent: a
+                        // rotation changes the width the strip has to hold.
+                        let variant_min_x = inset - variant.min_x;
+                        let variant_max_x =
+                            work_settings.sheet_short_axis_mm - inset - variant.max_x;
+                        if variant_min_x > variant_max_x {
+                            continue;
+                        }
+                        recentred.push((
+                            variant,
+                            variant_min_x,
+                            variant_max_x,
+                            vacated_center_x
+                                - (variant.min_x + variant.max_x) * 0.5
+                                - vacated.translate_x,
+                            vacated_center_y
+                                - (variant.min_y + variant.max_y) * 0.5
+                                - vacated.translate_y,
+                        ));
+                    }
+                    // Rank-major: every variant's re-centred pose before any
+                    // variant's first displacement, so a row-budget cut
+                    // truncates the shared neighbourhood uniformly instead of
+                    // spending the whole budget on the first rung.
+                    for (translate_x, translate_y) in neighbourhood {
+                        for (variant, variant_min_x, variant_max_x, shift_x, shift_y) in &recentred
+                        {
+                            orientation_candidates.push(RelaxedPlacement {
+                                input_index: piece_index,
+                                rotation_deg: variant.rotation_deg,
+                                mirrored: variant.mirrored,
+                                translate_x: snap_mm(
+                                    (translate_x + shift_x).clamp(*variant_min_x, *variant_max_x),
+                                ),
+                                translate_y: snap_mm(translate_y + shift_y),
+                            });
+                        }
                     }
                 }
             }
@@ -6359,28 +6827,60 @@ fn construct_candidate_poses(
     // skyline stops being re-placed at all. The stream is additive by
     // construction, so its budget is too.
     let mut anchor_rows = 0usize;
+    // The orientation stream's budget is held apart from *both* of the others,
+    // for the same reason: an additive degree of freedom must never be able to
+    // spend the rows a legacy-reachable solution would have used.
+    let mut orientation_rows = 0usize;
     let mut tried_buckets = BTreeSet::new();
     let mut finalists = Vec::with_capacity(CONSTRUCTION_FINALISTS_PER_SLOT);
     construction.anchor_local_candidates = construction
         .anchor_local_candidates
         .saturating_add(anchor_local_candidates.len());
+    construction.orientation_candidates = construction
+        .orientation_candidates
+        .saturating_add(orientation_candidates.len());
     // Anchor-local candidates lead. They are the only ones that can reach an
     // interior pocket, they are already ordered closest-displacement first,
     // and they are bounded by the cloud's own size, so leading costs the
     // station stream at most that many of its charged rows.
+    //
+    // The orientation-perturbed candidates come next: after every pose the
+    // legacy stream can reach, so anything modes 28 and 29 would have found is
+    // still found first and in the same finalist rank, and before the station
+    // stream, because they are anchor-local poses too.
     let ranked = anchor_local_candidates
         .into_iter()
-        .map(|(bucket_ordinal, zero_prior, candidate)| {
+        .enumerate()
+        .map(|(index, (bucket_ordinal, zero_prior, candidate))| {
             (
                 false,
                 bucket_ordinal,
                 CandidateProvenance {
                     zero_prior,
                     anchor_local: true,
+                    // The first candidate pushed under the anchor's own
+                    // orientation prior is the vacated pose itself.
+                    vacated: index == 0,
+                    orientation_perturbed: false,
                 },
                 candidate,
             )
         })
+        .chain(orientation_candidates.into_iter().enumerate().map(
+            |(index, candidate)| {
+                (
+                    false,
+                    ORIENTATION_PERTURBATION_BUCKET_BASE + index,
+                    CandidateProvenance {
+                        zero_prior: false,
+                        anchor_local: false,
+                        vacated: false,
+                        orientation_perturbed: true,
+                    },
+                    candidate,
+                )
+            },
+        ))
         .chain(
             candidates
                 .into_iter()
@@ -6391,6 +6891,8 @@ fn construct_candidate_poses(
                         CandidateProvenance {
                             zero_prior,
                             anchor_local: false,
+                            vacated: false,
+                            orientation_perturbed: false,
                         },
                         candidate,
                     )
@@ -6406,6 +6908,8 @@ fn construct_candidate_poses(
                         CandidateProvenance {
                             zero_prior,
                             anchor_local: false,
+                            vacated: false,
+                            orientation_perturbed: false,
                         },
                         candidate,
                     )
@@ -6418,6 +6922,10 @@ fn construct_candidate_poses(
         }
         if provenance.anchor_local {
             if anchor_rows >= ANCHOR_LOCAL_ROWS {
+                continue;
+            }
+        } else if provenance.orientation_perturbed {
+            if orientation_rows >= ORIENTATION_PERTURBATION_ROWS {
                 continue;
             }
         } else if !is_shelf && rows >= local_row_cap {
@@ -6434,6 +6942,9 @@ fn construct_candidate_poses(
         if provenance.anchor_local {
             anchor_rows += 1;
             construction.anchor_local_rows = construction.anchor_local_rows.saturating_add(1);
+        } else if provenance.orientation_perturbed {
+            orientation_rows += 1;
+            construction.orientation_rows = construction.orientation_rows.saturating_add(1);
         } else {
             rows += 1;
         }
@@ -6513,6 +7024,10 @@ fn construct_candidate_poses(
         if provenance.anchor_local {
             construction.anchor_local_finalists =
                 construction.anchor_local_finalists.saturating_add(1);
+        }
+        if provenance.orientation_perturbed {
+            construction.orientation_finalists =
+                construction.orientation_finalists.saturating_add(1);
         }
         finalists.push((walk_pose, Arc::new(walk_collision), provenance));
     }
@@ -9792,14 +10307,33 @@ mod tests {
             // Each of those slots may burn the full construction row cap plus
             // the anchor-local stream's own budget, and each row is one
             // collision build plus one pair visit per peer.
-            let rows_per_slot = CONSTRUCTION_ROWS_PER_PIECE + ANCHOR_LOCAL_ROWS;
+            // Modes 32 and 33 add the orientation stream's own row budget on
+            // top of those two, plus one charged collision build per
+            // orientation variant per ejected piece - taken once per pass by
+            // `arm_orientation_perturbation`, not once per insertion order.
+            // The stream's rows carry their own quota term, which is why the
+            // ceiling still covers the worst case with them included.
+            let rows_per_slot =
+                CONSTRUCTION_ROWS_PER_PIECE + ANCHOR_LOCAL_ROWS + ORIENTATION_PERTURBATION_ROWS;
+            let orientation_builds =
+                worst_case_slots.saturating_mul(ORIENTATION_PERTURBATION_VARIANTS);
             assert!(
                 worst_case_slots.saturating_mul(rows_per_slot) <= quotas.max_exact_finalist_rows,
                 "piece count {piece_count}"
             );
             assert!(
-                piece_count.saturating_add(worst_case_slots.saturating_mul(rows_per_slot))
+                piece_count
+                    .saturating_add(worst_case_slots.saturating_mul(rows_per_slot))
+                    .saturating_add(orientation_builds)
                     <= quotas.max_experimental_collision_builds,
+                "piece count {piece_count}"
+            );
+            // The orientation budget is derived from the stream it has to
+            // cover - the anchor-local neighbourhood once per variant - rather
+            // than being a tuned number.
+            assert_eq!(
+                ORIENTATION_PERTURBATION_ROWS,
+                ORIENTATION_PERTURBATION_VARIANTS * ANCHOR_LOCAL_ROWS,
                 "piece count {piece_count}"
             );
 
@@ -9857,15 +10391,30 @@ mod tests {
                 179 + JOINT_REPLACEMENT_PEER_POSES <= ANCHOR_LOCAL_ROWS,
                 "piece count {piece_count}"
             );
+            // The anchor-local stream can never consume a bucket ordinal the
+            // orientation stream would then reuse, which is what keeps a
+            // rotated candidate from being de-duplicated onto an unrotated one.
+            assert!(
+                179 + JOINT_REPLACEMENT_PEER_POSES + CONSTRUCTION_HINT_PRIORS
+                    <= ANCHOR_LOCAL_BUCKET_SPAN,
+                "piece count {piece_count}"
+            );
             assert!(
                 joint_slots.saturating_mul(rows_per_slot) <= quotas.max_exact_finalist_rows,
                 "piece count {piece_count}"
             );
             // Each attempted order also rebuilds one collision per kept piece.
+            // The orientation variants are built once per component pass, so
+            // mode 33's build term is the component ceiling times the ejection
+            // worst case times the variant ceiling.
+            let joint_orientation_builds = JOINT_REPLACEMENT_COMPONENT_PASSES
+                .saturating_mul(worst_case_slots)
+                .saturating_mul(ORIENTATION_PERTURBATION_VARIANTS);
             assert!(
                 joint_attempts
                     .saturating_mul(piece_count)
                     .saturating_add(joint_slots.saturating_mul(rows_per_slot))
+                    .saturating_add(joint_orientation_builds)
                     <= quotas.max_experimental_collision_builds,
                 "piece count {piece_count}"
             );
@@ -9951,12 +10500,24 @@ mod tests {
             let slots = population + settle + reconstruction + lns_settle + reinsert + construction;
             let streams = slots * 12;
             let positions = streams * 32;
+            // The orientation-perturbation lane of modes 32 and 33: the joint
+            // pass's own slot worst case (24 insertion orders plus 24
+            // pose-swap attempts, each over an ejection set as large as the
+            // whole layout) times the stream's per-slot row budget, which is
+            // itself the anchor-local budget once per orientation variant.
+            let orientation_slots = (24 + 24) * pieces;
+            let orientation_rows = orientation_slots * (29 * 192);
+            let orientation_builds = 8 * pieces * 29;
+            assert_eq!(ORIENTATION_PERTURBATION_VARIANTS, 29);
+            assert_eq!(ORIENTATION_PERTURBATION_ROWS, 29 * 192);
+            assert_eq!(JOINT_REPLACEMENT_COMPONENT_PASSES, 8);
             let rows = population * 8
                 + settle * 64
                 + reconstruction * 192
                 + lns_settle * 64
                 + reinsert * 192
-                + construction * 320;
+                + construction * 320
+                + orientation_rows;
             // Distinct pairs of a complete state, and the peers one candidate
             // row is exact-checked against.
             let complete_pairs = pieces * (pieces - 1) / 2;
@@ -9969,7 +10530,8 @@ mod tests {
                 + reconstruction
                 + reinsert
                 + 2 * construction
-                + 24 * (4_040 / 2 + 200 * 96);
+                + 24 * (4_040 / 2 + 200 * 96)
+                + orientation_builds;
             let experimental_pairs =
                 complete_pairs + rows * peers + group_drop_pairs + separation_pairs;
             let validator_builds_per_audit = 2 * pieces;
@@ -10133,9 +10695,18 @@ mod tests {
             mixed61.max_proxy_pressure_visits,
             (640 + 26 + 183 + 122 + 73 * 61 + 4_040 + 3_416) * 12 * 32 * 61
         );
+        // The orientation-perturbation lane (modes 32/33): 48 joint attempt
+        // slots per piece times the stream's per-slot row budget of one
+        // anchor-local budget per orientation variant.
         assert_eq!(
             mixed61.max_exact_finalist_rows,
-            (640 + 26) * 8 + 183 * 64 + 122 * 192 + 73 * 61 * 64 + 4_040 * 192 + 3_416 * 320
+            (640 + 26) * 8
+                + 183 * 64
+                + 122 * 192
+                + 73 * 61 * 64
+                + 4_040 * 192
+                + 3_416 * 320
+                + 48 * 61 * (29 * 192)
         );
         assert_eq!(
             mixed61.max_experimental_collision_builds,
@@ -10146,11 +10717,13 @@ mod tests {
                     + 122 * 192
                     + 73 * 61 * 64
                     + 4_040 * 192
-                    + 3_416 * 320)
+                    + 3_416 * 320
+                    + 48 * 61 * (29 * 192))
                 + 122
                 + 4_040
                 + 2 * 3_416
                 + 24 * (4_040 / 2 + 200 * 96)
+                + 8 * 61 * 29
         );
         assert_eq!(
             mixed61.max_experimental_pair_visits,
@@ -10160,7 +10733,8 @@ mod tests {
                     + 122 * 192
                     + 73 * 61 * 64
                     + 4_040 * 192
-                    + 3_416 * 320)
+                    + 3_416 * 320
+                    + 48 * 61 * (29 * 192))
                     * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61
@@ -10682,7 +11256,7 @@ mod tests {
         ];
         assert!(validate_and_measure_placements(&pieces, &placements, settings).is_err());
 
-        let outcome = replacement_repair(&pieces, &placements, settings, 200.0);
+        let outcome = replacement_repair(&pieces, &placements, settings, 200.0, false);
         let diagnostics = &outcome.diagnostics;
         assert!(diagnostics.attempted, "{diagnostics:?}");
         assert_eq!(diagnostics.violating_pairs, 1, "{diagnostics:?}");
@@ -10714,8 +11288,8 @@ mod tests {
             replacement_placement("b", 41.0, 20.0),
         ];
 
-        let first = replacement_repair(&pieces, &placements, settings, 200.0);
-        let second = replacement_repair(&pieces, &placements, settings, 200.0);
+        let first = replacement_repair(&pieces, &placements, settings, 200.0, false);
+        let second = replacement_repair(&pieces, &placements, settings, 200.0, false);
         assert_eq!(first.diagnostics, second.diagnostics);
         assert_eq!(first.repaired, second.repaired);
     }
@@ -10736,7 +11310,7 @@ mod tests {
             replacement_placement("c", 62.0, 20.0),
         ];
 
-        let outcome = replacement_repair(&pieces, &placements, settings, 200.0);
+        let outcome = replacement_repair(&pieces, &placements, settings, 200.0, false);
         let diagnostics = &outcome.diagnostics;
         assert_eq!(diagnostics.violating_pairs, 2, "{diagnostics:?}");
         assert_eq!(diagnostics.ejected_count, 1, "{diagnostics:?}");
@@ -10756,7 +11330,7 @@ mod tests {
         ];
         assert!(validate_and_measure_placements(&pieces, &placements, settings).is_ok());
 
-        let outcome = replacement_repair(&pieces, &placements, settings, 200.0);
+        let outcome = replacement_repair(&pieces, &placements, settings, 200.0, false);
         assert!(outcome.repaired.is_none());
         assert!(!outcome.diagnostics.attempted);
         assert!(
@@ -10784,7 +11358,7 @@ mod tests {
             replacement_placement("b", 26.0, 5.0),
         ];
 
-        let outcome = replacement_repair(&pieces, &placements, settings, 30.0);
+        let outcome = replacement_repair(&pieces, &placements, settings, 30.0, false);
         assert!(outcome.repaired.is_none(), "{:?}", outcome.diagnostics);
         assert!(!outcome.diagnostics.exact_valid);
         assert_eq!(outcome.diagnostics.replaced_count, 0);
@@ -10813,7 +11387,7 @@ mod tests {
             .map(|index| replacement_placement(&ids[index], 20.0 + 21.0 * index as f64, 20.0))
             .collect::<Vec<_>>();
 
-        let outcome = replacement_repair(&pieces, &placements, settings, 200.0);
+        let outcome = replacement_repair(&pieces, &placements, settings, 200.0, false);
         let diagnostics = &outcome.diagnostics;
         assert!(outcome.repaired.is_none());
         assert!(!diagnostics.attempted, "{diagnostics:?}");
@@ -10878,7 +11452,7 @@ mod tests {
         // Tier two ejects a vertex cover - one endpoint of the single violating
         // pair - and provably cannot re-place it: the piece left behind is the
         // thing blocking every band.
-        let single = replacement_repair(&pieces, &placements, settings, 80.0);
+        let single = replacement_repair(&pieces, &placements, settings, 80.0, false);
         assert!(single.repaired.is_none(), "{:?}", single.diagnostics);
         assert_eq!(
             single.diagnostics.ejected_count, 1,
@@ -10893,7 +11467,7 @@ mod tests {
         );
 
         // Tier three ejects the whole component and re-places it jointly.
-        let joint = joint_replacement_repair(&pieces, &placements, settings, 80.0);
+        let joint = joint_replacement_repair(&pieces, &placements, settings, 80.0, false);
         let diagnostics = &joint.diagnostics;
         assert!(diagnostics.attempted, "{diagnostics:?}");
         assert_eq!(diagnostics.violating_pairs, 1, "{diagnostics:?}");
@@ -10929,8 +11503,8 @@ mod tests {
         let pieces = replacement_pieces(&ids, &polygons);
         let settings = replacement_settings(55.0, 300.0);
 
-        let single = replacement_repair(&pieces, &placements, settings, 80.0);
-        let joint = joint_replacement_repair(&pieces, &placements, settings, 80.0);
+        let single = replacement_repair(&pieces, &placements, settings, 80.0, false);
+        let joint = joint_replacement_repair(&pieces, &placements, settings, 80.0, false);
         assert_eq!(single.diagnostics.ejected_count, 1);
         assert_eq!(joint.diagnostics.ejected_count, 2);
         assert_eq!(
@@ -10947,8 +11521,257 @@ mod tests {
         let pieces = replacement_pieces(&ids, &polygons);
         let settings = replacement_settings(55.0, 300.0);
 
-        let first = joint_replacement_repair(&pieces, &placements, settings, 80.0);
-        let second = joint_replacement_repair(&pieces, &placements, settings, 80.0);
+        let first = joint_replacement_repair(&pieces, &placements, settings, 80.0, false);
+        let second = joint_replacement_repair(&pieces, &placements, settings, 80.0, false);
+        assert_eq!(first.diagnostics, second.diagnostics);
+        assert_eq!(first.repaired, second.repaired);
+    }
+
+    fn rotatable_replacement_pieces<'a>(
+        ids: &'a [&'a str],
+        polygons: &'a [PolygonSet],
+    ) -> Vec<GeneralFastPiece<'a>> {
+        ids.iter()
+            .enumerate()
+            .map(|(index, id)| GeneralFastPiece {
+                id,
+                polygon: &polygons[index],
+                allow_rotation: true,
+                allow_mirror: true,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn orientation_ladder_is_geometric_and_scale_free() {
+        // An angle carries no length, so the ladder is a request-independent
+        // constant set rather than anything derived from an instance. What has
+        // to hold is that it is a *ladder*: strictly ascending, one fixed
+        // ratio, spanning the band between "finer than the placement grid can
+        // express" and "no longer a local repair".
+        let ladder = ORIENTATION_PERTURBATION_LADDER_DEG;
+        assert!(ladder[0] > 0.0, "{ladder:?}");
+        for window in ladder.windows(2) {
+            assert!(window[1] > window[0], "{ladder:?}");
+            let ratio = window[1] / window[0];
+            assert!((ratio - 2.5).abs() < 1e-12, "{ladder:?} ratio {ratio}");
+        }
+        assert!(*ladder.last().expect("a last rung") < 5.0, "{ladder:?}");
+        // Every rung is representable on the angle grid, so no two rungs can
+        // collapse onto one another and re-spend the same charged rows.
+        let mut keys = ladder.iter().map(|rung| angle_key(*rung)).collect::<Vec<_>>();
+        keys.dedup();
+        assert_eq!(keys.len(), ladder.len(), "{ladder:?}");
+        assert_eq!(
+            ORIENTATION_PERTURBATION_VARIANTS,
+            4 * ladder.len() + 1,
+            "{ladder:?}"
+        );
+    }
+
+    #[test]
+    fn orientation_variants_follow_the_ladder_and_the_request_freedoms() {
+        let polygons = vec![rect(20.0, 40.0)];
+        let settings = replacement_settings(200.0, 300.0);
+        let vacated = RelaxedPlacement {
+            input_index: 0,
+            rotation_deg: 17.5,
+            mirrored: false,
+            translate_x: 30.0,
+            translate_y: 40.0,
+        };
+
+        let free = GeneralFastPiece {
+            id: "a",
+            polygon: &polygons[0],
+            allow_rotation: true,
+            allow_mirror: true,
+        };
+        let mut work = RunWork::new(1);
+        let variants = orientation_perturbation_variants(free, &vacated, settings, &mut work)
+            .expect("variants build");
+        assert_eq!(
+            variants.len(),
+            ORIENTATION_PERTURBATION_VARIANTS,
+            "{variants:?}"
+        );
+        // The vacated orientation is never re-emitted: it is the anchor-local
+        // stream's own leading candidate.
+        assert!(
+            !variants.iter().any(|variant| {
+                (angle_key(variant.rotation_deg), variant.mirrored)
+                    == (angle_key(vacated.rotation_deg), vacated.mirrored)
+            }),
+            "{variants:?}"
+        );
+        // Rotation rungs lead, ascending in magnitude with the positive sign
+        // first; the mirror family follows, so a budget cut truncates the
+        // mirror variants before the rotation variants.
+        let rotation_family = 2 * ORIENTATION_PERTURBATION_LADDER_DEG.len();
+        for (index, variant) in variants.iter().enumerate() {
+            assert_eq!(
+                variant.mirrored,
+                index >= rotation_family,
+                "{index} {variant:?}"
+            );
+            assert!(variant.max_x > variant.min_x, "{variant:?}");
+            assert!(variant.max_y > variant.min_y, "{variant:?}");
+        }
+        assert_eq!(
+            variants[0].rotation_deg,
+            continuous_angle(vacated.rotation_deg + ORIENTATION_PERTURBATION_LADDER_DEG[0]),
+            "{variants:?}"
+        );
+        assert_eq!(
+            variants[1].rotation_deg,
+            continuous_angle(vacated.rotation_deg - ORIENTATION_PERTURBATION_LADDER_DEG[0]),
+            "{variants:?}"
+        );
+
+        // A piece the request pins gets only the freedoms it actually has.
+        let mirror_only = GeneralFastPiece {
+            allow_rotation: false,
+            ..free
+        };
+        let mut work = RunWork::new(1);
+        let variants =
+            orientation_perturbation_variants(mirror_only, &vacated, settings, &mut work)
+                .expect("variants build");
+        assert_eq!(variants.len(), 1, "{variants:?}");
+        assert!(variants[0].mirrored, "{variants:?}");
+
+        let pinned = GeneralFastPiece {
+            allow_rotation: false,
+            allow_mirror: false,
+            ..free
+        };
+        let mut work = RunWork::new(1);
+        let variants = orientation_perturbation_variants(pinned, &vacated, settings, &mut work)
+            .expect("variants build");
+        assert!(variants.is_empty(), "{variants:?}");
+    }
+
+    #[test]
+    fn orientation_perturbation_is_a_no_op_on_a_pinned_instance() {
+        // `replacement_pieces` pins both orientation freedoms, so modes 32 and
+        // 33 have no variant to seed and must reproduce modes 28 and 29 to the
+        // last field - including leaving the attribution block off entirely.
+        let ids = ["a", "b"];
+        let (polygons, placements) = interlocked_pair();
+        let pieces = replacement_pieces(&ids, &polygons);
+        let settings = replacement_settings(55.0, 300.0);
+
+        let legacy = replacement_repair(&pieces, &placements, settings, 80.0, false);
+        let perturbed = replacement_repair(&pieces, &placements, settings, 80.0, true);
+        assert_eq!(legacy.diagnostics, perturbed.diagnostics);
+        assert_eq!(legacy.repaired, perturbed.repaired);
+        assert!(
+            perturbed
+                .diagnostics
+                .pieces
+                .iter()
+                .all(|row| row.orientation.is_none()),
+            "{:?}",
+            perturbed.diagnostics
+        );
+
+        let legacy = joint_replacement_repair(&pieces, &placements, settings, 80.0, false);
+        let perturbed = joint_replacement_repair(&pieces, &placements, settings, 80.0, true);
+        assert_eq!(legacy.diagnostics, perturbed.diagnostics);
+        assert_eq!(legacy.repaired, perturbed.repaired);
+    }
+
+    /// The two-square residue of `replacement_repair_ejects_the_conflict_and_rebuilds_it`
+    /// with both orientation freedoms granted, which is what arms the stream.
+    fn rotatable_conflict() -> (Vec<PolygonSet>, Vec<GeneralFastPlacement>) {
+        (
+            vec![square(20.0), square(20.0)],
+            vec![
+                replacement_placement("a", 20.0, 20.0),
+                replacement_placement("b", 41.0, 20.0),
+            ],
+        )
+    }
+
+    #[test]
+    fn orientation_perturbation_is_additive_and_attributes_the_accepted_pose() {
+        let ids = ["a", "b"];
+        let (polygons, placements) = rotatable_conflict();
+        let pieces = rotatable_replacement_pieces(&ids, &polygons);
+        let settings = replacement_settings(200.0, 300.0);
+        assert!(validate_and_measure_placements(&pieces, &placements, settings).is_err());
+
+        let legacy = replacement_repair(&pieces, &placements, settings, 200.0, false);
+        let perturbed = replacement_repair(&pieces, &placements, settings, 200.0, true);
+        assert!(legacy.repaired.is_some(), "{:?}", legacy.diagnostics);
+
+        for (row, legacy_row) in perturbed
+            .diagnostics
+            .pieces
+            .iter()
+            .zip(legacy.diagnostics.pieces.iter())
+        {
+            let orientation = row.orientation.as_ref().expect("an armed attribution block");
+            assert_eq!(
+                orientation.variants, ORIENTATION_PERTURBATION_VARIANTS,
+                "{orientation:?}"
+            );
+            assert!(orientation.candidates > 0, "{orientation:?}");
+            assert!(
+                orientation.rows <= ORIENTATION_PERTURBATION_ROWS,
+                "{orientation:?}"
+            );
+            // Legacy-first: the orientation stream is ranked behind every
+            // anchor-local candidate, so it cannot displace an anchor-local
+            // finalist mode 28 would have found.
+            assert_eq!(
+                row.anchor_local_finalists, legacy_row.anchor_local_finalists,
+                "{row:?} vs {legacy_row:?}"
+            );
+            // The accepted-pose attribution is exclusive and totals one on a
+            // piece that found a pose, zero on a piece that did not.
+            let accepted = orientation.accepted_vacated
+                + orientation.accepted_anchor_local
+                + orientation.accepted_orientation
+                + orientation.accepted_station;
+            assert_eq!(accepted, usize::from(row.replaced), "{row:?}");
+            assert_eq!(
+                orientation.accepted_rotation_deg.is_some(),
+                row.replaced,
+                "{row:?}"
+            );
+            if orientation.accepted_orientation == 0 && row.replaced {
+                // Anything the legacy stream reached keeps the vacated
+                // orientation exactly, which is the property the whole
+                // pose-entry negative measured.
+                assert_eq!(
+                    orientation.accepted_rotation_delta_deg,
+                    Some(0.0),
+                    "{orientation:?}"
+                );
+                assert_eq!(
+                    orientation.accepted_mirror_flipped,
+                    Some(false),
+                    "{orientation:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn orientation_perturbation_is_deterministic() {
+        let ids = ["a", "b"];
+        let (polygons, placements) = rotatable_conflict();
+        let pieces = rotatable_replacement_pieces(&ids, &polygons);
+        let settings = replacement_settings(200.0, 300.0);
+
+        let first = replacement_repair(&pieces, &placements, settings, 200.0, true);
+        let second = replacement_repair(&pieces, &placements, settings, 200.0, true);
+        assert_eq!(first.diagnostics, second.diagnostics);
+        assert_eq!(first.repaired, second.repaired);
+
+        let first = joint_replacement_repair(&pieces, &placements, settings, 200.0, true);
+        let second = joint_replacement_repair(&pieces, &placements, settings, 200.0, true);
         assert_eq!(first.diagnostics, second.diagnostics);
         assert_eq!(first.repaired, second.repaired);
     }
@@ -10968,7 +11791,7 @@ mod tests {
         let pieces = replacement_pieces(&ids, &polygons);
         let settings = replacement_settings(55.0, 300.0);
 
-        let outcome = joint_replacement_repair(&pieces, &placements, settings, 55.0);
+        let outcome = joint_replacement_repair(&pieces, &placements, settings, 55.0, false);
         let diagnostics = &outcome.diagnostics;
         assert!(outcome.repaired.is_none(), "{diagnostics:?}");
         assert!(!diagnostics.exact_valid, "{diagnostics:?}");
@@ -11038,7 +11861,7 @@ mod tests {
             survey_layout_violations(&pieces, &placements, settings).expect("a surveyable layout");
         assert_eq!(violations.pair_components().len(), 2, "{violations:?}");
 
-        let outcome = joint_replacement_repair(&pieces, &placements, settings, 400.0);
+        let outcome = joint_replacement_repair(&pieces, &placements, settings, 400.0, false);
         let diagnostics = &outcome.diagnostics;
         assert_eq!(diagnostics.component_passes_run, 2, "{diagnostics:?}");
         assert_eq!(diagnostics.components.len(), 2, "{diagnostics:?}");
@@ -11069,7 +11892,7 @@ mod tests {
         ];
         assert!(validate_and_measure_placements(&pieces, &placements, settings).is_ok());
 
-        let outcome = joint_replacement_repair(&pieces, &placements, settings, 200.0);
+        let outcome = joint_replacement_repair(&pieces, &placements, settings, 200.0, false);
         assert!(outcome.repaired.is_none());
         assert!(!outcome.diagnostics.attempted);
         assert!(
@@ -11100,7 +11923,7 @@ mod tests {
             .map(|index| replacement_placement(&ids[index], 20.0 + 21.0 * index as f64, 20.0))
             .collect::<Vec<_>>();
 
-        let outcome = joint_replacement_repair(&pieces, &placements, settings, 200.0);
+        let outcome = joint_replacement_repair(&pieces, &placements, settings, 200.0, false);
         let diagnostics = &outcome.diagnostics;
         assert!(outcome.repaired.is_none());
         assert!(!diagnostics.attempted, "{diagnostics:?}");
