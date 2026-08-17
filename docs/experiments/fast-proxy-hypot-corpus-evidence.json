@@ -1,0 +1,659 @@
+{
+ "question": "does the off-by-default fast-proxy-hypot build reproduce the default build on a corpus, as the flag was delivered to be evaluated on?",
+ "verdict": "DO NOT PROMOTE",
+ "summary": "The persistent-vacancy publication - raw depth, placement fingerprint, exactValid, contractValid, failure-reason text - reproduces on 22 of 22 streams. Whole documents reproduce on 2 of 22: the flag moves the relaxed search trajectory on 20 streams, and on three mode-26 arms it moves the coupled separator's own reported treatment layout 0.121 mm deeper with a different fingerprint. publishedOutcomeIdentical below counts a stream as divergent when ANY depth, validity or fingerprint field moved, which is why the three mode-26 seed-1 arms are excluded from it even though their persistent-vacancy publication is unchanged.",
+ "method": "Every stream run under both binaries and compared as a whole JSON document with timing fields and executableSha256 removed. Each corpus is preceded by a same-binary determinism control over the identical stream set.",
+ "binaries": {
+  "flagOff": "jagua-experimental (release, base commit 4c35855)",
+  "flagOn": "jagua-experimental,fast-proxy-hypot (same commit)"
+ },
+ "determinismControls": {
+  "corpusSameBinaryTwice": {
+   "label": "shapes-17/triangle-20",
+   "streams": 8,
+   "wholeDocumentIdentical": 8,
+   "publishedOutcomeIdentical": 8,
+   "perStream": {
+    "shapes-17-2000x2700-compact-s5": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "shapes-17-2000x2700-compact-s7": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "shapes-17-600x400-compact-s5": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "shapes-17-600x400-compact-s7": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "triangle-20-2000x2700-compact-s5": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "triangle-20-2000x2700-compact-s7": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "triangle-20-600x400-compact-s5": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "triangle-20-600x400-compact-s7": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    }
+   }
+  },
+  "armsSameBinaryTwice": {
+   "label": "mixed-61 gates and arms",
+   "streams": 14,
+   "wholeDocumentIdentical": 14,
+   "publishedOutcomeIdentical": 14,
+   "perStream": {
+    "g1": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "g2": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "g3": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "g4": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m26-d0.3-s0": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m26-d0.3-s1": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m26-d0.55-s0": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m26-d0.55-s1": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m26-d1.0-s0": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m26-d1.0-s1": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m31-e0.006": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m31-e0.012": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m31-e0.025": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m31-e0.04": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    }
+   }
+  }
+ },
+ "flagComparison": {
+  "corpus": {
+   "label": "shapes-17 and triangle-20, mode 20, 2 sheets x 2 seeds",
+   "streams": 8,
+   "wholeDocumentIdentical": 2,
+   "publishedOutcomeIdentical": 8,
+   "perStream": {
+    "shapes-17-2000x2700-compact-s5": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 1,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "shapes-17-2000x2700-compact-s7": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 1,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "shapes-17-600x400-compact-s5": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 54,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "shapes-17-600x400-compact-s7": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 51,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "triangle-20-2000x2700-compact-s5": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 8,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "triangle-20-2000x2700-compact-s7": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 10,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "triangle-20-600x400-compact-s5": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "triangle-20-600x400-compact-s7": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    }
+   }
+  },
+  "arms": {
+   "label": "mixed-61: 4 gates, 4 mode-31 arms, 6 mode-26 ladder arms",
+   "streams": 14,
+   "wholeDocumentIdentical": 0,
+   "publishedOutcomeIdentical": 11,
+   "perStream": {
+    "g1": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 11,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "g2": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 3,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "g3": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 3,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "g4": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 3,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m26-d0.3-s0": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 25,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m26-d0.3-s1": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 1073,
+     "publishedFieldDivergences": [
+      [
+       "/coupledTreatmentIndependentUsedLongAxisDepthMm",
+       "179.809",
+       "179.93"
+      ],
+      [
+       "/relaxedDiagnostics/coupledDynamicSeparator/boundaryProjectionTreatment/finalDepthMm",
+       "179.81",
+       "179.931"
+      ],
+      [
+       "/relaxedDiagnostics/coupledDynamicSeparator/boundaryProjectionTreatment/finalPlacementFingerprint",
+       "'49516ab3d5f7013d23e677d6f157b2d05fc03627c39836aaf285ce353f7d87ef'",
+       "'ea7e63871babd135e7db36ac175d39bf142ec2b18e3aaf1dd9a0180eac1ffcfd'"
+      ]
+     ],
+     "reportedLayoutDivergences": [
+      [
+       "/coupledTreatmentIndependentUsedLongAxisDepthMm",
+       "179.809",
+       "179.93"
+      ],
+      [
+       "/relaxedDiagnostics/coupledDynamicSeparator/boundaryProjectionTreatment/finalDepthMm",
+       "179.81",
+       "179.931"
+      ],
+      [
+       "/relaxedDiagnostics/coupledDynamicSeparator/boundaryProjectionTreatment/finalPlacementFingerprint",
+       "'49516ab3d5f7013d23e677d6f157b2d05fc03627c39836aaf285ce353f7d87ef'",
+       "'ea7e63871babd135e7db36ac175d39bf142ec2b18e3aaf1dd9a0180eac1ffcfd'"
+      ]
+     ]
+    },
+    "m26-d0.55-s0": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 25,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m26-d0.55-s1": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 1073,
+     "publishedFieldDivergences": [
+      [
+       "/coupledTreatmentIndependentUsedLongAxisDepthMm",
+       "179.809",
+       "179.93"
+      ],
+      [
+       "/relaxedDiagnostics/coupledDynamicSeparator/boundaryProjectionTreatment/finalDepthMm",
+       "179.81",
+       "179.931"
+      ],
+      [
+       "/relaxedDiagnostics/coupledDynamicSeparator/boundaryProjectionTreatment/finalPlacementFingerprint",
+       "'49516ab3d5f7013d23e677d6f157b2d05fc03627c39836aaf285ce353f7d87ef'",
+       "'ea7e63871babd135e7db36ac175d39bf142ec2b18e3aaf1dd9a0180eac1ffcfd'"
+      ]
+     ],
+     "reportedLayoutDivergences": [
+      [
+       "/coupledTreatmentIndependentUsedLongAxisDepthMm",
+       "179.809",
+       "179.93"
+      ],
+      [
+       "/relaxedDiagnostics/coupledDynamicSeparator/boundaryProjectionTreatment/finalDepthMm",
+       "179.81",
+       "179.931"
+      ],
+      [
+       "/relaxedDiagnostics/coupledDynamicSeparator/boundaryProjectionTreatment/finalPlacementFingerprint",
+       "'49516ab3d5f7013d23e677d6f157b2d05fc03627c39836aaf285ce353f7d87ef'",
+       "'ea7e63871babd135e7db36ac175d39bf142ec2b18e3aaf1dd9a0180eac1ffcfd'"
+      ]
+     ]
+    },
+    "m26-d1.0-s0": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 25,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m26-d1.0-s1": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 1073,
+     "publishedFieldDivergences": [
+      [
+       "/coupledTreatmentIndependentUsedLongAxisDepthMm",
+       "179.809",
+       "179.93"
+      ],
+      [
+       "/relaxedDiagnostics/coupledDynamicSeparator/boundaryProjectionTreatment/finalDepthMm",
+       "179.81",
+       "179.931"
+      ],
+      [
+       "/relaxedDiagnostics/coupledDynamicSeparator/boundaryProjectionTreatment/finalPlacementFingerprint",
+       "'49516ab3d5f7013d23e677d6f157b2d05fc03627c39836aaf285ce353f7d87ef'",
+       "'ea7e63871babd135e7db36ac175d39bf142ec2b18e3aaf1dd9a0180eac1ffcfd'"
+      ]
+     ],
+     "reportedLayoutDivergences": [
+      [
+       "/coupledTreatmentIndependentUsedLongAxisDepthMm",
+       "179.809",
+       "179.93"
+      ],
+      [
+       "/relaxedDiagnostics/coupledDynamicSeparator/boundaryProjectionTreatment/finalDepthMm",
+       "179.81",
+       "179.931"
+      ],
+      [
+       "/relaxedDiagnostics/coupledDynamicSeparator/boundaryProjectionTreatment/finalPlacementFingerprint",
+       "'49516ab3d5f7013d23e677d6f157b2d05fc03627c39836aaf285ce353f7d87ef'",
+       "'ea7e63871babd135e7db36ac175d39bf142ec2b18e3aaf1dd9a0180eac1ffcfd'"
+      ]
+     ]
+    },
+    "m31-e0.006": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 25,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m31-e0.012": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 25,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m31-e0.025": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 25,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "m31-e0.04": {
+     "wholeDocumentIdentical": false,
+     "divergentFieldCount": 25,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    }
+   }
+  }
+ },
+ "persistentVacancyPublication": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fps": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ]
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "m31-e0.006": {
+   "raw": 159.07876040364795,
+   "fp": null,
+   "exactValid": false,
+   "contractValid": true,
+   "failureReason": "global legalization did not reach a feasible fixpoint: 1 violating pairs and 11 boundary pieces remain"
+  },
+  "m31-e0.012": {
+   "raw": 159.07876040364795,
+   "fp": null,
+   "exactValid": false,
+   "contractValid": true,
+   "failureReason": "global legalization did not reach a feasible fixpoint: 1 violating pairs and 0 boundary pieces remain"
+  },
+  "m31-e0.025": {
+   "raw": 159.07876040364795,
+   "fp": null,
+   "exactValid": false,
+   "contractValid": true,
+   "failureReason": "global legalization did not reach a feasible fixpoint: 1 violating pairs and 2 boundary pieces remain"
+  },
+  "m31-e0.04": {
+   "raw": 159.07876040364795,
+   "fp": null,
+   "exactValid": false,
+   "contractValid": true,
+   "failureReason": "global legalization did not reach a feasible fixpoint: 1 violating pairs and 1 boundary pieces remain"
+  },
+  "m26-d0.3-s0": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "m26-d0.3-s1": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "m26-d0.55-s0": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "m26-d0.55-s1": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "m26-d1.0-s0": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "m26-d1.0-s1": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  }
+ },
+ "persistentVacancyPublicationFlagOn": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fps": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ]
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "m31-e0.006": {
+   "raw": 159.07876040364795,
+   "fp": null,
+   "exactValid": false,
+   "contractValid": true,
+   "failureReason": "global legalization did not reach a feasible fixpoint: 1 violating pairs and 11 boundary pieces remain"
+  },
+  "m31-e0.012": {
+   "raw": 159.07876040364795,
+   "fp": null,
+   "exactValid": false,
+   "contractValid": true,
+   "failureReason": "global legalization did not reach a feasible fixpoint: 1 violating pairs and 0 boundary pieces remain"
+  },
+  "m31-e0.025": {
+   "raw": 159.07876040364795,
+   "fp": null,
+   "exactValid": false,
+   "contractValid": true,
+   "failureReason": "global legalization did not reach a feasible fixpoint: 1 violating pairs and 2 boundary pieces remain"
+  },
+  "m31-e0.04": {
+   "raw": 159.07876040364795,
+   "fp": null,
+   "exactValid": false,
+   "contractValid": true,
+   "failureReason": "global legalization did not reach a feasible fixpoint: 1 violating pairs and 1 boundary pieces remain"
+  },
+  "m26-d0.3-s0": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "m26-d0.3-s1": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "m26-d0.55-s0": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "m26-d0.55-s1": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "m26-d1.0-s0": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  },
+  "m26-d1.0-s1": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "exactValid": true,
+   "contractValid": true,
+   "failureReason": null
+  }
+ },
+ "bitIdenticalControl": {
+  "note": "the hoisted-operand-row experiment, which is arithmetically identical, reproduces the base binary on all four gates as a whole document - the comparison method above does detect sameness when sameness is there",
+  "gates": {
+   "label": "mixed-61 gates, hoist experiment vs base",
+   "streams": 4,
+   "wholeDocumentIdentical": 4,
+   "publishedOutcomeIdentical": 4,
+   "perStream": {
+    "g1": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "g2": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "g3": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    },
+    "g4": {
+     "wholeDocumentIdentical": true,
+     "divergentFieldCount": 0,
+     "publishedFieldDivergences": [],
+     "reportedLayoutDivergences": []
+    }
+   }
+  }
+ }
+}

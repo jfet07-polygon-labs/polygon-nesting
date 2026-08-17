@@ -37,12 +37,14 @@ search-profiling = []
 shadow-rescore = []
 # Replaces the *proxy* tier's vector length with `sqrt(x * x + y * y)`.
 #
-# Off by default and it must stay off in anything that publishes a comparable
-# number, because it is the one measured optimisation in this area that is not
-# bit-identical: the platform's `hypot` is correctly rounded and the naive form
-# is not, so about one in six results differs in the last place, which moves the
-# search's trajectory. See `search::general_relaxed::proxy_hypot` for the
-# measurement and the scope.
+# A MEASUREMENT build, not a candidate optimisation. Off by default, and the
+# corpus evaluation it was delivered for has now been run and rejected it: the
+# platform's `hypot` is correctly rounded and the naive form is not, so about
+# one in six results differs in the last place, and on 20 of 22 corpus streams
+# that moves the search's trajectory - on three of them as far as a reported
+# layout 0.121 mm deeper. It must stay off in anything that publishes a
+# comparable number, and it must not acquire a default or a settings knob. See
+# `search::general_relaxed::proxy_hypot` for the verdict and the scope.
 fast-proxy-hypot = []
 
 [dependencies]

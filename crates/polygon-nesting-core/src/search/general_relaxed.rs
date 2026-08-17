@@ -2281,16 +2281,48 @@ fn missing_orientation_error(
 /// mode-31 arm, failure-reason text included, while the mode-22 stream runs
 /// 3.2 s against 3.7 s.
 ///
-/// That is *evidence*, not a guarantee. A last-place difference in a ranking
-/// signal is not an error, but it can move a tie-break, and a moved tie-break
-/// is a different accepted move and therefore a different trajectory; five
-/// streams agreeing does not make the sixth agree, and no fingerprint this
-/// engine has ever published was measured under it. So it stays off, and it is
-/// delivered as a candidate for the anytime-coordinator era to evaluate on a
-/// corpus rather than as an optimisation to adopt on a fixture. The naive form
-/// additionally loses `hypot`'s overflow and underflow guards; at millimetre
-/// magnitudes on a sheet that is unreachable, but it is another reason this
-/// cannot be the default.
+/// That was *evidence*, not a guarantee, and it has since been checked on the
+/// corpus it asked for. The result is that it stays off permanently, not
+/// provisionally.
+///
+/// # The corpus verdict: do not promote
+///
+/// Twenty-two streams - eight mode-20 runs over shapes-17 and triangle-20 at
+/// two sheets and two seeds each, plus the four Mixed-61 gates, four mode-31
+/// arms and six mode-26 ladder arms - were run under both builds and compared
+/// as whole documents rather than as published fields, against a same-binary
+/// determinism control that is clean on all 22.
+///
+/// The published outcome reproduces on 22 of 22. The whole document reproduces
+/// on 2 of 22: under the flag the relaxed search takes a different path, with
+/// last-place differences in `rawPenalty`, `weightedPressure` and
+/// `weightedLoss` propagating into different accepted moves (32,317 against
+/// 32,288 on one shapes-17 stream) and different evaluation counts. That is
+/// the predicted mechanism, observed.
+///
+/// On three of the arms it reaches a reported layout: the coupled dynamic
+/// separator's boundary projection treatment finishes at `finalDepthMm`
+/// 179.931 under the flag against 179.810 without it, with a different
+/// placement fingerprint. A 0.121 mm regression on a reported depth is not a
+/// tie-break that happened to fall the other way; it is the flag choosing a
+/// worse layout, and it disproves the outcome-neutrality that promotion would
+/// have rested on.
+///
+/// So this stays a *measurement* instrument - the cheapest way to price the
+/// proxy tier's length - and must not acquire a default, a settings knob, or a
+/// coordinator that can reach it. The naive form additionally loses `hypot`'s
+/// overflow and underflow guards; at millimetre magnitudes on a sheet that is
+/// unreachable, but it is another reason this cannot be the default.
+///
+/// The route that remains open is a *certified* one: the platform call is
+/// correctly rounded (verified exactly, in rational arithmetic, on 200,000
+/// real pole-pair arguments with zero failures), so a faster length that
+/// carries a proof of correct rounding is bit-identical by specification and
+/// needs no corpus at all. A double-double fast path with one Newton
+/// correction measures 3.08 ns/call against the platform's 8.04 with FMA
+/// enabled, and disagrees with it on 0.558% of real inputs - which is the
+/// population such a certificate has to detect and hand back to the platform
+/// call. See the pole-loop chapter of `docs/next-generation-engine-plan.md`.
 #[inline(always)]
 fn proxy_hypot(x: f64, y: f64) -> f64 {
     #[cfg(feature = "fast-proxy-hypot")]
