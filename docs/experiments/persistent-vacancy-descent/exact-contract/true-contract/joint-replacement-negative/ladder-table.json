@@ -1,0 +1,776 @@
+[
+ {
+  "ladder": "A-163.8-s0",
+  "parentDepthMm": 164.058,
+  "publishedDepthMm": 164.058,
+  "publishedStep": null,
+  "rungs": [
+   {
+    "step": 0,
+    "boundMm": 163.894,
+    "bestFrontierMm": 163.874,
+    "armsRun": 3,
+    "tier3Reached": 3,
+    "tier3Admitted": 3,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2,
+     4
+    ],
+    "jointOrdersTried": 28,
+    "jointSwapsTried": 8,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 1,
+    "boundMm": 163.8,
+    "bestFrontierMm": 163.78,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 4,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4
+    ],
+    "jointOrdersTried": 96,
+    "jointSwapsTried": 24,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   }
+  ]
+ },
+ {
+  "ladder": "A-163.8-s1",
+  "parentDepthMm": 164.058,
+  "publishedDepthMm": 164.058,
+  "publishedStep": null,
+  "rungs": [
+   {
+    "step": 0,
+    "boundMm": 163.894,
+    "bestFrontierMm": 163.859,
+    "armsRun": 3,
+    "tier3Reached": 3,
+    "tier3Admitted": 2,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2
+    ],
+    "jointOrdersTried": 4,
+    "jointSwapsTried": 2,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 1,
+    "boundMm": 163.8,
+    "bestFrontierMm": 163.781,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 4,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2,
+     4,
+     6
+    ],
+    "jointOrdersTried": 38,
+    "jointSwapsTried": 37,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   }
+  ]
+ },
+ {
+  "ladder": "A-163.8-s2",
+  "parentDepthMm": 164.058,
+  "publishedDepthMm": 164.058,
+  "publishedStep": null,
+  "rungs": [
+   {
+    "step": 0,
+    "boundMm": 163.894,
+    "bestFrontierMm": 163.878,
+    "armsRun": 3,
+    "tier3Reached": 3,
+    "tier3Admitted": 1,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4
+    ],
+    "jointOrdersTried": 24,
+    "jointSwapsTried": 6,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 1,
+    "boundMm": 163.8,
+    "bestFrontierMm": 163.776,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 3,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4,
+     6
+    ],
+    "jointOrdersTried": 36,
+    "jointSwapsTried": 36,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   }
+  ]
+ },
+ {
+  "ladder": "A-163.3-s0",
+  "parentDepthMm": 164.058,
+  "publishedDepthMm": 164.058,
+  "publishedStep": null,
+  "rungs": [
+   {
+    "step": 0,
+    "boundMm": 163.894,
+    "bestFrontierMm": 163.874,
+    "armsRun": 3,
+    "tier3Reached": 3,
+    "tier3Admitted": 3,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2,
+     4
+    ],
+    "jointOrdersTried": 28,
+    "jointSwapsTried": 8,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 1,
+    "boundMm": 163.73,
+    "bestFrontierMm": 163.696,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 4,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4,
+     6
+    ],
+    "jointOrdersTried": 60,
+    "jointSwapsTried": 42,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 2,
+    "boundMm": 163.566,
+    "bestFrontierMm": 163.542,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 2,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4
+    ],
+    "jointOrdersTried": 48,
+    "jointSwapsTried": 12,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 3,
+    "boundMm": 163.402,
+    "bestFrontierMm": 163.391,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 2,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4,
+     6
+    ],
+    "jointOrdersTried": 30,
+    "jointSwapsTried": 21,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 4,
+    "boundMm": 163.3,
+    "bestFrontierMm": 163.286,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 4,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4,
+     6
+    ],
+    "jointOrdersTried": 42,
+    "jointSwapsTried": 51,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   }
+  ]
+ },
+ {
+  "ladder": "A-163.3-s1",
+  "parentDepthMm": 164.058,
+  "publishedDepthMm": 164.058,
+  "publishedStep": null,
+  "rungs": [
+   {
+    "step": 0,
+    "boundMm": 163.894,
+    "bestFrontierMm": 163.859,
+    "armsRun": 3,
+    "tier3Reached": 3,
+    "tier3Admitted": 2,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2
+    ],
+    "jointOrdersTried": 4,
+    "jointSwapsTried": 2,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 1,
+    "boundMm": 163.73,
+    "bestFrontierMm": 163.69,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 4,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2,
+     4,
+     6
+    ],
+    "jointOrdersTried": 38,
+    "jointSwapsTried": 37,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 2,
+    "boundMm": 163.566,
+    "bestFrontierMm": 163.551,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 4,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2,
+     4,
+     6
+    ],
+    "jointOrdersTried": 38,
+    "jointSwapsTried": 37,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 3,
+    "boundMm": 163.402,
+    "bestFrontierMm": 163.37,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 2,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     6
+    ],
+    "jointOrdersTried": 12,
+    "jointSwapsTried": 30,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 4,
+    "boundMm": 163.3,
+    "bestFrontierMm": 163.284,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 4,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     6
+    ],
+    "jointOrdersTried": 24,
+    "jointSwapsTried": 60,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   }
+  ]
+ },
+ {
+  "ladder": "A-162.5-s0",
+  "parentDepthMm": 164.058,
+  "publishedDepthMm": 164.058,
+  "publishedStep": null,
+  "rungs": [
+   {
+    "step": 0,
+    "boundMm": 163.863,
+    "bestFrontierMm": 163.858,
+    "armsRun": 3,
+    "tier3Reached": 3,
+    "tier3Admitted": 2,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4,
+     6
+    ],
+    "jointOrdersTried": 30,
+    "jointSwapsTried": 21,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 1,
+    "boundMm": 163.668,
+    "bestFrontierMm": 163.65,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 3,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2,
+     6
+    ],
+    "jointOrdersTried": 14,
+    "jointSwapsTried": 31,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 2,
+    "boundMm": 163.474,
+    "bestFrontierMm": 163.451,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 3,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4,
+     6
+    ],
+    "jointOrdersTried": 36,
+    "jointSwapsTried": 36,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 3,
+    "boundMm": 163.279,
+    "bestFrontierMm": 163.25,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 2,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4,
+     6
+    ],
+    "jointOrdersTried": 30,
+    "jointSwapsTried": 21,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 4,
+    "boundMm": 163.084,
+    "bestFrontierMm": 163.064,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 3,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     6
+    ],
+    "jointOrdersTried": 18,
+    "jointSwapsTried": 45,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 5,
+    "boundMm": 162.889,
+    "bestFrontierMm": 162.869,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 4,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     6
+    ],
+    "jointOrdersTried": 24,
+    "jointSwapsTried": 60,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 6,
+    "boundMm": 162.695,
+    "bestFrontierMm": 162.676,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 5,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4,
+     6
+    ],
+    "jointOrdersTried": 84,
+    "jointSwapsTried": 48,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   },
+   {
+    "step": 7,
+    "boundMm": 162.5,
+    "bestFrontierMm": 162.481,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 3,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4,
+     6
+    ],
+    "jointOrdersTried": 54,
+    "jointSwapsTried": 27,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 164.058
+   }
+  ]
+ },
+ {
+  "ladder": "B-165.0-s0",
+  "parentDepthMm": 165.203,
+  "publishedDepthMm": 165.203,
+  "publishedStep": null,
+  "rungs": [
+   {
+    "step": 0,
+    "boundMm": 165.038,
+    "bestFrontierMm": 165.024,
+    "armsRun": 3,
+    "tier3Reached": 3,
+    "tier3Admitted": 3,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2,
+     4
+    ],
+    "jointOrdersTried": 28,
+    "jointSwapsTried": 8,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 165.203
+   },
+   {
+    "step": 1,
+    "boundMm": 165.0,
+    "bestFrontierMm": 164.993,
+    "armsRun": 4,
+    "tier3Reached": 2,
+    "tier3Admitted": 2,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2,
+     4
+    ],
+    "jointOrdersTried": 26,
+    "jointSwapsTried": 7,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 165.203
+   }
+  ]
+ },
+ {
+  "ladder": "B-165.0-s1",
+  "parentDepthMm": 165.203,
+  "publishedDepthMm": 165.203,
+  "publishedStep": null,
+  "rungs": [
+   {
+    "step": 0,
+    "boundMm": 165.038,
+    "bestFrontierMm": 164.999,
+    "armsRun": 3,
+    "tier3Reached": 3,
+    "tier3Admitted": 3,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4
+    ],
+    "jointOrdersTried": 72,
+    "jointSwapsTried": 18,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 165.203
+   },
+   {
+    "step": 1,
+    "boundMm": 165.0,
+    "bestFrontierMm": 164.962,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 6,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2,
+     4
+    ],
+    "jointOrdersTried": 100,
+    "jointSwapsTried": 26,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 165.203
+   }
+  ]
+ },
+ {
+  "ladder": "B-165.0-s2",
+  "parentDepthMm": 165.203,
+  "publishedDepthMm": 165.203,
+  "publishedStep": null,
+  "rungs": [
+   {
+    "step": 0,
+    "boundMm": 165.038,
+    "bestFrontierMm": 165.016,
+    "armsRun": 3,
+    "tier3Reached": 3,
+    "tier3Admitted": 3,
+    "componentSizes": [
+     2,
+     3
+    ],
+    "ejectionSetSizes": [
+     2,
+     3
+    ],
+    "jointOrdersTried": 10,
+    "jointSwapsTried": 5,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 165.203
+   },
+   {
+    "step": 1,
+    "boundMm": 165.0,
+    "bestFrontierMm": 164.871,
+    "armsRun": 4,
+    "tier3Reached": 3,
+    "tier3Admitted": 3,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2
+    ],
+    "jointOrdersTried": 6,
+    "jointSwapsTried": 3,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 165.203
+   }
+  ]
+ },
+ {
+  "ladder": "B-164.5-s0",
+  "parentDepthMm": 165.203,
+  "publishedDepthMm": 165.203,
+  "publishedStep": null,
+  "rungs": [
+   {
+    "step": 0,
+    "boundMm": 165.038,
+    "bestFrontierMm": 165.024,
+    "armsRun": 3,
+    "tier3Reached": 3,
+    "tier3Admitted": 3,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2,
+     4
+    ],
+    "jointOrdersTried": 28,
+    "jointSwapsTried": 8,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 165.203
+   },
+   {
+    "step": 1,
+    "boundMm": 164.873,
+    "bestFrontierMm": 164.79,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 5,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     2,
+     4,
+     6
+    ],
+    "jointOrdersTried": 80,
+    "jointSwapsTried": 34,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 165.203
+   },
+   {
+    "step": 2,
+    "boundMm": 164.707,
+    "bestFrontierMm": 164.684,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 4,
+    "componentSizes": [
+     2,
+     3
+    ],
+    "ejectionSetSizes": [
+     5,
+     6
+    ],
+    "jointOrdersTried": 23,
+    "jointSwapsTried": 55,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 165.203
+   },
+   {
+    "step": 3,
+    "boundMm": 164.542,
+    "bestFrontierMm": 164.517,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 4,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     4,
+     6
+    ],
+    "jointOrdersTried": 78,
+    "jointSwapsTried": 33,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 165.203
+   },
+   {
+    "step": 4,
+    "boundMm": 164.5,
+    "bestFrontierMm": 164.473,
+    "armsRun": 6,
+    "tier3Reached": 6,
+    "tier3Admitted": 1,
+    "componentSizes": [
+     2
+    ],
+    "ejectionSetSizes": [
+     6
+    ],
+    "jointOrdersTried": 6,
+    "jointSwapsTried": 15,
+    "tier3Successes": 0,
+    "publishedRepairTier": null,
+    "publishedDepthMmAfter": 165.203
+   }
+  ]
+ }
+]

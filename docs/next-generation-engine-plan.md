@@ -1099,3 +1099,46 @@ general engine code. Remaining gap to the 155 goal: 9.06 mm. The
 binding constraint is unchanged and precisely known: deep-frontier
 states carry multi-millimetre clearance deficits that single-piece
 repair refuses; joint multi-piece re-placement is the open build.
+
+Joint multi-piece re-placement (mode 29, the third repair tier)
+closes that open build and is a clean, well-instrumented NEGATIVE on
+the residue class it was built for. The tier ejects every piece of
+every pair-bearing violation component rather than the vertex cover
+tier two lifts, so both sides of each conflict come out at once; it
+then searches over insertion *order* - every permutation up to four
+pieces, rotations of the canonical order above that - with each piece
+drawing its own vacated pose, the single-piece separating
+projection's trajectory, the aimed displacement cloud, the other
+ejected pieces' vacated poses, and the skyline stations; and when no
+order succeeds it runs one round of pairwise pose-swap seeding, which
+exchanges two pieces' vacated poses in the anchor so each one's whole
+cloud re-centres on the other's pocket. That last move is the
+coordinated one no translation and no single-piece neighbourhood can
+express at any magnitude, which is what made it worth building.
+
+It fires everywhere and repairs nothing. Over ten ladders on the two
+certified locks (record 164.058 to 163.8/163.3/162.5, from-scratch
+165.203 to 165.0/164.5), tier three was reached on 173 of 176 rung
+arms - tier one published 3 times, tier two zero - and admitted 110
+of those, spending 1297 plain insertion orders and 914 pose-swap
+attempts for zero exact-valid states. Both locks return their
+incumbent on every seed. The residue is measured precisely: violation
+components are 2 pieces in 108 of 110 admissions and 3 in the other
+two; incident violation mass runs median 2.450 mm and max 5.028 mm;
+and the best any order reached was 1 of 2, 3 of 4 or 5 of 6 ejected
+pieces re-placed. The failure is therefore not order-dependence and
+not the missing exchange - it is that at these depths the *vacated
+space of the whole component* is already smaller than the component,
+so no permutation of it can be packed back in. Of the 63 refusals, 35
+were a kept sub-layout whose boundary residue would not micro-legalize
+and 27 an ejection set of 8 against the local-repair limit of 7,
+which is the one mechanical lever left in this tier: the pass ejects
+every pair-bearing component in one set, so four independent 2-piece
+conflicts refuse on a cap that neither of them individually trips.
+
+The stack now has three tiers and a precise verdict on each. Tier one
+repairs boundary-class and rounding-scale residues; tier two repairs
+interior pockets to about half a millimetre; tier three reaches the
+multi-millimetre class and confirms it is over-compression rather
+than mis-arrangement. Every measured lever inside the compress-repair
+loop is now spent, and the 164.058 / 165.203 fixpoints are unmoved.

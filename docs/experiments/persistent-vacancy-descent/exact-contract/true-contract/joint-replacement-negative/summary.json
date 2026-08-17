@@ -1,0 +1,64 @@
+{
+ "experiment": "joint multi-piece re-placement (mode 29) as the third repair tier of the mode-26 clamped ladder: a clean negative on the multi-millimetre residue class",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "mechanism": {
+  "ejection": "every piece of every pair-bearing violation component (tier two ejects a vertex cover of the same graph), admitted by the shared local-repair limits micro_legalization_component_limit / replacement_ejection_limit",
+  "orderSearch": "every permutation of the ejection set up to 4 pieces (24 orders, lexicographic, identity first); rotations of the canonical descending-area order above that, capped at 24",
+  "candidateStream": "per piece: vacated pose, single-piece separating-projection trajectory, aimed displacement cloud, up to 3 nearest peers' vacated poses, skyline stations",
+  "swapSeeding": "one round; for each unordered pair the two vacated poses are exchanged in the anchor so each piece's whole cloud re-centres on the other's pocket; orientations stay with their own pieces",
+  "budgets": "one shared RunWork ledger for the whole pass; worst case 24 orders + 24 swap attempts, each over an ejection-limited set, funded by the existing per-piece construction quota terms (asserted in bounded_reinsertion_fits_the_construction_budget)"
+ },
+ "ladders": {
+  "record": {
+   "parent": "record-164.058/pinned-parent-164.058.json",
+   "parentDepthMm": 164.058,
+   "bounds": {"163.8": [0, 1, 2], "163.3": [0, 1], "162.5": [0]},
+   "publishedDepthMm": [164.058, 164.058, 164.058, 164.058, 164.058, 164.058],
+   "verdict": "every seed returns the incumbent"
+  },
+  "fromScratch": {
+   "parent": "from-scratch-165.203/pinned-parent-165.203.json",
+   "parentDepthMm": 165.203,
+   "bounds": {"165.0": [0, 1, 2], "164.5": [0]},
+   "publishedDepthMm": [165.203, 165.203, 165.203, 165.203],
+   "verdict": "every seed returns the incumbent"
+  }
+ },
+ "tierStatistics": {
+  "rungArmsRun": 176,
+  "tier1Publications": 3,
+  "tier2Publications": 0,
+  "tier3Reached": 173,
+  "tier3Admitted": 110,
+  "tier3PlainOrdersTried": 1297,
+  "tier3SwapAttemptsTried": 914,
+  "tier3Successes": 0,
+  "capExhausted": 0,
+  "componentSizes": {"2": 108, "3": 2},
+  "ejectionSetSizes": {"2": 25, "3": 1, "4": 41, "5": 1, "6": 42},
+  "ordersPlannedByEjectionSize": {"2": 2, "3": 6, "4": 24, "5": 5, "6": 6},
+  "incidentViolationMassMm": {"count": 474, "min": 0.0, "median": 2.45, "max": 5.028},
+  "bestReplacedCountPerEjectionSize": {"2/2": 1, "3/3": 2, "4/4": 3, "5/5": 3, "6/6": 5},
+  "refusals": {
+   "keptBoundaryResidueNotMicroLegalizable": 35,
+   "ejectionSetOf8AboveLocalRepairLimit7": 27,
+   "noViolatingPair": 1
+  }
+ },
+ "finding": "the failure is not order-dependence and not the missing coordinated exchange - no order re-places even the pieces it already vacated (best 1/2, 3/4, 5/6). At these depths the vacated space of the whole component is already smaller than the component, so the residue is over-compression rather than mis-arrangement, exactly as the anchor-local characterization predicted.",
+ "remainingLever": "the pass ejects every pair-bearing component in one set, so four independent 2-piece conflicts refuse on a cap (7) that none of them individually trips; 27 of 63 refusals are that cap. Per-component sequential repair would admit those.",
+ "regressions": {
+  "protocol": "every case run twice, once with the HEAD binary and once with a binary built from the parent commit c8cfd79, compared byte-for-byte after removing wall-clock and executable-hash fields",
+  "result": "12/12 bit-identical",
+  "cases": [
+   "mode 20 salt 320.000 anchor ex5-seed-native -> 206.869 / 8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437",
+   "mode 20 salt 320.000 at allowance 0.0005 -> 206.861",
+   "mode 20 legacy request salt 320.016 -> 205.031",
+   "mode 22 on the 165.203 parent, target 166.003, allowance 0.0005 -> 165.203",
+   "modes 11/24/27/28 on both pinned parents"
+  ]
+ },
+ "determinism": "mode-26 ladder A-163.8 seed 0 run twice: byte-identical apart from wall-clock fields, across 173 tier-three invocations; mode 29 standalone run twice on both pinned parents: byte-identical"
+}
