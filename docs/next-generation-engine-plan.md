@@ -1067,3 +1067,19 @@ from-scratch lineage must cross, with the last 2.5 mm earned by the
 deterministic compress-repair machinery rather than basin lottery.
 Conflict-targeted re-placement (mode 28) is in flight against the
 record's compressed frontier.
+
+Anchor-local re-insertion lands as a real primitive and recharacterizes
+the ladder residue; fine rungs are a negative. The seeded cloud is the
+first machinery to repair an interior pocket (record-parent nudge
+controls at 0.2/0.5 mm repaired exact-valid, all prior modes
+bit-identical), but the deep-ladder residues turn out to be
+over-compression - median incident violation mass 4.2 mm, projections
+demanding up to 42 mm of travel - far beyond any single-piece repair.
+Compressing at the pace repair can absorb does not work either: fine-
+rung cascade loops (0.019-0.044 mm steps) fixpoint immediately on
+both lines (165.368 / 164.465 hold). The remaining levers are
+mechanical, not conceptual: the rollback-tracker false-positive abort
+still kills 40-75% of rungs before they produce anything repairable
+(an ulp-tolerance scoped to the clamped arms is in flight), and the
+residue class above single-piece reach needs joint multi-piece
+re-placement.
