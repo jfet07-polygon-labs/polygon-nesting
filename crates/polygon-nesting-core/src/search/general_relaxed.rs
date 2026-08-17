@@ -2693,10 +2693,12 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
     let mut diagnostics = GeneralRelaxedDiagnostics::default();
     if pieces.is_empty() {
         diagnostics.skipped_reason = Some("relaxed search requires at least one piece".to_owned());
-        return Ok(GeneralRelaxedOutcome {
-            result: incumbent.clone(),
+        return Ok(relaxed_outcome(
+            pieces,
+            fast_settings,
+            incumbent.clone(),
             diagnostics,
-        });
+        ));
     }
     if pieces.iter().any(|piece| {
         piece
@@ -2718,10 +2720,12 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
                 rollback_comparison,
             ));
         }
-        return Ok(GeneralRelaxedOutcome {
-            result: incumbent.clone(),
+        return Ok(relaxed_outcome(
+            pieces,
+            fast_settings,
+            incumbent.clone(),
             diagnostics,
-        });
+        ));
     }
 
     let catalog_mode = if relaxed_settings.pressure_model
@@ -2745,10 +2749,12 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
                 if error.message().contains("relaxed surrogate") =>
             {
                 diagnostics.skipped_reason = Some(error.to_string());
-                return Ok(GeneralRelaxedOutcome {
-                    result: incumbent.clone(),
+                return Ok(relaxed_outcome(
+                    pieces,
+                    fast_settings,
+                    incumbent.clone(),
                     diagnostics,
-                });
+                ));
             }
             Err(error) => return Err(error),
         };
@@ -3073,10 +3079,31 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
             rollback_comparison,
         ));
     }
-    Ok(GeneralRelaxedOutcome {
-        result: protected,
+    Ok(relaxed_outcome(
+        pieces,
+        fast_settings,
+        protected,
         diagnostics,
-    })
+    ))
+}
+
+/// The single exit of the relaxed entry point.
+///
+/// Every `return` in [`improve_complete_layout_under_rollback_comparison`] goes
+/// through here, so anything that needs to see - or decide - the result the
+/// engine hands back has exactly one place to sit. `legacy` is the result that
+/// entry point returns today: the protected constructor/relaxed incumbent.
+fn relaxed_outcome(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    legacy: GeneralFastResult,
+    diagnostics: GeneralRelaxedDiagnostics,
+) -> GeneralRelaxedOutcome {
+    let _ = (pieces, fast_settings);
+    GeneralRelaxedOutcome {
+        result: legacy,
+        diagnostics,
+    }
 }
 
 fn run_bounded_repair_experiment<'a>(
