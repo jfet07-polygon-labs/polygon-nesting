@@ -1,0 +1,1132 @@
+{
+ "description": "fast-constructor-profile: incremental bit-grid trapped-void evaluation for the mode-20/25 skyline constructor. Every timing figure is a paired interleaved A/B on a box shared with two other benchmarking agents; no absolute time here is a claim.",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "baseCommit": "c9bfbd8",
+ "platform": {
+  "arch": "x86_64",
+  "cores": 16
+ },
+ "streamMode20Gate1": {
+  "parent": "/var/lib/t3/tmp/ex5-seed-native.json",
+  "targetDepthMm": 320.0,
+  "pairedInterleavedAB": {
+   "rounds": 10,
+   "armsAlternateOrderEveryRound": true,
+   "statistic": "per-round paired ratio, flag-on over flag-off",
+   "flagOffEngineMedianSeconds": 26.244789363000002,
+   "flagOnEngineMedianSeconds": 6.222679572500001,
+   "engineRatioMedian": 0.2374734741269519,
+   "engineRatioRange": [
+    0.2360701575930141,
+    0.23893385100620712
+   ],
+   "flagOffWallMedianSeconds": 26.2780681848526,
+   "flagOnWallMedianSeconds": 6.255077838897705,
+   "wallRatioMedian": 0.23842409600967074,
+   "wallRatioRange": [
+    0.23702071361124402,
+    0.23987526026616707
+   ],
+   "roundsBelowParity": 10,
+   "rows": [
+    {
+     "round": 0,
+     "aEngine": 26.302031213,
+     "bEngine": 6.264742142,
+     "aWall": 26.335339307785034,
+     "bWall": 6.296551465988159,
+     "engineRatio": 0.23818472768382995,
+     "wallRatio": 0.23909133626111378
+    },
+    {
+     "round": 1,
+     "aEngine": 26.293069921,
+     "bEngine": 6.282304451,
+     "aWall": 26.323806762695312,
+     "bWall": 6.314429998397827,
+     "engineRatio": 0.23893385100620712,
+     "wallRatio": 0.23987526026616707
+    },
+    {
+     "round": 2,
+     "aEngine": 26.201481341,
+     "bEngine": 6.220998638,
+     "aWall": 26.231398105621338,
+     "bWall": 6.254871129989624,
+     "engineRatio": 0.2374292719192712,
+     "wallRatio": 0.23844978086201274
+    },
+    {
+     "round": 3,
+     "aEngine": 26.205883297,
+     "bEngine": 6.224360507,
+     "aWall": 26.238784551620483,
+     "bWall": 6.255284547805786,
+     "engineRatio": 0.23751767633463258,
+     "wallRatio": 0.23839841115732877
+    },
+    {
+     "round": 4,
+     "aEngine": 26.259834251,
+     "bEngine": 6.19916321,
+     "aWall": 26.293352842330933,
+     "bWall": 6.232069253921509,
+     "engineRatio": 0.2360701575930141,
+     "wallRatio": 0.23702071361124402
+    },
+    {
+     "round": 5,
+     "aEngine": 26.22263509,
+     "bEngine": 6.244815475,
+     "aWall": 26.25747585296631,
+     "bWall": 6.277125597000122,
+     "engineRatio": 0.23814599309210766,
+     "wallRatio": 0.2390605110769242
+    },
+    {
+     "round": 6,
+     "aEngine": 26.210837568,
+     "bEngine": 6.214249423,
+     "aWall": 26.24595284461975,
+     "bWall": 6.247936010360718,
+     "engineRatio": 0.2370870219953133,
+     "wallRatio": 0.2380533123468407
+    },
+    {
+     "round": 7,
+     "aEngine": 26.271522386,
+     "bEngine": 6.24001127,
+     "aWall": 26.304606437683105,
+     "bWall": 6.2734386920928955,
+     "engineRatio": 0.2375199723227794,
+     "wallRatio": 0.2384920187631386
+    },
+    {
+     "round": 8,
+     "aEngine": 26.229744475,
+     "bEngine": 6.210748719,
+     "aWall": 26.262783527374268,
+     "bWall": 6.245436429977417,
+     "engineRatio": 0.23678266194775804,
+     "wallRatio": 0.23780557850875417
+    },
+    {
+     "round": 9,
+     "aEngine": 26.268082272,
+     "bEngine": 6.215808109,
+     "aWall": 26.299588918685913,
+     "bWall": 6.249090671539307,
+     "engineRatio": 0.23662968787126235,
+     "wallRatio": 0.23761172430719305
+    }
+   ]
+  },
+  "phaseProfileFlagOff": {
+   "engineElapsedSeconds": 26.575259914,
+   "leafSeconds": 30.201469361,
+   "phases": {
+    "constructorProposals": {
+     "ms": 548.719749,
+     "calls": 976,
+     "leafSharePercent": 1.8168644129234888
+    },
+    "collisionPolygonBuild": {
+     "ms": 2055.120693,
+     "calls": 750434,
+     "leafSharePercent": 6.804704328902072
+    },
+    "exactOverlapTest": {
+     "ms": 3417.059331,
+     "calls": 1266102,
+     "leafSharePercent": 11.31421551102591
+    },
+    "constructorScore": {
+     "ms": 37.635511,
+     "calls": 48953,
+     "leafSharePercent": 0.12461483429875696
+    },
+    "boundaryPenalty": {
+     "ms": 342.8524,
+     "calls": 4450975,
+     "leafSharePercent": 1.1352176144208892
+    },
+    "pairCollide": {
+     "ms": 1300.67062,
+     "calls": 15562760,
+     "leafSharePercent": 4.3066468205669235
+    },
+    "pairPressure": {
+     "ms": 970.939588,
+     "calls": 6363087,
+     "leafSharePercent": 3.2148753307142113
+    },
+    "pieceIndexBuild": {
+     "ms": 64.735518,
+     "calls": 4089,
+     "leafSharePercent": 0.21434559102476908
+    },
+    "updateAfterMove": {
+     "ms": 34.319031,
+     "calls": 36382,
+     "leafSharePercent": 0.11363364672686131
+    },
+    "hazardQuery": {
+     "ms": 295.10857,
+     "calls": 489006,
+     "leafSharePercent": 0.9771331535977582
+    },
+    "hazardPressure": {
+     "ms": 491.685012,
+     "calls": 661499,
+     "leafSharePercent": 1.6280168561431867
+    },
+    "hazardPoseBounds": {
+     "ms": 71.293461,
+     "calls": 768460,
+     "leafSharePercent": 0.2360595775914904
+    },
+    "hazardCommit": {
+     "ms": 374.97204,
+     "calls": 4940,
+     "leafSharePercent": 1.241568863812341
+    },
+    "vacancyProxyRank": {
+     "ms": 20115.096332,
+     "calls": 11281,
+     "leafSharePercent": 66.60303871829224
+    },
+    "publicationValidate": {
+     "ms": 62.102606,
+     "calls": 18,
+     "leafSharePercent": 0.20562776352926335
+    }
+   }
+  },
+  "phaseProfileFlagOn": {
+   "engineElapsedSeconds": 6.509198148,
+   "leafSeconds": 10.09090264,
+   "phases": {
+    "constructorProposals": {
+     "ms": 538.635144,
+     "calls": 976,
+     "leafSharePercent": 5.337829163714932
+    },
+    "collisionPolygonBuild": {
+     "ms": 2026.912044,
+     "calls": 750434,
+     "leafSharePercent": 20.086528592252872
+    },
+    "exactOverlapTest": {
+     "ms": 3335.284102,
+     "calls": 1266102,
+     "leafSharePercent": 33.05238610448034
+    },
+    "constructorScore": {
+     "ms": 36.912018,
+     "calls": 48953,
+     "leafSharePercent": 0.3657950068181413
+    },
+    "boundaryPenalty": {
+     "ms": 342.515685,
+     "calls": 4450975,
+     "leafSharePercent": 3.394301750987858
+    },
+    "pairCollide": {
+     "ms": 1263.030351,
+     "calls": 15562760,
+     "leafSharePercent": 12.51652499344697
+    },
+    "pairPressure": {
+     "ms": 944.531521,
+     "calls": 6363087,
+     "leafSharePercent": 9.360228263980158
+    },
+    "pieceIndexBuild": {
+     "ms": 62.020259,
+     "calls": 4089,
+     "leafSharePercent": 0.6146155721902793
+    },
+    "updateAfterMove": {
+     "ms": 32.677243,
+     "calls": 36382,
+     "leafSharePercent": 0.32382874125123856
+    },
+    "hazardQuery": {
+     "ms": 286.63679,
+     "calls": 489006,
+     "leafSharePercent": 2.8405465816683373
+    },
+    "hazardPressure": {
+     "ms": 480.868126,
+     "calls": 661499,
+     "leafSharePercent": 4.7653628536049375
+    },
+    "hazardPoseBounds": {
+     "ms": 69.177122,
+     "calls": 768460,
+     "leafSharePercent": 0.6855394850980348
+    },
+    "hazardCommit": {
+     "ms": 364.40577,
+     "calls": 4940,
+     "leafSharePercent": 3.611230659936285
+    },
+    "vacancyProxyRank": {
+     "ms": 225.937897,
+     "calls": 11281,
+     "leafSharePercent": 2.239025635867199
+    },
+    "publicationValidate": {
+     "ms": 62.314365,
+     "calls": 18,
+     "leafSharePercent": 0.6175301380174648
+    }
+   }
+  }
+ },
+ "equivalence": {
+  "wholeDocumentComparisonAgainstPristine_c9bfbd8": {
+   "flagOff": {
+    "g1": "identical",
+    "g2": "identical",
+    "g3": "identical",
+    "g4": "identical"
+   },
+   "flagOn": {
+    "g1": "identical except work.totalRetainedPeakBytes 468898 -> 1977858 (the evaluator grid cache, honestly accounted against the 64 MiB ceiling)",
+    "g2": "identical",
+    "g3": "identical",
+    "g4": "identical"
+   },
+   "ignoredFields": [
+    "engineWorktreeDirty",
+    "engineWorktreeStatus",
+    "executableSha256",
+    "relevantSourceTreeSha256",
+    "*ElapsedMs"
+   ]
+  },
+  "flagOnDeterminism": "two runs of the mode-20 gate-1 stream identical field for field apart from the elapsed clock",
+  "gatesFlagOff": {
+   "g1": {
+    "depths": [
+     206.869,
+     207.239,
+     211.194,
+     211.825,
+     213.073,
+     214.207,
+     214.738,
+     222.116
+    ],
+    "fps": [
+     "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+     "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+    ],
+    "hit": true,
+    "dt": 26.303690910339355
+   },
+   "g2": {
+    "dt": 3.2740395069122314,
+    "raw": 159.09233022733062,
+    "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true
+   },
+   "g3": {
+    "dt": 3.556793451309204,
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true
+   },
+   "g4": {
+    "dt": 3.1905603408813477,
+    "raw": 164.0375677990678,
+    "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true
+   },
+   "ALL_PASS": true
+  },
+  "gatesFlagOn": {
+   "g1": {
+    "depths": [
+     206.869,
+     207.239,
+     211.194,
+     211.825,
+     213.073,
+     214.207,
+     214.738,
+     222.116
+    ],
+    "fps": [
+     "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+     "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+    ],
+    "hit": true,
+    "dt": 6.318471670150757
+   },
+   "g2": {
+    "dt": 3.2664244174957275,
+    "raw": 159.09233022733062,
+    "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true
+   },
+   "g3": {
+    "dt": 3.537139415740967,
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true
+   },
+   "g4": {
+    "dt": 8.061704158782959,
+    "raw": 164.0375677990678,
+    "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true
+   },
+   "ALL_PASS": true
+  }
+ },
+ "qualityGate": {
+  "rule": "Sol: descendant depth under a FIXED downstream work budget; the constructor's own immediate depth is not a quality proxy.",
+  "protocol": "mode-20 endpoint per arm for CLI seeds 0-3, pinned, then the identical short descent (mode 22, relaxed seeds 0 and 1, target = endpoint + 0.8 mm, allowance 0.0005) run by the DEFAULT binary so only the parent differs.",
+  "caveat": "the mode-20 constructor endpoint is invariant to the relaxed seed argument - construction_seed derives from the anchor fixture, the seed domain and the target depth - so seeds 0-3 are four replicas rather than four samples, and this was verified rather than assumed (all four give fingerprint 8a7737381238fa4d on both arms).",
+  "constructors": [
+   {
+    "arm": "off",
+    "seed": 0,
+    "seconds": 26.612,
+    "exactValid": true,
+    "contractValid": true,
+    "depth": 206.869,
+    "raw": 206.869,
+    "fp": "8a7737381238fa4d"
+   },
+   {
+    "arm": "off",
+    "seed": 1,
+    "seconds": 26.684,
+    "exactValid": true,
+    "contractValid": true,
+    "depth": 206.869,
+    "raw": 206.869,
+    "fp": "8a7737381238fa4d"
+   },
+   {
+    "arm": "off",
+    "seed": 2,
+    "seconds": 26.669,
+    "exactValid": true,
+    "contractValid": true,
+    "depth": 206.869,
+    "raw": 206.869,
+    "fp": "8a7737381238fa4d"
+   },
+   {
+    "arm": "off",
+    "seed": 3,
+    "seconds": 26.879,
+    "exactValid": true,
+    "contractValid": true,
+    "depth": 206.869,
+    "raw": 206.869,
+    "fp": "8a7737381238fa4d"
+   },
+   {
+    "arm": "on",
+    "seed": 0,
+    "seconds": 6.623,
+    "exactValid": true,
+    "contractValid": true,
+    "depth": 206.869,
+    "raw": 206.869,
+    "fp": "8a7737381238fa4d"
+   },
+   {
+    "arm": "on",
+    "seed": 1,
+    "seconds": 6.661,
+    "exactValid": true,
+    "contractValid": true,
+    "depth": 206.869,
+    "raw": 206.869,
+    "fp": "8a7737381238fa4d"
+   },
+   {
+    "arm": "on",
+    "seed": 2,
+    "seconds": 6.648,
+    "exactValid": true,
+    "contractValid": true,
+    "depth": 206.869,
+    "raw": 206.869,
+    "fp": "8a7737381238fa4d"
+   },
+   {
+    "arm": "on",
+    "seed": 3,
+    "seconds": 6.939,
+    "exactValid": true,
+    "contractValid": true,
+    "depth": 206.869,
+    "raw": 206.869,
+    "fp": "8a7737381238fa4d"
+   }
+  ],
+  "descents": [
+   {
+    "arm": "off",
+    "ctorSeed": 0,
+    "descentSeed": 0,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 7.354,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 173.04696209930026,
+    "gain": 33.82203790069974,
+    "fp": "69b5aac11a23b4c2",
+    "failure": ""
+   },
+   {
+    "arm": "off",
+    "ctorSeed": 0,
+    "descentSeed": 1,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 11.116,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 170.648,
+    "gain": 36.221000000000004,
+    "fp": "7efadbd4b1dbe44a",
+    "failure": ""
+   },
+   {
+    "arm": "off",
+    "ctorSeed": 1,
+    "descentSeed": 0,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 7.397,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 173.04696209930026,
+    "gain": 33.82203790069974,
+    "fp": "69b5aac11a23b4c2",
+    "failure": ""
+   },
+   {
+    "arm": "off",
+    "ctorSeed": 1,
+    "descentSeed": 1,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 10.944,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 170.648,
+    "gain": 36.221000000000004,
+    "fp": "7efadbd4b1dbe44a",
+    "failure": ""
+   },
+   {
+    "arm": "off",
+    "ctorSeed": 2,
+    "descentSeed": 0,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 7.363,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 173.04696209930026,
+    "gain": 33.82203790069974,
+    "fp": "69b5aac11a23b4c2",
+    "failure": ""
+   },
+   {
+    "arm": "off",
+    "ctorSeed": 2,
+    "descentSeed": 1,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 11.018,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 170.648,
+    "gain": 36.221000000000004,
+    "fp": "7efadbd4b1dbe44a",
+    "failure": ""
+   },
+   {
+    "arm": "off",
+    "ctorSeed": 3,
+    "descentSeed": 0,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 7.311,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 173.04696209930026,
+    "gain": 33.82203790069974,
+    "fp": "69b5aac11a23b4c2",
+    "failure": ""
+   },
+   {
+    "arm": "off",
+    "ctorSeed": 3,
+    "descentSeed": 1,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 10.972,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 170.648,
+    "gain": 36.221000000000004,
+    "fp": "7efadbd4b1dbe44a",
+    "failure": ""
+   },
+   {
+    "arm": "on",
+    "ctorSeed": 0,
+    "descentSeed": 0,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 7.351,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 173.04696209930026,
+    "gain": 33.82203790069974,
+    "fp": "69b5aac11a23b4c2",
+    "failure": ""
+   },
+   {
+    "arm": "on",
+    "ctorSeed": 0,
+    "descentSeed": 1,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 11.056,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 170.648,
+    "gain": 36.221000000000004,
+    "fp": "7efadbd4b1dbe44a",
+    "failure": ""
+   },
+   {
+    "arm": "on",
+    "ctorSeed": 1,
+    "descentSeed": 0,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 7.298,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 173.04696209930026,
+    "gain": 33.82203790069974,
+    "fp": "69b5aac11a23b4c2",
+    "failure": ""
+   },
+   {
+    "arm": "on",
+    "ctorSeed": 1,
+    "descentSeed": 1,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 11.149,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 170.648,
+    "gain": 36.221000000000004,
+    "fp": "7efadbd4b1dbe44a",
+    "failure": ""
+   },
+   {
+    "arm": "on",
+    "ctorSeed": 2,
+    "descentSeed": 0,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 7.362,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 173.04696209930026,
+    "gain": 33.82203790069974,
+    "fp": "69b5aac11a23b4c2",
+    "failure": ""
+   },
+   {
+    "arm": "on",
+    "ctorSeed": 2,
+    "descentSeed": 1,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 10.929,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 170.648,
+    "gain": 36.221000000000004,
+    "fp": "7efadbd4b1dbe44a",
+    "failure": ""
+   },
+   {
+    "arm": "on",
+    "ctorSeed": 3,
+    "descentSeed": 0,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 7.325,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 173.04696209930026,
+    "gain": 33.82203790069974,
+    "fp": "69b5aac11a23b4c2",
+    "failure": ""
+   },
+   {
+    "arm": "on",
+    "ctorSeed": 3,
+    "descentSeed": 1,
+    "parentDepth": 206.869,
+    "target": "207.669000",
+    "seconds": 10.994,
+    "exactValid": true,
+    "contractValid": true,
+    "descended": 170.648,
+    "gain": 36.221000000000004,
+    "fp": "7efadbd4b1dbe44a",
+    "failure": ""
+   }
+  ],
+  "verdict": "every one of the eight pairs descends to the same depth at the same fingerprint; the paired delta is exactly 0."
+ },
+ "resolutionStudy": {
+  "question": "is the constructor basin a property of the trapped-void mechanism or of the cell size it happens to be measured at?",
+  "matchedCellTwoByTwo": {
+   "claim": "at a matched cell size the bit-grid evaluator and the legacy raster produce the same constructor endpoint fingerprint and the same descended depths, so the rewrite is not the variable",
+   "rows": [
+    {
+     "arm": "legacy-2.000",
+     "seconds": 26.55,
+     "exactValid": true,
+     "depth": 206.869,
+     "fp": "8a7737381238fa4d",
+     "descended": {
+      "0": {
+       "raw": 173.04696209930026,
+       "exactValid": true,
+       "seconds": 7.76
+      },
+      "1": {
+       "raw": 170.648,
+       "exactValid": true,
+       "seconds": 11.55
+      }
+     }
+    },
+    {
+     "arm": "legacy-1.875",
+     "seconds": 28.61,
+     "exactValid": true,
+     "depth": 205.096,
+     "fp": "c0174b0ce84667c3",
+     "descended": {
+      "0": {
+       "raw": 180.491,
+       "exactValid": true,
+       "seconds": 6.51
+      },
+      "1": {
+       "raw": 179.27181099307126,
+       "exactValid": true,
+       "seconds": 12.29
+      }
+     }
+    },
+    {
+     "arm": "legacy-1.900",
+     "seconds": 38.97,
+     "exactValid": true,
+     "depth": 204.519,
+     "fp": "dbfcc7135049fbc8",
+     "descended": {
+      "0": {
+       "raw": 180.63177826491074,
+       "exactValid": true,
+       "seconds": 14.22
+      },
+      "1": {
+       "raw": 179.48630422769722,
+       "exactValid": true,
+       "seconds": 10.31
+      }
+     }
+    },
+    {
+     "arm": "legacy-2.100",
+     "seconds": 25.23,
+     "exactValid": true,
+     "depth": 208.994,
+     "fp": "fb5436824e73e9c4",
+     "descended": {
+      "0": {
+       "raw": 179.4088372565567,
+       "exactValid": true,
+       "seconds": 5.82
+      },
+      "1": {
+       "raw": 181.465,
+       "exactValid": true,
+       "seconds": 6.15
+      }
+     }
+    },
+    {
+     "arm": "legacy-2.500",
+     "seconds": 19.76,
+     "exactValid": true,
+     "depth": 204.914,
+     "fp": "73a7daf0bbae66b7",
+     "descended": {
+      "0": {
+       "raw": 179.003,
+       "exactValid": true,
+       "seconds": 6.04
+      },
+      "1": {
+       "raw": 179.003,
+       "exactValid": true,
+       "seconds": 5.67
+      }
+     }
+    },
+    {
+     "arm": "bitgrid-2.000",
+     "seconds": 6.28,
+     "exactValid": true,
+     "depth": 206.869,
+     "fp": "8a7737381238fa4d",
+     "descended": {
+      "0": {
+       "raw": 173.04696209930026,
+       "exactValid": true,
+       "seconds": 7.63
+      },
+      "1": {
+       "raw": 170.648,
+       "exactValid": true,
+       "seconds": 11.41
+      }
+     }
+    },
+    {
+     "arm": "bitgrid-1.875",
+     "seconds": 6.36,
+     "exactValid": true,
+     "depth": 205.096,
+     "fp": "c0174b0ce84667c3",
+     "descended": {
+      "0": {
+       "raw": 180.491,
+       "exactValid": true,
+       "seconds": 6.41
+      },
+      "1": {
+       "raw": 179.27181099307126,
+       "exactValid": true,
+       "seconds": 4.87
+      }
+     }
+    },
+    {
+     "arm": "bitgrid-1.900",
+     "seconds": 6.44,
+     "exactValid": true,
+     "depth": 204.519,
+     "fp": "dbfcc7135049fbc8",
+     "descended": {
+      "0": {
+       "raw": 180.63177826491074,
+       "exactValid": true,
+       "seconds": 5.9
+      },
+      "1": {
+       "raw": 179.48630422769722,
+       "exactValid": true,
+       "seconds": 5.9
+      }
+     }
+    },
+    {
+     "arm": "bitgrid-2.100",
+     "seconds": 6.32,
+     "exactValid": true,
+     "depth": 208.994,
+     "fp": "fb5436824e73e9c4",
+     "descended": {
+      "0": {
+       "raw": 179.4088372565567,
+       "exactValid": true,
+       "seconds": 5.79
+      },
+      "1": {
+       "raw": 181.465,
+       "exactValid": true,
+       "seconds": 6.25
+      }
+     }
+    },
+    {
+     "arm": "bitgrid-2.500",
+     "seconds": 6.32,
+     "exactValid": true,
+     "depth": 204.914,
+     "fp": "73a7daf0bbae66b7",
+     "descended": {
+      "0": {
+       "raw": 179.003,
+       "exactValid": true,
+       "seconds": 6.42
+      },
+      "1": {
+       "raw": 179.003,
+       "exactValid": true,
+       "seconds": 5.77
+      }
+     }
+    }
+   ]
+  },
+  "cellSweep": {
+   "arms": [
+    {
+     "cell": 1.2,
+     "seconds": 9.83,
+     "exactValid": true,
+     "depth": 204.279,
+     "fp": "b7277c7074a24432",
+     "descended": {
+      "0": 179.5131371458658,
+      "1": 179.125
+     }
+    },
+    {
+     "cell": 1.4,
+     "seconds": 6.55,
+     "exactValid": true,
+     "depth": 208.425,
+     "fp": "c531758cec95f140",
+     "descended": {
+      "0": 179.67169518690673,
+      "1": 169.50095113482215
+     }
+    },
+    {
+     "cell": 1.5,
+     "seconds": 6.42,
+     "exactValid": true,
+     "depth": 202.994,
+     "fp": "e5fa3bb7e7bd0442",
+     "descended": {
+      "0": 173.16951142807838,
+      "1": 179.59896237563922
+     }
+    },
+    {
+     "cell": 1.6,
+     "seconds": 6.44,
+     "exactValid": true,
+     "depth": 206.698,
+     "fp": "7e6eea7ddf87ecdd",
+     "descended": {
+      "0": 171.07266341801255,
+      "1": 179.633
+     }
+    },
+    {
+     "cell": 1.7,
+     "seconds": 6.4,
+     "exactValid": true,
+     "depth": 206.664,
+     "fp": "917a4ec0226d770f",
+     "descended": {
+      "0": 181.64592860532056,
+      "1": 180.56792599918907
+     }
+    },
+    {
+     "cell": 1.8,
+     "seconds": 6.36,
+     "exactValid": true,
+     "depth": 204.729,
+     "fp": "159d2db87e9b93b3",
+     "descended": {
+      "0": 182.24093812459273,
+      "1": 179.59431585142056
+     }
+    },
+    {
+     "cell": 1.875,
+     "seconds": 6.35,
+     "exactValid": true,
+     "depth": 205.096,
+     "fp": "c0174b0ce84667c3",
+     "descended": {
+      "0": 180.491,
+      "1": 179.27181099307126
+     }
+    },
+    {
+     "cell": 1.9,
+     "seconds": 6.43,
+     "exactValid": true,
+     "depth": 204.519,
+     "fp": "dbfcc7135049fbc8",
+     "descended": {
+      "0": 180.63177826491074,
+      "1": 179.48630422769722
+     }
+    },
+    {
+     "cell": 1.95,
+     "seconds": 6.31,
+     "exactValid": true,
+     "depth": 202.994,
+     "fp": "9d38d9d5db2dad61",
+     "descended": {
+      "0": 179.62977826491073,
+      "1": 180.289
+     }
+    },
+    {
+     "cell": 2.0,
+     "seconds": 6.25,
+     "exactValid": true,
+     "depth": 206.869,
+     "fp": "8a7737381238fa4d",
+     "descended": {
+      "0": 173.04696209930026,
+      "1": 170.648
+     }
+    },
+    {
+     "cell": 2.05,
+     "seconds": 6.28,
+     "exactValid": true,
+     "depth": 202.994,
+     "fp": "4d1c77a7f6b86649",
+     "descended": {
+      "0": 189.003,
+      "1": 180.00500000000002
+     }
+    },
+    {
+     "cell": 2.1,
+     "seconds": 6.26,
+     "exactValid": true,
+     "depth": 208.994,
+     "fp": "fb5436824e73e9c4",
+     "descended": {
+      "0": 179.4088372565567,
+      "1": 181.465
+     }
+    },
+    {
+     "cell": 2.2,
+     "seconds": 6.34,
+     "exactValid": true,
+     "depth": 205.405,
+     "fp": "9050eccdb513530b",
+     "descended": {
+      "0": 179.50691785153265,
+      "1": 179.6665854710368
+     }
+    },
+    {
+     "cell": 2.4,
+     "seconds": 6.21,
+     "exactValid": true,
+     "depth": 204.869,
+     "fp": "b77da1fea27750d1",
+     "descended": {
+      "0": 173.847,
+      "1": 179.633
+     }
+    },
+    {
+     "cell": 2.5,
+     "seconds": 6.33,
+     "exactValid": true,
+     "depth": 204.914,
+     "fp": "73a7daf0bbae66b7",
+     "descended": {
+      "0": 179.003,
+      "1": 179.003
+     }
+    },
+    {
+     "cell": 3.0,
+     "seconds": 6.32,
+     "exactValid": true,
+     "depth": 206.869,
+     "fp": "275bbc61f92fb3d7",
+     "descended": {
+      "0": 179.00300000000001,
+      "1": 179.531
+     }
+    },
+    {
+     "cell": 3.75,
+     "seconds": 6.21,
+     "exactValid": true,
+     "depth": 206.228,
+     "fp": "923bebad48ece163",
+     "descended": {
+      "0": 179.003,
+      "1": 179.064
+     }
+    },
+    {
+     "cell": 5.0,
+     "seconds": 6.35,
+     "exactValid": true,
+     "depth": 202.615,
+     "fp": "78a6f57512a398a8",
+     "descended": {
+      "0": 174.30400000000003,
+      "1": 179.69289082659662
+     }
+    }
+   ],
+   "readout": {
+    "distinctEndpointFingerprints": 18,
+    "immediateDepthRangeMm": [
+     202.615,
+     208.994
+    ],
+    "bestOfTwoDescendedMinMm": 169.50095113482215,
+    "bestOfTwoDescendedMaxMm": 180.56792599918907,
+    "pearsonImmediateVersusBestDescended": -0.212,
+    "conclusion": "the cell is a lottery ticket, not a tuned parameter: 12 of 18 sizes land on a 179-181 mm plateau and 6 find a 169.5-174.3 mm basin, the shipped 2.0 mm is the second-luckiest ticket while its neighbours 1.95 and 2.05 mm both land on the plateau, and immediate depth is if anything anti-correlated with descendant depth."
+   }
+  }
+ },
+ "headroom": {
+  "phaseSpeedup": 89.02146779830254,
+  "streamSpeedup": 4.21099663310356,
+  "amdahlCeilingIfThePhaseWereFree": 4.376480583570758,
+  "note": "the redesign captures 96.6% of the entire headroom this phase can ever offer. Sol's ~13x for a two-second slice needs a further 3.1x, and it is no longer in this phase: exactOverlapTest (33.1% of leaf) plus collisionPolygonBuild (20.1%) is the constructor's exact confirmation, which is PR6's Clipper port."
+ }
+}

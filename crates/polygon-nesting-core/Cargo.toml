@@ -75,6 +75,21 @@ canonical-pair-order = []
 # comparable number, and it must not acquire a default or a settings knob. See
 # `search::general_relaxed::proxy_hypot` for the verdict and the scope.
 fast-proxy-hypot = []
+# Replaces the mode-20/25 skyline constructor's trapped-void evaluator with an
+# incremental bit-grid one: occupancy carried down the beam and updated by the
+# one piece a child adds, scanline rasterisation, a `u64`-word flood fill,
+# reusable buffers, and a cell size derived from the narrowest piece in the
+# request rather than a fixed 2 mm.
+#
+# Off by default. The legacy evaluator's raster is a *different measurement* -
+# a different cell size counts different cells - so this is not and cannot be a
+# bit-identical change, and the mode-20 regression gate must be run against the
+# default build. What the profile owes instead is per-seed determinism,
+# unchanged exact-valid publication, and a quality gate measured as descendant
+# depth under a fixed downstream work budget - never the constructor's own
+# immediate depth, which the ledger repeatedly shows is an invalid proxy. See
+# `search::construction_void_grid`.
+fast-constructor-profile = []
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }
