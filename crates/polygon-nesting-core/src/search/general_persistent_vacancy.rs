@@ -7847,15 +7847,22 @@ fn build_collision(
     {
         return Err(work.cap("experimental collision-build budget exhausted"));
     }
-    let collision = piece
-        .polygon
-        .transformed(
-            placement.rotation_deg,
-            placement.mirrored,
-            placement.translate_x,
-            placement.translate_y,
+    // The build itself is the kernel's exact tier, named rather than taken as a
+    // parameter: this polygon is what the deep operators' exact confirmation
+    // rows and the publication validator both measure, so no generic
+    // substitution may reroute it. The budget bookkeeping around it stays here,
+    // because it is this operator's quota, not the kernel's.
+    let collision = LEGACY
+        .collision_polygon(
+            piece.polygon,
+            KernelPose {
+                rotation_deg: placement.rotation_deg,
+                mirrored: placement.mirrored,
+                translate_x: placement.translate_x,
+                translate_y: placement.translate_y,
+            },
+            collision_expansion_mm(settings),
         )
-        .and_then(|polygon| polygon.offset(collision_expansion_mm(settings)))
         .map_err(|error| format!("persistent vacancy collision geometry: {error}"))?;
     if collision.vertex_count() > MAX_COLLISION_VERTICES {
         return Err(format!(

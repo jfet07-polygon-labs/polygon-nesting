@@ -18,6 +18,7 @@ use crate::geometry::general_polygon::{
 };
 use crate::parallel::map_slice_with_job_pool;
 use crate::profiling::{self, Counter, Phase};
+use crate::search::kernel::{ExplorationKernel, KernelPose, LEGACY};
 use crate::validation::general_polygon::{
     validate_publication, GeneralPlacement, PublicationValidationError,
     PublicationValidationSettings,
@@ -2176,11 +2177,48 @@ fn transformed_collision(
 ) -> Result<PolygonSet, GeneralPolygonError> {
     let _span = profiling::span(Phase::CollisionPolygonBuild);
     profiling::count(Counter::CollisionPolygonBuilds, 1);
-    piece
-        .input
-        .polygon
-        .transformed(rotation_deg, mirrored, translate_x, translate_y)?
-        .offset(collision_expansion_mm(settings))
+    LEGACY.collision_polygon(
+        piece.input.polygon,
+        KernelPose {
+            rotation_deg,
+            mirrored,
+            translate_x,
+            translate_y,
+        },
+        collision_expansion_mm(settings),
+    )
+}
+
+/// The exact collision-polygon build, behind
+/// [`LegacyKernel`](crate::search::kernel::LegacyKernel).
+///
+/// One Clipper transform followed by one Clipper offset. This is the
+/// `collisionPolygonBuild` cost centre PR1 measured, and the only place the
+/// engine turns a source ring into the expanded ring that every exact overlap
+/// question is asked about.
+///
+/// It carries no instrumentation of its own. Its two callers measure it
+/// differently on purpose: the constructor route opens a
+/// [`Phase::CollisionPolygonBuild`] span around it, while the deep-operator
+/// route uses [`profiling::deep`], which is compiled out by default because a
+/// runtime branch there perturbs the surrounding generated function's inlining.
+/// Owning a span here would force one of those two contracts onto the other.
+///
+/// It is `pub(crate)` for the kernel module alone; search code reaches it
+/// through [`ExplorationKernel::collision_polygon`], never directly.
+pub(crate) fn build_collision_polygon(
+    source: &PolygonSet,
+    pose: KernelPose,
+    expansion_mm: f64,
+) -> Result<PolygonSet, GeneralPolygonError> {
+    source
+        .transformed(
+            pose.rotation_deg,
+            pose.mirrored,
+            pose.translate_x,
+            pose.translate_y,
+        )?
+        .offset(expansion_mm)
 }
 
 pub(crate) fn collision_sheet_inset_mm(settings: GeneralFastSettings) -> f64 {
@@ -2299,7 +2337,27 @@ pub(crate) fn polygons_overlap_exact(
 /// re-walk a ring per pair to answer a question whose answer cannot have
 /// changed. Passing the extent in is the only difference; the broad-phase
 /// reject, the error on an empty operand, and the narrow phase are identical.
+///
+/// The verdict itself comes from the exact tier of
+/// [`LegacyKernel`](crate::search::kernel::LegacyKernel), named rather than
+/// taken as a parameter: this answer can reach a published placement, so no
+/// generic substitution may reroute it.
 fn polygons_overlap_exact_within(
+    first: &PolygonSet,
+    first_bounds: Option<IrregularBounds>,
+    second: &PolygonSet,
+    second_bounds: Option<IrregularBounds>,
+) -> Result<bool, GeneralPolygonError> {
+    LEGACY.exact_pair_overlaps(first, first_bounds, second, second_bounds)
+}
+
+/// The exact `f64` pair-overlap verdict, behind
+/// [`LegacyKernel`](crate::search::kernel::LegacyKernel).
+///
+/// This is the `exactOverlapTest` cost centre PR1 measured. It is `pub(crate)`
+/// for the kernel module alone; search code reaches it through
+/// [`ExplorationKernel::exact_pair_overlaps`].
+pub(crate) fn exact_pair_overlaps_within(
     first: &PolygonSet,
     first_bounds: Option<IrregularBounds>,
     second: &PolygonSet,
