@@ -33,6 +33,8 @@ use crate::search::general_micro_legalization::{
 use crate::search::kernel::{
     ExplorationKernel, KernelPose, KernelProbes, LegacyKernel, PosedShape, LEGACY,
 };
+#[cfg(feature = "shadow-rescore")]
+use crate::search::shadow_rescore;
 // The added contract-validity and raw-depth reporting is reachable only through
 // the persistent-vacancy arms, which the experimental feature gates.
 #[cfg(feature = "jagua-experimental")]
@@ -1995,6 +1997,100 @@ impl PieceQueryScratch {
     }
 }
 
+/// The pose a cached proxy row was derived at, compared by bit pattern.
+///
+/// Bits rather than values, deliberately. The derivation runs the pose through
+/// [`continuous_angle`], so two distinct `rotation_deg` bit patterns can produce
+/// the same transform; keying on the raw bits can therefore only ever cause an
+/// unnecessary recomputation, never a stale read. A key that compared canonical
+/// angles would have to prove the canonicalisation is injective on every input
+/// the search generates, which is a much stronger claim than this cache needs.
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct ProxyRowPose {
+    rotation_bits: u64,
+    translate_x_bits: u64,
+    translate_y_bits: u64,
+    mirrored: bool,
+}
+
+impl ProxyRowPose {
+    #[inline]
+    fn of(placement: &RelaxedPlacement) -> Self {
+        Self {
+            rotation_bits: placement.rotation_deg.to_bits(),
+            translate_x_bits: placement.translate_x.to_bits(),
+            translate_y_bits: placement.translate_y.to_bits(),
+            mirrored: placement.mirrored,
+        }
+    }
+}
+
+/// Dense per-piece proxy geometry, maintained one row at a time.
+///
+/// The confirmation collider ([`continuous_pair_collision`]) opens with a
+/// broad-phase reject against the two operands' transformed surrogate extents,
+/// and it used to derive both of them from scratch on every call — a walk over
+/// every cell vertex of both shapes. Asking one piece about all of its
+/// neighbours therefore re-derived the *same* extent for that piece once per
+/// neighbour, and a whole-layout score re-derived every piece's extent `n - 1`
+/// times.
+///
+/// This is the row storage that stops it. One entry per piece holds the pose
+/// the extent was taken at and the extent itself; a lookup that finds the same
+/// pose returns the stored extent, and a lookup that does not re-derives one
+/// row. A sweep that moves one piece therefore invalidates exactly one row,
+/// which is what delta scoring means for this quantity.
+///
+/// The cache is *self-invalidating*: it stores the pose alongside the extent
+/// and checks it on every read, so no call site has to remember to evict, and
+/// correctness does not depend on the search announcing a move. A candidate
+/// pose that is scored and then rejected simply leaves a row that the next
+/// reader recomputes.
+struct ProxyRowCache {
+    poses: Vec<Option<ProxyRowPose>>,
+    bounds: Vec<IrregularBounds>,
+}
+
+impl ProxyRowCache {
+    fn new(piece_count: usize) -> Self {
+        Self {
+            poses: vec![None; piece_count],
+            bounds: vec![IrregularBounds::new(0.0, 0.0, 0.0, 0.0); piece_count],
+        }
+    }
+
+    /// The transformed proxy extent of `placement`, derived once per pose.
+    ///
+    /// `shape` must be the same zero-degree confirmation surrogate the collider
+    /// would have used, which is what makes the stored extent bit-identical to
+    /// the one the deriving path computes.
+    #[inline]
+    fn bounds_for(
+        &mut self,
+        shape: &OrientedSurrogate,
+        placement: &RelaxedPlacement,
+    ) -> IrregularBounds {
+        let transform = || {
+            PoleTransform::new(
+                placement.rotation_deg,
+                placement.translate_x,
+                placement.translate_y,
+            )
+        };
+        let Some(slot) = self.poses.get_mut(placement.input_index) else {
+            return transformed_surrogate_bounds(shape, transform());
+        };
+        let pose = ProxyRowPose::of(placement);
+        if *slot == Some(pose) {
+            return self.bounds[placement.input_index];
+        }
+        let bounds = transformed_surrogate_bounds(shape, transform());
+        *slot = Some(pose);
+        self.bounds[placement.input_index] = bounds;
+        bounds
+    }
+}
+
 impl CellIndex {
     fn new(cells: &[Triangle], bounds: IrregularBounds) -> Self {
         let mut bins = vec![Vec::new(); CELL_INDEX_SIDE * CELL_INDEX_SIDE];
@@ -2684,6 +2780,12 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
     counters: WorkCounters,
     allow_worsening_chain: bool,
     piece_query_scratch: PieceQueryScratch,
+    /// Per-piece proxy extents, kept in step with the layout one row per move.
+    proxy_rows: ProxyRowCache,
+    /// Reusable buffer the accepted-move merge writes its new collision list
+    /// into. It is swapped with the incumbent list rather than copied, so after
+    /// the first move of a lane neither list allocates again.
+    collision_merge_scratch: Vec<(usize, usize, f64)>,
     pair_nfp_cache: BTreeMap<PairNfpKey, Arc<PairNfp>>,
     pair_nfp_cache_components: usize,
     #[cfg(feature = "jagua-experimental")]
@@ -9287,6 +9389,8 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             counters: WorkCounters::default(),
             allow_worsening_chain: false,
             piece_query_scratch: PieceQueryScratch::new(pieces.len()),
+            proxy_rows: ProxyRowCache::new(pieces.len()),
+            collision_merge_scratch: Vec::new(),
             pair_nfp_cache: BTreeMap::new(),
             pair_nfp_cache_components: 0,
             #[cfg(feature = "jagua-experimental")]
@@ -10143,9 +10247,73 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     old_boundary,
                     replacement_score,
                     &self.weights,
+                    &mut self.collision_merge_scratch,
                 );
+                self.audit_incremental_score(state, score)?;
             }
         }
+        Ok(())
+    }
+
+    /// Compares the incrementally maintained score against a complete rescore
+    /// of the same state.
+    ///
+    /// Compiled out entirely unless the `shadow-rescore` feature is on, in
+    /// which case it runs after every accepted move. See
+    /// [`crate::search::shadow_rescore`] for the agreement rule and how to read
+    /// the report.
+    ///
+    /// The audit must not be able to change what the search does, so the lane's
+    /// work counters are saved and restored around it: the rescore's probes and
+    /// pressure evaluations feed deterministic quotas, and letting them land
+    /// would make the audited run a different search from the audited-out one.
+    /// The other state a rescore reaches is read-only or idempotent — the
+    /// hazard index is only queried, and the proxy row cache re-derives exactly
+    /// what it stored.
+    ///
+    /// One exception is worth stating rather than glossing: the *directional*
+    /// backend's rescore fills the lane's pair-NFP cache, which is budgeted, so
+    /// an audited directional lane can reach that budget earlier than an
+    /// unaudited one and take the unscorable branch sooner. The audited streams
+    /// are the dynamic-hazard ones, where this does not arise, and both pinned
+    /// gates reproduce their fingerprints exactly under the audit — but a
+    /// directional arm run under this feature is not guaranteed to be the same
+    /// search, and its outcome should not be quoted as one.
+    #[cfg(feature = "shadow-rescore")]
+    fn audit_incremental_score(
+        &mut self,
+        state: &RelaxedState,
+        incremental: &PairTracker,
+    ) -> Result<(), GeneralFastError> {
+        let saved_counters = self.counters;
+        let shadow = self.score_state(state);
+        self.counters = saved_counters;
+        let mut shadow = shadow?;
+        // Same summation order in both paths: the complete score accumulates
+        // the weighted total interleaved with its boundary walk, so recompute
+        // it the way the delta does before comparing. What is under test is the
+        // delta, not which of two orders `+` was applied in.
+        refresh_weighted_loss(&mut shadow, &self.weights);
+        match shadow_tracker_disagreement(&shadow, incremental) {
+            ShadowAgreement::Rows(rendered) => shadow_rescore::record_disagreement(rendered),
+            ShadowAgreement::MagnitudeOnly {
+                rendered,
+                worst_pressure_ulps,
+            } => shadow_rescore::record_magnitude_only(rendered, worst_pressure_ulps),
+            ShadowAgreement::Agrees { derived_ulps } => {
+                shadow_rescore::record_agreement(derived_ulps)
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(not(feature = "shadow-rescore"))]
+    #[inline(always)]
+    fn audit_incremental_score(
+        &mut self,
+        _state: &RelaxedState,
+        _incremental: &PairTracker,
+    ) -> Result<(), GeneralFastError> {
         Ok(())
     }
 
@@ -11320,6 +11488,10 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         let piece_count = state.placements.len();
         let mut collision_pairs = Vec::new();
         let mut boundaries = Vec::with_capacity(piece_count);
+        // Every slot this vector declares is overwritten wholesale by the pair
+        // loop below, guided weight included, so the separate `pair_weight`
+        // sweep that used to run here answered `n * (n - 1) / 2` ordered-map
+        // lookups whose results were then discarded.
         let mut pairs = vec![
             PairEntry {
                 raw_loss: 0.0,
@@ -11328,11 +11500,23 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             };
             piece_count.saturating_mul(piece_count.saturating_sub(1)) / 2
         ];
-        for first in 0..piece_count {
-            for second in (first + 1)..piece_count {
-                pairs[pair_slot(piece_count, first, second)].guided_weight =
-                    self.pair_weight(first, second);
-            }
+        // One shape resolution per piece rather than two per pair. The
+        // catalogue is reached through a cloned handle so the resolved borrows
+        // outlive the `&mut self` calls in the loop below; that is one refcount
+        // bump per whole-layout score, against `n * (n - 1)` ordered-map
+        // descents saved.
+        let catalog = Arc::clone(&self.catalog);
+        let mut shapes = Vec::with_capacity(piece_count);
+        for placement in &state.placements {
+            let key = self.surrogate_key(
+                placement.input_index,
+                placement.rotation_deg,
+                placement.mirrored,
+            );
+            let Some(shape) = catalog.orientations.get(&key) else {
+                return Err(self.missing_orientation(placement.input_index, key));
+            };
+            shapes.push(shape);
         }
         let mut incident_raw_loss = vec![0.0; piece_count];
         let mut boundary_violations = 0usize;
@@ -11347,8 +11531,14 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             boundary_violations = boundary_violations.saturating_add(violations);
             boundary_loss += loss;
             weighted_loss += loss;
+            let first_shape = shapes[index];
             for second in (index + 1)..state.placements.len() {
-                let penalty = self.pair_penalty(placement, &state.placements[second])?;
+                let penalty = self.resolved_pair_penalty(
+                    first_shape,
+                    placement,
+                    shapes[second],
+                    &state.placements[second],
+                );
                 let guided_weight = self.pair_weight(index, second);
                 pairs[pair_slot(piece_count, index, second)] = PairEntry {
                     raw_loss: penalty,
@@ -11826,8 +12016,20 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         let second_shape = self.catalog.orientations.get(&second_key).ok_or_else(|| {
             GeneralPolygonError::from_message("missing zero-degree confirmation surrogate")
         })?;
-        let (collides, cell_probes, sat_tests) =
-            continuous_pair_collision(first_shape, first, second_shape, second);
+        // One row of proxy geometry per operand, derived once per pose rather
+        // than once per pair. `bounds_for` returns exactly what the deriving
+        // collider computed, so the verdict and both probe counts below are the
+        // ones the uncached call produced.
+        let first_bounds = self.proxy_rows.bounds_for(first_shape, first);
+        let second_bounds = self.proxy_rows.bounds_for(second_shape, second);
+        let (collides, cell_probes, sat_tests) = continuous_pair_collision(
+            first_shape,
+            first,
+            first_bounds,
+            second_shape,
+            second,
+            second_bounds,
+        );
         self.counters.piece_broad_phase_probes =
             self.counters.piece_broad_phase_probes.saturating_add(1);
         self.counters.cell_index_probes =
@@ -12180,18 +12382,68 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         // into another kernel, and `LegacyKernel::pair_collides` is the loop
         // this branch used to run inline; the probe totals it reports are
         // folded back into the lane quotas below.
-        let mut probes = KernelProbes::default();
-        let collides = self.kernel.pair_collides(
+        Ok(kernel_pair_collides(
+            &mut self.kernel,
+            &mut self.counters,
+            first_shape,
+            first,
+            second_shape,
+            second,
+        ))
+    }
+
+    /// The proxy collision verdict for two *already resolved* shapes.
+    ///
+    /// Same question, same counters, same span as [`Self::pair_collides`]; the
+    /// difference is that the caller has already resolved both operands' shapes
+    /// and does not want the catalogue consulted again. A whole-layout score
+    /// asks about `n * (n - 1) / 2` pairs over `n` distinct shapes, so resolving
+    /// per pair asked the ordered catalogue `n - 1` times for each answer it
+    /// needed once.
+    ///
+    /// Restricted to the non-directional proxy: the directional backend answers
+    /// a different question — a grid-relative SAT with an exact confirmation —
+    /// and keeps its own path in [`Self::pair_collides`].
+    fn resolved_pair_collides(
+        &mut self,
+        first_shape: &OrientedSurrogate,
+        first: &RelaxedPlacement,
+        second_shape: &OrientedSurrogate,
+        second: &RelaxedPlacement,
+    ) -> bool {
+        let _span = profiling::span(Phase::PairCollide);
+        profiling::count(Counter::NeighborTests, 1);
+        self.counters.piece_broad_phase_probes += 1;
+        kernel_pair_collides(
+            &mut self.kernel,
+            &mut self.counters,
+            first_shape,
+            first,
+            second_shape,
+            second,
+        )
+    }
+
+    /// The proxy pair penalty for two already resolved shapes.
+    ///
+    /// The resolved counterpart of [`Self::pair_penalty`]'s non-directional
+    /// branch, asked in the same order: collision first, magnitude only for a
+    /// pair the proxy has already reported.
+    fn resolved_pair_penalty(
+        &mut self,
+        first_shape: &OrientedSurrogate,
+        first: &RelaxedPlacement,
+        second_shape: &OrientedSurrogate,
+        second: &RelaxedPlacement,
+    ) -> f64 {
+        if !self.resolved_pair_collides(first_shape, first, second_shape, second) {
+            return 0.0;
+        }
+        let _span = profiling::span(Phase::PairPressure);
+        self.kernel.pair_pressure(
             PosedShape::new(first_shape, first.translate_x, first.translate_y),
             PosedShape::new(second_shape, second.translate_x, second.translate_y),
-            &mut probes,
-        );
-        self.counters.cell_index_probes = self
-            .counters
-            .cell_index_probes
-            .wrapping_add(probes.cell_index_probes);
-        self.counters.sat_tests = self.counters.sat_tests.wrapping_add(probes.sat_tests);
-        Ok(collides)
+        )
     }
 
     fn rollback_pair_pressure(
@@ -12556,21 +12808,65 @@ fn continuous_pole_overlap_pressure(
     overlap_proxy.sqrt() * (first_difficulty * second_difficulty).sqrt()
 }
 
-fn continuous_pair_collision(
+/// Asks the kernel about one pair and folds its reported work into the lane
+/// quotas.
+///
+/// The one place the kernel's proxy verdict is taken, so that a resolved caller
+/// and a resolving one cannot drift in how they charge for it. `kernel` and
+/// `counters` are passed as disjoint borrows rather than as `&mut self` because
+/// the shapes a resolved caller holds are borrowed from the lane's catalogue.
+///
+/// `inline(always)`, matching every method on [`ExplorationKernel`]'s legacy
+/// implementation, for the same reason PR3 gave: this sits on the hottest call
+/// in every measured stream — about 22.8M invocations on mode 20 and 52.0M on
+/// mode 22 — and factoring the body out of `pair_collides` must reproduce the
+/// direct call it replaced rather than introduce one.
+#[inline(always)]
+fn kernel_pair_collides<K: ExplorationKernel<Shape = OrientedSurrogate>>(
+    kernel: &mut K,
+    counters: &mut WorkCounters,
     first_shape: &OrientedSurrogate,
     first: &RelaxedPlacement,
     second_shape: &OrientedSurrogate,
     second: &RelaxedPlacement,
+) -> bool {
+    let mut probes = KernelProbes::default();
+    let collides = kernel.pair_collides(
+        PosedShape::new(first_shape, first.translate_x, first.translate_y),
+        PosedShape::new(second_shape, second.translate_x, second.translate_y),
+        &mut probes,
+    );
+    counters.cell_index_probes = counters
+        .cell_index_probes
+        .wrapping_add(probes.cell_index_probes);
+    counters.sat_tests = counters.sat_tests.wrapping_add(probes.sat_tests);
+    collides
+}
+
+/// The confirmation collider: whether two continuously posed surrogates
+/// overlap, with both broad-phase extents supplied by the caller.
+///
+/// The extents are the transformed cell-vertex extents of the two operands —
+/// exactly what this function used to derive itself, on both operands, on every
+/// call. The answer only ever depended on those extents and the cells, so
+/// hoisting them to the caller changes nothing about the verdict or either
+/// probe count; it only stops one piece's extent from being re-derived once per
+/// neighbour it is asked about. [`ProxyRowCache`] is where they come from.
+fn continuous_pair_collision(
+    first_shape: &OrientedSurrogate,
+    first: &RelaxedPlacement,
+    first_bounds: IrregularBounds,
+    second_shape: &OrientedSurrogate,
+    second: &RelaxedPlacement,
+    second_bounds: IrregularBounds,
 ) -> (bool, usize, usize) {
+    if !bounds_overlap(first_bounds, second_bounds) {
+        return (false, 0, 0);
+    }
     let first_transform =
         PoleTransform::new(first.rotation_deg, first.translate_x, first.translate_y);
     let second_transform =
         PoleTransform::new(second.rotation_deg, second.translate_x, second.translate_y);
-    let first_bounds = transformed_surrogate_bounds(first_shape, first_transform);
-    let second_bounds = transformed_surrogate_bounds(second_shape, second_transform);
-    if !bounds_overlap(first_bounds, second_bounds) {
-        return (false, 0, 0);
-    }
     let mut cell_probes = 0usize;
     let mut sat_tests = 0usize;
     for first_cell in first_shape.cells.iter().copied() {
@@ -13415,12 +13711,206 @@ fn same_piece_geometry(first: GeneralFastPiece<'_>, second: GeneralFastPiece<'_>
         && (first_dimensions[1] - second_dimensions[1]).abs() <= 0.001
 }
 
+/// The verdict of one shadow-rescore audit.
+#[cfg(feature = "shadow-rescore")]
+enum ShadowAgreement {
+    /// Every row matched bit for bit. `derived_ulps` is the widest gap any
+    /// running `f64` sum showed, in `f64` ulps; `0` means the whole tracker was
+    /// bit-identical.
+    Agrees { derived_ulps: u64 },
+    /// The two trackers describe the same layout — same colliding pairs, same
+    /// violation counts, same row *shape* — but at least one row's magnitude
+    /// differs bitwise.
+    MagnitudeOnly {
+        rendered: String,
+        worst_pressure_ulps: u64,
+    },
+    /// The two trackers disagree about the layout itself: a different set of
+    /// colliding pairs, a different violation count, a different row count.
+    Rows(String),
+}
+
+/// Compares a complete rescore against an incrementally maintained tracker.
+///
+/// The three verdicts are three different claims, and keeping them apart is the
+/// point of the audit:
+///
+/// * **Structure** — which pairs collide, how many rows there are, how many
+///   boundaries are violated. Nothing about evaluation order can change these,
+///   so any difference is a delta that has lost track of the layout. This is
+///   the class that must be empty.
+/// * **Magnitude** — the `f64` loss on a row whose structure matched. The proxy
+///   pressure kernels are not symmetric in their two operands: they accumulate
+///   a pole-pair series with the first operand outermost, so reading a pair as
+///   `(i, j)` and as `(j, i)` are two different summation orders over the same
+///   terms. A candidate scorer always reads a pair as `(moving, fixed)` and a
+///   complete score always reads it as `(lower index, higher index)`, so the
+///   two paths legitimately differ in the low bits of a magnitude whenever the
+///   moved piece is the higher-indexed one.
+/// * **Derived sums** — the running `f64` totals. Order-dependent by
+///   construction; see [`crate::search::shadow_rescore`].
+///
+/// `guided_weight` is deliberately not compared, for the same reason the
+/// coupled rollback auditor does not compare it: it is not a measurement of the
+/// layout but a copy of the guidance weight in force when the row was last
+/// written, and a complete score writes it for every pair while the delta
+/// writes it for the rows it touches. Every weight that reaches a score does so
+/// through the weighted total, which *is* compared.
+#[cfg(feature = "shadow-rescore")]
+fn shadow_tracker_disagreement(shadow: &PairTracker, incremental: &PairTracker) -> ShadowAgreement {
+    if shadow.piece_count != incremental.piece_count {
+        return ShadowAgreement::Rows(format!(
+            "piece count {} != {}",
+            shadow.piece_count, incremental.piece_count
+        ));
+    }
+    if shadow.boundaries.len() != incremental.boundaries.len() {
+        return ShadowAgreement::Rows("boundary row count differs".to_owned());
+    }
+    if shadow.boundary_violations != incremental.boundary_violations {
+        return ShadowAgreement::Rows(format!(
+            "boundary violation count {} != {}",
+            shadow.boundary_violations, incremental.boundary_violations
+        ));
+    }
+    if shadow.collision_pairs.len() != incremental.collision_pairs.len() {
+        return ShadowAgreement::Rows(format!(
+            "collision row count {} != {}",
+            shadow.collision_pairs.len(),
+            incremental.collision_pairs.len()
+        ));
+    }
+    if shadow.pairs.len() != incremental.pairs.len() {
+        return ShadowAgreement::Rows("pair row count differs".to_owned());
+    }
+    if shadow.incident_raw_loss.len() != incremental.incident_raw_loss.len() {
+        return ShadowAgreement::Rows("incident loss vector length differs".to_owned());
+    }
+    let mut magnitude = None::<(String, u64)>;
+    let mut note_magnitude = |rendered: String, first: f64, second: f64| {
+        let gap = shadow_rescore::derived_ulp_distance(first, second);
+        match &mut magnitude {
+            Some((_, worst)) => *worst = (*worst).max(gap),
+            slot @ None => *slot = Some((rendered, gap)),
+        }
+    };
+    for (index, (shadow, incremental)) in shadow
+        .boundaries
+        .iter()
+        .zip(&incremental.boundaries)
+        .enumerate()
+    {
+        if shadow.violations != incremental.violations {
+            return ShadowAgreement::Rows(format!(
+                "boundary row {index} violations {} != {}",
+                shadow.violations, incremental.violations
+            ));
+        }
+        if shadow.raw_loss != incremental.raw_loss {
+            note_magnitude(
+                format!(
+                    "boundary row {index}: {:.17e} != {:.17e}",
+                    shadow.raw_loss, incremental.raw_loss
+                ),
+                shadow.raw_loss,
+                incremental.raw_loss,
+            );
+        }
+    }
+    for (index, (shadow, incremental)) in shadow
+        .collision_pairs
+        .iter()
+        .zip(&incremental.collision_pairs)
+        .enumerate()
+    {
+        if (shadow.0, shadow.1) != (incremental.0, incremental.1) {
+            return ShadowAgreement::Rows(format!(
+                "collision row {index}: pair ({}, {}) != ({}, {})",
+                shadow.0, shadow.1, incremental.0, incremental.1
+            ));
+        }
+        if shadow.2 != incremental.2 {
+            note_magnitude(
+                format!(
+                    "collision row {index} pair ({}, {}): {:.17e} != {:.17e}",
+                    shadow.0, shadow.1, shadow.2, incremental.2
+                ),
+                shadow.2,
+                incremental.2,
+            );
+        }
+    }
+    for (slot, (shadow, incremental)) in shadow.pairs.iter().zip(&incremental.pairs).enumerate() {
+        if shadow.normalization_scale != incremental.normalization_scale
+            || (shadow.raw_loss > 0.0) != (incremental.raw_loss > 0.0)
+        {
+            return ShadowAgreement::Rows(format!(
+                "pair row {slot}: {:.17e} != {:.17e}",
+                shadow.raw_loss, incremental.raw_loss
+            ));
+        }
+        if shadow.raw_loss != incremental.raw_loss {
+            note_magnitude(
+                format!(
+                    "pair row {slot}: {:.17e} != {:.17e}",
+                    shadow.raw_loss, incremental.raw_loss
+                ),
+                shadow.raw_loss,
+                incremental.raw_loss,
+            );
+        }
+    }
+    if let Some((rendered, worst_pressure_ulps)) = magnitude {
+        return ShadowAgreement::MagnitudeOnly {
+            rendered,
+            worst_pressure_ulps,
+        };
+    }
+    let mut derived_ulps =
+        shadow_rescore::derived_ulp_distance(shadow.boundary_loss, incremental.boundary_loss).max(
+            shadow_rescore::derived_ulp_distance(shadow.weighted_loss, incremental.weighted_loss),
+        );
+    for (shadow, incremental) in shadow
+        .incident_raw_loss
+        .iter()
+        .zip(&incremental.incident_raw_loss)
+    {
+        derived_ulps =
+            derived_ulps.max(shadow_rescore::derived_ulp_distance(*shadow, *incremental));
+    }
+    ShadowAgreement::Agrees { derived_ulps }
+}
+
+/// Installs one accepted move into the incumbent score.
+///
+/// This is the delta the sweep runs on, and it is now bounded by the moved row
+/// plus the incumbent's collision list rather than by the layout:
+///
+/// * **The moved row is walked once, as a merge.** The `fixed` loop visits
+///   pairs in exactly `(first, second)` order — `(0, i), (1, i), ... (i - 1, i),
+///   (i, i + 1), ... (i, n - 1)` is ascending — and `replacement.collision_pairs`
+///   arrives sorted by the same key. One cursor over the row therefore answers
+///   every "what is this pair's new loss" question, where a linear `find` per
+///   piece used to rescan the whole row `n - 1` times.
+/// * **The collision list is rebuilt by merge, not by sort.** The rows that
+///   survive are the incumbent's minus the moved piece's, which is already
+///   sorted, and the incoming row is sorted; merging them into the caller's
+///   scratch and swapping produces exactly the order `sort_by_key` produced,
+///   without the `O(m log m)` and without an allocation once the scratch has
+///   grown.
+///
+/// The two running `f64` sums — the boundary total and the weighted total — are
+/// deliberately *not* turned into subtract-and-add deltas. Their accumulation
+/// order is observable in the last bit and the coupled rollback auditor compares
+/// them against a from-scratch score, so the weighted total keeps being summed
+/// over the whole ordered collision list exactly as it was.
 fn update_score_after_move(
     score: &mut PairTracker,
     input_index: usize,
     old_boundary: (usize, f64),
     replacement: PlacementScore,
     weights: &BTreeMap<(usize, usize), f64>,
+    merge_scratch: &mut Vec<(usize, usize, f64)>,
 ) {
     let _span = profiling::span(Phase::UpdateAfterMove);
     profiling::count(Counter::AcceptedMoves, 1);
@@ -13428,6 +13918,13 @@ fn update_score_after_move(
     let tracked_boundary = score.boundaries[input_index];
     debug_assert_eq!(tracked_boundary.violations, old_boundary.0);
     debug_assert!((tracked_boundary.raw_loss - old_boundary.1).abs() <= f64::EPSILON);
+    debug_assert!(
+        replacement
+            .collision_pairs
+            .windows(2)
+            .all(|window| (window[0].0, window[0].1) < (window[1].0, window[1].1)),
+        "the moved row reaches the delta sorted by pair"
+    );
     score.replace_boundary(
         input_index,
         BoundaryEntry {
@@ -13435,33 +13932,41 @@ fn update_score_after_move(
             raw_loss: replacement.boundary_loss,
         },
     );
+    let mut row_cursor = 0usize;
     for fixed in 0..score.piece_count {
         if fixed == input_index {
             continue;
         }
         let pair = ordered_pair(input_index, fixed);
+        while row_cursor < replacement.collision_pairs.len()
+            && (
+                replacement.collision_pairs[row_cursor].0,
+                replacement.collision_pairs[row_cursor].1,
+            ) < pair
+        {
+            row_cursor += 1;
+        }
         let raw_loss = replacement
             .collision_pairs
-            .iter()
-            .find(|(first, second, _)| (*first, *second) == pair)
+            .get(row_cursor)
+            .filter(|(first, second, _)| (*first, *second) == pair)
             .map(|(_, _, penalty)| *penalty)
             .unwrap_or(0.0);
         let guided_weight = weights.get(&pair).copied().unwrap_or(1.0);
         score.replace_pair(pair.0, pair.1, raw_loss, guided_weight);
     }
-    score
-        .collision_pairs
-        .retain(|(first, second, _)| *first != input_index && *second != input_index);
     score.boundary_violations = score
         .boundary_violations
         .saturating_sub(old_boundary.0)
         .saturating_add(replacement.boundary_violations);
     score.boundary_loss =
         (score.boundary_loss - old_boundary.1 + replacement.boundary_loss).max(0.0);
-    score.collision_pairs.extend(replacement.collision_pairs);
-    score
-        .collision_pairs
-        .sort_by_key(|(first, second, _)| (*first, *second));
+    merge_sorted_moved_row(
+        &mut score.collision_pairs,
+        input_index,
+        &replacement.collision_pairs,
+        merge_scratch,
+    );
     score.weighted_loss = score.boundary_loss
         + score
             .collision_pairs
@@ -13474,6 +13979,41 @@ fn update_score_after_move(
                     * *penalty
             })
             .sum::<f64>();
+}
+
+/// Replaces `input_index`'s rows in a sorted collision list with `row`.
+///
+/// `collision_pairs` and `row` are both sorted by `(first, second)`; `row`
+/// contains only pairs that mention `input_index`, and `collision_pairs` is the
+/// incumbent list. Dropping the old rows preserves sortedness, and the two key
+/// sets are disjoint by construction, so one linear merge reproduces the
+/// previous `retain` + `extend` + `sort_by_key` order exactly rather than merely
+/// up to ties — which matters, because the resulting list is compared
+/// element-wise against a from-scratch score.
+fn merge_sorted_moved_row(
+    collision_pairs: &mut Vec<(usize, usize, f64)>,
+    input_index: usize,
+    row: &[(usize, usize, f64)],
+    scratch: &mut Vec<(usize, usize, f64)>,
+) {
+    scratch.clear();
+    scratch.reserve(collision_pairs.len() + row.len());
+    let mut incoming = row.iter().copied().peekable();
+    for retained in collision_pairs
+        .iter()
+        .copied()
+        .filter(|(first, second, _)| *first != input_index && *second != input_index)
+    {
+        while incoming
+            .peek()
+            .is_some_and(|(first, second, _)| (*first, *second) < (retained.0, retained.1))
+        {
+            scratch.push(incoming.next().expect("peeked entry is present"));
+        }
+        scratch.push(retained);
+    }
+    scratch.extend(incoming);
+    std::mem::swap(collision_pairs, scratch);
 }
 
 fn tracked_piece_score(
@@ -15580,6 +16120,100 @@ mod tests {
         assert_ne!(derive_seed(7, 2, 3), derive_seed(7, 2, 4));
     }
 
+    /// The proxy row cache is only sound if a hit returns exactly what the
+    /// deriving path would have computed and a pose change is a miss. Both
+    /// halves are load-bearing: a hit that rounded differently would move a
+    /// collision verdict, and a stale hit would answer about the wrong pose.
+    #[test]
+    fn proxy_row_cache_hits_and_misses_match_the_deriving_path() {
+        let polygon = square(10.0);
+        let pieces = [GeneralFastPiece {
+            id: "first",
+            polygon: &polygon,
+            allow_rotation: true,
+            allow_mirror: false,
+        }];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::ZeroDegreeOnly,
+            None,
+        )
+        .unwrap();
+        let shape = catalog
+            .orientations
+            .get(&(catalog.geometry_class_by_input[0], angle_key(0.0), false))
+            .expect("zero-degree confirmation surrogate");
+
+        let mut cache = ProxyRowCache::new(pieces.len());
+        let poses = [
+            RelaxedPlacement {
+                input_index: 0,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 12.0,
+                translate_y: 30.0,
+            },
+            RelaxedPlacement {
+                input_index: 0,
+                rotation_deg: 37.5,
+                mirrored: false,
+                translate_x: 12.0,
+                translate_y: 30.0,
+            },
+            RelaxedPlacement {
+                input_index: 0,
+                rotation_deg: 37.5,
+                mirrored: false,
+                translate_x: 12.000_001,
+                translate_y: 30.0,
+            },
+        ];
+        // Every pose, then every pose again in the same order, so the second
+        // pass is served entirely from stored rows.
+        for placement in poses.iter().chain(poses.iter()) {
+            let derived = transformed_surrogate_bounds(
+                shape,
+                PoleTransform::new(
+                    placement.rotation_deg,
+                    placement.translate_x,
+                    placement.translate_y,
+                ),
+            );
+            let cached = cache.bounds_for(shape, placement);
+            assert_eq!(cached.min_x.to_bits(), derived.min_x.to_bits());
+            assert_eq!(cached.min_y.to_bits(), derived.min_y.to_bits());
+            assert_eq!(cached.max_x.to_bits(), derived.max_x.to_bits());
+            assert_eq!(cached.max_y.to_bits(), derived.max_y.to_bits());
+        }
+
+        // A repeated read of the pose the cache is holding is a hit, and a hit
+        // is the same value.
+        let held = cache.bounds_for(shape, &poses[2]);
+        assert_eq!(
+            held.min_x.to_bits(),
+            cache.bounds_for(shape, &poses[2]).min_x.to_bits()
+        );
+        // A piece index the cache was not sized for still answers, by deriving.
+        let unknown = RelaxedPlacement {
+            input_index: pieces.len(),
+            ..poses[0].clone()
+        };
+        let derived = transformed_surrogate_bounds(
+            shape,
+            PoleTransform::new(
+                unknown.rotation_deg,
+                unknown.translate_x,
+                unknown.translate_y,
+            ),
+        );
+        assert_eq!(
+            cache.bounds_for(shape, &unknown).max_y.to_bits(),
+            derived.max_y.to_bits()
+        );
+    }
+
     #[test]
     fn shared_pair_nfps_preserve_tracker_and_lane_budget_semantics() {
         let polygon = square(10.0);
@@ -15977,9 +16611,53 @@ mod tests {
                 weighted_loss: 0.0,
             },
             &BTreeMap::new(),
+            &mut Vec::new(),
         );
         assert_eq!(score.collision_pairs, vec![(1, 2, 1.0)]);
         assert_eq!(score.weighted_loss, 1.0);
+    }
+
+    /// The accepted-move merge has to reproduce `retain` + `extend` + sort, not
+    /// merely produce a sorted list: the sweep's collision list is compared
+    /// element-wise against a from-scratch score, so a permutation of equal
+    /// content would read as a real disagreement.
+    #[test]
+    fn moved_row_merge_reproduces_retain_extend_and_sort() {
+        let incumbent = vec![
+            (0usize, 3usize, 1.0f64),
+            (1, 2, 2.0),
+            (1, 4, 3.0),
+            (2, 3, 4.0),
+            (3, 5, 5.0),
+        ];
+        for input_index in 0..6usize {
+            let neighbour = (input_index + 1) % 6;
+            let single = ordered_pair(input_index, neighbour);
+            for row in [
+                Vec::new(),
+                vec![(single.0, single.1, 9.0)],
+                (0..6)
+                    .filter(|fixed| *fixed != input_index)
+                    .map(|fixed| {
+                        let pair = ordered_pair(input_index, fixed);
+                        (pair.0, pair.1, 7.0)
+                    })
+                    .collect::<Vec<_>>(),
+            ] {
+                let mut row = row;
+                row.sort_by_key(|(first, second, _)| (*first, *second));
+                let mut expected = incumbent.clone();
+                expected
+                    .retain(|(first, second, _)| *first != input_index && *second != input_index);
+                expected.extend(row.iter().copied());
+                expected.sort_by_key(|(first, second, _)| (*first, *second));
+
+                let mut actual = incumbent.clone();
+                let mut scratch = Vec::new();
+                merge_sorted_moved_row(&mut actual, input_index, &row, &mut scratch);
+                assert_eq!(actual, expected, "input index {input_index}");
+            }
+        }
     }
 
     #[test]
