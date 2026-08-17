@@ -2727,10 +2727,12 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
     let mut diagnostics = GeneralRelaxedDiagnostics::default();
     if pieces.is_empty() {
         diagnostics.skipped_reason = Some("relaxed search requires at least one piece".to_owned());
-        return Ok(GeneralRelaxedOutcome {
-            result: incumbent.clone(),
+        return Ok(relaxed_outcome(
+            pieces,
+            fast_settings,
+            incumbent.clone(),
             diagnostics,
-        });
+        ));
     }
     if pieces.iter().any(|piece| {
         piece
@@ -2752,10 +2754,12 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
                 rollback_comparison,
             ));
         }
-        return Ok(GeneralRelaxedOutcome {
-            result: incumbent.clone(),
+        return Ok(relaxed_outcome(
+            pieces,
+            fast_settings,
+            incumbent.clone(),
             diagnostics,
-        });
+        ));
     }
 
     let catalog_mode = if relaxed_settings.pressure_model
@@ -2779,10 +2783,12 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
                 if error.message().contains("relaxed surrogate") =>
             {
                 diagnostics.skipped_reason = Some(error.to_string());
-                return Ok(GeneralRelaxedOutcome {
-                    result: incumbent.clone(),
+                return Ok(relaxed_outcome(
+                    pieces,
+                    fast_settings,
+                    incumbent.clone(),
                     diagnostics,
-                });
+                ));
             }
             Err(error) => return Err(error),
         };
@@ -3107,10 +3113,143 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
             rollback_comparison,
         ));
     }
-    Ok(GeneralRelaxedOutcome {
-        result: protected,
+    Ok(relaxed_outcome(
+        pieces,
+        fast_settings,
+        protected,
         diagnostics,
-    })
+    ))
+}
+
+/// The single exit of the relaxed entry point, and therefore the single place
+/// where a search mode's publication can become the engine's own result.
+///
+/// Every `return` in [`improve_complete_layout_under_rollback_comparison`] goes
+/// through here, so no mode needs - or gets - its own copy of the adoption
+/// rule. `legacy` is the result that entry point would have returned before
+/// this function existed: the protected constructor/relaxed incumbent.
+///
+/// See [`adopt_published_layout`] for the rule. When no mode ran, that function
+/// returns `legacy` untouched without measuring anything, so a run with the
+/// persistent-vacancy arms off is byte-identical to the pre-adoption engine.
+fn relaxed_outcome(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    legacy: GeneralFastResult,
+    diagnostics: GeneralRelaxedDiagnostics,
+) -> GeneralRelaxedOutcome {
+    let result = adopt_published_layout(pieces, fast_settings, &diagnostics, legacy);
+    GeneralRelaxedOutcome {
+        result,
+        diagnostics,
+    }
+}
+
+/// The placements a search mode published in its own right, if it published.
+///
+/// Every mode - 20 and 21, the 22-31 band, and any mode added later - reports
+/// through the one `persistentVacancyPopulation` block and writes its published
+/// layout into that block's `final_placements`. Reading the block rather than
+/// each mode's own diagnostics is what makes the adoption rule uniform: a new
+/// mode is routed the moment it fills that field, and no mode can be forgotten.
+///
+/// Deliberately *not* [`persistent_vacancy_reported_layout`]: that function
+/// falls back to the parent layout so that a declining arm's report still
+/// describes something. An empty `final_placements` is precisely a refusal -
+/// the mode published nothing of its own - and a refusal must leave the legacy
+/// result standing, so no fallback belongs here.
+#[cfg(feature = "jagua-experimental")]
+fn published_mode_placements(
+    diagnostics: &GeneralRelaxedDiagnostics,
+) -> Option<Vec<GeneralFastPlacement>> {
+    let population = diagnostics
+        .coupled_dynamic_separator
+        .as_ref()?
+        .persistent_vacancy_population
+        .as_ref()?;
+    (!population.final_placements.is_empty())
+        .then(|| fast_placements_from_coupled_diagnostics(&population.final_placements))
+}
+
+/// Adopts a mode's publication as the engine's result when, and only when, it
+/// is both legal against the real request and strictly better than the legacy
+/// incumbent.
+///
+/// The rule, in the order it is applied:
+///
+/// 1. A mode must have published a layout of its own. No mode run, or a mode
+///    that refused, leaves `legacy` untouched.
+/// 2. The publication must be *complete*: one placement per requested piece.
+///    Neither validator enforces that on its own, and a partial layout would
+///    measure shallower than the complete one it is being compared against.
+/// 3. It must beat `legacy` on raw source depth - the untouched `f64` reading
+///    that cannot round, measured the same way on both sides. A legacy result
+///    that failed to place every piece is not a comparable reading and never
+///    wins. Ties keep `legacy`, so adoption is a strict improvement.
+/// 4. Publication authority stays where it already was: the composite exact
+///    validator, re-run here against the *real* request rather than trusted
+///    from the mode's own `exact_valid` flag. That flag is the mode's verdict
+///    under the settings the mode searched in - a clamped sheet for a mode-26
+///    rung - and mode 23 reports a layout together with a `false` verdict. Only
+///    a layout that passes `validate_and_measure_placements` here, which is
+///    `exactValid` and includes `contractValid`, is adopted.
+///
+/// The adopted result carries that validator's own measurements, so its depth,
+/// span, projection and envelope area are in the same basis as the legacy
+/// result's. Every other field - the constructor's evaluation counts and arm
+/// outcomes - describes work that still happened and is carried over unchanged.
+///
+/// The diagnostics block is read, never written: it keeps recording what each
+/// arm did whether or not the result moved.
+#[cfg(feature = "jagua-experimental")]
+fn adopt_published_layout(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    diagnostics: &GeneralRelaxedDiagnostics,
+    legacy: GeneralFastResult,
+) -> GeneralFastResult {
+    let Some(published) = published_mode_placements(diagnostics) else {
+        return legacy;
+    };
+    if published.len() != pieces.len() {
+        return legacy;
+    }
+    let Ok(published_depth_mm) = coupled_raw_source_depth(pieces, &published, fast_settings) else {
+        return legacy;
+    };
+    let legacy_depth_mm = if legacy.unplaced_piece_ids.is_empty() {
+        coupled_raw_source_depth(pieces, &legacy.placements, fast_settings).ok()
+    } else {
+        None
+    };
+    if legacy_depth_mm.is_some_and(|legacy_depth_mm| published_depth_mm >= legacy_depth_mm) {
+        return legacy;
+    }
+    let Ok(metrics) = validate_and_measure_placements(pieces, &published, fast_settings) else {
+        return legacy;
+    };
+    GeneralFastResult {
+        placements: published,
+        unplaced_piece_ids: Vec::new(),
+        used_short_axis_span_mm: metrics.used_short_axis_span_mm,
+        used_long_axis_depth_mm: metrics.used_long_axis_depth_mm,
+        unused_short_axis_projection_mm: metrics.unused_short_axis_projection_mm,
+        occupied_envelope_area_mm2: metrics.occupied_envelope_area_mm2,
+        ..legacy
+    }
+}
+
+/// Without the experimental feature no search mode can run, so there is never a
+/// publication to adopt and the legacy result is the only result.
+#[cfg(not(feature = "jagua-experimental"))]
+fn adopt_published_layout(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    diagnostics: &GeneralRelaxedDiagnostics,
+    legacy: GeneralFastResult,
+) -> GeneralFastResult {
+    let _ = (pieces, fast_settings, diagnostics);
+    legacy
 }
 
 fn run_bounded_repair_experiment<'a>(
@@ -16816,5 +16955,235 @@ mod tests {
                 .as_deref()
                 .is_some_and(|reason| reason.contains("confirmation catalog")));
         }
+    }
+
+    /// Two 10 mm squares on a bare 100x100 sheet: no padding, no safety margin,
+    /// so a layout's raw source depth is just its deepest `max_y`. That makes
+    /// every depth in the adoption tests below readable by hand.
+    #[cfg(feature = "jagua-experimental")]
+    fn adoption_settings() -> GeneralFastSettings {
+        GeneralFastSettings::deterministic_test(100.0, 100.0)
+    }
+
+    /// Both squares side by side at `long_axis_mm`, so the layout's raw source
+    /// depth is `long_axis_mm + 10`. The 5 mm offsets keep the collision
+    /// polygons - the sources expanded by the search allowance - off the sheet
+    /// edges, which the composite validator would otherwise reject.
+    #[cfg(feature = "jagua-experimental")]
+    fn adoption_layout(long_axis_mm: f64) -> Vec<GeneralFastPlacement> {
+        ["a", "b"]
+            .into_iter()
+            .enumerate()
+            .map(|(index, id)| GeneralFastPlacement {
+                piece_id: id.to_owned(),
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_short_axis: 5.0 + index as f64 * 20.0,
+                translate_long_axis: long_axis_mm,
+            })
+            .collect()
+    }
+
+    /// The legacy incumbent every adoption test starts from: both squares at
+    /// 20 mm, so 30 mm deep, and carrying a distinctive constructor counter so
+    /// the tests can tell a carried-over field from a defaulted one.
+    #[cfg(feature = "jagua-experimental")]
+    fn adoption_legacy_result() -> GeneralFastResult {
+        let mut legacy = general_fast_result_seed(adoption_layout(20.0), 30.0);
+        legacy.exact_evaluations = 7;
+        legacy.order_variants_attempted = 3;
+        legacy
+    }
+
+    #[cfg(feature = "jagua-experimental")]
+    fn adoption_diagnostics(
+        population: Option<GeneralPersistentVacancyDiagnostics>,
+    ) -> GeneralRelaxedDiagnostics {
+        GeneralRelaxedDiagnostics {
+            coupled_dynamic_separator: Some(GeneralCoupledSeparatorDiagnostics {
+                seed_domain: COUPLED_SEPARATOR_SEED_DOMAIN,
+                control: GeneralCoupledSeparatorArmDiagnostics::default(),
+                treatment: GeneralCoupledSeparatorArmDiagnostics::default(),
+                boundary_projection_treatment: None,
+                conflict_ruin_recreate: None,
+                precompression_frontier_vacancy: None,
+                persistent_vacancy_population: population,
+            }),
+            ..GeneralRelaxedDiagnostics::default()
+        }
+    }
+
+    /// A mode report that published `placements` and claims they are valid.
+    /// The claim is deliberately unconditional: the adoption point must reach
+    /// its own verdict through the exact validator, never through this flag.
+    #[cfg(feature = "jagua-experimental")]
+    fn adoption_publication(
+        placements: &[GeneralFastPlacement],
+    ) -> GeneralPersistentVacancyDiagnostics {
+        GeneralPersistentVacancyDiagnostics {
+            mode: 22,
+            attempted: true,
+            exact_valid: true,
+            contract_valid: true,
+            final_placements: coupled_placement_diagnostics(placements),
+            ..GeneralPersistentVacancyDiagnostics::default()
+        }
+    }
+
+    #[cfg(feature = "jagua-experimental")]
+    fn adopt_for_test(diagnostics: &GeneralRelaxedDiagnostics) -> GeneralFastResult {
+        let polygon = square(10.0);
+        let pieces = ["a", "b"].map(|id| GeneralFastPiece {
+            id,
+            polygon: &polygon,
+            allow_rotation: false,
+            allow_mirror: false,
+        });
+        adopt_published_layout(
+            &pieces,
+            adoption_settings(),
+            diagnostics,
+            adoption_legacy_result(),
+        )
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn improving_mode_publication_becomes_the_engine_result() {
+        let published = adoption_layout(5.0);
+        let adopted = adopt_for_test(&adoption_diagnostics(Some(adoption_publication(
+            &published,
+        ))));
+
+        assert_eq!(adopted.placements, published);
+        assert!(adopted.unplaced_piece_ids.is_empty());
+        // Re-measured by the validator, not copied from the mode's report.
+        assert!(adopted.used_long_axis_depth_mm < adoption_legacy_result().used_long_axis_depth_mm);
+        assert!(adopted.occupied_envelope_area_mm2 > 0.0);
+        // The constructor's own work still happened and is still reported.
+        assert_eq!(adopted.exact_evaluations, 7);
+        assert_eq!(adopted.order_variants_attempted, 3);
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn refusing_mode_keeps_the_legacy_result() {
+        let refused = GeneralPersistentVacancyDiagnostics {
+            mode: 22,
+            attempted: true,
+            failure_reason: Some("no exact-valid state".to_owned()),
+            ..GeneralPersistentVacancyDiagnostics::default()
+        };
+
+        assert_eq!(
+            adopt_for_test(&adoption_diagnostics(Some(refused))),
+            adoption_legacy_result()
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn deeper_mode_publication_keeps_the_legacy_result() {
+        let published = adoption_layout(40.0);
+
+        assert_eq!(
+            adopt_for_test(&adoption_diagnostics(Some(adoption_publication(
+                &published
+            )))),
+            adoption_legacy_result()
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn equally_deep_mode_publication_keeps_the_legacy_result() {
+        let published = adoption_layout(20.0)
+            .into_iter()
+            .map(|placement| GeneralFastPlacement {
+                translate_short_axis: placement.translate_short_axis + 1.0,
+                ..placement
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            adopt_for_test(&adoption_diagnostics(Some(adoption_publication(
+                &published
+            )))),
+            adoption_legacy_result()
+        );
+    }
+
+    /// The one case that decides who holds publication authority: a shallower
+    /// layout whose pieces overlap, reported with `exactValid` set. Adopting it
+    /// would mean the mode's own flag published; refusing it means the exact
+    /// validator did.
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn illegal_mode_publication_is_refused_despite_its_own_valid_flag() {
+        let mut published = adoption_layout(5.0);
+        published[1].translate_short_axis = 10.0;
+
+        assert_eq!(
+            adopt_for_test(&adoption_diagnostics(Some(adoption_publication(
+                &published
+            )))),
+            adoption_legacy_result()
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn incomplete_mode_publication_is_refused() {
+        let mut published = adoption_layout(5.0);
+        published.truncate(1);
+
+        assert_eq!(
+            adopt_for_test(&adoption_diagnostics(Some(adoption_publication(
+                &published
+            )))),
+            adoption_legacy_result()
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn absent_mode_leaves_the_result_untouched() {
+        assert_eq!(
+            adopt_for_test(&adoption_diagnostics(None)),
+            adoption_legacy_result()
+        );
+        assert_eq!(
+            adopt_for_test(&GeneralRelaxedDiagnostics::default()),
+            adoption_legacy_result()
+        );
+    }
+
+    /// The invariance the rollout depends on: arming the diagnostics arms
+    /// without arming a publishing mode must leave the engine's result exactly
+    /// where the legacy path put it.
+    #[test]
+    #[cfg(feature = "jagua-experimental")]
+    fn coupled_arms_without_a_publishing_mode_do_not_move_the_result() {
+        let polygon = square(10.0);
+        let pieces = [GeneralFastPiece {
+            id: "square",
+            polygon: &polygon,
+            allow_rotation: true,
+            allow_mirror: true,
+        }];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let incumbent = construct_short_side_first(&pieces, fast_settings).unwrap();
+        let mut settings = coupled_experiment_test_settings(47);
+        settings.persistent_vacancy_mode = 0;
+        settings.coupled_dynamic_separator = false;
+        let without_arms =
+            improve_complete_layout(&pieces, fast_settings, settings, &incumbent).unwrap();
+        settings.coupled_dynamic_separator = true;
+        let with_arms =
+            improve_complete_layout(&pieces, fast_settings, settings, &incumbent).unwrap();
+
+        assert!(with_arms.diagnostics.coupled_dynamic_separator.is_some());
+        assert!(without_arms.diagnostics.coupled_dynamic_separator.is_none());
+        assert_eq!(with_arms.result, without_arms.result);
     }
 }
