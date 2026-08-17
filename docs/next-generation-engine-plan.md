@@ -1712,3 +1712,168 @@ its own change with its own outcome risk. The natural order is: settle
 which oracle owns a row (the hazard index or the surrogate collider),
 stop `tracked_piece_score` reinstalling an unmeasured row on a reverted
 move, and only then let a sweep inherit its predecessor's tracker.
+
+## The measured hot path, precomputed (production roadmap PR5)
+
+PR4 ended by naming the centres it had *not* touched: `pairCollide` at
+45-48% of leaf time and `pairPressure` at 19-21%, both inside
+`scorePlacement`, and it said plainly that "a large factor out of this
+engine is kernel work, not accounting work". This stage is that kernel
+work. Nothing about what the engine computes changed; what changed is
+that the collider stopped re-deriving, on every one of a mode-22
+stream's 52.0M pair questions, quantities that are properties of a shape
+or of a pose.
+
+### Where the time actually was
+
+The phase table says `pairCollide`; it does not say what inside it. A
+counting build of the collider answered that, and three of its four
+findings were not what the shape of the code suggested.
+
+| quantity | mode 22 | mode 20 |
+|---|---:|---:|
+| `surrogate_pair_collides` calls | 51,962,803 | 22,821,625 |
+| rejected on the shape extent | 21,539,780 | 9,775,438 |
+| cell-index probes | 77,049,450 | 31,557,929 |
+| ... whose cell misses the whole other shape | 30,404,905 | 12,068,282 |
+| bin-membership iterations | 1,535,586,686 | 620,966,289 |
+| distinct cell bits produced | 157,316,634 | 63,200,794 |
+| separating-axis tests | 80,366,750 | 33,236,688 |
+| ... axes evaluated on the *first* triangle | 182,368,721 | 75,991,281 |
+| ... axes evaluated on the second | 83,375,467 | 35,816,953 |
+| pole pairs quantified | 410,114,462 | 170,742,109 |
+
+The bin index was the surprise. It was a `Vec<Vec<usize>>` of membership
+lists and a query walked every list in the covered bin rectangle setting
+one bit per entry - 1.54 *billion* pointer-chased iterations to produce
+157M distinct bits, because a cell sits in every bin its extent touches
+and a query covers 9.4 bins. Each bin now carries the bitmask of its own
+cells and a query ORs 9.4 words out of one contiguous array. The bit set
+is identical: `|` is idempotent and commutative, so neither the
+duplication nor the visit order was ever observable.
+
+The second was scale. `MAX_CELLS_PER_PIECE` is 512, so every probe
+zeroed and scanned an eight-word mask - while a real Mixed-61 surrogate
+carries 4.3 cells. The index now reports how many words are live.
+
+The third was that 39.5% of cell probes are asking about a cell that
+misses the *whole* other shape. A surrogate's extent is the fold of the
+same ring points its cells are triangulated from, so every cell's extent
+is inside it and translating both by the same amount preserves that; a
+reported cell would have failed its own extent test anyway. The probe is
+still charged, so `cell_index_probes` and `sat_tests` are untouched.
+
+The fourth is the narrow phase. It is called with its first triangle at
+a zero translation, which makes that triangle's three edge normals - and
+its own extent along each of them - functions of the cell alone. They
+are 68.6% of the stream's axis work, three `hypot` calls and six
+divisions each, and they are now built once per oriented surrogate. The
+magnitude the deriving function returned is dropped, because both of its
+callers only ever asked `.is_some()`.
+
+What was left after that was the work of finding out *which* shapes a
+question is about. A pose's surrogate key runs `rem_euclid` three times
+- three out-of-line `fmod`s - and the collider derives it for two poses
+per question, while the poses barely change: a candidate scan holds one
+candidate pose fixed across every neighbour, and a fixed piece's pose
+changes only on an accepted move. One memo slot per piece, keyed on the
+rotation's bit pattern for the reason `ProxyRowPose` is, answers almost
+all of it. And the scan itself descended the ordered catalogue `2k + 2c`
+times for `k` neighbours and `c` collisions - twice per pair in the
+collision test and twice more in the pressure quantification, for the
+same two shapes; it now descends `k + 1` times.
+
+That last one carries a measured negative worth recording. Holding a
+resolved shape across the scan keeps the catalogue borrowed, so the
+first attempt took a second `Arc` handle the way PR4's whole-layout
+score does. At 1,951 rescores that costs one refcount bump; at 13.6M
+candidate scans it costs eight lanes contending on one cache line, and
+it made the stream *slower* - 3.9 s to 4.0 s, with `scorePlacement`'s
+own work up 2.8 s while the two named phases fell. Destructuring the
+lane into disjoint field borrows buys the same freedom for nothing. The
+phase table would have called the `Arc` version a win; the wall clock
+called it a loss, and the wall clock is right.
+
+### What it is worth, measured
+
+Profiled, against the pre-PR binary on the same box, normalised against
+the untouched leaf phases in the same run (`exactOverlapTest`,
+`constructorProposals`, `pieceIndexBuild`, `boundaryPenalty`, which
+together drifted 0.971x on mode 22 and 0.940x on mode 20):
+
+| phase | mode 22 raw | mode 22 norm. | mode 20 raw | mode 20 norm. |
+|---|---:|---:|---:|---:|
+| `pairCollide` | 0.374 | 0.385 | 0.360 | 0.383 |
+| `pairPressure` | 0.743 | 0.765 | 0.695 | 0.739 |
+| `scorePlacement` | 0.666 | 0.686 | 0.635 | 0.676 |
+| `moveSweep` | 0.682 | 0.703 | 0.654 | 0.696 |
+
+`pairCollide`'s share of leaf time falls from 47.65% to 28.69% on mode
+22 and from 45.46% to 25.83% on mode 20. `pairPressure`'s share *rises*,
+from 19.29% to 23.07% and from 18.26% to 19.99%, and that is worth
+saying plainly rather than quoting the ratio alone: its absolute cost
+fell by a quarter, entirely because the double shape resolution it was
+paying for sat inside its span, but the leaf total fell faster. The pole
+loop itself is untouched.
+
+End to end, on ten-round interleaved A/Bs whose arms alternate order
+every round and whose statistic is the per-round paired ratio:
+
+| stream | before | after | paired median | spread | rounds below 1.0 |
+|---|---:|---:|---:|---|---:|
+| mode 22 | 4.847 s | 3.597 s | **0.743** | 0.731-0.755 | 10/10 |
+| mode 0 | 2.443 s | 1.895 s | **0.777** | 0.745-0.785 | 10/10 |
+| mode 20 | 27.239 s | 26.562 s | **0.975** | 0.974-0.977 | 5/5 |
+
+Mode 20 is the stream whose wall time is mostly deep-operator exact
+geometry - `exactOverlapTest` alone is 19.8% of its leaf time after this
+change - so a 2.5% end-to-end win against a 0.383x proxy collider is the
+expected shape, not a disappointment. No stream regressed.
+
+The equality evidence is the standard PR4 set. Every profile counter is
+identical on both streams - candidate queries, neighbour tests, SAT
+tests, cell probes, broad-phase probes, accepted moves, publication
+attempts. All three pinned regression gates are bit-identical: mode 20
+at `independentDepthMm` 206.869 and fingerprint `8a7737381238fa4d`, the
+mode-22 record replays at raw 159.09233022733062 and 159.08263749731248
+at `fa01012af1d559ae` and `145d0ed4b2f53d3f`. The mode-26 ladder and the
+mode-31 arm agree field for field, failure-reason text included. And the
+shadow-rescore audit rebuilt on this tree reproduces PR4's control
+tallies exactly - 52313/0/25107/22859 on mode 20 and
+121463/534/80693/34572 on mode 22, with the same worst-ulp figures and
+the same first rendered disagreement - so the per-move tracker
+trajectory is unchanged and not merely the published outcome.
+
+### The one thing that could not be both
+
+After all of the above, `hypot` *is* the proxy tier: 410M pole-pair
+separations and 83M axis normalisations on the mode-22 stream, measured
+at 7.7 ns/call on this box against 1.3 ns for `sqrt(x*x + y*y)`. It is
+also the one optimisation here that cannot be taken bit-identically. The
+platform's `hypot` is correctly rounded and the naive form is not: a
+5M-sample probe at this engine's magnitudes puts them one unit in the
+last place apart on 16.9% of inputs. The Rust `libm` port already in the
+dependency tree is no way out either - 3.7x faster than the platform
+call, and disagreeing with it on 13.9% of the same inputs.
+
+So it is `fast-proxy-hypot`, off by default, confined to two
+pole-pressure kernels and two axis normalisations, none of which can
+reach a published placement. Its measured outcome is better than the
+arithmetic predicted: on all three regression streams *and* on the
+mode-26 and mode-31 arms the flagged build reproduces the unflagged one
+exactly, every arm `exactValid` and `contractValid`, while mode 22 runs
+3.2 s against 3.7 s. Five agreeing streams is evidence and not a
+guarantee, and no published fingerprint in this repository was measured
+under it, so it stays off - a candidate for the anytime coordinator to
+evaluate on a corpus rather than an optimisation to adopt on a fixture.
+
+### What is left
+
+The proxy collider is now bounded below by two things it cannot shed
+without changing an answer: `hypot`, above, and the four divisions
+`bin_range` performs per cell-index query, which cannot become a
+reciprocal multiply because a differently-rounded bin can drop a cell
+from the mask. Beyond those, the next measured centre is no longer in
+this file at all - on mode 20 it is `exactOverlapTest` at 19.8% of leaf,
+which is Clipper inside the deep operators, and that is PR6's port of
+the constructor and vacancy operators onto the shared proxy kernel.
