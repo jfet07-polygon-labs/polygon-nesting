@@ -76,14 +76,24 @@
 //! BVH, a quadtree, a bitmask index — is swappable today. A kernel with its own
 //! shape representation additionally needs the catalogue, the NFP builder, and
 //! the pose-bounds helper moved behind [`ExplorationKernel::Shape`], which is
-//! PR4/PR6 work.
+//! PR4/PR6 work. [`JaguaKernel`] is that second kind, which is why it is built
+//! and tested standalone and is wired into no default path.
 
 use crate::domain::IrregularBounds;
 use crate::geometry::general_polygon::{GeneralPolygonError, PolygonSet};
 
 pub mod legacy;
 
+#[cfg(feature = "jagua-experimental")]
+pub mod jagua;
+
+#[cfg(all(test, feature = "jagua-experimental"))]
+mod parity;
+
 pub use legacy::{LegacyKernel, LEGACY};
+
+#[cfg(feature = "jagua-experimental")]
+pub use jagua::{JaguaKernel, JaguaShape};
 
 /// One oriented shape placed at a translation.
 ///

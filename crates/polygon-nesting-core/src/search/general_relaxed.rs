@@ -12093,6 +12093,29 @@ fn directional_nfp_preflight_fits(
         && current_components.saturating_add(new_components) <= lane_limit
 }
 
+/// Builds one legacy oriented shape outside the catalogue.
+///
+/// The catalogue carries a per-job cell budget across every orientation it
+/// builds. A caller that wants a single shape - the kernel parity harness,
+/// which has to hand two kernels the same geometry - has no job to charge, so
+/// this starts a fresh budget. Nothing in the search calls it, which is why it
+/// is compiled only for that harness.
+#[cfg(all(test, feature = "jagua-experimental"))]
+pub(crate) fn oriented_surrogate_for_kernel(
+    source: &PolygonSet,
+    rotation_deg: f64,
+    mirrored: bool,
+    expansion_mm: f64,
+) -> Result<OrientedSurrogate, GeneralFastError> {
+    build_oriented_surrogate(
+        source,
+        rotation_deg,
+        mirrored,
+        expansion_mm,
+        &mut WorkCounters::default(),
+    )
+}
+
 /// Builds one [`OrientedSurrogate`]: the source ring transformed and expanded,
 /// triangulated, poled, and indexed.
 ///
