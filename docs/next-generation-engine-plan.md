@@ -1374,3 +1374,64 @@ freedom the whole stack lacks is now the pose itself: rotation, mirror,
 re-placement *inside* the global solve rather than before or after it.
 Evidence:
 docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/{record-159.092,from-scratch-164.040}/.
+
+## The ExplorationKernel seam is in place (production roadmap PR3)
+
+The trait this plan has referred to since the collision-kernel decision
+checkpoint now exists as code, in `crates/polygon-nesting-core/src/search/kernel/`.
+`ExplorationKernel` declares the four geometric services the exploration
+loop consumes - the proxy pair collision test, the proxy overlap
+magnitude, the exact collision-polygon build, and the exact pair-overlap
+verdict - and `LegacyKernel` is the current code path behind them,
+forwarding to the functions that already implemented each one.
+
+The seam has two tiers, and the distinction is the load-bearing part.
+The proxy tier is bound generically: `LaneSearch` carries a
+`K: ExplorationKernel` parameter that defaults to `LegacyKernel`, so a
+kernel that accelerates the ~22.8M `pairCollide` calls PR1 measured is a
+type substitution at the entry point, not a rewrite of the sweep. The
+exact tier is bound by *name*, through a `LEGACY` constant, at every call
+site that can reach a published placement. That asymmetry is how this
+plan's refusal to put `f32`, a tolerance, or a foreign engine into
+publication authority becomes a property of the type system rather than a
+convention: no substitution can reroute an exact answer, because no exact
+call site is generic. The independent source-ring validator is untouched
+and remains the sole publisher.
+
+The boundary is free. `LegacyKernel` is zero-sized, its methods are
+`#[inline(always)]` forwarders, and the generic lane search has exactly
+one instantiation, so monomorphisation reproduces the previous direct
+calls; there is no `dyn` on any hot path. An interleaved six-round A/B of
+the mode-20 stream against the pre-seam binary on the same machine gives
+27.456 s median before and 27.425 s after (ratio 0.9989, ranges
+27.28-27.75 and 27.36-27.69), with both arms producing
+`independentDepthMm` 206.869 at fingerprint `8a7737381238fa4d...`. The
+mode-22 record replay likewise reproduces `rawSourceDepthMm`
+159.09233022733062 at fingerprint `fa01012af1d559ae...`.
+
+`JaguaKernel` is the second implementation, built against the pinned
+`jagua-rs` 0.7.2 behind the existing `jagua-experimental` feature. It is
+a skeleton and it is wired into nothing: no production route, no CLI
+mode, and no default path constructs one. Its exact tier forwards to
+`LegacyKernel` verbatim, which is asserted rather than merely documented.
+Its parity smoke test hands both kernels the same Mixed-61 source
+geometry at the same poses and requires identical verdicts outside an
+ambiguity band derived from the `f32` representation error at the
+magnitudes the query works at - classified by growing and shrinking the
+exact rings by that band, so the band never enters as slack in the
+comparison. None of the dependency gates listed above are claimed by it;
+it is the compiling target they will be measured against.
+
+Two boundaries of PR3 are worth writing down, because they set PR4's
+scope. First, the seam opens the *query*, not the shape: the oriented
+representation the proxy tier consumes is still the legacy surrogate and
+the catalogue that owns it is still concrete, so the lane search binds
+`K::Shape = OrientedSurrogate`. A kernel that accelerates the query over
+that representation is swappable today; a kernel with its own
+representation additionally needs the catalogue, the pair-NFP builder,
+and the pose-bounds helper moved behind `ExplorationKernel::Shape`.
+Second, `build_collision_polygon` deliberately carries no instrumentation
+of its own, because its constructor caller opens a
+`CollisionPolygonBuild` span while its deep-operator caller uses
+`profiling::deep`, which is compiled out by default; owning a span in the
+shared primitive would force one of those two contracts onto the other.

@@ -10,6 +10,7 @@ pub mod general_fast;
 pub mod general_hazard;
 pub mod general_micro_legalization;
 pub mod general_relaxed;
+pub mod kernel;
 pub mod layout_scorer;
 pub mod placement_scorer;
 pub mod score_grid;

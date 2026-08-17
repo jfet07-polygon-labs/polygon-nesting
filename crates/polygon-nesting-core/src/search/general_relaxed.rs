@@ -30,6 +30,9 @@ use crate::search::general_fast::{
 use crate::search::general_micro_legalization::{
     GeneralGlobalLegalizationDiagnostics, GeneralMicroLegalizationDiagnostics,
 };
+use crate::search::kernel::{
+    ExplorationKernel, KernelPose, KernelProbes, LegacyKernel, PosedShape, LEGACY,
+};
 // The added contract-validity and raw-depth reporting is reachable only through
 // the persistent-vacancy arms, which the experimental feature gates.
 #[cfg(feature = "jagua-experimental")]
@@ -1966,8 +1969,17 @@ impl CellIndex {
     }
 }
 
+/// One piece geometry at one canonical orientation, as the exploration tier
+/// sees it: the exact expanded collision ring, its triangulation, the poles the
+/// pressure proxy scores, and a bin index over the cells.
+///
+/// This is [`LegacyKernel`](crate::search::kernel::LegacyKernel)'s
+/// [`ExplorationKernel::Shape`](crate::search::kernel::ExplorationKernel::Shape),
+/// which is why it is `pub` at all. Every field stays private, so the type is
+/// opaque outside this module and every consumer still goes through a function
+/// here.
 #[derive(Clone)]
-struct OrientedSurrogate {
+pub struct OrientedSurrogate {
     collision: PolygonSet,
     cells: Vec<Triangle>,
     poles: Vec<Pole>,
@@ -2575,11 +2587,33 @@ enum CoordinateAxis {
     Rotation,
 }
 
-struct LaneSearch<'a> {
+/// One relaxed-search lane.
+///
+/// `K` is the [`ExplorationKernel`] the lane's proxy geometry runs on. It
+/// defaults to [`LegacyKernel`], which is what every production route and every
+/// existing `LaneSearch<'_>` mention resolves to, so a build that does not opt
+/// into another kernel monomorphises to exactly one instantiation and the
+/// generic parameter costs nothing.
+///
+/// The bound is `Shape = OrientedSurrogate` for now: PR3 opens the query seam,
+/// while the catalogue that owns the oriented shapes is still concrete. See
+/// [`crate::search::kernel`] for what that does and does not allow to be
+/// swapped.
+/// The lane search every production route runs: the legacy geometry kernel.
+///
+/// Constructor calls name this alias rather than `LaneSearch` so that the
+/// kernel a lane runs on is written down at every construction site instead of
+/// being inferred. Swapping a kernel in is then one alias, not an audit of
+/// which lanes were left on the default.
+type LegacyLaneSearch<'a> = LaneSearch<'a, LegacyKernel>;
+
+struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKernel> {
     pieces: &'a [GeneralFastPiece<'a>],
     fast_settings: GeneralFastSettings,
     relaxed_settings: GeneralRelaxedSettings,
     catalog: Arc<SurrogateCatalog>,
+    /// The geometric services this lane's proxy tier runs on.
+    kernel: K,
     rng: SplitMix64,
     weights: BTreeMap<(usize, usize), f64>,
     counters: WorkCounters,
@@ -3096,7 +3130,7 @@ fn run_bounded_repair_experiment<'a>(
     arm_settings.pressure_model = GeneralRelaxedPressureModel::ContinuousTrianglePoles;
     arm_settings.angular_repair = GeneralAngularRepairSettings::disabled();
 
-    let mut control = LaneSearch::new(
+    let mut control = LegacyLaneSearch::new(
         pieces,
         fast_settings,
         arm_settings,
@@ -3112,7 +3146,7 @@ fn run_bounded_repair_experiment<'a>(
         relaxed_settings.angular_repair.retained_confirmation_budget / 2,
     )?;
 
-    let mut rotation = LaneSearch::new(
+    let mut rotation = LegacyLaneSearch::new(
         pieces,
         fast_settings,
         arm_settings,
@@ -5857,7 +5891,7 @@ fn precompression_full_score<'a>(
     relaxed_settings.pressure_model = GeneralRelaxedPressureModel::DynamicPoles;
     relaxed_settings.angular_repair = GeneralAngularRepairSettings::disabled();
     relaxed_settings.synchronize_lanes = true;
-    let mut search = LaneSearch::new(
+    let mut search = LegacyLaneSearch::new(
         pieces,
         fast_settings,
         relaxed_settings,
@@ -5957,7 +5991,7 @@ fn run_conflict_ruin_recreate_experiment<'a>(
         probe_settings.pressure_model = GeneralRelaxedPressureModel::DynamicPoles;
         probe_settings.angular_repair = GeneralAngularRepairSettings::disabled();
         probe_settings.synchronize_lanes = true;
-        let mut probe_search = LaneSearch::new(
+        let mut probe_search = LegacyLaneSearch::new(
             pieces,
             fast_settings,
             probe_settings,
@@ -7491,7 +7525,7 @@ fn run_coupled_separator_target<'a>(
     let workers = worker_seeds
         .iter()
         .map(|seed| {
-            let mut worker = LaneSearch::new(
+            let mut worker = LegacyLaneSearch::new(
                 pieces,
                 fast_settings,
                 relaxed_settings,
@@ -8685,7 +8719,7 @@ fn run_independent_lanes<'a>(
                     disrupt_state_legacy(lane_state, pieces, derive_seed(seed, disruption, *lane))?;
             }
         }
-        let mut search = LaneSearch::new(
+        let mut search = LegacyLaneSearch::new(
             pieces,
             fast_settings,
             relaxed_settings,
@@ -8885,7 +8919,7 @@ fn run_synchronized_lanes<'a>(
     let workers = lane_ordinals
         .iter()
         .map(|lane| {
-            Mutex::new(LaneSearch::new(
+            Mutex::new(LegacyLaneSearch::new(
                 pieces,
                 fast_settings,
                 relaxed_settings,
@@ -9015,7 +9049,7 @@ fn run_synchronized_lanes<'a>(
     Ok(outcome)
 }
 
-impl<'a> LaneSearch<'a> {
+impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'a, K> {
     fn new(
         pieces: &'a [GeneralFastPiece<'a>],
         fast_settings: GeneralFastSettings,
@@ -9028,6 +9062,7 @@ impl<'a> LaneSearch<'a> {
             fast_settings,
             relaxed_settings,
             catalog,
+            kernel: K::default(),
             rng: SplitMix64::new(seed),
             weights: BTreeMap::new(),
             counters: WorkCounters::default(),
@@ -11840,13 +11875,9 @@ impl<'a> LaneSearch<'a> {
         let Some(second_shape) = self.catalog.orientations.get(&second_key) else {
             return Err(self.missing_orientation(second.input_index, second_key));
         };
-        Ok(pole_overlap_pressure(
-            first_shape,
-            first.translate_x,
-            first.translate_y,
-            second_shape,
-            second.translate_x,
-            second.translate_y,
+        Ok(self.kernel.pair_pressure(
+            PosedShape::new(first_shape, first.translate_x, first.translate_y),
+            PosedShape::new(second_shape, second.translate_x, second.translate_y),
         ))
     }
 
@@ -11925,55 +11956,23 @@ impl<'a> LaneSearch<'a> {
                 .saturating_add(1);
             return Ok(overlaps);
         }
-        let first_bounds =
-            translated_bounds(first_shape.bounds, first.translate_x, first.translate_y);
-        let second_bounds =
-            translated_bounds(second_shape.bounds, second.translate_x, second.translate_y);
-        if !bounds_overlap(first_bounds, second_bounds) {
-            return Ok(false);
-        }
-        let relative_x = second.translate_x - first.translate_x;
-        let relative_y = second.translate_y - first.translate_y;
-        for first_cell in &first_shape.cells {
-            let first_cell_bounds =
-                translated_bounds(first_cell.bounds, first.translate_x, first.translate_y);
-            self.counters.cell_index_probes += 1;
-            let mut cell_mask = second_shape.cell_index.query_mask(
-                first_cell_bounds,
-                second.translate_x,
-                second.translate_y,
-            );
-            for (word_index, word) in cell_mask.iter_mut().enumerate() {
-                while *word != 0 {
-                    let bit = word.trailing_zeros() as usize;
-                    *word &= *word - 1;
-                    let second_cell_index = word_index * 64 + bit;
-                    let second_cell = second_shape.cells[second_cell_index];
-                    let second_cell_bounds = translated_bounds(
-                        second_cell.bounds,
-                        second.translate_x,
-                        second.translate_y,
-                    );
-                    if !bounds_overlap(first_cell_bounds, second_cell_bounds) {
-                        continue;
-                    }
-                    self.counters.sat_tests += 1;
-                    if triangle_penetration(
-                        *first_cell,
-                        0.0,
-                        0.0,
-                        second_cell,
-                        relative_x,
-                        relative_y,
-                    )
-                    .is_some()
-                    {
-                        return Ok(true);
-                    }
-                }
-            }
-        }
-        Ok(false)
+        // The default proxy verdict is the kernel's answer, not this
+        // function's. `K` is `LegacyKernel` in every build that does not opt
+        // into another kernel, and `LegacyKernel::pair_collides` is the loop
+        // this branch used to run inline; the probe totals it reports are
+        // folded back into the lane quotas below.
+        let mut probes = KernelProbes::default();
+        let collides = self.kernel.pair_collides(
+            PosedShape::new(first_shape, first.translate_x, first.translate_y),
+            PosedShape::new(second_shape, second.translate_x, second.translate_y),
+            &mut probes,
+        );
+        self.counters.cell_index_probes = self
+            .counters
+            .cell_index_probes
+            .wrapping_add(probes.cell_index_probes);
+        self.counters.sat_tests = self.counters.sat_tests.wrapping_add(probes.sat_tests);
+        Ok(collides)
     }
 
     fn rollback_pair_pressure(
@@ -12094,7 +12093,166 @@ fn directional_nfp_preflight_fits(
         && current_components.saturating_add(new_components) <= lane_limit
 }
 
-fn pole_overlap_pressure(
+/// Builds one legacy oriented shape outside the catalogue.
+///
+/// The catalogue carries a per-job cell budget across every orientation it
+/// builds. A caller that wants a single shape - the kernel parity harness,
+/// which has to hand two kernels the same geometry - has no job to charge, so
+/// this starts a fresh budget. Nothing in the search calls it, which is why it
+/// is compiled only for that harness.
+#[cfg(all(test, feature = "jagua-experimental"))]
+pub(crate) fn oriented_surrogate_for_kernel(
+    source: &PolygonSet,
+    rotation_deg: f64,
+    mirrored: bool,
+    expansion_mm: f64,
+) -> Result<OrientedSurrogate, GeneralFastError> {
+    build_oriented_surrogate(
+        source,
+        rotation_deg,
+        mirrored,
+        expansion_mm,
+        &mut WorkCounters::default(),
+    )
+}
+
+/// Builds one [`OrientedSurrogate`]: the source ring transformed and expanded,
+/// triangulated, poled, and indexed.
+///
+/// Extracted verbatim from the catalogue builder's inner loop so that the
+/// kernel seam has one surrogate constructor rather than two. `counters`
+/// carries the per-job cell budget across calls; every error message and every
+/// budget check is the one the loop raised.
+fn build_oriented_surrogate(
+    source: &PolygonSet,
+    rotation_deg: f64,
+    mirrored: bool,
+    expansion_mm: f64,
+    counters: &mut WorkCounters,
+) -> Result<OrientedSurrogate, GeneralFastError> {
+    let polygon = source
+        .transformed(rotation_deg, mirrored, 0.0, 0.0)?
+        .offset(expansion_mm)?;
+    if polygon
+        .regions()
+        .iter()
+        .any(|region| !region.holes.is_empty())
+    {
+        return Err(GeneralPolygonError::from_message(
+            "relaxed surrogate does not yet support offset holes",
+        )
+        .into());
+    }
+    let mut cells = Vec::new();
+    for region in polygon.regions() {
+        cells.extend(triangulate_ring(region.outer.points())?);
+    }
+    if cells.is_empty() || cells.len() > MAX_CELLS_PER_PIECE {
+        return Err(GeneralPolygonError::from_message(format!(
+            "relaxed surrogate cell count must be between 1 and {MAX_CELLS_PER_PIECE}"
+        ))
+        .into());
+    }
+    counters.oriented_surrogate_builds += 1;
+    counters.generated_cells = counters.generated_cells.saturating_add(cells.len());
+    if counters.generated_cells > MAX_CELLS_PER_JOB {
+        return Err(GeneralPolygonError::from_message(format!(
+            "relaxed surrogate job may contain at most {MAX_CELLS_PER_JOB} generated cells"
+        ))
+        .into());
+    }
+    let bounds = polygon
+        .bounds()
+        .ok_or_else(|| GeneralPolygonError::from_message("relaxed surrogate geometry is empty"))?;
+    let hull_area_scale = ((bounds.max_x - bounds.min_x) * (bounds.max_y - bounds.min_y))
+        .sqrt()
+        .max(1.0);
+    let poles = cells.iter().copied().map(triangle_pole).collect();
+    let cell_index = CellIndex::new(&cells, bounds);
+    Ok(OrientedSurrogate {
+        collision: polygon,
+        cells,
+        poles,
+        bounds,
+        cell_index,
+        difficulty: hull_area_scale,
+        diameter: (bounds.max_x - bounds.min_x).hypot(bounds.max_y - bounds.min_y),
+    })
+}
+
+/// The legacy proxy collision verdict for two posed surrogates.
+///
+/// This is the body [`LaneSearch::pair_collides`] used to run inline, moved out
+/// verbatim so that [`LegacyKernel`](crate::search::kernel::LegacyKernel) can
+/// own it and an alternative kernel can replace it. The only change is that the
+/// two quota counters are reported through [`KernelProbes`] instead of being
+/// incremented on the lane directly; the caller folds the totals back, which is
+/// the same arithmetic in the same order.
+///
+/// Broad phase is a translated-AABB reject, then a per-cell bin-mask query into
+/// the second shape's cell index, then a strict triangle penetration test.
+/// "Strict" matters: [`triangle_penetration`] returns `None` on exact contact,
+/// so touching surrogates do not collide.
+pub(crate) fn surrogate_pair_collides(
+    first_shape: &OrientedSurrogate,
+    first_translate_x: f64,
+    first_translate_y: f64,
+    second_shape: &OrientedSurrogate,
+    second_translate_x: f64,
+    second_translate_y: f64,
+    probes: &mut KernelProbes,
+) -> bool {
+    let first_bounds = translated_bounds(first_shape.bounds, first_translate_x, first_translate_y);
+    let second_bounds =
+        translated_bounds(second_shape.bounds, second_translate_x, second_translate_y);
+    if !bounds_overlap(first_bounds, second_bounds) {
+        return false;
+    }
+    let relative_x = second_translate_x - first_translate_x;
+    let relative_y = second_translate_y - first_translate_y;
+    for first_cell in &first_shape.cells {
+        let first_cell_bounds =
+            translated_bounds(first_cell.bounds, first_translate_x, first_translate_y);
+        probes.cell_index_probes += 1;
+        let mut cell_mask = second_shape.cell_index.query_mask(
+            first_cell_bounds,
+            second_translate_x,
+            second_translate_y,
+        );
+        for (word_index, word) in cell_mask.iter_mut().enumerate() {
+            while *word != 0 {
+                let bit = word.trailing_zeros() as usize;
+                *word &= *word - 1;
+                let second_cell_index = word_index * 64 + bit;
+                let second_cell = second_shape.cells[second_cell_index];
+                let second_cell_bounds = translated_bounds(
+                    second_cell.bounds,
+                    second_translate_x,
+                    second_translate_y,
+                );
+                if !bounds_overlap(first_cell_bounds, second_cell_bounds) {
+                    continue;
+                }
+                probes.sat_tests += 1;
+                if triangle_penetration(
+                    *first_cell,
+                    0.0,
+                    0.0,
+                    second_cell,
+                    relative_x,
+                    relative_y,
+                )
+                .is_some()
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+pub(crate) fn pole_overlap_pressure(
     first_shape: &OrientedSurrogate,
     first_translate_x: f64,
     first_translate_y: f64,
@@ -12441,57 +12599,15 @@ fn build_surrogate_catalog(
         poses.dedup_by_key(|(angle, mirrored)| (angle_key(*angle), *mirrored));
         for (angle, mirrored) in poses {
             let key = (geometry_class, angle_key(angle), mirrored);
-            let polygon = piece
-                .polygon
-                .transformed(angle_from_key(key.1), mirrored, 0.0, 0.0)?
-                .offset(collision_expansion_mm(settings))?;
-            if polygon
-                .regions()
-                .iter()
-                .any(|region| !region.holes.is_empty())
-            {
-                return Err(GeneralPolygonError::from_message(
-                    "relaxed surrogate does not yet support offset holes",
-                )
-                .into());
-            }
-            let mut cells = Vec::new();
-            for region in polygon.regions() {
-                cells.extend(triangulate_ring(region.outer.points())?);
-            }
-            if cells.is_empty() || cells.len() > MAX_CELLS_PER_PIECE {
-                return Err(GeneralPolygonError::from_message(format!(
-                    "relaxed surrogate cell count must be between 1 and {MAX_CELLS_PER_PIECE}"
-                ))
-                .into());
-            }
-            counters.oriented_surrogate_builds += 1;
-            counters.generated_cells = counters.generated_cells.saturating_add(cells.len());
-            if counters.generated_cells > MAX_CELLS_PER_JOB {
-                return Err(GeneralPolygonError::from_message(format!(
-                    "relaxed surrogate job may contain at most {MAX_CELLS_PER_JOB} generated cells"
-                ))
-                .into());
-            }
-            let bounds = polygon.bounds().ok_or_else(|| {
-                GeneralPolygonError::from_message("relaxed surrogate geometry is empty")
-            })?;
-            let hull_area_scale = ((bounds.max_x - bounds.min_x) * (bounds.max_y - bounds.min_y))
-                .sqrt()
-                .max(1.0);
-            let poles = cells.iter().copied().map(triangle_pole).collect();
-            let cell_index = CellIndex::new(&cells, bounds);
             catalog.insert(
                 key,
-                OrientedSurrogate {
-                    collision: polygon,
-                    cells,
-                    poles,
-                    bounds,
-                    cell_index,
-                    difficulty: hull_area_scale,
-                    diameter: (bounds.max_x - bounds.min_x).hypot(bounds.max_y - bounds.min_y),
-                },
+                build_oriented_surrogate(
+                    piece.polygon,
+                    angle_from_key(key.1),
+                    mirrored,
+                    collision_expansion_mm(settings),
+                    &mut counters,
+                )?,
             );
         }
     }
@@ -15302,8 +15418,8 @@ mod tests {
             ],
             strip_depth_mm: 100.0,
         };
-        let mut cold = LaneSearch::new(&pieces, fast_settings, relaxed_settings, 0, cold_catalog);
-        let mut shared = LaneSearch::new(
+        let mut cold = LegacyLaneSearch::new(&pieces, fast_settings, relaxed_settings, 0, cold_catalog);
+        let mut shared = LegacyLaneSearch::new(
             &pieces,
             fast_settings,
             relaxed_settings,
@@ -15504,7 +15620,7 @@ mod tests {
             None,
         )
         .unwrap();
-        let mut search = LaneSearch::new(&pieces, fast_settings, relaxed_settings, 0, catalog);
+        let mut search = LegacyLaneSearch::new(&pieces, fast_settings, relaxed_settings, 0, catalog);
         let state = RelaxedState {
             placements: vec![
                 RelaxedPlacement {
@@ -16306,7 +16422,7 @@ mod tests {
         )
         .unwrap();
         let hazard_catalog = Arc::new(JaguaHazardCatalog::new(&pieces, fast_settings).unwrap());
-        let mut search = LaneSearch::new(&pieces, fast_settings, relaxed_settings, 7, catalog);
+        let mut search = LegacyLaneSearch::new(&pieces, fast_settings, relaxed_settings, 7, catalog);
         search.hazard_catalog = Some(hazard_catalog);
         let worker = Mutex::new(search);
         let state = RelaxedState {

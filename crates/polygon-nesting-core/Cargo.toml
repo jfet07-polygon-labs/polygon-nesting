@@ -5,6 +5,17 @@ edition.workspace = true
 
 [features]
 default = []
+# Compiles the optional `jagua-rs` dependency in. It gates two independent
+# experiments now - the `general_hazard` dynamic-hazard adapter and the
+# `search::kernel::jagua` exploration-kernel skeleton - and one feature covers
+# both deliberately: they share the same pinned version, the same conversion
+# contract, and the same open question (whether an f32 engine can rank
+# candidates for us). A second feature would let a build carry the dependency's
+# licence, size, and toolchain surface while exercising only half of it.
+#
+# Off by default, and it stays off until the dependency clears the gates in
+# docs/next-generation-engine-plan.md. Neither consumer is reachable from a
+# production route, and neither may answer an exact or publication question.
 jagua-experimental = ["dep:jagua-rs"]
 # Installs the counting global allocator in the benchmark example. Off by
 # default so that a normal profiling run measures the phase counters alone and
