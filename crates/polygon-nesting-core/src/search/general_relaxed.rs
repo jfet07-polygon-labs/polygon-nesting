@@ -10187,10 +10187,18 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
     /// work counters are saved and restored around it: the rescore's probes and
     /// pressure evaluations feed deterministic quotas, and letting them land
     /// would make the audited run a different search from the audited-out one.
-    /// The remaining state a rescore touches is read-only or idempotent — the
-    /// hazard index is only queried, and the pair-NFP cache the directional
-    /// backend fills is keyed by pose, so a rescore only ever refills entries
-    /// the sweep would have asked for.
+    /// The other state a rescore reaches is read-only or idempotent — the
+    /// hazard index is only queried, and the proxy row cache re-derives exactly
+    /// what it stored.
+    ///
+    /// One exception is worth stating rather than glossing: the *directional*
+    /// backend's rescore fills the lane's pair-NFP cache, which is budgeted, so
+    /// an audited directional lane can reach that budget earlier than an
+    /// unaudited one and take the unscorable branch sooner. The audited streams
+    /// are the dynamic-hazard ones, where this does not arise, and both pinned
+    /// gates reproduce their fingerprints exactly under the audit — but a
+    /// directional arm run under this feature is not guaranteed to be the same
+    /// search, and its outcome should not be quoted as one.
     #[cfg(feature = "shadow-rescore")]
     fn audit_incremental_score(
         &mut self,

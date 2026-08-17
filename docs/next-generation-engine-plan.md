@@ -1484,3 +1484,151 @@ at record density, inside the ejection-repair loop. Nothing in the
 current stack can express it; everything else has been eliminated with
 matched controls. Evidence:
 docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/{pose-entry-negative,from-scratch-164.038}/.
+
+## Delta scoring, and what auditing it found (production roadmap PR4)
+
+PR4's mandate was to make the relaxed sweep's score a delta: dense pair
+state, a per-move moved row, incident updates, a one-hazard commit, and
+no whole-layout rescore in the hot loop. Most of that list turned out to
+describe code that already existed. `PairTracker` was already a dense
+triangular array carrying per-piece incident sums, `score_placement`
+already scored only the moved row against a broad-phase index, and
+`commit_dynamic_hazard` already installed one pose. What did not exist
+was any check that the delta was *right*, and what that check found is
+the substantial result of this stage.
+
+### The audit, and the finding
+
+`search::shadow_rescore`, behind the `shadow-rescore` feature,
+recomputes the complete layout score after every accepted move and
+compares it against the incrementally maintained one. It classifies a
+disagreement rather than merely counting it, because three different
+claims are involved. **Structure** - which pairs collide, how many rows,
+how many boundary violations - can never depend on evaluation order, so
+a difference there is a delta that has lost the layout. **Row magnitude**
+is one `f64` measurement of one pair. **Derived sums** are running `f64`
+totals whose last bit depends on accumulation order. The weighted total
+is recomputed in the delta's own summation order before comparing, so
+what is under test is the delta and not which of two orders `+` was
+applied in.
+
+Run on the base commit, before any change, the audit says the
+incremental score has never equalled a from-scratch one:
+
+| stream | audited moves | structural | magnitude-only | derived-gap only | bit-identical |
+|---|---:|---:|---:|---:|---:|
+| mode 20 | 52313 | 0 | 25107 | 22859 | 4347 |
+| mode 22 | 121463 | 534 | 80693 | 34572 | 5664 |
+
+The magnitude class has a mechanical explanation. The proxy pressure
+kernels accumulate a pole-pair series with the first operand outermost,
+so reading a pair as `(moving, fixed)` and reading the same pair as
+`(lower index, higher index)` are two summation orders over the same
+terms. A candidate scorer always does the former and a complete score
+always does the latter, so the two legitimately differ in the low bits
+whenever the moved piece is the higher-indexed one - the asymmetry
+`CoupledRollbackComparison` already documents for the coupled arms,
+generalised to every accepted move. The widest gap seen is 4.83e9 `f64`
+ulps.
+
+The structural class has no rounding explanation, and 534 of mode 22's
+moves are in it. Its signature is a collision row count off by one. Two
+mechanisms in the sweep can produce it: when a dynamic move is rejected
+and reverted, the row installed for the reverted piece is read back out
+of the tracker by `tracked_piece_score` rather than re-measured, so a
+row that has drifted stays drifted; and the candidate scorer's colliding
+set comes from the hazard index while a complete score's comes from the
+surrogate collider, which are two different oracles. This is
+pre-existing, it is deterministic, and every published layout still
+passes the exact validator - but it means the tracker is a *guidance*
+structure rather than a measurement of the layout, and it must not be
+read as one.
+
+That is also the measured reason a sweep cannot simply carry its
+predecessor's tracker forward instead of rescoring, which was the
+obvious way to delete the per-sweep rescore outright. The two objects
+are not the same object; deleting the rescore that way would change
+outcomes, so it was not done.
+
+### What was made a delta
+
+Three quadratic costs were removed without changing a single answer.
+
+The confirmation collider opened with a broad-phase reject against its
+two operands' transformed surrogate extents and derived both of them
+itself on every call - a walk over every cell vertex of both shapes. One
+piece asked about all of its neighbours therefore re-derived its own
+extent once per neighbour, and a whole-layout score re-derived every
+piece's extent n-1 times; on the mode-22 stream, whose 121463 accepted
+moves each confirm a full 60-pair row and whose 1951 rescores each visit
+1830 pairs, that is of order 10^7 walks. `ProxyRowCache` holds one
+extent per piece together with the pose it was taken at and re-derives
+on a pose mismatch, so it is self-invalidating and a sweep that moves
+one piece invalidates exactly one row.
+
+The whole-layout score resolved both operands' oriented surrogates per
+pair, asking the ordered catalogue n-1 times for each of the n answers
+it needed; it now resolves one shape per piece behind a cloned catalogue
+handle. The same score also ran a `pair_weight` sweep over every pair
+whose results the pair loop immediately overwrote.
+
+`update_score_after_move` answered "what is this pair's new loss?" with
+a linear `find` over the moved row once per piece, and rebuilt the whole
+collision list by retain-extend-sort on every accepted move. Both are
+now linear merges over data that was already sorted, into a lane-owned
+scratch that stops allocating after a lane's first move.
+
+Deliberately *not* changed: the two running `f64` sums. The boundary and
+weighted totals could be maintained by subtract-and-add, but their
+accumulation order is observable in the last bit and the rollback
+auditor compares them against a complete score.
+
+### What it is worth, measured
+
+The whole-layout rescore now costs about a third of what it did.
+Normalised against untouched phases in the same profiled run it is
+0.357x on mode 20 and 0.318x on mode 22, and its share of leaf time
+falls from 2.41% to 0.86% (mode 20) and from 2.15% to 0.70% (mode 22).
+
+Those percentages are the honest headline, and they are small. The
+roadmap ranked "whole-layout rebuild/rescore around small moves" second
+among the cost centres; the fixed-stream profile says it was worth
+2.2-2.4% of leaf time, because sweeps are rare against candidates -
+1101 rescores against 5.85M candidate queries on mode 20. The measured
+centres are where PR1 said and where PR3 aimed: `pairCollide` at 45-48%
+of leaf time and `pairPressure` at 19-21%, both inside `scorePlacement`.
+A large factor out of this engine is kernel work, not accounting work.
+
+End to end, on a ten-round interleaved A/B whose arms alternate order
+every round and whose statistic is the per-round paired ratio (the box
+is shared and its load drifts, so a ratio of medians would measure the
+drift): mode 22 goes from a 6.483 s median to 6.047 s, paired ratio
+median **0.935**, and all ten rounds are below 1.0 with the spread
+0.876-0.949. Mode 20 goes from 27.673 s to 27.507 s, paired ratio median
+**0.995**, nine of ten rounds at or below parity and the tenth a round in
+which both arms were disturbed together. Mode 20 is the stream whose
+sweep work is the smaller share, and 0.5% is at the edge of what this
+machine can resolve; mode 22's 6.5% is not.
+
+The equality evidence is stronger than the gates require. Every counter
+in both fixed-stream profiles is identical across the change - candidate
+queries, neighbour tests, SAT tests, cell probes, broad-phase probes,
+accepted moves, publication attempts. Every non-timing field of the
+mode-20 anchor, the mode-22 record replay, a mode-26 ladder and a
+mode-31 solve is identical, failure-reason text included. And the audit
+re-run on the changed engine reproduces the base tallies exactly -
+121463 checks, 534 structural, 80693 magnitude-only, 34572 derived-gap,
+the same worst-ulp figures and the same first rendered disagreement -
+so the per-move tracker trajectory itself is unchanged, not merely the
+published outcome.
+
+### What is left
+
+The sweep still opens with a complete rescore. It is now a cheap one,
+but it is still `O(n^2)` in pair visits, and removing it entirely needs
+the tracker to become a measurement of the layout rather than a
+guidance structure - which is the structural disagreement above, and is
+its own change with its own outcome risk. The natural order is: settle
+which oracle owns a row (the hazard index or the surrogate collider),
+stop `tracked_piece_score` reinstalling an unmeasured row on a reverted
+move, and only then let a sweep inherit its predecessor's tracker.
