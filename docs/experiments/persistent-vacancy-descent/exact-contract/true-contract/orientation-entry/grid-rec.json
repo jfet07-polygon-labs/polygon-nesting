@@ -1,0 +1,578 @@
+[
+ {
+  "line": "rec",
+  "perturbation": "flat0.002",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.002",
+  "mode": 29,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.002",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.002",
+  "mode": 33,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.004",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.004",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 1 violation components inside the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.004",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.004",
+  "mode": 33,
+  "published": 159.08963749731248,
+  "record": true,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.01",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.01",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 3 violation components inside the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.01",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.01",
+  "mode": 33,
+  "published": 159.15862371460318,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.02",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.02",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 4 violation components inside the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.02",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "flat0.02",
+  "mode": 33,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 4 violation components inside the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r1-d0.002",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r1-d0.002",
+  "mode": 29,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r1-d0.002",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r1-d0.002",
+  "mode": 33,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r1-d0.006",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r1-d0.006",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 1 violation components inside the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r1-d0.006",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r1-d0.006",
+  "mode": 33,
+  "published": 159.08963749731248,
+  "record": true,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r1-d0.02",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r1-d0.02",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 1 violation components inside the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r1-d0.02",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r1-d0.02",
+  "mode": 33,
+  "published": 159.0859863776172,
+  "record": true,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r2-d0.002",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r2-d0.002",
+  "mode": 29,
+  "published": 159.1379863776172,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r2-d0.002",
+  "mode": 32,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r2-d0.002",
+  "mode": 33,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r2-d0.006",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r2-d0.006",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 1 violation components inside the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r2-d0.006",
+  "mode": 32,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r2-d0.006",
+  "mode": 33,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r2-d0.02",
+  "mode": 28,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r2-d0.02",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 1 violation components inside the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r2-d0.02",
+  "mode": 32,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r2-d0.02",
+  "mode": 33,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 1 violation components inside the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r3-d0.002",
+  "mode": 28,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r3-d0.002",
+  "mode": 29,
+  "published": 159.15762371460318,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r3-d0.002",
+  "mode": 32,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r3-d0.002",
+  "mode": 33,
+  "published": 159.15762371460318,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r3-d0.006",
+  "mode": 28,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r3-d0.006",
+  "mode": 29,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r3-d0.006",
+  "mode": 32,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r3-d0.006",
+  "mode": 33,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r3-d0.02",
+  "mode": 28,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r3-d0.02",
+  "mode": 29,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r3-d0.02",
+  "mode": 32,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-r3-d0.02",
+  "mode": 33,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-pair12-d0.002",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-pair12-d0.002",
+  "mode": 29,
+  "published": 159.1379863776172,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-pair12-d0.002",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-pair12-d0.002",
+  "mode": 33,
+  "published": 159.09233022733062,
+  "record": false,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-pair12-d0.006",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-pair12-d0.006",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 2 violation components inside the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-pair12-d0.006",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-pair12-d0.006",
+  "mode": 33,
+  "published": 159.08963749731248,
+  "record": true,
+  "attribution": {},
+  "failure": null
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-pair12-d0.02",
+  "mode": 28,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-pair12-d0.02",
+  "mode": 29,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 2 violation components inside the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-pair12-d0.02",
+  "mode": 32,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 161.09233 mm bound"
+ },
+ {
+  "line": "rec",
+  "perturbation": "nudge-pair12-d0.02",
+  "mode": 33,
+  "published": null,
+  "record": false,
+  "attribution": {},
+  "failure": "no insertion order re-placed the 2 violation components inside the 161.09233 mm bound"
+ }
+]

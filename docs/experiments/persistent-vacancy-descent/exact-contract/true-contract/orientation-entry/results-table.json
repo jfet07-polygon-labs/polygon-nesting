@@ -1,0 +1,760 @@
+{
+ "recordLine": {
+  "arms": 64,
+  "incumbent": 159.09233022733062,
+  "byMode": {
+   "28": {
+    "arms": 16,
+    "exactValidPublications": 4,
+    "publicationsBelowIncumbent": 0,
+    "orientationCandidates": 0,
+    "orientationRows": 0,
+    "orientationFinalists": 0,
+    "acceptedVacated": 0,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "29": {
+    "arms": 16,
+    "exactValidPublications": 7,
+    "publicationsBelowIncumbent": 0,
+    "orientationCandidates": 0,
+    "orientationRows": 0,
+    "orientationFinalists": 0,
+    "acceptedVacated": 0,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "32": {
+    "arms": 16,
+    "exactValidPublications": 6,
+    "publicationsBelowIncumbent": 0,
+    "orientationCandidates": 55071,
+    "orientationRows": 35106,
+    "orientationFinalists": 8,
+    "acceptedVacated": 0,
+    "acceptedAnchorLocal": 4,
+    "acceptedOrientation": 2,
+    "acceptedStation": 0
+   },
+   "33": {
+    "arms": 16,
+    "exactValidPublications": 13,
+    "publicationsBelowIncumbent": 4,
+    "orientationCandidates": 1255149,
+    "orientationRows": 461267,
+    "orientationFinalists": 61,
+    "acceptedVacated": 165,
+    "acceptedAnchorLocal": 46,
+    "acceptedOrientation": 12,
+    "acceptedStation": 23
+   }
+  },
+  "failureClasses": {
+   "no exact-valid pose for the ejected piece inside the bound": 22,
+   "no insertion order / swap / beam combination re-placed the component": 12
+  },
+  "acceptedOrientationAngles": [
+   [
+    "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+    179.957611,
+    -0.02,
+    false
+   ],
+   [
+    "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+    179.957611,
+    -0.02,
+    true
+   ],
+   [
+    "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+    304.345571,
+    -0.02,
+    false
+   ],
+   [
+    "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+    179.957611,
+    -0.02,
+    false
+   ],
+   [
+    "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+    304.345571,
+    -0.02,
+    false
+   ],
+   [
+    "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+    179.957611,
+    -0.02,
+    false
+   ],
+   [
+    "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+    304.345571,
+    -0.02,
+    false
+   ],
+   [
+    "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+    179.957611,
+    -0.02,
+    false
+   ],
+   [
+    "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+    179.957611,
+    -0.02,
+    false
+   ],
+   [
+    "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+    179.957611,
+    -0.02,
+    false
+   ],
+   [
+    "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+    304.345571,
+    -0.02,
+    false
+   ],
+   [
+    "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+    304.345571,
+    -0.02,
+    false
+   ],
+   [
+    "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+    304.345571,
+    -0.02,
+    false
+   ],
+   [
+    "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+    304.345571,
+    -0.02,
+    false
+   ]
+  ]
+ },
+ "fromScratchLine": {
+  "arms": 64,
+  "incumbent": 164.03856779906783,
+  "byMode": {
+   "28": {
+    "arms": 16,
+    "exactValidPublications": 5,
+    "publicationsBelowIncumbent": 0,
+    "orientationCandidates": 0,
+    "orientationRows": 0,
+    "orientationFinalists": 0,
+    "acceptedVacated": 0,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "29": {
+    "arms": 16,
+    "exactValidPublications": 9,
+    "publicationsBelowIncumbent": 0,
+    "orientationCandidates": 0,
+    "orientationRows": 0,
+    "orientationFinalists": 0,
+    "acceptedVacated": 0,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "32": {
+    "arms": 16,
+    "exactValidPublications": 11,
+    "publicationsBelowIncumbent": 0,
+    "orientationCandidates": 112259,
+    "orientationRows": 14494,
+    "orientationFinalists": 28,
+    "acceptedVacated": 3,
+    "acceptedAnchorLocal": 16,
+    "acceptedOrientation": 7,
+    "acceptedStation": 0
+   },
+   "33": {
+    "arms": 16,
+    "exactValidPublications": 9,
+    "publicationsBelowIncumbent": 0,
+    "orientationCandidates": 2217630,
+    "orientationRows": 895738,
+    "orientationFinalists": 70,
+    "acceptedVacated": 186,
+    "acceptedAnchorLocal": 166,
+    "acceptedOrientation": 0,
+    "acceptedStation": 72
+   }
+  },
+  "failureClasses": {
+   "perturbation produced no violating pair (structural non-experiment)": 12,
+   "no exact-valid pose for the ejected piece inside the bound": 10,
+   "no insertion order / swap / beam combination re-placed the component": 8
+  },
+  "acceptedOrientationAngles": [
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.348799,
+    -0.02,
+    false
+   ],
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.348799,
+    -0.02,
+    false
+   ],
+   [
+    "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+    329.273582,
+    0.02,
+    false
+   ],
+   [
+    "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-1",
+    27.868117,
+    -0.02,
+    false
+   ],
+   [
+    "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+    329.566082,
+    0.3125,
+    false
+   ],
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.348799,
+    -0.02,
+    false
+   ],
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.348799,
+    -0.02,
+    false
+   ]
+  ]
+ },
+ "fromScratchPads": {
+  "arms": 224,
+  "incumbent": 164.03856779906783,
+  "byMode": {
+   "28": {
+    "arms": 56,
+    "exactValidPublications": 18,
+    "publicationsBelowIncumbent": 0,
+    "orientationCandidates": 0,
+    "orientationRows": 0,
+    "orientationFinalists": 0,
+    "acceptedVacated": 0,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "29": {
+    "arms": 56,
+    "exactValidPublications": 27,
+    "publicationsBelowIncumbent": 0,
+    "orientationCandidates": 0,
+    "orientationRows": 0,
+    "orientationFinalists": 0,
+    "acceptedVacated": 0,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "32": {
+    "arms": 56,
+    "exactValidPublications": 26,
+    "publicationsBelowIncumbent": 0,
+    "orientationCandidates": 123250,
+    "orientationRows": 13157,
+    "orientationFinalists": 32,
+    "acceptedVacated": 0,
+    "acceptedAnchorLocal": 26,
+    "acceptedOrientation": 8,
+    "acceptedStation": 0
+   },
+   "33": {
+    "arms": 56,
+    "exactValidPublications": 27,
+    "publicationsBelowIncumbent": 0,
+    "orientationCandidates": 415541,
+    "orientationRows": 62724,
+    "orientationFinalists": 34,
+    "acceptedVacated": 48,
+    "acceptedAnchorLocal": 56,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   }
+  },
+  "failureClasses": {
+   "perturbation produced no violating pair (structural non-experiment)": 116,
+   "no exact-valid pose for the ejected piece inside the bound": 10
+  },
+  "acceptedOrientationAngles": [
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.348799,
+    -0.02,
+    false
+   ],
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.348799,
+    -0.02,
+    false
+   ],
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.348799,
+    -0.02,
+    false
+   ],
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.348799,
+    -0.02,
+    false
+   ],
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.348799,
+    -0.02,
+    false
+   ],
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.348799,
+    -0.02,
+    false
+   ],
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.348799,
+    -0.02,
+    false
+   ],
+   [
+    "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+    9.348799,
+    -0.02,
+    false
+   ]
+  ]
+ },
+ "recordCascade": {
+  "arms": 74,
+  "incumbent": 159.09233022733062,
+  "byMode": {
+   "28": {
+    "arms": 6,
+    "exactValidPublications": 2,
+    "publicationsBelowIncumbent": 2,
+    "orientationCandidates": 0,
+    "orientationRows": 0,
+    "orientationFinalists": 0,
+    "acceptedVacated": 0,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "29": {
+    "arms": 6,
+    "exactValidPublications": 1,
+    "publicationsBelowIncumbent": 0,
+    "orientationCandidates": 0,
+    "orientationRows": 0,
+    "orientationFinalists": 0,
+    "acceptedVacated": 0,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "32": {
+    "arms": 6,
+    "exactValidPublications": 2,
+    "publicationsBelowIncumbent": 2,
+    "orientationCandidates": 12412,
+    "orientationRows": 10266,
+    "orientationFinalists": 1,
+    "acceptedVacated": 0,
+    "acceptedAnchorLocal": 2,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "33": {
+    "arms": 9,
+    "exactValidPublications": 4,
+    "publicationsBelowIncumbent": 3,
+    "orientationCandidates": 461854,
+    "orientationRows": 237804,
+    "orientationFinalists": 237,
+    "acceptedVacated": 36,
+    "acceptedAnchorLocal": 21,
+    "acceptedOrientation": 57,
+    "acceptedStation": 0
+   }
+  },
+  "failureClasses": {
+   "global legalization did not reach a feasible fixpoint: 1 violating pai": 16,
+   "no insertion order / swap / beam combination re-placed the component": 10,
+   "no exact-valid pose for the ejected piece inside the bound": 8
+  },
+  "acceptedOrientationAngles": [
+   [
+    "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+    304.345571,
+    -0.02,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.5,
+    0.0,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.5,
+    0.0,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.5,
+    0.0,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.5,
+    0.0,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.5,
+    0.0,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.5,
+    0.0,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.5,
+    0.0,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.5,
+    0.0,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    false
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    true
+   ],
+   [
+    "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+    240.375,
+    -0.125,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ],
+   [
+    "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+    359.944444,
+    0.0,
+    true
+   ]
+  ]
+ }
+}
