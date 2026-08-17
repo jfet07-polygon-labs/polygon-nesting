@@ -1,0 +1,31 @@
+=== PHASE A: modes 27/28/29 directly on the LEGAL parent (raw 164.03956779907) ===
+[   2.8s] a-m27-d0.01: mode=27 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parent=164.04 fp=85a1df686c83d93c | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[   2.8s] a-m28-d0.01: mode=28 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None replaced=0 projConv=0 projFail=0
+[   2.9s] a-m29-d0.01: mode=29 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a joint re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None orders=0/0 swaps=0 compRep=0 compRef=0
+[   2.8s] a-m27-d0.02: mode=27 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parent=164.04 fp=85a1df686c83d93c | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[   2.8s] a-m28-d0.02: mode=28 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None replaced=0 projConv=0 projFail=0
+[   2.9s] a-m29-d0.02: mode=29 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a joint re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None orders=0/0 swaps=0 compRep=0 compRef=0
+[   2.8s] a-m27-d0.04: mode=27 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parent=164.04 fp=85a1df686c83d93c | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[   2.8s] a-m28-d0.04: mode=28 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None replaced=0 projConv=0 projFail=0
+[   2.8s] a-m29-d0.04: mode=29 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a joint re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None orders=0/0 swaps=0 compRep=0 compRef=0
+[   3.0s] a-m27-d0.08: mode=27 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parent=164.04 fp=85a1df686c83d93c | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[   3.4s] a-m28-d0.08: mode=28 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None replaced=0 projConv=0 projFail=0
+[   3.2s] a-m29-d0.08: mode=29 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a joint re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None orders=0/0 swaps=0 compRep=0 compRef=0
+[   2.9s] a-m27-d0.15: mode=27 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parent=164.04 fp=85a1df686c83d93c | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[   2.8s] a-m28-d0.15: mode=28 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None replaced=0 projConv=0 projFail=0
+[   2.8s] a-m29-d0.15: mode=29 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a joint re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None orders=0/0 swaps=0 compRep=0 compRef=0
+[   2.9s] a-m27-d0.3: mode=27 exactValid=True contractValid=True depth=164.04 raw=164.03956779906775 parent=164.04 fp=85a1df686c83d93c | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[   2.9s] a-m28-d0.3: mode=28 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None replaced=0 projConv=0 projFail=0
+[   2.8s] a-m29-d0.3: mode=29 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a joint re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None orders=0/0 swaps=0 compRep=0 compRef=0

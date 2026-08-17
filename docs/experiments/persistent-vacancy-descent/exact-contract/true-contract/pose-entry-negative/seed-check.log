@@ -1,0 +1,18 @@
+# perturbed fixtures (measured raw depth of the nudged state)
+  k=0 d=0.0: measured=159.09233022733062 file=/var/lib/t3/tmp/combo28-rec/perturbed/p-k0-d0.json
+  k=2 d=0.5: measured=159.08362371460316 file=/var/lib/t3/tmp/combo28-rec/perturbed/p-k2-d0.5.json
+  k=2 d=1.0: measured=159.08362371460316 file=/var/lib/t3/tmp/combo28-rec/perturbed/p-k2-d1.0.json
+  k=2 d=2.0: measured=159.08362371460316 file=/var/lib/t3/tmp/combo28-rec/perturbed/p-k2-d2.0.json
+  k=3 d=0.5: measured=159.07799885062 file=/var/lib/t3/tmp/combo28-rec/perturbed/p-k3-d0.5.json
+  k=3 d=1.0: measured=159.07799885062 file=/var/lib/t3/tmp/combo28-rec/perturbed/p-k3-d1.0.json
+  k=3 d=2.0: measured=159.07799885062 file=/var/lib/t3/tmp/combo28-rec/perturbed/p-k3-d2.0.json
+  k=6 d=0.5: measured=159.03499934779546 file=/var/lib/t3/tmp/combo28-rec/perturbed/p-k6-d0.5.json
+  k=6 d=1.0: measured=159.03499934779546 file=/var/lib/t3/tmp/combo28-rec/perturbed/p-k6-d1.0.json
+  k=6 d=2.0: measured=159.03499934779546 file=/var/lib/t3/tmp/combo28-rec/perturbed/p-k6-d2.0.json
+# SEED CHECK: perturbed k=2 d=1.0, target=parent_raw, seeds 0/1
+seed-m28-s0: mode=28 exactValid=False contractValid=False depth=None raw=159.08362371460316 parent=159.084 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 159.0
+seed-m28-s1: mode=28 exactValid=False contractValid=False depth=None raw=159.08362371460316 parent=159.084 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 within the 159.0
+seed-m29-s0: mode=29 exactValid=False contractValid=False depth=None raw=159.08362371460316 parent=159.084 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 2 violation components inside the 159.09233 mm bound
+seed-m29-s1: mode=29 exactValid=False contractValid=False depth=None raw=159.08362371460316 parent=159.084 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 2 violation components inside the 159.09233 mm bound
+  mode 28: seed-invariant=True
+  mode 29: seed-invariant=True

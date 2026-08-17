@@ -1,0 +1,82 @@
+=== PHASE C3: small-d nudges (k x d) -> modes 28/29 under sub-incumbent clamps ===
+-- k=1 d=0.02: measured depth 164.03758495038522 (-0.001983)
+[   4.4s] c3-k1d0.02-m28: mode=28 exactValid=False contractValid=True depth=None raw=164.03758495038522 parent=164.038 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=3 bnd=0 comp=1 maxComp=4 /7 ejected=1 /7 att=True maxMatDef=None maxEnvPush=0.008291304111480713 replaced=0 projConv=0 projFail=0
+[   4.3s] c3-k1d0.02-m29: mode=29 exactValid=False contractValid=True depth=None raw=164.03758495038522 parent=164.038 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=3 bnd=0 comp=1 maxComp=4 /7 ejected=4 /7 att=True maxMatDef=None maxEnvPush=0.008291304111480713 orders=24/24 swaps=6 compRep=0 compRef=1
+-- k=1 d=0.05: measured depth 164.03758495038522 (-0.001983)
+[   3.8s] c3-k1d0.05-m28: mode=28 exactValid=False contractValid=True depth=None raw=164.03758495038522 parent=164.038 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=3 bnd=0 comp=1 maxComp=4 /7 ejected=1 /7 att=True maxMatDef=None maxEnvPush=0.021442770957946777 replaced=0 projConv=0 projFail=0
+[   4.0s] c3-k1d0.05-m29: mode=29 exactValid=False contractValid=True depth=None raw=164.03758495038522 parent=164.038 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=3 bnd=0 comp=1 maxComp=4 /7 ejected=4 /7 att=True maxMatDef=None maxEnvPush=0.021442770957946777 orders=24/24 swaps=6 compRep=0 compRef=1
+-- k=1 d=0.1: measured depth 164.03758495038522 (-0.001983)
+[   3.7s] c3-k1d0.1-m28: mode=28 exactValid=False contractValid=True depth=None raw=164.03758495038522 parent=164.038 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=3 bnd=0 comp=1 maxComp=4 /7 ejected=1 /7 att=True maxMatDef=None maxEnvPush=0.04317134618759155 replaced=0 projConv=0 projFail=0
+[   4.0s] c3-k1d0.1-m29: mode=29 exactValid=False contractValid=True depth=None raw=164.03758495038522 parent=164.038 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=3 bnd=0 comp=1 maxComp=4 /7 ejected=4 /7 att=True maxMatDef=None maxEnvPush=0.04317134618759155 orders=24/24 swaps=6 compRep=0 compRef=1
+-- k=1 d=0.3: measured depth 164.03758495038522 (-0.001983)
+[   3.7s] c3-k1d0.3-m28: mode=28 exactValid=False contractValid=True depth=None raw=164.03758495038522 parent=164.038 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=3 bnd=0 comp=1 maxComp=4 /7 ejected=1 /7 att=True maxMatDef=None maxEnvPush=0.13065695762634277 replaced=0 projConv=0 projFail=0
+[   4.0s] c3-k1d0.3-m29: mode=29 exactValid=False contractValid=True depth=None raw=164.03758495038522 parent=164.038 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=3 bnd=0 comp=1 maxComp=4 /7 ejected=4 /7 att=True maxMatDef=None maxEnvPush=0.13065695762634277 orders=24/24 swaps=6 compRep=0 compRef=1
+-- k=2 d=0.02: measured depth 164.0359918302575 (-0.003576)
+[   3.7s] c3-k2d0.02-m28: mode=28 exactValid=False contractValid=True depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=None maxEnvPush=0.009401142597198486 replaced=1 projConv=3 projFail=0
+[   3.8s] c3-k2d0.02-m29: mode=29 exactValid=False contractValid=True depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.009401142597198486 orders=6/6 swaps=15 compRep=0 compRef=1
+-- k=2 d=0.05: measured depth 164.0359918302575 (-0.003576)
+[   3.8s] c3-k2d0.05-m28: mode=28 exactValid=False contractValid=True depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=None maxEnvPush=0.02413809299468994 replaced=1 projConv=3 projFail=0
+[   3.9s] c3-k2d0.05-m29: mode=29 exactValid=False contractValid=True depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.02413809299468994 orders=6/6 swaps=15 compRep=0 compRef=1
+-- k=2 d=0.1: measured depth 164.0359918302575 (-0.003576)
+[   3.9s] c3-k2d0.1-m28: mode=28 exactValid=False contractValid=True depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=None maxEnvPush=0.04903823137283325 replaced=1 projConv=3 projFail=0
+[   4.2s] c3-k2d0.1-m29: mode=29 exactValid=False contractValid=True depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.04903823137283325 orders=6/6 swaps=15 compRep=0 compRef=1
+-- k=2 d=0.3: measured depth 164.0359918302575 (-0.003576)
+[   3.9s] c3-k2d0.3-m28: mode=28 exactValid=False contractValid=False depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=0.08052849330753187 maxEnvPush=0.147114098072052 replaced=1 projConv=3 projFail=0
+[   4.1s] c3-k2d0.3-m29: mode=29 exactValid=False contractValid=False depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=0.08052849330753187 maxEnvPush=0.147114098072052 orders=6/6 swaps=15 compRep=0 compRef=1
+-- k=3 d=0.02: measured depth 164.03399266157405 (-0.005575)
+[   3.7s] c3-k3d0.02-m28: mode=28 exactValid=False contractValid=False depth=None raw=164.03399266157405 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=None maxEnvPush=0.009401142597198486 replaced=1 projConv=3 projFail=0
+[   4.1s] c3-k3d0.02-m29: mode=29 exactValid=False contractValid=False depth=None raw=164.03399266157405 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.009401142597198486 orders=6/6 swaps=15 compRep=0 compRef=1
+-- k=3 d=0.05: measured depth 164.03399266157405 (-0.005575)
+[   3.7s] c3-k3d0.05-m28: mode=28 exactValid=False contractValid=False depth=None raw=164.03399266157405 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=None maxEnvPush=0.02413809299468994 replaced=1 projConv=3 projFail=0
+[   3.8s] c3-k3d0.05-m29: mode=29 exactValid=False contractValid=False depth=None raw=164.03399266157405 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.02413809299468994 orders=6/6 swaps=15 compRep=0 compRef=1
+-- k=3 d=0.1: measured depth 164.03399266157405 (-0.005575)
+[   4.0s] c3-k3d0.1-m28: mode=28 exactValid=False contractValid=False depth=None raw=164.03399266157405 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=None maxEnvPush=0.04903823137283325 replaced=1 projConv=3 projFail=0
+[   5.1s] c3-k3d0.1-m29: mode=29 exactValid=False contractValid=False depth=None raw=164.03399266157405 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.04903823137283325 orders=6/6 swaps=15 compRep=0 compRef=1
+-- k=3 d=0.3: measured depth 164.03399266157405 (-0.005575)
+[   4.9s] c3-k3d0.3-m28: mode=28 exactValid=False contractValid=False depth=None raw=164.03399266157405 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=0.08052849330753187 maxEnvPush=0.147114098072052 replaced=1 projConv=3 projFail=0
+[   5.0s] c3-k3d0.3-m29: mode=29 exactValid=False contractValid=False depth=None raw=164.03399266157405 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=0.08052849330753187 maxEnvPush=0.147114098072052 orders=6/6 swaps=15 compRep=0 compRef=1
+-- k=4 d=0.02: measured depth 164.033977742483 (-0.005590)
+[   4.3s] c3-k4d0.02-m28: mode=28 exactValid=False contractValid=False depth=None raw=164.033977742483 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=2 comp=3 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=None maxEnvPush=0.009401142597198486 replaced=1 projConv=3 projFail=0
+[   4.3s] c3-k4d0.02-m29: mode=29 exactValid=False contractValid=False depth=None raw=164.033977742483 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=5 bnd=2 comp=3 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.009401142597198486 orders=6/6 swaps=15 compRep=0 compRef=1
+-- k=4 d=0.05: measured depth 164.033977742483 (-0.005590)
+[   4.0s] c3-k4d0.05-m28: mode=28 exactValid=False contractValid=False depth=None raw=164.033977742483 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=2 comp=3 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=None maxEnvPush=0.02413809299468994 replaced=1 projConv=3 projFail=0
+[   4.5s] c3-k4d0.05-m29: mode=29 exactValid=False contractValid=False depth=None raw=164.033977742483 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=5 bnd=2 comp=3 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.02413809299468994 orders=6/6 swaps=15 compRep=0 compRef=1
+-- k=4 d=0.1: measured depth 164.033977742483 (-0.005590)
+[   3.3s] c3-k4d0.1-m28: mode=28 exactValid=False contractValid=False depth=None raw=164.033977742483 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=2 comp=3 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=None maxEnvPush=0.04903823137283325 replaced=1 projConv=3 projFail=0
+[   3.4s] c3-k4d0.1-m29: mode=29 exactValid=False contractValid=False depth=None raw=164.033977742483 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=5 bnd=2 comp=3 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.04903823137283325 orders=6/6 swaps=15 compRep=0 compRef=1
+-- k=4 d=0.3: measured depth 164.033977742483 (-0.005590)
+[   3.1s] c3-k4d0.3-m28: mode=28 exactValid=False contractValid=False depth=None raw=164.033977742483 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=2 comp=3 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=0.08052849330753187 maxEnvPush=0.147114098072052 replaced=1 projConv=3 projFail=0
+[   3.4s] c3-k4d0.3-m29: mode=29 exactValid=False contractValid=False depth=None raw=164.033977742483 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.039068 mm bound
+   ~ pairs=5 bnd=2 comp=3 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=0.08052849330753187 maxEnvPush=0.147114098072052 orders=6/6 swaps=15 compRep=0 compRef=1
+C3 publications: []

@@ -1,0 +1,44 @@
+=== PHASE C1: is the 28/29 failure BOUND-limited or POSE-limited? loose bounds above the parent ===
+[   4.0s] c1-k2d2.0-m28-plus0.5: mode=28 exactValid=False contractValid=False depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.5
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 replaced=1 projConv=3 projFail=0
+[   3.8s] c1-k2d2.0-m29-plus0.5: mode=29 exactValid=False contractValid=False depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.539568 mm bound
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 orders=6/6 swaps=15 compRep=0 compRef=1
+[   3.4s] c1-k2d2.0-m28-plus2.0: mode=28 exactValid=True contractValid=True depth=164.313 raw=164.31258495038523 parent=164.036 fp=13b24c949438f9b1 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 replaced=3 projConv=3 projFail=0
+*** LEGAL STATE from 28 at loose bound +2.0: raw=164.31258495038523 (+0.273017 vs incumbent)
+[   3.4s] c1-k2d2.0-m29-plus2.0: mode=29 exactValid=False contractValid=False depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 166.039568 mm bound
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 orders=6/6 swaps=15 compRep=0 compRef=1
+[   3.7s] c1-k2d2.0-m28-plus5.0: mode=28 exactValid=True contractValid=True depth=164.313 raw=164.31258495038523 parent=164.036 fp=13b24c949438f9b1 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 replaced=3 projConv=3 projFail=0
+*** LEGAL STATE from 28 at loose bound +5.0: raw=164.31258495038523 (+0.273017 vs incumbent)
+[   3.7s] c1-k2d2.0-m29-plus5.0: mode=29 exactValid=True contractValid=True depth=165.949 raw=165.94858495038525 parent=164.036 fp=65a02c104b7163ba | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 orders=1/6 swaps=0 compRep=1 compRef=0
+*** LEGAL STATE from 29 at loose bound +5.0: raw=165.94858495038525 (+1.909017 vs incumbent)
+[   3.8s] c1-k2d2.0-m28-plus20.0: mode=28 exactValid=True contractValid=True depth=164.313 raw=164.31258495038523 parent=164.036 fp=13b24c949438f9b1 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 replaced=3 projConv=3 projFail=0
+*** LEGAL STATE from 28 at loose bound +20.0: raw=164.31258495038523 (+0.273017 vs incumbent)
+[   3.8s] c1-k2d2.0-m29-plus20.0: mode=29 exactValid=True contractValid=True depth=165.949 raw=165.94858495038525 parent=164.036 fp=65a02c104b7163ba | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 orders=1/6 swaps=0 compRep=1 compRef=0
+*** LEGAL STATE from 29 at loose bound +20.0: raw=165.94858495038525 (+1.909017 vs incumbent)
+[   3.9s] c1-k3d1.0-m28-plus0.5: mode=28 exactValid=True contractValid=True depth=164.063 raw=164.06258495038523 parent=164.034 fp=f9d7a3a1a4f0c53c | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=0.7692807088158453 maxEnvPush=0.4916501045227051 replaced=3 projConv=3 projFail=0
+*** LEGAL STATE from 28 at loose bound +0.5: raw=164.06258495038523 (+0.023017 vs incumbent)
+[   4.2s] c1-k3d1.0-m29-plus0.5: mode=29 exactValid=False contractValid=False depth=None raw=164.03399266157405 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.539568 mm bound
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=0.7692807088158453 maxEnvPush=0.4916501045227051 orders=6/6 swaps=15 compRep=0 compRef=1
+[   3.8s] c1-k3d1.0-m28-plus2.0: mode=28 exactValid=True contractValid=True depth=164.063 raw=164.06258495038523 parent=164.034 fp=f9d7a3a1a4f0c53c | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=0.7692807088158453 maxEnvPush=0.4916501045227051 replaced=3 projConv=3 projFail=0
+*** LEGAL STATE from 28 at loose bound +2.0: raw=164.06258495038523 (+0.023017 vs incumbent)
+[   4.2s] c1-k3d1.0-m29-plus2.0: mode=29 exactValid=False contractValid=False depth=None raw=164.03399266157405 parent=164.034 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 166.039568 mm bound
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=0.7692807088158453 maxEnvPush=0.4916501045227051 orders=6/6 swaps=15 compRep=0 compRef=1
+[   3.9s] c1-k3d1.0-m28-plus5.0: mode=28 exactValid=True contractValid=True depth=164.063 raw=164.06258495038523 parent=164.034 fp=f9d7a3a1a4f0c53c | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=0.7692807088158453 maxEnvPush=0.4916501045227051 replaced=3 projConv=3 projFail=0
+*** LEGAL STATE from 28 at loose bound +5.0: raw=164.06258495038523 (+0.023017 vs incumbent)
+[   4.0s] c1-k3d1.0-m29-plus5.0: mode=29 exactValid=True contractValid=True depth=166.235 raw=166.23458495038523 parent=164.034 fp=5fdb0d95ed27bbcf | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=0.7692807088158453 maxEnvPush=0.4916501045227051 orders=1/6 swaps=0 compRep=1 compRef=0
+*** LEGAL STATE from 29 at loose bound +5.0: raw=166.23458495038523 (+2.195017 vs incumbent)
+[   4.2s] c1-k3d1.0-m28-plus20.0: mode=28 exactValid=True contractValid=True depth=164.063 raw=164.06258495038523 parent=164.034 fp=f9d7a3a1a4f0c53c | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=0.7692807088158453 maxEnvPush=0.4916501045227051 replaced=3 projConv=3 projFail=0
+*** LEGAL STATE from 28 at loose bound +20.0: raw=164.06258495038523 (+0.023017 vs incumbent)
+[   3.9s] c1-k3d1.0-m29-plus20.0: mode=29 exactValid=True contractValid=True depth=167.259 raw=167.25858495038523 parent=164.034 fp=4faf2841cef97417 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=5 bnd=1 comp=2 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=0.7692807088158453 maxEnvPush=0.4916501045227051 orders=1/6 swaps=0 compRep=1 compRef=0
+*** LEGAL STATE from 29 at loose bound +20.0: raw=167.25858495038523 (+3.219017 vs incumbent)

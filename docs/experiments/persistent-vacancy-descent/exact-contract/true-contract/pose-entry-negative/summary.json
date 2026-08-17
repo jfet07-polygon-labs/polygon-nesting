@@ -1,0 +1,26 @@
+{
+ "verdict": "DECISIVE NEGATIVE with a mechanism autopsy: on the record basin the stack's nominal pose-changing modes (28 conflict ejection, 29 joint re-placement) are in fact a TRANSLATION-ONLY operator - across every legal state they produced, rotations are preserved to the last digit and mirror flips are zero. The record 159.092 fixpoint extends from 90 to 149 arms spanning modes 22/26/27/28/29/30/31.",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "parent": {
+  "file": "../record-159.092/pinned-parent-159.092.json",
+  "rawSourceDepthMm": 159.09233022733062,
+  "placementFingerprint": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc"
+ },
+ "runs": 309,
+ "publicationsBelowIncumbent": 0,
+ "whyTranslationOnly": {
+  "source": "the anchor-local candidate cloud seeds the VACATED POSE under the anchor's own orientation prior - 'the one candidate whose feasibility is a matter of record rather than of search' (general_persistent_vacancy.rs:6105-6122) - with translations on a 1-micron snap grid",
+  "consequence": "the record layout's continuous fine angles (179.977611, 350.661672, 9.190204 deg) are not reachable by any other orientation stream at record density, so re-insertion only ever accepts the ejected piece's own orientation, translated",
+  "measurement": "10 legal contract-valid states at exactly the incumbent depth with 10 distinct fingerprints (lineage/): maxdRot 0.000000 and mirrorFlips 0 on all ten; every one is itself a hard fixpoint, and mode 31 sees the identical 1-pair residue from each"
+ },
+ "furtherFindings": {
+  "perturbationSelfDefeating": "the vertex cover ejects the INNOCENT NEIGHBOUR of the nudged piece (equal incident mass on a single pair, tie broken on lower pieceId), so the nudged piece keeps its overlapping pose and the ejected neighbour has nowhere to go - holds for every d from 0.02 to 6.0 mm",
+  "boundIrrelevant": "at bound = parent + 2.0 mm mode 28 still cannot re-place a piece displaced by 0.02 mm: boundRejections 0, candidates die on exact-validity (anchorLocalFinalists 0/122)",
+  "depthControllersFrozen": "the incumbent depth is set by a single piece (maxY 154.092330, runner-up 0.006344 behind); the per-rank ejection sweep shows the three depth-setting pieces have zero re-placement freedom (finalists 0/133, 0/155, 0/154) while ranks 3-15 publish - publication is possible only for pieces that do not control the depth",
+  "mode27TargetNoop": "mode 27 takes no relaxed_settings; its target argument is a no-op (6 deltas byte-identical)",
+  "seedInvariance": "modes 28/29 seed-invariant (seeds 0/1 identical failure surfaces)"
+ },
+ "conclusion": "reaching 155.000 requires a mechanism that can place a piece at a DIFFERENT ORIENTATION - the candidate generator cannot express the continuous fine angles this layout is built from; that is the missing degree of freedom, now measured rather than hypothesized",
+ "evidence": "drivers/ (common.py, grid_a..d.py, perturb.py, ratchet.py, battery.py), logs grid-a..d/seed-check/ratchet/battery, lineage/ (10 distinct-fingerprint plateau fixtures at the incumbent depth); 309 run JSONs remain in /var/lib/t3/tmp/combo28-rec/runs/"
+}

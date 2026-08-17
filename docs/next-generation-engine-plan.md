@@ -1435,3 +1435,52 @@ of its own, because its constructor caller opens a
 `CollisionPolygonBuild` span while its deep-operator caller uses
 `profiling::deep`, which is compiled out by default; owning a span in the
 shared primitive would force one of those two contracts onto the other.
+
+## The pose-entry experiment: the missing degree of freedom, measured
+
+The residue analysis said the stack lacked pose changes; modes 28 and
+29 nominally supply them; the experiment asked whether they actually
+do. The answer is no on the record basin, yes-by-one-quantum on the
+from-scratch basin, and the difference is itself the finding.
+
+On the record line, 309 runs produced 59 legal states and zero
+publications below 159.092. Ten of those states sit at exactly the
+incumbent depth with ten distinct fingerprints - which looked like
+fixpoint-breaking material until the geometric diff against the parent:
+zero rotation change and zero mirror flips on all ten, rotations
+preserved to the last digit. The source explains it: anchor-local
+re-insertion seeds the vacated pose under the anchor's own orientation
+prior and searches translations on a micron grid, so a layout built
+from continuous fine angles (179.977611, 350.661672, 9.190204 degrees)
+can never see an alternative orientation at record density. The
+nominal pose-changing modes are, on this basin, a translation-only
+operator - and mode 31 accordingly sees the identical one-pair residue
+from every one of their outputs. Worse, the pieces that control the
+depth are exactly the frozen ones: the per-rank ejection sweep shows
+the three depth-setting pieces admit zero re-placement finalists while
+ranks 3-15 publish freely. The record fixpoint now spans 149 arms and
+seven modes.
+
+On the from-scratch line the same modes moved the line - by exactly
+0.001 mm, to 164.038568, and the constants that cap the mechanism are
+now measured. The productive perturbation is not the nudge (1-2 mm
+displacements manufacture a six-piece component the re-placement
+cannot house) but a frontier flatten of 0.002-0.004 mm, which
+manufactures exactly one violating pair in a two-piece component that
+mode 29 re-places on the first insertion order tried - under a LOOSE
+bound, because the clamp gates acceptance rather than driving descent.
+Every publication lands on the 0.001 mm pose-grid quantum, so this is
+the minimum move the mechanism can express; and the ejection limit of
+7 pieces meets a frontier whose ranks 1-8 sit within 0.0225 mm, so any
+perturbation worth 0.1 mm or more trips the cap. Structural ceiling:
+~0.02 mm per move. The one durable asset is diversity - 42 distinct
+legal frontier states where translation-only modes ever produced one,
+and mode 31 wakes up again on several of them.
+
+The conclusion is no longer a hypothesis but a measurement: the next
+mechanism must generate re-insertion candidates at DIFFERENT
+orientations - continuous angle perturbation around the vacated pose,
+at record density, inside the ejection-repair loop. Nothing in the
+current stack can express it; everything else has been eliminated with
+matched controls. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/{pose-entry-negative,from-scratch-164.038}/.

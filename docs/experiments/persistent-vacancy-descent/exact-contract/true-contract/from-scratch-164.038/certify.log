@@ -1,0 +1,17 @@
+=== FINAL CERTIFICATION of the new from-scratch line ===
+[   2.9s] repro-flat0.002-m29: mode=29 exactValid=True contractValid=True depth=164.039 raw=164.03856779906783 parent=164.038 fp=8e56054dee89574f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=1 bnd=0 comp=1 maxComp=2 /7 ejected=2 /7 att=True maxMatDef=None maxEnvPush=0.0005155801773071289 orders=1/2 swaps=0 compRep=1 compRef=0
+REPRODUCED record move: raw=164.03856779906783 fp=8e56054dee89574f1681a56d1a1eef138fddc28e3f9dd33d4b83de43fbd3bba5
+[   2.9s] cert-m27: mode=27 exactValid=True contractValid=True depth=164.039 raw=164.03856779906783 parent=164.039 fp=8e56054dee89574f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+  cert mode 27: exact=True contract=True raw=164.03856779906783 pairsAfter=None boundaryAfter=None
+[   3.0s] cert-m30: mode=30 exactValid=True contractValid=True depth=164.039 raw=164.03856779906783 parent=164.039 fp=8e56054dee89574f | before 0p/0b after 0p/0b cap=0.0 maxDisp=None moved=0 resid=0.0 | 
+  cert mode 30: exact=True contract=True raw=164.03856779906783 pairsAfter=0 boundaryAfter=0
+[   4.9s] cert-m22-s0: mode=22 exactValid=True contractValid=True depth=164.039 raw=164.03856779906783 parent=164.039 fp=8e56054dee89574f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+  cert mode 22 seed 0: exact=True contract=True raw=164.03856779906783 fp=8e56054dee89574f
+[   4.3s] cert-m22-s1: mode=22 exactValid=True contractValid=True depth=164.039 raw=164.03856779906783 parent=164.039 fp=8e56054dee89574f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+  cert mode 22 seed 1: exact=True contract=True raw=164.03856779906783 fp=8e56054dee89574f
+[   5.0s] cert-m22-s2: mode=22 exactValid=True contractValid=True depth=164.039 raw=164.03856779906783 parent=164.039 fp=8e56054dee89574f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+  cert mode 22 seed 2: exact=True contract=True raw=164.03856779906783 fp=8e56054dee89574f
+[   4.2s] cert-m22-s3: mode=22 exactValid=True contractValid=True depth=164.039 raw=164.03856779906783 parent=164.039 fp=8e56054dee89574f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+  cert mode 22 seed 3: exact=True contract=True raw=164.03856779906783 fp=8e56054dee89574f
+FIXTURE /var/lib/t3/tmp/combo28-fs/pins/pin-164.038568.json sha256=f01e500bf49870eaf9da369c8dabd5a86f423d22a78c1e7413b219d8badefadb fingerprint=8e56054dee89574f1681a56d1a1eef138fddc28e3f9dd33d4b83de43fbd3bba5 independentDepthMm=164.039 rederived=164.03856779906783

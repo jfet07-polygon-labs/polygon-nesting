@@ -1,0 +1,39 @@
+{
+ "milestone": "FROM-SCRATCH LINE at 164.038568 mm - the first move ever produced by a pose-changing entry mode (mode 29, joint re-placement) from a perturbed parent, and the measurement of the mechanism's two structural constants: pose-grid quantum 0.001 mm, ejection limit 7 pieces",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "binarySha256": "6e91c381f7e5c78542f78ae553e80a84b02623f424567c9b4bc56f46249f6d5b",
+ "machine": "x86_64, Intel(R) Core(TM) Ultra 7 270K Plus, 16 cores, runs pinned at 8 threads",
+ "experiment": "modes 27/28/29 on the legal parent and on perturbed states, 585 runs; the productive perturbation is a FRONTIER FLATTEN (every piece deeper than frontier - delta moved in by exactly its own excess, delta 0.002-0.004 mm) handed to mode 29 with a LOOSE bound",
+ "parent": {
+  "file": "../from-scratch-164.040/pinned-parent-164.040.json",
+  "rawSourceDepthMm": 164.03956779906775,
+  "independentDepthMm": 164.040
+ },
+ "pinnedParent": {
+  "file": "pinned-parent-164.038.json",
+  "independentDepthMm": 164.039,
+  "rawSourceDepthMm": 164.03856779906783,
+  "placementFingerprint": "8e56054dee89574f1681a56d1a1eef138fddc28e3f9dd33d4b83de43fbd3bba5",
+  "fixtureSha256": "f01e500bf49870eaf9da369c8dabd5a86f423d22a78c1e7413b219d8badefadb"
+ },
+ "mechanism": {
+  "whatWorks": "frontier flatten delta 0.002-0.004 mm -> exactly 1 violating pair in a 2-piece component -> mode 29 ejects both, re-places them jointly on the first order tried (ordersTried=1), exact validator accepts at 164.038568",
+  "whatFails": "the pv36 nudge at d=1-2 mm is the WRONG perturbation for these modes: it manufactures a 1.75 mm material deficit in a 6-piece component the re-placement cannot house; every sub-incumbent clamp fails because the bound gates acceptance of the re-placed pose rather than driving it shallower - the bound must be LOOSE",
+  "responseCurve": "delta sweep 0.0005..0.010 step 0.0005: productive band delta in [0.002, 0.004]"
+ },
+ "structuralConstants": {
+  "poseGridQuantum": "0.001 mm - every mode 28/29 publication lands on RAW + n*0.001 (grid_key snap); the -0.001 mm move is the minimum non-zero move this mechanism can make",
+  "ejectionLimit": "7 pieces - frontier ranks 1-8 lie within 0.0225 mm, rank 9 jumps to 0.109 mm, so any perturbation deep enough to buy >=0.1 mm displaces 8+ pieces and trips 'ejection set exceeds the local-repair limit of 7'; the mechanism is structurally capped at ~0.02 mm per move on this basin"
+ },
+ "cliSemantics": {
+  "mode27": "run_micro_legalization_probe takes no relaxed_settings - the target argument is a no-op (6 deltas -> 6 byte-identical results)",
+  "modes2829": "target = clamped sheet long axis for re-placed poses only; they gate on VIOLATIONS not validity (survey_layout_violations against the real request), refusing any layout with zero violating pairs (attempted=false) - a LEGAL parent is a structural non-experiment for them",
+  "seeds": "modes 28/29 seed-invariant on this fixture (seeds 0/1/2 identical)"
+ },
+ "certification": "modes 27 and 30 replay exactValid AND contractValid, 0 violating pairs / 0 boundary; mode 22 at raw+0.8 seeds 0-3 all return raw 164.03856779906783 same fingerprint; bit-identical reproduction under concurrent load; new state is again a hard fixpoint (mode 31 x4 tiny steps, 22 x4 seeds, 26 x6 ladders, flatten->29 x24 arms, plus 308 descent-probe arms from 28 launch pads: nothing below)",
+ "diversityAsset": "42 distinct legal states near the frontier were produced (translation-only modes only ever returned one fingerprint); mode 31 is productive again on those pose-changed states (164.062585 -> 164.046568 on pads where it was a certified fixpoint on the parent) but every such descent bottoms out above 164.038568; 28 launch pads pinned in pads/",
+ "runs": 585,
+ "evidence": "drivers/ (drv.py, cascade.py, phase_d.py; lib.py conventions imported from ../record-159.092/drivers/), logs phase-a/b/c1..c5/cmp/cascade/phase-d/certify, pads/ (28 launch-pad fixtures); 585 run JSONs remain in /var/lib/t3/tmp/combo28-fs/runs/"
+}

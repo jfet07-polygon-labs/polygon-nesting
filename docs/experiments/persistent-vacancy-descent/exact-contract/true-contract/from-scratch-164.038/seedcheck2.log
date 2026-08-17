@@ -1,0 +1,14 @@
+=== SEED CHECK on a PERTURBED (infeasible) parent: k=2 d=2.0, target RAW-0.01 ===
+perturbed fixture /var/lib/t3/tmp/combo28-fs/fix/k2-d2.0.json measured depth 164.0359918302575
+[   2.8s] sc-m28-s0: mode=28 exactValid=False contractValid=False depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 replaced=1 projConv=3 projFail=0
+[   2.3s] sc-m28-s1: mode=28 exactValid=False contractValid=False depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 replaced=1 projConv=3 projFail=0
+[   3.0s] sc-m28-s2: mode=28 exactValid=False contractValid=False depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no exact-valid pose for piece 68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4 within the 164.0
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=3 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 replaced=1 projConv=3 projFail=0
+[   3.2s] sc-m29-s0: mode=29 exactValid=False contractValid=False depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.029568 mm bound
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 orders=6/6 swaps=15 compRep=0 compRef=1
+[   2.5s] sc-m29-s1: mode=29 exactValid=False contractValid=False depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.029568 mm bound
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 orders=6/6 swaps=15 compRep=0 compRef=1
+[   3.2s] sc-m29-s2: mode=29 exactValid=False contractValid=False depth=None raw=164.0359918302575 parent=164.036 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 1 violation components inside the 164.029568 mm bound
+   ~ pairs=5 bnd=0 comp=1 maxComp=6 /7 ejected=6 /7 att=True maxMatDef=1.7532124452563171 maxEnvPush=0.9835541248321533 orders=6/6 swaps=15 compRep=0 compRef=1

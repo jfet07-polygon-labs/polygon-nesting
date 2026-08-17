@@ -1,0 +1,5 @@
+=== COMPARISON ARM: perturb k=2 d=2.0 -> mode 31 at bound incumbent-0.025 (previously productive cell) ===
+[   3.3s] cmp-k2d2.0-m31-e0.025: mode=31 exactValid=False contractValid=False depth=None raw=164.0359918302575 parent=164.036 fp= | before 5p/15b after 5p/2b cap=28.051399124101074 maxDisp=2.462755570494157 moved=55 resid=0.05901426639416054 | global legalization did not reach a feasible fixpoint: 5 violating pairs and 2 boundary pi
+published_raw=None incumbent=164.03956779906775
+[   2.9s] cmp-k0-m31-e0.025: mode=31 exactValid=False contractValid=True depth=None raw=164.03956779906775 parent=164.04 fp= | before 0p/17b after 56p/2b cap=0.4709120000002258 maxDisp=0.571443785511751 moved=54 resid=0.3916271270495837 | global legalization did not reach a feasible fixpoint: 56 violating pairs and 2 boundary p
+control published_raw=None

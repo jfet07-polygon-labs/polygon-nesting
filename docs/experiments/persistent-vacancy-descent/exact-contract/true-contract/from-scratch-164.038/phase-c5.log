@@ -1,0 +1,62 @@
+=== PHASE C5: response curve of flatten-delta -> mode 29 published depth (from the ORIGINAL 164.040 parent, bound raw+0.5) ===
+[   5.4s] c5-flat0.0005-m29: mode=29 exactValid=False contractValid=True depth=None raw=164.03906779906777 parent=164.039 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no violating pair to target with a joint re-placement
+   ~ pairs=0 bnd=0 comp=0 maxComp=0 /7 ejected=0 /7 att=False maxMatDef=None maxEnvPush=None orders=0/0 swaps=0 compRep=0 compRef=0
+   delta=0.0005 moved=1 perturbedDelta=-0.000500 published=None gain=None
+[   5.4s] c5-flat0.001-m29: mode=29 exactValid=True contractValid=True depth=164.077 raw=164.07656779906785 parent=164.039 fp=c11f50147efabe87 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=1 bnd=0 comp=1 maxComp=2 /7 ejected=2 /7 att=True maxMatDef=None maxEnvPush=0.000286102294921875 orders=1/2 swaps=0 compRep=1 compRef=0
+   delta=0.001 moved=1 perturbedDelta=-0.001000 published=164.07656779906785 gain=0.037000000000091404
+[   5.3s] c5-flat0.0015-m29: mode=29 exactValid=True contractValid=True depth=164.076 raw=164.0755677990678 parent=164.038 fp=5a4eeaee1d5527ca | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=1 bnd=0 comp=1 maxComp=2 /7 ejected=2 /7 att=True maxMatDef=None maxEnvPush=0.000286102294921875 orders=1/2 swaps=0 compRep=1 compRef=0
+   delta=0.0015 moved=1 perturbedDelta=-0.001500 published=164.0755677990678 gain=0.03600000000005821
+[   5.6s] c5-flat0.002-m29: mode=29 exactValid=True contractValid=True depth=164.039 raw=164.03856779906783 parent=164.038 fp=8e56054dee89574f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=1 bnd=0 comp=1 maxComp=2 /7 ejected=2 /7 att=True maxMatDef=None maxEnvPush=0.0005155801773071289 orders=1/2 swaps=0 compRep=1 compRef=0
+   delta=0.002 moved=2 perturbedDelta=-0.002000 published=164.03856779906783 gain=-0.0009999999999195097
+[   5.7s] c5-flat0.0025-m29: mode=29 exactValid=True contractValid=True depth=164.039 raw=164.03856779906783 parent=164.037 fp=8e56054dee89574f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=2 bnd=0 comp=1 maxComp=3 /7 ejected=3 /7 att=True maxMatDef=None maxEnvPush=0.0005155801773071289 orders=1/6 swaps=0 compRep=1 compRef=0
+   delta=0.0025 moved=2 perturbedDelta=-0.002500 published=164.03856779906783 gain=-0.0009999999999195097
+[   5.7s] c5-flat0.003-m29: mode=29 exactValid=True contractValid=True depth=164.039 raw=164.03856779906783 parent=164.037 fp=8e56054dee89574f | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=2 bnd=0 comp=1 maxComp=3 /7 ejected=3 /7 att=True maxMatDef=None maxEnvPush=0.0008577108383178711 orders=1/6 swaps=0 compRep=1 compRef=0
+   delta=0.003 moved=2 perturbedDelta=-0.003000 published=164.03856779906783 gain=-0.0009999999999195097
+[   5.0s] c5-flat0.0035-m29: mode=29 exactValid=True contractValid=True depth=164.039 raw=164.03856779906783 parent=164.036 fp=181c28e717ff6ef8 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=2 bnd=0 comp=1 maxComp=3 /7 ejected=3 /7 att=True maxMatDef=None maxEnvPush=0.0008577108383178711 orders=1/6 swaps=0 compRep=1 compRef=0
+   delta=0.0035 moved=2 perturbedDelta=-0.003500 published=164.03856779906783 gain=-0.0009999999999195097
+[   5.3s] c5-flat0.004-m29: mode=29 exactValid=True contractValid=True depth=164.039 raw=164.03856779906783 parent=164.036 fp=181c28e717ff6ef8 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=3 bnd=0 comp=1 maxComp=4 /7 ejected=4 /7 att=True maxMatDef=None maxEnvPush=0.0014296174049377441 orders=1/24 swaps=0 compRep=1 compRef=0
+   delta=0.004 moved=3 perturbedDelta=-0.004000 published=164.03856779906783 gain=-0.0009999999999195097
+[   5.6s] c5-flat0.0045-m29: mode=29 exactValid=True contractValid=True depth=164.041 raw=164.04056779906784 parent=164.035 fp=bad0f74d9c8d77a6 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=3 bnd=1 comp=2 maxComp=4 /7 ejected=4 /7 att=True maxMatDef=None maxEnvPush=0.0014296174049377441 orders=4/24 swaps=0 compRep=1 compRef=0
+   delta=0.0045 moved=3 perturbedDelta=-0.004500 published=164.04056779906784 gain=0.00100000000009004
+[   5.2s] c5-flat0.005-m29: mode=29 exactValid=True contractValid=True depth=164.041 raw=164.04056779906784 parent=164.035 fp=bad0f74d9c8d77a6 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=3 bnd=1 comp=2 maxComp=4 /7 ejected=4 /7 att=True maxMatDef=None maxEnvPush=0.002001523971557617 orders=4/24 swaps=0 compRep=1 compRef=0
+   delta=0.005 moved=3 perturbedDelta=-0.005000 published=164.04056779906784 gain=0.00100000000009004
+[   5.4s] c5-flat0.0055-m29: mode=29 exactValid=True contractValid=True depth=164.042 raw=164.04156779906782 parent=164.034 fp=8044cef5dd82371a | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=3 bnd=1 comp=2 maxComp=4 /7 ejected=4 /7 att=True maxMatDef=None maxEnvPush=0.002001523971557617 orders=4/24 swaps=0 compRep=1 compRef=0
+   delta=0.0055 moved=3 perturbedDelta=-0.005500 published=164.04156779906782 gain=0.002000000000066393
+[   6.2s] c5-flat0.006-m29: mode=29 exactValid=True contractValid=True depth=164.042 raw=164.04156779906782 parent=164.034 fp=90909834ffb84586 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=3 bnd=2 comp=3 maxComp=4 /7 ejected=4 /7 att=True maxMatDef=None maxEnvPush=0.0025731325149536133 orders=4/24 swaps=0 compRep=1 compRef=0
+   delta=0.006 moved=5 perturbedDelta=-0.006000 published=164.04156779906782 gain=0.002000000000066393
+[   6.7s] c5-flat0.0065-m29: mode=29 exactValid=True contractValid=True depth=164.043 raw=164.0425677990678 parent=164.033 fp=05bb379acf6b84e8 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=4 bnd=2 comp=4 maxComp=4 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.0025731325149536133 orders=6/26 swaps=0 compRep=2 compRef=0
+   delta=0.0065 moved=5 perturbedDelta=-0.006500 published=164.0425677990678 gain=0.0030000000000427463
+[   7.3s] c5-flat0.007-m29: mode=29 exactValid=True contractValid=True depth=164.043 raw=164.0425677990678 parent=164.033 fp=e8168bc282fadcf6 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=4 bnd=2 comp=4 maxComp=4 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.0025767087936401367 orders=6/26 swaps=0 compRep=2 compRef=0
+   delta=0.007 moved=5 perturbedDelta=-0.007000 published=164.0425677990678 gain=0.0030000000000427463
+[   6.9s] c5-flat0.0075-m29: mode=29 exactValid=True contractValid=True depth=164.042 raw=164.04156779906782 parent=164.032 fp=d57f9af7cc19dae1 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=4 bnd=2 comp=4 maxComp=4 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.0027951598167419434 orders=6/26 swaps=0 compRep=2 compRef=0
+   delta=0.0075 moved=5 perturbedDelta=-0.007500 published=164.04156779906782 gain=0.002000000000066393
+[   5.6s] c5-flat0.008-m29: mode=29 exactValid=True contractValid=True depth=164.044 raw=164.04356779906783 parent=164.032 fp=d3ff28e63c8de693 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=4 bnd=2 comp=4 maxComp=4 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.0031450390815734863 orders=6/26 swaps=0 compRep=2 compRef=0
+   delta=0.008 moved=5 perturbedDelta=-0.008000 published=164.04356779906783 gain=0.004000000000075943
+[   5.6s] c5-flat0.0085-m29: mode=29 exactValid=True contractValid=True depth=164.043 raw=164.0425677990678 parent=164.031 fp=22eddbf09744feb2 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=4 bnd=2 comp=4 maxComp=4 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.0033032894134521484 orders=6/26 swaps=0 compRep=2 compRef=0
+   delta=0.0085 moved=5 perturbedDelta=-0.008500 published=164.0425677990678 gain=0.0030000000000427463
+[   4.6s] c5-flat0.009-m29: mode=29 exactValid=True contractValid=True depth=164.045 raw=164.0445677990678 parent=164.031 fp=69078fa571e69913 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+   ~ pairs=4 bnd=2 comp=4 maxComp=4 /7 ejected=6 /7 att=True maxMatDef=None maxEnvPush=0.0036072731018066406 orders=6/26 swaps=0 compRep=2 compRef=0
+   delta=0.009 moved=5 perturbedDelta=-0.009000 published=164.0445677990678 gain=0.005000000000052296
+[   5.3s] c5-flat0.0095-m29: mode=29 exactValid=False contractValid=False depth=None raw=164.03006779906775 parent=164.03 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 2 violation components inside the 164.539568 mm bound
+   ~ pairs=5 bnd=2 comp=4 maxComp=5 /7 ejected=7 /7 att=True maxMatDef=None maxEnvPush=0.0038114190101623535 orders=7/7 swaps=10 compRep=1 compRef=1
+   delta=0.0095 moved=5 perturbedDelta=-0.009500 published=None gain=None
+[   8.3s] c5-flat0.01-m29: mode=29 exactValid=False contractValid=False depth=None raw=164.02956779906776 parent=164.03 fp= | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | no insertion order re-placed the 2 violation components inside the 164.539568 mm bound
+   ~ pairs=5 bnd=2 comp=4 maxComp=5 /7 ejected=7 /7 att=True maxMatDef=None maxEnvPush=0.0038114190101623535 orders=7/7 swaps=10 compRep=1 compRef=1
+   delta=0.01 moved=5 perturbedDelta=-0.010000 published=None gain=None
+C5 rows: [(0.0005, 1, -0.0004999999999881766, None, None), (0.001, 1, -0.0009999999999763531, 164.07656779906785, 0.037000000000091404), (0.0015, 1, -0.0014999999999645297, 164.0755677990678, 0.03600000000005821), (0.002, 2, -0.0020000000000095497, 164.03856779906783, -0.0009999999999195097), (0.0025, 2, -0.0024999999999977263, 164.03856779906783, -0.0009999999999195097), (0.003, 2, -0.002999999999985903, 164.03856779906783, -0.0009999999999195097), (0.0035, 2, -0.0034999999999740794, 164.03856779906783, -0.0009999999999195097), (0.004, 3, -0.003999999999962256, 164.03856779906783, -0.0009999999999195097), (0.0045, 3, -0.004500000000007276, 164.04056779906784, 0.00100000000009004), (0.005, 3, -0.0049999999999954525, 164.04056779906784, 0.00100000000009004), (0.0055, 3, -0.005499999999983629, 164.04156779906782, 0.002000000000066393), (0.006, 5, -0.005999999999971806, 164.04156779906782, 0.002000000000066393), (0.0065, 5, -0.006499999999959982, 164.0425677990678, 0.0030000000000427463), (0.007, 5, -0.007000000000005002, 164.0425677990678, 0.0030000000000427463), (0.0075, 5, -0.007499999999993179, 164.04156779906782, 0.002000000000066393), (0.008, 5, -0.007999999999981355, 164.04356779906783, 0.004000000000075943), (0.0085, 5, -0.008499999999969532, 164.0425677990678, 0.0030000000000427463), (0.009, 5, -0.008999999999957708, 164.0445677990678, 0.005000000000052296), (0.0095, 5, -0.009500000000002728, None, None), (0.01, 5, -0.009999999999990905, None, None)]
