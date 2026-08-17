@@ -236,6 +236,144 @@ pub(crate) fn micro_legalization_component_limit(piece_count: usize) -> usize {
     (piece_count / 8).max(4)
 }
 
+/// The largest ejection set the conflict-targeted re-placement repair will
+/// attempt, in pieces.
+///
+/// Deliberately *the same* threshold as [`micro_legalization_component_limit`]
+/// rather than a new tuned literal. The ejection set is a vertex cover of the
+/// violation graph, so it is never larger than the graph's own components; a
+/// residue whose cover exceeds the size a micro-repair would already have
+/// refused as "a search problem, not a projection" is a search problem for the
+/// re-placement repair too, and gets refused on the same terms.
+pub(crate) fn replacement_ejection_limit(piece_count: usize) -> usize {
+    micro_legalization_component_limit(piece_count)
+}
+
+/// One violating pair of a surveyed layout, with the travel that would clear
+/// it.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct ViolationPair {
+    /// Indices into the surveyed placement list, `first < second`.
+    pub first: usize,
+    pub second: usize,
+    /// The pair's *violation mass*: the larger of its clearance shortfall
+    /// against the material contract and the travel needed to pull its
+    /// collision envelopes apart. The two are routinely orders of magnitude
+    /// apart, so taking the larger is what keeps a millimetre-scale envelope
+    /// conflict from reading as a rounding-scale one.
+    pub mass_mm: f64,
+}
+
+/// The violation graph of a layout, measured against the bare publication
+/// contracts on the geometry each gate actually looks at.
+///
+/// This is exactly the survey [`micro_legalize`] runs before it decides
+/// whether to attempt a projection, exposed so a *different* repair - one that
+/// re-places pieces instead of translating them - can be targeted at the same
+/// residue without re-deriving the measurement.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub(crate) struct LayoutViolations {
+    pub pairs: Vec<ViolationPair>,
+    /// Pieces violating either sheet containment check, sorted.
+    pub boundary_pieces: Vec<usize>,
+    pub material_pairs: usize,
+    pub collision_pairs: usize,
+    pub max_material_deficit_mm: Option<f64>,
+    pub max_envelope_push_mm: Option<f64>,
+    pub max_boundary_deficit_mm: Option<f64>,
+    /// Connected components over the violating pairs, with boundary-only
+    /// pieces contributing singleton components.
+    pub components: Vec<Vec<usize>>,
+}
+
+impl LayoutViolations {
+    pub(crate) fn largest_component_pieces(&self) -> usize {
+        self.components.iter().map(Vec::len).max().unwrap_or(0)
+    }
+
+    /// Total violation mass incident to each surveyed slot.
+    pub(crate) fn incident_mass(&self, slots: usize) -> Vec<f64> {
+        let mut mass = vec![0.0f64; slots];
+        for pair in &self.pairs {
+            mass[pair.first] += pair.mass_mm;
+            mass[pair.second] += pair.mass_mm;
+        }
+        mass
+    }
+}
+
+/// Surveys `placements` against the bare publication contracts and returns the
+/// violation graph.
+///
+/// `placements` may be a strict sub-layout of `pieces`; indices in the result
+/// are into `placements`, not into `pieces`.
+pub(crate) fn survey_layout_violations(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+) -> Result<LayoutViolations, String> {
+    if placements.len() > pieces.len() {
+        return Err("violation survey requires a sub-layout of the request".to_owned());
+    }
+    let expansion_mm = collision_expansion_mm(settings);
+    let contracts = Contracts {
+        material_pair_mm: settings.total_padding_mm + 2.0 * settings.flattening_sag_tolerance_mm,
+        material_edge_mm: effective_sheet_edge_clearance_mm(settings)
+            + settings.flattening_sag_tolerance_mm,
+        collision_edge_mm: collision_sheet_inset_mm(settings),
+    };
+    if !contracts.material_pair_mm.is_finite()
+        || !contracts.material_edge_mm.is_finite()
+        || !contracts.collision_edge_mm.is_finite()
+        || !expansion_mm.is_finite()
+    {
+        return Err("violation survey requires a finite clearance contract".to_owned());
+    }
+    let pieces_by_id = pieces
+        .iter()
+        .enumerate()
+        .map(|(index, piece)| (piece.id, index))
+        .collect::<BTreeMap<_, _>>();
+    let geometries = placements
+        .iter()
+        .map(|placement| {
+            let piece = pieces_by_id
+                .get(placement.piece_id.as_str())
+                .map(|index| pieces[*index])
+                .ok_or_else(|| format!("unknown piece {}", placement.piece_id))?;
+            build_geometry(piece.polygon, placement, expansion_mm).ok_or_else(|| {
+                format!(
+                    "could not build an envelope for piece {}",
+                    placement.piece_id
+                )
+            })
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+
+    let zero = vec![(0.0f64, 0.0f64); placements.len()];
+    let survey = survey_violations(&geometries, &zero, &contracts, settings);
+    let (components, _) = violation_components(&survey, placements.len());
+    Ok(LayoutViolations {
+        pairs: survey
+            .pairs
+            .iter()
+            .zip(&survey.pair_mass)
+            .map(|((first, second), mass_mm)| ViolationPair {
+                first: *first,
+                second: *second,
+                mass_mm: *mass_mm,
+            })
+            .collect(),
+        boundary_pieces: survey.boundary_pieces.clone(),
+        material_pairs: survey.material_pairs,
+        collision_pairs: survey.collision_pairs,
+        max_material_deficit_mm: survey.max_material_deficit,
+        max_envelope_push_mm: survey.max_envelope_push,
+        max_boundary_deficit_mm: survey.max_boundary_deficit,
+        components,
+    })
+}
+
 /// Which of the two publication gates a constraint belongs to.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Gate {
@@ -394,9 +532,13 @@ pub(crate) fn micro_legalize(
     Option<Vec<GeneralFastPlacement>>,
 ) {
     let mut diagnostics = GeneralMicroLegalizationDiagnostics::default();
-    if placements.len() != pieces.len() {
+    // A *sub*-layout is admissible: the conflict-targeted re-placement repair
+    // removes pieces before it asks for the remainder to be cleaned up, and
+    // every gate the pass models is measured per placement, not per request.
+    // Anything longer than the request cannot be a layout of it at all.
+    if placements.len() > pieces.len() {
         diagnostics.skipped_reason =
-            Some("micro-legalization requires a complete layout".to_owned());
+            Some("micro-legalization requires a sub-layout of the request".to_owned());
         return (diagnostics, None);
     }
     if pieces.is_empty() {
@@ -451,7 +593,9 @@ pub(crate) fn micro_legalize(
 
     // Survey the input state against the bare contracts: this is the residue
     // the caller wants reported, independent of how the solver is tuned.
-    let zero = vec![(0.0f64, 0.0f64); pieces.len()];
+    // Slot-indexed, i.e. indexed by *placement*, which equals the piece count
+    // for every complete layout and is smaller for a sub-layout.
+    let zero = vec![(0.0f64, 0.0f64); placements.len()];
     let survey = survey_violations(&geometries, &zero, &contracts, settings);
     diagnostics.violating_pairs_before = survey.pairs.len();
     diagnostics.boundary_pieces_before = survey.boundary_pieces.len();
@@ -483,7 +627,7 @@ pub(crate) fn micro_legalize(
         }
     }
 
-    let (components, seeds) = violation_components(&survey, pieces.len());
+    let (components, seeds) = violation_components(&survey, placements.len());
     diagnostics.component_count = components.len();
     diagnostics.largest_component_pieces = components.iter().map(Vec::len).max().unwrap_or(0);
     diagnostics.seed_pieces = seeds.iter().filter(|seed| **seed).count();
@@ -602,6 +746,11 @@ struct Survey {
     /// Violating pairs as `(first, second)`, sorted and deduplicated across
     /// gates.
     pairs: Vec<(usize, usize)>,
+    /// Per-pair violation mass, parallel to `pairs`: the larger of the pair's
+    /// clearance shortfall and its envelope separating travel. The solver does
+    /// not need it - it re-measures every constraint anyway - but a repair
+    /// that has to *choose between* pieces does.
+    pair_mass: Vec<f64>,
     /// Pieces violating either sheet containment check, sorted.
     boundary_pieces: Vec<usize>,
     material_pairs: usize,
@@ -630,6 +779,7 @@ fn survey_violations(
     settings: GeneralFastSettings,
 ) -> Survey {
     let mut pairs: Vec<(usize, usize)> = Vec::new();
+    let mut pair_mass: Vec<f64> = Vec::new();
     let mut material_pairs = 0usize;
     let mut collision_pairs = 0usize;
     let mut max_material_deficit: Option<f64> = None;
@@ -638,6 +788,7 @@ fn survey_violations(
     for first in 0..geometries.len() {
         for second in (first + 1)..geometries.len() {
             let mut violating = false;
+            let mut mass = 0.0f64;
             // Material gate: a shortfall against the requested clearance.
             let material_contract = contracts.material_pair_mm;
             let first_bounds = geometries[first]
@@ -660,6 +811,7 @@ fn survey_violations(
                     violating = true;
                     material_pairs += 1;
                     let deficit = material_contract - approach.distance;
+                    mass = mass.max(deficit);
                     max_material_deficit = Some(
                         max_material_deficit.map_or(deficit, |current: f64| current.max(deficit)),
                     );
@@ -696,11 +848,13 @@ fn survey_violations(
                         translations,
                         displacement_ceiling(contracts),
                     );
+                mass = mass.max(push);
                 max_envelope_push =
                     Some(max_envelope_push.map_or(push, |current: f64| current.max(push)));
             }
             if violating {
                 pairs.push((first, second));
+                pair_mass.push(mass);
             }
         }
     }
@@ -725,6 +879,7 @@ fn survey_violations(
 
     Survey {
         pairs,
+        pair_mass,
         boundary_pieces,
         material_pairs,
         collision_pairs,
@@ -1788,5 +1943,118 @@ mod tests {
                 "expected a leftward push, got {direction:?}"
             );
         }
+    }
+
+    #[test]
+    fn the_ejection_limit_is_the_component_limit_at_every_scale() {
+        // The re-placement repair refuses exactly what a micro-repair would
+        // have refused, so the two thresholds have to agree at every piece
+        // count rather than only at the ones this experiment happens to run.
+        for piece_count in [0usize, 1, 2, 3, 17, 20, 61, 137, 400, 4_000] {
+            assert_eq!(
+                replacement_ejection_limit(piece_count),
+                micro_legalization_component_limit(piece_count),
+                "piece count {piece_count}"
+            );
+            // Never zero, so a violating pair always has a legal cover, and
+            // never more than an eighth of the layout once the layout is big
+            // enough for that to bite.
+            assert!(replacement_ejection_limit(piece_count) >= 4);
+            if piece_count >= 32 {
+                assert!(replacement_ejection_limit(piece_count) <= piece_count / 8);
+            }
+        }
+    }
+
+    #[test]
+    fn the_violation_survey_reports_pairs_with_their_mass() {
+        let square = rectangle(20.0, 20.0);
+        let pieces = vec![
+            piece("a", &square),
+            piece("b", &square),
+            piece("c", &square),
+        ];
+        // `a` and `b` sit 1 mm apart under a 5 mm contract - a 4 mm deficit,
+        // the millimetre-scale residue the micro-legalizer refuses. `c` is far
+        // away and must not appear at all.
+        let placements = vec![
+            placement("a", 20.0, 20.0),
+            placement("b", 41.0, 20.0),
+            placement("c", 20.0, 120.0),
+        ];
+        let settings = settings();
+
+        let violations =
+            survey_layout_violations(&pieces, &placements, settings).expect("a surveyable layout");
+        assert_eq!(violations.pairs.len(), 1, "{violations:?}");
+        let pair = violations.pairs[0];
+        assert_eq!((pair.first, pair.second), (0, 1));
+        assert!(
+            (pair.mass_mm - 4.0).abs() < 1e-6,
+            "expected a 4 mm mass, got {}",
+            pair.mass_mm
+        );
+        assert!(violations.boundary_pieces.is_empty());
+        assert_eq!(violations.components, vec![vec![0, 1]]);
+        assert_eq!(violations.largest_component_pieces(), 2);
+
+        // Incident mass is what the ejection choice maximizes, so it has to
+        // charge both endpoints and leave everything else at zero.
+        let mass = violations.incident_mass(placements.len());
+        assert!((mass[0] - 4.0).abs() < 1e-6);
+        assert!((mass[1] - 4.0).abs() < 1e-6);
+        assert_eq!(mass[2], 0.0);
+    }
+
+    #[test]
+    fn the_violation_survey_and_the_repair_accept_a_sub_layout() {
+        // The re-placement repair surveys and micro-legalizes the layout with
+        // its ejection set removed, so both entry points have to work on a
+        // strict sub-layout - with indices into the placements, not the
+        // request.
+        let square = rectangle(20.0, 20.0);
+        let pieces = vec![
+            piece("a", &square),
+            piece("b", &square),
+            piece("c", &square),
+        ];
+        let settings = settings();
+        // `b` removed: what is left is legal, and `c` is now slot 1.
+        let kept = vec![placement("a", 20.0, 20.0), placement("c", 20.0, 120.0)];
+
+        let violations =
+            survey_layout_violations(&pieces, &kept, settings).expect("a surveyable sub-layout");
+        assert!(violations.pairs.is_empty(), "{violations:?}");
+        assert!(violations.boundary_pieces.is_empty());
+
+        let (diagnostics, repaired) = micro_legalize(&pieces, &kept, settings);
+        assert!(diagnostics.skipped_reason.is_none(), "{diagnostics:?}");
+        assert!(diagnostics.exact_valid, "{diagnostics:?}");
+        assert_eq!(
+            repaired.expect("an already-legal sub-layout comes back"),
+            kept
+        );
+    }
+
+    #[test]
+    fn a_millimetre_scale_pair_deficit_is_refused_by_projection() {
+        // The premise of the re-placement repair: this residue class is
+        // outside the micro-legalizer's admission bound by construction, so
+        // the second tier is the only thing that can ever see it.
+        let square = rectangle(20.0, 20.0);
+        let pieces = vec![piece("a", &square), piece("b", &square)];
+        let placements = vec![placement("a", 20.0, 20.0), placement("b", 41.0, 20.0)];
+        let settings = settings();
+
+        let (diagnostics, repaired) = micro_legalize(&pieces, &placements, settings);
+        assert!(repaired.is_none(), "{diagnostics:?}");
+        assert!(!diagnostics.attempted, "{diagnostics:?}");
+        assert!(
+            diagnostics
+                .skipped_reason
+                .as_deref()
+                .is_some_and(|reason| reason.contains("admission bound")),
+            "{diagnostics:?}"
+        );
     }
 }

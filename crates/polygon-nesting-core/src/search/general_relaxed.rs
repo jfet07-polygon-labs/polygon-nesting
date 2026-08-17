@@ -26,9 +26,14 @@ use crate::search::general_fast::{
     polygons_overlap_exact, validate_and_measure_placements, GeneralFastError, GeneralFastPiece,
     GeneralFastPlacement, GeneralFastResult, GeneralFastSettings, GeneralPlacementMetrics,
 };
-#[cfg(feature = "jagua-experimental")]
-use crate::search::general_micro_legalization::micro_legalize;
 use crate::search::general_micro_legalization::GeneralMicroLegalizationDiagnostics;
+// Re-exported into the persistent-vacancy module by its `use super::*`, which
+// is where the conflict-targeted re-placement repair consumes them.
+#[cfg(feature = "jagua-experimental")]
+use crate::search::general_micro_legalization::{
+    micro_legalization_component_limit, micro_legalize, replacement_ejection_limit,
+    survey_layout_violations,
+};
 
 #[cfg(feature = "jagua-experimental")]
 #[path = "general_persistent_vacancy.rs"]
@@ -132,6 +137,15 @@ const LADDER_COMPRESSION_ATTEMPT_SLOT: usize = usize::MAX - 96;
 // the standalone instrument for the same pass mode 26 uses per rung.
 #[cfg(feature = "jagua-experimental")]
 const MICRO_LEGALIZATION_SEED_DOMAIN: u64 = 0x4D49_4352_4F4C_3237;
+// The two repair tiers a mode-26 rung may publish through, reported per rung so
+// a ladder table can say which mechanism reached which residue. Tier one is
+// mode 27's translation-only projection; tier two is mode 28's
+// conflict-targeted re-placement, attempted only when tier one produced
+// nothing.
+#[cfg(feature = "jagua-experimental")]
+const LADDER_REPAIR_TIER_MICRO: &str = "microLegalization";
+#[cfg(feature = "jagua-experimental")]
+const LADDER_REPAIR_TIER_REPLACEMENT: &str = "replacement";
 // Mode 24 (bounded-depth reinsertion) tests compression by ejection and
 // reconstruction rather than compression by overlap: it ejects exactly the
 // pieces that stick out past a hard bound and rebuilds them with the
@@ -454,6 +468,10 @@ pub struct GeneralPersistentVacancyDiagnostics {
     /// Mode 27: the standalone micro-legalization probe run on the parent.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub micro_legalization: Option<GeneralMicroLegalizationDiagnostics>,
+    /// Mode 28: the standalone conflict-targeted re-placement repair run on
+    /// the parent under the requested bound.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replacement_repair: Option<GeneralReplacementRepairDiagnostics>,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
 }
@@ -500,6 +518,11 @@ pub struct GeneralPersistentVacancyLadderStepDiagnostics {
     /// Whether that publication came from the micro-legalization pass rather
     /// than from the separator legalizing a target on its own.
     pub published_by_micro_legalization: bool,
+    /// Which repair tier produced the publication, when a repair did:
+    /// `microLegalization` or `replacement`. `None` means the separator
+    /// legalized the target itself.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub published_repair_tier: Option<String>,
     /// The deepest exact-valid depth known after this rung.
     pub published_depth_mm_after: f64,
     /// The compression frontier's measured depth after this rung, feasible or
@@ -576,6 +599,15 @@ pub struct GeneralPersistentVacancyLadderArmDiagnostics {
     pub micro_legalized_depth_mm: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub micro_legalized_fingerprint: Option<String>,
+    /// The second-tier conflict-targeted re-placement repair, run on the
+    /// arm's rejected state only when the micro-legalizer refused or failed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replacement_repair: Option<GeneralReplacementRepairDiagnostics>,
+    /// The depth of the re-placed state, when that tier published one.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replacement_repaired_depth_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replacement_repaired_fingerprint: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failure_reason: Option<String>,
 }
@@ -670,6 +702,96 @@ pub struct GeneralPersistentVacancyBoundedReinsertionPieceRow {
     pub placed_extent_mm: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failure_reason: Option<String>,
+}
+
+/// Mode-28 (conflict-targeted re-placement) diagnostics: the violation graph
+/// the pass was pointed at, the ejection set it derived from it, and what the
+/// clamped insertion machinery managed to do with the vacated space.
+///
+/// Also carried per mode-26 rung arm, where this pass is the second repair
+/// tier: it runs only after the micro-legalizer has refused or failed.
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralReplacementRepairDiagnostics {
+    /// Whether the pass got past admission and actually re-placed anything.
+    pub attempted: bool,
+    /// The clamped sheet long axis every re-placed pose had to fit inside.
+    pub bound_mm: f64,
+    /// The input state's residue against the bare publication contracts.
+    pub violating_pairs: usize,
+    pub boundary_pieces: usize,
+    pub material_pairs: usize,
+    pub collision_pairs: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_material_deficit_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_envelope_push_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_boundary_deficit_mm: Option<f64>,
+    /// The violation graph's connected components, and the admissible size of
+    /// the largest one.
+    pub component_count: usize,
+    pub largest_component_pieces: usize,
+    pub component_limit: usize,
+    /// The largest ejection set the pass would have attempted.
+    pub ejection_limit: usize,
+    pub ejected_count: usize,
+    /// The ejected pieces in placement-slot order. `pieces` reports the same
+    /// set in the order they were actually re-placed.
+    pub ejected_piece_ids: Vec<String>,
+    /// Total violation mass incident to each ejected piece, aligned with
+    /// `ejected_piece_ids`. This is the quantity the ejection choice
+    /// maximizes.
+    pub ejected_mass_mm: Vec<f64>,
+    /// Hash of the re-placement order, which is the pass's determinism anchor.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ejected_order_hash: Option<String>,
+    /// The residue left in the layout once the ejection set was removed. The
+    /// pair count is zero by construction; a boundary residue may survive and
+    /// is handed to the micro-legalizer.
+    pub kept_violating_pairs: usize,
+    pub kept_boundary_pieces: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kept_micro_legalization: Option<GeneralMicroLegalizationDiagnostics>,
+    /// One row per attempted piece, in re-placement order. A failing pass
+    /// stops at the first piece with no in-bound pose, so this is a prefix of
+    /// the ejection set rather than a permutation of it.
+    pub pieces: Vec<GeneralReplacementRepairPieceRow>,
+    pub replaced_count: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failed_piece_id: Option<String>,
+    /// Whether the authoritative validator accepted the re-placed state.
+    pub exact_valid: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub depth_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skipped_reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejection_reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cap_exhausted: Option<String>,
+    pub work: GeneralPersistentVacancyWorkDiagnostics,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralReplacementRepairPieceRow {
+    pub piece_id: String,
+    /// Exact-valid poses the construction machinery returned for this slot.
+    ///
+    /// Zero here is the diagnostically interesting case, and is *not* the same
+    /// failure as a non-zero count with every candidate out of bound: it says
+    /// the insertion machinery confirmed no legal pose for this piece anywhere
+    /// on the clamped sheet, vacated space included.
+    pub candidates_considered: usize,
+    /// Candidates discarded because their measured extent exceeded the bound.
+    /// The insertion sheet is already clamped to the bound, so this only fires
+    /// if the two measures disagree; it is the explicit contract check behind
+    /// the geometric one.
+    pub bound_rejections: usize,
+    pub replaced: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub placed_extent_mm: Option<f64>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
@@ -2714,6 +2836,13 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                         effective_parent,
                         parent_source,
                     ),
+                    28 => persistent_vacancy::run_replacement_repair(
+                        pieces,
+                        fast_settings,
+                        relaxed_settings,
+                        effective_parent,
+                        parent_source,
+                    ),
                     mode => persistent_vacancy::run_persistent_vacancy_population(
                         pieces,
                         fast_settings,
@@ -3320,14 +3449,13 @@ fn run_ladder_compression(
                     // it has one, and otherwise whatever the micro-legalization
                     // pass managed to project out of the rejected state.
                     let candidate = if product.exact_valid {
-                        Some((product.placements.clone(), product.depth_mm, false))
+                        Some((product.placements.clone(), product.depth_mm, None))
                     } else {
-                        product
-                            .legalized
-                            .clone()
-                            .map(|(placements, depth_mm)| (placements, depth_mm, true))
+                        product.legalized.clone().map(|(placements, depth_mm)| {
+                            (placements, depth_mm, product.repair_tier)
+                        })
                     };
-                    if let Some((placements, depth_mm, by_micro_legalization)) = candidate {
+                    if let Some((placements, depth_mm, tier)) = candidate {
                         if grid_key(depth_mm) < grid_key(published_depth_mm) {
                             published_depth_mm = depth_mm;
                             published_placements = placements;
@@ -3335,7 +3463,9 @@ fn run_ladder_compression(
                             ladder.published_step = Some(step);
                             ladder.published_bound_mm = Some(bound_mm);
                             row.improved_publication = true;
-                            row.published_by_micro_legalization = by_micro_legalization;
+                            row.published_by_micro_legalization =
+                                tier == Some(LADDER_REPAIR_TIER_MICRO);
+                            row.published_repair_tier = tier.map(str::to_owned);
                         }
                         published_here = true;
                     }
@@ -3551,11 +3681,25 @@ fn run_ladder_compression_arm(
     }
 
     // The residue this mode keeps producing is a compressed state that misses
-    // the contract by a handful of pairs at a rounding scale, with no source
-    // overlap anywhere. That is a projection problem, so try to project it
-    // before declaring the rung a loss. The pass validates its own output
-    // against the real request, so anything it returns here is publishable.
+    // the contract by a handful of pairs, with no source overlap anywhere.
+    //
+    // Tier one treats that as a projection problem: where the deficits really
+    // are at a rounding scale, the micro-legalizer nudges the offending pieces
+    // onto the feasible side and the rung publishes. The pass validates its
+    // own output against the real request, so anything it returns is
+    // publishable.
+    //
+    // Tier two exists because most of this residue is *not* rounding-scale.
+    // The measured terminal states miss by millimetres - miter-joined envelope
+    // conflicts far from the material closest-approach point - and the
+    // micro-legalizer correctly refuses them, because a millimetre of travel
+    // is a search move and its model is translation-only. That residue needs
+    // local *re-placement*, so the pieces incident to the conflict are ejected
+    // and rebuilt by the construction insertion machinery under this rung's
+    // own clamped sheet. It runs only when tier one produced nothing, and it
+    // likewise validates its own output before returning it.
     let mut legalized = None;
+    let mut repair_tier = None;
     if !row.exact_valid {
         let (micro_diagnostics, repaired) = micro_legalize(pieces, &placements, fast_settings);
         if let Some(repaired) = repaired {
@@ -3565,6 +3709,7 @@ fn run_ladder_compression_arm(
                     row.micro_legalized_fingerprint =
                         Some(coupled_fast_placement_fingerprint(&repaired));
                     legalized = Some((repaired, repaired_depth_mm));
+                    repair_tier = Some(LADDER_REPAIR_TIER_MICRO);
                 }
                 Err(error) => {
                     row.failure_reason = Some(format!("micro-legalized state depth: {error}"));
@@ -3572,6 +3717,20 @@ fn run_ladder_compression_arm(
             }
         }
         row.micro_legalization = Some(micro_diagnostics);
+    }
+    if !row.exact_valid && legalized.is_none() {
+        let outcome =
+            persistent_vacancy::replacement_repair(pieces, &placements, fast_settings, bound_mm);
+        if let Some(repaired) = &outcome.repaired {
+            if let Some(repaired_depth_mm) = outcome.diagnostics.depth_mm {
+                row.replacement_repaired_depth_mm = Some(repaired_depth_mm);
+                row.replacement_repaired_fingerprint =
+                    Some(coupled_fast_placement_fingerprint(repaired));
+                legalized = Some((repaired.clone(), repaired_depth_mm));
+                repair_tier = Some(LADDER_REPAIR_TIER_REPLACEMENT);
+            }
+        }
+        row.replacement_repair = Some(outcome.diagnostics);
     }
 
     let exact_valid = row.exact_valid;
@@ -3582,6 +3741,7 @@ fn run_ladder_compression_arm(
             depth_mm,
             exact_valid,
             legalized,
+            repair_tier,
         }),
     )
 }
@@ -3590,15 +3750,16 @@ fn run_ladder_compression_arm(
 ///
 /// `placements` is the arm's own state and is generally *infeasible* - it is
 /// the compression frontier the next rung works off. `legalized` is the
-/// exact-valid state the micro-legalization pass projected out of it, when it
-/// managed to, and is the arm's publication candidate whenever `exact_valid`
-/// is false.
+/// exact-valid state one of the two repair tiers recovered from it, when
+/// either managed to, and is the arm's publication candidate whenever
+/// `exact_valid` is false; `repair_tier` says which tier produced it.
 #[cfg(feature = "jagua-experimental")]
 struct LadderCompressionArmProduct {
     placements: Vec<GeneralFastPlacement>,
     depth_mm: f64,
     exact_valid: bool,
     legalized: Option<(Vec<GeneralFastPlacement>, f64)>,
+    repair_tier: Option<&'static str>,
 }
 
 /// Mode 23: recombination. Crosses parent A (`pinned_vacancy_parent`) with

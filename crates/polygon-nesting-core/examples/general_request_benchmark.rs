@@ -165,8 +165,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if persistent_vacancy_mode > 27 {
-        return Err("persistent vacancy mode must be between 0 and 27".into());
+    if persistent_vacancy_mode > 28 {
+        return Err("persistent vacancy mode must be between 0 and 28".into());
     }
     let persistent_vacancy_parent_fixture = arguments.next();
     // Modes 22 (alternation fixpoint), 23 (recombination), 24 (bounded-depth
@@ -183,7 +183,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // expansion parent armed and takes the same arguments as mode 20. Mode 27
     // (standalone micro-legalization probe) ignores this argument entirely: it
     // measures the parent's residue against the real request and attempts the
-    // repair pass on it as-is, with no bound and no ladder.
+    // repair pass on it as-is, with no bound and no ladder. Mode 28
+    // (standalone conflict-targeted re-placement) treats it as the clamped
+    // sheet long axis (mm) every re-placed pose must fit inside: it ejects the
+    // pieces incident to the parent's clearance violations and rebuilds them
+    // under that clamp.
     let persistent_vacancy_target_depth_mm = arguments
         .next()
         .map(|value| value.parse::<f64>())

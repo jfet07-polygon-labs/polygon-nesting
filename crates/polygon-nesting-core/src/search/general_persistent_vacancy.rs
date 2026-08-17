@@ -89,6 +89,10 @@ const CONSTRUCTION_BEST_EVER_PARENTS: usize = 1;
 // it takes its own seed domain: identical piece/ordinal pairs in the two
 // modes must not draw the same orientation and position streams.
 const BOUNDED_REINSERTION_SEED_DOMAIN: u64 = 0x424E_4452_494E_3234;
+// Mode 28 (conflict-targeted re-placement) drives the same insertion primitive
+// from a third starting point - a *rejected* compressed state with its
+// conflicting pieces removed - so it likewise takes its own seed domain.
+const REPLACEMENT_REPAIR_SEED_DOMAIN: u64 = 0x5245_504C_4143_3238;
 const CONSTRUCTION_TRANSIENT_BYTES: usize = 192 * 1024;
 // Child-scoring flood fills follow the reviewed-contract precedent of the
 // uncharged LNS depth-key scans: the structural ceiling (`VacancyQuotas::
@@ -877,24 +881,165 @@ fn bounded_reinsertion_inner(
         relaxed_state_from_diagnostics_with_target(pieces, &parent.final_placements, bound_mm)?;
     let bound_grid = grid_key(bound_mm);
 
+    // Mode 24's ejection rule: every piece whose own extent exceeds the bound,
+    // and nothing else.
+    let extents = (0..pieces.len())
+        .map(|index| {
+            placement_long_axis_extent_mm(pieces[index], &anchor.placements[index], fast_settings)
+        })
+        .collect::<Vec<_>>();
+    let ejected = (0..pieces.len())
+        .filter(|index| grid_key(extents[*index]) > bound_grid)
+        .collect::<Vec<_>>();
+    bounded.ejected_count = ejected.len();
+    bounded.kept_count = pieces.len() - ejected.len();
+
+    let pass = replace_ejected_under_bound(
+        pieces,
+        fast_settings,
+        bound_settings,
+        bound_mm,
+        &anchor,
+        &ejected,
+        BOUNDED_REINSERTION_SEED_DOMAIN,
+        work,
+    )?;
+    diagnostics.initial_state_fingerprint = Some(pass.initial_state_fingerprint);
+    diagnostics.initial_active_piece_ids = pass.initial_active_piece_ids;
+    diagnostics.initial_inactive_piece_ids = pass.order_piece_ids;
+    diagnostics.initial_inactive_order_hash = Some(pass.order_hash);
+    for outcome in &pass.pieces {
+        let mut row = GeneralPersistentVacancyBoundedReinsertionPieceRow {
+            piece_id: outcome.piece_id.clone(),
+            parent_extent_mm: extents[outcome.index],
+            candidates_considered: outcome.candidates_considered,
+            bound_rejections: outcome.bound_rejections,
+            reinserted: outcome.placed_extent_mm.is_some(),
+            placed_extent_mm: outcome.placed_extent_mm,
+            ..GeneralPersistentVacancyBoundedReinsertionPieceRow::default()
+        };
+        if row.reinserted {
+            bounded.reinserted_count = bounded.reinserted_count.saturating_add(1);
+        } else {
+            // A clean per-bound failure: the bound is reported as
+            // unreachable for this piece rather than exceeded.
+            row.failure_reason = Some(format!(
+                "no exact-valid pose for piece {} within the {bound_mm} mm bound",
+                outcome.piece_id
+            ));
+            bounded.failed_piece_id = Some(outcome.piece_id.clone());
+        }
+        bounded.pieces.push(row);
+    }
+    diagnostics.construction = Some(pass.construction);
+    if let Some(failed) = &bounded.failed_piece_id {
+        diagnostics.publication_rejections = diagnostics.publication_rejections.saturating_add(1);
+        diagnostics.failure_reason = Some(format!(
+            "bounded reinsertion could not place piece {failed} within the {bound_mm} mm bound"
+        ));
+        return Ok(());
+    }
+    let state = pass.state;
+    diagnostics.direct_insertions = bounded.reinserted_count;
+    diagnostics.complete_states = diagnostics.complete_states.saturating_add(1);
+
+    let final_placements = fast_placements(&state, pieces, false);
+    validate_and_measure_placements(pieces, &final_placements, fast_settings)
+        .map_err(|error| format!("bounded reinsertion final validation: {error}"))?;
+    let final_depth_mm = coupled_independent_source_depth(pieces, &final_placements, fast_settings)
+        .map_err(|error| format!("bounded reinsertion final depth: {error}"))?;
+    diagnostics.exact_valid = true;
+    diagnostics.independent_depth_mm = Some(final_depth_mm);
+    diagnostics.final_placement_fingerprint =
+        Some(coupled_fast_placement_fingerprint(&final_placements));
+    diagnostics.final_placements = coupled_placement_diagnostics(&final_placements);
+    bounded.final_depth_mm = Some(final_depth_mm);
+    Ok(())
+}
+
+/// What the shared bounded re-placement primitive did to one ejected piece.
+struct ReplacedPieceOutcome {
+    index: usize,
+    piece_id: String,
+    candidates_considered: usize,
+    bound_rejections: usize,
+    /// The extent of the pose that was accepted, or `None` when the piece had
+    /// no in-bound pose at all.
+    placed_extent_mm: Option<f64>,
+}
+
+/// What one run of the shared bounded re-placement primitive produced.
+struct BoundedReplacementPass {
+    /// The layout after re-placement. Complete exactly when every ejected
+    /// piece found a pose; otherwise the failed piece is still inactive.
+    state: VacancyState,
+    /// The state *as ejected*, before any piece was put back.
+    initial_state_fingerprint: String,
+    initial_active_piece_ids: Vec<String>,
+    /// The ejected pieces in the order they were re-placed.
+    order_piece_ids: Vec<String>,
+    order_hash: String,
+    /// One row per attempted piece, in re-placement order. Stops at the first
+    /// piece that could not be placed.
+    pieces: Vec<ReplacedPieceOutcome>,
+    construction: GeneralPersistentVacancyConstructionDiagnostics,
+}
+
+impl BoundedReplacementPass {
+    fn failed_piece_id(&self) -> Option<&str> {
+        self.pieces
+            .last()
+            .filter(|row| row.placed_extent_mm.is_none())
+            .map(|row| row.piece_id.as_str())
+    }
+}
+
+/// Removes `ejected` from `anchor` and re-places those pieces, one at a time,
+/// with the construction insertion machinery under a sheet clamped to
+/// `bound_mm`.
+///
+/// This is the single insertion path shared by mode 24 (bounded-depth
+/// reinsertion, which ejects the pieces that stick out past the bound) and
+/// mode 28 (conflict-targeted re-placement, which ejects the pieces incident
+/// to a clearance violation). The two modes differ only in *which* pieces they
+/// hand over and in what they do with the result; the ejection, the fixed
+/// occupancy, the re-placement order, and the per-pose bound contract are
+/// identical, and live here so they cannot drift apart.
+///
+/// Re-placement order is descending piece area with `pieceId` breaking ties.
+/// The bound is enforced twice: geometrically, because
+/// `construction_confirm_row`'s `fits_rect` runs against the clamped sheet and
+/// so refuses an out-of-bound pose before it is ever confirmed, and then again
+/// explicitly, because every confirmed pose is re-measured against `bound_mm`
+/// on the real transformed source polygon.
+///
+/// Budget: one charged collision build per kept piece plus one
+/// `construct_candidate_poses` call per ejected piece. Ejecting *every* piece
+/// is the worst case at both terms, which is what
+/// `bounded_reinsertion_fits_the_construction_budget` asserts against the
+/// existing per-piece construction quota - so neither caller needs a new
+/// aggregate term.
+#[allow(clippy::too_many_arguments)]
+fn replace_ejected_under_bound(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    bound_settings: GeneralFastSettings,
+    bound_mm: f64,
+    anchor: &RelaxedState,
+    ejected: &[usize],
+    seed_domain: u64,
+    work: &mut RunWork,
+) -> Result<BoundedReplacementPass, String> {
+    let bound_grid = grid_key(bound_mm);
     let mut state = VacancyState {
         placements: anchor.placements.clone(),
         active: vec![true; pieces.len()],
         collisions: vec![None; pieces.len()],
         last_transition: None,
     };
-    let mut extents = Vec::with_capacity(pieces.len());
-    let mut ejected = Vec::new();
-    for (index, piece) in pieces.iter().enumerate() {
-        let extent = placement_long_axis_extent_mm(*piece, &state.placements[index], fast_settings);
-        if grid_key(extent) > bound_grid {
-            state.active[index] = false;
-            ejected.push(index);
-        }
-        extents.push(extent);
+    for index in ejected {
+        state.active[*index] = false;
     }
-    bounded.ejected_count = ejected.len();
-    bounded.kept_count = pieces.len() - ejected.len();
 
     // Fixed occupancy: one charged collision build per kept piece.
     for index in 0..pieces.len() {
@@ -908,24 +1053,24 @@ fn bounded_reinsertion_inner(
             state.collisions[index] = Some(Arc::new(collision));
         }
     }
-    diagnostics.initial_state_fingerprint = Some(state_fingerprint(&state, pieces));
-    diagnostics.initial_active_piece_ids = active_ids(&state, pieces);
+    let initial_state_fingerprint = state_fingerprint(&state, pieces);
+    let initial_active_piece_ids = active_ids(&state, pieces);
 
     // Displaced-first by descending piece area; `pieceId` breaks ties. Only
-    // displaced pieces are reinserted, so this is the whole order.
-    ejected.sort_by(|first, second| {
+    // displaced pieces are re-placed, so this is the whole order.
+    let mut order = ejected.to_vec();
+    order.sort_by(|first, second| {
         doubled_area_grid2(pieces[*second].polygon.area_mm2())
             .cmp(&doubled_area_grid2(pieces[*first].polygon.area_mm2()))
             .then_with(|| pieces[*first].id.cmp(pieces[*second].id))
     });
-    diagnostics.initial_inactive_piece_ids = ejected
+    let order_piece_ids = order
         .iter()
         .map(|index| pieces[*index].id.to_owned())
-        .collect();
-    diagnostics.initial_inactive_order_hash = Some(id_order_hash(&ejected, pieces));
+        .collect::<Vec<_>>();
+    let order_hash = id_order_hash(&order, pieces);
 
-    let reinsertion_seed =
-        parent_seed_key(&state, pieces) ^ BOUNDED_REINSERTION_SEED_DOMAIN ^ (bound_grid as u64);
+    let replacement_seed = parent_seed_key(&state, pieces) ^ seed_domain ^ (bound_grid as u64);
     let mut construction = GeneralPersistentVacancyConstructionDiagnostics {
         hint_stations_per_slot: CONSTRUCTION_HINT_STATIONS,
         rows_per_piece_cap: CONSTRUCTION_ROWS_PER_PIECE,
@@ -933,18 +1078,21 @@ fn bounded_reinsertion_inner(
         ..GeneralPersistentVacancyConstructionDiagnostics::default()
     };
 
-    for (ordinal, index) in ejected.iter().copied().enumerate() {
-        let mut row = GeneralPersistentVacancyBoundedReinsertionPieceRow {
+    let mut rows = Vec::with_capacity(order.len());
+    for (ordinal, index) in order.iter().copied().enumerate() {
+        let mut row = ReplacedPieceOutcome {
+            index,
             piece_id: pieces[index].id.to_owned(),
-            parent_extent_mm: extents[index],
-            ..GeneralPersistentVacancyBoundedReinsertionPieceRow::default()
+            candidates_considered: 0,
+            bound_rejections: 0,
+            placed_extent_mm: None,
         };
         let finalists = construct_candidate_poses(
             pieces,
             bound_settings,
-            &anchor,
+            anchor,
             &state,
-            reinsertion_seed,
+            replacement_seed,
             ordinal,
             index,
             &mut construction,
@@ -967,47 +1115,464 @@ fn bounded_reinsertion_inner(
                 state.placements[index] = pose;
                 state.active[index] = true;
                 state.collisions[index] = Some(collision);
-                row.reinserted = true;
                 row.placed_extent_mm = Some(extent);
-                bounded.reinserted_count = bounded.reinserted_count.saturating_add(1);
-                bounded.pieces.push(row);
+                rows.push(row);
             }
             None => {
                 // A clean per-bound failure: the bound is reported as
-                // unreachable for this piece rather than exceeded.
-                row.failure_reason = Some(format!(
-                    "no exact-valid pose for piece {} within the {bound_mm} mm bound",
-                    pieces[index].id
-                ));
-                bounded.failed_piece_id = Some(pieces[index].id.to_owned());
-                bounded.pieces.push(row);
-                diagnostics.construction = Some(construction);
-                diagnostics.publication_rejections =
-                    diagnostics.publication_rejections.saturating_add(1);
-                diagnostics.failure_reason = Some(format!(
-                    "bounded reinsertion could not place piece {} within the {bound_mm} mm bound",
-                    pieces[index].id
-                ));
-                return Ok(());
+                // unreachable for this piece rather than exceeded, and the
+                // remaining pieces are not attempted.
+                rows.push(row);
+                break;
             }
         }
     }
-    diagnostics.construction = Some(construction);
-    diagnostics.direct_insertions = bounded.reinserted_count;
-    diagnostics.complete_states = diagnostics.complete_states.saturating_add(1);
 
-    let final_placements = fast_placements(&state, pieces, false);
-    validate_and_measure_placements(pieces, &final_placements, fast_settings)
-        .map_err(|error| format!("bounded reinsertion final validation: {error}"))?;
-    let final_depth_mm = coupled_independent_source_depth(pieces, &final_placements, fast_settings)
-        .map_err(|error| format!("bounded reinsertion final depth: {error}"))?;
-    diagnostics.exact_valid = true;
-    diagnostics.independent_depth_mm = Some(final_depth_mm);
-    diagnostics.final_placement_fingerprint =
-        Some(coupled_fast_placement_fingerprint(&final_placements));
-    diagnostics.final_placements = coupled_placement_diagnostics(&final_placements);
-    bounded.final_depth_mm = Some(final_depth_mm);
-    Ok(())
+    Ok(BoundedReplacementPass {
+        state,
+        initial_state_fingerprint,
+        initial_active_piece_ids,
+        order_piece_ids,
+        order_hash,
+        pieces: rows,
+        construction,
+    })
+}
+
+/// Mode 28: conflict-targeted re-placement.
+///
+/// The repair class the micro-legalizer provably cannot reach. Mode 26's
+/// clamped-sheet ladder routinely converges a deep layout past its requested
+/// bound and is then rejected over a handful of clearance-violating *pairs*
+/// whose deficits are millimetre-scale - miter-joined envelope conflicts far
+/// from the material closest-approach point. Mode 27's micro-legalizer
+/// correctly refuses those: its model is translation-only, and a millimetre of
+/// travel is a search move, not a projection. The residue is nevertheless
+/// tiny and *local*, so the instrument it actually calls for is local
+/// re-placement:
+///
+/// 1. Survey the violation graph of the state against the real publication
+///    contracts (the same survey mode 27 runs).
+/// 2. Choose the **ejection set**: for each violating pair, the endpoint whose
+///    removal clears more violation mass, with `pieceId` breaking ties; the
+///    union over pairs. Because one endpoint of every violating pair is
+///    ejected, the remaining layout provably carries no violating pair at all.
+/// 3. Remove them. Any *boundary* residue left among the kept pieces is a
+///    projection problem again, so the micro-legalizer is run on the remaining
+///    sub-layout to clear it.
+/// 4. Re-place the ejected pieces with the construction insertion machinery
+///    under a sheet clamped to the bound - the same
+///    [`replace_ejected_under_bound`] primitive mode 24 uses. Ejection vacates
+///    space exactly where the conflicts sat, which is the whole hypothesis:
+///    mode 24's negative was measured from a *converged exact-valid* layout,
+///    where no free space existed anywhere; a compressed rejected state is a
+///    different animal.
+/// 5. Exact-validate the whole state against the real request and publish only
+///    on success. Anything else fails cleanly, with the ejected set and the
+///    per-piece outcomes reported.
+///
+/// The mode is deliberately pointed at states that do *not* validate, so - like
+/// mode 27 - it measures its parent rather than gating on it.
+pub(super) fn run_replacement_repair(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    parent: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_source: Option<String>,
+) -> GeneralPersistentVacancyDiagnostics {
+    let mut diagnostics = GeneralPersistentVacancyDiagnostics {
+        mode: 28,
+        seed_domain: REPLACEMENT_REPAIR_SEED_DOMAIN,
+        parent_source,
+        ..GeneralPersistentVacancyDiagnostics::default()
+    };
+    let Some(bound_mm) = relaxed_settings.persistent_vacancy_target_depth_mm else {
+        diagnostics.failure_reason =
+            Some("persistent vacancy mode 28 requires an explicit depth bound".to_owned());
+        return diagnostics;
+    };
+    if !bound_mm.is_finite() || bound_mm <= 0.0 {
+        diagnostics.failure_reason = Some(
+            "persistent vacancy mode 28 depth bound must be a positive finite value".to_owned(),
+        );
+        return diagnostics;
+    }
+    diagnostics.target_depth_mm = bound_mm;
+    if pieces.is_empty() {
+        diagnostics.failure_reason =
+            Some("persistent vacancy experiment requires at least one piece".to_owned());
+        return diagnostics;
+    }
+    if parent.final_placements.len() != pieces.len() {
+        diagnostics.failure_reason =
+            Some("conflict-targeted re-placement requires a complete parent layout".to_owned());
+        return diagnostics;
+    }
+
+    let parent_placements = diagnostic_fast_placements(&parent.final_placements);
+    diagnostics.parent_fingerprint = Some(coupled_fast_placement_fingerprint(&parent_placements));
+    diagnostics.initial_state_fingerprint = diagnostics.parent_fingerprint.clone();
+    // Like mode 27, this mode is *meant* to be pointed at states that do not
+    // validate, so the parent is measured rather than gated on.
+    diagnostics.parent_independent_depth_mm =
+        coupled_independent_source_depth(pieces, &parent_placements, fast_settings).ok();
+    diagnostics.attempted = true;
+
+    let outcome = replacement_repair(pieces, &parent_placements, fast_settings, bound_mm);
+    diagnostics.work = outcome.diagnostics.work;
+    diagnostics.cap_exhausted = outcome.diagnostics.cap_exhausted.clone();
+    match &outcome.repaired {
+        Some(repaired) => {
+            diagnostics.complete_states = 1;
+            diagnostics.direct_insertions = outcome.diagnostics.replaced_count;
+            diagnostics.exact_valid = true;
+            diagnostics.independent_depth_mm = outcome.diagnostics.depth_mm;
+            diagnostics.final_placement_fingerprint =
+                Some(coupled_fast_placement_fingerprint(repaired));
+            diagnostics.final_placements = coupled_placement_diagnostics(repaired);
+        }
+        None => {
+            diagnostics.publication_rejections = 1;
+            diagnostics.failure_reason = Some(
+                outcome
+                    .diagnostics
+                    .skipped_reason
+                    .clone()
+                    .or_else(|| outcome.diagnostics.rejection_reason.clone())
+                    .unwrap_or_else(|| {
+                        "conflict-targeted re-placement produced no exact-valid state".to_owned()
+                    }),
+            );
+        }
+    }
+    // The ejection set in slot order; its re-placement order and that order's
+    // hash live in the pass's own block, where they are documented together.
+    diagnostics.initial_inactive_piece_ids = outcome.diagnostics.ejected_piece_ids.clone();
+    diagnostics.replacement_repair = Some(outcome.diagnostics);
+    diagnostics
+}
+
+/// What one conflict-targeted re-placement attempt produced.
+pub(crate) struct ReplacementRepairOutcome {
+    pub diagnostics: GeneralReplacementRepairDiagnostics,
+    /// The repaired layout, returned only after the authoritative validator
+    /// accepted it against the real request.
+    pub repaired: Option<Vec<GeneralFastPlacement>>,
+}
+
+/// Runs the conflict-targeted re-placement repair over `placements` under the
+/// clamped bound `bound_mm`.
+///
+/// See [`run_replacement_repair`] for the mechanism. This is the callable pass,
+/// used both by mode 28 standalone and by mode 26 as its second-tier repair.
+/// Like the micro-legalizer, it never publishes on its own authority: a layout
+/// comes back only after [`validate_and_measure_placements`] accepted it.
+pub(crate) fn replacement_repair(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    fast_settings: GeneralFastSettings,
+    bound_mm: f64,
+) -> ReplacementRepairOutcome {
+    let mut diagnostics = GeneralReplacementRepairDiagnostics {
+        bound_mm,
+        ..GeneralReplacementRepairDiagnostics::default()
+    };
+    let refuse = |diagnostics: GeneralReplacementRepairDiagnostics| ReplacementRepairOutcome {
+        diagnostics,
+        repaired: None,
+    };
+    if placements.len() != pieces.len() {
+        diagnostics.skipped_reason =
+            Some("conflict-targeted re-placement requires a complete layout".to_owned());
+        return refuse(diagnostics);
+    }
+    if !bound_mm.is_finite() || bound_mm <= 0.0 {
+        diagnostics.skipped_reason =
+            Some("conflict-targeted re-placement requires a positive finite bound".to_owned());
+        return refuse(diagnostics);
+    }
+    for piece in pieces {
+        if piece.polygon.vertex_count() > MAX_SOURCE_FEATURES {
+            diagnostics.skipped_reason = Some(format!(
+                "piece {} exceeds the {MAX_SOURCE_FEATURES}-feature experiment cap",
+                piece.id
+            ));
+            return refuse(diagnostics);
+        }
+    }
+
+    let violations = match survey_layout_violations(pieces, placements, fast_settings) {
+        Ok(violations) => violations,
+        Err(error) => {
+            diagnostics.skipped_reason = Some(format!("violation survey: {error}"));
+            return refuse(diagnostics);
+        }
+    };
+    diagnostics.violating_pairs = violations.pairs.len();
+    diagnostics.boundary_pieces = violations.boundary_pieces.len();
+    diagnostics.material_pairs = violations.material_pairs;
+    diagnostics.collision_pairs = violations.collision_pairs;
+    diagnostics.max_material_deficit_mm = violations.max_material_deficit_mm;
+    diagnostics.max_envelope_push_mm = violations.max_envelope_push_mm;
+    diagnostics.max_boundary_deficit_mm = violations.max_boundary_deficit_mm;
+    diagnostics.component_count = violations.components.len();
+    diagnostics.largest_component_pieces = violations.largest_component_pieces();
+    let component_limit = micro_legalization_component_limit(pieces.len());
+    let ejection_limit = replacement_ejection_limit(pieces.len());
+    diagnostics.component_limit = component_limit;
+    diagnostics.ejection_limit = ejection_limit;
+    if violations.pairs.is_empty() {
+        // A pure boundary residue is the micro-legalizer's job, and a state
+        // with no residue at all does not need this pass. Either way there is
+        // no conflict to target.
+        diagnostics.skipped_reason =
+            Some("no violating pair to target with a re-placement".to_owned());
+        return refuse(diagnostics);
+    }
+    if diagnostics.largest_component_pieces > component_limit {
+        diagnostics.skipped_reason = Some(format!(
+            "violation component spans {} pieces, above the local-repair limit of {component_limit}",
+            diagnostics.largest_component_pieces
+        ));
+        return refuse(diagnostics);
+    }
+
+    // The ejection set: for each violating pair, the endpoint whose removal
+    // clears more violation mass. `pieceId` breaks ties, so the choice is a
+    // function of the layout and the request alone.
+    let incident_mass = violations.incident_mass(placements.len());
+    let mut ejected = Vec::new();
+    for pair in &violations.pairs {
+        let (first, second) = (pair.first, pair.second);
+        let chosen = match grid_key(incident_mass[first]).cmp(&grid_key(incident_mass[second])) {
+            Ordering::Greater => first,
+            Ordering::Less => second,
+            Ordering::Equal => {
+                if placements[first].piece_id <= placements[second].piece_id {
+                    first
+                } else {
+                    second
+                }
+            }
+        };
+        if !ejected.contains(&chosen) {
+            ejected.push(chosen);
+        }
+    }
+    ejected.sort_unstable();
+    diagnostics.ejected_count = ejected.len();
+    if ejected.len() > ejection_limit {
+        diagnostics.skipped_reason = Some(format!(
+            "ejection set of {} pieces exceeds the local-repair limit of {ejection_limit}",
+            ejected.len()
+        ));
+        return refuse(diagnostics);
+    }
+    diagnostics.ejected_piece_ids = ejected
+        .iter()
+        .map(|slot| placements[*slot].piece_id.clone())
+        .collect();
+    diagnostics.ejected_mass_mm = ejected.iter().map(|slot| incident_mass[*slot]).collect();
+
+    // The remainder must now be free of violating pairs by construction. A
+    // boundary residue may survive, and that *is* a projection problem, so the
+    // micro-legalizer gets the sub-layout.
+    let mut kept = Vec::with_capacity(placements.len() - ejected.len());
+    for (slot, placement) in placements.iter().enumerate() {
+        if !ejected.contains(&slot) {
+            kept.push(placement.clone());
+        }
+    }
+    let kept_violations = match survey_layout_violations(pieces, &kept, fast_settings) {
+        Ok(violations) => violations,
+        Err(error) => {
+            diagnostics.skipped_reason = Some(format!("kept sub-layout survey: {error}"));
+            return refuse(diagnostics);
+        }
+    };
+    diagnostics.kept_violating_pairs = kept_violations.pairs.len();
+    diagnostics.kept_boundary_pieces = kept_violations.boundary_pieces.len();
+    if !kept_violations.pairs.is_empty() {
+        // Cannot happen while the ejection set covers every violating pair,
+        // but a silent claim is worse than a reported refusal.
+        diagnostics.skipped_reason = Some(format!(
+            "kept sub-layout still carries {} violating pairs after ejection",
+            kept_violations.pairs.len()
+        ));
+        return refuse(diagnostics);
+    }
+    let mut base = placements.to_vec();
+    if !kept_violations.boundary_pieces.is_empty() {
+        // The micro-legalizer only returns a layout the authoritative
+        // validator has already accepted, so a `Some` here is trustworthy.
+        let (micro, repaired) = micro_legalize(pieces, &kept, fast_settings);
+        diagnostics.kept_micro_legalization = Some(micro);
+        match repaired {
+            Some(repaired) => {
+                let by_id = repaired
+                    .iter()
+                    .map(|placement| (placement.piece_id.as_str(), placement))
+                    .collect::<BTreeMap<_, _>>();
+                for placement in &mut base {
+                    if let Some(moved) = by_id.get(placement.piece_id.as_str()) {
+                        placement.translate_short_axis = moved.translate_short_axis;
+                        placement.translate_long_axis = moved.translate_long_axis;
+                    }
+                }
+            }
+            None => {
+                diagnostics.rejection_reason = Some(
+                    "the kept sub-layout's boundary residue could not be micro-legalized"
+                        .to_owned(),
+                );
+                return refuse(diagnostics);
+            }
+        }
+    }
+
+    diagnostics.attempted = true;
+    let bound_settings = GeneralFastSettings {
+        sheet_long_axis_mm: bound_mm,
+        ..fast_settings
+    };
+    let anchor = match relaxed_state_from_fast_placements(pieces, &base, bound_mm) {
+        Ok(anchor) => anchor,
+        Err(error) => {
+            diagnostics.rejection_reason = Some(error);
+            return refuse(diagnostics);
+        }
+    };
+    // Placement slots and piece indices need not agree, so the ejection set is
+    // translated into piece indices before it reaches the insertion path.
+    let by_id = pieces
+        .iter()
+        .enumerate()
+        .map(|(index, piece)| (piece.id, index))
+        .collect::<BTreeMap<_, _>>();
+    let ejected_indices: Vec<usize> = match ejected
+        .iter()
+        .map(|slot| {
+            by_id
+                .get(placements[*slot].piece_id.as_str())
+                .copied()
+                .ok_or_else(|| format!("unknown piece {}", placements[*slot].piece_id))
+        })
+        .collect::<Result<Vec<usize>, String>>()
+    {
+        Ok(indices) => indices,
+        Err(error) => {
+            diagnostics.rejection_reason = Some(error);
+            return refuse(diagnostics);
+        }
+    };
+
+    let mut work = RunWork::new(pieces.len());
+    let pass = replace_ejected_under_bound(
+        pieces,
+        fast_settings,
+        bound_settings,
+        bound_mm,
+        &anchor,
+        &ejected_indices,
+        REPLACEMENT_REPAIR_SEED_DOMAIN,
+        &mut work,
+    );
+    diagnostics.work = work.diagnostics;
+    let pass = match pass {
+        Ok(pass) => pass,
+        Err(reason) => {
+            diagnostics.cap_exhausted = reason.strip_prefix("cap: ").map(str::to_owned);
+            diagnostics.rejection_reason = Some(reason);
+            return refuse(diagnostics);
+        }
+    };
+    // `ejected_piece_ids` stays in slot order and stays aligned with
+    // `ejected_mass_mm`; the re-placement order is `pieces`, anchored by the
+    // order hash.
+    diagnostics.ejected_order_hash = Some(pass.order_hash.clone());
+    diagnostics.pieces = pass
+        .pieces
+        .iter()
+        .map(|row| GeneralReplacementRepairPieceRow {
+            piece_id: row.piece_id.clone(),
+            candidates_considered: row.candidates_considered,
+            bound_rejections: row.bound_rejections,
+            replaced: row.placed_extent_mm.is_some(),
+            placed_extent_mm: row.placed_extent_mm,
+        })
+        .collect();
+    diagnostics.replaced_count = diagnostics.pieces.iter().filter(|row| row.replaced).count();
+    if let Some(failed) = pass.failed_piece_id() {
+        diagnostics.failed_piece_id = Some(failed.to_owned());
+        diagnostics.rejection_reason = Some(format!(
+            "no exact-valid pose for piece {failed} within the {bound_mm} mm bound"
+        ));
+        return refuse(diagnostics);
+    }
+
+    let repaired = fast_placements(&pass.state, pieces, false);
+    match validate_and_measure_placements(pieces, &repaired, fast_settings) {
+        Ok(_) => {}
+        Err(error) => {
+            diagnostics.rejection_reason = Some(error.to_string());
+            return refuse(diagnostics);
+        }
+    }
+    match coupled_independent_source_depth(pieces, &repaired, fast_settings) {
+        Ok(depth_mm) => {
+            diagnostics.exact_valid = true;
+            diagnostics.depth_mm = Some(depth_mm);
+            ReplacementRepairOutcome {
+                diagnostics,
+                repaired: Some(repaired),
+            }
+        }
+        Err(error) => {
+            diagnostics.rejection_reason = Some(format!("repaired state depth: {error}"));
+            refuse(diagnostics)
+        }
+    }
+}
+
+/// `relaxed_state_from_diagnostics_with_target` for a plain fast placement
+/// list, which is what every repair pass carries.
+fn relaxed_state_from_fast_placements(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    target_depth_mm: f64,
+) -> Result<RelaxedState, String> {
+    let by_id = pieces
+        .iter()
+        .enumerate()
+        .map(|(index, piece)| (piece.id, index))
+        .collect::<BTreeMap<_, _>>();
+    let mut slots = vec![None; pieces.len()];
+    for placement in placements {
+        let index = *by_id
+            .get(placement.piece_id.as_str())
+            .ok_or_else(|| format!("unknown piece {}", placement.piece_id))?;
+        if slots[index].is_some() {
+            return Err(format!("duplicate piece {}", placement.piece_id));
+        }
+        slots[index] = Some(RelaxedPlacement {
+            input_index: index,
+            rotation_deg: placement.rotation_deg,
+            mirrored: placement.mirrored,
+            translate_x: placement.translate_short_axis,
+            translate_y: placement.translate_long_axis,
+        });
+    }
+    let placements = slots
+        .into_iter()
+        .enumerate()
+        .map(|(index, placement)| {
+            placement.ok_or_else(|| format!("layout is missing piece {}", pieces[index].id))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(RelaxedState {
+        placements,
+        strip_depth_mm: target_depth_mm,
+    })
 }
 
 fn run_population(
@@ -7405,15 +7970,25 @@ mod tests {
 
     #[test]
     fn bounded_reinsertion_fits_the_construction_budget() {
-        // Mode 24 charges one construction slot expansion per reinserted
-        // piece and one collision build per kept piece. A run ejects at most
-        // every piece, so its worst case is `piece_count` slot expansions and
-        // `piece_count` seeding builds - both strictly funded by the existing
-        // per-piece construction term, which is why the mode needs no new
-        // aggregate quota term and the frozen ceilings are untouched.
+        // Modes 24 and 28 share `replace_ejected_under_bound`, which charges
+        // one construction slot expansion per re-placed piece and one
+        // collision build per kept piece. A run ejects at most every piece, so
+        // its worst case is `piece_count` slot expansions and `piece_count`
+        // seeding builds - both strictly funded by the existing per-piece
+        // construction term, which is why neither mode needs a new aggregate
+        // quota term and the frozen ceilings are untouched. Mode 28 ejects a
+        // vertex cover of the violation graph, so it can never eject more than
+        // `piece_count` pieces however the admission limit is sized, and each
+        // of its calls gets its own `RunWork` ledger - so a mode-26 rung
+        // running the repair per arm never accumulates against a shared budget
+        // either.
         for piece_count in [1usize, 2, 3, 17, 20, 61, 137, 400] {
             let quotas = VacancyQuotas::for_piece_count(piece_count);
             let worst_case_slots = piece_count;
+            assert!(
+                replacement_ejection_limit(piece_count).min(piece_count) <= worst_case_slots,
+                "piece count {piece_count}"
+            );
             assert!(
                 worst_case_slots <= quotas.construction_selected_piece_slots,
                 "piece count {piece_count}"
@@ -8171,6 +8746,208 @@ mod tests {
         assert!(settled.placements[1].translate_y < 40.0);
         assert!(
             settled.placements[1].translate_y >= settled.placements[0].translate_y + 10.0 - 1e-9
+        );
+    }
+
+    /// A settings block with a real clearance contract, matching how the
+    /// benchmark driver configures the engine for the exact-clearance fixture.
+    fn replacement_settings(short_axis_mm: f64, long_axis_mm: f64) -> GeneralFastSettings {
+        let mut settings = GeneralFastSettings::deterministic_test(short_axis_mm, long_axis_mm);
+        settings.total_padding_mm = 5.0;
+        settings.sheet_edge_clearance_mm = Some(5.0);
+        settings.clearance_safety_margin_mm = 0.0;
+        settings.flattening_sag_tolerance_mm = 0.0;
+        settings.search_offset_allowance_mm = 0.0005;
+        settings
+    }
+
+    fn replacement_placement(id: &str, x_mm: f64, y_mm: f64) -> GeneralFastPlacement {
+        GeneralFastPlacement {
+            piece_id: id.to_owned(),
+            rotation_deg: 0.0,
+            mirrored: false,
+            translate_short_axis: x_mm,
+            translate_long_axis: y_mm,
+        }
+    }
+
+    fn replacement_pieces<'a>(
+        ids: &'a [&'a str],
+        polygons: &'a [PolygonSet],
+    ) -> Vec<GeneralFastPiece<'a>> {
+        ids.iter()
+            .enumerate()
+            .map(|(index, id)| GeneralFastPiece {
+                id,
+                polygon: &polygons[index],
+                allow_rotation: false,
+                allow_mirror: false,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn replacement_repair_ejects_the_conflict_and_rebuilds_it() {
+        // The mechanism end to end on a residue the micro-legalizer refuses:
+        // `b` sits 1 mm from `a` under a 5 mm contract, a 4 mm deficit, which
+        // is a search move rather than a projection. There is open sheet above
+        // the pair, so ejecting one endpoint and re-placing it must succeed.
+        let ids = ["a", "b"];
+        let polygons = vec![square(20.0), square(20.0)];
+        let pieces = replacement_pieces(&ids, &polygons);
+        let settings = replacement_settings(200.0, 300.0);
+        let placements = vec![
+            replacement_placement("a", 20.0, 20.0),
+            replacement_placement("b", 41.0, 20.0),
+        ];
+        assert!(validate_and_measure_placements(&pieces, &placements, settings).is_err());
+
+        let outcome = replacement_repair(&pieces, &placements, settings, 200.0);
+        let diagnostics = &outcome.diagnostics;
+        assert!(diagnostics.attempted, "{diagnostics:?}");
+        assert_eq!(diagnostics.violating_pairs, 1, "{diagnostics:?}");
+        assert_eq!(diagnostics.ejected_count, 1, "{diagnostics:?}");
+        assert_eq!(diagnostics.kept_violating_pairs, 0, "{diagnostics:?}");
+        assert_eq!(diagnostics.replaced_count, 1, "{diagnostics:?}");
+        assert!(diagnostics.failed_piece_id.is_none(), "{diagnostics:?}");
+        assert!(diagnostics.exact_valid, "{diagnostics:?}");
+
+        let repaired = outcome.repaired.expect("a repaired layout");
+        // The pass never publishes on its own authority: what it returns has
+        // already been through the authoritative validator.
+        validate_and_measure_placements(&pieces, &repaired, settings)
+            .expect("the repaired layout validates");
+        // Every re-placed pose honours the clamp.
+        for placement in &repaired {
+            assert!(placement.translate_long_axis <= 200.0);
+        }
+    }
+
+    #[test]
+    fn replacement_repair_is_deterministic() {
+        let ids = ["a", "b"];
+        let polygons = vec![square(20.0), square(20.0)];
+        let pieces = replacement_pieces(&ids, &polygons);
+        let settings = replacement_settings(200.0, 300.0);
+        let placements = vec![
+            replacement_placement("a", 20.0, 20.0),
+            replacement_placement("b", 41.0, 20.0),
+        ];
+
+        let first = replacement_repair(&pieces, &placements, settings, 200.0);
+        let second = replacement_repair(&pieces, &placements, settings, 200.0);
+        assert_eq!(first.diagnostics, second.diagnostics);
+        assert_eq!(first.repaired, second.repaired);
+    }
+
+    #[test]
+    fn replacement_repair_ejects_the_heavier_endpoint_of_a_pair() {
+        // `b` is in conflict with both `a` and `c`, so it carries twice the
+        // incident mass either neighbour does and is the piece whose removal
+        // clears the most violation. Ejecting it covers both pairs at once,
+        // which is the whole point of scoring the choice by mass.
+        let ids = ["a", "b", "c"];
+        let polygons = vec![square(20.0), square(20.0), square(20.0)];
+        let pieces = replacement_pieces(&ids, &polygons);
+        let settings = replacement_settings(200.0, 300.0);
+        let placements = vec![
+            replacement_placement("a", 20.0, 20.0),
+            replacement_placement("b", 41.0, 20.0),
+            replacement_placement("c", 62.0, 20.0),
+        ];
+
+        let outcome = replacement_repair(&pieces, &placements, settings, 200.0);
+        let diagnostics = &outcome.diagnostics;
+        assert_eq!(diagnostics.violating_pairs, 2, "{diagnostics:?}");
+        assert_eq!(diagnostics.ejected_count, 1, "{diagnostics:?}");
+        assert_eq!(diagnostics.ejected_piece_ids, vec!["b".to_owned()]);
+        assert_eq!(diagnostics.kept_violating_pairs, 0, "{diagnostics:?}");
+    }
+
+    #[test]
+    fn replacement_repair_refuses_a_layout_with_no_violating_pair() {
+        let ids = ["a", "b"];
+        let polygons = vec![square(20.0), square(20.0)];
+        let pieces = replacement_pieces(&ids, &polygons);
+        let settings = replacement_settings(200.0, 300.0);
+        let placements = vec![
+            replacement_placement("a", 20.0, 20.0),
+            replacement_placement("b", 60.0, 20.0),
+        ];
+        assert!(validate_and_measure_placements(&pieces, &placements, settings).is_ok());
+
+        let outcome = replacement_repair(&pieces, &placements, settings, 200.0);
+        assert!(outcome.repaired.is_none());
+        assert!(!outcome.diagnostics.attempted);
+        assert!(
+            outcome
+                .diagnostics
+                .skipped_reason
+                .as_deref()
+                .is_some_and(|reason| reason.contains("no violating pair")),
+            "{:?}",
+            outcome.diagnostics
+        );
+    }
+
+    #[test]
+    fn replacement_repair_fails_cleanly_when_a_piece_cannot_be_re_placed() {
+        // The same conflict, but the sheet is clamped so tightly that the
+        // ejected piece has nowhere legal to land. The pass must report the
+        // failure per piece rather than publish anything.
+        let ids = ["a", "b"];
+        let polygons = vec![square(20.0), square(20.0)];
+        let pieces = replacement_pieces(&ids, &polygons);
+        let settings = replacement_settings(50.0, 300.0);
+        let placements = vec![
+            replacement_placement("a", 5.0, 5.0),
+            replacement_placement("b", 26.0, 5.0),
+        ];
+
+        let outcome = replacement_repair(&pieces, &placements, settings, 30.0);
+        assert!(outcome.repaired.is_none(), "{:?}", outcome.diagnostics);
+        assert!(!outcome.diagnostics.exact_valid);
+        assert_eq!(outcome.diagnostics.replaced_count, 0);
+        assert!(
+            outcome.diagnostics.failed_piece_id.is_some(),
+            "{:?}",
+            outcome.diagnostics
+        );
+    }
+
+    #[test]
+    fn replacement_repair_refuses_an_oversized_violation_component() {
+        // A residue that spans more of the layout than a local repair may
+        // touch is a search problem, and is refused rather than attempted.
+        let count = 8;
+        let ids = (0..count)
+            .map(|index| format!("p{index}"))
+            .collect::<Vec<_>>();
+        let id_refs = ids.iter().map(String::as_str).collect::<Vec<_>>();
+        let polygons = (0..count).map(|_| square(20.0)).collect::<Vec<_>>();
+        let pieces = replacement_pieces(&id_refs, &polygons);
+        let settings = replacement_settings(400.0, 300.0);
+        // A chain of pieces each 1 mm from the next: one component spanning
+        // every piece, against a limit of `max(4, 8 / 8) = 4`.
+        let placements = (0..count)
+            .map(|index| replacement_placement(&ids[index], 20.0 + 21.0 * index as f64, 20.0))
+            .collect::<Vec<_>>();
+
+        let outcome = replacement_repair(&pieces, &placements, settings, 200.0);
+        let diagnostics = &outcome.diagnostics;
+        assert!(outcome.repaired.is_none());
+        assert!(!diagnostics.attempted, "{diagnostics:?}");
+        assert_eq!(diagnostics.component_limit, 4, "{diagnostics:?}");
+        assert_eq!(
+            diagnostics.largest_component_pieces, count,
+            "{diagnostics:?}"
+        );
+        assert!(
+            diagnostics
+                .skipped_reason
+                .as_deref()
+                .is_some_and(|reason| reason.contains("local-repair limit")),
+            "{diagnostics:?}"
         );
     }
 }
