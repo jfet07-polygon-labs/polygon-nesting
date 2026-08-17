@@ -12727,7 +12727,13 @@ fn continuous_pole_overlap_pressure(
 /// and a resolving one cannot drift in how they charge for it. `kernel` and
 /// `counters` are passed as disjoint borrows rather than as `&mut self` because
 /// the shapes a resolved caller holds are borrowed from the lane's catalogue.
-#[inline]
+///
+/// `inline(always)`, matching every method on [`ExplorationKernel`]'s legacy
+/// implementation, for the same reason PR3 gave: this sits on the hottest call
+/// in every measured stream — about 22.8M invocations on mode 20 and 52.0M on
+/// mode 22 — and factoring the body out of `pair_collides` must reproduce the
+/// direct call it replaced rather than introduce one.
+#[inline(always)]
 fn kernel_pair_collides<K: ExplorationKernel<Shape = OrientedSurrogate>>(
     kernel: &mut K,
     counters: &mut WorkCounters,
