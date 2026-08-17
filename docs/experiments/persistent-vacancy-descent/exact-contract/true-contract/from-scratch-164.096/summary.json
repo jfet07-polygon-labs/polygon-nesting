@@ -1,0 +1,27 @@
+{
+ "milestone": "from-scratch fixpoint 164.096 mm on the true 5.0/5.0 exact-clearance contract, from 164.932 - the from-scratch line's first movement by the global legalization tier",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "mechanism": "mode-26 clamped-sheet ladder compression with the global pressure-balanced legalization fourth repair tier, then mode-22 alternation, jointly fixpointed. Same mechanism as record-159.150/, from the from-scratch parent.",
+ "lineage": [
+  {"depthMm": 164.932, "source": "from-scratch-164.932/pinned-parent-164.932.json"},
+  {"depthMm": 164.105, "via": "mode-26 ladder to 164.0, seed 0, published by tier four"},
+  {"depthMm": 164.096, "via": "mode-22 alternation, all four seeds"}
+ ],
+ "pinnedParent": {
+  "file": "pinned-parent-164.096.json",
+  "independentDepthMm": 164.096,
+  "rawSourceDepthMm": 164.09558495038524,
+  "placementFingerprint": "088d4cb6ed791d97929ea1b32b7df17a78aa1d4ec9ccb816540ba9357d41aa44"
+ },
+ "fixpointArms": {
+  "mode26Ladders": {"bounds": [163.796, 163.546, 163.096, 162.496], "seeds": [0, 1], "published": "164.096 on all eight"},
+  "mode22Alternation": {"seeds": [0, 1, 2, 3], "published": "164.096 on all four"},
+  "verdict": "12/12 arms return the incumbent"
+ },
+ "replayValidation": "modes 27 and 30 on the pinned state both report 0 violating pairs, 0 boundary pieces, exactValid AND contractValid, independent depth 164.096 and raw source depth 164.09558495038524",
+ "matchedControl": "the 164.4 ladder at seed 0 is a matched-arm pair: pre-change 164.932, with the tier armed 164.932. Tier four fired four times there and published nothing. Only the 164.0 rung breaks through, at seed 0 (seed 1 does not).",
+ "honestReading": "the from-scratch line moves 0.836 mm where the record line moves 4.892 mm, and the difference is not luck. The tier needs a COMPRESSED FRONTIER to work on - a state where the separator has already spent the layout's slack and left a repair problem - and the from-scratch basin's frontier is shallower, so most of its rungs hand the tier a program that is simply infeasible. This mechanism deepens an already deep basin far better than it reaches one, which leaves the owner's from-scratch acceptance criterion measured on this line rather than on the record line.",
+ "driver": "../global-legalization/joint.py, log in joint-cascade.log"
+}

@@ -1,0 +1,28 @@
+start 159.155 from /var/lib/t3/tmp/mode31/cascade/pinned-159.155.json
+  round 0 mode 26 target 158.855 seed 0: 159.155
+  round 0 mode 26 target 158.855 seed 1: 159.155
+  round 0 mode 26 target 158.605 seed 0: 159.155
+  round 0 mode 26 target 158.605 seed 1: 159.155
+  round 0 mode 26 target 158.155 seed 0: 159.155
+  round 0 mode 26 target 158.155 seed 1: 159.155
+  round 0 mode 26 target 157.555 seed 0: 159.155
+  round 0 mode 26 target 157.555 seed 1: 159.155
+  round 0 mode 22 target 159.955 seed 0: 159.15 <-- improves
+  round 0 mode 22 target 159.955 seed 1: 159.15 <-- improves
+  round 0 mode 22 target 159.955 seed 2: 159.15 <-- improves
+  round 0 mode 22 target 159.955 seed 3: 159.15 <-- improves
+pinned /var/lib/t3/tmp/mode31/joint/pinned-159.150.json: depth=159.15 raw=159.1499863776172 fp=e934f646912e1b5f pieces=61
+round 0: incumbent -> 159.15
+  round 1 mode 26 target 158.850 seed 0: 159.15
+  round 1 mode 26 target 158.850 seed 1: 159.15
+  round 1 mode 26 target 158.600 seed 0: 159.15
+  round 1 mode 26 target 158.600 seed 1: 159.15
+  round 1 mode 26 target 158.150 seed 0: 159.15
+  round 1 mode 26 target 158.150 seed 1: 159.15
+  round 1 mode 26 target 157.550 seed 0: 159.15
+  round 1 mode 26 target 157.550 seed 1: 159.15
+  round 1 mode 22 target 159.950 seed 0: 159.15
+  round 1 mode 22 target 159.950 seed 1: 159.15
+  round 1 mode 22 target 159.950 seed 2: 159.15
+  round 1 mode 22 target 159.950 seed 3: 159.15
+FIXPOINT at 159.15 after 1 rounds

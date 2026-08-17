@@ -92,6 +92,25 @@
 //! The pass never publishes on its own authority: a result is returned only
 //! after [`validate_and_measure_placements`] accepts it against the real
 //! request.
+//!
+//! # The global big brother
+//!
+//! Everything above is deliberately *local*: only pieces incident to a
+//! violation move, the residue must be rounding-scale, and a component
+//! spanning more than an eighth of the layout is refused outright. That is the
+//! right instrument for a projection problem and the wrong one for a
+//! **redistribution** problem, where the correction a violating pair needs is
+//! millimetres and the room to make it exists only three pieces away.
+//!
+//! [`global_legalize`] is the same geometry under a different bound: every
+//! piece is a variable, sheet containment and the depth bound are hard
+//! constraints on all of them, and the step of each round is the *minimum-norm*
+//! correction satisfying the whole linearized system at once rather than a
+//! sequence of pairwise pushes. It shares this module's witnesses, contracts,
+//! envelope predicate and grid discipline exactly, so the two passes always
+//! agree on what a violation is; they disagree only on how much of the layout
+//! is allowed to answer for it. See [`global_legalize`] for the model and the
+//! solver.
 
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
@@ -157,6 +176,76 @@ const GRID_MM: f64 = 0.001;
 /// [`MICRO_LEGALIZATION_MARGIN_MM`] is larger than the band, so even a state
 /// sitting at its lower edge still clears the bare contract.
 const MICRO_LEGALIZATION_SNAP_SLACK_MM: f64 = GRID_MM * std::f64::consts::SQRT_2;
+
+/// Outer re-linearization rounds of [`global_legalize`], per margin
+/// escalation. Every round re-measures the exact geometry, rebuilds the
+/// constraint system from that measurement, and solves it once.
+const GLOBAL_LEGALIZATION_ROUNDS: usize = 24;
+
+/// Dual coordinate sweeps of Hildreth's method inside one round. The dual is
+/// one variable per constraint and each sweep is a single pass over them, so
+/// this is the only iteration count the quadratic program has.
+const GLOBAL_LEGALIZATION_DUAL_SWEEPS: usize = 512;
+
+/// How many times [`global_legalize`] re-runs with an enlarged margin when the
+/// geometry closes but the authoritative validator still rejects. Each
+/// escalation adds another [`MICRO_LEGALIZATION_MARGIN_MM`] and continues from
+/// the translations already accumulated.
+const GLOBAL_LEGALIZATION_ESCALATIONS: usize = 3;
+
+/// Per-round trust radius, as a multiple of that round's own worst deficit.
+///
+/// The separation constraints are linearized around the current poses, so the
+/// model is only faithful within a neighbourhood of the residue it was measured
+/// from: past that the witness normal has rotated and the linear inequality is
+/// extrapolation. Bounding each round's step by the residue's own scale is what
+/// keeps the sequence inside the model, and it is also what makes the guard
+/// band sound - a pair further apart than the target plus twice this radius
+/// provably cannot be brought into contact by one round's step.
+const GLOBAL_LEGALIZATION_TRUST_FACTOR: f64 = 1.0;
+
+/// Cumulative per-piece displacement cap, as a multiple of the *initial* worst
+/// deficit. Generous by design: this pass exists precisely for corrections a
+/// bounded local nudge cannot express, and every intermediate state is
+/// re-measured exactly rather than trusted. It is a runaway guard, not a
+/// tuning knob.
+const GLOBAL_LEGALIZATION_CAP_FACTOR: f64 = 16.0;
+
+/// Exact pair probes one round may charge for a single pair of pieces.
+///
+/// A round measures each pair at most twice - once in the survey and once
+/// while building its rows - and each measurement costs one material approach,
+/// one envelope predicate and, when the envelopes interpenetrate, the 24-step
+/// bisection that recovers the separating travel. Two such measurements
+/// therefore top out at `2 * (1 + 1 + 26) = 56`; the ceiling carries headroom
+/// over that so a future measurement cannot silently exceed the funded budget
+/// instead of stopping on it.
+const GLOBAL_LEGALIZATION_PAIR_PROBES_PER_ROUND: usize = 64;
+
+/// The worst-case number of exact pair probes one [`global_legalize`] call may
+/// charge on an instance of `piece_count` pieces.
+///
+/// Asserted against the aggregate experimental pair-visit ceiling in
+/// `aggregate_quota_formulas_match_the_reviewed_contract`'s sibling,
+/// `bounded_reinsertion_fits_the_construction_budget`, so the global tier is
+/// funded by the terms already reviewed rather than by a new one.
+pub(crate) fn global_legalization_worst_case_pair_visits(piece_count: usize) -> usize {
+    let complete_pairs = piece_count
+        .saturating_mul(piece_count.saturating_sub(1))
+        .saturating_div(2);
+    (GLOBAL_LEGALIZATION_ESCALATIONS + 1)
+        .saturating_mul(GLOBAL_LEGALIZATION_ROUNDS)
+        .saturating_mul(complete_pairs)
+        .saturating_mul(GLOBAL_LEGALIZATION_PAIR_PROBES_PER_ROUND)
+}
+
+/// The worst-case number of collision-envelope builds one [`global_legalize`]
+/// call may charge: the pass builds one envelope per piece per margin
+/// escalation and never rebuilds one inside a round, because a grid-snapped
+/// translation commutes with both the transform and the offset.
+pub(crate) fn global_legalization_worst_case_collision_builds(piece_count: usize) -> usize {
+    (GLOBAL_LEGALIZATION_ESCALATIONS + 1).saturating_mul(piece_count)
+}
 
 /// Diagnostics for one micro-legalization attempt.
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
@@ -1905,6 +1994,799 @@ fn point_on_segment(point: IrregularPoint, start: IrregularPoint, end: Irregular
         && point.y <= start.y.max(end.y)
 }
 
+// ---------------------------------------------------------------------------
+// Global pressure-balanced legalization
+// ---------------------------------------------------------------------------
+
+/// Diagnostics for one global pressure-balanced legalization attempt.
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralGlobalLegalizationDiagnostics {
+    pub attempted: bool,
+    /// The depth bound the containment constraints were built against, when one
+    /// was requested.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bound_mm: Option<f64>,
+    /// The sheet long axis the pass actually solved under: the bound when one
+    /// was requested and it is tighter than the request's own sheet, and the
+    /// request's sheet otherwise.
+    pub effective_long_axis_mm: f64,
+    /// Every piece is a variable, so this is the layout's own piece count and
+    /// `2 * piece_count` scalar unknowns.
+    pub piece_count: usize,
+    pub variables: usize,
+    /// Violations of the input state, measured against the bare contracts under
+    /// the *effective* sheet - so `boundaryPiecesBefore` counts pieces past the
+    /// depth bound as well as pieces past the real sheet.
+    pub violating_pairs_before: usize,
+    pub boundary_pieces_before: usize,
+    pub material_pairs_before: usize,
+    pub collision_pairs_before: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_material_deficit_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_envelope_push_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_boundary_deficit_mm: Option<f64>,
+    /// The violation graph of the input, reported but *not* used to admit or
+    /// refuse: this pass has no component limit, which is the whole point of it.
+    pub component_count: usize,
+    pub largest_component_pieces: usize,
+    /// The cumulative per-piece displacement cap, and the trust radius of the
+    /// first round.
+    pub displacement_cap_mm: f64,
+    pub initial_trust_radius_mm: f64,
+    pub rounds_run: usize,
+    pub escalations_run: usize,
+    /// Dual sweeps summed over every round, and the widest constraint residual
+    /// the last solved round still carried when its sweeps ran out. A residual
+    /// at or above the grid quantum means the quadratic program itself did not
+    /// close, which is a different failure from a program that closed onto a
+    /// state the geometry then disagreed with.
+    pub dual_sweeps_run: usize,
+    pub max_dual_residual_mm: f64,
+    /// The largest constraint system built, split by kind. Pair rows include
+    /// the guard-band rows that protect currently legal pairs.
+    pub max_rows: usize,
+    pub max_pair_rows: usize,
+    pub max_boundary_rows: usize,
+    /// Exact pair probes actually charged, against the ceiling the aggregate
+    /// quota test funds, and the envelope builds this run cost against theirs.
+    pub pair_visits: usize,
+    pub funded_pair_visits: usize,
+    pub collision_builds: usize,
+    pub funded_collision_builds: usize,
+    pub moved_pieces: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_displacement_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mean_displacement_mm: Option<f64>,
+    pub displacement_capped: bool,
+    /// Violations of the output state, on the same terms as the input's.
+    pub violating_pairs_after: usize,
+    pub boundary_pieces_after: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_material_deficit_after_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_envelope_push_after_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_boundary_deficit_after_mm: Option<f64>,
+    /// Whether the exact geometry reached a feasible fixpoint.
+    pub resolved: bool,
+    /// Whether the authoritative validator accepted the result against the real
+    /// request.
+    pub exact_valid: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub depth_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cap_exhausted: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skipped_reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejection_reason: Option<String>,
+}
+
+/// One row of the global program: a linear inequality `a . t >= rhs` over the
+/// stacked translation vector `t = (dx_0, dy_0, ..., dx_n, dy_n)`.
+#[derive(Clone, Copy, Debug)]
+enum GlobalRow {
+    /// A separation constraint, `normal . (t_first - t_second) >= rhs_mm`. The
+    /// normal is a unit vector, so the row's squared norm is exactly two.
+    Pair {
+        first: usize,
+        second: usize,
+        normal: (f64, f64),
+        rhs_mm: f64,
+    },
+    /// A containment constraint, `sign * t_piece[axis] >= rhs_mm`, with `axis`
+    /// zero for the short axis and one for the long axis. Squared norm one.
+    ///
+    /// These are *exact*, not linearized: the outer bounds of a translated
+    /// outline are the translated outer bounds, so an axis-aligned containment
+    /// check is already linear in the translation. The depth bound is the
+    /// `axis == 1, sign == -1` row of every piece.
+    Axis {
+        piece: usize,
+        axis: usize,
+        sign: f64,
+        rhs_mm: f64,
+    },
+}
+
+impl GlobalRow {
+    fn rhs_mm(self) -> f64 {
+        match self {
+            GlobalRow::Pair { rhs_mm, .. } | GlobalRow::Axis { rhs_mm, .. } => rhs_mm,
+        }
+    }
+
+    fn norm_squared(self) -> f64 {
+        match self {
+            GlobalRow::Pair { .. } => 2.0,
+            GlobalRow::Axis { .. } => 1.0,
+        }
+    }
+
+    fn value(self, translations: &[(f64, f64)]) -> f64 {
+        match self {
+            GlobalRow::Pair {
+                first,
+                second,
+                normal,
+                ..
+            } => {
+                normal.0 * (translations[first].0 - translations[second].0)
+                    + normal.1 * (translations[first].1 - translations[second].1)
+            }
+            GlobalRow::Axis {
+                piece, axis, sign, ..
+            } => {
+                let component = if axis == 0 {
+                    translations[piece].0
+                } else {
+                    translations[piece].1
+                };
+                sign * component
+            }
+        }
+    }
+
+    fn apply(self, translations: &mut [(f64, f64)], step: f64) {
+        match self {
+            GlobalRow::Pair {
+                first,
+                second,
+                normal,
+                ..
+            } => {
+                translations[first].0 += step * normal.0;
+                translations[first].1 += step * normal.1;
+                translations[second].0 -= step * normal.0;
+                translations[second].1 -= step * normal.1;
+            }
+            GlobalRow::Axis {
+                piece, axis, sign, ..
+            } => {
+                if axis == 0 {
+                    translations[piece].0 += step * sign;
+                } else {
+                    translations[piece].1 += step * sign;
+                }
+            }
+        }
+    }
+}
+
+/// The global pass's own probe ledger.
+///
+/// Charged per round at the round's analytic worst case rather than per probe,
+/// which is what makes the ceiling checkable in a test:
+/// [`global_legalization_worst_case_pair_visits`] is exactly this cap summed
+/// over every round of every escalation, and
+/// `bounded_reinsertion_fits_the_construction_budget` asserts that sum against
+/// the aggregate experimental pair-visit quota. An instance whose geometry
+/// somehow outran the plan stops on `capExhausted` rather than overrunning it.
+struct GlobalLegalizationBudget {
+    pair_visits_remaining: usize,
+}
+
+impl GlobalLegalizationBudget {
+    fn for_piece_count(piece_count: usize) -> Self {
+        Self {
+            pair_visits_remaining: global_legalization_worst_case_pair_visits(piece_count),
+        }
+    }
+
+    /// Charges one round over `complete_pairs` pairs.
+    fn charge_round(&mut self, complete_pairs: usize) -> Result<(), &'static str> {
+        let charge = complete_pairs.saturating_mul(GLOBAL_LEGALIZATION_PAIR_PROBES_PER_ROUND);
+        if self.pair_visits_remaining < charge {
+            return Err("global legalization pair-probe budget exhausted");
+        }
+        self.pair_visits_remaining -= charge;
+        Ok(())
+    }
+}
+
+/// Runs the global pressure-balanced legalization pass over `placements`.
+///
+/// # What it is for
+///
+/// [`micro_legalize`] freezes everything outside the violation component and
+/// refuses residues above a rounding scale, which is correct for a projection
+/// problem and useless for the residue a deep compression frontier actually
+/// carries: multi-millimetre deficits in components whose own pieces have no
+/// in-bound pose, proven by the per-component re-placement beam. Sequential
+/// repair cannot answer those because the room to answer them is not inside the
+/// component. This pass lets the *whole layout* answer.
+///
+/// # Constraint model
+///
+/// Poses are frozen - rotation and mirror never change - and the unknowns are a
+/// translation `t_i = (dx_i, dy_i)` for **every** piece, violating or not.
+///
+/// * **Separation.** For a pair whose outlines are apart, the distance function
+///   is differentiable and its gradient is the unit vector along the
+///   closest-approach witness, so the requirement `dist(P_i + t_i, P_j + t_j)
+///   >= target` linearizes to `n_ij . (t_i - t_j) >= target - dist_ij`. Rows are
+///   generated for **every pair within a guard band**, not just violating ones:
+///   a violating pair's row has a positive right-hand side and asks for
+///   correction, while a legal pair's row has a negative one and *protects* the
+///   clearance it already has. The guard band is the target plus twice the
+///   round's trust radius, so a pair outside it cannot be brought into contact
+///   by any admissible step and needs no row at all.
+/// * **Containment and the depth bound.** Four rows per piece per gate,
+///   exactly and not by linearization. When a bound is requested the sheet long
+///   axis is clamped to it, so "no piece may end deeper than the bound" is a
+///   hard constraint of the program on every piece rather than a filter applied
+///   afterwards.
+/// * **The envelope gate.** An overlapping collision envelope carries no
+///   magnitude - the gate is a boolean - so its travel is recovered by
+///   bisecting against [`polygons_overlap_exact`] itself, exactly as the local
+///   pass does. A pair that has ever overlapped keeps its row for the rest of
+///   the run even once it comes apart, which is what stops it oscillating back.
+///
+/// # Solver
+///
+/// Each round solves `min ||t||^2 subject to A t >= b` by **Hildreth's method**,
+/// which is projected Gauss-Seidel on the dual of that program: one multiplier
+/// per row, swept in a fixed order, each updated by its own scaled residual and
+/// clipped at zero, with the primal iterate `t = sum_k lambda_k a_k` maintained
+/// incrementally. With the multipliers non-negative the fixpoint is the exact
+/// minimum-norm point of the polyhedron, which is what makes the answer a
+/// *redistribution*: when the piece that must move is blocked, the chain of
+/// rows behind it carries the correction outward and pieces that violate
+/// nothing move to make room. No sequential repair can express that, because
+/// nothing in a sequential repair ever asks a legal piece to move.
+///
+/// The round then applies the step under a trust radius, snaps to the canonical
+/// grid, re-measures the true geometry, regenerates the rows from that
+/// measurement, and repeats. The linear model is never propagated - it only
+/// ever picks a step.
+///
+/// # Bounds
+///
+/// Rounds, dual sweeps and margin escalations are capped; each round's step is
+/// capped by the trust radius and the run by a cumulative displacement cap; and
+/// the pair probes are charged against a ledger whose ceiling
+/// [`global_legalization_worst_case_pair_visits`] is asserted against the
+/// aggregate quota. There is deliberately **no admission bound and no component
+/// limit**: refusing a large residue is what the local pass is for.
+///
+/// Like every other pass here it never publishes on its own authority - a
+/// layout comes back only after [`validate_and_measure_placements`] accepted it
+/// against the real request, which is `settings`, not the clamped sheet.
+pub(crate) fn global_legalize(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+    bound_mm: Option<f64>,
+) -> (
+    GeneralGlobalLegalizationDiagnostics,
+    Option<Vec<GeneralFastPlacement>>,
+) {
+    let mut diagnostics = GeneralGlobalLegalizationDiagnostics {
+        bound_mm,
+        effective_long_axis_mm: settings.sheet_long_axis_mm,
+        piece_count: placements.len(),
+        variables: placements.len().saturating_mul(2),
+        ..GeneralGlobalLegalizationDiagnostics::default()
+    };
+    if placements.len() > pieces.len() {
+        diagnostics.skipped_reason =
+            Some("global legalization requires a sub-layout of the request".to_owned());
+        return (diagnostics, None);
+    }
+    if pieces.is_empty() || placements.is_empty() {
+        diagnostics.skipped_reason =
+            Some("global legalization requires at least one placement".to_owned());
+        return (diagnostics, None);
+    }
+    if let Some(bound_mm) = bound_mm {
+        if !bound_mm.is_finite() || bound_mm <= 0.0 {
+            diagnostics.skipped_reason =
+                Some("global legalization depth bound must be positive and finite".to_owned());
+            return (diagnostics, None);
+        }
+    }
+
+    // The sheet the containment rows - and therefore the depth bound - are
+    // built against. Clamping is only ever tightening: a bound above the
+    // request's own sheet would otherwise legalize states the request rejects.
+    let clamped_settings = match bound_mm {
+        Some(bound_mm) => GeneralFastSettings {
+            sheet_long_axis_mm: bound_mm.min(settings.sheet_long_axis_mm),
+            ..settings
+        },
+        None => settings,
+    };
+    diagnostics.effective_long_axis_mm = clamped_settings.sheet_long_axis_mm;
+
+    let expansion_mm = collision_expansion_mm(settings);
+    let contracts = Contracts {
+        material_pair_mm: settings.total_padding_mm + 2.0 * settings.flattening_sag_tolerance_mm,
+        material_edge_mm: effective_sheet_edge_clearance_mm(settings)
+            + settings.flattening_sag_tolerance_mm,
+        collision_edge_mm: collision_sheet_inset_mm(settings),
+    };
+    if !contracts.material_pair_mm.is_finite()
+        || !contracts.material_edge_mm.is_finite()
+        || !contracts.collision_edge_mm.is_finite()
+        || !expansion_mm.is_finite()
+    {
+        diagnostics.skipped_reason =
+            Some("global legalization requires a finite clearance contract".to_owned());
+        return (diagnostics, None);
+    }
+
+    let pieces_by_id = pieces
+        .iter()
+        .enumerate()
+        .map(|(index, piece)| (piece.id, index))
+        .collect::<BTreeMap<_, _>>();
+    let geometries = match placements
+        .iter()
+        .map(|placement| {
+            let piece = pieces_by_id
+                .get(placement.piece_id.as_str())
+                .map(|index| pieces[*index])?;
+            build_geometry(piece.polygon, placement, expansion_mm)
+        })
+        .collect::<Option<Vec<_>>>()
+    {
+        Some(geometries) => geometries,
+        None => {
+            diagnostics.skipped_reason =
+                Some("global legalization could not build a piece envelope".to_owned());
+            return (diagnostics, None);
+        }
+    };
+
+    let slots = placements.len();
+    // One envelope per piece, built once for the whole run: a grid-snapped
+    // translation commutes with both the transform and the offset, so every
+    // round measures the same geometry at a different offset rather than
+    // rebuilding it. The funded ceiling allows one build per piece per
+    // escalation, which is the bound a pass that *did* rebuild would need.
+    diagnostics.collision_builds = slots;
+    diagnostics.funded_collision_builds = global_legalization_worst_case_collision_builds(slots);
+    diagnostics.funded_pair_visits = global_legalization_worst_case_pair_visits(slots);
+    let complete_pairs = slots.saturating_mul(slots.saturating_sub(1)) / 2;
+    let zero = vec![(0.0f64, 0.0f64); slots];
+    let before = survey_violations(&geometries, &zero, &contracts, clamped_settings);
+    diagnostics.violating_pairs_before = before.pairs.len();
+    diagnostics.boundary_pieces_before = before.boundary_pieces.len();
+    diagnostics.material_pairs_before = before.material_pairs;
+    diagnostics.collision_pairs_before = before.collision_pairs;
+    diagnostics.max_material_deficit_mm = before.max_material_deficit;
+    diagnostics.max_envelope_push_mm = before.max_envelope_push;
+    diagnostics.max_boundary_deficit_mm = before.max_boundary_deficit;
+    let (components, _) = violation_components(&before, slots);
+    diagnostics.component_count = components.len();
+    diagnostics.largest_component_pieces = components.iter().map(Vec::len).max().unwrap_or(0);
+
+    if before.pairs.is_empty() && before.boundary_pieces.is_empty() {
+        // Already feasible under the effective sheet. Report the input's own
+        // validity rather than claiming a repair.
+        diagnostics.resolved = true;
+        diagnostics.violating_pairs_after = 0;
+        diagnostics.boundary_pieces_after = 0;
+        match validate_and_measure_placements(pieces, placements, settings) {
+            Ok(metrics) => {
+                diagnostics.exact_valid = true;
+                diagnostics.depth_mm = Some(metrics.used_long_axis_depth_mm);
+                return (diagnostics, Some(placements.to_vec()));
+            }
+            Err(error) => {
+                diagnostics.rejection_reason = Some(error.to_string());
+                return (diagnostics, None);
+            }
+        }
+    }
+
+    diagnostics.attempted = true;
+    let floor_mm = (contracts.material_pair_mm * MICRO_LEGALIZATION_MIN_CAP_RATIO)
+        .max(MICRO_LEGALIZATION_MIN_CAP_MM);
+    let initial_deficit_mm = before.deficit_scale();
+    let displacement_cap_mm = (initial_deficit_mm * GLOBAL_LEGALIZATION_CAP_FACTOR).max(floor_mm);
+    diagnostics.displacement_cap_mm = displacement_cap_mm;
+    diagnostics.initial_trust_radius_mm =
+        (initial_deficit_mm * GLOBAL_LEGALIZATION_TRUST_FACTOR).max(floor_mm);
+
+    let mut budget = GlobalLegalizationBudget::for_piece_count(slots);
+    let mut accumulated = vec![(0.0f64, 0.0f64); slots];
+    // Envelope conflicts are boolean, so a pair that stops overlapping loses
+    // its magnitude and would lose its row with it. Once seen, always
+    // constrained: this is the pass's cutting-plane memory.
+    let mut enforced_collision: BTreeSet<(usize, usize)> = BTreeSet::new();
+    let mut after = before;
+    let mut published: Option<Vec<GeneralFastPlacement>> = None;
+
+    'escalation: for escalation in 0..=GLOBAL_LEGALIZATION_ESCALATIONS {
+        let margin_mm = MICRO_LEGALIZATION_MARGIN_MM * (escalation + 1) as f64;
+        diagnostics.escalations_run = escalation;
+        for _ in 0..GLOBAL_LEGALIZATION_ROUNDS {
+            let survey = survey_violations(&geometries, &accumulated, &contracts, clamped_settings);
+            let resolved = survey.pairs.is_empty() && survey.boundary_pieces.is_empty();
+            after = survey;
+            if resolved {
+                diagnostics.resolved = true;
+                let repaired = apply_translations(placements, &accumulated);
+                match validate_and_measure_placements(pieces, &repaired, settings) {
+                    Ok(metrics) => {
+                        diagnostics.exact_valid = true;
+                        diagnostics.depth_mm = Some(metrics.used_long_axis_depth_mm);
+                        diagnostics.rejection_reason = None;
+                        published = Some(repaired);
+                        break 'escalation;
+                    }
+                    Err(error) => {
+                        // The geometry closed and the authoritative gate still
+                        // disagrees: a wider margin is the only thing that can
+                        // help, so escalate rather than spend more rounds here.
+                        diagnostics.rejection_reason = Some(error.to_string());
+                        continue 'escalation;
+                    }
+                }
+            }
+            if let Err(reason) = budget.charge_round(complete_pairs) {
+                diagnostics.cap_exhausted = Some(reason.to_owned());
+                break 'escalation;
+            }
+
+            let trust_radius_mm = (after.deficit_scale() * GLOBAL_LEGALIZATION_TRUST_FACTOR)
+                .max(floor_mm)
+                .min(displacement_cap_mm);
+            let mut probes = 0usize;
+            let (rows, pair_rows, boundary_rows) = build_global_rows(
+                &geometries,
+                &accumulated,
+                &contracts,
+                margin_mm,
+                trust_radius_mm,
+                clamped_settings,
+                &mut enforced_collision,
+                &mut probes,
+            );
+            diagnostics.pair_visits = diagnostics.pair_visits.saturating_add(probes);
+            diagnostics.max_rows = diagnostics.max_rows.max(rows.len());
+            diagnostics.max_pair_rows = diagnostics.max_pair_rows.max(pair_rows);
+            diagnostics.max_boundary_rows = diagnostics.max_boundary_rows.max(boundary_rows);
+            diagnostics.rounds_run = diagnostics.rounds_run.saturating_add(1);
+
+            let solution = solve_minimum_norm_step(&rows, slots);
+            diagnostics.dual_sweeps_run = diagnostics.dual_sweeps_run.saturating_add(solution.1);
+            diagnostics.max_dual_residual_mm = solution.2;
+            let mut step = solution.0;
+
+            // Trust region. Scaling the whole step uniformly keeps the
+            // correction's shape - which is the part the global solve
+            // contributed - and only ever undershoots the rows that ask for
+            // correction: the rows that merely protect a legal pair are
+            // satisfied at zero as well as at the full step, so every point of
+            // the segment between them satisfies those too.
+            let longest_mm = step
+                .iter()
+                .map(|(dx, dy)| dx.hypot(*dy))
+                .fold(0.0f64, f64::max);
+            if longest_mm > trust_radius_mm && longest_mm > 0.0 {
+                let scale = trust_radius_mm / longest_mm;
+                for translation in step.iter_mut() {
+                    translation.0 *= scale;
+                    translation.1 *= scale;
+                }
+            }
+
+            let mut moved = false;
+            for (index, translation) in accumulated.iter_mut().enumerate() {
+                let next = (
+                    snap_grid(translation.0 + step[index].0),
+                    snap_grid(translation.1 + step[index].1),
+                );
+                if grid_key_pair(next) != grid_key_pair(*translation) {
+                    moved = true;
+                }
+                *translation = next;
+            }
+            let travelled_mm = accumulated
+                .iter()
+                .map(|(dx, dy)| dx.hypot(*dy))
+                .fold(0.0f64, f64::max);
+            if travelled_mm > displacement_cap_mm {
+                diagnostics.displacement_capped = true;
+                break 'escalation;
+            }
+            if !moved {
+                // A fixpoint of the program that is not a fixpoint of the
+                // geometry: more rounds at this margin cannot move it, so hand
+                // the state to the next escalation instead of spinning.
+                continue 'escalation;
+            }
+        }
+    }
+
+    diagnostics.violating_pairs_after = after.pairs.len();
+    diagnostics.boundary_pieces_after = after.boundary_pieces.len();
+    diagnostics.max_material_deficit_after_mm = after.max_material_deficit;
+    diagnostics.max_envelope_push_after_mm = after.max_envelope_push;
+    diagnostics.max_boundary_deficit_after_mm = after.max_boundary_deficit;
+    diagnostics.moved_pieces = accumulated
+        .iter()
+        .filter(|(dx, dy)| *dx != 0.0 || *dy != 0.0)
+        .count();
+    let displacements = accumulated
+        .iter()
+        .map(|(dx, dy)| dx.hypot(*dy))
+        .collect::<Vec<_>>();
+    diagnostics.max_displacement_mm = Some(displacements.iter().copied().fold(0.0f64, f64::max));
+    diagnostics.mean_displacement_mm =
+        Some(displacements.iter().sum::<f64>() / displacements.len() as f64);
+    if published.is_none() && diagnostics.rejection_reason.is_none() {
+        diagnostics.rejection_reason = Some(if diagnostics.resolved {
+            "global legalization closed the geometry but the validator rejected it".to_owned()
+        } else {
+            format!(
+                "global legalization did not reach a feasible fixpoint: {} violating pairs and {} boundary pieces remain",
+                after.pairs.len(),
+                after.boundary_pieces.len()
+            )
+        });
+    }
+    (diagnostics, published)
+}
+
+/// Builds the round's constraint system from the exact geometry at
+/// `translations`.
+///
+/// Returns the rows together with the pair-row and boundary-row counts. Rows
+/// are emitted in a fixed order - pairs by `(first, second, gate)` and then
+/// containment by `(piece, gate, side)` - because the dual sweep is
+/// order-dependent and the pass has to be a deterministic function of the
+/// layout alone.
+#[allow(clippy::too_many_arguments)]
+fn build_global_rows(
+    geometries: &[PieceGeometry],
+    translations: &[(f64, f64)],
+    contracts: &Contracts,
+    margin_mm: f64,
+    trust_radius_mm: f64,
+    settings: GeneralFastSettings,
+    enforced_collision: &mut BTreeSet<(usize, usize)>,
+    probes: &mut usize,
+) -> (Vec<GlobalRow>, usize, usize) {
+    let mut rows: Vec<GlobalRow> = Vec::new();
+    let ceiling_mm = displacement_ceiling(contracts);
+    // A pair further apart than its target plus the relative travel two pieces
+    // can make in one round cannot reach the target inside this round, so it
+    // needs no row.
+    let reach_mm = 2.0 * trust_radius_mm;
+
+    for first in 0..geometries.len() {
+        for second in (first + 1)..geometries.len() {
+            // Material gate. Every pair inside the guard band gets a row: the
+            // violating ones ask for the contract plus the margin, and the
+            // legal ones hold the bare contract they already have.
+            let material_guard_mm = contracts.material_pair_mm + margin_mm + reach_mm;
+            let first_bounds = geometries[first]
+                .material
+                .bounds
+                .translated(translations[first].0, translations[first].1);
+            let second_bounds = geometries[second]
+                .material
+                .bounds
+                .translated(translations[second].0, translations[second].1);
+            if first_bounds.gap(second_bounds) < material_guard_mm {
+                *probes += 1;
+                let approach = measure_approach(
+                    &geometries[first].material,
+                    translations[first],
+                    &geometries[second].material,
+                    translations[second],
+                    material_guard_mm,
+                );
+                if approach.distance < material_guard_mm {
+                    let target_mm = if approach.distance < contracts.material_pair_mm {
+                        contracts.material_pair_mm + margin_mm
+                    } else {
+                        contracts.material_pair_mm
+                    };
+                    let normal = match approach.direction {
+                        Some(direction) => direction,
+                        None => {
+                            *probes += 1;
+                            separation_direction(geometries, first, second, translations)
+                        }
+                    };
+                    rows.push(GlobalRow::Pair {
+                        first,
+                        second,
+                        normal,
+                        rhs_mm: target_mm - approach.distance,
+                    });
+                }
+            }
+
+            // Envelope gate. Only an actual overlap opens a row - a touching
+            // envelope pair is legal to the grid gate and commonplace in a
+            // record-density layout - but once opened the row stays for the
+            // rest of the run, held at the margin so the pair cannot drift
+            // back into contact.
+            let overlapping = {
+                let first_envelope = geometries[first]
+                    .collision
+                    .bounds
+                    .translated(translations[first].0, translations[first].1);
+                let second_envelope = geometries[second]
+                    .collision
+                    .bounds
+                    .translated(translations[second].0, translations[second].1);
+                first_envelope.gap(second_envelope) <= 0.0 && {
+                    *probes += 1;
+                    envelopes_overlap(
+                        geometries,
+                        first,
+                        second,
+                        translations[first],
+                        translations[second],
+                    )
+                }
+            };
+            if overlapping {
+                enforced_collision.insert((first, second));
+                *probes += 26;
+                let push_mm = separation_push(geometries, first, second, translations, ceiling_mm)
+                    + margin_mm;
+                *probes += 1;
+                let normal = separation_direction(geometries, first, second, translations);
+                rows.push(GlobalRow::Pair {
+                    first,
+                    second,
+                    normal,
+                    rhs_mm: push_mm,
+                });
+            } else if enforced_collision.contains(&(first, second)) {
+                let guard_mm = margin_mm + reach_mm;
+                *probes += 1;
+                let approach = measure_approach(
+                    &geometries[first].collision,
+                    translations[first],
+                    &geometries[second].collision,
+                    translations[second],
+                    guard_mm,
+                );
+                if approach.distance < guard_mm {
+                    let normal = match approach.direction {
+                        Some(direction) => direction,
+                        None => {
+                            *probes += 1;
+                            separation_direction(geometries, first, second, translations)
+                        }
+                    };
+                    rows.push(GlobalRow::Pair {
+                        first,
+                        second,
+                        normal,
+                        rhs_mm: margin_mm - approach.distance,
+                    });
+                }
+            }
+        }
+    }
+    let pair_rows = rows.len();
+
+    // Containment, on every piece and both gates. The `top` row of each piece
+    // is the depth bound whenever the caller clamped the sheet to one, and it
+    // is a hard constraint of the program exactly like the other three.
+    for (index, geometry) in geometries.iter().enumerate() {
+        for gate in GATES {
+            let edge_mm = contracts.edge(gate);
+            let bounds = geometry
+                .outline(gate)
+                .outer_bounds
+                .translated(translations[index].0, translations[index].1);
+            // The margin is applied per side, and only to a side that is
+            // actually overrun: a piece resting legally against one edge must
+            // not be dragged inward because the opposite edge needed repair.
+            let sides = [
+                (0usize, 1.0f64, edge_mm - bounds.min_x),
+                (
+                    0usize,
+                    -1.0f64,
+                    bounds.max_x - (settings.sheet_short_axis_mm - edge_mm),
+                ),
+                (1usize, 1.0f64, edge_mm - bounds.min_y),
+                (
+                    1usize,
+                    -1.0f64,
+                    bounds.max_y - (settings.sheet_long_axis_mm - edge_mm),
+                ),
+            ];
+            for (axis, sign, overrun_mm) in sides {
+                let rhs_mm = if overrun_mm > 0.0 {
+                    overrun_mm + margin_mm
+                } else {
+                    overrun_mm
+                };
+                rows.push(GlobalRow::Axis {
+                    piece: index,
+                    axis,
+                    sign,
+                    rhs_mm,
+                });
+            }
+        }
+    }
+    let boundary_rows = rows.len() - pair_rows;
+    (rows, pair_rows, boundary_rows)
+}
+
+/// Solves `min ||t||^2 subject to A t >= b` by Hildreth's method.
+///
+/// Hildreth's is projected Gauss-Seidel on the dual of that program. Each row
+/// `k` owns one multiplier `lambda_k >= 0`; a sweep visits the rows in order,
+/// moves each multiplier by its own residual scaled by the row's squared norm,
+/// clips it at zero, and pushes the difference straight into the primal iterate
+/// `t = sum_k lambda_k a_k`. Its fixpoint is the exact projection of the origin
+/// onto the polyhedron, i.e. the minimum-norm correction - so an inactive row
+/// costs nothing (its multiplier stays at zero) and an active one pays exactly
+/// the pressure needed to hold it.
+///
+/// Returns the step, the sweeps spent, and the widest residual still standing.
+/// A residual above the grid quantum means the program did not close, which the
+/// caller reports rather than papers over: an infeasible system is a real
+/// answer about the layout.
+fn solve_minimum_norm_step(rows: &[GlobalRow], slots: usize) -> (Vec<(f64, f64)>, usize, f64) {
+    let mut translations = vec![(0.0f64, 0.0f64); slots];
+    if rows.is_empty() {
+        return (translations, 0, 0.0);
+    }
+    let mut multipliers = vec![0.0f64; rows.len()];
+    let mut sweeps = 0usize;
+    let mut max_residual_mm = 0.0f64;
+    for _ in 0..GLOBAL_LEGALIZATION_DUAL_SWEEPS {
+        sweeps += 1;
+        max_residual_mm = 0.0;
+        for (index, row) in rows.iter().enumerate() {
+            let residual_mm = row.rhs_mm() - row.value(&translations);
+            if residual_mm > max_residual_mm {
+                max_residual_mm = residual_mm;
+            }
+            let updated = (multipliers[index] + residual_mm / row.norm_squared()).max(0.0);
+            let step = updated - multipliers[index];
+            if step != 0.0 {
+                multipliers[index] = updated;
+                row.apply(&mut translations, step);
+            }
+        }
+        // Half the grid quantum: below that the snap the caller applies next
+        // decides the answer anyway, so further sweeps buy nothing real.
+        if max_residual_mm <= 0.5 * GRID_MM {
+            break;
+        }
+    }
+    (translations, sweeps, max_residual_mm)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2300,5 +3182,222 @@ mod tests {
                 .is_some_and(|reason| reason.contains("admission bound")),
             "{diagnostics:?}"
         );
+    }
+
+    // ---------------------------------------------------------------------
+    // Global pressure-balanced legalization
+    // ---------------------------------------------------------------------
+
+    /// A tall, narrow corridor: three 20 mm wide pieces that reach nearly the
+    /// full length of the sheet, so no pair can ever separate along the long
+    /// axis and every correction has to be made along the short one.
+    ///
+    /// The arithmetic that makes the case interesting, at the module's test
+    /// contract (5 mm pair clearance, 5 mm edge clearance, 2.5005 mm envelope
+    /// expansion against a 2.5 mm inset, so pieces need 5.001 mm of daylight
+    /// and 5.0005 mm from each edge): the usable width is
+    /// `short_axis - 10.001` and three pieces with two gaps need `70.002`, so
+    /// an 82 mm sheet carries about two millimetres of total slack.
+    fn corridor_pieces() -> PolygonSet {
+        rectangle(20.0, 200.0)
+    }
+
+    #[test]
+    fn a_millimetre_scale_pair_deficit_beyond_the_local_pass_is_solved_globally() {
+        // The residue class `a_millimetre_scale_pair_deficit_is_refused_by_projection`
+        // documents: a 2 mm shortfall, four times the micro-legalizer's
+        // admission bound. The global pass has no admission bound, because
+        // refusing this is what the local pass is for.
+        let square = rectangle(20.0, 20.0);
+        let pieces = vec![piece("a", &square), piece("b", &square)];
+        let placements = vec![placement("a", 20.0, 20.0), placement("b", 43.0, 20.0)];
+        let settings = settings();
+        assert!(validate_and_measure_placements(&pieces, &placements, settings).is_err());
+        let (local, locally_repaired) = micro_legalize(&pieces, &placements, settings);
+        assert!(locally_repaired.is_none(), "{local:?}");
+
+        let (diagnostics, repaired) = global_legalize(&pieces, &placements, settings, None);
+        assert!(diagnostics.attempted, "{diagnostics:?}");
+        assert_eq!(diagnostics.violating_pairs_before, 1, "{diagnostics:?}");
+        assert_eq!(diagnostics.violating_pairs_after, 0, "{diagnostics:?}");
+        assert!(diagnostics.resolved, "{diagnostics:?}");
+        assert!(diagnostics.exact_valid, "{diagnostics:?}");
+        let repaired = repaired.expect("a solvable two-piece deficit publishes");
+        validate_and_measure_placements(&pieces, &repaired, settings)
+            .expect("the globally legalized state validates against the real request");
+        // Minimum-norm means the correction is shared, not loaded onto one
+        // endpoint: each square carries about half of the 2 mm.
+        assert_eq!(diagnostics.moved_pieces, 2, "{diagnostics:?}");
+        let left = repaired[0].translate_short_axis - placements[0].translate_short_axis;
+        let right = repaired[1].translate_short_axis - placements[1].translate_short_axis;
+        assert!(left < 0.0 && right > 0.0, "{repaired:?}");
+        assert!((left.abs() - right.abs()).abs() < 0.01, "{repaired:?}");
+    }
+
+    #[test]
+    fn a_corridor_residue_is_solved_only_by_moving_a_piece_that_violates_nothing() {
+        // `a` and `b` are 3 mm apart against a 5 mm contract; `c` is 5.01 mm
+        // from `b` and violates nothing at all. Opening the a-b conflict needs
+        // about 2 mm, and there is nowhere to put it except through `c`: the
+        // sheet's left edge is 0.5 mm from `a`, the pieces are too tall to
+        // pass each other along the long axis, and any feasible arrangement
+        // puts `c` at 55.0 mm or beyond. A repair that only ever moves
+        // violating pieces cannot solve this state at any magnitude.
+        let slab = corridor_pieces();
+        let pieces = vec![piece("a", &slab), piece("b", &slab), piece("c", &slab)];
+        let placements = vec![
+            placement("a", 5.5, 20.0),
+            placement("b", 28.5, 20.0),
+            placement("c", 53.51, 20.0),
+        ];
+        let settings = sheet_settings(82.0, 300.0);
+        assert!(validate_and_measure_placements(&pieces, &placements, settings).is_err());
+
+        // The premise: `c` is legal, so it is not even in the local pass's
+        // violation component.
+        let survey = survey_layout_violations(&pieces, &placements, settings)
+            .expect("the corridor state surveys");
+        assert_eq!(survey.pairs.len(), 1, "{survey:?}");
+        assert_eq!((survey.pairs[0].first, survey.pairs[0].second), (0, 1));
+
+        let (diagnostics, repaired) = global_legalize(&pieces, &placements, settings, None);
+        assert!(diagnostics.attempted, "{diagnostics:?}");
+        assert!(diagnostics.resolved, "{diagnostics:?}");
+        assert!(diagnostics.exact_valid, "{diagnostics:?}");
+        let repaired = repaired.expect("the corridor residue is globally solvable");
+        validate_and_measure_placements(&pieces, &repaired, settings)
+            .expect("the globally legalized corridor validates");
+        // The point of the test: the piece that violated nothing had to move,
+        // and had to move by millimetres rather than by a rounding quantum.
+        let moved_c = repaired[2].translate_short_axis - placements[2].translate_short_axis;
+        assert!(moved_c > 1.0, "c moved {moved_c} mm: {repaired:?}");
+        assert_eq!(diagnostics.moved_pieces, 3, "{diagnostics:?}");
+    }
+
+    #[test]
+    fn the_depth_bound_is_a_hard_constraint_on_every_piece() {
+        // Neither square violates anything: the layout is exactly legal at a
+        // depth of 80 mm. The bound alone is what makes it a repair problem,
+        // and satisfying it needs *both* pieces to move, the lower one first.
+        let square = rectangle(20.0, 20.0);
+        let pieces = vec![piece("a", &square), piece("b", &square)];
+        let placements = vec![placement("a", 20.0, 20.0), placement("b", 20.0, 60.0)];
+        let settings = settings();
+        let metrics = validate_and_measure_placements(&pieces, &placements, settings)
+            .expect("the unbounded state is already legal");
+        assert!(metrics.used_long_axis_depth_mm > 60.0);
+
+        let (diagnostics, repaired) = global_legalize(&pieces, &placements, settings, Some(60.0));
+        assert_eq!(diagnostics.bound_mm, Some(60.0), "{diagnostics:?}");
+        assert_eq!(diagnostics.effective_long_axis_mm, 60.0, "{diagnostics:?}");
+        assert_eq!(diagnostics.violating_pairs_before, 0, "{diagnostics:?}");
+        assert_eq!(diagnostics.boundary_pieces_before, 1, "{diagnostics:?}");
+        assert!(diagnostics.exact_valid, "{diagnostics:?}");
+        let repaired = repaired.expect("the bounded state is solvable");
+        let bounded = validate_and_measure_placements(&pieces, &repaired, settings)
+            .expect("the bounded state validates against the real request");
+        assert!(
+            bounded.used_long_axis_depth_mm <= 60.0,
+            "published depth {} exceeds the bound",
+            bounded.used_long_axis_depth_mm
+        );
+        assert!(repaired[0].translate_long_axis < placements[0].translate_long_axis);
+        assert!(repaired[1].translate_long_axis < placements[1].translate_long_axis);
+    }
+
+    #[test]
+    fn a_layout_its_sheet_cannot_hold_fails_cleanly() {
+        // Two 20 mm squares in a 40 mm sheet. The usable box is 29.999 mm on
+        // each axis and separating them needs 25.001 mm along one of them, so
+        // no translation of any magnitude legalizes this. The pass must say so
+        // rather than publish, loop, or run away with the displacement.
+        let square = rectangle(20.0, 20.0);
+        let pieces = vec![piece("a", &square), piece("b", &square)];
+        let placements = vec![placement("a", 6.0, 6.0), placement("b", 12.0, 12.0)];
+        let settings = sheet_settings(40.0, 40.0);
+
+        let (diagnostics, repaired) = global_legalize(&pieces, &placements, settings, None);
+        assert!(repaired.is_none(), "{diagnostics:?}");
+        assert!(diagnostics.attempted, "{diagnostics:?}");
+        assert!(!diagnostics.resolved, "{diagnostics:?}");
+        assert!(!diagnostics.exact_valid, "{diagnostics:?}");
+        assert!(diagnostics.violating_pairs_after > 0, "{diagnostics:?}");
+        assert!(
+            diagnostics
+                .rejection_reason
+                .as_deref()
+                .is_some_and(|reason| reason.contains("feasible fixpoint")),
+            "{diagnostics:?}"
+        );
+        assert!(
+            diagnostics.max_displacement_mm.unwrap_or(0.0)
+                <= diagnostics.displacement_cap_mm + GRID_MM,
+            "{diagnostics:?}"
+        );
+        assert!(diagnostics.cap_exhausted.is_none(), "{diagnostics:?}");
+    }
+
+    #[test]
+    fn the_global_pass_is_deterministic() {
+        let slab = corridor_pieces();
+        let pieces = vec![piece("a", &slab), piece("b", &slab), piece("c", &slab)];
+        let placements = vec![
+            placement("a", 5.5, 20.0),
+            placement("b", 28.5, 20.0),
+            placement("c", 53.51, 20.0),
+        ];
+        let settings = sheet_settings(82.0, 300.0);
+        let first = global_legalize(&pieces, &placements, settings, Some(240.0));
+        let second = global_legalize(&pieces, &placements, settings, Some(240.0));
+        assert_eq!(first.0, second.0);
+        assert_eq!(first.1, second.1);
+        // And an unsolvable state is deterministic in its failure too.
+        let square = rectangle(20.0, 20.0);
+        let cramped = vec![piece("a", &square), piece("b", &square)];
+        let cramped_placements = vec![placement("a", 6.0, 6.0), placement("b", 12.0, 12.0)];
+        let cramped_settings = sheet_settings(40.0, 40.0);
+        let first = global_legalize(&cramped, &cramped_placements, cramped_settings, None);
+        let second = global_legalize(&cramped, &cramped_placements, cramped_settings, None);
+        assert_eq!(first.0, second.0);
+        assert_eq!(first.1, second.1);
+    }
+
+    #[test]
+    fn an_already_legal_state_is_returned_unchanged() {
+        let square = rectangle(20.0, 20.0);
+        let pieces = vec![piece("a", &square), piece("b", &square)];
+        let placements = vec![placement("a", 20.0, 20.0), placement("b", 46.0, 20.0)];
+        let settings = settings();
+        let (diagnostics, repaired) = global_legalize(&pieces, &placements, settings, None);
+        assert!(!diagnostics.attempted, "{diagnostics:?}");
+        assert!(diagnostics.resolved, "{diagnostics:?}");
+        assert!(diagnostics.exact_valid, "{diagnostics:?}");
+        assert_eq!(repaired.as_deref(), Some(placements.as_slice()));
+    }
+
+    #[test]
+    fn the_probe_ledger_is_the_ceiling_the_quota_test_asserts() {
+        for piece_count in [1usize, 2, 3, 17, 61] {
+            let mut budget = GlobalLegalizationBudget::for_piece_count(piece_count);
+            let complete_pairs = piece_count * piece_count.saturating_sub(1) / 2;
+            let rounds = (GLOBAL_LEGALIZATION_ESCALATIONS + 1) * GLOBAL_LEGALIZATION_ROUNDS;
+            for round in 0..rounds {
+                assert!(
+                    budget.charge_round(complete_pairs).is_ok(),
+                    "piece count {piece_count} round {round}"
+                );
+            }
+            if complete_pairs > 0 {
+                assert!(budget.charge_round(complete_pairs).is_err());
+            }
+            assert_eq!(
+                global_legalization_worst_case_pair_visits(piece_count),
+                rounds * complete_pairs * GLOBAL_LEGALIZATION_PAIR_PROBES_PER_ROUND
+            );
+            assert_eq!(
+                global_legalization_worst_case_collision_builds(piece_count),
+                (GLOBAL_LEGALIZATION_ESCALATIONS + 1) * piece_count
+            );
+        }
     }
 }

@@ -9016,6 +9016,9 @@ fn option_string_bytes(value: &Option<String>) -> usize {
 mod tests {
     use super::*;
     use crate::domain::IrregularPoint;
+    use crate::search::general_micro_legalization::{
+        global_legalization_worst_case_collision_builds, global_legalization_worst_case_pair_visits,
+    };
 
     fn square(size: f64) -> PolygonSet {
         PolygonSet::from_outer(vec![
@@ -9832,6 +9835,27 @@ mod tests {
                 joint_attempts
                     .saturating_mul(piece_count)
                     .saturating_add(joint_slots.saturating_mul(rows_per_slot))
+                    <= quotas.max_experimental_collision_builds,
+                "piece count {piece_count}"
+            );
+
+            // Modes 30 and 31 and the mode-26 fourth repair tier share
+            // `global_legalize`, which places nothing: it builds one collision
+            // envelope per piece per margin escalation and then only
+            // *measures*, charging at most a fixed number of exact pair probes
+            // per pair per re-linearization round against its own
+            // `GlobalLegalizationBudget`. Both worst cases are strictly funded
+            // by the experimental terms already reviewed, so the global tier
+            // needs no new aggregate quota term either, and an instance whose
+            // geometry somehow outran the plan stops on `capExhausted` rather
+            // than overrunning a ceiling.
+            assert!(
+                global_legalization_worst_case_pair_visits(piece_count)
+                    <= quotas.max_experimental_pair_visits,
+                "piece count {piece_count}"
+            );
+            assert!(
+                global_legalization_worst_case_collision_builds(piece_count)
                     <= quotas.max_experimental_collision_builds,
                 "piece count {piece_count}"
             );
