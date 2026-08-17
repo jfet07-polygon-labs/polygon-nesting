@@ -121,6 +121,26 @@ const JOINT_REPLACEMENT_SWAP_ATTEMPT_CAP: usize = 24;
 // stays inside the anchor-local stream's existing per-piece row budget
 // (the cloud is at most 179 poses against `ANCHOR_LOCAL_ROWS` = 192).
 const JOINT_REPLACEMENT_PEER_POSES: usize = 3;
+// Violation components one joint pass repairs, one at a time, re-surveying the
+// whole layout between them. The pass used to pool every pair-bearing
+// component into a single ejection set, so four independent two-piece conflicts
+// refused on an ejection cap that none of them individually trips; independent
+// conflicts are independent repairs and are run as such. The ceiling exists so
+// a residue of arbitrarily many clusters is still a bounded pass - beyond it
+// the state is a search problem, which is the same judgement the component and
+// ejection limits already encode.
+const JOINT_REPLACEMENT_COMPONENT_PASSES: usize = 8;
+// The finalist-combination beam. The shared insertion primitive commits the
+// first in-bound finalist for every piece, so a component whose first piece
+// takes the shallowest pose and thereby boxes the second one out is refused
+// with no backtracking - which is exactly the failure mode the joint tier's
+// measured negative was made of. For components at or below
+// `JOINT_REPLACEMENT_BEAM_MAX_PIECES` the pass therefore enumerates
+// *combinations* of finalist ranks rather than the single greedy one: at
+// `CONSTRUCTION_FINALISTS_PER_SLOT` = 4 ranks and three pieces that is 4^3 = 64
+// combinations, of which the all-zeros one is the greedy commit itself.
+const JOINT_REPLACEMENT_BEAM_MAX_PIECES: usize = 3;
+const JOINT_REPLACEMENT_BEAM_COMBINATIONS: usize = 64;
 // Anchor-local re-insertion. The shared re-placement primitive's candidate
 // generator is a *top-frontier* drop constructor: it plants hints at skyline
 // valleys, drops, and slides. That is the right instrument for building a
@@ -1016,6 +1036,7 @@ fn bounded_reinsertion_inner(
         &anchor,
         &ejected,
         None,
+        None,
         BOUNDED_REINSERTION_SEED_DOMAIN,
         &AnchorLocalSeeding::with_residue_scale(Some(overrun_mm)),
         work,
@@ -1339,6 +1360,14 @@ impl BoundedReplacementPass {
 /// because *which order* is the variable it searches over. An override must be
 /// a permutation of `ejected`; anything else is refused rather than silently
 /// re-placing a different set.
+///
+/// Which *pose* each piece commits to is the second variable, and
+/// `finalist_choice` is how a caller searches it: entry `i` selects the
+/// `i`-th piece's rank among its own in-bound finalists, so the all-zeros
+/// choice - and `None` - is the greedy shallowest-first commit this primitive
+/// has always made. Mode 29's beam uses it to back out of a first-finalist
+/// commit that boxed a later piece out; nothing else passes anything but
+/// `None`, so every other caller's stream is bit-identical.
 /// The bound is enforced twice: geometrically, because
 /// `construction_confirm_row`'s `fits_rect` runs against the clamped sheet and
 /// so refuses an out-of-bound pose before it is ever confirmed, and then again
@@ -1371,6 +1400,7 @@ fn replace_ejected_under_bound(
     anchor: &RelaxedState,
     ejected: &[usize],
     order_override: Option<&[usize]>,
+    finalist_choice: Option<&[usize]>,
     seed_domain: u64,
     anchor_local: &AnchorLocalSeeding,
     work: &mut RunWork,
@@ -1466,13 +1496,25 @@ fn replace_ejected_under_bound(
             .filter(|(_, _, provenance)| provenance.anchor_local)
             .count();
         // The finalists arrive ranked by the landing-frontier key, so the
-        // first one still inside the bound is the shallowest confirmed pose.
+        // first one still inside the bound is the shallowest confirmed pose,
+        // and rank zero - the default - commits it. A caller searching poses
+        // asks for a later in-bound rank instead; a rank the piece does not
+        // have leaves `chosen` empty and fails the pass on this piece, exactly
+        // as an empty finalist list does.
+        let wanted_rank = finalist_choice
+            .and_then(|choice| choice.get(ordinal).copied())
+            .unwrap_or(0);
         let mut chosen = None;
+        let mut in_bound_rank = 0usize;
         for (pose, collision, _) in finalists {
             let extent = placement_long_axis_extent_mm(pieces[index], &pose, fast_settings);
             if grid_key(extent) <= bound_grid {
-                chosen = Some((pose, collision, extent));
-                break;
+                if in_bound_rank == wanted_rank {
+                    chosen = Some((pose, collision, extent));
+                    break;
+                }
+                in_bound_rank = in_bound_rank.saturating_add(1);
+                continue;
             }
             row.bound_rejections = row.bound_rejections.saturating_add(1);
         }
@@ -2029,6 +2071,7 @@ pub(crate) fn replacement_repair(
         &anchor,
         &ejected_indices,
         None,
+        None,
         REPLACEMENT_REPAIR_SEED_DOMAIN,
         &anchor_local,
         &mut work,
@@ -2192,19 +2235,23 @@ fn joint_replacement_attempt(
     order: &[usize],
     anchor_local: &AnchorLocalSeeding,
     ordinal: usize,
+    component_pass: usize,
     swap_pair: Option<Vec<String>>,
+    finalist_ranks: Option<&[usize]>,
     work: &mut RunWork,
 ) -> (
     GeneralJointReplacementOrderRow,
-    Option<(Vec<GeneralFastPlacement>, f64)>,
+    Option<Vec<GeneralFastPlacement>>,
 ) {
     let mut row = GeneralJointReplacementOrderRow {
         ordinal,
+        component_pass,
         order_piece_ids: order
             .iter()
             .map(|index| pieces[*index].id.to_owned())
             .collect(),
         swap_pair,
+        finalist_ranks: finalist_ranks.map(<[usize]>::to_vec),
         ..GeneralJointReplacementOrderRow::default()
     };
     let pass = match replace_ejected_under_bound(
@@ -2215,6 +2262,7 @@ fn joint_replacement_attempt(
         anchor,
         ejected_indices,
         Some(order),
+        finalist_ranks,
         JOINT_REPLACEMENT_SEED_DOMAIN,
         anchor_local,
         work,
@@ -2248,22 +2296,112 @@ fn joint_replacement_attempt(
         return (row, None);
     }
 
+    // The complete re-placed layout comes back whether or not the *whole*
+    // request validates on it: a per-component pass legalizes one conflict
+    // cluster at a time, so a state that still carries another cluster's
+    // violation is real progress rather than a failure. `exactValid` on the row
+    // stays the authoritative whole-request verdict, and it is the only thing a
+    // single-cluster instance ever accepts on.
     let repaired = fast_placements(&pass.state, pieces, false);
-    if let Err(error) = validate_and_measure_placements(pieces, &repaired, fast_settings) {
-        row.rejection_reason = Some(error.to_string());
-        return (row, None);
+    match validate_and_measure_placements(pieces, &repaired, fast_settings) {
+        Ok(_) => match coupled_independent_source_depth(pieces, &repaired, fast_settings) {
+            Ok(depth_mm) => {
+                row.exact_valid = true;
+                row.depth_mm = Some(depth_mm);
+            }
+            Err(error) => row.rejection_reason = Some(format!("repaired state depth: {error}")),
+        },
+        Err(error) => row.rejection_reason = Some(error.to_string()),
     }
-    match coupled_independent_source_depth(pieces, &repaired, fast_settings) {
-        Ok(depth_mm) => {
-            row.exact_valid = true;
-            row.depth_mm = Some(depth_mm);
-            (row, Some((repaired, depth_mm)))
+    (row, Some(repaired))
+}
+
+/// The finalist-rank combinations the beam enumerates for a `pieces`-piece
+/// component, in the order it tries them.
+///
+/// Odometer order over `CONSTRUCTION_FINALISTS_PER_SLOT` ranks per piece with
+/// the *last* piece varying fastest, so the first combination is all-zeros -
+/// the greedy shallowest-first commit the primitive has always made - and every
+/// later one is a deterministic successor of it. Empty for a component the beam
+/// does not run on, which is how the caller asks for the greedy pass alone.
+fn finalist_rank_combinations(pieces: usize) -> Vec<Vec<usize>> {
+    if pieces == 0 || pieces > JOINT_REPLACEMENT_BEAM_MAX_PIECES {
+        return Vec::new();
+    }
+    let mut combinations = Vec::new();
+    let mut ranks = vec![0usize; pieces];
+    loop {
+        combinations.push(ranks.clone());
+        if combinations.len() >= JOINT_REPLACEMENT_BEAM_COMBINATIONS {
+            break;
         }
-        Err(error) => {
-            row.rejection_reason = Some(format!("repaired state depth: {error}"));
-            (row, None)
+        let mut position = pieces;
+        loop {
+            if position == 0 {
+                return combinations;
+            }
+            position -= 1;
+            ranks[position] += 1;
+            if ranks[position] < CONSTRUCTION_FINALISTS_PER_SLOT {
+                break;
+            }
+            ranks[position] = 0;
         }
     }
+    combinations
+}
+
+/// The next violation component to repair: the pair-bearing component carrying
+/// the most violation mass, with the lowest slot index breaking ties, skipping
+/// any component whose exact slot set an earlier pass already failed on.
+///
+/// Boundary-only components are a projection problem rather than a
+/// re-placement one and are never selected, which is exactly what
+/// [`LayoutViolations::pair_components`] leaves out.
+fn next_violation_component(
+    violations: &LayoutViolations,
+    refused: &BTreeSet<Vec<usize>>,
+) -> Option<Vec<usize>> {
+    let mut best: Option<((i64, usize), Vec<usize>)> = None;
+    for slots in violations.pair_components() {
+        if slots.is_empty() || refused.contains(&slots) {
+            continue;
+        }
+        let mass = violations
+            .pairs
+            .iter()
+            .filter(|pair| slots.contains(&pair.first) || slots.contains(&pair.second))
+            .fold(0.0f64, |total, pair| total + pair.mass_mm);
+        // Descending mass on the placement grid, ascending first slot: an
+        // integer key, so the choice cannot depend on float comparison order.
+        let key = (-grid_key(mass), slots[0]);
+        if best.as_ref().is_none_or(|(current, _)| key < *current) {
+            best = Some((key, slots));
+        }
+    }
+    best.map(|(_, slots)| slots)
+}
+
+/// Whether a re-placed layout cleared the component it was aimed at without
+/// making the rest of the residue worse.
+///
+/// This is the acceptance rule for a component pass that is *not* the last one:
+/// no violating pair may remain incident to any piece the pass ejected, and the
+/// boundary residue may not have grown. A pass that clears the whole layout is
+/// never accepted on this rule - the authoritative validator is, which is what
+/// keeps a single-cluster instance's behaviour exactly what it always was.
+fn component_pass_cleared(
+    before: &LayoutViolations,
+    after: &LayoutViolations,
+    ejected: &[usize],
+) -> bool {
+    if after.boundary_pieces.len() > before.boundary_pieces.len() {
+        return false;
+    }
+    !after
+        .pairs
+        .iter()
+        .any(|pair| ejected.contains(&pair.first) || ejected.contains(&pair.second))
 }
 
 /// Runs the joint multi-piece re-placement repair over `placements` under the
@@ -2340,40 +2478,234 @@ pub(crate) fn joint_replacement_repair(
         return refuse(diagnostics);
     }
 
-    // The ejection set: every piece of every component that carries a
-    // violating pair, not a vertex cover of it. That is the whole difference
-    // from the second tier - both sides of each conflict come out, so the
-    // vacated space is the conflict's own footprint rather than half of it.
-    let ejected = violations.pair_component_slots();
-    let incident_mass = violations.incident_mass(placements.len());
-    diagnostics.ejected_count = ejected.len();
-    if ejected.len() < 2 {
-        // A violating pair always contributes two slots, so this cannot happen
-        // from a pair-bearing component; refusing it explicitly keeps the pass
-        // from claiming to be joint while re-placing one piece.
-        diagnostics.skipped_reason =
-            Some("joint re-placement requires at least two pieces in the violating set".to_owned());
-        return refuse(diagnostics);
-    }
-    if ejected.len() > ejection_limit {
-        diagnostics.skipped_reason = Some(format!(
-            "joint ejection set of {} pieces exceeds the local-repair limit of {ejection_limit}",
-            ejected.len()
-        ));
-        return refuse(diagnostics);
-    }
-    diagnostics.ejected_piece_ids = ejected
-        .iter()
-        .map(|slot| placements[*slot].piece_id.clone())
-        .collect();
-    diagnostics.ejected_mass_mm = ejected.iter().map(|slot| incident_mass[*slot]).collect();
+    // The pass repairs the violation graph one connected component at a time,
+    // re-surveying the whole layout between components. Independent conflicts
+    // are independent repairs: pooling every pair-bearing component into one
+    // ejection set made four separate two-piece conflicts refuse on an ejection
+    // cap that none of them individually trips, which is what the measured
+    // negative on this tier was largely made of.
+    let bound_settings = GeneralFastSettings {
+        sheet_long_axis_mm: bound_mm,
+        ..fast_settings
+    };
+    let mut work = RunWork::new(pieces.len());
+    let mut budget = JointReplacementBudget::for_piece_count(pieces.len());
+    let mut working = placements.to_vec();
+    let mut refused = BTreeSet::<Vec<usize>>::new();
+    let mut ordinal = 0usize;
+    let mut accepted_depth_mm = None::<f64>;
+    let mut repaired_any = false;
+    let mut orders_exhaustive = true;
 
-    // Every violating pair has both endpoints in the ejection set, so the
-    // remainder carries no violating pair at all. A boundary residue may
-    // survive, and that is a projection problem, so the micro-legalizer gets
-    // the sub-layout - exactly as in the second tier.
-    let mut kept = Vec::with_capacity(placements.len() - ejected.len());
-    for (slot, placement) in placements.iter().enumerate() {
+    for component_pass in 0..JOINT_REPLACEMENT_COMPONENT_PASSES {
+        let current = match survey_layout_violations(pieces, &working, fast_settings) {
+            Ok(current) => current,
+            Err(error) => {
+                diagnostics.rejection_reason = Some(format!("working layout survey: {error}"));
+                break;
+            }
+        };
+        if current.pairs.is_empty() {
+            break;
+        }
+        let Some(component) = next_violation_component(&current, &refused) else {
+            break;
+        };
+        // Measured on *this* pass's survey, not the input one: a later
+        // component's residue scale is what its own anchor-local cloud is
+        // sized from, and on the first pass the two surveys are the same.
+        let incident_mass = current.incident_mass(working.len());
+        let mut row = GeneralJointReplacementComponentRow {
+            pass: component_pass,
+            piece_ids: component
+                .iter()
+                .map(|slot| working[*slot].piece_id.clone())
+                .collect(),
+            incident_mass_mm: component
+                .iter()
+                .map(|slot| incident_mass.get(*slot).copied().unwrap_or_default())
+                .collect(),
+            violating_pairs_before: current.pairs.len(),
+            boundary_pieces_before: current.boundary_pieces.len(),
+            ..GeneralJointReplacementComponentRow::default()
+        };
+        diagnostics.component_passes_run = diagnostics.component_passes_run.saturating_add(1);
+        if component.len() < 2 {
+            // A violating pair always contributes two slots, so this cannot
+            // happen from a pair-bearing component; refusing it explicitly
+            // keeps the pass from claiming to be joint while re-placing one
+            // piece.
+            row.skipped_reason = Some(
+                "joint re-placement requires at least two pieces in the violating set".to_owned(),
+            );
+            orders_exhaustive = false;
+            refused.insert(component);
+            diagnostics.components_refused = diagnostics.components_refused.saturating_add(1);
+            diagnostics.components.push(row);
+            continue;
+        }
+        if component.len() > ejection_limit {
+            row.skipped_reason = Some(format!(
+                "joint ejection set of {} pieces exceeds the local-repair limit of {ejection_limit}",
+                component.len()
+            ));
+            orders_exhaustive = false;
+            refused.insert(component);
+            diagnostics.components_refused = diagnostics.components_refused.saturating_add(1);
+            diagnostics.components.push(row);
+            continue;
+        }
+        for id in &row.piece_ids {
+            diagnostics.ejected_piece_ids.push(id.clone());
+        }
+        for mass in &row.incident_mass_mm {
+            diagnostics.ejected_mass_mm.push(*mass);
+        }
+        diagnostics.ejected_count = diagnostics.ejected_count.saturating_add(component.len());
+
+        let outcome = repair_violation_component(
+            pieces,
+            fast_settings,
+            bound_settings,
+            bound_mm,
+            &working,
+            &current,
+            &component,
+            component_pass,
+            &mut ordinal,
+            &mut budget,
+            &mut work,
+            &mut diagnostics,
+            &mut row,
+        );
+        orders_exhaustive &= outcome.orders_exhaustive;
+        match outcome.repaired {
+            Some(repaired) => {
+                working = repaired;
+                accepted_depth_mm = outcome.depth_mm;
+                repaired_any = true;
+                row.repaired = true;
+                diagnostics.components_repaired = diagnostics.components_repaired.saturating_add(1);
+            }
+            None => {
+                refused.insert(component);
+                diagnostics.components_refused = diagnostics.components_refused.saturating_add(1);
+            }
+        }
+        let after = survey_layout_violations(pieces, &working, fast_settings).ok();
+        row.violating_pairs_after = after
+            .as_ref()
+            .map_or(row.violating_pairs_before, |after| after.pairs.len());
+        row.boundary_pieces_after = after.as_ref().map_or(row.boundary_pieces_before, |after| {
+            after.boundary_pieces.len()
+        });
+        let capped = outcome.cap_exhausted.clone();
+        diagnostics.components.push(row);
+        if let Some(capped) = capped {
+            diagnostics.cap_exhausted = Some(capped);
+            break;
+        }
+    }
+    diagnostics.work = work.diagnostics;
+    // True only when *every* component pass enumerated all of its own set's
+    // permutations, so a single-cluster instance reports exactly what it did.
+    diagnostics.orders_exhaustive = orders_exhaustive && diagnostics.component_passes_run > 0;
+
+    // Publication is the whole-request validator's call, exactly as before: a
+    // component pass may accept partial progress, but only a layout the
+    // authoritative validator accepts ever leaves this function.
+    if repaired_any {
+        if let Some(depth_mm) = accepted_depth_mm {
+            diagnostics.exact_valid = true;
+            diagnostics.depth_mm = Some(depth_mm);
+            if let Some(winner) = diagnostics
+                .orders
+                .iter()
+                .rev()
+                .find(|row| row.exact_valid)
+                .cloned()
+            {
+                diagnostics.accepted_order = Some(winner.ordinal);
+                diagnostics.accepted_order_hash = winner.order_hash.clone();
+                diagnostics.accepted_by_swap = winner.swap_pair.is_some();
+                diagnostics.accepted_finalist_ranks = winner.finalist_ranks.clone();
+            }
+            return JointReplacementOutcome {
+                diagnostics,
+                repaired: Some(working),
+            };
+        }
+    }
+    if diagnostics.rejection_reason.is_none() {
+        diagnostics.rejection_reason = Some(format!(
+            "no insertion order re-placed the {} violation components inside the {bound_mm} mm bound",
+            diagnostics.component_passes_run
+        ));
+    }
+    refuse(diagnostics)
+}
+
+/// What one component pass produced.
+struct ComponentRepairOutcome {
+    /// The whole layout with this component re-placed, when the pass accepted
+    /// one. `None` means the component was not repaired and the caller keeps
+    /// the layout it had.
+    repaired: Option<Vec<GeneralFastPlacement>>,
+    /// The measured depth of that layout when the *whole request* validated on
+    /// it. `None` on a partial repair, which is not a publication candidate.
+    depth_mm: Option<f64>,
+    /// Whether this component's insertion-order plan was every permutation of
+    /// its ejection set rather than the bounded rotation family.
+    orders_exhaustive: bool,
+    cap_exhausted: Option<String>,
+}
+
+/// Repairs one connected violation component of `working` by ejecting all of
+/// it and re-placing it under the clamped bound.
+///
+/// The enumeration is the tier's original one - every insertion order, then the
+/// pose-swap round - followed by the finalist-combination beam. The beam runs
+/// *last* deliberately: every state the tier used to publish it still publishes
+/// by exactly the route it used to, and the beam only ever adds states nothing
+/// before it could reach.
+///
+/// Acceptance is the whole-request validator whenever it passes, which is what
+/// a single-component instance is decided on and is bit-identical to the
+/// pooled pass. Only when other conflict clusters are still outstanding may a
+/// pass instead accept partial progress - this component's pairs cleared, the
+/// boundary residue no worse - because such a layout cannot validate as a whole
+/// yet by construction.
+#[allow(clippy::too_many_arguments)]
+fn repair_violation_component(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    bound_settings: GeneralFastSettings,
+    bound_mm: f64,
+    working: &[GeneralFastPlacement],
+    violations: &LayoutViolations,
+    ejected: &[usize],
+    component_pass: usize,
+    ordinal: &mut usize,
+    budget: &mut JointReplacementBudget,
+    work: &mut RunWork,
+    diagnostics: &mut GeneralJointReplacementDiagnostics,
+    row: &mut GeneralJointReplacementComponentRow,
+) -> ComponentRepairOutcome {
+    let refuse = |cap_exhausted: Option<String>| ComponentRepairOutcome {
+        repaired: None,
+        depth_mm: None,
+        orders_exhaustive: false,
+        cap_exhausted,
+    };
+    // Every violating pair of *this* component has both endpoints in the
+    // ejection set, so what survives among the kept pieces is the other
+    // components' residue plus any boundary residue. A boundary residue is a
+    // projection problem, so - exactly as in the second tier - the
+    // micro-legalizer gets the sub-layout, but only once this is the last
+    // cluster standing and the projection is not being asked to reason about a
+    // conflict another pass still owns.
+    let mut kept = Vec::with_capacity(working.len().saturating_sub(ejected.len()));
+    for (slot, placement) in working.iter().enumerate() {
         if !ejected.contains(&slot) {
             kept.push(placement.clone());
         }
@@ -2381,23 +2713,28 @@ pub(crate) fn joint_replacement_repair(
     let kept_violations = match survey_layout_violations(pieces, &kept, fast_settings) {
         Ok(violations) => violations,
         Err(error) => {
-            diagnostics.skipped_reason = Some(format!("kept sub-layout survey: {error}"));
-            return refuse(diagnostics);
+            row.rejection_reason = Some(format!("kept sub-layout survey: {error}"));
+            return refuse(None);
         }
     };
-    diagnostics.kept_violating_pairs = kept_violations.pairs.len();
-    diagnostics.kept_boundary_pieces = kept_violations.boundary_pieces.len();
-    if !kept_violations.pairs.is_empty() {
-        diagnostics.skipped_reason = Some(format!(
-            "kept sub-layout still carries {} violating pairs after ejection",
-            kept_violations.pairs.len()
-        ));
-        return refuse(diagnostics);
+    row.kept_violating_pairs = kept_violations.pairs.len();
+    row.kept_boundary_pieces = kept_violations.boundary_pieces.len();
+    // The top-level kept-residue fields keep the pooled pass's meaning: they
+    // describe the *first* component pass, which on a single-cluster instance
+    // is the whole pass. Later passes are readable in their own rows.
+    let first_pass = component_pass == 0;
+    if first_pass {
+        diagnostics.kept_violating_pairs = kept_violations.pairs.len();
+        diagnostics.kept_boundary_pieces = kept_violations.boundary_pieces.len();
     }
-    let mut base = placements.to_vec();
-    if !kept_violations.boundary_pieces.is_empty() {
+    let other_clusters_remain = !kept_violations.pairs.is_empty();
+    let mut base = working.to_vec();
+    if kept_violations.pairs.is_empty() && !kept_violations.boundary_pieces.is_empty() {
         let (micro, repaired) = micro_legalize(pieces, &kept, fast_settings);
-        diagnostics.kept_micro_legalization = Some(micro);
+        row.kept_micro_legalization = Some(micro.clone());
+        if first_pass {
+            diagnostics.kept_micro_legalization = Some(micro);
+        }
         match repaired {
             Some(repaired) => {
                 let by_id = repaired
@@ -2412,25 +2749,21 @@ pub(crate) fn joint_replacement_repair(
                 }
             }
             None => {
-                diagnostics.rejection_reason = Some(
+                row.rejection_reason = Some(
                     "the kept sub-layout's boundary residue could not be micro-legalized"
                         .to_owned(),
                 );
-                return refuse(diagnostics);
+                return refuse(None);
             }
         }
     }
 
     diagnostics.attempted = true;
-    let bound_settings = GeneralFastSettings {
-        sheet_long_axis_mm: bound_mm,
-        ..fast_settings
-    };
     let anchor = match relaxed_state_from_fast_placements(pieces, &base, bound_mm) {
         Ok(anchor) => anchor,
         Err(error) => {
-            diagnostics.rejection_reason = Some(error);
-            return refuse(diagnostics);
+            row.rejection_reason = Some(error);
+            return refuse(None);
         }
     };
     let by_id = pieces
@@ -2442,16 +2775,16 @@ pub(crate) fn joint_replacement_repair(
         .iter()
         .map(|slot| {
             by_id
-                .get(placements[*slot].piece_id.as_str())
+                .get(working[*slot].piece_id.as_str())
                 .copied()
-                .ok_or_else(|| format!("unknown piece {}", placements[*slot].piece_id))
+                .ok_or_else(|| format!("unknown piece {}", working[*slot].piece_id))
         })
         .collect::<Result<Vec<usize>, String>>()
     {
         Ok(indices) => indices,
         Err(error) => {
-            diagnostics.rejection_reason = Some(error);
-            return refuse(diagnostics);
+            row.rejection_reason = Some(error);
+            return refuse(None);
         }
     };
 
@@ -2460,11 +2793,7 @@ pub(crate) fn joint_replacement_repair(
     // measured exactly as there; what is new is that each ejected piece also
     // gets the vacated translations of the *others* as candidate poses, which
     // is the only way a per-piece candidate stream can propose an exchange.
-    let residue_scale_mm = diagnostics
-        .ejected_mass_mm
-        .iter()
-        .copied()
-        .fold(0.0f64, f64::max);
+    let residue_scale_mm = row.incident_mass_mm.iter().copied().fold(0.0f64, f64::max);
     let mut anchor_local = AnchorLocalSeeding::with_residue_scale(Some(residue_scale_mm));
     for (slot, index) in ejected.iter().copied().zip(ejected_indices.iter().copied()) {
         let mut directions = Vec::new();
@@ -2538,166 +2867,250 @@ pub(crate) fn joint_replacement_repair(
             }
         }
     }
-    diagnostics.projected_displacements_mm = ejected_indices
-        .iter()
-        .map(|index| {
+    // Aligned with `ejectedPieceIds`, which accumulates across component passes.
+    diagnostics
+        .projected_displacements_mm
+        .extend(ejected_indices.iter().map(|index| {
             anchor_local
                 .projected_displacements(*index)
                 .last()
                 .map_or(0.0, |(x, y)| x.hypot(*y))
-        })
-        .collect();
+        }));
 
     let canonical = bounded_replacement_order(pieces, &ejected_indices);
     let (orders, exhaustive) = joint_replacement_orders(&canonical);
-    diagnostics.orders_planned = orders.len();
-    diagnostics.orders_exhaustive = exhaustive;
-    diagnostics.swap_pairs_planned = canonical
+    let combinations = finalist_rank_combinations(canonical.len());
+    row.orders_planned = orders.len();
+    row.beam_combinations_planned = combinations.len().saturating_sub(1);
+    diagnostics.orders_planned = diagnostics.orders_planned.saturating_add(orders.len());
+    let swap_pairs_planned = canonical
         .len()
         .saturating_mul(canonical.len().saturating_sub(1))
         .saturating_div(2)
         .min(JOINT_REPLACEMENT_SWAP_ATTEMPT_CAP);
+    diagnostics.swap_pairs_planned = diagnostics
+        .swap_pairs_planned
+        .saturating_add(swap_pairs_planned);
 
-    // One ledger for the whole pass, so the joint search has a real total
-    // budget rather than a per-order one that a long enumeration could
-    // multiply without bound.
-    let mut work = RunWork::new(pieces.len());
-    let mut accepted: Option<(Vec<GeneralFastPlacement>, f64)> = None;
-    let mut ordinal = 0usize;
+    // The attempt plan, in the order it is spent: every plain insertion order
+    // at the greedy finalist commit, then the pose-swap round, then the
+    // finalist-combination beam on the canonical order.
+    enum Attempt<'a> {
+        Order(&'a [usize]),
+        Swap(usize, usize),
+        Beam(&'a [usize]),
+    }
+    let mut plan = Vec::<Attempt<'_>>::new();
     for order in &orders {
-        let (row, produced) = joint_replacement_attempt(
+        plan.push(Attempt::Order(order));
+    }
+    for _ in 0..JOINT_REPLACEMENT_SWAP_ROUNDS {
+        let mut swaps = 0usize;
+        for first_position in 0..canonical.len() {
+            for second_position in (first_position + 1)..canonical.len() {
+                if swaps >= JOINT_REPLACEMENT_SWAP_ATTEMPT_CAP {
+                    break;
+                }
+                plan.push(Attempt::Swap(first_position, second_position));
+                swaps += 1;
+            }
+        }
+    }
+    for ranks in combinations.iter().skip(1) {
+        plan.push(Attempt::Beam(ranks));
+    }
+
+    let mut accepted = None::<(Vec<GeneralFastPlacement>, Option<f64>)>;
+    let mut cap_exhausted = None::<String>;
+    for attempt in &plan {
+        if let Err(reason) = budget.charge(ejected_indices.len()) {
+            cap_exhausted = Some(reason.to_owned());
+            break;
+        }
+        let (attempt_anchor, order, swap_pair, ranks) = match attempt {
+            Attempt::Order(order) => (anchor.clone(), *order, None, None),
+            Attempt::Swap(first_position, second_position) => {
+                // Exchanging two vacated poses in the anchor re-centres both
+                // pieces' whole candidate clouds on each other's pocket, so the
+                // exchange is proposed by the same confirmed-pose machinery as
+                // everything else. Orientations stay with their own pieces: a
+                // rotation is admissible per piece, so trading them could
+                // propose a pose the request forbids.
+                let first = canonical[*first_position];
+                let second = canonical[*second_position];
+                let mut swapped = anchor.clone();
+                let held = (
+                    swapped.placements[first].translate_x,
+                    swapped.placements[first].translate_y,
+                );
+                swapped.placements[first].translate_x = swapped.placements[second].translate_x;
+                swapped.placements[first].translate_y = swapped.placements[second].translate_y;
+                swapped.placements[second].translate_x = held.0;
+                swapped.placements[second].translate_y = held.1;
+                (
+                    swapped,
+                    canonical.as_slice(),
+                    Some(vec![
+                        pieces[first].id.to_owned(),
+                        pieces[second].id.to_owned(),
+                    ]),
+                    None,
+                )
+            }
+            Attempt::Beam(ranks) => (anchor.clone(), canonical.as_slice(), None, Some(*ranks)),
+        };
+        match attempt {
+            Attempt::Order(_) => {
+                row.orders_tried = row.orders_tried.saturating_add(1);
+                diagnostics.orders_tried = diagnostics.orders_tried.saturating_add(1);
+            }
+            Attempt::Swap(..) => {
+                row.swap_attempts_tried = row.swap_attempts_tried.saturating_add(1);
+                diagnostics.swap_attempts_tried = diagnostics.swap_attempts_tried.saturating_add(1);
+                diagnostics.swap_rounds_run = diagnostics.swap_rounds_run.max(1);
+            }
+            Attempt::Beam(_) => {
+                row.beam_combinations_tried = row.beam_combinations_tried.saturating_add(1);
+                diagnostics.beam_combinations_tried =
+                    diagnostics.beam_combinations_tried.saturating_add(1);
+            }
+        }
+        let (attempt_row, produced) = joint_replacement_attempt(
             pieces,
             fast_settings,
             bound_settings,
             bound_mm,
-            &anchor,
+            &attempt_anchor,
             &ejected_indices,
             order,
             &anchor_local,
-            ordinal,
-            None,
-            &mut work,
+            *ordinal,
+            component_pass,
+            swap_pair,
+            ranks,
+            work,
         );
-        ordinal += 1;
-        diagnostics.orders_tried = diagnostics.orders_tried.saturating_add(1);
-        let capped = row
+        *ordinal += 1;
+        let capped = attempt_row
             .rejection_reason
             .as_deref()
             .and_then(|reason| reason.strip_prefix("cap: "))
             .map(str::to_owned);
-        let exact_valid = row.exact_valid;
-        diagnostics.orders.push(row);
+        let exact_valid = attempt_row.exact_valid;
+        let depth_mm = attempt_row.depth_mm;
+        let accept = |row: &mut GeneralJointReplacementComponentRow| {
+            row.accepted_ordinal = Some(attempt_row.ordinal);
+            row.accepted_order_hash = attempt_row.order_hash.clone();
+            row.accepted_by_swap = attempt_row.swap_pair.is_some();
+            row.accepted_finalist_ranks = attempt_row.finalist_ranks.clone();
+        };
         if let Some(capped) = capped {
-            diagnostics.cap_exhausted = Some(capped);
+            diagnostics.orders.push(attempt_row);
+            cap_exhausted = Some(capped);
             break;
         }
+        let Some(candidate) = produced else {
+            diagnostics.orders.push(attempt_row);
+            continue;
+        };
         if exact_valid {
-            accepted = produced;
+            accept(row);
+            diagnostics.orders.push(attempt_row);
+            accepted = Some((candidate, depth_mm));
+            break;
+        }
+        if !other_clusters_remain {
+            diagnostics.orders.push(attempt_row);
+            continue;
+        }
+        // Partial progress: this component's pairs are gone and the boundary
+        // residue is no worse, but another cluster still keeps the layout from
+        // validating. Measured on the same survey every tier is targeted at.
+        let Ok(after) = survey_layout_violations(pieces, &candidate, fast_settings) else {
+            diagnostics.orders.push(attempt_row);
+            continue;
+        };
+        let cleared = component_pass_cleared(violations, &after, ejected);
+        if cleared {
+            accept(row);
+        }
+        diagnostics.orders.push(attempt_row);
+        if cleared {
+            accepted = Some((candidate, None));
             break;
         }
     }
-
-    // The pose swap. Every plain order has failed, which means no piece of the
-    // set found room where it or the stations could see it; the one local move
-    // left is the coordinated one, and a translation-based tier cannot express
-    // it at any magnitude. Exchanging two vacated poses in the anchor re-centres
-    // both pieces' whole candidate clouds on each other's pocket, so the
-    // exchange is proposed by the same confirmed-pose machinery as everything
-    // else. Orientations stay with their own pieces: a rotation is admissible
-    // per piece, so trading them could propose a pose the request forbids.
-    if accepted.is_none() && diagnostics.cap_exhausted.is_none() {
-        for _ in 0..JOINT_REPLACEMENT_SWAP_ROUNDS {
-            diagnostics.swap_rounds_run = diagnostics.swap_rounds_run.saturating_add(1);
-            for first_position in 0..canonical.len() {
-                for second_position in (first_position + 1)..canonical.len() {
-                    if diagnostics.swap_attempts_tried >= JOINT_REPLACEMENT_SWAP_ATTEMPT_CAP {
-                        break;
-                    }
-                    let first = canonical[first_position];
-                    let second = canonical[second_position];
-                    let mut swapped = anchor.clone();
-                    let held = (
-                        swapped.placements[first].translate_x,
-                        swapped.placements[first].translate_y,
-                    );
-                    swapped.placements[first].translate_x = swapped.placements[second].translate_x;
-                    swapped.placements[first].translate_y = swapped.placements[second].translate_y;
-                    swapped.placements[second].translate_x = held.0;
-                    swapped.placements[second].translate_y = held.1;
-                    let (row, produced) = joint_replacement_attempt(
-                        pieces,
-                        fast_settings,
-                        bound_settings,
-                        bound_mm,
-                        &swapped,
-                        &ejected_indices,
-                        &canonical,
-                        &anchor_local,
-                        ordinal,
-                        Some(vec![
-                            pieces[first].id.to_owned(),
-                            pieces[second].id.to_owned(),
-                        ]),
-                        &mut work,
-                    );
-                    ordinal += 1;
-                    diagnostics.swap_attempts_tried =
-                        diagnostics.swap_attempts_tried.saturating_add(1);
-                    let capped = row
-                        .rejection_reason
-                        .as_deref()
-                        .and_then(|reason| reason.strip_prefix("cap: "))
-                        .map(str::to_owned);
-                    let exact_valid = row.exact_valid;
-                    diagnostics.orders.push(row);
-                    if let Some(capped) = capped {
-                        diagnostics.cap_exhausted = Some(capped);
-                        break;
-                    }
-                    if exact_valid {
-                        accepted = produced;
-                        break;
-                    }
-                }
-                if accepted.is_some()
-                    || diagnostics.cap_exhausted.is_some()
-                    || diagnostics.swap_attempts_tried >= JOINT_REPLACEMENT_SWAP_ATTEMPT_CAP
-                {
-                    break;
-                }
-            }
-            if accepted.is_some() || diagnostics.cap_exhausted.is_some() {
-                break;
-            }
-        }
-    }
-    diagnostics.work = work.diagnostics;
 
     match accepted {
-        Some((repaired, depth_mm)) => {
-            let winner = diagnostics
-                .orders
-                .last()
-                .expect("an accepted order has a row");
-            diagnostics.accepted_order = Some(winner.ordinal);
-            diagnostics.accepted_order_hash = winner.order_hash.clone();
-            diagnostics.accepted_by_swap = winner.swap_pair.is_some();
-            diagnostics.exact_valid = true;
-            diagnostics.depth_mm = Some(depth_mm);
-            JointReplacementOutcome {
-                diagnostics,
-                repaired: Some(repaired),
-            }
-        }
+        Some((repaired, depth_mm)) => ComponentRepairOutcome {
+            repaired: Some(repaired),
+            depth_mm,
+            orders_exhaustive: exhaustive,
+            cap_exhausted,
+        },
         None => {
-            if diagnostics.rejection_reason.is_none() {
-                diagnostics.rejection_reason = Some(format!(
+            if row.rejection_reason.is_none() {
+                row.rejection_reason = Some(format!(
                     "no insertion order re-placed the {}-piece violation set inside the {bound_mm} mm bound",
-                    diagnostics.ejected_count
+                    ejected_indices.len()
                 ));
             }
-            refuse(diagnostics)
+            ComponentRepairOutcome {
+                orders_exhaustive: exhaustive,
+                ..refuse(cap_exhausted)
+            }
         }
+    }
+}
+
+/// The joint tier's own attempt and slot ledger.
+///
+/// Charged per re-placement attempt against the *same* product the single-set
+/// pass was already funded for in
+/// `bounded_reinsertion_fits_the_construction_budget`: at most
+/// `JOINT_REPLACEMENT_ORDER_CAP` plain orders plus the pose-swap round, each
+/// over an ejection set as large as the whole layout. The per-component loop
+/// and the finalist beam therefore spend the tier's existing construction-slot
+/// allowance differently rather than asking for a new one, and an instance too
+/// small to fund the full plan stops on `capExhausted` instead of overrunning.
+struct JointReplacementBudget {
+    attempts_remaining: usize,
+    slots_remaining: usize,
+}
+
+impl JointReplacementBudget {
+    fn attempt_cap() -> usize {
+        JOINT_REPLACEMENT_COMPONENT_PASSES.saturating_mul(
+            JOINT_REPLACEMENT_ORDER_CAP
+                .saturating_add(JOINT_REPLACEMENT_SWAP_ROUNDS * JOINT_REPLACEMENT_SWAP_ATTEMPT_CAP)
+                .saturating_add(JOINT_REPLACEMENT_BEAM_COMBINATIONS),
+        )
+    }
+
+    fn slot_cap(piece_count: usize) -> usize {
+        JOINT_REPLACEMENT_ORDER_CAP
+            .saturating_add(JOINT_REPLACEMENT_SWAP_ROUNDS * JOINT_REPLACEMENT_SWAP_ATTEMPT_CAP)
+            .saturating_mul(piece_count)
+    }
+
+    fn for_piece_count(piece_count: usize) -> Self {
+        Self {
+            attempts_remaining: Self::attempt_cap(),
+            slots_remaining: Self::slot_cap(piece_count),
+        }
+    }
+
+    /// Charges one re-placement attempt over `ejected` pieces.
+    fn charge(&mut self, ejected: usize) -> Result<(), &'static str> {
+        if self.attempts_remaining == 0 {
+            return Err("joint re-placement attempt budget exhausted");
+        }
+        if self.slots_remaining < ejected {
+            return Err("joint re-placement slot budget exhausted");
+        }
+        self.attempts_remaining -= 1;
+        self.slots_remaining -= ejected;
+        Ok(())
     }
 }
 
@@ -9357,17 +9770,44 @@ mod tests {
             );
 
             // Mode 29 drives the *same* primitive once per attempted insertion
-            // order, against one shared ledger, so its worst case is the
-            // single-pass one multiplied by the attempt ceiling: at most
+            // order, against one shared ledger. Its slot budget is exactly the
+            // single-set pass's old worst case - at most
             // `JOINT_REPLACEMENT_ORDER_CAP` plain orders plus
             // `JOINT_REPLACEMENT_SWAP_ROUNDS * JOINT_REPLACEMENT_SWAP_ATTEMPT_CAP`
-            // pose-swap attempts, each over an ejection set the shared
-            // admission limit already bounds. That product is still funded by
-            // the existing per-piece construction term at every instance size,
-            // which is why the joint tier needs no new aggregate term either.
-            let joint_attempts = JOINT_REPLACEMENT_ORDER_CAP
-                + JOINT_REPLACEMENT_SWAP_ROUNDS * JOINT_REPLACEMENT_SWAP_ATTEMPT_CAP;
-            let joint_slots = joint_attempts.saturating_mul(worst_case_slots);
+            // pose-swap attempts, each over an ejection set as large as the
+            // whole layout - and the per-component loop and the finalist beam
+            // spend *that* allowance differently rather than asking for a new
+            // one. `JointReplacementBudget` enforces it at runtime, so an
+            // instance too small to fund the full plan stops on `capExhausted`
+            // instead of overrunning, and the joint tier still needs no new
+            // aggregate quota term.
+            let joint_attempts = JointReplacementBudget::attempt_cap();
+            let joint_slots = JointReplacementBudget::slot_cap(piece_count);
+            assert_eq!(
+                joint_slots,
+                (JOINT_REPLACEMENT_ORDER_CAP
+                    + JOINT_REPLACEMENT_SWAP_ROUNDS * JOINT_REPLACEMENT_SWAP_ATTEMPT_CAP)
+                    .saturating_mul(worst_case_slots),
+                "piece count {piece_count}"
+            );
+            // The beam is exactly `CONSTRUCTION_FINALISTS_PER_SLOT` ranks per
+            // piece over a component of at most
+            // `JOINT_REPLACEMENT_BEAM_MAX_PIECES`, so its combination ceiling
+            // is that power and nothing tunable drifts away from it.
+            assert_eq!(
+                JOINT_REPLACEMENT_BEAM_COMBINATIONS,
+                CONSTRUCTION_FINALISTS_PER_SLOT.pow(JOINT_REPLACEMENT_BEAM_MAX_PIECES as u32),
+                "piece count {piece_count}"
+            );
+            assert_eq!(
+                finalist_rank_combinations(JOINT_REPLACEMENT_BEAM_MAX_PIECES).len(),
+                JOINT_REPLACEMENT_BEAM_COMBINATIONS,
+                "piece count {piece_count}"
+            );
+            assert!(
+                finalist_rank_combinations(JOINT_REPLACEMENT_BEAM_MAX_PIECES + 1).is_empty(),
+                "piece count {piece_count}"
+            );
             assert!(
                 joint_slots <= quotas.construction_selected_piece_slots,
                 "piece count {piece_count}"
@@ -10461,8 +10901,13 @@ mod tests {
     #[test]
     fn joint_replacement_fails_cleanly_when_no_order_or_swap_works() {
         // The same interlocked pair under a clamp too short to stack them. No
-        // insertion order can succeed, so the swap round runs too and the pass
-        // reports the exhausted search rather than publishing anything.
+        // insertion order can succeed, so the swap round runs, and then the
+        // finalist-combination beam spends every non-greedy rank pair before
+        // the pass reports the exhausted search rather than publishing
+        // anything. The attempt plan's shape is the contract here: the plain
+        // orders come first and the swap after them, exactly where they always
+        // were, so a state this tier used to publish still publishes by the
+        // route it used to; the beam only ever runs after both.
         let ids = ["a", "b"];
         let (polygons, placements) = interlocked_pair();
         let pieces = replacement_pieces(&ids, &polygons);
@@ -10478,10 +10923,32 @@ mod tests {
         assert_eq!(diagnostics.swap_rounds_run, 1, "{diagnostics:?}");
         assert_eq!(diagnostics.swap_pairs_planned, 1, "{diagnostics:?}");
         assert_eq!(diagnostics.swap_attempts_tried, 1, "{diagnostics:?}");
-        assert_eq!(diagnostics.orders.len(), 3, "{diagnostics:?}");
+        // One component, ejecting both pieces, so the beam's plan is every
+        // rank pair but the greedy one: 4 * 4 - 1 = 15.
+        assert_eq!(diagnostics.component_passes_run, 1, "{diagnostics:?}");
+        assert_eq!(diagnostics.components.len(), 1, "{diagnostics:?}");
+        assert_eq!(diagnostics.components_repaired, 0, "{diagnostics:?}");
+        assert_eq!(diagnostics.beam_combinations_tried, 15, "{diagnostics:?}");
+        assert_eq!(diagnostics.orders.len(), 2 + 1 + 15, "{diagnostics:?}");
+        assert!(
+            diagnostics.orders[..3]
+                .iter()
+                .all(|row| row.finalist_ranks.is_none()),
+            "{diagnostics:?}"
+        );
         assert_eq!(
             diagnostics.orders[2].swap_pair,
             Some(vec!["a".to_owned(), "b".to_owned()]),
+            "{diagnostics:?}"
+        );
+        assert_eq!(
+            diagnostics.orders[3].finalist_ranks,
+            Some(vec![0, 1]),
+            "{diagnostics:?}"
+        );
+        assert_eq!(
+            diagnostics.orders[17].finalist_ranks,
+            Some(vec![3, 3]),
             "{diagnostics:?}"
         );
         assert!(diagnostics.cap_exhausted.is_none(), "{diagnostics:?}");
@@ -10492,6 +10959,47 @@ mod tests {
                 .is_some_and(|reason| reason.contains("no insertion order")),
             "{diagnostics:?}"
         );
+    }
+
+    #[test]
+    fn joint_replacement_repairs_independent_components_one_at_a_time() {
+        // Two independent two-piece conflicts on one sheet. The pooled pass
+        // ejected all four at once and refused on an ejection cap that neither
+        // conflict individually trips; the per-component pass repairs them in
+        // sequence and re-surveys between them.
+        let ids = ["a", "b", "c", "d"];
+        let polygons = vec![square(20.0), square(20.0), square(20.0), square(20.0)];
+        let pieces = replacement_pieces(&ids, &polygons);
+        let settings = replacement_settings(400.0, 400.0);
+        // Two overlapping pairs, far enough apart that their violation graphs
+        // never touch.
+        let placements = vec![
+            replacement_placement("a", 40.0, 40.0),
+            replacement_placement("b", 45.0, 40.0),
+            replacement_placement("c", 300.0, 300.0),
+            replacement_placement("d", 305.0, 300.0),
+        ];
+        let violations =
+            survey_layout_violations(&pieces, &placements, settings).expect("a surveyable layout");
+        assert_eq!(violations.pair_components().len(), 2, "{violations:?}");
+
+        let outcome = joint_replacement_repair(&pieces, &placements, settings, 400.0);
+        let diagnostics = &outcome.diagnostics;
+        assert_eq!(diagnostics.component_passes_run, 2, "{diagnostics:?}");
+        assert_eq!(diagnostics.components.len(), 2, "{diagnostics:?}");
+        assert!(
+            diagnostics
+                .components
+                .iter()
+                .all(|row| row.piece_ids.len() == 2),
+            "{diagnostics:?}"
+        );
+        assert_eq!(diagnostics.components_repaired, 2, "{diagnostics:?}");
+        assert_eq!(diagnostics.ejected_count, 4, "{diagnostics:?}");
+        assert!(diagnostics.exact_valid, "{diagnostics:?}");
+        let repaired = outcome.repaired.expect("a repaired layout");
+        validate_and_measure_placements(&pieces, &repaired, settings)
+            .expect("the published layout validates against the real request");
     }
 
     #[test]
@@ -10619,6 +11127,7 @@ mod tests {
             &anchor,
             &[0, 1],
             Some(&[0, 0]),
+            None,
             JOINT_REPLACEMENT_SEED_DOMAIN,
             &AnchorLocalSeeding::disabled(),
             &mut work,
@@ -10699,6 +11208,7 @@ mod tests {
             bound_mm,
             &anchor,
             &[POCKET_SLOT],
+            None,
             None,
             REPLACEMENT_REPAIR_SEED_DOMAIN,
             anchor_local,

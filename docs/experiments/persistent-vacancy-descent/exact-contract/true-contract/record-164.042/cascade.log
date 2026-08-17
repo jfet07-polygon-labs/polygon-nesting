@@ -1,0 +1,6 @@
+start parent=/var/lib/t3/tmp/redo/states/pinned-164.054.json depth=164.0540 mode=28 seed=0
+round 0: 164.0540 -> 164.0530 via k1-d0.25 -> /var/lib/t3/tmp/redo/cascade28/pinned-164.053-r0.json
+round 1: 164.0530 -> 164.0430 via k1-d0.5 -> /var/lib/t3/tmp/redo/cascade28/pinned-164.043-r1.json
+round 2: 164.0430 -> 164.0420 via k1-d0.25 -> /var/lib/t3/tmp/redo/cascade28/pinned-164.042-r2.json
+round 3: no improvement (best=None) - FIXPOINT at 164.0420
+final parent=/var/lib/t3/tmp/redo/cascade28/pinned-164.042-r2.json depth=164.0420

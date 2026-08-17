@@ -1,0 +1,67 @@
+{
+ "experiment": "per-connected-component repair plus a finalist-combination beam for the joint multi-piece re-placement tier (mode 29), and the rerun of the ladders its original negative was measured on",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "searchOffsetAllowanceMm": 0.0005,
+ "whatWasWrongWithTheOriginal": {
+  "pooledEjectionSet": "the pass unioned every pair-bearing violation component into a single ejection set (general_persistent_vacancy.rs ~2343, LayoutViolations::pair_component_slots). Four independent two-piece conflicts therefore refused on an ejection cap that none of them individually trips: 27 of the original 63 refusals were this artifact, with no infeasibility certificate behind them.",
+  "greedyFirstFinalist": "the shared insertion primitive committed the first in-bound finalist for every piece with no backtracking (~1468). A component whose first piece takes the shallowest pose and thereby boxes the second one out was refused outright.",
+  "cyclicOrdersOnly": "above four pieces the order search degenerates to rotations of the canonical order (~2146). Unchanged - but with per-component repair, components above four pieces are now rare."
+ },
+ "fix": {
+  "perComponent": "the pass repairs one connected violation component at a time and re-surveys the whole layout between components, up to JOINT_REPLACEMENT_COMPONENT_PASSES = 8. Components are taken in descending incident violation mass with the lowest slot index breaking ties, on an integer grid key so the choice cannot depend on float comparison order. A component that fails is recorded and skipped rather than retried.",
+  "acceptance": "the authoritative whole-request validator whenever it passes - which is what a single-component instance is decided on, so that case is behaviourally what it always was. Only while other conflict clusters are still outstanding may a pass accept partial progress: this component's pairs cleared and the boundary residue no worse. Publication is unchanged: only a layout validate_and_measure_placements accepts ever leaves the pass.",
+  "combinationBeam": "for components of at most JOINT_REPLACEMENT_BEAM_MAX_PIECES = 3 pieces the pass enumerates combinations of finalist ranks - CONSTRUCTION_FINALISTS_PER_SLOT = 4 ranks per piece, 4^3 = 64 combinations - in odometer order with the all-zeros combination (the greedy commit) first. The primitive gained a finalist_choice parameter; every other caller passes None and is bit-identical.",
+  "planOrder": "plain insertion orders, then the pose-swap round, then the beam. The beam runs last deliberately: every state the tier used to publish it still publishes by exactly the route it used to, so the change can only ADD publications.",
+  "budgets": "no new aggregate quota term. JointReplacementBudget charges every attempt against a slot ceiling that is exactly the product the single-set pass was already funded for (JOINT_REPLACEMENT_ORDER_CAP + JOINT_REPLACEMENT_SWAP_ROUNDS * JOINT_REPLACEMENT_SWAP_ATTEMPT_CAP) * piece_count, plus an attempt ceiling of JOINT_REPLACEMENT_COMPONENT_PASSES * (orders + swaps + beam). Both are asserted in bounded_reinsertion_fits_the_construction_budget, extended in the same commit; an instance too small to fund the plan stops on capExhausted."
+ },
+ "matchedArms": {
+  "description": "the same seven perturbed states of the 164.058 record, mode 29 standalone, bound 164.058, seed 0, pre-fix binary vs post-fix binary",
+  "rows": [
+   {"case": "control-parent", "pre": "not admitted: no violating pair", "post": "identical"},
+   {"case": "squeeze-0.995", "pre": "not admitted: component of 16 above the repair limit", "post": "identical"},
+   {"case": "squeeze-0.99", "pre": "not admitted: component of 16 above the repair limit", "post": "identical"},
+   {"case": "squeeze-0.98", "pre": "not admitted: component of 36 above the repair limit", "post": "identical"},
+   {"case": "nudge-k3-d2.0", "pre": "admitted, pooled 7-piece set, 7 orders + 21 swaps, refused", "post": "admitted, 3 component passes, 10 orders + 5 swaps + 93 beam combinations, refused"},
+   {"case": "nudge-k6-d2.0", "pre": "REFUSED on the pooled ejection cap: 15 pieces against a limit of 7", "post": "admitted, 5 component passes, 1 component repaired, 42 orders + 13 swaps + 141 beam combinations"},
+   {"case": "nudge-k10-d1.0", "pre": "REFUSED on the pooled ejection cap: 20 pieces against a limit of 7", "post": "admitted, 6 component passes, 1 component repaired, 46 orders + 28 swaps + 141 beam combinations"}
+  ],
+  "verdict": "the pooled-cap refusal class is gone. Every component of every one of these states is at or below the repair limit; only the union was not."
+ },
+ "ladders": {
+  "description": "the record and from-scratch ladders the original negative was measured on, rerun on the fixed tier",
+  "record": {
+   "parent": "record-164.058/pinned-parent-164.058.json",
+   "parentDepthMm": 164.058,
+   "bounds": {"163.8": [0, 1], "163.3": [0], "162.5": [0]},
+   "publishedDepthMm": [164.058, 164.058, 164.058, 164.058],
+   "verdict": "every seed returns the incumbent"
+  },
+  "fromScratch": {
+   "parent": "from-scratch-165.203/pinned-parent-165.203.json",
+   "parentDepthMm": 165.203,
+   "bounds": {"165.0": [0, 1]},
+   "publishedDepthMm": [165.203, 165.203],
+   "verdict": "every seed returns the incumbent"
+  },
+  "tierStatistics": {
+   "tier3Invocations": 104,
+   "tier3Admitted": 102,
+   "componentPassesRun": 256,
+   "componentsRepaired": 1,
+   "plainOrdersTried": 509,
+   "swapAttemptsTried": 254,
+   "beamCombinationsTried": 3810,
+   "tier3Publications": 0,
+   "capExhausted": 0,
+   "refusalClasses": {
+    "no order/swap/beam attempt legalized the component": 254,
+    "kept sub-layout boundary residue": 1,
+    "no violating pair": 1,
+    "ejection-set cap (the pooled artifact)": 0
+   }
+  }
+ },
+ "verdict": "The mechanical objection is upheld and fixed: 27 of the original 63 refusals were a pooled-cap artifact and that class is now zero, the greedy first-finalist commit now has 64-combination backtracking on small components, and the tier repairs components it previously could not even attempt (1 component actually repaired per multi-cluster state). The scientific conclusion is UNCHANGED: on the deep-frontier residue of both certified locks the joint tier still publishes nothing, and both locks still return their incumbent at every seed. What was an artifact-contaminated negative is now a measured one - the residue at these depths is over-compression whose components individually have no in-bound pose, not a mis-arrangement any ordering, exchange or pose combination reaches.",
+ "note": "the same fixed tier IS productive on the perturbation class: see compression-negatives-corrected/ and record-164.042/, where a nudge-induced residue of two- and three-piece components legalizes below the record. The difference is the residue's scale, not the tier's reach."
+}

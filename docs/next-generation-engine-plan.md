@@ -1142,3 +1142,82 @@ interior pockets to about half a millimetre; tier three reaches the
 multi-millimetre class and confirms it is over-compression rather
 than mis-arrangement. Every measured lever inside the compress-repair
 loop is now spent, and the 164.058 / 165.203 fixpoints are unmoved.
+
+AN ADVERSARIAL REVIEW REFUTED TWO OF OUR NEGATIVES, AND ON ONE OF THEM
+IT WAS RIGHT: THE RECORD MOVES TO 164.042. The compression-negative
+drivers were an instrument failure. pv34 and pv35 wrote
+`reportedDepthMm` = `independentDepthMm` = 200.0 into the perturbed
+warm-start fixture; the harness installs that field as the incumbent's
+`used_long_axis_depth_mm` and every separator contraction target
+derives from it, so the separator was handed roughly 36 mm of headroom
+that did not exist and dutifully relaxed into it. The "~179 mm shelf"
+those runs reported is a measurement of the fake headroom, not of the
+geometry. pv35 additionally ranked "the k deepest pieces" by
+`translateLongAxis`, a post-rotation anchor offset that ranges -25.2 to
++175.7 on a layout 164.058 deep and has nothing to do with the depth
+frontier; the engine's own ordering, `high_frontier_blockers`, is by
+transformed source max-Y.
+
+Redone at true depth, the answer splits. The corrected setup declares
+the parent's own depth at the mode-26 rung seed convention and clamps
+the sheet long axis at the parent depth through the harness's existing
+override - which is exactly the mode-26 rung clamp, since
+`collision_fits_sheet` is the only place the long axis bounds anything
+and it gates every acceptance - so the separator provably cannot relax
+depth-ward. Under that clamp the separator accepts *zero* contraction
+targets on every perturbed state at both seeds, clamped and unclamped
+alike: the honest version of the original negative is not "179", it is
+"nothing". The uniform squeeze stays closed and for a sharper reason:
+even a 0.5% affine squeeze shatters the layout into eight or nine
+violation components whose largest spans 16 to 36 pieces, which is
+above every local-repair limit by design. But the binding-stack nudge
+negative does not survive. Nudge the *true* depth frontier by one to
+two millimetres and hand the result to conflict-targeted re-placement
+(mode 28) with its bound set to the incumbent's own depth, and the
+tier legalizes it below the record: 164.054 exact-valid at the first
+try, 18 exact-valid publications across a 35-point (k, d) sweep, and a
+cascade of 164.058 -> 164.054 -> 164.053 -> 164.043 -> 164.042. The new
+state is replay-validated (zero violating pairs, zero boundary pieces,
+`parentIndependentDepthMm` 164.042) and is a certified fixpoint on 8/8
+established arms - mode-22 alternation at four seeds and mode-26
+ladders at two rung scales and two seeds - plus both perturb-repair
+cascades. Gap to the 155 goal: 9.04 mm. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/{compression-negatives-corrected,record-164.042}/.
+
+The second refutation is upheld mechanically and rejected
+scientifically. Tier three did pool every pair-bearing component into
+one ejection set, so four independent two-piece conflicts refused on a
+cap none of them individually trips - 27 of the 63 refusals were that
+artifact - and it did commit the first in-bound finalist per piece with
+no backtracking. Both are fixed. The tier now repairs one connected
+component at a time, re-surveying the whole layout between components,
+and for components of at most three pieces it enumerates all 64
+combinations of the four finalist ranks per piece rather than the
+single greedy one. The plan order is deliberate: plain insertion
+orders, then the pose-swap round, then the beam, so every state the
+tier used to publish it still publishes by exactly the route it used
+to and the change can only ADD publications. Acceptance is still the
+authoritative validator whenever it passes; only while other clusters
+are outstanding may a pass accept partial progress. No new aggregate
+quota term: the whole plan is charged against exactly the slot product
+the single-set pass was already funded for, with the ceiling asserted
+in the same quota test. On matched arms the pooled-cap refusal class
+goes to zero and states that previously could not even be attempted
+now get five and six component passes with a component actually
+repaired in each. And on the ladders the original negative was
+measured on, the verdict is unchanged: 104 tier-three invocations, 102
+admitted, 256 component passes, 509 orders, 254 swaps, 3810 beam
+combinations, one component repaired, zero publications, both locks
+returning their incumbent at every seed. The residue at those depths
+is over-compression whose components individually have no in-bound
+pose - which the same fixed tier proves by being productive one class
+up, on the nudge-scale residue that just moved the record. Evidence:
+docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/joint-replacement-per-component/.
+
+The methodological lesson is the expensive one. Both negatives were
+reported as "matched" and neither was: one measured its own harness
+argument and the other refused on a cap its own ejection rule created.
+A perturb-relax experiment must state, and a reviewer must check, what
+the incumbent depth field was set to and what actually bounded the
+relaxation - and a refusal is only a negative when a certificate sits
+behind it.
