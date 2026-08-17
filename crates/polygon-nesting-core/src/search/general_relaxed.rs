@@ -21,6 +21,7 @@ use crate::geometry::general_polygon::{GeneralPolygonError, PolygonSet};
 use crate::geometry::predicates::orientation;
 use crate::nfp_ifp::compute_relative_nfp_boundary_reference;
 use crate::parallel::map_slice_with_job_pool;
+use crate::profiling::{self, Counter, Phase};
 use crate::search::general_fast::{
     collision_expansion_mm, collision_sheet_inset_mm, collision_sheet_short_axis_mm,
     polygons_overlap_exact, validate_and_measure_placements, GeneralFastError, GeneralFastPiece,
@@ -7413,6 +7414,7 @@ fn coupled_auditor_score(
     weights: &BTreeMap<(usize, usize), f64>,
     pair_visits_per_score: usize,
 ) -> (Result<PairTracker, GeneralFastError>, CoupledSeparatorWork) {
+    let _span = profiling::span(Phase::AuditorScore);
     let mut worker = match worker.lock() {
         Ok(worker) => worker,
         Err(_) => {
@@ -9800,6 +9802,7 @@ impl<'a> LaneSearch<'a> {
         score: &mut PairTracker,
         sweep: usize,
     ) -> Result<(), GeneralFastError> {
+        let _span = profiling::span(Phase::MoveSweep);
         if !score.feasible() {
             let mut forced = BTreeSet::new();
             let mut active = score
@@ -11043,6 +11046,8 @@ impl<'a> LaneSearch<'a> {
     }
 
     fn score_state(&mut self, state: &RelaxedState) -> Result<PairTracker, GeneralFastError> {
+        let _span = profiling::span(Phase::FullRescore);
+        profiling::count(Counter::FullRescores, 1);
         if self.uses_directional_pressure() {
             return self.score_state_directional(state);
         }
@@ -11213,6 +11218,8 @@ impl<'a> LaneSearch<'a> {
         piece_index: &PieceIndex,
         upper_bound: Option<f64>,
     ) -> Result<PlacementScore, GeneralFastError> {
+        let _span = profiling::span(Phase::ScorePlacement);
+        profiling::count(Counter::CandidateQueries, 1);
         if self.uses_directional_pressure() {
             return self.score_placement_directional(
                 state,
@@ -11617,6 +11624,7 @@ impl<'a> LaneSearch<'a> {
     }
 
     fn build_piece_index(&mut self, state: &RelaxedState) -> Result<PieceIndex, GeneralFastError> {
+        let _span = profiling::span(Phase::PieceIndexBuild);
         let inset = collision_sheet_inset_mm(self.fast_settings);
         let mut index = PieceIndex::new(IrregularBounds::new(
             inset,
@@ -11651,6 +11659,7 @@ impl<'a> LaneSearch<'a> {
         placement: &RelaxedPlacement,
         strip_depth_mm: f64,
     ) -> Result<(usize, f64), GeneralFastError> {
+        let _span = profiling::span(Phase::BoundaryPenalty);
         let bounds = self.placement_bounds(placement)?;
         let inset = collision_sheet_inset_mm(self.fast_settings);
         let overflow = [
@@ -11807,6 +11816,10 @@ impl<'a> LaneSearch<'a> {
         if !self.pair_collides(first, second)? {
             return Ok(0.0);
         }
+        // Opened after the collision test so that the overwhelmingly common
+        // non-colliding answer costs nothing: this phase is the quantification
+        // of a collision that has already been reported.
+        let _span = profiling::span(Phase::PairPressure);
         if self.uses_directional_pressure() {
             return Err(GeneralFastError::InvalidSettings(
                 "directional penetration requires candidate-scoped scoring".to_owned(),
@@ -11841,6 +11854,8 @@ impl<'a> LaneSearch<'a> {
         first: &RelaxedPlacement,
         second: &RelaxedPlacement,
     ) -> Result<bool, GeneralFastError> {
+        let _span = profiling::span(Phase::PairCollide);
+        profiling::count(Counter::NeighborTests, 1);
         self.counters.piece_broad_phase_probes += 1;
         let first_key =
             self.ensure_oriented(first.input_index, first.rotation_deg, first.mirrored)?;
@@ -13055,6 +13070,9 @@ fn update_score_after_move(
     replacement: PlacementScore,
     weights: &BTreeMap<(usize, usize), f64>,
 ) {
+    let _span = profiling::span(Phase::UpdateAfterMove);
+    profiling::count(Counter::AcceptedMoves, 1);
+    profiling::count(Counter::EffectivePieceMoves, 1);
     let tracked_boundary = score.boundaries[input_index];
     debug_assert_eq!(tracked_boundary.violations, old_boundary.0);
     debug_assert!((tracked_boundary.raw_loss - old_boundary.1).abs() <= f64::EPSILON);

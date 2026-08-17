@@ -22,6 +22,7 @@ use sha2::{Digest, Sha256};
 use crate::canonical_grid::{from_grid, to_grid_mm, CLIPPER2_OFFSET_SCALE};
 use crate::domain::{IrregularBounds, IrregularPoint};
 use crate::geometry::general_polygon::PolygonSet;
+use crate::profiling::{self, Counter, Phase};
 use crate::search::general_fast::{
     collision_expansion_mm, collision_sheet_inset_mm, GeneralFastPiece, GeneralFastSettings,
 };
@@ -482,6 +483,7 @@ impl JaguaHazardIndex {
         prune_at_or_above: Option<usize>,
         own_handle: Option<CurrentHandle>,
     ) -> Result<GeneralHazardQuery, GeneralHazardError> {
+        let _span = profiling::span(Phase::HazardQuery);
         let (layout, pieces) = (&self.layout, &mut self.pieces);
         let variant = pieces
             .get_mut(moving_piece_id)
@@ -560,6 +562,7 @@ impl JaguaHazardIndex {
         }
         colliding_piece_ids.sort_unstable();
         colliding_piece_ids.dedup();
+        profiling::count(Counter::NeighborTests, colliding_piece_ids.len() as u64);
         self.counters.complete_queries = self.counters.complete_queries.saturating_add(1);
         self.counters.collected_piece_ids = self
             .counters
@@ -577,6 +580,7 @@ impl JaguaHazardIndex {
         stable_piece_id: usize,
         pose: GeneralHazardPose,
     ) -> Result<IrregularBounds, GeneralHazardError> {
+        let _span = profiling::span(Phase::HazardPoseBounds);
         let variant = self
             .pieces
             .get_mut(stable_piece_id)
@@ -595,6 +599,7 @@ impl JaguaHazardIndex {
         pose: GeneralHazardPose,
         fixed_piece_id: usize,
     ) -> Result<f64, GeneralHazardError> {
+        let _span = profiling::span(Phase::HazardPressure);
         if moving_piece_id == fixed_piece_id {
             return Err(GeneralHazardError::new(
                 "collision pressure requires two different pieces",
@@ -636,6 +641,7 @@ impl JaguaHazardIndex {
         stable_piece_id: usize,
         pose: GeneralHazardPose,
     ) -> Result<(), GeneralHazardError> {
+        let _span = profiling::span(Phase::HazardCommit);
         let variant = self
             .pieces
             .get(stable_piece_id)
@@ -672,6 +678,7 @@ impl JaguaHazardIndex {
         strip_depth_mm: f64,
         poses: &[GeneralHazardPose],
     ) -> Result<(), GeneralHazardError> {
+        let _span = profiling::span(Phase::HazardCommit);
         if poses.len() != self.pieces.len() {
             return Err(GeneralHazardError::new(format!(
                 "hazard index rebuild received {} poses for {} pieces",

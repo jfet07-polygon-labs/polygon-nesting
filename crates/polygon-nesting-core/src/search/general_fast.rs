@@ -16,6 +16,7 @@ use crate::geometry::general_polygon::{
     GeneralPolygonError, PolygonRing, PolygonSet, GENERAL_MAX_JOB_VERTICES,
 };
 use crate::parallel::map_slice_with_job_pool;
+use crate::profiling::{self, Counter, Phase};
 use crate::validation::general_polygon::{
     validate_publication, GeneralPlacement, PublicationValidationError,
     PublicationValidationSettings,
@@ -1795,6 +1796,7 @@ fn publication_confirmed_candidate(
     fixed: &[PlacedState],
     settings: GeneralFastSettings,
 ) -> Result<Option<Candidate>, GeneralFastError> {
+    let _span = profiling::span(Phase::PublicationConfirm);
     candidate.collision = transformed_collision(
         piece,
         candidate.rotation_deg,
@@ -2143,6 +2145,8 @@ fn transformed_collision(
     translate_y: f64,
     settings: GeneralFastSettings,
 ) -> Result<PolygonSet, GeneralPolygonError> {
+    let _span = profiling::span(Phase::CollisionPolygonBuild);
+    profiling::count(Counter::CollisionPolygonBuilds, 1);
     piece
         .input
         .polygon
@@ -2163,6 +2167,7 @@ pub(crate) fn collision_sheet_long_axis_mm(settings: GeneralFastSettings) -> f64
 }
 
 fn collision_fits_sheet(polygon: &PolygonSet, settings: GeneralFastSettings) -> bool {
+    let _span = profiling::span(Phase::SheetFitTest);
     let inset = collision_sheet_inset_mm(settings);
     polygon.fits_rect(
         inset,
@@ -2184,6 +2189,13 @@ pub(crate) fn polygons_overlap_exact(
     if !bounds_have_positive_overlap(first_bounds, second_bounds) {
         return Ok(false);
     }
+    // Instrumented past the broad-phase reject on purpose. The reject arm runs
+    // hundreds of millions of times in a deep-operator stream, and it is not
+    // exact-overlap work anyway - it is the bounds filter in front of it.
+    // Guarding it measurably slowed the stream; guarding only the narrow phase
+    // measures the cost that matters and costs nothing on the common path.
+    let _span = profiling::span(Phase::ExactOverlapTest);
+    profiling::count(Counter::ExactPairTests, 1);
     Ok(first.intersection_area_mm2(second)? > 0.0)
 }
 
@@ -2701,6 +2713,7 @@ fn translation_proposals(
     mirrored: bool,
     input: TranslationProposalInput<'_>,
 ) -> Result<(Vec<CandidateProposal>, usize), GeneralFastError> {
+    let _span = profiling::span(Phase::ConstructorProposals);
     let TranslationProposalInput {
         oriented,
         placed,
@@ -3185,6 +3198,7 @@ fn score_candidate(
     candidate: &Candidate,
     settings: GeneralFastSettings,
 ) -> CandidateScore {
+    let _span = profiling::span(Phase::ConstructorScore);
     score_bounds(
         placed,
         candidate
@@ -3353,6 +3367,8 @@ pub(crate) fn validate_and_measure_placements(
     placements: &[GeneralFastPlacement],
     settings: GeneralFastSettings,
 ) -> Result<GeneralPlacementMetrics, GeneralFastError> {
+    let _span = profiling::span(Phase::PublicationValidate);
+    profiling::count(Counter::PublicationAttempts, 1);
     let pieces_by_id = pieces
         .iter()
         .enumerate()
