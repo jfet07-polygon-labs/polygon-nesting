@@ -2013,3 +2013,66 @@ from the mask. Beyond those, the next measured centre is no longer in
 this file at all - on mode 20 it is `exactOverlapTest` at 19.8% of leaf,
 which is Clipper inside the deep operators, and that is PR6's port of
 the constructor and vacancy operators onto the shared proxy kernel.
+
+## Sol review 3: the substrate is at parity; the gap moved
+
+The third adversarial review (docs/sol-review-3-production-convergence.md,
+verbatim) opens with a measured correction that retires this ledger's
+oldest premise. Replaying the m22 stream against the profiling counters:
+3.775M candidate evaluations/s at ~265ns each against Sparrow's 3.742M
+at ~270ns, and 33.9K effective moves/s against Sparrow's 14.2K. The
+"3-4 orders of magnitude per move" statement is now false for m22. What
+remains slow is everything around the loop: mode 20 needs ~13x even
+with its dominant phase free, mode-26 certification rungs are 12-95
+seconds of operator work against a 0.5-1.0 second production slice, and
+no single process reproduces the from-scratch causal chain (worse
+constructor basin -> waves -> sibling retention -> crossover ->
+compression) at any speed. Quality per unit work, not work per second,
+is now the deficit.
+
+Seven findings, all accepted. The two critical ones reshape PR6/PR7:
+there is still no evidenced 160-in-10 path (orchestrating existing
+mode schedules cannot honestly claim it), and PR5's adoption logic -
+correct as publication policy - is wrong as the coordinator's only
+state model, because it discards exactly the worse-but-structurally-
+different basins the from-scratch lineage was built from. PR7 needs a
+PublishedIncumbent and a typed SearchArchive as separate objects. The
+high findings: the certification comparator hid ~35 ULPs (fixed, below);
+the kernel seam is not yet the production seam (exact methods must
+leave the proxy trait; a lane-owned query_moved_into is the PR6 shape);
+the row tracker's 534 structural disagreements need causal attribution
+and one canonical measure_row before any tracker inheritance; the
+orientation ladder is not scale-free (angular rungs must derive from
+displacement rungs over piece radius, delta-theta = delta-x / r) and
+modes 28/29/32 leave the production portfolio, with m33 demoted to a
+triggered tail repair. The hypot flag's blast-radius claim was wrong
+(proxy scores steer which layout reaches publication); the stronger
+shape is squared-distance comparison with sqrt only on overlapping
+pairs.
+
+The comparator finding was acted on immediately. certify_full.py's
+`RAW - 1e-12` concealed five exact-valid publications one ULP below the
+declared record, one with a distinct fingerprint - and exposed that the
+parent-measure and publication-measure paths round one ULP apart on
+identical placements. Policy now: the declared record raw is the
+publication-authority measure (159.07876040364792), replay reproduction
+is identical fingerprint plus raw within one ULP, and below is strict
+raw < with no decimal epsilon. Recertified under that policy: 40 arms,
+replayPass true, zero below, fixpoint true (certulp.json). The distinct
+co-state is pinned (lineage/pin-159.078760-alt-5ddb62de.json) - the
+frontier now provably holds at least two layouts at the record depth.
+
+The reordered board, per the review: the quality frontier trace first
+(one process, from request only, every exact-valid candidate logged
+with elapsed time, work ordinal, operator, parent fingerprint, archive
+membership - the depth-versus-time curve nobody has measured), then the
+row-ownership oracle as a correctness gate for PR6, then PR6 as seam v2
+plus deep-operator port starting with mode-20 basin generation (the
+vacancyProxyRank redesign is part of PR6, incremental occupancy and a
+bit-grid flood fill, not loop tuning) and a fused compression->m31
+legalizer, then a thin PR7 harness before the full coordinator. Cut
+from the production path: full mode-26 ladders, modes 28/29/32 and
+standalone 30, unconditional m33, fixed-angle floor tuning, the Jagua
+pair-layout skeleton as a production target, and bit-identity as a
+requirement on the NEW profile - protected legacy stays bit-identical,
+the new profile owes per-seed determinism and exact-valid publication.

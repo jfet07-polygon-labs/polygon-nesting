@@ -231,7 +231,8 @@
   "rawSourceDepthMm": 159.07876040364795,
   "independentDepthMm": 159.079,
   "placementFingerprint": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
-  "fixtureSha256": "1535067297279e46680826b3e28d2f8ec635575d0324626b9168fca7fdf6145f"
+  "fixtureSha256": "1535067297279e46680826b3e28d2f8ec635575d0324626b9168fca7fdf6145f",
+  "publicationAuthorityRawMm": 159.07876040364792
  },
  "geometricDiffAgainstOldRecord": {
   "pieces": 61,
@@ -367,5 +368,6 @@
   "abOutcomeIdentical": true
  },
  "finalBinarySha256": "df9e4e1e90f009360017ff72828cee6287df0e28a0f5ebf7fc15e0567231b500",
- "gatesNote": "The campaign ran on bench-new (sha256 0ed9e2e3...), built before two test-only quota constants were carried 29 -> 37. The three gates were re-run on the final committed-tree binary (finalBinarySha256) and pass bit-identically there too; the test-module edits cannot reach the release binary, only its embedded build metadata."
+ "gatesNote": "The campaign ran on bench-new (sha256 0ed9e2e3...), built before two test-only quota constants were carried 29 -> 37. The three gates were re-run on the final committed-tree binary (finalBinarySha256) and pass bit-identically there too; the test-module edits cannot reach the release binary, only its embedded build metadata.",
+ "measurementNote": "Sol review 3 found the certification comparator (RAW - 1e-12, ~35 ULPs at this magnitude) hid publications one ULP below the declared raw, and that the parent-measure path (modes 22/27 returning the incumbent, 159.07876040364795) and the publication-measure path (modes re-publishing identical placements, 159.07876040364792) round one ULP apart on the same layout. Resolution: the record's declared raw is the publication-authority measure 159.07876040364792; replay reproduction = identical fingerprint + raw within one ULP; 'below' = strict raw <, no decimal epsilon. Recertified: certulp.json, 40 arms, 0 below, replayPass true, fixpoint true (347s). The comparator fix also surfaced a frontier co-state at the record depth with a distinct fingerprint, pinned as lineage/pin-159.078760-alt-5ddb62de.json (sha256 1b5082a9...)."
 }

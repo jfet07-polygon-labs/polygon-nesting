@@ -13,6 +13,7 @@ Two jobs in one pass:
 
 Usage: certify_full.py <pin> <raw> [label]
 """
+import math
 import sys, json, hashlib, os, collections, time
 sys.path.insert(0, '/var/lib/t3/tmp/orient-fine')
 import drv, lib
@@ -25,8 +26,8 @@ FIX = f'/var/lib/t3/tmp/orient-fine/{LABEL}-fix'
 os.makedirs(RUNS, exist_ok=True)
 os.makedirs(FIX, exist_ok=True)
 
-BASE_BIN = '/var/lib/t3/tmp/orient-fine/bench-base'
-NEW_BIN = '/var/lib/t3/tmp/orient-fine/bench-new'
+BASE_BIN = os.environ.get('CERT_BASE_BIN', '/var/lib/t3/tmp/orient-fine/bench-base')
+NEW_BIN = os.environ.get('CERT_NEW_BIN', '/var/lib/t3/tmp/orient-fine/bench-new')
 FLAT = (0.0005, 0.001, 0.002, 0.003, 0.004, 0.01)
 SLACK = (0.05, 2.0)
 M31 = (0.006, 0.012, 0.025, 0.04)
@@ -50,8 +51,11 @@ def probe(tag, mode, parent, target, seed, binary, ladder):
         key = ('mirror' if mirror else 'rot') + (f':{abs(dd):.7g}' if dd is not None else ':?')
         rungs[key] += 1
     published = drv.published_raw(out)
+    # Strict raw comparison, no decimal epsilon: RAW is the publication-authority
+    # measure, so anything the authority measures strictly below it is a real
+    # improvement. (The old `RAW - 1e-12` hid ~35 f64 ULPs at this magnitude.)
     row = {'tag': tag, 'mode': mode, 'ladder': ladder, 'published': published,
-           'below': published is not None and published < RAW - 1e-12,
+           'below': published is not None and published < RAW,
            'exactValid': pop.get('exactValid'), 'contractValid': pop.get('contractValid'),
            'raw': pop.get('rawSourceDepthMm'),
            'fp': pop.get('finalPlacementFingerprint'), 'attribution': attr}
@@ -72,7 +76,13 @@ for seed in range(4):
 
 replay_ok = True
 for name, row in replay:
-    match = (row['raw'] == RAW and row['fp'] == fingerprint)
+    # The parent-measure path (modes 22/27 returning the incumbent) and the
+    # publication-measure path (a mode re-publishing the same placements) round
+    # one ULP apart on identical layouts; identical fingerprint plus raw within
+    # one ULP of the declared (publication-authority) measure is a reproduction.
+    match = (row['fp'] == fingerprint
+             and row['raw'] is not None
+             and abs(row['raw'] - RAW) <= math.ulp(RAW))
     replay_ok &= bool(row['exactValid']) and bool(row['contractValid']) and match
     drv.log(LOG, f'   REPLAY {name}: exactValid={row["exactValid"]} '
                  f'contractValid={row["contractValid"]} raw={row["raw"]!r} '
