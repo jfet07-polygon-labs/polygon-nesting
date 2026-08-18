@@ -141,6 +141,32 @@ fused-pair-query = []
 # mode-20 regression gate must be run against the default build. See
 # `search::construction_confirm_shield`.
 fast-constructor-confirm = []
+# Rejects a skyline-constructor confirmation row before it builds anything, with
+# an *inner* overlap certificate: discs inscribed in the parent's collision
+# polygons and in the candidate's source polygon, the latter transformed
+# rigidly to the pose and inflated by the collision expansion. Two discs that
+# overlap prove the two collision polygons intersect in positive area, which is
+# the verdict the exact tier would have returned - so the row returns `None`
+# without the Clipper offset and without a single pair query.
+#
+# This is the direction the separation shield above cannot go. The census
+# measured its ceiling at 22.67% because 77.3% of the constructor's exact
+# queries are genuine overlaps; a proof of overlap is the only thing that
+# reaches those, and it is also the only thing that reaches the 78.66% of
+# collision-polygon builds spent on a pose the row then discards.
+#
+# The certificate answers "provably overlapping" or "no information". Every
+# discretisation between the source ring and the Clipper path is charged as an
+# explicit erosion of the certified radius, and a `debug_assert` on the reject
+# path builds the collision polygon anyway and requires a positive exact area.
+#
+# Off by default and stacked, like `fast-constructor-confirm`, so the two can be
+# priced separately. It is not bit-identical as a *document*: rows that never
+# build never charge `experimentalCollisionBuilds`, `transformedCollisionVertices`
+# or `clipperInputVertices`, which are quota quantities, so the regression gates
+# must be run against the default build. See
+# `search::construction_reject_certificate`.
+fast-constructor-reject = []
 # Compiles the constructor's exact-confirmation census in: a counting build
 # that attributes every exact pair question and every collision-polygon build
 # the constructor makes to its call path, and prices three *sound* separation

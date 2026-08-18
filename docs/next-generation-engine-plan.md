@@ -3675,3 +3675,284 @@ practice in this ledger.
 
 Evidence, drivers and raw batteries:
 `docs/experiments/pr7-coordinator-v2/`.
+## The inner certificate: Clipper's square join is a tangent cut, so the containment holds at every miter limit
+
+The census closed with two open items and an admission. The prize it
+named was the wasted collision-polygon build - 78.66% of 750,434 builds
+spent on a pose the row discards two lines later - and the reason it
+could not be claimed was that removing one needs a proof in the
+*opposite* direction from the separation shield: a proof that a pose
+**does** overlap. The natural such proof is an inner circle cover, and
+the census wrote that it "rests on `offset_miter(P, e)` containing
+`P + disc(e)`, which is believable for Clipper's miter join but is not
+proved here. It should not ship on 'believable'."
+
+This entry proves it, builds the certificate on it, and finds that the
+proof was not the hard part and the lemma is not even load-bearing.
+
+### The lemma, and why the miter limit is irrelevant to it
+
+Write `Q = offset_miter(P, e)` for the region the offsetter returns for a
+positively oriented ring `P` at delta `e > 0`. One thing is taken as
+given, and it is the offsetter's own specification rather than a
+geometric claim: the positive-fill union of the emitted path is the union
+of `P`, of the outward band of every edge, and of the join region emitted
+at every vertex. That is what `crates/polygon-nesting-core/src/clipper/`
+implements and what its vector tests pin against the reference.
+
+Take `x` in `P + disc(e)`.
+
+* If `x` is in `P` it is in `Q`.
+* Otherwise let `p*` be a nearest point of `P` to `x`, so `p*` is on the
+  boundary and `|x - p*| <= e`.
+  * If `p*` is interior to an edge `E`, then `x - p*` is normal to `E`
+    and points away from the material, so `x` is in `E`'s outward band at
+    depth at most `e`.
+  * If `p*` is a vertex `v`, then `x` is in `disc(v, e)` intersected with
+    the exterior normal cone `N(v)`. `N(v)` is empty unless `v` is convex
+    seen from outside - which is exactly the vertices Clipper routes to
+    `doMiter`/`doSquare` rather than to its concave branch - and for
+    those, `disc(v, e)` intersected with `N(v)` is the circular sector
+    between the two perpendicular offset points.
+
+So the lemma reduces to one question: **does the join emitted at a convex
+vertex contain that sector?** Clipper2 emits one of two joins there,
+selected by `cos_a > mitLimSqr - 1`, and both do.
+
+* `doMiter` emits `v + (n_k + n_j) * e/(1 + cos A)` with
+  `cos A = n_j . n_k`. Its distance from `v` is `e * sqrt(2/(1 + cos A))`,
+  which is at least `e`, along the outward bisector, and it is the
+  intersection of the two offset edge lines. The sector's arc is tangent
+  to both of those lines at the two perpendicular points, and an arc
+  tangent to two lines at two points lies inside the triangle those
+  tangency points make with the lines' intersection. Miter contains
+  sector.
+* `doSquare` sets `ptQ = v + e * b`, where `b` is `getAvgUnitVector` of
+  the incoming edge direction and the reverse of the outgoing one - the
+  outward angle bisector - and cuts the miter with the line through
+  `ptQ` perpendicular to `b`. The arc's farthest point along `b` is at
+  distance exactly `e`, which is *on* that line. **The cut is tangent to
+  the arc.** Square contains sector too.
+
+The second bullet is the one the census guessed wrong. `MiterLimit` -
+2.0 here, `CLIPPER_MITER_LIMIT` - decides only *which* of the two joins is
+emitted, and both contain the round join, so
+
+    offset_miter(P, e) contains P + disc(e)
+
+holds **at every miter limit and for every shape**. There is no
+counterexample to look for at these parameters. The sharp spike that
+would break a bevel join does not break this one, because Clipper's
+square join is a tangent cut at `e` rather than a chord. A counterexample
+would need an offsetter whose fallback join cuts *inside* `e`, and
+Clipper2 does not have one on the Miter+Polygon path this engine uses.
+
+The lemma is about exact arithmetic; four discretisations sit between it
+and the code, and each is charged as an explicit erosion of the certified
+radius - the grid snap of the transformed ring (0.000708 mm), the
+rounding of the offset distance (0.000500), `math_round` on each emitted
+offset vertex (0.000708), and `f64` (negligible). They sum to 0.001916 mm
+and the constant is 0.005 mm. A polygon whose boundary moves by at most
+`d` in Hausdorff distance still contains `disc(c, r - d)` for any
+`disc(c, r)` it contained, which is why the erosions simply add.
+
+### The certificate, and where it lands
+
+`fast-constructor-reject` stacks on `fast-constructor-confirm` and is
+`search::construction_reject_certificate`. Discs inscribed in the
+parent's collision polygons - a computation on the polygon the query is
+executed on, needing no lemma at all - against discs inscribed in the
+candidate's *source* polygon, transformed rigidly to the pose and
+inflated by the expansion, which is where the lemma is spent. Two discs
+at centre distance below the sum of the certified radii prove the two
+collision polygons meet in positive area, so the row returns `None`
+before the Clipper offset and before a single pair question.
+
+The counting build priced it beside the exact answer on every row, at
+four cover sizes, and counted the observation that would falsify it - a
+certificate issued for a row the exact tier then *accepted*:
+
+| site | rows | accepted | overlap rejects | certified @1 | @2 | @4 | @8 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| candidate | 432,710 | 11,292 | 398,050 | 288,693 | 320,216 | 330,260 | 330,746 |
+| slide ladder | 191,925 | 130,482 | 46,709 | 2,420 | 5,199 | 5,878 | 5,976 |
+| slide bisect | 122,886 | 15,453 | 78,616 | 1,895 | 4,133 | 4,846 | 4,889 |
+| deep total | 747,521 | 157,227 | 523,375 | 293,008 | 329,548 | 340,984 | 341,611 |
+
+Soundness violations: **0**, over 157,227 accepted rows.
+
+It lands where the census said the speculation is. **76.32% of the
+candidate stream's rows, and 82.97% of its overlap rejections, are proved
+at four discs.** The two slide sites are 3.1% and 3.9%, which is the
+census's asymmetry restated from the other side: a ladder rung starts
+from an already-valid pose, so its failures are shallow contact-band
+overlaps rather than a candidate dropped on top of a placed piece. Four
+discs is the knee - eight adds 486 rows to the candidate stream, 0.15%,
+for four times the pair arithmetic.
+
+And the lemma turns out not to be load-bearing. With the whole inflation
+taken back off - the fallback that needs nothing but `offset(P, e)`
+containing `P`, which is far weaker - the candidate stream still proves
+**312,692 rows, 94.5% of the inflated certificate's**. The slide sites
+collapse to 241 and 18. So the proof above buys 5.5% of the prize on the
+population that matters, and the design could retreat from it without
+losing the stage. That is worth recording precisely because the census
+identified the lemma as the blocker.
+
+### Ordering was measured, and pruning is what shipped
+
+The task the census set was "prune the speculative stream", and the first
+question is whether *ordering* it would do better. The counting build
+answers it directly rather than by argument. Per candidate slot it
+records each confirmed row as `(signed certificate pressure, accepted)` -
+pressure positive is a proof and its depth, negative is the closest
+approach the certificate could not close, so ascending is "cleanest
+first" - and compares two prefix lengths over the identical row set:
+
+| statistic | value |
+|---|---:|
+| candidate slots | 2,872 |
+| candidate rows confirmed | 432,710 |
+| acceptances | 11,292 |
+| rows the current order confirms to reach them | 432,710 |
+| rows a lazy proxy-ordered confirmation would confirm | **59,414** |
+
+`prefixActual` equals `rows` exactly, which is a fact about the loop and
+not a coincidence: it breaks at the top of the iteration after the fourth
+finalist, so the last candidate row it confirms is always the accepting
+one. A perfect lazy proxy order would therefore avoid **86.27%** of the
+candidate stream's exact confirmations. The sound prune avoids
+**76.32%** - **88.5% of the ordering prize, with the accept/reject
+semantics untouched.**
+
+The remaining 11.5% is not available, and the reason is worth stating
+because the brief allowed for gating it. **A reordering of this loop is
+not semantics-preserving and cannot be rescued by a tie-break
+refinement.** The loop is capped three ways - four finalists per slot,
+320 rows per piece, and a per-provenance row cap - and every accepted
+candidate then spends further rows on a contact walk. Which four poses
+become finalists, and how many rows remain when they do, are both
+functions of the order the rows were offered in, so there is no
+configuration in which the acceptance rule is order-invariant while any
+cap is live. The certificate sidesteps the question rather than answering
+it: it removes rows whose verdict was never in doubt, in place, leaving
+the order, the row charges and the finalist set identical.
+
+### What it is worth
+
+Paired interleaved A/Bs of the gate-1 stream, arms alternating order
+every round, statistic the per-round paired ratio, on a box a second
+agent was benchmarking on:
+
+| sample | rounds | arm A | A median | B median | paired median | spread | below 1.0 |
+|---|---:|---|---:|---:|---:|---|---:|
+| 1 | 12 | confirm | 5.849 s | 4.054 s | **0.6924** | 0.6875-0.6981 | 12/12 |
+| 2 | 10 | confirm | 5.851 s | 4.066 s | **0.6956** | 0.6881-0.6984 | 10/10 |
+| 3 | 8 | confirm | 5.853 s | 4.052 s | **0.6923** | 0.6875-0.6975 | 8/8 |
+| chain | 8 | **default** | 26.278 s | 4.059 s | **0.1545** | 0.1538-0.1565 | 8/8 |
+| mode 22 | 10 | confirm | 3.135 s | 3.119 s | **0.9966** | 0.9822-1.0137 | 6/10 |
+
+Three independent samples of the mode-20 A/B agree to 0.5%, the third
+taken on binaries rebuilt from the committed tree. **The honest
+multiplier is 6.47x**, and this time it is one measurement rather than
+three chained: the default build and the flag-on build, interleaved, on
+the same stream. Mode 20 goes 26.2 s -> 6.2 s -> 5.85 s -> **4.06 s**,
+against Sol's ~2 s, so the remaining gap is about 2.0x where the census
+left it at 2.9x. The mode-22 row is a real zero and is reported because
+it could have been a regression - the record replay barely exercises the
+constructor, so the certificate's arithmetic is charged there with almost
+nothing to remove, and it comes back at parity with the sign changing
+inside the sample.
+
+Profiled, two numbers carry the whole result:
+
+| phase | flag off | flag on | calls off | calls on |
+|---|---:|---:|---:|---:|
+| `exactOverlapTest` | 2,948.8 ms | 1,791.5 ms | 1,266,102 | 925,309 |
+| `collisionPolygonBuild` | 2,024.3 ms | 1,062.9 ms | 750,434 | **409,450** |
+| `vacancyExactRows` | 3,562.4 ms | 1,514.4 ms | 747,521 | **747,521** |
+| `pairCollide` | 1,253.7 ms | 1,264.7 ms | 15,562,760 | 15,562,760 |
+| `moveSweep` | 5,229.7 ms | 5,222.5 ms | 4,089 | 4,089 |
+| leaf total | 9,712.8 ms | 7,565.1 ms | | |
+
+`collisionPolygonBuild` loses exactly 340,984 calls - the census's
+`rowsCertified4` total, to the digit - and `vacancyExactRows` keeps all
+747,521 of its calls, because the row is still charged, still counted
+against the finalist-row budget, and still asked. Only the work behind
+the answer is gone. Everything outside the constructor moves by less than
+1%, in both directions, which is the box.
+
+### Equivalence, and the one thing that is not bit-identical
+
+Flag off, all four gates reproduce the pristine `8d9f7e5` binary as whole
+documents - 3,271 and 3,252 compared leaf fields per gate, six differing,
+all of them the executable hash and the five wall-clock fields. Flag on,
+gates 2, 3 and 4 are identical in **every** field; gate 1 differs in
+five, and all five are the removed work honestly not charged:
+`experimentalCollisionBuilds` 786,724 -> 445,740,
+`transformedCollisionVertices` 5,221,858 -> 3,313,762,
+`experimentalPairVisits` 13,120,423 -> 8,189,813, `clipperInputVertices`
+37,012,470 -> 32,823,802, `clipperOutputVertices` 2,572,148 -> 654,362.
+
+Those five are quota quantities, so the honest statement of the risk is
+that a cap they gate could bind later on the flag-on arm than on the
+flag-off one. Three things bound it. The cap that actually paces the
+constructor is `max_exact_finalist_rows`, and it is charged *identically* -
+the row is still counted before the certificate is consulted, which is
+why `vacancyExactRows` keeps all 747,521 calls. The other caps are
+derived from that one and are the "every build at the 512-vertex ceiling"
+bound, which is slack by orders of magnitude. And empirically, if any cap
+had bound in either arm the other 3,266 fields of gate 1 could not have
+been identical, because the arm that ran further would have produced a
+different layout rather than the same one with smaller counters.
+
+Two runs of the flag-on binary are identical field for field on all four
+gates apart from the clock. A debug build with the `debug_assert` live -
+every certified row builds its collision polygon anyway and must find a
+positive exact intersection area against some active piece - reproduces
+all four gates and the assertion never fired. Two unit tests issue
+certificates over dense placement grids of a rotated and of a mirrored
+non-convex piece and require that none is ever issued for a pair whose
+exact collision polygons are disjoint. The release suite is green at
+1,234 tests on `jagua-experimental` and 1,236 with the reject flag on,
+which is the same suite plus those two. One caveat is inherited rather
+than introduced: `cargo test --features fast-constructor-profile` does
+not compile at the base commit either, because a `construction_void_grid`
+test there calls `derived_cell_mm` with three arguments of four.
+
+The constructor-quality gate is the same four salted targets and two
+relaxed seeds as the shield's, each endpoint pinned and descended by the
+**default** binary: endpoints 206.869, 206.666, 199.801 and 214.042, all
+eight paired descended-depth deltas exactly **0.0**, at identical
+endpoint and descendant fingerprints. As with the shield, a zero here is
+the predicted result rather than a lucky one, and the gate earns its
+place by being what would catch a wrong soundness argument.
+
+### What this entry leaves open, sized
+
+* **The containment rejection is the next 66,919 rows.** The census
+  counts 66,919 deep rows rejected by `fits_rect` rather than by an
+  overlap - 8.95% of rows, every one a wasted build, and 16.3% of the
+  409,450 builds this stage leaves. The lemma above already covers it: a
+  transformed source vertex more than `e` outside the sheet rectangle
+  proves the row fails containment. It is not implemented here
+  deliberately, because it is a second mechanism with a second slack
+  budget and this stage's value is that it ships one.
+* **The candidate stream's last 17%** - 67,304 of its 398,050 overlap
+  rejections - are grazes a disc cover cannot close, and the ordering
+  measurement says a perfect proxy would reach about ten points more of
+  the stream than the sound prune does. Closing it needs a better inner
+  cover rather than a different idea: discs cover a long thin piece
+  badly, and an inner convex decomposition is the honest next tier.
+* **The slide sites stay almost untouched**, at 3.1% and 3.9% of rows,
+  and the uninflated column says why - their overlaps live inside the
+  expansion band, so they are exactly the population an inner certificate
+  is worst at and the separation shield is best at.
+* **The residual is no longer the constructor.** At 4.06 s the mode-20
+  leaf is `moveSweep` 5,222.5 ms and `scorePlacement` 4,752.7 ms - the
+  relaxed lane. The constructor's two exact phases are now 2,854 ms of a
+  7,565 ms leaf, down from 4,973 of 9,713, and the next measurement
+  belongs somewhere else.
+
+Evidence, drivers, the full per-site census and the ordering statistic:
+`docs/experiments/constructor-inner-certificate/`.
