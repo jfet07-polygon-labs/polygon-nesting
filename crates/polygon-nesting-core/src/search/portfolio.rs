@@ -47,13 +47,39 @@
 //! # What is general and what is policy
 //!
 //! Every length in this module is derived from the request: the constructor
-//! clamp is a multiple of the request's own area lower-bound depth, the basin
-//! target salts are relative to that clamp, and the alternation rung is the
-//! engine's own construction drop ladder. The dimensionless numbers - how many
-//! basin slots, what fraction of a budget a phase gets, how much pose overlap
-//! makes two layouts "similar" - are schedule policy, carry no millimetres, and
-//! are settings rather than constants wherever a caller could reasonably
-//! disagree.
+//! clamp is the larger of a multiple of the request's own area lower-bound
+//! depth and the depth the coordinator's own phase-0 constructor reached, the
+//! basin target salts are relative to that clamp, and the alternation rung is
+//! the engine's own construction drop ladder. The dimensionless numbers - how
+//! many basin slots, what fraction of a budget a phase gets, how much pose
+//! overlap makes two layouts "similar" - are schedule policy, carry no
+//! millimetres, and are settings rather than constants wherever a caller could
+//! reasonably disagree.
+//!
+//! A *dimensionless* constant can still be a fact about one request, and this
+//! module shipped two that were. [`constructor_clamp_mm`] documents the first:
+//! twice the area lower bound is above the reachable depth only when the
+//! request packs at better than half of its own bound, which mixed-61 does and
+//! shapes-17 and triangle-20 do not. [`PhaseSchedule`] documents the second:
+//! a phase deadline quoted as a fraction of the *whole* budget is a fraction of
+//! an unknown remainder, because phase 0's share of the budget is a property of
+//! the request and the box.
+//!
+//! # How the budget is spent, and why in this order
+//!
+//! The phases are ordered by measured publications per second, not by the
+//! order the review sketched them in: alternation quanta, then crossovers over
+//! the distinct archive pairs, then a compressing micro-descent, then - last,
+//! conditional, and stopping as soon as it stops paying - the salted
+//! constructor slice. See [`BasinTrigger`] and [`PortfolioSettings::
+//! basin_patience`] for what "conditional" and "stops paying" are measured to
+//! mean, and `docs/experiments/pr7-coordinator-v2/` for the batteries.
+//!
+//! One rule cuts across all of them: a phase may start an operator call only if
+//! the budget remaining before its deadline covers that operator's own measured
+//! mean cost *in this run*, in the budget's own currency. An operator this run
+//! has never called has no measured cost, so it is allowed one call to acquire
+//! one - which is the only way the budget can ever overrun a deadline.
 
 use std::collections::BTreeMap;
 use std::time::Instant;
@@ -90,7 +116,32 @@ pub const WORK_UNITS_PER_EXACT_PAIR_TEST: u64 = 5;
 /// clamp (130.399 mm -> 260.797 mm on its stream) precisely so that no fixture
 /// depth enters a from-request run. Dimensionless, so it scales with the
 /// request.
+///
+/// It is a *floor* and not the clamp; see [`constructor_clamp_mm`]. Two times
+/// the area lower bound is only above the reachable depth when the request
+/// packs at better than 50% of its own area bound, and that is a property of
+/// the request rather than a law: mixed-61 packs at 1.59x its bound, but
+/// shapes-17 packs at 2.08x and triangle-20 at 2.21x, so on both of those a
+/// clamp of two times the bound is *below* every layout that exists and every
+/// constructor arm is asked for an impossible target.
 pub const CONSTRUCTOR_CLAMP_MULTIPLE_OF_AREA_LOWER_BOUND: f64 = 2.0;
+
+/// The clamp the constructor slice runs its salted arms at.
+///
+/// The clamp's job, per the cell-lottery finding, is to be *geometrically
+/// inert*: it is only there so that the salt moves `grid_key(target_depth_mm)`
+/// and redraws the insertion lottery, so it has to sit above any depth the
+/// constructor can reach, and a clamp below that is not a loose bound - it is a
+/// refusal.
+///
+/// So it is the larger of the area-lower-bound multiple and a depth this
+/// request is *known* to admit a complete layout at, which is the one the
+/// coordinator's own phase-0 constructor just built. Both terms are derived
+/// from the request and neither is a length anyone chose.
+pub fn constructor_clamp_mm(area_lower_bound_depth_mm: f64, constructed_depth_mm: f64) -> f64 {
+    (area_lower_bound_depth_mm * CONSTRUCTOR_CLAMP_MULTIPLE_OF_AREA_LOWER_BOUND)
+        .max(constructed_depth_mm)
+}
 
 /// The relative step between one basin slot's constructor clamp and the next.
 ///
@@ -589,6 +640,41 @@ pub struct PortfolioOutcome {
     pub area_lower_bound_depth_mm: f64,
     /// The constructed layout's own depth, before any search.
     pub constructed_depth_mm: f64,
+    /// Whether the alternation phase ended at a frontier fixpoint rather than
+    /// at its deadline. This is the [`BasinTrigger::OnStall`] predicate, and it
+    /// is reported whether or not that trigger is the one in force.
+    pub descent_stalled: bool,
+}
+
+/// When the constructor slice is allowed to draw a basin.
+///
+/// The v1 coordinator gave the constructor the review's own 1.9-4.0 s slice,
+/// unconditionally and first. Nineteen salted arms over nine ten-second runs
+/// were every one exact-valid and every one refused by the adoption rule, and
+/// not one descendant caught the incumbent - so at that budget the slice was
+/// 1.24 s of pure loss, and the arm that priced it at zero was never worse.
+///
+/// The verdict is about the *allocation*, not the mechanism, so v2 keeps the
+/// mechanism and makes the allocation conditional. The default is
+/// [`BasinTrigger::WhenDescendable`], which is the measured rule: a constructor
+/// basin is worth drawing only when the run can still afford to *descend* from
+/// what it draws, because a drawn-and-undescended basin is exactly the 19/19
+/// refusal the v1 measurement recorded.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BasinTrigger {
+    /// Never draw one. The `focused` arm of the v1 measurement.
+    Never,
+    /// Always draw one while the phase deadline allows. The v1 default.
+    Always,
+    /// Draw one only when the alternation phase reached a frontier fixpoint -
+    /// every distinct archive state has had its quantum and none produced a new
+    /// layout - so the budget the slice spends is budget the productive
+    /// operator declined.
+    OnStall,
+    /// Draw one only when the remaining budget still covers the draw *and* a
+    /// descent from it, both priced from this run's own measured operator
+    /// costs in the budget's own currency. This is the default.
+    WhenDescendable,
 }
 
 /// How a schedule is configured.
@@ -617,8 +703,37 @@ pub struct PortfolioSettings {
     /// Piece-assignment overlap at or above which two layouts count as the same
     /// basin. Dimensionless schedule policy.
     pub similarity_threshold: f64,
-    /// How many salted constructor arms the basin phase will attempt.
+    /// How many salted constructor arms the diversify phase will attempt.
     pub basin_slots: usize,
+    /// When the diversify phase may draw a constructor basin at all.
+    pub basin_trigger: BasinTrigger,
+    /// How many consecutive draw-and-descend iterations may publish nothing
+    /// before the diversify phase ends.
+    ///
+    /// The stopping signal is deliberately *the descendant*, never the arm's
+    /// own depth: the ledger's eighteen-sample sweep measured
+    /// Pearson(immediate, descended) = -0.212, so a rule that stopped on a deep
+    /// arm would be the invalid quality proxy the review named. A rule that
+    /// stops when an arm *and a quantum spent on it* published nothing is a
+    /// descendant-quality rule, which is the one the review asks for.
+    ///
+    /// One, measured: on mixed-61 no arm ever published, and letting the phase
+    /// fill its slots spent 13.4 s of a thirty-second budget for a layout
+    /// identical in all nine rounds to the one a ten-second budget already had.
+    /// On triangle-20 the *first* arm published, so patience 1 keeps the only
+    /// gain the slice has ever produced.
+    pub basin_patience: usize,
+    /// How many crossovers one crossover phase may make.
+    ///
+    /// v1 made exactly one. Mode 23 was the second most productive operator in
+    /// that measurement - two publications in four calls under the review's
+    /// schedule, three in nine under the focused one, carrying the largest
+    /// single gains - so v2 lets it keep going while distinct archive pairs
+    /// remain and it can still afford a call.
+    pub crossover_attempts: usize,
+    /// How many frontier members the crossover phase draws its parent pairs
+    /// from. Pairs are taken in `(0,1), (0,2), (1,2), ...` order.
+    pub crossover_states: usize,
     /// Void-grid cell divisor salts, one per basin slot, cycled.
     ///
     /// Only the `fast-constructor-profile` evaluator reads them. Empty leaves
@@ -643,30 +758,57 @@ pub struct PortfolioSettings {
 
 /// The phase deadlines, as fractions of the whole budget.
 ///
-/// The defaults are the review's own ten-second sketch, normalised: 0-1.9 s
-/// protected mode 0 and preprocessing, 1.9-4.0 s salted constructor basins,
-/// 4.0-6.8 s alternation quanta across the archive, 6.8-7.4 s one crossover,
-/// 7.4-9.6 s compression and micro-descent, 9.6-10 s drain and validate.
+/// v1's defaults were the review's own ten-second sketch in the review's own
+/// order: protected mode 0, then salted constructor basins, then alternation
+/// quanta, then one crossover, then compression, then drain. v2 reorders them
+/// by *measured productivity per second* on that stream - alternation (9
+/// publications in 18 calls), crossover (3 in 9, largest single gains),
+/// compression's micro-descent (3 in 9), and the constructor slice (0 in 19)
+/// last and conditional - and it is the reordering, not a new operator, that
+/// this stage's numbers are about.
 ///
 /// They are *deadlines*, not allocations: a phase that finishes early hands the
 /// remainder to the next one, and a phase whose deadline has already passed
 /// when it is entered is skipped and says so.
+///
+/// # They are fractions of what phase 0 left, not of the whole budget
+///
+/// v1's fractions were of the whole budget, and that makes the schedule
+/// nonsense at any budget the protected mode-0 phase is a large part of. On
+/// this box mode 0 costs about two seconds; at a three-second budget it is 0.67
+/// of the whole, so *every* phase whose absolute fraction is below 0.67 is
+/// skipped and the first one above it runs - which on the v1 fractions means
+/// the most productive operator in the schedule is dropped and a crossover runs
+/// in its place, on an archive nothing has descended in yet, overrunning the
+/// budget by a third. The failure is not the fractions; it is measuring them
+/// against a budget that phase 0 has already spent an unknown part of.
+///
+/// So a deadline is `f0 + (1 - f0) * by`, where `f0` is the fraction of the
+/// budget the protected phase actually spent. Every phase keeps its share of
+/// what is *left*, at any budget, on any request - a 61-piece request whose
+/// mode 0 costs 20% of ten seconds and a 17-piece request whose mode 0 costs 2%
+/// get the same schedule shape rather than two different ones.
 #[derive(Clone, Copy, Debug)]
 pub struct PhaseSchedule {
-    pub basins_by: f64,
     pub descent_by: f64,
     pub crossover_by: f64,
     pub compression_by: f64,
+    pub diversify_by: f64,
     pub drain_by: f64,
 }
 
 impl Default for PhaseSchedule {
     fn default() -> Self {
+        // The v2 absolute fractions renormalised onto the post-phase-0
+        // remainder at the mode-0 share this stage measured (0.28 of ten
+        // seconds), so the ten-second schedule is unchanged to two decimal
+        // places and every other budget is now the same schedule rather than a
+        // truncation of it.
         Self {
-            basins_by: 0.40,
-            descent_by: 0.68,
-            crossover_by: 0.74,
-            compression_by: 0.96,
+            descent_by: 0.42,
+            crossover_by: 0.70,
+            compression_by: 0.89,
+            diversify_by: 0.98,
             drain_by: 1.0,
         }
     }
@@ -681,9 +823,18 @@ impl PortfolioSettings {
             budget,
             archive_capacity: 16,
             similarity_threshold: 0.5,
-            basin_slots: 4,
+            basin_slots: 8,
+            basin_trigger: BasinTrigger::WhenDescendable,
+            basin_patience: 1,
+            crossover_attempts: 3,
+            crossover_states: 3,
             cell_divisor_salts: Vec::new(),
-            descent_states: 3,
+            // One, not three, and it is the measured half of the v1 verdict:
+            // the `focused` arm spent every quantum on the single best distinct
+            // state and published 176.056 in three rounds of three, while the
+            // three-state arm spread the same budget over 194-214 mm
+            // constructor basins and landed at 176.753.
+            descent_states: 1,
             descent_cycles: 1,
             descent_iterated_deepening: false,
             schedule: PhaseSchedule::default(),
@@ -738,6 +889,36 @@ impl BudgetMeter {
     fn has_room(&self, fraction: f64) -> bool {
         self.spent_fraction() < fraction
     }
+
+    /// The whole budget, in the budget's own currency: seconds for
+    /// [`PortfolioBudget::Wall`], work units for [`PortfolioBudget::Work`].
+    fn currency_total(&self) -> f64 {
+        match self.budget {
+            PortfolioBudget::Wall { millis } => millis as f64 / 1_000.0,
+            PortfolioBudget::Work { units } => units as f64,
+        }
+    }
+
+    /// What has been spent, in the same currency.
+    fn currency_spent(&self) -> f64 {
+        match self.budget {
+            PortfolioBudget::Wall { .. } => self.seconds(),
+            PortfolioBudget::Work { .. } => self.work_units() as f64,
+        }
+    }
+
+    /// What is left before the deadline at `fraction`, in the same currency.
+    fn remaining_to(&self, fraction: f64) -> f64 {
+        (fraction * self.currency_total() - self.currency_spent()).max(0.0)
+    }
+
+    /// One recorded operator call's cost, in the same currency.
+    fn call_cost(&self, call: &OperatorCallReport) -> f64 {
+        match self.budget {
+            PortfolioBudget::Wall { .. } => call.elapsed_seconds,
+            PortfolioBudget::Work { .. } => call.work_units as f64,
+        }
+    }
 }
 
 /// The process-wide work-unit reading.
@@ -783,6 +964,13 @@ struct Coordinator<'a> {
     phases: Vec<PhaseReport>,
     phase_name: String,
     attempted: std::collections::BTreeSet<String>,
+    /// Whether the alternation phase ended because every distinct archive state
+    /// had already had its quantum, rather than because it ran out of budget.
+    descent_stalled: bool,
+    /// The fraction of the budget the protected phase 0 spent. Every later
+    /// phase's deadline is a fraction of what is left after it; see
+    /// [`PhaseSchedule`].
+    protected_fraction: f64,
 }
 
 impl<'a> Coordinator<'a> {
@@ -969,6 +1157,42 @@ impl<'a> Coordinator<'a> {
     fn already_attempted(&mut self, key: String) -> bool {
         !self.attempted.insert(key)
     }
+
+    /// The mean cost of the calls this run has already made to `operator`, in
+    /// the budget's own currency, or `None` if it has never called it.
+    ///
+    /// This is the coordinator pricing its own operators *from this run*, which
+    /// is the only pricing that is both general - it carries no millimetres, no
+    /// seconds and no request - and honest about the box it is running on.
+    fn mean_operator_cost(&self, operator: &str) -> Option<f64> {
+        let mut total = 0.0;
+        let mut calls = 0usize;
+        for call in &self.operator_calls {
+            if call.operator == operator {
+                total += self.meter.call_cost(call);
+                calls += 1;
+            }
+        }
+        (calls > 0).then(|| total / calls as f64)
+    }
+
+    /// Whether an operator call may be *started and finished* before `deadline`.
+    ///
+    /// v1 asked only "may I start?", which is why one 2.7 s crossover could be
+    /// launched 0.1 s before its deadline and overrun the phase after it. When
+    /// the operator has been priced by this run, the check is `remaining >=
+    /// multiple * mean cost`; when it has not, the check degrades to v1's
+    /// deadline test, because refusing an unpriced operator would mean never
+    /// pricing it.
+    fn affordable(&self, deadline: f64, operator: &str, multiple: f64) -> bool {
+        if !self.meter.has_room(deadline) {
+            return false;
+        }
+        match self.mean_operator_cost(operator) {
+            None => true,
+            Some(cost) => self.meter.remaining_to(deadline) >= multiple * cost,
+        }
+    }
 }
 
 /// Runs the portfolio from the request only: no pinned parent, no warm start,
@@ -1047,6 +1271,8 @@ pub fn run_portfolio(
         phases: Vec::new(),
         phase_name: "m0".to_owned(),
         attempted: std::collections::BTreeSet::new(),
+        descent_stalled: false,
+        protected_fraction: 0.0,
     };
 
     // Everything phase 0 produced goes into the archive, including the arms
@@ -1086,44 +1312,19 @@ pub fn run_portfolio(
         publications: 0,
         skipped: false,
     });
+    // Everything after this point is a fraction of what phase 0 left, not of
+    // the whole budget. See `PhaseSchedule`.
+    coordinator.protected_fraction = coordinator.meter.spent_fraction().clamp(0.0, 1.0);
 
     // The constructor clamp, derived from the request rather than pinned.
     let area_lower_bound_depth_mm = area_lower_bound_depth_mm(pieces, fast_settings)?;
     let constructor_clamp_mm =
-        area_lower_bound_depth_mm * CONSTRUCTOR_CLAMP_MULTIPLE_OF_AREA_LOWER_BOUND;
+        constructor_clamp_mm(area_lower_bound_depth_mm, constructed_depth_mm);
 
-    // ---- phase 1: salted constructor basins -------------------------------
-    coordinator.run_phase("basins", settings.schedule.basins_by, |run| {
-        for slot in 0..run.settings.basin_slots {
-            if !run.meter.has_room(run.deadline) {
-                break;
-            }
-            let salt = slot as f64 * BASIN_TARGET_SALT_RELATIVE_STEP * constructor_clamp_mm;
-            let divisor = if run.settings.cell_divisor_salts.is_empty() {
-                None
-            } else {
-                Some(run.settings.cell_divisor_salts[slot % run.settings.cell_divisor_salts.len()])
-            };
-            let parent = run.incumbent.result.placements.clone();
-            let parent_fingerprint = run.incumbent.fingerprint.clone();
-            run.run_operator(
-                20,
-                &parent,
-                Some(parent_fingerprint),
-                Some(constructor_clamp_mm + salt),
-                |relaxed| {
-                    relaxed.construction_restart_window = Some((slot, 1));
-                    relaxed.construction_void_cell_divisor = divisor;
-                },
-                None,
-                // The constructor builds from scratch; the incumbent is only
-                // its pose prior, so this is not that basin's quantum.
-                ParentRole::Prior,
-            );
-        }
-    });
-
-    // ---- phase 2: alternation quanta across the distinct frontier ---------
+    // ---- phase 1: alternation quanta across the distinct frontier ---------
+    // First, not third. It is the most productive operator this schedule has
+    // (9 publications in 18 calls on the v1 stream) and the constructor slice
+    // that used to precede it published nothing in nineteen.
     let template_epochs = settings.relaxed_template.epochs.max(1);
     coordinator.run_phase("descent", settings.schedule.descent_by, |run| {
         let mut cycles = run.settings.descent_cycles.max(1);
@@ -1136,7 +1337,7 @@ pub fn run_portfolio(
             let frontier = run.archive.distinct_frontier(run.settings.descent_states);
             let mut spent_any = false;
             for basin in frontier {
-                if !run.meter.has_room(run.deadline) {
+                if !run.affordable(run.deadline, "mode22", 1.0) {
                     return;
                 }
                 // The quantum's *size* is part of the key: a second pass at a
@@ -1178,11 +1379,13 @@ pub fn run_portfolio(
             // So the default is off, and the flag stays as the instrument that
             // priced it.
             if !run.settings.descent_iterated_deepening {
+                run.descent_stalled = true;
                 break;
             }
             let deepened_cycles = (cycles * 2).min(ALTERNATION_MAX_CYCLES);
             let deepened_epochs = (epochs * 2).min(template_epochs);
             if deepened_cycles == cycles && deepened_epochs == epochs {
+                run.descent_stalled = true;
                 break;
             }
             cycles = deepened_cycles;
@@ -1190,57 +1393,70 @@ pub fn run_portfolio(
         }
     });
 
-    // ---- phase 3: one crossover, only if two plateau basins exist ---------
+    // ---- phase 2: crossovers over the distinct archive pairs --------------
+    // Second, not fourth, and repeatable. The review called mode 23
+    // "conditional but currently evidence-required"; the v1 measurement made it
+    // evidence-*producing* - the largest single published gains in the run -
+    // and then gave it 0.6 s of a ten-second budget. The condition stays what
+    // the review wrote it as: two structurally distinct archive states.
     coordinator.run_phase("crossover", settings.schedule.crossover_by, |run| {
-        let frontier = run.archive.distinct_frontier(2);
-        if frontier.len() < 2 || !run.meter.has_room(run.deadline) {
-            return;
-        }
-        let parent_b = GeneralPersistentVacancyPinnedParent {
-            placements: frontier[1].placements.clone(),
-            source: "archive".to_owned(),
-            source_sha256: frontier[1].fingerprint.clone(),
-        };
-        run.run_operator(
-            23,
-            &frontier[0].placements.clone(),
-            Some(frontier[0].fingerprint.clone()),
-            Some(CROSSOVER_CUT_FRACTION),
-            |_| {},
-            Some(&parent_b),
-            ParentRole::Descended,
-        );
-    });
-
-    // ---- phase 4: fused short compression -> m31, then a micro-descent ----
-    coordinator.run_phase("compression", settings.schedule.compression_by, |run| {
-        if !run.meter.has_room(run.deadline) {
-            return;
-        }
-        let parent = run.incumbent.result.placements.clone();
-        let fingerprint = run.incumbent.fingerprint.clone();
-        let Some(depth) = run.incumbent.raw_depth_mm else {
-            return;
-        };
-        // One rung of the engine's own construction drop ladder below the
-        // incumbent, which is the smallest bound this engine ever asks a
-        // legalizer for.
-        let bound = depth - COMPRESSION_RUNG_MM;
-        if bound <= 0.0 {
-            return;
-        }
-        if !run.already_attempted(format!("31:{fingerprint}")) {
+        for _ in 0..run.settings.crossover_attempts {
+            if !run.affordable(run.deadline, "mode23", 1.0) {
+                return;
+            }
+            // Re-selected every attempt: a crossover that published moved the
+            // incumbent, and the next pair should be drawn from where the
+            // archive is now, not from where it was.
+            let frontier = run
+                .archive
+                .distinct_frontier(run.settings.crossover_states.max(2));
+            if frontier.len() < 2 {
+                return;
+            }
+            let fingerprints = frontier
+                .iter()
+                .map(|basin| basin.fingerprint.clone())
+                .collect::<Vec<_>>();
+            let Some((left, right, key)) =
+                first_unattempted_crossover_pair(&fingerprints, &run.attempted)
+            else {
+                return;
+            };
+            run.already_attempted(key);
+            let parent_b = GeneralPersistentVacancyPinnedParent {
+                placements: frontier[right].placements.clone(),
+                source: "archive".to_owned(),
+                source_sha256: frontier[right].fingerprint.clone(),
+            };
             run.run_operator(
-                31,
-                &parent,
-                Some(fingerprint),
-                Some(bound),
+                23,
+                &frontier[left].placements.clone(),
+                Some(frontier[left].fingerprint.clone()),
+                Some(CROSSOVER_CUT_FRACTION),
                 |_| {},
-                None,
+                Some(&parent_b),
                 ParentRole::Descended,
             );
+            // Both parents were descended from. v1 charged only the first,
+            // which is the same defect - a descent that happened going
+            // uncharged - as charging the constructor's pose prior, in the
+            // other direction.
+            let right_fingerprint = frontier[right].fingerprint.clone();
+            run.archive.charge_descent(&right_fingerprint);
         }
-        if !run.meter.has_room(run.deadline) {
+    });
+
+    // ---- phase 3: micro-descent, and m31 only on a residue -----------------
+    // The order is inverted from v1. v1 asked mode 31 to legalize a *clean*
+    // mode-22 fixpoint one rung below its own depth: six calls, zero
+    // exact-valid results, every one "global legalization did not reach a
+    // feasible fixpoint". The review's own sentence is that m31 is
+    // production-worthy "only as the legalizer for a compressed/perturbed
+    // frontier", so v2 does the compression first and hands m31 the residue if
+    // and only if one exists - a complete layout the compressing descent
+    // returned that the exact validator refuses.
+    coordinator.run_phase("compression", settings.schedule.compression_by, |run| {
+        if !run.affordable(run.deadline, "mode22", 1.0) {
             return;
         }
         let parent = run.incumbent.result.placements.clone();
@@ -1248,11 +1464,11 @@ pub fn run_portfolio(
         let Some(depth) = run.incumbent.raw_depth_mm else {
             return;
         };
-        if run.already_attempted(format!("22:{fingerprint}")) {
+        if run.already_attempted(format!("22c:{fingerprint}")) {
             return;
         }
         let epochs = run.settings.descent_relaxed_epochs;
-        run.run_operator(
+        let compressed = run.run_operator(
             22,
             &parent,
             Some(fingerprint),
@@ -1264,6 +1480,165 @@ pub fn run_portfolio(
             None,
             ParentRole::Descended,
         );
+        if compressed.exact_valid {
+            // Nothing to legalize. This is the whole demotion: on this stream
+            // the trigger does not fire, and a phase that does not fire costs
+            // nothing instead of costing six refused calls.
+            return;
+        }
+        let residue = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+            &compressed.final_placements,
+        );
+        if residue.len() != run.pieces.len() || !run.meter.has_room(run.deadline) {
+            return;
+        }
+        let Some(residue_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
+            run.pieces,
+            &residue,
+            run.fast_settings,
+        )
+        .ok() else {
+            return;
+        };
+        // One rung of the engine's own construction drop ladder below the
+        // residue, which is the smallest bound this engine ever asks a
+        // legalizer for.
+        let bound = residue_depth - COMPRESSION_RUNG_MM;
+        if bound <= 0.0 {
+            return;
+        }
+        let residue_fingerprint = general_placement_fingerprint(&residue);
+        if run.already_attempted(format!("31:{residue_fingerprint}")) {
+            return;
+        }
+        run.run_operator(
+            31,
+            &residue,
+            Some(residue_fingerprint),
+            Some(bound),
+            |_| {},
+            None,
+            ParentRole::Descended,
+        );
+    });
+
+    // ---- phase 4: diversify - draw a basin only if it can be descended ----
+    // The constructor slice, conditional and last. Each iteration draws one
+    // salted arm and immediately spends a quantum on it, because the v1
+    // measurement's finding was not "mode 20 is bad" - all nineteen arms were
+    // exact-valid - but "nineteen arms that nobody descended from published
+    // nothing". An arm that is drawn is now descended from in the same
+    // iteration or it is not drawn at all.
+    coordinator.run_phase("diversify", settings.schedule.diversify_by, |run| {
+        match run.settings.basin_trigger {
+            BasinTrigger::Never => return,
+            BasinTrigger::OnStall if !run.descent_stalled => return,
+            _ => {}
+        }
+        let priced = run.settings.basin_trigger == BasinTrigger::WhenDescendable;
+        let patience = run.settings.basin_patience.max(1);
+        let mut barren = 0usize;
+        for slot in 0..run.settings.basin_slots {
+            let publications_before = run.publications.len();
+            if !run.meter.has_room(run.deadline) {
+                return;
+            }
+            if priced {
+                // A quantum is the price of *using* a basin, and a basin that
+                // is not used is the 19/19 refusal. An arm has never been
+                // priced when the first one is drawn, so it is charged a
+                // quantum's price until it has priced itself.
+                let Some(quantum) = run.mean_operator_cost("mode22") else {
+                    return;
+                };
+                let arm = run.mean_operator_cost("mode20").unwrap_or(quantum);
+                if run.meter.remaining_to(run.deadline) < arm + quantum {
+                    return;
+                }
+            }
+            let salt = slot as f64 * BASIN_TARGET_SALT_RELATIVE_STEP * constructor_clamp_mm;
+            let divisor = if run.settings.cell_divisor_salts.is_empty() {
+                None
+            } else {
+                Some(run.settings.cell_divisor_salts[slot % run.settings.cell_divisor_salts.len()])
+            };
+            let parent = run.incumbent.result.placements.clone();
+            let parent_fingerprint = run.incumbent.fingerprint.clone();
+            let drawn = run.run_operator(
+                20,
+                &parent,
+                Some(parent_fingerprint),
+                Some(constructor_clamp_mm + salt),
+                |relaxed| {
+                    relaxed.construction_restart_window = Some((slot, 1));
+                    relaxed.construction_void_cell_divisor = divisor;
+                },
+                None,
+                // The constructor builds from scratch; the incumbent is only
+                // its pose prior, so this is not that basin's quantum.
+                ParentRole::Prior,
+            );
+            let basin = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+                &drawn.final_placements,
+            );
+            if basin.len() != run.pieces.len() {
+                // An arm that produced no complete layout is evidence about the
+                // clamp, not about this slot: consecutive slots differ only in
+                // a salt of one part in ten thousand, so the next arm would be
+                // refused for the same reason at the same price. Stopping here
+                // is what turns "the clamp was wrong" from eight wasted arms -
+                // 2.04 s of a 3.88 s shapes-17 run, measured - into one.
+                return;
+            }
+            if !run.meter.has_room(run.deadline) {
+                return;
+            }
+            let Some(basin_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
+                run.pieces,
+                &basin,
+                run.fast_settings,
+            )
+            .ok() else {
+                barren += 1;
+                if barren >= patience {
+                    return;
+                }
+                continue;
+            };
+            let basin_fingerprint = general_placement_fingerprint(&basin);
+            let cycles = run.settings.descent_cycles.max(1);
+            let epochs = run.settings.descent_relaxed_epochs.max(1);
+            if run.already_attempted(format!("22:{cycles}:{epochs}:{basin_fingerprint}")) {
+                // The arm rebuilt a layout some quantum has already descended
+                // from, so it bought nothing. That is a barren iteration on the
+                // same terms as one whose descent published nothing.
+                barren += 1;
+                if barren >= patience {
+                    return;
+                }
+                continue;
+            }
+            run.run_operator(
+                22,
+                &basin,
+                Some(basin_fingerprint),
+                Some(basin_depth + ALTERNATION_RUNG_MM),
+                |relaxed| {
+                    relaxed.alternation_max_cycles = Some(cycles);
+                    relaxed.epochs = epochs;
+                },
+                None,
+                ParentRole::Descended,
+            );
+            if run.publications.len() > publications_before {
+                barren = 0;
+            } else {
+                barren += 1;
+                if barren >= patience {
+                    return;
+                }
+            }
+        }
     });
 
     // ---- phase 5: drain ---------------------------------------------------
@@ -1295,7 +1670,9 @@ pub fn run_portfolio(
     let elapsed_seconds = coordinator.meter.seconds();
     let work_units = coordinator.meter.work_units();
     let budget = coordinator.meter.budget;
+    let descent_stalled = coordinator.descent_stalled;
     Ok(PortfolioOutcome {
+        descent_stalled,
         result: coordinator.incumbent.result.clone(),
         incumbent: coordinator.incumbent,
         archive: coordinator.archive.report(),
@@ -1310,6 +1687,28 @@ pub fn run_portfolio(
         area_lower_bound_depth_mm,
         constructed_depth_mm,
     })
+}
+
+/// The first frontier pair a crossover has not attempted, in
+/// `(0,1), (0,2), (1,2), (0,3), ...` order.
+///
+/// Ordered by the *worse* member's rank first, so a phase that can afford only
+/// one call spends it on the two best distinct states - which is the same
+/// "best structurally distinct" ordering the alternation phase uses, applied to
+/// a pair rather than to a single parent.
+fn first_unattempted_crossover_pair(
+    fingerprints: &[String],
+    attempted: &std::collections::BTreeSet<String>,
+) -> Option<(usize, usize, String)> {
+    for right in 1..fingerprints.len() {
+        for left in 0..right {
+            let key = format!("23:{}:{}", fingerprints[left], fingerprints[right]);
+            if !attempted.contains(&key) {
+                return Some((left, right, key));
+            }
+        }
+    }
+    None
 }
 
 /// The alternation descent rung: the engine's own construction drop ladder's
@@ -1345,7 +1744,8 @@ impl std::ops::DerefMut for PhaseRun<'_, '_> {
 impl<'a> Coordinator<'a> {
     /// Runs one phase against its deadline fraction, recording what it cost and
     /// whether it was entered at all.
-    fn run_phase(&mut self, name: &str, deadline: f64, body: impl FnOnce(&mut PhaseRun<'_, 'a>)) {
+    fn run_phase(&mut self, name: &str, share: f64, body: impl FnOnce(&mut PhaseRun<'_, 'a>)) {
+        let deadline = self.protected_fraction + (1.0 - self.protected_fraction) * share;
         let entered_seconds = self.meter.seconds();
         let entered_work = self.meter.work_units();
         let calls_before = self.operator_calls.len();
@@ -1607,5 +2007,84 @@ mod tests {
     fn a_zero_budget_has_room_for_nothing() {
         let meter = BudgetMeter::new(PortfolioBudget::Wall { millis: 0 });
         assert!(!meter.has_room(1.0));
+    }
+
+    #[test]
+    fn the_budget_currency_is_the_budgets_own() {
+        // The affordability guard compares a *measured operator cost* against
+        // what is left, so both have to be quoted in one currency, and which
+        // currency that is has to be the budget's - seconds for a wall budget,
+        // work units for a work budget - or a work-budget run would branch on
+        // a clock and stop being reproducible.
+        let wall = BudgetMeter::new(PortfolioBudget::Wall { millis: 10_000 });
+        assert_eq!(wall.currency_total(), 10.0);
+        let work = BudgetMeter::new(PortfolioBudget::Work { units: 40_000_000 });
+        assert_eq!(work.currency_total(), 40_000_000.0);
+        assert_eq!(work.currency_spent(), 0.0);
+        assert_eq!(work.remaining_to(0.5), 20_000_000.0);
+        assert_eq!(work.remaining_to(0.0), 0.0);
+
+        let call = OperatorCallReport {
+            phase: "descent".to_owned(),
+            operator: "mode22".to_owned(),
+            parent_fingerprint: None,
+            started_seconds: 0.0,
+            elapsed_seconds: 1.25,
+            work_units: 3_000_000,
+            exact_valid: true,
+            raw_depth_mm: None,
+            archive_disposition: None,
+            published: false,
+            failure_reason: None,
+        };
+        assert_eq!(wall.call_cost(&call), 1.25);
+        assert_eq!(work.call_cost(&call), 3_000_000.0);
+    }
+
+    #[test]
+    fn crossover_pairs_are_best_first_and_each_is_offered_once() {
+        let fingerprints = ["a".to_owned(), "b".to_owned(), "c".to_owned()];
+        let mut attempted = std::collections::BTreeSet::new();
+        let mut order = Vec::new();
+        while let Some((left, right, key)) =
+            first_unattempted_crossover_pair(&fingerprints, &attempted)
+        {
+            order.push((left, right));
+            attempted.insert(key);
+        }
+        assert_eq!(order, vec![(0, 1), (0, 2), (1, 2)]);
+        // Exhausted rather than looping: a crossover phase with budget left and
+        // no new pair ends instead of paying for a layout it already has.
+        assert!(first_unattempted_crossover_pair(&fingerprints, &attempted).is_none());
+    }
+
+    #[test]
+    fn the_constructor_clamp_is_above_a_depth_the_request_admits() {
+        // mixed-61: the area bound dominates, and the clamp is the one the
+        // quality frontier trace established, unchanged.
+        assert_eq!(constructor_clamp_mm(130.3985, 206.869), 260.797);
+        // shapes-17 and triangle-20 pack at 2.08x and 2.21x their own area
+        // bound, so twice the bound is below every layout that exists and the
+        // constructed depth is the floor that rescues them.
+        assert_eq!(constructor_clamp_mm(96.30984986566416, 200.903), 200.903);
+        assert_eq!(constructor_clamp_mm(32.123, 73.72), 73.72);
+        // Whichever term wins, the clamp is never below a depth this request is
+        // known to admit a complete layout at.
+        for (bound, constructed) in [(1.0, 5.0), (5.0, 1.0), (2.5, 5.0)] {
+            assert!(constructor_clamp_mm(bound, constructed) >= constructed);
+        }
+    }
+
+    #[test]
+    fn the_phase_schedule_is_monotone_and_ends_at_the_budget() {
+        let schedule = PhaseSchedule::default();
+        assert!(schedule.descent_by <= schedule.crossover_by);
+        assert!(schedule.crossover_by <= schedule.compression_by);
+        assert!(schedule.compression_by <= schedule.diversify_by);
+        assert!(schedule.diversify_by <= schedule.drain_by);
+        assert_eq!(schedule.drain_by, 1.0);
+        // The constructor slice is last, which is the whole of this stage's
+        // rebudget: 19 arms, 19 exact-valid, 0 published at ten seconds.
+        assert!(schedule.compression_by < schedule.diversify_by);
     }
 }

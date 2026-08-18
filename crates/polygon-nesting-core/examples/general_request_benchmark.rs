@@ -27,7 +27,7 @@ use polygon_nesting_core::search::general_relaxed::{
     GeneralRelaxedSettings,
 };
 use polygon_nesting_core::search::portfolio::{
-    self, PortfolioBudget, PortfolioOutcome, PortfolioSettings,
+    self, BasinTrigger, PortfolioBudget, PortfolioOutcome, PortfolioSettings,
 };
 use polygon_nesting_core::search::shadow_rescore;
 use polygon_nesting_core::validation::general_polygon::{
@@ -1627,6 +1627,18 @@ fn parse_portfolio_spec(
                 })
             }
             "slots" => settings.basin_slots = value.parse()?,
+            "basins" => {
+                settings.basin_trigger = match value {
+                    "never" => BasinTrigger::Never,
+                    "always" => BasinTrigger::Always,
+                    "stall" => BasinTrigger::OnStall,
+                    "descendable" => BasinTrigger::WhenDescendable,
+                    other => return Err(format!("unknown basin trigger {other:?}").into()),
+                }
+            }
+            "patience" => settings.basin_patience = value.parse()?,
+            "xattempts" => settings.crossover_attempts = value.parse()?,
+            "xstates" => settings.crossover_states = value.parse()?,
             "states" => settings.descent_states = value.parse()?,
             "cycles" => settings.descent_cycles = value.parse()?,
             "deepen" => settings.descent_iterated_deepening = value != "0",
@@ -1640,10 +1652,10 @@ fn parse_portfolio_spec(
                     .map(str::parse::<f64>)
                     .collect::<Result<Vec<_>, _>>()?;
             }
-            "basinsBy" => settings.schedule.basins_by = value.parse()?,
             "descentBy" => settings.schedule.descent_by = value.parse()?,
             "crossoverBy" => settings.schedule.crossover_by = value.parse()?,
             "compressionBy" => settings.schedule.compression_by = value.parse()?,
+            "diversifyBy" => settings.schedule.diversify_by = value.parse()?,
             "drainBy" => settings.schedule.drain_by = value.parse()?,
             other => return Err(format!("unknown portfolio spec key {other:?}").into()),
         }
@@ -1665,6 +1677,7 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
         "areaLowerBoundDepthMm": outcome.area_lower_bound_depth_mm,
         "constructorClampMm": outcome.constructor_clamp_mm,
         "constructedDepthMm": outcome.constructed_depth_mm,
+        "descentStalled": outcome.descent_stalled,
         "incumbent": {
             "fingerprint": outcome.incumbent.fingerprint(),
             "rawDepthMm": outcome.incumbent.raw_depth_mm(),
