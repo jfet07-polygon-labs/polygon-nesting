@@ -13,6 +13,10 @@ pub mod general_relaxed;
 pub mod kernel;
 pub mod layout_scorer;
 pub mod placement_scorer;
+/// The anytime portfolio coordinator. Requires the deep operators, so it is
+/// compiled only where they are.
+#[cfg(feature = "jagua-experimental")]
+pub mod portfolio;
 pub mod score_grid;
 pub mod shadow_rescore;
 pub mod sort_pieces;
