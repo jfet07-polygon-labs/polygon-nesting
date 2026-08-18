@@ -164,8 +164,13 @@ the new incumbent the moment any arm publishes an `exactValid` **and**
 `contractValid` layout whose raw is **strictly** below — strict `<`, no decimal
 epsilon, because ~35 ULPs of slack at this magnitude hides real improvements.
 
-Three cascades ran to a stop, **907 arms** in total, each restarting from its
-new incumbent (`evidence/cascade-*.json`, `evidence/cascade-*.log`):
+Three cascades contribute arms — `fsline`, `fsline2` and `fsline4`, **907 arms**
+in total, each restarting from its new incumbent (`evidence/cascade-*.json`,
+`evidence/cascade-*.log`). A fourth, `fsline3`, was launched with mode 26 hoisted
+to the *front* of the round and stopped after 6 barren mode-26 arms without
+adopting anything — that ordering starved the cheap tiers exactly as the
+cheap-first ordering had starved mode 26, and its log is kept
+(`evidence/cascade-fsline3.log`) because the mistake is the finding:
 
 | tier | mode | arms | publications | adoptions |
 |---|---|---:|---:|---:|
