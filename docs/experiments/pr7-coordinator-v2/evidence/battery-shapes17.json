@@ -1,0 +1,5284 @@
+{
+ "name": "shapes17",
+ "request": "shapes-17",
+ "rounds": 3,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "arms": [
+  {
+   "label": "base",
+   "binary": "/var/lib/t3/tmp/pr7v2-measure-v2",
+   "spec": ""
+  },
+  {
+   "label": "v2at3",
+   "binary": "/var/lib/t3/tmp/pr7v2-measure-v2",
+   "spec": "wall=3000,cells={cells}"
+  },
+  {
+   "label": "v2at10",
+   "binary": "/var/lib/t3/tmp/pr7v2-measure-v2",
+   "spec": "wall=10000,cells={cells}"
+  },
+  {
+   "label": "v2at30",
+   "binary": "/var/lib/t3/tmp/pr7v2-measure-v2",
+   "spec": "wall=30000,cells={cells}"
+  }
+ ],
+ "rows": [
+  {
+   "tag": "base-s0-r0",
+   "processSeconds": 0.942913506005425,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": null,
+   "arm": "base",
+   "seed": 0,
+   "round": 0
+  },
+  {
+   "tag": "v2at3-s0-r0",
+   "processSeconds": 2.534079709002981,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.890140941,
+   "coordinatorSeconds": 2.498940263,
+   "descentStalled": false,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.899769347,
+     "enteredSeconds": 3.32e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.5939555143866666,
+     "elapsedSeconds": 0.461096806,
+     "enteredSeconds": 0.89990233,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7899769902,
+     "elapsedSeconds": 5.266999999919975e-06,
+     "enteredSeconds": 1.360999993,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9229915630733334,
+     "elapsedSeconds": 0.4638669489999998,
+     "enteredSeconds": 1.361005371,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9859984660133334,
+     "elapsedSeconds": 0.6740609059999998,
+     "enteredSeconds": 1.824873052,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 5.290000000268691e-06,
+     "enteredSeconds": 2.498934925,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.45911880299999996,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.899906109,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.46193823300000014,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.361007119,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.2673481099999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.8248746850000002,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.40278541700000003,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.094165272,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.892071788,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.094146522,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.892071788,
+      1
+     ],
+     [
+      2.094146522,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at3",
+   "seed": 0,
+   "round": 0
+  },
+  {
+   "tag": "v2at10-s0-r0",
+   "processSeconds": 2.557672230992466,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.903403917,
+   "coordinatorSeconds": 2.520022285,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.913005082,
+     "enteredSeconds": 6.59e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.472954340518,
+     "elapsedSeconds": 0.47483282399999993,
+     "enteredSeconds": 0.913133947,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.72739017613,
+     "elapsedSeconds": 3.304999999897973e-06,
+     "enteredSeconds": 1.3879674180000001,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.900043064581,
+     "elapsedSeconds": 0.46431503800000007,
+     "enteredSeconds": 1.387970768,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.981826011742,
+     "elapsedSeconds": 0.6677316769999999,
+     "enteredSeconds": 1.852286634,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 3.0950000002860634e-06,
+     "enteredSeconds": 2.520019091,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4728970330000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.913137499,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.46239108399999984,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.387973179,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.267766811,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.852288299,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.3960454699999998,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.122018729,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.905339519,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.122000646,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.905339519,
+      1
+     ],
+     [
+      2.122000646,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at10",
+   "seed": 0,
+   "round": 0
+  },
+  {
+   "tag": "v2at30-s0-r0",
+   "processSeconds": 2.6007687380188145,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.930759192,
+   "coordinatorSeconds": 2.567216101,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.94039441,
+     "enteredSeconds": 3.09e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.4381809700386667,
+     "elapsedSeconds": 0.46593343899999995,
+     "enteredSeconds": 0.940524365,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.70940395002,
+     "elapsedSeconds": 3.9570000001099e-06,
+     "enteredSeconds": 1.4064582429999999,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.8934481150073335,
+     "elapsedSeconds": 0.48002422499999997,
+     "enteredSeconds": 1.406462243,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9806269300013333,
+     "elapsedSeconds": 0.680723231,
+     "enteredSeconds": 1.886487141,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 3.350000000068576e-06,
+     "enteredSeconds": 2.567212705,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.463991162,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.940528033,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.47809612600000007,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.406463483,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.2818301969999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.886488921,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.39495882300000007,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.170276518,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.932685562,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.170257243,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.932685562,
+      1
+     ],
+     [
+      2.170257243,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at30",
+   "seed": 0,
+   "round": 0
+  },
+  {
+   "tag": "base-s1-r0",
+   "processSeconds": 0.9266151430201717,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": null,
+   "arm": "base",
+   "seed": 1,
+   "round": 0
+  },
+  {
+   "tag": "v2at3-s1-r0",
+   "processSeconds": 2.5473371029947884,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.895850032,
+   "coordinatorSeconds": 2.516067962,
+   "descentStalled": false,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.905542685,
+     "enteredSeconds": 2.62e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.5950716754733334,
+     "elapsedSeconds": 0.475260849,
+     "enteredSeconds": 0.905678871,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7905543149,
+     "elapsedSeconds": 3.3260000000812084e-06,
+     "enteredSeconds": 1.380940225,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9232032487966668,
+     "elapsedSeconds": 0.462342856,
+     "enteredSeconds": 1.380943668,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9860369543266667,
+     "elapsedSeconds": 0.6727734399999998,
+     "enteredSeconds": 1.843286988,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 3.97399999974013e-06,
+     "enteredSeconds": 2.516063937,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.47333185599999994,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.905682903,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.46040859700000003,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.38094531,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.27562995400000023,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.8432899969999998,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.39320955300000016,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.120874101,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.897805454,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.120856405,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.897805454,
+      1
+     ],
+     [
+      2.120856405,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at3",
+   "seed": 1,
+   "round": 0
+  },
+  {
+   "tag": "v2at10-s1-r0",
+   "processSeconds": 2.5332084740221035,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.883971846,
+   "coordinatorSeconds": 2.497384954,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.89375034,
+     "enteredSeconds": 2.17e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.47183754112200005,
+     "elapsedSeconds": 0.4561383130000001,
+     "enteredSeconds": 0.893886051,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.72681252127,
+     "elapsedSeconds": 3.302000000093841e-06,
+     "enteredSeconds": 1.350024832,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.899831257799,
+     "elapsedSeconds": 0.4698344739999998,
+     "enteredSeconds": 1.350028178,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.981787501418,
+     "elapsedSeconds": 0.6775181730000002,
+     "enteredSeconds": 1.819863109,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 2.795999999971599e-06,
+     "enteredSeconds": 2.497382113,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4542107069999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.893890214,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4678903019999998,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.3500294990000001,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.275336303,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.819864649,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.39826687399999994,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.097162498,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.885924445,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.097144134,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.885924445,
+      1
+     ],
+     [
+      2.097144134,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at10",
+   "seed": 1,
+   "round": 0
+  },
+  {
+   "tag": "v2at30-s1-r0",
+   "processSeconds": 2.5466823909955565,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.890031272,
+   "coordinatorSeconds": 2.516466116,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.902969267,
+     "enteredSeconds": 9.69e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.43745742755933337,
+     "elapsedSeconds": 0.4680017879999999,
+     "enteredSeconds": 0.90313063,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.70902970391,
+     "elapsedSeconds": 4.185999999961609e-06,
+     "enteredSeconds": 1.371132888,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.8933108914336667,
+     "elapsedSeconds": 0.4582779400000001,
+     "enteredSeconds": 1.37113712,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9806019802606667,
+     "elapsedSeconds": 0.6870449589999998,
+     "enteredSeconds": 1.829415808,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 3.2459999999012723e-06,
+     "enteredSeconds": 2.516462825,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.46602086499999995,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.903135882,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.456338669,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.3711391210000001,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.2748158180000002,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.829417589,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4082490999999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.106247744,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.892640837,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.10622892,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.892640837,
+      1
+     ],
+     [
+      2.10622892,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at30",
+   "seed": 1,
+   "round": 0
+  },
+  {
+   "tag": "base-s2-r0",
+   "processSeconds": 0.9784577909740619,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": null,
+   "arm": "base",
+   "seed": 2,
+   "round": 0
+  },
+  {
+   "tag": "v2at3-s2-r0",
+   "processSeconds": 2.6605508789943997,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.975443694,
+   "coordinatorSeconds": 2.626853107,
+   "descentStalled": false,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.988674267,
+     "enteredSeconds": 3e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.6111438031733334,
+     "elapsedSeconds": 0.4794154030000001,
+     "enteredSeconds": 0.988839669,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7988674843999999,
+     "elapsedSeconds": 5.765999999907123e-06,
+     "enteredSeconds": 1.468255936,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9262514109466666,
+     "elapsedSeconds": 0.480482815,
+     "enteredSeconds": 1.468261821,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9865911656266666,
+     "elapsedSeconds": 0.6781022219999999,
+     "enteredSeconds": 1.94874528,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 4.639000000139504e-06,
+     "enteredSeconds": 2.626848421,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4774621579999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.9888453,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.477888039,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.468264147,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.26302999299999996,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.948747666,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.41118590499999996,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.213727945,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.978242889,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.213709347,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.978242889,
+      1
+     ],
+     [
+      2.213709347,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at3",
+   "seed": 2,
+   "round": 0
+  },
+  {
+   "tag": "v2at10-s2-r0",
+   "processSeconds": 2.635613716993248,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.958674616,
+   "coordinatorSeconds": 2.59849654,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.969357793,
+     "enteredSeconds": 2.57e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.47622277733999996,
+     "elapsedSeconds": 0.48981924600000004,
+     "enteredSeconds": 0.969489741,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7290807469,
+     "elapsedSeconds": 4.1129999999167666e-06,
+     "enteredSeconds": 1.459309669,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9006629405300001,
+     "elapsedSeconds": 0.4770456260000002,
+     "enteredSeconds": 1.4593138429999999,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.98193871646,
+     "elapsedSeconds": 0.6621306279999999,
+     "enteredSeconds": 1.9363599169999999,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 5.099000000008402e-06,
+     "enteredSeconds": 2.598491396,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4878743,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.969494051,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4751214939999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.459315248,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.25931063500000007,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.936362825,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.3989081940000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.197642862,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.961255948,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.197624494,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.961255948,
+      1
+     ],
+     [
+      2.197624494,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at10",
+   "seed": 2,
+   "round": 0
+  },
+  {
+   "tag": "v2at30-s2-r0",
+   "processSeconds": 2.5699472179985605,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.906832435,
+   "coordinatorSeconds": 2.538392458,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.916420102,
+     "enteredSeconds": 2.52e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.43771746309666665,
+     "elapsedSeconds": 0.477452373,
+     "enteredSeconds": 0.916548224,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.70916420505,
+     "elapsedSeconds": 3.6290000000605005e-06,
+     "enteredSeconds": 1.3940014299999999,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.8933602085183333,
+     "elapsedSeconds": 0.4795203749999999,
+     "enteredSeconds": 1.394005104,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9806109470033333,
+     "elapsedSeconds": 0.6648625699999997,
+     "enteredSeconds": 1.873526153,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 2.6370000001385563e-06,
+     "enteredSeconds": 2.538389778,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.475520351,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.916552055,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4775885769999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.394006435,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.2590417380000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.873529264,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.40190671600000005,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.134540861,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.908754176,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.134521408,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.908754176,
+      1
+     ],
+     [
+      2.134521408,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at30",
+   "seed": 2,
+   "round": 0
+  },
+  {
+   "tag": "v2at3-s0-r1",
+   "processSeconds": 2.56759358200361,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.912203133,
+   "coordinatorSeconds": 2.5326360770000003,
+   "descentStalled": false,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.921855903,
+     "enteredSeconds": 2.86e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.5982255577133333,
+     "elapsedSeconds": 0.4672447310000001,
+     "enteredSeconds": 0.921983276,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7921856332999999,
+     "elapsedSeconds": 6.465999999871741e-06,
+     "enteredSeconds": 1.389228943,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9238013988766667,
+     "elapsedSeconds": 0.47395588899999996,
+     "enteredSeconds": 1.38923556,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9861457088866666,
+     "elapsedSeconds": 0.6694385550000002,
+     "enteredSeconds": 1.863192008,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 4.4030000001527014e-06,
+     "enteredSeconds": 2.5326316269999998,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.46522876599999996,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.921987129,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4720246560000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.389238698,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.2677035670000003,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.8631936599999999,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.39776597199999975,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.1328537340000002,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.914136817,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.132834204,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.914136817,
+      1
+     ],
+     [
+      2.132834204,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at3",
+   "seed": 0,
+   "round": 1
+  },
+  {
+   "tag": "v2at10-s0-r1",
+   "processSeconds": 2.5664194139826577,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.906334491,
+   "coordinatorSeconds": 2.529574067,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.915945282,
+     "enteredSeconds": 3.31e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.47312485390599995,
+     "elapsedSeconds": 0.4654263409999999,
+     "enteredSeconds": 0.916074039,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7274783727099998,
+     "elapsedSeconds": 4.163000000056982e-06,
+     "enteredSeconds": 1.381501476,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.900075403327,
+     "elapsedSeconds": 0.4799853330000001,
+     "enteredSeconds": 1.381505684,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9818318915139999,
+     "elapsedSeconds": 0.6680782880000002,
+     "enteredSeconds": 1.8614918029999998,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 2.795000000332948e-06,
+     "enteredSeconds": 2.5295712249999998,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4634823090000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.91607761,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4780343169999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.381507006,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.26626890900000033,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.8614945779999998,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.39789295499999966,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.1297180510000002,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.908265942,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.129698675,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.908265942,
+      1
+     ],
+     [
+      2.129698675,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at10",
+   "seed": 0,
+   "round": 1
+  },
+  {
+   "tag": "v2at30-s0-r1",
+   "processSeconds": 2.538205139018828,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.900660164,
+   "coordinatorSeconds": 2.503484817,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.910322262,
+     "enteredSeconds": 2.46e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.43759956976399994,
+     "elapsedSeconds": 0.4629716050000001,
+     "enteredSeconds": 0.910448806,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.70910322574,
+     "elapsedSeconds": 4.6620000002661754e-06,
+     "enteredSeconds": 1.3734212129999999,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.893337849438,
+     "elapsedSeconds": 0.462754259,
+     "enteredSeconds": 1.373425932,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.980606881716,
+     "elapsedSeconds": 0.6672978049999996,
+     "enteredSeconds": 1.8361807570000002,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 5.412000000148964e-06,
+     "enteredSeconds": 2.50347936,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.46103344600000007,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.910451965,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4608250919999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.373427313,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.2668965879999998,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.83618264,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.3965055259999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.105022731,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.902613404,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.10500089,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.902613404,
+      1
+     ],
+     [
+      2.10500089,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at30",
+   "seed": 0,
+   "round": 1
+  },
+  {
+   "tag": "base-s0-r1",
+   "processSeconds": 0.9324807559896726,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": null,
+   "arm": "base",
+   "seed": 0,
+   "round": 1
+  },
+  {
+   "tag": "v2at3-s1-r1",
+   "processSeconds": 2.561100027000066,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.886209002,
+   "coordinatorSeconds": 2.52698732,
+   "descentStalled": false,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.895791235,
+     "enteredSeconds": 2.2e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.5931863721333333,
+     "elapsedSeconds": 0.49414157299999995,
+     "enteredSeconds": 0.895922674,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.789579158,
+     "elapsedSeconds": 7.450000000019941e-06,
+     "enteredSeconds": 1.390064971,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9228456912666667,
+     "elapsedSeconds": 0.453784567,
+     "enteredSeconds": 1.390072539,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9859719438666666,
+     "elapsedSeconds": 0.683125491,
+     "enteredSeconds": 1.843857621,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 3.344999999654874e-06,
+     "enteredSeconds": 2.526983931,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.49153361399999984,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.895926831,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4518198729999998,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.390074814,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.276667676,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.843859269,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.40254454500000003,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.122483596,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.888124798,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.122464879,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.888124798,
+      1
+     ],
+     [
+      2.122464879,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at3",
+   "seed": 1,
+   "round": 1
+  },
+  {
+   "tag": "v2at10-s1-r1",
+   "processSeconds": 2.5837856250000186,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.90692546,
+   "coordinatorSeconds": 2.548461337,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.916499077,
+     "enteredSeconds": 3.42e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.473156973378,
+     "elapsedSeconds": 0.4658622240000001,
+     "enteredSeconds": 0.916626757,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.72749498623,
+     "elapsedSeconds": 3.6809999999221077e-06,
+     "enteredSeconds": 1.382489464,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.900081494951,
+     "elapsedSeconds": 0.47992403400000017,
+     "enteredSeconds": 1.38249319,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.981832999082,
+     "elapsedSeconds": 0.6860392359999998,
+     "enteredSeconds": 1.862417698,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 3.5770000001988933e-06,
+     "enteredSeconds": 2.548457713,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.463928707,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.9166303,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4776917999999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.382494756,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.275289549,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.862420073,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.40682325399999986,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.13967815,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.908846104,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.139656275,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.908846104,
+      1
+     ],
+     [
+      2.139656275,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at10",
+   "seed": 1,
+   "round": 1
+  },
+  {
+   "tag": "v2at30-s1-r1",
+   "processSeconds": 2.701998773991363,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.975487336,
+   "coordinatorSeconds": 2.670741337,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.985134467,
+     "enteredSeconds": 3.17e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.439045943662,
+     "elapsedSeconds": 0.5024764669999999,
+     "enteredSeconds": 0.985264186,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7098513501699999,
+     "elapsedSeconds": 4.7439999999454585e-06,
+     "enteredSeconds": 1.487741146,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.893612161729,
+     "elapsedSeconds": 0.49221651,
+     "enteredSeconds": 1.487745935,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.980656756678,
+     "elapsedSeconds": 0.6907724390000001,
+     "enteredSeconds": 1.979963039,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 4.021999999714865e-06,
+     "enteredSeconds": 2.670737271,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.500541763,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.985268019,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.490274788,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.487747377,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.2748937819999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.979964527,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.41127543099999997,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.256809661,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.97743922,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.256791025,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.97743922,
+      1
+     ],
+     [
+      2.256791025,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at30",
+   "seed": 1,
+   "round": 1
+  },
+  {
+   "tag": "base-s1-r1",
+   "processSeconds": 0.9193176219996531,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": null,
+   "arm": "base",
+   "seed": 1,
+   "round": 1
+  },
+  {
+   "tag": "v2at3-s2-r1",
+   "processSeconds": 2.5870553189888597,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.924234111,
+   "coordinatorSeconds": 2.553213294,
+   "descentStalled": false,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.933882387,
+     "enteredSeconds": 3.18e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.6005506723466667,
+     "elapsedSeconds": 0.48253869700000007,
+     "enteredSeconds": 0.934016905,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7933882788,
+     "elapsedSeconds": 1.0317000000092946e-05,
+     "enteredSeconds": 1.416556419,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9242423688933334,
+     "elapsedSeconds": 0.4841988690000001,
+     "enteredSeconds": 1.416566859,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9862258852533334,
+     "elapsedSeconds": 0.652441345,
+     "enteredSeconds": 1.90076669,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 4.328999999803074e-06,
+     "enteredSeconds": 2.553208921,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.48060506000000003,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.934020533,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4822678389999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.416569209,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.2596638640000002,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.90076819,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.3888997460000003,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.162372449,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.926163161,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.162352394,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.926163161,
+      1
+     ],
+     [
+      2.162352394,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at3",
+   "seed": 2,
+   "round": 1
+  },
+  {
+   "tag": "v2at10-s2-r1",
+   "processSeconds": 2.602234950987622,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.935594498,
+   "coordinatorSeconds": 2.564830783,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.9488968760000001,
+     "enteredSeconds": 3.86e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.47503606184400005,
+     "elapsedSeconds": 0.4855540239999999,
+     "enteredSeconds": 0.949087836,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.72846692854,
+     "elapsedSeconds": 4.697000000053464e-06,
+     "enteredSeconds": 1.434642764,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.900437873798,
+     "elapsedSeconds": 0.47041136699999986,
+     "enteredSeconds": 1.434647572,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.981897795236,
+     "elapsedSeconds": 0.6597664549999998,
+     "enteredSeconds": 1.9050595540000002,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 4.14900000000884e-06,
+     "enteredSeconds": 2.56482659,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4836312009999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.94909416,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.46848630299999994,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.434649005,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.25932726799999983,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.905061426,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.39654976100000017,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.166336034,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.938323639,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.16631791,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.938323639,
+      1
+     ],
+     [
+      2.16631791,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at10",
+   "seed": 2,
+   "round": 1
+  },
+  {
+   "tag": "v2at30-s2-r1",
+   "processSeconds": 2.577195716003189,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.910396592,
+   "coordinatorSeconds": 2.541039731,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.919986939,
+     "enteredSeconds": 2.46e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.43778642045666666,
+     "elapsedSeconds": 0.481168401,
+     "enteredSeconds": 0.920116209,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.70919987265,
+     "elapsedSeconds": 4.864999999965036e-06,
+     "enteredSeconds": 1.401285563,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.8933732866383334,
+     "elapsedSeconds": 0.47336639699999994,
+     "enteredSeconds": 1.401290473,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9806133248433333,
+     "elapsedSeconds": 0.6663786159999998,
+     "enteredSeconds": 1.8746574580000002,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 3.078999999850396e-06,
+     "enteredSeconds": 2.541036606,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4792343250000002,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.920119658,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4714315440000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.401291884,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.2594821420000002,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.87465901,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4029852709999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.136097678,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.912322643,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.136078082,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.912322643,
+      1
+     ],
+     [
+      2.136078082,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at30",
+   "seed": 2,
+   "round": 1
+  },
+  {
+   "tag": "base-s2-r1",
+   "processSeconds": 0.9580800570256542,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": null,
+   "arm": "base",
+   "seed": 2,
+   "round": 1
+  },
+  {
+   "tag": "v2at10-s0-r2",
+   "processSeconds": 2.5464078030199744,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.90185806,
+   "coordinatorSeconds": 2.5100012720000002,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.911457405,
+     "enteredSeconds": 2.44e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.472864551298,
+     "elapsedSeconds": 0.4701984039999999,
+     "enteredSeconds": 0.911584482,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7273437334299999,
+     "elapsedSeconds": 4.23599999987978e-06,
+     "enteredSeconds": 1.381783465,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.900026035591,
+     "elapsedSeconds": 0.462637693,
+     "enteredSeconds": 1.381787746,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.981822915562,
+     "elapsedSeconds": 0.6655697759999999,
+     "enteredSeconds": 1.844426425,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 4.318000000225197e-06,
+     "enteredSeconds": 2.509996911,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.468243658,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.911588123,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.46069655900000006,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.381789324,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.26703284400000005,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.844429414,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.3946039640000003,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.113421425,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.903784798,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.113402551,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.903784798,
+      1
+     ],
+     [
+      2.113402551,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at10",
+   "seed": 0,
+   "round": 2
+  },
+  {
+   "tag": "v2at30-s0-r2",
+   "processSeconds": 2.547150573984254,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.907230844,
+   "coordinatorSeconds": 2.511312867,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.916828695,
+     "enteredSeconds": 3.65e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.43772536799399997,
+     "elapsedSeconds": 0.4700444129999999,
+     "enteredSeconds": 0.916958393,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.70916829379,
+     "elapsedSeconds": 3.43499999999608e-06,
+     "enteredSeconds": 1.387003426,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.893361707723,
+     "elapsedSeconds": 0.45942602,
+     "enteredSeconds": 1.387006905,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.980611219586,
+     "elapsedSeconds": 0.6648747199999998,
+     "enteredSeconds": 1.8464334550000001,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 4.058000000028983e-06,
+     "enteredSeconds": 2.511308764,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.46810577899999994,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.916962398,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4574991700000002,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.3870083659999999,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.26690243199999975,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.84643675,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.39405797899999984,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.115295159,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.909161494,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.115277383,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.909161494,
+      1
+     ],
+     [
+      2.115277383,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at30",
+   "seed": 0,
+   "round": 2
+  },
+  {
+   "tag": "base-s0-r2",
+   "processSeconds": 0.9392460439994466,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": null,
+   "arm": "base",
+   "seed": 0,
+   "round": 2
+  },
+  {
+   "tag": "v2at3-s0-r2",
+   "processSeconds": 2.5324007460149005,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.905769162,
+   "coordinatorSeconds": 2.496826113,
+   "descentStalled": false,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.915400395,
+     "enteredSeconds": 2.51e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.5969774837466666,
+     "elapsedSeconds": 0.4623748339999999,
+     "enteredSeconds": 0.915528821,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7915400777999999,
+     "elapsedSeconds": 6.230999999967679e-06,
+     "enteredSeconds": 1.377904655,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9235646951933334,
+     "elapsedSeconds": 0.4642650020000001,
+     "enteredSeconds": 1.377911039,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9861026718533332,
+     "elapsedSeconds": 0.6546437050000002,
+     "enteredSeconds": 1.8421767999999998,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 4.720000000180136e-06,
+     "enteredSeconds": 2.496821345,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4604422989999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.915533377,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.46234222599999986,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.377912784,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.26641611399999987,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.842183766,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.3843133220000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.110552839,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.907698625,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.110535087,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "25af39539bb51fb8d061444363dbaa67b7ef77d9628ff80336da40d2072be74f",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.907698625,
+      1
+     ],
+     [
+      2.110535087,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at3",
+   "seed": 0,
+   "round": 2
+  },
+  {
+   "tag": "v2at10-s1-r2",
+   "processSeconds": 2.5444253160094377,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.899791051,
+   "coordinatorSeconds": 2.512602404,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.909408713,
+     "enteredSeconds": 2.64e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.472745729134,
+     "elapsedSeconds": 0.46527764000000005,
+     "enteredSeconds": 0.909542675,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.72728227369,
+     "elapsedSeconds": 3.347999999903095e-06,
+     "enteredSeconds": 1.374820674,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.900003500353,
+     "elapsedSeconds": 0.4635196399999999,
+     "enteredSeconds": 1.374824067,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.981818818246,
+     "elapsedSeconds": 0.6742533669999999,
+     "enteredSeconds": 1.838344352,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 3.6979999999964264e-06,
+     "enteredSeconds": 2.512598659,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.463336744,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.909546749,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.46157222500000006,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.374825378,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.2744456499999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.83834728,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.3958797700000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.114758125,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.901716805,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.114739838,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.901716805,
+      1
+     ],
+     [
+      2.114739838,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at10",
+   "seed": 1,
+   "round": 2
+  },
+  {
+   "tag": "v2at30-s1-r2",
+   "processSeconds": 2.5421908140124287,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.896234885,
+   "coordinatorSeconds": 2.505329934,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.905809385,
+     "enteredSeconds": 4.08e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.4375123268793333,
+     "elapsedSeconds": 0.46121236199999993,
+     "enteredSeconds": 0.905937483,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7090581001099999,
+     "elapsedSeconds": 4.179999999909256e-06,
+     "enteredSeconds": 1.3671508430000001,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.8933213033736667,
+     "elapsedSeconds": 0.46190590500000006,
+     "enteredSeconds": 1.367155068,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9806038733406667,
+     "elapsedSeconds": 0.676261647,
+     "enteredSeconds": 1.829061807,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 3.262999999975591e-06,
+     "enteredSeconds": 2.505326623,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4592526349999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.905941243,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.45995188,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.367156502,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.274572142,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.829065047,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.39777065,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.105592552,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.89815963,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.1055717449999998,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.89815963,
+      1
+     ],
+     [
+      2.1055717449999998,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at30",
+   "seed": 1,
+   "round": 2
+  },
+  {
+   "tag": "base-s1-r2",
+   "processSeconds": 0.9305268860189244,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": null,
+   "arm": "base",
+   "seed": 1,
+   "round": 2
+  },
+  {
+   "tag": "v2at3-s1-r2",
+   "processSeconds": 2.534506906988099,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.888593523,
+   "coordinatorSeconds": 2.501611076,
+   "descentStalled": false,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.8982308960000001,
+     "enteredSeconds": 3.12e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.59365806622,
+     "elapsedSeconds": 0.45989236199999994,
+     "enteredSeconds": 0.898360705,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7898231377,
+     "elapsedSeconds": 3.983000000040704e-06,
+     "enteredSeconds": 1.35825394,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.92293515049,
+     "elapsedSeconds": 0.46109776400000024,
+     "enteredSeconds": 1.35825819,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.98598820918,
+     "elapsedSeconds": 0.6822504760000001,
+     "enteredSeconds": 1.819356772,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 2.97099999979622e-06,
+     "enteredSeconds": 2.50160806,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4579019160000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.898364775,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.45916582400000006,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.358260402,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.2755635220000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.819358533,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4027600250000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.096875626,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.890522183,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.096855719,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "b95de09313413c5b44eaeeae908e85ebcd4da3a763448db764262f427ddee253",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.890522183,
+      1
+     ],
+     [
+      2.096855719,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at3",
+   "seed": 1,
+   "round": 2
+  },
+  {
+   "tag": "v2at10-s2-r2",
+   "processSeconds": 2.6037983630085364,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.927361225,
+   "coordinatorSeconds": 2.570421801,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.936938447,
+     "enteredSeconds": 8.05e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.474342484794,
+     "elapsedSeconds": 0.47653760200000017,
+     "enteredSeconds": 0.937067303,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7281081817899999,
+     "elapsedSeconds": 3.808000000216083e-06,
+     "enteredSeconds": 1.4136055619999999,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.900306333323,
+     "elapsedSeconds": 0.4820196050000001,
+     "enteredSeconds": 1.413609419,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.981873878786,
+     "elapsedSeconds": 0.6747875730000001,
+     "enteredSeconds": 1.8956297229999999,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 3.019000000215044e-06,
+     "enteredSeconds": 2.570418739,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4746112640000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.937071068,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4800434630000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.413610923,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.275289404,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.895631443,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.3955982709999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.172882276,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.929283675,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.172863228,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.929283675,
+      1
+     ],
+     [
+      2.172863228,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at10",
+   "seed": 2,
+   "round": 2
+  },
+  {
+   "tag": "v2at30-s2-r2",
+   "processSeconds": 2.6501101500180084,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.921803602,
+   "coordinatorSeconds": 2.616252683,
+   "descentStalled": true,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.9314530990000001,
+     "enteredSeconds": 6.68e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.4380081087333333,
+     "elapsedSeconds": 0.501239116,
+     "enteredSeconds": 0.931584247,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.709314539,
+     "elapsedSeconds": 4.778000000094096e-06,
+     "enteredSeconds": 1.432824248,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.8934153309666667,
+     "elapsedSeconds": 0.49909571099999983,
+     "enteredSeconds": 1.432829072,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9806209692666666,
+     "elapsedSeconds": 0.684323462,
+     "enteredSeconds": 1.931925455,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 3.0179999996882145e-06,
+     "enteredSeconds": 2.61624962,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.499234325,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.931587876,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.497121299,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.432830536,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.2747525369999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.931927155,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.40566726,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.208628907,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.923716643,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.208610165,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.923716643,
+      1
+     ],
+     [
+      2.208610165,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at30",
+   "seed": 2,
+   "round": 2
+  },
+  {
+   "tag": "base-s2-r2",
+   "processSeconds": 0.9559101330232807,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": null,
+   "arm": "base",
+   "seed": 2,
+   "round": 2
+  },
+  {
+   "tag": "v2at3-s2-r2",
+   "processSeconds": 2.6416145369876176,
+   "engineDepthMm": 200.349,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "publishedSeconds": 0.944508805,
+   "coordinatorSeconds": 2.606168887,
+   "descentStalled": false,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 0.954155486,
+     "enteredSeconds": 2.39e-07,
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.6044701195933333,
+     "elapsedSeconds": 0.5046992760000001,
+     "enteredSeconds": 0.954282295,
+     "name": "descent",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.7954155790999999,
+     "elapsedSeconds": 6.549000000077854e-06,
+     "enteredSeconds": 1.4589823339999999,
+     "name": "crossover",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9249857123366667,
+     "elapsedSeconds": 0.4855327250000001,
+     "enteredSeconds": 1.458988985,
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 0.9863610386066667,
+     "elapsedSeconds": 0.6616423,
+     "enteredSeconds": 1.944522392,
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 3.0479999999499796e-06,
+     "enteredSeconds": 2.606165795,
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [],
+   "operatorCalls": [
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.5020854469999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 0.954286133,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.4835931210000002,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.458991448,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.259482569,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 1.944524674,
+     "workUnits": 0
+    },
+    {
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.3982701889999998,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "startedSeconds": 2.205958282,
+     "workUnits": 0
+    }
+   ],
+   "archive": {
+    "admitted": 2,
+    "byOperator": {
+     "constructor": 1,
+     "mode20": 1
+    },
+    "capacity": 16,
+    "duplicates": 7,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 0.946430513,
+      "birthWorkUnits": 0,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 200.34937729570953
+     },
+     {
+      "birthSeconds": 2.205938746,
+      "birthWorkUnits": 0,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "daf2ac959dc2ad81f4471784e1b7a27be2d3a293a6ed6e1961a5fb99b4697f4b",
+      "operator": "mode20",
+      "parentFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "rawDepthMm": 200.34937729570953
+     }
+    ],
+    "occupancy": 2,
+    "occupancyOverTime": [
+     [
+      0.946430513,
+      1
+     ],
+     [
+      2.205938746,
+      2
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "areaLowerBoundDepthMm": 96.30984986566416,
+   "constructedDepthMm": 200.903,
+   "arm": "v2at3",
+   "seed": 2,
+   "round": 2
+  }
+ ],
+ "summary": {
+  "control": "base",
+  "perSeed": {
+   "0": {
+    "base": [
+     200.349,
+     200.349,
+     200.349
+    ],
+    "v2at3": [
+     200.349,
+     200.349,
+     200.349
+    ],
+    "v2at10": [
+     200.349,
+     200.349,
+     200.349
+    ],
+    "v2at30": [
+     200.349,
+     200.349,
+     200.349
+    ]
+   },
+   "1": {
+    "base": [
+     200.349,
+     200.349,
+     200.349
+    ],
+    "v2at3": [
+     200.349,
+     200.349,
+     200.349
+    ],
+    "v2at10": [
+     200.349,
+     200.349,
+     200.349
+    ],
+    "v2at30": [
+     200.349,
+     200.349,
+     200.349
+    ]
+   },
+   "2": {
+    "base": [
+     200.349,
+     200.349,
+     200.349
+    ],
+    "v2at3": [
+     200.349,
+     200.349,
+     200.349
+    ],
+    "v2at10": [
+     200.349,
+     200.349,
+     200.349
+    ],
+    "v2at30": [
+     200.349,
+     200.349,
+     200.349
+    ]
+   }
+  },
+  "paired": {
+   "v2at3": {
+    "medianMm": 0.0,
+    "minMm": 0.0,
+    "maxMm": 0.0,
+    "roundsBetter": 0,
+    "roundsWorse": 0,
+    "roundsEqual": 9,
+    "rounds": 9
+   },
+   "v2at10": {
+    "medianMm": 0.0,
+    "minMm": 0.0,
+    "maxMm": 0.0,
+    "roundsBetter": 0,
+    "roundsWorse": 0,
+    "roundsEqual": 9,
+    "rounds": 9
+   },
+   "v2at30": {
+    "medianMm": 0.0,
+    "minMm": 0.0,
+    "maxMm": 0.0,
+    "roundsBetter": 0,
+    "roundsWorse": 0,
+    "roundsEqual": 9,
+    "rounds": 9
+   }
+  },
+  "pairwise": {
+   "v2at3-minus-base": {
+    "medianMm": 0.0,
+    "minMm": 0.0,
+    "maxMm": 0.0,
+    "roundsRightBetter": 0,
+    "roundsLeftBetter": 0,
+    "roundsEqual": 9,
+    "rounds": 9
+   },
+   "v2at10-minus-base": {
+    "medianMm": 0.0,
+    "minMm": 0.0,
+    "maxMm": 0.0,
+    "roundsRightBetter": 0,
+    "roundsLeftBetter": 0,
+    "roundsEqual": 9,
+    "rounds": 9
+   },
+   "v2at30-minus-base": {
+    "medianMm": 0.0,
+    "minMm": 0.0,
+    "maxMm": 0.0,
+    "roundsRightBetter": 0,
+    "roundsLeftBetter": 0,
+    "roundsEqual": 9,
+    "rounds": 9
+   },
+   "v2at30-minus-v2at3": {
+    "medianMm": 0.0,
+    "minMm": 0.0,
+    "maxMm": 0.0,
+    "roundsRightBetter": 0,
+    "roundsLeftBetter": 0,
+    "roundsEqual": 9,
+    "rounds": 9
+   },
+   "v2at3-minus-v2at10": {
+    "medianMm": 0.0,
+    "minMm": 0.0,
+    "maxMm": 0.0,
+    "roundsRightBetter": 0,
+    "roundsLeftBetter": 0,
+    "roundsEqual": 9,
+    "rounds": 9
+   },
+   "v2at30-minus-v2at10": {
+    "medianMm": 0.0,
+    "minMm": 0.0,
+    "maxMm": 0.0,
+    "roundsRightBetter": 0,
+    "roundsLeftBetter": 0,
+    "roundsEqual": 9,
+    "rounds": 9
+   }
+  },
+  "operatorCost": {
+   "v2at10/compression/mode22": {
+    "calls": 9,
+    "seconds": 4.231927547,
+    "published": 0,
+    "exactValid": 9,
+    "meanSeconds": 0.47021417188888887
+   },
+   "v2at10/descent/mode22": {
+    "calls": 9,
+    "seconds": 4.232215923,
+    "published": 0,
+    "exactValid": 9,
+    "meanSeconds": 0.4702462136666667
+   },
+   "v2at10/diversify/mode20": {
+    "calls": 9,
+    "seconds": 2.420067373,
+    "published": 0,
+    "exactValid": 9,
+    "meanSeconds": 0.2688963747777778
+   },
+   "v2at10/diversify/mode22": {
+    "calls": 9,
+    "seconds": 3.580568513,
+    "published": 0,
+    "exactValid": 9,
+    "meanSeconds": 0.39784094588888885
+   },
+   "v2at3/compression/mode22": {
+    "calls": 9,
+    "seconds": 4.211448408000001,
+    "published": 0,
+    "exactValid": 9,
+    "meanSeconds": 0.4679387120000001
+   },
+   "v2at3/descent/mode22": {
+    "calls": 9,
+    "seconds": 4.267709919,
+    "published": 0,
+    "exactValid": 9,
+    "meanSeconds": 0.474189991
+   },
+   "v2at3/diversify/mode20": {
+    "calls": 9,
+    "seconds": 2.4115053690000003,
+    "published": 0,
+    "exactValid": 9,
+    "meanSeconds": 0.26794504100000005
+   },
+   "v2at3/diversify/mode22": {
+    "calls": 9,
+    "seconds": 3.5817346740000002,
+    "published": 0,
+    "exactValid": 9,
+    "meanSeconds": 0.3979705193333334
+   },
+   "v2at30/compression/mode22": {
+    "calls": 9,
+    "seconds": 4.249127145,
+    "published": 0,
+    "exactValid": 9,
+    "meanSeconds": 0.47212523833333336
+   },
+   "v2at30/descent/mode22": {
+    "calls": 9,
+    "seconds": 4.272934651,
+    "published": 0,
+    "exactValid": 9,
+    "meanSeconds": 0.47477051677777776
+   },
+   "v2at30/diversify/mode20": {
+    "calls": 9,
+    "seconds": 2.433187376,
+    "published": 0,
+    "exactValid": 9,
+    "meanSeconds": 0.27035415288888887
+   },
+   "v2at30/diversify/mode22": {
+    "calls": 9,
+    "seconds": 3.6133767559999996,
+    "published": 0,
+    "exactValid": 9,
+    "meanSeconds": 0.4014863062222222
+   }
+  },
+  "phaseSeconds": {
+   "v2at10/compression": {
+    "median": 0.47041136699999986,
+    "min": 0.462637693,
+    "max": 0.4820196050000001
+   },
+   "v2at10/crossover": {
+    "median": 3.808000000216083e-06,
+    "min": 3.302000000093841e-06,
+    "max": 4.697000000053464e-06
+   },
+   "v2at10/descent": {
+    "median": 0.4701984039999999,
+    "min": 0.4561383130000001,
+    "max": 0.48981924600000004
+   },
+   "v2at10/diversify": {
+    "median": 0.6680782880000002,
+    "min": 0.6597664549999998,
+    "max": 0.6860392359999998
+   },
+   "v2at10/drain": {
+    "median": 3.5770000001988933e-06,
+    "min": 2.795000000332948e-06,
+    "max": 5.099000000008402e-06
+   },
+   "v2at10/m0": {
+    "median": 0.915945282,
+    "min": 0.89375034,
+    "max": 0.969357793
+   },
+   "v2at3/compression": {
+    "median": 0.4642650020000001,
+    "min": 0.453784567,
+    "max": 0.4855327250000001
+   },
+   "v2at3/crossover": {
+    "median": 6.230999999967679e-06,
+    "min": 3.3260000000812084e-06,
+    "max": 1.0317000000092946e-05
+   },
+   "v2at3/descent": {
+    "median": 0.475260849,
+    "min": 0.45989236199999994,
+    "max": 0.5046992760000001
+   },
+   "v2at3/diversify": {
+    "median": 0.6727734399999998,
+    "min": 0.652441345,
+    "max": 0.683125491
+   },
+   "v2at3/drain": {
+    "median": 4.328999999803074e-06,
+    "min": 2.97099999979622e-06,
+    "max": 5.290000000268691e-06
+   },
+   "v2at3/m0": {
+    "median": 0.915400395,
+    "min": 0.895791235,
+    "max": 0.988674267
+   },
+   "v2at30/compression": {
+    "median": 0.47336639699999994,
+    "min": 0.4582779400000001,
+    "max": 0.49909571099999983
+   },
+   "v2at30/crossover": {
+    "median": 4.185999999961609e-06,
+    "min": 3.43499999999608e-06,
+    "max": 4.864999999965036e-06
+   },
+   "v2at30/descent": {
+    "median": 0.4700444129999999,
+    "min": 0.46121236199999993,
+    "max": 0.5024764669999999
+   },
+   "v2at30/diversify": {
+    "median": 0.676261647,
+    "min": 0.6648625699999997,
+    "max": 0.6907724390000001
+   },
+   "v2at30/drain": {
+    "median": 3.262999999975591e-06,
+    "min": 2.6370000001385563e-06,
+    "max": 5.412000000148964e-06
+   },
+   "v2at30/m0": {
+    "median": 0.916828695,
+    "min": 0.902969267,
+    "max": 0.985134467
+   }
+  },
+  "processSeconds": {
+   "base": 0.9392460439994466,
+   "v2at3": 2.561100027000066,
+   "v2at10": 2.5664194139826577,
+   "v2at30": 2.5699472179985605
+  },
+  "errors": []
+ },
+ "milestoneSeconds": {
+  "base": {
+   "0": {},
+   "1": {},
+   "2": {}
+  },
+  "v2at10": {
+   "0": {},
+   "1": {},
+   "2": {}
+  },
+  "v2at3": {
+   "0": {},
+   "1": {},
+   "2": {}
+  },
+  "v2at30": {
+   "0": {},
+   "1": {},
+   "2": {}
+  }
+ }
+}
