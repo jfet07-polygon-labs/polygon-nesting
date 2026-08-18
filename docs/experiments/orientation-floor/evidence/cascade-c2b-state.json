@@ -1,0 +1,135 @@
+{
+ "label": "c2b",
+ "pin": "/var/lib/t3/tmp/wf87/run/c2b/pins/pin-155.40872811293.json",
+ "raw": "155.4087281129324",
+ "rawFloat": 155.4087281129324,
+ "arms": 120,
+ "fixpoint": false,
+ "byTier": {
+  "A-m22": {
+   "arms": 24,
+   "publications": 24
+  },
+  "B-flat-m33": {
+   "arms": 44,
+   "publications": 32,
+   "below": 13
+  },
+  "B-flat-m32": {
+   "arms": 22,
+   "publications": 14,
+   "below": 10
+  },
+  "C-m31": {
+   "arms": 4
+  },
+  "D-nudge": {
+   "arms": 16,
+   "publications": 15,
+   "below": 2
+  },
+  "F-m26": {
+   "arms": 2,
+   "publications": 2
+  },
+  "E-m34": {
+   "arms": 8,
+   "publications": 8
+  }
+ },
+ "adoptions": [
+  {
+   "round": 0,
+   "tier": "B-flat-m33",
+   "tag": "r0-flat0.008-m33-p0.05",
+   "from": "155.4137281129324",
+   "to": "155.4087281129324",
+   "delta": -0.0049999999999954525,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2b/pins/pin-155.40872811293.json",
+   "sha256": "a849d84cfef03c9a21959792b06a3108d2c659572fcdaedc969d809015825267",
+   "fingerprint": "96652639798c2f5c6e47ff72e38946c41021d140c98cb69dfaa2863e674744ad",
+   "attribution": {
+    "variants": 164,
+    "candidates": 20008,
+    "rows": 5847,
+    "finalists": 1,
+    "acceptedVacated": 2,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "alsoBelow": 24
+  }
+ ],
+ "rounds": [
+  {
+   "round": 0,
+   "from": "155.4137281129324",
+   "arms": 120,
+   "below": 25,
+   "seconds": 399.353520154953,
+   "belowTags": [
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.008-m33-p0.05",
+     "raw": "155.4087281129324"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.008-m33-p2.0",
+     "raw": "155.4087281129324"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.006-m33-p0.05",
+     "raw": "155.40972811293238"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.006-m33-p2.0",
+     "raw": "155.40972811293238"
+    },
+    {
+     "tier": "D-nudge",
+     "tag": "r0-nudge-r1-d0.006-m33",
+     "raw": "155.40972811293238"
+    },
+    {
+     "tier": "D-nudge",
+     "tag": "r0-nudge-pair-d0.006-m33",
+     "raw": "155.40972811293238"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.004-m33-p0.05",
+     "raw": "155.41072811293242"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.004-m33-p2.0",
+     "raw": "155.41072811293242"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.005-m33-p0.05",
+     "raw": "155.41072811293242"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.005-m33-p2.0",
+     "raw": "155.41072811293242"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.01-m33-p0.05",
+     "raw": "155.41072811293242"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.01-m33-p2.0",
+     "raw": "155.41072811293242"
+    }
+   ]
+  }
+ ]
+}

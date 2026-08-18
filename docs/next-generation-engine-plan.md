@@ -5185,3 +5185,163 @@ Evidence, drivers, the nine pinned states, the step sweeps, the three negatives
 and the two certifications: `docs/experiments/record-line-cascade/`, with the
 pins under
 `docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/record-line-cascade/`.
+
+## The orientation floor was still a floor, and the repair tier — not the entry — was the wall
+
+The previous entry ended on a certified fixpoint and a clear demand: the last
+0.422 mm needs "an instrument this round did not fire rather than more of the
+same". Four were fired. They compose, they are all cheap, and every one was
+found by reading a diagnostic the engine was already emitting rather than by
+widening a grid. The record moved **155.42229074464285 → 155.26442950832842**,
+0.158 mm, in 7,204 arms.
+
+The fourth is the one worth carrying forward, because of *when* it was found:
+after the third had run to a fully certified fixpoint. That certificate was
+honest and it was also a statement about the four instruments in the battery,
+and inventing a fifth entry family took another 0.066 mm out of it in eighteen
+rounds. "Certified fixpoint" means "fixpoint of these instruments", and this
+round broke four of them.
+
+### The floor's own symptom had already been written down
+
+The round that moved the ladder floor from 0.02 to 0.0032 degrees reported its
+own residual: of 40 accepted rotations, 27 sat *on* the new floor and 13 one
+rung above it. A distribution that piles on the floor is what a floor placed
+above the useful band looks like, and it said so — "the same argument that
+justified this change justifies testing another two rungs down".
+
+It is one rung down, not two, and the arithmetic says which. A rung `d` moves a
+vertex at radius `r` by `r · d · π/180`. At 0.00128 degrees that is 0.00223 mm
+on a hand-sized 100 mm radius and 0.00120 mm on this request's depth-setting
+family — one to two 0.001 mm pose quanta, the edge of expressibility. The next
+rung of the same 5/2 ratio, 0.000512, travels 0.00089 mm on the *largest* piece
+in the request, below one quantum, so the stream would be emitting angles the
+grid rounds away. The floor is now at the grid rather than above it, and this
+particular lever is spent.
+
+The A/B on the certified fixpoint is the whole argument in one table: the same
+22-arm flatten grid, nine rungs versus ten, **0 below versus 2 below**. The
+winning arm accepted exactly one pose — `acceptedAnchorLocal = 0`,
+`acceptedStation = 0`, one piece rotated by exactly +0.00128 degrees — and the
+old ladder could not have produced it by any *sequence* of its own rungs: in
+micro-degrees the nine old rungs generate a lattice of spacing 12.5, and 1280 is
+102.4 of those. That is a lattice fact, not a search observation.
+
+### The entry grid was three pieces deep and the frontier was seven
+
+Printing the frontier stack (`drivers/frontier.py`) was the round's cheapest
+measurement and its most useful. Ranks 1–7 sit inside 0.040 mm; rank 8 is at
+0.171. The cascade's frontier-flatten grid ran {0.0005 … 0.01}, which perturbs
+ranks 1–3 and never touches 4–7 — the grid could not express the move the state
+needed. Extending it to 0.2 mm turned a round that found 3 arms below out of 109
+into one that found 25 out of 120.
+
+### Mode 33 throws away the repairs it has already made
+
+That still left a fixpoint at 155.4087, of 164 arms. The diagnostics named the
+wall in one field pair: `componentsRepaired: 1, componentsRefused: 1`, then
+rejection of the whole arm. Mode 33's repair is all-or-nothing — one refusing
+violation component discards every component the pass already placed — and the
+entry was never the problem, since the entry had reached 155.3787.
+
+So the same entries went to the tiers that do not enumerate insertion orders at
+all. Modes 30 and 31 push the whole layout under a displacement cap, so a
+component that will not re-place is a push rather than a veto. On the 164-arm
+fixpoint: **14 of 28** and **13 of 28** arms strictly below, against 0 of 28 for
+mode 27 (which is the probe authority and never repairs). The productive deltas
+are an order of magnitude deeper than the re-insertion tier's — 0.1–0.3 mm
+rather than 0.001–0.03 — which is the same statement from the other side. The
+entry and the repair are independent choices, and the previous cascade had been
+varying only one of them.
+
+Naming that tier H and putting it in the interleave took the next round from
+3 arms below out of 138 to **76 out of 198**, and it supplied ten of the
+eighteen steps in that line.
+
+### Every entry family on this line was a translation
+
+Separating the entry from the repair immediately asks what *else* an entry could
+be, and the answer had been sitting in plain sight: the frontier flatten, the
+rank nudges and the k-deepest nudge all move pieces along the depth axis. The
+orientation freedom was only ever reachable from *inside* modes 32 and 33, as a
+candidate stream — and that stream can only perturb the pieces those modes
+themselves ejected.
+
+Tier I rotates the k deepest pieces **in place**, about each one's own
+transformed bounding-box centre, by rungs drawn from the ladder itself. On the
+certified fixpoint at 155.33041597699957 — a state that had just survived 138
+certification arms and 110 further compositions — 80 rotation-entry arms
+published 3 below. The 0.0006 mm is not the point. The point is that tier I then
+broke **three consecutive fixpoints** nothing else could touch (rounds whose
+only arms below were rotation entries, 4, 4 and 2 of them), and the state the
+third handed on had **44** arms below. Thirteen of that cascade's eighteen
+adoptions are rotation entries and the other five are the flatten and
+legalization grids re-opened by them. The entry families are not substitutes;
+they are a cycle, and the cycle carried the last 0.066 mm at up to 0.008 mm a
+round — twenty times the rate the record-line round's cheap tiers ground at.
+
+### Two prior findings that did not carry, and one process knob
+
+**Mode 32 is not the unproductive tier here.** The previous round measured 4 of
+4 sub-record publications for mode 33 and none for mode 32, and explained it by
+the vertex cover. The explanation is intact and the measurement does not
+generalise: across this round's cascades mode 32 took **97 of 352** arms below
+the incumbent against mode 33's 66 of 352. "Mode 32 is unproductive" was a fact
+about a basin whose conflicts were partner-blocked.
+
+**Deferred credit, then frequency.** The cascade no longer restarts on the first
+improvement; it runs every tier of a round to completion and adopts the round's
+strictly-best publication. That removes the ordering bias the previous round
+diagnosed — neither cheapest-first nor mode-26-first works — and exposes the one
+hiding underneath it: *cost*. Modes 26 and 34 were 70% of a round's seconds for
+0 of its adoptions. The answer is frequency rather than deletion (deletion is
+how the previous round lost mode 26 for 555 arms), and moving the barren tiers
+to every-Nth-round took a round from 349 s to 111 s. The knob cuts both ways:
+mode 22 was 0 of 24 below on one state and **48 of 48** on the states the
+legalization tier had just moved, so it went back to every round. A tier's yield
+is conditional on what the previous round did to the state, which is exactly
+what a fixed schedule cannot see.
+
+### The negatives, and what the round does not claim
+
+Mode 34 is inert on this whole lineage — 48 arms across eight step/budget specs,
+two seeds and three parents, every one returning its parent's depth to the
+digit — and the schedule's own block says why: `parentProxyFeasible: false`,
+35 colliding pairs, and a `startDepthMm` 0.825 mm above the incumbent, all of it
+the 2.5-degree `canonical_angle` entry snap. Walking around the snap still costs
+more than it pays, now measured at 155.4 as well as at 156.9: the regrid probe
+moves 49 of 61 poses, loses 0.779 mm on entry, and mode 34 then *does* ratchet
+(155, 294 and 467 accepted confirmations against 0) to 155.604 — 0.195 mm worse
+than the incumbent it left. Mode 23 crossover is barren against a pool it should
+have liked: seven same-lineage siblings inside 0.09 mm, five cuts, both
+directions, 70 arms, 0 below. The k-deepest nudge is barren against both the
+re-insertion tiers (32 arms) and tier H (60 arms). Modes 33 and 30 are
+seed-invariant, 18 arms each.
+
+The final state replays `exactValid` and `contractValid` at **0 ULPs** on the
+**pristine base-commit binary**, which knows nothing of the new rung — the
+ladder change is what found the state, not what verifies it — and it is a
+certified fixpoint of 132 further probe arms including tier H's own grid and
+both ladder generations. All four pinned gates hit, and the whole-document
+comparison of the two binaries differs in **0** of 3,262/3,243/3,243/3,243
+fields, which is the required result: the gates are modes 20 and 22 and neither
+enters the orientation stream.
+
+The 155.000 mm threshold is **not** reached; the gap is 0.236 mm, down from
+0.422, and the last cascade was stopped while still adopting rather than at a
+fixpoint, so no claim about the remaining distance is made either way. What the
+round claims is narrower and reusable: all four levers were found by reading
+diagnostics the engine already emits — an acceptance histogram piled on a
+constant, a frontier stack four times wider than the grid probing it, a
+`componentsRefused` counter sitting next to a `componentsRepaired` one, and the
+observation that every entry the line had was a translation — and not one of
+them was a parameter of the search. The corollary is the process finding:
+a certified fixpoint bounds the instruments in the battery, and the way past one
+is to add an instrument, not arms. Everything here is one request, one contract,
+work-budgeted or seeded arms on a deliberately oversubscribed box, with no
+wall-clock claim made anywhere.
+
+Evidence, drivers, the thirty-five pinned states, the two certification
+batteries and the eight negatives: `docs/experiments/orientation-floor/`, with
+the pins under
+`docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/orientation-floor/`.

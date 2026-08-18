@@ -334,8 +334,18 @@ const ANCHOR_LOCAL_FAN_DIRECTIONS: [(f64, f64); 16] = [
 // expressible - while being a sixth of the old floor, and both new rungs are
 // exact on the 1e-6 degree angle key, so no rung collapses onto another and
 // re-spends the same charged rows.
-const ORIENTATION_PERTURBATION_LADDER_DEG: [f64; 9] = [
-    0.0032, 0.008, 0.02, 0.05, 0.125, 0.3125, 0.78125, 1.953125, 4.8828125,
+//
+// That change left the same symptom behind: the accepted rungs re-piled on the
+// *new* floor (27 of 40 rotation acceptances at 0.0032, 13 at 0.008, zero at
+// 0.02 or coarser), which is again the signature of a floor placed above the
+// useful band. One further rung of the same ratio, 0.00128 degrees, moves a
+// 100 mm vertex by 0.00223 mm - two quanta - so it is the last rung the same
+// arithmetic still admits: 0.000512 degrees would travel 0.00089 mm, below the
+// 0.001 mm pose grid, and the stream would be emitting angles the grid rounds
+// away. The floor is now *at* the edge of expressibility rather than above it,
+// and the ladder stops there for a reason that is arithmetic rather than taste.
+const ORIENTATION_PERTURBATION_LADDER_DEG: [f64; 10] = [
+    0.00128, 0.0032, 0.008, 0.02, 0.05, 0.125, 0.3125, 0.78125, 1.953125, 4.8828125,
 ];
 // Orientation variants one perturbed re-insertion seeds per piece: the ladder
 // in both signs, the mirrored counterpart of the vacated orientation, and the
@@ -10803,10 +10813,10 @@ mod tests {
             // whole layout) times the stream's per-slot row budget, which is
             // itself the anchor-local budget once per orientation variant.
             let orientation_slots = (24 + 24) * pieces;
-            let orientation_rows = orientation_slots * (37 * 192);
-            let orientation_builds = 8 * pieces * 37;
-            assert_eq!(ORIENTATION_PERTURBATION_VARIANTS, 37);
-            assert_eq!(ORIENTATION_PERTURBATION_ROWS, 37 * 192);
+            let orientation_rows = orientation_slots * (41 * 192);
+            let orientation_builds = 8 * pieces * 41;
+            assert_eq!(ORIENTATION_PERTURBATION_VARIANTS, 41);
+            assert_eq!(ORIENTATION_PERTURBATION_ROWS, 41 * 192);
             assert_eq!(JOINT_REPLACEMENT_COMPONENT_PASSES, 8);
             let rows = population * 8
                 + settle * 64
@@ -10994,8 +11004,8 @@ mod tests {
         );
         // The orientation-perturbation lane (modes 32/33): 48 joint attempt
         // slots per piece times the stream's per-slot row budget of one
-        // anchor-local budget per orientation variant. 37 variants is the
-        // nine-rung ladder in both signs, mirrored, plus the pure mirror flip.
+        // anchor-local budget per orientation variant. 41 variants is the
+        // ten-rung ladder in both signs, mirrored, plus the pure mirror flip.
         assert_eq!(
             mixed61.max_exact_finalist_rows,
             (640 + 26) * 8
@@ -11004,7 +11014,7 @@ mod tests {
                 + 73 * 61 * 64
                 + 4_040 * 192
                 + 3_416 * 320
-                + 48 * 61 * (37 * 192)
+                + 48 * 61 * (41 * 192)
         );
         assert_eq!(
             mixed61.max_experimental_collision_builds,
@@ -11016,12 +11026,12 @@ mod tests {
                     + 73 * 61 * 64
                     + 4_040 * 192
                     + 3_416 * 320
-                    + 48 * 61 * (37 * 192))
+                    + 48 * 61 * (41 * 192))
                 + 122
                 + 4_040
                 + 2 * 3_416
                 + 24 * (4_040 / 2 + 200 * 96)
-                + 8 * 61 * 37
+                + 8 * 61 * 41
         );
         assert_eq!(
             mixed61.max_experimental_pair_visits,
@@ -11032,7 +11042,7 @@ mod tests {
                     + 73 * 61 * 64
                     + 4_040 * 192
                     + 3_416 * 320
-                    + 48 * 61 * (37 * 192))
+                    + 48 * 61 * (41 * 192))
                     * 60
                 + 3 * 61 * 64 * 61
                 + 24 * 200 * 96 * 61

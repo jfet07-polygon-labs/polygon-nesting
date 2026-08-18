@@ -1,0 +1,1408 @@
+{
+ "label": "c2f",
+ "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.26442950833.json",
+ "raw": "155.26442950832842",
+ "rawFloat": 155.26442950832842,
+ "arms": 3886,
+ "fixpoint": false,
+ "byTier": {
+  "A-m22": {
+   "arms": 432,
+   "publications": 432,
+   "below": 264
+  },
+  "B-flat-m33": {
+   "arms": 684,
+   "publications": 285,
+   "below": 77
+  },
+  "B-flat-m32": {
+   "arms": 684,
+   "publications": 284,
+   "below": 91
+  },
+  "H-legal-m30": {
+   "arms": 306,
+   "publications": 306,
+   "below": 26
+  },
+  "H-legal-m31": {
+   "arms": 306,
+   "publications": 89
+  },
+  "I-rot-m30": {
+   "arms": 576,
+   "publications": 576,
+   "below": 143
+  },
+  "I-rot-m33": {
+   "arms": 576,
+   "publications": 382,
+   "below": 42
+  },
+  "C-m31": {
+   "arms": 12
+  },
+  "D-nudge": {
+   "arms": 288,
+   "publications": 240,
+   "below": 22
+  },
+  "F-m26": {
+   "arms": 6,
+   "publications": 6
+  },
+  "E-m34": {
+   "arms": 16,
+   "publications": 16
+  }
+ },
+ "adoptions": [
+  {
+   "round": 0,
+   "tier": "I-rot-m33",
+   "tag": "r0-rot-k1-d-0.008-m33",
+   "from": "155.33041597699957",
+   "to": "155.32981307831446",
+   "delta": -0.0006028986851163154,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.32981307831.json",
+   "sha256": "d2f4b8686194f055f62117c84b39ac69bcaf8838d5b7336e6304434fde9f4334",
+   "fingerprint": "f4d6f0c5fe3447a42d6d8b07ec86d3a8fc7e67ec007682abbe852230ebc5e4ab",
+   "attribution": {
+    "variants": 82,
+    "candidates": 9922,
+    "rows": 16,
+    "finalists": 1,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "alsoBelow": 3
+  },
+  {
+   "round": 1,
+   "tier": "I-rot-m33",
+   "tag": "r1-rot-k1-d-0.02-m33",
+   "from": "155.32981307831446",
+   "to": "155.3289952387182",
+   "delta": -0.0008178395962659124,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.32899523872.json",
+   "sha256": "c54a72570ba56acfcc8eb28f330719b52b05ef6d3a8ee3f841f70ce97362fe70",
+   "fingerprint": "2d060226ed56aea7de5ad9be3df6b81ad9b8659ae8f1bb7b9013932dfee534ea",
+   "attribution": {
+    "variants": 82,
+    "candidates": 9922,
+    "rows": 1759,
+    "finalists": 4,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "d06db288-d2d6-4f40-874e-98287f516d93-copy-1",
+      241.415935,
+      -0.78125,
+      false
+     ]
+    ]
+   },
+   "alsoBelow": 3
+  },
+  {
+   "round": 2,
+   "tier": "I-rot-m30",
+   "tag": "r2-rot-k1-d0.02-m30",
+   "from": "155.3289952387182",
+   "to": "155.32763453787385",
+   "delta": -0.0013607008443443647,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.32763453787.json",
+   "sha256": "f929e7fb52ed45eefd2fc2e0b7f0c0882d4a773736081cd4a7b031163cf0f76b",
+   "fingerprint": "eac23737a0371eae08b4b1594535e992bbdb833ef6f4818c83ed0697e95df81c",
+   "attribution": {},
+   "alsoBelow": 1
+  },
+  {
+   "round": 3,
+   "tier": "B-flat-m33",
+   "tag": "r3-flat0.003-m33-p0.05",
+   "from": "155.32763453787385",
+   "to": "155.32463453787386",
+   "delta": -0.002999999999985903,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.32463453787.json",
+   "sha256": "b27efadcfaa38662959ba92ba3f2ee77b2845e623ad538e500eafbf6f2ace238",
+   "fingerprint": "c032f71cacd7e584ad6cd883c9a212e26d11fbc58359fa8155bb76f5d53aabb6",
+   "attribution": {
+    "variants": 82,
+    "candidates": 6068,
+    "rows": 2891,
+    "finalists": 4,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+      270.11875,
+      -0.00128,
+      true
+     ]
+    ]
+   },
+   "alsoBelow": 44
+  },
+  {
+   "round": 4,
+   "tier": "H-legal-m30",
+   "tag": "r4-legalflat0.01-m30",
+   "from": "155.32463453787386",
+   "to": "155.32363453787386",
+   "delta": -0.0010000000000047748,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.32363453787.json",
+   "sha256": "d1c17730453002f7617181f6d4d8b2533fd7511f9f743a4983ea6d1c6be9b75b",
+   "fingerprint": "3b2413ef1582e473d01669afcb4f815912ca5da20b12ef754d7404b86290cd00",
+   "attribution": {},
+   "alsoBelow": 37
+  },
+  {
+   "round": 5,
+   "tier": "I-rot-m30",
+   "tag": "r5-rot-k1-d0.02-m30",
+   "from": "155.32363453787386",
+   "to": "155.32063453787387",
+   "delta": -0.002999999999985903,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.32063453787.json",
+   "sha256": "26c1f614249747f9b4441308a61431f7e865bf9887485a4e418775b2393d7050",
+   "fingerprint": "c1361acfdc244c54d979617e96d4a61d44aa7ebf7fa9d2f193f95b56df40e2ba",
+   "attribution": {},
+   "alsoBelow": 41
+  },
+  {
+   "round": 6,
+   "tier": "H-legal-m30",
+   "tag": "r6-legalflat0.4-m30",
+   "from": "155.32063453787387",
+   "to": "155.3176345378739",
+   "delta": -0.002999999999985903,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.31763453787.json",
+   "sha256": "decc672cbc31b0eb357421c5c8d4f91a81206410225d1f188899885e93fd4c33",
+   "fingerprint": "281d836db9d399649f640fd57bb412f33005ad4a527ebaa1ad1b2bc23848eca2",
+   "attribution": {},
+   "alsoBelow": 59
+  },
+  {
+   "round": 7,
+   "tier": "I-rot-m30",
+   "tag": "r7-rot-k1-d0.02-m30",
+   "from": "155.3176345378739",
+   "to": "155.31126417741294",
+   "delta": -0.006370360460948632,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.31126417741.json",
+   "sha256": "f68b0461673091ba0b994f8afeb4d0cef1d6f3915f84c35c3f57b03e316f56e2",
+   "fingerprint": "86c71ced2c1285721004c1d2ae99bc5bfdfb64725b9fb143dd4ba3a9730bf162",
+   "attribution": {},
+   "alsoBelow": 63
+  },
+  {
+   "round": 8,
+   "tier": "I-rot-m30",
+   "tag": "r8-rot-k1-d0.02-m30",
+   "from": "155.31126417741294",
+   "to": "155.30288952528645",
+   "delta": -0.008374652126491355,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.30288952529.json",
+   "sha256": "3d9675ed0fe0b3b1e9336be6ffb56f15f6e05e8228230de2f92780bc62f283e6",
+   "fingerprint": "6daa6c3a89b8e9593722bb7731ccca1e50c752bf879cbd42a88b6457d43e7d39",
+   "attribution": {},
+   "alsoBelow": 64
+  },
+  {
+   "round": 9,
+   "tier": "I-rot-m30",
+   "tag": "r9-rot-k2-d0.02-m30",
+   "from": "155.30288952528645",
+   "to": "155.29650956355795",
+   "delta": -0.006379961728498529,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.29650956356.json",
+   "sha256": "768c179909d8b59318194094194e359d7626c83c57bb522fd4d6702732ae49a6",
+   "fingerprint": "2e8e912aa37cc340b4ce1d642a51e3d534bbeb8a701626b285040c6cff1b6578",
+   "attribution": {},
+   "alsoBelow": 58
+  },
+  {
+   "round": 10,
+   "tier": "I-rot-m30",
+   "tag": "r10-rot-k1-d0.02-m30",
+   "from": "155.29650956355795",
+   "to": "155.2881252959753",
+   "delta": -0.008384267582641769,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.28812529598.json",
+   "sha256": "6bc4fe03b6d4f4d399caae29f67ef46d43910f2f136c242d39b9bd06995401d9",
+   "fingerprint": "5294b4439b384544e05a4df6806f498cfa45a4bfebf30a6069fdf29e5c14efd8",
+   "attribution": {},
+   "alsoBelow": 69
+  },
+  {
+   "round": 11,
+   "tier": "I-rot-m33",
+   "tag": "r11-rot-k1-d0.008-m33",
+   "from": "155.2881252959753",
+   "to": "155.28221538414277",
+   "delta": -0.005909911832532089,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.28221538414.json",
+   "sha256": "bc915cfeb2f6b51b40f6402f178e343cb11b124a2faebbac167b31c4d9680c3e",
+   "fingerprint": "9fcc22850a5a8cb2789129d653ca90a8313e82f25c54f5689cb16777ca5619e0",
+   "attribution": {
+    "variants": 82,
+    "candidates": 9922,
+    "rows": 109,
+    "finalists": 1,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "alsoBelow": 66
+  },
+  {
+   "round": 12,
+   "tier": "I-rot-m30",
+   "tag": "r12-rot-k2-d0.02-m30",
+   "from": "155.28221538414277",
+   "to": "155.27882509466292",
+   "delta": -0.0033902894798529815,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.27882509466.json",
+   "sha256": "bde3bd6a814294fbe27181ad7c5d4c4eda97e354437780e1221d9042319cb063",
+   "fingerprint": "6baf876ea08ce42d91e04e040a424136277bb386663cc74de0bd01fc9607bd54",
+   "attribution": {},
+   "alsoBelow": 6
+  },
+  {
+   "round": 13,
+   "tier": "I-rot-m30",
+   "tag": "r13-rot-k1-d0.02-m30",
+   "from": "155.27882509466292",
+   "to": "155.27142950832842",
+   "delta": -0.007395586334496329,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.27142950833.json",
+   "sha256": "eb1ce706e06160f4281485f075a4637f9ed35e331c3649c4d387c539a1a381df",
+   "fingerprint": "633b3ad485aefda615683a2b7a12e7cbaf35746868082099206ee46b97b92d39",
+   "attribution": {},
+   "alsoBelow": 59
+  },
+  {
+   "round": 14,
+   "tier": "B-flat-m33",
+   "tag": "r14-flat0.005-m33-p0.05",
+   "from": "155.27142950832842",
+   "to": "155.26671615201747",
+   "delta": -0.004713356310958261,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.26671615202.json",
+   "sha256": "40347c40e0102f5fb0a360e2086880f72093fb13241178ad05ff0ba69b32ca5d",
+   "fingerprint": "5903cfa2860cf66bd82f03c58827bb87d01a4dee852958bda837a72987b0a3fe",
+   "attribution": {
+    "variants": 164,
+    "candidates": 11562,
+    "rows": 5784,
+    "finalists": 5,
+    "acceptedVacated": 2,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
+      108.19571,
+      0.0032,
+      false
+     ]
+    ]
+   },
+   "alsoBelow": 48
+  },
+  {
+   "round": 15,
+   "tier": "I-rot-m30",
+   "tag": "r15-rot-k1-d0.0032-m30",
+   "from": "155.26671615201747",
+   "to": "155.26642950832843",
+   "delta": -0.0002866436890371915,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.26642950833.json",
+   "sha256": "221d30b19244fa52371de13d1a654e6ed51375c75cc23f3a53bd744214c7324c",
+   "fingerprint": "ca9b9d1b9ccfff83b8c11c3c0afd06156a2f874edd20dc62c529d5569040f787",
+   "attribution": {},
+   "alsoBelow": 6
+  },
+  {
+   "round": 16,
+   "tier": "B-flat-m33",
+   "tag": "r16-flat0.002-m33-p0.05",
+   "from": "155.26642950832843",
+   "to": "155.26444327521912",
+   "delta": -0.0019862331093065677,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.26444327522.json",
+   "sha256": "e7cdb45cfac632753995d05e78c43efa7835039825c816f6bb89d6fe114979ca",
+   "fingerprint": "9ec81ee459e3aeac5e639299bdcbf43dcad121e4b40d1396d478d2e83b16168d",
+   "attribution": {
+    "variants": 164,
+    "candidates": 12382,
+    "rows": 3163,
+    "finalists": 5,
+    "acceptedVacated": 2,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "alsoBelow": 15
+  },
+  {
+   "round": 17,
+   "tier": "I-rot-m30",
+   "tag": "r17-rot-k1-d-0.00128-m30",
+   "from": "155.26444327521912",
+   "to": "155.26442950832842",
+   "delta": -1.3766890702981982e-05,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.26442950833.json",
+   "sha256": "111082132fa7610a1000dd96b36f13e8f9282c28a4006e2333c485b7066ad7b7",
+   "fingerprint": "82eaa9762e0df399537226f34490e59d658867a5dec0f4b4ea67537d927a0c72",
+   "attribution": {},
+   "alsoBelow": 5
+  }
+ ],
+ "rounds": [
+  {
+   "round": 0,
+   "from": "155.33041597699957",
+   "arms": 228,
+   "below": 4,
+   "seconds": 313.8312394618988,
+   "belowTags": [
+    {
+     "tier": "I-rot-m33",
+     "tag": "r0-rot-k1-d-0.008-m33",
+     "raw": "155.32981307831446"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r0-rot-k1-d-0.0032-m30",
+     "raw": "155.330023823849"
+    },
+    {
+     "tier": "I-rot-m33",
+     "tag": "r0-rot-k1-d-0.0032-m33",
+     "raw": "155.33023582384897"
+    },
+    {
+     "tier": "I-rot-m33",
+     "tag": "r0-rot-k2-d-0.0032-m33",
+     "raw": "155.33023582384897"
+    }
+   ]
+  },
+  {
+   "round": 1,
+   "from": "155.32981307831446",
+   "arms": 214,
+   "below": 4,
+   "seconds": 187.1142315864563,
+   "belowTags": [
+    {
+     "tier": "I-rot-m33",
+     "tag": "r1-rot-k1-d-0.02-m33",
+     "raw": "155.3289952387182"
+    },
+    {
+     "tier": "D-nudge",
+     "tag": "r1-nudge-r1-d0.012-m33",
+     "raw": "155.3289952387182"
+    },
+    {
+     "tier": "D-nudge",
+     "tag": "r1-nudge-r1-d0.02-m33",
+     "raw": "155.3289952387182"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r1-flat0.001-m33-p0.05",
+     "raw": "155.32936635358573"
+    }
+   ]
+  },
+  {
+   "round": 2,
+   "from": "155.3289952387182",
+   "arms": 214,
+   "below": 2,
+   "seconds": 185.64303421974182,
+   "belowTags": [
+    {
+     "tier": "I-rot-m30",
+     "tag": "r2-rot-k1-d0.02-m30",
+     "raw": "155.32763453787385"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r2-rot-k1-d0.008-m30",
+     "raw": "155.32885167712072"
+    }
+   ]
+  },
+  {
+   "round": 3,
+   "from": "155.32763453787385",
+   "arms": 214,
+   "below": 45,
+   "seconds": 199.0323669910431,
+   "belowTags": [
+    {
+     "tier": "B-flat-m33",
+     "tag": "r3-flat0.003-m33-p0.05",
+     "raw": "155.32463453787386"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r3-flat0.008-m33-p0.05",
+     "raw": "155.32463740260192"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r3-flat0.01-m33-p0.05",
+     "raw": "155.32463740260192"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r3-flat0.0025-m33-p0.05",
+     "raw": "155.32513453787385"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r3-m22-p0.8-s0",
+     "raw": "155.3259651837669"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r3-m22-p0.8-s1",
+     "raw": "155.3259651837669"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r3-m22-p0.8-s2",
+     "raw": "155.3259651837669"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r3-m22-p0.8-s3",
+     "raw": "155.3259651837669"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r3-m22-p0.8-s4",
+     "raw": "155.3259651837669"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r3-m22-p0.8-s5",
+     "raw": "155.3259651837669"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r3-m22-p0.8-s6",
+     "raw": "155.3259651837669"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r3-m22-p0.8-s7",
+     "raw": "155.3259651837669"
+    }
+   ]
+  },
+  {
+   "round": 4,
+   "from": "155.32463453787386",
+   "arms": 214,
+   "below": 38,
+   "seconds": 198.28810143470764,
+   "belowTags": [
+    {
+     "tier": "H-legal-m30",
+     "tag": "r4-legalflat0.01-m30",
+     "raw": "155.32363453787386"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r4-m22-p0.8-s0",
+     "raw": "155.32444327521912"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r4-m22-p0.8-s1",
+     "raw": "155.32444327521912"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r4-m22-p0.8-s2",
+     "raw": "155.32444327521912"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r4-m22-p0.8-s3",
+     "raw": "155.32444327521912"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r4-m22-p0.8-s4",
+     "raw": "155.32444327521912"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r4-m22-p0.8-s5",
+     "raw": "155.32444327521912"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r4-m22-p0.8-s6",
+     "raw": "155.32444327521912"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r4-m22-p0.8-s7",
+     "raw": "155.32444327521912"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r4-m22-p0.3-s0",
+     "raw": "155.32444327521912"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r4-m22-p0.3-s1",
+     "raw": "155.32444327521912"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r4-m22-p0.3-s2",
+     "raw": "155.32444327521912"
+    }
+   ]
+  },
+  {
+   "round": 5,
+   "from": "155.32363453787386",
+   "arms": 214,
+   "below": 42,
+   "seconds": 200.52889466285706,
+   "belowTags": [
+    {
+     "tier": "I-rot-m30",
+     "tag": "r5-rot-k1-d0.02-m30",
+     "raw": "155.32063453787387"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r5-flat0.003-m33-p0.05",
+     "raw": "155.32227353787383"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r5-flat0.003-m33-p2.0",
+     "raw": "155.32227353787383"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r5-m22-p0.8-s0",
+     "raw": "155.32263453787385"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r5-m22-p0.8-s1",
+     "raw": "155.32263453787385"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r5-m22-p0.8-s2",
+     "raw": "155.32263453787385"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r5-m22-p0.8-s3",
+     "raw": "155.32263453787385"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r5-m22-p0.8-s4",
+     "raw": "155.32263453787385"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r5-m22-p0.8-s5",
+     "raw": "155.32263453787385"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r5-m22-p0.8-s6",
+     "raw": "155.32263453787385"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r5-m22-p0.8-s7",
+     "raw": "155.32263453787385"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r5-m22-p0.3-s0",
+     "raw": "155.32263453787385"
+    }
+   ]
+  },
+  {
+   "round": 6,
+   "from": "155.32063453787387",
+   "arms": 214,
+   "below": 60,
+   "seconds": 200.08281087875366,
+   "belowTags": [
+    {
+     "tier": "H-legal-m30",
+     "tag": "r6-legalflat0.4-m30",
+     "raw": "155.3176345378739"
+    },
+    {
+     "tier": "H-legal-m30",
+     "tag": "r6-legalflat0.5-m30",
+     "raw": "155.3176345378739"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r6-flat0.0025-m33-p0.05",
+     "raw": "155.31844327521912"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r6-flat0.0025-m32-p0.05",
+     "raw": "155.31844327521912"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r6-flat0.0025-m33-p2.0",
+     "raw": "155.31844327521912"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r6-flat0.0025-m32-p2.0",
+     "raw": "155.31844327521912"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r6-flat0.003-m32-p0.05",
+     "raw": "155.31844327521912"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r6-flat0.003-m32-p2.0",
+     "raw": "155.31844327521912"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r6-flat0.004-m33-p0.05",
+     "raw": "155.31844327521912"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r6-flat0.004-m33-p2.0",
+     "raw": "155.31844327521912"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r6-flat0.05-m32-p2.0",
+     "raw": "155.31844327521912"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r6-m22-p0.8-s0",
+     "raw": "155.31863453787386"
+    }
+   ]
+  },
+  {
+   "round": 7,
+   "from": "155.3176345378739",
+   "arms": 214,
+   "below": 64,
+   "seconds": 194.99822163581848,
+   "belowTags": [
+    {
+     "tier": "I-rot-m30",
+     "tag": "r7-rot-k1-d0.02-m30",
+     "raw": "155.31126417741294"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r7-rot-k2-d0.02-m30",
+     "raw": "155.31126417741294"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r7-rot-k3-d0.02-m30",
+     "raw": "155.31126417741294"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r7-rot-k5-d0.02-m30",
+     "raw": "155.31126417741294"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r7-rot-k1-d0.008-m30",
+     "raw": "155.3134874985211"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r7-rot-k2-d0.008-m30",
+     "raw": "155.3134874985211"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r7-rot-k3-d0.008-m30",
+     "raw": "155.3134874985211"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r7-rot-k5-d0.008-m30",
+     "raw": "155.3134874985211"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r7-flat0.004-m33-p0.05",
+     "raw": "155.31362468799756"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r7-flat0.004-m33-p2.0",
+     "raw": "155.31362468799756"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r7-m22-p0.8-s0",
+     "raw": "155.3136345378739"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r7-m22-p0.8-s1",
+     "raw": "155.3136345378739"
+    }
+   ]
+  },
+  {
+   "round": 8,
+   "from": "155.31126417741294",
+   "arms": 220,
+   "below": 65,
+   "seconds": 272.0102894306183,
+   "belowTags": [
+    {
+     "tier": "I-rot-m30",
+     "tag": "r8-rot-k1-d0.02-m30",
+     "raw": "155.30288952528645"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r8-rot-k2-d0.02-m30",
+     "raw": "155.30288952528645"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r8-rot-k3-d0.02-m30",
+     "raw": "155.30288952528645"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r8-rot-k5-d0.02-m30",
+     "raw": "155.30288952528645"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r8-flat0.005-m33-p0.05",
+     "raw": "155.30488285883237"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r8-flat0.005-m33-p2.0",
+     "raw": "155.30488285883237"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r8-rot-k1-d0.008-m30",
+     "raw": "155.30611443395438"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r8-rot-k2-d0.008-m30",
+     "raw": "155.30611443395438"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r8-rot-k3-d0.008-m30",
+     "raw": "155.30611443395438"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r8-rot-k5-d0.008-m30",
+     "raw": "155.30611443395438"
+    },
+    {
+     "tier": "I-rot-m33",
+     "tag": "r8-rot-k1-d0.008-m33",
+     "raw": "155.3065034339544"
+    },
+    {
+     "tier": "I-rot-m33",
+     "tag": "r8-rot-k2-d0.008-m33",
+     "raw": "155.3065034339544"
+    }
+   ]
+  },
+  {
+   "round": 9,
+   "from": "155.30288952528645",
+   "arms": 214,
+   "below": 59,
+   "seconds": 196.8535671234131,
+   "belowTags": [
+    {
+     "tier": "I-rot-m30",
+     "tag": "r9-rot-k2-d0.02-m30",
+     "raw": "155.29650956355795"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r9-rot-k3-d0.02-m30",
+     "raw": "155.29650956355795"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r9-rot-k5-d0.02-m30",
+     "raw": "155.29650956355795"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r9-rot-k1-d0.02-m30",
+     "raw": "155.29763453787388"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r9-rot-k1-d0.008-m30",
+     "raw": "155.29773805753743"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r9-flat0.006-m33-p0.05",
+     "raw": "155.29805252528644"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r9-flat0.006-m33-p2.0",
+     "raw": "155.29805252528644"
+    },
+    {
+     "tier": "D-nudge",
+     "tag": "r9-nudge-r1-d0.006-m33",
+     "raw": "155.29805252528644"
+    },
+    {
+     "tier": "D-nudge",
+     "tag": "r9-nudge-pair-d0.006-m33",
+     "raw": "155.29805252528644"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r9-rot-k2-d0.008-m30",
+     "raw": "155.29873805753743"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r9-rot-k3-d0.008-m30",
+     "raw": "155.29873805753743"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r9-rot-k5-d0.008-m30",
+     "raw": "155.29873805753743"
+    }
+   ]
+  },
+  {
+   "round": 10,
+   "from": "155.29650956355795",
+   "arms": 214,
+   "below": 70,
+   "seconds": 197.51992845535278,
+   "belowTags": [
+    {
+     "tier": "I-rot-m30",
+     "tag": "r10-rot-k1-d0.02-m30",
+     "raw": "155.2881252959753"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r10-rot-k2-d0.02-m30",
+     "raw": "155.28912529597528"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r10-rot-k3-d0.02-m30",
+     "raw": "155.28912529597528"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r10-rot-k5-d0.02-m30",
+     "raw": "155.28912529597528"
+    },
+    {
+     "tier": "I-rot-m33",
+     "tag": "r10-rot-k1-d0.008-m33",
+     "raw": "155.28998737301745"
+    },
+    {
+     "tier": "I-rot-m33",
+     "tag": "r10-rot-k2-d0.008-m33",
+     "raw": "155.28998737301745"
+    },
+    {
+     "tier": "I-rot-m33",
+     "tag": "r10-rot-k3-d0.008-m33",
+     "raw": "155.28998737301745"
+    },
+    {
+     "tier": "I-rot-m33",
+     "tag": "r10-rot-k5-d0.008-m33",
+     "raw": "155.28998737301745"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r10-rot-k1-d0.008-m30",
+     "raw": "155.29135637301744"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r10-flat0.008-m33-p0.05",
+     "raw": "155.29229356355793"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r10-flat0.008-m33-p2.0",
+     "raw": "155.29229356355793"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r10-flat0.004-m33-p0.05",
+     "raw": "155.2923246731218"
+    }
+   ]
+  },
+  {
+   "round": 11,
+   "from": "155.2881252959753",
+   "arms": 214,
+   "below": 67,
+   "seconds": 198.07284927368164,
+   "belowTags": [
+    {
+     "tier": "I-rot-m33",
+     "tag": "r11-rot-k1-d0.008-m33",
+     "raw": "155.28221538414277"
+    },
+    {
+     "tier": "I-rot-m33",
+     "tag": "r11-rot-k2-d0.008-m33",
+     "raw": "155.28221538414277"
+    },
+    {
+     "tier": "I-rot-m33",
+     "tag": "r11-rot-k3-d0.008-m33",
+     "raw": "155.28221538414277"
+    },
+    {
+     "tier": "I-rot-m33",
+     "tag": "r11-rot-k5-d0.008-m33",
+     "raw": "155.28221538414277"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r11-rot-k2-d0.02-m30",
+     "raw": "155.28273672628745"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r11-rot-k3-d0.02-m30",
+     "raw": "155.28273672628745"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r11-rot-k5-d0.02-m30",
+     "raw": "155.28273672628745"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r11-rot-k1-d0.02-m30",
+     "raw": "155.2837929449616"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r11-rot-k1-d0.008-m30",
+     "raw": "155.28397038414278"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r11-rot-k2-d0.008-m30",
+     "raw": "155.28397038414278"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r11-rot-k3-d0.008-m30",
+     "raw": "155.28397038414278"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r11-rot-k5-d0.008-m30",
+     "raw": "155.28397038414278"
+    }
+   ]
+  },
+  {
+   "round": 12,
+   "from": "155.28221538414277",
+   "arms": 214,
+   "below": 7,
+   "seconds": 181.70336270332336,
+   "belowTags": [
+    {
+     "tier": "I-rot-m30",
+     "tag": "r12-rot-k2-d0.02-m30",
+     "raw": "155.27882509466292"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r12-rot-k3-d0.02-m30",
+     "raw": "155.28033414776826"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r12-rot-k5-d0.02-m30",
+     "raw": "155.28033414776826"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r12-rot-k1-d0.00128-m30",
+     "raw": "155.28123066014797"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r12-rot-k2-d0.00128-m30",
+     "raw": "155.28123066014797"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r12-rot-k3-d0.00128-m30",
+     "raw": "155.28123066014797"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r12-rot-k5-d0.00128-m30",
+     "raw": "155.28123066014797"
+    }
+   ]
+  },
+  {
+   "round": 13,
+   "from": "155.27882509466292",
+   "arms": 214,
+   "below": 60,
+   "seconds": 199.5075762271881,
+   "belowTags": [
+    {
+     "tier": "I-rot-m30",
+     "tag": "r13-rot-k1-d0.02-m30",
+     "raw": "155.27142950832842"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r13-rot-k1-d0.008-m30",
+     "raw": "155.27366797554163"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r13-rot-k2-d0.008-m30",
+     "raw": "155.27366797554163"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r13-rot-k3-d0.008-m30",
+     "raw": "155.27466797554163"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r13-rot-k5-d0.008-m30",
+     "raw": "155.27466797554163"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r13-m22-p0.8-s0",
+     "raw": "155.27482509466293"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r13-m22-p0.8-s1",
+     "raw": "155.27482509466293"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r13-m22-p0.8-s2",
+     "raw": "155.27482509466293"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r13-m22-p0.8-s3",
+     "raw": "155.27482509466293"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r13-m22-p0.8-s4",
+     "raw": "155.27482509466293"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r13-m22-p0.8-s5",
+     "raw": "155.27482509466293"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r13-m22-p0.8-s6",
+     "raw": "155.27482509466293"
+    }
+   ]
+  },
+  {
+   "round": 14,
+   "from": "155.27142950832842",
+   "arms": 214,
+   "below": 49,
+   "seconds": 197.68431854248047,
+   "belowTags": [
+    {
+     "tier": "B-flat-m33",
+     "tag": "r14-flat0.005-m33-p0.05",
+     "raw": "155.26671615201747"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r14-flat0.005-m33-p2.0",
+     "raw": "155.26671615201747"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r14-m22-p0.8-s0",
+     "raw": "155.26742950832843"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r14-m22-p0.8-s1",
+     "raw": "155.26742950832843"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r14-m22-p0.8-s2",
+     "raw": "155.26742950832843"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r14-m22-p0.8-s3",
+     "raw": "155.26742950832843"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r14-m22-p0.8-s4",
+     "raw": "155.26742950832843"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r14-m22-p0.8-s5",
+     "raw": "155.26742950832843"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r14-m22-p0.8-s6",
+     "raw": "155.26742950832843"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r14-m22-p0.8-s7",
+     "raw": "155.26742950832843"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r14-m22-p0.3-s0",
+     "raw": "155.26742950832843"
+    },
+    {
+     "tier": "A-m22",
+     "tag": "r14-m22-p0.3-s1",
+     "raw": "155.26742950832843"
+    }
+   ]
+  },
+  {
+   "round": 15,
+   "from": "155.26671615201747",
+   "arms": 214,
+   "below": 7,
+   "seconds": 184.787926197052,
+   "belowTags": [
+    {
+     "tier": "I-rot-m30",
+     "tag": "r15-rot-k1-d0.0032-m30",
+     "raw": "155.26642950832843"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r15-flat0.0005-m33-p0.05",
+     "raw": "155.2664432752191"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r15-flat0.0005-m32-p0.05",
+     "raw": "155.2664432752191"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r15-flat0.0005-m33-p2.0",
+     "raw": "155.2664432752191"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r15-flat0.0005-m32-p2.0",
+     "raw": "155.2664432752191"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r15-flat0.002-m32-p0.05",
+     "raw": "155.2664432752191"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r15-flat0.002-m32-p2.0",
+     "raw": "155.2664432752191"
+    }
+   ]
+  },
+  {
+   "round": 16,
+   "from": "155.26642950832843",
+   "arms": 228,
+   "below": 16,
+   "seconds": 302.81236124038696,
+   "belowTags": [
+    {
+     "tier": "B-flat-m33",
+     "tag": "r16-flat0.002-m33-p0.05",
+     "raw": "155.26444327521912"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r16-flat0.0015-m33-p0.05",
+     "raw": "155.26492950832844"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r16-flat0.001-m33-p0.05",
+     "raw": "155.26542950832842"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r16-flat0.004-m33-p0.05",
+     "raw": "155.26544327521913"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r16-flat0.004-m33-p2.0",
+     "raw": "155.26544327521913"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r16-flat0.01-m32-p0.05",
+     "raw": "155.26578855781844"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r16-flat0.01-m32-p2.0",
+     "raw": "155.26578855781844"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r16-flat0.015-m32-p0.05",
+     "raw": "155.26578855781844"
+    },
+    {
+     "tier": "B-flat-m32",
+     "tag": "r16-flat0.015-m32-p2.0",
+     "raw": "155.26578855781844"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r16-flat0.0005-m33-p0.05",
+     "raw": "155.26592950832844"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r16-rot-k1-d-0.00128-m30",
+     "raw": "155.26625255781846"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r16-rot-k1-d-0.0032-m30",
+     "raw": "155.26625255781846"
+    }
+   ]
+  },
+  {
+   "round": 17,
+   "from": "155.26444327521912",
+   "arms": 214,
+   "below": 6,
+   "seconds": 186.57853484153748,
+   "belowTags": [
+    {
+     "tier": "I-rot-m30",
+     "tag": "r17-rot-k1-d-0.00128-m30",
+     "raw": "155.26442950832842"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r17-rot-k1-d-0.0032-m30",
+     "raw": "155.26442950832842"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r17-rot-k1-d-0.008-m30",
+     "raw": "155.26442950832842"
+    },
+    {
+     "tier": "I-rot-m30",
+     "tag": "r17-rot-k1-d-0.02-m30",
+     "raw": "155.26442950832842"
+    },
+    {
+     "tier": "D-nudge",
+     "tag": "r17-nudge-r1-d0.006-m33",
+     "raw": "155.26442950832842"
+    },
+    {
+     "tier": "D-nudge",
+     "tag": "r17-nudge-r1-d0.012-m33",
+     "raw": "155.26442950832842"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "pin": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.26442950833.json",
+ "sha256": "111082132fa7610a1000dd96b36f13e8f9282c28a4006e2333c485b7066ad7b7",
+ "declaredRaw": "155.26442950832842",
+ "fingerprint": "82eaa9762e0df399537226f34490e59d658867a5dec0f4b4ea67537d927a0c72",
+ "replayPass": true,
+ "improvements": [],
+ "rows": [
+  {
+   "tag": "m27",
+   "mode": 27,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "155.26442950832842",
+   "ulpsFromDeclared": 0.0,
+   "fingerprintMatches": true,
+   "authority": true,
+   "reproduces": true,
+   "improves": false
+  },
+  {
+   "tag": "m30",
+   "mode": 30,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "155.26442950832842",
+   "ulpsFromDeclared": 0.0,
+   "fingerprintMatches": true,
+   "authority": true,
+   "reproduces": true,
+   "improves": false
+  },
+  {
+   "tag": "m22-s0",
+   "mode": 22,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "155.26442950832842",
+   "ulpsFromDeclared": 0.0,
+   "fingerprintMatches": true,
+   "authority": false,
+   "reproduces": true,
+   "improves": false
+  },
+  {
+   "tag": "m22-s1",
+   "mode": 22,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "155.26442950832842",
+   "ulpsFromDeclared": 0.0,
+   "fingerprintMatches": true,
+   "authority": false,
+   "reproduces": true,
+   "improves": false
+  }
+ ]
+}
