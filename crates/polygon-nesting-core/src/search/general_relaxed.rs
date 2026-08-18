@@ -10334,7 +10334,37 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 ));
             }
         }
-        Ok(self.oriented(input_index, rotation_deg, mirrored)?.bounds)
+        // `oriented` derives the rotation half of the key through
+        // `derive_rotation_key`, which runs `rem_euclid` and a rounding step on
+        // every call. `relaxed-cached-pose-bounds` asks [`AngleKeyCache`] for
+        // the same `i64` instead, which is the memo the candidate scan has used
+        // all along; on a hit it is a bits comparison, and on a miss it derives
+        // exactly what `oriented` would have and stores it. The key, the
+        // catalogue entry, the bounds and the missing-orientation error are the
+        // same in both arms - only how many times `canonical_angle` runs
+        // differs. This is the lane's most-called catalogue path: 4.45M calls
+        // on the mode-20 gate-1 stream and 11.64M on mode-22 gate-2, nearly all
+        // of them from `boundary_penalty`.
+        #[cfg(not(feature = "relaxed-cached-pose-bounds"))]
+        {
+            Ok(self.oriented(input_index, rotation_deg, mirrored)?.bounds)
+        }
+        #[cfg(feature = "relaxed-cached-pose-bounds")]
+        {
+            let directional = self.uses_directional_pressure();
+            let key = (
+                self.catalog.geometry_class_by_input[input_index],
+                self.angle_keys
+                    .rotation_key(input_index, rotation_deg, directional),
+                mirrored,
+            );
+            let bounds = self
+                .catalog
+                .orientations
+                .get(&key)
+                .map(|shape| shape.bounds);
+            bounds.ok_or_else(|| self.missing_orientation(input_index, key))
+        }
     }
 
     fn commit_dynamic_hazard(
@@ -12495,17 +12525,6 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         let mut weighted_loss = boundary_loss;
         let mut collision_pairs = Vec::new();
         let mut pruned = false;
-        let shape_bounds = self
-            .oriented(
-                candidate.input_index,
-                candidate.rotation_deg,
-                candidate.mirrored,
-            )?
-            .bounds;
-        let candidate_bounds =
-            translated_bounds(shape_bounds, candidate.translate_x, candidate.translate_y);
-        piece_index.query_into(candidate_bounds, &mut self.piece_query_scratch);
-        let fixed_indices = std::mem::take(&mut self.piece_query_scratch.selected);
         // The scan runs over *disjoint field borrows* rather than `&mut self`.
         //
         // The candidate's shape is resolved once for the whole scan instead of
@@ -12518,8 +12537,32 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         // dodge that was measurably worse than the descents it saved, because
         // every lane bumps the *same* refcount and eight of them contend on one
         // cache line. Destructuring gives the same freedom for nothing.
-        let mut failure = None;
+        //
+        // The `k + 1`st descent is the one `relaxed-scan-shape-reuse` removes:
+        // the broad-phase probe needs the candidate's *bounds*, which live in
+        // the very shape the scan is about to resolve, so the default body
+        // descends for the bounds through `oriented` and then descends a second
+        // time for the shape itself. Both bodies below run the same scan over
+        // the same neighbours through [`scan_fixed_neighbors`]; they differ
+        // only in how many times the candidate's own key is looked up.
+        let failure: Option<GeneralFastError>;
+        #[cfg(not(feature = "relaxed-scan-shape-reuse"))]
         {
+            let probe_span = profiling::census::start(Phase::ScoreProbe);
+            let shape_bounds = self
+                .oriented(
+                    candidate.input_index,
+                    candidate.rotation_deg,
+                    candidate.mirrored,
+                )?
+                .bounds;
+            profiling::census::count(Counter::ScanCatalogDescents, 1);
+            let candidate_bounds =
+                translated_bounds(shape_bounds, candidate.translate_x, candidate.translate_y);
+            piece_index.query_into(candidate_bounds, &mut self.piece_query_scratch);
+            let fixed_indices = std::mem::take(&mut self.piece_query_scratch.selected);
+            profiling::census::count(Counter::ScanNeighborsReturned, fixed_indices.len() as u64);
+            profiling::census::finish(Phase::ScoreProbe, probe_span);
             let LaneSearch {
                 pieces,
                 catalog,
@@ -12539,65 +12582,118 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 angle_keys.rotation_key(candidate.input_index, candidate.rotation_deg, directional),
                 candidate.mirrored,
             );
-            match catalog.orientations.get(&candidate_key) {
-                None => {
-                    failure = Some(missing_orientation_error(
-                        pieces,
-                        candidate.input_index,
-                        candidate_key,
-                    ))
-                }
-                Some(candidate_shape) => {
-                    for fixed_index in fixed_indices.iter().copied() {
-                        if fixed_index == input_index {
-                            continue;
-                        }
-                        let fixed = &state.placements[fixed_index];
-                        let fixed_key = (
-                            catalog.geometry_class_by_input[fixed.input_index],
-                            angle_keys.rotation_key(
-                                fixed.input_index,
-                                fixed.rotation_deg,
-                                directional,
-                            ),
-                            fixed.mirrored,
-                        );
-                        let Some(fixed_shape) = catalog.orientations.get(&fixed_key) else {
-                            failure = Some(missing_orientation_error(
-                                pieces,
-                                fixed.input_index,
-                                fixed_key,
-                            ));
-                            break;
-                        };
-                        let penalty = resolved_pair_row(
-                            kernel,
-                            counters,
-                            candidate_shape,
-                            candidate,
-                            fixed_shape,
-                            fixed,
-                        )
-                        .penalty();
-                        if penalty > 0.0 {
-                            let pair = ordered_pair(input_index, fixed_index);
-                            collision_pairs.push((pair.0, pair.1, penalty));
-                            weighted_loss +=
-                                weights.get(&pair).copied().unwrap_or(1.0) * penalty;
-                            if upper_bound.is_some_and(|upper_bound| weighted_loss > upper_bound) {
-                                pruned = true;
-                                break;
-                            }
-                        }
-                    }
-                }
+            profiling::census::count(Counter::ScanCatalogDescents, 1);
+            let scan_span = profiling::census::start(Phase::ScoreScan);
+            failure = match catalog.orientations.get(&candidate_key) {
+                None => Some(missing_orientation_error(
+                    pieces,
+                    candidate.input_index,
+                    candidate_key,
+                )),
+                Some(candidate_shape) => scan_fixed_neighbors(
+                    pieces,
+                    catalog,
+                    kernel,
+                    counters,
+                    angle_keys,
+                    weights,
+                    directional,
+                    state,
+                    input_index,
+                    candidate,
+                    candidate_shape,
+                    &fixed_indices,
+                    upper_bound,
+                    &mut collision_pairs,
+                    &mut weighted_loss,
+                    &mut pruned,
+                ),
+            };
+            profiling::census::finish(Phase::ScoreScan, scan_span);
+            // Only on the path that does not raise: the borrowed buffer used to
+            // be handed back after the early return above, so a raising scan
+            // left the scratch empty and dropped the taken vector. That is
+            // unobservable - the error ends the lane - but it is free to keep.
+            if failure.is_none() {
+                self.piece_query_scratch.selected = fixed_indices;
             }
+        }
+        #[cfg(feature = "relaxed-scan-shape-reuse")]
+        {
+            let LaneSearch {
+                pieces,
+                catalog,
+                kernel,
+                counters,
+                angle_keys,
+                weights,
+                relaxed_settings,
+                piece_query_scratch,
+                ..
+            } = self;
+            let directional = relaxed_settings.collision_backend
+                == GeneralRelaxedCollisionBackend::RollbackTriangle
+                && relaxed_settings.pressure_model
+                    == GeneralRelaxedPressureModel::DirectionalPenetration;
+            let candidate_key = (
+                catalog.geometry_class_by_input[candidate.input_index],
+                angle_keys.rotation_key(candidate.input_index, candidate.rotation_deg, directional),
+                candidate.mirrored,
+            );
+            profiling::census::count(Counter::ScanCatalogDescents, 1);
+            failure = match catalog.orientations.get(&candidate_key) {
+                None => Some(missing_orientation_error(
+                    pieces,
+                    candidate.input_index,
+                    candidate_key,
+                )),
+                Some(candidate_shape) => {
+                    let probe_span = profiling::census::start(Phase::ScoreProbe);
+                    let candidate_bounds = translated_bounds(
+                        candidate_shape.bounds,
+                        candidate.translate_x,
+                        candidate.translate_y,
+                    );
+                    piece_index.query_into(candidate_bounds, piece_query_scratch);
+                    profiling::census::count(
+                        Counter::ScanNeighborsReturned,
+                        piece_query_scratch.selected.len() as u64,
+                    );
+                    profiling::census::finish(Phase::ScoreProbe, probe_span);
+                    let scan_span = profiling::census::start(Phase::ScoreScan);
+                    let outcome = scan_fixed_neighbors(
+                        pieces,
+                        catalog,
+                        kernel,
+                        counters,
+                        angle_keys,
+                        weights,
+                        directional,
+                        state,
+                        input_index,
+                        candidate,
+                        candidate_shape,
+                        &piece_query_scratch.selected,
+                        upper_bound,
+                        &mut collision_pairs,
+                        &mut weighted_loss,
+                        &mut pruned,
+                    );
+                    profiling::census::finish(Phase::ScoreScan, scan_span);
+                    outcome
+                }
+            };
         }
         if let Some(error) = failure {
             return Err(error);
         }
-        self.piece_query_scratch.selected = fixed_indices;
+        let finalize_span = profiling::census::start(Phase::ScoreFinalize);
+        profiling::census::count(Counter::ScanCollisionRows, collision_pairs.len() as u64);
+        if pruned {
+            profiling::census::count(Counter::ScanUpperBoundCutoffs, 1);
+        }
         collision_pairs.sort_by_key(|(first, second, _)| (*first, *second));
+        profiling::census::finish(Phase::ScoreFinalize, finalize_span);
         Ok(MovedRowDelta {
             boundary_violations,
             boundary_loss,
@@ -13752,6 +13848,79 @@ fn continuous_pole_overlap_pressure(
         .sqrt()
         .max(1.0);
     overlap_proxy.sqrt() * (first_difficulty * second_difficulty).sqrt()
+}
+
+/// The generic scorer's neighbour scan, over the lane fields it actually needs.
+///
+/// This is the *whole* of what `score_placement` does per neighbour: the
+/// catalogue descent for the fixed operand, the proxy row, the weighted
+/// accumulation and the caller's upper-bound cutoff. It exists as one function
+/// so that the two bodies of [`LaneSearch::score_placement`] — the default one
+/// and the `relaxed-scan-shape-reuse` one — cannot drift: they differ in how
+/// the candidate's own shape and the broad-phase probe are ordered, and in
+/// nothing that touches an `f64`.
+///
+/// Returns the error a missing fixed orientation raises, or `None`. The scan is
+/// left partial in that case, exactly as the inline loop left it.
+#[allow(clippy::too_many_arguments)]
+#[inline(always)]
+fn scan_fixed_neighbors<K: ExplorationKernel<Shape = OrientedSurrogate>>(
+    pieces: &[GeneralFastPiece<'_>],
+    catalog: &SurrogateCatalog,
+    kernel: &mut K,
+    counters: &mut WorkCounters,
+    angle_keys: &mut AngleKeyCache,
+    weights: &BTreeMap<(usize, usize), f64>,
+    directional: bool,
+    state: &RelaxedState,
+    input_index: usize,
+    candidate: &RelaxedPlacement,
+    candidate_shape: &OrientedSurrogate,
+    fixed_indices: &[usize],
+    upper_bound: Option<f64>,
+    collision_pairs: &mut Vec<(usize, usize, f64)>,
+    weighted_loss: &mut f64,
+    pruned: &mut bool,
+) -> Option<GeneralFastError> {
+    for fixed_index in fixed_indices.iter().copied() {
+        if fixed_index == input_index {
+            continue;
+        }
+        profiling::census::count(Counter::ScanNeighborsVisited, 1);
+        let fixed = &state.placements[fixed_index];
+        let fixed_key = (
+            catalog.geometry_class_by_input[fixed.input_index],
+            angle_keys.rotation_key(fixed.input_index, fixed.rotation_deg, directional),
+            fixed.mirrored,
+        );
+        profiling::census::count(Counter::ScanCatalogDescents, 1);
+        let Some(fixed_shape) = catalog.orientations.get(&fixed_key) else {
+            return Some(missing_orientation_error(
+                pieces,
+                fixed.input_index,
+                fixed_key,
+            ));
+        };
+        let penalty = resolved_pair_row(
+            kernel,
+            counters,
+            candidate_shape,
+            candidate,
+            fixed_shape,
+            fixed,
+        )
+        .penalty();
+        if penalty > 0.0 {
+            let pair = ordered_pair(input_index, fixed_index);
+            collision_pairs.push((pair.0, pair.1, penalty));
+            *weighted_loss += weights.get(&pair).copied().unwrap_or(1.0) * penalty;
+            if upper_bound.is_some_and(|upper_bound| *weighted_loss > upper_bound) {
+                *pruned = true;
+                break;
+            }
+        }
+    }
+    None
 }
 
 /// The proxy collision verdict for two already resolved shapes, over the two

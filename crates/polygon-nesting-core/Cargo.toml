@@ -26,6 +26,30 @@ profiling-allocator = []
 # they perturb, which costs about 4.5% of a mode-20 stream even with recording
 # switched off. See `profiling::deep` for the measurement behind this.
 search-profiling = []
+# Compiles the relaxed lane's candidate-scorer census in: three coarse spans
+# and five counters inside `general_relaxed`'s generic `score_placement`.
+# Off by default and a measurement build only - the scorer runs about four
+# million times per mode-20 stream, so the spans are a real fraction of what
+# they measure. Its counters are exact; its milliseconds are a decomposition
+# and never a wall-clock claim. See `profiling::census` and
+# docs/experiments/relaxed-lane-residual/.
+relaxed-lane-census = []
+# Resolves the relaxed lane's candidate shape once per candidate scan instead
+# of twice. The broad-phase probe needs the candidate's bounds, which live in
+# the oriented shape the scan then resolves again; this reuses the first
+# resolution for both. Off by default, like `fast-constructor-reject`, so the
+# default build is the one every pinned gate was measured on - but the arms are
+# the same computation in the same order, so both reproduce all four gates as
+# whole documents. See docs/experiments/relaxed-lane-residual/.
+relaxed-scan-shape-reuse = []
+# Answers the lane's per-pose bounds lookup out of the same rotation-key memo
+# the candidate scan already uses, instead of re-deriving the key with
+# `rem_euclid` on every call. Off by default and stacked on
+# `relaxed-scan-shape-reuse`, like `fast-constructor-reject` is stacked on
+# `fast-constructor-confirm`, so the two can be priced separately. Both arms
+# read the same catalogue entry through the same key, so this is bit-identical
+# as a whole document. See docs/experiments/relaxed-lane-residual/.
+relaxed-cached-pose-bounds = []
 # Compiles the quality frontier trace in: an event-driven JSONL record of every
 # exact-valid candidate the search sees, with elapsed time, work ordinals,
 # operator identity, parent fingerprint and disposition. See `quality_trace`.
