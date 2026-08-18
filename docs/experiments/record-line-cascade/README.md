@@ -179,8 +179,8 @@ new incumbent (`evidence/cascade-*.json`, `evidence/cascade-*.log`):
 The one mode-26 adoption on this line — the 0.628 mm one — came from **outside**
 the cascade, out of the certification battery, for the reason below. Tiers D and
 G were never reached at all: no round ever got past tier F without adopting
-first, so the crossover instrument the brief asked for is **unmeasured on this
-line** and is named as such in §8.
+first, so the crossover instrument the brief asked for had to be run outside the
+cascade against the certified fixpoint (§8: 24 arms, 13 publications, 0 below).
 
 The ordering finding is worth more than any single arm. The first cascade ran
 the cheap tiers first — mode 22 at 3 s an arm, the flatten grid at 2 s — and
@@ -269,10 +269,15 @@ whole round and is the evidence for §5.
   throughout, and several sweeps were deliberately run concurrently. Every
   quality number is a work-budgeted or seeded arm; the seconds in the logs are
   reported so a reader can see the arms were concurrent, not as measurements.
-* **Mode 23 crossover was never run.** The brief asked for it in both
-  directions between the new deep states and the record co-states, and the
-  cascade's tier G sits behind tiers A-F, none of which ever went barren in the
-  same round. It is written, wired and untested, and no claim is made about it.
+* **Mode 23 crossover is measured, and it is barren here.** It never ran
+  *inside* the cascade — tier G sits behind tiers A-F and no round ever went
+  barren above it — so it was run separately against the certified fixpoint
+  (`drivers/crosssweep.py`, `evidence/crossover-155.4223.json`): the incumbent
+  against two of its own ancestors and both record co-states, three cut
+  fractions, both directions, 24 arms. Thirteen published, **none below**, and
+  the best was 158.144 — 2.7 mm above the incumbent. That is one incumbent, one
+  seed and three cuts, so it is a negative about this state, not about the
+  operator.
 * **Mode 26's determinism under load is assumed, not proved here.** The four
   pinned gates (three of them mode 22) reproduce bit-exactly under every load
   this round ran them at, and mode 26's budget is a query count rather than a
@@ -292,6 +297,7 @@ whole round and is the evidence for §5.
 * `drivers/sched.py`, `drivers/schedsweep.py` — one mode-34 arm, and a
   concurrent grid of them.
 * `drivers/armsweep.py` — a concurrent grid of any one mode's arms.
+* `drivers/crosssweep.py` — the mode-23 crossover grid, both directions.
 * `drivers/regrid.py` — the 2.5°-grid re-entry probe.
 * `drivers/cascade.py` — the cascade.
 * `drivers/pinrun.py`, `drivers/replay.py` — pin a run report, and the

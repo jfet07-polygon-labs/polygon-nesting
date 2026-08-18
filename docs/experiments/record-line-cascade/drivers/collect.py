@@ -41,6 +41,11 @@ COPY = [
     ('cert-final.json', 'cert-final.json'),
     ('replay-156.0914.json', 'replay-156.0914.json'),
     ('replay-final.json', 'replay-final.json'),
+    ('replay-155.4633.json', 'replay-155.4633.json'),
+    ('m26-155.452/sweep.json', 'm26sweep-155.452.json'),
+    ('cross-155.4223/cross.json', 'crossover-155.4223.json'),
+    ('fsline4/state.json', 'cascade-fsline4-state.json'),
+    ('fsline4/cascade.log', 'cascade-fsline4.log'),
 ]
 
 

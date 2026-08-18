@@ -4969,8 +4969,11 @@ The record fell to the *from-scratch* lineage, so the 159.079 record parent
 itself is exactly where it was: probed at six step sizes, two budgets and two
 seeds, all twelve arms returned its own depth to the digit, and its fixpoint now
 survives the very knob that broke the other line open. Mode 23 crossover — the
-brief's other instrument — is wired and was **never reached**, because no round
-ever went barren above it. The 155 mm goal is 0.422 mm away and the final state
+brief's other instrument — was never reached *inside* the cascade, because no
+round ever went barren above it, and run separately against the certified
+fixpoint it is barren too: 24 arms over two ancestors, both record co-states,
+three cut fractions and both directions published 13 layouts and **none** below
+the incumbent, the best 2.7 mm above it. The 155 mm goal is 0.422 mm away and the final state
 is a certified fixpoint, so closing it needs an instrument this round did not
 fire. And every number here is one request, one fixture, work-budgeted or seeded
 arms on a shared box, with no wall-clock claim made anywhere.
