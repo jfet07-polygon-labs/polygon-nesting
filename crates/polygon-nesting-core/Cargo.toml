@@ -122,6 +122,15 @@ fast-constructor-profile = []
 # The fused entry itself is unconditional and is the shape a kernel with a
 # shared traversal will implement; only the lane's use of it is gated.
 fused-pair-query = []
+# Compiles the constructor's exact-confirmation census in: a counting build
+# that attributes every exact pair question and every collision-polygon build
+# the constructor makes to its call path, and prices three *sound* separation
+# prefilters against the exact answer on every pair that reaches Clipper.
+#
+# A measurement build and nothing else. It runs a convex hull per observed pair,
+# so its clock is not the production clock and no time from it may be quoted.
+# See `constructor_census`.
+constructor-census = []
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }

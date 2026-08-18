@@ -874,6 +874,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "structuralDetails": audit.structural_details,
         });
     }
+    // The constructor census reports unconditionally in a build that carries
+    // it, for the reason the shadow-rescore audit does: a counting build that
+    // counted and said nothing would be indistinguishable from one that never
+    // counted. A build without the feature emits nothing.
+    #[cfg(feature = "constructor-census")]
+    {
+        output["constructorCensus"] = polygon_nesting_core::constructor_census::snapshot();
+    }
     println!("{}", serde_json::to_string_pretty(&output)?);
     // Fail closed: a requested persistent-vacancy mode that never ran (the
     // machinery declined the arm, e.g. invalid parent or failed validation)

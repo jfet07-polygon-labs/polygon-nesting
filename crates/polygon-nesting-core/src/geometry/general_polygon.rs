@@ -488,6 +488,150 @@ impl PolygonSet {
         }
         paths
     }
+
+    /// This set's extent along each of [`GridSlabs`]' fixed directions, in
+    /// **grid units**, or `None` when the set is empty.
+    ///
+    /// Read off the same integer `Path64` the exact intersection query is
+    /// executed on, so the numbers are the ones Clipper will see rather than a
+    /// re-derivation of them. Only outer rings are visited: a hole removes
+    /// material, so the outer rings alone already bound the set, and a
+    /// separation proved against them is a separation of the set.
+    ///
+    /// See [`GridSlabs::separated`] for what this is for and why the arithmetic
+    /// is exact.
+    #[cfg(feature = "constructor-census")]
+    pub(crate) fn grid_slabs(&self) -> Option<GridSlabs> {
+        let mut slabs: Option<GridSlabs> = None;
+        for region in &self.regions {
+            for point in &region.outer.path {
+                let value = slabs.get_or_insert_with(|| GridSlabs::at(point.x, point.y));
+                value.extend(point.x, point.y);
+            }
+        }
+        slabs.map(GridSlabs::sealed)
+    }
+
+    /// Every outer-ring vertex of this set, in grid units.
+    ///
+    /// The census prices candidate prefilters against each other on the
+    /// geometry the exact query actually receives, and the strongest of them —
+    /// the convex hull the confirmation shield also builds — needs the vertices
+    /// rather than a summary of them.
+    #[cfg(feature = "constructor-census")]
+    pub(crate) fn grid_points(&self) -> Vec<(f64, f64)> {
+        self.regions
+            .iter()
+            .flat_map(|region| region.outer.path.iter().map(|point| (point.x, point.y)))
+            .collect()
+    }
+}
+
+/// The number of fixed directions [`GridSlabs`] projects onto.
+#[cfg(feature = "constructor-census")]
+pub(crate) const GRID_SLAB_DIRECTIONS: usize = 4;
+
+/// The largest grid coordinate magnitude for which every projection below is an
+/// exact `f64` integer.
+///
+/// The diagonal directions sum two coordinates, so the widest intermediate is
+/// `|x| + |y| <= 2^52`, which is exactly representable; every projection is
+/// therefore an integer-valued `f64` with no rounding anywhere, and a
+/// comparison between two of them is exact. Grid coordinates come from
+/// `to_grid_mm`, which admits anything up to `2^53 - 1`, so the guard is real
+/// rather than decorative — but it is astronomically slack for a sheet: a
+/// coordinate of `2^51` grid units is 2.25 billion kilometres.
+#[cfg(feature = "constructor-census")]
+const GRID_SLAB_EXACT_LIMIT: f64 = 4_503_599_627_370_496.0; // 2^52
+
+/// A polygon set's extent along four fixed directions, in grid units.
+///
+/// This is a discrete oriented polytope — the axis-aligned box plus the two
+/// diagonals — computed on the integer Clipper grid. Its one purpose is to
+/// *prove* two sets disjoint cheaply; see [`GridSlabs::separated`].
+#[cfg(feature = "constructor-census")]
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct GridSlabs {
+    min: [f64; GRID_SLAB_DIRECTIONS],
+    max: [f64; GRID_SLAB_DIRECTIONS],
+    /// How many of the four directions carry an exact projection: four
+    /// normally, two when the exactness guard below does not hold. Decided once
+    /// when the slabs are sealed, because the pair test runs millions of times
+    /// and the answer cannot change.
+    directions: usize,
+}
+
+#[cfg(feature = "constructor-census")]
+impl GridSlabs {
+    #[inline]
+    fn at(x: f64, y: f64) -> Self {
+        let projections = [x, y, x + y, x - y];
+        Self {
+            min: projections,
+            max: projections,
+            directions: GRID_SLAB_DIRECTIONS,
+        }
+    }
+
+    /// Fixes the usable direction count once the extents are complete.
+    #[inline]
+    fn sealed(mut self) -> Self {
+        if !self.diagonals_are_exact() {
+            self.directions = 2;
+        }
+        self
+    }
+
+    #[inline]
+    fn extend(&mut self, x: f64, y: f64) {
+        let projections = [x, y, x + y, x - y];
+        for index in 0..GRID_SLAB_DIRECTIONS {
+            self.min[index] = self.min[index].min(projections[index]);
+            self.max[index] = self.max[index].max(projections[index]);
+        }
+    }
+
+    /// Whether every coordinate is small enough for the diagonal projections to
+    /// be exact `f64` integers.
+    #[inline]
+    fn diagonals_are_exact(self) -> bool {
+        self.min[0].abs() <= GRID_SLAB_EXACT_LIMIT
+            && self.max[0].abs() <= GRID_SLAB_EXACT_LIMIT
+            && self.min[1].abs() <= GRID_SLAB_EXACT_LIMIT
+            && self.max[1].abs() <= GRID_SLAB_EXACT_LIMIT
+    }
+
+    /// Whether the two sets these slabs describe **provably** do not overlap
+    /// with positive area.
+    ///
+    /// `true` is a proof and `false` is no information. If some direction's
+    /// slabs do not strictly overlap then the two sets lie in closed half-planes
+    /// that meet only on their common boundary line, so their intersection has
+    /// measure zero, so `intersection_area_mm2` is exactly `0.0` and the exact
+    /// overlap verdict is `false`. There is no tolerance in that argument and no
+    /// tolerance in this code:
+    ///
+    /// * the projections are sums and differences of integer-valued `f64`
+    ///   coordinates, which are exact below [`GRID_SLAB_EXACT_LIMIT`];
+    /// * the comparison is `<=`, so a *touching* pair is reported separated,
+    ///   which is the same verdict the exact query gives it (zero area is not
+    ///   positive area);
+    /// * the diagonal directions are skipped entirely when the guard above does
+    ///   not hold, leaving the axis-aligned pair, whose projections are the
+    ///   stored coordinates themselves and so are exact unconditionally.
+    ///
+    /// The consequence is the property a prefilter needs: this can be wrong
+    /// about "they might overlap", and cannot be wrong about "they do not".
+    #[inline]
+    pub(crate) fn separated(&self, other: &Self) -> bool {
+        let directions = self.directions.min(other.directions);
+        for index in 0..directions {
+            if self.max[index] <= other.min[index] || other.max[index] <= self.min[index] {
+                return true;
+            }
+        }
+        false
+    }
 }
 
 fn polygon_set_from_tree(tree: &PolyTree64) -> Result<PolygonSet, GeneralPolygonError> {
