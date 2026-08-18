@@ -1,6 +1,6 @@
 //! The exploration-kernel seam.
 //!
-//! Every geometric service the exploration hot loop consumes is declared here
+//! The geometric services the exploration hot loop consumes are declared here
 //! as one trait, [`ExplorationKernel`], so that a faster implementation can be
 //! measured against the current one without editing a single line of search
 //! logic. The current code path is [`LegacyKernel`]; it is the default and the
@@ -22,40 +22,35 @@
 //! [`Phase::ExactOverlapTest`]: crate::profiling::Phase::ExactOverlapTest
 //! [`Phase::CollisionPolygonBuild`]: crate::profiling::Phase::CollisionPolygonBuild
 //!
-//! Those three, plus the proxy scoring hook that turns a reported collision
-//! into a magnitude, are exactly the trait's method set.
+//! The first of those, plus the proxy scoring hook that turns a reported
+//! collision into a magnitude, are exactly this trait's method set. The other
+//! two are the exact tier, and they are deliberately *not* on it.
 //!
-//! # Two tiers, and why they are not interchangeable
+//! # One tier on the trait, and where the other one went
 //!
-//! The trait declares two tiers, and the difference between them is a
-//! *contract*, not a performance note.
+//! [`ExplorationKernel`] is the **proxy tier** and nothing else:
+//! [`ExplorationKernel::pair_collides`] and
+//! [`ExplorationKernel::pair_pressure`] rank and prune candidates. They are
+//! allowed to be approximate, and a replacement kernel is expected to change
+//! their numeric representation. Search binds this tier *generically*:
+//! [`crate::search::general_relaxed`]'s lane search carries a
+//! `K: ExplorationKernel` type parameter that defaults to [`LegacyKernel`], so
+//! swapping a kernel in is a type substitution at the entry point.
 //!
-//! * **Proxy tier** — [`ExplorationKernel::pair_collides`] and
-//!   [`ExplorationKernel::pair_pressure`]. These rank and prune candidates.
-//!   They are allowed to be approximate, and a replacement kernel is expected
-//!   to change their numeric representation. Search binds this tier
-//!   *generically*: [`crate::search::general_relaxed`]'s lane search carries a
-//!   `K: ExplorationKernel` type parameter that defaults to [`LegacyKernel`],
-//!   so swapping a kernel in is a type substitution at the entry point.
+//! The **exact tier** — the `f64` Clipper collision-polygon build and pair
+//! overlap that publication-adjacent code consults — lives in [`exact`], a
+//! non-generic module, behind the [`ExactAuthority`](exact::ExactAuthority)
+//! token. PR3 declared it here and relied on a convention to keep it off a
+//! generic parameter; Sol's third review named that as this seam's fourth
+//! defect, because the convention was unenforced and a future generic function
+//! could still have written `K::exact_pair_overlaps`. It is now a compile
+//! error: the methods do not exist on the trait, and the one grant that mints
+//! the token is inherent to [`LegacyKernel`], so no code parameterised over `K`
+//! can reach an exact answer at all. See [`exact`] for the full statement of
+//! what that does and does not enforce.
 //!
-//! * **Exact tier** — [`ExplorationKernel::collision_polygon`] and
-//!   [`ExplorationKernel::exact_pair_overlaps`]. These are the `f64`
-//!   Clipper answers that publication-adjacent code consults. Every call site
-//!   that can reach a published placement binds this tier to the *named*
-//!   [`LegacyKernel`] through [`LEGACY`], never through a generic parameter.
-//!   That is deliberate and is the structural form of the roadmap's refusal to
-//!   "put `f32`, a tolerance, or Jagua in the publication authority": there is
-//!   no type substitution that can reroute an exact answer, because no exact
-//!   call site is generic. The independent validator in
-//!   [`crate::validation::general_polygon`] remains the sole publisher and is
-//!   not part of this seam at all.
-//!
-//!   The exact tier is still declared on the trait because a kernel has to be
-//!   able to *ask* the exact question — the deep operators confirm proxy
-//!   verdicts before they commit — and because a kernel that answered it
-//!   differently would be a bug we want the type system to make visible. The
-//!   experimental [`JaguaKernel`] therefore forwards its whole exact tier to
-//!   [`LegacyKernel`] verbatim.
+//! The independent validator in [`crate::validation::general_polygon`] remains
+//! the sole publisher and is not part of this seam at all.
 //!
 //! # Cost of the boundary
 //!
@@ -79,9 +74,9 @@
 //! PR4/PR6 work. [`JaguaKernel`] is that second kind, which is why it is built
 //! and tested standalone and is wired into no default path.
 
-use crate::domain::IrregularBounds;
-use crate::geometry::general_polygon::{GeneralPolygonError, PolygonSet};
+use crate::profiling::{self, Phase};
 
+pub(crate) mod exact;
 pub mod legacy;
 
 #[cfg(feature = "jagua-experimental")]
@@ -101,7 +96,6 @@ pub use jagua::{JaguaKernel, JaguaShape};
 /// mirror are baked into the prepared shape and only the translation varies per
 /// candidate. Keeping that split explicit in the argument type is what lets a
 /// kernel precompute whatever it wants per orientation.
-#[derive(Clone, Copy)]
 pub struct PosedShape<'a, S> {
     /// The prepared, already-oriented shape.
     pub shape: &'a S,
@@ -110,6 +104,24 @@ pub struct PosedShape<'a, S> {
     /// Translation along the sheet long axis, in millimetres.
     pub translate_y: f64,
 }
+
+// `Copy` by hand rather than by `derive`, and the difference is load-bearing.
+// A posed shape is a shared reference and two `f64`, so it is copyable for
+// *every* `S`; `derive` would nonetheless bound both impls on `S: Clone`, and
+// `Self::Shape` on a generic kernel carries no such bound. That would make
+// [`ExplorationKernel::pair_row`]'s default body — which presents the same two
+// operands to the verdict and then to the magnitude — fail to compile on a
+// kernel whose shape is not `Clone`, for a reason that has nothing to do with
+// the shape. Nothing is copied that was not copied before: the legacy
+// surrogate is `Clone`, so the derived impls applied to it too.
+impl<S> Clone for PosedShape<'_, S> {
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<S> Copy for PosedShape<'_, S> {}
 
 impl<'a, S> PosedShape<'a, S> {
     /// Poses `shape` at `(translate_x, translate_y)`.
@@ -174,11 +186,63 @@ impl KernelProbes {
     }
 }
 
-/// The geometric services the exploration hot loop consumes.
+/// One candidate row: whether the pair collides, and by how much.
 ///
-/// See the module documentation for the two-tier contract. In short: the proxy
-/// tier is swappable and approximate, the exact tier is `f64` Clipper truth and
-/// is never bound through a generic parameter on a publication-adjacent path.
+/// This is what a *single* pair question produces, and it is the unit a
+/// `MovedRowDelta` — the lane's moved-piece row set, in
+/// [`crate::search::general_relaxed`] — is assembled from. The two quantities travel
+/// together because they are one question: the magnitude is only defined for a
+/// colliding pair, and a separated pair contributes nothing to a score. Keeping
+/// them in one value is what lets a kernel answer both from one traversal if it
+/// can — see [`ExplorationKernel::pair_row`].
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct PairRow {
+    collides: bool,
+    pressure: f64,
+}
+
+impl PairRow {
+    /// The row of a pair the proxy reports as separated.
+    #[inline(always)]
+    pub fn separated() -> Self {
+        Self {
+            collides: false,
+            pressure: 0.0,
+        }
+    }
+
+    /// The row of a colliding pair, at the magnitude the proxy quantified.
+    #[inline(always)]
+    pub fn colliding(pressure: f64) -> Self {
+        Self {
+            collides: true,
+            pressure,
+        }
+    }
+
+    /// Whether the proxy reported a collision.
+    #[inline(always)]
+    pub fn collides(self) -> bool {
+        self.collides
+    }
+
+    /// The row's contribution to a score: the magnitude, or exactly zero when
+    /// the pair is separated.
+    ///
+    /// Zero is not a *measurement* of a separated pair — the pole series is
+    /// strictly positive for any two shapes — it is the additive identity a
+    /// score wants for a pair that has no row at all.
+    #[inline(always)]
+    pub fn penalty(self) -> f64 {
+        self.pressure
+    }
+}
+
+/// The **proxy** geometric services the exploration hot loop consumes.
+///
+/// See the module documentation for the tier contract. In short: this tier is
+/// swappable and approximate; the exact tier is `f64` Clipper truth, is not
+/// declared here, and cannot be reached from a generic parameter at all.
 pub trait ExplorationKernel {
     /// The kernel's own oriented-shape representation.
     ///
@@ -187,8 +251,6 @@ pub trait ExplorationKernel {
     /// be handed to the lane search, which still owns a concrete catalogue; see
     /// the module documentation.
     type Shape;
-
-    // ---- proxy tier ----------------------------------------------------
 
     /// Whether two posed shapes overlap, as the exploration tier sees it.
     ///
@@ -209,38 +271,57 @@ pub trait ExplorationKernel {
     ///
     /// This is a ranking signal only. It never decides feasibility, and it is
     /// never compared against a clearance: a zero here does not mean legal, and
-    /// only [`Self::exact_pair_overlaps`] and the independent validator can say
-    /// that a placement is publishable.
+    /// only the exact tier — reached through
+    /// [`LegacyKernel::exact_authority`], never through `Self` — and the
+    /// independent validator can say that a placement is publishable.
     fn pair_pressure(
         &self,
         first: PosedShape<'_, Self::Shape>,
         second: PosedShape<'_, Self::Shape>,
     ) -> f64;
 
-    // ---- exact tier ----------------------------------------------------
-
-    /// Builds the exact, expanded collision polygon for one pose.
+    /// The whole row for one pair — verdict and magnitude — in one call.
     ///
-    /// `expansion_mm` is the contract's collision expansion; the result is the
-    /// source ring transformed by `pose` and offset outward by it.
-    fn collision_polygon(
-        &self,
-        source: &PolygonSet,
-        pose: KernelPose,
-        expansion_mm: f64,
-    ) -> Result<PolygonSet, GeneralPolygonError>;
-
-    /// Whether two exact collision polygons overlap with positive area.
+    /// This is the fused entry Sol's fourth finding asks for. The two questions
+    /// above are one question at every call site that matters: a candidate scan
+    /// asks whether the pair collides and, if it does, immediately asks how
+    /// much. Splitting that across two trait entries forces every caller to
+    /// re-present both operands, and it forbids a kernel whose two answers
+    /// *share* a traversal from exploiting that.
     ///
-    /// `first_bounds`/`second_bounds` are the operands' already-derived
-    /// extents. Callers that ask the same polygon about many partners pass them
-    /// so the broad-phase reject does not re-walk a ring per pair; an empty
-    /// extent is an error, exactly as it is for a caller that derives it here.
-    fn exact_pair_overlaps(
-        &self,
-        first: &PolygonSet,
-        first_bounds: Option<IrregularBounds>,
-        second: &PolygonSet,
-        second_bounds: Option<IrregularBounds>,
-    ) -> Result<bool, GeneralPolygonError>;
+    /// The provided body is the split, in the order the split has always run:
+    /// verdict first, magnitude only for a pair the verdict admitted, with the
+    /// same two profiling phases around the same two pieces of work. A kernel
+    /// that can do better overrides it; a kernel that cannot inherits today's
+    /// arithmetic exactly, which is why this method could be added without
+    /// moving a single bit on any gate.
+    ///
+    /// The legacy kernel is deliberately *not* one of the kernels that can do
+    /// better, and the reason is worth recording: its verdict walks a cell
+    /// index and its magnitude walks a pole series, and those are two disjoint
+    /// structures built at catalogue time. There is nothing between them to
+    /// share, so fusing the call saves one operand presentation and nothing
+    /// else — which is what the interleaved A/B behind `fused-pair-query`
+    /// measured, at paired medians within 0.7% of parity on both the mode-22
+    /// and mode-0 streams and with the mode-22 sign changing between two
+    /// samples. The entry earns its place as the seam a sharing kernel needs,
+    /// not as a speedup of this one. See the PR6 entry in
+    /// `docs/next-generation-engine-plan.md`.
+    #[inline(always)]
+    fn pair_row(
+        &mut self,
+        first: PosedShape<'_, Self::Shape>,
+        second: PosedShape<'_, Self::Shape>,
+        probes: &mut KernelProbes,
+    ) -> PairRow {
+        let collides = {
+            let _span = profiling::span(Phase::PairCollide);
+            self.pair_collides(first, second, probes)
+        };
+        if !collides {
+            return PairRow::separated();
+        }
+        let _span = profiling::span(Phase::PairPressure);
+        PairRow::colliding(self.pair_pressure(first, second))
+    }
 }

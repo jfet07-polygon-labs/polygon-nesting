@@ -110,9 +110,11 @@ fn prepare(
         jagua: JaguaShape::prepare(index, source, pose, EXPANSION_MM, true)
             .expect("jagua conversion succeeds"),
         grown: LEGACY
+            .exact_authority()
             .collision_polygon(source, pose, EXPANSION_MM + band_mm / 2.0)
             .expect("grown collision polygon builds"),
         shrunk: LEGACY
+            .exact_authority()
             .collision_polygon(source, pose, EXPANSION_MM - band_mm / 2.0)
             .expect("shrunk collision polygon builds"),
     }
@@ -302,60 +304,61 @@ fn jagua_kernel_agrees_with_the_legacy_kernel_outside_the_ambiguity_band() {
     );
 }
 
-/// The exact tier is the same code for both kernels, by construction.
+/// There is one exact tier, it is the legacy one, and the kernel a caller holds
+/// cannot change it.
 ///
-/// This is the executable form of the refusal in the module documentation: a
-/// kernel may not answer an exact question differently, because a published
-/// placement is measured with that answer.
+/// PR3 stated this as a runtime property and checked it by asking two kernels
+/// the same exact question. PR6 made it a *type* property instead: the exact
+/// services are not on [`ExplorationKernel`], so `kernel.exact_pair_overlaps(..)`
+/// no longer names anything, and the only grant of authority is inherent to
+/// [`LegacyKernel`]. The compiler now enforces what this test used to assert,
+/// which is why the jagua kernel does not appear in it — there is no second
+/// answer left to compare against.
+///
+/// What remains worth checking at runtime is that the two doors onto the tier
+/// agree: the general entry point [`polygons_overlap_exact`], which every
+/// constructor and deep-operator confirmation uses, and the authority method it
+/// forwards to.
 #[test]
-fn the_jagua_kernel_exact_tier_is_the_legacy_exact_tier() {
+fn the_exact_tier_has_one_implementation_and_it_is_the_legacy_one() {
     let sources = load_source_pieces();
     let (_, first_source) = &sources[3];
     let (_, second_source) = &sources[11];
-    let jagua = JaguaKernel::new();
 
+    let mut overlapping = 0usize;
+    let mut separated = 0usize;
     for (rotation_deg, mirrored) in [(0.0_f64, false), (61.25, true)] {
         let pose = KernelPose::oriented(rotation_deg, mirrored);
-        let legacy_polygon = LEGACY
+        let polygon = LEGACY
+            .exact_authority()
             .collision_polygon(first_source, pose, EXPANSION_MM)
-            .expect("legacy builds the collision polygon");
-        let jagua_polygon = jagua
-            .collision_polygon(first_source, pose, EXPANSION_MM)
-            .expect("the jagua kernel builds the collision polygon");
-        assert_eq!(
-            legacy_polygon.regions().len(),
-            jagua_polygon.regions().len()
-        );
-        assert_eq!(legacy_polygon.vertex_count(), jagua_polygon.vertex_count());
-        assert_eq!(legacy_polygon.bounds(), jagua_polygon.bounds());
-
+            .expect("the exact tier builds the collision polygon");
         let other = LEGACY
+            .exact_authority()
             .collision_polygon(second_source, pose, EXPANSION_MM)
-            .expect("legacy builds the partner collision polygon");
+            .expect("the exact tier builds the partner collision polygon");
         for translate in [0.0_f64, 30.0, 400.0] {
             let moved = other
                 .translated(translate, translate)
                 .expect("translating succeeds");
-            let legacy_verdict = LEGACY
-                .exact_pair_overlaps(
-                    &legacy_polygon,
-                    legacy_polygon.bounds(),
-                    &moved,
-                    moved.bounds(),
-                )
-                .expect("legacy answers the exact query");
-            let jagua_verdict = jagua
-                .exact_pair_overlaps(
-                    &legacy_polygon,
-                    legacy_polygon.bounds(),
-                    &moved,
-                    moved.bounds(),
-                )
-                .expect("the jagua kernel answers the exact query");
+            let through_authority = LEGACY
+                .exact_authority()
+                .pair_overlaps(&polygon, polygon.bounds(), &moved, moved.bounds())
+                .expect("the exact tier answers the query");
+            let through_entry_point =
+                polygons_overlap_exact(&polygon, &moved).expect("the entry point answers");
             assert_eq!(
-                legacy_verdict, jagua_verdict,
-                "the exact tier must not depend on which kernel was asked"
+                through_authority, through_entry_point,
+                "the exact tier must not depend on which door it was asked through"
             );
+            if through_authority {
+                overlapping += 1;
+            } else {
+                separated += 1;
+            }
         }
     }
+    // Both answers have to occur, or an "always false" tier would pass.
+    assert!(overlapping > 0, "expected at least one overlapping sample");
+    assert!(separated > 0, "expected at least one separated sample");
 }

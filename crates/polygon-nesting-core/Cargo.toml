@@ -90,6 +90,38 @@ fast-proxy-hypot = []
 # immediate depth, which the ledger repeatedly shows is an invalid proxy. See
 # `search::construction_void_grid`.
 fast-constructor-profile = []
+# Asks the exploration kernel one fused question per candidate row -
+# `ExplorationKernel::pair_row` - instead of a collision verdict followed by a
+# separate pressure call.
+#
+# A MEASUREMENT build, not a behaviour flag. Both arms compute the same `f64`
+# from the same operands in the same order, and the fused arm reproduces all
+# four regression gates plus the four mode-31 and six mode-26 arms as whole
+# documents - 14 of 14 - so the flag exists only to price the second trait
+# entry.
+#
+# The price was measured, on ten-round interleaved A/Bs whose arms alternate
+# order every round and whose statistic is the per-round paired ratio. Two
+# independent samples of that A/B, fused against split:
+#
+#   sample 1: mode 22 median 1.007 (2 of 10 rounds below parity)
+#             mode 0  median 0.994 (7 of 10)
+#   sample 2: mode 22 median 0.998 (7 of 10)
+#             mode 0  median 0.999 (6 of 10)
+#
+# Every median is within 0.7% of parity, every one is inside its own sample's
+# spread, and mode 22 changes sign between the samples - which is what a real
+# zero looks like, and why one sample would have been reported as a small
+# regression. It is also the expected result: the legacy kernel's verdict walks
+# a cell index and its magnitude walks a pole series, two disjoint structures
+# built at catalogue time with nothing between them to share, so fusing the
+# *call* saves one operand presentation and one index-ordered swap, and those
+# were never the cost. The default therefore stays split. See the PR6 entry in
+# docs/next-generation-engine-plan.md.
+#
+# The fused entry itself is unconditional and is the shape a kernel with a
+# shared traversal will implement; only the lane's use of it is gated.
+fused-pair-query = []
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }

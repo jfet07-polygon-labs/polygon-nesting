@@ -32,7 +32,7 @@ use crate::search::general_micro_legalization::{
     GeneralGlobalLegalizationDiagnostics, GeneralMicroLegalizationDiagnostics,
 };
 use crate::search::kernel::{
-    ExplorationKernel, KernelPose, KernelProbes, LegacyKernel, PosedShape, LEGACY,
+    ExplorationKernel, KernelPose, KernelProbes, LegacyKernel, PairRow, PosedShape, LEGACY,
 };
 #[cfg(feature = "shadow-rescore")]
 use crate::search::shadow_rescore;
@@ -2754,12 +2754,104 @@ impl PairTracker {
     }
 }
 
+/// What one moved piece's query produces, and what the incremental tracker
+/// installs.
+///
+/// A sweep asks one question per candidate pose — *if this piece went here,
+/// what would its rows be?* — and this is the whole answer: the piece's own
+/// boundary term, and the row it owns against every partner it collides with.
+/// [`update_score_after_move`] consumes exactly this and nothing else, which is
+/// what makes an accepted move cost the moved row rather than the layout.
+///
+/// It is named for what it is because the name was load-bearing and missing.
+/// Sol's fourth finding asks for a moved-piece query returning
+/// `Pruned | Complete<MovedRowDelta>`; the hazard index already answers in that
+/// shape ([`GeneralHazardQuery`]), and this is the lane-level counterpart that
+/// the shape was missing.
+///
+/// # Rows are keyed by the index-ordered pair
+///
+/// Every producer builds its keys through [`ordered_pair`] and sorts by
+/// `(first, second)` before returning, so a row is named `(lower, higher)`
+/// whichever of the two pieces was the one that moved. That is not a formatting
+/// convention. It is the row-ownership decision, and the ledger chapter "Who
+/// owns a row" is where it was forced rather than chosen: a tracker row has to
+/// be a measurement of the *layout* if a sweep is ever to inherit one instead
+/// of rescoring, and `(moving, fixed)` is a function of the path taken to a
+/// layout rather than of the layout.
+///
+/// The key is index-ordered unconditionally, and it always was. What is *not*
+/// unconditional is the order the two operands are presented to the proxy
+/// kernel in — the proxy is not symmetric in them, and only
+/// `canonical-pair-order` makes the asking order agree with the key. So this
+/// type carries the half of the decision that is free, and the flag carries the
+/// half that costs a trajectory. See [`canonical_pair_operands`].
+///
+/// The sortedness is load-bearing twice: [`update_score_after_move`] walks the
+/// row with a single cursor against an ascending pair sequence, and
+/// [`sorted_pair_difference_counts`] merges two of these rather than building
+/// two `BTreeSet`s.
 #[derive(Clone, Debug)]
-struct PlacementScore {
+struct MovedRowDelta {
     boundary_violations: usize,
     boundary_loss: f64,
+    /// The moved piece's rows, sorted by index-ordered pair key, each pair once.
     collision_pairs: Vec<(usize, usize, f64)>,
     weighted_loss: f64,
+    /// Whether `collision_pairs` is every colliding partner. See [`MovedRows`].
+    rows: MovedRows,
+}
+
+/// Whether a [`MovedRowDelta`]'s row set is all of the moved piece's rows.
+///
+/// This is the `Pruned | Complete` distinction Sol's fourth finding asks a
+/// moved-piece query to make, at the lane's level. It is a marker on the delta
+/// rather than an enum wrapping one because an incomplete answer still carries
+/// a usable boundary term and a usable loss — a scan that stopped early has
+/// already established that the candidate is worse than the bound, which is the
+/// only thing the caller wanted from it. What it does not carry is a row set a
+/// tracker may install.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum MovedRows {
+    /// Every partner the candidate collides with is present.
+    Complete,
+    /// The partner scan stopped early: the running weighted loss had already
+    /// passed the bound the caller supplied, so the remaining partners were
+    /// never asked.
+    ///
+    /// Such a delta is never installed into the tracker, and the reason is an
+    /// ordering identity rather than a check. The bound a scan prunes against
+    /// is exactly the `weighted_loss` of the candidate it would have to beat,
+    /// and both comparators — [`compare_score_objective`] and
+    /// [`compare_move_score`] — order on `weighted_loss` first. So a pruned
+    /// delta compares strictly worse than the thing it was measured against, at
+    /// both sites that retain one: [`refine_candidate`] keeps a candidate only
+    /// when it compares `!= Greater`, and [`report_diverse_sample`] either
+    /// returns early or sorts the pruned sample past the truncation point. The
+    /// `debug_assert` in [`update_score_after_move`] is what checks that the
+    /// identity still holds rather than merely being argued for.
+    PrunedAtBound,
+    /// No partner scan ran at all: the lane's dynamic query budget was spent,
+    /// or the pose was rejected before the scan.
+    ///
+    /// The row set is empty and the loss is infinite. This is deliberately
+    /// *not* merged into `PrunedAtBound`, because the argument that keeps it
+    /// out of the tracker is weaker: it relies on the incumbent it is compared
+    /// against having a finite loss, not on an ordering identity, so it is
+    /// documented rather than asserted. It arises only on the dynamic-hazard
+    /// backend, which no default path binds.
+    Unscanned,
+}
+
+/// The row-set state of a partner scan that ran, given whether it stopped at
+/// the caller's bound.
+#[inline(always)]
+fn moved_rows(pruned: bool) -> MovedRows {
+    if pruned {
+        MovedRows::PrunedAtBound
+    } else {
+        MovedRows::Complete
+    }
 }
 
 #[derive(Clone)]
@@ -10505,17 +10597,18 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         input_index: usize,
         candidate: &RelaxedPlacement,
         ignored: &BTreeSet<usize>,
-    ) -> Result<PlacementScore, GeneralFastError> {
+    ) -> Result<MovedRowDelta, GeneralFastError> {
         #[cfg(feature = "jagua-experimental")]
         {
             let (boundary_violations, boundary_loss) =
                 self.boundary_penalty(candidate, state.strip_depth_mm)?;
             if self.dynamic_query_budget_exhausted() {
-                return Ok(PlacementScore {
+                return Ok(MovedRowDelta {
                     boundary_violations,
                     boundary_loss,
                     collision_pairs: Vec::new(),
                     weighted_loss: f64::INFINITY,
+                    rows: MovedRows::Unscanned,
                 });
             }
             let query = self
@@ -10550,11 +10643,12 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     self.counters.dynamic_pressure_evaluations.saturating_add(1);
             }
             collision_pairs.sort_by_key(|(first, second, _)| (*first, *second));
-            Ok(PlacementScore {
+            Ok(MovedRowDelta {
                 boundary_violations,
                 boundary_loss,
                 collision_pairs,
                 weighted_loss,
+                rows: MovedRows::Complete,
             })
         }
         #[cfg(not(feature = "jagua-experimental"))]
@@ -10573,7 +10667,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         candidate: &RelaxedPlacement,
         ignored: &BTreeSet<usize>,
         retained: bool,
-    ) -> Result<PlacementScore, GeneralFastError> {
+    ) -> Result<MovedRowDelta, GeneralFastError> {
         let (boundary_violations, boundary_loss) =
             self.boundary_penalty(candidate, state.strip_depth_mm)?;
         let mut collision_pairs = Vec::new();
@@ -10596,11 +10690,12 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             self.counters.retained_f64_confirmations =
                 self.counters.retained_f64_confirmations.saturating_add(1);
         }
-        Ok(PlacementScore {
+        Ok(MovedRowDelta {
             boundary_violations,
             boundary_loss,
             collision_pairs,
             weighted_loss,
+            rows: MovedRows::Complete,
         })
     }
 
@@ -11307,7 +11402,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         tracker: &PairTracker,
         input_index: usize,
         piece_index: &PieceIndex,
-    ) -> Result<(RelaxedPlacement, PlacementScore), GeneralFastError> {
+    ) -> Result<(RelaxedPlacement, MovedRowDelta), GeneralFastError> {
         let current = state.placements[input_index].clone();
         let current_bounds =
             self.local_shape_bounds(input_index, current.rotation_deg, current.mirrored)?;
@@ -11468,7 +11563,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         state: &RelaxedState,
         input_index: usize,
         mut best: RelaxedPlacement,
-        mut best_score: PlacementScore,
+        mut best_score: MovedRowDelta,
         piece_index: &PieceIndex,
         minimum_dimension: f64,
         initial_step_ratio: f64,
@@ -11476,7 +11571,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         initial_rotation_step_deg: f64,
         rotation_step_limit_deg: f64,
         evaluation_budget: usize,
-    ) -> Result<(RelaxedPlacement, PlacementScore, usize), GeneralFastError> {
+    ) -> Result<(RelaxedPlacement, MovedRowDelta, usize), GeneralFastError> {
         let mut step_x = minimum_dimension * initial_step_ratio;
         let mut step_y = minimum_dimension * initial_step_ratio;
         let step_limit = (minimum_dimension * limit_step_ratio).max(0.001);
@@ -11586,10 +11681,10 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         tracker: &PairTracker,
         input_index: usize,
         mut best: RelaxedPlacement,
-        mut best_score: PlacementScore,
+        mut best_score: MovedRowDelta,
         piece_index: &PieceIndex,
         evaluation_budget: usize,
-    ) -> Result<Option<(RelaxedPlacement, PlacementScore, usize)>, GeneralFastError> {
+    ) -> Result<Option<(RelaxedPlacement, MovedRowDelta, usize)>, GeneralFastError> {
         if evaluation_budget < 2 {
             return Ok(None);
         }
@@ -12149,12 +12244,14 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             weighted_loss += loss;
             let first_shape = shapes[index];
             for second in (index + 1)..state.placements.len() {
-                let penalty = self.resolved_pair_penalty(
-                    first_shape,
-                    placement,
-                    shapes[second],
-                    &state.placements[second],
-                );
+                let penalty = self
+                    .resolved_pair_row(
+                        first_shape,
+                        placement,
+                        shapes[second],
+                        &state.placements[second],
+                    )
+                    .penalty();
                 let guided_weight = self.pair_weight(index, second);
                 pairs[pair_slot(piece_count, index, second)] = PairEntry {
                     raw_loss: penalty,
@@ -12286,7 +12383,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         candidate: &RelaxedPlacement,
         piece_index: &PieceIndex,
         upper_bound: Option<f64>,
-    ) -> Result<PlacementScore, GeneralFastError> {
+    ) -> Result<MovedRowDelta, GeneralFastError> {
         let _span = profiling::span(Phase::ScorePlacement);
         profiling::count(Counter::CandidateQueries, 1);
         if self.uses_directional_pressure() {
@@ -12306,6 +12403,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             self.boundary_penalty(candidate, state.strip_depth_mm)?;
         let mut weighted_loss = boundary_loss;
         let mut collision_pairs = Vec::new();
+        let mut pruned = false;
         let shape_bounds = self
             .oriented(
                 candidate.input_index,
@@ -12381,20 +12479,22 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                             ));
                             break;
                         };
-                        let penalty = resolved_pair_penalty(
+                        let penalty = resolved_pair_row(
                             kernel,
                             counters,
                             candidate_shape,
                             candidate,
                             fixed_shape,
                             fixed,
-                        );
+                        )
+                        .penalty();
                         if penalty > 0.0 {
                             let pair = ordered_pair(input_index, fixed_index);
                             collision_pairs.push((pair.0, pair.1, penalty));
                             weighted_loss +=
                                 weights.get(&pair).copied().unwrap_or(1.0) * penalty;
                             if upper_bound.is_some_and(|upper_bound| weighted_loss > upper_bound) {
+                                pruned = true;
                                 break;
                             }
                         }
@@ -12407,11 +12507,12 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         }
         self.piece_query_scratch.selected = fixed_indices;
         collision_pairs.sort_by_key(|(first, second, _)| (*first, *second));
-        Ok(PlacementScore {
+        Ok(MovedRowDelta {
             boundary_violations,
             boundary_loss,
             collision_pairs,
             weighted_loss,
+            rows: moved_rows(pruned),
         })
     }
 
@@ -12422,18 +12523,19 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         candidate: &RelaxedPlacement,
         _piece_index: &PieceIndex,
         _upper_bound: Option<f64>,
-    ) -> Result<PlacementScore, GeneralFastError> {
+    ) -> Result<MovedRowDelta, GeneralFastError> {
         self.counters.surrogate_evaluations = self.counters.surrogate_evaluations.saturating_add(1);
         if !self.directional_contains(candidate, state.strip_depth_mm)? {
             self.counters.directional_containment_rejections = self
                 .counters
                 .directional_containment_rejections
                 .saturating_add(1);
-            return Ok(PlacementScore {
+            return Ok(MovedRowDelta {
                 boundary_violations: 1,
                 boundary_loss: 0.0,
                 collision_pairs: Vec::new(),
                 weighted_loss: f64::INFINITY,
+                rows: MovedRows::Unscanned,
             });
         }
         let boundary_violations = 0;
@@ -12484,11 +12586,12 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             weighted_loss += self.pair_weight(pair.0, pair.1) * penalty;
         }
         collision_pairs.sort_by_key(|(first, second, _)| (*first, *second));
-        Ok(PlacementScore {
+        Ok(MovedRowDelta {
             boundary_violations,
             boundary_loss,
             collision_pairs,
             weighted_loss,
+            rows: MovedRows::Complete,
         })
     }
 
@@ -12566,7 +12669,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         input_index: usize,
         candidate: &RelaxedPlacement,
         upper_bound: Option<f64>,
-    ) -> Result<PlacementScore, GeneralFastError> {
+    ) -> Result<MovedRowDelta, GeneralFastError> {
         #[cfg(feature = "jagua-experimental")]
         {
             self.counters.surrogate_evaluations =
@@ -12574,15 +12677,17 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             let (boundary_violations, boundary_loss) =
                 self.boundary_penalty(candidate, state.strip_depth_mm)?;
             if self.dynamic_query_budget_exhausted() {
-                return Ok(PlacementScore {
+                return Ok(MovedRowDelta {
                     boundary_violations,
                     boundary_loss,
                     collision_pairs: Vec::new(),
                     weighted_loss: f64::INFINITY,
+                    rows: MovedRows::Unscanned,
                 });
             }
             let mut weighted_loss = boundary_loss;
             let mut collision_pairs = Vec::new();
+            let mut pruned = false;
             let query = self
                 .hazard_index
                 .as_mut()
@@ -12616,15 +12721,17 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 collision_pairs.push((pair.0, pair.1, penalty));
                 weighted_loss += self.pair_weight(pair.0, pair.1) * penalty;
                 if upper_bound.is_some_and(|upper_bound| weighted_loss > upper_bound) {
+                    pruned = true;
                     break;
                 }
             }
             collision_pairs.sort_by_key(|(first, second, _)| (*first, *second));
-            return Ok(PlacementScore {
+            return Ok(MovedRowDelta {
                 boundary_violations,
                 boundary_loss,
                 collision_pairs,
                 weighted_loss,
+                rows: moved_rows(pruned),
             });
         }
         #[cfg(not(feature = "jagua-experimental"))]
@@ -12641,8 +12748,8 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         state: &RelaxedState,
         input_index: usize,
         candidate: &RelaxedPlacement,
-        search_score: &PlacementScore,
-    ) -> Result<PlacementScore, GeneralFastError> {
+        search_score: &MovedRowDelta,
+    ) -> Result<MovedRowDelta, GeneralFastError> {
         let (boundary_violations, boundary_loss) =
             self.boundary_penalty(candidate, state.strip_depth_mm)?;
         let mut collision_pairs = Vec::new();
@@ -12681,11 +12788,12 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         {
             self.audit_last_confirmed_row = Some((input_index, collision_pairs.clone()));
         }
-        Ok(PlacementScore {
+        Ok(MovedRowDelta {
             boundary_violations,
             boundary_loss,
             collision_pairs,
             weighted_loss,
+            rows: MovedRows::Complete,
         })
     }
 
@@ -13134,19 +13242,19 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         )
     }
 
-    /// The proxy pair penalty for two already resolved shapes.
+    /// The proxy row for two already resolved shapes.
     ///
     /// The resolved counterpart of [`Self::pair_penalty`]'s non-directional
     /// branch, asked in the same order: collision first, magnitude only for a
     /// pair the proxy has already reported.
-    fn resolved_pair_penalty(
+    fn resolved_pair_row(
         &mut self,
         first_shape: &OrientedSurrogate,
         first: &RelaxedPlacement,
         second_shape: &OrientedSurrogate,
         second: &RelaxedPlacement,
-    ) -> f64 {
-        resolved_pair_penalty(
+    ) -> PairRow {
+        resolved_pair_row(
             &mut self.kernel,
             &mut self.counters,
             first_shape,
@@ -13563,6 +13671,14 @@ fn continuous_pole_overlap_pressure(
 /// [`kernel_pair_collides`] does: the shapes a resolved caller holds are
 /// borrowed from the lane's catalogue, so a caller that keeps a shape alive
 /// across the call cannot also hand over `&mut self`.
+///
+/// Only the split arm of [`resolved_pair_row`] asks the verdict as its own
+/// step; the fused arm asks the kernel for the whole row at once and never
+/// reaches here, which leaves this the split arm's alone and therefore dead in
+/// a `fused-pair-query` build. It stays as written rather than being restated
+/// inside the split body, because it is the shape the caller of a *verdict*
+/// wants and the two arms are meant to differ in exactly one thing.
+#[cfg_attr(feature = "fused-pair-query", allow(dead_code))]
 #[inline(always)]
 fn resolved_pair_collides<K: ExplorationKernel<Shape = OrientedSurrogate>>(
     kernel: &mut K,
@@ -13578,19 +13694,28 @@ fn resolved_pair_collides<K: ExplorationKernel<Shape = OrientedSurrogate>>(
     kernel_pair_collides(kernel, counters, first_shape, first, second_shape, second)
 }
 
-/// The proxy pair penalty for two already resolved shapes: collision first,
-/// magnitude only for a pair the proxy has already reported.
+/// The proxy row for two already resolved shapes: collision first, magnitude
+/// only for a pair the proxy has already reported.
+///
+/// Two bodies, one contract. The default one asks the kernel the two questions
+/// separately, which is what every measured stream in this file was produced
+/// by; `fused-pair-query` asks [`ExplorationKernel::pair_row`] once instead.
+/// Both compute the same `f64` from the same operands in the same order — the
+/// fused arm reproduces all four regression gates as whole documents — so the
+/// feature is a *measurement* of what a second trait entry costs, not a change
+/// of answer. See the PR6 entry in `docs/next-generation-engine-plan.md`.
+#[cfg(not(feature = "fused-pair-query"))]
 #[inline(always)]
-fn resolved_pair_penalty<K: ExplorationKernel<Shape = OrientedSurrogate>>(
+fn resolved_pair_row<K: ExplorationKernel<Shape = OrientedSurrogate>>(
     kernel: &mut K,
     counters: &mut WorkCounters,
     first_shape: &OrientedSurrogate,
     first: &RelaxedPlacement,
     second_shape: &OrientedSurrogate,
     second: &RelaxedPlacement,
-) -> f64 {
+) -> PairRow {
     if !resolved_pair_collides(kernel, counters, first_shape, first, second_shape, second) {
-        return 0.0;
+        return PairRow::separated();
     }
     let _span = profiling::span(Phase::PairPressure);
     // The pole series is accumulated with the first operand outermost, so it is
@@ -13600,10 +13725,48 @@ fn resolved_pair_penalty<K: ExplorationKernel<Shape = OrientedSurrogate>>(
     #[cfg(feature = "canonical-pair-order")]
     let (first_shape, first, second_shape, second) =
         canonical_pair_operands(first_shape, first, second_shape, second);
-    kernel.pair_pressure(
+    PairRow::colliding(kernel.pair_pressure(
         PosedShape::new(first_shape, first.translate_x, first.translate_y),
         PosedShape::new(second_shape, second.translate_x, second.translate_y),
-    )
+    ))
+}
+
+/// [`resolved_pair_row`] over the fused kernel entry.
+///
+/// One [`ExplorationKernel::pair_row`] call carries both questions, so the
+/// operands are presented once and the index-ordered swap is derived once
+/// instead of twice. The two profiling phases move inside the kernel, where
+/// they still wrap the same two pieces of geometric work — the split arm's
+/// [`Phase::PairCollide`] span additionally encloses the lane's own counter
+/// bumps, which is the one attribution difference between the arms and is worth
+/// a few nanoseconds of nothing. The lane keeps those counters either way,
+/// because they are the lane's quotas and not the kernel's.
+#[cfg(feature = "fused-pair-query")]
+#[inline(always)]
+fn resolved_pair_row<K: ExplorationKernel<Shape = OrientedSurrogate>>(
+    kernel: &mut K,
+    counters: &mut WorkCounters,
+    first_shape: &OrientedSurrogate,
+    first: &RelaxedPlacement,
+    second_shape: &OrientedSurrogate,
+    second: &RelaxedPlacement,
+) -> PairRow {
+    profiling::count(Counter::NeighborTests, 1);
+    counters.piece_broad_phase_probes += 1;
+    #[cfg(feature = "canonical-pair-order")]
+    let (first_shape, first, second_shape, second) =
+        canonical_pair_operands(first_shape, first, second_shape, second);
+    let mut probes = KernelProbes::default();
+    let row = kernel.pair_row(
+        PosedShape::new(first_shape, first.translate_x, first.translate_y),
+        PosedShape::new(second_shape, second.translate_x, second.translate_y),
+        &mut probes,
+    );
+    counters.cell_index_probes = counters
+        .cell_index_probes
+        .wrapping_add(probes.cell_index_probes);
+    counters.sat_tests = counters.sat_tests.wrapping_add(probes.sat_tests);
+    row
 }
 
 /// The two operands of a pair question, in the order the *pair* owns rather
@@ -14816,7 +14979,7 @@ fn update_score_after_move(
     score: &mut PairTracker,
     input_index: usize,
     old_boundary: (usize, f64),
-    replacement: PlacementScore,
+    replacement: MovedRowDelta,
     weights: &BTreeMap<(usize, usize), f64>,
     merge_scratch: &mut Vec<(usize, usize, f64)>,
 ) {
@@ -14832,6 +14995,17 @@ fn update_score_after_move(
             .windows(2)
             .all(|window| (window[0].0, window[0].1) < (window[1].0, window[1].1)),
         "the moved row reaches the delta sorted by pair"
+    );
+    // Only a complete result may produce a tracker delta - the roadmap bullet
+    // this type exists to satisfy. A bound-pruned row set is a partial
+    // measurement of a candidate that had already lost, and installing one
+    // would silently drop the partners the scan never reached. See
+    // [`MovedRows::PrunedAtBound`] for why the comparators make this hold, and
+    // why `Unscanned` is documented rather than asserted.
+    debug_assert_ne!(
+        replacement.rows,
+        MovedRows::PrunedAtBound,
+        "a bound-pruned row set must never be installed into the tracker"
     );
     score.replace_boundary(
         input_index,
@@ -14928,7 +15102,7 @@ fn tracked_piece_score(
     score: &PairTracker,
     input_index: usize,
     weights: &BTreeMap<(usize, usize), f64>,
-) -> PlacementScore {
+) -> MovedRowDelta {
     let boundary = score.boundaries[input_index];
     let collision_pairs = score
         .collision_pairs
@@ -14947,11 +15121,12 @@ fn tracked_piece_score(
                     * *penalty
             })
             .sum::<f64>();
-    PlacementScore {
+    MovedRowDelta {
         boundary_violations: boundary.violations,
         boundary_loss: boundary.raw_loss,
         collision_pairs,
         weighted_loss,
+        rows: MovedRows::Complete,
     }
 }
 
@@ -14977,9 +15152,9 @@ fn refresh_weighted_loss(score: &mut PairTracker, weights: &BTreeMap<(usize, usi
 }
 
 fn compare_move_score(
-    first_score: &PlacementScore,
+    first_score: &MovedRowDelta,
     first: &RelaxedPlacement,
-    second_score: &PlacementScore,
+    second_score: &MovedRowDelta,
     second: &RelaxedPlacement,
 ) -> Ordering {
     first_score
@@ -14999,7 +15174,7 @@ fn compare_move_score(
         .then_with(|| move_tie_key(first).cmp(&move_tie_key(second)))
 }
 
-fn compare_score_objective(first: &PlacementScore, second: &PlacementScore) -> Ordering {
+fn compare_score_objective(first: &MovedRowDelta, second: &MovedRowDelta) -> Ordering {
     first
         .weighted_loss
         .total_cmp(&second.weighted_loss)
@@ -15017,7 +15192,7 @@ fn unscorable_directional_score(
     boundary_violations: usize,
     boundary_loss: f64,
     colliding: &[(usize, PairNfpKey, IrregularPoint)],
-) -> PlacementScore {
+) -> MovedRowDelta {
     let mut collision_pairs = colliding
         .iter()
         .map(|(fixed_index, _, _)| {
@@ -15026,11 +15201,12 @@ fn unscorable_directional_score(
         })
         .collect::<Vec<_>>();
     collision_pairs.sort_by_key(|(first, second, _)| (*first, *second));
-    PlacementScore {
+    MovedRowDelta {
         boundary_violations,
         boundary_loss,
         collision_pairs,
         weighted_loss: f64::INFINITY,
+        rows: MovedRows::Complete,
     }
 }
 
@@ -15263,9 +15439,9 @@ fn canonical_state_key(state: &RelaxedState) -> Vec<(usize, i64, bool, i64, i64)
 }
 
 fn report_diverse_sample(
-    samples: &mut Vec<(RelaxedPlacement, PlacementScore)>,
+    samples: &mut Vec<(RelaxedPlacement, MovedRowDelta)>,
     candidate: RelaxedPlacement,
-    score: PlacementScore,
+    score: MovedRowDelta,
     position_threshold: f64,
 ) {
     let mut similar = [0usize; LOCAL_DESCENT_STARTS];
@@ -15294,7 +15470,7 @@ fn report_diverse_sample(
     samples.truncate(LOCAL_DESCENT_STARTS);
 }
 
-fn sample_upper_bound(samples: &[(RelaxedPlacement, PlacementScore)]) -> Option<f64> {
+fn sample_upper_bound(samples: &[(RelaxedPlacement, MovedRowDelta)]) -> Option<f64> {
     (samples.len() >= LOCAL_DESCENT_STARTS).then(|| {
         samples
             .last()
@@ -15350,7 +15526,7 @@ fn placement_key(placement: &RelaxedPlacement) -> (usize, i64, bool, i64, i64) {
 /// how many only in `searched`.
 ///
 /// Both slices must be sorted by `(first, second)` and free of duplicates,
-/// which is what every producer of a [`PlacementScore`] guarantees: the pair
+/// which is what every producer of a [`MovedRowDelta`] guarantees: the pair
 /// list is built from a deduplicated neighbour set and sorted before it is
 /// returned. Under that precondition this is exactly the pair of
 /// `BTreeSet::difference` counts it replaces.
@@ -17246,22 +17422,24 @@ mod tests {
                 translate_x: 20.0 + offset,
                 translate_y: 20.0 + offset,
             };
-            let forward = resolved_pair_penalty(
+            let forward = resolved_pair_row(
                 &mut kernel,
                 &mut counters,
                 shape(0),
                 &first,
                 shape(1),
                 &second,
-            );
-            let reverse = resolved_pair_penalty(
+            )
+            .penalty();
+            let reverse = resolved_pair_row(
                 &mut kernel,
                 &mut counters,
                 shape(1),
                 &second,
                 shape(0),
                 &first,
-            );
+            )
+            .penalty();
             assert_eq!(
                 forward.to_bits(),
                 reverse.to_bits(),
@@ -17269,6 +17447,174 @@ mod tests {
                  and {reverse:.17e} as (1, 0)"
             );
         }
+    }
+
+    /// A bound-pruned row set is marked as one, and a scan that ran to the end
+    /// is marked complete — over the same scorer, same state, same candidate,
+    /// with only the bound changing.
+    ///
+    /// This is the property [`update_score_after_move`]'s `debug_assert` rests
+    /// on, and asserting it here is what stops that assert from being vacuous:
+    /// if [`MovedRows::PrunedAtBound`] were never produced in the first place,
+    /// "no pruned delta reaches the tracker" would hold for the wrong reason.
+    /// A bound of zero prunes at the first colliding partner of a candidate
+    /// that has some; no bound at all cannot prune.
+    #[test]
+    fn a_bound_pruned_row_set_is_marked_pruned_and_an_unbounded_one_complete() {
+        let polygon = square(10.0);
+        let pieces = [
+            GeneralFastPiece {
+                id: "a",
+                polygon: &polygon,
+                allow_rotation: false,
+                allow_mirror: false,
+            },
+            GeneralFastPiece {
+                id: "b",
+                polygon: &polygon,
+                allow_rotation: false,
+                allow_mirror: false,
+            },
+            GeneralFastPiece {
+                id: "c",
+                polygon: &polygon,
+                allow_rotation: false,
+                allow_mirror: false,
+            },
+        ];
+        let fast_settings = GeneralFastSettings::deterministic_test(200.0, 200.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::ZeroDegreeOnly,
+            None,
+        )
+        .unwrap();
+        let relaxed_settings = GeneralRelaxedSettings::mixed_61_probe(0, 1);
+        let mut search =
+            LegacyLaneSearch::new(&pieces, fast_settings, relaxed_settings, 0, catalog);
+        // Three squares stacked on one point: piece 0's scan has two colliding
+        // partners, so a zero bound stops it after the first.
+        let placement = |input_index: usize| RelaxedPlacement {
+            input_index,
+            rotation_deg: 0.0,
+            mirrored: false,
+            translate_x: 30.0,
+            translate_y: 30.0,
+        };
+        let state = RelaxedState {
+            placements: vec![placement(0), placement(1), placement(2)],
+            strip_depth_mm: 200.0,
+        };
+        let piece_index = search.build_piece_index(&state).unwrap();
+        let candidate = placement(0);
+
+        let complete = search
+            .score_placement(&state, 0, &candidate, &piece_index, None)
+            .unwrap();
+        assert_eq!(complete.rows, MovedRows::Complete);
+        assert_eq!(
+            complete.collision_pairs.len(),
+            2,
+            "an unbounded scan must see both partners"
+        );
+
+        let pruned = search
+            .score_placement(&state, 0, &candidate, &piece_index, Some(0.0))
+            .unwrap();
+        assert_eq!(pruned.rows, MovedRows::PrunedAtBound);
+        assert!(
+            pruned.collision_pairs.len() < complete.collision_pairs.len(),
+            "a pruned scan must have stopped short: {} against {}",
+            pruned.collision_pairs.len(),
+            complete.collision_pairs.len()
+        );
+    }
+
+    /// The fused kernel entry answers exactly what the two split entries
+    /// answer: same verdict, same magnitude bits, same reported probes.
+    ///
+    /// This is the equivalence the `fused-pair-query` arm rests on, and it is
+    /// asserted here rather than inferred from the trait's default body,
+    /// because the default body is what a *future* kernel is invited to
+    /// override. A kernel that overrides [`ExplorationKernel::pair_row`] to
+    /// share a traversal has to keep passing this, or the arm stops being a
+    /// measurement of the seam and becomes a change of answer.
+    ///
+    /// The ladder walks from deep overlap out to clear separation so the sweep
+    /// crosses the contact boundary, which is where a fused implementation that
+    /// reordered its work would first disagree.
+    #[test]
+    fn the_fused_pair_row_reproduces_the_split_pair_query() {
+        let first_polygon = square(10.0);
+        let second_polygon = l_shape();
+        let pieces = [
+            GeneralFastPiece {
+                id: "first",
+                polygon: &first_polygon,
+                allow_rotation: true,
+                allow_mirror: false,
+            },
+            GeneralFastPiece {
+                id: "second",
+                polygon: &second_polygon,
+                allow_rotation: true,
+                allow_mirror: false,
+            },
+        ];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::ZeroDegreeOnly,
+            None,
+        )
+        .unwrap();
+        let shape = |index: usize| {
+            catalog
+                .orientations
+                .get(&(catalog.geometry_class_by_input[index], angle_key(0.0), false))
+                .expect("zero-degree surrogate")
+        };
+        let mut kernel = LegacyKernel::default();
+        let mut separated = 0usize;
+        let mut colliding = 0usize;
+        for step in 0..40 {
+            let offset = step as f64 * 0.75;
+            let first = PosedShape::new(shape(0), 20.0, 20.0);
+            let second = PosedShape::new(shape(1), 20.0 + offset, 20.0);
+
+            let mut split_probes = KernelProbes::default();
+            let split_collides = kernel.pair_collides(first, second, &mut split_probes);
+            let split_pressure = split_collides.then(|| kernel.pair_pressure(first, second));
+
+            let mut fused_probes = KernelProbes::default();
+            let fused = kernel.pair_row(first, second, &mut fused_probes);
+
+            assert_eq!(
+                fused.collides(),
+                split_collides,
+                "verdict at offset {offset}"
+            );
+            assert_eq!(fused_probes, split_probes, "probes at offset {offset}");
+            assert_eq!(
+                fused.penalty().to_bits(),
+                split_pressure.unwrap_or(0.0).to_bits(),
+                "magnitude at offset {offset}: fused {:.17e} against split {:?}",
+                fused.penalty(),
+                split_pressure,
+            );
+            if split_collides {
+                colliding += 1;
+            } else {
+                separated += 1;
+            }
+        }
+        // A ladder that never crossed the boundary would pass vacuously.
+        assert!(
+            colliding > 0 && separated > 0,
+            "the ladder must cross contact: {colliding} colliding, {separated} separated"
+        );
     }
 
     /// The proxy row cache is only sound if a hit returns exactly what the
@@ -17755,11 +18101,12 @@ mod tests {
             &mut score,
             0,
             (0, 0.0),
-            PlacementScore {
+            MovedRowDelta {
                 boundary_violations: 0,
                 boundary_loss: 0.0,
                 collision_pairs: Vec::new(),
                 weighted_loss: 0.0,
+                rows: MovedRows::Complete,
             },
             &BTreeMap::new(),
             &mut Vec::new(),

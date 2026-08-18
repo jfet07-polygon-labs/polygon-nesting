@@ -2927,3 +2927,167 @@ would exceed 2^21 cells.
   the remaining gap to a two-second slice.
 
 Evidence: `docs/experiments/fast-constructor-profile-evidence.json`.
+
+## Seam v2: the exact tier leaves the trait, the fused pair query is priced at zero, and the moved row gets a name
+
+Sol's fourth finding is that the kernel seam is not the production seam,
+and it lists seven defects. This stage takes the three that are seam
+shape rather than backend work - the trait declaring both tiers, the
+split pair query, and the untyped tracker delta - and leaves the four
+that are not. It is a pure-seam stage: every gate and every arm is
+bit-identical to the base commit, on both arms of the one flag it adds,
+and the one thing measured came back zero.
+
+### The exact tier is off the generic parameter, mechanically
+
+`ExplorationKernel` declared both tiers, and the convention that kept
+exact answers off a generic parameter was "exact call sites name
+`LEGACY`". A convention is not a seam: nothing stopped a future generic
+function from writing `K::exact_pair_overlaps` and routing a
+publication-authority answer through whatever kernel had been
+substituted.
+
+The trait is now the proxy tier and nothing else. The `f64` Clipper
+collision-polygon build and pair-overlap verdict moved to
+`search::kernel::exact`, a module with no type parameter anywhere in it,
+behind an `ExactAuthority` token whose one field has a type private to
+that module - so the token cannot be constructed outside it, only
+received. Both service functions are private there, so the token is the
+only door, and the crate's one grant is `LegacyKernel::exact_authority`,
+an *inherent* method on the concrete kernel.
+
+That turns the misuse into a compile error. A function generic over
+`K: ExplorationKernel` has no `K::collision_polygon` and no
+`K::exact_pair_overlaps` to call; it cannot reach the grant, because `K`
+is not `LegacyKernel`; and it cannot forge a token to hand to a helper.
+Grepping `exact_authority` now enumerates every exact call site in the
+crate - two in `general_fast`, one in the deep-operator constructor, one
+in the jagua shape conversion. `JaguaKernel` loses its exact tier
+entirely rather than forwarding it, so the refusal to put `f32`, a
+tolerance, or jagua into publication authority stopped being a runtime
+property checked by asking two kernels the same question and became a
+type property.
+
+The honest limit of the mechanism, stated because the previous version of
+this claim overreached: `ExactAuthority::grant` is `pub(super)`, so any
+module *inside* `kernel/` could mint one. What it buys is that no code
+outside that directory can, and that the one grant handed to the rest of
+the crate is a named legacy service.
+
+### The fused pair query: built, measured, declined as a default
+
+The split pair query is a real defect of the seam. Every call site that
+matters asks both questions about the same two operands, so two trait
+entries make every caller present the operands twice and forbid a kernel
+whose two answers share a traversal from exploiting that.
+`ExplorationKernel::pair_row` is the fused entry and it is
+unconditional: it returns a `PairRow` carrying verdict and magnitude,
+and its provided body is today's split in today's order, so a kernel
+that cannot share a traversal inherits today's arithmetic exactly.
+
+Whether the *lane* should call it is a different question, and it is a
+measurement, so it shipped as one. `fused-pair-query` selects between
+two bodies of `resolved_pair_row` that compute the same `f64` from the
+same operands in the same order. Ten-round interleaved A/Bs, arms
+alternating order every round, statistic the per-round paired ratio
+fused/split, two independent samples:
+
+| stream | sample 1 | rounds below 1.0 | sample 2 | rounds below 1.0 |
+|---|---:|---:|---:|---:|
+| mode 22 | 1.007 | 2/10 | **0.998** | 7/10 |
+| mode 0 | 0.994 | 7/10 | **0.999** | 6/10 |
+
+Every median is within 0.7% of parity, every one sits inside its own
+sample's spread, and mode 22 changes sign between the samples. That is
+what a real zero looks like, and it is the reason two samples were taken:
+sample 1 alone would have been written up as a 0.7% regression and
+sample 2 alone as a 0.2% win, and neither statement would have been
+true.
+
+The result is the one the structure predicts. The legacy kernel's
+verdict walks a cell index and its magnitude walks a pole series - two
+disjoint structures built at catalogue time, with nothing between them
+to share - so fusing the call saves one operand presentation and one
+index-ordered swap, and PR5 already established that the arithmetic
+around this loop is not its cost. **The default stays split.** The flag
+stays in the tree, off, as the instrument that priced the entry; the
+entry stays unconditional as the seam a sharing kernel needs.
+
+A measured no is the delivery here, not a consolation for one. The thing
+that would change the answer is not a better fusion but a kernel whose
+two answers come from one traversal, and that kernel is exactly what the
+entry now makes expressible.
+
+### The moved row has a name and a completeness
+
+`PlacementScore` named neither of the two things that matter about it.
+It is `MovedRowDelta`: the delta for one moved piece, which
+`update_score_after_move` consumes and nothing else, which is what makes
+an accepted move cost the moved row rather than the layout.
+
+Two contracts now live on the type rather than being rediscovered at each
+of its eleven producers. Rows are keyed by the index-ordered pair, per
+the row-ownership decision - and the sharp distinction the doc now draws
+is that the row *key* has always been index-ordered unconditionally,
+while the order the operands are *asked* in is not, and only
+`canonical-pair-order` makes the two agree. The type carries the free
+half of that decision; the flag carries the half that costs a
+trajectory.
+
+And completeness is explicit, per the roadmap bullet "only a complete
+result may produce a tracker delta". `MovedRows` distinguishes
+`Complete`, `PrunedAtBound` and `Unscanned`, and the two incomplete cases
+are deliberately not merged because the arguments that keep them out of
+the tracker differ in strength. `PrunedAtBound` is excluded by an
+ordering identity - the bound a scan prunes against is exactly the
+`weighted_loss` of the candidate it must beat, and both comparators order
+on `weighted_loss` first - so it is asserted. `Unscanned` is excluded
+only when the incumbent it is compared against has a finite loss, which
+is weaker, so it is documented and not asserted. A test constructs a
+`PrunedAtBound` delta on purpose, so the assertion cannot pass because
+the state is never reached.
+
+The marker is free: it is written by every producer, read only by a
+`debug_assert` that the release profile compiles out, and branched on
+nowhere. A ten-round interleaved A/B of the mode-22 gate stream against
+the previous commit measured a paired median of 0.992, spread
+0.966-1.018.
+
+### What this stage shipped, and what it did not
+
+Zero engine behaviour. Both arms of the flag reproduce the base-commit
+binary as whole documents on all four gates, the four mode-31 arms and
+the six mode-26 ladder arms - 14 of 14 each, wall-clock and
+build-identity fields removed - with mode 20 at `independentDepthMm`
+206.869 and fingerprint `8a7737381238fa4d`, the three mode-22 records at
+raw 159.09233022733062, 159.07876040364795 and 164.0375677990678 at
+`fa01012af1d559ae`, `e28fba007f8031d4` and `49f094d7e59a9008`, every arm
+`exactValid` and `contractValid`, and failure-reason text agreeing field
+for field. Full release suite green at 1222 tests, plus the 132
+`general_relaxed` tests re-run in a debug build so the new
+`debug_assert` is live rather than compiled out.
+
+Four of Sol's seven bullets are untouched and stay open, because they are
+backend work rather than seam shape:
+
+* `LaneSearch` still fixes `K::Shape = OrientedSurrogate`, so
+  `JaguaKernel` still cannot be substituted into it. That needs the
+  catalogue, the NFP builder and the pose-bounds helper moved behind
+  `ExplorationKernel::Shape`.
+* `PosedShape` still only translates a pre-oriented shape, so
+  continuous-angle operators still require prebuilding every angle
+  variant.
+* The jagua skeleton still builds a `Layout`, container, placed item and
+  moving scratch per pair question. It is a parity scaffold and is still
+  not a candidate engine.
+* `KernelProbes` are still backend-defined, so a jagua "one SAT" charge
+  is still not economically comparable with the legacy collider's, and
+  portfolio work quotas are still not backend-neutral under that
+  definition.
+
+Tracker inheritance remains blocked for the reason the row-ownership
+chapter established rather than for a new one: it needs the magnitude
+class at zero as well as the structural class, and the residue is the
+`f32` dynamic-pole tier, which cannot express an index-ordered pair
+question at its interface. `MovedRowDelta` is the type that inheritance
+will hand around when that tier is fixed; it does not unblock it.
