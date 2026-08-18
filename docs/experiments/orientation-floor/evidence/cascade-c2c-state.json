@@ -1,0 +1,52 @@
+{
+ "label": "c2c",
+ "pin": "/var/lib/t3/tmp/wf87/run/c2b/pins/pin-155.40872811293.json",
+ "raw": "155.4087281129324",
+ "rawFloat": 155.4087281129324,
+ "arms": 164,
+ "fixpoint": true,
+ "byTier": {
+  "A-m22": {
+   "arms": 24,
+   "publications": 24
+  },
+  "B-flat-m33": {
+   "arms": 44,
+   "publications": 30
+  },
+  "B-flat-m32": {
+   "arms": 44,
+   "publications": 27
+  },
+  "C-m31": {
+   "arms": 4
+  },
+  "D-nudge": {
+   "arms": 16,
+   "publications": 15
+  },
+  "F-m26": {
+   "arms": 6,
+   "publications": 6
+  },
+  "E-m34": {
+   "arms": 8,
+   "publications": 8
+  },
+  "G-cross": {
+   "arms": 18,
+   "publications": 18
+  }
+ },
+ "adoptions": [],
+ "rounds": [
+  {
+   "round": 0,
+   "from": "155.4087281129324",
+   "arms": 164,
+   "below": 0,
+   "seconds": 354.05618047714233,
+   "belowTags": []
+  }
+ ]
+}

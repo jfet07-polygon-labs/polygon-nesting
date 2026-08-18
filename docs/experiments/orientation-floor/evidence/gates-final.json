@@ -1,0 +1,57 @@
+{
+ "label": "final",
+ "binary": "/var/lib/t3/tmp/wf87/target-l10/release/examples/general_request_benchmark",
+ "env": {},
+ "gates": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fingerprints": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ],
+   "hit": true,
+   "wallSeconds": 26.30751609802246,
+   "docDigest": "5a4e7bbc45cddaa54717574206b2d2c760796150c70a4075a61bf50bd4c121fb"
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "depth": 159.092,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.174044132232666,
+   "docDigest": "077a3713d0f7e77ec62141d1f51779b5c7ac87ec7e6e8811da6cdae8113fab04"
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "depth": 159.079,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.4465415477752686,
+   "docDigest": "e8f60544525937961394684ad7a6a5c71481cceef76aa6bcf99bea3bf76ef964"
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "depth": 164.038,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.0398833751678467,
+   "docDigest": "9066046e961805048bb63ce1e01641d26597720783e8e23090b9bb1362b4d09b"
+  }
+ },
+ "ALL_PASS": true
+}

@@ -1,0 +1,1036 @@
+{
+ "label": "knudge",
+ "pin": "/var/lib/t3/tmp/wf87/run/c2a/pins/pin-155.41964177680.json",
+ "declaredRaw": "155.4196417768017",
+ "binary": "/var/lib/t3/tmp/wf87/target-l10/release/examples/general_request_benchmark",
+ "ks": [
+  2,
+  3,
+  5,
+  7
+ ],
+ "ds": [
+  0.02,
+  0.05,
+  0.1,
+  0.3
+ ],
+ "modes": [
+  33,
+  31
+ ],
+ "arms": 32,
+ "armsBelow": 0,
+ "rows": [
+  {
+   "tag": "knudge-k2-d0.05-m33",
+   "k": 2,
+   "d": 0.05,
+   "mode": 33,
+   "entryDepth": 155.4137281129324,
+   "published": 155.5637012070554,
+   "publishedRepr": "155.5637012070554",
+   "rawAny": "155.5637012070554",
+   "exactValid": true,
+   "contractValid": true,
+   "attribution": {
+    "variants": 82,
+    "candidates": 10373,
+    "rows": 1594,
+    "finalists": 6,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+      270.31681,
+      0.3125,
+      false
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k2-d0.05-m33.json"
+  },
+  {
+   "tag": "knudge-k3-d0.05-m33",
+   "k": 3,
+   "d": 0.05,
+   "mode": 33,
+   "entryDepth": 155.40299999999996,
+   "published": 155.5637012070554,
+   "publishedRepr": "155.5637012070554",
+   "rawAny": "155.5637012070554",
+   "exactValid": true,
+   "contractValid": true,
+   "attribution": {
+    "variants": 246,
+    "candidates": 30381,
+    "rows": 8125,
+    "finalists": 7,
+    "acceptedVacated": 3,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+      270.31681,
+      0.3125,
+      false
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k3-d0.05-m33.json"
+  },
+  {
+   "tag": "knudge-k5-d0.05-m33",
+   "k": 5,
+   "d": 0.05,
+   "mode": 33,
+   "entryDepth": 155.39290984562933,
+   "published": 155.5637012070554,
+   "publishedRepr": "155.5637012070554",
+   "rawAny": "155.5637012070554",
+   "exactValid": true,
+   "contractValid": true,
+   "attribution": {
+    "variants": 533,
+    "candidates": 65805,
+    "rows": 13379,
+    "finalists": 10,
+    "acceptedVacated": 6,
+    "acceptedAnchorLocal": 4,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+      270.31681,
+      0.3125,
+      false
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k5-d0.05-m33.json"
+  },
+  {
+   "tag": "knudge-k7-d0.05-m33",
+   "k": 7,
+   "d": 0.05,
+   "mode": 33,
+   "entryDepth": 155.3696417768017,
+   "published": 155.58690984562935,
+   "publishedRepr": "155.58690984562935",
+   "rawAny": "155.58690984562935",
+   "exactValid": true,
+   "contractValid": true,
+   "attribution": {
+    "variants": 902,
+    "candidates": 111151,
+    "rows": 31593,
+    "finalists": 16,
+    "acceptedVacated": 11,
+    "acceptedAnchorLocal": 5,
+    "acceptedOrientation": 2,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+      185.95411,
+      0.3125,
+      false
+     ],
+     [
+      "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+      270.31681,
+      0.3125,
+      false
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k7-d0.05-m33.json"
+  },
+  {
+   "tag": "knudge-k2-d0.02-m33",
+   "k": 2,
+   "d": 0.02,
+   "mode": 33,
+   "entryDepth": 155.4137281129324,
+   "published": 155.60664177680172,
+   "publishedRepr": "155.60664177680172",
+   "rawAny": "155.60664177680172",
+   "exactValid": true,
+   "contractValid": true,
+   "attribution": {
+    "variants": 82,
+    "candidates": 10373,
+    "rows": 1508,
+    "finalists": 4,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k2-d0.02-m33.json"
+  },
+  {
+   "tag": "knudge-k3-d0.02-m33",
+   "k": 3,
+   "d": 0.02,
+   "mode": 33,
+   "entryDepth": 155.40299999999996,
+   "published": 155.60664177680172,
+   "publishedRepr": "155.60664177680172",
+   "rawAny": "155.60664177680172",
+   "exactValid": true,
+   "contractValid": true,
+   "attribution": {
+    "variants": 246,
+    "candidates": 30381,
+    "rows": 6551,
+    "finalists": 4,
+    "acceptedVacated": 3,
+    "acceptedAnchorLocal": 2,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k3-d0.02-m33.json"
+  },
+  {
+   "tag": "knudge-k5-d0.02-m33",
+   "k": 5,
+   "d": 0.02,
+   "mode": 33,
+   "entryDepth": 155.3996417768017,
+   "published": 155.60664177680172,
+   "publishedRepr": "155.60664177680172",
+   "rawAny": "155.60664177680172",
+   "exactValid": true,
+   "contractValid": true,
+   "attribution": {
+    "variants": 533,
+    "candidates": 65805,
+    "rows": 11535,
+    "finalists": 6,
+    "acceptedVacated": 6,
+    "acceptedAnchorLocal": 5,
+    "acceptedOrientation": 0,
+    "acceptedStation": 0
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k5-d0.02-m33.json"
+  },
+  {
+   "tag": "knudge-k2-d0.1-m33",
+   "k": 2,
+   "d": 0.1,
+   "mode": 33,
+   "entryDepth": 155.4137281129324,
+   "published": 155.6077012070554,
+   "publishedRepr": "155.6077012070554",
+   "rawAny": "155.6077012070554",
+   "exactValid": true,
+   "contractValid": true,
+   "attribution": {
+    "variants": 82,
+    "candidates": 10373,
+    "rows": 2146,
+    "finalists": 7,
+    "acceptedVacated": 1,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+      270.31681,
+      0.3125,
+      false
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k2-d0.1-m33.json"
+  },
+  {
+   "tag": "knudge-k3-d0.1-m33",
+   "k": 3,
+   "d": 0.1,
+   "mode": 33,
+   "entryDepth": 155.40299999999996,
+   "published": 155.6077012070554,
+   "publishedRepr": "155.6077012070554",
+   "rawAny": "155.6077012070554",
+   "exactValid": true,
+   "contractValid": true,
+   "attribution": {
+    "variants": 246,
+    "candidates": 30381,
+    "rows": 7189,
+    "finalists": 7,
+    "acceptedVacated": 3,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+      270.31681,
+      0.3125,
+      false
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k3-d0.1-m33.json"
+  },
+  {
+   "tag": "knudge-k5-d0.1-m33",
+   "k": 5,
+   "d": 0.1,
+   "mode": 33,
+   "entryDepth": 155.39290984562933,
+   "published": 155.6077012070554,
+   "publishedRepr": "155.6077012070554",
+   "rawAny": "155.6077012070554",
+   "exactValid": true,
+   "contractValid": true,
+   "attribution": {
+    "variants": 533,
+    "candidates": 65805,
+    "rows": 12445,
+    "finalists": 10,
+    "acceptedVacated": 6,
+    "acceptedAnchorLocal": 4,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+      270.31681,
+      0.3125,
+      false
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k5-d0.1-m33.json"
+  },
+  {
+   "tag": "knudge-k7-d0.1-m33",
+   "k": 7,
+   "d": 0.1,
+   "mode": 33,
+   "entryDepth": 155.31964177680172,
+   "published": 155.6077012070554,
+   "publishedRepr": "155.6077012070554",
+   "rawAny": "155.6077012070554",
+   "exactValid": true,
+   "contractValid": true,
+   "attribution": {
+    "variants": 902,
+    "candidates": 109757,
+    "rows": 29564,
+    "finalists": 16,
+    "acceptedVacated": 11,
+    "acceptedAnchorLocal": 5,
+    "acceptedOrientation": 2,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+      185.95411,
+      0.3125,
+      false
+     ],
+     [
+      "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+      270.31681,
+      0.3125,
+      false
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k7-d0.1-m33.json"
+  },
+  {
+   "tag": "knudge-k7-d0.02-m33",
+   "k": 7,
+   "d": 0.02,
+   "mode": 33,
+   "entryDepth": 155.3996417768017,
+   "published": 155.61690984562932,
+   "publishedRepr": "155.61690984562932",
+   "rawAny": "155.61690984562932",
+   "exactValid": true,
+   "contractValid": true,
+   "attribution": {
+    "variants": 902,
+    "candidates": 111151,
+    "rows": 29749,
+    "finalists": 12,
+    "acceptedVacated": 11,
+    "acceptedAnchorLocal": 6,
+    "acceptedOrientation": 1,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+      185.95411,
+      0.3125,
+      false
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k7-d0.02-m33.json"
+  },
+  {
+   "tag": "knudge-k2-d0.02-m31",
+   "k": 2,
+   "d": 0.02,
+   "mode": 31,
+   "entryDepth": 155.4137281129324,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.4137281129324",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k2-d0.02-m31.json"
+  },
+  {
+   "tag": "knudge-k2-d0.05-m31",
+   "k": 2,
+   "d": 0.05,
+   "mode": 31,
+   "entryDepth": 155.4137281129324,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.4137281129324",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k2-d0.05-m31.json"
+  },
+  {
+   "tag": "knudge-k2-d0.1-m31",
+   "k": 2,
+   "d": 0.1,
+   "mode": 31,
+   "entryDepth": 155.4137281129324,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.4137281129324",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k2-d0.1-m31.json"
+  },
+  {
+   "tag": "knudge-k2-d0.3-m33",
+   "k": 2,
+   "d": 0.3,
+   "mode": 33,
+   "entryDepth": 155.4137281129324,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.4137281129324",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {
+    "variants": 1435,
+    "candidates": 181753,
+    "rows": 90536,
+    "finalists": 48,
+    "acceptedVacated": 5,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 12,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k2-d0.3-m33.json"
+  },
+  {
+   "tag": "knudge-k2-d0.3-m31",
+   "k": 2,
+   "d": 0.3,
+   "mode": 31,
+   "entryDepth": 155.4137281129324,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.4137281129324",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k2-d0.3-m31.json"
+  },
+  {
+   "tag": "knudge-k3-d0.02-m31",
+   "k": 3,
+   "d": 0.02,
+   "mode": 31,
+   "entryDepth": 155.40299999999996,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.40299999999996",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k3-d0.02-m31.json"
+  },
+  {
+   "tag": "knudge-k3-d0.05-m31",
+   "k": 3,
+   "d": 0.05,
+   "mode": 31,
+   "entryDepth": 155.40299999999996,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.40299999999996",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k3-d0.05-m31.json"
+  },
+  {
+   "tag": "knudge-k3-d0.1-m31",
+   "k": 3,
+   "d": 0.1,
+   "mode": 31,
+   "entryDepth": 155.40299999999996,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.40299999999996",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k3-d0.1-m31.json"
+  },
+  {
+   "tag": "knudge-k3-d0.3-m33",
+   "k": 3,
+   "d": 0.3,
+   "mode": 33,
+   "entryDepth": 155.40299999999996,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.40299999999996",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {
+    "variants": 1599,
+    "candidates": 201761,
+    "rows": 97179,
+    "finalists": 49,
+    "acceptedVacated": 7,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 12,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k3-d0.3-m33.json"
+  },
+  {
+   "tag": "knudge-k3-d0.3-m31",
+   "k": 3,
+   "d": 0.3,
+   "mode": 31,
+   "entryDepth": 155.40299999999996,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.40299999999996",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k3-d0.3-m31.json"
+  },
+  {
+   "tag": "knudge-k5-d0.02-m31",
+   "k": 5,
+   "d": 0.02,
+   "mode": 31,
+   "entryDepth": 155.3996417768017,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.3996417768017",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k5-d0.02-m31.json"
+  },
+  {
+   "tag": "knudge-k5-d0.05-m31",
+   "k": 5,
+   "d": 0.05,
+   "mode": 31,
+   "entryDepth": 155.39290984562933,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.39290984562933",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k5-d0.05-m31.json"
+  },
+  {
+   "tag": "knudge-k5-d0.1-m31",
+   "k": 5,
+   "d": 0.1,
+   "mode": 31,
+   "entryDepth": 155.39290984562933,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.39290984562933",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k5-d0.1-m31.json"
+  },
+  {
+   "tag": "knudge-k5-d0.3-m33",
+   "k": 5,
+   "d": 0.3,
+   "mode": 33,
+   "entryDepth": 155.39290984562933,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.39290984562933",
+   "exactValid": false,
+   "contractValid": false,
+   "attribution": {
+    "variants": 1968,
+    "candidates": 248501,
+    "rows": 104942,
+    "finalists": 52,
+    "acceptedVacated": 11,
+    "acceptedAnchorLocal": 5,
+    "acceptedOrientation": 12,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k5-d0.3-m33.json"
+  },
+  {
+   "tag": "knudge-k5-d0.3-m31",
+   "k": 5,
+   "d": 0.3,
+   "mode": 31,
+   "entryDepth": 155.39290984562933,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.39290984562933",
+   "exactValid": false,
+   "contractValid": false,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k5-d0.3-m31.json"
+  },
+  {
+   "tag": "knudge-k7-d0.02-m31",
+   "k": 7,
+   "d": 0.02,
+   "mode": 31,
+   "entryDepth": 155.3996417768017,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.3996417768017",
+   "exactValid": false,
+   "contractValid": true,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k7-d0.02-m31.json"
+  },
+  {
+   "tag": "knudge-k7-d0.05-m31",
+   "k": 7,
+   "d": 0.05,
+   "mode": 31,
+   "entryDepth": 155.3696417768017,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.3696417768017",
+   "exactValid": false,
+   "contractValid": false,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k7-d0.05-m31.json"
+  },
+  {
+   "tag": "knudge-k7-d0.1-m31",
+   "k": 7,
+   "d": 0.1,
+   "mode": 31,
+   "entryDepth": 155.31964177680172,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.31964177680172",
+   "exactValid": false,
+   "contractValid": false,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k7-d0.1-m31.json"
+  },
+  {
+   "tag": "knudge-k7-d0.3-m33",
+   "k": 7,
+   "d": 0.3,
+   "mode": 33,
+   "entryDepth": 155.25064627741745,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.25064627741745",
+   "exactValid": false,
+   "contractValid": false,
+   "attribution": {
+    "variants": 2337,
+    "candidates": 293847,
+    "rows": 121254,
+    "finalists": 59,
+    "acceptedVacated": 16,
+    "acceptedAnchorLocal": 6,
+    "acceptedOrientation": 13,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+      185.95411,
+      0.3125,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.13622,
+      -0.00128,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1343,
+      -0.0032,
+      false
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ],
+     [
+      "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+      21.1375,
+      0.0,
+      true
+     ]
+    ]
+   },
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k7-d0.3-m33.json"
+  },
+  {
+   "tag": "knudge-k7-d0.3-m31",
+   "k": 7,
+   "d": 0.3,
+   "mode": 31,
+   "entryDepth": 155.25064627741745,
+   "published": null,
+   "publishedRepr": "None",
+   "rawAny": "155.25064627741745",
+   "exactValid": false,
+   "contractValid": false,
+   "attribution": {},
+   "below": false,
+   "run": "/var/lib/t3/tmp/wf87/run/knudge/runs/knudge-k7-d0.3-m31.json"
+  }
+ ]
+}

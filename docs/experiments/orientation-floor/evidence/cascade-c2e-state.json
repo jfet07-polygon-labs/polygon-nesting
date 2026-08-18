@@ -1,0 +1,187 @@
+{
+ "label": "c2e",
+ "pin": "/var/lib/t3/tmp/wf87/run/c2e/pins/pin-155.33041597700.json",
+ "raw": "155.33041597699957",
+ "rawFloat": 155.33041597699957,
+ "arms": 486,
+ "fixpoint": true,
+ "byTier": {
+  "A-m22": {
+   "arms": 72,
+   "publications": 72
+  },
+  "B-flat-m33": {
+   "arms": 114,
+   "publications": 61,
+   "below": 6
+  },
+  "B-flat-m32": {
+   "arms": 114,
+   "publications": 62
+  },
+  "H-legal-m30": {
+   "arms": 51,
+   "publications": 51
+  },
+  "H-legal-m31": {
+   "arms": 51
+  },
+  "C-m31": {
+   "arms": 4
+  },
+  "D-nudge": {
+   "arms": 48,
+   "publications": 48,
+   "below": 1
+  },
+  "F-m26": {
+   "arms": 6,
+   "publications": 6
+  },
+  "E-m34": {
+   "arms": 8,
+   "publications": 8
+  },
+  "G-cross": {
+   "arms": 18,
+   "publications": 18
+  }
+ },
+ "adoptions": [
+  {
+   "round": 0,
+   "tier": "B-flat-m33",
+   "tag": "r0-flat0.001-m33-p0.05",
+   "from": "155.33181307831444",
+   "to": "155.33141597699955",
+   "delta": -0.00039710131488845946,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2e/pins/pin-155.33141597700.json",
+   "sha256": "8830f45c50ebba817a5755477160b24c9bace5e8acf812180826f89ec6fb9ab1",
+   "fingerprint": "0b7aed434ca4f1cdf4432d2ea560b251e25b4de14f4406459c2ea7017c981cfa",
+   "attribution": {
+    "variants": 246,
+    "candidates": 18040,
+    "rows": 8901,
+    "finalists": 8,
+    "acceptedVacated": 3,
+    "acceptedAnchorLocal": 0,
+    "acceptedOrientation": 2,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
+      108.02451,
+      0.0032,
+      false
+     ],
+     [
+      "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+      270.12803,
+      0.0,
+      true
+     ]
+    ]
+   },
+   "alsoBelow": 2
+  },
+  {
+   "round": 1,
+   "tier": "B-flat-m33",
+   "tag": "r1-flat0.002-m33-p0.05",
+   "from": "155.33141597699955",
+   "to": "155.33041597699957",
+   "delta": -0.0009999999999763531,
+   "pin": "/var/lib/t3/tmp/wf87/run/c2e/pins/pin-155.33041597700.json",
+   "sha256": "67bef07c498ca6d979ccd37e0191d4ec9255edd8d262f2f1c07108e1feebf002",
+   "fingerprint": "77965c9fbb9ebf783cf54bf6fcfe47e86297f5ee1453f0e993bbba9b24237fb2",
+   "attribution": {
+    "variants": 369,
+    "candidates": 38417,
+    "rows": 3354,
+    "finalists": 11,
+    "acceptedVacated": 5,
+    "acceptedAnchorLocal": 1,
+    "acceptedOrientation": 2,
+    "acceptedStation": 0,
+    "acceptedAngles": [
+     [
+      "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+      185.64353,
+      -0.00128,
+      false
+     ],
+     [
+      "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+      43.629012,
+      0.008,
+      false
+     ]
+    ]
+   },
+   "alsoBelow": 3
+  }
+ ],
+ "rounds": [
+  {
+   "round": 0,
+   "from": "155.33181307831444",
+   "arms": 186,
+   "below": 3,
+   "seconds": 345.0185766220093,
+   "belowTags": [
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.001-m33-p0.05",
+     "raw": "155.33141597699955"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.0005-m33-p0.05",
+     "raw": "155.33159073863078"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r0-flat0.0005-m33-p2.0",
+     "raw": "155.33159073863078"
+    }
+   ]
+  },
+  {
+   "round": 1,
+   "from": "155.33141597699955",
+   "arms": 150,
+   "below": 4,
+   "seconds": 158.60108160972595,
+   "belowTags": [
+    {
+     "tier": "B-flat-m33",
+     "tag": "r1-flat0.002-m33-p0.05",
+     "raw": "155.33041597699957"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r1-flat0.002-m33-p2.0",
+     "raw": "155.33041597699957"
+    },
+    {
+     "tier": "B-flat-m33",
+     "tag": "r1-flat0.0025-m33-p0.05",
+     "raw": "155.33041597699957"
+    },
+    {
+     "tier": "D-nudge",
+     "tag": "r1-nudge-r1-d0.002-m33",
+     "raw": "155.33041597699957"
+    }
+   ]
+  },
+  {
+   "round": 2,
+   "from": "155.33041597699957",
+   "arms": 150,
+   "below": 0,
+   "seconds": 138.26800203323364,
+   "belowTags": []
+  }
+ ]
+}

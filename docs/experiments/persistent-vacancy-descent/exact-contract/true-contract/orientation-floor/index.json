@@ -1,0 +1,247 @@
+[
+ {
+  "pin": "pinned-fs-155.42197.json",
+  "sha256": "a548971271535fa1c370124b658f197d6a09fbdaa79bcceca52d8f9313d60db3",
+  "fingerprint": "c8e85bf8e105e6ec757350e197ca3b9b8bf15d828ca07b9e4baf51beb3eac002",
+  "independentDepthMm": 155.422,
+  "source": "/var/lib/t3/tmp/wf87/pins/pinned-fs-155.42197.json"
+ },
+ {
+  "pin": "pinned-fs-155.41964177680.json",
+  "sha256": "2838e844974bced52fc1b7b9de35f79325677a8cd029bdaba50bfefa9f939cc9",
+  "fingerprint": "018bcbb25017b8094a98bdf87070afb41727b1eb1fb25baf16594f67ad201475",
+  "independentDepthMm": 155.42,
+  "source": "/var/lib/t3/tmp/wf87/run/c2a/pins/pin-155.41964177680.json"
+ },
+ {
+  "pin": "pinned-fs-155.41373.json",
+  "sha256": "d1b50354011b7834e8c8e65cde253d1df15a0bab281ae72737e023596328fd41",
+  "fingerprint": "d801b0a45584bdd348ff253e29b2364429f1e6e09e104f1b410b161046b0777f",
+  "independentDepthMm": 155.414,
+  "source": "/var/lib/t3/tmp/wf87/pins/pinned-fs-155.41373.json"
+ },
+ {
+  "pin": "pinned-fs-155.40872811293.json",
+  "sha256": "a849d84cfef03c9a21959792b06a3108d2c659572fcdaedc969d809015825267",
+  "fingerprint": "96652639798c2f5c6e47ff72e38946c41021d140c98cb69dfaa2863e674744ad",
+  "independentDepthMm": 155.409,
+  "source": "/var/lib/t3/tmp/wf87/run/c2b/pins/pin-155.40872811293.json"
+ },
+ {
+  "pin": "pinned-fs-155.39673.json",
+  "sha256": "71318108aa9a144d642a14665fcf0e2dc13e884921c0b2523a4bceba1cb79fb2",
+  "fingerprint": "24a289527473391ccc7dc6a46d2fc4ab828939686f382cab6fc8aa49c6a4df33",
+  "independentDepthMm": 155.397,
+  "source": "/var/lib/t3/tmp/wf87/pins/pinned-fs-155.39673.json"
+ },
+ {
+  "pin": "pinned-fs-155.38372811293.json",
+  "sha256": "20d161945ba2e738089dca7d0246876c1fa20d06dfce8179672358b10396e6f8",
+  "fingerprint": "2ccc8cf142947f95d98d3c0e5cba4275677996411a7182a1208a69db2391c533",
+  "independentDepthMm": 155.384,
+  "source": "/var/lib/t3/tmp/wf87/run/c2d/pins/pin-155.38372811293.json"
+ },
+ {
+  "pin": "pinned-fs-155.37372811293.json",
+  "sha256": "88ae68b5bf2815179ae404d206f964376a7f75a9eca8446506b800cba51f299f",
+  "fingerprint": "f552c5e48845756cfda9d2afcfb4b385567d50570509f374e5f114de4b459bdf",
+  "independentDepthMm": 155.374,
+  "source": "/var/lib/t3/tmp/wf87/run/c2d/pins/pin-155.37372811293.json"
+ },
+ {
+  "pin": "pinned-fs-155.36572811293.json",
+  "sha256": "e095f459f0a8adf2b6b2e46345520cb669f2157c0049d215a963dc62b3ac27f5",
+  "fingerprint": "e59121fe5ad83b9d3523e5884378844d9347dd957ecd7e5ff183df643842adbf",
+  "independentDepthMm": 155.366,
+  "source": "/var/lib/t3/tmp/wf87/run/c2d/pins/pin-155.36572811293.json"
+ },
+ {
+  "pin": "pinned-fs-155.36072811293.json",
+  "sha256": "960e91fc81a3310ca4cd8091d4bfff24c813fc40d1397e6a1b01dcd7bd20fd62",
+  "fingerprint": "01627438f8ac59be7110fb3e97cef8904058f432dc3a7a7e986a6e54f11f596b",
+  "independentDepthMm": 155.361,
+  "source": "/var/lib/t3/tmp/wf87/run/c2d/pins/pin-155.36072811293.json"
+ },
+ {
+  "pin": "pinned-fs-155.35272811293.json",
+  "sha256": "6ef32a3cfab9a043e752ddcb0589215eac08b65e8138e1bca257d9567152d049",
+  "fingerprint": "5545c302f4bb1e444fde94aa8c9b13c368a01928d49f5518ba09ce18352309b8",
+  "independentDepthMm": 155.353,
+  "source": "/var/lib/t3/tmp/wf87/run/c2d/pins/pin-155.35272811293.json"
+ },
+ {
+  "pin": "pinned-fs-155.35181307831.json",
+  "sha256": "6257afb3ae69574bd0257879029d1441c4f566c274dfeea24e5a52a63e66eae3",
+  "fingerprint": "957b7bf6b820cc064c92f56c5eff35369ac4ef0ff6b868b9d90397e68c1b4fd6",
+  "independentDepthMm": 155.352,
+  "source": "/var/lib/t3/tmp/wf87/run/c2d/pins/pin-155.35181307831.json"
+ },
+ {
+  "pin": "pinned-fs-155.34181307831.json",
+  "sha256": "068396b6a9f3d4a8ecfaac696feba9196f370d9f8c08e2e180c2b93922c9be1d",
+  "fingerprint": "ed04e6304c378ae2a6209138be6b38dc05938a4b2dceeb09b235566ea8402d0f",
+  "independentDepthMm": 155.342,
+  "source": "/var/lib/t3/tmp/wf87/run/c2d/pins/pin-155.34181307831.json"
+ },
+ {
+  "pin": "pinned-fs-155.33681307831.json",
+  "sha256": "d27b2713bc4ad48db3b5a2d9a70abc22616cfbfb7123e0d2aa9da14d9cb6cdd4",
+  "fingerprint": "02a6fa8daa71c8e3b4cd59277ca30927d22c90131c81839046c929a109c986cb",
+  "independentDepthMm": 155.337,
+  "source": "/var/lib/t3/tmp/wf87/run/c2d/pins/pin-155.33681307831.json"
+ },
+ {
+  "pin": "pinned-fs-155.33281307831.json",
+  "sha256": "54e4bd1aeb0bf98136783e65649271d2abdbe4f32a1cc4534f89222029576e09",
+  "fingerprint": "e8cd8e5d99356f1448f063adce4676136def4fa8dc27cad872f6b23c2b522a09",
+  "independentDepthMm": 155.333,
+  "source": "/var/lib/t3/tmp/wf87/run/c2d/pins/pin-155.33281307831.json"
+ },
+ {
+  "pin": "pinned-fs-155.33181307831.json",
+  "sha256": "2b572597cb6573309cceec2ab78879a2d70d3f0086d4718a0425b8eb411292dd",
+  "fingerprint": "08a7c4136e0e23067b5e7ca99390a4f87b0826fc12a9a444ca4bb8b46c0d3f98",
+  "independentDepthMm": 155.332,
+  "source": "/var/lib/t3/tmp/wf87/run/c2d/pins/pin-155.33181307831.json"
+ },
+ {
+  "pin": "pinned-fs-155.33141597700.json",
+  "sha256": "8830f45c50ebba817a5755477160b24c9bace5e8acf812180826f89ec6fb9ab1",
+  "fingerprint": "0b7aed434ca4f1cdf4432d2ea560b251e25b4de14f4406459c2ea7017c981cfa",
+  "independentDepthMm": 155.331,
+  "source": "/var/lib/t3/tmp/wf87/run/c2e/pins/pin-155.33141597700.json"
+ },
+ {
+  "pin": "pinned-fs-155.33041597700.json",
+  "sha256": "67bef07c498ca6d979ccd37e0191d4ec9255edd8d262f2f1c07108e1feebf002",
+  "fingerprint": "77965c9fbb9ebf783cf54bf6fcfe47e86297f5ee1453f0e993bbba9b24237fb2",
+  "independentDepthMm": 155.33,
+  "source": "/var/lib/t3/tmp/wf87/run/c2e/pins/pin-155.33041597700.json"
+ },
+ {
+  "pin": "pinned-fs-155.32981307831.json",
+  "sha256": "d2f4b8686194f055f62117c84b39ac69bcaf8838d5b7336e6304434fde9f4334",
+  "fingerprint": "f4d6f0c5fe3447a42d6d8b07ec86d3a8fc7e67ec007682abbe852230ebc5e4ab",
+  "independentDepthMm": 155.33,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.32981307831.json"
+ },
+ {
+  "pin": "pinned-fs-155.32899523872.json",
+  "sha256": "c54a72570ba56acfcc8eb28f330719b52b05ef6d3a8ee3f841f70ce97362fe70",
+  "fingerprint": "2d060226ed56aea7de5ad9be3df6b81ad9b8659ae8f1bb7b9013932dfee534ea",
+  "independentDepthMm": 155.329,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.32899523872.json"
+ },
+ {
+  "pin": "pinned-fs-155.32763453787.json",
+  "sha256": "f929e7fb52ed45eefd2fc2e0b7f0c0882d4a773736081cd4a7b031163cf0f76b",
+  "fingerprint": "eac23737a0371eae08b4b1594535e992bbdb833ef6f4818c83ed0697e95df81c",
+  "independentDepthMm": 155.328,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.32763453787.json"
+ },
+ {
+  "pin": "pinned-fs-155.32463453787.json",
+  "sha256": "b27efadcfaa38662959ba92ba3f2ee77b2845e623ad538e500eafbf6f2ace238",
+  "fingerprint": "c032f71cacd7e584ad6cd883c9a212e26d11fbc58359fa8155bb76f5d53aabb6",
+  "independentDepthMm": 155.325,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.32463453787.json"
+ },
+ {
+  "pin": "pinned-fs-155.32363453787.json",
+  "sha256": "d1c17730453002f7617181f6d4d8b2533fd7511f9f743a4983ea6d1c6be9b75b",
+  "fingerprint": "3b2413ef1582e473d01669afcb4f815912ca5da20b12ef754d7404b86290cd00",
+  "independentDepthMm": 155.324,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.32363453787.json"
+ },
+ {
+  "pin": "pinned-fs-155.32063453787.json",
+  "sha256": "26c1f614249747f9b4441308a61431f7e865bf9887485a4e418775b2393d7050",
+  "fingerprint": "c1361acfdc244c54d979617e96d4a61d44aa7ebf7fa9d2f193f95b56df40e2ba",
+  "independentDepthMm": 155.321,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.32063453787.json"
+ },
+ {
+  "pin": "pinned-fs-155.31763453787.json",
+  "sha256": "decc672cbc31b0eb357421c5c8d4f91a81206410225d1f188899885e93fd4c33",
+  "fingerprint": "281d836db9d399649f640fd57bb412f33005ad4a527ebaa1ad1b2bc23848eca2",
+  "independentDepthMm": 155.318,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.31763453787.json"
+ },
+ {
+  "pin": "pinned-fs-155.31126417741.json",
+  "sha256": "f68b0461673091ba0b994f8afeb4d0cef1d6f3915f84c35c3f57b03e316f56e2",
+  "fingerprint": "86c71ced2c1285721004c1d2ae99bc5bfdfb64725b9fb143dd4ba3a9730bf162",
+  "independentDepthMm": 155.311,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.31126417741.json"
+ },
+ {
+  "pin": "pinned-fs-155.30288952529.json",
+  "sha256": "3d9675ed0fe0b3b1e9336be6ffb56f15f6e05e8228230de2f92780bc62f283e6",
+  "fingerprint": "6daa6c3a89b8e9593722bb7731ccca1e50c752bf879cbd42a88b6457d43e7d39",
+  "independentDepthMm": 155.303,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.30288952529.json"
+ },
+ {
+  "pin": "pinned-fs-155.29650956356.json",
+  "sha256": "768c179909d8b59318194094194e359d7626c83c57bb522fd4d6702732ae49a6",
+  "fingerprint": "2e8e912aa37cc340b4ce1d642a51e3d534bbeb8a701626b285040c6cff1b6578",
+  "independentDepthMm": 155.297,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.29650956356.json"
+ },
+ {
+  "pin": "pinned-fs-155.28812529598.json",
+  "sha256": "6bc4fe03b6d4f4d399caae29f67ef46d43910f2f136c242d39b9bd06995401d9",
+  "fingerprint": "5294b4439b384544e05a4df6806f498cfa45a4bfebf30a6069fdf29e5c14efd8",
+  "independentDepthMm": 155.288,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.28812529598.json"
+ },
+ {
+  "pin": "pinned-fs-155.28221538414.json",
+  "sha256": "bc915cfeb2f6b51b40f6402f178e343cb11b124a2faebbac167b31c4d9680c3e",
+  "fingerprint": "9fcc22850a5a8cb2789129d653ca90a8313e82f25c54f5689cb16777ca5619e0",
+  "independentDepthMm": 155.282,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.28221538414.json"
+ },
+ {
+  "pin": "pinned-fs-155.27882509466.json",
+  "sha256": "bde3bd6a814294fbe27181ad7c5d4c4eda97e354437780e1221d9042319cb063",
+  "fingerprint": "6baf876ea08ce42d91e04e040a424136277bb386663cc74de0bd01fc9607bd54",
+  "independentDepthMm": 155.279,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.27882509466.json"
+ },
+ {
+  "pin": "pinned-fs-155.27142950833.json",
+  "sha256": "eb1ce706e06160f4281485f075a4637f9ed35e331c3649c4d387c539a1a381df",
+  "fingerprint": "633b3ad485aefda615683a2b7a12e7cbaf35746868082099206ee46b97b92d39",
+  "independentDepthMm": 155.271,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.27142950833.json"
+ },
+ {
+  "pin": "pinned-fs-155.26671615202.json",
+  "sha256": "40347c40e0102f5fb0a360e2086880f72093fb13241178ad05ff0ba69b32ca5d",
+  "fingerprint": "5903cfa2860cf66bd82f03c58827bb87d01a4dee852958bda837a72987b0a3fe",
+  "independentDepthMm": 155.267,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.26671615202.json"
+ },
+ {
+  "pin": "pinned-fs-155.26642950833.json",
+  "sha256": "221d30b19244fa52371de13d1a654e6ed51375c75cc23f3a53bd744214c7324c",
+  "fingerprint": "ca9b9d1b9ccfff83b8c11c3c0afd06156a2f874edd20dc62c529d5569040f787",
+  "independentDepthMm": 155.266,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.26642950833.json"
+ },
+ {
+  "pin": "pinned-fs-155.26444327522.json",
+  "sha256": "e7cdb45cfac632753995d05e78c43efa7835039825c816f6bb89d6fe114979ca",
+  "fingerprint": "9ec81ee459e3aeac5e639299bdcbf43dcad121e4b40d1396d478d2e83b16168d",
+  "independentDepthMm": 155.264,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.26444327522.json"
+ },
+ {
+  "pin": "pinned-fs-155.26442950833.json",
+  "sha256": "111082132fa7610a1000dd96b36f13e8f9282c28a4006e2333c485b7066ad7b7",
+  "fingerprint": "82eaa9762e0df399537226f34490e59d658867a5dec0f4b4ea67537d927a0c72",
+  "independentDepthMm": 155.264,
+  "source": "/var/lib/t3/tmp/wf87/run/c2f/pins/pin-155.26442950833.json"
+ }
+]
