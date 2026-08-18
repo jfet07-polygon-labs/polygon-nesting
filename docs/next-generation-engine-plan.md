@@ -4238,3 +4238,144 @@ enough seeds that the control publishes.
 
 Evidence, drivers, the per-ladder/per-rung/per-arm tables and the abort
 census: `docs/experiments/mode26-rung-anatomy/`.
+
+## PR10 — One neighbour visit in seven is removable, and it costs 8.968 mm; the row buffer is 15% of the allocator and buys nothing
+
+The relaxed-lane census left two levers sized and unbuilt: the class (B)
+scan ordering, and the class (A) allocation. Both were built behind
+default-off flags at `57ad992` and measured. **The verdicts are
+opposite, and neither is the one the sizing note expected.**
+
+### The scan ordering: rejected, and it removes the most work of anything measured in this lane
+
+`relaxed-scan-order-proxy` sorts the broad phase's neighbours by the
+squared distance between the two placements' translation origins before
+the scan, instead of taking them in the ascending piece index
+`PieceQueryScratch::query_into` leaves them in. Near neighbours are asked
+first, so the caller's upper bound — which already ends 82% of scans — is
+crossed on fewer of them.
+
+It works, on its own terms. `pieceBroadPhaseProbes` falls from
+15,562,760 to 13,255,792 on m20 g1 (**0.8518**) and from 19,264,010 to
+16,313,072 on each mode-22 gate (**0.8468**). One neighbour visit in
+seven disappears. `satTests` falls 2.9-3.7%, `cellIndexProbes` 0.8-1.2%,
+`surrogateEvaluations` 0.5% and `acceptedMoves` 0.3%.
+
+And it is rejected on both of the things a class (B) lever has to buy:
+
+* **Quality.** Sixteen matched cells — four mode-20 target salts x four
+  relaxed seeds, both arms descending the *same* pinned parent on the
+  identical mode-22 schedule. Fifteen cells are bit-identical, raw depth
+  and placement fingerprint alike. The sixteenth loses **8.968 mm**
+  (170.648 → 179.616, salt 320.000, seed 1). **Zero cells improve.**
+  Every cell in both arms is `exactValid` and `contractValid`, so the
+  designed falsifier is not what sinks it — the ledger is.
+* **Speed.** Paired interleaved coordinator A/Bs at
+  `work=20000000`: 0.9867 over 14 rounds in a quiet window, 1.0100 over
+  10 rounds in a loaded one, both ranges straddling parity. **The two
+  campaigns disagree in sign.** Deleting one visit in seven does not move
+  the wall clock, which says the per-neighbour cost saved is close to the
+  per-scan cost of the keying pass and the sort that save it.
+
+At an identical *work* budget the lever cannot convert speed into search
+— the budget is in work units — so the coordinator run measures quality
+alone, and quality there is exactly neutral: five seeds, five identical
+incumbents, five identical published fingerprints, with the publication
+work ordinals differing by up to 8,228 units, so the arms did diverge and
+reconverge.
+
+### The methodological finding: the four pinned gates cannot see this lever
+
+**Every one of the four pinned values reproduces under the flag** —
+206.869/`8a7737381238fa4d`, 159.09233022733062/`fa01012af1d559ae`,
+159.07876040364795/`e28fba007f8031d4`,
+164.0375677990678/`49f094d7e59a9008`, all `exactValid` and
+`contractValid`, and the gate-1 depth list identical element for element
+— while nine document fields move on g1 and sixteen on each mode-22
+gate, including `acceptedMoves`.
+
+That is not evidence for the lever. It is evidence that the four pinned
+replays are attractors: the counters prove the search took a different
+path and arrived at the same place. **A regression gate that a lever
+deleting 15% of the neighbour visits cannot move is not measuring that
+lever**, and the same warning applies to every future class (B)
+candidate. The 16-cell matched-parent gate resolved exactly one cell out
+of sixteen, and that resolution was negative; the endpoint the census
+designed has very little power, and the honest way to report it is
+"fifteen ties, one loss, no wins", not "neutral".
+
+### The allocation lever: bit-identical, 15% of the allocator, and parity
+
+`relaxed-row-buffer-reuse` recycles the candidate scorer's collision-row
+buffer. The scorer wrote `Vec::new()` per call for ~1.80 rows and the
+refinement loop then retired **two** buffers per iteration — the loser of
+the paired probe, and the incumbent it displaced — straight back to the
+allocator. The flag hands both to a four-slot per-lane pool.
+
+The structural change the sizing note feared was not needed:
+`MovedRowDelta` still owns a plain `Vec`, and only the two points where
+the refinement loop *drops* one had to change. It is bit-identical by
+construction — the buffer is cleared, the same values are pushed in the
+same order, the terminal sort runs on the same slice, and nothing reads a
+capacity — and bit-identical in fact: **all four gates, 3,271 and 3,252
+fields compared, 6 differing, the executable hash and the five wall-clock
+quartiles.** No work diagnostic moves.
+
+Allocations removed, `profiling-allocator` builds, gross demand:
+
+| stream | default | `+reuse` | removed | per candidate scan |
+|---|---:|---:|---:|---:|
+| m22 g2 | 50,455,078 | 42,881,288 | **7,573,790 (15.01%)** | 0.695 |
+| m22 g2 bytes | 8,406,034,810 | 7,671,679,301 | 734,355,509 (8.74%) | |
+| m20 g1 | 115,375,028 | 112,544,207 | 2,830,821 (2.45%) | 0.692 |
+| m20 g1 bytes | 24,341,428,590 | 24,065,306,857 | 276,121,733 (1.13%) | |
+
+The two streams agree to **0.4% on the per-scan rate** across a 2.7x
+range of scan counts, two operators and two completely different
+allocator mixes, which is what identifies the removed traffic as exactly
+the refinement loop's two retired buffers. The m22 baseline reproduces
+the census figure to two allocations in fifty million.
+
+**And the wall clock does not move**: 1.0014 (m20 g1, 14 rounds), 1.0004
+(m22 g2, 16 rounds), 0.9976 (coordinator at `work=20000000`, 16 rounds),
+with 5/14, 8/16 and 10/16 rounds below parity. The arithmetic agrees
+rather than contradicting: 7.57M allocation/free pairs at a
+tcache-resident 20-30 ns is 0.15-0.23 s *thread-summed*, and the m22 g2
+stream runs about 4.8 lane-seconds per wall second, so the whole prize is
+30-50 ms on a 3.17 s stream — **1.0-1.5%, inside this box's per-round
+spread.**
+
+So the lever is kept as a default-off flag rather than proposed for the
+default build: it is free to turn on, it removes real allocator traffic,
+and it is not a speed claim on this hardware.
+
+### Two things this chapter corrects
+
+* The sizing note credited part of the per-scan allocation to
+  `search_piece` cloning the row vector twice. **Both clone sites are
+  unreachable on every stream measured here** — one is inside
+  `if self.uses_directional_pressure()`, which the default backend never
+  satisfies, and the other inside `if ENABLE_NFP_AXIS_MINIMIZER`, which is
+  a `const false`.
+* The m20 g1 allocation total is **115.4M, not the 72.2M** quoted before:
+  that figure was taken on the `fast-constructor-*` stream and this one on
+  the plain `jagua-experimental` build. Per-scan rate, not total, is the
+  comparable statistic across builds.
+
+### What this leaves
+
+The relaxed lane's remaining semantics-preserving levers are the
+fixed-side catalogue descents (15.4M/40.8M/69.4M, needing a slab and a
+per-piece slot memo) and the `weights` `BTreeMap` descent per colliding
+row. Both are class (A) and both are now known to be competing against a
+noise floor of about 1.5% per measurement on this box, so neither is
+worth building until there is a stream where the lane is a larger share
+of the wall than mode 22's is, or a quieter box. **The class (B) door in
+this lane is closed**: the one ordering that was cheap enough to be worth
+trying removes a seventh of the work, changes the trajectory, and pays
+8.968 mm for it.
+
+Evidence, drivers, the sixteen quality cells, the coordinator work-budget
+cells, the allocation counts and both timing campaigns with their
+per-round rows: `docs/experiments/relaxed-lane-residual/` and
+`evidence-stage2.json`.
