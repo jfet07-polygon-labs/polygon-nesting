@@ -1,0 +1,493 @@
+{
+ "binary": "/var/lib/t3/tmp/pr7-bench-measure",
+ "seed": 1,
+ "rounds": 10,
+ "rows": [
+  {
+   "round": 0,
+   "ratio": 1.0540393649107647,
+   "outside": {
+    "medianElapsedMs": 6052.532252,
+    "engineDepthMm": 179.69,
+    "fingerprint": null
+   },
+   "inside": {
+    "medianElapsedMs": 6379.607251,
+    "engineDepthMm": 179.69,
+    "fingerprint": null,
+    "phases": [
+     {
+      "name": "m0",
+      "skipped": false,
+      "elapsedSeconds": 6.378673936
+     },
+     {
+      "name": "basins",
+      "skipped": true,
+      "elapsedSeconds": 3.49999999649242e-07
+     },
+     {
+      "name": "descent",
+      "skipped": true,
+      "elapsedSeconds": 3.2199999999704687e-07
+     },
+     {
+      "name": "crossover",
+      "skipped": true,
+      "elapsedSeconds": 3.7200000058135174e-07
+     },
+     {
+      "name": "compression",
+      "skipped": true,
+      "elapsedSeconds": 3.120000000578216e-07
+     },
+     {
+      "name": "drain",
+      "skipped": true,
+      "elapsedSeconds": 1.6999999985500835e-07
+     }
+    ],
+    "archiveOccupancy": 2
+   }
+  },
+  {
+   "round": 1,
+   "ratio": 0.9939955197673033,
+   "inside": {
+    "medianElapsedMs": 5527.591774,
+    "engineDepthMm": 179.69,
+    "fingerprint": null,
+    "phases": [
+     {
+      "name": "m0",
+      "skipped": false,
+      "elapsedSeconds": 5.525439604
+     },
+     {
+      "name": "basins",
+      "skipped": true,
+      "elapsedSeconds": 2.3800000015228306e-07
+     },
+     {
+      "name": "descent",
+      "skipped": true,
+      "elapsedSeconds": 2.5499999978251253e-07
+     },
+     {
+      "name": "crossover",
+      "skipped": true,
+      "elapsedSeconds": 2.370000000695427e-07
+     },
+     {
+      "name": "compression",
+      "skipped": true,
+      "elapsedSeconds": 3.7399999985865406e-07
+     },
+     {
+      "name": "drain",
+      "skipped": true,
+      "elapsedSeconds": 2.040000000036457e-07
+     }
+    ],
+    "archiveOccupancy": 2
+   },
+   "outside": {
+    "medianElapsedMs": 5560.982583999999,
+    "engineDepthMm": 179.69,
+    "fingerprint": null
+   }
+  },
+  {
+   "round": 2,
+   "ratio": 1.0182117833147508,
+   "outside": {
+    "medianElapsedMs": 5507.572612,
+    "engineDepthMm": 179.69,
+    "fingerprint": null
+   },
+   "inside": {
+    "medianElapsedMs": 5607.875331,
+    "engineDepthMm": 179.69,
+    "fingerprint": null,
+    "phases": [
+     {
+      "name": "m0",
+      "skipped": false,
+      "elapsedSeconds": 5.603944234
+     },
+     {
+      "name": "basins",
+      "skipped": true,
+      "elapsedSeconds": 2.3199999965584084e-07
+     },
+     {
+      "name": "descent",
+      "skipped": true,
+      "elapsedSeconds": 2.8100000015740534e-07
+     },
+     {
+      "name": "crossover",
+      "skipped": true,
+      "elapsedSeconds": 2.6399999963899745e-07
+     },
+     {
+      "name": "compression",
+      "skipped": true,
+      "elapsedSeconds": 3.350000001844933e-07
+     },
+     {
+      "name": "drain",
+      "skipped": true,
+      "elapsedSeconds": 1.8099999987697402e-07
+     }
+    ],
+    "archiveOccupancy": 2
+   }
+  },
+  {
+   "round": 3,
+   "ratio": 1.0610496214388785,
+   "inside": {
+    "medianElapsedMs": 5756.590701,
+    "engineDepthMm": 179.69,
+    "fingerprint": null,
+    "phases": [
+     {
+      "name": "m0",
+      "skipped": false,
+      "elapsedSeconds": 5.754208532
+     },
+     {
+      "name": "basins",
+      "skipped": true,
+      "elapsedSeconds": 7.389999998608232e-07
+     },
+     {
+      "name": "descent",
+      "skipped": true,
+      "elapsedSeconds": 4.280000007739204e-07
+     },
+     {
+      "name": "crossover",
+      "skipped": true,
+      "elapsedSeconds": 2.830000003228861e-07
+     },
+     {
+      "name": "compression",
+      "skipped": true,
+      "elapsedSeconds": 3.8099999954965824e-07
+     },
+     {
+      "name": "drain",
+      "skipped": true,
+      "elapsedSeconds": 6.420000007167914e-07
+     }
+    ],
+    "archiveOccupancy": 2
+   },
+   "outside": {
+    "medianElapsedMs": 5425.373691,
+    "engineDepthMm": 179.69,
+    "fingerprint": null
+   }
+  },
+  {
+   "round": 4,
+   "ratio": 1.0083873928057403,
+   "outside": {
+    "medianElapsedMs": 5724.930394,
+    "engineDepthMm": 179.69,
+    "fingerprint": null
+   },
+   "inside": {
+    "medianElapsedMs": 5772.947634,
+    "engineDepthMm": 179.69,
+    "fingerprint": null,
+    "phases": [
+     {
+      "name": "m0",
+      "skipped": false,
+      "elapsedSeconds": 5.770864938
+     },
+     {
+      "name": "basins",
+      "skipped": true,
+      "elapsedSeconds": 6.660000000380251e-07
+     },
+     {
+      "name": "descent",
+      "skipped": true,
+      "elapsedSeconds": 2.600000001962144e-07
+     },
+     {
+      "name": "crossover",
+      "skipped": true,
+      "elapsedSeconds": 3.4600000020645894e-07
+     },
+     {
+      "name": "compression",
+      "skipped": true,
+      "elapsedSeconds": 6.130000000936775e-07
+     },
+     {
+      "name": "drain",
+      "skipped": true,
+      "elapsedSeconds": 7.130000003741088e-07
+     }
+    ],
+    "archiveOccupancy": 2
+   }
+  },
+  {
+   "round": 5,
+   "ratio": 1.1306285956721183,
+   "inside": {
+    "medianElapsedMs": 6063.946288,
+    "engineDepthMm": 179.69,
+    "fingerprint": null,
+    "phases": [
+     {
+      "name": "m0",
+      "skipped": false,
+      "elapsedSeconds": 6.060844889
+     },
+     {
+      "name": "basins",
+      "skipped": true,
+      "elapsedSeconds": 4.3899999990770766e-07
+     },
+     {
+      "name": "descent",
+      "skipped": true,
+      "elapsedSeconds": 3.570000002284246e-07
+     },
+     {
+      "name": "crossover",
+      "skipped": true,
+      "elapsedSeconds": 2.889999999311499e-07
+     },
+     {
+      "name": "compression",
+      "skipped": true,
+      "elapsedSeconds": 4.369999997422269e-07
+     },
+     {
+      "name": "drain",
+      "skipped": true,
+      "elapsedSeconds": 7.740000000922009e-07
+     }
+    ],
+    "archiveOccupancy": 2
+   },
+   "outside": {
+    "medianElapsedMs": 5363.340633,
+    "engineDepthMm": 179.69,
+    "fingerprint": null
+   }
+  },
+  {
+   "round": 6,
+   "ratio": 0.7005485166683518,
+   "outside": {
+    "medianElapsedMs": 3628.7092350000003,
+    "engineDepthMm": 179.69,
+    "fingerprint": null
+   },
+   "inside": {
+    "medianElapsedMs": 2542.086872,
+    "engineDepthMm": 179.69,
+    "fingerprint": null,
+    "phases": [
+     {
+      "name": "m0",
+      "skipped": false,
+      "elapsedSeconds": 2.541893339
+     },
+     {
+      "name": "basins",
+      "skipped": true,
+      "elapsedSeconds": 3.819999996323986e-07
+     },
+     {
+      "name": "descent",
+      "skipped": true,
+      "elapsedSeconds": 2.3499999990406195e-07
+     },
+     {
+      "name": "crossover",
+      "skipped": true,
+      "elapsedSeconds": 2.2499999996483666e-07
+     },
+     {
+      "name": "compression",
+      "skipped": true,
+      "elapsedSeconds": 3.570000002284246e-07
+     },
+     {
+      "name": "drain",
+      "skipped": true,
+      "elapsedSeconds": 1.8099999987697402e-07
+     }
+    ],
+    "archiveOccupancy": 2
+   }
+  },
+  {
+   "round": 7,
+   "ratio": 1.0074112727923048,
+   "inside": {
+    "medianElapsedMs": 2717.852481,
+    "engineDepthMm": 179.69,
+    "fingerprint": null,
+    "phases": [
+     {
+      "name": "m0",
+      "skipped": false,
+      "elapsedSeconds": 2.717529667
+     },
+     {
+      "name": "basins",
+      "skipped": true,
+      "elapsedSeconds": 4.3600000010357576e-07
+     },
+     {
+      "name": "descent",
+      "skipped": true,
+      "elapsedSeconds": 3.280000000493999e-07
+     },
+     {
+      "name": "crossover",
+      "skipped": true,
+      "elapsedSeconds": 2.660000002485674e-07
+     },
+     {
+      "name": "compression",
+      "skipped": true,
+      "elapsedSeconds": 3.8800000012884084e-07
+     },
+     {
+      "name": "drain",
+      "skipped": true,
+      "elapsedSeconds": 3.8999999985023237e-07
+     }
+    ],
+    "archiveOccupancy": 2
+   },
+   "outside": {
+    "medianElapsedMs": 2697.85792,
+    "engineDepthMm": 179.69,
+    "fingerprint": null
+   }
+  },
+  {
+   "round": 8,
+   "ratio": 1.0209423713272372,
+   "outside": {
+    "medianElapsedMs": 2625.875224,
+    "engineDepthMm": 179.69,
+    "fingerprint": null
+   },
+   "inside": {
+    "medianElapsedMs": 2680.867278,
+    "engineDepthMm": 179.69,
+    "fingerprint": null,
+    "phases": [
+     {
+      "name": "m0",
+      "skipped": false,
+      "elapsedSeconds": 2.680551169
+     },
+     {
+      "name": "basins",
+      "skipped": true,
+      "elapsedSeconds": 3.94999999819845e-07
+     },
+     {
+      "name": "descent",
+      "skipped": true,
+      "elapsedSeconds": 4.2700000024709084e-07
+     },
+     {
+      "name": "crossover",
+      "skipped": true,
+      "elapsedSeconds": 3.1000000033643005e-07
+     },
+     {
+      "name": "compression",
+      "skipped": true,
+      "elapsedSeconds": 5.040000004008505e-07
+     },
+     {
+      "name": "drain",
+      "skipped": true,
+      "elapsedSeconds": 7.680000000398479e-07
+     }
+    ],
+    "archiveOccupancy": 2
+   }
+  },
+  {
+   "round": 9,
+   "ratio": 1.0969977269129074,
+   "inside": {
+    "medianElapsedMs": 2714.972586,
+    "engineDepthMm": 179.69,
+    "fingerprint": null,
+    "phases": [
+     {
+      "name": "m0",
+      "skipped": false,
+      "elapsedSeconds": 2.714391522
+     },
+     {
+      "name": "basins",
+      "skipped": true,
+      "elapsedSeconds": 4.849999997169618e-07
+     },
+     {
+      "name": "descent",
+      "skipped": true,
+      "elapsedSeconds": 4.4499999951597147e-07
+     },
+     {
+      "name": "crossover",
+      "skipped": true,
+      "elapsedSeconds": 3.9699999998532576e-07
+     },
+     {
+      "name": "compression",
+      "skipped": true,
+      "elapsedSeconds": 5.020000002353697e-07
+     },
+     {
+      "name": "drain",
+      "skipped": true,
+      "elapsedSeconds": 7.309999996429895e-07
+     }
+    ],
+    "archiveOccupancy": 2
+   },
+   "outside": {
+    "medianElapsedMs": 2474.9117699999997,
+    "engineDepthMm": 179.69,
+    "fingerprint": null
+   }
+  }
+ ],
+ "pairedRatio": {
+  "median": 1.019577077320994,
+  "min": 0.7005485166683518,
+  "max": 1.1306285956721183,
+  "roundsBelowParity": 2,
+  "rounds": 10
+ },
+ "engineDepths": {
+  "outside": [
+   179.69
+  ],
+  "inside": [
+   179.69
+  ]
+ },
+ "sameResultBothArms": true
+}
