@@ -180,6 +180,25 @@ pub struct CompressionScheduleSettings {
     pub continue_past_bound: bool,
     /// What to do with a refused confirmation.
     pub repair_policy: CompressionRepairPolicy,
+    /// How far one step lowers the frontier, **in canonical grid units**.
+    ///
+    /// `1.0` - one grid unit, 1 µm on this request - is the default and is the
+    /// module's first invariant: it is the finest depth change a *layout* can
+    /// express, because `snap_mm` rounds every translation onto that lattice.
+    ///
+    /// A value below `1.0` is therefore not a finer layout, it is a finer
+    /// *clamp*: `strip_depth_mm` is a proxy-tier scalar that `boundary_penalty`
+    /// reads as a continuous number, so a sub-grid frontier is a smaller
+    /// increment of pressure per step rather than a smaller move. What it buys
+    /// is cadence, not resolution - `confirm_every` counts steps, so a quarter
+    /// step at the same `sweeps_per_step` asks the exact tier four times as
+    /// often per micron of descent, and spends four times as many repair sweeps
+    /// getting there.
+    ///
+    /// Kept as a knob rather than a default because it is a budget, and because
+    /// the invariant above is worth stating in the type: the caller has to ask
+    /// for a sub-grid frontier by name.
+    pub step_grid: f64,
 }
 
 impl Default for CompressionScheduleSettings {
@@ -191,6 +210,7 @@ impl Default for CompressionScheduleSettings {
             work_cap_queries: None,
             continue_past_bound: false,
             repair_policy: CompressionRepairPolicy::MicroLegalizeOnReject,
+            step_grid: 1.0,
         }
     }
 }
@@ -297,7 +317,19 @@ impl CompressionSchedule {
     ) -> Self {
         let start_grid = to_grid(start_depth_mm);
         let target_grid = to_grid(target_depth_mm);
-        let steps_planned = (start_grid - target_grid).max(0.0) as usize;
+        // A non-finite or non-positive step would make the walk either infinite
+        // or backwards, and both are worse than degrading to the canonical
+        // unit; the parser rejects them first, so this is the second wall.
+        let settings = CompressionScheduleSettings {
+            step_grid: if settings.step_grid.is_finite() && settings.step_grid > 0.0 {
+                settings.step_grid
+            } else {
+                1.0
+            },
+            ..settings
+        };
+        let steps_planned =
+            ((start_grid - target_grid).max(0.0) / settings.step_grid) as usize;
         Self {
             settings,
             depth_grid: start_grid,
@@ -333,7 +365,7 @@ impl CompressionSchedule {
     }
 
     pub fn step_mm(&self) -> f64 {
-        canonical_grid_step_mm()
+        from_grid(self.settings.step_grid)
     }
 
     pub fn steps_planned(&self) -> usize {
@@ -428,7 +460,7 @@ impl CompressionSchedule {
                 return false;
             }
         }
-        if self.depth_grid - 1.0 < self.lower_limit_grid() {
+        if self.depth_grid - self.settings.step_grid < self.lower_limit_grid() {
             self.exit = if self.settings.continue_past_bound {
                 CompressionScheduleExit::DepthFloor
             } else {
@@ -439,13 +471,15 @@ impl CompressionSchedule {
         true
     }
 
-    /// Lowers the clamp by exactly one canonical grid unit.
+    /// Lowers the clamp by one step - one canonical grid unit unless the caller
+    /// asked for a sub-grid frontier through
+    /// [`CompressionScheduleSettings::step_grid`].
     ///
     /// The invariant `depth_mm <= floor_mm` is preserved by construction here:
     /// the depth only ever decreases in this function, and the floor only ever
     /// decreases in [`Self::note_confirmed`].
     pub fn step_down(&mut self) {
-        self.depth_grid -= 1.0;
+        self.depth_grid -= self.settings.step_grid;
         self.steps_taken += 1;
         self.steps_since_confirmation += 1;
         self.steps_since_accepted_confirmation += 1;
@@ -695,6 +729,32 @@ mod tests {
         assert_eq!(plan.step_mm(), 0.001);
         // 0.3 mm of drop at one micron a step.
         assert_eq!(plan.steps_planned(), 300);
+    }
+
+    #[test]
+    fn a_sub_grid_step_walks_the_same_drop_in_proportionally_more_steps() {
+        let mut settings = CompressionScheduleSettings::default();
+        settings.step_grid = 0.25;
+        let mut plan = schedule(settings);
+        assert_eq!(plan.step_mm(), 0.00025);
+        // The same 0.3 mm of drop, at a quarter of a micron a step.
+        assert_eq!(plan.steps_planned(), 1_200);
+        let mut steps = 0;
+        while plan.may_step(0) {
+            plan.step_down();
+            steps += 1;
+        }
+        assert_eq!(steps, 1_200);
+        assert!((plan.depth_mm() - 99.7).abs() < 1e-9, "{}", plan.depth_mm());
+    }
+
+    #[test]
+    fn a_non_positive_step_degrades_to_the_canonical_unit() {
+        for bad in [0.0, -1.0, f64::NAN] {
+            let mut settings = CompressionScheduleSettings::default();
+            settings.step_grid = bad;
+            assert_eq!(schedule(settings).step_mm(), canonical_grid_step_mm());
+        }
     }
 
     #[test]
