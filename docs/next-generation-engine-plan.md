@@ -5345,3 +5345,63 @@ Evidence, drivers, the thirty-five pinned states, the two certification
 batteries and the eight negatives: `docs/experiments/orientation-floor/`, with
 the pins under
 `docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/orientation-floor/`.
+
+## Coordinator v5, item 1 only: the self-meter debits the budget it prices, and the other three items are named rather than faked
+
+Sol review 5 §2 gave four items. This round did one of them — the budget-debit
+bug at `portfolio.rs:3438` — and verified it; it did not attempt the other
+three, and says so rather than presenting a partial result as the full one.
+
+**The fix.** `schedule_self_cost_units`'s doc comment said the quiet part
+outright: "The charge is a *price*, never a spend: the budget still advances
+at the meter's own rate." Under a work budget that let a class whose own
+meter reads up to 11x the coordinator's global counter (§6.3's twelve gate
+cells) buy more of itself than the nominal budget allowed, because the number
+gating every later affordability check never saw the higher price.
+`BudgetMeter` now carries a `self_metered_debit` accumulator; the call site
+that already computed `cost = metered_cost.max(self_metered_units)` for
+ranking now also calls `run.meter.debit_self_metered(metered_cost, units)`,
+so `work_units()` — and so `spent_fraction`/`remaining_to`/every
+affordability check — reads `max(global_meter_delta, operator_self_units)`,
+not just the global delta. No-op under a wall budget and for every action
+that never reports a self-metered charge, by construction.
+
+**Verified, not just built.** The four pinned gates rebuilt with the fix hit
+bit-for-bit — same four depths, same fingerprint prefixes, `ALL_PASS: true` —
+confirming the fix is inert wherever the gates run (modes 20/22 never report
+a self-metered charge). All 26 `portfolio::` unit tests pass with
+`compression-schedule` compiled in. A paired baseline-vs-fixed comparison at
+`work=120,000,000`, mixed-61, seeds 0/1/2, with and without the
+`compression-schedule` feature, produced identical depths in all four
+combinations — 174.208 / 176.056 / 179.006 — because every one of those runs
+spent well under its cap before the self-metered debit could matter. A
+warm-start probe from the pinned 159.092 record parent at 40M work units was
+inconclusive (its output matched the cold-start seed-1 number, so it likely
+never engaged the intended warm path).
+
+**The honest result item 1 asked for.** No headline number moved, in either
+direction, in any run this round executed. That is not "the bug is not real"
+— the fix is real, targeted at exactly the code path the review named, and
+proven not to disturb any pinned or unit-tested behavior. It is that every
+scenario reachable in the time available ended with the coordinator stopping
+on `KeysExhausted`/`Affordability` against its own priced queue before the
+debit could be the deciding factor — consistent with this same document's
+orientation-floor finding that mode 34 is now inert from a generic starting
+point (`parentProxyFeasible: false`) on this lineage. The debit bug and item
+2's eligibility-prior gap are the same fact from two sides: a class this
+rarely both eligible and load-bearing at the budget boundary is hard to catch
+red-handed with a bare-request, 3-seed, 1-round battery. Reproducing the
+exact conditions of the original v4 battery (base commit `5d6ce0c`, four
+merged rounds before this one) was out of scope for the time this round had.
+
+**Items 2, 3, and the rest of 4 were not attempted.** Three-level priors and
+the wall batch are each a multi-file subsystem with their own tests and gate
+re-verification, not a same-session addition on top of item 1. The
+anytime-curve battery (3/10/30s, three corpora, three seeds, three rounds,
+paired), the two-process determinism check, and the full `cargo test
+--release --features jagua-experimental` suite were not run; a truncated
+stand-in for any of them would misrepresent a measurement this project
+treats as load-bearing, so none is reported.
+
+Evidence, the fix diff, the gate output, the unit-test log and all four
+battery documents: `docs/experiments/coordinator-v5-budget-debit/`.

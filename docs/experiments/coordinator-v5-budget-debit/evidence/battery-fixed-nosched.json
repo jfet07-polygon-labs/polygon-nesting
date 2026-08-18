@@ -1,0 +1,1217 @@
+{
+ "name": "v5-debit-fixed",
+ "request": "mixed-61",
+ "rounds": 1,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "binary": "/tmp/gate-bin-fixed",
+ "arms": [
+  {
+   "label": "v4",
+   "budget": "work=120000000",
+   "v3": false,
+   "extra": ""
+  }
+ ],
+ "rows": [
+  {
+   "tag": "v4-s0-r0",
+   "processSeconds": 16.50769706798019,
+   "engineDepthMm": 174.208,
+   "rawDepthMm": 174.20812003998896,
+   "dualGateValid": true,
+   "publishedSeconds": 12.327704752,
+   "publishedWorkUnits": 31428739,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 16.47470964,
+   "workUnits": 32393757,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 2.2438163089999996,
+     "enteredSeconds": 1.95e-07,
+     "exitCause": "completed",
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 8778573
+    },
+    {
+     "deadlineFraction": 0.4624297695,
+     "elapsedSeconds": 1.872566456,
+     "enteredSeconds": 2.243952602,
+     "exitCause": "keysExhausted",
+     "name": "descent",
+     "operatorCalls": 2,
+     "publications": 1,
+     "skipped": false,
+     "workUnits": 4697784
+    },
+    {
+     "deadlineFraction": 0.7219464325,
+     "elapsedSeconds": 7.186297943,
+     "enteredSeconds": 4.116519943,
+     "exitCause": "completed",
+     "name": "crossover",
+     "operatorCalls": 3,
+     "publications": 1,
+     "skipped": false,
+     "workUnits": 16043533
+    },
+    {
+     "deadlineFraction": 0.89804702525,
+     "elapsedSeconds": 1.0248952030000016,
+     "enteredSeconds": 11.302819105,
+     "exitCause": "noResidue",
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 1,
+     "skipped": false,
+     "workUnits": 1908849
+    },
+    {
+     "deadlineFraction": 0.9814630955,
+     "elapsedSeconds": 4.14696857,
+     "enteredSeconds": 12.327715383,
+     "exitCause": "patience",
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 965018
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 2.450399999887054e-05,
+     "enteredSeconds": 16.474684967,
+     "exitCause": "completed",
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [
+    {
+     "fingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+     "phase": "descent",
+     "previousRawDepthMm": 181.589,
+     "rawDepthMm": 179.5868589805926,
+     "seconds": 3.199767248,
+     "source": "mode22",
+     "workUnits": 10793256
+    },
+    {
+     "fingerprint": "6fd3df51ce22a6b63a7184ca2f310a9fb6bcae6d9bd70997efdfb99016dc045b",
+     "phase": "crossover",
+     "previousRawDepthMm": 179.5868589805926,
+     "rawDepthMm": 176.30940751567982,
+     "seconds": 8.870493678,
+     "source": "mode23",
+     "workUnits": 23989121
+    },
+    {
+     "fingerprint": "70ea4238be33dd31291c696b052261dc02fe1eef6be4837c1e96a44f21a74cb6",
+     "phase": "compression",
+     "previousRawDepthMm": 176.30940751567982,
+     "rawDepthMm": 174.20812003998896,
+     "seconds": 12.327704752,
+     "source": "mode22",
+     "workUnits": 31428739
+    }
+   ],
+   "operatorCalls": [
+    {
+     "action": null,
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.9420373799999999,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "27b9184578142f69e2e28e51b68f7fc9093c0c07be9ea54eeea588ffa3dd0bf9",
+     "phase": "descent",
+     "published": true,
+     "rawDepthMm": 179.5868589805926,
+     "resultFingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 2.243960478,
+     "workUnits": 2013198
+    },
+    {
+     "action": null,
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.9121242110000005,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 179.5868589805926,
+     "resultFingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 3.199791741,
+     "workUnits": 2682606
+    },
+    {
+     "action": "x:forward:0->1@0.5",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 2.264376552,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode23",
+     "parentFingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+     "phase": "crossover",
+     "published": false,
+     "rawDepthMm": 179.63864761013144,
+     "resultFingerprint": "e9931946e6abf3310969b2cf0dcd4b19ae8ca0b7223e27537f555cac3272bda3",
+     "secondaryParentFingerprint": "27b9184578142f69e2e28e51b68f7fc9093c0c07be9ea54eeea588ffa3dd0bf9",
+     "startedSeconds": 4.116542969,
+     "workUnits": 5444755
+    },
+    {
+     "action": "x:forward:0->1@0.5",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 2.469801575,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode23",
+     "parentFingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+     "phase": "crossover",
+     "published": true,
+     "rawDepthMm": 176.30940751567982,
+     "resultFingerprint": "6fd3df51ce22a6b63a7184ca2f310a9fb6bcae6d9bd70997efdfb99016dc045b",
+     "secondaryParentFingerprint": "e9931946e6abf3310969b2cf0dcd4b19ae8ca0b7223e27537f555cac3272bda3",
+     "startedSeconds": 6.385866691,
+     "workUnits": 5066199
+    },
+    {
+     "action": "x:forward:0->1@0.5",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 2.4260479569999998,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode23",
+     "parentFingerprint": "6fd3df51ce22a6b63a7184ca2f310a9fb6bcae6d9bd70997efdfb99016dc045b",
+     "phase": "crossover",
+     "published": false,
+     "rawDepthMm": 179.60844597671,
+     "resultFingerprint": "286c61373d3becd4f3d4b8283470db3f8894049e8ad11fc5c8e58a410af50be7",
+     "secondaryParentFingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+     "startedSeconds": 8.870543849,
+     "workUnits": 5530304
+    },
+    {
+     "action": null,
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 1.0098884590000008,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "6fd3df51ce22a6b63a7184ca2f310a9fb6bcae6d9bd70997efdfb99016dc045b",
+     "phase": "compression",
+     "published": true,
+     "rawDepthMm": 174.20812003998896,
+     "resultFingerprint": "70ea4238be33dd31291c696b052261dc02fe1eef6be4837c1e96a44f21a74cb6",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 11.302830985,
+     "workUnits": 1907334
+    },
+    {
+     "action": "m20:slot0",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 3.0879391809999994,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "70ea4238be33dd31291c696b052261dc02fe1eef6be4837c1e96a44f21a74cb6",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 216.574,
+     "resultFingerprint": "ddb7896fd77272e11d9ab7fcb14ec8ab6391f0e5096349b180ccb594682bf967",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 12.327721237,
+     "workUnits": 260
+    },
+    {
+     "action": "m22:slot0",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 1.0505508150000011,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "ddb7896fd77272e11d9ab7fcb14ec8ab6391f0e5096349b180ccb594682bf967",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 206.44704511374482,
+     "resultFingerprint": "cec8f3a28db7f213d1fcc3afab35ccb5bbc64cd845efb31b3a38db71d78fbd31",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 15.419638574,
+     "workUnits": 964103
+    }
+   ],
+   "archive": {
+    "admitted": 9,
+    "byOperator": {
+     "constructor": 1,
+     "m0": 1,
+     "mode20": 1,
+     "mode22": 3,
+     "mode23": 3
+    },
+    "capacity": 16,
+    "duplicates": 4,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 2.226792176,
+      "birthWorkUnits": 8777133,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 182.976,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 2.231054447,
+      "birthWorkUnits": 8777493,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "27b9184578142f69e2e28e51b68f7fc9093c0c07be9ea54eeea588ffa3dd0bf9",
+      "operator": "m0",
+      "parentFingerprint": null,
+      "rawDepthMm": 181.589,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 3.190584943,
+      "birthWorkUnits": 10792266,
+      "descents": 4,
+      "exactValid": true,
+      "fingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+      "operator": "mode22",
+      "parentFingerprint": "27b9184578142f69e2e28e51b68f7fc9093c0c07be9ea54eeea588ffa3dd0bf9",
+      "rawDepthMm": 179.5868589805926,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 6.385795779,
+      "birthWorkUnits": 18921527,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "e9931946e6abf3310969b2cf0dcd4b19ae8ca0b7223e27537f555cac3272bda3",
+      "operator": "mode23",
+      "parentFingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+      "rawDepthMm": 179.63864761013144,
+      "secondaryParentFingerprint": "27b9184578142f69e2e28e51b68f7fc9093c0c07be9ea54eeea588ffa3dd0bf9"
+     },
+     {
+      "birthSeconds": 8.86060927,
+      "birthWorkUnits": 23988191,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "6fd3df51ce22a6b63a7184ca2f310a9fb6bcae6d9bd70997efdfb99016dc045b",
+      "operator": "mode23",
+      "parentFingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+      "rawDepthMm": 176.30940751567982,
+      "secondaryParentFingerprint": "e9931946e6abf3310969b2cf0dcd4b19ae8ca0b7223e27537f555cac3272bda3"
+     },
+     {
+      "birthSeconds": 11.302768765,
+      "birthWorkUnits": 29519890,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "286c61373d3becd4f3d4b8283470db3f8894049e8ad11fc5c8e58a410af50be7",
+      "operator": "mode23",
+      "parentFingerprint": "6fd3df51ce22a6b63a7184ca2f310a9fb6bcae6d9bd70997efdfb99016dc045b",
+      "rawDepthMm": 179.60844597671,
+      "secondaryParentFingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931"
+     },
+     {
+      "birthSeconds": 12.317699591,
+      "birthWorkUnits": 31427729,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "70ea4238be33dd31291c696b052261dc02fe1eef6be4837c1e96a44f21a74cb6",
+      "operator": "mode22",
+      "parentFingerprint": "6fd3df51ce22a6b63a7184ca2f310a9fb6bcae6d9bd70997efdfb99016dc045b",
+      "rawDepthMm": 174.20812003998896,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 15.419592109,
+      "birthWorkUnits": 31429259,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "ddb7896fd77272e11d9ab7fcb14ec8ab6391f0e5096349b180ccb594682bf967",
+      "operator": "mode20",
+      "parentFingerprint": "70ea4238be33dd31291c696b052261dc02fe1eef6be4837c1e96a44f21a74cb6",
+      "rawDepthMm": 216.574,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 16.474650638,
+      "birthWorkUnits": 32393757,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "cec8f3a28db7f213d1fcc3afab35ccb5bbc64cd845efb31b3a38db71d78fbd31",
+      "operator": "mode22",
+      "parentFingerprint": "ddb7896fd77272e11d9ab7fcb14ec8ab6391f0e5096349b180ccb594682bf967",
+      "rawDepthMm": 206.44704511374482,
+      "secondaryParentFingerprint": null
+     }
+    ],
+    "occupancy": 9,
+    "occupancyOverTime": [
+     [
+      2.226792176,
+      1
+     ],
+     [
+      2.231054447,
+      2
+     ],
+     [
+      3.190584943,
+      3
+     ],
+     [
+      6.385795779,
+      4
+     ],
+     [
+      8.86060927,
+      5
+     ],
+     [
+      11.302768765,
+      6
+     ],
+     [
+      12.317699591,
+      7
+     ],
+     [
+      15.419592109,
+      8
+     ],
+     [
+      16.474650638,
+      9
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "schedule": null,
+   "arm": "v4",
+   "seed": 0,
+   "round": 0,
+   "spec": "work=120000000,cells=13:15:17:19,v3=0"
+  },
+  {
+   "tag": "v4-s1-r0",
+   "processSeconds": 16.193086242012214,
+   "engineDepthMm": 176.056,
+   "rawDepthMm": 176.05599999999998,
+   "dualGateValid": true,
+   "publishedSeconds": 11.969150747,
+   "publishedWorkUnits": 31314499,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 16.163135152,
+   "workUnits": 31957935,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 2.3718693060000002,
+     "enteredSeconds": 2.08e-07,
+     "exitCause": "completed",
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 9629453
+    },
+    {
+     "deadlineFraction": 0.4665423561666666,
+     "elapsedSeconds": 1.653854708,
+     "enteredSeconds": 2.371996274,
+     "exitCause": "keysExhausted",
+     "name": "descent",
+     "operatorCalls": 2,
+     "publications": 1,
+     "skipped": false,
+     "workUnits": 4791312
+    },
+    {
+     "deadlineFraction": 0.7240736325,
+     "elapsedSeconds": 7.209378498,
+     "enteredSeconds": 4.025851701,
+     "exitCause": "completed",
+     "name": "crossover",
+     "operatorCalls": 3,
+     "publications": 1,
+     "skipped": false,
+     "workUnits": 15310977
+    },
+    {
+     "deadlineFraction": 0.8988269985833334,
+     "elapsedSeconds": 0.7339251509999993,
+     "enteredSeconds": 11.235230998,
+     "exitCause": "noResidue",
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 1,
+     "skipped": false,
+     "workUnits": 1582757
+    },
+    {
+     "deadlineFraction": 0.9816049088333333,
+     "elapsedSeconds": 4.193956589999999,
+     "enteredSeconds": 11.969157052,
+     "exitCause": "patience",
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 643436
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 2.05680000000541e-05,
+     "enteredSeconds": 16.16311444,
+     "exitCause": "completed",
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [
+    {
+     "fingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+     "phase": "descent",
+     "previousRawDepthMm": 179.69,
+     "rawDepthMm": 179.63299999999998,
+     "seconds": 3.163902878,
+     "source": "mode22",
+     "workUnits": 11887826
+    },
+    {
+     "fingerprint": "7d7c09b204147962b8576cd08fe2a861b52fed68d0515185fa90139e7ebdd9fe",
+     "phase": "crossover",
+     "previousRawDepthMm": 179.63299999999998,
+     "rawDepthMm": 176.75281805880576,
+     "seconds": 6.263877337,
+     "source": "mode23",
+     "workUnits": 19327809
+    },
+    {
+     "fingerprint": "1e754eed759cc31ec9e5fde499d7c5da5dd963916c1bdb0e3195c1ba17d39a48",
+     "phase": "compression",
+     "previousRawDepthMm": 176.75281805880576,
+     "rawDepthMm": 176.05599999999998,
+     "seconds": 11.969150747,
+     "source": "mode22",
+     "workUnits": 31314499
+    }
+   ],
+   "operatorCalls": [
+    {
+     "action": null,
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.7788963409999998,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "8f8515004a0581d4fc5c1fd3dcb5786eeae0c4a676f0b75bdba8ee628eb79ac7",
+     "phase": "descent",
+     "published": true,
+     "rawDepthMm": 179.63299999999998,
+     "resultFingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 2.372003781,
+     "workUnits": 2256843
+    },
+    {
+     "action": null,
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.8575539110000001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 179.63299999999998,
+     "resultFingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 3.163928842,
+     "workUnits": 2532429
+    },
+    {
+     "action": "x:forward:0->1@0.5",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 2.223392747,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode23",
+     "parentFingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+     "phase": "crossover",
+     "published": true,
+     "rawDepthMm": 176.75281805880576,
+     "resultFingerprint": "7d7c09b204147962b8576cd08fe2a861b52fed68d0515185fa90139e7ebdd9fe",
+     "secondaryParentFingerprint": "8f8515004a0581d4fc5c1fd3dcb5786eeae0c4a676f0b75bdba8ee628eb79ac7",
+     "startedSeconds": 4.025873902,
+     "workUnits": 4905634
+    },
+    {
+     "action": "x:forward:0->1@0.5",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 2.124188805,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode23",
+     "parentFingerprint": "7d7c09b204147962b8576cd08fe2a861b52fed68d0515185fa90139e7ebdd9fe",
+     "phase": "crossover",
+     "published": false,
+     "rawDepthMm": 179.921,
+     "resultFingerprint": "f76fa6742a0e9af676ecc0bba4e0ba6e24aae31da4df8e2d62b2a84b20842a7a",
+     "secondaryParentFingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+     "startedSeconds": 6.263924444,
+     "workUnits": 5083750
+    },
+    {
+     "action": "x:forward:0->2@0.5",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 2.837181288,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode23",
+     "parentFingerprint": "7d7c09b204147962b8576cd08fe2a861b52fed68d0515185fa90139e7ebdd9fe",
+     "phase": "crossover",
+     "published": false,
+     "rawDepthMm": 179.898,
+     "resultFingerprint": "b5d62da28a5d3fc168407bf1b084b23ae60ed48472b4982d10ee880fd9ec2a2b",
+     "secondaryParentFingerprint": "8f8515004a0581d4fc5c1fd3dcb5786eeae0c4a676f0b75bdba8ee628eb79ac7",
+     "startedSeconds": 8.393107651,
+     "workUnits": 5319258
+    },
+    {
+     "action": null,
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.7192800659999996,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "7d7c09b204147962b8576cd08fe2a861b52fed68d0515185fa90139e7ebdd9fe",
+     "phase": "compression",
+     "published": true,
+     "rawDepthMm": 176.05599999999998,
+     "resultFingerprint": "1e754eed759cc31ec9e5fde499d7c5da5dd963916c1bdb0e3195c1ba17d39a48",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 11.23523922,
+     "workUnits": 1581212
+    },
+    {
+     "action": "m20:slot0",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 3.0671529940000006,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "1e754eed759cc31ec9e5fde499d7c5da5dd963916c1bdb0e3195c1ba17d39a48",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 214.53,
+     "resultFingerprint": "2797ca42a847e7d9498dbfd4e42bc1dc9a8c234d5ef68531d3a8d7609fd7874b",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 11.969166621,
+     "workUnits": 335
+    },
+    {
+     "action": "m22:slot0",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 1.118355396000002,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "2797ca42a847e7d9498dbfd4e42bc1dc9a8c234d5ef68531d3a8d7609fd7874b",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 196.1299355261407,
+     "resultFingerprint": "3063221e057417813882af2eef58785601887084ee0548bc89cb7c445b80cd9a",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 15.040252698,
+     "workUnits": 642351
+    }
+   ],
+   "archive": {
+    "admitted": 9,
+    "byOperator": {
+     "constructor": 1,
+     "m0": 1,
+     "mode20": 1,
+     "mode22": 3,
+     "mode23": 3
+    },
+    "capacity": 16,
+    "duplicates": 4,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 2.35458975,
+      "birthWorkUnits": 9627753,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 182.976,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 2.358908219,
+      "birthWorkUnits": 9628178,
+      "descents": 3,
+      "exactValid": true,
+      "fingerprint": "8f8515004a0581d4fc5c1fd3dcb5786eeae0c4a676f0b75bdba8ee628eb79ac7",
+      "operator": "m0",
+      "parentFingerprint": null,
+      "rawDepthMm": 179.69,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 3.155236458,
+      "birthWorkUnits": 11886806,
+      "descents": 3,
+      "exactValid": true,
+      "fingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+      "operator": "mode22",
+      "parentFingerprint": "8f8515004a0581d4fc5c1fd3dcb5786eeae0c4a676f0b75bdba8ee628eb79ac7",
+      "rawDepthMm": 179.63299999999998,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 6.254139906,
+      "birthWorkUnits": 19326869,
+      "descents": 3,
+      "exactValid": true,
+      "fingerprint": "7d7c09b204147962b8576cd08fe2a861b52fed68d0515185fa90139e7ebdd9fe",
+      "operator": "mode23",
+      "parentFingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+      "rawDepthMm": 176.75281805880576,
+      "secondaryParentFingerprint": "8f8515004a0581d4fc5c1fd3dcb5786eeae0c4a676f0b75bdba8ee628eb79ac7"
+     },
+     {
+      "birthSeconds": 8.393032576,
+      "birthWorkUnits": 24412029,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "f76fa6742a0e9af676ecc0bba4e0ba6e24aae31da4df8e2d62b2a84b20842a7a",
+      "operator": "mode23",
+      "parentFingerprint": "7d7c09b204147962b8576cd08fe2a861b52fed68d0515185fa90139e7ebdd9fe",
+      "rawDepthMm": 179.921,
+      "secondaryParentFingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f"
+     },
+     {
+      "birthSeconds": 11.235190908,
+      "birthWorkUnits": 29731742,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "b5d62da28a5d3fc168407bf1b084b23ae60ed48472b4982d10ee880fd9ec2a2b",
+      "operator": "mode23",
+      "parentFingerprint": "7d7c09b204147962b8576cd08fe2a861b52fed68d0515185fa90139e7ebdd9fe",
+      "rawDepthMm": 179.898,
+      "secondaryParentFingerprint": "8f8515004a0581d4fc5c1fd3dcb5786eeae0c4a676f0b75bdba8ee628eb79ac7"
+     },
+     {
+      "birthSeconds": 11.959408228000001,
+      "birthWorkUnits": 31313469,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "1e754eed759cc31ec9e5fde499d7c5da5dd963916c1bdb0e3195c1ba17d39a48",
+      "operator": "mode22",
+      "parentFingerprint": "7d7c09b204147962b8576cd08fe2a861b52fed68d0515185fa90139e7ebdd9fe",
+      "rawDepthMm": 176.05599999999998,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 15.040207175,
+      "birthWorkUnits": 31315169,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "2797ca42a847e7d9498dbfd4e42bc1dc9a8c234d5ef68531d3a8d7609fd7874b",
+      "operator": "mode20",
+      "parentFingerprint": "1e754eed759cc31ec9e5fde499d7c5da5dd963916c1bdb0e3195c1ba17d39a48",
+      "rawDepthMm": 214.53,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 16.163074391,
+      "birthWorkUnits": 31957935,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "3063221e057417813882af2eef58785601887084ee0548bc89cb7c445b80cd9a",
+      "operator": "mode22",
+      "parentFingerprint": "2797ca42a847e7d9498dbfd4e42bc1dc9a8c234d5ef68531d3a8d7609fd7874b",
+      "rawDepthMm": 196.1299355261407,
+      "secondaryParentFingerprint": null
+     }
+    ],
+    "occupancy": 9,
+    "occupancyOverTime": [
+     [
+      2.35458975,
+      1
+     ],
+     [
+      2.358908219,
+      2
+     ],
+     [
+      3.155236458,
+      3
+     ],
+     [
+      6.254139906,
+      4
+     ],
+     [
+      8.393032576,
+      5
+     ],
+     [
+      11.235190908,
+      6
+     ],
+     [
+      11.959408228000001,
+      7
+     ],
+     [
+      15.040207175,
+      8
+     ],
+     [
+      16.163074391,
+      9
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "schedule": null,
+   "arm": "v4",
+   "seed": 1,
+   "round": 0,
+   "spec": "work=120000000,cells=11:15:21:27,v3=0"
+  },
+  {
+   "tag": "v4-s2-r0",
+   "processSeconds": 15.272724382055458,
+   "engineDepthMm": 179.006,
+   "rawDepthMm": 179.006,
+   "dualGateValid": true,
+   "publishedSeconds": 3.110550182,
+   "publishedWorkUnits": 10606873,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 15.240405796,
+   "workUnits": 27938867,
+   "phases": [
+    {
+     "deadlineFraction": 0.0,
+     "elapsedSeconds": 2.390337632,
+     "enteredSeconds": 2.45e-07,
+     "exitCause": "completed",
+     "name": "m0",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 8961342
+    },
+    {
+     "deadlineFraction": 0.463313153,
+     "elapsedSeconds": 1.473445238,
+     "enteredSeconds": 2.390473299,
+     "exitCause": "keysExhausted",
+     "name": "descent",
+     "operatorCalls": 2,
+     "publications": 1,
+     "skipped": false,
+     "workUnits": 3581889
+    },
+    {
+     "deadlineFraction": 0.722403355,
+     "elapsedSeconds": 6.050480556000001,
+     "enteredSeconds": 3.8639190599999997,
+     "exitCause": "completed",
+     "name": "crossover",
+     "operatorCalls": 3,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 12269393
+    },
+    {
+     "deadlineFraction": 0.8982145635000001,
+     "elapsedSeconds": 0.7350445400000005,
+     "enteredSeconds": 9.914400417,
+     "exitCause": "noResidue",
+     "name": "compression",
+     "operatorCalls": 1,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 1936358
+    },
+    {
+     "deadlineFraction": 0.981493557,
+     "elapsedSeconds": 4.590937998999999,
+     "enteredSeconds": 10.649445624,
+     "exitCause": "patience",
+     "name": "diversify",
+     "operatorCalls": 2,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 1189885
+    },
+    {
+     "deadlineFraction": 1.0,
+     "elapsedSeconds": 2.1175999998845896e-05,
+     "enteredSeconds": 15.240384451,
+     "exitCause": "completed",
+     "name": "drain",
+     "operatorCalls": 0,
+     "publications": 0,
+     "skipped": false,
+     "workUnits": 0
+    }
+   ],
+   "publications": [
+    {
+     "fingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "phase": "descent",
+     "previousRawDepthMm": 179.662,
+     "rawDepthMm": 179.006,
+     "seconds": 3.110550182,
+     "source": "mode22",
+     "workUnits": 10606873
+    }
+   ],
+   "operatorCalls": [
+    {
+     "action": null,
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 0.7052239030000003,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "d2287d86cc79229aa8285cb9a4f21aa3cf17c797f92275ec4ced32f001c1e87d",
+     "phase": "descent",
+     "published": true,
+     "rawDepthMm": 179.006,
+     "resultFingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 2.390481097,
+     "workUnits": 1644196
+    },
+    {
+     "action": null,
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.7489057509999997,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "phase": "descent",
+     "published": false,
+     "rawDepthMm": 179.006,
+     "resultFingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 3.110585104,
+     "workUnits": 1935913
+    },
+    {
+     "action": "x:forward:0->1@0.5",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 1.9748973330000004,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode23",
+     "parentFingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "phase": "crossover",
+     "published": false,
+     "rawDepthMm": 181.743,
+     "resultFingerprint": "06c6ed870c2b67fdd48e0f4000ccbd8331e756f2f0aa4559f52f5a8a43b4f44a",
+     "secondaryParentFingerprint": "d2287d86cc79229aa8285cb9a4f21aa3cf17c797f92275ec4ced32f001c1e87d",
+     "startedSeconds": 3.863942143,
+     "workUnits": 4354807
+    },
+    {
+     "action": "x:forward:0->2@0.5",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 2.0840791539999994,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode23",
+     "parentFingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "phase": "crossover",
+     "published": false,
+     "rawDepthMm": 181.781,
+     "resultFingerprint": "5432d462b3df98a7353719b32fe8de95e150f7d45de3db9d1817d2999e8f68d0",
+     "secondaryParentFingerprint": "06c6ed870c2b67fdd48e0f4000ccbd8331e756f2f0aa4559f52f5a8a43b4f44a",
+     "startedSeconds": 5.84375886,
+     "workUnits": 3900845
+    },
+    {
+     "action": "x:forward:1->2@0.5",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 1.9768495909999997,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode23",
+     "parentFingerprint": "d2287d86cc79229aa8285cb9a4f21aa3cf17c797f92275ec4ced32f001c1e87d",
+     "phase": "crossover",
+     "published": false,
+     "rawDepthMm": 181.66877938633132,
+     "resultFingerprint": "f713476a6d7dabce771f74c8cced6ee0928f6a20007beb96c9638a36f5ceb868",
+     "secondaryParentFingerprint": "06c6ed870c2b67fdd48e0f4000ccbd8331e756f2f0aa4559f52f5a8a43b4f44a",
+     "startedSeconds": 7.932744677,
+     "workUnits": 4012421
+    },
+    {
+     "action": null,
+     "archiveDisposition": "Duplicate",
+     "elapsedSeconds": 0.7306021769999997,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "phase": "compression",
+     "published": false,
+     "rawDepthMm": 179.006,
+     "resultFingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 9.914410652,
+     "workUnits": 1935913
+    },
+    {
+     "action": "m20:slot0",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 3.113408001,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode20",
+     "parentFingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 210.121,
+     "resultFingerprint": "ba5e02cb7e6ea580e47514f43e662f5ab78f7d1d931c24b4a96d33566f2edc62",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 10.649449726,
+     "workUnits": 320
+    },
+    {
+     "action": "m22:slot0",
+     "archiveDisposition": "Admitted",
+     "elapsedSeconds": 1.468993694,
+     "exactValid": true,
+     "failureReason": null,
+     "operator": "mode22",
+     "parentFingerprint": "ba5e02cb7e6ea580e47514f43e662f5ab78f7d1d931c24b4a96d33566f2edc62",
+     "phase": "diversify",
+     "published": false,
+     "rawDepthMm": 195.07527749853207,
+     "resultFingerprint": "9b200d86dfdfb55ee15e1c47bb73c603b94dfcc6845f6ee3b041af1843aed1d8",
+     "secondaryParentFingerprint": null,
+     "startedSeconds": 13.766737298,
+     "workUnits": 1188825
+    }
+   ],
+   "archive": {
+    "admitted": 8,
+    "byOperator": {
+     "constructor": 1,
+     "m0": 1,
+     "mode20": 1,
+     "mode22": 2,
+     "mode23": 3
+    },
+    "capacity": 16,
+    "duplicates": 5,
+    "evicted": 0,
+    "members": [
+     {
+      "birthSeconds": 2.373940727,
+      "birthWorkUnits": 8959822,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+      "operator": "constructor",
+      "parentFingerprint": null,
+      "rawDepthMm": 182.976,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 2.378051851,
+      "birthWorkUnits": 8960202,
+      "descents": 3,
+      "exactValid": true,
+      "fingerprint": "d2287d86cc79229aa8285cb9a4f21aa3cf17c797f92275ec4ced32f001c1e87d",
+      "operator": "m0",
+      "parentFingerprint": null,
+      "rawDepthMm": 179.662,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 3.100069147,
+      "birthWorkUnits": 10605983,
+      "descents": 4,
+      "exactValid": true,
+      "fingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+      "operator": "mode22",
+      "parentFingerprint": "d2287d86cc79229aa8285cb9a4f21aa3cf17c797f92275ec4ced32f001c1e87d",
+      "rawDepthMm": 179.006,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 5.8436841170000005,
+      "birthWorkUnits": 16898463,
+      "descents": 2,
+      "exactValid": true,
+      "fingerprint": "06c6ed870c2b67fdd48e0f4000ccbd8331e756f2f0aa4559f52f5a8a43b4f44a",
+      "operator": "mode23",
+      "parentFingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+      "rawDepthMm": 181.743,
+      "secondaryParentFingerprint": "d2287d86cc79229aa8285cb9a4f21aa3cf17c797f92275ec4ced32f001c1e87d"
+     },
+     {
+      "birthSeconds": 7.9326723999999995,
+      "birthWorkUnits": 20799773,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "5432d462b3df98a7353719b32fe8de95e150f7d45de3db9d1817d2999e8f68d0",
+      "operator": "mode23",
+      "parentFingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+      "rawDepthMm": 181.781,
+      "secondaryParentFingerprint": "06c6ed870c2b67fdd48e0f4000ccbd8331e756f2f0aa4559f52f5a8a43b4f44a"
+     },
+     {
+      "birthSeconds": 9.914354001,
+      "birthWorkUnits": 24812624,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "f713476a6d7dabce771f74c8cced6ee0928f6a20007beb96c9638a36f5ceb868",
+      "operator": "mode23",
+      "parentFingerprint": "d2287d86cc79229aa8285cb9a4f21aa3cf17c797f92275ec4ced32f001c1e87d",
+      "rawDepthMm": 181.66877938633132,
+      "secondaryParentFingerprint": "06c6ed870c2b67fdd48e0f4000ccbd8331e756f2f0aa4559f52f5a8a43b4f44a"
+     },
+     {
+      "birthSeconds": 13.766689595999999,
+      "birthWorkUnits": 26749622,
+      "descents": 1,
+      "exactValid": true,
+      "fingerprint": "ba5e02cb7e6ea580e47514f43e662f5ab78f7d1d931c24b4a96d33566f2edc62",
+      "operator": "mode20",
+      "parentFingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+      "rawDepthMm": 210.121,
+      "secondaryParentFingerprint": null
+     },
+     {
+      "birthSeconds": 15.240348216,
+      "birthWorkUnits": 27938867,
+      "descents": 0,
+      "exactValid": true,
+      "fingerprint": "9b200d86dfdfb55ee15e1c47bb73c603b94dfcc6845f6ee3b041af1843aed1d8",
+      "operator": "mode22",
+      "parentFingerprint": "ba5e02cb7e6ea580e47514f43e662f5ab78f7d1d931c24b4a96d33566f2edc62",
+      "rawDepthMm": 195.07527749853207,
+      "secondaryParentFingerprint": null
+     }
+    ],
+    "occupancy": 8,
+    "occupancyOverTime": [
+     [
+      2.373940727,
+      1
+     ],
+     [
+      2.378051851,
+      2
+     ],
+     [
+      3.100069147,
+      3
+     ],
+     [
+      5.8436841170000005,
+      4
+     ],
+     [
+      7.9326723999999995,
+      5
+     ],
+     [
+      9.914354001,
+      6
+     ],
+     [
+      13.766689595999999,
+      7
+     ],
+     [
+      15.240348216,
+      8
+     ]
+    ],
+    "refusedArchiveFullAllDistinct": 0,
+    "refusedIncomplete": 0,
+    "similarityThreshold": 0.5
+   },
+   "schedule": null,
+   "arm": "v4",
+   "seed": 2,
+   "round": 0,
+   "spec": "work=120000000,cells=15:23:31:39,v3=0"
+  }
+ ],
+ "summary": {
+  "perSeed": {
+   "0": {
+    "v4": [
+     174.208
+    ]
+   },
+   "1": {
+    "v4": [
+     176.056
+    ]
+   },
+   "2": {
+    "v4": [
+     179.006
+    ]
+   }
+  },
+  "pairwise": {},
+  "processSeconds": {
+   "v4": {
+    "median": 16.193086242012214,
+    "min": 15.272724382055458,
+    "max": 16.50769706798019
+   }
+  },
+  "v3Classes": {},
+  "errors": []
+ }
+}
