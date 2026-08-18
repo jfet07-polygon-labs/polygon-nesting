@@ -26,6 +26,9 @@ use polygon_nesting_core::search::general_relaxed::{
     GeneralRelaxedCollisionBackend, GeneralRelaxedDiagnostics, GeneralRelaxedPressureModel,
     GeneralRelaxedSettings,
 };
+use polygon_nesting_core::search::portfolio::{
+    self, PortfolioBudget, PortfolioOutcome, PortfolioSettings,
+};
 use polygon_nesting_core::search::shadow_rescore;
 use polygon_nesting_core::validation::general_polygon::{
     raw_source_long_axis_depth_mm, GeneralPlacement,
@@ -185,7 +188,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     profiling::set_enabled(profiling_armed);
     let mut arguments = env::args().skip(1);
     let request_path = arguments.next().ok_or(
-        "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy] [persistent-vacancy-parent-fixture] [persistent-vacancy-target-depth-mm] [warm-start-fixture] [search-offset-allowance-mm]",
+        "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy] [persistent-vacancy-parent-fixture] [persistent-vacancy-target-depth-mm] [warm-start-fixture] [search-offset-allowance-mm] [portfolio-spec]",
     )?;
     let runs = parse_optional(&mut arguments, 1)?;
     let order_variants = parse_optional(&mut arguments, 1)?;
@@ -289,8 +292,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // offered at a continuous ladder of nearby angles, and at the mirror flip
     // where the request allows one - and read this argument exactly as 28 and
     // 29 do.
+    //
+    // An empty string means "no target", following the two fixture slots'
+    // precedent exactly: an empty string was never a parseable depth, so no
+    // previously valid invocation changes meaning, and it is what lets a later
+    // positional argument be supplied without arming this one.
     let persistent_vacancy_target_depth_mm = arguments
         .next()
+        .filter(|value| !value.is_empty())
         .map(|value| value.parse::<f64>())
         .transpose()
         .map_err(|error| format!("persistent vacancy target depth: {error}"))?;
@@ -320,8 +329,75 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !search_offset_allowance_mm.is_finite() || search_offset_allowance_mm < 0.0 {
         return Err("search offset allowance must be finite and non-negative".into());
     }
+    // Optional portfolio-coordinator spec (arg 48): a `key=value` list that
+    // arms the PR7 anytime coordinator in place of the single-mode run above.
+    // Absent or empty leaves every existing invocation byte-identical - the
+    // coordinator is a different entry point, not a different default.
+    //
+    //   wall=<ms>      wall-clock budget; the demo mode
+    //   work=<units>   work-unit budget; the reproducible mode
+    //   slots=<n>      salted constructor basin slots
+    //   cells=a:b:c    void-grid cell divisor salts, cycled over the slots
+    //   states=<n>     distinct archive states the descent phase spends on
+    //   cycles=<n>     alternation cycles per descent quantum
+    //   epochs=<n>     relaxed epochs inside a descent quantum
+    //   archive=<n>    archive capacity
+    //   overlap=<f>    piece-assignment overlap at which two layouts are the
+    //                  same basin
+    let portfolio_spec = arguments.next().filter(|value| !value.is_empty());
     if runs == 0 || arguments.next().is_some() {
         return Err("runs must be positive and no extra arguments are accepted".into());
+    }
+    // The relaxed configuration, assembled once. It used to be built inside the
+    // measured closure; hoisting it changes no field and no order, and it is
+    // what lets the portfolio coordinator run its protected mode-0 phase under
+    // *this* configuration rather than under a rebuilt approximation of it.
+    let relaxed_settings_template = {
+        let mut relaxed_settings =
+            GeneralRelaxedSettings::mixed_61_probe(relaxed_seed, relaxed_lanes);
+        relaxed_settings.epochs = relaxed_epochs;
+        relaxed_settings.sweeps_per_epoch = relaxed_sweeps;
+        relaxed_settings.global_samples_per_move = relaxed_global_samples;
+        relaxed_settings.focused_samples_per_move = relaxed_focused_samples;
+        relaxed_settings.refinement_rounds = relaxed_refinement_rounds;
+        relaxed_settings.initial_shrink_ratio = relaxed_initial_shrink_ratio;
+        relaxed_settings.minimum_shrink_ratio = relaxed_minimum_shrink_ratio;
+        relaxed_settings.synchronize_lanes = relaxed_synchronize_lanes;
+        relaxed_settings.collision_backend = if relaxed_dynamic_hazard {
+            GeneralRelaxedCollisionBackend::DynamicHazard
+        } else {
+            GeneralRelaxedCollisionBackend::RollbackTriangle
+        };
+        relaxed_settings.angle_seed_policy = if relaxed_continuous_seeds {
+            GeneralRelaxedAngleSeedPolicy::ContinuousUniform
+        } else {
+            GeneralRelaxedAngleSeedPolicy::StructuredGrid
+        };
+        relaxed_settings.pressure_model = relaxed_pressure_model;
+        relaxed_settings.angular_repair = if relaxed_angular_repair {
+            let mut repair = GeneralAngularRepairSettings::bounded_probe();
+            repair.neighborhood_size = relaxed_repair_neighborhood;
+            repair
+        } else {
+            GeneralAngularRepairSettings::disabled()
+        };
+        relaxed_settings.coupled_dynamic_separator = coupled_dynamic_separator;
+        relaxed_settings.precompression_frontier_vacancy_mode =
+            precompression_frontier_vacancy_mode;
+        relaxed_settings.persistent_vacancy_mode = persistent_vacancy_mode;
+        relaxed_settings.persistent_vacancy_target_depth_mm = persistent_vacancy_target_depth_mm;
+        relaxed_settings.persistent_vacancy_allow_unpinned_parent = unpinned_vacancy_parent_armed;
+        relaxed_settings
+    };
+    let portfolio_settings = portfolio_spec
+        .as_deref()
+        .map(|spec| parse_portfolio_spec(spec, relaxed_settings_template))
+        .transpose()?;
+    if portfolio_settings.is_some() && persistent_vacancy_mode != 0 {
+        return Err(
+            "the portfolio coordinator schedules its own operators; leave the persistent-vacancy mode at 0"
+                .into(),
+        );
     }
 
     let bytes = fs::read(Path::new(&request_path))?;
@@ -487,13 +563,45 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "\"request\":\"{request_sha256}\",\"pieces\":{},\"relaxedSeed\":{relaxed_seed},\
          \"persistentVacancyMode\":{persistent_vacancy_mode},\"relaxedEpochs\":{relaxed_epochs},\
          \"coupledDynamicSeparator\":{coupled_dynamic_separator},\"threads\":{threads},\
-         \"pinnedParent\":{},\"warmStart\":{},\"runs\":{runs}",
+         \"pinnedParent\":{},\"warmStart\":{},\"runs\":{runs},\"portfolio\":{}",
         pieces.len(),
         pinned_vacancy_parent.is_some(),
         warm_start_incumbent.is_some(),
+        portfolio_settings.is_some(),
     ));
+    let mut portfolio_report = None::<serde_json::Value>;
     for _ in 0..runs {
         let started = Instant::now();
+        if let Some(portfolio_settings) = portfolio_settings.as_ref() {
+            // The coordinator owns the whole run: it constructs, runs the
+            // protected mode-0 phase itself, and schedules the operators. It
+            // returns the mode-0 diagnostics unchanged so the rest of this
+            // report describes exactly what a mode-0 run's report describes.
+            let outcome = job_pool
+                .run_scoped(|| portfolio::run_portfolio(&pieces, settings, portfolio_settings))?;
+            elapsed_ms.push(started.elapsed().as_secs_f64() * 1_000.0);
+            constructed_depth_mm.get_or_insert(outcome.constructed_depth_mm);
+            let current = outcome.result.clone();
+            let current_relaxed_diagnostics = (*outcome.m0_diagnostics).clone();
+            portfolio_report.get_or_insert_with(|| portfolio_report_json(&outcome));
+            if let Some(reference) = &result {
+                if reference != &current {
+                    return Err("deterministic replay produced different results".into());
+                }
+            } else {
+                result = Some(current);
+            }
+            if let Some(reference) = &relaxed_diagnostics {
+                if reference != &current_relaxed_diagnostics {
+                    return Err(
+                        "deterministic relaxed replay produced different diagnostics".into(),
+                    );
+                }
+            } else {
+                relaxed_diagnostics = Some(current_relaxed_diagnostics);
+            }
+            continue;
+        }
         let (current, current_relaxed_diagnostics, current_constructed_depth_mm) = job_pool
             .run_scoped(|| {
                 let mut constructed = construct_short_side_first(&pieces, settings)?;
@@ -508,42 +616,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         (constructed, None, constructed_depth_mm),
                     );
                 }
-                let mut relaxed_settings =
-                    GeneralRelaxedSettings::mixed_61_probe(relaxed_seed, relaxed_lanes);
-                relaxed_settings.epochs = relaxed_epochs;
-                relaxed_settings.sweeps_per_epoch = relaxed_sweeps;
-                relaxed_settings.global_samples_per_move = relaxed_global_samples;
-                relaxed_settings.focused_samples_per_move = relaxed_focused_samples;
-                relaxed_settings.refinement_rounds = relaxed_refinement_rounds;
-                relaxed_settings.initial_shrink_ratio = relaxed_initial_shrink_ratio;
-                relaxed_settings.minimum_shrink_ratio = relaxed_minimum_shrink_ratio;
-                relaxed_settings.synchronize_lanes = relaxed_synchronize_lanes;
-                relaxed_settings.collision_backend = if relaxed_dynamic_hazard {
-                    GeneralRelaxedCollisionBackend::DynamicHazard
-                } else {
-                    GeneralRelaxedCollisionBackend::RollbackTriangle
-                };
-                relaxed_settings.angle_seed_policy = if relaxed_continuous_seeds {
-                    GeneralRelaxedAngleSeedPolicy::ContinuousUniform
-                } else {
-                    GeneralRelaxedAngleSeedPolicy::StructuredGrid
-                };
-                relaxed_settings.pressure_model = relaxed_pressure_model;
-                relaxed_settings.angular_repair = if relaxed_angular_repair {
-                    let mut repair = GeneralAngularRepairSettings::bounded_probe();
-                    repair.neighborhood_size = relaxed_repair_neighborhood;
-                    repair
-                } else {
-                    GeneralAngularRepairSettings::disabled()
-                };
-                relaxed_settings.coupled_dynamic_separator = coupled_dynamic_separator;
-                relaxed_settings.precompression_frontier_vacancy_mode =
-                    precompression_frontier_vacancy_mode;
-                relaxed_settings.persistent_vacancy_mode = persistent_vacancy_mode;
-                relaxed_settings.persistent_vacancy_target_depth_mm =
-                    persistent_vacancy_target_depth_mm;
-                relaxed_settings.persistent_vacancy_allow_unpinned_parent =
-                    unpinned_vacancy_parent_armed;
+                let relaxed_settings = relaxed_settings_template;
                 let outcome = improve_complete_layout_with_pinned_vacancy_parent(
                     &pieces,
                     settings,
@@ -846,6 +919,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // report, unconditionally, so no artifact of one can be read as a replay.
     if unpinned_vacancy_parent_armed {
         output["unpinnedVacancyParent"] = json!(true);
+    }
+    // The coordinator's own report. Present only when the coordinator ran, so
+    // every existing invocation's document is unchanged.
+    if let Some(report) = portfolio_report {
+        output["portfolio"] = report;
     }
     if quality_trace_armed {
         output["qualityTrace"] = json!({
@@ -1509,6 +1587,142 @@ fn relevant_source_tree_sha256() -> Option<String> {
         hasher.update(bytes);
     }
     Some(format!("{:x}", hasher.finalize()))
+}
+
+/// Parses the portfolio-coordinator spec (argument 48).
+///
+/// One argument rather than a dozen positional ones on purpose: every replay
+/// driver in this repository pins the positional tail by index, and a schedule
+/// gains knobs. Exactly one of `wall` and `work` must be given - the budget's
+/// *currency* is the one thing the coordinator cannot default, because the two
+/// modes make different promises about reproducibility.
+fn parse_portfolio_spec(
+    spec: &str,
+    relaxed_template: GeneralRelaxedSettings,
+) -> Result<PortfolioSettings, Box<dyn std::error::Error>> {
+    let mut budget = None;
+    let mut settings =
+        PortfolioSettings::new(relaxed_template, PortfolioBudget::Wall { millis: 0 });
+    for entry in spec.split(',').filter(|entry| !entry.is_empty()) {
+        let (key, value) = entry
+            .split_once('=')
+            .ok_or_else(|| format!("portfolio spec entry {entry:?} is not key=value"))?;
+        match key {
+            "wall" => {
+                budget = Some(PortfolioBudget::Wall {
+                    millis: value.parse()?,
+                })
+            }
+            "work" => {
+                budget = Some(PortfolioBudget::Work {
+                    units: value.parse()?,
+                })
+            }
+            "slots" => settings.basin_slots = value.parse()?,
+            "states" => settings.descent_states = value.parse()?,
+            "cycles" => settings.descent_cycles = value.parse()?,
+            "deepen" => settings.descent_iterated_deepening = value != "0",
+            "epochs" => settings.descent_relaxed_epochs = value.parse()?,
+            "archive" => settings.archive_capacity = value.parse()?,
+            "overlap" => settings.similarity_threshold = value.parse()?,
+            "cells" => {
+                settings.cell_divisor_salts = value
+                    .split(':')
+                    .filter(|entry| !entry.is_empty())
+                    .map(str::parse::<f64>)
+                    .collect::<Result<Vec<_>, _>>()?;
+            }
+            "basinsBy" => settings.schedule.basins_by = value.parse()?,
+            "descentBy" => settings.schedule.descent_by = value.parse()?,
+            "crossoverBy" => settings.schedule.crossover_by = value.parse()?,
+            "compressionBy" => settings.schedule.compression_by = value.parse()?,
+            "drainBy" => settings.schedule.drain_by = value.parse()?,
+            other => return Err(format!("unknown portfolio spec key {other:?}").into()),
+        }
+    }
+    settings.budget = budget.ok_or("portfolio spec requires wall=<ms> or work=<units>")?;
+    Ok(settings)
+}
+
+/// The coordinator's report, as JSON.
+fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
+    let budget = match outcome.budget {
+        PortfolioBudget::Wall { millis } => json!({"kind": "wall", "millis": millis}),
+        PortfolioBudget::Work { units } => json!({"kind": "work", "units": units}),
+    };
+    json!({
+        "budget": budget,
+        "elapsedSeconds": outcome.elapsed_seconds,
+        "workUnits": outcome.work_units,
+        "areaLowerBoundDepthMm": outcome.area_lower_bound_depth_mm,
+        "constructorClampMm": outcome.constructor_clamp_mm,
+        "constructedDepthMm": outcome.constructed_depth_mm,
+        "incumbent": {
+            "fingerprint": outcome.incumbent.fingerprint(),
+            "rawDepthMm": outcome.incumbent.raw_depth_mm(),
+            "dualGateValid": outcome.incumbent.dual_gate_valid(),
+            "source": outcome.incumbent.source(),
+            "publishedSeconds": outcome.incumbent.published_seconds(),
+            "publishedWorkUnits": outcome.incumbent.published_work_units(),
+        },
+        "phases": outcome.phases.iter().map(|phase| json!({
+            "name": phase.name,
+            "deadlineFraction": phase.deadline_fraction,
+            "enteredSeconds": phase.entered_seconds,
+            "elapsedSeconds": phase.elapsed_seconds,
+            "workUnits": phase.work_units,
+            "operatorCalls": phase.operator_calls,
+            "publications": phase.publications,
+            "skipped": phase.skipped,
+        })).collect::<Vec<_>>(),
+        "publications": outcome.publications.iter().map(|event| json!({
+            "seconds": event.seconds,
+            "workUnits": event.work_units,
+            "phase": event.phase,
+            "source": event.source,
+            "rawDepthMm": event.raw_depth_mm,
+            "previousRawDepthMm": event.previous_raw_depth_mm,
+            "fingerprint": event.fingerprint,
+        })).collect::<Vec<_>>(),
+        "operatorCalls": outcome.operator_calls.iter().map(|call| json!({
+            "phase": call.phase,
+            "operator": call.operator,
+            "parentFingerprint": call.parent_fingerprint,
+            "startedSeconds": call.started_seconds,
+            "elapsedSeconds": call.elapsed_seconds,
+            "workUnits": call.work_units,
+            "exactValid": call.exact_valid,
+            "rawDepthMm": call.raw_depth_mm,
+            "archiveDisposition": call.archive_disposition,
+            "published": call.published,
+            "failureReason": call.failure_reason,
+        })).collect::<Vec<_>>(),
+        "archive": {
+            "capacity": outcome.archive.capacity,
+            "occupancy": outcome.archive.occupancy,
+            "similarityThreshold": outcome.archive.similarity_threshold,
+            "admitted": outcome.archive.admitted,
+            "duplicates": outcome.archive.duplicates,
+            "evicted": outcome.archive.evicted,
+            "refusedArchiveFullAllDistinct": outcome.archive.refused_full,
+            "refusedIncomplete": outcome.archive.refused_incomplete,
+            "byOperator": outcome.archive.by_operator,
+            "occupancyOverTime": outcome.archive.occupancy_over_time
+                .iter()
+                .map(|(seconds, occupancy)| json!([seconds, occupancy]))
+                .collect::<Vec<_>>(),
+            "members": outcome.archive.members.iter().map(|member| json!({
+                "fingerprint": member.fingerprint,
+                "rawDepthMm": member.raw_depth_mm,
+                "birthSeconds": member.birth_seconds,
+                "birthWorkUnits": member.birth_work_units,
+                "operator": member.operator,
+                "parentFingerprint": member.parent_fingerprint,
+                "exactValid": member.exact_valid,
+                "descents": member.descents,
+            })).collect::<Vec<_>>(),
+        },
+    })
 }
 
 fn parse_optional_f64(

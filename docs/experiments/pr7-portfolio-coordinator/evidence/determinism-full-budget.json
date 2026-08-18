@@ -1,0 +1,59 @@
+{
+ "binary": "/var/lib/t3/tmp/pr7-bench-measure",
+ "workUnits": 40000000,
+ "seed": 1,
+ "spec": "work=40000000,slots=4,states=3,cycles=1,epochs=4,cells=13:15:17:19",
+ "inProcessReplay": {
+  "runs": 2,
+  "exitCode": 0,
+  "passed": true,
+  "error": "",
+  "engineDepthMm": 176.056
+ },
+ "crossProcess": {
+  "passed": true,
+  "differences": 0,
+  "first": [],
+  "engineDepthMm": 176.056,
+  "workUnitsSpent": 33286633,
+  "phases": [
+   {
+    "name": "m0",
+    "workUnits": 9629453,
+    "skipped": false,
+    "operatorCalls": 0
+   },
+   {
+    "name": "basins",
+    "workUnits": 2310,
+    "skipped": false,
+    "operatorCalls": 4
+   },
+   {
+    "name": "descent",
+    "workUnits": 17042589,
+    "skipped": false,
+    "operatorCalls": 8
+   },
+   {
+    "name": "crossover",
+    "workUnits": 4907044,
+    "skipped": false,
+    "operatorCalls": 1
+   },
+   {
+    "name": "compression",
+    "workUnits": 1705237,
+    "skipped": false,
+    "operatorCalls": 2
+   },
+   {
+    "name": "drain",
+    "workUnits": 0,
+    "skipped": false,
+    "operatorCalls": 0
+   }
+  ]
+ },
+ "ALL_PASS": true
+}

@@ -122,8 +122,13 @@ const VOID_GRID_CACHE_SLOTS: usize = 64;
 /// result scales by `k` - which is the property that makes the void signal a
 /// statement about the request's own geometry rather than about millimetres.
 #[cfg(feature = "fast-constructor-profile")]
-fn derived_cell_mm(min_piece_extent_mm: f64, width_mm: f64, envelope_mm: f64) -> f64 {
-    let piece_cell = min_piece_extent_mm / VOID_CELLS_PER_MIN_PIECE_EXTENT;
+fn derived_cell_mm(
+    min_piece_extent_mm: f64,
+    width_mm: f64,
+    envelope_mm: f64,
+    cells_per_min_piece_extent: f64,
+) -> f64 {
+    let piece_cell = min_piece_extent_mm / cells_per_min_piece_extent;
     let budget_cell = ((width_mm.max(0.0) * envelope_mm.max(0.0)) / VOID_MAX_GRID_CELLS).sqrt();
     // The budget only ever coarsens: a cell finer than it would blow the grid,
     // while a cell coarser than the piece scale is what the caller asked for by
@@ -172,7 +177,20 @@ pub(super) struct ConstructionVoidCache {
 #[cfg(feature = "fast-constructor-profile")]
 impl ConstructionVoidCache {
     /// Derives the grid resolution from the request's own geometry.
-    pub(super) fn new(pieces: &[GeneralFastPiece<'_>], settings: GeneralFastSettings) -> Self {
+    ///
+    /// `divisor_override` replaces [`VOID_CELLS_PER_MIN_PIECE_EXTENT`] for this
+    /// one evaluator when a coordinator salted it; `None`, which is every CLI
+    /// invocation, keeps the calibrated divisor. A non-finite or non-positive
+    /// override is ignored rather than propagated into the cell, because a
+    /// coordinator's salt table must not be able to produce a `NaN` grid.
+    pub(super) fn new(
+        pieces: &[GeneralFastPiece<'_>],
+        settings: GeneralFastSettings,
+        divisor_override: Option<f64>,
+    ) -> Self {
+        let divisor = divisor_override
+            .filter(|value| value.is_finite() && *value > 0.0)
+            .unwrap_or(VOID_CELLS_PER_MIN_PIECE_EXTENT);
         let mut min_extent = f64::INFINITY;
         for piece in pieces {
             if let Some(bounds) = piece.polygon.bounds() {
@@ -183,7 +201,7 @@ impl ConstructionVoidCache {
             }
         }
         let width = settings.sheet_short_axis_mm;
-        let cell_mm = derived_cell_mm(min_extent, width, settings.sheet_long_axis_mm);
+        let cell_mm = derived_cell_mm(min_extent, width, settings.sheet_long_axis_mm, divisor);
         let columns = if cell_mm.is_finite() && cell_mm > 0.0 && width.is_finite() && width > 0.0 {
             let columns = (width / cell_mm).ceil();
             if columns.is_finite() && columns > 0.0 {
@@ -731,8 +749,14 @@ pub(super) struct ConstructionVoidCache;
 
 #[cfg(not(feature = "fast-constructor-profile"))]
 impl ConstructionVoidCache {
-    pub(super) fn new(pieces: &[GeneralFastPiece<'_>], settings: GeneralFastSettings) -> Self {
-        let _ = (pieces, settings);
+    pub(super) fn new(
+        pieces: &[GeneralFastPiece<'_>],
+        settings: GeneralFastSettings,
+        divisor_override: Option<f64>,
+    ) -> Self {
+        // The legacy raster's cell is a fixed grid step, not a derived one, so
+        // there is nothing here for a divisor salt to move.
+        let _ = (pieces, settings, divisor_override);
         Self
     }
 

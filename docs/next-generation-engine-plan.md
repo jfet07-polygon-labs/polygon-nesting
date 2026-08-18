@@ -3091,3 +3091,194 @@ class at zero as well as the structural class, and the residue is the
 `f32` dynamic-pole tier, which cannot express an index-ordered pair
 question at its interface. `MovedRowDelta` is the type that inheritance
 will hand around when that tier is fixed; it does not unblock it.
+
+## PR7: the coordinator has two state objects, and the schedule it was given is not the schedule the measurements support
+
+Sol's review 3 asks for a thin coordinator - "Sol's portfolio, sized by
+the measured economics, as one single-process anytime driver" - and its
+finding 2 says why the engine cannot get there with the state model it
+has: adoption "only retains an immediately better public result", while
+"the documented from-scratch lineage begins from precisely this class of
+worse, structurally different constructor basin". This stage builds that
+coordinator, runs the review's own ten-second schedule from the bare
+request, and measures it against the m0+coupled baseline. It beats the
+baseline on every paired round. It also disagrees with the schedule
+about where three of the ten seconds should go, and the disagreement is
+the more useful half.
+
+### The two objects, and the one door
+
+`search::portfolio` is the module. `PublishedIncumbent` is the engine's
+answer - always dual-gate valid, best raw depth - and it moves through
+exactly one function: `adopt_published_placements`, which is steps 2-4 of
+the adoption rule extracted verbatim so that the coordinator and the
+coupled separator's own mode slot publish through the *same* completeness
+check, the *same* strict raw comparator and the *same* composite exact
+validator. The coordinator detects adoption by the fingerprint moving,
+because that is the only way that function can have said yes. It has no
+validity opinion of its own and no way to acquire one.
+
+`SearchArchive` is the search's memory: basins keyed by placement
+fingerprint, each carrying raw depth, birth time in both seconds and work
+units, operator provenance and parent fingerprint. Under capacity it
+admits **everything**, including a basin deeper than every member,
+because this ledger's own eighteen-sample sweep measured
+Pearson(immediate, descended) = -0.212 and immediate depth is therefore
+not evidence about future value. At capacity it evicts only a member that
+is both *dominated by* and *similar to* some other layout - no deeper,
+and piece-assignment overlap at or above the threshold - and a full
+archive of mutually distinct basins refuses the newcomer rather than
+dropping a distinct member. Structural distance is the fingerprint as the
+cheap first cut and the fraction of pieces at an exactly identical pose
+as the better one, with no tolerance in it: a tolerance would be a
+length, and a length would have to come from somewhere.
+
+### The number
+
+Nine paired rounds, three seeds, arms interleaved with the order rotating
+every round, from the bare request at a ten-second wall budget, on a box
+shared with another benchmarking agent:
+
+| seed | m0+coupled baseline | coordinator, review schedule | coordinator, focused |
+|---:|---:|---:|---:|
+| 0 | 181.589 | **179.587** | **179.587** |
+| 1 | **179.690** | 176.753 (176.056/179.633/176.753) | **176.056** (3/3) |
+| 2 | 179.662 | **179.006** | **179.006** |
+
+**Paired delta median -2.002 mm, 9 of 9 rounds strictly better**, on both
+coordinator arms. Against the bar - the baseline's 179.690 flatline - the
+focused arm publishes **176.056 mm in all three rounds, a 3.634 mm
+margin**. The stretch goal of 175 mm is not reached; the best layout any
+arm published in ten seconds is 176.056.
+
+The first 1.8 seconds of all three curves are the same curve, because
+they are the same search: the coordinator's phase 0 *is* the protected
+mode-0 run. Under the trace, seed 1's focused arm crosses 179 mm at
+6.800 s and 177 mm at 7.526 s; the baseline crosses neither, ever.
+
+### Where the ten seconds went, per operator
+
+| operator | calls | mean wall | exact-valid | published |
+|---|---:|---:|---:|---:|
+| `basins/mode20` | 19 | 0.613 s | 19 | **0** |
+| `descent/mode22` | 27 | 1.168 s | 27 | 9 |
+| `crossover/mode23` | 4 | 2.716 s | 4 | 2 |
+| `compression/mode31` | 6 | 0.096 s | **0** | 0 |
+| `compression/mode22` | 6 | 1.036 s | 6 | 0 |
+
+**The constructor slice does not pay at this budget.** The review gives
+mode-20 basin generation 1.9-4.0 s and this stage gave it four salted
+arms - salted on the derived cell divisor and on the clamp target, per
+the cell-lottery finding, never tuned. Nineteen arms across nine runs,
+every one exact-valid, every one refused by the adoption rule, and not
+one descendant caught the incumbent inside ten seconds. At 0.613 s each
+they are running at the `fast-constructor-profile` price, 4.2x cheaper
+than the shipped evaluator, and it is still not cheap enough. The
+`focused` arm prices the slice directly by setting it to zero: it is
+never worse, and on seed 1 it is better and more consistent, because the
+1.24 s goes to the crossover phase instead. That is a verdict on the
+*allocation* at this budget, not on mode 20's mechanism, and the archive
+is exactly the structure that will collect the payoff when the mechanism
+gets cheaper.
+
+**Mode 31 legalised nothing.** Six calls, zero exact-valid results, every
+one "global legalization did not reach a feasible fixpoint". The review
+already said m31 is production-worthy "only as the legalizer for a
+compressed/perturbed frontier"; on a clean mode-22 fixpoint it has
+nothing to legalise, and this is that sentence measured.
+
+**Mode 23 is the second most productive operator here.** Two
+publications in four calls under the review's schedule and three in nine
+under the focused one, carrying the largest single gains in the run. The
+review called crossover "conditional but currently evidence-required"; it
+is now evidence-*producing*.
+
+The archive ends at 8 of 16 under the review's schedule and 4-5 of 16
+focused, so **its eviction rule never fired on this stream** - a caveat,
+not a claim. One small finding fell out of it: the coupled separator's
+control, treatment and boundary-projection arms are all offered and all
+three come back `Duplicate`. The mode-0 result *is* the
+boundary-projection arm; the separator's three arms are one layout.
+
+### Two defects the coordinator's own ledger found, and one experiment it declined
+
+**Charging a constructor's pose prior as a descent.** The frontier is
+ordered partly by how often a basin has been descended from, and mode 20
+does not descend from its parent - it builds from scratch and reads the
+parent as a pose prior. Charging it a descent pushed the incumbent to the
+back of a queue it should have led, and the first schedule spent its
+whole alternation phase on 194-214 mm constructor basins while the one
+parent whose quantum published waited. `ParentRole` is the fix.
+
+**Ordering the frontier by fairness before quality.** The review's phrase
+is "m22 work quanta across the **best** structurally distinct archive
+states", and the word is load-bearing: sorting by descent count first is
+fairer and measured worse. That schedule's nine rounds are retained -
+also -2.002 mm median, but its best layout is 179.006 mm rather than
+176.056 and seed 1 lands at 179.545-179.633.
+
+**Iterated deepening of the alternation quantum**, built and declined.
+When the frontier is a fixpoint at the current quantum size the obvious
+move is to double the quantum rather than end the phase with budget left.
+It keeps the phase busy by spending the *crossover* phase's budget, and
+the crossover phase is the second most productive operator here: seed 1
+goes from 176.056 to 179.633 under the review's schedule and to 176.753
+under the focused one. `descent_iterated_deepening` stays in the tree,
+off, as the instrument that priced it.
+
+### Determinism is denominated in work, not seconds
+
+A wall-clock schedule branches on a clock, so two of its runs are two
+different searches on a shared box - which seed 1's own spread shows. The
+work-budget mode branches only on the engine's counters: one unit is one
+proxy candidate query and an exact Clipper pair test is charged five, a
+ratio read off the quality-frontier trace's scope ledger (1.108 us
+against 0.224 us). Two independent processes at a 40M-unit budget are
+identical **as whole documents** - every phase boundary, every operator
+call, every archive member, every work-unit reading - at depth 176.056
+and 33,286,633 units spent, and so are two at a *binding* 20M budget,
+where the schedule is genuinely different: `basins` is skipped because
+mode 0 alone spends 9.63M past the 8M deadline, `descent` gets 4.12M
+instead of 17.04M, `drain` is skipped, and both processes take that
+different schedule identically.
+
+One honest limit: the deep operators' Clipper counters are behind
+`search-profiling`, which is off, so the `basins` phase charges 2,310
+work units for 2.44 s of real work. The phase is still bounded, by its
+slot count, so the schedule terminates - but the work currency is not yet
+a faithful proxy for wall time across all operators, and nothing here
+claims it is.
+
+### What the coordinator costs on the work it did not add
+
+Paired A/B on the phase both arms share: the plain engine run against the
+same search as the coordinator's phase 0 with a zero budget, so every
+later phase is entered, finds no room and is skipped. The difference is
+five archive offers - each re-measuring a raw depth and re-running the
+composite validator on a 61-piece layout - plus the incumbent's own
+validation. Ten interleaved rounds per sample, arm order alternating,
+statistic the per-round paired ratio: **1.020** (spread 0.701-1.131, 2/10
+below parity) and **1.049** (spread 0.950-1.106, 3/10). Roughly 2-5%,
+with both arms returning the identical engine depth 179.690. Two samples
+for the reason the fused-pair-query entry gives; sample 1's 0.701 round
+is another agent's benchmark landing on the box, not a coordinator
+speedup.
+
+### What this stage shipped
+
+The default path is untouched. All four pinned regression gates reproduce
+the pristine `0cf1163` binary as **whole documents** on the
+default-features worktree binary - mode 20 at `independentDepthMm`
+206.869 / `8a7737381238fa4d`, the three mode-22 records at raw
+159.09233022733062, 159.07876040364795 and 164.0375677990678 at
+`fa01012af1d559ae`, `e28fba007f8031d4` and `49f094d7e59a9008`, every
+counter and every diagnostic field agreeing with wall-clock and
+build-identity fields removed. The coordinator is reachable only through
+a new trailing positional argument that every existing invocation leaves
+empty, and the three new relaxed settings it needs - a constructor
+restart window, a void-grid cell divisor salt, an alternation cycle cap -
+are `None` everywhere else and can only ever *shorten* what the operator
+they touch was already allowed to do.
+
+Evidence, drivers and raw event streams:
+`docs/experiments/pr7-portfolio-coordinator/`.

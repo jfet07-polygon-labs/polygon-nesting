@@ -1,0 +1,1324 @@
+{
+ "binary": "/var/lib/t3/tmp/pr7-bench-measure",
+ "allowance": "0.002",
+ "arms": {
+  "base": null,
+  "coord": "wall=10000,slots=4,states=3,cycles=1,epochs=4,cells={cells}",
+  "focus": "wall=10000,slots=0,states=1,cycles=1,epochs=4"
+ },
+ "saltSets": {
+  "0": "13:15:17:19",
+  "1": "11:15:21:27",
+  "2": "15:23:31:39"
+ },
+ "pairs": [
+  {
+   "arm": "coord",
+   "seed": 0,
+   "round": 0,
+   "baseEngineDepthMm": 181.589,
+   "armEngineDepthMm": 179.587,
+   "armRawDepthMm": 179.5868589805926,
+   "armDualGateValid": true,
+   "deltaMm": -2.0020000000000095,
+   "baseProcessSeconds": 2.33273529302096,
+   "armProcessSeconds": 9.789386618009303,
+   "armPublishedSeconds": 5.067297597
+  },
+  {
+   "arm": "focus",
+   "seed": 0,
+   "round": 0,
+   "baseEngineDepthMm": 181.589,
+   "armEngineDepthMm": 179.587,
+   "armRawDepthMm": 179.5868589805926,
+   "armDualGateValid": true,
+   "deltaMm": -2.0020000000000095,
+   "baseProcessSeconds": 2.33273529302096,
+   "armProcessSeconds": 8.560513108008308,
+   "armPublishedSeconds": 3.375157206
+  },
+  {
+   "arm": "coord",
+   "seed": 0,
+   "round": 1,
+   "baseEngineDepthMm": 181.589,
+   "armEngineDepthMm": 179.587,
+   "armRawDepthMm": 179.5868589805926,
+   "armDualGateValid": true,
+   "deltaMm": -2.0020000000000095,
+   "baseProcessSeconds": 2.9510090480034705,
+   "armProcessSeconds": 9.284469047997845,
+   "armPublishedSeconds": 5.426995663
+  },
+  {
+   "arm": "focus",
+   "seed": 0,
+   "round": 1,
+   "baseEngineDepthMm": 181.589,
+   "armEngineDepthMm": 179.587,
+   "armRawDepthMm": 179.5868589805926,
+   "armDualGateValid": true,
+   "deltaMm": -2.0020000000000095,
+   "baseProcessSeconds": 2.9510090480034705,
+   "armProcessSeconds": 9.54574408501503,
+   "armPublishedSeconds": 3.827444698
+  },
+  {
+   "arm": "coord",
+   "seed": 0,
+   "round": 2,
+   "baseEngineDepthMm": 181.589,
+   "armEngineDepthMm": 179.587,
+   "armRawDepthMm": 179.5868589805926,
+   "armDualGateValid": true,
+   "deltaMm": -2.0020000000000095,
+   "baseProcessSeconds": 2.9063094930024818,
+   "armProcessSeconds": 9.580509716004599,
+   "armPublishedSeconds": 5.461416
+  },
+  {
+   "arm": "focus",
+   "seed": 0,
+   "round": 2,
+   "baseEngineDepthMm": 181.589,
+   "armEngineDepthMm": 179.587,
+   "armRawDepthMm": 179.5868589805926,
+   "armDualGateValid": true,
+   "deltaMm": -2.0020000000000095,
+   "baseProcessSeconds": 2.9063094930024818,
+   "armProcessSeconds": 9.850280041020596,
+   "armPublishedSeconds": 4.422598271
+  },
+  {
+   "arm": "coord",
+   "seed": 1,
+   "round": 0,
+   "baseEngineDepthMm": 179.69,
+   "armEngineDepthMm": 176.753,
+   "armRawDepthMm": 176.75281805880576,
+   "armDualGateValid": true,
+   "deltaMm": -2.937000000000012,
+   "baseProcessSeconds": 2.3740106299810577,
+   "armProcessSeconds": 10.16803421601071,
+   "armPublishedSeconds": 10.133535265
+  },
+  {
+   "arm": "focus",
+   "seed": 1,
+   "round": 0,
+   "baseEngineDepthMm": 179.69,
+   "armEngineDepthMm": 176.056,
+   "armRawDepthMm": 176.05599999999998,
+   "armDualGateValid": true,
+   "deltaMm": -3.633999999999986,
+   "baseProcessSeconds": 2.3740106299810577,
+   "armProcessSeconds": 7.929875520989299,
+   "armPublishedSeconds": 7.897378011
+  },
+  {
+   "arm": "coord",
+   "seed": 1,
+   "round": 1,
+   "baseEngineDepthMm": 179.69,
+   "armEngineDepthMm": 179.633,
+   "armRawDepthMm": 179.63299999999998,
+   "armDualGateValid": true,
+   "deltaMm": -0.05699999999998795,
+   "baseProcessSeconds": 3.082193147012731,
+   "armProcessSeconds": 9.194549281004583,
+   "armPublishedSeconds": 5.492409172
+  },
+  {
+   "arm": "focus",
+   "seed": 1,
+   "round": 1,
+   "baseEngineDepthMm": 179.69,
+   "armEngineDepthMm": 176.056,
+   "armRawDepthMm": 176.05599999999998,
+   "armDualGateValid": true,
+   "deltaMm": -3.633999999999986,
+   "baseProcessSeconds": 3.082193147012731,
+   "armProcessSeconds": 8.661461484007305,
+   "armPublishedSeconds": 8.623045521
+  },
+  {
+   "arm": "coord",
+   "seed": 1,
+   "round": 2,
+   "baseEngineDepthMm": 179.69,
+   "armEngineDepthMm": 176.753,
+   "armRawDepthMm": 176.75281805880576,
+   "armDualGateValid": true,
+   "deltaMm": -2.937000000000012,
+   "baseProcessSeconds": 2.8095960570208263,
+   "armProcessSeconds": 10.42802670400124,
+   "armPublishedSeconds": 10.392486637
+  },
+  {
+   "arm": "focus",
+   "seed": 1,
+   "round": 2,
+   "baseEngineDepthMm": 179.69,
+   "armEngineDepthMm": 176.056,
+   "armRawDepthMm": 176.05599999999998,
+   "armDualGateValid": true,
+   "deltaMm": -3.633999999999986,
+   "baseProcessSeconds": 2.8095960570208263,
+   "armProcessSeconds": 9.6495891380182,
+   "armPublishedSeconds": 9.608677565
+  },
+  {
+   "arm": "coord",
+   "seed": 2,
+   "round": 0,
+   "baseEngineDepthMm": 179.662,
+   "armEngineDepthMm": 179.006,
+   "armRawDepthMm": 179.006,
+   "armDualGateValid": true,
+   "deltaMm": -0.6560000000000059,
+   "baseProcessSeconds": 2.3597584890085272,
+   "armProcessSeconds": 10.354347225016681,
+   "armPublishedSeconds": 4.955846578
+  },
+  {
+   "arm": "focus",
+   "seed": 2,
+   "round": 0,
+   "baseEngineDepthMm": 179.662,
+   "armEngineDepthMm": 179.006,
+   "armRawDepthMm": 179.006,
+   "armDualGateValid": true,
+   "deltaMm": -0.6560000000000059,
+   "baseProcessSeconds": 2.3597584890085272,
+   "armProcessSeconds": 7.752990088018123,
+   "armPublishedSeconds": 3.226619877
+  },
+  {
+   "arm": "coord",
+   "seed": 2,
+   "round": 1,
+   "baseEngineDepthMm": 179.662,
+   "armEngineDepthMm": 179.006,
+   "armRawDepthMm": 179.006,
+   "armDualGateValid": true,
+   "deltaMm": -0.6560000000000059,
+   "baseProcessSeconds": 3.1201715400093235,
+   "armProcessSeconds": 9.05876710699522,
+   "armPublishedSeconds": 5.346971047
+  },
+  {
+   "arm": "focus",
+   "seed": 2,
+   "round": 1,
+   "baseEngineDepthMm": 179.662,
+   "armEngineDepthMm": 179.006,
+   "armRawDepthMm": 179.006,
+   "armDualGateValid": true,
+   "deltaMm": -0.6560000000000059,
+   "baseProcessSeconds": 3.1201715400093235,
+   "armProcessSeconds": 8.82872750700335,
+   "armPublishedSeconds": 4.106933455
+  },
+  {
+   "arm": "coord",
+   "seed": 2,
+   "round": 2,
+   "baseEngineDepthMm": 179.662,
+   "armEngineDepthMm": 179.006,
+   "armRawDepthMm": 179.006,
+   "armDualGateValid": true,
+   "deltaMm": -0.6560000000000059,
+   "baseProcessSeconds": 2.9099414680094924,
+   "armProcessSeconds": 9.262750737019815,
+   "armPublishedSeconds": 5.055169757
+  },
+  {
+   "arm": "focus",
+   "seed": 2,
+   "round": 2,
+   "baseEngineDepthMm": 179.662,
+   "armEngineDepthMm": 179.006,
+   "armRawDepthMm": 179.006,
+   "armDualGateValid": true,
+   "deltaMm": -0.6560000000000059,
+   "baseProcessSeconds": 2.9099414680094924,
+   "armProcessSeconds": 8.778184191003675,
+   "armPublishedSeconds": 3.993458595
+  }
+ ],
+ "milestones": {
+  "base": {
+   "0": {
+    "200.0": 0.753,
+    "190.0": 0.753,
+    "185.0": 0.753,
+    "182.0": 1.291,
+    "181.6": 1.691,
+    "180.0": null,
+    "179.69": null,
+    "179.0": null,
+    "178.0": null,
+    "177.0": null,
+    "175.0": null
+   },
+   "1": {
+    "200.0": 0.702,
+    "190.0": 0.702,
+    "185.0": 0.702,
+    "182.0": 1.039,
+    "181.6": 1.457,
+    "180.0": 1.807,
+    "179.69": 1.807,
+    "179.0": null,
+    "178.0": null,
+    "177.0": null,
+    "175.0": null
+   },
+   "2": {
+    "200.0": 0.754,
+    "190.0": 0.754,
+    "185.0": 0.754,
+    "182.0": 0.954,
+    "181.6": 0.954,
+    "180.0": 1.521,
+    "179.69": 1.521,
+    "179.0": null,
+    "178.0": null,
+    "177.0": null,
+    "175.0": null
+   }
+  },
+  "coord": {
+   "0": {
+    "200.0": 0.723,
+    "190.0": 0.723,
+    "185.0": 0.723,
+    "182.0": 1.163,
+    "181.6": 1.636,
+    "180.0": 5.421,
+    "179.69": 5.421,
+    "179.0": null,
+    "178.0": null,
+    "177.0": null,
+    "175.0": null
+   },
+   "1": {
+    "200.0": 0.68,
+    "190.0": 0.68,
+    "185.0": 0.68,
+    "182.0": 1.135,
+    "181.6": 1.396,
+    "180.0": 1.728,
+    "179.69": 1.728,
+    "179.0": null,
+    "178.0": null,
+    "177.0": null,
+    "175.0": null
+   },
+   "2": {
+    "200.0": 0.67,
+    "190.0": 0.67,
+    "185.0": 0.67,
+    "182.0": 0.861,
+    "181.6": 0.861,
+    "180.0": 1.786,
+    "179.69": 1.786,
+    "179.0": null,
+    "178.0": null,
+    "177.0": null,
+    "175.0": null
+   }
+  },
+  "focus": {
+   "0": {
+    "200.0": 0.767,
+    "190.0": 0.767,
+    "185.0": 0.767,
+    "182.0": 1.211,
+    "181.6": 1.558,
+    "180.0": 3.823,
+    "179.69": 3.823,
+    "179.0": null,
+    "178.0": null,
+    "177.0": null,
+    "175.0": null
+   },
+   "1": {
+    "200.0": 0.671,
+    "190.0": 0.671,
+    "185.0": 0.671,
+    "182.0": 1.119,
+    "181.6": 1.493,
+    "180.0": 1.734,
+    "179.69": 1.734,
+    "179.0": 6.8,
+    "178.0": 7.526,
+    "177.0": 7.526,
+    "175.0": null
+   },
+   "2": {
+    "200.0": 0.684,
+    "190.0": 0.684,
+    "185.0": 0.684,
+    "182.0": 0.838,
+    "181.6": 0.838,
+    "180.0": 1.746,
+    "179.69": 1.746,
+    "179.0": null,
+    "178.0": null,
+    "177.0": null,
+    "175.0": null
+   }
+  }
+ },
+ "perSeed": {
+  "0": {
+   "base": {
+    "median": 181.589,
+    "depths": [
+     181.589,
+     181.589,
+     181.589
+    ]
+   },
+   "coord": {
+    "median": 179.587,
+    "depths": [
+     179.587,
+     179.587,
+     179.587
+    ]
+   },
+   "focus": {
+    "median": 179.587,
+    "depths": [
+     179.587,
+     179.587,
+     179.587
+    ]
+   }
+  },
+  "1": {
+   "base": {
+    "median": 179.69,
+    "depths": [
+     179.69,
+     179.69,
+     179.69
+    ]
+   },
+   "coord": {
+    "median": 176.753,
+    "depths": [
+     176.753,
+     179.633,
+     176.753
+    ]
+   },
+   "focus": {
+    "median": 176.056,
+    "depths": [
+     176.056,
+     176.056,
+     176.056
+    ]
+   }
+  },
+  "2": {
+   "base": {
+    "median": 179.662,
+    "depths": [
+     179.662,
+     179.662,
+     179.662
+    ]
+   },
+   "coord": {
+    "median": 179.006,
+    "depths": [
+     179.006,
+     179.006,
+     179.006
+    ]
+   },
+   "focus": {
+    "median": 179.006,
+    "depths": [
+     179.006,
+     179.006,
+     179.006
+    ]
+   }
+  }
+ },
+ "pairedDeltaMm": {
+  "coord": {
+   "median": -2.0020000000000095,
+   "min": -2.937000000000012,
+   "max": -0.05699999999998795,
+   "roundsBetterThanBaseline": 9,
+   "rounds": 9
+  },
+  "focus": {
+   "median": -2.0020000000000095,
+   "min": -3.633999999999986,
+   "max": -0.6560000000000059,
+   "roundsBetterThanBaseline": 9,
+   "rounds": 9
+  }
+ },
+ "phaseCredits": {
+  "coord/descent/mode22": {
+   "count": 9,
+   "gainMm": 8.145423058222235
+  },
+  "focus/descent/mode22": {
+   "count": 9,
+   "gainMm": 8.145423058222235
+  },
+  "coord/crossover/mode23": {
+   "count": 2,
+   "gainMm": 5.760363882388447
+  },
+  "focus/crossover/mode23": {
+   "count": 3,
+   "gainMm": 8.64054582358267
+  },
+  "focus/compression/mode22": {
+   "count": 3,
+   "gainMm": 2.0904541764173246
+  }
+ },
+ "operatorCost": {
+  "coord/basins/mode20": {
+   "calls": 19,
+   "seconds": 11.639814614,
+   "published": 0,
+   "exactValid": 19,
+   "meanSeconds": 0.6126218217894737
+  },
+  "coord/compression/mode22": {
+   "calls": 6,
+   "seconds": 6.218600816,
+   "published": 0,
+   "exactValid": 6,
+   "meanSeconds": 1.0364334693333335
+  },
+  "coord/compression/mode31": {
+   "calls": 6,
+   "seconds": 0.5773064500000027,
+   "published": 0,
+   "exactValid": 0,
+   "meanSeconds": 0.09621774166666712
+  },
+  "coord/crossover/mode23": {
+   "calls": 4,
+   "seconds": 10.864629484000002,
+   "published": 2,
+   "exactValid": 4,
+   "meanSeconds": 2.7161573710000004
+  },
+  "coord/descent/mode22": {
+   "calls": 27,
+   "seconds": 31.533380026,
+   "published": 9,
+   "exactValid": 27,
+   "meanSeconds": 1.167902963925926
+  },
+  "focus/compression/mode22": {
+   "calls": 9,
+   "seconds": 10.025222472,
+   "published": 3,
+   "exactValid": 9,
+   "meanSeconds": 1.1139136079999998
+  },
+  "focus/compression/mode31": {
+   "calls": 9,
+   "seconds": 0.8242229659999989,
+   "published": 0,
+   "exactValid": 0,
+   "meanSeconds": 0.09158032955555544
+  },
+  "focus/crossover/mode23": {
+   "calls": 9,
+   "seconds": 23.744959896999998,
+   "published": 3,
+   "exactValid": 9,
+   "meanSeconds": 2.638328877444444
+  },
+  "focus/descent/mode22": {
+   "calls": 18,
+   "seconds": 19.561673403,
+   "published": 9,
+   "exactValid": 18,
+   "meanSeconds": 1.0867596335
+  }
+ },
+ "archives": {
+  "coord-s0-r0": {
+   "occupancy": 8,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode20": 2,
+    "mode22": 3,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 3,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.750674929,
+     1
+    ],
+    [
+     2.75625095,
+     2
+    ],
+    [
+     3.430163242,
+     3
+    ],
+    [
+     4.038698366,
+     4
+    ],
+    [
+     5.058208762,
+     5
+    ],
+    [
+     5.642017284,
+     6
+    ],
+    [
+     6.973775731,
+     7
+    ],
+    [
+     9.754124394,
+     8
+    ]
+   ]
+  },
+  "focus-s0-r0": {
+   "occupancy": 4,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode22": 1,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 5,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.245849195,
+     1
+    ],
+    [
+     2.251415222,
+     2
+    ],
+    [
+     3.363247585,
+     3
+    ],
+    [
+     7.185784833,
+     4
+    ]
+   ]
+  },
+  "coord-s1-r0": {
+   "occupancy": 8,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode20": 2,
+    "mode22": 3,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 3,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.867228854,
+     1
+    ],
+    [
+     2.872923875,
+     2
+    ],
+    [
+     3.522319833,
+     3
+    ],
+    [
+     4.107097096,
+     4
+    ],
+    [
+     5.088313068,
+     5
+    ],
+    [
+     6.119799941,
+     6
+    ],
+    [
+     7.30442398,
+     7
+    ],
+    [
+     10.123775488,
+     8
+    ]
+   ]
+  },
+  "focus-s1-r0": {
+   "occupancy": 5,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode22": 2,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 4,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.377448002,
+     1
+    ],
+    [
+     2.38243107,
+     2
+    ],
+    [
+     3.311984251,
+     3
+    ],
+    [
+     6.9771085280000005,
+     4
+    ],
+    [
+     7.887616528,
+     5
+    ]
+   ]
+  },
+  "coord-s2-r0": {
+   "occupancy": 8,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode20": 2,
+    "mode22": 3,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 4,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.767271858,
+     1
+    ],
+    [
+     2.772711078,
+     2
+    ],
+    [
+     3.422740668,
+     3
+    ],
+    [
+     4.051223918,
+     4
+    ],
+    [
+     4.947070089,
+     5
+    ],
+    [
+     5.778037602,
+     6
+    ],
+    [
+     7.15060793,
+     7
+    ],
+    [
+     9.33636157,
+     8
+    ]
+   ]
+  },
+  "focus-s2-r0": {
+   "occupancy": 4,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode22": 1,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 5,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.422244914,
+     1
+    ],
+    [
+     2.427697734,
+     2
+    ],
+    [
+     3.215032751,
+     3
+    ],
+    [
+     6.657911063,
+     4
+    ]
+   ]
+  },
+  "coord-s0-r1": {
+   "occupancy": 7,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode20": 2,
+    "mode22": 3
+   },
+   "evicted": 0,
+   "duplicates": 4,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.807857478,
+     1
+    ],
+    [
+     2.812150118,
+     2
+    ],
+    [
+     3.452525637,
+     3
+    ],
+    [
+     4.063688803,
+     4
+    ],
+    [
+     5.415066637,
+     5
+    ],
+    [
+     6.183804122,
+     6
+    ],
+    [
+     7.998373855,
+     7
+    ]
+   ]
+  },
+  "focus-s0-r1": {
+   "occupancy": 4,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode22": 1,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 5,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.551593362,
+     1
+    ],
+    [
+     2.556124264,
+     2
+    ],
+    [
+     3.818346908,
+     3
+    ],
+    [
+     7.876892022,
+     4
+    ]
+   ]
+  },
+  "coord-s1-r1": {
+   "occupancy": 8,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode20": 3,
+    "mode22": 3
+   },
+   "evicted": 0,
+   "duplicates": 4,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.58056112,
+     1
+    ],
+    [
+     2.586228865,
+     2
+    ],
+    [
+     3.195146954,
+     3
+    ],
+    [
+     3.801350565,
+     4
+    ],
+    [
+     4.439207653,
+     5
+    ],
+    [
+     5.481637719,
+     6
+    ],
+    [
+     6.643189397,
+     7
+    ],
+    [
+     8.211527694,
+     8
+    ]
+   ]
+  },
+  "focus-s1-r1": {
+   "occupancy": 5,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode22": 2,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 4,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.925937135,
+     1
+    ],
+    [
+     2.931697296,
+     2
+    ],
+    [
+     4.153668581,
+     3
+    ],
+    [
+     7.521267777,
+     4
+    ],
+    [
+     8.610382849,
+     5
+    ]
+   ]
+  },
+  "coord-s2-r1": {
+   "occupancy": 7,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode20": 2,
+    "mode22": 3
+   },
+   "evicted": 0,
+   "duplicates": 4,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     3.084470089,
+     1
+    ],
+    [
+     3.088569433,
+     2
+    ],
+    [
+     3.694540085,
+     3
+    ],
+    [
+     4.321361297,
+     4
+    ],
+    [
+     5.335431524,
+     5
+    ],
+    [
+     6.148198159,
+     6
+    ],
+    [
+     8.030170095,
+     7
+    ]
+   ]
+  },
+  "focus-s2-r1": {
+   "occupancy": 4,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode22": 1,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 5,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.9081814870000002,
+     1
+    ],
+    [
+     2.913746479,
+     2
+    ],
+    [
+     4.095348198,
+     3
+    ],
+    [
+     7.490527988,
+     4
+    ]
+   ]
+  },
+  "focus-s0-r2": {
+   "occupancy": 4,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode22": 1,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 5,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     3.052018324,
+     1
+    ],
+    [
+     3.057634584,
+     2
+    ],
+    [
+     4.410729881,
+     3
+    ],
+    [
+     8.598060694,
+     4
+    ]
+   ]
+  },
+  "coord-s0-r2": {
+   "occupancy": 7,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode20": 2,
+    "mode22": 3
+   },
+   "evicted": 0,
+   "duplicates": 4,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.712731643,
+     1
+    ],
+    [
+     2.7183097800000002,
+     2
+    ],
+    [
+     3.417308783,
+     3
+    ],
+    [
+     4.027483604,
+     4
+    ],
+    [
+     5.44936406,
+     5
+    ],
+    [
+     6.165565552,
+     6
+    ],
+    [
+     8.159746103,
+     7
+    ]
+   ]
+  },
+  "focus-s1-r2": {
+   "occupancy": 5,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode22": 2,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 4,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     3.003220675,
+     1
+    ],
+    [
+     3.007531108,
+     2
+    ],
+    [
+     4.019482754,
+     3
+    ],
+    [
+     8.355814543,
+     4
+    ],
+    [
+     9.595897381,
+     5
+    ]
+   ]
+  },
+  "coord-s1-r2": {
+   "occupancy": 8,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode20": 2,
+    "mode22": 3,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 3,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.912463455,
+     1
+    ],
+    [
+     2.916804194,
+     2
+    ],
+    [
+     3.50181659,
+     3
+    ],
+    [
+     4.088958357,
+     4
+    ],
+    [
+     5.013494991,
+     5
+    ],
+    [
+     5.838213056,
+     6
+    ],
+    [
+     7.282465289,
+     7
+    ],
+    [
+     10.382812085,
+     8
+    ]
+   ]
+  },
+  "focus-s2-r2": {
+   "occupancy": 4,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode22": 1,
+    "mode23": 1
+   },
+   "evicted": 0,
+   "duplicates": 5,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     3.018747671,
+     1
+    ],
+    [
+     3.022882163,
+     2
+    ],
+    [
+     3.9816680570000003,
+     3
+    ],
+    [
+     7.576179165,
+     4
+    ]
+   ]
+  },
+  "coord-s2-r2": {
+   "occupancy": 7,
+   "capacity": 16,
+   "byOperator": {
+    "constructor": 1,
+    "m0": 1,
+    "mode20": 2,
+    "mode22": 3
+   },
+   "evicted": 0,
+   "duplicates": 4,
+   "refusedArchiveFullAllDistinct": 0,
+   "occupancyOverTime": [
+    [
+     2.928306234,
+     1
+    ],
+    [
+     2.932412015,
+     2
+    ],
+    [
+     3.539732142,
+     3
+    ],
+    [
+     4.167112501,
+     4
+    ],
+    [
+     5.046346935,
+     5
+    ],
+    [
+     6.237350633,
+     6
+    ],
+    [
+     7.9547321140000005,
+     7
+    ]
+   ]
+  }
+ },
+ "phaseSeconds": {
+  "coord/m0": {
+   "median": 2.8250004150000003,
+   "min": 2.6033682259999997,
+   "max": 3.1008226640000003
+  },
+  "coord/basins": {
+   "median": 1.238593276,
+   "min": 1.1591411610000004,
+   "max": 1.8357138770000003
+  },
+  "coord/descent": {
+   "median": 3.7088619630000004,
+   "min": 2.935134541,
+   "max": 4.132359169
+  },
+  "coord/crossover": {
+   "median": 5.930000011034053e-07,
+   "min": 3.0700000053229815e-07,
+   "max": 3.1099504299999996
+  },
+  "coord/compression": {
+   "median": 0.9821224920000002,
+   "min": 1.8800000134433503e-07,
+   "max": 1.3798843009999988
+  },
+  "coord/drain": {
+   "median": 2.418500000089807e-05,
+   "min": 1.8199999907153597e-07,
+   "max": 2.8943999998531922e-05
+  },
+  "focus/m0": {
+   "median": 2.9301973450000003,
+   "min": 2.26815862,
+   "max": 3.074524532
+  },
+  "focus/basins": {
+   "median": 2.6439999998295605e-06,
+   "min": 1.90999999993835e-06,
+   "max": 5.108999999947628e-06
+  },
+  "focus/descent": {
+   "median": 2.19232662,
+   "min": 1.8657465520000005,
+   "max": 2.609161774
+  },
+  "focus/crossover": {
+   "median": 2.6840509919999995,
+   "min": 2.2794824789999995,
+   "max": 3.124259274000001
+  },
+  "focus/compression": {
+   "median": 1.212961365,
+   "min": 0.9105996479999998,
+   "max": 1.6244731069999991
+  },
+  "focus/drain": {
+   "median": 2.036100000069041e-05,
+   "min": 1.3859000000060462e-05,
+   "max": 2.601299999938078e-05
+  }
+ }
+}
