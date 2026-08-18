@@ -188,8 +188,9 @@ impl KernelProbes {
 
 /// One candidate row: whether the pair collides, and by how much.
 ///
-/// This is what a *single* pair question produces, and it is the unit the
-/// lane's moved-piece row set is assembled from. The two quantities travel
+/// This is what a *single* pair question produces, and it is the unit a
+/// `MovedRowDelta` — the lane's moved-piece row set, in
+/// [`crate::search::general_relaxed`] — is assembled from. The two quantities travel
 /// together because they are one question: the magnitude is only defined for a
 /// colliding pair, and a separated pair contributes nothing to a score. Keeping
 /// them in one value is what lets a kernel answer both from one traversal if it
