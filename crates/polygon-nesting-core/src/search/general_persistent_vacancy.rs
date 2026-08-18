@@ -68,6 +68,51 @@ const RECONSTRUCTION_ROWS_PER_PIECE: usize = 192;
 // at CONSTRUCTION_FRONTIER_BAND_GRID so the trapped-void term stays active
 // on frontier-raising commits.
 const CONSTRUCTION_RESTARTS: usize = 8;
+
+/// Coordinator-supplied diversity salt for the mode-20/25 skyline constructor.
+///
+/// Every field is `None` for every CLI invocation and for every mode the
+/// separator dispatches on its own, in which case this struct is inert and the
+/// constructor is exactly the one the regression gates pin. It exists so the
+/// portfolio coordinator can draw *several* constructor tickets from one
+/// process rather than one, which is what the ledger's cell-size sweep argues
+/// for and what a single mode-20 call - best of its whole restart sweep, one
+/// derived cell - cannot give.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub(super) struct ConstructionSalt {
+    /// `Some((first, count))` runs restart indices `first ..= first + count - 1`
+    /// reduced modulo [`CONSTRUCTION_RESTARTS`], instead of all of them. A
+    /// `count` of zero, or one at or above the restart count, is normalised
+    /// back to the full sweep, so the window can only ever select a subset of
+    /// the orders the constructor already has.
+    restart_window: Option<(usize, usize)>,
+    /// Overrides the `fast-constructor-profile` evaluator's derived cell
+    /// divisor. The legacy raster has no derived cell and ignores it.
+    void_cell_divisor: Option<f64>,
+}
+
+impl ConstructionSalt {
+    /// Reads the salt a coordinator put in the relaxed settings.
+    pub(super) fn from_settings(settings: GeneralRelaxedSettings) -> Self {
+        Self {
+            restart_window: settings.construction_restart_window,
+            void_cell_divisor: settings.construction_void_cell_divisor,
+        }
+    }
+
+    /// The restart indices this salt selects, in order.
+    ///
+    /// The unsalted answer is `0 .. CONSTRUCTION_RESTARTS`, which is the
+    /// sequence the loop has always walked.
+    fn restarts(self) -> Vec<usize> {
+        match self.restart_window {
+            Some((first, count)) if count >= 1 && count < CONSTRUCTION_RESTARTS => (0..count)
+                .map(|step| first.wrapping_add(step) % CONSTRUCTION_RESTARTS)
+                .collect(),
+            _ => (0..CONSTRUCTION_RESTARTS).collect(),
+        }
+    }
+}
 const CONSTRUCTION_BEAM_WIDTH: usize = 6;
 const CONSTRUCTION_HINT_STATIONS: usize = 3;
 const CONSTRUCTION_HINT_PRIORS: usize = 2;
@@ -932,6 +977,7 @@ pub(super) fn run_persistent_vacancy_population(
         parent,
         parent_is_pinned || relaxed_settings.persistent_vacancy_allow_unpinned_parent,
         mode,
+        ConstructionSalt::from_settings(relaxed_settings),
         &mut diagnostics,
         &mut work,
     ) {
@@ -3580,6 +3626,7 @@ fn relaxed_state_from_fast_placements(
 /// `GeneralRelaxedSettings::persistent_vacancy_allow_unpinned_parent`. The
 /// *reported* `parent_source` is unchanged either way, so a run that descended
 /// from an in-process arm can never be mistaken for a replay of a fixture.
+#[allow(clippy::too_many_arguments)]
 fn run_population(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
@@ -3587,6 +3634,7 @@ fn run_population(
     parent: &GeneralCoupledSeparatorArmDiagnostics,
     parent_is_admissible: bool,
     mode: usize,
+    construction_salt: ConstructionSalt,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<Option<(VacancyState, f64)>, String> {
@@ -3736,6 +3784,7 @@ fn run_population(
             target_depth_mm,
             &baseline,
             mode == 25,
+            construction_salt,
             diagnostics,
             work,
         )?;
@@ -5923,12 +5972,14 @@ fn settle_sweep(
 /// Mode 20 (`best_ever_parent = false`) and mode 25 (`best_ever_parent =
 /// true`) share this constructor; see `CONSTRUCTION_BEST_EVER_PARENTS` for the
 /// off-beam best-ever parent mechanism mode 25 adds.
+#[allow(clippy::too_many_arguments)]
 fn construct_skyline_beam(
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
     target_depth_mm: f64,
     anchor: &RelaxedState,
     best_ever_parent: bool,
+    construction_salt: ConstructionSalt,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     work: &mut RunWork,
 ) -> Result<(VacancyState, f64), String> {
@@ -5947,6 +5998,7 @@ fn construct_skyline_beam(
         target_depth_mm,
         anchor,
         best_ever_parent,
+        construction_salt,
         diagnostics,
         &mut construction,
         work,
@@ -5962,6 +6014,7 @@ fn construct_skyline_beam_inner(
     target_depth_mm: f64,
     anchor: &RelaxedState,
     best_ever_parent: bool,
+    construction_salt: ConstructionSalt,
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     construction: &mut GeneralPersistentVacancyConstructionDiagnostics,
     work: &mut RunWork,
@@ -5997,9 +6050,10 @@ fn construct_skyline_beam_inner(
     // this is a zero-sized forwarder to `trapped_void_cells` and the
     // constructor behaves exactly as before; on it, occupancy is carried
     // incrementally down the beam. See `construction_void_grid`.
-    let mut voids = ConstructionVoidCache::new(pieces, work_settings);
+    let mut voids =
+        ConstructionVoidCache::new(pieces, work_settings, construction_salt.void_cell_divisor);
     let mut best: Option<(i64, usize, VacancyState, f64)> = None;
-    for restart in 0..CONSTRUCTION_RESTARTS {
+    for restart in construction_salt.restarts() {
         // One trace scope per construction restart. The restarts are the
         // constructor's own basin generators - eight different insertion
         // orders over the same pieces - so this is the granularity at which

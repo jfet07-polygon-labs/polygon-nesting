@@ -115,7 +115,7 @@ const RECOMBINATION_SEED_DOMAIN: u64 = 0x5245_434F_4D42_3233;
 // before it is declared non-convergent; a joint fixpoint (neither arm
 // improves) may stop it earlier.
 #[cfg(feature = "jagua-experimental")]
-const ALTERNATION_MAX_CYCLES: usize = 6;
+pub(super) const ALTERNATION_MAX_CYCLES: usize = 6;
 // Each descent-arm target steps the current best by the same rung already
 // used elsewhere in this experiment family for a bounded escape hop
 // (`persistent_vacancy::CONSTRUCTION_DROP_LADDER_MM[1]`), rather than
@@ -367,6 +367,43 @@ pub struct GeneralRelaxedSettings {
     /// currently measure what a from-request mode-20 basin costs or is worth.
     /// Measuring that is the whole point of the quality frontier trace.
     pub persistent_vacancy_allow_unpinned_parent: bool,
+    /// Restricts modes 20/25's construction sweep to a window of its insertion
+    /// orders: `Some((first, count))` runs restart indices
+    /// `first .. first + count`, wrapped into the constructor's own restart
+    /// count, instead of all of them.
+    ///
+    /// `None` - the default, and the only value any CLI invocation produces -
+    /// runs the full sweep, so the constructor is unchanged.
+    ///
+    /// This exists for the portfolio coordinator, which needs *one* basin per
+    /// slot rather than the best of eight: mode 20 returns the best of its
+    /// whole sweep, and a coordinator that wants several structurally distinct
+    /// tickets has to draw them one at a time. It is a **budget** knob, not a
+    /// quality knob - the ledger's cell-size sweep is the standing warning
+    /// against treating any constructor parameter as tunable.
+    pub construction_restart_window: Option<(usize, usize)>,
+    /// Overrides the number of void-grid cells the mode-20/25 constructor's
+    /// trapped-void evaluator derives per narrowest-piece extent.
+    ///
+    /// `None` - the default - keeps the calibrated divisor. Only the
+    /// `fast-constructor-profile` evaluator reads it; the legacy raster has no
+    /// derived cell to override and ignores it.
+    ///
+    /// This is the coordinator's basin *lottery ticket*, and the word is
+    /// deliberate. The ledger measured eighteen cell sizes over one stream:
+    /// eighteen distinct endpoints, twelve on a 179-181 mm plateau and six in a
+    /// 169.5-174.3 mm basin, with Pearson(immediate, descended) = -0.212 and no
+    /// contiguous region of good values. So a coordinator salts this across
+    /// basin slots to buy variance; it must never *tune* it, and no value here
+    /// may be presented as better than another.
+    pub construction_void_cell_divisor: Option<f64>,
+    /// Caps mode 22's alternation cycles, so a coordinator can spend a
+    /// *quantum* of alternation on each of several archived basins instead of
+    /// running one basin to its fixpoint.
+    ///
+    /// `None` - the default - runs the mode's own cycle bound. A value larger
+    /// than that bound is clamped to it, so this can only ever shorten a run.
+    pub alternation_max_cycles: Option<usize>,
 }
 
 impl GeneralRelaxedSettings {
@@ -391,6 +428,9 @@ impl GeneralRelaxedSettings {
             persistent_vacancy_mode: 0,
             persistent_vacancy_target_depth_mm: None,
             persistent_vacancy_allow_unpinned_parent: false,
+            construction_restart_window: None,
+            construction_void_cell_divisor: None,
+            alternation_max_cycles: None,
         }
     }
 
@@ -3857,6 +3897,27 @@ fn adopt_published_layout(
     let Some(published) = published_mode_placements(diagnostics) else {
         return legacy;
     };
+    adopt_published_placements(pieces, fast_settings, published, legacy)
+}
+
+/// Steps 2-4 of the adoption rule, applied to placements a caller already has
+/// in hand.
+///
+/// [`adopt_published_layout`] is step 1 - "did a mode publish anything?" - read
+/// off the diagnostics DTO, and then this. The split exists so that the
+/// portfolio coordinator, which holds an operator's typed outcome directly and
+/// never reconstructs it from a DTO, publishes through the *same* comparator,
+/// the same completeness check and the same composite validator as the
+/// separator's own slot. A coordinator that re-implemented any of the three
+/// would be inventing its own notion of validity, which is precisely the thing
+/// this engine does not allow.
+#[cfg(feature = "jagua-experimental")]
+pub(super) fn adopt_published_placements(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    published: Vec<GeneralFastPlacement>,
+    legacy: GeneralFastResult,
+) -> GeneralFastResult {
     if published.len() != pieces.len() {
         trace_publication_refusal(f64::NAN, f64::NAN, "incompleteCardinality");
         return legacy;
@@ -4151,113 +4212,14 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                 let effective_parent = pinned_arm
                     .as_ref()
                     .unwrap_or(&boundary_projection_treatment.diagnostics);
-                // One scope per deep-operator dispatch, named by mode and
-                // rooted at the parent it descends from, so every exact-valid
-                // candidate the mode produces is attributed to both.
-                #[cfg(feature = "quality-trace")]
-                let _trace_mode = {
-                    let parent_fingerprint = quality_trace::active().then(|| {
-                        general_placement_fingerprint(
-                            &fast_placements_from_coupled_diagnostics(
-                                &effective_parent.final_placements,
-                            ),
-                        )
-                    });
-                    quality_trace::scope(
-                        format!("mode{}", relaxed_settings.persistent_vacancy_mode),
-                        relaxed_settings.seed,
-                        parent_fingerprint.as_deref(),
-                    )
-                };
-                let mut population = match relaxed_settings.persistent_vacancy_mode {
-                    22 => run_alternation_fixpoint(
-                        pieces,
-                        fast_settings,
-                        relaxed_settings,
-                        effective_parent,
-                        parent_source,
-                    ),
-                    23 => run_recombination(
-                        pieces,
-                        fast_settings,
-                        relaxed_settings,
-                        effective_parent,
-                        parent_source,
-                        secondary_pinned_vacancy_parent,
-                    ),
-                    24 => persistent_vacancy::run_bounded_reinsertion(
-                        pieces,
-                        fast_settings,
-                        relaxed_settings,
-                        effective_parent,
-                        parent_source,
-                    ),
-                    26 => run_ladder_compression(
-                        pieces,
-                        fast_settings,
-                        relaxed_settings,
-                        effective_parent,
-                        parent_source,
-                    ),
-                    27 => run_micro_legalization_probe(
-                        pieces,
-                        fast_settings,
-                        effective_parent,
-                        parent_source,
-                    ),
-                    // Modes 32 and 33 are modes 28 and 29 with the
-                    // orientation-perturbation candidate stream armed; nothing
-                    // else about the two pipelines differs, which is why they
-                    // are the same two entry points with one flag.
-                    mode @ (28 | 32) => persistent_vacancy::run_replacement_repair(
-                        pieces,
-                        fast_settings,
-                        relaxed_settings,
-                        effective_parent,
-                        parent_source,
-                        mode == 32,
-                    ),
-                    mode @ (29 | 33) => persistent_vacancy::run_joint_replacement_repair(
-                        pieces,
-                        fast_settings,
-                        relaxed_settings,
-                        effective_parent,
-                        parent_source,
-                        mode == 33,
-                    ),
-                    mode @ (30 | 31) => run_global_legalization_probe(
-                        pieces,
-                        fast_settings,
-                        relaxed_settings,
-                        effective_parent,
-                        parent_source,
-                        mode == 31,
-                    ),
-                    mode => persistent_vacancy::run_persistent_vacancy_population(
-                        pieces,
-                        fast_settings,
-                        relaxed_settings,
-                        effective_parent,
-                        parent_source,
-                        mode,
-                    ),
-                };
-                record_persistent_vacancy_contract_report(
-                    &mut population,
+                dispatch_persistent_vacancy_mode(
                     pieces,
                     fast_settings,
+                    relaxed_settings,
                     effective_parent,
-                );
-                #[cfg(feature = "quality-trace")]
-                quality_trace::mode_result(
-                    population.mode,
-                    population.exact_valid,
-                    population.independent_depth_mm,
-                    population.parent_independent_depth_mm,
-                    population.final_placement_fingerprint.as_deref(),
-                    population.failure_reason.as_deref(),
-                );
-                population
+                    parent_source,
+                    secondary_pinned_vacancy_parent,
+                )
             });
         GeneralCoupledSeparatorDiagnostics {
             seed_domain: COUPLED_SEPARATOR_SEED_DOMAIN,
@@ -4299,6 +4261,130 @@ fn run_coupled_dynamic_separator_experiment<'a>(
     }
 }
 
+/// Runs one deep-operator (persistent-vacancy) mode against one parent layout.
+///
+/// This is the whole of what the coupled separator's mode slot used to do
+/// inline, extracted verbatim so that it has exactly one implementation and
+/// two callers: the separator's own slot, which is unchanged, and the
+/// portfolio coordinator, which needs to invoke an operator against a parent
+/// it chose from its archive rather than against the one arm the separator
+/// happens to end on.
+///
+/// Nothing here decides validity or publication. The mode reports what it
+/// found and `record_persistent_vacancy_contract_report` measures it; the
+/// adoption rule lives in [`adopt_published_placements`] and is the only door
+/// to a published result for either caller.
+#[cfg(feature = "jagua-experimental")]
+pub(super) fn dispatch_persistent_vacancy_mode(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    effective_parent: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_source: Option<String>,
+    secondary_pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
+) -> GeneralPersistentVacancyDiagnostics {
+    // One scope per deep-operator dispatch, named by mode and
+    // rooted at the parent it descends from, so every exact-valid
+    // candidate the mode produces is attributed to both.
+    #[cfg(feature = "quality-trace")]
+    let _trace_mode = {
+        let parent_fingerprint = quality_trace::active().then(|| {
+            general_placement_fingerprint(&fast_placements_from_coupled_diagnostics(
+                &effective_parent.final_placements,
+            ))
+        });
+        quality_trace::scope(
+            format!("mode{}", relaxed_settings.persistent_vacancy_mode),
+            relaxed_settings.seed,
+            parent_fingerprint.as_deref(),
+        )
+    };
+    let mut population = match relaxed_settings.persistent_vacancy_mode {
+        22 => run_alternation_fixpoint(
+            pieces,
+            fast_settings,
+            relaxed_settings,
+            effective_parent,
+            parent_source,
+        ),
+        23 => run_recombination(
+            pieces,
+            fast_settings,
+            relaxed_settings,
+            effective_parent,
+            parent_source,
+            secondary_pinned_vacancy_parent,
+        ),
+        24 => persistent_vacancy::run_bounded_reinsertion(
+            pieces,
+            fast_settings,
+            relaxed_settings,
+            effective_parent,
+            parent_source,
+        ),
+        26 => run_ladder_compression(
+            pieces,
+            fast_settings,
+            relaxed_settings,
+            effective_parent,
+            parent_source,
+        ),
+        27 => run_micro_legalization_probe(pieces, fast_settings, effective_parent, parent_source),
+        // Modes 32 and 33 are modes 28 and 29 with the
+        // orientation-perturbation candidate stream armed; nothing
+        // else about the two pipelines differs, which is why they
+        // are the same two entry points with one flag.
+        mode @ (28 | 32) => persistent_vacancy::run_replacement_repair(
+            pieces,
+            fast_settings,
+            relaxed_settings,
+            effective_parent,
+            parent_source,
+            mode == 32,
+        ),
+        mode @ (29 | 33) => persistent_vacancy::run_joint_replacement_repair(
+            pieces,
+            fast_settings,
+            relaxed_settings,
+            effective_parent,
+            parent_source,
+            mode == 33,
+        ),
+        mode @ (30 | 31) => run_global_legalization_probe(
+            pieces,
+            fast_settings,
+            relaxed_settings,
+            effective_parent,
+            parent_source,
+            mode == 31,
+        ),
+        mode => persistent_vacancy::run_persistent_vacancy_population(
+            pieces,
+            fast_settings,
+            relaxed_settings,
+            effective_parent,
+            parent_source,
+            mode,
+        ),
+    };
+    record_persistent_vacancy_contract_report(
+        &mut population,
+        pieces,
+        fast_settings,
+        effective_parent,
+    );
+    #[cfg(feature = "quality-trace")]
+    quality_trace::mode_result(
+        population.mode,
+        population.exact_valid,
+        population.independent_depth_mm,
+        population.parent_independent_depth_mm,
+        population.final_placement_fingerprint.as_deref(),
+        population.failure_reason.as_deref(),
+    );
+    population
+}
+
 /// Builds a `GeneralFastResult` suitable as a relaxed-search incumbent from
 /// placements that may or may not currently be exact-valid (the whole point
 /// of this engine is to legalize temporarily infeasible complete states).
@@ -4306,7 +4392,7 @@ fn run_coupled_dynamic_separator_experiment<'a>(
 /// search; the remaining bookkeeping fields are unused by that path and are
 /// left at their neutral defaults.
 #[cfg(feature = "jagua-experimental")]
-fn general_fast_result_seed(
+pub(super) fn general_fast_result_seed(
     placements: Vec<GeneralFastPlacement>,
     used_long_axis_depth_mm: f64,
 ) -> GeneralFastResult {
@@ -4348,7 +4434,7 @@ fn general_fast_result_seed(
 }
 
 #[cfg(feature = "jagua-experimental")]
-fn fast_placements_from_coupled_diagnostics(
+pub(super) fn fast_placements_from_coupled_diagnostics(
     placements: &[GeneralCoupledSeparatorPlacementDiagnostics],
 ) -> Vec<GeneralFastPlacement> {
     placements
@@ -4458,9 +4544,16 @@ fn run_alternation_fixpoint(
     let mut current = general_fast_result_seed(parent_placements, current_best);
 
     diagnostics.attempted = true;
-    let mut cycle_rows = Vec::with_capacity(ALTERNATION_MAX_CYCLES);
+    // The coordinator's alternation *quantum*: a cap that can only shorten the
+    // mode's own bound, never extend it, so no setting can buy this mode more
+    // work than it has ever been allowed to do.
+    let max_cycles = relaxed_settings
+        .alternation_max_cycles
+        .unwrap_or(ALTERNATION_MAX_CYCLES)
+        .min(ALTERNATION_MAX_CYCLES);
+    let mut cycle_rows = Vec::with_capacity(max_cycles);
     let mut cycles_run = 0usize;
-    for cycle in 0..ALTERNATION_MAX_CYCLES {
+    for cycle in 0..max_cycles {
         cycles_run = cycle + 1;
         let mut row = GeneralPersistentVacancyAlternationCycleDiagnostics {
             cycle,
@@ -9390,7 +9483,7 @@ fn coupled_state_fingerprint(state: &RelaxedState) -> String {
     format!("{:x}", digest.finalize())
 }
 
-fn coupled_placement_diagnostics(
+pub(super) fn coupled_placement_diagnostics(
     placements: &[GeneralFastPlacement],
 ) -> Vec<GeneralCoupledSeparatorPlacementDiagnostics> {
     placements
@@ -9488,7 +9581,7 @@ fn coupled_independent_source_depth(
 /// to 0.001 mm. The two agree to within half a grid step; they can land on
 /// opposite sides of a hard threshold, which is the reason both are reported.
 #[cfg(feature = "jagua-experimental")]
-fn coupled_raw_source_depth(
+pub(super) fn coupled_raw_source_depth(
     pieces: &[GeneralFastPiece<'_>],
     placements: &[GeneralFastPlacement],
     settings: GeneralFastSettings,
