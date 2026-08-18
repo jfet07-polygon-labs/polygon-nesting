@@ -3282,3 +3282,181 @@ they touch was already allowed to do.
 
 Evidence, drivers and raw event streams:
 `docs/experiments/pr7-portfolio-coordinator/`.
+
+## Three quarters of the constructor's exact queries are real overlaps, and that is the ceiling
+
+The bit-grid redesign left mode 20 at 6.2 s with its leaf dominated by the
+exact confirmation *inside* construction - `exactOverlapTest` 33.1% plus
+`collisionPolygonBuild` 20.1%, 1,266,102 overlap-test spans and 750,434
+collision builds on the gate-1 stream. Sol's portfolio wants that
+constructor at about two seconds. The obvious move is a proxy-first
+prefilter: run a cheap verdict before the exact one and skip the exact
+work when the cheap one says clean. This entry counts the stream before
+building it, and the count decides the size of the prize before a line of
+the prefilter exists.
+
+### The census
+
+`constructor-census` is a counting build in the sense the pole-loop and
+collider stages use the term: opt-in, empty when off, and slow on
+purpose. It attributes every confirmation row and every exact pair
+question to its call path, and on every pair that reaches Clipper it
+evaluates three separation tests beside the exact answer - the
+axis-aligned box already in the code, a four-direction DOP (the box plus
+the two diagonals), and a separating-axis test over both convex hulls.
+
+All three run on the **integer Clipper path** the exact query is executed
+on. That is the whole design: the collision polygon's `Path64` is on the
+0.001 mm contractual grid, so its coordinates are integer-valued `f64`,
+and every projection and cross product below stays inside the exactly
+representable range under an explicit guard. Each test therefore answers
+"provably separated" or "no information" - never "probably". A separated
+pair has zero intersection area, so the verdict a skip substitutes is the
+verdict the exact query would have returned.
+
+The census checks that claim from the other side rather than asserting
+it: it counts pairs the exact query calls *overlapping* that a cheap test
+called separated. On 997,826 overlapping pairs, both counters are **0**.
+
+### What the stream is made of
+
+Mode-20 gate-1 stream, which reproduces 206.869 / `8a7737381238fa4d`
+under the census:
+
+| quantity | count | share |
+|---|---:|---:|
+| pair questions offered | 22,080,053 | |
+| ... rejected by the existing box test | 20,789,701 | 94.16% |
+| ... reaching Clipper | 1,290,352 | 5.84% |
+| ... **genuinely overlapping** | 997,826 | **77.33%** |
+| ... clean | 292,526 | 22.67% |
+| clean, separated by the DOP | 136,671 | 46.72% of clean |
+| clean, separated by the hull | 245,715 | **84.00% of clean** |
+
+**The ceiling is 22.67%**, and it is a ceiling for *any* sound prefilter,
+not for this one. Three quarters of the constructor's exact queries
+answer "they overlap", and no outer approximation can ever remove one of
+those - proving an overlap needs an inner certificate. The hull tier
+reaches 19.04% of all Clipper queries, which is 84% of everything that is
+reachable at all. That is the honest size of the proxy-first idea on this
+operator, established before it was implemented rather than after.
+
+The census reconciles with the profiler to the digit, and the two count
+different things: `exactOverlapTest` opens one span per confirmation
+*row* in the deep constructor and one per narrow-phase *query* in
+`general_fast`, so its 1,266,102 spans are 680,602 deep rows past
+containment plus 584,478 `general_fast` queries plus 1,022 elsewhere.
+Inside them are 1,290,352 Clipper pair queries and 13.1M box rejects.
+
+Two further facts the census produced by existing. The mean query is
+**13.69 combined vertices** and the phase costs 3,309.6 ms over 1,290,352
+of them - 2.6 us each - so `exactOverlapTest` is not geometry cost on a
+fourteen-vertex problem; it is Clipper's per-call setup. And **78.66% of collision
+polygon builds are wasted**: 590,299 of 750,434 are spent on a pose the
+row discards two lines later, 66,919 for sheet containment and 523,375
+for an overlap.
+
+The three constructor call paths are not one population:
+
+| site | rows | accepted | reaching Clipper | overlapping |
+|---|---:|---:|---:|---:|
+| candidate stream | 432,710 | 2.6% | 450,840 | 88.3% |
+| contact drop ladder | 191,925 | 68.0% | 140,790 | 33.2% |
+| slide bisection | 122,886 | 12.6% | 113,222 | 69.4% |
+| `general_fast` short-side-first | - | - | 584,478 | 81.2% |
+
+The candidate stream is speculative and the slide ladder is not, because
+every rung of a ladder starts from an already-valid pose. "Reject the
+speculative stream earlier" and "make the exact query cheaper" are
+therefore different projects with different prizes, and only the second
+is sound today.
+
+### The prefilter, and what it is worth
+
+`fast-constructor-confirm` stacks on `fast-constructor-profile` and is
+`search::construction_confirm_shield`: DOP then hull, both proofs, the
+parent's certificates derived once per beam slot and the row's once per
+row into reused buffers. The reuse is not incidental - a first version
+that allocated a hull per row measured 0.9494 where the final one
+measures 0.9396.
+
+Paired interleaved A/Bs of the mode-20 gate-1 stream against
+`fast-constructor-profile` alone, arms alternating order every round,
+statistic the per-round paired ratio, two independent samples:
+
+| sample | rounds | flag off | flag on | paired median | spread | rounds below 1.0 |
+|---|---:|---:|---:|---:|---|---:|
+| 1 | 14 | 6.231 s | 5.858 s | **0.9396** | 0.9245-1.0340 | 13/14 |
+| 2 | 10 | 6.264 s | 5.848 s | **0.9367** | 0.6793-1.1404 | 9/10 |
+
+Profiled, the delta is entirely inside the phase the change is in:
+
+| phase | flag off | flag on | calls |
+|---|---:|---:|---:|
+| `exactOverlapTest` | 3,309.6 ms (32.64%) | 2,926.2 ms (29.94%) | 1,266,102 both |
+| `collisionPolygonBuild` | 2,016.5 ms | 2,015.5 ms | 750,434 both |
+| `pairCollide` | 1,285.7 ms | 1,285.4 ms | 15,562,760 both |
+| leaf total | 10,141.0 ms | 9,774.8 ms | |
+
+**The honest multiplier is 4.48x**, against Sol's ~13x: 4.21x from the
+bit-grid redesign times 1.064 from this. Mode 20 goes 26.2 s -> 6.2 s ->
+5.86 s. A two-second slice still needs 2.9x that this stage does not
+have, and the census says where it is not: not in the exact pair
+question, three quarters of whose calls are load-bearing.
+
+### Equivalence, and why the quality gate is trivially zero
+
+Flag off, all four regression gates reproduce the pristine `0cf1163`
+binary as **whole documents** - 3,271 and 3,252 compared leaf fields per
+gate, six differing, all of them the executable hash and the five
+wall-clock fields. Flag on, the gate-1 document is identical to the
+`fast-constructor-profile` arm in every field but one:
+`clipperInputVertices` falls 39,043,027 -> 37,012,470, which is the work
+the prefilter removed being honestly not charged; gates 2, 3 and 4 are
+identical in every field. Two flag-on runs are identical field for field
+apart from the clock. A debug build with the `debug_assert` live - every
+skipped pair handed to Clipper anyway and required to return zero area -
+reproduces all four gates, and the assertion never fired.
+
+The constructor-quality gate is four salts, and the salt is the **target
+depth** rather than the relaxed-seed argument, per the caveat the
+previous round recorded: `construction_seed` derives from the anchor, the
+seed domain and the target, so seeds are replicas and targets are
+samples. The four targets produce four different endpoints - 206.869,
+206.666, 199.801, 214.042 - each pinned and given the identical short
+mode-22 descent by the *default* binary at two relaxed seeds. All eight
+paired descended-depth deltas are exactly 0.0, at identical endpoint and
+descendant fingerprints.
+
+That is the gate passing, but the interesting part is *why* it is a
+tautology here. A sound prefilter cannot move a search: it removes
+queries whose answers were never in doubt. The gate is worth running
+precisely because it would catch the case where the soundness argument is
+wrong, and it is worth saying plainly that a zero here is the predicted
+result rather than a lucky one.
+
+### What this entry leaves open, sized
+
+* **The wasted build is the bigger prize and it is not sound yet.**
+  78.66% of collision-polygon builds are discarded and
+  `collisionPolygonBuild` is 20% of leaf. Removing one needs a
+  certificate in the *opposite* direction - a proof that a pose **does**
+  overlap - and the natural one is an inner circle cover of the
+  unexpanded source, transformed rigidly per pose: two inscribed circles
+  at centre distance below `r1 + r2 + 2 * expansion` prove the expanded
+  polygons meet. Cheap, general, and resting on `offset_miter(P, e)`
+  containing `P + disc(e)`, which is believable for Clipper's miter join
+  and is not proved here. It must not ship on "believable"; the whole
+  value of this stage is that its skips are proofs.
+* **The residual `exactOverlapTest` is Clipper's per-call setup.**
+  Fourteen vertices and 2.6 us. A pair query that reused one engine and
+  one scratch path set across calls is the next measurement, and it is a
+  Clipper-binding change rather than a search change.
+* **`general_fast`'s constructor is untouched deliberately.** It carries
+  584,478 of the 1,290,352 Clipper queries and 15.9% of them are
+  hull-separable, but it is the protected legacy path and it runs on
+  eight threads in about 0.65 s, so its share of the wall is small and
+  its share of the risk is not.
+
+Evidence, drivers and the full per-site census:
+`docs/experiments/constructor-exact-census/`.

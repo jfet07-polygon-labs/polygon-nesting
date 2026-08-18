@@ -9,6 +9,14 @@ use std::mem::size_of;
 mod construction_void_grid;
 use construction_void_grid::ConstructionVoidCache;
 
+// The skyline constructor's exact-confirmation prefilter. Its default build is
+// a zero-sized forwarder whose one query always answers "no information", so
+// every pair reaches Clipper exactly as before; `fast-constructor-confirm`
+// swaps in the grid-exact separation certificate.
+#[path = "construction_confirm_shield.rs"]
+mod construction_confirm_shield;
+use construction_confirm_shield::ConfirmShields;
+
 const PERSISTENT_VACANCY_SEED_DOMAIN: u64 = 0x5650_4f50_3030_3031;
 const TARGET_DEPTH_MM: f64 = 165.0;
 const EXPECTED_PARENT_FINGERPRINT: &str =
@@ -852,6 +860,12 @@ fn elite_snapshot_heap_bytes(snapshot: &EliteSnapshot) -> usize {
 struct RunWork {
     diagnostics: GeneralPersistentVacancyWorkDiagnostics,
     quotas: VacancyQuotas,
+    /// The constructor's exact-confirmation prefilter cache. It lives here
+    /// rather than in a parameter because every function on the confirmation
+    /// path already carries `&mut RunWork`, so no signature moves and the
+    /// default build's generated code is unchanged — the forwarder is
+    /// zero-sized and its one query is a constant `false`.
+    confirm_shields: ConfirmShields,
 }
 
 impl RunWork {
@@ -859,6 +873,7 @@ impl RunWork {
         Self {
             diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
             quotas: VacancyQuotas::for_piece_count(piece_count),
+            confirm_shields: ConfirmShields::default(),
         }
     }
 
@@ -6558,6 +6573,10 @@ fn construct_candidate_poses(
     work: &mut RunWork,
 ) -> Result<Vec<(RelaxedPlacement, Arc<PolygonSet>, CandidateProvenance)>, String> {
     let proposal_span = profiling::deep::start(Phase::VacancyProposals);
+    // The expansion parent is fixed for every confirmation row this call
+    // generates, so its separation certificates are derived once here and
+    // reused by all of them. A no-op off the profile.
+    work.confirm_shields.begin_parent(&parent.collisions);
     construction.slots = construction.slots.saturating_add(1);
     work.diagnostics.selected_piece_slots = work.diagnostics.selected_piece_slots.saturating_add(1);
     if work.diagnostics.selected_piece_slots > work.quotas.max_selected_piece_slots {
@@ -7058,17 +7077,22 @@ fn construct_candidate_poses(
         } else {
             rows += 1;
         }
-        let Some(collision) = construction_confirm_row(
-            pieces,
-            work_settings,
-            parent,
-            piece_index,
-            &candidate,
-            inset,
-            construction,
-            work,
-        )?
-        else {
+        let Some(collision) = ({
+            #[cfg(feature = "constructor-census")]
+            let _census = crate::constructor_census::site(
+                crate::constructor_census::Site::Candidate,
+            );
+            construction_confirm_row(
+                pieces,
+                work_settings,
+                parent,
+                piece_index,
+                &candidate,
+                inset,
+                construction,
+                work,
+            )?
+        }) else {
             continue;
         };
         // Multi-directional contact walk (the bounded NFP surrogate): the
@@ -7172,16 +7196,23 @@ fn construction_slide(
         probe.translate_x = snap_mm(start_pose.translate_x + delta * direction.0);
         probe.translate_y = snap_mm(start_pose.translate_y + delta * direction.1);
         *rows += 1;
-        match construction_confirm_row(
-            pieces,
-            work_settings,
-            parent,
-            piece_index,
-            &probe,
-            inset,
-            construction,
-            work,
-        )? {
+        let confirmed = {
+            #[cfg(feature = "constructor-census")]
+            let _census = crate::constructor_census::site(
+                crate::constructor_census::Site::SlideLadder,
+            );
+            construction_confirm_row(
+                pieces,
+                work_settings,
+                parent,
+                piece_index,
+                &probe,
+                inset,
+                construction,
+                work,
+            )?
+        };
+        match confirmed {
             Some(pushed) => {
                 settled_pose = probe;
                 settled_collision = pushed;
@@ -7202,16 +7233,23 @@ fn construction_slide(
             probe.translate_x = snap_mm(start_pose.translate_x + mid * direction.0);
             probe.translate_y = snap_mm(start_pose.translate_y + mid * direction.1);
             *rows += 1;
-            match construction_confirm_row(
-                pieces,
-                work_settings,
-                parent,
-                piece_index,
-                &probe,
-                inset,
-                construction,
-                work,
-            )? {
+            let confirmed = {
+                #[cfg(feature = "constructor-census")]
+                let _census = crate::constructor_census::site(
+                    crate::constructor_census::Site::SlideBisect,
+                );
+                construction_confirm_row(
+                    pieces,
+                    work_settings,
+                    parent,
+                    piece_index,
+                    &probe,
+                    inset,
+                    construction,
+                    work,
+                )?
+            };
+            match confirmed {
                 Some(pushed) => {
                     settled_pose = probe;
                     settled_collision = pushed;
@@ -7242,6 +7280,8 @@ fn construction_confirm_row(
     work: &mut RunWork,
 ) -> Result<Option<PolygonSet>, String> {
     let started = profiling::deep::start(Phase::VacancyExactRows);
+    #[cfg(feature = "constructor-census")]
+    crate::constructor_census::row_started();
     construction.exact_rows = construction.exact_rows.saturating_add(1);
     profiling::deep::count(Counter::CollisionPolygonBuilds, 1);
     work.diagnostics.exact_finalist_rows = work.diagnostics.exact_finalist_rows.saturating_add(1);
@@ -7257,11 +7297,17 @@ fn construction_confirm_row(
         work_settings.sheet_short_axis_mm - inset,
         work_settings.sheet_long_axis_mm - inset,
     ) {
+        #[cfg(feature = "constructor-census")]
+        crate::constructor_census::row_rejected_by_containment();
         profiling::deep::finish(Phase::VacancyExactRows, started);
         return Ok(None);
     }
     let pairs_started = profiling::deep::start(Phase::ExactOverlapTest);
     profiling::deep::count(Counter::ExactPairTests, 1);
+    // One separation certificate per confirmation row, against the parent's
+    // pre-derived ones. A no-op off the profile, and inert for a degenerate
+    // polygon, in which case every pair below takes the exact route.
+    work.confirm_shields.begin_candidate(&collision);
     for fixed_index in 0..pieces.len() {
         if !parent.active[fixed_index] {
             continue;
@@ -7270,12 +7316,30 @@ fn construction_confirm_row(
         let fixed = parent.collisions[fixed_index]
             .as_ref()
             .ok_or_else(|| format!("active piece {fixed_index} has no collision"))?;
+        // The prefilter answers "provably separated" or "no information", so a
+        // skip here is the exact query's own answer, reached without running
+        // it. The debug build proves that claim rather than asserting it: it
+        // runs the query anyway and requires the areas to agree.
+        if work.confirm_shields.separated(fixed_index) {
+            debug_assert_eq!(
+                collision
+                    .intersection_area_mm2(fixed)
+                    .expect("a certified-separated pair is a valid pair query"),
+                0.0,
+                "the constructor's separation certificate disagreed with the exact tier"
+            );
+            continue;
+        }
         if exact_intersection_area(&collision, fixed, work)? > 0.0 {
+            #[cfg(feature = "constructor-census")]
+            crate::constructor_census::row_rejected_by_overlap();
             profiling::deep::finish(Phase::ExactOverlapTest, pairs_started);
             profiling::deep::finish(Phase::VacancyExactRows, started);
             return Ok(None);
         }
     }
+    #[cfg(feature = "constructor-census")]
+    crate::constructor_census::row_accepted();
     profiling::deep::finish(Phase::ExactOverlapTest, pairs_started);
     profiling::deep::finish(Phase::VacancyExactRows, started);
     Ok(Some(collision))
@@ -8519,6 +8583,8 @@ fn exact_intersection_area(
     work: &mut RunWork,
 ) -> Result<f64, String> {
     if bounds_are_disjoint(first, second)? {
+        #[cfg(feature = "constructor-census")]
+        crate::constructor_census::pair(first, second, false, false);
         return Ok(0.0);
     }
     let input_vertices = first.vertex_count().saturating_add(second.vertex_count());
@@ -8545,6 +8611,8 @@ fn exact_intersection_area(
         .clipper_input_vertices
         .saturating_add(result.input_vertices);
     work.diagnostics.clipper_output_vertices = next_output;
+    #[cfg(feature = "constructor-census")]
+    crate::constructor_census::pair(first, second, true, result.area_mm2 > 0.0);
     Ok(result.area_mm2)
 }
 

@@ -1,0 +1,1164 @@
+{
+ "description": "The constructor exact-confirmation census, and the grid-exact separation prefilter it sized. Every timing figure is a paired interleaved A/B on a box shared with another benchmarking agent; no absolute time here is a claim.",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "baseCommit": "0cf1163",
+ "platform": {
+  "arch": "x86_64",
+  "cores": 16
+ },
+ "census": {
+  "stream": "mode 20, gate 1 (parent ex5-seed-native.json, target 320.000)",
+  "build": "jagua-experimental,constructor-census,search-profiling",
+  "caveat": "a counting build runs a convex hull on every observed pair, so its clock is meaningless; only the counts are quotable",
+  "gateReproduced": true,
+  "totals": {
+   "cleanSeparatedByHull": 245715,
+   "cleanSeparatedBySlabs": 136671,
+   "clipperInputVertices": 17667211,
+   "collisionBuilds": 750434,
+   "collisionBuildsWasted": 590299,
+   "pairsClipperOverlapping": 997826,
+   "pairsOffered": 22080053,
+   "pairsReachingClipper": 1290352,
+   "pairsRejectedByAabb": 20789701,
+   "rows": 747521,
+   "rowsAccepted": 157227,
+   "rowsRejectedByContainment": 66919,
+   "rowsRejectedByOverlap": 523375,
+   "soundnessViolationsHull": 0,
+   "soundnessViolationsSlabs": 0
+  },
+  "bySite": {
+   "candidate": {
+    "cleanSeparatedByHull": 47228,
+    "cleanSeparatedBySlabs": 26551,
+    "clipperInputVertices": 5627479,
+    "collisionBuilds": 432710,
+    "collisionBuildsWasted": 421418,
+    "pairsClipperOverlapping": 398050,
+    "pairsOffered": 6243603,
+    "pairsReachingClipper": 450840,
+    "pairsRejectedByAabb": 5792763,
+    "rows": 432710,
+    "rowsAccepted": 11292,
+    "rowsRejectedByContainment": 23368,
+    "rowsRejectedByOverlap": 398050,
+    "soundnessViolationsHull": 0,
+    "soundnessViolationsSlabs": 0
+   },
+   "other": {
+    "cleanSeparatedByHull": 721,
+    "cleanSeparatedBySlabs": 200,
+    "clipperInputVertices": 15144,
+    "collisionBuilds": 0,
+    "collisionBuildsWasted": 0,
+    "pairsClipperOverlapping": 2,
+    "pairsOffered": 32495,
+    "pairsReachingClipper": 1022,
+    "pairsRejectedByAabb": 31473,
+    "rows": 0,
+    "rowsAccepted": 0,
+    "rowsRejectedByContainment": 0,
+    "rowsRejectedByOverlap": 0,
+    "soundnessViolationsHull": 0,
+    "soundnessViolationsSlabs": 0
+   },
+   "shortSideFirst": {
+    "cleanSeparatedByHull": 92729,
+    "cleanSeparatedBySlabs": 52973,
+    "clipperInputVertices": 8591760,
+    "collisionBuilds": 2913,
+    "collisionBuildsWasted": 5,
+    "pairsClipperOverlapping": 474449,
+    "pairsOffered": 8927135,
+    "pairsReachingClipper": 584478,
+    "pairsRejectedByAabb": 8342657,
+    "rows": 0,
+    "rowsAccepted": 0,
+    "rowsRejectedByContainment": 0,
+    "rowsRejectedByOverlap": 0,
+    "soundnessViolationsHull": 0,
+    "soundnessViolationsSlabs": 0
+   },
+   "slideBisect": {
+    "cleanSeparatedByHull": 27222,
+    "cleanSeparatedBySlabs": 13245,
+    "clipperInputVertices": 1466273,
+    "collisionBuilds": 122886,
+    "collisionBuildsWasted": 107433,
+    "pairsClipperOverlapping": 78616,
+    "pairsOffered": 1958553,
+    "pairsReachingClipper": 113222,
+    "pairsRejectedByAabb": 1845331,
+    "rows": 122886,
+    "rowsAccepted": 15453,
+    "rowsRejectedByContainment": 28817,
+    "rowsRejectedByOverlap": 78616,
+    "soundnessViolationsHull": 0,
+    "soundnessViolationsSlabs": 0
+   },
+   "slideLadder": {
+    "cleanSeparatedByHull": 77815,
+    "cleanSeparatedBySlabs": 43702,
+    "clipperInputVertices": 1966555,
+    "collisionBuilds": 191925,
+    "collisionBuildsWasted": 61443,
+    "pairsClipperOverlapping": 46709,
+    "pairsOffered": 4918267,
+    "pairsReachingClipper": 140790,
+    "pairsRejectedByAabb": 4777477,
+    "rows": 191925,
+    "rowsAccepted": 130482,
+    "rowsRejectedByContainment": 14734,
+    "rowsRejectedByOverlap": 46709,
+    "soundnessViolationsHull": 0,
+    "soundnessViolationsSlabs": 0
+   }
+  },
+  "derived": {
+   "pairsOffered": 22080053,
+   "pairsRejectedByAabb": 20789701,
+   "aabbRejectShare": 0.9415602852040256,
+   "pairsReachingClipper": 1290352,
+   "clipperOverlapping": 997826,
+   "clipperClean": 292526,
+   "cleanShareOfClipperQueries": 0.226702481183429,
+   "cleanSeparatedBySlabs": 136671,
+   "cleanSeparatedByHull": 245715,
+   "slabsShareOfClean": 0.4672097522955225,
+   "hullShareOfClean": 0.8399766174630631,
+   "hullShareOfAllClipperQueries": 0.19042478331494042,
+   "atLeastOneTierShareOfCleanFloor": 0.8399766174630631,
+   "collisionBuilds": 750434,
+   "collisionBuildsWasted": 590299,
+   "wastedBuildShare": 0.786610148260873,
+   "rows": 747521,
+   "rowsRejectedByContainment": 66919,
+   "rowsRejectedByOverlap": 523375,
+   "rowsAccepted": 157227,
+   "soundnessViolationsSlabs": 0,
+   "soundnessViolationsHull": 0,
+   "meanClipperInputVerticesPerQuery": 13.691776352499163
+  }
+ },
+ "prefilter": {
+  "flag": "fast-constructor-confirm (stacked on fast-constructor-profile)",
+  "pairedInterleavedAB": {
+   "sample1": {
+    "gate": "g1",
+    "rounds": 14,
+    "armsAlternateOrderEveryRound": true,
+    "statistic": "per-round paired ratio, b over a",
+    "a": {
+     "label": "profile",
+     "binary": "/var/lib/t3/tmp/ccensus/bin/bench-profile"
+    },
+    "b": {
+     "label": "confirm",
+     "binary": "/var/lib/t3/tmp/ccensus/bin/bench-confirm2"
+    },
+    "profileEngineMedianSeconds": 6.230932,
+    "confirmEngineMedianSeconds": 5.858471214,
+    "engineRatioMedian": 0.9396444485677022,
+    "engineRatioRange": [
+     0.9244737318831876,
+     1.0339508334642304
+    ],
+    "wallRatioMedian": 0.9399966185970559,
+    "wallRatioRange": [
+     0.9255597505496049,
+     1.0343832611587074
+    ],
+    "roundsBelowParity": 13,
+    "outcomesIdenticalWithinArm": {
+     "profile": true,
+     "confirm": true
+    },
+    "outcomesIdenticalAcrossArms": true,
+    "rows": [
+     {
+      "round": 0,
+      "first": "profile",
+      "profileEngine": 6.323391383,
+      "confirmEngine": 5.84580923,
+      "profileWall": 6.354301452636719,
+      "confirmWall": 5.881285667419434,
+      "engineRatio": 0.9244737318831876,
+      "wallRatio": 0.9255597505496049
+     },
+     {
+      "round": 1,
+      "first": "confirm",
+      "profileEngine": 6.226621558,
+      "confirmEngine": 5.831040409,
+      "profileWall": 6.260258436203003,
+      "confirmWall": 5.86146354675293,
+      "engineRatio": 0.9364693766410527,
+      "wallRatio": 0.9362973759767094
+     },
+     {
+      "round": 2,
+      "first": "profile",
+      "profileEngine": 6.21382142,
+      "confirmEngine": 5.921947117,
+      "profileWall": 6.250621795654297,
+      "confirmWall": 5.957111358642578,
+      "engineRatio": 0.9530282119050663,
+      "wallRatio": 0.9530430017033218
+     },
+     {
+      "round": 3,
+      "first": "confirm",
+      "profileEngine": 6.247582912,
+      "confirmEngine": 5.877376338,
+      "profileWall": 6.281617879867554,
+      "confirmWall": 5.913766622543335,
+      "engineRatio": 0.940744031857676,
+      "wallRatio": 0.9414400454852286
+     },
+     {
+      "round": 4,
+      "first": "profile",
+      "profileEngine": 6.323001948,
+      "confirmEngine": 5.926768099,
+      "profileWall": 6.357598066329956,
+      "confirmWall": 5.9649951457977295,
+      "engineRatio": 0.9373345363075002,
+      "wallRatio": 0.938246659125643
+     },
+     {
+      "round": 5,
+      "first": "confirm",
+      "profileEngine": 6.231999041,
+      "confirmEngine": 5.86597119,
+      "profileWall": 6.268390893936157,
+      "confirmWall": 5.899335861206055,
+      "engineRatio": 0.941266382008097,
+      "wallRatio": 0.9411244386359002
+     },
+     {
+      "round": 6,
+      "first": "profile",
+      "profileEngine": 6.24477028,
+      "confirmEngine": 5.834789397,
+      "profileWall": 6.280369997024536,
+      "confirmWall": 5.868220806121826,
+      "engineRatio": 0.9343481241715107,
+      "wallRatio": 0.9343750143545723
+     },
+     {
+      "round": 7,
+      "first": "confirm",
+      "profileEngine": 6.190949029,
+      "confirmEngine": 5.905280558,
+      "profileWall": 6.221837282180786,
+      "confirmWall": 5.9385106563568115,
+      "engineRatio": 0.9538570791550931,
+      "wallRatio": 0.9544625465157348
+     },
+     {
+      "round": 8,
+      "first": "profile",
+      "profileEngine": 6.201289681,
+      "confirmEngine": 5.845134939,
+      "profileWall": 6.236607074737549,
+      "confirmWall": 5.90557336807251,
+      "engineRatio": 0.9425676334567606,
+      "wallRatio": 0.9469208653522605
+     },
+     {
+      "round": 9,
+      "first": "confirm",
+      "profileEngine": 6.240062213,
+      "confirmEngine": 6.451917526,
+      "profileWall": 6.271589040756226,
+      "confirmWall": 6.487226724624634,
+      "engineRatio": 1.0339508334642304,
+      "wallRatio": 1.0343832611587074
+     },
+     {
+      "round": 10,
+      "first": "profile",
+      "profileEngine": 6.215968832,
+      "confirmEngine": 5.83396563,
+      "profileWall": 6.2496654987335205,
+      "confirmWall": 5.8676159381866455,
+      "engineRatio": 0.9385448652777286,
+      "wallRatio": 0.9388687985582114
+     },
+     {
+      "round": 11,
+      "first": "confirm",
+      "profileEngine": 6.229864959,
+      "confirmEngine": 5.865701442,
+      "profileWall": 6.258990526199341,
+      "confirmWall": 5.899751424789429,
+      "engineRatio": 0.9415455199435888,
+      "wallRatio": 0.9426043065720929
+     },
+     {
+      "round": 12,
+      "first": "profile",
+      "profileEngine": 6.24752314,
+      "confirmEngine": 5.851240986,
+      "profileWall": 6.279747009277344,
+      "confirmWall": 5.883724927902222,
+      "engineRatio": 0.9365697180915122,
+      "wallRatio": 0.9369366184991113
+     },
+     {
+      "round": 13,
+      "first": "confirm",
+      "profileEngine": 6.229268306,
+      "confirmEngine": 5.814019602,
+      "profileWall": 6.26031756401062,
+      "confirmWall": 5.847109317779541,
+      "engineRatio": 0.9333390883805672,
+      "wallRatio": 0.9339956412744084
+     }
+    ]
+   },
+   "sample2": {
+    "gate": "g1",
+    "rounds": 10,
+    "armsAlternateOrderEveryRound": true,
+    "statistic": "per-round paired ratio, b over a",
+    "a": {
+     "label": "profile",
+     "binary": "/var/lib/t3/tmp/ccensus/bin/bench-profile"
+    },
+    "b": {
+     "label": "confirmB",
+     "binary": "/var/lib/t3/tmp/ccensus/bin/bench-confirm2"
+    },
+    "profileEngineMedianSeconds": 6.263641124,
+    "confirmBEngineMedianSeconds": 5.8476345045,
+    "engineRatioMedian": 0.9367160255693494,
+    "engineRatioRange": [
+     0.6792715766900561,
+     1.1403745368516962
+    ],
+    "wallRatioMedian": 0.9367847784497999,
+    "wallRatioRange": [
+     0.6774870864206102,
+     1.1396675760525057
+    ],
+    "roundsBelowParity": 9,
+    "outcomesIdenticalWithinArm": {
+     "profile": true,
+     "confirmB": true
+    },
+    "outcomesIdenticalAcrossArms": true,
+    "rows": [
+     {
+      "round": 0,
+      "first": "profile",
+      "profileEngine": 6.213453135,
+      "confirmBEngine": 5.836632435,
+      "profileWall": 6.246648550033569,
+      "confirmBWall": 5.872115135192871,
+      "engineRatio": 0.9393540609685471,
+      "wallRatio": 0.9400425024970093
+     },
+     {
+      "round": 1,
+      "first": "confirmB",
+      "profileEngine": 6.263591702,
+      "confirmBEngine": 5.81139675,
+      "profileWall": 6.2970404624938965,
+      "confirmBWall": 5.847558259963989,
+      "engineRatio": 0.9278058063944986,
+      "wallRatio": 0.9286200866570432
+     },
+     {
+      "round": 2,
+      "first": "profile",
+      "profileEngine": 6.263690546,
+      "confirmBEngine": 5.804803071,
+      "profileWall": 6.299550533294678,
+      "confirmBWall": 5.840418815612793,
+      "engineRatio": 0.9267384824282154,
+      "wallRatio": 0.9271167497974243
+     },
+     {
+      "round": 3,
+      "first": "confirmB",
+      "profileEngine": 6.251613544,
+      "confirmBEngine": 5.851089759,
+      "profileWall": 6.284299373626709,
+      "confirmBWall": 5.885257244110107,
+      "engineRatio": 0.9359327344563063,
+      "wallRatio": 0.9365017314115779
+     },
+     {
+      "round": 4,
+      "first": "profile",
+      "profileEngine": 6.250062697,
+      "confirmBEngine": 5.857388312,
+      "profileWall": 6.285287618637085,
+      "confirmBWall": 5.89051365852356,
+      "engineRatio": 0.9371727286530291,
+      "wallRatio": 0.9371907883828665
+     },
+     {
+      "round": 5,
+      "first": "confirmB",
+      "profileEngine": 6.234858864,
+      "confirmBEngine": 5.84417925,
+      "profileWall": 6.2680628299713135,
+      "confirmBWall": 5.873600006103516,
+      "engineRatio": 0.9373394614823153,
+      "wallRatio": 0.9370678254880219
+     },
+     {
+      "round": 6,
+      "first": "profile",
+      "profileEngine": 6.276515682,
+      "confirmBEngine": 5.87644632,
+      "profileWall": 6.312013864517212,
+      "confirmBWall": 5.910543918609619,
+      "engineRatio": 0.9362593224856696,
+      "wallRatio": 0.9363959023974197
+     },
+     {
+      "round": 7,
+      "first": "confirmB",
+      "profileEngine": 8.587634353,
+      "confirmBEngine": 5.833335927,
+      "profileWall": 8.66114068031311,
+      "confirmBWall": 5.867810964584351,
+      "engineRatio": 0.6792715766900561,
+      "wallRatio": 0.6774870864206102
+     },
+     {
+      "round": 8,
+      "first": "profile",
+      "profileEngine": 9.072878649,
+      "confirmBEngine": 8.948803773,
+      "profileWall": 9.135449886322021,
+      "confirmBWall": 9.033201456069946,
+      "engineRatio": 0.9863246406350122,
+      "wallRatio": 0.9888075101364011
+     },
+     {
+      "round": 9,
+      "first": "confirmB",
+      "profileEngine": 9.137833312,
+      "confirmBEngine": 10.420552431,
+      "profileWall": 9.205851554870605,
+      "confirmBWall": 10.491610527038574,
+      "engineRatio": 1.1403745368516962,
+      "wallRatio": 1.1396675760525057
+     }
+    ]
+   },
+   "preAllocationRework": {
+    "gate": "g1",
+    "rounds": 10,
+    "armsAlternateOrderEveryRound": true,
+    "statistic": "per-round paired ratio, b over a",
+    "a": {
+     "label": "profile",
+     "binary": "/var/lib/t3/tmp/ccensus/bin/bench-profile"
+    },
+    "b": {
+     "label": "confirm2",
+     "binary": "/var/lib/t3/tmp/ccensus/bin/bench-confirm2"
+    },
+    "profileEngineMedianSeconds": 6.8686249759999995,
+    "confirm2EngineMedianSeconds": 6.467038366500001,
+    "engineRatioMedian": 0.9493586929566533,
+    "engineRatioRange": [
+     0.8772733381114494,
+     1.0950803641640872
+    ],
+    "wallRatioMedian": 0.9484759405045391,
+    "wallRatioRange": [
+     0.8779680665053337,
+     1.0942714902382753
+    ],
+    "roundsBelowParity": 9,
+    "outcomesIdenticalWithinArm": {
+     "profile": true,
+     "confirm2": true
+    },
+    "outcomesIdenticalAcrossArms": true,
+    "rows": [
+     {
+      "round": 0,
+      "first": "profile",
+      "profileEngine": 7.111801328,
+      "confirm2Engine": 6.238993690999999,
+      "profileWall": 7.146563291549683,
+      "confirm2Wall": 6.274454355239868,
+      "engineRatio": 0.8772733381114494,
+      "wallRatio": 0.8779680665053337
+     },
+     {
+      "round": 1,
+      "first": "confirm2",
+      "profileEngine": 7.044779938,
+      "confirm2Engine": 6.309050261,
+      "profileWall": 7.082341432571411,
+      "confirm2Wall": 6.344421863555908,
+      "engineRatio": 0.8955638524588361,
+      "wallRatio": 0.8958085294191213
+     },
+     {
+      "round": 2,
+      "first": "profile",
+      "profileEngine": 7.170189883,
+      "confirm2Engine": 6.757680028000001,
+      "profileWall": 7.218005657196045,
+      "confirm2Wall": 6.8122169971466064,
+      "engineRatio": 0.9424687683685993,
+      "wallRatio": 0.9437810554159258
+     },
+     {
+      "round": 3,
+      "first": "confirm2",
+      "profileEngine": 7.2507015,
+      "confirm2Engine": 6.904469401,
+      "profileWall": 7.305866003036499,
+      "confirm2Wall": 6.941920280456543,
+      "engineRatio": 0.9522484687860892,
+      "wallRatio": 0.9501844514491928
+     },
+     {
+      "round": 4,
+      "first": "profile",
+      "profileEngine": 6.9744059499999995,
+      "confirm2Engine": 6.640156107,
+      "profileWall": 7.0100343227386475,
+      "confirm2Wall": 6.678321361541748,
+      "engineRatio": 0.9520747938396101,
+      "wallRatio": 0.9526802657554881
+     },
+     {
+      "round": 5,
+      "first": "confirm2",
+      "profileEngine": 6.762844002,
+      "confirm2Engine": 6.625026472,
+      "profileWall": 6.803283452987671,
+      "confirm2Wall": 6.6796417236328125,
+      "engineRatio": 0.9796213649229167,
+      "wallRatio": 0.9818261681716993
+     },
+     {
+      "round": 6,
+      "first": "profile",
+      "profileEngine": 6.365677302,
+      "confirm2Engine": 6.237344074,
+      "profileWall": 6.3995208740234375,
+      "confirm2Wall": 6.27338433265686,
+      "engineRatio": 0.9798398156375788,
+      "wallRatio": 0.980289689829971
+     },
+     {
+      "round": 7,
+      "first": "confirm2",
+      "profileEngine": 6.542246491,
+      "confirm2Engine": 6.066341774,
+      "profileWall": 6.577844858169556,
+      "confirm2Wall": 6.100255489349365,
+      "engineRatio": 0.9272566819891775,
+      "wallRatio": 0.9273942485543675
+     },
+     {
+      "round": 8,
+      "first": "profile",
+      "profileEngine": 6.364609037,
+      "confirm2Engine": 6.969758382,
+      "profileWall": 6.3995041847229,
+      "confirm2Wall": 7.002794981002808,
+      "engineRatio": 1.0950803641640872,
+      "wallRatio": 1.0942714902382753
+     },
+     {
+      "round": 9,
+      "first": "confirm2",
+      "profileEngine": 6.619178437,
+      "confirm2Engine": 6.265996233,
+      "profileWall": 6.654580354690552,
+      "confirm2Wall": 6.300339937210083,
+      "engineRatio": 0.9466425920736966,
+      "wallRatio": 0.9467674295598852
+     }
+    ]
+   }
+  },
+  "phaseProfile": {
+   "profile": {
+    "engineElapsedSeconds": 6.504889481,
+    "processWallSeconds": 6.5380895137786865,
+    "leafMilliseconds": 10140.987106,
+    "counters": {
+     "acceptedMoves": 36382,
+     "allocationBytes": 0,
+     "allocationCount": 0,
+     "candidateQueries": 4089768,
+     "collisionPolygonBuilds": 750434,
+     "effectivePieceMoves": 36382,
+     "exactPairTests": 1266102,
+     "fullRescores": 1048,
+     "neighborTests": 16367371,
+     "publicationAttempts": 18
+    },
+    "gateHit": true,
+    "phases": {
+     "moveSweep": {
+      "ms": 5322.790633,
+      "calls": 4089,
+      "leafSharePercent": null
+     },
+     "scorePlacement": {
+      "ms": 4842.57593,
+      "calls": 4089768,
+      "leafSharePercent": null
+     },
+     "vacancyProposals": {
+      "ms": 4449.676842,
+      "calls": 2872,
+      "leafSharePercent": null
+     },
+     "vacancyExactRows": {
+      "ms": 3926.985822,
+      "calls": 747521,
+      "leafSharePercent": null
+     },
+     "exactOverlapTest": {
+      "ms": 3309.600751,
+      "calls": 1266102,
+      "leafSharePercent": 32.63588363150414
+     },
+     "collisionPolygonBuild": {
+      "ms": 2016.538936,
+      "calls": 750434,
+      "leafSharePercent": 19.88503599227434
+     },
+     "pairCollide": {
+      "ms": 1285.709716,
+      "calls": 15562760,
+      "leafSharePercent": 12.67834878953055
+     },
+     "pairPressure": {
+      "ms": 959.955652,
+      "calls": 6363087,
+      "leafSharePercent": 9.466096761251517
+     },
+     "constructorProposals": {
+      "ms": 541.451571,
+      "calls": 976,
+      "leafSharePercent": 5.339239320003135
+     },
+     "hazardPressure": {
+      "ms": 494.608124,
+      "calls": 661499,
+      "leafSharePercent": 4.8773173541199055
+     },
+     "hazardCommit": {
+      "ms": 381.143178,
+      "calls": 4940,
+      "leafSharePercent": 3.758442585677813
+     },
+     "boundaryPenalty": {
+      "ms": 344.391393,
+      "calls": 4450975,
+      "leafSharePercent": 3.3960342262563175
+     },
+     "hazardQuery": {
+      "ms": 293.018569,
+      "calls": 489006,
+      "leafSharePercent": 2.8894481960896403
+     },
+     "vacancyProxyRank": {
+      "ms": 226.633733,
+      "calls": 11281,
+      "leafSharePercent": 2.234829120982811
+     },
+     "fullRescore": {
+      "ms": 76.594846,
+      "calls": 1048,
+      "leafSharePercent": null
+     },
+     "hazardPoseBounds": {
+      "ms": 71.979684,
+      "calls": 768460,
+      "leafSharePercent": 0.7097897201487675
+     },
+     "pieceIndexBuild": {
+      "ms": 64.515957,
+      "calls": 4089,
+      "leafSharePercent": 0.6361901097559683
+     },
+     "publicationValidate": {
+      "ms": 62.150952,
+      "calls": 18,
+      "leafSharePercent": 0.6128688593167412
+     },
+     "constructorScore": {
+      "ms": 37.381592,
+      "calls": 48953,
+      "leafSharePercent": 0.36861886924087367
+     },
+     "updateAfterMove": {
+      "ms": 32.763398,
+      "calls": 36382,
+      "leafSharePercent": 0.3230789829188843
+     },
+     "sheetFitTest": {
+      "ms": 19.1439,
+      "calls": 524500,
+      "leafSharePercent": 0.18877748092859079
+     },
+     "publicationConfirm": {
+      "ms": 8.060553,
+      "calls": 1937,
+      "leafSharePercent": null
+     },
+     "auditorScore": {
+      "ms": 3.142385,
+      "calls": 7,
+      "leafSharePercent": null
+     }
+    }
+   },
+   "confirm": {
+    "engineElapsedSeconds": 6.141429812,
+    "processWallSeconds": 6.174894571304321,
+    "leafMilliseconds": 9774.826651,
+    "counters": {
+     "acceptedMoves": 36382,
+     "allocationBytes": 0,
+     "allocationCount": 0,
+     "candidateQueries": 4089768,
+     "collisionPolygonBuilds": 750434,
+     "effectivePieceMoves": 36382,
+     "exactPairTests": 1266102,
+     "fullRescores": 1048,
+     "neighborTests": 16367371,
+     "publicationAttempts": 18
+    },
+    "gateHit": true,
+    "phases": {
+     "moveSweep": {
+      "ms": 5328.472465,
+      "calls": 4089,
+      "leafSharePercent": null
+     },
+     "scorePlacement": {
+      "ms": 4846.288325,
+      "calls": 4089768,
+      "leafSharePercent": null
+     },
+     "vacancyProposals": {
+      "ms": 4061.067302,
+      "calls": 2872,
+      "leafSharePercent": null
+     },
+     "vacancyExactRows": {
+      "ms": 3539.599785,
+      "calls": 747521,
+      "leafSharePercent": null
+     },
+     "exactOverlapTest": {
+      "ms": 2926.218237,
+      "calls": 1266102,
+      "leafSharePercent": 29.936267327059323
+     },
+     "collisionPolygonBuild": {
+      "ms": 2015.516075,
+      "calls": 750434,
+      "leafSharePercent": 20.619455944968657
+     },
+     "pairCollide": {
+      "ms": 1285.384809,
+      "calls": 15562760,
+      "leafSharePercent": 13.149949916180871
+     },
+     "pairPressure": {
+      "ms": 963.480605,
+      "calls": 6363087,
+      "leafSharePercent": 9.856753878100053
+     },
+     "constructorProposals": {
+      "ms": 543.225457,
+      "calls": 976,
+      "leafSharePercent": 5.557392232059953
+     },
+     "hazardPressure": {
+      "ms": 498.438419,
+      "calls": 661499,
+      "leafSharePercent": 5.099204689722123
+     },
+     "hazardCommit": {
+      "ms": 392.215768,
+      "calls": 4940,
+      "leafSharePercent": 4.012508681776724
+     },
+     "boundaryPenalty": {
+      "ms": 343.156908,
+      "calls": 4450975,
+      "leafSharePercent": 3.5106188605901654
+     },
+     "hazardQuery": {
+      "ms": 290.734828,
+      "calls": 489006,
+      "leafSharePercent": 2.9743220865226982
+     },
+     "vacancyProxyRank": {
+      "ms": 228.076049,
+      "calls": 11281,
+      "leafSharePercent": 2.333300191841939
+     },
+     "fullRescore": {
+      "ms": 77.361829,
+      "calls": 1048,
+      "leafSharePercent": null
+     },
+     "hazardPoseBounds": {
+      "ms": 71.697601,
+      "calls": 768460,
+      "leafSharePercent": 0.7334923018063454
+     },
+     "pieceIndexBuild": {
+      "ms": 65.019199,
+      "calls": 4089,
+      "leafSharePercent": 0.6651698420999446
+     },
+     "publicationValidate": {
+      "ms": 62.058908,
+      "calls": 18,
+      "leafSharePercent": 0.6348849981257841
+     },
+     "constructorScore": {
+      "ms": 37.489746,
+      "calls": 48953,
+      "leafSharePercent": 0.38353361485100773
+     },
+     "updateAfterMove": {
+      "ms": 32.943693,
+      "calls": 36382,
+      "leafSharePercent": 0.3370258540250404
+     },
+     "sheetFitTest": {
+      "ms": 19.170349,
+      "calls": 524500,
+      "leafSharePercent": 0.1961195802693729
+     },
+     "publicationConfirm": {
+      "ms": 7.969137,
+      "calls": 1937,
+      "leafSharePercent": null
+     },
+     "auditorScore": {
+      "ms": 2.878586,
+      "calls": 7,
+      "leafSharePercent": null
+     }
+    }
+   }
+  },
+  "qualityGate": {
+   "salts": [
+    "320.000",
+    "321.500",
+    "323.000",
+    "324.500"
+   ],
+   "descentHeadroomMm": 0.8,
+   "descentBinary": "/var/lib/t3/tmp/ccensus/bin/bench-worktree",
+   "a": {
+    "label": "profile",
+    "binary": "/var/lib/t3/tmp/ccensus/bin/bench-profile"
+   },
+   "b": {
+    "label": "confirm",
+    "binary": "/var/lib/t3/tmp/ccensus/bin/bench-confirm2"
+   },
+   "pairs": [
+    {
+     "salt": "320.000",
+     "relaxedSeed": "0",
+     "profileEndpoint": 206.869,
+     "confirmEndpoint": 206.869,
+     "endpointFingerprintsEqual": true,
+     "profileDescended": 173.04696209930026,
+     "confirmDescended": 173.04696209930026,
+     "descendedDelta": 0.0,
+     "descendantFingerprintsEqual": true
+    },
+    {
+     "salt": "320.000",
+     "relaxedSeed": "1",
+     "profileEndpoint": 206.869,
+     "confirmEndpoint": 206.869,
+     "endpointFingerprintsEqual": true,
+     "profileDescended": 170.648,
+     "confirmDescended": 170.648,
+     "descendedDelta": 0.0,
+     "descendantFingerprintsEqual": true
+    },
+    {
+     "salt": "321.500",
+     "relaxedSeed": "0",
+     "profileEndpoint": 206.666,
+     "confirmEndpoint": 206.666,
+     "endpointFingerprintsEqual": true,
+     "profileDescended": 171.463,
+     "confirmDescended": 171.463,
+     "descendedDelta": 0.0,
+     "descendantFingerprintsEqual": true
+    },
+    {
+     "salt": "321.500",
+     "relaxedSeed": "1",
+     "profileEndpoint": 206.666,
+     "confirmEndpoint": 206.666,
+     "endpointFingerprintsEqual": true,
+     "profileDescended": 171.25599999999997,
+     "confirmDescended": 171.25599999999997,
+     "descendedDelta": 0.0,
+     "descendantFingerprintsEqual": true
+    },
+    {
+     "salt": "323.000",
+     "relaxedSeed": "0",
+     "profileEndpoint": 199.801,
+     "confirmEndpoint": 199.801,
+     "endpointFingerprintsEqual": true,
+     "profileDescended": 179.003,
+     "confirmDescended": 179.003,
+     "descendedDelta": 0.0,
+     "descendantFingerprintsEqual": true
+    },
+    {
+     "salt": "323.000",
+     "relaxedSeed": "1",
+     "profileEndpoint": 199.801,
+     "confirmEndpoint": 199.801,
+     "endpointFingerprintsEqual": true,
+     "profileDescended": 175.08863905832428,
+     "confirmDescended": 175.08863905832428,
+     "descendedDelta": 0.0,
+     "descendantFingerprintsEqual": true
+    },
+    {
+     "salt": "324.500",
+     "relaxedSeed": "0",
+     "profileEndpoint": 214.042,
+     "confirmEndpoint": 214.042,
+     "endpointFingerprintsEqual": true,
+     "profileDescended": 179.003,
+     "confirmDescended": 179.003,
+     "descendedDelta": 0.0,
+     "descendantFingerprintsEqual": true
+    },
+    {
+     "salt": "324.500",
+     "relaxedSeed": "1",
+     "profileEndpoint": 214.042,
+     "confirmEndpoint": 214.042,
+     "endpointFingerprintsEqual": true,
+     "profileDescended": 179.654,
+     "confirmDescended": 179.654,
+     "descendedDelta": 0.0,
+     "descendantFingerprintsEqual": true
+    }
+   ],
+   "maxAbsDescendedDelta": 0.0,
+   "allEndpointFingerprintsEqual": true,
+   "allDescendantFingerprintsEqual": true
+  }
+ },
+ "gates": {
+  "base": {
+   "label": "base",
+   "binary": "/var/lib/t3/tmp/ccensus/bin/bench-base",
+   "env": {},
+   "gates": {
+    "g1": {
+     "depths": [
+      206.869,
+      207.239,
+      211.194,
+      211.825,
+      213.073,
+      214.207,
+      214.738,
+      222.116
+     ],
+     "fingerprints": [
+      "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+      "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+     ],
+     "hit": true,
+     "wallSeconds": 26.374828577041626,
+     "docDigest": "1431c49595c0d16b6ca84042e5f40790b03ba7e66c814df75960af57660bf16e"
+    },
+    "g2": {
+     "raw": 159.09233022733062,
+     "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+     "depth": 159.092,
+     "exactValid": true,
+     "contractValid": true,
+     "hit": true,
+     "wallSeconds": 3.1914515495300293,
+     "docDigest": "72353bf13599144342e236fc2baed063467a0f4295218b57405c8c2732f6c50d"
+    },
+    "g3": {
+     "raw": 159.07876040364795,
+     "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+     "depth": 159.079,
+     "exactValid": true,
+     "contractValid": true,
+     "hit": true,
+     "wallSeconds": 3.4245107173919678,
+     "docDigest": "f94ef0fb596d5e895b1446ba04e9b6316f04fe9d5b21d8c3efaebecfee901d1d"
+    },
+    "g4": {
+     "raw": 164.0375677990678,
+     "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+     "depth": 164.038,
+     "exactValid": true,
+     "contractValid": true,
+     "hit": true,
+     "wallSeconds": 3.1208081245422363,
+     "docDigest": "96cac805471e2f758298e96ac7e9680a1db75090a6a635e0a5a73bc54657bf4a"
+    }
+   },
+   "ALL_PASS": true
+  },
+  "worktreeDefaultFeatures": {
+   "label": "worktree",
+   "binary": "/var/lib/t3/tmp/ccensus/bin/bench-worktree",
+   "env": {},
+   "gates": {
+    "g1": {
+     "depths": [
+      206.869,
+      207.239,
+      211.194,
+      211.825,
+      213.073,
+      214.207,
+      214.738,
+      222.116
+     ],
+     "fingerprints": [
+      "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+      "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+     ],
+     "hit": true,
+     "wallSeconds": 26.315075874328613,
+     "docDigest": "19e6876e4767eb29704a71b546ae6d78f31ba7a97f7e4a9ee8ec6e316a7880bc"
+    },
+    "g2": {
+     "raw": 159.09233022733062,
+     "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+     "depth": 159.092,
+     "exactValid": true,
+     "contractValid": true,
+     "hit": true,
+     "wallSeconds": 3.1726388931274414,
+     "docDigest": "f015b1987ae903fa274f804c12ec1cea7e2446ab04593fc89223ca50041592c6"
+    },
+    "g3": {
+     "raw": 159.07876040364795,
+     "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+     "depth": 159.079,
+     "exactValid": true,
+     "contractValid": true,
+     "hit": true,
+     "wallSeconds": 3.401793956756592,
+     "docDigest": "c94745c4f0ba21cb3d87ab79fb6deeb99a5fadcbe45dd2718431fcda75ae6b2e"
+    },
+    "g4": {
+     "raw": 164.0375677990678,
+     "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+     "depth": 164.038,
+     "exactValid": true,
+     "contractValid": true,
+     "hit": true,
+     "wallSeconds": 3.0939245223999023,
+     "docDigest": "d0b528dae4bab20b0409923a91aaaf3c00be0417ee06773b9df82e38768d7ae1"
+    }
+   },
+   "ALL_PASS": true
+  },
+  "debugAssertLive": {
+   "label": "debugconfirm",
+   "binary": "/var/lib/t3/tmp/ccensus/bin/bench-confirm-debug",
+   "env": {},
+   "gates": {
+    "g1": {
+     "depths": [
+      206.869,
+      207.239,
+      211.194,
+      211.825,
+      213.073,
+      214.207,
+      214.738,
+      222.116
+     ],
+     "fingerprints": [
+      "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+      "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+     ],
+     "hit": true,
+     "wallSeconds": 271.91790437698364,
+     "docDigest": "88e34ecd6f2ec365823211df4f0f5fb7590fc440c6e1b7873c7954383ec14b16"
+    },
+    "g2": {
+     "raw": 159.09233022733062,
+     "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+     "depth": 159.092,
+     "exactValid": true,
+     "contractValid": true,
+     "hit": true,
+     "wallSeconds": 319.3811638355255,
+     "docDigest": "738d2a6568fc78698710bfd4dd828070d8d5b90a2e04f7a8839fd3cc9a2d28d4"
+    },
+    "g3": {
+     "raw": 159.07876040364795,
+     "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+     "depth": 159.079,
+     "exactValid": true,
+     "contractValid": true,
+     "hit": true,
+     "wallSeconds": 367.3148515224457,
+     "docDigest": "76ae0c1f87666ef066491619493222ad777abd16b39c18fe6fd39381ceb8f2fa"
+    },
+    "g4": {
+     "raw": 164.0375677990678,
+     "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+     "depth": 164.038,
+     "exactValid": true,
+     "contractValid": true,
+     "hit": true,
+     "wallSeconds": 413.5040285587311,
+     "docDigest": "5e48ac7826e62ff1d0dc5bd9320ca7d3c99a3003cda84edb0709a48b03a8a965"
+    }
+   },
+   "ALL_PASS": true
+  }
+ },
+ "wholeDocumentDiffs": {
+  "diff-profile-confirm-g1.json": null,
+  "diff-base-worktree-g1.json": null,
+  "diff-base-worktree-g2.json": null,
+  "diff-base-worktree-g3.json": null,
+  "diff-base-worktree-g4.json": null,
+  "diff-profile-confirm2-g1.json": null,
+  "diff-profile-confirm2-g2.json": null,
+  "diff-profile-confirm2-g3.json": null,
+  "diff-profile-confirm2-g4.json": null,
+  "diff-confirmA-confirmB-g1.json": null,
+  "diff-confirmA-confirmB-g2.json": null,
+  "diff-base-final-g1.json": null,
+  "diff-base-final-g2.json": null,
+  "diff-base-final-g3.json": null,
+  "diff-base-final-g4.json": null
+ }
+}

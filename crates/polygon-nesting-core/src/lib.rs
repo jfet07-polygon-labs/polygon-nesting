@@ -4,6 +4,7 @@ pub mod canonical_grid;
 pub mod capacity;
 pub mod checkpoints;
 pub mod clipper;
+pub mod constructor_census;
 mod control;
 pub mod domain;
 mod events;

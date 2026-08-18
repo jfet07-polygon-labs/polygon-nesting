@@ -1809,6 +1809,9 @@ fn candidate_is_feasible(
     fixed: &[PlacedState],
     settings: GeneralFastSettings,
 ) -> Result<bool, GeneralFastError> {
+    #[cfg(feature = "constructor-census")]
+    let _census =
+        crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
     if !collision_fits_sheet(&candidate.collision, settings) {
         return Ok(false);
     }
@@ -1833,6 +1836,9 @@ fn publication_confirmed_candidate(
     settings: GeneralFastSettings,
 ) -> Result<Option<Candidate>, GeneralFastError> {
     let _span = profiling::span(Phase::PublicationConfirm);
+    #[cfg(feature = "constructor-census")]
+    let _census =
+        crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
     candidate.collision = transformed_collision(
         piece,
         candidate.rotation_deg,
@@ -1841,7 +1847,13 @@ fn publication_confirmed_candidate(
         candidate.translate_y,
         settings,
     )?;
-    candidate_is_feasible(&candidate, fixed, settings).map(|feasible| feasible.then_some(candidate))
+    candidate_is_feasible(&candidate, fixed, settings).map(|feasible| {
+        #[cfg(feature = "constructor-census")]
+        if !feasible {
+            crate::constructor_census::build_wasted();
+        }
+        feasible.then_some(candidate)
+    })
 }
 
 struct CandidateSearch {
@@ -1938,13 +1950,18 @@ fn best_candidate_for_orientations(
         if !collision_fits_sheet(&candidate.collision, settings) {
             continue;
         }
-        if fixed
-            .iter()
-            .map(|placed| polygons_overlap_exact(&candidate.collision, &placed.collision))
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .any(std::convert::identity)
-        {
+        let overlaps = {
+            #[cfg(feature = "constructor-census")]
+            let _census =
+                crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
+            fixed
+                .iter()
+                .map(|placed| polygons_overlap_exact(&candidate.collision, &placed.collision))
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .any(std::convert::identity)
+        };
+        if overlaps {
             continue;
         }
         candidates.push(candidate);
@@ -2182,6 +2199,11 @@ fn transformed_collision(
     settings: GeneralFastSettings,
 ) -> Result<PolygonSet, GeneralPolygonError> {
     let _span = profiling::span(Phase::CollisionPolygonBuild);
+    #[cfg(feature = "constructor-census")]
+    let _census =
+        crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
+    #[cfg(feature = "constructor-census")]
+    crate::constructor_census::build_recorded();
     profiling::count(Counter::CollisionPolygonBuilds, 1);
     // The build is the exact tier, reached by naming the legacy kernel. It is
     // not a service any generic kernel parameter can offer; see
@@ -2249,6 +2271,9 @@ fn any_exact_overlap(
     candidate: &PolygonSet,
     placed: &[PlacedState],
 ) -> Result<bool, GeneralPolygonError> {
+    #[cfg(feature = "constructor-census")]
+    let _census =
+        crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
     let candidate_bounds = candidate.bounds();
     for (index, fixed) in placed.iter().enumerate() {
         if !polygons_overlap_exact_within(

@@ -163,6 +163,8 @@ fn exact_pair_overlaps_within(
         ));
     };
     if !bounds_have_positive_overlap(first_bounds, second_bounds) {
+        #[cfg(feature = "constructor-census")]
+        crate::constructor_census::pair(first, second, false, false);
         return Ok(false);
     }
     // Instrumented past the broad-phase reject on purpose. The reject arm runs
@@ -172,5 +174,8 @@ fn exact_pair_overlaps_within(
     // measures the cost that matters and costs nothing on the common path.
     let _span = profiling::span(Phase::ExactOverlapTest);
     profiling::count(Counter::ExactPairTests, 1);
-    Ok(first.intersection_area_mm2(second)? > 0.0)
+    let overlaps = first.intersection_area_mm2(second)? > 0.0;
+    #[cfg(feature = "constructor-census")]
+    crate::constructor_census::pair(first, second, true, overlaps);
+    Ok(overlaps)
 }
