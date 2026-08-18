@@ -3460,3 +3460,218 @@ result rather than a lucky one.
 
 Evidence, drivers and the full per-site census:
 `docs/experiments/constructor-exact-census/`.
+
+## Coordinator v2: the schedule's own verdicts were worth more than the coordinator, and its generality was a mixed-61 fact
+
+PR7 delivered a coordinator that beat the baseline 9 of 9 and then wrote
+down what its trace said was wrong with it. This stage acts on all of
+it: the two recorded defects, the three measured verdicts on where the
+budget went, the anytime curve nobody had drawn, and the one thing PR7
+did not test - whether the schedule was general code or a description of
+one request. It was a description of one request, in two places, and
+both of them are now measured rather than assumed.
+
+### The two recorded defects were already fixed, and there is a third
+
+Both of PR7's defects are shipped at `8d9f7e5`. `ParentRole::Prior` is
+in the basin phase and it is live - in a v2 triangle-20 run the
+incumbent that eight mode-20 arms read as their pose prior ends at
+`descents: 0` while the basins a quantum actually descended from carry
+1, 2 and 4 - and `distinct_frontier` sorts `raw_depth_mm` first with
+`descents` only as a tie-break, pinned by two unit tests.
+
+The residual is in the other direction and this stage fixes it: **the
+crossover's second parent was never charged a descent at all.** Mode 23
+descends from both parents; v1 charged `frontier[0]` and passed
+`frontier[1]` as a pinned secondary without telling the archive. Its
+measured effect is nil, and the reason is the interesting part: once the
+frontier is ordered by quality first, the descent counter only decides
+exact depth ties between structurally distinct layouts, which no stream
+here produced. Fixing the first defect made the second one nearly inert.
+That is a correctness fix to an instrument, and it is reported as one
+rather than as a win.
+
+### The rebudget, and the one change that carried it
+
+The schedule is reordered by measured productivity: alternation quanta
+first (9 publications in 18 calls), then crossover (largest single
+gains), then the compression micro-descent (3 in 9), then the
+constructor slice (0 in 19), conditional and last.
+
+**Crossover, made repeatable, is the whole gain.** v1 made one crossover
+per run; the review's own schedule made one in *nine* runs, because the
+constructor slice ahead of it had spent its deadline. Seed 0, one paired
+round, from the operator ledger: v1's single crossover produces 179.639
+and publishes nothing, and the run ends at 179.587; v2's second crossover
+attempt produces **176.309** and publishes, and the compression quantum
+then takes it to **174.208**. Ten seconds, three seeds, three rounds,
+paired and interleaved, against the bare engine: **median -3.634 mm, min
+-7.381 mm, 9 of 9 strictly better**, where v1's focused arm on the same
+rounds is -2.002 mm. Against the v1 champion: **0 of 9 worse, 3 of 9
+better, all by 5.379 mm**. 174.208 mm is a new best-from-request layout
+at ten seconds, 1.848 mm below PR7's 176.056.
+
+**The constructor slice is conditional, and the condition is priced
+in-run.** Not a seconds threshold and not the stall test - the thing both
+were proxies for: draw a basin only when the run can still afford to
+*descend* from it, because a drawn-and-undescended basin is exactly the
+19/19 refusal PR7 measured. The phase draws one salted arm and spends a
+quantum on it in the same iteration, and refuses to start unless the
+remaining budget covers `mean(mode20) + mean(mode22)`, both measured from
+this run's own calls in the budget's own currency.
+
+**And it stops when it stops paying.** `basin_patience`, default 1: the
+phase ends after one iteration that publishes nothing, and the stopping
+signal is the *descendant*, never the arm's own depth, because
+Pearson(immediate, descended) = -0.212 makes immediate depth an invalid
+proxy. At thirty seconds on mixed-61, three arms of a paired battery -
+`never`, `patience=1`, `patience=8` - published **identical depths in all
+27 rounds**, at 10.20 s, 12.57 s and 23.91 s of median process wall.
+Patience 8 spends 13.7 s on 72 exact-valid constructor arms and 72
+descents from them and changes nothing.
+
+**Mode 31 is demoted to Sol's own trigger.** v1 asked it to legalize a
+clean m22 fixpoint: 6 calls, 0 exact-valid. v2 compresses first and hands
+m31 the residue only if the compressing descent returns a complete layout
+the exact validator refuses. It was called **zero times** in 36 measured
+runs across three requests, because there was never a residue. The
+demotion is a measured no-op on quality that removes a call which has
+never once succeeded.
+
+Two further changes the measurements forced. "May I start?" became "can I
+finish?": an operator call is refused unless the remaining budget covers
+that operator's own measured mean cost, so a 2.7 s crossover can no
+longer be launched 0.1 s before its deadline. And phase deadlines became
+fractions of what phase 0 *left* rather than of the whole budget - see
+below, because that one is a generality bug.
+
+### The anytime curve, and where it saturates
+
+Best published depth against wall budget, from the bare request, three
+seeds, three rounds each, quality-trace armed with counters off:
+
+| budget | seed 0 | seed 1 | seed 2 | vs bare engine |
+|---|---:|---:|---:|---|
+| bare engine (~2.0-2.3 s) | 181.589 | 179.690 | 179.662 | - |
+| 3 s | 179.587 | 179.633 | 179.006 | -0.656 mm, 9/9 |
+| 10 s | 174.208 / 179.587 | 176.056 | 179.006 | -2.002 mm, 9/9 |
+| 30 s | 174.208 | 176.056 | 179.006 | -3.634 mm, 9/9 |
+
+Time to depth, seed 0, thirty-second arm: 185 mm at 0.68 s, 182 at 0.97,
+180 at 3.00, 179 at 7.67, 177 at 8.36, 175 at 10.59, **174.5 at 11.22**.
+
+**The curve saturates at about eleven seconds.** The thirty-second arm's
+median process wall is 12.57 s: every phase reaches a joint fixpoint and
+the schedule ends with more than half its budget unspent. What thirty
+seconds buys over ten is not depth but *reliability* - seed 0's 174.208
+needs a second crossover to fit inside the budget, and on the quieter box
+of the first two batteries it fit 6 times in 6 at ten seconds while on
+the busier box of the last it fit once in three. Pooled over all three
+ten-second batteries: **27 paired rounds against the v1 champion, 7
+strictly better, 0 worse, 20 identical.**
+
+Sparrow's pins here are 157.971 at 3 s and 150.165 at 10 s. Ours are
+179.6 and 174.2 - **21.6 mm and 24.0 mm behind** - and the shape of the
+curve says the gap is not a scheduling gap: our operators reach a joint
+fixpoint at eleven seconds, so more budget spent this way does not close
+it. The review said orchestration alone cannot reach 160; this is the
+first curve that says so in our own numbers.
+
+### Generality: two requests, two bugs, and a verdict that flipped
+
+**The constructor clamp was a fact about mixed-61.** `2.0 x area lower
+bound` is dimensionless, and the module header claimed on that basis that
+every length here is derived from the request. A dimensionless constant
+can still be a fact about one request: twice the area bound is above the
+reachable depth only when the request packs at better than 50% of its own
+bound, and mixed-61's phase-0 constructor packs at 1.40x its bound while
+shapes-17 packs at 2.09x and triangle-20 at 2.29x. On both other requests
+**every constructor arm failed** - "skyline construction produced no
+publishable layout within the target depth" - eight arms per run, 2.04 s
+of a 3.88 s shapes-17 run, buying a guaranteed refusal. The clamp is now
+the larger of the area-bound multiple and a depth the request is *known*
+to admit a complete layout at, which is the one phase 0 just built;
+mixed-61's clamp is unchanged to the digit and both other requests are
+rescued, 12 of 12 and 9 of 9 arms exact-valid. The phase also now stops
+at the first arm that produces no complete layout, because consecutive
+slots differ by a salt of one part in ten thousand.
+
+**Phase deadlines were fractions of the whole budget.** Mode 0 costs
+about two seconds on this box, which is 0.67 of a three-second budget, so
+every phase whose absolute fraction was below 0.67 was skipped and the
+first one above it ran: the most productive operator dropped, a crossover
+run in its place on an archive nothing had descended in, and a 3.9 s
+process against a 3.0 s budget. Deadlines are now
+`f0 + (1 - f0) * share`. This is also what makes the schedule the *same*
+schedule across requests, where mode 0 is 20% of ten seconds on 61 pieces
+and 9% on 17.
+
+**shapes-17 is a fixpoint and the coordinator says so by stopping.**
+200.349 mm at every budget, every seed, every round, identical to the
+bare engine, with **zero publications by any operator** in 27 rounds:
+mode 0's result is already a joint fixpoint, the coupled separator's arms
+collapse to one layout, so `distinct_frontier(2)` has one member and the
+crossover phase never runs. The schedule terminates in 2.57 s whether the
+budget is 3 s or 30 s. It does not burn a budget it cannot use.
+
+**triangle-20 flips the constructor verdict.** 70.931/70.904/70.901 from
+the bare engine, **70.727 on every seed and every round at thirty
+seconds**, -0.177 mm paired median at ten seconds, 9 of 9. And the
+operator ranking is different: crossover 10 publications in 23 calls,
+alternation 9 in 16, compression 7 in 7, and **the constructor slice 6
+publications in 12 arms**. On mixed-61 that same slice has now published
+0 of 207 arms in this stage and 0 of 19 in PR7. PR7's "the constructor
+slice does not pay" is a true statement about mixed-61 and a false one
+about triangle-20, and that is the reason v2 makes the slice conditional
+rather than deleting it.
+
+One PR7 caveat is *not* discharged: the archive's eviction rule still
+never fires in the shipping configuration - triangle-20 peaks at 11 of 16
+with zero evictions - though it did fire on a pre-patience probe of the
+same request, so it is reachable and still only unit-tested.
+
+### Determinism, and what a work budget does not promise
+
+The affordability guard reads a measured operator cost, which is exactly
+the kind of thing that quietly makes a schedule clock-dependent. It does
+not, because the cost is quoted in the budget's own currency - work units
+under a work budget, seconds only under a wall budget - pinned by a unit
+test. Two independent processes are identical **as whole documents** at
+40M units on mixed-61 (176.056, 32,327,123 spent), at a *binding* 20M
+where the schedule is genuinely different (176.753, one descent call
+instead of two, one crossover instead of three, three phases refused),
+and at 20M on triangle-20 (70.747).
+
+The honest limit is visible in that last row: it spent 23.3M against a
+20M budget, because the guard cannot refuse an operator it has never
+priced and triangle-20's first crossover cost 9.45M units. **A work
+budget is a bound on what may be started, not on what is spent.** PR7's
+other limit stands: the deep operators' Clipper counters are behind
+`search-profiling`, so a work budget under-prices constructor arms.
+
+### What this stage shipped
+
+The default path is untouched. All four pinned regression gates reproduce
+the pristine `8d9f7e5` binary as **whole documents** - 3,261 and 3,242
+compared leaf fields per gate, **0 differences** - with mode 20 at
+`independentDepthMm` 206.869 / `8a7737381238fa4d` and the three mode-22
+records at raw 159.09233022733062, 159.07876040364795 and
+164.0375677990678 at `fa01012af1d559ae`, `e28fba007f8031d4` and
+`49f094d7e59a9008`, every arm `exactValid` and `contractValid`, and each
+gate additionally reproduced field for field by a second process. Full
+release suite green at 1,238 tests, including six new portfolio unit
+tests. The coordinator remains reachable only through trailing positional
+argument 48.
+
+One observation that is not this stage's doing but belongs in the record:
+**`cargo build --release` with the literal default feature set does not
+compile at `8d9f7e5`** - `CoupledSeparatorArm::label` and
+`LaneSearch::uses_dynamic_pressure` are `#[cfg(feature =
+"jagua-experimental")]` while their call sites in `general_relaxed.rs`
+are not, and that file is byte-identical to the base commit here. The
+gate binary is `--features jagua-experimental` with no measurement
+features, which is what "the default-features binary" has meant in
+practice in this ledger.
+
+Evidence, drivers and raw batteries:
+`docs/experiments/pr7-coordinator-v2/`.

@@ -1,0 +1,61 @@
+{
+ "label": "worktree",
+ "binary": "/var/lib/t3/tmp/pr7v2-gate-v2",
+ "twice": true,
+ "g1": {
+  "depths": [
+   206.869,
+   207.239,
+   211.194,
+   211.825,
+   213.073,
+   214.207,
+   214.738,
+   222.116
+  ],
+  "fingerprints": [
+   "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+   "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+  ],
+  "hit": true,
+  "seconds": 32.145744175009895,
+  "wholeDocumentFields": 3261,
+  "crossRunDifferences": 0,
+  "crossRunFirst": []
+ },
+ "g2": {
+  "raw": 159.09233022733062,
+  "fingerprint": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+  "exactValid": true,
+  "contractValid": true,
+  "hit": true,
+  "seconds": 3.2370832529850304,
+  "wholeDocumentFields": 3242,
+  "crossRunDifferences": 0,
+  "crossRunFirst": []
+ },
+ "g3": {
+  "raw": 159.07876040364795,
+  "fingerprint": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+  "exactValid": true,
+  "contractValid": true,
+  "hit": true,
+  "seconds": 3.480989497009432,
+  "wholeDocumentFields": 3242,
+  "crossRunDifferences": 0,
+  "crossRunFirst": []
+ },
+ "g4": {
+  "raw": 164.0375677990678,
+  "fingerprint": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+  "exactValid": true,
+  "contractValid": true,
+  "hit": true,
+  "seconds": 3.1541090029932093,
+  "wholeDocumentFields": 3242,
+  "crossRunDifferences": 0,
+  "crossRunFirst": []
+ },
+ "ALL_PASS": true,
+ "ALL_STABLE": true
+}

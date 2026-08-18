@@ -1,0 +1,23 @@
+{
+ "a": "/var/lib/t3/tmp/pr7v2/gates/pristine",
+ "b": "/var/lib/t3/tmp/pr7v2/gates/worktree",
+ "documents": {
+  "g1": {
+   "identical": true,
+   "differences": 0
+  },
+  "g2": {
+   "identical": true,
+   "differences": 0
+  },
+  "g3": {
+   "identical": true,
+   "differences": 0
+  },
+  "g4": {
+   "identical": true,
+   "differences": 0
+  }
+ },
+ "ALL_IDENTICAL": true
+}

@@ -1,0 +1,59 @@
+{
+ "binary": "/var/lib/t3/tmp/pr7v2-measure-v2",
+ "request": "mixed-61",
+ "workUnits": 40000000,
+ "seed": 1,
+ "spec": "work=40000000,cells=13:15:17:19",
+ "inProcessReplay": {
+  "runs": 2,
+  "passed": true,
+  "error": "",
+  "engineDepthMm": 176.056
+ },
+ "crossProcess": {
+  "passed": true,
+  "differences": 0,
+  "first": [],
+  "engineDepthMm": 176.056,
+  "workUnitsSpent": 32327123,
+  "phases": [
+   {
+    "name": "m0",
+    "workUnits": 9629453,
+    "skipped": false,
+    "operatorCalls": 0
+   },
+   {
+    "name": "descent",
+    "workUnits": 4791312,
+    "skipped": false,
+    "operatorCalls": 2
+   },
+   {
+    "name": "crossover",
+    "workUnits": 15310977,
+    "skipped": false,
+    "operatorCalls": 3
+   },
+   {
+    "name": "compression",
+    "workUnits": 1582757,
+    "skipped": false,
+    "operatorCalls": 1
+   },
+   {
+    "name": "diversify",
+    "workUnits": 1012624,
+    "skipped": false,
+    "operatorCalls": 2
+   },
+   {
+    "name": "drain",
+    "workUnits": 0,
+    "skipped": false,
+    "operatorCalls": 0
+   }
+  ]
+ },
+ "ALL_PASS": true
+}
