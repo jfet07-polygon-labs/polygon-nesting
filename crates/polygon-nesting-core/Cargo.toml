@@ -62,6 +62,26 @@ relaxed-scan-shape-reuse = []
 # read the same catalogue entry through the same key, so this is bit-identical
 # as a whole document. See docs/experiments/relaxed-lane-residual/.
 relaxed-cached-pose-bounds = []
+# Recycles the candidate scorer's collision-row buffer instead of allocating a
+# fresh `Vec` per scan. The refinement loop retires exactly two rows per
+# iteration - the loser of the paired probe and the incumbent it displaced - and
+# this hands both back to a small per-lane pool the next two scans take from.
+# Same values, same order, same sort; only the buffer's capacity differs and no
+# path reads a capacity, so it is bit-identical as a whole document. Off by
+# default like every other lever in this family, so the default build is the one
+# the pinned gates were measured on. See docs/experiments/relaxed-lane-residual/.
+relaxed-row-buffer-reuse = []
+# Orders a candidate scan's neighbours by a cheap separation proxy - the squared
+# distance between the two placements' translation origins - instead of by piece
+# index.
+#
+# This is a class (B) lever and it is NOT semantics-preserving: 82% of scans stop
+# early on the caller's upper bound, so the visit order decides which rows land
+# before the cutoff and therefore what the tracker installs, and it also changes
+# the order the weighted-loss sum accumulates in. It must stay off in anything
+# that publishes a comparable number until a matched-arm quality gate says
+# otherwise. See docs/experiments/relaxed-lane-residual/.
+relaxed-scan-order-proxy = []
 # Compiles the quality frontier trace in: an event-driven JSONL record of every
 # exact-valid candidate the search sees, with elapsed time, work ordinals,
 # operator identity, parent fingerprint and disposition. See `quality_trace`.

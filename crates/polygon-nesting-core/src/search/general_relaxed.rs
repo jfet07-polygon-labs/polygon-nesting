@@ -86,6 +86,15 @@ const MAX_TRIANGLE_NFP_POINTS: usize = 6;
 const AXIS_MINIMIZATION_PASSES: usize = 4;
 const AXIS_RETAINED_CANDIDATES: usize = 4;
 const ENABLE_NFP_AXIS_MINIMIZER: bool = false;
+/// How many spare candidate-row buffers one lane keeps under
+/// `relaxed-row-buffer-reuse`.
+///
+/// Two is what the refinement loop actually retires per iteration — the loser
+/// of the paired probe and the incumbent it displaced — so a deeper pool would
+/// only hold memory the loop never asks for again. Four leaves headroom for the
+/// sample loops without becoming a cache.
+#[cfg(feature = "relaxed-row-buffer-reuse")]
+const ROW_BUFFER_POOL_CAPACITY: usize = 4;
 const DIRECTIONAL_LANE_UNSCORABLE: &str = "directional penetration lane is unscorable";
 const COUPLED_SEPARATOR_SEED_DOMAIN: u64 = 0x4350_4C44_5350_5231;
 #[cfg(feature = "jagua-experimental")]
@@ -3317,6 +3326,28 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
     /// into. It is swapped with the incumbent list rather than copied, so after
     /// the first move of a lane neither list allocates again.
     collision_merge_scratch: Vec<(usize, usize, f64)>,
+    /// Recycled row buffers for [`MovedRowDelta::collision_pairs`].
+    ///
+    /// The candidate scorer builds one `Vec` per call for about 1.8 rows, and
+    /// the refinement loop then drops two of them per iteration — the loser of
+    /// the paired probe and the incumbent it displaced. This is where those two
+    /// buffers go instead of back to the allocator, and where the next scan
+    /// takes its buffer from. Nothing but the buffer's *capacity* differs, and
+    /// no path reads a capacity, so the flag is bit-identical by construction.
+    ///
+    /// Compiled out entirely when `relaxed-row-buffer-reuse` is off, so the
+    /// default build has neither the field nor the `pop`.
+    #[cfg(feature = "relaxed-row-buffer-reuse")]
+    row_pool: Vec<Vec<(usize, usize, f64)>>,
+    /// Keying buffer for `relaxed-scan-order-proxy`'s neighbour reordering.
+    ///
+    /// Unconditional, unlike [`Self::row_pool`], because the reordering is
+    /// reached through a helper that both bodies of
+    /// [`Self::score_placement`] call and only one of the two can name a lane
+    /// field after the destructure. It is never written when the flag is off —
+    /// an empty `Vec` allocates nothing — and the default build reproduces all
+    /// four gates as whole documents with it in place.
+    scan_order_scratch: Vec<(f64, usize)>,
     /// Whether the move the shadow-rescore audit is about to inspect was a
     /// *revert* — a dynamic candidate the objective judged worse than the
     /// incumbent, whose row is reinstalled out of the tracker rather than
@@ -10260,6 +10291,9 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             proxy_rows: ProxyRowCache::new(pieces.len()),
             angle_keys: AngleKeyCache::new(pieces.len()),
             collision_merge_scratch: Vec::new(),
+            #[cfg(feature = "relaxed-row-buffer-reuse")]
+            row_pool: Vec::new(),
+            scan_order_scratch: Vec::new(),
             #[cfg(feature = "shadow-rescore")]
             audit_move_was_revert: false,
             #[cfg(feature = "shadow-rescore")]
@@ -11971,15 +12005,27 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 Ordering::Greater => 1,
                 Ordering::Equal => (self.rng.next_u64() as usize) & 1,
             };
-            let (candidate, score) = if selected == 0 {
-                (first_candidate, first_score)
+            // The loop retires exactly two row buffers per iteration: the
+            // candidate the probe did not select, and — when the selected one
+            // wins — the incumbent it displaces. Both used to go back to the
+            // allocator here, and under `relaxed-row-buffer-reuse` both go back
+            // to the lane's pool instead, which is where the next two
+            // `score_placement` calls take theirs from. The values, their order
+            // and the two comparisons above are untouched; the discarded delta
+            // is destructured at the same point it was dropped before.
+            let (candidate, score, discarded) = if selected == 0 {
+                (first_candidate, first_score, second_score)
             } else {
-                (second_candidate, second_score)
+                (second_candidate, second_score, first_score)
             };
+            self.recycle_row_buffer(discarded.collision_pairs);
             let comparison = compare_score_objective(&score, &best_score);
             if comparison != Ordering::Greater {
                 best = candidate;
-                best_score = score;
+                let displaced = std::mem::replace(&mut best_score, score);
+                self.recycle_row_buffer(displaced.collision_pairs);
+            } else {
+                self.recycle_row_buffer(score.collision_pairs);
             }
             let multiplier = if comparison == Ordering::Less {
                 REFINEMENT_SUCCESS_MULTIPLIER
@@ -12712,6 +12758,52 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         })
     }
 
+    /// The row buffer the next candidate scan fills.
+    ///
+    /// `Vec::new()` in the default build — literally what the scorer wrote
+    /// before this lever existed — and a recycled buffer under
+    /// `relaxed-row-buffer-reuse`. A recycled buffer is `clear`ed, so the scan
+    /// pushes the same values in the same order into an empty vector either
+    /// way; only its capacity differs, and no path reads one.
+    #[inline(always)]
+    fn take_row_buffer(&mut self) -> Vec<(usize, usize, f64)> {
+        #[cfg(feature = "relaxed-row-buffer-reuse")]
+        {
+            match self.row_pool.pop() {
+                Some(mut buffer) => {
+                    buffer.clear();
+                    buffer
+                }
+                None => Vec::new(),
+            }
+        }
+        #[cfg(not(feature = "relaxed-row-buffer-reuse"))]
+        {
+            Vec::new()
+        }
+    }
+
+    /// Hands a finished delta's rows back, instead of dropping them.
+    ///
+    /// The default build drops the vector here, at the same point the value
+    /// would have gone out of scope anyway; the flag keeps it. A buffer that
+    /// never allocated is not worth pooling, and the pool is capped so a lane
+    /// cannot accumulate more spare rows than the refinement loop can hold
+    /// live at once.
+    #[inline(always)]
+    fn recycle_row_buffer(&mut self, buffer: Vec<(usize, usize, f64)>) {
+        #[cfg(feature = "relaxed-row-buffer-reuse")]
+        {
+            if buffer.capacity() > 0 && self.row_pool.len() < ROW_BUFFER_POOL_CAPACITY {
+                self.row_pool.push(buffer);
+            }
+        }
+        #[cfg(not(feature = "relaxed-row-buffer-reuse"))]
+        {
+            drop(buffer);
+        }
+    }
+
     fn score_placement(
         &mut self,
         state: &RelaxedState,
@@ -12738,7 +12830,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         let (boundary_violations, boundary_loss) =
             self.boundary_penalty(candidate, state.strip_depth_mm)?;
         let mut weighted_loss = boundary_loss;
-        let mut collision_pairs = Vec::new();
+        let mut collision_pairs = self.take_row_buffer();
         let mut pruned = false;
         // The scan runs over *disjoint field borrows* rather than `&mut self`.
         //
@@ -12775,8 +12867,14 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             let candidate_bounds =
                 translated_bounds(shape_bounds, candidate.translate_x, candidate.translate_y);
             piece_index.query_into(candidate_bounds, &mut self.piece_query_scratch);
-            let fixed_indices = std::mem::take(&mut self.piece_query_scratch.selected);
+            let mut fixed_indices = std::mem::take(&mut self.piece_query_scratch.selected);
             profiling::census::count(Counter::ScanNeighborsReturned, fixed_indices.len() as u64);
+            order_scan_neighbors(
+                &mut fixed_indices,
+                &mut self.scan_order_scratch,
+                state,
+                candidate,
+            );
             profiling::census::finish(Phase::ScoreProbe, probe_span);
             let LaneSearch {
                 pieces,
@@ -12844,6 +12942,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 weights,
                 relaxed_settings,
                 piece_query_scratch,
+                scan_order_scratch,
                 ..
             } = self;
             let directional = relaxed_settings.collision_backend
@@ -12873,6 +12972,12 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     profiling::census::count(
                         Counter::ScanNeighborsReturned,
                         piece_query_scratch.selected.len() as u64,
+                    );
+                    order_scan_neighbors(
+                        &mut piece_query_scratch.selected,
+                        scan_order_scratch,
+                        state,
+                        candidate,
                     );
                     profiling::census::finish(Phase::ScoreProbe, probe_span);
                     let scan_span = profiling::census::start(Phase::ScoreScan);
@@ -14063,6 +14168,66 @@ fn continuous_pole_overlap_pressure(
         .sqrt()
         .max(1.0);
     overlap_proxy.sqrt() * (first_difficulty * second_difficulty).sqrt()
+}
+
+/// Reorders a candidate scan's neighbours cheapest-first, under
+/// `relaxed-scan-order-proxy`.
+///
+/// **This is a class (B) lever: it changes which candidates the search visits.**
+/// The broad-phase hands back its neighbours in ascending piece index, which is
+/// an artefact of the bin walk and of [`PieceQueryScratch`]'s `sort_unstable`,
+/// not a statement about which of them matter. Between 81.7% and 83.7% of scans
+/// stop early on the caller's upper bound, so the index order decides *which*
+/// rows land before the cutoff fires — hence `pruned`, hence [`MovedRows`],
+/// hence what the tracker may install. Ordering the near neighbours first makes
+/// the cutoff fire on fewer neighbours; it also changes the order the
+/// `weighted_loss` sum is accumulated in, so the arms diverge in the low bits
+/// of an `f64` even on scans that never prune. Neither arm is more correct than
+/// the other, and no tie-break makes them agree.
+///
+/// The proxy is the squared distance between the two placements' translation
+/// origins. It is deliberately the cheapest separation statistic available to
+/// this loop: everything better — a bounds gap, an extent overlap — needs the
+/// fixed operand's oriented shape, and resolving that for all 7.3 returned
+/// neighbours in order to skip 3.1 of them is the cost the lever exists to
+/// avoid. The origin is not the centroid, so the ordering is a heuristic on the
+/// pose rather than on the geometry.
+///
+/// The keys are built once per neighbour into a lane scratch, so the comparator
+/// does no arithmetic; the order is a strict total order — `total_cmp` on the
+/// key, then the piece index — so it is deterministic despite the unstable
+/// sort.
+#[inline(always)]
+fn order_scan_neighbors(
+    fixed_indices: &mut [usize],
+    scratch: &mut Vec<(f64, usize)>,
+    state: &RelaxedState,
+    candidate: &RelaxedPlacement,
+) {
+    #[cfg(feature = "relaxed-scan-order-proxy")]
+    {
+        if fixed_indices.len() < 2 {
+            return;
+        }
+        scratch.clear();
+        scratch.reserve(fixed_indices.len());
+        for fixed_index in fixed_indices.iter().copied() {
+            let fixed = &state.placements[fixed_index];
+            let delta_x = fixed.translate_x - candidate.translate_x;
+            let delta_y = fixed.translate_y - candidate.translate_y;
+            scratch.push((delta_x * delta_x + delta_y * delta_y, fixed_index));
+        }
+        scratch.sort_unstable_by(|(left_key, left), (right_key, right)| {
+            left_key.total_cmp(right_key).then_with(|| left.cmp(right))
+        });
+        for (slot, (_, fixed_index)) in fixed_indices.iter_mut().zip(scratch.iter()) {
+            *slot = *fixed_index;
+        }
+    }
+    #[cfg(not(feature = "relaxed-scan-order-proxy"))]
+    {
+        let _ = (fixed_indices, scratch, state, candidate);
+    }
 }
 
 /// The generic scorer's neighbour scan, over the lane fields it actually needs.

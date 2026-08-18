@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 
-ROOT = '/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_028f78e1-e59-2'
+ROOT = '/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_8545aefe-80d-2'
 REQ = f'{ROOT}/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json'
 ARGS = ('1 4 0 0 0 0 1 0 0 1 1 0 16 4 8 0 0 5 5 24 8 40 10 10 5 5 '
         '0.005 0.001 1 6 0 0 0 structured 0 10 1 0 0 0 0').split()
