@@ -1,0 +1,57 @@
+{
+ "label": "final",
+ "binary": "target/release/examples/general_request_benchmark",
+ "env": {},
+ "gates": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fingerprints": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ],
+   "hit": true,
+   "wallSeconds": 26.510364770889282,
+   "docDigest": "7e04e25d6ef2b0b307f63e9eac8339a9958b22a37890a35c0b2188d6488052dc"
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "depth": 159.092,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.2912988662719727,
+   "docDigest": "e51b29959c9f67a333938a41f9c847d036e5a98bb5a2946d5b134726762579b6"
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "depth": 159.079,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.6670477390289307,
+   "docDigest": "b852c435948039ad0c9a05199068ce7461523d76734d1d4f0332a17d01d09995"
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "depth": 164.038,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.2123422622680664,
+   "docDigest": "2b1ccc98ff6a577358bc3ce372448b27424b8cc0128b7ba4684d5dd2d334c719"
+  }
+ },
+ "ALL_PASS": true
+}

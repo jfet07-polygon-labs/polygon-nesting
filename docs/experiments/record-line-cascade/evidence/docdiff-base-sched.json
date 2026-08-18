@@ -1,0 +1,27 @@
+{
+ "a": "base",
+ "b": "final-sched",
+ "gates": {
+  "g1": {
+   "fieldsCompared": 3262,
+   "differences": 0,
+   "differingFields": []
+  },
+  "g2": {
+   "fieldsCompared": 3243,
+   "differences": 0,
+   "differingFields": []
+  },
+  "g3": {
+   "fieldsCompared": 3243,
+   "differences": 0,
+   "differingFields": []
+  },
+  "g4": {
+   "fieldsCompared": 3243,
+   "differences": 0,
+   "differingFields": []
+  }
+ },
+ "identical": true
+}

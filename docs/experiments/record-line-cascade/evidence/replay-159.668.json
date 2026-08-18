@@ -1,0 +1,49 @@
+{
+ "pin": "docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/record-line-cascade/pinned-fs-parent-159.668.json",
+ "sha256": "91cc27aebb6ac166ba4ec212f3aeaecc490295b008981554786610e4cedf7926",
+ "declaredRaw": "159.668",
+ "fingerprint": "853c1763f26deb439288dd4da89d33197efe714ea3acee52fba55ae26701ee31",
+ "replayPass": false,
+ "rows": [
+  {
+   "tag": "m27",
+   "mode": 27,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "159.668",
+   "ulpsFromDeclared": 0.0,
+   "fingerprintMatches": true,
+   "reproduces": true
+  },
+  {
+   "tag": "m30",
+   "mode": 30,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "159.668",
+   "ulpsFromDeclared": 0.0,
+   "fingerprintMatches": true,
+   "reproduces": true
+  },
+  {
+   "tag": "m22-s0",
+   "mode": 22,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "159.35500000000002",
+   "ulpsFromDeclared": -11012708463804.0,
+   "fingerprintMatches": false,
+   "reproduces": false
+  },
+  {
+   "tag": "m22-s1",
+   "mode": 22,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "159.46577826491074",
+   "ulpsFromDeclared": -7115044771830.0,
+   "fingerprintMatches": false,
+   "reproduces": false
+  }
+ ]
+}

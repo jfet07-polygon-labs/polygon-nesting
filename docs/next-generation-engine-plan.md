@@ -5096,3 +5096,92 @@ rather than smoothed.
 Evidence, drivers, the 126 battery runs, the ablation, the twelve
 independent confirmations and the whole-document reproductions:
 `docs/experiments/coordinator-v4/`.
+## The record line: a sub-grid clamp took 3.656 mm off the record, and the cascade's cost ordering starved its best instrument
+
+The compression schedule's first invariant was that its step is one canonical
+grid unit, because 1 µm is the finest depth change a *layout* can express —
+`snap_mm` rounds every translation onto that lattice. The invariant is true of a
+pose and false of the clamp. `strip_depth_mm` is a proxy-tier scalar that
+`boundary_penalty` reads as a continuous number, so a sub-grid step is not a
+finer *move*, it is a smaller increment of pressure per step; and because
+`confirm_every` counts steps rather than microns, a quarter step asks the exact
+tier four times as often per micron of descent and spends four times as many
+repair sweeps getting there.
+
+`step=` — canonical grid units, default `1`, inside the already off-by-default
+`compression-schedule` feature — is that knob. On the port's own from-scratch
+state at a fixed 20M units, seed 5, `past=1`: `step=1` published 159.102 with 64
+accepted confirmations; **`step=0.25` published 158.668 with 190**. The coarse
+steps (2 and 4 grid units) accepted **zero** confirmations in thousands of
+steps — the frontier outruns the repair — and the relationship is not monotone,
+because `step=0.5` also published nothing. The direction is mechanical; the
+curve is a search.
+
+That one arm put the **from-scratch line below the standing record**, and the
+cascade that followed it took the line to **155.42229074464285 mm raw**,
+`exactValid` and `contractValid` on the true 5.0/5.0 exact-clearance contract at
+the record lineage's `''` 0.0005 tail. That is **3.656 mm below the previous
+record** (159.07876040364792) and 0.422 mm above the 155 mm goal, and it is
+reached **unaided**: 164.0375677990678 → 159.668 → 158.668 → … → 155.422 with no
+record-line placement imported at any step. The pin replays through modes 27, 30
+and 22 seeds 0-3 on the pristine default-feature binary — which contains no mode
+34 at all — at **0 ULPs** from the declared raw with the fingerprint unchanged,
+and it is a certified fixpoint of 36 further probe arms including mode 26 and
+mode 34 at four step sizes.
+
+### Mode 34 is an operator with a precondition, and the precondition is itself
+
+Every barren stretch of this round has one cause. `initialize_complete_state`
+maps warm-start rotations through `canonical_angle`, which snaps them onto the
+structured surrogate's 2.5-degree grid; the resulting collisions are
+*rotation*-induced and the schedule's repair is translation-only, so it never
+recovers. A state mode 34 produced arrives proxy-**feasible** (0 colliding
+pairs, 0.019 mm of entry loss) and the schedule ratchets on it. A state modes
+22/33 produced arrives with 28 colliding pairs and 0.647 mm of entry loss, and
+the schedule then confirms **nothing** — not at 10x the budget, not at 40 sweeps
+per step, not at `confirm=1`, and not at any of eight seeds (22 arms, 0 below).
+Pre-snapping the poses onto the 2.5-degree grid and legalizing with modes 30/31
+does restore the ratchet — 37 accepted confirmations — but the round trip loses
+0.391 mm to win 0.171 mm, so it is a confirmed mechanism and a negative trade at
+this depth.
+
+The consequence for scheduling is concrete: mode 34's tier belongs behind a
+gate, not in every round.
+
+### The cascade's cost ordering starved its most productive instrument for 555 arms
+
+The cascade adopts on the first strictly-deeper publication and restarts the
+round, and its tiers were ordered cheapest-first: mode 22 at 3 s, the flatten
+grid at 2 s, then mode 26 at 44-88 s. The cheap tiers never went *barren* — they
+published 0.001-0.002 mm, round after round — so the round always restarted
+before reaching mode 26. **555 arms** later, the certification battery ran mode
+26 against that same incumbent and **six of six arms came back below it, the
+best by 0.628 mm**, which is 300x the round's going rate.
+
+The general statement is that an adopt-and-restart cascade ordered by arm cost
+starves any expensive tier whenever the cheap tiers are merely non-zero, and
+"merely non-zero" is the *normal* state of a repair tier near a fixpoint. A
+cheap tier's yield has to be compared against the expensive tier's yield per
+round, not against zero. Mode 26's own yield is basin-shaped rather than steady —
+6 of 6 at 156.091, then 0 of 12 over four drops and four seeds at 155.452 — so
+the fix is a gate and a periodic concurrent sweep, not a permanent promotion.
+
+### What this does not settle
+
+The record fell to the *from-scratch* lineage, so the 159.079 record parent
+itself is exactly where it was: probed at six step sizes, two budgets and two
+seeds, all twelve arms returned its own depth to the digit, and its fixpoint now
+survives the very knob that broke the other line open. Mode 23 crossover — the
+brief's other instrument — was never reached *inside* the cascade, because no
+round ever went barren above it, and run separately against the certified
+fixpoint it is barren too: 24 arms over two ancestors, both record co-states,
+three cut fractions and both directions published 13 layouts and **none** below
+the incumbent, the best 2.7 mm above it. The 155 mm goal is 0.422 mm away and the final state
+is a certified fixpoint, so closing it needs an instrument this round did not
+fire. And every number here is one request, one fixture, work-budgeted or seeded
+arms on a shared box, with no wall-clock claim made anywhere.
+
+Evidence, drivers, the nine pinned states, the step sweeps, the three negatives
+and the two certifications: `docs/experiments/record-line-cascade/`, with the
+pins under
+`docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/record-line-cascade/`.

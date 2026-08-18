@@ -17601,6 +17601,10 @@ mod tests {
             work_cap_queries: Some(200_000),
             continue_past_bound: false,
             repair_policy: CompressionRepairPolicy::MicroLegalizeOnReject,
+            // The step stays the canonical grid unit here: this test is about
+            // the lane integration, and a knob it does not exercise should
+            // follow the default rather than be re-stated.
+            ..CompressionScheduleSettings::default()
         });
 
         let population = JobPool::new(Some(1)).run_scoped(|| {
@@ -17673,6 +17677,7 @@ mod tests {
             work_cap_queries: Some(1),
             continue_past_bound: true,
             repair_policy: CompressionRepairPolicy::SweepsOnly,
+            ..CompressionScheduleSettings::default()
         });
         let population = JobPool::new(Some(1)).run_scoped(|| {
             run_compression_schedule(&pieces, fast_settings, settings, &parent, None)

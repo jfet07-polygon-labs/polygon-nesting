@@ -176,7 +176,12 @@ const MAX_PERSISTENT_VACANCY_MODE: usize = 33;
 /// argument; everything here is a budget or a cadence.
 ///
 ///   `POLYGON_NESTING_COMPRESSION_SCHEDULE="sweeps=6,confirm=4,rollback=32,\
-///    work=33413789,past=0,repair=micro"`
+///    work=33413789,past=0,repair=micro,step=1"`
+///
+/// `step` is in canonical grid units and defaults to `1` - one grid unit, the
+/// finest depth change a layout can express. Below `1` it asks for a sub-grid
+/// *clamp*, which the proxy tier can express even though a pose cannot; see
+/// `CompressionScheduleSettings::step_grid`.
 ///
 /// Absent, the schedule runs `CompressionScheduleSettings::default()`: the
 /// anatomy's design point for the step, the cadence and the sweeps, and this
@@ -219,6 +224,17 @@ fn compression_schedule_settings(
                 settings.work_cap_queries = (units > 0).then_some(units);
             }
             "past" => settings.continue_past_bound = value != "0",
+            "step" => {
+                let step: f64 = value
+                    .parse()
+                    .map_err(|_| format!("compression schedule step: `{value}`"))?;
+                if !step.is_finite() || step <= 0.0 {
+                    return Err(format!(
+                        "compression schedule step must be a positive number of canonical grid units, not `{value}`"
+                    ));
+                }
+                settings.step_grid = step;
+            }
             "repair" => {
                 settings.repair_policy = match value {
                     "micro" => CompressionRepairPolicy::MicroLegalizeOnReject,
