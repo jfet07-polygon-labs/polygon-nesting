@@ -23,10 +23,10 @@ Two results, and they are on opposite sides of the design.
 * **The design's own rollback contract is what nearly sank it.** With the
   rollback armed at 32 steps — the value this round chose before measuring —
   the same schedule publishes 8 of 12 at a median 0.359 mm and **loses** to the
-  ladder in 9 of 12 cells. Disarming it is worth a median **11.751 mm**. That
-  is the anatomy's own headline finding about mode 26, reproduced one level
-  down inside the port that was built to avoid it, and it is why
-  `rollback_after_steps` now defaults to `0`.
+  ladder in 9 of 12 cells. Disarming it is worth a **paired median 10.962 mm**
+  (range 6.782 - 15.618, 12 of 12 cells). That is the anatomy's own headline
+  finding about mode 26, reproduced one level down inside the port that was
+  built to avoid it, and it is why `rollback_after_steps` now defaults to `0`.
 
 Two corrections to the design document fall out of the same evidence, both
 measured: the exact confirmation costs **4.83 ms**, not the 0.491 ms the
@@ -271,6 +271,7 @@ measurement. Against `0`, on the same twelve cells at the same allowance:
 | mm / M units | 0.031 | **0.623** |
 | median rollbacks per arm | 685 | 0 |
 | median confirmations accepted | 128 | **1,838** |
+| paired difference, per cell | — | **median +10.962 mm**, range 6.782 - 15.618, 12 of 12 |
 
 The mechanism is visible in the step rows. The frontier is proxy-infeasible for
 **82%** of its steps by construction — that is what a compression frontier

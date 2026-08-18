@@ -4620,6 +4620,7 @@ is catastrophic:
 | median Δ | 0.359 mm | **12.110 mm** |
 | paired vs the ladder | **loses** 9 of 12 | **wins** 12 of 12 |
 | median confirmations accepted | 128 | 1,838 |
+| paired difference per cell | — | median **+10.962 mm**, 12 of 12 |
 
 The mechanism is in the step rows: a compression frontier is
 proxy-infeasible **82% of the time by construction** — that is what a
