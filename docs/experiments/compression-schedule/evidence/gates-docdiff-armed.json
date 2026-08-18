@@ -1,0 +1,56 @@
+{
+ "dir": "/var/lib/t3/tmp/csched/gates",
+ "a": "base",
+ "b": "final",
+ "ignoredFields": [
+  "allocatedBytes",
+  "binaryPath",
+  "buildIdentity",
+  "durationMs",
+  "elapsedMs",
+  "elapsedSeconds",
+  "engineElapsedSeconds",
+  "engineVersion",
+  "engineWorktreeStatus",
+  "executableSha256",
+  "firstQuartileElapsedMs",
+  "leafSeconds",
+  "maxElapsedMs",
+  "medianElapsedMs",
+  "minElapsedMs",
+  "ms",
+  "peakResidentBytes",
+  "phaseProfile",
+  "phases",
+  "processWallSeconds",
+  "profile",
+  "relevantSourceTreeSha256",
+  "thirdQuartileElapsedMs",
+  "timestamp",
+  "totalMs",
+  "wallMs"
+ ],
+ "gates": {
+  "g1": {
+   "fieldsCompared": 3263,
+   "differences": 0,
+   "first": []
+  },
+  "g2": {
+   "fieldsCompared": 3244,
+   "differences": 0,
+   "first": []
+  },
+  "g3": {
+   "fieldsCompared": 3244,
+   "differences": 0,
+   "first": []
+  },
+  "g4": {
+   "fieldsCompared": 3244,
+   "differences": 0,
+   "first": []
+  }
+ },
+ "ALL_EQUAL": true
+}

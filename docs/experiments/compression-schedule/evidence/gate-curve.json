@@ -1,0 +1,3180 @@
+{
+ "arm": "sched-noroll",
+ "summary": {
+  "cells": 12,
+  "medianMatchedSpendAdvantageMm": 4.339618846164029,
+  "cellsWhereScheduleWins": 12,
+  "cellsTied": 0,
+  "cellsWhereLadderWins": 0
+ },
+ "rows": [
+  {
+   "seed": 0,
+   "parentRawDepthMm": 174.20812003998896,
+   "controlRawDepthMm": 169.655,
+   "controlWorkUnits": 14796284,
+   "controlDeltaMm": 4.553120039988954,
+   "firstConfirmedStep": 26,
+   "firstConfirmedRawDepthMm": 174.977,
+   "entryLossMm": 0.7688799600110485,
+   "parentProxyCollisionPairs": 33,
+   "parentProxyBoundaryViolations": 8,
+   "scheduleSteps": 12576,
+   "scheduleFinalWorkUnits": 33425053,
+   "scheduleBestRawDepthMm": 164.008,
+   "scheduleAtControlSpendRawDepthMm": 167.951,
+   "scheduleAtControlSpendDeltaMm": 6.257120039988962,
+   "matchedSpendAdvantageMm": 1.7040000000000077,
+   "curve": [
+    {
+     "workUnits": 10194,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 451716,
+     "bestRawDepthMm": 174.858
+    },
+    {
+     "workUnits": 840079,
+     "bestRawDepthMm": 174.613
+    },
+    {
+     "workUnits": 1318294,
+     "bestRawDepthMm": 174.367
+    },
+    {
+     "workUnits": 1777867,
+     "bestRawDepthMm": 174.132
+    },
+    {
+     "workUnits": 2240312,
+     "bestRawDepthMm": 173.985
+    },
+    {
+     "workUnits": 2666207,
+     "bestRawDepthMm": 173.668
+    },
+    {
+     "workUnits": 3143299,
+     "bestRawDepthMm": 173.554
+    },
+    {
+     "workUnits": 3620552,
+     "bestRawDepthMm": 173.3
+    },
+    {
+     "workUnits": 4107402,
+     "bestRawDepthMm": 173.177
+    },
+    {
+     "workUnits": 4586790,
+     "bestRawDepthMm": 172.95
+    },
+    {
+     "workUnits": 4946990,
+     "bestRawDepthMm": 172.757
+    },
+    {
+     "workUnits": 5413458,
+     "bestRawDepthMm": 172.333
+    },
+    {
+     "workUnits": 5889779,
+     "bestRawDepthMm": 172.272
+    },
+    {
+     "workUnits": 6366629,
+     "bestRawDepthMm": 172.096
+    },
+    {
+     "workUnits": 6853138,
+     "bestRawDepthMm": 171.888
+    },
+    {
+     "workUnits": 7330834,
+     "bestRawDepthMm": 171.713
+    },
+    {
+     "workUnits": 7811080,
+     "bestRawDepthMm": 171.494
+    },
+    {
+     "workUnits": 8279381,
+     "bestRawDepthMm": 171.3
+    },
+    {
+     "workUnits": 8734399,
+     "bestRawDepthMm": 171.03
+    },
+    {
+     "workUnits": 9214649,
+     "bestRawDepthMm": 170.877
+    },
+    {
+     "workUnits": 9606162,
+     "bestRawDepthMm": 170.664
+    },
+    {
+     "workUnits": 10037568,
+     "bestRawDepthMm": 170.444
+    },
+    {
+     "workUnits": 10483963,
+     "bestRawDepthMm": 170.221
+    },
+    {
+     "workUnits": 10907499,
+     "bestRawDepthMm": 170.012
+    },
+    {
+     "workUnits": 11327285,
+     "bestRawDepthMm": 169.837
+    },
+    {
+     "workUnits": 11715056,
+     "bestRawDepthMm": 169.659
+    },
+    {
+     "workUnits": 12092073,
+     "bestRawDepthMm": 169.421
+    },
+    {
+     "workUnits": 12497021,
+     "bestRawDepthMm": 169.219
+    },
+    {
+     "workUnits": 12907021,
+     "bestRawDepthMm": 168.993
+    },
+    {
+     "workUnits": 13299019,
+     "bestRawDepthMm": 168.667
+    },
+    {
+     "workUnits": 13663973,
+     "bestRawDepthMm": 168.613
+    },
+    {
+     "workUnits": 14096219,
+     "bestRawDepthMm": 168.356
+    },
+    {
+     "workUnits": 14434306,
+     "bestRawDepthMm": 168.134
+    },
+    {
+     "workUnits": 14896352,
+     "bestRawDepthMm": 167.921
+    },
+    {
+     "workUnits": 15337205,
+     "bestRawDepthMm": 167.749
+    },
+    {
+     "workUnits": 15767359,
+     "bestRawDepthMm": 167.577
+    },
+    {
+     "workUnits": 16159737,
+     "bestRawDepthMm": 167.353
+    },
+    {
+     "workUnits": 16584307,
+     "bestRawDepthMm": 167.209
+    },
+    {
+     "workUnits": 17001853,
+     "bestRawDepthMm": 166.899
+    },
+    {
+     "workUnits": 17369294,
+     "bestRawDepthMm": 166.742
+    },
+    {
+     "workUnits": 17772946,
+     "bestRawDepthMm": 166.638
+    },
+    {
+     "workUnits": 18311398,
+     "bestRawDepthMm": 166.638
+    },
+    {
+     "workUnits": 18795212,
+     "bestRawDepthMm": 166.167
+    },
+    {
+     "workUnits": 19154336,
+     "bestRawDepthMm": 165.897
+    },
+    {
+     "workUnits": 19521121,
+     "bestRawDepthMm": 165.66
+    },
+    {
+     "workUnits": 19977611,
+     "bestRawDepthMm": 165.538
+    },
+    {
+     "workUnits": 20912279,
+     "bestRawDepthMm": 165.538
+    },
+    {
+     "workUnits": 21977463,
+     "bestRawDepthMm": 165.538
+    },
+    {
+     "workUnits": 23219373,
+     "bestRawDepthMm": 165.538
+    },
+    {
+     "workUnits": 24271230,
+     "bestRawDepthMm": 165.538
+    },
+    {
+     "workUnits": 25071142,
+     "bestRawDepthMm": 165.538
+    },
+    {
+     "workUnits": 26006937,
+     "bestRawDepthMm": 165.538
+    },
+    {
+     "workUnits": 26371430,
+     "bestRawDepthMm": 164.008
+    },
+    {
+     "workUnits": 26793769,
+     "bestRawDepthMm": 164.008
+    },
+    {
+     "workUnits": 27261474,
+     "bestRawDepthMm": 164.008
+    },
+    {
+     "workUnits": 28133683,
+     "bestRawDepthMm": 164.008
+    },
+    {
+     "workUnits": 28798704,
+     "bestRawDepthMm": 164.008
+    },
+    {
+     "workUnits": 30193966,
+     "bestRawDepthMm": 164.008
+    },
+    {
+     "workUnits": 31554693,
+     "bestRawDepthMm": 164.008
+    },
+    {
+     "workUnits": 33078535,
+     "bestRawDepthMm": 164.008
+    }
+   ]
+  },
+  {
+   "seed": 1,
+   "parentRawDepthMm": 176.05599999999998,
+   "controlRawDepthMm": 172.143,
+   "controlWorkUnits": 20970095,
+   "controlDeltaMm": 3.9129999999999825,
+   "firstConfirmedStep": 39,
+   "firstConfirmedRawDepthMm": 175.99,
+   "entryLossMm": -0.06599999999997408,
+   "parentProxyCollisionPairs": 38,
+   "parentProxyBoundaryViolations": 5,
+   "scheduleSteps": 13821,
+   "scheduleFinalWorkUnits": 33419530,
+   "scheduleBestRawDepthMm": 164.103,
+   "scheduleAtControlSpendRawDepthMm": 165.546,
+   "scheduleAtControlSpendDeltaMm": 10.509999999999991,
+   "matchedSpendAdvantageMm": 6.597000000000008,
+   "curve": [
+    {
+     "workUnits": 9489,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 558918,
+     "bestRawDepthMm": 175.824
+    },
+    {
+     "workUnits": 1033706,
+     "bestRawDepthMm": 175.6
+    },
+    {
+     "workUnits": 1568481,
+     "bestRawDepthMm": 175.339
+    },
+    {
+     "workUnits": 2099317,
+     "bestRawDepthMm": 175.085
+    },
+    {
+     "workUnits": 2621251,
+     "bestRawDepthMm": 174.899
+    },
+    {
+     "workUnits": 3098901,
+     "bestRawDepthMm": 174.661
+    },
+    {
+     "workUnits": 3538534,
+     "bestRawDepthMm": 174.432
+    },
+    {
+     "workUnits": 4035305,
+     "bestRawDepthMm": 174.185
+    },
+    {
+     "workUnits": 4510601,
+     "bestRawDepthMm": 173.989
+    },
+    {
+     "workUnits": 5006078,
+     "bestRawDepthMm": 173.748
+    },
+    {
+     "workUnits": 5491791,
+     "bestRawDepthMm": 173.511
+    },
+    {
+     "workUnits": 5981654,
+     "bestRawDepthMm": 173.294
+    },
+    {
+     "workUnits": 6489656,
+     "bestRawDepthMm": 173.031
+    },
+    {
+     "workUnits": 6984384,
+     "bestRawDepthMm": 172.837
+    },
+    {
+     "workUnits": 7493517,
+     "bestRawDepthMm": 172.6
+    },
+    {
+     "workUnits": 7942932,
+     "bestRawDepthMm": 172.263
+    },
+    {
+     "workUnits": 8450582,
+     "bestRawDepthMm": 172.042
+    },
+    {
+     "workUnits": 8922007,
+     "bestRawDepthMm": 171.882
+    },
+    {
+     "workUnits": 9450870,
+     "bestRawDepthMm": 171.667
+    },
+    {
+     "workUnits": 9940733,
+     "bestRawDepthMm": 171.419
+    },
+    {
+     "workUnits": 10424063,
+     "bestRawDepthMm": 171.221
+    },
+    {
+     "workUnits": 10958283,
+     "bestRawDepthMm": 170.971
+    },
+    {
+     "workUnits": 11457465,
+     "bestRawDepthMm": 170.766
+    },
+    {
+     "workUnits": 11964890,
+     "bestRawDepthMm": 170.509
+    },
+    {
+     "workUnits": 12425670,
+     "bestRawDepthMm": 170.278
+    },
+    {
+     "workUnits": 12840101,
+     "bestRawDepthMm": 170.097
+    },
+    {
+     "workUnits": 13303424,
+     "bestRawDepthMm": 169.817
+    },
+    {
+     "workUnits": 13814165,
+     "bestRawDepthMm": 169.6
+    },
+    {
+     "workUnits": 14206562,
+     "bestRawDepthMm": 169.502
+    },
+    {
+     "workUnits": 14611794,
+     "bestRawDepthMm": 169.148
+    },
+    {
+     "workUnits": 15003998,
+     "bestRawDepthMm": 168.945
+    },
+    {
+     "workUnits": 15370769,
+     "bestRawDepthMm": 168.845
+    },
+    {
+     "workUnits": 15829849,
+     "bestRawDepthMm": 168.47
+    },
+    {
+     "workUnits": 16238518,
+     "bestRawDepthMm": 168.265
+    },
+    {
+     "workUnits": 16687268,
+     "bestRawDepthMm": 167.977
+    },
+    {
+     "workUnits": 17127915,
+     "bestRawDepthMm": 167.78
+    },
+    {
+     "workUnits": 17545795,
+     "bestRawDepthMm": 167.567
+    },
+    {
+     "workUnits": 17947280,
+     "bestRawDepthMm": 167.304
+    },
+    {
+     "workUnits": 18424516,
+     "bestRawDepthMm": 167.12
+    },
+    {
+     "workUnits": 18722998,
+     "bestRawDepthMm": 166.849
+    },
+    {
+     "workUnits": 19121729,
+     "bestRawDepthMm": 166.699
+    },
+    {
+     "workUnits": 19529849,
+     "bestRawDepthMm": 166.452
+    },
+    {
+     "workUnits": 19893933,
+     "bestRawDepthMm": 166.232
+    },
+    {
+     "workUnits": 20229219,
+     "bestRawDepthMm": 165.955
+    },
+    {
+     "workUnits": 20663915,
+     "bestRawDepthMm": 165.729
+    },
+    {
+     "workUnits": 21093513,
+     "bestRawDepthMm": 165.445
+    },
+    {
+     "workUnits": 21562411,
+     "bestRawDepthMm": 165.242
+    },
+    {
+     "workUnits": 21999055,
+     "bestRawDepthMm": 165.022
+    },
+    {
+     "workUnits": 22389611,
+     "bestRawDepthMm": 164.781
+    },
+    {
+     "workUnits": 22837952,
+     "bestRawDepthMm": 164.516
+    },
+    {
+     "workUnits": 23362643,
+     "bestRawDepthMm": 164.321
+    },
+    {
+     "workUnits": 23872987,
+     "bestRawDepthMm": 164.103
+    },
+    {
+     "workUnits": 24288646,
+     "bestRawDepthMm": 164.103
+    },
+    {
+     "workUnits": 24782089,
+     "bestRawDepthMm": 164.103
+    },
+    {
+     "workUnits": 25228327,
+     "bestRawDepthMm": 164.103
+    },
+    {
+     "workUnits": 25821108,
+     "bestRawDepthMm": 164.103
+    },
+    {
+     "workUnits": 27427576,
+     "bestRawDepthMm": 164.103
+    },
+    {
+     "workUnits": 29385825,
+     "bestRawDepthMm": 164.103
+    },
+    {
+     "workUnits": 31524662,
+     "bestRawDepthMm": 164.103
+    },
+    {
+     "workUnits": 33284782,
+     "bestRawDepthMm": 164.103
+    }
+   ]
+  },
+  {
+   "seed": 2,
+   "parentRawDepthMm": 179.006,
+   "controlRawDepthMm": 179.006,
+   "controlWorkUnits": 5573741,
+   "controlDeltaMm": 0.0,
+   "firstConfirmedStep": 535,
+   "firstConfirmedRawDepthMm": 178.469,
+   "entryLossMm": -0.5370000000000061,
+   "parentProxyCollisionPairs": 34,
+   "parentProxyBoundaryViolations": 6,
+   "scheduleSteps": 14965,
+   "scheduleFinalWorkUnits": 33418326,
+   "scheduleBestRawDepthMm": 164.304,
+   "scheduleAtControlSpendRawDepthMm": 176.367,
+   "scheduleAtControlSpendDeltaMm": 2.63900000000001,
+   "matchedSpendAdvantageMm": 2.63900000000001,
+   "curve": [
+    {
+     "workUnits": 6647,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 449995,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 1055368,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 1618869,
+     "bestRawDepthMm": 178.181
+    },
+    {
+     "workUnits": 2137403,
+     "bestRawDepthMm": 177.984
+    },
+    {
+     "workUnits": 2652417,
+     "bestRawDepthMm": 177.736
+    },
+    {
+     "workUnits": 3220684,
+     "bestRawDepthMm": 177.504
+    },
+    {
+     "workUnits": 3750281,
+     "bestRawDepthMm": 177.199
+    },
+    {
+     "workUnits": 4299547,
+     "bestRawDepthMm": 176.974
+    },
+    {
+     "workUnits": 4837474,
+     "bestRawDepthMm": 176.759
+    },
+    {
+     "workUnits": 5306863,
+     "bestRawDepthMm": 176.528
+    },
+    {
+     "workUnits": 5802836,
+     "bestRawDepthMm": 176.279
+    },
+    {
+     "workUnits": 6315437,
+     "bestRawDepthMm": 176.031
+    },
+    {
+     "workUnits": 6841665,
+     "bestRawDepthMm": 175.737
+    },
+    {
+     "workUnits": 7377002,
+     "bestRawDepthMm": 175.507
+    },
+    {
+     "workUnits": 7919698,
+     "bestRawDepthMm": 175.185
+    },
+    {
+     "workUnits": 8482931,
+     "bestRawDepthMm": 175.01
+    },
+    {
+     "workUnits": 9051523,
+     "bestRawDepthMm": 174.767
+    },
+    {
+     "workUnits": 9616310,
+     "bestRawDepthMm": 174.36
+    },
+    {
+     "workUnits": 10196817,
+     "bestRawDepthMm": 174.188
+    },
+    {
+     "workUnits": 10693982,
+     "bestRawDepthMm": 173.99
+    },
+    {
+     "workUnits": 11261718,
+     "bestRawDepthMm": 173.741
+    },
+    {
+     "workUnits": 11710704,
+     "bestRawDepthMm": 173.592
+    },
+    {
+     "workUnits": 12214566,
+     "bestRawDepthMm": 173.255
+    },
+    {
+     "workUnits": 12731143,
+     "bestRawDepthMm": 173.017
+    },
+    {
+     "workUnits": 13231474,
+     "bestRawDepthMm": 172.772
+    },
+    {
+     "workUnits": 13767734,
+     "bestRawDepthMm": 172.521
+    },
+    {
+     "workUnits": 14231236,
+     "bestRawDepthMm": 172.366
+    },
+    {
+     "workUnits": 14747588,
+     "bestRawDepthMm": 172.031
+    },
+    {
+     "workUnits": 15147840,
+     "bestRawDepthMm": 171.753
+    },
+    {
+     "workUnits": 15708442,
+     "bestRawDepthMm": 171.476
+    },
+    {
+     "workUnits": 16266386,
+     "bestRawDepthMm": 171.298
+    },
+    {
+     "workUnits": 16752203,
+     "bestRawDepthMm": 171.038
+    },
+    {
+     "workUnits": 17215463,
+     "bestRawDepthMm": 170.785
+    },
+    {
+     "workUnits": 17530628,
+     "bestRawDepthMm": 170.575
+    },
+    {
+     "workUnits": 18279581,
+     "bestRawDepthMm": 170.246
+    },
+    {
+     "workUnits": 18770706,
+     "bestRawDepthMm": 170.029
+    },
+    {
+     "workUnits": 19295658,
+     "bestRawDepthMm": 169.777
+    },
+    {
+     "workUnits": 19739054,
+     "bestRawDepthMm": 169.508
+    },
+    {
+     "workUnits": 20311516,
+     "bestRawDepthMm": 169.255
+    },
+    {
+     "workUnits": 20819200,
+     "bestRawDepthMm": 169.02
+    },
+    {
+     "workUnits": 21324401,
+     "bestRawDepthMm": 168.761
+    },
+    {
+     "workUnits": 21783617,
+     "bestRawDepthMm": 168.545
+    },
+    {
+     "workUnits": 22345898,
+     "bestRawDepthMm": 168.274
+    },
+    {
+     "workUnits": 22834884,
+     "bestRawDepthMm": 168.23
+    },
+    {
+     "workUnits": 23399928,
+     "bestRawDepthMm": 167.758
+    },
+    {
+     "workUnits": 23770921,
+     "bestRawDepthMm": 167.678
+    },
+    {
+     "workUnits": 24192322,
+     "bestRawDepthMm": 167.33
+    },
+    {
+     "workUnits": 24658666,
+     "bestRawDepthMm": 167.043
+    },
+    {
+     "workUnits": 25069271,
+     "bestRawDepthMm": 166.812
+    },
+    {
+     "workUnits": 25664033,
+     "bestRawDepthMm": 166.699
+    },
+    {
+     "workUnits": 26847144,
+     "bestRawDepthMm": 166.699
+    },
+    {
+     "workUnits": 28212479,
+     "bestRawDepthMm": 166.699
+    },
+    {
+     "workUnits": 29196669,
+     "bestRawDepthMm": 165.814
+    },
+    {
+     "workUnits": 29556342,
+     "bestRawDepthMm": 165.55
+    },
+    {
+     "workUnits": 30150415,
+     "bestRawDepthMm": 165.485
+    },
+    {
+     "workUnits": 30780000,
+     "bestRawDepthMm": 165.485
+    },
+    {
+     "workUnits": 31516628,
+     "bestRawDepthMm": 165.485
+    },
+    {
+     "workUnits": 32278802,
+     "bestRawDepthMm": 164.648
+    },
+    {
+     "workUnits": 32686797,
+     "bestRawDepthMm": 164.306
+    },
+    {
+     "workUnits": 33320460,
+     "bestRawDepthMm": 164.304
+    }
+   ]
+  },
+  {
+   "seed": 3,
+   "parentRawDepthMm": 176.061,
+   "controlRawDepthMm": 175.0589738439441,
+   "controlWorkUnits": 10422875,
+   "controlDeltaMm": 1.002026156055905,
+   "firstConfirmedStep": 5970,
+   "firstConfirmedRawDepthMm": 170.03,
+   "entryLossMm": -6.031000000000006,
+   "parentProxyCollisionPairs": 34,
+   "parentProxyBoundaryViolations": 9,
+   "scheduleSteps": 12796,
+   "scheduleFinalWorkUnits": 33414401,
+   "scheduleBestRawDepthMm": 168.582,
+   "scheduleAtControlSpendRawDepthMm": 169.576,
+   "scheduleAtControlSpendDeltaMm": 6.485000000000014,
+   "matchedSpendAdvantageMm": 5.482973843944109,
+   "curve": [
+    {
+     "workUnits": 6381,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 325935,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 552386,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 763811,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 988339,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 1222913,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 1565762,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 1812769,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 2072368,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 2311677,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 2578120,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 2855897,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 3075380,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 3279322,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 3512915,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 3747117,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 4007538,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 4343533,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 4558251,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 4813783,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 5059897,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 5319630,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 5581690,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 5900233,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 6246266,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 6596165,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 6841845,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 7163496,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 7699685,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 8011043,
+     "bestRawDepthMm": 169.882
+    },
+    {
+     "workUnits": 8364593,
+     "bestRawDepthMm": 169.72
+    },
+    {
+     "workUnits": 8735851,
+     "bestRawDepthMm": 169.576
+    },
+    {
+     "workUnits": 9195795,
+     "bestRawDepthMm": 169.576
+    },
+    {
+     "workUnits": 9753293,
+     "bestRawDepthMm": 169.576
+    },
+    {
+     "workUnits": 10271786,
+     "bestRawDepthMm": 169.576
+    },
+    {
+     "workUnits": 10614111,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 11002140,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 11669740,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 12569293,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 13311930,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 13942782,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 14639874,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 15056480,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 15545758,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 16031420,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 16988439,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 17801292,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 18688765,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 19310176,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 19749528,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 20458025,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 21606856,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 22524028,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 23161388,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 24115935,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 25494747,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 27186769,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 28909883,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 30341054,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 31700039,
+     "bestRawDepthMm": 168.582
+    },
+    {
+     "workUnits": 33255530,
+     "bestRawDepthMm": 168.582
+    }
+   ]
+  },
+  {
+   "seed": 4,
+   "parentRawDepthMm": 171.64953207726535,
+   "controlRawDepthMm": 171.07361884616404,
+   "controlWorkUnits": 14715136,
+   "controlDeltaMm": 0.5759132311013104,
+   "firstConfirmedStep": 10,
+   "firstConfirmedRawDepthMm": 172.649,
+   "entryLossMm": 0.9994679227346523,
+   "parentProxyCollisionPairs": 27,
+   "parentProxyBoundaryViolations": 6,
+   "scheduleSteps": 11647,
+   "scheduleFinalWorkUnits": 33418598,
+   "scheduleBestRawDepthMm": 164.155,
+   "scheduleAtControlSpendRawDepthMm": 166.734,
+   "scheduleAtControlSpendDeltaMm": 4.91553207726534,
+   "matchedSpendAdvantageMm": 4.339618846164029,
+   "curve": [
+    {
+     "workUnits": 8960,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 420294,
+     "bestRawDepthMm": 172.463
+    },
+    {
+     "workUnits": 865959,
+     "bestRawDepthMm": 172.199
+    },
+    {
+     "workUnits": 1301933,
+     "bestRawDepthMm": 172.115
+    },
+    {
+     "workUnits": 1663059,
+     "bestRawDepthMm": 171.896
+    },
+    {
+     "workUnits": 2145305,
+     "bestRawDepthMm": 171.829
+    },
+    {
+     "workUnits": 2569249,
+     "bestRawDepthMm": 171.474
+    },
+    {
+     "workUnits": 2864109,
+     "bestRawDepthMm": 171.451
+    },
+    {
+     "workUnits": 3242523,
+     "bestRawDepthMm": 171.082
+    },
+    {
+     "workUnits": 3620836,
+     "bestRawDepthMm": 170.885
+    },
+    {
+     "workUnits": 3933229,
+     "bestRawDepthMm": 170.649
+    },
+    {
+     "workUnits": 4327602,
+     "bestRawDepthMm": 170.456
+    },
+    {
+     "workUnits": 4735086,
+     "bestRawDepthMm": 170.373
+    },
+    {
+     "workUnits": 5065857,
+     "bestRawDepthMm": 170.163
+    },
+    {
+     "workUnits": 5429742,
+     "bestRawDepthMm": 169.952
+    },
+    {
+     "workUnits": 5710212,
+     "bestRawDepthMm": 169.716
+    },
+    {
+     "workUnits": 6043924,
+     "bestRawDepthMm": 169.597
+    },
+    {
+     "workUnits": 6382832,
+     "bestRawDepthMm": 169.597
+    },
+    {
+     "workUnits": 6735952,
+     "bestRawDepthMm": 169.597
+    },
+    {
+     "workUnits": 7165385,
+     "bestRawDepthMm": 169.597
+    },
+    {
+     "workUnits": 7657526,
+     "bestRawDepthMm": 169.597
+    },
+    {
+     "workUnits": 8247732,
+     "bestRawDepthMm": 169.597
+    },
+    {
+     "workUnits": 8582782,
+     "bestRawDepthMm": 168.465
+    },
+    {
+     "workUnits": 8888600,
+     "bestRawDepthMm": 168.465
+    },
+    {
+     "workUnits": 9329684,
+     "bestRawDepthMm": 168.013
+    },
+    {
+     "workUnits": 9734798,
+     "bestRawDepthMm": 167.822
+    },
+    {
+     "workUnits": 10143751,
+     "bestRawDepthMm": 167.576
+    },
+    {
+     "workUnits": 10540964,
+     "bestRawDepthMm": 167.449
+    },
+    {
+     "workUnits": 10882856,
+     "bestRawDepthMm": 167.236
+    },
+    {
+     "workUnits": 11293170,
+     "bestRawDepthMm": 167.026
+    },
+    {
+     "workUnits": 11665870,
+     "bestRawDepthMm": 166.88
+    },
+    {
+     "workUnits": 12027274,
+     "bestRawDepthMm": 166.734
+    },
+    {
+     "workUnits": 13011128,
+     "bestRawDepthMm": 166.734
+    },
+    {
+     "workUnits": 13621322,
+     "bestRawDepthMm": 166.734
+    },
+    {
+     "workUnits": 14429675,
+     "bestRawDepthMm": 166.734
+    },
+    {
+     "workUnits": 15332655,
+     "bestRawDepthMm": 166.734
+    },
+    {
+     "workUnits": 16232818,
+     "bestRawDepthMm": 166.734
+    },
+    {
+     "workUnits": 16612682,
+     "bestRawDepthMm": 165.494
+    },
+    {
+     "workUnits": 16969236,
+     "bestRawDepthMm": 165.338
+    },
+    {
+     "workUnits": 17285158,
+     "bestRawDepthMm": 165.208
+    },
+    {
+     "workUnits": 17668492,
+     "bestRawDepthMm": 164.936
+    },
+    {
+     "workUnits": 18093840,
+     "bestRawDepthMm": 164.936
+    },
+    {
+     "workUnits": 18420006,
+     "bestRawDepthMm": 164.529
+    },
+    {
+     "workUnits": 18828082,
+     "bestRawDepthMm": 164.349
+    },
+    {
+     "workUnits": 19143566,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 19504028,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 19945868,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 20381950,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 21152054,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 22183798,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 23116634,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 24043841,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 25576452,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 27030813,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 27889130,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 28681903,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 29500752,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 30507267,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 31718095,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 32500491,
+     "bestRawDepthMm": 164.155
+    },
+    {
+     "workUnits": 33375515,
+     "bestRawDepthMm": 164.155
+    }
+   ]
+  },
+  {
+   "seed": 5,
+   "parentRawDepthMm": 179.05182605364416,
+   "controlRawDepthMm": 179.05182605364416,
+   "controlWorkUnits": 6118844,
+   "controlDeltaMm": 0.0,
+   "firstConfirmedStep": 4,
+   "firstConfirmedRawDepthMm": 179.052,
+   "entryLossMm": 0.0001739463558294574,
+   "parentProxyCollisionPairs": 34,
+   "parentProxyBoundaryViolations": 6,
+   "scheduleSteps": 15541,
+   "scheduleFinalWorkUnits": 33415349,
+   "scheduleBestRawDepthMm": 165.659,
+   "scheduleAtControlSpendRawDepthMm": 176.206,
+   "scheduleAtControlSpendDeltaMm": 2.845826053644174,
+   "matchedSpendAdvantageMm": 2.845826053644174,
+   "curve": [
+    {
+     "workUnits": 8175,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 582542,
+     "bestRawDepthMm": 179.033
+    },
+    {
+     "workUnits": 1222775,
+     "bestRawDepthMm": 178.556
+    },
+    {
+     "workUnits": 1767686,
+     "bestRawDepthMm": 178.273
+    },
+    {
+     "workUnits": 2330419,
+     "bestRawDepthMm": 177.965
+    },
+    {
+     "workUnits": 2928283,
+     "bestRawDepthMm": 177.699
+    },
+    {
+     "workUnits": 3530039,
+     "bestRawDepthMm": 177.505
+    },
+    {
+     "workUnits": 3968773,
+     "bestRawDepthMm": 177.263
+    },
+    {
+     "workUnits": 4453186,
+     "bestRawDepthMm": 176.989
+    },
+    {
+     "workUnits": 5039093,
+     "bestRawDepthMm": 176.714
+    },
+    {
+     "workUnits": 5593524,
+     "bestRawDepthMm": 176.468
+    },
+    {
+     "workUnits": 6117558,
+     "bestRawDepthMm": 176.206
+    },
+    {
+     "workUnits": 6615197,
+     "bestRawDepthMm": 175.969
+    },
+    {
+     "workUnits": 7049063,
+     "bestRawDepthMm": 175.734
+    },
+    {
+     "workUnits": 7550845,
+     "bestRawDepthMm": 175.427
+    },
+    {
+     "workUnits": 8040868,
+     "bestRawDepthMm": 175.196
+    },
+    {
+     "workUnits": 8607928,
+     "bestRawDepthMm": 174.88
+    },
+    {
+     "workUnits": 9158072,
+     "bestRawDepthMm": 174.611
+    },
+    {
+     "workUnits": 9583430,
+     "bestRawDepthMm": 174.511
+    },
+    {
+     "workUnits": 10060906,
+     "bestRawDepthMm": 174.13
+    },
+    {
+     "workUnits": 10542154,
+     "bestRawDepthMm": 174.102
+    },
+    {
+     "workUnits": 11142591,
+     "bestRawDepthMm": 173.623
+    },
+    {
+     "workUnits": 11596072,
+     "bestRawDepthMm": 173.382
+    },
+    {
+     "workUnits": 12125334,
+     "bestRawDepthMm": 173.105
+    },
+    {
+     "workUnits": 12631369,
+     "bestRawDepthMm": 172.826
+    },
+    {
+     "workUnits": 13097761,
+     "bestRawDepthMm": 172.581
+    },
+    {
+     "workUnits": 13639807,
+     "bestRawDepthMm": 172.321
+    },
+    {
+     "workUnits": 14044427,
+     "bestRawDepthMm": 172.073
+    },
+    {
+     "workUnits": 14515388,
+     "bestRawDepthMm": 171.797
+    },
+    {
+     "workUnits": 14960839,
+     "bestRawDepthMm": 171.605
+    },
+    {
+     "workUnits": 15448318,
+     "bestRawDepthMm": 171.153
+    },
+    {
+     "workUnits": 16038765,
+     "bestRawDepthMm": 170.956
+    },
+    {
+     "workUnits": 16594678,
+     "bestRawDepthMm": 170.882
+    },
+    {
+     "workUnits": 17298015,
+     "bestRawDepthMm": 170.882
+    },
+    {
+     "workUnits": 17711097,
+     "bestRawDepthMm": 170.285
+    },
+    {
+     "workUnits": 18070659,
+     "bestRawDepthMm": 170.031
+    },
+    {
+     "workUnits": 18500797,
+     "bestRawDepthMm": 170.031
+    },
+    {
+     "workUnits": 18928763,
+     "bestRawDepthMm": 169.509
+    },
+    {
+     "workUnits": 19328534,
+     "bestRawDepthMm": 169.209
+    },
+    {
+     "workUnits": 19870843,
+     "bestRawDepthMm": 168.934
+    },
+    {
+     "workUnits": 20343340,
+     "bestRawDepthMm": 168.675
+    },
+    {
+     "workUnits": 20887468,
+     "bestRawDepthMm": 168.438
+    },
+    {
+     "workUnits": 21442233,
+     "bestRawDepthMm": 168.169
+    },
+    {
+     "workUnits": 21946253,
+     "bestRawDepthMm": 167.909
+    },
+    {
+     "workUnits": 22316789,
+     "bestRawDepthMm": 167.706
+    },
+    {
+     "workUnits": 22817666,
+     "bestRawDepthMm": 167.376
+    },
+    {
+     "workUnits": 23379665,
+     "bestRawDepthMm": 167.151
+    },
+    {
+     "workUnits": 23918384,
+     "bestRawDepthMm": 166.878
+    },
+    {
+     "workUnits": 24330920,
+     "bestRawDepthMm": 166.554
+    },
+    {
+     "workUnits": 24905163,
+     "bestRawDepthMm": 166.348
+    },
+    {
+     "workUnits": 25485421,
+     "bestRawDepthMm": 166.11
+    },
+    {
+     "workUnits": 25906869,
+     "bestRawDepthMm": 165.829
+    },
+    {
+     "workUnits": 26324007,
+     "bestRawDepthMm": 165.659
+    },
+    {
+     "workUnits": 26934940,
+     "bestRawDepthMm": 165.659
+    },
+    {
+     "workUnits": 27493562,
+     "bestRawDepthMm": 165.659
+    },
+    {
+     "workUnits": 28070842,
+     "bestRawDepthMm": 165.659
+    },
+    {
+     "workUnits": 28598593,
+     "bestRawDepthMm": 165.659
+    },
+    {
+     "workUnits": 29481332,
+     "bestRawDepthMm": 165.659
+    },
+    {
+     "workUnits": 30959744,
+     "bestRawDepthMm": 165.659
+    },
+    {
+     "workUnits": 32277439,
+     "bestRawDepthMm": 165.659
+    },
+    {
+     "workUnits": 33415349,
+     "bestRawDepthMm": 165.659
+    }
+   ]
+  },
+  {
+   "seed": 6,
+   "parentRawDepthMm": 179.6200102363703,
+   "controlRawDepthMm": 179.52043943524956,
+   "controlWorkUnits": 10379244,
+   "controlDeltaMm": 0.09957080112073413,
+   "firstConfirmedStep": 7,
+   "firstConfirmedRawDepthMm": 179.889,
+   "entryLossMm": 0.26898976362971894,
+   "parentProxyCollisionPairs": 35,
+   "parentProxyBoundaryViolations": 7,
+   "scheduleSteps": 16892,
+   "scheduleFinalWorkUnits": 33413964,
+   "scheduleBestRawDepthMm": 164.002,
+   "scheduleAtControlSpendRawDepthMm": 174.679,
+   "scheduleAtControlSpendDeltaMm": 4.941010236370289,
+   "matchedSpendAdvantageMm": 4.841439435249555,
+   "curve": [
+    {
+     "workUnits": 7226,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 634270,
+     "bestRawDepthMm": 179.685
+    },
+    {
+     "workUnits": 1425517,
+     "bestRawDepthMm": 179.338
+    },
+    {
+     "workUnits": 2061588,
+     "bestRawDepthMm": 179.016
+    },
+    {
+     "workUnits": 2702494,
+     "bestRawDepthMm": 178.755
+    },
+    {
+     "workUnits": 3109497,
+     "bestRawDepthMm": 178.624
+    },
+    {
+     "workUnits": 3575820,
+     "bestRawDepthMm": 178.214
+    },
+    {
+     "workUnits": 4219100,
+     "bestRawDepthMm": 177.934
+    },
+    {
+     "workUnits": 4783845,
+     "bestRawDepthMm": 177.644
+    },
+    {
+     "workUnits": 5323815,
+     "bestRawDepthMm": 177.349
+    },
+    {
+     "workUnits": 5767286,
+     "bestRawDepthMm": 177.097
+    },
+    {
+     "workUnits": 6330132,
+     "bestRawDepthMm": 176.841
+    },
+    {
+     "workUnits": 6809199,
+     "bestRawDepthMm": 176.532
+    },
+    {
+     "workUnits": 7387982,
+     "bestRawDepthMm": 176.262
+    },
+    {
+     "workUnits": 7884446,
+     "bestRawDepthMm": 175.989
+    },
+    {
+     "workUnits": 8442275,
+     "bestRawDepthMm": 175.627
+    },
+    {
+     "workUnits": 9009803,
+     "bestRawDepthMm": 175.325
+    },
+    {
+     "workUnits": 9650925,
+     "bestRawDepthMm": 175.098
+    },
+    {
+     "workUnits": 10054644,
+     "bestRawDepthMm": 175.006
+    },
+    {
+     "workUnits": 10581491,
+     "bestRawDepthMm": 174.595
+    },
+    {
+     "workUnits": 11045587,
+     "bestRawDepthMm": 174.356
+    },
+    {
+     "workUnits": 11593884,
+     "bestRawDepthMm": 174.015
+    },
+    {
+     "workUnits": 12102378,
+     "bestRawDepthMm": 173.727
+    },
+    {
+     "workUnits": 12638784,
+     "bestRawDepthMm": 173.477
+    },
+    {
+     "workUnits": 13145629,
+     "bestRawDepthMm": 173.179
+    },
+    {
+     "workUnits": 13748340,
+     "bestRawDepthMm": 172.885
+    },
+    {
+     "workUnits": 14323877,
+     "bestRawDepthMm": 172.593
+    },
+    {
+     "workUnits": 14871263,
+     "bestRawDepthMm": 172.333
+    },
+    {
+     "workUnits": 15437266,
+     "bestRawDepthMm": 171.966
+    },
+    {
+     "workUnits": 16071368,
+     "bestRawDepthMm": 171.63
+    },
+    {
+     "workUnits": 16682472,
+     "bestRawDepthMm": 171.476
+    },
+    {
+     "workUnits": 17206286,
+     "bestRawDepthMm": 171.196
+    },
+    {
+     "workUnits": 17655408,
+     "bestRawDepthMm": 170.922
+    },
+    {
+     "workUnits": 18230553,
+     "bestRawDepthMm": 170.615
+    },
+    {
+     "workUnits": 18754885,
+     "bestRawDepthMm": 170.368
+    },
+    {
+     "workUnits": 19327646,
+     "bestRawDepthMm": 170.079
+    },
+    {
+     "workUnits": 19851487,
+     "bestRawDepthMm": 169.802
+    },
+    {
+     "workUnits": 20436229,
+     "bestRawDepthMm": 169.522
+    },
+    {
+     "workUnits": 21108085,
+     "bestRawDepthMm": 169.522
+    },
+    {
+     "workUnits": 21861957,
+     "bestRawDepthMm": 169.522
+    },
+    {
+     "workUnits": 22630962,
+     "bestRawDepthMm": 169.522
+    },
+    {
+     "workUnits": 23296993,
+     "bestRawDepthMm": 168.439
+    },
+    {
+     "workUnits": 23807093,
+     "bestRawDepthMm": 168.149
+    },
+    {
+     "workUnits": 24385930,
+     "bestRawDepthMm": 167.818
+    },
+    {
+     "workUnits": 24972692,
+     "bestRawDepthMm": 167.508
+    },
+    {
+     "workUnits": 25523314,
+     "bestRawDepthMm": 167.229
+    },
+    {
+     "workUnits": 26115367,
+     "bestRawDepthMm": 166.912
+    },
+    {
+     "workUnits": 26687321,
+     "bestRawDepthMm": 166.659
+    },
+    {
+     "workUnits": 27218414,
+     "bestRawDepthMm": 166.408
+    },
+    {
+     "workUnits": 27745229,
+     "bestRawDepthMm": 166.141
+    },
+    {
+     "workUnits": 28330807,
+     "bestRawDepthMm": 165.863
+    },
+    {
+     "workUnits": 28898060,
+     "bestRawDepthMm": 165.566
+    },
+    {
+     "workUnits": 29431649,
+     "bestRawDepthMm": 165.296
+    },
+    {
+     "workUnits": 30074773,
+     "bestRawDepthMm": 165.026
+    },
+    {
+     "workUnits": 30710041,
+     "bestRawDepthMm": 164.728
+    },
+    {
+     "workUnits": 31261111,
+     "bestRawDepthMm": 164.448
+    },
+    {
+     "workUnits": 31846475,
+     "bestRawDepthMm": 164.145
+    },
+    {
+     "workUnits": 32259362,
+     "bestRawDepthMm": 164.002
+    },
+    {
+     "workUnits": 32551760,
+     "bestRawDepthMm": 164.002
+    },
+    {
+     "workUnits": 32916215,
+     "bestRawDepthMm": 164.002
+    },
+    {
+     "workUnits": 33350266,
+     "bestRawDepthMm": 164.002
+    }
+   ]
+  },
+  {
+   "seed": 7,
+   "parentRawDepthMm": 179.52233303152792,
+   "controlRawDepthMm": 179.48182611209816,
+   "controlWorkUnits": 9922188,
+   "controlDeltaMm": 0.04050691942975959,
+   "firstConfirmedStep": 7,
+   "firstConfirmedRawDepthMm": 179.97,
+   "entryLossMm": 0.44766696847207754,
+   "parentProxyCollisionPairs": 27,
+   "parentProxyBoundaryViolations": 9,
+   "scheduleSteps": 16223,
+   "scheduleFinalWorkUnits": 33414923,
+   "scheduleBestRawDepthMm": 164.06,
+   "scheduleAtControlSpendRawDepthMm": 175.326,
+   "scheduleAtControlSpendDeltaMm": 4.196333031527928,
+   "matchedSpendAdvantageMm": 4.155826112098168,
+   "curve": [
+    {
+     "workUnits": 8671,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 630514,
+     "bestRawDepthMm": 179.696
+    },
+    {
+     "workUnits": 1262863,
+     "bestRawDepthMm": 179.384
+    },
+    {
+     "workUnits": 1874625,
+     "bestRawDepthMm": 179.198
+    },
+    {
+     "workUnits": 2330429,
+     "bestRawDepthMm": 178.906
+    },
+    {
+     "workUnits": 2853813,
+     "bestRawDepthMm": 178.264
+    },
+    {
+     "workUnits": 3451283,
+     "bestRawDepthMm": 178.264
+    },
+    {
+     "workUnits": 4065764,
+     "bestRawDepthMm": 177.998
+    },
+    {
+     "workUnits": 4655348,
+     "bestRawDepthMm": 177.83
+    },
+    {
+     "workUnits": 5268506,
+     "bestRawDepthMm": 177.566
+    },
+    {
+     "workUnits": 5881914,
+     "bestRawDepthMm": 177.236
+    },
+    {
+     "workUnits": 6503081,
+     "bestRawDepthMm": 177.002
+    },
+    {
+     "workUnits": 7098745,
+     "bestRawDepthMm": 176.749
+    },
+    {
+     "workUnits": 7694017,
+     "bestRawDepthMm": 176.475
+    },
+    {
+     "workUnits": 8278082,
+     "bestRawDepthMm": 176.13
+    },
+    {
+     "workUnits": 8869361,
+     "bestRawDepthMm": 175.862
+    },
+    {
+     "workUnits": 9476427,
+     "bestRawDepthMm": 175.666
+    },
+    {
+     "workUnits": 10065483,
+     "bestRawDepthMm": 175.326
+    },
+    {
+     "workUnits": 10678399,
+     "bestRawDepthMm": 175.127
+    },
+    {
+     "workUnits": 11220666,
+     "bestRawDepthMm": 174.867
+    },
+    {
+     "workUnits": 11796507,
+     "bestRawDepthMm": 174.597
+    },
+    {
+     "workUnits": 12344625,
+     "bestRawDepthMm": 174.319
+    },
+    {
+     "workUnits": 12842888,
+     "bestRawDepthMm": 174.058
+    },
+    {
+     "workUnits": 13349692,
+     "bestRawDepthMm": 173.794
+    },
+    {
+     "workUnits": 13891245,
+     "bestRawDepthMm": 173.486
+    },
+    {
+     "workUnits": 14387953,
+     "bestRawDepthMm": 173.24
+    },
+    {
+     "workUnits": 14904664,
+     "bestRawDepthMm": 172.962
+    },
+    {
+     "workUnits": 15515643,
+     "bestRawDepthMm": 172.631
+    },
+    {
+     "workUnits": 15973280,
+     "bestRawDepthMm": 172.415
+    },
+    {
+     "workUnits": 16516009,
+     "bestRawDepthMm": 172.106
+    },
+    {
+     "workUnits": 17004507,
+     "bestRawDepthMm": 171.896
+    },
+    {
+     "workUnits": 17495394,
+     "bestRawDepthMm": 171.596
+    },
+    {
+     "workUnits": 17968323,
+     "bestRawDepthMm": 171.344
+    },
+    {
+     "workUnits": 18382410,
+     "bestRawDepthMm": 171.111
+    },
+    {
+     "workUnits": 18892448,
+     "bestRawDepthMm": 170.832
+    },
+    {
+     "workUnits": 19414852,
+     "bestRawDepthMm": 170.618
+    },
+    {
+     "workUnits": 19891578,
+     "bestRawDepthMm": 170.353
+    },
+    {
+     "workUnits": 20339669,
+     "bestRawDepthMm": 170.053
+    },
+    {
+     "workUnits": 20960733,
+     "bestRawDepthMm": 170.053
+    },
+    {
+     "workUnits": 21453376,
+     "bestRawDepthMm": 169.43
+    },
+    {
+     "workUnits": 21864935,
+     "bestRawDepthMm": 169.338
+    },
+    {
+     "workUnits": 22376940,
+     "bestRawDepthMm": 168.954
+    },
+    {
+     "workUnits": 22802183,
+     "bestRawDepthMm": 168.675
+    },
+    {
+     "workUnits": 23220027,
+     "bestRawDepthMm": 168.415
+    },
+    {
+     "workUnits": 23767797,
+     "bestRawDepthMm": 168.116
+    },
+    {
+     "workUnits": 24300378,
+     "bestRawDepthMm": 167.9
+    },
+    {
+     "workUnits": 25167913,
+     "bestRawDepthMm": 167.9
+    },
+    {
+     "workUnits": 26281980,
+     "bestRawDepthMm": 167.9
+    },
+    {
+     "workUnits": 27607887,
+     "bestRawDepthMm": 167.9
+    },
+    {
+     "workUnits": 28207517,
+     "bestRawDepthMm": 166.748
+    },
+    {
+     "workUnits": 28812588,
+     "bestRawDepthMm": 166.439
+    },
+    {
+     "workUnits": 29219243,
+     "bestRawDepthMm": 166.218
+    },
+    {
+     "workUnits": 29731227,
+     "bestRawDepthMm": 166.043
+    },
+    {
+     "workUnits": 30163764,
+     "bestRawDepthMm": 165.815
+    },
+    {
+     "workUnits": 30764329,
+     "bestRawDepthMm": 165.815
+    },
+    {
+     "workUnits": 31394338,
+     "bestRawDepthMm": 165.815
+    },
+    {
+     "workUnits": 31808911,
+     "bestRawDepthMm": 164.902
+    },
+    {
+     "workUnits": 32206594,
+     "bestRawDepthMm": 164.603
+    },
+    {
+     "workUnits": 32559439,
+     "bestRawDepthMm": 164.334
+    },
+    {
+     "workUnits": 32963947,
+     "bestRawDepthMm": 164.064
+    },
+    {
+     "workUnits": 33379364,
+     "bestRawDepthMm": 164.06
+    }
+   ]
+  },
+  {
+   "seed": 8,
+   "parentRawDepthMm": 178.93200000000002,
+   "controlRawDepthMm": 170.76011257421212,
+   "controlWorkUnits": 21015304,
+   "controlDeltaMm": 8.1718874257879,
+   "firstConfirmedStep": 3,
+   "firstConfirmedRawDepthMm": 178.796,
+   "entryLossMm": -0.1360000000000241,
+   "parentProxyCollisionPairs": 36,
+   "parentProxyBoundaryViolations": 4,
+   "scheduleSteps": 14882,
+   "scheduleFinalWorkUnits": 33415206,
+   "scheduleBestRawDepthMm": 166.666,
+   "scheduleAtControlSpendRawDepthMm": 168.798,
+   "scheduleAtControlSpendDeltaMm": 10.134000000000015,
+   "matchedSpendAdvantageMm": 1.9621125742121137,
+   "curve": [
+    {
+     "workUnits": 7719,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 444818,
+     "bestRawDepthMm": 178.796
+    },
+    {
+     "workUnits": 913632,
+     "bestRawDepthMm": 178.464
+    },
+    {
+     "workUnits": 1447302,
+     "bestRawDepthMm": 178.105
+    },
+    {
+     "workUnits": 2007100,
+     "bestRawDepthMm": 177.938
+    },
+    {
+     "workUnits": 2571310,
+     "bestRawDepthMm": 177.632
+    },
+    {
+     "workUnits": 3114975,
+     "bestRawDepthMm": 177.464
+    },
+    {
+     "workUnits": 3630093,
+     "bestRawDepthMm": 177.196
+    },
+    {
+     "workUnits": 3985442,
+     "bestRawDepthMm": 176.962
+    },
+    {
+     "workUnits": 4544026,
+     "bestRawDepthMm": 176.659
+    },
+    {
+     "workUnits": 5112687,
+     "bestRawDepthMm": 176.432
+    },
+    {
+     "workUnits": 5567575,
+     "bestRawDepthMm": 176.21
+    },
+    {
+     "workUnits": 6042948,
+     "bestRawDepthMm": 175.951
+    },
+    {
+     "workUnits": 6567888,
+     "bestRawDepthMm": 175.691
+    },
+    {
+     "workUnits": 6963375,
+     "bestRawDepthMm": 175.472
+    },
+    {
+     "workUnits": 7499195,
+     "bestRawDepthMm": 175.472
+    },
+    {
+     "workUnits": 8053358,
+     "bestRawDepthMm": 174.935
+    },
+    {
+     "workUnits": 8468669,
+     "bestRawDepthMm": 174.71
+    },
+    {
+     "workUnits": 8961536,
+     "bestRawDepthMm": 174.46
+    },
+    {
+     "workUnits": 9392809,
+     "bestRawDepthMm": 174.2
+    },
+    {
+     "workUnits": 9960352,
+     "bestRawDepthMm": 173.955
+    },
+    {
+     "workUnits": 10472352,
+     "bestRawDepthMm": 173.737
+    },
+    {
+     "workUnits": 10812052,
+     "bestRawDepthMm": 173.466
+    },
+    {
+     "workUnits": 11279444,
+     "bestRawDepthMm": 173.202
+    },
+    {
+     "workUnits": 11817291,
+     "bestRawDepthMm": 172.975
+    },
+    {
+     "workUnits": 12278086,
+     "bestRawDepthMm": 172.721
+    },
+    {
+     "workUnits": 12851882,
+     "bestRawDepthMm": 172.444
+    },
+    {
+     "workUnits": 13381324,
+     "bestRawDepthMm": 172.214
+    },
+    {
+     "workUnits": 13881278,
+     "bestRawDepthMm": 171.978
+    },
+    {
+     "workUnits": 14429646,
+     "bestRawDepthMm": 171.754
+    },
+    {
+     "workUnits": 14870787,
+     "bestRawDepthMm": 171.511
+    },
+    {
+     "workUnits": 15483862,
+     "bestRawDepthMm": 171.382
+    },
+    {
+     "workUnits": 16063686,
+     "bestRawDepthMm": 170.963
+    },
+    {
+     "workUnits": 16608846,
+     "bestRawDepthMm": 170.726
+    },
+    {
+     "workUnits": 17018691,
+     "bestRawDepthMm": 170.556
+    },
+    {
+     "workUnits": 17496103,
+     "bestRawDepthMm": 170.297
+    },
+    {
+     "workUnits": 17952028,
+     "bestRawDepthMm": 170.048
+    },
+    {
+     "workUnits": 18394557,
+     "bestRawDepthMm": 169.923
+    },
+    {
+     "workUnits": 19098179,
+     "bestRawDepthMm": 169.923
+    },
+    {
+     "workUnits": 19757692,
+     "bestRawDepthMm": 169.923
+    },
+    {
+     "workUnits": 20584065,
+     "bestRawDepthMm": 169.032
+    },
+    {
+     "workUnits": 21094888,
+     "bestRawDepthMm": 168.724
+    },
+    {
+     "workUnits": 21567488,
+     "bestRawDepthMm": 168.493
+    },
+    {
+     "workUnits": 22062662,
+     "bestRawDepthMm": 168.31
+    },
+    {
+     "workUnits": 22528734,
+     "bestRawDepthMm": 168.006
+    },
+    {
+     "workUnits": 22916340,
+     "bestRawDepthMm": 167.786
+    },
+    {
+     "workUnits": 23322396,
+     "bestRawDepthMm": 167.549
+    },
+    {
+     "workUnits": 23802224,
+     "bestRawDepthMm": 167.347
+    },
+    {
+     "workUnits": 24344676,
+     "bestRawDepthMm": 167.002
+    },
+    {
+     "workUnits": 24744016,
+     "bestRawDepthMm": 166.789
+    },
+    {
+     "workUnits": 25324438,
+     "bestRawDepthMm": 166.666
+    },
+    {
+     "workUnits": 25972238,
+     "bestRawDepthMm": 166.666
+    },
+    {
+     "workUnits": 26800807,
+     "bestRawDepthMm": 166.666
+    },
+    {
+     "workUnits": 27780381,
+     "bestRawDepthMm": 166.666
+    },
+    {
+     "workUnits": 28487182,
+     "bestRawDepthMm": 166.666
+    },
+    {
+     "workUnits": 29278690,
+     "bestRawDepthMm": 166.666
+    },
+    {
+     "workUnits": 29837789,
+     "bestRawDepthMm": 166.666
+    },
+    {
+     "workUnits": 30594911,
+     "bestRawDepthMm": 166.666
+    },
+    {
+     "workUnits": 31143040,
+     "bestRawDepthMm": 166.666
+    },
+    {
+     "workUnits": 32233276,
+     "bestRawDepthMm": 166.666
+    },
+    {
+     "workUnits": 33413171,
+     "bestRawDepthMm": 166.666
+    }
+   ]
+  },
+  {
+   "seed": 9,
+   "parentRawDepthMm": 174.96558182288433,
+   "controlRawDepthMm": 169.669,
+   "controlWorkUnits": 20292853,
+   "controlDeltaMm": 5.2965818228843204,
+   "firstConfirmedStep": 4,
+   "firstConfirmedRawDepthMm": 175.636,
+   "entryLossMm": 0.6704181771156641,
+   "parentProxyCollisionPairs": 32,
+   "parentProxyBoundaryViolations": 8,
+   "scheduleSteps": 15165,
+   "scheduleFinalWorkUnits": 33417107,
+   "scheduleBestRawDepthMm": 164.127,
+   "scheduleAtControlSpendRawDepthMm": 165.08,
+   "scheduleAtControlSpendDeltaMm": 9.885581822884319,
+   "matchedSpendAdvantageMm": 4.588999999999999,
+   "curve": [
+    {
+     "workUnits": 8213,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 544581,
+     "bestRawDepthMm": 175.349
+    },
+    {
+     "workUnits": 1033212,
+     "bestRawDepthMm": 175.09
+    },
+    {
+     "workUnits": 1611964,
+     "bestRawDepthMm": 174.892
+    },
+    {
+     "workUnits": 2128375,
+     "bestRawDepthMm": 174.603
+    },
+    {
+     "workUnits": 2648833,
+     "bestRawDepthMm": 174.372
+    },
+    {
+     "workUnits": 3144940,
+     "bestRawDepthMm": 174.129
+    },
+    {
+     "workUnits": 3665867,
+     "bestRawDepthMm": 173.828
+    },
+    {
+     "workUnits": 4154709,
+     "bestRawDepthMm": 173.635
+    },
+    {
+     "workUnits": 4675821,
+     "bestRawDepthMm": 173.303
+    },
+    {
+     "workUnits": 5187384,
+     "bestRawDepthMm": 173.041
+    },
+    {
+     "workUnits": 5642260,
+     "bestRawDepthMm": 172.784
+    },
+    {
+     "workUnits": 6156163,
+     "bestRawDepthMm": 172.558
+    },
+    {
+     "workUnits": 6582397,
+     "bestRawDepthMm": 172.38
+    },
+    {
+     "workUnits": 7013947,
+     "bestRawDepthMm": 172.138
+    },
+    {
+     "workUnits": 7499086,
+     "bestRawDepthMm": 171.834
+    },
+    {
+     "workUnits": 8034407,
+     "bestRawDepthMm": 171.624
+    },
+    {
+     "workUnits": 8469343,
+     "bestRawDepthMm": 171.424
+    },
+    {
+     "workUnits": 8859264,
+     "bestRawDepthMm": 171.104
+    },
+    {
+     "workUnits": 9314505,
+     "bestRawDepthMm": 171.003
+    },
+    {
+     "workUnits": 9810179,
+     "bestRawDepthMm": 170.461
+    },
+    {
+     "workUnits": 10337104,
+     "bestRawDepthMm": 170.334
+    },
+    {
+     "workUnits": 10859582,
+     "bestRawDepthMm": 170.124
+    },
+    {
+     "workUnits": 11325025,
+     "bestRawDepthMm": 169.87
+    },
+    {
+     "workUnits": 11885750,
+     "bestRawDepthMm": 169.583
+    },
+    {
+     "workUnits": 12420695,
+     "bestRawDepthMm": 169.346
+    },
+    {
+     "workUnits": 12948439,
+     "bestRawDepthMm": 169.127
+    },
+    {
+     "workUnits": 13417638,
+     "bestRawDepthMm": 168.855
+    },
+    {
+     "workUnits": 13942900,
+     "bestRawDepthMm": 168.589
+    },
+    {
+     "workUnits": 14483229,
+     "bestRawDepthMm": 168.492
+    },
+    {
+     "workUnits": 14956007,
+     "bestRawDepthMm": 168.038
+    },
+    {
+     "workUnits": 15372597,
+     "bestRawDepthMm": 167.838
+    },
+    {
+     "workUnits": 15841208,
+     "bestRawDepthMm": 167.589
+    },
+    {
+     "workUnits": 16394112,
+     "bestRawDepthMm": 167.349
+    },
+    {
+     "workUnits": 16851141,
+     "bestRawDepthMm": 167.076
+    },
+    {
+     "workUnits": 17260085,
+     "bestRawDepthMm": 166.872
+    },
+    {
+     "workUnits": 17588897,
+     "bestRawDepthMm": 166.567
+    },
+    {
+     "workUnits": 18060222,
+     "bestRawDepthMm": 166.382
+    },
+    {
+     "workUnits": 18392571,
+     "bestRawDepthMm": 166.059
+    },
+    {
+     "workUnits": 18757833,
+     "bestRawDepthMm": 165.928
+    },
+    {
+     "workUnits": 19181580,
+     "bestRawDepthMm": 165.655
+    },
+    {
+     "workUnits": 19752549,
+     "bestRawDepthMm": 165.655
+    },
+    {
+     "workUnits": 20308414,
+     "bestRawDepthMm": 165.076
+    },
+    {
+     "workUnits": 20822857,
+     "bestRawDepthMm": 164.815
+    },
+    {
+     "workUnits": 21247184,
+     "bestRawDepthMm": 164.574
+    },
+    {
+     "workUnits": 21648180,
+     "bestRawDepthMm": 164.37
+    },
+    {
+     "workUnits": 21943512,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 22328973,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 22663735,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 23178395,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 23560887,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 24061248,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 24486535,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 24814121,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 25257831,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 25723553,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 27009305,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 28762275,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 30189461,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 31668469,
+     "bestRawDepthMm": 164.127
+    },
+    {
+     "workUnits": 33087730,
+     "bestRawDepthMm": 164.127
+    }
+   ]
+  },
+  {
+   "seed": 10,
+   "parentRawDepthMm": 176.3622237458826,
+   "controlRawDepthMm": 171.544,
+   "controlWorkUnits": 18261241,
+   "controlDeltaMm": 4.818223745882591,
+   "firstConfirmedStep": 3,
+   "firstConfirmedRawDepthMm": 176.825,
+   "entryLossMm": 0.46277625411738654,
+   "parentProxyCollisionPairs": 26,
+   "parentProxyBoundaryViolations": 7,
+   "scheduleSteps": 16229,
+   "scheduleFinalWorkUnits": 33416187,
+   "scheduleBestRawDepthMm": 160.985,
+   "scheduleAtControlSpendRawDepthMm": 168.564,
+   "scheduleAtControlSpendDeltaMm": 7.798223745882609,
+   "matchedSpendAdvantageMm": 2.980000000000018,
+   "curve": [
+    {
+     "workUnits": 5774,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 620314,
+     "bestRawDepthMm": 176.579
+    },
+    {
+     "workUnits": 1247596,
+     "bestRawDepthMm": 176.26
+    },
+    {
+     "workUnits": 1865628,
+     "bestRawDepthMm": 176.138
+    },
+    {
+     "workUnits": 2452658,
+     "bestRawDepthMm": 175.848
+    },
+    {
+     "workUnits": 3002037,
+     "bestRawDepthMm": 175.47
+    },
+    {
+     "workUnits": 3563075,
+     "bestRawDepthMm": 175.31
+    },
+    {
+     "workUnits": 4041797,
+     "bestRawDepthMm": 175.046
+    },
+    {
+     "workUnits": 4558949,
+     "bestRawDepthMm": 174.71
+    },
+    {
+     "workUnits": 5172250,
+     "bestRawDepthMm": 174.523
+    },
+    {
+     "workUnits": 5722058,
+     "bestRawDepthMm": 174.274
+    },
+    {
+     "workUnits": 6319084,
+     "bestRawDepthMm": 173.99
+    },
+    {
+     "workUnits": 6936122,
+     "bestRawDepthMm": 173.649
+    },
+    {
+     "workUnits": 7530674,
+     "bestRawDepthMm": 173.455
+    },
+    {
+     "workUnits": 8120762,
+     "bestRawDepthMm": 173.166
+    },
+    {
+     "workUnits": 8708172,
+     "bestRawDepthMm": 172.901
+    },
+    {
+     "workUnits": 9305226,
+     "bestRawDepthMm": 172.635
+    },
+    {
+     "workUnits": 9905687,
+     "bestRawDepthMm": 172.385
+    },
+    {
+     "workUnits": 10490539,
+     "bestRawDepthMm": 172.09
+    },
+    {
+     "workUnits": 11073034,
+     "bestRawDepthMm": 171.833
+    },
+    {
+     "workUnits": 11657433,
+     "bestRawDepthMm": 171.574
+    },
+    {
+     "workUnits": 12211667,
+     "bestRawDepthMm": 171.37
+    },
+    {
+     "workUnits": 12776807,
+     "bestRawDepthMm": 171.043
+    },
+    {
+     "workUnits": 13286454,
+     "bestRawDepthMm": 170.975
+    },
+    {
+     "workUnits": 13942334,
+     "bestRawDepthMm": 170.496
+    },
+    {
+     "workUnits": 14535050,
+     "bestRawDepthMm": 170.233
+    },
+    {
+     "workUnits": 15145222,
+     "bestRawDepthMm": 169.948
+    },
+    {
+     "workUnits": 15760212,
+     "bestRawDepthMm": 169.675
+    },
+    {
+     "workUnits": 16385715,
+     "bestRawDepthMm": 169.382
+    },
+    {
+     "workUnits": 17000738,
+     "bestRawDepthMm": 169.122
+    },
+    {
+     "workUnits": 17603883,
+     "bestRawDepthMm": 168.854
+    },
+    {
+     "workUnits": 18193321,
+     "bestRawDepthMm": 168.564
+    },
+    {
+     "workUnits": 18769019,
+     "bestRawDepthMm": 168.296
+    },
+    {
+     "workUnits": 19246849,
+     "bestRawDepthMm": 168.071
+    },
+    {
+     "workUnits": 19726402,
+     "bestRawDepthMm": 167.711
+    },
+    {
+     "workUnits": 20223660,
+     "bestRawDepthMm": 167.572
+    },
+    {
+     "workUnits": 20644404,
+     "bestRawDepthMm": 167.248
+    },
+    {
+     "workUnits": 21172990,
+     "bestRawDepthMm": 166.999
+    },
+    {
+     "workUnits": 21736126,
+     "bestRawDepthMm": 166.671
+    },
+    {
+     "workUnits": 22243153,
+     "bestRawDepthMm": 166.401
+    },
+    {
+     "workUnits": 22815764,
+     "bestRawDepthMm": 166.172
+    },
+    {
+     "workUnits": 23290521,
+     "bestRawDepthMm": 165.935
+    },
+    {
+     "workUnits": 24140176,
+     "bestRawDepthMm": 165.935
+    },
+    {
+     "workUnits": 24796512,
+     "bestRawDepthMm": 165.935
+    },
+    {
+     "workUnits": 25399909,
+     "bestRawDepthMm": 165.141
+    },
+    {
+     "workUnits": 25728621,
+     "bestRawDepthMm": 165.141
+    },
+    {
+     "workUnits": 26140506,
+     "bestRawDepthMm": 164.658
+    },
+    {
+     "workUnits": 26677995,
+     "bestRawDepthMm": 164.658
+    },
+    {
+     "workUnits": 27191210,
+     "bestRawDepthMm": 164.062
+    },
+    {
+     "workUnits": 27585020,
+     "bestRawDepthMm": 164.062
+    },
+    {
+     "workUnits": 27900624,
+     "bestRawDepthMm": 164.062
+    },
+    {
+     "workUnits": 28414912,
+     "bestRawDepthMm": 163.116
+    },
+    {
+     "workUnits": 28940041,
+     "bestRawDepthMm": 163.011
+    },
+    {
+     "workUnits": 29466316,
+     "bestRawDepthMm": 162.623
+    },
+    {
+     "workUnits": 30064228,
+     "bestRawDepthMm": 162.408
+    },
+    {
+     "workUnits": 30652562,
+     "bestRawDepthMm": 162.106
+    },
+    {
+     "workUnits": 31208587,
+     "bestRawDepthMm": 161.88
+    },
+    {
+     "workUnits": 31615875,
+     "bestRawDepthMm": 161.666
+    },
+    {
+     "workUnits": 32058054,
+     "bestRawDepthMm": 161.491
+    },
+    {
+     "workUnits": 32546257,
+     "bestRawDepthMm": 161.047
+    },
+    {
+     "workUnits": 33300033,
+     "bestRawDepthMm": 160.985
+    }
+   ]
+  },
+  {
+   "seed": 11,
+   "parentRawDepthMm": 171.6141235046606,
+   "controlRawDepthMm": 170.86465202974364,
+   "controlWorkUnits": 21127353,
+   "controlDeltaMm": 0.7494714749169589,
+   "firstConfirmedStep": 6,
+   "firstConfirmedRawDepthMm": 172.277,
+   "entryLossMm": 0.6628764953393897,
+   "parentProxyCollisionPairs": 30,
+   "parentProxyBoundaryViolations": 11,
+   "scheduleSteps": 11322,
+   "scheduleFinalWorkUnits": 33413948,
+   "scheduleBestRawDepthMm": 164.716,
+   "scheduleAtControlSpendRawDepthMm": 164.716,
+   "scheduleAtControlSpendDeltaMm": 6.898123504660589,
+   "matchedSpendAdvantageMm": 6.14865202974363,
+   "curve": [
+    {
+     "workUnits": 10143,
+     "bestRawDepthMm": null
+    },
+    {
+     "workUnits": 372711,
+     "bestRawDepthMm": 172.117
+    },
+    {
+     "workUnits": 729237,
+     "bestRawDepthMm": 171.97
+    },
+    {
+     "workUnits": 1297516,
+     "bestRawDepthMm": 171.727
+    },
+    {
+     "workUnits": 1729216,
+     "bestRawDepthMm": 171.579
+    },
+    {
+     "workUnits": 2147822,
+     "bestRawDepthMm": 171.382
+    },
+    {
+     "workUnits": 2578710,
+     "bestRawDepthMm": 171.19
+    },
+    {
+     "workUnits": 2996376,
+     "bestRawDepthMm": 170.972
+    },
+    {
+     "workUnits": 3431279,
+     "bestRawDepthMm": 170.806
+    },
+    {
+     "workUnits": 3700098,
+     "bestRawDepthMm": 170.768
+    },
+    {
+     "workUnits": 3997557,
+     "bestRawDepthMm": 170.512
+    },
+    {
+     "workUnits": 4350206,
+     "bestRawDepthMm": 170.269
+    },
+    {
+     "workUnits": 4700595,
+     "bestRawDepthMm": 170.081
+    },
+    {
+     "workUnits": 5109908,
+     "bestRawDepthMm": 169.827
+    },
+    {
+     "workUnits": 5483917,
+     "bestRawDepthMm": 169.698
+    },
+    {
+     "workUnits": 5810171,
+     "bestRawDepthMm": 169.488
+    },
+    {
+     "workUnits": 6110355,
+     "bestRawDepthMm": 169.234
+    },
+    {
+     "workUnits": 6380643,
+     "bestRawDepthMm": 169.234
+    },
+    {
+     "workUnits": 6975396,
+     "bestRawDepthMm": 169.234
+    },
+    {
+     "workUnits": 7685338,
+     "bestRawDepthMm": 169.234
+    },
+    {
+     "workUnits": 8256577,
+     "bestRawDepthMm": 169.234
+    },
+    {
+     "workUnits": 8800050,
+     "bestRawDepthMm": 169.234
+    },
+    {
+     "workUnits": 9200456,
+     "bestRawDepthMm": 169.234
+    },
+    {
+     "workUnits": 9621277,
+     "bestRawDepthMm": 167.884
+    },
+    {
+     "workUnits": 10034309,
+     "bestRawDepthMm": 167.739
+    },
+    {
+     "workUnits": 10465637,
+     "bestRawDepthMm": 167.48
+    },
+    {
+     "workUnits": 10896745,
+     "bestRawDepthMm": 167.442
+    },
+    {
+     "workUnits": 11310747,
+     "bestRawDepthMm": 167.211
+    },
+    {
+     "workUnits": 11705101,
+     "bestRawDepthMm": 167.1
+    },
+    {
+     "workUnits": 12071882,
+     "bestRawDepthMm": 166.9
+    },
+    {
+     "workUnits": 12452392,
+     "bestRawDepthMm": 166.705
+    },
+    {
+     "workUnits": 12841200,
+     "bestRawDepthMm": 166.63
+    },
+    {
+     "workUnits": 13228588,
+     "bestRawDepthMm": 166.452
+    },
+    {
+     "workUnits": 13540737,
+     "bestRawDepthMm": 166.452
+    },
+    {
+     "workUnits": 13914925,
+     "bestRawDepthMm": 165.97
+    },
+    {
+     "workUnits": 14296268,
+     "bestRawDepthMm": 165.774
+    },
+    {
+     "workUnits": 14656160,
+     "bestRawDepthMm": 165.542
+    },
+    {
+     "workUnits": 15036667,
+     "bestRawDepthMm": 165.389
+    },
+    {
+     "workUnits": 15368207,
+     "bestRawDepthMm": 165.209
+    },
+    {
+     "workUnits": 15673266,
+     "bestRawDepthMm": 165.144
+    },
+    {
+     "workUnits": 15938139,
+     "bestRawDepthMm": 164.822
+    },
+    {
+     "workUnits": 16329281,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 16758503,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 17316291,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 18109866,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 19074979,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 19829147,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 20619968,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 22092748,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 23584156,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 24265673,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 25148468,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 26513068,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 27485802,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 28398392,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 29146258,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 30136705,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 31087288,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 31931992,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 32736970,
+     "bestRawDepthMm": 164.716
+    },
+    {
+     "workUnits": 33257459,
+     "bestRawDepthMm": 164.716
+    }
+   ]
+  }
+ ]
+}

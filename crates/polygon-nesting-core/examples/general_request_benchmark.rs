@@ -156,6 +156,86 @@ fn search_profile_json(snapshot: &ProfileSnapshot) -> serde_json::Value {
     })
 }
 
+/// The highest persistent-vacancy mode this build can run.
+///
+/// A `cfg` pair rather than a runtime check: mode 34 is the compression
+/// schedule, and a build without it must refuse the mode exactly as it did
+/// before the mode existed, with the same message and the same bound.
+#[cfg(feature = "compression-schedule")]
+const MAX_PERSISTENT_VACANCY_MODE: usize = 34;
+#[cfg(not(feature = "compression-schedule"))]
+const MAX_PERSISTENT_VACANCY_MODE: usize = 33;
+
+/// The compression schedule's knobs, parsed from the environment.
+///
+/// Read from the environment for exactly the reason profiling is: the
+/// positional argument list is a pinned contract that replay drivers depend
+/// on, and a new knob may not change what a replayed command means. Mode 34's
+/// *bound* is the ordinary positional target-depth slot (argument 45), the same
+/// slot mode 26 reads, so the two modes are asked for the same drop by the same
+/// argument; everything here is a budget or a cadence.
+///
+///   `POLYGON_NESTING_COMPRESSION_SCHEDULE="sweeps=6,confirm=4,rollback=32,\
+///    work=33413789,past=0,repair=micro"`
+///
+/// Absent, the schedule runs `CompressionScheduleSettings::default()`: the
+/// anatomy's design point for the step, the cadence and the sweeps, and this
+/// round's own measurement for the rollback, which defaults to off.
+#[cfg(feature = "compression-schedule")]
+fn compression_schedule_settings(
+) -> Result<polygon_nesting_core::search::compression_schedule::CompressionScheduleSettings, String>
+{
+    use polygon_nesting_core::search::compression_schedule::{
+        CompressionRepairPolicy, CompressionScheduleSettings,
+    };
+    let mut settings = CompressionScheduleSettings::default();
+    let Ok(spec) = env::var("POLYGON_NESTING_COMPRESSION_SCHEDULE") else {
+        return Ok(settings);
+    };
+    for item in spec.split(',').filter(|item| !item.is_empty()) {
+        let (key, value) = item
+            .split_once('=')
+            .ok_or_else(|| format!("compression schedule spec entry `{item}` is not key=value"))?;
+        match key {
+            "sweeps" => {
+                settings.sweeps_per_step = value
+                    .parse()
+                    .map_err(|_| format!("compression schedule sweeps: `{value}`"))?
+            }
+            "confirm" => {
+                settings.confirm_every = value
+                    .parse()
+                    .map_err(|_| format!("compression schedule confirm: `{value}`"))?
+            }
+            "rollback" => {
+                settings.rollback_after_steps = value
+                    .parse()
+                    .map_err(|_| format!("compression schedule rollback: `{value}`"))?
+            }
+            "work" => {
+                let units: usize = value
+                    .parse()
+                    .map_err(|_| format!("compression schedule work: `{value}`"))?;
+                settings.work_cap_queries = (units > 0).then_some(units);
+            }
+            "past" => settings.continue_past_bound = value != "0",
+            "repair" => {
+                settings.repair_policy = match value {
+                    "micro" => CompressionRepairPolicy::MicroLegalizeOnReject,
+                    "sweeps" => CompressionRepairPolicy::SweepsOnly,
+                    other => {
+                        return Err(format!(
+                            "compression schedule repair policy must be `micro` or `sweeps`, not `{other}`"
+                        ))
+                    }
+                }
+            }
+            other => return Err(format!("unknown compression schedule key `{other}`")),
+        }
+    }
+    Ok(settings)
+}
+
 /// Whether the harness should record a profile.
 ///
 /// This is read from the environment rather than from a CLI slot on purpose:
@@ -251,8 +331,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("exact pair terminal diagnostics have been retired; mode must be 0".into());
     }
     let persistent_vacancy_mode = parse_optional(&mut arguments, 0)?;
-    if persistent_vacancy_mode > 33 {
-        return Err("persistent vacancy mode must be between 0 and 33".into());
+    if persistent_vacancy_mode > MAX_PERSISTENT_VACANCY_MODE {
+        return Err(format!(
+            "persistent vacancy mode must be between 0 and {MAX_PERSISTENT_VACANCY_MODE}"
+        )
+        .into());
     }
     // An empty string means "no pinned parent", which is what a from-request
     // run needs: the deep operators then descend from the coupled arm this
@@ -348,6 +431,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if runs == 0 || arguments.next().is_some() {
         return Err("runs must be positive and no extra arguments are accepted".into());
     }
+    #[cfg(feature = "compression-schedule")]
+    let compression_schedule_armed = compression_schedule_settings()?;
     // The relaxed configuration, assembled once. It used to be built inside the
     // measured closure; hoisting it changes no field and no order, and it is
     // what lets the portfolio coordinator run its protected mode-0 phase under
@@ -387,6 +472,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         relaxed_settings.persistent_vacancy_mode = persistent_vacancy_mode;
         relaxed_settings.persistent_vacancy_target_depth_mm = persistent_vacancy_target_depth_mm;
         relaxed_settings.persistent_vacancy_allow_unpinned_parent = unpinned_vacancy_parent_armed;
+        // Armed only for the mode that reads it, so every other invocation of
+        // a schedule-capable build is the invocation it was before.
+        #[cfg(feature = "compression-schedule")]
+        {
+            relaxed_settings.compression_schedule =
+                (persistent_vacancy_mode == 34).then_some(compression_schedule_armed);
+        }
         relaxed_settings
     };
     let portfolio_settings = portfolio_spec

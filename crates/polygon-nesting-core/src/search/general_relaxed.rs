@@ -34,6 +34,11 @@ use crate::search::general_micro_legalization::{
 use crate::search::kernel::{
     ExplorationKernel, KernelPose, KernelProbes, LegacyKernel, PairRow, PosedShape, LEGACY,
 };
+#[cfg(feature = "compression-schedule")]
+use crate::search::compression_schedule::{
+    CompressionRepairPolicy, CompressionSchedule, CompressionScheduleSettings,
+    GeneralCompressionScheduleDiagnostics, GeneralCompressionScheduleStepRow,
+};
 #[cfg(feature = "shadow-rescore")]
 use crate::search::shadow_rescore;
 // The added contract-validity and raw-depth reporting is reachable only through
@@ -166,6 +171,11 @@ const MICRO_LEGALIZATION_SEED_DOMAIN: u64 = 0x4D49_4352_4F4C_3237;
 // explicit depth bound, exactly the way mode 27 and modes 28/29 pair up.
 #[cfg(feature = "jagua-experimental")]
 const GLOBAL_LEGALIZATION_SEED_DOMAIN: u64 = 0x474C_4F42_414C_3330;
+// Mode 34 is the compression schedule: the same clamp mode 26 buys by
+// rebuilding a whole pipeline per rung, bought instead one canonical grid unit
+// at a time inside a single lane's sweeps.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+const COMPRESSION_SCHEDULE_SEED_DOMAIN: u64 = 0x434F_4D50_5343_4834;
 // The four repair tiers a mode-26 rung may publish through, reported per rung
 // so a ladder table can say which mechanism reached which residue. Tier one is
 // mode 27's translation-only projection; tier two is mode 28's
@@ -413,6 +423,18 @@ pub struct GeneralRelaxedSettings {
     /// `None` - the default - runs the mode's own cycle bound. A value larger
     /// than that bound is clamped to it, so this can only ever shorten a run.
     pub alternation_max_cycles: Option<usize>,
+    /// Arms the lane-owned compression schedule.
+    ///
+    /// `None` - the default, and what every existing caller constructs -
+    /// leaves `move_sweep` reading `state.strip_depth_mm` exactly as it does
+    /// today. `Some` makes the lane advance a depth clock at every sweep entry
+    /// instead, which is a trajectory change and must be gated on quality.
+    ///
+    /// Compiled only under `compression-schedule`: with the feature off the
+    /// field does not exist, so no caller can name it and no build carries a
+    /// branch on it. See [`crate::search::compression_schedule`].
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule: Option<crate::search::compression_schedule::CompressionScheduleSettings>,
 }
 
 impl GeneralRelaxedSettings {
@@ -440,6 +462,8 @@ impl GeneralRelaxedSettings {
             construction_restart_window: None,
             construction_void_cell_divisor: None,
             alternation_max_cycles: None,
+            #[cfg(feature = "compression-schedule")]
+            compression_schedule: None,
         }
     }
 
@@ -648,6 +672,13 @@ pub struct GeneralPersistentVacancyDiagnostics {
     /// requested depth bound (31).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub global_legalization: Option<GeneralGlobalLegalizationDiagnostics>,
+    /// Mode 34: the lane-owned compression schedule's own report.
+    ///
+    /// Compiled only under `compression-schedule`, so a default build's
+    /// document has neither the field nor a `null` where it would be.
+    #[cfg(feature = "compression-schedule")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub compression_schedule: Option<GeneralCompressionScheduleDiagnostics>,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
 }
@@ -3368,6 +3399,20 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
     hazard_catalog: Option<Arc<JaguaHazardCatalog>>,
     dynamic_query_limit: Option<usize>,
     refine_rotation: bool,
+    /// The lane's depth clock, when one is armed.
+    ///
+    /// This is the missing piece (a) the mode-26 anatomy identified:
+    /// `RelaxedState.strip_depth_mm` is written in exactly five non-test
+    /// places and every one of them is a *whole-pipeline* decision, so nothing
+    /// owned the depth per sweep. This does. It is a lane field rather than a
+    /// state field on purpose - a state can be cloned, projected and restored
+    /// by paths that predate the schedule, and the floor has to survive all of
+    /// them.
+    ///
+    /// Compiled out entirely when `compression-schedule` is off, so the
+    /// default build has neither the field nor the branch that reads it.
+    #[cfg(feature = "compression-schedule")]
+    compression: Option<CompressionSchedule>,
 }
 
 type SurrogateKey = (usize, i64, bool);
@@ -4444,6 +4489,14 @@ pub(super) fn dispatch_persistent_vacancy_mode(
             parent_source,
         ),
         27 => run_micro_legalization_probe(pieces, fast_settings, effective_parent, parent_source),
+        #[cfg(feature = "compression-schedule")]
+        34 => run_compression_schedule(
+            pieces,
+            fast_settings,
+            relaxed_settings,
+            effective_parent,
+            parent_source,
+        ),
         // Modes 32 and 33 are modes 28 and 29 with the
         // orientation-perturbation candidate stream armed; nothing
         // else about the two pipelines differs, which is why they
@@ -5234,6 +5287,396 @@ fn run_ladder_compression(
     diagnostics.final_placements = coupled_placement_diagnostics(&published_placements);
     diagnostics.ladder_compression = Some(ladder);
     diagnostics
+}
+
+/// Mode 34: the compression schedule.
+///
+/// The mode-26 ladder and this mode ask for the same thing and pay for it
+/// differently. A mode-26 rung hands the whole mode-0 pipeline a sheet whose
+/// long axis *is* the rung's bound and lets it legalize from scratch: measured
+/// at 32.25M candidate queries and 4.7-13.8 s per rung, to move one bound by
+/// 0.159 mm, with 75.5% of the arm wall lost to a rollback comparison the rung
+/// inherits from the coupled separator. This mode keeps one lane alive and
+/// lowers the clamp underneath it, one canonical grid unit at a time, running
+/// the lane's own violating-pair queue as the repair between steps.
+///
+/// The five things it adds to the relaxed lane are exactly the five the rung
+/// anatomy found missing:
+///
+/// * **(a) a schedule that owns the depth.** [`CompressionSchedule`] lives on
+///   the lane, and `move_sweep` writes its `depth_mm()` into the state at every
+///   sweep entry. That one write reaches all eleven `boundary_penalty` call
+///   sites and every candidate generator's sampling box, because all of them
+///   already read the same scalar.
+/// * **(b) a monotone floor in the proxy tier.** The schedule's `floor_mm` only
+///   ever decreases and lives on the lane, not on the state, so no rollback, no
+///   epoch acceptance and no rescore can restore a looser depth - the memory
+///   `boundary_penalty` does not have.
+/// * **(c) a deepest-confirmed slot.** `confirmed` below is the incumbent and
+///   it is only ever written by an accepted exact confirmation; `state` is the
+///   frontier and may be infeasible for as long as the schedule likes. That
+///   asymmetry is the one property Sol's review asks the port to preserve.
+/// * **(d) a repair ordered from the queue that already exists.** A step that
+///   makes `k` pieces protrude puts exactly those `k` pieces into the next
+///   sweep's active set, through `PairTracker::collision_pairs` and
+///   `piece_is_active`, with no new selection logic. When a confirmation is
+///   nonetheless refused, one `micro_legalize` pass - the only repair tier
+///   cheap enough for this loop at 0.83 ms - is offered the layout.
+/// * **(e) a rollback contract that survives a moving depth.** It does not
+///   inherit the coupled separator's rollback rescore at all; see
+///   [`CompressionSchedule`]'s own note for why, and what replaces it.
+///
+/// Publication is the same contract mode 26 uses: the deepest exact-valid
+/// layout seen over the whole run wins, with the parent itself as the floor, so
+/// this mode can never publish something worse than its parent. Every candidate
+/// is validated against the *real* request; the schedule's clamp is a proxy-tier
+/// scalar and never touches `fast_settings.sheet_long_axis_mm`.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+fn run_compression_schedule(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    parent: &GeneralCoupledSeparatorArmDiagnostics,
+    parent_source: Option<String>,
+) -> GeneralPersistentVacancyDiagnostics {
+    let mut diagnostics = GeneralPersistentVacancyDiagnostics {
+        mode: 34,
+        seed_domain: COMPRESSION_SCHEDULE_SEED_DOMAIN,
+        parent_source,
+        ..GeneralPersistentVacancyDiagnostics::default()
+    };
+    let Some(final_bound_mm) = relaxed_settings.persistent_vacancy_target_depth_mm else {
+        diagnostics.failure_reason =
+            Some("persistent vacancy mode 34 requires an explicit final bound".to_owned());
+        return diagnostics;
+    };
+    if !final_bound_mm.is_finite() || final_bound_mm <= 0.0 {
+        diagnostics.failure_reason = Some(
+            "persistent vacancy mode 34 final bound must be a positive finite value".to_owned(),
+        );
+        return diagnostics;
+    }
+    diagnostics.target_depth_mm = final_bound_mm;
+    if pieces.is_empty() {
+        diagnostics.failure_reason =
+            Some("compression schedule requires at least one piece".to_owned());
+        return diagnostics;
+    }
+    if parent.final_placements.len() != pieces.len() {
+        diagnostics.failure_reason =
+            Some("compression schedule requires a complete parent layout".to_owned());
+        return diagnostics;
+    }
+    let Some(schedule_settings) = relaxed_settings.compression_schedule else {
+        diagnostics.failure_reason =
+            Some("persistent vacancy mode 34 requires an armed compression schedule".to_owned());
+        return diagnostics;
+    };
+
+    let parent_placements = fast_placements_from_coupled_diagnostics(&parent.final_placements);
+    diagnostics.parent_fingerprint = Some(coupled_fast_placement_fingerprint(&parent_placements));
+    diagnostics.initial_state_fingerprint = diagnostics.parent_fingerprint.clone();
+    if let Err(error) = validate_and_measure_placements(pieces, &parent_placements, fast_settings) {
+        diagnostics.failure_reason = Some(format!("compression schedule parent validation: {error}"));
+        return diagnostics;
+    }
+    let parent_depth_mm =
+        match coupled_independent_source_depth(pieces, &parent_placements, fast_settings) {
+            Ok(depth) => depth,
+            Err(error) => {
+                diagnostics.failure_reason = Some(format!("compression schedule parent depth: {error}"));
+                return diagnostics;
+            }
+        };
+    diagnostics.parent_independent_depth_mm = Some(parent_depth_mm);
+    if grid_key(final_bound_mm) >= grid_key(parent_depth_mm) {
+        diagnostics.failure_reason =
+            Some("persistent vacancy mode 34 final bound must be below the parent depth".to_owned());
+        return diagnostics;
+    }
+    diagnostics.attempted = true;
+
+    match drive_compression_schedule(
+        pieces,
+        fast_settings,
+        relaxed_settings,
+        schedule_settings,
+        &parent_placements,
+        parent_depth_mm,
+        parent_depth_mm - final_bound_mm,
+    ) {
+        Ok((published_placements, published_depth_mm, report)) => {
+            diagnostics.complete_states = 1;
+            diagnostics.exact_valid = true;
+            diagnostics.independent_depth_mm = Some(published_depth_mm);
+            diagnostics.final_placement_fingerprint =
+                Some(coupled_fast_placement_fingerprint(&published_placements));
+            diagnostics.final_placements = coupled_placement_diagnostics(&published_placements);
+            diagnostics.compression_schedule = Some(report);
+        }
+        Err(error) => {
+            diagnostics.failure_reason = Some(format!("compression schedule: {error}"));
+        }
+    }
+    diagnostics
+}
+
+/// The schedule's driver loop: step, repair, confirm.
+///
+/// Returns the deepest exact-valid layout it reached with its raw source depth,
+/// plus the schedule's report. The parent is the floor of both, so the worst
+/// this can return is the parent unchanged.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+#[allow(clippy::type_complexity)]
+fn drive_compression_schedule(
+    pieces: &[GeneralFastPiece<'_>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    schedule_settings: CompressionScheduleSettings,
+    parent_placements: &[GeneralFastPlacement],
+    parent_depth_mm: f64,
+    requested_drop_mm: f64,
+) -> Result<
+    (
+        Vec<GeneralFastPlacement>,
+        f64,
+        GeneralCompressionScheduleDiagnostics,
+    ),
+    GeneralFastError,
+> {
+    let incumbent = general_fast_result_seed(parent_placements.to_vec(), parent_depth_mm);
+    let catalog_mode = if relaxed_settings.pressure_model
+        == GeneralRelaxedPressureModel::DirectionalPenetration
+    {
+        SurrogateCatalogMode::CurrentAssignment
+    } else if relaxed_settings.collision_backend == GeneralRelaxedCollisionBackend::RollbackTriangle
+        || matches!(
+            relaxed_settings.pressure_model,
+            GeneralRelaxedPressureModel::StructuredTrianglePoles
+        )
+    {
+        SurrogateCatalogMode::StructuredGrid
+    } else {
+        SurrogateCatalogMode::ZeroDegreeOnly
+    };
+    let (catalog, _) =
+        build_surrogate_catalog(pieces, fast_settings, catalog_mode, Some(&incumbent))?;
+    let mut state = initialize_complete_state(
+        pieces,
+        fast_settings,
+        relaxed_settings.collision_backend,
+        relaxed_settings.angle_seed_policy,
+        relaxed_settings.pressure_model,
+        &incumbent,
+    )?;
+    let mut search = LegacyLaneSearch::new(
+        pieces,
+        fast_settings,
+        relaxed_settings,
+        derive_seed(
+            relaxed_settings.seed,
+            0,
+            COMPRESSION_SCHEDULE_SEED_DOMAIN as usize,
+        ),
+        catalog,
+    );
+    // The schedule walks the *strip* depth, which bounds the collision
+    // polygons; the bound the caller supplied is a *source* depth, which
+    // bounds the material. The two differ by the search envelope's expansion,
+    // a constant on this request, so the schedule is given the same **drop**
+    // rather than the same absolute number - which is what makes it a matched
+    // arm against a mode-26 ladder asked for the same drop - and it starts at
+    // the clamp the parent already occupies rather than at the number the
+    // parent reports. See [`LaneSearch::tight_strip_depth`].
+    let start_depth_mm = search.tight_strip_depth(&state)?;
+    state.strip_depth_mm = start_depth_mm;
+    let inset_mm = collision_sheet_inset_mm(fast_settings);
+    let mut schedule = CompressionSchedule::new(
+        schedule_settings,
+        start_depth_mm,
+        start_depth_mm - requested_drop_mm,
+        inset_mm * 2.0,
+    );
+    // What one whole-layout validation costs the exact tier, so the schedule
+    // can charge itself in the portfolio's currency without a counter.
+    schedule.set_exact_pairs_per_confirmation(pieces.len() * pieces.len().saturating_sub(1) / 2);
+    let steps_planned = schedule.steps_planned();
+    let sweeps_per_step = schedule.sweeps_per_step();
+    let repair_policy = schedule.repair_policy();
+    let mut score = search.score_state(&state)?;
+    // The proxy tier's opinion of the parent, recorded before anything moves.
+    let parent_boundary_violations = score.boundary_violations;
+    let parent_collision_pairs = score.collision_pairs.len();
+    let parent_proxy_feasible = score.feasible();
+
+    // The incumbent half of the asymmetry. It starts at the parent, so the
+    // schedule's floor is the parent by construction.
+    let mut confirmed_state = state.clone();
+    let mut published_placements = parent_placements.to_vec();
+    let mut published_depth_mm = parent_depth_mm;
+
+    let mut rows = Vec::with_capacity(steps_planned.min(4_096));
+    let mut confirmation_ms = 0.0;
+    let mut repair_ms = 0.0;
+    let mut global_sweep = 0usize;
+
+    let unbounded_tail =
+        schedule_settings.continue_past_bound && schedule_settings.work_cap_queries.is_some();
+    while schedule.steps_taken() < steps_planned.max(1) || unbounded_tail {
+        if !schedule.may_step(search.counters.surrogate_evaluations) {
+            break;
+        }
+        let step = schedule.steps_taken();
+        let queries_before = search.counters.surrogate_evaluations;
+        schedule.step_down();
+        // The step, taken here rather than left to the first sweep, so that the
+        // residue below is the residue the *step* made rather than what one
+        // sweep of repair left of it. `move_sweep` performs the same write, so
+        // its schedule check finds the depth already in place and does nothing
+        // - the write stays in the sweep because any other caller of a
+        // schedule-armed lane needs it there.
+        state.strip_depth_mm = schedule.depth_mm();
+        search.refresh_boundary_rows(&state, &mut score)?;
+        let before_violations = score.boundary_violations;
+        let before_pairs = score.collision_pairs.len();
+        let before_loss = score.boundary_loss;
+        search.compression = Some(schedule);
+
+        let repair_started = Instant::now();
+        let mut sweeps_run = 0usize;
+        for _ in 0..sweeps_per_step.max(1) {
+            if score.feasible() {
+                break;
+            }
+            search.move_sweep(&mut state, &mut score, global_sweep)?;
+            global_sweep += 1;
+            sweeps_run += 1;
+            if score.feasible() {
+                break;
+            }
+            update_weights(&mut search.weights, &score.collision_pairs);
+            refresh_weighted_loss(&mut score, &search.weights);
+        }
+        repair_ms += repair_started.elapsed().as_secs_f64() * 1_000.0;
+        schedule = search
+            .compression
+            .take()
+            .expect("the lane keeps the schedule it was handed");
+
+        let mut row = GeneralCompressionScheduleStepRow {
+            step,
+            depth_mm: schedule.depth_mm(),
+            boundary_violations_before: before_violations,
+            collision_pairs_before: before_pairs,
+            boundary_loss_before: before_loss,
+            boundary_violations_after: score.boundary_violations,
+            collision_pairs_after: score.collision_pairs.len(),
+            boundary_loss_after: score.boundary_loss,
+            sweeps_run,
+            candidate_queries: search
+                .counters
+                .surrogate_evaluations
+                .saturating_sub(queries_before),
+            proxy_feasible: score.feasible(),
+            ..GeneralCompressionScheduleStepRow::default()
+        };
+
+        if schedule.due_for_confirmation(score.feasible()) {
+            schedule.note_confirmation_attempt();
+            let started = Instant::now();
+            let placements = to_fast_placements(&state, pieces);
+            let mut accepted = None;
+            // Whether it was the *frontier itself* the validator accepted, as
+            // opposed to something the repair pass made out of it. Only the
+            // former may move the floor: the deepest-confirmed slot has to hold
+            // a layout that is exact-valid *and* is the layout the lane is
+            // holding, or a rollback would restore an infeasible state at a
+            // depth the schedule believes was confirmed.
+            let mut frontier_confirmed = false;
+            match validate_and_measure_placements(pieces, &placements, fast_settings) {
+                Ok(_) => {
+                    accepted = Some(placements.clone());
+                    frontier_confirmed = true;
+                }
+                Err(_) => {
+                    schedule.note_refused();
+                    row.confirmation_refused = true;
+                    if repair_policy == CompressionRepairPolicy::MicroLegalizeOnReject {
+                        let (_, repaired) = micro_legalize(pieces, &placements, fast_settings);
+                        schedule.note_micro_legalization(repaired.is_some());
+                        if let Some(repaired) = repaired {
+                            row.micro_legalized = true;
+                            accepted = Some(repaired);
+                        }
+                    }
+                }
+            }
+            if let Some(accepted) = accepted {
+                // The confirmation's own measurement, on the untouched source
+                // rings: the only number this mode publishes on.
+                if let Ok(raw_depth_mm) =
+                    coupled_independent_source_depth(pieces, &accepted, fast_settings)
+                {
+                    row.raw_depth_mm = Some(raw_depth_mm);
+                    if frontier_confirmed {
+                        schedule.note_confirmed();
+                        row.confirmed = true;
+                        confirmed_state = state.clone();
+                    }
+                    if grid_key(raw_depth_mm) < grid_key(published_depth_mm) {
+                        published_depth_mm = raw_depth_mm;
+                        published_placements = accepted;
+                    }
+                }
+            }
+            confirmation_ms += started.elapsed().as_secs_f64() * 1_000.0;
+        }
+
+        if schedule.due_for_rollback() {
+            // Both halves of the snapshot, restored in the same statement. The
+            // depth the schedule returns to is its monotone floor, which is the
+            // depth `confirmed_state` was confirmed at.
+            schedule.rollback_to_floor();
+            state = confirmed_state.clone();
+            state.strip_depth_mm = schedule.depth_mm();
+            search.weights.clear();
+            score = search.score_state(&state)?;
+            row.rolled_back = true;
+        }
+
+        rows.push(row);
+    }
+
+    // The last state the frontier reached never gets a scheduled confirmation
+    // if the run ended between cadences, and it is the deepest one there is.
+    if score.feasible() {
+        let started = Instant::now();
+        let placements = to_fast_placements(&state, pieces);
+        if validate_and_measure_placements(pieces, &placements, fast_settings).is_ok() {
+            if let Ok(raw_depth_mm) =
+                coupled_independent_source_depth(pieces, &placements, fast_settings)
+            {
+                schedule.note_confirmation_attempt();
+                schedule.note_confirmed();
+                if grid_key(raw_depth_mm) < grid_key(published_depth_mm) {
+                    published_depth_mm = raw_depth_mm;
+                    published_placements = placements;
+                }
+            }
+        }
+        confirmation_ms += started.elapsed().as_secs_f64() * 1_000.0;
+    }
+
+    schedule.may_step(search.counters.surrogate_evaluations);
+    let mut report = schedule.report();
+    report.start_depth_mm = start_depth_mm;
+    report.parent_boundary_violations = parent_boundary_violations;
+    report.parent_collision_pairs = parent_collision_pairs;
+    report.parent_proxy_feasible = parent_proxy_feasible;
+    report.confirmation_ms = confirmation_ms;
+    report.repair_ms = repair_ms;
+    report.steps = rows;
+    Ok((published_placements, published_depth_mm, report))
 }
 
 /// Mode 27: the standalone micro-legalization probe.
@@ -10306,6 +10749,8 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             hazard_catalog: None,
             dynamic_query_limit: None,
             refine_rotation: false,
+            #[cfg(feature = "compression-schedule")]
+            compression: None,
         }
     }
 
@@ -11100,6 +11545,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         sweep: usize,
     ) -> Result<(), GeneralFastError> {
         let _span = profiling::span(Phase::MoveSweep);
+        self.apply_compression_schedule(state, score)?;
         if !score.feasible() {
             let mut forced = BTreeSet::new();
             let mut active = score
@@ -11199,6 +11645,125 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 self.audit_incremental_score(state, score, input_index, &piece_index)?;
             }
         }
+        Ok(())
+    }
+
+    /// Writes the lane's scheduled depth into the state, and brings the
+    /// tracker's boundary rows onto it.
+    ///
+    /// This is the whole of the depth schedule's cost inside a sweep, and it is
+    /// what the mode-26 anatomy priced: **one `f64` write per sweep and zero
+    /// additional geometry.** `boundary_penalty` already takes the depth as a
+    /// parameter at all eleven of its call sites and every one of them passes
+    /// `state.strip_depth_mm`, so substituting the schedule's depth *into that
+    /// scalar* reaches all eleven - the penalty itself, and the sampling boxes
+    /// `random_candidate`, `random_directional_candidate`,
+    /// `directional_inner_fit` and `repair_contact_candidates` derive from
+    /// `strip_depth_mm - inset - local.max_y`.
+    ///
+    /// The refresh is the part that is *not* free, and it is bounded: the
+    /// tracker's boundary rows were measured against the old depth, so a
+    /// changed depth invalidates exactly `n` of them and nothing else. The pair
+    /// rows are untouched - a pair's penetration does not depend on the sheet -
+    /// so this is `n` calls at a measured 84.9 ns, about 5 µs for 61 pieces,
+    /// against the 2,555 candidate queries an m26-class sweep costs. It runs
+    /// only when the depth actually moved, which is once per *step* rather than
+    /// once per sweep.
+    ///
+    /// Without it the tracker would report the old depth's feasibility and the
+    /// sweep below would return immediately, which is the silent failure this
+    /// function exists to prevent.
+    #[cfg(feature = "compression-schedule")]
+    fn apply_compression_schedule(
+        &mut self,
+        state: &mut RelaxedState,
+        score: &mut PairTracker,
+    ) -> Result<(), GeneralFastError> {
+        let Some(schedule) = self.compression.as_mut() else {
+            return Ok(());
+        };
+        schedule.note_sweep();
+        let depth_mm = schedule.depth_mm();
+        if depth_mm == state.strip_depth_mm {
+            return Ok(());
+        }
+        state.strip_depth_mm = depth_mm;
+        self.refresh_boundary_rows(state, score)
+    }
+
+    #[cfg(not(feature = "compression-schedule"))]
+    #[inline(always)]
+    fn apply_compression_schedule(
+        &mut self,
+        _state: &mut RelaxedState,
+        _score: &mut PairTracker,
+    ) -> Result<(), GeneralFastError> {
+        Ok(())
+    }
+
+    /// The tightest strip depth this state occupies without a single boundary
+    /// violation.
+    ///
+    /// The schedule has to start at the frontier the layout *actually* sits on,
+    /// and that is not the layout's reported depth. A reported depth measures
+    /// the material; `boundary_penalty` measures the **collision** polygon,
+    /// which carries `collision_expansion_mm` - half the pair clearance, the
+    /// safety margin and the search-offset allowance - and is compared against
+    /// `strip_depth - inset`. Seeding the schedule with the material depth
+    /// therefore over-clamps the very first step by the whole envelope
+    /// (measured on the 159.079 parent: 12 protruding pieces and a boundary
+    /// loss of 1.0e4 at what should have been a one-micron perturbation), and
+    /// the schedule spends its budget chasing a residue that was never a
+    /// residue of *its* step.
+    ///
+    /// This is the same quantity `boundary_penalty` would drive to zero, read
+    /// directly off the bounds it reads: `max_y + inset` over the layout. It
+    /// costs one `placement_bounds` call per piece.
+    #[cfg(feature = "compression-schedule")]
+    fn tight_strip_depth(&mut self, state: &RelaxedState) -> Result<f64, GeneralFastError> {
+        let inset = collision_sheet_inset_mm(self.fast_settings);
+        let mut deepest = f64::NEG_INFINITY;
+        for index in 0..state.placements.len() {
+            let bounds = self.placement_bounds(&state.placements[index])?;
+            deepest = deepest.max(bounds.max_y);
+        }
+        Ok(if deepest.is_finite() {
+            deepest + inset
+        } else {
+            state.strip_depth_mm
+        })
+    }
+
+    /// Re-measures every piece's boundary row against the state's current
+    /// strip depth, leaving the pair rows alone.
+    ///
+    /// Compiled only with the schedule, because it is the only thing that
+    /// moves a depth under a live tracker.
+    #[cfg(feature = "compression-schedule")]
+    fn refresh_boundary_rows(
+        &mut self,
+        state: &RelaxedState,
+        score: &mut PairTracker,
+    ) -> Result<(), GeneralFastError> {
+        let depth_mm = state.strip_depth_mm;
+        let mut violations = 0usize;
+        let mut loss = 0.0;
+        for index in 0..state.placements.len() {
+            let (piece_violations, piece_loss) =
+                self.boundary_penalty(&state.placements[index], depth_mm)?;
+            score.replace_boundary(
+                index,
+                BoundaryEntry {
+                    violations: piece_violations,
+                    raw_loss: piece_loss,
+                },
+            );
+            violations = violations.saturating_add(piece_violations);
+            loss += piece_loss;
+        }
+        score.boundary_violations = violations;
+        score.boundary_loss = loss;
+        refresh_weighted_loss(score, &self.weights);
         Ok(())
     }
 
@@ -16990,6 +17555,209 @@ mod tests {
             final_placements: coupled_placement_diagnostics(&constructed.placements),
             ..GeneralCoupledSeparatorArmDiagnostics::default()
         }
+    }
+
+    /// The whole mode-34 path, end to end, on the same two-piece fixture the
+    /// mode-26 ladder tests use.
+    ///
+    /// It pins the four contracts that make the schedule a *port* rather than a
+    /// new operator: the parent is the publication floor, the schedule's own
+    /// step is one canonical grid unit, the exact tier is asked at the cadence
+    /// the schedule claims, and the work the schedule reports is the work unit
+    /// the portfolio budgets in.
+    #[test]
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn compression_schedule_publishes_no_worse_than_its_parent() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+        let mut settings = coupled_experiment_test_settings(9);
+        settings.persistent_vacancy_mode = 34;
+        settings.persistent_vacancy_target_depth_mm = Some(1.0);
+        settings.compression_schedule = Some(CompressionScheduleSettings {
+            sweeps_per_step: 2,
+            confirm_every: 2,
+            rollback_after_steps: 8,
+            work_cap_queries: Some(200_000),
+            continue_past_bound: false,
+            repair_policy: CompressionRepairPolicy::MicroLegalizeOnReject,
+        });
+
+        let population = JobPool::new(Some(1)).run_scoped(|| {
+            run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+        });
+        assert!(population.attempted, "{:?}", population.failure_reason);
+        assert!(population.exact_valid);
+        let report = population
+            .compression_schedule
+            .expect("an attempted schedule reports");
+        let parent_depth = population
+            .parent_independent_depth_mm
+            .expect("the parent is measured");
+        let published = population
+            .independent_depth_mm
+            .expect("an exact-valid arm has a depth");
+        assert!(
+            published <= parent_depth,
+            "the parent is the floor: {published} vs {parent_depth}"
+        );
+        assert_eq!(report.step_mm, 0.001, "the step is one grid unit");
+        assert_eq!(report.steps_taken, report.steps.len());
+        assert!(report.steps_taken > 0);
+        // The frontier never sits looser than the deepest confirmed depth.
+        assert!(report.final_depth_mm <= report.floor_depth_mm + f64::EPSILON);
+        // Every depth the schedule names is on the canonical grid.
+        for row in &report.steps {
+            assert_eq!(row.depth_mm, snap_mm(row.depth_mm));
+        }
+        // The work unit is the portfolio's: queries plus five per pair test,
+        // and one confirmation is one whole-layout validation.
+        assert_eq!(
+            report.exact_pair_tests,
+            report.confirmations_attempted * pieces.len() * (pieces.len() - 1) / 2
+        );
+        assert_eq!(
+            report.work_units,
+            report.candidate_queries + 5 * report.exact_pair_tests
+        );
+    }
+
+    /// The schedule stops on the budget it was given rather than on the step
+    /// plan, and says which.
+    #[test]
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn compression_schedule_stops_on_its_work_cap() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+        let mut settings = coupled_experiment_test_settings(9);
+        settings.persistent_vacancy_mode = 34;
+        settings.persistent_vacancy_target_depth_mm = Some(1.0);
+        settings.compression_schedule = Some(CompressionScheduleSettings {
+            sweeps_per_step: 2,
+            confirm_every: 2,
+            rollback_after_steps: 0,
+            work_cap_queries: Some(1),
+            continue_past_bound: true,
+            repair_policy: CompressionRepairPolicy::SweepsOnly,
+        });
+        let population = JobPool::new(Some(1)).run_scoped(|| {
+            run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+        });
+        let report = population
+            .compression_schedule
+            .expect("an attempted schedule reports");
+        assert_eq!(report.exit_cause, "workCap");
+        assert!(report.steps_taken <= 1);
+        // A schedule that spent nothing still publishes its parent.
+        assert!(population.exact_valid);
+        assert_eq!(
+            population.independent_depth_mm,
+            population.parent_independent_depth_mm
+        );
+    }
+
+    /// Mode 34 refuses to run without a schedule, rather than silently running
+    /// an unclamped lane.
+    #[test]
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn compression_schedule_mode_requires_an_armed_schedule() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+        let mut settings = coupled_experiment_test_settings(9);
+        settings.persistent_vacancy_mode = 34;
+        settings.persistent_vacancy_target_depth_mm = Some(1.0);
+        settings.compression_schedule = None;
+        let population = JobPool::new(Some(1)).run_scoped(|| {
+            run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+        });
+        assert!(!population.attempted);
+        assert!(population
+            .failure_reason
+            .as_deref()
+            .is_some_and(|reason| reason.contains("armed compression schedule")));
+    }
+
+    /// A lane with no schedule is the lane that was there before: the sweep's
+    /// schedule hook must not touch the state or the tracker.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn an_unarmed_lane_leaves_the_depth_and_the_tracker_alone() {
+        let polygons = [square(10.0)];
+        let pieces = [GeneralFastPiece {
+            id: "only",
+            polygon: &polygons[0],
+            allow_rotation: false,
+            allow_mirror: false,
+        }];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let settings = GeneralRelaxedSettings::mixed_61_probe(3, 1);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the catalogue builds for one square");
+        let mut search = LegacyLaneSearch::new(&pieces, fast_settings, settings, 1, catalog);
+        assert!(search.compression.is_none());
+        let mut state = RelaxedState {
+            placements: vec![RelaxedPlacement {
+                input_index: 0,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 10.0,
+                translate_y: 10.0,
+            }],
+            strip_depth_mm: 50.0,
+        };
+        let mut score = search.score_state(&state).expect("the state scores");
+        let before = score.clone();
+        search
+            .apply_compression_schedule(&mut state, &mut score)
+            .expect("an unarmed lane cannot fail");
+        assert_eq!(state.strip_depth_mm, 50.0);
+        assert_eq!(score, before);
     }
 
     #[test]

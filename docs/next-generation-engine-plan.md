@@ -4565,3 +4565,132 @@ Evidence, drivers, the sixteen quality cells, the coordinator work-budget
 cells, the allocation counts and both timing campaigns with their
 per-round rows: `docs/experiments/relaxed-lane-residual/` and
 `evidence-stage2.json`.
+
+## The compression schedule: the clamp bought one micron at a time, and the rollback that cost 97% of it
+
+The mode-26 rung anatomy ended with a design: the clamped-sheet ladder is
+expensive because it rebuilds a whole mode-0 pipeline per rung, but the
+clamp it rebuilds for is **already a proxy-tier parameter** —
+`boundary_penalty` takes the depth as an argument at all eleven of its
+call sites and every candidate generator derives its sampling box from
+the same scalar — so buying depth needs a clock, not geometry. The
+opportunity ledger's A/B/C then cleared that design's gate: at the
+coordinator's own 174-179 mm parents the clamped ladder publishes 2 of 3
+and is the only mechanism that broke the saturation. This chapter is the
+port, behind `compression-schedule`, off by default.
+
+### The verdict, at equal work
+
+Twelve pinned coordinator parents (one per seed, `work=120,000,000` from
+the bare request, the ledger's own `0.002` allowance), both arms from the
+same fixture at the same seed, allowance **33,413,789 work units** — one
+measured mode-26 rung. Statistic: raw source depth of the best exact-valid
+publication, parent as the floor for both arms.
+
+| arm | publishes | median Δ | mm / M units | median operator work |
+|---|---:|---:|---:|---:|
+| one short mode-26 ladder | 10 / 12 | 0.876 mm | 0.168 | 14,755,710 |
+| **the schedule** | **12 / 12** | **12.110 mm** | **0.623** | 17,481,265 |
+| the schedule at 10% of a rung | 11 / 12 | 1.104 mm | **1.013** | **869,133** |
+
+Paired per cell, the schedule beats the ladder in **12 of 12** cells with
+a median advantage of **7.479 mm** — and also in 12 of 12 when it is read
+at the control's *own measured spend* rather than at the shared
+allowance, median **4.340 mm**. Every one of the twelve publications was
+re-confirmed through mode 27 in a separate process from the pristine
+default-feature binary: exact-valid, contract-valid, fingerprint
+unchanged, zero pieces moved. The best cell reaches **160.985 mm**,
+**8.266 mm below the previous best-from-request layout on this request**
+(169.251 mm, ledger arm C).
+
+At the design budget the port does what the anatomy hoped: **1.013 mm per
+million work units against the ladder's 0.168**, for a median spend of
+2.6% of a rung.
+
+### The finding that was not predicted: the port's own rollback was 97% of its depth
+
+The anatomy's piece (e) asked for "a rollback contract that survives a
+moving depth". It was built, it is correct, and its trigger — 32 depth
+steps without an accepted confirmation, chosen before any measurement —
+is catastrophic:
+
+| | rollback 32 | rollback 0 |
+|---|---:|---:|
+| publications | 8 / 12 | **12 / 12** |
+| median Δ | 0.359 mm | **12.110 mm** |
+| paired vs the ladder | **loses** 9 of 12 | **wins** 12 of 12 |
+| median confirmations accepted | 128 | 1,838 |
+
+The mechanism is in the step rows: a compression frontier is
+proxy-infeasible **82% of the time by construction** — that is what a
+compression frontier *is* — so a rollback keyed on "the frontier has not
+been publishable lately" fires almost every time it can, and the schedule
+spends its budget descending 32 microns, being thrown back, and
+descending again.
+
+That is the anatomy's own headline about mode 26 (85.4% of arms abort on
+a rollback, 75.5% of the arm wall) reproduced one level down, inside the
+port built to avoid inheriting it. The generalisable rule: **a rollback
+whose trigger is the normal state of the thing it guards is not a
+guard.** The mechanism stays, tested, with `rollback_after_steps`
+defaulting to `0` and the measurement in its doc comment.
+
+### Two corrections to the anatomy, both arithmetic
+
+**One exact confirmation costs 4.83 ms, not 0.491 ms.** The anatomy
+called 0.491 ms "the hinge of the porting design" and budgeted the exact
+tier at 2.0% of a 1.0 s slice. Measured over 23,176 confirmations here:
+4.83 ms mean, 4.18-5.65 ms over cells. The anatomy's own phase table
+implies it — an *accepting* confirmation asks all 1,830 pairs, which at
+that round's 1,904.8 ns per `exactOverlapTest` is 3.485 ms before the 61
+collision-polygon builds — and the 0.491 ms figure is the cost of a
+confirmation that **fails**, exiting at the first violating pair. Every
+one of that round's 25 samples was a rejection, because zero of its 171
+arms produced an exact-valid state. The port survives the correction only
+because of a clause the design did not name: a layout the proxy tier
+already calls infeasible is never offered to the exact validator, which
+suppresses 82% of the confirmations the cadence makes due.
+
+**Every 171-179 mm parent arrives at the relaxed lane already
+proxy-infeasible.** All twelve are `exactValid` and `contractValid`, and
+the proxy tier sees 26-38 colliding pairs and 4-11 boundary violations at
+each. `initialize_complete_state` snaps a warm start's rotations onto the
+structured surrogate's 2.5-degree grid (`general_relaxed.rs:15397`), and
+17 of seed 0's 61 poses are off that grid — all 61 of the 159.079 record
+parent's are. The first exact-valid depth after that entry transform is a
+median **0.448 mm worse** than the parent it came from. This is upstream
+of both operators and identical for both, so it does not move the gate;
+it is the largest single thing between this band and the next one, and it
+is a protected shared path that four modes' trajectories depend on.
+
+### Regression, and what the flag costs when off
+
+All four pinned gates reproduce as **whole documents** against the
+pristine binary — 3,263 / 3,244 / 3,244 / 3,244 fields, **0 differences**
+— for the default-feature build *and* for the `compression-schedule`
+build with the feature compiled in and unarmed. The feature adds one
+`Option` field no existing caller constructs, one `#[cfg]`-paired call at
+the top of `move_sweep` whose disabled half has no body, and one match
+arm. Release suite: 1,238 passed / 0 failed with the feature off, 1,250
+passed / 0 failed with it on.
+
+### What this does not settle
+
+The schedule is **one lane** where a mode-26 rung is eight, so equal work
+is emphatically not equal wall and no wall claim is made here. The work
+meter itself counts only the *narrow phase* of the exact tier
+(`kernel::exact` increments past the bounds reject), so the exact tier is
+24-52% of the schedule's wall and about 4% of its metered work; the
+schedule's own cap deliberately over-charges by ~18x in the other
+direction, which is why it stopped at 52% of the allowance in the
+coordinator's currency and still won 12 of 12. `micro_legalize` was never
+invoked — zero of 23,176 confirmations were refused, so at a one-micron
+step a proxy-feasible layout was always exact-valid — which answers the
+anatomy's second risk on this fixture and leaves the tier itself
+untested. And nothing here is a schedule change: the coordinator has no
+compression-schedule phase, and mode 34 is reachable only from an
+explicit CLI mode in a build that carries the feature.
+
+Evidence, drivers, the twelve cells per arm, the twenty-four independent
+confirmations, the depth-versus-work curves and the record-line contrast:
+`docs/experiments/compression-schedule/`.
