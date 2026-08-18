@@ -4892,3 +4892,207 @@ explicit CLI mode in a build that carries the feature.
 Evidence, drivers, the twelve cells per arm, the twenty-four independent
 confirmations, the depth-versus-work curves and the record-line contrast:
 `docs/experiments/compression-schedule/`.
+
+## Coordinator v4 — the schedule becomes a class, the queue learns to stop, and the slice competes
+
+Coordinator v3 shipped a ranked action queue and three measured negatives.
+This stage is those three negatives, discharged, on the same request, the
+same allowance and the same paired discipline. Merged-HEAD v3 is the
+reference arm and it is **the same binary**: three portfolio spec keys
+(`sched=`, `barren=`, `divq=`) select the schedule, so every A/B is two
+processes of one build.
+
+**mixed-61 from the bare request, work budget 120,000,000, three seeds:
+169.141 → 163.927, 169.928 → 162.161, 172.086 → 164.004.** Six of six at
+both measured budgets, every one `exactValid` and `contractValid`, every
+one re-confirmed through mode 27 in a separate process from a pristine
+base-commit binary that contains none of this code. **162.161 mm is a new
+best-from-request layout on this request** — 6.967 mm below v3's 169.141
+and 12.047 mm below v2's 174.208, at allowance `0.002` and therefore not
+comparable to the 159.079 / 164.038 record lineage.
+
+On the wall clock, paired and interleaved over nine rounds a tier, v4 is
+**strictly better in 9 of 9 rounds at 10 s and at 30 s and not worse in a
+single round at any tier** — including the 3 s tier, where v3 was worse
+than v2 in 2 of 9. The 10 s tier is the one the port's data predicted
+would move, and it moved past 174.208 on every seed: **173.575 / 171.362 /
+176.162** against v3's 174.208 / 176.056 / 178.286. The prediction was
+mechanical rather than statistical — a class costing a third of a
+protected phase and publishing 1.1 mm becomes affordable at a budget where
+the ladder never is — and the traces confirm it: the ladder makes 0
+actions in the v4 10 s arm and the schedule class makes 9.
+
+### The compression schedule is now a priced class, and it is the best one
+
+The port left mode 34 reachable only from an explicit CLI mode. It is now
+an action class offered over the same best distinct state the two mode-22
+classes are offered over, and pooled over three seeds at 120M it makes 19
+actions, **publishes on 17 of them**, and returns 20.292 mm for 34.9M of
+the coordinator's units — **0.581 mm per million, twice compression's
+0.298 and eleven times the ladder's 0.053**, at a twelfth of the ladder's
+cost per action.
+
+The slice is **nine rungs of the separator's own relative contraction
+quantum**, walked one canonical grid unit at a time. Nine is a
+reproduction, not a tuning: the port's cheap arm walked a median 1,568
+one-micron steps, and `9 × 174.208 × 0.001` is 1.5679 mm, which is 1,568
+steps. Expressing it as rungs rather than as the port's 3,341,379-unit cap
+is what lets it cross a request — 1.80 mm on shapes-17's 200 mm parent,
+0.64 mm on triangle-20's 70.7 mm one — and what makes the arm
+deterministic without reading a counter, which a cap in the coordinator's
+currency could not be, because that currency is zero when profiling is off
+and a wall-budget run has it off.
+
+**The pricing is the honest part.** The port's own §6.3 says the work
+meter counts the narrow phase of the exact tier only, so the schedule's
+exact tier is 24-52% of its wall and ~4% of its metered work. On the
+port's twelve cells the same self-capped arm reads **307,767 to 3,343,739
+units on the coordinator's meter — an 11x spread — and 3,341,665 to
+3,356,020 on its own, a spread of 0.4%.** Extending the process-wide meter
+was rejected on blast radius: every pinned work-unit number in this
+repository is denominated in the current counter, including the ledger's
+32,393,757 / 31,957,935 / 27,938,867 that v3 §6.1 reproduces to the unit.
+So the coordinator charges the **larger of the two** into the class's price
+ratchet — a price, never a spend, so the budget still advances on the
+meter — and both numbers are in every action row. The result is the best
+first-action estimate any class in the queue gets: actual/estimate
+**0.991 / 0.966 / 1.013** on the three seeds, against the ladder's
+0.39-1.33 and compression's 0.84-1.08.
+
+### A stopping rule, sized from the interval rather than fitted
+
+v3 §5.2 measured the interval a global patience would have to live in —
+**at least 8**, or it cuts the mixed-61 30 s run that published after seven
+barren actions; **at most 32**, or it does not cut shapes-17's 33-action
+churn — and declined to fit a constant. `BARREN_ACTION_PATIENCE = 16` is
+the **geometric** midpoint of `[8, 32]`, taken geometrically because the
+quantity is a ratio, and it is simultaneously twice the largest productive
+barren run ever measured and half the churn it has to cut. The loop exits
+`patience` **with its queue still full**, which is a third exit cause
+distinct from `keysExhausted` and `affordability`.
+
+On shapes-17 at 30 s it takes the coordinator wall from **28.98 s to
+19.06 s** — 9 of 9 runs exit `patience` where v3's 9 of 9 exit
+`affordability` — and cuts crossover from 272 actions to 108. The price is
+stated rather than rounded away: it cuts a 33-action productive barren run
+by construction, and that costs **0.38 µm in three of nine rounds**. It
+does **not** reach v2's 2.57 s, and this round says why: on that stream the
+first publication is action #9, so nine actions precede any barren counter
+at all and a patience of 16 has a 26-action floor whatever the budget.
+Cutting the rest needs the first publication sooner, not the last barren
+run shorter.
+
+### A prior of zero is not a prior
+
+v3 gave diversify `prior Δraw = 0.0` and scheduled it by an eligibility
+rule that triangle-20 never satisfies. Zero is absorbing: a class ranked at
+zero is never chosen, so it never earns the evidence that would displace
+its prior, and v3's own "the prior is worth two actions" becomes
+unfalsifiable for that one class. This round measured the number instead,
+on all three requests rather than one — **10 constructor arms, 0.05826 mm,
+all of it on triangle-20: 0.005826 mm per action.**
+
+It also measured the price, and found that one price cannot do the job.
+The ledger priced an m20 arm at 260-335 work units against 3.1 s of clock;
+v3 §1.3 measured the same rule 11.7-12.0x wrong on the wall and left it.
+Measured here on three requests, the diversify phase costs **0.067-1.224
+phase-zeros in work units and 1.254-1.976 in seconds** — the same action,
+priced 17x apart on mixed-61. So the class carries **two** priors, each the
+worst case of its own currency, and it is the only class that does; a test
+pins that asymmetry. The first diversify action of a shapes-17 run is now
+estimated at ~2.0 s and costs ~1.2 s — **1.6x over**, where v3's rule was
+11.8x under — and an overestimate is the right side to be wrong on, because
+at a 3 s budget the queue now refuses a 4 s ticket on affordability instead
+of buying it on an eligibility clause.
+
+Ranking it is necessary and not sufficient, and this round says so: a prior
+of 0.005826 mm never outranks crossover's 1.0923 mm at any budget this
+engine runs at. So the queue additionally **auditions** one untested ticket
+after eight consecutive barren actions — the floor of the same measured
+interval, and a count the mixed-61 headline stream (longest productive
+barren run 7) never reaches. The pair reads as one rule: *at eight barren
+actions the queue buys a new basin, at sixteen it stops.*
+
+On **triangle-20 at 30 s the 0.00279 mm regression is gone, exactly**: all
+three seeds and all three rounds reach **70.72726178003285**, coordinator
+v2's own depth to the digit, and the last publication's class is
+`diversify` in 9 of 9 runs. At 10 s it is not gone — the run is ten actions
+long and never accumulates eight barren ones — and this round declines to
+fit a smaller constant to one request.
+
+### The ablation
+
+Three changes landed together, so the attribution is measured. One key at
+a time, mixed-61, `work=120,000,000`, three seeds, one run per cell:
+**`sched=1` alone reproduces the whole headline** — 163.927 / 162.161 /
+164.004 — and `barren=16` alone and `divq=1` alone reproduce the reference
+arm's depth, its iteration count and its work spend **to the unit**. That
+is the designed behaviour and not a null result: on mixed-61 no barren run
+reaches 16, so the patience never trips, and none reaches 8, so the
+audition never fires. Read across the three requests: **the schedule class
+buys the depth, the patience buys the wall, and the audition buys the
+3 µm.**
+
+### Regression, and what the reference arm proves
+
+The strongest statement is not the gates. `v3=1,sched=0,barren=0,divq=0`
+was run against the **pristine `5d6ce0c` binary** through the coordinator
+itself, at `work=40,000,000` on three seeds, and compared as whole
+documents: 3,405 / 2,770 / 3,483 fields, **29 differing in total, every one
+of them `meteredCost` — a field this round adds that the pristine binary
+does not emit.** No behavioural field differs and the work-unit spend is
+identical to the unit, which means every affordability decision, every
+ranking value and every action the queue took is the same. The four pinned
+gates then reproduce as whole documents — 3,261 / 3,242 / 3,242 / 3,242
+fields, **0 differences** — on this tree's default-feature build *and* on
+its `compression-schedule` build. Determinism: two processes, six arms,
+**0 differing fields** and identical work-unit spends. Release suite:
+**1,250 passed / 0 failed** with the feature off and **1,262 / 0** with it
+on, six new tests, each pinning a number this stage argues from.
+
+### The 2.5-degree snap: opened, and left alone with a reason
+
+The port named the warm-start snap as the largest single thing between this
+band and the next (+0.448 mm median entry loss). This round opened it and
+is not touching it, and the reason is not caution: **there is no flag to
+put it behind.** `canonical_angle` is not a normalisation applied to a
+representation that could hold something finer — the structured surrogate
+catalog `SurrogateCatalogMode::StructuredGrid` enumerates
+`i × SURROGATE_ANGLE_STEP_DEG` and nothing else, so an off-grid rotation is
+a pose the proxy tier has no surrogate for. Removing the snap means
+switching to `CurrentAssignment`, which is a different pressure model, a
+different candidate stream and a different cost model — and every number
+the port measured is a measurement of the structured tier. A flag whose
+two arms run different pressure models is not an ablation; it is two
+engines. The 0.448 mm is therefore **not attributable to `canonical_angle`
+alone**, and settling it is a campaign, named here with its three line
+references.
+
+### What this does not settle
+
+**v4 overran its own coordinator budget in 2 of 27 mixed-61 runs where v3
+overran in 0 of 27.** One is a crossover this stage did not touch (1.9%
+over at 10 s); the other is a schedule slice estimated at 1.95 s that cost
+5.12 s (7.4% over at 30 s). For scale v2 overran by 41% at 3 s and 6% at
+10 s on the same request — but this is a regression against v3's own
+headline and it is the same weak number as everything else below.
+
+The headline is one request and three seeds. On the other two the schedule
+class publishes **nothing at all** — 0 of 29 actions on shapes-17, 0 of 37
+on triangle-20 — because its 1.104 mm prior is a mixed-61 number, exactly
+as crossover's 1.0923 mm is one. Worse, its price transfers in work units and not in seconds:
+first-action actual/estimate is **0.97-1.01** at a work budget and
+**2.54-2.59** on the same request's clock, 2.94-3.07 on shapes-17 and 5.1
+on triangle-20. At a 10 s budget one action is 20% of the run, which is
+the mechanism behind triangle-20's new ≤2 µm regression on one seed at
+10 s and behind the 30 s overrun above.
+`DIVERSIFY_AUDITION_BARREN` is not a spec key and so is argued from the
+trace and the interval's floor rather than ablated. And charging the
+self-cap prices *one class* honestly; it does not make the coordinator's
+meter correct, so at a work budget v4 still gets slightly more schedule
+than its own accounting says it paid for — reported in every action row
+rather than smoothed.
+
+Evidence, drivers, the 126 battery runs, the ablation, the twelve
+independent confirmations and the whole-document reproductions:
+`docs/experiments/coordinator-v4/`.

@@ -1,0 +1,248 @@
+{
+ "work": 120000000,
+ "pooled": {
+  "compression": {
+   "actions": 35,
+   "publications": 23,
+   "workUnits": 86540157,
+   "seconds": 33.58924464200001,
+   "deltaRawMm": 25.751652906407998,
+   "firstEstimated": [
+    1910217.4848,
+    2095368.9727999999,
+    1949988.0192
+   ],
+   "firstActual": [
+    2014683.0,
+    2258373.0,
+    1645531.0
+   ],
+   "deltaRawPerMegaUnit": 0.2975688258389455,
+   "workUnitsPerAction": 2472575.9142857143,
+   "deltaRawPerAction": 0.735761511611657
+  },
+  "descent": {
+   "actions": 7,
+   "publications": 0,
+   "workUnits": 19218167,
+   "seconds": 6.849272416000001,
+   "deltaRawMm": 0.0,
+   "firstEstimated": [
+    2350901.8493999997,
+    2578767.5134,
+    2399847.3876
+   ],
+   "firstActual": [
+    2683101.0,
+    2532939.0,
+    1936358.0
+   ],
+   "deltaRawPerMegaUnit": 0.0,
+   "workUnitsPerAction": 2745452.4285714286,
+   "deltaRawPerAction": 0.0
+  },
+  "schedule": {
+   "actions": 19,
+   "publications": 17,
+   "workUnits": 34932849,
+   "seconds": 58.225724837,
+   "deltaRawMm": 20.292348408004443,
+   "firstEstimated": [
+    3341124.8838,
+    3664969.8118,
+    3410686.7652
+   ],
+   "firstActual": [
+    3311034.0,
+    3539786.0,
+    3455866.0
+   ],
+   "deltaRawPerMegaUnit": 0.5808958899402807,
+   "workUnitsPerAction": 1838571.0,
+   "deltaRawPerAction": 1.0680183372633918
+  },
+  "crossover": {
+   "actions": 12,
+   "publications": 0,
+   "workUnits": 81809329,
+   "seconds": 28.648624161999983,
+   "deltaRawMm": 0.0,
+   "firstEstimated": [
+    5347906.6716,
+    5866262.7676,
+    5459249.546399999
+   ],
+   "firstActual": [
+    7194100.0,
+    5416216.0,
+    6782824.0
+   ],
+   "deltaRawPerMegaUnit": 0.0,
+   "workUnitsPerAction": 6817444.083333333,
+   "deltaRawPerAction": 0.0
+  },
+  "ladder": {
+   "actions": 4,
+   "publications": 5,
+   "workUnits": 90781550,
+   "seconds": 27.863440406999995,
+   "deltaRawMm": 4.804998685587577,
+   "firstEstimated": [
+    21000980.1879,
+    23036540.411900003,
+    21438218.4666
+   ],
+   "firstActual": [
+    8170796.0,
+    22405196.0,
+    28594700.0
+   ],
+   "deltaRawPerMegaUnit": 0.05292924262240045,
+   "workUnitsPerAction": 22695387.5,
+   "deltaRawPerAction": 1.2012496713968943
+  }
+ },
+ "perSeed": {
+  "0": {
+   "compression": {
+    "actions": 15,
+    "publications": 12,
+    "workUnits": 38243445,
+    "deltaRawMm": 13.92229849892675,
+    "firstEstimatedCost": 1910217.4848,
+    "firstActualCost": 2014683.0,
+    "firstActualOverEstimate": 1.054687759918048
+   },
+   "descent": {
+    "actions": 2,
+    "publications": 0,
+    "workUnits": 5844159,
+    "deltaRawMm": 0.0,
+    "firstEstimatedCost": 2350901.8493999997,
+    "firstActualCost": 2683101.0,
+    "firstActualOverEstimate": 1.1413071118578535
+   },
+   "schedule": {
+    "actions": 4,
+    "publications": 4,
+    "workUnits": 3660841,
+    "deltaRawMm": 3.4787015010732603,
+    "firstEstimatedCost": 3341124.8838,
+    "firstActualCost": 3311034.0,
+    "firstActualOverEstimate": 0.9909937865699362
+   },
+   "crossover": {
+    "actions": 7,
+    "publications": 0,
+    "workUnits": 48872682,
+    "deltaRawMm": 0.0,
+    "firstEstimatedCost": 5347906.6716,
+    "firstActualCost": 7194100.0,
+    "firstActualOverEstimate": 1.3452179407326215
+   },
+   "ladder": {
+    "actions": 1,
+    "publications": 1,
+    "workUnits": 8170796,
+    "deltaRawMm": 0.2609999999999957,
+    "firstEstimatedCost": 21000980.1879,
+    "firstActualCost": 8170796.0,
+    "firstActualOverEstimate": 0.3890673638513175
+   }
+  },
+  "1": {
+   "compression": {
+    "actions": 11,
+    "publications": 6,
+    "workUnits": 28178343,
+    "deltaRawMm": 8.744537796157942,
+    "firstEstimatedCost": 2095368.9727999999,
+    "firstActualCost": 2258373.0,
+    "firstActualOverEstimate": 1.0777925173637468
+   },
+   "descent": {
+    "actions": 3,
+    "publications": 0,
+    "workUnits": 8401974,
+    "deltaRawMm": 0.0,
+    "firstEstimatedCost": 2578767.5134,
+    "firstActualCost": 2532939.0,
+    "firstActualOverEstimate": 0.9822285207325351
+   },
+   "schedule": {
+    "actions": 5,
+    "publications": 3,
+    "workUnits": 10162426,
+    "deltaRawMm": 4.407463518254474,
+    "firstEstimatedCost": 3664969.8118,
+    "firstActualCost": 3539786.0,
+    "firstActualOverEstimate": 0.9658431533605136
+   },
+   "crossover": {
+    "actions": 1,
+    "publications": 0,
+    "workUnits": 5416216,
+    "deltaRawMm": 0.0,
+    "firstEstimatedCost": 5866262.7676,
+    "firstActualCost": 5416216.0,
+    "firstActualOverEstimate": 0.9232822010487398
+   },
+   "ladder": {
+    "actions": 2,
+    "publications": 3,
+    "workUnits": 54016054,
+    "deltaRawMm": 4.37699868558758,
+    "firstEstimatedCost": 23036540.411900003,
+    "firstActualCost": 22405196.0,
+    "firstActualOverEstimate": 0.9725937835885344
+   }
+  },
+  "2": {
+   "compression": {
+    "actions": 9,
+    "publications": 5,
+    "workUnits": 20118369,
+    "deltaRawMm": 3.084816611323305,
+    "firstEstimatedCost": 1949988.0192,
+    "firstActualCost": 1645531.0,
+    "firstActualOverEstimate": 0.8438672360023493
+   },
+   "descent": {
+    "actions": 2,
+    "publications": 0,
+    "workUnits": 4972034,
+    "deltaRawMm": 0.0,
+    "firstEstimatedCost": 2399847.3876,
+    "firstActualCost": 1936358.0,
+    "firstActualOverEstimate": 0.8068671408045164
+   },
+   "schedule": {
+    "actions": 10,
+    "publications": 10,
+    "workUnits": 21109582,
+    "deltaRawMm": 12.406183388676709,
+    "firstEstimatedCost": 3410686.7652,
+    "firstActualCost": 3455866.0,
+    "firstActualOverEstimate": 1.0132463746776672
+   },
+   "crossover": {
+    "actions": 4,
+    "publications": 0,
+    "workUnits": 27520431,
+    "deltaRawMm": 0.0,
+    "firstEstimatedCost": 5459249.546399999,
+    "firstActualCost": 6782824.0,
+    "firstActualOverEstimate": 1.24244622678456
+   },
+   "ladder": {
+    "actions": 1,
+    "publications": 1,
+    "workUnits": 28594700,
+    "deltaRawMm": 0.1670000000000016,
+    "firstEstimatedCost": 21438218.4666,
+    "firstActualCost": 28594700.0,
+    "firstActualOverEstimate": 1.3338188546100296
+   }
+  }
+ }
+}

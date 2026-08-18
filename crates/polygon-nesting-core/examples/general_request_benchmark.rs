@@ -1756,6 +1756,9 @@ fn parse_portfolio_spec(
             }
             "probeWork" => settings.probe_work_units = value.parse()?,
             "v3" => settings.coordinator_v3 = value != "0",
+            "sched" => settings.compression_schedule_class = value != "0",
+            "barren" => settings.barren_action_patience = value.parse()?,
+            "divq" => settings.diversify_in_queue = value != "0",
             "scheduleBy" => settings.schedule.schedule_by = value.parse()?,
             "descentBy" => settings.schedule.descent_by = value.parse()?,
             "crossoverBy" => settings.schedule.crossover_by = value.parse()?,
@@ -1879,6 +1882,7 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
                 "value": row.value,
                 "estimatedCost": row.estimated_cost,
                 "actualCost": row.actual_cost,
+                "meteredCost": row.metered_cost,
                 "workUnits": row.work_units,
                 "seconds": row.seconds,
                 "operatorCalls": row.operator_calls,

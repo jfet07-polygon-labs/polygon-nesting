@@ -715,6 +715,15 @@ pub enum ActionClass {
     Compression,
     /// One mode-22 alternation quantum at the parent's own alternation rung.
     Descent,
+    /// One mode-34 compression-schedule slice: the clamp walked down
+    /// [`SCHEDULE_RUNGS`] rungs of the separator's own quantum, one canonical
+    /// grid unit at a time, with the parent as the floor.
+    ///
+    /// Compiled into the enumeration only under the `compression-schedule`
+    /// feature, because mode 34 does not exist without it. The variant itself
+    /// is unconditional so that the reporting names, the spec key and the
+    /// class table are the same document in either build.
+    Schedule,
     /// One ordered, cut-derived mode-23 recombination.
     Crossover,
     /// One short mode-26 clamped-sheet ladder and the global legalizer tier on
@@ -731,10 +740,25 @@ impl ActionClass {
         match self {
             ActionClass::Compression => "compression",
             ActionClass::Descent => "descent",
+            ActionClass::Schedule => "schedule",
             ActionClass::Crossover => "crossover",
             ActionClass::Ladder => "ladder",
             ActionClass::Diversify => "diversify",
         }
+    }
+
+    /// Every class, in declaration order. The queue ranks over exactly this
+    /// list, so a class that is added here and nowhere else is a class that is
+    /// ranked but never enumerated - which is a no-op rather than a defect.
+    pub fn all() -> [ActionClass; 6] {
+        [
+            ActionClass::Compression,
+            ActionClass::Descent,
+            ActionClass::Schedule,
+            ActionClass::Crossover,
+            ActionClass::Ladder,
+            ActionClass::Diversify,
+        ]
     }
 
     /// Millimetres of published raw depth one action of this class produced, as
@@ -750,13 +774,31 @@ impl ActionClass {
             ActionClass::Descent => 1.001,
             ActionClass::Crossover => 1.0923,
             ActionClass::Ladder => 3.0914,
-            // The ledger's verdict on the m20 feeder, on deferred credit and
-            // not on immediate publication: every archived mode-20 basin on
-            // all three mixed-61 seeds has 0 descendant publications. It is
-            // *not* zero on triangle-20, where the slice published on half its
-            // arms - which is why the class is still in the queue and why its
-            // eligibility rule, not its rank, is what schedules it.
-            ActionClass::Diversify => 0.0,
+            // The compression-schedule port's `sched10-noroll` arm: twelve
+            // matched cells at 171-179 mm coordinator parents, 11 of 12
+            // publishing, **median 1.104 mm** below the parent (mean 1.072).
+            // That arm walked a median 1,568 one-micron steps, which is what
+            // [`SCHEDULE_RUNGS`] reproduces from the parent's own quantum.
+            ActionClass::Schedule => 1.104,
+            // **Not zero, and this round measured why zero was wrong.** The
+            // opportunity ledger's `0` is a true statement about mixed-61 - 0
+            // descendant publications from every archived m20 basin on all
+            // three seeds - and a false one about triangle-20, where
+            // coordinator v2's generality measurement found the slice
+            // publishing on 6 of 12 arms. A prior of exactly `0` is not a
+            // prior, it is a deletion: a class ranked at zero is never chosen,
+            // so it never earns the evidence that would displace its prior,
+            // and v3's own rule ("the prior is worth two actions of evidence")
+            // becomes unfalsifiable for that one class.
+            //
+            // The number is this round's own pooled measurement over the three
+            // requests the coordinator has been measured on
+            // (`evidence/diversify-prior.json`, coordinator v2 at
+            // `work=40,000,000`, three seeds each): 10 constructor arms, 0.05826
+            // mm of published raw depth, all of it on triangle-20 - **0.005826
+            // mm per action**. It is small because the class is worthless on
+            // two of the three requests, and it is honest for the same reason.
+            ActionClass::Diversify => 0.005826,
         }
     }
 
@@ -772,13 +814,65 @@ impl ActionClass {
     /// the three A/B/C arm-C spends (20.998M) rather than their mean: an
     /// operator with a 3.7x spread across seeds has to be priced by its worst
     /// case or the affordability rule is a coin toss.
+    /// The work-budget price. See [`Self::prior_cost_in_phase_zero_for`] for
+    /// why one class needs two of these and the other five do not.
     fn prior_cost_in_phase_zero(self) -> f64 {
         match self {
             ActionClass::Compression => 0.2176,
             ActionClass::Descent => 0.2678,
+            // The port's `sched10-noroll` self-cap, 3,341,379 units, against
+            // mixed-61 seed 0's own 8,778,573-unit phase 0. The **self**-cap
+            // rather than the coordinator's metered spend, because the
+            // coordinator's meter counts the narrow phase of the exact tier
+            // only and the schedule's exact tier is 24-52% of its wall and
+            // ~4% of its metered work: charging the meter would let the class
+            // ride free on the one tier it spends its wall in. See
+            // [`schedule_self_cost_units`].
+            //
+            // The two readings happen to agree at this budget, which is the
+            // reason to trust the number rather than a coincidence to hide:
+            // the *worst* of the twelve cells' coordinator-metered spends is
+            // 3,343,739 units, or 0.3809 phase-zeros.
+            ActionClass::Schedule => 0.3806,
             ActionClass::Crossover => 0.6092,
             ActionClass::Ladder => 2.3923,
-            ActionClass::Diversify => 0.1094,
+            // v3 carried the ledger's mixed-61 reading, 0.1094, and §1.3 of
+            // its own README reported that the same rule mispriced an m20
+            // ticket by 11.7-12.0x **on the clock**. This round measured both
+            // currencies on all three requests and priced the class by its
+            // worst case in each, which is the rule every other class is
+            // already priced by: the largest of the three requests' spends is
+            // triangle-20's 7,804,768 units against its own 6,376,387-unit
+            // phase 0.
+            ActionClass::Diversify => 1.224,
+        }
+    }
+
+    /// What one action of this class costs, as a multiple of the protected
+    /// phase-0 pipeline, **in the budget's own currency**.
+    ///
+    /// Five of the six classes have one price, because their two currencies
+    /// agree: they spend their time in the candidate-query and exact-pair
+    /// tiers the work meter counts, so a multiple of phase 0 measured in work
+    /// units is the same multiple measured in seconds to within the noise.
+    ///
+    /// The constructor slice is the exception and it is a *measured*
+    /// exception, twice over. The ledger found the work budget pricing a mode-20
+    /// arm at 260-335 units against 3.1 seconds of clock; coordinator v3 §1.3
+    /// found the same rule 11.7-12.0x wrong on shapes-17's wall. Measured here
+    /// on three requests at `work=40,000,000` (`evidence/diversify-prior.json`),
+    /// the diversify phase costs **0.067 - 1.224** phase-zeros in work units and
+    /// **1.25 - 1.98** phase-zeros in seconds - the same action, priced 17x
+    /// apart on mixed-61. One number cannot be both, so the class carries both,
+    /// and each is the worst case of its own currency.
+    ///
+    /// This is what makes the class safe to rank rather than gate: at a 3 s
+    /// wall budget the queue now refuses a 4 s constructor ticket on the
+    /// affordability rule instead of buying it on an eligibility clause.
+    fn prior_cost_in_phase_zero_for(self, wall: bool) -> f64 {
+        match (self, wall) {
+            (ActionClass::Diversify, true) => 1.979,
+            _ => self.prior_cost_in_phase_zero(),
         }
     }
 }
@@ -799,8 +893,15 @@ pub struct ScheduledActionReport {
     pub value: f64,
     /// What the queue thought the action would cost, in the budget's currency.
     pub estimated_cost: f64,
-    /// What it did cost.
+    /// What the class was *charged*, in the budget's currency, and therefore
+    /// what its price ratchet and its ranking value read. Equal to
+    /// [`Self::metered_cost`] for every class but the compression schedule; see
+    /// [`schedule_self_cost_units`].
     pub actual_cost: f64,
+    /// What the coordinator's own meter read across the action. Reported next
+    /// to `actual_cost` rather than instead of it so the one place the two
+    /// disagree is visible in the evidence rather than argued for in prose.
+    pub metered_cost: f64,
     pub work_units: u64,
     pub seconds: f64,
     pub operator_calls: usize,
@@ -1209,6 +1310,34 @@ pub struct PortfolioSettings {
     /// the two coordinators can be interleaved from one binary - which is the
     /// only way a paired A/B on a shared box is worth anything.
     pub coordinator_v3: bool,
+    /// Whether the v3 queue offers the mode-34 compression-schedule class.
+    ///
+    /// On by default *inside v3*, which is itself off by default. Setting it to
+    /// `false` restores the merged-HEAD v3 enumeration exactly; that is the
+    /// arm every A/B below is paired against, and it reproduces a pristine
+    /// base-commit binary field for field.
+    ///
+    /// In a build without the `compression-schedule` feature the field is still
+    /// here and still parsed - a replay driver may not have to know which
+    /// features a binary carries to reproduce a pinned command - and it does
+    /// nothing, because mode 34 does not exist there.
+    pub compression_schedule_class: bool,
+    /// How many consecutive actions may publish nothing before the whole v3
+    /// loop stops, with its queue still full. `0` disables the rule, which is
+    /// merged-HEAD v3's behaviour.
+    ///
+    /// See [`BARREN_ACTION_PATIENCE`] for where 16 comes from. It is a *global*
+    /// patience over every class, not the constructor slice's own
+    /// [`Self::basin_patience`], which stays what it was.
+    pub barren_action_patience: usize,
+    /// Whether the diversify class is enumerated into the ranked queue and
+    /// priced like every other class, instead of being gated on the priced
+    /// queue emptying.
+    ///
+    /// On by default inside v3. `false` restores merged-HEAD v3's
+    /// "un ticket m20 quando non rimangono coppie complementari" rule, which
+    /// coordinator v3 §4.2 measured never firing on triangle-20 at all.
+    pub diversify_in_queue: bool,
 }
 
 /// The phase deadlines, as fractions of the whole budget.
@@ -1301,6 +1430,9 @@ impl PortfolioSettings {
             probe: ProbeArm::None,
             probe_work_units: 0,
             coordinator_v3: false,
+            compression_schedule_class: true,
+            barren_action_patience: BARREN_ACTION_PATIENCE,
+            diversify_in_queue: true,
         }
     }
 }
@@ -1360,6 +1492,16 @@ impl BudgetMeter {
             PortfolioBudget::Wall { millis } => millis as f64 / 1_000.0,
             PortfolioBudget::Work { units } => units as f64,
         }
+    }
+
+    /// Whether the budget's currency is the clock rather than the work meter.
+    ///
+    /// The one thing the schedule below reads a *currency* for rather than a
+    /// fraction: two of its prices are measured to disagree by an order of
+    /// magnitude between the two, so which one is running has to be a fact the
+    /// ranking can see. See [`ActionClass::prior_cost_in_phase_zero_for`].
+    fn is_wall(&self) -> bool {
+        matches!(self.budget, PortfolioBudget::Wall { .. })
     }
 
     /// What has been spent, in the same currency.
@@ -2448,6 +2590,64 @@ const LADDER_RUNGS: usize = 2;
 /// ledger's canonical order (nearest the constant `0.5` first).
 const CROSSOVER_CUTS_PER_PAIR: usize = 2;
 
+/// How many rungs of the separator's own relative contraction quantum one
+/// scheduled mode-34 slice walks.
+///
+/// Nine, and the nine is a reproduction rather than a tuning. The
+/// compression-schedule port's cheap arm - `sched10-noroll`, capped at 10% of a
+/// measured mode-26 rung in the schedule's own currency - walked a **median
+/// 1,568** one-micron steps across its twelve cells and published a median
+/// 1.104 mm. On a 174.208 mm parent, `9 * depth * ratio` is 1.5679 mm, which is
+/// 1,568 canonical grid steps: the same walk, expressed as a multiple of the
+/// engine's own quantum instead of as a work cap measured on one request.
+///
+/// That is what makes the slice portable. A cap of 3,341,379 units is a
+/// mixed-61 number; nine rungs is 1.568 mm on mixed-61's 174 mm parent, 0.636 mm
+/// on triangle-20's 70.7 mm parent and 1.803 mm on shapes-17's 200.3 mm one,
+/// and no millimetre crosses a request. It is the same derivation
+/// [`LADDER_RUNGS`] uses, at a different count, because it is the same quantum.
+const SCHEDULE_RUNGS: usize = 9;
+
+/// How many consecutive actions may publish nothing before the v3 loop stops.
+///
+/// Coordinator v3 has no global patience at all, and §4 of its README measures
+/// what that costs: shapes-17 spends a 30 s budget making 281 crossover actions
+/// across nine runs for 0.0034 mm, at 9.4x v2's coordinator wall, and never
+/// reaches a fixpoint because every rounding-scale publication regenerates the
+/// frontier's ordered pairs.
+///
+/// §5.2 measured the interval any such constant has to live in rather than
+/// guessing one, over 1,056 actions on three requests: the **longest barren run
+/// that was followed by a publication** is 7 on the mixed-61 30 s arm that
+/// produced this stage's headline and 8 on shapes-17 at 10 s, so a patience
+/// below 8 destroys measured results; and shapes-17 at 30 s churns 33 barren
+/// actions between micron publications, so a patience above 32 does not stop
+/// the churn. `[8, 32]` is the measured interval; the constant inside it was
+/// left unfitted.
+///
+/// **16 is the geometric midpoint of that interval**, `sqrt(8 * 32)`, and the
+/// midpoint is taken geometrically rather than arithmetically because the
+/// quantity being bounded is a *ratio* - "how many failures before a success" -
+/// whose interval endpoints are multiplicative, not additive. It is also
+/// exactly twice the largest productive barren run ever measured (8, shapes-17
+/// at 10 s), which is the same margin the interval's floor was chosen to
+/// protect, and exactly half the churn length it has to cut.
+pub const BARREN_ACTION_PATIENCE: usize = 16;
+
+/// How many consecutive barren actions the queue tolerates before it auditions
+/// an untested constructor ticket.
+///
+/// Eight: the *floor* of the same measured interval, and for the same measured
+/// reason. Coordinator v3 §5.2 says a patience below 8 would have cut the
+/// seed-0 30 s run's #13 crossover, which published 1.736 mm after seven barren
+/// actions - so 8 is the smallest number that provably interrupts no measured
+/// productive barren run on any of the three requests. An audition at 8 is
+/// therefore an action mixed-61's own headline stream never reaches.
+///
+/// The pair reads as one rule: **at eight barren actions the queue buys a new
+/// basin, at sixteen it stops.**
+const DIVERSIFY_AUDITION_BARREN: usize = 8;
+
 /// How many bands one enumeration will build a hybrid for, per ordered pair.
 /// The hybrid is what decides whether a cut is a real action, and it costs a
 /// fingerprint over the whole layout; this bounds that cost.
@@ -2545,6 +2745,36 @@ impl Coordinator<'_> {
                         fingerprint: basin.fingerprint.clone(),
                     },
                 });
+            }
+            // The compression-schedule slice. Offered over the same one best
+            // distinct state the two mode-22 classes are offered over rather
+            // than over rank 0 alone: at 0.3806 phase-zeros it is a sixth of a
+            // ladder, and the port measured it publishing in 11 of 12 cells
+            // against the ladder's 10 of 12 at 17x the price.
+            #[cfg(feature = "compression-schedule")]
+            if self.settings.compression_schedule_class {
+                let drop_mm = depth
+                    * SCHEDULE_RUNGS as f64
+                    * crate::search::general_relaxed::COUPLED_SEPARATOR_CONTRACTION_RATIO;
+                let key = format!("34:{}", basin.fingerprint);
+                if rank < quantum_states && depth - drop_mm > 0.0 && !self.attempted.contains(&key) {
+                    actions.push(ScheduledAction {
+                        class: ActionClass::Schedule,
+                        key,
+                        rank,
+                        label: format!(
+                            "m34 schedule rank{rank} {depth:.4} -> {:.4} ({SCHEDULE_RUNGS} rungs, \
+                             {} steps)",
+                            depth - drop_mm,
+                            (drop_mm
+                                / crate::search::compression_schedule::canonical_grid_step_mm())
+                            .round() as usize
+                        ),
+                        payload: ActionPayload::Basin {
+                            fingerprint: basin.fingerprint.clone(),
+                        },
+                    });
+                }
             }
             let drop_mm = depth
                 * LADDER_RUNGS as f64
@@ -2681,7 +2911,8 @@ impl Coordinator<'_> {
     /// 21.0M on the same request at a different seed, so a class with a 3.7x
     /// spread priced from one lucky sample is not priced at all.
     fn class_cost_estimate(&self, class: ActionClass) -> f64 {
-        let prior = class.prior_cost_in_phase_zero() * self.phase_zero_cost;
+        let prior =
+            class.prior_cost_in_phase_zero_for(self.meter.is_wall()) * self.phase_zero_cost;
         let observed = self
             .class_stats
             .get(&class)
@@ -2756,28 +2987,42 @@ fn v3_loop(
 ) {
     let patience = run.settings.basin_patience.max(1);
     let slots = run.settings.basin_slots;
+    let barren_patience = run.settings.barren_action_patience;
+    let ranked_diversify = run.settings.diversify_in_queue;
     let mut diversify_slot = 0usize;
     let mut diversify_barren = 0usize;
     let mut diversify_done = run.settings.basin_trigger == BasinTrigger::Never;
+    // Consecutive actions of *any* class that published nothing. Reset by a
+    // publication and by nothing else.
+    let mut barren = 0usize;
+    // The same count, additionally reset by a diversify action, so the audition
+    // rule fires at most once per `DIVERSIFY_AUDITION_BARREN` barren actions
+    // rather than on every action after the eighth.
+    let mut barren_since_diversify = 0usize;
     loop {
         if !run.meter.has_room(run.deadline) {
             run.note_exit(PhaseExitCause::Deadline);
             return;
         }
         let mut candidates = run.enumerate_v3_actions();
+        // The diversify class competes on rank like every other class, instead
+        // of being gated on the priced queue emptying - which coordinator v3
+        // §4.2 measured never happening on triangle-20, where the class is the
+        // only one that pays: crossover regenerates ordered pairs at 217
+        // actions per nine runs, so v3 never draws a ticket at all and loses
+        // the 3 µm those tickets were worth.
+        let diversify_available = ranked_diversify && !diversify_done && diversify_slot < slots;
+        if diversify_available {
+            candidates.push(diversify_action(diversify_slot));
+        }
         let candidate_count = candidates.len();
         // Rank: value first, then the class declaration order, then the action's
         // own order within its class. Every comparison is total, so the queue is
         // a deterministic function of the archive.
-        let values = [
-            ActionClass::Compression,
-            ActionClass::Descent,
-            ActionClass::Crossover,
-            ActionClass::Ladder,
-        ]
-        .into_iter()
-        .map(|class| (class, run.class_value(class)))
-        .collect::<BTreeMap<_, _>>();
+        let values = ActionClass::all()
+            .into_iter()
+            .map(|class| (class, run.class_value(class)))
+            .collect::<BTreeMap<_, _>>();
         candidates.sort_by(|first, second| {
             values[&second.class]
                 .total_cmp(&values[&first.class])
@@ -2785,6 +3030,23 @@ fn v3_loop(
                 .then(first.rank.cmp(&second.rank))
                 .then(first.key.cmp(&second.key))
         });
+        // The audition. A prior of 0.005826 mm never outranks a crossover prior
+        // of 1.0923 mm inside any budget this engine runs at, so ranking the
+        // class is necessary and not sufficient: a prior that is never tested
+        // is not evidence, and v3's own rule says the prior is worth two
+        // actions. After `DIVERSIFY_AUDITION_BARREN` barren actions the queue
+        // promotes one ticket to the front of the affordable set - and it is
+        // still the *affordability* rule that decides whether it is bought,
+        // which is the half of this that fixes §1.3's 12x mispricing.
+        if diversify_available && barren_since_diversify >= DIVERSIFY_AUDITION_BARREN {
+            if let Some(position) = candidates
+                .iter()
+                .position(|action| action.class == ActionClass::Diversify)
+            {
+                let promoted = candidates.remove(position);
+                candidates.insert(0, promoted);
+            }
+        }
         let remaining = run.meter.remaining_to(run.deadline);
         let chosen = candidates
             .into_iter()
@@ -2816,17 +3078,18 @@ fn v3_loop(
                 }
                 let slot = diversify_slot;
                 diversify_slot += 1;
-                ScheduledAction {
-                    class: ActionClass::Diversify,
-                    key: format!("m20:slot{slot}"),
-                    rank: slot,
-                    label: format!("m20 ticket slot{slot} + m22 quantum"),
-                    payload: ActionPayload::Diversify { slot },
-                }
+                diversify_action(slot)
             }
         };
 
         let class = action.class;
+        if class == ActionClass::Diversify && ranked_diversify {
+            // The slot advances when the ticket is *bought*, not when it is
+            // offered: an offer the affordability rule declines has to be
+            // offerable again on the next iteration or the class silently
+            // spends its slots on actions it never took.
+            diversify_slot += 1;
+        }
         let estimated_cost = run.class_cost_estimate(class);
         let entry_raw_depth_mm = run.incumbent.raw_depth_mm;
         let cost_before = run.meter.currency_spent();
@@ -2836,9 +3099,15 @@ fn v3_loop(
         let calls_before = run.operator_calls.len();
         let iteration = out.len();
 
-        execute_v3_action(run, &action, constructor_clamp_mm);
+        let self_metered_units = execute_v3_action(run, &action, constructor_clamp_mm);
 
-        let cost = (run.meter.currency_spent() - cost_before).max(0.0);
+        let metered_cost = (run.meter.currency_spent() - cost_before).max(0.0);
+        // The one place the coordinator charges an action more than its own
+        // meter read. See [`schedule_self_cost_units`].
+        let cost = match self_metered_units {
+            Some(units) if !run.meter.is_wall() => metered_cost.max(units as f64),
+            _ => metered_cost,
+        };
         let work_units = run.meter.work_units().saturating_sub(work_before);
         let seconds = run.meter.seconds() - seconds_before;
         let publications = run.publications.len() - publications_before;
@@ -2877,6 +3146,7 @@ fn v3_loop(
             entry_raw_depth_mm,
             exit_raw_depth_mm,
             candidates: candidate_count,
+            metered_cost,
         });
         if class == ActionClass::Diversify {
             // The stopping signal is the descendant, never the arm's own depth
@@ -2892,22 +3162,64 @@ fn v3_loop(
                 }
             }
         }
+        // The global patience. The signal is the incumbent moving, which is the
+        // only thing the coordinator is being paid for, and it is deliberately
+        // *not* a yield floor: coordinator v3 §5.2 suggested one, and a floor
+        // needs a millimetre to compare against, which is the kind of constant
+        // this schedule carries none of.
+        if publications > 0 {
+            barren = 0;
+            barren_since_diversify = 0;
+        } else {
+            barren += 1;
+            barren_since_diversify += 1;
+        }
+        if class == ActionClass::Diversify {
+            barren_since_diversify = 0;
+        }
+        if barren_patience > 0 && barren >= barren_patience {
+            // With the queue still full: this is a patience exit, not a
+            // fixpoint and not an affordability exit, and the three are
+            // different findings about a run.
+            run.note_exit(PhaseExitCause::Patience);
+            return;
+        }
+    }
+}
+
+/// One constructor ticket plus the quantum spent on it, at `slot`.
+///
+/// Built in one place because the queue now names it from two - the ranked
+/// enumeration and merged-HEAD v3's empty-queue fallback - and the two have to
+/// produce the same key or the same ticket would be bought twice.
+fn diversify_action(slot: usize) -> ScheduledAction {
+    ScheduledAction {
+        class: ActionClass::Diversify,
+        key: format!("m20:slot{slot}"),
+        rank: slot,
+        label: format!("m20 ticket slot{slot} + m22 quantum"),
+        payload: ActionPayload::Diversify { slot },
     }
 }
 
 /// Executes one queued action. Marks its key attempted first, so an action that
 /// produces nothing is still never offered twice.
+///
+/// Returns the action's own self-metered work units when the operator carries a
+/// meter of its own that the coordinator's does not cover; `None` otherwise.
+/// Today that is exactly the compression schedule - see
+/// [`schedule_self_cost_units`].
 fn execute_v3_action(
     run: &mut PhaseRun<'_, '_>,
     action: &ScheduledAction,
     constructor_clamp_mm: f64,
-) {
+) -> Option<u64> {
     run.phase_name = action.class.name().to_owned();
     run.already_attempted(action.key.clone());
     match (action.class, &action.payload) {
         (ActionClass::Descent, ActionPayload::Basin { fingerprint }) => {
             let Some(basin) = run.basin_by_fingerprint(fingerprint) else {
-                return;
+                return None;
             };
             let cycles = run.settings.descent_cycles.max(1);
             let epochs = run.settings.descent_relaxed_epochs.max(1);
@@ -2924,10 +3236,11 @@ fn execute_v3_action(
                 ParentRole::Descended,
                 Some(action.label.clone()),
             );
+            None
         }
         (ActionClass::Compression, ActionPayload::Basin { fingerprint }) => {
             let Some(basin) = run.basin_by_fingerprint(fingerprint) else {
-                return;
+                return None;
             };
             let epochs = run.settings.descent_relaxed_epochs.max(1);
             let target = basin.raw_depth_mm - COMPRESSION_RUNG_MM;
@@ -2947,13 +3260,14 @@ fn execute_v3_action(
             if compressed.exact_valid {
                 // Already archived and already offered to the adoption rule by
                 // `run_operator`. There is nothing for a legalizer to do.
-                return;
+                return None;
             }
             legalize_residue(run, &compressed, "m31 on the compression residue");
+            None
         }
         (ActionClass::Ladder, ActionPayload::Basin { fingerprint }) => {
             let Some(basin) = run.basin_by_fingerprint(fingerprint) else {
-                return;
+                return None;
             };
             let drop_mm = basin.raw_depth_mm
                 * LADDER_RUNGS as f64
@@ -2970,6 +3284,7 @@ fn execute_v3_action(
                 Some(action.label.clone()),
             );
             legalize_residue(run, &ladder, "m31 on the ladder residue");
+            None
         }
         (
             ActionClass::Crossover,
@@ -2983,7 +3298,7 @@ fn execute_v3_action(
                 run.basin_by_fingerprint(left_fingerprint),
                 run.basin_by_fingerprint(right_fingerprint),
             ) else {
-                return;
+                return None;
             };
             let parent_b = GeneralPersistentVacancyPinnedParent {
                 placements: right.placements.clone(),
@@ -3002,6 +3317,7 @@ fn execute_v3_action(
             );
             // Both parents were descended from.
             run.archive.charge_descent(&right.fingerprint);
+            None
         }
         (ActionClass::Diversify, ActionPayload::Diversify { slot }) => {
             let slot = *slot;
@@ -3032,7 +3348,7 @@ fn execute_v3_action(
                 &drawn.final_placements,
             );
             if basin.len() != run.pieces.len() {
-                return;
+                return None;
             }
             let Some(basin_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
                 run.pieces,
@@ -3040,13 +3356,13 @@ fn execute_v3_action(
                 run.fast_settings,
             )
             .ok() else {
-                return;
+                return None;
             };
             let basin_fingerprint = general_placement_fingerprint(&basin);
             let cycles = run.settings.descent_cycles.max(1);
             let epochs = run.settings.descent_relaxed_epochs.max(1);
             if run.already_attempted(format!("22:{cycles}:{epochs}:{basin_fingerprint}")) {
-                return;
+                return None;
             }
             run.run_operator(
                 22,
@@ -3061,13 +3377,112 @@ fn execute_v3_action(
                 ParentRole::Descended,
                 Some(format!("m22 quantum on m20 slot{slot}")),
             );
+            None
+        }
+        #[cfg(feature = "compression-schedule")]
+        (ActionClass::Schedule, ActionPayload::Basin { fingerprint }) => {
+            let Some(basin) = run.basin_by_fingerprint(fingerprint) else {
+                return None;
+            };
+            let drop_mm = basin.raw_depth_mm
+                * SCHEDULE_RUNGS as f64
+                * crate::search::general_relaxed::COUPLED_SEPARATOR_CONTRACTION_RATIO;
+            let bound = basin.raw_depth_mm - drop_mm;
+            let scheduled = run.run_operator(
+                34,
+                &basin.placements,
+                Some(basin.fingerprint.clone()),
+                Some(bound),
+                |relaxed| {
+                    // The port's own measured defaults, unmodified: six repair
+                    // sweeps per step, a confirmation due every fourth step,
+                    // `micro_legalize` on a refused confirmation - and
+                    // `rollback_after_steps = 0`, which is not a preference but
+                    // the port's structural finding (arming it at 32 cost a
+                    // paired median 10.962 mm over twelve cells, because a
+                    // rollback triggered by "the frontier has not been
+                    // publishable lately" fires on the normal state of a
+                    // compression frontier).
+                    //
+                    // `continue_past_bound` stays `false` and there is no work
+                    // cap: the slice *is* the bound. Nine rungs of the
+                    // separator's own quantum is a step count the request
+                    // supplies, so the arm is deterministic and load-independent
+                    // without reading a counter at all - which a work cap
+                    // expressed in the coordinator's currency would not be,
+                    // because that currency is zero when profiling is off and a
+                    // wall-budget run has it off.
+                    relaxed.compression_schedule = Some(
+                        crate::search::compression_schedule::CompressionScheduleSettings::default(),
+                    );
+                },
+                None,
+                ParentRole::Descended,
+                Some(action.label.clone()),
+            );
+            // Mode 34 publishes only layouts its own exact confirmation
+            // accepted, with the parent as the floor, so there is never a
+            // residue for the global legalizer to be pointed at. That is the
+            // structural difference from the ladder class, and it is why this
+            // arm does not call `legalize_residue`.
+            schedule_self_cost_units(&scheduled)
         }
         // The payload and the class are built together, so a mismatch is
         // unreachable; it is a no-op rather than a panic because a coordinator
         // that aborts a run to report a scheduling bug is worse than one that
         // skips an action.
-        _ => {}
+        _ => None,
     }
+}
+
+/// What one compression-schedule slice charges itself, in the portfolio's own
+/// work currency, or `None` if the arm never armed a schedule.
+///
+/// # Why the coordinator does not simply read its own meter
+///
+/// The port measured the disagreement and named it a finding (§6.3): the
+/// coordinator's `Counter::ExactPairTests` is incremented *past* the
+/// broad-phase bounds reject, so a whole-layout confirmation that asks all
+/// `n * (n - 1) / 2 = 1,830` pairs on the 61-piece request reaches the narrow
+/// phase on about 99 of them and is charged **~493 units for 4.83 ms of work**.
+/// On the schedule's own arms the exact tier is 24-52% of the wall and about
+/// 4% of the metered work.
+///
+/// So a schedule slice priced on the coordinator's meter is a slice riding
+/// free on the one tier it spends its wall in, and the twelve gate cells show
+/// exactly that: the same self-capped arm reads 307,767 to 3,343,739 units on
+/// the coordinator's meter - an **11x spread** for an arm whose own meter reads
+/// 3,341,665 to 3,356,020, a spread of **0.4%**.
+///
+/// Two ways to fix it were available and this round took the second:
+///
+/// * **extend the meter** - charge asked pairs rather than narrow-phase tests,
+///   process-wide. That is the more principled instrument and it is *rejected
+///   here on blast radius*: every pinned work-unit number in this repository is
+///   denominated in the current counter, including the ledger's
+///   32,393,757 / 31,957,935 / 27,938,867 that coordinator v3 §6.1 reproduces
+///   to the unit as its strongest regression statement, and the four gates'
+///   work columns. Moving the meter moves all of them at once and buys nothing
+///   the pricing decision needs.
+/// * **charge the self-cap** - the operator carries a deterministic meter of
+///   its own, denominated in the same currency by construction
+///   (`candidate_queries + WORK_UNITS_PER_EXACT_PAIR_TEST * asked pairs`), and
+///   the coordinator charges the larger of the two. That is this function.
+///
+/// The charge is a *price*, never a spend: the budget still advances at the
+/// meter's own rate, so this cannot make a run stop early against its own
+/// counter. It raises `ClassStats::cost_max`, which is what the affordability
+/// rule and the ranking value read - so the class is ranked and refused on the
+/// conservative number and the run's budget is still the run's budget.
+///
+/// Under a **wall** budget the caller does not apply it at all, and does not
+/// need to: seconds are seconds, and the clock has no broad phase.
+#[cfg(feature = "compression-schedule")]
+fn schedule_self_cost_units(population: &GeneralPersistentVacancyDiagnostics) -> Option<u64> {
+    population
+        .compression_schedule
+        .as_ref()
+        .map(|report| report.work_units as u64)
 }
 
 /// Hands a deep operator's terminal state to the global legalizer, one rung
@@ -4377,34 +4792,173 @@ mod tests {
             ActionClass::Ladder.prior_cost_in_phase_zero()
                 > 3.0 * ActionClass::Crossover.prior_cost_in_phase_zero()
         );
-        // The constructor slice is never ranked into the queue; the ledger
-        // measured 0 descendant publications from every archived m20 basin on
-        // all three mixed-61 seeds.
-        assert_eq!(ActionClass::Diversify.prior_delta_mm(), 0.0);
+        // The compression schedule sits between descent and crossover on the
+        // ledger's own axis - 1.104 mm for a 3,341,379-unit self-cap is 0.330
+        // mm per million, against descent's 0.4264 and crossover's 0.2043 -
+        // and that is the declaration order it is given.
+        let schedule = value(ActionClass::Schedule);
+        assert!(descent > schedule, "{descent} > {schedule}");
+        assert!(schedule > crossover, "{schedule} > {crossover}");
+        assert!(ActionClass::Descent < ActionClass::Schedule);
+        assert!(ActionClass::Schedule < ActionClass::Crossover);
+        // The slice is a sixth of a ladder and it published in 11 of 12 gate
+        // cells against the ladder's 10, which is the whole reason it is worth
+        // ranking above the operator it replaces.
+        assert!(
+            ActionClass::Schedule.prior_cost_in_phase_zero() * 6.0
+                < ActionClass::Ladder.prior_cost_in_phase_zero()
+        );
+        assert!(schedule > ladder, "{schedule} > {ladder}");
+    }
+
+    /// A prior of exactly zero is not a prior, it is a deletion: a class ranked
+    /// at zero can never be chosen, so it never earns the evidence that would
+    /// displace its prior. Coordinator v3 §4.2 measured what that costs - 3 µm
+    /// on triangle-20, where the class is the only one that pays.
+    #[test]
+    fn every_class_prior_is_testable() {
+        for class in ActionClass::all() {
+            assert!(
+                class.prior_delta_mm() > 0.0,
+                "{} has an untestable prior",
+                class.name()
+            );
+            for wall in [false, true] {
+                assert!(class.prior_cost_in_phase_zero_for(wall) > 0.0);
+            }
+        }
+    }
+
+    /// The one class whose two currencies were *measured* to disagree carries
+    /// two prices, and every other class carries one.
+    ///
+    /// The ledger priced a mode-20 arm at 260-335 work units against 3.1
+    /// seconds of clock; coordinator v3 §1.3 measured the same rule 11.7-12.0x
+    /// wrong on shapes-17's wall and did not fix it. Measured on three requests
+    /// here, the diversify phase costs 0.067-1.224 phase-zeros in work units
+    /// and 1.25-1.98 in seconds.
+    #[test]
+    fn only_the_constructor_slice_is_priced_twice() {
+        for class in ActionClass::all() {
+            let work = class.prior_cost_in_phase_zero_for(false);
+            let wall = class.prior_cost_in_phase_zero_for(true);
+            if class == ActionClass::Diversify {
+                assert!(wall > work, "{wall} > {work}");
+                // The measured disagreement is an order of magnitude on
+                // mixed-61 and it must survive as one, not be averaged away.
+                assert!(wall / work > 1.5);
+            } else {
+                assert_eq!(work, wall, "{} is priced twice", class.name());
+            }
+        }
+    }
+
+    /// A scheduled compression slice is nine rungs of the same quantum the
+    /// ladder takes two of, and nine rungs on the band the port measured is the
+    /// step count the port's cheap arm actually walked.
+    #[test]
+    fn a_scheduled_slice_is_nine_rungs_and_the_ports_own_step_count() {
+        let ratio = crate::search::general_relaxed::COUPLED_SEPARATOR_CONTRACTION_RATIO;
+        // The port's `sched10-noroll` arm walked a median 1,568 one-micron
+        // steps over twelve cells at 171-179 mm parents.
+        let steps = |depth: f64| (depth * SCHEDULE_RUNGS as f64 * ratio / 0.001).round() as usize;
+        assert_eq!(steps(174.20812003998896), 1568);
+        for depth in [171.6141235046606_f64, 179.6200102363703] {
+            assert!((1_400..=1_700).contains(&steps(depth)), "depth {depth}");
+        }
+        // No millimetre crosses a request: the same nine rungs is a shorter
+        // walk on a shallower parent, and a strictly positive bound on any.
+        for depth in [70.72726178003285_f64, 200.34937729570953] {
+            let drop = depth * SCHEDULE_RUNGS as f64 * ratio;
+            assert!(drop > 0.0 && drop < depth, "depth {depth}");
+        }
+        assert!(SCHEDULE_RUNGS > LADDER_RUNGS);
+    }
+
+    /// The two patience constants are the two ends of the interval coordinator
+    /// v3 §5.2 measured, and neither is inside the other's evidence.
+    #[test]
+    fn the_patience_constants_sit_inside_the_measured_interval() {
+        // §5.2's floor: the longest barren run that was *followed by* a
+        // publication is 8, on shapes-17 at 10 s; the mixed-61 30 s headline's
+        // own #13 published after 7.
+        const MEASURED_FLOOR: usize = 8;
+        // §5.2's ceiling: shapes-17 at 30 s churns 33 barren actions between
+        // micron publications, so a patience above 32 does not cut the churn.
+        const MEASURED_CEILING: usize = 32;
+        assert!((MEASURED_FLOOR..=MEASURED_CEILING).contains(&BARREN_ACTION_PATIENCE));
+        assert!((MEASURED_FLOOR..=MEASURED_CEILING).contains(&DIVERSIFY_AUDITION_BARREN));
+        // 16 is the geometric midpoint of [8, 32], because the quantity is a
+        // ratio - "how many failures before a success" - and its interval's
+        // endpoints are multiplicative.
+        assert_eq!(
+            BARREN_ACTION_PATIENCE,
+            ((MEASURED_FLOOR * MEASURED_CEILING) as f64).sqrt() as usize
+        );
+        // The audition is the floor itself, so a run that publishes at least
+        // once every eight actions never buys a ticket it did not need, and the
+        // seed-0 30 s stream - whose longest productive barren run is 7 - never
+        // reaches one.
+        assert_eq!(DIVERSIFY_AUDITION_BARREN, MEASURED_FLOOR);
+        assert!(DIVERSIFY_AUDITION_BARREN < BARREN_ACTION_PATIENCE);
+        // The run gives a basin a chance before it gives up, and it gives it
+        // exactly one chance per audition interval.
+        assert_eq!(BARREN_ACTION_PATIENCE / DIVERSIFY_AUDITION_BARREN, 2);
+    }
+
+    /// The three v4 keys default on inside v3, and v3 itself defaults off, so
+    /// a default build is still coordinator v2 to the digit.
+    #[test]
+    fn the_shipping_defaults_are_v3_plus_three_and_v3_is_off() {
+        let settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Work { units: 1 },
+        );
+        assert!(!settings.coordinator_v3);
+        assert!(settings.compression_schedule_class);
+        assert!(settings.diversify_in_queue);
+        assert_eq!(settings.barren_action_patience, BARREN_ACTION_PATIENCE);
+        // The constructor slice's own patience is untouched: it is a different
+        // rule about a different thing, and the global one does not replace it.
+        assert_eq!(settings.basin_patience, 1);
+    }
+
+    /// The two diversify construction sites produce one key, so a ticket the
+    /// ranked queue offered and the empty-queue fallback offered is one ticket.
+    #[test]
+    fn the_two_diversify_paths_name_one_action() {
+        let ranked = diversify_action(3);
+        assert_eq!(ranked.key, "m20:slot3");
+        assert_eq!(ranked.rank, 3);
+        assert_eq!(ranked.class, ActionClass::Diversify);
+        assert_ne!(diversify_action(3).key, diversify_action(4).key);
     }
 
     /// Every class name is distinct, because the operator calls and the
     /// publication events a class pays for are attributed by that name.
     #[test]
     fn action_class_names_are_distinct() {
-        let all = [
-            ActionClass::Compression,
-            ActionClass::Descent,
-            ActionClass::Crossover,
-            ActionClass::Ladder,
-            ActionClass::Diversify,
-        ];
+        let all = ActionClass::all();
         let names = all
             .iter()
             .map(|class| class.name())
             .collect::<std::collections::BTreeSet<_>>();
         assert_eq!(names.len(), all.len());
+        // `all()` is the list the queue ranks over. A variant missing from it
+        // would be a class that is enumerated and never ranked, which sorts as
+        // a panic in the ranking map rather than as a mis-ordering.
+        assert_eq!(
+            all.iter().copied().collect::<std::collections::BTreeSet<_>>().len(),
+            all.len()
+        );
         // The declaration order is the deterministic tie-break after the value,
         // and it is the ledger's own yield order.
         assert!(ActionClass::Compression < ActionClass::Descent);
         assert!(ActionClass::Descent < ActionClass::Crossover);
         assert!(ActionClass::Crossover < ActionClass::Ladder);
         assert!(ActionClass::Ladder < ActionClass::Diversify);
+        assert!(ActionClass::Descent < ActionClass::Schedule);
+        assert!(ActionClass::Schedule < ActionClass::Crossover);
     }
 
     /// A crossover action's key is built from the two parents *in the order
@@ -4443,6 +4997,13 @@ mod tests {
             2 * quantum_states + 1 + ordered_pairs * (CROSSOVER_CUTS_PER_PAIR + 1);
         assert_eq!(ordered_pairs, 6);
         assert_eq!(ceiling, 21);
+        // Plus one compression-schedule slice per quantum state and one ranked
+        // constructor ticket: the enumeration is 23 wide in a schedule-capable
+        // build, still bounded by construction and still two orders below the
+        // ledger's 4,318.
+        let with_v4 = ceiling + quantum_states + 1;
+        assert_eq!(with_v4, 23);
+        assert!(with_v4 < 360);
         // The ledger's top-3 frontier alone carries 360 ordered, cut-derived
         // actions; one enumeration offers at most 21 of them, and the loop
         // re-enumerates after every action rather than walking the rest blindly.

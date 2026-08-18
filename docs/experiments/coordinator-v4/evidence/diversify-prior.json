@@ -1,0 +1,184 @@
+{
+ "workBudget": 40000000,
+ "rows": [
+  {
+   "request": "mixed-61",
+   "seed": 0,
+   "workBudget": 40000000,
+   "processSeconds": 0.0,
+   "rawDepthMm": 174.20812003998896,
+   "diversifyArms": 1,
+   "diversifyArmsPublished": 0,
+   "diversifyGainedMm": 0.0,
+   "diversifyWorkUnits": 964363,
+   "diversifySeconds": 4.0813903950000014,
+   "phaseZeroWorkUnits": 8778573,
+   "phaseZeroSeconds": 2.1981348179999998
+  },
+  {
+   "request": "mixed-61",
+   "seed": 1,
+   "workBudget": 40000000,
+   "processSeconds": 0.0,
+   "rawDepthMm": 176.05599999999998,
+   "diversifyArms": 1,
+   "diversifyArmsPublished": 0,
+   "diversifyGainedMm": 0.0,
+   "diversifyWorkUnits": 642686,
+   "diversifySeconds": 4.162757163,
+   "phaseZeroWorkUnits": 9629453,
+   "phaseZeroSeconds": 2.3131623140000004
+  },
+  {
+   "request": "mixed-61",
+   "seed": 2,
+   "workBudget": 40000000,
+   "processSeconds": 0.0,
+   "rawDepthMm": 179.006,
+   "diversifyArms": 1,
+   "diversifyArmsPublished": 0,
+   "diversifyGainedMm": 0.0,
+   "diversifyWorkUnits": 1189145,
+   "diversifySeconds": 4.651025594000002,
+   "phaseZeroWorkUnits": 8961342,
+   "phaseZeroSeconds": 2.353444539
+  },
+  {
+   "request": "shapes-17",
+   "seed": 0,
+   "workBudget": 40000000,
+   "processSeconds": 0.0,
+   "rawDepthMm": 200.34937729570953,
+   "diversifyArms": 1,
+   "diversifyArmsPublished": 0,
+   "diversifyGainedMm": 0.0,
+   "diversifyWorkUnits": 301724,
+   "diversifySeconds": 1.1854331730000003,
+   "phaseZeroWorkUnits": 1160739,
+   "phaseZeroSeconds": 0.937966463
+  },
+  {
+   "request": "shapes-17",
+   "seed": 1,
+   "workBudget": 40000000,
+   "processSeconds": 0.0,
+   "rawDepthMm": 200.34937729570953,
+   "diversifyArms": 1,
+   "diversifyArmsPublished": 0,
+   "diversifyGainedMm": 0.0,
+   "diversifyWorkUnits": 302382,
+   "diversifySeconds": 1.1946018409999999,
+   "phaseZeroWorkUnits": 1154177,
+   "phaseZeroSeconds": 0.92396761
+  },
+  {
+   "request": "shapes-17",
+   "seed": 2,
+   "workBudget": 40000000,
+   "processSeconds": 0.0,
+   "rawDepthMm": 200.34937729570953,
+   "diversifyArms": 1,
+   "diversifyArmsPublished": 0,
+   "diversifyGainedMm": 0.0,
+   "diversifyWorkUnits": 305743,
+   "diversifySeconds": 1.1853960099999998,
+   "phaseZeroWorkUnits": 1184708,
+   "phaseZeroSeconds": 0.94520995
+  },
+  {
+   "request": "triangle-20",
+   "seed": 0,
+   "workBudget": 40000000,
+   "processSeconds": 0.0,
+   "rawDepthMm": 70.72726178003285,
+   "diversifyArms": 2,
+   "diversifyArmsPublished": 1,
+   "diversifyGainedMm": 0.04387185116195269,
+   "diversifyWorkUnits": 7804768,
+   "diversifySeconds": 1.6122153329999995,
+   "phaseZeroWorkUnits": 6376387,
+   "phaseZeroSeconds": 0.8703915680000001
+  },
+  {
+   "request": "triangle-20",
+   "seed": 1,
+   "workBudget": 40000000,
+   "processSeconds": 0.0,
+   "rawDepthMm": 70.74684851410467,
+   "diversifyArms": 0,
+   "diversifyArmsPublished": 0,
+   "diversifyGainedMm": 0.0,
+   "diversifyWorkUnits": 0,
+   "diversifySeconds": 0,
+   "phaseZeroWorkUnits": 9249221,
+   "phaseZeroSeconds": 1.101077694
+  },
+  {
+   "request": "triangle-20",
+   "seed": 2,
+   "workBudget": 40000000,
+   "processSeconds": 0.0,
+   "rawDepthMm": 70.72726178003285,
+   "diversifyArms": 2,
+   "diversifyArmsPublished": 1,
+   "diversifyGainedMm": 0.014384731171560361,
+   "diversifyWorkUnits": 8783238,
+   "diversifySeconds": 1.803411671,
+   "phaseZeroWorkUnits": 7598248,
+   "phaseZeroSeconds": 0.9749401759999999
+  }
+ ],
+ "perRequest": {
+  "mixed-61": {
+   "arms": 3,
+   "costInPhaseZerosWork": [
+    0.1098541870073872,
+    0.06674169342744599,
+    0.13269720093262818
+   ],
+   "costInPhaseZerosWall": [
+    1.8567516248678073,
+    1.7995957904923743,
+    1.976263097313636
+   ],
+   "armsPublished": 0,
+   "gainedMm": 0.0,
+   "mmPerArm": 0.0
+  },
+  "shapes-17": {
+   "arms": 3,
+   "costInPhaseZerosWork": [
+    0.259941296019174,
+    0.26198927894075175,
+    0.2580745635211377
+   ],
+   "costInPhaseZerosWall": [
+    1.263833217670172,
+    1.292904456899739,
+    1.2541086877047791
+   ],
+   "armsPublished": 0,
+   "gainedMm": 0.0,
+   "mmPerArm": 0.0
+  },
+  "triangle-20": {
+   "arms": 4,
+   "costInPhaseZerosWork": [
+    1.2240110269342184,
+    1.1559556887324551
+   ],
+   "costInPhaseZerosWall": [
+    1.8522873983080674,
+    1.8497664937751013
+   ],
+   "armsPublished": 2,
+   "gainedMm": 0.05825658233351305,
+   "mmPerArm": 0.014564145583378263
+  }
+ },
+ "pooled": {
+  "arms": 10,
+  "gainedMm": 0.05825658233351305,
+  "mmPerArm": 0.005825658233351305
+ }
+}
