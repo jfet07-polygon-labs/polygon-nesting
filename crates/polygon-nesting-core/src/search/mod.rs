@@ -4,6 +4,11 @@
 //! `irregularScoreGrid.ts`, and `src/workers/algorithm/sortPiecesForNesting.ts`.
 
 pub mod beam_state;
+/// The relaxed lane's depth clock. Compiled only under
+/// `compression-schedule`; with the feature off the module does not exist and
+/// nothing in the lane names it.
+#[cfg(feature = "compression-schedule")]
+pub mod compression_schedule;
 pub mod gap_regions;
 pub mod general_fast;
 #[cfg(feature = "jagua-experimental")]

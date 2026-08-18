@@ -1,0 +1,57 @@
+{
+ "label": "after",
+ "binary": "/var/lib/t3/tmp/csched-gate-after",
+ "env": {},
+ "gates": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fingerprints": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ],
+   "hit": true,
+   "wallSeconds": 26.268878936767578,
+   "docDigest": "3ae3454a90ef80b83ddb86205a9878db4e7090c70fd1dc96626b8c9d70522ef9"
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "depth": 159.092,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.2531144618988037,
+   "docDigest": "96c352f11e138a4d58f0ee96e7da89b5de96c6897ddd60082d96df59e5d82b61"
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "depth": 159.079,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.5382468700408936,
+   "docDigest": "921aa5875f1c1cd1df4c1fe13f2bd7ab050ebbdec3854f34d96fa7ef2f652ac0"
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "depth": 164.038,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.2287180423736572,
+   "docDigest": "03bca98fb2f954479b76b55d2489fe66cd473b4f08280307a445d8a328058cec"
+  }
+ },
+ "ALL_PASS": true
+}

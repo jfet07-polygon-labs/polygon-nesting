@@ -232,6 +232,26 @@ fast-constructor-reject = []
 # so its clock is not the production clock and no time from it may be quoted.
 # See `constructor_census`.
 constructor-census = []
+# Compiles the lane-owned compression schedule in: a depth clock the relaxed
+# lane advances one canonical grid unit at a time, a monotone floor in the
+# proxy tier, a deepest-confirmed slot, and persistent-vacancy mode 34, which
+# drives them.
+#
+# Off by default, and the default build is byte-identical: the schedule is one
+# `Option` field on `GeneralRelaxedSettings` that does not exist when the
+# feature is off, one `#[cfg]`-paired call at the top of `move_sweep` whose
+# disabled half has no body, and one match arm in the mode dispatch. Every
+# existing caller constructs the settings without naming it, so `move_sweep`
+# reads `state.strip_depth_mm` exactly as it does today and the four pinned
+# gates reproduce bit-for-bit.
+#
+# It is not a bit-identical *behaviour* flag when armed: an armed lane writes a
+# tightening depth into the state at every sweep entry, which changes the
+# boundary penalty, the candidate sampling boxes and therefore the trajectory.
+# That is the whole point of it, and it is why arming it needs a matched-arm
+# quality gate rather than a document diff. See
+# `search::compression_schedule` and docs/experiments/compression-schedule/.
+compression-schedule = []
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }
