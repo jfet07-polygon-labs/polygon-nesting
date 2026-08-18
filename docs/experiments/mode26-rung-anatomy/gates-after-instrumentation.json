@@ -1,0 +1,57 @@
+{
+ "label": "plainafter",
+ "binary": "/var/lib/t3/tmp/m26anat/target-plain/release/examples/general_request_benchmark",
+ "env": {},
+ "gates": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fingerprints": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ],
+   "hit": true,
+   "wallSeconds": 26.383228302001953,
+   "docDigest": "3fd60b3013cdfacfff5f157ffa1631e884b0fc2e8c680ce72f177939d2f2027f"
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "depth": 159.092,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.1555991172790527,
+   "docDigest": "26056e166da9cdf32c88991863177559019459a885b1755883c1a6400d703d22"
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "depth": 159.079,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.472210645675659,
+   "docDigest": "ba5e3367ed46398c9aa0cc44fcfd81c11570407d1d0b56a755a7ef19b088e6c0"
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "depth": 164.038,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.058128833770752,
+   "docDigest": "05cb6f742feafe793eeb8a4cba9924156abcc22b4d92e96e9ce1146854a143d3"
+  }
+ },
+ "ALL_PASS": true
+}

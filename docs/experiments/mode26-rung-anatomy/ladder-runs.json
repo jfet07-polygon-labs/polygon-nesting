@@ -1,0 +1,1626 @@
+[
+ {
+  "tag": "lin-d0.3-s0",
+  "parent": "pinned-parent-159.079.json",
+  "parentRaw": 159.07876040364795,
+  "dropMm": 0.3,
+  "targetMm": 158.77876,
+  "seed": 0,
+  "processWallSeconds": 12.512477159500122,
+  "engineSeconds": 12.475089359,
+  "publishedRaw": 159.07876040364795,
+  "independentDepthMm": 159.079,
+  "exactValid": true,
+  "contractValid": true,
+  "failureReason": null,
+  "stepsPlanned": 2,
+  "stepsRun": 2,
+  "stepMm": 0.159079,
+  "publishedStep": null,
+  "ladderWallMs": 9980.969532,
+  "searchProfile": {
+   "allocatorInstalled": false,
+   "counters": {
+    "acceptedMoves": 403753,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 45146439,
+    "collisionPolygonBuilds": 2920,
+    "effectivePieceMoves": 403753,
+    "exactPairTests": 585298,
+    "fullRescores": 4973,
+    "neighborTests": 179145655,
+    "publicationAttempts": 13
+   },
+   "deepOperatorsInstrumented": true,
+   "leafMilliseconds": 50591.313704,
+   "phases": [
+    {
+     "calls": 976,
+     "enclosing": false,
+     "leafSharePercent": 1.0800641374861104,
+     "milliseconds": 546.418636,
+     "phase": "constructorProposals"
+    },
+    {
+     "calls": 2920,
+     "enclosing": false,
+     "leafSharePercent": 0.02325625317586831,
+     "milliseconds": 11.765644,
+     "phase": "collisionPolygonBuild"
+    },
+    {
+     "calls": 524630,
+     "enclosing": false,
+     "leafSharePercent": 0.039179891860433746,
+     "milliseconds": 19.821622,
+     "phase": "sheetFitTest"
+    },
+    {
+     "calls": 585298,
+     "enclosing": false,
+     "leafSharePercent": 2.8817824588032566,
+     "milliseconds": 1457.931604,
+     "phase": "exactOverlapTest"
+    },
+    {
+     "calls": 1944,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 7.941819,
+     "phase": "publicationConfirm"
+    },
+    {
+     "calls": 48770,
+     "enclosing": false,
+     "leafSharePercent": 0.0730134153386878,
+     "milliseconds": 36.938446,
+     "phase": "constructorScore"
+    },
+    {
+     "calls": 45146439,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 61231.71307,
+     "phase": "scorePlacement"
+    },
+    {
+     "calls": 47282003,
+     "enclosing": false,
+     "leafSharePercent": 7.537329707053065,
+     "milliseconds": 3813.234117,
+     "phase": "boundaryPenalty"
+    },
+    {
+     "calls": 163215054,
+     "enclosing": false,
+     "leafSharePercent": 28.54596967870032,
+     "milliseconds": 14441.78107,
+     "phase": "pairCollide"
+    },
+    {
+     "calls": 69131332,
+     "enclosing": false,
+     "leafSharePercent": 23.2598821763144,
+     "milliseconds": 11767.479959,
+     "phase": "pairPressure"
+    },
+    {
+     "calls": 4973,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 472.837404,
+     "phase": "fullRescore"
+    },
+    {
+     "calls": 21729,
+     "enclosing": false,
+     "leafSharePercent": 0.7311257129319316,
+     "milliseconds": 369.886103,
+     "phase": "pieceIndexBuild"
+    },
+    {
+     "calls": 21729,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 66250.381277,
+     "phase": "moveSweep"
+    },
+    {
+     "calls": 403753,
+     "enclosing": false,
+     "leafSharePercent": 0.9763960012782672,
+     "milliseconds": 493.971564,
+     "phase": "updateAfterMove"
+    },
+    {
+     "calls": 44,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 20.851912,
+     "phase": "auditorScore"
+    },
+    {
+     "calls": 7608958,
+     "enclosing": false,
+     "leafSharePercent": 11.93887030358424,
+     "milliseconds": 6040.031328,
+     "phase": "hazardQuery"
+    },
+    {
+     "calls": 12556096,
+     "enclosing": false,
+     "leafSharePercent": 17.130240805181522,
+     "milliseconds": 8666.413864,
+     "phase": "hazardPressure"
+    },
+    {
+     "calls": 9980374,
+     "enclosing": false,
+     "leafSharePercent": 1.940612741831955,
+     "milliseconds": 981.78148,
+     "phase": "hazardPoseBounds"
+    },
+    {
+     "calls": 65402,
+     "enclosing": false,
+     "leafSharePercent": 3.746304055453195,
+     "milliseconds": 1895.304437,
+     "phase": "hazardCommit"
+    },
+    {
+     "calls": 0,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 0.0,
+     "phase": "vacancyProposals"
+    },
+    {
+     "calls": 0,
+     "enclosing": false,
+     "leafSharePercent": 0.0,
+     "milliseconds": 0.0,
+     "phase": "vacancyProxyRank"
+    },
+    {
+     "calls": 0,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 0.0,
+     "phase": "vacancyExactRows"
+    },
+    {
+     "calls": 13,
+     "enclosing": false,
+     "leafSharePercent": 0.09597266100674728,
+     "milliseconds": 48.55383,
+     "phase": "publicationValidate"
+    }
+   ],
+   "threads": 8
+  },
+  "stderrTail": "",
+  "elapsed": 12.513830661773682
+ },
+ {
+  "tag": "lin-d0.3-s1",
+  "parent": "pinned-parent-159.079.json",
+  "parentRaw": 159.07876040364795,
+  "dropMm": 0.3,
+  "targetMm": 158.77876,
+  "seed": 1,
+  "processWallSeconds": 18.28414487838745,
+  "engineSeconds": 18.249310208,
+  "publishedRaw": 159.07876040364795,
+  "independentDepthMm": 159.079,
+  "exactValid": true,
+  "contractValid": true,
+  "failureReason": null,
+  "stepsPlanned": 2,
+  "stepsRun": 2,
+  "stepMm": 0.159079,
+  "publishedStep": null,
+  "ladderWallMs": 16200.322449000001,
+  "searchProfile": {
+   "allocatorInstalled": false,
+   "counters": {
+    "acceptedMoves": 557765,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 62408757,
+    "collisionPolygonBuilds": 44507,
+    "effectivePieceMoves": 557765,
+    "exactPairTests": 953498,
+    "fullRescores": 6843,
+    "neighborTests": 251101967,
+    "publicationAttempts": 15
+   },
+   "deepOperatorsInstrumented": true,
+   "leafMilliseconds": 71136.455673,
+   "phases": [
+    {
+     "calls": 976,
+     "enclosing": false,
+     "leafSharePercent": 0.7586223278830407,
+     "milliseconds": 539.657036,
+     "phase": "constructorProposals"
+    },
+    {
+     "calls": 44507,
+     "enclosing": false,
+     "leafSharePercent": 0.24598911815958954,
+     "milliseconds": 174.98794,
+     "phase": "collisionPolygonBuild"
+    },
+    {
+     "calls": 524742,
+     "enclosing": false,
+     "leafSharePercent": 0.02777388585512414,
+     "milliseconds": 19.757358,
+     "phase": "sheetFitTest"
+    },
+    {
+     "calls": 953498,
+     "enclosing": false,
+     "leafSharePercent": 2.939949414423505,
+     "milliseconds": 2091.375812,
+     "phase": "exactOverlapTest"
+    },
+    {
+     "calls": 1944,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 7.791827,
+     "phase": "publicationConfirm"
+    },
+    {
+     "calls": 48770,
+     "enclosing": false,
+     "leafSharePercent": 0.05158715127541634,
+     "milliseconds": 36.697271,
+     "phase": "constructorScore"
+    },
+    {
+     "calls": 62408757,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 85986.056454,
+     "phase": "scorePlacement"
+    },
+    {
+     "calls": 65188481,
+     "enclosing": false,
+     "leafSharePercent": 7.4471949296326025,
+     "milliseconds": 5297.67052,
+     "phase": "boundaryPenalty"
+    },
+    {
+     "calls": 228351617,
+     "enclosing": false,
+     "leafSharePercent": 28.381786947340256,
+     "milliseconds": 20189.797291,
+     "phase": "pairCollide"
+    },
+    {
+     "calls": 95994984,
+     "enclosing": false,
+     "leafSharePercent": 22.651788741164374,
+     "milliseconds": 16113.679657,
+     "phase": "pairPressure"
+    },
+    {
+     "calls": 6843,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 669.468585,
+     "phase": "fullRescore"
+    },
+    {
+     "calls": 27276,
+     "enclosing": false,
+     "leafSharePercent": 0.673248608563692,
+     "milliseconds": 478.925198,
+     "phase": "pieceIndexBuild"
+    },
+    {
+     "calls": 27276,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 92900.301786,
+     "phase": "moveSweep"
+    },
+    {
+     "calls": 557765,
+     "enclosing": false,
+     "leafSharePercent": 0.9800514594159263,
+     "milliseconds": 697.173872,
+     "phase": "updateAfterMove"
+    },
+    {
+     "calls": 66,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 31.181609,
+     "phase": "auditorScore"
+    },
+    {
+     "calls": 10611267,
+     "enclosing": false,
+     "leafSharePercent": 12.178527130763703,
+     "milliseconds": 8663.372554,
+     "phase": "hazardQuery"
+    },
+    {
+     "calls": 17928826,
+     "enclosing": false,
+     "leafSharePercent": 17.78826560767608,
+     "milliseconds": 12653.941679,
+     "phase": "hazardPressure"
+    },
+    {
+     "calls": 13893552,
+     "enclosing": false,
+     "leafSharePercent": 1.9674664105189823,
+     "milliseconds": 1399.585871,
+     "phase": "hazardPoseBounds"
+    },
+    {
+     "calls": 90388,
+     "enclosing": false,
+     "leafSharePercent": 3.835505497409237,
+     "milliseconds": 2728.442668,
+     "phase": "hazardCommit"
+    },
+    {
+     "calls": 143,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 374.580266,
+     "phase": "vacancyProposals"
+    },
+    {
+     "calls": 0,
+     "enclosing": false,
+     "leafSharePercent": 0.0,
+     "milliseconds": 0.0,
+     "phase": "vacancyProxyRank"
+    },
+    {
+     "calls": 41587,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 342.516428,
+     "phase": "vacancyExactRows"
+    },
+    {
+     "calls": 15,
+     "enclosing": false,
+     "leafSharePercent": 0.0722427699184703,
+     "milliseconds": 51.390946,
+     "phase": "publicationValidate"
+    }
+   ],
+   "threads": 8
+  },
+  "stderrTail": "",
+  "elapsed": 18.28586173057556
+ },
+ {
+  "tag": "lin-d0.55-s0",
+  "parent": "pinned-parent-159.079.json",
+  "parentRaw": 159.07876040364795,
+  "dropMm": 0.55,
+  "targetMm": 158.52876,
+  "seed": 0,
+  "processWallSeconds": 37.25763201713562,
+  "engineSeconds": 37.221351862,
+  "publishedRaw": 159.07876040364795,
+  "independentDepthMm": 159.079,
+  "exactValid": true,
+  "contractValid": true,
+  "failureReason": null,
+  "stepsPlanned": 4,
+  "stepsRun": 4,
+  "stepMm": 0.159079,
+  "publishedStep": null,
+  "ladderWallMs": 34752.237324,
+  "searchProfile": {
+   "allocatorInstalled": false,
+   "counters": {
+    "acceptedMoves": 1112555,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 124823125,
+    "collisionPolygonBuilds": 154583,
+    "effectivePieceMoves": 1112555,
+    "exactPairTests": 1478661,
+    "fullRescores": 14169,
+    "neighborTests": 491030938,
+    "publicationAttempts": 21
+   },
+   "deepOperatorsInstrumented": true,
+   "leafMilliseconds": 146109.625165,
+   "phases": [
+    {
+     "calls": 976,
+     "enclosing": false,
+     "leafSharePercent": 0.3680920113186576,
+     "milliseconds": 537.817858,
+     "phase": "constructorProposals"
+    },
+    {
+     "calls": 154583,
+     "enclosing": false,
+     "leafSharePercent": 0.37773177870844754,
+     "milliseconds": 551.902486,
+     "phase": "collisionPolygonBuild"
+    },
+    {
+     "calls": 524954,
+     "enclosing": false,
+     "leafSharePercent": 0.013494245144859208,
+     "milliseconds": 19.716391,
+     "phase": "sheetFitTest"
+    },
+    {
+     "calls": 1478661,
+     "enclosing": false,
+     "leafSharePercent": 2.17079826699862,
+     "milliseconds": 3171.745211,
+     "phase": "exactOverlapTest"
+    },
+    {
+     "calls": 1944,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 7.64539,
+     "phase": "publicationConfirm"
+    },
+    {
+     "calls": 48770,
+     "enclosing": false,
+     "leafSharePercent": 0.024818388904255733,
+     "milliseconds": 36.262055,
+     "phase": "constructorScore"
+    },
+    {
+     "calls": 124823125,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 175680.498134,
+     "phase": "scorePlacement"
+    },
+    {
+     "calls": 130358242,
+     "enclosing": false,
+     "leafSharePercent": 7.438519834491699,
+     "milliseconds": 10868.393448,
+     "phase": "boundaryPenalty"
+    },
+    {
+     "calls": 439506597,
+     "enclosing": false,
+     "leafSharePercent": 26.887266748262483,
+     "milliseconds": 39284.884663,
+     "phase": "pairCollide"
+    },
+    {
+     "calls": 186817503,
+     "enclosing": false,
+     "leafSharePercent": 22.19811623866197,
+     "milliseconds": 32433.58443,
+     "phase": "pairPressure"
+    },
+    {
+     "calls": 14169,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 1403.34396,
+     "phase": "fullRescore"
+    },
+    {
+     "calls": 53321,
+     "enclosing": false,
+     "leafSharePercent": 0.6545733697694138,
+     "milliseconds": 956.394697,
+     "phase": "pieceIndexBuild"
+    },
+    {
+     "calls": 53321,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 189688.471647,
+     "phase": "moveSweep"
+    },
+    {
+     "calls": 1112555,
+     "enclosing": false,
+     "leafSharePercent": 0.960129959553168,
+     "milliseconds": 1402.842285,
+     "phase": "updateAfterMove"
+    },
+    {
+     "calls": 109,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 52.595926,
+     "phase": "auditorScore"
+    },
+    {
+     "calls": 24245010,
+     "enclosing": false,
+     "leafSharePercent": 13.364800003386554,
+     "milliseconds": 19527.259189,
+     "phase": "hazardQuery"
+    },
+    {
+     "calls": 40611178,
+     "enclosing": false,
+     "leafSharePercent": 19.394084351390102,
+     "milliseconds": 28336.62395,
+     "phase": "hazardPressure"
+    },
+    {
+     "calls": 31517141,
+     "enclosing": false,
+     "leafSharePercent": 2.1522456104098513,
+     "milliseconds": 3144.637994,
+     "phase": "hazardPoseBounds"
+    },
+    {
+     "calls": 205332,
+     "enclosing": false,
+     "leafSharePercent": 3.9560861096402498,
+     "milliseconds": 5780.222586,
+     "phase": "hazardCommit"
+    },
+    {
+     "calls": 535,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 1310.028379,
+     "phase": "vacancyProposals"
+    },
+    {
+     "calls": 0,
+     "enclosing": false,
+     "leafSharePercent": 0.0,
+     "milliseconds": 0.0,
+     "phase": "vacancyProxyRank"
+    },
+    {
+     "calls": 151663,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 1193.028219,
+     "phase": "vacancyExactRows"
+    },
+    {
+     "calls": 21,
+     "enclosing": false,
+     "leafSharePercent": 0.03924308335966841,
+     "milliseconds": 57.337922,
+     "phase": "publicationValidate"
+    }
+   ],
+   "threads": 8
+  },
+  "stderrTail": "",
+  "elapsed": 37.26091766357422
+ },
+ {
+  "tag": "lin-d0.55-s1",
+  "parent": "pinned-parent-159.079.json",
+  "parentRaw": 159.07876040364795,
+  "dropMm": 0.55,
+  "targetMm": 158.52876,
+  "seed": 1,
+  "processWallSeconds": 44.20320177078247,
+  "engineSeconds": 44.165953061,
+  "publishedRaw": 159.07876040364795,
+  "independentDepthMm": 159.079,
+  "exactValid": true,
+  "contractValid": true,
+  "failureReason": null,
+  "stepsPlanned": 4,
+  "stepsRun": 4,
+  "stepMm": 0.159079,
+  "publishedStep": null,
+  "ladderWallMs": 42100.287584,
+  "searchProfile": {
+   "allocatorInstalled": false,
+   "counters": {
+    "acceptedMoves": 1292202,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 145240496,
+    "collisionPolygonBuilds": 148062,
+    "effectivePieceMoves": 1292202,
+    "exactPairTests": 1796647,
+    "fullRescores": 16632,
+    "neighborTests": 577579639,
+    "publicationAttempts": 23
+   },
+   "deepOperatorsInstrumented": true,
+   "leafMilliseconds": 171272.805306,
+   "phases": [
+    {
+     "calls": 976,
+     "enclosing": false,
+     "leafSharePercent": 0.3165281195875924,
+     "milliseconds": 542.12659,
+     "phase": "constructorProposals"
+    },
+    {
+     "calls": 148062,
+     "enclosing": false,
+     "leafSharePercent": 0.39830302176763716,
+     "milliseconds": 682.184759,
+     "phase": "collisionPolygonBuild"
+    },
+    {
+     "calls": 525020,
+     "enclosing": false,
+     "leafSharePercent": 0.011514732280331907,
+     "milliseconds": 19.721605,
+     "phase": "sheetFitTest"
+    },
+    {
+     "calls": 1796647,
+     "enclosing": false,
+     "leafSharePercent": 2.158879754082283,
+     "milliseconds": 3697.573918,
+     "phase": "exactOverlapTest"
+    },
+    {
+     "calls": 1944,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 7.818065,
+     "phase": "publicationConfirm"
+    },
+    {
+     "calls": 48770,
+     "enclosing": false,
+     "leafSharePercent": 0.021312959132526815,
+     "milliseconds": 36.503303,
+     "phase": "constructorScore"
+    },
+    {
+     "calls": 145240496,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 205915.631272,
+     "phase": "scorePlacement"
+    },
+    {
+     "calls": 151526789,
+     "enclosing": false,
+     "leafSharePercent": 7.422336622727496,
+     "milliseconds": 12712.444153,
+     "phase": "boundaryPenalty"
+    },
+    {
+     "calls": 516375502,
+     "enclosing": false,
+     "leafSharePercent": 26.763338958630463,
+     "milliseconds": 45838.321428,
+     "phase": "pairCollide"
+    },
+    {
+     "calls": 217630963,
+     "enclosing": false,
+     "leafSharePercent": 21.708755205224325,
+     "milliseconds": 37181.194037,
+     "phase": "pairPressure"
+    },
+    {
+     "calls": 16632,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 1646.011191,
+     "phase": "fullRescore"
+    },
+    {
+     "calls": 59452,
+     "enclosing": false,
+     "leafSharePercent": 0.6195778542332461,
+     "milliseconds": 1061.168372,
+     "phase": "pieceIndexBuild"
+    },
+    {
+     "calls": 59452,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 222157.456028,
+     "phase": "moveSweep"
+    },
+    {
+     "calls": 1292202,
+     "enclosing": false,
+     "leafSharePercent": 0.9587982891189744,
+     "milliseconds": 1642.160727,
+     "phase": "updateAfterMove"
+    },
+    {
+     "calls": 139,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 64.762683,
+     "phase": "auditorScore"
+    },
+    {
+     "calls": 28630789,
+     "enclosing": false,
+     "leafSharePercent": 13.654511080271732,
+     "milliseconds": 23386.464178,
+     "phase": "hazardQuery"
+    },
+    {
+     "calls": 48419985,
+     "enclosing": false,
+     "leafSharePercent": 19.80277484064298,
+     "milliseconds": 33916.767998,
+     "phase": "hazardPressure"
+    },
+    {
+     "calls": 37171039,
+     "enclosing": false,
+     "leafSharePercent": 2.1873898604665154,
+     "milliseconds": 3746.403977,
+     "phase": "hazardPoseBounds"
+    },
+    {
+     "calls": 240957,
+     "enclosing": false,
+     "leafSharePercent": 3.942695806806779,
+     "milliseconds": 6752.765713,
+     "phase": "hazardCommit"
+    },
+    {
+     "calls": 500,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 1481.376031,
+     "phase": "vacancyProposals"
+    },
+    {
+     "calls": 0,
+     "enclosing": false,
+     "leafSharePercent": 0.0,
+     "milliseconds": 0.0,
+     "phase": "vacancyProxyRank"
+    },
+    {
+     "calls": 145142,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 1363.532573,
+     "phase": "vacancyExactRows"
+    },
+    {
+     "calls": 23,
+     "enclosing": false,
+     "leafSharePercent": 0.033282895027120236,
+     "milliseconds": 57.004548,
+     "phase": "publicationValidate"
+    }
+   ],
+   "threads": 8
+  },
+  "stderrTail": "",
+  "elapsed": 44.20636177062988
+ },
+ {
+  "tag": "lin-d1.0-s0",
+  "parent": "pinned-parent-159.079.json",
+  "parentRaw": 159.07876040364795,
+  "dropMm": 1.0,
+  "targetMm": 158.07876,
+  "seed": 0,
+  "processWallSeconds": 75.14678716659546,
+  "engineSeconds": 75.109303411,
+  "publishedRaw": 159.07876040364795,
+  "independentDepthMm": 159.079,
+  "exactValid": true,
+  "contractValid": true,
+  "failureReason": null,
+  "stepsPlanned": 7,
+  "stepsRun": 7,
+  "stepMm": 0.159079,
+  "publishedStep": null,
+  "ladderWallMs": 72650.652069,
+  "searchProfile": {
+   "allocatorInstalled": false,
+   "counters": {
+    "acceptedMoves": 2257805,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 254197947,
+    "collisionPolygonBuilds": 265856,
+    "effectivePieceMoves": 2257805,
+    "exactPairTests": 2286798,
+    "fullRescores": 27823,
+    "neighborTests": 996997142,
+    "publicationAttempts": 26
+   },
+   "deepOperatorsInstrumented": true,
+   "leafMilliseconds": 303981.898965,
+   "phases": [
+    {
+     "calls": 976,
+     "enclosing": false,
+     "leafSharePercent": 0.17588491150966845,
+     "milliseconds": 534.658294,
+     "phase": "constructorProposals"
+    },
+    {
+     "calls": 265856,
+     "enclosing": false,
+     "leafSharePercent": 0.38132132306123345,
+     "milliseconds": 1159.147799,
+     "phase": "collisionPolygonBuild"
+    },
+    {
+     "calls": 525199,
+     "enclosing": false,
+     "leafSharePercent": 0.006452464461463991,
+     "milliseconds": 19.614324,
+     "phase": "sheetFitTest"
+    },
+    {
+     "calls": 2286798,
+     "enclosing": false,
+     "leafSharePercent": 1.5793064134232404,
+     "milliseconds": 4800.805626,
+     "phase": "exactOverlapTest"
+    },
+    {
+     "calls": 1944,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 7.537217,
+     "phase": "publicationConfirm"
+    },
+    {
+     "calls": 48770,
+     "enclosing": false,
+     "leafSharePercent": 0.011911304299131625,
+     "milliseconds": 36.208209,
+     "phase": "constructorScore"
+    },
+    {
+     "calls": 254197947,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 365628.353343,
+     "phase": "scorePlacement"
+    },
+    {
+     "calls": 264912088,
+     "enclosing": false,
+     "leafSharePercent": 7.418327798062876,
+     "milliseconds": 22550.373712,
+     "phase": "boundaryPenalty"
+    },
+    {
+     "calls": 883021450,
+     "enclosing": false,
+     "leafSharePercent": 26.000728639470818,
+     "milliseconds": 79037.508663,
+     "phase": "pairCollide"
+    },
+    {
+     "calls": 375374920,
+     "enclosing": false,
+     "leafSharePercent": 21.62067557238572,
+     "milliseconds": 65722.940174,
+     "phase": "pairPressure"
+    },
+    {
+     "calls": 27823,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 2791.052894,
+     "phase": "fullRescore"
+    },
+    {
+     "calls": 100561,
+     "enclosing": false,
+     "leafSharePercent": 0.6086496039071811,
+     "milliseconds": 1850.184624,
+     "phase": "pieceIndexBuild"
+    },
+    {
+     "calls": 100561,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 394335.884297,
+     "phase": "moveSweep"
+    },
+    {
+     "calls": 2257805,
+     "enclosing": false,
+     "leafSharePercent": 0.9685458061892662,
+     "milliseconds": 2944.203934,
+     "phase": "updateAfterMove"
+    },
+    {
+     "calls": 216,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 101.844338,
+     "phase": "auditorScore"
+    },
+    {
+     "calls": 53198063,
+     "enclosing": false,
+     "leafSharePercent": 14.370580897657232,
+     "milliseconds": 43683.964705,
+     "phase": "hazardQuery"
+    },
+    {
+     "calls": 90509116,
+     "enclosing": false,
+     "leafSharePercent": 20.752301710656564,
+     "milliseconds": 63083.240819,
+     "phase": "hazardPressure"
+    },
+    {
+     "calls": 68548034,
+     "enclosing": false,
+     "leafSharePercent": 2.2823239879157455,
+     "milliseconds": 6937.851799,
+     "phase": "hazardPoseBounds"
+    },
+    {
+     "calls": 445893,
+     "enclosing": false,
+     "leafSharePercent": 3.8034934462762937,
+     "milliseconds": 11561.931605,
+     "phase": "hazardCommit"
+    },
+    {
+     "calls": 924,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 2582.343813,
+     "phase": "vacancyProposals"
+    },
+    {
+     "calls": 0,
+     "enclosing": false,
+     "leafSharePercent": 0.0,
+     "milliseconds": 0.0,
+     "phase": "vacancyProxyRank"
+    },
+    {
+     "calls": 262936,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 2370.057004,
+     "phase": "vacancyExactRows"
+    },
+    {
+     "calls": 26,
+     "enclosing": false,
+     "leafSharePercent": 0.019496120723564412,
+     "milliseconds": 59.264678,
+     "phase": "publicationValidate"
+    }
+   ],
+   "threads": 8
+  },
+  "stderrTail": "",
+  "elapsed": 75.15054845809937
+ },
+ {
+  "tag": "lin-d1.0-s1",
+  "parent": "pinned-parent-159.079.json",
+  "parentRaw": 159.07876040364795,
+  "dropMm": 1.0,
+  "targetMm": 158.07876,
+  "seed": 1,
+  "processWallSeconds": 83.24536800384521,
+  "engineSeconds": 83.206524951,
+  "publishedRaw": 159.07876040364795,
+  "independentDepthMm": 159.079,
+  "exactValid": true,
+  "contractValid": true,
+  "failureReason": null,
+  "stepsPlanned": 7,
+  "stepsRun": 7,
+  "stepMm": 0.159079,
+  "publishedStep": null,
+  "ladderWallMs": 81132.579572,
+  "searchProfile": {
+   "allocatorInstalled": false,
+   "counters": {
+    "acceptedMoves": 2459208,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 277123758,
+    "collisionPolygonBuilds": 277833,
+    "effectivePieceMoves": 2459208,
+    "exactPairTests": 2634631,
+    "fullRescores": 30249,
+    "neighborTests": 1099790643,
+    "publicationAttempts": 28
+   },
+   "deepOperatorsInstrumented": true,
+   "leafMilliseconds": 332556.99819,
+   "phases": [
+    {
+     "calls": 976,
+     "enclosing": false,
+     "leafSharePercent": 0.16129758505143066,
+     "milliseconds": 536.406407,
+     "phase": "constructorProposals"
+    },
+    {
+     "calls": 277833,
+     "enclosing": false,
+     "leafSharePercent": 0.38515411011384193,
+     "milliseconds": 1280.856947,
+     "phase": "collisionPolygonBuild"
+    },
+    {
+     "calls": 525146,
+     "enclosing": false,
+     "leafSharePercent": 0.0059216627847803825,
+     "milliseconds": 19.692904,
+     "phase": "sheetFitTest"
+    },
+    {
+     "calls": 2634631,
+     "enclosing": false,
+     "leafSharePercent": 1.6044011423724838,
+     "milliseconds": 5335.548278,
+     "phase": "exactOverlapTest"
+    },
+    {
+     "calls": 1944,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 7.651264,
+     "phase": "publicationConfirm"
+    },
+    {
+     "calls": 48770,
+     "enclosing": false,
+     "leafSharePercent": 0.010930441156806497,
+     "milliseconds": 36.349947,
+     "phase": "constructorScore"
+    },
+    {
+     "calls": 277123758,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 400271.656963,
+     "phase": "scorePlacement"
+    },
+    {
+     "calls": 288607734,
+     "enclosing": false,
+     "leafSharePercent": 7.405590866239831,
+     "milliseconds": 24627.810683,
+     "phase": "boundaryPenalty"
+    },
+    {
+     "calls": 973963590,
+     "enclosing": false,
+     "leafSharePercent": 26.087327667491778,
+     "milliseconds": 86755.233799,
+     "phase": "pairCollide"
+    },
+    {
+     "calls": 410608876,
+     "enclosing": false,
+     "leafSharePercent": 21.285887894187933,
+     "milliseconds": 70787.709819,
+     "phase": "pairPressure"
+    },
+    {
+     "calls": 30249,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 3040.733722,
+     "phase": "fullRescore"
+    },
+    {
+     "calls": 106660,
+     "enclosing": false,
+     "leafSharePercent": 0.5856953188779924,
+     "milliseconds": 1947.770771,
+     "phase": "pieceIndexBuild"
+    },
+    {
+     "calls": 106660,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 431473.837479,
+     "phase": "moveSweep"
+    },
+    {
+     "calls": 2459208,
+     "enclosing": false,
+     "leafSharePercent": 0.9664850297823768,
+     "milliseconds": 3214.113603,
+     "phase": "updateAfterMove"
+    },
+    {
+     "calls": 242,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 116.148306,
+     "phase": "auditorScore"
+    },
+    {
+     "calls": 58070463,
+     "enclosing": false,
+     "leafSharePercent": 14.433703228393938,
+     "milliseconds": 48000.290184,
+     "phase": "hazardQuery"
+    },
+    {
+     "calls": 100053454,
+     "enclosing": false,
+     "leafSharePercent": 21.001761640901226,
+     "milliseconds": 69842.82808,
+     "phase": "hazardPressure"
+    },
+    {
+     "calls": 74768793,
+     "enclosing": false,
+     "leafSharePercent": 2.2975674162883264,
+     "milliseconds": 7640.721231,
+     "phase": "hazardPoseBounds"
+    },
+    {
+     "calls": 485038,
+     "enclosing": false,
+     "leafSharePercent": 3.7498139611770713,
+     "milliseconds": 12470.268747,
+     "phase": "hazardCommit"
+    },
+    {
+     "calls": 924,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 2773.659214,
+     "phase": "vacancyProposals"
+    },
+    {
+     "calls": 0,
+     "enclosing": false,
+     "leafSharePercent": 0.0,
+     "milliseconds": 0.0,
+     "phase": "vacancyProxyRank"
+    },
+    {
+     "calls": 274913,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 2557.015536,
+     "phase": "vacancyExactRows"
+    },
+    {
+     "calls": 28,
+     "enclosing": false,
+     "leafSharePercent": 0.018462035180183498,
+     "milliseconds": 61.39679,
+     "phase": "publicationValidate"
+    }
+   ],
+   "threads": 8
+  },
+  "stderrTail": "",
+  "elapsed": 83.25023889541626
+ },
+ {
+  "tag": "fs-d0.3-s0",
+  "parent": "pinned-fs-parent-164.0376.json",
+  "parentRaw": 164.0375677990678,
+  "dropMm": 0.3,
+  "targetMm": 163.737568,
+  "seed": 0,
+  "processWallSeconds": 13.587035417556763,
+  "engineSeconds": 13.551776121,
+  "publishedRaw": 164.0375677990678,
+  "independentDepthMm": 164.038,
+  "exactValid": true,
+  "contractValid": true,
+  "failureReason": null,
+  "stepsPlanned": 2,
+  "stepsRun": 2,
+  "stepMm": 0.16403800000000002,
+  "publishedStep": null,
+  "ladderWallMs": 11055.150824,
+  "searchProfile": {
+   "allocatorInstalled": false,
+   "counters": {
+    "acceptedMoves": 387114,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 43700632,
+    "collisionPolygonBuilds": 67335,
+    "effectivePieceMoves": 387114,
+    "exactPairTests": 928226,
+    "fullRescores": 5850,
+    "neighborTests": 163907050,
+    "publicationAttempts": 14
+   },
+   "deepOperatorsInstrumented": true,
+   "leafMilliseconds": 50725.512255,
+   "phases": [
+    {
+     "calls": 976,
+     "enclosing": false,
+     "leafSharePercent": 1.0653524705346518,
+     "milliseconds": 540.405498,
+     "phase": "constructorProposals"
+    },
+    {
+     "calls": 67335,
+     "enclosing": false,
+     "leafSharePercent": 0.5549391154196832,
+     "milliseconds": 281.495709,
+     "phase": "collisionPolygonBuild"
+    },
+    {
+     "calls": 524689,
+     "enclosing": false,
+     "leafSharePercent": 0.038832873487755375,
+     "milliseconds": 19.698174,
+     "phase": "sheetFitTest"
+    },
+    {
+     "calls": 928226,
+     "enclosing": false,
+     "leafSharePercent": 4.190287069581019,
+     "milliseconds": 2125.544581,
+     "phase": "exactOverlapTest"
+    },
+    {
+     "calls": 1944,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 7.843559,
+     "phase": "publicationConfirm"
+    },
+    {
+     "calls": 48770,
+     "enclosing": false,
+     "leafSharePercent": 0.07162062517450274,
+     "milliseconds": 36.329929,
+     "phase": "constructorScore"
+    },
+    {
+     "calls": 43700632,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 58491.775652,
+     "phase": "scorePlacement"
+    },
+    {
+     "calls": 45950112,
+     "enclosing": false,
+     "leafSharePercent": 7.636271297818558,
+     "milliseconds": 3873.537733,
+     "phase": "boundaryPenalty"
+    },
+    {
+     "calls": 146606905,
+     "enclosing": false,
+     "leafSharePercent": 26.08631699267992,
+     "milliseconds": 13232.417923,
+     "phase": "pairCollide"
+    },
+    {
+     "calls": 60760753,
+     "enclosing": false,
+     "leafSharePercent": 19.559127385691493,
+     "milliseconds": 9921.467559,
+     "phase": "pairPressure"
+    },
+    {
+     "calls": 5850,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 551.816167,
+     "phase": "fullRescore"
+    },
+    {
+     "calls": 22609,
+     "enclosing": false,
+     "leafSharePercent": 0.7443342555161349,
+     "milliseconds": 377.567364,
+     "phase": "pieceIndexBuild"
+    },
+    {
+     "calls": 22609,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 63445.344394,
+     "phase": "moveSweep"
+    },
+    {
+     "calls": 387114,
+     "enclosing": false,
+     "leafSharePercent": 0.8947658482350007,
+     "milliseconds": 453.87456,
+     "phase": "updateAfterMove"
+    },
+    {
+     "calls": 42,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 20.044607,
+     "phase": "auditorScore"
+    },
+    {
+     "calls": 8972810,
+     "enclosing": false,
+     "leafSharePercent": 14.786934624323392,
+     "milliseconds": 7500.748335,
+     "phase": "hazardQuery"
+    },
+    {
+     "calls": 13484650,
+     "enclosing": false,
+     "leafSharePercent": 17.34232375964401,
+     "milliseconds": 8796.982564,
+     "phase": "hazardPressure"
+    },
+    {
+     "calls": 11742326,
+     "enclosing": false,
+     "leafSharePercent": 2.258898323667604,
+     "milliseconds": 1145.837746,
+     "phase": "hazardPoseBounds"
+    },
+    {
+     "calls": 75645,
+     "enclosing": false,
+     "leafSharePercent": 4.663558345370523,
+     "milliseconds": 2365.61386,
+     "phase": "hazardCommit"
+    },
+    {
+     "calls": 209,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 587.303831,
+     "phase": "vacancyProposals"
+    },
+    {
+     "calls": 0,
+     "enclosing": false,
+     "leafSharePercent": 0.0,
+     "milliseconds": 0.0,
+     "phase": "vacancyProxyRank"
+    },
+    {
+     "calls": 64415,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 538.583458,
+     "phase": "vacancyExactRows"
+    },
+    {
+     "calls": 14,
+     "enclosing": false,
+     "leafSharePercent": 0.1064370128557512,
+     "milliseconds": 53.99072,
+     "phase": "publicationValidate"
+    }
+   ],
+   "threads": 8
+  },
+  "stderrTail": "",
+  "elapsed": 13.588924646377563
+ },
+ {
+  "tag": "fs-d1.0-s0",
+  "parent": "pinned-fs-parent-164.0376.json",
+  "parentRaw": 164.0375677990678,
+  "dropMm": 1.0,
+  "targetMm": 163.037568,
+  "seed": 0,
+  "processWallSeconds": 65.40851092338562,
+  "engineSeconds": 65.372557249,
+  "publishedRaw": 164.0375677990678,
+  "independentDepthMm": 164.038,
+  "exactValid": true,
+  "contractValid": true,
+  "failureReason": null,
+  "stepsPlanned": 7,
+  "stepsRun": 7,
+  "stepMm": 0.16403800000000002,
+  "publishedStep": null,
+  "ladderWallMs": 62897.031908000004,
+  "searchProfile": {
+   "allocatorInstalled": false,
+   "counters": {
+    "acceptedMoves": 2011237,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 226763751,
+    "collisionPolygonBuilds": 262666,
+    "effectivePieceMoves": 2011237,
+    "exactPairTests": 2189177,
+    "fullRescores": 24809,
+    "neighborTests": 848553405,
+    "publicationAttempts": 21
+   },
+   "deepOperatorsInstrumented": true,
+   "leafMilliseconds": 256641.77599,
+   "phases": [
+    {
+     "calls": 976,
+     "enclosing": false,
+     "leafSharePercent": 0.21161855037239216,
+     "milliseconds": 543.101606,
+     "phase": "constructorProposals"
+    },
+    {
+     "calls": 262666,
+     "enclosing": false,
+     "leafSharePercent": 0.3627435340208503,
+     "milliseconds": 930.951448,
+     "phase": "collisionPolygonBuild"
+    },
+    {
+     "calls": 525005,
+     "enclosing": false,
+     "leafSharePercent": 0.0076884485870955185,
+     "milliseconds": 19.731771,
+     "phase": "sheetFitTest"
+    },
+    {
+     "calls": 2189177,
+     "enclosing": false,
+     "leafSharePercent": 1.724677706084947,
+     "milliseconds": 4426.243495,
+     "phase": "exactOverlapTest"
+    },
+    {
+     "calls": 1944,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 7.916063,
+     "phase": "publicationConfirm"
+    },
+    {
+     "calls": 48770,
+     "enclosing": false,
+     "leafSharePercent": 0.01432139286685428,
+     "milliseconds": 36.754677,
+     "phase": "constructorScore"
+    },
+    {
+     "calls": 226763751,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 309246.71131,
+     "phase": "scorePlacement"
+    },
+    {
+     "calls": 236863354,
+     "enclosing": false,
+     "leafSharePercent": 7.795005435038566,
+     "milliseconds": 20005.240387,
+     "phase": "boundaryPenalty"
+    },
+    {
+     "calls": 754449818,
+     "enclosing": false,
+     "leafSharePercent": 27.06602958775761,
+     "milliseconds": 69462.739024,
+     "phase": "pairCollide"
+    },
+    {
+     "calls": 314926558,
+     "enclosing": false,
+     "leafSharePercent": 20.51540987350849,
+     "milliseconds": 52651.112251,
+     "phase": "pairPressure"
+    },
+    {
+     "calls": 24809,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 2461.704774,
+     "phase": "fullRescore"
+    },
+    {
+     "calls": 97545,
+     "enclosing": false,
+     "leafSharePercent": 0.6684152185990333,
+     "milliseconds": 1715.432688,
+     "phase": "pieceIndexBuild"
+    },
+    {
+     "calls": 97545,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 334814.696953,
+     "phase": "moveSweep"
+    },
+    {
+     "calls": 2011237,
+     "enclosing": false,
+     "leafSharePercent": 0.9663647172924164,
+     "milliseconds": 2480.095573,
+     "phase": "updateAfterMove"
+    },
+    {
+     "calls": 225,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 106.99278,
+     "phase": "auditorScore"
+    },
+    {
+     "calls": 47335180,
+     "enclosing": false,
+     "leafSharePercent": 15.694656850632715,
+     "milliseconds": 40279.046077,
+     "phase": "hazardQuery"
+    },
+    {
+     "calls": 73490521,
+     "enclosing": false,
+     "leafSharePercent": 18.598995063399148,
+     "milliseconds": 47732.791247,
+     "phase": "hazardPressure"
+    },
+    {
+     "calls": 60880816,
+     "enclosing": false,
+     "leafSharePercent": 2.3084093009202213,
+     "milliseconds": 5924.342627,
+     "phase": "hazardPoseBounds"
+    },
+    {
+     "calls": 393500,
+     "enclosing": false,
+     "leafSharePercent": 4.040168860273168,
+     "milliseconds": 10368.761116,
+     "phase": "hazardCommit"
+    },
+    {
+     "calls": 877,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 2106.474652,
+     "phase": "vacancyProposals"
+    },
+    {
+     "calls": 0,
+     "enclosing": false,
+     "leafSharePercent": 0.0,
+     "milliseconds": 0.0,
+     "phase": "vacancyProxyRank"
+    },
+    {
+     "calls": 259746,
+     "enclosing": true,
+     "leafSharePercent": null,
+     "milliseconds": 1908.016688,
+     "phase": "vacancyExactRows"
+    },
+    {
+     "calls": 21,
+     "enclosing": false,
+     "leafSharePercent": 0.02549546064649644,
+     "milliseconds": 65.432003,
+     "phase": "publicationValidate"
+    }
+   ],
+   "threads": 8
+  },
+  "stderrTail": "",
+  "elapsed": 65.41271924972534
+ }
+]

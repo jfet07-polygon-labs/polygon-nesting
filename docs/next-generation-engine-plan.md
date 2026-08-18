@@ -3956,3 +3956,153 @@ place by being what would catch a wrong soundness argument.
 
 Evidence, drivers, the full per-site census and the ordering statistic:
 `docs/experiments/constructor-inner-certificate/`.
+
+## Mode 26's seconds are a rollback comparison, not geometry — and the compression clamp is already a proxy-tier parameter
+
+Mode 26 (clamped-sheet ladder compression) is the mechanism behind the
+159.079 record and the review's standing objection to it: "12-95 seconds
+of operator work against a 0.5-1.0 second production slice". The next
+round wants that mechanism at kernel frequency — a continuous per-move
+compression schedule on the proxy kernel. This entry is the measured
+anatomy that round has to be built from. It changes no engine
+behaviour: the only code change is a wall-clock anatomy block on the
+mode-26 ladder, rung and arm diagnostics, compiled in **only** under
+`search-profiling`, and all four pinned gates reproduce with every
+search-visible field identical before and after.
+
+Sample: eight profiled mode-26 ladders on the true 5.0/5.0
+exact-clearance contract — drops of 0.3, 0.55 and 1.0 mm below the
+record parent at seeds 0 and 1, plus 0.3 and 1.0 mm below the
+from-scratch parent — **35 rungs, 171 rung arms, 330.73 s of arm wall**.
+Every number below is from a profiling build and is a decomposition,
+never a wall-clock claim.
+
+### The band is the ladder, and orchestration is nothing
+
+An operator call is 9.98-81.13 s (process wall 12.51-83.25 s), a rung is
+4.66-13.80 s and an arm is 1.23-4.03 s. The time *between* the rungs —
+both warm-start fingerprints, the placement clones, the publication
+bookkeeping — is **35.0 ms in total across all 35 rungs**, and the
+ladder's own overhead outside its rungs is 0.010-0.045 ms per ladder.
+There is nothing to optimise in the orchestration. It is all inside the
+arms, and **90.14% of an arm is one call**: the clamped mode-0 pipeline.
+
+### Three quarters of the time is discarded by a four-ulp comparison
+
+**146 of 171 arms (85.4%) end on a rollback-tracker abort and produce no
+state at all**, at a median 1.687 s each — **249.81 s of 330.73 s,
+75.53% of every second mode 26 spends.** Not one of the 171 arms
+produced an exact-valid state; every one attempted exactly one
+contraction target of the 32 available and accepted zero, and
+`epochsImproved` was 0 in all 171.
+
+All 146 aborts are the same comparison — the per-piece **incident-loss
+vector**, never a pair pressure and never the boundary total — and the
+gaps are 0-6 f32 ulps (median 2), relative 3.9e-8 to 4.9e-7. The
+mechanism is in the code and is not a bug: `ToleratesPoleRounding`
+grants 64 f32 ulps to `RollbackMagnitude::PairPressure` because a pole
+pressure reaches `f64` through `f64::from(f32)`, while the per-piece
+sums are `NativeF64` and fall back to `equal_within_one_ulp` at one
+**f64** ulp. At the magnitudes involved that rule is nine orders of
+magnitude tighter than the disagreement it refuses, and the same policy
+already tolerates 644 wider-provenance comparisons in the same runs at a
+per-rung maximum of 2-6 ulps. Widening it is a search-trajectory change
+and would need its own gate; it is recorded here because it is where
+mode 26's wall time goes.
+
+### The inner loop is already at production speed
+
+| ladder | rungs | wall | candidate queries/s | effective moves/s |
+|---|---:|---:|---:|---:|
+| lin d0.3 s0 | 2 | 9.98 s | 3.814M | 34,059 |
+| lin d1.0 s1 | 7 | 81.13 s | 3.352M | 29,749 |
+| fs d1.0 s0 | 7 | 62.90 s | 3.493M | 30,962 |
+
+Across all eight: 3.31-3.81M candidate queries/s and 29.2-34.1K
+effective moves/s, **under a profiling build that costs ~4.5%**, against
+this ledger's own m22 replay figure of 3.775M evaluations/s at ~265 ns
+and 33.9K moves/s. Within measurement it is the same loop at the same
+rate. The 12-95 seconds are 38-272 **million** candidate evaluations
+spent to move one bound by 0.159 mm — a structural cost, not a slow
+kernel.
+
+Leaf shares over the whole sample (1,322.88 thread-s, 4.00x effective
+parallelism on 8 workers): proxy collider plus boundary penalty
+**55.59%**, dynamic hazard adapter **41.27%**, exact tier **1.55%**
+(`exactOverlapTest` 1,904.8 ns/call, `collisionPolygonBuild` 4,149.3
+ns/call, all of it inside the repair tiers). `boundaryPenalty` — the
+clamp — is 84.9 ns/call over 1,175,941,640 calls, 1.042 per candidate
+query.
+
+### The repair tiers, priced
+
+Only the 25 arms that produced a terminal state ever reach a repair.
+Per arm when it runs: `micro_legalize` 0.808 ms, single-piece
+re-placement 51.5 ms, joint re-placement 495.6 ms, the global Hildreth
+program (mode 31) 888.3 ms — medians. **The only tier cheap enough for a
+per-move loop published in none of the 25.**
+
+### The number the port turns on
+
+One complete exact confirmation of the 61-piece layout — depth, the
+1,830-pair exact overlap census and `validate_and_measure_placements` —
+costs **0.491 ms mean (0.213-0.664, n=25)**. At 5% of the production
+slice that buys 50 confirmations in 0.5 s or 101 in 1.0 s: one per ~340
+effective moves, ~100/s against the 16 m0 epoch scopes in 1.193 s this
+ledger's own quality-curve trace records (13.4/s) — about 7.5x more
+often than mode 0 confirms today.
+
+### What is already proxy-tier, and what is missing
+
+`boundary_penalty(&placement, strip_depth_mm)` is pure `f64` arithmetic
+on cached axis-aligned bounds and **already takes the depth as a
+parameter at all eleven of its call sites**; every candidate generator
+derives its sampling box from the same scalar; `PairTracker.
+collision_pairs` plus `piece_is_active` already are the violating-pair
+queue a repair needs, and `move_sweep` already builds its work order
+from them. A per-sweep schedule is therefore a *substitution at the call
+site*: one `f64` write per sweep and zero additional geometry.
+
+What is genuinely missing is not geometry. It is (a) a lane-owned
+schedule object — `strip_depth_mm` is written in five non-test places
+and every one is a whole-pipeline decision; (b) a **monotone floor in the proxy
+tier**, because today the only thing preventing depth-ward relaxation is
+`sheet_long_axis_mm` in the *exact* tier, which is precisely why mode 26
+had to build a whole clamped pipeline per rung; (c) a lane-local
+deepest-confirmed slot; (d) a repair that answers the residue a schedule
+makes, given that the affordable tier answered none of 25; and (e) a
+rollback contract that survives a moving depth — the one that already
+destroys 75.5% of mode 26.
+
+### The design, and the budget it has to fit
+
+At the plan's production rate and this sample's measured sweep shape
+(2,555.4 candidate queries and 22.70 accepted moves per sweep), a
+0.5-1.0 s slice is 1.89-3.78M queries, 16,950-33,900 effective moves and
+739-1,478 sweeps — **5.9% to 11.7% of a single mode-26 rung**. One rung's
+0.159 mm of depth spread over those sweeps is 0.11-0.22 µm each, below
+the canonical 1/1000 mm grid, so the schedule quantises to **1 µm per
+step, 159 steps per rung-equivalent, 4.6-9.3 repair sweeps per step, and
+an exact confirmation every fourth step** (40 x 0.491 ms = 19.6 ms, 2.0%
+of a 1.0 s slice).
+
+Feature flag `compression-schedule`, off by default, with the setting
+`None` reproducing today's `state.strip_depth_mm` path exactly. Quality
+gate: matched-arm at equal *work* budget — one measured rung, 32,246,564
+candidate queries plus 5 x 233,445 exact pair tests = 33,413,789
+`PortfolioBudget::Work` units — fast schedule against a
+mode-26 short ladder, both from the same pinned parent
+(159.07876040364795 and 164.0375677990678) at the same seed, statistic
+the paired median delta of best raw depth, with the parent as the floor
+for both arms.
+
+Three risks, in order: the rollback contract is the dominant cost and a
+moving depth makes that comparison strictly harder; the residue may not
+be rounding-scale, and the only repair the slice can afford published in
+0 of 25 arms; and **this sample measured mode 26's cost honestly and its
+yield not at all** — zero of eight ladders published, so a matched-arm
+gate run at these seeds would compare two zeros and must be run at
+enough seeds that the control publishes.
+
+Evidence, drivers, the per-ladder/per-rung/per-arm tables and the abort
+census: `docs/experiments/mode26-rung-anatomy/`.
