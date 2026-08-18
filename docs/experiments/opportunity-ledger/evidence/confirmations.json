@@ -1,0 +1,127 @@
+{
+ "battery": "docs/experiments/opportunity-ledger/evidence/abc-equalwork-mixed61.json",
+ "confirmBinary": "/var/lib/t3/tmp/lg-gate",
+ "confirmations": [
+  {
+   "seed": 0,
+   "arm": "A",
+   "deltaRawMm": 0.0,
+   "publications": 0,
+   "confirmed": null,
+   "note": "the arm published nothing; nothing to confirm"
+  },
+  {
+   "seed": 0,
+   "arm": "B",
+   "deltaRawMm": 0.0,
+   "publications": 0,
+   "confirmed": null,
+   "note": "the arm published nothing; nothing to confirm"
+  },
+  {
+   "seed": 0,
+   "arm": "C",
+   "deltaRawMm": 4.957120039988951,
+   "publications": 2,
+   "rawSourceDepthMm": 169.251,
+   "exactValid": true,
+   "contractValid": true,
+   "fingerprintUnchanged": true,
+   "violatingPairsBefore": 0,
+   "collisionPairsBefore": 0,
+   "movedPieces": 0,
+   "confirmed": true
+  },
+  {
+   "seed": 0,
+   "arm": "D",
+   "deltaRawMm": 2.6202875535157943,
+   "publications": 1,
+   "rawSourceDepthMm": 171.58783248647316,
+   "exactValid": true,
+   "contractValid": true,
+   "fingerprintUnchanged": true,
+   "violatingPairsBefore": 0,
+   "collisionPairsBefore": 0,
+   "movedPieces": 0,
+   "confirmed": true
+  },
+  {
+   "seed": 1,
+   "arm": "A",
+   "deltaRawMm": 0.0,
+   "publications": 0,
+   "confirmed": null,
+   "note": "the arm published nothing; nothing to confirm"
+  },
+  {
+   "seed": 1,
+   "arm": "B",
+   "deltaRawMm": 0.0,
+   "publications": 0,
+   "confirmed": null,
+   "note": "the arm published nothing; nothing to confirm"
+  },
+  {
+   "seed": 1,
+   "arm": "C",
+   "deltaRawMm": 4.316999999999979,
+   "publications": 2,
+   "rawSourceDepthMm": 171.739,
+   "exactValid": true,
+   "contractValid": true,
+   "fingerprintUnchanged": true,
+   "violatingPairsBefore": 0,
+   "collisionPairsBefore": 0,
+   "movedPieces": 0,
+   "confirmed": true
+  },
+  {
+   "seed": 1,
+   "arm": "D",
+   "deltaRawMm": 0.0,
+   "publications": 0,
+   "confirmed": null,
+   "note": "the arm published nothing; nothing to confirm"
+  },
+  {
+   "seed": 2,
+   "arm": "A",
+   "deltaRawMm": 0.7202781281679052,
+   "publications": 1,
+   "rawSourceDepthMm": 178.2857218718321,
+   "exactValid": true,
+   "contractValid": true,
+   "fingerprintUnchanged": true,
+   "violatingPairsBefore": 0,
+   "collisionPairsBefore": 0,
+   "movedPieces": 0,
+   "confirmed": true
+  },
+  {
+   "seed": 2,
+   "arm": "B",
+   "deltaRawMm": 0.0,
+   "publications": 0,
+   "confirmed": null,
+   "note": "the arm published nothing; nothing to confirm"
+  },
+  {
+   "seed": 2,
+   "arm": "C",
+   "deltaRawMm": 0.0,
+   "publications": 0,
+   "confirmed": null,
+   "note": "the arm published nothing; nothing to confirm"
+  },
+  {
+   "seed": 2,
+   "arm": "D",
+   "deltaRawMm": 0.0,
+   "publications": 0,
+   "confirmed": null,
+   "note": "the arm published nothing; nothing to confirm"
+  }
+ ],
+ "ALL_CONFIRMED": true
+}

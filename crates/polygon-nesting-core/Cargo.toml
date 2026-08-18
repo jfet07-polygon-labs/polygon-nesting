@@ -34,6 +34,18 @@ search-profiling = []
 # and never a wall-clock claim. See `profiling::census` and
 # docs/experiments/relaxed-lane-residual/.
 relaxed-lane-census = []
+# Compiles the portfolio coordinator's opportunity-and-delayed-credit ledger,
+# and the A/B/C probe phase that spends one action from the state the schedule
+# saturated at.
+#
+# Off by default and off in every shipping path. The ledger is an instrument:
+# it runs once, after the last phase, and reads the archive - it never feeds a
+# schedule decision, and it costs `O(members^2 * pieces)` hybrid fingerprints,
+# which is cheap at exit and is not something a production run should pay for
+# nothing. The probe is an extra phase after the drain; with the feature off
+# neither the phase nor any branch reaching it is compiled, so a default build
+# is the shipping schedule exactly. See docs/experiments/opportunity-ledger/.
+portfolio-ledger = []
 # Resolves the relaxed lane's candidate shape once per candidate scan instead
 # of twice. The broad-phase probe needs the candidate's bounds, which live in
 # the oriented shape the scan then resolves again; this reuses the first
