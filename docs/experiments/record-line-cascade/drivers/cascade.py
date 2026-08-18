@@ -50,7 +50,11 @@ FLAT = (0.0005, 0.001, 0.002, 0.003, 0.004, 0.01)
 SLACK = (0.05, 2.0)
 M31 = (0.006, 0.012, 0.025, 0.04)
 NUDGE = (0.002, 0.006, 0.012, 0.02)
-DROPS = (0.3, 0.55, 1.0)
+DROPS = tuple(float(d) for d in
+              os.environ.get('CASCADE_DROPS', '1.0,0.55,0.3').split(','))
+M26_SEEDS = tuple(int(s) for s in
+                  os.environ.get('CASCADE_M26_SEEDS', '0,1').split(','))
+M26_EVERY = int(os.environ.get('CASCADE_M26_EVERY', '3'))
 CUTS = (0.35, 0.5, 0.65)
 # The schedule slices. `past=1` makes it an anytime operator; `work` is in the
 # schedule's own conservative currency (~18x the coordinator's meter). The
@@ -65,6 +69,11 @@ SCHED_SPECS = [
     ('w20-s0.25-c1', 'past=1,work=20000000,step=0.25,confirm=1'),
 ]
 SCHED_SEEDS = (5, 0)
+SCHED_EVERY = int(os.environ.get('CASCADE_SCHED_EVERY', '4'))
+# Mode 22's bound is a slack above the incumbent, not a target: the wave is an
+# alternation fixpoint that may climb before it descends. 0.8 is the finer
+# ladder's; the other two are this round's, and they are different waves.
+M22_SLACK = (0.8, 0.3, 2.0)
 POOL = [p for p in os.environ.get('CASCADE_POOL', '').split(':') if p]
 DEADLINE = float(os.environ.get('CASCADE_DEADLINE', '1e18'))
 
@@ -138,22 +147,63 @@ def sched_arm(tag, spec, parent, target, seed, current_raw):
 
 def round_once(pin, raw, rnd):
     tried = []
-    # A. mode 22 salted waves.
-    for seed in range(8):
-        tried.append(('A-m22', f'r{rnd}-m22-s{seed}'))
-        got = arm(f'r{rnd}-m22-s{seed}', 'A-m22', 22, pin, raw + 0.8, seed, raw)
-        if got:
-            return got, tried
-    # E. mode 34 compression-schedule slices. Early rather than last: it is the
-    # instrument that moved this line 164.038 -> 159.668 -> 158.668, and the
-    # step size is the knob that decides whether it moves at all.
-    for seed in SCHED_SEEDS:
-        for tag, spec in SCHED_SPECS:
-            tried.append(('E-m34', f'r{rnd}-m34-{tag}-s{seed}'))
-            got = sched_arm(f'r{rnd}-m34-{tag}-s{seed}', spec, pin, raw - 0.3,
-                            seed, raw)
+    # The tier order is measured, not designed. Cheap-and-sometimes (m22, the
+    # flatten grid, m31: 2-4 s an arm) run first so a barren pass costs about
+    # two minutes; mode 26 (44-88 s an arm) runs next, because the 156.091
+    # certification found six of six mode-26 arms strictly below the incumbent,
+    # the best by 0.628 mm, while the cheap tiers had been grinding 0.001 mm a
+    # round - the first ordering starved the most productive instrument for 555
+    # arms; mode 34 (23-70 s) runs last of the descent tiers because it is inert
+    # on any state it did not itself produce (see the README's §4).
+    # A. mode 22 salted waves, over the seed salt and the bound slack.
+    for slack in M22_SLACK:
+        for seed in range(8):
+            tried.append(('A-m22', f'r{rnd}-m22-p{slack}-s{seed}'))
+            got = arm(f'r{rnd}-m22-p{slack}-s{seed}', 'A-m22', 22, pin,
+                      raw + slack, seed, raw)
             if got:
                 return got, tried
+    # B'. flatten grid and m31, hoisted above mode 26 for the same reason.
+    for delta in FLAT:
+        path, depth, moved = drv.flatten_fixture(delta, pin, f'{LABEL}-r{rnd}',
+                                                 outdir=FIX)
+        for slack in SLACK:
+            tried.append(('B-flat', f'r{rnd}-flat{delta}-m33-p{slack}'))
+            got = arm(f'r{rnd}-flat{delta}-m33-p{slack}', 'B-flat', 33, path,
+                      raw + slack, 0, raw)
+            if got:
+                return got, tried
+    for step in M31:
+        tried.append(('C-m31', f'r{rnd}-m31-e{step}'))
+        got = arm(f'r{rnd}-m31-e{step}', 'C-m31', 31, pin, raw - step, 0, raw)
+        if got:
+            return got, tried
+    # F. mode 26 ladders.
+    if rnd % M26_EVERY == 0:
+        for drop in DROPS:
+            for seed in M26_SEEDS:
+                tried.append(('F-m26', f'r{rnd}-m26-d{drop}-s{seed}'))
+                got = arm(f'r{rnd}-m26-d{drop}-s{seed}', 'F-m26', 26, pin,
+                          raw - drop, seed, raw)
+                if got:
+                    return got, tried
+    # E. mode 34 compression-schedule slices. It is the instrument that moved
+    # this line 164.038 -> 159.668 -> 158.668 -> 157.484, so it runs before the
+    # repair tiers - but only every `SCHED_EVERY` rounds. Measured reason: a
+    # state the schedule itself produced arrives proxy-*feasible* and the
+    # schedule ratchets on it, while a state modes 22/33 produced arrives with
+    # 28-38 colliding pairs after the 2.5-degree entry snap and the schedule
+    # confirms nothing at all. Twelve 25-70 s arms per round against a tier that
+    # publishes 0.005 mm in 40 s is the wrong trade every round but the ones
+    # right after a schedule adoption.
+    if rnd % SCHED_EVERY == 0:
+        for seed in SCHED_SEEDS:
+            for tag, spec in SCHED_SPECS:
+                tried.append(('E-m34', f'r{rnd}-m34-{tag}-s{seed}'))
+                got = sched_arm(f'r{rnd}-m34-{tag}-s{seed}', spec, pin,
+                                raw - 0.3, seed, raw)
+                if got:
+                    return got, tried
     # B. flatten grid -> mode 33.
     for delta in FLAT:
         path, depth, moved = drv.flatten_fixture(delta, pin, f'{LABEL}-r{rnd}',
@@ -193,15 +243,6 @@ def round_once(pin, raw, rnd):
                   raw + 2.0, 0, raw)
         if got:
             return got, tried
-    # F. mode 26 ladders, every third round.
-    if rnd % 3 == 2:
-        for drop in DROPS:
-            for seed in (0, 1):
-                tried.append(('F-m26', f'r{rnd}-m26-d{drop}-s{seed}'))
-                got = arm(f'r{rnd}-m26-d{drop}-s{seed}', 'F-m26', 26, pin,
-                          raw - drop, seed, raw)
-                if got:
-                    return got, tried
     # G. mode 23 crossover, both directions.
     for other in POOL:
         if os.path.abspath(other) == os.path.abspath(pin):

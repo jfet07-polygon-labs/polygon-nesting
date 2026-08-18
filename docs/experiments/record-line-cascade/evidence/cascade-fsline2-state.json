@@ -1,0 +1,309 @@
+{
+ "label": "fsline2",
+ "arms": 555,
+ "byTier": {
+  "A-m22": {
+   "arms": 442,
+   "publications": 442,
+   "adoptions": 10
+  },
+  "E-m34": {
+   "arms": 41,
+   "publications": 41,
+   "adoptions": 2
+  },
+  "B-flat": {
+   "arms": 71,
+   "publications": 63,
+   "adoptions": 15
+  },
+  "C-m31": {
+   "arms": 1,
+   "publications": 1,
+   "adoptions": 1
+  }
+ },
+ "adoptions": [
+  {
+   "tier": "B-flat",
+   "tag": "r0-flat0.001-m33-p0.05",
+   "from": "156.91883051080544",
+   "to": "156.9169867126863",
+   "delta": -0.0018437981191254948,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.916986713.json",
+   "sha256": "1fbea4c9aab001e3168ce0e93ff5e7ac9aa89339ee86348be6e5acec3ea54c15",
+   "fingerprint": "c148c7401abb80a2ed826184bd39c8c43903203d10409219e08c4accd0041df0"
+  },
+  {
+   "tier": "A-m22",
+   "tag": "r1-m22-p0.8-s0",
+   "from": "156.9169867126863",
+   "to": "156.91536504906918",
+   "delta": -0.001621663617129343,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.915365049.json",
+   "sha256": "9a8cab255d4822eb6e56ad9dcbb76762dbc28f696405d4c7f53bc6071257b5f8",
+   "fingerprint": "636d9bffa19be1111935c4e277e80ca99891f3c736657f11cbddbc57c3b5b354"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r2-flat0.001-m33-p0.05",
+   "from": "156.91536504906918",
+   "to": "156.91436504906918",
+   "delta": -0.0010000000000047748,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.914365049.json",
+   "sha256": "338219b2777f1085c43cad121af40593bfe0022b43a6efda379d4bfb6b1caba0",
+   "fingerprint": "15699f1a91410f60c32a7552ded793e8cb02e6088249d1c33ce9a48dc7903480"
+  },
+  {
+   "tier": "A-m22",
+   "tag": "r3-m22-p0.8-s0",
+   "from": "156.91436504906918",
+   "to": "156.91336504906917",
+   "delta": -0.0010000000000047748,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.913365049.json",
+   "sha256": "e8f8837258517f395c8f5a84d359c1c8346185a4214a71ddea3c7a19e78e0e3e",
+   "fingerprint": "d7dba53b32d7d555a62fb87e4b2fffe25393976dda1070c475ac51140f555370"
+  },
+  {
+   "tier": "E-m34",
+   "tag": "r4-m34-w20-s0.25-s5",
+   "from": "156.91336504906917",
+   "to": "156.418",
+   "delta": -0.49536504906916434,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.418000000.json",
+   "sha256": "1d56dde19b522f8142e0d348323d767812ce8df7b29654c696c8a63f0afb4583",
+   "fingerprint": "6532a490f1ea5a855134e67a570dd08fec9ecab41e1475c368d46dd2359a124e"
+  },
+  {
+   "tier": "A-m22",
+   "tag": "r5-m22-p0.8-s0",
+   "from": "156.418",
+   "to": "156.389",
+   "delta": -0.028999999999996362,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.389000000.json",
+   "sha256": "fa06117e681f4ed84083722e541858a6b31b095bf70f4805530f23ee7bcc8300",
+   "fingerprint": "c01b89db86427bfb7fad2f16df4f69758b00893372094da857b9ac2eda51ec78"
+  },
+  {
+   "tier": "C-m31",
+   "tag": "r6-m31-e0.006",
+   "from": "156.389",
+   "to": "156.382",
+   "delta": -0.007000000000005002,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.382000000.json",
+   "sha256": "caca56c598ac1409abe0329dd69ba9ebd3f1ba47ac2d27db4995cf048a6a3710",
+   "fingerprint": "360072a7aaa1c0d9ff9c8d1e672ea26544a40cef50b57550a8a0e99d894b762f"
+  },
+  {
+   "tier": "A-m22",
+   "tag": "r7-m22-p0.8-s0",
+   "from": "156.382",
+   "to": "156.38",
+   "delta": -0.0020000000000095497,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.380000000.json",
+   "sha256": "154b13ca3f5a28bac3448033c53d8195215ac0a8c689045fa0f03c09c1adc6e5",
+   "fingerprint": "8eefde614961ba975362378ce25c45b035b353b68f429959c08dece808a5a3c2"
+  },
+  {
+   "tier": "E-m34",
+   "tag": "r8-m34-w20-s0.1-s5",
+   "from": "156.38",
+   "to": "156.37",
+   "delta": -0.009999999999990905,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.370000000.json",
+   "sha256": "d7f8ef12f16ed2ae4072ee519a41f6805d053c1757eb96eeed55fbad4a290293",
+   "fingerprint": "81200655284e8b827baf0ca7acfc37741044a1a27c12956ed3c1280d3fe4a29a"
+  },
+  {
+   "tier": "A-m22",
+   "tag": "r9-m22-p0.8-s0",
+   "from": "156.37",
+   "to": "156.14992679372747",
+   "delta": -0.2200732062725308,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.149926794.json",
+   "sha256": "d0d9fd0e7f049779177a707a17f8fece89c803883ef63cfd39f0c31d7644d5bc",
+   "fingerprint": "a681a6cf95e2b80d62c78a60db37ded9da6bd37fbb29882d5b37b7812c55afa9"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r10-flat0.001-m33-p0.05",
+   "from": "156.14992679372747",
+   "to": "156.11836504906918",
+   "delta": -0.031561744658290536,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.118365049.json",
+   "sha256": "cc0926e204d39a0f9fe5a62f66c67a4af3b2d4fa26aed8ae1b26a19f33572476",
+   "fingerprint": "8f0438c98dc124a4912896c44f3a9bb5809f92c46075acd3b242df0404bd3fd6"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r11-flat0.001-m33-p0.05",
+   "from": "156.11836504906918",
+   "to": "156.11736504906918",
+   "delta": -0.0010000000000047748,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.117365049.json",
+   "sha256": "c7e16ec434229fc43fa35dcfae259336deacfc1be1998e8b7297992bce0e4fe2",
+   "fingerprint": "b6868781a3af348284f6436b0c048b05181fc0e7f5d063654e84203b4db69c6b"
+  },
+  {
+   "tier": "A-m22",
+   "tag": "r12-m22-p0.8-s0",
+   "from": "156.11736504906918",
+   "to": "156.11436504906916",
+   "delta": -0.0030000000000143245,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.114365049.json",
+   "sha256": "080e7b0e338e2c2e50a6ee30551c68c0c5e52faf54ffe19c9f31ffcf2f32f534",
+   "fingerprint": "d7ede23a8b4dd97f1b6b11c86afe864e0e3884519ea435220e6f1388c03ae164"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r13-flat0.002-m33-p0.05",
+   "from": "156.11436504906916",
+   "to": "156.11236504906918",
+   "delta": -0.001999999999981128,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.112365049.json",
+   "sha256": "a15faa5dbd561201d224d0ed2b41f9333f3a2ae88d666ebfc07dd9d3bf846381",
+   "fingerprint": "0345341b2eb56021f805e90fec74c8dc9a0ff341fb507e3e5798160671a1be4e"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r14-flat0.002-m33-p0.05",
+   "from": "156.11236504906918",
+   "to": "156.11036504906917",
+   "delta": -0.0020000000000095497,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.110365049.json",
+   "sha256": "db4bd435dd0f02bbb46990018f8d610d9cd39abc7bb4f9bf4d468973fef4a4a7",
+   "fingerprint": "40e7f3c0c1a630c915b75a9bb708a60b1ea87a1c67991fc84ca0529b1a946d1d"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r15-flat0.001-m33-p0.05",
+   "from": "156.11036504906917",
+   "to": "156.10936504906917",
+   "delta": -0.0010000000000047748,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.109365049.json",
+   "sha256": "9428da2f7bdd28fbe9ffc86d5cd73f24fec994dc632b6cf4003af900ecd56740",
+   "fingerprint": "c104cf69a5822aa5cea6de9df1e70d151085d4f749e516201c78295f30c01768"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r16-flat0.002-m33-p0.05",
+   "from": "156.10936504906917",
+   "to": "156.1073650490692",
+   "delta": -0.001999999999981128,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.107365049.json",
+   "sha256": "7926dd0d4bc52a2c660dfb4f6e40cb3b394ce8ce479c5fd51de48f4beb1b22f3",
+   "fingerprint": "e746e97385905cc58b0f04a4bbadd60525b942d7a0ed845152c42f3922ff8f47"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r17-flat0.001-m33-p0.05",
+   "from": "156.1073650490692",
+   "to": "156.10636504906918",
+   "delta": -0.0010000000000047748,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.106365049.json",
+   "sha256": "62d00fa839c9e03a06929a53956704e36acad82ba3ad2ebc2b1dfb34a9a8c38e",
+   "fingerprint": "7cf99462db8ac89af09786cbf5cf09c095b7843ca3dfaf858b4ee701380421dd"
+  },
+  {
+   "tier": "A-m22",
+   "tag": "r18-m22-p0.8-s0",
+   "from": "156.10636504906918",
+   "to": "156.10536504906918",
+   "delta": -0.0010000000000047748,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.105365049.json",
+   "sha256": "5df07a8aee59a91184cfa7eb214330bdd131c74117dec38892e786f013458a2e",
+   "fingerprint": "aab1f1f6f7defe6c14924ae2ca2903943c182149666d23eb48de54e54e31e7a2"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r19-flat0.001-m33-p0.05",
+   "from": "156.10536504906918",
+   "to": "156.10436504906917",
+   "delta": -0.0010000000000047748,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.104365049.json",
+   "sha256": "fc582522599fb852ed53d50111a17cf6635f1bb7580d4685c4cb1e010acd555c",
+   "fingerprint": "cf7adf72bbdd4091ce18030a5ec2e2b51145324b80dd709819921adebf38f77e"
+  },
+  {
+   "tier": "A-m22",
+   "tag": "r20-m22-p0.8-s0",
+   "from": "156.10436504906917",
+   "to": "156.10336504906917",
+   "delta": -0.0010000000000047748,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.103365049.json",
+   "sha256": "8d1667665265cec2c96d51e782e3550c118887b92b61c0763d1e17b23be4e9c1",
+   "fingerprint": "5bd22bd8fe3a639f60adeb1f974149305851a2872dbd1a819d4e20c390cefa05"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r21-flat0.002-m33-p0.05",
+   "from": "156.10336504906917",
+   "to": "156.1013650490692",
+   "delta": -0.001999999999981128,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.101365049.json",
+   "sha256": "15bdea1b32a53c783d93565b14e3e9b7b1647af76c6242122c3aee49b6d49b78",
+   "fingerprint": "e0a704a8d2ee28f64e144b6827782c8950d49a278a81d6fc18a16cdc15d43f1d"
+  },
+  {
+   "tier": "A-m22",
+   "tag": "r22-m22-p0.8-s0",
+   "from": "156.1013650490692",
+   "to": "156.09936504906918",
+   "delta": -0.0020000000000095497,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.099365049.json",
+   "sha256": "b1d1386ef61b4997b166f579d53a9b642c750bf87ecc096f867c46d0efa03035",
+   "fingerprint": "01a0572b65a5d60e95ce4d65ba178224996328e5bb0309f6bae7b81c9d143e17"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r23-flat0.002-m33-p0.05",
+   "from": "156.09936504906918",
+   "to": "156.09736504906917",
+   "delta": -0.0020000000000095497,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.097365049.json",
+   "sha256": "65c997adc2d50232dd39ee2b39da93680a13316ed55db375c9a1ad53255a7e50",
+   "fingerprint": "8879719a2d985f3ee44bf20c931e20c4f1f60f7a149d12684d95b762a0530634"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r24-flat0.001-m33-p0.05",
+   "from": "156.09736504906917",
+   "to": "156.0963650490692",
+   "delta": -0.0009999999999763531,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.096365049.json",
+   "sha256": "2187eaefc480d568eb9666c375b099aed6bd7b50f1a87c95ef2273f2aa26a316",
+   "fingerprint": "581cb7e0492881410fdfb36b31923c9e400ff937998a70c0fd3ff6077e4b8219"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r25-flat0.002-m33-p0.05",
+   "from": "156.0963650490692",
+   "to": "156.09436504906918",
+   "delta": -0.0020000000000095497,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.094365049.json",
+   "sha256": "a0d2a9b511b949c0b6d89ccd385333e23b8277f4f568ba2d7e95a805a1601bf7",
+   "fingerprint": "e65cccda69f272289a9f7874740fc8cf236191fd8d3160aaa8e7d77d8f49bc15"
+  },
+  {
+   "tier": "B-flat",
+   "tag": "r26-flat0.002-m33-p0.05",
+   "from": "156.09436504906918",
+   "to": "156.09236504906917",
+   "delta": -0.0020000000000095497,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.092365049.json",
+   "sha256": "67d47f9d9cd9d6a11c366646a4a794a3f4018ff8f10f6dfb3baca88102086db1",
+   "fingerprint": "3c51368d3b6592078b26a93135b8ff33543406dc0aa1672dc369c4e571fb676f"
+  },
+  {
+   "tier": "A-m22",
+   "tag": "r27-m22-p0.8-s0",
+   "from": "156.09236504906917",
+   "to": "156.09136504906917",
+   "delta": -0.0010000000000047748,
+   "pin": "/var/lib/t3/tmp/recordline/fsline2/pins/pin-156.091365049.json",
+   "sha256": "65a7f293b4c50371843b78c98ff8bd94e28491d3058be7ec5d8ab76ab8123da3",
+   "fingerprint": "fd9a5ed190f2f1e48af106e1e0053bf2b9ccada344a0c3bba249ed67ab092828"
+  }
+ ],
+ "barren": []
+}

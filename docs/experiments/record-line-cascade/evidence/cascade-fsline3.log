@@ -1,0 +1,8 @@
+=== CASCADE fsline3 from docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/record-line-cascade/pinned-fs-155.4633.json raw=155.46327292304915 ===
+    pool: []
+[   65.1s] r0-m26-d1.0-s0: mode=26 exactValid=True contractValid=True depth=155.463 raw=155.46327292304915 parent=155.463 fp=667097dc7f3a15f0 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[   72.7s] r0-m26-d1.0-s1: mode=26 exactValid=True contractValid=True depth=155.463 raw=155.46327292304915 parent=155.463 fp=667097dc7f3a15f0 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[   79.9s] r0-m26-d1.0-s2: mode=26 exactValid=True contractValid=True depth=155.463 raw=155.46327292304915 parent=155.463 fp=667097dc7f3a15f0 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[   56.2s] r0-m26-d1.0-s3: mode=26 exactValid=True contractValid=True depth=155.463 raw=155.46327292304915 parent=155.463 fp=667097dc7f3a15f0 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[   43.7s] r0-m26-d2.0-s0: mode=26 exactValid=True contractValid=True depth=155.463 raw=155.46327292304915 parent=155.463 fp=667097dc7f3a15f0 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 
+[   88.4s] r0-m26-d2.0-s1: mode=26 exactValid=True contractValid=True depth=155.463 raw=155.46327292304915 parent=155.463 fp=667097dc7f3a15f0 | before Nonep/Noneb after Nonep/Noneb cap=None maxDisp=None moved=None resid=None | 

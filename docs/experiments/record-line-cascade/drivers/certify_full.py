@@ -15,23 +15,33 @@ Usage: certify_full.py <pin> <raw> [label]
 """
 import math
 import sys, json, hashlib, os, collections, time
-sys.path.insert(0, '/var/lib/t3/tmp/orient-fine')
-import drv, lib
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import drv, lib, sched
 
 PIN, RAW = sys.argv[1], float(sys.argv[2])
 LABEL = sys.argv[3] if len(sys.argv) > 3 else 'cert'
-LOG = f'/var/lib/t3/tmp/orient-fine/{LABEL}.log'
-RUNS = f'/var/lib/t3/tmp/orient-fine/{LABEL}-runs'
-FIX = f'/var/lib/t3/tmp/orient-fine/{LABEL}-fix'
+OUT = '/var/lib/t3/tmp/recordline'
+LOG = f'{OUT}/{LABEL}.log'
+RUNS = f'{OUT}/{LABEL}-runs'
+FIX = f'{OUT}/{LABEL}-fix'
 os.makedirs(RUNS, exist_ok=True)
 os.makedirs(FIX, exist_ok=True)
 
-BASE_BIN = os.environ.get('CERT_BASE_BIN', '/var/lib/t3/tmp/orient-fine/bench-base')
-NEW_BIN = os.environ.get('CERT_NEW_BIN', '/var/lib/t3/tmp/orient-fine/bench-new')
+BASE_BIN = os.environ.get('CERT_BASE_BIN', lib.BIN)
+NEW_BIN = os.environ.get('CERT_NEW_BIN', lib.BIN)
 FLAT = (0.0005, 0.001, 0.002, 0.003, 0.004, 0.01)
 SLACK = (0.05, 2.0)
 M31 = (0.006, 0.012, 0.025, 0.04)
 DROPS = (0.3, 0.55, 1.0)
+# The mode-34 fixpoint arms. The step size is the knob this round added and the
+# one that decided whether the schedule moved at all, so a fixpoint claim that
+# only probed the 1-micron default would be the same one-step-size claim the
+# 159.079 record parent's fixpoint turned out to be.
+SCHED_SPECS = ('past=1,work=20000000,step=0.25',
+               'past=1,work=20000000,step=1',
+               'past=1,work=20000000,step=0.1',
+               'past=1,work=60000000,step=0.25')
+SCHED_SEEDS = (5, 0)
 
 sha = hashlib.sha256(open(PIN, 'rb').read()).hexdigest()
 fingerprint = json.load(open(PIN))['expectedPlacementFingerprint']
@@ -94,13 +104,41 @@ for step in M31:
 for delta in FLAT:
     path, depth, moved = drv.flatten_fixture(delta, PIN, LABEL, outdir=FIX)
     drv.log(LOG, f'-- flatten {delta}: depth {depth:.9f}, {len(moved)} moved')
-    for binary, ladder in ((NEW_BIN, 'new'), (BASE_BIN, 'base')):
+    # Two ladder generations only when there really are two binaries: this
+    # round's tree already carries the finer 0.0032/0.008 rungs, so a default
+    # run has `CERT_BASE_BIN == CERT_NEW_BIN` and the second pass would be the
+    # same arm counted twice.
+    ladders = [(NEW_BIN, 'new')]
+    if os.path.realpath(BASE_BIN) != os.path.realpath(NEW_BIN):
+        ladders.append((BASE_BIN, 'base'))
+    for binary, ladder in ladders:
         for slack in SLACK:
             probe(f'{LABEL}-{ladder}-flat{delta}-m33-p{slack}', 33, path,
                   RAW + slack, 0, binary, ladder)
 for drop in DROPS:
     for seed in (0, 1):
         probe(f'{LABEL}-m26-d{drop}-s{seed}', 26, PIN, RAW - drop, seed, NEW_BIN, 'new')
+
+# The mode-34 arm. It runs on the schedule binary rather than the replay binary
+# and through `sched.sched_arm`, because its knobs live in the environment.
+for seed in SCHED_SEEDS:
+    for spec in SCHED_SPECS:
+        tag = f'{LABEL}-m34-{spec.split(",")[-1]}-s{seed}'
+        out, _ = sched.sched_arm(tag, PIN, RAW - 0.3, seed, spec, logfile=LOG,
+                                 outdir=RUNS)
+        pop = lib.population(out) or {}
+        published = drv.published_raw(out)
+        row = {'tag': tag, 'mode': 34, 'ladder': 'sched', 'spec': spec,
+               'published': published,
+               'below': published is not None and published < RAW,
+               'exactValid': pop.get('exactValid'),
+               'contractValid': pop.get('contractValid'),
+               'raw': pop.get('rawSourceDepthMm'),
+               'fp': pop.get('finalPlacementFingerprint'),
+               'attribution': {}}
+        probes.append(row)
+        if row['below']:
+            drv.log(LOG, f'!!! BELOW INCUMBENT {tag}: {published!r}')
 
 below = [row for row in probes if row['below']]
 result = {
@@ -112,7 +150,7 @@ result = {
     'fixpoint': bool(replay_ok) and not below,
     'probes': probes,
 }
-json.dump(result, open(f'/var/lib/t3/tmp/orient-fine/{LABEL}.json', 'w'), indent=1)
+json.dump(result, open(f'{OUT}/{LABEL}.json', 'w'), indent=1)
 drv.log(LOG, f'=== CERTIFY replayPass={replay_ok} arms={len(probes)} '
              f'below={len(below)} fixpoint={result["fixpoint"]} '
              f'({result["elapsedS"]:.0f}s)')

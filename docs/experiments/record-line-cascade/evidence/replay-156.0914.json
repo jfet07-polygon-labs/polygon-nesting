@@ -1,0 +1,58 @@
+{
+ "pin": "docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/record-line-cascade/pinned-fs-156.0914.json",
+ "sha256": "65a7f293b4c50371843b78c98ff8bd94e28491d3058be7ec5d8ab76ab8123da3",
+ "declaredRaw": "156.09136504906917",
+ "fingerprint": "fd9a5ed190f2f1e48af106e1e0053bf2b9ccada344a0c3bba249ed67ab092828",
+ "replayPass": true,
+ "improvements": [],
+ "rows": [
+  {
+   "tag": "m27",
+   "mode": 27,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "156.09136504906917",
+   "ulpsFromDeclared": 0.0,
+   "fingerprintMatches": true,
+   "authority": true,
+   "reproduces": true,
+   "improves": false
+  },
+  {
+   "tag": "m30",
+   "mode": 30,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "156.09136504906917",
+   "ulpsFromDeclared": 0.0,
+   "fingerprintMatches": true,
+   "authority": true,
+   "reproduces": true,
+   "improves": false
+  },
+  {
+   "tag": "m22-s0",
+   "mode": 22,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "156.09136504906917",
+   "ulpsFromDeclared": 0.0,
+   "fingerprintMatches": true,
+   "authority": false,
+   "reproduces": true,
+   "improves": false
+  },
+  {
+   "tag": "m22-s1",
+   "mode": 22,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "156.09136504906917",
+   "ulpsFromDeclared": 0.0,
+   "fingerprintMatches": true,
+   "authority": false,
+   "reproduces": true,
+   "improves": false
+  }
+ ]
+}

@@ -1,0 +1,85 @@
+{
+ "label": "regrid-156.9188",
+ "pin": "/var/lib/t3/tmp/recordline/fsline/pins/pin-156.918830511.json",
+ "declaredRaw": "156.91883051080544",
+ "posesMoved": 28,
+ "snappedDepthMm": 157.30941245693958,
+ "snapEntryLossMm": 0.390581946134148,
+ "rows": [
+  {
+   "tag": "m30",
+   "mode": 30,
+   "published": "157.188",
+   "belowIncumbent": false
+  },
+  {
+   "tag": "m30+m34",
+   "spec": "past=1,work=20000000,step=0.25",
+   "parentProxyFeasible": false,
+   "parentCollisionPairs": 9,
+   "startDepthMm": 157.20100000000002,
+   "floorDepthMm": 157.01825,
+   "confirmationsAccepted": 37,
+   "published": "157.017",
+   "belowIncumbent": false
+  },
+  {
+   "tag": "m30+m34",
+   "spec": "past=1,work=60000000,step=0.25",
+   "parentProxyFeasible": false,
+   "parentCollisionPairs": 9,
+   "startDepthMm": 157.20100000000002,
+   "floorDepthMm": 157.01825,
+   "confirmationsAccepted": 37,
+   "published": "157.017",
+   "belowIncumbent": false
+  },
+  {
+   "tag": "m27",
+   "mode": 27,
+   "published": "None",
+   "belowIncumbent": false
+  },
+  {
+   "tag": "m33-p2",
+   "mode": 33,
+   "published": "None",
+   "belowIncumbent": false
+  },
+  {
+   "tag": "m33-p0.05",
+   "mode": 33,
+   "published": "None",
+   "belowIncumbent": false
+  },
+  {
+   "tag": "m31-b",
+   "mode": 31,
+   "published": "157.188",
+   "belowIncumbent": false
+  },
+  {
+   "tag": "m31-b+m34",
+   "spec": "past=1,work=20000000,step=0.25",
+   "parentProxyFeasible": false,
+   "parentCollisionPairs": 9,
+   "startDepthMm": 157.20100000000002,
+   "floorDepthMm": 157.01825,
+   "confirmationsAccepted": 37,
+   "published": "157.017",
+   "belowIncumbent": false
+  },
+  {
+   "tag": "m31-b+m34",
+   "spec": "past=1,work=60000000,step=0.25",
+   "parentProxyFeasible": false,
+   "parentCollisionPairs": 9,
+   "startDepthMm": 157.20100000000002,
+   "floorDepthMm": 157.01825,
+   "confirmationsAccepted": 37,
+   "published": "157.017",
+   "belowIncumbent": false
+  }
+ ],
+ "anyBelow": false
+}

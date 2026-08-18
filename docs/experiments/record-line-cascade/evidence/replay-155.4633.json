@@ -1,0 +1,69 @@
+{
+ "pin": "docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/record-line-cascade/pinned-fs-155.4633.json",
+ "sha256": "3deaef6dbd4a9b453a22079c824d29bdbd5462dd1c7b6b93713170985fe2304d",
+ "declaredRaw": "155.46327292304915",
+ "fingerprint": "667097dc7f3a15f0cb51c04dec04d30385946898699cd8d33d0308edb148f94d",
+ "replayPass": true,
+ "improvements": [
+  {
+   "tag": "m22-s0",
+   "raw": "155.45627292304914",
+   "run": "/var/lib/t3/tmp/recordline/replay-155.4633-runs/replay-155.4633-m22-s0.json"
+  },
+  {
+   "tag": "m22-s1",
+   "raw": "155.45627292304914",
+   "run": "/var/lib/t3/tmp/recordline/replay-155.4633-runs/replay-155.4633-m22-s1.json"
+  }
+ ],
+ "rows": [
+  {
+   "tag": "m27",
+   "mode": 27,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "155.46327292304915",
+   "ulpsFromDeclared": 0.0,
+   "fingerprintMatches": true,
+   "authority": true,
+   "reproduces": true,
+   "improves": false
+  },
+  {
+   "tag": "m30",
+   "mode": 30,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "155.46327292304915",
+   "ulpsFromDeclared": 0.0,
+   "fingerprintMatches": true,
+   "authority": true,
+   "reproduces": true,
+   "improves": false
+  },
+  {
+   "tag": "m22-s0",
+   "mode": 22,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "155.45627292304914",
+   "ulpsFromDeclared": -246290604622.0,
+   "fingerprintMatches": false,
+   "authority": false,
+   "reproduces": false,
+   "improves": true
+  },
+  {
+   "tag": "m22-s1",
+   "mode": 22,
+   "exactValid": true,
+   "contractValid": true,
+   "raw": "155.45627292304914",
+   "ulpsFromDeclared": -246290604622.0,
+   "fingerprintMatches": false,
+   "authority": false,
+   "reproduces": false,
+   "improves": true
+  }
+ ]
+}
