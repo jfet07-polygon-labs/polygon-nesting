@@ -643,6 +643,81 @@ pub struct GeneralPersistentVacancyDiagnostics {
     pub failure_reason: Option<String>,
 }
 
+/// One profiling phase's contribution to one mode-26 region.
+///
+/// Diagnostics only, and only in a `search-profiling` build. See
+/// [`GeneralPersistentVacancyLadderAnatomy`] for the tier contract.
+#[cfg(feature = "search-profiling")]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralLadderPhaseDelta {
+    /// Wall-clock milliseconds this phase accumulated inside the region,
+    /// summed over every thread that recorded any.
+    pub milliseconds: f64,
+    /// How many times the phase was entered inside the region.
+    pub calls: u64,
+}
+
+/// The wall-clock anatomy of one mode-26 region: an arm, a rung, or the whole
+/// ladder.
+///
+/// # Why this is a `search-profiling` field rather than an ordinary one
+///
+/// The four pinned regression gates measure the default build, and the default
+/// build must not acquire a clock read, a snapshot, or a serialised field it
+/// did not have. So the whole block is `#[cfg(feature = "search-profiling")]`:
+/// without the feature the field does not exist, no `Instant` is read, and the
+/// generated code is the one the gates pin. With the feature it costs one
+/// `Instant::now` pair and one [`crate::profiling::snapshot`] per *arm* — tens
+/// of them in a whole ladder, against arms that run for seconds each — so the
+/// measurement it reports is not the measurement it perturbs.
+///
+/// Like everything in [`crate::profiling`], these are wall-clock quantities and
+/// are therefore not reproducible; nothing here may ever reach a search
+/// decision, and nothing does — the ladder writes these fields and never reads
+/// them back.
+///
+/// `phases` and `counters` are *deltas* of the process-wide profiling totals
+/// across the region, keyed by the stable names in
+/// [`crate::profiling::Phase::name`] and [`crate::profiling::Counter::name`].
+/// A mode-26 ladder is strictly sequential between arms, so a delta taken
+/// around one arm is that arm's own work even though the arm itself runs on a
+/// pool of threads. Phases that
+/// [`crate::profiling::Phase::is_enclosing`] must be excluded from a share
+/// table, exactly as in the whole-run profile.
+#[cfg(feature = "search-profiling")]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralPersistentVacancyLadderAnatomy {
+    /// Wall-clock milliseconds spent in the region as a whole.
+    pub wall_ms: f64,
+    /// The clamped mode-0 pipeline run (relaxed epochs plus the coupled
+    /// separator). Zero outside an arm.
+    pub separator_ms: f64,
+    /// `coupled_independent_source_depth` on the arm's own state.
+    pub depth_measure_ms: f64,
+    /// `count_exact_overlap_pairs` on the arm's own state.
+    pub overlap_count_ms: f64,
+    /// `validate_and_measure_placements` on the arm's own state.
+    pub exact_validate_ms: f64,
+    /// Repair tier one: `micro_legalize`.
+    pub micro_legalization_ms: f64,
+    /// Repair tier two: single-piece conflict-targeted re-placement.
+    pub replacement_repair_ms: f64,
+    /// Repair tier three: joint multi-piece re-placement.
+    pub joint_replacement_ms: f64,
+    /// Repair tier four: the global pressure-balanced program (mode 31).
+    pub global_legalization_ms: f64,
+    /// Fingerprinting, cloning and diagnostics assembly around the arms; only
+    /// filled on a rung and on the ladder, where it is the orchestration cost
+    /// that is not inside any arm.
+    pub orchestration_ms: f64,
+    /// Per-phase deltas across the region.
+    pub phases: BTreeMap<String, GeneralLadderPhaseDelta>,
+    /// Per-counter deltas across the region.
+    pub counters: BTreeMap<String, u64>,
+}
+
 /// Mode-26 (clamped-sheet ladder compression) diagnostics: the ladder of
 /// effective sheet long-axis bounds walked from the parent's own depth down to
 /// the requested final bound, one row per step.
@@ -662,6 +737,9 @@ pub struct GeneralPersistentVacancyLadderCompressionDiagnostics {
     pub published_step: Option<usize>,
     /// The published state's own bound, when a step produced it.
     pub published_bound_mm: Option<f64>,
+    /// The whole ladder's wall-clock anatomy. `search-profiling` builds only.
+    #[cfg(feature = "search-profiling")]
+    pub anatomy: GeneralPersistentVacancyLadderAnatomy,
     pub steps: Vec<GeneralPersistentVacancyLadderStepDiagnostics>,
 }
 
@@ -677,6 +755,9 @@ pub struct GeneralPersistentVacancyLadderStepDiagnostics {
     /// The strip depth the warm-start incumbents were handed at, one separator
     /// contraction above `bound_mm`.
     pub seed_depth_mm: f64,
+    /// This rung's wall-clock anatomy. `search-profiling` builds only.
+    #[cfg(feature = "search-profiling")]
+    pub anatomy: GeneralPersistentVacancyLadderAnatomy,
     pub arms: Vec<GeneralPersistentVacancyLadderArmDiagnostics>,
     /// How many arm attempts this rung spent across both warm starts.
     pub attempts_run: usize,
@@ -784,6 +865,9 @@ pub struct GeneralPersistentVacancyLadderArmDiagnostics {
     pub state_fingerprint: Option<String>,
     /// Which retry of this rung arm produced the row, counting from zero.
     pub attempt: usize,
+    /// This arm's wall-clock anatomy. `search-profiling` builds only.
+    #[cfg(feature = "search-profiling")]
+    pub anatomy: GeneralPersistentVacancyLadderAnatomy,
     /// The micro-legalization pass run on the arm's rejected state, when one
     /// was attempted.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -4706,6 +4790,80 @@ fn run_alternation_fixpoint(
     diagnostics
 }
 
+/// A profiling-totals sample taken at a mode-26 region boundary.
+///
+/// `search-profiling` builds only; see [`GeneralPersistentVacancyLadderAnatomy`]
+/// for why this is not an ordinary diagnostic.
+#[cfg(all(feature = "jagua-experimental", feature = "search-profiling"))]
+struct LadderAnatomySample {
+    started: Instant,
+    phases: Vec<profiling::PhaseSample>,
+    counters: [u64; Counter::COUNT],
+}
+
+#[cfg(all(feature = "jagua-experimental", feature = "search-profiling"))]
+impl LadderAnatomySample {
+    /// Opens a region.
+    fn open() -> Self {
+        let snapshot = profiling::snapshot();
+        Self {
+            started: Instant::now(),
+            phases: snapshot.phases,
+            counters: profiling::counter_totals(),
+        }
+    }
+
+    /// Closes a region into `anatomy`, filling its wall time and its phase and
+    /// counter deltas. Only phases and counters that actually moved are
+    /// recorded, so a region's map names the work it did rather than the whole
+    /// declaration order.
+    fn close(self, anatomy: &mut GeneralPersistentVacancyLadderAnatomy) {
+        anatomy.wall_ms = self.started.elapsed().as_secs_f64() * 1000.0;
+        let after = profiling::snapshot();
+        for (before, now) in self.phases.iter().zip(after.phases.iter()) {
+            let nanos = now.nanos.saturating_sub(before.nanos);
+            let calls = now.calls.saturating_sub(before.calls);
+            if nanos == 0 && calls == 0 {
+                continue;
+            }
+            anatomy.phases.insert(
+                now.phase.name().to_owned(),
+                GeneralLadderPhaseDelta {
+                    milliseconds: nanos as f64 / 1.0e6,
+                    calls,
+                },
+            );
+        }
+        let after_counters = profiling::counter_totals();
+        for (index, counter) in Counter::ALL.iter().enumerate() {
+            let delta = after_counters[index].saturating_sub(self.counters[index]);
+            if delta == 0 {
+                continue;
+            }
+            anatomy.counters.insert(counter.name().to_owned(), delta);
+        }
+    }
+}
+
+/// Times one mode-26 region into `slot` when the `search-profiling` build is
+/// in use, and calls `body` unchanged otherwise.
+///
+/// This is a statement macro rather than a function taking a closure because
+/// several of the regions it wraps borrow `row` mutably inside the body while
+/// writing a field of `row` outside it.
+macro_rules! ladder_time {
+    ($slot:expr, $body:block) => {{
+        #[cfg(feature = "search-profiling")]
+        let started = Instant::now();
+        let value = $body;
+        #[cfg(feature = "search-profiling")]
+        {
+            $slot = started.elapsed().as_secs_f64() * 1000.0;
+        }
+        value
+    }};
+}
+
 /// Builds the mode-26 ladder of effective sheet long-axis bounds.
 ///
 /// The rungs run from just below `parent_depth_mm` down to `final_bound_mm`
@@ -4847,6 +5005,8 @@ fn run_ladder_compression(
     }
 
     diagnostics.attempted = true;
+    #[cfg(feature = "search-profiling")]
+    let ladder_region = LadderAnatomySample::open();
     let (step_mm, bounds) = ladder_compression_bounds(parent_depth_mm, final_bound_mm);
     let mut ladder = GeneralPersistentVacancyLadderCompressionDiagnostics {
         parent_depth_mm,
@@ -4886,6 +5046,8 @@ fn run_ladder_compression(
             ..GeneralPersistentVacancyLadderStepDiagnostics::default()
         };
         ladder.steps_run = step + 1;
+        #[cfg(feature = "search-profiling")]
+        let step_region = LadderAnatomySample::open();
 
         // The clamp: the search believes in a sheet exactly `bound_mm` deep.
         let step_settings = GeneralFastSettings {
@@ -5008,9 +5170,32 @@ fn run_ladder_compression(
 
         row.published_depth_mm_after = published_depth_mm;
         row.chained_depth_mm_after = chain_depth_mm;
+        #[cfg(feature = "search-profiling")]
+        {
+            step_region.close(&mut row.anatomy);
+            // Everything the rung spent outside its own arms: the two
+            // warm-start fingerprints, the warm-start clones, and the
+            // publication bookkeeping between attempts.
+            let arm_ms = row
+                .arms
+                .iter()
+                .map(|arm| arm.anatomy.wall_ms)
+                .sum::<f64>();
+            row.anatomy.orchestration_ms = (row.anatomy.wall_ms - arm_ms).max(0.0);
+        }
         ladder.steps.push(row);
     }
 
+    #[cfg(feature = "search-profiling")]
+    {
+        ladder_region.close(&mut ladder.anatomy);
+        let step_ms = ladder
+            .steps
+            .iter()
+            .map(|step| step.anatomy.wall_ms)
+            .sum::<f64>();
+        ladder.anatomy.orchestration_ms = (ladder.anatomy.wall_ms - step_ms).max(0.0);
+    }
     diagnostics.exact_valid = true;
     diagnostics.independent_depth_mm = Some(published_depth_mm);
     diagnostics.final_placement_fingerprint =
@@ -5202,13 +5387,17 @@ fn run_ladder_compression_arm(
         warm_start_depth_mm,
         ..GeneralPersistentVacancyLadderArmDiagnostics::default()
     };
+    #[cfg(feature = "search-profiling")]
+    let arm_region = LadderAnatomySample::open();
     let seed = general_fast_result_seed(warm_placements, seed_depth_mm);
     // The one place the tolerant rollback comparison is armed. A rung runs the
     // separator against a sheet that does not exist outside this ladder, so its
     // accepted states are this mode's alone to change; every other caller of
     // the pipeline keeps the bit-exact rule. See `CoupledRollbackComparison`
     // for why the exact rule was rejecting rollbacks that were correct.
-    let candidate = match improve_complete_layout_under_rollback_comparison(
+    #[cfg(feature = "search-profiling")]
+    let separator_started = Instant::now();
+    let separator_outcome = improve_complete_layout_under_rollback_comparison(
         pieces,
         step_settings,
         separator_settings,
@@ -5216,7 +5405,12 @@ fn run_ladder_compression_arm(
         None,
         None,
         CoupledRollbackComparison::ToleratesPoleRounding,
-    ) {
+    );
+    #[cfg(feature = "search-profiling")]
+    {
+        row.anatomy.separator_ms = separator_started.elapsed().as_secs_f64() * 1000.0;
+    }
+    let candidate = match separator_outcome {
         Ok(outcome) => {
             row.epochs_improved = outcome.diagnostics.epochs_improved;
             let arm = outcome
@@ -5291,10 +5485,15 @@ fn run_ladder_compression_arm(
     };
 
     let Some(placements) = candidate else {
+        #[cfg(feature = "search-profiling")]
+        arm_region.close(&mut row.anatomy);
         return (row, None);
     };
     row.state_fingerprint = Some(coupled_fast_placement_fingerprint(&placements));
-    let depth_mm = match coupled_independent_source_depth(pieces, &placements, fast_settings) {
+    let measured = ladder_time!(row.anatomy.depth_measure_ms, {
+        coupled_independent_source_depth(pieces, &placements, fast_settings)
+    });
+    let depth_mm = match measured {
         Ok(depth) => {
             row.converged_depth_mm = Some(depth);
             row.bound_excess_mm = Some((depth - bound_mm).max(0.0));
@@ -5302,11 +5501,18 @@ fn run_ladder_compression_arm(
         }
         Err(error) => {
             row.failure_reason = Some(error.to_string());
+            #[cfg(feature = "search-profiling")]
+            arm_region.close(&mut row.anatomy);
             return (row, None);
         }
     };
-    row.overlap_pairs = count_exact_overlap_pairs(pieces, &placements).ok();
-    match validate_and_measure_placements(pieces, &placements, fast_settings) {
+    row.overlap_pairs = ladder_time!(row.anatomy.overlap_count_ms, {
+        count_exact_overlap_pairs(pieces, &placements).ok()
+    });
+    let validated = ladder_time!(row.anatomy.exact_validate_ms, {
+        validate_and_measure_placements(pieces, &placements, fast_settings)
+    });
+    match validated {
         Ok(_) => row.exact_valid = true,
         Err(error) => row.exact_rejection_reason = Some(error.to_string()),
     }
@@ -5343,7 +5549,9 @@ fn run_ladder_compression_arm(
     let mut legalized = None;
     let mut repair_tier = None;
     if !row.exact_valid {
-        let (micro_diagnostics, repaired) = micro_legalize(pieces, &placements, fast_settings);
+        let (micro_diagnostics, repaired) = ladder_time!(row.anatomy.micro_legalization_ms, {
+            micro_legalize(pieces, &placements, fast_settings)
+        });
         if let Some(repaired) = repaired {
             match coupled_independent_source_depth(pieces, &repaired, fast_settings) {
                 Ok(repaired_depth_mm) => {
@@ -5364,13 +5572,15 @@ fn run_ladder_compression_arm(
         // Mode 26's repair tiers are protected legacy behaviour, so they stay
         // on the legacy candidate stream: the orientation perturbation is
         // reachable only through the modes that were built to measure it.
-        let outcome = persistent_vacancy::replacement_repair(
-            pieces,
-            &placements,
-            fast_settings,
-            bound_mm,
-            false,
-        );
+        let outcome = ladder_time!(row.anatomy.replacement_repair_ms, {
+            persistent_vacancy::replacement_repair(
+                pieces,
+                &placements,
+                fast_settings,
+                bound_mm,
+                false,
+            )
+        });
         if let Some(repaired) = &outcome.repaired {
             if let Some(repaired_depth_mm) = outcome.diagnostics.depth_mm {
                 row.replacement_repaired_depth_mm = Some(repaired_depth_mm);
@@ -5383,13 +5593,15 @@ fn run_ladder_compression_arm(
         row.replacement_repair = Some(outcome.diagnostics);
     }
     if !row.exact_valid && legalized.is_none() {
-        let outcome = persistent_vacancy::joint_replacement_repair(
-            pieces,
-            &placements,
-            fast_settings,
-            bound_mm,
-            false,
-        );
+        let outcome = ladder_time!(row.anatomy.joint_replacement_ms, {
+            persistent_vacancy::joint_replacement_repair(
+                pieces,
+                &placements,
+                fast_settings,
+                bound_mm,
+                false,
+            )
+        });
         if let Some(repaired) = &outcome.repaired {
             if let Some(repaired_depth_mm) = outcome.diagnostics.depth_mm {
                 row.joint_replaced_depth_mm = Some(repaired_depth_mm);
@@ -5412,8 +5624,9 @@ fn run_ladder_compression_arm(
     // It runs strictly after the local tiers have produced nothing, so like
     // them it can only add publications to rungs that were already failing.
     if !row.exact_valid && legalized.is_none() {
-        let (global_diagnostics, repaired) =
-            global_legalize(pieces, &placements, fast_settings, Some(bound_mm));
+        let (global_diagnostics, repaired) = ladder_time!(row.anatomy.global_legalization_ms, {
+            global_legalize(pieces, &placements, fast_settings, Some(bound_mm))
+        });
         if let Some(repaired) = repaired {
             match coupled_independent_source_depth(pieces, &repaired, fast_settings) {
                 Ok(repaired_depth_mm) => {
@@ -5431,6 +5644,8 @@ fn run_ladder_compression_arm(
         row.global_legalization = Some(global_diagnostics);
     }
 
+    #[cfg(feature = "search-profiling")]
+    arm_region.close(&mut row.anatomy);
     let exact_valid = row.exact_valid;
     (
         row,
