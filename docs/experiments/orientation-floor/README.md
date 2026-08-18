@@ -1,11 +1,17 @@
 # The orientation floor was still a floor, and the repair tier was the wall
 
 The standing record on the true 5.0/5.0 exact-clearance contract was
-**155.42229074464285 mm**, and it was not merely an incumbent: it was a
-*certified fixpoint* of 36 probe arms — mode 31 at four tiny steps, the whole
-frontier-flatten delta grid handed to mode 33 under both slack values, mode 26
-ladders at three drops and two seeds, and mode 34 at four step sizes and two
-seeds. The record-line round closed by saying what the last 0.422 mm would
+**155.42229074464285 mm**, and it was not merely an incumbent: it had survived
+a **finite negative on a declared battery** of 30 search arms plus 6 replays
+(record-line-cascade's `probeArms: 36` folds the replays into the search
+count; see that round's §7, corrected post hoc — this is not a certified
+fixpoint) — mode 31 at four tiny steps, the whole frontier-flatten delta grid
+handed to mode 33 under both slack values, mode 26 ladders at three drops and
+two seeds, and mode 34 at three distinct step sizes (0.25, 1, 0.1) and two
+seeds, with `step=0.25` also probed at a second work budget. Every mode-34 arm
+in that battery entered with `parentProxyFeasible: false`, so it measured the
+schedule's regrid recovery rather than a local schedule search. The
+record-line round closed by saying what the last 0.422 mm would
 take: "an instrument this round did not fire rather than more of the same".
 
 Four were fired, and they compose — each one opening the fixpoint the
@@ -55,7 +61,7 @@ Nothing here is comparable to any number measured at allowance `0.002`.
 
 | pin | declared raw (mm) | via | delta |
 |---|---:|---|---:|
-| `record-line-cascade/pinned-fs-155.4223.json` | 155.42229074464285 | the prior record, a certified fixpoint of 36 arms | — |
+| `record-line-cascade/pinned-fs-155.4223.json` | 155.42229074464285 | the prior record, a finite negative on a declared battery of 30 search arms + 6 replays (not a certified fixpoint — see that round's §7) | — |
 | `pinned-fs-155.42197.json` | 155.42196626072334 | flatten 0.001 -> mode 33 p0.05, accepted rung **0.00128** | -0.000324 |
 | `pinned-fs-155.41964177680.json` | 155.4196417768017 | flatten 0.005 -> mode 33 p0.05, accepted rung 0.00128 | -0.002324 |
 | `pinned-fs-155.41373.json` | 155.4137281129324 | flatten **0.03** -> mode 33 p2.0 (deep entry grid) | -0.005914 |

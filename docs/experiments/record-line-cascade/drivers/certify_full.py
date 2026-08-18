@@ -121,9 +121,18 @@ for drop in DROPS:
 
 # The mode-34 arm. It runs on the schedule binary rather than the replay binary
 # and through `sched.sched_arm`, because its knobs live in the environment.
+#
+# The tag must be unique per spec: two SCHED_SPECS entries can share the same
+# step (0.25 at both 20M and 60M work), and `sched.sched_arm` writes its raw
+# artifact to `{outdir}/{tag}.json`, so a tag built from `step=` alone collides
+# and the second run silently overwrites the first run's raw file on disk (the
+# in-memory summary row is unaffected, since it comes from the run's own
+# return value rather than a re-read of that file). Encode both `work=` and
+# `step=` in the tag so every spec gets its own artifact.
 for seed in SCHED_SEEDS:
     for spec in SCHED_SPECS:
-        tag = f'{LABEL}-m34-{spec.split(",")[-1]}-s{seed}'
+        fields = dict(kv.split('=') for kv in spec.split(','))
+        tag = f'{LABEL}-m34-w{fields["work"]}-{fields["step"]}-s{seed}'
         out, _ = sched.sched_arm(tag, PIN, RAW - 0.3, seed, spec, logfile=LOG,
                                  outdir=RUNS)
         pop = lib.population(out) or {}
