@@ -23,7 +23,9 @@ The headline, mixed-61 from the bare request, three seeds, work budget
 | 1 | 176.05599999999998 | **169.92832830680420** | **−6.128** | 171.739 |
 | 2 | 179.006 | **172.086** | **−6.920** | *(published nothing)* |
 
-All six are `exactValid` **and** `contractValid`. **169.141 mm is a new
+All six are `exactValid` **and** `contractValid`, independently re-confirmed
+through mode 27 in a separate process from a **pristine base-commit binary**
+that contains no v3 code (§5.5). **169.141 mm is a new
 best-from-request layout on this request**, 5.068 mm below coordinator v2 and
 0.110 mm below the number the ledger's arm C reached as a probe *after* the
 schedule had finished - and v3 reaches it **in schedule**: the drain published
@@ -440,6 +442,30 @@ than a count.
   are process wall inside the coordinator's own clock, never thread sums, and no
   unpaired wall claim is made.
 
+# 5.5 - Independent confirmation of every layout
+
+Every one of the twelve work-budget layouts - six v3 and six v2 - was written
+out as a pinned-parent fixture and replayed through **mode 27**, the
+micro-legalization probe, the one mode meant to be pointed at states that may
+not validate, in a separate process from the **pristine `fccda7f` binary**,
+which contains no v3 queue at all (`evidence/confirmations.json`):
+
+| budget | seed | arm | exactValid | contractValid | rawSourceDepthMm | fingerprint unchanged | violating pairs before | pieces moved |
+|---|---:|---|---|---|---:|---|---:|---:|
+| 40M | 0 | v3 | true | true | 170.63217550422073 | yes | 0 | 0 |
+| 40M | 1 | v3 | true | true | 176.05599999999998 | yes | 0 | 0 |
+| 40M | 2 | v3 | true | true | 172.89557339904468 | yes | 0 | 0 |
+| 120M | 0 | **v3** | true | true | **169.14057315694365** | yes | 0 | 0 |
+| 120M | 1 | **v3** | true | true | **169.92832830680420** | yes | 0 | 0 |
+| 120M | 2 | **v3** | true | true | **172.086** | yes | 0 | 0 |
+| 40M/120M | 0,1,2 | v2 | true | true | 174.208 / 176.056 / 179.006 | yes | 0 | 0 |
+
+Zero repair applied, zero violating pairs, fingerprint unchanged, raw depth to
+the digit: a different build, a different code path and a different process
+agree that these are legal layouts at those depths under the request's own
+5.0/5.0 contract. This is `exactValid` and `contractValid` **as separate
+measured fields**, not the coordinator's own `dualGateValid` composite.
+
 # 6 - Regression
 
 ## 6.1 The four pinned gates reproduce the pristine binary as whole documents
@@ -510,6 +536,8 @@ action order are functions of the counters and of nothing else.
 * `drivers/determinism.py`, `drivers/recheck.py` - two processes, whole
   documents.
 * `drivers/docdiff.py` - two gate runs, whole documents.
+* `drivers/confirm.py` - every published layout replayed through mode 27 from
+  the pristine base-commit binary.
 * `drivers/summarize.py`, `drivers/classeconomics.py`, `drivers/barrengaps.py` -
   the tables above.
 * `drivers/smoke.py` - one v2 and one v3 run with the action trace printed.
@@ -537,6 +565,8 @@ python3 drivers/determinism.py   determinism mixed-61 0,1,2 40000000
 python3 drivers/gates.py pristine <pristine-binary> /var/lib/t3/tmp/v3/gates/pristine
 python3 drivers/gates.py v3final  <v3-binary>       /var/lib/t3/tmp/v3/gates/v3final
 python3 drivers/docdiff.py /var/lib/t3/tmp/v3/gates pristine v3final
+python3 drivers/confirm.py <workquality.json> /var/lib/t3/tmp/v3/confirm \
+    <pristine-binary> evidence/confirmations.json
 ```
 
 The schedule is armed by one portfolio spec key, `v3=1`; absent or `v3=0`,

@@ -4648,10 +4648,14 @@ three seeds. Work-budget mode is deterministic and load-independent.
 | 1 | 176.05599999999998 | **169.92832830680420** | **−6.128** | 171.739 |
 | 2 | 179.006 | **172.086** | **−6.920** | *(nothing)* |
 
-All `exactValid` and `contractValid`. **169.141 mm is a new best-from-request
-layout on this request at this allowance**, and unlike the 169.251 it is reached
-**in schedule** - the drain published nothing in any of the six work-budget runs
-and the final publication's phase is `compression` in all six.
+All `exactValid` and `contractValid`, and all twelve work-budget layouts - six
+v3 and six v2 - were re-confirmed by replaying them through mode 27 in a
+separate process from a **pristine base-commit binary that contains no v3
+code**: zero repair applied, zero violating pairs, fingerprint unchanged, raw
+depth to the digit. **169.141 mm is a new best-from-request layout on this
+request at this allowance**, and unlike the 169.251 it is reached **in
+schedule** - the drain published nothing in any of the six work-budget runs and
+the final publication's phase is `compression` in all six.
 
 The budget statement moves with the depth. v2 stops at 23-27% of a 120M budget
 on `keysExhausted`; v3 stops at **94.9 - 97.7%** on `affordability`.
