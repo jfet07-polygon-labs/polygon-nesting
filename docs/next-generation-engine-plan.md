@@ -4725,6 +4725,12 @@ documents with wall-clock and build-identity fields removed: **0 differences
 over 3,261 / 3,242 / 3,242 / 3,242 fields.** The gates never enter the
 coordinator; the argument is the default `false`, and this is the check.
 
+Stronger than the gates, because it is the coordinator path rather than one
+that never enters it: the `v3=0` arm of the work-budget battery spends
+**32,393,757 / 31,957,935 / 27,938,867** units for **174.20812003998896 /
+176.05599999999998 / 179.006** - the opportunity ledger's Part 1 table, digit
+for digit and unit for unit, from a binary that contains the whole v3 queue.
+
 Determinism, two processes per cell at `work=40,000,000`, whole documents:
 **0 differing fields** on all three seeds for both schedules, with the work-unit
 spend identical to the unit.

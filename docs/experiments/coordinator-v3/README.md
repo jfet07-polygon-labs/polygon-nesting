@@ -464,6 +464,15 @@ The gates never enter the coordinator at all - they are pinned-parent
 positional replays - so this is a *check* rather than the argument. The argument
 is that `run_portfolio` branches on `coordinator_v3` and the default is `false`.
 
+**The coordinator's own default path reproduces the ledger to the unit.** The
+`v3=0` arm of §3 is the same schedule the opportunity ledger measured at
+`work=120,000,000` on the same three seeds, and it spends **32,393,757 /
+31,957,935 / 27,938,867** work units for **174.20812003998896 /
+176.05599999999998 / 179.006** - the ledger's Part 1 table, digit for digit and
+unit for unit, from a binary that contains the whole v3 queue. That is a
+stronger statement than the four gates make, because it is the *coordinator*
+path rather than a path that never enters it.
+
 ## 6.2 Determinism: two processes, whole documents, one work budget
 
 Both schedules, three seeds, `work=40,000,000`, two processes each, compared
