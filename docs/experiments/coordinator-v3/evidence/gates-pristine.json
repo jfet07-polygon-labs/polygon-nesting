@@ -1,0 +1,57 @@
+{
+ "label": "pristine",
+ "binary": "/var/lib/t3/tmp/v3/pristine-bench",
+ "env": {},
+ "gates": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fingerprints": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ],
+   "hit": true,
+   "wallSeconds": 26.40786600112915,
+   "docDigest": "fdb071e4eb89582fa4c05856eb3a005f78f979c88455251d4c1e404605b04c57"
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "depth": 159.092,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.1966207027435303,
+   "docDigest": "17acf3dc30747db16346410812cfaf7c3f3f46a2f78d92cc43c8f2586cef13f2"
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "depth": 159.079,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.4529812335968018,
+   "docDigest": "4da4e4621b03859b466c490ec0445a754043166852565aaad72f3b2786e51001"
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "depth": 164.038,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.1055266857147217,
+   "docDigest": "c511aee0510e380ed24a759fda89055c85ef596e28a7933db55f0e54b9f56c09"
+  }
+ },
+ "ALL_PASS": true
+}

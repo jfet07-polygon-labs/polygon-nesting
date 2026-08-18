@@ -4565,3 +4565,191 @@ Evidence, drivers, the sixteen quality cells, the coordinator work-budget
 cells, the allocation counts and both timing campaigns with their
 per-round rows: `docs/experiments/relaxed-lane-residual/` and
 `evidence-stage2.json`.
+
+## Coordinator v3: the ranked action queue, the compression sign, and the ladder as a phase
+
+Full evidence, drivers and every table below as measured:
+`docs/experiments/coordinator-v3/`.
+
+The opportunity ledger established two facts about coordinator v2 that this
+chapter acts on. The saturated run is **not** a fixpoint of the operator set -
+it stops at 23-27% of its budget because it has run out of *keys it knows how
+to name* - and the A/B/C refuted the prediction that a constructor feeder would
+break that: arm B published 0 of 3 and stayed 42-53 mm behind, while arm C, one
+short mode-26 ladder into the global legalizer tier, published on 2 of 3 seeds
+and reached 169.251 mm.
+
+Coordinator v3 is three changes to `search/portfolio.rs`, behind
+`PortfolioSettings::coordinator_v3` (spec key `v3=1`), off by default.
+
+### 1. The compression target had the wrong sign
+
+v2's compression phase asked mode 22 for `depth + 0.8` - a **looser** bound than
+the incumbent it already held - received an exact-valid answer and exited
+`noResidue`, so the mode-31 tier behind it never ran. The A/B/C's control D
+asked the same operator, from the same parent, for `depth - 0.3` and published
+2.620 mm for 3.08M work units. v3's compression class asks for
+`depth - COMPRESSION_RUNG_MM`: incumbent-relative, derived from the engine's own
+smallest construction drop, never an absolute slack above the depth the parent
+already holds.
+
+### 2. The schedule was a single pass
+
+The ledger found that on seeds 0 and 1 the final rank-0 state is born in the
+*compression* phase, after the crossover phase has ended, so the run's best
+state and its recombination operator never meet. v3 replaces the five-phase
+sequence with one action queue that re-enumerates after every action. A state
+born late re-enters compression, descent, the ladder and crossover until the
+budget or a true all-actions fixpoint.
+
+The queue's actions are the ledger's derived ones: **ordered** directional pairs
+(`A->B` and `B->A` are different layouts and both are named), the constant cut
+`0.5` first and then the **interface-band-derived** cuts outward from it, and
+attempted-keys built from the two parents **in the order they are handed to the
+operator** plus the cut's bit pattern - never from ranks, which is the ledger's
+own pinned bug. Enumeration is bounded by construction: at most 21 actions per
+iteration over the top-3 frontier, against the ledger's 360 on that frontier and
+4,318 over the whole archive.
+
+Ranking is `expected Δraw per action / expected cost per action`, with the cost
+quoted as a multiple of **the protected phase-0 pipeline this run just paid
+for** so that one prior table prices a 61-piece request and a 17-piece one, and
+a wall budget and a work budget. The priors are the ledger's own §5 rows and the
+A/B/C's arm C, and they reproduce the ledger's Δraw/M-evaluation ordering to
+better than 10% (`5.39 : 2.09 : 1` for compression : descent : crossover). Each
+prior is worth two actions of evidence; the run's own publications displace it.
+
+### 3. Mode 26 is a scheduled class, priced honestly
+
+The ladder class is two rungs of the separator's own relative contraction
+quantum - the drop is `2 x depth x COUPLED_SEPARATOR_CONTRACTION_RATIO`, so no
+millimetre is carried across requests - followed by the coordinator's global
+legalizer tier on what it leaves. Its price before its first action is the
+**largest** of the three arm-C spends the A/B/C measured, expressed against that
+run's own protected phase; afterwards it is the larger of that prior and this
+run's own worst ladder. There is no "unpriced operators get a free pass" clause,
+which is the ledger's mode-20 finding turned into a rule.
+
+Measured, over every ladder action at a 120M work budget: the prior is right to
+within a factor of 2.9 in both directions and conservative in four of six
+(`0.35, 0.39, 0.49, 0.59, 1.14, 1.22` actual over estimate). By contrast the one
+class still priced by v2's `WhenDescendable` rule - diversify - estimates an m20
+ticket on shapes-17 at 0.10 s and pays 1.18 s for it, **a factor of 12 on the
+clock** to go with the ledger's four orders of magnitude in work units.
+
+### What it measures
+
+mixed-61, from the bare request, allowance `0.002`, work budget 120,000,000,
+three seeds. Work-budget mode is deterministic and load-independent.
+
+| seed | coordinator v2 | **coordinator v3** | Δ | arm C's post-drain probe |
+|---:|---:|---:|---:|---:|
+| 0 | 174.20812003998896 | **169.14057315694365** | **−5.068** | 169.251 |
+| 1 | 176.05599999999998 | **169.92832830680420** | **−6.128** | 171.739 |
+| 2 | 179.006 | **172.086** | **−6.920** | *(nothing)* |
+
+All `exactValid` and `contractValid`. **169.141 mm is a new best-from-request
+layout on this request at this allowance**, and unlike the 169.251 it is reached
+**in schedule** - the drain published nothing in any of the six work-budget runs
+and the final publication's phase is `compression` in all six.
+
+The budget statement moves with the depth. v2 stops at 23-27% of a 120M budget
+on `keysExhausted`; v3 stops at **94.9 - 97.7%** on `affordability`.
+
+Anytime curve, three seeds x three rounds, paired and interleaved:
+
+| budget | median Δ (v3 − v2) | min | v3 better | v3 worse | v2 coordinator wall | v3 coordinator wall |
+|---|---:|---:|---:|---:|---:|---:|
+| 3 s | 0.000 | 0.000 | 0 | **2** | **4.23 s** | 2.71 s |
+| 10 s | 0.000 | **−2.293** | 3 | 0 | **10.57 s** | 9.24 s |
+| **30 s** | **−5.068** | **−6.920** | **9** | **0** | 14.16 s | 28.77 s |
+
+**v2 overran its own budget at 3 s and at 10 s; v3 overran neither in any of its
+27 mixed-61 runs.** That is the affordability rule: v2 asks "may I start?", v3
+asks "can I pay for the worst version of this I have seen?".
+
+Pooled class economics at 120M, over the three seeds:
+
+| class | actions | published | Δraw | Δraw / M eval | Δraw / action |
+|---|---:|---:|---:|---:|---:|
+| compression | 31 | 21 | 18.159 | **0.2461** | 0.586 |
+| ladder | 6 | 5 | 6.291 | 0.0662 | **1.048** |
+| crossover | 22 | 3 | 5.337 | 0.0428 | 0.243 |
+| descent | 10 | **0** | 0.000 | 0.000 | 0.000 |
+
+The measured order is **not** the prior order, and the queue found that out
+during the run. Compression's prior was right. Descent's - the ledger's second
+highest - is wrong on this stream. The ladder's was too pessimistic: it is the
+worst class per evaluation and the best per action, and on seed 1 it produced
+5.486 mm of a 9.762 mm run. It pays on 2 of 3 seeds, the same shape arm C had,
+on a different set of parents.
+
+One trace line is worth the chapter. On seed 0 at 30 s, six consecutive
+crossovers fail - the constant `0.5` twice and three derived cuts - and the
+seventh, a derived interface-band cut at `0.539114160` in a 33.134 mm band,
+publishes 1.736 mm; six consecutive compression actions on six successive
+incumbents then take 177.770 to 169.141. Neither the cut nor the chain is an
+action v2 can name.
+
+### The negatives
+
+* **3 s on mixed-61: 2 of 9 rounds worse, by 2.880 mm, all on seed 1.** At that
+  budget the queue affords exactly one action and spends it on compression where
+  v2 spends it on a descent quantum. The compression prior is confounded with
+  *position in the schedule* - the ledger measured it on a state two publications
+  deep - and the 3 s tier is where that assumption is load-bearing and wrong.
+  From the second action on, the tight ask wins by 5-7 mm.
+* **shapes-17: identical layout, 9.4x the coordinator wall at 30 s** (28.90 s
+  against 3.06 s). 281 crossover actions across nine runs for 0.0034 mm. Each
+  crossover publishes a rounding-scale improvement, that publication is a new
+  archive member, the frontier changes and the ordered pairs regenerate. The
+  queue is not stuck; its keys are worth 12 µm each.
+* **triangle-20: 0.00279 mm worse, 9 of 9 rounds.** v3 makes the diversify class
+  eligible only when the priced queue is empty, and on triangle-20 it never
+  empties, so the constructor slice that published on half its arms under v2
+  never draws a ticket.
+* **No stopping rule.** The interval a global barren-action patience would have
+  to sit in is *measured* rather than guessed: at least **8**, because the
+  seed-0 30 s publication at action #13 came after seven barren actions, and at
+  most **32**, because shapes-17's churn runs 33 barren actions between 12 µm
+  publications. The constant inside `[8, 32]` is not measured and this round
+  declines to fit one to nine runs on one request.
+
+### Regression
+
+Both binaries built from the same worktree - the pristine one from a detached
+checkout of the base commit - and run through the four pinned gates: 206.869 /
+`8a7737381238fa4d`, 159.09233022733062 / `fa01012af1d559ae`, 159.07876040364795
+/ `e28fba007f8031d4`, 164.0375677990678 / `49f094d7e59a9008`. Compared as whole
+documents with wall-clock and build-identity fields removed: **0 differences
+over 3,261 / 3,242 / 3,242 / 3,242 fields.** The gates never enter the
+coordinator; the argument is the default `false`, and this is the check.
+
+Determinism, two processes per cell at `work=40,000,000`, whole documents:
+**0 differing fields** on all three seeds for both schedules, with the work-unit
+spend identical to the unit.
+
+`cargo test --release --features jagua-experimental`: **1,244 passed, 0 failed,
+2 ignored**, including six new coordinator-v3 unit tests.
+
+### What this leaves
+
+The 10 s tier is the open question. v3 is never worse there and better on one
+seed, but the mechanism that produced the 5-7 mm - a long chain of cheap
+compression actions after a crossover finally lands - needed 20 actions on
+seed 0, and a 10 s budget buys 6.4 (58 actions over nine runs against 170 at
+30 s). The ladder is unaffordable below roughly 10 s by its own honest
+price, which is correct behaviour and not a tuning. So the 10 s answer is
+probably not this ladder at all: it is either the m26 **port** (a compression
+schedule at kernel frequency inside `move_sweep`, whose design and costing are
+in `docs/experiments/mode26-rung-anatomy/`), or a cheaper crossover - mode 23
+spends 5.7M evaluations per action here and returns 0.043 mm per million, the
+worst ratio of any class that publishes at all, because its seam legalization
+re-enters the protected 8-lane path.
+
+The three v3 negatives are all one missing instrument: a rule that retires an
+action class when its *own measured* yield stops justifying its price. The
+shrinkage limits the damage; it does not stop the run. Sizing that rule - a
+barren-action patience in `[8, 32]`, or better, a yield floor in millimetres per
+unit of budget - is the smallest next step, and shapes-17 and triangle-20 are
+the two requests that will tell it apart from a constant fitted to mixed-61.
