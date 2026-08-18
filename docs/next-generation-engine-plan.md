@@ -3956,3 +3956,136 @@ place by being what would catch a wrong soundness argument.
 
 Evidence, drivers, the full per-site census and the ordering statistic:
 `docs/experiments/constructor-inner-certificate/`.
+
+## PR9 - The relaxed lane's residual: a decomposition, and the 2x that is not there
+
+The previous chapter handed on a pointer rather than a result: at 4.06 s the
+mode-20 leaf was `moveSweep` 5,222.5 ms and `scorePlacement` 4,752.7 ms, "the
+relaxed lane, not the constructor", with Sol's ~2 s slice about 2.0x away. This
+chapter measures that lane on three streams, and its main finding is a negative
+one that the ledger should carry forward explicitly: **the 2x is not available
+in this lane as a semantics-preserving change.**
+
+### One correction that changes how the previous table reads
+
+`moveSweep` at 5,222.5 ms inside a 4,060 ms stream is not a paradox. **Phase
+milliseconds are summed across the eight lane threads.** Every phase total in
+this repository's profiled tables is a thread sum, so it can exceed the stream's
+wall clock and it is never a wall-clock claim. The chapter above is not wrong -
+its A/B rows are all paired wall-clock measurements - but the leaf table beside
+them invites the reading that `moveSweep` *is* 5.2 seconds of the stream, and it
+is not.
+
+A second correction, for anyone reproducing: `fast-constructor-confirm` and
+`fast-constructor-reject` are **stacked on `fast-constructor-profile`**. Built
+without it, the mode-20 gate-1 stream is 24.2 s rather than 4.06 s even though
+the certificate is fully active and `collisionPolygonBuilds` falls to exactly
+409,450.
+
+### What the lane is doing
+
+A new measurement build, `relaxed-lane-census`, splits the generic scorer into
+`scoreProbe` / `scoreScan` / `scoreFinalize` and adds five exact counters. The
+scan's structure turns out to be almost **stream-invariant**:
+
+| statistic | m20 g1 | m22 g2 | coordinator 10 s |
+|---|---:|---:|---:|
+| candidate queries | 4,089,768 | 10,898,458 | 20,645,490 |
+| ordered-catalogue descents | 22,617,886 | 59,877,384 | 102,974,975 |
+| neighbours returned / visited per scan | 7.37 / 4.28 | 7.45 / 4.29 | 7.17 / 4.14 |
+| scans stopping on the upper bound | 81.7% | 83.7% | 82.1% |
+| collision rows per scan | 1.77 | 1.80 | 1.71 |
+| scan residual per visited neighbour | 60.1 ns | 59.8 ns | 59.4 ns |
+| `scoreProbe` per generic scan | 147.2 ns | 153.2 ns | 149.2 ns |
+| `pairCollide`+`pairPressure` share of `scorePlacement` | 42.0% | 42.0% | 37.7% |
+
+Two per-unit costs reproducing to within 1.2% across three streams with a 5x
+range of call counts is the evidence that this is the loop and not the noise.
+
+**The coordinator confirms the premise in its strongest form**: on a 10 s run
+from the bare request, `scorePlacement` is **91.6% of leaf time**, and
+`collisionPolygonBuilds` is 2,913. At a budget the constructor is a rounding
+error and this lane is the whole engine.
+
+### Two of the four hypotheses are dead
+
+* **"Upper-bound cutoffs unexploited" is false.** 81.7-83.7% of scans already
+  stop early on the caller's bound. That cutoff is *why* only 4.2 of 7.3
+  returned neighbours are visited; there is nothing left to take.
+* **"Rescans of unmoved pieces" is not where the calls are.** The scan is
+  re-entered because the candidate moved, and its neighbour set is already
+  small and bounded by a 16x16 broad-phase grid.
+
+### What shipped, and what it was worth
+
+Two stacked flags, off by default, **bit-identical as whole documents on all
+four gates** - 6 fields differing, the executable hash and five wall-clock
+quartiles, and no work diagnostic moving at all.
+
+`relaxed-scan-shape-reuse` removes the scorer's *second* descent for the
+candidate's own key: the broad-phase probe needed the bounds that live in the
+shape the scan was about to resolve anyway. `relaxed-cached-pose-bounds` routes
+the lane's per-pose bounds lookup through the `AngleKeyCache` memo the scan has
+always used, instead of re-deriving the rotation key with `rem_euclid` on each
+of 4.45M / 11.64M / 23.36M calls. Together they remove 36% / 35% / 39% of all
+catalogue descents.
+
+| sample | rounds | paired median | range | below 1.0 |
+|---|---:|---:|---|---:|
+| m20 g1, `+shape-reuse` only | 12 | 0.9976 | 0.9888-1.0052 | 7/12 |
+| m22 g2, `+shape-reuse` only | 10 | 0.9754 | 0.9611-1.0031 | 9/10 |
+| m20 g1, `+both` | 12 | **0.9917** | 0.9836-1.0023 | 11/12 |
+| m22 g2, `+both` | 12 | **0.9700** | 0.9473-0.9823 | 12/12 |
+| coordinator `work=20000000`, `+both` | 10 | **0.9750** | 0.9620-0.9909 | 10/10 |
+
+The coordinator row is the load-bearing one: budgeted in *work units*, both arms
+run the identical scheduled search, all ten rounds are below parity, and the
+incumbent is identical - depth 180.64489329491147, one publication at 9,064,287
+work units, only the publication's wall-clock timestamp moving. Mode 22 is the
+biggest winner and is the mirror image of the previous stage, where m22 was the
+row that came back at parity: that stream barely touches the constructor, so it
+is nearly pure relaxed lane.
+
+The m20 `shape-reuse`-only row is reported as the parity result it is, range
+straddling 1.0, rather than rounded up into a win.
+
+### Why there is no 2x here, and where the next one is
+
+**42% of the scorer is `pairCollide` + `pairPressure`**, already proved to be at
+their floor. What remains is a 60 ns-per-neighbour residual and a
+149 ns-per-scan probe, and neither is one thing - each is a catalogue descent, a
+key derivation, a weights lookup, a bin walk, a small sort and a `Vec` push.
+Removing a third of the largest of those items bought 2.5-3.0%. There is no
+single semantics-preserving item left in this lane worth more than a few points.
+
+The two things that *are* worth more:
+
+* **Allocation, and it is bigger than what shipped.** On m22 g2 - the
+  relaxed-dominated stream - the run makes **50,455,080 allocations for 8.41 GB
+  of gross demand, 5.30 per candidate scan.** The scorer builds a fresh
+  `Vec<(usize, usize, f64)>` per call for 1.80 rows, grows it a power of two at
+  a time, and `search_piece` then clones it twice more. A pooled row buffer the
+  tracker swaps rather than copies is the shape of the fix - the lane already
+  does this for `collision_merge_scratch` - but it changes what `MovedRowDelta`
+  owns and wants its own stage.
+* **Ordering the scan cheapest-first, which is class (B).** 42% of returned
+  neighbours are never visited because the cutoff fires first, so the prize is
+  in the order. But the iteration order decides which rows land before the
+  cutoff, hence `pruned`, hence `MovedRows`, hence what the tracker installs -
+  the same structure the constructor census met in its finalist loop, with the
+  same verdict: not semantics-preserving, and no tie-break refinement makes it
+  so. Its experiment is designed in the stage directory: descendant depth under
+  a fixed *work* budget, four target salts x two relaxed seeds, paired per salt,
+  with `exactValid`/`contractValid` on every publication as the falsifier.
+
+One caveat is recorded against the fixed-side descents that remain (15.4M /
+40.8M / 69.4M, one per visited neighbour): **their prize must not be estimated
+by scaling this stage's result.** What shipped removed a `rem_euclid` *and* a
+descent per call, while the fixed-side loop already reads its key from the memo,
+so its per-unit value is strictly smaller than 4.3x what shipped. Removing them
+needs a slab - `BTreeMap<SurrogateKey, u32>` plus `Vec<OrientedSurrogate>` -
+with a per-piece slot memo, because the present map cannot hand out a handle
+that survives across calls.
+
+Evidence, drivers, all three decompositions and the five A/B samples:
+`docs/experiments/relaxed-lane-residual/`.

@@ -113,6 +113,18 @@ pub enum Phase {
     // ---- relaxed search (general_relaxed) ----
     /// Scoring one candidate pose against the current layout.
     ScorePlacement,
+    /// The part of [`Phase::ScorePlacement`] before the neighbour scan:
+    /// resolving the candidate's oriented shape and querying the broad-phase
+    /// index for the pieces whose bounds it overlaps. Recorded only under
+    /// `relaxed-lane-census`.
+    ScoreProbe,
+    /// The neighbour scan of [`Phase::ScorePlacement`]: encloses the catalogue
+    /// descents and the pair rows. Recorded only under `relaxed-lane-census`.
+    ScoreScan,
+    /// The part of [`Phase::ScorePlacement`] after the neighbour scan: sorting
+    /// the moved piece's rows into pair order and returning the delta.
+    /// Recorded only under `relaxed-lane-census`.
+    ScoreFinalize,
     /// The boundary-overflow penalty of one pose.
     BoundaryPenalty,
     /// One proxy collision question between two poses.
@@ -166,6 +178,9 @@ impl Phase {
         Phase::PublicationConfirm,
         Phase::ConstructorScore,
         Phase::ScorePlacement,
+        Phase::ScoreProbe,
+        Phase::ScoreScan,
+        Phase::ScoreFinalize,
         Phase::BoundaryPenalty,
         Phase::PairCollide,
         Phase::PairPressure,
@@ -194,6 +209,9 @@ impl Phase {
             Phase::PublicationConfirm => "publicationConfirm",
             Phase::ConstructorScore => "constructorScore",
             Phase::ScorePlacement => "scorePlacement",
+            Phase::ScoreProbe => "scoreProbe",
+            Phase::ScoreScan => "scoreScan",
+            Phase::ScoreFinalize => "scoreFinalize",
             Phase::BoundaryPenalty => "boundaryPenalty",
             Phase::PairCollide => "pairCollide",
             Phase::PairPressure => "pairPressure",
@@ -222,6 +240,7 @@ impl Phase {
             self,
             Phase::PublicationConfirm
                 | Phase::ScorePlacement
+                | Phase::ScoreScan
                 | Phase::FullRescore
                 | Phase::MoveSweep
                 | Phase::AuditorScore
@@ -246,6 +265,21 @@ pub enum Counter {
     PublicationAttempts,
     ExactPairTests,
     CollisionPolygonBuilds,
+    /// Pieces the broad-phase index returned for one candidate scan, summed.
+    /// Recorded only under `relaxed-lane-census`.
+    ScanNeighborsReturned,
+    /// Neighbours the scan actually reached before an upper-bound cutoff,
+    /// summed. Recorded only under `relaxed-lane-census`.
+    ScanNeighborsVisited,
+    /// Scans that stopped early on the caller's upper bound.
+    /// Recorded only under `relaxed-lane-census`.
+    ScanUpperBoundCutoffs,
+    /// Colliding rows a scan emitted, summed.
+    /// Recorded only under `relaxed-lane-census`.
+    ScanCollisionRows,
+    /// Ordered-catalogue descents the lane's scoring path performed.
+    /// Recorded only under `relaxed-lane-census`.
+    ScanCatalogDescents,
     AllocationCount,
     AllocationBytes,
 }
@@ -264,6 +298,11 @@ impl Counter {
         Counter::PublicationAttempts,
         Counter::ExactPairTests,
         Counter::CollisionPolygonBuilds,
+        Counter::ScanNeighborsReturned,
+        Counter::ScanNeighborsVisited,
+        Counter::ScanUpperBoundCutoffs,
+        Counter::ScanCollisionRows,
+        Counter::ScanCatalogDescents,
         Counter::AllocationCount,
         Counter::AllocationBytes,
     ];
@@ -279,6 +318,11 @@ impl Counter {
             Counter::PublicationAttempts => "publicationAttempts",
             Counter::ExactPairTests => "exactPairTests",
             Counter::CollisionPolygonBuilds => "collisionPolygonBuilds",
+            Counter::ScanNeighborsReturned => "scanNeighborsReturned",
+            Counter::ScanNeighborsVisited => "scanNeighborsVisited",
+            Counter::ScanUpperBoundCutoffs => "scanUpperBoundCutoffs",
+            Counter::ScanCollisionRows => "scanCollisionRows",
+            Counter::ScanCatalogDescents => "scanCatalogDescents",
             Counter::AllocationCount => "allocationCount",
             Counter::AllocationBytes => "allocationBytes",
         }
@@ -531,6 +575,75 @@ pub mod deep {
 
     /// Whether the deep-operator sites are compiled in.
     pub const COMPILED_IN: bool = cfg!(feature = "search-profiling");
+}
+
+/// Instrumentation for the relaxed lane's candidate scorer, compiled out by
+/// default.
+///
+/// # Why this is a separate switch from [`deep`]
+///
+/// The lane's generic `score_placement` runs about four million times per
+/// mode-20 stream and its neighbour loop about sixteen million, so this is the
+/// one place where the *measurement* is a serious fraction of the thing being
+/// measured: three spans per call is six `Instant::now` reads against a call
+/// that costs around a microsecond. That is an acceptable price for a
+/// decomposition and an unacceptable one for a wall-clock claim, so the sites
+/// are compiled out unless `relaxed-lane-census` is on, exactly like the deep
+/// operators, and the census build is never quoted as a time.
+///
+/// The counters are the durable half of what this feature produces: they are
+/// exact call structure rather than sampled time, they cost one relaxed add on
+/// a thread-local block, and they are what sizes a lever. The spans only say
+/// which third of the function to look in.
+pub mod census {
+    use super::{Counter, Phase};
+
+    /// The token returned by [`start`]; carries no data when compiled out.
+    #[cfg(feature = "relaxed-lane-census")]
+    pub type CensusSpan = Option<std::time::Instant>;
+
+    /// The token returned by [`start`]; carries no data when compiled out.
+    #[cfg(not(feature = "relaxed-lane-census"))]
+    pub type CensusSpan = ();
+
+    /// Opens a census span.
+    #[cfg(feature = "relaxed-lane-census")]
+    #[inline(always)]
+    pub fn start(phase: Phase) -> CensusSpan {
+        super::start(phase)
+    }
+
+    /// Opens a census span. Compiled out.
+    #[cfg(not(feature = "relaxed-lane-census"))]
+    #[inline(always)]
+    pub fn start(_phase: Phase) -> CensusSpan {}
+
+    /// Closes a census span.
+    #[cfg(feature = "relaxed-lane-census")]
+    #[inline(always)]
+    pub fn finish(phase: Phase, span: CensusSpan) {
+        super::finish(phase, span);
+    }
+
+    /// Closes a census span. Compiled out.
+    #[cfg(not(feature = "relaxed-lane-census"))]
+    #[inline(always)]
+    pub fn finish(_phase: Phase, _span: CensusSpan) {}
+
+    /// Adds to a census counter.
+    #[cfg(feature = "relaxed-lane-census")]
+    #[inline(always)]
+    pub fn count(counter: Counter, amount: u64) {
+        super::count(counter, amount);
+    }
+
+    /// Adds to a census counter. Compiled out.
+    #[cfg(not(feature = "relaxed-lane-census"))]
+    #[inline(always)]
+    pub fn count(_counter: Counter, _amount: u64) {}
+
+    /// Whether the census sites are compiled in.
+    pub const COMPILED_IN: bool = cfg!(feature = "relaxed-lane-census");
 }
 
 /// One phase's aggregated sample.
