@@ -216,6 +216,23 @@ impl PolygonRegion {
                 .map(|hole| hole.points.len())
                 .sum::<usize>()
     }
+
+    /// This region's material boundary.
+    ///
+    /// The inner overlap certificate inscribes discs, which needs the rings
+    /// themselves rather than a summary of them: the material of a region is
+    /// the outer ring minus its holes, and a disc has to clear every one of
+    /// them. See [`crate::search::construction_reject_certificate`].
+    #[cfg(feature = "constructor-census")]
+    pub(crate) fn outer_ring(&self) -> &PolygonRing {
+        &self.outer
+    }
+
+    /// The rings this region removes from [`PolygonRegion::outer_ring`].
+    #[cfg(feature = "constructor-census")]
+    pub(crate) fn hole_rings(&self) -> &[PolygonRing] {
+        &self.holes
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]

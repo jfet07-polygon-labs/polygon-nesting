@@ -168,6 +168,21 @@ mod armed {
         // row then rejected.
         collision_builds,
         collision_builds_wasted,
+        // The inner overlap certificate, priced at four cover sizes. A row the
+        // certificate proves is a row that could have returned `None` before
+        // building anything.
+        rows_certified_1,
+        rows_certified_2,
+        rows_certified_4,
+        rows_certified_8,
+        // The same certificate with the expansion inflation removed - the
+        // fallback that needs no Minkowski containment lemma at all, only
+        // `offset(P, e) contains P`.
+        rows_certified_uninflated,
+        // A certificate issued for a row the exact tier then *accepted* is a
+        // falsification of the whole design, in the same sense the separation
+        // violations above are.
+        soundness_violations_certificate,
         // Input size, for cost context: Clipper's cost is superlinear in these.
         clipper_input_vertices,
     }
@@ -179,10 +194,131 @@ mod armed {
         counter[current()].fetch_add(amount, Ordering::Relaxed);
     }
 
+    thread_local! {
+        /// Whether the inner certificate proved the row in progress, at the
+        /// largest cover. Read by [`row_accepted`], which is the only place a
+        /// falsification can be observed.
+        static ROW_CERTIFIED: Cell<bool> = const { Cell::new(false) };
+        /// The candidate rows of the slot in progress, in offered order:
+        /// `(signed certificate pressure, accepted)`. See [`slot_end`].
+        static SLOT_ROWS: std::cell::RefCell<Vec<(f64, bool)>> =
+            const { std::cell::RefCell::new(Vec::new()) };
+        /// Whether a candidate slot is open on this thread.
+        static SLOT_OPEN: Cell<bool> = const { Cell::new(false) };
+    }
+
+    /// Ordering-quality accumulators. Not per-site: the statistic is defined
+    /// only for the candidate stream, which is the speculative one.
+    #[derive(Default)]
+    struct OrderingStats {
+        slots: AtomicU64,
+        rows: AtomicU64,
+        acceptances: AtomicU64,
+        /// Rows the loop confirmed before its last acceptance, inclusive - the
+        /// exact confirmations the current order spends to reach the
+        /// acceptances it reaches.
+        prefix_actual: AtomicU64,
+        /// The same quantity when the identical row set is confirmed lazily in
+        /// ascending certificate-pressure order.
+        prefix_proxy: AtomicU64,
+    }
+
+    static ORDERING: std::sync::LazyLock<OrderingStats> =
+        std::sync::LazyLock::new(OrderingStats::default);
+
+    /// Opens a candidate slot's ordering record.
+    pub fn slot_begin() {
+        SLOT_OPEN.with(|cell| cell.set(true));
+        SLOT_ROWS.with(|rows| rows.borrow_mut().clear());
+    }
+
+    /// Closes it and folds the slot's two prefix lengths into the totals.
+    ///
+    /// `prefix_actual` is the number of candidate rows the loop confirmed up to
+    /// and including its last acceptance. `prefix_proxy` is the same count when
+    /// the *same* rows are confirmed in ascending pressure order - the lazy
+    /// confirmation a proxy-first ordering would perform. The comparison is
+    /// restricted to the rows the loop actually reached, which is the honest
+    /// limit of a counterfactual measured inside the stream it describes.
+    pub fn slot_end() {
+        SLOT_OPEN.with(|cell| cell.set(false));
+        SLOT_ROWS.with(|rows| {
+            let rows = rows.borrow();
+            if rows.is_empty() {
+                return;
+            }
+            let accepted = rows.iter().filter(|(_, accepted)| *accepted).count();
+            ORDERING.slots.fetch_add(1, Ordering::Relaxed);
+            ORDERING.rows.fetch_add(rows.len() as u64, Ordering::Relaxed);
+            ORDERING
+                .acceptances
+                .fetch_add(accepted as u64, Ordering::Relaxed);
+            if accepted == 0 {
+                // No acceptance: both orders must confirm every row to learn
+                // that, so the slot is neutral and is still counted in `rows`.
+                ORDERING
+                    .prefix_actual
+                    .fetch_add(rows.len() as u64, Ordering::Relaxed);
+                ORDERING
+                    .prefix_proxy
+                    .fetch_add(rows.len() as u64, Ordering::Relaxed);
+                return;
+            }
+            let actual = rows
+                .iter()
+                .rposition(|(_, accepted)| *accepted)
+                .map_or(0, |index| index + 1);
+            let mut order: Vec<usize> = (0..rows.len()).collect();
+            order.sort_by(|first, second| {
+                rows[*first]
+                    .0
+                    .total_cmp(&rows[*second].0)
+                    .then(first.cmp(second))
+            });
+            let proxy = order
+                .iter()
+                .rposition(|index| rows[*index].1)
+                .map_or(0, |index| index + 1);
+            ORDERING
+                .prefix_actual
+                .fetch_add(actual as u64, Ordering::Relaxed);
+            ORDERING
+                .prefix_proxy
+                .fetch_add(proxy as u64, Ordering::Relaxed);
+        });
+    }
+
     /// Records one confirmation row that built a collision polygon.
     pub fn row_started() {
         bump(&COUNTERS.rows, 1);
         bump(&COUNTERS.collision_builds, 1);
+        ROW_CERTIFIED.with(|cell| cell.set(false));
+    }
+
+    /// Prices the inner overlap certificate on the row in progress.
+    ///
+    /// `certified` is the verdict at cover sizes one, two, four and eight;
+    /// `pressure` is the signed proximity at the largest cover - positive is a
+    /// proof of overlap and its depth, negative is the closest approach the
+    /// certificate could not close, so ascending order is "cleanest first".
+    pub fn row_certificate(certified: [bool; 4], uninflated: bool, pressure: f64) {
+        if uninflated {
+            bump(&COUNTERS.rows_certified_uninflated, 1);
+        }
+        for (counter, hit) in [
+            (&COUNTERS.rows_certified_1, certified[0]),
+            (&COUNTERS.rows_certified_2, certified[1]),
+            (&COUNTERS.rows_certified_4, certified[2]),
+            (&COUNTERS.rows_certified_8, certified[3]),
+        ] {
+            if hit {
+                bump(counter, 1);
+            }
+        }
+        ROW_CERTIFIED.with(|cell| cell.set(certified[3]));
+        if current() == Site::Candidate.index() && SLOT_OPEN.with(Cell::get) {
+            SLOT_ROWS.with(|rows| rows.borrow_mut().push((pressure, false)));
+        }
     }
 
     /// Records a row rejected before any pair question was asked.
@@ -200,6 +336,16 @@ mod armed {
     /// Records a row whose pose was accepted.
     pub fn row_accepted() {
         bump(&COUNTERS.rows_accepted, 1);
+        if ROW_CERTIFIED.with(Cell::get) {
+            bump(&COUNTERS.soundness_violations_certificate, 1);
+        }
+        if current() == Site::Candidate.index() && SLOT_OPEN.with(Cell::get) {
+            SLOT_ROWS.with(|rows| {
+                if let Some(last) = rows.borrow_mut().last_mut() {
+                    last.1 = true;
+                }
+            });
+        }
     }
 
     /// Records a collision-polygon build outside a confirmation row.
@@ -344,6 +490,13 @@ mod armed {
         serde_json::json!({
             "totals": totals,
             "bySite": sites,
+            "candidateOrdering": {
+                "slots": ORDERING.slots.load(Ordering::Relaxed),
+                "rows": ORDERING.rows.load(Ordering::Relaxed),
+                "acceptances": ORDERING.acceptances.load(Ordering::Relaxed),
+                "prefixActual": ORDERING.prefix_actual.load(Ordering::Relaxed),
+                "prefixProxy": ORDERING.prefix_proxy.load(Ordering::Relaxed),
+            },
         })
     }
 
@@ -366,8 +519,9 @@ mod armed {
 
 #[cfg(feature = "constructor-census")]
 pub use armed::{
-    build_recorded, build_wasted, pair, row_accepted, row_rejected_by_containment,
-    row_rejected_by_overlap, row_started, site, snapshot, Site, SiteGuard,
+    build_recorded, build_wasted, pair, row_accepted, row_certificate,
+    row_rejected_by_containment, row_rejected_by_overlap, row_started, site, slot_begin, slot_end,
+    snapshot, Site, SiteGuard,
 };
 
 /// Whether the census sites are compiled into this build.

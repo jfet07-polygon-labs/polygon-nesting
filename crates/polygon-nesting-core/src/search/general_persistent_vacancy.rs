@@ -17,6 +17,16 @@ use construction_void_grid::ConstructionVoidCache;
 mod construction_confirm_shield;
 use construction_confirm_shield::ConfirmShields;
 
+// The skyline constructor's inner overlap certificate - the prefilter that runs
+// in the opposite direction to the shield above, and the only one that could
+// reject a row before it builds anything. Its default build is a zero-sized
+// forwarder whose one query always answers "no proof"; `constructor-census`
+// compiles the inscribed-disc certificate in for measurement, and this commit
+// lets it decide nothing.
+#[path = "construction_reject_certificate.rs"]
+pub(crate) mod construction_reject_certificate;
+use construction_reject_certificate::RejectCertificates;
+
 const PERSISTENT_VACANCY_SEED_DOMAIN: u64 = 0x5650_4f50_3030_3031;
 const TARGET_DEPTH_MM: f64 = 165.0;
 const EXPECTED_PARENT_FINGERPRINT: &str =
@@ -866,6 +876,9 @@ struct RunWork {
     /// default build's generated code is unchanged — the forwarder is
     /// zero-sized and its one query is a constant `false`.
     confirm_shields: ConfirmShields,
+    /// The constructor's inner overlap certificate cache, here for the same
+    /// reason and with the same default-build cost, which is none.
+    reject_certificates: RejectCertificates,
 }
 
 impl RunWork {
@@ -874,6 +887,7 @@ impl RunWork {
             diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
             quotas: VacancyQuotas::for_piece_count(piece_count),
             confirm_shields: ConfirmShields::default(),
+            reject_certificates: RejectCertificates::default(),
         }
     }
 
@@ -6577,6 +6591,7 @@ fn construct_candidate_poses(
     // generates, so its separation certificates are derived once here and
     // reused by all of them. A no-op off the profile.
     work.confirm_shields.begin_parent(&parent.collisions);
+    work.reject_certificates.begin_parent(&parent.collisions);
     construction.slots = construction.slots.saturating_add(1);
     work.diagnostics.selected_piece_slots = work.diagnostics.selected_piece_slots.saturating_add(1);
     if work.diagnostics.selected_piece_slots > work.quotas.max_selected_piece_slots {
@@ -7044,6 +7059,8 @@ fn construct_candidate_poses(
                     )
                 }),
         );
+    #[cfg(feature = "constructor-census")]
+    crate::constructor_census::slot_begin();
     for (is_shelf, bucket_ordinal, provenance, candidate) in ranked {
         if finalists.len() == CONSTRUCTION_FINALISTS_PER_SLOT || rows >= CONSTRUCTION_ROWS_PER_PIECE
         {
@@ -7165,6 +7182,8 @@ fn construct_candidate_poses(
         }
         finalists.push((walk_pose, Arc::new(walk_collision), provenance));
     }
+    #[cfg(feature = "constructor-census")]
+    crate::constructor_census::slot_end();
     profiling::deep::finish(Phase::VacancyProposals, proposal_span);
     Ok(finalists)
 }
@@ -7283,11 +7302,48 @@ fn construction_confirm_row(
     #[cfg(feature = "constructor-census")]
     crate::constructor_census::row_started();
     construction.exact_rows = construction.exact_rows.saturating_add(1);
-    profiling::deep::count(Counter::CollisionPolygonBuilds, 1);
     work.diagnostics.exact_finalist_rows = work.diagnostics.exact_finalist_rows.saturating_add(1);
     if work.diagnostics.exact_finalist_rows > work.quotas.max_exact_finalist_rows {
         return Err(work.cap("exact-finalist row budget exhausted"));
     }
+    // The inner certificate, before anything is built. It answers "provably
+    // overlapping" or "no information"; a proof is the verdict the exact tier
+    // below would have returned, so acting on one substitutes a decision rather
+    // than making a different one. Off both flags this is a zero-sized call
+    // that returns `None`.
+    work.reject_certificates.begin_candidate(
+        pieces[piece_index].polygon,
+        piece_index,
+        candidate.rotation_deg,
+        candidate.mirrored,
+        candidate.translate_x,
+        candidate.translate_y,
+        collision_expansion_mm(work_settings),
+    );
+    #[cfg(feature = "constructor-census")]
+    crate::constructor_census::row_certificate(
+        [
+            work.reject_certificates
+                .proven_overlap(&parent.active, 1)
+                .is_some(),
+            work.reject_certificates
+                .proven_overlap(&parent.active, 2)
+                .is_some(),
+            work.reject_certificates
+                .proven_overlap(&parent.active, 4)
+                .is_some(),
+            work.reject_certificates
+                .proven_overlap(&parent.active, construction_reject_certificate::COVER_DISCS)
+                .is_some(),
+        ],
+        work.reject_certificates.proven_overlap_without_inflation(
+            &parent.active,
+            construction_reject_certificate::COVER_DISCS,
+        ),
+        work.reject_certificates
+            .signed_pressure(&parent.active, construction_reject_certificate::COVER_DISCS),
+    );
+    profiling::deep::count(Counter::CollisionPolygonBuilds, 1);
     let build_started = profiling::deep::start(Phase::CollisionPolygonBuild);
     let collision = build_collision(pieces[piece_index], candidate, work_settings, work)?;
     profiling::deep::finish(Phase::CollisionPolygonBuild, build_started);
