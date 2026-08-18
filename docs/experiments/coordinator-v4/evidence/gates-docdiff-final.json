@@ -1,0 +1,66 @@
+{
+ "gateDir": "/var/lib/t3/tmp/v4/gates",
+ "left": "base",
+ "right": "final",
+ "volatileFields": [
+  "allocatedBytes",
+  "binaryPath",
+  "birthSeconds",
+  "buildIdentity",
+  "durationMs",
+  "elapsedMs",
+  "elapsedSeconds",
+  "engineCommit",
+  "engineElapsedSeconds",
+  "engineVersion",
+  "engineWorktreeDirty",
+  "engineWorktreeStatus",
+  "enteredSeconds",
+  "executableSha256",
+  "firstQuartileElapsedMs",
+  "leafSeconds",
+  "maxElapsedMs",
+  "meanElapsedMs",
+  "medianElapsedMs",
+  "minElapsedMs",
+  "ms",
+  "p50ElapsedMs",
+  "p95ElapsedMs",
+  "peakResidentBytes",
+  "phaseProfile",
+  "processWallSeconds",
+  "profile",
+  "publishedSeconds",
+  "relevantSourceTreeSha256",
+  "seconds",
+  "secondsSpent",
+  "startedSeconds",
+  "thirdQuartileElapsedMs",
+  "timestamp",
+  "totalMs",
+  "wallMs"
+ ],
+ "gates": {
+  "g1": {
+   "fieldsCompared": 3261,
+   "differingFields": 0,
+   "differing": []
+  },
+  "g2": {
+   "fieldsCompared": 3242,
+   "differingFields": 0,
+   "differing": []
+  },
+  "g3": {
+   "fieldsCompared": 3242,
+   "differingFields": 0,
+   "differing": []
+  },
+  "g4": {
+   "fieldsCompared": 3242,
+   "differingFields": 0,
+   "differing": []
+  }
+ },
+ "ALL_IDENTICAL": true
+}

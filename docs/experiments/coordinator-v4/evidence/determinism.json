@@ -1,0 +1,98 @@
+{
+ "name": "determinism",
+ "request": "mixed-61",
+ "work": 40000000,
+ "binary": "/var/lib/t3/tmp/v4/bin/sched",
+ "rows": [
+  {
+   "arm": "v4",
+   "seed": 0,
+   "fieldsCompared": 3557,
+   "differingFields": 0,
+   "differingSample": [],
+   "rawDepthMm": [
+    169.891,
+    169.891
+   ],
+   "workUnits": [
+    39309265,
+    39309265
+   ]
+  },
+  {
+   "arm": "v3",
+   "seed": 0,
+   "fieldsCompared": 3405,
+   "differingFields": 0,
+   "differingSample": [],
+   "rawDepthMm": [
+    170.63217550422073,
+    170.63217550422073
+   ],
+   "workUnits": [
+    37575714,
+    37575714
+   ]
+  },
+  {
+   "arm": "v4",
+   "seed": 1,
+   "fieldsCompared": 2846,
+   "differingFields": 0,
+   "differingSample": [],
+   "rawDepthMm": [
+    171.3619986855876,
+    171.3619986855876
+   ],
+   "workUnits": [
+    38518915,
+    38518915
+   ]
+  },
+  {
+   "arm": "v3",
+   "seed": 1,
+   "fieldsCompared": 2770,
+   "differingFields": 0,
+   "differingSample": [],
+   "rawDepthMm": [
+    176.05599999999998,
+    176.05599999999998
+   ],
+   "workUnits": [
+    39177529,
+    39177529
+   ]
+  },
+  {
+   "arm": "v4",
+   "seed": 2,
+   "fieldsCompared": 3635,
+   "differingFields": 0,
+   "differingSample": [],
+   "rawDepthMm": [
+    165.779,
+    165.779
+   ],
+   "workUnits": [
+    37102965,
+    37102965
+   ]
+  },
+  {
+   "arm": "v3",
+   "seed": 2,
+   "fieldsCompared": 3483,
+   "differingFields": 0,
+   "differingSample": [],
+   "rawDepthMm": [
+    172.89557339904468,
+    172.89557339904468
+   ],
+   "workUnits": [
+    38960559,
+    38960559
+   ]
+  }
+ ]
+}
