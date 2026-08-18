@@ -1,0 +1,201 @@
+{
+ "work": 120000000,
+ "pooled": {
+  "compression": {
+   "actions": 31,
+   "publications": 21,
+   "workUnits": 73781552,
+   "seconds": 28.39172432199999,
+   "deltaRawMm": 18.158706713753332,
+   "firstEstimated": [
+    1910217.4848,
+    2095368.9727999999,
+    1949988.0192
+   ],
+   "firstActual": [
+    2014683.0,
+    2258373.0,
+    1645531.0
+   ],
+   "deltaRawPerMegaUnit": 0.2461144584455655,
+   "workUnitsPerAction": 2380050.064516129,
+   "deltaRawPerAction": 0.5857647327017204
+  },
+  "descent": {
+   "actions": 10,
+   "publications": 0,
+   "workUnits": 26050367,
+   "seconds": 9.309750419000004,
+   "deltaRawMm": 0.0,
+   "firstEstimated": [
+    2350901.8493999997,
+    2578767.5134,
+    2399847.3876
+   ],
+   "firstActual": [
+    2683101.0,
+    2532939.0,
+    1936358.0
+   ],
+   "deltaRawPerMegaUnit": 0.0,
+   "workUnitsPerAction": 2605036.7,
+   "deltaRawPerAction": 0.0
+  },
+  "crossover": {
+   "actions": 22,
+   "publications": 3,
+   "workUnits": 124660637,
+   "seconds": 50.47964463199999,
+   "deltaRawMm": 5.336734168903206,
+   "firstEstimated": [
+    5347906.6716,
+    5866262.7676,
+    5459249.546399999
+   ],
+   "firstActual": [
+    5445170.0,
+    4907044.0,
+    4355232.0
+   ],
+   "deltaRawPerMegaUnit": 0.042810098659316224,
+   "workUnitsPerAction": 5666392.590909091,
+   "deltaRawPerAction": 0.24257882585923662
+  },
+  "ladder": {
+   "actions": 6,
+   "publications": 5,
+   "workUnits": 95052124,
+   "seconds": 30.082393048000007,
+   "deltaRawMm": 6.290657653595616,
+   "firstEstimated": [
+    21000980.1879,
+    23036540.411900003,
+    21438218.4666
+   ],
+   "firstActual": [
+    10309810.0,
+    28091870.0,
+    8399788.0
+   ],
+   "deltaRawPerMegaUnit": 0.06618113713687887,
+   "workUnitsPerAction": 15842020.666666666,
+   "deltaRawPerAction": 1.048442942265936
+  }
+ },
+ "perSeed": {
+  "0": {
+   "compression": {
+    "actions": 11,
+    "publications": 8,
+    "workUnits": 26873189,
+    "deltaRawMm": 10.635359220484105,
+    "firstEstimatedCost": 1910217.4848,
+    "firstActualCost": 2014683.0,
+    "firstActualOverEstimate": 1.054687759918048
+   },
+   "descent": {
+    "actions": 3,
+    "publications": 0,
+    "workUnits": 8461196,
+    "deltaRawMm": 0.0,
+    "firstEstimatedCost": 2350901.8493999997,
+    "firstActualCost": 2683101.0,
+    "firstActualOverEstimate": 1.1413071118578535
+   },
+   "crossover": {
+    "actions": 9,
+    "publications": 1,
+    "workUnits": 52233492,
+    "deltaRawMm": 1.7362740995410775,
+    "firstEstimatedCost": 5347906.6716,
+    "firstActualCost": 5445170.0,
+    "firstActualOverEstimate": 1.0181871775953975
+   },
+   "ladder": {
+    "actions": 2,
+    "publications": 1,
+    "workUnits": 17622013,
+    "deltaRawMm": 0.07679352303117071,
+    "firstEstimatedCost": 21000980.1879,
+    "firstActualCost": 10309810.0,
+    "firstActualOverEstimate": 0.4909204193211961
+   }
+  },
+  "1": {
+   "compression": {
+    "actions": 10,
+    "publications": 6,
+    "workUnits": 24594092,
+    "deltaRawMm": 1.3951990204818117,
+    "firstEstimatedCost": 2095368.9727999999,
+    "firstActualCost": 2258373.0,
+    "firstActualOverEstimate": 1.0777925173637468
+   },
+   "descent": {
+    "actions": 4,
+    "publications": 0,
+    "workUnits": 10252956,
+    "deltaRawMm": 0.0,
+    "firstEstimatedCost": 2578767.5134,
+    "firstActualCost": 2532939.0,
+    "firstActualOverEstimate": 0.9822285207325351
+   },
+   "crossover": {
+    "actions": 5,
+    "publications": 1,
+    "workUnits": 28229114,
+    "deltaRawMm": 2.8801819411942233,
+    "firstEstimatedCost": 5866262.7676,
+    "firstActualCost": 4907044.0,
+    "firstActualOverEstimate": 0.8364855435903983
+   },
+   "ladder": {
+    "actions": 2,
+    "publications": 3,
+    "workUnits": 44527680,
+    "deltaRawMm": 5.486290731519773,
+    "firstEstimatedCost": 23036540.411900003,
+    "firstActualCost": 28091870.0,
+    "firstActualOverEstimate": 1.219448298125901
+   }
+  },
+  "2": {
+   "compression": {
+    "actions": 10,
+    "publications": 7,
+    "workUnits": 22314271,
+    "deltaRawMm": 6.128148472787416,
+    "firstEstimatedCost": 1949988.0192,
+    "firstActualCost": 1645531.0,
+    "firstActualOverEstimate": 0.8438672360023493
+   },
+   "descent": {
+    "actions": 3,
+    "publications": 0,
+    "workUnits": 7336215,
+    "deltaRawMm": 0.0,
+    "firstEstimatedCost": 2399847.3876,
+    "firstActualCost": 1936358.0,
+    "firstActualOverEstimate": 0.8068671408045164
+   },
+   "crossover": {
+    "actions": 8,
+    "publications": 1,
+    "workUnits": 44198031,
+    "deltaRawMm": 0.7202781281679052,
+    "firstEstimatedCost": 5459249.546399999,
+    "firstActualCost": 4355232.0,
+    "firstActualOverEstimate": 0.7977711886924049
+   },
+   "ladder": {
+    "actions": 2,
+    "publications": 1,
+    "workUnits": 32902431,
+    "deltaRawMm": 0.7275733990446724,
+    "firstEstimatedCost": 21438218.4666,
+    "firstActualCost": 8399788.0,
+    "firstActualOverEstimate": 0.39181371404935433
+   }
+  }
+ }
+}

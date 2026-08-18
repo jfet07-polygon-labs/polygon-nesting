@@ -1,0 +1,795 @@
+{
+ "byArm": {
+  "mixed-61/v3at3": {
+   "runs": 9,
+   "actions": 9,
+   "longestProductiveBarrenRun": 0,
+   "maxTrailingBarren": 0
+  },
+  "mixed-61/v3at10": {
+   "runs": 9,
+   "actions": 58,
+   "longestProductiveBarrenRun": 4,
+   "maxTrailingBarren": 2
+  },
+  "mixed-61/v3at30": {
+   "runs": 9,
+   "actions": 170,
+   "longestProductiveBarrenRun": 7,
+   "maxTrailingBarren": 7
+  },
+  "shapes-17/v3at10": {
+   "runs": 9,
+   "actions": 90,
+   "longestProductiveBarrenRun": 8,
+   "maxTrailingBarren": 10
+  },
+  "shapes-17/v3at30": {
+   "runs": 9,
+   "actions": 350,
+   "longestProductiveBarrenRun": 33,
+   "maxTrailingBarren": 35
+  },
+  "triangle-20/v3at10": {
+   "runs": 9,
+   "actions": 93,
+   "longestProductiveBarrenRun": 3,
+   "maxTrailingBarren": 5
+  },
+  "triangle-20/v3at30": {
+   "runs": 9,
+   "actions": 295,
+   "longestProductiveBarrenRun": 3,
+   "maxTrailingBarren": 28
+  }
+ },
+ "rows": [
+  {
+   "request": "mixed-61",
+   "arm": "v3at3",
+   "seed": 0,
+   "round": 0,
+   "actions": 1,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [],
+   "longestProductiveBarrenRun": 0
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at10",
+   "seed": 0,
+   "round": 0,
+   "actions": 6,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at30",
+   "seed": 0,
+   "round": 0,
+   "actions": 22,
+   "trailingBarren": 2,
+   "productiveBarrenRuns": [
+    3,
+    7
+   ],
+   "longestProductiveBarrenRun": 7
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at3",
+   "seed": 1,
+   "round": 0,
+   "actions": 1,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [],
+   "longestProductiveBarrenRun": 0
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at10",
+   "seed": 1,
+   "round": 0,
+   "actions": 7,
+   "trailingBarren": 2,
+   "productiveBarrenRuns": [
+    2
+   ],
+   "longestProductiveBarrenRun": 2
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at30",
+   "seed": 1,
+   "round": 0,
+   "actions": 17,
+   "trailingBarren": 7,
+   "productiveBarrenRuns": [
+    2,
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at3",
+   "seed": 2,
+   "round": 0,
+   "actions": 1,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [],
+   "longestProductiveBarrenRun": 0
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at10",
+   "seed": 2,
+   "round": 0,
+   "actions": 7,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [
+    4
+   ],
+   "longestProductiveBarrenRun": 4
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at30",
+   "seed": 2,
+   "round": 0,
+   "actions": 20,
+   "trailingBarren": 4,
+   "productiveBarrenRuns": [
+    5,
+    2
+   ],
+   "longestProductiveBarrenRun": 5
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at3",
+   "seed": 0,
+   "round": 1,
+   "actions": 1,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [],
+   "longestProductiveBarrenRun": 0
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at10",
+   "seed": 0,
+   "round": 1,
+   "actions": 6,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at30",
+   "seed": 0,
+   "round": 1,
+   "actions": 20,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [
+    3,
+    7
+   ],
+   "longestProductiveBarrenRun": 7
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at3",
+   "seed": 1,
+   "round": 1,
+   "actions": 1,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [],
+   "longestProductiveBarrenRun": 0
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at10",
+   "seed": 1,
+   "round": 1,
+   "actions": 7,
+   "trailingBarren": 2,
+   "productiveBarrenRuns": [
+    2
+   ],
+   "longestProductiveBarrenRun": 2
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at30",
+   "seed": 1,
+   "round": 1,
+   "actions": 16,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [
+    2,
+    3,
+    2
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at3",
+   "seed": 2,
+   "round": 1,
+   "actions": 1,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [],
+   "longestProductiveBarrenRun": 0
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at10",
+   "seed": 2,
+   "round": 1,
+   "actions": 6,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [
+    4
+   ],
+   "longestProductiveBarrenRun": 4
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at30",
+   "seed": 2,
+   "round": 1,
+   "actions": 20,
+   "trailingBarren": 4,
+   "productiveBarrenRuns": [
+    5,
+    2
+   ],
+   "longestProductiveBarrenRun": 5
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at10",
+   "seed": 0,
+   "round": 2,
+   "actions": 6,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at30",
+   "seed": 0,
+   "round": 2,
+   "actions": 20,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [
+    3,
+    7
+   ],
+   "longestProductiveBarrenRun": 7
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at3",
+   "seed": 0,
+   "round": 2,
+   "actions": 1,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [],
+   "longestProductiveBarrenRun": 0
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at10",
+   "seed": 1,
+   "round": 2,
+   "actions": 7,
+   "trailingBarren": 2,
+   "productiveBarrenRuns": [
+    2
+   ],
+   "longestProductiveBarrenRun": 2
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at30",
+   "seed": 1,
+   "round": 2,
+   "actions": 16,
+   "trailingBarren": 6,
+   "productiveBarrenRuns": [
+    2,
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at3",
+   "seed": 1,
+   "round": 2,
+   "actions": 1,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [],
+   "longestProductiveBarrenRun": 0
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at10",
+   "seed": 2,
+   "round": 2,
+   "actions": 6,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [
+    4
+   ],
+   "longestProductiveBarrenRun": 4
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at30",
+   "seed": 2,
+   "round": 2,
+   "actions": 19,
+   "trailingBarren": 3,
+   "productiveBarrenRuns": [
+    5,
+    2
+   ],
+   "longestProductiveBarrenRun": 5
+  },
+  {
+   "request": "mixed-61",
+   "arm": "v3at3",
+   "seed": 2,
+   "round": 2,
+   "actions": 1,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [],
+   "longestProductiveBarrenRun": 0
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at10",
+   "seed": 0,
+   "round": 0,
+   "actions": 10,
+   "trailingBarren": 1,
+   "productiveBarrenRuns": [
+    8
+   ],
+   "longestProductiveBarrenRun": 8
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at30",
+   "seed": 0,
+   "round": 0,
+   "actions": 36,
+   "trailingBarren": 27,
+   "productiveBarrenRuns": [
+    8
+   ],
+   "longestProductiveBarrenRun": 8
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at10",
+   "seed": 1,
+   "round": 0,
+   "actions": 10,
+   "trailingBarren": 10,
+   "productiveBarrenRuns": [],
+   "longestProductiveBarrenRun": 0
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at30",
+   "seed": 1,
+   "round": 0,
+   "actions": 38,
+   "trailingBarren": 4,
+   "productiveBarrenRuns": [
+    33
+   ],
+   "longestProductiveBarrenRun": 33
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at10",
+   "seed": 2,
+   "round": 0,
+   "actions": 10,
+   "trailingBarren": 4,
+   "productiveBarrenRuns": [
+    5
+   ],
+   "longestProductiveBarrenRun": 5
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at30",
+   "seed": 2,
+   "round": 0,
+   "actions": 41,
+   "trailingBarren": 35,
+   "productiveBarrenRuns": [
+    5
+   ],
+   "longestProductiveBarrenRun": 5
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at10",
+   "seed": 0,
+   "round": 1,
+   "actions": 9,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [
+    8
+   ],
+   "longestProductiveBarrenRun": 8
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at30",
+   "seed": 0,
+   "round": 1,
+   "actions": 38,
+   "trailingBarren": 29,
+   "productiveBarrenRuns": [
+    8
+   ],
+   "longestProductiveBarrenRun": 8
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at10",
+   "seed": 1,
+   "round": 1,
+   "actions": 10,
+   "trailingBarren": 10,
+   "productiveBarrenRuns": [],
+   "longestProductiveBarrenRun": 0
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at30",
+   "seed": 1,
+   "round": 1,
+   "actions": 39,
+   "trailingBarren": 5,
+   "productiveBarrenRuns": [
+    33
+   ],
+   "longestProductiveBarrenRun": 33
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at10",
+   "seed": 2,
+   "round": 1,
+   "actions": 10,
+   "trailingBarren": 4,
+   "productiveBarrenRuns": [
+    5
+   ],
+   "longestProductiveBarrenRun": 5
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at30",
+   "seed": 2,
+   "round": 1,
+   "actions": 41,
+   "trailingBarren": 35,
+   "productiveBarrenRuns": [
+    5
+   ],
+   "longestProductiveBarrenRun": 5
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at30",
+   "seed": 0,
+   "round": 2,
+   "actions": 38,
+   "trailingBarren": 29,
+   "productiveBarrenRuns": [
+    8
+   ],
+   "longestProductiveBarrenRun": 8
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at10",
+   "seed": 0,
+   "round": 2,
+   "actions": 9,
+   "trailingBarren": 0,
+   "productiveBarrenRuns": [
+    8
+   ],
+   "longestProductiveBarrenRun": 8
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at30",
+   "seed": 1,
+   "round": 2,
+   "actions": 39,
+   "trailingBarren": 5,
+   "productiveBarrenRuns": [
+    33
+   ],
+   "longestProductiveBarrenRun": 33
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at10",
+   "seed": 1,
+   "round": 2,
+   "actions": 10,
+   "trailingBarren": 10,
+   "productiveBarrenRuns": [],
+   "longestProductiveBarrenRun": 0
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at30",
+   "seed": 2,
+   "round": 2,
+   "actions": 40,
+   "trailingBarren": 34,
+   "productiveBarrenRuns": [
+    5
+   ],
+   "longestProductiveBarrenRun": 5
+  },
+  {
+   "request": "shapes-17",
+   "arm": "v3at10",
+   "seed": 2,
+   "round": 2,
+   "actions": 12,
+   "trailingBarren": 6,
+   "productiveBarrenRuns": [
+    5
+   ],
+   "longestProductiveBarrenRun": 5
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at10",
+   "seed": 0,
+   "round": 0,
+   "actions": 11,
+   "trailingBarren": 5,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at30",
+   "seed": 0,
+   "round": 0,
+   "actions": 30,
+   "trailingBarren": 24,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at10",
+   "seed": 1,
+   "round": 0,
+   "actions": 10,
+   "trailingBarren": 4,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at30",
+   "seed": 1,
+   "round": 0,
+   "actions": 32,
+   "trailingBarren": 26,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at10",
+   "seed": 2,
+   "round": 0,
+   "actions": 10,
+   "trailingBarren": 2,
+   "productiveBarrenRuns": [
+    2,
+    1
+   ],
+   "longestProductiveBarrenRun": 2
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at30",
+   "seed": 2,
+   "round": 0,
+   "actions": 33,
+   "trailingBarren": 25,
+   "productiveBarrenRuns": [
+    2,
+    1
+   ],
+   "longestProductiveBarrenRun": 2
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at10",
+   "seed": 0,
+   "round": 1,
+   "actions": 10,
+   "trailingBarren": 4,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at30",
+   "seed": 0,
+   "round": 1,
+   "actions": 32,
+   "trailingBarren": 26,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at10",
+   "seed": 1,
+   "round": 1,
+   "actions": 9,
+   "trailingBarren": 3,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at30",
+   "seed": 1,
+   "round": 1,
+   "actions": 34,
+   "trailingBarren": 28,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at10",
+   "seed": 2,
+   "round": 1,
+   "actions": 11,
+   "trailingBarren": 4,
+   "productiveBarrenRuns": [
+    2
+   ],
+   "longestProductiveBarrenRun": 2
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at30",
+   "seed": 2,
+   "round": 1,
+   "actions": 34,
+   "trailingBarren": 26,
+   "productiveBarrenRuns": [
+    2,
+    1
+   ],
+   "longestProductiveBarrenRun": 2
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at30",
+   "seed": 0,
+   "round": 2,
+   "actions": 33,
+   "trailingBarren": 27,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at10",
+   "seed": 0,
+   "round": 2,
+   "actions": 11,
+   "trailingBarren": 5,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at30",
+   "seed": 1,
+   "round": 2,
+   "actions": 33,
+   "trailingBarren": 27,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at10",
+   "seed": 1,
+   "round": 2,
+   "actions": 10,
+   "trailingBarren": 4,
+   "productiveBarrenRuns": [
+    3
+   ],
+   "longestProductiveBarrenRun": 3
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at30",
+   "seed": 2,
+   "round": 2,
+   "actions": 34,
+   "trailingBarren": 26,
+   "productiveBarrenRuns": [
+    2,
+    1
+   ],
+   "longestProductiveBarrenRun": 2
+  },
+  {
+   "request": "triangle-20",
+   "arm": "v3at10",
+   "seed": 2,
+   "round": 2,
+   "actions": 11,
+   "trailingBarren": 3,
+   "productiveBarrenRuns": [
+    2,
+    1
+   ],
+   "longestProductiveBarrenRun": 2
+  }
+ ]
+}

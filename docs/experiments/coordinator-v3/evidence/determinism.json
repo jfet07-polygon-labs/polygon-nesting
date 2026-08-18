@@ -1,0 +1,92 @@
+[
+ {
+  "arm": "v2",
+  "seed": 0,
+  "fieldsCompared": 3255,
+  "differingFields": 0,
+  "differing": [],
+  "rawDepthMm": [
+   174.20812003998896,
+   174.20812003998896
+  ],
+  "workUnits": [
+   32393757,
+   32393757
+  ]
+ },
+ {
+  "arm": "v2",
+  "seed": 1,
+  "fieldsCompared": 2648,
+  "differingFields": 0,
+  "differing": [],
+  "rawDepthMm": [
+   176.05599999999998,
+   176.05599999999998
+  ],
+  "workUnits": [
+   31957935,
+   31957935
+  ]
+ },
+ {
+  "arm": "v2",
+  "seed": 2,
+  "fieldsCompared": 3233,
+  "differingFields": 0,
+  "differing": [],
+  "rawDepthMm": [
+   179.006,
+   179.006
+  ],
+  "workUnits": [
+   27938867,
+   27938867
+  ]
+ },
+ {
+  "arm": "v3",
+  "seed": 0,
+  "fieldsCompared": 3396,
+  "differingFields": 0,
+  "differing": [],
+  "rawDepthMm": [
+   170.63217550422073,
+   170.63217550422073
+  ],
+  "workUnits": [
+   37575714,
+   37575714
+  ]
+ },
+ {
+  "arm": "v3",
+  "seed": 1,
+  "fieldsCompared": 2761,
+  "differingFields": 0,
+  "differing": [],
+  "rawDepthMm": [
+   176.05599999999998,
+   176.05599999999998
+  ],
+  "workUnits": [
+   39177529,
+   39177529
+  ]
+ },
+ {
+  "arm": "v3",
+  "seed": 2,
+  "fieldsCompared": 3472,
+  "differingFields": 0,
+  "differing": [],
+  "rawDepthMm": [
+   172.89557339904468,
+   172.89557339904468
+  ],
+  "workUnits": [
+   38960559,
+   38960559
+  ]
+ }
+]

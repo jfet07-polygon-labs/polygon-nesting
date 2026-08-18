@@ -199,8 +199,15 @@ const COUPLED_SEPARATOR_ROUNDS: usize = 40;
 const COUPLED_SEPARATOR_NO_IMPROVEMENT_LIMIT: usize = 10;
 #[cfg(feature = "jagua-experimental")]
 const COUPLED_SEPARATOR_STRIKE_LIMIT: usize = 3;
+/// The separator's own relative contraction quantum, and therefore the smallest
+/// rung [`ladder_compression_bounds`] will ever walk: a ladder rung is never
+/// finer than this fraction of the parent's own depth.
+///
+/// Public because the coordinator derives a ladder's *rung count* from it - a
+/// two-rung ladder is a drop of `2 * depth * ratio`, which is a length the
+/// request supplies rather than a millimetre the schedule carries.
 #[cfg(feature = "jagua-experimental")]
-const COUPLED_SEPARATOR_CONTRACTION_RATIO: f64 = 0.001;
+pub const COUPLED_SEPARATOR_CONTRACTION_RATIO: f64 = 0.001;
 #[cfg(feature = "jagua-experimental")]
 const COUPLED_SEPARATOR_SUBSTANTIAL_RATIO: f64 = 0.98;
 /// How far two readings of one pole pressure may sit apart, in `f32` units in

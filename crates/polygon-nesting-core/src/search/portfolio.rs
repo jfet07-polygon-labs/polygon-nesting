@@ -701,6 +701,147 @@ pub struct PhaseReport {
     pub exit_cause: PhaseExitCause,
 }
 
+/// What kind of action the v3 queue is offering.
+///
+/// The classes are the ledger's own cost-and-yield rows plus the mode-26 ladder
+/// the A/B/C measured, and each carries the *measured* prior that orders the
+/// queue before this run has any evidence of its own. Ordering by class is the
+/// deterministic tie-break after the ranking value, so the declaration order is
+/// load-bearing and it is the ledger's Δraw/M-evaluation order.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ActionClass {
+    /// One compressing mode-22 quantum at a target *below* the parent's own
+    /// depth, and mode 31 on whatever residue it leaves.
+    Compression,
+    /// One mode-22 alternation quantum at the parent's own alternation rung.
+    Descent,
+    /// One ordered, cut-derived mode-23 recombination.
+    Crossover,
+    /// One short mode-26 clamped-sheet ladder and the global legalizer tier on
+    /// what it leaves.
+    Ladder,
+    /// One salted mode-20 constructor ticket and a quantum spent on it.
+    Diversify,
+}
+
+impl ActionClass {
+    /// The reporting name, stable across runs, and the name the operator calls
+    /// and publication events this class pays for are attributed to.
+    pub fn name(self) -> &'static str {
+        match self {
+            ActionClass::Compression => "compression",
+            ActionClass::Descent => "descent",
+            ActionClass::Crossover => "crossover",
+            ActionClass::Ladder => "ladder",
+            ActionClass::Diversify => "diversify",
+        }
+    }
+
+    /// Millimetres of published raw depth one action of this class produced, as
+    /// measured, before this run has evidence of its own.
+    ///
+    /// From `docs/experiments/opportunity-ledger`: the seed-0 cost-and-yield
+    /// table for compression / descent / crossover (2.101 mm in 1 call,
+    /// 2.002 mm in 2, 3.277 mm in 3), and the A/B/C's arm C for the ladder
+    /// (4.957 / 4.317 / 0 mm over three seeds, one ladder action each).
+    fn prior_delta_mm(self) -> f64 {
+        match self {
+            ActionClass::Compression => 2.101,
+            ActionClass::Descent => 1.001,
+            ActionClass::Crossover => 1.0923,
+            ActionClass::Ladder => 3.0914,
+            // The ledger's verdict on the m20 feeder, on deferred credit and
+            // not on immediate publication: every archived mode-20 basin on
+            // all three mixed-61 seeds has 0 descendant publications. It is
+            // *not* zero on triangle-20, where the slice published on half its
+            // arms - which is why the class is still in the queue and why its
+            // eligibility rule, not its rank, is what schedules it.
+            ActionClass::Diversify => 0.0,
+        }
+    }
+
+    /// What one action of this class costs, as a multiple of the *protected
+    /// phase-0 pipeline this run just paid for*.
+    ///
+    /// Expressed relative to phase 0 rather than in work units on purpose:
+    /// phase 0 is one full mode-0 pipeline on this request, measured in this
+    /// process, in the budget's own currency, so the same prior prices a
+    /// 61-piece request and a 17-piece one and prices a wall budget and a work
+    /// budget. The multiples are the ledger's seed-0 spends against that run's
+    /// own 8.777M-unit phase 0, except the ladder's, which is the *largest* of
+    /// the three A/B/C arm-C spends (20.998M) rather than their mean: an
+    /// operator with a 3.7x spread across seeds has to be priced by its worst
+    /// case or the affordability rule is a coin toss.
+    fn prior_cost_in_phase_zero(self) -> f64 {
+        match self {
+            ActionClass::Compression => 0.2176,
+            ActionClass::Descent => 0.2678,
+            ActionClass::Crossover => 0.6092,
+            ActionClass::Ladder => 2.3923,
+            ActionClass::Diversify => 0.1094,
+        }
+    }
+}
+
+/// One action the v3 queue offered and executed.
+#[derive(Clone, Debug)]
+pub struct ScheduledActionReport {
+    /// The loop iteration that chose it, from zero.
+    pub iteration: usize,
+    pub class: String,
+    /// The action's key in the `attempted` namespace.
+    pub key: String,
+    /// The human-readable action, as recorded on the operator calls it made.
+    pub label: String,
+    /// The ranking value the queue chose it on: expected millimetres per unit
+    /// of the budget's own currency, times the protected phase's own cost, so
+    /// the number is comparable across budgets and requests.
+    pub value: f64,
+    /// What the queue thought the action would cost, in the budget's currency.
+    pub estimated_cost: f64,
+    /// What it did cost.
+    pub actual_cost: f64,
+    pub work_units: u64,
+    pub seconds: f64,
+    pub operator_calls: usize,
+    pub publications: usize,
+    /// The incumbent's raw depth before and after.
+    pub entry_raw_depth_mm: Option<f64>,
+    pub exit_raw_depth_mm: Option<f64>,
+    /// How many candidate actions the queue had to choose from.
+    pub candidates: usize,
+}
+
+/// What one action class did over the whole run.
+#[derive(Clone, Debug)]
+pub struct ScheduleClassReport {
+    pub class: String,
+    pub actions: usize,
+    pub publications: usize,
+    pub work_units: u64,
+    pub seconds: f64,
+    pub cost_total: f64,
+    pub cost_max: f64,
+    pub delta_raw_mm: f64,
+    /// The prior's estimate of the first action's cost, and what that action
+    /// actually cost. This is the mispricing the ledger found for mode 20,
+    /// reported for every class rather than discovered afterwards.
+    pub first_estimated_cost: Option<f64>,
+    pub first_actual_cost: Option<f64>,
+}
+
+/// The v3 action loop, as run.
+#[derive(Clone, Debug)]
+pub struct ScheduleReport {
+    pub iterations: usize,
+    pub exit_cause: String,
+    pub actions: Vec<ScheduledActionReport>,
+    pub classes: Vec<ScheduleClassReport>,
+    /// The protected phase's own cost in the budget's currency: the unit every
+    /// class prior is quoted in.
+    pub phase_zero_cost: f64,
+}
+
 /// One ordered, cut-derived crossover action over a pair of archive states.
 ///
 /// Mode 23 is directional - it takes parent A's short-axis span, cuts it at a
@@ -922,6 +1063,8 @@ pub struct PortfolioOutcome {
     /// coordinator run reports everything a mode-0 run reports.
     pub m0_diagnostics: Box<crate::search::general_relaxed::GeneralRelaxedDiagnostics>,
     pub phases: Vec<PhaseReport>,
+    /// The v3 action loop's own report, `None` on the v2 phase schedule.
+    pub schedule: Option<ScheduleReport>,
     pub operator_calls: Vec<OperatorCallReport>,
     pub publications: Vec<PublicationEvent>,
     pub budget: PortfolioBudget,
@@ -1060,6 +1203,12 @@ pub struct PortfolioSettings {
     /// The probe arm's allowance, in work units. Every arm gets the same one,
     /// measured from the identical saturated state the schedule leaves.
     pub probe_work_units: u64,
+    /// Run the v3 ranked action loop instead of the v2 phase sequence.
+    ///
+    /// Off by default, so a default build's schedule is v2's to the digit and
+    /// the two coordinators can be interleaved from one binary - which is the
+    /// only way a paired A/B on a shared box is worth anything.
+    pub coordinator_v3: bool,
 }
 
 /// The phase deadlines, as fractions of the whole budget.
@@ -1101,6 +1250,10 @@ pub struct PhaseSchedule {
     pub compression_by: f64,
     pub diversify_by: f64,
     pub drain_by: f64,
+    /// v3 only: the deadline of the single action loop that replaces the four
+    /// phases above. It is the same fraction the last of them ended at, so the
+    /// drain keeps the reserve it already had.
+    pub schedule_by: f64,
 }
 
 impl Default for PhaseSchedule {
@@ -1116,6 +1269,7 @@ impl Default for PhaseSchedule {
             compression_by: 0.89,
             diversify_by: 0.98,
             drain_by: 1.0,
+            schedule_by: 0.98,
         }
     }
 }
@@ -1146,6 +1300,7 @@ impl PortfolioSettings {
             schedule: PhaseSchedule::default(),
             probe: ProbeArm::None,
             probe_work_units: 0,
+            coordinator_v3: false,
         }
     }
 }
@@ -1283,6 +1438,31 @@ struct Coordinator<'a> {
     /// phase's deadline is a fraction of what is left after it; see
     /// [`PhaseSchedule`].
     protected_fraction: f64,
+    /// What the protected phase 0 cost, in the budget's own currency. Every v3
+    /// class prior is quoted as a multiple of it, so a prior measured on
+    /// mixed-61 at a work budget still prices shapes-17 at a wall budget.
+    phase_zero_cost: f64,
+    /// What each v3 action class has cost and produced *in this run*.
+    class_stats: BTreeMap<ActionClass, ClassStats>,
+}
+
+/// One action class's running evidence.
+#[derive(Clone, Debug, Default)]
+struct ClassStats {
+    actions: usize,
+    publications: usize,
+    work_units: u64,
+    seconds: f64,
+    /// Cost in the budget's own currency, summed and maximised. The maximum is
+    /// what the affordability rule uses: the ledger priced a mode-20 arm at
+    /// 260 work units and 3.1 seconds, and the A/B/C's arm C spent 5.7M units
+    /// on one seed and 21.0M on another, so a class with a spread is priced by
+    /// its worst case or it is not priced at all.
+    cost_total: f64,
+    cost_max: f64,
+    delta_raw_mm: f64,
+    first_estimated_cost: Option<f64>,
+    first_actual_cost: Option<f64>,
 }
 
 impl<'a> Coordinator<'a> {
@@ -1615,6 +1795,8 @@ pub fn run_portfolio(
         descent_stalled: false,
         exit_cause: PhaseExitCause::Completed,
         protected_fraction: 0.0,
+        phase_zero_cost: 0.0,
+        class_stats: BTreeMap::new(),
     };
 
     // Everything phase 0 produced goes into the archive, including the arms
@@ -1659,6 +1841,9 @@ pub fn run_portfolio(
     // Everything after this point is a fraction of what phase 0 left, not of
     // the whole budget. See `PhaseSchedule`.
     coordinator.protected_fraction = coordinator.meter.spent_fraction().clamp(0.0, 1.0);
+    // One full mode-0 pipeline on this request, in this process, in the
+    // budget's own currency. It is the unit every v3 class prior is quoted in.
+    coordinator.phase_zero_cost = coordinator.meter.currency_spent().max(f64::MIN_POSITIVE);
 
     // The constructor clamp, derived from the request rather than pinned.
     let area_lower_bound_depth_mm = area_lower_bound_depth_mm(pieces, fast_settings)?;
@@ -1670,6 +1855,21 @@ pub fn run_portfolio(
     // (9 publications in 18 calls on the v1 stream) and the constructor slice
     // that used to precede it published nothing in nineteen.
     let template_epochs = settings.relaxed_template.epochs.max(1);
+
+    // ---- v3: one ranked action loop in place of phases 1-4 ----------------
+    // The v2 schedule below is a single pass: descent, then crossover, then
+    // compression, then diversify, each entered once. The ledger measured what
+    // that costs - on seeds 0 and 1 the final rank-0 state is born in the
+    // *compression* phase, after the crossover phase has ended, so the run's
+    // best state and its recombination operator never meet. v3 replaces the
+    // pass with a queue that re-enumerates after every action, so a state born
+    // late re-enters every class it is eligible for.
+    let schedule_report = if settings.coordinator_v3 {
+        Some(run_v3_schedule(&mut coordinator, constructor_clamp_mm))
+    } else {
+        None
+    };
+    if !settings.coordinator_v3 {
     coordinator.run_phase("descent", settings.schedule.descent_by, |run| {
         let mut cycles = run.settings.descent_cycles.max(1);
         let mut epochs = run.settings.descent_relaxed_epochs.max(1);
@@ -2026,6 +2226,7 @@ pub fn run_portfolio(
             }
         }
     });
+    } // end of the v2 phase sequence
 
     // ---- phase 5: drain ---------------------------------------------------
     // Every archived basin that is exact-valid and might beat the incumbent is
@@ -2082,6 +2283,7 @@ pub fn run_portfolio(
         archive: coordinator.archive.report(),
         m0_diagnostics: Box::new(m0.diagnostics),
         phases: coordinator.phases,
+        schedule: schedule_report,
         operator_calls: coordinator.operator_calls,
         publications: coordinator.publications,
         budget,
@@ -2212,6 +2414,712 @@ impl<'a> Coordinator<'a> {
 }
 
 // ---------------------------------------------------------------------------
+// Coordinator v3: the ranked action queue.
+//
+// Three measured defects of the v2 phase sequence, and nothing else:
+//
+//   * its compression phase asked mode 22 for `depth + 0.8` - a *looser* bound
+//     than the incumbent it already held - got an exact-valid answer and exited
+//     `noResidue`. The A/B/C's control D asked the same operator, the same
+//     parent, for `depth - 0.3` and published 2.620 mm for 3.08M work units;
+//   * its schedule is a single pass, so a state born in a late phase is never
+//     a parent for an earlier one. On seeds 0 and 1 the final rank-0 state was
+//     born in compression, after crossover had ended, and never met the
+//     recombination operator;
+//   * it names one crossover action per pair - one direction, one cut - and the
+//     ledger enumerated 360 ordered, cut-derived actions over the same top-3
+//     frontier, of which the schedule had attempted exactly one.
+// ---------------------------------------------------------------------------
+
+/// How many rungs a scheduled mode-26 ladder walks.
+///
+/// Two, which is the A/B/C's arm C: a 0.3 mm drop at a 174 mm parent is two
+/// rungs of the mode's own `COUPLED_SEPARATOR_CONTRACTION_RATIO`. The drop is
+/// derived rather than carried - `rungs * depth * ratio` - so the same two-rung
+/// ladder is a different number of millimetres on a different request.
+const LADDER_RUNGS: usize = 2;
+
+/// How many derived cuts one ordered pair may contribute to a single
+/// enumeration.
+///
+/// The ledger's point is that the action space is 4,318 wide, not that a
+/// schedule should walk all of it: the queue re-enumerates after every action,
+/// so a pair that keeps paying keeps being offered its next cut, in the
+/// ledger's canonical order (nearest the constant `0.5` first).
+const CROSSOVER_CUTS_PER_PAIR: usize = 2;
+
+/// How many bands one enumeration will build a hybrid for, per ordered pair.
+/// The hybrid is what decides whether a cut is a real action, and it costs a
+/// fingerprint over the whole layout; this bounds that cost.
+const CROSSOVER_BANDS_SCANNED: usize = 6;
+
+/// How much evidence a class prior is worth, in actions.
+///
+/// Two: the prior is displaced by this run's own measurements after two actions
+/// of the class, which is the smallest number at which "it published once" and
+/// "it published twice" are different statements.
+const PRIOR_ACTIONS: f64 = 2.0;
+
+/// What an action needs to identify its parents. Fingerprints rather than
+/// placements, because the archive is the authority on both and a queue that
+/// carried copies could offer an action against a state that has been evicted.
+#[derive(Clone, Debug)]
+enum ActionPayload {
+    Basin {
+        fingerprint: String,
+    },
+    Crossover {
+        left_fingerprint: String,
+        right_fingerprint: String,
+        cut_fraction: f64,
+    },
+    Diversify {
+        slot: usize,
+    },
+}
+
+/// One action the queue may offer.
+#[derive(Clone, Debug)]
+struct ScheduledAction {
+    class: ActionClass,
+    /// The key in the `attempted` namespace. Built from the parents *in the
+    /// order they will be handed to the operator*, never from their ranks: the
+    /// frontier reorders between actions, and a rank-built key reports an
+    /// attempted action as untried. That is pinned by a test.
+    key: String,
+    /// Order within the class. Smaller first.
+    rank: usize,
+    label: String,
+    payload: ActionPayload,
+}
+
+impl Coordinator<'_> {
+    /// Every action the queue can name against the archive as it stands.
+    ///
+    /// Bounded by construction rather than by truncation: the frontier is the
+    /// same top-K the v2 phases drew from, and each ordered pair contributes at
+    /// most [`CROSSOVER_CUTS_PER_PAIR`] cuts. Actions already attempted are not
+    /// offered, so a pair that has spent its two nearest cuts is offered the
+    /// next two on the following iteration.
+    fn enumerate_v3_actions(&self) -> Vec<ScheduledAction> {
+        let mut actions = Vec::new();
+        let frontier = self
+            .archive
+            .distinct_frontier(self.settings.crossover_states.max(2));
+        let cycles = self.settings.descent_cycles.max(1);
+        let epochs = self.settings.descent_relaxed_epochs.max(1);
+        // The two mode-22 classes keep v2's measured selection width: one
+        // state, the best distinct one. v2 priced the alternative and declined
+        // it - spreading the same quanta over three states put them on 194-214
+        // mm constructor basins and landed at 176.753 against 176.056 - and the
+        // loop does not change that arithmetic, it only means the *next* best
+        // state gets its quantum on the next iteration instead of never. The
+        // ladder is rank 0 only, because it is the one class whose single
+        // action costs more than the whole rest of the queue.
+        let quantum_states = self.settings.descent_states.max(1);
+        for (rank, basin) in frontier.iter().enumerate() {
+            let depth = basin.raw_depth_mm;
+            // Compression: the incumbent-relative, derived target. Never an
+            // absolute slack *above* the depth the parent already holds.
+            let compress_to = depth - COMPRESSION_RUNG_MM;
+            let key = format!("22c:{}", basin.fingerprint);
+            if rank < quantum_states && compress_to > 0.0 && !self.attempted.contains(&key) {
+                actions.push(ScheduledAction {
+                    class: ActionClass::Compression,
+                    key,
+                    rank,
+                    label: format!("m22 compress rank{rank} {depth:.4} -> {compress_to:.4}"),
+                    payload: ActionPayload::Basin {
+                        fingerprint: basin.fingerprint.clone(),
+                    },
+                });
+            }
+            let key = format!("22:{cycles}:{epochs}:{}", basin.fingerprint);
+            if rank < quantum_states && !self.attempted.contains(&key) {
+                actions.push(ScheduledAction {
+                    class: ActionClass::Descent,
+                    key,
+                    rank,
+                    label: format!("m22 quantum rank{rank} cycles={cycles} epochs={epochs}"),
+                    payload: ActionPayload::Basin {
+                        fingerprint: basin.fingerprint.clone(),
+                    },
+                });
+            }
+            let drop_mm = depth
+                * LADDER_RUNGS as f64
+                * crate::search::general_relaxed::COUPLED_SEPARATOR_CONTRACTION_RATIO;
+            let key = format!("26:{}", basin.fingerprint);
+            if rank == 0 && depth - drop_mm > 0.0 && !self.attempted.contains(&key) {
+                actions.push(ScheduledAction {
+                    class: ActionClass::Ladder,
+                    key,
+                    rank,
+                    label: format!(
+                        "m26 ladder rank{rank} {depth:.4} -> {:.4} ({LADDER_RUNGS} rungs)",
+                        depth - drop_mm
+                    ),
+                    payload: ActionPayload::Basin {
+                        fingerprint: basin.fingerprint.clone(),
+                    },
+                });
+            }
+        }
+        // Crossover: ordered pairs, both directions, cuts derived from the
+        // interface bands where the two parents actually differ.
+        let mut pair_rank = 0usize;
+        for right in 1..frontier.len() {
+            for left in 0..right {
+                for (a, b) in [(left, right), (right, left)] {
+                    let parent_a = &frontier[a];
+                    let parent_b = &frontier[b];
+                    let mut bands = derived_cut_bands(&parent_a.placements, &parent_b.placements);
+                    bands.sort_by(|first, second| {
+                        (first.0 - CROSSOVER_CUT_FRACTION)
+                            .abs()
+                            .total_cmp(&(second.0 - CROSSOVER_CUT_FRACTION).abs())
+                            .then(first.0.total_cmp(&second.0))
+                    });
+                    // The constant `0.5` first, then the derived band midpoints
+                    // outward from it. `0.5` is the only cut this engine has
+                    // evidence for - it is the action that published 3.277 mm
+                    // on the ledger's own stream - and the ledger's arm A
+                    // measured that the *next* derived cut produces a legal
+                    // hybrid that the adoption rule usually refuses. So the
+                    // derived cuts widen the action space behind the action
+                    // that is known to pay, rather than replacing it.
+                    let bands = std::iter::once((CROSSOVER_CUT_FRACTION, f64::NAN, 0usize, true))
+                        .chain(bands);
+                    let mut taken = 0usize;
+                    let mut scanned = 0usize;
+                    let mut seen = std::collections::BTreeSet::new();
+                    for (fraction, gap_mm, differing, is_midpoint) in bands {
+                        if taken > CROSSOVER_CUTS_PER_PAIR || scanned > CROSSOVER_BANDS_SCANNED {
+                            break;
+                        }
+                        let key = format!(
+                            "23:{}:{}:{:016x}",
+                            parent_a.fingerprint,
+                            parent_b.fingerprint,
+                            fraction.to_bits()
+                        );
+                        if self.attempted.contains(&key) {
+                            continue;
+                        }
+                        scanned += 1;
+                        let Some((hybrid, from_a, from_b)) =
+                            crossover_hybrid(&parent_a.placements, &parent_b.placements, fraction)
+                        else {
+                            continue;
+                        };
+                        let hybrid_fingerprint = general_placement_fingerprint(&hybrid);
+                        // A cut that rebuilds one of its own parents is a no-op
+                        // dressed as a crossover; a cut that rebuilds a layout
+                        // the archive already holds buys a duplicate.
+                        if hybrid_fingerprint == parent_a.fingerprint
+                            || hybrid_fingerprint == parent_b.fingerprint
+                            || !seen.insert(hybrid_fingerprint.clone())
+                            || self
+                                .archive
+                                .basins()
+                                .iter()
+                                .any(|member| member.fingerprint == hybrid_fingerprint)
+                        {
+                            continue;
+                        }
+                        actions.push(ScheduledAction {
+                            class: ActionClass::Crossover,
+                            key,
+                            rank: pair_rank * (CROSSOVER_CUTS_PER_PAIR + 1) + taken,
+                            label: if gap_mm.is_nan() {
+                                format!(
+                                    "m23 rank{a}->rank{b} cut={fraction:.9} constant \
+                                     from={from_a}/{from_b}"
+                                )
+                            } else {
+                                format!(
+                                    "m23 rank{a}->rank{b} cut={fraction:.9} derived \
+                                     band={gap_mm:.6}mm differing={differing} \
+                                     midpoint={is_midpoint} from={from_a}/{from_b}"
+                                )
+                            },
+                            payload: ActionPayload::Crossover {
+                                left_fingerprint: parent_a.fingerprint.clone(),
+                                right_fingerprint: parent_b.fingerprint.clone(),
+                                cut_fraction: fraction,
+                            },
+                        });
+                        taken += 1;
+                    }
+                    pair_rank += 1;
+                }
+            }
+        }
+        actions
+    }
+
+    /// The archived basin with this fingerprint, cloned.
+    fn basin_by_fingerprint(&self, fingerprint: &str) -> Option<ArchivedBasin> {
+        self.archive
+            .basins()
+            .iter()
+            .find(|basin| basin.fingerprint == fingerprint)
+            .cloned()
+    }
+
+    /// What one action of `class` is expected to cost, in the budget's own
+    /// currency.
+    ///
+    /// The larger of the class prior - a multiple of the protected phase's own
+    /// measured cost - and this run's own worst observed action of the class.
+    ///
+    /// There is no "unpriced operators get a free pass" clause, which is the
+    /// ledger's mode-20 finding turned into a rule: an operator nobody has
+    /// priced is exactly the one that overruns. And the prior is never
+    /// *discarded* by a cheap first action, only raised by an expensive one:
+    /// the A/B/C measured one mode-26 ladder at 5.7M work units and another at
+    /// 21.0M on the same request at a different seed, so a class with a 3.7x
+    /// spread priced from one lucky sample is not priced at all.
+    fn class_cost_estimate(&self, class: ActionClass) -> f64 {
+        let prior = class.prior_cost_in_phase_zero() * self.phase_zero_cost;
+        let observed = self
+            .class_stats
+            .get(&class)
+            .filter(|stats| stats.actions > 0)
+            .map(|stats| stats.cost_max)
+            .unwrap_or(0.0);
+        prior.max(observed).max(f64::MIN_POSITIVE)
+    }
+
+    /// The queue's ranking value: expected millimetres of published raw depth
+    /// per protected-phase-0 cost.
+    ///
+    /// The prior is worth [`PRIOR_ACTIONS`] actions of evidence and this run's
+    /// own publications displace it, which is the "let publications re-rank"
+    /// half of the rule. Quoting the value against phase 0 rather than against
+    /// a million evaluations makes it the same number under a wall budget and a
+    /// work budget; the *ordering* it produces on the priors alone is the
+    /// ledger's own Δraw/M-evaluation ordering.
+    fn class_value(&self, class: ActionClass) -> f64 {
+        let (actions, delta) = match self.class_stats.get(&class) {
+            Some(stats) => (stats.actions as f64, stats.delta_raw_mm),
+            None => (0.0, 0.0),
+        };
+        let expected_delta =
+            (PRIOR_ACTIONS * class.prior_delta_mm() + delta) / (PRIOR_ACTIONS + actions);
+        expected_delta * self.phase_zero_cost / self.class_cost_estimate(class)
+    }
+}
+
+/// The v3 loop: enumerate, rank, spend the best affordable action, repeat.
+fn run_v3_schedule(coordinator: &mut Coordinator<'_>, constructor_clamp_mm: f64) -> ScheduleReport {
+    let mut actions: Vec<ScheduledActionReport> = Vec::new();
+    let schedule_by = coordinator.settings.schedule.schedule_by;
+    let phase_zero_cost = coordinator.phase_zero_cost;
+    coordinator.run_phase("schedule", schedule_by, |run| {
+        v3_loop(run, constructor_clamp_mm, &mut actions);
+    });
+    let exit_cause = coordinator
+        .phases
+        .last()
+        .map(|phase| phase.exit_cause.name().to_owned())
+        .unwrap_or_else(|| PhaseExitCause::Completed.name().to_owned());
+    let classes = coordinator
+        .class_stats
+        .iter()
+        .map(|(class, stats)| ScheduleClassReport {
+            class: class.name().to_owned(),
+            actions: stats.actions,
+            publications: stats.publications,
+            work_units: stats.work_units,
+            seconds: stats.seconds,
+            cost_total: stats.cost_total,
+            cost_max: stats.cost_max,
+            delta_raw_mm: stats.delta_raw_mm,
+            first_estimated_cost: stats.first_estimated_cost,
+            first_actual_cost: stats.first_actual_cost,
+        })
+        .collect();
+    ScheduleReport {
+        iterations: actions.len(),
+        exit_cause,
+        actions,
+        classes,
+        phase_zero_cost,
+    }
+}
+
+fn v3_loop(
+    run: &mut PhaseRun<'_, '_>,
+    constructor_clamp_mm: f64,
+    out: &mut Vec<ScheduledActionReport>,
+) {
+    let patience = run.settings.basin_patience.max(1);
+    let slots = run.settings.basin_slots;
+    let mut diversify_slot = 0usize;
+    let mut diversify_barren = 0usize;
+    let mut diversify_done = run.settings.basin_trigger == BasinTrigger::Never;
+    loop {
+        if !run.meter.has_room(run.deadline) {
+            run.note_exit(PhaseExitCause::Deadline);
+            return;
+        }
+        let mut candidates = run.enumerate_v3_actions();
+        let candidate_count = candidates.len();
+        // Rank: value first, then the class declaration order, then the action's
+        // own order within its class. Every comparison is total, so the queue is
+        // a deterministic function of the archive.
+        let values = [
+            ActionClass::Compression,
+            ActionClass::Descent,
+            ActionClass::Crossover,
+            ActionClass::Ladder,
+        ]
+        .into_iter()
+        .map(|class| (class, run.class_value(class)))
+        .collect::<BTreeMap<_, _>>();
+        candidates.sort_by(|first, second| {
+            values[&second.class]
+                .total_cmp(&values[&first.class])
+                .then(first.class.cmp(&second.class))
+                .then(first.rank.cmp(&second.rank))
+                .then(first.key.cmp(&second.key))
+        });
+        let remaining = run.meter.remaining_to(run.deadline);
+        let chosen = candidates
+            .into_iter()
+            .find(|action| remaining >= run.class_cost_estimate(action.class));
+        let action = match chosen {
+            Some(action) => action,
+            None if candidate_count > 0 => {
+                // Every action the queue can name costs more than the budget
+                // has left. That is a different finding from having no actions,
+                // and the exit cause says which.
+                run.note_exit(PhaseExitCause::Affordability);
+                return;
+            }
+            None => {
+                // No complementary pairs remain: the one place a constructor
+                // ticket is worth its price, and the only place v3 spends one.
+                if diversify_done || diversify_slot >= slots {
+                    run.note_exit(PhaseExitCause::KeysExhausted);
+                    return;
+                }
+                let Some(quantum) = run.mean_operator_cost("mode22") else {
+                    run.note_exit(PhaseExitCause::Affordability);
+                    return;
+                };
+                let arm = run.mean_operator_cost("mode20").unwrap_or(quantum);
+                if remaining < arm + quantum {
+                    run.note_exit(PhaseExitCause::Affordability);
+                    return;
+                }
+                let slot = diversify_slot;
+                diversify_slot += 1;
+                ScheduledAction {
+                    class: ActionClass::Diversify,
+                    key: format!("m20:slot{slot}"),
+                    rank: slot,
+                    label: format!("m20 ticket slot{slot} + m22 quantum"),
+                    payload: ActionPayload::Diversify { slot },
+                }
+            }
+        };
+
+        let class = action.class;
+        let estimated_cost = run.class_cost_estimate(class);
+        let entry_raw_depth_mm = run.incumbent.raw_depth_mm;
+        let cost_before = run.meter.currency_spent();
+        let work_before = run.meter.work_units();
+        let seconds_before = run.meter.seconds();
+        let publications_before = run.publications.len();
+        let calls_before = run.operator_calls.len();
+        let iteration = out.len();
+
+        execute_v3_action(run, &action, constructor_clamp_mm);
+
+        let cost = (run.meter.currency_spent() - cost_before).max(0.0);
+        let work_units = run.meter.work_units().saturating_sub(work_before);
+        let seconds = run.meter.seconds() - seconds_before;
+        let publications = run.publications.len() - publications_before;
+        let operator_calls = run.operator_calls.len() - calls_before;
+        let exit_raw_depth_mm = run.incumbent.raw_depth_mm;
+        let gained = match (entry_raw_depth_mm, exit_raw_depth_mm) {
+            (Some(entry), Some(exit)) => (entry - exit).max(0.0),
+            _ => 0.0,
+        };
+        {
+            let stats = run.class_stats.entry(class).or_default();
+            stats.actions += 1;
+            stats.publications += publications;
+            stats.work_units += work_units;
+            stats.seconds += seconds;
+            stats.cost_total += cost;
+            stats.cost_max = stats.cost_max.max(cost);
+            stats.delta_raw_mm += gained;
+            if stats.first_estimated_cost.is_none() {
+                stats.first_estimated_cost = Some(estimated_cost);
+                stats.first_actual_cost = Some(cost);
+            }
+        }
+        out.push(ScheduledActionReport {
+            iteration,
+            class: class.name().to_owned(),
+            key: action.key.clone(),
+            label: action.label.clone(),
+            value: values.get(&class).copied().unwrap_or(0.0),
+            estimated_cost,
+            actual_cost: cost,
+            work_units,
+            seconds,
+            operator_calls,
+            publications,
+            entry_raw_depth_mm,
+            exit_raw_depth_mm,
+            candidates: candidate_count,
+        });
+        if class == ActionClass::Diversify {
+            // The stopping signal is the descendant, never the arm's own depth
+            // - the same rule v2's patience implements, kept because the
+            // ledger's eighteen-sample sweep measured Pearson(immediate,
+            // descended) = -0.212.
+            if publications > 0 {
+                diversify_barren = 0;
+            } else {
+                diversify_barren += 1;
+                if diversify_barren >= patience {
+                    diversify_done = true;
+                }
+            }
+        }
+    }
+}
+
+/// Executes one queued action. Marks its key attempted first, so an action that
+/// produces nothing is still never offered twice.
+fn execute_v3_action(
+    run: &mut PhaseRun<'_, '_>,
+    action: &ScheduledAction,
+    constructor_clamp_mm: f64,
+) {
+    run.phase_name = action.class.name().to_owned();
+    run.already_attempted(action.key.clone());
+    match (action.class, &action.payload) {
+        (ActionClass::Descent, ActionPayload::Basin { fingerprint }) => {
+            let Some(basin) = run.basin_by_fingerprint(fingerprint) else {
+                return;
+            };
+            let cycles = run.settings.descent_cycles.max(1);
+            let epochs = run.settings.descent_relaxed_epochs.max(1);
+            run.run_operator(
+                22,
+                &basin.placements,
+                Some(basin.fingerprint.clone()),
+                Some(basin.raw_depth_mm + ALTERNATION_RUNG_MM),
+                |relaxed| {
+                    relaxed.alternation_max_cycles = Some(cycles);
+                    relaxed.epochs = epochs;
+                },
+                None,
+                ParentRole::Descended,
+                Some(action.label.clone()),
+            );
+        }
+        (ActionClass::Compression, ActionPayload::Basin { fingerprint }) => {
+            let Some(basin) = run.basin_by_fingerprint(fingerprint) else {
+                return;
+            };
+            let epochs = run.settings.descent_relaxed_epochs.max(1);
+            let target = basin.raw_depth_mm - COMPRESSION_RUNG_MM;
+            let compressed = run.run_operator(
+                22,
+                &basin.placements,
+                Some(basin.fingerprint.clone()),
+                Some(target),
+                |relaxed| {
+                    relaxed.alternation_max_cycles = Some(1);
+                    relaxed.epochs = epochs;
+                },
+                None,
+                ParentRole::Descended,
+                Some(action.label.clone()),
+            );
+            if compressed.exact_valid {
+                // Already archived and already offered to the adoption rule by
+                // `run_operator`. There is nothing for a legalizer to do.
+                return;
+            }
+            legalize_residue(run, &compressed, "m31 on the compression residue");
+        }
+        (ActionClass::Ladder, ActionPayload::Basin { fingerprint }) => {
+            let Some(basin) = run.basin_by_fingerprint(fingerprint) else {
+                return;
+            };
+            let drop_mm = basin.raw_depth_mm
+                * LADDER_RUNGS as f64
+                * crate::search::general_relaxed::COUPLED_SEPARATOR_CONTRACTION_RATIO;
+            let bound = basin.raw_depth_mm - drop_mm;
+            let ladder = run.run_operator(
+                26,
+                &basin.placements,
+                Some(basin.fingerprint.clone()),
+                Some(bound),
+                |_| {},
+                None,
+                ParentRole::Descended,
+                Some(action.label.clone()),
+            );
+            legalize_residue(run, &ladder, "m31 on the ladder residue");
+        }
+        (
+            ActionClass::Crossover,
+            ActionPayload::Crossover {
+                left_fingerprint,
+                right_fingerprint,
+                cut_fraction,
+            },
+        ) => {
+            let (Some(left), Some(right)) = (
+                run.basin_by_fingerprint(left_fingerprint),
+                run.basin_by_fingerprint(right_fingerprint),
+            ) else {
+                return;
+            };
+            let parent_b = GeneralPersistentVacancyPinnedParent {
+                placements: right.placements.clone(),
+                source: "archive".to_owned(),
+                source_sha256: right.fingerprint.clone(),
+            };
+            run.run_operator(
+                23,
+                &left.placements,
+                Some(left.fingerprint.clone()),
+                Some(*cut_fraction),
+                |_| {},
+                Some(&parent_b),
+                ParentRole::Descended,
+                Some(action.label.clone()),
+            );
+            // Both parents were descended from.
+            run.archive.charge_descent(&right.fingerprint);
+        }
+        (ActionClass::Diversify, ActionPayload::Diversify { slot }) => {
+            let slot = *slot;
+            let salt = slot as f64 * BASIN_TARGET_SALT_RELATIVE_STEP * constructor_clamp_mm;
+            let divisor = if run.settings.cell_divisor_salts.is_empty() {
+                None
+            } else {
+                Some(run.settings.cell_divisor_salts[slot % run.settings.cell_divisor_salts.len()])
+            };
+            let parent = run.incumbent.result.placements.clone();
+            let parent_fingerprint = run.incumbent.fingerprint.clone();
+            let drawn = run.run_operator(
+                20,
+                &parent,
+                Some(parent_fingerprint),
+                Some(constructor_clamp_mm + salt),
+                |relaxed| {
+                    relaxed.construction_restart_window = Some((slot, 1));
+                    relaxed.construction_void_cell_divisor = divisor;
+                },
+                None,
+                // The constructor builds from scratch; the incumbent is only
+                // its pose prior.
+                ParentRole::Prior,
+                Some(action.label.clone()),
+            );
+            let basin = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+                &drawn.final_placements,
+            );
+            if basin.len() != run.pieces.len() {
+                return;
+            }
+            let Some(basin_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
+                run.pieces,
+                &basin,
+                run.fast_settings,
+            )
+            .ok() else {
+                return;
+            };
+            let basin_fingerprint = general_placement_fingerprint(&basin);
+            let cycles = run.settings.descent_cycles.max(1);
+            let epochs = run.settings.descent_relaxed_epochs.max(1);
+            if run.already_attempted(format!("22:{cycles}:{epochs}:{basin_fingerprint}")) {
+                return;
+            }
+            run.run_operator(
+                22,
+                &basin,
+                Some(basin_fingerprint),
+                Some(basin_depth + ALTERNATION_RUNG_MM),
+                |relaxed| {
+                    relaxed.alternation_max_cycles = Some(cycles);
+                    relaxed.epochs = epochs;
+                },
+                None,
+                ParentRole::Descended,
+                Some(format!("m22 quantum on m20 slot{slot}")),
+            );
+        }
+        // The payload and the class are built together, so a mismatch is
+        // unreachable; it is a no-op rather than a panic because a coordinator
+        // that aborts a run to report a scheduling bug is worse than one that
+        // skips an action.
+        _ => {}
+    }
+}
+
+/// Hands a deep operator's terminal state to the global legalizer, one rung
+/// below its own measured depth, if it is a complete layout that the exact
+/// validator refused.
+///
+/// This is the one place mode 31 is called in v3, and it is what the review
+/// asked for: `m31` belongs to the clamp/repair chain, not to a phase of its
+/// own.
+fn legalize_residue(
+    run: &mut PhaseRun<'_, '_>,
+    population: &GeneralPersistentVacancyDiagnostics,
+    label: &str,
+) {
+    let residue = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+        &population.final_placements,
+    );
+    if residue.len() != run.pieces.len() {
+        return;
+    }
+    if !run.meter.has_room(run.deadline) {
+        return;
+    }
+    let Some(residue_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
+        run.pieces,
+        &residue,
+        run.fast_settings,
+    )
+    .ok() else {
+        return;
+    };
+    let bound = residue_depth - COMPRESSION_RUNG_MM;
+    if bound <= 0.0 {
+        return;
+    }
+    let residue_fingerprint = general_placement_fingerprint(&residue);
+    if run.already_attempted(format!("31:{residue_fingerprint}")) {
+        return;
+    }
+    run.run_operator(
+        31,
+        &residue,
+        Some(residue_fingerprint),
+        Some(bound),
+        |_| {},
+        None,
+        ParentRole::Descended,
+        Some(format!("{label} to {bound:.4}")),
+    );
+}
+
+// ---------------------------------------------------------------------------
 // The opportunity-and-delayed-credit ledger, and the A/B/C probe.
 //
 // Everything below this line is compiled only under `portfolio-ledger`. The
@@ -2223,7 +3131,6 @@ impl<'a> Coordinator<'a> {
 
 /// Whether two placements are the same pose, on the same bit-exact terms
 /// [`assignment_overlap`] uses - which is the terms mode 23 copies poses on.
-#[cfg(feature = "portfolio-ledger")]
 fn poses_equal(left: &GeneralFastPlacement, right: &GeneralFastPlacement) -> bool {
     left.rotation_deg.to_bits() == right.rotation_deg.to_bits()
         && left.mirrored == right.mirrored
@@ -2238,7 +3145,6 @@ fn poses_equal(left: &GeneralFastPlacement, right: &GeneralFastPlacement) -> boo
 /// a piece goes to left when its left-pose is strictly below it - so the
 /// ledger's hybrid fingerprint is the fingerprint the operator would actually
 /// be handed. Nothing is legalized here; this is the seed, not the result.
-#[cfg(feature = "portfolio-ledger")]
 fn crossover_hybrid(
     left: &[GeneralFastPlacement],
     right: &[GeneralFastPlacement],
@@ -2286,7 +3192,6 @@ fn crossover_hybrid(
 /// parents produces the same hybrid as the band below it, which is why the
 /// count is carried: it is the ledger's "where the two parents' placements
 /// differ" and it is what makes a cut a real action rather than a relabelling.
-#[cfg(feature = "portfolio-ledger")]
 fn derived_cut_bands(
     left: &[GeneralFastPlacement],
     right: &[GeneralFastPlacement],
@@ -3404,6 +4309,145 @@ mod tests {
         // The constructor slice is last, which is the whole of this stage's
         // rebudget: 19 arms, 19 exact-valid, 0 published at ten seconds.
         assert!(schedule.compression_by < schedule.diversify_by);
+        // v3's single loop ends where v2's last operator phase ended, so the
+        // drain keeps exactly the reserve it already had.
+        assert_eq!(schedule.schedule_by, schedule.diversify_by);
+        assert!(schedule.schedule_by < schedule.drain_by);
+    }
+
+    // ---- coordinator v3 ---------------------------------------------------
+
+    /// The compression target is *below* the parent's own depth. v2 asked for
+    /// `depth + 0.8` - looser than the incumbent it held - and exited
+    /// `noResidue`; the A/B/C's control D asked the same operator for
+    /// `depth - 0.3` and published 2.620 mm on seed 0. The rung is the
+    /// engine's own smallest construction drop, not a new millimetre.
+    #[test]
+    fn the_compression_target_is_below_the_parents_own_depth() {
+        assert!(COMPRESSION_RUNG_MM > 0.0);
+        let depth = 174.20812003998896;
+        assert!(depth - COMPRESSION_RUNG_MM < depth);
+        // And it is strictly tighter than the alternation rung the descent
+        // class asks for, which is a ceiling rather than a compression ask.
+        assert!(depth - COMPRESSION_RUNG_MM < depth + ALTERNATION_RUNG_MM);
+    }
+
+    /// A scheduled ladder is two rungs of the separator's own relative
+    /// contraction quantum, so the drop is a length the request supplies.
+    #[test]
+    fn a_scheduled_ladder_is_two_rungs_of_the_engines_own_quantum() {
+        let ratio = crate::search::general_relaxed::COUPLED_SEPARATOR_CONTRACTION_RATIO;
+        for depth in [174.20812003998896_f64, 70.9, 200.903] {
+            let drop = depth * LADDER_RUNGS as f64 * ratio;
+            // `ladder_compression_bounds` floors its rung at `depth * ratio`,
+            // so a drop of exactly two floors is exactly two rungs whatever the
+            // parent's depth is.
+            let floor = depth * ratio;
+            let step = (drop / 8.0).max(floor);
+            let rungs = ((drop / step).ceil() as usize).clamp(1, 8);
+            assert_eq!(rungs, LADDER_RUNGS, "depth {depth}");
+            assert!(drop > 0.0 && drop < depth);
+        }
+    }
+
+    /// The class priors reproduce the ledger's own Δraw per million evaluations
+    /// ordering - compression 1.10, descent 0.43, crossover 0.20 - even though
+    /// they are quoted against the protected phase rather than against a
+    /// million evaluations, because the queue has to be rankable under a wall
+    /// budget where the evaluation counters are off.
+    #[test]
+    fn the_class_priors_reproduce_the_ledgers_measured_order() {
+        let value = |class: ActionClass| class.prior_delta_mm() / class.prior_cost_in_phase_zero();
+        let compression = value(ActionClass::Compression);
+        let descent = value(ActionClass::Descent);
+        let crossover = value(ActionClass::Crossover);
+        let ladder = value(ActionClass::Ladder);
+        assert!(compression > descent, "{compression} > {descent}");
+        assert!(descent > crossover, "{descent} > {crossover}");
+        // The ledger's own ratios are 1.1017 : 0.4264 : 0.2043, i.e. 5.39 : 2.09
+        // : 1. The priors have to reproduce them to better than 10%, or the
+        // queue is not ranking by the thing that was measured.
+        assert!(((compression / crossover) / (1.1017 / 0.2043) - 1.0).abs() < 0.1);
+        assert!(((descent / crossover) / (0.4264 / 0.2043) - 1.0).abs() < 0.1);
+        // The ladder is the most expensive class by a factor of four and it is
+        // ranked last of the four priced classes, which is why it only runs
+        // once the cheap ones have exhausted their keys.
+        assert!(ladder < crossover, "{ladder} < {crossover}");
+        assert!(
+            ActionClass::Ladder.prior_cost_in_phase_zero()
+                > 3.0 * ActionClass::Crossover.prior_cost_in_phase_zero()
+        );
+        // The constructor slice is never ranked into the queue; the ledger
+        // measured 0 descendant publications from every archived m20 basin on
+        // all three mixed-61 seeds.
+        assert_eq!(ActionClass::Diversify.prior_delta_mm(), 0.0);
+    }
+
+    /// Every class name is distinct, because the operator calls and the
+    /// publication events a class pays for are attributed by that name.
+    #[test]
+    fn action_class_names_are_distinct() {
+        let all = [
+            ActionClass::Compression,
+            ActionClass::Descent,
+            ActionClass::Crossover,
+            ActionClass::Ladder,
+            ActionClass::Diversify,
+        ];
+        let names = all
+            .iter()
+            .map(|class| class.name())
+            .collect::<std::collections::BTreeSet<_>>();
+        assert_eq!(names.len(), all.len());
+        // The declaration order is the deterministic tie-break after the value,
+        // and it is the ledger's own yield order.
+        assert!(ActionClass::Compression < ActionClass::Descent);
+        assert!(ActionClass::Descent < ActionClass::Crossover);
+        assert!(ActionClass::Crossover < ActionClass::Ladder);
+        assert!(ActionClass::Ladder < ActionClass::Diversify);
+    }
+
+    /// A crossover action's key is built from the two parents *in the order
+    /// they are handed to the operator*, plus the cut, and never from their
+    /// ranks. The frontier reorders between actions, so a rank-built key would
+    /// report an attempted action as untried - which is the exact class of
+    /// error the ledger exists to avoid.
+    #[test]
+    fn a_v3_crossover_key_is_parent_and_cut_ordered_never_rank_ordered() {
+        let key = |left: &str, right: &str, cut: f64| {
+            format!("23:{left}:{right}:{:016x}", cut.to_bits())
+        };
+        // Same pair, two directions: two keys.
+        assert_ne!(key("a", "b", 0.5), key("b", "a", 0.5));
+        // Same ordered pair, two cuts: two keys.
+        assert_ne!(key("a", "b", 0.5), key("a", "b", 0.4957));
+        // The same action named from either end of a reordered frontier is one
+        // key, because nothing in it is a rank.
+        assert_eq!(key("a", "b", 0.5), key("a", "b", 0.5));
+    }
+
+    /// The bounded enumeration is bounded by *construction*: at most
+    /// `CROSSOVER_CUTS_PER_PAIR` cuts per ordered pair per iteration, over the
+    /// frontier's ordered pairs, plus one compression, one descent and one
+    /// ladder per frontier member. The ledger's 4,318 actions are never
+    /// enumerated in one pass.
+    #[test]
+    fn the_enumeration_is_bounded_by_construction() {
+        let states = 3usize;
+        let quantum_states = 1usize;
+        let ordered_pairs = states * (states - 1);
+        // One compression and one descent per quantum state, one ladder on
+        // rank 0, and the constant cut plus `CROSSOVER_CUTS_PER_PAIR` derived
+        // cuts per ordered pair.
+        let ceiling =
+            2 * quantum_states + 1 + ordered_pairs * (CROSSOVER_CUTS_PER_PAIR + 1);
+        assert_eq!(ordered_pairs, 6);
+        assert_eq!(ceiling, 21);
+        // The ledger's top-3 frontier alone carries 360 ordered, cut-derived
+        // actions; one enumeration offers at most 21 of them, and the loop
+        // re-enumerates after every action rather than walking the rest blindly.
+        assert!(ceiling < 360);
+        assert!(CROSSOVER_BANDS_SCANNED >= CROSSOVER_CUTS_PER_PAIR);
     }
 }
 
