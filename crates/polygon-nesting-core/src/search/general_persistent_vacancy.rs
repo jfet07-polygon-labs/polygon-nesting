@@ -18,11 +18,11 @@ mod construction_confirm_shield;
 use construction_confirm_shield::ConfirmShields;
 
 // The skyline constructor's inner overlap certificate - the prefilter that runs
-// in the opposite direction to the shield above, and the only one that could
+// in the opposite direction to the shield above, and the only one that can
 // reject a row before it builds anything. Its default build is a zero-sized
-// forwarder whose one query always answers "no proof"; `constructor-census`
-// compiles the inscribed-disc certificate in for measurement, and this commit
-// lets it decide nothing.
+// forwarder whose one query always answers "no proof"; `fast-constructor-reject`
+// swaps in the inscribed-disc certificate, and `constructor-census` compiles the
+// same certificate in for measurement without letting it decide anything.
 #[path = "construction_reject_certificate.rs"]
 pub(crate) mod construction_reject_certificate;
 use construction_reject_certificate::RejectCertificates;
@@ -7343,6 +7343,21 @@ fn construction_confirm_row(
         work.reject_certificates
             .signed_pressure(&parent.active, construction_reject_certificate::COVER_DISCS),
     );
+    #[cfg(feature = "fast-constructor-reject")]
+    if work
+        .reject_certificates
+        .proven_overlap(&parent.active, construction_reject_certificate::REJECT_DISCS)
+        .is_some()
+    {
+        debug_assert!(
+            certified_row_really_overlaps(pieces, work_settings, parent, piece_index, candidate),
+            "the constructor's inner overlap certificate disagreed with the exact tier"
+        );
+        #[cfg(feature = "constructor-census")]
+        crate::constructor_census::row_rejected_by_overlap();
+        profiling::deep::finish(Phase::VacancyExactRows, started);
+        return Ok(None);
+    }
     profiling::deep::count(Counter::CollisionPolygonBuilds, 1);
     let build_started = profiling::deep::start(Phase::CollisionPolygonBuild);
     let collision = build_collision(pieces[piece_index], candidate, work_settings, work)?;
@@ -7399,6 +7414,48 @@ fn construction_confirm_row(
     profiling::deep::finish(Phase::ExactOverlapTest, pairs_started);
     profiling::deep::finish(Phase::VacancyExactRows, started);
     Ok(Some(collision))
+}
+
+/// The empirical half of the inner certificate's soundness claim.
+///
+/// Called from the `debug_assert` on the reject path, so it runs on **every**
+/// row the certificate rejects in a debug build and on none of them in a
+/// release one: it builds the collision polygon the certificate exists to avoid
+/// building and requires a positive exact intersection area against some active
+/// piece. A certificate that were ever wrong would fire here rather than
+/// silently changing what the constructor accepts.
+///
+/// It deliberately does not go through [`build_collision`] or
+/// [`exact_intersection_area`], because those charge quotas: the assertion must
+/// not move the budgets the arm it is checking runs under.
+#[cfg(feature = "fast-constructor-reject")]
+fn certified_row_really_overlaps(
+    pieces: &[GeneralFastPiece<'_>],
+    work_settings: GeneralFastSettings,
+    parent: &VacancyState,
+    piece_index: usize,
+    candidate: &RelaxedPlacement,
+) -> bool {
+    let Ok(collision) = LEGACY.exact_authority().collision_polygon(
+        pieces[piece_index].polygon,
+        KernelPose {
+            rotation_deg: candidate.rotation_deg,
+            mirrored: candidate.mirrored,
+            translate_x: candidate.translate_x,
+            translate_y: candidate.translate_y,
+        },
+        collision_expansion_mm(work_settings),
+    ) else {
+        return false;
+    };
+    (0..pieces.len()).any(|fixed_index| {
+        parent.active[fixed_index]
+            && parent.collisions[fixed_index].as_ref().is_some_and(|fixed| {
+                collision
+                    .intersection_area_mm2(fixed)
+                    .is_ok_and(|area| area > 0.0)
+            })
+    })
 }
 
 pub(super) const CONSTRUCTION_DROP_LADDER_MM: [f64; 6] = [0.4, 0.8, 1.6, 3.2, 6.4, 12.8];

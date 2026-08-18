@@ -47,16 +47,22 @@
 //!
 //! which answers "provably overlapping" or "no information", never "probably".
 //!
-//! # What this commit does with it
+//! # What it is allowed to decide
 //!
-//! Nothing but count. The certificate is evaluated beside the exact answer on
-//! every confirmation row and decides none of them, so the counting build can
-//! establish what it would prove — and, in `soundnessViolationsCertificate`,
-//! whether it would ever prove something false — before any code acts on it.
+//! Exactly one thing: that a confirmation row returns `None`. That is the same
+//! value the row returns when the exact tier finds an overlap, produced without
+//! running it — so, like the separation shield, the mechanism is a proof that
+//! substitutes a verdict rather than a heuristic that changes one. The poses the
+//! constructor accepts are unchanged, in the same order, at the same row
+//! charges.
+//!
+//! A `debug_assert` on the reject path closes the loop empirically: in a debug
+//! build every certified row still builds its collision polygon and asks
+//! Clipper, and the exact area must be positive.
 //!
 //! [`construction_confirm_shield`]: crate::search::construction_confirm_shield
 
-#[cfg(feature = "constructor-census")]
+#[cfg(any(feature = "constructor-census", feature = "fast-constructor-reject"))]
 mod armed {
     use std::sync::Arc;
 
@@ -69,6 +75,24 @@ mod armed {
     /// discs — because the greedy that builds it is nested, so its first `k`
     /// picks *are* the `k`-disc cover.
     pub(crate) const COVER_DISCS: usize = 8;
+
+    /// How many of those discs the *armed* query uses.
+    ///
+    /// The census priced the ladder on the mode-20 gate-1 stream: the candidate
+    /// stream's certified rows are 288,693 at one disc, 320,216 at two, 330,260
+    /// at four and 330,746 at eight. Four reaches 99.85% of what eight reaches
+    /// for a quarter of the pair arithmetic, so four is where the knee is and
+    /// the cover is still built at eight so the census can keep pricing past it.
+    pub(crate) const REJECT_DISCS: usize = 4;
+
+    /// How many discs a *row* poses. The counting build has to pose the whole
+    /// cover, because it prices prefixes it does not act on; every other build
+    /// poses only the discs its query will read.
+    const POSED_DISCS: usize = if cfg!(feature = "constructor-census") {
+        COVER_DISCS
+    } else {
+        REJECT_DISCS
+    };
 
     /// Millimetres eroded from a candidate disc's certified radius.
     ///
@@ -451,7 +475,7 @@ mod armed {
                 self.candidate.seal();
                 return;
             };
-            for disc in cover.discs.iter().take(COVER_DISCS) {
+            for disc in cover.discs.iter().take(POSED_DISCS) {
                 let radius = disc.r + inflation;
                 if radius <= 0.0 {
                     continue;
@@ -575,10 +599,10 @@ mod armed {
     }
 }
 
-/// The forwarder compiled when the census is off: a zero-sized value whose one
-/// query always answers "no proof", so every row builds and confirms exactly as
-/// it did before.
-#[cfg(not(feature = "constructor-census"))]
+/// The forwarder compiled when neither the census nor the reject flag is on: a
+/// zero-sized value whose one query always answers "no proof", so every row
+/// builds and confirms exactly as it did before.
+#[cfg(not(any(feature = "constructor-census", feature = "fast-constructor-reject")))]
 mod armed {
     use std::sync::Arc;
 
@@ -626,9 +650,129 @@ mod armed {
 
 pub(crate) use armed::RejectCertificates;
 
-
+#[cfg(any(feature = "constructor-census", feature = "fast-constructor-reject"))]
+pub(crate) use armed::REJECT_DISCS;
 
 /// The full cover size, which only the counting build reads: it prices the
 /// prefixes the armed query does not use.
 #[cfg(feature = "constructor-census")]
 pub(crate) use armed::COVER_DISCS;
+
+#[cfg(all(test, feature = "fast-constructor-reject"))]
+mod tests {
+    use std::sync::Arc;
+
+    use super::armed::{RejectCertificates, REJECT_DISCS};
+    use crate::domain::IrregularPoint;
+    use crate::geometry::general_polygon::{PolygonRegion, PolygonSet};
+
+    fn polygon(points: &[(f64, f64)]) -> PolygonSet {
+        PolygonSet::new(vec![PolygonRegion::new(
+            points
+                .iter()
+                .map(|(x, y)| IrregularPoint::new(*x, *y))
+                .collect(),
+            Vec::new(),
+        )
+        .expect("valid region")])
+        .expect("valid set")
+    }
+
+    /// The property the whole design rests on, checked by brute force in the
+    /// direction that matters: over a dense grid of relative placements of two
+    /// non-convex pieces, the certificate may never claim an overlap for a pair
+    /// whose exact collision polygons are disjoint.
+    #[test]
+    fn an_overlap_certificate_is_never_issued_for_a_disjoint_pair() {
+        let ell = [
+            (0.0, 0.0),
+            (30.0, 0.0),
+            (30.0, 10.0),
+            (10.0, 10.0),
+            (10.0, 30.0),
+            (0.0, 30.0),
+        ];
+        let bar = [(0.0, 0.0), (14.0, 0.0), (14.0, 6.0), (0.0, 6.0)];
+        let expansion = 1.25;
+        let fixed_source = polygon(&ell);
+        let fixed_collision = Arc::new(
+            fixed_source
+                .transformed(0.0, false, 0.0, 0.0)
+                .expect("transform")
+                .offset(expansion)
+                .expect("offset"),
+        );
+        let moving_source = polygon(&bar);
+
+        let mut certificates = RejectCertificates::default();
+        certificates.begin_parent(&[Some(Arc::clone(&fixed_collision))]);
+        let active = [true];
+
+        let mut proofs = 0;
+        let mut overlaps = 0;
+        for step_x in -50..=50 {
+            for step_y in -50..=50 {
+                let (dx, dy) = (step_x as f64 * 0.9, step_y as f64 * 0.9);
+                certificates.begin_candidate(&moving_source, 0, 37.0, false, dx, dy, expansion);
+                let proved = certificates.proven_overlap(&active, REJECT_DISCS).is_some();
+                let moving_collision = moving_source
+                    .transformed(37.0, false, dx, dy)
+                    .expect("transform")
+                    .offset(expansion)
+                    .expect("offset");
+                let overlapping = moving_collision
+                    .intersection_area_mm2(&fixed_collision)
+                    .expect("a small pair query succeeds")
+                    > 0.0;
+                assert!(
+                    !(proved && !overlapping),
+                    "an overlap certificate was issued for a disjoint pair at ({dx}, {dy})"
+                );
+                proofs += usize::from(proved);
+                overlaps += usize::from(overlapping);
+            }
+        }
+        assert!(proofs > 100, "expected many proved placements, got {proofs}");
+        assert!(
+            overlaps > proofs,
+            "the certificate is conservative, so it cannot prove more than exist"
+        );
+    }
+
+    /// The certificate holds under a mirror as well as a rotation, because the
+    /// disc centres travel through the same transform the polygon does.
+    #[test]
+    fn a_mirrored_pose_transforms_its_cover_the_same_way() {
+        let wedge = [(0.0, 0.0), (20.0, 0.0), (20.0, 4.0), (6.0, 4.0), (6.0, 14.0), (0.0, 14.0)];
+        let expansion = 0.75;
+        let source = polygon(&wedge);
+        let fixed = Arc::new(
+            source
+                .transformed(0.0, false, 0.0, 0.0)
+                .expect("transform")
+                .offset(expansion)
+                .expect("offset"),
+        );
+        let mut certificates = RejectCertificates::default();
+        certificates.begin_parent(&[Some(Arc::clone(&fixed))]);
+        let active = [true];
+        for step in -30..=30 {
+            let dx = step as f64 * 0.7;
+            certificates.begin_candidate(&source, 0, 113.0, true, dx, 2.0, expansion);
+            let proved = certificates.proven_overlap(&active, REJECT_DISCS).is_some();
+            let moving = source
+                .transformed(113.0, true, dx, 2.0)
+                .expect("transform")
+                .offset(expansion)
+                .expect("offset");
+            let overlapping = moving
+                .intersection_area_mm2(&fixed)
+                .expect("a small pair query succeeds")
+                > 0.0;
+            assert!(
+                !(proved && !overlapping),
+                "an overlap certificate was issued for a disjoint mirrored pose at {dx}"
+            );
+        }
+    }
+}
