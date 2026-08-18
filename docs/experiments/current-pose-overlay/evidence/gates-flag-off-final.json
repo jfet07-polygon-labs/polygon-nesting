@@ -1,0 +1,57 @@
+{
+ "label": "flag-off-final",
+ "binary": "/tmp/grb-gate-final",
+ "env": {},
+ "gates": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fingerprints": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ],
+   "hit": true,
+   "wallSeconds": 26.43720006942749,
+   "docDigest": "e640aff2e1c6addddddc53481f658b6d3abad3d111ed3ce6c6470116cfe85fca"
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "depth": 159.092,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.1723012924194336,
+   "docDigest": "e8183c78840b0a16fcd59a90c4d851422610e127369f9d05832047acaf7e4713"
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "depth": 159.079,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.514708995819092,
+   "docDigest": "f3126740c099a5105c3715cc8db22c4d5081e21d3ce209a7b3bdcc41976fb80d"
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "depth": 164.038,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.099200963973999,
+   "docDigest": "86deb18f0c08b5cccc27619ad738eb1f2ea3ac565846243afc2e001b6646e61b"
+  }
+ },
+ "ALL_PASS": true
+}

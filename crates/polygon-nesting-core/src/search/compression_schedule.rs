@@ -592,6 +592,9 @@ impl CompressionSchedule {
             parent_boundary_violations: 0,
             parent_collision_pairs: 0,
             parent_proxy_feasible: false,
+            parent_entry_loss: 0.0,
+            current_pose_overlay: false,
+            current_pose_overlay_entries: 0,
             target_depth_mm: from_grid(self.target_grid),
             final_depth_mm: self.depth_mm(),
             floor_depth_mm: self.floor_mm(),
@@ -691,6 +694,23 @@ pub struct GeneralCompressionScheduleDiagnostics {
     pub parent_boundary_violations: usize,
     pub parent_collision_pairs: usize,
     pub parent_proxy_feasible: bool,
+    /// The magnitude behind the two counts above: boundary loss plus every
+    /// colliding pair's raw penalty, in the proxy tier's own units, measured
+    /// on the parent before the schedule takes a single step. Two runs can
+    /// report the same violation and collision-pair counts while this
+    /// differs, because a piece a continuous rotation away from its nearest
+    /// `StructuredGrid` angle can still clear the same neighbours by a
+    /// smaller margin. This is the number Sol review 5's entry-damage claim
+    /// is about.
+    pub parent_entry_loss: f64,
+    /// Whether `CurrentPoseOverlay` was armed for this run. See
+    /// `GeneralRelaxedSettings::current_pose_overlay`.
+    pub current_pose_overlay: bool,
+    /// How many pieces the overlay actually had to cover: the count of
+    /// parent placements whose rotation was not already on the
+    /// `StructuredGrid` 2.5-degree grid. Zero whenever the overlay is off,
+    /// and zero on an overlay run whose parent happened to be grid-native.
+    pub current_pose_overlay_entries: usize,
     pub target_depth_mm: f64,
     /// The clamp the frontier ended at.
     pub final_depth_mm: f64,

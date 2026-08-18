@@ -442,6 +442,33 @@ pub struct GeneralRelaxedSettings {
     /// branch on it. See [`crate::search::compression_schedule`].
     #[cfg(feature = "compression-schedule")]
     pub compression_schedule: Option<crate::search::compression_schedule::CompressionScheduleSettings>,
+    /// Arms `CurrentPoseOverlay`: a per-piece lookup of the parent's own
+    /// continuous rotation, consulted only when the `StructuredGrid` catalogue
+    /// has no entry for the pose a placement currently holds.
+    ///
+    /// `false` - the default, and what every existing caller constructs -
+    /// leaves `initialize_complete_state` snapping every parent rotation onto
+    /// the 2.5-degree grid exactly as it does today, which is the entry
+    /// damage Sol review 5 measured (median +0.448 mm on the 171-179 port
+    /// parents). `true` seeds the lane with the parent's *continuous*
+    /// rotation instead, and layers a small per-piece surrogate map on top of
+    /// the unchanged `StructuredGrid` catalogue so that pose resolves.
+    ///
+    /// This does **not** touch `build_surrogate_catalog`'s `StructuredGrid`
+    /// branch, `random_candidate`'s `seed_angle` snapping, or the pressure
+    /// model: the candidate catalogue and the candidate order a lane can
+    /// still propose are the ones `StructuredGrid` always proposed. Only a
+    /// piece no candidate has yet touched - the warm start - or a piece whose
+    /// rotation a translation-only repair step left alone, ever resolves
+    /// through the overlay; the moment a candidate's own rotation is
+    /// accepted for a piece, that piece is grid-native again for the rest of
+    /// the run. See `docs/experiments/current-pose-overlay/README.md`.
+    ///
+    /// Only meaningful where `drive_compression_schedule` builds a lane -
+    /// currently mode 34 - and compiled out entirely without
+    /// `compression-schedule`, matching `compression_schedule` above.
+    #[cfg(feature = "compression-schedule")]
+    pub current_pose_overlay: bool,
 }
 
 impl GeneralRelaxedSettings {
@@ -471,6 +498,8 @@ impl GeneralRelaxedSettings {
             alternation_max_cycles: None,
             #[cfg(feature = "compression-schedule")]
             compression_schedule: None,
+            #[cfg(feature = "compression-schedule")]
+            current_pose_overlay: false,
         }
     }
 
@@ -2536,6 +2565,39 @@ fn derive_rotation_key(rotation_deg: f64, directional: bool) -> i64 {
     angle_key(angle)
 }
 
+/// Whether a rotation key should be derived from the placement's exact
+/// continuous angle instead of snapped onto the `StructuredGrid`.
+///
+/// This is the `directional` every `derive_rotation_key`/`rotation_key` call
+/// site asks for - it governs *key derivation only*, never which pressure
+/// model's scoring path runs. Two things make it true:
+///
+/// * the `DirectionalPenetration` engine, which has always worked in
+///   continuous angles;
+/// * `CurrentPoseOverlay`, when armed. Without this, a placement that
+///   `initialize_complete_state` seeded at the parent's own continuous
+///   rotation would still have every lookup re-derive a *snapped* key -
+///   `derive_rotation_key`'s `else` branch runs `canonical_angle`
+///   unconditionally - so the overlay's own catalogue entries, keyed by the
+///   continuous angle, would sit there unread and every score would be
+///   computed from the grid-snapped shape regardless. This is what actually
+///   lets a resolution reach the overlay instead of the base catalogue: see
+///   [`GeneralRelaxedSettings::current_pose_overlay`].
+///
+/// Safe either way for a placement that is already grid-native - `2.5` is a
+/// fixed point of both `canonical_angle` and `continuous_angle` - so this
+/// changes nothing for any piece a candidate has actually touched; only an
+/// untouched or translation-only-repaired piece can still carry a continuous
+/// angle for this to matter.
+fn continuous_rotation_keys(relaxed_settings: GeneralRelaxedSettings) -> bool {
+    let directional = relaxed_settings.collision_backend
+        == GeneralRelaxedCollisionBackend::RollbackTriangle
+        && relaxed_settings.pressure_model == GeneralRelaxedPressureModel::DirectionalPenetration;
+    #[cfg(feature = "compression-schedule")]
+    let directional = directional || relaxed_settings.current_pose_overlay;
+    directional
+}
+
 impl CellIndex {
     fn new(cells: &[Triangle], bounds: IrregularBounds) -> Self {
         let words = cells.len().div_ceil(64).max(1);
@@ -3598,6 +3660,7 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
         relaxed_settings.angle_seed_policy,
         relaxed_settings.pressure_model,
         incumbent,
+        false,
     )?;
     let mut shrink_ratio = relaxed_settings.initial_shrink_ratio;
     let mut repair_successors_attempted = 0usize;
@@ -3889,6 +3952,7 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
                 relaxed_settings.angle_seed_policy,
                 relaxed_settings.pressure_model,
                 &protected,
+                false,
             )?
         };
         diagnostics.epochs.push(GeneralRelaxedEpochDiagnostics {
@@ -5468,6 +5532,19 @@ fn drive_compression_schedule(
     };
     let (catalog, _) =
         build_surrogate_catalog(pieces, fast_settings, catalog_mode, Some(&incumbent))?;
+    // `CurrentPoseOverlay`: layered onto a clone of the grid catalogue, never
+    // mutating it, and only when the settings flag asks for it - see
+    // `GeneralRelaxedSettings::current_pose_overlay`. `overlay_entries` is
+    // the count Sol review 5 asked for: how many of the parent's placements
+    // arrived off the 2.5-degree grid.
+    let mut overlay_entries = 0usize;
+    let catalog = if relaxed_settings.current_pose_overlay {
+        let overlay = build_current_pose_overlay(pieces, fast_settings, &catalog, parent_placements)?;
+        overlay_entries = overlay.len();
+        Arc::new(catalog_with_current_pose_overlay(&catalog, &overlay))
+    } else {
+        catalog
+    };
     let mut state = initialize_complete_state(
         pieces,
         fast_settings,
@@ -5475,6 +5552,7 @@ fn drive_compression_schedule(
         relaxed_settings.angle_seed_policy,
         relaxed_settings.pressure_model,
         &incumbent,
+        relaxed_settings.current_pose_overlay,
     )?;
     let mut search = LegacyLaneSearch::new(
         pieces,
@@ -5515,6 +5593,14 @@ fn drive_compression_schedule(
     let parent_boundary_violations = score.boundary_violations;
     let parent_collision_pairs = score.collision_pairs.len();
     let parent_proxy_feasible = score.feasible();
+    // The magnitude behind the two counts above, in the tracker's own units:
+    // boundary loss plus every colliding pair's raw penalty. Two counts can
+    // agree while this differs by 2.5-degree-grid-sized amounts - a piece a
+    // continuous rotation away from its nearest catalogue angle can still
+    // clear the same neighbours, just by a smaller margin - so this is the
+    // number Sol review 5's entry-damage claim (median +0.448 mm) is actually
+    // about, not the violation count.
+    let parent_entry_loss = score.common_loss();
 
     // The incumbent half of the asymmetry. It starts at the parent, so the
     // schedule's floor is the parent by construction.
@@ -5680,6 +5766,9 @@ fn drive_compression_schedule(
     report.parent_boundary_violations = parent_boundary_violations;
     report.parent_collision_pairs = parent_collision_pairs;
     report.parent_proxy_feasible = parent_proxy_feasible;
+    report.parent_entry_loss = parent_entry_loss;
+    report.current_pose_overlay = relaxed_settings.current_pose_overlay;
+    report.current_pose_overlay_entries = overlay_entries;
     report.confirmation_ms = confirmation_ms;
     report.repair_ms = repair_ms;
     report.steps = rows;
@@ -6499,6 +6588,7 @@ fn run_coupled_separator_arm<'a>(
             GeneralRelaxedAngleSeedPolicy::ContinuousUniform,
             arm.pressure_model(),
             &incumbent,
+            false,
         )
         .and_then(|state| {
             compress_state_at_split(&state, target_depth_mm, compression_split_mm, pieces)
@@ -6938,6 +7028,7 @@ fn run_precompression_frontier_vacancy_experiment<'a>(
         GeneralRelaxedAngleSeedPolicy::ContinuousUniform,
         GeneralRelaxedPressureModel::DynamicPoles,
         &checkpoint.incumbent,
+        false,
     ) {
         Ok(state) => state,
         Err(error) => {
@@ -11052,7 +11143,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         }
         #[cfg(feature = "relaxed-cached-pose-bounds")]
         {
-            let directional = self.uses_directional_pressure();
+            let directional = continuous_rotation_keys(self.relaxed_settings);
             let key = (
                 self.catalog.geometry_class_by_input[input_index],
                 self.angle_keys
@@ -13458,10 +13549,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 relaxed_settings,
                 ..
             } = self;
-            let directional = relaxed_settings.collision_backend
-                == GeneralRelaxedCollisionBackend::RollbackTriangle
-                && relaxed_settings.pressure_model
-                    == GeneralRelaxedPressureModel::DirectionalPenetration;
+            let directional = continuous_rotation_keys(*relaxed_settings);
             let candidate_key = (
                 catalog.geometry_class_by_input[candidate.input_index],
                 angle_keys.rotation_key(candidate.input_index, candidate.rotation_deg, directional),
@@ -13517,10 +13605,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 scan_order_scratch,
                 ..
             } = self;
-            let directional = relaxed_settings.collision_backend
-                == GeneralRelaxedCollisionBackend::RollbackTriangle
-                && relaxed_settings.pressure_model
-                    == GeneralRelaxedPressureModel::DirectionalPenetration;
+            let directional = continuous_rotation_keys(*relaxed_settings);
             let candidate_key = (
                 catalog.geometry_class_by_input[candidate.input_index],
                 angle_keys.rotation_key(candidate.input_index, candidate.rotation_deg, directional),
@@ -14428,7 +14513,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
 
     /// The rotation half of a [`Self::surrogate_key`].
     fn rotation_key(&self, rotation_deg: f64) -> i64 {
-        derive_rotation_key(rotation_deg, self.uses_directional_pressure())
+        derive_rotation_key(rotation_deg, continuous_rotation_keys(self.relaxed_settings))
     }
 
     /// [`Self::surrogate_key`], answered from [`AngleKeyCache`] when the piece
@@ -14444,7 +14529,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         rotation_deg: f64,
         mirrored: bool,
     ) -> SurrogateKey {
-        let directional = self.uses_directional_pressure();
+        let directional = continuous_rotation_keys(self.relaxed_settings);
         (
             self.catalog.geometry_class_by_input[input_index],
             self.angle_keys
@@ -15367,6 +15452,81 @@ fn build_surrogate_catalog(
     ))
 }
 
+/// `CurrentPoseOverlay`: one [`OrientedSurrogate`] per piece whose parent
+/// rotation is not already a `StructuredGrid` grid angle, keyed exactly the
+/// way the grid catalogue keys its own entries.
+///
+/// This is computed as a value distinct from the `StructuredGrid` catalogue:
+/// it never touches `build_surrogate_catalog`, and nothing about the grid's
+/// own angle enumeration changes, so a caller that never asks for it gets
+/// today's catalogue back unchanged. [`catalog_with_current_pose_overlay`]
+/// layers it onto a *clone* of the base catalogue's orientation map for the
+/// one lane that asked, which is what "used only for warm-start/repair"
+/// means in practice: `random_candidate`'s `seed_angle` never samples a key
+/// from this map, because it never consults the map's membership at all; it
+/// only ever proposes grid angles. See [`GeneralRelaxedSettings::current_pose_overlay`].
+#[cfg(feature = "compression-schedule")]
+fn build_current_pose_overlay(
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    catalog: &SurrogateCatalog,
+    parent_placements: &[GeneralFastPlacement],
+) -> Result<BTreeMap<SurrogateKey, OrientedSurrogate>, GeneralFastError> {
+    let by_id = parent_placements
+        .iter()
+        .map(|placement| (placement.piece_id.as_str(), placement))
+        .collect::<BTreeMap<_, _>>();
+    let mut counters = WorkCounters::default();
+    let mut overlay = BTreeMap::new();
+    for (input_index, piece) in pieces.iter().enumerate() {
+        let Some(existing) = by_id.get(piece.id) else {
+            continue;
+        };
+        let angle = continuous_angle(existing.rotation_deg);
+        let key = (
+            catalog.geometry_class_by_input[input_index],
+            angle_key(angle),
+            existing.mirrored,
+        );
+        if catalog.orientations.contains_key(&key) || overlay.contains_key(&key) {
+            // Already grid-native, or another instance of the same geometry
+            // class already contributed this exact continuous pose.
+            continue;
+        }
+        overlay.insert(
+            key,
+            build_oriented_surrogate(
+                piece.polygon,
+                angle,
+                existing.mirrored,
+                collision_expansion_mm(settings),
+                &mut counters,
+            )?,
+        );
+    }
+    Ok(overlay)
+}
+
+/// Layers a [`build_current_pose_overlay`] map onto a clone of `catalog`'s
+/// orientation table, returning a new catalogue. The input `catalog` is
+/// untouched - every other holder of the same `Arc` keeps seeing the pure
+/// `StructuredGrid` table `build_surrogate_catalog` produced.
+#[cfg(feature = "compression-schedule")]
+fn catalog_with_current_pose_overlay(
+    catalog: &SurrogateCatalog,
+    overlay: &BTreeMap<SurrogateKey, OrientedSurrogate>,
+) -> SurrogateCatalog {
+    let mut orientations = catalog.orientations.clone();
+    for (key, shape) in overlay {
+        orientations.entry(*key).or_insert_with(|| shape.clone());
+    }
+    SurrogateCatalog {
+        geometry_class_by_input: catalog.geometry_class_by_input.clone(),
+        orientations,
+        shared_pair_nfps: catalog.shared_pair_nfps.clone(),
+    }
+}
+
 fn initialize_complete_state(
     pieces: &[GeneralFastPiece<'_>],
     settings: GeneralFastSettings,
@@ -15374,6 +15534,7 @@ fn initialize_complete_state(
     angle_seed_policy: GeneralRelaxedAngleSeedPolicy,
     pressure_model: GeneralRelaxedPressureModel,
     incumbent: &GeneralFastResult,
+    current_pose_overlay: bool,
 ) -> Result<RelaxedState, GeneralFastError> {
     let by_id = incumbent
         .placements
@@ -15387,21 +15548,32 @@ fn initialize_complete_state(
         if let Some(existing) = by_id.get(piece.id) {
             placements.push(RelaxedPlacement {
                 input_index,
-                rotation_deg: match (pressure_model, collision_backend, angle_seed_policy) {
-                    (GeneralRelaxedPressureModel::DirectionalPenetration, _, _) => {
-                        continuous_angle(existing.rotation_deg)
+                rotation_deg: if current_pose_overlay {
+                    // The overlay's whole point: keep the parent's own
+                    // rotation instead of snapping it onto the grid, and let
+                    // `CurrentPoseOverlay` resolve it. Unconditional on the
+                    // other three settings, but a no-op wherever they were
+                    // already continuous below - this only changes behaviour
+                    // for the default `StructuredGrid` + `RollbackTriangle` +
+                    // `StructuredTrianglePoles` combination.
+                    continuous_angle(existing.rotation_deg)
+                } else {
+                    match (pressure_model, collision_backend, angle_seed_policy) {
+                        (GeneralRelaxedPressureModel::DirectionalPenetration, _, _) => {
+                            continuous_angle(existing.rotation_deg)
+                        }
+                        (
+                            _,
+                            GeneralRelaxedCollisionBackend::DynamicHazard,
+                            GeneralRelaxedAngleSeedPolicy::ContinuousUniform,
+                        ) => continuous_angle(existing.rotation_deg),
+                        (
+                            _,
+                            GeneralRelaxedCollisionBackend::DynamicHazard,
+                            GeneralRelaxedAngleSeedPolicy::CurrentOnly,
+                        ) => continuous_angle(existing.rotation_deg),
+                        _ => canonical_angle(existing.rotation_deg),
                     }
-                    (
-                        _,
-                        GeneralRelaxedCollisionBackend::DynamicHazard,
-                        GeneralRelaxedAngleSeedPolicy::ContinuousUniform,
-                    ) => continuous_angle(existing.rotation_deg),
-                    (
-                        _,
-                        GeneralRelaxedCollisionBackend::DynamicHazard,
-                        GeneralRelaxedAngleSeedPolicy::CurrentOnly,
-                    ) => continuous_angle(existing.rotation_deg),
-                    _ => canonical_angle(existing.rotation_deg),
                 },
                 mirrored: existing.mirrored,
                 translate_x: existing.translate_short_axis,
@@ -17643,6 +17815,99 @@ mod tests {
         assert_eq!(
             report.work_units,
             report.candidate_queries + 5 * report.exact_pair_tests
+        );
+    }
+
+    /// `CurrentPoseOverlay` off: a parent with one piece at a continuous,
+    /// off-grid rotation is exactly the entry-damage case Sol review 5
+    /// describes - `initialize_complete_state` snaps it onto the
+    /// `StructuredGrid`, so the schedule's own `parentEntryLoss` measures a
+    /// perturbed layout rather than the parent it was actually handed.
+    #[test]
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn compression_schedule_without_overlay_snaps_continuous_parent_rotation() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        // Opposite corners of the 100x100 test sheet: far enough apart that
+        // no rotation of either 10x10/8x8 square can make them collide, so
+        // the parent is proxy-feasible regardless of how its rotation is
+        // resolved. `13.37` is deliberately off the 2.5-degree grid.
+        let parent = GeneralCoupledSeparatorArmDiagnostics {
+            final_placements: vec![
+                GeneralCoupledSeparatorPlacementDiagnostics {
+                    piece_id: "large".to_owned(),
+                    rotation_deg: 13.37,
+                    mirrored: false,
+                    translate_short_axis: 10.0,
+                    translate_long_axis: 10.0,
+                },
+                GeneralCoupledSeparatorPlacementDiagnostics {
+                    piece_id: "small".to_owned(),
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_short_axis: 80.0,
+                    translate_long_axis: 80.0,
+                },
+            ],
+            ..GeneralCoupledSeparatorArmDiagnostics::default()
+        };
+        let mut settings = coupled_experiment_test_settings(9);
+        settings.persistent_vacancy_target_depth_mm = Some(50.0);
+        settings.compression_schedule = Some(CompressionScheduleSettings {
+            sweeps_per_step: 1,
+            confirm_every: 1,
+            rollback_after_steps: 0,
+            work_cap_queries: Some(1),
+            continue_past_bound: true,
+            repair_policy: CompressionRepairPolicy::SweepsOnly,
+            ..CompressionScheduleSettings::default()
+        });
+
+        let without_overlay = JobPool::new(Some(1)).run_scoped(|| {
+            run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+        });
+        let report = without_overlay
+            .compression_schedule
+            .expect("an attempted schedule reports");
+        assert!(!report.current_pose_overlay);
+        assert_eq!(report.current_pose_overlay_entries, 0);
+        // The layout is well-separated, so it is proxy-feasible either way -
+        // this asserts the *mechanism* the overlay test below contrasts
+        // against, not damage on this particular fixture.
+        assert!(report.parent_proxy_feasible, "{report:?}");
+
+        settings.current_pose_overlay = true;
+        let with_overlay = JobPool::new(Some(1)).run_scoped(|| {
+            run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+        });
+        let overlay_report = with_overlay
+            .compression_schedule
+            .expect("an attempted schedule reports");
+        assert!(overlay_report.current_pose_overlay);
+        // Exactly the one piece that was off the grid, not the other, and not
+        // a `CurrentAssignment`-style catalogue rebuilt for the whole class.
+        assert_eq!(overlay_report.current_pose_overlay_entries, 1);
+        assert!(overlay_report.parent_proxy_feasible, "{overlay_report:?}");
+        // Both arms publish the same exact-valid parent - the schedule was
+        // given one query of budget - so this is purely a resolution check,
+        // not a quality claim.
+        assert_eq!(without_overlay.exact_valid, with_overlay.exact_valid);
+        assert_eq!(
+            without_overlay.independent_depth_mm,
+            with_overlay.independent_depth_mm
         );
     }
 

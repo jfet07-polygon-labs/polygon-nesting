@@ -5345,3 +5345,74 @@ Evidence, drivers, the thirty-five pinned states, the two certification
 batteries and the eight negatives: `docs/experiments/orientation-floor/`, with
 the pins under
 `docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/orientation-floor/`.
+
+## CurrentPoseOverlay: isolating the snap found a bug the campaign had to catch first
+
+Sol review 5 §3 asked for `StructuredGrid + CurrentPoseOverlay` before any
+`CurrentAssignment`/`DirectionalPenetration` comparison is trusted, precisely
+so the `+0.448 mm` entry-damage claim could be measured without also swapping
+the catalogue, the pair-NFP table and the pressure model the way
+`CurrentAssignment` does. This round built it, ran the A/B/C campaign, and the
+first honest result is that **the overlay initially did nothing at all** —
+not because it was inert by design, but because it was inert by bug.
+
+`GeneralRelaxedSettings::current_pose_overlay` (off by default, compiled only
+under `compression-schedule`) seeds `initialize_complete_state` with the
+parent's continuous rotation instead of `canonical_angle`-snapping it, and
+layers a small per-piece map onto a *clone* of the `StructuredGrid` catalogue
+so that pose resolves. `build_surrogate_catalog`'s grid branch, and every
+candidate `random_candidate`/`seed_angle` can still propose, are untouched —
+every consumer of `catalog.orientations` in the file is a point lookup, never
+an enumeration, so extra entries in the clone change nothing about what a
+fresh grid build produces. The first campaign run against fifteen parents
+(the twelve compression-schedule port parents plus the three true-contract
+pins) reported **bit-identical** entry loss between the grid and overlay arms
+on all fifteen, despite the overlay correctly counting 8-50 off-grid pieces
+per parent — including **49 of 61** on the `155.4223` pin, the exact number
+the record-line-cascade evidence already reported for that parent
+independently. Bit-identical results with correctly-counted overlay entries
+is the signature of dead code, not of a real null result, and that is what it
+was: `derive_rotation_key`'s non-directional branch calls `canonical_angle`
+**unconditionally**, so every lookup re-snapped a placement's key before it
+ever reached the overlay's own entries, regardless of what continuous angle
+`initialize_complete_state` had correctly seeded into the placement itself.
+The fix, `continuous_rotation_keys`, threads the overlay flag into rotation-
+key derivation at the six call sites that fed a `directional` bool into it —
+carefully kept separate from `uses_directional_pressure()`'s branch-dispatch
+checks, so the overlay still never switches the pressure model or the
+collision backend. A regression test pins the resolution on a hand-built
+continuous-rotation fixture.
+
+With the fix in place, at equal work (compression-schedule's own 3,341,379-
+unit design slice) on all fifteen parents: entry loss falls (median **-1420**,
+11 of 15 reduced) and boundary violations fall (median **-2**, 11 of 15
+reduced, none increased) — but the proxy tier's own collision-*pair* count
+rises on **14 of 15**, every time it moves at all. Not zero, not a clean gain:
+a trade along two axes of the same entry measurement, exactly the range Sol's
+review warned the number could fall in. Downstream, arm B still publishes
+more (12 of 15 parents against 9 of 15, 5.984 mm total drop against 4.136 mm)
+at the same work budget and within 1% on queries/second. The prize the
+review actually named — an `m33`/`m22`-produced state passing
+`parentProxyFeasible` under the overlay where it failed under the grid —
+did not land: **zero of fifteen** parents flip, because none of the fifteen
+were close enough to the feasibility boundary (26-46 colliding pairs on
+every one, both arms) for a sub-1.25-degree correction to cross it. Arm C
+could not be run at all: mode 34 is reachable only through the coupled
+separator's gate, which unconditionally requires the structured pressure
+model for both its arms regardless of which persistent-vacancy mode is
+asked for, and the fixture-loading path's settings check rejects any sheet-
+depth override outright — so there is currently no CLI-reachable way to ask
+the other engine to compress a parent at all, a sharper and more general
+statement than the catalogue/pair-NFP/pressure-model entanglement the review
+already named.
+
+Four pinned gates hit on the unmodified gate binary
+(`jagua-experimental` only, the flag compiled out entirely); a whole-document
+diff against a binary built from the pre-round commit differs in exactly the
+build/run artefacts expected (executable hash, source-tree hash, worktree
+status, wall-clock quartiles) and in nothing else. The full suite passes,
+`EXIT=0`, 55 binaries, 0 failures, the known-flaky eviction test included on
+the first attempt.
+
+Evidence, drivers, the campaign table, the gate runs and the regression test:
+`docs/experiments/current-pose-overlay/`.
