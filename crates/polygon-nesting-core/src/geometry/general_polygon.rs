@@ -500,7 +500,7 @@ impl PolygonSet {
     ///
     /// See [`GridSlabs::separated`] for what this is for and why the arithmetic
     /// is exact.
-    #[cfg(feature = "constructor-census")]
+    #[cfg(any(feature = "constructor-census", feature = "fast-constructor-confirm"))]
     pub(crate) fn grid_slabs(&self) -> Option<GridSlabs> {
         let mut slabs: Option<GridSlabs> = None;
         for region in &self.regions {
@@ -518,17 +518,25 @@ impl PolygonSet {
     /// geometry the exact query actually receives, and the strongest of them —
     /// the convex hull the confirmation shield also builds — needs the vertices
     /// rather than a summary of them.
+    #[cfg(any(feature = "constructor-census", feature = "fast-constructor-confirm"))]
+    pub(crate) fn grid_points_into(&self, out: &mut Vec<(f64, f64)>) {
+        out.clear();
+        for region in &self.regions {
+            out.extend(region.outer.path.iter().map(|point| (point.x, point.y)));
+        }
+    }
+
+    /// [`PolygonSet::grid_points_into`] into a fresh vector.
     #[cfg(feature = "constructor-census")]
     pub(crate) fn grid_points(&self) -> Vec<(f64, f64)> {
-        self.regions
-            .iter()
-            .flat_map(|region| region.outer.path.iter().map(|point| (point.x, point.y)))
-            .collect()
+        let mut out = Vec::new();
+        self.grid_points_into(&mut out);
+        out
     }
 }
 
 /// The number of fixed directions [`GridSlabs`] projects onto.
-#[cfg(feature = "constructor-census")]
+#[cfg(any(feature = "constructor-census", feature = "fast-constructor-confirm"))]
 pub(crate) const GRID_SLAB_DIRECTIONS: usize = 4;
 
 /// The largest grid coordinate magnitude for which every projection below is an
@@ -541,7 +549,7 @@ pub(crate) const GRID_SLAB_DIRECTIONS: usize = 4;
 /// `to_grid_mm`, which admits anything up to `2^53 - 1`, so the guard is real
 /// rather than decorative — but it is astronomically slack for a sheet: a
 /// coordinate of `2^51` grid units is 2.25 billion kilometres.
-#[cfg(feature = "constructor-census")]
+#[cfg(any(feature = "constructor-census", feature = "fast-constructor-confirm"))]
 const GRID_SLAB_EXACT_LIMIT: f64 = 4_503_599_627_370_496.0; // 2^52
 
 /// A polygon set's extent along four fixed directions, in grid units.
@@ -549,7 +557,7 @@ const GRID_SLAB_EXACT_LIMIT: f64 = 4_503_599_627_370_496.0; // 2^52
 /// This is a discrete oriented polytope — the axis-aligned box plus the two
 /// diagonals — computed on the integer Clipper grid. Its one purpose is to
 /// *prove* two sets disjoint cheaply; see [`GridSlabs::separated`].
-#[cfg(feature = "constructor-census")]
+#[cfg(any(feature = "constructor-census", feature = "fast-constructor-confirm"))]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct GridSlabs {
     min: [f64; GRID_SLAB_DIRECTIONS],
@@ -561,7 +569,7 @@ pub(crate) struct GridSlabs {
     directions: usize,
 }
 
-#[cfg(feature = "constructor-census")]
+#[cfg(any(feature = "constructor-census", feature = "fast-constructor-confirm"))]
 impl GridSlabs {
     #[inline]
     fn at(x: f64, y: f64) -> Self {

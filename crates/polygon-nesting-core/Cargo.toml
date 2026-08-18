@@ -122,6 +122,25 @@ fast-constructor-profile = []
 # The fused entry itself is unconditional and is the shape a kernel with a
 # shared traversal will implement; only the lane's use of it is gated.
 fused-pair-query = []
+# Prefilters the skyline constructor's exact pair questions with a grid-exact
+# separation certificate: the axis-aligned box plus the two diagonals, then a
+# separating-axis test over both convex hulls, both computed on the integer
+# Clipper path the exact query itself is executed on.
+#
+# The certificate answers "provably separated" or "no information", never
+# "probably". A separated pair has zero intersection area, so the verdict this
+# substitutes is the verdict the exact query would have returned; the poses the
+# constructor accepts, and the Clipper queries that confirm them, are unchanged.
+# A `debug_assert` on the skip path runs the exact query anyway and requires the
+# area to be zero.
+#
+# Off by default, and stacked on `fast-constructor-profile` rather than folded
+# into it so the two can be priced separately. It is not bit-identical as a
+# *document*: fewer Clipper queries means smaller `clipperInputVertices` and
+# `clipperOutputVertices` work diagnostics, which are quota quantities, so the
+# mode-20 regression gate must be run against the default build. See
+# `search::construction_confirm_shield`.
+fast-constructor-confirm = []
 # Compiles the constructor's exact-confirmation census in: a counting build
 # that attributes every exact pair question and every collision-polygon build
 # the constructor makes to its call path, and prices three *sound* separation

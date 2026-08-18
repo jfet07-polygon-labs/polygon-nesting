@@ -9,6 +9,14 @@ use std::mem::size_of;
 mod construction_void_grid;
 use construction_void_grid::ConstructionVoidCache;
 
+// The skyline constructor's exact-confirmation prefilter. Its default build is
+// a zero-sized forwarder whose one query always answers "no information", so
+// every pair reaches Clipper exactly as before; `fast-constructor-confirm`
+// swaps in the grid-exact separation certificate.
+#[path = "construction_confirm_shield.rs"]
+mod construction_confirm_shield;
+use construction_confirm_shield::ConfirmShields;
+
 const PERSISTENT_VACANCY_SEED_DOMAIN: u64 = 0x5650_4f50_3030_3031;
 const TARGET_DEPTH_MM: f64 = 165.0;
 const EXPECTED_PARENT_FINGERPRINT: &str =
@@ -807,6 +815,12 @@ fn elite_snapshot_heap_bytes(snapshot: &EliteSnapshot) -> usize {
 struct RunWork {
     diagnostics: GeneralPersistentVacancyWorkDiagnostics,
     quotas: VacancyQuotas,
+    /// The constructor's exact-confirmation prefilter cache. It lives here
+    /// rather than in a parameter because every function on the confirmation
+    /// path already carries `&mut RunWork`, so no signature moves and the
+    /// default build's generated code is unchanged — the forwarder is
+    /// zero-sized and its one query is a constant `false`.
+    confirm_shields: ConfirmShields,
 }
 
 impl RunWork {
@@ -814,6 +828,7 @@ impl RunWork {
         Self {
             diagnostics: GeneralPersistentVacancyWorkDiagnostics::default(),
             quotas: VacancyQuotas::for_piece_count(piece_count),
+            confirm_shields: ConfirmShields::default(),
         }
     }
 
@@ -6504,6 +6519,10 @@ fn construct_candidate_poses(
     work: &mut RunWork,
 ) -> Result<Vec<(RelaxedPlacement, Arc<PolygonSet>, CandidateProvenance)>, String> {
     let proposal_span = profiling::deep::start(Phase::VacancyProposals);
+    // The expansion parent is fixed for every confirmation row this call
+    // generates, so its separation certificates are derived once here and
+    // reused by all of them. A no-op off the profile.
+    work.confirm_shields.begin_parent(&parent.collisions);
     construction.slots = construction.slots.saturating_add(1);
     work.diagnostics.selected_piece_slots = work.diagnostics.selected_piece_slots.saturating_add(1);
     if work.diagnostics.selected_piece_slots > work.quotas.max_selected_piece_slots {
@@ -7231,6 +7250,10 @@ fn construction_confirm_row(
     }
     let pairs_started = profiling::deep::start(Phase::ExactOverlapTest);
     profiling::deep::count(Counter::ExactPairTests, 1);
+    // One separation certificate per confirmation row, against the parent's
+    // pre-derived ones. A no-op off the profile, and inert for a degenerate
+    // polygon, in which case every pair below takes the exact route.
+    work.confirm_shields.begin_candidate(&collision);
     for fixed_index in 0..pieces.len() {
         if !parent.active[fixed_index] {
             continue;
@@ -7239,6 +7262,20 @@ fn construction_confirm_row(
         let fixed = parent.collisions[fixed_index]
             .as_ref()
             .ok_or_else(|| format!("active piece {fixed_index} has no collision"))?;
+        // The prefilter answers "provably separated" or "no information", so a
+        // skip here is the exact query's own answer, reached without running
+        // it. The debug build proves that claim rather than asserting it: it
+        // runs the query anyway and requires the areas to agree.
+        if work.confirm_shields.separated(fixed_index) {
+            debug_assert_eq!(
+                collision
+                    .intersection_area_mm2(fixed)
+                    .expect("a certified-separated pair is a valid pair query"),
+                0.0,
+                "the constructor's separation certificate disagreed with the exact tier"
+            );
+            continue;
+        }
         if exact_intersection_area(&collision, fixed, work)? > 0.0 {
             #[cfg(feature = "constructor-census")]
             crate::constructor_census::row_rejected_by_overlap();
