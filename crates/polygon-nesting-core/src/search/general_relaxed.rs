@@ -3015,7 +3015,6 @@ impl CoupledSeparatorArm {
         self == Self::Treatment
     }
 
-    #[cfg(feature = "jagua-experimental")]
     fn label(self) -> &'static str {
         match self {
             Self::Control => "dynamicCoveragePolesTranslationOnly",
@@ -10065,7 +10064,6 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         self.relaxed_settings.collision_backend == GeneralRelaxedCollisionBackend::DynamicHazard
     }
 
-    #[cfg(feature = "jagua-experimental")]
     fn uses_dynamic_pressure(&self) -> bool {
         self.uses_dynamic_hazard()
             && self.relaxed_settings.pressure_model == GeneralRelaxedPressureModel::DynamicPoles
