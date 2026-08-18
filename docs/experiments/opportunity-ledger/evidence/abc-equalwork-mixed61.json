@@ -1,0 +1,539 @@
+{
+ "tag": "equalwork",
+ "binary": "/var/lib/t3/tmp/lg-ledger",
+ "baseWork": 120000000,
+ "probeWork": 21000000,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "arms": [
+  "A",
+  "B",
+  "C",
+  "D"
+ ],
+ "allowance": "0.002",
+ "rows": [
+  {
+   "seed": 0,
+   "arm": "A",
+   "spec": "work=120000000,cells=13:15:17:19,probe=A,probeWork=21000000",
+   "processWallSeconds": 18.934259656991344,
+   "entryRawDepthMm": 174.20812003998896,
+   "exitRawDepthMm": 174.20812003998896,
+   "deltaRawMm": 0.0,
+   "exitDualGateValid": true,
+   "probeWorkUnitsSpent": 6036325,
+   "probeSecondsSpent": 2.361094251000001,
+   "probePublications": 0,
+   "probeOperatorCalls": 1,
+   "probeSteps": [
+    "m23 forward rank0->rank1 cut=0.495798035 band=4.606000mm differing=1"
+   ],
+   "probeExitCause": "completed",
+   "incumbentRawDepthMm": 174.20812003998896,
+   "incumbentDualGateValid": true,
+   "totalWorkUnits": 38430082,
+   "probeCalls": [
+    {
+     "operator": "mode23",
+     "action": "m23 forward rank0->rank1 cut=0.495798035 band=4.606000mm differing=1",
+     "workUnits": 6035845,
+     "elapsedSeconds": 2.353692433999999,
+     "exactValid": true,
+     "rawDepthMm": 176.81686787029813,
+     "archiveDisposition": "Admitted",
+     "published": false,
+     "failureReason": null
+    }
+   ]
+  },
+  {
+   "seed": 0,
+   "arm": "B",
+   "spec": "work=120000000,cells=13:15:17:19,probe=B,probeWork=21000000",
+   "processWallSeconds": 22.54571548299282,
+   "entryRawDepthMm": 174.20812003998896,
+   "exitRawDepthMm": 174.20812003998896,
+   "deltaRawMm": 0.0,
+   "exitDualGateValid": true,
+   "probeWorkUnitsSpent": 3795975,
+   "probeSecondsSpent": 6.429706346,
+   "probePublications": 0,
+   "probeOperatorCalls": 3,
+   "probeSteps": [
+    "m20 ticket slot1",
+    "m23 incumbent->ticket@0.5",
+    "m22 short on crossover"
+   ],
+   "probeExitCause": "completed",
+   "incumbentRawDepthMm": 174.20812003998896,
+   "incumbentDualGateValid": true,
+   "totalWorkUnits": 36189732,
+   "probeCalls": [
+    {
+     "operator": "mode20",
+     "action": "m20:ticket:slot1",
+     "workUnits": 290,
+     "elapsedSeconds": 3.237520847999999,
+     "exactValid": true,
+     "rawDepthMm": 219.208,
+     "archiveDisposition": "Admitted",
+     "published": false,
+     "failureReason": null
+    },
+    {
+     "operator": "mode23",
+     "action": "m23:ticket:forward@0.5",
+     "workUnits": 2548578,
+     "elapsedSeconds": 2.445928710999997,
+     "exactValid": true,
+     "rawDepthMm": 193.426,
+     "archiveDisposition": "Admitted",
+     "published": false,
+     "failureReason": null
+    },
+    {
+     "operator": "mode22",
+     "action": "m22:ticket:crossover",
+     "workUnits": 1245942,
+     "elapsedSeconds": 0.732208313000001,
+     "exactValid": true,
+     "rawDepthMm": 189.006,
+     "archiveDisposition": "Admitted",
+     "published": false,
+     "failureReason": null
+    }
+   ]
+  },
+  {
+   "seed": 0,
+   "arm": "C",
+   "spec": "work=120000000,cells=13:15:17:19,probe=C,probeWork=21000000",
+   "processWallSeconds": 20.773619628016604,
+   "entryRawDepthMm": 174.20812003998896,
+   "exitRawDepthMm": 169.251,
+   "deltaRawMm": 4.957120039988951,
+   "exitDualGateValid": true,
+   "probeWorkUnitsSpent": 14822849,
+   "probeSecondsSpent": 4.7173893190000005,
+   "probePublications": 2,
+   "probeOperatorCalls": 2,
+   "probeSteps": [
+    "m26 ladder 174.2081 -> 173.9081",
+    "m26 rungs planned=2 run=2 step=0.174208mm publishedStep=Some(1) arms=2",
+    "m31 global legalizer to 169.2550"
+   ],
+   "probeExitCause": "completed",
+   "incumbentRawDepthMm": 169.251,
+   "incumbentDualGateValid": true,
+   "totalWorkUnits": 47216606,
+   "probeCalls": [
+    {
+     "operator": "mode26",
+     "action": "m26:drop0.3",
+     "workUnits": 14795749,
+     "elapsedSeconds": 4.6657085810000005,
+     "exactValid": true,
+     "rawDepthMm": 169.655,
+     "archiveDisposition": "Admitted",
+     "published": true,
+     "failureReason": null
+    },
+    {
+     "operator": "mode31",
+     "action": "m31:ladder-residue",
+     "workUnits": 23875,
+     "elapsedSeconds": 0.021611667999998474,
+     "exactValid": true,
+     "rawDepthMm": 169.251,
+     "archiveDisposition": "Admitted",
+     "published": true,
+     "failureReason": null
+    }
+   ]
+  },
+  {
+   "seed": 0,
+   "arm": "D",
+   "spec": "work=120000000,cells=13:15:17:19,probe=D,probeWork=21000000",
+   "processWallSeconds": 17.37823616398964,
+   "entryRawDepthMm": 174.20812003998896,
+   "exitRawDepthMm": 171.58783248647316,
+   "deltaRawMm": 2.6202875535157943,
+   "exitDualGateValid": true,
+   "probeWorkUnitsSpent": 3079958,
+   "probeSecondsSpent": 1.3748361199999994,
+   "probePublications": 1,
+   "probeOperatorCalls": 1,
+   "probeSteps": [
+    "m22 control 174.2081 -> 173.9081"
+   ],
+   "probeExitCause": "completed",
+   "incumbentRawDepthMm": 171.58783248647316,
+   "incumbentDualGateValid": true,
+   "totalWorkUnits": 35473715,
+   "probeCalls": [
+    {
+     "operator": "mode22",
+     "action": "m22:control:drop0.3",
+     "workUnits": 3078353,
+     "elapsedSeconds": 1.3598300809999984,
+     "exactValid": true,
+     "rawDepthMm": 171.58783248647316,
+     "archiveDisposition": "Admitted",
+     "published": true,
+     "failureReason": null
+    }
+   ]
+  },
+  {
+   "seed": 1,
+   "arm": "A",
+   "spec": "work=120000000,cells=11:15:21:27,probe=A,probeWork=21000000",
+   "processWallSeconds": 18.248952609981643,
+   "entryRawDepthMm": 176.05599999999998,
+   "exitRawDepthMm": 176.05599999999998,
+   "deltaRawMm": 0.0,
+   "exitDualGateValid": true,
+   "probeWorkUnitsSpent": 5784955,
+   "probeSecondsSpent": 2.3520015789999995,
+   "probePublications": 0,
+   "probeOperatorCalls": 1,
+   "probeSteps": [
+    "m23 forward rank0->rank1 cut=0.494714163 band=26.465000mm differing=1"
+   ],
+   "probeExitCause": "completed",
+   "incumbentRawDepthMm": 176.05599999999998,
+   "incumbentDualGateValid": true,
+   "totalWorkUnits": 37742890,
+   "probeCalls": [
+    {
+     "operator": "mode23",
+     "action": "m23 forward rank0->rank1 cut=0.494714163 band=26.465000mm differing=1",
+     "workUnits": 5784450,
+     "elapsedSeconds": 2.3445002099999996,
+     "exactValid": true,
+     "rawDepthMm": 178.72166446801054,
+     "archiveDisposition": "Admitted",
+     "published": false,
+     "failureReason": null
+    }
+   ]
+  },
+  {
+   "seed": 1,
+   "arm": "B",
+   "spec": "work=120000000,cells=11:15:21:27,probe=B,probeWork=21000000",
+   "processWallSeconds": 21.978569256985793,
+   "entryRawDepthMm": 176.05599999999998,
+   "exitRawDepthMm": 176.05599999999998,
+   "deltaRawMm": 0.0,
+   "exitDualGateValid": true,
+   "probeWorkUnitsSpent": 3476577,
+   "probeSecondsSpent": 6.2200815259999995,
+   "probePublications": 0,
+   "probeOperatorCalls": 3,
+   "probeSteps": [
+    "m20 ticket slot1",
+    "m23 incumbent->ticket@0.5",
+    "m22 short on crossover"
+   ],
+   "probeExitCause": "completed",
+   "incumbentRawDepthMm": 176.05599999999998,
+   "incumbentDualGateValid": true,
+   "totalWorkUnits": 35434512,
+   "probeCalls": [
+    {
+     "operator": "mode20",
+     "action": "m20:ticket:slot1",
+     "workUnits": 275,
+     "elapsedSeconds": 3.2256810509999987,
+     "exactValid": true,
+     "rawDepthMm": 227.516,
+     "archiveDisposition": "Admitted",
+     "published": false,
+     "failureReason": null
+    },
+    {
+     "operator": "mode23",
+     "action": "m23:ticket:forward@0.5",
+     "workUnits": 2474167,
+     "elapsedSeconds": 2.3261229020000016,
+     "exactValid": true,
+     "rawDepthMm": 192.02598438262098,
+     "archiveDisposition": "Admitted",
+     "published": false,
+     "failureReason": null
+    },
+    {
+     "operator": "mode22",
+     "action": "m22:ticket:crossover",
+     "workUnits": 1000960,
+     "elapsedSeconds": 0.6542706629999984,
+     "exactValid": true,
+     "rawDepthMm": 187.30937180151062,
+     "archiveDisposition": "Admitted",
+     "published": false,
+     "failureReason": null
+    }
+   ]
+  },
+  {
+   "seed": 1,
+   "arm": "C",
+   "spec": "work=120000000,cells=11:15:21:27,probe=C,probeWork=21000000",
+   "processWallSeconds": 22.222812063002493,
+   "entryRawDepthMm": 176.05599999999998,
+   "exitRawDepthMm": 171.739,
+   "deltaRawMm": 4.316999999999979,
+   "exitDualGateValid": true,
+   "probeWorkUnitsSpent": 20998305,
+   "probeSecondsSpent": 6.457470861000001,
+   "probePublications": 2,
+   "probeOperatorCalls": 2,
+   "probeSteps": [
+    "m26 ladder 176.0560 -> 175.7560",
+    "m26 rungs planned=2 run=2 step=0.176056mm publishedStep=Some(1) arms=3",
+    "m31 global legalizer to 171.7430"
+   ],
+   "probeExitCause": "completed",
+   "incumbentRawDepthMm": 171.739,
+   "incumbentDualGateValid": true,
+   "totalWorkUnits": 52956240,
+   "probeCalls": [
+    {
+     "operator": "mode26",
+     "action": "m26:drop0.3",
+     "workUnits": 20969630,
+     "elapsedSeconds": 6.4069397640000005,
+     "exactValid": true,
+     "rawDepthMm": 172.143,
+     "archiveDisposition": "Admitted",
+     "published": true,
+     "failureReason": null
+    },
+    {
+     "operator": "mode31",
+     "action": "m31:ladder-residue",
+     "workUnits": 25885,
+     "elapsedSeconds": 0.020822032000001656,
+     "exactValid": true,
+     "rawDepthMm": 171.739,
+     "archiveDisposition": "Admitted",
+     "published": true,
+     "failureReason": null
+    }
+   ]
+  },
+  {
+   "seed": 1,
+   "arm": "D",
+   "spec": "work=120000000,cells=11:15:21:27,probe=D,probeWork=21000000",
+   "processWallSeconds": 17.131677729979856,
+   "entryRawDepthMm": 176.05599999999998,
+   "exitRawDepthMm": 176.05599999999998,
+   "deltaRawMm": 0.0,
+   "exitDualGateValid": true,
+   "probeWorkUnitsSpent": 2082057,
+   "probeSecondsSpent": 0.940281517999999,
+   "probePublications": 0,
+   "probeOperatorCalls": 1,
+   "probeSteps": [
+    "m22 control 176.0560 -> 175.7560"
+   ],
+   "probeExitCause": "completed",
+   "incumbentRawDepthMm": 176.05599999999998,
+   "incumbentDualGateValid": true,
+   "totalWorkUnits": 34039992,
+   "probeCalls": [
+    {
+     "operator": "mode22",
+     "action": "m22:control:drop0.3",
+     "workUnits": 2081542,
+     "elapsedSeconds": 0.9353287439999995,
+     "exactValid": true,
+     "rawDepthMm": 176.05599999999998,
+     "archiveDisposition": "Duplicate",
+     "published": false,
+     "failureReason": null
+    }
+   ]
+  },
+  {
+   "seed": 2,
+   "arm": "A",
+   "spec": "work=120000000,cells=15:23:31:39,probe=A,probeWork=21000000",
+   "processWallSeconds": 19.68332563000149,
+   "entryRawDepthMm": 179.006,
+   "exitRawDepthMm": 178.2857218718321,
+   "deltaRawMm": 0.7202781281679052,
+   "exitDualGateValid": true,
+   "probeWorkUnitsSpent": 4856537,
+   "probeSecondsSpent": 2.335618909000001,
+   "probePublications": 1,
+   "probeOperatorCalls": 1,
+   "probeSteps": [
+    "m23 forward rank0->rank1 cut=0.495566704 band=0.578000mm differing=1"
+   ],
+   "probeExitCause": "completed",
+   "incumbentRawDepthMm": 178.2857218718321,
+   "incumbentDualGateValid": true,
+   "totalWorkUnits": 32795404,
+   "probeCalls": [
+    {
+     "operator": "mode23",
+     "action": "m23 forward rank0->rank1 cut=0.495566704 band=0.578000mm differing=1",
+     "workUnits": 4855142,
+     "elapsedSeconds": 2.318370055999999,
+     "exactValid": true,
+     "rawDepthMm": 178.2857218718321,
+     "archiveDisposition": "Admitted",
+     "published": true,
+     "failureReason": null
+    }
+   ]
+  },
+  {
+   "seed": 2,
+   "arm": "B",
+   "spec": "work=120000000,cells=15:23:31:39,probe=B,probeWork=21000000",
+   "processWallSeconds": 22.950957900990034,
+   "entryRawDepthMm": 179.006,
+   "exitRawDepthMm": 179.006,
+   "deltaRawMm": 0.0,
+   "exitDualGateValid": true,
+   "probeWorkUnitsSpent": 2373258,
+   "probeSecondsSpent": 6.204554554000001,
+   "probePublications": 0,
+   "probeOperatorCalls": 3,
+   "probeSteps": [
+    "m20 ticket slot1",
+    "m23 incumbent->ticket@0.5",
+    "m22 short on crossover"
+   ],
+   "probeExitCause": "completed",
+   "incumbentRawDepthMm": 179.006,
+   "incumbentDualGateValid": true,
+   "totalWorkUnits": 30312125,
+   "probeCalls": [
+    {
+     "operator": "mode20",
+     "action": "m20:ticket:slot1",
+     "workUnits": 285,
+     "elapsedSeconds": 3.0247873379999994,
+     "exactValid": true,
+     "rawDepthMm": 216.506,
+     "archiveDisposition": "Admitted",
+     "published": false,
+     "failureReason": null
+    },
+    {
+     "operator": "mode23",
+     "action": "m23:ticket:forward@0.5",
+     "workUnits": 1344154,
+     "elapsedSeconds": 2.1392524880000003,
+     "exactValid": true,
+     "rawDepthMm": 200.878,
+     "archiveDisposition": "Admitted",
+     "published": false,
+     "failureReason": null
+    },
+    {
+     "operator": "mode22",
+     "action": "m22:ticket:crossover",
+     "workUnits": 1027624,
+     "elapsedSeconds": 1.0258736519999978,
+     "exactValid": true,
+     "rawDepthMm": 194.63154361232623,
+     "archiveDisposition": "Admitted",
+     "published": false,
+     "failureReason": null
+    }
+   ]
+  },
+  {
+   "seed": 2,
+   "arm": "C",
+   "spec": "work=120000000,cells=15:23:31:39,probe=C,probeWork=21000000",
+   "processWallSeconds": 17.765843128989218,
+   "entryRawDepthMm": 179.006,
+   "exitRawDepthMm": 179.006,
+   "deltaRawMm": 0.0,
+   "exitDualGateValid": true,
+   "probeWorkUnitsSpent": 5682616,
+   "probeSecondsSpent": 1.854231232,
+   "probePublications": 0,
+   "probeOperatorCalls": 2,
+   "probeSteps": [
+    "m26 ladder 179.0060 -> 178.7060",
+    "m26 rungs planned=2 run=2 step=0.179006mm publishedStep=None arms=2",
+    "m31 global legalizer to 178.6060"
+   ],
+   "probeExitCause": "completed",
+   "incumbentRawDepthMm": 179.006,
+   "incumbentDualGateValid": true,
+   "totalWorkUnits": 33621483,
+   "probeCalls": [
+    {
+     "operator": "mode26",
+     "action": "m26:drop0.3",
+     "workUnits": 5573296,
+     "elapsedSeconds": 1.7820043989999999,
+     "exactValid": true,
+     "rawDepthMm": 179.006,
+     "archiveDisposition": "Duplicate",
+     "published": false,
+     "failureReason": null
+    },
+    {
+     "operator": "mode31",
+     "action": "m31:ladder-residue",
+     "workUnits": 108875,
+     "elapsedSeconds": 0.0676921109999995,
+     "exactValid": false,
+     "rawDepthMm": null,
+     "archiveDisposition": null,
+     "published": false,
+     "failureReason": "global legalization did not reach a feasible fixpoint: 2 violating pairs and 1 boundary pieces remain"
+    }
+   ]
+  },
+  {
+   "seed": 2,
+   "arm": "D",
+   "spec": "work=120000000,cells=15:23:31:39,probe=D,probeWork=21000000",
+   "processWallSeconds": 16.362572460988304,
+   "entryRawDepthMm": 179.006,
+   "exitRawDepthMm": 179.006,
+   "deltaRawMm": 0.0,
+   "exitDualGateValid": true,
+   "probeWorkUnitsSpent": 1936358,
+   "probeSecondsSpent": 0.9629290040000011,
+   "probePublications": 0,
+   "probeOperatorCalls": 1,
+   "probeSteps": [
+    "m22 control 179.0060 -> 178.7060"
+   ],
+   "probeExitCause": "completed",
+   "incumbentRawDepthMm": 179.006,
+   "incumbentDualGateValid": true,
+   "totalWorkUnits": 29875225,
+   "probeCalls": [
+    {
+     "operator": "mode22",
+     "action": "m22:control:drop0.3",
+     "workUnits": 1935913,
+     "elapsedSeconds": 0.9584484270000004,
+     "exactValid": true,
+     "rawDepthMm": 179.006,
+     "archiveDisposition": "Duplicate",
+     "published": false,
+     "failureReason": null
+    }
+   ]
+  }
+ ]
+}

@@ -27,7 +27,7 @@ use polygon_nesting_core::search::general_relaxed::{
     GeneralRelaxedSettings,
 };
 use polygon_nesting_core::search::portfolio::{
-    self, BasinTrigger, PortfolioBudget, PortfolioOutcome, PortfolioSettings,
+    self, BasinTrigger, PortfolioBudget, PortfolioOutcome, PortfolioSettings, ProbeArm,
 };
 use polygon_nesting_core::search::shadow_rescore;
 use polygon_nesting_core::validation::general_polygon::{
@@ -1652,6 +1652,17 @@ fn parse_portfolio_spec(
                     .map(str::parse::<f64>)
                     .collect::<Result<Vec<_>, _>>()?;
             }
+            "probe" => {
+                settings.probe = match value {
+                    "none" => ProbeArm::None,
+                    "A" | "a" => ProbeArm::NextDerivedCrossover,
+                    "B" | "b" => ProbeArm::ConstructorTicket,
+                    "C" | "c" => ProbeArm::LadderRung,
+                    "D" | "d" => ProbeArm::DescentControl,
+                    other => return Err(format!("unknown probe arm {other:?}").into()),
+                }
+            }
+            "probeWork" => settings.probe_work_units = value.parse()?,
             "descentBy" => settings.schedule.descent_by = value.parse()?,
             "crossoverBy" => settings.schedule.crossover_by = value.parse()?,
             "compressionBy" => settings.schedule.compression_by = value.parse()?,
@@ -1670,7 +1681,7 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
         PortfolioBudget::Wall { millis } => json!({"kind": "wall", "millis": millis}),
         PortfolioBudget::Work { units } => json!({"kind": "work", "units": units}),
     };
-    json!({
+    let mut report = json!({
         "budget": budget,
         "elapsedSeconds": outcome.elapsed_seconds,
         "workUnits": outcome.work_units,
@@ -1695,6 +1706,7 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
             "operatorCalls": phase.operator_calls,
             "publications": phase.publications,
             "skipped": phase.skipped,
+            "exitCause": phase.exit_cause.name(),
         })).collect::<Vec<_>>(),
         "publications": outcome.publications.iter().map(|event| json!({
             "seconds": event.seconds,
@@ -1709,11 +1721,14 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
             "phase": call.phase,
             "operator": call.operator,
             "parentFingerprint": call.parent_fingerprint,
+            "secondaryParentFingerprint": call.secondary_parent_fingerprint,
+            "action": call.action,
             "startedSeconds": call.started_seconds,
             "elapsedSeconds": call.elapsed_seconds,
             "workUnits": call.work_units,
             "exactValid": call.exact_valid,
             "rawDepthMm": call.raw_depth_mm,
+            "resultFingerprint": call.result_fingerprint,
             "archiveDisposition": call.archive_disposition,
             "published": call.published,
             "failureReason": call.failure_reason,
@@ -1739,10 +1754,102 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
                 "birthWorkUnits": member.birth_work_units,
                 "operator": member.operator,
                 "parentFingerprint": member.parent_fingerprint,
+                "secondaryParentFingerprint": member.secondary_parent_fingerprint,
                 "exactValid": member.exact_valid,
                 "descents": member.descents,
             })).collect::<Vec<_>>(),
         },
+    });
+    if let Some(probe) = outcome.probe.as_ref() {
+        report["probe"] = json!({
+            "arm": probe.arm,
+            "allowance": probe.allowance,
+            "workUnitsSpent": probe.work_units_spent,
+            "secondsSpent": probe.seconds_spent,
+            "entryRawDepthMm": probe.entry_raw_depth_mm,
+            "exitRawDepthMm": probe.exit_raw_depth_mm,
+            "deltaRawMm": probe.delta_raw_mm,
+            "exitDualGateValid": probe.exit_dual_gate_valid,
+            "publications": probe.publications,
+            "operatorCalls": probe.operator_calls,
+            "steps": probe.steps,
+            "exitCause": probe.exit_cause,
+        });
+    }
+    if let Some(ledger) = outcome.ledger.as_ref() {
+        report["ledger"] = json!({
+            "archiveOrderedPairs": ledger.archive_ordered_pairs,
+            "archiveActionsTotal": ledger.archive_actions_total,
+            "archiveActionsUntried": ledger.archive_actions_untried,
+            "archiveActionsUntriedNondegenerate":
+                ledger.archive_actions_untried_nondegenerate,
+            "membersWithoutAction": ledger.members_without_action,
+            "excludedByTopK": ledger.excluded_by_top_k,
+            "excludedBySimilarity": ledger.excluded_by_similarity,
+            "nextAction": ledger.next_action.as_ref().map(crossover_action_json),
+            "frontierActions": ledger.frontier_actions.iter()
+                .map(crossover_action_json).collect::<Vec<_>>(),
+            "archiveRows": ledger.archive_rows.iter().map(|row| json!({
+                "fingerprint": row.fingerprint,
+                "rawDepthMm": row.raw_depth_mm,
+                "operator": row.operator,
+                "exactValid": row.exact_valid,
+                "depthRank": row.depth_rank,
+                "inDescentFrontier": row.in_descent_frontier,
+                "inCrossoverFrontier": row.in_crossover_frontier,
+                "reachableAtFullK": row.reachable_at_full_k,
+                "excludedBy": row.excluded_by,
+                "shadowedBy": row.shadowed_by,
+                "shadowOverlap": row.shadow_overlap,
+                "actionsReceived": row.actions_received,
+                "descents": row.descents,
+                "descendantPublications": row.descendant_publications,
+                "bestDescendantRawDepthMm": row.best_descendant_raw_depth_mm,
+                "generationsToIncumbent": row.generations_to_incumbent,
+            })).collect::<Vec<_>>(),
+            "actionClasses": ledger.action_classes.iter().map(|row| json!({
+                "phase": row.phase,
+                "operator": row.operator,
+                "calls": row.calls,
+                "published": row.published,
+                "workUnitsTotal": row.work_units_total,
+                "workUnitsP50": row.work_units_p50,
+                "workUnitsP95": row.work_units_p95,
+                "secondsP50": row.seconds_p50,
+                "secondsP95": row.seconds_p95,
+                "secondsTotal": row.seconds_total,
+                "deltaRawMm": row.delta_raw_mm,
+                "deltaRawPerMegaUnit": row.delta_raw_per_mega_unit,
+            })).collect::<Vec<_>>(),
+            "incumbentLineage": ledger.incumbent_lineage.iter().map(|step| json!({
+                "fingerprint": step.fingerprint,
+                "operator": step.operator,
+                "rawDepthMm": step.raw_depth_mm,
+                "birthWorkUnits": step.birth_work_units,
+            })).collect::<Vec<_>>(),
+        });
+    }
+    report
+}
+
+/// One crossover action, as JSON.
+fn crossover_action_json(action: &portfolio::CrossoverAction) -> serde_json::Value {
+    json!({
+        "leftFingerprint": action.left_fingerprint,
+        "rightFingerprint": action.right_fingerprint,
+        "leftRank": action.left_rank,
+        "rightRank": action.right_rank,
+        "reciprocal": action.reciprocal,
+        "cutFraction": action.cut_fraction,
+        "bandGapMm": action.band_gap_mm,
+        "differingPiecesAtBand": action.differing_pieces_at_band,
+        "piecesFromLeft": action.pieces_from_left,
+        "piecesFromRight": action.pieces_from_right,
+        "hybridFingerprint": action.hybrid_fingerprint,
+        "degenerate": action.degenerate,
+        "isMidpointBand": action.is_midpoint_band,
+        "attempted": action.attempted,
+        "key": action.key,
     })
 }
 

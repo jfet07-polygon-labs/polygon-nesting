@@ -4238,3 +4238,190 @@ enough seeds that the control publishes.
 
 Evidence, drivers, the per-ladder/per-rung/per-arm tables and the abort
 census: `docs/experiments/mode26-rung-anatomy/`.
+
+## The saturated run had 4,318 crossover actions and had tried three — and the arm that broke it was the clamped ladder, not the constructor
+
+Sol's round-4 close asks for one measurement before any further spend: an
+**opportunity-and-delayed-credit ledger** on the saturated state, then an
+**A/B/C at identical work** on the three saturated archives. This chapter is
+that measurement. It reproduces coordinator v2's three depths exactly
+(174.20812003998896 / 176.05599999999998 / 179.006, all `dualGateValid`, all
+cross-process deterministic over 8,233-8,844 compared fields) and then reports
+what those states still had available.
+
+Everything is `mixed-61` from the bare request, `work=120,000,000` (three times
+coordinator v2's own 40M ten-second anchor), search-offset allowance `0.002`
+— **coordinator v2's contract, not the four pinned gates' `0.0005`** — so
+these depths are comparable to 174.208 and are not comparable to the 159/164
+record lineage.
+
+### The saturation is a naming problem, and the ledger says so in one field
+
+`PhaseReport` now carries an exit cause, and on all three seeds it reads the
+same:
+
+| phase | exit cause |
+|---|---|
+| `descent` | **`keysExhausted`** |
+| `crossover` | **`completed`** — its `crossover_attempts = 3` counter, not its pairs |
+| `compression` | **`noResidue`** |
+| `diversify` | **`patience`** |
+
+**Not one phase on any seed exits on `deadline` or on `affordability`**, and the
+run stops having spent 23-27% of its budget. Sol's "it is a fixpoint of the
+finite top-3/midpoint/one-direction queue, not of the operator space" is now a
+field rather than an inference.
+
+The size of what the queue does not name:
+
+| | seed 0 | seed 1 | seed 2 |
+|---|---:|---:|---:|
+| ordered pairs over the whole archive | 72 | 72 | 56 |
+| ordered, cut-derived crossover actions | **4,318** | **4,316** | **3,357** |
+| attempted | **3** | **3** | **3** |
+| actions over the crossover phase's *own* top-3 frontier | 360 | 360 | 360 |
+| of those, still on the frontier at exit and attempted | **1** | **1** | **1** |
+
+The cuts are derived rather than gridded: for an ordered pair the cut only
+partitions **A's occupied short-axis positions**, so the continuum collapses to
+one action per gap, placed at the gap's midpoint. On 61 pieces that is 60 bands
+per ordered pair, and **all 60 produce a distinct hybrid on every seed** —
+`bands whose lower edge holds no differing piece: 0 of 360`. Band gaps run
+0.072-185.167 mm with a p50 of 19.8-24.4 mm.
+
+And the phase ordering costs more than the queue does: **on seeds 0 and 1 the
+final rank-0 state was never a crossover parent at all**, because it is born in
+the *compression* phase, after the crossover phase has ended. On seed 1 the
+ledger's next untried action is the plain `rank0 -> rank1` **midpoint** cut —
+the schedule's own action, on the schedule's own two best states, made
+unreachable by the order the phases run in.
+
+### Selection excludes by top-K; the bit-exact similarity rule excludes nobody
+
+| | seed 0 | seed 1 | seed 2 |
+|---|---:|---:|---:|
+| excluded by **top-K** | 6 | 6 | 5 |
+| excluded by the **bit-exact-pose similarity rule** | **0** | **0** | **0** |
+| members receiving **no action at all** | 3 | 4 | 4 |
+
+Review 4 §4 names the pose-equality rule as a reason members never receive an
+action. On these three archives it never fires. The rule is as fragile as §4
+says and this does not defend it — but it is not what is costing actions here,
+and eviction remains inert (8-9 of 16, zero evictions, zero
+`RefusedArchiveFullAllDistinct`).
+
+### Deferred credit: the archive earns its retention, the m20 feeder does not
+
+`ArchivedBasin` now records **both** crossover parents. It recorded one, so on
+the old record every recombination was a genealogical dead end and no basin
+that fed parent B was ever anyone's ancestor. With the edge in place, seed 0's
+incumbent lineage is:
+
+```
+m0     181.5890 @  8,777,493 units
+mode22 179.5869 @ 10,792,266
+mode23 179.6386 @ 18,921,527   <- worse than its own parent, top-K excluded, and an ancestor anyway
+mode23 176.3094 @ 23,988,191
+mode22 174.2081 @ 31,427,729
+```
+
+That 179.6386 state is precisely the object the archive exists for. The m0 basin
+is likewise top-K excluded on seeds 0 and 1 and is an ancestor at 3 and 2
+generations.
+
+**The m20 feeder judged on deferred credit, which is the measure Sol asks for:**
+on all three seeds the archived mode-20 basin receives exactly **1** action and
+has **0 descendant publications**; the phase-0 constructor basin (182.976, the
+same seed-independent fingerprint on all three) receives **0** actions.
+
+### Δraw per million evaluations, and a four-order-of-magnitude mispricing
+
+| phase / operator | calls | published | Δraw mm (s0/s1/s2) | **Δraw / M eval** |
+|---|---:|---:|---|---|
+| compression / mode22 | 1 | 1/1/0 | 2.101 / 0.697 / 0 | **1.1017 / 0.4407 / 0** |
+| descent / mode22 | 2 | 1/1/1 | 2.002 / 0.057 / 0.656 | 0.4264 / 0.0119 / 0.1832 |
+| crossover / mode23 | 3 | 1/1/0 | 3.277 / 2.880 / 0 | 0.2043 / 0.1881 / 0 |
+| diversify / mode20 | 1 | 0/0/0 | 0 | 0 |
+
+The compressing micro-descent is the most efficient operator in the schedule by
+a factor of five, and the schedule gives it one call.
+
+And the caveat PR7 recorded is not a rounding error: **a mode-20 arm costs
+260-335 work units and 3.02-3.24 seconds.** The work budget prices a constructor
+arm at about 1/6,000 of an m22 quantum and the clock prices it at 3x one.
+
+### The A/B/C, at 21,000,000 work units per arm, plus the control it needed
+
+Every arm runs the identical base schedule and then one probe phase *after the
+drain*, so the arms are paired on the same saturated archive by construction.
+21M is the smallest round allowance above every arm's own spend; re-running at
+400M is bit-identical, so the allowance is non-binding.
+
+A fourth arm was added because without it C's number is not a statement about
+the clamp: **D** asks the schedule's own mode-22 for the *same target depth*
+from the *same parent*, with no clamp.
+
+| seed | A: next derived crossover | B: m20 ticket -> crossover -> m22 | **C: m26 short ladder -> m31** | D: control |
+|---:|---:|---:|---:|---:|
+| 0 | 0.0000 | 0.0000 | **-4.9571** | -2.6203 |
+| 1 | 0.0000 | 0.0000 | **-4.3170** | 0.0000 |
+| 2 | **-0.7203** | 0.0000 | 0.0000 | 0.0000 |
+| publishes | 1 of 3 | **0 of 3** | **2 of 3** | 1 of 3 |
+
+**Sol predicted B breaks the saturation and C is the 165 component. B breaks
+nothing at any seed; C is both the breaker and the largest single gain this
+coordinator has ever made.**
+
+* **169.251 mm on seed 0 and 171.739 mm on seed 1**, from the bare request, both
+  `exactValid` and `contractValid`, and both **re-confirmed in a separate
+  process from the default-feature binary through mode 27 with zero repair
+  applied and the fingerprint unchanged**. 169.251 is **4.957 mm below the
+  previous best-from-request layout on this request**.
+* C's ladder is 2 rungs and 2-3 arms — the mode's own bounds function turns a
+  0.3 mm drop at a 174 mm parent into a 0.174208 mm step — and **rung 1
+  publishes 4.25 mm and 3.61 mm below its own requested bound.** The clamp
+  removes the depth-ward room and the separator then compresses far past what it
+  was asked for.
+* **This is the census the review demanded as the gate before the L-sized m26
+  port, and it passes.** The rung anatomy measured 0 of 171 publishing arms at
+  159 mm and 164 mm parents; at 174-179 mm parents, two of three ladders publish
+  on their first probe. The anatomy's sample is not a prediction for this band.
+* B's chain is monotonically improving and starts 42-53 mm behind: ticket
+  216.5-227.5, direct crossover with the incumbent 192.0-200.9, short m22
+  187.3-194.6. One generation of `m20 -> crossover -> m22` does not close that,
+  and Part 1's genealogy says the same thing from the other side.
+* A produces a legal hybrid every time (176.817 / 178.722 / 178.286) and it is
+  simply not better than its own parent on two of three seeds. The derived cut
+  is not a no-op — seed 0's is cut 0.4958 in a 4.606 mm band, 30 pieces from A
+  and 31 from B — it is just not a win there.
+* **D is a finding of its own.** On seed 0, asking mode 22 for `incumbent - 0.3`
+  publishes **2.620 mm for 3.08M units and 1.37 s**. The schedule never asks:
+  its compression phase asks for `depth + 0.8`, a *looser* target than the
+  incumbent it already holds, gets an exact-valid answer, and exits `noResidue`.
+  2.620 mm was one sign away from the schedule's own most efficient operator.
+  C-minus-D — 2.337 mm on seed 0, the whole 4.317 mm on seed 1 — is the clamp.
+* The coordinator-level mode 31 lands **exactly on the bound it is given** on
+  both states where it succeeded (0.404 mm, published depth equal to the
+  requested bound to the digit). Its contribution here is a property of
+  `COMPRESSION_RUNG_MM`, not a measurement of its reach. That is a lead.
+
+### What this does not measure
+
+One request and three seeds. `0.002`, not `0.0005`. **Equal work is not equal
+wall and the gap is worst exactly where it matters** — at equal work B is the
+cheapest arm and on the clock it is the second most expensive, so the *cost*
+half of B's verdict is unreliable in both directions, though its 0/3 is not.
+No wall-clock claim is made: the box is shared and one arm's probe took 2.36 s,
+2.44 s and 5.62 s on three runs with a bit-identical 6,036,325-unit spend. Arm C's mode 26
+runs its own internal repair tiers including the global program, and the split
+between those and the outer m31 rung is not separated here. No default was
+moved; the probe is one action from a saturated state, not a proposal for where
+it belongs in a budget.
+
+Instrumented behind `portfolio-ledger`, off by default; the four pinned gates
+reproduce the pristine `57ad992` binary as **whole documents**, 3,244-3,263
+fields each, **0 differences**. Release suite green: 1,238 passed, 0 failed,
+2 ignored.
+
+Evidence, drivers, the five ledger tables and the per-call A/B/C/D detail:
+`docs/experiments/opportunity-ledger/`.

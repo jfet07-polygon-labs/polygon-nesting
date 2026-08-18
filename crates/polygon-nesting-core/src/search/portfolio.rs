@@ -201,6 +201,14 @@ pub struct ArchivedBasin {
     pub operator: BasinOperator,
     /// The fingerprint of the basin it descended from, when it descended.
     pub parent_fingerprint: Option<String>,
+    /// The fingerprint of the *second* parent, for the operators that have one.
+    ///
+    /// Mode 23 descends from two layouts and the archive recorded only the
+    /// first, so the genealogy it could report stopped at every crossover: a
+    /// basin that fed parent B of a recombination was, on the record, never
+    /// anyone's ancestor. Deferred credit is exactly the quantity that edge
+    /// carries, so it is recorded.
+    pub secondary_parent_fingerprint: Option<String>,
     /// Whether the composite exact validator accepted it against the real
     /// request. An archived basin may legitimately be `false`: the archive is
     /// allowed to remember a deliberately infeasible parent, and only
@@ -443,6 +451,7 @@ impl SearchArchive {
                     birth_work_units: basin.birth_work_units,
                     operator: basin.operator.name(),
                     parent_fingerprint: basin.parent_fingerprint.clone(),
+                    secondary_parent_fingerprint: basin.secondary_parent_fingerprint.clone(),
                     exact_valid: basin.exact_valid,
                     descents: basin.descents,
                 })
@@ -460,6 +469,7 @@ pub struct ArchiveMemberReport {
     pub birth_work_units: u64,
     pub operator: String,
     pub parent_fingerprint: Option<String>,
+    pub secondary_parent_fingerprint: Option<String>,
     pub exact_valid: bool,
     pub descents: usize,
 }
@@ -595,14 +605,84 @@ pub struct OperatorCallReport {
     pub phase: String,
     pub operator: String,
     pub parent_fingerprint: Option<String>,
+    /// Parent B, for the operators that take one. See
+    /// [`ArchivedBasin::secondary_parent_fingerprint`].
+    pub secondary_parent_fingerprint: Option<String>,
+    /// The action this call executed, when the phase names one: the crossover
+    /// ledger's `A->B@cut` descriptor, or a probe arm's step label. `None` for
+    /// the schedule's own unparameterised calls.
+    pub action: Option<String>,
     pub started_seconds: f64,
     pub elapsed_seconds: f64,
     pub work_units: u64,
     pub exact_valid: bool,
     pub raw_depth_mm: Option<f64>,
+    /// The fingerprint of the layout this call produced, when it produced a
+    /// complete one. The genealogy needs it: a call whose output the archive
+    /// refused as a duplicate still happened, and its parent edge is real.
+    pub result_fingerprint: Option<String>,
     pub archive_disposition: Option<String>,
     pub published: bool,
     pub failure_reason: Option<String>,
+}
+
+/// Why a phase stopped issuing operator calls.
+///
+/// `skipped` answered "did this phase run at all" and nothing else, so a
+/// saturated schedule reported five phases that had all simply *ended*. The
+/// review's third ledger item is the distinction this enum makes: a phase that
+/// ran out of *actions* is a fixpoint of the action space and a phase that ran
+/// out of *budget* is not, and only the first is evidence that the operator set
+/// is exhausted.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PhaseExitCause {
+    /// The phase's deadline had already passed when it was entered.
+    SkippedDeadlinePassed,
+    /// The phase ran its body to the end: every attempt it was allowed to make
+    /// was made.
+    Completed,
+    /// The selection the phase draws from cannot supply an action at all - the
+    /// frontier has fewer members than the operator needs, or the incumbent has
+    /// no measurable depth.
+    GeometricFixpoint,
+    /// Every action the phase can name has already been attempted, at this
+    /// quantum size, with these parents. This is the "keys exhausted" exit and
+    /// it is *not* a fixpoint of the operator set.
+    KeysExhausted,
+    /// The remaining budget before the phase deadline no longer covers this
+    /// operator's own measured mean cost in this run.
+    Affordability,
+    /// The phase deadline was reached mid-phase.
+    Deadline,
+    /// The diversify phase's patience rule fired: `basin_patience` consecutive
+    /// iterations published nothing.
+    Patience,
+    /// The diversify phase's trigger refused to draw at all.
+    TriggerRefused,
+    /// The compressing descent came back exact-valid, so mode 31 had no residue
+    /// to legalize.
+    NoResidue,
+    /// An operator produced no complete layout, so the phase stopped rather
+    /// than buying the same refusal again.
+    NoCompleteLayout,
+}
+
+impl PhaseExitCause {
+    /// The reporting name, stable across runs.
+    pub fn name(self) -> &'static str {
+        match self {
+            PhaseExitCause::SkippedDeadlinePassed => "skippedDeadlinePassed",
+            PhaseExitCause::Completed => "completed",
+            PhaseExitCause::GeometricFixpoint => "geometricFixpoint",
+            PhaseExitCause::KeysExhausted => "keysExhausted",
+            PhaseExitCause::Affordability => "affordability",
+            PhaseExitCause::Deadline => "deadline",
+            PhaseExitCause::Patience => "patience",
+            PhaseExitCause::TriggerRefused => "triggerRefused",
+            PhaseExitCause::NoResidue => "noResidue",
+            PhaseExitCause::NoCompleteLayout => "noCompleteLayout",
+        }
+    }
 }
 
 /// One phase of the schedule, as run.
@@ -616,6 +696,217 @@ pub struct PhaseReport {
     pub operator_calls: usize,
     pub publications: usize,
     pub skipped: bool,
+    /// Why the phase stopped. One enum store per phase exit; it reads nothing
+    /// and branches on nothing, so it is free in the schedule's own currency.
+    pub exit_cause: PhaseExitCause,
+}
+
+/// One ordered, cut-derived crossover action over a pair of archive states.
+///
+/// Mode 23 is directional - it takes parent A's short-axis span, cuts it at a
+/// fraction of *A's own* span, keeps A's poses below the cut and B's above it -
+/// so `A->B` and `B->A` are two different layouts, and the schedule keys only
+/// one of them. The cut is likewise a whole axis of the action space that the
+/// schedule collapses to the single constant `0.5`.
+#[derive(Clone, Debug)]
+pub struct CrossoverAction {
+    /// Parent A: the layout whose span the cut is measured on and whose poses
+    /// are kept below it.
+    pub left_fingerprint: String,
+    /// Parent B: the layout whose poses are kept above the cut.
+    pub right_fingerprint: String,
+    /// A's rank in the selection this action was enumerated over.
+    pub left_rank: usize,
+    /// B's rank in the same selection.
+    pub right_rank: usize,
+    /// Whether this is the reciprocal of the ranked pair - `B->A` where the
+    /// schedule would key `A->B`.
+    pub reciprocal: bool,
+    /// The cut fraction, in A's own short-axis span.
+    pub cut_fraction: f64,
+    /// The width of the interface band the cut sits in, in millimetres. This is
+    /// the actual gap between two consecutive occupied short-axis positions of
+    /// A - the cut is placed at its midpoint, so it is the most numerically
+    /// robust representative of its own partition.
+    pub band_gap_mm: f64,
+    /// How many of A's pieces at the band's lower edge have a *different* pose
+    /// in B. A band where this is zero produces the same hybrid as the band
+    /// below it and is not enumerated.
+    pub differing_pieces_at_band: usize,
+    /// Pieces the hybrid takes from A.
+    pub pieces_from_left: usize,
+    /// Pieces the hybrid takes from B.
+    pub pieces_from_right: usize,
+    /// The hybrid's placement fingerprint, before any legalization.
+    pub hybrid_fingerprint: String,
+    /// Whether the hybrid is bit-identical to one of its own parents, in which
+    /// case the action is a no-op dressed as a crossover.
+    pub degenerate: bool,
+    /// Whether this cut is the one the constant `0.5` lands in.
+    pub is_midpoint_band: bool,
+    /// Whether the schedule has already attempted this action.
+    pub attempted: bool,
+    /// The action's key, in the schedule's own `attempted` namespace.
+    pub key: String,
+}
+
+/// What became of one archive state: whether the selection could reach it, and
+/// what it has been paid for.
+#[derive(Clone, Debug)]
+pub struct ArchiveOpportunityRow {
+    pub fingerprint: String,
+    pub raw_depth_mm: f64,
+    pub operator: String,
+    pub exact_valid: bool,
+    /// Its rank when the archive is ordered the way the frontier orders it.
+    pub depth_rank: usize,
+    /// Whether the alternation phase's selection can reach it.
+    pub in_descent_frontier: bool,
+    /// Whether the crossover phase's selection can reach it.
+    pub in_crossover_frontier: bool,
+    /// Whether *any* selection could reach it if top-K were not binding.
+    pub reachable_at_full_k: bool,
+    /// `"topK"` when a bigger K would have reached it, `"similarity"` when the
+    /// bit-exact-pose rule shadows it behind a shallower member, `None` when it
+    /// is in the crossover frontier.
+    pub excluded_by: Option<String>,
+    /// The shallower member that shadows it, when similarity excludes it.
+    pub shadowed_by: Option<String>,
+    /// The overlap with that member.
+    pub shadow_overlap: f64,
+    /// Operator calls that took this state as a parent, in either slot.
+    pub actions_received: usize,
+    /// Descents charged against it by the fairness counter.
+    pub descents: usize,
+    /// Publications descending from it, however many generations later.
+    pub descendant_publications: usize,
+    /// The best raw depth any of those publications reached.
+    pub best_descendant_raw_depth_mm: Option<f64>,
+    /// Generations from this state to the final incumbent, when it is an
+    /// ancestor of it.
+    pub generations_to_incumbent: Option<usize>,
+}
+
+/// The cost and yield of one action class, from this run's own calls.
+#[derive(Clone, Debug)]
+pub struct ActionClassRow {
+    pub phase: String,
+    pub operator: String,
+    pub calls: usize,
+    pub published: usize,
+    pub work_units_total: u64,
+    pub work_units_p50: u64,
+    pub work_units_p95: u64,
+    pub seconds_p50: f64,
+    pub seconds_p95: f64,
+    pub seconds_total: f64,
+    /// Millimetres of raw depth this class removed from the incumbent.
+    pub delta_raw_mm: f64,
+    /// Those millimetres per million work units this class spent.
+    pub delta_raw_per_mega_unit: f64,
+}
+
+/// One step of the final incumbent's ancestry, root first.
+#[derive(Clone, Debug)]
+pub struct LineageStep {
+    pub fingerprint: String,
+    pub operator: String,
+    pub raw_depth_mm: f64,
+    pub birth_work_units: u64,
+}
+
+/// The opportunity-and-delayed-credit ledger: what the saturated state still
+/// had available, and what its history is owed.
+#[derive(Clone, Debug)]
+pub struct PortfolioLedger {
+    /// Every ordered/derived crossover action over the crossover phase's own
+    /// selection.
+    pub frontier_actions: Vec<CrossoverAction>,
+    /// The same enumeration over *every* archive member, which is the ceiling
+    /// of the action space the schedule could reach at this archive.
+    pub archive_actions_total: usize,
+    pub archive_actions_untried: usize,
+    pub archive_actions_untried_nondegenerate: usize,
+    /// Ordered pairs over the whole archive, i.e. `n * (n - 1)`.
+    pub archive_ordered_pairs: usize,
+    /// The first action in the canonical order that has not been attempted,
+    /// is not degenerate, and whose hybrid is not already an archive member.
+    pub next_action: Option<CrossoverAction>,
+    /// One row per archive member.
+    pub archive_rows: Vec<ArchiveOpportunityRow>,
+    /// One row per `(phase, operator)`.
+    pub action_classes: Vec<ActionClassRow>,
+    /// The final incumbent's ancestry, root first.
+    pub incumbent_lineage: Vec<LineageStep>,
+    /// Members that received no action at all.
+    pub members_without_action: usize,
+    /// Members excluded by the top-K rule.
+    pub excluded_by_top_k: usize,
+    /// Members excluded by the bit-exact-pose similarity rule.
+    pub excluded_by_similarity: usize,
+}
+
+/// Which A/B/C arm the probe phase runs, at identical work, from the saturated
+/// archive the schedule leaves behind.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ProbeArm {
+    /// No probe. The default, and the shipping schedule.
+    None,
+    /// The next derived crossover action the ledger names.
+    NextDerivedCrossover,
+    /// One mode-20 ticket, a direct crossover with the incumbent, a short
+    /// mode-22.
+    ConstructorTicket,
+    /// One short mode-26 ladder, then the coordinator's own global legalizer
+    /// tier on what it leaves.
+    LadderRung,
+    /// The control for arm C, and not one of the review's three: the *same*
+    /// target depth, from the *same* parent, asked of the schedule's own
+    /// mode-22 alternation instead of the clamped ladder.
+    ///
+    /// Without it, arm C's result is "the arm that got 21M more work units
+    /// found something", which is not a statement about the clamp. With it, the
+    /// difference between C and D is the clamp and nothing else.
+    DescentControl,
+}
+
+impl ProbeArm {
+    /// The reporting name, stable across runs.
+    pub fn name(self) -> &'static str {
+        match self {
+            ProbeArm::None => "none",
+            ProbeArm::NextDerivedCrossover => "A",
+            ProbeArm::ConstructorTicket => "B",
+            ProbeArm::LadderRung => "C",
+            ProbeArm::DescentControl => "D",
+        }
+    }
+}
+
+/// What one probe arm did, measured from the saturated state it started at.
+#[derive(Clone, Debug)]
+pub struct ProbeReport {
+    pub arm: String,
+    /// The allowance the arm was given, in the budget's own currency.
+    pub allowance: f64,
+    /// What it actually spent. A first call of an unpriced operator may
+    /// overrun: a work budget bounds what may be *started*.
+    pub work_units_spent: u64,
+    pub seconds_spent: f64,
+    /// The incumbent's raw depth when the arm started.
+    pub entry_raw_depth_mm: Option<f64>,
+    /// The incumbent's raw depth when it finished.
+    pub exit_raw_depth_mm: Option<f64>,
+    /// `entry - exit`: positive is an improvement.
+    pub delta_raw_mm: f64,
+    /// Whether the exit incumbent passes the composite exact validator.
+    pub exit_dual_gate_valid: bool,
+    pub publications: usize,
+    pub operator_calls: usize,
+    /// The steps the arm actually executed, in order.
+    pub steps: Vec<String>,
+    /// Why the arm stopped.
+    pub exit_cause: String,
 }
 
 /// What the coordinator did.
@@ -644,6 +935,12 @@ pub struct PortfolioOutcome {
     /// at its deadline. This is the [`BasinTrigger::OnStall`] predicate, and it
     /// is reported whether or not that trigger is the one in force.
     pub descent_stalled: bool,
+    /// The opportunity-and-delayed-credit ledger, when the build carries it.
+    /// `None` in a default build: computing it is `O(members^2 * pieces)` at
+    /// exit and it is an instrument, not a schedule input.
+    pub ledger: Option<PortfolioLedger>,
+    /// What the probe arm did, when one was asked for.
+    pub probe: Option<ProbeReport>,
 }
 
 /// When the constructor slice is allowed to draw a basin.
@@ -754,6 +1051,15 @@ pub struct PortfolioSettings {
     pub descent_iterated_deepening: bool,
     /// Phase deadlines as fractions of the budget. See [`PhaseSchedule`].
     pub schedule: PhaseSchedule,
+    /// Which A/B/C probe arm runs after the schedule saturates.
+    ///
+    /// [`ProbeArm::None`] by default, and the probe phase itself is compiled
+    /// only under the `portfolio-ledger` feature, so a default build runs the
+    /// shipping schedule and nothing else whatever this says.
+    pub probe: ProbeArm,
+    /// The probe arm's allowance, in work units. Every arm gets the same one,
+    /// measured from the identical saturated state the schedule leaves.
+    pub probe_work_units: u64,
 }
 
 /// The phase deadlines, as fractions of the whole budget.
@@ -838,6 +1144,8 @@ impl PortfolioSettings {
             descent_cycles: 1,
             descent_iterated_deepening: false,
             schedule: PhaseSchedule::default(),
+            probe: ProbeArm::None,
+            probe_work_units: 0,
         }
     }
 }
@@ -967,6 +1275,10 @@ struct Coordinator<'a> {
     /// Whether the alternation phase ended because every distinct archive state
     /// had already had its quantum, rather than because it ran out of budget.
     descent_stalled: bool,
+    /// Why the phase currently in flight stopped. Reset to
+    /// [`PhaseExitCause::Completed`] on entry and overwritten by whichever
+    /// early return fires.
+    exit_cause: PhaseExitCause,
     /// The fraction of the budget the protected phase 0 spent. Every later
     /// phase's deadline is a fraction of what is left after it; see
     /// [`PhaseSchedule`].
@@ -1036,6 +1348,7 @@ impl<'a> Coordinator<'a> {
         placements: Vec<GeneralFastPlacement>,
         operator: BasinOperator,
         parent_fingerprint: Option<String>,
+        secondary_parent_fingerprint: Option<String>,
     ) -> (ArchiveDisposition, Option<f64>) {
         if placements.len() != self.pieces.len() {
             return (ArchiveDisposition::IncompleteCardinality, None);
@@ -1058,6 +1371,7 @@ impl<'a> Coordinator<'a> {
             birth_work_units: self.meter.work_units(),
             operator,
             parent_fingerprint,
+            secondary_parent_fingerprint,
             exact_valid,
             descents: 0,
             placements,
@@ -1078,7 +1392,9 @@ impl<'a> Coordinator<'a> {
         tune: impl FnOnce(&mut GeneralRelaxedSettings),
         secondary: Option<&GeneralPersistentVacancyPinnedParent>,
         parent_role: ParentRole,
+        action: Option<String>,
     ) -> GeneralPersistentVacancyDiagnostics {
+        let secondary_fingerprint = secondary.map(|parent| parent.source_sha256.clone());
         let mut relaxed = self.base_relaxed_settings();
         relaxed.persistent_vacancy_mode = mode;
         relaxed.persistent_vacancy_target_depth_mm = target;
@@ -1111,11 +1427,16 @@ impl<'a> Coordinator<'a> {
         let mut disposition = None;
         let mut published = false;
         let mut raw_depth_mm = None;
+        let mut result_fingerprint = None;
+        if produced.len() == self.pieces.len() {
+            result_fingerprint = Some(general_placement_fingerprint(&produced));
+        }
         if !produced.is_empty() {
             let (archived, depth) = self.archive_layout(
                 produced.clone(),
                 BasinOperator::Mode(mode),
                 parent_fingerprint.clone(),
+                secondary_fingerprint.clone(),
             );
             disposition = Some(format!("{archived:?}"));
             raw_depth_mm = depth;
@@ -1125,11 +1446,14 @@ impl<'a> Coordinator<'a> {
             phase: self.phase_name.clone(),
             operator: format!("mode{mode}"),
             parent_fingerprint,
+            secondary_parent_fingerprint: secondary_fingerprint,
+            action,
             started_seconds,
             elapsed_seconds,
             work_units,
             exact_valid: population.exact_valid,
             raw_depth_mm,
+            result_fingerprint,
             archive_disposition: disposition,
             published,
             failure_reason: population.failure_reason.clone(),
@@ -1184,14 +1508,31 @@ impl<'a> Coordinator<'a> {
     /// multiple * mean cost`; when it has not, the check degrades to v1's
     /// deadline test, because refusing an unpriced operator would mean never
     /// pricing it.
-    fn affordable(&self, deadline: f64, operator: &str, multiple: f64) -> bool {
+    ///
+    /// It reports *which* of its two clauses refused, because the two are
+    /// different findings about a saturated run - a phase stopped by its
+    /// deadline has actions left and a phase stopped by affordability has
+    /// actions it cannot pay for - and the boolean this replaced collapsed them
+    /// into one `false`. `None` is "yes, go ahead".
+    fn affordability(
+        &self,
+        deadline: f64,
+        operator: &str,
+        multiple: f64,
+    ) -> Option<PhaseExitCause> {
         if !self.meter.has_room(deadline) {
-            return false;
+            return Some(PhaseExitCause::Deadline);
         }
         match self.mean_operator_cost(operator) {
-            None => true,
-            Some(cost) => self.meter.remaining_to(deadline) >= multiple * cost,
+            None => None,
+            Some(cost) if self.meter.remaining_to(deadline) >= multiple * cost => None,
+            Some(_) => Some(PhaseExitCause::Affordability),
         }
+    }
+
+    /// Records why the phase in flight stopped.
+    fn note_exit(&mut self, cause: PhaseExitCause) {
+        self.exit_cause = cause;
     }
 }
 
@@ -1272,6 +1613,7 @@ pub fn run_portfolio(
         phase_name: "m0".to_owned(),
         attempted: std::collections::BTreeSet::new(),
         descent_stalled: false,
+        exit_cause: PhaseExitCause::Completed,
         protected_fraction: 0.0,
     };
 
@@ -1283,9 +1625,10 @@ pub fn run_portfolio(
         constructed.placements.clone(),
         BasinOperator::Constructor,
         None,
+        None,
     );
     let m0_placements = coordinator.incumbent.result.placements.clone();
-    coordinator.archive_layout(m0_placements, BasinOperator::RelaxedM0, None);
+    coordinator.archive_layout(m0_placements, BasinOperator::RelaxedM0, None, None);
     if let Some(coupled) = m0.diagnostics.coupled_dynamic_separator.as_ref() {
         let arms = [
             Some(&coupled.control),
@@ -1298,7 +1641,7 @@ pub fn run_portfolio(
                     &arm.final_placements,
                 );
             if !placements.is_empty() {
-                coordinator.archive_layout(placements, BasinOperator::CoupledSeparator, None);
+                coordinator.archive_layout(placements, BasinOperator::CoupledSeparator, None, None);
             }
         }
     }
@@ -1311,6 +1654,7 @@ pub fn run_portfolio(
         operator_calls: 0,
         publications: 0,
         skipped: false,
+        exit_cause: PhaseExitCause::Completed,
     });
     // Everything after this point is a fraction of what phase 0 left, not of
     // the whole budget. See `PhaseSchedule`.
@@ -1335,9 +1679,14 @@ pub fn run_portfolio(
             // round. That is what turns a round-robin over the frontier into a
             // progressive descent rather than a repeated one.
             let frontier = run.archive.distinct_frontier(run.settings.descent_states);
+            if frontier.is_empty() {
+                run.note_exit(PhaseExitCause::GeometricFixpoint);
+                return;
+            }
             let mut spent_any = false;
             for basin in frontier {
-                if !run.affordable(run.deadline, "mode22", 1.0) {
+                if let Some(cause) = run.affordability(run.deadline, "mode22", 1.0) {
+                    run.note_exit(cause);
                     return;
                 }
                 // The quantum's *size* is part of the key: a second pass at a
@@ -1358,6 +1707,7 @@ pub fn run_portfolio(
                     },
                     None,
                     ParentRole::Descended,
+                    None,
                 );
             }
             if spent_any {
@@ -1380,12 +1730,14 @@ pub fn run_portfolio(
             // priced it.
             if !run.settings.descent_iterated_deepening {
                 run.descent_stalled = true;
+                run.note_exit(PhaseExitCause::KeysExhausted);
                 break;
             }
             let deepened_cycles = (cycles * 2).min(ALTERNATION_MAX_CYCLES);
             let deepened_epochs = (epochs * 2).min(template_epochs);
             if deepened_cycles == cycles && deepened_epochs == epochs {
                 run.descent_stalled = true;
+                run.note_exit(PhaseExitCause::KeysExhausted);
                 break;
             }
             cycles = deepened_cycles;
@@ -1401,7 +1753,8 @@ pub fn run_portfolio(
     // the review wrote it as: two structurally distinct archive states.
     coordinator.run_phase("crossover", settings.schedule.crossover_by, |run| {
         for _ in 0..run.settings.crossover_attempts {
-            if !run.affordable(run.deadline, "mode23", 1.0) {
+            if let Some(cause) = run.affordability(run.deadline, "mode23", 1.0) {
+                run.note_exit(cause);
                 return;
             }
             // Re-selected every attempt: a crossover that published moved the
@@ -1411,6 +1764,7 @@ pub fn run_portfolio(
                 .archive
                 .distinct_frontier(run.settings.crossover_states.max(2));
             if frontier.len() < 2 {
+                run.note_exit(PhaseExitCause::GeometricFixpoint);
                 return;
             }
             let fingerprints = frontier
@@ -1420,6 +1774,7 @@ pub fn run_portfolio(
             let Some((left, right, key)) =
                 first_unattempted_crossover_pair(&fingerprints, &run.attempted)
             else {
+                run.note_exit(PhaseExitCause::KeysExhausted);
                 return;
             };
             run.already_attempted(key);
@@ -1436,6 +1791,7 @@ pub fn run_portfolio(
                 |_| {},
                 Some(&parent_b),
                 ParentRole::Descended,
+                Some(format!("x:forward:{left}->{right}@{CROSSOVER_CUT_FRACTION}")),
             );
             // Both parents were descended from. v1 charged only the first,
             // which is the same defect - a descent that happened going
@@ -1456,15 +1812,18 @@ pub fn run_portfolio(
     // and only if one exists - a complete layout the compressing descent
     // returned that the exact validator refuses.
     coordinator.run_phase("compression", settings.schedule.compression_by, |run| {
-        if !run.affordable(run.deadline, "mode22", 1.0) {
+        if let Some(cause) = run.affordability(run.deadline, "mode22", 1.0) {
+            run.note_exit(cause);
             return;
         }
         let parent = run.incumbent.result.placements.clone();
         let fingerprint = run.incumbent.fingerprint.clone();
         let Some(depth) = run.incumbent.raw_depth_mm else {
+            run.note_exit(PhaseExitCause::GeometricFixpoint);
             return;
         };
         if run.already_attempted(format!("22c:{fingerprint}")) {
+            run.note_exit(PhaseExitCause::KeysExhausted);
             return;
         }
         let epochs = run.settings.descent_relaxed_epochs;
@@ -1479,17 +1838,24 @@ pub fn run_portfolio(
             },
             None,
             ParentRole::Descended,
+            None,
         );
         if compressed.exact_valid {
             // Nothing to legalize. This is the whole demotion: on this stream
             // the trigger does not fire, and a phase that does not fire costs
             // nothing instead of costing six refused calls.
+            run.note_exit(PhaseExitCause::NoResidue);
             return;
         }
         let residue = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
             &compressed.final_placements,
         );
-        if residue.len() != run.pieces.len() || !run.meter.has_room(run.deadline) {
+        if residue.len() != run.pieces.len() {
+            run.note_exit(PhaseExitCause::NoCompleteLayout);
+            return;
+        }
+        if !run.meter.has_room(run.deadline) {
+            run.note_exit(PhaseExitCause::Deadline);
             return;
         }
         let Some(residue_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
@@ -1498,6 +1864,7 @@ pub fn run_portfolio(
             run.fast_settings,
         )
         .ok() else {
+            run.note_exit(PhaseExitCause::GeometricFixpoint);
             return;
         };
         // One rung of the engine's own construction drop ladder below the
@@ -1505,10 +1872,12 @@ pub fn run_portfolio(
         // legalizer for.
         let bound = residue_depth - COMPRESSION_RUNG_MM;
         if bound <= 0.0 {
+            run.note_exit(PhaseExitCause::GeometricFixpoint);
             return;
         }
         let residue_fingerprint = general_placement_fingerprint(&residue);
         if run.already_attempted(format!("31:{residue_fingerprint}")) {
+            run.note_exit(PhaseExitCause::KeysExhausted);
             return;
         }
         run.run_operator(
@@ -1519,6 +1888,7 @@ pub fn run_portfolio(
             |_| {},
             None,
             ParentRole::Descended,
+            None,
         );
     });
 
@@ -1531,8 +1901,14 @@ pub fn run_portfolio(
     // iteration or it is not drawn at all.
     coordinator.run_phase("diversify", settings.schedule.diversify_by, |run| {
         match run.settings.basin_trigger {
-            BasinTrigger::Never => return,
-            BasinTrigger::OnStall if !run.descent_stalled => return,
+            BasinTrigger::Never => {
+                run.note_exit(PhaseExitCause::TriggerRefused);
+                return;
+            }
+            BasinTrigger::OnStall if !run.descent_stalled => {
+                run.note_exit(PhaseExitCause::TriggerRefused);
+                return;
+            }
             _ => {}
         }
         let priced = run.settings.basin_trigger == BasinTrigger::WhenDescendable;
@@ -1541,6 +1917,7 @@ pub fn run_portfolio(
         for slot in 0..run.settings.basin_slots {
             let publications_before = run.publications.len();
             if !run.meter.has_room(run.deadline) {
+                run.note_exit(PhaseExitCause::Deadline);
                 return;
             }
             if priced {
@@ -1549,10 +1926,12 @@ pub fn run_portfolio(
                 // priced when the first one is drawn, so it is charged a
                 // quantum's price until it has priced itself.
                 let Some(quantum) = run.mean_operator_cost("mode22") else {
+                    run.note_exit(PhaseExitCause::Affordability);
                     return;
                 };
                 let arm = run.mean_operator_cost("mode20").unwrap_or(quantum);
                 if run.meter.remaining_to(run.deadline) < arm + quantum {
+                    run.note_exit(PhaseExitCause::Affordability);
                     return;
                 }
             }
@@ -1577,6 +1956,7 @@ pub fn run_portfolio(
                 // The constructor builds from scratch; the incumbent is only
                 // its pose prior, so this is not that basin's quantum.
                 ParentRole::Prior,
+                Some(format!("m20:slot{slot}")),
             );
             let basin = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
                 &drawn.final_placements,
@@ -1588,9 +1968,11 @@ pub fn run_portfolio(
                 // refused for the same reason at the same price. Stopping here
                 // is what turns "the clamp was wrong" from eight wasted arms -
                 // 2.04 s of a 3.88 s shapes-17 run, measured - into one.
+                run.note_exit(PhaseExitCause::NoCompleteLayout);
                 return;
             }
             if !run.meter.has_room(run.deadline) {
+                run.note_exit(PhaseExitCause::Deadline);
                 return;
             }
             let Some(basin_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
@@ -1601,6 +1983,7 @@ pub fn run_portfolio(
             .ok() else {
                 barren += 1;
                 if barren >= patience {
+                    run.note_exit(PhaseExitCause::Patience);
                     return;
                 }
                 continue;
@@ -1614,6 +1997,7 @@ pub fn run_portfolio(
                 // same terms as one whose descent published nothing.
                 barren += 1;
                 if barren >= patience {
+                    run.note_exit(PhaseExitCause::Patience);
                     return;
                 }
                 continue;
@@ -1629,12 +2013,14 @@ pub fn run_portfolio(
                 },
                 None,
                 ParentRole::Descended,
+                Some(format!("m22:slot{slot}")),
             );
             if run.publications.len() > publications_before {
                 barren = 0;
             } else {
                 barren += 1;
                 if barren >= patience {
+                    run.note_exit(PhaseExitCause::Patience);
                     return;
                 }
             }
@@ -1667,11 +2053,29 @@ pub fn run_portfolio(
         }
     });
 
+    // ---- phase 6: the A/B/C probe -----------------------------------------
+    // One action, from the state the schedule saturated at, on an allowance
+    // every arm shares. It runs *after* the whole schedule, including the
+    // drain, so the base trajectory of an A run, a B run and a C run is
+    // bit-identical and the arms are paired on the same saturated archive by
+    // construction. Compiled only under `portfolio-ledger`; the shipping
+    // schedule has no such phase and no branch that could reach one.
+    #[cfg(feature = "portfolio-ledger")]
+    let probe = run_probe_phase(&mut coordinator, constructor_clamp_mm);
+    #[cfg(not(feature = "portfolio-ledger"))]
+    let probe = None;
+
     let elapsed_seconds = coordinator.meter.seconds();
     let work_units = coordinator.meter.work_units();
     let budget = coordinator.meter.budget;
     let descent_stalled = coordinator.descent_stalled;
+    #[cfg(feature = "portfolio-ledger")]
+    let ledger = Some(build_ledger(&coordinator));
+    #[cfg(not(feature = "portfolio-ledger"))]
+    let ledger = None;
     Ok(PortfolioOutcome {
+        ledger,
+        probe,
         descent_stalled,
         result: coordinator.incumbent.result.clone(),
         incumbent: coordinator.incumbent,
@@ -1722,6 +2126,16 @@ const COMPRESSION_RUNG_MM: f64 = 0.4;
 /// Dimensionless and scale-free by the mode's own definition.
 const CROSSOVER_CUT_FRACTION: f64 = 0.5;
 
+/// The probe arm C ladder drop, in millimetres below the incumbent's own raw
+/// depth.
+///
+/// The mode-26 anatomy's shortest measured ladder. It is a length and it is
+/// stated as one: it is the drop the anatomy sampled at (0.30 mm, two rungs,
+/// six arms, 9.98-11.06 s of profiled wall), chosen so that this probe measures
+/// the same object that round measured rather than a new one.
+#[cfg(feature = "portfolio-ledger")]
+const LADDER_PROBE_DROP_MM: f64 = 0.3;
+
 /// A phase in flight: the coordinator plus this phase's deadline.
 struct PhaseRun<'c, 'a> {
     coordinator: &'c mut Coordinator<'a>,
@@ -1746,12 +2160,26 @@ impl<'a> Coordinator<'a> {
     /// whether it was entered at all.
     fn run_phase(&mut self, name: &str, share: f64, body: impl FnOnce(&mut PhaseRun<'_, 'a>)) {
         let deadline = self.protected_fraction + (1.0 - self.protected_fraction) * share;
+        self.run_phase_to(name, deadline, body);
+    }
+
+    /// The same, against an absolute deadline fraction rather than a share of
+    /// what phase 0 left. The probe phase is the only caller that needs one:
+    /// its allowance is a fixed number of work units measured from wherever the
+    /// schedule saturated, so that every arm gets the same allowance from the
+    /// same state.
+    fn run_phase_to(&mut self, name: &str, deadline: f64, body: impl FnOnce(&mut PhaseRun<'_, 'a>)) {
         let entered_seconds = self.meter.seconds();
         let entered_work = self.meter.work_units();
         let calls_before = self.operator_calls.len();
         let publications_before = self.publications.len();
         let skipped = !self.meter.has_room(deadline);
         self.phase_name = name.to_owned();
+        self.exit_cause = if skipped {
+            PhaseExitCause::SkippedDeadlinePassed
+        } else {
+            PhaseExitCause::Completed
+        };
         if !skipped {
             // One trace scope per phase, so the quality-frontier stream
             // attributes every exact-valid candidate to the phase that paid
@@ -1778,8 +2206,894 @@ impl<'a> Coordinator<'a> {
             operator_calls: self.operator_calls.len() - calls_before,
             publications: self.publications.len() - publications_before,
             skipped,
+            exit_cause: self.exit_cause,
         });
     }
+}
+
+// ---------------------------------------------------------------------------
+// The opportunity-and-delayed-credit ledger, and the A/B/C probe.
+//
+// Everything below this line is compiled only under `portfolio-ledger`. The
+// ledger is an instrument: it reads the archive at exit and never feeds a
+// schedule decision, and the probe is one extra phase that runs after the
+// whole schedule has finished, so a default build has neither the phase nor a
+// branch that could reach it.
+// ---------------------------------------------------------------------------
+
+/// Whether two placements are the same pose, on the same bit-exact terms
+/// [`assignment_overlap`] uses - which is the terms mode 23 copies poses on.
+#[cfg(feature = "portfolio-ledger")]
+fn poses_equal(left: &GeneralFastPlacement, right: &GeneralFastPlacement) -> bool {
+    left.rotation_deg.to_bits() == right.rotation_deg.to_bits()
+        && left.mirrored == right.mirrored
+        && left.translate_short_axis.to_bits() == right.translate_short_axis.to_bits()
+        && left.translate_long_axis.to_bits() == right.translate_long_axis.to_bits()
+}
+
+/// The hybrid mode 23 would build from `(left, right)` at `cut_fraction`.
+///
+/// This mirrors `general_relaxed::run_recombination`'s rule exactly - the
+/// threshold is `min + f * (max - min)` over *left*'s own short-axis span, and
+/// a piece goes to left when its left-pose is strictly below it - so the
+/// ledger's hybrid fingerprint is the fingerprint the operator would actually
+/// be handed. Nothing is legalized here; this is the seed, not the result.
+#[cfg(feature = "portfolio-ledger")]
+fn crossover_hybrid(
+    left: &[GeneralFastPlacement],
+    right: &[GeneralFastPlacement],
+    cut_fraction: f64,
+) -> Option<(Vec<GeneralFastPlacement>, usize, usize)> {
+    let right_by_id = right
+        .iter()
+        .map(|placement| (placement.piece_id.as_str(), placement))
+        .collect::<BTreeMap<_, _>>();
+    let mut min_short = f64::INFINITY;
+    let mut max_short = f64::NEG_INFINITY;
+    for placement in left {
+        min_short = min_short.min(placement.translate_short_axis);
+        max_short = max_short.max(placement.translate_short_axis);
+    }
+    if !(min_short.is_finite() && max_short.is_finite() && max_short > min_short) {
+        return None;
+    }
+    let threshold = min_short + cut_fraction * (max_short - min_short);
+    let mut hybrid = Vec::with_capacity(left.len());
+    let mut from_left = 0usize;
+    let mut from_right = 0usize;
+    for placement in left {
+        if placement.translate_short_axis < threshold {
+            from_left += 1;
+            hybrid.push(placement.clone());
+        } else {
+            let other = right_by_id.get(placement.piece_id.as_str())?;
+            from_right += 1;
+            hybrid.push((*other).clone());
+        }
+    }
+    Some((hybrid, from_left, from_right))
+}
+
+/// The interface bands of `left` against `right`, as cut fractions.
+///
+/// A cut only ever partitions `left`'s *occupied* short-axis positions, so the
+/// whole continuum of fractions collapses to at most one action per gap between
+/// two consecutive occupied positions. The cut is placed at the gap's midpoint,
+/// which is the representative of its partition furthest from either edge.
+///
+/// Returns `(fraction, gap_mm, differing_pieces_at_lower_edge, is_midpoint_band)`.
+/// A band whose lower edge holds no piece that *differs* between the two
+/// parents produces the same hybrid as the band below it, which is why the
+/// count is carried: it is the ledger's "where the two parents' placements
+/// differ" and it is what makes a cut a real action rather than a relabelling.
+#[cfg(feature = "portfolio-ledger")]
+fn derived_cut_bands(
+    left: &[GeneralFastPlacement],
+    right: &[GeneralFastPlacement],
+) -> Vec<(f64, f64, usize, bool)> {
+    let right_by_id = right
+        .iter()
+        .map(|placement| (placement.piece_id.as_str(), placement))
+        .collect::<BTreeMap<_, _>>();
+    let mut rows = left
+        .iter()
+        .map(|placement| {
+            let differs = right_by_id
+                .get(placement.piece_id.as_str())
+                .is_none_or(|other| !poses_equal(placement, other));
+            (placement.translate_short_axis, differs)
+        })
+        .collect::<Vec<_>>();
+    rows.sort_by(|first, second| first.0.total_cmp(&second.0));
+    // One group per occupied short-axis position, carrying how many of the
+    // pieces at that position differ between the parents.
+    let mut groups: Vec<(f64, usize)> = Vec::new();
+    for (value, differs) in rows {
+        match groups.last_mut() {
+            Some(last) if last.0.to_bits() == value.to_bits() => {
+                last.1 += usize::from(differs);
+            }
+            _ => groups.push((value, usize::from(differs))),
+        }
+    }
+    if groups.len() < 2 {
+        return Vec::new();
+    }
+    let min_short = groups[0].0;
+    let max_short = groups[groups.len() - 1].0;
+    let span = max_short - min_short;
+    if !(span.is_finite() && span > 0.0) {
+        return Vec::new();
+    }
+    let midpoint_threshold = min_short + CROSSOVER_CUT_FRACTION * span;
+    let mut bands = Vec::with_capacity(groups.len() - 1);
+    for index in 0..groups.len() - 1 {
+        let lower = groups[index].0;
+        let upper = groups[index + 1].0;
+        let threshold = lower + (upper - lower) / 2.0;
+        let fraction = (threshold - min_short) / span;
+        if !(fraction.is_finite() && fraction > 0.0 && fraction < 1.0) {
+            continue;
+        }
+        let is_midpoint = lower < midpoint_threshold && midpoint_threshold <= upper;
+        bands.push((fraction, upper - lower, groups[index].1, is_midpoint));
+    }
+    bands
+}
+
+/// Every ordered, cut-derived crossover action over `selection`, in the
+/// canonical order the ledger names "next" by.
+///
+/// The order is the schedule's own pair order - `(0,1), (0,2), (1,2), ...`,
+/// worse member's rank first - then forward before reciprocal, then cuts by
+/// distance from the constant `0.5`, because `0.5` is the only cut this engine
+/// has evidence for and the nearest band to it is the smallest departure from
+/// the action the schedule already knows how to make.
+#[cfg(feature = "portfolio-ledger")]
+fn enumerate_crossover_actions(
+    selection: &[ArchivedBasin],
+    attempted: &std::collections::BTreeSet<String>,
+) -> Vec<CrossoverAction> {
+    let mut actions = Vec::new();
+    for right in 1..selection.len() {
+        for left in 0..right {
+            for (a, b, reciprocal) in [(left, right, false), (right, left, true)] {
+                let parent_a = &selection[a];
+                let parent_b = &selection[b];
+                // The schedule's key is built from the two parents in the order
+                // it handed them to the operator, and the frontier's *ranks*
+                // move between attempts, so the key has to come from the
+                // fingerprints rather than from the ranks: an action whose
+                // parents were ranked the other way round when the phase made
+                // it is still the same attempted action.
+                let schedule_key =
+                    format!("23:{}:{}", parent_a.fingerprint, parent_b.fingerprint);
+                let mut bands = derived_cut_bands(&parent_a.placements, &parent_b.placements);
+                bands.sort_by(|first, second| {
+                    (first.0 - CROSSOVER_CUT_FRACTION)
+                        .abs()
+                        .total_cmp(&(second.0 - CROSSOVER_CUT_FRACTION).abs())
+                        .then(first.0.total_cmp(&second.0))
+                });
+                let mut seen = std::collections::BTreeSet::new();
+                for (fraction, gap_mm, differing, is_midpoint) in bands {
+                    let Some((hybrid, from_left, from_right)) =
+                        crossover_hybrid(&parent_a.placements, &parent_b.placements, fraction)
+                    else {
+                        continue;
+                    };
+                    let hybrid_fingerprint = general_placement_fingerprint(&hybrid);
+                    if !seen.insert(hybrid_fingerprint.clone()) {
+                        // A different band, the same hybrid: the pieces the two
+                        // bands disagree about have the same pose in both
+                        // parents, so this is not a second action.
+                        continue;
+                    }
+                    let degenerate = hybrid_fingerprint == parent_a.fingerprint
+                        || hybrid_fingerprint == parent_b.fingerprint;
+                    // Only the midpoint band is an action the schedule can
+                    // name; every other cut has no key in the schedule's
+                    // namespace at all, which is the finding.
+                    let (key, was_attempted) = if is_midpoint {
+                        let hit = attempted.contains(&schedule_key);
+                        (schedule_key.clone(), hit)
+                    } else {
+                        (
+                            format!(
+                                "23d:{}:{}:{:016x}",
+                                parent_a.fingerprint,
+                                parent_b.fingerprint,
+                                fraction.to_bits()
+                            ),
+                            false,
+                        )
+                    };
+                    let attempted_now = was_attempted || attempted.contains(&key);
+                    actions.push(CrossoverAction {
+                        left_fingerprint: parent_a.fingerprint.clone(),
+                        right_fingerprint: parent_b.fingerprint.clone(),
+                        left_rank: a,
+                        right_rank: b,
+                        reciprocal,
+                        cut_fraction: fraction,
+                        band_gap_mm: gap_mm,
+                        differing_pieces_at_band: differing,
+                        pieces_from_left: from_left,
+                        pieces_from_right: from_right,
+                        hybrid_fingerprint,
+                        degenerate,
+                        is_midpoint_band: is_midpoint,
+                        attempted: attempted_now,
+                        key,
+                    });
+                }
+            }
+        }
+    }
+    actions
+}
+
+/// The nearest-rank percentile of an already-sorted slice.
+#[cfg(feature = "portfolio-ledger")]
+fn percentile(sorted: &[f64], quantile: f64) -> f64 {
+    if sorted.is_empty() {
+        return 0.0;
+    }
+    let rank = (quantile * sorted.len() as f64).ceil() as usize;
+    sorted[rank.clamp(1, sorted.len()) - 1]
+}
+
+/// The opportunity-and-delayed-credit ledger for the state the run ended in.
+#[cfg(feature = "portfolio-ledger")]
+fn build_ledger(coordinator: &Coordinator<'_>) -> PortfolioLedger {
+    let archive = &coordinator.archive;
+    let members = archive.basins().to_vec();
+
+    // 1 - the crossover action space, over the phase's own selection and over
+    //     the whole archive.
+    let frontier = archive.distinct_frontier(coordinator.settings.crossover_states.max(2));
+    let frontier_actions = enumerate_crossover_actions(&frontier, &coordinator.attempted);
+    let mut ranked = members.clone();
+    ranked.sort_by(|left, right| {
+        left.raw_depth_mm
+            .total_cmp(&right.raw_depth_mm)
+            .then(left.fingerprint.cmp(&right.fingerprint))
+    });
+    let archive_actions = enumerate_crossover_actions(&ranked, &coordinator.attempted);
+    let archive_actions_total = archive_actions.len();
+    let archive_actions_untried = archive_actions
+        .iter()
+        .filter(|action| !action.attempted)
+        .count();
+    let archive_actions_untried_nondegenerate = archive_actions
+        .iter()
+        .filter(|action| !action.attempted && !action.degenerate)
+        .count();
+    let existing = members
+        .iter()
+        .map(|member| member.fingerprint.clone())
+        .collect::<std::collections::BTreeSet<_>>();
+    let next_action = frontier_actions
+        .iter()
+        .find(|action| {
+            !action.attempted && !action.degenerate && !existing.contains(&action.hybrid_fingerprint)
+        })
+        .cloned();
+
+    // 2 - selection: who the frontier can reach, and what shadows the rest.
+    let descent_selection = archive
+        .distinct_frontier(coordinator.settings.descent_states)
+        .iter()
+        .map(|basin| basin.fingerprint.clone())
+        .collect::<std::collections::BTreeSet<_>>();
+    let crossover_selection = frontier
+        .iter()
+        .map(|basin| basin.fingerprint.clone())
+        .collect::<std::collections::BTreeSet<_>>();
+    let full = archive.distinct_frontier(members.len().max(1));
+    let full_selection = full
+        .iter()
+        .map(|basin| basin.fingerprint.clone())
+        .collect::<std::collections::BTreeSet<_>>();
+
+    // 4 - genealogy. Edges come from the archive's own parent fields *and*
+    //     from every operator call, because a call whose output the archive
+    //     refused as a duplicate still descended from its parents.
+    let mut parents_of: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    let mut add_edge = |child: &str, parent: Option<&String>| {
+        let Some(parent) = parent else { return };
+        if parent == child {
+            return;
+        }
+        let entry = parents_of.entry(child.to_owned()).or_default();
+        if !entry.iter().any(|known| known == parent) {
+            entry.push(parent.clone());
+        }
+    };
+    for member in &members {
+        add_edge(&member.fingerprint, member.parent_fingerprint.as_ref());
+        add_edge(
+            &member.fingerprint,
+            member.secondary_parent_fingerprint.as_ref(),
+        );
+    }
+    for call in &coordinator.operator_calls {
+        let Some(child) = call.result_fingerprint.as_deref() else {
+            continue;
+        };
+        add_edge(child, call.parent_fingerprint.as_ref());
+        add_edge(child, call.secondary_parent_fingerprint.as_ref());
+    }
+    let mut children_of: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for (child, parents) in &parents_of {
+        for parent in parents {
+            children_of
+                .entry(parent.clone())
+                .or_default()
+                .push(child.clone());
+        }
+    }
+    // Forward reachability, breadth first, with the distance carried so the
+    // "how many generations later did this pay" question has an answer.
+    let descendants_of = |root: &str| -> BTreeMap<String, usize> {
+        let mut seen: BTreeMap<String, usize> = BTreeMap::new();
+        let mut queue = std::collections::VecDeque::new();
+        queue.push_back((root.to_owned(), 0usize));
+        seen.insert(root.to_owned(), 0);
+        while let Some((node, distance)) = queue.pop_front() {
+            let Some(children) = children_of.get(&node) else {
+                continue;
+            };
+            for child in children {
+                if seen.contains_key(child) {
+                    continue;
+                }
+                seen.insert(child.clone(), distance + 1);
+                queue.push_back((child.clone(), distance + 1));
+            }
+        }
+        seen
+    };
+    let incumbent_fingerprint = coordinator.incumbent.fingerprint.clone();
+
+    let mut archive_rows = Vec::with_capacity(members.len());
+    let mut members_without_action = 0usize;
+    let mut excluded_by_top_k = 0usize;
+    let mut excluded_by_similarity = 0usize;
+    for member in &members {
+        let depth_rank = ranked
+            .iter()
+            .position(|other| other.fingerprint == member.fingerprint)
+            .unwrap_or(usize::MAX);
+        let in_crossover = crossover_selection.contains(&member.fingerprint);
+        let reachable_at_full_k = full_selection.contains(&member.fingerprint);
+        let (excluded_by, shadowed_by, shadow_overlap) = if in_crossover {
+            (None, None, 0.0)
+        } else if reachable_at_full_k {
+            excluded_by_top_k += 1;
+            (Some("topK".to_owned()), None, 0.0)
+        } else {
+            excluded_by_similarity += 1;
+            let mut best: Option<(&ArchivedBasin, f64)> = None;
+            for kept in &full {
+                let overlap = assignment_overlap(&kept.placements, &member.placements);
+                if overlap >= archive.similarity_threshold()
+                    && best.is_none_or(|(_, known)| overlap > known)
+                {
+                    best = Some((kept, overlap));
+                }
+            }
+            match best {
+                Some((kept, overlap)) => (
+                    Some("similarity".to_owned()),
+                    Some(kept.fingerprint.clone()),
+                    overlap,
+                ),
+                None => (Some("similarity".to_owned()), None, 0.0),
+            }
+        };
+        let actions_received = coordinator
+            .operator_calls
+            .iter()
+            .filter(|call| {
+                call.parent_fingerprint.as_deref() == Some(member.fingerprint.as_str())
+                    || call.secondary_parent_fingerprint.as_deref()
+                        == Some(member.fingerprint.as_str())
+            })
+            .count();
+        if actions_received == 0 {
+            members_without_action += 1;
+        }
+        let reach = descendants_of(&member.fingerprint);
+        let mut descendant_publications = 0usize;
+        let mut best_descendant_raw_depth_mm: Option<f64> = None;
+        for event in &coordinator.publications {
+            let Some(distance) = reach.get(&event.fingerprint) else {
+                continue;
+            };
+            if *distance == 0 && event.fingerprint == member.fingerprint {
+                // A state that *is* a publication still counts as its own
+                // credit; deferred credit is the distance, and it is reported.
+            }
+            descendant_publications += 1;
+            if best_descendant_raw_depth_mm.is_none_or(|known| event.raw_depth_mm < known) {
+                best_descendant_raw_depth_mm = Some(event.raw_depth_mm);
+            }
+        }
+        archive_rows.push(ArchiveOpportunityRow {
+            fingerprint: member.fingerprint.clone(),
+            raw_depth_mm: member.raw_depth_mm,
+            operator: member.operator.name(),
+            exact_valid: member.exact_valid,
+            depth_rank,
+            in_descent_frontier: descent_selection.contains(&member.fingerprint),
+            in_crossover_frontier: in_crossover,
+            reachable_at_full_k,
+            excluded_by,
+            shadowed_by,
+            shadow_overlap,
+            actions_received,
+            descents: member.descents,
+            descendant_publications,
+            best_descendant_raw_depth_mm,
+            generations_to_incumbent: reach.get(&incumbent_fingerprint).copied(),
+        });
+    }
+    archive_rows.sort_by_key(|row| row.depth_rank);
+
+    // 5 - cost and yield per action class.
+    let mut classes: BTreeMap<(String, String), Vec<&OperatorCallReport>> = BTreeMap::new();
+    for call in &coordinator.operator_calls {
+        classes
+            .entry((call.phase.clone(), call.operator.clone()))
+            .or_default()
+            .push(call);
+    }
+    let mut action_classes = Vec::with_capacity(classes.len());
+    for ((phase, operator), calls) in classes {
+        let mut work = calls
+            .iter()
+            .map(|call| call.work_units as f64)
+            .collect::<Vec<_>>();
+        let mut seconds = calls
+            .iter()
+            .map(|call| call.elapsed_seconds)
+            .collect::<Vec<_>>();
+        work.sort_by(f64::total_cmp);
+        seconds.sort_by(f64::total_cmp);
+        let work_total = calls.iter().map(|call| call.work_units).sum::<u64>();
+        let delta_raw_mm = coordinator
+            .publications
+            .iter()
+            .filter(|event| event.phase == phase && event.source == operator)
+            .filter_map(|event| {
+                event
+                    .previous_raw_depth_mm
+                    .map(|previous| previous - event.raw_depth_mm)
+            })
+            .sum::<f64>();
+        action_classes.push(ActionClassRow {
+            phase,
+            operator,
+            calls: calls.len(),
+            published: calls.iter().filter(|call| call.published).count(),
+            work_units_total: work_total,
+            work_units_p50: percentile(&work, 0.50) as u64,
+            work_units_p95: percentile(&work, 0.95) as u64,
+            seconds_p50: percentile(&seconds, 0.50),
+            seconds_p95: percentile(&seconds, 0.95),
+            seconds_total: seconds.iter().sum(),
+            delta_raw_mm,
+            delta_raw_per_mega_unit: if work_total == 0 {
+                0.0
+            } else {
+                delta_raw_mm / (work_total as f64 / 1.0e6)
+            },
+        });
+    }
+
+    // The incumbent's ancestry. It is a DAG, not a chain - crossover has two
+    // parents - so this is the ancestor *set* in birth order, which is the
+    // honest shape of "what fed the answer".
+    let mut ancestors = std::collections::BTreeSet::new();
+    let mut queue = std::collections::VecDeque::new();
+    queue.push_back(incumbent_fingerprint.clone());
+    ancestors.insert(incumbent_fingerprint.clone());
+    while let Some(node) = queue.pop_front() {
+        let Some(parents) = parents_of.get(&node) else {
+            continue;
+        };
+        for parent in parents {
+            if ancestors.insert(parent.clone()) {
+                queue.push_back(parent.clone());
+            }
+        }
+    }
+    let mut incumbent_lineage = members
+        .iter()
+        .filter(|member| ancestors.contains(&member.fingerprint))
+        .map(|member| LineageStep {
+            fingerprint: member.fingerprint.clone(),
+            operator: member.operator.name(),
+            raw_depth_mm: member.raw_depth_mm,
+            birth_work_units: member.birth_work_units,
+        })
+        .collect::<Vec<_>>();
+    incumbent_lineage.sort_by_key(|step| step.birth_work_units);
+
+    PortfolioLedger {
+        frontier_actions,
+        archive_actions_total,
+        archive_actions_untried,
+        archive_actions_untried_nondegenerate,
+        archive_ordered_pairs: members.len() * members.len().saturating_sub(1),
+        next_action,
+        archive_rows,
+        action_classes,
+        incumbent_lineage,
+        members_without_action,
+        excluded_by_top_k,
+        excluded_by_similarity,
+    }
+}
+
+/// Runs the A/B/C probe arm the settings name, on the allowance they name.
+#[cfg(feature = "portfolio-ledger")]
+fn run_probe_phase(
+    coordinator: &mut Coordinator<'_>,
+    constructor_clamp_mm: f64,
+) -> Option<ProbeReport> {
+    let arm = coordinator.settings.probe;
+    let allowance_units = coordinator.settings.probe_work_units;
+    if arm == ProbeArm::None || allowance_units == 0 {
+        return None;
+    }
+    if !matches!(coordinator.meter.budget, PortfolioBudget::Work { .. }) {
+        // The arms are paired on identical work by construction, and a wall
+        // budget cannot promise that. Refusing is the honest answer.
+        return None;
+    }
+    let allowance = allowance_units as f64;
+    let deadline =
+        coordinator.meter.spent_fraction() + allowance / coordinator.meter.currency_total();
+    let entry_raw_depth_mm = coordinator.incumbent.raw_depth_mm;
+    let entry_work = coordinator.meter.work_units();
+    let entry_seconds = coordinator.meter.seconds();
+    let publications_before = coordinator.publications.len();
+    let calls_before = coordinator.operator_calls.len();
+    let mut steps: Vec<String> = Vec::new();
+    coordinator.run_phase_to("probe", deadline, |run| match arm {
+        ProbeArm::NextDerivedCrossover => probe_next_derived_crossover(run, &mut steps),
+        ProbeArm::ConstructorTicket => probe_constructor_ticket(run, constructor_clamp_mm, &mut steps),
+        ProbeArm::LadderRung => probe_ladder_rung(run, &mut steps),
+        ProbeArm::DescentControl => probe_descent_control(run, &mut steps),
+        ProbeArm::None => {}
+    });
+    let exit_raw_depth_mm = coordinator.incumbent.raw_depth_mm;
+    Some(ProbeReport {
+        arm: arm.name().to_owned(),
+        allowance,
+        work_units_spent: coordinator.meter.work_units().saturating_sub(entry_work),
+        seconds_spent: coordinator.meter.seconds() - entry_seconds,
+        entry_raw_depth_mm,
+        exit_raw_depth_mm,
+        delta_raw_mm: match (entry_raw_depth_mm, exit_raw_depth_mm) {
+            (Some(entry), Some(exit)) => entry - exit,
+            _ => 0.0,
+        },
+        exit_dual_gate_valid: coordinator.incumbent.dual_gate_valid,
+        publications: coordinator.publications.len() - publications_before,
+        operator_calls: coordinator.operator_calls.len() - calls_before,
+        steps,
+        exit_cause: coordinator.exit_cause.name().to_owned(),
+    })
+}
+
+/// Arm A: the next derived crossover action the ledger names.
+#[cfg(feature = "portfolio-ledger")]
+fn probe_next_derived_crossover(run: &mut PhaseRun<'_, '_>, steps: &mut Vec<String>) {
+    let frontier = run
+        .archive
+        .distinct_frontier(run.settings.crossover_states.max(2));
+    if frontier.len() < 2 {
+        run.note_exit(PhaseExitCause::GeometricFixpoint);
+        return;
+    }
+    let existing = run
+        .archive
+        .basins()
+        .iter()
+        .map(|basin| basin.fingerprint.clone())
+        .collect::<std::collections::BTreeSet<_>>();
+    let actions = enumerate_crossover_actions(&frontier, &run.attempted);
+    let Some(action) = actions.into_iter().find(|action| {
+        !action.attempted && !action.degenerate && !existing.contains(&action.hybrid_fingerprint)
+    }) else {
+        run.note_exit(PhaseExitCause::KeysExhausted);
+        return;
+    };
+    if let Some(cause) = run.affordability(run.deadline, "mode23", 1.0) {
+        run.note_exit(cause);
+        return;
+    }
+    let (Some(left), Some(right)) = (
+        frontier
+            .iter()
+            .find(|basin| basin.fingerprint == action.left_fingerprint),
+        frontier
+            .iter()
+            .find(|basin| basin.fingerprint == action.right_fingerprint),
+    ) else {
+        run.note_exit(PhaseExitCause::GeometricFixpoint);
+        return;
+    };
+    let left_placements = left.placements.clone();
+    let left_fingerprint = left.fingerprint.clone();
+    let right_fingerprint = right.fingerprint.clone();
+    let parent_b = GeneralPersistentVacancyPinnedParent {
+        placements: right.placements.clone(),
+        source: "archive".to_owned(),
+        source_sha256: right_fingerprint.clone(),
+    };
+    let label = format!(
+        "m23 {} rank{}->rank{} cut={:.9} band={:.6}mm differing={}",
+        if action.reciprocal {
+            "reciprocal"
+        } else {
+            "forward"
+        },
+        action.left_rank,
+        action.right_rank,
+        action.cut_fraction,
+        action.band_gap_mm,
+        action.differing_pieces_at_band,
+    );
+    steps.push(label.clone());
+    run.already_attempted(action.key.clone());
+    run.run_operator(
+        23,
+        &left_placements,
+        Some(left_fingerprint),
+        Some(action.cut_fraction),
+        |_| {},
+        Some(&parent_b),
+        ParentRole::Descended,
+        Some(label),
+    );
+    run.archive.charge_descent(&right_fingerprint);
+}
+
+/// Arm B: one mode-20 ticket, a direct crossover with the incumbent, a short
+/// mode-22.
+#[cfg(feature = "portfolio-ledger")]
+fn probe_constructor_ticket(
+    run: &mut PhaseRun<'_, '_>,
+    constructor_clamp_mm: f64,
+    steps: &mut Vec<String>,
+) {
+    // A *fresh* restart window and a fresh salt: the slot the diversify phase
+    // would have drawn next, so the ticket is new material rather than a replay
+    // of one the schedule already bought.
+    let slot = run
+        .operator_calls
+        .iter()
+        .filter(|call| call.operator == "mode20")
+        .count();
+    let salt = slot as f64 * BASIN_TARGET_SALT_RELATIVE_STEP * constructor_clamp_mm;
+    let divisor = if run.settings.cell_divisor_salts.is_empty() {
+        None
+    } else {
+        Some(run.settings.cell_divisor_salts[slot % run.settings.cell_divisor_salts.len()])
+    };
+    let incumbent_placements = run.incumbent.result.placements.clone();
+    let incumbent_fingerprint = run.incumbent.fingerprint.clone();
+    steps.push(format!("m20 ticket slot{slot}"));
+    let drawn = run.run_operator(
+        20,
+        &incumbent_placements,
+        Some(incumbent_fingerprint.clone()),
+        Some(constructor_clamp_mm + salt),
+        |relaxed| {
+            relaxed.construction_restart_window = Some((slot, 1));
+            relaxed.construction_void_cell_divisor = divisor;
+        },
+        None,
+        ParentRole::Prior,
+        Some(format!("m20:ticket:slot{slot}")),
+    );
+    let ticket = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+        &drawn.final_placements,
+    );
+    if ticket.len() != run.pieces.len() {
+        run.note_exit(PhaseExitCause::NoCompleteLayout);
+        return;
+    }
+    let ticket_fingerprint = general_placement_fingerprint(&ticket);
+
+    // The direct crossover: parent A is the incumbent, whose span the cut is
+    // measured on, and parent B is the ticket. That is the pairing the
+    // crossover phase would make of these two, because the frontier orders by
+    // depth and the incumbent is the shallower of them.
+    let parent_b = GeneralPersistentVacancyPinnedParent {
+        placements: ticket.clone(),
+        source: "probe-ticket".to_owned(),
+        source_sha256: ticket_fingerprint.clone(),
+    };
+    steps.push("m23 incumbent->ticket@0.5".to_owned());
+    // Re-read after the ticket: a mode-20 arm that published would have moved
+    // the incumbent, and the crossover's parent A must be the current one.
+    let crossover_parent = run.incumbent.result.placements.clone();
+    let crossover_parent_fingerprint = run.incumbent.fingerprint.clone();
+    let crossed = run.run_operator(
+        23,
+        &crossover_parent,
+        Some(crossover_parent_fingerprint),
+        Some(CROSSOVER_CUT_FRACTION),
+        |_| {},
+        Some(&parent_b),
+        ParentRole::Descended,
+        Some("m23:ticket:forward@0.5".to_owned()),
+    );
+    run.archive.charge_descent(&ticket_fingerprint);
+    let crossed_placements =
+        crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+            &crossed.final_placements,
+        );
+    // The short mode-22 descends from whatever the crossover left. If the
+    // crossover produced nothing complete, it descends from the ticket itself,
+    // which is what the diversify phase does and is the deferred-credit chain
+    // the review names.
+    let (child, origin) = if crossed_placements.len() == run.pieces.len() {
+        (crossed_placements, "crossover")
+    } else {
+        (ticket, "ticket")
+    };
+    let Some(child_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
+        run.pieces,
+        &child,
+        run.fast_settings,
+    )
+    .ok() else {
+        run.note_exit(PhaseExitCause::GeometricFixpoint);
+        return;
+    };
+    let child_fingerprint = general_placement_fingerprint(&child);
+    let cycles = run.settings.descent_cycles.max(1);
+    let epochs = run.settings.descent_relaxed_epochs.max(1);
+    if run.already_attempted(format!("22:{cycles}:{epochs}:{child_fingerprint}")) {
+        run.note_exit(PhaseExitCause::KeysExhausted);
+        return;
+    }
+    steps.push(format!("m22 short on {origin}"));
+    run.run_operator(
+        22,
+        &child,
+        Some(child_fingerprint),
+        Some(child_depth + ALTERNATION_RUNG_MM),
+        |relaxed| {
+            relaxed.alternation_max_cycles = Some(cycles);
+            relaxed.epochs = epochs;
+        },
+        None,
+        ParentRole::Descended,
+        Some(format!("m22:ticket:{origin}")),
+    );
+}
+
+/// Arm C: one short mode-26 ladder, then the coordinator's own global
+/// legalizer tier on what it leaves.
+#[cfg(feature = "portfolio-ledger")]
+fn probe_ladder_rung(run: &mut PhaseRun<'_, '_>, steps: &mut Vec<String>) {
+    let parent = run.incumbent.result.placements.clone();
+    let parent_fingerprint = run.incumbent.fingerprint.clone();
+    let Some(parent_depth) = run.incumbent.raw_depth_mm else {
+        run.note_exit(PhaseExitCause::GeometricFixpoint);
+        return;
+    };
+    let bound = parent_depth - LADDER_PROBE_DROP_MM;
+    if bound <= 0.0 {
+        run.note_exit(PhaseExitCause::GeometricFixpoint);
+        return;
+    }
+    steps.push(format!("m26 ladder {parent_depth:.4} -> {bound:.4}"));
+    let ladder = run.run_operator(
+        26,
+        &parent,
+        Some(parent_fingerprint.clone()),
+        Some(bound),
+        |_| {},
+        None,
+        ParentRole::Descended,
+        Some(format!("m26:drop{LADDER_PROBE_DROP_MM}")),
+    );
+    // The ladder's own rung count, so "a short ladder" is a measurement rather
+    // than a claim: `ladder_compression_bounds` derives the rung size from the
+    // parent's depth, so the same 0.3 mm drop is a different number of rungs on
+    // a different parent.
+    if let Some(rungs) = ladder.ladder_compression.as_ref() {
+        steps.push(format!(
+            "m26 rungs planned={} run={} step={:.6}mm publishedStep={:?} arms={}",
+            rungs.steps_planned,
+            rungs.steps_run,
+            rungs.step_mm,
+            rungs.published_step,
+            rungs.steps.iter().map(|step| step.arms.len()).sum::<usize>(),
+        ));
+    }
+    let produced = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+        &ladder.final_placements,
+    );
+    if produced.len() != run.pieces.len() {
+        run.note_exit(PhaseExitCause::NoCompleteLayout);
+        return;
+    }
+    if !run.meter.has_room(run.deadline) {
+        run.note_exit(PhaseExitCause::Deadline);
+        return;
+    }
+    let Some(residue_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
+        run.pieces,
+        &produced,
+        run.fast_settings,
+    )
+    .ok() else {
+        run.note_exit(PhaseExitCause::GeometricFixpoint);
+        return;
+    };
+    let residue_bound = residue_depth - COMPRESSION_RUNG_MM;
+    if residue_bound <= 0.0 {
+        run.note_exit(PhaseExitCause::GeometricFixpoint);
+        return;
+    }
+    let residue_fingerprint = general_placement_fingerprint(&produced);
+    if run.already_attempted(format!("31:{residue_fingerprint}")) {
+        run.note_exit(PhaseExitCause::KeysExhausted);
+        return;
+    }
+    steps.push(format!("m31 global legalizer to {residue_bound:.4}"));
+    run.run_operator(
+        31,
+        &produced,
+        Some(residue_fingerprint),
+        Some(residue_bound),
+        |_| {},
+        None,
+        ParentRole::Descended,
+        Some("m31:ladder-residue".to_owned()),
+    );
+}
+
+/// Arm D, the control for arm C: the same target depth, the same parent, the
+/// schedule's own alternation operator, no clamp.
+#[cfg(feature = "portfolio-ledger")]
+fn probe_descent_control(run: &mut PhaseRun<'_, '_>, steps: &mut Vec<String>) {
+    let parent = run.incumbent.result.placements.clone();
+    let parent_fingerprint = run.incumbent.fingerprint.clone();
+    let Some(parent_depth) = run.incumbent.raw_depth_mm else {
+        run.note_exit(PhaseExitCause::GeometricFixpoint);
+        return;
+    };
+    let target = parent_depth - LADDER_PROBE_DROP_MM;
+    if target <= 0.0 {
+        run.note_exit(PhaseExitCause::GeometricFixpoint);
+        return;
+    }
+    let cycles = run.settings.descent_cycles.max(1);
+    let epochs = run.settings.descent_relaxed_epochs.max(1);
+    steps.push(format!("m22 control {parent_depth:.4} -> {target:.4}"));
+    run.run_operator(
+        22,
+        &parent,
+        Some(parent_fingerprint),
+        Some(target),
+        |relaxed| {
+            relaxed.alternation_max_cycles = Some(cycles);
+            relaxed.epochs = epochs;
+        },
+        None,
+        ParentRole::Descended,
+        Some(format!("m22:control:drop{LADDER_PROBE_DROP_MM}")),
+    );
 }
 
 /// The request's own area lower-bound depth: the depth a perfect packing of the
@@ -1838,6 +3152,7 @@ mod tests {
             birth_work_units: 0,
             operator: BasinOperator::Mode(20),
             parent_fingerprint: None,
+            secondary_parent_fingerprint: None,
             exact_valid: true,
             descents: 0,
             placements: layout,
@@ -2028,11 +3343,14 @@ mod tests {
             phase: "descent".to_owned(),
             operator: "mode22".to_owned(),
             parent_fingerprint: None,
+            secondary_parent_fingerprint: None,
+            action: None,
             started_seconds: 0.0,
             elapsed_seconds: 1.25,
             work_units: 3_000_000,
             exact_valid: true,
             raw_depth_mm: None,
+            result_fingerprint: None,
             archive_disposition: None,
             published: false,
             failure_reason: None,
@@ -2086,5 +3404,216 @@ mod tests {
         // The constructor slice is last, which is the whole of this stage's
         // rebudget: 19 arms, 19 exact-valid, 0 published at ten seconds.
         assert!(schedule.compression_by < schedule.diversify_by);
+    }
+}
+
+#[cfg(all(test, feature = "portfolio-ledger"))]
+mod ledger_tests {
+    use super::*;
+
+    fn pose(id: &str, short: f64, long: f64) -> GeneralFastPlacement {
+        GeneralFastPlacement {
+            piece_id: id.to_owned(),
+            rotation_deg: 0.0,
+            mirrored: false,
+            translate_short_axis: short,
+            translate_long_axis: long,
+        }
+    }
+
+    fn member(fingerprint: &str, depth: f64, layout: Vec<GeneralFastPlacement>) -> ArchivedBasin {
+        ArchivedBasin {
+            fingerprint: fingerprint.to_owned(),
+            raw_depth_mm: depth,
+            birth_seconds: 0.0,
+            birth_work_units: 0,
+            operator: BasinOperator::Mode(22),
+            parent_fingerprint: None,
+            secondary_parent_fingerprint: None,
+            exact_valid: true,
+            descents: 0,
+            placements: layout,
+        }
+    }
+
+    /// Four pieces at four distinct short-axis positions leave three interface
+    /// bands, and each band's cut sits at the *midpoint* of its own gap.
+    #[test]
+    fn derived_cuts_are_one_per_gap_at_the_gap_midpoint() {
+        let left = vec![
+            pose("a", 0.0, 0.0),
+            pose("b", 10.0, 0.0),
+            pose("c", 20.0, 0.0),
+            pose("d", 30.0, 0.0),
+        ];
+        let right = left
+            .iter()
+            .map(|placement| pose(&placement.piece_id, placement.translate_short_axis, 7.0))
+            .collect::<Vec<_>>();
+        let bands = derived_cut_bands(&left, &right);
+        assert_eq!(bands.len(), 3);
+        // Span is 30; the gaps are 0-10, 10-20, 20-30, so the midpoints are 5,
+        // 15 and 25, i.e. fractions 1/6, 1/2 and 5/6.
+        let fractions = bands.iter().map(|band| band.0).collect::<Vec<_>>();
+        assert!((fractions[0] - 1.0 / 6.0).abs() < 1e-12);
+        assert!((fractions[1] - 0.5).abs() < 1e-12);
+        assert!((fractions[2] - 5.0 / 6.0).abs() < 1e-12);
+        assert!(bands.iter().all(|band| (band.1 - 10.0).abs() < 1e-12));
+        // Every piece has a different long-axis pose in the two parents, so
+        // every band's lower edge holds a differing piece.
+        assert!(bands.iter().all(|band| band.2 == 1));
+        // Exactly one band is the one the constant 0.5 lands in.
+        assert_eq!(bands.iter().filter(|band| band.3).count(), 1);
+    }
+
+    /// A band whose lower edge holds no *differing* piece is reported with a
+    /// zero count, and the hybrid it builds is the one the band below builds -
+    /// which is why `enumerate_crossover_actions` deduplicates by hybrid.
+    #[test]
+    fn a_band_over_agreeing_pieces_repeats_the_hybrid_below_it() {
+        let left = vec![
+            pose("a", 0.0, 0.0),
+            pose("b", 10.0, 0.0),
+            pose("c", 20.0, 0.0),
+        ];
+        // `b` is identical in both parents; `a` and `c` are not.
+        let right = vec![
+            pose("a", 0.0, 5.0),
+            pose("b", 10.0, 0.0),
+            pose("c", 20.0, 5.0),
+        ];
+        let bands = derived_cut_bands(&left, &right);
+        assert_eq!(bands.len(), 2);
+        assert_eq!(bands[0].2, 1);
+        assert_eq!(bands[1].2, 0);
+        let first = crossover_hybrid(&left, &right, bands[0].0).expect("hybrid");
+        let second = crossover_hybrid(&left, &right, bands[1].0).expect("hybrid");
+        assert_eq!(
+            general_placement_fingerprint(&first.0),
+            general_placement_fingerprint(&second.0)
+        );
+    }
+
+    /// The hybrid keeps parent A below the cut and parent B above it, which is
+    /// the rule `general_relaxed::run_recombination` applies.
+    #[test]
+    fn the_hybrid_takes_a_below_the_cut_and_b_above_it() {
+        let left = vec![
+            pose("a", 0.0, 1.0),
+            pose("b", 10.0, 1.0),
+            pose("c", 20.0, 1.0),
+        ];
+        let right = vec![
+            pose("a", 0.0, 9.0),
+            pose("b", 10.0, 9.0),
+            pose("c", 20.0, 9.0),
+        ];
+        // The span is 0..20, so the cut at 0.5 is at 10 - and the test is that
+        // the comparison is *strict*: the piece sitting exactly on the
+        // threshold goes to B, which is what `run_recombination` does.
+        let (hybrid, from_left, from_right) = crossover_hybrid(&left, &right, 0.5).expect("hybrid");
+        assert_eq!((from_left, from_right), (1, 2));
+        let by_id = hybrid
+            .iter()
+            .map(|placement| (placement.piece_id.as_str(), placement.translate_long_axis))
+            .collect::<BTreeMap<_, _>>();
+        assert_eq!(by_id["a"], 1.0);
+        assert_eq!(by_id["b"], 9.0);
+        assert_eq!(by_id["c"], 9.0);
+    }
+
+    /// Both directions are enumerated, they produce different hybrids, and only
+    /// the midpoint band of the direction the schedule actually keyed is marked
+    /// attempted.
+    #[test]
+    fn both_directions_are_actions_and_only_the_keyed_one_is_attempted() {
+        let left = vec![
+            pose("a", 0.0, 1.0),
+            pose("b", 10.0, 1.0),
+            pose("c", 20.0, 1.0),
+        ];
+        let right = vec![
+            pose("a", 2.0, 9.0),
+            pose("b", 12.0, 9.0),
+            pose("c", 22.0, 9.0),
+        ];
+        let selection = vec![member("left", 170.0, left), member("right", 180.0, right)];
+        let mut attempted = std::collections::BTreeSet::new();
+        attempted.insert("23:left:right".to_owned());
+        let actions = enumerate_crossover_actions(&selection, &attempted);
+        assert!(actions.iter().any(|action| action.reciprocal));
+        assert!(actions.iter().any(|action| !action.reciprocal));
+        let hit = actions
+            .iter()
+            .filter(|action| action.attempted)
+            .collect::<Vec<_>>();
+        assert_eq!(hit.len(), 1);
+        assert!(!hit[0].reciprocal);
+        assert!(hit[0].is_midpoint_band);
+        // The reciprocal of the keyed action is untried, which is the whole
+        // point: mode 23 is directional and the schedule keys one direction.
+        assert!(actions
+            .iter()
+            .any(|action| action.reciprocal && action.is_midpoint_band && !action.attempted));
+    }
+
+    /// The key is built from the two parents in the order they are handed to
+    /// the operator, never from their ranks - the frontier reorders between
+    /// attempts and a rank-built key would report an attempted action as
+    /// untried.
+    #[test]
+    fn the_attempted_key_is_parent_ordered_not_rank_ordered() {
+        let shallow = vec![pose("a", 0.0, 1.0), pose("b", 10.0, 1.0)];
+        let deep = vec![pose("a", 2.0, 9.0), pose("b", 12.0, 9.0)];
+        let selection = vec![
+            member("shallow", 170.0, shallow),
+            member("deep", 180.0, deep),
+        ];
+        // The schedule keyed `deep -> shallow`, i.e. what is now the
+        // *reciprocal* of the ranked pair.
+        let mut attempted = std::collections::BTreeSet::new();
+        attempted.insert("23:deep:shallow".to_owned());
+        let actions = enumerate_crossover_actions(&selection, &attempted);
+        let hit = actions
+            .iter()
+            .filter(|action| action.attempted)
+            .collect::<Vec<_>>();
+        assert_eq!(hit.len(), 1);
+        assert!(hit[0].reciprocal);
+        assert_eq!(hit[0].left_fingerprint, "deep");
+        assert_eq!(hit[0].right_fingerprint, "shallow");
+    }
+
+    #[test]
+    fn percentiles_are_nearest_rank() {
+        let sorted = vec![1.0, 2.0, 3.0, 4.0];
+        assert_eq!(percentile(&sorted, 0.5), 2.0);
+        assert_eq!(percentile(&sorted, 0.95), 4.0);
+        assert_eq!(percentile(&[], 0.5), 0.0);
+        assert_eq!(percentile(&[7.0], 0.95), 7.0);
+    }
+
+    /// The exit causes a saturated run reports have to be distinguishable, and
+    /// the ones that mean "the budget stopped me" have to be separable from the
+    /// ones that mean "I ran out of actions".
+    #[test]
+    fn exit_cause_names_are_distinct() {
+        let all = [
+            PhaseExitCause::SkippedDeadlinePassed,
+            PhaseExitCause::Completed,
+            PhaseExitCause::GeometricFixpoint,
+            PhaseExitCause::KeysExhausted,
+            PhaseExitCause::Affordability,
+            PhaseExitCause::Deadline,
+            PhaseExitCause::Patience,
+            PhaseExitCause::TriggerRefused,
+            PhaseExitCause::NoResidue,
+            PhaseExitCause::NoCompleteLayout,
+        ];
+        let names = all
+            .iter()
+            .map(|cause| cause.name())
+            .collect::<std::collections::BTreeSet<_>>();
+        assert_eq!(names.len(), all.len());
     }
 }
