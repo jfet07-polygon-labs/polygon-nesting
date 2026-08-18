@@ -1663,6 +1663,8 @@ fn parse_portfolio_spec(
                 }
             }
             "probeWork" => settings.probe_work_units = value.parse()?,
+            "v3" => settings.coordinator_v3 = value != "0",
+            "scheduleBy" => settings.schedule.schedule_by = value.parse()?,
             "descentBy" => settings.schedule.descent_by = value.parse()?,
             "crossoverBy" => settings.schedule.crossover_by = value.parse()?,
             "compressionBy" => settings.schedule.compression_by = value.parse()?,
@@ -1760,6 +1762,41 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
             })).collect::<Vec<_>>(),
         },
     });
+    if let Some(schedule) = outcome.schedule.as_ref() {
+        report["schedule"] = json!({
+            "iterations": schedule.iterations,
+            "exitCause": schedule.exit_cause,
+            "phaseZeroCost": schedule.phase_zero_cost,
+            "classes": schedule.classes.iter().map(|row| json!({
+                "class": row.class,
+                "actions": row.actions,
+                "publications": row.publications,
+                "workUnits": row.work_units,
+                "seconds": row.seconds,
+                "costTotal": row.cost_total,
+                "costMax": row.cost_max,
+                "deltaRawMm": row.delta_raw_mm,
+                "firstEstimatedCost": row.first_estimated_cost,
+                "firstActualCost": row.first_actual_cost,
+            })).collect::<Vec<_>>(),
+            "actions": schedule.actions.iter().map(|row| json!({
+                "iteration": row.iteration,
+                "class": row.class,
+                "key": row.key,
+                "label": row.label,
+                "value": row.value,
+                "estimatedCost": row.estimated_cost,
+                "actualCost": row.actual_cost,
+                "workUnits": row.work_units,
+                "seconds": row.seconds,
+                "operatorCalls": row.operator_calls,
+                "publications": row.publications,
+                "entryRawDepthMm": row.entry_raw_depth_mm,
+                "exitRawDepthMm": row.exit_raw_depth_mm,
+                "candidates": row.candidates,
+            })).collect::<Vec<_>>(),
+        });
+    }
     if let Some(probe) = outcome.probe.as_ref() {
         report["probe"] = json!({
             "arm": probe.arm,

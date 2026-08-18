@@ -1,0 +1,57 @@
+{
+ "label": "v3final",
+ "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_8687e703-3d9-1/target/release/examples/general_request_benchmark",
+ "env": {},
+ "gates": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fingerprints": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ],
+   "hit": true,
+   "wallSeconds": 26.310606002807617,
+   "docDigest": "8912650938c1ea1608ab75afd64986108eb0dd58d57afa5766af7931ddad053f"
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "depth": 159.092,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.248290777206421,
+   "docDigest": "f546b0271933494244fc8ecfff9deeeeea42eca2eb085efe8eeed104f23e2341"
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "depth": 159.079,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.4730701446533203,
+   "docDigest": "9258cf1a2b9cf0fa4206f0e0e65645a9575db68515ef35d59c5337b4c6077a1d"
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "depth": 164.038,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.163031578063965,
+   "docDigest": "e1876c218502c9db07c8b4d38729ad410ab83b85c8f6125c8c066c7a66891f36"
+  }
+ },
+ "ALL_PASS": true
+}

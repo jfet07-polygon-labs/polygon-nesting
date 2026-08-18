@@ -1,0 +1,297 @@
+{
+ "request": "triangle-20",
+ "rounds": 3,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "perSeed": {
+  "v2at10": {
+   "0": {
+    "best": 70.72726178003285,
+    "median": 70.72726178003285,
+    "worst": 70.72726178003285,
+    "all": [
+     70.72726178003285,
+     70.72726178003285,
+     70.72726178003285
+    ]
+   },
+   "1": {
+    "best": 70.72726178003285,
+    "median": 70.72726178003285,
+    "worst": 70.72726178003285,
+    "all": [
+     70.72726178003285,
+     70.72726178003285,
+     70.72726178003285
+    ]
+   },
+   "2": {
+    "best": 70.72726178003285,
+    "median": 70.72726178003285,
+    "worst": 70.72726178003285,
+    "all": [
+     70.72726178003285,
+     70.72726178003285,
+     70.72726178003285
+    ]
+   }
+  },
+  "v3at10": {
+   "0": {
+    "best": 70.73006941379586,
+    "median": 70.73006941379586,
+    "worst": 70.73006941379586,
+    "all": [
+     70.73006941379586,
+     70.73006941379586,
+     70.73006941379586
+    ]
+   },
+   "1": {
+    "best": 70.73005002608552,
+    "median": 70.73005002608552,
+    "worst": 70.73005002608552,
+    "all": [
+     70.73005002608552,
+     70.73005002608552,
+     70.73005002608552
+    ]
+   },
+   "2": {
+    "best": 70.72882090841742,
+    "median": 70.72882090841742,
+    "worst": 70.72882090841742,
+    "all": [
+     70.72882090841742,
+     70.72882090841742,
+     70.72882090841742
+    ]
+   }
+  },
+  "v2at30": {
+   "0": {
+    "best": 70.72726178003285,
+    "median": 70.72726178003285,
+    "worst": 70.72726178003285,
+    "all": [
+     70.72726178003285,
+     70.72726178003285,
+     70.72726178003285
+    ]
+   },
+   "1": {
+    "best": 70.72726178003285,
+    "median": 70.72726178003285,
+    "worst": 70.72726178003285,
+    "all": [
+     70.72726178003285,
+     70.72726178003285,
+     70.72726178003285
+    ]
+   },
+   "2": {
+    "best": 70.72726178003285,
+    "median": 70.72726178003285,
+    "worst": 70.72726178003285,
+    "all": [
+     70.72726178003285,
+     70.72726178003285,
+     70.72726178003285
+    ]
+   }
+  },
+  "v3at30": {
+   "0": {
+    "best": 70.73006941379586,
+    "median": 70.73006941379586,
+    "worst": 70.73006941379586,
+    "all": [
+     70.73006941379586,
+     70.73006941379586,
+     70.73006941379586
+    ]
+   },
+   "1": {
+    "best": 70.73005002608552,
+    "median": 70.73005002608552,
+    "worst": 70.73005002608552,
+    "all": [
+     70.73005002608552,
+     70.73005002608552,
+     70.73005002608552
+    ]
+   },
+   "2": {
+    "best": 70.72882090841742,
+    "median": 70.72882090841742,
+    "worst": 70.72882090841742,
+    "all": [
+     70.72882090841742,
+     70.72882090841742,
+     70.72882090841742
+    ]
+   }
+  }
+ },
+ "paired": {
+  "10": {
+   "medianMm": 0.002788246052674026,
+   "minMm": 0.0015591283845708404,
+   "maxMm": 0.002807633763012518,
+   "v3Better": 0,
+   "v3Worse": 9,
+   "equal": 0,
+   "rounds": 9
+  },
+  "30": {
+   "medianMm": 0.002788246052674026,
+   "minMm": 0.0015591283845708404,
+   "maxMm": 0.002807633763012518,
+   "v3Better": 0,
+   "v3Worse": 9,
+   "equal": 0,
+   "rounds": 9
+  }
+ },
+ "wall": {
+  "v2at10": {
+   "processMedian": 6.596734532999108,
+   "processMax": 6.985359097016044,
+   "coordinatorMedian": 6.560462144
+  },
+  "v3at10": {
+   "processMedian": 9.420095651003066,
+   "processMax": 9.789279488992179,
+   "coordinatorMedian": 9.385645604
+  },
+  "v2at30": {
+   "processMedian": 6.52292502601631,
+   "processMax": 7.671795991016552,
+   "coordinatorMedian": 6.488895905
+  },
+  "v3at30": {
+   "processMedian": 28.84940025501419,
+   "processMax": 29.19356226999662,
+   "coordinatorMedian": 28.815631747
+  }
+ },
+ "classes": {
+  "v3at10/compression": {
+   "actions": 41,
+   "publications": 21,
+   "workUnits": 0,
+   "seconds": 21.161020512999997,
+   "deltaRawMm": 1.4318916888176432,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 2.8988639211016265,
+   "firstActualOverEstimateMax": 3.2537052489976674,
+   "mmPerMegaUnit": null
+  },
+  "v3at10/descent": {
+   "actions": 18,
+   "publications": 0,
+   "workUnits": 0,
+   "seconds": 9.463404871999996,
+   "deltaRawMm": 0.0,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 2.386236943865886,
+   "firstActualOverEstimateMax": 2.74506716667371,
+   "mmPerMegaUnit": null
+  },
+  "v3at10/crossover": {
+   "actions": 22,
+   "publications": 3,
+   "workUnits": 0,
+   "seconds": 19.081166628,
+   "deltaRawMm": 0.013891931134949687,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 1.6794195707261663,
+   "firstActualOverEstimateMax": 1.7886329004519983,
+   "mmPerMegaUnit": null
+  },
+  "v3at10/ladder": {
+   "actions": 12,
+   "publications": 9,
+   "workUnits": 0,
+   "seconds": 27.323586093000003,
+   "deltaRawMm": 0.19406492461531855,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 1.3647607911553103,
+   "firstActualOverEstimateMax": 1.5432252525785526,
+   "mmPerMegaUnit": null
+  },
+  "v3at30/compression": {
+   "actions": 42,
+   "publications": 21,
+   "workUnits": 0,
+   "seconds": 21.748432268,
+   "deltaRawMm": 1.4318916888176432,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 2.907611762994038,
+   "firstActualOverEstimateMax": 3.3345793212204566,
+   "mmPerMegaUnit": null
+  },
+  "v3at30/descent": {
+   "actions": 18,
+   "publications": 0,
+   "workUnits": 0,
+   "seconds": 9.430302166000004,
+   "deltaRawMm": 0.0,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 2.4014279064420068,
+   "firstActualOverEstimateMax": 2.6700703716713194,
+   "mmPerMegaUnit": null
+  },
+  "v3at30/crossover": {
+   "actions": 217,
+   "publications": 3,
+   "workUnits": 0,
+   "seconds": 182.771265427,
+   "deltaRawMm": 0.013891931134949687,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 1.6528948137841566,
+   "firstActualOverEstimateMax": 1.7984194623532745,
+   "mmPerMegaUnit": null
+  },
+  "v3at30/ladder": {
+   "actions": 18,
+   "publications": 9,
+   "workUnits": 0,
+   "seconds": 37.47986761399999,
+   "deltaRawMm": 0.19406492461531855,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 1.3851103224828796,
+   "firstActualOverEstimateMax": 1.5485088261887376,
+   "mmPerMegaUnit": null
+  }
+ },
+ "inSchedule": {
+  "v2at10": {
+   "runs": 9,
+   "lastPublicationPhase": {
+    "diversify": 9
+   }
+  },
+  "v3at10": {
+   "runs": 9,
+   "lastPublicationPhase": {
+    "compression": 9
+   }
+  },
+  "v2at30": {
+   "runs": 9,
+   "lastPublicationPhase": {
+    "diversify": 9
+   }
+  },
+  "v3at30": {
+   "runs": 9,
+   "lastPublicationPhase": {
+    "compression": 9
+   }
+  }
+ }
+}

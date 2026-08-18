@@ -1,0 +1,396 @@
+{
+ "request": "mixed-61",
+ "rounds": 3,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "perSeed": {
+  "v2at3": {
+   "0": {
+    "best": 179.5868589805926,
+    "median": 179.5868589805926,
+    "worst": 179.5868589805926,
+    "all": [
+     179.5868589805926,
+     179.5868589805926,
+     179.5868589805926
+    ]
+   },
+   "1": {
+    "best": 176.75281805880576,
+    "median": 176.75281805880576,
+    "worst": 179.63299999999998,
+    "all": [
+     176.75281805880576,
+     176.75281805880576,
+     179.63299999999998
+    ]
+   },
+   "2": {
+    "best": 179.006,
+    "median": 179.006,
+    "worst": 179.006,
+    "all": [
+     179.006,
+     179.006,
+     179.006
+    ]
+   }
+  },
+  "v3at3": {
+   "0": {
+    "best": 179.5868589805926,
+    "median": 179.5868589805926,
+    "worst": 179.5868589805926,
+    "all": [
+     179.5868589805926,
+     179.5868589805926,
+     179.5868589805926
+    ]
+   },
+   "1": {
+    "best": 179.63299999999998,
+    "median": 179.63299999999998,
+    "worst": 179.63299999999998,
+    "all": [
+     179.63299999999998,
+     179.63299999999998,
+     179.63299999999998
+    ]
+   },
+   "2": {
+    "best": 179.006,
+    "median": 179.006,
+    "worst": 179.006,
+    "all": [
+     179.006,
+     179.006,
+     179.006
+    ]
+   }
+  },
+  "v2at10": {
+   "0": {
+    "best": 174.20812003998896,
+    "median": 174.20812003998896,
+    "worst": 174.20812003998896,
+    "all": [
+     174.20812003998896,
+     174.20812003998896,
+     174.20812003998896
+    ]
+   },
+   "1": {
+    "best": 176.05599999999998,
+    "median": 176.05599999999998,
+    "worst": 176.05599999999998,
+    "all": [
+     176.05599999999998,
+     176.05599999999998,
+     176.05599999999998
+    ]
+   },
+   "2": {
+    "best": 179.006,
+    "median": 179.006,
+    "worst": 179.006,
+    "all": [
+     179.006,
+     179.006,
+     179.006
+    ]
+   }
+  },
+  "v3at10": {
+   "0": {
+    "best": 174.20812003998896,
+    "median": 174.20812003998896,
+    "worst": 174.20812003998896,
+    "all": [
+     174.20812003998896,
+     174.20812003998896,
+     174.20812003998896
+    ]
+   },
+   "1": {
+    "best": 176.05599999999998,
+    "median": 176.05599999999998,
+    "worst": 176.05599999999998,
+    "all": [
+     176.05599999999998,
+     176.05599999999998,
+     176.05599999999998
+    ]
+   },
+   "2": {
+    "best": 176.71319996779852,
+    "median": 178.2857218718321,
+    "worst": 178.2857218718321,
+    "all": [
+     176.71319996779852,
+     178.2857218718321,
+     178.2857218718321
+    ]
+   }
+  },
+  "v2at30": {
+   "0": {
+    "best": 174.20812003998896,
+    "median": 174.20812003998896,
+    "worst": 174.20812003998896,
+    "all": [
+     174.20812003998896,
+     174.20812003998896,
+     174.20812003998896
+    ]
+   },
+   "1": {
+    "best": 176.05599999999998,
+    "median": 176.05599999999998,
+    "worst": 176.05599999999998,
+    "all": [
+     176.05599999999998,
+     176.05599999999998,
+     176.05599999999998
+    ]
+   },
+   "2": {
+    "best": 179.006,
+    "median": 179.006,
+    "worst": 179.006,
+    "all": [
+     179.006,
+     179.006,
+     179.006
+    ]
+   }
+  },
+  "v3at30": {
+   "0": {
+    "best": 169.14057315694365,
+    "median": 169.14057315694365,
+    "worst": 169.14057315694365,
+    "all": [
+     169.14057315694365,
+     169.14057315694365,
+     169.14057315694365
+    ]
+   },
+   "1": {
+    "best": 169.9283283068042,
+    "median": 171.43672016345357,
+    "worst": 171.43672016345357,
+    "all": [
+     171.43672016345357,
+     169.9283283068042,
+     171.43672016345357
+    ]
+   },
+   "2": {
+    "best": 172.086,
+    "median": 172.086,
+    "worst": 172.086,
+    "all": [
+     172.086,
+     172.086,
+     172.086
+    ]
+   }
+  }
+ },
+ "paired": {
+  "3": {
+   "medianMm": 0.0,
+   "minMm": 0.0,
+   "maxMm": 2.8801819411942233,
+   "v3Better": 0,
+   "v3Worse": 2,
+   "equal": 7,
+   "rounds": 9
+  },
+  "10": {
+   "medianMm": 0.0,
+   "minMm": -2.292800032201484,
+   "maxMm": 0.0,
+   "v3Better": 3,
+   "v3Worse": 0,
+   "equal": 6,
+   "rounds": 9
+  },
+  "30": {
+   "medianMm": -5.06754688304531,
+   "minMm": -6.9199999999999875,
+   "maxMm": -4.619279836546411,
+   "v3Better": 9,
+   "v3Worse": 0,
+   "equal": 0,
+   "rounds": 9
+  }
+ },
+ "wall": {
+  "v2at3": {
+   "processMedian": 4.256799553986639,
+   "processMax": 4.630990131990984,
+   "coordinatorMedian": 4.226302583
+  },
+  "v3at3": {
+   "processMedian": 2.743856496992521,
+   "processMax": 2.9017875940189697,
+   "coordinatorMedian": 2.710184486
+  },
+  "v2at10": {
+   "processMedian": 10.599408255016897,
+   "processMax": 10.935962962015765,
+   "coordinatorMedian": 10.569374072
+  },
+  "v3at10": {
+   "processMedian": 9.278771265002433,
+   "processMax": 10.059179914998822,
+   "coordinatorMedian": 9.243346501
+  },
+  "v2at30": {
+   "processMedian": 14.20025943199289,
+   "processMax": 15.789803685009247,
+   "coordinatorMedian": 14.16463283
+  },
+  "v3at30": {
+   "processMedian": 28.801629154011607,
+   "processMax": 29.443788794014836,
+   "coordinatorMedian": 28.766254409
+  }
+ },
+ "classes": {
+  "v3at3/compression": {
+   "actions": 9,
+   "publications": 9,
+   "workUnits": 0,
+   "seconds": 6.384508771999999,
+   "deltaRawMm": 8.145423058222235,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 1.571153503321124,
+   "firstActualOverEstimateMax": 2.001085596950519,
+   "mmPerMegaUnit": null
+  },
+  "v3at10/compression": {
+   "actions": 28,
+   "publications": 16,
+   "workUnits": 0,
+   "seconds": 21.080894403999995,
+   "deltaRawMm": 18.11226156574574,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 1.53670721768348,
+   "firstActualOverEstimateMax": 1.9912300122591546,
+   "mmPerMegaUnit": null
+  },
+  "v3at10/descent": {
+   "actions": 12,
+   "publications": 0,
+   "workUnits": 0,
+   "seconds": 9.107826270999999,
+   "deltaRawMm": 0.0,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 1.3505641807682087,
+   "firstActualOverEstimateMax": 1.5187587987263251,
+   "mmPerMegaUnit": null
+  },
+  "v3at10/crossover": {
+   "actions": 18,
+   "publications": 9,
+   "workUnits": 0,
+   "seconds": 34.691549806,
+   "deltaRawMm": 20.633734602824745,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 1.6169766825608707,
+   "firstActualOverEstimateMax": 1.6799420887492578,
+   "mmPerMegaUnit": null
+  },
+  "v3at30/compression": {
+   "actions": 82,
+   "publications": 57,
+   "workUnits": 0,
+   "seconds": 64.37957152799999,
+   "deltaRawMm": 53.32665823810257,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 1.5423650386401533,
+   "firstActualOverEstimateMax": 2.0251217665373065,
+   "mmPerMegaUnit": null
+  },
+  "v3at30/descent": {
+   "actions": 24,
+   "publications": 0,
+   "workUnits": 0,
+   "seconds": 19.64013656499999,
+   "deltaRawMm": 0.0,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 1.3851130780314185,
+   "firstActualOverEstimateMax": 1.6453227357976643,
+   "mmPerMegaUnit": null
+  },
+  "v3at30/crossover": {
+   "actions": 48,
+   "publications": 9,
+   "workUnits": 0,
+   "seconds": 89.347267067,
+   "deltaRawMm": 16.010202506709618,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 1.6255184210154272,
+   "firstActualOverEstimateMax": 1.8313231384563098,
+   "mmPerMegaUnit": null
+  },
+  "v3at30/ladder": {
+   "actions": 16,
+   "publications": 11,
+   "workUnits": 0,
+   "seconds": 67.428118831,
+   "deltaRawMm": 17.004651150645515,
+   "runs": 9,
+   "firstActualOverEstimateMedian": 0.6006550205624732,
+   "firstActualOverEstimateMax": 1.6175156499993115,
+   "mmPerMegaUnit": null
+  }
+ },
+ "inSchedule": {
+  "v2at3": {
+   "runs": 9,
+   "lastPublicationPhase": {
+    "descent": 7,
+    "crossover": 2
+   }
+  },
+  "v3at3": {
+   "runs": 9,
+   "lastPublicationPhase": {
+    "compression": 9
+   }
+  },
+  "v2at10": {
+   "runs": 9,
+   "lastPublicationPhase": {
+    "compression": 6,
+    "descent": 3
+   }
+  },
+  "v3at10": {
+   "runs": 9,
+   "lastPublicationPhase": {
+    "compression": 7,
+    "crossover": 2
+   }
+  },
+  "v2at30": {
+   "runs": 9,
+   "lastPublicationPhase": {
+    "compression": 6,
+    "descent": 3
+   }
+  },
+  "v3at30": {
+   "runs": 9,
+   "lastPublicationPhase": {
+    "compression": 9
+   }
+  }
+ }
+}
