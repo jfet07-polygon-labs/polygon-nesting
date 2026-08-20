@@ -1,0 +1,2109 @@
+{
+ "name": "wall-10000",
+ "request": "mixed-61",
+ "rounds": 3,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "spec": "wall=10000,cells={cells},v3=1,sched=1,barren=16,divq=1",
+ "arms": [
+  {
+   "label": "fixed",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed"
+  },
+  {
+   "label": "unfixed",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed"
+  }
+ ],
+ "rows": [
+  {
+   "tag": "fixed-s0-r0",
+   "processSeconds": 11.002446717990097,
+   "engineDepthMm": 176.108,
+   "rawDepthMm": 176.10777659602962,
+   "dualGateValid": true,
+   "publishedSeconds": 10.953588023,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 10.95360706,
+   "workUnits": 0,
+   "arm": "fixed",
+   "seed": 0,
+   "round": 0,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed",
+   "debitCalls": [
+    {
+     "operator": "mode34",
+     "phase": "schedule",
+     "globalUnits": 0,
+     "selfMeteredUnits": 3311034,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "resultFingerprint": "33a059fc6c2cfa35c590e020993a9137ba0328bbd65a0c3ce14f9970273f5946",
+     "published": true,
+     "startedSeconds": 5.86903961
+    }
+   ],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 0.8659204799999998,
+     "meteredCost": 0.8659204799999998,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 0.82599533,
+     "meteredCost": 0.82599533,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 2,
+     "class": "descent",
+     "actualCost": 2.0598833059999997,
+     "meteredCost": 2.0598833059999997,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 3,
+     "class": "schedule",
+     "actualCost": 2.609496793000001,
+     "meteredCost": 2.609496793000001,
+     "selfMeteredUnits": 3311034,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 4,
+     "class": "compression",
+     "actualCost": 2.4747255,
+     "meteredCost": 2.4747255,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 3,
+     "class": "compression",
+     "costMax": 2.4747255,
+     "costTotal": 4.166641309999999,
+     "deltaRawMm": 4.074142688288475,
+     "firstActualCost": 0.8659204799999998,
+     "firstEstimatedCost": 0.4597800711936,
+     "publications": 2,
+     "seconds": 4.1666413339999995,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "descent",
+     "costMax": 2.0598833059999997,
+     "costTotal": 2.0598833059999997,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 2.0598833059999997,
+     "firstEstimatedCost": 0.5658506574708,
+     "publications": 0,
+     "seconds": 2.059883363,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "schedule",
+     "costMax": 2.609496793000001,
+     "costTotal": 2.609496793000001,
+     "deltaRawMm": 1.4070807156819,
+     "firstActualCost": 2.609496793000001,
+     "firstEstimatedCost": 0.8041925326116001,
+     "publications": 1,
+     "seconds": 2.6094960900000004,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "deadline",
+   "scheduleIterations": 5
+  },
+  {
+   "tag": "unfixed-s0-r0",
+   "processSeconds": 10.982777297962457,
+   "engineDepthMm": 179.587,
+   "rawDepthMm": 179.5868589805926,
+   "dualGateValid": true,
+   "publishedSeconds": 8.09961064,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 10.910630485,
+   "workUnits": 0,
+   "arm": "unfixed",
+   "seed": 0,
+   "round": 0,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 3.0787863680000003,
+     "meteredCost": 3.0787863680000003,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "descent",
+     "actualCost": 2.810624453000001,
+     "meteredCost": 2.810624453000001,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 1,
+     "class": "compression",
+     "costMax": 3.0787863680000003,
+     "costTotal": 3.0787863680000003,
+     "deltaRawMm": 2.0021410194073894,
+     "firstActualCost": 3.0787863680000003,
+     "firstEstimatedCost": 1.0924136898175998,
+     "publications": 1,
+     "seconds": 3.0787862210000005,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "descent",
+     "costMax": 2.810624453000001,
+     "costTotal": 2.810624453000001,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 2.810624453000001,
+     "firstEstimatedCost": 1.3444319215677998,
+     "publications": 0,
+     "seconds": 2.8106243400000004,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "deadline",
+   "scheduleIterations": 2
+  },
+  {
+   "tag": "fixed-s1-r0",
+   "processSeconds": 10.377588473027572,
+   "engineDepthMm": 179.633,
+   "rawDepthMm": 179.63299999999998,
+   "dualGateValid": true,
+   "publishedSeconds": 7.819415544,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 10.290977904,
+   "workUnits": 0,
+   "arm": "fixed",
+   "seed": 1,
+   "round": 0,
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 2.25654632,
+     "meteredCost": 2.25654632,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "descent",
+     "actualCost": 2.4712396230000007,
+     "meteredCost": 2.4712396230000007,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 1,
+     "class": "compression",
+     "costMax": 2.25654632,
+     "costTotal": 2.25654632,
+     "deltaRawMm": 0.05700000000001637,
+     "firstActualCost": 2.25654632,
+     "firstEstimatedCost": 1.2104009848575998,
+     "publications": 1,
+     "seconds": 2.256546364,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "descent",
+     "costMax": 2.4712396230000007,
+     "costTotal": 2.4712396230000007,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 2.4712396230000007,
+     "firstEstimatedCost": 1.4896387120627999,
+     "publications": 0,
+     "seconds": 2.4712396749999996,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "deadline",
+   "scheduleIterations": 2
+  },
+  {
+   "tag": "unfixed-s1-r0",
+   "processSeconds": 9.789998855034355,
+   "engineDepthMm": 179.633,
+   "rawDepthMm": 179.63299999999998,
+   "dualGateValid": true,
+   "publishedSeconds": 7.54483182,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 9.717074234,
+   "workUnits": 0,
+   "arm": "unfixed",
+   "seed": 1,
+   "round": 0,
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 2.1896802080000004,
+     "meteredCost": 2.1896802080000004,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "descent",
+     "actualCost": 2.1714165680000006,
+     "meteredCost": 2.1714165680000006,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 1,
+     "class": "compression",
+     "costMax": 2.1896802080000004,
+     "costTotal": 2.1896802080000004,
+     "deltaRawMm": 0.05700000000001637,
+     "firstActualCost": 2.1896802080000004,
+     "firstEstimatedCost": 1.165206072832,
+     "publications": 1,
+     "seconds": 2.1896801310000003,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "descent",
+     "costMax": 2.1714165680000006,
+     "costTotal": 2.1714165680000006,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 2.1714165680000006,
+     "firstEstimatedCost": 1.4340174002959998,
+     "publications": 0,
+     "seconds": 2.171416403000001,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "affordability",
+   "scheduleIterations": 2
+  },
+  {
+   "tag": "fixed-s2-r0",
+   "processSeconds": 9.861119927023537,
+   "engineDepthMm": 179.006,
+   "rawDepthMm": 179.006,
+   "dualGateValid": true,
+   "publishedSeconds": 7.786630358,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 9.789673974,
+   "workUnits": 0,
+   "arm": "fixed",
+   "seed": 2,
+   "round": 0,
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 2.039352484,
+     "meteredCost": 2.039352484,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 2.0022870390000005,
+     "meteredCost": 2.0022870390000005,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 2,
+     "class": "compression",
+     "costMax": 2.039352484,
+     "costTotal": 4.041639523000001,
+     "deltaRawMm": 0.6560000000000059,
+     "firstActualCost": 2.039352484,
+     "firstEstimatedCost": 1.2505379617919998,
+     "publications": 1,
+     "seconds": 4.041639421999999,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "affordability",
+   "scheduleIterations": 2
+  },
+  {
+   "tag": "unfixed-s2-r0",
+   "processSeconds": 9.599847808014601,
+   "engineDepthMm": 179.006,
+   "rawDepthMm": 179.006,
+   "dualGateValid": true,
+   "publishedSeconds": 7.273518173,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 9.515596373,
+   "workUnits": 0,
+   "arm": "unfixed",
+   "seed": 2,
+   "round": 0,
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 2.218997185,
+     "meteredCost": 2.218997185,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "descent",
+     "actualCost": 2.2413236990000005,
+     "meteredCost": 2.2413236990000005,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 1,
+     "class": "compression",
+     "costMax": 2.218997185,
+     "costTotal": 2.218997185,
+     "deltaRawMm": 0.6560000000000059,
+     "firstActualCost": 2.218997185,
+     "firstEstimatedCost": 1.09979950144,
+     "publications": 1,
+     "seconds": 2.218997192,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "descent",
+     "costMax": 2.2413236990000005,
+     "costTotal": 2.2413236990000005,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 2.2413236990000005,
+     "firstEstimatedCost": 1.35352162907,
+     "publications": 0,
+     "seconds": 2.241323577,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "affordability",
+   "scheduleIterations": 2
+  },
+  {
+   "tag": "unfixed-s0-r1",
+   "processSeconds": 10.178807534044608,
+   "engineDepthMm": 179.587,
+   "rawDepthMm": 179.5868589805926,
+   "dualGateValid": true,
+   "publishedSeconds": 7.427975428,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 10.096875748,
+   "workUnits": 0,
+   "arm": "unfixed",
+   "seed": 0,
+   "round": 1,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 2.9397959810000005,
+     "meteredCost": 2.9397959810000005,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "descent",
+     "actualCost": 2.668424237000001,
+     "meteredCost": 2.668424237000001,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 1,
+     "class": "compression",
+     "costMax": 2.9397959810000005,
+     "costTotal": 2.9397959810000005,
+     "deltaRawMm": 2.0021410194073894,
+     "firstActualCost": 2.9397959810000005,
+     "firstEstimatedCost": 0.9765535679488,
+     "publications": 1,
+     "seconds": 2.9397959609999997,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "descent",
+     "costMax": 2.668424237000001,
+     "costTotal": 2.668424237000001,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 2.668424237000001,
+     "firstEstimatedCost": 1.2018430399664,
+     "publications": 0,
+     "seconds": 2.6684242839999994,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "deadline",
+   "scheduleIterations": 2
+  },
+  {
+   "tag": "fixed-s0-r1",
+   "processSeconds": 8.4188348960015,
+   "engineDepthMm": 179.587,
+   "rawDepthMm": 179.5868589805926,
+   "dualGateValid": true,
+   "publishedSeconds": 6.467752809,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 8.379043645,
+   "workUnits": 0,
+   "arm": "fixed",
+   "seed": 0,
+   "round": 1,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 1.6492076190000002,
+     "meteredCost": 1.6492076190000002,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 0.9723188690000004,
+     "meteredCost": 0.9723188690000004,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 2,
+     "class": "descent",
+     "actualCost": 0.9379508989999996,
+     "meteredCost": 0.9379508989999996,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 2,
+     "class": "compression",
+     "costMax": 1.6492076190000002,
+     "costTotal": 2.6215264880000007,
+     "deltaRawMm": 2.0021410194073894,
+     "firstActualCost": 1.6492076190000002,
+     "firstEstimatedCost": 1.0484409797632,
+     "publications": 1,
+     "seconds": 2.621526617,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "descent",
+     "costMax": 0.9379508989999996,
+     "costTotal": 0.9379508989999996,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 0.9379508989999996,
+     "firstEstimatedCost": 1.2903147719695998,
+     "publications": 0,
+     "seconds": 0.9379509530000005,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "affordability",
+   "scheduleIterations": 3
+  },
+  {
+   "tag": "unfixed-s1-r1",
+   "processSeconds": 9.226156465010718,
+   "engineDepthMm": 171.362,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "publishedSeconds": 8.414867189,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 9.193391613,
+   "workUnits": 0,
+   "arm": "unfixed",
+   "seed": 1,
+   "round": 1,
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 0.813003385,
+     "meteredCost": 0.813003385,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "descent",
+     "actualCost": 0.95418519,
+     "meteredCost": 0.95418519,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 2,
+     "class": "compression",
+     "actualCost": 0.9455441059999998,
+     "meteredCost": 0.9455441059999998,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 3,
+     "class": "schedule",
+     "actualCost": 1.946439508,
+     "meteredCost": 1.946439508,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 4,
+     "class": "compression",
+     "actualCost": 0.8665972459999995,
+     "meteredCost": 0.8665972459999995,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 5,
+     "class": "compression",
+     "actualCost": 0.7656551300000007,
+     "meteredCost": 0.7656551300000007,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 6,
+     "class": "compression",
+     "actualCost": 0.7778936489999992,
+     "meteredCost": 0.7778936489999992,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 5,
+     "class": "compression",
+     "costMax": 0.9455441059999998,
+     "costTotal": 4.168693515999999,
+     "deltaRawMm": 6.6028705663086384,
+     "firstActualCost": 0.813003385,
+     "firstEstimatedCost": 0.46166049967359996,
+     "publications": 3,
+     "seconds": 4.168693738000002,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "descent",
+     "costMax": 0.95418519,
+     "costTotal": 0.95418519,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 0.95418519,
+     "firstEstimatedCost": 0.5681648980358,
+     "publications": 0,
+     "seconds": 0.9541855079999997,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "schedule",
+     "costMax": 1.946439508,
+     "costTotal": 1.946439508,
+     "deltaRawMm": 1.7251307481037657,
+     "firstActualCost": 1.946439508,
+     "firstEstimatedCost": 0.8074815541165999,
+     "publications": 1,
+     "seconds": 1.9464395349999997,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "affordability",
+   "scheduleIterations": 7
+  },
+  {
+   "tag": "fixed-s1-r1",
+   "processSeconds": 10.184886607981753,
+   "engineDepthMm": 171.362,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "publishedSeconds": 7.691201748,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 10.151680476,
+   "workUnits": 0,
+   "arm": "fixed",
+   "seed": 1,
+   "round": 1,
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed",
+   "debitCalls": [
+    {
+     "operator": "mode34",
+     "phase": "schedule",
+     "globalUnits": 0,
+     "selfMeteredUnits": 3539786,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "resultFingerprint": "49826f36371717fa7444586177b314eea3666318a64a2ba84fe68130dd2ccaf3",
+     "published": true,
+     "startedSeconds": 4.119367022
+    }
+   ],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 0.6644202380000004,
+     "meteredCost": 0.6644202380000004,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 0.7450011750000001,
+     "meteredCost": 0.7450011750000001,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 2,
+     "class": "descent",
+     "actualCost": 0.7381962860000004,
+     "meteredCost": 0.7381962860000004,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 3,
+     "class": "schedule",
+     "actualCost": 1.9379938790000004,
+     "meteredCost": 1.9379938790000004,
+     "selfMeteredUnits": 3539786,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 4,
+     "class": "compression",
+     "actualCost": 0.8803988309999999,
+     "meteredCost": 0.8803988309999999,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 5,
+     "class": "compression",
+     "actualCost": 0.752846484,
+     "meteredCost": 0.752846484,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 6,
+     "class": "compression",
+     "actualCost": 0.810402690000001,
+     "meteredCost": 0.810402690000001,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 7,
+     "class": "crossover",
+     "actualCost": 1.6494758879999996,
+     "meteredCost": 1.6494758879999996,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 5,
+     "class": "compression",
+     "costMax": 0.8803988309999999,
+     "costTotal": 3.8530694180000014,
+     "deltaRawMm": 6.6028705663086384,
+     "firstActualCost": 0.6644202380000004,
+     "firstEstimatedCost": 0.428795869888,
+     "publications": 3,
+     "seconds": 3.8530695539999993,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "descent",
+     "costMax": 0.7381962860000004,
+     "costTotal": 0.7381962860000004,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 0.7381962860000004,
+     "firstEstimatedCost": 0.527718446489,
+     "publications": 0,
+     "seconds": 0.7381963310000001,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "schedule",
+     "costMax": 1.9379938790000004,
+     "costTotal": 1.9379938790000004,
+     "deltaRawMm": 1.7251307481037657,
+     "firstActualCost": 1.9379938790000004,
+     "firstEstimatedCost": 0.749998658453,
+     "publications": 1,
+     "seconds": 1.93799395,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "crossover",
+     "costMax": 1.6494758879999996,
+     "costTotal": 1.6494758879999996,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 1.6494758879999996,
+     "firstEstimatedCost": 1.2004707901459999,
+     "publications": 0,
+     "seconds": 1.649475949000001,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "deadline",
+   "scheduleIterations": 8
+  },
+  {
+   "tag": "unfixed-s2-r1",
+   "processSeconds": 10.259244882036,
+   "engineDepthMm": 176.162,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "publishedSeconds": 6.880344073,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 10.228056439,
+   "workUnits": 0,
+   "arm": "unfixed",
+   "seed": 2,
+   "round": 1,
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 0.611664918,
+     "meteredCost": 0.611664918,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 0.6521651510000002,
+     "meteredCost": 0.6521651510000002,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 2,
+     "class": "descent",
+     "actualCost": 0.6440521019999998,
+     "meteredCost": 0.6440521019999998,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 3,
+     "class": "schedule",
+     "actualCost": 2.2461655670000003,
+     "meteredCost": 2.2461655670000003,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 4,
+     "class": "compression",
+     "actualCost": 0.7694225359999995,
+     "meteredCost": 0.7694225359999995,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 5,
+     "class": "compression",
+     "actualCost": 0.7473924270000003,
+     "meteredCost": 0.7473924270000003,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 6,
+     "class": "descent",
+     "actualCost": 0.6836503100000009,
+     "meteredCost": 0.6836503100000009,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 7,
+     "class": "crossover",
+     "actualCost": 1.9157892150000002,
+     "meteredCost": 1.9157892150000002,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 4,
+     "class": "compression",
+     "costMax": 0.7694225359999995,
+     "costTotal": 2.780645032,
+     "deltaRawMm": 1.836999999999989,
+     "firstActualCost": 0.611664918,
+     "firstEstimatedCost": 0.4254970171136,
+     "publications": 2,
+     "seconds": 2.7806450610000013,
+     "workUnits": 0
+    },
+    {
+     "actions": 2,
+     "class": "descent",
+     "costMax": 0.6836503100000009,
+     "costTotal": 1.3277024120000007,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 0.6440521019999998,
+     "firstEstimatedCost": 0.5236585532307999,
+     "publications": 0,
+     "seconds": 1.3277024909999997,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "schedule",
+     "costMax": 2.2461655670000003,
+     "costTotal": 2.2461655670000003,
+     "deltaRawMm": 1.6629999999999825,
+     "firstActualCost": 2.2461655670000003,
+     "firstEstimatedCost": 0.7442286981316,
+     "publications": 1,
+     "seconds": 2.2461655789999995,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "crossover",
+     "costMax": 1.9157892150000002,
+     "costTotal": 1.9157892150000002,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 1.9157892150000002,
+     "firstEstimatedCost": 1.1912352151912,
+     "publications": 0,
+     "seconds": 1.9157895060000012,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "deadline",
+   "scheduleIterations": 8
+  },
+  {
+   "tag": "fixed-s2-r1",
+   "processSeconds": 8.805431307991967,
+   "engineDepthMm": 176.162,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "publishedSeconds": 7.352726169,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 8.775209031,
+   "workUnits": 0,
+   "arm": "fixed",
+   "seed": 2,
+   "round": 1,
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed",
+   "debitCalls": [
+    {
+     "operator": "mode34",
+     "phase": "schedule",
+     "globalUnits": 0,
+     "selfMeteredUnits": 3455866,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "resultFingerprint": "6d0ddb941e82342ddb2333327b2e496537d94aca889b51f37b553dcf8bef59e1",
+     "published": true,
+     "startedSeconds": 4.315118884
+    }
+   ],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 0.7756740070000001,
+     "meteredCost": 0.7756740070000001,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 0.6708166979999999,
+     "meteredCost": 0.6708166979999999,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 2,
+     "class": "descent",
+     "actualCost": 0.6753389319999998,
+     "meteredCost": 0.6753389319999998,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 3,
+     "class": "schedule",
+     "actualCost": 2.2355893060000005,
+     "meteredCost": 2.2355893060000005,
+     "selfMeteredUnits": 3455866,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 4,
+     "class": "compression",
+     "actualCost": 0.8017224240000003,
+     "meteredCost": 0.8017224240000003,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 5,
+     "class": "compression",
+     "actualCost": 0.7190618849999995,
+     "meteredCost": 0.7190618849999995,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 6,
+     "class": "descent",
+     "actualCost": 0.7025249109999994,
+     "meteredCost": 0.7025249109999994,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 4,
+     "class": "compression",
+     "costMax": 0.8017224240000003,
+     "costTotal": 2.9672750139999997,
+     "deltaRawMm": 1.836999999999989,
+     "firstActualCost": 0.7756740070000001,
+     "firstEstimatedCost": 0.4770102304128,
+     "publications": 2,
+     "seconds": 2.967275313,
+     "workUnits": 0
+    },
+    {
+     "actions": 2,
+     "class": "descent",
+     "costMax": 0.7025249109999994,
+     "costTotal": 1.3778638429999992,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 0.6753389319999998,
+     "firstEstimatedCost": 0.5870557890834001,
+     "publications": 0,
+     "seconds": 1.3778640010000003,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "schedule",
+     "costMax": 2.2355893060000005,
+     "costTotal": 2.2355893060000005,
+     "deltaRawMm": 1.6629999999999825,
+     "firstActualCost": 2.2355893060000005,
+     "firstEstimatedCost": 0.8343294747018001,
+     "publications": 1,
+     "seconds": 2.23558946,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "affordability",
+   "scheduleIterations": 7
+  },
+  {
+   "tag": "fixed-s0-r2",
+   "processSeconds": 9.521024919988122,
+   "engineDepthMm": 173.575,
+   "rawDepthMm": 173.57506393348288,
+   "dualGateValid": true,
+   "publishedSeconds": 9.487965116,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 9.488246691,
+   "workUnits": 0,
+   "arm": "fixed",
+   "seed": 0,
+   "round": 2,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed",
+   "debitCalls": [
+    {
+     "operator": "mode34",
+     "phase": "schedule",
+     "globalUnits": 0,
+     "selfMeteredUnits": 3311034,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "resultFingerprint": "33a059fc6c2cfa35c590e020993a9137ba0328bbd65a0c3ce14f9970273f5946",
+     "published": true,
+     "startedSeconds": 4.629615639
+    }
+   ],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 0.8665358439999999,
+     "meteredCost": 0.8665358439999999,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 0.8228955259999999,
+     "meteredCost": 0.8228955259999999,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 2,
+     "class": "descent",
+     "actualCost": 0.8270183940000004,
+     "meteredCost": 0.8270183940000004,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 3,
+     "class": "schedule",
+     "actualCost": 1.914543213,
+     "meteredCost": 1.914543213,
+     "selfMeteredUnits": 3311034,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 4,
+     "class": "compression",
+     "actualCost": 0.7331283150000001,
+     "meteredCost": 0.7331283150000001,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 5,
+     "class": "compression",
+     "actualCost": 0.6636153619999998,
+     "meteredCost": 0.6636153619999998,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 6,
+     "class": "compression",
+     "actualCost": 0.7619865690000003,
+     "meteredCost": 0.7619865690000003,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 7,
+     "class": "compression",
+     "actualCost": 0.7839299450000006,
+     "meteredCost": 0.7839299450000006,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 6,
+     "class": "compression",
+     "costMax": 0.8665358439999999,
+     "costTotal": 4.632091561000001,
+     "deltaRawMm": 6.606855350835218,
+     "firstActualCost": 0.8665358439999999,
+     "firstEstimatedCost": 0.459540734912,
+     "publications": 5,
+     "seconds": 4.632091686000001,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "descent",
+     "costMax": 0.8270183940000004,
+     "costTotal": 0.8270183940000004,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 0.8270183940000004,
+     "firstEstimatedCost": 0.565556106661,
+     "publications": 0,
+     "seconds": 0.8270184250000003,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "schedule",
+     "costMax": 1.914543213,
+     "costTotal": 1.914543213,
+     "deltaRawMm": 1.4070807156819,
+     "firstActualCost": 1.914543213,
+     "firstEstimatedCost": 0.803773914097,
+     "publications": 1,
+     "seconds": 1.9145432869999999,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "affordability",
+   "scheduleIterations": 8
+  },
+  {
+   "tag": "unfixed-s0-r2",
+   "processSeconds": 9.459080444008578,
+   "engineDepthMm": 173.575,
+   "rawDepthMm": 173.57506393348288,
+   "dualGateValid": true,
+   "publishedSeconds": 9.427051873,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 9.427375586,
+   "workUnits": 0,
+   "arm": "unfixed",
+   "seed": 0,
+   "round": 2,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 0.8489577600000002,
+     "meteredCost": 0.8489577600000002,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 0.8214798480000001,
+     "meteredCost": 0.8214798480000001,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 2,
+     "class": "descent",
+     "actualCost": 0.826007004,
+     "meteredCost": 0.826007004,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 3,
+     "class": "schedule",
+     "actualCost": 1.920848705,
+     "meteredCost": 1.920848705,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 4,
+     "class": "compression",
+     "actualCost": 0.7352413219999994,
+     "meteredCost": 0.7352413219999994,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 5,
+     "class": "compression",
+     "actualCost": 0.6570744029999993,
+     "meteredCost": 0.6570744029999993,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 6,
+     "class": "compression",
+     "actualCost": 0.7819046629999997,
+     "meteredCost": 0.7819046629999997,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 7,
+     "class": "compression",
+     "actualCost": 0.7957387990000004,
+     "meteredCost": 0.7957387990000004,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 6,
+     "class": "compression",
+     "costMax": 0.8489577600000002,
+     "costTotal": 4.640396794999999,
+     "deltaRawMm": 6.606855350835218,
+     "firstActualCost": 0.8489577600000002,
+     "firstEstimatedCost": 0.44336456938239993,
+     "publications": 5,
+     "seconds": 4.640397232,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "descent",
+     "costMax": 0.826007004,
+     "costTotal": 0.826007004,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 0.826007004,
+     "firstEstimatedCost": 0.5456481235321999,
+     "publications": 0,
+     "seconds": 0.826007079,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "schedule",
+     "costMax": 1.920848705,
+     "costTotal": 1.920848705,
+     "deltaRawMm": 1.4070807156819,
+     "firstActualCost": 1.920848705,
+     "firstEstimatedCost": 0.7754804922194,
+     "publications": 1,
+     "seconds": 1.920848844,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "affordability",
+   "scheduleIterations": 8
+  },
+  {
+   "tag": "fixed-s1-r2",
+   "processSeconds": 9.809738584968727,
+   "engineDepthMm": 171.362,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "publishedSeconds": 8.129698319,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 9.77501378,
+   "workUnits": 0,
+   "arm": "fixed",
+   "seed": 1,
+   "round": 2,
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed",
+   "debitCalls": [
+    {
+     "operator": "mode34",
+     "phase": "schedule",
+     "globalUnits": 0,
+     "selfMeteredUnits": 3539786,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "resultFingerprint": "49826f36371717fa7444586177b314eea3666318a64a2ba84fe68130dd2ccaf3",
+     "published": true,
+     "startedSeconds": 4.458883817
+    }
+   ],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 0.6818613779999998,
+     "meteredCost": 0.6818613779999998,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 0.7865536260000003,
+     "meteredCost": 0.7865536260000003,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 2,
+     "class": "descent",
+     "actualCost": 0.787934345,
+     "meteredCost": 0.787934345,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 3,
+     "class": "schedule",
+     "actualCost": 1.9400896850000002,
+     "meteredCost": 1.9400896850000002,
+     "selfMeteredUnits": 3539786,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 4,
+     "class": "compression",
+     "actualCost": 0.9020083149999998,
+     "meteredCost": 0.9020083149999998,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 5,
+     "class": "compression",
+     "actualCost": 0.8281117439999992,
+     "meteredCost": 0.8281117439999992,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 6,
+     "class": "compression",
+     "actualCost": 0.8176104379999991,
+     "meteredCost": 0.8176104379999991,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 7,
+     "class": "descent",
+     "actualCost": 0.8267423249999997,
+     "meteredCost": 0.8267423249999997,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 5,
+     "class": "compression",
+     "costMax": 0.9020083149999998,
+     "costTotal": 4.016145500999999,
+     "deltaRawMm": 6.6028705663086384,
+     "firstActualCost": 0.6818613779999998,
+     "firstEstimatedCost": 0.4789981730944,
+     "publications": 3,
+     "seconds": 4.016145649999999,
+     "workUnits": 0
+    },
+    {
+     "actions": 2,
+     "class": "descent",
+     "costMax": 0.8267423249999997,
+     "costTotal": 1.6146766699999997,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 0.787934345,
+     "firstEstimatedCost": 0.5895023472182,
+     "publications": 0,
+     "seconds": 1.6146766930000016,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "schedule",
+     "costMax": 1.9400896850000002,
+     "costTotal": 1.9400896850000002,
+     "deltaRawMm": 1.7251307481037657,
+     "firstActualCost": 1.9400896850000002,
+     "firstEstimatedCost": 0.8378065472414,
+     "publications": 1,
+     "seconds": 1.9400897720000003,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "affordability",
+   "scheduleIterations": 8
+  },
+  {
+   "tag": "unfixed-s1-r2",
+   "processSeconds": 9.854370826040395,
+   "engineDepthMm": 171.362,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "publishedSeconds": 8.134445268,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 9.819943828,
+   "workUnits": 0,
+   "arm": "unfixed",
+   "seed": 1,
+   "round": 2,
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 0.6955331719999998,
+     "meteredCost": 0.6955331719999998,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 0.7760583159999999,
+     "meteredCost": 0.7760583159999999,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 2,
+     "class": "descent",
+     "actualCost": 0.7526948710000001,
+     "meteredCost": 0.7526948710000001,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 3,
+     "class": "schedule",
+     "actualCost": 1.9768393249999994,
+     "meteredCost": 1.9768393249999994,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 4,
+     "class": "compression",
+     "actualCost": 0.9282291869999995,
+     "meteredCost": 0.9282291869999995,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 5,
+     "class": "compression",
+     "actualCost": 0.7986397799999994,
+     "meteredCost": 0.7986397799999994,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 6,
+     "class": "compression",
+     "actualCost": 0.8469448189999991,
+     "meteredCost": 0.8469448189999991,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 7,
+     "class": "descent",
+     "actualCost": 0.837642228,
+     "meteredCost": 0.837642228,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 5,
+     "class": "compression",
+     "costMax": 0.9282291869999995,
+     "costTotal": 4.0454052739999975,
+     "deltaRawMm": 6.6028705663086384,
+     "firstActualCost": 0.6955331719999998,
+     "firstEstimatedCost": 0.4797333608064,
+     "publications": 3,
+     "seconds": 4.045405482,
+     "workUnits": 0
+    },
+    {
+     "actions": 2,
+     "class": "descent",
+     "costMax": 0.837642228,
+     "costTotal": 1.590337099,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 0.7526948710000001,
+     "firstEstimatedCost": 0.5904071416541999,
+     "publications": 0,
+     "seconds": 1.5903373030000014,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "schedule",
+     "costMax": 1.9768393249999994,
+     "costTotal": 1.9768393249999994,
+     "deltaRawMm": 1.7251307481037657,
+     "firstActualCost": 1.9768393249999994,
+     "firstEstimatedCost": 0.8390924500134,
+     "publications": 1,
+     "seconds": 1.976839409,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "affordability",
+   "scheduleIterations": 8
+  },
+  {
+   "tag": "fixed-s2-r2",
+   "processSeconds": 11.82678040501196,
+   "engineDepthMm": 176.162,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "publishedSeconds": 7.183343692,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 11.736228203,
+   "workUnits": 0,
+   "arm": "fixed",
+   "seed": 2,
+   "round": 2,
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed",
+   "debitCalls": [
+    {
+     "operator": "mode34",
+     "phase": "schedule",
+     "globalUnits": 0,
+     "selfMeteredUnits": 3455866,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "resultFingerprint": "6d0ddb941e82342ddb2333327b2e496537d94aca889b51f37b553dcf8bef59e1",
+     "published": true,
+     "startedSeconds": 4.172614709
+    }
+   ],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 0.6530582950000001,
+     "meteredCost": 0.6530582950000001,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 0.6668390529999999,
+     "meteredCost": 0.6668390529999999,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 2,
+     "class": "descent",
+     "actualCost": 0.6719691320000001,
+     "meteredCost": 0.6719691320000001,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 3,
+     "class": "schedule",
+     "actualCost": 2.239470711,
+     "meteredCost": 2.239470711,
+     "selfMeteredUnits": 3455866,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 4,
+     "class": "compression",
+     "actualCost": 0.7709964460000007,
+     "meteredCost": 0.7709964460000007,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 5,
+     "class": "compression",
+     "actualCost": 1.8750467960000003,
+     "meteredCost": 1.8750467960000003,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    },
+    {
+     "iteration": 6,
+     "class": "descent",
+     "actualCost": 2.677167409999999,
+     "meteredCost": 2.677167409999999,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 4,
+     "class": "compression",
+     "costMax": 1.8750467960000003,
+     "costTotal": 3.965940590000001,
+     "deltaRawMm": 1.836999999999989,
+     "firstActualCost": 0.6530582950000001,
+     "firstEstimatedCost": 0.47425986911999995,
+     "publications": 2,
+     "seconds": 3.9659411589999993,
+     "workUnits": 0
+    },
+    {
+     "actions": 2,
+     "class": "descent",
+     "costMax": 2.677167409999999,
+     "costTotal": 3.349136541999999,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 0.6719691320000001,
+     "firstEstimatedCost": 0.5836709234849999,
+     "publications": 0,
+     "seconds": 3.3491366399999993,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "schedule",
+     "costMax": 2.239470711,
+     "costTotal": 2.239470711,
+     "deltaRawMm": 1.6629999999999825,
+     "firstActualCost": 2.239470711,
+     "firstEstimatedCost": 0.8295188703449999,
+     "publications": 1,
+     "seconds": 2.2394707700000005,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "deadline",
+   "scheduleIterations": 7
+  },
+  {
+   "tag": "unfixed-s2-r2",
+   "processSeconds": 9.985081919003278,
+   "engineDepthMm": 179.006,
+   "rawDepthMm": 179.006,
+   "dualGateValid": true,
+   "publishedSeconds": 7.78896409,
+   "publishedWorkUnits": 0,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 9.926972979,
+   "workUnits": 0,
+   "arm": "unfixed",
+   "seed": 2,
+   "round": 2,
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,sched=1,barren=16,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 2.1928689840000004,
+     "meteredCost": 2.1928689840000004,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "descent",
+     "actualCost": 2.1375510010000003,
+     "meteredCost": 2.1375510010000003,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 0,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 1,
+     "class": "compression",
+     "costMax": 2.1928689840000004,
+     "costTotal": 2.1928689840000004,
+     "deltaRawMm": 0.6560000000000059,
+     "firstActualCost": 2.1928689840000004,
+     "firstEstimatedCost": 1.217633837824,
+     "publications": 1,
+     "seconds": 2.192869021,
+     "workUnits": 0
+    },
+    {
+     "actions": 1,
+     "class": "descent",
+     "costMax": 2.1375510010000003,
+     "costTotal": 2.1375510010000003,
+     "deltaRawMm": 0.0,
+     "firstActualCost": 2.1375510010000003,
+     "firstEstimatedCost": 1.4985401735719999,
+     "publications": 0,
+     "seconds": 2.137551200999999,
+     "workUnits": 0
+    }
+   ],
+   "scheduleExit": "deadline",
+   "scheduleIterations": 2
+  }
+ ],
+ "summary": {
+  "perSeed": {
+   "0": {
+    "fixed": [
+     176.108,
+     179.587,
+     173.575
+    ],
+    "unfixed": [
+     179.587,
+     179.587,
+     173.575
+    ]
+   },
+   "1": {
+    "fixed": [
+     179.633,
+     171.362,
+     171.362
+    ],
+    "unfixed": [
+     179.633,
+     171.362,
+     171.362
+    ]
+   },
+   "2": {
+    "fixed": [
+     179.006,
+     176.162,
+     176.162
+    ],
+    "unfixed": [
+     179.006,
+     176.162,
+     179.006
+    ]
+   }
+  },
+  "pairwise": {
+   "unfixed-minus-fixed": {
+    "medianMm": 0.0,
+    "meanMm": 0.7025555555555533,
+    "minMm": 0.0,
+    "maxMm": 3.478999999999985,
+    "cellsRightBetter": 0,
+    "cellsLeftBetter": 2,
+    "cellsEqual": 7,
+    "cells": 9,
+    "medianWorkUnitsDelta": null
+   }
+  },
+  "processSeconds": {
+   "fixed": {
+    "median": 9.861119927023537,
+    "min": 8.4188348960015,
+    "max": 11.82678040501196
+   },
+   "unfixed": {
+    "median": 9.854370826040395,
+    "min": 9.226156465010718,
+    "max": 10.982777297962457
+   }
+  },
+  "workUnits": {
+   "fixed": null,
+   "unfixed": null
+  },
+  "debit": {
+   "fixed": {
+    "selfMeteredCalls": 6,
+    "callsWithDebit": 0,
+    "totalDebited": 0,
+    "medianSelfUnits": 3455866.0,
+    "medianGlobalUnits": 0.0
+   },
+   "unfixed": {
+    "selfMeteredCalls": 0,
+    "callsWithDebit": 0,
+    "totalDebited": 0,
+    "medianSelfUnits": null,
+    "medianGlobalUnits": null
+   }
+  },
+  "ordering": {
+   "fixed": null,
+   "unfixed": null
+  },
+  "errors": []
+ }
+}

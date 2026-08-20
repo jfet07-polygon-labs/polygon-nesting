@@ -5348,6 +5348,16 @@ the pins under
 
 ## Coordinator v5, item 1 only: the self-meter debits the budget it prices, and the other three items are named rather than faked
 
+> **Corrected by the chapter below** ("The budget debit binds at 40M"). Keep
+> this chapter for the record, but do not read its measurement section as
+> evidence. Sol review 6 §1 checked the battery it rests on and found the arm
+> ran with `v3=0`: the coordinator's v3 loop, the schedule class and mode 34
+> were all switched off, so the "identical depths in all four combinations"
+> below is a true statement about runs that never executed a single line of
+> the code this chapter is about. The paragraph beginning "The honest result
+> item 1 asked for" is wrong in its conclusion, not merely thin: rerun
+> properly, the debit binds at 40M and costs 4.376 mm on one seed of three.
+
 Sol review 5 §2 gave four items. This round did one of them — the budget-debit
 bug at `portfolio.rs:3438` — and verified it; it did not attempt the other
 three, and says so rather than presenting a partial result as the full one.
@@ -5405,3 +5415,116 @@ treats as load-bearing, so none is reported.
 
 Evidence, the fix diff, the gate output, the unit-test log and all four
 battery documents: `docs/experiments/coordinator-v5-budget-debit/`.
+
+## The budget debit binds at 40M: the first round's battery ran with the code switched off, and the honest number is a 4.376 mm regression that is the budget being enforced
+
+Sol review 6 §1 accepted coordinator v5's debit and rejected everything that
+had been said about it. Both halves were right. This chapter is the corrected
+round: the ordering fix the review asked for, and the measurement the previous
+chapter should have had.
+
+**The retraction first.** The previous chapter's evidence is one battery, and
+that battery's only arm carries `"v3": false` — spec
+`work=120000000,cells=13:15:17:19,v3=0`, printed in every row of
+`docs/experiments/coordinator-v5-budget-debit/evidence/battery-fixed-sched.json`.
+With `v3=0` the coordinator's v3 loop does
+not run, so the schedule class does not run, so mode 34 does not run, so
+`schedule_self_cost_units` returns `None` and `debit_self_metered` is never
+called. The depths 174.208 / 176.056 / 179.006 are correct numbers about runs
+that executed no part of the code under test, and the conclusion drawn from
+them — "no headline number moved in either direction", "every run in reach
+stopped on its own priced queue before the debit could be the deciding factor"
+— is false. Under the true v4 configuration the debit is the deciding factor at
+40M on **every** seed.
+
+**The ordering fix.** `run_operator` is now a four-step transaction — dispatch,
+determine the charge, debit, then stamp — where before it archived, published
+and wrote its call report *before* returning the self-cost to `v3_loop`, which
+is where the debit was applied. The old order put an action's own charge on the
+next action's readings: `birth_work_units`, `PublicationEvent::work_units` and
+`OperatorCallReport::work_units` were all one debit behind. `debit_self_metered`
+is now `u64` end to end (`operator_self_units.saturating_sub(global_meter_delta)`,
+no `f64` in the path), returns the extra it applied, and holds the wall-budget
+no-op itself rather than trusting each call site to remember it. Six named
+tests plus two more pin the arithmetic; two drivers pin the ordering on real
+runs.
+
+**Finding 4, measured rather than asserted.** Across nine paired 40M cells,
+every debited call satisfies `workUnits == globalUnits + debitedUnits` (18/18)
+— an identity the old ordering could not produce, since it computed
+`work_units` before the debit and so could only emit `workUnits ==
+globalUnits`. Stronger, because the fixed and unfixed arms are bit-identical
+run prefixes: for every layout both arms produced, the difference between their
+publication and `birthWorkUnits` stamps is the cumulative debit *through the
+current call inclusive*, never the exclusive sum the old ordering produced —
+**36 of 36 comparable stamps, 0 of 36 matching the pre-fix identity**. Seed 2's
+four debits of 2,090,715 / 1,998,160 / 2,252,965 / 2,470,770 show up as stamp
+deltas of 2,090,715 / 4,088,875 / 6,341,840 / 8,812,610.
+
+**The honest number.** True v4 (`v3=1,sched=1,barren=16,divq=1`) on a
+`compression-schedule` build, mixed-61 from the bare request, seeds 0/1/2,
+three paired interleaved rounds against `f32c629`:
+
+| budget | seed 0 | seed 1 | seed 2 |
+|---|---|---|---|
+| 40M fixed | 169.891 | 171.362 | **170.155** |
+| 40M unfixed | 169.891 | 171.362 | **165.779** |
+| 120M fixed | 163.927 | 162.161 | 164.004 |
+| 120M unfixed | 163.927 | 162.161 | 164.004 |
+
+At 40M the fix costs **4.376 mm on one seed of three** (median 0.0, mean
+−1.459 over nine cells) and buys strictly fewer actions on all three. At 120M
+nothing moves. Every cell reproduced exactly across all three rounds.
+
+**Why that regression is the instrument working.** The unfixed binary still
+reports `actualCost` and `meteredCost` per action, so the debit it discarded is
+recoverable. At 40M its *true* spend is 41,805,185 / 41,188,355 / 51,328,640 —
+Sol's counterfactual from the pinned v4 trace was 41.81M / 41.19M / 51.33M, and
+these are independent runs on a different commit. At 120M: 122,358,786 /
+121,613,866 / 126,516,058 against Sol's 122.36M / 121.61M / 126.52M. **Nine of
+nine unfixed runs at 40M overran their budget, by up to 28.3%; none of the nine
+fixed runs did.** The 165.779 was bought with 51.3M units against a 40M budget.
+The two seed-2 runs are identical action for action and metered unit for
+metered unit through iteration 10; then the fixed run stops on `affordability`
+at 39.1M of 40M while the unfixed run, whose meter reads about 30M at the same
+instant, buys four more schedule slices — each of which publishes — down to
+165.779. The regression is not a loss of search power. It is the difference
+between a budget and a suggestion.
+
+**And the control that settles it.** Give the fixed arm 52M — above every
+unfixed *true* spend at the 40M point — and compare at matched true cost. Seed
+2's unfixed 40M run spent 51,328,640 true units and reached 165.779. Seed 2's
+fixed 52M run spends 51,339,455 and reaches **165.779**: two runs 10,815 units
+apart, 0.02%, on exactly the same depth. The fix costs no search quality at
+all. It costs only the ability to spend work the budget did not authorise.
+
+**The wall curves, and the two negative results worth having.** 3/10/30 s,
+three seeds, three paired rounds, 54 runs: thirty self-metered mode-34 calls
+fired under a wall budget and **not one debited a unit**, which is the no-op
+observed rather than asserted. The cells that differ are the box — the
+within-arm round-to-round spread is 5.709 mm mean at 10 s and 4.276 mm at 30 s
+against a between-arm paired difference of 0.703 mm and 0.455 mm. Separately,
+running Sol's `barren=1` literally produces **zero** self-metered calls on all
+three seeds and depths 8–10 mm worse than v4's: it is a patience of one, not a
+boolean, and a battery run that way would have repeated the previous round's
+mistake in a new costume. That is why the main battery uses v4's actual
+`BARREN_ACTION_PATIENCE = 16`.
+
+**What it still does not do, and this matters for the roadmap.** The debit is
+charged *after* the action it prices, so one indivisible action can still
+overshoot. Completely: 0 of 9 fixed runs exceed the cap at 40M and 0 of 6 at
+52M, against 9 of 9 and 4 of 6 unfixed; at 120M **3 of 9 fixed runs do** — the
+same seed-1 cell in all three rounds, 121,474,651 against 120,000,000, +1.23%
+— against 9 of 9 unfixed at up to +5.43%. The fix bounds the overrun to at most one action's own debit rather than
+removing it, and Sol review 6 §1 finding 3 names the instrument that would —
+preflight/p95 pricing, shorter quanta, or a deadline-aware batch. It is also
+explicitly a no-op under a wall budget, so it is **not** what would have caught
+the 2/27 wall overruns; the wall curves confirm that empirically, below. And
+the class it now correctly charges was *productive* on seed 2 — every extra
+slice the unfixed run bought published — which is an argument for item 2's
+eligibility prior deciding *whether* to schedule mode 34, not for making its
+price a lie again.
+
+Evidence, drivers, both suites, the gate documents, the retraction index and
+every battery: `docs/experiments/coordinator-v5-budget-debit/`, round 2 under
+`evidence/round6/`.

@@ -1,0 +1,302 @@
+{
+ "runs": {
+  "fixed-s0-r0.json": [
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 813749,
+    "selfMeteredUnits": 3311034,
+    "debitedUnits": 2497285,
+    "workUnits": 3311034,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 2497285,
+    "publicationWorkUnits": 19471857,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 19470947,
+    "birthAtLeastCumulative": true
+   }
+  ],
+  "fixed-s0-r1.json": [
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 813749,
+    "selfMeteredUnits": 3311034,
+    "debitedUnits": 2497285,
+    "workUnits": 3311034,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 2497285,
+    "publicationWorkUnits": 19471857,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 19470947,
+    "birthAtLeastCumulative": true
+   }
+  ],
+  "fixed-s0-r2.json": [
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 813749,
+    "selfMeteredUnits": 3311034,
+    "debitedUnits": 2497285,
+    "workUnits": 3311034,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 2497285,
+    "publicationWorkUnits": 19471857,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 19470947,
+    "birthAtLeastCumulative": true
+   }
+  ],
+  "fixed-s1-r0.json": [
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 868906,
+    "selfMeteredUnits": 3539786,
+    "debitedUnits": 2670880,
+    "workUnits": 3539786,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 2670880,
+    "publicationWorkUnits": 20494930,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 20493970,
+    "birthAtLeastCumulative": true
+   }
+  ],
+  "fixed-s1-r1.json": [
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 868906,
+    "selfMeteredUnits": 3539786,
+    "debitedUnits": 2670880,
+    "workUnits": 3539786,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 2670880,
+    "publicationWorkUnits": 20494930,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 20493970,
+    "birthAtLeastCumulative": true
+   }
+  ],
+  "fixed-s1-r2.json": [
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 868906,
+    "selfMeteredUnits": 3539786,
+    "debitedUnits": 2670880,
+    "workUnits": 3539786,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 2670880,
+    "publicationWorkUnits": 20494930,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 20493970,
+    "birthAtLeastCumulative": true
+   }
+  ],
+  "fixed-s2-r0.json": [
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 1365151,
+    "selfMeteredUnits": 3455866,
+    "debitedUnits": 2090715,
+    "workUnits": 3455866,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 2090715,
+    "publicationWorkUnits": 17936760,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 17935890,
+    "birthAtLeastCumulative": true
+   },
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 1400365,
+    "selfMeteredUnits": 3398525,
+    "debitedUnits": 1998160,
+    "workUnits": 3398525,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 4088875,
+    "publicationWorkUnits": 25123730,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 25122860,
+    "birthAtLeastCumulative": true
+   },
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 997094,
+    "selfMeteredUnits": 3250059,
+    "debitedUnits": 2252965,
+    "workUnits": 3250059,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 6341840,
+    "publicationWorkUnits": 33213050,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 33212130,
+    "birthAtLeastCumulative": true
+   },
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 1083234,
+    "selfMeteredUnits": 3554004,
+    "debitedUnits": 2470770,
+    "workUnits": 3554004,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 8812610,
+    "publicationWorkUnits": 36768344,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 36767484,
+    "birthAtLeastCumulative": true
+   }
+  ],
+  "fixed-s2-r1.json": [
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 1365151,
+    "selfMeteredUnits": 3455866,
+    "debitedUnits": 2090715,
+    "workUnits": 3455866,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 2090715,
+    "publicationWorkUnits": 17936760,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 17935890,
+    "birthAtLeastCumulative": true
+   },
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 1400365,
+    "selfMeteredUnits": 3398525,
+    "debitedUnits": 1998160,
+    "workUnits": 3398525,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 4088875,
+    "publicationWorkUnits": 25123730,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 25122860,
+    "birthAtLeastCumulative": true
+   },
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 997094,
+    "selfMeteredUnits": 3250059,
+    "debitedUnits": 2252965,
+    "workUnits": 3250059,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 6341840,
+    "publicationWorkUnits": 33213050,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 33212130,
+    "birthAtLeastCumulative": true
+   },
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 1083234,
+    "selfMeteredUnits": 3554004,
+    "debitedUnits": 2470770,
+    "workUnits": 3554004,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 8812610,
+    "publicationWorkUnits": 36768344,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 36767484,
+    "birthAtLeastCumulative": true
+   }
+  ],
+  "fixed-s2-r2.json": [
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 1365151,
+    "selfMeteredUnits": 3455866,
+    "debitedUnits": 2090715,
+    "workUnits": 3455866,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 2090715,
+    "publicationWorkUnits": 17936760,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 17935890,
+    "birthAtLeastCumulative": true
+   },
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 1400365,
+    "selfMeteredUnits": 3398525,
+    "debitedUnits": 1998160,
+    "workUnits": 3398525,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 4088875,
+    "publicationWorkUnits": 25123730,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 25122860,
+    "birthAtLeastCumulative": true
+   },
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 997094,
+    "selfMeteredUnits": 3250059,
+    "debitedUnits": 2252965,
+    "workUnits": 3250059,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 6341840,
+    "publicationWorkUnits": 33213050,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 33212130,
+    "birthAtLeastCumulative": true
+   },
+   {
+    "operator": "mode34",
+    "phase": "schedule",
+    "globalUnits": 1083234,
+    "selfMeteredUnits": 3554004,
+    "debitedUnits": 2470770,
+    "workUnits": 3554004,
+    "reportExact": true,
+    "reportWouldBePreFix": false,
+    "cumulativeDebitInclusive": 8812610,
+    "publicationWorkUnits": 36768344,
+    "publicationAtLeastCumulative": true,
+    "birthWorkUnits": 36767484,
+    "birthAtLeastCumulative": true
+   }
+  ]
+ },
+ "totals": {
+  "debitedCalls": 18,
+  "reportExact": 18,
+  "reportWouldBePreFix": 0,
+  "publicationsChecked": 18,
+  "publicationAtLeastCumulative": 18,
+  "birthsChecked": 18,
+  "birthAtLeastCumulative": 18
+ },
+ "ALL_EXACT": true
+}

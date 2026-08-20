@@ -1,0 +1,451 @@
+{
+ "name": "barren1-40000000",
+ "request": "mixed-61",
+ "rounds": 1,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "spec": "work=40000000,cells={cells},v3=1,sched=1,barren=1,divq=1",
+ "arms": [
+  {
+   "label": "fixed",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed"
+  },
+  {
+   "label": "unfixed",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed"
+  }
+ ],
+ "rows": [
+  {
+   "tag": "fixed-s0-r0",
+   "processSeconds": 4.185043992998544,
+   "engineDepthMm": 179.587,
+   "rawDepthMm": 179.5868589805926,
+   "dualGateValid": true,
+   "publishedSeconds": 3.224266537,
+   "publishedWorkUnits": 10793256,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 4.15661404,
+   "workUnits": 13476357,
+   "arm": "fixed",
+   "seed": 0,
+   "round": 0,
+   "spec": "work=40000000,cells=13:15:17:19,v3=1,sched=1,barren=1,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 2014683.0,
+     "meteredCost": 2014683.0,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 2014683,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 2683101.0,
+     "meteredCost": 2683101.0,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 2683101,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 2,
+     "class": "compression",
+     "costMax": 2683101.0,
+     "costTotal": 4697784.0,
+     "deltaRawMm": 2.0021410194073894,
+     "firstActualCost": 2014683.0,
+     "firstEstimatedCost": 1910217.4848,
+     "publications": 1,
+     "seconds": 1.8846605329999995,
+     "workUnits": 4697784
+    }
+   ],
+   "scheduleExit": "patience",
+   "scheduleIterations": 2
+  },
+  {
+   "tag": "unfixed-s0-r0",
+   "processSeconds": 4.169842678005807,
+   "engineDepthMm": 179.587,
+   "rawDepthMm": 179.5868589805926,
+   "dualGateValid": true,
+   "publishedSeconds": 3.220319635,
+   "publishedWorkUnits": 10793256,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 4.136278434,
+   "workUnits": 13476357,
+   "arm": "unfixed",
+   "seed": 0,
+   "round": 0,
+   "spec": "work=40000000,cells=13:15:17:19,v3=1,sched=1,barren=1,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 2014683.0,
+     "meteredCost": 2014683.0,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 2014683,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 2683101.0,
+     "meteredCost": 2683101.0,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 2683101,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 2,
+     "class": "compression",
+     "costMax": 2683101.0,
+     "costTotal": 4697784.0,
+     "deltaRawMm": 2.0021410194073894,
+     "firstActualCost": 2014683.0,
+     "firstEstimatedCost": 1910217.4848,
+     "publications": 1,
+     "seconds": 1.8563127980000003,
+     "workUnits": 4697784
+    }
+   ],
+   "scheduleExit": "patience",
+   "scheduleIterations": 2
+  },
+  {
+   "tag": "fixed-s1-r0",
+   "processSeconds": 4.102195354993455,
+   "engineDepthMm": 179.633,
+   "rawDepthMm": 179.63299999999998,
+   "dualGateValid": true,
+   "publishedSeconds": 3.210558239,
+   "publishedWorkUnits": 11887826,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 4.069093881,
+   "workUnits": 14420765,
+   "arm": "fixed",
+   "seed": 1,
+   "round": 0,
+   "spec": "work=40000000,cells=11:15:21:27,v3=1,sched=1,barren=1,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 2258373.0,
+     "meteredCost": 2258373.0,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 2258373,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 2532939.0,
+     "meteredCost": 2532939.0,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 2532939,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 2,
+     "class": "compression",
+     "costMax": 2532939.0,
+     "costTotal": 4791312.0,
+     "deltaRawMm": 0.05700000000001637,
+     "firstActualCost": 2258373.0,
+     "firstEstimatedCost": 2095368.9727999999,
+     "publications": 1,
+     "seconds": 1.6385736789999998,
+     "workUnits": 4791312
+    }
+   ],
+   "scheduleExit": "patience",
+   "scheduleIterations": 2
+  },
+  {
+   "tag": "unfixed-s1-r0",
+   "processSeconds": 4.013716025976464,
+   "engineDepthMm": 179.633,
+   "rawDepthMm": 179.63299999999998,
+   "dualGateValid": true,
+   "publishedSeconds": 3.117495963,
+   "publishedWorkUnits": 11887826,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 3.983373103,
+   "workUnits": 14420765,
+   "arm": "unfixed",
+   "seed": 1,
+   "round": 0,
+   "spec": "work=40000000,cells=11:15:21:27,v3=1,sched=1,barren=1,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 2258373.0,
+     "meteredCost": 2258373.0,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 2258373,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 2532939.0,
+     "meteredCost": 2532939.0,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 2532939,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 2,
+     "class": "compression",
+     "costMax": 2532939.0,
+     "costTotal": 4791312.0,
+     "deltaRawMm": 0.05700000000001637,
+     "firstActualCost": 2258373.0,
+     "firstEstimatedCost": 2095368.9727999999,
+     "publications": 1,
+     "seconds": 1.6523927449999998,
+     "workUnits": 4791312
+    }
+   ],
+   "scheduleExit": "patience",
+   "scheduleIterations": 2
+  },
+  {
+   "tag": "fixed-s2-r0",
+   "processSeconds": 3.824029019975569,
+   "engineDepthMm": 179.006,
+   "rawDepthMm": 179.006,
+   "dualGateValid": true,
+   "publishedSeconds": 3.047178874,
+   "publishedWorkUnits": 10606873,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 3.790556515,
+   "workUnits": 12543231,
+   "arm": "fixed",
+   "seed": 2,
+   "round": 0,
+   "spec": "work=40000000,cells=15:23:31:39,v3=1,sched=1,barren=1,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-fixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 1645531.0,
+     "meteredCost": 1645531.0,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 1645531,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 1936358.0,
+     "meteredCost": 1936358.0,
+     "selfMeteredUnits": null,
+     "debitedUnits": 0,
+     "workUnits": 1936358,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 2,
+     "class": "compression",
+     "costMax": 1936358.0,
+     "costTotal": 3581889.0,
+     "deltaRawMm": 0.6560000000000059,
+     "firstActualCost": 1645531.0,
+     "firstEstimatedCost": 1949988.0192,
+     "publications": 1,
+     "seconds": 1.449044565,
+     "workUnits": 3581889
+    }
+   ],
+   "scheduleExit": "patience",
+   "scheduleIterations": 2
+  },
+  {
+   "tag": "unfixed-s2-r0",
+   "processSeconds": 3.812853471026756,
+   "engineDepthMm": 179.006,
+   "rawDepthMm": 179.006,
+   "dualGateValid": true,
+   "publishedSeconds": 3.049397746,
+   "publishedWorkUnits": 10606873,
+   "incumbentSource": "mode22",
+   "coordinatorSeconds": 3.77906033,
+   "workUnits": 12543231,
+   "arm": "unfixed",
+   "seed": 2,
+   "round": 0,
+   "spec": "work=40000000,cells=15:23:31:39,v3=1,sched=1,barren=1,divq=1",
+   "binary": "/var/lib/t3/tmp/wf6v1/bin/sched-unfixed",
+   "debitCalls": [],
+   "ordering": null,
+   "scheduleActions": [
+    {
+     "iteration": 0,
+     "class": "compression",
+     "actualCost": 1645531.0,
+     "meteredCost": 1645531.0,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 1645531,
+     "publications": 1
+    },
+    {
+     "iteration": 1,
+     "class": "compression",
+     "actualCost": 1936358.0,
+     "meteredCost": 1936358.0,
+     "selfMeteredUnits": null,
+     "debitedUnits": null,
+     "workUnits": 1936358,
+     "publications": 0
+    }
+   ],
+   "scheduleClasses": [
+    {
+     "actions": 2,
+     "class": "compression",
+     "costMax": 1936358.0,
+     "costTotal": 3581889.0,
+     "deltaRawMm": 0.6560000000000059,
+     "firstActualCost": 1645531.0,
+     "firstEstimatedCost": 1949988.0192,
+     "publications": 1,
+     "seconds": 1.4468888830000002,
+     "workUnits": 3581889
+    }
+   ],
+   "scheduleExit": "patience",
+   "scheduleIterations": 2
+  }
+ ],
+ "summary": {
+  "perSeed": {
+   "0": {
+    "fixed": [
+     179.587
+    ],
+    "unfixed": [
+     179.587
+    ]
+   },
+   "1": {
+    "fixed": [
+     179.633
+    ],
+    "unfixed": [
+     179.633
+    ]
+   },
+   "2": {
+    "fixed": [
+     179.006
+    ],
+    "unfixed": [
+     179.006
+    ]
+   }
+  },
+  "pairwise": {
+   "unfixed-minus-fixed": {
+    "medianMm": 0.0,
+    "meanMm": 0.0,
+    "minMm": 0.0,
+    "maxMm": 0.0,
+    "cellsRightBetter": 0,
+    "cellsLeftBetter": 0,
+    "cellsEqual": 3,
+    "cells": 3,
+    "medianWorkUnitsDelta": 0
+   }
+  },
+  "processSeconds": {
+   "fixed": {
+    "median": 4.102195354993455,
+    "min": 3.824029019975569,
+    "max": 4.185043992998544
+   },
+   "unfixed": {
+    "median": 4.013716025976464,
+    "min": 3.812853471026756,
+    "max": 4.169842678005807
+   }
+  },
+  "workUnits": {
+   "fixed": {
+    "median": 13476357,
+    "min": 12543231,
+    "max": 14420765
+   },
+   "unfixed": {
+    "median": 13476357,
+    "min": 12543231,
+    "max": 14420765
+   }
+  },
+  "debit": {
+   "fixed": {
+    "selfMeteredCalls": 0,
+    "callsWithDebit": 0,
+    "totalDebited": 0,
+    "medianSelfUnits": null,
+    "medianGlobalUnits": null
+   },
+   "unfixed": {
+    "selfMeteredCalls": 0,
+    "callsWithDebit": 0,
+    "totalDebited": 0,
+    "medianSelfUnits": null,
+    "medianGlobalUnits": null
+   }
+  },
+  "ordering": {
+   "fixed": null,
+   "unfixed": null
+  },
+  "errors": []
+ }
+}

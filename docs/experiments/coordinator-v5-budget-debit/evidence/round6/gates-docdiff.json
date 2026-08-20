@@ -1,0 +1,28 @@
+{
+ "dir": "/var/lib/t3/tmp/wf6v1/gates",
+ "left": "fixed",
+ "right": "unfixed",
+ "gates": {
+  "g1": {
+   "leftDigest": "c326faf2b9911178",
+   "rightDigest": "c326faf2b9911178",
+   "identical": true
+  },
+  "g2": {
+   "leftDigest": "0458a169e0f49539",
+   "rightDigest": "0458a169e0f49539",
+   "identical": true
+  },
+  "g3": {
+   "leftDigest": "2777a82313c3cac7",
+   "rightDigest": "2777a82313c3cac7",
+   "identical": true
+  },
+  "g4": {
+   "leftDigest": "ed5c9ce182250316",
+   "rightDigest": "ed5c9ce182250316",
+   "identical": true
+  }
+ },
+ "ALL_IDENTICAL": true
+}

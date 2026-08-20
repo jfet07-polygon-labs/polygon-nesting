@@ -614,7 +614,26 @@ pub struct OperatorCallReport {
     pub action: Option<String>,
     pub started_seconds: f64,
     pub elapsed_seconds: f64,
+    /// What this call was *charged* to the work budget:
+    /// `global_units + debited_units`, i.e. `max(global_units,
+    /// self_metered_units)` for the one operator that carries its own meter.
+    /// This is the number [`BudgetMeter::call_cost`] prices a future call of
+    /// the same operator at, and since coordinator v5's transaction ordering
+    /// it includes *this* call's own debit rather than the previous one's.
     pub work_units: u64,
+    /// The coordinator's own counter delta across the call, before any
+    /// self-metered debit. Reported next to [`Self::work_units`] rather than
+    /// instead of it so the one place the two disagree is visible in the
+    /// evidence rather than argued for in prose (Sol review 6 §1).
+    pub global_units: u64,
+    /// What the operator's own meter charged itself, when it carries one -
+    /// see [`schedule_self_cost_units`]. `None` for every operator that does
+    /// not, which today is all of them but mode 34.
+    pub self_metered_units: Option<u64>,
+    /// `self_metered_units.saturating_sub(global_units)`, and zero under a
+    /// wall budget. What this call added to the meter beyond the global
+    /// counter's own reading.
+    pub debited_units: u64,
     pub exact_valid: bool,
     pub raw_depth_mm: Option<f64>,
     /// The fingerprint of the layout this call produced, when it produced a
@@ -898,10 +917,21 @@ pub struct ScheduledActionReport {
     /// [`Self::metered_cost`] for every class but the compression schedule; see
     /// [`schedule_self_cost_units`].
     pub actual_cost: f64,
-    /// What the coordinator's own meter read across the action. Reported next
-    /// to `actual_cost` rather than instead of it so the one place the two
-    /// disagree is visible in the evidence rather than argued for in prose.
+    /// What the coordinator's own meter read across the action, with any
+    /// self-metered debit taken back out. Reported next to `actual_cost`
+    /// rather than instead of it so the one place the two disagree is visible
+    /// in the evidence rather than argued for in prose.
     pub metered_cost: f64,
+    /// What the action's operators charged themselves, when any of them
+    /// carries its own meter. See [`schedule_self_cost_units`].
+    pub self_metered_units: Option<u64>,
+    /// What this action added to the budget beyond the coordinator's own
+    /// counter - `actual_cost - metered_cost` under a work budget, always
+    /// zero under a wall budget. Since coordinator v5's transaction ordering
+    /// this is charged *within* the action, so `work_units` below, the
+    /// publications the action produced and the basins it archived all
+    /// already include it.
+    pub debited_units: u64,
     pub work_units: u64,
     pub seconds: f64,
     pub operator_calls: usize,
@@ -1471,14 +1501,24 @@ impl BudgetMeter {
             .saturating_add(self.self_metered_debit)
     }
 
+    /// The total charged so far for self-metered gaps, in work units.
+    ///
+    /// Read by the schedule loop to attribute a debit to the action that
+    /// caused it, which is only possible because the debit now happens inside
+    /// the operator transaction rather than after it.
+    fn self_metered_debit(&self) -> u64 {
+        self.self_metered_debit
+    }
+
     /// Charges the budget itself for the gap between what the global counter
     /// priced an action at and what the action's own meter (e.g.
-    /// [`schedule_self_cost_units`]) read, when the latter is larger.
+    /// [`schedule_self_cost_units`]) read, when the latter is larger, and
+    /// returns the extra it applied.
     ///
     /// Before this, `spent` never moved when an m34 self-metered arm's price
-    /// beat the global meter's read at the call site in
-    /// [`Coordinator::run_schedule`]: `ClassStats::cost_max` and the ranking
-    /// saw the higher, honest price, but `BudgetMeter::work_units` - and so
+    /// beat the global meter's read in [`v3_loop`]: `ClassStats::cost_max` and
+    /// the ranking saw the higher, honest price, but
+    /// [`BudgetMeter::work_units`] - and so
     /// `spent_fraction`/`remaining_to`, which the affordability rule and every
     /// phase deadline read - kept advancing at the global counter's rate. A
     /// class whose own meter reads 11x the global counter's could therefore
@@ -1487,9 +1527,27 @@ impl BudgetMeter {
     /// price used for ranking, is what closes that gap; it can only ever
     /// raise `spent`, never lower it, so this cannot manufacture room a run
     /// did not have.
-    fn debit_self_metered(&mut self, global_meter_delta: f64, operator_self_units: u64) {
-        let extra = (operator_self_units as f64 - global_meter_delta).max(0.0);
-        self.self_metered_debit = self.self_metered_debit.saturating_add(extra as u64);
+    ///
+    /// Both arguments and the accumulator are `u64`, the work meter's own
+    /// type: the first version of this took the global delta as an `f64`
+    /// because the call site had one lying around, which put a 53-bit
+    /// mantissa between a counter that is exact and a budget that is compared
+    /// against it (Sol review 6 §1). `saturating_sub` is the whole of the
+    /// `max(..., 0)` clamp.
+    ///
+    /// Under a **wall** budget this is a deliberate no-op and returns zero:
+    /// seconds are seconds, the clock has no broad phase to ride free on, and
+    /// `work_units` is not that budget's currency. The guard lives here, in
+    /// the one place that owns the accumulator, rather than at the call site
+    /// - a rule enforced by every caller separately is a rule one new caller
+    /// silently breaks.
+    fn debit_self_metered(&mut self, global_meter_delta: u64, operator_self_units: u64) -> u64 {
+        if self.is_wall() {
+            return 0;
+        }
+        let extra = operator_self_units.saturating_sub(global_meter_delta);
+        self.self_metered_debit = self.self_metered_debit.saturating_add(extra);
+        extra
     }
 
     /// The fraction of the budget already spent, in the budget's own currency.
@@ -1567,6 +1625,75 @@ fn work_units_now() -> u64 {
     totals[Counter::CandidateQueries as usize].saturating_add(
         WORK_UNITS_PER_EXACT_PAIR_TEST.saturating_mul(totals[Counter::ExactPairTests as usize]),
     )
+}
+
+/// What one dispatched operator call was charged, settled before the call's
+/// archive entry, publication and report are stamped.
+///
+/// The four numbers are reported rather than collapsed to one because the
+/// interesting fact about a self-metered operator is precisely the *gap*: an
+/// arm whose own meter reads 3.34M while the coordinator's counter reads 307k
+/// is the finding, and an evidence document that only carried the maximum
+/// would hide it. See [`schedule_self_cost_units`] and Sol review 6 §1.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct OperatorCharge {
+    /// The coordinator's own counter delta across the call.
+    global_units: u64,
+    /// What the operator's own meter charged itself, if it carries one.
+    self_metered_units: Option<u64>,
+    /// What [`BudgetMeter::debit_self_metered`] actually applied: zero under a
+    /// wall budget, zero when the global counter already read at least as
+    /// much, and the difference otherwise.
+    debited_units: u64,
+    /// `global_units + debited_units`, which is `max(global_units,
+    /// self_metered_units)` whenever a debit was possible.
+    charged_units: u64,
+}
+
+/// Steps two and three of the operator transaction: determine what one
+/// dispatched operator call is charged, and debit the difference into the
+/// meter *before* the caller stamps anything with a meter reading.
+///
+/// A free function over `&mut BudgetMeter` rather than a `Coordinator` method,
+/// and taking the self-metered reading rather than the population it came
+/// from, for one reason: the ordering rule Sol review 6 §1 asked for is the
+/// load-bearing part, and this way it has a name, a signature and a unit test
+/// in every feature configuration rather than only a position inside a
+/// 90-line function that needs a whole engine to call.
+fn settle_operator_charge(
+    meter: &mut BudgetMeter,
+    global_units: u64,
+    self_metered_units: Option<u64>,
+) -> OperatorCharge {
+    let debited_units = match self_metered_units {
+        Some(units) => meter.debit_self_metered(global_units, units),
+        None => 0,
+    };
+    OperatorCharge {
+        global_units,
+        self_metered_units,
+        debited_units,
+        charged_units: global_units.saturating_add(debited_units),
+    }
+}
+
+/// The self-metered charge one dispatched operator reports for itself, in the
+/// portfolio's own work currency, or `None` when it carries no meter of its
+/// own.
+///
+/// The one implementation today is the compression schedule; the wrapper
+/// exists so [`settle_operator_charge`]'s caller - which runs for every mode,
+/// in every feature configuration - has a single call to make.
+fn operator_self_metered_units(population: &GeneralPersistentVacancyDiagnostics) -> Option<u64> {
+    #[cfg(feature = "compression-schedule")]
+    {
+        schedule_self_cost_units(population)
+    }
+    #[cfg(not(feature = "compression-schedule"))]
+    {
+        let _ = population;
+        None
+    }
 }
 
 /// What an operator's parent layout is *to that operator*.
@@ -1734,6 +1861,21 @@ impl<'a> Coordinator<'a> {
 
     /// Runs one deep-operator mode against one parent, archives whatever it
     /// produced, attempts publication, and records the call.
+    ///
+    /// # The call is a transaction
+    ///
+    /// The order below is load-bearing and is the correction Sol review 6 §1
+    /// asked for: **dispatch -> determine the charge -> debit -> archive,
+    /// publish, report**. Coordinator v5's first cut debited the self-metered
+    /// gap in [`v3_loop`], *after* `run_operator` had already returned, which
+    /// left the action's own publication, its archived basin's
+    /// `birth_work_units` and its own [`OperatorCallReport::work_units`]
+    /// stamped with a meter reading that did not include the charge the same
+    /// action had just incurred - while every *later* publication did include
+    /// it. The anytime curve that comes out of that is not merely imprecise,
+    /// it is temporally incoherent: work appears on the timeline one action
+    /// after the action that spent it. Debiting before anything is stamped
+    /// makes every reading in this function a reading of a settled budget.
     #[allow(clippy::too_many_arguments)]
     fn run_operator(
         &mut self,
@@ -1766,8 +1908,20 @@ impl<'a> Coordinator<'a> {
             None,
             secondary,
         );
+        // Step two of the transaction: what did this call cost? The global
+        // counter's delta is read *before* the debit, so it is the global
+        // counter's own number and nothing else - `work_units()` folds in
+        // every debit charged so far, and the ones charged before this call
+        // are already inside `started_work`.
+        let global_units = self.meter.work_units().saturating_sub(started_work);
+        let charge = settle_operator_charge(
+            &mut self.meter,
+            global_units,
+            operator_self_metered_units(&population),
+        );
+        // Step four: everything from here reads a settled meter.
         let elapsed_seconds = self.meter.seconds() - started_seconds;
-        let work_units = self.meter.work_units().saturating_sub(started_work);
+        let work_units = charge.charged_units;
         if parent_role == ParentRole::Descended {
             if let Some(fingerprint) = parent_fingerprint.as_deref() {
                 self.archive.charge_descent(fingerprint);
@@ -1803,6 +1957,9 @@ impl<'a> Coordinator<'a> {
             started_seconds,
             elapsed_seconds,
             work_units,
+            global_units: charge.global_units,
+            self_metered_units: charge.self_metered_units,
+            debited_units: charge.debited_units,
             exact_valid: population.exact_valid,
             raw_depth_mm,
             result_fingerprint,
@@ -3124,6 +3281,7 @@ fn v3_loop(
         let entry_raw_depth_mm = run.incumbent.raw_depth_mm;
         let cost_before = run.meter.currency_spent();
         let work_before = run.meter.work_units();
+        let debit_before = run.meter.self_metered_debit();
         let seconds_before = run.meter.seconds();
         let publications_before = run.publications.len();
         let calls_before = run.operator_calls.len();
@@ -3131,29 +3289,34 @@ fn v3_loop(
 
         let self_metered_units = execute_v3_action(run, &action, constructor_clamp_mm);
 
-        let metered_cost = (run.meter.currency_spent() - cost_before).max(0.0);
+        // The debit is applied inside the operator transaction now (see
+        // [`Coordinator::run_operator`]), so by here the meter has already
+        // settled and `currency_spent` is the honest charge. What is left for
+        // this loop is *attribution*: how much of the action's charge was the
+        // debit, so the report can carry the global reading and the debit
+        // separately rather than only their sum.
+        let debited_units = run.meter.self_metered_debit().saturating_sub(debit_before);
+        let charged_cost = (run.meter.currency_spent() - cost_before).max(0.0);
+        let metered_cost = if run.meter.is_wall() {
+            charged_cost
+        } else {
+            (charged_cost - debited_units as f64).max(0.0)
+        };
         // The one place the coordinator charges an action more than its own
-        // meter read. See [`schedule_self_cost_units`].
+        // meter read. See [`schedule_self_cost_units`]. `charged_cost` already
+        // *is* `max(metered_cost, units)` for the single-operator schedule
+        // action, which is the only self-metered action today; the `max` is
+        // kept so an action that ever dispatches a self-metered operator
+        // alongside others is still priced at no less than the self-meter's
+        // own reading.
         let cost = match self_metered_units {
-            Some(units) if !run.meter.is_wall() => metered_cost.max(units as f64),
-            _ => metered_cost,
+            Some(units) if !run.meter.is_wall() => charged_cost.max(units as f64),
+            _ => charged_cost,
         };
         let work_units = run.meter.work_units().saturating_sub(work_before);
         let seconds = run.meter.seconds() - seconds_before;
         let publications = run.publications.len() - publications_before;
         let operator_calls = run.operator_calls.len() - calls_before;
-        // The price computed above (`cost`) is what ranking and
-        // `ClassStats::cost_max` see; without this the budget itself never
-        // felt it. Debit the same gap into the meter so a work budget cannot
-        // be over-spent by scheduling actions whose own meter reads higher
-        // than the global counter's - see
-        // [`BudgetMeter::debit_self_metered`]. No-op under a wall budget and
-        // for every action that never reports a self-metered charge.
-        if let Some(units) = self_metered_units {
-            if !run.meter.is_wall() {
-                run.meter.debit_self_metered(metered_cost, units);
-            }
-        }
         let exit_raw_depth_mm = run.incumbent.raw_depth_mm;
         let gained = match (entry_raw_depth_mm, exit_raw_depth_mm) {
             (Some(entry), Some(exit)) => (entry - exit).max(0.0),
@@ -3189,6 +3352,8 @@ fn v3_loop(
             exit_raw_depth_mm,
             candidates: candidate_count,
             metered_cost,
+            self_metered_units,
+            debited_units,
         });
         if class == ActionClass::Diversify {
             // The stopping signal is the descendant, never the arm's own depth
@@ -3519,14 +3684,22 @@ fn execute_v3_action(
 /// the price used to be a price and never a spend, so a work-budget run's
 /// `BudgetMeter` advanced at its own rate regardless of what this function
 /// priced an arm at, and a class whose own meter read 11x the coordinator's
-/// could buy far more of itself than the nominal budget allowed. The call
-/// site now also debits `max(global_meter_delta, operator_self_units)` into
-/// the meter itself via [`BudgetMeter::debit_self_metered`] - the same
-/// number this function's caller already computes for ranking, just no
-/// longer thrown away before the budget sees it.
+/// could buy far more of itself than the nominal budget allowed. The reading
+/// this function returns is now charged into the meter itself, by
+/// [`settle_operator_charge`] inside [`Coordinator::run_operator`], as
+/// `max(global_units, operator_self_units)`.
 ///
-/// Under a **wall** budget the caller does not apply it at all, and does not
-/// need to: seconds are seconds, and the clock has no broad phase.
+/// Sol review 6 §1 corrected *when*: the first cut debited in [`v3_loop`],
+/// after `run_operator` had already stamped the call's archive entry,
+/// publication and report, so an action's own charge landed on the next
+/// action's readings. The debit is now step three of a four-step operator
+/// transaction - dispatch, charge, debit, stamp - so every reading taken
+/// after it is a reading of a settled budget.
+///
+/// Under a **wall** budget nothing is debited, and nothing needs to be:
+/// seconds are seconds, and the clock has no broad phase. That guard lives in
+/// [`BudgetMeter::debit_self_metered`], not at the call site, so no future
+/// caller can forget it.
 #[cfg(feature = "compression-schedule")]
 fn schedule_self_cost_units(population: &GeneralPersistentVacancyDiagnostics) -> Option<u64> {
     population
@@ -4718,6 +4891,9 @@ mod tests {
             started_seconds: 0.0,
             elapsed_seconds: 1.25,
             work_units: 3_000_000,
+            global_units: 3_000_000,
+            self_metered_units: None,
+            debited_units: 0,
             exact_valid: true,
             raw_depth_mm: None,
             result_fingerprint: None,
@@ -4727,6 +4903,263 @@ mod tests {
         };
         assert_eq!(wall.call_cost(&call), 1.25);
         assert_eq!(work.call_cost(&call), 3_000_000.0);
+    }
+
+    // ---------------------------------------------------------------------
+    // The self-metered debit (coordinator v5 item 1, corrected under Sol
+    // review 6 §1). Every test below reads `work_units()` directly, which is
+    // legitimate here for the reason the test above pins: with `profiling`
+    // recording off - which it is in a unit test - `work_units_now()` is
+    // constant, so `work_units()` is exactly the debit accumulator and
+    // nothing else.
+    // ---------------------------------------------------------------------
+
+    #[test]
+    fn a_self_meter_above_the_global_counter_is_what_gets_spent() {
+        // Sol review 6 §1: "global 30 / self 50 -> spent 50". The gap, not
+        // the maximum, is what the accumulator carries, because the global
+        // counter has already contributed its own 30 through
+        // `work_units_now()`.
+        let mut meter = BudgetMeter::new(PortfolioBudget::Work { units: 1_000 });
+        let extra = meter.debit_self_metered(30, 50);
+        assert_eq!(extra, 20);
+        assert_eq!(meter.self_metered_debit(), 20);
+        // 30 already-counted units plus the 20 debited: the action is charged
+        // 50, which is the self-meter's own reading.
+        assert_eq!(meter.work_units() + 30, 50);
+
+        // And the charge the operator transaction reports says so in all four
+        // numbers at once.
+        let mut fresh = BudgetMeter::new(PortfolioBudget::Work { units: 1_000 });
+        let charge = settle_operator_charge(&mut fresh, 30, Some(50));
+        assert_eq!(
+            charge,
+            OperatorCharge {
+                global_units: 30,
+                self_metered_units: Some(50),
+                debited_units: 20,
+                charged_units: 50,
+            }
+        );
+    }
+
+    #[test]
+    fn a_global_counter_at_or_above_the_self_meter_debits_nothing() {
+        // The debit can only ever raise `spent`. When the coordinator's own
+        // counter already read at least what the operator charges itself
+        // there is nothing to add, and - the case that matters - the debit
+        // must never *lower* the reading either.
+        let mut meter = BudgetMeter::new(PortfolioBudget::Work { units: 1_000 });
+        assert_eq!(meter.debit_self_metered(50, 50), 0);
+        assert_eq!(meter.debit_self_metered(3_343_739, 3_341_665), 0);
+        assert_eq!(meter.self_metered_debit(), 0);
+        assert_eq!(meter.work_units(), 0);
+
+        let charge = settle_operator_charge(&mut meter, 3_343_739, Some(3_341_665));
+        assert_eq!(charge.debited_units, 0);
+        assert_eq!(charge.charged_units, 3_343_739);
+        // An operator with no meter of its own is charged its global delta and
+        // nothing more.
+        let plain = settle_operator_charge(&mut meter, 12_345, None);
+        assert_eq!(plain.debited_units, 0);
+        assert_eq!(plain.charged_units, 12_345);
+        assert_eq!(plain.self_metered_units, None);
+        assert_eq!(meter.self_metered_debit(), 0);
+    }
+
+    #[test]
+    fn two_consecutive_self_metered_actions_both_land_on_the_budget() {
+        // The accumulator is additive, and the second action's charge does not
+        // overwrite or absorb the first: a run that schedules the class twice
+        // pays for it twice. This is the arithmetic that decides whether a
+        // 40M-unit run can afford a third slice.
+        let mut meter = BudgetMeter::new(PortfolioBudget::Work { units: 40_000_000 });
+        let first = settle_operator_charge(&mut meter, 307_767, Some(3_341_665));
+        assert_eq!(first.debited_units, 3_033_898);
+        let after_first = meter.work_units();
+        let second = settle_operator_charge(&mut meter, 400_000, Some(3_356_020));
+        assert_eq!(second.debited_units, 2_956_020);
+        assert_eq!(meter.self_metered_debit(), 3_033_898 + 2_956_020);
+        assert_eq!(meter.work_units(), after_first + 2_956_020);
+        // Each action's own charge is the self-meter's reading, and the budget
+        // has felt both.
+        assert_eq!(first.charged_units, 3_341_665);
+        assert_eq!(second.charged_units, 3_356_020);
+        assert_eq!(
+            meter.spent_fraction(),
+            (3_033_898.0 + 2_956_020.0) / 40_000_000.0
+        );
+    }
+
+    #[test]
+    fn the_debit_saturates_rather_than_wrapping() {
+        // `overflow-checks = true` is on in this profile's release build, so
+        // an accumulator that wrapped would abort a run rather than
+        // mis-report one; saturation makes the failure mode "the budget reads
+        // full", which is the safe direction for a number the affordability
+        // rule compares against.
+        let mut meter = BudgetMeter::new(PortfolioBudget::Work { units: 1_000 });
+        assert_eq!(meter.debit_self_metered(0, u64::MAX), u64::MAX);
+        assert_eq!(meter.self_metered_debit(), u64::MAX);
+        assert_eq!(meter.debit_self_metered(0, 7), 7);
+        assert_eq!(meter.self_metered_debit(), u64::MAX);
+        assert_eq!(meter.work_units(), u64::MAX);
+        assert!(!meter.has_room(1.0));
+        // The subtraction saturates too: a global delta larger than the self
+        // meter's reading is zero extra, never a wrap to `u64::MAX`.
+        let mut second = BudgetMeter::new(PortfolioBudget::Work { units: 1_000 });
+        assert_eq!(second.debit_self_metered(u64::MAX, 1), 0);
+        assert_eq!(second.self_metered_debit(), 0);
+    }
+
+    #[test]
+    fn a_wall_budget_never_debits_a_self_meter() {
+        // Sol review 6 §1 finding 3, kept explicit: this instrument is
+        // accounting, not a wall-clock guard, and it is a no-op under a wall
+        // budget by construction rather than by the caller remembering to
+        // ask. It is *not* what would have caught the 2/27 wall overruns.
+        let mut wall = BudgetMeter::new(PortfolioBudget::Wall { millis: 10_000 });
+        assert_eq!(wall.debit_self_metered(30, 50), 0);
+        assert_eq!(wall.self_metered_debit(), 0);
+        let charge = settle_operator_charge(&mut wall, 30, Some(3_341_665));
+        assert_eq!(charge.debited_units, 0);
+        assert_eq!(charge.charged_units, 30);
+        assert_eq!(charge.self_metered_units, Some(3_341_665));
+        assert_eq!(wall.self_metered_debit(), 0);
+        // The wall meter's own currency is untouched: `currency_spent` is
+        // seconds and no accumulator is anywhere near it.
+        assert_eq!(wall.work_units(), 0);
+    }
+
+    #[test]
+    fn the_current_actions_debit_is_already_on_the_meter_when_it_is_stamped() {
+        // Sol review 6 §1 finding 4, and the reason `run_operator` is written
+        // as a transaction. `archive_layout` stamps `birth_work_units`,
+        // `try_publish` stamps the publication's `work_units` and the
+        // incumbent's `published_work_units`, and `OperatorCallReport`
+        // carries the call's own charge - all three read the meter *after*
+        // this settlement, so all three include the charge of the action that
+        // produced them. Before the fix they read the meter before it, and
+        // the debit landed on the next action instead: a curve where work
+        // appears one action after the action that spent it.
+        let mut meter = BudgetMeter::new(PortfolioBudget::Work { units: 40_000_000 });
+        let started_work = meter.work_units();
+
+        // Step 1-2 of the transaction: dispatch has happened, the global
+        // delta is read.
+        let global_units = meter.work_units().saturating_sub(started_work);
+        // What the pre-fix ordering would have stamped: the meter as it
+        // stands before the charge is settled.
+        let stamp_before_settlement = meter.work_units();
+
+        // Step 3: debit.
+        let charge = settle_operator_charge(&mut meter, global_units, Some(3_341_665));
+
+        // Step 4: every stamp taken from here includes it.
+        let stamp_after_settlement = meter.work_units();
+        assert_eq!(charge.debited_units, 3_341_665);
+        assert_eq!(
+            stamp_after_settlement,
+            stamp_before_settlement + charge.debited_units
+        );
+        // `OperatorCallReport::work_units` is `charge.charged_units`, and the
+        // publication and archive stamps are `stamp_after_settlement`; the
+        // pre-fix reading is strictly smaller than all of them.
+        assert_eq!(charge.charged_units, 3_341_665);
+        assert!(stamp_before_settlement < stamp_after_settlement);
+        // A second call in the same action inherits the settled meter as its
+        // own baseline, so no charge is ever counted twice.
+        let next_started = meter.work_units();
+        let next_global = meter.work_units().saturating_sub(next_started);
+        let next = settle_operator_charge(&mut meter, next_global, None);
+        assert_eq!(next.charged_units, 0);
+        assert_eq!(meter.work_units(), stamp_after_settlement);
+
+        // What this test does *not* do, said plainly: it exercises the
+        // settlement, not `run_operator`'s own source order. Reaching a real
+        // `archive_layout`/`try_publish` from a unit test needs a whole engine
+        // run whose mode-34 arm actually fires, which no unit test in this
+        // module can afford. The end-to-end half of finding 4 is checked on
+        // real run documents instead, by `drivers/orderingcheck.py`, on the
+        // identity asserted just below: it is a discriminator, because the
+        // pre-fix ordering computed `work_units` from the meter *before* the
+        // debit and so could only ever emit `work_units == global_units`.
+        let report = OperatorCallReport {
+            phase: "schedule".to_owned(),
+            operator: "mode34".to_owned(),
+            parent_fingerprint: None,
+            secondary_parent_fingerprint: None,
+            action: None,
+            started_seconds: 0.0,
+            elapsed_seconds: 4.0,
+            work_units: charge.charged_units,
+            global_units: charge.global_units,
+            self_metered_units: charge.self_metered_units,
+            debited_units: charge.debited_units,
+            exact_valid: true,
+            raw_depth_mm: None,
+            result_fingerprint: None,
+            archive_disposition: None,
+            published: false,
+            failure_reason: None,
+        };
+        assert_eq!(report.work_units, report.global_units + report.debited_units);
+        assert_ne!(report.work_units, report.global_units);
+    }
+
+    #[test]
+    fn a_debited_call_is_priced_at_the_self_meter_for_the_next_one() {
+        // The behavioural consequence of stamping the call report with the
+        // settled charge rather than the global delta, and the reason this is
+        // more than bookkeeping: `mean_operator_cost` averages
+        // `BudgetMeter::call_cost` over a run's own past calls, and the
+        // affordability rule refuses a class it cannot finish. Pricing a past
+        // mode-34 call at the coordinator's optimistic 307,767 rather than the
+        // 3,341,665 the arm charged itself is what let the class keep being
+        // affordable. Under a wall budget the same report is priced in
+        // seconds and none of this is read at all.
+        let charge_units = 3_341_665u64;
+        let call = OperatorCallReport {
+            phase: "schedule".to_owned(),
+            operator: "mode34".to_owned(),
+            parent_fingerprint: None,
+            secondary_parent_fingerprint: None,
+            action: None,
+            started_seconds: 0.0,
+            elapsed_seconds: 4.0,
+            work_units: charge_units,
+            global_units: 307_767,
+            self_metered_units: Some(charge_units),
+            debited_units: charge_units - 307_767,
+            exact_valid: true,
+            raw_depth_mm: None,
+            result_fingerprint: None,
+            archive_disposition: None,
+            published: false,
+            failure_reason: None,
+        };
+        let work = BudgetMeter::new(PortfolioBudget::Work { units: 40_000_000 });
+        assert_eq!(work.call_cost(&call), 3_341_665.0);
+        let wall = BudgetMeter::new(PortfolioBudget::Wall { millis: 10_000 });
+        assert_eq!(wall.call_cost(&call), 4.0);
+    }
+
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn the_schedules_own_report_is_the_self_metered_reading() {
+        // The wiring the five tests above take as given: the number
+        // `settle_operator_charge` is handed comes from the operator's own
+        // report, in the portfolio's own currency, and every other operator
+        // reports nothing.
+        use crate::search::compression_schedule::GeneralCompressionScheduleDiagnostics;
+        let mut population = GeneralPersistentVacancyDiagnostics::default();
+        assert_eq!(operator_self_metered_units(&population), None);
+        population.compression_schedule = Some(GeneralCompressionScheduleDiagnostics {
+            work_units: 3_341_665,
+            ..GeneralCompressionScheduleDiagnostics::default()
+        });
+        assert_eq!(operator_self_metered_units(&population), Some(3_341_665));
+        assert_eq!(schedule_self_cost_units(&population), Some(3_341_665));
     }
 
     #[test]
