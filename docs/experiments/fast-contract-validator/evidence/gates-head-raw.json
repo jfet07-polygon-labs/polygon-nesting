@@ -1,0 +1,57 @@
+{
+ "label": "head",
+ "binary": "/var/lib/t3/tmp/wf78/bin/prepatch",
+ "env": {},
+ "gates": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fingerprints": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ],
+   "hit": true,
+   "wallSeconds": 26.31758952140808,
+   "docDigest": "8300dc2de9d18d8400e8acff5e47599b19e62e11613fa8ba4579eef882200c6d"
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "depth": 159.092,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.2490427494049072,
+   "docDigest": "f55abc835c12cbf9c52b8c7e1bd2ae6db5b29d6df94524aba22ac0252a9b495c"
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "depth": 159.079,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.7225444316864014,
+   "docDigest": "c8972af4d516f6954756bea97135d626810226a1a6c78a1fdb3526afe33fa719"
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "depth": 164.038,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.286264181137085,
+   "docDigest": "7f86c5a7a28d35fb7f755b711d6050d735fb4069ad653f4b6f4c3df3e0acf23f"
+  }
+ },
+ "ALL_PASS": true
+}

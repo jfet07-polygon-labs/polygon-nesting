@@ -1,0 +1,77 @@
+{
+ "offBinary": "/var/lib/t3/tmp/wf78/bin/prepatch",
+ "onBinary": "/var/lib/t3/tmp/wf78/bin/flagon",
+ "allPassOff": true,
+ "allPassOn": true,
+ "allDigestsEqual": true,
+ "allPinnedEqual": true,
+ "gates": [
+  {
+   "gate": "g1",
+   "offHit": true,
+   "onHit": true,
+   "digestsEqual": true,
+   "docDigest": "8300dc2de9d18d8400e8acff5e47599b19e62e11613fa8ba4579eef882200c6d",
+   "offPinned": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "onPinned": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "pinnedEqual": true,
+   "offWallSeconds": 26.31758952140808,
+   "onWallSeconds": 26.339165449142456
+  },
+  {
+   "gate": "g2",
+   "offHit": true,
+   "onHit": true,
+   "digestsEqual": true,
+   "docDigest": "f55abc835c12cbf9c52b8c7e1bd2ae6db5b29d6df94524aba22ac0252a9b495c",
+   "offPinned": 159.09233022733062,
+   "onPinned": 159.09233022733062,
+   "pinnedEqual": true,
+   "offWallSeconds": 3.2490427494049072,
+   "onWallSeconds": 3.1478593349456787
+  },
+  {
+   "gate": "g3",
+   "offHit": true,
+   "onHit": true,
+   "digestsEqual": true,
+   "docDigest": "c8972af4d516f6954756bea97135d626810226a1a6c78a1fdb3526afe33fa719",
+   "offPinned": 159.07876040364795,
+   "onPinned": 159.07876040364795,
+   "pinnedEqual": true,
+   "offWallSeconds": 3.7225444316864014,
+   "onWallSeconds": 3.444524049758911
+  },
+  {
+   "gate": "g4",
+   "offHit": true,
+   "onHit": true,
+   "digestsEqual": true,
+   "docDigest": "7f86c5a7a28d35fb7f755b711d6050d735fb4069ad653f4b6f4c3df3e0acf23f",
+   "offPinned": 164.0375677990678,
+   "onPinned": 164.0375677990678,
+   "pinnedEqual": true,
+   "offWallSeconds": 3.286264181137085,
+   "onWallSeconds": 3.052767276763916
+  }
+ ],
+ "claim": "flag-on is whole-document identical to flag-off on all four pinned gates; no field is permitted to differ"
+}

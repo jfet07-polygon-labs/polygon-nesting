@@ -1,0 +1,159 @@
+{
+ "binary": "/var/lib/t3/tmp/wf78/bin/m34on",
+ "dropMm": 1.5,
+ "rows": [
+  {
+   "seed": 0,
+   "exitCode": 0,
+   "calls": 325,
+   "pairs": 594750,
+   "provedClear": 568934,
+   "skipRate": 0.956594,
+   "rawSourceDepthMm": 173.554,
+   "confirmationsAccepted": 315,
+   "confirmationsAttempted": 315
+  },
+  {
+   "seed": 1,
+   "exitCode": 0,
+   "calls": 339,
+   "pairs": 620370,
+   "provedClear": 594445,
+   "skipRate": 0.95821,
+   "rawSourceDepthMm": 174.57600000000002,
+   "confirmationsAccepted": 327,
+   "confirmationsAttempted": 327
+  },
+  {
+   "seed": 2,
+   "exitCode": 0,
+   "calls": 233,
+   "pairs": 426390,
+   "provedClear": 410815,
+   "skipRate": 0.963472,
+   "rawSourceDepthMm": 177.50400000000002,
+   "confirmationsAccepted": 220,
+   "confirmationsAttempted": 220
+  },
+  {
+   "seed": 3,
+   "exitCode": 0,
+   "calls": 16,
+   "pairs": 29280,
+   "provedClear": 28421,
+   "skipRate": 0.970663,
+   "rawSourceDepthMm": 176.061,
+   "confirmationsAccepted": 0,
+   "confirmationsAttempted": 0
+  },
+  {
+   "seed": 4,
+   "exitCode": 0,
+   "calls": 225,
+   "pairs": 411750,
+   "provedClear": 393736,
+   "skipRate": 0.95625,
+   "rawSourceDepthMm": 171.08177826491067,
+   "confirmationsAccepted": 214,
+   "confirmationsAttempted": 214
+  },
+  {
+   "seed": 5,
+   "exitCode": 0,
+   "calls": 250,
+   "pairs": 457500,
+   "provedClear": 438497,
+   "skipRate": 0.958463,
+   "rawSourceDepthMm": 177.558,
+   "confirmationsAccepted": 239,
+   "confirmationsAttempted": 239
+  },
+  {
+   "seed": 6,
+   "exitCode": 0,
+   "calls": 262,
+   "pairs": 479460,
+   "provedClear": 463528,
+   "skipRate": 0.966771,
+   "rawSourceDepthMm": 178.624,
+   "confirmationsAccepted": 245,
+   "confirmationsAttempted": 245
+  },
+  {
+   "seed": 7,
+   "exitCode": 0,
+   "calls": 286,
+   "pairs": 523380,
+   "provedClear": 504120,
+   "skipRate": 0.963201,
+   "rawSourceDepthMm": 178.264,
+   "confirmationsAccepted": 272,
+   "confirmationsAttempted": 272
+  },
+  {
+   "seed": 8,
+   "exitCode": 0,
+   "calls": 321,
+   "pairs": 587430,
+   "provedClear": 566418,
+   "skipRate": 0.964231,
+   "rawSourceDepthMm": 177.464,
+   "confirmationsAccepted": 302,
+   "confirmationsAttempted": 302
+  },
+  {
+   "seed": 9,
+   "exitCode": 0,
+   "calls": 311,
+   "pairs": 569130,
+   "provedClear": 545396,
+   "skipRate": 0.958298,
+   "rawSourceDepthMm": 174.12877826491066,
+   "confirmationsAccepted": 299,
+   "confirmationsAttempted": 299
+  },
+  {
+   "seed": 10,
+   "exitCode": 0,
+   "calls": 365,
+   "pairs": 667950,
+   "provedClear": 642501,
+   "skipRate": 0.9619,
+   "rawSourceDepthMm": 175.39367511657755,
+   "confirmationsAccepted": 351,
+   "confirmationsAttempted": 351
+  },
+  {
+   "seed": 11,
+   "exitCode": 0,
+   "calls": 310,
+   "pairs": 567300,
+   "provedClear": 541723,
+   "skipRate": 0.954915,
+   "rawSourceDepthMm": 170.806,
+   "confirmationsAccepted": 293,
+   "confirmationsAttempted": 293
+  }
+ ],
+ "total": {
+  "seeds": 12,
+  "calls": 3243,
+  "pairs": 5934690,
+  "provedClear": 5698534,
+  "skipRate": 0.9602075255826337,
+  "perSeedSkipRate": [
+   0.954915,
+   0.95625,
+   0.956594,
+   0.95821,
+   0.958298,
+   0.958463,
+   0.9619,
+   0.963201,
+   0.963472,
+   0.964231,
+   0.966771,
+   0.970663
+  ]
+ }
+}

@@ -1224,6 +1224,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         output["constructorCensus"] = polygon_nesting_core::constructor_census::snapshot();
     }
     println!("{}", serde_json::to_string_pretty(&output)?);
+    // The contract validator's broad-phase census, on stderr and never in
+    // `output`. The constructor census above is a field because its feature
+    // changes what the engine counts; this one may not be, because
+    // `fast-contract-validator`'s entire claim is that the document is
+    // byte-identical with the flag on, and a field here would be the one that
+    // always differed. Silent unless
+    // `POLYGON_NESTING_CONTRACT_VALIDATOR_CENSUS` asked for it.
+    #[cfg(feature = "fast-contract-validator")]
+    {
+        let (calls, pairs, clear) =
+            polygon_nesting_core::validation::general_polygon::contract_validator_census_totals();
+        if calls > 0 && pairs > 0 {
+            eprintln!(
+                "contractValidatorCensus calls={calls} pairs={pairs} provedClear={clear} \
+                 skipRate={:.6}",
+                clear as f64 / pairs as f64
+            );
+        }
+    }
     // Fail closed: a requested persistent-vacancy mode that never ran (the
     // machinery declined the arm, e.g. invalid parent or failed validation)
     // must not exit 0. Callers that only check depth fields for null would

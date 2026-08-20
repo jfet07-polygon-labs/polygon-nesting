@@ -131,6 +131,13 @@ fn validate_publication_inner(
     }
 
     let pair_clearance = settings.total_padding_mm + 2.0 * settings.flattening_sag_tolerance_mm;
+    // The broad phase, sealed once for the whole call: `O(total points)` to
+    // build against the `O(pairs * edges^2)` it filters. Its verdict is a proof
+    // of clearance, never an estimate of it - see `ClearanceBroadPhase::new`.
+    #[cfg(feature = "fast-contract-validator")]
+    let broad_phase = ClearanceBroadPhase::new(&transformed, pair_clearance);
+    #[cfg(feature = "fast-contract-validator")]
+    contract_validator_census(&broad_phase, transformed.len());
     // One row per first index. Named so the serial nest and the job-pool
     // dispatch below run the same body against the same operands in the same
     // per-row order: this is one loop with two traversals, not two loops.
@@ -138,6 +145,33 @@ fn validate_publication_inner(
         for second_index in (first_index + 1)..transformed.len() {
             let first = &transformed[first_index];
             let second = &transformed[second_index];
+            // A proved-clear pair can fail neither test below: a positive
+            // separation is a disjointness proof as well as a clearance one.
+            // The debug arm runs both of them anyway and requires the verdict
+            // the skip claimed - this is the only place the feature can be
+            // wrong, so it is the place that is checked.
+            #[cfg(feature = "fast-contract-validator")]
+            if broad_phase.provably_clear(first_index, second_index) {
+                debug_assert!(
+                    !material_sets_overlap(first, second),
+                    "fast-contract-validator skipped an overlapping pair: {} and {}",
+                    placements[first_index].piece_id,
+                    placements[second_index].piece_id
+                );
+                debug_assert!(
+                    {
+                        let distance = minimum_boundary_distance(first, second);
+                        distance.is_finite() && distance >= pair_clearance
+                    },
+                    "fast-contract-validator skipped a pair the exact loop refuses: \
+                     {} and {} at {} against a clearance of {}",
+                    placements[first_index].piece_id,
+                    placements[second_index].piece_id,
+                    minimum_boundary_distance(first, second),
+                    pair_clearance
+                );
+                continue;
+            }
             if material_sets_overlap(first, second) {
                 return Some(PublicationValidationError::new(format!(
                     "pieces {} and {} overlap",
@@ -538,6 +572,267 @@ fn rings_properly_cross(first: &[IrregularPoint], second: &[IrregularPoint]) -> 
         }
     }
     false
+}
+
+/// The directions a [`ClearanceSlabs`] projects onto: the two axes and the two
+/// diagonals.
+#[cfg(feature = "fast-contract-validator")]
+const CLEARANCE_SLAB_DIRECTIONS: usize = 4;
+
+/// The length of each projection direction's normal, in the order the
+/// projections are stored: `(1,0)`, `(0,1)`, `(1,1)`, `(1,-1)`.
+///
+/// A gap measured along an *unnormalised* direction `d` is `|d|` times the gap
+/// along its unit normal, so a distance threshold has to be scaled by `|d|`
+/// before it is compared against the diagonal projections. Scaling the
+/// threshold up rather than the gap down keeps the test on the strict side of
+/// the rounding either way.
+#[cfg(feature = "fast-contract-validator")]
+const CLEARANCE_SLAB_NORMS: [f64; CLEARANCE_SLAB_DIRECTIONS] =
+    [1.0, 1.0, std::f64::consts::SQRT_2, std::f64::consts::SQRT_2];
+
+/// The floor of the proof margin, in millimetres.
+///
+/// See [`ClearanceBroadPhase::new`] for what this has to dominate. It is a
+/// picometre: six orders of magnitude below the smallest pair clearance this
+/// engine is ever asked for (`0.0005 mm`), and three to four orders *above* the
+/// worst rounding error either side of the comparison can carry at the
+/// coordinate magnitudes a sheet has.
+#[cfg(feature = "fast-contract-validator")]
+const CLEARANCE_SLAB_ABSOLUTE_MARGIN_MM: f64 = 1e-9;
+
+/// The scale-following part of the proof margin, as a fraction of the largest
+/// projection magnitude in the layout.
+#[cfg(feature = "fast-contract-validator")]
+const CLEARANCE_SLAB_RELATIVE_MARGIN: f64 = 1e-12;
+
+/// One material set's extent along [`CLEARANCE_SLAB_DIRECTIONS`] fixed
+/// directions, in the same untouched-`f64` millimetres the exact loop measures
+/// in.
+///
+/// This is the discrete oriented polytope `GridSlabs` is, asking a different
+/// question - "how far apart are they at least", not "do they overlap" - and
+/// built on different numbers. `GridSlabs` projects the canonical *integer*
+/// grid, and this module's entire premise (see the module docs and
+/// [`transform_source_ring`]) is that the quantized geometry cannot answer a
+/// publication question, so its certificate is not reusable here however sound
+/// it is for its own.
+#[cfg(feature = "fast-contract-validator")]
+#[derive(Clone, Copy, Debug)]
+struct ClearanceSlabs {
+    min: [f64; CLEARANCE_SLAB_DIRECTIONS],
+    max: [f64; CLEARANCE_SLAB_DIRECTIONS],
+    /// The largest `|projection|` in this set, which feeds the proof margin.
+    extent: f64,
+}
+
+#[cfg(feature = "fast-contract-validator")]
+impl ClearanceSlabs {
+    /// The slabs of `set`, or `None` when it carries no points at all.
+    ///
+    /// `None` is load-bearing and not a convenience: a skip has to prove the
+    /// exact loop would have *accepted* the pair, and the exact loop rejects a
+    /// pair whose minimum stays at `f64::INFINITY` for want of a single segment
+    /// to measure. Refusing to build slabs for a pointless set means a skip can
+    /// only ever fire when both sets have at least one point, hence at least one
+    /// ring, hence at least one segment pair, hence a finite minimum.
+    fn of(set: &MaterialSet) -> Option<Self> {
+        let mut slabs: Option<Self> = None;
+        for region in &set.regions {
+            for ring in region_rings(region) {
+                for point in ring {
+                    let projections = [point.x, point.y, point.x + point.y, point.x - point.y];
+                    match slabs.as_mut() {
+                        None => {
+                            slabs = Some(Self {
+                                min: projections,
+                                max: projections,
+                                extent: 0.0,
+                            })
+                        }
+                        Some(slabs) => {
+                            for index in 0..CLEARANCE_SLAB_DIRECTIONS {
+                                slabs.min[index] = slabs.min[index].min(projections[index]);
+                                slabs.max[index] = slabs.max[index].max(projections[index]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        let mut slabs = slabs?;
+        for index in 0..CLEARANCE_SLAB_DIRECTIONS {
+            if !slabs.min[index].is_finite() || !slabs.max[index].is_finite() {
+                return None;
+            }
+            slabs.extent = slabs
+                .extent
+                .max(slabs.min[index].abs())
+                .max(slabs.max[index].abs());
+        }
+        Some(slabs)
+    }
+
+    /// The gap between the two sets along direction `index`, or a negative
+    /// number when their slabs overlap there.
+    #[inline]
+    fn gap(&self, other: &Self, index: usize) -> f64 {
+        (other.min[index] - self.max[index]).max(self.min[index] - other.max[index])
+    }
+}
+
+/// The all-pairs loop's broad phase: every set's slabs, plus the per-direction
+/// gap a skip has to clear.
+#[cfg(feature = "fast-contract-validator")]
+struct ClearanceBroadPhase {
+    slabs: Vec<Option<ClearanceSlabs>>,
+    /// `(pair clearance + margin) * |direction normal|`, one per direction, so
+    /// the per-pair test is four subtractions and four comparisons with no
+    /// multiplication and no division in it.
+    thresholds: [f64; CLEARANCE_SLAB_DIRECTIONS],
+}
+
+#[cfg(feature = "fast-contract-validator")]
+impl ClearanceBroadPhase {
+    /// Seals the certificate for one `validate_publication` call.
+    ///
+    /// # Why the margin makes this a proof
+    ///
+    /// Skipping a pair claims the exact loop would have found
+    /// `minimum_boundary_distance >= pair_clearance`. Three things stand between
+    /// the stored projections and that claim, and the margin dominates all of
+    /// them by at least three orders of magnitude:
+    ///
+    /// * **the projections themselves.** `x` and `y` are stored coordinates and
+    ///   exact; `x + y` and `x - y` are one rounded operation each, so each
+    ///   diagonal projection sits within `2^-53 * (|x| + |y|)` of its real value,
+    ///   and a slab can therefore be reported at most that much *wider* apart
+    ///   than it is.
+    /// * **the gap.** One further subtraction, correctly rounded, so at most
+    ///   another `2^-53` relative.
+    /// * **the exact loop's own arithmetic.** `segment_distance` is not exact
+    ///   either; the value the skip is claiming about is the *computed* one, and
+    ///   its coordinate differences and `hypot` carry a handful of ulps of the
+    ///   coordinate magnitude.
+    ///
+    /// Every one of those is bounded by a small multiple of
+    /// `2^-53 * extent ~= 1.1e-16 * extent`. The margin is
+    /// `1e-9 mm + 1e-12 * extent` - four orders above the worst of them at any
+    /// sheet-sized `extent`, and still six orders below the tightest clearance
+    /// the engine is asked for, so it costs the filter nothing it could have had.
+    ///
+    /// The consequence is the property a prefilter needs, and it is the same one
+    /// `GridSlabs::separated` states for its own question: this can be wrong
+    /// about "they might be close", and cannot be wrong about "they are far".
+    fn new(sets: &[MaterialSet], pair_clearance: f64) -> Self {
+        let slabs = sets.iter().map(ClearanceSlabs::of).collect::<Vec<_>>();
+        let extent = slabs
+            .iter()
+            .flatten()
+            .fold(0.0f64, |extent, slabs| extent.max(slabs.extent));
+        let threshold = pair_clearance
+            + CLEARANCE_SLAB_ABSOLUTE_MARGIN_MM
+            + CLEARANCE_SLAB_RELATIVE_MARGIN * extent;
+        let mut thresholds = [f64::INFINITY; CLEARANCE_SLAB_DIRECTIONS];
+        if threshold.is_finite() {
+            for index in 0..CLEARANCE_SLAB_DIRECTIONS {
+                thresholds[index] = threshold * CLEARANCE_SLAB_NORMS[index];
+            }
+        }
+        Self { slabs, thresholds }
+    }
+
+    /// Whether the pair is **provably** clear: at least `pair_clearance` apart,
+    /// and therefore both non-overlapping and contract-legal.
+    ///
+    /// `true` is a proof and `false` carries no information, so a `false` here
+    /// costs only the four comparisons and hands the pair to the exact loop.
+    /// Every comparison is a `>=` against a positive threshold, so a `NaN`
+    /// anywhere in the operands answers `false` and cannot produce a skip.
+    ///
+    /// A `true` clears **both** tests in the scan row, and the second one is the
+    /// case worth stating because it is not the distance question. A positive
+    /// gap along any direction puts the two sets in disjoint half-planes, so:
+    ///
+    /// * `rings_properly_cross` is false - the rings are in disjoint strips;
+    /// * `has_material_sample_inside` is false in both directions, because an
+    ///   interior sample of one set lies inside that set's own polygon, hence
+    ///   inside its own slab interval, hence outside the other's.
+    ///
+    /// That second bullet is the **containment** case, and it is the one a
+    /// reader should check: a region sitting strictly inside another's outer
+    /// ring has a large positive boundary distance and is nevertheless an
+    /// overlap the validator must reject. It can never be skipped here, because
+    /// containment makes one slab interval a subset of the other in *every*
+    /// direction, so every gap is negative and no proof is available.
+    #[inline]
+    fn provably_clear(&self, first: usize, second: usize) -> bool {
+        let (Some(first), Some(second)) = (&self.slabs[first], &self.slabs[second]) else {
+            return false;
+        };
+        for index in 0..CLEARANCE_SLAB_DIRECTIONS {
+            if first.gap(second, index) >= self.thresholds[index] {
+                return true;
+            }
+        }
+        false
+    }
+}
+
+/// Totals for [`contract_validator_census`]: calls, pairs offered, pairs proved
+/// clear.
+#[cfg(feature = "fast-contract-validator")]
+static CENSUS: [std::sync::atomic::AtomicU64; 3] = [
+    std::sync::atomic::AtomicU64::new(0),
+    std::sync::atomic::AtomicU64::new(0),
+    std::sync::atomic::AtomicU64::new(0),
+];
+
+#[cfg(feature = "fast-contract-validator")]
+fn census_enabled() -> bool {
+    static ENABLED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ENABLED.get_or_init(|| std::env::var_os("POLYGON_NESTING_CONTRACT_VALIDATOR_CENSUS").is_some())
+}
+
+/// Counts what the broad phase would reject, for the measurement rounds only.
+///
+/// Two things about the shape of this are deliberate. It is a **separate**
+/// `O(n^2)` pass rather than two counters in the scan row, so a wall
+/// measurement never pays for the instrument that describes it and the hot loop
+/// is byte-identical whether or not anyone is counting. And it reports through
+/// [`contract_validator_census_totals`] to stderr rather than into the result
+/// document, because this feature's entire claim is that the document does not
+/// change - a counter inside it would be the one field that always did.
+#[cfg(feature = "fast-contract-validator")]
+fn contract_validator_census(broad_phase: &ClearanceBroadPhase, count: usize) {
+    use std::sync::atomic::Ordering;
+    if !census_enabled() {
+        return;
+    }
+    let (mut pairs, mut clear) = (0u64, 0u64);
+    for first in 0..count {
+        for second in (first + 1)..count {
+            pairs += 1;
+            if broad_phase.provably_clear(first, second) {
+                clear += 1;
+            }
+        }
+    }
+    CENSUS[0].fetch_add(1, Ordering::Relaxed);
+    CENSUS[1].fetch_add(pairs, Ordering::Relaxed);
+    CENSUS[2].fetch_add(clear, Ordering::Relaxed);
+}
+
+/// `(calls, pairs offered, pairs proved clear)` since process start; all zero
+/// unless `POLYGON_NESTING_CONTRACT_VALIDATOR_CENSUS` is set.
+#[cfg(feature = "fast-contract-validator")]
+pub fn contract_validator_census_totals() -> (u64, u64, u64) {
+    use std::sync::atomic::Ordering;
+    (
+        CENSUS[0].load(Ordering::Relaxed),
+        CENSUS[1].load(Ordering::Relaxed),
+        CENSUS[2].load(Ordering::Relaxed),
+    )
 }
 
 fn minimum_boundary_distance(first: &MaterialSet, second: &MaterialSet) -> f64 {
@@ -1018,5 +1313,220 @@ mod tests {
             translate_y: 0.0,
         }];
         assert!(validate_publication(&placements, settings()).is_err());
+    }
+
+    /// The property the broad phase has to have, checked against the exact loop
+    /// itself rather than against an expectation: over a sweep that walks a pair
+    /// from deeply overlapped to far apart, through the boundary-contact case
+    /// and both diagonal separations, a skip must never be claimed for a pair
+    /// the exact loop would refuse.
+    ///
+    /// This is the same discipline the `debug_assert` arm applies inside the
+    /// engine, run here as a dense sweep so a `cargo test` build exercises it
+    /// without needing a request.
+    #[cfg(feature = "fast-contract-validator")]
+    #[test]
+    fn a_proved_clear_pair_is_one_the_exact_loop_accepts() {
+        let piece = square(2.0);
+        let mut proofs = 0usize;
+        for clearance in [0.0, 0.0005, 0.002, 0.5, 1.0] {
+            for step_x in -30..=60 {
+                for step_y in -30..=60 {
+                    let placements = [
+                        GeneralPlacement {
+                            piece_id: "a",
+                            polygon: &piece,
+                            rotation_deg: 0.0,
+                            mirrored: false,
+                            translate_x: 0.0,
+                            translate_y: 0.0,
+                        },
+                        GeneralPlacement {
+                            piece_id: "b",
+                            polygon: &piece,
+                            rotation_deg: 17.0,
+                            mirrored: false,
+                            translate_x: f64::from(step_x) * 0.1,
+                            translate_y: f64::from(step_y) * 0.1,
+                        },
+                    ];
+                    let transformed = placements
+                        .iter()
+                        .map(transform_placement)
+                        .collect::<Result<Vec<_>, _>>()
+                        .expect("both placements are measurable");
+                    let broad_phase = ClearanceBroadPhase::new(&transformed, clearance);
+                    if !broad_phase.provably_clear(0, 1) {
+                        continue;
+                    }
+                    proofs += 1;
+                    // The two things the skip claims, asked of the exact code
+                    // the skip replaced.
+                    assert!(
+                        !material_sets_overlap(&transformed[0], &transformed[1]),
+                        "proved clear but overlapping at ({step_x}, {step_y})"
+                    );
+                    let distance = minimum_boundary_distance(&transformed[0], &transformed[1]);
+                    assert!(
+                        distance.is_finite() && distance >= clearance,
+                        "proved clear at ({step_x}, {step_y}) but the exact minimum is \
+                         {distance} against a clearance of {clearance}"
+                    );
+                }
+            }
+        }
+        assert!(proofs > 0, "the sweep never exercised a proof");
+    }
+
+    /// A touching pair is legal and is NOT proved clear: the margin is on the
+    /// strict side, so the case the exact loop has to decide reaches it.
+    ///
+    /// This is the direction that would make the filter unsound if it were ever
+    /// reversed, and it is also the one that keeps the filter honest about what
+    /// it is: a pair at exactly the clearance is handed over, not skipped.
+    #[cfg(feature = "fast-contract-validator")]
+    #[test]
+    fn a_pair_exactly_at_the_clearance_is_not_skipped() {
+        let piece = square(2.0);
+        for clearance in [0.0, 0.0005, 0.002, 1.0] {
+            let placements = [
+                GeneralPlacement {
+                    piece_id: "a",
+                    polygon: &piece,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 0.0,
+                    translate_y: 0.0,
+                },
+                GeneralPlacement {
+                    piece_id: "b",
+                    polygon: &piece,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 2.0 + clearance,
+                    translate_y: 0.0,
+                },
+            ];
+            let transformed = placements
+                .iter()
+                .map(transform_placement)
+                .collect::<Result<Vec<_>, _>>()
+                .expect("both placements are measurable");
+            let broad_phase = ClearanceBroadPhase::new(&transformed, clearance);
+            assert!(
+                !broad_phase.provably_clear(0, 1),
+                "a pair exactly at the clearance {clearance} must reach the exact loop"
+            );
+        }
+    }
+
+    /// Containment is an overlap with a large POSITIVE boundary distance, so it
+    /// is the case where "far apart" and "legal" come apart. The broad phase
+    /// must not skip it, and it cannot: one slab interval is a subset of the
+    /// other in every direction, so no direction offers a gap.
+    ///
+    /// Without this the filter would be unsound in exactly one way that the
+    /// distance sweep above could never catch, because the exact *distance* on
+    /// this input is 4 mm and passes any clearance the engine asks for.
+    #[cfg(feature = "fast-contract-validator")]
+    #[test]
+    fn a_contained_piece_is_never_proved_clear() {
+        let big = square(10.0);
+        let small = square(2.0);
+        let placements = [
+            GeneralPlacement {
+                piece_id: "big",
+                polygon: &big,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 0.0,
+                translate_y: 0.0,
+            },
+            GeneralPlacement {
+                piece_id: "small",
+                polygon: &small,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 4.0,
+                translate_y: 4.0,
+            },
+        ];
+        let transformed = placements
+            .iter()
+            .map(transform_placement)
+            .collect::<Result<Vec<_>, _>>()
+            .expect("both placements are measurable");
+        // The trap: the exact boundary distance is a comfortable 4 mm.
+        let distance = minimum_boundary_distance(&transformed[0], &transformed[1]);
+        assert!(
+            (distance - 4.0).abs() < 1e-12,
+            "expected a 4 mm boundary distance, got {distance}"
+        );
+        assert!(material_sets_overlap(&transformed[0], &transformed[1]));
+        for clearance in [0.0, 0.002, 1.0, 3.0] {
+            let broad_phase = ClearanceBroadPhase::new(&transformed, clearance);
+            assert!(
+                !broad_phase.provably_clear(0, 1),
+                "a contained piece was proved clear at a clearance of {clearance}"
+            );
+        }
+        // And the verdict itself is still the overlap rejection.
+        let error = validate_publication(&placements, settings())
+            .expect_err("a contained piece is an overlap");
+        assert!(error.message().contains("overlap"), "{}", error.message());
+    }
+
+    /// The whole point, stated as a test: flag-on and flag-off decide every
+    /// input identically, including the error message.
+    ///
+    /// The cases are this module's own suite, re-run through both paths - the
+    /// broad phase cannot be switched off at runtime, so what this checks is
+    /// that the verdict on each is the one the flag-off build's committed
+    /// assertions above already pin.
+    #[cfg(feature = "fast-contract-validator")]
+    #[test]
+    fn the_broad_phase_changes_no_verdict() {
+        let piece = square(2.0);
+        let mut clearance_settings = settings();
+        clearance_settings.total_padding_mm = 0.5;
+        // Both pieces are held off the sheet edge by `ORIGIN`: with a 0.5 mm
+        // pair clearance the sheet-edge clearance is 0.25 mm, and a piece at the
+        // origin fails `validate_sheet` before the pair loop is ever reached -
+        // which would make every row below a test of the wrong thing.
+        const ORIGIN: f64 = 1.0;
+        for (rotation, tx, ty, expected_ok) in [
+            (0.0, 2.0, 0.0, false),  // touching, but 0.5 mm is required
+            (0.0, 1.5, 0.0, false),  // overlapping
+            (0.0, 2.5, 0.0, true),   // exactly at the clearance
+            (0.0, 9.0, 0.0, true),   // far apart on x
+            (0.0, 0.0, 9.0, true),   // far apart on y
+            (0.0, 6.0, 6.0, true),   // far apart on the diagonal
+            (33.0, 6.0, 6.0, true),  // ditto, rotated
+            (33.0, 2.4, 0.0, false), // rotated into the clearance band
+        ] {
+            let placements = [
+                GeneralPlacement {
+                    piece_id: "a",
+                    polygon: &piece,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: ORIGIN,
+                    translate_y: ORIGIN,
+                },
+                GeneralPlacement {
+                    piece_id: "b",
+                    polygon: &piece,
+                    rotation_deg: rotation,
+                    mirrored: false,
+                    translate_x: ORIGIN + tx,
+                    translate_y: ORIGIN + ty,
+                },
+            ];
+            assert_eq!(
+                validate_publication(&placements, clearance_settings).is_ok(),
+                expected_ok,
+                "verdict changed at rotation {rotation}, ({tx}, {ty})"
+            );
+        }
     }
 }
