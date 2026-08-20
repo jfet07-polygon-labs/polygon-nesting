@@ -1,0 +1,149 @@
+{
+ "a": {
+  "dir": "/var/lib/t3/tmp/cpo6/gates-preround",
+  "label": "preround"
+ },
+ "b": {
+  "dir": "/var/lib/t3/tmp/cpo6/gates-final",
+  "label": "final"
+ },
+ "gates": {
+  "g1": {
+   "leavesCompared": 3271,
+   "differingLeafCount": 7,
+   "differingLeaves": {
+    "/engineWorktreeStatus": {
+     "preround": "MM crates/polygon-nesting-core/examples/general_request_benchmark.rs\nMM crates/polygon-nesting-core/src/search/compression_schedule.rs\nMM crates/polygon-nesting-core/src/search/general_relaxed.rs\n M docs/experiments/current-pose-overlay/README.md\nMM docs/experiments/current-pose-overlay/drivers/campaign.py\nAM docs/experiments/current-pose-overlay/drivers/classify.py\nM  docs/experiments/current-pose-overlay/drivers/lib.py\n M docs/experiments/current-pose-overlay/drivers/summarize.py\nR  docs/experiments/current-pose-overlay/evidence/ab-campaign.json -> docs/experiments/current-pose-overlay/evidence/ab-campaign-v5-rollback32.json\nD  docs/experiments/current-pose-overlay/evidence/gates-compression-schedule-flag-off.json\nD  docs/experiments/current-pose-overlay/evidence/gates-flag-off-final.json\nD  docs/experiments/current-pose-overlay/evidence/suite.log\n M docs/next-generation-engine-plan.md\n?? docs/experiments/current-pose-overlay/drivers/docdiff.py\n?? docs/experiments/current-pose-overlay/drivers/flagoff.py\n?? docs/experiments/current-pose-overlay/drivers/setupcost.py\n?? docs/experiments/current-pose-overlay/drivers/suites.sh\n?? docs/experiments/current-pose-overlay/evidence/ab-campaign.json\n?? docs/experiments/current-pose-overlay/evidence/classification.json\n?? docs/experiments/current-pose-overlay/evidence/flagoff-ab.json\n?? docs/experiments/current-pose-overlay/evidence/gates-round6-flag-off.json\n?? docs/experiments/current-pose-overlay/evidence/regression-test-bug-injection.log\n?? docs/experiments/current-pose-overlay/evidence/setup-cost.json\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental-compression-schedule.log\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental.log",
+     "final": "MM crates/polygon-nesting-core/examples/general_request_benchmark.rs\nMM crates/polygon-nesting-core/src/search/compression_schedule.rs\nMM crates/polygon-nesting-core/src/search/general_relaxed.rs\n M docs/experiments/current-pose-overlay/README.md\nMM docs/experiments/current-pose-overlay/drivers/campaign.py\nAM docs/experiments/current-pose-overlay/drivers/classify.py\nM  docs/experiments/current-pose-overlay/drivers/lib.py\n M docs/experiments/current-pose-overlay/drivers/summarize.py\nR  docs/experiments/current-pose-overlay/evidence/ab-campaign.json -> docs/experiments/current-pose-overlay/evidence/ab-campaign-v5-rollback32.json\nD  docs/experiments/current-pose-overlay/evidence/gates-compression-schedule-flag-off.json\nD  docs/experiments/current-pose-overlay/evidence/gates-flag-off-final.json\nD  docs/experiments/current-pose-overlay/evidence/suite.log\n M docs/next-generation-engine-plan.md\n?? docs/experiments/current-pose-overlay/drivers/docdiff.py\n?? docs/experiments/current-pose-overlay/drivers/flagoff.py\n?? docs/experiments/current-pose-overlay/drivers/setupcost.py\n?? docs/experiments/current-pose-overlay/drivers/suites.sh\n?? docs/experiments/current-pose-overlay/evidence/ab-campaign.json\n?? docs/experiments/current-pose-overlay/evidence/classification.json\n?? docs/experiments/current-pose-overlay/evidence/docdiff-jagua-vs-csched.json\n?? docs/experiments/current-pose-overlay/evidence/docdiff-preround-vs-fix.json\n?? docs/experiments/current-pose-overlay/evidence/flagoff-ab.json\n?? docs/experiments/current-pose-overlay/evidence/gates-round6-compression-schedule-flag-off.json\n?? docs/experiments/current-pose-overlay/evidence/gates-round6-flag-off.json\n?? docs/experiments/current-pose-overlay/evidence/regression-test-bug-injection.log\n?? docs/experiments/current-pose-overlay/evidence/setup-cost.json\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental-compression-schedule.log\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental.log"
+    },
+    "/executableSha256": {
+     "preround": "2ca8b2b43d538f2d8471ec543ebf45e197222437d29ecdb3c4d1627db896ca57",
+     "final": "71efbf9e7891171138d7b35294e29cc333709ac83a9538eebf10ed12a75dd500"
+    },
+    "/firstQuartileElapsedMs": {
+     "preround": "29573.549034",
+     "final": "26683.983758"
+    },
+    "/maxElapsedMs": {
+     "preround": "29573.549034",
+     "final": "26683.983758"
+    },
+    "/medianElapsedMs": {
+     "preround": "29573.549034",
+     "final": "26683.983758"
+    },
+    "/minElapsedMs": {
+     "preround": "29573.549034",
+     "final": "26683.983758"
+    },
+    "/thirdQuartileElapsedMs": {
+     "preround": "29573.549034",
+     "final": "26683.983758"
+    }
+   }
+  },
+  "g2": {
+   "leavesCompared": 3252,
+   "differingLeafCount": 7,
+   "differingLeaves": {
+    "/engineWorktreeStatus": {
+     "preround": "MM crates/polygon-nesting-core/examples/general_request_benchmark.rs\nMM crates/polygon-nesting-core/src/search/compression_schedule.rs\nMM crates/polygon-nesting-core/src/search/general_relaxed.rs\n M docs/experiments/current-pose-overlay/README.md\nMM docs/experiments/current-pose-overlay/drivers/campaign.py\nAM docs/experiments/current-pose-overlay/drivers/classify.py\nM  docs/experiments/current-pose-overlay/drivers/lib.py\n M docs/experiments/current-pose-overlay/drivers/summarize.py\nR  docs/experiments/current-pose-overlay/evidence/ab-campaign.json -> docs/experiments/current-pose-overlay/evidence/ab-campaign-v5-rollback32.json\nD  docs/experiments/current-pose-overlay/evidence/gates-compression-schedule-flag-off.json\nD  docs/experiments/current-pose-overlay/evidence/gates-flag-off-final.json\nD  docs/experiments/current-pose-overlay/evidence/suite.log\n M docs/next-generation-engine-plan.md\n?? docs/experiments/current-pose-overlay/drivers/docdiff.py\n?? docs/experiments/current-pose-overlay/drivers/flagoff.py\n?? docs/experiments/current-pose-overlay/drivers/setupcost.py\n?? docs/experiments/current-pose-overlay/drivers/suites.sh\n?? docs/experiments/current-pose-overlay/evidence/ab-campaign.json\n?? docs/experiments/current-pose-overlay/evidence/classification.json\n?? docs/experiments/current-pose-overlay/evidence/flagoff-ab.json\n?? docs/experiments/current-pose-overlay/evidence/gates-round6-flag-off.json\n?? docs/experiments/current-pose-overlay/evidence/regression-test-bug-injection.log\n?? docs/experiments/current-pose-overlay/evidence/setup-cost.json\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental-compression-schedule.log\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental.log",
+     "final": "MM crates/polygon-nesting-core/examples/general_request_benchmark.rs\nMM crates/polygon-nesting-core/src/search/compression_schedule.rs\nMM crates/polygon-nesting-core/src/search/general_relaxed.rs\n M docs/experiments/current-pose-overlay/README.md\nMM docs/experiments/current-pose-overlay/drivers/campaign.py\nAM docs/experiments/current-pose-overlay/drivers/classify.py\nM  docs/experiments/current-pose-overlay/drivers/lib.py\n M docs/experiments/current-pose-overlay/drivers/summarize.py\nR  docs/experiments/current-pose-overlay/evidence/ab-campaign.json -> docs/experiments/current-pose-overlay/evidence/ab-campaign-v5-rollback32.json\nD  docs/experiments/current-pose-overlay/evidence/gates-compression-schedule-flag-off.json\nD  docs/experiments/current-pose-overlay/evidence/gates-flag-off-final.json\nD  docs/experiments/current-pose-overlay/evidence/suite.log\n M docs/next-generation-engine-plan.md\n?? docs/experiments/current-pose-overlay/drivers/docdiff.py\n?? docs/experiments/current-pose-overlay/drivers/flagoff.py\n?? docs/experiments/current-pose-overlay/drivers/setupcost.py\n?? docs/experiments/current-pose-overlay/drivers/suites.sh\n?? docs/experiments/current-pose-overlay/evidence/ab-campaign.json\n?? docs/experiments/current-pose-overlay/evidence/classification.json\n?? docs/experiments/current-pose-overlay/evidence/docdiff-jagua-vs-csched.json\n?? docs/experiments/current-pose-overlay/evidence/docdiff-preround-vs-fix.json\n?? docs/experiments/current-pose-overlay/evidence/flagoff-ab.json\n?? docs/experiments/current-pose-overlay/evidence/gates-round6-compression-schedule-flag-off.json\n?? docs/experiments/current-pose-overlay/evidence/gates-round6-flag-off.json\n?? docs/experiments/current-pose-overlay/evidence/regression-test-bug-injection.log\n?? docs/experiments/current-pose-overlay/evidence/setup-cost.json\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental-compression-schedule.log\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental.log"
+    },
+    "/executableSha256": {
+     "preround": "2ca8b2b43d538f2d8471ec543ebf45e197222437d29ecdb3c4d1627db896ca57",
+     "final": "71efbf9e7891171138d7b35294e29cc333709ac83a9538eebf10ed12a75dd500"
+    },
+    "/firstQuartileElapsedMs": {
+     "preround": "3186.189745",
+     "final": "3143.915041"
+    },
+    "/maxElapsedMs": {
+     "preround": "3186.189745",
+     "final": "3143.915041"
+    },
+    "/medianElapsedMs": {
+     "preround": "3186.189745",
+     "final": "3143.915041"
+    },
+    "/minElapsedMs": {
+     "preround": "3186.189745",
+     "final": "3143.915041"
+    },
+    "/thirdQuartileElapsedMs": {
+     "preround": "3186.189745",
+     "final": "3143.915041"
+    }
+   }
+  },
+  "g3": {
+   "leavesCompared": 3252,
+   "differingLeafCount": 7,
+   "differingLeaves": {
+    "/engineWorktreeStatus": {
+     "preround": "MM crates/polygon-nesting-core/examples/general_request_benchmark.rs\nMM crates/polygon-nesting-core/src/search/compression_schedule.rs\nMM crates/polygon-nesting-core/src/search/general_relaxed.rs\n M docs/experiments/current-pose-overlay/README.md\nMM docs/experiments/current-pose-overlay/drivers/campaign.py\nAM docs/experiments/current-pose-overlay/drivers/classify.py\nM  docs/experiments/current-pose-overlay/drivers/lib.py\n M docs/experiments/current-pose-overlay/drivers/summarize.py\nR  docs/experiments/current-pose-overlay/evidence/ab-campaign.json -> docs/experiments/current-pose-overlay/evidence/ab-campaign-v5-rollback32.json\nD  docs/experiments/current-pose-overlay/evidence/gates-compression-schedule-flag-off.json\nD  docs/experiments/current-pose-overlay/evidence/gates-flag-off-final.json\nD  docs/experiments/current-pose-overlay/evidence/suite.log\n M docs/next-generation-engine-plan.md\n?? docs/experiments/current-pose-overlay/drivers/docdiff.py\n?? docs/experiments/current-pose-overlay/drivers/flagoff.py\n?? docs/experiments/current-pose-overlay/drivers/setupcost.py\n?? docs/experiments/current-pose-overlay/drivers/suites.sh\n?? docs/experiments/current-pose-overlay/evidence/ab-campaign.json\n?? docs/experiments/current-pose-overlay/evidence/classification.json\n?? docs/experiments/current-pose-overlay/evidence/flagoff-ab.json\n?? docs/experiments/current-pose-overlay/evidence/gates-round6-flag-off.json\n?? docs/experiments/current-pose-overlay/evidence/regression-test-bug-injection.log\n?? docs/experiments/current-pose-overlay/evidence/setup-cost.json\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental-compression-schedule.log\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental.log",
+     "final": "MM crates/polygon-nesting-core/examples/general_request_benchmark.rs\nMM crates/polygon-nesting-core/src/search/compression_schedule.rs\nMM crates/polygon-nesting-core/src/search/general_relaxed.rs\n M docs/experiments/current-pose-overlay/README.md\nMM docs/experiments/current-pose-overlay/drivers/campaign.py\nAM docs/experiments/current-pose-overlay/drivers/classify.py\nM  docs/experiments/current-pose-overlay/drivers/lib.py\n M docs/experiments/current-pose-overlay/drivers/summarize.py\nR  docs/experiments/current-pose-overlay/evidence/ab-campaign.json -> docs/experiments/current-pose-overlay/evidence/ab-campaign-v5-rollback32.json\nD  docs/experiments/current-pose-overlay/evidence/gates-compression-schedule-flag-off.json\nD  docs/experiments/current-pose-overlay/evidence/gates-flag-off-final.json\nD  docs/experiments/current-pose-overlay/evidence/suite.log\n M docs/next-generation-engine-plan.md\n?? docs/experiments/current-pose-overlay/drivers/docdiff.py\n?? docs/experiments/current-pose-overlay/drivers/flagoff.py\n?? docs/experiments/current-pose-overlay/drivers/setupcost.py\n?? docs/experiments/current-pose-overlay/drivers/suites.sh\n?? docs/experiments/current-pose-overlay/evidence/ab-campaign.json\n?? docs/experiments/current-pose-overlay/evidence/classification.json\n?? docs/experiments/current-pose-overlay/evidence/docdiff-jagua-vs-csched.json\n?? docs/experiments/current-pose-overlay/evidence/docdiff-preround-vs-fix.json\n?? docs/experiments/current-pose-overlay/evidence/flagoff-ab.json\n?? docs/experiments/current-pose-overlay/evidence/gates-round6-compression-schedule-flag-off.json\n?? docs/experiments/current-pose-overlay/evidence/gates-round6-flag-off.json\n?? docs/experiments/current-pose-overlay/evidence/regression-test-bug-injection.log\n?? docs/experiments/current-pose-overlay/evidence/setup-cost.json\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental-compression-schedule.log\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental.log"
+    },
+    "/executableSha256": {
+     "preround": "2ca8b2b43d538f2d8471ec543ebf45e197222437d29ecdb3c4d1627db896ca57",
+     "final": "71efbf9e7891171138d7b35294e29cc333709ac83a9538eebf10ed12a75dd500"
+    },
+    "/firstQuartileElapsedMs": {
+     "preround": "3420.663882",
+     "final": "3410.22012"
+    },
+    "/maxElapsedMs": {
+     "preround": "3420.663882",
+     "final": "3410.22012"
+    },
+    "/medianElapsedMs": {
+     "preround": "3420.663882",
+     "final": "3410.22012"
+    },
+    "/minElapsedMs": {
+     "preround": "3420.663882",
+     "final": "3410.22012"
+    },
+    "/thirdQuartileElapsedMs": {
+     "preround": "3420.663882",
+     "final": "3410.22012"
+    }
+   }
+  },
+  "g4": {
+   "leavesCompared": 3252,
+   "differingLeafCount": 7,
+   "differingLeaves": {
+    "/engineWorktreeStatus": {
+     "preround": "MM crates/polygon-nesting-core/examples/general_request_benchmark.rs\nMM crates/polygon-nesting-core/src/search/compression_schedule.rs\nMM crates/polygon-nesting-core/src/search/general_relaxed.rs\n M docs/experiments/current-pose-overlay/README.md\nMM docs/experiments/current-pose-overlay/drivers/campaign.py\nAM docs/experiments/current-pose-overlay/drivers/classify.py\nM  docs/experiments/current-pose-overlay/drivers/lib.py\n M docs/experiments/current-pose-overlay/drivers/summarize.py\nR  docs/experiments/current-pose-overlay/evidence/ab-campaign.json -> docs/experiments/current-pose-overlay/evidence/ab-campaign-v5-rollback32.json\nD  docs/experiments/current-pose-overlay/evidence/gates-compression-schedule-flag-off.json\nD  docs/experiments/current-pose-overlay/evidence/gates-flag-off-final.json\nD  docs/experiments/current-pose-overlay/evidence/suite.log\n M docs/next-generation-engine-plan.md\n?? docs/experiments/current-pose-overlay/drivers/docdiff.py\n?? docs/experiments/current-pose-overlay/drivers/flagoff.py\n?? docs/experiments/current-pose-overlay/drivers/setupcost.py\n?? docs/experiments/current-pose-overlay/drivers/suites.sh\n?? docs/experiments/current-pose-overlay/evidence/ab-campaign.json\n?? docs/experiments/current-pose-overlay/evidence/classification.json\n?? docs/experiments/current-pose-overlay/evidence/flagoff-ab.json\n?? docs/experiments/current-pose-overlay/evidence/gates-round6-flag-off.json\n?? docs/experiments/current-pose-overlay/evidence/regression-test-bug-injection.log\n?? docs/experiments/current-pose-overlay/evidence/setup-cost.json\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental-compression-schedule.log\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental.log",
+     "final": "MM crates/polygon-nesting-core/examples/general_request_benchmark.rs\nMM crates/polygon-nesting-core/src/search/compression_schedule.rs\nMM crates/polygon-nesting-core/src/search/general_relaxed.rs\n M docs/experiments/current-pose-overlay/README.md\nMM docs/experiments/current-pose-overlay/drivers/campaign.py\nAM docs/experiments/current-pose-overlay/drivers/classify.py\nM  docs/experiments/current-pose-overlay/drivers/lib.py\n M docs/experiments/current-pose-overlay/drivers/summarize.py\nR  docs/experiments/current-pose-overlay/evidence/ab-campaign.json -> docs/experiments/current-pose-overlay/evidence/ab-campaign-v5-rollback32.json\nD  docs/experiments/current-pose-overlay/evidence/gates-compression-schedule-flag-off.json\nD  docs/experiments/current-pose-overlay/evidence/gates-flag-off-final.json\nD  docs/experiments/current-pose-overlay/evidence/suite.log\n M docs/next-generation-engine-plan.md\n?? docs/experiments/current-pose-overlay/drivers/docdiff.py\n?? docs/experiments/current-pose-overlay/drivers/flagoff.py\n?? docs/experiments/current-pose-overlay/drivers/setupcost.py\n?? docs/experiments/current-pose-overlay/drivers/suites.sh\n?? docs/experiments/current-pose-overlay/evidence/ab-campaign.json\n?? docs/experiments/current-pose-overlay/evidence/classification.json\n?? docs/experiments/current-pose-overlay/evidence/docdiff-jagua-vs-csched.json\n?? docs/experiments/current-pose-overlay/evidence/docdiff-preround-vs-fix.json\n?? docs/experiments/current-pose-overlay/evidence/flagoff-ab.json\n?? docs/experiments/current-pose-overlay/evidence/gates-round6-compression-schedule-flag-off.json\n?? docs/experiments/current-pose-overlay/evidence/gates-round6-flag-off.json\n?? docs/experiments/current-pose-overlay/evidence/regression-test-bug-injection.log\n?? docs/experiments/current-pose-overlay/evidence/setup-cost.json\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental-compression-schedule.log\n?? docs/experiments/current-pose-overlay/evidence/suite-jagua-experimental.log"
+    },
+    "/executableSha256": {
+     "preround": "2ca8b2b43d538f2d8471ec543ebf45e197222437d29ecdb3c4d1627db896ca57",
+     "final": "71efbf9e7891171138d7b35294e29cc333709ac83a9538eebf10ed12a75dd500"
+    },
+    "/firstQuartileElapsedMs": {
+     "preround": "3142.720802",
+     "final": "3154.167598"
+    },
+    "/maxElapsedMs": {
+     "preround": "3142.720802",
+     "final": "3154.167598"
+    },
+    "/medianElapsedMs": {
+     "preround": "3142.720802",
+     "final": "3154.167598"
+    },
+    "/minElapsedMs": {
+     "preround": "3142.720802",
+     "final": "3154.167598"
+    },
+    "/thirdQuartileElapsedMs": {
+     "preround": "3142.720802",
+     "final": "3154.167598"
+    }
+   }
+  }
+ },
+ "totalDifferingLeaves": 28
+}

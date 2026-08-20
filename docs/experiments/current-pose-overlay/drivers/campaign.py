@@ -36,7 +36,7 @@ import subprocess
 import sys
 import time
 
-ROOT = '/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_48bbc38e-879-2'
+ROOT = '/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_b7992967-b13-2'
 REQUEST = f'{ROOT}/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json'
 TRUE = (f'{ROOT}/docs/experiments/persistent-vacancy-descent/exact-contract/'
         'true-contract/record-line-cascade')
@@ -54,6 +54,24 @@ DEFAULT_DROP_MM = 0.3
 # ten-second envelope the binding priority names, rather than an offline
 # record-chasing budget.
 DESIGN_SLICE_UNITS = 3_341_379
+
+# The schedule configuration every arm runs, spelled out rather than defaulted.
+#
+# Sol review 6 §2.3 rejected the v5 round's campaign because it ran
+# `rollback=32`: the compression-schedule port had *already certified* that
+# arming the rollback costs a median 11.75 mm of published depth (12/12 publish
+# without it, 8/12 with it), and `CompressionScheduleSettings::default()` sets
+# `rollback_after_steps = 0` for that reason. The paired arms made the *entry*
+# measurement survive, but the downstream 12/15-vs-9/15 claim was measured on a
+# configuration that does not ship and does not transfer to one that does.
+#
+# These are coordinator v4's own settings (`docs/experiments/coordinator-v4/
+# README.md` §1.1: six repair sweeps per step, a confirmation every fourth
+# step, `micro_legalize` on a refused confirmation, one canonical grid unit per
+# step, and `rollback_after_steps = 0`), which are also the schedule's
+# defaults. Written out in full so a reader can see the whole configuration
+# instead of inferring it from what is absent.
+SCHEDULE_V4 = 'sweeps=6,confirm=4,rollback=0,repair=micro,step=1,past=1'
 
 ARMS = {
     'grid': {'pressure': 'structured', 'overlay': False},
@@ -93,8 +111,12 @@ def run_arm(binary, parent, arm, work, drop_mm, out_path):
     command = [binary, REQUEST] + args + tail
     env = dict(os.environ)
     env['POLYGON_NESTING_PROFILE'] = '1'
-    env['POLYGON_NESTING_COMPRESSION_SCHEDULE'] = f'past=1,rollback=32,work={work}'
+    env['POLYGON_NESTING_COMPRESSION_SCHEDULE'] = f'{SCHEDULE_V4},work={work}'
     env.pop('POLYGON_NESTING_CURRENT_POSE_OVERLAY', None)
+    # Never armed on a measured arm: the classification runs an exact-tier
+    # bisection per pair, so a run carrying it is a diagnostic, not a
+    # measurement. `classify.py` arms it on its own runs.
+    env.pop('POLYGON_NESTING_CURRENT_POSE_OVERLAY_CLASSIFY', None)
     if spec['overlay']:
         env['POLYGON_NESTING_CURRENT_POSE_OVERLAY'] = '1'
     started = time.monotonic()
@@ -154,7 +176,12 @@ def summarize(parent, arm, doc, wall):
         'entryCollisionPairs': schedule.get('parentCollisionPairs'),
         'entryProxyFeasible': schedule.get('parentProxyFeasible'),
         'currentPoseOverlay': schedule.get('currentPoseOverlay'),
+        # Two counts, not one (Sol review 6 §2.4): entries are catalogue keys
+        # `(geometry_class, angle, mirror)` and collapse duplicates; off-grid
+        # pieces are placements, and are what the snap would have damaged.
         'currentPoseOverlayEntries': schedule.get('currentPoseOverlayEntries'),
+        'currentPoseOverlayOffGridPieces':
+            schedule.get('currentPoseOverlayOffGridPieces'),
         'scheduleCandidateQueries': schedule.get('candidateQueries'),
         'scheduleExactPairTests': schedule.get('exactPairTests'),
         'scheduleWorkUnits': schedule.get('workUnits'),
@@ -190,6 +217,7 @@ def main():
         'workUnits': work,
         'dropMm': drop_mm,
         'allowance': DEFAULT_ALLOWANCE,
+        'schedule': f'{SCHEDULE_V4},work={work}',
         'rows': [],
     }
     for parent in PORT_PARENTS:

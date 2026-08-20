@@ -293,6 +293,21 @@ fn current_pose_overlay_requested() -> bool {
         .unwrap_or(false)
 }
 
+/// Whether mode 34 should also emit the per-pair classification Sol review 6
+/// §2 asks for (`parentPairClassification`).
+///
+/// Separate from the overlay's own flag because arming it makes the run a
+/// diagnostic rather than a measurement: it runs an exact-tier offset and
+/// overlap bisection for every parent pair either proxy calls colliding, so
+/// its wall time is not comparable with a measured arm's. See
+/// `GeneralRelaxedSettings::current_pose_overlay_classify_pairs`.
+#[cfg(feature = "compression-schedule")]
+fn current_pose_overlay_classify_requested() -> bool {
+    env::var("POLYGON_NESTING_CURRENT_POSE_OVERLAY_CLASSIFY")
+        .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+        .unwrap_or(false)
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let profiling_armed = profiling_requested();
     let unpinned_vacancy_parent_armed = unpinned_vacancy_parent_requested();
@@ -510,6 +525,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             relaxed_settings.compression_schedule =
                 (persistent_vacancy_mode == 34).then_some(compression_schedule_armed);
             relaxed_settings.current_pose_overlay = current_pose_overlay_requested();
+            relaxed_settings.current_pose_overlay_classify_pairs =
+                current_pose_overlay_classify_requested();
         }
         relaxed_settings
     };

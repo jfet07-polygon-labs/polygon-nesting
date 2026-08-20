@@ -5359,8 +5359,11 @@ not because it was inert by design, but because it was inert by bug.
 `GeneralRelaxedSettings::current_pose_overlay` (off by default, compiled only
 under `compression-schedule`) seeds `initialize_complete_state` with the
 parent's continuous rotation instead of `canonical_angle`-snapping it, and
-layers a small per-piece map onto a *clone* of the `StructuredGrid` catalogue
-so that pose resolves. `build_surrogate_catalog`'s grid branch, and every
+layers a small per-piece map onto the `StructuredGrid` catalogue so that pose
+resolves. (The v5 round layered it onto a *clone* of that catalogue; Sol review
+6 §2.2 rejected the clone and the next chapter replaces it — 8 ms of setup per
+mode-34 invocation that the ten-second path cannot absorb.)
+`build_surrogate_catalog`'s grid branch, and every
 candidate `random_candidate`/`seed_angle` can still propose, are untouched —
 every consumer of `catalog.orientations` in the file is a point lookup, never
 an enumeration, so extra entries in the clone change nothing about what a
@@ -5381,7 +5384,9 @@ key derivation at the six call sites that fed a `directional` bool into it —
 carefully kept separate from `uses_directional_pressure()`'s branch-dispatch
 checks, so the overlay still never switches the pressure model or the
 collision backend. A regression test pins the resolution on a hand-built
-continuous-rotation fixture.
+continuous-rotation fixture. (That test was not a regression test for this
+bug — it used symmetric, well-separated squares and passes against the bug.
+Sol review 6 §2.1 caught it; the next chapter replaces it.)
 
 With the fix in place, at equal work (compression-schedule's own 3,341,379-
 unit design slice) on all fifteen parents: entry loss falls (median **-1420**,
@@ -5389,9 +5394,14 @@ unit design slice) on all fifteen parents: entry loss falls (median **-1420**,
 reduced, none increased) — but the proxy tier's own collision-*pair* count
 rises on **14 of 15**, every time it moves at all. Not zero, not a clean gain:
 a trade along two axes of the same entry measurement, exactly the range Sol's
-review warned the number could fall in. Downstream, arm B still publishes
+review warned the number could fall in. Downstream, arm B appeared to publish
 more (12 of 15 parents against 9 of 15, 5.984 mm total drop against 4.136 mm)
-at the same work budget and within 1% on queries/second. The prize the
+at the same work budget and within 1% on queries/second — **a claim the next
+chapter retracts**: that campaign ran `rollback=32`, a configuration the
+compression-schedule port had already certified as costing ~11 mm of published
+depth and which neither the schedule's defaults nor the coordinator's mode-34
+call site use. Rerun at `rollback=0` the direction reverses and the effect
+vanishes into noise. The prize the
 review actually named — an `m33`/`m22`-produced state passing
 `parentProxyFeasible` under the overlay where it failed under the grid —
 did not land: **zero of fifteen** parents flip, because none of the fifteen
@@ -5416,3 +5426,99 @@ the first attempt.
 
 Evidence, drivers, the campaign table, the gate runs and the regression test:
 `docs/experiments/current-pose-overlay/`.
+
+## The overlay corrected: a retracted downstream claim, and a `+9` that is conservatism
+
+Sol review 6 §2 (`docs/sol-review-6-premerge-v5.md`) returned the overlay
+branch **MERGE CON CORREZIONI** with seven named findings. Applying them cost
+one published claim and turned one open question into a measurement. Both are
+worth recording, because the pattern — *a result that survives its correction
+in shape but not in sign* — is the thing a campaign has to be able to detect
+about itself.
+
+**The regression test did not test the regression.** The v5 round's only
+overlay test used two symmetric, well-separated squares, so both arms produced
+identical numbers whether or not any lookup ever reached the overlay. Sol
+called it, and it is checkable rather than arguable: re-introducing the
+never-looked-up bug verbatim and running all seven overlay tests, the v5 test
+**passes** and three of this round's six new ones **fail** — precisely the
+three that assert a lookup returned the overlay's shape rather than the grid
+snap. The new fixtures are asymmetric and interacting (a 30x30 L with a 22x22
+bite, and a 26x5 bar, at `13.37°` against a `12.5°` snap), and they cover every
+lookup path (`rotation_key`, `surrogate_key`, `memoised_surrogate_key` on both
+a miss and the cached hit, `oriented`, `local_shape_bounds`), both free scan
+bodies, `score_state`, and mode 34 end to end. A test that cannot fail against
+the bug it is named for is not a regression test, and the cheapest way to know
+which kind you have is to put the bug back.
+
+**The deep clone is gone, and it was 8 ms.** Installing the overlay used to
+clone `catalog.orientations` — every polygon, triangle, cell-axis set, pole and
+cell index for all 144 grid angles of every geometry class — in order to add
+8-50 entries. It now takes `Arc::get_mut` on the catalogue the call already
+sole-owns and moves the surrogates in. Measured with the engine's own new
+`currentPoseOverlaySetupMs` meter, same instrumentation on both sides, on the
+campaign's fifteen parents: **median 7.997 ms → 0.323 ms**, a median 23.7x, and
+the one grid-native parent correctly shows no difference on either arm. That is
+0.08% of a ten-second envelope per mode-34 invocation, recurring once per
+basin the coordinator schedules.
+
+**The downstream claim does not survive `rollback=0`.** The v5 campaign ran
+`rollback=32`. The compression-schedule port had already certified that arming
+the rollback costs a paired median of ~11 mm of published depth, which is
+exactly why `CompressionScheduleSettings::default()` and the coordinator's own
+mode-34 call site both set it to zero — so the v5 downstream numbers were
+measured on a configuration that does not ship. Rerun at `rollback=0` with
+coordinator v4's settings written out in full, on the same fifteen parents at
+the same budget: both arms publish far more and far deeper (16.3 and 18.6 mm of
+total drop against 4.1 and 6.0), and **the direction reverses** — the grid arm
+now publishes on 13 of 15 parents against the overlay's 12. Paired on the depth
+each arm actually reached, the overlay ends deeper on 7 parents, shallower on
+4, tied on 4, median delta **0.000 mm**, sign-test p ≈ 0.55. The correct
+statement is that the overlay has *no measurable downstream effect* at the
+shipping rollback setting, and that "publishes more" was an artefact. The
+entry-side numbers are untouched by the rerun and reproduce to the bit, as they
+must: they are taken before the schedule's first step, where no schedule knob
+can reach them.
+
+**The `+9` is conservatism at the contract boundary, not inaccuracy.** The
+review would not accept "the expected price" for the collision-pair rise until
+each new pair was classified, and named the four things to measure. They are
+now a diagnostics field, and the answer is unambiguous. Across the fifteen
+parents the overlay adds 194 pairs and removes 73. **All 194 added pairs sit
+1-2 µm from the envelope-feasibility boundary** — the same band, to the micron,
+that the pairs the *grid* proxy already flags occupy; not one is outside it.
+**67 of the 73 removed pairs** are pairs with 0.1-1.0 mm of genuine envelope
+slack that the grid proxy was flagging wrongly, median 0.113 mm. The overlay
+never drops a real conflict. This is the 5.0/5.0 exact-clearance contract and
+these parents are compression outputs, so their close pairs sit *on* the
+contract with 1-2 µm of envelope clearance; at that separation any
+pole-and-triangle proxy disagrees with the exact tier somewhere, and the
+continuous resolution disagrees only there while the grid resolution also
+disagrees a hundred times further out. What the classification cannot do is
+call the overlay *accurate*: an exact-valid parent has no real conflicts to
+catch, so that column is zero by construction. Deciding that needs a parent
+that actually conflicts — the causal sweep around the proxy-feasible boundary
+the review asks for next.
+
+**Two negatives on this round's own work.** The counters were separated —
+`currentPoseOverlayEntries` is a catalogue size that collapses duplicate
+`(geometry_class, angle, mirror)` keys, `currentPoseOverlayOffGridPieces` is the
+placement count the snap would have damaged — but on all fifteen parents the
+two are equal, so the fix moves no published number and its divergence is
+covered by unit test only. And the flag-off wall A/B (12 paired interleaved
+rounds, three binaries, both gate streams, `gateMisses: 0`) finds **no
+significant difference anywhere**: the overlay commit costs at most +0.5% on a
+26-second mode-20 stream against the pre-overlay baseline at p = 0.146, and
+making the predicate lane-local rather than a by-value helper moves it +0.06%
+at p = 0.77. The lane-local form is kept for clarity and because it is what
+makes the lookup test able to assert the bit — not because it was measured
+faster, and it is not claimed to be.
+
+The seam stays what it was: **off by default, not enabled in the coordinator**,
+now with a regression suite that fails against its own bug, a setup cost that
+is 23.7x smaller, a downstream claim retracted, and the entry-side price
+classified.
+
+Evidence: `docs/experiments/current-pose-overlay/` (README §0.2-§0.4 for the
+tests, the clone and the flag-off; §3.1 for the retraction; §4 for the
+classification).

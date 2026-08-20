@@ -1,6 +1,6 @@
 {
- "label": "compression-schedule-flag-off",
- "binary": "/tmp/grb-comp-schedule",
+ "label": "final-csched",
+ "binary": "/var/lib/t3/tmp/cpo6/bin/cs-final",
  "env": {},
  "gates": {
   "g1": {
@@ -19,8 +19,8 @@
     "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
    ],
    "hit": true,
-   "wallSeconds": 26.28959822654724,
-   "docDigest": "4b534f8ef20675801e4fe9a906dcf1ef626cd356d13ed8dd943cdebe452b1a24"
+   "wallSeconds": 26.397520065307617,
+   "docDigest": "f12c2d3f0747afe8c3434b062451e14da0ece296ed48bc7e09fb1e0f25df0074"
   },
   "g2": {
    "raw": 159.09233022733062,
@@ -29,8 +29,8 @@
    "exactValid": true,
    "contractValid": true,
    "hit": true,
-   "wallSeconds": 3.1237094402313232,
-   "docDigest": "fac332ae2acc99069ada776faa8ebb39b2b0d74d3b083bb63eaf68d781424873"
+   "wallSeconds": 4.414407014846802,
+   "docDigest": "c3931586eb31f38860d0efb8e1bdb904325c4cf9a3577616ec3399a08cae6f4b"
   },
   "g3": {
    "raw": 159.07876040364795,
@@ -39,8 +39,8 @@
    "exactValid": true,
    "contractValid": true,
    "hit": true,
-   "wallSeconds": 3.4376578330993652,
-   "docDigest": "6c615a430fe781d27fe58a3fffd0e6aa2a9a73add01582c9e5b73887c2cbd3bb"
+   "wallSeconds": 3.7143354415893555,
+   "docDigest": "4491b78a223f18a38eb66ebfca9283f0d15cd55b9eb63c47228d778d24972588"
   },
   "g4": {
    "raw": 164.0375677990678,
@@ -49,8 +49,8 @@
    "exactValid": true,
    "contractValid": true,
    "hit": true,
-   "wallSeconds": 3.057340621948242,
-   "docDigest": "ee5f634090e91bf07b47467fdd4ccfd231b3ede41da0f0277b17f264be0fb4c9"
+   "wallSeconds": 3.25992488861084,
+   "docDigest": "caf1555c8b7b1c227c97d676cb1535197ef7d98e92d8ba8b59bdad5dc47dac88"
   }
  },
  "ALL_PASS": true

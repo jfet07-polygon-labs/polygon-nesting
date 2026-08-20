@@ -1,0 +1,235 @@
+{
+ "arms": [
+  {
+   "label": "clone",
+   "binary": "/var/lib/t3/tmp/cpo6/bin/cs-clone"
+  },
+  {
+   "label": "merge",
+   "binary": "/var/lib/t3/tmp/cpo6/bin/cs-fix"
+  }
+ ],
+ "schedule": "sweeps=6,confirm=4,rollback=0,repair=micro,step=1,past=1,work=1",
+ "summary": {
+  "clone": {
+   "parents": 15,
+   "setupMsMedian": 7.9973019999999995,
+   "setupMsMin": 0.034783,
+   "setupMsMax": 9.049595,
+   "setupMsTotal": 102.216348
+  },
+  "merge": {
+   "parents": 15,
+   "setupMsMedian": 0.323189,
+   "setupMsMin": 0.031757,
+   "setupMsMax": 0.617107,
+   "setupMsTotal": 4.5136579999999995
+  },
+  "paired": {
+   "reference": "clone",
+   "other": "merge",
+   "parentsWithOverlayEntries": 15,
+   "otherOverReferenceRatioMedian": 0.04225676342740672,
+   "speedupMedian": 23.66485075739199,
+   "savedMsMedian": 7.620476,
+   "savedMsTotal": 97.70269
+  }
+ },
+ "rows": [
+  {
+   "parent": "port-seed0",
+   "clone": {
+    "setupMs": 9.049595,
+    "entries": 17,
+    "offGridPieces": 17
+   },
+   "merge": {
+    "setupMs": 0.299138,
+    "entries": 17,
+    "offGridPieces": 17
+   }
+  },
+  {
+   "parent": "port-seed1",
+   "merge": {
+    "setupMs": 0.031757,
+    "entries": 0,
+    "offGridPieces": 0
+   },
+   "clone": {
+    "setupMs": 0.034783,
+    "entries": 0,
+    "offGridPieces": 0
+   }
+  },
+  {
+   "parent": "port-seed2",
+   "clone": {
+    "setupMs": 6.02227,
+    "entries": 8,
+    "offGridPieces": 8
+   },
+   "merge": {
+    "setupMs": 0.109308,
+    "entries": 8,
+    "offGridPieces": 8
+   }
+  },
+  {
+   "parent": "port-seed3",
+   "merge": {
+    "setupMs": 0.126885,
+    "entries": 12,
+    "offGridPieces": 12
+   },
+   "clone": {
+    "setupMs": 6.184274,
+    "entries": 12,
+    "offGridPieces": 12
+   }
+  },
+  {
+   "parent": "port-seed4",
+   "clone": {
+    "setupMs": 6.2770220000000005,
+    "entries": 50,
+    "offGridPieces": 50
+   },
+   "merge": {
+    "setupMs": 0.617107,
+    "entries": 50,
+    "offGridPieces": 50
+   }
+  },
+  {
+   "parent": "port-seed5",
+   "merge": {
+    "setupMs": 0.342161,
+    "entries": 34,
+    "offGridPieces": 34
+   },
+   "clone": {
+    "setupMs": 8.097189,
+    "entries": 34,
+    "offGridPieces": 34
+   }
+  },
+  {
+   "parent": "port-seed6",
+   "clone": {
+    "setupMs": 5.7555760000000005,
+    "entries": 8,
+    "offGridPieces": 8
+   },
+   "merge": {
+    "setupMs": 0.09081,
+    "entries": 8,
+    "offGridPieces": 8
+   }
+  },
+  {
+   "parent": "port-seed7",
+   "merge": {
+    "setupMs": 0.34121599999999996,
+    "entries": 41,
+    "offGridPieces": 41
+   },
+   "clone": {
+    "setupMs": 5.816208,
+    "entries": 41,
+    "offGridPieces": 41
+   }
+  },
+  {
+   "parent": "port-seed8",
+   "clone": {
+    "setupMs": 8.116563000000001,
+    "entries": 11,
+    "offGridPieces": 11
+   },
+   "merge": {
+    "setupMs": 0.10648400000000001,
+    "entries": 11,
+    "offGridPieces": 11
+   }
+  },
+  {
+   "parent": "port-seed9",
+   "merge": {
+    "setupMs": 0.41844099999999995,
+    "entries": 29,
+    "offGridPieces": 29
+   },
+   "clone": {
+    "setupMs": 8.112897,
+    "entries": 29,
+    "offGridPieces": 29
+   }
+  },
+  {
+   "parent": "port-seed10",
+   "clone": {
+    "setupMs": 8.000026,
+    "entries": 28,
+    "offGridPieces": 28
+   },
+   "merge": {
+    "setupMs": 0.37955,
+    "entries": 28,
+    "offGridPieces": 28
+   }
+  },
+  {
+   "parent": "port-seed11",
+   "merge": {
+    "setupMs": 0.492715,
+    "entries": 41,
+    "offGridPieces": 41
+   },
+   "clone": {
+    "setupMs": 6.214696,
+    "entries": 41,
+    "offGridPieces": 41
+   }
+  },
+  {
+   "parent": "true-156.9188",
+   "clone": {
+    "setupMs": 8.266137,
+    "entries": 28,
+    "offGridPieces": 28
+   },
+   "merge": {
+    "setupMs": 0.323189,
+    "entries": 28,
+    "offGridPieces": 28
+   }
+  },
+  {
+   "parent": "true-156.091",
+   "merge": {
+    "setupMs": 0.313033,
+    "entries": 26,
+    "offGridPieces": 26
+   },
+   "clone": {
+    "setupMs": 7.9973019999999995,
+    "entries": 26,
+    "offGridPieces": 26
+   }
+  },
+  {
+   "parent": "true-155.422",
+   "clone": {
+    "setupMs": 8.271809999999999,
+    "entries": 49,
+    "offGridPieces": 49
+   },
+   "merge": {
+    "setupMs": 0.521864,
+    "entries": 49,
+    "offGridPieces": 49
+   }
+  }
+ ]
+}

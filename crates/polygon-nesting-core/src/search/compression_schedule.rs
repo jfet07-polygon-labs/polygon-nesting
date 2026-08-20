@@ -595,6 +595,9 @@ impl CompressionSchedule {
             parent_entry_loss: 0.0,
             current_pose_overlay: false,
             current_pose_overlay_entries: 0,
+            current_pose_overlay_off_grid_pieces: 0,
+            current_pose_overlay_setup_ms: 0.0,
+            parent_pair_classification: Vec::new(),
             target_depth_mm: from_grid(self.target_grid),
             final_depth_mm: self.depth_mm(),
             floor_depth_mm: self.floor_mm(),
@@ -611,6 +614,64 @@ impl CompressionSchedule {
             steps: Vec::new(),
         }
     }
+}
+
+/// One parent pair, classified against both proxy resolutions and the exact
+/// tier.
+///
+/// Written only by a diagnostic run (see
+/// `GeneralCompressionScheduleDiagnostics::parent_pair_classification`). The
+/// question it answers, per pair: when the continuous surrogate calls a pair
+/// colliding and the grid surrogate does not, is the continuous one *right*
+/// (the exact envelope really does conflict, so the grid proxy was missing a
+/// real conflict, and the overlay is more conservative *and* more accurate) or
+/// *wrong* (the exact envelope is clear, so the continuous proxy invented a
+/// conflict, and the overlay is simply more inaccurate at the parent's own
+/// rotations)?
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralCompressionSchedulePairClassification {
+    pub first_piece_id: String,
+    pub second_piece_id: String,
+    /// The parent's own continuous rotations for the two pieces, and the grid
+    /// angles the `StructuredGrid` snap would have used instead.
+    pub first_rotation_deg: f64,
+    pub second_rotation_deg: f64,
+    pub first_snapped_rotation_deg: f64,
+    pub second_snapped_rotation_deg: f64,
+    /// The proxy tier's penalty for this pair with both pieces resolved at the
+    /// parent's exact poses. `> 0` is the proxy calling the pair colliding.
+    pub continuous_proxy_penalty: f64,
+    /// The same, with both pieces resolved at their grid-snapped poses - the
+    /// verdict today's default arm reaches.
+    pub grid_proxy_penalty: f64,
+    /// The exact tier on the parent's true geometry: do the two pieces'
+    /// *material* polygons overlap? On a valid parent this is always `false`,
+    /// and it is recorded so that stays visible rather than assumed.
+    pub material_overlap: bool,
+    /// The exact tier on the parent's true geometry: do the two pieces'
+    /// *envelope* (material offset by half the pair clearance) polygons
+    /// overlap? This is the verdict the authoritative validator uses, and it
+    /// is what "the pair really does conflict" means.
+    pub envelope_overlap: bool,
+    /// Signed distance from the envelope-feasibility boundary, in millimetres,
+    /// measured by bisecting the symmetric offset at which the two material
+    /// polygons first touch. Positive is clearance to spare, negative is
+    /// penetration; `0` is exactly on the boundary.
+    ///
+    /// This is the "margine dal confine" the review asks for, and it is what
+    /// distinguishes a pair the proxy was right to flag from one it invented.
+    ///
+    /// **One saturating case, stated rather than hidden:** the bisection only
+    /// searches *outward* offsets, so a pair whose material polygons already
+    /// overlap has no bracket and reports the floor value
+    /// `-2 * collision_expansion_mm` regardless of how deep the penetration is.
+    /// [`Self::material_overlap`] is the flag that says the number saturated;
+    /// on an exact-valid parent it is always `false` and the margin is always
+    /// a real measurement.
+    pub envelope_margin_mm: f64,
+    /// The gap between the two *material* polygons, in millimetres.
+    pub material_gap_mm: f64,
 }
 
 /// What one depth step cost and what residue it made.
@@ -706,11 +767,52 @@ pub struct GeneralCompressionScheduleDiagnostics {
     /// Whether `CurrentPoseOverlay` was armed for this run. See
     /// `GeneralRelaxedSettings::current_pose_overlay`.
     pub current_pose_overlay: bool,
-    /// How many pieces the overlay actually had to cover: the count of
-    /// parent placements whose rotation was not already on the
-    /// `StructuredGrid` 2.5-degree grid. Zero whenever the overlay is off,
-    /// and zero on an overlay run whose parent happened to be grid-native.
+    /// How many *surrogates* the overlay had to build.
+    ///
+    /// This is a catalogue size, not a piece count: entries are keyed by
+    /// `(geometry_class, angle, mirror)`, so two instances of the same
+    /// geometry class at the same continuous pose share one entry. Use it to
+    /// price the overlay's setup. Zero whenever the overlay is off, and zero
+    /// on an overlay run whose parent happened to be grid-native.
+    ///
+    /// The v5 round reported this alone and described it as a piece count;
+    /// Sol review 6 §2.4 caught the conflation. See
+    /// [`Self::current_pose_overlay_off_grid_pieces`].
     pub current_pose_overlay_entries: usize,
+    /// How many of the parent's *placements* arrived off the 2.5-degree grid -
+    /// that is, how many pieces the `StructuredGrid` snap would have moved.
+    ///
+    /// Always `>= current_pose_overlay_entries`; strictly greater exactly when
+    /// a repetitive parent puts two instances of one geometry class at the
+    /// same continuous pose. This is the damage measure; the entry count is
+    /// the cost measure.
+    pub current_pose_overlay_off_grid_pieces: usize,
+    /// What the overlay cost to set up: building its surrogates plus
+    /// installing them into the schedule's catalogue, in milliseconds.
+    ///
+    /// Sol review 6 §2.2 rejected the v5 round's installation - a deep clone of
+    /// every grid orientation of every geometry class, to add a handful of
+    /// entries - as setup cost the ten-second path cannot absorb, and asked for
+    /// the price to be measured before and after. This is that measurement,
+    /// reported by the run itself rather than inferred from process wall.
+    /// `0.0` whenever the overlay is off, and no `Instant` is read then.
+    pub current_pose_overlay_setup_ms: f64,
+    /// Per-pair classification of the parent's proxy collisions, empty unless
+    /// `current_pose_overlay_classify_pairs` armed it.
+    ///
+    /// Sol review 6 §2's "Interpretazione dei numeri" asks whether the
+    /// continuous surrogate is *more conservative* or *more inaccurate* at the
+    /// parent's own rotations, and says the `+9` collision-pair delta cannot
+    /// be called "the expected price" until each new pair is classified. Each
+    /// row here carries the four things that decide it for one pair: the exact
+    /// material verdict, the exact envelope verdict, both proxy verdicts, and
+    /// the pair's signed distance from the envelope-feasibility boundary.
+    ///
+    /// Off by default and gated behind its own setting because it runs an
+    /// exact-tier bisection per pair: a run that emits this is a *diagnostic*
+    /// run and its wall and work numbers must not be quoted against a
+    /// measured arm.
+    pub parent_pair_classification: Vec<GeneralCompressionSchedulePairClassification>,
     pub target_depth_mm: f64,
     /// The clamp the frontier ended at.
     pub final_depth_mm: f64,

@@ -10,7 +10,7 @@ import os
 import subprocess
 import time
 
-ROOT = '/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_48bbc38e-879-2'
+ROOT = '/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_b7992967-b13-2'
 REQ = f'{ROOT}/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json'
 TRUE = (f'{ROOT}/docs/experiments/persistent-vacancy-descent/exact-contract/'
         'true-contract')
