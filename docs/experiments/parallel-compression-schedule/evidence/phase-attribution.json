@@ -1,0 +1,462 @@
+{
+ "note": "mode-34 phase costs with the identical mode-0 preamble subtracted, equal-walk shape (1.5 mm drop, past=0), seed 0, profiled build. This is the evidence for the correction to compression-schedule/README.md section 6.1: an accepted confirmation costs 4.92 ms and the collision-grid overlap loop is 0.13 ms of it, because `exactOverlapTest` is entered past the broad-phase bounds reject about 98 times per confirmation rather than 1830 times.",
+ "scheduleOnlyAttribution": {
+  "serial": {
+   "publicationValidate": {
+    "scheduleOnlyMilliseconds": 1583.88199,
+    "scheduleOnlyCalls": 317,
+    "perConfirmationMs": 5.028196793650794,
+    "callsPerConfirmation": 1.0063492063492063
+   },
+   "exactOverlapTest": {
+    "scheduleOnlyMilliseconds": 32.88544899999988,
+    "scheduleOnlyCalls": 30985,
+    "perConfirmationMs": 0.10439825079365041,
+    "callsPerConfirmation": 98.36507936507937
+   },
+   "collisionPolygonBuild": {
+    "scheduleOnlyMilliseconds": -0.22440000000000104,
+    "scheduleOnlyCalls": 0,
+    "perConfirmationMs": -0.0007123809523809557,
+    "callsPerConfirmation": 0.0
+   }
+  },
+  "pconfirm": {
+   "publicationValidate": {
+    "scheduleOnlyMilliseconds": 343.807638,
+    "scheduleOnlyCalls": 317,
+    "perConfirmationMs": 1.0914528190476191,
+    "callsPerConfirmation": 1.0063492063492063
+   },
+   "exactOverlapTest": {
+    "scheduleOnlyMilliseconds": 83.88607200000001,
+    "scheduleOnlyCalls": 30985,
+    "perConfirmationMs": 0.2663049904761905,
+    "callsPerConfirmation": 98.36507936507937
+   },
+   "collisionPolygonBuild": {
+    "scheduleOnlyMilliseconds": 0.20353599999999972,
+    "scheduleOnlyCalls": 0,
+    "perConfirmationMs": 0.0006461460317460308,
+    "callsPerConfirmation": 0.0
+   }
+  }
+ },
+ "rawPhases": {
+  "preamble": {
+   "constructorProposals": {
+    "milliseconds": 542.737786,
+    "calls": 976
+   },
+   "collisionPolygonBuild": {
+    "milliseconds": 11.713751,
+    "calls": 2913
+   },
+   "sheetFitTest": {
+    "milliseconds": 19.025845,
+    "calls": 523951
+   },
+   "exactOverlapTest": {
+    "milliseconds": 1452.06203,
+    "calls": 585002
+   },
+   "publicationConfirm": {
+    "milliseconds": 7.821818,
+    "calls": 1937
+   },
+   "constructorScore": {
+    "milliseconds": 37.554344,
+    "calls": 48953
+   },
+   "scorePlacement": {
+    "milliseconds": 6969.796743,
+    "calls": 5851533
+   },
+   "scoreProbe": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "scoreScan": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "scoreFinalize": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "boundaryPenalty": {
+    "milliseconds": 473.0323,
+    "calls": 6352884
+   },
+   "pairCollide": {
+    "milliseconds": 1942.204179,
+    "calls": 22821625
+   },
+   "pairPressure": {
+    "milliseconds": 1499.027426,
+    "calls": 9386694
+   },
+   "fullRescore": {
+    "milliseconds": 92.935551,
+    "calls": 1101
+   },
+   "pieceIndexBuild": {
+    "milliseconds": 90.645618,
+    "calls": 6040
+   },
+   "moveSweep": {
+    "milliseconds": 7652.516126,
+    "calls": 6040
+   },
+   "updateAfterMove": {
+    "milliseconds": 48.325097,
+    "calls": 52313
+   },
+   "auditorScore": {
+    "milliseconds": 5.79096,
+    "calls": 12
+   },
+   "hazardQuery": {
+    "milliseconds": 317.055066,
+    "calls": 519111
+   },
+   "hazardPressure": {
+    "milliseconds": 540.71651,
+    "calls": 683219
+   },
+   "hazardPoseBounds": {
+    "milliseconds": 79.305816,
+    "calls": 803199
+   },
+   "hazardCommit": {
+    "milliseconds": 436.206229,
+    "calls": 5108
+   },
+   "vacancyProposals": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "vacancyProxyRank": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "vacancyExactRows": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "publicationValidate": {
+    "milliseconds": 28.99147,
+    "calls": 9
+   },
+   "_schedule": {}
+  },
+  "serial": {
+   "constructorProposals": {
+    "milliseconds": 541.238022,
+    "calls": 976
+   },
+   "collisionPolygonBuild": {
+    "milliseconds": 11.489351,
+    "calls": 2913
+   },
+   "sheetFitTest": {
+    "milliseconds": 19.802606,
+    "calls": 543288
+   },
+   "exactOverlapTest": {
+    "milliseconds": 1484.947479,
+    "calls": 615987
+   },
+   "publicationConfirm": {
+    "milliseconds": 7.736749,
+    "calls": 1937
+   },
+   "constructorScore": {
+    "milliseconds": 37.325471,
+    "calls": 48953
+   },
+   "scorePlacement": {
+    "milliseconds": 7580.852234,
+    "calls": 6204183
+   },
+   "scoreProbe": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "scoreScan": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "scoreFinalize": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "boundaryPenalty": {
+    "milliseconds": 520.110668,
+    "calls": 6913231
+   },
+   "pairCollide": {
+    "milliseconds": 2137.020817,
+    "calls": 24211842
+   },
+   "pairPressure": {
+    "milliseconds": 1688.170279,
+    "calls": 9910618
+   },
+   "fullRescore": {
+    "milliseconds": 101.908097,
+    "calls": 1102
+   },
+   "pieceIndexBuild": {
+    "milliseconds": 115.262726,
+    "calls": 7862
+   },
+   "moveSweep": {
+    "milliseconds": 8348.158178,
+    "calls": 7862
+   },
+   "updateAfterMove": {
+    "milliseconds": 51.556051,
+    "calls": 55621
+   },
+   "auditorScore": {
+    "milliseconds": 6.138866,
+    "calls": 12
+   },
+   "hazardQuery": {
+    "milliseconds": 335.597916,
+    "calls": 519111
+   },
+   "hazardPressure": {
+    "milliseconds": 566.155776,
+    "calls": 683219
+   },
+   "hazardPoseBounds": {
+    "milliseconds": 83.459618,
+    "calls": 803199
+   },
+   "hazardCommit": {
+    "milliseconds": 483.620719,
+    "calls": 5108
+   },
+   "vacancyProposals": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "vacancyProxyRank": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "vacancyExactRows": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "publicationValidate": {
+    "milliseconds": 1612.87346,
+    "calls": 326
+   },
+   "_schedule": {
+    "candidateQueries": 352650,
+    "confirmEvery": 4,
+    "confirmationMs": 1589.3716830000003,
+    "confirmationsAccepted": 315,
+    "confirmationsAttempted": 315,
+    "confirmationsRefused": 0,
+    "confirmationsSkippedInfeasible": 242,
+    "continuePastBound": false,
+    "currentPoseOverlay": false,
+    "currentPoseOverlayEntries": 0,
+    "currentPoseOverlayOffGridPieces": 0,
+    "currentPoseOverlaySetupMs": 0.0,
+    "exactPairTests": 576450,
+    "exitCause": "bound",
+    "finalDepthMm": 173.563,
+    "floorDepthMm": 173.563,
+    "microLegalizationsAccepted": 0,
+    "microLegalizationsAttempted": 0,
+    "parallel": {
+     "discardedQueries": 0,
+     "fannedOutSteps": 0,
+     "laneWins": [
+      0
+     ],
+     "lanes": 1,
+     "parallelConfirm": false,
+     "stepsWonOffLaneZero": 0,
+     "winnerQueries": 0
+    },
+    "parentBoundaryViolations": 8,
+    "parentCollisionPairs": 33,
+    "parentEntryLoss": 14928.578449503326,
+    "parentPairClassification": [],
+    "parentProxyFeasible": false,
+    "repairMs": 550.8649770000073,
+    "rollbackAfterSteps": 0,
+    "rollbacks": 0,
+    "startDepthMm": 175.063,
+    "stepMm": 0.001,
+    "stepsPlanned": 1500,
+    "stepsTaken": 1500,
+    "sweepsPerStep": 6,
+    "sweepsRun": 1822,
+    "targetDepthMm": 173.563,
+    "workCapQueries": null,
+    "workUnits": 3234900
+   }
+  },
+  "pconfirm": {
+   "constructorProposals": {
+    "milliseconds": 550.245671,
+    "calls": 976
+   },
+   "collisionPolygonBuild": {
+    "milliseconds": 11.917287,
+    "calls": 2913
+   },
+   "sheetFitTest": {
+    "milliseconds": 20.128483,
+    "calls": 543288
+   },
+   "exactOverlapTest": {
+    "milliseconds": 1535.948102,
+    "calls": 615987
+   },
+   "publicationConfirm": {
+    "milliseconds": 7.973338,
+    "calls": 1937
+   },
+   "constructorScore": {
+    "milliseconds": 37.964415,
+    "calls": 48953
+   },
+   "scorePlacement": {
+    "milliseconds": 7638.425395,
+    "calls": 6204183
+   },
+   "scoreProbe": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "scoreScan": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "scoreFinalize": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "boundaryPenalty": {
+    "milliseconds": 523.56279,
+    "calls": 6913231
+   },
+   "pairCollide": {
+    "milliseconds": 2134.763538,
+    "calls": 24211842
+   },
+   "pairPressure": {
+    "milliseconds": 1702.660849,
+    "calls": 9910618
+   },
+   "fullRescore": {
+    "milliseconds": 97.423788,
+    "calls": 1102
+   },
+   "pieceIndexBuild": {
+    "milliseconds": 117.338962,
+    "calls": 7862
+   },
+   "moveSweep": {
+    "milliseconds": 8405.601173,
+    "calls": 7862
+   },
+   "updateAfterMove": {
+    "milliseconds": 51.898474,
+    "calls": 55621
+   },
+   "auditorScore": {
+    "milliseconds": 5.339639,
+    "calls": 12
+   },
+   "hazardQuery": {
+    "milliseconds": 330.496565,
+    "calls": 519111
+   },
+   "hazardPressure": {
+    "milliseconds": 550.700672,
+    "calls": 683219
+   },
+   "hazardPoseBounds": {
+    "milliseconds": 81.197243,
+    "calls": 803199
+   },
+   "hazardCommit": {
+    "milliseconds": 479.635773,
+    "calls": 5108
+   },
+   "vacancyProposals": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "vacancyProxyRank": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "vacancyExactRows": {
+    "milliseconds": 0.0,
+    "calls": 0
+   },
+   "publicationValidate": {
+    "milliseconds": 372.799108,
+    "calls": 326
+   },
+   "_schedule": {
+    "candidateQueries": 352650,
+    "confirmEvery": 4,
+    "confirmationMs": 349.93946399999976,
+    "confirmationsAccepted": 315,
+    "confirmationsAttempted": 315,
+    "confirmationsRefused": 0,
+    "confirmationsSkippedInfeasible": 242,
+    "continuePastBound": false,
+    "currentPoseOverlay": false,
+    "currentPoseOverlayEntries": 0,
+    "currentPoseOverlayOffGridPieces": 0,
+    "currentPoseOverlaySetupMs": 0.0,
+    "exactPairTests": 576450,
+    "exitCause": "bound",
+    "finalDepthMm": 173.563,
+    "floorDepthMm": 173.563,
+    "microLegalizationsAccepted": 0,
+    "microLegalizationsAttempted": 0,
+    "parallel": {
+     "discardedQueries": 0,
+     "fannedOutSteps": 0,
+     "laneWins": [
+      0
+     ],
+     "lanes": 1,
+     "parallelConfirm": true,
+     "stepsWonOffLaneZero": 0,
+     "winnerQueries": 0
+    },
+    "parentBoundaryViolations": 8,
+    "parentCollisionPairs": 33,
+    "parentEntryLoss": 14928.578449503326,
+    "parentPairClassification": [],
+    "parentProxyFeasible": false,
+    "repairMs": 561.1692680000044,
+    "rollbackAfterSteps": 0,
+    "rollbacks": 0,
+    "startDepthMm": 175.063,
+    "stepMm": 0.001,
+    "stepsPlanned": 1500,
+    "stepsTaken": 1500,
+    "sweepsPerStep": 6,
+    "sweepsRun": 1822,
+    "targetDepthMm": 173.563,
+    "workCapQueries": null,
+    "workUnits": 3234900
+   }
+  }
+ }
+}

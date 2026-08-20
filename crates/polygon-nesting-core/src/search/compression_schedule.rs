@@ -282,6 +282,36 @@ pub struct CompressionScheduleSettings {
     /// fraction, and go on only on evidence. It is the same shape as the
     /// coordinator's own audition rule, one level down.
     pub barren_probe_denominator: usize,
+    /// How many workers repair one step, under this one clock.
+    ///
+    /// `1` - the shipped serial schedule - is the default, and everything above
+    /// it is the `parallel-compression-schedule` lever. A step whose proxy tier
+    /// is infeasible dispatches `lanes` workers, each repairing a private clone
+    /// of the frontier at the *same* depth from a seed derived from
+    /// `(base, step, worker)`, and a reduce in worker-index order adopts one of
+    /// them. No worker owns the clock: a worker never calls
+    /// [`CompressionSchedule::step_down`], never confirms and never moves the
+    /// floor, so the five invariants above are untouched by the fan-out.
+    ///
+    /// It is a *budget* knob and not a free one. Every worker's candidate
+    /// queries are charged, so `lanes=8` spends about eight times the candidate
+    /// half of a repair step - which on the measured mixed-61 band is only 11%
+    /// of the schedule's self-charged work, the derived exact tier being the
+    /// other 89%, so the honest multiplier on a work-capped arm is well under
+    /// eight. See docs/experiments/parallel-compression-schedule/.
+    #[cfg(feature = "parallel-compression-schedule")]
+    pub lanes: usize,
+    /// Whether one whole-layout exact confirmation is spread over the job pool.
+    ///
+    /// `false` - the shipped serial validator - is the default. The lever
+    /// exists because the measurement that motivated the *repair* fan-out found
+    /// the confirmation to be the larger half: on the 174-179 mm band at the
+    /// design slice the exact tier is 41-77% of the schedule's own wall, and it
+    /// is one 61-piece build pass plus 1,830 pair questions executed one at a
+    /// time. Parallelising it does not touch the cadence, the floor or the
+    /// deepest-confirmed slot; it makes one confirmation cost less wall.
+    #[cfg(feature = "parallel-compression-schedule")]
+    pub parallel_confirm: bool,
 }
 
 impl Default for CompressionScheduleSettings {
@@ -298,6 +328,12 @@ impl Default for CompressionScheduleSettings {
             skip_infeasible_entry: false,
             skip_unpublishable_entry: false,
             barren_probe_denominator: 0,
+            // Both levers default to the shipped serial behaviour, so an armed
+            // *build* that is not asked for them is the shipped schedule.
+            #[cfg(feature = "parallel-compression-schedule")]
+            lanes: 1,
+            #[cfg(feature = "parallel-compression-schedule")]
+            parallel_confirm: false,
         }
     }
 }
@@ -718,6 +754,8 @@ impl CompressionSchedule {
             exit_cause: self.exit.name().to_owned(),
             confirmation_ms: 0.0,
             repair_ms: 0.0,
+            #[cfg(feature = "parallel-compression-schedule")]
+            parallel: GeneralCompressionScheduleParallelDiagnostics::default(),
             steps: Vec::new(),
         }
     }
@@ -1014,7 +1052,49 @@ pub struct GeneralCompressionScheduleDiagnostics {
     pub confirmation_ms: f64,
     /// Wall-clock milliseconds inside the repair sweeps, on the same terms.
     pub repair_ms: f64,
+    /// The intra-arm parallel schedule's own report. See
+    /// [`GeneralCompressionScheduleParallelDiagnostics`]. Absent - not merely
+    /// zeroed - in a build without `parallel-compression-schedule`, so an
+    /// armed-feature document and a `compression-schedule`-only one differ by
+    /// this key alone.
+    #[cfg(feature = "parallel-compression-schedule")]
+    pub parallel: GeneralCompressionScheduleParallelDiagnostics,
     pub steps: Vec<GeneralCompressionScheduleStepRow>,
+}
+
+/// What the intra-arm fan-out did, so its multiplier is a measurement rather
+/// than an assumption.
+///
+/// Every field here is a count the run made, not a rate derived from a clock:
+/// the wall numbers this experiment reports live in `repair_ms` and
+/// `confirmation_ms`, and the box these were measured on was shared.
+#[cfg(feature = "parallel-compression-schedule")]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneralCompressionScheduleParallelDiagnostics {
+    /// Workers per repair step, as asked for. `1` is the serial schedule.
+    pub lanes: usize,
+    /// Whether the exact confirmation was spread over the job pool.
+    pub parallel_confirm: bool,
+    /// Steps that actually fanned out. A step the proxy tier already calls
+    /// feasible repairs nothing and dispatches nothing, and on the measured
+    /// band that is 55-77% of all steps - which is the first reason the
+    /// occupancy multiplier is not the lane multiplier.
+    pub fanned_out_steps: usize,
+    /// Candidate queries the winning worker of each fanned-out step spent:
+    /// what a serial schedule would have paid for the same step.
+    pub winner_queries: usize,
+    /// Candidate queries the *losing* workers spent. This is the price of the
+    /// fan-out in the work currency, and it is charged in full.
+    pub discarded_queries: usize,
+    /// How often each worker ordinal won its step, lowest ordinal first. A
+    /// distribution concentrated on worker 0 means the fan-out is buying
+    /// nothing the serial lane would not have found.
+    pub lane_wins: Vec<usize>,
+    /// Fanned-out steps where the winning worker reached proxy feasibility and
+    /// worker 0 - the one whose seed matches the serial lane's - did not.
+    /// These are the steps the fan-out actually bought.
+    pub steps_won_off_lane_zero: usize,
 }
 
 #[cfg(test)]

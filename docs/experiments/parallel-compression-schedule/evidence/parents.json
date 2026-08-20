@@ -1,0 +1,259 @@
+{
+ "note": "the compression-schedule round's twelve 171-179 mm parents; seeds 0-2 are that round's surviving fixtures, seeds 3-11 were regenerated here from the bare request at work=120000000 and reproduce the committed depth, fingerprint and work-unit spend to the digit",
+ "reproducedFromCommitted": [
+  {
+   "seed": 0,
+   "rawDepthMm": 174.20812003998896,
+   "committedRawDepthMm": 174.20812003998896,
+   "fingerprintMatches": true,
+   "workUnitsMatch": true,
+   "regenerated": false
+  },
+  {
+   "seed": 1,
+   "rawDepthMm": 176.05599999999998,
+   "committedRawDepthMm": 176.05599999999998,
+   "fingerprintMatches": true,
+   "workUnitsMatch": true,
+   "regenerated": false
+  },
+  {
+   "seed": 2,
+   "rawDepthMm": 179.006,
+   "committedRawDepthMm": 179.006,
+   "fingerprintMatches": true,
+   "workUnitsMatch": true,
+   "regenerated": false
+  },
+  {
+   "seed": 3,
+   "rawDepthMm": 176.061,
+   "committedRawDepthMm": 176.061,
+   "fingerprintMatches": true,
+   "workUnitsMatch": true,
+   "regenerated": true
+  },
+  {
+   "seed": 4,
+   "rawDepthMm": 171.64953207726535,
+   "committedRawDepthMm": 171.64953207726535,
+   "fingerprintMatches": true,
+   "workUnitsMatch": true,
+   "regenerated": true
+  },
+  {
+   "seed": 5,
+   "rawDepthMm": 179.05182605364416,
+   "committedRawDepthMm": 179.05182605364416,
+   "fingerprintMatches": true,
+   "workUnitsMatch": true,
+   "regenerated": true
+  },
+  {
+   "seed": 6,
+   "rawDepthMm": 179.6200102363703,
+   "committedRawDepthMm": 179.6200102363703,
+   "fingerprintMatches": true,
+   "workUnitsMatch": true,
+   "regenerated": true
+  },
+  {
+   "seed": 7,
+   "rawDepthMm": 179.52233303152792,
+   "committedRawDepthMm": 179.52233303152792,
+   "fingerprintMatches": true,
+   "workUnitsMatch": true,
+   "regenerated": true
+  },
+  {
+   "seed": 8,
+   "rawDepthMm": 178.93200000000002,
+   "committedRawDepthMm": 178.93200000000002,
+   "fingerprintMatches": true,
+   "workUnitsMatch": true,
+   "regenerated": true
+  },
+  {
+   "seed": 9,
+   "rawDepthMm": 174.96558182288433,
+   "committedRawDepthMm": 174.96558182288433,
+   "fingerprintMatches": true,
+   "workUnitsMatch": true,
+   "regenerated": true
+  },
+  {
+   "seed": 10,
+   "rawDepthMm": 176.3622237458826,
+   "committedRawDepthMm": 176.3622237458826,
+   "fingerprintMatches": true,
+   "workUnitsMatch": true,
+   "regenerated": true
+  },
+  {
+   "seed": 11,
+   "rawDepthMm": 171.6141235046606,
+   "committedRawDepthMm": 171.6141235046606,
+   "fingerprintMatches": true,
+   "workUnitsMatch": true,
+   "regenerated": true
+  }
+ ],
+ "rows": [
+  {
+   "seed": 0,
+   "spec": "work=120000000,cells=13:15:17:19",
+   "fixture": "/var/lib/t3/tmp/csched/parents/parent-seed0.json",
+   "rawDepthMm": 174.20812003998896,
+   "independentDepthMm": 174.208,
+   "dualGateValid": true,
+   "fingerprint": "70ea4238be33dd31291c696b052261dc02fe1eef6be4837c1e96a44f21a74cb6",
+   "workUnits": 32393757,
+   "processWallSeconds": 16.076248288998613,
+   "archiveMembers": 0,
+   "inBand": true
+  },
+  {
+   "seed": 1,
+   "spec": "work=120000000,cells=11:15:21:27",
+   "fixture": "/var/lib/t3/tmp/csched/parents/parent-seed1.json",
+   "rawDepthMm": 176.05599999999998,
+   "independentDepthMm": 176.056,
+   "dualGateValid": true,
+   "fingerprint": "1e754eed759cc31ec9e5fde499d7c5da5dd963916c1bdb0e3195c1ba17d39a48",
+   "workUnits": 31957935,
+   "processWallSeconds": 16.119592367991572,
+   "archiveMembers": 0,
+   "inBand": true
+  },
+  {
+   "seed": 2,
+   "spec": "work=120000000,cells=15:23:31:39",
+   "fixture": "/var/lib/t3/tmp/csched/parents/parent-seed2.json",
+   "rawDepthMm": 179.006,
+   "independentDepthMm": 179.006,
+   "dualGateValid": true,
+   "fingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+   "workUnits": 27938867,
+   "processWallSeconds": 15.358469791011885,
+   "archiveMembers": 0,
+   "inBand": true
+  },
+  {
+   "seed": 3,
+   "spec": "work=120000000,cells=13:15:17:19",
+   "fixture": "/var/lib/t3/tmp/csched/parents-rest/parent-seed3.json",
+   "rawDepthMm": 176.061,
+   "independentDepthMm": 176.061,
+   "dualGateValid": true,
+   "fingerprint": "3f6606c04a0d4f768c9adcabc79606417bce5c78d5773a9478232188afa906f3",
+   "workUnits": 31395350,
+   "processWallSeconds": 15.40568677795818,
+   "archiveMembers": 0,
+   "inBand": true
+  },
+  {
+   "seed": 4,
+   "spec": "work=120000000,cells=11:15:21:27",
+   "fixture": "/var/lib/t3/tmp/csched/parents-rest/parent-seed4.json",
+   "rawDepthMm": 171.64953207726535,
+   "independentDepthMm": 171.65,
+   "dualGateValid": true,
+   "fingerprint": "6abc2510b5ff79391a79aa18dec829fa16669939ff44f8117a71902ff41eb2ed",
+   "workUnits": 31897492,
+   "processWallSeconds": 16.54076234297827,
+   "archiveMembers": 0,
+   "inBand": false
+  },
+  {
+   "seed": 5,
+   "spec": "work=120000000,cells=15:23:31:39",
+   "fixture": "/var/lib/t3/tmp/csched/parents-rest/parent-seed5.json",
+   "rawDepthMm": 179.05182605364416,
+   "independentDepthMm": 179.052,
+   "dualGateValid": true,
+   "fingerprint": "370efb7fc0c29c08b12908505251e97475cb9ec2f0f4f5b588ebc297c35148bf",
+   "workUnits": 28895961,
+   "processWallSeconds": 15.448433549026959,
+   "archiveMembers": 0,
+   "inBand": true
+  },
+  {
+   "seed": 6,
+   "spec": "work=120000000,cells=13:15:17:19",
+   "fixture": "/var/lib/t3/tmp/csched/parents-rest/parent-seed6.json",
+   "rawDepthMm": 179.6200102363703,
+   "independentDepthMm": 179.62,
+   "dualGateValid": true,
+   "fingerprint": "2e0a15901af40d0575a9974dcbfa37a74513f5934ea53aaa7a14abea6fa3ef53",
+   "workUnits": 31130162,
+   "processWallSeconds": 14.620944881986361,
+   "archiveMembers": 0,
+   "inBand": false
+  },
+  {
+   "seed": 7,
+   "spec": "work=120000000,cells=11:15:21:27",
+   "fixture": "/var/lib/t3/tmp/csched/parents-rest/parent-seed7.json",
+   "rawDepthMm": 179.52233303152792,
+   "independentDepthMm": 179.522,
+   "dualGateValid": true,
+   "fingerprint": "43407723c112eec4c2c39c0104ca8ebd5cfe03d7609ff0d4632bd738543ba8f3",
+   "workUnits": 35396236,
+   "processWallSeconds": 16.659400698030367,
+   "archiveMembers": 0,
+   "inBand": false
+  },
+  {
+   "seed": 8,
+   "spec": "work=120000000,cells=15:23:31:39",
+   "fixture": "/var/lib/t3/tmp/csched/parents-rest/parent-seed8.json",
+   "rawDepthMm": 178.93200000000002,
+   "independentDepthMm": 178.932,
+   "dualGateValid": true,
+   "fingerprint": "e2d2b9b8afcedde1a05fcaa7052da41eef434a0ae7e2a2f59611cc02377e8a5a",
+   "workUnits": 33901660,
+   "processWallSeconds": 15.728845965990331,
+   "archiveMembers": 0,
+   "inBand": true
+  },
+  {
+   "seed": 9,
+   "spec": "work=120000000,cells=13:15:17:19",
+   "fixture": "/var/lib/t3/tmp/csched/parents-rest/parent-seed9.json",
+   "rawDepthMm": 174.96558182288433,
+   "independentDepthMm": 174.966,
+   "dualGateValid": true,
+   "fingerprint": "5bdce43e7c7f9025c4eca42655a3611fb5fd0cc4b204cb7c80c25ed50451631d",
+   "workUnits": 27877624,
+   "processWallSeconds": 15.09239568299381,
+   "archiveMembers": 0,
+   "inBand": true
+  },
+  {
+   "seed": 10,
+   "spec": "work=120000000,cells=11:15:21:27",
+   "fixture": "/var/lib/t3/tmp/csched/parents-rest/parent-seed10.json",
+   "rawDepthMm": 176.3622237458826,
+   "independentDepthMm": 176.362,
+   "dualGateValid": true,
+   "fingerprint": "3d0a08a354f5df5d8d9b0ce968866c2c6608d087e2c6848176693cf1a8ef8743",
+   "workUnits": 29620324,
+   "processWallSeconds": 15.21993320202455,
+   "archiveMembers": 0,
+   "inBand": true
+  },
+  {
+   "seed": 11,
+   "spec": "work=120000000,cells=15:23:31:39",
+   "fixture": "/var/lib/t3/tmp/csched/parents-rest/parent-seed11.json",
+   "rawDepthMm": 171.6141235046606,
+   "independentDepthMm": 171.614,
+   "dualGateValid": true,
+   "fingerprint": "9cbdd4205aa4de29651053632a190f8385fc1116f96305645dc5e527a8117ea5",
+   "workUnits": 32775448,
+   "processWallSeconds": 16.268337488989346,
+   "archiveMembers": 0,
+   "inBand": false
+  }
+ ]
+}

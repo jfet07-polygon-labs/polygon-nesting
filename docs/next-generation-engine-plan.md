@@ -5916,3 +5916,125 @@ deterministic across two processes on 9 of 9; both feature-combination suites
 pass at 1,260 and 1,282 tests.
 
 Evidence, drivers and both retracted batteries: `docs/experiments/m34-wall-price/`.
+## Intra-arm parallelism of mode 34: the seven idle lanes were real, and they were idle during the wrong 22%
+
+Grok's 10 s plan, action 2, starts from a fact this campaign had committed and
+never quantified: one mode-34 arm runs one lane while a mode-26 rung arm runs
+eight (`compression-schedule` README §6.3, which states it and explicitly
+declines to make a wall claim). The action asks for one clock and eight workers
+proposing and scoring moves under it, cadence and floor preserved, feature
+flagged, with determinism in work mode as a hard gate rather than a preference.
+
+The fact is right, and this round is the first to put a number on it. Process
+CPU-seconds over wall-seconds, with the identical mode-0 preamble measured in
+the same shape and subtracted — because the preamble *is* eight-lane and the
+whole-process number (2.71 lanes) hides everything — gives the m34 slice an
+occupancy of **0.99, 0.97 and 1.02 lanes** on the three parents. One lane, as
+claimed.
+
+The inference from it is wrong, and the same instrument says so before anything
+was built. The schedule reports its own `repairMs` and `confirmationMs`, and at
+the design slice the confirmation is **74.9%, 77.4% and 41.3%** of the arm.
+Worse for the proposal, **55-79% of steps repair nothing at all**: a one-micron
+step usually leaves the layout proxy-feasible, the sweep loop breaks
+immediately, and there is nothing to hand eight workers. Amdahl on those two
+numbers, computed before writing a line of the fan-out, predicts 1.25x / 1.25x /
+2.06x for a *perfect* eight-way repair — and the measured fan-out came in below
+even that.
+
+So the round built both halves and priced them separately, and the interesting
+one is the half the action listed under "preserved".
+
+**Where a confirmation's 4.83 ms actually goes, and a correction to
+`compression-schedule` §6.1.** That section explains the cost as "a
+confirmation the validator accepts asks all 1,830 pairs, and at 1,904.8 ns per
+`exactOverlapTest` that is 3.485 ms". The total is right — measured here, mode 34
+minus the preamble, `publicationValidate` is 1,559.3 ms over 317 confirmations,
+**4.92 ms each**. The attribution is not. `exactOverlapTest` over the same runs
+is **41.3 ms in 30,985 calls**: **98 calls per confirmation, 0.13 ms, 2.6% of
+it.** §6.1 multiplied 1,830 pairs by a per-*narrow-phase* cost, and its own §6.3
+already contains the reason not to — the span and the counter are both entered
+past the broad-phase bounds reject. The error is the same ~18x factor §6.3 names
+for the self-meter, applied by accident in the opposite direction.
+
+The other 4.79 ms is `validate_publication`'s own `n(n-1)/2` loop over
+`minimum_boundary_distance`: the exact-clearance contract, walking every edge of
+one material set against every edge of the other, with no broad phase and no
+phase span. No round in this campaign had seen it, because nothing was
+instrumented to.
+
+**The two levers, measured.** `parallel-compression-schedule`, off by default,
+stacked on `compression-schedule`, spec keys `lanes=` and `pconfirm=` for a
+replay and `m34lanes=` / `m34pconfirm=` for the coordinator's own slice.
+
+`lanes=8` — the fan-out the action specified — occupies the lanes it was
+supposed to: repair does 10.0x the candidate queries in 1.65x the wall, about
+**6.1x** effective throughput, and pinned to one CPU the same arm takes 3,126 ms
+of repair against 621 ms unpinned, which is the direct proof the job pool is
+reached rather than an inference from a rate. It also loses on every gate the
+action set. At equal **work** on the twelve pinned 171-179 mm parents it is a
+paired median **−0.867 mm, 1 win against 11 losses**, because the fan-out
+charges every worker it dispatches — enforced by a test — and therefore walks
+618 steps where the serial schedule walks 1,568. At equal **walk** it is
+**0.912x wall**, 0 of 30 rounds above parity, for a paired median of +0.028 mm.
+On the bare-request 10 s curve it is **−2.158 mm, 0 wins in 9**.
+
+`pconfirm=1` — the confirmation, spread over the pool with a lowest-index
+reduce so the verdict and its message stay the serial ones — is **2.623x** on
+the m34 slice (30 of 30 paired rounds above parity, worst round 1.587x) and
+1.431x on the whole process, at an occupancy of 0.99 → 3.16 lanes. At equal work
+it is **0.000 mm on 12 of 12 cells**, and leaf-by-leaf its whole output document
+differs from the serial schedule's in **exactly one leaf**: the diagnostic flag
+that says it was armed. Every placement, every step row, every counter is
+identical.
+
+On the anytime curve from the bare request, 3 seeds x 3 rounds paired, that
+buys **+1.882 mm at 10 s and +3.359 mm at 30 s, 9 of 9 wins at both**, and at
+3 s it ties on 9 of 9 — the perfect control, because at 3 s the coordinator
+schedules no mode-34 action at all. The mechanism is a counter, not a story: the
+faster slice fits **two** m34 calls into 10 s where the serial one fits one, and
+four into 30 s where it fits three. `lanes8` fits *fewer* — two at 30 s against
+three — which is its 0.912x showing up as lost actions.
+
+Grok's hypothesis was "this brings 10 s toward the 40M-work quality (~166), not
+to 150". **It lands at 172.288**, about a quarter of the way, and it gets there
+from the other lever. At 30 s, 163.927 is past the 40M band and inside the 120M
+one (162.161 / 163.927 / 164.004), so the wall-versus-work gap §2a estimated at
+4-6 mm is closed at 30 s and a third closed at 10 s.
+
+**The determinism gate is met as worded.** Four arms x three parents x three
+processes under a work cap: 12 of 12 cells, one distinct whole-document digest
+each. In-process, the same eight-worker schedule on a one-thread pool and an
+eight-thread pool produces an identical report including every step row and the
+lane-win histogram. The argument behind the measurement is structural: a
+worker's entire input is `(frontier, weights, depth, step, worker ordinal)`, the
+job-pool maps return results in input order whatever order the workers finish
+in, and the reduce is a total order whose last tiebreak is the worker ordinal.
+
+That gate also found the third defect in this campaign's reproducibility
+instrument, and found it the only way it could be found — with a control. The
+first run reported three distinct digests for **every** cell including the
+`serial` shipped schedule, which is deterministic by construction. The leaf diff
+said why: the only fields that moved were `repairMs` and `confirmationMs`, the
+compression-schedule round's own wall-clock decomposition, never added to the
+`VOLATILE` set the SE(2) round repaired for exactly this class of bug. Without
+the serial arm in the battery this would have been written up as the parallel
+schedule failing its own gate.
+
+All four pinned gates reproduce bit-for-bit on four binaries — HEAD, flag-off,
+`compression-schedule`-only, and the armed build with an unarmed spec — as whole
+documents and not only on the pinned scalars. All three suites pass. The twelve
+gate parents were re-derived on the way in: seeds 3-11 were regenerated from the
+bare request and reproduce the committed depth, fingerprint and work-unit spend
+to the digit on 9 of 9, which independently confirms that round's parent band
+from a different binary.
+
+What the round recommends next is not in its brief. `minimum_boundary_distance`
+was spread across eight lanes, not made cheaper; the publication contract costs
+4.8 ms per layout and is `O(n^2 * edges^2)` with no broad phase, on **every**
+publication in the engine rather than only mode 34's. A bounds reject there —
+the one the collision tier already has — is plausibly worth more than any
+parallelism, and it is worth it everywhere.
+
+Evidence, drivers and every battery:
+`docs/experiments/parallel-compression-schedule/`.

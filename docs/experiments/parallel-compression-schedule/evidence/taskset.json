@@ -1,0 +1,57 @@
+{
+ "note": "one CPU (taskset -c 2) against all sixteen, equal-walk shape, seed 0. The direct proof that each lever reaches the job pool: a lever that silently fell back to serial iteration would not move.",
+ "arms": {
+  "1cpu": {
+   "serial": {
+    "repairMs": 438.5058150000062,
+    "confirmationMs": 1563.6366850000002,
+    "sliceMs": 2002.1425000000063,
+    "candidateQueries": 352650,
+    "stepsTaken": 1500,
+    "rawSourceDepthMm": 173.554
+   },
+   "lanes8": {
+    "repairMs": 3155.507074999998,
+    "confirmationMs": 1497.9509800000005,
+    "sliceMs": 4653.458054999999,
+    "candidateQueries": 3540584,
+    "stepsTaken": 1500,
+    "rawSourceDepthMm": 173.31637368766053
+   },
+   "pconfirm": {
+    "repairMs": 440.3506480000053,
+    "confirmationMs": 1579.219873,
+    "sliceMs": 2019.5705210000053,
+    "candidateQueries": 352650,
+    "stepsTaken": 1500,
+    "rawSourceDepthMm": 173.554
+   }
+  },
+  "all": {
+   "serial": {
+    "repairMs": 436.64706400000136,
+    "confirmationMs": 1570.3693049999995,
+    "sliceMs": 2007.0163690000009,
+    "candidateQueries": 352650,
+    "stepsTaken": 1500,
+    "rawSourceDepthMm": 173.554
+   },
+   "lanes8": {
+    "repairMs": 628.4527830000018,
+    "confirmationMs": 1536.6960940000001,
+    "sliceMs": 2165.148877000002,
+    "candidateQueries": 3540584,
+    "stepsTaken": 1500,
+    "rawSourceDepthMm": 173.31637368766053
+   },
+   "pconfirm": {
+    "repairMs": 439.6099320000036,
+    "confirmationMs": 318.36927699999995,
+    "sliceMs": 757.9792090000035,
+    "candidateQueries": 352650,
+    "stepsTaken": 1500,
+    "rawSourceDepthMm": 173.554
+   }
+  }
+ }
+}

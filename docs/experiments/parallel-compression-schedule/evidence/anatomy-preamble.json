@@ -1,0 +1,54 @@
+{
+ "binary": "/var/lib/t3/tmp/pl34/bin/base-csched",
+ "spec": "",
+ "mode": 0,
+ "label": "preamble",
+ "dropMm": 0.3,
+ "rows": [
+  {
+   "processWallSeconds": 2.235172024986241,
+   "usage": {
+    "userSeconds": "10.52",
+    "systemSeconds": "0.05",
+    "cpuPercent": "473%",
+    "maxRssKb": "31452"
+   },
+   "occupancyLanes": 4.73,
+   "processCandidateQueries": 5851533,
+   "processExactPairTests": 585002,
+   "processWorkUnits": 8776543,
+   "seed": 0,
+   "parentRawDepthMm": 174.20812003998896
+  },
+  {
+   "processWallSeconds": 2.3385115999844857,
+   "usage": {
+    "userSeconds": "11.24",
+    "systemSeconds": "0.04",
+    "cpuPercent": "483%",
+    "maxRssKb": "31424"
+   },
+   "occupancyLanes": 4.83,
+   "processCandidateQueries": 6701483,
+   "processExactPairTests": 585123,
+   "processWorkUnits": 9627098,
+   "seed": 1,
+   "parentRawDepthMm": 176.05599999999998
+  },
+  {
+   "processWallSeconds": 2.356284047011286,
+   "usage": {
+    "userSeconds": "10.76",
+    "systemSeconds": "0.05",
+    "cpuPercent": "459%",
+    "maxRssKb": "31420"
+   },
+   "occupancyLanes": 4.59,
+   "processCandidateQueries": 6033382,
+   "processExactPairTests": 585166,
+   "processWorkUnits": 8959212,
+   "seed": 2,
+   "parentRawDepthMm": 179.006
+  }
+ ]
+}

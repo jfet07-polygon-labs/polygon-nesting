@@ -1,0 +1,111 @@
+{
+ "note": "the four pinned regression gates on every binary this round produced. `mine-parallel` is the ARMED build run with an unarmed spec: the gates are modes 20 and 22 and never reach mode 34, so an armed build must still be the shipped engine here. Digests are recomputed with this round's repaired `doc_digest` (see drivers/lib.py) and the leaf diff against base-jagua is reported next to each, so a match is a match on leaves and not only on a hash.",
+ "pinned": {
+  "g1": [
+   206.869,
+   "8a7737381238fa4d"
+  ],
+  "g2": [
+   159.09233022733062,
+   "fa01012af1d559ae"
+  ],
+  "g3": [
+   159.07876040364795,
+   "e28fba007f8031d4"
+  ],
+  "g4": [
+   164.0375677990678,
+   "49f094d7e59a9008"
+  ]
+ },
+ "allPinnedValuesHit": {
+  "base-jagua": true,
+  "mine-jagua": true,
+  "mine-csched": true,
+  "mine-parallel": true
+ },
+ "perGateHit": {
+  "base-jagua": {
+   "g1": true,
+   "g2": true,
+   "g3": true,
+   "g4": true
+  },
+  "mine-jagua": {
+   "g1": true,
+   "g2": true,
+   "g3": true,
+   "g4": true
+  },
+  "mine-csched": {
+   "g1": true,
+   "g2": true,
+   "g3": true,
+   "g4": true
+  },
+  "mine-parallel": {
+   "g1": true,
+   "g2": true,
+   "g3": true,
+   "g4": true
+  }
+ },
+ "docDigestsMatchBaseJagua": {
+  "base-jagua": true,
+  "mine-jagua": true,
+  "mine-csched": true,
+  "mine-parallel": true
+ },
+ "differingLeavesVsBaseJagua": {
+  "base-jagua": {
+   "g1": 0,
+   "g2": 0,
+   "g3": 0,
+   "g4": 0
+  },
+  "mine-jagua": {
+   "g1": 0,
+   "g2": 0,
+   "g3": 0,
+   "g4": 0
+  },
+  "mine-csched": {
+   "g1": 0,
+   "g2": 0,
+   "g3": 0,
+   "g4": 0
+  },
+  "mine-parallel": {
+   "g1": 0,
+   "g2": 0,
+   "g3": 0,
+   "g4": 0
+  }
+ },
+ "docDigests": {
+  "base-jagua": {
+   "g1": "dd3e64a90510db8235e9ef435e914a250317b85d5603c0c385fea225e968871b",
+   "g2": "ae0b232b08801cacd58151da55517b8f75f15e509da43920084e619bc70d1d73",
+   "g3": "c993daf64b45411f60a70fd1632ef870a10a908c5ba39060d53e8c8eb885a0a6",
+   "g4": "0d6cce11e994bd85ccc23e89ed80fd004798ae74e5c95168d81114835ff553cf"
+  },
+  "mine-jagua": {
+   "g1": "dd3e64a90510db8235e9ef435e914a250317b85d5603c0c385fea225e968871b",
+   "g2": "ae0b232b08801cacd58151da55517b8f75f15e509da43920084e619bc70d1d73",
+   "g3": "c993daf64b45411f60a70fd1632ef870a10a908c5ba39060d53e8c8eb885a0a6",
+   "g4": "0d6cce11e994bd85ccc23e89ed80fd004798ae74e5c95168d81114835ff553cf"
+  },
+  "mine-csched": {
+   "g1": "dd3e64a90510db8235e9ef435e914a250317b85d5603c0c385fea225e968871b",
+   "g2": "ae0b232b08801cacd58151da55517b8f75f15e509da43920084e619bc70d1d73",
+   "g3": "c993daf64b45411f60a70fd1632ef870a10a908c5ba39060d53e8c8eb885a0a6",
+   "g4": "0d6cce11e994bd85ccc23e89ed80fd004798ae74e5c95168d81114835ff553cf"
+  },
+  "mine-parallel": {
+   "g1": "dd3e64a90510db8235e9ef435e914a250317b85d5603c0c385fea225e968871b",
+   "g2": "ae0b232b08801cacd58151da55517b8f75f15e509da43920084e619bc70d1d73",
+   "g3": "c993daf64b45411f60a70fd1632ef870a10a908c5ba39060d53e8c8eb885a0a6",
+   "g4": "0d6cce11e994bd85ccc23e89ed80fd004798ae74e5c95168d81114835ff553cf"
+  }
+ }
+}

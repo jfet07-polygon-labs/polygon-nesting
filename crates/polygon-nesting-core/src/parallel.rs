@@ -409,6 +409,47 @@ where
     }
 }
 
+/// [`map_slice_with_job_pool`] over items the closure may *mutate*, with the
+/// item's index handed to the closure alongside it.
+///
+/// The distinction matters for a worker that must live longer than one
+/// dispatch. `map_slice_with_job_pool` can only lend its items out by shared
+/// reference, so a caller wanting persistent per-worker state has to rebuild
+/// that state on every call - and for the compression schedule's repair
+/// workers that state is a warm surrogate and pair-NFP cache, which is most of
+/// what makes the second dispatch cheaper than the first. This lends each
+/// worker out by unique reference instead, so the pool's workers keep their
+/// caches across steps.
+///
+/// The ordering guarantee is the same one and for the same reason: Rayon's
+/// indexed `collect` writes results by input position, so the output `Vec` is
+/// in input order whatever order the workers finish in. That is what lets a
+/// caller reduce over the results with the item index as a deterministic
+/// tiebreak.
+pub fn map_slice_mut_with_job_pool<T, R, F>(items: &mut [T], map: F) -> Vec<R>
+where
+    T: Send,
+    R: Send,
+    F: Fn(usize, &mut T) -> R + Sync + Send,
+{
+    use rayon::prelude::*;
+    if has_job_pool() {
+        with_job_pool(|| {
+            items
+                .par_iter_mut()
+                .enumerate()
+                .map(|(index, item)| map(index, item))
+                .collect()
+        })
+    } else {
+        items
+            .iter_mut()
+            .enumerate()
+            .map(|(index, item)| map(index, item))
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

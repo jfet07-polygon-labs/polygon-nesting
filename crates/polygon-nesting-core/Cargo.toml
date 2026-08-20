@@ -252,6 +252,42 @@ constructor-census = []
 # quality gate rather than a document diff. See
 # `search::compression_schedule` and docs/experiments/compression-schedule/.
 compression-schedule = []
+# Occupies the seven worker lanes a mode-34 arm leaves idle: the same depth
+# clock, driven by W workers instead of one.
+#
+# Stacked on `compression-schedule` and off by default. It compiles in two
+# independent levers, each with its own spec key and each priced separately in
+# docs/experiments/parallel-compression-schedule/:
+#
+#   `lanes=W`    the repair half. On a step whose proxy tier is infeasible, W
+#                workers each repair a private clone of the frontier under the
+#                *same* global depth, from per-(step, worker) derived seeds,
+#                and a reduce in worker-index order adopts the best. The clock,
+#                the monotone floor, the deepest-confirmed slot and the
+#                confirmation cadence stay where they were - a worker never
+#                steps the schedule and never confirms.
+#   `pconfirm=1` the confirmation half. One whole-layout exact validation, its
+#                61 collision-polygon builds and its 1,830 pair questions
+#                spread over the job pool, reduced on the lowest violating pair
+#                index so the verdict and its message are the serial ones.
+#
+# Both are deterministic by construction rather than by hope, which is the
+# hard gate this feature was asked to clear: every worker's input is a function
+# of (frontier, step, worker ordinal), the reduce is a total order whose final
+# tiebreak is the worker index, and the counters are summed in that same order.
+# Two processes in work-budget mode therefore produce the same document.
+#
+# `lanes` is NOT semantics-preserving when armed - a best-of-W repair takes a
+# different trajectory than one lane's, and it charges W times the candidate
+# queries - so it needs a matched-arm quality gate, not a document diff.
+# `pconfirm` is semantics-preserving on every accepted confirmation and differs
+# from the serial validator only in the `exactPairTests` a *refused* one
+# charges; see the README's determinism section for the measured refusal rate.
+#
+# With the feature off none of it is compiled: the settings have no field
+# naming either lever, the repair loop is the shipped serial one, and the four
+# pinned gates reproduce bit-for-bit.
+parallel-compression-schedule = ["compression-schedule"]
 # A diagnostic-only companion to `general_micro_legalization`'s translation-only
 # global program. It asks a different question from the repair pass: not "can
 # this front be pushed open at all" but "how much shallower can the PUBLISHED
