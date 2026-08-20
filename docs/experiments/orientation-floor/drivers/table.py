@@ -13,8 +13,13 @@ INDEX = ('/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/'
 PRIOR = 155.42229074464285
 
 LINE = [
+    # Not "a certified fixpoint of 36 arms": `probeArms: 36` folds the 6 replay
+    # arms into the search count, so the battery is 30 search arms plus 6
+    # replays, and a finite negative on a declared battery is not a fixpoint.
+    # This string is the one the README table carries; keep the two in step.
     ('record-line-cascade/pinned-fs-155.4223.json', PRIOR,
-     'the prior record, a certified fixpoint of 36 arms'),
+     'the prior record, a finite negative on a declared battery of 30 search '
+     "arms + 6 replays (not a certified fixpoint — see that round's §7)"),
     ('pinned-fs-155.42197.json', 155.42196626072334,
      'flatten 0.001 -> mode 33 p0.05, accepted rung **0.00128**'),
     ('pinned-fs-155.41964177680.json', 155.4196417768017,

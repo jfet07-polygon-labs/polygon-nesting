@@ -5126,8 +5126,13 @@ reached **unaided**: 164.0375677990678 → 159.668 → 158.668 → … → 155.4
 record-line placement imported at any step. The pin replays through modes 27, 30
 and 22 seeds 0-3 on the pristine default-feature binary — which contains no mode
 34 at all — at **0 ULPs** from the declared raw with the fingerprint unchanged,
-and it is a certified fixpoint of 36 further probe arms including mode 26 and
-mode 34 at four step sizes.
+and it holds a finite negative on a declared battery of 30 further search arms
+(the certification's `probeArms: 36` folds in the 6 replay arms above) including
+mode 26 and mode 34 at three distinct step sizes — 0.25, 1 and 0.1, with
+`step=0.25` also probed at a second work budget, which is four *specs* but not
+four step sizes. That is a negative on the arms that were declared and run, not
+a certified fixpoint: see `docs/experiments/record-line-cascade/README.md` §7
+for what the battery does and does not cover.
 
 ### Mode 34 is an operator with a precondition, and the precondition is itself
 
@@ -5177,8 +5182,8 @@ round ever went barren above it, and run separately against the certified
 fixpoint it is barren too: 24 arms over two ancestors, both record co-states,
 three cut fractions and both directions published 13 layouts and **none** below
 the incumbent, the best 2.7 mm above it. The 155 mm goal is 0.422 mm away and the final state
-is a certified fixpoint, so closing it needs an instrument this round did not
-fire. And every number here is one request, one fixture, work-budgeted or seeded
+holds a finite negative on the declared battery, so closing it needs an
+instrument this round did not fire. And every number here is one request, one fixture, work-budgeted or seeded
 arms on a shared box, with no wall-clock claim made anywhere.
 
 Evidence, drivers, the nine pinned states, the step sweeps, the three negatives
@@ -5188,7 +5193,8 @@ pins under
 
 ## The orientation floor was still a floor, and the repair tier — not the entry — was the wall
 
-The previous entry ended on a certified fixpoint and a clear demand: the last
+The previous entry ended on a finite negative over a declared battery and a
+clear demand: the last
 0.422 mm needs "an instrument this round did not fire rather than more of the
 same". Four were fired. They compose, they are all cheap, and every one was
 found by reading a diagnostic the engine was already emitting rather than by
@@ -5196,11 +5202,12 @@ widening a grid. The record moved **155.42229074464285 → 155.26442950832842**,
 0.158 mm, in 7,204 arms.
 
 The fourth is the one worth carrying forward, because of *when* it was found:
-after the third had run to a fully certified fixpoint. That certificate was
-honest and it was also a statement about the four instruments in the battery,
-and inventing a fifth entry family took another 0.066 mm out of it in eighteen
-rounds. "Certified fixpoint" means "fixpoint of these instruments", and this
-round broke four of them.
+after the third had run its whole battery to a negative. That battery was
+honest and it was also a statement about the four instruments in it, and
+inventing a fifth entry family took another 0.066 mm out of it in eighteen
+rounds. This is why the rounds no longer say "certified fixpoint": the claim
+the batteries actually support is "none of *these* instruments found anything",
+and this round walked past four such negatives.
 
 ### The floor's own symptom had already been written down
 
@@ -5219,7 +5226,7 @@ in the request, below one quantum, so the stream would be emitting angles the
 grid rounds away. The floor is now at the grid rather than above it, and this
 particular lever is spent.
 
-The A/B on the certified fixpoint is the whole argument in one table: the same
+The A/B on the battery-negative pin is the whole argument in one table: the same
 22-arm flatten grid, nine rungs versus ten, **0 below versus 2 below**. The
 winning arm accepted exactly one pose — `acceptedAnchorLocal = 0`,
 `acceptedStation = 0`, one piece rotated by exactly +0.00128 degrees — and the
@@ -5269,8 +5276,9 @@ themselves ejected.
 
 Tier I rotates the k deepest pieces **in place**, about each one's own
 transformed bounding-box centre, by rungs drawn from the ladder itself. On the
-certified fixpoint at 155.33041597699957 — a state that had just survived 138
-certification arms and 110 further compositions — 80 rotation-entry arms
+battery-negative pin at 155.33041597699957 — a state that had just survived 132
+certification search arms (plus its 6 replays, for `probeArms: 138`) and 110
+further compositions — 80 rotation-entry arms
 published 3 below. The 0.0006 mm is not the point. The point is that tier I then
 broke **three consecutive fixpoints** nothing else could touch (rounds whose
 only arms below were rotation entries, 4, 4 and 2 of them), and the state the
@@ -5320,9 +5328,10 @@ seed-invariant, 18 arms each.
 
 The final state replays `exactValid` and `contractValid` at **0 ULPs** on the
 **pristine base-commit binary**, which knows nothing of the new rung — the
-ladder change is what found the state, not what verifies it — and it is a
-certified fixpoint of 132 further probe arms including tier H's own grid and
-both ladder generations. All four pinned gates hit, and the whole-document
+ladder change is what found the state, not what verifies it — and it holds a
+finite negative on a declared battery of 132 further search arms (plus 6
+replays, for `probeArms: 138`) including tier H's own grid and both ladder
+generations. All four pinned gates hit, and the whole-document
 comparison of the two binaries differs in **0** of 3,262/3,243/3,243/3,243
 fields, which is the required result: the gates are modes 20 and 22 and neither
 enters the orientation stream.
@@ -5336,8 +5345,8 @@ constant, a frontier stack four times wider than the grid probing it, a
 `componentsRefused` counter sitting next to a `componentsRepaired` one, and the
 observation that every entry the line had was a translation — and not one of
 them was a parameter of the search. The corollary is the process finding:
-a certified fixpoint bounds the instruments in the battery, and the way past one
-is to add an instrument, not arms. Everything here is one request, one contract,
+a finite negative bounds the instruments in the battery and nothing else, and
+the way past one is to add an instrument, not arms. Everything here is one request, one contract,
 work-budgeted or seeded arms on a deliberately oversubscribed box, with no
 wall-clock claim made anywhere.
 

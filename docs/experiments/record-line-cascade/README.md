@@ -1,8 +1,10 @@
 # The record line: a sub-grid clamp, and 3.6 mm off the record
 
 The standing record on the true 5.0/5.0 exact-clearance contract was
-**159.07876040364792 mm**, and its parent was a certified fixpoint of 40 probe
-arms. The from-scratch line — the same contract, the same `''` 0.0005 CLI tail,
+**159.07876040364792 mm**, and its parent held a finite negative on a declared
+battery of 34 search arms plus 6 replays (`cert.json`'s `probeArms: 40` folds
+the replays into the search count, the same way this round's own `probeArms: 36`
+does — see §7). The from-scratch line — the same contract, the same `''` 0.0005 CLI tail,
 and the standing rule that it may never import a record-line placement — stood
 at 159.668 mm after the compression-schedule port.
 
@@ -240,9 +242,13 @@ non-positive step to the canonical unit.
 | half | what | result |
 |---|---|---|
 | replay | modes 27, 30 and 22 seeds 0-3, on the **default-feature** binary that contains no mode 34 at all | 6 of 6 `exactValid` **and** `contractValid`, all six reproducing fingerprint `c62879b4…` at **0 ULPs** from the declared raw |
-| fixpoint | 30 search arms (plus the 6 replay arms above, for `probeArms: 36`): mode 31 × 4 tiny steps, the flatten grid × 6 deltas × 2 slacks → mode 33, mode 26 × 3 drops × 2 seeds, and **mode 34 × 2 seeds over three distinct step sizes (0.25, 1, 0.1) plus a repeat of `step=0.25` at a 60M-unit budget — not four step sizes** | **0 below the incumbent** |
+| battery | 30 search arms (plus the 6 replay arms above, for `probeArms: 36`): mode 31 × 4 tiny steps, the flatten grid × 6 deltas × 2 slacks → mode 33, mode 26 × 3 drops × 2 seeds, and **mode 34 × 2 seeds over three distinct step sizes (0.25, 1, 0.1) plus a repeat of `step=0.25` at a 60M-unit budget — not four step sizes** | **0 below the incumbent** |
 
-`replayPass: true`, `belowIncumbent: 0`, `fixpoint: true` in the raw JSON. The
+`replayPass: true`, `belowIncumbent: 0`, `fixpoint: true` in the raw JSON as it
+was produced. (That field has since been renamed `finiteNegativeOnBattery` in
+`drivers/certify_full.py`, and the driver now also emits `searchArms` and
+`replayArms` so the 36-vs-30 split is in the document rather than only in this
+prose. The archived JSON is left exactly as it was produced.) The
 right English label for that is a **finite negative on the declared
 battery** — not a "certified fixpoint" — for two reasons. First, `probeArms:
 36` folds the 6 replay arms into the search count; only 30 arms actually probe
