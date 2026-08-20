@@ -126,6 +126,18 @@ use crate::search::general_fast::{
     GeneralFastPlacement, GeneralFastSettings,
 };
 
+/// The SE(2) rigidity certificate: a diagnostic that asks how much shallower
+/// this module's own contact front can be made by a bounded SE(2) motion.
+///
+/// A child module rather than a sibling so it can reuse this one's private
+/// geometry (`Outline`, `build_outline`, `measure_approach`, `Contracts`)
+/// without any of it becoming crate-visible, and gated so that a default build
+/// contains none of it. It never runs inside a request: the only caller is a
+/// dedicated CLI path in `general_request_benchmark`. See
+/// `docs/experiments/se2-rigidity/`.
+#[cfg(feature = "se2-rigidity-certificate")]
+pub mod se2_certificate;
+
 /// Grid slack added on top of each exact contract so the projection lands
 /// strictly inside it rather than on its boundary.
 const MICRO_LEGALIZATION_MARGIN_MM: f64 = 0.002;
@@ -820,6 +832,27 @@ struct Approach {
     /// the pair. `None` when the outlines meet, where the distance function is
     /// flat and carries no gradient.
     direction: Option<(f64, f64)>,
+    /// The closest-approach point pair itself, `(on the first, on the second)`,
+    /// in the *first* outline's frame — which is the frame `measure_approach`
+    /// measures in, so the second point carries the pair's relative
+    /// translation and a caller that wants it in the second outline's own
+    /// frame must subtract that shift back off.
+    ///
+    /// Compiled out entirely without the certificate feature. It is only ever
+    /// read to build a rotational coefficient, which no production path has,
+    /// and `global_legalize` runs this function on every pair of every round —
+    /// so carrying two extra points through it, and through the `Copy` this
+    /// struct relies on, would be a cost on the shipping path bought for a
+    /// diagnostic. Sol review 6, §3 called that out on the previous branch,
+    /// where the field was unconditional.
+    ///
+    /// `Some` **including at a touch**. A contact at distance zero is exactly
+    /// where a rotational coefficient matters most — those are the rows that
+    /// are actually holding the front — and returning `None` there would give
+    /// every active contact a zero rotational coefficient, which reads as "no
+    /// rotation can open this pair" when the truth is "nobody measured".
+    #[cfg(feature = "se2-rigidity-certificate")]
+    witness: Option<(IrregularPoint, IrregularPoint)>,
 }
 
 /// The separation each gate demands, before the solver's margin is added.
@@ -1844,6 +1877,30 @@ fn measure_approach(
                         && segments_touch_or_cross(first_start, first_end, second_start, second_end)
                     {
                         touching = true;
+                        // Keep the contact itself as the witness rather than
+                        // dropping it. `segment_witness` with no ceiling is the
+                        // closest endpoint-to-segment pair of the two touching
+                        // segments, which at a touch is the contact point (its
+                        // distance is zero whenever an endpoint lies on the
+                        // other segment, which is what a touch between two
+                        // grid-snapped outlines is). For a *proper* crossing —
+                        // an overlap, not a contact — it is the nearest
+                        // endpoint pair instead, which is an approximation; the
+                        // certificate that reads this field says so, and never
+                        // treats a linearized row as an exact statement about
+                        // the geometry.
+                        #[cfg(feature = "se2-rigidity-certificate")]
+                        {
+                            witness = segment_witness(
+                                first_start,
+                                first_end,
+                                second_start,
+                                second_end,
+                                f64::INFINITY,
+                            )
+                            .map(|(_distance, from, to)| (from, to))
+                            .or(witness);
+                        }
                         break 'outer;
                     }
                     if let Some((distance, from, to)) =
@@ -1861,12 +1918,16 @@ fn measure_approach(
         return Approach {
             distance: 0.0,
             direction: None,
+            #[cfg(feature = "se2-rigidity-certificate")]
+            witness,
         };
     }
     let direction = witness.and_then(|(from, to)| normalize(from.x - to.x, from.y - to.y));
     Approach {
         distance: best,
         direction,
+        #[cfg(feature = "se2-rigidity-certificate")]
+        witness,
     }
 }
 

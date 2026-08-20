@@ -114,11 +114,39 @@ def gate_check(gate, doc):
 
 # Fields that legitimately differ between two runs of the same binary, or
 # between a profiled and an unprofiled build. Everything else is compared.
+#
+# This list was incomplete as inherited, which made `doc_digest` useless as a
+# reproducibility instrument: it dropped `elapsedMs` but not the five summary
+# statistics the benchmark computes *from* `elapsedMs`, so two runs of the SAME
+# binary on the SAME gate hashed differently every time. Measured on this
+# branch before the fix, flag-off against flag-off, all four gates differed. A
+# digest mismatch therefore proved nothing and a match would have been luck.
+#
+# The five quartile/extremum fields below are the fix. `executableSha256` is
+# the second addition and a different kind: it is the binary's own identity, the
+# analogue of the `buildIdentity` and `binaryPath` already here, and it MUST
+# differ whenever two binaries are compared - which is the entire use of this
+# function. Leaving it in the digest made every cross-binary comparison fail on
+# the one field guaranteed to differ.
+#
+# `docdiff.py` is the paired instrument that measured this and is the one to
+# reach for when a digest does mismatch: it reports which leaf paths differ,
+# against a same-binary noise floor.
 VOLATILE = {
     'elapsedMs', 'elapsedSeconds', 'engineElapsedSeconds', 'wallMs',
     'durationMs', 'timestamp', 'totalMs', 'ms', 'processWallSeconds',
     'phaseProfile', 'phases', 'profile', 'leafSeconds', 'engineVersion',
     'buildIdentity', 'binaryPath', 'peakResidentBytes', 'allocatedBytes',
+    # Summary statistics over `elapsedMs`; wall-clock, one per run.
+    'medianElapsedMs', 'minElapsedMs', 'maxElapsedMs',
+    'firstQuartileElapsedMs', 'thirdQuartileElapsedMs',
+    # Build and source identity. `executableSha256` is the binary's own hash and
+    # two binaries are the point of the comparison; the rest describe the
+    # worktree the binary was built from, and `engineWorktreeStatus` in
+    # particular changes every time any file in the tree is edited - so leaving
+    # it in makes the digest a function of the author's editor, not the engine.
+    'executableSha256', 'relevantSourceTreeSha256', 'engineWorktreeStatus',
+    'engineCommit', 'engineWorktreeDirty',
 }
 
 

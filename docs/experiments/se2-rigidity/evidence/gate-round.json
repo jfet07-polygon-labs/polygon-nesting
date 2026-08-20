@@ -1,0 +1,252 @@
+{
+ "binaries": {
+  "off": "/var/lib/t3/tmp/se2-bin-off",
+  "on": "/var/lib/t3/tmp/se2-bin-on"
+ },
+ "gates": {
+  "g1": {
+   "off": {
+    "depths": [
+     206.869,
+     207.239,
+     211.194,
+     211.825,
+     213.073,
+     214.207,
+     214.738,
+     222.116
+    ],
+    "fingerprints": [
+     "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+     "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+    ],
+    "hit": true,
+    "wallSeconds": 26.41,
+    "docDigest": "7a4b0288009a6ca2a7a803d6f6206d0c5ea3ba042f062cfef4ca9a79a2c0de63"
+   },
+   "off-repeat": {
+    "depths": [
+     206.869,
+     207.239,
+     211.194,
+     211.825,
+     213.073,
+     214.207,
+     214.738,
+     222.116
+    ],
+    "fingerprints": [
+     "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+     "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+    ],
+    "hit": true,
+    "wallSeconds": 26.35,
+    "docDigest": "7a4b0288009a6ca2a7a803d6f6206d0c5ea3ba042f062cfef4ca9a79a2c0de63"
+   },
+   "on-unarmed": {
+    "depths": [
+     206.869,
+     207.239,
+     211.194,
+     211.825,
+     213.073,
+     214.207,
+     214.738,
+     222.116
+    ],
+    "fingerprints": [
+     "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+     "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+    ],
+    "hit": true,
+    "wallSeconds": 26.38,
+    "docDigest": "7a4b0288009a6ca2a7a803d6f6206d0c5ea3ba042f062cfef4ca9a79a2c0de63"
+   },
+   "ALL_DIGESTS_MATCH": true,
+   "noiseFloorPaths": [
+    "/elapsedMs/0",
+    "/firstQuartileElapsedMs",
+    "/maxElapsedMs",
+    "/medianElapsedMs",
+    "/minElapsedMs",
+    "/thirdQuartileElapsedMs"
+   ],
+   "claimPaths": [
+    "/elapsedMs/0",
+    "/executableSha256",
+    "/firstQuartileElapsedMs",
+    "/maxElapsedMs",
+    "/medianElapsedMs",
+    "/minElapsedMs",
+    "/thirdQuartileElapsedMs"
+   ],
+   "claimPathsOutsideFloor": [
+    "/executableSha256"
+   ]
+  },
+  "g2": {
+   "off": {
+    "raw": 159.09233022733062,
+    "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+    "depth": 159.092,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true,
+    "wallSeconds": 3.24,
+    "docDigest": "18631dad1272c7baea90dad25a98278e7f06958bdf394c97800dda3a06ce1286"
+   },
+   "off-repeat": {
+    "raw": 159.09233022733062,
+    "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+    "depth": 159.092,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true,
+    "wallSeconds": 3.17,
+    "docDigest": "18631dad1272c7baea90dad25a98278e7f06958bdf394c97800dda3a06ce1286"
+   },
+   "on-unarmed": {
+    "raw": 159.09233022733062,
+    "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+    "depth": 159.092,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true,
+    "wallSeconds": 3.1,
+    "docDigest": "18631dad1272c7baea90dad25a98278e7f06958bdf394c97800dda3a06ce1286"
+   },
+   "ALL_DIGESTS_MATCH": true,
+   "noiseFloorPaths": [
+    "/elapsedMs/0",
+    "/firstQuartileElapsedMs",
+    "/maxElapsedMs",
+    "/medianElapsedMs",
+    "/minElapsedMs",
+    "/thirdQuartileElapsedMs"
+   ],
+   "claimPaths": [
+    "/elapsedMs/0",
+    "/executableSha256",
+    "/firstQuartileElapsedMs",
+    "/maxElapsedMs",
+    "/medianElapsedMs",
+    "/minElapsedMs",
+    "/thirdQuartileElapsedMs"
+   ],
+   "claimPathsOutsideFloor": [
+    "/executableSha256"
+   ]
+  },
+  "g3": {
+   "off": {
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "depth": 159.079,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true,
+    "wallSeconds": 3.54,
+    "docDigest": "d9a3666c96b3c414a0a398e70e1da0a636b764c61985d0ca76b63b450c5270e9"
+   },
+   "off-repeat": {
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "depth": 159.079,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true,
+    "wallSeconds": 3.43,
+    "docDigest": "d9a3666c96b3c414a0a398e70e1da0a636b764c61985d0ca76b63b450c5270e9"
+   },
+   "on-unarmed": {
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "depth": 159.079,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true,
+    "wallSeconds": 3.42,
+    "docDigest": "d9a3666c96b3c414a0a398e70e1da0a636b764c61985d0ca76b63b450c5270e9"
+   },
+   "ALL_DIGESTS_MATCH": true,
+   "noiseFloorPaths": [
+    "/elapsedMs/0",
+    "/firstQuartileElapsedMs",
+    "/maxElapsedMs",
+    "/medianElapsedMs",
+    "/minElapsedMs",
+    "/thirdQuartileElapsedMs"
+   ],
+   "claimPaths": [
+    "/elapsedMs/0",
+    "/executableSha256",
+    "/firstQuartileElapsedMs",
+    "/maxElapsedMs",
+    "/medianElapsedMs",
+    "/minElapsedMs",
+    "/thirdQuartileElapsedMs"
+   ],
+   "claimPathsOutsideFloor": [
+    "/executableSha256"
+   ]
+  },
+  "g4": {
+   "off": {
+    "raw": 164.0375677990678,
+    "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+    "depth": 164.038,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true,
+    "wallSeconds": 3.18,
+    "docDigest": "9c10414dda9b3a0ba2f0cb14a538e9af1bf9e251171624e3b7c1466b2cf89b20"
+   },
+   "off-repeat": {
+    "raw": 164.0375677990678,
+    "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+    "depth": 164.038,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true,
+    "wallSeconds": 3.12,
+    "docDigest": "9c10414dda9b3a0ba2f0cb14a538e9af1bf9e251171624e3b7c1466b2cf89b20"
+   },
+   "on-unarmed": {
+    "raw": 164.0375677990678,
+    "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+    "depth": 164.038,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true,
+    "wallSeconds": 3.12,
+    "docDigest": "9c10414dda9b3a0ba2f0cb14a538e9af1bf9e251171624e3b7c1466b2cf89b20"
+   },
+   "ALL_DIGESTS_MATCH": true,
+   "noiseFloorPaths": [
+    "/elapsedMs/0",
+    "/firstQuartileElapsedMs",
+    "/maxElapsedMs",
+    "/medianElapsedMs",
+    "/minElapsedMs",
+    "/thirdQuartileElapsedMs"
+   ],
+   "claimPaths": [
+    "/elapsedMs/0",
+    "/executableSha256",
+    "/firstQuartileElapsedMs",
+    "/maxElapsedMs",
+    "/medianElapsedMs",
+    "/minElapsedMs",
+    "/thirdQuartileElapsedMs"
+   ],
+   "claimPathsOutsideFloor": [
+    "/executableSha256"
+   ]
+  }
+ },
+ "ALL_PASS": true,
+ "ALL_DIGESTS_MATCH": true,
+ "CLAIM_PATHS_OUTSIDE_FLOOR": [
+  "/executableSha256"
+ ]
+}

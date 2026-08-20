@@ -102,6 +102,18 @@ STATS = {'arms': 0, 'byTier': collections.defaultdict(
 
 
 def save(pin, raw, fixpoint):
+    """Writes the cascade's state.
+
+    `fixpoint` is the LOOP's termination flag - True when one full round of this
+    pool produced nothing below the incumbent, False when the round ran out of
+    time - and not a claim that the state has no better neighbour. It is a
+    finite negative over the arms in `POOL`, which is exactly the correction
+    Sol reviews 3 section 0, 5 section 0 and 6 section 3 made to the
+    certification batteries; this round's own section 11 is the demonstration,
+    since a fifth instrument walked past four such negatives. The field name is
+    kept because the state documents already written carry it and are left as
+    produced. See docs/experiments/orientation-floor/README.md.
+    """
     json.dump({'label': LABEL, 'pin': pin, 'raw': repr(raw), 'rawFloat': raw,
                'arms': STATS['arms'], 'fixpoint': fixpoint,
                'byTier': {k: dict(v) for k, v in STATS['byTier'].items()},
