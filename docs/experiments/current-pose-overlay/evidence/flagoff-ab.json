@@ -1,0 +1,85 @@
+{
+ "rounds": 12,
+ "arms": [
+  {
+   "label": "pre",
+   "binary": "/var/lib/t3/tmp/cpo6/bin/cs-pre-f32c629"
+  },
+  {
+   "label": "v5",
+   "binary": "/var/lib/t3/tmp/cpo6/bin/cs-v5-f527bea"
+  },
+  {
+   "label": "fix",
+   "binary": "/var/lib/t3/tmp/cpo6/bin/cs-fix"
+  }
+ ],
+ "note": "flag compiled in, POLYGON_NESTING_CURRENT_POSE_OVERLAY unset",
+ "gateMisses": [],
+ "perGate": {
+  "g1": {
+   "reference": "pre",
+   "arms": {
+    "pre": {
+     "engineSecondsMedian": 26.3726544395,
+     "engineSecondsMin": 26.252660628,
+     "processWallSecondsMedian": 26.410533905029297
+    },
+    "v5": {
+     "engineSecondsMedian": 26.536291779000003,
+     "engineSecondsMin": 26.314533942,
+     "processWallSecondsMedian": 26.57221269607544,
+     "pairedDeltaSecondsMedian": 0.11220078699999902,
+     "pairedDeltaPercentMedian": 0.4229246316705608,
+     "roundsFasterThanReference": 3,
+     "roundsTied": 0,
+     "roundsCompared": 12,
+     "signTestP": 0.14599609375
+    },
+    "fix": {
+     "engineSecondsMedian": 26.486404917999998,
+     "engineSecondsMin": 26.334846228,
+     "processWallSecondsMedian": 26.52399468421936,
+     "pairedDeltaSecondsMedian": 0.1252110394999999,
+     "pairedDeltaPercentMedian": 0.4764565401330897,
+     "roundsFasterThanReference": 3,
+     "roundsTied": 0,
+     "roundsCompared": 12,
+     "signTestP": 0.14599609375
+    }
+   }
+  },
+  "g2": {
+   "reference": "pre",
+   "arms": {
+    "pre": {
+     "engineSecondsMedian": 3.3170273105,
+     "engineSecondsMin": 3.153294519,
+     "processWallSecondsMedian": 3.35265851020813
+    },
+    "v5": {
+     "engineSecondsMedian": 3.2946201195,
+     "engineSecondsMin": 3.148995544,
+     "processWallSecondsMedian": 3.3319090604782104,
+     "pairedDeltaSecondsMedian": -0.0011587280000002753,
+     "pairedDeltaPercentMedian": -0.03498004003118535,
+     "roundsFasterThanReference": 6,
+     "roundsTied": 0,
+     "roundsCompared": 12,
+     "signTestP": 1.0
+    },
+    "fix": {
+     "engineSecondsMedian": 3.3197439275000002,
+     "engineSecondsMin": 3.148668763,
+     "processWallSecondsMedian": 3.352742552757263,
+     "pairedDeltaSecondsMedian": 0.019946188500000295,
+     "pairedDeltaPercentMedian": 0.6005912848204598,
+     "roundsFasterThanReference": 5,
+     "roundsTied": 0,
+     "roundsCompared": 12,
+     "signTestP": 0.7744140625
+    }
+   }
+  }
+ }
+}

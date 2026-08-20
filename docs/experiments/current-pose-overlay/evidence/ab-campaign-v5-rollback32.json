@@ -1,0 +1,435 @@
+{
+ "perArm": {
+  "grid": {
+   "parents": 15,
+   "medianQueriesPerSecond": 1223999.9261954797,
+   "confirmationsAttemptedTotal": 1807,
+   "confirmationsAcceptedTotal": 1807,
+   "publications": 9,
+   "sumDropOverPublishedMm": 4.136391
+  },
+  "overlay": {
+   "parents": 15,
+   "medianQueriesPerSecond": 1213281.3970900008,
+   "confirmationsAttemptedTotal": 1394,
+   "confirmationsAcceptedTotal": 1394,
+   "publications": 12,
+   "sumDropOverPublishedMm": 5.98442
+  }
+ },
+ "entryLoss": {
+  "medianDelta": -1420.4048530092386,
+  "meanDelta": -2006.845874039362,
+  "nReduced": 11,
+  "nIncreased": 3,
+  "nUnchanged": 1
+ },
+ "entryBoundaryViolations": {
+  "medianDelta": -2,
+  "nReduced": 11,
+  "nIncreased": 0,
+  "nUnchanged": 4
+ },
+ "entryCollisionPairs": {
+  "medianDelta": 9,
+  "nReduced": 0,
+  "nIncreased": 14,
+  "nUnchanged": 1
+ },
+ "composabilityPrize": {
+  "parentsTested": 15,
+  "flips": 0
+ },
+ "perParent": [
+  {
+   "parent": "port-seed0",
+   "currentPoseOverlayEntries": 17,
+   "grid": {
+    "entryBoundaryViolations": 8,
+    "entryCollisionPairs": 33,
+    "entryProxyFeasible": false,
+    "entryLoss": 14928.578449503326,
+    "confirmationsAccepted": 256,
+    "published": true,
+    "rawSourceDepthMm": 173.735
+   },
+   "overlay": {
+    "entryBoundaryViolations": 5,
+    "entryCollisionPairs": 43,
+    "entryProxyFeasible": false,
+    "entryLoss": 13508.173596494087,
+    "confirmationsAccepted": 189,
+    "published": true,
+    "rawSourceDepthMm": 173.32612891516152
+   },
+   "entryLossDeltaMm": -1420.4048530092386,
+   "entryBoundaryViolationsDelta": -3,
+   "entryCollisionPairsDelta": 10,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "port-seed1",
+   "currentPoseOverlayEntries": 0,
+   "grid": {
+    "entryBoundaryViolations": 5,
+    "entryCollisionPairs": 38,
+    "entryProxyFeasible": false,
+    "entryLoss": 12954.924332077378,
+    "confirmationsAccepted": 331,
+    "published": true,
+    "rawSourceDepthMm": 174.55200000000002
+   },
+   "overlay": {
+    "entryBoundaryViolations": 5,
+    "entryCollisionPairs": 38,
+    "entryProxyFeasible": false,
+    "entryLoss": 12954.924332077378,
+    "confirmationsAccepted": 331,
+    "published": true,
+    "rawSourceDepthMm": 174.55200000000002
+   },
+   "entryLossDeltaMm": 0.0,
+   "entryBoundaryViolationsDelta": 0,
+   "entryCollisionPairsDelta": 0,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "port-seed10",
+   "currentPoseOverlayEntries": 28,
+   "grid": {
+    "entryBoundaryViolations": 7,
+    "entryCollisionPairs": 26,
+    "entryProxyFeasible": false,
+    "entryLoss": 11987.999884428478,
+    "confirmationsAccepted": 254,
+    "published": true,
+    "rawSourceDepthMm": 175.511
+   },
+   "overlay": {
+    "entryBoundaryViolations": 7,
+    "entryCollisionPairs": 38,
+    "entryProxyFeasible": false,
+    "entryLoss": 13307.081361972134,
+    "confirmationsAccepted": 306,
+    "published": true,
+    "rawSourceDepthMm": 175.0650639334829
+   },
+   "entryLossDeltaMm": 1319.0814775436556,
+   "entryBoundaryViolationsDelta": 0,
+   "entryCollisionPairsDelta": 12,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "port-seed11",
+   "currentPoseOverlayEntries": 41,
+   "grid": {
+    "entryBoundaryViolations": 11,
+    "entryCollisionPairs": 30,
+    "entryProxyFeasible": false,
+    "entryLoss": 20745.934943841923,
+    "confirmationsAccepted": 94,
+    "published": false,
+    "rawSourceDepthMm": 171.6141235046606
+   },
+   "overlay": {
+    "entryBoundaryViolations": 5,
+    "entryCollisionPairs": 36,
+    "entryProxyFeasible": false,
+    "entryLoss": 11829.96170447468,
+    "confirmationsAccepted": 93,
+    "published": true,
+    "rawSourceDepthMm": 171.575
+   },
+   "entryLossDeltaMm": -8915.973239367244,
+   "entryBoundaryViolationsDelta": -6,
+   "entryCollisionPairsDelta": 6,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "port-seed2",
+   "currentPoseOverlayEntries": 8,
+   "grid": {
+    "entryBoundaryViolations": 6,
+    "entryCollisionPairs": 34,
+    "entryProxyFeasible": false,
+    "entryLoss": 12125.153334551303,
+    "confirmationsAccepted": 0,
+    "published": false,
+    "rawSourceDepthMm": 179.006
+   },
+   "overlay": {
+    "entryBoundaryViolations": 6,
+    "entryCollisionPairs": 40,
+    "entryProxyFeasible": false,
+    "entryLoss": 13693.855737467919,
+    "confirmationsAccepted": 0,
+    "published": false,
+    "rawSourceDepthMm": 179.006
+   },
+   "entryLossDeltaMm": 1568.702402916615,
+   "entryBoundaryViolationsDelta": 0,
+   "entryCollisionPairsDelta": 6,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "port-seed3",
+   "currentPoseOverlayEntries": 12,
+   "grid": {
+    "entryBoundaryViolations": 9,
+    "entryCollisionPairs": 34,
+    "entryProxyFeasible": false,
+    "entryLoss": 12297.790001034145,
+    "confirmationsAccepted": 96,
+    "published": true,
+    "rawSourceDepthMm": 175.678
+   },
+   "overlay": {
+    "entryBoundaryViolations": 8,
+    "entryCollisionPairs": 40,
+    "entryProxyFeasible": false,
+    "entryLoss": 13211.080933265403,
+    "confirmationsAccepted": 234,
+    "published": true,
+    "rawSourceDepthMm": 175.006
+   },
+   "entryLossDeltaMm": 913.2909322312571,
+   "entryBoundaryViolationsDelta": -1,
+   "entryCollisionPairsDelta": 6,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "port-seed4",
+   "currentPoseOverlayEntries": 50,
+   "grid": {
+    "entryBoundaryViolations": 6,
+    "entryCollisionPairs": 27,
+    "entryProxyFeasible": false,
+    "entryLoss": 17554.75302488269,
+    "confirmationsAccepted": 307,
+    "published": true,
+    "rawSourceDepthMm": 171.356
+   },
+   "overlay": {
+    "entryBoundaryViolations": 4,
+    "entryCollisionPairs": 38,
+    "entryProxyFeasible": false,
+    "entryLoss": 13066.658683951491,
+    "confirmationsAccepted": 126,
+    "published": true,
+    "rawSourceDepthMm": 170.993
+   },
+   "entryLossDeltaMm": -4488.0943409312,
+   "entryBoundaryViolationsDelta": -2,
+   "entryCollisionPairsDelta": 11,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "port-seed5",
+   "currentPoseOverlayEntries": 34,
+   "grid": {
+    "entryBoundaryViolations": 6,
+    "entryCollisionPairs": 34,
+    "entryProxyFeasible": false,
+    "entryLoss": 15466.369140274479,
+    "confirmationsAccepted": 10,
+    "published": true,
+    "rawSourceDepthMm": 179.013
+   },
+   "overlay": {
+    "entryBoundaryViolations": 4,
+    "entryCollisionPairs": 43,
+    "entryProxyFeasible": false,
+    "entryLoss": 14149.853301974923,
+    "confirmationsAccepted": 7,
+    "published": true,
+    "rawSourceDepthMm": 179.006
+   },
+   "entryLossDeltaMm": -1316.515838299556,
+   "entryBoundaryViolationsDelta": -2,
+   "entryCollisionPairsDelta": 9,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "port-seed6",
+   "currentPoseOverlayEntries": 8,
+   "grid": {
+    "entryBoundaryViolations": 7,
+    "entryCollisionPairs": 35,
+    "entryProxyFeasible": false,
+    "entryLoss": 15179.763121927423,
+    "confirmationsAccepted": 72,
+    "published": false,
+    "rawSourceDepthMm": 179.6200102363703
+   },
+   "overlay": {
+    "entryBoundaryViolations": 7,
+    "entryCollisionPairs": 37,
+    "entryProxyFeasible": false,
+    "entryLoss": 13758.187234932851,
+    "confirmationsAccepted": 4,
+    "published": true,
+    "rawSourceDepthMm": 179.60077838962263
+   },
+   "entryLossDeltaMm": -1421.5758869945712,
+   "entryBoundaryViolationsDelta": 0,
+   "entryCollisionPairsDelta": 2,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "port-seed7",
+   "currentPoseOverlayEntries": 41,
+   "grid": {
+    "entryBoundaryViolations": 9,
+    "entryCollisionPairs": 27,
+    "entryProxyFeasible": false,
+    "entryLoss": 19648.395572428795,
+    "confirmationsAccepted": 71,
+    "published": false,
+    "rawSourceDepthMm": 179.52233303152792
+   },
+   "overlay": {
+    "entryBoundaryViolations": 3,
+    "entryCollisionPairs": 42,
+    "entryProxyFeasible": false,
+    "entryLoss": 13714.060603905653,
+    "confirmationsAccepted": 0,
+    "published": false,
+    "rawSourceDepthMm": 179.52233303152792
+   },
+   "entryLossDeltaMm": -5934.334968523142,
+   "entryBoundaryViolationsDelta": -6,
+   "entryCollisionPairsDelta": 15,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "port-seed8",
+   "currentPoseOverlayEntries": 11,
+   "grid": {
+    "entryBoundaryViolations": 4,
+    "entryCollisionPairs": 36,
+    "entryProxyFeasible": false,
+    "entryLoss": 14663.84036047484,
+    "confirmationsAccepted": 40,
+    "published": true,
+    "rawSourceDepthMm": 178.75400000000002
+   },
+   "overlay": {
+    "entryBoundaryViolations": 2,
+    "entryCollisionPairs": 42,
+    "entryProxyFeasible": false,
+    "entryLoss": 13485.16168881184,
+    "confirmationsAccepted": 21,
+    "published": true,
+    "rawSourceDepthMm": 178.826
+   },
+   "entryLossDeltaMm": -1178.6786716629995,
+   "entryBoundaryViolationsDelta": -2,
+   "entryCollisionPairsDelta": 6,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "port-seed9",
+   "currentPoseOverlayEntries": 29,
+   "grid": {
+    "entryBoundaryViolations": 8,
+    "entryCollisionPairs": 32,
+    "entryProxyFeasible": false,
+    "entryLoss": 14399.221971026087,
+    "confirmationsAccepted": 260,
+    "published": true,
+    "rawSourceDepthMm": 174.55177826491067
+   },
+   "overlay": {
+    "entryBoundaryViolations": 4,
+    "entryCollisionPairs": 42,
+    "entryProxyFeasible": false,
+    "entryLoss": 14069.092504792543,
+    "confirmationsAccepted": 69,
+    "published": true,
+    "rawSourceDepthMm": 174.60477826491066
+   },
+   "entryLossDeltaMm": -330.129466233544,
+   "entryBoundaryViolationsDelta": -4,
+   "entryCollisionPairsDelta": 10,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "true-155.422",
+   "currentPoseOverlayEntries": 49,
+   "grid": {
+    "entryBoundaryViolations": 9,
+    "entryCollisionPairs": 35,
+    "entryProxyFeasible": false,
+    "entryLoss": 18431.847290413953,
+    "confirmationsAccepted": 0,
+    "published": false,
+    "rawSourceDepthMm": 155.42229074464285
+   },
+   "overlay": {
+    "entryBoundaryViolations": 4,
+    "entryCollisionPairs": 46,
+    "entryProxyFeasible": false,
+    "entryLoss": 15344.914477106355,
+    "confirmationsAccepted": 0,
+    "published": false,
+    "rawSourceDepthMm": 155.42229074464285
+   },
+   "entryLossDeltaMm": -3086.932813307598,
+   "entryBoundaryViolationsDelta": -5,
+   "entryCollisionPairsDelta": 11,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "true-156.091",
+   "currentPoseOverlayEntries": 26,
+   "grid": {
+    "entryBoundaryViolations": 8,
+    "entryCollisionPairs": 34,
+    "entryProxyFeasible": false,
+    "entryLoss": 18099.816933590508,
+    "confirmationsAccepted": 0,
+    "published": false,
+    "rawSourceDepthMm": 156.09136504906917
+   },
+   "overlay": {
+    "entryBoundaryViolations": 2,
+    "entryCollisionPairs": 39,
+    "entryProxyFeasible": false,
+    "entryLoss": 14351.797978886174,
+    "confirmationsAccepted": 14,
+    "published": true,
+    "rawSourceDepthMm": 156.073
+   },
+   "entryLossDeltaMm": -3748.0189547043337,
+   "entryBoundaryViolationsDelta": -6,
+   "entryCollisionPairsDelta": 5,
+   "composabilityFlip": false
+  },
+  {
+   "parent": "true-156.9188",
+   "currentPoseOverlayEntries": 28,
+   "grid": {
+    "entryBoundaryViolations": 13,
+    "entryCollisionPairs": 28,
+    "entryProxyFeasible": false,
+    "entryLoss": 15100.759038868575,
+    "confirmationsAccepted": 16,
+    "published": true,
+    "rawSourceDepthMm": 156.91883051080544
+   },
+   "overlay": {
+    "entryBoundaryViolations": 4,
+    "entryCollisionPairs": 40,
+    "entryProxyFeasible": false,
+    "entryLoss": 13037.655148620046,
+    "confirmationsAccepted": 0,
+    "published": true,
+    "rawSourceDepthMm": 156.91883051080544
+   },
+   "entryLossDeltaMm": -2063.103890248529,
+   "entryBoundaryViolationsDelta": -9,
+   "entryCollisionPairsDelta": 12,
+   "composabilityFlip": false
+  }
+ ]
+}

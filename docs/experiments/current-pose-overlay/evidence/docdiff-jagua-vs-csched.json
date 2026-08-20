@@ -1,0 +1,133 @@
+{
+ "a": {
+  "dir": "/var/lib/t3/tmp/cpo6/gates-final",
+  "label": "final"
+ },
+ "b": {
+  "dir": "/var/lib/t3/tmp/cpo6/gates-final",
+  "label": "final-csched"
+ },
+ "gates": {
+  "g1": {
+   "leavesCompared": 3271,
+   "differingLeafCount": 6,
+   "differingLeaves": {
+    "/executableSha256": {
+     "final": "71efbf9e7891171138d7b35294e29cc333709ac83a9538eebf10ed12a75dd500",
+     "final-csched": "09adff33e2b6ccf7d3617f49bb752f95ead544255db3b4c282634b169c63fadf"
+    },
+    "/firstQuartileElapsedMs": {
+     "final": "26683.983758",
+     "final-csched": "26343.618123"
+    },
+    "/maxElapsedMs": {
+     "final": "26683.983758",
+     "final-csched": "26343.618123"
+    },
+    "/medianElapsedMs": {
+     "final": "26683.983758",
+     "final-csched": "26343.618123"
+    },
+    "/minElapsedMs": {
+     "final": "26683.983758",
+     "final-csched": "26343.618123"
+    },
+    "/thirdQuartileElapsedMs": {
+     "final": "26683.983758",
+     "final-csched": "26343.618123"
+    }
+   }
+  },
+  "g2": {
+   "leavesCompared": 3252,
+   "differingLeafCount": 6,
+   "differingLeaves": {
+    "/executableSha256": {
+     "final": "71efbf9e7891171138d7b35294e29cc333709ac83a9538eebf10ed12a75dd500",
+     "final-csched": "09adff33e2b6ccf7d3617f49bb752f95ead544255db3b4c282634b169c63fadf"
+    },
+    "/firstQuartileElapsedMs": {
+     "final": "3143.915041",
+     "final-csched": "4378.5894929999995"
+    },
+    "/maxElapsedMs": {
+     "final": "3143.915041",
+     "final-csched": "4378.5894929999995"
+    },
+    "/medianElapsedMs": {
+     "final": "3143.915041",
+     "final-csched": "4378.5894929999995"
+    },
+    "/minElapsedMs": {
+     "final": "3143.915041",
+     "final-csched": "4378.5894929999995"
+    },
+    "/thirdQuartileElapsedMs": {
+     "final": "3143.915041",
+     "final-csched": "4378.5894929999995"
+    }
+   }
+  },
+  "g3": {
+   "leavesCompared": 3252,
+   "differingLeafCount": 6,
+   "differingLeaves": {
+    "/executableSha256": {
+     "final": "71efbf9e7891171138d7b35294e29cc333709ac83a9538eebf10ed12a75dd500",
+     "final-csched": "09adff33e2b6ccf7d3617f49bb752f95ead544255db3b4c282634b169c63fadf"
+    },
+    "/firstQuartileElapsedMs": {
+     "final": "3410.22012",
+     "final-csched": "3676.871383"
+    },
+    "/maxElapsedMs": {
+     "final": "3410.22012",
+     "final-csched": "3676.871383"
+    },
+    "/medianElapsedMs": {
+     "final": "3410.22012",
+     "final-csched": "3676.871383"
+    },
+    "/minElapsedMs": {
+     "final": "3410.22012",
+     "final-csched": "3676.871383"
+    },
+    "/thirdQuartileElapsedMs": {
+     "final": "3410.22012",
+     "final-csched": "3676.871383"
+    }
+   }
+  },
+  "g4": {
+   "leavesCompared": 3252,
+   "differingLeafCount": 6,
+   "differingLeaves": {
+    "/executableSha256": {
+     "final": "71efbf9e7891171138d7b35294e29cc333709ac83a9538eebf10ed12a75dd500",
+     "final-csched": "09adff33e2b6ccf7d3617f49bb752f95ead544255db3b4c282634b169c63fadf"
+    },
+    "/firstQuartileElapsedMs": {
+     "final": "3154.167598",
+     "final-csched": "3228.226884"
+    },
+    "/maxElapsedMs": {
+     "final": "3154.167598",
+     "final-csched": "3228.226884"
+    },
+    "/medianElapsedMs": {
+     "final": "3154.167598",
+     "final-csched": "3228.226884"
+    },
+    "/minElapsedMs": {
+     "final": "3154.167598",
+     "final-csched": "3228.226884"
+    },
+    "/thirdQuartileElapsedMs": {
+     "final": "3154.167598",
+     "final-csched": "3228.226884"
+    }
+   }
+  }
+ },
+ "totalDifferingLeaves": 24
+}

@@ -442,6 +442,44 @@ pub struct GeneralRelaxedSettings {
     /// branch on it. See [`crate::search::compression_schedule`].
     #[cfg(feature = "compression-schedule")]
     pub compression_schedule: Option<crate::search::compression_schedule::CompressionScheduleSettings>,
+    /// Arms `CurrentPoseOverlay`: a per-piece lookup of the parent's own
+    /// continuous rotation, consulted only when the `StructuredGrid` catalogue
+    /// has no entry for the pose a placement currently holds.
+    ///
+    /// `false` - the default, and what every existing caller constructs -
+    /// leaves `initialize_complete_state` snapping every parent rotation onto
+    /// the 2.5-degree grid exactly as it does today, which is the entry
+    /// damage Sol review 5 measured (median +0.448 mm on the 171-179 port
+    /// parents). `true` seeds the lane with the parent's *continuous*
+    /// rotation instead, and layers a small per-piece surrogate map on top of
+    /// the unchanged `StructuredGrid` catalogue so that pose resolves.
+    ///
+    /// This does **not** touch `build_surrogate_catalog`'s `StructuredGrid`
+    /// branch, `random_candidate`'s `seed_angle` snapping, or the pressure
+    /// model: the candidate catalogue and the candidate order a lane can
+    /// still propose are the ones `StructuredGrid` always proposed. Only a
+    /// piece no candidate has yet touched - the warm start - or a piece whose
+    /// rotation a translation-only repair step left alone, ever resolves
+    /// through the overlay; the moment a candidate's own rotation is
+    /// accepted for a piece, that piece is grid-native again for the rest of
+    /// the run. See `docs/experiments/current-pose-overlay/README.md`.
+    ///
+    /// Only meaningful where `drive_compression_schedule` builds a lane -
+    /// currently mode 34 - and compiled out entirely without
+    /// `compression-schedule`, matching `compression_schedule` above.
+    #[cfg(feature = "compression-schedule")]
+    pub current_pose_overlay: bool,
+    /// Arms the per-pair classification Sol review 6 §2 asks for, filling
+    /// `GeneralCompressionScheduleDiagnostics::parent_pair_classification`.
+    ///
+    /// Diagnostic only, off by default, and deliberately *not* armed by the
+    /// campaign's measured arms: it runs an exact-tier bisection for every
+    /// parent pair either proxy calls colliding, so a run with it on is not a
+    /// timing measurement. Requires `current_pose_overlay`, because the
+    /// classification needs both resolutions of every pose and only the
+    /// overlay build carries the continuous one.
+    #[cfg(feature = "compression-schedule")]
+    pub current_pose_overlay_classify_pairs: bool,
 }
 
 impl GeneralRelaxedSettings {
@@ -471,6 +509,10 @@ impl GeneralRelaxedSettings {
             alternation_max_cycles: None,
             #[cfg(feature = "compression-schedule")]
             compression_schedule: None,
+            #[cfg(feature = "compression-schedule")]
+            current_pose_overlay: false,
+            #[cfg(feature = "compression-schedule")]
+            current_pose_overlay_classify_pairs: false,
         }
     }
 
@@ -2536,6 +2578,50 @@ fn derive_rotation_key(rotation_deg: f64, directional: bool) -> i64 {
     angle_key(angle)
 }
 
+/// Whether a rotation key should be derived from the placement's exact
+/// continuous angle instead of snapped onto the `StructuredGrid`.
+///
+/// This is the `directional` every `derive_rotation_key`/`rotation_key` call
+/// site asks for - it governs *key derivation only*, never which pressure
+/// model's scoring path runs. Two things make it true:
+///
+/// * the `DirectionalPenetration` engine, which has always worked in
+///   continuous angles;
+/// * `CurrentPoseOverlay`, when armed. Without this, a placement that
+///   `initialize_complete_state` seeded at the parent's own continuous
+///   rotation would still have every lookup re-derive a *snapped* key -
+///   `derive_rotation_key`'s `else` branch runs `canonical_angle`
+///   unconditionally - so the overlay's own catalogue entries, keyed by the
+///   continuous angle, would sit there unread and every score would be
+///   computed from the grid-snapped shape regardless. This is what actually
+///   lets a resolution reach the overlay instead of the base catalogue: see
+///   [`GeneralRelaxedSettings::current_pose_overlay`].
+///
+/// Safe either way for a placement that is already grid-native - `2.5` is a
+/// fixed point of both `canonical_angle` and `continuous_angle` - so this
+/// changes nothing for any piece a candidate has actually touched; only an
+/// untouched or translation-only-repaired piece can still carry a continuous
+/// angle for this to matter.
+///
+/// **Called once per lane, not once per lookup.** Sol review 6 §2 flagged the
+/// first version of this: the hot key-derivation sites called it with a
+/// by-value [`GeneralRelaxedSettings`] on every catalogue descent, which is
+/// millions of copies of a 40-field struct per gate stream for a predicate
+/// whose inputs cannot change inside a lane. [`LaneSearch::new`] evaluates it
+/// once and stores the answer in [`LaneSearch::continuous_rotation_keys`];
+/// every hot site reads that `bool`. `#[inline]` because the remaining callers
+/// are lane setup and the two free-function scan bodies, and because with the
+/// argument constant-folded at those sites this collapses to a load.
+#[inline]
+fn continuous_rotation_keys(relaxed_settings: GeneralRelaxedSettings) -> bool {
+    let directional = relaxed_settings.collision_backend
+        == GeneralRelaxedCollisionBackend::RollbackTriangle
+        && relaxed_settings.pressure_model == GeneralRelaxedPressureModel::DirectionalPenetration;
+    #[cfg(feature = "compression-schedule")]
+    let directional = directional || relaxed_settings.current_pose_overlay;
+    directional
+}
+
 impl CellIndex {
     fn new(cells: &[Triangle], bounds: IrregularBounds) -> Self {
         let words = cells.len().div_ceil(64).max(1);
@@ -3360,6 +3446,16 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
     proxy_rows: ProxyRowCache,
     /// Per-piece memo of the rotation half of a [`SurrogateKey`].
     angle_keys: AngleKeyCache,
+    /// [`continuous_rotation_keys`] for this lane's settings, resolved once.
+    ///
+    /// Lane-local rather than recomputed per lookup: the predicate reads only
+    /// `relaxed_settings`, which a lane never mutates, so every catalogue
+    /// descent asking for it again was re-deriving a constant from a by-value
+    /// copy of a 40-field struct. Sol review 6 §2 asked for exactly this - the
+    /// gates prove the flag is semantically inert, not that it is free - and
+    /// `docs/experiments/current-pose-overlay/README.md` §5.1 carries the
+    /// paired flag-off A/B that shows the hot path did not move.
+    continuous_rotation_keys: bool,
     /// Reusable buffer the accepted-move merge writes its new collision list
     /// into. It is swapped with the incumbent list rather than copied, so after
     /// the first move of a lane neither list allocates again.
@@ -3598,6 +3694,7 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
         relaxed_settings.angle_seed_policy,
         relaxed_settings.pressure_model,
         incumbent,
+        false,
     )?;
     let mut shrink_ratio = relaxed_settings.initial_shrink_ratio;
     let mut repair_successors_attempted = 0usize;
@@ -3889,6 +3986,7 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
                 relaxed_settings.angle_seed_policy,
                 relaxed_settings.pressure_model,
                 &protected,
+                false,
             )?
         };
         diagnostics.epochs.push(GeneralRelaxedEpochDiagnostics {
@@ -5466,8 +5564,35 @@ fn drive_compression_schedule(
     } else {
         SurrogateCatalogMode::ZeroDegreeOnly
     };
-    let (catalog, _) =
+    let (mut catalog, _) =
         build_surrogate_catalog(pieces, fast_settings, catalog_mode, Some(&incumbent))?;
+    // `CurrentPoseOverlay`: folded into the grid catalogue this call already
+    // sole-owns, and only when the settings flag asks for it - see
+    // `GeneralRelaxedSettings::current_pose_overlay` and
+    // `merge_current_pose_overlay` for why no clone is needed.
+    //
+    // The two counts are deliberately separate (Sol review 6 §2.4):
+    // `overlay_entries` is how many surrogates the overlay had to build,
+    // `off_grid_pieces` is how many of the parent's placements arrived off the
+    // 2.5-degree grid. They differ whenever a repetitive parent puts two
+    // instances of one geometry class at the same continuous pose.
+    let mut overlay_entries = 0usize;
+    let mut overlay_off_grid_pieces = 0usize;
+    // The setup price of the overlay, so Sol review 6 §2.2's "measure it before
+    // and after" is a number the run itself reports rather than one inferred
+    // from process wall. It brackets both halves - building the surrogates and
+    // installing them - because the v5 round's cost was in the *installing*.
+    // Zero, and one unread `Instant`, when the overlay is off.
+    let mut overlay_setup_ms = 0.0_f64;
+    if relaxed_settings.current_pose_overlay {
+        let overlay_started = Instant::now();
+        let overlay =
+            build_current_pose_overlay(pieces, fast_settings, &catalog, parent_placements)?;
+        overlay_entries = overlay.entries.len();
+        overlay_off_grid_pieces = overlay.off_grid_pieces;
+        merge_current_pose_overlay(&mut catalog, overlay.entries);
+        overlay_setup_ms = overlay_started.elapsed().as_secs_f64() * 1_000.0;
+    }
     let mut state = initialize_complete_state(
         pieces,
         fast_settings,
@@ -5475,6 +5600,7 @@ fn drive_compression_schedule(
         relaxed_settings.angle_seed_policy,
         relaxed_settings.pressure_model,
         &incumbent,
+        relaxed_settings.current_pose_overlay,
     )?;
     let mut search = LegacyLaneSearch::new(
         pieces,
@@ -5515,6 +5641,25 @@ fn drive_compression_schedule(
     let parent_boundary_violations = score.boundary_violations;
     let parent_collision_pairs = score.collision_pairs.len();
     let parent_proxy_feasible = score.feasible();
+    // The magnitude behind the two counts above, in the tracker's own units:
+    // boundary loss plus every colliding pair's raw penalty. Two counts can
+    // agree while this differs by 2.5-degree-grid-sized amounts - a piece a
+    // continuous rotation away from its nearest catalogue angle can still
+    // clear the same neighbours, just by a smaller margin - so this is the
+    // number Sol review 5's entry-damage claim (median +0.448 mm) is actually
+    // about, not the violation count.
+    let parent_entry_loss = score.common_loss();
+    // Diagnostic only, and off the measured path: see
+    // `GeneralRelaxedSettings::current_pose_overlay_classify_pairs`. It runs
+    // after the parent's own score is taken so it cannot influence it, and on
+    // its own counters so it cannot influence the work meter.
+    let parent_pair_classification = if relaxed_settings.current_pose_overlay
+        && relaxed_settings.current_pose_overlay_classify_pairs
+    {
+        classify_current_pose_overlay_pairs(pieces, fast_settings, search.catalog(), &state)?
+    } else {
+        Vec::new()
+    };
 
     // The incumbent half of the asymmetry. It starts at the parent, so the
     // schedule's floor is the parent by construction.
@@ -5680,6 +5825,12 @@ fn drive_compression_schedule(
     report.parent_boundary_violations = parent_boundary_violations;
     report.parent_collision_pairs = parent_collision_pairs;
     report.parent_proxy_feasible = parent_proxy_feasible;
+    report.parent_entry_loss = parent_entry_loss;
+    report.current_pose_overlay = relaxed_settings.current_pose_overlay;
+    report.current_pose_overlay_entries = overlay_entries;
+    report.current_pose_overlay_off_grid_pieces = overlay_off_grid_pieces;
+    report.current_pose_overlay_setup_ms = overlay_setup_ms;
+    report.parent_pair_classification = parent_pair_classification;
     report.confirmation_ms = confirmation_ms;
     report.repair_ms = repair_ms;
     report.steps = rows;
@@ -6499,6 +6650,7 @@ fn run_coupled_separator_arm<'a>(
             GeneralRelaxedAngleSeedPolicy::ContinuousUniform,
             arm.pressure_model(),
             &incumbent,
+            false,
         )
         .and_then(|state| {
             compress_state_at_split(&state, target_depth_mm, compression_split_mm, pieces)
@@ -6938,6 +7090,7 @@ fn run_precompression_frontier_vacancy_experiment<'a>(
         GeneralRelaxedAngleSeedPolicy::ContinuousUniform,
         GeneralRelaxedPressureModel::DynamicPoles,
         &checkpoint.incumbent,
+        false,
     ) {
         Ok(state) => state,
         Err(error) => {
@@ -10740,6 +10893,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             piece_query_scratch: PieceQueryScratch::new(pieces.len()),
             proxy_rows: ProxyRowCache::new(pieces.len()),
             angle_keys: AngleKeyCache::new(pieces.len()),
+            continuous_rotation_keys: continuous_rotation_keys(relaxed_settings),
             collision_merge_scratch: Vec::new(),
             #[cfg(feature = "relaxed-row-buffer-reuse")]
             row_pool: Vec::new(),
@@ -10759,6 +10913,13 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             #[cfg(feature = "compression-schedule")]
             compression: None,
         }
+    }
+
+    /// The catalogue this lane resolves poses against, for the diagnostics
+    /// that need to read it after the lane has taken ownership.
+    #[cfg(feature = "compression-schedule")]
+    fn catalog(&self) -> &SurrogateCatalog {
+        &self.catalog
     }
 
     fn uses_dynamic_hazard(&self) -> bool {
@@ -11052,7 +11213,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         }
         #[cfg(feature = "relaxed-cached-pose-bounds")]
         {
-            let directional = self.uses_directional_pressure();
+            let directional = self.continuous_rotation_keys;
             let key = (
                 self.catalog.geometry_class_by_input[input_index],
                 self.angle_keys
@@ -13455,13 +13616,10 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 counters,
                 angle_keys,
                 weights,
-                relaxed_settings,
+                continuous_rotation_keys: directional,
                 ..
             } = self;
-            let directional = relaxed_settings.collision_backend
-                == GeneralRelaxedCollisionBackend::RollbackTriangle
-                && relaxed_settings.pressure_model
-                    == GeneralRelaxedPressureModel::DirectionalPenetration;
+            let directional = *directional;
             let candidate_key = (
                 catalog.geometry_class_by_input[candidate.input_index],
                 angle_keys.rotation_key(candidate.input_index, candidate.rotation_deg, directional),
@@ -13512,15 +13670,12 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 counters,
                 angle_keys,
                 weights,
-                relaxed_settings,
+                continuous_rotation_keys: directional,
                 piece_query_scratch,
                 scan_order_scratch,
                 ..
             } = self;
-            let directional = relaxed_settings.collision_backend
-                == GeneralRelaxedCollisionBackend::RollbackTriangle
-                && relaxed_settings.pressure_model
-                    == GeneralRelaxedPressureModel::DirectionalPenetration;
+            let directional = *directional;
             let candidate_key = (
                 catalog.geometry_class_by_input[candidate.input_index],
                 angle_keys.rotation_key(candidate.input_index, candidate.rotation_deg, directional),
@@ -14428,7 +14583,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
 
     /// The rotation half of a [`Self::surrogate_key`].
     fn rotation_key(&self, rotation_deg: f64) -> i64 {
-        derive_rotation_key(rotation_deg, self.uses_directional_pressure())
+        derive_rotation_key(rotation_deg, self.continuous_rotation_keys)
     }
 
     /// [`Self::surrogate_key`], answered from [`AngleKeyCache`] when the piece
@@ -14444,7 +14599,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         rotation_deg: f64,
         mirrored: bool,
     ) -> SurrogateKey {
-        let directional = self.uses_directional_pressure();
+        let directional = self.continuous_rotation_keys;
         (
             self.catalog.geometry_class_by_input[input_index],
             self.angle_keys
@@ -15367,6 +15522,302 @@ fn build_surrogate_catalog(
     ))
 }
 
+/// What [`build_current_pose_overlay`] found, with the two counts Sol review 6
+/// §2.4 asked be kept apart.
+///
+/// `entries` is keyed by `(geometry_class, angle, mirror)`, so two instances of
+/// the same geometry class sitting at the same continuous pose collapse into
+/// one surrogate - that is the point of the key, and it is why `entries.len()`
+/// is a *catalogue* size rather than a piece count. `off_grid_pieces` counts
+/// the placements themselves: how many of the parent's pieces actually arrived
+/// off the 2.5-degree grid. The first number is what the overlay costs; the
+/// second is what the snap would have damaged. Reporting only the first, as the
+/// v5 round did, understates the damage exactly when the parent is repetitive.
+#[cfg(feature = "compression-schedule")]
+struct CurrentPoseOverlay {
+    entries: BTreeMap<SurrogateKey, OrientedSurrogate>,
+    off_grid_pieces: usize,
+}
+
+/// `CurrentPoseOverlay`: one [`OrientedSurrogate`] per piece whose parent
+/// rotation is not already a `StructuredGrid` grid angle, keyed exactly the
+/// way the grid catalogue keys its own entries.
+///
+/// This is computed as a value distinct from the `StructuredGrid` catalogue:
+/// it never touches `build_surrogate_catalog`, and nothing about the grid's
+/// own angle enumeration changes, so a caller that never asks for it gets
+/// today's catalogue back unchanged. [`merge_current_pose_overlay`] then folds
+/// it into the catalogue the one lane that asked already owns, which is what
+/// "used only for warm-start/repair" means in practice:
+/// `random_candidate`'s `seed_angle` never samples a key from this map,
+/// because it never consults the map's membership at all; it only ever
+/// proposes grid angles. See [`GeneralRelaxedSettings::current_pose_overlay`].
+#[cfg(feature = "compression-schedule")]
+fn build_current_pose_overlay(
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    catalog: &SurrogateCatalog,
+    parent_placements: &[GeneralFastPlacement],
+) -> Result<CurrentPoseOverlay, GeneralFastError> {
+    let by_id = parent_placements
+        .iter()
+        .map(|placement| (placement.piece_id.as_str(), placement))
+        .collect::<BTreeMap<_, _>>();
+    let mut counters = WorkCounters::default();
+    let mut entries = BTreeMap::new();
+    let mut off_grid_pieces = 0usize;
+    for (input_index, piece) in pieces.iter().enumerate() {
+        let Some(existing) = by_id.get(piece.id) else {
+            continue;
+        };
+        let angle = continuous_angle(existing.rotation_deg);
+        let key = (
+            catalog.geometry_class_by_input[input_index],
+            angle_key(angle),
+            existing.mirrored,
+        );
+        if catalog.orientations.contains_key(&key) {
+            // Already grid-native: the snap would not have moved this piece,
+            // so it is neither an overlay entry nor off-grid damage.
+            continue;
+        }
+        // Off the grid, whether or not it needs a *new* surrogate: another
+        // instance of the same geometry class may already have contributed
+        // this exact continuous pose.
+        off_grid_pieces += 1;
+        if entries.contains_key(&key) {
+            continue;
+        }
+        entries.insert(
+            key,
+            build_oriented_surrogate(
+                piece.polygon,
+                angle,
+                existing.mirrored,
+                collision_expansion_mm(settings),
+                &mut counters,
+            )?,
+        );
+    }
+    Ok(CurrentPoseOverlay {
+        entries,
+        off_grid_pieces,
+    })
+}
+
+/// Folds a [`build_current_pose_overlay`] map into the catalogue `catalog`
+/// already owns, in place.
+///
+/// The v5 round cloned `catalog.orientations` here - every polygon, triangle,
+/// cell-axis set, pole and cell index, for all 144 grid angles of every
+/// geometry class - in order to add a handful of entries. Sol review 6 §2.2
+/// rejected that as setup cost the ten-second path cannot absorb, and named
+/// the fix: take ownership before the catalogue is shared. `catalog` arrives
+/// straight from `build_surrogate_catalog`, which allocates a fresh `Arc` per
+/// call and hands it to exactly one caller; the lane that will share it
+/// (`LegacyLaneSearch::new`) is constructed *after* this returns. The strong
+/// count is therefore 1 and `Arc::get_mut` cannot fail - and if a future
+/// refactor ever clones the handle earlier, this `expect` is a loud, local
+/// failure in the tests that cover the overlay rather than a silent
+/// reintroduction of the deep clone.
+///
+/// The merge itself is `entries.len()` B-tree inserts of surrogates that are
+/// *moved*, not cloned. `or_insert` keeps the grid's own entry wherever the
+/// two collide, so the base catalogue's meaning never changes.
+#[cfg(feature = "compression-schedule")]
+fn merge_current_pose_overlay(
+    catalog: &mut Arc<SurrogateCatalog>,
+    overlay: BTreeMap<SurrogateKey, OrientedSurrogate>,
+) {
+    if overlay.is_empty() {
+        return;
+    }
+    let owned = Arc::get_mut(catalog).expect(
+        "the surrogate catalogue is still sole-owned when the current-pose overlay is merged",
+    );
+    for (key, shape) in overlay {
+        owned.orientations.entry(key).or_insert(shape);
+    }
+}
+
+/// Classifies every parent pair the two proxy resolutions disagree about, or
+/// that either of them calls colliding.
+///
+/// Sol review 6 §2 ("Interpretazione dei numeri"): the `+9` collision-pair
+/// delta on 14 of 15 parents "says the continuous surrogate is more
+/// conservative, or more inaccurate, exactly at the parent's rotations", and
+/// which one it is has to be decided with data. This is that data. For one
+/// pair it records:
+///
+/// * the proxy verdict with both pieces at the parent's exact poses;
+/// * the proxy verdict with both pieces snapped onto the `StructuredGrid`;
+/// * the exact tier's material and envelope verdicts on the parent's true
+///   geometry - the same `polygons_overlap_exact` the authoritative validator
+///   runs;
+/// * how far the pair sits from the envelope-feasibility boundary, by
+///   bisecting the symmetric offset at which the two material polygons touch.
+///
+/// A pair that the continuous proxy flags and the grid proxy misses is the
+/// overlay being **more accurate** if `envelope_overlap` is true, and the
+/// overlay being **more inaccurate** if it is false. The margin says by how
+/// much, so a near-boundary miss can be told from an invented one.
+///
+/// Runs on a throwaway [`WorkCounters`] and its own kernel: nothing it does
+/// reaches the schedule's work meter. It is still expensive - an exact offset
+/// and overlap test per bisection step per pair - which is why it is armed
+/// separately from the overlay itself.
+#[cfg(feature = "compression-schedule")]
+fn classify_current_pose_overlay_pairs(
+    pieces: &[GeneralFastPiece<'_>],
+    settings: GeneralFastSettings,
+    catalog: &SurrogateCatalog,
+    state: &RelaxedState,
+) -> Result<Vec<crate::search::compression_schedule::GeneralCompressionSchedulePairClassification>, GeneralFastError>
+{
+    use crate::search::compression_schedule::GeneralCompressionSchedulePairClassification;
+
+    let expansion = collision_expansion_mm(settings);
+    let mut kernel = LegacyKernel;
+    // Deliberately thrown away: the schedule charges itself off
+    // `search.counters`, and a diagnostic may not move that meter.
+    let mut counters = WorkCounters::default();
+
+    // Both resolutions of every placement, plus the parent's true material
+    // geometry, resolved once per piece rather than once per pair.
+    let mut continuous = Vec::with_capacity(state.placements.len());
+    let mut snapped = Vec::with_capacity(state.placements.len());
+    let mut material = Vec::with_capacity(state.placements.len());
+    for placement in &state.placements {
+        let class = catalog.geometry_class_by_input[placement.input_index];
+        let continuous_key = (
+            class,
+            angle_key(continuous_angle(placement.rotation_deg)),
+            placement.mirrored,
+        );
+        let snapped_key = (
+            class,
+            angle_key(canonical_angle(placement.rotation_deg)),
+            placement.mirrored,
+        );
+        let continuous_shape = catalog
+            .orientations
+            .get(&continuous_key)
+            .ok_or_else(|| missing_orientation_error(pieces, placement.input_index, continuous_key))?;
+        let snapped_shape = catalog
+            .orientations
+            .get(&snapped_key)
+            .ok_or_else(|| missing_orientation_error(pieces, placement.input_index, snapped_key))?;
+        let mut snapped_placement = placement.clone();
+        snapped_placement.rotation_deg = canonical_angle(placement.rotation_deg);
+        continuous.push(continuous_shape);
+        snapped.push((snapped_shape, snapped_placement));
+        material.push(pieces[placement.input_index].polygon.transformed(
+            continuous_angle(placement.rotation_deg),
+            placement.mirrored,
+            placement.translate_x,
+            placement.translate_y,
+        )?);
+    }
+
+    let mut rows = Vec::new();
+    for first in 0..state.placements.len() {
+        for second in (first + 1)..state.placements.len() {
+            let continuous_penalty = resolved_pair_row(
+                &mut kernel,
+                &mut counters,
+                continuous[first],
+                &state.placements[first],
+                continuous[second],
+                &state.placements[second],
+            )
+            .penalty();
+            let grid_penalty = resolved_pair_row(
+                &mut kernel,
+                &mut counters,
+                snapped[first].0,
+                &snapped[first].1,
+                snapped[second].0,
+                &snapped[second].1,
+            )
+            .penalty();
+            if continuous_penalty <= 0.0 && grid_penalty <= 0.0 {
+                // Neither proxy calls this pair colliding: it is not part of
+                // either arm's collision-pair count, so there is nothing to
+                // classify.
+                continue;
+            }
+
+            let material_overlap = polygons_overlap_exact(&material[first], &material[second])?;
+            let envelope_overlap = polygons_overlap_exact(
+                &material[first].offset(expansion)?,
+                &material[second].offset(expansion)?,
+            )?;
+            // Bisect the symmetric offset at which the two material polygons
+            // first touch. Offsetting both by `e` closes a gap of `2e`, so the
+            // gap is `2 * e_touch` and the envelope margin - what is left of
+            // the pair clearance - is `2 * (e_touch - expansion)`.
+            let mut low = 0.0_f64;
+            let mut high = (expansion * 8.0).max(1.0);
+            if !polygons_overlap_exact(
+                &material[first].offset(high)?,
+                &material[second].offset(high)?,
+            )? {
+                // Further apart than the bracket: report the bracket as a
+                // lower bound rather than bisecting into a wrong answer.
+                rows.push(GeneralCompressionSchedulePairClassification {
+                    first_piece_id: pieces[state.placements[first].input_index].id.to_owned(),
+                    second_piece_id: pieces[state.placements[second].input_index].id.to_owned(),
+                    first_rotation_deg: continuous_angle(state.placements[first].rotation_deg),
+                    second_rotation_deg: continuous_angle(state.placements[second].rotation_deg),
+                    first_snapped_rotation_deg: canonical_angle(state.placements[first].rotation_deg),
+                    second_snapped_rotation_deg: canonical_angle(
+                        state.placements[second].rotation_deg,
+                    ),
+                    continuous_proxy_penalty: continuous_penalty,
+                    grid_proxy_penalty: grid_penalty,
+                    material_overlap,
+                    envelope_overlap,
+                    envelope_margin_mm: 2.0 * (high - expansion),
+                    material_gap_mm: 2.0 * high,
+                });
+                continue;
+            }
+            if material_overlap {
+                low = 0.0;
+                high = 0.0;
+            } else {
+                for _ in 0..40 {
+                    let mid = 0.5 * (low + high);
+                    if polygons_overlap_exact(
+                        &material[first].offset(mid)?,
+                        &material[second].offset(mid)?,
+                    )? {
+                        high = mid;
+                    } else {
+                        low = mid;
+                    }
+                }
+            }
+            let touch = 0.5 * (low + high);
+            rows.push(GeneralCompressionSchedulePairClassification {
+                first_piece_id: pieces[state.placements[first].input_index].id.to_owned(),
+                second_piece_id: pieces[state.placements[second].input_index].id.to_owned(),
+                first_rotation_deg: continuous_angle(state.placements[first].rotation_deg),
+                second_rotation_deg: continuous_angle(state.placements[second].rotation_deg),
+                first_snapped_rotation_deg: canonical_angle(state.placements[first].rotation_deg),
+                second_snapped_rotation_deg: canonical_angle(state.placements[second].rotation_deg),
+                continuous_proxy_penalty: continuous_penalty,
+                grid_proxy_penalty: grid_penalty,
+                material_overlap,
+                envelope_overlap,
+                envelope_margin_mm: 2.0 * (touch - expansion),
+                material_gap_mm: 2.0 * touch,
+            });
+        }
+    }
+    Ok(rows)
+}
+
 fn initialize_complete_state(
     pieces: &[GeneralFastPiece<'_>],
     settings: GeneralFastSettings,
@@ -15374,6 +15825,7 @@ fn initialize_complete_state(
     angle_seed_policy: GeneralRelaxedAngleSeedPolicy,
     pressure_model: GeneralRelaxedPressureModel,
     incumbent: &GeneralFastResult,
+    current_pose_overlay: bool,
 ) -> Result<RelaxedState, GeneralFastError> {
     let by_id = incumbent
         .placements
@@ -15387,21 +15839,32 @@ fn initialize_complete_state(
         if let Some(existing) = by_id.get(piece.id) {
             placements.push(RelaxedPlacement {
                 input_index,
-                rotation_deg: match (pressure_model, collision_backend, angle_seed_policy) {
-                    (GeneralRelaxedPressureModel::DirectionalPenetration, _, _) => {
-                        continuous_angle(existing.rotation_deg)
+                rotation_deg: if current_pose_overlay {
+                    // The overlay's whole point: keep the parent's own
+                    // rotation instead of snapping it onto the grid, and let
+                    // `CurrentPoseOverlay` resolve it. Unconditional on the
+                    // other three settings, but a no-op wherever they were
+                    // already continuous below - this only changes behaviour
+                    // for the default `StructuredGrid` + `RollbackTriangle` +
+                    // `StructuredTrianglePoles` combination.
+                    continuous_angle(existing.rotation_deg)
+                } else {
+                    match (pressure_model, collision_backend, angle_seed_policy) {
+                        (GeneralRelaxedPressureModel::DirectionalPenetration, _, _) => {
+                            continuous_angle(existing.rotation_deg)
+                        }
+                        (
+                            _,
+                            GeneralRelaxedCollisionBackend::DynamicHazard,
+                            GeneralRelaxedAngleSeedPolicy::ContinuousUniform,
+                        ) => continuous_angle(existing.rotation_deg),
+                        (
+                            _,
+                            GeneralRelaxedCollisionBackend::DynamicHazard,
+                            GeneralRelaxedAngleSeedPolicy::CurrentOnly,
+                        ) => continuous_angle(existing.rotation_deg),
+                        _ => canonical_angle(existing.rotation_deg),
                     }
-                    (
-                        _,
-                        GeneralRelaxedCollisionBackend::DynamicHazard,
-                        GeneralRelaxedAngleSeedPolicy::ContinuousUniform,
-                    ) => continuous_angle(existing.rotation_deg),
-                    (
-                        _,
-                        GeneralRelaxedCollisionBackend::DynamicHazard,
-                        GeneralRelaxedAngleSeedPolicy::CurrentOnly,
-                    ) => continuous_angle(existing.rotation_deg),
-                    _ => canonical_angle(existing.rotation_deg),
                 },
                 mirrored: existing.mirrored,
                 translate_x: existing.translate_short_axis,
@@ -17644,6 +18107,741 @@ mod tests {
             report.work_units,
             report.candidate_queries + 5 * report.exact_pair_tests
         );
+    }
+
+    /// An L, for the `CurrentPoseOverlay` tests.
+    ///
+    /// Sol review 6 §2.1 rejected the v5 round's only overlay regression test
+    /// because it used two *symmetric, well-separated* squares: a square's
+    /// proxy surrogate barely moves with rotation and the two pieces never
+    /// interacted, so the grid and overlay arms produced identical numbers and
+    /// the test would have passed against the original never-looked-up bug -
+    /// the very bug §0.1 of the experiment README says the campaign caught.
+    /// This shape is the opposite: 30x30 with a 22x22 bite out of it, so its
+    /// bounds, poles and triangles all move materially per degree of rotation.
+    #[cfg(feature = "compression-schedule")]
+    fn overlay_l_shape() -> PolygonSet {
+        PolygonSet::from_outer(vec![
+            point(0.0, 0.0),
+            point(30.0, 0.0),
+            point(30.0, 8.0),
+            point(8.0, 8.0),
+            point(8.0, 30.0),
+            point(0.0, 30.0),
+        ])
+        .unwrap()
+    }
+
+    /// A long thin bar: the most rotation-sensitive bounding box available, and
+    /// a different geometry class from [`overlay_l_shape`].
+    #[cfg(feature = "compression-schedule")]
+    fn overlay_bar() -> PolygonSet {
+        PolygonSet::from_outer(vec![
+            point(0.0, 0.0),
+            point(26.0, 0.0),
+            point(26.0, 5.0),
+            point(0.0, 5.0),
+        ])
+        .unwrap()
+    }
+
+    /// `13.37` is deliberately off the 2.5-degree grid; `canonical_angle`
+    /// snaps it to `12.5`. Both tests below turn on the 0.87-degree gap.
+    #[cfg(feature = "compression-schedule")]
+    const OVERLAY_OFF_GRID_DEG: f64 = 13.37;
+
+    #[cfg(feature = "compression-schedule")]
+    fn overlay_pieces<'a>(polygons: &'a [PolygonSet; 2]) -> [GeneralFastPiece<'a>; 2] {
+        [
+            GeneralFastPiece {
+                id: "ell",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "bar",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ]
+    }
+
+    #[cfg(feature = "compression-schedule")]
+    fn overlay_parent_placements() -> Vec<GeneralFastPlacement> {
+        vec![
+            GeneralFastPlacement {
+                piece_id: "ell".to_owned(),
+                rotation_deg: OVERLAY_OFF_GRID_DEG,
+                mirrored: false,
+                translate_short_axis: 12.0,
+                translate_long_axis: 12.0,
+            },
+            // Grid-native: `5.0` is two grid steps, a fixed point of both
+            // `canonical_angle` and `continuous_angle`. It must contribute
+            // neither an overlay entry nor an off-grid piece.
+            GeneralFastPlacement {
+                piece_id: "bar".to_owned(),
+                rotation_deg: 5.0,
+                mirrored: false,
+                translate_short_axis: 55.0,
+                translate_long_axis: 55.0,
+            },
+        ]
+    }
+
+    /// The overlay builds the parent's *exact* pose, and that pose is a
+    /// genuinely different shape from the grid snap of the same rotation.
+    ///
+    /// This is Sol review 6 §2.1's second option - "bounds/scores that differ
+    /// from the grid and coincide with a directly-constructed surrogate" - at
+    /// the catalogue level, and it is the fact every lookup test below rests
+    /// on: if the 13.37-degree surrogate and the 12.5-degree surrogate were
+    /// equal, no lookup test could tell which one a lookup returned.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn current_pose_overlay_builds_the_exact_pose_not_the_grid_snap() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) =
+            build_surrogate_catalog(&pieces, fast_settings, SurrogateCatalogMode::StructuredGrid, None)
+                .expect("the grid catalogue builds");
+        let parent = overlay_parent_placements();
+
+        let overlay = build_current_pose_overlay(&pieces, fast_settings, &catalog, &parent)
+            .expect("the overlay builds");
+
+        // One entry, one off-grid piece: the bar at 5.0 degrees is grid-native
+        // and contributes to neither count.
+        assert_eq!(overlay.entries.len(), 1);
+        assert_eq!(overlay.off_grid_pieces, 1);
+
+        let ell_class = catalog.geometry_class_by_input[0];
+        let continuous_key = (
+            ell_class,
+            angle_key(continuous_angle(OVERLAY_OFF_GRID_DEG)),
+            false,
+        );
+        let snapped_key = (
+            ell_class,
+            angle_key(canonical_angle(OVERLAY_OFF_GRID_DEG)),
+            false,
+        );
+        assert_ne!(
+            continuous_key, snapped_key,
+            "13.37 must not already be a grid angle, or this fixture proves nothing"
+        );
+        assert!(
+            catalog.orientations.contains_key(&snapped_key),
+            "the grid catalogue carries the snapped angle"
+        );
+        assert!(
+            !catalog.orientations.contains_key(&continuous_key),
+            "and does not carry the continuous one - that is why an overlay exists"
+        );
+
+        let entry = overlay
+            .entries
+            .get(&continuous_key)
+            .expect("the overlay entry is keyed by the continuous angle");
+
+        // It coincides with a directly-constructed surrogate at the parent's
+        // own rotation, field by field.
+        let mut counters = WorkCounters::default();
+        let direct = build_oriented_surrogate(
+            &polygons[0],
+            continuous_angle(OVERLAY_OFF_GRID_DEG),
+            false,
+            collision_expansion_mm(fast_settings),
+            &mut counters,
+        )
+        .expect("the reference surrogate builds");
+        assert_eq!(entry.bounds, direct.bounds);
+        assert_eq!(entry.diameter, direct.diameter);
+        assert_eq!(entry.difficulty, direct.difficulty);
+        assert_eq!(entry.cells.len(), direct.cells.len());
+        assert_eq!(entry.poles.len(), direct.poles.len());
+
+        // And it differs from the grid snap, which is what makes every lookup
+        // assertion below able to distinguish the two.
+        let snapped = &catalog.orientations[&snapped_key];
+        assert_ne!(
+            entry.bounds, snapped.bounds,
+            "the overlay surrogate must be observably different from the grid snap"
+        );
+    }
+
+    /// Sol review 6 §2.4: `currentPoseOverlayEntries` counts *keys*, so two
+    /// instances of one geometry class at the same continuous pose collapse
+    /// into one entry. The piece count must be reported separately, because it
+    /// is the one that measures the damage the snap would have done.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn current_pose_overlay_counts_entries_and_off_grid_pieces_separately() {
+        // Three bars - one geometry class - two of them at the same off-grid
+        // pose, one grid-native.
+        let bar = overlay_bar();
+        let pieces = [
+            GeneralFastPiece {
+                id: "bar-a",
+                polygon: &bar,
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "bar-b",
+                polygon: &bar,
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "bar-c",
+                polygon: &bar,
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        assert_eq!(
+            catalog.geometry_class_by_input,
+            vec![0, 0, 0],
+            "the three bars must share one geometry class for this test to bite"
+        );
+        let parent = vec![
+            GeneralFastPlacement {
+                piece_id: "bar-a".to_owned(),
+                rotation_deg: OVERLAY_OFF_GRID_DEG,
+                mirrored: false,
+                translate_short_axis: 10.0,
+                translate_long_axis: 10.0,
+            },
+            GeneralFastPlacement {
+                piece_id: "bar-b".to_owned(),
+                rotation_deg: OVERLAY_OFF_GRID_DEG,
+                mirrored: false,
+                translate_short_axis: 10.0,
+                translate_long_axis: 50.0,
+            },
+            GeneralFastPlacement {
+                piece_id: "bar-c".to_owned(),
+                rotation_deg: 5.0,
+                mirrored: false,
+                translate_short_axis: 60.0,
+                translate_long_axis: 80.0,
+            },
+        ];
+
+        let overlay = build_current_pose_overlay(&pieces, fast_settings, &catalog, &parent)
+            .expect("the overlay builds");
+
+        // One surrogate had to be built; two pieces were off the grid. The v5
+        // round reported only the first and called it a piece count.
+        assert_eq!(overlay.entries.len(), 1);
+        assert_eq!(overlay.off_grid_pieces, 2);
+    }
+
+    /// Sol review 6 §2.2: the merge must not clone the catalogue.
+    ///
+    /// `Arc::as_ptr` is the direct observation - a deep clone necessarily
+    /// allocates a new `SurrogateCatalog`, so the handle would move. This also
+    /// pins the two properties the merge has to preserve: the grid's own
+    /// entries survive untouched (`or_insert`, not `insert`), and the overlay's
+    /// entries are reachable afterwards.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn current_pose_overlay_merges_into_the_catalogue_without_cloning_it() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (mut catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        let parent = overlay_parent_placements();
+        let overlay = build_current_pose_overlay(&pieces, fast_settings, &catalog, &parent)
+            .expect("the overlay builds");
+
+        let ell_class = catalog.geometry_class_by_input[0];
+        let continuous_key = (
+            ell_class,
+            angle_key(continuous_angle(OVERLAY_OFF_GRID_DEG)),
+            false,
+        );
+        let snapped_key = (
+            ell_class,
+            angle_key(canonical_angle(OVERLAY_OFF_GRID_DEG)),
+            false,
+        );
+        let before_ptr = Arc::as_ptr(&catalog);
+        let before_len = catalog.orientations.len();
+        let snapped_bounds_before = catalog.orientations[&snapped_key].bounds;
+        let overlay_bounds = overlay.entries[&continuous_key].bounds;
+
+        merge_current_pose_overlay(&mut catalog, overlay.entries);
+
+        assert_eq!(
+            Arc::as_ptr(&catalog),
+            before_ptr,
+            "the merge must be in place - a deep clone would move the allocation"
+        );
+        assert_eq!(catalog.orientations.len(), before_len + 1);
+        assert_eq!(
+            catalog.orientations[&snapped_key].bounds, snapped_bounds_before,
+            "the grid's own entry is preserved"
+        );
+        assert_eq!(
+            catalog.orientations[&continuous_key].bounds, overlay_bounds,
+            "and the overlay's entry is reachable"
+        );
+    }
+
+    /// **Every** lookup path resolves through the overlay when the flag is on,
+    /// and through the grid snap when it is off - on one and the same
+    /// catalogue, so only the flag differs.
+    ///
+    /// This is Sol review 6 §2.1's third option, and it is the test that
+    /// actually fails against the original bug. Under that bug every one of
+    /// these paths re-ran `canonical_angle` and returned the *snapped* shape
+    /// even with the overlay armed, so each `assert_eq!` on the armed lane
+    /// below would have found grid bounds where it expects overlay bounds.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn current_pose_overlay_is_consulted_by_every_lookup_path() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (mut catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        let parent = overlay_parent_placements();
+        let overlay = build_current_pose_overlay(&pieces, fast_settings, &catalog, &parent)
+            .expect("the overlay builds");
+        merge_current_pose_overlay(&mut catalog, overlay.entries);
+
+        let ell_class = catalog.geometry_class_by_input[0];
+        let continuous_key = (
+            ell_class,
+            angle_key(continuous_angle(OVERLAY_OFF_GRID_DEG)),
+            false,
+        );
+        let snapped_key = (
+            ell_class,
+            angle_key(canonical_angle(OVERLAY_OFF_GRID_DEG)),
+            false,
+        );
+        let overlay_bounds = catalog.orientations[&continuous_key].bounds;
+        let snapped_bounds = catalog.orientations[&snapped_key].bounds;
+        assert_ne!(
+            overlay_bounds, snapped_bounds,
+            "the two shapes must differ or this test cannot distinguish them"
+        );
+
+        let mut armed_settings = coupled_experiment_test_settings(9);
+        armed_settings.current_pose_overlay = true;
+        let mut armed =
+            LegacyLaneSearch::new(&pieces, fast_settings, armed_settings, 7, catalog.clone());
+        // The predicate is resolved once per lane, so this is the single bit
+        // every hot site now reads.
+        assert!(armed.continuous_rotation_keys);
+
+        let mut disarmed_settings = coupled_experiment_test_settings(9);
+        disarmed_settings.current_pose_overlay = false;
+        let mut disarmed =
+            LegacyLaneSearch::new(&pieces, fast_settings, disarmed_settings, 7, catalog.clone());
+        assert!(!disarmed.continuous_rotation_keys);
+
+        // 1. `rotation_key` - the uncached derivation.
+        assert_eq!(
+            armed.rotation_key(OVERLAY_OFF_GRID_DEG),
+            continuous_key.1,
+            "rotation_key must derive the continuous angle when armed"
+        );
+        assert_eq!(
+            disarmed.rotation_key(OVERLAY_OFF_GRID_DEG),
+            snapped_key.1,
+            "and the snapped angle when not"
+        );
+
+        // 2. `surrogate_key` - the whole key the pair hot loop descends on.
+        assert_eq!(
+            armed.surrogate_key(0, OVERLAY_OFF_GRID_DEG, false),
+            continuous_key
+        );
+        assert_eq!(
+            disarmed.surrogate_key(0, OVERLAY_OFF_GRID_DEG, false),
+            snapped_key
+        );
+
+        // 3. `memoised_surrogate_key` - the `AngleKeyCache` path, on both a
+        //    miss and the hit that follows it.
+        assert_eq!(
+            armed.memoised_surrogate_key(0, OVERLAY_OFF_GRID_DEG, false),
+            continuous_key
+        );
+        assert_eq!(
+            armed.memoised_surrogate_key(0, OVERLAY_OFF_GRID_DEG, false),
+            continuous_key,
+            "the cached answer must be the same answer"
+        );
+        assert_eq!(
+            disarmed.memoised_surrogate_key(0, OVERLAY_OFF_GRID_DEG, false),
+            snapped_key
+        );
+        assert_eq!(
+            disarmed.memoised_surrogate_key(0, OVERLAY_OFF_GRID_DEG, false),
+            snapped_key
+        );
+
+        // 4. `oriented` - the shape itself, not just the key. This is the
+        //    assertion the never-looked-up bug fails.
+        assert_eq!(
+            armed
+                .oriented(0, OVERLAY_OFF_GRID_DEG, false)
+                .expect("the armed lane resolves the parent's own pose")
+                .bounds,
+            overlay_bounds
+        );
+        assert_eq!(
+            disarmed
+                .oriented(0, OVERLAY_OFF_GRID_DEG, false)
+                .expect("the disarmed lane resolves the snapped pose")
+                .bounds,
+            snapped_bounds
+        );
+
+        // 5. `local_shape_bounds` - the lane's most-called catalogue path,
+        //    which has its own cached and uncached bodies.
+        assert_eq!(
+            armed
+                .local_shape_bounds(0, OVERLAY_OFF_GRID_DEG, false)
+                .expect("armed bounds resolve"),
+            overlay_bounds
+        );
+        assert_eq!(
+            disarmed
+                .local_shape_bounds(0, OVERLAY_OFF_GRID_DEG, false)
+                .expect("disarmed bounds resolve"),
+            snapped_bounds
+        );
+
+        // 6. The grid-native piece is unaffected by the flag: `5.0` is a fixed
+        //    point of both angle functions, so both lanes agree on the bar.
+        assert_eq!(
+            armed.surrogate_key(1, 5.0, false),
+            disarmed.surrogate_key(1, 5.0, false)
+        );
+    }
+
+    /// The whole-state scorer disagrees between the arms on an *interacting*
+    /// asymmetric layout.
+    ///
+    /// `score_state` is what `drive_compression_schedule` measures
+    /// `parentEntryLoss`/`parentCollisionPairs`/`parentProxyFeasible` with, so
+    /// this is the unit-level form of the campaign's own entry measurement -
+    /// and it is bit-identical between arms under the never-looked-up bug,
+    /// which is exactly how the campaign found that bug.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn current_pose_overlay_changes_the_scored_state_on_interacting_geometry() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (mut catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        // Overlapping on purpose: the bar lies along the L's lower arm, so the
+        // pair penalty depends on the L's precise rotation rather than only on
+        // whether the two collide at all.
+        let parent = vec![
+            GeneralFastPlacement {
+                piece_id: "ell".to_owned(),
+                rotation_deg: OVERLAY_OFF_GRID_DEG,
+                mirrored: false,
+                translate_short_axis: 20.0,
+                translate_long_axis: 20.0,
+            },
+            GeneralFastPlacement {
+                piece_id: "bar".to_owned(),
+                rotation_deg: 5.0,
+                mirrored: false,
+                translate_short_axis: 22.0,
+                translate_long_axis: 22.0,
+            },
+        ];
+        let overlay = build_current_pose_overlay(&pieces, fast_settings, &catalog, &parent)
+            .expect("the overlay builds");
+        assert_eq!(overlay.entries.len(), 1);
+        assert_eq!(overlay.off_grid_pieces, 1);
+        merge_current_pose_overlay(&mut catalog, overlay.entries);
+
+        // One and the same state, scored by two lanes that differ only in the
+        // flag - so any difference is the overlay being read.
+        let state = RelaxedState {
+            placements: vec![
+                RelaxedPlacement {
+                    input_index: 0,
+                    rotation_deg: OVERLAY_OFF_GRID_DEG,
+                    mirrored: false,
+                    translate_x: 20.0,
+                    translate_y: 20.0,
+                },
+                RelaxedPlacement {
+                    input_index: 1,
+                    rotation_deg: 5.0,
+                    mirrored: false,
+                    translate_x: 22.0,
+                    translate_y: 22.0,
+                },
+            ],
+            strip_depth_mm: 100.0,
+        };
+
+        let mut armed_settings = coupled_experiment_test_settings(9);
+        armed_settings.current_pose_overlay = true;
+        let mut armed =
+            LegacyLaneSearch::new(&pieces, fast_settings, armed_settings, 7, catalog.clone());
+        let armed_score = armed.score_state(&state).expect("the armed lane scores");
+
+        let mut disarmed_settings = coupled_experiment_test_settings(9);
+        disarmed_settings.current_pose_overlay = false;
+        let mut disarmed =
+            LegacyLaneSearch::new(&pieces, fast_settings, disarmed_settings, 7, catalog.clone());
+        let disarmed_score = disarmed
+            .score_state(&state)
+            .expect("the disarmed lane scores");
+
+        // Guard the guard: a layout the two arms both score as a clean zero
+        // would make the inequality below vacuous, which is precisely how the
+        // v5 round's symmetric-squares test managed to pass against the bug.
+        assert!(
+            armed_score.common_loss() > 0.0 && disarmed_score.common_loss() > 0.0,
+            "the fixture must actually interact: armed={armed_score:?} disarmed={disarmed_score:?}"
+        );
+        assert_ne!(
+            armed_score.common_loss(),
+            disarmed_score.common_loss(),
+            "the scored entry loss must differ between the arms: armed={armed_score:?} \
+             disarmed={disarmed_score:?}"
+        );
+    }
+
+    /// `CurrentPoseOverlay` off: a parent with one piece at a continuous,
+    /// off-grid rotation is exactly the entry-damage case Sol review 5
+    /// describes - `initialize_complete_state` snaps it onto the
+    /// `StructuredGrid`, so the schedule's own `parentEntryLoss` measures a
+    /// perturbed layout rather than the parent it was actually handed.
+    #[test]
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn compression_schedule_without_overlay_snaps_continuous_parent_rotation() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        // Opposite corners of the 100x100 test sheet: far enough apart that
+        // no rotation of either 10x10/8x8 square can make them collide, so
+        // the parent is proxy-feasible regardless of how its rotation is
+        // resolved. `13.37` is deliberately off the 2.5-degree grid.
+        let parent = GeneralCoupledSeparatorArmDiagnostics {
+            final_placements: vec![
+                GeneralCoupledSeparatorPlacementDiagnostics {
+                    piece_id: "large".to_owned(),
+                    rotation_deg: 13.37,
+                    mirrored: false,
+                    translate_short_axis: 10.0,
+                    translate_long_axis: 10.0,
+                },
+                GeneralCoupledSeparatorPlacementDiagnostics {
+                    piece_id: "small".to_owned(),
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_short_axis: 80.0,
+                    translate_long_axis: 80.0,
+                },
+            ],
+            ..GeneralCoupledSeparatorArmDiagnostics::default()
+        };
+        let mut settings = coupled_experiment_test_settings(9);
+        settings.persistent_vacancy_target_depth_mm = Some(50.0);
+        settings.compression_schedule = Some(CompressionScheduleSettings {
+            sweeps_per_step: 1,
+            confirm_every: 1,
+            rollback_after_steps: 0,
+            work_cap_queries: Some(1),
+            continue_past_bound: true,
+            repair_policy: CompressionRepairPolicy::SweepsOnly,
+            ..CompressionScheduleSettings::default()
+        });
+
+        let without_overlay = JobPool::new(Some(1)).run_scoped(|| {
+            run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+        });
+        let report = without_overlay
+            .compression_schedule
+            .expect("an attempted schedule reports");
+        assert!(!report.current_pose_overlay);
+        assert_eq!(report.current_pose_overlay_entries, 0);
+        // The layout is well-separated, so it is proxy-feasible either way -
+        // this asserts the *mechanism* the overlay test below contrasts
+        // against, not damage on this particular fixture.
+        assert!(report.parent_proxy_feasible, "{report:?}");
+
+        settings.current_pose_overlay = true;
+        let with_overlay = JobPool::new(Some(1)).run_scoped(|| {
+            run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+        });
+        let overlay_report = with_overlay
+            .compression_schedule
+            .expect("an attempted schedule reports");
+        assert!(overlay_report.current_pose_overlay);
+        // Exactly the one piece that was off the grid, not the other, and not
+        // a `CurrentAssignment`-style catalogue rebuilt for the whole class.
+        // One entry and one piece, because the two squares are different
+        // geometry classes - the two counts only diverge on a repetitive
+        // parent, which
+        // `current_pose_overlay_counts_entries_and_off_grid_pieces_separately`
+        // covers.
+        assert_eq!(overlay_report.current_pose_overlay_entries, 1);
+        assert_eq!(overlay_report.current_pose_overlay_off_grid_pieces, 1);
+        assert!(overlay_report.parent_proxy_feasible, "{overlay_report:?}");
+        // Both arms publish the same exact-valid parent - the schedule was
+        // given one query of budget - so this is purely a resolution check,
+        // not a quality claim.
+        assert_eq!(without_overlay.exact_valid, with_overlay.exact_valid);
+        assert_eq!(
+            without_overlay.independent_depth_mm,
+            with_overlay.independent_depth_mm
+        );
+    }
+
+    /// Mode 34 end to end, on asymmetric *interacting* geometry: the two arms
+    /// must report a different entry measurement.
+    ///
+    /// This is the regression test Sol review 6 §2.1 asked for at the level
+    /// the campaign works at. The v5 round's version used well-separated
+    /// symmetric squares, so `parentEntryLoss` was identical between arms and
+    /// the test passed even while the overlay was never read; here the L's
+    /// exact 13.37-degree pose and its 12.5-degree snap genuinely disagree
+    /// about the layout, so the schedule's own entry number moves. Under the
+    /// never-looked-up bug the two arms are bit-identical here and this fails.
+    #[test]
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn compression_schedule_overlay_changes_entry_measurement_on_asymmetric_parent() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let parent = GeneralCoupledSeparatorArmDiagnostics {
+            final_placements: vec![
+                GeneralCoupledSeparatorPlacementDiagnostics {
+                    piece_id: "ell".to_owned(),
+                    rotation_deg: OVERLAY_OFF_GRID_DEG,
+                    mirrored: false,
+                    translate_short_axis: 20.0,
+                    translate_long_axis: 20.0,
+                },
+                GeneralCoupledSeparatorPlacementDiagnostics {
+                    piece_id: "bar".to_owned(),
+                    rotation_deg: 5.0,
+                    mirrored: false,
+                    translate_short_axis: 30.0,
+                    translate_long_axis: 34.0,
+                },
+            ],
+            ..GeneralCoupledSeparatorArmDiagnostics::default()
+        };
+        let mut settings = coupled_experiment_test_settings(9);
+        settings.persistent_vacancy_target_depth_mm = Some(50.0);
+        settings.compression_schedule = Some(CompressionScheduleSettings {
+            sweeps_per_step: 1,
+            confirm_every: 1,
+            rollback_after_steps: 0,
+            work_cap_queries: Some(1),
+            continue_past_bound: true,
+            repair_policy: CompressionRepairPolicy::SweepsOnly,
+            ..CompressionScheduleSettings::default()
+        });
+
+        let grid = JobPool::new(Some(1))
+            .run_scoped(|| run_compression_schedule(&pieces, fast_settings, settings, &parent, None))
+            .compression_schedule
+            .expect("an attempted schedule reports");
+        assert!(!grid.current_pose_overlay);
+        assert_eq!(grid.current_pose_overlay_entries, 0);
+        assert_eq!(grid.current_pose_overlay_off_grid_pieces, 0);
+
+        settings.current_pose_overlay = true;
+        let overlay = JobPool::new(Some(1))
+            .run_scoped(|| run_compression_schedule(&pieces, fast_settings, settings, &parent, None))
+            .compression_schedule
+            .expect("an attempted schedule reports");
+        assert!(overlay.current_pose_overlay);
+        assert_eq!(overlay.current_pose_overlay_entries, 1);
+        assert_eq!(overlay.current_pose_overlay_off_grid_pieces, 1);
+
+        // `startDepthMm` is `tight_strip_depth`: the tightest strip that
+        // contains the *resolved* shapes of the parent's placements. It is
+        // therefore a direct read-out of which surrogate each lookup returned,
+        // and it is bit-identical between the arms under the never-looked-up
+        // bug. Here the L's exact pose is the deeper one, by 18 microns.
+        assert_ne!(
+            grid.start_depth_mm, overlay.start_depth_mm,
+            "the resolved parent bounds must differ between the arms: \
+             grid={grid:?} overlay={overlay:?}"
+        );
+
+        // The same statement one level down, on the proxy tier's own scored
+        // loss for the first step, which is where the campaign's entry
+        // measurement lives on a parent that is not already at its tight depth.
+        let grid_step = &grid.steps[0];
+        let overlay_step = &overlay.steps[0];
+        assert!(
+            grid_step.boundary_loss_before > 0.0 && overlay_step.boundary_loss_before > 0.0,
+            "the fixture must put the parent under boundary pressure: \
+             grid={grid_step:?} overlay={overlay_step:?}"
+        );
+        assert_ne!(
+            grid_step.boundary_loss_before, overlay_step.boundary_loss_before,
+            "grid={grid_step:?} overlay={overlay_step:?}"
+        );
+
+        // `parentEntryLoss` itself is *not* asserted to differ: mode 34
+        // requires an exact-valid parent, and on a two-piece fixture scored at
+        // its own tight depth that number is a clean zero on both arms. The
+        // campaign's 61-piece parents are proxy-infeasible on arrival (26-38
+        // colliding pairs) and so do move it; a two-piece unit fixture cannot
+        // reproduce that without an invalid parent, which mode 34 rejects.
+        assert_eq!(grid.parent_entry_loss, 0.0);
+        assert_eq!(overlay.parent_entry_loss, 0.0);
     }
 
     /// The schedule stops on the budget it was given rather than on the step

@@ -1,0 +1,57 @@
+{
+ "label": "final-csched",
+ "binary": "/var/lib/t3/tmp/cpo6/bin/cs-final",
+ "env": {},
+ "gates": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fingerprints": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ],
+   "hit": true,
+   "wallSeconds": 26.397520065307617,
+   "docDigest": "f12c2d3f0747afe8c3434b062451e14da0ece296ed48bc7e09fb1e0f25df0074"
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "depth": 159.092,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 4.414407014846802,
+   "docDigest": "c3931586eb31f38860d0efb8e1bdb904325c4cf9a3577616ec3399a08cae6f4b"
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "depth": 159.079,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.7143354415893555,
+   "docDigest": "4491b78a223f18a38eb66ebfca9283f0d15cd55b9eb63c47228d778d24972588"
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "depth": 164.038,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.25992488861084,
+   "docDigest": "caf1555c8b7b1c227c97d676cb1535197ef7d98e92d8ba8b59bdad5dc47dac88"
+  }
+ },
+ "ALL_PASS": true
+}
