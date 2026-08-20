@@ -306,6 +306,8 @@ fn current_pose_overlay_classify_requested() -> bool {
     env::var("POLYGON_NESTING_CURRENT_POSE_OVERLAY_CLASSIFY")
         .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
         .unwrap_or(false)
+}
+
 /// The SE(2) rigidity certificate's own knobs, parsed from the environment for
 /// exactly the reason profiling is: the positional argument list is a pinned
 /// contract that replay drivers depend on, and a diagnostic may not change what
