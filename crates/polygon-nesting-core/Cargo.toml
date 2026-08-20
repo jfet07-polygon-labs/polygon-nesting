@@ -252,6 +252,27 @@ constructor-census = []
 # quality gate rather than a document diff. See
 # `search::compression_schedule` and docs/experiments/compression-schedule/.
 compression-schedule = []
+# A diagnostic-only companion to `general_micro_legalization`'s translation-only
+# global program. It asks a different question from the repair pass: not "can
+# this front be pushed open at all" but "how much shallower can the PUBLISHED
+# depth be made, by a bounded SE(2) motion of every piece, without breaking
+# anything else". See `search::general_micro_legalization::se2_certificate` and
+# docs/experiments/se2-rigidity/.
+#
+# Off by default, and the default build contains none of it: the whole module is
+# behind this `#[cfg]`, and the only thing it needs from the shipping path is
+# `Approach`'s witness pair, which is itself behind the same gate so that
+# neither the struct's size nor `measure_approach`'s work changes in a default
+# build. `global_legalize` shares no code with the certificate's solver and no
+# production path calls it.
+#
+# It never runs inside a request even when compiled in: the only caller is a
+# CLI branch in `general_request_benchmark`, gated on the
+# `POLYGON_NESTING_SE2_CERTIFICATE` environment variable exactly the way
+# `POLYGON_NESTING_COMPRESSION_SCHEDULE` gates mode 34's knobs, so an armed
+# build run without it is the shipping benchmark. The four pinned gates are run
+# on both binaries to hold that.
+se2-rigidity-certificate = []
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }

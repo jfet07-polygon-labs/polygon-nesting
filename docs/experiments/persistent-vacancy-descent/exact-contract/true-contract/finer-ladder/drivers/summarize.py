@@ -66,8 +66,11 @@ summary = {
         'every one of the three adoptions is an orientation acceptance at one '
         'of the two NEW rungs - the accepted-rung distribution moved off the '
         'old floor entirely (27 acceptances at 0.0032, 13 at 0.008, none at '
-        '0.02 or coarser across 110 campaign arms). The incumbent is a '
-        'certified fixpoint of 40 further probe arms including mode 26.'),
+        '0.02 or coarser across 110 campaign arms). The incumbent holds a '
+        'finite negative on a declared battery of 34 further search arms plus '
+        '6 replays (cert.json probeArms: 40 folds the replays into the search '
+        'count) including mode 26 - a negative over the instruments that were '
+        'fired, not a certified fixpoint.'),
     'request': lib.REQ.split('/tests/')[-1],
     'requestSha256': lib.REQ_SHA,
     'searchOffsetAllowanceMm': float(lib.ALLOWANCE),
@@ -86,7 +89,9 @@ summary = {
                      'true-contract/orientation-entry/pinned-parent-159.083.json'),
         'finalRaw': result.get('raw'),
         'finalPin': pin,
-        'fixpoint': result.get('fixpoint'),
+        # The cascade's own stop condition (it escalated and stuck), not a
+        # claim about the battery; `certification` below carries that.
+        'cascadeEscalatedAndStuck': result.get('fixpoint'),
         'arms': state.get('arms'),
         'byTier': state.get('byTier'),
         'rungsSeenAcrossAllArms': state.get('rungs'),
@@ -108,7 +113,8 @@ summary = {
     },
     'geometricDiffAgainstOldRecord': geodiff(OLD_PIN, RECORD_PIN),
     'certification': {k: cert.get(k) for k in
-                      ('replayPass', 'probeArms', 'belowIncumbent', 'fixpoint',
+                      ('replayPass', 'probeArms', 'searchArms', 'replayArms',
+                       'belowIncumbent', 'finiteNegativeOnBattery',
                        'rungs', 'elapsedS')} if cert else None,
     'abLadderGenerations': {
         'decisiveArm': {

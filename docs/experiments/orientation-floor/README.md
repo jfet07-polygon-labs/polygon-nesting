@@ -1,11 +1,17 @@
 # The orientation floor was still a floor, and the repair tier was the wall
 
 The standing record on the true 5.0/5.0 exact-clearance contract was
-**155.42229074464285 mm**, and it was not merely an incumbent: it was a
-*certified fixpoint* of 36 probe arms — mode 31 at four tiny steps, the whole
-frontier-flatten delta grid handed to mode 33 under both slack values, mode 26
-ladders at three drops and two seeds, and mode 34 at four step sizes and two
-seeds. The record-line round closed by saying what the last 0.422 mm would
+**155.42229074464285 mm**, and it was not merely an incumbent: it had survived
+a **finite negative on a declared battery** of 30 search arms plus 6 replays
+(record-line-cascade's `probeArms: 36` folds the replays into the search
+count; see that round's §7, corrected post hoc — this is not a certified
+fixpoint) — mode 31 at four tiny steps, the whole frontier-flatten delta grid
+handed to mode 33 under both slack values, mode 26 ladders at three drops and
+two seeds, and mode 34 at three distinct step sizes (0.25, 1, 0.1) and two
+seeds, with `step=0.25` also probed at a second work budget. Every mode-34 arm
+in that battery entered with `parentProxyFeasible: false`, so it measured the
+schedule's regrid recovery rather than a local schedule search. The
+record-line round closed by saying what the last 0.422 mm would
 take: "an instrument this round did not fire rather than more of the same".
 
 Four were fired, and they compose — each one opening the fixpoint the
@@ -55,7 +61,7 @@ Nothing here is comparable to any number measured at allowance `0.002`.
 
 | pin | declared raw (mm) | via | delta |
 |---|---:|---|---:|
-| `record-line-cascade/pinned-fs-155.4223.json` | 155.42229074464285 | the prior record, a certified fixpoint of 36 arms | — |
+| `record-line-cascade/pinned-fs-155.4223.json` | 155.42229074464285 | the prior record, a finite negative on a declared battery of 30 search arms + 6 replays (not a certified fixpoint — see that round's §7) | — |
 | `pinned-fs-155.42197.json` | 155.42196626072334 | flatten 0.001 -> mode 33 p0.05, accepted rung **0.00128** | -0.000324 |
 | `pinned-fs-155.41964177680.json` | 155.4196417768017 | flatten 0.005 -> mode 33 p0.05, accepted rung 0.00128 | -0.002324 |
 | `pinned-fs-155.41373.json` | 155.4137281129324 | flatten **0.03** -> mode 33 p2.0 (deep entry grid) | -0.005914 |
@@ -74,7 +80,11 @@ Nothing here is comparable to any number measured at allowance `0.002`.
 | `pinned-fs-155.33141597700.json` | 155.33141597699955 | flatten 0.001 -> mode 33 p0.05 | -0.000397 |
 | **`pinned-fs-155.33041597700.json`** | 155.33041597699957 | flatten 0.002 -> mode 33 p0.05 | -0.001000 |
 
-That line ends at 155.33041597699957, a certified fixpoint of 138 arms. The
+That line ends at 155.33041597699957, holding a finite negative on a declared
+battery of 132 search arms plus 6 replays (`probeArms: 138` folds the replays
+into the search count, exactly as the record-line round's own `probeArms: 36`
+does). It is not a certified fixpoint — and §11 below is the proof, since the
+fourth instrument then walked straight past it. The
 fourth instrument (§5a) then took it a further 0.0660 mm over eighteen rounds:
 
 | c2f round | tier | via | declared raw (mm) | delta | others below |
@@ -158,7 +168,7 @@ untouched, and the ordering rule is unchanged, so the new finest rung leads.
 ## 3. The A/B, and why the old ladder could not have found this
 
 The same 22-arm sweep — the frontier-flatten delta grid
-{0.0005 … 0.01} × slacks {0.05, 2.0} → mode 33 — on the certified fixpoint,
+{0.0005 … 0.01} × slacks {0.05, 2.0} → mode 33 — on the battery-negative pin,
 under both binaries (`evidence/ladder-ab-base-155.4223.json`,
 `evidence/ladder-ab-new-155.4223.json`):
 
@@ -262,8 +272,9 @@ translation — for a placement `R(r)·s + T` with footprint centre
 `C = R(r)·c + T`, the rotated placement is `R(r+d)·s + T'` with
 `T' = C − R(r+d)·c`.
 
-On the certified fixpoint at 155.33041597699957 — a state that had just survived
-138 certification arms plus 110 further compositions — 80 rotation-entry arms
+On the battery-negative pin at 155.33041597699957 — a state that had just
+survived 132 certification search arms (plus its 6 replays) and 110 further
+compositions — 80 rotation-entry arms
 (k ∈ {1,2,3,5,7} × 8 signed rungs × modes {30, 33}) published **3 below**
 (`evidence/rotentry-155.33042.json`).
 
@@ -327,7 +338,7 @@ not a statement about the operator.
 | k-deepest nudge, k ∈ {2,3,5,7} × d ∈ {0.02 … 0.3} × modes {33,31} | 32 | **0** | `evidence/knudge-155.41964.json` |
 | mode 33 seed salt, 3 deltas × 6 seeds | 18 | **0** | `evidence/seedtest-m33-155.40873.json` |
 | mode 30 seed salt, 3 deltas × 6 seeds | 18 | **0** | `evidence/m30seed-155.33042.json` |
-| 2.5° regrid → legalize → mode 34 at four step sizes | 13 | **0** | `evidence/regrid-155.40873.json` |
+| 2.5° regrid → legalize → mode 34 at four specs, **three** distinct step sizes (0.0625, 0.125, 0.25; `step=0.125` repeated at a 60M-unit budget) | 13 | **0** | `evidence/regrid-155.40873.json` |
 | mode 23 crossover, record-line near-ties (in-cascade) | 90 | **0** | the cascade states, tier `G-cross` |
 | mode 23 crossover, **seven same-lineage siblings inside 0.09 mm**, 5 cuts, both directions | 70 | **0** | `evidence/crossover-final.json` |
 | k-deepest nudge → **tier H**, k ∈ {1,2,3,5,7,10} × d ∈ {0.05 … 0.5} × modes {30,31} | 60 | **0** | `evidence/knudge-legal-155.33042.json` |
@@ -410,10 +421,12 @@ one is what motivated §5a.
 
 **The intermediate, `pinned-fs-155.33041597700.json`** (declared raw
 `155.33041597699957`, 1,247 s, `evidence/cert-final.json`): `replayPass: true`,
-**138 probe arms**, `belowIncumbent: 0`, `fixpoint: true`. A further 110 arms of
-untried compositions (§8's last three rows) were also barren on it. That is the
-state tier I was invented against, and it is the reason the round can say what a
-certified fixpoint does and does not mean.
+**138 probe arms — 132 search plus 6 replays**, `belowIncumbent: 0`, and the
+field the driver then recorded as `fixpoint: true` (since renamed
+`finiteNegativeOnBattery`; the archived JSON is left as produced). A further 110
+arms of untried compositions (§8's last three rows) were also barren on it. That
+is the state tier I was invented against, and it is the reason the round can say
+what a finite negative on a declared battery does and does not mean.
 
 **The final, `pinned-fs-155.26442950833.json`** (declared raw
 `155.26442950832842`, 1,130 s, `evidence/cert-final2.json`):
@@ -421,16 +434,20 @@ certified fixpoint does and does not mean.
 | half | what | result |
 |---|---|---|
 | replay | modes 27, 30 and 22 seeds 0-3 | 6 of 6 `exactValid` **and** `contractValid`, all six reproducing fingerprint `82eaa976…` at **0 ULPs** from the declared raw |
-| fixpoint | **132 probe arms**: mode 31 x 4 tiny steps, the eleven-delta flatten grid x 2 slacks -> mode 33 and x 1 slack -> mode 32 under **both ladder generations**, the nudge tier x 16, tier H's twelve-delta grid -> modes 30 and 31, mode 26 x 3 drops x 2 seeds, and mode 34 x 8 step/budget specs x 2 seeds | **0 below the incumbent** |
+| battery | **132 search arms** (plus the 6 replay arms above, for `probeArms: 138`): mode 31 x 4 tiny steps, the eleven-delta flatten grid x 2 slacks -> mode 33 and x 1 slack -> mode 32 under **both ladder generations**, the nudge tier x 16, tier H's twelve-delta grid -> modes 30 and 31, mode 26 x 3 drops x 2 seeds, and mode 34 x 8 step/budget specs x 2 seeds | **0 below the incumbent** |
 
-`replayPass: true`, `belowIncumbent: 0`, `fixpoint: true`. The battery is 138
-arms against the record-line round's 36, and the additions are the instruments
-that moved this round: the wide entry grid, mode 32, and tier H. A fixpoint claim
+`replayPass: true`, `belowIncumbent: 0`, `finiteNegativeOnBattery: true` (the
+field the driver recorded as `fixpoint: true` when this ran; the archived JSON is
+left as produced). The battery is 138
+arms against the record-line round's 36 — 132 search arms against 30, both counts
+folding the same 6 replays — and the additions are the instruments
+that moved this round: the wide entry grid, mode 32, and tier H. A coverage claim
 that does not probe the tier that produced the descent is a claim about the tiers
-that were already exhausted — which is exactly what the 155.33042 certificate
+that were already exhausted — which is exactly what the 155.33042 negative
 turned out to be, since tier I then took 0.066 mm out of it. The final
-certificate has the same shape and therefore the same caveat, stated plainly:
-**it certifies the instruments in the battery, and tier I is not yet in it.**
+battery has the same shape and therefore the same caveat, stated plainly:
+**it is a negative on the instruments in the battery, and tier I is not yet in
+it.**
 
 Two independent replays are kept rather than one. The record was produced by the
 ten-rung binary, so `evidence/replay-final.json` is the in-family check — and
@@ -460,10 +477,11 @@ rung.
   adopting when it was stopped, at a decaying but non-zero rate. What it does
   claim is that the levers are not exhausted in *kind*: all four were found by
   asking what the state's own diagnostics were saying rather than by widening a
-  grid, and three of the four were found *after* a certified fixpoint said the
-  previous set was done. A certified fixpoint is a statement about the
-  instruments that were fired, and this round fired four sets of them and broke
-  four fixpoints.
+  grid, and three of the four were found *after* a battery of probe arms had
+  come back empty on the previous set. That is exactly why the conclusion is
+  called a finite negative on a declared battery and not a certified fixpoint:
+  it is a statement about the instruments that were fired, and this round fired
+  four sets of them and walked past four such negatives.
 * **The descent decays inside a basin and the instruments have to be
   re-chosen.** Every cascade in this round started fast and slowed: 25 arms
   below out of 120, then 76 of 198, then 3 of 138. Each stall was broken by a

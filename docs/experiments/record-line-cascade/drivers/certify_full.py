@@ -6,10 +6,20 @@ Two jobs in one pass:
   1. REPLAY VALIDATION - modes 27, 30 and 22 seeds 0-3 must all come back
      exactValid AND contractValid and reproduce the pin's own raw depth and
      placement fingerprint. That is the pin-is-real check.
-  2. FIXPOINT CLAIM - mode 22 seeds 0-3, mode 26 ladders x6, mode 31 tiny steps
-     x4, mode 27, mode 30, and the whole frontier-flatten delta grid handed to
-     mode 33 under BOTH ladder generations (the base-commit binary and the
-     finer-ladder binary). Nothing below the incumbent anywhere is the claim.
+  2. FINITE NEGATIVE ON A DECLARED BATTERY - mode 26 ladders x6, mode 31 tiny
+     steps x4, the whole frontier-flatten delta grid handed to mode 33 under
+     BOTH ladder generations (the base-commit binary and the finer-ladder
+     binary), and the mode-34 schedule specs. The claim this supports is
+     exactly "none of the arms listed below found anything under the
+     incumbent" - a finite negative over an enumerated set of modes,
+     constants, seeds and budgets.
+
+     It is NOT a fixpoint claim, and the output field is named accordingly
+     (`finiteNegativeOnBattery`, not `fixpoint`). The battery says nothing
+     about unenumerated angles, centres, budgets, operators or instances; Sol
+     review 3 §0 and review 5 §0 both landed on the same correction, and
+     review 6 §3 found the word still standing in the drivers after the READMEs
+     had been fixed. See docs/experiments/record-line-cascade/README.md §7.
 
 Usage: certify_full.py <pin> <raw> [label]
 """
@@ -33,10 +43,14 @@ FLAT = (0.0005, 0.001, 0.002, 0.003, 0.004, 0.01)
 SLACK = (0.05, 2.0)
 M31 = (0.006, 0.012, 0.025, 0.04)
 DROPS = (0.3, 0.55, 1.0)
-# The mode-34 fixpoint arms. The step size is the knob this round added and the
-# one that decided whether the schedule moved at all, so a fixpoint claim that
-# only probed the 1-micron default would be the same one-step-size claim the
-# 159.079 record parent's fixpoint turned out to be.
+# The mode-34 arms. The step size is the knob this round added and the one that
+# decided whether the schedule moved at all, so a negative that only probed the
+# 1-micron default would be the same one-step-size negative the 159.079 record
+# parent's battery turned out to be.
+#
+# Four specs, THREE distinct step sizes: 0.25, 1 and 0.1, with 0.25 repeated at
+# a second work budget. Any prose derived from this tuple must say "three step
+# sizes at four specs", not "four step sizes".
 SCHED_SPECS = ('past=1,work=20000000,step=0.25',
                'past=1,work=20000000,step=1',
                'past=1,work=20000000,step=0.1',
@@ -98,7 +112,8 @@ for name, row in replay:
                  f'contractValid={row["contractValid"]} raw={row["raw"]!r} '
                  f'fp={(row["fp"] or "")[:16]} reproduces={match}')
 
-# 2. Fixpoint battery.
+# 2. The declared battery. Every arm below is a search arm; the six above are
+#    replays. `probeArms` counts both (which is why it reads 36, not 30).
 for step in M31:
     probe(f'{LABEL}-m31-e{step}', 31, PIN, RAW - step, 0, NEW_BIN, 'new')
 for delta in FLAT:
@@ -121,9 +136,18 @@ for drop in DROPS:
 
 # The mode-34 arm. It runs on the schedule binary rather than the replay binary
 # and through `sched.sched_arm`, because its knobs live in the environment.
+#
+# The tag must be unique per spec: two SCHED_SPECS entries can share the same
+# step (0.25 at both 20M and 60M work), and `sched.sched_arm` writes its raw
+# artifact to `{outdir}/{tag}.json`, so a tag built from `step=` alone collides
+# and the second run silently overwrites the first run's raw file on disk (the
+# in-memory summary row is unaffected, since it comes from the run's own
+# return value rather than a re-read of that file). Encode both `work=` and
+# `step=` in the tag so every spec gets its own artifact.
 for seed in SCHED_SEEDS:
     for spec in SCHED_SPECS:
-        tag = f'{LABEL}-m34-{spec.split(",")[-1]}-s{seed}'
+        fields = dict(kv.split('=') for kv in spec.split(','))
+        tag = f'{LABEL}-m34-w{fields["work"]}-{fields["step"]}-s{seed}'
         out, _ = sched.sched_arm(tag, PIN, RAW - 0.3, seed, spec, logfile=LOG,
                                  outdir=RUNS)
         pop = lib.population(out) or {}
@@ -141,17 +165,31 @@ for seed in SCHED_SEEDS:
             drv.log(LOG, f'!!! BELOW INCUMBENT {tag}: {published!r}')
 
 below = [row for row in probes if row['below']]
+replay_tags = {row['tag'] for _name, row in replay}
+search_arms = [row for row in probes if row['tag'] not in replay_tags]
 result = {
     'pin': PIN, 'raw': RAW, 'fingerprint': fingerprint, 'sha256': sha,
     'replayPass': bool(replay_ok),
     'replay': [(name, row) for name, row in replay],
-    'probeArms': len(probes), 'belowIncumbent': len(below), 'below': below,
+    # `probeArms` is EVERY arm this driver ran, replays included, and is kept
+    # under its original name because the round's arm totals are quoted from
+    # it. `searchArms` is the number that actually probed for a better
+    # neighbour, which is the number a coverage claim may cite.
+    'probeArms': len(probes),
+    'searchArms': len(search_arms), 'replayArms': len(replay),
+    'belowIncumbent': len(below), 'below': below,
     'rungs': dict(rungs), 'elapsedS': time.time() - t0,
-    'fixpoint': bool(replay_ok) and not below,
+    # Renamed from `fixpoint`, whose semantics this predicate never had: it is
+    # "the replays reproduced the pin AND no arm in the declared battery came
+    # back under the incumbent". That is a finite negative over an enumerated
+    # set of arms, not a statement that no better neighbour exists.
+    'finiteNegativeOnBattery': bool(replay_ok) and not below,
     'probes': probes,
 }
 json.dump(result, open(f'{OUT}/{LABEL}.json', 'w'), indent=1)
 drv.log(LOG, f'=== CERTIFY replayPass={replay_ok} arms={len(probes)} '
-             f'below={len(below)} fixpoint={result["fixpoint"]} '
+             f'(search={len(search_arms)} replay={len(replay)}) '
+             f'below={len(below)} '
+             f'finiteNegativeOnBattery={result["finiteNegativeOnBattery"]} '
              f'({result["elapsedS"]:.0f}s)')
 drv.log(LOG, '    rungs ' + json.dumps(dict(rungs), sort_keys=True))

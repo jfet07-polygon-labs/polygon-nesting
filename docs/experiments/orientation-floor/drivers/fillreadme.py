@@ -14,12 +14,15 @@ CERT = """`drivers/certify_full.py` on `pinned-fs-155.33041597700.json`, declare
 | half | what | result |
 |---|---|---|
 | replay | modes 27, 30 and 22 seeds 0-3 | 6 of 6 `exactValid` **and** `contractValid`, all six reproducing fingerprint `77965c9f…` at **0 ULPs** from the declared raw |
-| fixpoint | **132 probe arms**: mode 31 x 4 tiny steps, the eleven-delta flatten grid x 2 slacks -> mode 33 and x 1 slack -> mode 32 under **both ladder generations**, the nudge tier x 16, **tier H's twelve-delta grid -> modes 30 and 31**, mode 26 x 3 drops x 2 seeds, and mode 34 x 8 step/budget specs x 2 seeds | **0 below the incumbent** |
+| battery | **132 search arms** (plus the 6 replay arms above, for `probeArms: 138`): mode 31 x 4 tiny steps, the eleven-delta flatten grid x 2 slacks -> mode 33 and x 1 slack -> mode 32 under **both ladder generations**, the nudge tier x 16, **tier H's twelve-delta grid -> modes 30 and 31**, mode 26 x 3 drops x 2 seeds, and mode 34 x 8 step/budget specs x 2 seeds | **0 below the incumbent** |
 
-`replayPass: true`, `belowIncumbent: 0`, `fixpoint: true`. The battery is 138
-arms against the record-line round's 36, and the three additions are the three
+`replayPass: true`, `belowIncumbent: 0`, `finiteNegativeOnBattery: true` (the
+field the driver recorded as `fixpoint: true` when this ran; the archived JSON
+is left as produced). The battery is 138
+arms against the record-line round's 36 — 132 search arms against 30, both
+counts folding the same 6 replays — and the three additions are the three
 instruments that moved this round: the wide entry grid, mode 32, and tier H. A
-fixpoint claim that does not probe the tier that produced the descent is a claim
+coverage claim that does not probe the tier that produced the descent is a claim
 about the tiers that were already exhausted.
 
 Two independent replays are kept rather than one. The record was produced by the
@@ -41,8 +44,10 @@ add another rung even before the arithmetic in §2 forbids it."""
 GOALNOTE = """The gap to 155.000 is **0.330 mm**, down
   from 0.422 mm. This round did not reach the threshold and does not claim a
   path to it: the descent decayed from 0.013 mm a round to 0.0004 mm a round
-  inside the last cascade, and the final state is a certified fixpoint of 138
-  arms plus a further 110 arms of untried compositions (§8's last three rows).
+  inside the last cascade, and the final state holds a finite negative on a
+  declared battery of 132 search arms plus 6 replays (`probeArms: 138`), plus a
+  further 110 arms of untried compositions (§8's last three rows) — a negative
+  on the instruments that were fired, not a certified fixpoint.
   What it does claim is that the two levers it found are not exhausted in
   *kind* — both were found by asking what the state's own diagnostics were
   saying rather than by widening a grid, and the diagnostics are still talking."""

@@ -103,17 +103,30 @@ for drop in DROPS:
         probe(f'{LABEL}-m26-d{drop}-s{seed}', 26, PIN, RAW - drop, seed, NEW_BIN, 'new')
 
 below = [row for row in probes if row['below']]
+replay_tags = {row['tag'] for _name, row in replay}
+search_arms = [row for row in probes if row['tag'] not in replay_tags]
 result = {
     'pin': PIN, 'raw': RAW, 'fingerprint': fingerprint, 'sha256': sha,
     'replayPass': bool(replay_ok),
     'replay': [(name, row) for name, row in replay],
-    'probeArms': len(probes), 'belowIncumbent': len(below), 'below': below,
+    # `probeArms` counts EVERY arm, replays included, and keeps its name
+    # because the round's arm totals are quoted from it. `searchArms` is the
+    # number that actually probed for a better neighbour.
+    'probeArms': len(probes),
+    'searchArms': len(search_arms), 'replayArms': len(replay),
+    'belowIncumbent': len(below), 'below': below,
     'rungs': dict(rungs), 'elapsedS': time.time() - t0,
-    'fixpoint': bool(replay_ok) and not below,
+    # Renamed from `fixpoint`, whose semantics this predicate never had: it is
+    # "the replays reproduced the pin AND no arm in the declared battery came
+    # back under the incumbent" - a finite negative over an enumerated set of
+    # arms, not a statement that no better neighbour exists.
+    'finiteNegativeOnBattery': bool(replay_ok) and not below,
     'probes': probes,
 }
 json.dump(result, open(f'/var/lib/t3/tmp/orient-fine/{LABEL}.json', 'w'), indent=1)
 drv.log(LOG, f'=== CERTIFY replayPass={replay_ok} arms={len(probes)} '
-             f'below={len(below)} fixpoint={result["fixpoint"]} '
+             f'(search={len(search_arms)} replay={len(replay)}) '
+             f'below={len(below)} '
+             f'finiteNegativeOnBattery={result["finiteNegativeOnBattery"]} '
              f'({result["elapsedS"]:.0f}s)')
 drv.log(LOG, '    rungs ' + json.dumps(dict(rungs), sort_keys=True))

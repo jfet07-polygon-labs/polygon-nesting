@@ -5126,8 +5126,13 @@ reached **unaided**: 164.0375677990678 → 159.668 → 158.668 → … → 155.4
 record-line placement imported at any step. The pin replays through modes 27, 30
 and 22 seeds 0-3 on the pristine default-feature binary — which contains no mode
 34 at all — at **0 ULPs** from the declared raw with the fingerprint unchanged,
-and it is a certified fixpoint of 36 further probe arms including mode 26 and
-mode 34 at four step sizes.
+and it holds a finite negative on a declared battery of 30 further search arms
+(the certification's `probeArms: 36` folds in the 6 replay arms above) including
+mode 26 and mode 34 at three distinct step sizes — 0.25, 1 and 0.1, with
+`step=0.25` also probed at a second work budget, which is four *specs* but not
+four step sizes. That is a negative on the arms that were declared and run, not
+a certified fixpoint: see `docs/experiments/record-line-cascade/README.md` §7
+for what the battery does and does not cover.
 
 ### Mode 34 is an operator with a precondition, and the precondition is itself
 
@@ -5177,8 +5182,8 @@ round ever went barren above it, and run separately against the certified
 fixpoint it is barren too: 24 arms over two ancestors, both record co-states,
 three cut fractions and both directions published 13 layouts and **none** below
 the incumbent, the best 2.7 mm above it. The 155 mm goal is 0.422 mm away and the final state
-is a certified fixpoint, so closing it needs an instrument this round did not
-fire. And every number here is one request, one fixture, work-budgeted or seeded
+holds a finite negative on the declared battery, so closing it needs an
+instrument this round did not fire. And every number here is one request, one fixture, work-budgeted or seeded
 arms on a shared box, with no wall-clock claim made anywhere.
 
 Evidence, drivers, the nine pinned states, the step sweeps, the three negatives
@@ -5188,7 +5193,8 @@ pins under
 
 ## The orientation floor was still a floor, and the repair tier — not the entry — was the wall
 
-The previous entry ended on a certified fixpoint and a clear demand: the last
+The previous entry ended on a finite negative over a declared battery and a
+clear demand: the last
 0.422 mm needs "an instrument this round did not fire rather than more of the
 same". Four were fired. They compose, they are all cheap, and every one was
 found by reading a diagnostic the engine was already emitting rather than by
@@ -5196,11 +5202,12 @@ widening a grid. The record moved **155.42229074464285 → 155.26442950832842**,
 0.158 mm, in 7,204 arms.
 
 The fourth is the one worth carrying forward, because of *when* it was found:
-after the third had run to a fully certified fixpoint. That certificate was
-honest and it was also a statement about the four instruments in the battery,
-and inventing a fifth entry family took another 0.066 mm out of it in eighteen
-rounds. "Certified fixpoint" means "fixpoint of these instruments", and this
-round broke four of them.
+after the third had run its whole battery to a negative. That battery was
+honest and it was also a statement about the four instruments in it, and
+inventing a fifth entry family took another 0.066 mm out of it in eighteen
+rounds. This is why the rounds no longer say "certified fixpoint": the claim
+the batteries actually support is "none of *these* instruments found anything",
+and this round walked past four such negatives.
 
 ### The floor's own symptom had already been written down
 
@@ -5219,7 +5226,7 @@ in the request, below one quantum, so the stream would be emitting angles the
 grid rounds away. The floor is now at the grid rather than above it, and this
 particular lever is spent.
 
-The A/B on the certified fixpoint is the whole argument in one table: the same
+The A/B on the battery-negative pin is the whole argument in one table: the same
 22-arm flatten grid, nine rungs versus ten, **0 below versus 2 below**. The
 winning arm accepted exactly one pose — `acceptedAnchorLocal = 0`,
 `acceptedStation = 0`, one piece rotated by exactly +0.00128 degrees — and the
@@ -5269,8 +5276,9 @@ themselves ejected.
 
 Tier I rotates the k deepest pieces **in place**, about each one's own
 transformed bounding-box centre, by rungs drawn from the ladder itself. On the
-certified fixpoint at 155.33041597699957 — a state that had just survived 138
-certification arms and 110 further compositions — 80 rotation-entry arms
+battery-negative pin at 155.33041597699957 — a state that had just survived 132
+certification search arms (plus its 6 replays, for `probeArms: 138`) and 110
+further compositions — 80 rotation-entry arms
 published 3 below. The 0.0006 mm is not the point. The point is that tier I then
 broke **three consecutive fixpoints** nothing else could touch (rounds whose
 only arms below were rotation entries, 4, 4 and 2 of them), and the state the
@@ -5320,9 +5328,10 @@ seed-invariant, 18 arms each.
 
 The final state replays `exactValid` and `contractValid` at **0 ULPs** on the
 **pristine base-commit binary**, which knows nothing of the new rung — the
-ladder change is what found the state, not what verifies it — and it is a
-certified fixpoint of 132 further probe arms including tier H's own grid and
-both ladder generations. All four pinned gates hit, and the whole-document
+ladder change is what found the state, not what verifies it — and it holds a
+finite negative on a declared battery of 132 further search arms (plus 6
+replays, for `probeArms: 138`) including tier H's own grid and both ladder
+generations. All four pinned gates hit, and the whole-document
 comparison of the two binaries differs in **0** of 3,262/3,243/3,243/3,243
 fields, which is the required result: the gates are modes 20 and 22 and neither
 enters the orientation stream.
@@ -5336,8 +5345,8 @@ constant, a frontier stack four times wider than the grid probing it, a
 `componentsRefused` counter sitting next to a `componentsRepaired` one, and the
 observation that every entry the line had was a translation — and not one of
 them was a parameter of the search. The corollary is the process finding:
-a certified fixpoint bounds the instruments in the battery, and the way past one
-is to add an instrument, not arms. Everything here is one request, one contract,
+a finite negative bounds the instruments in the battery and nothing else, and
+the way past one is to add an instrument, not arms. Everything here is one request, one contract,
 work-budgeted or seeded arms on a deliberately oversubscribed box, with no
 wall-clock claim made anywhere.
 
@@ -5704,3 +5713,111 @@ classified.
 Evidence: `docs/experiments/current-pose-overlay/` (README §0.2-§0.4 for the
 tests, the clone and the flag-off; §3.1 for the retraction; §4 for the
 classification).
+## The SE(2) certificate, rewritten: the model says 0.9 mm, the exact validator signs for 0.039
+
+Sol review 6 §3 rejected the previous round's SE(2) branch. Its documentary
+corrections were right and are carried forward; its certificate solved the wrong
+program and is replaced rather than patched. The distinction the rewrite is
+built around is the one that round did not have: **a bound on a linear model is
+not a statement about the geometry, and only one of the two numbers in a bracket
+can be handed to anybody.**
+
+The old program maximized `min_i (a_i . x - rhs_i)` — uniform slack on every
+row — which asks to open every pair contact, the left edge, the bottom and the
+short edge by the same amount at once. Reducing a published depth requires none
+of that. The corrected program puts `delta` only on the rows that measure the
+depth, holds everything else at its own contract, and separates the published
+material depth from the collision envelope's strip bound instead of clamping one
+`sheet_long_axis_mm` onto both.
+
+That separation retired the previous round's most-quoted anomaly. It had
+reported that two of four parents "needed their depth bound calibrated upward by
+0.15-0.28 mm" before the program would call the state feasible. That number is
+now a measurement rather than a correction: `stripExcessMm` is **0.276570** on
+155.264 and **0.151163** on 171.238, against 0.002709 and 0.002000 on the other
+two. It was the miter reach of the collision envelope all along, in exactly the
+range that used to be applied by hand — and with the two gates measured
+separately no calibration is needed anywhere, which the run demonstrates rather
+than asserts: the parent's own worst residual is non-negative in all six row
+families on all four parents.
+
+Five further model corrections, each of which changes a reported number: the
+boundary rows carry `a_theta = n . J(p - c)` instead of `theta = 0` (a zero there
+lets rotation open a pair contact without paying for the vertex it drives into
+the sheet edge, which *overestimates* rotational room); the witness survives the
+touch, so active contacts stop reporting a zero rotational coefficient; envelope
+rows exist for every reachable pair rather than only for pairs already
+overlapping; the guard band is `2*trust + Theta_i*reach_i + Theta_j*reach_j`; and
+`Approach`'s witness storage is compiled out when the feature is off, where the
+old branch had it on the production path.
+
+The largest finding is the one that only appears once the certificate is made to
+return a vector. The rows are relaxed outward by the exact second-order chord
+term, which is what makes the dual bound a valid upper bound on rotated
+geometry — and the price is that the model's optimum sits microns outside the
+true constraint, so its full-length vector is rejected by `validate_publication`
+essentially every time. Handing back "witness rejected" would have left the
+diagnostic with no constructive lower bound at all, which was Sol's complaint.
+So the model supplies the direction and the exact validator decides the length,
+by line search. The result:
+
+| parent | model upper bound at 1 mm trust | exactly-validated best |
+|---|---|---|
+| 155.264 (record) | 0.615525 | **0.039131** |
+| 155.422 | 0.919870 | **0.030420** |
+| 156.418 | 1.022000 | 0.499876 |
+| 171.238 | 0.934582 | 0.211093 |
+
+On the record parents the model claims 0.6-0.9 mm and the geometry signs for
+0.03-0.04 mm — a factor of 20. Nobody is blocked, so no front is rigid, but the
+gap between those two columns is the honest measure of how much of an SE(2)
+bound on this contact front is model error.
+
+It also answers Sol review 5's rank-0 question properly for the first time.
+On the model, rotation is worth between 1.00x and 70.48x translation, the same
+story the old branch told and then some. On the exactly-validated number, SE(2)
+beats translation in 5 of 24 cells, ties 3, and loses 16. Every win is at a small
+trust radius and every win has the model's full step surviving the exact
+validator intact — 1.56x on 155.264 at 6 microns, 1.78x on 171.238 at 6/25/100
+microns — while the losses split into two different causes. Most are the model
+over-reaching once the box is wide: the accepted fraction of its step collapses
+to a few percent and the line search hands the claimed room back, with the
+crossover between 6 and 25 microns on 155.264 and between 0.1 and 0.25 mm on the
+other two. But 155.422 loses at *every* radius including 6 microns, and it is
+also the parent whose strip excess is nearly zero — its envelopes and its
+material agree about where the depth is, so rotation has nothing to exploit. So
+rotation is a real lever worth 1.5-1.8x on some fronts, only under a trust radius
+small enough for the linearization to hold, and on at least one of these four
+parents it is not a lever at all.
+
+None of this is a record claim, and the round says so in its own README before
+anyone else has to. `validate_publication` gates material containment and
+material pair clearance; it never looks at the collision envelope, and
+`contractValid` was not run on any witness. That matters concretely here,
+because `EnvelopePair` slack is exactly 0.0 on all four parents — the envelopes
+are already touching. Every number was nevertheless re-derived out of engine, by
+a Python implementation of the placement transform and a brute-force pair
+distance that calibrates itself against the parent's pinned depth before it is
+trusted: over all 96 cells, `ALL_AGREE=True ALL_CONTAINED=True ALL_PAIR_OK=True`.
+That cross-check also settled the contract rather than assuming it - the
+parent's worst pair distance measures 5.004 mm and the certificate's own
+`MaterialPair` residual, from unrelated code, is 0.004.
+
+Two process findings are worth more than the millimetres. The first: a draft of
+this rewrite reintroduced the exact guard-band defect it was fixing, by
+recovering the trust radius as `theta_cap * reach` — correct for a rotatable
+piece, **zero** for a pinned one — so two pinned pieces inside the translation
+band got no pair row at all. It is caught by a test that fails on the draft and
+passes on the fix, which is the only reason it is a footnote instead of a
+finding in the next review. The second: the whole-document reproducibility
+instrument this round inherited was broken. `lib.doc_digest` dropped `elapsedMs`
+but not the five summary statistics computed from it, nor `engineWorktreeStatus`,
+so two runs of the same binary on the same gate hashed differently every time —
+a digest mismatch proved nothing and a match would have been luck. With the list
+repaired, four independent runs across two binaries produce identical digests on
+all four gates, and the only leaf path that differs between flag-off and
+flag-on-unarmed is `/executableSha256`. All four pinned gates hit on both
+binaries, both feature-combination suites pass, and the default path is
+bit-reproducing.
+
+Evidence, drivers and the raw certificates: `docs/experiments/se2-rigidity/`.

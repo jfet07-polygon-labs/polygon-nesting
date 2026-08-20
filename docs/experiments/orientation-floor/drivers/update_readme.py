@@ -32,7 +32,11 @@ Its fixture sha256 is
 `67bef07c498ca6d979ccd37e0191d4ec9255edd8d262f2f1c07108e1feebf002` and its
 placement fingerprint is
 `77965c9fbb9ebf783cf54bf6fcfe47e86297f5ee1453f0e993bbba9b24237fb2`.""",
-     """That line ends at 155.33041597699957, a certified fixpoint of 138 arms. The
+     """That line ends at 155.33041597699957, holding a finite negative on a declared
+battery of 132 search arms plus 6 replays (`probeArms: 138` folds the replays
+into the search count, exactly as the record-line round's own `probeArms: 36`
+does). It is not a certified fixpoint — and §11 below is the proof, since the
+fourth instrument then walked straight past it. The
 fourth instrument (§5a) then took it a further 0.0660 mm over eighteen rounds:
 
 """ + C2F_TABLE + """

@@ -263,6 +263,16 @@ if __name__ == '__main__':
     max_rounds = int(sys.argv[4]) if len(sys.argv) > 4 else 30
     drv.log(LOG, f'=== CASCADE {LABEL} from {pin} raw={raw!r} ===')
     drv.log(LOG, f'    pool: {POOL}')
+    # `fixpoint` here is the CASCADE LOOP's termination flag, not a claim about
+    # the state: it is True when one full round of the pool produced nothing
+    # below the incumbent, and False when the round ran out of time instead.
+    # That is a finite negative over the arms this pool happens to contain, and
+    # the same correction Sol reviews 3 §0, 5 §0 and 6 §3 applied to the
+    # certification batteries applies verbatim to it - a later round walked past
+    # four such negatives by adding an instrument. The name is kept because the
+    # evidence documents already written carry it and are left as produced; what
+    # must not be inherited is the *reading*. See
+    # docs/experiments/record-line-cascade/README.md section 7.
     fixpoint = False
     try:
         for rnd in range(max_rounds):

@@ -306,6 +306,78 @@ fn current_pose_overlay_classify_requested() -> bool {
     env::var("POLYGON_NESTING_CURRENT_POSE_OVERLAY_CLASSIFY")
         .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
         .unwrap_or(false)
+/// The SE(2) rigidity certificate's own knobs, parsed from the environment for
+/// exactly the reason profiling is: the positional argument list is a pinned
+/// contract that replay drivers depend on, and a diagnostic may not change what
+/// a replayed command means. `None` is "not requested", which is every
+/// invocation of an armed build that does not set the variable — so an armed
+/// build run without it is the shipping benchmark.
+///
+///   `POLYGON_NESTING_SE2_CERTIFICATE="trust=1.0,iters=20000,reference=0.422"`
+///
+/// `trust` is the trust radius in millimetres (positive, default `0.01`, which
+/// is `general_micro_legalization::MICRO_LEGALIZATION_MIN_CAP_MM`), `iters` the
+/// primal iteration budget *per penalty weight*, and `reference` the depth
+/// reduction the caller wants the verdict compared against — the record line's
+/// outstanding `0.422 mm`, in practice. `reference` only selects among the
+/// verdict strings; it never changes a number.
+///
+/// Unlike the previous branch's version there is no depth-bound knob: the
+/// certificate measures the parent's published depth and its collision strip
+/// bound off the parent's own geometry. Handing it a bound was how that branch
+/// ended up imposing one number on two different gates and then recalibrating
+/// it by hand after the fact.
+#[cfg(feature = "se2-rigidity-certificate")]
+struct Se2CertificateSpec {
+    trust_radius_mm: f64,
+    iterations: usize,
+    reference_mm: Option<f64>,
+}
+
+#[cfg(feature = "se2-rigidity-certificate")]
+fn se2_rigidity_certificate_requested() -> Result<Option<Se2CertificateSpec>, String> {
+    let Ok(spec) = env::var("POLYGON_NESTING_SE2_CERTIFICATE") else {
+        return Ok(None);
+    };
+    let mut out = Se2CertificateSpec {
+        trust_radius_mm: 0.01,
+        iterations: 20_000,
+        reference_mm: None,
+    };
+    for item in spec.split(',').filter(|item| !item.is_empty() && *item != "1") {
+        let (key, value) = item
+            .split_once('=')
+            .ok_or_else(|| format!("se2 certificate spec entry `{item}` is not key=value"))?;
+        match key {
+            "trust" => {
+                let trust: f64 = value
+                    .parse()
+                    .map_err(|_| format!("se2 certificate trust radius: `{value}`"))?;
+                if !trust.is_finite() || trust <= 0.0 {
+                    return Err(format!(
+                        "se2 certificate trust radius must be positive and finite, not `{value}`"
+                    ));
+                }
+                out.trust_radius_mm = trust;
+            }
+            "iters" => {
+                out.iterations = value
+                    .parse()
+                    .map_err(|_| format!("se2 certificate iterations: `{value}`"))?;
+            }
+            "reference" => {
+                let reference: f64 = value
+                    .parse()
+                    .map_err(|_| format!("se2 certificate reference: `{value}`"))?;
+                if !reference.is_finite() {
+                    return Err(format!("se2 certificate reference must be finite: `{value}`"));
+                }
+                out.reference_mm = Some(reference);
+            }
+            other => return Err(format!("unknown se2 certificate key `{other}`")),
+        }
+    }
+    Ok(Some(out))
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -631,6 +703,35 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             load_pinned_vacancy_parent(path, &request_sha256, &effective_parent_settings, &owned)
         })
         .transpose()?;
+
+    // The SE(2) rigidity certificate: a read-only diagnostic over the pinned
+    // parent, run and printed in place of the search this binary otherwise
+    // performs. Gated on both the feature and the environment variable, the way
+    // profiling and the unpinned-vacancy-parent switch are, so an armed build
+    // run without the variable is the shipping benchmark exactly — which the
+    // four pinned gates are run on both binaries to hold.
+    //
+    // It reads the parent and nothing else: no target depth, no bound, no
+    // search settings. Whatever it reports is a statement about the parent's
+    // own geometry under its own contract.
+    #[cfg(feature = "se2-rigidity-certificate")]
+    if let Some(spec) = se2_rigidity_certificate_requested()? {
+        let parent = pinned_vacancy_parent
+            .as_ref()
+            .ok_or("se2 rigidity certificate requires a pinned parent fixture (argument 43)")?;
+        let certificate =
+            polygon_nesting_core::search::general_micro_legalization::se2_certificate::se2_rigidity_certificate(
+                &pieces,
+                &parent.placements,
+                settings,
+                spec.trust_radius_mm,
+                spec.iterations,
+                spec.reference_mm,
+            )?;
+        println!("{}", serde_json::to_string_pretty(&certificate)?);
+        return Ok(());
+    }
+
     let warm_start_incumbent = warm_start_fixture_path
         .as_deref()
         .map(|path| -> Result<_, Box<dyn std::error::Error>> {

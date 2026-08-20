@@ -1,8 +1,10 @@
 # The record line: a sub-grid clamp, and 3.6 mm off the record
 
 The standing record on the true 5.0/5.0 exact-clearance contract was
-**159.07876040364792 mm**, and its parent was a certified fixpoint of 40 probe
-arms. The from-scratch line — the same contract, the same `''` 0.0005 CLI tail,
+**159.07876040364792 mm**, and its parent held a finite negative on a declared
+battery of 34 search arms plus 6 replays (`cert.json`'s `probeArms: 40` folds
+the replays into the search count, the same way this round's own `probeArms: 36`
+does — see §7). The from-scratch line — the same contract, the same `''` 0.0005 CLI tail,
 and the standing rule that it may never import a record-line placement — stood
 at 159.668 mm after the compression-schedule port.
 
@@ -185,7 +187,7 @@ The one mode-26 adoption on this line — the 0.628 mm one — came from **outsi
 the cascade, out of the certification battery, for the reason below. Tiers D and
 G were never reached at all: no round ever got past tier F without adopting
 first, so the crossover instrument the brief asked for had to be run outside the
-cascade against the certified fixpoint (§8: 24 arms, 13 publications, 0 below).
+cascade against the declared-battery incumbent (§8: 24 arms, 13 publications, 0 below).
 
 The ordering finding is worth more than any single arm. The first cascade ran
 the cheap tiers first — mode 22 at 3 s an arm, the flatten grid at 2 s — and
@@ -199,8 +201,10 @@ tiers, and to run it as a concurrent sweep (`drivers/armsweep.py`) when it is
 the tier that is paying.
 
 Mode 26's own yield is basin-shaped rather than steady: on the 156.091
-incumbent it published 6 of 6 (best 155.463); on the 155.452 incumbent, 12 arms
-over four drops and four seeds published **0** (`evidence/m26sweep-155.452.json`).
+incumbent it published 6 of 6 (best 155.463); on the 155.452 incumbent, **16**
+arms over four drops and four seeds published, and **0** were below the
+incumbent (`evidence/m26sweep-155.452.json` has 16 rows, not the 12 originally
+claimed here — the negative is if anything stronger than stated).
 
 ## 6. Regression
 
@@ -238,12 +242,43 @@ non-positive step to the canonical unit.
 | half | what | result |
 |---|---|---|
 | replay | modes 27, 30 and 22 seeds 0-3, on the **default-feature** binary that contains no mode 34 at all | 6 of 6 `exactValid` **and** `contractValid`, all six reproducing fingerprint `c62879b4…` at **0 ULPs** from the declared raw |
-| fixpoint | 36 probe arms: mode 31 × 4 tiny steps, the flatten grid × 6 deltas × 2 slacks → mode 33, mode 26 × 3 drops × 2 seeds, and **mode 34 × 4 step sizes × 2 seeds** | **0 below the incumbent** |
+| battery | 30 search arms (plus the 6 replay arms above, for `probeArms: 36`): mode 31 × 4 tiny steps, the flatten grid × 6 deltas × 2 slacks → mode 33, mode 26 × 3 drops × 2 seeds, and **mode 34 × 2 seeds over three distinct step sizes (0.25, 1, 0.1) plus a repeat of `step=0.25` at a 60M-unit budget — not four step sizes** | **0 below the incumbent** |
 
-`replayPass: true`, `belowIncumbent: 0`, `fixpoint: true`. The mode-34 arms are
-new to the battery this round, and they are there because §3's lesson applies to
-this incumbent too: a fixpoint claim probed at one step size is a claim about
-one step size.
+`replayPass: true`, `belowIncumbent: 0`, `fixpoint: true` in the raw JSON as it
+was produced. (That field has since been renamed `finiteNegativeOnBattery` in
+`drivers/certify_full.py`, and the driver now also emits `searchArms` and
+`replayArms` so the 36-vs-30 split is in the document rather than only in this
+prose. The archived JSON is left exactly as it was produced.) The
+right English label for that is a **finite negative on the declared
+battery** — not a "certified fixpoint" — for two reasons. First, `probeArms:
+36` folds the 6 replay arms into the search count; only 30 arms actually probe
+for a better neighbor. Second, and more important: every one of the eight
+mode-34 arms entered with `parentProxyFeasible: false` (35 colliding pairs, 9
+boundary violations), because the incumbent is not itself a mode-34 product —
+so the mode-34 half of this battery mostly measured the schedule's regrid
+recovery off an infeasible entry, not a local schedule search around 155.422
+the way §4 shows mode 34 behaves on a state it produced itself. `0 below` is
+still real and still the whole of what "0 below" claims; it is a finite
+battery run once, not evidence of a fixpoint in the mathematical sense. The
+mode-34 arms are new to the battery this round, and they are there because
+§3's lesson applies to this incumbent too: a claim probed at one step size is a
+claim about one step size.
+
+A second bug in the same battery is worth recording honestly: the mode-34 loop
+built its per-arm tag from `step=` alone, so the `work=20000000,step=0.25` and
+`work=60000000,step=0.25` arms wrote to the same `{tag}.json` raw artifact and
+the second overwrote the first. All eight arms still contributed their own row
+to the summary above — each row comes from the run's own in-process return
+value, not a re-read of the overwritten file — so `belowIncumbent: 0` is
+unaffected, but only six of the eight raw per-arm artifacts survive on disk in
+`/var/lib/t3/tmp/recordline/cert-final-runs/`. `SCHED_SPECS` runs
+`work=20000000,step=0.25` before `work=60000000,step=0.25` for each seed, so
+the later write wins: the two `work=20000000,step=0.25` raw files (one per
+seed) are gone, overwritten by the `work=60000000,step=0.25` run at the same
+path, while `step=1` and `step=0.1` never shared a tag with anything and are
+intact. `drivers/certify_full.py`'s tag now encodes `work=` as well as
+`step=`, so this cannot recur; the existing evidence is left as it was
+produced, not re-run.
 
 An earlier incumbent's certification is kept as well
 (`evidence/cert-156.0914.json`) precisely because it **failed** the fixpoint
@@ -258,8 +293,9 @@ whole round and is the evidence for §5.
   placement imported at any step — but it also means this round produced **no**
   new descent on the 159.079 lineage itself. That parent is where it was.
 * **The 155 mm goal is not reached.** The gap is **0.422 mm**, and the final
-  state is a *certified* fixpoint of 36 arms, so closing it needs an instrument
-  this round did not fire rather than more of the same. The
+  state is a **finite negative on the declared battery** in §7 (30 search arms
+  plus 6 replays, not a certified fixpoint — see §7 for why), so closing it
+  needs an instrument this round did not fire rather than more of the same. The
   measured rates say how it would have to close: the two instruments that moved
   more than 0.1 mm in a single arm are mode 34 on a state it produced itself
   (1.000, 0.671, 0.495 mm) and mode 26 in a basin (0.628 mm), and both are
@@ -276,7 +312,8 @@ whole round and is the evidence for §5.
   reported so a reader can see the arms were concurrent, not as measurements.
 * **Mode 23 crossover is measured, and it is barren here.** It never ran
   *inside* the cascade — tier G sits behind tiers A-F and no round ever went
-  barren above it — so it was run separately against the certified fixpoint
+  barren above it — so it was run separately against the declared-battery
+  incumbent
   (`drivers/crosssweep.py`, `evidence/crossover-155.4223.json`): the incumbent
   against two of its own ancestors and both record co-states, three cut
   fractions, both directions, 24 arms. Thirteen published, **none below**, and
@@ -308,7 +345,9 @@ whole round and is the evidence for §5.
 * `drivers/pinrun.py`, `drivers/replay.py` — pin a run report, and the
   one-ULP replay check.
 * `drivers/certify_full.py` — the certification battery, with mode-34 arms
-  added at four step sizes.
+  added at three distinct step sizes (one of them repeated at a second work
+  budget); the per-arm tag now encodes the work budget too, so specs that
+  share a step size no longer overwrite each other's raw artifact (§7).
 * `drivers/collect.py` — copies the evidence out of the scratch tree.
 * `evidence/` — every driver's own emitted document, unedited.
 
