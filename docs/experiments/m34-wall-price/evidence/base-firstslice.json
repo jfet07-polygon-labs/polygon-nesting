@@ -1,0 +1,699 @@
+{
+ "name": "base-firstslice",
+ "binary": "/var/lib/t3/tmp/wf201/base_sched_bin",
+ "extra": "",
+ "rows": [
+  {
+   "tag": "mixed-61-s0-w10000",
+   "request": "mixed-61",
+   "seed": 0,
+   "budgetMs": 10000,
+   "processSeconds": 9.849784835998435,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1",
+   "coordinatorSeconds": 9.811303345,
+   "overrunSeconds": -0.18869665499999932,
+   "rawDepthMm": 172.2875460463765,
+   "engineDepthMm": 172.288,
+   "phaseZeroCost": 1.888630675,
+   "exitCause": "affordability",
+   "iterations": 9,
+   "scheduleActions": 1,
+   "schedulePublications": 1,
+   "scheduleSeconds": 1.9260672620000001,
+   "scheduleDeltaRawMm": 1.4070807156819,
+   "firstEstimatedCost": 0.7188128349049999,
+   "firstActualCost": 1.9260672439999995,
+   "firstActualPhaseZeros": 1.0198220697649103,
+   "actualOverEstimate": 2.6795114812530487,
+   "m34Calls": [
+    {
+     "seconds": 1.9124054949999998,
+     "published": true,
+     "rawDepthMm": 178.1797782649107,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "mixed-61-s1-w10000",
+   "request": "mixed-61",
+   "seed": 1,
+   "budgetMs": 10000,
+   "processSeconds": 9.238973062019795,
+   "spec": "wall=10000,cells=11:15:21:27,v3=1",
+   "coordinatorSeconds": 9.206791439,
+   "overrunSeconds": -0.7932085610000001,
+   "rawDepthMm": 171.3619986855876,
+   "engineDepthMm": 171.362,
+   "phaseZeroCost": 1.9725387890000001,
+   "exitCause": "affordability",
+   "iterations": 8,
+   "scheduleActions": 1,
+   "schedulePublications": 1,
+   "scheduleSeconds": 1.9529081540000002,
+   "scheduleDeltaRawMm": 1.7251307481037657,
+   "firstEstimatedCost": 0.7507482630934,
+   "firstActualCost": 1.952908088,
+   "firstActualPhaseZeros": 0.9900480025490641,
+   "actualOverEstimate": 2.601282192719559,
+   "m34Calls": [
+    {
+     "seconds": 1.9396218809999999,
+     "published": true,
+     "rawDepthMm": 177.90786925189622,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "mixed-61-s2-w10000",
+   "request": "mixed-61",
+   "seed": 2,
+   "budgetMs": 10000,
+   "processSeconds": 9.995292383944616,
+   "spec": "wall=10000,cells=15:23:31:39,v3=1",
+   "coordinatorSeconds": 9.962962045,
+   "overrunSeconds": -0.03703795500000062,
+   "rawDepthMm": 176.16200000000003,
+   "engineDepthMm": 176.162,
+   "phaseZeroCost": 1.968618475,
+   "exitCause": "deadline",
+   "iterations": 8,
+   "scheduleActions": 1,
+   "schedulePublications": 1,
+   "scheduleSeconds": 2.2572965359999997,
+   "scheduleDeltaRawMm": 1.6629999999999825,
+   "firstEstimatedCost": 0.749256191585,
+   "firstActualCost": 2.25729662,
+   "firstActualPhaseZeros": 1.1466399653696229,
+   "actualOverEstimate": 3.0127166720168757,
+   "m34Calls": [
+    {
+     "seconds": 2.2434440990000004,
+     "published": true,
+     "rawDepthMm": 177.34300000000002,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "mixed-61-s0-w30000",
+   "request": "mixed-61",
+   "seed": 0,
+   "budgetMs": 30000,
+   "processSeconds": 29.07739869103534,
+   "spec": "wall=30000,cells=13:15:17:19,v3=1",
+   "coordinatorSeconds": 29.043591518,
+   "overrunSeconds": -0.9564084820000005,
+   "rawDepthMm": 166.80799678723815,
+   "engineDepthMm": 166.808,
+   "phaseZeroCost": 1.896210553,
+   "exitCause": "affordability",
+   "iterations": 21,
+   "scheduleActions": 2,
+   "schedulePublications": 2,
+   "scheduleSeconds": 4.547953587,
+   "scheduleDeltaRawMm": 2.4350934206795216,
+   "firstEstimatedCost": 0.7216977364718,
+   "firstActualCost": 1.931078427,
+   "firstActualPhaseZeros": 1.0183881868734648,
+   "actualOverEstimate": 2.675744053792603,
+   "m34Calls": [
+    {
+     "seconds": 1.9174245570000004,
+     "published": true,
+     "rawDepthMm": 178.1797782649107,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 2.602743115999999,
+     "published": true,
+     "rawDepthMm": 167.912,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "mixed-61-s1-w30000",
+   "request": "mixed-61",
+   "seed": 1,
+   "budgetMs": 30000,
+   "processSeconds": 31.828665038978215,
+   "spec": "wall=30000,cells=11:15:21:27,v3=1",
+   "coordinatorSeconds": 31.792537435,
+   "overrunSeconds": 1.7925374349999998,
+   "rawDepthMm": 165.32299999999998,
+   "engineDepthMm": 165.323,
+   "phaseZeroCost": 1.97372374,
+   "exitCause": "deadline",
+   "iterations": 19,
+   "scheduleActions": 3,
+   "schedulePublications": 2,
+   "scheduleSeconds": 8.428513116,
+   "scheduleDeltaRawMm": 2.3737242202046787,
+   "firstEstimatedCost": 0.751199255444,
+   "firstActualCost": 1.9577334429999995,
+   "firstActualPhaseZeros": 0.991898411780769,
+   "actualOverEstimate": 2.606144014137596,
+   "m34Calls": [
+    {
+     "seconds": 1.9444583719999997,
+     "published": true,
+     "rawDepthMm": 177.90786925189622,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 1.294355641000001,
+     "published": false,
+     "rawDepthMm": 171.3619986855876,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 5.157191403999999,
+     "published": true,
+     "rawDepthMm": 165.32299999999998,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "mixed-61-s2-w30000",
+   "request": "mixed-61",
+   "seed": 2,
+   "budgetMs": 30000,
+   "processSeconds": 28.968892844975926,
+   "spec": "wall=30000,cells=15:23:31:39,v3=1",
+   "coordinatorSeconds": 28.93339166,
+   "overrunSeconds": -1.0666083399999984,
+   "rawDepthMm": 170.10577826491073,
+   "engineDepthMm": 170.106,
+   "phaseZeroCost": 2.001979984,
+   "exitCause": "affordability",
+   "iterations": 20,
+   "scheduleActions": 3,
+   "schedulePublications": 3,
+   "scheduleSeconds": 7.476961268,
+   "scheduleDeltaRawMm": 1.9826332615807303,
+   "firstEstimatedCost": 0.7619535819104001,
+   "firstActualCost": 2.2516374079999997,
+   "firstActualPhaseZeros": 1.1247052547953944,
+   "actualOverEstimate": 2.955084747229097,
+   "m34Calls": [
+    {
+     "seconds": 2.2378428319999997,
+     "published": true,
+     "rawDepthMm": 177.34300000000002,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 2.0309326599999977,
+     "published": true,
+     "rawDepthMm": 171.35800000000003,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 3.1655692310000028,
+     "published": true,
+     "rawDepthMm": 170.10577826491073,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "shapes-17-s0-w10000",
+   "request": "shapes-17",
+   "seed": 0,
+   "budgetMs": 10000,
+   "processSeconds": 9.921035875973757,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1",
+   "coordinatorSeconds": 9.887624057,
+   "overrunSeconds": -0.11237594299999998,
+   "rawDepthMm": 200.34937729570953,
+   "engineDepthMm": 200.349,
+   "phaseZeroCost": 0.905041249,
+   "exitCause": "deadline",
+   "iterations": 9,
+   "scheduleActions": 1,
+   "schedulePublications": 0,
+   "scheduleSeconds": 1.460855423,
+   "scheduleDeltaRawMm": 0.0,
+   "firstEstimatedCost": 0.3444586993694,
+   "firstActualCost": 1.460855413,
+   "firstActualPhaseZeros": 1.6141313057433915,
+   "actualOverEstimate": 4.241017618873862,
+   "m34Calls": [
+    {
+     "seconds": 1.4588797470000001,
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "shapes-17-s1-w10000",
+   "request": "shapes-17",
+   "seed": 1,
+   "budgetMs": 10000,
+   "processSeconds": 9.511926888022572,
+   "spec": "wall=10000,cells=11:15:21:27,v3=1",
+   "coordinatorSeconds": 9.479582706,
+   "overrunSeconds": -0.5204172939999996,
+   "rawDepthMm": 200.34937729570953,
+   "engineDepthMm": 200.349,
+   "phaseZeroCost": 0.918117607,
+   "exitCause": "affordability",
+   "iterations": 9,
+   "scheduleActions": 1,
+   "schedulePublications": 0,
+   "scheduleSeconds": 1.1063222790000002,
+   "scheduleDeltaRawMm": 0.0,
+   "firstEstimatedCost": 0.3494355612242,
+   "firstActualCost": 1.1063222489999998,
+   "firstActualPhaseZeros": 1.204989688211044,
+   "actualOverEstimate": 3.166026506072107,
+   "m34Calls": [
+    {
+     "seconds": 1.1043517710000001,
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "shapes-17-s2-w10000",
+   "request": "shapes-17",
+   "seed": 2,
+   "budgetMs": 10000,
+   "processSeconds": 9.410240884986706,
+   "spec": "wall=10000,cells=15:23:31:39,v3=1",
+   "coordinatorSeconds": 9.37159533,
+   "overrunSeconds": -0.6284046700000001,
+   "rawDepthMm": 200.349,
+   "engineDepthMm": 200.349,
+   "phaseZeroCost": 0.942379332,
+   "exitCause": "affordability",
+   "iterations": 12,
+   "scheduleActions": 1,
+   "schedulePublications": 0,
+   "scheduleSeconds": 1.07239343,
+   "scheduleDeltaRawMm": 0.0,
+   "firstEstimatedCost": 0.3586695737592,
+   "firstActualCost": 1.072393387,
+   "firstActualPhaseZeros": 1.1379636103903856,
+   "actualOverEstimate": 2.989920153416673,
+   "m34Calls": [
+    {
+     "seconds": 1.0704423359999997,
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "shapes-17-s0-w30000",
+   "request": "shapes-17",
+   "seed": 0,
+   "budgetMs": 30000,
+   "processSeconds": 22.267645698040724,
+   "spec": "wall=30000,cells=13:15:17:19,v3=1",
+   "coordinatorSeconds": 22.23115055,
+   "overrunSeconds": -7.768849450000001,
+   "rawDepthMm": 200.349,
+   "engineDepthMm": 200.349,
+   "phaseZeroCost": 0.900486085,
+   "exitCause": "patience",
+   "iterations": 26,
+   "scheduleActions": 2,
+   "schedulePublications": 0,
+   "scheduleSeconds": 2.4136070119999986,
+   "scheduleDeltaRawMm": 0.0,
+   "firstEstimatedCost": 0.34272500395100003,
+   "firstActualCost": 1.458158755,
+   "firstActualPhaseZeros": 1.6193018185283783,
+   "actualOverEstimate": 4.254602781209612,
+   "m34Calls": [
+    {
+     "seconds": 1.4561850399999998,
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 0.953340257999999,
+     "published": false,
+     "rawDepthMm": 200.349,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "shapes-17-s1-w30000",
+   "request": "shapes-17",
+   "seed": 1,
+   "budgetMs": 30000,
+   "processSeconds": 14.485488972975872,
+   "spec": "wall=30000,cells=11:15:21:27,v3=1",
+   "coordinatorSeconds": 14.447450217,
+   "overrunSeconds": -15.552549783,
+   "rawDepthMm": 200.34937729570953,
+   "engineDepthMm": 200.349,
+   "phaseZeroCost": 0.926149426,
+   "exitCause": "patience",
+   "iterations": 16,
+   "scheduleActions": 2,
+   "schedulePublications": 0,
+   "scheduleSeconds": 2.1230412249999993,
+   "scheduleDeltaRawMm": 0.0,
+   "firstEstimatedCost": 0.35249247153560004,
+   "firstActualCost": 1.1093764739999998,
+   "firstActualPhaseZeros": 1.1978374578186044,
+   "actualOverEstimate": 3.1472345187036375,
+   "m34Calls": [
+    {
+     "seconds": 1.1073957019999998,
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 1.0116813010000012,
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "shapes-17-s2-w30000",
+   "request": "shapes-17",
+   "seed": 2,
+   "budgetMs": 30000,
+   "processSeconds": 18.56407796300482,
+   "spec": "wall=30000,cells=15:23:31:39,v3=1",
+   "coordinatorSeconds": 18.530495174,
+   "overrunSeconds": -11.469504826000001,
+   "rawDepthMm": 200.349,
+   "engineDepthMm": 200.349,
+   "phaseZeroCost": 0.934692708,
+   "exitCause": "patience",
+   "iterations": 23,
+   "scheduleActions": 2,
+   "schedulePublications": 0,
+   "scheduleSeconds": 2.2884985070000003,
+   "scheduleDeltaRawMm": 0.0,
+   "firstEstimatedCost": 0.35574404466480003,
+   "firstActualCost": 1.0754890550000002,
+   "firstActualPhaseZeros": 1.1506338348367646,
+   "actualOverEstimate": 3.023210285961021,
+   "m34Calls": [
+    {
+     "seconds": 1.0735199119999999,
+     "published": false,
+     "rawDepthMm": 200.34937729570953,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 1.2109031009999995,
+     "published": false,
+     "rawDepthMm": 200.349,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "triangle-20-s0-w10000",
+   "request": "triangle-20",
+   "seed": 0,
+   "budgetMs": 10000,
+   "processSeconds": 9.5718412680435,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1",
+   "coordinatorSeconds": 9.536956108,
+   "overrunSeconds": -0.46304389199999996,
+   "rawDepthMm": 70.73006941379586,
+   "engineDepthMm": 70.73,
+   "phaseZeroCost": 0.73486411,
+   "exitCause": "affordability",
+   "iterations": 10,
+   "scheduleActions": 1,
+   "schedulePublications": 0,
+   "scheduleSeconds": 1.6433874679999998,
+   "scheduleDeltaRawMm": 0.0,
+   "firstEstimatedCost": 0.279689280266,
+   "firstActualCost": 1.643387444,
+   "firstActualPhaseZeros": 2.2363147439599413,
+   "actualOverEstimate": 5.875761282080771,
+   "m34Calls": [
+    {
+     "seconds": 1.643037191,
+     "published": false,
+     "rawDepthMm": 70.7711336311948,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "triangle-20-s1-w10000",
+   "request": "triangle-20",
+   "seed": 1,
+   "budgetMs": 10000,
+   "processSeconds": 9.404628326010425,
+   "spec": "wall=10000,cells=11:15:21:27,v3=1",
+   "coordinatorSeconds": 9.371228313,
+   "overrunSeconds": -0.6287716870000004,
+   "rawDepthMm": 70.73005002608552,
+   "engineDepthMm": 70.73,
+   "phaseZeroCost": 0.900703198,
+   "exitCause": "affordability",
+   "iterations": 8,
+   "scheduleActions": 1,
+   "schedulePublications": 0,
+   "scheduleSeconds": 1.9195366049999998,
+   "scheduleDeltaRawMm": 0.0,
+   "firstEstimatedCost": 0.34280763715879997,
+   "firstActualCost": 1.919536594,
+   "firstActualPhaseZeros": 2.1311533014008464,
+   "actualOverEstimate": 5.599456913822507,
+   "m34Calls": [
+    {
+     "seconds": 1.9192186279999999,
+     "published": false,
+     "rawDepthMm": 70.74684851410467,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "triangle-20-s2-w10000",
+   "request": "triangle-20",
+   "seed": 2,
+   "budgetMs": 10000,
+   "processSeconds": 9.38539316697279,
+   "spec": "wall=10000,cells=15:23:31:39,v3=1",
+   "coordinatorSeconds": 9.352557282,
+   "overrunSeconds": -0.6474427180000006,
+   "rawDepthMm": 70.72882090841742,
+   "engineDepthMm": 70.729,
+   "phaseZeroCost": 0.818137121,
+   "exitCause": "affordability",
+   "iterations": 9,
+   "scheduleActions": 1,
+   "schedulePublications": 0,
+   "scheduleSeconds": 1.8270410400000001,
+   "scheduleDeltaRawMm": 0.0,
+   "firstEstimatedCost": 0.3113829882526,
+   "firstActualCost": 1.827041024,
+   "firstActualPhaseZeros": 2.233172138390234,
+   "actualOverEstimate": 5.867504304756264,
+   "m34Calls": [
+    {
+     "seconds": 1.826701317,
+     "published": false,
+     "rawDepthMm": 70.74727715491606,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "triangle-20-s0-w30000",
+   "request": "triangle-20",
+   "seed": 0,
+   "budgetMs": 30000,
+   "processSeconds": 28.552398881001864,
+   "spec": "wall=30000,cells=13:15:17:19,v3=1",
+   "coordinatorSeconds": 28.520752953,
+   "overrunSeconds": -1.4792470470000012,
+   "rawDepthMm": 70.72726178003285,
+   "engineDepthMm": 70.727,
+   "phaseZeroCost": 0.733602375,
+   "exitCause": "affordability",
+   "iterations": 29,
+   "scheduleActions": 4,
+   "schedulePublications": 0,
+   "scheduleSeconds": 7.404347487000003,
+   "scheduleDeltaRawMm": 0.0,
+   "firstEstimatedCost": 0.279209063925,
+   "firstActualCost": 1.6414530680000001,
+   "firstActualPhaseZeros": 2.2375242010360177,
+   "actualOverEstimate": 5.8789390463374085,
+   "m34Calls": [
+    {
+     "seconds": 1.641122444,
+     "published": false,
+     "rawDepthMm": 70.7711336311948,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 1.8872662239999993,
+     "published": false,
+     "rawDepthMm": 70.73006941379586,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 1.9246994599999994,
+     "published": false,
+     "rawDepthMm": 70.72726178003285,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 1.950178858000001,
+     "published": false,
+     "rawDepthMm": 70.72726178003285,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "triangle-20-s1-w30000",
+   "request": "triangle-20",
+   "seed": 1,
+   "budgetMs": 30000,
+   "processSeconds": 29.34212943399325,
+   "spec": "wall=30000,cells=11:15:21:27,v3=1",
+   "coordinatorSeconds": 29.310657199,
+   "overrunSeconds": -0.6893428009999987,
+   "rawDepthMm": 70.72726178003285,
+   "engineDepthMm": 70.727,
+   "phaseZeroCost": 0.905017762,
+   "exitCause": "affordability",
+   "iterations": 27,
+   "scheduleActions": 4,
+   "schedulePublications": 0,
+   "scheduleSeconds": 7.742806134999998,
+   "scheduleDeltaRawMm": 0.0,
+   "firstEstimatedCost": 0.3444497602172,
+   "firstActualCost": 1.9225325560000002,
+   "firstActualPhaseZeros": 2.1243036730587397,
+   "actualOverEstimate": 5.581459992272044,
+   "m34Calls": [
+    {
+     "seconds": 1.922206685,
+     "published": false,
+     "rawDepthMm": 70.74684851410467,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 1.9305316290000007,
+     "published": false,
+     "rawDepthMm": 70.73005002608552,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 1.950975605,
+     "published": false,
+     "rawDepthMm": 70.72726178003285,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 1.9380181730000032,
+     "published": false,
+     "rawDepthMm": 70.72726178003285,
+     "scheduleEntry": null
+    }
+   ]
+  },
+  {
+   "tag": "triangle-20-s2-w30000",
+   "request": "triangle-20",
+   "seed": 2,
+   "budgetMs": 30000,
+   "processSeconds": 28.9041710649617,
+   "spec": "wall=30000,cells=15:23:31:39,v3=1",
+   "coordinatorSeconds": 28.870399727,
+   "overrunSeconds": -1.1296002730000012,
+   "rawDepthMm": 70.72726178003285,
+   "engineDepthMm": 70.727,
+   "phaseZeroCost": 0.838873068,
+   "exitCause": "affordability",
+   "iterations": 29,
+   "scheduleActions": 4,
+   "schedulePublications": 0,
+   "scheduleSeconds": 7.603397354,
+   "scheduleDeltaRawMm": 0.0,
+   "firstEstimatedCost": 0.31927508968080004,
+   "firstActualCost": 1.82985702,
+   "firstActualPhaseZeros": 2.181327652302219,
+   "actualOverEstimate": 5.731286527331106,
+   "m34Calls": [
+    {
+     "seconds": 1.82951564,
+     "published": false,
+     "rawDepthMm": 70.74727715491606,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 1.9143715110000006,
+     "published": false,
+     "rawDepthMm": 70.72882090841742,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 1.935346224,
+     "published": false,
+     "rawDepthMm": 70.72726178003285,
+     "scheduleEntry": null
+    },
+    {
+     "seconds": 1.9230579350000028,
+     "published": false,
+     "rawDepthMm": 70.72726178003285,
+     "scheduleEntry": null
+    }
+   ]
+  }
+ ],
+ "firstActualPhaseZeros": {
+  "mixed-61": {
+   "n": 6,
+   "min": 0.9900480025490641,
+   "max": 1.1466399653696229,
+   "median": 1.0191051283191874
+  },
+  "shapes-17": {
+   "n": 6,
+   "min": 1.1379636103903856,
+   "max": 1.6193018185283783,
+   "median": 1.201413573014824
+  },
+  "triangle-20": {
+   "n": 6,
+   "min": 2.1243036730587397,
+   "max": 2.2375242010360177,
+   "median": 2.2072498953462265
+  },
+  "pooled": {
+   "n": 18,
+   "min": 0.9900480025490641,
+   "max": 2.2375242010360177,
+   "median": 1.201413573014824
+  }
+ },
+ "actualOverEstimate": {
+  "n": 18,
+  "min": 2.601282192719559,
+  "max": 5.8789390463374085,
+  "median": 3.1566305123878724
+ }
+}

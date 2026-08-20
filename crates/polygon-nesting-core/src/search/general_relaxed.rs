@@ -5621,7 +5621,7 @@ fn drive_compression_schedule(
     // arm against a mode-26 ladder asked for the same drop - and it starts at
     // the clamp the parent already occupies rather than at the number the
     // parent reports. See [`LaneSearch::tight_strip_depth`].
-    let start_depth_mm = search.tight_strip_depth(&state)?;
+    let mut start_depth_mm = search.tight_strip_depth(&state)?;
     state.strip_depth_mm = start_depth_mm;
     let inset_mm = collision_sheet_inset_mm(fast_settings);
     let mut schedule = CompressionSchedule::new(
@@ -5633,9 +5633,6 @@ fn drive_compression_schedule(
     // What one whole-layout validation costs the exact tier, so the schedule
     // can charge itself in the portfolio's currency without a counter.
     schedule.set_exact_pairs_per_confirmation(pieces.len() * pieces.len().saturating_sub(1) / 2);
-    let steps_planned = schedule.steps_planned();
-    let sweeps_per_step = schedule.sweeps_per_step();
-    let repair_policy = schedule.repair_policy();
     let mut score = search.score_state(&state)?;
     // The proxy tier's opinion of the parent, recorded before anything moves.
     let parent_boundary_violations = score.boundary_violations;
@@ -5660,6 +5657,193 @@ fn drive_compression_schedule(
     } else {
         Vec::new()
     };
+
+    // Grok review 1 §2b item 3: make the *entry* feasible, by translation
+    // alone, before step 0 - and give the slice back if that fails.
+    //
+    // The port's §7.1 measured the problem: every 171-179 mm coordinator parent
+    // arrives proxy-infeasible at 26-38 colliding pairs, because
+    // `initialize_complete_state` snapped its continuous rotations onto the
+    // 2.5-degree surrogate grid. A lane that starts there spends part of every
+    // step repairing the parent instead of compressing it. `global_legalize` is
+    // the right instrument and it already exists: it is translation-only - two
+    // variables per piece and no rotation, so it cannot undo the snap - and its
+    // rows are exactly the separations the proxy tier is counting, the material
+    // contract and the collision envelopes, under a hard depth bound.
+    //
+    // Three rules, all of them load-bearing:
+    //
+    // * **Nothing is published from it.** The repaired layout is a starting
+    //   state and never a result; the schedule still publishes only what its
+    //   own exact confirmation accepts, with the parent as the floor.
+    // * **It may not make the entry worse.** A program that closes onto a state
+    //   the proxy tier scores no better is refused and the original entry
+    //   stands, so the arm's floor is the arm it replaces.
+    // * **The start depth is re-measured on whatever state is accepted**, so
+    //   the slice still asks for the same *drop* from the clamp it actually
+    //   holds, which is what makes it a matched arm.
+    //
+    // **The bound is the entry's own depth, not the parent's.** The state the
+    // lane holds is the *snapped* parent and it is deeper than the parent it
+    // came from; bounding the program at the pre-snap number asks a
+    // translation-only legalizer to compress as well as separate, which is not
+    // what it is for. This round measured that mistake before it fixed it: 9 of
+    // 9 slices came back with no layout at all - see the README's §3.
+    //
+    // The entry's own material depth is measured either way, whether or not the
+    // repair is armed, because it costs one depth measurement (~0.05 ms) and it
+    // is the number that says whether this slice *can* publish at all.
+    let snapped_entry = to_fast_placements(&state, pieces);
+    let entry_source_depth_mm =
+        coupled_independent_source_depth(pieces, &snapped_entry, fast_settings).ok();
+    let mut entry_legalization_run = false;
+    let mut entry_legalization_resolved = false;
+    let mut entry_legalization_accepted = false;
+    let mut entry_legalization_ms = 0.0_f64;
+    let mut entry_legalization_reason = None;
+    let mut entry_legalization_pairs_before = 0usize;
+    let mut entry_legalization_pairs_after = 0usize;
+    let mut entry_legalization_boundary_before = 0usize;
+    let mut entry_legalization_boundary_after = 0usize;
+    if schedule_settings.legalize_entry && !parent_proxy_feasible {
+        let started = Instant::now();
+        entry_legalization_run = true;
+        let snapped = snapped_entry.clone();
+        let bound_mm = entry_source_depth_mm.unwrap_or(parent_depth_mm);
+        let (legalization, repaired) =
+            global_legalize(pieces, &snapped, fast_settings, Some(bound_mm));
+        entry_legalization_pairs_before = legalization.violating_pairs_before;
+        entry_legalization_pairs_after = legalization.violating_pairs_after;
+        entry_legalization_boundary_before = legalization.boundary_pieces_before;
+        entry_legalization_boundary_after = legalization.boundary_pieces_after;
+        entry_legalization_reason = legalization
+            .skipped_reason
+            .clone()
+            .or_else(|| legalization.rejection_reason.clone())
+            .or_else(|| (!legalization.resolved).then(|| "unresolved".to_owned()));
+        if let Some(repaired) = repaired {
+            entry_legalization_resolved = true;
+            let seed = general_fast_result_seed(repaired, bound_mm);
+            let candidate = initialize_complete_state(
+                pieces,
+                fast_settings,
+                relaxed_settings.collision_backend,
+                relaxed_settings.angle_seed_policy,
+                relaxed_settings.pressure_model,
+                &seed,
+                relaxed_settings.current_pose_overlay,
+            )?;
+            let mut candidate = candidate;
+            let candidate_start_mm = search.tight_strip_depth(&candidate)?;
+            candidate.strip_depth_mm = candidate_start_mm;
+            let candidate_score = search.score_state(&candidate)?;
+            // Better means "feasible when the entry was not", or "strictly less
+            // total loss at no greater start clamp". Both clauses are needed:
+            // a repair that closes the proxy tier's books by pushing the layout
+            // deeper is not an improvement to a schedule whose whole job is
+            // depth.
+            let closes_the_books = candidate_score.feasible() && !score.feasible();
+            let strictly_less_loss = candidate_score.common_loss() < score.common_loss()
+                && grid_key(candidate_start_mm) <= grid_key(start_depth_mm);
+            if closes_the_books || strictly_less_loss {
+                entry_legalization_accepted = true;
+                state = candidate;
+                score = candidate_score;
+                start_depth_mm = candidate_start_mm;
+                schedule = CompressionSchedule::new(
+                    schedule_settings,
+                    start_depth_mm,
+                    start_depth_mm - requested_drop_mm,
+                    inset_mm * 2.0,
+                );
+                schedule.set_exact_pairs_per_confirmation(
+                    pieces.len() * pieces.len().saturating_sub(1) / 2,
+                );
+            }
+        }
+        entry_legalization_ms = started.elapsed().as_secs_f64() * 1_000.0;
+    }
+    let entry_proxy_feasible = score.feasible();
+    let entry_collision_pairs = score.collision_pairs.len();
+    let entry_boundary_violations = score.boundary_violations;
+    let entry_loss = score.common_loss();
+    let entry_source_depth_mm = if entry_legalization_accepted {
+        coupled_independent_source_depth(pieces, &to_fast_placements(&state, pieces), fast_settings)
+            .ok()
+    } else {
+        entry_source_depth_mm
+    };
+    let entry_depth_loss_mm = entry_source_depth_mm.map(|depth| depth - parent_depth_mm);
+
+    // The skip, and it is an *arithmetic* one rather than a feasibility one.
+    //
+    // Grok review 1 §2b item 3 proposed skipping on the entry's proxy
+    // feasibility. Measured here, that rule refuses every slice on every
+    // request - the entry is infeasible 9 times in 9, including on the request
+    // where this class publishes on 9 of 9 - so it is not the discriminator it
+    // was expected to be, and the README says so at length.
+    //
+    // What *is* a discriminator is the entry's own material depth. The lane
+    // publishes a layout only when its source depth beats the **parent's**, and
+    // it may walk only `requested_drop_mm` of clamp to get there. A slice whose
+    // entry already sits `requested_drop_mm` or more above the parent is
+    // therefore asking to buy the snap back before it compresses anything, and
+    // a perfect walk to its own bound still publishes nothing. That is not a
+    // heuristic about which requests are worth it; it is the slice's own
+    // arithmetic, per parent, before a step is taken, for the price of one
+    // depth measurement.
+    let unpublishable_entry = entry_depth_loss_mm
+        .is_some_and(|loss| loss >= requested_drop_mm && requested_drop_mm > 0.0);
+    let skip_now = (schedule_settings.skip_infeasible_entry
+        && schedule_settings.legalize_entry
+        && !entry_proxy_feasible)
+        || (schedule_settings.skip_unpublishable_entry && unpublishable_entry);
+    if skip_now {
+        let mut report = schedule.report();
+        report.start_depth_mm = start_depth_mm;
+        report.parent_boundary_violations = parent_boundary_violations;
+        report.parent_collision_pairs = parent_collision_pairs;
+        report.parent_proxy_feasible = parent_proxy_feasible;
+        report.parent_entry_loss = parent_entry_loss;
+        report.entry_legalization_armed = schedule_settings.legalize_entry;
+        report.entry_legalization_run = entry_legalization_run;
+        report.entry_legalization_resolved = entry_legalization_resolved;
+        report.entry_legalization_accepted = entry_legalization_accepted;
+        report.entry_legalization_ms = entry_legalization_ms;
+        report.entry_legalization_reason = entry_legalization_reason;
+        report.entry_legalization_violating_pairs_before = entry_legalization_pairs_before;
+        report.entry_legalization_violating_pairs_after = entry_legalization_pairs_after;
+        report.entry_legalization_boundary_pieces_before = entry_legalization_boundary_before;
+        report.entry_legalization_boundary_pieces_after = entry_legalization_boundary_after;
+        report.entry_proxy_feasible = entry_proxy_feasible;
+        report.entry_collision_pairs = entry_collision_pairs;
+        report.entry_boundary_violations = entry_boundary_violations;
+        report.entry_loss = entry_loss;
+        report.entry_source_depth_mm = entry_source_depth_mm;
+        report.entry_depth_loss_mm = entry_depth_loss_mm;
+        report.requested_drop_mm = requested_drop_mm;
+        report.skipped_infeasible_entry = true;
+        report.current_pose_overlay = relaxed_settings.current_pose_overlay;
+        report.current_pose_overlay_entries = overlay_entries;
+        report.current_pose_overlay_off_grid_pieces = overlay_off_grid_pieces;
+        report.current_pose_overlay_setup_ms = overlay_setup_ms;
+        report.parent_pair_classification = parent_pair_classification;
+        return Ok((parent_placements.to_vec(), parent_depth_mm, report));
+    }
+
+    // Read after the entry repair, because an accepted repair rebuilt the
+    // schedule at a re-measured start clamp and the step budget is a function
+    // of that clamp.
+    let steps_planned = schedule.steps_planned();
+    let sweeps_per_step = schedule.sweeps_per_step();
+    let repair_policy = schedule.repair_policy();
+    // At least one step, so a probe armed on a very short slice is a probe and
+    // not a refusal: this mechanism prices the slice, it does not veto it.
+    let probe_steps = match schedule_settings.barren_probe_denominator {
+        0 => 0,
+        denominator => (steps_planned / denominator).max(1),
+    };
+    let mut aborted_barren_probe = false;
 
     // The incumbent half of the asymmetry. It starts at the parent, so the
     // schedule's floor is the parent by construction.
@@ -5797,6 +5981,22 @@ fn drive_compression_schedule(
         }
 
         rows.push(row);
+
+        // The probe. A slice is bought on a prior; it is *continued* on
+        // evidence. If the lane has spent its probe and nothing it has reached
+        // beats the parent yet, the rest of the slice is given back - which is
+        // the only place in this design where the first slice's wall price can
+        // be charged at all, because no number available before step 0
+        // separates the request where this class publishes on nine of nine
+        // from the two where it never has. See
+        // `CompressionScheduleSettings::barren_probe_denominator`.
+        if probe_steps > 0
+            && schedule.steps_taken() >= probe_steps
+            && grid_key(published_depth_mm) >= grid_key(parent_depth_mm)
+        {
+            aborted_barren_probe = true;
+            break;
+        }
     }
 
     // The last state the frontier reached never gets a scheduled confirmation
@@ -5826,6 +6026,25 @@ fn drive_compression_schedule(
     report.parent_collision_pairs = parent_collision_pairs;
     report.parent_proxy_feasible = parent_proxy_feasible;
     report.parent_entry_loss = parent_entry_loss;
+    report.entry_legalization_armed = schedule_settings.legalize_entry;
+    report.entry_legalization_run = entry_legalization_run;
+    report.entry_legalization_resolved = entry_legalization_resolved;
+    report.entry_legalization_accepted = entry_legalization_accepted;
+    report.entry_legalization_ms = entry_legalization_ms;
+    report.entry_legalization_reason = entry_legalization_reason;
+    report.entry_legalization_violating_pairs_before = entry_legalization_pairs_before;
+    report.entry_legalization_violating_pairs_after = entry_legalization_pairs_after;
+    report.entry_legalization_boundary_pieces_before = entry_legalization_boundary_before;
+    report.entry_legalization_boundary_pieces_after = entry_legalization_boundary_after;
+    report.entry_proxy_feasible = entry_proxy_feasible;
+    report.entry_collision_pairs = entry_collision_pairs;
+    report.entry_boundary_violations = entry_boundary_violations;
+    report.entry_loss = entry_loss;
+    report.entry_source_depth_mm = entry_source_depth_mm;
+    report.entry_depth_loss_mm = entry_depth_loss_mm;
+    report.requested_drop_mm = requested_drop_mm;
+    report.aborted_barren_probe = aborted_barren_probe;
+    report.probe_steps = probe_steps;
     report.current_pose_overlay = relaxed_settings.current_pose_overlay;
     report.current_pose_overlay_entries = overlay_entries;
     report.current_pose_overlay_off_grid_pieces = overlay_off_grid_pieces;
