@@ -39,6 +39,12 @@ use crate::search::compression_schedule::{
     CompressionRepairPolicy, CompressionSchedule, CompressionScheduleSettings,
     GeneralCompressionScheduleDiagnostics, GeneralCompressionScheduleStepRow,
 };
+#[cfg(feature = "parallel-compression-schedule")]
+use crate::parallel::map_slice_mut_with_job_pool;
+#[cfg(feature = "parallel-compression-schedule")]
+use crate::search::compression_schedule::GeneralCompressionScheduleParallelDiagnostics;
+#[cfg(feature = "parallel-compression-schedule")]
+use crate::search::general_fast::validate_and_measure_placements_parallel;
 #[cfg(feature = "shadow-rescore")]
 use crate::search::shadow_rescore;
 // The added contract-validity and raw-depth reporting is reachable only through
@@ -5526,6 +5532,29 @@ fn run_compression_schedule(
     diagnostics
 }
 
+/// One whole-layout exact confirmation, serial or spread over the job pool.
+///
+/// The `parallel` flag is the schedule's `pconfirm` lever and nothing else
+/// reads it: every other caller of the validator in this file is unchanged, so
+/// the lever's blast radius is the compression schedule's own two confirmation
+/// sites. In a build without the feature the flag is dead and this is a
+/// one-line forward to the shipped validator.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+fn confirm_placements(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    fast_settings: GeneralFastSettings,
+    parallel: bool,
+) -> Result<GeneralPlacementMetrics, GeneralFastError> {
+    #[cfg(feature = "parallel-compression-schedule")]
+    if parallel {
+        return validate_and_measure_placements_parallel(pieces, placements, fast_settings);
+    }
+    #[cfg(not(feature = "parallel-compression-schedule"))]
+    let _ = parallel;
+    validate_and_measure_placements(pieces, placements, fast_settings)
+}
+
 /// The schedule's driver loop: step, repair, confirm.
 ///
 /// Returns the deepest exact-valid layout it reached with its raw source depth,
@@ -5602,6 +5631,46 @@ fn drive_compression_schedule(
         &incumbent,
         relaxed_settings.current_pose_overlay,
     )?;
+    // The intra-arm fan-out's workers, built once and kept alive for the whole
+    // schedule. They are persistent on purpose: a worker's surrogate and
+    // pair-NFP caches are what make its second step cheaper than its first, and
+    // rebuilding a worker per step would have priced the fan-out against a cold
+    // cache the serial lane never pays for. Empty - and never dispatched -
+    // unless `lanes` asked for more than one.
+    #[cfg(feature = "parallel-compression-schedule")]
+    let repair_lanes = schedule_settings.lanes.max(1);
+    #[cfg(feature = "parallel-compression-schedule")]
+    let mut repair_workers = (0..repair_lanes)
+        .filter(|_| repair_lanes > 1)
+        .map(|worker| {
+            LegacyLaneSearch::new(
+                pieces,
+                fast_settings,
+                relaxed_settings,
+                derive_seed(relaxed_settings.seed, 0, worker),
+                catalog.clone(),
+            )
+        })
+        .collect::<Vec<_>>();
+    #[cfg(feature = "parallel-compression-schedule")]
+    let mut parallel_report = GeneralCompressionScheduleParallelDiagnostics {
+        lanes: repair_lanes,
+        parallel_confirm: schedule_settings.parallel_confirm,
+        lane_wins: vec![0; repair_lanes],
+        ..GeneralCompressionScheduleParallelDiagnostics::default()
+    };
+    // Candidate queries spent by the fan-out's workers. The schedule's budget
+    // is charged in the lane's own counter, and with the repair moved off that
+    // lane the counter would otherwise read zero and the work cap would never
+    // fire. Every worker's queries are added here, winners and losers alike:
+    // a fan-out that only charged for the branch it kept would be buying its
+    // depth with unmetered work.
+    #[cfg(feature = "parallel-compression-schedule")]
+    let mut fan_out_queries = 0usize;
+    #[cfg(feature = "parallel-compression-schedule")]
+    let confirm_in_parallel = schedule_settings.parallel_confirm;
+    #[cfg(not(feature = "parallel-compression-schedule"))]
+    let confirm_in_parallel = false;
     let mut search = LegacyLaneSearch::new(
         pieces,
         fast_settings,
@@ -5672,14 +5741,34 @@ fn drive_compression_schedule(
     let mut repair_ms = 0.0;
     let mut global_sweep = 0usize;
 
+    // The lane's spend as the schedule's budget sees it. Identical to
+    // `search.counters.surrogate_evaluations` on the serial schedule; on a
+    // fanned-out one the repair happens on the workers, so their queries are
+    // added here and the cap sees the whole bill.
+    #[cfg(feature = "parallel-compression-schedule")]
+    macro_rules! queries_spent {
+        () => {
+            search
+                .counters
+                .surrogate_evaluations
+                .saturating_add(fan_out_queries)
+        };
+    }
+    #[cfg(not(feature = "parallel-compression-schedule"))]
+    macro_rules! queries_spent {
+        () => {
+            search.counters.surrogate_evaluations
+        };
+    }
+
     let unbounded_tail =
         schedule_settings.continue_past_bound && schedule_settings.work_cap_queries.is_some();
     while schedule.steps_taken() < steps_planned.max(1) || unbounded_tail {
-        if !schedule.may_step(search.counters.surrogate_evaluations) {
+        if !schedule.may_step(queries_spent!()) {
             break;
         }
         let step = schedule.steps_taken();
-        let queries_before = search.counters.surrogate_evaluations;
+        let queries_before = queries_spent!();
         schedule.step_down();
         // The step, taken here rather than left to the first sweep, so that the
         // residue below is the residue the *step* made rather than what one
@@ -5692,28 +5781,166 @@ fn drive_compression_schedule(
         let before_violations = score.boundary_violations;
         let before_pairs = score.collision_pairs.len();
         let before_loss = score.boundary_loss;
-        search.compression = Some(schedule);
-
         let repair_started = Instant::now();
         let mut sweeps_run = 0usize;
-        for _ in 0..sweeps_per_step.max(1) {
-            if score.feasible() {
-                break;
+        // The fan-out fires only where there is something to repair. A step the
+        // proxy tier already calls feasible runs no sweep in either schedule,
+        // so dispatching eight workers at it would buy nothing and cost a
+        // barrier; on the measured 174-179 mm band that is 55-77% of all steps,
+        // and it is the first of the two reasons the wall multiplier is not the
+        // lane multiplier.
+        #[cfg(feature = "parallel-compression-schedule")]
+        let fan_out = repair_lanes > 1 && !score.feasible();
+        #[cfg(not(feature = "parallel-compression-schedule"))]
+        let fan_out = false;
+        if !fan_out {
+            search.compression = Some(schedule);
+            for _ in 0..sweeps_per_step.max(1) {
+                if score.feasible() {
+                    break;
+                }
+                search.move_sweep(&mut state, &mut score, global_sweep)?;
+                global_sweep += 1;
+                sweeps_run += 1;
+                if score.feasible() {
+                    break;
+                }
+                update_weights(&mut search.weights, &score.collision_pairs);
+                refresh_weighted_loss(&mut score, &search.weights);
             }
-            search.move_sweep(&mut state, &mut score, global_sweep)?;
-            global_sweep += 1;
-            sweeps_run += 1;
-            if score.feasible() {
-                break;
+            schedule = search
+                .compression
+                .take()
+                .expect("the lane keeps the schedule it was handed");
+        }
+        #[cfg(feature = "parallel-compression-schedule")]
+        if fan_out {
+            // One clock, `repair_lanes` workers. Each worker repairs a private
+            // clone of *this* frontier at *this* depth; none of them owns the
+            // schedule, so none can step it, confirm against it or move its
+            // floor. The clone they are handed is read-only in effect: it is
+            // what `move_sweep`'s `apply_compression_schedule` reads the depth
+            // out of, and it is dropped at the end of the dispatch.
+            let schedule_view = schedule.clone();
+            let base_state = state.clone();
+            let base_score = score.clone();
+            let base_weights = search.weights.clone();
+            let sweeps_budget = sweeps_per_step.max(1);
+            let step_sweep = global_sweep;
+            let outcomes = map_slice_mut_with_job_pool(&mut repair_workers, |worker, lane| {
+                // Determinism, at its source: a worker's entire input is
+                // (frontier, weights, depth, step, worker ordinal). Nothing it
+                // reads depends on which thread ran it or on what any other
+                // worker did, so two processes dispatch the same eight
+                // computations and reduce them in the same order.
+                lane.rng = SplitMix64::new(derive_seed(
+                    derive_seed(
+                        relaxed_settings.seed,
+                        step,
+                        COMPRESSION_SCHEDULE_SEED_DOMAIN as usize,
+                    ),
+                    step,
+                    worker,
+                ));
+                lane.weights = base_weights.clone();
+                lane.compression = Some(schedule_view.clone());
+                let queries_before = lane.counters.surrogate_evaluations;
+                let mut lane_state = base_state.clone();
+                let mut lane_score = base_score.clone();
+                let mut lane_sweeps = 0usize;
+                let mut failure = None;
+                for _ in 0..sweeps_budget {
+                    if lane_score.feasible() {
+                        break;
+                    }
+                    if let Err(error) =
+                        lane.move_sweep(&mut lane_state, &mut lane_score, step_sweep + lane_sweeps)
+                    {
+                        failure = Some(error);
+                        break;
+                    }
+                    lane_sweeps += 1;
+                    if lane_score.feasible() {
+                        break;
+                    }
+                    update_weights(&mut lane.weights, &lane_score.collision_pairs);
+                    refresh_weighted_loss(&mut lane_score, &lane.weights);
+                }
+                let queries = lane
+                    .counters
+                    .surrogate_evaluations
+                    .saturating_sub(queries_before);
+                lane.compression = None;
+                (
+                    failure,
+                    lane_state,
+                    lane_score,
+                    std::mem::take(&mut lane.weights),
+                    lane_sweeps,
+                    queries,
+                )
+            });
+            // A failure on any worker is the schedule's failure, and it is the
+            // lowest-ordinal one so that two processes report the same error.
+            let mut outcomes = outcomes;
+            for outcome in outcomes.iter_mut() {
+                if let Some(error) = outcome.0.take() {
+                    return Err(error);
+                }
             }
-            update_weights(&mut search.weights, &score.collision_pairs);
-            refresh_weighted_loss(&mut score, &search.weights);
+            // The reduce, and the whole of the determinism argument above it:
+            // a total order on (feasible, common loss, worker ordinal). The
+            // ordinal tiebreak is what makes it total - two workers that find
+            // equally good states must not be separated by which finished
+            // first - and `total_cmp` is what keeps the middle term a total
+            // order over `f64`.
+            let mut winner = 0usize;
+            for candidate in 1..outcomes.len() {
+                let (_, _, best_score, ..) = &outcomes[winner];
+                let (_, _, other_score, ..) = &outcomes[candidate];
+                let better = match other_score.feasible().cmp(&best_score.feasible()) {
+                    Ordering::Greater => true,
+                    Ordering::Less => false,
+                    Ordering::Equal => {
+                        other_score.common_loss().total_cmp(&best_score.common_loss())
+                            == Ordering::Less
+                    }
+                };
+                if better {
+                    winner = candidate;
+                }
+            }
+            let step_queries: usize = outcomes
+                .iter()
+                .map(|(_, _, _, _, _, queries)| *queries)
+                .sum();
+            let (_, winner_state, winner_score, winner_weights, winner_sweeps, winner_queries) =
+                outcomes
+                    .into_iter()
+                    .nth(winner)
+                    .expect("the reduce always names a worker");
+            state = winner_state;
+            score = winner_score;
+            search.weights = winner_weights;
+            sweeps_run = winner_sweeps;
+            global_sweep += winner_sweeps;
+            // The clock's sweep counter follows the *adopted* branch, so
+            // `sweepsRun` stays the number of sweeps this schedule's frontier
+            // actually took and stays comparable with the serial arm's. What
+            // the discarded branches cost is reported separately, in queries.
+            for _ in 0..winner_sweeps {
+                schedule.note_sweep();
+            }
+            fan_out_queries = fan_out_queries.saturating_add(step_queries);
+            parallel_report.fanned_out_steps += 1;
+            parallel_report.winner_queries += winner_queries;
+            parallel_report.discarded_queries += step_queries.saturating_sub(winner_queries);
+            parallel_report.lane_wins[winner] += 1;
+            if winner != 0 {
+                parallel_report.steps_won_off_lane_zero += 1;
+            }
         }
         repair_ms += repair_started.elapsed().as_secs_f64() * 1_000.0;
-        schedule = search
-            .compression
-            .take()
-            .expect("the lane keeps the schedule it was handed");
 
         let mut row = GeneralCompressionScheduleStepRow {
             step,
@@ -5725,10 +5952,7 @@ fn drive_compression_schedule(
             collision_pairs_after: score.collision_pairs.len(),
             boundary_loss_after: score.boundary_loss,
             sweeps_run,
-            candidate_queries: search
-                .counters
-                .surrogate_evaluations
-                .saturating_sub(queries_before),
+            candidate_queries: queries_spent!().saturating_sub(queries_before),
             proxy_feasible: score.feasible(),
             ..GeneralCompressionScheduleStepRow::default()
         };
@@ -5745,7 +5969,7 @@ fn drive_compression_schedule(
             // holding, or a rollback would restore an infeasible state at a
             // depth the schedule believes was confirmed.
             let mut frontier_confirmed = false;
-            match validate_and_measure_placements(pieces, &placements, fast_settings) {
+            match confirm_placements(pieces, &placements, fast_settings, confirm_in_parallel) {
                 Ok(_) => {
                     accepted = Some(placements.clone());
                     frontier_confirmed = true;
@@ -5804,7 +6028,7 @@ fn drive_compression_schedule(
     if score.feasible() {
         let started = Instant::now();
         let placements = to_fast_placements(&state, pieces);
-        if validate_and_measure_placements(pieces, &placements, fast_settings).is_ok() {
+        if confirm_placements(pieces, &placements, fast_settings, confirm_in_parallel).is_ok() {
             if let Ok(raw_depth_mm) =
                 coupled_independent_source_depth(pieces, &placements, fast_settings)
             {
@@ -5819,8 +6043,12 @@ fn drive_compression_schedule(
         confirmation_ms += started.elapsed().as_secs_f64() * 1_000.0;
     }
 
-    schedule.may_step(search.counters.surrogate_evaluations);
+    schedule.may_step(queries_spent!());
     let mut report = schedule.report();
+    #[cfg(feature = "parallel-compression-schedule")]
+    {
+        report.parallel = parallel_report;
+    }
     report.start_depth_mm = start_depth_mm;
     report.parent_boundary_violations = parent_boundary_violations;
     report.parent_collision_pairs = parent_collision_pairs;
@@ -18891,6 +19119,212 @@ mod tests {
             population.independent_depth_mm,
             population.parent_independent_depth_mm
         );
+    }
+
+    /// The two-piece harness every parallel-schedule test below runs on, armed
+    /// with a given lane count, confirmation policy and job-pool width.
+    ///
+    /// It returns the population rather than the report so a test can assert on
+    /// the *publication* - the fingerprint and the depth - and not only on the
+    /// counters, which is the difference between "the fan-out is reproducible"
+    /// and "the fan-out's bookkeeping is reproducible".
+    #[cfg(all(
+        feature = "jagua-experimental",
+        feature = "parallel-compression-schedule"
+    ))]
+    fn parallel_schedule_population(
+        lanes: usize,
+        parallel_confirm: bool,
+        pool_threads: usize,
+    ) -> GeneralPersistentVacancyDiagnostics {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+        let mut settings = coupled_experiment_test_settings(9);
+        settings.persistent_vacancy_mode = 34;
+        settings.persistent_vacancy_target_depth_mm = Some(1.0);
+        settings.compression_schedule = Some(CompressionScheduleSettings {
+            sweeps_per_step: 3,
+            confirm_every: 2,
+            rollback_after_steps: 0,
+            work_cap_queries: Some(200_000),
+            continue_past_bound: true,
+            repair_policy: CompressionRepairPolicy::SweepsOnly,
+            lanes,
+            parallel_confirm,
+            ..CompressionScheduleSettings::default()
+        });
+        JobPool::new(Some(pool_threads))
+            .run_scoped(|| run_compression_schedule(&pieces, fast_settings, settings, &parent, None))
+    }
+
+    /// The hard gate: an armed, work-capped schedule is bit-reproducible, and
+    /// it is reproducible *across pool widths* rather than only across two runs
+    /// that happened to schedule their workers the same way.
+    ///
+    /// Running the same eight-worker schedule on a one-thread pool and on an
+    /// eight-thread pool is the sharpest in-process form of the cross-process
+    /// requirement: the two runs differ in exactly the thing a nondeterministic
+    /// fan-out would leak through - which worker's result arrives first - and
+    /// they must still publish the same layout, spend the same work and reduce
+    /// to the same lane-win histogram. The cross-*process* half of the gate is
+    /// measured by the driver, in
+    /// docs/experiments/parallel-compression-schedule/.
+    #[test]
+    #[cfg(all(
+        feature = "jagua-experimental",
+        feature = "parallel-compression-schedule"
+    ))]
+    fn parallel_compression_schedule_reproduces_across_pool_widths() {
+        let narrow = parallel_schedule_population(8, false, 1);
+        let wide = parallel_schedule_population(8, false, 8);
+        let narrow_report = narrow
+            .compression_schedule
+            .as_ref()
+            .expect("an attempted schedule reports");
+        let wide_report = wide
+            .compression_schedule
+            .as_ref()
+            .expect("an attempted schedule reports");
+        assert_eq!(
+            narrow.final_placement_fingerprint,
+            wide.final_placement_fingerprint
+        );
+        assert_eq!(narrow.independent_depth_mm, wide.independent_depth_mm);
+        assert_eq!(narrow_report.steps_taken, wide_report.steps_taken);
+        assert_eq!(narrow_report.work_units, wide_report.work_units);
+        assert_eq!(narrow_report.sweeps_run, wide_report.sweeps_run);
+        assert_eq!(narrow_report.parallel, wide_report.parallel);
+        // The whole report, step rows included, so a divergence anywhere in the
+        // walk fails here rather than only in the four scalars above. The two
+        // wall-clock decompositions are excluded and nothing else is: a
+        // one-thread pool and an eight-thread pool are *meant* to spend
+        // different milliseconds on the same walk, and that is the only
+        // difference this gate tolerates.
+        let comparable = |report: &GeneralCompressionScheduleDiagnostics| {
+            let mut report = report.clone();
+            report.repair_ms = 0.0;
+            report.confirmation_ms = 0.0;
+            report
+        };
+        assert_eq!(comparable(narrow_report), comparable(wide_report));
+    }
+
+    /// The parallel confirmation is the serial validator with a different
+    /// traversal: same verdict, therefore same publication.
+    #[test]
+    #[cfg(all(
+        feature = "jagua-experimental",
+        feature = "parallel-compression-schedule"
+    ))]
+    fn parallel_confirmation_publishes_what_the_serial_validator_publishes() {
+        let serial = parallel_schedule_population(1, false, 4);
+        let parallel = parallel_schedule_population(1, true, 4);
+        assert_eq!(
+            serial.final_placement_fingerprint,
+            parallel.final_placement_fingerprint
+        );
+        assert_eq!(serial.independent_depth_mm, parallel.independent_depth_mm);
+        let serial_report = serial
+            .compression_schedule
+            .as_ref()
+            .expect("an attempted schedule reports");
+        let parallel_report = parallel
+            .compression_schedule
+            .as_ref()
+            .expect("an attempted schedule reports");
+        assert_eq!(
+            serial_report.confirmations_accepted,
+            parallel_report.confirmations_accepted
+        );
+        assert_eq!(
+            serial_report.confirmations_refused,
+            parallel_report.confirmations_refused
+        );
+        assert_eq!(serial_report.steps_taken, parallel_report.steps_taken);
+    }
+
+    /// The fan-out charges the losing workers, and the report says how much.
+    ///
+    /// This is the honesty invariant of the whole lever: a best-of-eight repair
+    /// that only paid for the branch it kept would be buying depth with
+    /// unmetered work, and every work-matched comparison against the serial
+    /// schedule would be a comparison of eight units against one.
+    #[test]
+    #[cfg(all(
+        feature = "jagua-experimental",
+        feature = "parallel-compression-schedule"
+    ))]
+    fn the_fan_out_charges_every_worker_it_dispatched() {
+        let serial = parallel_schedule_population(1, false, 8);
+        let fanned = parallel_schedule_population(8, false, 8);
+        let serial_report = serial
+            .compression_schedule
+            .as_ref()
+            .expect("an attempted schedule reports");
+        let fanned_report = fanned
+            .compression_schedule
+            .as_ref()
+            .expect("an attempted schedule reports");
+        assert_eq!(serial_report.parallel.lanes, 1);
+        assert_eq!(serial_report.parallel.fanned_out_steps, 0);
+        assert_eq!(serial_report.parallel.discarded_queries, 0);
+        assert_eq!(fanned_report.parallel.lanes, 8);
+        assert_eq!(fanned_report.parallel.lane_wins.len(), 8);
+        // A step that fanned out charged all eight workers, so the winner is a
+        // strict minority of the queries the step spent.
+        if fanned_report.parallel.fanned_out_steps > 0 {
+            assert!(
+                fanned_report.parallel.discarded_queries > 0,
+                "a fanned-out step must charge the workers it discarded"
+            );
+            assert!(
+                fanned_report.parallel.lane_wins.iter().sum::<usize>()
+                    == fanned_report.parallel.fanned_out_steps,
+                "every fanned-out step names exactly one winner"
+            );
+        }
+        // The candidate half of the schedule's own work is the sum of both
+        // halves of the fan-out's bill, whatever the reduce chose.
+        assert_eq!(
+            fanned_report.candidate_queries,
+            fanned_report.parallel.winner_queries + fanned_report.parallel.discarded_queries
+        );
+        // Both arms stop on the same cap in the same currency, and both
+        // overshoot it: `may_step` is asked *before* a step, so a schedule
+        // always ends one step's charge past its cap. The point of asserting it
+        // here is that the fan-out's last step charges up to `lanes` times what
+        // the serial one's does, so its overshoot is larger - which is a real
+        // property of this lever and not a rounding detail. It is bounded by
+        // the last step's own row either way.
+        assert_eq!(serial_report.exit_cause, "workCap");
+        assert_eq!(fanned_report.exit_cause, "workCap");
+        for (report, arm) in [(serial_report, "serial"), (fanned_report, "fanned")] {
+            let last_step_charge = report
+                .steps
+                .last()
+                .map(|row| row.candidate_queries)
+                .unwrap_or(0);
+            assert!(
+                report.work_units <= 200_000 + last_step_charge,
+                "{arm} overshot its cap by more than its last step charged: \
+                 {} units against a 200000 cap and a {last_step_charge}-query step",
+                report.work_units
+            );
+        }
     }
 
     /// Mode 34 refuses to run without a schedule, rather than silently running

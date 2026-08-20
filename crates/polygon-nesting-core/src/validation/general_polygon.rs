@@ -78,6 +78,45 @@ pub fn validate_publication(
     placements: &[GeneralPlacement<'_>],
     settings: PublicationValidationSettings,
 ) -> Result<(), PublicationValidationError> {
+    validate_publication_inner(placements, settings, false)
+}
+
+/// [`validate_publication`] with its all-pairs clearance loop spread over the
+/// job pool.
+///
+/// This is where a mode-34 confirmation's milliseconds actually are, and the
+/// measurement that says so is in
+/// docs/experiments/parallel-compression-schedule/: of the 4.92 ms an accepted
+/// confirmation costs on the mixed-61 band, the collision-grid overlap loop in
+/// `validate_and_measure_placements` is **0.13 ms** and this function is
+/// essentially all the rest. The reason is the `n * (n - 1) / 2` calls to
+/// [`minimum_boundary_distance`], which walks every edge of one material set
+/// against every edge of the other - the exact-clearance contract is a
+/// boundary-distance question, not an overlap question, and no bounds reject
+/// short-circuits it.
+///
+/// The verdict is the serial function's, including its message: each row scans
+/// its own second indices and the reduce returns the lexicographically lowest
+/// `(first, second)` that fails, which is the pair the serial nest returns.
+/// The only difference is on the failure path, where the serial nest stops at
+/// the first bad pair and this lets every row finish - more work, same answer.
+#[cfg(feature = "parallel-compression-schedule")]
+pub fn validate_publication_parallel(
+    placements: &[GeneralPlacement<'_>],
+    settings: PublicationValidationSettings,
+) -> Result<(), PublicationValidationError> {
+    validate_publication_inner(placements, settings, true)
+}
+
+fn validate_publication_inner(
+    placements: &[GeneralPlacement<'_>],
+    settings: PublicationValidationSettings,
+    #[cfg_attr(
+        not(feature = "parallel-compression-schedule"),
+        allow(unused_variables)
+    )]
+    parallel: bool,
+) -> Result<(), PublicationValidationError> {
     validate_settings(settings)?;
     let transformed = placements
         .iter()
@@ -92,23 +131,45 @@ pub fn validate_publication(
     }
 
     let pair_clearance = settings.total_padding_mm + 2.0 * settings.flattening_sag_tolerance_mm;
-    for first_index in 0..transformed.len() {
+    // One row per first index. Named so the serial nest and the job-pool
+    // dispatch below run the same body against the same operands in the same
+    // per-row order: this is one loop with two traversals, not two loops.
+    let scan_row = |first_index: usize| -> Option<PublicationValidationError> {
         for second_index in (first_index + 1)..transformed.len() {
             let first = &transformed[first_index];
             let second = &transformed[second_index];
             if material_sets_overlap(first, second) {
-                return Err(PublicationValidationError::new(format!(
+                return Some(PublicationValidationError::new(format!(
                     "pieces {} and {} overlap",
                     placements[first_index].piece_id, placements[second_index].piece_id
                 )));
             }
             let distance = minimum_boundary_distance(first, second);
             if !distance.is_finite() || distance < pair_clearance {
-                return Err(PublicationValidationError::new(format!(
+                return Some(PublicationValidationError::new(format!(
                     "pieces {} and {} violate the required clearance",
                     placements[first_index].piece_id, placements[second_index].piece_id
                 )));
             }
+        }
+        None
+    };
+    #[cfg(feature = "parallel-compression-schedule")]
+    if parallel {
+        let rows = (0..transformed.len()).collect::<Vec<_>>();
+        let scanned = crate::parallel::map_slice_with_job_pool(&rows, |first| scan_row(*first));
+        // Input order, so the first `Some` here is the lowest-indexed failing
+        // row - the pair the serial nest would have returned on.
+        for row in scanned {
+            if let Some(error) = row {
+                return Err(error);
+            }
+        }
+        return Ok(());
+    }
+    for first_index in 0..transformed.len() {
+        if let Some(error) = scan_row(first_index) {
+            return Err(error);
         }
     }
     Ok(())

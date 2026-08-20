@@ -1,0 +1,41 @@
+{
+ "note": "the armed build, with an unarmed spec, against HEAD 65f6fc9 on the v3 coordinator path from the bare request - the path the four pinned gates do NOT cover, because they are modes 20 and 22 and never schedule mode 34. Budget is work=40000000 rather than wall, because a wall-budgeted coordinator run is not reproducible across processes even on one binary and a wall comparison could not tell \"the build differs\" from \"the box was busy\".",
+ "headBinarySha256": "5a8ed8ba5a06b24d0e3536013d87081dffb3dd91f762fc80289e7068fea0ce14",
+ "armedBinarySha256": "1e93f02a7bca41455d4e7aac4a37cb840716111b0a40c16d079d60a3b36a73a9",
+ "ALL_MATCH": true,
+ "cells": [
+  {
+   "seed": 0,
+   "docDigestHead": "418b9f2283bb985ee82322f36dcf160c9f519ad09fb0ba4e0f344717d8f072d9",
+   "docDigestArmedUnarmedSpec": "418b9f2283bb985ee82322f36dcf160c9f519ad09fb0ba4e0f344717d8f072d9",
+   "docDigestsMatch": true,
+   "differingLeaves": 0,
+   "rawDepthMm": {
+    "head": 169.891,
+    "armedUnarmedSpec": 169.891
+   }
+  },
+  {
+   "seed": 1,
+   "docDigestHead": "17350460c5ff1a5b7df2e6907a52edb618d08c03a441894dc5ab0f03b9f5753f",
+   "docDigestArmedUnarmedSpec": "17350460c5ff1a5b7df2e6907a52edb618d08c03a441894dc5ab0f03b9f5753f",
+   "docDigestsMatch": true,
+   "differingLeaves": 0,
+   "rawDepthMm": {
+    "head": 171.3619986855876,
+    "armedUnarmedSpec": 171.3619986855876
+   }
+  },
+  {
+   "seed": 2,
+   "docDigestHead": "db9388fce52ce04cafcddfaffc156f7903c3c6b3654b698b58dd95ba03763478",
+   "docDigestArmedUnarmedSpec": "db9388fce52ce04cafcddfaffc156f7903c3c6b3654b698b58dd95ba03763478",
+   "docDigestsMatch": true,
+   "differingLeaves": 0,
+   "rawDepthMm": {
+    "head": 170.155,
+    "armedUnarmedSpec": 170.155
+   }
+  }
+ ]
+}

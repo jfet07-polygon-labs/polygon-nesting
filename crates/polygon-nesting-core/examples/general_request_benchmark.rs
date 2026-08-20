@@ -246,6 +246,25 @@ fn compression_schedule_settings(
                     }
                 }
             }
+            // `parallel-compression-schedule`'s two levers, priced separately
+            // in docs/experiments/parallel-compression-schedule/. Both are
+            // unknown keys in a build without the feature, which is what makes
+            // an unarmed binary refuse an armed driver's spec rather than
+            // silently run the serial schedule under an armed label.
+            #[cfg(feature = "parallel-compression-schedule")]
+            "lanes" => {
+                let lanes: usize = value
+                    .parse()
+                    .map_err(|_| format!("compression schedule lanes: `{value}`"))?;
+                if lanes == 0 {
+                    return Err(
+                        "compression schedule lanes must be at least 1, not `0`".to_owned()
+                    );
+                }
+                settings.lanes = lanes;
+            }
+            #[cfg(feature = "parallel-compression-schedule")]
+            "pconfirm" => settings.parallel_confirm = value != "0",
             other => return Err(format!("unknown compression schedule key `{other}`")),
         }
     }
@@ -1909,6 +1928,15 @@ fn parse_portfolio_spec(
             "probeWork" => settings.probe_work_units = value.parse()?,
             "v3" => settings.coordinator_v3 = value != "0",
             "sched" => settings.compression_schedule_class = value != "0",
+            // The intra-arm parallel schedule, armed for the coordinator's own
+            // mode-34 slice. Off by default, and unknown keys in a build
+            // without the feature - so an unarmed binary refuses an armed
+            // driver's spec instead of silently running the serial slice under
+            // an armed label.
+            #[cfg(feature = "parallel-compression-schedule")]
+            "m34lanes" => settings.compression_schedule_lanes = value.parse()?,
+            #[cfg(feature = "parallel-compression-schedule")]
+            "m34pconfirm" => settings.compression_schedule_parallel_confirm = value != "0",
             "barren" => settings.barren_action_patience = value.parse()?,
             "divq" => settings.diversify_in_queue = value != "0",
             "scheduleBy" => settings.schedule.schedule_by = value.parse()?,

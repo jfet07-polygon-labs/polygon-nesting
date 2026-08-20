@@ -3474,6 +3474,19 @@ pub(crate) fn validate_placements_against_contract(
     placements: &[GeneralFastPlacement],
     settings: GeneralFastSettings,
 ) -> Result<(), GeneralFastError> {
+    validate_placements_against_contract_inner(pieces, placements, settings, false)
+}
+
+fn validate_placements_against_contract_inner(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+    #[cfg_attr(
+        not(feature = "parallel-compression-schedule"),
+        allow(unused_variables)
+    )]
+    parallel: bool,
+) -> Result<(), GeneralFastError> {
     let pieces_by_id = pieces
         .iter()
         .map(|piece| (piece.id, piece))
@@ -3500,16 +3513,22 @@ pub(crate) fn validate_placements_against_contract(
             })
         })
         .collect::<Result<Vec<_>, GeneralFastError>>()?;
-    validate_publication(
-        &independent,
-        PublicationValidationSettings {
-            sheet_width_mm: settings.sheet_short_axis_mm,
-            sheet_height_mm: settings.sheet_long_axis_mm,
-            total_padding_mm: settings.total_padding_mm,
-            sheet_edge_clearance_mm: settings.sheet_edge_clearance_mm,
-            flattening_sag_tolerance_mm: settings.flattening_sag_tolerance_mm,
-        },
-    )?;
+    let publication_settings = PublicationValidationSettings {
+        sheet_width_mm: settings.sheet_short_axis_mm,
+        sheet_height_mm: settings.sheet_long_axis_mm,
+        total_padding_mm: settings.total_padding_mm,
+        sheet_edge_clearance_mm: settings.sheet_edge_clearance_mm,
+        flattening_sag_tolerance_mm: settings.flattening_sag_tolerance_mm,
+    };
+    #[cfg(feature = "parallel-compression-schedule")]
+    if parallel {
+        crate::validation::general_polygon::validate_publication_parallel(
+            &independent,
+            publication_settings,
+        )?;
+        return Ok(());
+    }
+    validate_publication(&independent, publication_settings)?;
     Ok(())
 }
 
@@ -3529,6 +3548,47 @@ pub(crate) fn validate_and_measure_placements(
     placements: &[GeneralFastPlacement],
     settings: GeneralFastSettings,
 ) -> Result<GeneralPlacementMetrics, GeneralFastError> {
+    validate_and_measure_placements_inner(pieces, placements, settings, false)
+}
+
+/// [`validate_and_measure_placements`] with its two `O(n)` and `O(n^2)` phases
+/// spread over the job pool.
+///
+/// The compression schedule's own measurement is what this exists for: on the
+/// 174-179 mm band at the design slice, 41-77% of a mode-34 arm's wall is this
+/// function, executed one pair at a time on one thread while the other seven
+/// job-pool workers are idle. Nothing about the schedule's cadence, floor or
+/// deepest-confirmed slot changes; one confirmation costs less wall.
+///
+/// **It returns the serial function's verdict, including its message.** The
+/// rebuild phase reports the lowest-indexed placement that fails, and the pair
+/// phase reports the lexicographically lowest `(first, second)` that overlaps -
+/// which are exactly the ones the serial loops short-circuit on. The one thing
+/// that is *not* identical is what a **refused** confirmation charges the
+/// `ExactPairTests` counter: the serial loop stops at the first overlap and
+/// this one lets every row finish its own scan first. An **accepted**
+/// confirmation asks all `n * (n - 1) / 2` pairs either way and its counters
+/// are identical, which on the measured band is every confirmation the
+/// schedule made.
+#[cfg(feature = "parallel-compression-schedule")]
+pub(crate) fn validate_and_measure_placements_parallel(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+) -> Result<GeneralPlacementMetrics, GeneralFastError> {
+    validate_and_measure_placements_inner(pieces, placements, settings, true)
+}
+
+fn validate_and_measure_placements_inner(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+    #[cfg_attr(
+        not(feature = "parallel-compression-schedule"),
+        allow(unused_variables)
+    )]
+    parallel: bool,
+) -> Result<GeneralPlacementMetrics, GeneralFastError> {
     let _span = profiling::span(Phase::PublicationValidate);
     profiling::count(Counter::PublicationAttempts, 1);
     let pieces_by_id = pieces
@@ -3546,9 +3606,11 @@ pub(crate) fn validate_and_measure_placements(
         }
     }
     let expansion = collision_expansion_mm(settings);
-    let rebuilt = placements
-        .iter()
-        .map(|placement| {
+    // Named rather than inline so the serial and the job-pool paths below run
+    // the *same* body: the parallel confirmation must be the serial validator
+    // with a different traversal, not a second implementation of it.
+    let rebuild_one =
+        |placement: &GeneralFastPlacement| -> Result<PlacedState, GeneralFastError> {
             let (input_index, piece) = pieces_by_id
                 .get(placement.piece_id.as_str())
                 .copied()
@@ -3592,25 +3654,89 @@ pub(crate) fn validate_and_measure_placements(
                 )));
             }
             Ok(PlacedState::new(input_index, placement.clone(), collision))
-        })
+        };
+    // `collect::<Result<Vec<_>, _>>` over an in-order iterator yields the
+    // lowest-indexed failure in both branches: serially because it
+    // short-circuits there, and in the job-pool branch because
+    // `map_slice_with_job_pool` returns results in input order and the
+    // `collect` then walks them in that order. Same verdict, same message.
+    #[cfg(feature = "parallel-compression-schedule")]
+    let rebuilt = if parallel {
+        crate::parallel::map_slice_with_job_pool(placements, &rebuild_one)
+            .into_iter()
+            .collect::<Result<Vec<_>, GeneralFastError>>()?
+    } else {
+        placements
+            .iter()
+            .map(rebuild_one)
+            .collect::<Result<Vec<_>, GeneralFastError>>()?
+    };
+    #[cfg(not(feature = "parallel-compression-schedule"))]
+    let rebuilt = placements
+        .iter()
+        .map(rebuild_one)
         .collect::<Result<Vec<_>, GeneralFastError>>()?;
 
-    for first_index in 0..rebuilt.len() {
+    // The `n * (n - 1) / 2` exact pair questions. One row per first index, so
+    // the parallel branch's unit of work is a row and its reduce is "the
+    // lexicographically lowest overlapping pair" - which is the pair the
+    // serial nest returns, because the serial nest visits rows in order and
+    // each row in order.
+    let first_overlap = |first_index: usize| -> Result<Option<usize>, GeneralFastError> {
         for second_index in (first_index + 1)..rebuilt.len() {
             if polygons_overlap_exact(
                 &rebuilt[first_index].collision,
                 &rebuilt[second_index].collision,
             )? {
-                return Err(GeneralFastError::InvalidInput(format!(
-                    "pieces {} and {} overlap on the canonical collision grid",
-                    rebuilt[first_index].placement.piece_id,
-                    rebuilt[second_index].placement.piece_id
-                )));
+                return Ok(Some(second_index));
             }
         }
+        Ok(None)
+    };
+    #[cfg(feature = "parallel-compression-schedule")]
+    let overlap = if parallel {
+        let rows = (0..rebuilt.len()).collect::<Vec<_>>();
+        let scanned =
+            crate::parallel::map_slice_with_job_pool(&rows, |first| {
+                first_overlap(*first).map(|second| second.map(|second| (*first, second)))
+            });
+        let mut found = None;
+        for row in scanned {
+            if let Some(pair) = row? {
+                found = Some(pair);
+                break;
+            }
+        }
+        found
+    } else {
+        let mut found = None;
+        for first_index in 0..rebuilt.len() {
+            if let Some(second_index) = first_overlap(first_index)? {
+                found = Some((first_index, second_index));
+                break;
+            }
+        }
+        found
+    };
+    #[cfg(not(feature = "parallel-compression-schedule"))]
+    let overlap = {
+        let mut found = None;
+        for first_index in 0..rebuilt.len() {
+            if let Some(second_index) = first_overlap(first_index)? {
+                found = Some((first_index, second_index));
+                break;
+            }
+        }
+        found
+    };
+    if let Some((first_index, second_index)) = overlap {
+        return Err(GeneralFastError::InvalidInput(format!(
+            "pieces {} and {} overlap on the canonical collision grid",
+            rebuilt[first_index].placement.piece_id, rebuilt[second_index].placement.piece_id
+        )));
     }
 
-    validate_placements_against_contract(pieces, placements, settings)?;
+    validate_placements_against_contract_inner(pieces, placements, settings, parallel)?;
     let metrics = layout_metrics(&rebuilt, settings);
     // The quality frontier trace's single choke point. Every exact-valid
     // candidate the search sees reaches this line, published or not, complete

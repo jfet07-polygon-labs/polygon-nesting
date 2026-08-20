@@ -1352,6 +1352,23 @@ pub struct PortfolioSettings {
     /// features a binary carries to reproduce a pinned command - and it does
     /// nothing, because mode 34 does not exist there.
     pub compression_schedule_class: bool,
+    /// Workers the coordinator's own mode-34 slice fans a repair step out to.
+    ///
+    /// `1` - the shipped serial slice - is the default and the only value any
+    /// existing spec produces, so an unarmed run is the merged schedule exactly.
+    /// See `search::compression_schedule::CompressionScheduleSettings::lanes`
+    /// and docs/experiments/parallel-compression-schedule/.
+    #[cfg(feature = "parallel-compression-schedule")]
+    pub compression_schedule_lanes: usize,
+    /// Whether the coordinator's mode-34 slice spreads its exact confirmation
+    /// over the job pool. `false` by default.
+    ///
+    /// Unlike `compression_schedule_lanes` this one is semantics-preserving -
+    /// measured on the 174-179 mm band, an armed slice differs from the serial
+    /// one in exactly the diagnostic flag that says it was armed - so it moves
+    /// wall without moving the search's trajectory.
+    #[cfg(feature = "parallel-compression-schedule")]
+    pub compression_schedule_parallel_confirm: bool,
     /// How many consecutive actions may publish nothing before the whole v3
     /// loop stops, with its queue still full. `0` disables the rule, which is
     /// merged-HEAD v3's behaviour.
@@ -1461,6 +1478,10 @@ impl PortfolioSettings {
             probe_work_units: 0,
             coordinator_v3: false,
             compression_schedule_class: true,
+            #[cfg(feature = "parallel-compression-schedule")]
+            compression_schedule_lanes: 1,
+            #[cfg(feature = "parallel-compression-schedule")]
+            compression_schedule_parallel_confirm: false,
             barren_action_patience: BARREN_ACTION_PATIENCE,
             diversify_in_queue: true,
         }
@@ -3595,6 +3616,12 @@ fn execute_v3_action(
                 * SCHEDULE_RUNGS as f64
                 * crate::search::general_relaxed::COUPLED_SEPARATOR_CONTRACTION_RATIO;
             let bound = basin.raw_depth_mm - drop_mm;
+            // Read before the operator closure borrows `run`, so the closure
+            // captures two scalars rather than the phase run.
+            #[cfg(feature = "parallel-compression-schedule")]
+            let schedule_lanes = run.settings.compression_schedule_lanes.max(1);
+            #[cfg(feature = "parallel-compression-schedule")]
+            let schedule_parallel_confirm = run.settings.compression_schedule_parallel_confirm;
             let scheduled = run.run_operator(
                 34,
                 &basin.placements,
@@ -3619,9 +3646,19 @@ fn execute_v3_action(
                     // expressed in the coordinator's currency would not be,
                     // because that currency is zero when profiling is off and a
                     // wall-budget run has it off.
-                    relaxed.compression_schedule = Some(
-                        crate::search::compression_schedule::CompressionScheduleSettings::default(),
-                    );
+                    // The two intra-arm parallel levers are the only fields the
+                    // coordinator overrides, and both default to the serial
+                    // slice, so an unarmed spec builds the merged settings
+                    // field for field.
+                    #[allow(unused_mut)]
+                    let mut schedule_settings =
+                        crate::search::compression_schedule::CompressionScheduleSettings::default();
+                    #[cfg(feature = "parallel-compression-schedule")]
+                    {
+                        schedule_settings.lanes = schedule_lanes;
+                        schedule_settings.parallel_confirm = schedule_parallel_confirm;
+                    }
+                    relaxed.compression_schedule = Some(schedule_settings);
                 },
                 None,
                 ParentRole::Descended,

@@ -1,0 +1,240 @@
+{
+ "note": "the hard gate of Grok action 2: work-budget mode, bit-reproducible across two processes. Four arms x three pinned parents x three processes at work=3341379. Digests recomputed with the repaired `doc_digest`; `maxLeafDiffAcrossProcesses` is the direct check behind each verdict.",
+ "firstRunFinding": "the first pass reported 3 distinct digests for EVERY cell including the serial shipped schedule, which is deterministic by construction. The only leaves that moved were repairMs and confirmationMs - the compression-schedule round's own wall-clock decomposition, never added to VOLATILE. The serial control is what caught it.",
+ "ALL_REPRODUCIBLE": true,
+ "cells": [
+  {
+   "arm": "serial",
+   "seed": 0,
+   "processes": 3,
+   "distinctDocDigests": 1,
+   "docDigest": "7760e247dadef629600d1cbda01d37453ceeeda8a4fa7ca4d9a357035585f074",
+   "reproducible": true,
+   "distinctDepths": 1,
+   "rawSourceDepthMm": 173.37991578608327,
+   "distinctFingerprints": 1,
+   "maxLeafDiffAcrossProcesses": 0
+  },
+  {
+   "arm": "serial",
+   "seed": 1,
+   "processes": 3,
+   "distinctDocDigests": 1,
+   "docDigest": "c75edca721997b48e909c841f9486fbb245c593fe4a88ff11fd95a7e4216e7ba",
+   "reproducible": true,
+   "distinctDepths": 1,
+   "rawSourceDepthMm": 174.57600000000002,
+   "distinctFingerprints": 1,
+   "maxLeafDiffAcrossProcesses": 0
+  },
+  {
+   "arm": "serial",
+   "seed": 2,
+   "processes": 3,
+   "distinctDocDigests": 1,
+   "docDigest": "28d0e0338aeef723582cb2fed4882daeb04e9f26b2d6d28f80dfbca04da05f30",
+   "reproducible": true,
+   "distinctDepths": 1,
+   "rawSourceDepthMm": 177.34300000000002,
+   "distinctFingerprints": 1,
+   "maxLeafDiffAcrossProcesses": 0
+  },
+  {
+   "arm": "lanes8",
+   "seed": 0,
+   "processes": 3,
+   "distinctDocDigests": 1,
+   "docDigest": "bac2cf647a3708ff8ee6a9674d8ce3f155ae059c102a498caa5d9f0f5661869f",
+   "reproducible": true,
+   "distinctDepths": 1,
+   "rawSourceDepthMm": 174.145,
+   "distinctFingerprints": 1,
+   "maxLeafDiffAcrossProcesses": 0
+  },
+  {
+   "arm": "lanes8",
+   "seed": 1,
+   "processes": 3,
+   "distinctDocDigests": 1,
+   "docDigest": "91ea2cc0378256bc02ce87e61e022a74d12675cedffd3f672fe6c6b69474be11",
+   "reproducible": true,
+   "distinctDepths": 1,
+   "rawSourceDepthMm": 175.11200000000002,
+   "distinctFingerprints": 1,
+   "maxLeafDiffAcrossProcesses": 0
+  },
+  {
+   "arm": "lanes8",
+   "seed": 2,
+   "processes": 3,
+   "distinctDocDigests": 1,
+   "docDigest": "807ffbb159bbe1a98bff07b143af3d4cbba7d5f4cc4d4db7b291f3bee53c056b",
+   "reproducible": true,
+   "distinctDepths": 1,
+   "rawSourceDepthMm": 179.006,
+   "distinctFingerprints": 1,
+   "maxLeafDiffAcrossProcesses": 0
+  },
+  {
+   "arm": "pconfirm",
+   "seed": 0,
+   "processes": 3,
+   "distinctDocDigests": 1,
+   "docDigest": "8ec3c2a377f780634b36f22f7386ddab61461fe1ee264214b78942fcd28a48f0",
+   "reproducible": true,
+   "distinctDepths": 1,
+   "rawSourceDepthMm": 173.37991578608327,
+   "distinctFingerprints": 1,
+   "maxLeafDiffAcrossProcesses": 0
+  },
+  {
+   "arm": "pconfirm",
+   "seed": 1,
+   "processes": 3,
+   "distinctDocDigests": 1,
+   "docDigest": "efc38ecfb23691df608a39cc528173feabd1d1c68fd681b35c659bd1bb42a295",
+   "reproducible": true,
+   "distinctDepths": 1,
+   "rawSourceDepthMm": 174.57600000000002,
+   "distinctFingerprints": 1,
+   "maxLeafDiffAcrossProcesses": 0
+  },
+  {
+   "arm": "pconfirm",
+   "seed": 2,
+   "processes": 3,
+   "distinctDocDigests": 1,
+   "docDigest": "dc6d46f301c4b0beb4736a2e08126f95ab9097c9c44684cab64a571374e62d3d",
+   "reproducible": true,
+   "distinctDepths": 1,
+   "rawSourceDepthMm": 177.34300000000002,
+   "distinctFingerprints": 1,
+   "maxLeafDiffAcrossProcesses": 0
+  },
+  {
+   "arm": "both",
+   "seed": 0,
+   "processes": 3,
+   "distinctDocDigests": 1,
+   "docDigest": "ef002192af360887274e3de1affeabf50e791f1129075a332437ec4df718fdde",
+   "reproducible": true,
+   "distinctDepths": 1,
+   "rawSourceDepthMm": 174.145,
+   "distinctFingerprints": 1,
+   "maxLeafDiffAcrossProcesses": 0
+  },
+  {
+   "arm": "both",
+   "seed": 1,
+   "processes": 3,
+   "distinctDocDigests": 1,
+   "docDigest": "d43a528dcf21e7ddd3388d647d948ad4a0944641d11a41cf681d5aada75df299",
+   "reproducible": true,
+   "distinctDepths": 1,
+   "rawSourceDepthMm": 175.11200000000002,
+   "distinctFingerprints": 1,
+   "maxLeafDiffAcrossProcesses": 0
+  },
+  {
+   "arm": "both",
+   "seed": 2,
+   "processes": 3,
+   "distinctDocDigests": 1,
+   "docDigest": "534b916b06d2444b3c0f0353f294a48d959dac33ba0a6e2cb7ac1dc55e027d45",
+   "reproducible": true,
+   "distinctDepths": 1,
+   "rawSourceDepthMm": 179.006,
+   "distinctFingerprints": 1,
+   "maxLeafDiffAcrossProcesses": 0
+  }
+ ],
+ "semanticsPreservationVsSerial": [
+  {
+   "seed": 0,
+   "pconfirm": {
+    "differingLeavesVsSerial": 1,
+    "leafNames": {
+     "parallelConfirm": 1
+    }
+   },
+   "lanes8": {
+    "differingLeavesVsSerial": 12662,
+    "leafNames": {
+     "candidateQueries": 997,
+     "sweepsRun": 993,
+     "confirmed": 964,
+     "boundaryLossBefore": 962
+    }
+   },
+   "both": {
+    "differingLeavesVsSerial": 12663,
+    "leafNames": {
+     "candidateQueries": 997,
+     "sweepsRun": 993,
+     "confirmed": 964,
+     "boundaryLossBefore": 962
+    }
+   }
+  },
+  {
+   "seed": 1,
+   "pconfirm": {
+    "differingLeavesVsSerial": 1,
+    "leafNames": {
+     "parallelConfirm": 1
+    }
+   },
+   "lanes8": {
+    "differingLeavesVsSerial": 11929,
+    "leafNames": {
+     "confirmed": 1003,
+     "candidateQueries": 890,
+     "boundaryLossBefore": 868,
+     "sweepsRun": 860
+    }
+   },
+   "both": {
+    "differingLeavesVsSerial": 11930,
+    "leafNames": {
+     "confirmed": 1003,
+     "candidateQueries": 890,
+     "boundaryLossBefore": 868,
+     "sweepsRun": 860
+    }
+   }
+  },
+  {
+   "seed": 2,
+   "pconfirm": {
+    "differingLeavesVsSerial": 1,
+    "leafNames": {
+     "parallelConfirm": 1
+    }
+   },
+   "lanes8": {
+    "differingLeavesVsSerial": 21270,
+    "leafNames": {
+     "candidateQueries": 1566,
+     "boundaryLossAfter": 1451,
+     "boundaryLossBefore": 1447,
+     "collisionPairsAfter": 1415
+    }
+   },
+   "both": {
+    "differingLeavesVsSerial": 21271,
+    "leafNames": {
+     "candidateQueries": 1566,
+     "boundaryLossAfter": 1451,
+     "boundaryLossBefore": 1447,
+     "collisionPairsAfter": 1415
+    }
+   }
+  }
+ ],
+ "arms": {
+  "serial": "past=1,rollback=0,work=3341379,lanes=1,pconfirm=0",
+  "lanes8": "past=1,rollback=0,work=3341379,lanes=8,pconfirm=0",
+  "pconfirm": "past=1,rollback=0,work=3341379,lanes=1,pconfirm=1",
+  "both": "past=1,rollback=0,work=3341379,lanes=8,pconfirm=1"
+ }
+}
