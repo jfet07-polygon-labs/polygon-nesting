@@ -1,0 +1,754 @@
+{
+ "work-40000000": {
+  "budget": 40000000,
+  "spec": "work=40000000,cells={cells},v3=1,sched=1,barren=16,divq=1",
+  "rows": [
+   {
+    "arm": "fixed",
+    "seed": 0,
+    "round": 0,
+    "depthMm": 169.891,
+    "reportedWorkUnits": 38857134,
+    "debitAlreadyCharged": 2497285,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 38857134,
+    "overrunUnits": -1142866,
+    "overrunFraction": -0.028572
+   },
+   {
+    "arm": "unfixed",
+    "seed": 0,
+    "round": 0,
+    "depthMm": 169.891,
+    "reportedWorkUnits": 39309265,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 2495920,
+    "trueWorkUnits": 41805185,
+    "overrunUnits": 1805185,
+    "overrunFraction": 0.04513
+   },
+   {
+    "arm": "fixed",
+    "seed": 1,
+    "round": 0,
+    "depthMm": 171.362,
+    "reportedWorkUnits": 35773579,
+    "debitAlreadyCharged": 2670880,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 35773579,
+    "overrunUnits": -4226421,
+    "overrunFraction": -0.105661
+   },
+   {
+    "arm": "unfixed",
+    "seed": 1,
+    "round": 0,
+    "depthMm": 171.362,
+    "reportedWorkUnits": 38518915,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 2669440,
+    "trueWorkUnits": 41188355,
+    "overrunUnits": 1188355,
+    "overrunFraction": 0.029709
+   },
+   {
+    "arm": "fixed",
+    "seed": 2,
+    "round": 0,
+    "depthMm": 170.155,
+    "reportedWorkUnits": 39106937,
+    "debitAlreadyCharged": 8812610,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 39106937,
+    "overrunUnits": -893063,
+    "overrunFraction": -0.022327
+   },
+   {
+    "arm": "unfixed",
+    "seed": 2,
+    "round": 0,
+    "depthMm": 165.779,
+    "reportedWorkUnits": 37102965,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 14225675,
+    "trueWorkUnits": 51328640,
+    "overrunUnits": 11328640,
+    "overrunFraction": 0.283216
+   },
+   {
+    "arm": "unfixed",
+    "seed": 0,
+    "round": 1,
+    "depthMm": 169.891,
+    "reportedWorkUnits": 39309265,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 2495920,
+    "trueWorkUnits": 41805185,
+    "overrunUnits": 1805185,
+    "overrunFraction": 0.04513
+   },
+   {
+    "arm": "fixed",
+    "seed": 0,
+    "round": 1,
+    "depthMm": 169.891,
+    "reportedWorkUnits": 38857134,
+    "debitAlreadyCharged": 2497285,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 38857134,
+    "overrunUnits": -1142866,
+    "overrunFraction": -0.028572
+   },
+   {
+    "arm": "unfixed",
+    "seed": 1,
+    "round": 1,
+    "depthMm": 171.362,
+    "reportedWorkUnits": 38518915,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 2669440,
+    "trueWorkUnits": 41188355,
+    "overrunUnits": 1188355,
+    "overrunFraction": 0.029709
+   },
+   {
+    "arm": "fixed",
+    "seed": 1,
+    "round": 1,
+    "depthMm": 171.362,
+    "reportedWorkUnits": 35773579,
+    "debitAlreadyCharged": 2670880,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 35773579,
+    "overrunUnits": -4226421,
+    "overrunFraction": -0.105661
+   },
+   {
+    "arm": "unfixed",
+    "seed": 2,
+    "round": 1,
+    "depthMm": 165.779,
+    "reportedWorkUnits": 37102965,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 14225675,
+    "trueWorkUnits": 51328640,
+    "overrunUnits": 11328640,
+    "overrunFraction": 0.283216
+   },
+   {
+    "arm": "fixed",
+    "seed": 2,
+    "round": 1,
+    "depthMm": 170.155,
+    "reportedWorkUnits": 39106937,
+    "debitAlreadyCharged": 8812610,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 39106937,
+    "overrunUnits": -893063,
+    "overrunFraction": -0.022327
+   },
+   {
+    "arm": "fixed",
+    "seed": 0,
+    "round": 2,
+    "depthMm": 169.891,
+    "reportedWorkUnits": 38857134,
+    "debitAlreadyCharged": 2497285,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 38857134,
+    "overrunUnits": -1142866,
+    "overrunFraction": -0.028572
+   },
+   {
+    "arm": "unfixed",
+    "seed": 0,
+    "round": 2,
+    "depthMm": 169.891,
+    "reportedWorkUnits": 39309265,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 2495920,
+    "trueWorkUnits": 41805185,
+    "overrunUnits": 1805185,
+    "overrunFraction": 0.04513
+   },
+   {
+    "arm": "fixed",
+    "seed": 1,
+    "round": 2,
+    "depthMm": 171.362,
+    "reportedWorkUnits": 35773579,
+    "debitAlreadyCharged": 2670880,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 35773579,
+    "overrunUnits": -4226421,
+    "overrunFraction": -0.105661
+   },
+   {
+    "arm": "unfixed",
+    "seed": 1,
+    "round": 2,
+    "depthMm": 171.362,
+    "reportedWorkUnits": 38518915,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 2669440,
+    "trueWorkUnits": 41188355,
+    "overrunUnits": 1188355,
+    "overrunFraction": 0.029709
+   },
+   {
+    "arm": "fixed",
+    "seed": 2,
+    "round": 2,
+    "depthMm": 170.155,
+    "reportedWorkUnits": 39106937,
+    "debitAlreadyCharged": 8812610,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 39106937,
+    "overrunUnits": -893063,
+    "overrunFraction": -0.022327
+   },
+   {
+    "arm": "unfixed",
+    "seed": 2,
+    "round": 2,
+    "depthMm": 165.779,
+    "reportedWorkUnits": 37102965,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 14225675,
+    "trueWorkUnits": 51328640,
+    "overrunUnits": 11328640,
+    "overrunFraction": 0.283216
+   }
+  ],
+  "summary": {
+   "fixed": {
+    "medianDepthMm": 170.155,
+    "medianReported": 38857134,
+    "medianTrue": 38857134,
+    "maxTrue": 39106937,
+    "maxOverrunFraction": -0.022327,
+    "runsOverBudget": 0,
+    "runs": 9
+   },
+   "unfixed": {
+    "medianDepthMm": 169.891,
+    "medianReported": 38518915,
+    "medianTrue": 41805185,
+    "maxTrue": 51328640,
+    "maxOverrunFraction": 0.283216,
+    "runsOverBudget": 9,
+    "runs": 9
+   }
+  }
+ },
+ "work-120000000": {
+  "budget": 120000000,
+  "spec": "work=120000000,cells={cells},v3=1,sched=1,barren=16,divq=1",
+  "rows": [
+   {
+    "arm": "fixed",
+    "seed": 0,
+    "round": 0,
+    "depthMm": 163.927,
+    "reportedWorkUnits": 114305364,
+    "debitAlreadyCharged": 8793885,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 114305364,
+    "overrunUnits": -5694636,
+    "overrunFraction": -0.047455
+   },
+   {
+    "arm": "unfixed",
+    "seed": 0,
+    "round": 0,
+    "depthMm": 163.927,
+    "reportedWorkUnits": 113570496,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 8788290,
+    "trueWorkUnits": 122358786,
+    "overrunUnits": 2358786,
+    "overrunFraction": 0.019657
+   },
+   {
+    "arm": "fixed",
+    "seed": 1,
+    "round": 0,
+    "depthMm": 162.161,
+    "reportedWorkUnits": 121474651,
+    "debitAlreadyCharged": 5814230,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 121474651,
+    "overrunUnits": 1474651,
+    "overrunFraction": 0.012289
+   },
+   {
+    "arm": "unfixed",
+    "seed": 1,
+    "round": 0,
+    "depthMm": 162.161,
+    "reportedWorkUnits": 115804466,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 5809400,
+    "trueWorkUnits": 121613866,
+    "overrunUnits": 1613866,
+    "overrunFraction": 0.013449
+   },
+   {
+    "arm": "fixed",
+    "seed": 2,
+    "round": 0,
+    "depthMm": 164.004,
+    "reportedWorkUnits": 112574865,
+    "debitAlreadyCharged": 15253190,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 112574865,
+    "overrunUnits": -7425135,
+    "overrunFraction": -0.061876
+   },
+   {
+    "arm": "unfixed",
+    "seed": 2,
+    "round": 0,
+    "depthMm": 164.004,
+    "reportedWorkUnits": 111276458,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 15239600,
+    "trueWorkUnits": 126516058,
+    "overrunUnits": 6516058,
+    "overrunFraction": 0.0543
+   },
+   {
+    "arm": "unfixed",
+    "seed": 0,
+    "round": 1,
+    "depthMm": 163.927,
+    "reportedWorkUnits": 113570496,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 8788290,
+    "trueWorkUnits": 122358786,
+    "overrunUnits": 2358786,
+    "overrunFraction": 0.019657
+   },
+   {
+    "arm": "fixed",
+    "seed": 0,
+    "round": 1,
+    "depthMm": 163.927,
+    "reportedWorkUnits": 114305364,
+    "debitAlreadyCharged": 8793885,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 114305364,
+    "overrunUnits": -5694636,
+    "overrunFraction": -0.047455
+   },
+   {
+    "arm": "unfixed",
+    "seed": 1,
+    "round": 1,
+    "depthMm": 162.161,
+    "reportedWorkUnits": 115804466,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 5809400,
+    "trueWorkUnits": 121613866,
+    "overrunUnits": 1613866,
+    "overrunFraction": 0.013449
+   },
+   {
+    "arm": "fixed",
+    "seed": 1,
+    "round": 1,
+    "depthMm": 162.161,
+    "reportedWorkUnits": 121474651,
+    "debitAlreadyCharged": 5814230,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 121474651,
+    "overrunUnits": 1474651,
+    "overrunFraction": 0.012289
+   },
+   {
+    "arm": "unfixed",
+    "seed": 2,
+    "round": 1,
+    "depthMm": 164.004,
+    "reportedWorkUnits": 111276458,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 15239600,
+    "trueWorkUnits": 126516058,
+    "overrunUnits": 6516058,
+    "overrunFraction": 0.0543
+   },
+   {
+    "arm": "fixed",
+    "seed": 2,
+    "round": 1,
+    "depthMm": 164.004,
+    "reportedWorkUnits": 112574865,
+    "debitAlreadyCharged": 15253190,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 112574865,
+    "overrunUnits": -7425135,
+    "overrunFraction": -0.061876
+   },
+   {
+    "arm": "fixed",
+    "seed": 0,
+    "round": 2,
+    "depthMm": 163.927,
+    "reportedWorkUnits": 114305364,
+    "debitAlreadyCharged": 8793885,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 114305364,
+    "overrunUnits": -5694636,
+    "overrunFraction": -0.047455
+   },
+   {
+    "arm": "unfixed",
+    "seed": 0,
+    "round": 2,
+    "depthMm": 163.927,
+    "reportedWorkUnits": 113570496,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 8788290,
+    "trueWorkUnits": 122358786,
+    "overrunUnits": 2358786,
+    "overrunFraction": 0.019657
+   },
+   {
+    "arm": "fixed",
+    "seed": 1,
+    "round": 2,
+    "depthMm": 162.161,
+    "reportedWorkUnits": 121474651,
+    "debitAlreadyCharged": 5814230,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 121474651,
+    "overrunUnits": 1474651,
+    "overrunFraction": 0.012289
+   },
+   {
+    "arm": "unfixed",
+    "seed": 1,
+    "round": 2,
+    "depthMm": 162.161,
+    "reportedWorkUnits": 115804466,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 5809400,
+    "trueWorkUnits": 121613866,
+    "overrunUnits": 1613866,
+    "overrunFraction": 0.013449
+   },
+   {
+    "arm": "fixed",
+    "seed": 2,
+    "round": 2,
+    "depthMm": 164.004,
+    "reportedWorkUnits": 112574865,
+    "debitAlreadyCharged": 15253190,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 112574865,
+    "overrunUnits": -7425135,
+    "overrunFraction": -0.061876
+   },
+   {
+    "arm": "unfixed",
+    "seed": 2,
+    "round": 2,
+    "depthMm": 164.004,
+    "reportedWorkUnits": 111276458,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 15239600,
+    "trueWorkUnits": 126516058,
+    "overrunUnits": 6516058,
+    "overrunFraction": 0.0543
+   }
+  ],
+  "summary": {
+   "fixed": {
+    "medianDepthMm": 163.927,
+    "medianReported": 114305364,
+    "medianTrue": 114305364,
+    "maxTrue": 121474651,
+    "maxOverrunFraction": 0.012289,
+    "runsOverBudget": 3,
+    "runs": 9
+   },
+   "unfixed": {
+    "medianDepthMm": 163.927,
+    "medianReported": 113570496,
+    "medianTrue": 122358786,
+    "maxTrue": 126516058,
+    "maxOverrunFraction": 0.0543,
+    "runsOverBudget": 9,
+    "runs": 9
+   }
+  }
+ },
+ "work-52000000": {
+  "budget": 52000000,
+  "spec": "work=52000000,cells={cells},v3=1,sched=1,barren=16,divq=1",
+  "rows": [
+   {
+    "arm": "fixed",
+    "seed": 0,
+    "round": 0,
+    "depthMm": 166.552,
+    "reportedWorkUnits": 50094630,
+    "debitAlreadyCharged": 4448440,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 50094630,
+    "overrunUnits": -1905370,
+    "overrunFraction": -0.036642
+   },
+   {
+    "arm": "unfixed",
+    "seed": 0,
+    "round": 0,
+    "depthMm": 164.742,
+    "reportedWorkUnits": 48809403,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 7336620,
+    "trueWorkUnits": 56146023,
+    "overrunUnits": 4146023,
+    "overrunFraction": 0.079731
+   },
+   {
+    "arm": "fixed",
+    "seed": 1,
+    "round": 0,
+    "depthMm": 171.362,
+    "reportedWorkUnits": 47666602,
+    "debitAlreadyCharged": 2670880,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 47666602,
+    "overrunUnits": -4333398,
+    "overrunFraction": -0.083335
+   },
+   {
+    "arm": "unfixed",
+    "seed": 1,
+    "round": 0,
+    "depthMm": 171.362,
+    "reportedWorkUnits": 44995722,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 2669440,
+    "trueWorkUnits": 47665162,
+    "overrunUnits": -4334838,
+    "overrunFraction": -0.083362
+   },
+   {
+    "arm": "fixed",
+    "seed": 2,
+    "round": 0,
+    "depthMm": 165.779,
+    "reportedWorkUnits": 51339455,
+    "debitAlreadyCharged": 14236490,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 51339455,
+    "overrunUnits": -660545,
+    "overrunFraction": -0.012703
+   },
+   {
+    "arm": "unfixed",
+    "seed": 2,
+    "round": 0,
+    "depthMm": 164.171,
+    "reportedWorkUnits": 49089975,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 15239600,
+    "trueWorkUnits": 64329575,
+    "overrunUnits": 12329575,
+    "overrunFraction": 0.237107
+   },
+   {
+    "arm": "unfixed",
+    "seed": 0,
+    "round": 1,
+    "depthMm": 164.742,
+    "reportedWorkUnits": 48809403,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 7336620,
+    "trueWorkUnits": 56146023,
+    "overrunUnits": 4146023,
+    "overrunFraction": 0.079731
+   },
+   {
+    "arm": "fixed",
+    "seed": 0,
+    "round": 1,
+    "depthMm": 166.552,
+    "reportedWorkUnits": 50094630,
+    "debitAlreadyCharged": 4448440,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 50094630,
+    "overrunUnits": -1905370,
+    "overrunFraction": -0.036642
+   },
+   {
+    "arm": "unfixed",
+    "seed": 1,
+    "round": 1,
+    "depthMm": 171.362,
+    "reportedWorkUnits": 44995722,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 2669440,
+    "trueWorkUnits": 47665162,
+    "overrunUnits": -4334838,
+    "overrunFraction": -0.083362
+   },
+   {
+    "arm": "fixed",
+    "seed": 1,
+    "round": 1,
+    "depthMm": 171.362,
+    "reportedWorkUnits": 47666602,
+    "debitAlreadyCharged": 2670880,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 47666602,
+    "overrunUnits": -4333398,
+    "overrunFraction": -0.083335
+   },
+   {
+    "arm": "unfixed",
+    "seed": 2,
+    "round": 1,
+    "depthMm": 164.171,
+    "reportedWorkUnits": 49089975,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 15239600,
+    "trueWorkUnits": 64329575,
+    "overrunUnits": 12329575,
+    "overrunFraction": 0.237107
+   },
+   {
+    "arm": "fixed",
+    "seed": 2,
+    "round": 1,
+    "depthMm": 165.779,
+    "reportedWorkUnits": 51339455,
+    "debitAlreadyCharged": 14236490,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 51339455,
+    "overrunUnits": -660545,
+    "overrunFraction": -0.012703
+   }
+  ],
+  "summary": {
+   "fixed": {
+    "medianDepthMm": 166.552,
+    "medianReported": 50094630.0,
+    "medianTrue": 50094630.0,
+    "maxTrue": 51339455,
+    "maxOverrunFraction": -0.012703,
+    "runsOverBudget": 0,
+    "runs": 6
+   },
+   "unfixed": {
+    "medianDepthMm": 164.742,
+    "medianReported": 48809403.0,
+    "medianTrue": 56146023.0,
+    "maxTrue": 64329575,
+    "maxOverrunFraction": 0.237107,
+    "runsOverBudget": 4,
+    "runs": 6
+   }
+  }
+ },
+ "barren1-40000000": {
+  "budget": 40000000,
+  "spec": "work=40000000,cells={cells},v3=1,sched=1,barren=1,divq=1",
+  "rows": [
+   {
+    "arm": "fixed",
+    "seed": 0,
+    "round": 0,
+    "depthMm": 179.587,
+    "reportedWorkUnits": 13476357,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 13476357,
+    "overrunUnits": -26523643,
+    "overrunFraction": -0.663091
+   },
+   {
+    "arm": "unfixed",
+    "seed": 0,
+    "round": 0,
+    "depthMm": 179.587,
+    "reportedWorkUnits": 13476357,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 13476357,
+    "overrunUnits": -26523643,
+    "overrunFraction": -0.663091
+   },
+   {
+    "arm": "fixed",
+    "seed": 1,
+    "round": 0,
+    "depthMm": 179.633,
+    "reportedWorkUnits": 14420765,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 14420765,
+    "overrunUnits": -25579235,
+    "overrunFraction": -0.639481
+   },
+   {
+    "arm": "unfixed",
+    "seed": 1,
+    "round": 0,
+    "depthMm": 179.633,
+    "reportedWorkUnits": 14420765,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 14420765,
+    "overrunUnits": -25579235,
+    "overrunFraction": -0.639481
+   },
+   {
+    "arm": "fixed",
+    "seed": 2,
+    "round": 0,
+    "depthMm": 179.006,
+    "reportedWorkUnits": 12543231,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 12543231,
+    "overrunUnits": -27456769,
+    "overrunFraction": -0.686419
+   },
+   {
+    "arm": "unfixed",
+    "seed": 2,
+    "round": 0,
+    "depthMm": 179.006,
+    "reportedWorkUnits": 12543231,
+    "debitAlreadyCharged": 0,
+    "counterfactualDebit": 0,
+    "trueWorkUnits": 12543231,
+    "overrunUnits": -27456769,
+    "overrunFraction": -0.686419
+   }
+  ],
+  "summary": {
+   "fixed": {
+    "medianDepthMm": 179.587,
+    "medianReported": 13476357,
+    "medianTrue": 13476357,
+    "maxTrue": 14420765,
+    "maxOverrunFraction": -0.639481,
+    "runsOverBudget": 0,
+    "runs": 3
+   },
+   "unfixed": {
+    "medianDepthMm": 179.587,
+    "medianReported": 13476357,
+    "medianTrue": 13476357,
+    "maxTrue": 14420765,
+    "maxOverrunFraction": -0.639481,
+    "runsOverBudget": 0,
+    "runs": 3
+   }
+  }
+ }
+}

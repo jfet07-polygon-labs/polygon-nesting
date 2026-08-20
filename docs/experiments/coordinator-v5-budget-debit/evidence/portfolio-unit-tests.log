@@ -1,0 +1,85 @@
+   Compiling smallvec v1.15.2
+   Compiling thiserror v2.0.20
+   Compiling serde_core v1.0.229
+   Compiling libc v0.2.189
+   Compiling num-complex v0.4.6
+   Compiling memchr v2.8.3
+   Compiling rstar v0.10.0
+   Compiling ndarray v0.17.2
+   Compiling geo-types v0.7.20
+   Compiling getrandom v0.4.3
+   Compiling geo v0.24.1
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling polygon-nesting-protocol v0.3.0 (/tmp/topo-work-wf48/crates/polygon-nesting-protocol)
+   Compiling geo-buffer v0.2.0
+   Compiling jagua-rs v0.7.2
+   Compiling polygon-nesting-core v0.3.0 (/tmp/topo-work-wf48/crates/polygon-nesting-core)
+warning: unused variable: `settings`
+    --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:4521:5
+     |
+4521 |     settings: GeneralFastSettings,
+     |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_settings`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `resolved_pair_collides` is never used
+     --> crates/polygon-nesting-core/src/search/general_relaxed.rs:14307:8
+      |
+10722 | impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'a, K> {
+      | ------------------------------------------------------------------------------------- method in this implementation
+...
+14307 |     fn resolved_pair_collides(
+      |        ^^^^^^^^^^^^^^^^^^^^^^
+      |
+      = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `settle_key_for` is never used
+    --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:4306:4
+     |
+4306 | fn settle_key_for(
+     |    ^^^^^^^^^^^^^^
+
+warning: method `proven_overlap` is never used
+   --> crates/polygon-nesting-core/src/search/construction_reject_certificate.rs:644:23
+    |
+614 |     impl RejectCertificates {
+    |     ----------------------- method in this implementation
+...
+644 |         pub(crate) fn proven_overlap(&self, active: &[bool], discs: usize) -> Option<f64> {
+    |                       ^^^^^^^^^^^^^^
+
+warning: `polygon-nesting-core` (lib test) generated 4 warnings (run `cargo fix --lib -p polygon-nesting-core --tests` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 1m 20s
+     Running unittests src/lib.rs (target/release/deps/polygon_nesting_core-cc99c6bbb82fbc2a)
+
+running 26 tests
+test search::portfolio::tests::a_scheduled_slice_is_nine_rungs_and_the_ports_own_step_count ... ok
+test search::portfolio::tests::a_v3_crossover_key_is_parent_and_cut_ordered_never_rank_ordered ... ok
+test search::portfolio::tests::a_scheduled_ladder_is_two_rungs_of_the_engines_own_quantum ... ok
+test search::portfolio::tests::a_zero_budget_has_room_for_nothing ... ok
+test search::portfolio::tests::archive_refuses_a_duplicate_fingerprint ... ok
+test search::portfolio::tests::action_class_names_are_distinct ... ok
+test search::portfolio::tests::assignment_overlap_counts_identical_poses ... ok
+test search::portfolio::tests::archive_retains_a_worse_but_different_basin ... ok
+test search::portfolio::tests::distinct_frontier_breaks_depth_ties_toward_the_least_descended ... ok
+test search::portfolio::tests::archive_refuses_incomplete_layouts ... ok
+test search::portfolio::tests::crossover_pairs_are_best_first_and_each_is_offered_once ... ok
+test search::portfolio::tests::distinct_frontier_is_best_first_and_skips_similar ... ok
+test search::portfolio::tests::full_archive_evicts_only_a_dominated_and_similar_member ... ok
+test search::portfolio::tests::only_the_constructor_slice_is_priced_twice ... ok
+test search::portfolio::tests::full_archive_of_distinct_basins_refuses_rather_than_evicting ... ok
+test search::portfolio::tests::the_budget_currency_is_the_budgets_own ... ok
+test search::portfolio::tests::the_class_priors_reproduce_the_ledgers_measured_order ... ok
+test search::portfolio::tests::the_compression_target_is_below_the_parents_own_depth ... ok
+test search::portfolio::tests::the_constructor_clamp_is_above_a_depth_the_request_admits ... ok
+test search::portfolio::tests::the_enumeration_is_bounded_by_construction ... ok
+test search::portfolio::tests::the_patience_constants_sit_inside_the_measured_interval ... ok
+test search::portfolio::tests::the_phase_schedule_is_monotone_and_ends_at_the_budget ... ok
+test search::portfolio::tests::the_shipping_defaults_are_v3_plus_three_and_v3_is_off ... ok
+test search::portfolio::tests::the_two_diversify_paths_name_one_action ... ok
+test search::portfolio::tests::every_class_prior_is_testable ... ok
+test search::portfolio::tests::work_budget_meter_is_monotone_and_wall_free ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 829 filtered out; finished in 0.00s
+

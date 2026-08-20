@@ -1,0 +1,8 @@
+# The four binaries this round measured with.
+# gate-*   : --features jagua-experimental
+# sched-*  : --features jagua-experimental,compression-schedule
+# *-fixed  : this branch; *-unfixed : f32c629, before the debit existed
+f53be9ea82e6d75ebbc03f207c08d8bfc960c04da385e21f2ae7cb265a9d3a5a  /var/lib/t3/tmp/wf6v1/bin/gate-fixed
+62ecd44d618cdea4a663b41967f0aa3a4ace2103a250b19f1c6424fa0f683377  /var/lib/t3/tmp/wf6v1/bin/sched-fixed
+2ca8b2b43d538f2d8471ec543ebf45e197222437d29ecdb3c4d1627db896ca57  /var/lib/t3/tmp/wf6v1/bin/gate-unfixed
+ddb7d7468166fae3205d973260712dfa135c068774f0bf8d09e45f654bc8e9e4  /var/lib/t3/tmp/wf6v1/bin/sched-unfixed

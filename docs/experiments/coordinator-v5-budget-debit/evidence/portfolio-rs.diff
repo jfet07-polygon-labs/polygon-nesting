@@ -1,0 +1,100 @@
+diff --git a/crates/polygon-nesting-core/src/search/portfolio.rs b/crates/polygon-nesting-core/src/search/portfolio.rs
+index 12aab9c..6d4783d 100644
+--- a/crates/polygon-nesting-core/src/search/portfolio.rs
++++ b/crates/polygon-nesting-core/src/search/portfolio.rs
+@@ -1443,6 +1443,12 @@ struct BudgetMeter {
+     budget: PortfolioBudget,
+     started: Instant,
+     work_base: u64,
++    /// Work units debited for self-metered charges the global counter never
++    /// saw - see [`BudgetMeter::debit_self_metered`]. Additive on top of
++    /// `work_units_now() - work_base`; zero for a run that never schedules an
++    /// operator with its own meter, and always zero under a wall budget
++    /// (nothing here is ever read by [`BudgetMeter::seconds`]).
++    self_metered_debit: u64,
+ }
+ 
+ impl BudgetMeter {
+@@ -1451,6 +1457,7 @@ impl BudgetMeter {
+             budget,
+             started: Instant::now(),
+             work_base: work_units_now(),
++            self_metered_debit: 0,
+         }
+     }
+ 
+@@ -1459,7 +1466,30 @@ impl BudgetMeter {
+     }
+ 
+     fn work_units(&self) -> u64 {
+-        work_units_now().saturating_sub(self.work_base)
++        work_units_now()
++            .saturating_sub(self.work_base)
++            .saturating_add(self.self_metered_debit)
++    }
++
++    /// Charges the budget itself for the gap between what the global counter
++    /// priced an action at and what the action's own meter (e.g.
++    /// [`schedule_self_cost_units`]) read, when the latter is larger.
++    ///
++    /// Before this, `spent` never moved when an m34 self-metered arm's price
++    /// beat the global meter's read at the call site in
++    /// [`Coordinator::run_schedule`]: `ClassStats::cost_max` and the ranking
++    /// saw the higher, honest price, but `BudgetMeter::work_units` - and so
++    /// `spent_fraction`/`remaining_to`, which the affordability rule and every
++    /// phase deadline read - kept advancing at the global counter's rate. A
++    /// class whose own meter reads 11x the global counter's could therefore
++    /// buy far more of itself than a work budget was meant to afford. Charging
++    /// `max(global_meter_delta, operator_self_units)` here, not just the
++    /// price used for ranking, is what closes that gap; it can only ever
++    /// raise `spent`, never lower it, so this cannot manufacture room a run
++    /// did not have.
++    fn debit_self_metered(&mut self, global_meter_delta: f64, operator_self_units: u64) {
++        let extra = (operator_self_units as f64 - global_meter_delta).max(0.0);
++        self.self_metered_debit = self.self_metered_debit.saturating_add(extra as u64);
+     }
+ 
+     /// The fraction of the budget already spent, in the budget's own currency.
+@@ -3112,6 +3142,18 @@ fn v3_loop(
+         let seconds = run.meter.seconds() - seconds_before;
+         let publications = run.publications.len() - publications_before;
+         let operator_calls = run.operator_calls.len() - calls_before;
++        // The price computed above (`cost`) is what ranking and
++        // `ClassStats::cost_max` see; without this the budget itself never
++        // felt it. Debit the same gap into the meter so a work budget cannot
++        // be over-spent by scheduling actions whose own meter reads higher
++        // than the global counter's - see
++        // [`BudgetMeter::debit_self_metered`]. No-op under a wall budget and
++        // for every action that never reports a self-metered charge.
++        if let Some(units) = self_metered_units {
++            if !run.meter.is_wall() {
++                run.meter.debit_self_metered(metered_cost, units);
++            }
++        }
+         let exit_raw_depth_mm = run.incumbent.raw_depth_mm;
+         let gained = match (entry_raw_depth_mm, exit_raw_depth_mm) {
+             (Some(entry), Some(exit)) => (entry - exit).max(0.0),
+@@ -3469,11 +3511,19 @@ fn execute_v3_action(
+ ///   (`candidate_queries + WORK_UNITS_PER_EXACT_PAIR_TEST * asked pairs`), and
+ ///   the coordinator charges the larger of the two. That is this function.
+ ///
+-/// The charge is a *price*, never a spend: the budget still advances at the
+-/// meter's own rate, so this cannot make a run stop early against its own
+-/// counter. It raises `ClassStats::cost_max`, which is what the affordability
++/// The charge raises `ClassStats::cost_max`, which is what the affordability
+ /// rule and the ranking value read - so the class is ranked and refused on the
+-/// conservative number and the run's budget is still the run's budget.
++/// conservative number, not the coordinator's own optimistic meter read.
++///
++/// Coordinator v5 (Sol review 5 §2, item 1) closes the gap this left open:
++/// the price used to be a price and never a spend, so a work-budget run's
++/// `BudgetMeter` advanced at its own rate regardless of what this function
++/// priced an arm at, and a class whose own meter read 11x the coordinator's
++/// could buy far more of itself than the nominal budget allowed. The call
++/// site now also debits `max(global_meter_delta, operator_self_units)` into
++/// the meter itself via [`BudgetMeter::debit_self_metered`] - the same
++/// number this function's caller already computes for ranking, just no
++/// longer thrown away before the budget sees it.
+ ///
+ /// Under a **wall** budget the caller does not apply it at all, and does not
+ /// need to: seconds are seconds, and the clock has no broad phase.
