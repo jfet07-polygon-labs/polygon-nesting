@@ -1911,6 +1911,12 @@ fn parse_portfolio_spec(
             "sched" => settings.compression_schedule_class = value != "0",
             "barren" => settings.barren_action_patience = value.parse()?,
             "divq" => settings.diversify_in_queue = value != "0",
+            "m34wall" => settings.schedule_wall_prior = value != "0",
+            "m34entry" => settings.schedule_legalize_entry = value != "0",
+            "m34skip" => settings.schedule_skip_infeasible_entry = value != "0",
+            "m34drop" => settings.schedule_skip_unpublishable_entry = value != "0",
+            "m34probe" => settings.schedule_probe_denominator = value.parse()?,
+            "m34bit" => settings.schedule_sterile_bit = value != "0",
             "scheduleBy" => settings.schedule.schedule_by = value.parse()?,
             "descentBy" => settings.schedule.descent_by = value.parse()?,
             "crossoverBy" => settings.schedule.crossover_by = value.parse()?,
@@ -1922,6 +1928,58 @@ fn parse_portfolio_spec(
     }
     settings.budget = budget.ok_or("portfolio spec requires wall=<ms> or work=<units>")?;
     Ok(settings)
+}
+
+/// One mode-34 slice's own account of itself, as JSON.
+///
+/// Emitted next to the operator call rather than folded into it: every field
+/// here is the *slice's* measurement of the slice, and the call's own
+/// `elapsedSeconds` and `workUnits` stay the coordinator's.
+fn schedule_slice_json(
+    slice: &polygon_nesting_core::search::portfolio::ScheduleSliceReport,
+) -> serde_json::Value {
+    json!({
+        "parentProxyFeasible": slice.parent_proxy_feasible,
+        "parentCollisionPairs": slice.parent_collision_pairs,
+        "parentBoundaryViolations": slice.parent_boundary_violations,
+        "parentEntryLoss": slice.parent_entry_loss,
+        "entryProxyFeasible": slice.entry_proxy_feasible,
+        "entryCollisionPairs": slice.entry_collision_pairs,
+        "entryBoundaryViolations": slice.entry_boundary_violations,
+        "entryLoss": slice.entry_loss,
+        "entrySourceDepthMm": slice.entry_source_depth_mm,
+        "entryDepthLossMm": slice.entry_depth_loss_mm,
+        "requestedDropMm": slice.requested_drop_mm,
+        "entryLegalizationArmed": slice.entry_legalization_armed,
+        "entryLegalizationRun": slice.entry_legalization_run,
+        "entryLegalizationResolved": slice.entry_legalization_resolved,
+        "entryLegalizationAccepted": slice.entry_legalization_accepted,
+        "entryLegalizationMs": slice.entry_legalization_ms,
+        "entryLegalizationReason": slice.entry_legalization_reason,
+        "entryLegalizationViolatingPairsBefore":
+            slice.entry_legalization_violating_pairs_before,
+        "entryLegalizationViolatingPairsAfter":
+            slice.entry_legalization_violating_pairs_after,
+        "entryLegalizationBoundaryPiecesBefore":
+            slice.entry_legalization_boundary_pieces_before,
+        "entryLegalizationBoundaryPiecesAfter":
+            slice.entry_legalization_boundary_pieces_after,
+        "skippedInfeasibleEntry": slice.skipped_infeasible_entry,
+        "abortedBarrenProbe": slice.aborted_barren_probe,
+        "probeSteps": slice.probe_steps,
+        "stepsPlanned": slice.steps_planned,
+        "stepsTaken": slice.steps_taken,
+        "confirmationsAttempted": slice.confirmations_attempted,
+        "confirmationsAccepted": slice.confirmations_accepted,
+        "confirmationsRefused": slice.confirmations_refused,
+        "confirmationsSkippedInfeasible": slice.confirmations_skipped_infeasible,
+        "confirmationMs": slice.confirmation_ms,
+        "repairMs": slice.repair_ms,
+        "startDepthMm": slice.start_depth_mm,
+        "finalDepthMm": slice.final_depth_mm,
+        "workUnits": slice.work_units,
+        "exitCause": slice.exit_cause,
+    })
 }
 
 /// The coordinator's report, as JSON.
@@ -1984,6 +2042,7 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
             "archiveDisposition": call.archive_disposition,
             "published": call.published,
             "failureReason": call.failure_reason,
+            "scheduleSlice": call.schedule_slice.as_ref().map(schedule_slice_json),
         })).collect::<Vec<_>>(),
         "archive": {
             "capacity": outcome.archive.capacity,

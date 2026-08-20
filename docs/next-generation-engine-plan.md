@@ -5821,3 +5821,98 @@ binaries, both feature-combination suites pass, and the default path is
 bit-reproducing.
 
 Evidence, drivers and the raw certificates: `docs/experiments/se2-rigidity/`.
+
+## Pricing the m34 slice: the three-second budget was being overrun by a slice that never publishes, and the ten-second curve does not move
+
+Grok review 1 §2b asked for three things about the compression-schedule class:
+wall-price its first action (item 1), make its entry feasible with the existing
+translation-only legalizer or skip the slice (item 3), and give it a one-bit
+per-request prior where it has published nothing (item 4). This round did all
+three, measured all three, and ships two of them. The headline against the
+binding priority is a zero: **at ten seconds, on all three requests, every
+published depth is identical to HEAD's in 27 of 27 paired rounds.** What moved
+is the wall, at the tiers either side of it.
+
+**The re-baseline first, because the v4 numbers are v4's.** Over eighteen cells
+on HEAD - three requests, three seeds, ten and thirty seconds - the class's
+first slice costs 2.60-5.88x its work-denominated estimate on the clock, which
+reproduces coordinator v4 §8 and is slightly worse. In the currency a prior can
+carry, that first slice is 0.990-1.147 phase-zeros on mixed-61, 1.138-1.619 on
+shapes-17 and 2.124-2.238 on triangle-20. **2.2375** - the worst of the
+eighteen - is the new wall prior, by the same worst-case rule the ladder and the
+diversify class are already priced by.
+
+**Two rules read that prior, and both readings had to be measured to be
+rejected.** Letting the *ranking* value read it drops the class to
+`1.104 / 2.2375 = 0.493`, below the ladder, and cost a paired median **0.649 mm**
+over nine thirty-second rounds on mixed-61 with the slice count falling from
+2.89 per run to 1.00 - and those later slices publish on 23 of 26. Letting the
+affordability gate hold it over *later* slices cost a further **0.137 mm**
+median, +2.1 to +4.0 mm on one seed, by refusing a slice that fit: HEAD buys it,
+it costs 2.606 s, it publishes 1.03 mm and the run still finishes inside its
+budget. Both arms were run to completion as nine-round paired batteries and both
+are in the evidence directory. What ships is the residue: the worst-case wall
+price is read by the affordability gate, for the **first** slice of a run only,
+and the ranking is left exactly where coordinator v4 put it.
+
+**Where that residue pays is the three-second tier, and it is the clearest
+number in the round.** HEAD offers the class a slice with about a second of
+budget left, prices it at 0.35 phase-zeros, pays 1.11 s on shapes-17 and 1.82 s
+on triangle-20, and publishes nothing - in 18 of 18 runs. It **overruns its own
+three-second budget in 3 of 9 shapes-17 runs and 9 of 9 triangle-20 runs**,
+finishing at a median 2.96 s and 3.70 s. Priced at its worst case the slice does
+not fit: shapes-17 finishes at **1.85 s** with **0 of 9** overruns, triangle-20
+at **3.10 s** with 6 of 9, and the published depth is identical in 18 of 18
+rounds with three triangle-20 rounds 4 µm better.
+
+**Item 4's bit pays at thirty seconds.** On triangle-20 HEAD takes **36 m34
+slices across nine runs - four per run, 7.53 s, a quarter of the budget - and
+publishes on none of them.** One sterile action now takes the class off the
+queue for the rest of the run, with a single audition after sixteen further
+barren actions; the count falls to one slice per run, 1.78 s, and the depth is
+identical in 9 of 9. shapes-17 halves the same way. It is a within-run bit and
+not the per-request memory the review asked for, because the engine is one
+process per request with no store, and the README says so rather than eliding
+it.
+
+**Item 3 is a measured negative, twice, and the negative is more interesting
+than the item.** `global_legalize` on the parent - once the bound was corrected
+from the pre-snap parent depth to the entry state's own depth, a mistake this
+round made and records - reaches proxy feasibility on **0 of 9** slices. More to
+the point, the entry is infeasible on the request where the class publishes 9 of
+9 exactly as it is on the two where it never has, so a skip on that predicate
+refuses every slice on every request. A second discriminator, the entry's own
+depth loss against the drop the slice is allowed, fires nowhere - and on two of
+three mixed-61 seeds it cannot even be evaluated, because the snapped entry is
+not a valid layout and has no measurable source depth.
+
+What the entry census did settle is that **"the slice is part regrid" is a
+per-request claim, not a general one**. triangle-20's slice spends **98-100%** of
+its wall in proxy repair sweeps and 0.1-0.8% in the exact tier, and has **zero**
+colliding pairs at entry - it is infeasible on boundary violations alone.
+shapes-17 spends 76-82% in repair. mixed-61 spends **50-76% in accepted exact
+confirmations**, which is the tier it is being paid to spend its wall in. One
+mechanism, three different jobs.
+
+**And a fourth mechanism, built because the measurement asked for it and off
+because the measurement then took it back.** No number available before step 0
+separates the request where this class pays from the two where it does not, but
+the difference is plain from the slice's own first steps - so the slice was made
+an anytime budget: spend a third of its steps, abandon it if nothing beats the
+parent yet. It works. Sterile slices fall to 0.017-0.50 s. It is off for two
+reasons neither of which is the ablation: the wall it returns buys **no depth**
+on either request that has a sterile slice to cut, and at thirty seconds the
+entry loss on a deeper mixed-61 parent is 0.453 mm of a 1.520 mm drop, so a
+third of the steps expires before the lane has walked back the snap and a slice
+that publishes 1.03 mm is abandoned instead. A step count cannot know how far a
+lane has to walk before it is allowed to have evidence; the next attempt should
+start entry-loss-relative.
+
+All four pinned gates hit on three binaries - the base commit, this branch's
+`jagua-experimental` gate build and its measurement build - with **identical
+whole-document digests** on every gate. Flag-off reproduces the base commit as
+whole documents on 9 of 9 cells at a work budget; the shipping arm is
+deterministic across two processes on 9 of 9; both feature-combination suites
+pass at 1,260 and 1,282 tests.
+
+Evidence, drivers and both retracted batteries: `docs/experiments/m34-wall-price/`.

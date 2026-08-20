@@ -643,6 +643,80 @@ pub struct OperatorCallReport {
     pub archive_disposition: Option<String>,
     pub published: bool,
     pub failure_reason: Option<String>,
+    /// The compression-schedule slice's own account of itself, when this call
+    /// was one. `None` for every other operator, and for a build without the
+    /// `compression-schedule` feature.
+    ///
+    /// The coordinator's document carried none of this before: a reader could
+    /// see that an m34 call took 1.93 s and published, and could not see how
+    /// much of that wall was the exact tier, whether the parent arrived
+    /// feasible, or whether the slice was given back unspent. Every claim this
+    /// round makes about where the slice's seconds go is read out of here.
+    pub schedule_slice: Option<ScheduleSliceReport>,
+}
+
+/// What one mode-34 slice did, as the slice itself measured it.
+///
+/// A projection of `GeneralCompressionScheduleDiagnostics` rather than the
+/// whole of it: the per-step rows are thousands of entries per call and belong
+/// to the operator's own document, not to the coordinator's.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ScheduleSliceReport {
+    /// The proxy tier's verdict on the parent as it arrived, before any entry
+    /// repair. `parentCollisionPairs` is 26-38 on every 171-179 mm coordinator
+    /// parent the port measured, at the parent's *own* depth.
+    pub parent_proxy_feasible: bool,
+    pub parent_collision_pairs: usize,
+    pub parent_boundary_violations: usize,
+    pub parent_entry_loss: f64,
+    /// The same three, on the state the slice actually started from. Equal to
+    /// the parent's unless a translation-only entry repair was armed and
+    /// accepted.
+    pub entry_proxy_feasible: bool,
+    pub entry_collision_pairs: usize,
+    pub entry_boundary_violations: usize,
+    pub entry_loss: f64,
+    /// The material depth of the state the lane actually starts from, and how
+    /// far above the parent that is. The slice's whole arithmetic: it may walk
+    /// `requestedDropMm` of clamp and it publishes only below the parent, so a
+    /// slice that arrives a drop or more above the parent cannot publish.
+    pub entry_source_depth_mm: Option<f64>,
+    pub entry_depth_loss_mm: Option<f64>,
+    pub requested_drop_mm: f64,
+    pub entry_legalization_armed: bool,
+    pub entry_legalization_run: bool,
+    pub entry_legalization_resolved: bool,
+    pub entry_legalization_accepted: bool,
+    pub entry_legalization_ms: f64,
+    /// Why the entry repair produced no layout, when it ran and did not, and
+    /// its own before/after violation counts in the exact tier's terms.
+    pub entry_legalization_reason: Option<String>,
+    pub entry_legalization_violating_pairs_before: usize,
+    pub entry_legalization_violating_pairs_after: usize,
+    pub entry_legalization_boundary_pieces_before: usize,
+    pub entry_legalization_boundary_pieces_after: usize,
+    /// Whether the slice was given back unspent - by either skip rule.
+    pub skipped_infeasible_entry: bool,
+    /// Whether the slice was abandoned after its probe expired with nothing
+    /// published below the parent, and how long that probe was.
+    pub aborted_barren_probe: bool,
+    pub probe_steps: usize,
+    pub steps_planned: usize,
+    pub steps_taken: usize,
+    pub confirmations_attempted: usize,
+    pub confirmations_accepted: usize,
+    pub confirmations_refused: usize,
+    pub confirmations_skipped_infeasible: usize,
+    /// Where the slice's wall went: the exact tier, the repair sweeps, and the
+    /// entry repair. The three do not sum to the call's `elapsedSeconds` -
+    /// catalogue construction, the initial state and the surrogate scoring are
+    /// outside all three - and that residual is itself a finding.
+    pub confirmation_ms: f64,
+    pub repair_ms: f64,
+    pub start_depth_mm: f64,
+    pub final_depth_mm: f64,
+    pub work_units: usize,
+    pub exit_cause: String,
 }
 
 /// Why a phase stopped issuing operator calls.
@@ -870,10 +944,21 @@ impl ActionClass {
     /// What one action of this class costs, as a multiple of the protected
     /// phase-0 pipeline, **in the budget's own currency**.
     ///
-    /// Five of the six classes have one price, because their two currencies
+    /// Four of the six classes have one price, because their two currencies
     /// agree: they spend their time in the candidate-query and exact-pair
     /// tiers the work meter counts, so a multiple of phase 0 measured in work
     /// units is the same multiple measured in seconds to within the noise.
+    ///
+    /// **The compression schedule is the second exception and it is the one v4
+    /// §8 predicted.** Its work price is the best in the queue - first-action
+    /// actual/estimate 0.97-1.01 - and its wall price is 2.6-5.9x that, because
+    /// the coordinator's meter counts the narrow phase of the exact tier only
+    /// and this operator spends 24-52% of its *wall* in that tier. One number
+    /// cannot be both, so the class carries both, and each is the worst case of
+    /// its own currency. See [`SCHEDULE_WALL_PRIOR_PHASE_ZEROS`], and
+    /// [`Coordinator::class_rank_cost_estimate`] for the floor that stops a
+    /// worst-case wall prior from deleting the class on the one request where
+    /// it publishes on nine of nine.
     ///
     /// The constructor slice is the exception and it is a *measured*
     /// exception, twice over. The ledger found the work budget pricing a mode-20
@@ -891,6 +976,7 @@ impl ActionClass {
     fn prior_cost_in_phase_zero_for(self, wall: bool) -> f64 {
         match (self, wall) {
             (ActionClass::Diversify, true) => 1.979,
+            (ActionClass::Schedule, true) => SCHEDULE_WALL_PRIOR_PHASE_ZEROS,
             _ => self.prior_cost_in_phase_zero(),
         }
     }
@@ -1368,6 +1454,70 @@ pub struct PortfolioSettings {
     /// "un ticket m20 quando non rimangono coppie complementari" rule, which
     /// coordinator v3 §4.2 measured never firing on triangle-20 at all.
     pub diversify_in_queue: bool,
+    /// Whether the compression-schedule class is priced on the clock by its own
+    /// measured wall, instead of by the work-denominated prior that is 2.6-5.9x
+    /// low there.
+    ///
+    /// On by default inside v3, and it re-prices the **affordability gate
+    /// only**: the queue goes on ranking the class exactly as coordinator v4
+    /// did. `false` restores v4's pricing entirely - one prior, both
+    /// currencies. Under a **work** budget this setting does nothing at all:
+    /// the work prior is the only prior there.
+    ///
+    /// See [`SCHEDULE_WALL_PRIOR_PHASE_ZEROS`] and
+    /// [`Coordinator::class_rank_cost_estimate`] for the measured reason the
+    /// two rules read different numbers.
+    pub schedule_wall_prior: bool,
+    /// Whether a compression-schedule slice tries to make its parent
+    /// proxy-feasible by translation alone before it takes step 0.
+    ///
+    /// See [`CompressionScheduleSettings::legalize_entry`][cs]. Off by default,
+    /// because it changes what every m34 slice in this repository walks from.
+    ///
+    /// [cs]: crate::search::compression_schedule::CompressionScheduleSettings::legalize_entry
+    pub schedule_legalize_entry: bool,
+    /// Whether a compression-schedule slice whose entry is still infeasible
+    /// after that repair gives its wall back instead of spending it on regrid.
+    ///
+    /// See [`CompressionScheduleSettings::skip_infeasible_entry`][cs]. Off by
+    /// default, and inert unless [`Self::schedule_legalize_entry`] is on.
+    ///
+    /// [cs]: crate::search::compression_schedule::CompressionScheduleSettings::skip_infeasible_entry
+    pub schedule_skip_infeasible_entry: bool,
+    /// Whether a compression-schedule slice that arrives more than its own drop
+    /// above its parent gives its wall back instead of spending it on a walk
+    /// that cannot publish.
+    ///
+    /// See [`CompressionScheduleSettings::skip_unpublishable_entry`][cs]. Off
+    /// by default: it is this round's own instrument and the round that
+    /// measured it has to be able to run the arm that does not.
+    ///
+    /// [cs]: crate::search::compression_schedule::CompressionScheduleSettings::skip_unpublishable_entry
+    pub schedule_skip_unpublishable_entry: bool,
+    /// The denominator of the compression-schedule slice's *probe*: the slice
+    /// is abandoned after `steps_planned / n` steps that published nothing
+    /// below the parent. `0` disables it.
+    ///
+    /// [`SCHEDULE_PROBE_DENOMINATOR`] - **zero, off** - by default. It is the
+    /// only mechanism this round found that can charge the *first* slice's wall
+    /// price at all, and it is off because what it returns is unspendable and
+    /// what it costs at thirty seconds is not. See
+    /// [`SCHEDULE_PROBE_DENOMINATOR`] for both measurements and
+    /// [`CompressionScheduleSettings::barren_probe_denominator`][cs] for the
+    /// mechanism.
+    ///
+    /// [cs]: crate::search::compression_schedule::CompressionScheduleSettings::barren_probe_denominator
+    pub schedule_probe_denominator: usize,
+    /// Whether a compression-schedule class that has published nothing on
+    /// *this* request is taken off the queue.
+    ///
+    /// On by default inside v3. See [`SCHEDULE_STERILE_ACTIONS`] for the count
+    /// and [`SCHEDULE_AUDITION_BARREN`] for the one audition that keeps it
+    /// falsifiable. `false` restores coordinator v4's queue, where the class is
+    /// held back only by its own ratchet and buys 2 more slices on shapes-17
+    /// and 3 more on triangle-20 at a thirty-second budget, publishing on none
+    /// of them.
+    pub schedule_sterile_bit: bool,
 }
 
 /// The phase deadlines, as fractions of the whole budget.
@@ -1463,6 +1613,15 @@ impl PortfolioSettings {
             compression_schedule_class: true,
             barren_action_patience: BARREN_ACTION_PATIENCE,
             diversify_in_queue: true,
+            schedule_wall_prior: true,
+            // Off by default: these two change the state every m34 slice walks
+            // from, and the round that measures them has to be able to run the
+            // arm that does not.
+            schedule_legalize_entry: false,
+            schedule_skip_infeasible_entry: false,
+            schedule_skip_unpublishable_entry: false,
+            schedule_probe_denominator: SCHEDULE_PROBE_DENOMINATOR,
+            schedule_sterile_bit: true,
         }
     }
 }
@@ -1966,6 +2125,7 @@ impl<'a> Coordinator<'a> {
             archive_disposition: disposition,
             published,
             failure_reason: population.failure_reason.clone(),
+            schedule_slice: schedule_slice_report(&population),
         });
         population
     }
@@ -2835,6 +2995,122 @@ pub const BARREN_ACTION_PATIENCE: usize = 16;
 /// basin, at sixteen it stops.**
 const DIVERSIFY_AUDITION_BARREN: usize = 8;
 
+/// How many actions of the compression-schedule class this run will buy on
+/// nothing but the prior, before a class that has published *nothing here* is
+/// taken off the queue.
+///
+/// One, and it is the whole of Grok review 1 §2b item 4: the class published
+/// **0 of 29** actions on shapes-17 and **0 of 37** on triangle-20, pooled over
+/// both budget tiers, while publishing on 9 of 9 at ten seconds on mixed-61. A
+/// prior of 1.104 mm is a mixed-61 number and it does not cross a request - so
+/// the first slice on a new request is the *audition*, and one sterile audition
+/// is the evidence this rule acts on. Re-baselined on HEAD, the second and
+/// later slices are 1.1 s each on shapes-17 and 1.6-1.9 s each on triangle-20,
+/// and at a thirty-second budget the class takes 2 and 4 of them respectively.
+const SCHEDULE_STERILE_ACTIONS: usize = 1;
+
+/// How many barren actions must pass after the class was taken off the queue
+/// before it is offered once more.
+///
+/// Sixteen, which is [`BARREN_ACTION_PATIENCE`] itself: the audition is meant
+/// to keep the rule falsifiable, not to buy the class back, and a run that has
+/// gone sixteen barren actions since a sterile slice is about to end anyway. It
+/// fires **at most once per run**. The diversify class's own audition is at
+/// eight because that class is being promoted *into* a queue that outranks it;
+/// this one is being let back into a queue it was removed from, which is a
+/// weaker claim and gets the more conservative number.
+const SCHEDULE_AUDITION_BARREN: usize = BARREN_ACTION_PATIENCE;
+
+/// What one compression-schedule slice costs on the **clock**, as a multiple of
+/// the protected phase-0 pipeline this run just paid for.
+///
+/// Coordinator v4 §1.3 measured this class's work-budget prior as the best in
+/// the queue - first-action actual/estimate 0.97-1.01 - and §8 named the same
+/// number "the weakest in this stage" under a wall budget, where the ratio is
+/// 2.54-2.59 on mixed-61, 2.94-3.07 on shapes-17 and 5.1 on triangle-20. The
+/// two are the same fact: [`schedule_self_cost_units`] is denominated in the
+/// coordinator's work currency, which counts the narrow phase of the exact tier
+/// only, and the exact tier is 24-52% of this operator's *wall*.
+///
+/// The number here is this round's own re-baselined measurement on HEAD, over
+/// **18 cells** - three requests, three seeds, ten- and thirty-second budgets -
+/// of the first slice's charged seconds against that run's own phase 0:
+///
+/// | request | min | median | max |
+/// |---|---:|---:|---:|
+/// | mixed-61 | 0.990 | 1.019 | 1.147 |
+/// | shapes-17 | 1.138 | 1.201 | 1.619 |
+/// | triangle-20 | 2.124 | 2.207 | **2.238** |
+///
+/// **2.2375 is the worst of the eighteen**, which is the rule every other class
+/// in this table is already priced by: the ladder carries the largest of three
+/// arm-C spends rather than their mean, and the diversify class carries the
+/// worst of three requests in each of its two currencies. An operator with a
+/// 2.3x spread across requests priced by its median is an affordability rule
+/// that is a coin toss on the request where it is dearest.
+///
+/// It is 2.9x the work-denominated prior, so on mixed-61 - where the true
+/// multiple is 1.02 - it over-prices the class by 2.2x. Two rules keep that
+/// from costing what it is worth, and both were arrived at by measuring the
+/// version without them:
+///
+/// * it is read by the **affordability gate only** - see
+///   [`Coordinator::class_rank_cost_estimate`] for the nine paired rounds that
+///   measured what happens when the ranking reads it too (a median 0.649 mm at
+///   thirty seconds on mixed-61);
+/// * and only until this run has bought one slice - see
+///   [`Coordinator::class_cost_estimate`] for the nine paired rounds that
+///   measured holding it over later slices (a median 0.137 mm, and 2.1-4.0 mm
+///   on one seed).
+///
+/// What is left is the case the review named: **the first slice has no
+/// ratchet.** On shapes-17 at three seconds that slice costs 1.11 s of a budget
+/// that has about 1 s left when it is offered, and HEAD buys it in 8 of 9 runs
+/// and overruns in 7.
+const SCHEDULE_WALL_PRIOR_PHASE_ZEROS: f64 = 2.2375;
+
+/// The fraction of a compression-schedule slice bought before the slice has to
+/// show evidence: `1 / SCHEDULE_PROBE_DENOMINATOR` of its planned steps.
+///
+/// **Zero - off - and that is a measurement, not an omission.**
+///
+/// The mechanism does what it was built to do. Nine cells at ten seconds,
+/// every other key off (`evidence/probe-sweep.json`):
+///
+/// | denominator | mixed-61 slices publishing | shapes-17 first slice | triangle-20 first slice |
+/// |---|---:|---:|---:|
+/// | off | 3 of 3 | 1.07-1.46 s | 1.64-1.92 s |
+/// | 2 | 3 of 3 | 0.50-0.74 s | 0.13-0.38 s |
+/// | 3 | 3 of 3 | 0.38-0.50 s | 0.017-0.020 s |
+/// | 4 | **2 of 3** | 0.31-0.38 s | 0.012-0.015 s |
+///
+/// It is off for two measured reasons and neither is the sweep above.
+///
+/// **It buys no depth with the wall it returns.** On shapes-17 and triangle-20
+/// - the only two requests where a sterile slice exists to cut - every arm in
+/// that sweep publishes exactly the depth HEAD publishes: 200.349 on all three
+/// shapes-17 seeds, and 70.73007 / 70.73005 / 70.72882 on triangle-20's, which
+/// are coordinator v4's own ten-second numbers. One to two seconds of a
+/// ten-second budget come back and nothing in the queue can spend them.
+///
+/// **And at thirty seconds it costs millimetres on the request that pays.**
+/// Deeper parents arrive further above themselves - the entry loss on
+/// mixed-61's *second* slice is 0.453 mm against a 1.520 mm drop, 30% of the
+/// walk, against 0.158 mm and 10% on the first - so a probe at a third expires
+/// before the lane has walked back the snap. Measured on seed 0 at thirty
+/// seconds, action #17: the unabridged slice takes 2.61 s and **publishes**
+/// 1.03 mm; the probed slice is abandoned at step 506 of 1520 after 1.30 s with
+/// ten accepted confirmations and publishes nothing, and the run ends 2.132 mm
+/// worse.
+///
+/// So the honest reading is that "spend a fraction, continue on evidence" is
+/// the right shape and a *step count* is the wrong budget for it: the evidence
+/// the lane can produce depends on a handicap the step count does not know
+/// about. The key stays, off, with the sweep and the counter-example, because
+/// the next attempt should start from an entry-loss-relative probe rather than
+/// from scratch.
+const SCHEDULE_PROBE_DENOMINATOR: usize = 0;
+
 /// How many bands one enumeration will build a hybrid for, per ordered pair.
 /// The hybrid is what decides whether a cut is a real action, and it costs a
 /// fingerprint over the whole layout; this bounds that cost.
@@ -3098,15 +3374,101 @@ impl Coordinator<'_> {
     /// 21.0M on the same request at a different seed, so a class with a 3.7x
     /// spread priced from one lucky sample is not priced at all.
     fn class_cost_estimate(&self, class: ActionClass) -> f64 {
-        let prior =
-            class.prior_cost_in_phase_zero_for(self.meter.is_wall()) * self.phase_zero_cost;
-        let observed = self
-            .class_stats
+        let observed = self.class_observed_cost(class);
+        if self.schedule_wall_priced(class) && observed > 0.0 {
+            // **Ratchet after.** [`SCHEDULE_WALL_PRIOR_PHASE_ZEROS`] is the
+            // worst of three *other* requests; the moment this run has bought
+            // one slice it holds a measurement of *this* request, and a
+            // same-request sample strictly dominates a cross-request worst
+            // case. Grok review 1 §2b item 1 asks for exactly this - "p95/worst
+            // of the same request, ratchet after" - and this round measured
+            // what happens without it: holding the cross-request worst case
+            // over later slices refuses slices that fit and publish, for a
+            // paired median 0.137 mm and up to 3.95 mm on one mixed-61 seed at
+            // thirty seconds (`evidence/curve-mixed61-priorheld.json`).
+            //
+            // What the prior still does is the thing item 1 was about: **the
+            // first slice has no ratchet.** That is the slice this class
+            // overruns on, and on shapes-17 at three seconds it is the slice
+            // that puts 7 of 9 HEAD runs over their own budget.
+            return observed.max(f64::MIN_POSITIVE);
+        }
+        self.class_prior_cost(class)
+            .max(observed)
+            .max(f64::MIN_POSITIVE)
+    }
+
+    /// This run's own worst observed action of `class`, or `0.0` if it has
+    /// never bought one. The ratchet.
+    fn class_observed_cost(&self, class: ActionClass) -> f64 {
+        self.class_stats
             .get(&class)
             .filter(|stats| stats.actions > 0)
             .map(|stats| stats.cost_max)
-            .unwrap_or(0.0);
-        prior.max(observed).max(f64::MIN_POSITIVE)
+            .unwrap_or(0.0)
+    }
+
+    /// The class prior, in the budget's own currency, with the one switch a
+    /// prior in this table has.
+    ///
+    /// `schedule_wall_prior` off restores merged-HEAD v4 exactly: the schedule
+    /// class is priced by its work-denominated prior under both budgets, which
+    /// is 2.6-5.9x low on the clock.
+    fn class_prior_cost(&self, class: ActionClass) -> f64 {
+        let wall = self.meter.is_wall()
+            && (class != ActionClass::Schedule || self.settings.schedule_wall_prior);
+        class.prior_cost_in_phase_zero_for(wall) * self.phase_zero_cost
+    }
+
+    /// The price the queue *ranks* against, which for one class is not the
+    /// price it is willing to pay.
+    ///
+    /// # Why the two rules read different numbers here, and what it cost to
+    /// find out
+    ///
+    /// The two rules answer different questions. **Affordability** asks "can
+    /// this run finish an action of this class in what is left?" - a question
+    /// about the tail, whose failure mode is an overrun - and for the *first*
+    /// slice of a run it is asked at [`SCHEDULE_WALL_PRIOR_PHASE_ZEROS`], the
+    /// worst of the eighteen cells measured, because the first slice is the one
+    /// with no ratchet behind it. **Ranking** asks "is this class the best value
+    /// on offer?" - a question about the centre, whose failure mode is buying
+    /// the wrong class - and it is asked at coordinator v4's own price: the
+    /// work-denominated prior, raised by this run's own worst action.
+    ///
+    /// **This round's first cut asked both questions at the worst case, and
+    /// measured what that costs.** Nine paired rounds on mixed-61
+    /// (`evidence/curve-mixed61-priorfloor.json`): at ten seconds it was
+    /// harmless - 9 of 9 kept, 2 rounds better - and at thirty seconds it cost
+    /// a median **0.649 mm** and 8 of 9 rounds, because a class ranked at
+    /// `1.104 / 2.2375 = 0.493` never wins a rank again and the slice count
+    /// fell from 2.89 per run to 1.00. Those later slices are not speculative:
+    /// the same battery has them publishing on 23 of 26. A worst-case wall
+    /// price is the right answer to "can I afford it" and the wrong answer to
+    /// "is it worth it".
+    ///
+    /// So the ranking is left exactly where coordinator v4 had it - this
+    /// function is v4's `class_cost_estimate` for this class, unchanged - and
+    /// only the affordability gate is re-priced. That is also Grok review 1
+    /// §2b item 1's floor, "at least one slice if eligible", obtained without a
+    /// special case for the first action: the class keeps the rank it earned in
+    /// v4 and the budget refuses it when the worst case does not fit.
+    fn class_rank_cost_estimate(&self, class: ActionClass) -> f64 {
+        if !self.schedule_wall_priced(class) {
+            return self.class_cost_estimate(class);
+        }
+        let prior = class.prior_cost_in_phase_zero() * self.phase_zero_cost;
+        prior
+            .max(self.class_observed_cost(class))
+            .max(f64::MIN_POSITIVE)
+    }
+
+    /// Whether `class` is the one class this run prices differently for
+    /// affordability than for rank.
+    fn schedule_wall_priced(&self, class: ActionClass) -> bool {
+        self.settings.schedule_wall_prior
+            && class == ActionClass::Schedule
+            && self.meter.is_wall()
     }
 
     /// The queue's ranking value: expected millimetres of published raw depth
@@ -3125,7 +3487,7 @@ impl Coordinator<'_> {
         };
         let expected_delta =
             (PRIOR_ACTIONS * class.prior_delta_mm() + delta) / (PRIOR_ACTIONS + actions);
-        expected_delta * self.phase_zero_cost / self.class_cost_estimate(class)
+        expected_delta * self.phase_zero_cost / self.class_rank_cost_estimate(class)
     }
 }
 
@@ -3179,6 +3541,16 @@ fn v3_loop(
     let mut diversify_slot = 0usize;
     let mut diversify_barren = 0usize;
     let mut diversify_done = run.settings.basin_trigger == BasinTrigger::Never;
+    let sterile_bit = run.settings.schedule_sterile_bit;
+    // The one bit Grok review 1 §2b item 4 asks for, and it is one bit: once
+    // the compression-schedule class has spent [`SCHEDULE_STERILE_ACTIONS`]
+    // actions on *this* request and published nothing, it comes off the queue.
+    // `schedule_auditioned` is the falsifiability half - the class is offered
+    // once more after [`SCHEDULE_AUDITION_BARREN`] further barren actions, and
+    // once only, so the bit is a claim this run can still disprove rather than
+    // an absorbing state.
+    let mut schedule_auditioned = false;
+    let mut barren_since_schedule = 0usize;
     // Consecutive actions of *any* class that published nothing. Reset by a
     // publication and by nothing else.
     let mut barren = 0usize;
@@ -3201,6 +3573,27 @@ fn v3_loop(
         let diversify_available = ranked_diversify && !diversify_done && diversify_slot < slots;
         if diversify_available {
             candidates.push(diversify_action(diversify_slot));
+        }
+        // The sterile bit. It is applied to the *candidate list* rather than to
+        // the prior, because a prior of zero is a deletion the class can never
+        // argue with (coordinator v4 §3.1) while a candidate withheld is a
+        // candidate the audition below can hand back. The class keeps its
+        // prior, its stats and its ratchet throughout.
+        let mut schedule_audition_due = false;
+        if sterile_bit {
+            let sterile = run
+                .class_stats
+                .get(&ActionClass::Schedule)
+                .is_some_and(|stats| {
+                    stats.actions >= SCHEDULE_STERILE_ACTIONS && stats.publications == 0
+                });
+            if sterile {
+                schedule_audition_due =
+                    !schedule_auditioned && barren_since_schedule >= SCHEDULE_AUDITION_BARREN;
+                if !schedule_audition_due {
+                    candidates.retain(|action| action.class != ActionClass::Schedule);
+                }
+            }
         }
         let candidate_count = candidates.len();
         // Rank: value first, then the class declaration order, then the action's
@@ -3377,12 +3770,21 @@ fn v3_loop(
         if publications > 0 {
             barren = 0;
             barren_since_diversify = 0;
+            barren_since_schedule = 0;
         } else {
             barren += 1;
             barren_since_diversify += 1;
+            barren_since_schedule += 1;
         }
         if class == ActionClass::Diversify {
             barren_since_diversify = 0;
+        }
+        if class == ActionClass::Schedule {
+            barren_since_schedule = 0;
+            // Spent whether or not the audition published: a rare audition that
+            // re-armed itself on every failure would be the state machine this
+            // rule exists instead of.
+            schedule_auditioned |= schedule_audition_due;
         }
         if barren_patience > 0 && barren >= barren_patience {
             // With the queue still full: this is a patience exit, not a
@@ -3595,6 +3997,10 @@ fn execute_v3_action(
                 * SCHEDULE_RUNGS as f64
                 * crate::search::general_relaxed::COUPLED_SEPARATOR_CONTRACTION_RATIO;
             let bound = basin.raw_depth_mm - drop_mm;
+            let legalize_entry = run.settings.schedule_legalize_entry;
+            let skip_infeasible_entry = run.settings.schedule_skip_infeasible_entry;
+            let skip_unpublishable_entry = run.settings.schedule_skip_unpublishable_entry;
+            let barren_probe_denominator = run.settings.schedule_probe_denominator;
             let scheduled = run.run_operator(
                 34,
                 &basin.placements,
@@ -3619,8 +4025,19 @@ fn execute_v3_action(
                     // expressed in the coordinator's currency would not be,
                     // because that currency is zero when profiling is off and a
                     // wall-budget run has it off.
+                    //
+                    // The two entry keys are the exception: they are the round
+                    // that measured them, and they are off unless the caller
+                    // asks. See
+                    // `CompressionScheduleSettings::legalize_entry`.
                     relaxed.compression_schedule = Some(
-                        crate::search::compression_schedule::CompressionScheduleSettings::default(),
+                        crate::search::compression_schedule::CompressionScheduleSettings {
+                            legalize_entry,
+                            skip_infeasible_entry,
+                            skip_unpublishable_entry,
+                            barren_probe_denominator,
+                            ..crate::search::compression_schedule::CompressionScheduleSettings::default()
+                        },
                     );
                 },
                 None,
@@ -3706,6 +4123,64 @@ fn schedule_self_cost_units(population: &GeneralPersistentVacancyDiagnostics) ->
         .compression_schedule
         .as_ref()
         .map(|report| report.work_units as u64)
+}
+
+/// The slice's own account of itself, projected onto
+/// [`ScheduleSliceReport`], or `None` when this call was not a schedule slice.
+#[cfg(feature = "compression-schedule")]
+fn schedule_slice_report(
+    population: &GeneralPersistentVacancyDiagnostics,
+) -> Option<ScheduleSliceReport> {
+    let report = population.compression_schedule.as_ref()?;
+    Some(ScheduleSliceReport {
+        parent_proxy_feasible: report.parent_proxy_feasible,
+        parent_collision_pairs: report.parent_collision_pairs,
+        parent_boundary_violations: report.parent_boundary_violations,
+        parent_entry_loss: report.parent_entry_loss,
+        entry_proxy_feasible: report.entry_proxy_feasible,
+        entry_collision_pairs: report.entry_collision_pairs,
+        entry_boundary_violations: report.entry_boundary_violations,
+        entry_loss: report.entry_loss,
+        entry_source_depth_mm: report.entry_source_depth_mm,
+        entry_depth_loss_mm: report.entry_depth_loss_mm,
+        requested_drop_mm: report.requested_drop_mm,
+        entry_legalization_armed: report.entry_legalization_armed,
+        entry_legalization_run: report.entry_legalization_run,
+        entry_legalization_resolved: report.entry_legalization_resolved,
+        entry_legalization_accepted: report.entry_legalization_accepted,
+        entry_legalization_ms: report.entry_legalization_ms,
+        entry_legalization_reason: report.entry_legalization_reason.clone(),
+        entry_legalization_violating_pairs_before: report
+            .entry_legalization_violating_pairs_before,
+        entry_legalization_violating_pairs_after: report.entry_legalization_violating_pairs_after,
+        entry_legalization_boundary_pieces_before: report
+            .entry_legalization_boundary_pieces_before,
+        entry_legalization_boundary_pieces_after: report.entry_legalization_boundary_pieces_after,
+        skipped_infeasible_entry: report.skipped_infeasible_entry,
+        aborted_barren_probe: report.aborted_barren_probe,
+        probe_steps: report.probe_steps,
+        steps_planned: report.steps_planned,
+        steps_taken: report.steps_taken,
+        confirmations_attempted: report.confirmations_attempted,
+        confirmations_accepted: report.confirmations_accepted,
+        confirmations_refused: report.confirmations_refused,
+        confirmations_skipped_infeasible: report.confirmations_skipped_infeasible,
+        confirmation_ms: report.confirmation_ms,
+        repair_ms: report.repair_ms,
+        start_depth_mm: report.start_depth_mm,
+        final_depth_mm: report.final_depth_mm,
+        work_units: report.work_units,
+        exit_cause: report.exit_cause.clone(),
+    })
+}
+
+/// Without the feature there is no slice to report, and the call site stays one
+/// expression in either build.
+#[cfg(not(feature = "compression-schedule"))]
+fn schedule_slice_report(
+    _population: &GeneralPersistentVacancyDiagnostics,
+) -> Option<ScheduleSliceReport> {
+    None
 }
 
 /// Hands a deep operator's terminal state to the global legalizer, one rung
@@ -4900,6 +5375,7 @@ mod tests {
             archive_disposition: None,
             published: false,
             failure_reason: None,
+            schedule_slice: None,
         };
         assert_eq!(wall.call_cost(&call), 1.25);
         assert_eq!(work.call_cost(&call), 3_000_000.0);
@@ -5102,6 +5578,7 @@ mod tests {
             archive_disposition: None,
             published: false,
             failure_reason: None,
+            schedule_slice: None,
         };
         assert_eq!(report.work_units, report.global_units + report.debited_units);
         assert_ne!(report.work_units, report.global_units);
@@ -5137,6 +5614,7 @@ mod tests {
             archive_disposition: None,
             published: false,
             failure_reason: None,
+            schedule_slice: None,
         };
         let work = BudgetMeter::new(PortfolioBudget::Work { units: 40_000_000 });
         assert_eq!(work.call_cost(&call), 3_341_665.0);
@@ -5312,28 +5790,123 @@ mod tests {
         }
     }
 
-    /// The one class whose two currencies were *measured* to disagree carries
-    /// two prices, and every other class carries one.
+    /// Exactly the two classes whose two currencies were *measured* to disagree
+    /// carry two prices, and the other four carry one.
     ///
     /// The ledger priced a mode-20 arm at 260-335 work units against 3.1
     /// seconds of clock; coordinator v3 §1.3 measured the same rule 11.7-12.0x
     /// wrong on shapes-17's wall and did not fix it. Measured on three requests
-    /// here, the diversify phase costs 0.067-1.224 phase-zeros in work units
+    /// there, the diversify phase costs 0.067-1.224 phase-zeros in work units
     /// and 1.25-1.98 in seconds.
+    ///
+    /// The compression schedule is the second, and coordinator v4 §8 named it
+    /// before this round priced it: first-action actual/estimate is 0.97-1.01
+    /// on a work budget and 2.60-5.88 on a wall budget, re-baselined here over
+    /// eighteen cells.
     #[test]
-    fn only_the_constructor_slice_is_priced_twice() {
+    fn only_the_two_measured_classes_are_priced_twice() {
+        let twice = [ActionClass::Diversify, ActionClass::Schedule];
         for class in ActionClass::all() {
             let work = class.prior_cost_in_phase_zero_for(false);
             let wall = class.prior_cost_in_phase_zero_for(true);
-            if class == ActionClass::Diversify {
-                assert!(wall > work, "{wall} > {work}");
-                // The measured disagreement is an order of magnitude on
-                // mixed-61 and it must survive as one, not be averaged away.
-                assert!(wall / work > 1.5);
+            if twice.contains(&class) {
+                assert!(wall > work, "{} : {wall} > {work}", class.name());
+                // The measured disagreements are 17x and 2.9x respectively and
+                // they must survive as disagreements, not be averaged away.
+                assert!(wall / work > 1.5, "{} : {wall} / {work}", class.name());
             } else {
                 assert_eq!(work, wall, "{} is priced twice", class.name());
             }
         }
+        // The schedule's wall prior is the worst of the eighteen cells measured
+        // in `docs/experiments/m34-wall-price`: triangle-20 seed 0 at 30 s,
+        // 1.6415 s of charged slice against a 0.7336 s phase 0. Every other
+        // class in this table is priced by its own worst case too.
+        assert_eq!(
+            ActionClass::Schedule.prior_cost_in_phase_zero_for(true),
+            SCHEDULE_WALL_PRIOR_PHASE_ZEROS
+        );
+        assert!((SCHEDULE_WALL_PRIOR_PHASE_ZEROS - 1.6414530680000001 / 0.733602375).abs() < 5e-4);
+        // And it is above every measured cell, including mixed-61's, which is
+        // what makes it a bound rather than an average.
+        for measured in [1.1466399653696229_f64, 1.6193018185283783, 2.2375242010360177] {
+            assert!(SCHEDULE_WALL_PRIOR_PHASE_ZEROS >= measured - 5e-5);
+        }
+    }
+
+    /// The wall prior may not be allowed to *delete* the class it prices.
+    ///
+    /// This is coordinator v4 §3.1's rule - "a prior of zero is not a prior, it
+    /// is a deletion" - arriving from the cost side rather than the yield side.
+    /// At 2.2375 phase-zeros the schedule's ranking value is 1.104 / 2.2375 =
+    /// 0.493, below the ladder's 1.292 and below crossover's 1.793, on the one
+    /// request where the class publishes on nine of nine at ten seconds. It is
+    /// not a hypothetical: this round's first cut ranked on that number and
+    /// measured a median 0.649 mm regression over nine paired thirty-second
+    /// rounds on mixed-61. The ranking now stays on the class's own currency
+    /// and only the affordability gate reads the worst case.
+    #[test]
+    fn the_wall_prior_alone_would_rank_the_schedule_below_the_ladder() {
+        let rank = |class: ActionClass, wall: bool| {
+            class.prior_delta_mm() / class.prior_cost_in_phase_zero_for(wall)
+        };
+        let ladder = rank(ActionClass::Ladder, true);
+        let crossover = rank(ActionClass::Crossover, true);
+        // Priced on the clock, the class loses to both.
+        assert!(rank(ActionClass::Schedule, true) < ladder);
+        assert!(rank(ActionClass::Schedule, true) < crossover);
+        // Priced in its own currency - which is what the floor quotes - it
+        // beats both, which is the ordering coordinator v4 measured and the
+        // ordering that bought mixed-61 nine publications in nine rounds.
+        assert!(rank(ActionClass::Schedule, false) > ladder);
+        assert!(rank(ActionClass::Schedule, false) > crossover);
+    }
+
+    /// The probe is a budget, never a veto, and it is off by default.
+    #[test]
+    fn the_probe_is_a_budget_and_it_ships_disarmed() {
+        // A probe is at least one step at any slice length, so an armed probe
+        // on a very short slice still runs the slice rather than refusing it.
+        let probe = |planned: usize, denominator: usize| match denominator {
+            0 => 0,
+            n => (planned / n).max(1),
+        };
+        assert_eq!(probe(1_616, 0), 0);
+        assert_eq!(probe(1_616, 3), 538);
+        assert_eq!(probe(1_520, 3), 506);
+        assert_eq!(probe(2, 3), 1);
+        assert_eq!(probe(0, 3), 1);
+        // Off. See the constant for the two measurements: the wall it returns
+        // buys no depth on either request that has a sterile slice to cut, and
+        // at thirty seconds it abandons a mixed-61 slice that publishes 1.03 mm
+        // for a 2.132 mm loss on the round.
+        assert_eq!(SCHEDULE_PROBE_DENOMINATOR, 0);
+        assert_eq!(
+            PortfolioSettings::new(
+                GeneralRelaxedSettings::mixed_61_probe(0, 1),
+                PortfolioBudget::Wall { millis: 10_000 }
+            )
+            .schedule_probe_denominator,
+            0
+        );
+        // The counter-example, as arithmetic: a third of the second slice's
+        // 1,520 steps is 506, and the lane has to walk 453 of them just to get
+        // back to its parent's depth before it can publish anything at all.
+        let entry_loss_steps = (0.453_f64 / 0.001).round() as usize;
+        assert!(entry_loss_steps > probe(1_520, 3) * 8 / 10);
+    }
+
+    /// The sterile bit is one bit with one audition, and the audition is rarer
+    /// than the rule that ends the run.
+    #[test]
+    fn the_sterile_bit_is_one_action_and_its_audition_is_rare() {
+        assert_eq!(SCHEDULE_STERILE_ACTIONS, 1);
+        // The class is offered again only after a barren run as long as the one
+        // that ends the whole loop, so on the measured streams it fires at most
+        // once and usually never: coordinator v4's own mixed-61 30 s headline
+        // never reaches sixteen consecutive barren actions.
+        assert_eq!(SCHEDULE_AUDITION_BARREN, BARREN_ACTION_PATIENCE);
+        assert!(SCHEDULE_AUDITION_BARREN > DIVERSIFY_AUDITION_BARREN);
     }
 
     /// A scheduled compression slice is nine rungs of the same quantum the

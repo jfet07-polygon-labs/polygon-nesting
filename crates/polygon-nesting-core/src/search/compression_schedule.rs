@@ -199,6 +199,89 @@ pub struct CompressionScheduleSettings {
     /// the invariant above is worth stating in the type: the caller has to ask
     /// for a sub-grid frontier by name.
     pub step_grid: f64,
+    /// Whether the lane tries to make its *parent* proxy-feasible, by
+    /// translation alone, before it takes step 0.
+    ///
+    /// The port's §7.1 is the reason this exists: **0 of 12** coordinator
+    /// parents at 171-179 mm are feasible in the proxy tier when they arrive,
+    /// at 26-38 colliding pairs, because `initialize_complete_state` snaps
+    /// every rotation onto the structured surrogate's 2.5-degree grid and the
+    /// parents' rotations are continuous. A lane that starts infeasible spends
+    /// a fraction of every step repairing the *parent* rather than compressing
+    /// it - the slice is part regrid - and the fraction is not reported by any
+    /// number the schedule publishes.
+    ///
+    /// `false` is the default and it keeps every pinned m34 number in this
+    /// repository reproducible: the port's twelve cells, the coordinator's
+    /// nine-rung slice and the v4 curves were all measured with the lane
+    /// entering on whatever `initialize_complete_state` handed it.
+    ///
+    /// When `true`, the lane runs one
+    /// [`crate::search::general_micro_legalization::global_legalize`] on the
+    /// snapped parent, bounded at the parent's own depth. That solver is
+    /// translation-only - two variables per piece, no rotation - so it cannot
+    /// undo the snap; what it can do is redistribute the layout until the
+    /// collision envelopes the snap pushed together come apart again. Nothing
+    /// is published from it: its output is only ever a starting state for the
+    /// schedule, and the schedule still publishes only what its own exact
+    /// confirmation accepts.
+    pub legalize_entry: bool,
+    /// Whether a lane whose parent is *still* proxy-infeasible after
+    /// [`Self::legalize_entry`] gives the slice back instead of running it.
+    ///
+    /// Grok review 1 §2b item 3's rule, and the arithmetic behind it: a slice
+    /// that enters infeasible costs 1.1-2.3 seconds of a ten-second budget on
+    /// the three requests measured here, and on two of them it has never
+    /// published anything at all. Refusing it returns that wall to the classes
+    /// that do publish.
+    ///
+    /// Requires [`Self::legalize_entry`]: skipping on the *unrepaired* entry
+    /// verdict would refuse every slice on every request, including the one
+    /// where the class publishes on nine of nine.
+    pub skip_infeasible_entry: bool,
+    /// Whether a lane whose entry is already deeper than the parent by more
+    /// than the drop it was asked for gives the slice back instead of running
+    /// it.
+    ///
+    /// This is [`Self::skip_infeasible_entry`]'s rule with the discriminator
+    /// the measurement chose rather than the one the review proposed. The lane
+    /// publishes only a layout whose *source* depth beats the parent's, and it
+    /// may walk only the requested drop of clamp to get there; so a slice whose
+    /// entry already sits a drop or more above its parent cannot publish even
+    /// if every step and every confirmation goes perfectly. It is the slice's
+    /// own arithmetic, decided before step 0 for the price of one depth
+    /// measurement, and it carries no request in it.
+    ///
+    /// Independent of [`Self::legalize_entry`]: it needs no repair, only the
+    /// entry's own depth.
+    pub skip_unpublishable_entry: bool,
+    /// The denominator of the *probe*: the lane abandons the slice once it has
+    /// taken `steps_planned / n` steps without having published anything below
+    /// its parent. `0` disables it, which is every measurement before this one.
+    ///
+    /// # Why the price of the first slice is a budget and not a prior
+    ///
+    /// Grok review 1 §2b item 1 asks for the first slice to be wall-priced,
+    /// because the first one has no ratchet and costs 1.1-2.3 s of a
+    /// ten-second budget. A prior can only decide *whether* to buy it, and
+    /// this round measured that no prior can: the entry numbers that were
+    /// expected to discriminate - proxy feasibility, the entry's own depth
+    /// loss - are the same on the request where the class publishes on nine of
+    /// nine as on the two where it has never published at all.
+    ///
+    /// What does discriminate is visible *inside* the slice, from its first
+    /// steps, and it is what the lane is being paid for: whether anything it
+    /// has reached beats the parent yet. Measured over nine ten-second cells,
+    /// where a slice publishes it publishes early, and where it does not the
+    /// whole slice is repair sweeps against a frontier that never becomes
+    /// publishable - **98-100%** of triangle-20's wall and 76-82% of
+    /// shapes-17's, against 21-47% of mixed-61's, whose wall is 50-76% accepted
+    /// exact confirmations instead.
+    ///
+    /// So the price of the first slice is charged as an anytime budget: spend a
+    /// fraction, and go on only on evidence. It is the same shape as the
+    /// coordinator's own audition rule, one level down.
+    pub barren_probe_denominator: usize,
 }
 
 impl Default for CompressionScheduleSettings {
@@ -211,6 +294,10 @@ impl Default for CompressionScheduleSettings {
             continue_past_bound: false,
             repair_policy: CompressionRepairPolicy::MicroLegalizeOnReject,
             step_grid: 1.0,
+            legalize_entry: false,
+            skip_infeasible_entry: false,
+            skip_unpublishable_entry: false,
+            barren_probe_denominator: 0,
         }
     }
 }
@@ -593,6 +680,26 @@ impl CompressionSchedule {
             parent_collision_pairs: 0,
             parent_proxy_feasible: false,
             parent_entry_loss: 0.0,
+            entry_legalization_armed: false,
+            entry_legalization_run: false,
+            entry_legalization_resolved: false,
+            entry_legalization_accepted: false,
+            entry_legalization_ms: 0.0,
+            entry_proxy_feasible: false,
+            entry_collision_pairs: 0,
+            entry_boundary_violations: 0,
+            entry_loss: 0.0,
+            entry_source_depth_mm: None,
+            entry_depth_loss_mm: None,
+            requested_drop_mm: 0.0,
+            entry_legalization_reason: None,
+            entry_legalization_violating_pairs_before: 0,
+            entry_legalization_violating_pairs_after: 0,
+            entry_legalization_boundary_pieces_before: 0,
+            entry_legalization_boundary_pieces_after: 0,
+            aborted_barren_probe: false,
+            probe_steps: 0,
+            skipped_infeasible_entry: false,
             current_pose_overlay: false,
             current_pose_overlay_entries: 0,
             current_pose_overlay_off_grid_pieces: 0,
@@ -764,6 +871,80 @@ pub struct GeneralCompressionScheduleDiagnostics {
     /// smaller margin. This is the number Sol review 5's entry-damage claim
     /// is about.
     pub parent_entry_loss: f64,
+    /// Whether [`CompressionScheduleSettings::legalize_entry`] armed the
+    /// translation-only repair of the parent, and whether it ran.
+    ///
+    /// It is armed-and-not-run whenever the parent arrived proxy-feasible,
+    /// which is the state this whole mechanism exists to *produce*.
+    pub entry_legalization_armed: bool,
+    pub entry_legalization_run: bool,
+    /// Whether the translation-only program came back with a layout at all,
+    /// and whether the lane accepted it.
+    ///
+    /// The two differ: a program that closes onto a state the proxy tier likes
+    /// no better than the one it started from is refused, because the entry
+    /// repair may not hand the schedule a worse entry than the one it replaces.
+    pub entry_legalization_resolved: bool,
+    pub entry_legalization_accepted: bool,
+    /// What the entry repair cost, in milliseconds, whether or not its result
+    /// was accepted. `0.0` when it never ran, and no `Instant` is read then.
+    pub entry_legalization_ms: f64,
+    /// The proxy tier's verdict on the state the schedule actually starts from,
+    /// after any entry repair. Equal to [`Self::parent_proxy_feasible`] when
+    /// the repair did not run or was refused.
+    pub entry_proxy_feasible: bool,
+    pub entry_collision_pairs: usize,
+    pub entry_boundary_violations: usize,
+    pub entry_loss: f64,
+    /// The **material** depth of the state the lane is actually holding when it
+    /// arrives, measured on the untouched source rings by the same function
+    /// every publication is measured by.
+    ///
+    /// This is the number the port's §7.2 entry-loss median is about, reported
+    /// per slice rather than pooled, and it is the one the schedule's whole
+    /// arithmetic turns on: the lane publishes only a layout whose source depth
+    /// beats the *parent's*, and it may only walk `requested_drop_mm` of clamp
+    /// to get there. A slice that arrives more than its own drop above the
+    /// parent is asking to buy back the snap before it compresses anything.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entry_source_depth_mm: Option<f64>,
+    /// `entry_source_depth_mm - parent_depth_mm`: what the 2.5-degree snap and
+    /// the lane's own initialisation cost, in millimetres of published depth,
+    /// before the schedule takes a step.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entry_depth_loss_mm: Option<f64>,
+    /// The drop the slice was asked for, so `entry_depth_loss_mm` can be read
+    /// against it without a second document.
+    pub requested_drop_mm: f64,
+    /// Why the translation-only entry repair did not produce a layout, when it
+    /// ran and did not. The program's own `skippedReason` / `rejectionReason`,
+    /// or `"unresolved"` when it simply did not converge.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entry_legalization_reason: Option<String>,
+    /// The entry repair's own before/after violation counts, in the *exact*
+    /// tier's terms rather than the proxy tier's. Reported because the two
+    /// tiers disagree about this parent by construction and a repair that
+    /// closed the exact tier's books while the proxy tier still refuses is a
+    /// different finding from a repair that closed neither.
+    pub entry_legalization_violating_pairs_before: usize,
+    pub entry_legalization_violating_pairs_after: usize,
+    pub entry_legalization_boundary_pieces_before: usize,
+    pub entry_legalization_boundary_pieces_after: usize,
+    /// Whether the lane abandoned the slice because its probe expired with
+    /// nothing published below the parent, and at which step the probe ended.
+    ///
+    /// A lane that aborts here has spent `probe_steps` of its `steps_planned`
+    /// and given the rest back. See
+    /// [`CompressionScheduleSettings::barren_probe_denominator`].
+    pub aborted_barren_probe: bool,
+    pub probe_steps: usize,
+    /// Whether the lane gave the slice back because its entry was still
+    /// infeasible - see
+    /// [`CompressionScheduleSettings::skip_infeasible_entry`]. A skipped slice
+    /// takes no steps, asks the exact tier nothing and publishes nothing; the
+    /// parent comes back unchanged, and the wall it did not spend is returned
+    /// to the classes that do publish.
+    pub skipped_infeasible_entry: bool,
     /// Whether `CurrentPoseOverlay` was armed for this run. See
     /// `GeneralRelaxedSettings::current_pose_overlay`.
     pub current_pose_overlay: bool,

@@ -1,0 +1,1296 @@
+{
+ "requests": {
+  "mixed-61": {
+   "wall=3000": {
+    "arms": [
+     "aheadat3",
+     "bnewat3",
+     "cprobeat3"
+    ],
+    "baseline": "aheadat3",
+    "perSeed": {
+     "0": {
+      "aheadat3": [
+       179.587,
+       179.587,
+       179.587
+      ],
+      "bnewat3": [
+       179.587,
+       179.587,
+       179.587
+      ],
+      "cprobeat3": [
+       179.587,
+       179.587,
+       179.587
+      ]
+     },
+     "1": {
+      "aheadat3": [
+       179.633,
+       179.633,
+       179.633
+      ],
+      "bnewat3": [
+       179.633,
+       179.633,
+       179.633
+      ],
+      "cprobeat3": [
+       179.633,
+       179.633,
+       179.633
+      ]
+     },
+     "2": {
+      "aheadat3": [
+       179.006,
+       179.006,
+       179.006
+      ],
+      "bnewat3": [
+       179.006,
+       179.006,
+       179.006
+      ],
+      "cprobeat3": [
+       179.006,
+       179.006,
+       179.006
+      ]
+     }
+    },
+    "pairedDeltaMm": {
+     "bnewat3-minus-aheadat3": {
+      "n": 9,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "armBetter": 0,
+      "armWorse": 0,
+      "equal": 9
+     },
+     "cprobeat3-minus-aheadat3": {
+      "n": 9,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "armBetter": 0,
+      "armWorse": 0,
+      "equal": 9
+     }
+    },
+    "withinArmSpreadMm": {
+     "aheadat3": 0.0,
+     "bnewat3": 0.0,
+     "cprobeat3": 0.0
+    },
+    "aheadat3": {
+     "coordinatorSeconds": {
+      "median": 2.7735828810000003,
+      "max": 2.9103942959999998
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -0.08960570400000023,
+     "runs": 9,
+     "m34Slices": 0,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 0.0,
+     "m34FirstSliceSeconds": null,
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "bnewat3": {
+     "coordinatorSeconds": {
+      "median": 2.728523049,
+      "max": 2.844377545
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -0.15562245500000005,
+     "runs": 9,
+     "m34Slices": 0,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 0.0,
+     "m34FirstSliceSeconds": null,
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "cprobeat3": {
+     "coordinatorSeconds": {
+      "median": 2.738876227,
+      "max": 2.868168509
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -0.1318314909999998,
+     "runs": 9,
+     "m34Slices": 0,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 0.0,
+     "m34FirstSliceSeconds": null,
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    }
+   },
+   "wall=10000": {
+    "arms": [
+     "aheadat10",
+     "bnewat10",
+     "cprobeat10"
+    ],
+    "baseline": "aheadat10",
+    "perSeed": {
+     "0": {
+      "aheadat10": [
+       173.575,
+       173.575,
+       173.575
+      ],
+      "bnewat10": [
+       173.575,
+       173.575,
+       173.575
+      ],
+      "cprobeat10": [
+       173.575,
+       173.575,
+       173.575
+      ]
+     },
+     "1": {
+      "aheadat10": [
+       171.362,
+       171.362,
+       171.362
+      ],
+      "bnewat10": [
+       171.362,
+       171.362,
+       171.362
+      ],
+      "cprobeat10": [
+       171.362,
+       171.362,
+       171.362
+      ]
+     },
+     "2": {
+      "aheadat10": [
+       176.162,
+       176.162,
+       176.162
+      ],
+      "bnewat10": [
+       176.162,
+       176.162,
+       176.162
+      ],
+      "cprobeat10": [
+       176.162,
+       176.162,
+       176.162
+      ]
+     }
+    },
+    "pairedDeltaMm": {
+     "bnewat10-minus-aheadat10": {
+      "n": 9,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "armBetter": 0,
+      "armWorse": 0,
+      "equal": 9
+     },
+     "cprobeat10-minus-aheadat10": {
+      "n": 9,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "armBetter": 0,
+      "armWorse": 0,
+      "equal": 9
+     }
+    },
+    "withinArmSpreadMm": {
+     "aheadat10": 0.0,
+     "bnewat10": 0.0,
+     "cprobeat10": 0.0
+    },
+    "aheadat10": {
+     "coordinatorSeconds": {
+      "median": 9.568495913,
+      "max": 10.457458825
+     },
+     "overruns": 2,
+     "worstOverrunSeconds": 0.4574588249999998,
+     "runs": 9,
+     "m34Slices": 9,
+     "m34SlicesPublishing": 9,
+     "m34SecondsPerRun": 2.028477115,
+     "m34FirstSliceSeconds": {
+      "median": 1.9381542110000005,
+      "min": 1.908405944,
+      "max": 2.2389622530000004
+     },
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "bnewat10": {
+     "coordinatorSeconds": {
+      "median": 9.704249202,
+      "max": 10.499710903
+     },
+     "overruns": 2,
+     "worstOverrunSeconds": 0.49971090300000043,
+     "runs": 9,
+     "m34Slices": 9,
+     "m34SlicesPublishing": 9,
+     "m34SecondsPerRun": 2.0391986447777777,
+     "m34FirstSliceSeconds": {
+      "median": 1.9366894610000003,
+      "min": 1.908155443,
+      "max": 2.2545564039999997
+     },
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "cprobeat10": {
+     "coordinatorSeconds": {
+      "median": 9.589658968,
+      "max": 10.46794071
+     },
+     "overruns": 2,
+     "worstOverrunSeconds": 0.4679407100000006,
+     "runs": 9,
+     "m34Slices": 9,
+     "m34SlicesPublishing": 9,
+     "m34SecondsPerRun": 2.034265651777778,
+     "m34FirstSliceSeconds": {
+      "median": 1.9339541739999992,
+      "min": 1.9083215779999998,
+      "max": 2.267166909
+     },
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    }
+   },
+   "wall=30000": {
+    "arms": [
+     "aheadat30",
+     "bnewat30",
+     "cprobeat30"
+    ],
+    "baseline": "aheadat30",
+    "perSeed": {
+     "0": {
+      "aheadat30": [
+       164.988,
+       164.988,
+       166.808
+      ],
+      "bnewat30": [
+       168.94,
+       168.94,
+       168.94
+      ],
+      "cprobeat30": [
+       168.94,
+       168.94,
+       168.94
+      ]
+     },
+     "1": {
+      "aheadat30": [
+       165.972,
+       165.972,
+       165.972
+      ],
+      "bnewat30": [
+       165.972,
+       165.972,
+       165.972
+      ],
+      "cprobeat30": [
+       165.972,
+       165.972,
+       165.972
+      ]
+     },
+     "2": {
+      "aheadat30": [
+       170.106,
+       170.106,
+       170.106
+      ],
+      "bnewat30": [
+       170.243,
+       170.243,
+       170.243
+      ],
+      "cprobeat30": [
+       170.188,
+       170.188,
+       170.188
+      ]
+     }
+    },
+    "pairedDeltaMm": {
+     "bnewat30-minus-aheadat30": {
+      "n": 9,
+      "median": 0.13700000000000045,
+      "min": 0.0,
+      "max": 3.951999999999998,
+      "armBetter": 0,
+      "armWorse": 6,
+      "equal": 3
+     },
+     "cprobeat30-minus-aheadat30": {
+      "n": 9,
+      "median": 0.08199999999999363,
+      "min": 0.0,
+      "max": 3.951999999999998,
+      "armBetter": 0,
+      "armWorse": 6,
+      "equal": 3
+     }
+    },
+    "withinArmSpreadMm": {
+     "aheadat30": 1.8199999999999932,
+     "bnewat30": 0.0,
+     "cprobeat30": 0.0
+    },
+    "aheadat30": {
+     "coordinatorSeconds": {
+      "median": 28.973263383,
+      "max": 30.308857812
+     },
+     "overruns": 2,
+     "worstOverrunSeconds": 0.3088578119999994,
+     "runs": 9,
+     "m34Slices": 23,
+     "m34SlicesPublishing": 20,
+     "m34SecondsPerRun": 5.3119541275555555,
+     "m34FirstSliceSeconds": {
+      "median": 1.9371296009999996,
+      "min": 1.9098922740000006,
+      "max": 2.2706722790000002
+     },
+     "sterileSlicesOver1s": 3,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "bnewat30": {
+     "coordinatorSeconds": {
+      "median": 28.642088154,
+      "max": 29.068224135
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -0.9317758649999988,
+     "runs": 9,
+     "m34Slices": 15,
+     "m34SlicesPublishing": 12,
+     "m34SecondsPerRun": 3.1499842239999998,
+     "m34FirstSliceSeconds": {
+      "median": 1.9373488879999998,
+      "min": 1.9096383440000002,
+      "max": 2.299720324
+     },
+     "sterileSlicesOver1s": 3,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "cprobeat30": {
+     "coordinatorSeconds": {
+      "median": 28.718252096,
+      "max": 29.845278255
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -0.1547217449999998,
+     "runs": 9,
+     "m34Slices": 16,
+     "m34SlicesPublishing": 9,
+     "m34SecondsPerRun": 2.5305227273333335,
+     "m34FirstSliceSeconds": {
+      "median": 1.9408972960000002,
+      "min": 1.9085373519999997,
+      "max": 2.2597852580000004
+     },
+     "sterileSlicesOver1s": 1,
+     "probeAborts": 7,
+     "mmPerSecond": null
+    }
+   }
+  },
+  "shapes-17": {
+   "wall=3000": {
+    "arms": [
+     "aheadat3",
+     "bnewat3",
+     "cprobeat3"
+    ],
+    "baseline": "aheadat3",
+    "perSeed": {
+     "0": {
+      "aheadat3": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "bnewat3": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "cprobeat3": [
+       200.349,
+       200.349,
+       200.349
+      ]
+     },
+     "1": {
+      "aheadat3": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "bnewat3": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "cprobeat3": [
+       200.349,
+       200.349,
+       200.349
+      ]
+     },
+     "2": {
+      "aheadat3": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "bnewat3": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "cprobeat3": [
+       200.349,
+       200.349,
+       200.349
+      ]
+     }
+    },
+    "pairedDeltaMm": {
+     "bnewat3-minus-aheadat3": {
+      "n": 9,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "armBetter": 0,
+      "armWorse": 0,
+      "equal": 9
+     },
+     "cprobeat3-minus-aheadat3": {
+      "n": 9,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "armBetter": 0,
+      "armWorse": 0,
+      "equal": 9
+     }
+    },
+    "withinArmSpreadMm": {
+     "aheadat3": 0.0,
+     "bnewat3": 0.0,
+     "cprobeat3": 0.0
+    },
+    "aheadat3": {
+     "coordinatorSeconds": {
+      "median": 3.089364424,
+      "max": 3.40765485
+     },
+     "overruns": 7,
+     "worstOverrunSeconds": 0.4076548500000001,
+     "runs": 9,
+     "m34Slices": 8,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 1.0938426435555555,
+     "m34FirstSliceSeconds": {
+      "median": 1.1077501244999999,
+      "min": 1.0717640509999997,
+      "max": 1.4613382430000001
+     },
+     "sterileSlicesOver1s": 8,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "bnewat3": {
+     "coordinatorSeconds": {
+      "median": 1.90198354,
+      "max": 3.521596787
+     },
+     "overruns": 1,
+     "worstOverrunSeconds": 0.521596787,
+     "runs": 9,
+     "m34Slices": 0,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 0.0,
+     "m34FirstSliceSeconds": null,
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "cprobeat3": {
+     "coordinatorSeconds": {
+      "median": 1.915493686,
+      "max": 1.970256198
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -1.029743802,
+     "runs": 9,
+     "m34Slices": 0,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 0.0,
+     "m34FirstSliceSeconds": null,
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    }
+   },
+   "wall=10000": {
+    "arms": [
+     "aheadat10",
+     "bnewat10",
+     "cprobeat10"
+    ],
+    "baseline": "aheadat10",
+    "perSeed": {
+     "0": {
+      "aheadat10": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "bnewat10": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "cprobeat10": [
+       200.349,
+       200.349,
+       200.349
+      ]
+     },
+     "1": {
+      "aheadat10": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "bnewat10": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "cprobeat10": [
+       200.349,
+       200.349,
+       200.349
+      ]
+     },
+     "2": {
+      "aheadat10": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "bnewat10": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "cprobeat10": [
+       200.349,
+       200.349,
+       200.349
+      ]
+     }
+    },
+    "pairedDeltaMm": {
+     "bnewat10-minus-aheadat10": {
+      "n": 9,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "armBetter": 0,
+      "armWorse": 0,
+      "equal": 9
+     },
+     "cprobeat10-minus-aheadat10": {
+      "n": 9,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "armBetter": 0,
+      "armWorse": 0,
+      "equal": 9
+     }
+    },
+    "withinArmSpreadMm": {
+     "aheadat10": 0.0,
+     "bnewat10": 0.0,
+     "cprobeat10": 0.0
+    },
+    "aheadat10": {
+     "coordinatorSeconds": {
+      "median": 9.432426332,
+      "max": 9.866296899
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -0.13370310100000005,
+     "runs": 9,
+     "m34Slices": 9,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 1.216151426888889,
+     "m34FirstSliceSeconds": {
+      "median": 1.1090860930000002,
+      "min": 1.070428424,
+      "max": 1.48508049
+     },
+     "sterileSlicesOver1s": 9,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "bnewat10": {
+     "coordinatorSeconds": {
+      "median": 9.690566579,
+      "max": 10.125687245
+     },
+     "overruns": 1,
+     "worstOverrunSeconds": 0.12568724499999995,
+     "runs": 9,
+     "m34Slices": 9,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 1.2120212194444444,
+     "m34FirstSliceSeconds": {
+      "median": 1.1075741609999996,
+      "min": 1.070723702,
+      "max": 1.4581347620000003
+     },
+     "sterileSlicesOver1s": 9,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "cprobeat10": {
+     "coordinatorSeconds": {
+      "median": 9.557218936,
+      "max": 9.847706101
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -0.152293899,
+     "runs": 9,
+     "m34Slices": 9,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 0.45210052233333325,
+     "m34FirstSliceSeconds": {
+      "median": 0.4472138110000001,
+      "min": 0.3952140949999998,
+      "max": 0.524565776
+     },
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 9,
+     "mmPerSecond": null
+    }
+   },
+   "wall=30000": {
+    "arms": [
+     "aheadat30",
+     "bnewat30",
+     "cprobeat30"
+    ],
+    "baseline": "aheadat30",
+    "perSeed": {
+     "0": {
+      "aheadat30": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "bnewat30": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "cprobeat30": [
+       200.349,
+       200.349,
+       200.349
+      ]
+     },
+     "1": {
+      "aheadat30": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "bnewat30": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "cprobeat30": [
+       200.349,
+       200.349,
+       200.349
+      ]
+     },
+     "2": {
+      "aheadat30": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "bnewat30": [
+       200.349,
+       200.349,
+       200.349
+      ],
+      "cprobeat30": [
+       200.349,
+       200.349,
+       200.349
+      ]
+     }
+    },
+    "pairedDeltaMm": {
+     "bnewat30-minus-aheadat30": {
+      "n": 9,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "armBetter": 0,
+      "armWorse": 0,
+      "equal": 9
+     },
+     "cprobeat30-minus-aheadat30": {
+      "n": 9,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "armBetter": 0,
+      "armWorse": 0,
+      "equal": 9
+     }
+    },
+    "withinArmSpreadMm": {
+     "aheadat30": 0.0,
+     "bnewat30": 0.0,
+     "cprobeat30": 0.0
+    },
+    "aheadat30": {
+     "coordinatorSeconds": {
+      "median": 19.289268087,
+      "max": 23.127119023
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -6.872880977000001,
+     "runs": 9,
+     "m34Slices": 18,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 2.284164462777778,
+     "m34FirstSliceSeconds": {
+      "median": 1.108200379,
+      "min": 1.0733022830000003,
+      "max": 1.460397447
+     },
+     "sterileSlicesOver1s": 15,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "bnewat30": {
+     "coordinatorSeconds": {
+      "median": 18.573541095,
+      "max": 22.887802747
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -7.1121972530000015,
+     "runs": 9,
+     "m34Slices": 9,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 1.2147901628888889,
+     "m34FirstSliceSeconds": {
+      "median": 1.1106585949999999,
+      "min": 1.071815882,
+      "max": 1.4598349130000001
+     },
+     "sterileSlicesOver1s": 9,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "cprobeat30": {
+     "coordinatorSeconds": {
+      "median": 18.2833144,
+      "max": 24.251772663
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -5.748227336999999,
+     "runs": 9,
+     "m34Slices": 9,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 0.4491978728888889,
+     "m34FirstSliceSeconds": {
+      "median": 0.4482830739999999,
+      "min": 0.396149587,
+      "max": 0.501651232
+     },
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 9,
+     "mmPerSecond": null
+    }
+   }
+  },
+  "triangle-20": {
+   "wall=3000": {
+    "arms": [
+     "aheadat3",
+     "bnewat3",
+     "cprobeat3"
+    ],
+    "baseline": "aheadat3",
+    "perSeed": {
+     "0": {
+      "aheadat3": [
+       70.771,
+       70.771,
+       70.779
+      ],
+      "bnewat3": [
+       70.771,
+       70.771,
+       70.779
+      ],
+      "cprobeat3": [
+       70.771,
+       70.771,
+       70.779
+      ]
+     },
+     "1": {
+      "aheadat3": [
+       70.747,
+       70.747,
+       70.747
+      ],
+      "bnewat3": [
+       70.747,
+       70.747,
+       70.747
+      ],
+      "cprobeat3": [
+       70.747,
+       70.747,
+       70.747
+      ]
+     },
+     "2": {
+      "aheadat3": [
+       70.747,
+       70.747,
+       70.901
+      ],
+      "bnewat3": [
+       70.743,
+       70.747,
+       70.901
+      ],
+      "cprobeat3": [
+       70.743,
+       70.747,
+       70.901
+      ]
+     }
+    },
+    "pairedDeltaMm": {
+     "bnewat3-minus-aheadat3": {
+      "n": 9,
+      "median": 0.0,
+      "min": -0.0040000000000048885,
+      "max": 0.0,
+      "armBetter": 1,
+      "armWorse": 0,
+      "equal": 8
+     },
+     "cprobeat3-minus-aheadat3": {
+      "n": 9,
+      "median": 0.0,
+      "min": -0.0040000000000048885,
+      "max": 0.0,
+      "armBetter": 1,
+      "armWorse": 0,
+      "equal": 8
+     }
+    },
+    "withinArmSpreadMm": {
+     "aheadat3": 0.15399999999999636,
+     "bnewat3": 0.15800000000000125,
+     "cprobeat3": 0.15800000000000125
+    },
+    "aheadat3": {
+     "coordinatorSeconds": {
+      "median": 3.6974287759999998,
+      "max": 4.186506686
+     },
+     "overruns": 8,
+     "worstOverrunSeconds": 1.1865066860000004,
+     "runs": 9,
+     "m34Slices": 7,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 1.4181466773333335,
+     "m34FirstSliceSeconds": {
+      "median": 1.8364770259999998,
+      "min": 1.648235336,
+      "max": 1.9440457470000005
+     },
+     "sterileSlicesOver1s": 7,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "bnewat3": {
+     "coordinatorSeconds": {
+      "median": 2.754680428,
+      "max": 3.157692611
+     },
+     "overruns": 3,
+     "worstOverrunSeconds": 0.15769261099999987,
+     "runs": 9,
+     "m34Slices": 0,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 0.0,
+     "m34FirstSliceSeconds": null,
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "cprobeat3": {
+     "coordinatorSeconds": {
+      "median": 2.584485382,
+      "max": 3.2517787240000002
+     },
+     "overruns": 3,
+     "worstOverrunSeconds": 0.25177872400000023,
+     "runs": 9,
+     "m34Slices": 0,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 0.0,
+     "m34FirstSliceSeconds": null,
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    }
+   },
+   "wall=10000": {
+    "arms": [
+     "aheadat10",
+     "bnewat10",
+     "cprobeat10"
+    ],
+    "baseline": "aheadat10",
+    "perSeed": {
+     "0": {
+      "aheadat10": [
+       70.73,
+       70.73,
+       70.771
+      ],
+      "bnewat10": [
+       70.73,
+       70.771,
+       70.771
+      ],
+      "cprobeat10": [
+       70.73,
+       70.771,
+       70.771
+      ]
+     },
+     "1": {
+      "aheadat10": [
+       70.73,
+       70.73,
+       70.73
+      ],
+      "bnewat10": [
+       70.73,
+       70.73,
+       70.73
+      ],
+      "cprobeat10": [
+       70.73,
+       70.73,
+       70.73
+      ]
+     },
+     "2": {
+      "aheadat10": [
+       70.729,
+       70.729,
+       70.742
+      ],
+      "bnewat10": [
+       70.729,
+       70.729,
+       70.729
+      ],
+      "cprobeat10": [
+       70.729,
+       70.729,
+       70.729
+      ]
+     }
+    },
+    "pairedDeltaMm": {
+     "bnewat10-minus-aheadat10": {
+      "n": 9,
+      "median": 0.0,
+      "min": -0.01300000000000523,
+      "max": 0.04099999999999682,
+      "armBetter": 1,
+      "armWorse": 1,
+      "equal": 7
+     },
+     "cprobeat10-minus-aheadat10": {
+      "n": 9,
+      "median": 0.0,
+      "min": -0.01300000000000523,
+      "max": 0.04099999999999682,
+      "armBetter": 1,
+      "armWorse": 1,
+      "equal": 7
+     }
+    },
+    "withinArmSpreadMm": {
+     "aheadat10": 0.04099999999999682,
+     "bnewat10": 0.04099999999999682,
+     "cprobeat10": 0.04099999999999682
+    },
+    "aheadat10": {
+     "coordinatorSeconds": {
+      "median": 9.413314622,
+      "max": 10.800889362
+     },
+     "overruns": 1,
+     "worstOverrunSeconds": 0.8008893619999995,
+     "runs": 9,
+     "m34Slices": 9,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 1.8513365964444444,
+     "m34FirstSliceSeconds": {
+      "median": 1.8885023949999997,
+      "min": 1.644905433,
+      "max": 1.9872189890000005
+     },
+     "sterileSlicesOver1s": 9,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "bnewat10": {
+     "coordinatorSeconds": {
+      "median": 9.498358647,
+      "max": 9.702518008
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -0.2974819919999998,
+     "runs": 9,
+     "m34Slices": 7,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 1.4378012768888888,
+     "m34FirstSliceSeconds": {
+      "median": 1.837229905,
+      "min": 1.646542171,
+      "max": 1.9303076479999999
+     },
+     "sterileSlicesOver1s": 7,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "cprobeat10": {
+     "coordinatorSeconds": {
+      "median": 9.42503642,
+      "max": 9.70753036
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -0.2924696400000002,
+     "runs": 9,
+     "m34Slices": 7,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 0.01379951588888891,
+     "m34FirstSliceSeconds": {
+      "median": 0.017276724999999882,
+      "min": 0.01678822999999996,
+      "max": 0.020896347000000093
+     },
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 7,
+     "mmPerSecond": null
+    }
+   },
+   "wall=30000": {
+    "arms": [
+     "aheadat30",
+     "bnewat30",
+     "cprobeat30"
+    ],
+    "baseline": "aheadat30",
+    "perSeed": {
+     "0": {
+      "aheadat30": [
+       70.727,
+       70.73,
+       70.73
+      ],
+      "bnewat30": [
+       70.727,
+       70.727,
+       70.73
+      ],
+      "cprobeat30": [
+       70.727,
+       70.727,
+       70.727
+      ]
+     },
+     "1": {
+      "aheadat30": [
+       70.727,
+       70.727,
+       70.727
+      ],
+      "bnewat30": [
+       70.727,
+       70.727,
+       70.73
+      ],
+      "cprobeat30": [
+       70.727,
+       70.727,
+       70.73
+      ]
+     },
+     "2": {
+      "aheadat30": [
+       70.727,
+       70.727,
+       70.727
+      ],
+      "bnewat30": [
+       70.727,
+       70.727,
+       70.727
+      ],
+      "cprobeat30": [
+       70.727,
+       70.727,
+       70.727
+      ]
+     }
+    },
+    "pairedDeltaMm": {
+     "bnewat30-minus-aheadat30": {
+      "n": 9,
+      "median": 0.0,
+      "min": -0.0030000000000001137,
+      "max": 0.0030000000000001137,
+      "armBetter": 1,
+      "armWorse": 1,
+      "equal": 7
+     },
+     "cprobeat30-minus-aheadat30": {
+      "n": 9,
+      "median": 0.0,
+      "min": -0.0030000000000001137,
+      "max": 0.0030000000000001137,
+      "armBetter": 2,
+      "armWorse": 1,
+      "equal": 6
+     }
+    },
+    "withinArmSpreadMm": {
+     "aheadat30": 0.0030000000000001137,
+     "bnewat30": 0.0030000000000001137,
+     "cprobeat30": 0.0030000000000001137
+    },
+    "aheadat30": {
+     "coordinatorSeconds": {
+      "median": 28.918645731,
+      "max": 29.240745008
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -0.7592549919999989,
+     "runs": 9,
+     "m34Slices": 29,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 6.389816118222222,
+     "m34FirstSliceSeconds": {
+      "median": 1.9253732180000003,
+      "min": 1.645256866,
+      "max": 2.513856169000001
+     },
+     "sterileSlicesOver1s": 29,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "bnewat30": {
+     "coordinatorSeconds": {
+      "median": 28.655539475,
+      "max": 29.179979487
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -0.8200205129999993,
+     "runs": 9,
+     "m34Slices": 9,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 1.8780045642222225,
+     "m34FirstSliceSeconds": {
+      "median": 1.8414149100000001,
+      "min": 1.649692666,
+      "max": 2.2994264500000003
+     },
+     "sterileSlicesOver1s": 9,
+     "probeAborts": 0,
+     "mmPerSecond": null
+    },
+    "cprobeat30": {
+     "coordinatorSeconds": {
+      "median": 27.659134594,
+      "max": 29.032284306
+     },
+     "overruns": 0,
+     "worstOverrunSeconds": -0.9677156939999989,
+     "runs": 9,
+     "m34Slices": 9,
+     "m34SlicesPublishing": 0,
+     "m34SecondsPerRun": 0.01992460277777772,
+     "m34FirstSliceSeconds": {
+      "median": 0.017349287999999907,
+      "min": 0.016892517999999912,
+      "max": 0.03668862199999978
+     },
+     "sterileSlicesOver1s": 0,
+     "probeAborts": 9,
+     "mmPerSecond": null
+    }
+   }
+  }
+ }
+}
