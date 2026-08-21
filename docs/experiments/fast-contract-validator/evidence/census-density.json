@@ -1,0 +1,493 @@
+{
+ "binary": "/var/lib/t3/tmp/fcv2/bin-on",
+ "binarySha256": "23335405152f73fa29280c05bee4c15966b8533a178c0c40c7f0647341c98c9c",
+ "note": "census only; no row here is a wall claim",
+ "rows": [
+  {
+   "label": "record-155.264",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_4111958b-3b3-1/docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/orientation-floor/pinned-fs-155.26442950833.json",
+   "calls": 13,
+   "pairs": 23790,
+   "provedClear": 23016,
+   "skipRate": 0.967465,
+   "rawSourceDepthMm": 155.26442950832842,
+   "confirmationsAccepted": 0,
+   "confirmationsAttempted": 0,
+   "confirmationsSkippedInfeasible": 297,
+   "nominalDepthMm": 155.264
+  },
+  {
+   "label": "record-159.079",
+   "mode": 22,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_4111958b-3b3-1/docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/finer-ladder/pinned-parent-159.079.json",
+   "calls": 16,
+   "pairs": 29280,
+   "provedClear": 28191,
+   "skipRate": 0.962807,
+   "rawSourceDepthMm": 159.07876040364795,
+   "confirmationsAccepted": null,
+   "confirmationsAttempted": null,
+   "confirmationsSkippedInfeasible": null,
+   "nominalDepthMm": 159.079
+  },
+  {
+   "label": "record-159.092",
+   "mode": 22,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_4111958b-3b3-1/docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/record-159.092/pinned-parent-159.092.json",
+   "calls": 16,
+   "pairs": 29280,
+   "provedClear": 28191,
+   "skipRate": 0.962807,
+   "rawSourceDepthMm": 159.09233022733062,
+   "confirmationsAccepted": null,
+   "confirmationsAttempted": null,
+   "confirmationsSkippedInfeasible": null,
+   "nominalDepthMm": 159.092
+  },
+  {
+   "label": "record-164.038",
+   "mode": 22,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_4111958b-3b3-1/docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/finer-ladder/pinned-fs-parent-164.0376.json",
+   "calls": 16,
+   "pairs": 29280,
+   "provedClear": 28293,
+   "skipRate": 0.966291,
+   "rawSourceDepthMm": 164.0375677990678,
+   "confirmationsAccepted": null,
+   "confirmationsAttempted": null,
+   "confirmationsSkippedInfeasible": null,
+   "nominalDepthMm": 164.038
+  },
+  {
+   "label": "shapes-17",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_4111958b-3b3-1/docs/experiments/fast-contract-validator/evidence/parents/shapes-17.json",
+   "calls": 7,
+   "pairs": 952,
+   "provedClear": 913,
+   "skipRate": 0.959034,
+   "rawSourceDepthMm": 200.349,
+   "confirmationsAccepted": 0,
+   "confirmationsAttempted": 0,
+   "confirmationsSkippedInfeasible": 497,
+   "nominalDepthMm": 200.349
+  },
+  {
+   "label": "triangle-20",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_4111958b-3b3-1/docs/experiments/fast-contract-validator/evidence/parents/triangle-20.json",
+   "calls": 117,
+   "pairs": 22230,
+   "provedClear": 21606,
+   "skipRate": 0.97193,
+   "rawSourceDepthMm": 70.72726178003285,
+   "confirmationsAccepted": 59,
+   "confirmationsAttempted": 59,
+   "confirmationsSkippedInfeasible": 1261,
+   "nominalDepthMm": 70.727
+  },
+  {
+   "label": "small-8",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_4111958b-3b3-1/docs/experiments/fast-contract-validator/evidence/parents/small-8.json",
+   "calls": 4,
+   "pairs": 112,
+   "provedClear": 108,
+   "skipRate": 0.964286,
+   "rawSourceDepthMm": 70.252,
+   "confirmationsAccepted": 0,
+   "confirmationsAttempted": 0,
+   "confirmationsSkippedInfeasible": 1497,
+   "nominalDepthMm": 70.252
+  },
+  {
+   "label": "band-seed0",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/tmp/csched/parents/parent-seed0.json",
+   "calls": 325,
+   "pairs": 594750,
+   "provedClear": 568934,
+   "skipRate": 0.956594,
+   "rawSourceDepthMm": 173.554,
+   "confirmationsAccepted": 315,
+   "confirmationsAttempted": 315,
+   "confirmationsSkippedInfeasible": 242,
+   "nominalDepthMm": 174.20812003998896
+  },
+  {
+   "label": "band-seed1",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/tmp/csched/parents/parent-seed1.json",
+   "calls": 339,
+   "pairs": 620370,
+   "provedClear": 594445,
+   "skipRate": 0.95821,
+   "rawSourceDepthMm": 174.57600000000002,
+   "confirmationsAccepted": 327,
+   "confirmationsAttempted": 327,
+   "confirmationsSkippedInfeasible": 189,
+   "nominalDepthMm": 176.05599999999998
+  },
+  {
+   "label": "band-seed2",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/tmp/csched/parents/parent-seed2.json",
+   "calls": 233,
+   "pairs": 426390,
+   "provedClear": 410815,
+   "skipRate": 0.963472,
+   "rawSourceDepthMm": 177.50400000000002,
+   "confirmationsAccepted": 220,
+   "confirmationsAttempted": 220,
+   "confirmationsSkippedInfeasible": 622,
+   "nominalDepthMm": 179.006
+  },
+  {
+   "label": "band-seed3",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/tmp/csched/parents-rest/parent-seed3.json",
+   "calls": 16,
+   "pairs": 29280,
+   "provedClear": 28421,
+   "skipRate": 0.970663,
+   "rawSourceDepthMm": 176.061,
+   "confirmationsAccepted": 0,
+   "confirmationsAttempted": 0,
+   "confirmationsSkippedInfeasible": 1497,
+   "nominalDepthMm": 176.061
+  },
+  {
+   "label": "band-seed4",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/tmp/csched/parents-rest/parent-seed4.json",
+   "calls": 225,
+   "pairs": 411750,
+   "provedClear": 393736,
+   "skipRate": 0.95625,
+   "rawSourceDepthMm": 171.08177826491067,
+   "confirmationsAccepted": 214,
+   "confirmationsAttempted": 214,
+   "confirmationsSkippedInfeasible": 645,
+   "nominalDepthMm": 171.64953207726535
+  },
+  {
+   "label": "band-seed5",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/tmp/csched/parents-rest/parent-seed5.json",
+   "calls": 250,
+   "pairs": 457500,
+   "provedClear": 438497,
+   "skipRate": 0.958463,
+   "rawSourceDepthMm": 177.558,
+   "confirmationsAccepted": 239,
+   "confirmationsAttempted": 239,
+   "confirmationsSkippedInfeasible": 547,
+   "nominalDepthMm": 179.05182605364416
+  },
+  {
+   "label": "band-seed6",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/tmp/csched/parents-rest/parent-seed6.json",
+   "calls": 262,
+   "pairs": 479460,
+   "provedClear": 463528,
+   "skipRate": 0.966771,
+   "rawSourceDepthMm": 178.624,
+   "confirmationsAccepted": 245,
+   "confirmationsAttempted": 245,
+   "confirmationsSkippedInfeasible": 517,
+   "nominalDepthMm": 179.6200102363703
+  },
+  {
+   "label": "band-seed7",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/tmp/csched/parents-rest/parent-seed7.json",
+   "calls": 286,
+   "pairs": 523380,
+   "provedClear": 504120,
+   "skipRate": 0.963201,
+   "rawSourceDepthMm": 178.264,
+   "confirmationsAccepted": 272,
+   "confirmationsAttempted": 272,
+   "confirmationsSkippedInfeasible": 413,
+   "nominalDepthMm": 179.52233303152792
+  },
+  {
+   "label": "band-seed8",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/tmp/csched/parents-rest/parent-seed8.json",
+   "calls": 321,
+   "pairs": 587430,
+   "provedClear": 566418,
+   "skipRate": 0.964231,
+   "rawSourceDepthMm": 177.464,
+   "confirmationsAccepted": 302,
+   "confirmationsAttempted": 302,
+   "confirmationsSkippedInfeasible": 289,
+   "nominalDepthMm": 178.93200000000002
+  },
+  {
+   "label": "band-seed9",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/tmp/csched/parents-rest/parent-seed9.json",
+   "calls": 311,
+   "pairs": 569130,
+   "provedClear": 545396,
+   "skipRate": 0.958298,
+   "rawSourceDepthMm": 174.12877826491066,
+   "confirmationsAccepted": 299,
+   "confirmationsAttempted": 299,
+   "confirmationsSkippedInfeasible": 305,
+   "nominalDepthMm": 174.96558182288433
+  },
+  {
+   "label": "band-seed10",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/tmp/csched/parents-rest/parent-seed10.json",
+   "calls": 365,
+   "pairs": 667950,
+   "provedClear": 642501,
+   "skipRate": 0.9619,
+   "rawSourceDepthMm": 175.39367511657755,
+   "confirmationsAccepted": 351,
+   "confirmationsAttempted": 351,
+   "confirmationsSkippedInfeasible": 99,
+   "nominalDepthMm": 176.3622237458826
+  },
+  {
+   "label": "band-seed11",
+   "mode": 34,
+   "exitCode": 0,
+   "parent": "/var/lib/t3/tmp/csched/parents-rest/parent-seed11.json",
+   "calls": 310,
+   "pairs": 567300,
+   "provedClear": 541723,
+   "skipRate": 0.954915,
+   "rawSourceDepthMm": 170.806,
+   "confirmationsAccepted": 293,
+   "confirmationsAttempted": 293,
+   "confirmationsSkippedInfeasible": 325,
+   "nominalDepthMm": 171.6141235046606
+  }
+ ],
+ "summary": {
+  "rowsWithCalls": 19,
+  "rowsWithoutCalls": 0,
+  "band171to179": {
+   "rows": 12,
+   "calls": 3243,
+   "pairs": 5934690,
+   "provedClear": 5698534,
+   "skipRate": 0.9602075255826337,
+   "perRowSkipRate": [
+    0.95491,
+    0.95625,
+    0.95659,
+    0.95821,
+    0.9583,
+    0.95846,
+    0.9619,
+    0.9632,
+    0.96347,
+    0.96423,
+    0.96677,
+    0.97066
+   ],
+   "depthRangeMm": [
+    171.6141235046606,
+    179.6200102363703
+   ]
+  },
+  "recordLine155to164": {
+   "rows": 4,
+   "calls": 61,
+   "pairs": 111630,
+   "provedClear": 107691,
+   "skipRate": 0.964713786616501,
+   "perRowSkipRate": [
+    0.96281,
+    0.96281,
+    0.96629,
+    0.96747
+   ],
+   "depthRangeMm": [
+    155.264,
+    164.038
+   ]
+  },
+  "otherFixtures": {
+   "shapes-17": {
+    "skipRate": 0.959034,
+    "calls": 7,
+    "pairs": 952,
+    "depthMm": 200.349
+   },
+   "triangle-20": {
+    "skipRate": 0.97193,
+    "calls": 117,
+    "pairs": 22230,
+    "depthMm": 70.72726178003285
+   },
+   "small-8": {
+    "skipRate": 0.964286,
+    "calls": 4,
+    "pairs": 112,
+    "depthMm": 70.252
+   }
+  },
+  "byDepth": [
+   {
+    "label": "small-8",
+    "depthMm": 70.252,
+    "skipRate": 0.964286,
+    "calls": 4,
+    "pairs": 112
+   },
+   {
+    "label": "triangle-20",
+    "depthMm": 70.727,
+    "skipRate": 0.97193,
+    "calls": 117,
+    "pairs": 22230
+   },
+   {
+    "label": "record-155.264",
+    "depthMm": 155.264,
+    "skipRate": 0.967465,
+    "calls": 13,
+    "pairs": 23790
+   },
+   {
+    "label": "record-159.079",
+    "depthMm": 159.079,
+    "skipRate": 0.962807,
+    "calls": 16,
+    "pairs": 29280
+   },
+   {
+    "label": "record-159.092",
+    "depthMm": 159.092,
+    "skipRate": 0.962807,
+    "calls": 16,
+    "pairs": 29280
+   },
+   {
+    "label": "record-164.038",
+    "depthMm": 164.038,
+    "skipRate": 0.966291,
+    "calls": 16,
+    "pairs": 29280
+   },
+   {
+    "label": "band-seed11",
+    "depthMm": 171.6141235046606,
+    "skipRate": 0.954915,
+    "calls": 310,
+    "pairs": 567300
+   },
+   {
+    "label": "band-seed4",
+    "depthMm": 171.64953207726535,
+    "skipRate": 0.95625,
+    "calls": 225,
+    "pairs": 411750
+   },
+   {
+    "label": "band-seed0",
+    "depthMm": 174.20812003998896,
+    "skipRate": 0.956594,
+    "calls": 325,
+    "pairs": 594750
+   },
+   {
+    "label": "band-seed9",
+    "depthMm": 174.96558182288433,
+    "skipRate": 0.958298,
+    "calls": 311,
+    "pairs": 569130
+   },
+   {
+    "label": "band-seed1",
+    "depthMm": 176.05599999999998,
+    "skipRate": 0.95821,
+    "calls": 339,
+    "pairs": 620370
+   },
+   {
+    "label": "band-seed3",
+    "depthMm": 176.061,
+    "skipRate": 0.970663,
+    "calls": 16,
+    "pairs": 29280
+   },
+   {
+    "label": "band-seed10",
+    "depthMm": 176.3622237458826,
+    "skipRate": 0.9619,
+    "calls": 365,
+    "pairs": 667950
+   },
+   {
+    "label": "band-seed8",
+    "depthMm": 178.93200000000002,
+    "skipRate": 0.964231,
+    "calls": 321,
+    "pairs": 587430
+   },
+   {
+    "label": "band-seed2",
+    "depthMm": 179.006,
+    "skipRate": 0.963472,
+    "calls": 233,
+    "pairs": 426390
+   },
+   {
+    "label": "band-seed5",
+    "depthMm": 179.05182605364416,
+    "skipRate": 0.958463,
+    "calls": 250,
+    "pairs": 457500
+   },
+   {
+    "label": "band-seed7",
+    "depthMm": 179.52233303152792,
+    "skipRate": 0.963201,
+    "calls": 286,
+    "pairs": 523380
+   },
+   {
+    "label": "band-seed6",
+    "depthMm": 179.6200102363703,
+    "skipRate": 0.966771,
+    "calls": 262,
+    "pairs": 479460
+   },
+   {
+    "label": "shapes-17",
+    "depthMm": 200.349,
+    "skipRate": 0.959034,
+    "calls": 7,
+    "pairs": 952
+   }
+  ]
+ }
+}

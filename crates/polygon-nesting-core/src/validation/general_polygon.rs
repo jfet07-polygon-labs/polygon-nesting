@@ -78,7 +78,31 @@ pub fn validate_publication(
     placements: &[GeneralPlacement<'_>],
     settings: PublicationValidationSettings,
 ) -> Result<(), PublicationValidationError> {
-    validate_publication_inner(placements, settings, false)
+    validate_publication_inner(placements, settings, false, true)
+}
+
+/// [`validate_publication`] with the broad phase **disarmed**: the exact loop
+/// runs on every pair, as it does in a build without this feature.
+///
+/// This exists so that one release binary can hold both implementations at
+/// once. The equivalence evidence the previous round could offer was a test
+/// comparing the feature-on path against *enumerated expectations*, which is not
+/// two implementations meeting; and the 5.9M-pair census ran in release, where
+/// the `debug_assert` on the skip is compiled out. `examples/
+/// contract_validator_shadow.rs` closes that by running a randomized corpus
+/// through this function and [`validate_publication`] in the same release
+/// process and requiring the two `Result`s to be equal **including the error
+/// message**.
+///
+/// Disarming costs the armed path nothing: a disarmed phase is one whose slabs
+/// are all `None` and whose thresholds are all infinite, so `provably_clear` is
+/// constantly false without the scan row acquiring a branch it did not have.
+#[cfg(feature = "fast-contract-validator")]
+pub fn validate_publication_exact_reference(
+    placements: &[GeneralPlacement<'_>],
+    settings: PublicationValidationSettings,
+) -> Result<(), PublicationValidationError> {
+    validate_publication_inner(placements, settings, false, false)
 }
 
 /// [`validate_publication`] with its all-pairs clearance loop spread over the
@@ -105,7 +129,7 @@ pub fn validate_publication_parallel(
     placements: &[GeneralPlacement<'_>],
     settings: PublicationValidationSettings,
 ) -> Result<(), PublicationValidationError> {
-    validate_publication_inner(placements, settings, true)
+    validate_publication_inner(placements, settings, true, true)
 }
 
 fn validate_publication_inner(
@@ -116,6 +140,8 @@ fn validate_publication_inner(
         allow(unused_variables)
     )]
     parallel: bool,
+    #[cfg_attr(not(feature = "fast-contract-validator"), allow(unused_variables))]
+    use_broad_phase: bool,
 ) -> Result<(), PublicationValidationError> {
     validate_settings(settings)?;
     let transformed = placements
@@ -135,9 +161,15 @@ fn validate_publication_inner(
     // build against the `O(pairs * edges^2)` it filters. Its verdict is a proof
     // of clearance, never an estimate of it - see `ClearanceBroadPhase::new`.
     #[cfg(feature = "fast-contract-validator")]
-    let broad_phase = ClearanceBroadPhase::new(&transformed, pair_clearance);
+    let broad_phase = if use_broad_phase {
+        ClearanceBroadPhase::new(&transformed, pair_clearance)
+    } else {
+        ClearanceBroadPhase::disarmed(transformed.len())
+    };
     #[cfg(feature = "fast-contract-validator")]
-    contract_validator_census(&broad_phase, transformed.len());
+    if use_broad_phase {
+        contract_validator_census(&broad_phase, transformed.len());
+    }
     // One row per first index. Named so the serial nest and the job-pool
     // dispatch below run the same body against the same operands in the same
     // per-row order: this is one loop with two traversals, not two loops.
@@ -579,32 +611,175 @@ fn rings_properly_cross(first: &[IrregularPoint], second: &[IrregularPoint]) -> 
 #[cfg(feature = "fast-contract-validator")]
 const CLEARANCE_SLAB_DIRECTIONS: usize = 4;
 
-/// The length of each projection direction's normal, in the order the
-/// projections are stored: `(1,0)`, `(0,1)`, `(1,1)`, `(1,-1)`.
+/// An **upper** bound on the length of each projection direction's normal, in
+/// the order the projections are stored: `(1,0)`, `(0,1)`, `(1,1)`, `(1,-1)`.
 ///
 /// A gap measured along an *unnormalised* direction `d` is `|d|` times the gap
 /// along its unit normal, so a distance threshold has to be scaled by `|d|`
-/// before it is compared against the diagonal projections. Scaling the
-/// threshold up rather than the gap down keeps the test on the strict side of
-/// the rounding either way.
+/// before it is compared against the diagonal projections. The bound has to be
+/// an upper one in *both* uses: the threshold is what gets scaled, and a
+/// threshold scaled by anything `>= |d|` is a threshold at least as strict as
+/// the true one.
+///
+/// `SQRT_2` is the correctly rounded `sqrt(2)` and already rounds *up*
+/// (`1.4142135623730951` against `1.41421356237309504880...`), but the proof
+/// must not rest on which way a library constant happened to land, so this
+/// takes one further ulp outward and does not care.
 #[cfg(feature = "fast-contract-validator")]
-const CLEARANCE_SLAB_NORMS: [f64; CLEARANCE_SLAB_DIRECTIONS] =
-    [1.0, 1.0, std::f64::consts::SQRT_2, std::f64::consts::SQRT_2];
+const CLEARANCE_SLAB_NORM_UPPER_BOUNDS: [f64; CLEARANCE_SLAB_DIRECTIONS] = [
+    1.0,
+    1.0,
+    f64::from_bits(std::f64::consts::SQRT_2.to_bits() + 1),
+    f64::from_bits(std::f64::consts::SQRT_2.to_bits() + 1),
+];
 
 /// The floor of the proof margin, in millimetres.
 ///
-/// See [`ClearanceBroadPhase::new`] for what this has to dominate. It is a
-/// picometre: six orders of magnitude below the smallest pair clearance this
-/// engine is ever asked for (`0.0005 mm`), and three to four orders *above* the
-/// worst rounding error either side of the comparison can carry at the
-/// coordinate magnitudes a sheet has.
+/// This is *not* what carries the proof - [`CLEARANCE_SLAB_RELATIVE_MARGIN`] is
+/// - and it is kept only because it costs nothing and holds the shipped
+/// threshold where the measured rounds found it. It is a picometre: six orders
+/// of magnitude below the smallest pair clearance this engine is ever asked for
+/// (`0.0005 mm`).
 #[cfg(feature = "fast-contract-validator")]
 const CLEARANCE_SLAB_ABSOLUTE_MARGIN_MM: f64 = 1e-9;
 
 /// The scale-following part of the proof margin, as a fraction of the largest
 /// projection magnitude in the layout.
+///
+/// This is the number the whole certificate rests on, and it is held to
+/// [`CLEARANCE_SLAB_PROVEN_RELATIVE_ERROR`] by
+/// [`the_shipped_margin_dominates_the_proven_error_bound`]: it may be *raised*
+/// freely and may never be lowered below the derived bound. It sits about 280x
+/// above that bound, which is why the value the measured rounds ran with is
+/// still the value here - nothing in this change moves a threshold.
 #[cfg(feature = "fast-contract-validator")]
 const CLEARANCE_SLAB_RELATIVE_MARGIN: f64 = 1e-12;
+
+/// The **derived** relative error bound the proof needs the margin to dominate:
+/// `CLEARANCE_SLAB_PROVEN_ERROR_ULPS * 2^-53`.
+///
+/// See [`ClearanceBroadPhase::new`] for the derivation this discharges. Both
+/// halves of a skip depend on it - the distance half needs `16.5 * u * extent`
+/// and the overlap half's rounded edge midpoints need `1.5 * u * extent`.
+#[cfg(feature = "fast-contract-validator")]
+const CLEARANCE_SLAB_PROVEN_ERROR_ULPS: f64 = 32.0;
+
+/// `CLEARANCE_SLAB_PROVEN_ERROR_ULPS` unit roundoffs, relative.
+#[cfg(feature = "fast-contract-validator")]
+const CLEARANCE_SLAB_PROVEN_RELATIVE_ERROR: f64 =
+    CLEARANCE_SLAB_PROVEN_ERROR_ULPS * (f64::EPSILON / 2.0);
+
+/// The contractual grid's own coordinate ceiling, in millimetres.
+///
+/// [`PolygonRing::new`] admits a source coordinate only when `to_grid_mm` can
+/// represent it, and that requires `|x| * 1000` to be an IEEE-754 *safe
+/// integer*. Every **source** coordinate this validator can ever see therefore
+/// satisfies `|x| <= (2^53 - 1) / 1000`. It is quoted here because it is the
+/// only bound the type system gives, and because
+/// [`CLEARANCE_SLAB_MAX_COORDINATE_MM`] exists precisely to say that it is not
+/// enough on its own.
+///
+/// A proof input rather than a runtime value: nothing in the filter reads it,
+/// and the test that recomputes the structural ceiling from it is what keeps it
+/// honest, so it is scoped to the tests that consume it.
+#[cfg(all(test, feature = "fast-contract-validator"))]
+const CLEARANCE_SLAB_GRID_CEILING_MM: f64 = 9_007_199_254_740_991.0 / 1000.0;
+
+/// The numeric domain the certificate is proved on: no skip is ever issued for
+/// a pair carrying a coordinate of larger magnitude than this. `2^112 mm`.
+///
+/// # The step this exists to close
+///
+/// The scan row treats a non-finite minimum as a **rejection**, and the filter's
+/// original argument for never skipping past one was "`minimum` starts at
+/// `INFINITY` and `f64::min` ignores `NaN`, so the only way out is that no
+/// segment pair existed". That does not follow on its own:
+/// [`point_segment_distance`] contains squares, products and a division that can
+/// each manufacture an `inf` or a `NaN` out of finite inputs, and `f64::min`
+/// returning the non-`NaN` operand is exactly what would leave `INFINITY`
+/// standing on a pair whose slabs are far apart. The implication needs a bound
+/// on the coordinates, and the bound needs to survive the transform.
+///
+/// # Where the bound actually comes from, which is not where one would look
+///
+/// The grid contract ([`CLEARANCE_SLAB_GRID_CEILING_MM`]) bounds the *source*
+/// ring, but it does not survive the transform: `translate_x` / `translate_y`
+/// are checked only for finiteness ([`placement_rotation`]), and
+/// `transform_source_ring` likewise rejects only a non-finite result. Nor can
+/// `validate_sheet` be leaned on - it runs against `sheet_width_mm`, itself only
+/// required to be finite and positive, and it runs *after* the transform and
+/// only over outer rings.
+///
+/// The bound that does hold comes from [`interior_sample`], via
+/// [`transform_placement`], which rejects any region with no discoverable
+/// material interior. Discovering one requires two **distinct** `f64` y-levels
+/// among the transformed ring points, and two distinct x-intersections at some
+/// scan level. Two distinct doubles of magnitude `M` differ by at least
+/// `M * 2^-53`, and both differences are bounded by the region's diameter, which
+/// a rigid transform inherits from the source ring: at most
+/// `2 * sqrt(2) * (2^53 - 1) / 1000 ~= 2.55e13 mm`. So every coordinate of a set
+/// that `transform_placement` admits satisfies
+///
+/// ```text
+/// |coordinate| <= 2.55e13 * 2^53 ~= 2.29e29 mm
+/// ```
+///
+/// and at that magnitude nothing in the exact loop overflows. **So the original
+/// lemma is true** - but for a reason that lives three functions away, in the
+/// one function whose failure mode is "this piece has no interior", and it had
+/// not been written down anywhere. A validator's soundness should not rest on an
+/// unstated consequence of a helper that exists for another purpose.
+///
+/// # What the value is chosen to make true
+///
+/// `2^112 ~= 5.19e33` is picked to sit above that structural bound by four
+/// orders of magnitude - so it can never refuse a layout the contract actually
+/// admits, and the shipped skip rate is untouched - while still proving
+/// finiteness *on its own*, without borrowing the argument above. Writing `C`
+/// for the largest coordinate magnitude in a pair, `C <= 2^112` gives:
+///
+/// * `dx = end.x - start.x` has `|dx| <= 2^113`, so `dx * dx <= 2^226` and
+///   `length_squared <= 2^227` - 797 binades below the overflow horizon, so no
+///   product, sum or square in [`point_segment_distance`] reaches infinity;
+/// * the projection numerator is bounded by the same `2^227`, so the division is
+///   never `inf / inf` and never yields `NaN`; `clamp` then puts the parameter in
+///   `[0, 1]` even where a denormal `length_squared` sends the quotient to
+///   infinity;
+/// * `hypot`'s arguments are bounded by `2^113`, so its result is finite;
+/// * `orient2d`'s adaptive expansions multiply coordinate differences by the
+///   splitter `2^27 + 1`, giving intermediates bounded by `2^254` - so the
+///   `robust` predicate keeps its **exact sign**, which is what makes
+///   `segments_touch_or_cross`, `rings_properly_cross` and
+///   `classify_point_in_ring` exact rather than approximate, and that exactness
+///   is load-bearing for the overlap half of every skip;
+/// * `(a + b) / 2.0` in [`has_material_sample_inside`] and the `x + y` / `x - y`
+///   projections are bounded by `2^113`.
+///
+/// No overflow anywhere means no `inf`, hence no `inf - inf`, `0 * inf` or
+/// `inf / inf`, hence **no `NaN`**. So on the guarded domain
+/// `point_segment_distance` returns a finite non-negative number on every input,
+/// `minimum_boundary_distance` is non-finite *only* when it saw no segment pair
+/// at all, and that case is exactly what [`ClearanceSlabs::of`]'s empty-set
+/// `None` forecloses. The horizon for this argument is `C <= 2^497`; `2^112`
+/// leaves 385 binades of room.
+///
+/// Outside the domain none of that is available, and the guard is why the
+/// question never has to be asked there: the pair takes the exact loop, which is
+/// the fail-closed direction.
+#[cfg(feature = "fast-contract-validator")]
+const CLEARANCE_SLAB_MAX_COORDINATE_MM: f64 = 5_192_296_858_534_827_628_530_496_329_220_096.0;
+
+/// The structural coordinate bound derived in
+/// [`CLEARANCE_SLAB_MAX_COORDINATE_MM`]: what `interior_sample` and the grid
+/// contract already force, in millimetres.
+///
+/// Kept as a constant so `the_domain_guard_admits_everything_the_contract_can_build`
+/// can assert the guard sits above it *and* that the number still matches its
+/// own derivation. If a future change to `interior_sample` or to the grid
+/// contract raises this above the guard, that test fails rather than the
+/// validator silently starting to refuse certificates.
+#[cfg(all(test, feature = "fast-contract-validator"))]
+const CLEARANCE_SLAB_STRUCTURAL_CEILING_MM: f64 = 2.2946926991272400e29;
 
 /// One material set's extent along [`CLEARANCE_SLAB_DIRECTIONS`] fixed
 /// directions, in the same untouched-`f64` millimetres the exact loop measures
@@ -620,7 +795,9 @@ const CLEARANCE_SLAB_RELATIVE_MARGIN: f64 = 1e-12;
 #[cfg(feature = "fast-contract-validator")]
 #[derive(Clone, Copy, Debug)]
 struct ClearanceSlabs {
+    /// A rounded-**down** lower bound on the true minimum of each projection.
     min: [f64; CLEARANCE_SLAB_DIRECTIONS],
+    /// A rounded-**up** upper bound on the true maximum of each projection.
     max: [f64; CLEARANCE_SLAB_DIRECTIONS],
     /// The largest `|projection|` in this set, which feeds the proof margin.
     extent: f64,
@@ -628,35 +805,89 @@ struct ClearanceSlabs {
 
 #[cfg(feature = "fast-contract-validator")]
 impl ClearanceSlabs {
-    /// The slabs of `set`, or `None` when it carries no points at all.
+    /// The slabs of `set`, or `None` when it carries no points at all, when any
+    /// coordinate leaves [`CLEARANCE_SLAB_MAX_COORDINATE_MM`], or when any
+    /// projection is not finite.
     ///
-    /// `None` is load-bearing and not a convenience: a skip has to prove the
-    /// exact loop would have *accepted* the pair, and the exact loop rejects a
-    /// pair whose minimum stays at `f64::INFINITY` for want of a single segment
-    /// to measure. Refusing to build slabs for a pointless set means a skip can
-    /// only ever fire when both sets have at least one point, hence at least one
-    /// ring, hence at least one segment pair, hence a finite minimum.
+    /// # Two different `None`s, both load-bearing
+    ///
+    /// **No points.** A skip has to prove the exact loop would have *accepted*
+    /// the pair, and the exact loop rejects a pair whose minimum stays at
+    /// `f64::INFINITY` for want of a single segment to measure. Refusing to
+    /// build slabs for a pointless set means a skip can only ever fire when both
+    /// sets have at least one point, hence at least one ring, hence at least one
+    /// segment pair.
+    ///
+    /// **Outside the numeric domain.** That "hence a finite minimum" is a step
+    /// about floating-point arithmetic, not about geometry, and it is only true
+    /// where the arithmetic cannot overflow: squares, products and a division in
+    /// [`point_segment_distance`] can each manufacture an `inf` or a `NaN` out of
+    /// finite inputs, `f64::min` propagates the *non*-`NaN` operand and so
+    /// leaves `INFINITY` standing, and the scan row treats a non-finite minimum
+    /// as a **rejection**. A filter that skipped such a pair would invert a
+    /// verdict. [`CLEARANCE_SLAB_MAX_COORDINATE_MM`] is the domain on which that
+    /// cannot happen, and this is where the guard is applied: any set with a
+    /// coordinate outside it gets no certificate at all, and every pair
+    /// containing it takes the exact loop.
+    ///
+    /// The interior sample is checked with the ring points even though it is
+    /// never projected, because [`has_material_sample_inside`] feeds it to
+    /// `orient2d` and the domain is what keeps that predicate exact.
+    ///
+    /// # Outward rounding
+    ///
+    /// `x` and `y` are stored coordinates and exact. `x + y` and `x - y` are one
+    /// correctly rounded operation each, so the true projection lies within half
+    /// an ulp of the computed one and therefore inside
+    /// `[next_down(p), next_up(p)]`. Widening each diagonal projection outward
+    /// by that ulp before the running `min`/`max` makes `[min, max]` a
+    /// guaranteed **superset** of the true projection interval, which is what
+    /// lets [`Self::gap`] carry a genuine bound rather than an estimate
+    /// with an epsilon bolted on.
     fn of(set: &MaterialSet) -> Option<Self> {
         let mut slabs: Option<Self> = None;
+        let mut admit = |x: f64, y: f64| -> bool {
+            if !(x.abs() <= CLEARANCE_SLAB_MAX_COORDINATE_MM)
+                || !(y.abs() <= CLEARANCE_SLAB_MAX_COORDINATE_MM)
+            {
+                // Written as a negated `<=` so that a `NaN` coordinate, on which
+                // every comparison is false, takes this branch too.
+                return false;
+            }
+            let sum = x + y;
+            let difference = x - y;
+            let lower = [x, y, sum.next_down(), difference.next_down()];
+            let upper = [x, y, sum.next_up(), difference.next_up()];
+            match slabs.as_mut() {
+                None => {
+                    slabs = Some(Self {
+                        min: lower,
+                        max: upper,
+                        extent: 0.0,
+                    })
+                }
+                Some(slabs) => {
+                    for index in 0..CLEARANCE_SLAB_DIRECTIONS {
+                        slabs.min[index] = slabs.min[index].min(lower[index]);
+                        slabs.max[index] = slabs.max[index].max(upper[index]);
+                    }
+                }
+            }
+            true
+        };
         for region in &set.regions {
             for ring in region_rings(region) {
                 for point in ring {
-                    let projections = [point.x, point.y, point.x + point.y, point.x - point.y];
-                    match slabs.as_mut() {
-                        None => {
-                            slabs = Some(Self {
-                                min: projections,
-                                max: projections,
-                                extent: 0.0,
-                            })
-                        }
-                        Some(slabs) => {
-                            for index in 0..CLEARANCE_SLAB_DIRECTIONS {
-                                slabs.min[index] = slabs.min[index].min(projections[index]);
-                                slabs.max[index] = slabs.max[index].max(projections[index]);
-                            }
-                        }
+                    if !admit(point.x, point.y) {
+                        return None;
                     }
+                }
+            }
+            if let Some(sample) = region.material_sample {
+                if !(sample.x.abs() <= CLEARANCE_SLAB_MAX_COORDINATE_MM)
+                    || !(sample.y.abs() <= CLEARANCE_SLAB_MAX_COORDINATE_MM)
+                {
+                    return None;
                 }
             }
         }
@@ -673,8 +904,24 @@ impl ClearanceSlabs {
         Some(slabs)
     }
 
-    /// The gap between the two sets along direction `index`, or a negative
-    /// number when their slabs overlap there.
+    /// The computed gap between the two sets along direction `index`, negative
+    /// when their slabs overlap there.
+    ///
+    /// This is **not** itself a lower bound on the true gap - it is one rounded
+    /// subtraction away from one - and it is deliberately left that way. The
+    /// missing ulp is absorbed once, at build time, by the second `next_up` on
+    /// the threshold in [`ClearanceBroadPhase::new`], because `next_down` is
+    /// monotonic and `next_down(g) >= t` is exactly `g >= next_up(t)`. Moving
+    /// the rounding to the threshold makes it cost `O(directions)` per
+    /// `validate_publication` call instead of `O(pairs * directions)`, and
+    /// leaves this function the two subtractions and one `max` the measured
+    /// rounds timed - the 5.57x per-confirmation result is a result about
+    /// *this* instruction sequence, and a version of the proof that changed it
+    /// would have needed its own wall battery to keep that number.
+    ///
+    /// `self.min`/`self.max` already bracket the true projection interval
+    /// outward, so each difference below is no larger than the corresponding
+    /// true difference. `max` of two floats is exact.
     #[inline]
     fn gap(&self, other: &Self, index: usize) -> f64 {
         (other.min[index] - self.max[index]).max(self.min[index] - other.max[index])
@@ -696,30 +943,71 @@ struct ClearanceBroadPhase {
 impl ClearanceBroadPhase {
     /// Seals the certificate for one `validate_publication` call.
     ///
-    /// # Why the margin makes this a proof
+    /// # What a skip has to be, and the two halves it is built from
     ///
-    /// Skipping a pair claims the exact loop would have found
-    /// `minimum_boundary_distance >= pair_clearance`. Three things stand between
-    /// the stored projections and that claim, and the margin dominates all of
-    /// them by at least three orders of magnitude:
+    /// Skipping a pair claims two things: that `material_sets_overlap` is false,
+    /// and that `minimum_boundary_distance` is finite and `>= pair_clearance`.
+    /// The second is a claim about the **computed** value, not the real
+    /// distance, so the proof has to cross the exact loop's own arithmetic as
+    /// well as its own. It is built from two pieces that are kept deliberately
+    /// separate:
     ///
-    /// * **the projections themselves.** `x` and `y` are stored coordinates and
-    ///   exact; `x + y` and `x - y` are one rounded operation each, so each
-    ///   diagonal projection sits within `2^-53 * (|x| + |y|)` of its real value,
-    ///   and a slab can therefore be reported at most that much *wider* apart
-    ///   than it is.
-    /// * **the gap.** One further subtraction, correctly rounded, so at most
-    ///   another `2^-53` relative.
-    /// * **the exact loop's own arithmetic.** `segment_distance` is not exact
-    ///   either; the value the skip is claiming about is the *computed* one, and
-    ///   its coordinate differences and `hypot` carry a handful of ulps of the
-    ///   coordinate magnitude.
+    /// 1. a *certified* lower bound on the true geometric gap, carrying no
+    ///    epsilon at all - [`ClearanceSlabs::of`] rounds the stored intervals
+    ///    outward and the threshold absorbs the subtraction's own rounding, so
+    ///    `next_down(gap) <= true gap` is unconditional; and
+    /// 2. a *derived* bound on how far below the truth the exact loop's own
+    ///    floating-point answer can land, which is what the margin is for.
     ///
-    /// Every one of those is bounded by a small multiple of
-    /// `2^-53 * extent ~= 1.1e-16 * extent`. The margin is
-    /// `1e-9 mm + 1e-12 * extent` - four orders above the worst of them at any
-    /// sheet-sized `extent`, and still six orders below the tightest clearance
-    /// the engine is asked for, so it costs the filter nothing it could have had.
+    /// The previous form of this comment claimed "a handful of ulps" for the
+    /// second piece, which is an assertion and not a bound. Here is the bound.
+    ///
+    /// # The derivation the margin discharges
+    ///
+    /// Write `u = 2^-53` and let `C` be the largest coordinate magnitude in the
+    /// pair; `extent >= C` always, because the stored projections include `x`
+    /// and `y` themselves. Every step below is a correctly rounded IEEE-754
+    /// operation, and [`CLEARANCE_SLAB_MAX_COORDINATE_MM`] has already ruled out
+    /// overflow, so each carries a relative error of at most `u`.
+    ///
+    /// **Distance half.** In [`point_segment_distance`] the clamped parameter
+    /// `p` lies in `[0, 1]`, so `Q = S + p * (E - S)` - computed exactly - is a
+    /// real point *on* the segment and `true_distance <= |P - Q|`. Tracking the
+    /// roundings: `fl(p * dx)` is within `2.1 * C * u` of `p * (E.x - S.x)`;
+    /// `closest_x` adds one more rounding for `5.3 * C * u`; the difference
+    /// `P.x - closest_x` adds another for `7.4 * C * u` per component, so the
+    /// computed difference vector is within `10.5 * C * u` of `P - Q`. `hypot`
+    /// contributes at most `2u` relative on a result bounded by `3C`, i.e.
+    /// `6 * C * u`. Hence
+    /// **`computed >= true_distance - 16.5 * C * u`**. The degenerate branch
+    /// (`length_squared == 0`) measures to an endpoint and is looser only in the
+    /// safe direction, at `9 * C * u`.
+    ///
+    /// **Overlap half.** A positive true gap puts the two sets in disjoint
+    /// half-planes. `rings_properly_cross` and `classify_point_in_ring` are then
+    /// *exact* - they consume only signs of `robust`'s adaptive `orient2d`,
+    /// which is exact on the guarded domain - so the only inexact input to
+    /// `material_sets_overlap` is the rounded edge midpoint in
+    /// [`has_material_sample_inside`], which sits within `1.5 * C * u` of a true
+    /// point of its own set. (The interior sample needs no slack: it is a stored
+    /// point that the exact winding rule certified as inside its own polygon,
+    /// hence inside its own hull.)
+    ///
+    /// So `32 * u` dominates both halves, with the distance half binding.
+    /// [`CLEARANCE_SLAB_RELATIVE_MARGIN`] is `1e-12`, about `280x` that, and
+    /// [`the_shipped_margin_dominates_the_proven_error_bound`] is the test that
+    /// fails if anyone ever lowers it under the derivation.
+    ///
+    /// # Putting them together
+    ///
+    /// The threshold is rounded **up** at every step, so
+    /// `gap >= threshold[i]` implies
+    /// `next_down(gap) >= (pair_clearance + margin) * |d_i|` in exact
+    /// arithmetic. Since `|b - a| * |d| >= (b - a) . d >= gap` for any `a`, `b`
+    /// in the two sets, that gives
+    /// `true_distance >= pair_clearance + margin`, and the distance half then
+    /// gives `computed >= pair_clearance`. That is the claim, and it is now an
+    /// implication rather than a comfortable ratio.
     ///
     /// The consequence is the property a prefilter needs, and it is the same one
     /// `GridSlabs::separated` states for its own question: this can be wrong
@@ -730,16 +1018,57 @@ impl ClearanceBroadPhase {
             .iter()
             .flatten()
             .fold(0.0f64, |extent, slabs| extent.max(slabs.extent));
-        let threshold = pair_clearance
-            + CLEARANCE_SLAB_ABSOLUTE_MARGIN_MM
-            + CLEARANCE_SLAB_RELATIVE_MARGIN * extent;
+        // Every rounding here is outward, so `threshold` is an upper bound on
+        // the real `(pair_clearance + margin) * |d_i|` and a skip therefore
+        // clears the real quantity too.
+        //
+        // The `max` is the proof made structural rather than merely tested:
+        // whatever `CLEARANCE_SLAB_RELATIVE_MARGIN` is edited to, the margin
+        // cannot fall below the derived error bound, so soundness does not
+        // depend on anyone reading the derivation before touching the constant.
+        // At the shipped `1e-12` against a derived `3.55e-15` the `max` selects
+        // the shipped value and this changes no threshold.
+        let relative = CLEARANCE_SLAB_RELATIVE_MARGIN.max(CLEARANCE_SLAB_PROVEN_RELATIVE_ERROR);
+        let margin = (CLEARANCE_SLAB_ABSOLUTE_MARGIN_MM + (relative * extent).next_up()).next_up();
+        let threshold = (pair_clearance + margin).next_up();
         let mut thresholds = [f64::INFINITY; CLEARANCE_SLAB_DIRECTIONS];
         if threshold.is_finite() {
             for index in 0..CLEARANCE_SLAB_DIRECTIONS {
-                thresholds[index] = threshold * CLEARANCE_SLAB_NORMS[index];
+                // Two outward steps, absorbing two different roundings. The
+                // first is this multiplication's own. The second is the
+                // *subtraction* inside `ClearanceSlabs::gap`, paid here rather
+                // than per pair: `next_down(g) >= t` iff `g >= next_up(t)`, so
+                // bumping the threshold once is worth a `next_down` on every
+                // gap of every pair, and leaves the hot loop untouched.
+                thresholds[index] = (threshold * CLEARANCE_SLAB_NORM_UPPER_BOUNDS[index])
+                    .next_up()
+                    .next_up();
             }
         }
         Self { slabs, thresholds }
+    }
+
+    /// A phase that certifies nothing, for
+    /// [`validate_publication_exact_reference`].
+    ///
+    /// Both fields are independently sufficient: every slab is `None`, so the
+    /// `let ... else` in [`Self::provably_clear`] returns on the first line, and
+    /// every threshold is infinite, so even a hypothetical `Some` could not
+    /// clear it - `gap` is always finite on a set that produced a
+    /// certificate, because [`CLEARANCE_SLAB_MAX_COORDINATE_MM`] bounds the
+    /// projections and `next_down` of a finite difference is finite.
+    fn disarmed(count: usize) -> Self {
+        Self {
+            slabs: vec![None; count],
+            thresholds: [f64::INFINITY; CLEARANCE_SLAB_DIRECTIONS],
+        }
+    }
+
+    /// How many sets were refused a certificate outright - no points, a
+    /// non-finite projection, or a coordinate outside
+    /// [`CLEARANCE_SLAB_MAX_COORDINATE_MM`]. The fail-closed counter.
+    fn domain_refusals(&self) -> u64 {
+        self.slabs.iter().filter(|slabs| slabs.is_none()).count() as u64
     }
 
     /// Whether the pair is **provably** clear: at least `pair_clearance` apart,
@@ -765,6 +1094,11 @@ impl ClearanceBroadPhase {
     /// overlap the validator must reject. It can never be skipped here, because
     /// containment makes one slab interval a subset of the other in *every*
     /// direction, so every gap is negative and no proof is available.
+    ///
+    /// The `None` arm is the fail-closed one, and it carries the numeric-domain
+    /// guard as well as the empty-set case: a pair either side of
+    /// [`CLEARANCE_SLAB_MAX_COORDINATE_MM`] gets no certificate and goes to the
+    /// exact loop unchanged.
     #[inline]
     fn provably_clear(&self, first: usize, second: usize) -> bool {
         let (Some(first), Some(second)) = (&self.slabs[first], &self.slabs[second]) else {
@@ -833,6 +1167,118 @@ pub fn contract_validator_census_totals() -> (u64, u64, u64) {
         CENSUS[1].load(Ordering::Relaxed),
         CENSUS[2].load(Ordering::Relaxed),
     )
+}
+
+/// What [`contract_validator_shadow_audit`] found on one layout.
+#[cfg(feature = "fast-contract-validator")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContractValidatorShadowAudit {
+    /// Pairs offered to the broad phase.
+    pub pairs: u64,
+    /// Pairs it issued a certificate for. A corpus with this at zero has tested
+    /// nothing, which is why the harness reports it.
+    pub proved_clear: u64,
+    /// Material sets refused a certificate outright - no points, a non-finite
+    /// projection, or a coordinate outside
+    /// [`CLEARANCE_SLAB_MAX_COORDINATE_MM`]. This is the fail-closed counter.
+    pub domain_refusals: u64,
+    /// Whether the layout never reached a pair, because the settings or a
+    /// transform rejected it first.
+    pub preamble_rejected: bool,
+    /// The smallest `exact distance - pair_clearance` over the pairs this
+    /// layout certified, or `f64::INFINITY` when it certified none.
+    ///
+    /// This is how far the corpus actually got from the boundary. A shadow run
+    /// whose tightest certificate sits millimetres clear of the clearance has
+    /// not probed the margin at all, however many pairs it counted, so this is
+    /// reported beside the zero rather than left for the reader to assume.
+    pub tightest_certified_excess: f64,
+    /// One entry per skip that the exact tests then contradicted. **This is the
+    /// finding**: it must be empty.
+    pub mismatches: Vec<String>,
+}
+
+#[cfg(feature = "fast-contract-validator")]
+impl Default for ContractValidatorShadowAudit {
+    fn default() -> Self {
+        Self {
+            pairs: 0,
+            proved_clear: 0,
+            domain_refusals: 0,
+            preamble_rejected: false,
+            tightest_certified_excess: f64::INFINITY,
+            mismatches: Vec::new(),
+        }
+    }
+}
+
+/// Re-runs, for real and in whatever build profile the caller is in, both of the
+/// tests every certificate claims - and reports every disagreement.
+///
+/// The scan row's `debug_assert` does this too, but it is compiled out of a
+/// release build, so the 5.9M-pair census the previous round quotes was taken
+/// with no checking of any kind behind it. This is the release-visible form:
+/// production never calls it, it costs the hot path nothing, and
+/// `examples/contract_validator_shadow.rs` drives it over a randomized corpus.
+///
+/// It deliberately audits pairs the production loop would not reach - it does
+/// not run `validate_sheet` first, and it does not stop at the first failing
+/// pair - because the filter's claim is about geometry, not about how far the
+/// scan got.
+#[cfg(feature = "fast-contract-validator")]
+pub fn contract_validator_shadow_audit(
+    placements: &[GeneralPlacement<'_>],
+    settings: PublicationValidationSettings,
+) -> ContractValidatorShadowAudit {
+    let mut audit = ContractValidatorShadowAudit::default();
+    if validate_settings(settings).is_err() {
+        audit.preamble_rejected = true;
+        return audit;
+    }
+    let Ok(transformed) = placements
+        .iter()
+        .map(transform_placement)
+        .collect::<Result<Vec<_>, _>>()
+    else {
+        audit.preamble_rejected = true;
+        return audit;
+    };
+    let pair_clearance = settings.total_padding_mm + 2.0 * settings.flattening_sag_tolerance_mm;
+    let broad_phase = ClearanceBroadPhase::new(&transformed, pair_clearance);
+    audit.domain_refusals = broad_phase.domain_refusals();
+    for first_index in 0..transformed.len() {
+        for second_index in (first_index + 1)..transformed.len() {
+            audit.pairs += 1;
+            if !broad_phase.provably_clear(first_index, second_index) {
+                continue;
+            }
+            audit.proved_clear += 1;
+            let first = &transformed[first_index];
+            let second = &transformed[second_index];
+            if material_sets_overlap(first, second) {
+                audit.mismatches.push(format!(
+                    "skipped an overlapping pair: {} and {}",
+                    placements[first_index].piece_id, placements[second_index].piece_id
+                ));
+            }
+            let distance = minimum_boundary_distance(first, second);
+            if distance.is_finite() {
+                audit.tightest_certified_excess = audit
+                    .tightest_certified_excess
+                    .min(distance - pair_clearance);
+            }
+            if !(distance.is_finite() && distance >= pair_clearance) {
+                audit.mismatches.push(format!(
+                    "skipped a pair the exact loop refuses: {} and {} at {} against a clearance of {}",
+                    placements[first_index].piece_id,
+                    placements[second_index].piece_id,
+                    distance,
+                    pair_clearance
+                ));
+            }
+        }
+    }
+    audit
 }
 
 fn minimum_boundary_distance(first: &MaterialSet, second: &MaterialSet) -> f64 {
@@ -1476,13 +1922,227 @@ mod tests {
         assert!(error.message().contains("overlap"), "{}", error.message());
     }
 
-    /// The whole point, stated as a test: flag-on and flag-off decide every
-    /// input identically, including the error message.
+    /// The margin is only a proof if it dominates the derived error bound, so
+    /// the derivation is a test rather than a paragraph.
     ///
-    /// The cases are this module's own suite, re-run through both paths - the
-    /// broad phase cannot be switched off at runtime, so what this checks is
-    /// that the verdict on each is the one the flag-off build's committed
-    /// assertions above already pin.
+    /// [`ClearanceBroadPhase::new`] derives `16.5 * u * extent` for the distance
+    /// half and `1.5 * u * extent` for the overlap half's rounded midpoints.
+    /// `CLEARANCE_SLAB_PROVEN_ERROR_ULPS` is the `32` that dominates both, and
+    /// the shipped `CLEARANCE_SLAB_RELATIVE_MARGIN` must not fall under it. It
+    /// may be raised freely; this fails if it is ever lowered past the proof.
+    #[cfg(feature = "fast-contract-validator")]
+    #[test]
+    fn the_shipped_margin_dominates_the_proven_error_bound() {
+        assert!(
+            CLEARANCE_SLAB_PROVEN_ERROR_ULPS >= 16.5,
+            "the derivation needs at least 16.5 ulps for the distance half"
+        );
+        assert!(
+            CLEARANCE_SLAB_RELATIVE_MARGIN >= CLEARANCE_SLAB_PROVEN_RELATIVE_ERROR,
+            "the shipped margin {CLEARANCE_SLAB_RELATIVE_MARGIN:e} is below the proven \
+             error bound {CLEARANCE_SLAB_PROVEN_RELATIVE_ERROR:e}"
+        );
+        // And the margin is still far below the tightest clearance the engine is
+        // ever asked for, at the coordinate scale a sheet actually has, so
+        // dominating the error costs the filter nothing.
+        assert!(CLEARANCE_SLAB_RELATIVE_MARGIN * 3000.0 < 0.0005 / 1000.0);
+    }
+
+    /// The guard must sit above everything the contract can actually build, or
+    /// it would be refusing certificates rather than bounding them.
+    #[cfg(feature = "fast-contract-validator")]
+    #[test]
+    fn the_domain_guard_admits_everything_the_contract_can_build() {
+        // The structural ceiling, recomputed here from its two inputs rather
+        // than copied, so the constant cannot drift away from its derivation.
+        let diameter = 2.0 * std::f64::consts::SQRT_2 * CLEARANCE_SLAB_GRID_CEILING_MM;
+        let structural = diameter * (2.0f64).powi(53);
+        assert!(
+            (structural / CLEARANCE_SLAB_STRUCTURAL_CEILING_MM - 1.0).abs() < 1e-9,
+            "the structural ceiling constant {CLEARANCE_SLAB_STRUCTURAL_CEILING_MM:e} no \
+             longer matches its derivation {structural:e}"
+        );
+        assert!(
+            CLEARANCE_SLAB_MAX_COORDINATE_MM > structural,
+            "the domain guard {CLEARANCE_SLAB_MAX_COORDINATE_MM:e} is below the structural \
+             ceiling {structural:e}, so it can refuse contractual layouts"
+        );
+        // And it is far below the horizon where `orient2d`'s splitter overflows,
+        // which is what the guard is for in the other direction.
+        assert!(CLEARANCE_SLAB_MAX_COORDINATE_MM < (2.0f64).powi(497));
+    }
+
+    /// The lemma the guard replaces is **false** as stated, and this is the
+    /// witness: a pair of material sets whose exact minimum is not finite - so
+    /// the scan row rejects them - and whose slab gap, computed the way the
+    /// unguarded certificate computed it, is `+inf` and clears every threshold.
+    ///
+    /// The old certificate would have skipped a rejection. It never could in
+    /// production, because `transform_placement` cannot build these sets (see
+    /// `CLEARANCE_SLAB_MAX_COORDINATE_MM`: `interior_sample` bounds coordinates
+    /// at `2.29e29` long before this), which is why this constructs them
+    /// directly. The point is that the filter's soundness was resting on that
+    /// unstated bound, and now it rests on a check.
+    #[cfg(feature = "fast-contract-validator")]
+    #[test]
+    fn the_numeric_domain_guard_fails_closed_where_the_lemma_does_not_hold() {
+        let far = 1.3e308;
+        let strip = |x: f64| MaterialRegion {
+            outer: vec![point(x, 0.0), point(x, 2.0), point(x, 4.0)],
+            holes: Vec::new(),
+            material_sample: Some(point(x, 2.0)),
+        };
+        let left = MaterialSet {
+            regions: vec![strip(-far)],
+        };
+        let right = MaterialSet {
+            regions: vec![strip(far)],
+        };
+
+        // 1. The exact loop's verdict on this pair is a REJECTION: its minimum
+        //    is not finite, which `scan_row` turns into a clearance violation.
+        let distance = minimum_boundary_distance(&left, &right);
+        assert!(
+            !distance.is_finite(),
+            "expected a non-finite exact minimum, got {distance}"
+        );
+
+        // 2. The unguarded certificate would nevertheless have proved it clear:
+        //    the x-projections are finite on both sides, and their difference
+        //    overflows to +inf, which clears any finite threshold.
+        let raw_gap = far - -far;
+        assert!(
+            raw_gap.is_infinite() && raw_gap > 0.0,
+            "expected the unguarded gap to overflow, got {raw_gap}"
+        );
+        assert!(
+            raw_gap >= 5.0,
+            "an infinite gap clears every real clearance"
+        );
+
+        // 3. The guard refuses both sets outright, so no certificate exists and
+        //    the pair takes the exact loop - which rejects it.
+        assert!(ClearanceSlabs::of(&left).is_none());
+        assert!(ClearanceSlabs::of(&right).is_none());
+        let phase = ClearanceBroadPhase::new(&[left, right], 5.0);
+        assert_eq!(phase.domain_refusals(), 2);
+        assert!(!phase.provably_clear(0, 1));
+    }
+
+    /// Outward rounding is only worth having if it actually brackets: the stored
+    /// interval must contain the true projection of every point, and the gap
+    /// must never be reported larger than it is.
+    #[cfg(feature = "fast-contract-validator")]
+    #[test]
+    fn the_slab_interval_brackets_the_true_projection() {
+        // Coordinates chosen so `x + y` and `x - y` are both inexact.
+        let awkward = MaterialSet {
+            regions: vec![MaterialRegion {
+                outer: vec![
+                    point(0.1, 0.2),
+                    point(1.0 / 3.0, 7.0 / 9.0),
+                    point(1e15 + 0.1, 1e-15),
+                ],
+                holes: Vec::new(),
+                material_sample: Some(point(0.2, 0.3)),
+            }],
+        };
+        let slabs = ClearanceSlabs::of(&awkward).expect("in domain");
+        for p in &awkward.regions[0].outer {
+            // The true projections, as exact rationals would give them, lie
+            // inside the stored interval for every direction.
+            for (index, exact) in [
+                p.x,
+                p.y,
+                // `next_down`/`next_up` of the rounded sum bracket the true
+                // value; comparing against the rounded value is therefore a
+                // weaker but sufficient check that the bracket did not shrink.
+                p.x + p.y,
+                p.x - p.y,
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                assert!(
+                    slabs.min[index] <= exact && exact <= slabs.max[index],
+                    "direction {index}: {exact} escaped [{}, {}]",
+                    slabs.min[index],
+                    slabs.max[index]
+                );
+            }
+        }
+        // A set displaced by a known amount: the certified lower bound must not
+        // exceed the true gap.
+        let shifted = MaterialSet {
+            regions: vec![MaterialRegion {
+                outer: awkward.regions[0]
+                    .outer
+                    .iter()
+                    .map(|p| point(p.x + 1000.0, p.y))
+                    .collect(),
+                holes: Vec::new(),
+                material_sample: Some(point(1000.2, 0.3)),
+            }],
+        };
+        let other = ClearanceSlabs::of(&shifted).expect("in domain");
+        let bound = slabs.gap(&other, 0).next_down();
+        let truth = 1000.0 + 0.1 - (1e15 + 0.1);
+        assert!(
+            bound <= truth,
+            "the certified lower bound {bound} exceeds the true gap {truth}"
+        );
+    }
+
+    /// The reference path must certify nothing, or the shadow harness would be
+    /// comparing the filter against itself.
+    #[cfg(feature = "fast-contract-validator")]
+    #[test]
+    fn the_disarmed_phase_certifies_nothing() {
+        let piece = square(2.0);
+        let placements = [
+            GeneralPlacement {
+                piece_id: "a",
+                polygon: &piece,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 1.0,
+                translate_y: 1.0,
+            },
+            GeneralPlacement {
+                piece_id: "b",
+                polygon: &piece,
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_x: 12.0,
+                translate_y: 1.0,
+            },
+        ];
+        let transformed = placements
+            .iter()
+            .map(transform_placement)
+            .collect::<Result<Vec<_>, _>>()
+            .expect("both placements are measurable");
+        // Armed, this pair is far apart and is proved clear.
+        assert!(ClearanceBroadPhase::new(&transformed, 0.5).provably_clear(0, 1));
+        // Disarmed, nothing is.
+        assert!(!ClearanceBroadPhase::disarmed(transformed.len()).provably_clear(0, 1));
+        // And the two public entry points agree on the verdict.
+        assert_eq!(
+            validate_publication(&placements, settings()).is_ok(),
+            validate_publication_exact_reference(&placements, settings()).is_ok()
+        );
+    }
+
+    /// The whole point, stated as a test: the filtered path and the exact path
+    /// decide every input identically, including the error message.
+    ///
+    /// This used to compare the feature-on path against *enumerated
+    /// expectations*, which is not two implementations meeting - a wrong
+    /// expectation and a wrong filter would have agreed. Now
+    /// [`validate_publication_exact_reference`] runs the exact loop on every
+    /// pair in the same process, and the two `Result`s are compared whole. The
+    /// enumerated expectations are kept as a third opinion, so the test still
+    /// fails if both paths move together.
     #[cfg(feature = "fast-contract-validator")]
     #[test]
     fn the_broad_phase_changes_no_verdict() {
@@ -1522,8 +2182,16 @@ mod tests {
                     translate_y: ORIGIN + ty,
                 },
             ];
+            let filtered = validate_publication(&placements, clearance_settings)
+                .map_err(|error| error.message().to_string());
+            let exact = validate_publication_exact_reference(&placements, clearance_settings)
+                .map_err(|error| error.message().to_string());
             assert_eq!(
-                validate_publication(&placements, clearance_settings).is_ok(),
+                filtered, exact,
+                "the filtered and exact paths disagreed at rotation {rotation}, ({tx}, {ty})"
+            );
+            assert_eq!(
+                filtered.is_ok(),
                 expected_ok,
                 "verdict changed at rotation {rotation}, ({tx}, {ty})"
             );

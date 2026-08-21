@@ -414,3 +414,13 @@ sha2 = "0.10"
 name = "general_hazard_benchmark"
 path = "examples/general_hazard_benchmark.rs"
 required-features = ["jagua-experimental"]
+
+# The release-build shadow corpus for `fast-contract-validator`. It is an
+# example rather than a test because the checking has to happen in a build with
+# `debug_assertions` off - that is the profile the campaign measures and ships,
+# and it is the one profile in which the filter's own `debug_assert` is absent.
+# See docs/experiments/fast-contract-validator/ §4.4.
+[[example]]
+name = "contract_validator_shadow"
+path = "examples/contract_validator_shadow.rs"
+required-features = ["fast-contract-validator"]

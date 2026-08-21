@@ -1,0 +1,164 @@
+{
+ "schemaVersion": 1,
+ "description": "triangle-20 pinned parent for the fast-contract-validator per-confirmation wall",
+ "requestSha256": "811595741286ced9fda7a97fd7c6f6c9e0bf7ba24aef186f97fe4f40f5b923d4",
+ "expectedPlacementFingerprint": "92dcc7cae87aa123984780bd86cc71e81e69c2ce6a56b7d95b510d9305f7ba1c",
+ "reportedDepthMm": 70.979,
+ "independentDepthMm": 70.727,
+ "provenance": {
+  "source": "/var/lib/t3/tmp/fcv2/parents/triangle-20-run.json",
+  "binary": "/var/lib/t3/tmp/fcv2/bin-off",
+  "spec": "wall=20000,cells=13:15:17:19,v3=1,m34lanes=1,m34pconfirm=1",
+  "request": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_4111958b-3b3-1/tests/fixtures/triangle-20/2000x2700-compact/request.json"
+ },
+ "settings": {
+  "sheetShortAxisMm": 2000.0,
+  "sheetLongAxisMm": 2700.0,
+  "totalPaddingMm": 5.0,
+  "sheetEdgeClearanceMm": 5.0,
+  "clearanceSafetyMarginMm": 0.25,
+  "flatteningSagToleranceMm": 0.25
+ },
+ "placements": [
+  {
+   "pieceId": "triangle-copy-1",
+   "rotationDeg": 300.256437,
+   "mirrored": false,
+   "translateShortAxis": 1097.939,
+   "translateLongAxis": 35.484
+  },
+  {
+   "pieceId": "triangle-copy-2",
+   "rotationDeg": 239.743563,
+   "mirrored": true,
+   "translateShortAxis": 93.105,
+   "translateLongAxis": 35.495
+  },
+  {
+   "pieceId": "triangle-copy-3",
+   "rotationDeg": 300.256437,
+   "mirrored": false,
+   "translateShortAxis": 1345.599,
+   "translateLongAxis": 35.484
+  },
+  {
+   "pieceId": "triangle-copy-4",
+   "rotationDeg": 300.256437,
+   "mirrored": false,
+   "translateShortAxis": 757.646,
+   "translateLongAxis": 35.484
+  },
+  {
+   "pieceId": "triangle-copy-5",
+   "rotationDeg": 300.256437,
+   "mirrored": false,
+   "translateShortAxis": 459.887,
+   "translateLongAxis": 35.484
+  },
+  {
+   "pieceId": "triangle-copy-6",
+   "rotationDeg": 300.256437,
+   "mirrored": false,
+   "translateShortAxis": 41.344,
+   "translateLongAxis": 35.484
+  },
+  {
+   "pieceId": "triangle-copy-7",
+   "rotationDeg": 239.743563,
+   "mirrored": true,
+   "translateShortAxis": 1300.128,
+   "translateLongAxis": 35.495
+  },
+  {
+   "pieceId": "triangle-copy-8",
+   "rotationDeg": 239.743563,
+   "mirrored": true,
+   "translateShortAxis": 656.098,
+   "translateLongAxis": 35.495
+  },
+  {
+   "pieceId": "triangle-copy-9",
+   "rotationDeg": 300.256437,
+   "mirrored": false,
+   "translateShortAxis": 369.575,
+   "translateLongAxis": 35.484
+  },
+  {
+   "pieceId": "triangle-copy-10",
+   "rotationDeg": 239.743563,
+   "mirrored": true,
+   "translateShortAxis": -10.417,
+   "translateLongAxis": 35.495
+  },
+  {
+   "pieceId": "triangle-copy-11",
+   "rotationDeg": 239.743563,
+   "mirrored": true,
+   "translateShortAxis": 1149.7,
+   "translateLongAxis": 35.495
+  },
+  {
+   "pieceId": "triangle-copy-12",
+   "rotationDeg": 300.256437,
+   "mirrored": false,
+   "translateShortAxis": 568.428,
+   "translateLongAxis": 35.484
+  },
+  {
+   "pieceId": "triangle-copy-13",
+   "rotationDeg": 239.743563,
+   "mirrored": true,
+   "translateShortAxis": 272.205,
+   "translateLongAxis": 35.495
+  },
+  {
+   "pieceId": "triangle-copy-14",
+   "rotationDeg": 300.256437,
+   "mirrored": false,
+   "translateShortAxis": 922.803,
+   "translateLongAxis": 35.484
+  },
+  {
+   "pieceId": "triangle-copy-15",
+   "rotationDeg": 239.743563,
+   "mirrored": true,
+   "translateShortAxis": 1629.75,
+   "translateLongAxis": 35.495
+  },
+  {
+   "pieceId": "triangle-copy-16",
+   "rotationDeg": 300.256437,
+   "mirrored": false,
+   "translateShortAxis": 1225.425,
+   "translateLongAxis": 35.484
+  },
+  {
+   "pieceId": "triangle-copy-17",
+   "rotationDeg": 300.256437,
+   "mirrored": false,
+   "translateShortAxis": 1881.622,
+   "translateLongAxis": 35.484
+  },
+  {
+   "pieceId": "triangle-copy-18",
+   "rotationDeg": 300.256437,
+   "mirrored": false,
+   "translateShortAxis": 144.866,
+   "translateLongAxis": 35.484
+  },
+  {
+   "pieceId": "triangle-copy-19",
+   "rotationDeg": 239.743563,
+   "mirrored": true,
+   "translateShortAxis": 1473.892,
+   "translateLongAxis": 35.495
+  },
+  {
+   "pieceId": "triangle-copy-20",
+   "rotationDeg": 239.743563,
+   "mirrored": true,
+   "translateShortAxis": 1036.005,
+   "translateLongAxis": 35.495
+  }
+ ]
+}
