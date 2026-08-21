@@ -1,0 +1,56 @@
+{
+ "binary": "/var/lib/t3/tmp/basinrace/bin/base-combo",
+ "budgetKey": "plan",
+ "value": "10000",
+ "extra": "",
+ "requests": [
+  "triangle-20"
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "rows": [
+  {
+   "tag": "triangle-20-s0",
+   "spec": "plan=10000,cells=13:15:17:19,v3=1",
+   "digestA": "e07d2c2497ebca6e",
+   "digestB": "e07d2c2497ebca6e",
+   "planUnitsA": 37856795,
+   "planUnitsB": 37856795,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 70.7711336311948,
+   "rawDepthMmB": 70.7711336311948,
+   "equal": true
+  },
+  {
+   "tag": "triangle-20-s1",
+   "spec": "plan=10000,cells=11:15:21:27,v3=1",
+   "digestA": "7b4385d5446c84a2",
+   "digestB": "c418b18d2b8e4e85",
+   "planUnitsA": 50065612,
+   "planUnitsB": 37856795,
+   "planAgrees": false,
+   "documentEqual": false,
+   "rawDepthMmA": 70.74553343914744,
+   "rawDepthMmB": 70.74684851410467,
+   "equal": false
+  },
+  {
+   "tag": "triangle-20-s2",
+   "spec": "plan=10000,cells=15:23:31:39,v3=1",
+   "digestA": "5f626ac884926847",
+   "digestB": "5f626ac884926847",
+   "planUnitsA": 43535314,
+   "planUnitsB": 43535314,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 70.74164651120441,
+   "rawDepthMmB": 70.74164651120441,
+   "equal": true
+  }
+ ],
+ "allEqual": false
+}

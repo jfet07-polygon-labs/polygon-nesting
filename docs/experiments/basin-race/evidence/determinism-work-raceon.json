@@ -1,0 +1,136 @@
+{
+ "binary": "/var/lib/t3/tmp/basinrace/bin/race-combo",
+ "budgetKey": "work",
+ "value": "40000000",
+ "extra": "race=3:1:3",
+ "requests": [
+  "mixed-61",
+  "shapes-17",
+  "triangle-20"
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "rows": [
+  {
+   "tag": "mixed-61-s0",
+   "spec": "work=40000000,cells=13:15:17:19,v3=1,race=3:1:3",
+   "digestA": "4dd3486233c72e46",
+   "digestB": "4dd3486233c72e46",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 179.53451201824103,
+   "rawDepthMmB": 179.53451201824103,
+   "equal": true
+  },
+  {
+   "tag": "mixed-61-s1",
+   "spec": "work=40000000,cells=11:15:21:27,v3=1,race=3:1:3",
+   "digestA": "e5cd59cc2e3fe654",
+   "digestB": "e5cd59cc2e3fe654",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 171.321,
+   "rawDepthMmB": 171.321,
+   "equal": true
+  },
+  {
+   "tag": "mixed-61-s2",
+   "spec": "work=40000000,cells=15:23:31:39,v3=1,race=3:1:3",
+   "digestA": "fd9ade2650c4c74d",
+   "digestB": "fd9ade2650c4c74d",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 171.35599027006083,
+   "rawDepthMmB": 171.35599027006083,
+   "equal": true
+  },
+  {
+   "tag": "shapes-17-s0",
+   "spec": "work=40000000,cells=13:15:17:19,v3=1,race=3:1:3",
+   "digestA": "4ec4328c6506d7dd",
+   "digestB": "4ec4328c6506d7dd",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 200.349,
+   "rawDepthMmB": 200.349,
+   "equal": true
+  },
+  {
+   "tag": "shapes-17-s1",
+   "spec": "work=40000000,cells=11:15:21:27,v3=1,race=3:1:3",
+   "digestA": "6b15c07b5b3d1dfa",
+   "digestB": "6b15c07b5b3d1dfa",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 200.34937729570953,
+   "rawDepthMmB": 200.34937729570953,
+   "equal": true
+  },
+  {
+   "tag": "shapes-17-s2",
+   "spec": "work=40000000,cells=15:23:31:39,v3=1,race=3:1:3",
+   "digestA": "6a0f18b8404d868a",
+   "digestB": "6a0f18b8404d868a",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 200.349,
+   "rawDepthMmB": 200.349,
+   "equal": true
+  },
+  {
+   "tag": "triangle-20-s0",
+   "spec": "work=40000000,cells=13:15:17:19,v3=1,race=3:1:3",
+   "digestA": "ea71ce72e3a13250",
+   "digestB": "ea71ce72e3a13250",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 70.72726178003285,
+   "rawDepthMmB": 70.72726178003285,
+   "equal": true
+  },
+  {
+   "tag": "triangle-20-s1",
+   "spec": "work=40000000,cells=11:15:21:27,v3=1,race=3:1:3",
+   "digestA": "a1acd2e2ef59b08d",
+   "digestB": "a1acd2e2ef59b08d",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 70.72726178003285,
+   "rawDepthMmB": 70.72726178003285,
+   "equal": true
+  },
+  {
+   "tag": "triangle-20-s2",
+   "spec": "work=40000000,cells=15:23:31:39,v3=1,race=3:1:3",
+   "digestA": "34a6207fcfcf05d3",
+   "digestB": "34a6207fcfcf05d3",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 70.72726178003285,
+   "rawDepthMmB": 70.72726178003285,
+   "equal": true
+  }
+ ],
+ "allEqual": true
+}

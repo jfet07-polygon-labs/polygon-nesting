@@ -584,6 +584,33 @@ pub struct Se2WitnessSettings {
     /// Hard cap on calls per schedule slice. A slice that spends more than this
     /// on the certificate is a slice that stopped compressing.
     pub max_calls: usize,
+    /// Whether an accepted witness becomes the slice's **child frontier** as
+    /// well as its publication.
+    ///
+    /// The fourth knob, and it is the one Sol review 8 §"Design C e verdetto
+    /// null" and Grok review 3 §2 both say the design-C null was measuring.
+    /// With it off - the shipped default, and every number the sparse-rotation
+    /// round published - an accepted witness updates `published_depth_mm` and
+    /// `published_placements` and *nothing else*: not `state`, not
+    /// `confirmed_state`, not the schedule's floor. The witness layout is
+    /// therefore a one-shot publication that the schedule's own next
+    /// confirmation overwrites, and "0/12 parents moved their final depth"
+    /// measures the integration and not the mechanism.
+    ///
+    /// With it on, an accepted witness is adopted as both halves of the
+    /// schedule's snapshot: it becomes `confirmed_state` at the floor it was
+    /// validated on - which is legal by construction, because the certificate
+    /// only ever returns a layout `validate_publication` accepted - and it
+    /// becomes the live frontier at the current clamp, so every later step,
+    /// sweep and confirmation descends from the witness instead of from the
+    /// parent it improved on. The floor itself is *not* moved: a floor is set
+    /// by a confirmation at the frontier and by nothing else
+    /// (`CompressionSchedule::note_confirmed`), and a witness accepted at the
+    /// floor's own depth has not compressed anything yet.
+    ///
+    /// Off by default. `docs/experiments/basin-race/` §2 is the A/B this knob
+    /// exists to run, and its verdict is what decides whether design C stays.
+    pub adopt: bool,
 }
 
 impl GeneralRelaxedSettings {
@@ -3101,6 +3128,34 @@ struct WorkCounters {
     /// Sweeps run with a non-empty arming, so the wall an episode covers has a
     /// denominator.
     sparse_rotation_sweeps: usize,
+    // ---- the sparse operator's own chain: proposal -> winner -> committed ---
+    //
+    // Sol review 8 §2 P0: `rotation_accepted_moves` counts any accepted move
+    // whose pose changed, so the control arm - zero rungs offered, all round -
+    // reported 11,523 of them and "the disarm never fired" could not be read.
+    // These three are the operator's chain and nothing else's. Each is a subset
+    // of the one before it, so the two ratios are the operator's two yields and
+    // neither is an inference from the other.
+    //
+    /// Rungs proposed *inside an open episode*. Against
+    /// `rotation_rungs_proposed` this is the sparse share of the operator's
+    /// proposals: on a design-B lane the two are equal, on a design-A lane this
+    /// is zero, and a lane that mixes the two can be told apart from both.
+    sparse_rotation_rungs_proposed: usize,
+    /// Refinement iterations an episode's rung won *and* whose win moved the
+    /// pose. A rung that ties, or that wins without changing the angle key,
+    /// is a proposal that bought nothing and is not counted here.
+    sparse_rotation_rung_winners: usize,
+    /// Accepted moves whose committed pose is, key for key, the pose an
+    /// episode's rung produced. This is the number `rotation_accepted_moves`
+    /// was being read as, and the two differ by every catalogue start that
+    /// happened to win with a different angle.
+    sparse_rotation_committed_moves: usize,
+    /// Distinct episodes with at least one committed move, so
+    /// `/ sparse_rotation_episodes` is the fraction of stalls the operator
+    /// converted. This, and not the accepted-move count, is what the disarm bit
+    /// has to read: an episode that commits nothing is the sterile event.
+    sparse_rotation_committed_episodes: usize,
 }
 
 impl WorkCounters {
@@ -3279,6 +3334,18 @@ impl WorkCounters {
         self.sparse_rotation_episodes = self
             .sparse_rotation_episodes
             .saturating_add(other.sparse_rotation_episodes);
+        self.sparse_rotation_rungs_proposed = self
+            .sparse_rotation_rungs_proposed
+            .saturating_add(other.sparse_rotation_rungs_proposed);
+        self.sparse_rotation_rung_winners = self
+            .sparse_rotation_rung_winners
+            .saturating_add(other.sparse_rotation_rung_winners);
+        self.sparse_rotation_committed_moves = self
+            .sparse_rotation_committed_moves
+            .saturating_add(other.sparse_rotation_committed_moves);
+        self.sparse_rotation_committed_episodes = self
+            .sparse_rotation_committed_episodes
+            .saturating_add(other.sparse_rotation_committed_episodes);
         self.sparse_rotation_pieces_armed = self
             .sparse_rotation_pieces_armed
             .saturating_add(other.sparse_rotation_pieces_armed);
@@ -3886,6 +3953,36 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
     /// Which pieces may currently be offered a rung. See [`RotationArming`].
     #[cfg(feature = "sparse-rotation")]
     rotation_arming: RotationArming,
+    /// The identity of the episode that is open right now, and the sequence it
+    /// is drawn from. Zero is "no episode": [`Self::arm_rotation_for_pairs`]
+    /// pre-increments, so a live id is always positive and an id is never
+    /// reused inside a lane.
+    ///
+    /// It exists because Sol review 8 §2 P0 is that the disarm bit was reading
+    /// `rotation_accepted_moves`, which counts *any* accepted move whose pose
+    /// changed - a random catalogue start winning a sweep is one, and the
+    /// control arm scored 11,523 of them with zero rungs offered. An operator's
+    /// attribution has to be keyed to the operator's own episodes, so it is.
+    #[cfg(feature = "sparse-rotation")]
+    sparse_rotation_episode: u64,
+    #[cfg(feature = "sparse-rotation")]
+    sparse_rotation_episode_seq: u64,
+    /// The pose a sparse rung last won with, and the episode that owns it:
+    /// `(episode, angle key, mirrored)`.
+    ///
+    /// Cleared at the top of every [`Self::search_piece`] and *not* cleared by
+    /// anything else, which is the point: the credit at the commit site is
+    /// granted only when the pose being committed is still, key for key, the
+    /// pose the rung produced. Any later stage that moves the pose - the NFP
+    /// axis minimiser, a second refinement pass, the dynamic-hazard revert -
+    /// invalidates the credit by making the keys disagree, without that stage
+    /// having to know this field exists.
+    #[cfg(feature = "sparse-rotation")]
+    sparse_rotation_pose_owner: Option<(u64, i64, bool)>,
+    /// The last episode this lane charged a committed move to, so
+    /// `sparse_rotation_committed_episodes` counts episodes and not moves.
+    #[cfg(feature = "sparse-rotation")]
+    sparse_rotation_last_committed_episode: u64,
     /// Whether this lane is running design B at all. When false the arming is
     /// [`RotationArming::Everything`] for the whole slice and the lane is
     /// design A, which is what the battery's control arm needs.
@@ -4190,6 +4287,57 @@ struct RotationCache {
 ///
 /// `Everything` is design A, kept reachable because the battery needs an arm
 /// that reproduces it on the same binary.
+/// Design B's stall rule, as a two-line state machine, so the serial repair
+/// loop and each fan-out worker run the *same* rule rather than two copies of
+/// it that can drift.
+///
+/// # The rule, and the one it replaces
+///
+/// The documented trigger is "a sweep that left the frontier infeasible **and**
+/// did not lower the loss it was handed". The loss a sweep was handed is the
+/// loss as that sweep found it: the entry loss for the first sweep of a step,
+/// and the previous sweep's result for every sweep after it.
+///
+/// The code used to compare against `min(entry, every result so far)` instead -
+/// `stall_loss = stall_loss.min(now)` - which is a different predicate and a
+/// strictly stickier one. Sol review 8 §2 P1 and Grok review 3 §2 both name the
+/// witness sequence: on `10 -> 8 -> 9 -> 8.5`, the fourth sweep lowered the
+/// 9 it was handed to 8.5, so translation had demonstrably resumed, and the old
+/// rule kept the rungs armed because 8.5 is not below the 8 the step had once
+/// touched. Grok calls it "candidato meccanico della perdita a 30 s", where the
+/// armed arm's loss share went 31.8% -> 40.1%.
+///
+/// The difference is not academic: a step whose loss oscillates - which is the
+/// normal behaviour of a weighted repair, since `update_weights` moves the
+/// weights under the frontier after every sweep - stays armed forever under the
+/// old rule and arms only on the genuinely non-improving sweeps under this one.
+#[cfg(feature = "sparse-rotation")]
+#[derive(Clone, Copy, Debug)]
+struct StallDetector {
+    handed_loss: f64,
+}
+
+#[cfg(feature = "sparse-rotation")]
+impl StallDetector {
+    /// Opens the detector on the loss the step's *first* sweep will be handed.
+    fn entering(loss: f64) -> Self {
+        Self { handed_loss: loss }
+    }
+
+    /// Records one sweep's result and answers the only question the caller
+    /// asks: **arm the rungs?**
+    ///
+    /// `true` when the sweep did not lower the loss it was handed - the stall -
+    /// and `false` when it did, which disarms. Either way the loss this sweep
+    /// produced becomes the loss the next one is handed, because that is what
+    /// "handed" means.
+    fn observe(&mut self, now: f64) -> bool {
+        let stalled = !(now < self.handed_loss);
+        self.handed_loss = now;
+        stalled
+    }
+}
+
 #[cfg(feature = "sparse-rotation")]
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum RotationArming {
@@ -6648,6 +6796,14 @@ fn drive_compression_schedule(
         mut se2_witness_ms,
         mut se2_witness_bought_mm,
     ) = (0usize, 0usize, 0.0f64, 0.0f64);
+    // Accepted witnesses that became the child frontier, against
+    // `se2_witness_accepted` which is accepted witnesses of any kind. With
+    // `adopt` off the two differ by every acceptance; with it on they differ
+    // only by the ones `relaxed_state_from_moved` refused, which is the
+    // instrument's own check on itself.
+    #[cfg(feature = "sparse-rotation")]
+    #[allow(unused_mut)]
+    let mut se2_witness_adoptions = 0usize;
     #[cfg(all(feature = "sparse-rotation", feature = "se2-rigidity-certificate"))]
     let mut se2_witness_last_floor: Option<f64> = None;
 
@@ -6719,12 +6875,16 @@ fn drive_compression_schedule(
             // rotation-tax round measured.
             #[cfg(feature = "sparse-rotation")]
             let detect_stall = relaxed_settings.sparse_rotation;
+            // The loss the *next* sweep will be handed, which is the only
+            // quantity the documented rule compares against. It is the loss as
+            // this sweep found it, not the best loss the step has ever seen:
+            // see the disarm below for why the difference is the whole trigger.
             #[cfg(feature = "sparse-rotation")]
-            let mut stall_loss = if detect_stall {
+            let mut stall = StallDetector::entering(if detect_stall {
                 score.common_loss()
             } else {
                 0.0
-            };
+            });
             for _ in 0..sweeps_per_step.max(1) {
                 if score.feasible() {
                     break;
@@ -6746,15 +6906,26 @@ fn drive_compression_schedule(
                 // the pieces the tracker is naming right now, and to nobody
                 // else. A sweep that does lower the loss disarms again, so an
                 // episode ends the moment translation resumes.
+                //
+                // "The loss it was handed" is the loss as this sweep found it,
+                // and this comparison used to be against the step's historical
+                // minimum instead - `stall_loss.min(now)`, seeded with the
+                // entry loss. The two differ exactly when translation resumes
+                // *above* a minimum the step has already left behind, which is
+                // the common case after a rollback or a weight update:
+                // `10 -> 8 -> 9 -> 8.5` disarms on the first sweep, arms on the
+                // second, and under the old rule stayed armed on the third even
+                // though 8.5 < 9 means translation had resumed. Sol review 8
+                // §2 P1 and Grok review 3 §2 both name it; the sequence is
+                // pinned in `trigger_b_disarms_when_translation_resumes_above_
+                // the_step_minimum`.
                 #[cfg(feature = "sparse-rotation")]
                 if detect_stall {
-                    let now = score.common_loss();
-                    if now < stall_loss {
-                        search.disarm_rotation();
-                    } else {
+                    if stall.observe(score.common_loss()) {
                         search.arm_rotation_for_pairs(&score.collision_pairs);
+                    } else {
+                        search.disarm_rotation();
                     }
-                    stall_loss = stall_loss.min(now);
                 }
                 update_weights(&mut search.weights, &score.collision_pairs);
                 refresh_weighted_loss(&mut score, &search.weights);
@@ -6812,11 +6983,11 @@ fn drive_compression_schedule(
                 #[cfg(feature = "sparse-rotation")]
                 let detect_stall = relaxed_settings.sparse_rotation;
                 #[cfg(feature = "sparse-rotation")]
-                let mut stall_loss = if detect_stall {
+                let mut stall = StallDetector::entering(if detect_stall {
                     lane_score.common_loss()
                 } else {
                     0.0
-                };
+                });
                 for _ in 0..sweeps_budget {
                     if lane_score.feasible() {
                         break;
@@ -6835,15 +7006,17 @@ fn drive_compression_schedule(
                     if lane_score.feasible() {
                         break;
                     }
+                    // The handed-loss rule of the serial arm, unchanged: a
+                    // worker that diverged from it would make the fan-out a
+                    // different operator rather than the same one on eight
+                    // frontiers.
                     #[cfg(feature = "sparse-rotation")]
                     if detect_stall {
-                        let now = lane_score.common_loss();
-                        if now < stall_loss {
-                            lane.disarm_rotation();
-                        } else {
+                        if stall.observe(lane_score.common_loss()) {
                             lane.arm_rotation_for_pairs(&lane_score.collision_pairs);
+                        } else {
+                            lane.disarm_rotation();
                         }
-                        stall_loss = stall_loss.min(now);
                     }
                     update_weights(&mut lane.weights, &lane_score.collision_pairs);
                     refresh_weighted_loss(&mut lane_score, &lane.weights);
@@ -7048,8 +7221,58 @@ fn drive_compression_schedule(
                             if grid_key(raw_depth_mm) < grid_key(published_depth_mm) {
                                 se2_witness_bought_mm += published_depth_mm - raw_depth_mm;
                                 published_depth_mm = raw_depth_mm;
-                                published_placements = proposal.placements;
                                 se2_witness_accepted += 1;
+                                // ---- the child frontier -------------------
+                                //
+                                // Everything above this comment is what design
+                                // C did before, and it is a publication and
+                                // nothing more: the schedule's next accepted
+                                // confirmation writes `published_depth_mm`
+                                // again from a layout that never saw the
+                                // witness, so the witness is dominated by
+                                // construction rather than by argument. That is
+                                // what `witness_settings.adopt` is here to
+                                // separate; see the field's own note.
+                                //
+                                // The adoption is both halves of the snapshot
+                                // and no third thing:
+                                //
+                                // * `confirmed_state` takes the witness at
+                                //   `confirmed_state`'s own clamp, which is the
+                                //   depth `validate_publication` accepted it
+                                //   at inside the line search;
+                                // * `state` takes the witness at the *frontier*
+                                //   clamp, so the next sweep repairs the
+                                //   witness towards the depth the schedule has
+                                //   already stepped to;
+                                // * the floor is not touched, because a floor
+                                //   is what a confirmation at the frontier
+                                //   leaves behind and this witness has not been
+                                //   confirmed at the frontier.
+                                //
+                                // The weights are cleared and the tracker is
+                                // rebuilt for the same reason the rollback path
+                                // clears them: the guided weights were learned
+                                // about pairs of a layout that no longer
+                                // exists. The surrogates are ensured first
+                                // because the witness poses are continuous and
+                                // this lane has never scored them.
+                                if witness_settings.adopt {
+                                    if let Some(child) = relaxed_state_from_moved(
+                                        &confirmed_state,
+                                        &proposal.placements,
+                                        pieces,
+                                    ) {
+                                        confirmed_state = child.clone();
+                                        state = child;
+                                        state.strip_depth_mm = schedule.depth_mm();
+                                        search.ensure_state_surrogates(&state)?;
+                                        search.weights.clear();
+                                        score = search.score_state(&state)?;
+                                        se2_witness_adoptions += 1;
+                                    }
+                                }
+                                published_placements = proposal.placements;
                             }
                         }
                     }
@@ -7182,8 +7405,14 @@ fn drive_compression_schedule(
             report.sparse_rotation_episodes = counters.sparse_rotation_episodes;
             report.sparse_rotation_pieces_armed = counters.sparse_rotation_pieces_armed;
             report.sparse_rotation_sweeps = counters.sparse_rotation_sweeps;
+            report.sparse_rotation_rungs_proposed = counters.sparse_rotation_rungs_proposed;
+            report.sparse_rotation_rung_winners = counters.sparse_rotation_rung_winners;
+            report.sparse_rotation_committed_moves = counters.sparse_rotation_committed_moves;
+            report.sparse_rotation_committed_episodes =
+                counters.sparse_rotation_committed_episodes;
             report.se2_witness_calls = se2_witness_calls;
             report.se2_witness_accepted = se2_witness_accepted;
+            report.se2_witness_adoptions = se2_witness_adoptions;
             report.se2_witness_ms = se2_witness_ms;
             report.se2_witness_bought_mm = se2_witness_bought_mm;
         }
@@ -12276,6 +12505,14 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 RotationArming::Everything
             },
             #[cfg(feature = "sparse-rotation")]
+            sparse_rotation_episode: 0,
+            #[cfg(feature = "sparse-rotation")]
+            sparse_rotation_episode_seq: 0,
+            #[cfg(feature = "sparse-rotation")]
+            sparse_rotation_pose_owner: None,
+            #[cfg(feature = "sparse-rotation")]
+            sparse_rotation_last_committed_episode: 0,
+            #[cfg(feature = "sparse-rotation")]
             sparse_rotation: relaxed_settings.sparse_rotation,
             collision_merge_scratch: Vec::new(),
             #[cfg(feature = "relaxed-row-buffer-reuse")]
@@ -13181,6 +13418,11 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     {
                         self.counters.rotation_accepted_moves =
                             self.counters.rotation_accepted_moves.saturating_add(1);
+                        #[cfg(feature = "sparse-rotation")]
+                        self.credit_sparse_rotation_commit(
+                            replacement.rotation_deg,
+                            replacement.mirrored,
+                        );
                     }
                     if self.uses_directional_pressure() {
                         for (_, _, penalty) in &replacement_score.collision_pairs {
@@ -13930,6 +14172,25 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         if self.continuous_rotation {
             self.release_rotation_holds();
         }
+        // The sparse chain's credit is scoped to one piece's search, so it is
+        // cleared here and granted at the commit site in `move_sweep`. A piece
+        // whose refinement never lets a rung win leaves this `None`, and its
+        // accepted move - however much its pose moved - is charged to whatever
+        // moved it instead.
+        //
+        // Guarded on the lane's own flag rather than on the feature, so a
+        // design-A lane in a binary that *compiles* design B does not execute
+        // one instruction of it. That is not micro-optimisation: the control
+        // and design-A arms of `docs/experiments/sparse-rotation/` are quoted
+        // against `docs/experiments/rotation-tax/` on the claim that they are
+        // the same lane, and an unconditional store here would make that claim
+        // slightly false for no reason. The owner cannot be set on such a lane
+        // anyway - `sparse_rotation_episode` returns `None` for it - so there
+        // is nothing to clear.
+        #[cfg(feature = "sparse-rotation")]
+        if self.sparse_rotation {
+            self.sparse_rotation_pose_owner = None;
+        }
         let current = state.placements[input_index].clone();
         let current_bounds =
             self.local_shape_bounds(input_index, current.rotation_deg, current.mirrored)?;
@@ -14281,6 +14542,17 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     self.counters.rotation_rungs_proposed =
                         self.counters.rotation_rungs_proposed.saturating_add(2);
                 }
+                // The first link of the sparse chain, taken at the same site
+                // and with the same denominator as the design-A column above,
+                // so "the sparse share of the proposals" is one subtraction
+                // rather than two instruments.
+                #[cfg(feature = "sparse-rotation")]
+                if self.sparse_rotation_episode().is_some() {
+                    self.counters.sparse_rotation_rungs_proposed = self
+                        .counters
+                        .sparse_rotation_rungs_proposed
+                        .saturating_add(2);
+                }
             }
             if axis_is_continuous(axis) {
                 self.counters.rotation_evaluations =
@@ -14336,6 +14608,29 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 }
             }
             if comparison != Ordering::Greater {
+                // The second link of the sparse chain, taken here because here
+                // is where a proposal becomes the thing the piece is carrying.
+                // Two conditions, and both are load-bearing: the winner has to
+                // come off a *continuous* axis inside an *open episode*, and it
+                // has to have actually moved the pose - a rung that wins on a
+                // tie, or whose angle rounds back onto the incumbent's key, is
+                // a proposal that bought nothing.
+                #[cfg(feature = "sparse-rotation")]
+                if derived_rungs && axis_is_continuous(axis) {
+                    let moved = angle_key(candidate.rotation_deg) != angle_key(best.rotation_deg)
+                        || candidate.mirrored != best.mirrored;
+                    if moved {
+                        if let Some(episode) = self.sparse_rotation_episode() {
+                            self.counters.sparse_rotation_rung_winners =
+                                self.counters.sparse_rotation_rung_winners.saturating_add(1);
+                            self.sparse_rotation_pose_owner = Some((
+                                episode,
+                                angle_key(candidate.rotation_deg),
+                                candidate.mirrored,
+                            ));
+                        }
+                    }
+                }
                 best = candidate;
                 let displaced = std::mem::replace(&mut best_score, score);
                 self.recycle_row_buffer(displaced.collision_pairs);
@@ -16484,8 +16779,16 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         }
         if count == 0 {
             self.rotation_arming = RotationArming::Nobody;
+            self.sparse_rotation_episode = 0;
             return false;
         }
+        // One id per episode, and a *re-arm* is a new episode: the caller arms
+        // once per sweep that failed to lower the loss it was handed, and two
+        // consecutive armed sweeps are two stalls with two violating sets, not
+        // one stall that lasted twice as long. `sparse_rotation_episodes` has
+        // always counted them that way; this only gives each one a name.
+        self.sparse_rotation_episode_seq = self.sparse_rotation_episode_seq.saturating_add(1);
+        self.sparse_rotation_episode = self.sparse_rotation_episode_seq;
         self.counters.sparse_rotation_episodes =
             self.counters.sparse_rotation_episodes.saturating_add(1);
         self.counters.sparse_rotation_pieces_armed = self
@@ -16502,6 +16805,60 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
     fn disarm_rotation(&mut self) {
         if self.sparse_rotation {
             self.rotation_arming = RotationArming::Nobody;
+            self.sparse_rotation_episode = 0;
+        }
+    }
+
+    /// The third link of the sparse chain: an accepted move whose pose changed
+    /// is charged to an episode **only if it is still that episode's pose**.
+    ///
+    /// Called at the commit site with the pose actually being written into the
+    /// state. The owner was recorded by the rung that won it (see
+    /// `refine_candidate`) and nothing between there and here clears it, so a
+    /// stage that moved the pose afterwards - the NFP axis minimiser, the
+    /// second refinement pass, the dynamic-hazard revert - makes the two keys
+    /// disagree and the episode gets no credit for a move it did not make.
+    /// That comparison is what separates this from `rotation_accepted_moves`,
+    /// which credits the operator for every catalogue start that happened to
+    /// win at a different angle.
+    ///
+    /// Episode ids are drawn from a monotone per-lane sequence and an episode
+    /// is closed before the next one opens, so committed episodes arrive in
+    /// increasing order and remembering only the last one is enough to count
+    /// them distinctly.
+    #[cfg(feature = "sparse-rotation")]
+    fn credit_sparse_rotation_commit(&mut self, rotation_deg: f64, mirrored: bool) {
+        let Some((episode, angle, owner_mirrored)) = self.sparse_rotation_pose_owner else {
+            return;
+        };
+        if angle != angle_key(rotation_deg) || owner_mirrored != mirrored {
+            return;
+        }
+        self.counters.sparse_rotation_committed_moves = self
+            .counters
+            .sparse_rotation_committed_moves
+            .saturating_add(1);
+        if self.sparse_rotation_last_committed_episode != episode {
+            self.sparse_rotation_last_committed_episode = episode;
+            self.counters.sparse_rotation_committed_episodes = self
+                .counters
+                .sparse_rotation_committed_episodes
+                .saturating_add(1);
+        }
+    }
+
+    /// The open episode's id, or `None` when the lane is not running design B
+    /// or has nothing armed. Design A returns `None`: its rungs are the whole
+    /// descent's and belong to no episode, which is what keeps
+    /// `sparse_rotation_rungs_proposed` a *sparse* column rather than a second
+    /// copy of `rotation_rungs_proposed`.
+    #[cfg(feature = "sparse-rotation")]
+    #[inline]
+    fn sparse_rotation_episode(&self) -> Option<u64> {
+        if self.sparse_rotation && self.sparse_rotation_episode > 0 {
+            Some(self.sparse_rotation_episode)
+        } else {
+            None
         }
     }
 
@@ -18549,6 +18906,48 @@ fn area_depth_lower_bound(
         Ok::<_, GeneralFastError>(total + piece.polygon.offset(expansion)?.area_mm2())
     })?;
     Ok(area / collision_sheet_short_axis_mm(settings) + 2.0 * collision_sheet_inset_mm(settings))
+}
+
+/// The inverse of [`to_fast_placements`] for a layout that came *out* of a
+/// state this lane owns: the poses are taken from `moved` and everything else -
+/// the slot order, the `input_index` of each slot, the strip clamp - is taken
+/// from `parent`.
+///
+/// It is deliberately not a general converter. `GeneralFastPlacement` carries a
+/// piece **id** and `RelaxedPlacement` carries an **input index**, and the only
+/// safe way to bridge the two is to already know which slot each row came from.
+/// Here we do: `se2_witness_proposal` builds its output by zipping the input
+/// placements, so row `i` of `moved` is row `i` of `parent` moved. Both halves
+/// of that are checked rather than assumed - the lengths and every piece id -
+/// and a mismatch returns `None`, which the caller reads as "do not adopt"
+/// rather than as an error, because a witness that cannot be mapped back is a
+/// witness the search simply does not take up.
+#[cfg(all(feature = "sparse-rotation", feature = "se2-rigidity-certificate"))]
+fn relaxed_state_from_moved(
+    parent: &RelaxedState,
+    moved: &[GeneralFastPlacement],
+    pieces: &[GeneralFastPiece<'_>],
+) -> Option<RelaxedState> {
+    if moved.len() != parent.placements.len() {
+        return None;
+    }
+    let mut placements = Vec::with_capacity(moved.len());
+    for (slot, placement) in parent.placements.iter().zip(moved) {
+        if pieces.get(slot.input_index).map(|piece| piece.id) != Some(placement.piece_id.as_str()) {
+            return None;
+        }
+        placements.push(RelaxedPlacement {
+            input_index: slot.input_index,
+            rotation_deg: placement.rotation_deg,
+            mirrored: placement.mirrored,
+            translate_x: placement.translate_short_axis,
+            translate_y: placement.translate_long_axis,
+        });
+    }
+    Some(RelaxedState {
+        placements,
+        strip_depth_mm: parent.strip_depth_mm,
+    })
 }
 
 fn to_fast_placements(
@@ -21250,6 +21649,243 @@ mod tests {
             lane.counters.sparse_rotation_episodes, 0,
             "a lane that is always armed has no episodes to count"
         );
+    }
+
+    /// The sparse operator's attribution is keyed to its own episodes, and a
+    /// pose the operator did not produce earns it nothing.
+    ///
+    /// Sol review 8 §2 P0 is that the disarm bit was reading
+    /// `rotation_accepted_moves`, which counts any accepted move whose pose
+    /// differs from the incumbent's - including the random catalogue starts
+    /// `search_piece` draws, which is why the control arm reported **11,523**
+    /// of them having offered zero rungs all round. This pins the chain that
+    /// replaced it at the link where the two differ: the commit.
+    #[test]
+    #[cfg(all(feature = "sparse-rotation", feature = "compression-schedule"))]
+    fn a_committed_move_is_charged_to_the_episode_that_actually_produced_it() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        let mut settings = coupled_experiment_test_settings(9);
+        settings.continuous_rotation = true;
+        settings.sparse_rotation = true;
+        let mut lane = LegacyLaneSearch::new(&pieces, fast_settings, settings, 43, catalog);
+
+        // No episode, no id, and therefore no proposal this operator may claim.
+        assert_eq!(lane.sparse_rotation_episode(), None);
+
+        // Opening an episode names it, and re-arming is a new episode rather
+        // than a longer one: two stalls with two violating sets are two events.
+        assert!(lane.arm_rotation_for_pairs(&[(0, 1, 0.5)]));
+        let first = lane.sparse_rotation_episode().expect("an episode is open");
+        assert!(lane.arm_rotation_for_pairs(&[(0, 1, 0.5)]));
+        let second = lane.sparse_rotation_episode().expect("and a second one");
+        assert_ne!(first, second, "an id is never reused inside a lane");
+        lane.disarm_rotation();
+        assert_eq!(
+            lane.sparse_rotation_episode(),
+            None,
+            "a disarmed lane has no episode to charge anything to"
+        );
+
+        // The commit site, driven directly. An accepted move with no owner is
+        // some other mechanism's move, however much its pose changed - this is
+        // exactly the 11,523.
+        lane.sparse_rotation_pose_owner = None;
+        lane.credit_sparse_rotation_commit(37.5, false);
+        assert_eq!(lane.counters.sparse_rotation_committed_moves, 0);
+        assert_eq!(lane.counters.sparse_rotation_committed_episodes, 0);
+
+        // A rung that won and whose pose survived to the commit is the
+        // operator's move, and it opens its episode's account.
+        lane.sparse_rotation_pose_owner = Some((first, angle_key(37.5), false));
+        lane.credit_sparse_rotation_commit(37.5, false);
+        assert_eq!(lane.counters.sparse_rotation_committed_moves, 1);
+        assert_eq!(lane.counters.sparse_rotation_committed_episodes, 1);
+
+        // A second commit in the same episode is a second move and the same
+        // episode: `committed_episodes / episodes` has to stay a fraction of
+        // stalls converted, not a move count wearing an episode's name.
+        lane.credit_sparse_rotation_commit(37.5, false);
+        assert_eq!(lane.counters.sparse_rotation_committed_moves, 2);
+        assert_eq!(lane.counters.sparse_rotation_committed_episodes, 1);
+
+        // A pose that drifted after the rung won it is not the rung's pose.
+        // Neither axis alone is enough: the angle can match while the mirror
+        // does not, and a stage that only compared angles would credit it.
+        lane.sparse_rotation_pose_owner = Some((second, angle_key(37.5), false));
+        lane.credit_sparse_rotation_commit(37.5, true);
+        lane.credit_sparse_rotation_commit(40.0, false);
+        assert_eq!(
+            lane.counters.sparse_rotation_committed_moves, 2,
+            "a pose something else moved is not this operator's commit"
+        );
+        assert_eq!(lane.counters.sparse_rotation_committed_episodes, 1);
+
+        // And the second episode opens its own account when its own pose does
+        // survive.
+        lane.credit_sparse_rotation_commit(37.5, false);
+        assert_eq!(lane.counters.sparse_rotation_committed_moves, 3);
+        assert_eq!(lane.counters.sparse_rotation_committed_episodes, 2);
+    }
+
+    /// Trigger B compares against the loss the sweep was **handed**, not
+    /// against the step's historical minimum.
+    ///
+    /// Sol review 8 §2 P1's own sequence, and it is the sequence because it is
+    /// the smallest one on which the two rules disagree: `10 -> 8 -> 9 -> 8.5`.
+    /// The last sweep lowered the 9 it was handed, so translation has resumed
+    /// and the rungs must come off; the rule this replaces kept them on,
+    /// because 8.5 is not below the 8 the step touched two sweeps earlier.
+    ///
+    /// The detector is shared by the serial repair loop and every fan-out
+    /// worker, so this test pins both.
+    #[test]
+    #[cfg(feature = "sparse-rotation")]
+    fn trigger_b_disarms_when_translation_resumes_above_the_step_minimum() {
+        // The witness sequence. `true` is "arm", `false` is "disarm".
+        let mut detector = StallDetector::entering(10.0);
+        assert!(
+            !detector.observe(8.0),
+            "10 -> 8 lowered the loss it was handed: disarm"
+        );
+        assert!(
+            detector.observe(9.0),
+            "8 -> 9 did not lower the loss it was handed: arm"
+        );
+        assert!(
+            !detector.observe(8.5),
+            "9 -> 8.5 lowered the loss it was handed, so translation has \
+             resumed and the episode must end - the historical-minimum rule \
+             this replaces stayed armed here, which is the whole bug"
+        );
+
+        // The old rule, written out, so the disagreement is in the test rather
+        // than only in the comment: under `min(entry, every result)` the same
+        // sequence ends armed.
+        let mut historical_minimum = 10.0_f64;
+        let mut old_rule_armed = Vec::new();
+        for now in [8.0_f64, 9.0, 8.5] {
+            old_rule_armed.push(!(now < historical_minimum));
+            historical_minimum = historical_minimum.min(now);
+        }
+        assert_eq!(
+            old_rule_armed,
+            vec![false, true, true],
+            "if this ever reads [false, true, false] the two rules have \
+             stopped disagreeing and the fix is no longer being tested"
+        );
+
+        // A monotone descent never arms, which is the case the rule is easy to
+        // get right on and is here so a regression that armed everything would
+        // still be caught.
+        let mut descending = StallDetector::entering(10.0);
+        for now in [9.0, 8.0, 7.0, 6.0] {
+            assert!(!descending.observe(now), "a strict descent never stalls");
+        }
+
+        // Equality is a stall. A sweep that returned exactly the loss it was
+        // handed did not lower it, and the fixpoint is precisely the state the
+        // rungs exist for.
+        let mut flat = StallDetector::entering(4.0);
+        assert!(flat.observe(4.0), "a sweep that changed nothing is a stall");
+        assert!(flat.observe(4.0), "and stays one");
+
+        // A NaN loss must not disarm. `!(NaN < x)` is `true`, which is the
+        // fail-armed direction and the one written into `observe` on purpose:
+        // an unreadable loss is not evidence that translation is working.
+        let mut unreadable = StallDetector::entering(4.0);
+        assert!(unreadable.observe(f64::NAN), "an unreadable loss stalls");
+    }
+
+    /// The witness maps back onto the lane's own state, slot for slot, and
+    /// refuses rather than guessing when it cannot.
+    ///
+    /// Design C's child frontier is only sound because `se2_witness_proposal`
+    /// builds its output by zipping the placements it was handed, so row `i`
+    /// out is row `i` in, moved. That is checked here rather than assumed:
+    /// `input_index` and the strip clamp come from the parent and the pose comes
+    /// from the witness, and a row whose piece id has drifted returns `None`,
+    /// which the caller reads as "do not adopt".
+    #[test]
+    #[cfg(all(feature = "sparse-rotation", feature = "se2-rigidity-certificate"))]
+    fn a_witness_maps_back_onto_the_parent_state_slot_for_slot() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        // A parent whose slots are deliberately *not* in input-index order, so
+        // a mapping that quietly used the row position as the input index would
+        // fail here instead of passing by coincidence.
+        let parent = RelaxedState {
+            placements: vec![
+                RelaxedPlacement {
+                    input_index: 1,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 1.0,
+                    translate_y: 2.0,
+                },
+                RelaxedPlacement {
+                    input_index: 0,
+                    rotation_deg: 90.0,
+                    mirrored: true,
+                    translate_x: 3.0,
+                    translate_y: 4.0,
+                },
+            ],
+            strip_depth_mm: 42.5,
+        };
+        let mut moved = to_fast_placements(&parent, &pieces);
+        moved[0].rotation_deg = 0.125;
+        moved[0].translate_long_axis = 2.5;
+        moved[1].mirrored = false;
+
+        let child = relaxed_state_from_moved(&parent, &moved, &pieces)
+            .expect("a witness built from this parent maps back");
+        assert_eq!(
+            child.strip_depth_mm, parent.strip_depth_mm,
+            "the clamp is the parent's: a witness moves pieces, not the strip"
+        );
+        assert_eq!(child.placements[0].input_index, 1);
+        assert_eq!(child.placements[1].input_index, 0);
+        assert_eq!(child.placements[0].rotation_deg, 0.125);
+        assert_eq!(child.placements[0].translate_y, 2.5);
+        assert!(!child.placements[1].mirrored);
+        assert_eq!(
+            child.placements[1].rotation_deg, 90.0,
+            "an untouched row survives the round trip unchanged"
+        );
+
+        // A row whose piece id has drifted is refused, not guessed at.
+        let mut drifted = moved.clone();
+        drifted[0].piece_id = "not-a-piece-in-this-parent".to_owned();
+        assert!(
+            relaxed_state_from_moved(&parent, &drifted, &pieces).is_none(),
+            "a witness that cannot be mapped back must be refused"
+        );
+
+        // So is a short one.
+        assert!(
+            relaxed_state_from_moved(&parent, &moved[..1], &pieces).is_none(),
+            "a witness with a missing row must be refused"
+        );
+
+        // And the default is not to adopt at all, which is what keeps every
+        // number the sparse-rotation round published reproducible on this
+        // binary.
+        let three_part = Se2WitnessSettings {
+            trust_radius_mm: 0.05,
+            iterations: 8,
+            max_calls: 1,
+            adopt: false,
+        };
+        assert!(!three_part.adopt);
     }
 
     /// `ensure_state_surrogates` does nothing for a piece that has not moved,

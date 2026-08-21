@@ -1,0 +1,225 @@
+   Compiling syn v2.0.119
+   Compiling litemap v0.8.2
+   Compiling writeable v0.6.3
+   Compiling displaydoc v0.2.7
+   Compiling utf8_iter v1.0.4
+   Compiling icu_properties_data v2.2.0
+   Compiling icu_normalizer_data v2.2.0
+   Compiling getrandom v0.3.4
+   Compiling zerocopy v0.8.56
+   Compiling ahash v0.8.12
+   Compiling napi-build v2.4.0
+   Compiling parking_lot_core v0.9.12
+   Compiling futures-core v0.3.33
+   Compiling regex-syntax v0.8.11
+   Compiling futures-sink v0.3.33
+   Compiling heck v0.5.0
+   Compiling ref-cast v1.0.26
+   Compiling futures-channel v0.3.33
+   Compiling num-rational v0.4.2
+   Compiling num-iter v0.1.46
+   Compiling ref-cast-impl v1.0.26
+   Compiling aho-corasick v1.1.5
+   Compiling once_cell v1.21.4
+   Compiling slab v0.4.12
+   Compiling utf8parse v0.2.2
+   Compiling futures-task v0.3.33
+   Compiling futures-io v0.3.33
+   Compiling pin-project-lite v0.2.17
+   Compiling anstyle-parse v1.0.0
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling cfg_aliases v0.2.2
+   Compiling colorchoice v1.0.5
+   Compiling anstyle-query v1.1.5
+   Compiling allocator-api2 v0.2.21
+   Compiling bit-vec v0.8.0
+   Compiling equivalent v1.0.2
+   Compiling anstyle v1.0.14
+   Compiling borrow-or-share v0.2.4
+   Compiling unicode-general-category v1.1.0
+   Compiling lazy_static v1.5.0
+   Compiling num v0.4.3
+   Compiling foldhash v0.2.0
+   Compiling unicode-segmentation v1.13.3
+   Compiling bitflags v2.13.1
+   Compiling fraction v0.15.4
+   Compiling fluent-uri v0.4.1
+   Compiling parking_lot v0.12.5
+   Compiling anstream v1.0.0
+   Compiling bit-set v0.8.0
+   Compiling convert_case v0.11.0
+   Compiling nix v0.31.3
+   Compiling napi v3.12.0
+   Compiling libloading v0.9.0
+   Compiling hashbrown v0.17.1
+   Compiling num-cmp v0.1.0
+   Compiling strsim v0.11.1
+   Compiling percent-encoding v2.3.2
+   Compiling bytecount v0.6.9
+   Compiling micromap v0.3.0
+   Compiling vsimd v0.8.0
+   Compiling outref v0.5.2
+   Compiling clap_lex v1.1.0
+   Compiling napi-sys v3.3.0
+warning: unused variable: `settings`
+    --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:4521:5
+     |
+4521 |     settings: GeneralFastSettings,
+     |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_settings`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `resolved_pair_collides` is never used
+     --> crates/polygon-nesting-core/src/search/general_relaxed.rs:16524:8
+      |
+12461 | impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'a, K> {
+      | ------------------------------------------------------------------------------------- method in this implementation
+...
+16524 |     fn resolved_pair_collides(
+      |        ^^^^^^^^^^^^^^^^^^^^^^
+      |
+      = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: multiple fields are never read
+   --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:470:5
+    |
+469 | struct VacancyQuotas {
+    |        ------------- fields in this struct
+470 |     piece_count: usize,
+    |     ^^^^^^^^^^^
+...
+475 |     settle_selected_piece_slots: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+476 |     reconstruction_selected_piece_slots: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+477 |     lns_settle_selected_piece_slots: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+478 |     construction_selected_piece_slots: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+479 |     construction_void_scan_cap: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+480 |     bridge_void_scan_cap: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^
+481 |     group_drop_pair_visits: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+482 |     separation_pair_visits: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `VacancyQuotas` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: struct `SettleKey` is never constructed
+    --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:4300:8
+     |
+4300 | struct SettleKey {
+     |        ^^^^^^^^^
+
+warning: function `settle_key_for` is never used
+    --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:4306:4
+     |
+4306 | fn settle_key_for(
+     |    ^^^^^^^^^^^^^^
+
+warning: function `settle_key_less` is never used
+    --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:4320:4
+     |
+4320 | fn settle_key_less(first: SettleKey, second: SettleKey) -> bool {
+     |    ^^^^^^^^^^^^^^^
+
+warning: method `proven_overlap` is never used
+   --> crates/polygon-nesting-core/src/search/construction_reject_certificate.rs:644:23
+    |
+614 |     impl RejectCertificates {
+    |     ----------------------- method in this implementation
+...
+644 |         pub(crate) fn proven_overlap(&self, active: &[bool], discs: usize) -> Option<f64> {
+    |                       ^^^^^^^^^^^^^^
+
+warning: `polygon-nesting-core` (lib) generated 7 warnings (run `cargo fix --lib -p polygon-nesting-core` to apply 1 suggestion)
+   Compiling clap_derive v4.6.4
+   Compiling polygon-nesting-napi v0.3.0 (/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_30e47560-32c-2/crates/polygon-nesting-napi)
+   Compiling email_address v0.2.9
+   Compiling errno v0.3.14
+   Compiling clap_builder v4.6.5
+   Compiling data-encoding v2.11.1
+   Compiling nohash-hasher v0.2.0
+   Compiling ctor v1.0.12
+   Compiling uuid-simd v0.8.0
+   Compiling rustc-hash v2.1.3
+   Compiling signal-hook-registry v1.4.8
+   Compiling polygon-nesting-dxf v0.3.0 (/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_30e47560-32c-2/crates/polygon-nesting-dxf)
+   Compiling polygon-nesting-core v0.3.0 (/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_30e47560-32c-2/crates/polygon-nesting-core)
+   Compiling polygon-nesting-protocol v0.3.0 (/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_30e47560-32c-2/crates/polygon-nesting-protocol)
+   Compiling regex-automata v0.4.18
+   Compiling jsonschema-regex v0.49.9
+   Compiling synstructure v0.13.2
+   Compiling napi-derive-backend v6.1.1
+   Compiling jsonschema-value v0.49.9
+   Compiling referencing v0.49.9
+   Compiling zerofrom-derive v0.1.7
+   Compiling yoke-derive v0.8.2
+   Compiling zerovec-derive v0.11.3
+   Compiling futures-macro v0.3.33
+   Compiling strum_macros v0.28.0
+   Compiling clap v4.6.5
+   Compiling futures-util v0.3.33
+   Compiling zerofrom v0.1.8
+   Compiling yoke v0.8.3
+   Compiling zerovec v0.11.6
+   Compiling zerotrie v0.2.4
+   Compiling napi-derive v3.6.1
+   Compiling strum v0.28.0
+   Compiling tinystr v0.8.3
+   Compiling potential_utf v0.1.5
+   Compiling icu_collections v2.2.0
+   Compiling icu_locale_core v2.2.0
+   Compiling fancy-regex v0.19.0
+   Compiling regex v1.13.1
+   Compiling icu_provider v2.2.0
+   Compiling icu_properties v2.2.0
+   Compiling icu_normalizer v2.2.0
+   Compiling futures-executor v0.3.33
+   Compiling futures v0.3.33
+   Compiling idna_adapter v1.2.2
+   Compiling idna v1.1.0
+   Compiling jsonschema v0.49.9
+   Compiling polygon-nesting-cli v0.3.0 (/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_30e47560-32c-2/crates/polygon-nesting-cli)
+warning: `polygon-nesting-core` (lib test) generated 4 warnings (4 duplicates)
+    Finished `release` profile [optimized] target(s) in 1m 24s
+     Running unittests src/lib.rs (/var/lib/t3/tmp/basinrace/target-se2/release/deps/polygon_nesting_cli-5e797deb1878f338)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/var/lib/t3/tmp/basinrace/target-se2/release/deps/polygon_nesting_core-00fb29e41a41cdb6)
+
+running 8 tests
+test search::portfolio::tests::the_halving_shrinks_to_the_target_and_stops ... ok
+test search::general_relaxed::tests::a_witness_maps_back_onto_the_parent_state_slot_for_slot ... ok
+test search::portfolio::tests::the_basin_race_is_off_by_default ... ok
+test search::general_relaxed::tests::trigger_b_disarms_when_translation_resumes_above_the_step_minimum ... ok
+test search::portfolio::tests::a_retired_basin_leaves_the_archive ... ok
+test search::portfolio::tests::the_disarm_bit_cannot_be_fed_the_catalogues_accepted_moves ... ok
+test search::portfolio::tests::the_race_judges_on_yield_stability_and_infeasibility_and_not_on_depth ... ok
+test search::general_relaxed::tests::a_committed_move_is_charged_to_the_episode_that_actually_produced_it ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 921 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/var/lib/t3/tmp/basinrace/target-se2/release/deps/polygon_nesting_dxf-f5673e1b9b7dbc93)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/var/lib/t3/tmp/basinrace/target-se2/release/deps/polygon_nesting_napi-c0e69ab0dbaa67e2)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 40 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/var/lib/t3/tmp/basinrace/target-se2/release/deps/polygon_nesting_protocol-1bfb0f82771d95d4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

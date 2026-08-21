@@ -1,0 +1,35 @@
+{
+ "note": "Every binary this round measured on. The two `base-*` rows are built from the base commit and are the A side of the gate digest comparison in README \u00a77.",
+ "binaries": [
+  {
+   "label": "base-gate",
+   "features": "jagua-experimental",
+   "tree": "base commit 29d5780",
+   "sha256": "afaf5b0fa0b43069ceaf933f5060355b4c1da90c1c23d5bd59973ac750ee97de"
+  },
+  {
+   "label": "base-combo",
+   "features": "jagua-experimental,compression-schedule,parallel-compression-schedule,continuous-rotation,sparse-rotation,fast-contract-validator",
+   "tree": "base commit 29d5780",
+   "sha256": "5681046a61fc665e0448eec75c68cd163849792b084759d58410b25ecd3f7cc0"
+  },
+  {
+   "label": "race-gate",
+   "features": "jagua-experimental",
+   "tree": "this tree",
+   "sha256": "c7c2e556f390e552bbc3c344b1943bad92464c068da5fe853bd6fcfe9b1d73b1"
+  },
+  {
+   "label": "race-combo",
+   "features": "jagua-experimental,compression-schedule,parallel-compression-schedule,continuous-rotation,sparse-rotation,fast-contract-validator",
+   "tree": "this tree",
+   "sha256": "607978581b45d7cca9c9584fdae0e4662ec4247d1d74f9337bb4123a18cb949b"
+  },
+  {
+   "label": "race-se2",
+   "features": "jagua-experimental,compression-schedule,parallel-compression-schedule,continuous-rotation,sparse-rotation,fast-contract-validator,se2-rigidity-certificate",
+   "tree": "this tree",
+   "sha256": "a05b70fb29d5b024bb9c6d6c2fd8a26350b82090f2fc6d64a981e3ece7c3098d"
+  }
+ ]
+}

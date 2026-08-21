@@ -358,9 +358,10 @@ fn se2_witness_requested()
         return Ok(None);
     }
     let parts = spec.split(':').collect::<Vec<_>>();
-    if parts.len() != 3 {
+    if parts.len() != 3 && parts.len() != 4 {
         return Err(format!(
-            "POLYGON_NESTING_SE2_WITNESS takes trust:iterations:maxcalls, not `{spec}`"
+            "POLYGON_NESTING_SE2_WITNESS takes trust:iterations:maxcalls[:adopt], \
+             not `{spec}`"
         ));
     }
     Ok(Some(
@@ -374,6 +375,7 @@ fn se2_witness_requested()
             max_calls: parts[2]
                 .parse()
                 .map_err(|_| format!("se2 witness max calls: `{}`", parts[2]))?,
+            adopt: parts.get(3).is_some_and(|part| *part != "0"),
         },
     ))
 }
@@ -2113,18 +2115,21 @@ fn parse_portfolio_spec(
             "sparserot" => settings.sparse_rotation = value != "0",
             #[cfg(feature = "sparse-rotation")]
             "rotbit" => settings.sparse_rotation_bit = value != "0",
-            // Design C, as `trust:iterations:maxcalls` or `0` for off. One key
-            // rather than three because the three are one budget: a trust radius
-            // without an iteration count is not a price.
+            // Design C, as `trust:iterations:maxcalls[:adopt]` or `0` for off.
+            // One key rather than four because the first three are one budget -
+            // a trust radius without an iteration count is not a price - and
+            // the fourth is a property of that same call. The three-part form
+            // is still accepted and still means `adopt = 0`, so every spec any
+            // previous round recorded reproduces on this binary.
             #[cfg(feature = "sparse-rotation")]
             "se2w" => {
                 settings.se2_witness = if value == "0" || value.is_empty() {
                     None
                 } else {
                     let parts = value.split(':').collect::<Vec<_>>();
-                    if parts.len() != 3 {
+                    if parts.len() != 3 && parts.len() != 4 {
                         return Err(format!(
-                            "se2w takes trust:iterations:maxcalls, not {value:?}"
+                            "se2w takes trust:iterations:maxcalls[:adopt], not {value:?}"
                         )
                         .into());
                     }
@@ -2133,10 +2138,46 @@ fn parse_portfolio_spec(
                             trust_radius_mm: parts[0].parse()?,
                             iterations: parts[1].parse()?,
                             max_calls: parts[2].parse()?,
+                            adopt: parts.get(3).is_some_and(|part| *part != "0"),
                         },
                     )
                 };
             }
+            // The multi-basin race, as `arms:keep:rungs[:share]` or `0` for
+            // off. One key for the same reason `se2w` is one key: the four are
+            // one audition, and an arm count without a rung cap is not a price.
+            // `raceevict=0` is separate because it is not part of the audition
+            // - it is what happens to the losers afterwards, and the arm that
+            // leaves them in the archive is a real arm to measure.
+            #[cfg(feature = "compression-schedule")]
+            "race" => {
+                if value == "0" || value.is_empty() {
+                    settings.basin_race = false;
+                } else {
+                    let parts = value.split(':').collect::<Vec<_>>();
+                    if parts.len() != 3 && parts.len() != 4 {
+                        return Err(
+                            format!("race takes arms:keep:rungs[:share], not {value:?}").into()
+                        );
+                    }
+                    settings.basin_race = true;
+                    settings.basin_race_arms = parts[0].parse()?;
+                    settings.basin_race_keep = parts[1].parse()?;
+                    settings.basin_race_rungs = parts[2].parse()?;
+                    if let Some(share) = parts.get(3) {
+                        settings.basin_race_share = share.parse()?;
+                    }
+                }
+            }
+            #[cfg(feature = "compression-schedule")]
+            "raceevict" => settings.basin_race_evict = value != "0",
+            // Where the challengers come from: `1` draws salted constructors,
+            // `0` auditions the basins phase 0 already archived. Separate from
+            // `race` because it is the arm this round's central price finding
+            // is about, and a battery that could only move it together with the
+            // arm count could not attribute the price to it.
+            #[cfg(feature = "compression-schedule")]
+            "racedraw" => settings.basin_race_draw = value != "0",
             "barren" => settings.barren_action_patience = value.parse()?,
             "divq" => settings.diversify_in_queue = value != "0",
             "m34wall" => settings.schedule_wall_prior = value != "0",
@@ -2234,8 +2275,13 @@ fn schedule_slice_json(
         "sparseRotationEpisodes": slice.sparse_rotation_episodes,
         "sparseRotationPiecesArmed": slice.sparse_rotation_pieces_armed,
         "sparseRotationSweeps": slice.sparse_rotation_sweeps,
+        "sparseRotationRungsProposed": slice.sparse_rotation_rungs_proposed,
+        "sparseRotationRungWinners": slice.sparse_rotation_rung_winners,
+        "sparseRotationCommittedMoves": slice.sparse_rotation_committed_moves,
+        "sparseRotationCommittedEpisodes": slice.sparse_rotation_committed_episodes,
         "se2WitnessCalls": slice.se2_witness_calls,
         "se2WitnessAccepted": slice.se2_witness_accepted,
+        "se2WitnessAdoptions": slice.se2_witness_adoptions,
         "se2WitnessMs": slice.se2_witness_ms,
         "se2WitnessBoughtMm": slice.se2_witness_bought_mm,
     })
@@ -2397,6 +2443,41 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
                 "entryRawDepthMm": row.entry_raw_depth_mm,
                 "exitRawDepthMm": row.exit_raw_depth_mm,
                 "candidates": row.candidates,
+            })).collect::<Vec<_>>(),
+        });
+    }
+    #[cfg(feature = "compression-schedule")]
+    if let Some(race) = outcome.basin_race.as_ref() {
+        report["basinRace"] = json!({
+            "armed": race.armed,
+            "armsStarted": race.arms_started,
+            "rounds": race.rounds,
+            "kept": race.kept,
+            "retired": race.retired,
+            "winnerSlot": race.winner_slot,
+            "winnerFingerprint": race.winner_fingerprint,
+            "winnerDepthMm": race.winner_depth_mm,
+            "incumbentArmDepthMm": race.incumbent_arm_depth_mm,
+            // The round's central question, answered by the document instead
+            // of by a reader subtracting two fields: did the race move the run
+            // off the basin it would otherwise have used?
+            "movedOffIncumbent": race.winner_slot.map(|slot| slot != 0),
+            "workUnits": race.work_units,
+            "seconds": race.seconds,
+            "exitCause": race.exit_cause,
+            "arms": race.arms.iter().map(|arm| json!({
+                "slot": arm.slot,
+                "kind": arm.kind,
+                "fingerprint": arm.fingerprint,
+                "depthMm": arm.depth_mm,
+                "yieldMm": arm.yield_mm,
+                "stability": arm.stability,
+                "infeasibility": arm.infeasibility,
+                "batchSteps": arm.batch_steps,
+                "batchConfirmations": arm.batch_confirmations,
+                "rankSum": arm.rank_sum,
+                "eliminatedRound": arm.eliminated_round,
+                "retiredFromArchive": arm.retired_from_archive,
             })).collect::<Vec<_>>(),
         });
     }

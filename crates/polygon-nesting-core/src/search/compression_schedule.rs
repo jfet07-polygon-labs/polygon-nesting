@@ -760,6 +760,11 @@ impl CompressionSchedule {
             sparse_rotation_episodes: 0,
             sparse_rotation_pieces_armed: 0,
             sparse_rotation_sweeps: 0,
+            sparse_rotation_rungs_proposed: 0,
+            sparse_rotation_rung_winners: 0,
+            sparse_rotation_committed_moves: 0,
+            sparse_rotation_committed_episodes: 0,
+            se2_witness_adoptions: 0,
             se2_witness_calls: 0,
             se2_witness_accepted: 0,
             se2_witness_ms: 0.0,
@@ -1107,8 +1112,30 @@ pub struct GeneralCompressionScheduleDiagnostics {
     pub sparse_rotation_episodes: usize,
     pub sparse_rotation_pieces_armed: usize,
     pub sparse_rotation_sweeps: usize,
+    /// The operator's own chain, and the column a disarm bit must read.
+    ///
+    /// `rotation_accepted_moves` counts any accepted move whose pose changed -
+    /// including a random catalogue start that happened to win at a different
+    /// angle - so it is not the operator's attribution and the control arm
+    /// proves it: zero rungs offered, 11,523 accepted "rotation" moves
+    /// (Sol review 8 §2 P0). These four are keyed to the operator's episodes:
+    /// rungs proposed inside an open episode, iterations one of them won and
+    /// moved the pose with, accepted moves whose committed pose is still the
+    /// one the rung produced, and the number of distinct episodes that
+    /// produced at least one of those. `committed_episodes / episodes` is the
+    /// fraction of stalls the operator actually converted, and it is zero on a
+    /// lane where the operator never fired regardless of what the sweeps did.
+    pub sparse_rotation_rungs_proposed: usize,
+    pub sparse_rotation_rung_winners: usize,
+    pub sparse_rotation_committed_moves: usize,
+    pub sparse_rotation_committed_episodes: usize,
     pub se2_witness_calls: usize,
     pub se2_witness_accepted: usize,
+    /// Accepted witnesses that were adopted as the child frontier. Zero unless
+    /// `Se2WitnessSettings::adopt` armed it, and it is reported separately from
+    /// `se2_witness_accepted` so "the witness published" and "the search
+    /// continued from the witness" are two readings and not one.
+    pub se2_witness_adoptions: usize,
     pub se2_witness_ms: f64,
     pub se2_witness_bought_mm: f64,
     /// Per-pair classification of the parent's proxy collisions, empty unless

@@ -1,0 +1,562 @@
+{
+ "binary": "/var/lib/t3/tmp/basinrace/bin/race-se2",
+ "binarySha256": "a05b70fb29d5b024bb9c6d6c2fd8a26350b82090f2fc6d64a981e3ece7c3098d",
+ "workUnits": 3341379,
+ "dropMm": 0.3,
+ "allowance": "0.002",
+ "arms": {
+  "control": {},
+  "designA": {
+   "POLYGON_NESTING_CONTINUOUS_ROTATION": "1"
+  },
+  "designB": {
+   "POLYGON_NESTING_CONTINUOUS_ROTATION": "1",
+   "POLYGON_NESTING_SPARSE_ROTATION": "1",
+   "POLYGON_NESTING_ROTATION_EQUIVARIANT": "1"
+  }
+ },
+ "cells": [
+  {
+   "seed": 0,
+   "parentRawDepthMm": 174.20812003998896,
+   "arms": {
+    "control": {
+     "rawSourceDepthMm": 173.37991578608327,
+     "wallSeconds": 3.1674021420185454,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 0,
+     "rotationAcceptedMoves": 138,
+     "acceptedMoves": 1657
+    },
+    "designA": {
+     "rawSourceDepthMm": 173.52416349775987,
+     "wallSeconds": 4.152251079038251,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 8838,
+     "rotationAcceptedMoves": 889,
+     "acceptedMoves": 957
+    },
+    "designB": {
+     "rawSourceDepthMm": 173.496,
+     "wallSeconds": 3.2286218469962478,
+     "sparseRotationEpisodes": 138,
+     "sparseRotationRungsProposed": 4726,
+     "sparseRotationRungWinners": 1425,
+     "sparseRotationCommittedMoves": 163,
+     "sparseRotationCommittedEpisodes": 92,
+     "rotationRungsProposed": 2194,
+     "rotationAcceptedMoves": 287,
+     "acceptedMoves": 1569
+    }
+   }
+  },
+  {
+   "seed": 1,
+   "parentRawDepthMm": 176.05599999999998,
+   "arms": {
+    "control": {
+     "rawSourceDepthMm": 174.57600000000002,
+     "wallSeconds": 3.26062511903001,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 0,
+     "rotationAcceptedMoves": 152,
+     "acceptedMoves": 1877
+    },
+    "designA": {
+     "rawSourceDepthMm": 174.588249374415,
+     "wallSeconds": 3.647223770036362,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 6060,
+     "rotationAcceptedMoves": 580,
+     "acceptedMoves": 818
+    },
+    "designB": {
+     "rawSourceDepthMm": 174.48590779334523,
+     "wallSeconds": 3.3909496949636377,
+     "sparseRotationEpisodes": 46,
+     "sparseRotationRungsProposed": 2616,
+     "sparseRotationRungWinners": 904,
+     "sparseRotationCommittedMoves": 87,
+     "sparseRotationCommittedEpisodes": 37,
+     "rotationRungsProposed": 1304,
+     "rotationAcceptedMoves": 151,
+     "acceptedMoves": 2120
+    }
+   }
+  },
+  {
+   "seed": 2,
+   "parentRawDepthMm": 179.006,
+   "arms": {
+    "control": {
+     "rawSourceDepthMm": 177.34300000000002,
+     "wallSeconds": 4.254474416957237,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 0,
+     "rotationAcceptedMoves": 491,
+     "acceptedMoves": 7097
+    },
+    "designA": {
+     "rawSourceDepthMm": 177.33985734211342,
+     "wallSeconds": 6.919340535998344,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 66460,
+     "rotationAcceptedMoves": 6127,
+     "acceptedMoves": 9312
+    },
+    "designB": {
+     "rawSourceDepthMm": 177.25399870219374,
+     "wallSeconds": 4.277744713006541,
+     "sparseRotationEpisodes": 686,
+     "sparseRotationRungsProposed": 17530,
+     "sparseRotationRungWinners": 4602,
+     "sparseRotationCommittedMoves": 690,
+     "sparseRotationCommittedEpisodes": 442,
+     "rotationRungsProposed": 8926,
+     "rotationAcceptedMoves": 991,
+     "acceptedMoves": 9806
+    }
+   }
+  },
+  {
+   "seed": 3,
+   "parentRawDepthMm": 176.061,
+   "arms": {
+    "control": {
+     "rawSourceDepthMm": 176.061,
+     "wallSeconds": 7.616534380009398,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 0,
+     "rotationAcceptedMoves": 218,
+     "acceptedMoves": 28114
+    },
+    "designA": {
+     "rawSourceDepthMm": 174.37999999416596,
+     "wallSeconds": 5.520988123025745,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 21316,
+     "rotationAcceptedMoves": 2874,
+     "acceptedMoves": 3530
+    },
+    "designB": {
+     "rawSourceDepthMm": 176.061,
+     "wallSeconds": 6.860696354997344,
+     "sparseRotationEpisodes": 259,
+     "sparseRotationRungsProposed": 7520,
+     "sparseRotationRungWinners": 2135,
+     "sparseRotationCommittedMoves": 253,
+     "sparseRotationCommittedEpisodes": 176,
+     "rotationRungsProposed": 3616,
+     "rotationAcceptedMoves": 418,
+     "acceptedMoves": 24011
+    }
+   }
+  },
+  {
+   "seed": 4,
+   "parentRawDepthMm": 171.64953207726535,
+   "arms": {
+    "control": {
+     "rawSourceDepthMm": 171.08177826491067,
+     "wallSeconds": 4.613683425006457,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 0,
+     "rotationAcceptedMoves": 762,
+     "acceptedMoves": 5479
+    },
+    "designA": {
+     "rawSourceDepthMm": 171.1187662642279,
+     "wallSeconds": 5.205341333989054,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 33366,
+     "rotationAcceptedMoves": 2427,
+     "acceptedMoves": 2785
+    },
+    "designB": {
+     "rawSourceDepthMm": 171.09659403470084,
+     "wallSeconds": 3.356530920951627,
+     "sparseRotationEpisodes": 113,
+     "sparseRotationRungsProposed": 3084,
+     "sparseRotationRungWinners": 831,
+     "sparseRotationCommittedMoves": 132,
+     "sparseRotationCommittedEpisodes": 79,
+     "rotationRungsProposed": 1534,
+     "rotationAcceptedMoves": 222,
+     "acceptedMoves": 1700
+    }
+   }
+  },
+  {
+   "seed": 5,
+   "parentRawDepthMm": 179.05182605364416,
+   "arms": {
+    "control": {
+     "rawSourceDepthMm": 177.56277826491072,
+     "wallSeconds": 3.5863434310304,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 0,
+     "rotationAcceptedMoves": 564,
+     "acceptedMoves": 6444
+    },
+    "designA": {
+     "rawSourceDepthMm": 177.47788103430537,
+     "wallSeconds": 5.567905407049693,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 63952,
+     "rotationAcceptedMoves": 5622,
+     "acceptedMoves": 8304
+    },
+    "designB": {
+     "rawSourceDepthMm": 177.37900000000002,
+     "wallSeconds": 3.7825165310059674,
+     "sparseRotationEpisodes": 807,
+     "sparseRotationRungsProposed": 23000,
+     "sparseRotationRungWinners": 6264,
+     "sparseRotationCommittedMoves": 828,
+     "sparseRotationCommittedEpisodes": 548,
+     "rotationRungsProposed": 11574,
+     "rotationAcceptedMoves": 1209,
+     "acceptedMoves": 7368
+    }
+   }
+  },
+  {
+   "seed": 6,
+   "parentRawDepthMm": 179.6200102363703,
+   "arms": {
+    "control": {
+     "rawSourceDepthMm": 178.40299999999996,
+     "wallSeconds": 3.4224946289905347,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 0,
+     "rotationAcceptedMoves": 504,
+     "acceptedMoves": 5448
+    },
+    "designA": {
+     "rawSourceDepthMm": 178.38638293373378,
+     "wallSeconds": 5.855088278010953,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 81188,
+     "rotationAcceptedMoves": 6341,
+     "acceptedMoves": 10892
+    },
+    "designB": {
+     "rawSourceDepthMm": 178.518,
+     "wallSeconds": 4.014987547008786,
+     "sparseRotationEpisodes": 479,
+     "sparseRotationRungsProposed": 17724,
+     "sparseRotationRungWinners": 4880,
+     "sparseRotationCommittedMoves": 702,
+     "sparseRotationCommittedEpisodes": 334,
+     "rotationRungsProposed": 8708,
+     "rotationAcceptedMoves": 1205,
+     "acceptedMoves": 10017
+    }
+   }
+  },
+  {
+   "seed": 7,
+   "parentRawDepthMm": 179.52233303152792,
+   "arms": {
+    "control": {
+     "rawSourceDepthMm": 178.264,
+     "wallSeconds": 3.4319528699852526,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 0,
+     "rotationAcceptedMoves": 149,
+     "acceptedMoves": 3841
+    },
+    "designA": {
+     "rawSourceDepthMm": 178.35699990565965,
+     "wallSeconds": 5.960685162979644,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 42788,
+     "rotationAcceptedMoves": 3161,
+     "acceptedMoves": 5780
+    },
+    "designB": {
+     "rawSourceDepthMm": 178.497,
+     "wallSeconds": 3.498718836985063,
+     "sparseRotationEpisodes": 91,
+     "sparseRotationRungsProposed": 3250,
+     "sparseRotationRungWinners": 1060,
+     "sparseRotationCommittedMoves": 117,
+     "sparseRotationCommittedEpisodes": 67,
+     "rotationRungsProposed": 1526,
+     "rotationAcceptedMoves": 245,
+     "acceptedMoves": 4969
+    }
+   }
+  },
+  {
+   "seed": 8,
+   "parentRawDepthMm": 178.93200000000002,
+   "arms": {
+    "control": {
+     "rawSourceDepthMm": 177.28,
+     "wallSeconds": 3.966595186968334,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 0,
+     "rotationAcceptedMoves": 79,
+     "acceptedMoves": 1739
+    },
+    "designA": {
+     "rawSourceDepthMm": 176.94844716794395,
+     "wallSeconds": 6.318691203021444,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 97082,
+     "rotationAcceptedMoves": 8854,
+     "acceptedMoves": 11121
+    },
+    "designB": {
+     "rawSourceDepthMm": 177.288,
+     "wallSeconds": 4.0417100170161575,
+     "sparseRotationEpisodes": 254,
+     "sparseRotationRungsProposed": 9022,
+     "sparseRotationRungWinners": 2451,
+     "sparseRotationCommittedMoves": 318,
+     "sparseRotationCommittedEpisodes": 175,
+     "rotationRungsProposed": 4696,
+     "rotationAcceptedMoves": 518,
+     "acceptedMoves": 2292
+    }
+   }
+  },
+  {
+   "seed": 9,
+   "parentRawDepthMm": 174.96558182288433,
+   "arms": {
+    "control": {
+     "rawSourceDepthMm": 173.97377826491066,
+     "wallSeconds": 2.955072921991814,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 0,
+     "rotationAcceptedMoves": 68,
+     "acceptedMoves": 1229
+    },
+    "designA": {
+     "rawSourceDepthMm": 174.10007235035243,
+     "wallSeconds": 3.924657817988191,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 14048,
+     "rotationAcceptedMoves": 1335,
+     "acceptedMoves": 1458
+    },
+    "designB": {
+     "rawSourceDepthMm": 173.44128910952358,
+     "wallSeconds": 4.170364968013018,
+     "sparseRotationEpisodes": 116,
+     "sparseRotationRungsProposed": 3786,
+     "sparseRotationRungWinners": 1147,
+     "sparseRotationCommittedMoves": 140,
+     "sparseRotationCommittedEpisodes": 91,
+     "rotationRungsProposed": 1596,
+     "rotationAcceptedMoves": 235,
+     "acceptedMoves": 3847
+    }
+   }
+  },
+  {
+   "seed": 10,
+   "parentRawDepthMm": 176.3622237458826,
+   "arms": {
+    "control": {
+     "rawSourceDepthMm": 175.39367511657755,
+     "wallSeconds": 2.403385626967065,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 0,
+     "rotationAcceptedMoves": 45,
+     "acceptedMoves": 804
+    },
+    "designA": {
+     "rawSourceDepthMm": 175.4778613456041,
+     "wallSeconds": 4.653457029955462,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 2210,
+     "rotationAcceptedMoves": 234,
+     "acceptedMoves": 256
+    },
+    "designB": {
+     "rawSourceDepthMm": 175.36067511657757,
+     "wallSeconds": 2.4858208459918387,
+     "sparseRotationEpisodes": 11,
+     "sparseRotationRungsProposed": 142,
+     "sparseRotationRungWinners": 44,
+     "sparseRotationCommittedMoves": 7,
+     "sparseRotationCommittedEpisodes": 6,
+     "rotationRungsProposed": 86,
+     "rotationAcceptedMoves": 44,
+     "acceptedMoves": 426
+    }
+   }
+  },
+  {
+   "seed": 11,
+   "parentRawDepthMm": 171.6141235046606,
+   "arms": {
+    "control": {
+     "rawSourceDepthMm": 170.868,
+     "wallSeconds": 4.089853869983926,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 0,
+     "rotationAcceptedMoves": 671,
+     "acceptedMoves": 3242
+    },
+    "designA": {
+     "rawSourceDepthMm": 170.4619999983776,
+     "wallSeconds": 6.702149068005383,
+     "sparseRotationEpisodes": 0,
+     "sparseRotationRungsProposed": 0,
+     "sparseRotationRungWinners": 0,
+     "sparseRotationCommittedMoves": 0,
+     "sparseRotationCommittedEpisodes": 0,
+     "rotationRungsProposed": 64256,
+     "rotationAcceptedMoves": 5206,
+     "acceptedMoves": 5743
+    },
+    "designB": {
+     "rawSourceDepthMm": 170.49097831883284,
+     "wallSeconds": 4.183539290970657,
+     "sparseRotationEpisodes": 391,
+     "sparseRotationRungsProposed": 11844,
+     "sparseRotationRungWinners": 3504,
+     "sparseRotationCommittedMoves": 396,
+     "sparseRotationCommittedEpisodes": 275,
+     "rotationRungsProposed": 5536,
+     "rotationAcceptedMoves": 614,
+     "acceptedMoves": 4143
+    }
+   }
+  }
+ ],
+ "summary": {
+  "control": {
+   "sparseRotationEpisodes": 0,
+   "sparseRotationRungsProposed": 0,
+   "sparseRotationRungWinners": 0,
+   "sparseRotationCommittedMoves": 0,
+   "sparseRotationCommittedEpisodes": 0,
+   "rotationRungsProposed": 0,
+   "rotationAcceptedMoves": 3841,
+   "acceptedMoves": 66971,
+   "acceptedOverCommitted": null,
+   "committedEpisodeFraction": null
+  },
+  "designA": {
+   "sparseRotationEpisodes": 0,
+   "sparseRotationRungsProposed": 0,
+   "sparseRotationRungWinners": 0,
+   "sparseRotationCommittedMoves": 0,
+   "sparseRotationCommittedEpisodes": 0,
+   "rotationRungsProposed": 501564,
+   "rotationAcceptedMoves": 43650,
+   "acceptedMoves": 60956,
+   "acceptedOverCommitted": null,
+   "committedEpisodeFraction": null
+  },
+  "designB": {
+   "sparseRotationEpisodes": 3391,
+   "sparseRotationRungsProposed": 104244,
+   "sparseRotationRungWinners": 29247,
+   "sparseRotationCommittedMoves": 3833,
+   "sparseRotationCommittedEpisodes": 2322,
+   "rotationRungsProposed": 51296,
+   "rotationAcceptedMoves": 6139,
+   "acceptedMoves": 72268,
+   "acceptedOverCommitted": 1.601617531959301,
+   "committedEpisodeFraction": 0.6847537599528163
+  }
+ }
+}
