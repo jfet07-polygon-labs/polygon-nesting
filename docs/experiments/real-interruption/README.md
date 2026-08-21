@@ -234,12 +234,12 @@ stopped early, and - the part that makes "exact-valid" a claim rather than a fla
 this code set - that the returned layout **re-validates against the real
 request** through `validate_and_measure_placements`.
 
-**`a_suspended_slice_resumes_onto_the_uninterrupted_run`** suspends every fourth
-checkpoint and runs *a whole other operator* - a mode-22 alternation fixpoint on
-the same pieces - between every pair of batches. It allocates, it drives the job
-pool, it runs the same proxy tier, and it advances every process-global counter
-the slice's own meter is not derived from. Then it resumes, and compares against
-the run that was never stopped:
+**`a_suspended_slice_resumes_onto_the_uninterrupted_run`** suspends at every
+fourth checkpoint and runs *a whole other operator* - a mode-22 alternation
+fixpoint on the same pieces - at every suspension. It allocates, it drives the
+job pool, it runs the same proxy tier, and it advances every process-global
+counter the slice's own meter is not derived from. Then it resumes, and compares
+against the run that was never stopped:
 
 * the step digest, and all three gate fingerprints;
 * the whole report, field for field, with the six wall-clock fields zeroed and

@@ -1184,3 +1184,4 @@ test search::general_relaxed::tests::alternation_is_deterministic_across_repeate
 test search::general_relaxed::tests::a_suspended_slice_resumes_onto_the_uninterrupted_run ... ok
 test search::general_relaxed::tests::ladder_compression_walks_every_rung_and_never_publishes_worse_than_its_parent has been running for over 60 seconds
 test search::general_relaxed::tests::only_the_clamped_ladder_arm_runs_the_tolerant_comparison has been running for over 60 seconds
+test search::general_relaxed::tests::ladder_compression_walks_every_rung_and_never_publishes_worse_than_its_parent ... ok
