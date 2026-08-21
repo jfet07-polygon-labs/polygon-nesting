@@ -82,6 +82,8 @@
 //! one - which is the only way the budget can ever overrun a deadline.
 
 use std::collections::BTreeMap;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
 use crate::profiling::{self, Counter};
@@ -1009,6 +1011,23 @@ pub struct PlanReport {
     /// single-tranche plan; anything below it means the run intends to re-plan.
     /// See [`PortfolioSettings::plan_first_tranche`].
     pub first_tranche: f64,
+    /// The probe wall the arithmetic above actually used.
+    ///
+    /// Equal to `probe_seconds` in the shipped mode. It differs when a max-of-k
+    /// bucket estimate ([`PLAN_PROBE_BUCKETS`]) or a persisted calibration
+    /// ([`PortfolioSettings::plan_calibration_path`]) replaced the whole-phase
+    /// clock reading, and `calibration_source` says which.
+    ///
+    /// It is a clock reading when the source is `live` or `probe` and a **file
+    /// constant** when the source is `file` - which is the whole point of the
+    /// file, and the only configuration in which this mode's plan is
+    /// independent of the box's load.
+    pub probe_effective_seconds: f64,
+    /// Where `probe_effective_seconds` came from. Deterministic.
+    pub calibration_source: PlanCalibrationSource,
+    /// How many probe samples the sampler thread collected. `0` when it was not
+    /// armed. A clock-side diagnostic.
+    pub probe_samples: usize,
 }
 
 /// One in-run re-plan: a second (or third) tranche of work, priced at the rate
@@ -1268,6 +1287,114 @@ pub const PLAN_QUANTUM_STEP: f64 = 1.15;
 /// clipping such a run to a round number would be arithmetic pretending to be a
 /// budget.
 pub const PLAN_ANCHOR_UNITS: f64 = 1_000_000.0;
+
+/// How many equal-**work** buckets the probe's wall is cut into before the
+/// fastest of them is taken as the box's rate.
+///
+/// **The problem this exists for.** `install_plan`'s whole non-determinism is
+/// one clock reading: `raw = W0 * (1 + (T*h/t0 - 1)/bias)`, where `W0` is a
+/// counter and `t0` is the probe's wall. On a quiet box `t0`'s spread is
+/// 1.2-2.5% (`calibrated-plan` §6.1) and [`PLAN_QUANTUM_STEP`]'s 14% rung
+/// swallows it. Under a competing workload it is not: `docs/experiments/replan/`
+/// §11.1 re-measured the shipping `plan=10000` arm on a loaded box and got
+/// **2 / 3 / 1 distinct depths per seed** where the quiet box gave 1 / 1 / 1.
+///
+/// **The rule.** A loaded box does not make every microsecond slower; it makes
+/// *some* of them slower. So the mean rate over the whole probe is a
+/// load-weighted average, and the **maximum** rate over a sub-window is the
+/// least-loaded estimate available - the closest this run can get to what the
+/// box would have done with nobody else on it. `k` buckets of `W0/k` units each,
+/// the rate of each measured against its own wall, and the largest taken.
+///
+/// The buckets are cut on the **work** axis and not the wall axis, and that is
+/// the half that makes the estimator legitimate: work is a counter, so the same
+/// run on a quiet and a loaded box compares the same *k* stretches of the same
+/// computation. Cutting on wall would compare a loaded second against a quiet
+/// second and call the difference a rate.
+///
+/// `0` (and `1`) mean one bucket, which is the whole-phase reading unchanged, so
+/// the default is the mode `calibrated-plan` shipped. **Eight** is what this
+/// constant holds and what every arm in `docs/experiments/robust-plan/` was
+/// measured at; `planprobe=on` in the benchmark spec is exactly this value, and
+/// `planprobe=<k>` names a different one.
+pub const PLAN_PROBE_BUCKETS: usize = 8;
+
+/// The floor under a max-of-k probe, as a fraction of the probe's real wall.
+///
+/// A single bucket that happened to catch a cheap stretch of phase 0 - a
+/// preprocessing pass that retires units far faster than the separator does -
+/// would price the whole run at a rate no part of it will sustain, and the plan
+/// would overrun. The estimate is therefore clamped: the effective probe wall
+/// may not fall below this fraction of the wall actually observed, so the
+/// mechanism can correct a loaded reading by at most 2x and cannot invent a box.
+pub const PLAN_PROBE_MIN_FRACTION: f64 = 0.5;
+
+/// How often the probe sampler reads the counters, in milliseconds.
+///
+/// It reads two atomics-backed totals and pushes a pair; on the shortest phase 0
+/// this campaign measures (0.87 s on triangle-20) it takes about 43 samples,
+/// which is enough to cut eight work buckets with room. It is a *cadence* and
+/// not a checkpoint: the buckets are interpolated onto the work axis afterwards,
+/// so a sample that arrives late moves no boundary.
+pub const PLAN_PROBE_SAMPLE_MILLIS: u64 = 20;
+
+/// How far the live probe may sit from a persisted calibration before the file
+/// is refused.
+///
+/// The file is the point of [`PortfolioSettings::plan_calibration_path`]: while
+/// it is used, the plan is a function of counters alone and two processes agree
+/// **whatever the load**. The band is where that stops being safe.
+///
+/// It is deliberately one number with two very different jobs, and a reader
+/// should see both:
+///
+/// * **`live` much larger than the file** is the case the mechanism exists for -
+///   a loaded box - and the file is kept right up to this factor. That is the
+///   load robustness, and its size is exactly how much load the guarantee
+///   survives.
+/// * **`live` much smaller than the file** cannot be load, so it is a file
+///   measured on a slower box, a different build or a different request that
+///   happened to collide on the key. Keeping it there would under-buy for ever.
+///
+/// Outside the band the run falls back to its own probe and says so in
+/// `plan.calibrationSource`, so the degrade is in the document rather than
+/// inferred from a wall.
+pub const PLAN_CALIBRATION_BAND: f64 = 2.0;
+
+/// Where a plan's probe wall came from.
+///
+/// Reported in the **deterministic** half of the plan block, not the clock half,
+/// and that is on purpose: two processes that took their probe from different
+/// sources did not run the same calibration, and a digest has to say so even
+/// when they happen to land on the same rung.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PlanCalibrationSource {
+    /// The whole-phase clock reading. What `calibrated-plan` shipped.
+    Live,
+    /// The max-of-k bucket estimate. See [`PLAN_PROBE_BUCKETS`].
+    Probe,
+    /// A persisted calibration entry, inside the band.
+    File,
+    /// A persisted calibration file was named but had no entry for this run's
+    /// `probe_work_units`.
+    FileMiss,
+    /// A persisted entry was found and refused because the live probe sat
+    /// outside [`PLAN_CALIBRATION_BAND`].
+    FileOutOfBand,
+}
+
+impl PlanCalibrationSource {
+    /// The string the document carries.
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Live => "live",
+            Self::Probe => "probe",
+            Self::File => "file",
+            Self::FileMiss => "fileMiss",
+            Self::FileOutOfBand => "fileOutOfBand",
+        }
+    }
+}
 
 /// One phase of the schedule, as run.
 #[derive(Clone, Debug)]
@@ -2081,6 +2208,37 @@ pub struct PortfolioSettings {
     /// because with it off nothing in `work_currency` is called and no field
     /// it owns is reported.
     pub work_currency: WorkCurrencyMode,
+    /// How many equal-**work** buckets the probe's wall is split into before the
+    /// *fastest* of them is taken as the box's rate. `0` - the default - is one
+    /// bucket, which is the single whole-phase reading
+    /// `docs/experiments/calibrated-plan/` shipped.
+    ///
+    /// See [`PLAN_PROBE_BUCKETS`] for what the max-of-k rule is for and what it
+    /// costs.
+    pub plan_probe_buckets: usize,
+    /// A persisted per-box calibration file, consulted at plan time.
+    ///
+    /// `None` - the default - is the live probe, unchanged. When set, the file
+    /// is read once and looked up by the run's own `probe_work_units`, which is
+    /// a **counter** and therefore an exact key for (request, seed, binary,
+    /// features). A hit replaces the clock reading with the stored one, and the
+    /// plan stops being a function of the clock at all.
+    ///
+    /// This is Sol review 8 §3 condition 1: *"il probe hardware dev'essere
+    /// offline/persistito e il cap parte della spec"*. See
+    /// [`PLAN_CALIBRATION_BAND`] for the sanity band that keeps a stale file
+    /// from silently pricing a box it was not measured on.
+    pub plan_calibration_path: Option<String>,
+    /// Whether this run merges its own probe back into
+    /// [`Self::plan_calibration_path`] under the min rule.
+    ///
+    /// `false` by default, and the separation is deliberate: a measured battery
+    /// reads a frozen file, and the file is written by an explicit calibration
+    /// pass. A run that both reads and writes would make the file a function of
+    /// the order the battery happened to run in.
+    pub plan_calibration_write: bool,
+    /// [`PLAN_CALIBRATION_BAND`], overridable per run.
+    pub plan_calibration_band: f64,
     /// Whether the coordinator arms the continuous-rotation operator on the two
     /// operators whose relaxed lane the brief scopes it to: the alternation
     /// fixpoint (mode 22) and the compression schedule (mode 34).
@@ -2281,6 +2439,40 @@ pub struct PortfolioSettings {
     /// and 3 more on triangle-20 at a thirty-second budget, publishing on none
     /// of them.
     pub schedule_sterile_bit: bool,
+    /// [`CompressionScheduleSettings::step_grid`][cs] for the **first** m34
+    /// slice of a run only. `None` - the default - is the module's own `1.0`.
+    ///
+    /// # Why the first slice and not every slice
+    ///
+    /// The lever is confirmation density: `confirm_every` counts *steps*, so a
+    /// quarter-grid clamp asks the exact tier four times as often per micron of
+    /// descent and spends four times as many repair sweeps getting there.
+    /// `docs/experiments/record-line-cascade/` bought **1.000 mm** with it at a
+    /// pinned 20 M budget from a 159 mm parent, when a confirmation cost
+    /// 0.80 ms; `calibrated-plan` §4 now prices one at **0.257 ms** with the
+    /// certificate and the parallel confirmation both armed, so the same lever
+    /// is a quarter of the price it was measured at.
+    ///
+    /// It is scoped to the first slice because that is where the descent is
+    /// steepest and where the coordinator has the most budget left to pay for
+    /// the extra pressure. A run that spent it on every slice would be spending
+    /// it on the slices that are already refusing to descend.
+    ///
+    /// [cs]: crate::search::compression_schedule::CompressionScheduleSettings::step_grid
+    #[cfg(feature = "compression-schedule")]
+    pub schedule_first_slice_step_grid: Option<f64>,
+    /// [`CompressionScheduleSettings::confirm_every`][cs] for the **first** m34
+    /// slice of a run only. `None` - the default - is the module's own `4`.
+    ///
+    /// The other half of the same lever, and the independent one: `step_grid`
+    /// changes how much clamp a step is worth, `confirm_every` changes how many
+    /// steps pass between exact questions. Both raise confirmations per micron
+    /// and they raise different other things with it, which is why the round
+    /// that chose them swept the product rather than the diagonal.
+    ///
+    /// [cs]: crate::search::compression_schedule::CompressionScheduleSettings::confirm_every
+    #[cfg(feature = "compression-schedule")]
+    pub schedule_first_slice_confirm_every: Option<usize>,
 }
 
 /// The phase deadlines, as fractions of the whole budget.
@@ -2396,6 +2588,10 @@ impl PortfolioSettings {
             plan_max_tranches: PLAN_MAX_TRANCHES,
             plan_tranche_horizon: PLAN_TRANCHE_HORIZON,
             work_currency: WorkCurrencyMode::Off,
+            plan_probe_buckets: 0,
+            plan_calibration_path: None,
+            plan_calibration_write: false,
+            plan_calibration_band: PLAN_CALIBRATION_BAND,
             #[cfg(feature = "continuous-rotation")]
             continuous_rotation: false,
             #[cfg(feature = "sparse-rotation")]
@@ -2438,7 +2634,217 @@ impl PortfolioSettings {
             schedule_skip_unpublishable_entry: false,
             schedule_probe_denominator: SCHEDULE_PROBE_DENOMINATOR,
             schedule_sterile_bit: true,
+            // `None` and not a value: the two knobs must build the module's own
+            // default field for field on an unarmed spec, and `Some(1.0)` is not
+            // the same statement as "the caller said nothing".
+            #[cfg(feature = "compression-schedule")]
+            schedule_first_slice_step_grid: None,
+            #[cfg(feature = "compression-schedule")]
+            schedule_first_slice_confirm_every: None,
         }
+    }
+}
+
+/// The probe sampler: a thread that watches phase 0 retire work.
+///
+/// It exists because phase 0 is two monolithic calls -
+/// `construct_short_side_first` and one `improve_complete_layout` - with no
+/// budget check and no natural checkpoint between them, so there is nowhere in
+/// the search itself to read a rate from. A sampler thread is the least
+/// invasive instrument available: it takes no lock the search holds, writes
+/// nothing the search reads, and increments no counter, so the run it measures
+/// is the run that would have happened without it.
+///
+/// It is armed only under [`PortfolioBudget::Plan`] and only when
+/// [`PortfolioSettings::plan_probe_buckets`] asks for more than one bucket, so
+/// a default run does not start a thread at all.
+struct PlanProbe {
+    samples: Arc<Mutex<Vec<(f64, u64)>>>,
+    stop: Arc<AtomicBool>,
+    handle: Option<std::thread::JoinHandle<()>>,
+    buckets: usize,
+}
+
+impl PlanProbe {
+    /// Stops the sampler and returns what it saw, oldest first.
+    fn finish(&mut self) -> Vec<(f64, u64)> {
+        self.stop.store(true, Ordering::Relaxed);
+        if let Some(handle) = self.handle.take() {
+            let _ = handle.join();
+        }
+        self.samples
+            .lock()
+            .map(|samples| samples.clone())
+            .unwrap_or_default()
+    }
+}
+
+impl Drop for PlanProbe {
+    fn drop(&mut self) {
+        self.stop.store(true, Ordering::Relaxed);
+        if let Some(handle) = self.handle.take() {
+            let _ = handle.join();
+        }
+    }
+}
+
+/// The fastest of `buckets` equal-**work** stretches of the probe, expressed as
+/// the wall the whole probe would have taken at that rate.
+///
+/// Returns `None` when the samples cannot support the cut - fewer than two
+/// usable samples, no work retired, or a bucket with no measurable wall - in
+/// which case the caller keeps the whole-phase reading rather than guessing.
+///
+/// The result is clamped to `[live_seconds * PLAN_PROBE_MIN_FRACTION,
+/// live_seconds]`. The upper clamp is arithmetic - a maximum rate cannot be
+/// below the mean - and the lower one is the guard [`PLAN_PROBE_MIN_FRACTION`]
+/// describes.
+fn probe_effective_seconds(
+    samples: &[(f64, u64)],
+    live_seconds: f64,
+    live_work_units: u64,
+    buckets: usize,
+) -> Option<f64> {
+    let buckets = buckets.max(1);
+    if buckets < 2 || live_work_units == 0 || !(live_seconds > 0.0) {
+        return None;
+    }
+    // The sampled path, with the two endpoints the sampler cannot see: the
+    // meter's own origin, and the end of the probe as `install_plan` read it.
+    let mut path: Vec<(f64, u64)> = Vec::with_capacity(samples.len() + 2);
+    path.push((0.0, 0));
+    for &(seconds, units) in samples {
+        let (last_seconds, last_units) = *path.last().expect("seeded above");
+        // Monotone in both axes or dropped: a sample that reads a lower total
+        // than its predecessor is a torn read across the counter registry, not
+        // a rate.
+        if seconds > last_seconds && units >= last_units && seconds < live_seconds {
+            path.push((seconds, units));
+        }
+    }
+    let (last_seconds, last_units) = *path.last().expect("seeded above");
+    if !(live_seconds > last_seconds) || live_work_units < last_units {
+        return None;
+    }
+    path.push((live_seconds, live_work_units));
+    if path.len() < 3 {
+        return None;
+    }
+    // Where each bucket boundary falls on the wall axis, by linear
+    // interpolation between the two samples that bracket it on the work axis.
+    let at_work = |target: f64| -> Option<f64> {
+        for window in path.windows(2) {
+            let (t0, w0) = window[0];
+            let (t1, w1) = window[1];
+            if (w1 as f64) >= target {
+                let span = (w1 - w0) as f64;
+                if span <= 0.0 {
+                    return Some(t0);
+                }
+                return Some(t0 + (t1 - t0) * (target - w0 as f64) / span);
+            }
+        }
+        None
+    };
+    let per_bucket = live_work_units as f64 / buckets as f64;
+    let total = live_work_units as f64;
+    let mut best_rate = 0.0_f64;
+    for bucket in 0..buckets {
+        // Clamped at the total: `per_bucket * buckets` is exact only while the
+        // division was, and a last boundary a single ulp above the work the path
+        // actually ends at would find no bracketing window and throw the whole
+        // estimate away.
+        let start = at_work((per_bucket * bucket as f64).min(total))?;
+        let end = at_work((per_bucket * (bucket + 1) as f64).min(total))?;
+        let span = end - start;
+        if span > 0.0 {
+            best_rate = best_rate.max(per_bucket / span);
+        }
+    }
+    if !(best_rate > 0.0) {
+        return None;
+    }
+    let effective = live_work_units as f64 / best_rate;
+    Some(effective.clamp(live_seconds * PLAN_PROBE_MIN_FRACTION, live_seconds))
+}
+
+/// A persisted per-box calibration: `probe_work_units` to the probe wall the
+/// least-loaded run of that cell observed.
+///
+/// The key is the whole design. `probe_work_units` is a **counter**, bit
+/// identical across every run of a (request, seed, binary, feature set) -
+/// `calibrated-plan` §6.1 measured exactly one distinct value over seven runs on
+/// each of three seeds - so it identifies the cell precisely and *cannot*
+/// collide with a cell that would want a different answer unless the two cells
+/// genuinely retire the same number of units. A file keyed on a request path or
+/// a fixture hash would need a policy for a changed binary; this one misses,
+/// which is the right answer.
+///
+/// The format is deliberately dull, because a corrupt or absent file must
+/// degrade to the live probe rather than fail a run: every error path here
+/// returns an empty map.
+fn read_plan_calibration(path: &str) -> BTreeMap<u64, f64> {
+    let mut out = BTreeMap::new();
+    let Ok(text) = std::fs::read_to_string(path) else {
+        return out;
+    };
+    let Ok(doc) = serde_json::from_str::<serde_json::Value>(&text) else {
+        return out;
+    };
+    let Some(entries) = doc.get("entries").and_then(|v| v.as_object()) else {
+        return out;
+    };
+    for (key, value) in entries {
+        let Ok(units) = key.parse::<u64>() else {
+            continue;
+        };
+        let Some(seconds) = value.get("probeSeconds").and_then(|v| v.as_f64()) else {
+            continue;
+        };
+        if seconds > 0.0 && seconds.is_finite() {
+            out.insert(units, seconds);
+        }
+    }
+    out
+}
+
+/// Merges one observation into the calibration file under the **min** rule.
+///
+/// The minimum wall is the least-loaded observation, which is the quantity the
+/// file is supposed to hold: a calibration pass that ran into a load spike must
+/// not be able to make the box look permanently slower. It is monotone, so the
+/// file converges rather than oscillating, and a fresh box is calibrated by
+/// running the pass more than once.
+///
+/// Write-if-better by a full percent, so a pass that is already converged
+/// rewrites nothing; and written through a temporary file and a rename, so a
+/// reader never sees a half-written map.
+fn write_plan_calibration(path: &str, units: u64, seconds: f64) {
+    if !(seconds > 0.0) || !seconds.is_finite() {
+        return;
+    }
+    let mut entries = read_plan_calibration(path);
+    match entries.get(&units) {
+        Some(&existing) if existing <= seconds * 1.01 => return,
+        _ => {}
+    }
+    entries.insert(units, seconds);
+    let doc = serde_json::json!({
+        "version": 1,
+        "note": "probeWorkUnits -> the least-loaded probe wall observed for that cell",
+        "entries": entries
+            .iter()
+            .map(|(units, seconds)| {
+                (units.to_string(), serde_json::json!({"probeSeconds": seconds}))
+            })
+            .collect::<serde_json::Map<_, _>>(),
+    });
+    let Ok(text) = serde_json::to_string_pretty(&doc) else {
+        return;
+    };
+    let temporary = format!("{path}.tmp{}", std::process::id());
+    if std::fs::write(&temporary, text).is_ok() {
+        let _ = std::fs::rename(&temporary, path);
     }
 }
 
@@ -2454,6 +2860,9 @@ struct BudgetMeter {
     /// operator with its own meter, and always zero under a wall budget
     /// (nothing here is ever read by [`BudgetMeter::seconds`]).
     self_metered_debit: u64,
+    /// The phase-0 sampler, when one was armed. Dropped - and joined - by
+    /// [`Self::install_plan`], so it never outlives the probe it measures.
+    plan_probe: Option<PlanProbe>,
 }
 
 impl BudgetMeter {
@@ -2463,6 +2872,54 @@ impl BudgetMeter {
             started: Instant::now(),
             work_base: work_units_now(),
             self_metered_debit: 0,
+            plan_probe: None,
+        }
+    }
+
+    /// Starts the phase-0 sampler, if this run wants one.
+    ///
+    /// Called once, from `run_portfolio`, immediately after the meter is built
+    /// and before the first line of phase 0. It is a no-op unless the budget is
+    /// a plan **and** more than one work bucket was asked for, so no default run
+    /// starts a thread.
+    fn arm_plan_probe(&mut self, settings: &PortfolioSettings) {
+        if !matches!(self.budget, PortfolioBudget::Plan { .. }) {
+            return;
+        }
+        let buckets = settings.plan_probe_buckets;
+        if buckets < 2 {
+            return;
+        }
+        let samples = Arc::new(Mutex::new(Vec::new()));
+        let stop = Arc::new(AtomicBool::new(false));
+        let thread_samples = Arc::clone(&samples);
+        let thread_stop = Arc::clone(&stop);
+        let started = self.started;
+        let work_base = self.work_base;
+        let handle = std::thread::Builder::new()
+            .name("plan-probe".to_owned())
+            .spawn(move || {
+                while !thread_stop.load(Ordering::Relaxed) {
+                    std::thread::sleep(std::time::Duration::from_millis(
+                        PLAN_PROBE_SAMPLE_MILLIS,
+                    ));
+                    let seconds = started.elapsed().as_secs_f64();
+                    let units = work_units_now().saturating_sub(work_base);
+                    if let Ok(mut samples) = thread_samples.lock() {
+                        samples.push((seconds, units));
+                    }
+                }
+            })
+            .ok();
+        // A box that cannot spawn a thread is a box that keeps the shipped
+        // whole-phase reading, not a box that fails a run.
+        if let Some(handle) = handle {
+            self.plan_probe = Some(PlanProbe {
+                samples,
+                stop,
+                handle: Some(handle),
+                buckets,
+            });
         }
     }
 
@@ -2493,6 +2950,61 @@ impl BudgetMeter {
     fn install_plan(&mut self, target_millis: u64, settings: &PortfolioSettings) -> PlanReport {
         let probe_seconds = self.seconds();
         let probe_work_units = self.work_units();
+        // ---- which probe wall the arithmetic uses ---------------------------
+        //
+        // Everything below this block is `calibrated-plan`'s arithmetic
+        // unchanged. This block decides the single number that arithmetic is a
+        // function of, and it is the whole of `docs/experiments/robust-plan/`:
+        // the shipped mode reads one clock, so a competing workload moves the
+        // reading, moves the rung and moves the published depth.
+        //
+        // Three sources, in the order a run prefers them, and each falls back to
+        // the next rather than to an error:
+        //
+        //  1. a **persisted calibration** keyed on `probe_work_units` - a
+        //     counter, so the key is exact - which takes the clock out of the
+        //     decision entirely while the live reading stays inside the band;
+        //  2. the **max-of-k bucket estimate**, which is still a clock reading
+        //     but is the least-loaded one this run can see;
+        //  3. the **whole-phase reading**, which is what shipped.
+        let samples = self
+            .plan_probe
+            .as_mut()
+            .map(|probe| (probe.finish(), probe.buckets));
+        self.plan_probe = None;
+        let probe_samples = samples.as_ref().map(|(rows, _)| rows.len()).unwrap_or(0);
+        let bucketed = samples.and_then(|(rows, buckets)| {
+            probe_effective_seconds(&rows, probe_seconds, probe_work_units, buckets)
+        });
+        let (mut probe_effective_seconds, mut calibration_source) = match bucketed {
+            Some(seconds) => (seconds, PlanCalibrationSource::Probe),
+            None => (probe_seconds, PlanCalibrationSource::Live),
+        };
+        if let Some(path) = settings.plan_calibration_path.as_deref() {
+            let band = settings.plan_calibration_band.max(1.0);
+            match read_plan_calibration(path).get(&probe_work_units) {
+                Some(&stored) if probe_seconds <= stored * band
+                    && probe_seconds * band >= stored =>
+                {
+                    probe_effective_seconds = stored;
+                    calibration_source = PlanCalibrationSource::File;
+                }
+                Some(_) => calibration_source = PlanCalibrationSource::FileOutOfBand,
+                None => calibration_source = PlanCalibrationSource::FileMiss,
+            }
+            if settings.plan_calibration_write {
+                // The run's own least-loaded estimate, which is the bucketed one
+                // when it exists: a calibration pass under a load spike writes
+                // the fastest stretch it saw rather than the average it endured.
+                write_plan_calibration(
+                    path,
+                    probe_work_units,
+                    bucketed.unwrap_or(probe_seconds),
+                );
+            }
+        }
+        let probe_effective_seconds = probe_effective_seconds;
+        let calibration_source = calibration_source;
         let target_seconds = target_millis as f64 / 1_000.0;
         let bias = settings.plan_bias.max(f64::MIN_POSITIVE);
         let headroom = settings.plan_headroom;
@@ -2500,8 +3012,8 @@ impl BudgetMeter {
         // off; and a probe that took no measurable time cannot price anything.
         // Both fall back to the whole target at a nominal rate rather than to a
         // division that would produce an infinity.
-        let rate = if probe_seconds > 0.0 {
-            probe_work_units as f64 / probe_seconds
+        let rate = if probe_effective_seconds > 0.0 {
+            probe_work_units as f64 / probe_effective_seconds
         } else {
             0.0
         };
@@ -2519,7 +3031,17 @@ impl BudgetMeter {
         } else {
             1.0
         };
-        let mut remaining_seconds = target_seconds * headroom * first_tranche - probe_seconds;
+        // `probe_effective_seconds` and not the live reading, and this is the
+        // one line where the choice has teeth. The plan must be a function of
+        // deterministic inputs *end to end* or it is not a plan: a run that
+        // priced the rate off a file constant and then subtracted a clock
+        // reading would still put the box's load into the rung, one term later.
+        // What it costs is stated rather than hidden - under load the run
+        // believes phase 0 was quicker than it was, buys the budget it would
+        // have bought on a quiet box, and takes longer in wall for it. That is
+        // the trade the round measures.
+        let mut remaining_seconds =
+            target_seconds * headroom * first_tranche - probe_effective_seconds;
         // **The probe outran the tranche.** At a three-second target on
         // mixed-61 phase 0 alone is 2.2 s, so a first tranche aimed at 60% of
         // `target * headroom` - 1.75 s - is already behind by the time it is
@@ -2536,7 +3058,7 @@ impl BudgetMeter {
         // applied rather than inferring it from a wall.
         if remaining_seconds <= 0.0 {
             first_tranche = 1.0;
-            remaining_seconds = target_seconds * headroom - probe_seconds;
+            remaining_seconds = target_seconds * headroom - probe_effective_seconds;
         }
         let remaining_seconds = remaining_seconds.max(0.0);
         let raw_units = probe_work_units as f64 + remaining_seconds * rate / bias;
@@ -2556,6 +3078,9 @@ impl BudgetMeter {
             rung,
             units,
             first_tranche,
+            probe_effective_seconds,
+            calibration_source,
+            probe_samples,
         }
     }
 
@@ -3084,6 +3609,15 @@ struct Coordinator<'a> {
     phase_zero_cost: f64,
     /// What each v3 action class has cost and produced *in this run*.
     class_stats: BTreeMap<ActionClass, ClassStats>,
+    /// How many compression-schedule slices this run has dispatched.
+    ///
+    /// Incremented at the dispatch site and read only by it, to decide whether
+    /// [`PortfolioSettings::schedule_first_slice_step_grid`] and its neighbour
+    /// apply. A counter rather than a bool because the document reports it and a
+    /// reader comparing two arms of the confirmation-density sweep needs to know
+    /// how many slices each bought, not only what the first one did.
+    #[cfg(feature = "compression-schedule")]
+    schedule_slices: usize,
     /// The sparse operator's request-adaptive disarm. See [`SparseRotationBit`].
     #[cfg(feature = "sparse-rotation")]
     sparse_rotation_bit: SparseRotationBit,
@@ -3711,7 +4245,12 @@ pub fn run_portfolio(
     } else {
         None
     };
-    let meter = BudgetMeter::new(settings.budget);
+    let mut meter = BudgetMeter::new(settings.budget);
+    // Before the first line of phase 0, because the probe's whole subject is
+    // phase 0 and a sampler armed after it started would be measuring a
+    // different window than the one `install_plan` divides by. Inert unless the
+    // budget is a plan and more than one bucket was asked for.
+    meter.arm_plan_probe(settings);
 
     // ---- phase 0: protected mode 0 and shared preprocessing ---------------
     // It is never skipped and never budget-checked: it is the result the
@@ -3776,6 +4315,8 @@ pub fn run_portfolio(
         protected_fraction: 0.0,
         phase_zero_cost: 0.0,
         class_stats: BTreeMap::new(),
+        #[cfg(feature = "compression-schedule")]
+        schedule_slices: 0,
         #[cfg(feature = "sparse-rotation")]
         sparse_rotation_bit: SparseRotationBit::default(),
     };
@@ -6368,6 +6909,21 @@ fn execute_v3_action(
                     (run.settings.compression_schedule_cap_to_budget && !run.meter.is_wall())
                         .then(|| run.meter.remaining_to(deadline).max(1.0) as usize)
                 });
+            // The confirmation-density lever, and it is scoped by *count* here
+            // rather than by a flag inside the slice: the coordinator is the
+            // only thing that knows which slice this is. Incremented before the
+            // dispatch so a slice that returns early still spends its turn -
+            // "the first slice" has to mean the first one that was tried, or a
+            // request whose first slice is refused at the entry gate would apply
+            // the lever to its second and report it as its first.
+            let first_slice = run.schedule_slices == 0;
+            run.coordinator.schedule_slices += 1;
+            let first_slice_step_grid = first_slice
+                .then_some(run.settings.schedule_first_slice_step_grid)
+                .flatten();
+            let first_slice_confirm_every = first_slice
+                .then_some(run.settings.schedule_first_slice_confirm_every)
+                .flatten();
             let scheduled = run.run_operator(
                 34,
                 &basin.placements,
@@ -6412,6 +6968,17 @@ fn execute_v3_action(
                     {
                         schedule_settings.lanes = schedule_lanes;
                         schedule_settings.parallel_confirm = schedule_parallel_confirm;
+                    }
+                    // Applied last and only when a value was actually named, so
+                    // an unarmed spec leaves the two fields at the module's own
+                    // defaults rather than writing them back with the same
+                    // numbers - which is the difference between a document that
+                    // is equal to the base binary's and one that only looks it.
+                    if let Some(step_grid) = first_slice_step_grid {
+                        schedule_settings.step_grid = step_grid;
+                    }
+                    if let Some(confirm_every) = first_slice_confirm_every {
+                        schedule_settings.confirm_every = confirm_every;
                     }
                     relaxed.compression_schedule = Some(schedule_settings);
                 },
@@ -7864,6 +8431,258 @@ mod tests {
         assert_eq!(plan.units, 8_000_000);
     }
 
+    /// A run that names none of the load-robustness keys is the run
+    /// `docs/experiments/calibrated-plan/` shipped, field for field.
+    ///
+    /// The keys are three separate mechanisms and each of them is a way this
+    /// round could have moved a pinned number by accident, so the null is
+    /// asserted rather than assumed: the source is `Live`, the effective probe
+    /// *is* the whole-phase reading, and no sampler ran.
+    #[test]
+    fn an_unarmed_plan_is_the_shipped_plan_and_reads_no_file() {
+        let mut meter = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 10_000,
+        });
+        meter.started = Instant::now() - std::time::Duration::from_secs(2);
+        meter.self_metered_debit = 8_000_000;
+        let settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Plan {
+                target_millis: 10_000,
+            },
+        );
+        assert_eq!(settings.plan_probe_buckets, 0);
+        assert_eq!(settings.plan_calibration_path, None);
+        assert!(!settings.plan_calibration_write);
+        #[cfg(feature = "compression-schedule")]
+        {
+            assert_eq!(settings.schedule_first_slice_step_grid, None);
+            assert_eq!(settings.schedule_first_slice_confirm_every, None);
+        }
+        // Nothing was armed, so nothing was started.
+        meter.arm_plan_probe(&settings);
+        assert!(meter.plan_probe.is_none());
+        let plan = meter.install_plan(10_000, &settings);
+        assert_eq!(plan.calibration_source, PlanCalibrationSource::Live);
+        assert_eq!(plan.probe_effective_seconds, plan.probe_seconds);
+        assert_eq!(plan.probe_samples, 0);
+    }
+
+    /// The max-of-k probe takes the **fastest** equal-work bucket, and the
+    /// clamp stops one lucky bucket from inventing a box.
+    ///
+    /// The path below retires 8 M units in 4 s, but its second quarter retires
+    /// 2 M in 0.1 s - a 20 M/s stretch against a 2 M/s average. Unclamped that
+    /// would price the probe at 0.4 s; [`PLAN_PROBE_MIN_FRACTION`] holds it at
+    /// half the observed wall, which is the most this mechanism is ever allowed
+    /// to correct a loaded reading by.
+    #[test]
+    fn the_max_of_k_probe_takes_the_fastest_bucket_and_is_clamped() {
+        let samples = vec![
+            (1.0, 2_000_000),
+            (1.1, 4_000_000),
+            (2.5, 6_000_000),
+            (3.9, 7_900_000),
+        ];
+        let effective = probe_effective_seconds(&samples, 4.0, 8_000_000, 4)
+            .expect("four buckets over four samples");
+        assert!((effective - 2.0).abs() < 1e-9, "{effective}");
+
+        // With the same path and an even split, the fastest bucket is the whole
+        // second quarter and the estimate is genuinely below the clamp's reach,
+        // so a *milder* spike is passed through rather than flattened.
+        let mild = vec![
+            (1.0, 2_000_000),
+            (1.6, 4_000_000),
+            (2.6, 6_000_000),
+            (3.9, 7_900_000),
+        ];
+        let effective = probe_effective_seconds(&mild, 4.0, 8_000_000, 4)
+            .expect("four buckets over four samples");
+        // The fastest quarter is 2 M in 0.6 s -> 3.333 M/s -> 2.4 s for 8 M.
+        assert!((effective - 2.4).abs() < 1e-6, "{effective}");
+
+        // One bucket is the whole-phase reading, which is the shipped mode, and
+        // the function refuses rather than pretending.
+        assert_eq!(probe_effective_seconds(&samples, 4.0, 8_000_000, 1), None);
+        // And a path with nothing in it cannot be cut.
+        assert_eq!(probe_effective_seconds(&[], 4.0, 8_000_000, 4), None);
+    }
+
+    /// A persisted calibration takes the clock out of the plan entirely.
+    ///
+    /// This is the round's central claim in one assertion: two meters whose
+    /// probe walls differ by **2.5x** - which is more than three ladder rungs of
+    /// rate - install the *same budget* when both consult the same file, because
+    /// the file is keyed on `probe_work_units`, which is a counter.
+    ///
+    /// The third meter is the control: without the file the same pair of
+    /// readings installs two different budgets, which is the failure
+    /// `docs/experiments/replan/` §11.1 measured as 2 / 3 / 1 distinct depths
+    /// per seed.
+    #[test]
+    fn a_persisted_calibration_makes_two_loaded_probes_install_one_budget() {
+        let path = std::env::temp_dir().join(format!(
+            "plan-calibration-{}-{}.json",
+            std::process::id(),
+            line!()
+        ));
+        let path = path.to_string_lossy().into_owned();
+        let _ = std::fs::remove_file(&path);
+        write_plan_calibration(&path, 8_000_000, 2.0);
+
+        let install = |wall_millis: u64, calibrated: bool| {
+            let mut meter = BudgetMeter::new(PortfolioBudget::Plan {
+                target_millis: 10_000,
+            });
+            meter.started = Instant::now() - std::time::Duration::from_millis(wall_millis);
+            meter.self_metered_debit = 8_000_000;
+            let mut settings = PortfolioSettings::new(
+                GeneralRelaxedSettings::mixed_61_probe(0, 1),
+                PortfolioBudget::Plan {
+                    target_millis: 10_000,
+                },
+            );
+            settings.plan_bias = 2.0;
+            settings.plan_headroom = 1.0;
+            if calibrated {
+                settings.plan_calibration_path = Some(path.clone());
+            }
+            meter.install_plan(10_000, &settings)
+        };
+
+        // 1.9x apart, which is inside the default band and is more than three
+        // ladder rungs of rate.
+        let quiet = install(2_000, true);
+        let loaded = install(3_800, true);
+        assert_eq!(quiet.calibration_source, PlanCalibrationSource::File);
+        assert_eq!(loaded.calibration_source, PlanCalibrationSource::File);
+        assert_eq!(quiet.units, loaded.units);
+        assert_eq!(quiet.probe_effective_seconds, 2.0);
+        assert_eq!(loaded.probe_effective_seconds, 2.0);
+        // The live reading is still reported, because a reader has to be able to
+        // see the load the file absorbed.
+        assert!(loaded.probe_seconds > 3.5, "{loaded:?}");
+
+        // The control: the same two readings, no file, two budgets.
+        assert_ne!(install(2_000, false).units, install(3_800, false).units);
+
+        // A key the file does not carry misses and falls back, and says so.
+        let mut meter = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 10_000,
+        });
+        meter.started = Instant::now() - std::time::Duration::from_secs(2);
+        meter.self_metered_debit = 9_999_999;
+        let mut settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Plan {
+                target_millis: 10_000,
+            },
+        );
+        settings.plan_calibration_path = Some(path.clone());
+        let missed = meter.install_plan(10_000, &settings);
+        assert_eq!(missed.calibration_source, PlanCalibrationSource::FileMiss);
+        assert_eq!(missed.probe_effective_seconds, missed.probe_seconds);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// A live probe outside the band refuses the file rather than pricing the
+    /// run off a calibration that cannot be about this box.
+    ///
+    /// Both directions, because they fail differently: a file that is *too fast*
+    /// for the live reading would over-buy and overrun, and one that is too slow
+    /// would under-buy for ever. The band is the same number for both and
+    /// `plan.calibrationSource` names the refusal in the document.
+    #[test]
+    fn a_calibration_outside_the_band_is_refused_in_both_directions() {
+        let path = std::env::temp_dir().join(format!(
+            "plan-calibration-{}-{}.json",
+            std::process::id(),
+            line!()
+        ));
+        let path = path.to_string_lossy().into_owned();
+        let _ = std::fs::remove_file(&path);
+        write_plan_calibration(&path, 8_000_000, 2.0);
+
+        let install = |wall_millis: u64, band: f64| {
+            let mut meter = BudgetMeter::new(PortfolioBudget::Plan {
+                target_millis: 30_000,
+            });
+            meter.started = Instant::now() - std::time::Duration::from_millis(wall_millis);
+            meter.self_metered_debit = 8_000_000;
+            let mut settings = PortfolioSettings::new(
+                GeneralRelaxedSettings::mixed_61_probe(0, 1),
+                PortfolioBudget::Plan {
+                    target_millis: 30_000,
+                },
+            );
+            settings.plan_calibration_path = Some(path.clone());
+            settings.plan_calibration_band = band;
+            meter.install_plan(30_000, &settings)
+        };
+
+        // Inside: 3.5 s against a stored 2.0 s at a band of 2.0.
+        assert_eq!(
+            install(3_500, 2.0).calibration_source,
+            PlanCalibrationSource::File
+        );
+        // Too slow to be load: 5 s against 2 s is 2.5x.
+        assert_eq!(
+            install(5_000, 2.0).calibration_source,
+            PlanCalibrationSource::FileOutOfBand
+        );
+        // Too fast to be this box: 0.5 s against 2 s is 4x the other way.
+        assert_eq!(
+            install(500, 2.0).calibration_source,
+            PlanCalibrationSource::FileOutOfBand
+        );
+        // And a refusal is a *fallback*, not a failure: the run still plans.
+        assert!(install(5_000, 2.0).units > 0);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// The calibration file keeps the **least-loaded** observation and converges.
+    ///
+    /// The min rule is what makes a calibration pass repeatable: a pass that ran
+    /// into a load spike must not be able to make the box look permanently
+    /// slower, and a pass that is already converged must not rewrite the file on
+    /// every run.
+    #[test]
+    fn the_calibration_file_keeps_the_least_loaded_observation() {
+        let path = std::env::temp_dir().join(format!(
+            "plan-calibration-{}-{}.json",
+            std::process::id(),
+            line!()
+        ));
+        let path = path.to_string_lossy().into_owned();
+        let _ = std::fs::remove_file(&path);
+
+        // An absent file is an empty map, not an error.
+        assert!(read_plan_calibration(&path).is_empty());
+
+        write_plan_calibration(&path, 8_000_000, 2.4);
+        assert_eq!(read_plan_calibration(&path).get(&8_000_000), Some(&2.4));
+        // A slower observation is ignored...
+        write_plan_calibration(&path, 8_000_000, 3.9);
+        assert_eq!(read_plan_calibration(&path).get(&8_000_000), Some(&2.4));
+        // ...a faster one wins...
+        write_plan_calibration(&path, 8_000_000, 2.0);
+        assert_eq!(read_plan_calibration(&path).get(&8_000_000), Some(&2.0));
+        // ...and a second cell does not disturb the first.
+        write_plan_calibration(&path, 9_000_000, 2.2);
+        let entries = read_plan_calibration(&path);
+        assert_eq!(entries.get(&8_000_000), Some(&2.0));
+        assert_eq!(entries.get(&9_000_000), Some(&2.2));
+
+        // A corrupt file degrades to the live probe rather than failing a run.
+        std::fs::write(&path, "{ this is not json").expect("write");
+        assert!(read_plan_calibration(&path).is_empty());
+
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// The two flags the promotion round turns on are on, and the Cargo
     /// features that carry them are still off.
     ///
@@ -7943,6 +8762,9 @@ mod tests {
             rung: Some(23),
             units: 24_000_000,
             first_tranche: 0.6,
+            probe_effective_seconds: 2.0,
+            calibration_source: PlanCalibrationSource::Live,
+            probe_samples: 0,
         };
         // A meter whose clock has already passed the target buys nothing: there
         // is no remaining wall to re-price.
@@ -7982,6 +8804,9 @@ mod tests {
             rung: None,
             units: 4_000_000,
             first_tranche: 0.6,
+            probe_effective_seconds: 2.0,
+            calibration_source: PlanCalibrationSource::Live,
+            probe_samples: 0,
         };
         let mut meter = BudgetMeter::new(PortfolioBudget::Work { units: 4_000_000 });
         // A run 1 ms old with 4 M units already retired: a very fast queue and
@@ -8068,6 +8893,9 @@ mod tests {
             rung: Some(31),
             units: current,
             first_tranche: 0.6,
+            probe_effective_seconds: 2.0,
+            calibration_source: PlanCalibrationSource::Live,
+            probe_samples: 0,
         };
         // 4 s in: a 1.5 s queue window that retired 579 k units, and 5.7 s of
         // the target still to spend. The horizon alone buys 1.5 s * 386 k/s =
@@ -8169,6 +8997,9 @@ mod tests {
             rung: None,
             units: 4_000_000,
             first_tranche: 0.6,
+            probe_effective_seconds: 2.0,
+            calibration_source: PlanCalibrationSource::Live,
+            probe_samples: 0,
         };
         let priced = move |horizon: f64| {
             let mut meter = BudgetMeter::new(PortfolioBudget::Work { units: 4_000_000 });

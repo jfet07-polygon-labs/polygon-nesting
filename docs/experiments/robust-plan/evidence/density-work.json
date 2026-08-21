@@ -1,0 +1,1618 @@
+{
+ "binary": "/var/lib/t3/tmp/robust/bin/ship-meas",
+ "mode": "work",
+ "value": "30000000",
+ "fixture": "mixed-61",
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "rounds": 1,
+ "extra": "",
+ "grids": [
+  1.0,
+  0.5,
+  0.25,
+  0.125
+ ],
+ "confirms": [
+  4,
+  2,
+  1
+ ],
+ "rows": [
+  {
+   "tag": "g1.0-c4-s0-r0",
+   "grid": 1.0,
+   "confirm": 4,
+   "seed": 0,
+   "round": 0,
+   "spec": "work=30000000,cells=13:15:17:19,v3=1",
+   "processWallSeconds": 8.925924765993841,
+   "rawDepthMm": 173.57506393348288,
+   "coordinatorWorkUnits": 27642964,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.753,
+   "firstSliceFinalMm": 178.137,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceSteps": 1616,
+   "firstSliceWorkUnits": 3311034,
+   "firstSliceConfirmAttempted": 287,
+   "firstSliceConfirmAccepted": 287,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 465,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.0004880650576224785,
+   "mmPerAcceptedConfirmation": 0.005630662020905872,
+   "load1": 6.80126953125
+  },
+  {
+   "tag": "g1.0-c4-s1-r0",
+   "grid": 1.0,
+   "confirm": 4,
+   "seed": 1,
+   "round": 0,
+   "spec": "work=30000000,cells=11:15:21:27,v3=1",
+   "processWallSeconds": 9.07270930102095,
+   "rawDepthMm": 171.3619986855876,
+   "coordinatorWorkUnits": 28636653,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.638,
+   "firstSliceFinalMm": 178.021,
+   "firstSliceDropMm": 1.6170000000000186,
+   "firstSliceSteps": 1617,
+   "firstSliceWorkUnits": 3539786,
+   "firstSliceConfirmAttempted": 308,
+   "firstSliceConfirmAccepted": 308,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 387,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.00045680727592007503,
+   "mmPerAcceptedConfirmation": 0.00525000000000006,
+   "load1": 6.62353515625
+  },
+  {
+   "tag": "g1.0-c4-s2-r0",
+   "grid": 1.0,
+   "confirm": 4,
+   "seed": 2,
+   "round": 0,
+   "spec": "work=30000000,cells=15:23:31:39,v3=1",
+   "processWallSeconds": 10.285537877934985,
+   "rawDepthMm": 174.28,
+   "coordinatorWorkUnits": 27391297,
+   "planUnits": null,
+   "slices": 2,
+   "firstSliceStartMm": 179.00799999999998,
+   "firstSliceFinalMm": 177.397,
+   "firstSliceDropMm": 1.61099999999999,
+   "firstSliceSteps": 1611,
+   "firstSliceWorkUnits": 3455866,
+   "firstSliceConfirmAttempted": 240,
+   "firstSliceConfirmAccepted": 240,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 653,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.0004661639079755957,
+   "mmPerAcceptedConfirmation": 0.006712499999999958,
+   "load1": 6.39306640625
+  },
+  {
+   "tag": "g1.0-c2-s0-r0",
+   "grid": 1.0,
+   "confirm": 2,
+   "seed": 0,
+   "round": 0,
+   "spec": "work=30000000,cells=13:15:17:19,v3=1,m34confirm1=2",
+   "processWallSeconds": 8.181137843988836,
+   "rawDepthMm": 175.1357388323935,
+   "coordinatorWorkUnits": 28147357,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.753,
+   "firstSliceFinalMm": 178.137,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceSteps": 1616,
+   "firstSliceWorkUnits": 5882184,
+   "firstSliceConfirmAttempted": 568,
+   "firstSliceConfirmAccepted": 568,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 479,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.0002747278901850036,
+   "mmPerAcceptedConfirmation": 0.0028450704225351856,
+   "load1": 6.1982421875
+  },
+  {
+   "tag": "g1.0-c2-s1-r0",
+   "grid": 1.0,
+   "confirm": 2,
+   "seed": 1,
+   "round": 0,
+   "spec": "work=30000000,cells=11:15:21:27,v3=1,m34confirm1=2",
+   "processWallSeconds": 8.27936276991386,
+   "rawDepthMm": 171.3619986855876,
+   "coordinatorWorkUnits": 28996236,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.638,
+   "firstSliceFinalMm": 178.021,
+   "firstSliceDropMm": 1.6170000000000186,
+   "firstSliceSteps": 1617,
+   "firstSliceWorkUnits": 6275636,
+   "firstSliceConfirmAttempted": 607,
+   "firstSliceConfirmAccepted": 607,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 405,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.0002576631276893718,
+   "mmPerAcceptedConfirmation": 0.002663920922570047,
+   "load1": 6.5830078125
+  },
+  {
+   "tag": "g1.0-c2-s2-r0",
+   "grid": 1.0,
+   "confirm": 2,
+   "seed": 2,
+   "round": 0,
+   "spec": "work=30000000,cells=15:23:31:39,v3=1,m34confirm1=2",
+   "processWallSeconds": 8.545105925993994,
+   "rawDepthMm": 176.16200000000003,
+   "coordinatorWorkUnits": 25991005,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.00799999999998,
+   "firstSliceFinalMm": 177.397,
+   "firstSliceDropMm": 1.61099999999999,
+   "firstSliceSteps": 1611,
+   "firstSliceWorkUnits": 5587816,
+   "firstSliceConfirmAttempted": 473,
+   "firstSliceConfirmAccepted": 473,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 667,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.00028830584256890173,
+   "mmPerAcceptedConfirmation": 0.003405919661733594,
+   "load1": 7.00927734375
+  },
+  {
+   "tag": "g1.0-c1-s0-r0",
+   "grid": 1.0,
+   "confirm": 1,
+   "seed": 0,
+   "round": 0,
+   "spec": "work=30000000,cells=13:15:17:19,v3=1,m34confirm1=1",
+   "processWallSeconds": 5.990576843963936,
+   "rawDepthMm": 178.1797782649107,
+   "coordinatorWorkUnits": 27167007,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.753,
+   "firstSliceFinalMm": 178.137,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceSteps": 1616,
+   "firstSliceWorkUnits": 11006184,
+   "firstSliceConfirmAttempted": 1128,
+   "firstSliceConfirmAccepted": 1128,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 488,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.00014682654769354988,
+   "mmPerAcceptedConfirmation": 0.0014326241134751643,
+   "load1": 6.95361328125
+  },
+  {
+   "tag": "g1.0-c1-s1-r0",
+   "grid": 1.0,
+   "confirm": 1,
+   "seed": 1,
+   "round": 0,
+   "spec": "work=30000000,cells=11:15:21:27,v3=1,m34confirm1=1",
+   "processWallSeconds": 5.8355894619598985,
+   "rawDepthMm": 177.90786925189622,
+   "coordinatorWorkUnits": 28711630,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.638,
+   "firstSliceFinalMm": 178.021,
+   "firstSliceDropMm": 1.6170000000000186,
+   "firstSliceSteps": 1617,
+   "firstSliceWorkUnits": 11756486,
+   "firstSliceConfirmAttempted": 1206,
+   "firstSliceConfirmAccepted": 1206,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 412,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.00013754109859017555,
+   "mmPerAcceptedConfirmation": 0.0013407960199005129,
+   "load1": 7.11767578125
+  },
+  {
+   "tag": "g1.0-c1-s2-r0",
+   "grid": 1.0,
+   "confirm": 1,
+   "seed": 2,
+   "round": 0,
+   "spec": "work=30000000,cells=15:23:31:39,v3=1,m34confirm1=1",
+   "processWallSeconds": 7.822106002015062,
+   "rawDepthMm": 176.16200000000003,
+   "coordinatorWorkUnits": 28110600,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.00799999999998,
+   "firstSliceFinalMm": 177.397,
+   "firstSliceDropMm": 1.61099999999999,
+   "firstSliceSteps": 1611,
+   "firstSliceWorkUnits": 9842566,
+   "firstSliceConfirmAttempted": 938,
+   "firstSliceConfirmAccepted": 938,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 674,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.00016367682980230865,
+   "mmPerAcceptedConfirmation": 0.001717484008528774,
+   "load1": 6.78759765625
+  },
+  {
+   "tag": "g0.5-c4-s0-r0",
+   "grid": 0.5,
+   "confirm": 4,
+   "seed": 0,
+   "round": 0,
+   "spec": "work=30000000,cells=13:15:17:19,v3=1,m34grid1=0.5",
+   "processWallSeconds": 10.14111241500359,
+   "rawDepthMm": 175.15878522143555,
+   "coordinatorWorkUnits": 27298477,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.753,
+   "firstSliceFinalMm": 178.137,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceSteps": 3232,
+   "firstSliceWorkUnits": 6492587,
+   "firstSliceConfirmAttempted": 406,
+   "firstSliceConfirmAccepted": 406,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 1611,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.00024889924463083595,
+   "mmPerAcceptedConfirmation": 0.0039802955665024274,
+   "load1": 7.81689453125
+  },
+  {
+   "tag": "g0.5-c4-s1-r0",
+   "grid": 0.5,
+   "confirm": 4,
+   "seed": 1,
+   "round": 0,
+   "spec": "work=30000000,cells=11:15:21:27,v3=1,m34grid1=0.5",
+   "processWallSeconds": 7.587855860008858,
+   "rawDepthMm": 175.006,
+   "coordinatorWorkUnits": 28414167,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.638,
+   "firstSliceFinalMm": 178.021,
+   "firstSliceDropMm": 1.6170000000000186,
+   "firstSliceSteps": 3234,
+   "firstSliceWorkUnits": 7390567,
+   "firstSliceConfirmAttempted": 735,
+   "firstSliceConfirmAccepted": 735,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 298,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.0002187924147091852,
+   "mmPerAcceptedConfirmation": 0.0022000000000000253,
+   "load1": 9.07568359375
+  },
+  {
+   "tag": "g0.5-c4-s2-r0",
+   "grid": 0.5,
+   "confirm": 4,
+   "seed": 2,
+   "round": 0,
+   "spec": "work=30000000,cells=15:23:31:39,v3=1,m34grid1=0.5",
+   "processWallSeconds": 10.168007152969949,
+   "rawDepthMm": 175.006,
+   "coordinatorWorkUnits": 29085620,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.00799999999998,
+   "firstSliceFinalMm": 177.397,
+   "firstSliceDropMm": 1.61099999999999,
+   "firstSliceSteps": 3222,
+   "firstSliceWorkUnits": 6332297,
+   "firstSliceConfirmAttempted": 455,
+   "firstSliceConfirmAccepted": 455,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 1404,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.000254410050570905,
+   "mmPerAcceptedConfirmation": 0.0035406593406593187,
+   "load1": 9.0693359375
+  },
+  {
+   "tag": "g0.5-c2-s0-r0",
+   "grid": 0.5,
+   "confirm": 2,
+   "seed": 0,
+   "round": 0,
+   "spec": "work=30000000,cells=13:15:17:19,v3=1,m34grid1=0.5,m34confirm1=2",
+   "processWallSeconds": 9.57391502300743,
+   "rawDepthMm": 175.15878522143555,
+   "coordinatorWorkUnits": 28261353,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.753,
+   "firstSliceFinalMm": 178.137,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceSteps": 3232,
+   "firstSliceWorkUnits": 10115987,
+   "firstSliceConfirmAttempted": 802,
+   "firstSliceConfirmAccepted": 802,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 1629,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.00015974714083756588,
+   "mmPerAcceptedConfirmation": 0.0020149625935161914,
+   "load1": 9.13232421875
+  },
+  {
+   "tag": "g0.5-c2-s1-r0",
+   "grid": 0.5,
+   "confirm": 2,
+   "seed": 1,
+   "round": 0,
+   "spec": "work=30000000,cells=11:15:21:27,v3=1,m34grid1=0.5,m34confirm1=2",
+   "processWallSeconds": 6.25618782103993,
+   "rawDepthMm": 177.88419151033597,
+   "coordinatorWorkUnits": 31034226,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.638,
+   "firstSliceFinalMm": 178.021,
+   "firstSliceDropMm": 1.6170000000000186,
+   "firstSliceSteps": 3234,
+   "firstSliceWorkUnits": 14079217,
+   "firstSliceConfirmAttempted": 1466,
+   "firstSliceConfirmAccepted": 1466,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 304,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.00011485013690747281,
+   "mmPerAcceptedConfirmation": 0.001103001364256493,
+   "load1": 9.2275390625
+  },
+  {
+   "tag": "g0.5-c2-s2-r0",
+   "grid": 0.5,
+   "confirm": 2,
+   "seed": 2,
+   "round": 0,
+   "spec": "work=30000000,cells=15:23:31:39,v3=1,m34grid1=0.5,m34confirm1=2",
+   "processWallSeconds": 8.820957140997052,
+   "rawDepthMm": 175.006,
+   "coordinatorWorkUnits": 28607282,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.00799999999998,
+   "firstSliceFinalMm": 177.397,
+   "firstSliceDropMm": 1.61099999999999,
+   "firstSliceSteps": 3222,
+   "firstSliceWorkUnits": 10431497,
+   "firstSliceConfirmAttempted": 903,
+   "firstSliceConfirmAccepted": 903,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 1418,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.00015443612743214037,
+   "mmPerAcceptedConfirmation": 0.0017840531561461683,
+   "load1": 10.01025390625
+  },
+  {
+   "tag": "g0.5-c1-s0-r0",
+   "grid": 0.5,
+   "confirm": 1,
+   "seed": 0,
+   "round": 0,
+   "spec": "work=30000000,cells=13:15:17:19,v3=1,m34grid1=0.5,m34confirm1=1",
+   "processWallSeconds": 8.850581893115304,
+   "rawDepthMm": 178.1147782649107,
+   "coordinatorWorkUnits": 33514490,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.753,
+   "firstSliceFinalMm": 178.137,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceSteps": 3232,
+   "firstSliceWorkUnits": 17353637,
+   "firstSliceConfirmAttempted": 1593,
+   "firstSliceConfirmAccepted": 1593,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 1640,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 9.312168970688886e-05,
+   "mmPerAcceptedConfirmation": 0.0010144381669805306,
+   "load1": 9.736328125
+  },
+  {
+   "tag": "g0.5-c1-s1-r0",
+   "grid": 0.5,
+   "confirm": 1,
+   "seed": 1,
+   "round": 0,
+   "spec": "work=30000000,cells=11:15:21:27,v3=1,m34grid1=0.5,m34confirm1=1",
+   "processWallSeconds": 6.252190264058299,
+   "rawDepthMm": 177.88419151033597,
+   "coordinatorWorkUnits": 44420676,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.638,
+   "firstSliceFinalMm": 178.021,
+   "firstSliceDropMm": 1.6170000000000186,
+   "firstSliceSteps": 3234,
+   "firstSliceWorkUnits": 27465667,
+   "firstSliceConfirmAttempted": 2929,
+   "firstSliceConfirmAccepted": 2929,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 306,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 5.887350196155872e-05,
+   "mmPerAcceptedConfirmation": 0.0005520655513827308,
+   "load1": 10.21875
+  },
+  {
+   "tag": "g0.5-c1-s2-r0",
+   "grid": 0.5,
+   "confirm": 1,
+   "seed": 2,
+   "round": 0,
+   "spec": "work=30000000,cells=15:23:31:39,v3=1,m34grid1=0.5,m34confirm1=1",
+   "processWallSeconds": 7.385450758971274,
+   "rawDepthMm": 177.3867782649107,
+   "coordinatorWorkUnits": 33074131,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.00799999999998,
+   "firstSliceFinalMm": 177.397,
+   "firstSliceDropMm": 1.61099999999999,
+   "firstSliceSteps": 3222,
+   "firstSliceWorkUnits": 18593297,
+   "firstSliceConfirmAttempted": 1795,
+   "firstSliceConfirmAccepted": 1795,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 1428,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 8.66441277197901e-05,
+   "mmPerAcceptedConfirmation": 0.0008974930362116935,
+   "load1": 10.12109375
+  },
+  {
+   "tag": "g0.25-c4-s0-r0",
+   "grid": 0.25,
+   "confirm": 4,
+   "seed": 0,
+   "round": 0,
+   "spec": "work=30000000,cells=13:15:17:19,v3=1,m34grid1=0.25",
+   "processWallSeconds": 12.42600915406365,
+   "rawDepthMm": 175.61019471220882,
+   "coordinatorWorkUnits": 28511213,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.753,
+   "firstSliceFinalMm": 178.137,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceSteps": 6464,
+   "firstSliceWorkUnits": 10471550,
+   "firstSliceConfirmAttempted": 571,
+   "firstSliceConfirmAccepted": 571,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 4182,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.000154322903486111,
+   "mmPerAcceptedConfirmation": 0.0028301225919439327,
+   "load1": 9.39453125
+  },
+  {
+   "tag": "g0.25-c4-s1-r0",
+   "grid": 0.25,
+   "confirm": 4,
+   "seed": 1,
+   "round": 0,
+   "spec": "work=30000000,cells=11:15:21:27,v3=1,m34grid1=0.25",
+   "processWallSeconds": 6.9043499800609425,
+   "rawDepthMm": 178.00977826491072,
+   "coordinatorWorkUnits": 31516458,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.638,
+   "firstSliceFinalMm": 178.021,
+   "firstSliceDropMm": 1.6170000000000186,
+   "firstSliceSteps": 6468,
+   "firstSliceWorkUnits": 14561329,
+   "firstSliceConfirmAttempted": 1430,
+   "firstSliceConfirmAccepted": 1430,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 749,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.00011104755616743628,
+   "mmPerAcceptedConfirmation": 0.0011307692307692438,
+   "load1": 9.259765625
+  },
+  {
+   "tag": "g0.25-c4-s2-r0",
+   "grid": 0.25,
+   "confirm": 4,
+   "seed": 2,
+   "round": 0,
+   "spec": "work=30000000,cells=15:23:31:39,v3=1,m34grid1=0.25",
+   "processWallSeconds": 8.244792029960081,
+   "rawDepthMm": 177.364,
+   "coordinatorWorkUnits": 28377066,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.00799999999998,
+   "firstSliceFinalMm": 177.397,
+   "firstSliceDropMm": 1.61099999999999,
+   "firstSliceSteps": 6444,
+   "firstSliceWorkUnits": 13896262,
+   "firstSliceConfirmAttempted": 1244,
+   "firstSliceConfirmAccepted": 1244,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 1472,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.00011593045669403685,
+   "mmPerAcceptedConfirmation": 0.00129501607717041,
+   "load1": 9.23876953125
+  },
+  {
+   "tag": "g0.25-c2-s0-r0",
+   "grid": 0.25,
+   "confirm": 2,
+   "seed": 0,
+   "round": 0,
+   "spec": "work=30000000,cells=13:15:17:19,v3=1,m34grid1=0.25,m34confirm1=2",
+   "processWallSeconds": 11.880708941956982,
+   "rawDepthMm": 178.086,
+   "coordinatorWorkUnits": 31802063,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.753,
+   "firstSliceFinalMm": 178.137,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceSteps": 6464,
+   "firstSliceWorkUnits": 15641300,
+   "firstSliceConfirmAttempted": 1136,
+   "firstSliceConfirmAccepted": 1136,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 4194,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 0.0001033162205187539,
+   "mmPerAcceptedConfirmation": 0.0014225352112675928,
+   "load1": 8.6474609375
+  },
+  {
+   "tag": "g0.25-c2-s1-r0",
+   "grid": 0.25,
+   "confirm": 2,
+   "seed": 1,
+   "round": 0,
+   "spec": "work=30000000,cells=11:15:21:27,v3=1,m34grid1=0.25,m34confirm1=2",
+   "processWallSeconds": 7.12956488202326,
+   "rawDepthMm": 178.00977826491072,
+   "coordinatorWorkUnits": 44573508,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.638,
+   "firstSliceFinalMm": 178.021,
+   "firstSliceDropMm": 1.6170000000000186,
+   "firstSliceSteps": 6468,
+   "firstSliceWorkUnits": 27618379,
+   "firstSliceConfirmAttempted": 2857,
+   "firstSliceConfirmAccepted": 2857,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 755,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 5.854796908971445e-05,
+   "mmPerAcceptedConfirmation": 0.0005659782989149522,
+   "load1": 8.65673828125
+  },
+  {
+   "tag": "g0.25-c2-s2-r0",
+   "grid": 0.25,
+   "confirm": 2,
+   "seed": 2,
+   "round": 0,
+   "spec": "work=30000000,cells=15:23:31:39,v3=1,m34grid1=0.25,m34confirm1=2",
+   "processWallSeconds": 8.130484752939083,
+   "rawDepthMm": 177.364,
+   "coordinatorWorkUnits": 39677316,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.00799999999998,
+   "firstSliceFinalMm": 177.397,
+   "firstSliceDropMm": 1.61099999999999,
+   "firstSliceSteps": 6444,
+   "firstSliceWorkUnits": 25196512,
+   "firstSliceConfirmAttempted": 2479,
+   "firstSliceConfirmAccepted": 2479,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 1488,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 6.393742117956604e-05,
+   "mmPerAcceptedConfirmation": 0.0006498588140379145,
+   "load1": 8.4150390625
+  },
+  {
+   "tag": "g0.25-c1-s0-r0",
+   "grid": 0.25,
+   "confirm": 1,
+   "seed": 0,
+   "round": 0,
+   "spec": "work=30000000,cells=13:15:17:19,v3=1,m34grid1=0.25,m34confirm1=1",
+   "processWallSeconds": 11.992005263920873,
+   "rawDepthMm": 178.086,
+   "coordinatorWorkUnits": 42123263,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.753,
+   "firstSliceFinalMm": 178.137,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceSteps": 6464,
+   "firstSliceWorkUnits": 25962500,
+   "firstSliceConfirmAttempted": 2264,
+   "firstSliceConfirmAccepted": 2264,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 4201,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 6.224362060664364e-05,
+   "mmPerAcceptedConfirmation": 0.0007137809187279088,
+   "load1": 9.0205078125
+  },
+  {
+   "tag": "g0.25-c1-s1-r0",
+   "grid": 0.25,
+   "confirm": 1,
+   "seed": 1,
+   "round": 0,
+   "spec": "work=30000000,cells=11:15:21:27,v3=1,m34grid1=0.25,m34confirm1=1",
+   "processWallSeconds": 7.712958144955337,
+   "rawDepthMm": 178.00977826491072,
+   "coordinatorWorkUnits": 70705908,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.638,
+   "firstSliceFinalMm": 178.021,
+   "firstSliceDropMm": 1.6170000000000186,
+   "firstSliceSteps": 6468,
+   "firstSliceWorkUnits": 53750779,
+   "firstSliceConfirmAttempted": 5713,
+   "firstSliceConfirmAccepted": 5713,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 756,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 3.0083284932484765e-05,
+   "mmPerAcceptedConfirmation": 0.00028303868370383665,
+   "load1": 8.16162109375
+  },
+  {
+   "tag": "g0.25-c1-s2-r0",
+   "grid": 0.25,
+   "confirm": 1,
+   "seed": 2,
+   "round": 0,
+   "spec": "work=30000000,cells=15:23:31:39,v3=1,m34grid1=0.25,m34confirm1=1",
+   "processWallSeconds": 8.974204008933157,
+   "rawDepthMm": 177.364,
+   "coordinatorWorkUnits": 62286966,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.00799999999998,
+   "firstSliceFinalMm": 177.397,
+   "firstSliceDropMm": 1.61099999999999,
+   "firstSliceSteps": 6444,
+   "firstSliceWorkUnits": 47806162,
+   "firstSliceConfirmAttempted": 4950,
+   "firstSliceConfirmAccepted": 4950,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 1495,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 3.3698584713828105e-05,
+   "mmPerAcceptedConfirmation": 0.00032545454545454344,
+   "load1": 7.66796875
+  },
+  {
+   "tag": "g0.125-c4-s0-r0",
+   "grid": 0.125,
+   "confirm": 4,
+   "seed": 0,
+   "round": 0,
+   "spec": "work=30000000,cells=13:15:17:19,v3=1,m34grid1=0.125",
+   "processWallSeconds": 16.846914614085108,
+   "rawDepthMm": 178.114,
+   "coordinatorWorkUnits": 37331799,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.753,
+   "firstSliceFinalMm": 178.137,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceSteps": 12928,
+   "firstSliceWorkUnits": 21171021,
+   "firstSliceConfirmAttempted": 1320,
+   "firstSliceConfirmAccepted": 1320,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 7651,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 7.633075419461279e-05,
+   "mmPerAcceptedConfirmation": 0.0012242424242424133,
+   "load1": 7.0908203125
+  },
+  {
+   "tag": "g0.125-c4-s1-r0",
+   "grid": 0.125,
+   "confirm": 4,
+   "seed": 1,
+   "round": 0,
+   "spec": "work=30000000,cells=11:15:21:27,v3=1,m34grid1=0.125",
+   "processWallSeconds": 10.576627718051895,
+   "rawDepthMm": 178.00277826491072,
+   "coordinatorWorkUnits": 44541039,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.638,
+   "firstSliceFinalMm": 178.021,
+   "firstSliceDropMm": 1.6170000000000186,
+   "firstSliceSteps": 12936,
+   "firstSliceWorkUnits": 27585970,
+   "firstSliceConfirmAttempted": 2521,
+   "firstSliceConfirmAccepted": 2521,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 2854,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 5.861675337137025e-05,
+   "mmPerAcceptedConfirmation": 0.0006414121380404676,
+   "load1": 6.6259765625
+  },
+  {
+   "tag": "g0.125-c4-s2-r0",
+   "grid": 0.125,
+   "confirm": 4,
+   "seed": 2,
+   "round": 0,
+   "spec": "work=30000000,cells=15:23:31:39,v3=1,m34grid1=0.125",
+   "processWallSeconds": 12.199397981050424,
+   "rawDepthMm": 177.38,
+   "coordinatorWorkUnits": 41404349,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.00799999999998,
+   "firstSliceFinalMm": 177.397,
+   "firstSliceDropMm": 1.61099999999999,
+   "firstSliceSteps": 12888,
+   "firstSliceWorkUnits": 26923545,
+   "firstSliceConfirmAttempted": 2268,
+   "firstSliceConfirmAccepted": 2268,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 3818,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 5.9836102563759346e-05,
+   "mmPerAcceptedConfirmation": 0.0007103174603174559,
+   "load1": 6.548828125
+  },
+  {
+   "tag": "g0.125-c2-s0-r0",
+   "grid": 0.125,
+   "confirm": 2,
+   "seed": 0,
+   "round": 0,
+   "spec": "work=30000000,cells=13:15:17:19,v3=1,m34grid1=0.125,m34confirm1=2",
+   "processWallSeconds": 17.06520008004736,
+   "rawDepthMm": 178.114,
+   "coordinatorWorkUnits": 49345749,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.753,
+   "firstSliceFinalMm": 178.137,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceSteps": 12928,
+   "firstSliceWorkUnits": 33184971,
+   "firstSliceConfirmAttempted": 2633,
+   "firstSliceConfirmAccepted": 2633,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 7663,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 4.869674287194603e-05,
+   "mmPerAcceptedConfirmation": 0.0006137485757690791,
+   "load1": 7.3681640625
+  },
+  {
+   "tag": "g0.125-c2-s1-r0",
+   "grid": 0.125,
+   "confirm": 2,
+   "seed": 1,
+   "round": 0,
+   "spec": "work=30000000,cells=11:15:21:27,v3=1,m34grid1=0.125,m34confirm1=2",
+   "processWallSeconds": 11.293536936980672,
+   "rawDepthMm": 178.00277826491072,
+   "coordinatorWorkUnits": 67470939,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.638,
+   "firstSliceFinalMm": 178.021,
+   "firstSliceDropMm": 1.6170000000000186,
+   "firstSliceSteps": 12936,
+   "firstSliceWorkUnits": 50515870,
+   "firstSliceConfirmAttempted": 5027,
+   "firstSliceConfirmAccepted": 5027,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 2884,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 3.2009742680864817e-05,
+   "mmPerAcceptedConfirmation": 0.00032166301969365797,
+   "load1": 7.10888671875
+  },
+  {
+   "tag": "g0.125-c2-s2-r0",
+   "grid": 0.125,
+   "confirm": 2,
+   "seed": 2,
+   "round": 0,
+   "spec": "work=30000000,cells=15:23:31:39,v3=1,m34grid1=0.125,m34confirm1=2",
+   "processWallSeconds": 12.553227476077154,
+   "rawDepthMm": 177.38,
+   "coordinatorWorkUnits": 62092499,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.00799999999998,
+   "firstSliceFinalMm": 177.397,
+   "firstSliceDropMm": 1.61099999999999,
+   "firstSliceSteps": 12888,
+   "firstSliceWorkUnits": 47611695,
+   "firstSliceConfirmAttempted": 4529,
+   "firstSliceConfirmAccepted": 4529,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 3832,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 3.383622448224097e-05,
+   "mmPerAcceptedConfirmation": 0.00035570766173548024,
+   "load1": 7.54736328125
+  },
+  {
+   "tag": "g0.125-c1-s0-r0",
+   "grid": 0.125,
+   "confirm": 1,
+   "seed": 0,
+   "round": 0,
+   "spec": "work=30000000,cells=13:15:17:19,v3=1,m34grid1=0.125,m34confirm1=1",
+   "processWallSeconds": 17.60966737207491,
+   "rawDepthMm": 178.114,
+   "coordinatorWorkUnits": 73391949,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.753,
+   "firstSliceFinalMm": 178.137,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceSteps": 12928,
+   "firstSliceWorkUnits": 57231171,
+   "firstSliceConfirmAttempted": 5261,
+   "firstSliceConfirmAccepted": 5261,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 7668,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 2.8236360915976808e-05,
+   "mmPerAcceptedConfirmation": 0.00030716593803459144,
+   "load1": 8.06591796875
+  },
+  {
+   "tag": "g0.125-c1-s1-r0",
+   "grid": 0.125,
+   "confirm": 1,
+   "seed": 1,
+   "round": 0,
+   "spec": "work=30000000,cells=11:15:21:27,v3=1,m34grid1=0.125,m34confirm1=1",
+   "processWallSeconds": 12.227900807047263,
+   "rawDepthMm": 178.00277826491072,
+   "coordinatorWorkUnits": 113358189,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.638,
+   "firstSliceFinalMm": 178.021,
+   "firstSliceDropMm": 1.6170000000000186,
+   "firstSliceSteps": 12936,
+   "firstSliceWorkUnits": 96403120,
+   "firstSliceConfirmAttempted": 10042,
+   "firstSliceConfirmAccepted": 10042,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 2895,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 1.677331605035209e-05,
+   "mmPerAcceptedConfirmation": 0.00016102370045807793,
+   "load1": 8.04345703125
+  },
+  {
+   "tag": "g0.125-c1-s2-r0",
+   "grid": 0.125,
+   "confirm": 1,
+   "seed": 2,
+   "round": 0,
+   "spec": "work=30000000,cells=15:23:31:39,v3=1,m34grid1=0.125,m34confirm1=1",
+   "processWallSeconds": 13.825711367069744,
+   "rawDepthMm": 177.38,
+   "coordinatorWorkUnits": 103395599,
+   "planUnits": null,
+   "slices": 1,
+   "firstSliceStartMm": 179.00799999999998,
+   "firstSliceFinalMm": 177.397,
+   "firstSliceDropMm": 1.61099999999999,
+   "firstSliceSteps": 12888,
+   "firstSliceWorkUnits": 88914795,
+   "firstSliceConfirmAttempted": 9043,
+   "firstSliceConfirmAccepted": 9043,
+   "firstSliceConfirmRefused": 0,
+   "firstSliceConfirmSkipped": 3846,
+   "firstSliceExit": "bound",
+   "mmPerKiloUnit": 1.811846948530883e-05,
+   "mmPerAcceptedConfirmation": 0.00017814884441003982,
+   "load1": 7.80224609375
+  }
+ ],
+ "byCell": {
+  "1.0/4": {
+   "n": 3,
+   "grid": 1.0,
+   "confirm": 4,
+   "depthMedianMm": 173.57506393348288,
+   "seedMedianOfMedians": 173.57506393348288,
+   "wallP50": 9.07270930102095,
+   "wallMax": 10.285537877934985,
+   "slicesMedian": 1,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceStepsMedian": 1616,
+   "firstSliceWorkUnitsMedian": 3455866,
+   "confirmAcceptedMedian": 287,
+   "confirmAttemptedMedian": 287,
+   "mmPerKiloUnit": 0.0004661639079755957,
+   "mmPerAcceptedConfirmation": 0.005630662020905872,
+   "exitCauses": {
+    "bound": 3
+   },
+   "perSeed": {
+    "0": {
+     "depthMedianMm": 173.57506393348288,
+     "distinctDepthsMm": [
+      173.57506393348288
+     ],
+     "mmPerKiloUnit": 0.0004880650576224785,
+     "slices": [
+      1
+     ]
+    },
+    "1": {
+     "depthMedianMm": 171.3619986855876,
+     "distinctDepthsMm": [
+      171.3619986855876
+     ],
+     "mmPerKiloUnit": 0.00045680727592007503,
+     "slices": [
+      1
+     ]
+    },
+    "2": {
+     "depthMedianMm": 174.28,
+     "distinctDepthsMm": [
+      174.28
+     ],
+     "mmPerKiloUnit": 0.0004661639079755957,
+     "slices": [
+      2
+     ]
+    }
+   },
+   "deltaVsBaselineMm": 0.0,
+   "mmPerKiloUnitRatio": 1.0
+  },
+  "1.0/2": {
+   "n": 3,
+   "grid": 1.0,
+   "confirm": 2,
+   "depthMedianMm": 175.1357388323935,
+   "seedMedianOfMedians": 175.1357388323935,
+   "wallP50": 8.27936276991386,
+   "wallMax": 8.545105925993994,
+   "slicesMedian": 1,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceStepsMedian": 1616,
+   "firstSliceWorkUnitsMedian": 5882184,
+   "confirmAcceptedMedian": 568,
+   "confirmAttemptedMedian": 568,
+   "mmPerKiloUnit": 0.0002747278901850036,
+   "mmPerAcceptedConfirmation": 0.0028450704225351856,
+   "exitCauses": {
+    "bound": 3
+   },
+   "perSeed": {
+    "0": {
+     "depthMedianMm": 175.1357388323935,
+     "distinctDepthsMm": [
+      175.1357388323935
+     ],
+     "mmPerKiloUnit": 0.0002747278901850036,
+     "slices": [
+      1
+     ]
+    },
+    "1": {
+     "depthMedianMm": 171.3619986855876,
+     "distinctDepthsMm": [
+      171.3619986855876
+     ],
+     "mmPerKiloUnit": 0.0002576631276893718,
+     "slices": [
+      1
+     ]
+    },
+    "2": {
+     "depthMedianMm": 176.16200000000003,
+     "distinctDepthsMm": [
+      176.16200000000003
+     ],
+     "mmPerKiloUnit": 0.00028830584256890173,
+     "slices": [
+      1
+     ]
+    }
+   },
+   "deltaVsBaselineMm": 1.5606748989106336,
+   "mmPerKiloUnitRatio": 0.5893375387598346
+  },
+  "1.0/1": {
+   "n": 3,
+   "grid": 1.0,
+   "confirm": 1,
+   "depthMedianMm": 177.90786925189622,
+   "seedMedianOfMedians": 177.90786925189622,
+   "wallP50": 5.990576843963936,
+   "wallMax": 7.822106002015062,
+   "slicesMedian": 1,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceStepsMedian": 1616,
+   "firstSliceWorkUnitsMedian": 11006184,
+   "confirmAcceptedMedian": 1128,
+   "confirmAttemptedMedian": 1128,
+   "mmPerKiloUnit": 0.00014682654769354988,
+   "mmPerAcceptedConfirmation": 0.0014326241134751643,
+   "exitCauses": {
+    "bound": 3
+   },
+   "perSeed": {
+    "0": {
+     "depthMedianMm": 178.1797782649107,
+     "distinctDepthsMm": [
+      178.1797782649107
+     ],
+     "mmPerKiloUnit": 0.00014682654769354988,
+     "slices": [
+      1
+     ]
+    },
+    "1": {
+     "depthMedianMm": 177.90786925189622,
+     "distinctDepthsMm": [
+      177.90786925189622
+     ],
+     "mmPerKiloUnit": 0.00013754109859017555,
+     "slices": [
+      1
+     ]
+    },
+    "2": {
+     "depthMedianMm": 176.16200000000003,
+     "distinctDepthsMm": [
+      176.16200000000003
+     ],
+     "mmPerKiloUnit": 0.00016367682980230865,
+     "slices": [
+      1
+     ]
+    }
+   },
+   "deltaVsBaselineMm": 4.332805318413335,
+   "mmPerKiloUnitRatio": 0.31496764374396063
+  },
+  "0.5/4": {
+   "n": 3,
+   "grid": 0.5,
+   "confirm": 4,
+   "depthMedianMm": 175.006,
+   "seedMedianOfMedians": 175.006,
+   "wallP50": 10.14111241500359,
+   "wallMax": 10.168007152969949,
+   "slicesMedian": 1,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceStepsMedian": 3232,
+   "firstSliceWorkUnitsMedian": 6492587,
+   "confirmAcceptedMedian": 455,
+   "confirmAttemptedMedian": 455,
+   "mmPerKiloUnit": 0.00024889924463083595,
+   "mmPerAcceptedConfirmation": 0.0035406593406593187,
+   "exitCauses": {
+    "bound": 3
+   },
+   "perSeed": {
+    "0": {
+     "depthMedianMm": 175.15878522143555,
+     "distinctDepthsMm": [
+      175.15878522143555
+     ],
+     "mmPerKiloUnit": 0.00024889924463083595,
+     "slices": [
+      1
+     ]
+    },
+    "1": {
+     "depthMedianMm": 175.006,
+     "distinctDepthsMm": [
+      175.006
+     ],
+     "mmPerKiloUnit": 0.0002187924147091852,
+     "slices": [
+      1
+     ]
+    },
+    "2": {
+     "depthMedianMm": 175.006,
+     "distinctDepthsMm": [
+      175.006
+     ],
+     "mmPerKiloUnit": 0.000254410050570905,
+     "slices": [
+      1
+     ]
+    }
+   },
+   "deltaVsBaselineMm": 1.4309360665171198,
+   "mmPerKiloUnitRatio": 0.5339307491901886
+  },
+  "0.5/2": {
+   "n": 3,
+   "grid": 0.5,
+   "confirm": 2,
+   "depthMedianMm": 175.15878522143555,
+   "seedMedianOfMedians": 175.15878522143555,
+   "wallP50": 8.820957140997052,
+   "wallMax": 9.57391502300743,
+   "slicesMedian": 1,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceStepsMedian": 3232,
+   "firstSliceWorkUnitsMedian": 10431497,
+   "confirmAcceptedMedian": 903,
+   "confirmAttemptedMedian": 903,
+   "mmPerKiloUnit": 0.00015443612743214037,
+   "mmPerAcceptedConfirmation": 0.0017840531561461683,
+   "exitCauses": {
+    "bound": 3
+   },
+   "perSeed": {
+    "0": {
+     "depthMedianMm": 175.15878522143555,
+     "distinctDepthsMm": [
+      175.15878522143555
+     ],
+     "mmPerKiloUnit": 0.00015974714083756588,
+     "slices": [
+      1
+     ]
+    },
+    "1": {
+     "depthMedianMm": 177.88419151033597,
+     "distinctDepthsMm": [
+      177.88419151033597
+     ],
+     "mmPerKiloUnit": 0.00011485013690747281,
+     "slices": [
+      1
+     ]
+    },
+    "2": {
+     "depthMedianMm": 175.006,
+     "distinctDepthsMm": [
+      175.006
+     ],
+     "mmPerKiloUnit": 0.00015443612743214037,
+     "slices": [
+      1
+     ]
+    }
+   },
+   "deltaVsBaselineMm": 1.5837212879526703,
+   "mmPerKiloUnitRatio": 0.33129147235531003
+  },
+  "0.5/1": {
+   "n": 3,
+   "grid": 0.5,
+   "confirm": 1,
+   "depthMedianMm": 177.88419151033597,
+   "seedMedianOfMedians": 177.88419151033597,
+   "wallP50": 7.385450758971274,
+   "wallMax": 8.850581893115304,
+   "slicesMedian": 1,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceStepsMedian": 3232,
+   "firstSliceWorkUnitsMedian": 18593297,
+   "confirmAcceptedMedian": 1795,
+   "confirmAttemptedMedian": 1795,
+   "mmPerKiloUnit": 8.66441277197901e-05,
+   "mmPerAcceptedConfirmation": 0.0008974930362116935,
+   "exitCauses": {
+    "bound": 3
+   },
+   "perSeed": {
+    "0": {
+     "depthMedianMm": 178.1147782649107,
+     "distinctDepthsMm": [
+      178.1147782649107
+     ],
+     "mmPerKiloUnit": 9.312168970688886e-05,
+     "slices": [
+      1
+     ]
+    },
+    "1": {
+     "depthMedianMm": 177.88419151033597,
+     "distinctDepthsMm": [
+      177.88419151033597
+     ],
+     "mmPerKiloUnit": 5.887350196155872e-05,
+     "slices": [
+      1
+     ]
+    },
+    "2": {
+     "depthMedianMm": 177.3867782649107,
+     "distinctDepthsMm": [
+      177.3867782649107
+     ],
+     "mmPerKiloUnit": 8.66441277197901e-05,
+     "slices": [
+      1
+     ]
+    }
+   },
+   "deltaVsBaselineMm": 4.309127576853086,
+   "mmPerKiloUnitRatio": 0.1858662291039615
+  },
+  "0.25/4": {
+   "n": 3,
+   "grid": 0.25,
+   "confirm": 4,
+   "depthMedianMm": 177.364,
+   "seedMedianOfMedians": 177.364,
+   "wallP50": 8.244792029960081,
+   "wallMax": 12.42600915406365,
+   "slicesMedian": 1,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceStepsMedian": 6464,
+   "firstSliceWorkUnitsMedian": 13896262,
+   "confirmAcceptedMedian": 1244,
+   "confirmAttemptedMedian": 1244,
+   "mmPerKiloUnit": 0.00011593045669403685,
+   "mmPerAcceptedConfirmation": 0.00129501607717041,
+   "exitCauses": {
+    "bound": 3
+   },
+   "perSeed": {
+    "0": {
+     "depthMedianMm": 175.61019471220882,
+     "distinctDepthsMm": [
+      175.61019471220882
+     ],
+     "mmPerKiloUnit": 0.000154322903486111,
+     "slices": [
+      1
+     ]
+    },
+    "1": {
+     "depthMedianMm": 178.00977826491072,
+     "distinctDepthsMm": [
+      178.00977826491072
+     ],
+     "mmPerKiloUnit": 0.00011104755616743628,
+     "slices": [
+      1
+     ]
+    },
+    "2": {
+     "depthMedianMm": 177.364,
+     "distinctDepthsMm": [
+      177.364
+     ],
+     "mmPerKiloUnit": 0.00011593045669403685,
+     "slices": [
+      1
+     ]
+    }
+   },
+   "deltaVsBaselineMm": 3.788936066517124,
+   "mmPerKiloUnitRatio": 0.24869033125598808
+  },
+  "0.25/2": {
+   "n": 3,
+   "grid": 0.25,
+   "confirm": 2,
+   "depthMedianMm": 178.00977826491072,
+   "seedMedianOfMedians": 178.00977826491072,
+   "wallP50": 8.130484752939083,
+   "wallMax": 11.880708941956982,
+   "slicesMedian": 1,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceStepsMedian": 6464,
+   "firstSliceWorkUnitsMedian": 25196512,
+   "confirmAcceptedMedian": 2479,
+   "confirmAttemptedMedian": 2479,
+   "mmPerKiloUnit": 6.393742117956604e-05,
+   "mmPerAcceptedConfirmation": 0.0006498588140379145,
+   "exitCauses": {
+    "bound": 3
+   },
+   "perSeed": {
+    "0": {
+     "depthMedianMm": 178.086,
+     "distinctDepthsMm": [
+      178.086
+     ],
+     "mmPerKiloUnit": 0.0001033162205187539,
+     "slices": [
+      1
+     ]
+    },
+    "1": {
+     "depthMedianMm": 178.00977826491072,
+     "distinctDepthsMm": [
+      178.00977826491072
+     ],
+     "mmPerKiloUnit": 5.854796908971445e-05,
+     "slices": [
+      1
+     ]
+    },
+    "2": {
+     "depthMedianMm": 177.364,
+     "distinctDepthsMm": [
+      177.364
+     ],
+     "mmPerKiloUnit": 6.393742117956604e-05,
+     "slices": [
+      1
+     ]
+    }
+   },
+   "deltaVsBaselineMm": 4.434714331427841,
+   "mmPerKiloUnitRatio": 0.1371565238871158
+  },
+  "0.25/1": {
+   "n": 3,
+   "grid": 0.25,
+   "confirm": 1,
+   "depthMedianMm": 178.00977826491072,
+   "seedMedianOfMedians": 178.00977826491072,
+   "wallP50": 8.974204008933157,
+   "wallMax": 11.992005263920873,
+   "slicesMedian": 1,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceStepsMedian": 6464,
+   "firstSliceWorkUnitsMedian": 47806162,
+   "confirmAcceptedMedian": 4950,
+   "confirmAttemptedMedian": 4950,
+   "mmPerKiloUnit": 3.3698584713828105e-05,
+   "mmPerAcceptedConfirmation": 0.00032545454545454344,
+   "exitCauses": {
+    "bound": 3
+   },
+   "perSeed": {
+    "0": {
+     "depthMedianMm": 178.086,
+     "distinctDepthsMm": [
+      178.086
+     ],
+     "mmPerKiloUnit": 6.224362060664364e-05,
+     "slices": [
+      1
+     ]
+    },
+    "1": {
+     "depthMedianMm": 178.00977826491072,
+     "distinctDepthsMm": [
+      178.00977826491072
+     ],
+     "mmPerKiloUnit": 3.0083284932484765e-05,
+     "slices": [
+      1
+     ]
+    },
+    "2": {
+     "depthMedianMm": 177.364,
+     "distinctDepthsMm": [
+      177.364
+     ],
+     "mmPerKiloUnit": 3.3698584713828105e-05,
+     "slices": [
+      1
+     ]
+    }
+   },
+   "deltaVsBaselineMm": 4.434714331427841,
+   "mmPerKiloUnitRatio": 0.0722891329364612
+  },
+  "0.125/4": {
+   "n": 3,
+   "grid": 0.125,
+   "confirm": 4,
+   "depthMedianMm": 178.00277826491072,
+   "seedMedianOfMedians": 178.00277826491072,
+   "wallP50": 12.199397981050424,
+   "wallMax": 16.846914614085108,
+   "slicesMedian": 1,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceStepsMedian": 12928,
+   "firstSliceWorkUnitsMedian": 26923545,
+   "confirmAcceptedMedian": 2268,
+   "confirmAttemptedMedian": 2268,
+   "mmPerKiloUnit": 5.9836102563759346e-05,
+   "mmPerAcceptedConfirmation": 0.0007103174603174559,
+   "exitCauses": {
+    "bound": 3
+   },
+   "perSeed": {
+    "0": {
+     "depthMedianMm": 178.114,
+     "distinctDepthsMm": [
+      178.114
+     ],
+     "mmPerKiloUnit": 7.633075419461279e-05,
+     "slices": [
+      1
+     ]
+    },
+    "1": {
+     "depthMedianMm": 178.00277826491072,
+     "distinctDepthsMm": [
+      178.00277826491072
+     ],
+     "mmPerKiloUnit": 5.861675337137025e-05,
+     "slices": [
+      1
+     ]
+    },
+    "2": {
+     "depthMedianMm": 177.38,
+     "distinctDepthsMm": [
+      177.38
+     ],
+     "mmPerKiloUnit": 5.9836102563759346e-05,
+     "slices": [
+      1
+     ]
+    }
+   },
+   "deltaVsBaselineMm": 4.427714331427836,
+   "mmPerKiloUnitRatio": 0.1283585055385537
+  },
+  "0.125/2": {
+   "n": 3,
+   "grid": 0.125,
+   "confirm": 2,
+   "depthMedianMm": 178.00277826491072,
+   "seedMedianOfMedians": 178.00277826491072,
+   "wallP50": 12.553227476077154,
+   "wallMax": 17.06520008004736,
+   "slicesMedian": 1,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceStepsMedian": 12928,
+   "firstSliceWorkUnitsMedian": 47611695,
+   "confirmAcceptedMedian": 4529,
+   "confirmAttemptedMedian": 4529,
+   "mmPerKiloUnit": 3.383622448224097e-05,
+   "mmPerAcceptedConfirmation": 0.00035570766173548024,
+   "exitCauses": {
+    "bound": 3
+   },
+   "perSeed": {
+    "0": {
+     "depthMedianMm": 178.114,
+     "distinctDepthsMm": [
+      178.114
+     ],
+     "mmPerKiloUnit": 4.869674287194603e-05,
+     "slices": [
+      1
+     ]
+    },
+    "1": {
+     "depthMedianMm": 178.00277826491072,
+     "distinctDepthsMm": [
+      178.00277826491072
+     ],
+     "mmPerKiloUnit": 3.2009742680864817e-05,
+     "slices": [
+      1
+     ]
+    },
+    "2": {
+     "depthMedianMm": 177.38,
+     "distinctDepthsMm": [
+      177.38
+     ],
+     "mmPerKiloUnit": 3.383622448224097e-05,
+     "slices": [
+      1
+     ]
+    }
+   },
+   "deltaVsBaselineMm": 4.427714331427836,
+   "mmPerKiloUnitRatio": 0.07258439339326188
+  },
+  "0.125/1": {
+   "n": 3,
+   "grid": 0.125,
+   "confirm": 1,
+   "depthMedianMm": 178.00277826491072,
+   "seedMedianOfMedians": 178.00277826491072,
+   "wallP50": 13.825711367069744,
+   "wallMax": 17.60966737207491,
+   "slicesMedian": 1,
+   "firstSliceDropMm": 1.6159999999999854,
+   "firstSliceStepsMedian": 12928,
+   "firstSliceWorkUnitsMedian": 88914795,
+   "confirmAcceptedMedian": 9043,
+   "confirmAttemptedMedian": 9043,
+   "mmPerKiloUnit": 1.811846948530883e-05,
+   "mmPerAcceptedConfirmation": 0.00017814884441003982,
+   "exitCauses": {
+    "bound": 3
+   },
+   "perSeed": {
+    "0": {
+     "depthMedianMm": 178.114,
+     "distinctDepthsMm": [
+      178.114
+     ],
+     "mmPerKiloUnit": 2.8236360915976808e-05,
+     "slices": [
+      1
+     ]
+    },
+    "1": {
+     "depthMedianMm": 178.00277826491072,
+     "distinctDepthsMm": [
+      178.00277826491072
+     ],
+     "mmPerKiloUnit": 1.677331605035209e-05,
+     "slices": [
+      1
+     ]
+    },
+    "2": {
+     "depthMedianMm": 177.38,
+     "distinctDepthsMm": [
+      177.38
+     ],
+     "mmPerKiloUnit": 1.811846948530883e-05,
+     "slices": [
+      1
+     ]
+    }
+   },
+   "deltaVsBaselineMm": 4.427714331427836,
+   "mmPerKiloUnitRatio": 0.03886716490770743
+  }
+ },
+ "boxLoad": {
+  "n": 36,
+  "min": 6.1982421875,
+  "median": 7.93017578125,
+  "max": 10.21875
+ }
+}
