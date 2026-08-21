@@ -642,6 +642,84 @@ pub struct PublicationEvent {
     pub fingerprint: String,
 }
 
+/// How a run treats the parallel work currency.
+///
+/// Three values rather than a bool, and the middle one is the instrument this
+/// round is built on: [`Self::Observe`] computes and reports every price the
+/// currency would charge **without charging any of them**, so a paired
+/// `Off`/`Observe` run walks the same trajectory and the difference between
+/// the two documents is exactly the new reporting. That is what makes the
+/// mispricing measurable on the shipped arm rather than only on a repriced
+/// one, and it is what `docs/experiments/work-currency/` §1's table is read
+/// off.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum WorkCurrencyMode {
+    /// Nothing is computed, nothing is reported, nothing is charged. The
+    /// shipped arm, and bit-identical to a binary that does not have the
+    /// field.
+    #[default]
+    Off,
+    /// Priced and reported, never charged. The trajectory is the `Off`
+    /// trajectory: two extra counter reads per operator call increment
+    /// nothing, so a work-budgeted run under `Observe` produces the `Off`
+    /// document plus the currency's own block.
+    Observe,
+    /// Priced, reported and **charged**: the coordinator settles every
+    /// operator call at `max(global_delta, self_metered_units,
+    /// class_self_units)`, so affordability, every phase deadline, the class
+    /// ranking and the plan's own budget all read the repriced currency.
+    Charge,
+}
+
+impl WorkCurrencyMode {
+    /// Whether the currency is computed and reported at all.
+    pub fn armed(self) -> bool {
+        !matches!(self, WorkCurrencyMode::Off)
+    }
+
+    /// Whether a price this currency computed is settled into the meter.
+    fn charges(self) -> bool {
+        matches!(self, WorkCurrencyMode::Charge)
+    }
+
+    /// The stable reporting name.
+    pub fn label(self) -> &'static str {
+        match self {
+            WorkCurrencyMode::Off => "off",
+            WorkCurrencyMode::Observe => "observe",
+            WorkCurrencyMode::Charge => "charge",
+        }
+    }
+}
+
+/// What the parallel currency priced one operator call at, and out of what.
+///
+/// Reported whole rather than as one scalar for the same reason
+/// [`OperatorCharge`] reports four numbers: the interesting fact about a
+/// repricing is the *gap*, and a document that carried only the settled
+/// maximum could not be used to fit the profile that produced it. Every field
+/// here is an input to `drivers/fitprofile.py`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct WorkCurrencyCallReport {
+    pub candidate_queries: u64,
+    pub exact_pair_tests: u64,
+    pub collision_builds: u64,
+    pub neighbor_tests: u64,
+    pub full_rescores: u64,
+    pub position_source_attempts: u64,
+    pub returned_positions: u64,
+    pub pair_visits: u64,
+    pub operator_collision_builds: u64,
+    pub confirmations: u64,
+    /// What [`crate::search::work_currency::ClassPrice::units`] returned for
+    /// this class and these counts.
+    pub class_units: u64,
+    /// What this call actually added to the meter *because of* the currency:
+    /// zero under [`WorkCurrencyMode::Observe`], zero when some other price
+    /// was already at least as high, and the difference otherwise.
+    pub charged_extra_units: u64,
+}
+
 /// One operator invocation the schedule made.
 #[derive(Clone, Debug)]
 pub struct OperatorCallReport {
@@ -671,7 +749,14 @@ pub struct OperatorCallReport {
     pub global_units: u64,
     /// What the operator's own meter charged itself, when it carries one -
     /// see [`schedule_self_cost_units`]. `None` for every operator that does
-    /// not, which today is all of them but mode 34.
+    /// not, which without the parallel currency is all of them but mode 34.
+    ///
+    /// With [`WorkCurrencyMode::Charge`] armed this is
+    /// `max(schedule_self_cost_units, class_self_units)` - the class price is
+    /// the operator's own price, settled through the same arm - so it becomes
+    /// `Some` on every class the profile names. Nothing is lost by the
+    /// merge: [`WorkCurrencyCallReport::class_units`] carries the class price
+    /// on its own, so the two are separable in the evidence.
     pub self_metered_units: Option<u64>,
     /// `self_metered_units.saturating_sub(global_units)`, and zero under a
     /// wall budget. What this call added to the meter beyond the global
@@ -696,6 +781,11 @@ pub struct OperatorCallReport {
     /// feasible, or whether the slice was given back unspent. Every claim this
     /// round makes about where the slice's seconds go is read out of here.
     pub schedule_slice: Option<ScheduleSliceReport>,
+    /// The parallel currency's account of this call, or `None` when
+    /// [`PortfolioSettings::work_currency`] is [`WorkCurrencyMode::Off`] -
+    /// which is the default, and is why an unarmed run's document is
+    /// byte-identical to a binary that has never heard of the currency.
+    pub work_currency: Option<WorkCurrencyCallReport>,
 }
 
 /// What one mode-34 slice did, as the slice itself measured it.
@@ -1688,6 +1778,10 @@ pub struct PortfolioOutcome {
     pub basin_race: Option<BasinRaceReport>,
     pub operator_calls: Vec<OperatorCallReport>,
     pub publications: Vec<PublicationEvent>,
+    /// Which parallel currency this run was priced in, so a document says so
+    /// rather than a reader inferring it from whether the per-call block is
+    /// present.
+    pub work_currency: WorkCurrencyMode,
     pub budget: PortfolioBudget,
     pub elapsed_seconds: f64,
     pub work_units: u64,
@@ -1977,6 +2071,16 @@ pub struct PortfolioSettings {
     /// restores the unbounded extrapolation the pilot measured and is how
     /// `evidence/cal-pilot-unbounded.json`'s arm is reproduced.
     pub plan_tranche_horizon: f64,
+    /// The parallel work currency, spec key `cur2`. See
+    /// [`WorkCurrencyMode`] and `crate::search::work_currency`.
+    ///
+    /// [`WorkCurrencyMode::Off`] is the default and is the shipped arm: every
+    /// pinned work number in this repository - the four gates, the ledger's
+    /// spends, `work=40000000`, `portfolio.plan.units` - is denominated in the
+    /// meter `work_units_now()` reads, and this field cannot move any of them
+    /// because with it off nothing in `work_currency` is called and no field
+    /// it owns is reported.
+    pub work_currency: WorkCurrencyMode,
     /// Whether the coordinator arms the continuous-rotation operator on the two
     /// operators whose relaxed lane the brief scopes it to: the alternation
     /// fixpoint (mode 22) and the compression schedule (mode 34).
@@ -2291,6 +2395,7 @@ impl PortfolioSettings {
             plan_first_tranche: PLAN_FIRST_TRANCHE,
             plan_max_tranches: PLAN_MAX_TRANCHES,
             plan_tranche_horizon: PLAN_TRANCHE_HORIZON,
+            work_currency: WorkCurrencyMode::Off,
             #[cfg(feature = "continuous-rotation")]
             continuous_rotation: false,
             #[cfg(feature = "sparse-rotation")]
@@ -2780,10 +2885,87 @@ fn next_rung_above(units: u64, step: f64) -> f64 {
 /// not. A wall-budget run must have the clock the production build runs on; a
 /// work-budget run must have the counters, and pays the ~17% they cost.
 fn work_units_now() -> u64 {
-    let totals = profiling::counter_totals();
+    work_units_from(&profiling::counter_totals())
+}
+
+/// The shipped meter's formula, over a snapshot rather than over the live
+/// registry.
+///
+/// Split out from [`work_units_now`] so the *mapping* can be compared against
+/// [`work_currency_counts_from`]'s without either function reading a
+/// process-global counter. The two have to agree - a class the parallel
+/// currency's profile does not name must self-price at exactly what this
+/// returns, or `max(global, class)` starts charging a debit on every operator
+/// in the run - and the first cut of the currency got that wrong (see
+/// `work_currency::SHIPPED_EXACT_PAIR_TEST`).
+///
+/// Writing the comparison against the live counters instead was the obvious
+/// thing and it was wrong twice over: it needed `profiling::set_enabled(true)`,
+/// which is process-global, and `cargo test` runs this module's tests in
+/// parallel threads of one process - so the test broke three *sibling* tests
+/// that legitimately assume an unarmed meter reads zero. A snapshot has no
+/// such reach.
+fn work_units_from(totals: &[u64; Counter::COUNT]) -> u64 {
     totals[Counter::CandidateQueries as usize].saturating_add(
         WORK_UNITS_PER_EXACT_PAIR_TEST.saturating_mul(totals[Counter::ExactPairTests as usize]),
     )
+}
+
+/// The parallel currency's five profiling counts, read as one snapshot.
+///
+/// Deliberately one `counter_totals()` call rather than five reads: the
+/// registry is locked once and the five numbers are consistent with each
+/// other, which is what makes a *delta* over a call meaningful when the call
+/// fanned out to worker threads.
+///
+/// Zero, and therefore a zero delta, when profiling recording is off - the
+/// same condition the shipped meter has always had, and the reason the
+/// currency is a work-budget concept exactly as the meter it parallels is.
+fn work_currency_counts_now() -> crate::search::work_currency::ClassCounts {
+    work_currency_counts_from(&profiling::counter_totals())
+}
+
+/// The currency's half of the same mapping, over the same snapshot. See
+/// [`work_units_from`].
+fn work_currency_counts_from(
+    totals: &[u64; Counter::COUNT],
+) -> crate::search::work_currency::ClassCounts {
+    crate::search::work_currency::ClassCounts {
+        candidate_queries: totals[Counter::CandidateQueries as usize],
+        exact_pair_tests: totals[Counter::ExactPairTests as usize],
+        collision_builds: totals[Counter::CollisionPolygonBuilds as usize],
+        neighbor_tests: totals[Counter::NeighborTests as usize],
+        full_rescores: totals[Counter::FullRescores as usize],
+        position_source_attempts: 0,
+        returned_positions: 0,
+        pair_visits: 0,
+        operator_collision_builds: 0,
+        confirmations: 0,
+    }
+}
+
+/// Whole-layout exact confirmations the call attempted, when it was a mode-34
+/// slice; zero otherwise, and zero in a build without the schedule.
+///
+/// This is the one currency input that is not a profiling counter, and it is
+/// here for the same reason `CompressionSchedule::work_units` derives its
+/// exact half rather than sampling one: a confirmation is `n*(n-1)/2` pair
+/// questions of which only a handful reach the narrow phase the profiling
+/// array counts, so the array under-reads the exact tier by about 18x and the
+/// slice's own count is the honest one.
+fn schedule_confirmations_attempted(population: &GeneralPersistentVacancyDiagnostics) -> u64 {
+    #[cfg(feature = "compression-schedule")]
+    {
+        population
+            .compression_schedule
+            .as_ref()
+            .map_or(0, |report| report.confirmations_attempted as u64)
+    }
+    #[cfg(not(feature = "compression-schedule"))]
+    {
+        let _ = population;
+        0
+    }
 }
 
 /// What one dispatched operator call was charged, settled before the call's
@@ -3206,6 +3388,16 @@ impl<'a> Coordinator<'a> {
         };
         let started_seconds = self.meter.seconds();
         let started_work = self.meter.work_units();
+        // The parallel currency's own "before" reading. Taken only when the
+        // currency is armed, so an unarmed run makes exactly the counter reads
+        // it always made: `counter_totals()` takes the registry lock and sums
+        // every thread block, and a run that is not going to use the answer
+        // must not pay for it.
+        let currency = self.settings.work_currency;
+        let counts_before = currency
+            .armed()
+            .then(work_currency_counts_now)
+            .unwrap_or_default();
         let population = crate::search::general_relaxed::dispatch_persistent_vacancy_mode(
             self.pieces,
             self.fast_settings,
@@ -3220,11 +3412,77 @@ impl<'a> Coordinator<'a> {
         // every debit charged so far, and the ones charged before this call
         // are already inside `started_work`.
         let global_units = self.meter.work_units().saturating_sub(started_work);
-        let charge = settle_operator_charge(
-            &mut self.meter,
-            global_units,
-            operator_self_metered_units(&population),
-        );
+        // Step two and a half: what would the *parallel* currency have charged
+        // for the same call?
+        //
+        // The counts are the delta of an array of counters, so two processes
+        // running the same work-budgeted arm compute the same number; the
+        // weights are the machine profile. `confirmations` is the one input
+        // that does not come from the profiling array - the schedule's own
+        // report carries it, and it is the count the shipped meter's exact
+        // half is *derived* from inside mode 34 (see
+        // `CompressionSchedule::work_units`).
+        let currency_call = currency.armed().then(|| {
+            let mut after = work_currency_counts_now();
+            // The operator's own half. Per-call already, so it is written onto
+            // the `after` reading and carried through the delta untouched -
+            // see `ClassCounts::delta`.
+            let work = &population.work;
+            after.position_source_attempts = work.position_source_attempts as u64;
+            after.returned_positions = work.returned_positions as u64;
+            after.pair_visits = (work.experimental_pair_visits as u64)
+                .saturating_add(work.validator_pair_visits as u64);
+            after.operator_collision_builds = (work.experimental_collision_builds as u64)
+                .saturating_add(work.validator_collision_builds as u64);
+            after.confirmations = schedule_confirmations_attempted(&population);
+            let counts =
+                crate::search::work_currency::ClassCounts::delta(&after, &counts_before);
+            let class_units = crate::search::work_currency::price_for(mode).units(&counts);
+            (counts, class_units)
+        });
+        // Step three: settle. The class price joins the operator's own meter
+        // under the same `max`, and only when the currency is set to charge -
+        // `Observe` computes the number, reports it, and does not spend it.
+        let class_charge = currency_call
+            .filter(|_| currency.charges())
+            .map(|(_, units)| units);
+        let self_metered = operator_self_metered_units(&population);
+        // Spelled out rather than `self_metered.max(class_charge)`, which is
+        // the same thing only because `Option`'s derived ordering puts `None`
+        // below every `Some`. That is a Rust convention rather than an
+        // arithmetic fact, and this is the line that decides what a run is
+        // charged; a reader should not have to recall it.
+        let settled_self = match (self_metered, class_charge) {
+            (Some(operator), Some(class)) => Some(operator.max(class)),
+            (Some(operator), None) => Some(operator),
+            (None, Some(class)) => Some(class),
+            (None, None) => None,
+        };
+        let charge = settle_operator_charge(&mut self.meter, global_units, settled_self);
+        let work_currency_report = currency_call.map(|(counts, class_units)| {
+            WorkCurrencyCallReport {
+                candidate_queries: counts.candidate_queries,
+                exact_pair_tests: counts.exact_pair_tests,
+                collision_builds: counts.collision_builds,
+                neighbor_tests: counts.neighbor_tests,
+                full_rescores: counts.full_rescores,
+                position_source_attempts: counts.position_source_attempts,
+                returned_positions: counts.returned_positions,
+                pair_visits: counts.pair_visits,
+                operator_collision_builds: counts.operator_collision_builds,
+                confirmations: counts.confirmations,
+                class_units,
+                // What the currency *itself* added, as opposed to what the
+                // settlement added in total: zero unless the class price was
+                // the strict maximum of the three.
+                charged_extra_units: if currency.charges() {
+                    class_units
+                        .saturating_sub(global_units.max(self_metered.unwrap_or(0)))
+                } else {
+                    0
+                },
+            }
+        });
         // Step four: everything from here reads a settled meter.
         let elapsed_seconds = self.meter.seconds() - started_seconds;
         let work_units = charge.charged_units;
@@ -3304,6 +3562,7 @@ impl<'a> Coordinator<'a> {
             published,
             failure_reason: population.failure_reason.clone(),
             schedule_slice: schedule_slice_report(&population),
+            work_currency: work_currency_report,
         });
         population
     }
@@ -4045,6 +4304,7 @@ pub fn run_portfolio(
         basin_race: basin_race_report,
         operator_calls: coordinator.operator_calls,
         publications: coordinator.publications,
+        work_currency: settings.work_currency,
         budget,
         elapsed_seconds,
         work_units,
@@ -8001,6 +8261,126 @@ mod tests {
         assert!(contract_certificate_armed(), "the outer guard restored");
     }
 
+    /// The parallel currency joins the settlement under the same `max`, and
+    /// the three-way maximum is the rule - not "the class price wins".
+    ///
+    /// The three prices this exercises are the three the measured band
+    /// produces: mode 34's own meter reading about 11x the global counter,
+    /// mode 20's class price reading about 26,000x it, and mode 22 where the
+    /// global counter is already the largest of the three.
+    #[test]
+    fn the_class_price_settles_as_the_third_arm_of_one_maximum() {
+        // Mode 34: the operator's own meter is the maximum and the class price
+        // must not lower it. The class price here is a mode-22-shaped one -
+        // below the global delta - so the settled charge has to be the
+        // operator's.
+        let mut meter = BudgetMeter::new(PortfolioBudget::Work { units: 40_000_000 });
+        let charge = settle_operator_charge(&mut meter, 307_767, Some(3_341_665));
+        assert_eq!(charge.charged_units, 3_341_665);
+
+        // Mode 20: the global counter reads 310 and the class price reads the
+        // draw's honest 8.17 M. The settlement takes the class price, and the
+        // *budget* moves by the difference - which is the whole mechanism, and
+        // the thing `docs/experiments/basin-race/` §4.4 said a work-denominated
+        // ceiling could not do.
+        let before = meter.work_units();
+        let draw = settle_operator_charge(&mut meter, 310, Some(8_173_539));
+        assert_eq!(draw.charged_units, 8_173_539);
+        assert_eq!(draw.debited_units, 8_173_229);
+        assert_eq!(meter.work_units() - before, 8_173_229);
+
+        // Mode 22: nothing is repriced, so the settled charge is the global
+        // delta and the budget moves by nothing extra.
+        let steady = meter.work_units();
+        let quantum = settle_operator_charge(&mut meter, 2_013_198, Some(2_013_198));
+        assert_eq!(quantum.charged_units, 2_013_198);
+        assert_eq!(quantum.debited_units, 0);
+        assert_eq!(meter.work_units(), steady);
+    }
+
+    /// The currency's reading of the counter array and the shipped meter's
+    /// are the same function of the same array.
+    ///
+    /// This is the structural half of the `43` bug's regression, and it is the
+    /// half a unit test inside `work_currency` cannot write: it drives
+    /// `work_currency_counts_from` and `work_units_from`, the two production
+    /// mappings `run_operator` reads the live registry through, and asserts
+    /// that a class the profile does not name self-prices at exactly the
+    /// global delta. If those two ever disagree again, every unnamed class
+    /// starts paying a debit the coordinator never intended and the whole
+    /// trajectory moves - which is what happened, and what
+    /// `chargedExtraUnits` on a mode-22 call reported.
+    ///
+    /// Over a **snapshot**, not the live counters: see `work_units_from`'s
+    /// own comment for what the live version cost.
+    #[test]
+    fn an_unnamed_class_self_prices_at_exactly_the_shipped_meters_reading() {
+        use crate::search::work_currency::{price_for, DEFAULT_CLASS_PRICE};
+        let mut totals = [0u64; Counter::COUNT];
+        // A real measured mode-22 call, plus non-zero values on every counter
+        // an unnamed class must be charged *nothing* for - if any of those
+        // leaked into the price the two sides would part company here.
+        totals[Counter::CandidateQueries as usize] = 2_007_788;
+        totals[Counter::ExactPairTests as usize] = 1_082;
+        totals[Counter::NeighborTests as usize] = 7_247_175;
+        totals[Counter::FullRescores as usize] = 1_912;
+        totals[Counter::CollisionPolygonBuilds as usize] = 12_345;
+        totals[Counter::AcceptedMoves as usize] = 999;
+        for scale in [0u64, 1, 7, 1_000_003] {
+            let scaled: [u64; Counter::COUNT] =
+                std::array::from_fn(|index| totals[index].saturating_mul(scale));
+            let counts = work_currency_counts_from(&scaled);
+            let global = work_units_from(&scaled);
+            assert_eq!(
+                DEFAULT_CLASS_PRICE.units(&counts),
+                global,
+                "the currency and the shipped meter must read the array the same way"
+            );
+            // And the named class must be at least the global reading, never
+            // below it - `max` protects the budget, but a class that
+            // self-priced below the meter would make `classUnits`
+            // incomparable with `globalUnits` in the evidence.
+            assert!(price_for(20).units(&counts) >= global);
+        }
+        // The pinned scalar, so a change to the shipped meter breaks this
+        // loudly rather than silently re-deriving itself on both sides.
+        assert_eq!(work_units_from(&totals), 2_013_198);
+    }
+
+    /// Under a wall budget the currency is inert, exactly as the operator's
+    /// own meter is.
+    ///
+    /// A wall budget spends seconds; there is no broad phase for a class to
+    /// ride free on and no counter to reprice, and the guard lives in
+    /// `debit_self_metered` so one rule covers both self-metered arms rather
+    /// than each call site remembering it.
+    #[test]
+    fn a_wall_budget_is_not_repriced_by_the_class_price_either() {
+        let mut wall = BudgetMeter::new(PortfolioBudget::Wall { millis: 10_000 });
+        let charge = settle_operator_charge(&mut wall, 310, Some(8_173_539));
+        assert_eq!(charge.debited_units, 0);
+        assert_eq!(charge.charged_units, 310);
+        assert_eq!(wall.self_metered_debit(), 0);
+    }
+
+    /// `Off` is the default, and the two other modes differ in exactly one
+    /// thing: whether the price is settled.
+    #[test]
+    fn the_observing_mode_prices_without_charging() {
+        assert_eq!(WorkCurrencyMode::default(), WorkCurrencyMode::Off);
+        assert!(!WorkCurrencyMode::Off.armed());
+        assert!(WorkCurrencyMode::Observe.armed());
+        assert!(WorkCurrencyMode::Charge.armed());
+        assert!(!WorkCurrencyMode::Observe.charges());
+        assert!(WorkCurrencyMode::Charge.charges());
+        assert!(!WorkCurrencyMode::Off.charges());
+        let shipped = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Work { units: 40_000_000 },
+        );
+        assert_eq!(shipped.work_currency, WorkCurrencyMode::Off);
+    }
+
     #[test]
     fn the_budget_currency_is_the_budgets_own() {
         // The affordability guard compares a *measured operator cost* against
@@ -8035,6 +8415,7 @@ mod tests {
             published: false,
             failure_reason: None,
             schedule_slice: None,
+            work_currency: None,
         };
         assert_eq!(wall.call_cost(&call), 1.25);
         assert_eq!(work.call_cost(&call), 3_000_000.0);
@@ -8238,6 +8619,7 @@ mod tests {
             published: false,
             failure_reason: None,
             schedule_slice: None,
+            work_currency: None,
         };
         assert_eq!(report.work_units, report.global_units + report.debited_units);
         assert_ne!(report.work_units, report.global_units);
@@ -8274,6 +8656,7 @@ mod tests {
             published: false,
             failure_reason: None,
             schedule_slice: None,
+            work_currency: None,
         };
         let work = BudgetMeter::new(PortfolioBudget::Work { units: 40_000_000 });
         assert_eq!(work.call_cost(&call), 3_341_665.0);

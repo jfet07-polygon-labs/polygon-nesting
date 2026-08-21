@@ -1,0 +1,2060 @@
+{
+ "binary": "/tmp/wc-bin/ship-combo",
+ "binarySha256": "c63e5af0b92747f1899a1c37dd1b91975e5bf32f458e48ec428dcdd5d90be05b",
+ "boxLoad": [
+  {
+   "after": 9.23876953125,
+   "before": 9.28271484375,
+   "out": "/tmp/wc-out/observe-mixed-61-s0-queue.json",
+   "wall": 13.164851597044617
+  },
+  {
+   "after": 9.236328125,
+   "before": 9.23876953125,
+   "out": "/tmp/wc-out/observe-mixed-61-s1-queue.json",
+   "wall": 13.022814981057309
+  },
+  {
+   "after": 9.0224609375,
+   "before": 9.236328125,
+   "out": "/tmp/wc-out/observe-mixed-61-s0-race.json",
+   "wall": 19.28897678607609
+  },
+  {
+   "after": 7.5341796875,
+   "before": 9.0224609375,
+   "out": "/tmp/wc-out/observe-shapes-17-s0-race.json",
+   "wall": 24.053104553953744
+  },
+  {
+   "after": 7.404296875,
+   "before": 7.5341796875,
+   "out": "/tmp/wc-out/observe-triangle-20-s0-race.json",
+   "wall": 11.912072295090184
+  }
+ ],
+ "corpusCalls": 435,
+ "corpusRates": [
+  {
+   "calls": 227,
+   "maxUnitsPerSecond": 7536355.284154297,
+   "medianSecondsPerCall": 0.7784844630000003,
+   "medianUnitsPerSecond": 2083311.3007329449,
+   "minUnitsPerSecond": 478925.24776029924,
+   "operator": "mode22",
+   "pooledUnitsPerSecond": 2553476.379712871,
+   "totalSeconds": 190.59367999900002,
+   "totalUnits": 486676460
+  },
+  {
+   "calls": 117,
+   "maxUnitsPerSecond": 20657671.318631407,
+   "medianSecondsPerCall": 1.142592661,
+   "medianUnitsPerSecond": 1669502.0559133983,
+   "minUnitsPerSecond": 642863.9179353988,
+   "operator": "mode34",
+   "pooledUnitsPerSecond": 1721302.466560449,
+   "totalSeconds": 146.961900023,
+   "totalUnits": 252965881
+  },
+  {
+   "calls": 38,
+   "maxUnitsPerSecond": 8222773.033288818,
+   "medianSecondsPerCall": 0.7751213890000006,
+   "medianUnitsPerSecond": 1220612.209077931,
+   "minUnitsPerSecond": 692922.2566750662,
+   "operator": "mode23",
+   "pooledUnitsPerSecond": 3607538.6237026667,
+   "totalSeconds": 37.303040116,
+   "totalUnits": 134572158
+  },
+  {
+   "calls": 35,
+   "maxUnitsPerSecond": 217.57669133174073,
+   "medianSecondsPerCall": 0.7922166940000004,
+   "medianUnitsPerSecond": 79.95818562242829,
+   "minUnitsPerSecond": 37.553109438081414,
+   "operator": "mode20",
+   "pooledUnitsPerSecond": 84.86472814143232,
+   "totalSeconds": 53.496901474,
+   "totalUnits": 4540
+  },
+  {
+   "calls": 9,
+   "maxUnitsPerSecond": 890757.1159704037,
+   "medianSecondsPerCall": 1.768620877,
+   "medianUnitsPerSecond": 685722.4268760002,
+   "minUnitsPerSecond": 599250.5123926816,
+   "operator": "mode26",
+   "pooledUnitsPerSecond": 711031.2319399976,
+   "totalSeconds": 15.743173431999999,
+   "totalUnits": 11193888
+  },
+  {
+   "calls": 9,
+   "maxUnitsPerSecond": 162685.6341682313,
+   "medianSecondsPerCall": 0.0012961919999998628,
+   "medianUnitsPerSecond": 127130.593168241,
+   "minUnitsPerSecond": 126425.44691393117,
+   "operator": "mode31",
+   "pooledUnitsPerSecond": 141773.12061827665,
+   "totalSeconds": 0.01047448200000023,
+   "totalUnits": 1485
+  }
+ ],
+ "corpusRoots": [
+  "basin-race",
+  "replan",
+  "calibrated-plan"
+ ],
+ "observed": [
+  {
+   "calls": [
+    {
+     "action": "m22 compress rank0 181.5890 -> 181.1890",
+     "classUnits": 2013198,
+     "counts": {
+      "candidateQueries": 2007788,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 1082,
+      "fullRescores": 1912,
+      "neighborTests": 7247175,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.868293967,
+     "globalUnits": 2013198,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 179.5869 -> 179.1869",
+     "classUnits": 2682606,
+     "counts": {
+      "candidateQueries": 2680251,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 471,
+      "fullRescores": 1004,
+      "neighborTests": 9356935,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.8900331719999999,
+     "globalUnits": 2682606,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 quantum rank0 cycles=1 epochs=4",
+     "classUnits": 2682606,
+     "counts": {
+      "candidateQueries": 2680251,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 471,
+      "fullRescores": 1004,
+      "neighborTests": 9356935,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.8733580780000003,
+     "globalUnits": 2682606,
+     "operator": "mode22",
+     "phase": "descent",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m34 schedule rank0 179.5869 -> 177.9706 (9 rungs, 1616 steps)",
+     "classUnits": 813749,
+     "counts": {
+      "candidateQueries": 684984,
+      "collisionBuilds": 0,
+      "confirmations": 287,
+      "exactPairTests": 25753,
+      "fullRescores": 1,
+      "neighborTests": 2516634,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.8865501699999996,
+     "globalUnits": 813749,
+     "operator": "mode34",
+     "phase": "schedule",
+     "selfMeteredUnits": 3311034
+    },
+    {
+     "action": "m22 compress rank0 178.1798 -> 177.7798",
+     "classUnits": 1859433,
+     "counts": {
+      "candidateQueries": 1855008,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 885,
+      "fullRescores": 1111,
+      "neighborTests": 7204092,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.798360121,
+     "globalUnits": 1859433,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 176.1078 -> 175.7078",
+     "classUnits": 2022124,
+     "counts": {
+      "candidateQueries": 2019224,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 580,
+      "fullRescores": 494,
+      "neighborTests": 8291280,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.7396200720000001,
+     "globalUnits": 2022124,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 175.3878 -> 174.9878",
+     "classUnits": 2218158,
+     "counts": {
+      "candidateQueries": 2213838,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 864,
+      "fullRescores": 1070,
+      "neighborTests": 8521972,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.8644254609999997,
+     "globalUnits": 2218158,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 175.1357 -> 174.7357",
+     "classUnits": 2065197,
+     "counts": {
+      "candidateQueries": 2059957,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 1048,
+      "fullRescores": 1039,
+      "neighborTests": 8211963,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.8198546219999994,
+     "globalUnits": 2065197,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 173.5751 -> 173.1751",
+     "classUnits": 2529691,
+     "counts": {
+      "candidateQueries": 2521226,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 1693,
+      "fullRescores": 1285,
+      "neighborTests": 9789244,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.9804982140000007,
+     "globalUnits": 2529691,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 172.2875 -> 171.8875",
+     "classUnits": 2761770,
+     "counts": {
+      "candidateQueries": 2752290,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 1896,
+      "fullRescores": 1717,
+      "neighborTests": 10613095,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 1.0679910059999997,
+     "globalUnits": 2761770,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 170.4527 -> 170.0527",
+     "classUnits": 2968643,
+     "counts": {
+      "candidateQueries": 2962993,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 1130,
+      "fullRescores": 2011,
+      "neighborTests": 11114025,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 1.1112251440000005,
+     "globalUnits": 2968643,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 169.8910 -> 169.4910",
+     "classUnits": 2948891,
+     "counts": {
+      "candidateQueries": 2946466,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 485,
+      "fullRescores": 1000,
+      "neighborTests": 11519621,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.9732423160000003,
+     "globalUnits": 2948891,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    }
+   ],
+   "processSeconds": 13.164851597044617,
+   "rawDepthMm": 169.891,
+   "request": "mixed-61",
+   "seed": 0,
+   "spec": "work=40000000,cells=13:15:17:19,v3=1,cur2=2",
+   "stderr": null,
+   "tag": "mixed-61-s0-queue",
+   "workCurrency": {
+    "chargedExtraUnits": 0,
+    "classUnits": 27566066,
+    "globalUnits": 27566066,
+    "mode": "observe",
+    "operatorCalls": 12,
+    "operatorSeconds": 10.873452343
+   }
+  },
+  {
+   "calls": [
+    {
+     "action": "m22 compress rank0 179.6900 -> 179.2900",
+     "classUnits": 2256843,
+     "counts": {
+      "candidateQueries": 2253753,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 618,
+      "fullRescores": 1001,
+      "neighborTests": 8430897,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.8089779729999997,
+     "globalUnits": 2256843,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 179.6330 -> 179.2330",
+     "classUnits": 2532429,
+     "counts": {
+      "candidateQueries": 2529989,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 488,
+      "fullRescores": 963,
+      "neighborTests": 9532517,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.9330927920000001,
+     "globalUnits": 2532429,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 quantum rank0 cycles=1 epochs=4",
+     "classUnits": 2532429,
+     "counts": {
+      "candidateQueries": 2529989,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 488,
+      "fullRescores": 963,
+      "neighborTests": 9532517,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.9014000060000003,
+     "globalUnits": 2532429,
+     "operator": "mode22",
+     "phase": "descent",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m34 schedule rank0 179.6330 -> 178.0163 (9 rungs, 1617 steps)",
+     "classUnits": 868906,
+     "counts": {
+      "candidateQueries": 721586,
+      "collisionBuilds": 0,
+      "confirmations": 308,
+      "exactPairTests": 29464,
+      "fullRescores": 1,
+      "neighborTests": 2546582,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.8698908329999995,
+     "globalUnits": 868906,
+     "operator": "mode34",
+     "phase": "schedule",
+     "selfMeteredUnits": 3539786
+    },
+    {
+     "action": "m22 compress rank0 177.9079 -> 177.5079",
+     "classUnits": 1656074,
+     "counts": {
+      "candidateQueries": 1645984,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 2018,
+      "fullRescores": 2025,
+      "neighborTests": 5832360,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.8537330690000005,
+     "globalUnits": 1656074,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 174.1700 -> 173.7700",
+     "classUnits": 1730175,
+     "counts": {
+      "candidateQueries": 1720020,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 2031,
+      "fullRescores": 1191,
+      "neighborTests": 6586039,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.7553546290000002,
+     "globalUnits": 1730175,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 171.3620 -> 170.9620",
+     "classUnits": 2375777,
+     "counts": {
+      "candidateQueries": 2371282,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 899,
+      "fullRescores": 1144,
+      "neighborTests": 8903950,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.9006225429999999,
+     "globalUnits": 2375777,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m34 schedule rank0 171.3620 -> 169.8197 (9 rungs, 1542 steps)",
+     "classUnits": 1720220,
+     "counts": {
+      "candidateQueries": 1719730,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 98,
+      "fullRescores": 1,
+      "neighborTests": 5961935,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 1.8242977319999998,
+     "globalUnits": 1720220,
+     "operator": "mode34",
+     "phase": "schedule",
+     "selfMeteredUnits": 1719730
+    },
+    {
+     "action": "m22 quantum rank0 cycles=1 epochs=4",
+     "classUnits": 2375777,
+     "counts": {
+      "candidateQueries": 2371282,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 899,
+      "fullRescores": 1144,
+      "neighborTests": 8903950,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.9078410510000001,
+     "globalUnits": 2375777,
+     "operator": "mode22",
+     "phase": "descent",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.500000000 constant from=25/36",
+     "classUnits": 5415741,
+     "counts": {
+      "candidateQueries": 5390916,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 4965,
+      "fullRescores": 1165,
+      "neighborTests": 21915890,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 1.7682702829999997,
+     "globalUnits": 5415741,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    }
+   ],
+   "processSeconds": 13.022814981057309,
+   "rawDepthMm": 171.3619986855876,
+   "request": "mixed-61",
+   "seed": 1,
+   "spec": "work=40000000,cells=11:15:21:27,v3=1,cur2=2",
+   "stderr": null,
+   "tag": "mixed-61-s1-queue",
+   "workCurrency": {
+    "chargedExtraUnits": 0,
+    "classUnits": 23464371,
+    "globalUnits": 23464371,
+    "mode": "observe",
+    "operatorCalls": 10,
+    "operatorSeconds": 10.523480911
+   }
+  },
+  {
+   "calls": [
+    {
+     "action": "race m20 slot1",
+     "classUnits": 8173849,
+     "counts": {
+      "candidateQueries": 0,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 62,
+      "fullRescores": 0,
+      "neighborTests": 0,
+      "operatorCollisionBuilds": 99066,
+      "pairVisits": 1836106,
+      "positionSourceAttempts": 1230516,
+      "returnedPositions": 137856
+     },
+     "elapsedSeconds": 3.1474230120000004,
+     "globalUnits": 310,
+     "operator": "mode20",
+     "phase": "race",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "race m22 quantum on slot1",
+     "classUnits": 811865,
+     "counts": {
+      "candidateQueries": 766515,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 9070,
+      "fullRescores": 1440,
+      "neighborTests": 1982240,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.7030782630000001,
+     "globalUnits": 811865,
+     "operator": "mode22",
+     "phase": "race",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "race m20 slot2",
+     "classUnits": 8394682,
+     "counts": {
+      "candidateQueries": 0,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 55,
+      "fullRescores": 0,
+      "neighborTests": 0,
+      "operatorCollisionBuilds": 101743,
+      "pairVisits": 1626200,
+      "positionSourceAttempts": 1230516,
+      "returnedPositions": 137856
+     },
+     "elapsedSeconds": 3.1555554420000007,
+     "globalUnits": 275,
+     "operator": "mode20",
+     "phase": "race",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "race m22 quantum on slot2",
+     "classUnits": 1524998,
+     "counts": {
+      "candidateQueries": 1497958,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 5408,
+      "fullRescores": 4809,
+      "neighborTests": 3921378,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 1.3078427759999993,
+     "globalUnits": 1524998,
+     "operator": "mode22",
+     "phase": "race",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "race m34 batch slot0 (3 rungs)",
+     "classUnits": 259951,
+     "counts": {
+      "candidateQueries": 224026,
+      "collisionBuilds": 0,
+      "confirmations": 93,
+      "exactPairTests": 7185,
+      "fullRescores": 1,
+      "neighborTests": 874474,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.29313455799999844,
+     "globalUnits": 259951,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 1074976
+    },
+    {
+     "action": "race m34 batch slot1 (3 rungs)",
+     "classUnits": 63560,
+     "counts": {
+      "candidateQueries": 4670,
+      "collisionBuilds": 0,
+      "confirmations": 148,
+      "exactPairTests": 11778,
+      "fullRescores": 1,
+      "neighborTests": 20975,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.06572616999999958,
+     "globalUnits": 63560,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 1358870
+    },
+    {
+     "action": "race m34 batch slot2 (3 rungs)",
+     "classUnits": 104706,
+     "counts": {
+      "candidateQueries": 45756,
+      "collisionBuilds": 0,
+      "confirmations": 136,
+      "exactPairTests": 11790,
+      "fullRescores": 1,
+      "neighborTests": 183875,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.12453086600000063,
+     "globalUnits": 104706,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 1290156
+    },
+    {
+     "action": "race m34 batch slot0 (6 rungs)",
+     "classUnits": 551771,
+     "counts": {
+      "candidateQueries": 482706,
+      "collisionBuilds": 0,
+      "confirmations": 179,
+      "exactPairTests": 13813,
+      "fullRescores": 1,
+      "neighborTests": 1755623,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.6098102269999988,
+     "globalUnits": 551771,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 2120556
+    },
+    {
+     "action": "race m34 batch slot1 (6 rungs)",
+     "classUnits": 121318,
+     "counts": {
+      "candidateQueries": 4763,
+      "collisionBuilds": 0,
+      "confirmations": 295,
+      "exactPairTests": 23311,
+      "fullRescores": 1,
+      "neighborTests": 21310,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.10367685000000115,
+     "globalUnits": 121318,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 2704013
+    },
+    {
+     "action": "m22 compress rank0 180.0020 -> 179.6020",
+     "classUnits": 2572010,
+     "counts": {
+      "candidateQueries": 2567565,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 889,
+      "fullRescores": 1410,
+      "neighborTests": 9692531,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.9017022679999993,
+     "globalUnits": 2572010,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 179.5345 -> 179.1345",
+     "classUnits": 3133288,
+     "counts": {
+      "candidateQueries": 3131308,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 396,
+      "fullRescores": 1002,
+      "neighborTests": 11106440,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 1.0483396860000003,
+     "globalUnits": 3133288,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 quantum rank0 cycles=1 epochs=4",
+     "classUnits": 3133288,
+     "counts": {
+      "candidateQueries": 3131308,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 396,
+      "fullRescores": 1002,
+      "neighborTests": 11106440,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 1.034077483999999,
+     "globalUnits": 3133288,
+     "operator": "mode22",
+     "phase": "descent",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m34 schedule rank0 179.5345 -> 177.9187 (9 rungs, 1616 steps)",
+     "classUnits": 2086186,
+     "counts": {
+      "candidateQueries": 2085716,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 94,
+      "fullRescores": 1,
+      "neighborTests": 9300198,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 2.528303768999999,
+     "globalUnits": 2086186,
+     "operator": "mode34",
+     "phase": "schedule",
+     "selfMeteredUnits": 2085716
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.500000000 constant from=29/32",
+     "classUnits": 6838555,
+     "counts": {
+      "candidateQueries": 6820050,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 3701,
+      "fullRescores": 1162,
+      "neighborTests": 28547483,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 2.007755135,
+     "globalUnits": 6838555,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    }
+   ],
+   "processSeconds": 19.28897678607609,
+   "rawDepthMm": 179.53451201824103,
+   "request": "mixed-61",
+   "seed": 0,
+   "spec": "work=40000000,cells=13:15:17:19,v3=1,cur2=2,race=3:1:3",
+   "stderr": null,
+   "tag": "mixed-61-s0-race",
+   "workCurrency": {
+    "chargedExtraUnits": 0,
+    "classUnits": 37770027,
+    "globalUnits": 21202081,
+    "mode": "observe",
+    "operatorCalls": 14,
+    "operatorSeconds": 17.030956505999995
+   }
+  },
+  {
+   "calls": [
+    {
+     "action": "race m20 slot1",
+     "classUnits": 1599831,
+     "counts": {
+      "candidateQueries": 0,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 8,
+      "fullRescores": 0,
+      "neighborTests": 0,
+      "operatorCollisionBuilds": 19390,
+      "pairVisits": 78770,
+      "positionSourceAttempts": 124884,
+      "returnedPositions": 36480
+     },
+     "elapsedSeconds": 0.776833619,
+     "globalUnits": 40,
+     "operator": "mode20",
+     "phase": "race",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "race m22 quantum on slot1",
+     "classUnits": 392125,
+     "counts": {
+      "candidateQueries": 391965,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 32,
+      "fullRescores": 1004,
+      "neighborTests": 534443,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.46127643100000015,
+     "globalUnits": 392125,
+     "operator": "mode22",
+     "phase": "race",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "race m20 slot2",
+     "classUnits": 1642394,
+     "counts": {
+      "candidateQueries": 0,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 6,
+      "fullRescores": 0,
+      "neighborTests": 0,
+      "operatorCollisionBuilds": 19906,
+      "pairVisits": 73708,
+      "positionSourceAttempts": 124884,
+      "returnedPositions": 36480
+     },
+     "elapsedSeconds": 0.7732469740000001,
+     "globalUnits": 30,
+     "operator": "mode20",
+     "phase": "race",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "race m22 quantum on slot2",
+     "classUnits": 283732,
+     "counts": {
+      "candidateQueries": 283612,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 24,
+      "fullRescores": 302,
+      "neighborTests": 355192,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.38738873999999957,
+     "globalUnits": 283732,
+     "operator": "mode22",
+     "phase": "race",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "race m34 batch slot0 (3 rungs)",
+     "classUnits": 239543,
+     "counts": {
+      "candidateQueries": 236443,
+      "collisionBuilds": 0,
+      "confirmations": 73,
+      "exactPairTests": 620,
+      "fullRescores": 1,
+      "neighborTests": 527145,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.4302902359999998,
+     "globalUnits": 239543,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 286083
+    },
+    {
+     "action": "race m34 batch slot1 (3 rungs)",
+     "classUnits": 219371,
+     "counts": {
+      "candidateQueries": 216226,
+      "collisionBuilds": 0,
+      "confirmations": 79,
+      "exactPairTests": 629,
+      "fullRescores": 1,
+      "neighborTests": 386201,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.31155134800000006,
+     "globalUnits": 219371,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 269946
+    },
+    {
+     "action": "race m34 batch slot2 (3 rungs)",
+     "classUnits": 202649,
+     "counts": {
+      "candidateQueries": 200189,
+      "collisionBuilds": 0,
+      "confirmations": 81,
+      "exactPairTests": 492,
+      "fullRescores": 1,
+      "neighborTests": 280778,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.257408549,
+     "globalUnits": 202649,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 255269
+    },
+    {
+     "action": "race m34 batch slot0 (6 rungs)",
+     "classUnits": 685423,
+     "counts": {
+      "candidateQueries": 682323,
+      "collisionBuilds": 0,
+      "confirmations": 73,
+      "exactPairTests": 620,
+      "fullRescores": 1,
+      "neighborTests": 1502372,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 1.0086775890000004,
+     "globalUnits": 685423,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 731963
+    },
+    {
+     "action": "race m34 batch slot1 (6 rungs)",
+     "classUnits": 670551,
+     "counts": {
+      "candidateQueries": 667406,
+      "collisionBuilds": 0,
+      "confirmations": 79,
+      "exactPairTests": 629,
+      "fullRescores": 1,
+      "neighborTests": 1220694,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.737917887,
+     "globalUnits": 670551,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 721126
+    },
+    {
+     "action": "m22 compress rank0 200.3494 -> 199.9494",
+     "classUnits": 331626,
+     "counts": {
+      "candidateQueries": 331566,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 12,
+      "fullRescores": 1004,
+      "neighborTests": 362930,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.5110589889999995,
+     "globalUnits": 331626,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 quantum rank0 cycles=1 epochs=4",
+     "classUnits": 331626,
+     "counts": {
+      "candidateQueries": 331566,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 12,
+      "fullRescores": 1004,
+      "neighborTests": 362930,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.49155722300000004,
+     "globalUnits": 331626,
+     "operator": "mode22",
+     "phase": "descent",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m34 schedule rank0 200.3494 -> 198.5462 (9 rungs, 1803 steps)",
+     "classUnits": 1130288,
+     "counts": {
+      "candidateQueries": 1127188,
+      "collisionBuilds": 0,
+      "confirmations": 73,
+      "exactPairTests": 620,
+      "fullRescores": 1,
+      "neighborTests": 2499437,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 1.589288465,
+     "globalUnits": 1130288,
+     "operator": "mode34",
+     "phase": "schedule",
+     "selfMeteredUnits": 1176828
+    },
+    {
+     "action": "m26 ladder rank0 200.3494 -> 199.9487 (2 rungs)",
+     "classUnits": 1212783,
+     "counts": {
+      "candidateQueries": 1212438,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 69,
+      "fullRescores": 2820,
+      "neighborTests": 1404359,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 1.3735516950000015,
+     "globalUnits": 1212783,
+     "operator": "mode26",
+     "phase": "ladder",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m31 on the ladder residue to 199.9494",
+     "classUnits": 165,
+     "counts": {
+      "candidateQueries": 0,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 33,
+      "fullRescores": 0,
+      "neighborTests": 0,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.001008322000000561,
+     "globalUnits": 165,
+     "operator": "mode31",
+     "phase": "ladder",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m20 ticket slot0 + m22 quantum",
+     "classUnits": 1627800,
+     "counts": {
+      "candidateQueries": 0,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 8,
+      "fullRescores": 0,
+      "neighborTests": 0,
+      "operatorCollisionBuilds": 19729,
+      "pairVisits": 74091,
+      "positionSourceAttempts": 124884,
+      "returnedPositions": 36480
+     },
+     "elapsedSeconds": 0.7826864640000011,
+     "globalUnits": 40,
+     "operator": "mode20",
+     "phase": "diversify",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 quantum on m20 slot0",
+     "classUnits": 301684,
+     "counts": {
+      "candidateQueries": 301524,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 32,
+      "fullRescores": 302,
+      "neighborTests": 420560,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.3882841510000006,
+     "globalUnits": 301684,
+     "operator": "mode22",
+     "phase": "diversify",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 200.3494 -> 199.9494",
+     "classUnits": 301684,
+     "counts": {
+      "candidateQueries": 301524,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 32,
+      "fullRescores": 302,
+      "neighborTests": 420560,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.3861552909999997,
+     "globalUnits": 301684,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.500000000 constant from=9/8",
+     "classUnits": 662959,
+     "counts": {
+      "candidateQueries": 660514,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 489,
+      "fullRescores": 908,
+      "neighborTests": 1031988,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.5443653490000013,
+     "globalUnits": 662959,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.479563980 derived band=105.976000mm differing=1 midpoint=true from=9/8",
+     "classUnits": 662959,
+     "counts": {
+      "candidateQueries": 660514,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 489,
+      "fullRescores": 908,
+      "neighborTests": 1031988,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.5536467859999998,
+     "globalUnits": 662959,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.415399813 derived band=105.650000mm differing=1 midpoint=false from=8/9",
+     "classUnits": 471340,
+     "counts": {
+      "candidateQueries": 468620,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 544,
+      "fullRescores": 844,
+      "neighborTests": 794807,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.49338164199999923,
+     "globalUnits": 471340,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 compress rank0 200.3490 -> 199.9490",
+     "classUnits": 292853,
+     "counts": {
+      "candidateQueries": 292633,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 44,
+      "fullRescores": 764,
+      "neighborTests": 454002,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.43730924800000004,
+     "globalUnits": 292853,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 quantum rank0 cycles=1 epochs=4",
+     "classUnits": 292853,
+     "counts": {
+      "candidateQueries": 292633,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 44,
+      "fullRescores": 764,
+      "neighborTests": 454002,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.4490729130000002,
+     "globalUnits": 292853,
+     "operator": "mode22",
+     "phase": "descent",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m26 ladder rank0 200.3490 -> 199.9483 (2 rungs)",
+     "classUnits": 1987446,
+     "counts": {
+      "candidateQueries": 1986166,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 256,
+      "fullRescores": 4380,
+      "neighborTests": 3303859,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 2.3099614340000016,
+     "globalUnits": 1987446,
+     "operator": "mode26",
+     "phase": "ladder",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m31 on the ladder residue to 199.9490",
+     "classUnits": 605,
+     "counts": {
+      "candidateQueries": 0,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 121,
+      "fullRescores": 0,
+      "neighborTests": 0,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.001317836000001904,
+     "globalUnits": 605,
+     "operator": "mode31",
+     "phase": "ladder",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.500000000 constant from=9/8",
+     "classUnits": 791415,
+     "counts": {
+      "candidateQueries": 788110,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 661,
+      "fullRescores": 884,
+      "neighborTests": 1317408,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.6123523479999982,
+     "globalUnits": 791415,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.483652102 derived band=49.735000mm differing=1 midpoint=false from=8/9",
+     "classUnits": 760095,
+     "counts": {
+      "candidateQueries": 757065,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 606,
+      "fullRescores": 1116,
+      "neighborTests": 1118386,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.5991668660000009,
+     "globalUnits": 760095,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.545316120 derived band=183.649000mm differing=1 midpoint=true from=9/8",
+     "classUnits": 791415,
+     "counts": {
+      "candidateQueries": 788110,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 661,
+      "fullRescores": 884,
+      "neighborTests": 1317408,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.630968639999999,
+     "globalUnits": 791415,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.404711729 derived band=249.036000mm differing=1 midpoint=false from=7/10",
+     "classUnits": 571072,
+     "counts": {
+      "candidateQueries": 568302,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 554,
+      "fullRescores": 876,
+      "neighborTests": 806856,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.5432609819999996,
+     "globalUnits": 571072,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.624641722 derived band=116.580000mm differing=1 midpoint=false from=10/7",
+     "classUnits": 459473,
+     "counts": {
+      "candidateQueries": 456178,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 659,
+      "fullRescores": 1076,
+      "neighborTests": 685219,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.5562738500000002,
+     "globalUnits": 459473,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.658338371 derived band=10.954000mm differing=1 midpoint=false from=11/6",
+     "classUnits": 744487,
+     "counts": {
+      "candidateQueries": 741987,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 500,
+      "fullRescores": 1108,
+      "neighborTests": 1095175,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.6435852779999998,
+     "globalUnits": 744487,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.500000000 constant from=9/8",
+     "classUnits": 499179,
+     "counts": {
+      "candidateQueries": 495519,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 732,
+      "fullRescores": 1100,
+      "neighborTests": 686289,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.5667594139999999,
+     "globalUnits": 499179,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.662588566 derived band=5.132000mm differing=1 midpoint=false from=12/5",
+     "classUnits": 550316,
+     "counts": {
+      "candidateQueries": 547171,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 629,
+      "fullRescores": 1637,
+      "neighborTests": 869539,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.5886142630000002,
+     "globalUnits": 550316,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.483652102 derived band=49.735000mm differing=1 midpoint=false from=8/9",
+     "classUnits": 472294,
+     "counts": {
+      "candidateQueries": 468174,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 824,
+      "fullRescores": 852,
+      "neighborTests": 676967,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.5265443730000001,
+     "globalUnits": 472294,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.682216981 derived band=69.157000mm differing=1 midpoint=false from=13/4",
+     "classUnits": 594669,
+     "counts": {
+      "candidateQueries": 591919,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 550,
+      "fullRescores": 860,
+      "neighborTests": 947073,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.5813310779999981,
+     "globalUnits": 594669,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.545316120 derived band=183.649000mm differing=1 midpoint=true from=9/8",
+     "classUnits": 499179,
+     "counts": {
+      "candidateQueries": 495519,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 732,
+      "fullRescores": 1100,
+      "neighborTests": 686289,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.5612620220000011,
+     "globalUnits": 499179,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.303747020 derived band=133.092000mm differing=1 midpoint=false from=6/11",
+     "classUnits": 555525,
+     "counts": {
+      "candidateQueries": 552625,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 580,
+      "fullRescores": 1076,
+      "neighborTests": 890301,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.5712208959999998,
+     "globalUnits": 555525,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.404711729 derived band=249.036000mm differing=1 midpoint=false from=7/10",
+     "classUnits": 823689,
+     "counts": {
+      "candidateQueries": 820604,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 617,
+      "fullRescores": 1124,
+      "neighborTests": 1243085,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.6417303869999991,
+     "globalUnits": 823689,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    }
+   ],
+   "processSeconds": 24.053104553953744,
+   "rawDepthMm": 200.349,
+   "request": "shapes-17",
+   "seed": 0,
+   "spec": "work=40000000,cells=13:15:17:19,v3=1,cur2=2,race=3:1:3",
+   "stderr": null,
+   "tag": "shapes-17-s0-race",
+   "workCurrency": {
+    "chargedExtraUnits": 0,
+    "classUnits": 23657098,
+    "globalUnits": 18787183,
+    "mode": "observe",
+    "operatorCalls": 37,
+    "operatorSeconds": 23.080307578000003
+   }
+  },
+  {
+   "calls": [
+    {
+     "action": "race m20 slot1",
+     "classUnits": 2032187,
+     "counts": {
+      "candidateQueries": 0,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 13,
+      "fullRescores": 0,
+      "neighborTests": 0,
+      "operatorCollisionBuilds": 24630,
+      "pairVisits": 62116,
+      "positionSourceAttempts": 164844,
+      "returnedPositions": 43392
+     },
+     "elapsedSeconds": 0.29741067499999996,
+     "globalUnits": 65,
+     "operator": "mode20",
+     "phase": "race",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "race m22 quantum on slot1",
+     "classUnits": 4349496,
+     "counts": {
+      "candidateQueries": 4349236,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 52,
+      "fullRescores": 868,
+      "neighborTests": 5648233,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.6441005100000001,
+     "globalUnits": 4349496,
+     "operator": "mode22",
+     "phase": "race",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "race m20 slot2",
+     "classUnits": 2101575,
+     "counts": {
+      "candidateQueries": 0,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 13,
+      "fullRescores": 0,
+      "neighborTests": 0,
+      "operatorCollisionBuilds": 25471,
+      "pairVisits": 62297,
+      "positionSourceAttempts": 164844,
+      "returnedPositions": 43392
+     },
+     "elapsedSeconds": 0.31253127,
+     "globalUnits": 65,
+     "operator": "mode20",
+     "phase": "race",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "race m22 quantum on slot2",
+     "classUnits": 4336694,
+     "counts": {
+      "candidateQueries": 4336434,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 52,
+      "fullRescores": 852,
+      "neighborTests": 5638558,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.647796971,
+     "globalUnits": 4336694,
+     "operator": "mode22",
+     "phase": "race",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "race m34 batch slot0 (3 rungs)",
+     "classUnits": 1860475,
+     "counts": {
+      "candidateQueries": 1860135,
+      "collisionBuilds": 0,
+      "confirmations": 12,
+      "exactPairTests": 68,
+      "fullRescores": 1,
+      "neighborTests": 4414729,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 1.1561153340000003,
+     "globalUnits": 1860475,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 1871535
+    },
+    {
+     "action": "race m34 batch slot1 (3 rungs)",
+     "classUnits": 11748,
+     "counts": {
+      "candidateQueries": 9838,
+      "collisionBuilds": 0,
+      "confirmations": 54,
+      "exactPairTests": 382,
+      "fullRescores": 1,
+      "neighborTests": 17926,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.010529925000000162,
+     "globalUnits": 11748,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 61138
+    },
+    {
+     "action": "race m34 batch slot2 (3 rungs)",
+     "classUnits": 10402,
+     "counts": {
+      "candidateQueries": 8277,
+      "collisionBuilds": 0,
+      "confirmations": 54,
+      "exactPairTests": 425,
+      "fullRescores": 1,
+      "neighborTests": 14316,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.009515729000000306,
+     "globalUnits": 10402,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 59577
+    },
+    {
+     "action": "race m34 batch slot0 (6 rungs)",
+     "classUnits": 4787640,
+     "counts": {
+      "candidateQueries": 4787600,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 8,
+      "fullRescores": 1,
+      "neighborTests": 11677968,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 3.0158003190000002,
+     "globalUnits": 4787640,
+     "operator": "mode34",
+     "phase": "race",
+     "selfMeteredUnits": 4787600
+    },
+    {
+     "action": "m22 compress rank0 70.7792 -> 70.3792",
+     "classUnits": 4639735,
+     "counts": {
+      "candidateQueries": 4639560,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 35,
+      "fullRescores": 996,
+      "neighborTests": 5268129,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.6676062409999997,
+     "globalUnits": 4639735,
+     "operator": "mode22",
+     "phase": "compression",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m22 quantum rank0 cycles=1 epochs=4",
+     "classUnits": 4642636,
+     "counts": {
+      "candidateQueries": 4642496,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 28,
+      "fullRescores": 998,
+      "neighborTests": 5305596,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 0.6389522440000004,
+     "globalUnits": 4642636,
+     "operator": "mode22",
+     "phase": "descent",
+     "selfMeteredUnits": null
+    },
+    {
+     "action": "m34 schedule rank0 70.7711 -> 70.1342 (9 rungs, 637 steps)",
+     "classUnits": 3882374,
+     "counts": {
+      "candidateQueries": 3879304,
+      "collisionBuilds": 0,
+      "confirmations": 74,
+      "exactPairTests": 614,
+      "fullRescores": 1,
+      "neighborTests": 9460325,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 2.4093066739999998,
+     "globalUnits": 3882374,
+     "operator": "mode34",
+     "phase": "schedule",
+     "selfMeteredUnits": 3949604
+    },
+    {
+     "action": "m23 rank0->rank1 cut=0.500000000 constant from=7/13",
+     "classUnits": 7567096,
+     "counts": {
+      "candidateQueries": 7562536,
+      "collisionBuilds": 0,
+      "confirmations": 0,
+      "exactPairTests": 912,
+      "fullRescores": 1610,
+      "neighborTests": 10604082,
+      "operatorCollisionBuilds": 0,
+      "pairVisits": 0,
+      "positionSourceAttempts": 0,
+      "returnedPositions": 0
+     },
+     "elapsedSeconds": 1.1140220559999996,
+     "globalUnits": 7567096,
+     "operator": "mode23",
+     "phase": "crossover",
+     "selfMeteredUnits": null
+    }
+   ],
+   "processSeconds": 11.912072295090184,
+   "rawDepthMm": 70.72726178003285,
+   "request": "triangle-20",
+   "seed": 0,
+   "spec": "work=40000000,cells=13:15:17:19,v3=1,cur2=2,race=3:1:3",
+   "stderr": null,
+   "tag": "triangle-20-s0-race",
+   "workCurrency": {
+    "chargedExtraUnits": 0,
+    "classUnits": 40222058,
+    "globalUnits": 36088426,
+    "mode": "observe",
+    "operatorCalls": 12,
+    "operatorSeconds": 10.923687948000001
+   }
+  }
+ ],
+ "sessionRates": [
+  {
+   "calls": 35,
+   "maxUnitsPerSecond": 7266014.077884665,
+   "medianSecondsPerCall": 0.8198546219999994,
+   "medianUnitsPerSecond": 2585948.743467228,
+   "minUnitsPerSecond": 648899.6517777722,
+   "operator": "mode22",
+   "pooledUnitsPerSecond": 2720973.3407540796,
+   "totalSeconds": 27.153523664999998,
+   "totalUnits": 73884014
+  },
+  {
+   "calls": 20,
+   "maxUnitsPerSecond": 1611407.149574019,
+   "medianSecondsPerCall": 0.6738640569999994,
+   "medianUnitsPerSecond": 913294.7128685449,
+   "minUnitsPerSecond": 556700.9891435234,
+   "operator": "mode34",
+   "pooledUnitsPerSecond": 1112294.2370975632,
+   "totalSeconds": 18.242323229999997,
+   "totalUnits": 20290831
+  },
+  {
+   "calls": 19,
+   "maxUnitsPerSecond": 6792590.828201702,
+   "medianSecondsPerCall": 0.5813310779999981,
+   "medianUnitsPerSecond": 1156780.6558806964,
+   "minUnitsPerSecond": 825983.4612035059,
+   "operator": "mode23",
+   "pooledUnitsPerSecond": 2107939.554519485,
+   "totalSeconds": 14.104511647999995,
+   "totalUnits": 29731458
+  },
+  {
+   "calls": 7,
+   "maxUnitsPerSecond": 218.55301596017026,
+   "medianSecondsPerCall": 0.776833619,
+   "medianUnitsPerSecond": 87.14789046004026,
+   "minUnitsPerSecond": 38.797436018158926,
+   "operator": "mode20",
+   "pooledUnitsPerSecond": 89.23079045513431,
+   "totalSeconds": 9.245687456000002,
+   "totalUnits": 825
+  },
+  {
+   "calls": 2,
+   "maxUnitsPerSecond": 882954.0267139336,
+   "medianSecondsPerCall": 1.8417565645000016,
+   "medianUnitsPerSecond": 871667.3123695516,
+   "minUnitsPerSecond": 860380.5980251697,
+   "operator": "mode26",
+   "pooledUnitsPerSecond": 868798.0435863942,
+   "totalSeconds": 3.683513129000003,
+   "totalUnits": 3200229
+  },
+  {
+   "calls": 2,
+   "maxUnitsPerSecond": 459085.95606670773,
+   "medianSecondsPerCall": 0.0011630790000012325,
+   "medianUnitsPerSecond": 311362.0794711427,
+   "minUnitsPerSecond": 163638.20287557764,
+   "operator": "mode31",
+   "pooledUnitsPerSecond": 331017.92741472594,
+   "totalSeconds": 0.002326158000002465,
+   "totalUnits": 770
+  }
+ ]
+}

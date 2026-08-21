@@ -28,6 +28,7 @@ use polygon_nesting_core::search::general_relaxed::{
 };
 use polygon_nesting_core::search::portfolio::{
     self, BasinTrigger, PortfolioBudget, PortfolioOutcome, PortfolioSettings, ProbeArm,
+    WorkCurrencyMode,
 };
 use polygon_nesting_core::search::shadow_rescore;
 use polygon_nesting_core::validation::general_polygon::{
@@ -2046,6 +2047,22 @@ fn parse_portfolio_spec(
             "planfirst" => settings.plan_first_tranche = value.parse()?,
             "plantranches" => settings.plan_max_tranches = value.parse()?,
             "planhorizon" => settings.plan_tranche_horizon = value.parse()?,
+            // The parallel work currency. `0` is off and is the default, so a
+            // spec without the key is the shipped meter exactly; `2` observes
+            // (prices every call, charges nothing) and `1` charges. Three
+            // values rather than a flag because the observing arm is the
+            // instrument the profile is fitted on and the paired control that
+            // shows the repricing did not move the trajectory.
+            "cur2" => {
+                settings.work_currency = match value {
+                    "0" | "off" => WorkCurrencyMode::Off,
+                    "1" | "charge" => WorkCurrencyMode::Charge,
+                    "2" | "observe" => WorkCurrencyMode::Observe,
+                    other => {
+                        return Err(format!("unknown cur2 mode {other:?}").into())
+                    }
+                }
+            }
             "slots" => settings.basin_slots = value.parse()?,
             "basins" => {
                 settings.basin_trigger = match value {
@@ -2479,26 +2496,50 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
             "previousRawDepthMm": event.previous_raw_depth_mm,
             "fingerprint": event.fingerprint,
         })).collect::<Vec<_>>(),
-        "operatorCalls": outcome.operator_calls.iter().map(|call| json!({
-            "phase": call.phase,
-            "operator": call.operator,
-            "parentFingerprint": call.parent_fingerprint,
-            "secondaryParentFingerprint": call.secondary_parent_fingerprint,
-            "action": call.action,
-            "startedSeconds": call.started_seconds,
-            "elapsedSeconds": call.elapsed_seconds,
-            "workUnits": call.work_units,
-            "globalUnits": call.global_units,
-            "selfMeteredUnits": call.self_metered_units,
-            "debitedUnits": call.debited_units,
-            "exactValid": call.exact_valid,
-            "rawDepthMm": call.raw_depth_mm,
-            "resultFingerprint": call.result_fingerprint,
-            "archiveDisposition": call.archive_disposition,
-            "published": call.published,
-            "failureReason": call.failure_reason,
-            "scheduleSlice": call.schedule_slice.as_ref().map(schedule_slice_json),
-        })).collect::<Vec<_>>(),
+        "operatorCalls": outcome.operator_calls.iter().map(|call| {
+            let mut row = json!({
+                "phase": call.phase,
+                "operator": call.operator,
+                "parentFingerprint": call.parent_fingerprint,
+                "secondaryParentFingerprint": call.secondary_parent_fingerprint,
+                "action": call.action,
+                "startedSeconds": call.started_seconds,
+                "elapsedSeconds": call.elapsed_seconds,
+                "workUnits": call.work_units,
+                "globalUnits": call.global_units,
+                "selfMeteredUnits": call.self_metered_units,
+                "debitedUnits": call.debited_units,
+                "exactValid": call.exact_valid,
+                "rawDepthMm": call.raw_depth_mm,
+                "resultFingerprint": call.result_fingerprint,
+                "archiveDisposition": call.archive_disposition,
+                "published": call.published,
+                "failureReason": call.failure_reason,
+                "scheduleSlice": call.schedule_slice.as_ref().map(schedule_slice_json),
+            });
+            // Inserted rather than always present, and that is the whole
+            // reason `work_currency` is an `Option` on the report: a run with
+            // the currency off must produce the document a binary without the
+            // currency produces, key for key, so `docs/experiments/`'s
+            // whole-document digests keep comparing what they say they compare.
+            if let Some(currency) = call.work_currency.as_ref() {
+                row["workCurrency"] = json!({
+                    "candidateQueries": currency.candidate_queries,
+                    "exactPairTests": currency.exact_pair_tests,
+                    "collisionBuilds": currency.collision_builds,
+                    "neighborTests": currency.neighbor_tests,
+                    "fullRescores": currency.full_rescores,
+                    "positionSourceAttempts": currency.position_source_attempts,
+                    "returnedPositions": currency.returned_positions,
+                    "pairVisits": currency.pair_visits,
+                    "operatorCollisionBuilds": currency.operator_collision_builds,
+                    "confirmations": currency.confirmations,
+                    "classUnits": currency.class_units,
+                    "chargedExtraUnits": currency.charged_extra_units,
+                });
+            }
+            row
+        }).collect::<Vec<_>>(),
         "archive": {
             "capacity": outcome.archive.capacity,
             "occupancy": outcome.archive.occupancy,
@@ -2526,6 +2567,38 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
             })).collect::<Vec<_>>(),
         },
     });
+    // The parallel currency's run-level total, absent when it is off. Summed
+    // here from the calls rather than accumulated in the coordinator, so the
+    // block cannot disagree with the rows it is a sum of.
+    //
+    // Gated on the *arm* rather than on whether any call carried a block, so
+    // an armed run that dispatched no operator at all still says which
+    // currency it ran in. The `off` arm emits nothing at all, which is what
+    // keeps its document identical to a binary without the field.
+    if outcome.work_currency.armed() {
+        let rows = outcome
+            .operator_calls
+            .iter()
+            .filter_map(|call| call.work_currency.as_ref().map(|c| (call, c)));
+        let mut class_units = 0u64;
+        let mut charged_extra = 0u64;
+        let mut global = 0u64;
+        let mut seconds = 0.0f64;
+        for (call, currency) in rows {
+            class_units = class_units.saturating_add(currency.class_units);
+            charged_extra = charged_extra.saturating_add(currency.charged_extra_units);
+            global = global.saturating_add(call.global_units);
+            seconds += call.elapsed_seconds;
+        }
+        report["workCurrency"] = json!({
+            "mode": outcome.work_currency.label(),
+            "operatorCalls": outcome.operator_calls.len(),
+            "classUnits": class_units,
+            "globalUnits": global,
+            "chargedExtraUnits": charged_extra,
+            "operatorSeconds": seconds,
+        });
+    }
     if let Some(schedule) = outcome.schedule.as_ref() {
         report["schedule"] = json!({
             "iterations": schedule.iterations,

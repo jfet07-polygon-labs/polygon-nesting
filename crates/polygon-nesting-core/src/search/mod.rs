@@ -27,3 +27,7 @@ pub mod shadow_rescore;
 pub mod sort_pieces;
 pub mod strict_decoder;
 pub mod strict_family;
+/// The parallel work currency: a price for every operator class in one unit.
+/// Spec-keyed and off by default; nothing here is read by the shipped meter.
+#[cfg(feature = "jagua-experimental")]
+pub mod work_currency;

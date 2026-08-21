@@ -1,0 +1,648 @@
+{
+ "arms": {
+  "off": "cur2=0",
+  "on": "cur2=1"
+ },
+ "binary": "/tmp/wc-bin/ship-combo",
+ "binarySha256": "c63e5af0b92747f1899a1c37dd1b91975e5bf32f458e48ec428dcdd5d90be05b",
+ "boxLoad": [
+  {
+   "after": 6.01123046875,
+   "before": 5.3154296875,
+   "out": "/tmp/wc-out/plan-mixed-61-s0-r0-off.json",
+   "wall": 7.48735220101662
+  },
+  {
+   "after": 7.3203125,
+   "before": 6.01123046875,
+   "out": "/tmp/wc-out/plan-mixed-61-s0-r0-on.json",
+   "wall": 7.4249987551011145
+  },
+  {
+   "after": 7.615234375,
+   "before": 7.3203125,
+   "out": "/tmp/wc-out/plan-mixed-61-s1-r0-on.json",
+   "wall": 6.561557963956147
+  },
+  {
+   "after": 7.7265625,
+   "before": 7.615234375,
+   "out": "/tmp/wc-out/plan-mixed-61-s1-r0-off.json",
+   "wall": 6.643040947965346
+  },
+  {
+   "after": 8.2431640625,
+   "before": 7.7265625,
+   "out": "/tmp/wc-out/plan-mixed-61-s2-r0-off.json",
+   "wall": 8.86359919293318
+  },
+  {
+   "after": 7.68359375,
+   "before": 8.2431640625,
+   "out": "/tmp/wc-out/plan-mixed-61-s2-r0-on.json",
+   "wall": 8.601028406061232
+  },
+  {
+   "after": 7.38818359375,
+   "before": 7.68359375,
+   "out": "/tmp/wc-out/plan-mixed-61-s0-r1-on.json",
+   "wall": 7.535099706030451
+  },
+  {
+   "after": 7.72314453125,
+   "before": 7.38818359375,
+   "out": "/tmp/wc-out/plan-mixed-61-s0-r1-off.json",
+   "wall": 7.70777768001426
+  },
+  {
+   "after": 7.74560546875,
+   "before": 7.72314453125,
+   "out": "/tmp/wc-out/plan-mixed-61-s1-r1-off.json",
+   "wall": 6.694914569961838
+  },
+  {
+   "after": 7.9736328125,
+   "before": 7.74560546875,
+   "out": "/tmp/wc-out/plan-mixed-61-s1-r1-on.json",
+   "wall": 6.64776243804954
+  },
+  {
+   "after": 8.05615234375,
+   "before": 7.9736328125,
+   "out": "/tmp/wc-out/plan-mixed-61-s2-r1-on.json",
+   "wall": 8.600172728067264
+  },
+  {
+   "after": 8.0087890625,
+   "before": 8.05615234375,
+   "out": "/tmp/wc-out/plan-mixed-61-s2-r1-off.json",
+   "wall": 8.591278532054275
+  },
+  {
+   "after": 7.908203125,
+   "before": 8.0087890625,
+   "out": "/tmp/wc-out/plan-mixed-61-s0-r2-off.json",
+   "wall": 7.401288177003153
+  },
+  {
+   "after": 8.15625,
+   "before": 7.908203125,
+   "out": "/tmp/wc-out/plan-mixed-61-s0-r2-on.json",
+   "wall": 7.458101392956451
+  },
+  {
+   "after": 8.70458984375,
+   "before": 8.15625,
+   "out": "/tmp/wc-out/plan-mixed-61-s1-r2-on.json",
+   "wall": 6.7039795810123906
+  },
+  {
+   "after": 8.689453125,
+   "before": 8.70458984375,
+   "out": "/tmp/wc-out/plan-mixed-61-s1-r2-off.json",
+   "wall": 6.943955027032644
+  },
+  {
+   "after": 9.19482421875,
+   "before": 8.689453125,
+   "out": "/tmp/wc-out/plan-mixed-61-s2-r2-off.json",
+   "wall": 8.637020785012282
+  },
+  {
+   "after": 8.86376953125,
+   "before": 9.19482421875,
+   "out": "/tmp/wc-out/plan-mixed-61-s2-r2-on.json",
+   "wall": 8.623903789906763
+  }
+ ],
+ "requests": [
+  "mixed-61"
+ ],
+ "rounds": 3,
+ "rows": [
+  {
+   "armOrder": [
+    "off",
+    "on"
+   ],
+   "deltaMm": 0.0,
+   "equalWork": true,
+   "off": {
+    "coordinatorSeconds": 7.448497887,
+    "depthMm": 175.3877782649107,
+    "digest": "0ca1661e09b3d95c455373a666100c4ae3a2ab1f375521f19b662f40ea0ce5a9",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 6,
+    "planUnits": 24891457,
+    "probeWorkUnits": 8778573,
+    "processSeconds": 7.48735220101662,
+    "publications": 4,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 6,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,cur2=0",
+    "workCurrency": null,
+    "workUnits": 23356444
+   },
+   "on": {
+    "coordinatorSeconds": 7.387957445,
+    "depthMm": 175.3877782649107,
+    "digest": "52490e7a764e2d50e991f813fc4807b37615bcea8d0ee21839a5880975567d78",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 6,
+    "planUnits": 24891457,
+    "probeWorkUnits": 8778573,
+    "processSeconds": 7.4249987551011145,
+    "publications": 4,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 6,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 0,
+     "classUnits": 12073716,
+     "globalUnits": 12073716,
+     "mode": "charge",
+     "operatorCalls": 6,
+     "operatorSeconds": 5.11647982
+    },
+    "workUnits": 23356444
+   },
+   "request": "mixed-61",
+   "round": 0,
+   "seed": 0
+  },
+  {
+   "armOrder": [
+    "on",
+    "off"
+   ],
+   "deltaMm": 0.0,
+   "equalWork": true,
+   "off": {
+    "coordinatorSeconds": 6.604437205,
+    "depthMm": 174.17000000000002,
+    "digest": "028f5b92896e79ddb6aa7aee1fdf7def2a042b682f267141f8418bca50e88041",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 5,
+    "planUnits": 24891457,
+    "probeWorkUnits": 9629453,
+    "processSeconds": 6.643040947965346,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 5,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,cur2=0",
+    "workCurrency": null,
+    "workUnits": 22152474
+   },
+   "on": {
+    "coordinatorSeconds": 6.521865047,
+    "depthMm": 174.17000000000002,
+    "digest": "d24784d682cf7ed427b76580583319e0493a1c0776113a50545d63ada7ef2c06",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 5,
+    "planUnits": 24891457,
+    "probeWorkUnits": 9629453,
+    "processSeconds": 6.561557963956147,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 5,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 0,
+     "classUnits": 9846681,
+     "globalUnits": 9846681,
+     "mode": "charge",
+     "operatorCalls": 5,
+     "operatorSeconds": 4.172361159000001
+    },
+    "workUnits": 22152474
+   },
+   "request": "mixed-61",
+   "round": 0,
+   "seed": 1
+  },
+  {
+   "armOrder": [
+    "off",
+    "on"
+   ],
+   "deltaMm": 0.0,
+   "equalWork": true,
+   "off": {
+    "coordinatorSeconds": 8.826822457,
+    "depthMm": 176.16200000000003,
+    "digest": "d50502e7f9836bea57a9bfa2fc2cd4d8303e9c8bc55e4d6b77048453d0cc5343",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 7,
+    "planUnits": 24891457,
+    "probeWorkUnits": 8961342,
+    "processSeconds": 8.86359919293318,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 7,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,cur2=0",
+    "workCurrency": null,
+    "workUnits": 23859055
+   },
+   "on": {
+    "coordinatorSeconds": 8.562338469,
+    "depthMm": 176.16200000000003,
+    "digest": "f022bd682e59142e8ccfa5be1916b1ab84454c13a698ead3e6fbc1dd60be5b1b",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 7,
+    "planUnits": 24891457,
+    "probeWorkUnits": 8961342,
+    "processSeconds": 8.601028406061232,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 7,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 0,
+     "classUnits": 12801193,
+     "globalUnits": 12801193,
+     "mode": "charge",
+     "operatorCalls": 7,
+     "operatorSeconds": 6.241812544000001
+    },
+    "workUnits": 23859055
+   },
+   "request": "mixed-61",
+   "round": 0,
+   "seed": 2
+  },
+  {
+   "armOrder": [
+    "on",
+    "off"
+   ],
+   "deltaMm": 0.0,
+   "equalWork": true,
+   "off": {
+    "coordinatorSeconds": 7.673134142,
+    "depthMm": 175.3877782649107,
+    "digest": "0ca1661e09b3d95c455373a666100c4ae3a2ab1f375521f19b662f40ea0ce5a9",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 6,
+    "planUnits": 24891457,
+    "probeWorkUnits": 8778573,
+    "processSeconds": 7.70777768001426,
+    "publications": 4,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 6,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,cur2=0",
+    "workCurrency": null,
+    "workUnits": 23356444
+   },
+   "on": {
+    "coordinatorSeconds": 7.499247297,
+    "depthMm": 175.3877782649107,
+    "digest": "52490e7a764e2d50e991f813fc4807b37615bcea8d0ee21839a5880975567d78",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 6,
+    "planUnits": 24891457,
+    "probeWorkUnits": 8778573,
+    "processSeconds": 7.535099706030451,
+    "publications": 4,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 6,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 0,
+     "classUnits": 12073716,
+     "globalUnits": 12073716,
+     "mode": "charge",
+     "operatorCalls": 6,
+     "operatorSeconds": 5.218784491000001
+    },
+    "workUnits": 23356444
+   },
+   "request": "mixed-61",
+   "round": 1,
+   "seed": 0
+  },
+  {
+   "armOrder": [
+    "off",
+    "on"
+   ],
+   "deltaMm": 0.0,
+   "equalWork": true,
+   "off": {
+    "coordinatorSeconds": 6.657218555,
+    "depthMm": 174.17000000000002,
+    "digest": "028f5b92896e79ddb6aa7aee1fdf7def2a042b682f267141f8418bca50e88041",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 5,
+    "planUnits": 24891457,
+    "probeWorkUnits": 9629453,
+    "processSeconds": 6.694914569961838,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 5,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,cur2=0",
+    "workCurrency": null,
+    "workUnits": 22152474
+   },
+   "on": {
+    "coordinatorSeconds": 6.614862393,
+    "depthMm": 174.17000000000002,
+    "digest": "d24784d682cf7ed427b76580583319e0493a1c0776113a50545d63ada7ef2c06",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 5,
+    "planUnits": 24891457,
+    "probeWorkUnits": 9629453,
+    "processSeconds": 6.64776243804954,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 5,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 0,
+     "classUnits": 9846681,
+     "globalUnits": 9846681,
+     "mode": "charge",
+     "operatorCalls": 5,
+     "operatorSeconds": 4.203120327999999
+    },
+    "workUnits": 22152474
+   },
+   "request": "mixed-61",
+   "round": 1,
+   "seed": 1
+  },
+  {
+   "armOrder": [
+    "on",
+    "off"
+   ],
+   "deltaMm": 0.0,
+   "equalWork": true,
+   "off": {
+    "coordinatorSeconds": 8.554957415,
+    "depthMm": 176.16200000000003,
+    "digest": "d50502e7f9836bea57a9bfa2fc2cd4d8303e9c8bc55e4d6b77048453d0cc5343",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 7,
+    "planUnits": 24891457,
+    "probeWorkUnits": 8961342,
+    "processSeconds": 8.591278532054275,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 7,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,cur2=0",
+    "workCurrency": null,
+    "workUnits": 23859055
+   },
+   "on": {
+    "coordinatorSeconds": 8.562544211,
+    "depthMm": 176.16200000000003,
+    "digest": "f022bd682e59142e8ccfa5be1916b1ab84454c13a698ead3e6fbc1dd60be5b1b",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 7,
+    "planUnits": 24891457,
+    "probeWorkUnits": 8961342,
+    "processSeconds": 8.600172728067264,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 7,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 0,
+     "classUnits": 12801193,
+     "globalUnits": 12801193,
+     "mode": "charge",
+     "operatorCalls": 7,
+     "operatorSeconds": 6.205549650999999
+    },
+    "workUnits": 23859055
+   },
+   "request": "mixed-61",
+   "round": 1,
+   "seed": 2
+  },
+  {
+   "armOrder": [
+    "off",
+    "on"
+   ],
+   "deltaMm": 0.0,
+   "equalWork": true,
+   "off": {
+    "coordinatorSeconds": 7.362897695,
+    "depthMm": 175.3877782649107,
+    "digest": "0ca1661e09b3d95c455373a666100c4ae3a2ab1f375521f19b662f40ea0ce5a9",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 6,
+    "planUnits": 24891457,
+    "probeWorkUnits": 8778573,
+    "processSeconds": 7.401288177003153,
+    "publications": 4,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 6,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,cur2=0",
+    "workCurrency": null,
+    "workUnits": 23356444
+   },
+   "on": {
+    "coordinatorSeconds": 7.421116495,
+    "depthMm": 175.3877782649107,
+    "digest": "52490e7a764e2d50e991f813fc4807b37615bcea8d0ee21839a5880975567d78",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 6,
+    "planUnits": 24891457,
+    "probeWorkUnits": 8778573,
+    "processSeconds": 7.458101392956451,
+    "publications": 4,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 6,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 0,
+     "classUnits": 12073716,
+     "globalUnits": 12073716,
+     "mode": "charge",
+     "operatorCalls": 6,
+     "operatorSeconds": 5.143121213
+    },
+    "workUnits": 23356444
+   },
+   "request": "mixed-61",
+   "round": 2,
+   "seed": 0
+  },
+  {
+   "armOrder": [
+    "on",
+    "off"
+   ],
+   "deltaMm": 0.0,
+   "equalWork": true,
+   "off": {
+    "coordinatorSeconds": 6.910597103,
+    "depthMm": 174.17000000000002,
+    "digest": "028f5b92896e79ddb6aa7aee1fdf7def2a042b682f267141f8418bca50e88041",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 5,
+    "planUnits": 24891457,
+    "probeWorkUnits": 9629453,
+    "processSeconds": 6.943955027032644,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 5,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,cur2=0",
+    "workCurrency": null,
+    "workUnits": 22152474
+   },
+   "on": {
+    "coordinatorSeconds": 6.671316124,
+    "depthMm": 174.17000000000002,
+    "digest": "d24784d682cf7ed427b76580583319e0493a1c0776113a50545d63ada7ef2c06",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 5,
+    "planUnits": 24891457,
+    "probeWorkUnits": 9629453,
+    "processSeconds": 6.7039795810123906,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 5,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 0,
+     "classUnits": 9846681,
+     "globalUnits": 9846681,
+     "mode": "charge",
+     "operatorCalls": 5,
+     "operatorSeconds": 4.25973926
+    },
+    "workUnits": 22152474
+   },
+   "request": "mixed-61",
+   "round": 2,
+   "seed": 1
+  },
+  {
+   "armOrder": [
+    "off",
+    "on"
+   ],
+   "deltaMm": 0.0,
+   "equalWork": true,
+   "off": {
+    "coordinatorSeconds": 8.596905577,
+    "depthMm": 176.16200000000003,
+    "digest": "d50502e7f9836bea57a9bfa2fc2cd4d8303e9c8bc55e4d6b77048453d0cc5343",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 7,
+    "planUnits": 24891457,
+    "probeWorkUnits": 8961342,
+    "processSeconds": 8.637020785012282,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 7,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,cur2=0",
+    "workCurrency": null,
+    "workUnits": 23859055
+   },
+   "on": {
+    "coordinatorSeconds": 8.585969371000001,
+    "depthMm": 176.16200000000003,
+    "digest": "f022bd682e59142e8ccfa5be1916b1ab84454c13a698ead3e6fbc1dd60be5b1b",
+    "drawCalls": 0,
+    "drawChargedUnits": 0,
+    "drawSeconds": 0,
+    "dualGateValid": true,
+    "operatorCalls": 7,
+    "planUnits": 24891457,
+    "probeWorkUnits": 8961342,
+    "processSeconds": 8.623903789906763,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 7,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 0,
+     "classUnits": 12801193,
+     "globalUnits": 12801193,
+     "mode": "charge",
+     "operatorCalls": 7,
+     "operatorSeconds": 6.213794147000001
+    },
+    "workUnits": 23859055
+   },
+   "request": "mixed-61",
+   "round": 2,
+   "seed": 2
+  }
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "summary": {
+  "better": 0,
+  "cells": 9,
+  "equalWorkCells": 9,
+  "meanDeltaMm": 0.0,
+  "medianDeltaMm": 0.0,
+  "perSeedMedians": {
+   "mixed-61-s0": 0.0,
+   "mixed-61-s1": 0.0,
+   "mixed-61-s2": 0.0
+  },
+  "tied": 9,
+  "worse": 0
+ },
+ "targetMillis": 10000
+}

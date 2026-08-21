@@ -1,0 +1,574 @@
+{
+ "allEqual": false,
+ "allPlansAgree": false,
+ "binary": "/tmp/wc-bin/ship-combo",
+ "binarySha256": "c63e5af0b92747f1899a1c37dd1b91975e5bf32f458e48ec428dcdd5d90be05b",
+ "boxLoad": [
+  {
+   "after": 5.6025390625,
+   "before": 5.82958984375,
+   "out": "/tmp/wc-out/det-mixed-61-s0-p0.json",
+   "wall": 7.715964882983826
+  },
+  {
+   "after": 5.49072265625,
+   "before": 5.6025390625,
+   "out": "/tmp/wc-out/det-mixed-61-s0-p1.json",
+   "wall": 7.5688734279247
+  },
+  {
+   "after": 5.77197265625,
+   "before": 5.49072265625,
+   "out": "/tmp/wc-out/det-mixed-61-s1-p0.json",
+   "wall": 6.539639702998102
+  },
+  {
+   "after": 6.2685546875,
+   "before": 5.77197265625,
+   "out": "/tmp/wc-out/det-mixed-61-s1-p1.json",
+   "wall": 6.763428685953841
+  },
+  {
+   "after": 5.92626953125,
+   "before": 6.2685546875,
+   "out": "/tmp/wc-out/det-mixed-61-s2-p0.json",
+   "wall": 8.622157722013071
+  },
+  {
+   "after": 6.587890625,
+   "before": 5.92626953125,
+   "out": "/tmp/wc-out/det-mixed-61-s2-p1.json",
+   "wall": 7.120514887967147
+  },
+  {
+   "after": 7.181640625,
+   "before": 6.587890625,
+   "out": "/tmp/wc-out/det-shapes-17-s0-p0.json",
+   "wall": 6.518699891981669
+  },
+  {
+   "after": 7.0068359375,
+   "before": 7.181640625,
+   "out": "/tmp/wc-out/det-shapes-17-s0-p1.json",
+   "wall": 6.552867690916173
+  },
+  {
+   "after": 6.87744140625,
+   "before": 7.0068359375,
+   "out": "/tmp/wc-out/det-shapes-17-s1-p0.json",
+   "wall": 6.169970665010624
+  },
+  {
+   "after": 7.0478515625,
+   "before": 6.87744140625,
+   "out": "/tmp/wc-out/det-shapes-17-s1-p1.json",
+   "wall": 6.163014385965653
+  },
+  {
+   "after": 6.7236328125,
+   "before": 7.0478515625,
+   "out": "/tmp/wc-out/det-shapes-17-s2-p0.json",
+   "wall": 6.184522458002903
+  },
+  {
+   "after": 6.34521484375,
+   "before": 6.7236328125,
+   "out": "/tmp/wc-out/det-shapes-17-s2-p1.json",
+   "wall": 6.194861831958406
+  },
+  {
+   "after": 5.82421875,
+   "before": 6.34521484375,
+   "out": "/tmp/wc-out/det-triangle-20-s0-p0.json",
+   "wall": 6.4069104249356315
+  },
+  {
+   "after": 6.15869140625,
+   "before": 5.82421875,
+   "out": "/tmp/wc-out/det-triangle-20-s0-p1.json",
+   "wall": 6.377087948960252
+  },
+  {
+   "after": 5.8251953125,
+   "before": 6.15869140625,
+   "out": "/tmp/wc-out/det-triangle-20-s1-p0.json",
+   "wall": 7.187674320070073
+  },
+  {
+   "after": 6.8740234375,
+   "before": 5.8251953125,
+   "out": "/tmp/wc-out/det-triangle-20-s1-p1.json",
+   "wall": 8.200358881964348
+  },
+  {
+   "after": 6.4833984375,
+   "before": 6.8740234375,
+   "out": "/tmp/wc-out/det-triangle-20-s2-p0.json",
+   "wall": 7.962945608072914
+  },
+  {
+   "after": 7.3125,
+   "before": 6.4833984375,
+   "out": "/tmp/wc-out/det-triangle-20-s2-p1.json",
+   "wall": 8.221765956026502
+  }
+ ],
+ "cells": 9,
+ "equalCells": 7,
+ "extra": "cur2=1",
+ "mode": "plan",
+ "rows": [
+  {
+   "chargedExtraUnits": [
+    0,
+    0
+   ],
+   "classUnits": [
+    12073716,
+    12073716
+   ],
+   "depths": [
+    175.3877782649107,
+    175.3877782649107
+   ],
+   "digests": [
+    "52490e7a764e2d50e991f813fc4807b37615bcea8d0ee21839a5880975567d78",
+    "52490e7a764e2d50e991f813fc4807b37615bcea8d0ee21839a5880975567d78"
+   ],
+   "equal": true,
+   "leafDiff": {
+    "differing": 0,
+    "differingBeforeWallStrip": 38,
+    "differingPaths": [],
+    "leaves": 3470
+   },
+   "plans": [
+    24891457,
+    24891457
+   ],
+   "plansAgree": true,
+   "request": "mixed-61",
+   "seed": 0,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,cur2=1",
+   "walls": [
+    7.715964882983826,
+    7.5688734279247
+   ],
+   "workUnits": [
+    23356444,
+    23356444
+   ]
+  },
+  {
+   "chargedExtraUnits": [
+    0,
+    0
+   ],
+   "classUnits": [
+    9846681,
+    9846681
+   ],
+   "depths": [
+    174.17000000000002,
+    174.17000000000002
+   ],
+   "digests": [
+    "d24784d682cf7ed427b76580583319e0493a1c0776113a50545d63ada7ef2c06",
+    "d24784d682cf7ed427b76580583319e0493a1c0776113a50545d63ada7ef2c06"
+   ],
+   "equal": true,
+   "leafDiff": {
+    "differing": 0,
+    "differingBeforeWallStrip": 33,
+    "differingPaths": [],
+    "leaves": 2805
+   },
+   "plans": [
+    24891457,
+    24891457
+   ],
+   "plansAgree": true,
+   "request": "mixed-61",
+   "seed": 1,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,cur2=1",
+   "walls": [
+    6.539639702998102,
+    6.763428685953841
+   ],
+   "workUnits": [
+    22152474,
+    22152474
+   ]
+  },
+  {
+   "chargedExtraUnits": [
+    0,
+    0
+   ],
+   "classUnits": [
+    12801193,
+    8531793
+   ],
+   "depths": [
+    176.16200000000003,
+    176.16200000000003
+   ],
+   "digests": [
+    "f022bd682e59142e8ccfa5be1916b1ab84454c13a698ead3e6fbc1dd60be5b1b",
+    "1c068c0db43bed426baaf4e52e6908a1b096ebe75f4e6b3aba20440f5d02d758"
+   ],
+   "equal": false,
+   "leafDiff": {
+    "differing": 98,
+    "differingBeforeWallStrip": 135,
+    "differingPaths": [
+     "/portfolio/archive/duplicates",
+     "/portfolio/archive/members/4/descents",
+     "/portfolio/budget/units",
+     "/portfolio/operatorCalls/5/action",
+     "/portfolio/operatorCalls/5/archiveDisposition",
+     "/portfolio/operatorCalls/5/debitedUnits",
+     "/portfolio/operatorCalls/5/exactValid",
+     "/portfolio/operatorCalls/5/globalUnits",
+     "/portfolio/operatorCalls/5/operator",
+     "/portfolio/operatorCalls/5/parentFingerprint",
+     "/portfolio/operatorCalls/5/phase",
+     "/portfolio/operatorCalls/5/published",
+     "/portfolio/operatorCalls/5/rawDepthMm",
+     "/portfolio/operatorCalls/5/resultFingerprint",
+     "/portfolio/operatorCalls/5/selfMeteredUnits",
+     "/portfolio/operatorCalls/5/workCurrency/candidateQueries",
+     "/portfolio/operatorCalls/5/workCurrency/chargedExtraUnits",
+     "/portfolio/operatorCalls/5/workCurrency/classUnits",
+     "/portfolio/operatorCalls/5/workCurrency/collisionBuilds",
+     "/portfolio/operatorCalls/5/workCurrency/confirmations",
+     "/portfolio/operatorCalls/5/workCurrency/exactPairTests",
+     "/portfolio/operatorCalls/5/workCurrency/fullRescores",
+     "/portfolio/operatorCalls/5/workCurrency/neighborTests",
+     "/portfolio/operatorCalls/5/workCurrency/operatorCollisionBuilds",
+     "/portfolio/operatorCalls/5/workCurrency/pairVisits",
+     "/portfolio/operatorCalls/5/workCurrency/positionSourceAttempts",
+     "/portfolio/operatorCalls/5/workCurrency/returnedPositions",
+     "/portfolio/operatorCalls/5/workUnits",
+     "/portfolio/operatorCalls/6/action",
+     "/portfolio/operatorCalls/6/archiveDisposition",
+     "/portfolio/operatorCalls/6/debitedUnits",
+     "/portfolio/operatorCalls/6/exactValid",
+     "/portfolio/operatorCalls/6/globalUnits",
+     "/portfolio/operatorCalls/6/operator",
+     "/portfolio/operatorCalls/6/parentFingerprint",
+     "/portfolio/operatorCalls/6/phase",
+     "/portfolio/operatorCalls/6/published",
+     "/portfolio/operatorCalls/6/rawDepthMm",
+     "/portfolio/operatorCalls/6/resultFingerprint",
+     "/portfolio/operatorCalls/6/selfMeteredUnits"
+    ],
+    "leaves": 3498
+   },
+   "plans": [
+    24891457,
+    21644745
+   ],
+   "plansAgree": false,
+   "request": "mixed-61",
+   "seed": 2,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,cur2=1",
+   "walls": [
+    8.622157722013071,
+    7.120514887967147
+   ],
+   "workUnits": [
+    23859055,
+    19588745
+   ]
+  },
+  {
+   "chargedExtraUnits": [
+    1627760,
+    1627760
+   ],
+   "classUnits": [
+    5237656,
+    5237656
+   ],
+   "depths": [
+    200.34937729570953,
+    200.34937729570953
+   ],
+   "digests": [
+    "ede842c459ffe60108c78b242129cf104ac85932e9857203fbf6934a502f8ddd",
+    "ede842c459ffe60108c78b242129cf104ac85932e9857203fbf6934a502f8ddd"
+   ],
+   "equal": true,
+   "leafDiff": {
+    "differing": 0,
+    "differingBeforeWallStrip": 30,
+    "differingPaths": [],
+    "leaves": 1631
+   },
+   "plans": [
+    7075705,
+    7075705
+   ],
+   "plansAgree": true,
+   "request": "shapes-17",
+   "seed": 0,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,cur2=1",
+   "walls": [
+    6.518699891981669,
+    6.552867690916173
+   ],
+   "workUnits": [
+    6445115,
+    6445115
+   ]
+  },
+  {
+   "chargedExtraUnits": [
+    1627760,
+    1627760
+   ],
+   "classUnits": [
+    5186206,
+    5186206
+   ],
+   "depths": [
+    200.34937729570953,
+    200.34937729570953
+   ],
+   "digests": [
+    "e3eff509fffbd5c4c1af32569c9dc9d23f90a23016e5f0292fff5d43afa0b16b",
+    "e3eff509fffbd5c4c1af32569c9dc9d23f90a23016e5f0292fff5d43afa0b16b"
+   ],
+   "equal": true,
+   "leafDiff": {
+    "differing": 0,
+    "differingBeforeWallStrip": 30,
+    "differingPaths": [],
+    "leaves": 1631
+   },
+   "plans": [
+    7075705,
+    7075705
+   ],
+   "plansAgree": true,
+   "request": "shapes-17",
+   "seed": 1,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,cur2=1",
+   "walls": [
+    6.169970665010624,
+    6.163014385965653
+   ],
+   "workUnits": [
+    6390343,
+    6390343
+   ]
+  },
+  {
+   "chargedExtraUnits": [
+    1627760,
+    1627760
+   ],
+   "classUnits": [
+    5386797,
+    5386797
+   ],
+   "depths": [
+    200.34937729570953,
+    200.34937729570953
+   ],
+   "digests": [
+    "55ebab9f104eb7cea235cd3783d4b45cbf98687f6257e2dd81b390a9546c5478",
+    "55ebab9f104eb7cea235cd3783d4b45cbf98687f6257e2dd81b390a9546c5478"
+   ],
+   "equal": true,
+   "leafDiff": {
+    "differing": 0,
+    "differingBeforeWallStrip": 30,
+    "differingPaths": [],
+    "leaves": 1631
+   },
+   "plans": [
+    7075705,
+    7075705
+   ],
+   "plansAgree": true,
+   "request": "shapes-17",
+   "seed": 2,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,cur2=1",
+   "walls": [
+    6.184522458002903,
+    6.194861831958406
+   ],
+   "workUnits": [
+    6622830,
+    6622830
+   ]
+  },
+  {
+   "chargedExtraUnits": [
+    0,
+    0
+   ],
+   "classUnits": [
+    25374477,
+    25374477
+   ],
+   "depths": [
+    70.7711336311948,
+    70.7711336311948
+   ],
+   "digests": [
+    "eb4c49320b40ba999b5981bfdfbd9c8ed3c9fc4bbb50f57ed5c0dd89d528aeb7",
+    "eb4c49320b40ba999b5981bfdfbd9c8ed3c9fc4bbb50f57ed5c0dd89d528aeb7"
+   ],
+   "equal": true,
+   "leafDiff": {
+    "differing": 0,
+    "differingBeforeWallStrip": 34,
+    "differingPaths": [],
+    "leaves": 2070
+   },
+   "plans": [
+    37856795,
+    37856795
+   ],
+   "plansAgree": true,
+   "request": "triangle-20",
+   "seed": 0,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,cur2=1",
+   "walls": [
+    6.4069104249356315,
+    6.377087948960252
+   ],
+   "workUnits": [
+    31818324,
+    31818324
+   ]
+  },
+  {
+   "chargedExtraUnits": [
+    0,
+    0
+   ],
+   "classUnits": [
+    27801191,
+    35563255
+   ],
+   "depths": [
+    70.74684851410467,
+    70.74553343914744
+   ],
+   "digests": [
+    "5f4c0d745625ec7b031ea1f8d10d491748cd92fc32514c2ebdaea2e2b5884d28",
+    "d26b412b9734627471d0d18a7827e042c4af77e0de27a03f770a928f82166cae"
+   ],
+   "equal": false,
+   "leafDiff": {
+    "differing": 149,
+    "differingBeforeWallStrip": 189,
+    "differingPaths": [
+     "/independentUsedLongAxisDepthMm",
+     "/placements/0/mirrored",
+     "/placements/0/rotationDeg",
+     "/placements/0/translateLongAxis",
+     "/placements/0/translateShortAxis",
+     "/placements/1/rotationDeg",
+     "/placements/1/translateLongAxis",
+     "/placements/1/translateShortAxis",
+     "/placements/10/rotationDeg",
+     "/placements/10/translateLongAxis",
+     "/placements/10/translateShortAxis",
+     "/placements/11/mirrored",
+     "/placements/11/rotationDeg",
+     "/placements/11/translateLongAxis",
+     "/placements/11/translateShortAxis",
+     "/placements/12/rotationDeg",
+     "/placements/12/translateLongAxis",
+     "/placements/12/translateShortAxis",
+     "/placements/13/mirrored",
+     "/placements/13/rotationDeg",
+     "/placements/13/translateShortAxis",
+     "/placements/14/mirrored",
+     "/placements/14/rotationDeg",
+     "/placements/14/translateLongAxis",
+     "/placements/14/translateShortAxis",
+     "/placements/15/mirrored",
+     "/placements/15/rotationDeg",
+     "/placements/15/translateLongAxis",
+     "/placements/15/translateShortAxis",
+     "/placements/16/mirrored",
+     "/placements/16/rotationDeg",
+     "/placements/16/translateLongAxis",
+     "/placements/16/translateShortAxis",
+     "/placements/17/rotationDeg",
+     "/placements/17/translateLongAxis",
+     "/placements/17/translateShortAxis",
+     "/placements/18/mirrored",
+     "/placements/18/rotationDeg",
+     "/placements/18/translateLongAxis",
+     "/placements/18/translateShortAxis"
+    ],
+    "leaves": 2306
+   },
+   "plans": [
+    43535314,
+    50065612
+   ],
+   "plansAgree": false,
+   "request": "triangle-20",
+   "seed": 1,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,cur2=1",
+   "walls": [
+    7.187674320070073,
+    8.200358881964348
+   ],
+   "workUnits": [
+    37106382,
+    44868551
+   ]
+  },
+  {
+   "chargedExtraUnits": [
+    0,
+    0
+   ],
+   "classUnits": [
+    34825800,
+    34825800
+   ],
+   "depths": [
+    70.74164651120441,
+    70.74164651120441
+   ],
+   "digests": [
+    "125f1a30dae67d6b19fda75fa0fb009934cd4f72e7f320c4d2a4c8f15e7c4602",
+    "125f1a30dae67d6b19fda75fa0fb009934cd4f72e7f320c4d2a4c8f15e7c4602"
+   ],
+   "equal": true,
+   "leafDiff": {
+    "differing": 0,
+    "differingBeforeWallStrip": 42,
+    "differingPaths": [],
+    "leaves": 2242
+   },
+   "plans": [
+    43535314,
+    43535314
+   ],
+   "plansAgree": true,
+   "request": "triangle-20",
+   "seed": 2,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,cur2=1",
+   "walls": [
+    7.962945608072914,
+    8.221765956026502
+   ],
+   "workUnits": [
+    42480678,
+    42480678
+   ]
+  }
+ ],
+ "value": "10000"
+}

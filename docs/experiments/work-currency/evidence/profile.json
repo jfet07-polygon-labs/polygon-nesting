@@ -1,0 +1,412 @@
+{
+ "classes": {
+  "mode20": {
+   "calls": 7,
+   "candidates": [
+    {
+     "calls": 7,
+     "count": "operatorCollisionBuilds",
+     "maxPerSecond": 82814.78127844605,
+     "medianPerSecond": 31475.273460954155,
+     "minPerSecond": 24960.299767870885,
+     "residualRms": 1.7032347213528263,
+     "scaledWeight": 82605,
+     "spread": 3.317860043694105,
+     "weight": 82.60452457149779,
+     "worstOvercharge": 2.6311060134610047,
+     "worstUndercharge": 0.7930129598027083
+    },
+    {
+     "calls": 7,
+     "count": "returnedPositions",
+     "maxPerSecond": 145899.26874682627,
+     "medianPerSecond": 46959.86258545281,
+     "minPerSecond": 43686.7621354884,
+     "residualRms": 1.811333670591293,
+     "scaledWeight": 55366,
+     "spread": 3.339667707447396,
+     "weight": 55.36643117872807,
+     "worstOvercharge": 3.106893008499195,
+     "worstUndercharge": 0.9303000419984547
+    },
+    {
+     "calls": 7,
+     "count": "positionSourceAttempts",
+     "maxPerSecond": 554263.8978913586,
+     "medianPerSecond": 389952.267553916,
+     "minPerSecond": 159558.1446007987,
+     "residualRms": 1.83415581345485,
+     "scaledWeight": 6667,
+     "spread": 3.4737424358880653,
+     "weight": 6.667482705791718,
+     "worstOvercharge": 1.4213634437059,
+     "worstUndercharge": 0.4091735268053998
+    },
+    {
+     "calls": 7,
+     "count": "exactPairTests",
+     "maxPerSecond": 43.71060319203405,
+     "medianPerSecond": 17.429578092008054,
+     "minPerSecond": 7.759487203631784,
+     "residualRms": 1.8893476747283309,
+     "scaledWeight": 149171712,
+     "spread": 5.6331819416591795,
+     "weight": 149171.7118036364,
+     "worstOvercharge": 2.5078405777404664,
+     "worstUndercharge": 0.4451907649554481
+    },
+    {
+     "calls": 7,
+     "count": "pairVisits",
+     "maxPerSecond": 583368.0420456936,
+     "medianPerSecond": 199330.45419743116,
+     "minPerSecond": 94662.42666488723,
+     "residualRms": 2.0512403215283443,
+     "scaledWeight": 13044,
+     "spread": 6.162614488120661,
+     "weight": 13.043666661315957,
+     "worstOvercharge": 2.9266378005033,
+     "worstUndercharge": 0.47490197644925236
+    }
+   ],
+   "fit": {
+    "count": "operatorCollisionBuilds",
+    "perSecond": 31475.273460954155,
+    "residualRms": 1.7032347213528263,
+    "runnerUp": "returnedPositions",
+    "runnerUpResidualRms": 1.811333670591293,
+    "scaledWeight": 82605,
+    "spread": 3.317860043694105,
+    "weight": 82.60452457149779
+   },
+   "globalUnits": 825,
+   "residuals": [
+    {
+     "fittedUnits": 8183346,
+     "globalUnits": 310,
+     "ratio": 1.0000056418316512,
+     "request": "mixed-61",
+     "seconds": 3.1474230120000004,
+     "targetUnits": 8183299.831200001
+    },
+    {
+     "fittedUnits": 8404480,
+     "globalUnits": 275,
+     "ratio": 1.0243814019770618,
+     "request": "mixed-61",
+     "seconds": 3.1555554420000007,
+     "targetUnits": 8204444.149200002
+    },
+    {
+     "fittedUnits": 1601710,
+     "globalUnits": 40,
+     "ratio": 0.7930170536199563,
+     "request": "shapes-17",
+     "seconds": 0.776833619,
+     "targetUnits": 2019767.4094
+    },
+    {
+     "fittedUnits": 1644335,
+     "globalUnits": 30,
+     "ratio": 0.8178972045502482,
+     "request": "shapes-17",
+     "seconds": 0.7732469740000001,
+     "targetUnits": 2010442.1324000002
+    },
+    {
+     "fittedUnits": 1629714,
+     "globalUnits": 40,
+     "ratio": 0.8008482396893426,
+     "request": "shapes-17",
+     "seconds": 0.7826864640000011,
+     "targetUnits": 2034984.806400003
+    },
+    {
+     "fittedUnits": 2034561,
+     "globalUnits": 65,
+     "ratio": 2.631120962751124,
+     "request": "triangle-20",
+     "seconds": 0.29741067499999996,
+     "targetUnits": 773267.7549999999
+    },
+    {
+     "fittedUnits": 2104031,
+     "globalUnits": 65,
+     "ratio": 2.5893175179165024,
+     "request": "triangle-20",
+     "seconds": 0.31253127,
+     "targetUnits": 812581.302
+    }
+   ],
+   "shippedMispricing": 3.4319534790436274e-05,
+   "shippedUnitsPerSecond": 89.23079045513431,
+   "underpriced": true,
+   "usableCalls": 7,
+   "wallSeconds": 9.245687456000002
+  },
+  "mode22": {
+   "calls": 35,
+   "candidates": [
+    {
+     "calls": 35,
+     "count": "fullRescores",
+     "maxPerSecond": 3677.0474924426258,
+     "medianPerSecond": 1315.2268969161328,
+     "minPerSecond": 667.9104836408495,
+     "residualRms": 1.4350738762567565,
+     "scaledWeight": 1976845,
+     "spread": 5.505299860542175,
+     "weight": 1976.8452166666666,
+     "worstOvercharge": 2.7957514411120634,
+     "worstUndercharge": 0.5078290941334359
+    },
+    {
+     "calls": 35,
+     "count": "candidateQueries",
+     "maxPerSecond": 7265794.969177692,
+     "medianPerSecond": 2577072.2642209223,
+     "minPerSecond": 648782.248500868,
+     "residualRms": 2.075608029813824,
+     "scaledWeight": 1009,
+     "spread": 11.199127266454441,
+     "weight": 1.0088968152338595,
+     "worstOvercharge": 2.819399001748297,
+     "worstUndercharge": 0.2517516708818416
+    },
+    {
+     "calls": 35,
+     "count": "neighborTests",
+     "maxPerSecond": 11836333.881725706,
+     "medianPerSecond": 9023612.039860394,
+     "minPerSecond": 710152.8547813105,
+     "residualRms": 3.055619740360063,
+     "scaledWeight": 288,
+     "spread": 16.66730451343559,
+     "weight": 0.2881329547984673,
+     "worstOvercharge": 1.3117068674318613,
+     "worstUndercharge": 0.07869940015642533
+    },
+    {
+     "calls": 35,
+     "count": "exactPairTests",
+     "maxPerSecond": 12900.41305117123,
+     "medianPerSecond": 539.2976968605996,
+     "minPerSecond": 23.48065538086057,
+     "residualRms": 4.801979396721169,
+     "scaledWeight": 4821085,
+     "spread": 549.406004301164,
+     "weight": 4821.084931634821,
+     "worstOvercharge": 23.92076422033339,
+     "worstUndercharge": 0.043539320708298836
+    }
+   ],
+   "globalUnits": 73884014,
+   "shippedMispricing": 1.0465282079823384,
+   "shippedUnitsPerSecond": 2720973.3407540796,
+   "underpriced": false,
+   "usableCalls": 35,
+   "wallSeconds": 27.153523664999998
+  },
+  "mode23": {
+   "calls": 19,
+   "candidates": [
+    {
+     "calls": 19,
+     "count": "exactPairTests",
+     "maxPerSecond": 2807.828671743844,
+     "medianPerSecond": 1047.5956459579372,
+     "minPerSecond": 776.8978208354856,
+     "residualRms": 1.3588948597980457,
+     "scaledWeight": 2481874,
+     "spread": 3.614154392561264,
+     "weight": 2481.8736217851697,
+     "worstOvercharge": 2.6802599672665908,
+     "worstUndercharge": 0.7416008493669124
+    },
+    {
+     "calls": 19,
+     "count": "fullRescores",
+     "maxPerSecond": 2781.108279056431,
+     "medianPerSecond": 1667.9974242813125,
+     "minPerSecond": 578.7558351830588,
+     "residualRms": 1.430466734300825,
+     "scaledWeight": 1558755,
+     "spread": 4.805322227423892,
+     "weight": 1558.7554046255545,
+     "worstOvercharge": 1.6673336772415717,
+     "worstUndercharge": 0.3469764561731422
+    },
+    {
+     "calls": 19,
+     "count": "candidateQueries",
+     "maxPerSecond": 6788497.551973067,
+     "medianPerSecond": 1152896.1667765188,
+     "minPerSecond": 820060.1196694755,
+     "residualRms": 1.7350233537779602,
+     "scaledWeight": 2255,
+     "spread": 8.278048632226092,
+     "weight": 2.2551900812278376,
+     "worstOvercharge": 5.888212440634277,
+     "worstUndercharge": 0.7113044030342749
+    },
+    {
+     "calls": 19,
+     "count": "neighborTests",
+     "maxPerSecond": 14218607.888157636,
+     "medianPerSecond": 1701678.141867006,
+     "minPerSecond": 1210900.0451468464,
+     "residualRms": 2.214903621081074,
+     "scaledWeight": 1528,
+     "spread": 11.742181318056964,
+     "weight": 1.5279035065628774,
+     "worstOvercharge": 8.355638788753325,
+     "worstUndercharge": 0.7115917019526974
+    }
+   ],
+   "globalUnits": 29731458,
+   "shippedMispricing": 0.8107459825074943,
+   "shippedUnitsPerSecond": 2107939.554519485,
+   "underpriced": false,
+   "usableCalls": 19,
+   "wallSeconds": 14.104511647999995
+  },
+  "mode26": {
+   "calls": 2,
+   "candidates": [
+    {
+     "calls": 2,
+     "count": "candidateQueries",
+     "maxPerSecond": 882702.8530586165,
+     "medianPerSecond": 871264.6646392391,
+     "minPerSecond": 859826.4762198617,
+     "residualRms": 1.0132158641007998,
+     "scaledWeight": 2984,
+     "spread": 1.0266058064870582,
+     "weight": 2.9841678487863055,
+     "worstOvercharge": 1.013128259280564,
+     "worstUndercharge": 0.9868717407194362
+    },
+    {
+     "calls": 2,
+     "count": "fullRescores",
+     "maxPerSecond": 2053.071617373671,
+     "medianPerSecond": 1974.603584956038,
+     "minPerSecond": 1896.1355525384051,
+     "residualRms": 1.040568725280168,
+     "scaledWeight": 1316720,
+     "spread": 1.082766268806664,
+     "weight": 1316.7199836000934,
+     "worstOvercharge": 1.0397386255223373,
+     "worstUndercharge": 0.9602613744776627
+    },
+    {
+     "calls": 2,
+     "count": "neighborTests",
+     "maxPerSecond": 1430265.869971229,
+     "medianPerSecond": 1226347.4036918683,
+     "minPerSecond": 1022428.9374125074,
+     "residualRms": 1.183438419634412,
+     "scaledWeight": 2120,
+     "spread": 1.3988902481485386,
+     "weight": 2.1201170175537594,
+     "worstOvercharge": 1.1662811579047443,
+     "worstUndercharge": 0.8337188420952557
+    },
+    {
+     "calls": 2,
+     "count": "exactPairTests",
+     "maxPerSecond": 110.82436106160542,
+     "medianPerSecond": 80.52954606250188,
+     "minPerSecond": 50.23473106339833,
+     "residualRms": 1.4961722628919765,
+     "scaledWeight": 32286287,
+     "spread": 2.2061302751226126,
+     "weight": 32286.286551051046,
+     "worstOvercharge": 1.3761950300277448,
+     "worstUndercharge": 0.6238049699722552
+    }
+   ],
+   "globalUnits": 3200229,
+   "shippedMispricing": 0.3341530936870747,
+   "shippedUnitsPerSecond": 868798.0435863942,
+   "underpriced": false,
+   "usableCalls": 2,
+   "wallSeconds": 3.683513129000003
+  },
+  "mode31": {
+   "calls": 2,
+   "candidates": [],
+   "globalUnits": 0,
+   "shippedMispricing": null,
+   "shippedUnitsPerSecond": null,
+   "underpriced": false,
+   "usableCalls": 0,
+   "wallSeconds": 0
+  },
+  "mode34": {
+   "calls": 20,
+   "candidates": [
+    {
+     "calls": 18,
+     "count": "neighborTests",
+     "maxPerSecond": 3926575.6834075833,
+     "medianPerSecond": 2246461.478749322,
+     "minPerSecond": 205542.51021322276,
+     "residualRms": 2.329830989535588,
+     "scaledWeight": 1157,
+     "spread": 19.103472460924447,
+     "weight": 1.1573757327223366,
+     "worstOvercharge": 1.7478936187206005,
+     "worstUndercharge": 0.09149612052446808
+    },
+    {
+     "calls": 18,
+     "count": "candidateQueries",
+     "maxPerSecond": 1610132.9240745716,
+     "medianPerSecond": 775174.5368123262,
+     "minPerSecond": 45940.824783931486,
+     "residualRms": 2.5719001804524386,
+     "scaledWeight": 3354,
+     "spread": 35.04797599188381,
+     "weight": 3.354083340626388,
+     "worstOvercharge": 2.0771230833971437,
+     "worstUndercharge": 0.05926513656246941
+    },
+    {
+     "calls": 18,
+     "count": "fullRescores",
+     "maxPerSecond": 15.214639769820854,
+     "medianPerSecond": 1.2523669329984397,
+     "minPerSecond": 0.3315869401895902,
+     "residualRms": 3.109753534630093,
+     "scaledWeight": 2076068867,
+     "spread": 45.88431547129582,
+     "weight": 2076068.867272815,
+     "worstOvercharge": 12.148707674190733,
+     "worstUndercharge": 0.2647682012776389
+    },
+    {
+     "calls": 18,
+     "count": "exactPairTests",
+     "maxPerSecond": 224842.8651140514,
+     "medianPerSecond": 1676.1231711783917,
+     "minPerSecond": 2.6526955215167214,
+     "residualRms": 23.543148379271493,
+     "scaledWeight": 1551199,
+     "spread": 84760.14804197878,
+     "weight": 1551.1986497818536,
+     "worstOvercharge": 134.14459568384615,
+     "worstUndercharge": 0.0015826375812535032
+    }
+   ],
+   "globalUnits": 20268681,
+   "shippedMispricing": 0.42780857145590545,
+   "shippedUnitsPerSecond": 1112302.2857853542,
+   "underpriced": false,
+   "usableCalls": 18,
+   "wallSeconds": 18.222277575999996
+  }
+ },
+ "referenceRate": 2600000,
+ "scale": 1000
+}
