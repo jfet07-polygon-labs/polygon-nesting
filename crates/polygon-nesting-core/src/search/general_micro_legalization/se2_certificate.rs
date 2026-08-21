@@ -1434,6 +1434,220 @@ pub fn se2_rigidity_certificate(
     })
 }
 
+/// One exactly-validated layout the certificate's witness reached, and what it
+/// cost to reach it.
+///
+/// This is the certificate reduced to the only part a *search* can spend: the
+/// moved placements themselves. Everything else the certificate reports —
+/// brackets, dual bounds, per-family residuals, the four programs — is a
+/// diagnostic about what is possible, and a schedule slice has no budget for it.
+#[cfg(feature = "sparse-rotation")]
+#[derive(Clone, Debug)]
+pub struct Se2WitnessProposal {
+    /// The moved layout. Already accepted by `validate_publication`, because
+    /// the line search never returns a scale it did not validate.
+    pub placements: Vec<GeneralFastPlacement>,
+    /// The publication measure on `placements`.
+    pub published_depth_mm: f64,
+    /// `parent published depth - published_depth_mm`. Zero when the line search
+    /// fell back to the parent, which is always available and never rejected.
+    pub delta_mm: f64,
+    /// The fraction of the model's vector that survived exact validation.
+    pub scale: f64,
+    /// Largest applied `|dtheta|` in degrees, so a caller can tell a rotation
+    /// witness from a translation one without re-deriving it.
+    pub max_abs_dtheta_deg: f64,
+    pub moved_pieces: usize,
+    /// Exact validations the line search spent. The dominant per-call price
+    /// after the row build, and the number a slice budget is charged.
+    pub validations: usize,
+    /// Rows the program carried, for the same reason.
+    pub rows: usize,
+}
+
+/// The certificate's **witness only**, on the one program a search can use.
+///
+/// [`se2_rigidity_certificate`] solves four programs and line-searches all four,
+/// because it is a diagnostic and the comparison is its subject. A proposal
+/// source cannot afford that: docs/experiments/se2-rigidity/ measured a
+/// certificate call at up to a second, against a mode-34 slice that is 0.78 s
+/// whole. This runs `{depth-only} x {SE(2)}` — the headline column, the one that
+/// actually carries rotation — once, and returns the moved placements.
+///
+/// It is still not cheap, and it is not pretended to be: the row build is
+/// `O(pairs)` and the solve is `O(iterations * rows)`. `iterations` and
+/// `trust_radius_mm` are the caller's two knobs and
+/// docs/experiments/sparse-rotation/ §3 prices the call against a slice at the
+/// values the schedule uses. The honest reason to keep the entry point narrow
+/// is that a wide one would invite a caller to run it per step.
+///
+/// `Ok(None)` means the solve produced no witness — a parent the line search
+/// could not evaluate — which is a refusal, not an error, and leaves the caller
+/// with the layout it already had.
+#[cfg(feature = "sparse-rotation")]
+pub fn se2_witness_proposal(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+    trust_radius_mm: f64,
+    iterations: usize,
+) -> Result<Option<Se2WitnessProposal>, String> {
+    if pieces.is_empty() || placements.is_empty() {
+        return Err("se2 witness proposal requires at least one placement".to_owned());
+    }
+    if !trust_radius_mm.is_finite() || trust_radius_mm <= 0.0 {
+        return Err("se2 witness proposal trust radius must be positive and finite".to_owned());
+    }
+    if iterations == 0 {
+        return Err("se2 witness proposal requires at least one iteration".to_owned());
+    }
+
+    let pieces_by_id = pieces
+        .iter()
+        .enumerate()
+        .map(|(index, piece)| (piece.id, index))
+        .collect::<BTreeMap<_, _>>();
+    let expansion_mm = collision_expansion_mm(settings);
+    let edge_clearance_mm = effective_sheet_edge_clearance_mm(settings);
+    let collision_inset_mm = collision_sheet_inset_mm(settings);
+    let contracts = Contracts {
+        material_pair_mm: settings.total_padding_mm + 2.0 * settings.flattening_sag_tolerance_mm,
+        material_edge_mm: edge_clearance_mm + settings.flattening_sag_tolerance_mm,
+        collision_edge_mm: collision_inset_mm,
+    };
+    if !contracts.material_pair_mm.is_finite()
+        || !contracts.material_edge_mm.is_finite()
+        || !expansion_mm.is_finite()
+    {
+        return Err("se2 witness proposal requires a finite clearance contract".to_owned());
+    }
+
+    let geometries = placements
+        .iter()
+        .map(|placement| {
+            let index = pieces_by_id
+                .get(placement.piece_id.as_str())
+                .ok_or_else(|| format!("unknown piece id `{}`", placement.piece_id))?;
+            let piece = pieces[*index];
+            build_geometry(piece.polygon, placement, expansion_mm, piece.allow_rotation)
+                .ok_or_else(|| format!("could not build a geometry for `{}`", placement.piece_id))
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+
+    let parent_exact = exact_placements(pieces, &pieces_by_id, placements)?;
+    let published_depth_mm = raw_source_long_axis_depth_mm(&parent_exact, edge_clearance_mm)
+        .map_err(|error| error.message().to_owned())?;
+    let strip_bound_mm = geometries
+        .iter()
+        .map(|geometry| geometry.collision.outer_bounds.max_y)
+        .fold(f64::NEG_INFINITY, f64::max)
+        + collision_inset_mm;
+    if !strip_bound_mm.is_finite() {
+        return Err("se2 witness proposal could not measure a strip bound".to_owned());
+    }
+
+    let slots = placements.len();
+    let theta_caps: Vec<f64> = geometries
+        .iter()
+        .map(|geometry| {
+            if geometry.rotatable {
+                trust_radius_mm / geometry.reach_mm
+            } else {
+                0.0
+            }
+        })
+        .collect();
+    let rows = build_rows(
+        &geometries,
+        &contracts,
+        settings,
+        published_depth_mm,
+        strip_bound_mm,
+        edge_clearance_mm,
+        collision_inset_mm,
+        trust_radius_mm,
+        &theta_caps,
+    );
+
+    let program = Se2Program::DepthOnly;
+    let mut delta_rows = Vec::new();
+    let mut other_rows = Vec::new();
+    for (index, row) in rows.iter().enumerate() {
+        if row.family.carries_delta(program) {
+            delta_rows.push(index);
+        } else {
+            other_rows.push(index);
+        }
+    }
+    let Solved {
+        feasible: feasible_x,
+        objective: objective_x,
+        ..
+    } = solve_program(
+        &rows,
+        &delta_rows,
+        &other_rows,
+        slots,
+        trust_radius_mm,
+        &theta_caps,
+        iterations,
+    );
+
+    let validation_settings = PublicationValidationSettings {
+        sheet_width_mm: settings.sheet_short_axis_mm,
+        sheet_height_mm: settings.sheet_long_axis_mm,
+        total_padding_mm: settings.total_padding_mm,
+        sheet_edge_clearance_mm: settings.sheet_edge_clearance_mm,
+        flattening_sag_tolerance_mm: settings.flattening_sag_tolerance_mm,
+    };
+    let exact_context = ExactContext {
+        pieces,
+        pieces_by_id: &pieces_by_id,
+        placements,
+        geometries: &geometries,
+        validation_settings,
+        edge_clearance_mm,
+    };
+    let Ok(witness) = witness_outcome(
+        &exact_context,
+        &feasible_x,
+        &objective_x,
+        published_depth_mm,
+    ) else {
+        return Ok(None);
+    };
+    let (Some(depth_mm), Some(delta_mm)) = (witness.published_depth_mm, witness.delta_mm) else {
+        return Ok(None);
+    };
+    // The vector the witness reports is the *applied* one - already multiplied
+    // by the scale the validator accepted - so it is applied at unit scale here.
+    // Rebuilding the layout rather than carrying it out of the line search keeps
+    // `witness_outcome` the single owner of "which scale won".
+    let moved = placements
+        .iter()
+        .zip(&geometries)
+        .zip(&witness.vector)
+        .map(|((placement, geometry), (_, dx, dy, dtheta_deg))| {
+            apply_se2(
+                placement,
+                geometry.centre,
+                (*dx, *dy, dtheta_deg.to_radians()),
+            )
+        })
+        .collect();
+
+    Ok(Some(Se2WitnessProposal {
+        placements: moved,
+        published_depth_mm: depth_mm,
+        delta_mm,
+        scale: witness.scale,
+        max_abs_dtheta_deg: witness.max_abs_dtheta_deg,
+        moved_pieces: witness.moved_pieces,
+        validations: witness.validations,
+        rows: rows.len(),
+    }))
+}
+
 /// Sol review 6 §3's three cases, plus the two the rewrite makes reachable.
 ///
 /// The reference is compared against the **validated** delta, never against

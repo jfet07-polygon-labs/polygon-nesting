@@ -397,6 +397,32 @@ fast-contract-validator = []
 # wall battery is run on a build without this. See
 # docs/experiments/rotation-tax/ §1.
 rotation-tax-census = ["continuous-rotation"]
+# The witness-driven, clamp-triggered form of the continuous-rotation operator,
+# plus the equivariant-offset construction its per-rung price turns on.
+#
+# docs/experiments/rotation-tax/ §4 measured design A - a rotation axis in every
+# refinement descent, every piece, every slice - at **+6.735 mm worse** on
+# mixed-61 at a ten-second wall, and §1 said why: 1.13M surrogate builds, 79% of
+# them compulsory misses, 81.4% of each build one `ClipperOffset` call. Two
+# reviews converged on the same two verdicts - blanket arming is dead on the
+# wall, and a sparse form pays the same per-rung price unless the build cost is
+# fixed first - so this feature carries both halves:
+#
+# * **the equivariant lever.** A miter-join offset is rotation-equivariant, so
+#   the operator offsets each piece *once* and derives every rung by
+#   transforming the already-offset ring. It is NOT bit-identical to the
+#   per-rung offset - the two orders round differently on Clipper's integer grid
+#   - so it is a distinct operator geometry and carries its own matched-arm
+#   quality battery rather than an answer-preservation claim;
+# * **sparse arming.** Rotation is proposed only for the pieces a stalled
+#   compression-schedule step names through its own violating-pair queue, and
+#   only while that step's translation repair is not making progress.
+#
+# Off by default, stacked on `continuous-rotation` (whose lane, cache, rung
+# derivation and residency guard it reuses in full) and further gated by three
+# runtime spec keys - `roteq`, `sparserot` and `rotbit` - so one binary can hold
+# every arm of the battery. See docs/experiments/sparse-rotation/.
+sparse-rotation = ["continuous-rotation"]
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }

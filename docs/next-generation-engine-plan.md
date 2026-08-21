@@ -6362,3 +6362,85 @@ reaching a mode-34 slice at all, so the instrument destroyed the phase structure
 it existed to describe.
 
 Evidence, drivers and every battery: `docs/experiments/rotation-tax/`.
+
+
+## Sparse rotation: the tax is gone, the operator is accepted five times as often, and the depth is a null
+
+The brief was to take the expressive degree of freedom without the blanket tax.
+Both reviews of the previous round had converged on the same pair of verdicts —
+blanket design A is dead on the wall, and a sparse form pays the same per-rung
+price unless the build cost is fixed first — so this round fixed the build cost
+first, made the arming sparse second, and measured the compound.
+
+**The build cost is fixed, and the previous chapter's own estimate was right.**
+A miter-join offset is rotation-equivariant, so the operator now offsets each
+piece **once** and derives every rung by transforming the already-offset ring.
+The previous chapter priced that at "roughly four times cheaper per rung" and
+declined to take it because it changes the surrogate's geometry. Measured:
+**1.271 µs per build against 4.19 µs** in the anytime battery (3.30x), and
+**4.34x** and **4.54x** in the equal-work battery, with **100% coverage and zero
+fallbacks over 1.4 M builds** on three requests. It is not bit-identical — the
+two orders miter on different snappings of Clipper's integer grid — so it was
+given the matched-arm quality battery that licence required, and it **passed in
+the favourable direction**: at equal work on twelve pinned parents it is
+**0.040 mm better than the per-rung offset on 27 of 36 paired cells** with
+design A armed, and 0.028 mm better on 18 of 36 with design B.
+
+**The arming is sparse, and on two of three requests it costs literally
+nothing.** A stall is a repair sweep that left the frontier infeasible and did
+not lower the loss; at that point, and only then, the pieces the lane's own
+violating-pair queue names are offered rungs for the rest of the step. Mean
+episode width is **2.6 of 61 pieces**. On shapes-17 and triangle-20 the schedule
+steps do not stall, so **zero episodes open and zero surrogates are built**,
+against design A's 355,404 and 1,336,518 — and the armed slice returns to parity
+with the unarmed one. That is the control flow, not a policy: the
+request-adaptive disarm bit this round also built **never fired**, because it
+requires an episode to have evidence about and there were none.
+
+**The compound is the finding, and it is a null.** The armed mode-34 slice now
+costs **1.064x** the unarmed one at ten seconds where design A cost 2.12x; rungs
+are accepted **5.22x** as often per proposal (23.36% against 4.47%); the arm
+produces **91% as many improvements from 17% as many proposals**; and it
+publishes on 31 of 31 slices where design A published on 12 of 15. And at a
+ten-second wall on mixed-61, over **six** seeds, the paired difference is
+**−0.290 mm with a within-seed spread of 4.0 mm** — a favourable direction the
+instrument cannot resolve. At thirty seconds it is resolvable and against the
+operator: **+1.483 mm, base better on 5 of 6 seeds.** At equal work, where the
+throughput question is removed, the arm is **−0.077 mm on 24 of 36 paired
+cells**, which is real and is two orders of magnitude short of the gap.
+
+**The witness was wired, priced, and is dominated.** Design C runs the rewritten
+SE(2) certificate's one usable program when a stall outlives a step. It costs
+**1.42 ms a call** — 0.18% of a slice, three orders of magnitude below the
+diagnostic's four-program call — and the round's working hypothesis that a
+slice-affordable iteration budget would not converge is **retracted**: at 64
+iterations the witness is within 4e-5 mm of the witness at 20,000, with
+`scale = 1.0`. It is accepted 6 to 16 times across twelve parents and buys up to
+2.714 mm against the running incumbent. The final published depth moves on
+**0 of 12 cells**. Everything the certificate can point at, the schedule's own
+1,600 one-micron steps reach without it; at a trust radius small enough for the
+linearization to hold, the translation column returns exactly the trust radius,
+so the witness's answer *is the box*.
+
+**What the round removes is an explanation.** For three chapters the rotation
+operator's cost has been a sufficient account of why it loses. It is no longer:
+the operator is nearly free, it is five times more likely to be right when it
+proposes, and the depth still does not move. The residual is quality per action,
+which is what Sol review 7 predicted in a sentence this round has now measured.
+
+One caveat is load-bearing and is carried forward rather than buried. This
+round's base arm reproduces the base commit **document for document at a work
+budget, 9 of 9** — and its own ten-second wall median differs from the previous
+chapter's by 2 mm on the same seed and 5 mm across a wider seed set. A
+wall-budget median on this fixture is not stable to the three decimals this
+campaign has been quoting it to, and every millimetre claim above is stated
+against this session's own base arm for that reason.
+
+Four pinned gates hit on **four** binaries — the base commit, this tree's gate
+build, and both measurement builds — with the whole-document digest identical
+across all four on all four, which is the check that matters because the
+constructor refactor those two constructions share is not feature-gated.
+Determinism across two processes with the operator armed is 9 of 9. Three
+suites pass on first attempt, including the campaign's known flake.
+
+Evidence, drivers and every battery: `docs/experiments/sparse-rotation/`.

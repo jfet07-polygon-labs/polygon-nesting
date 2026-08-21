@@ -736,6 +736,21 @@ pub struct ScheduleSliceReport {
     pub rotation_surrogate_build_ms: f64,
     pub rotation_surrogate_cells: usize,
     pub rotation_builds_refused: usize,
+    /// The sparse operator's account of the same slice: how the rungs were
+    /// built, how sparse the arming actually was, and what the witness cost.
+    /// See `GeneralCompressionScheduleDiagnostics` for each counter's
+    /// denominator; all zero without `sparse-rotation` compiled in.
+    pub sparse_rotation: bool,
+    pub rotation_equivariant_offset: bool,
+    pub rotation_equivariant_builds: usize,
+    pub rotation_equivariant_fallbacks: usize,
+    pub sparse_rotation_episodes: usize,
+    pub sparse_rotation_pieces_armed: usize,
+    pub sparse_rotation_sweeps: usize,
+    pub se2_witness_calls: usize,
+    pub se2_witness_accepted: usize,
+    pub se2_witness_ms: f64,
+    pub se2_witness_bought_mm: f64,
 }
 
 /// Why a phase stopped issuing operator calls.
@@ -1488,6 +1503,35 @@ pub struct PortfolioSettings {
     /// a dynamic-hazard or directional lane by accident.
     #[cfg(feature = "continuous-rotation")]
     pub continuous_rotation: bool,
+    /// Derives rung surrogates from each piece's offset ring instead of
+    /// offsetting per rung. See
+    /// `GeneralRelaxedSettings::rotation_equivariant_offset`; inert unless
+    /// [`Self::continuous_rotation`] is also set.
+    #[cfg(feature = "sparse-rotation")]
+    pub rotation_equivariant_offset: bool,
+    /// Design B: rungs only for the pieces a stalled schedule step names.
+    ///
+    /// Also narrows [`Self::continuous_rotation`] to mode 34 - see the
+    /// `arm_operator` site for why mode 22 has nothing to stall.
+    #[cfg(feature = "sparse-rotation")]
+    pub sparse_rotation: bool,
+    /// Design C's budget, or `None` to never call the certificate.
+    #[cfg(feature = "sparse-rotation")]
+    pub se2_witness: Option<crate::search::general_relaxed::Se2WitnessSettings>,
+    /// The request-adaptive disarm: after
+    /// [`SPARSE_ROTATION_STERILE_EPISODES`] episodes on *this* request that
+    /// bought nothing, sparse rotation comes off for the rest of the run, with
+    /// one late audition.
+    ///
+    /// The same shape as [`Self::schedule_sterile_bit`] and for the same reason:
+    /// the prior that says rotation is worth proposing is a mixed-61 prior and
+    /// it does not cross a request. docs/experiments/rotation-tax/ §4.5 measured
+    /// shapes-17 paying 355,404 surrogate builds and triangle-20 paying
+    /// 1,336,518 rotation iterations for a depth delta of **exactly zero** on
+    /// 0 of 9 published slices each - two requests where every rung the operator
+    /// has ever proposed was waste, discoverable in one slice.
+    #[cfg(feature = "sparse-rotation")]
+    pub sparse_rotation_bit: bool,
     /// How many consecutive actions may publish nothing before the whole v3
     /// loop stops, with its queue still full. `0` disables the rule, which is
     /// merged-HEAD v3's behaviour.
@@ -1667,6 +1711,18 @@ impl PortfolioSettings {
             compression_schedule_parallel_confirm: false,
             #[cfg(feature = "continuous-rotation")]
             continuous_rotation: false,
+            #[cfg(feature = "sparse-rotation")]
+            rotation_equivariant_offset: false,
+            #[cfg(feature = "sparse-rotation")]
+            sparse_rotation: false,
+            #[cfg(feature = "sparse-rotation")]
+            se2_witness: None,
+            // On by default *within* the sparse operator, which is itself off by
+            // default: a mechanism whose whole claim is "spend nothing where
+            // there is nothing to buy" should not need a second flag to stop
+            // spending. The battery runs it both ways anyway.
+            #[cfg(feature = "sparse-rotation")]
+            sparse_rotation_bit: true,
             barren_action_patience: BARREN_ACTION_PATIENCE,
             diversify_in_queue: true,
             schedule_wall_prior: true,
@@ -1958,7 +2014,56 @@ struct Coordinator<'a> {
     phase_zero_cost: f64,
     /// What each v3 action class has cost and produced *in this run*.
     class_stats: BTreeMap<ActionClass, ClassStats>,
+    /// The sparse operator's request-adaptive disarm. See [`SparseRotationBit`].
+    #[cfg(feature = "sparse-rotation")]
+    sparse_rotation_bit: SparseRotationBit,
 }
+
+/// One bit, one audition — the sparse operator's request-adaptive disarm.
+///
+/// Deliberately the same shape as the compression-schedule sterile bit
+/// (`PortfolioSettings::schedule_sterile_bit`), because it acts on the same kind
+/// of evidence for the same reason: a prior measured on one request does not
+/// cross to another, and the cheapest place to find that out is the first slice
+/// where the mechanism could have fired and did not.
+///
+/// The evidence is a **sterile slice**: an m34 slice in which design B opened at
+/// least one episode - so the mechanism had its trigger, its pieces and its
+/// budget - and not one accepted move changed a pose. That is not "rotation was
+/// not offered"; it is "rotation was offered exactly where the clamp said to
+/// offer it, and bought nothing".
+#[cfg(feature = "sparse-rotation")]
+#[derive(Clone, Debug, Default)]
+struct SparseRotationBit {
+    /// Slices that opened an episode and accepted no rotation move.
+    sterile_slices: usize,
+    /// Whether the operator is currently off.
+    disarmed: bool,
+    /// Whether the one audition has been spent. It fires at most once per run,
+    /// which is what keeps the bit a claim this run can still disprove instead
+    /// of an absorbing state.
+    auditioned: bool,
+    /// Operator calls that published nothing since the bit fired.
+    barren_calls: usize,
+}
+
+/// Sterile slices before the sparse operator comes off this request.
+///
+/// One, and for the same reason `SCHEDULE_STERILE_ACTIONS` is one: the two
+/// requests where this has to fire (`shapes-17`, `triangle-20`) have never
+/// published a single m34 slice in any round of this campaign, in either arm,
+/// so waiting for a second slice buys nothing but a second slice's wall.
+#[cfg(feature = "sparse-rotation")]
+const SPARSE_ROTATION_STERILE_SLICES: usize = 1;
+
+/// Barren operator calls after the bit fires before the one audition.
+///
+/// [`BARREN_ACTION_PATIENCE`] itself, exactly as `SCHEDULE_AUDITION_BARREN` is:
+/// the audition exists to keep the rule falsifiable, and a run that has gone
+/// sixteen calls without publishing is close enough to over that handing the
+/// operator back is a cheap way to be wrong out loud.
+#[cfg(feature = "sparse-rotation")]
+const SPARSE_ROTATION_AUDITION_BARREN: usize = BARREN_ACTION_PATIENCE;
 
 /// One action class's running evidence.
 #[derive(Clone, Debug, Default)]
@@ -2123,6 +2228,49 @@ impl<'a> Coordinator<'a> {
             relaxed.continuous_rotation =
                 self.settings.continuous_rotation && matches!(mode, 22 | 34);
         }
+        // The sparse operator, scoped to **mode 34 alone**.
+        //
+        // Design B's trigger is a compression-schedule step whose translation
+        // repair stalled, and mode 22 has no schedule, no clamp and no step to
+        // stall: an m22 lane with `sparse_rotation` set starts at
+        // `RotationArming::Nobody` and nothing ever arms it, so it proposes no
+        // rungs at all. That is the intended reading of "sparse" and not an
+        // oversight - docs/experiments/rotation-tax/ §0 measured mode 22 paying
+        // for **85%** of design A's 1.13 M surrogate builds while every piece of
+        // detailed attribution the campaign has is about m34 - but leaving it
+        // implicit in a lane's arming would be a scope that drifts, so it is
+        // written here beside the one above.
+        #[cfg(feature = "sparse-rotation")]
+        let sparse_audition = {
+            // The bit, read here and nowhere else. `audition` is the one call
+            // the run hands back after the operator has been off for
+            // `SPARSE_ROTATION_AUDITION_BARREN` barren calls; it is consumed
+            // whether or not this call turns out to be an m34 slice, because a
+            // second chance that could be spent repeatedly is not one audition.
+            let bit = &mut self.sparse_rotation_bit;
+            let audition = self.settings.sparse_rotation_bit
+                && bit.disarmed
+                && !bit.auditioned
+                && bit.barren_calls >= SPARSE_ROTATION_AUDITION_BARREN;
+            let off = self.settings.sparse_rotation_bit && bit.disarmed && !audition;
+            if audition {
+                bit.auditioned = true;
+            }
+            let armed = self.settings.sparse_rotation && !off;
+            relaxed.rotation_equivariant_offset =
+                self.settings.rotation_equivariant_offset && relaxed.continuous_rotation;
+            relaxed.sparse_rotation = armed && mode == 34;
+            relaxed.se2_witness = self.settings.se2_witness.filter(|_| relaxed.sparse_rotation);
+            // Design A's mode-22 arming has no trigger under design B, so it is
+            // withdrawn rather than left proposing rungs no stall asked for.
+            if self.settings.sparse_rotation && mode == 22 {
+                relaxed.continuous_rotation = false;
+            }
+            if self.settings.sparse_rotation && mode == 34 && !armed {
+                relaxed.continuous_rotation = false;
+            }
+            audition
+        };
         tune(&mut relaxed);
         let parent_arm = GeneralCoupledSeparatorArmDiagnostics {
             final_placements: crate::search::general_relaxed::coupled_placement_diagnostics(parent),
@@ -2177,6 +2325,35 @@ impl<'a> Coordinator<'a> {
             disposition = Some(format!("{archived:?}"));
             raw_depth_mm = depth;
             published = self.try_publish(&produced, &format!("mode{mode}"));
+        }
+        // The bit's evidence, taken from the slice's own report rather than from
+        // anything this function inferred. `sparse_rotation_episodes > 0` is
+        // "the mechanism fired"; `rotation_accepted_moves == 0` is "and not one
+        // of its proposals survived into a committed move".
+        #[cfg(feature = "sparse-rotation")]
+        if self.settings.sparse_rotation_bit {
+            let slice = population.compression_schedule.as_ref();
+            let episodes = slice.map_or(0, |report| report.sparse_rotation_episodes);
+            let accepted = slice.map_or(0, |report| report.rotation_accepted_moves);
+            if episodes > 0 && accepted == 0 {
+                self.sparse_rotation_bit.sterile_slices += 1;
+                if self.sparse_rotation_bit.sterile_slices >= SPARSE_ROTATION_STERILE_SLICES {
+                    self.sparse_rotation_bit.disarmed = true;
+                    self.sparse_rotation_bit.barren_calls = 0;
+                }
+            } else if episodes > 0 && accepted > 0 {
+                // The audition disproved the bit: rotation is productive on this
+                // request after all, so the operator comes back for good.
+                self.sparse_rotation_bit.disarmed = false;
+                self.sparse_rotation_bit.sterile_slices = 0;
+            }
+            if self.sparse_rotation_bit.disarmed {
+                if published {
+                    self.sparse_rotation_bit.barren_calls = 0;
+                } else if !sparse_audition {
+                    self.sparse_rotation_bit.barren_calls += 1;
+                }
+            }
         }
         self.operator_calls.push(OperatorCallReport {
             phase: self.phase_name.clone(),
@@ -2357,6 +2534,8 @@ pub fn run_portfolio(
         protected_fraction: 0.0,
         phase_zero_cost: 0.0,
         class_stats: BTreeMap::new(),
+        #[cfg(feature = "sparse-rotation")]
+        sparse_rotation_bit: SparseRotationBit::default(),
     };
 
     // Everything phase 0 produced goes into the archive, including the arms
@@ -4270,6 +4449,17 @@ fn schedule_slice_report(
         rotation_surrogate_build_ms: report.rotation_surrogate_build_ms,
         rotation_surrogate_cells: report.rotation_surrogate_cells,
         rotation_builds_refused: report.rotation_builds_refused,
+        sparse_rotation: report.sparse_rotation,
+        rotation_equivariant_offset: report.rotation_equivariant_offset,
+        rotation_equivariant_builds: report.rotation_equivariant_builds,
+        rotation_equivariant_fallbacks: report.rotation_equivariant_fallbacks,
+        sparse_rotation_episodes: report.sparse_rotation_episodes,
+        sparse_rotation_pieces_armed: report.sparse_rotation_pieces_armed,
+        sparse_rotation_sweeps: report.sparse_rotation_sweeps,
+        se2_witness_calls: report.se2_witness_calls,
+        se2_witness_accepted: report.se2_witness_accepted,
+        se2_witness_ms: report.se2_witness_ms,
+        se2_witness_bought_mm: report.se2_witness_bought_mm,
     })
 }
 
@@ -6006,6 +6196,62 @@ mod tests {
         // never reaches sixteen consecutive barren actions.
         assert_eq!(SCHEDULE_AUDITION_BARREN, BARREN_ACTION_PATIENCE);
         assert!(SCHEDULE_AUDITION_BARREN > DIVERSIFY_AUDITION_BARREN);
+    }
+
+    /// The sparse operator's own bit is one sterile slice, one audition, and a
+    /// state a productive slice can leave.
+    ///
+    /// The last clause is the one worth a test. `schedule_sterile_bit` withholds
+    /// a whole action class and its audition can only ever hand the class back
+    /// for one call; this bit withholds a *degree of freedom* inside a class
+    /// that keeps running, so a run whose audition finds rotation productive
+    /// should keep it, not spend its one chance and go quiet again. The
+    /// transitions below are the ones `run_operator` performs, driven directly.
+    #[test]
+    #[cfg(feature = "sparse-rotation")]
+    fn the_sparse_rotation_bit_is_one_sterile_slice_and_a_reversible_verdict() {
+        assert_eq!(SPARSE_ROTATION_STERILE_SLICES, 1);
+        assert_eq!(SPARSE_ROTATION_AUDITION_BARREN, BARREN_ACTION_PATIENCE);
+
+        let mut bit = SparseRotationBit::default();
+        // A slice that opened episodes and accepted nothing fires the bit.
+        let sterile = |bit: &mut SparseRotationBit, episodes: usize, accepted: usize| {
+            if episodes > 0 && accepted == 0 {
+                bit.sterile_slices += 1;
+                if bit.sterile_slices >= SPARSE_ROTATION_STERILE_SLICES {
+                    bit.disarmed = true;
+                    bit.barren_calls = 0;
+                }
+            } else if episodes > 0 && accepted > 0 {
+                bit.disarmed = false;
+                bit.sterile_slices = 0;
+            }
+        };
+        sterile(&mut bit, 12, 0);
+        assert!(bit.disarmed, "one sterile slice is the evidence");
+
+        // A slice that never opened an episode is not evidence either way: the
+        // mechanism did not get its trigger, so it did not get its verdict.
+        let mut untried = SparseRotationBit::default();
+        sterile(&mut untried, 0, 0);
+        assert!(
+            !untried.disarmed,
+            "a slice with no stall says nothing about whether rotation pays"
+        );
+
+        // The audition is spent once and only after the barren wait.
+        bit.barren_calls = SPARSE_ROTATION_AUDITION_BARREN - 1;
+        assert!(bit.barren_calls < SPARSE_ROTATION_AUDITION_BARREN);
+        bit.barren_calls += 1;
+        assert!(!bit.auditioned);
+        bit.auditioned = true;
+
+        // And a productive audition reverses the verdict rather than exhausting
+        // it: `sterile_slices` goes back to zero, so the bit would need fresh
+        // evidence to fire again.
+        sterile(&mut bit, 4, 3);
+        assert!(!bit.disarmed);
+        assert_eq!(bit.sterile_slices, 0);
     }
 
     /// A scheduled compression slice is nine rungs of the same quantum the

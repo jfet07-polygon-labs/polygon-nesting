@@ -518,6 +518,72 @@ pub struct GeneralRelaxedSettings {
     /// setting is inert on every other lane, so a coordinator may set it once.
     #[cfg(feature = "continuous-rotation")]
     pub continuous_rotation: bool,
+    /// Derives every rung's surrogate from the piece's already-offset ring
+    /// rather than offsetting the rotated source ring.
+    ///
+    /// The lever docs/experiments/rotation-tax/ §5 named and did not take. It
+    /// removes the `ClipperOffset` call that was **81.4%** of a 5.78 µs build,
+    /// and it changes the surrogate's geometry at grid scale - so it is a
+    /// quality question, not a wall refactor, and
+    /// docs/experiments/sparse-rotation/ §1 is its matched-arm battery. Inert
+    /// unless [`Self::continuous_rotation`] is also set: the catalogue's own
+    /// builds are untouched, and the default build has neither the field nor
+    /// the branch.
+    #[cfg(feature = "sparse-rotation")]
+    pub rotation_equivariant_offset: bool,
+    /// Design B: propose rungs only for the pieces a stalled schedule step
+    /// names, and only while it is stalled.
+    ///
+    /// `false` reproduces design A on this binary - the whole lane armed for the
+    /// whole slice - which is the control the battery pairs against. `true`
+    /// starts the lane at [`RotationArming::Nobody`] and lets
+    /// `run_compression_schedule` arm the violating pieces for the remaining
+    /// sweeps of a step whose translation repair has stopped making progress.
+    ///
+    /// Inert on any lane the schedule does not drive, because nothing else
+    /// calls the arming entry point: a mode-22 lane with this set proposes no
+    /// rungs at all, which is deliberate. Mode 22 was 85% of design A's builds
+    /// (docs/experiments/rotation-tax/ §0) and is not a lane with a clamp to
+    /// bind.
+    #[cfg(feature = "sparse-rotation")]
+    pub sparse_rotation: bool,
+    /// Design C: the SE(2) rigidity certificate as a proposal source, invoked
+    /// when design B's stall persists through a whole step.
+    ///
+    /// `None` - the default - never calls it. `Some` is a **budget**, not a
+    /// switch: the certificate is a whole-parent solve that
+    /// docs/experiments/se2-rigidity/ measured at up to a second against a
+    /// mode-34 slice that is 0.78 s whole, so the only responsible way to arm it
+    /// is with a hard cap on calls per slice and the wall it took reported
+    /// beside whatever it bought.
+    ///
+    /// Requires `se2-rigidity-certificate` as well as `sparse-rotation`; with
+    /// only the latter compiled in the field exists, is accepted, and does
+    /// nothing, which is deliberate - the battery's arm labels then stay the
+    /// same across both binaries.
+    #[cfg(feature = "sparse-rotation")]
+    pub se2_witness: Option<Se2WitnessSettings>,
+}
+
+/// The three knobs design C is allowed.
+///
+/// `trust_radius_mm` is small on purpose. docs/experiments/se2-rigidity/ §4.2
+/// measured the crossover: at 6-100 µm the model's full step survives exact
+/// validation (`scale = 1.0`) and SE(2) beats translation by 1.5-1.8x, and past
+/// 0.25 mm `scale` collapses to a few percent because the linearization is
+/// buying model error. A proposal source wants the side of that crossover where
+/// the vector it hands over is real.
+#[cfg(feature = "sparse-rotation")]
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Se2WitnessSettings {
+    pub trust_radius_mm: f64,
+    /// Primal iterations per penalty weight. The solve is `O(iterations *
+    /// rows)` and mixed-61 carries 797-840 rows, so this is the term that
+    /// decides whether the call fits a slice.
+    pub iterations: usize,
+    /// Hard cap on calls per schedule slice. A slice that spends more than this
+    /// on the certificate is a slice that stopped compressing.
+    pub max_calls: usize,
 }
 
 impl GeneralRelaxedSettings {
@@ -553,6 +619,12 @@ impl GeneralRelaxedSettings {
             current_pose_overlay_classify_pairs: false,
             #[cfg(feature = "continuous-rotation")]
             continuous_rotation: false,
+            #[cfg(feature = "sparse-rotation")]
+            rotation_equivariant_offset: false,
+            #[cfg(feature = "sparse-rotation")]
+            sparse_rotation: false,
+            #[cfg(feature = "sparse-rotation")]
+            se2_witness: None,
         }
     }
 
@@ -3009,6 +3081,26 @@ struct WorkCounters {
     /// failing a slice, and it is the number to look at first if an armed arm
     /// under-performs.
     rotation_builds_refused: usize,
+    // ---- the sparse operator's own attribution ----
+    //
+    /// Rung surrogates derived from the piece's offset base rather than offset
+    /// from scratch. Against `rotation_surrogate_builds` this is the lever's
+    /// coverage: the two are equal when every build took the equivariant path.
+    rotation_equivariant_builds: usize,
+    /// Times a piece was routed back to the per-rung offset - once for a base
+    /// that could not be built or carried holes, once for the first rung whose
+    /// transform of a good base failed. Both are permanent for the piece, so
+    /// this counts *pieces refused*, not rungs paid for.
+    rotation_equivariant_fallbacks: usize,
+    /// Design B episodes: times a stalled schedule step armed a non-empty set of
+    /// violating pieces. One episode is one stall.
+    sparse_rotation_episodes: usize,
+    /// Pieces armed, summed over episodes. `/ episodes` is the mean episode
+    /// width, which is the number that says whether "sparse" is sparse.
+    sparse_rotation_pieces_armed: usize,
+    /// Sweeps run with a non-empty arming, so the wall an episode covers has a
+    /// denominator.
+    sparse_rotation_sweeps: usize,
 }
 
 impl WorkCounters {
@@ -3178,6 +3270,21 @@ impl WorkCounters {
         self.rotation_builds_refused = self
             .rotation_builds_refused
             .saturating_add(other.rotation_builds_refused);
+        self.rotation_equivariant_builds = self
+            .rotation_equivariant_builds
+            .saturating_add(other.rotation_equivariant_builds);
+        self.rotation_equivariant_fallbacks = self
+            .rotation_equivariant_fallbacks
+            .saturating_add(other.rotation_equivariant_fallbacks);
+        self.sparse_rotation_episodes = self
+            .sparse_rotation_episodes
+            .saturating_add(other.sparse_rotation_episodes);
+        self.sparse_rotation_pieces_armed = self
+            .sparse_rotation_pieces_armed
+            .saturating_add(other.sparse_rotation_pieces_armed);
+        self.sparse_rotation_sweeps = self
+            .sparse_rotation_sweeps
+            .saturating_add(other.sparse_rotation_sweeps);
     }
 }
 
@@ -3771,6 +3878,19 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
     /// Pins, eviction order and per-piece radii for [`Self::rotation_overflow`].
     #[cfg(feature = "continuous-rotation")]
     rotation_cache: RotationCache,
+    /// Whether a rung's surrogate is derived from the piece's already-offset
+    /// ring ([`build_oriented_surrogate_equivariant`]) instead of being offset
+    /// from scratch. Read only inside [`Self::ensure_rotation_surrogate`].
+    #[cfg(feature = "sparse-rotation")]
+    rotation_equivariant: bool,
+    /// Which pieces may currently be offered a rung. See [`RotationArming`].
+    #[cfg(feature = "sparse-rotation")]
+    rotation_arming: RotationArming,
+    /// Whether this lane is running design B at all. When false the arming is
+    /// [`RotationArming::Everything`] for the whole slice and the lane is
+    /// design A, which is what the battery's control arm needs.
+    #[cfg(feature = "sparse-rotation")]
+    sparse_rotation: bool,
     /// Reusable buffer the accepted-move merge writes its new collision list
     /// into. It is swapped with the incumbent list rather than copied, so after
     /// the first move of a lane neither list allocates again.
@@ -4040,6 +4160,47 @@ struct RotationCache {
     /// wall - the second-largest component of the operator's tax and one that
     /// almost never had anything to do.
     ensured: Vec<Option<(u64, bool)>>,
+    /// The **equivariant lever's** per-piece base: this piece's source ring
+    /// already expanded by `collision_expansion_mm`, at zero degrees and
+    /// unmirrored, or `None` until first asked.
+    ///
+    /// One entry is one `ClipperOffset::execute_poly_tree` that every later rung
+    /// of that piece does not perform. `Arc` because a fanned-out repair clones
+    /// the lane per worker and the base is immutable once built - the expansion
+    /// is a lane constant, so a piece has exactly one base for the life of the
+    /// slice.
+    ///
+    /// `Err` is remembered as deliberately as `Ok`: a piece whose base cannot be
+    /// built (or whose *first* rung fails to transform) must not re-attempt the
+    /// offset on every subsequent rung, which would cost more than the lever
+    /// saves. `Some(None)` is that memory and it routes the piece back to the
+    /// per-rung construction for good.
+    #[cfg(feature = "sparse-rotation")]
+    offset_bases: Vec<Option<Option<Arc<PolygonSet>>>>,
+}
+
+/// Which pieces the sparse operator is currently offering rotation rungs to.
+///
+/// Design A armed the whole lane for the whole slice and
+/// docs/experiments/rotation-tax/ §4 priced that at +6.735 mm. This is the
+/// sparse form both reviews named instead: a set that is **empty almost always**
+/// and is filled, for a bounded number of sweeps, only with the pieces a stalled
+/// compression-schedule step has just named through its own violating-pair
+/// queue.
+///
+/// `Everything` is design A, kept reachable because the battery needs an arm
+/// that reproduces it on the same binary.
+#[cfg(feature = "sparse-rotation")]
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum RotationArming {
+    /// No piece is offered a rung. The lane behaves exactly as an unarmed one:
+    /// `random_coordinate_axis` never pushes the two continuous slots, so the
+    /// refinement draws from the legacy list at the legacy length.
+    Nobody,
+    /// Design A: every piece, every descent.
+    Everything,
+    /// Design B: the pieces named by the stall, and nothing else.
+    Pieces(Vec<bool>),
 }
 
 /// How many *unpinned* continuous-angle surrogates a lane keeps.
@@ -6472,6 +6633,23 @@ fn drive_compression_schedule(
     let mut confirmation_ms = 0.0;
     let mut repair_ms = 0.0;
     let mut global_sweep = 0usize;
+    // Design C's account. Declared whether or not the certificate is compiled
+    // in, because "armed and never fired" and "not armed" must be
+    // distinguishable in the slice report rather than both reading as zero.
+    // `unused_mut` rather than a second `cfg`: without the certificate compiled
+    // in these four are read by the report and written by nothing, and a build
+    // that reports "armed, zero calls" is exactly what a binary missing
+    // `se2-rigidity-certificate` should say.
+    #[cfg(feature = "sparse-rotation")]
+    #[allow(unused_mut)]
+    let (
+        mut se2_witness_calls,
+        mut se2_witness_accepted,
+        mut se2_witness_ms,
+        mut se2_witness_bought_mm,
+    ) = (0usize, 0usize, 0.0f64, 0.0f64);
+    #[cfg(all(feature = "sparse-rotation", feature = "se2-rigidity-certificate"))]
+    let mut se2_witness_last_floor: Option<f64> = None;
 
     // The lane's spend as the schedule's budget sees it. Identical to
     // `search.counters.surrogate_evaluations` on the serial schedule; on a
@@ -6527,9 +6705,33 @@ fn drive_compression_schedule(
         let fan_out = false;
         if !fan_out {
             search.compression = Some(schedule);
+            // Design B's stall detector, and its whole state. The episode is
+            // scoped to this step: `disarm_rotation` at the top means no arming
+            // can outlive the stall that opened it, so "sparse" is a property of
+            // the control flow rather than of a heuristic that has to remember
+            // to switch off.
+            #[cfg(feature = "sparse-rotation")]
+            search.disarm_rotation();
+            // Hoisted so the control arm pays for none of this. With
+            // `sparse_rotation` off the two `common_loss` folds and the arming
+            // call below are not merely no-ops, they are not reached, and the
+            // serial repair loop is instruction for instruction the one the
+            // rotation-tax round measured.
+            #[cfg(feature = "sparse-rotation")]
+            let detect_stall = relaxed_settings.sparse_rotation;
+            #[cfg(feature = "sparse-rotation")]
+            let mut stall_loss = if detect_stall {
+                score.common_loss()
+            } else {
+                0.0
+            };
             for _ in 0..sweeps_per_step.max(1) {
                 if score.feasible() {
                     break;
+                }
+                #[cfg(feature = "sparse-rotation")]
+                if detect_stall && search.rotation_episode_open() {
+                    search.note_rotation_episode_sweep();
                 }
                 search.move_sweep(&mut state, &mut score, global_sweep)?;
                 global_sweep += 1;
@@ -6537,9 +6739,28 @@ fn drive_compression_schedule(
                 if score.feasible() {
                     break;
                 }
+                // The stall, measured rather than assumed: a sweep that left the
+                // frontier infeasible *and* did not lower the loss it was
+                // handed. That is the moment the translation repair has stopped
+                // paying, and it is the only moment the rungs are offered - to
+                // the pieces the tracker is naming right now, and to nobody
+                // else. A sweep that does lower the loss disarms again, so an
+                // episode ends the moment translation resumes.
+                #[cfg(feature = "sparse-rotation")]
+                if detect_stall {
+                    let now = score.common_loss();
+                    if now < stall_loss {
+                        search.disarm_rotation();
+                    } else {
+                        search.arm_rotation_for_pairs(&score.collision_pairs);
+                    }
+                    stall_loss = stall_loss.min(now);
+                }
                 update_weights(&mut search.weights, &score.collision_pairs);
                 refresh_weighted_loss(&mut score, &search.weights);
             }
+            #[cfg(feature = "sparse-rotation")]
+            search.disarm_rotation();
             schedule = search
                 .compression
                 .take()
@@ -6581,9 +6802,28 @@ fn drive_compression_schedule(
                 let mut lane_score = base_score.clone();
                 let mut lane_sweeps = 0usize;
                 let mut failure = None;
+                // The same stall detector the serial arm runs, on this worker's
+                // private frontier. It reads nothing outside `(lane_state,
+                // lane_score, lane.weights)`, so a worker's arming is a
+                // deterministic function of its own inputs and the reduce below
+                // stays a total order over the same eight computations.
+                #[cfg(feature = "sparse-rotation")]
+                lane.disarm_rotation();
+                #[cfg(feature = "sparse-rotation")]
+                let detect_stall = relaxed_settings.sparse_rotation;
+                #[cfg(feature = "sparse-rotation")]
+                let mut stall_loss = if detect_stall {
+                    lane_score.common_loss()
+                } else {
+                    0.0
+                };
                 for _ in 0..sweeps_budget {
                     if lane_score.feasible() {
                         break;
+                    }
+                    #[cfg(feature = "sparse-rotation")]
+                    if detect_stall && lane.rotation_episode_open() {
+                        lane.note_rotation_episode_sweep();
                     }
                     if let Err(error) =
                         lane.move_sweep(&mut lane_state, &mut lane_score, step_sweep + lane_sweeps)
@@ -6595,9 +6835,21 @@ fn drive_compression_schedule(
                     if lane_score.feasible() {
                         break;
                     }
+                    #[cfg(feature = "sparse-rotation")]
+                    if detect_stall {
+                        let now = lane_score.common_loss();
+                        if now < stall_loss {
+                            lane.disarm_rotation();
+                        } else {
+                            lane.arm_rotation_for_pairs(&lane_score.collision_pairs);
+                        }
+                        stall_loss = stall_loss.min(now);
+                    }
                     update_weights(&mut lane.weights, &lane_score.collision_pairs);
                     refresh_weighted_loss(&mut lane_score, &lane.weights);
                 }
+                #[cfg(feature = "sparse-rotation")]
+                lane.disarm_rotation();
                 let queries = lane
                     .counters
                     .surrogate_evaluations
@@ -6740,6 +6992,72 @@ fn drive_compression_schedule(
             confirmation_ms += started.elapsed().as_secs_f64() * 1_000.0;
         }
 
+        // ---- design C: the witness, when design B's stall outlived the step
+        //
+        // The trigger is deliberately the narrowest one available: the step ran
+        // its whole sweep budget, the frontier is still infeasible, and the
+        // rungs the violating pieces were offered did not clear it either. That
+        // is the state in which translation has fixpointed *and* sparse rotation
+        // has failed to move it, which is the only state a whole-parent solve
+        // could be worth its price in.
+        //
+        // It runs on `confirmed_state`, not on the frontier, and that is a
+        // requirement rather than a preference: the certificate's line search
+        // ends at `scale = 0` - the parent itself - and asserts that rung
+        // validates, so handing it an infeasible frontier makes it error out
+        // rather than answer. `confirmed_state` is the deepest layout an exact
+        // confirmation has accepted, so it is legal by construction.
+        //
+        // What comes back is already exactly validated by `validate_publication`
+        // at the scale the line search settled on, so "apply the witness vector
+        // as a candidate, validate exactly" is satisfied inside the certificate
+        // and the schedule's own confirmation is not spent twice. It is still
+        // re-measured here through `coupled_independent_source_depth`, on the
+        // untouched source rings, because that - and not the certificate's own
+        // measure - is the number this mode publishes on.
+        #[cfg(all(feature = "sparse-rotation", feature = "se2-rigidity-certificate"))]
+        if let Some(witness_settings) = relaxed_settings.se2_witness {
+            let stalled = !score.feasible() && sweeps_run >= sweeps_per_step.max(1);
+            // The certificate is a deterministic function of `(parent, trust,
+            // iterations)`, so calling it twice on the same incumbent spends a
+            // slice to learn what the previous call already returned. The floor
+            // moves only when a confirmation accepts the frontier, which is
+            // exactly the event that makes a second call worth its price.
+            let fresh = se2_witness_last_floor
+                .is_none_or(|floor| grid_key(floor) != grid_key(schedule.floor_mm()));
+            if stalled && fresh && se2_witness_calls < witness_settings.max_calls {
+                let started = Instant::now();
+                se2_witness_calls += 1;
+                se2_witness_last_floor = Some(schedule.floor_mm());
+                let confirmed_placements = to_fast_placements(&confirmed_state, pieces);
+                let proposal = crate::search::general_micro_legalization::se2_certificate::
+                    se2_witness_proposal(
+                        pieces,
+                        &confirmed_placements,
+                        fast_settings,
+                        witness_settings.trust_radius_mm,
+                        witness_settings.iterations,
+                    );
+                if let Ok(Some(proposal)) = proposal {
+                    if proposal.moved_pieces > 0 {
+                        if let Ok(raw_depth_mm) = coupled_independent_source_depth(
+                            pieces,
+                            &proposal.placements,
+                            fast_settings,
+                        ) {
+                            if grid_key(raw_depth_mm) < grid_key(published_depth_mm) {
+                                se2_witness_bought_mm += published_depth_mm - raw_depth_mm;
+                                published_depth_mm = raw_depth_mm;
+                                published_placements = proposal.placements;
+                                se2_witness_accepted += 1;
+                            }
+                        }
+                    }
+                }
+                se2_witness_ms += started.elapsed().as_secs_f64() * 1_000.0;
+            }
+        }
+
         if schedule.due_for_rollback() {
             // Both halves of the snapshot, restored in the same statement. The
             // depth the schedule returns to is its monotone floor, which is the
@@ -6855,6 +7173,20 @@ fn drive_compression_schedule(
             counters.rotation_surrogate_build_nanos as f64 / 1_000_000.0;
         report.rotation_surrogate_cells = counters.rotation_surrogate_cells;
         report.rotation_builds_refused = counters.rotation_builds_refused;
+        #[cfg(feature = "sparse-rotation")]
+        {
+            report.sparse_rotation = relaxed_settings.sparse_rotation;
+            report.rotation_equivariant_offset = relaxed_settings.rotation_equivariant_offset;
+            report.rotation_equivariant_builds = counters.rotation_equivariant_builds;
+            report.rotation_equivariant_fallbacks = counters.rotation_equivariant_fallbacks;
+            report.sparse_rotation_episodes = counters.sparse_rotation_episodes;
+            report.sparse_rotation_pieces_armed = counters.sparse_rotation_pieces_armed;
+            report.sparse_rotation_sweeps = counters.sparse_rotation_sweeps;
+            report.se2_witness_calls = se2_witness_calls;
+            report.se2_witness_accepted = se2_witness_accepted;
+            report.se2_witness_ms = se2_witness_ms;
+            report.se2_witness_bought_mm = se2_witness_bought_mm;
+        }
     }
     report.confirmation_ms = confirmation_ms;
     report.repair_ms = repair_ms;
@@ -11932,7 +12264,19 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 holds: Vec::new(),
                 radii: vec![0.0; pieces.len()],
                 ensured: vec![None; pieces.len()],
+                #[cfg(feature = "sparse-rotation")]
+                offset_bases: vec![None; pieces.len()],
             },
+            #[cfg(feature = "sparse-rotation")]
+            rotation_equivariant: relaxed_settings.rotation_equivariant_offset,
+            #[cfg(feature = "sparse-rotation")]
+            rotation_arming: if relaxed_settings.sparse_rotation {
+                RotationArming::Nobody
+            } else {
+                RotationArming::Everything
+            },
+            #[cfg(feature = "sparse-rotation")]
+            sparse_rotation: relaxed_settings.sparse_rotation,
             collision_merge_scratch: Vec::new(),
             #[cfg(feature = "relaxed-row-buffer-reuse")]
             row_pool: Vec::new(),
@@ -13804,7 +14148,8 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         // silently displace the legacy ladder.
         #[cfg(feature = "continuous-rotation")]
         let (continuous_rotation, continuous_mirror, rotation_radius) = {
-            let armed = self.continuous_rotation && continuous_axes;
+            let armed =
+                self.continuous_rotation && continuous_axes && self.piece_rotation_armed(input_index);
             let rotation = armed && self.pieces[input_index].allow_rotation;
             // The mirror toggle is a *companion* to the rotation rung, and this
             // conjunction is what keeps it one.
@@ -16079,6 +16424,102 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
     //    that make it attributable.
     // ---------------------------------------------------------------------
 
+    /// Whether piece `input_index` may currently be offered a rotation rung.
+    ///
+    /// The whole of design B is this predicate. On a lane that is not running
+    /// it - every lane in every previous round - it is the constant `true` and
+    /// the compiler removes it, so the design-A arm on this binary is the
+    /// design-A arm the rotation-tax round measured.
+    #[cfg(feature = "continuous-rotation")]
+    #[inline]
+    fn piece_rotation_armed(&self, input_index: usize) -> bool {
+        #[cfg(feature = "sparse-rotation")]
+        {
+            match &self.rotation_arming {
+                RotationArming::Everything => true,
+                RotationArming::Nobody => false,
+                RotationArming::Pieces(armed) => {
+                    armed.get(input_index).copied().unwrap_or(false)
+                }
+            }
+        }
+        #[cfg(not(feature = "sparse-rotation"))]
+        {
+            let _ = input_index;
+            true
+        }
+    }
+
+    /// Arms the pieces a stalled schedule step named, for the sweeps that step
+    /// has left.
+    ///
+    /// `pairs` is the lane's own violating-pair queue - `PairTracker::
+    /// collision_pairs`, the same list `piece_is_active` reads to build the next
+    /// sweep's active set - so design B introduces **no new selection logic**,
+    /// exactly as the schedule's repair tier (d) introduced none. A piece the
+    /// request forbids to rotate is dropped here rather than at the proposal, so
+    /// the episode width this reports is the width that can actually propose
+    /// anything.
+    ///
+    /// Returns whether anything was armed, so the caller can count the episode
+    /// only when there is an episode to count.
+    #[cfg(feature = "sparse-rotation")]
+    fn arm_rotation_for_pairs(&mut self, pairs: &[(usize, usize, f64)]) -> bool {
+        if !self.sparse_rotation || !self.continuous_rotation {
+            return false;
+        }
+        let mut armed = vec![false; self.pieces.len()];
+        let mut count = 0usize;
+        for (first, second, _) in pairs {
+            for index in [*first, *second] {
+                if index >= armed.len() || armed[index] {
+                    continue;
+                }
+                if !self.pieces[index].allow_rotation && !self.pieces[index].allow_mirror {
+                    continue;
+                }
+                armed[index] = true;
+                count += 1;
+            }
+        }
+        if count == 0 {
+            self.rotation_arming = RotationArming::Nobody;
+            return false;
+        }
+        self.counters.sparse_rotation_episodes =
+            self.counters.sparse_rotation_episodes.saturating_add(1);
+        self.counters.sparse_rotation_pieces_armed = self
+            .counters
+            .sparse_rotation_pieces_armed
+            .saturating_add(count);
+        self.rotation_arming = RotationArming::Pieces(armed);
+        true
+    }
+
+    /// Puts the lane back to proposing nothing. Called at the top of every
+    /// schedule step, so an episode never outlives the stall that opened it.
+    #[cfg(feature = "sparse-rotation")]
+    fn disarm_rotation(&mut self) {
+        if self.sparse_rotation {
+            self.rotation_arming = RotationArming::Nobody;
+        }
+    }
+
+    /// Whether an episode is open right now.
+    #[cfg(feature = "sparse-rotation")]
+    #[inline]
+    fn rotation_episode_open(&self) -> bool {
+        matches!(self.rotation_arming, RotationArming::Pieces(_))
+    }
+
+    /// Charges one sweep to the open episode.
+    #[cfg(feature = "sparse-rotation")]
+    #[inline]
+    fn note_rotation_episode_sweep(&mut self) {
+        self.counters.sparse_rotation_sweeps =
+            self.counters.sparse_rotation_sweeps.saturating_add(1);
+    }
+
     /// The piece's bounding radius about its own rotation origin: the `r` of
     /// `dtheta = dx / r`.
     ///
@@ -16173,16 +16614,11 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             return Err(self.missing_orientation(input_index, key));
         }
         let mut build_counters = WorkCounters::default();
-        let shape = build_oriented_surrogate(
-            self.pieces[input_index].polygon,
-            // The key's own angle, not the caller's: the catalogue builder
-            // quantises the same way, so the shape and the key that finds it
-            // describe the same rotation to the last bit.
-            angle_from_key(key.1),
-            mirrored,
-            collision_expansion_mm(self.fast_settings),
-            &mut build_counters,
-        )?;
+        // The key's own angle, not the caller's: the catalogue builder
+        // quantises the same way, so the shape and the key that finds it
+        // describe the same rotation to the last bit.
+        let angle = angle_from_key(key.1);
+        let shape = self.build_rung_surrogate(input_index, angle, mirrored, &mut build_counters)?;
         let build_nanos = started.elapsed().as_nanos() as u64;
         profiling::rotation_tax::add(profiling::rotation_tax::Tax::RotationBuildCalls, 1);
         profiling::rotation_tax::add(
@@ -16206,6 +16642,122 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         Arc::make_mut(&mut self.rotation_overflow).insert(key, shape);
         self.rotation_cache.probes.push_back(key);
         Ok(key)
+    }
+
+    /// Builds one rung's surrogate, by whichever of the two constructions this
+    /// lane is armed for.
+    ///
+    /// The per-rung order is the one every previous round measured and is what
+    /// an unarmed lever does, unconditionally and with no extra branch on the
+    /// build path. The equivariant order replaces the `ClipperOffset` call with
+    /// a transform of a ring this piece offset once.
+    ///
+    /// **The fallback is the load-bearing part.** An offset ring carries more
+    /// vertices than its source and they sit closer together, so
+    /// `PolygonSet::transformed` can fail on a rotated copy where the per-rung
+    /// order would have succeeded: two vertices can land on the same grid point
+    /// ("must remain unique after grid snapping"), the ring can exceed
+    /// `GENERAL_MAX_RING_VERTICES`, or a snapped edge can cross another. None of
+    /// those is a reason to fail the *slice*, so each one falls back to the
+    /// per-rung offset and is counted. A piece that fails once is routed back
+    /// permanently, because a piece whose offset ring does not survive rotation
+    /// at one angle will keep not surviving it, and paying the failed transform
+    /// before every offset would make the lever a pure loss on that piece.
+    #[cfg(feature = "continuous-rotation")]
+    fn build_rung_surrogate(
+        &mut self,
+        input_index: usize,
+        rotation_deg: f64,
+        mirrored: bool,
+        build_counters: &mut WorkCounters,
+    ) -> Result<OrientedSurrogate, GeneralFastError> {
+        #[cfg(feature = "sparse-rotation")]
+        if self.rotation_equivariant {
+            if let Some(base) = self.rotation_offset_base(input_index) {
+                // A scratch counter, so a failed attempt cannot charge the
+                // fallback's counters twice. `finish_oriented_surrogate`
+                // increments `oriented_surrogate_builds` and `generated_cells`
+                // *before* its last budget check, so an error can in principle
+                // leave a counter advanced - it cannot here, because the check
+                // is `MAX_CELLS_PER_JOB` against one piece's cells, but relying
+                // on that is relying on two constants staying apart.
+                let mut attempt = WorkCounters::default();
+                match build_oriented_surrogate_equivariant(
+                    &base,
+                    rotation_deg,
+                    mirrored,
+                    &mut attempt,
+                ) {
+                    Ok(shape) => {
+                        build_counters.accumulate(attempt);
+                        self.counters.rotation_equivariant_builds =
+                            self.counters.rotation_equivariant_builds.saturating_add(1);
+                        return Ok(shape);
+                    }
+                    Err(_) => {
+                        // Route this piece back to the per-rung offset for the
+                        // rest of the slice. A ring that does not survive
+                        // rotation onto the grid at one angle will keep not
+                        // surviving it, and paying a failed transform before
+                        // every offset would make the lever a pure loss here.
+                        self.rotation_cache.offset_bases[input_index] = Some(None);
+                        self.counters.rotation_equivariant_fallbacks = self
+                            .counters
+                            .rotation_equivariant_fallbacks
+                            .saturating_add(1);
+                    }
+                }
+            }
+        }
+        build_oriented_surrogate(
+            self.pieces[input_index].polygon,
+            rotation_deg,
+            mirrored,
+            collision_expansion_mm(self.fast_settings),
+            build_counters,
+        )
+    }
+
+    /// This piece's offset base for the equivariant lever, built on first ask.
+    ///
+    /// `None` means "this piece has no usable base" and is a permanent verdict
+    /// for the slice - either the one offset failed, or a rung's transform did
+    /// and [`Self::build_rung_surrogate`] wrote the refusal back.
+    ///
+    /// The base is `source.offset(e)` and not
+    /// `source.transformed(0, false).offset(e)`, which is the same value: a
+    /// zero-degree unmirrored transform has `cos = 1`, `sin = 0` and zero
+    /// translation, so it reproduces the source ring point for point and
+    /// `PolygonSet::new` re-derives the same canonical form it already had.
+    #[cfg(feature = "sparse-rotation")]
+    fn rotation_offset_base(&mut self, input_index: usize) -> Option<Arc<PolygonSet>> {
+        if let Some(slot) = &self.rotation_cache.offset_bases[input_index] {
+            return slot.clone();
+        }
+        let expansion_mm = collision_expansion_mm(self.fast_settings);
+        let built = self.pieces[input_index]
+            .polygon
+            .offset(expansion_mm)
+            .ok()
+            // A base that already carries holes would be refused by
+            // `finish_oriented_surrogate` on every single rung, so it is refused
+            // once, here, and the piece keeps the per-rung path - which refuses
+            // it too, with the same message, exactly as it does today.
+            .filter(|polygon| {
+                polygon
+                    .regions()
+                    .iter()
+                    .all(|region| region.holes.is_empty())
+            })
+            .map(Arc::new);
+        self.rotation_cache.offset_bases[input_index] = Some(built.clone());
+        if built.is_none() {
+            self.counters.rotation_equivariant_fallbacks = self
+                .counters
+                .rotation_equivariant_fallbacks
+                .saturating_add(1);
+        }
+        built
     }
 
     /// Whether the operator's cache may hold one more surrogate.
@@ -16514,6 +17066,58 @@ fn build_oriented_surrogate(
     let stage = build_stage_mark(stage, profiling::rotation_tax::Tax::BuildTransformNanos);
     let polygon = transformed.offset(expansion_mm)?;
     let stage = build_stage_mark(stage, profiling::rotation_tax::Tax::BuildOffsetNanos);
+    finish_oriented_surrogate(polygon, counters, stage)
+}
+
+/// The **equivariant** construction of the same object: the piece's already
+/// offset ring, transformed, rather than the source ring transformed and then
+/// offset.
+///
+/// A miter join is built from the two incident edge normals and both rotate
+/// with the ring, so in exact arithmetic `offset(T(p)) == T(offset(p))` for any
+/// `T` in `O(2)` - which is what makes this legitimate at all. It is **not**
+/// bit-identical, and the reason is the grid rather than the algebra: the
+/// per-rung order snaps the *rotated source* onto Clipper's integer grid and
+/// miters there, while this order miters on the *unrotated* grid and snaps the
+/// rotated result. The two disagree by grid-scale amounts in the miter corners,
+/// so this is a different operator geometry and is measured as one - see
+/// docs/experiments/sparse-rotation/ §1, which runs it against the per-rung
+/// construction on twelve pinned parents at equal work rather than claiming an
+/// answer-preserving refactor.
+///
+/// What it buys is the whole point: docs/experiments/rotation-tax/ §1.2 timed
+/// one `.offset()` at **81.4%** of a 5.78 µs build, and this construction does
+/// not perform one.
+///
+/// The transform can fail where the per-rung order would not - an offset ring
+/// carries more vertices than its source, and rotating them onto the grid can
+/// collide two of them or cross an edge - so every caller must be prepared to
+/// fall back. [`LaneSearch::ensure_rotation_surrogate`] is, and counts it.
+#[cfg(feature = "sparse-rotation")]
+fn build_oriented_surrogate_equivariant(
+    offset_source: &PolygonSet,
+    rotation_deg: f64,
+    mirrored: bool,
+    counters: &mut WorkCounters,
+) -> Result<OrientedSurrogate, GeneralFastError> {
+    let stage = build_stage_clock();
+    let polygon = offset_source.transformed(rotation_deg, mirrored, 0.0, 0.0)?;
+    let stage = build_stage_mark(stage, profiling::rotation_tax::Tax::BuildTransformNanos);
+    finish_oriented_surrogate(polygon, counters, stage)
+}
+
+/// The three stages both constructions share, from the expanded polygon on:
+/// the hole refusal, the triangulation, the job budget, the poles, the cell
+/// axes and the index.
+///
+/// Extracted so the equivariant order cannot drift from the per-rung one in
+/// anything but the stage it replaces. Every error message, every budget check
+/// and every field is the one the single-function version raised.
+fn finish_oriented_surrogate(
+    polygon: PolygonSet,
+    counters: &mut WorkCounters,
+    stage: Option<Instant>,
+) -> Result<OrientedSurrogate, GeneralFastError> {
     if polygon
         .regions()
         .iter()
@@ -20455,6 +21059,197 @@ mod tests {
             SurrogateRoute::Overflow,
         )
         .is_none());
+    }
+
+    /// The equivariant construction really is the offset one, to the tolerance
+    /// the grid allows — and it really is a *different* object, which is why it
+    /// gets a quality battery instead of an equality claim.
+    ///
+    /// Both halves matter and neither is obvious. If the two orders disagreed by
+    /// more than the grid, the operator would be scoring poses against shapes
+    /// that are not theirs and every millimetre this round reports would be
+    /// noise; if they agreed exactly, §1's battery would be measuring nothing
+    /// and should be deleted rather than run. The assertions bracket the real
+    /// answer: same bounds and same area to well under a grid unit, and a
+    /// vertex set that is not identical.
+    #[test]
+    #[cfg(all(feature = "sparse-rotation", feature = "compression-schedule"))]
+    fn the_equivariant_surrogate_is_the_offset_one_up_to_the_grid() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let expansion_mm = collision_expansion_mm(fast_settings);
+        let source = pieces[0].polygon;
+        let base = source
+            .offset(expansion_mm)
+            .expect("the piece offsets at zero degrees");
+        let mut counters = WorkCounters::default();
+        // A grid-native angle would be answered by the catalogue in production;
+        // an off-grid one is what the operator actually builds.
+        for angle in [OVERLAY_OFF_GRID_DEG, 17.5, -3.25] {
+            for mirrored in [false, true] {
+                let per_rung = build_oriented_surrogate(
+                    source,
+                    angle,
+                    mirrored,
+                    expansion_mm,
+                    &mut counters,
+                )
+                .expect("the per-rung construction succeeds");
+                let equivariant =
+                    build_oriented_surrogate_equivariant(&base, angle, mirrored, &mut counters)
+                        .expect("the equivariant construction succeeds");
+                // The tolerance is stated in **grid units**, because the grid is
+                // the whole of the disagreement: `CLIPPER2_OFFSET_SCALE` is
+                // 1000, so one unit is 1 µm, and the two orders miter on
+                // different snappings of the same ring. Four units is what this
+                // corpus measures (the observed maximum is one), and the point
+                // of writing it as `4.0 * GRID` rather than `0.004` is that a
+                // future change to the scale moves the tolerance with it.
+                const GRID_MM: f64 = 1.0 / crate::canonical_grid::CLIPPER2_OFFSET_SCALE;
+                for (left, right, what) in [
+                    (per_rung.bounds.min_x, equivariant.bounds.min_x, "min_x"),
+                    (per_rung.bounds.min_y, equivariant.bounds.min_y, "min_y"),
+                    (per_rung.bounds.max_x, equivariant.bounds.max_x, "max_x"),
+                    (per_rung.bounds.max_y, equivariant.bounds.max_y, "max_y"),
+                ] {
+                    assert!(
+                        (left - right).abs() <= 4.0 * GRID_MM,
+                        "{what} disagrees by {} mm ({} grid units) at {angle} deg, \
+                         mirrored={mirrored} - that is more than a rounding \
+                         difference and the equivariance argument is wrong",
+                        (left - right).abs(),
+                        (left - right).abs() / GRID_MM
+                    );
+                }
+                let per_rung_area = per_rung.collision.area_mm2();
+                let equivariant_area = equivariant.collision.area_mm2();
+                assert!(
+                    (per_rung_area - equivariant_area).abs() / per_rung_area.abs() < 1e-3,
+                    "areas disagree: {per_rung_area} against {equivariant_area}"
+                );
+            }
+        }
+        // And the geometry is genuinely different, so §1's battery has a
+        // subject. Clipper miters the rotated source on one path and the
+        // unrotated source on the other, and the grid does not commute with
+        // rotation.
+        let per_rung = build_oriented_surrogate(
+            source,
+            OVERLAY_OFF_GRID_DEG,
+            false,
+            expansion_mm,
+            &mut counters,
+        )
+        .expect("the per-rung construction succeeds");
+        let equivariant = build_oriented_surrogate_equivariant(
+            &base,
+            OVERLAY_OFF_GRID_DEG,
+            false,
+            &mut counters,
+        )
+        .expect("the equivariant construction succeeds");
+        assert_ne!(
+            per_rung.collision, equivariant.collision,
+            "if the two orders produced identical rings the quality battery \
+             would be vacuous and this round would be a refactor"
+        );
+    }
+
+    /// A lane running design B proposes rungs for the armed pieces and for
+    /// nobody else, and forgets the arming the moment it is told to.
+    ///
+    /// This is the whole of the sparsity claim, checked at its only decision
+    /// point. `Nobody` is the state the lane starts and ends every schedule step
+    /// in, so a bug that left an episode open would turn design B into design A
+    /// silently — and the depth numbers would still look plausible.
+    #[test]
+    #[cfg(all(feature = "sparse-rotation", feature = "compression-schedule"))]
+    fn sparse_arming_offers_rungs_to_the_violating_pieces_and_to_nobody_else() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        let mut settings = coupled_experiment_test_settings(7);
+        settings.continuous_rotation = true;
+        settings.sparse_rotation = true;
+        let mut lane = LegacyLaneSearch::new(&pieces, fast_settings, settings, 37, catalog);
+
+        // Design B starts closed. An unarmed lane is an unarmed lane.
+        assert!(!lane.rotation_episode_open());
+        assert!(!lane.piece_rotation_armed(0));
+        assert!(!lane.piece_rotation_armed(1));
+
+        // One violating pair names one piece pair, and arms exactly it.
+        assert!(lane.arm_rotation_for_pairs(&[(1, 1, 0.5)]));
+        assert!(lane.rotation_episode_open());
+        assert!(!lane.piece_rotation_armed(0), "piece 0 was not named");
+        assert!(lane.piece_rotation_armed(1), "piece 1 was named");
+        assert_eq!(lane.counters.sparse_rotation_episodes, 1);
+        assert_eq!(lane.counters.sparse_rotation_pieces_armed, 1);
+
+        // An empty queue is not an episode: it arms nothing and is not counted.
+        assert!(!lane.arm_rotation_for_pairs(&[]));
+        assert!(!lane.rotation_episode_open());
+        assert_eq!(lane.counters.sparse_rotation_episodes, 1);
+
+        // A wider stall arms both, and the width is what is reported.
+        assert!(lane.arm_rotation_for_pairs(&[(0, 1, 0.5)]));
+        assert!(lane.piece_rotation_armed(0));
+        assert!(lane.piece_rotation_armed(1));
+        assert_eq!(lane.counters.sparse_rotation_episodes, 2);
+        assert_eq!(lane.counters.sparse_rotation_pieces_armed, 3);
+
+        // And the disarm is total.
+        lane.disarm_rotation();
+        assert!(!lane.rotation_episode_open());
+        assert!(!lane.piece_rotation_armed(0));
+        assert!(!lane.piece_rotation_armed(1));
+    }
+
+    /// A lane that is *not* running design B is design A, and the sparse
+    /// machinery cannot switch it off.
+    ///
+    /// The control arm of every table in this round is this lane. If
+    /// `sparse_rotation = false` ever left a piece unarmed, the battery's
+    /// "design A" column would be measuring something that is not design A and
+    /// the comparison with docs/experiments/rotation-tax/ §4 would be void.
+    #[test]
+    #[cfg(all(feature = "sparse-rotation", feature = "compression-schedule"))]
+    fn a_lane_without_design_b_is_armed_everywhere_and_stays_that_way() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        let mut settings = coupled_experiment_test_settings(8);
+        settings.continuous_rotation = true;
+        settings.sparse_rotation = false;
+        let mut lane = LegacyLaneSearch::new(&pieces, fast_settings, settings, 41, catalog);
+
+        assert!(lane.piece_rotation_armed(0));
+        assert!(lane.piece_rotation_armed(1));
+        lane.disarm_rotation();
+        assert!(
+            lane.piece_rotation_armed(0),
+            "design A must not be disarmable by design B's own entry point"
+        );
+        assert!(!lane.arm_rotation_for_pairs(&[(0, 1, 0.5)]));
+        assert_eq!(
+            lane.counters.sparse_rotation_episodes, 0,
+            "a lane that is always armed has no episodes to count"
+        );
     }
 
     /// `ensure_state_surrogates` does nothing for a piece that has not moved,
