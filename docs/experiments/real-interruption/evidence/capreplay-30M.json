@@ -1,0 +1,187 @@
+{
+  "binary": "/var/lib/t3/tmp/realint/bin/combo-base",
+  "binarySha256": "c41cd0943974fedaad8a5832b46007f0e7d4f7d716ed53a7c21b6ee567466ac6",
+  "request": "mixed-61",
+  "work": "30000000",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "rows": [
+    {
+      "seed": 0,
+      "specOff": "work=30000000,cells=13:15:17:19,v3=1,m34cap=0",
+      "specOn": "work=30000000,cells=13:15:17:19,v3=1,m34cap=1",
+      "depthOff": 173.57506393348288,
+      "depthOn": 173.57506393348288,
+      "depthEqual": true,
+      "fingerprintEqual": true,
+      "workOff": 27642964,
+      "workOn": 27642964,
+      "workEqual": true,
+      "callsOff": 8,
+      "callsOn": 8,
+      "callsEqual": true,
+      "digestNoSliceEqual": true,
+      "digestWithSliceEqual": false,
+      "stepDigestsEqual": true,
+      "slicesOff": [
+        {
+          "stepDigest": 8094261235934077622,
+          "stepsTaken": 1616,
+          "workUnits": 3311034,
+          "finalDepthMm": 178.137,
+          "exit": null,
+          "checkpoints": 0
+        }
+      ],
+      "slicesOn": [
+        {
+          "stepDigest": 8094261235934077622,
+          "stepsTaken": 1616,
+          "workUnits": 3311034,
+          "finalDepthMm": 178.137,
+          "exit": null,
+          "checkpoints": 1
+        }
+      ],
+      "wallOff": 8.81512451195158,
+      "wallOn": 8.742269468028098
+    },
+    {
+      "seed": 1,
+      "specOff": "work=30000000,cells=11:15:21:27,v3=1,m34cap=0",
+      "specOn": "work=30000000,cells=11:15:21:27,v3=1,m34cap=1",
+      "depthOff": 171.3619986855876,
+      "depthOn": 171.3619986855876,
+      "depthEqual": true,
+      "fingerprintEqual": true,
+      "workOff": 28636653,
+      "workOn": 28636653,
+      "workEqual": true,
+      "callsOff": 8,
+      "callsOn": 8,
+      "callsEqual": true,
+      "digestNoSliceEqual": true,
+      "digestWithSliceEqual": false,
+      "stepDigestsEqual": true,
+      "slicesOff": [
+        {
+          "stepDigest": 13470008650902116946,
+          "stepsTaken": 1617,
+          "workUnits": 3539786,
+          "finalDepthMm": 178.021,
+          "exit": null,
+          "checkpoints": 0
+        }
+      ],
+      "slicesOn": [
+        {
+          "stepDigest": 13470008650902116946,
+          "stepsTaken": 1617,
+          "workUnits": 3539786,
+          "finalDepthMm": 178.021,
+          "exit": null,
+          "checkpoints": 1
+        }
+      ],
+      "wallOff": 8.742423508083448,
+      "wallOn": 8.803207070101053
+    },
+    {
+      "seed": 2,
+      "specOff": "work=30000000,cells=15:23:31:39,v3=1,m34cap=0",
+      "specOn": "work=30000000,cells=15:23:31:39,v3=1,m34cap=1",
+      "depthOff": 174.28,
+      "depthOn": 174.28,
+      "depthEqual": true,
+      "fingerprintEqual": true,
+      "workOff": 27391297,
+      "workOn": 27391297,
+      "workEqual": true,
+      "callsOff": 8,
+      "callsOn": 8,
+      "callsEqual": true,
+      "digestNoSliceEqual": true,
+      "digestWithSliceEqual": false,
+      "stepDigestsEqual": true,
+      "slicesOff": [
+        {
+          "stepDigest": 4261813672146735768,
+          "stepsTaken": 1611,
+          "workUnits": 3455866,
+          "finalDepthMm": 177.397,
+          "exit": null,
+          "checkpoints": 0
+        },
+        {
+          "stepDigest": 1113558791815050863,
+          "stepsTaken": 1585,
+          "workUnits": 3398525,
+          "finalDepthMm": 174.579,
+          "exit": null,
+          "checkpoints": 0
+        }
+      ],
+      "slicesOn": [
+        {
+          "stepDigest": 4261813672146735768,
+          "stepsTaken": 1611,
+          "workUnits": 3455866,
+          "finalDepthMm": 177.397,
+          "exit": null,
+          "checkpoints": 1
+        },
+        {
+          "stepDigest": 1113558791815050863,
+          "stepsTaken": 1585,
+          "workUnits": 3398525,
+          "finalDepthMm": 174.579,
+          "exit": null,
+          "checkpoints": 1
+        }
+      ],
+      "wallOff": 10.172125292010605,
+      "wallOn": 10.183579136035405
+    }
+  ],
+  "boxLoad": [
+    {
+      "out": "/var/lib/t3/tmp/realint/out/capreplay/capoff-s0.json",
+      "wall": 8.81512451195158,
+      "before": 2.728515625,
+      "after": 2.6162109375
+    },
+    {
+      "out": "/var/lib/t3/tmp/realint/out/capreplay/capon-s0.json",
+      "wall": 8.742269468028098,
+      "before": 2.6162109375,
+      "after": 2.44091796875
+    },
+    {
+      "out": "/var/lib/t3/tmp/realint/out/capreplay/capoff-s1.json",
+      "wall": 8.742423508083448,
+      "before": 2.44091796875,
+      "after": 2.88623046875
+    },
+    {
+      "out": "/var/lib/t3/tmp/realint/out/capreplay/capon-s1.json",
+      "wall": 8.803207070101053,
+      "before": 2.88623046875,
+      "after": 2.890625
+    },
+    {
+      "out": "/var/lib/t3/tmp/realint/out/capreplay/capoff-s2.json",
+      "wall": 10.172125292010605,
+      "before": 2.890625,
+      "after": 3.115234375
+    },
+    {
+      "out": "/var/lib/t3/tmp/realint/out/capreplay/capon-s2.json",
+      "wall": 10.183579136035405,
+      "before": 3.115234375,
+      "after": 3.34423828125
+    }
+  ]
+}

@@ -410,6 +410,16 @@ pub enum CompressionScheduleExit {
     StepBudget,
     /// The depth could not be lowered any further without leaving the sheet.
     DepthFloor,
+    /// The **caller** stopped the slice at a checkpoint.
+    ///
+    /// The other four are the schedule's own stopping rules, read off its own
+    /// counters. This one is not: it is the only exit the schedule cannot
+    /// predict, and it is set by [`CompressionSchedule::note_interrupted`] when
+    /// a driver's checkpoint policy answered "stop". A report carrying it
+    /// describes a slice that still held budget and steps and was told to hand
+    /// its incumbent back - which is the difference between "ran out" and "was
+    /// interrupted", and the difference a wall promise is made of.
+    Interrupted,
 }
 
 impl CompressionScheduleExit {
@@ -419,6 +429,7 @@ impl CompressionScheduleExit {
             Self::WorkCap => "workCap",
             Self::StepBudget => "stepBudget",
             Self::DepthFloor => "depthFloor",
+            Self::Interrupted => "interrupted",
         }
     }
 }
@@ -650,6 +661,15 @@ impl CompressionSchedule {
         self.exit
     }
 
+    /// Records that the slice was stopped by its caller at a checkpoint.
+    ///
+    /// Called only from the batch driver's stop path, and never by `may_step`:
+    /// the four other exits are the schedule's own opinion of itself and this
+    /// one is the caller's, so it is written from outside on purpose.
+    pub fn note_interrupted(&mut self) {
+        self.exit = CompressionScheduleExit::Interrupted;
+    }
+
     /// The lowest depth the next step may set, given the bound policy, in grid
     /// units.
     fn lower_limit_grid(&self) -> f64 {
@@ -796,6 +816,15 @@ impl CompressionSchedule {
             work_cap_queries: self.settings.work_cap_queries,
             batch_work_units: self.settings.batch_work_units,
             checkpoints: Vec::new(),
+            // Written by the driver in `ScheduleSliceRun::finish`, which is the
+            // only place that knows how many batches it ran and how many of
+            // them were resumptions.
+            batches: 0,
+            resumptions: 0,
+            interrupted: false,
+            final_state_fingerprint: String::new(),
+            final_tracker_fingerprint: String::new(),
+            final_lane_fingerprint: String::new(),
             step_digest: 0,
             candidate_queries: self.work_spent,
             exact_pair_tests: self.exact_pair_tests(),
@@ -985,6 +1014,23 @@ pub struct GeneralCompressionScheduleStepRow {
     pub rolled_back: bool,
 }
 
+/// One batch is the atomic slice, so a one-batch report says nothing a reader
+/// of the previous round's document did not already know.
+///
+/// The predicate is `<= 1` rather than `== 1` so a `Default`-constructed report
+/// - zero batches, because it never ran - is silent for the same reason.
+fn batches_is_atomic(batches: &usize) -> bool {
+    *batches <= 1
+}
+
+fn is_zero(value: &usize) -> bool {
+    *value == 0
+}
+
+fn is_false(value: &bool) -> bool {
+    !*value
+}
+
 /// FNV-1a over every step row, in order.
 ///
 /// See [`GeneralCompressionScheduleDiagnostics::step_digest`] for why a
@@ -1050,6 +1096,54 @@ pub struct GeneralCompressionScheduleDiagnostics {
     /// "was interrupted".
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub checkpoints: Vec<ScheduleCheckpoint>,
+    /// How many times the driver called `advance_one_batch` for this slice.
+    ///
+    /// One on the atomic arm, and the atomic arm does not emit it - which is
+    /// what keeps a document from an unarmed run byte-identical to the one the
+    /// previous round's binary wrote. `checkpoints` answers the same question
+    /// only while the checkpoint list is recorded; this counts the batches
+    /// whether or not it is.
+    #[serde(skip_serializing_if = "batches_is_atomic")]
+    pub batches: usize,
+    /// How many of those batches were entered by **resuming a suspended
+    /// slice**, rather than by the driver's own loop continuing.
+    ///
+    /// A resumption is the property Grok review 4 §4 names as missing - *"senza
+    /// portare uno slice sospeso alla coda, m34 non può cedere a un'altra
+    /// classe"* - so it is counted separately from the batch count: N batches
+    /// inside one call is segmentation, and N batches across two calls with
+    /// another action between them is interleaving.
+    #[serde(skip_serializing_if = "is_zero")]
+    pub resumptions: usize,
+    /// Whether the slice ended because its caller stopped it at a checkpoint.
+    ///
+    /// Redundant with `exit == "interrupted"` and kept because it is the one
+    /// bit a battery filters on, and a boolean column is cheaper to read than a
+    /// string compare in every driver that wants it.
+    #[serde(skip_serializing_if = "is_false")]
+    pub interrupted: bool,
+    /// The frontier's **geometry**, the tracker's **state** and the lane's
+    /// **rng and weights**, as three SHA-256 digests, at the instant the slice
+    /// ended.
+    ///
+    /// `#[serde(skip)]` on all three, which is the point. Sol review 9 §P1
+    /// judged the FNV step digest *"adeguato come checksum regressivo, non come
+    /// certificato"* and named what it does not hash - placement fingerprints,
+    /// pair identities, weights, rng state - and then said where to put the
+    /// stronger instrument: *"aggiungerei, **solo nei gate**, fingerprint
+    /// completi di state/tracker/RNG"*. Only in the gates is exactly a field a
+    /// unit test can read and a document cannot carry, so a batched slice that
+    /// re-converged on the step rows while holding a different frontier fails
+    /// the gate, and no shipped document grows a key.
+    ///
+    /// Empty on a slice that was refused at the entry gate, which never built a
+    /// lane to fingerprint.
+    #[serde(skip)]
+    pub final_state_fingerprint: String,
+    #[serde(skip)]
+    pub final_tracker_fingerprint: String,
+    #[serde(skip)]
+    pub final_lane_fingerprint: String,
     /// The lane's candidate-query count: the first half of the work unit.
     pub candidate_queries: usize,
     /// The exact pair tests the confirmations cost: the second half.
