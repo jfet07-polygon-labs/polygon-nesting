@@ -6604,3 +6604,86 @@ Determinism across two processes with the operator armed is 9 of 9. Three
 suites pass on first attempt, including the campaign's known flake.
 
 Evidence, drivers and every battery: `docs/experiments/sparse-rotation/`.
+
+## The shipping configuration is armed, and the ten-second number stopped being a distribution
+
+Two rounds recommended a configuration and neither turned it on;
+`docs/experiments/fast-contract-validator/` §13 says so of itself — *"no default
+is flipped by this round — the recommendation is the deliverable"*. This round
+flips them, and then does the thing that had to happen before any of the
+campaign's millimetres could be quoted at all.
+
+**The promotion, and it is a default inside a flag.** `m34pconfirm=1` and the
+exact-clearance certificate are now the v3 coordinator's defaults whenever their
+Cargo features are compiled — which they are not, by default, so the default
+build and all four pinned gates are binaries in which the two fields do not
+exist. The certificate needed a *disarm* rather than an arm, which is §13.2's
+first condition: before this round the exact loop was unreachable from any spec
+key in a release binary, and now `fcv=0` reaches it, scoped to one run and
+restored on the way out. Both opt-outs stay, and §13.2(4)'s qualification is why:
+`pconfirm` is worth its 1.5 mm only where there are spare cores.
+
+Measured as documents, at a work budget, six arms per cell over 24 runs: the new
+binary's default **is** the old binary's shipping configuration, field for field,
+and `m34pconfirm=0` reproduces the old *default* field for field. Both promoted
+levers are semantics-preserving in the work currency — neither touches
+`Counter::ExactPairTests` — so what they buy is wall, and the microbenchmark says
+how much: **0.2573 ms per accepted confirmation against the previous default's
+0.7991 ms**, a **3.11x**, with the ordering of the two levers flipping between
+mixed-61 and triangle-20.
+
+**And then the finding that reframes the campaign's own record.** Twenty runs of
+one command — mixed-61, seed 0, `wall=10000`, the shipping arm, one binary, one
+afternoon — produced **three different depths**: 168.4836 thirteen times,
+169.5878 six times, 171.111 once. Two of those three are numbers this campaign
+has published as *separate results*: `rotation-tax` §4.2's **168.484** and
+`fast-contract-validator` §12.1's loaded-box **171.111**, which that round
+attributed to the box being busier and used to retract a verdict. A second
+twenty-round battery the same afternoon found a **fourth**, 169.379. The 2.6 mm
+that two chapters attributed to box load *between sessions* is reproducible
+inside a single twenty-run window. The same battery's `wall=10000` arm also
+**overran its own ten-second budget on 21 of 60 runs**.
+
+**`plan=<ms>` is the answer, and it is a trade rather than a win.** A wall target
+spent as a work budget the coordinator sizes from its own protected phase 0: one
+clock read, floored onto a geometric ladder so two processes agree on it, and
+reported so a caller can replay it exactly as `work=<units>`. Over the same
+twenty rounds it chose **one plan per seed, 20 of 20**, produced **one depth and
+one whole document per seed**, and **overran nothing, 0 of 60**, at a wall p95 of
+8.282 s against the 10 s target.
+
+The price is the unspent wall, and it is smaller than it looks. Over the
+canonical table's **nine (fixture, budget) rows the median price of
+reproducibility is +0.000 mm**: seven rows are at parity to within 0.012 mm, one
+row is 1.074 mm *better*, and the entire cost is one row — mixed-61 at ten
+seconds, at **+6.904 mm**. That row decomposes into a conservative bias constant
+(≈3.74 mm; a single number cannot fit a phase-0 bias that ranges 1.12x–1.59x
+across nine cells), the work counters a work budget carries by construction
+(**1.882 mm**, measured directly at a fixed wall), and the ladder's floor
+(1.281 mm). The first is the largest and it has a named fix — a second clock
+reading at a deterministic work checkpoint — which is priced and declined in
+§13.1 rather than done badly.
+
+Two honest limits are published rather than buried. The plan mode's wall promise
+holds at ten seconds — **0 of 9 cells over target, against the wall mode's 1** —
+and fails at both ends for two different reasons: at three seconds because
+neither mode can stop an action in flight, and at thirty because the fitted bias
+rises with the budget and a constant fitted at ten is no longer conservative
+(36.39 s on one cell — against the wall mode's **41.23 s** in the same cell). And
+two of the table's 27 plan cells did not reproduce; both are **exactly one ladder
+rung** apart, which is the only failure mode §7 predicts, and one of the two
+produced the same layout anyway.
+
+Four pinned gates hit with the **whole-document digest identical to the base
+binary on all four**. Determinism across two processes is **9 of 9 at a work
+budget and 9 of 9 in plan mode**, where the plan-mode gate is two claims and not
+one: the two processes must choose the same plan, and then produce the same
+document. Both suites pass. The canonical production table — three fixtures,
+3/10/30 s, three seeds, two processes each, plan against wall — is
+`docs/experiments/calibrated-plan/` §10, and its headline is one line:
+**`plan` reproduced 25 of 27 cells; `wall` reproduced 0 of 27.** The gap to
+Sparrow is untouched at **18.3 mm** on the `wall` arm at ten seconds, which
+reproduces `fast-contract-validator` §13.3's 18.6 mm to inside the spread this
+round measures.
+
+Evidence, drivers and every battery: `docs/experiments/calibrated-plan/`.

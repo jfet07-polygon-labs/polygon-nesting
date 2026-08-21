@@ -1,0 +1,78 @@
+[
+ {
+  "spec": "plan=10000,cells=13:15:17:19,v3=1",
+  "processWallSeconds": 7.11454252502881,
+  "budget": {
+   "kind": "work",
+   "units": 24891457
+  },
+  "plan": {
+   "bias": 1.7,
+   "headroom": 0.97,
+   "probeWorkUnits": 8778573,
+   "quantumStep": 1.15,
+   "rung": 23,
+   "targetMillis": 10000,
+   "units": 24891457
+  },
+  "planCalibration": {
+   "probeRateUnitsPerSecond": 4013846.4200108773,
+   "probeSeconds": 2.187072469,
+   "rawUnits": 26517241.984767944
+  },
+  "rawDepthMm": 175.3877782649107,
+  "workUnits": 23356444,
+  "coordinatorSeconds": 7.083001716
+ },
+ {
+  "spec": "plan=10000,cells=13:15:17:19,v3=1,planq=1",
+  "processWallSeconds": 7.87414827599423,
+  "budget": {
+   "kind": "work",
+   "units": 26485639
+  },
+  "plan": {
+   "bias": 1.7,
+   "headroom": 0.97,
+   "probeWorkUnits": 8778573,
+   "quantumStep": 1.0,
+   "rung": null,
+   "targetMillis": 10000,
+   "units": 26485639
+  },
+  "planCalibration": {
+   "probeRateUnitsPerSecond": 4008307.761857482,
+   "probeSeconds": 2.190094554,
+   "rawUnits": 26485639.052951515
+  },
+  "rawDepthMm": 175.1357388323935,
+  "workUnits": 25576207,
+  "coordinatorSeconds": 7.83962999
+ },
+ {
+  "spec": "wall=10000,cells=13:15:17:19,v3=1",
+  "processWallSeconds": 9.890990361978766,
+  "budget": {
+   "kind": "wall",
+   "millis": 10000
+  },
+  "plan": null,
+  "planCalibration": null,
+  "rawDepthMm": 168.4836008374388,
+  "workUnits": 0,
+  "coordinatorSeconds": 9.860411822
+ },
+ {
+  "spec": "work=24891457,cells=13:15:17:19,v3=1",
+  "processWallSeconds": 7.183242750004865,
+  "budget": {
+   "kind": "work",
+   "units": 24891457
+  },
+  "plan": null,
+  "planCalibration": null,
+  "rawDepthMm": 175.3877782649107,
+  "workUnits": 23356444,
+  "coordinatorSeconds": 7.150208114
+ }
+]

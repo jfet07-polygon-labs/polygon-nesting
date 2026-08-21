@@ -1,0 +1,594 @@
+plan-s0-r0: wall= 7.205 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r0: wall= 6.338 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r0: wall= 8.238 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r0: wall= 7.941 depth=175.136 units=26523235 rung=None dg=c0b249e490fd51a2
+planraw-s1-r0: wall= 8.018 depth=171.362 units=28210884 rung=None dg=2da8ec113c84716d
+planraw-s2-r0: wall= 9.231 depth=174.881 units=26145413 rung=None dg=e922bb95fa494dcb
+wall-s0-r0: wall= 9.641 depth=169.588 units=None rung=None dg=f2088c777c349801
+wall-s1-r0: wall=10.308 depth=165.656 units=None rung=None dg=06d7599a5d1da2a1
+wall-s2-r0: wall= 9.669 depth=174.280 units=None rung=None dg=0add46aed85f46f4
+planraw-s0-r1: wall= 7.908 depth=175.136 units=26584222 rung=None dg=03f33c79348e99ae
+planraw-s1-r1: wall= 8.021 depth=171.362 units=27524757 rung=None dg=51cb8553562faf05
+planraw-s2-r1: wall= 9.200 depth=174.881 units=26191176 rung=None dg=d944325014347330
+wall-s0-r1: wall= 9.931 depth=168.484 units=None rung=None dg=b5b9419af1af0e23
+wall-s1-r1: wall= 9.366 depth=165.823 units=None rung=None dg=0d5dcf0e4e5d8c9b
+wall-s2-r1: wall= 9.748 depth=174.280 units=None rung=None dg=95eb97de5ec3ba51
+plan-s0-r1: wall= 7.140 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r1: wall= 6.350 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r1: wall= 8.306 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+wall-s0-r2: wall= 9.636 depth=169.588 units=None rung=None dg=c592a916a37615fa
+wall-s1-r2: wall=10.326 depth=165.656 units=None rung=None dg=80402b263fc7b7ca
+wall-s2-r2: wall= 9.878 depth=174.280 units=None rung=None dg=f3b5be8ca6d041a5
+plan-s0-r2: wall= 7.213 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r2: wall= 6.372 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r2: wall= 8.242 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r2: wall= 7.191 depth=175.388 units=26265454 rung=None dg=af04c07b8653881a
+planraw-s1-r2: wall= 8.006 depth=171.362 units=27876991 rung=None dg=9f43a5704e0ec79c
+planraw-s2-r2: wall= 9.178 depth=174.881 units=26347989 rung=None dg=0a8370f29c84431a
+plan-s0-r3: wall= 7.168 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r3: wall= 6.414 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r3: wall= 8.288 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r3: wall= 7.921 depth=175.136 units=26534813 rung=None dg=8e3222cd7faef252
+planraw-s1-r3: wall= 7.967 depth=171.362 units=28060639 rung=None dg=26266ee07c94a7ab
+planraw-s2-r3: wall= 9.217 depth=174.881 units=26242625 rung=None dg=261a6b4cf08a4a59
+wall-s0-r3: wall= 9.645 depth=169.588 units=None rung=None dg=989b72091ff8a0ba
+wall-s1-r3: wall=10.296 depth=165.656 units=None rung=None dg=17198e7c4285e6f5
+wall-s2-r3: wall= 9.858 depth=174.280 units=None rung=None dg=e18d78f10b197fba
+planraw-s0-r4: wall= 8.088 depth=175.136 units=26528822 rung=None dg=d789e92e61d90891
+planraw-s1-r4: wall= 8.014 depth=171.362 units=27519937 rung=None dg=23497ac87e8fc7e8
+planraw-s2-r4: wall= 9.198 depth=174.881 units=26450993 rung=None dg=6bdf6abd3722ddb8
+wall-s0-r4: wall=10.050 depth=168.484 units=None rung=None dg=389021172e728b13
+wall-s1-r4: wall=10.351 depth=165.656 units=None rung=None dg=917602ce57601419
+wall-s2-r4: wall= 9.839 depth=174.280 units=None rung=None dg=4fd604f2cbe84ff1
+plan-s0-r4: wall= 7.160 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r4: wall= 6.340 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r4: wall= 8.255 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+wall-s0-r5: wall= 9.965 depth=168.484 units=None rung=None dg=7ba07e39db6c1300
+wall-s1-r5: wall=10.313 depth=165.656 units=None rung=None dg=7c778d2a9390da69
+wall-s2-r5: wall= 9.677 depth=174.280 units=None rung=None dg=685a0cc81d3bede0
+plan-s0-r5: wall= 7.152 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r5: wall= 6.387 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r5: wall= 8.252 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r5: wall= 7.861 depth=175.136 units=26643880 rung=None dg=55f51f6be73027a8
+planraw-s1-r5: wall= 7.970 depth=171.362 units=27976247 rung=None dg=472bae0545e14ce6
+planraw-s2-r5: wall= 9.240 depth=174.881 units=26245468 rung=None dg=d249ea9fd05e3d32
+plan-s0-r6: wall= 7.152 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r6: wall= 6.377 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r6: wall= 8.201 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r6: wall= 7.203 depth=175.388 units=26317813 rung=None dg=7eb890af111cc4a5
+planraw-s1-r6: wall= 7.986 depth=171.362 units=28162553 rung=None dg=e58baf507405142b
+planraw-s2-r6: wall= 9.196 depth=174.881 units=26265342 rung=None dg=d57b24ceecff5b73
+wall-s0-r6: wall= 9.926 depth=168.484 units=None rung=None dg=dd2db09b02605c81
+wall-s1-r6: wall=10.335 depth=165.656 units=None rung=None dg=22b764a878e581a3
+wall-s2-r6: wall= 9.655 depth=174.280 units=None rung=None dg=6289a456bf140bfe
+planraw-s0-r7: wall= 7.935 depth=175.136 units=26637045 rung=None dg=3bc6ae8ae35a8c00
+planraw-s1-r7: wall= 8.008 depth=171.362 units=27886238 rung=None dg=7414e3cd0cc96c61
+planraw-s2-r7: wall= 9.210 depth=174.881 units=26115775 rung=None dg=dc0aab35682fa418
+wall-s0-r7: wall= 9.666 depth=169.588 units=None rung=None dg=78c13fed31ea8abe
+wall-s1-r7: wall=10.314 depth=165.656 units=None rung=None dg=917bff2643052862
+wall-s2-r7: wall= 9.735 depth=174.280 units=None rung=None dg=169e0714ce244f5f
+plan-s0-r7: wall= 7.142 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r7: wall= 6.415 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r7: wall= 8.261 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+wall-s0-r8: wall= 9.956 depth=168.484 units=None rung=None dg=328b9f8f69817301
+wall-s1-r8: wall=10.312 depth=165.656 units=None rung=None dg=6128eb3800e3b21a
+wall-s2-r8: wall= 9.758 depth=174.280 units=None rung=None dg=0d94bdea028814d2
+plan-s0-r8: wall= 7.160 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r8: wall= 6.356 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r8: wall= 8.222 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r8: wall= 7.124 depth=175.388 units=26340561 rung=None dg=b83c1ee3d50dfab6
+planraw-s1-r8: wall= 8.008 depth=171.362 units=27936566 rung=None dg=5c3f65b6d82c64dd
+planraw-s2-r8: wall= 9.219 depth=174.881 units=26076573 rung=None dg=a98caf0a8875ba4b
+plan-s0-r9: wall= 7.156 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r9: wall= 6.397 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r9: wall= 8.282 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r9: wall= 7.963 depth=175.136 units=26474935 rung=None dg=eed7b2869d5f2bee
+planraw-s1-r9: wall= 7.961 depth=171.362 units=27866737 rung=None dg=bd449558a1f5d176
+planraw-s2-r9: wall= 9.278 depth=174.881 units=26001568 rung=None dg=6ab868b2fbfdd894
+wall-s0-r9: wall= 9.964 depth=168.484 units=None rung=None dg=7b11c28daf940e85
+wall-s1-r9: wall=10.344 depth=165.656 units=None rung=None dg=e3893109f5fd8b55
+wall-s2-r9: wall= 9.709 depth=174.280 units=None rung=None dg=4c0b15d0c7c35f3b
+planraw-s0-r10: wall= 7.963 depth=175.136 units=26626232 rung=None dg=8cf4fdbefb003a26
+planraw-s1-r10: wall= 8.008 depth=171.362 units=28153580 rung=None dg=979a8d5676360099
+planraw-s2-r10: wall= 9.243 depth=174.881 units=26142487 rung=None dg=796fb3a740d5fdf9
+wall-s0-r10: wall= 9.624 depth=169.588 units=None rung=None dg=223326eed111e106
+wall-s1-r10: wall=10.328 depth=165.656 units=None rung=None dg=e693446b9dcb3884
+wall-s2-r10: wall= 9.698 depth=174.280 units=None rung=None dg=3fd2bc2a361fa2dd
+plan-s0-r10: wall= 7.139 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r10: wall= 6.419 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r10: wall= 8.288 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+wall-s0-r11: wall= 9.122 depth=171.111 units=None rung=None dg=131ee9c91a83f92c
+wall-s1-r11: wall=10.309 depth=165.656 units=None rung=None dg=091d5657e99d58b3
+wall-s2-r11: wall= 9.650 depth=174.280 units=None rung=None dg=bad5c3ddd1357082
+plan-s0-r11: wall= 7.141 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r11: wall= 6.387 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r11: wall= 8.214 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r11: wall= 7.142 depth=175.388 units=26248345 rung=None dg=d930e63d0de65765
+planraw-s1-r11: wall= 7.991 depth=171.362 units=28119051 rung=None dg=e1f2aa8d7b6a3de9
+planraw-s2-r11: wall= 9.270 depth=174.881 units=26067278 rung=None dg=0bb9469b6170999c
+plan-s0-r12: wall= 7.175 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r12: wall= 6.375 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r12: wall= 8.277 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r12: wall= 7.197 depth=175.388 units=26125955 rung=None dg=fb8c3826ecfa56bd
+planraw-s1-r12: wall= 7.941 depth=171.362 units=28091356 rung=None dg=a845da7d7066bb7a
+planraw-s2-r12: wall= 9.233 depth=174.881 units=26128217 rung=None dg=a15e30f5e25ddb13
+wall-s0-r12: wall=10.009 depth=168.484 units=None rung=None dg=9ffc9315eb86ece2
+wall-s1-r12: wall=10.382 depth=165.656 units=None rung=None dg=9c9d635a80eaaec1
+wall-s2-r12: wall= 9.662 depth=174.280 units=None rung=None dg=d213695f1dcfaeb6
+planraw-s0-r13: wall= 7.200 depth=175.388 units=26331550 rung=None dg=ccc68c2bcf1ee83f
+planraw-s1-r13: wall= 8.060 depth=171.362 units=27697067 rung=None dg=b9d64e9e94287d4e
+planraw-s2-r13: wall= 9.196 depth=174.881 units=26268646 rung=None dg=dc15dcb4c041b95a
+wall-s0-r13: wall= 9.963 depth=168.484 units=None rung=None dg=e8894ca8a900db52
+wall-s1-r13: wall=10.261 depth=165.656 units=None rung=None dg=99bf15b642793c6a
+wall-s2-r13: wall= 9.621 depth=174.280 units=None rung=None dg=a2a645a313226e71
+plan-s0-r13: wall= 7.193 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r13: wall= 6.339 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r13: wall= 8.281 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+wall-s0-r14: wall= 9.993 depth=168.484 units=None rung=None dg=d038e5c30dc7698a
+wall-s1-r14: wall=10.314 depth=165.656 units=None rung=None dg=ca035d4c5c521ab5
+wall-s2-r14: wall= 9.859 depth=174.280 units=None rung=None dg=01f86bb59e593f1e
+plan-s0-r14: wall= 7.134 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r14: wall= 6.364 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r14: wall= 8.247 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r14: wall= 7.940 depth=175.136 units=26740090 rung=None dg=4b2d718c41532501
+planraw-s1-r14: wall= 7.945 depth=171.362 units=28060465 rung=None dg=2193019611a60f0e
+planraw-s2-r14: wall= 9.230 depth=174.881 units=26186408 rung=None dg=8ee2a30869d8ada1
+plan-s0-r15: wall= 7.164 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r15: wall= 6.385 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r15: wall= 8.236 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r15: wall= 7.151 depth=175.388 units=26204717 rung=None dg=fd04dcbeda22cfa4
+planraw-s1-r15: wall= 8.000 depth=171.362 units=27764889 rung=None dg=81a7059754db0b6b
+planraw-s2-r15: wall= 9.255 depth=174.881 units=26209980 rung=None dg=f75aa4ebd9941bfb
+wall-s0-r15: wall= 9.633 depth=169.588 units=None rung=None dg=4961eb827d758fa2
+wall-s1-r15: wall=10.316 depth=165.656 units=None rung=None dg=36ad3f1651f06806
+wall-s2-r15: wall= 9.690 depth=174.280 units=None rung=None dg=a004f84f6c044cb9
+planraw-s0-r16: wall= 7.937 depth=175.136 units=26452470 rung=None dg=8e9a4f3aaa45ba8e
+planraw-s1-r16: wall= 8.001 depth=171.362 units=27990805 rung=None dg=9e827cf8057cd08b
+planraw-s2-r16: wall= 9.243 depth=174.881 units=26062618 rung=None dg=a1aefea516b515f8
+wall-s0-r16: wall= 9.990 depth=168.484 units=None rung=None dg=b88ff2ecdd26f43e
+wall-s1-r16: wall=10.241 depth=165.656 units=None rung=None dg=a27a2d60c9a2da26
+wall-s2-r16: wall= 9.786 depth=174.280 units=None rung=None dg=fce00f7eb91d5a3d
+plan-s0-r16: wall= 7.117 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r16: wall= 6.384 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r16: wall= 8.187 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+wall-s0-r17: wall= 9.973 depth=168.484 units=None rung=None dg=1d1f470015ff20e0
+wall-s1-r17: wall=10.288 depth=165.656 units=None rung=None dg=5d657a701f024008
+wall-s2-r17: wall= 9.658 depth=174.280 units=None rung=None dg=5a9d28ae2a6d1b2d
+plan-s0-r17: wall= 7.135 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r17: wall= 6.346 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r17: wall= 8.231 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r17: wall= 7.897 depth=175.136 units=26643887 rung=None dg=5a490715d7b2ed40
+planraw-s1-r17: wall= 7.939 depth=171.362 units=27736885 rung=None dg=2da589d602599868
+planraw-s2-r17: wall= 9.228 depth=174.881 units=26096398 rung=None dg=c4b1fd612137c02e
+plan-s0-r18: wall= 7.162 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r18: wall= 6.410 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r18: wall= 8.272 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+planraw-s0-r18: wall= 7.947 depth=175.136 units=26393657 rung=None dg=399b3985c3995bb8
+planraw-s1-r18: wall= 7.993 depth=171.362 units=28125353 rung=None dg=96eab9ebfb390b36
+planraw-s2-r18: wall= 9.243 depth=174.881 units=26123197 rung=None dg=85f8384bab9e71ab
+wall-s0-r18: wall= 9.931 depth=168.484 units=None rung=None dg=20c063e1f741efef
+wall-s1-r18: wall=10.283 depth=165.656 units=None rung=None dg=cf3e67d7922b58b2
+wall-s2-r18: wall= 9.700 depth=174.280 units=None rung=None dg=5bbba5a4cf8b9111
+planraw-s0-r19: wall= 7.151 depth=175.388 units=26342945 rung=None dg=fd1a798ca36e8534
+planraw-s1-r19: wall= 7.954 depth=171.362 units=28151817 rung=None dg=27089c164626fe90
+planraw-s2-r19: wall= 9.191 depth=174.881 units=26262179 rung=None dg=4c51fb60d61b7043
+wall-s0-r19: wall= 9.994 depth=168.484 units=None rung=None dg=f389f7517f77dd2f
+wall-s1-r19: wall=10.322 depth=165.656 units=None rung=None dg=28de8841ba6c91c3
+wall-s2-r19: wall= 9.710 depth=174.280 units=None rung=None dg=a6583ffbf216fb9d
+plan-s0-r19: wall= 7.185 depth=175.388 units=24891457 rung=23 dg=8f2949e8bd9e5b8c
+plan-s1-r19: wall= 6.381 depth=174.170 units=24891457 rung=23 dg=c2c07a40c5ffdfa2
+plan-s2-r19: wall= 8.210 depth=176.162 units=24891457 rung=23 dg=b7a7fafdcec25b10
+{
+ "plan": {
+  "n": 60,
+  "wallP50": 7.155583834974095,
+  "wallP95": 8.282375239999965,
+  "wallMax": 8.306325466022827,
+  "wallMin": 6.33774397498928,
+  "overruns": 0,
+  "perSeed": {
+   "0": {
+    "n": 20,
+    "wallP50": 7.155583834974095,
+    "wallP95": 7.204659656970762,
+    "wallMax": 7.212816454994027,
+    "wallMin": 7.116945046989713,
+    "overruns": 0,
+    "distinctPlanUnits": [
+     24891457
+    ],
+    "distinctDepthsMm": [
+     175.3877782649107
+    ],
+    "distinctDigests": [
+     "8f2949e8bd9e5b8c"
+    ],
+    "planStable": true,
+    "depthStable": true,
+    "documentStable": true,
+    "depthMedianMm": 175.3877782649107,
+    "modalDepthShare": 1.0
+   },
+   "1": {
+    "n": 20,
+    "wallP50": 6.377370245987549,
+    "wallP95": 6.41508468502434,
+    "wallMax": 6.418502738990355,
+    "wallMin": 6.33774397498928,
+    "overruns": 0,
+    "distinctPlanUnits": [
+     24891457
+    ],
+    "distinctDepthsMm": [
+     174.17000000000002
+    ],
+    "distinctDigests": [
+     "c2c07a40c5ffdfa2"
+    ],
+    "planStable": true,
+    "depthStable": true,
+    "documentStable": true,
+    "depthMedianMm": 174.17000000000002,
+    "modalDepthShare": 1.0
+   },
+   "2": {
+    "n": 20,
+    "wallP50": 8.246604135958478,
+    "wallP95": 8.288139504031278,
+    "wallMax": 8.306325466022827,
+    "wallMin": 8.18701901100576,
+    "overruns": 0,
+    "distinctPlanUnits": [
+     24891457
+    ],
+    "distinctDepthsMm": [
+     176.16200000000003
+    ],
+    "distinctDigests": [
+     "b7a7fafdcec25b10"
+    ],
+    "planStable": true,
+    "depthStable": true,
+    "documentStable": true,
+    "depthMedianMm": 176.16200000000003,
+    "modalDepthShare": 1.0
+   }
+  },
+  "allSeedsPlanStable": true,
+  "allSeedsDocumentStable": true,
+  "seedMedianOfMedians": 175.3877782649107
+ },
+ "planraw": {
+  "n": 60,
+  "wallP50": 8.000010463991202,
+  "wallP95": 9.24348236998776,
+  "wallMax": 9.278466527990531,
+  "wallMin": 7.124084344017319,
+  "overruns": 0,
+  "perSeed": {
+   "0": {
+    "n": 20,
+    "wallP50": 7.897160377004184,
+    "wallP95": 7.962582912994549,
+    "wallMax": 8.087753716041334,
+    "wallMin": 7.124084344017319,
+    "overruns": 0,
+    "distinctPlanUnits": [
+     26125955,
+     26204717,
+     26248345,
+     26265454,
+     26317813,
+     26331550,
+     26340561,
+     26342945,
+     26393657,
+     26452470,
+     26474935,
+     26523235,
+     26528822,
+     26534813,
+     26584222,
+     26626232,
+     26637045,
+     26643880,
+     26643887,
+     26740090
+    ],
+    "distinctDepthsMm": [
+     175.1357388323935,
+     175.3877782649107
+    ],
+    "distinctDigests": [
+     "03f33c79348e99ae",
+     "399b3985c3995bb8",
+     "3bc6ae8ae35a8c00",
+     "4b2d718c41532501",
+     "55f51f6be73027a8",
+     "5a490715d7b2ed40",
+     "7eb890af111cc4a5",
+     "8cf4fdbefb003a26",
+     "8e3222cd7faef252",
+     "8e9a4f3aaa45ba8e",
+     "af04c07b8653881a",
+     "b83c1ee3d50dfab6",
+     "c0b249e490fd51a2",
+     "ccc68c2bcf1ee83f",
+     "d789e92e61d90891",
+     "d930e63d0de65765",
+     "eed7b2869d5f2bee",
+     "fb8c3826ecfa56bd",
+     "fd04dcbeda22cfa4",
+     "fd1a798ca36e8534"
+    ],
+    "planStable": false,
+    "depthStable": false,
+    "documentStable": false,
+    "depthMedianMm": 175.1357388323935,
+    "modalDepthShare": 0.6
+   },
+   "1": {
+    "n": 20,
+    "wallP50": 7.992939747055061,
+    "wallP95": 8.021137196978088,
+    "wallMax": 8.06019600701984,
+    "wallMin": 7.93874336295994,
+    "overruns": 0,
+    "distinctPlanUnits": [
+     27519937,
+     27524757,
+     27697067,
+     27736885,
+     27764889,
+     27866737,
+     27876991,
+     27886238,
+     27936566,
+     27976247,
+     27990805,
+     28060465,
+     28060639,
+     28091356,
+     28119051,
+     28125353,
+     28151817,
+     28153580,
+     28162553,
+     28210884
+    ],
+    "distinctDepthsMm": [
+     171.3619986855876
+    ],
+    "distinctDigests": [
+     "2193019611a60f0e",
+     "23497ac87e8fc7e8",
+     "26266ee07c94a7ab",
+     "27089c164626fe90",
+     "2da589d602599868",
+     "2da8ec113c84716d",
+     "472bae0545e14ce6",
+     "51cb8553562faf05",
+     "5c3f65b6d82c64dd",
+     "7414e3cd0cc96c61",
+     "81a7059754db0b6b",
+     "96eab9ebfb390b36",
+     "979a8d5676360099",
+     "9e827cf8057cd08b",
+     "9f43a5704e0ec79c",
+     "a845da7d7066bb7a",
+     "b9d64e9e94287d4e",
+     "bd449558a1f5d176",
+     "e1f2aa8d7b6a3de9",
+     "e58baf507405142b"
+    ],
+    "planStable": false,
+    "depthStable": true,
+    "documentStable": false,
+    "depthMedianMm": 171.3619986855876,
+    "modalDepthShare": 1.0
+   },
+   "2": {
+    "n": 20,
+    "wallP50": 9.228190544992685,
+    "wallP95": 9.27020261803409,
+    "wallMax": 9.278466527990531,
+    "wallMin": 9.178215094958432,
+    "overruns": 0,
+    "distinctPlanUnits": [
+     26001568,
+     26062618,
+     26067278,
+     26076573,
+     26096398,
+     26115775,
+     26123197,
+     26128217,
+     26142487,
+     26145413,
+     26186408,
+     26191176,
+     26209980,
+     26242625,
+     26245468,
+     26262179,
+     26265342,
+     26268646,
+     26347989,
+     26450993
+    ],
+    "distinctDepthsMm": [
+     174.881
+    ],
+    "distinctDigests": [
+     "0a8370f29c84431a",
+     "0bb9469b6170999c",
+     "261a6b4cf08a4a59",
+     "4c51fb60d61b7043",
+     "6ab868b2fbfdd894",
+     "6bdf6abd3722ddb8",
+     "796fb3a740d5fdf9",
+     "85f8384bab9e71ab",
+     "8ee2a30869d8ada1",
+     "a15e30f5e25ddb13",
+     "a1aefea516b515f8",
+     "a98caf0a8875ba4b",
+     "c4b1fd612137c02e",
+     "d249ea9fd05e3d32",
+     "d57b24ceecff5b73",
+     "d944325014347330",
+     "dc0aab35682fa418",
+     "dc15dcb4c041b95a",
+     "e922bb95fa494dcb",
+     "f75aa4ebd9941bfb"
+    ],
+    "planStable": false,
+    "depthStable": true,
+    "documentStable": false,
+    "depthMedianMm": 174.881,
+    "modalDepthShare": 1.0
+   }
+  },
+  "allSeedsPlanStable": false,
+  "allSeedsDocumentStable": false,
+  "seedMedianOfMedians": 174.881
+ },
+ "wall": {
+  "n": 60,
+  "wallP50": 9.930565977003425,
+  "wallP95": 10.335043407976627,
+  "wallMax": 10.381664140964858,
+  "wallMin": 9.122084645030554,
+  "overruns": 21,
+  "perSeed": {
+   "0": {
+    "n": 20,
+    "wallP50": 9.93144240602851,
+    "wallP95": 10.008628872979898,
+    "wallMax": 10.049767779011745,
+    "wallMin": 9.122084645030554,
+    "overruns": 2,
+    "distinctPlanUnits": [
+     null
+    ],
+    "distinctDepthsMm": [
+     168.4836008374388,
+     169.58777826491067,
+     171.111
+    ],
+    "distinctDigests": [
+     "131ee9c91a83f92c",
+     "1d1f470015ff20e0",
+     "20c063e1f741efef",
+     "223326eed111e106",
+     "328b9f8f69817301",
+     "389021172e728b13",
+     "4961eb827d758fa2",
+     "78c13fed31ea8abe",
+     "7b11c28daf940e85",
+     "7ba07e39db6c1300",
+     "989b72091ff8a0ba",
+     "9ffc9315eb86ece2",
+     "b5b9419af1af0e23",
+     "b88ff2ecdd26f43e",
+     "c592a916a37615fa",
+     "d038e5c30dc7698a",
+     "dd2db09b02605c81",
+     "e8894ca8a900db52",
+     "f2088c777c349801",
+     "f389f7517f77dd2f"
+    ],
+    "planStable": true,
+    "depthStable": false,
+    "documentStable": false,
+    "depthMedianMm": 168.4836008374388,
+    "modalDepthShare": 0.65
+   },
+   "1": {
+    "n": 20,
+    "wallP50": 10.312877546006348,
+    "wallP95": 10.350626514002215,
+    "wallMax": 10.381664140964858,
+    "wallMin": 9.366259953007102,
+    "overruns": 19,
+    "distinctPlanUnits": [
+     null
+    ],
+    "distinctDepthsMm": [
+     165.65577826491065,
+     165.82295744730885
+    ],
+    "distinctDigests": [
+     "06d7599a5d1da2a1",
+     "091d5657e99d58b3",
+     "0d5dcf0e4e5d8c9b",
+     "17198e7c4285e6f5",
+     "22b764a878e581a3",
+     "28de8841ba6c91c3",
+     "36ad3f1651f06806",
+     "5d657a701f024008",
+     "6128eb3800e3b21a",
+     "7c778d2a9390da69",
+     "80402b263fc7b7ca",
+     "917602ce57601419",
+     "917bff2643052862",
+     "99bf15b642793c6a",
+     "9c9d635a80eaaec1",
+     "a27a2d60c9a2da26",
+     "ca035d4c5c521ab5",
+     "cf3e67d7922b58b2",
+     "e3893109f5fd8b55",
+     "e693446b9dcb3884"
+    ],
+    "planStable": true,
+    "depthStable": false,
+    "documentStable": false,
+    "depthMedianMm": 165.65577826491065,
+    "modalDepthShare": 0.95
+   },
+   "2": {
+    "n": 20,
+    "wallP50": 9.700308258994482,
+    "wallP95": 9.858856956998352,
+    "wallMax": 9.877564705035184,
+    "wallMin": 9.620642752968706,
+    "overruns": 0,
+    "distinctPlanUnits": [
+     null
+    ],
+    "distinctDepthsMm": [
+     174.28
+    ],
+    "distinctDigests": [
+     "01f86bb59e593f1e",
+     "0add46aed85f46f4",
+     "0d94bdea028814d2",
+     "169e0714ce244f5f",
+     "3fd2bc2a361fa2dd",
+     "4c0b15d0c7c35f3b",
+     "4fd604f2cbe84ff1",
+     "5a9d28ae2a6d1b2d",
+     "5bbba5a4cf8b9111",
+     "6289a456bf140bfe",
+     "685a0cc81d3bede0",
+     "95eb97de5ec3ba51",
+     "a004f84f6c044cb9",
+     "a2a645a313226e71",
+     "a6583ffbf216fb9d",
+     "bad5c3ddd1357082",
+     "d213695f1dcfaeb6",
+     "e18d78f10b197fba",
+     "f3b5be8ca6d041a5",
+     "fce00f7eb91d5a3d"
+    ],
+    "planStable": true,
+    "depthStable": true,
+    "documentStable": false,
+    "depthMedianMm": 174.28,
+    "modalDepthShare": 1.0
+   }
+  },
+  "allSeedsPlanStable": true,
+  "allSeedsDocumentStable": false,
+  "seedMedianOfMedians": 168.4836008374388
+ }
+}

@@ -1,0 +1,136 @@
+{
+ "binary": "/var/lib/t3/tmp/calplan/bin/plan-meas",
+ "budgetKey": "work",
+ "value": "30000000",
+ "extra": "",
+ "requests": [
+  "mixed-61",
+  "shapes-17",
+  "triangle-20"
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "rows": [
+  {
+   "tag": "mixed-61-s0",
+   "spec": "work=30000000,cells=13:15:17:19,v3=1",
+   "digestA": "5f245fe18d37a4d7",
+   "digestB": "5f245fe18d37a4d7",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 173.57506393348288,
+   "rawDepthMmB": 173.57506393348288,
+   "equal": true
+  },
+  {
+   "tag": "mixed-61-s1",
+   "spec": "work=30000000,cells=11:15:21:27,v3=1",
+   "digestA": "22ad73cb8ae9e4ea",
+   "digestB": "22ad73cb8ae9e4ea",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 171.3619986855876,
+   "rawDepthMmB": 171.3619986855876,
+   "equal": true
+  },
+  {
+   "tag": "mixed-61-s2",
+   "spec": "work=30000000,cells=15:23:31:39,v3=1",
+   "digestA": "6e316b3b0364f476",
+   "digestB": "6e316b3b0364f476",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 174.28,
+   "rawDepthMmB": 174.28,
+   "equal": true
+  },
+  {
+   "tag": "shapes-17-s0",
+   "spec": "work=30000000,cells=13:15:17:19,v3=1",
+   "digestA": "b2c84e9ae497e4e1",
+   "digestB": "b2c84e9ae497e4e1",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 200.349,
+   "rawDepthMmB": 200.349,
+   "equal": true
+  },
+  {
+   "tag": "shapes-17-s1",
+   "spec": "work=30000000,cells=11:15:21:27,v3=1",
+   "digestA": "75e0237d355aa655",
+   "digestB": "75e0237d355aa655",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 200.34937729570953,
+   "rawDepthMmB": 200.34937729570953,
+   "equal": true
+  },
+  {
+   "tag": "shapes-17-s2",
+   "spec": "work=30000000,cells=15:23:31:39,v3=1",
+   "digestA": "f8ba9ebd4c459e7b",
+   "digestB": "f8ba9ebd4c459e7b",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 200.349,
+   "rawDepthMmB": 200.349,
+   "equal": true
+  },
+  {
+   "tag": "triangle-20-s0",
+   "spec": "work=30000000,cells=13:15:17:19,v3=1",
+   "digestA": "8b2c8d99c7931941",
+   "digestB": "8b2c8d99c7931941",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 70.7711336311948,
+   "rawDepthMmB": 70.7711336311948,
+   "equal": true
+  },
+  {
+   "tag": "triangle-20-s1",
+   "spec": "work=30000000,cells=11:15:21:27,v3=1",
+   "digestA": "e491e66ffb29b178",
+   "digestB": "e491e66ffb29b178",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 70.74684851410467,
+   "rawDepthMmB": 70.74684851410467,
+   "equal": true
+  },
+  {
+   "tag": "triangle-20-s2",
+   "spec": "work=30000000,cells=15:23:31:39,v3=1",
+   "digestA": "543e771624a926ec",
+   "digestB": "543e771624a926ec",
+   "planUnitsA": null,
+   "planUnitsB": null,
+   "planAgrees": true,
+   "documentEqual": true,
+   "rawDepthMmA": 70.74727715491606,
+   "rawDepthMmB": 70.74727715491606,
+   "equal": true
+  }
+ ],
+ "allEqual": true
+}

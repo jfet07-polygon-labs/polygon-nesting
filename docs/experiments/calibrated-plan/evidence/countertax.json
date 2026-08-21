@@ -1,0 +1,216 @@
+{
+ "binary": "/var/lib/t3/tmp/calplan/bin/plan-meas",
+ "request": "mixed-61",
+ "targetMs": "10000",
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "rounds": 3,
+ "rows": [
+  {
+   "tag": "countersOff-s0-r0",
+   "arm": "countersOff",
+   "seed": 0,
+   "round": 0,
+   "processWallSeconds": 9.1415880570421,
+   "rawDepthMm": 171.111,
+   "workUnits": 0
+  },
+  {
+   "tag": "countersOff-s1-r0",
+   "arm": "countersOff",
+   "seed": 1,
+   "round": 0,
+   "processWallSeconds": 10.234518663957715,
+   "rawDepthMm": 165.65577826491065,
+   "workUnits": 0
+  },
+  {
+   "tag": "countersOff-s2-r0",
+   "arm": "countersOff",
+   "seed": 2,
+   "round": 0,
+   "processWallSeconds": 9.656817598035559,
+   "rawDepthMm": 174.28,
+   "workUnits": 0
+  },
+  {
+   "tag": "countersOn-s0-r0",
+   "arm": "countersOn",
+   "seed": 0,
+   "round": 0,
+   "processWallSeconds": 9.647279973025434,
+   "rawDepthMm": 172.2875460463765,
+   "workUnits": 27676900
+  },
+  {
+   "tag": "countersOn-s1-r0",
+   "arm": "countersOn",
+   "seed": 1,
+   "round": 0,
+   "processWallSeconds": 10.111435233033262,
+   "rawDepthMm": 167.183,
+   "workUnits": 21573468
+  },
+  {
+   "tag": "countersOn-s2-r0",
+   "arm": "countersOn",
+   "seed": 2,
+   "round": 0,
+   "processWallSeconds": 9.935125083022285,
+   "rawDepthMm": 174.881,
+   "workUnits": 23170010
+  },
+  {
+   "tag": "countersOn-s0-r1",
+   "arm": "countersOn",
+   "seed": 0,
+   "round": 1,
+   "processWallSeconds": 9.691252880031243,
+   "rawDepthMm": 172.2875460463765,
+   "workUnits": 27676900
+  },
+  {
+   "tag": "countersOn-s1-r1",
+   "arm": "countersOn",
+   "seed": 1,
+   "round": 1,
+   "processWallSeconds": 9.903714190004393,
+   "rawDepthMm": 176.05599999999998,
+   "workUnits": 31310517
+  },
+  {
+   "tag": "countersOn-s2-r1",
+   "arm": "countersOn",
+   "seed": 2,
+   "round": 1,
+   "processWallSeconds": 10.055505613039713,
+   "rawDepthMm": 176.16200000000003,
+   "workUnits": 27249085
+  },
+  {
+   "tag": "countersOff-s0-r1",
+   "arm": "countersOff",
+   "seed": 0,
+   "round": 1,
+   "processWallSeconds": 9.98502754297806,
+   "rawDepthMm": 168.4836008374388,
+   "workUnits": 0
+  },
+  {
+   "tag": "countersOff-s1-r1",
+   "arm": "countersOff",
+   "seed": 1,
+   "round": 1,
+   "processWallSeconds": 10.27763407601742,
+   "rawDepthMm": 165.65577826491065,
+   "workUnits": 0
+  },
+  {
+   "tag": "countersOff-s2-r1",
+   "arm": "countersOff",
+   "seed": 2,
+   "round": 1,
+   "processWallSeconds": 9.750005590030923,
+   "rawDepthMm": 174.28,
+   "workUnits": 0
+  },
+  {
+   "tag": "countersOff-s0-r2",
+   "arm": "countersOff",
+   "seed": 0,
+   "round": 2,
+   "processWallSeconds": 9.648488520993851,
+   "rawDepthMm": 169.58777826491067,
+   "workUnits": 0
+  },
+  {
+   "tag": "countersOff-s1-r2",
+   "arm": "countersOff",
+   "seed": 1,
+   "round": 2,
+   "processWallSeconds": 10.279853309970349,
+   "rawDepthMm": 165.65577826491065,
+   "workUnits": 0
+  },
+  {
+   "tag": "countersOff-s2-r2",
+   "arm": "countersOff",
+   "seed": 2,
+   "round": 2,
+   "processWallSeconds": 9.713957850006409,
+   "rawDepthMm": 174.28,
+   "workUnits": 0
+  },
+  {
+   "tag": "countersOn-s0-r2",
+   "arm": "countersOn",
+   "seed": 0,
+   "round": 2,
+   "processWallSeconds": 9.666100958944298,
+   "rawDepthMm": 172.2875460463765,
+   "workUnits": 27676900
+  },
+  {
+   "tag": "countersOn-s1-r2",
+   "arm": "countersOn",
+   "seed": 1,
+   "round": 2,
+   "processWallSeconds": 10.114322730980348,
+   "rawDepthMm": 167.183,
+   "workUnits": 21573468
+  },
+  {
+   "tag": "countersOn-s2-r2",
+   "arm": "countersOn",
+   "seed": 2,
+   "round": 2,
+   "processWallSeconds": 10.15282495203428,
+   "rawDepthMm": 176.16200000000003,
+   "workUnits": 27249085
+  }
+ ],
+ "perSeed": {
+  "0": {
+   "countersOffMedianMm": 169.58777826491067,
+   "countersOnMedianMm": 172.2875460463765,
+   "deltaMm": 2.699767781465823,
+   "countersOffDistinct": [
+    168.4836008374388,
+    169.58777826491067,
+    171.111
+   ],
+   "countersOnDistinct": [
+    172.2875460463765
+   ]
+  },
+  "1": {
+   "countersOffMedianMm": 165.65577826491065,
+   "countersOnMedianMm": 167.183,
+   "deltaMm": 1.5272217350893413,
+   "countersOffDistinct": [
+    165.65577826491065
+   ],
+   "countersOnDistinct": [
+    167.183,
+    176.05599999999998
+   ]
+  },
+  "2": {
+   "countersOffMedianMm": 174.28,
+   "countersOnMedianMm": 176.16200000000003,
+   "deltaMm": 1.8820000000000334,
+   "countersOffDistinct": [
+    174.28
+   ],
+   "countersOnDistinct": [
+    174.881,
+    176.16200000000003
+   ]
+  }
+ },
+ "medianDeltaMm": 1.8820000000000334,
+ "worstDeltaMm": 2.699767781465823
+}

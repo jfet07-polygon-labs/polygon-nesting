@@ -1,0 +1,18 @@
+# Binaries this round measured, by content hash.
+#
+# base-*  : the campaign base commit a131a72, unpatched.
+# plan-*  : this worktree, the binary every battery below ran on.
+# ship-*  : this worktree after the last (comment-only) source edit;
+#           see README §12.1 for the equivalence evidence.
+#
+# gate binaries: --features jagua-experimental
+# meas binaries: jagua-experimental,compression-schedule,
+#                parallel-compression-schedule,continuous-rotation,
+#                sparse-rotation,fast-contract-validator
+
+511afd201eb1dcac4afb0af97d75c3151165f8e2e5735a17b83bb4ce68d32c6a  base-gate
+4b791db4f1a59a092e70aedf5afee4264e5d7b988b8ab70d3ddfe89e885db891  base-meas
+4449326979f1ba48b3bc0b1556fb9e1542eeedf1631fea27179ce5457770d47a  plan-gate
+1182b02ba5d78cbd23e87273bacf4feb38816f4d7d52cb2944ea2f1ed20fb24b  plan-meas
+a2ad9bad87cc3325ae326a71c0d6e0f9baa5f085063571dee7c9a9098fbb9488  ship-gate
+5681046a61fc665e0448eec75c68cd163849792b084759d58410b25ecd3f7cc0  ship-meas
