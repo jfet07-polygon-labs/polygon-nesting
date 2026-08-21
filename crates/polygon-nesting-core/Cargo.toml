@@ -288,6 +288,38 @@ compression-schedule = []
 # naming either lever, the repair loop is the shipped serial one, and the four
 # pinned gates reproduce bit-for-bit.
 parallel-compression-schedule = ["compression-schedule"]
+# Rotation as a *continuous degree of freedom inside the relaxed lane's own
+# candidate loop* - design A of the continuous-rotation brief.
+#
+# The 2.5-degree `StructuredGrid` is the catalogue's angle quantum, and the
+# record line's productive orientation rungs are 0.0032 / 0.008 / 0.00128
+# degrees - three orders below it. This feature extends the coordinate-descent
+# axis schedule with a rotation rung derived per piece, `dtheta = dx / r` (r the
+# piece's bounding radius, dx the schedule's own live translation step), both
+# signs, plus a mirror toggle as a discrete companion move. The surrogate for a
+# continuous angle is built on demand through the same construction path
+# `CurrentPoseOverlay` uses (`build_oriented_surrogate`, layered - never a
+# catalogue clone) and cached in a lane-local map: a per-piece pinned slot for
+# the pose the lane currently holds, plus a small bounded LRU for probes. The
+# continuous angle space is never enumerated into the catalogue.
+#
+# Off by default, and the operator is compiled out entirely without it: the
+# settings have no field naming it, `refine_candidate` has no rotation rung and
+# no mirror axis, and nothing can populate the lane-local surrogate map. The one
+# thing that stays compiled either way is the *resolution fallback* -
+# `resolve_surrogate` consults the lane-local map after the catalogue misses -
+# because a `#[cfg]` cannot be put on a function parameter and two copies of the
+# candidate scan's hot loop would be free to drift. With the feature off that
+# map is provably empty (its only insert site is behind this `#[cfg]`), so the
+# fallback is a null-root probe on the path where today's code raises
+# `missing_orientation` and nowhere else; the four pinned gates reproduce
+# bit-for-bit as whole documents.
+#
+# It is NOT semantics-preserving when armed: a rotation rung is a candidate the
+# lane could not previously propose, and it costs a surrogate build on a cache
+# miss. It therefore needs a matched-arm quality gate, not a document diff. See
+# docs/experiments/continuous-rotation/.
+continuous-rotation = []
 # A diagnostic-only companion to `general_micro_legalization`'s translation-only
 # global program. It asks a different question from the repair pass: not "can
 # this front be pushed open at all" but "how much shallower can the PUBLISHED

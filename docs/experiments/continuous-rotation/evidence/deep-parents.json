@@ -1,0 +1,15 @@
+{
+ "note": "the two record-lineage depth-reach parents the brief names, at the '' 0.0005 trailing allowance the record line was measured under; depths are the committed reportedDepthMm of each pinned fixture",
+ "rows": [
+  {
+   "seed": 5,
+   "rawDepthMm": 156.418,
+   "fixture": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_c2459b6d-78e-1/docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/record-line-cascade/pinned-fs-156.418.json"
+  },
+  {
+   "seed": 5,
+   "rawDepthMm": 155.422,
+   "fixture": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_c2459b6d-78e-1/docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/record-line-cascade/pinned-fs-155.4223.json"
+  }
+ ]
+}

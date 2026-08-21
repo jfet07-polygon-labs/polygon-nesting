@@ -312,6 +312,27 @@ fn current_pose_overlay_requested() -> bool {
         .unwrap_or(false)
 }
 
+/// Whether a *replay* should arm the continuous-rotation operator.
+///
+/// Read from the environment for the same reason the overlay's flag is: the
+/// positional argument list is a pinned contract that every replay driver in
+/// this repository depends on, and a new knob may not change what a replayed
+/// command means. Under the coordinator the operator is armed by the portfolio
+/// spec's `crot=` key instead, which is what the anytime battery uses; this is
+/// the door the equal-work matched-arm gate needs, because that gate replays a
+/// pinned parent through mode 34 directly and never enters the coordinator.
+///
+/// The setting is still inert on any lane that is not
+/// `RollbackTriangle` + `StructuredTrianglePoles` - see
+/// `general_relaxed::continuous_rotation_lane` - so arming it here cannot
+/// reach a dynamic-hazard or directional replay by accident.
+#[cfg(feature = "continuous-rotation")]
+fn continuous_rotation_requested() -> bool {
+    env::var("POLYGON_NESTING_CONTINUOUS_ROTATION")
+        .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+        .unwrap_or(false)
+}
+
 /// Whether mode 34 should also emit the per-pair classification Sol review 6
 /// §2 asks for (`parentPairClassification`).
 ///
@@ -620,6 +641,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             relaxed_settings.current_pose_overlay = current_pose_overlay_requested();
             relaxed_settings.current_pose_overlay_classify_pairs =
                 current_pose_overlay_classify_requested();
+        }
+        #[cfg(feature = "continuous-rotation")]
+        {
+            relaxed_settings.continuous_rotation = continuous_rotation_requested();
         }
         relaxed_settings
     };
@@ -1937,6 +1962,12 @@ fn parse_portfolio_spec(
             "m34lanes" => settings.compression_schedule_lanes = value.parse()?,
             #[cfg(feature = "parallel-compression-schedule")]
             "m34pconfirm" => settings.compression_schedule_parallel_confirm = value != "0",
+            // The continuous-rotation operator. Unknown in a build without the
+            // feature, deliberately: an unarmed binary refuses an armed
+            // driver's spec instead of silently running without the operator
+            // under an armed label.
+            #[cfg(feature = "continuous-rotation")]
+            "crot" => settings.continuous_rotation = value != "0",
             "barren" => settings.barren_action_patience = value.parse()?,
             "divq" => settings.diversify_in_queue = value != "0",
             "m34wall" => settings.schedule_wall_prior = value != "0",
@@ -2007,6 +2038,25 @@ fn schedule_slice_json(
         "finalDepthMm": slice.final_depth_mm,
         "workUnits": slice.work_units,
         "exitCause": slice.exit_cause,
+        // The continuous-rotation operator's attribution, per slice. Emitted
+        // unconditionally so that an unarmed run reports the zeros - a
+        // measurement that has to be told "the operator was off" by the absence
+        // of a key is one nobody can check.
+        "continuousRotation": slice.continuous_rotation,
+        "rotationRungsProposed": slice.rotation_rungs_proposed,
+        "rotationRungsImproved": slice.rotation_rungs_improved,
+        "mirrorTogglesProposed": slice.mirror_toggles_proposed,
+        "mirrorTogglesImproved": slice.mirror_toggles_improved,
+        "rotationAcceptedMoves": slice.rotation_accepted_moves,
+        "acceptedMoves": slice.accepted_moves,
+        "rotationLossBoughtMm": slice.rotation_loss_bought_mm,
+        "translationLossBoughtMm": slice.translation_loss_bought_mm,
+        "rotationSurrogateBuilds": slice.rotation_surrogate_builds,
+        "rotationSurrogateHits": slice.rotation_surrogate_hits,
+        "rotationSurrogateEvictions": slice.rotation_surrogate_evictions,
+        "rotationSurrogateBuildMs": slice.rotation_surrogate_build_ms,
+        "rotationSurrogateCells": slice.rotation_surrogate_cells,
+        "rotationBuildsRefused": slice.rotation_builds_refused,
     })
 }
 

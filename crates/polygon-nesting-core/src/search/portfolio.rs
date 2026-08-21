@@ -717,6 +717,25 @@ pub struct ScheduleSliceReport {
     pub final_depth_mm: f64,
     pub work_units: usize,
     pub exit_cause: String,
+    /// The continuous-rotation operator's account of this slice: whether it was
+    /// armed, what it proposed, what it bought and what it cost. See
+    /// `GeneralCompressionScheduleDiagnostics::continuous_rotation` for what
+    /// each counter is a denominator for; all zero on an unarmed slice.
+    pub continuous_rotation: bool,
+    pub rotation_rungs_proposed: usize,
+    pub rotation_rungs_improved: usize,
+    pub mirror_toggles_proposed: usize,
+    pub mirror_toggles_improved: usize,
+    pub rotation_accepted_moves: usize,
+    pub accepted_moves: usize,
+    pub rotation_loss_bought_mm: f64,
+    pub translation_loss_bought_mm: f64,
+    pub rotation_surrogate_builds: usize,
+    pub rotation_surrogate_hits: usize,
+    pub rotation_surrogate_evictions: usize,
+    pub rotation_surrogate_build_ms: f64,
+    pub rotation_surrogate_cells: usize,
+    pub rotation_builds_refused: usize,
 }
 
 /// Why a phase stopped issuing operator calls.
@@ -1455,6 +1474,20 @@ pub struct PortfolioSettings {
     /// wall without moving the search's trajectory.
     #[cfg(feature = "parallel-compression-schedule")]
     pub compression_schedule_parallel_confirm: bool,
+    /// Whether the coordinator arms the continuous-rotation operator on the two
+    /// operators whose relaxed lane the brief scopes it to: the alternation
+    /// fixpoint (mode 22) and the compression schedule (mode 34).
+    ///
+    /// `false` by default. It is deliberately *not* set on
+    /// `relaxed_template`, which every other class inherits: the operator
+    /// changes what a relaxed lane can propose, and a round that measures it
+    /// has to be able to say which classes it was measuring. The setting is
+    /// additionally inert on any lane that is not
+    /// `RollbackTriangle` + `StructuredTrianglePoles` - see
+    /// `general_relaxed::continuous_rotation_lane` - so arming it cannot reach
+    /// a dynamic-hazard or directional lane by accident.
+    #[cfg(feature = "continuous-rotation")]
+    pub continuous_rotation: bool,
     /// How many consecutive actions may publish nothing before the whole v3
     /// loop stops, with its queue still full. `0` disables the rule, which is
     /// merged-HEAD v3's behaviour.
@@ -1632,6 +1665,8 @@ impl PortfolioSettings {
             compression_schedule_lanes: 1,
             #[cfg(feature = "parallel-compression-schedule")]
             compression_schedule_parallel_confirm: false,
+            #[cfg(feature = "continuous-rotation")]
+            continuous_rotation: false,
             barren_action_patience: BARREN_ACTION_PATIENCE,
             diversify_in_queue: true,
             schedule_wall_prior: true,
@@ -2073,6 +2108,21 @@ impl<'a> Coordinator<'a> {
         relaxed.persistent_vacancy_mode = mode;
         relaxed.persistent_vacancy_target_depth_mm = target;
         relaxed.persistent_vacancy_allow_unpinned_parent = true;
+        // The continuous-rotation operator, scoped here rather than on
+        // `relaxed_template`, and by mode rather than by call site.
+        //
+        // The brief scopes it to "the relaxed lane used by m22/m34 under the
+        // coordinator", and those two modes are reached from eleven call sites
+        // between them; arming it at each would be eleven places for the scope
+        // to drift. It is set *before* `tune` so a caller that wants a
+        // different answer for one call can still override it, and after
+        // `base_relaxed_settings` so it cannot be inherited by a class that was
+        // not measured with it.
+        #[cfg(feature = "continuous-rotation")]
+        {
+            relaxed.continuous_rotation =
+                self.settings.continuous_rotation && matches!(mode, 22 | 34);
+        }
         tune(&mut relaxed);
         let parent_arm = GeneralCoupledSeparatorArmDiagnostics {
             final_placements: crate::search::general_relaxed::coupled_placement_diagnostics(parent),
@@ -4205,6 +4255,21 @@ fn schedule_slice_report(
         final_depth_mm: report.final_depth_mm,
         work_units: report.work_units,
         exit_cause: report.exit_cause.clone(),
+        continuous_rotation: report.continuous_rotation,
+        rotation_rungs_proposed: report.rotation_rungs_proposed,
+        rotation_rungs_improved: report.rotation_rungs_improved,
+        mirror_toggles_proposed: report.mirror_toggles_proposed,
+        mirror_toggles_improved: report.mirror_toggles_improved,
+        rotation_accepted_moves: report.rotation_accepted_moves,
+        accepted_moves: report.accepted_moves,
+        rotation_loss_bought_mm: report.rotation_loss_bought_mm,
+        translation_loss_bought_mm: report.translation_loss_bought_mm,
+        rotation_surrogate_builds: report.rotation_surrogate_builds,
+        rotation_surrogate_hits: report.rotation_surrogate_hits,
+        rotation_surrogate_evictions: report.rotation_surrogate_evictions,
+        rotation_surrogate_build_ms: report.rotation_surrogate_build_ms,
+        rotation_surrogate_cells: report.rotation_surrogate_cells,
+        rotation_builds_refused: report.rotation_builds_refused,
     })
 }
 

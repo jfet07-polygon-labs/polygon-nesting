@@ -1,0 +1,52 @@
+{
+ "runs": [
+  {
+   "run": "/var/lib/t3/tmp/crot/out/curve-mixed61/runs/baseat10-s0-r0.json",
+   "pieces": 61,
+   "offGridPieces": 27,
+   "mirroredPieces": 18,
+   "depthMm": 172.288,
+   "maxOffGridDeltaDeg": 1.1703239999999937
+  },
+  {
+   "run": "/var/lib/t3/tmp/crot/out/curve-mixed61/runs/crotat10-s0-r0.json",
+   "pieces": 61,
+   "offGridPieces": 46,
+   "mirroredPieces": 30,
+   "depthMm": 175.219,
+   "maxOffGridDeltaDeg": 1.1650450000000063
+  },
+  {
+   "run": "/var/lib/t3/tmp/crot/out/curve-mixed61/runs/baseat10-s1-r0.json",
+   "pieces": 61,
+   "offGridPieces": 0,
+   "mirroredPieces": 21,
+   "depthMm": 168.708,
+   "maxOffGridDeltaDeg": 0.0
+  },
+  {
+   "run": "/var/lib/t3/tmp/crot/out/curve-mixed61/runs/crotat10-s1-r0.json",
+   "pieces": 61,
+   "offGridPieces": 40,
+   "mirroredPieces": 27,
+   "depthMm": 175.925,
+   "maxOffGridDeltaDeg": 1.1189539999999987
+  },
+  {
+   "run": "/var/lib/t3/tmp/crot/out/curve-mixed61/runs/baseat30-s1-r0.json",
+   "pieces": 61,
+   "offGridPieces": 48,
+   "mirroredPieces": 19,
+   "depthMm": 162.068,
+   "maxOffGridDeltaDeg": 1.2201759999999808
+  },
+  {
+   "run": "/var/lib/t3/tmp/crot/out/curve-mixed61/runs/crotat30-s1-r0.json",
+   "pieces": 61,
+   "offGridPieces": 56,
+   "mirroredPieces": 26,
+   "depthMm": 169.067,
+   "maxOffGridDeltaDeg": 1.1777510000000007
+  }
+ ]
+}
