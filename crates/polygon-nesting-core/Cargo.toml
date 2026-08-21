@@ -309,6 +309,38 @@ parallel-compression-schedule = ["compression-schedule"]
 # build run without it is the shipping benchmark. The four pinned gates are run
 # on both binaries to hold that.
 se2-rigidity-certificate = []
+# A sound broad phase for the exact-clearance contract validator's all-pairs
+# loop, `validation::general_polygon::validate_publication`.
+#
+# docs/experiments/parallel-compression-schedule/ §3 measured where a mode-34
+# confirmation's milliseconds are and found 97.9% of them in that loop: `n(n-1)/2`
+# calls to `minimum_boundary_distance`, each walking every edge of one material
+# set against every edge of the other, with no broad phase of any kind. This
+# feature adds one.
+#
+# It is sound rather than approximate, and the distinction is the whole design.
+# The loop's *only* consumer reads a threshold verdict - `distance.is_finite() &&
+# distance >= pair_clearance` - and never the distance itself; the value is
+# module-private and has exactly one call site. So a prefilter may skip a pair
+# only when it PROVES that verdict would have been "clear", which is what
+# `ClearanceSlabs` does: four separating-axis projections in the validator's own
+# untouched-`f64` millimetres, with a margin that dominates every rounding error
+# on both sides of the comparison. It is never allowed to be wrong about "these
+# are far apart"; it is allowed to be uninformative, and then the exact loop runs
+# unchanged.
+#
+# It deliberately does NOT reuse `GridSlabs`, whose projections live on the
+# canonical *integer* grid. That is the quantized geometry this module exists not
+# to read - a validator built on it cannot see a sub-grid violation - so its
+# certificate, though sound for its own question, would import exactly the
+# blindness the exact validator is for.
+#
+# Off by default. With the feature off none of it is compiled and the loop is the
+# shipped one. With it on the verdict is unchanged on every input, so the four
+# pinned gates reproduce bit-for-bit in BOTH states - which is the gate this
+# feature is held to, and the reason it carries no document-visible counter of
+# its own. See docs/experiments/fast-contract-validator/.
+fast-contract-validator = []
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }

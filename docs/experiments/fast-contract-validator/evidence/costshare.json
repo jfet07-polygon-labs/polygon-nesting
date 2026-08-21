@@ -1,0 +1,173 @@
+{
+ "binaries": {
+  "off": "/var/lib/t3/tmp/wf78/bin/m34off",
+  "on": "/var/lib/t3/tmp/wf78/bin/m34on"
+ },
+ "binarySha256": {
+  "off": "a5a5cccd684c271e9a10a87bf55d19fd9ccf8553068b20eb5be5899f7cb51fb0",
+  "on": "ab3946f75abe708ba3880aab56954504c9ed0f061b21d2aae36fbbbc76b4a5bc"
+ },
+ "seconds": 10.0,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "note": "profiled runs; the share is the reading, the milliseconds are a decomposition and not a wall claim",
+ "observations": [
+  {
+   "processWallSeconds": 9.702936279994901,
+   "leafMilliseconds": 30227.08709,
+   "rawDepthMm": 176.30940751567982,
+   "threads": 8,
+   "publicationValidate": {
+    "milliseconds": 1183.153441,
+    "calls": 236,
+    "leafSharePercent": 3.9142158735878376
+   },
+   "exactOverlapTest": {
+    "milliseconds": 1480.026713,
+    "calls": 603932,
+    "leafSharePercent": 4.896359045756797
+   },
+   "collisionPolygonBuild": {
+    "milliseconds": 11.686613,
+    "calls": 2913,
+    "leafSharePercent": 0.03866271654031219
+   },
+   "seed": 0,
+   "flag": "off"
+  },
+  {
+   "processWallSeconds": 9.798609519028105,
+   "leafMilliseconds": 31326.613915,
+   "rawDepthMm": 172.2875460463765,
+   "threads": 8,
+   "publicationValidate": {
+    "milliseconds": 155.289241,
+    "calls": 404,
+    "leafSharePercent": 0.49571026546741925
+   },
+   "exactOverlapTest": {
+    "milliseconds": 1516.033586,
+    "calls": 620568,
+    "leafSharePercent": 4.839442877910541
+   },
+   "collisionPolygonBuild": {
+    "milliseconds": 11.608305,
+    "calls": 2913,
+    "leafSharePercent": 0.037055728498130595
+   },
+   "seed": 0,
+   "flag": "on"
+  },
+  {
+   "processWallSeconds": 9.185747354000341,
+   "leafMilliseconds": 29440.950574,
+   "rawDepthMm": 176.05599999999998,
+   "threads": 8,
+   "publicationValidate": {
+    "milliseconds": 759.403217,
+    "calls": 155,
+    "leafSharePercent": 2.5794113375899177
+   },
+   "exactOverlapTest": {
+    "milliseconds": 1459.640268,
+    "calls": 597732,
+    "leafSharePercent": 4.957857132809573
+   },
+   "collisionPolygonBuild": {
+    "milliseconds": 11.567972,
+    "calls": 2913,
+    "leafSharePercent": 0.03929211446798851
+   },
+   "seed": 1,
+   "flag": "off"
+  },
+  {
+   "processWallSeconds": 9.305711638997309,
+   "leafMilliseconds": 31257.730036,
+   "rawDepthMm": 176.05599999999998,
+   "threads": 8,
+   "publicationValidate": {
+    "milliseconds": 148.347936,
+    "calls": 174,
+    "leafSharePercent": 0.4745959985870549
+   },
+   "exactOverlapTest": {
+    "milliseconds": 1522.980912,
+    "calls": 599470,
+    "leafSharePercent": 4.872333692324938
+   },
+   "collisionPolygonBuild": {
+    "milliseconds": 12.384752,
+    "calls": 2913,
+    "leafSharePercent": 0.03962140560346607
+   },
+   "seed": 1,
+   "flag": "on"
+  },
+  {
+   "processWallSeconds": 8.88391999801388,
+   "leafMilliseconds": 25393.871173,
+   "rawDepthMm": 179.006,
+   "threads": 8,
+   "publicationValidate": {
+    "milliseconds": 1257.566304,
+    "calls": 248,
+    "leafSharePercent": 4.952243379643139
+   },
+   "exactOverlapTest": {
+    "milliseconds": 1476.710143,
+    "calls": 603135,
+    "leafSharePercent": 5.815222629663925
+   },
+   "collisionPolygonBuild": {
+    "milliseconds": 11.794226,
+    "calls": 2913,
+    "leafSharePercent": 0.0464451674959279
+   },
+   "seed": 2,
+   "flag": "off"
+  },
+  {
+   "processWallSeconds": 8.670575794007163,
+   "leafMilliseconds": 24423.873455,
+   "rawDepthMm": 176.16200000000003,
+   "threads": 8,
+   "publicationValidate": {
+    "milliseconds": 130.112333,
+    "calls": 330,
+    "leafSharePercent": 0.5327260364320455
+   },
+   "exactOverlapTest": {
+    "milliseconds": 1511.065745,
+    "calls": 612301,
+    "leafSharePercent": 6.186839068684488
+   },
+   "collisionPolygonBuild": {
+    "milliseconds": 11.919042,
+    "calls": 2913,
+    "leafSharePercent": 0.04880078510871895
+   },
+   "seed": 2,
+   "flag": "on"
+  }
+ ],
+ "summary": {
+  "off": {
+   "n": 3,
+   "medianLeafSharePercent": 3.9142158735878376,
+   "medianMilliseconds": 1183.153441,
+   "medianCalls": 236,
+   "medianLeafMilliseconds": 29440.950574
+  },
+  "on": {
+   "n": 3,
+   "medianLeafSharePercent": 0.49571026546741925,
+   "medianMilliseconds": 148.347936,
+   "medianCalls": 330,
+   "medianLeafMilliseconds": 31257.730036
+  }
+ }
+}

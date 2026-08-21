@@ -6038,3 +6038,108 @@ parallelism, and it is worth it everywhere.
 
 Evidence, drivers and every battery:
 `docs/experiments/parallel-compression-schedule/`.
+
+## The contract validator had no broad phase, 96% of its pairs never needed measuring, and the document did not move
+
+The previous chapter ends by recommending this round: "`minimum_boundary_distance`
+was spread across eight lanes, not made cheaper... A bounds reject there — the
+one the collision tier already has — is plausibly worth more than any
+parallelism, and it is worth it everywhere." This is that, built and priced.
+
+**The design question came before the design, and it decided it.** A prefilter
+may skip a pair only if it can prove the skip changes nothing a caller consumes,
+and "what is consumed" has two possible answers that license completely
+different filters. `minimum_boundary_distance` is module-private with **exactly
+one call site**, and that site binds the value, tests
+`!distance.is_finite() || distance < pair_clearance`, and drops it. Only the
+threshold verdict is consumed — so the filter has to preserve a boolean, not a
+number, and the campaign's 1-ULP pinned depths are not in the blast radius at
+all (they are `raw_source_long_axis_depth_mm`, which never calls the loop). Case
+(b) does exist in this engine — `general_micro_legalization`'s
+`measure_approach` consumes the value and already carries sound running-minimum
+pruning, whose doc comment is the in-repo precedent for the argument here — but
+it is a different function on a different path and this round does not touch it.
+
+**Two things a skip must prove, not one.** The scan row runs an overlap test
+*and* a distance test, so a filter that reasons only about distance is unsound in
+one specific way: **containment**. A region strictly inside another's outer ring
+has a large positive boundary distance — 4 mm in the committed test — and is
+nevertheless an overlap the validator must reject. It can never be skipped here
+because containment makes one slab interval a subset of the other in every
+direction, so no direction offers a gap. The other trap is that
+`!distance.is_finite()` is a **rejection**: `minimum` starts at infinity, so "no
+segment pair existed" fails, and a filter reasoning "far apart, therefore fine"
+would invert it. `ClearanceSlabs::of` returns `None` for a pointless set, so a
+skip structurally requires a segment pair to exist.
+
+**The filter is four separating axes in the validator's own `f64` millimetres,
+and deliberately not the constructor's.** Reusing `GridSlabs::separated` — the
+same four-direction polytope, already certified — would have been the obvious
+move and is wrong: `GridSlabs` projects the canonical **integer** grid, which is
+the quantized geometry this module exists not to read, and importing it would
+import the sub-grid blindness `sub_grid_source_overlap_is_not_hidden_by_search_snapping`
+was written to forbid. The structure is borrowed; the numbers are rebuilt. The
+margin is `1e-9 mm + 1e-12 * extent`, four orders above the worst rounding error
+on either side of the comparison and six orders below the tightest clearance the
+engine is asked for.
+
+**What it buys.** 96.02% of pairs proved clear over **5,934,690 pairs** on the
+twelve pinned parents, per-seed 95.49–97.07% — 1,830 pairs per confirmation
+become about 73. Paired interleaved over the twelve parents × 10 rounds, equal
+walk: **4.8236 ms → 0.8609 ms per accepted confirmation, 5.5745x, 110 of 110
+cells above parity**, against a within-arm spread of ~15%. The flag-off baseline
+reproduces §6.1's 4.83 ms and the previous chapter's 5.028 ms, which is the check
+that this is the same quantity. Single-threaded, it beats what eight-lane
+`pconfirm` achieved (1.091 ms).
+
+**It compounds, and the mechanism is a counter.** On the bare-request 10 s curve
+with both arms running the shipping `m34pconfirm=1` spec, **+2.716 mm median**,
+3 of 3 seeds improving, and the m34 slice count rises 30 → 49 across nine runs —
+a cheaper confirmation fits more slices under the same clock, exactly as the
+previous chapter's `pconfirm` result did. `publicationValidate` falls from
+**3.914% to 0.496%** of a 10 s run's leaf time while its **call count rises**,
+236 → 330. The honest denominator: at a wall budget these runs are
+near-deterministic, so nine cells are three results repeated — the sample is
+three seeds, all three improving, not nine independent confirmations.
+
+**The equivalence result is the strongest this campaign has produced.** All four
+pinned gates reproduce as **whole documents with identical digests** on three
+binaries — a pre-patch build of the base commit, flag-off, and flag-on — not
+merely on the pinned scalars. Leaf-by-leaf on mode-34 documents,
+flag-off against flag-on differs in **at most 2 leaves out of 27,113**, and they
+are the same two wall clocks that differ between two processes of the *same*
+binary — one of them `confirmationMs`, differing 1636.2 → 298.1 ms because it is
+the field the feature exists to move. `pconfirm` could only claim "one leaf, the
+flag that says it was armed"; this claims zero, because it changes no verdict and
+carries **no counter in the document at all**. That is why the broad-phase census
+reports on stderr: a counter in the document would have been the one field that
+always differed. The 120 equal-walk cells in the wall battery are an independent
+second proof — identical fingerprints, depths, steps, candidate queries and work
+units in every one.
+
+**The reproducibility instrument failed again, for the third recorded time, and
+this round did not discover it.** The first determinism run failed on every cell
+including flag-off; the leaf diff said `repairMs` and `confirmationMs`. That is
+precisely the repair the previous chapter records making — its `lib.py:160`, "the
+second repair of this list". This round inherited **m34-wall-price's** older
+`gatelib.py`, which predates it, so the older copy reproduced the older bug. The
+finding is not the defect; the finding is that the campaign carries N copies of
+this list and repairs to one do not reach the others. A single shared module
+would have prevented this round from spending a battery on it.
+
+**What ships:** `fast-contract-validator`, off by default, no spec key, no
+tuning constant, not armed in the coordinator by this round. It has no
+arm-versus-arm question — it either proves a pair clear or it does not.
+
+**What it does not do:** close the gap. 169.572 mm at 10 s against Sparrow's
+150.165 mm is still 19.4 mm short. This makes an existing operator cheaper; it
+adds no degree of freedom, and the continuous-rotation brief's case that the
+remaining 12–16 mm needs rotation *in the search* is untouched by it. Only
+mixed-61 was measured — shapes-17 and triangle-20 were not run — and the 96% is a
+property of that corpus at 171–179 mm, not a general constant. The inner
+`O(E₁·E₂)` nest over the ~73 survivors was left alone deliberately: the
+confirmation is now 0.86 ms of an 826 ms slice, so the remaining headroom is
+worth a few percent against a real increase in hand-proved geometry.
+
+Evidence, drivers and every battery:
+`docs/experiments/fast-contract-validator/`.
