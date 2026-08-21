@@ -1185,3 +1185,633 @@ test search::general_relaxed::tests::a_suspended_slice_resumes_onto_the_uninterr
 test search::general_relaxed::tests::ladder_compression_walks_every_rung_and_never_publishes_worse_than_its_parent has been running for over 60 seconds
 test search::general_relaxed::tests::only_the_clamped_ladder_arm_runs_the_tolerant_comparison has been running for over 60 seconds
 test search::general_relaxed::tests::ladder_compression_walks_every_rung_and_never_publishes_worse_than_its_parent ... ok
+test search::general_relaxed::tests::only_the_clamped_ladder_arm_runs_the_tolerant_comparison ... ok
+
+test result: ok. 946 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 253.39s
+
+     Running tests/beam_state_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/beam_state_vectors-04255acaef8ff7ca)
+
+running 7 tests
+test from_input_raw_construction_matches_incremental_construction_for_the_same_geometry ... ok
+test negative_zero_cases_match_ts_production_oracle_and_fold_to_the_comparison_key ... ok
+test ring_key_invariance_sweeps_hold_and_match_ts_production_oracle ... ok
+test vector_file_reports_at_least_500_total_cases ... ok
+test ring_key_values_match_ts_production_oracle ... ok
+test dedup_identity_is_independent_of_placement_insertion_order ... ok
+test state_chains_replay_incrementally_and_match_every_recorded_snapshot ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+     Running tests/cache_keys_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/cache_keys_vectors-20ef0e244188ccae)
+
+running 6 tests
+test geometry_cache_store_scenarios_match_ts_production_oracle_hit_miss_and_clear_sequences ... ok
+test transform_collision_geometry_cache_key_matches_ts_production_oracle_over_the_full_matrix ... ok
+test pairwise_nfp_cache_key_matches_ts_production_oracle_over_the_full_matrix ... ok
+test total_vector_count_meets_the_task_spec_floor ... ok
+test inner_fit_bounds_cache_key_matches_ts_production_oracle_over_the_full_matrix ... ok
+test legal_placement_candidate_memo_key_matches_ts_production_oracle_over_the_full_matrix ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/canonical_grid_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/canonical_grid_vectors-218da8743c3cb499)
+
+running 9 tests
+test compare_bigints_matches_oracle ... ok
+test to_grid_mm_and_from_grid_match_oracle ... ok
+test area_and_winding_functions_match_oracle ... ok
+test convex_hull_matches_oracle ... ok
+test point_on_segment_matches_oracle ... ok
+test doubled_grid_area_to_mm2_matches_oracle ... ok
+test compare_ratios_matches_oracle ... ok
+test vector_file_header_records_generating_commit ... ok
+test cross_and_cross_sign_match_oracle ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/canonical_json_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/canonical_json_vectors-b0e023fa5b721b37)
+
+running 10 tests
+test header_records_generating_commit_and_meaningful_coverage ... ok
+test canonical_token_matches_oracle ... ok
+test canonical_entry_list_key_matches_oracle ... ok
+test strict_encoder_matches_oracle ... ok
+test locale_compare_keys_matches_oracle_over_full_printable_ascii_range ... ok
+test canonical_number_matches_oracle ... ok
+test strict_map_vectors_match_oracle ... ok
+test capacity_encoder_matches_oracle ... ok
+test canonical_record_matches_oracle ... ok
+test periodic_encoder_matches_oracle ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/canonical_layout_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/canonical_layout_vectors-eb3c8a4ef13c03fb)
+
+running 4 tests
+test vector_file_header_records_generating_commit_and_meaningful_coverage ... ok
+test convex_pair_vectors_match_ts_production_oracle ... ok
+test grid_pair_vectors_match_ts_production_oracle ... ok
+test layout_vectors_match_ts_production_oracle ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+     Running tests/capacity_core_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/capacity_core_vectors-58a42a630d7b28b5)
+
+running 5 tests
+test endpoint_comparator_vectors_match ... ok
+test material_vectors_match ... ok
+test comparator_vectors_match ... ok
+test endpoint_vectors_match ... ok
+test preflight_vectors_match ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/capacity_search_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/capacity_search_vectors-c2ed0aea5b996bbe)
+
+running 3 tests
+test vector_file_reports_at_least_four_hundred_total_cases ... ok
+test full_run_cases_reproduce_ts_endpoints_and_trace ... ok
+test checkpoint_cases_reproduce_ts_hash_fields_and_resume_to_the_recorded_ground_truth ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.15s
+
+     Running tests/clipper_core_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/clipper_core_vectors-76af5cda7a8e7162)
+
+running 19 tests
+test offset_get_unit_normal_matches_oracle ... ok
+test products_are_equal_matches_oracle ... ok
+test offset_area_and_sqr_match_oracle ... ok
+test point_in_polygon_and_path2_contains_path1_match_oracle ... ok
+test point64_utils_match_oracle ... ok
+test area_matches_oracle ... ok
+test rect64_utils_match_oracle ... ok
+test multiply_uint64_matches_oracle ... ok
+test is_positive_matches_oracle ... ok
+test get_closest_pt_on_segment_matches_oracle ... ok
+test get_bounds_matches_oracle ... ok
+test offset_strip_duplicates_matches_oracle ... ok
+test offset_get_lowest_path_info_matches_oracle ... ok
+test offset_pre_cleanup_pipeline_matches_oracle ... ok
+test offset_ellipse_matches_oracle ... ok
+test cross_product_family_matches_oracle ... ok
+test round_to_even_check_cast_tri_sign_almost_zero_match_oracle ... ok
+test vectors_file_has_meta_and_expected_generating_commit_field ... ok
+test segs_intersect_and_get_line_intersect_pt_match_oracle ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/clipper_engine_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/clipper_engine_vectors-08fd5c7eb05d20e7)
+
+running 4 tests
+test engine_module_path64_alias_matches_core ... ok
+test vector_file_header_records_generating_commit_and_meaningful_coverage ... ok
+test boolean_op_matches_oracle_vertex_for_vertex ... ok
+test boolean_op_with_poly_tree_matches_oracle_structure ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/clipper_offset_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/clipper_offset_vectors-b3d43043ac241e64)
+
+running 2 tests
+test vector_file_header_records_generating_commit_and_expected_vector_count ... ok
+test execute_matches_oracle_vertex_for_vertex_for_every_pending_vector ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/collision_builder_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/collision_builder_vectors-fd4a6d84df08f06a)
+
+running 2 tests
+test vector_file_has_the_expected_shape_and_case_counts ... ok
+test build_piece_matches_the_oracle_for_every_vector ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/control.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/control-79bf818e13db763b)
+
+running 5 tests
+test cancellation_rejects_late_completion ... ok
+test cancellation_retains_first_cancelled_writer ... ok
+test completion_rejects_late_cancellation ... ok
+test cancellation_retains_first_deadline_writer ... ok
+test cancellation_concurrent_writers_preserve_one_barrier_winner ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/convex_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/convex_vectors-018c2839d91c0276)
+
+running 6 tests
+test bounds_for_points_matches_oracle_for_every_vector ... ok
+test compute_convex_hull_matches_oracle_for_every_vector ... ok
+test translate_polygon_with_bounds_matches_oracle_for_every_vector ... ok
+test vector_file_header_records_generating_commit_and_meaningful_coverage ... ok
+test are_disjoint_matches_oracle_for_every_vector ... ok
+test validate_strict_boundary_matches_oracle_for_every_vector ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/coordinator_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/coordinator_vectors-c56005e81308cfc3)
+
+running 8 tests
+test missing_source_geometry_returns_the_typed_compute_error ... ok
+test archive_ineligible_settings_return_a_typed_routing_error ... ok
+test short_side_profile_with_zero_placed_pieces_fails_closed_with_no_valid_result ... ok
+test history_mode_off_suppresses_state_snapshots_but_not_progress ... ok
+test two_small_squares_on_a_roomy_sheet_settle_through_the_shared_archive_winner_path ... ok
+test baseline_uncancelled_run_matches_ts_oracle_and_fires_the_nested_resume ... ok
+test cancellation_injected_during_the_nested_scheduler_resume_aborts_the_whole_job ... ok
+test full_job_vectors_match_ts_oracle ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 30.76s
+
+     Running tests/diagnostic_trace_mode.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/diagnostic_trace_mode-92f26d70b6512e3e)
+
+running 5 tests
+test full_and_off_invalid_input_failures_are_identical ... ok
+test full_and_off_archive_ineligible_failures_are_identical ... ok
+test full_and_off_pre_cancelled_failures_are_identical ... ok
+test full_and_off_success_match_except_trace_fields_and_timing ... ok
+test full_and_off_short_side_success_match_except_trace_fields_and_timing ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/events.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/events-269fba975e5fb0be)
+
+running 1 test
+test sequencer_records_semantic_events_in_callback_order ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/free_material_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/free_material_vectors-0eec5abebf8866ef)
+
+running 4 tests
+test extend_free_material_matches_ts_production_oracle_for_malformed_geometry ... ok
+test extend_free_material_matches_ts_production_oracle_over_parent_chains ... ok
+test total_vector_count_meets_the_task_spec_floor ... ok
+test compute_free_material_matches_ts_production_oracle_over_the_full_matrix ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests/gap_family_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/gap_family_vectors-d52e14b2aba443cc)
+
+running 5 tests
+test total_vector_count_meets_the_task_spec_floor ... ok
+test intrinsic_collision_family_key_matches_ts_production_oracle ... ok
+test group_intrinsic_collision_families_matches_ts_production_oracle ... ok
+test derive_canonical_intrinsic_gap_regions_matches_ts_production_oracle ... ok
+test candidate_contained_in_intrinsic_gap_matches_ts_production_oracle ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/hash_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/hash_vectors-ed1a1879589791c2)
+
+running 1 test
+test sha256_hex_matches_node_crypto_oracle ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/job_service.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/job_service-3dedbb233a9ada90)
+
+running 9 tests
+test typed_job_projects_pre_cancelled_control_before_archive_ineligible ... ok
+test typed_job_returns_archive_ineligible_before_events ... ok
+test typed_job_projects_cancelled_control_as_failure ... ok
+test typed_job_projects_deadline_control_as_failure ... ok
+test typed_job_runs_on_its_job_pool_and_emits_semantic_events ... ok
+test typed_job_reports_post_cleanup_cache_telemetry ... ok
+test compact_short_side_projects_short_side_traces_when_emitted ... ok
+test compact_archive_completes_for_interchangeable_circle_copies ... ok
+test compact_archive_completes_for_interchangeable_regular_polygon_copies ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.35s
+
+     Running tests/js_hypot_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/js_hypot_vectors-21f2c866553ba577)
+
+running 1 test
+test standard_hypot_stays_within_the_documented_node_v8_envelope ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/js_number_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/js_number_vectors-87261c0053467ad4)
+
+running 16 tests
+test math_ceil_matches_v8 ... ok
+test is_safe_integer_matches_v8 ... ok
+test math_min_all_matches_v8 ... ok
+test math_max_pairs_match_v8 ... ok
+test math_min_pairs_match_v8 ... ok
+test math_trunc_matches_v8 ... ok
+test canonical_area_metric_matches_real_production_function ... ok
+test math_sign_matches_v8 ... ok
+test vector_file_header_records_generating_commit ... ok
+test fold_negative_zero_matches_v8_ternary_idiom ... ok
+test math_floor_matches_v8 ... ok
+test cmp_js_code_units_matches_v8_over_fixture_id_alphabet ... ok
+test canonical_linear_metric_matches_real_production_function ... ok
+test number_to_js_string_matches_v8 ... ok
+test math_round_matches_v8 ... ok
+test math_max_all_matches_v8 ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/nfp_ifp_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/nfp_ifp_vectors-583a75fce01a1c14)
+
+running 7 tests
+test rejection_cases_match_ts_error_taxonomy_and_abort_phases ... ok
+test candidate_point_alternatives_ordering_matches_ts ... ok
+test vector_file_reports_at_least_500_total_cases_across_every_section ... ok
+test cache_sequences_reproduce_the_recorded_hit_stale_recompute_pattern ... ok
+test ifp_bounds_matches_ts_computation ... ok
+test generated_candidates_match_ts_ordered_output ... ok
+test pairwise_nfp_matches_ts_computation ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/no_pool_global_rayon_containment.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/no_pool_global_rayon_containment-6716c4796c1bc5cb)
+
+running 1 test
+test no_pool_execution_never_initializes_rayons_global_registry ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/periodic_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/periodic_vectors-66da4193d1832faa)
+
+running 9 tests
+test crop_enumeration_preserves_serial_checkpoint_and_attempt_chronology ... ok
+test periodic_work_characterization_rejects_finite_runtime_limits ... ok
+test seed_battery_cases_reproduce_ts_outcomes ... ok
+test vector_file_metadata_is_present ... ok
+test continuation_ordering_cases_reproduce_ts_outcomes ... ok
+test phase_residual_cases_reproduce_ts_outcomes ... ok
+test catalog_cases_reproduce_ts_outcomes ... ok
+test portfolio_cases_reproduce_ts_outcomes ... ok
+test regular_polygon_periodic_work_is_deterministic_and_observer_only ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running tests/predicates_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/predicates_vectors-4fea6272c4f076ef)
+
+running 1 test
+test orient2d_and_orientation_match_ts_production_oracle ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/reconstruction_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/reconstruction_vectors-684b9e72df33d385)
+
+running 7 tests
+test archive_capacity_constant_matches_ts ... ok
+test order_key_cases_reproduce_ts_class_keys_and_effective_order_key ... ok
+test total_vector_count_meets_the_task_spec_floor ... ok
+test endpoint_orders_cases_reproduce_ts_traversal_orders ... ok
+test specs_cases_reproduce_ts_role_order_and_family_counts ... ok
+test archive_cases_reproduce_ts_retained_hashes ... ok
+test portfolio_cases_reproduce_ts_outcomes ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.09s
+
+     Running tests/scorers_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/scorers_vectors-c47e1e3c37370167)
+
+running 6 tests
+test score_grid_canonicalization_matches_ts_oracle ... ok
+test placement_scorer_compare_scores_matches_ts_oracle ... ok
+test sort_pieces_for_nesting_matches_ts_oracle ... ok
+test layout_scorer_compare_scores_matches_ts_oracle ... ok
+test placement_scorer_score_candidate_matches_ts_oracle ... ok
+test layout_scorer_score_state_matches_ts_oracle ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/shared_archive_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/shared_archive_vectors-3af5a82a04eb8ebd)
+
+running 5 tests
+test admission_cases_match_ts ... ok
+test ranking_comparator_cases_match_ts ... ok
+test checkpoint_chronology_cases_match_ts ... ok
+test evaluation_cap_cases_match_ts ... ok
+test full_portfolio_cases_match_ts ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.88s
+
+     Running tests/short_side_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/short_side_vectors-57158c47b201700d)
+
+running 4 tests
+test axes_cases_reproduce_ts_axes_and_span_bit_exact ... ok
+test observer_cases_reproduce_ts_status_and_ranking_exactly ... ok
+test pair_fold_cases_reproduce_ts_trace_exactly ... ok
+test contact_strip_cases_reproduce_ts_trace_exactly ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s
+
+     Running tests/strict_decoder_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/strict_decoder_vectors-1fb7dfffe192d9a9)
+
+running 14 tests
+test metric_rounding_cases_match_ts ... ok
+test transform_order_cases_match_ts ... ok
+test no_timing_strict_scoring_fixture_is_semantically_equal_at_one_two_four_and_eight_threads ... ok
+test total_vector_count_meets_floor ... ok
+test envelope_cases_match_ts ... ok
+test pareto_cases_match_ts ... ok
+test deadline_cases_match_ts ... ok
+test measure_completed_layout_cases_match_ts ... ok
+test budget_cap_cases_match_ts ... ok
+test checkpoint_integrity_hash_matches_ts_after_spatial_index_continuation_identity_fix ... ok
+test decode_cases_match_ts ... ok
+test checkpoint_cases_match_ts ... ok
+test no_timing_parallel_scoring_matches_the_serial_authority_for_every_decoder_mode ... ok
+test no_timing_parallel_scoring_preserves_cap_and_checkpoint_boundaries ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.67s
+
+     Running tests/thread_equality.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/thread_equality-5ffb61e07604258d)
+
+running 6 tests
+test canonical_semantic_bytes_sort_object_fields_and_preserve_timing_field_presence ... ok
+test canonical_semantic_bytes_preserve_semantic_values_and_normalize_only_measurements ... ok
+test two_piece_fixture_is_thread_count_invariant ... ok
+test four_piece_fixture_is_thread_count_invariant ... ok
+test eight_piece_fixture_is_thread_count_invariant ... ok
+test twenty_piece_fixture_is_thread_count_invariant has been running for over 60 seconds
+test twenty_piece_fixture_is_thread_count_invariant ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 139.62s
+
+     Running tests/transforms_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/transforms_vectors-65456449605a2f24)
+
+running 2 tests
+test transform_and_snap_point_matches_ts_production_oracle_over_real_and_synthetic_rings ... ok
+test generate_transforms_matches_ts_production_oracle_over_the_full_matrix ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/validation_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/validation_vectors-4bb9ddc91080bd4b)
+
+running 5 tests
+test empty_index_helper_matches_ts_oracle_shape ... ok
+test total_vector_count_is_at_least_500 ... ok
+test sat_penetration_matches_ts_oracle ... ok
+test spatial_index_sequences_match_ts_oracle ... ok
+test assess_placement_matches_ts_oracle ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running unittests src/lib.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/polygon_nesting_dxf-054f5d818e6f566a)
+
+running 7 tests
+test tests::rejects_missing_required_entity_fields_and_nonpositive_radii ... ok
+test tests::ignores_supported_paper_space_entities ... ok
+test tests::ellipse_bounds_include_exact_rotated_analytic_extrema ... ok
+test tests::rejects_arc_sweeps_larger_than_one_turn ... ok
+test tests::preserves_model_space_entity_order_and_ignores_block_definitions ... ok
+test tests::directory_order_cannot_change_request_bytes ... ok
+test tests::imports_supported_entities_and_emits_a_valid_request ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/corpus.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/corpus-dca20f13b2aa0beb)
+
+running 2 tests
+test shapes_17_imports_the_real_configurator_curve_corpus ... ok
+test mixed_61_preserves_the_golden_geometry_families_and_request_bytes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/polygon_nesting_napi-7ac8f1911bc2de1b)
+
+running 40 tests
+test diagnostics::tests::diagnostics_are_null_before_first_completed_job ... ok
+test events::tests::cleanup_before_terminal_admission_prevents_enqueue ... ok
+test diagnostics::tests::lifecycle_counters_are_exposed_and_increment_exactly_once ... ok
+test diagnostics::tests::execution_diagnostics_constructor_reconstructs_all_supported_fields ... ok
+test diagnostics::tests::completed_jobs_replace_the_process_global_snapshot ... ok
+test diagnostics::tests::execution_diagnostics_constructor_rejects_unknown_counters ... ok
+test events::tests::forwards_core_events_in_order_and_appends_terminal_after_last_core_ordinal ... ok
+test diagnostics::tests::diagnostics_json_has_typed_populated_telemetry_and_lifecycle ... ok
+test events::tests::cleanup_hook_wakes_terminal_waiter ... ok
+test events::tests::core_event_after_terminal_is_suppressed_without_delivery_or_failure ... ok
+test events::tests::callback_failure_wins_over_later_cleanup ... ok
+test events::tests::nonterminal_callback_exception_precedes_terminal_acknowledgement ... ok
+test events::tests::cleanup_does_not_block_during_terminal_enqueue_admission ... ok
+test events::tests::rejects_gapped_core_ordinal_without_delivery_or_ordinal_mutation ... ok
+test events::tests::cleanup_wins_over_late_callback_acknowledgement ... ok
+test events::tests::rejects_maximum_core_ordinal_without_delivery_or_panic ... ok
+test events::tests::repeated_terminal_emission_is_suppressed ... ok
+test job::tests::archive_ineligible_diagnostics_commit_measured_no_pool_elapsed_at_completion ... ok
+test events::tests::terminal_waits_for_callback_acknowledgement ... ok
+test job::tests::lifecycle_projects_decode_failure_and_removes_current_lease ... ok
+test job::tests::lifecycle_projects_environment_cleanup_terminal_wakeup_through_delivery_boundary ... ok
+test events::tests::retains_first_delivery_failure_after_terminal_acknowledgement ... ok
+test events::tests::terminal_ordinal_overflow_never_panics ... ok
+test events::tests::serializes_progress_and_snapshot_callback_frames ... ok
+test events::tests::suppressing_snapshot_delivery_preserves_core_owned_ordinals ... ok
+test tests::native_capability_has_the_desktop_compatibility_shape ... ok
+test job::tests::completion_diagnostics_follow_completion_order_not_compute_order ... ok
+test job::tests::lifecycle_projects_terminal_callback_failure_after_terminal_handling ... ok
+test job::tests::lifecycle_sanitizes_terminal_delivery_panic_and_removes_current_lease ... ok
+test job::tests::lifecycle_sanitizes_panic_and_removes_current_lease ... ok
+test job::tests::lifecycle_projects_typed_core_failure_and_removes_current_lease ... ok
+test job::tests::lifecycle_observes_cancellation_projects_it_and_removes_current_lease ... ok
+test job::tests::malformed_pre_execution_completion_replaces_previous_diagnostics ... ok
+test job::tests::stale_terminal_cleanup_hook_cannot_remove_a_reused_token_lease ... ok
+test job::tests::terminal_cleanup_hook_preserves_an_existing_cancellation_reason ... ok
+test job::tests::terminal_cleanup_hook_removes_its_current_lease_and_allows_token_reuse ... ok
+test tests::diagnostics_export_returns_valid_json_or_null ... ok
+test job::tests::terminal_cleanup_hook_wakes_terminal_delivery_and_is_idempotent ... ok
+test job::tests::lifecycle_preserves_core_ordinals_and_appends_one_terminal_frame ... ok
+test job::tests::lifecycle_preserves_ordinals_and_one_terminal_for_each_diagnostic_trace_mode ... ok
+
+test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/bin/parity-desktop-request-adapter.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/parity_desktop_request_adapter-eee16db7e00a8ffc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/parity-project-engine-events.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/parity_project_engine_events-5c2d3914ed950f46)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/parity-project-engine-outcome.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/parity_project_engine_outcome-21ff380edb903837)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/compat.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/compat-bc7c93e737e7f5c6)
+
+running 16 tests
+test public_adapter_rejects_desktop_request_with_job_id_only_after_decoding ... ok
+test malformed_json_preserves_desktop_protocol_error ... ok
+test desktop_compatibility_keeps_unknown_fields_and_omitted_defaults ... ok
+test overflowing_json_number_preserves_desktop_revalidation_error ... ok
+test invalid_strategy_run_id_preserves_desktop_revalidation_error ... ok
+test invalid_worker_mode_preserves_desktop_revalidation_error ... ok
+test public_adapter_serializes_the_production_desktop_decoder_output ... ok
+test unknown_history_mode_preserves_desktop_revalidation_error ... ok
+test missing_job_id_preserves_desktop_protocol_error ... ok
+test unknown_diagnostic_trace_mode_preserves_desktop_revalidation_error ... ok
+test desktop_diagnostic_trace_mode_accepts_explicit_off ... ok
+test version_mismatch_preserves_desktop_protocol_error ... ok
+test zero_timeout_projects_protocol_validation_as_desktop_revalidation_error ... ok
+test desktop_diagnostic_trace_mode_defaults_to_full_when_omitted ... ok
+test frozen_desktop_request_converts_to_neutral_engine_request ... ok
+test invalid_job_id_preserves_desktop_revalidation_error ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/job.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/job-08cf0b3e802e5d8d)
+
+running 19 tests
+test engine_cancelled_projects_to_desktop_worker_cancelled ... ok
+test accepted_not_implemented_context_projects_to_exact_desktop_category ... ok
+test adapter_sanitizes_caught_panics_without_raw_payload ... ok
+test engine_deadline_projects_to_desktop_worker_timeout ... ok
+test generic_engine_failure_omits_empty_desktop_context ... ok
+test engine_invalid_geometry_projects_to_desktop_geometry_error ... ok
+test compat_decode_error_resolves_as_the_desktop_failure_envelope ... ok
+test adapter_projects_delivery_failures_after_terminal_acknowledgement ... ok
+test only_documented_cancellation_wire_reasons_are_accepted ... ok
+test engine_failure_projects_to_desktop_no_valid_result ... ok
+test io_failure_projects_to_conservative_desktop_unknown_error ... ok
+test source_geometry_failure_projects_to_exact_desktop_category ... ok
+test scoring_engine_failures_project_to_exact_desktop_category ... ok
+test archive_ineligible_projects_each_reason_to_accepted_desktop_routing_failure ... ok
+test n_api_full_and_off_requests_have_equivalent_results ... ok
+test issue_21_interchangeable_arc_circle_desktop_request_completes ... ok
+test issue_21_interchangeable_chord_circle_desktop_request_completes ... ok
+test issue_21_exact_production_desktop_request_completes ... ok
+test shapes_17_result_is_independent_of_production_upload_order ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.50s
+
+     Running tests/parity_adapter_binary.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/parity_adapter_binary-818848695ad1900f)
+
+running 1 test
+test parity_adapter_binary_emits_neutral_engine_request_json ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/polygon_nesting_protocol-6918c2c169b37578)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/protocol_vectors.rs (/var/lib/t3/tmp/realint/tgt-test/debug/deps/protocol_vectors-077fe97fbab08f22)
+
+running 39 tests
+test capacity_preflight_reason_controls_piece_id_presence ... ok
+test decimal_exact_integers_are_canonical_strings_on_the_wire ... ok
+test capacity_lane_coordinator_preserves_snake_case_producer_fields ... ok
+test compact_short_side_archive_ineligibility_is_a_typed_outcome ... ok
+test archive_ineligible_requests_produce_a_typed_outcome ... ok
+test diagnostic_trace_mode_defaults_to_full_when_omitted ... ok
+test decode_rejects_malformed_input_with_a_typed_error ... ok
+test every_explicit_exact_decimal_field_rejects_numbers_and_accepts_strings ... ok
+test diagnostic_trace_mode_rejects_unknown_wire_values ... ok
+test decode_rejects_unsupported_versions_with_a_typed_error ... ok
+test frozen_vector_records_portable_source_provenance ... ok
+test error_categories_are_application_neutral ... ok
+test frozen_semantic_event_vector_round_trips ... ok
+test frozen_request_vector_preserves_source_sheet_label ... ok
+test protocol_version_one_is_current ... ok
+test extreme_magnitude_floats_parse_to_the_nearest_binary64_value ... ok
+test diagnostic_trace_mode_round_trips_supported_wire_values ... ok
+test frozen_state_snapshot_uses_the_result_side_prepared_piece_shape ... ok
+test empty_duplicate_and_invalid_prepared_pieces_are_rejected ... ok
+test only_supported_profiles_are_accepted ... ok
+test scheduler_trace_round_trips_integer_quantum_ordinals_as_json_integers ... ok
+test optional_fields_are_omitted_instead_of_encoded_as_null ... ok
+test scheduler_quantum_ordinal_rejects_fractional_json_numbers ... ok
+test nonempty_short_side_observer_trace_accepts_hash_and_sentinel_tuple_strings ... ok
+test repeated_encoding_is_byte_deterministic ... ok
+test required_presence_sensitive_settings_are_not_synthesized ... ok
+test safe_integer_boundaries_are_enforced_for_optimizer_settings ... ok
+test request_sheet_label_is_required ... ok
+test invalid_sheet_dimensions_are_rejected ... ok
+test request_sheet_label_survives_codec_round_trip ... ok
+test semantic_result_values_reject_unknown_or_malformed_values ... ok
+test invalid_timeout_is_rejected ... ok
+test semantic_events_serialize_with_an_outer_ordinal_and_no_terminal_variant ... ok
+test required_result_fields_are_not_synthesized_during_decode ... ok
+test semantic_result_values_round_trip_through_typed_dtos ... ok
+test source_piece_warnings_are_required ... ok
+test unknown_fields_are_accepted_and_adapter_fields_are_not_reencoded ... ok
+test source_piece_warnings_preserve_the_accepted_wire_fields ... ok
+test source_piece_geometry_is_typed_and_source_bounds_are_validated ... ok
+
+test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests polygon_nesting_cli
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests polygon_nesting_core
+
+running 2 tests
+test crates/polygon-nesting-core/src/profiling.rs - profiling::CountingAllocator (line 1063) ... ignored
+test crates/polygon-nesting-core/src/profiling.rs - profiling::span (line 445) ... ignored
+
+test result: ok. 0 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests polygon_nesting_dxf
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests polygon_nesting_napi
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests polygon_nesting_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
