@@ -1,0 +1,792 @@
+{
+ "binary": "/var/lib/t3/rt/bin/fix-meas",
+ "request": "mixed-61",
+ "rows": [
+  {
+   "seed": 0,
+   "arm": "base",
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,m34lanes=1,m34pconfirm=1,crot=0",
+   "processSeconds": 9.760026556032244,
+   "rawDepthMm": 172.2875460463765,
+   "m34Slices": 1,
+   "phases": {
+    "constructorProposals": [
+     541.433991,
+     976
+    ],
+    "collisionPolygonBuild": [
+     11.700999,
+     2913
+    ],
+    "sheetFitTest": [
+     20.109992,
+     548046
+    ],
+    "exactOverlapTest": [
+     1496.375901,
+     620568
+    ],
+    "publicationConfirm": [
+     7.816319,
+     1937
+    ],
+    "constructorScore": [
+     37.207337,
+     48953
+    ],
+    "scorePlacement": [
+     31878.466758,
+     24574060
+    ],
+    "scoreProbe": [
+     0,
+     0
+    ],
+    "scoreScan": [
+     0,
+     0
+    ],
+    "scoreFinalize": [
+     0,
+     0
+    ],
+    "boundaryPenalty": [
+     2292.262253,
+     27277302
+    ],
+    "pairCollide": [
+     7466.896488,
+     85680112
+    ],
+    "pairPressure": [
+     5750.843516,
+     35172507
+    ],
+    "fullRescore": [
+     831.786099,
+     10021
+    ],
+    "pieceIndexBuild": [
+     422.10145,
+     27769
+    ],
+    "moveSweep": [
+     35067.264528,
+     27769
+    ],
+    "updateAfterMove": [
+     202.618393,
+     217824
+    ],
+    "auditorScore": [
+     55.318625,
+     128
+    ],
+    "hazardQuery": [
+     3212.385941,
+     4504322
+    ],
+    "hazardPressure": [
+     4715.396036,
+     6439865
+    ],
+    "hazardPoseBounds": [
+     711.63669,
+     7177363
+    ],
+    "hazardCommit": [
+     3698.187827,
+     45230
+    ],
+    "vacancyProposals": [
+     0,
+     0
+    ],
+    "vacancyProxyRank": [
+     0,
+     0
+    ],
+    "vacancyExactRows": [
+     0,
+     0
+    ],
+    "publicationValidate": [
+     154.709526,
+     404
+    ]
+   },
+   "counters": {
+    "acceptedMoves": 217824,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 24574060,
+    "collisionPolygonBuilds": 2913,
+    "effectivePieceMoves": 217824,
+    "exactPairTests": 620568,
+    "fullRescores": 10021,
+    "neighborTests": 94129889,
+    "publicationAttempts": 404,
+    "scanCatalogDescents": 0,
+    "scanCollisionRows": 0,
+    "scanNeighborsReturned": 0,
+    "scanNeighborsVisited": 0,
+    "scanUpperBoundCutoffs": 0
+   }
+  },
+  {
+   "seed": 0,
+   "arm": "crot",
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,m34lanes=1,m34pconfirm=1,crot=1",
+   "processSeconds": 8.848223845998291,
+   "rawDepthMm": 179.00599999999997,
+   "m34Slices": 0,
+   "phases": {
+    "constructorProposals": [
+     542.605512,
+     976
+    ],
+    "collisionPolygonBuild": [
+     11.561609,
+     2913
+    ],
+    "sheetFitTest": [
+     19.345804,
+     532491
+    ],
+    "exactOverlapTest": [
+     1454.570526,
+     596093
+    ],
+    "publicationConfirm": [
+     7.72049,
+     1937
+    ],
+    "constructorScore": [
+     37.0291,
+     48953
+    ],
+    "scorePlacement": [
+     27291.628437,
+     22043727
+    ],
+    "scoreProbe": [
+     0,
+     0
+    ],
+    "scoreScan": [
+     0,
+     0
+    ],
+    "scoreFinalize": [
+     0,
+     0
+    ],
+    "boundaryPenalty": [
+     1866.292463,
+     24142825
+    ],
+    "pairCollide": [
+     7048.314078,
+     81520791
+    ],
+    "pairPressure": [
+     5500.588707,
+     32902977
+    ],
+    "fullRescore": [
+     585.467999,
+     6830
+    ],
+    "pieceIndexBuild": [
+     364.163096,
+     23558
+    ],
+    "moveSweep": [
+     36578.492432,
+     23558
+    ],
+    "updateAfterMove": [
+     176.157988,
+     186491
+    ],
+    "auditorScore": [
+     32.249192,
+     72
+    ],
+    "hazardQuery": [
+     2070.80699,
+     2940523
+    ],
+    "hazardPressure": [
+     2960.305461,
+     4145417
+    ],
+    "hazardPoseBounds": [
+     440.975894,
+     4707392
+    ],
+    "hazardCommit": [
+     2454.511572,
+     30026
+    ],
+    "vacancyProposals": [
+     0,
+     0
+    ],
+    "vacancyProxyRank": [
+     0,
+     0
+    ],
+    "vacancyExactRows": [
+     0,
+     0
+    ],
+    "publicationValidate": [
+     119.626677,
+     149
+    ]
+   },
+   "counters": {
+    "acceptedMoves": 186491,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 22043727,
+    "collisionPolygonBuilds": 2913,
+    "effectivePieceMoves": 186491,
+    "exactPairTests": 596093,
+    "fullRescores": 6830,
+    "neighborTests": 86892315,
+    "publicationAttempts": 149,
+    "scanCatalogDescents": 0,
+    "scanCollisionRows": 0,
+    "scanNeighborsReturned": 0,
+    "scanNeighborsVisited": 0,
+    "scanUpperBoundCutoffs": 0
+   }
+  },
+  {
+   "seed": 1,
+   "arm": "base",
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,m34lanes=1,m34pconfirm=1,crot=0",
+   "processSeconds": 10.109585543978028,
+   "rawDepthMm": 167.183,
+   "m34Slices": 8,
+   "phases": {
+    "constructorProposals": [
+     542.668611,
+     976
+    ],
+    "collisionPolygonBuild": [
+     11.714809,
+     2913
+    ],
+    "sheetFitTest": [
+     26.723459,
+     681819
+    ],
+    "exactOverlapTest": [
+     1818.976383,
+     828036
+    ],
+    "publicationConfirm": [
+     7.836424,
+     1937
+    ],
+    "constructorScore": [
+     37.008853,
+     48953
+    ],
+    "scorePlacement": [
+     20940.116251,
+     17433288
+    ],
+    "scoreProbe": [
+     0,
+     0
+    ],
+    "scoreScan": [
+     0,
+     0
+    ],
+    "scoreFinalize": [
+     0,
+     0
+    ],
+    "boundaryPenalty": [
+     1531.49295,
+     20501422
+    ],
+    "pairCollide": [
+     5558.345502,
+     64469082
+    ],
+    "pairPressure": [
+     4109.115467,
+     25688190
+    ],
+    "fullRescore": [
+     317.029501,
+     3736
+    ],
+    "pieceIndexBuild": [
+     372.036211,
+     30487
+    ],
+    "moveSweep": [
+     23254.94284,
+     30487
+    ],
+    "updateAfterMove": [
+     133.03741,
+     157114
+    ],
+    "auditorScore": [
+     16.599988,
+     38
+    ],
+    "hazardQuery": [
+     1502.49151,
+     1971918
+    ],
+    "hazardPressure": [
+     2132.648319,
+     2919381
+    ],
+    "hazardPoseBounds": [
+     287.505436,
+     3020562
+    ],
+    "hazardCommit": [
+     1346.954383,
+     19448
+    ],
+    "vacancyProposals": [
+     0,
+     0
+    ],
+    "vacancyProxyRank": [
+     0,
+     0
+    ],
+    "vacancyExactRows": [
+     0,
+     0
+    ],
+    "publicationValidate": [
+     639.508691,
+     2597
+    ]
+   },
+   "counters": {
+    "acceptedMoves": 157114,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 17433288,
+    "collisionPolygonBuilds": 2913,
+    "effectivePieceMoves": 157114,
+    "exactPairTests": 828036,
+    "fullRescores": 3736,
+    "neighborTests": 68579727,
+    "publicationAttempts": 2597,
+    "scanCatalogDescents": 0,
+    "scanCollisionRows": 0,
+    "scanNeighborsReturned": 0,
+    "scanNeighborsVisited": 0,
+    "scanUpperBoundCutoffs": 0
+   }
+  },
+  {
+   "seed": 1,
+   "arm": "crot",
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,m34lanes=1,m34pconfirm=1,crot=1",
+   "processSeconds": 9.123196702974383,
+   "rawDepthMm": 175.92529894051563,
+   "m34Slices": 0,
+   "phases": {
+    "constructorProposals": [
+     548.347425,
+     976
+    ],
+    "collisionPolygonBuild": [
+     11.940397,
+     2913
+    ],
+    "sheetFitTest": [
+     19.462405,
+     532369
+    ],
+    "exactOverlapTest": [
+     1475.793542,
+     596975
+    ],
+    "publicationConfirm": [
+     7.920364,
+     1937
+    ],
+    "constructorScore": [
+     37.569162,
+     48953
+    ],
+    "scorePlacement": [
+     28356.120202,
+     23044540
+    ],
+    "scoreProbe": [
+     0,
+     0
+    ],
+    "scoreScan": [
+     0,
+     0
+    ],
+    "scoreFinalize": [
+     0,
+     0
+    ],
+    "boundaryPenalty": [
+     1970.843048,
+     25247738
+    ],
+    "pairCollide": [
+     7339.010251,
+     85506234
+    ],
+    "pairPressure": [
+     5329.669755,
+     34188060
+    ],
+    "fullRescore": [
+     643.002279,
+     7407
+    ],
+    "pieceIndexBuild": [
+     390.268159,
+     24571
+    ],
+    "moveSweep": [
+     37236.536999,
+     24571
+    ],
+    "updateAfterMove": [
+     185.992063,
+     195410
+    ],
+    "auditorScore": [
+     37.336904,
+     84
+    ],
+    "hazardQuery": [
+     2363.104581,
+     2929667
+    ],
+    "hazardPressure": [
+     3153.042556,
+     4339604
+    ],
+    "hazardPoseBounds": [
+     482.276922,
+     4791929
+    ],
+    "hazardCommit": [
+     2677.394893,
+     30255
+    ],
+    "vacancyProposals": [
+     0,
+     0
+    ],
+    "vacancyProxyRank": [
+     0,
+     0
+    ],
+    "vacancyExactRows": [
+     0,
+     0
+    ],
+    "publicationValidate": [
+     117.557677,
+     147
+    ]
+   },
+   "counters": {
+    "acceptedMoves": 195410,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 23044540,
+    "collisionPolygonBuilds": 2913,
+    "effectivePieceMoves": 195410,
+    "exactPairTests": 596975,
+    "fullRescores": 7407,
+    "neighborTests": 91398972,
+    "publicationAttempts": 147,
+    "scanCatalogDescents": 0,
+    "scanCollisionRows": 0,
+    "scanNeighborsReturned": 0,
+    "scanNeighborsVisited": 0,
+    "scanUpperBoundCutoffs": 0
+   }
+  },
+  {
+   "seed": 2,
+   "arm": "base",
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,m34lanes=1,m34pconfirm=1,crot=0",
+   "processSeconds": 10.18536923796637,
+   "rawDepthMm": 176.16200000000003,
+   "m34Slices": 1,
+   "phases": {
+    "constructorProposals": [
+     543.974882,
+     976
+    ],
+    "collisionPolygonBuild": [
+     11.743212,
+     2913
+    ],
+    "sheetFitTest": [
+     20.119981,
+     547558
+    ],
+    "exactOverlapTest": [
+     1498.388636,
+     618054
+    ],
+    "publicationConfirm": [
+     7.865018,
+     1937
+    ],
+    "constructorScore": [
+     37.204492,
+     48953
+    ],
+    "scorePlacement": [
+     30490.741978,
+     24158815
+    ],
+    "scoreProbe": [
+     0,
+     0
+    ],
+    "scoreScan": [
+     0,
+     0
+    ],
+    "scoreFinalize": [
+     0,
+     0
+    ],
+    "boundaryPenalty": [
+     2090.436451,
+     27091246
+    ],
+    "pairCollide": [
+     7860.188874,
+     92852839
+    ],
+    "pairPressure": [
+     5994.085867,
+     37791269
+    ],
+    "fullRescore": [
+     800.965865,
+     9536
+    ],
+    "pieceIndexBuild": [
+     490.700953,
+     32393
+    ],
+    "moveSweep": [
+     33671.520623,
+     32393
+    ],
+    "updateAfterMove": [
+     188.123767,
+     215255
+    ],
+    "auditorScore": [
+     54.774732,
+     119
+    ],
+    "hazardQuery": [
+     2304.268676,
+     2823075
+    ],
+    "hazardPressure": [
+     3407.079915,
+     4633875
+    ],
+    "hazardPoseBounds": [
+     488.056613,
+     5031918
+    ],
+    "hazardCommit": [
+     3478.077449,
+     31068
+    ],
+    "vacancyProposals": [
+     0,
+     0
+    ],
+    "vacancyProxyRank": [
+     0,
+     0
+    ],
+    "vacancyExactRows": [
+     0,
+     0
+    ],
+    "publicationValidate": [
+     179.637374,
+     396
+    ]
+   },
+   "counters": {
+    "acceptedMoves": 215255,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 24158815,
+    "collisionPolygonBuilds": 2913,
+    "effectivePieceMoves": 215255,
+    "exactPairTests": 618054,
+    "fullRescores": 9536,
+    "neighborTests": 99002404,
+    "publicationAttempts": 396,
+    "scanCatalogDescents": 0,
+    "scanCollisionRows": 0,
+    "scanNeighborsReturned": 0,
+    "scanNeighborsVisited": 0,
+    "scanUpperBoundCutoffs": 0
+   }
+  },
+  {
+   "seed": 2,
+   "arm": "crot",
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,m34lanes=1,m34pconfirm=1,crot=1",
+   "processSeconds": 8.503642662020866,
+   "rawDepthMm": 179.633,
+   "m34Slices": 0,
+   "phases": {
+    "constructorProposals": [
+     543.322353,
+     976
+    ],
+    "collisionPolygonBuild": [
+     12.278376,
+     2913
+    ],
+    "sheetFitTest": [
+     19.594284,
+     536029
+    ],
+    "exactOverlapTest": [
+     1473.856136,
+     600146
+    ],
+    "publicationConfirm": [
+     8.083834,
+     1937
+    ],
+    "constructorScore": [
+     37.279861,
+     48953
+    ],
+    "scorePlacement": [
+     27232.437404,
+     21882936
+    ],
+    "scoreProbe": [
+     0,
+     0
+    ],
+    "scoreScan": [
+     0,
+     0
+    ],
+    "scoreFinalize": [
+     0,
+     0
+    ],
+    "boundaryPenalty": [
+     1853.788977,
+     24175333
+    ],
+    "pairCollide": [
+     7328.762867,
+     86191684
+    ],
+    "pairPressure": [
+     5630.463916,
+     33386669
+    ],
+    "fullRescore": [
+     542.652927,
+     6637
+    ],
+    "pieceIndexBuild": [
+     418.667362,
+     26903
+    ],
+    "moveSweep": [
+     33376.795184,
+     26903
+    ],
+    "updateAfterMove": [
+     169.133028,
+     189614
+    ],
+    "auditorScore": [
+     34.146647,
+     74
+    ],
+    "hazardQuery": [
+     1805.957849,
+     2529945
+    ],
+    "hazardPressure": [
+     2559.888463,
+     3458364
+    ],
+    "hazardPoseBounds": [
+     401.464354,
+     4145312
+    ],
+    "hazardCommit": [
+     2410.399893,
+     26115
+    ],
+    "vacancyProposals": [
+     0,
+     0
+    ],
+    "vacancyProxyRank": [
+     0,
+     0
+    ],
+    "vacancyExactRows": [
+     0,
+     0
+    ],
+    "publicationValidate": [
+     171.293596,
+     207
+    ]
+   },
+   "counters": {
+    "acceptedMoves": 189614,
+    "allocationBytes": 0,
+    "allocationCount": 0,
+    "candidateQueries": 21882936,
+    "collisionPolygonBuilds": 2913,
+    "effectivePieceMoves": 189614,
+    "exactPairTests": 600146,
+    "fullRescores": 6637,
+    "neighborTests": 90602923,
+    "publicationAttempts": 207,
+    "scanCatalogDescents": 0,
+    "scanCollisionRows": 0,
+    "scanNeighborsReturned": 0,
+    "scanNeighborsVisited": 0,
+    "scanUpperBoundCutoffs": 0
+   }
+  }
+ ]
+}

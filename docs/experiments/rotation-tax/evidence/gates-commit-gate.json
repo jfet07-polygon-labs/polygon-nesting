@@ -1,0 +1,57 @@
+{
+ "label": "commit-gate",
+ "binary": "/var/lib/t3/rt/bin/commit-gate",
+ "env": {},
+ "gates": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fingerprints": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ],
+   "hit": true,
+   "wallSeconds": 26.81462574005127,
+   "docDigest": "cb9caac2a1667635f6c12b26cd2ce51213de8b9db27ba9695dcf6d278f8d726c"
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "depth": 159.092,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 6.892358064651489,
+   "docDigest": "20a6d7eace3011aacaf815f04f0e3f176e5e42fd5614c1477bd8a733f80ec8c0"
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "depth": 159.079,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 4.806824445724487,
+   "docDigest": "cc4f738b84907bfcc3128f9b81f6fe8b403f8716ddca32ae89c8ce63556af9f4"
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "depth": 164.038,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.9622671604156494,
+   "docDigest": "3f13a6e7ec0a3717989ae158a0feb552c8d3de3570b7ca2f5e2a3f186a01f662"
+  }
+ },
+ "ALL_PASS": true
+}

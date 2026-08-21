@@ -2471,7 +2471,44 @@ impl ProxyRowCache {
 /// expression produced, so a hit and a miss are indistinguishable in the
 /// result.
 struct AngleKeyCache {
-    entries: Vec<Option<(u64, i64)>>,
+    entries: Vec<Option<(u64, i64, SurrogateRoute)>>,
+}
+
+/// Which of the two maps last answered a pose resolution for one piece.
+///
+/// # What this is worth, and why it is only ever a hint
+///
+/// An armed lane's layout is about half off-grid (docs/experiments/rotation-tax/
+/// §1 measured 88.2 M of 175.1 M resolutions landing in the overflow map), and
+/// every one of those resolutions used to pay a **full-depth failed descent of
+/// the catalogue** before reaching the map that had the answer. That is the
+/// resolution tax docs/experiments/continuous-rotation/ §1.2 named and could not
+/// price. Remembering which map answered last time turns it into one descent of
+/// the right map.
+///
+/// It is a hint rather than a fact because [`AngleKeyCache`] is keyed on
+/// `(input_index, rotation bits)` and a [`SurrogateKey`] also carries `mirrored`,
+/// so one slot can be asked about two keys that could in principle route
+/// differently. [`resolve_surrogate_routed`] therefore *verifies*: a
+/// [`SurrogateRoute::Overflow`] hint is tried first and, if it misses, the
+/// full catalogue-then-overflow order runs exactly as before. A wrong hint
+/// costs one probe of a map that holds at most
+/// [`ROTATION_CACHE_PROBE_CAPACITY`] plus one entry per piece; it can never
+/// change the answer, and the answer is what the four pinned gates hash.
+///
+/// [`SurrogateRoute::Unknown`] is what a slot holds until a resolution has
+/// answered for it, and what a miss on the bit pattern resets it to. On an
+/// unarmed lane the overflow map is empty, so no slot can ever leave
+/// `Unknown`/`Catalog` and the resolution performed is the one today's code
+/// performs, instruction for instruction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum SurrogateRoute {
+    /// No resolution has answered for this slot yet.
+    Unknown,
+    /// The surrogate catalogue answered.
+    Catalog,
+    /// The lane's continuous-angle overflow map answered.
+    Overflow,
 }
 
 impl AngleKeyCache {
@@ -2489,17 +2526,49 @@ impl AngleKeyCache {
     /// constant for a lane; it selects the same branch the deriving path takes.
     #[inline(always)]
     fn rotation_key(&mut self, input_index: usize, rotation_deg: f64, directional: bool) -> i64 {
+        self.rotation_key_routed(input_index, rotation_deg, directional)
+            .0
+    }
+
+    /// [`Self::rotation_key`], plus which map answered the last resolution that
+    /// used this slot.
+    ///
+    /// The route rides in the same slot as the key because it is refreshed by
+    /// the same event: a piece that moved to a new angle has a new bit pattern,
+    /// which misses the memo, which re-derives the key and forgets the route in
+    /// one store. There is deliberately no separate invalidation path to get
+    /// wrong.
+    #[inline(always)]
+    fn rotation_key_routed(
+        &mut self,
+        input_index: usize,
+        rotation_deg: f64,
+        directional: bool,
+    ) -> (i64, SurrogateRoute) {
         let bits = rotation_deg.to_bits();
-        if let Some(Some((stored_bits, key))) = self.entries.get(input_index).copied() {
+        if let Some(Some((stored_bits, key, route))) = self.entries.get(input_index).copied() {
             if stored_bits == bits {
-                return key;
+                return (key, route);
             }
         }
         let key = derive_rotation_key(rotation_deg, directional);
         if let Some(slot) = self.entries.get_mut(input_index) {
-            *slot = Some((bits, key));
+            *slot = Some((bits, key, SurrogateRoute::Unknown));
         }
-        key
+        (key, SurrogateRoute::Unknown)
+    }
+
+    /// Records which map answered, so the next resolution for this piece at
+    /// this angle goes straight there.
+    ///
+    /// A no-op when the slot is empty, which can only happen for an
+    /// `input_index` past the piece count - the same guard
+    /// [`Self::rotation_key_routed`] uses.
+    #[inline(always)]
+    fn record_route(&mut self, input_index: usize, route: SurrogateRoute) {
+        if let Some(Some(entry)) = self.entries.get_mut(input_index) {
+            entry.2 = route;
+        }
     }
 }
 
@@ -3787,9 +3856,126 @@ fn resolve_surrogate<'a>(
     overflow: &'a BTreeMap<SurrogateKey, OrientedSurrogate>,
     key: &SurrogateKey,
 ) -> Option<&'a OrientedSurrogate> {
+    resolve_surrogate_routed(catalog, overflow, key, SurrogateRoute::Unknown).map(|(shape, _)| shape)
+}
+
+/// [`resolve_surrogate`] with a hint about which map answered last time, and
+/// the map that answered this time.
+///
+/// # Why a hint is sound here
+///
+/// The two maps' key sets are **disjoint by construction**, and that is what
+/// makes the probe order free to change. There is exactly one insert site for
+/// the overflow map, in [`LaneSearch::ensure_rotation_surrogate`], and it is
+/// guarded by `catalog.orientations.contains_key(&key)` returning false; the
+/// catalogue itself is an immutable `Arc` for the whole lane. So no key is ever
+/// in both, no key is ever added to the catalogue, and "which map holds this
+/// key" is a fact about the key rather than about the order it was asked in.
+/// Probing the overflow first can therefore return a different *reference* from
+/// probing the catalogue first only if some key were in both, which cannot
+/// happen.
+///
+/// # What it buys
+///
+/// The tax it removes is a full-depth **failed** descent of the catalogue: a
+/// mixed-61 catalogue carries a `StructuredGrid`'s worth of entries and an
+/// armed layout resolves about half its neighbours out of the overflow map, so
+/// half of every scan's descents were being paid twice. With the hint, an
+/// off-grid neighbour costs one descent of a map that holds at most
+/// [`ROTATION_CACHE_PROBE_CAPACITY`] probes plus one pin per piece.
+///
+/// A [`SurrogateRoute::Unknown`] or [`SurrogateRoute::Catalog`] hint runs the
+/// original order, so an unarmed lane - which can never leave those two states,
+/// its overflow map being empty - performs exactly the resolution it performs
+/// today. That is the property the four pinned gates check.
+#[inline(always)]
+fn resolve_surrogate_routed<'a>(
+    catalog: &'a SurrogateCatalog,
+    overflow: &'a BTreeMap<SurrogateKey, OrientedSurrogate>,
+    key: &SurrogateKey,
+    route: SurrogateRoute,
+) -> Option<(&'a OrientedSurrogate, SurrogateRoute)> {
+    if route == SurrogateRoute::Overflow {
+        if let Some(found) = overflow.get(key) {
+            profiling::rotation_tax::add(profiling::rotation_tax::Tax::ResolveHintedOverflowHit, 1);
+            return Some((found, SurrogateRoute::Overflow));
+        }
+    }
     match catalog.orientations.get(key) {
-        found @ Some(_) => found,
-        None => overflow.get(key),
+        Some(found) => {
+            profiling::rotation_tax::add(profiling::rotation_tax::Tax::ResolveCatalogHit, 1);
+            Some((found, SurrogateRoute::Catalog))
+        }
+        None => {
+            let found = overflow.get(key);
+            profiling::rotation_tax::add(
+                if found.is_some() {
+                    profiling::rotation_tax::Tax::ResolveOverflowHit
+                } else {
+                    profiling::rotation_tax::Tax::ResolveMiss
+                },
+                1,
+            );
+            found.map(|shape| (shape, SurrogateRoute::Overflow))
+        }
+    }
+}
+
+/// Opens the `rotation-tax-census` clock over one deque linear scan, and
+/// nothing at all in any other build.
+///
+/// A free function rather than an inline `Instant::now()` so that the *only*
+/// difference between a census build and a measurement build at these two sites
+/// is this call, which compiles to nothing.
+#[cfg(feature = "continuous-rotation")]
+#[inline(always)]
+fn rotation_tax_clock() -> Option<Instant> {
+    #[cfg(feature = "rotation-tax-census")]
+    {
+        Some(Instant::now())
+    }
+    #[cfg(not(feature = "rotation-tax-census"))]
+    {
+        None
+    }
+}
+
+/// Records one deque linear scan: the call, the entries it compared, and the
+/// wall it took.
+///
+/// `steps` is the number of entries the `position` predicate actually ran on -
+/// `position + 1` on a hit, the whole queue on a miss - which is the quantity
+/// the continuous-rotation round's §6 estimated at "tens of millions" and never
+/// counted.
+#[cfg(feature = "continuous-rotation")]
+#[inline(always)]
+fn rotation_tax_scan(started: Option<Instant>, steps: usize) {
+    use profiling::rotation_tax::{add, Tax};
+    let Some(started) = started else {
+        return;
+    };
+    add(Tax::ProbeScanCalls, 1);
+    add(Tax::ProbeScanSteps, steps as u64);
+    add(Tax::ProbeScanNanos, started.elapsed().as_nanos() as u64);
+}
+
+/// Records `ensure_state_surrogates`'s call and wall on the way out.
+///
+/// A guard rather than a pair of calls because the body has three `?` exits and
+/// a decomposition that silently dropped the raising ones would be reporting on
+/// a different population from the one that ran.
+#[cfg(feature = "continuous-rotation")]
+struct RotationTaxEnsureState(Option<Instant>);
+
+#[cfg(feature = "continuous-rotation")]
+impl Drop for RotationTaxEnsureState {
+    fn drop(&mut self) {
+        use profiling::rotation_tax::{add, Tax};
+        let Some(started) = self.0 else {
+            return;
+        };
+        add(Tax::EnsureStateCalls, 1);
+        add(Tax::EnsureStateNanos, started.elapsed().as_nanos() as u64);
     }
 }
 
@@ -3818,12 +4004,42 @@ struct RotationCache {
     /// evicted.
     pin_counts: BTreeMap<SurrogateKey, usize>,
     /// Unpinned entries in least-recently-ensured order.
+    ///
+    /// A `VecDeque` with a linear `position()` scan, which
+    /// docs/experiments/continuous-rotation/ §6 called "bounded, but not free,
+    /// and removable with an index". It is bounded and not free — this round
+    /// counted the scan at **212.5 M** entry comparisons over three isolated
+    /// mode-34 slices — and it was removed with an index, and the index was
+    /// **slower**: 24 paired equal-work cells put the deque ahead by 0.38% of
+    /// slice wall and 1.14% of process wall, 22 of 24 and 21 of 24. At a
+    /// window of [`ROTATION_CACHE_PROBE_CAPACITY`] a contiguous scan of 24-byte
+    /// tuples beats two ordered-map descents, and the queue is the shape the
+    /// measurement chose. See docs/experiments/rotation-tax/ §2.3, and
+    /// `drivers/run-probequeue-ab.sh`, which rebuilds the indexed variant.
     probes: VecDeque<SurrogateKey>,
     /// Poses an in-flight refinement is carrying, released one piece later.
     holds: Vec<SurrogateKey>,
     /// Per-piece bounding radius about the rotation origin, `0.0` until first
     /// asked. This is the `r` of `dtheta = dx / r`.
     radii: Vec<f64>,
+    /// The `(rotation bits, mirrored)` last *pinned* for each piece, or `None`
+    /// when nothing has been.
+    ///
+    /// This is what lets `ensure_state_surrogates` skip a piece whose pose has
+    /// not moved since the last time this lane pinned it, and it is exactly as
+    /// strong as that: `pinned[i]` is written in one place,
+    /// [`LaneSearch::pin_rotation_pose`], and this slot is written by the same
+    /// call, so the two cannot drift. A pin is never evicted - `pin_counts`
+    /// holds it out of the queue for as long as it is a pin - so "piece `i`
+    /// still sits at the pose we pinned" implies "that pose still resolves",
+    /// which is the whole of what the loop had to establish.
+    ///
+    /// docs/experiments/rotation-tax/ §1 is why it exists: an isolated mode-34
+    /// slice called `ensure_state_surrogates` about seventeen thousand times,
+    /// each an `O(pieces)` walk of two ordered-map probes, for 0.143 s of slice
+    /// wall - the second-largest component of the operator's tax and one that
+    /// almost never had anything to do.
+    ensured: Vec<Option<(u64, bool)>>,
 }
 
 /// How many *unpinned* continuous-angle surrogates a lane keeps.
@@ -11715,6 +11931,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 probes: VecDeque::new(),
                 holds: Vec::new(),
                 radii: vec![0.0; pieces.len()],
+                ensured: vec![None; pieces.len()],
             },
             collision_merge_scratch: Vec::new(),
             #[cfg(feature = "relaxed-row-buffer-reuse")]
@@ -13860,6 +14077,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             if !armed {
                 return Ok(candidate);
             }
+            profiling::rotation_tax::add(profiling::rotation_tax::Tax::PrepareCandidateCalls, 1);
             if !self.rotation_residency_available() {
                 // The cache is full to its ceiling. Propose the incumbent's own
                 // pose - a candidate that needs nothing built and scores as the
@@ -14191,6 +14409,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
     }
 
     fn pair_directional_penetration(&self, nfp_key: PairNfpKey, relative: IrregularPoint) -> f64 {
+        profiling::rotation_tax::add(profiling::rotation_tax::Tax::PairNfpLookups, 1);
         let pair_nfp = self
             .pair_nfp_cache
             .get(&nfp_key)
@@ -14785,20 +15004,36 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 ..
             } = self;
             let directional = *directional;
+            let (candidate_angle_key, candidate_route) = angle_keys.rotation_key_routed(
+                candidate.input_index,
+                candidate.rotation_deg,
+                directional,
+            );
             let candidate_key = (
                 catalog.geometry_class_by_input[candidate.input_index],
-                angle_keys.rotation_key(candidate.input_index, candidate.rotation_deg, directional),
+                candidate_angle_key,
                 candidate.mirrored,
             );
             profiling::census::count(Counter::ScanCatalogDescents, 1);
             let scan_span = profiling::census::start(Phase::ScoreScan);
-            failure = match resolve_surrogate(catalog, rotation_overflow, &candidate_key) {
+            let resolved = resolve_surrogate_routed(
+                catalog,
+                rotation_overflow,
+                &candidate_key,
+                candidate_route,
+            );
+            if let Some((_, answered)) = resolved {
+                if answered != candidate_route {
+                    angle_keys.record_route(candidate.input_index, answered);
+                }
+            }
+            failure = match resolved {
                 None => Some(missing_orientation_error(
                     pieces,
                     candidate.input_index,
                     candidate_key,
                 )),
-                Some(candidate_shape) => scan_fixed_neighbors(
+                Some((candidate_shape, _)) => scan_fixed_neighbors(
                     pieces,
                     catalog,
                     rotation_overflow,
@@ -14843,19 +15078,35 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 ..
             } = self;
             let directional = *directional;
+            let (candidate_angle_key, candidate_route) = angle_keys.rotation_key_routed(
+                candidate.input_index,
+                candidate.rotation_deg,
+                directional,
+            );
             let candidate_key = (
                 catalog.geometry_class_by_input[candidate.input_index],
-                angle_keys.rotation_key(candidate.input_index, candidate.rotation_deg, directional),
+                candidate_angle_key,
                 candidate.mirrored,
             );
             profiling::census::count(Counter::ScanCatalogDescents, 1);
-            failure = match resolve_surrogate(catalog, rotation_overflow, &candidate_key) {
+            let resolved = resolve_surrogate_routed(
+                catalog,
+                rotation_overflow,
+                &candidate_key,
+                candidate_route,
+            );
+            if let Some((_, answered)) = resolved {
+                if answered != candidate_route {
+                    angle_keys.record_route(candidate.input_index, answered);
+                }
+            }
+            failure = match resolved {
                 None => Some(missing_orientation_error(
                     pieces,
                     candidate.input_index,
                     candidate_key,
                 )),
-                Some(candidate_shape) => {
+                Some((candidate_shape, _)) => {
                     let probe_span = profiling::census::start(Phase::ScoreProbe);
                     let candidate_bounds = translated_bounds(
                         candidate_shape.bounds,
@@ -15373,7 +15624,9 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         moving: &RelaxedPlacement,
     ) -> Result<Option<&PairNfp>, GeneralFastError> {
         let key = self.pair_nfp_key(fixed, moving)?;
+        profiling::rotation_tax::add(profiling::rotation_tax::Tax::PairNfpLookups, 1);
         if !self.pair_nfp_cache.contains_key(&key) {
+            profiling::rotation_tax::add(profiling::rotation_tax::Tax::PairNfpMisses, 1);
             let component_count = self.pair_nfp_component_count(key)?;
             if component_count > MAX_NFP_COMPONENTS_PER_MOVE
                 || self
@@ -15870,6 +16123,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         rotation_deg: f64,
         mirrored: bool,
     ) -> Result<SurrogateKey, GeneralFastError> {
+        profiling::rotation_tax::add(profiling::rotation_tax::Tax::EnsureRotationCalls, 1);
         let key = self.surrogate_key(input_index, rotation_deg, mirrored);
         if self.catalog.orientations.contains_key(&key) {
             return Ok(key);
@@ -15929,10 +16183,16 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             collision_expansion_mm(self.fast_settings),
             &mut build_counters,
         )?;
+        let build_nanos = started.elapsed().as_nanos() as u64;
+        profiling::rotation_tax::add(profiling::rotation_tax::Tax::RotationBuildCalls, 1);
+        profiling::rotation_tax::add(
+            profiling::rotation_tax::Tax::RotationBuildNanos,
+            build_nanos,
+        );
         self.counters.rotation_surrogate_build_nanos = self
             .counters
             .rotation_surrogate_build_nanos
-            .saturating_add(started.elapsed().as_nanos() as u64);
+            .saturating_add(build_nanos);
         self.counters.rotation_surrogate_builds =
             self.counters.rotation_surrogate_builds.saturating_add(1);
         self.counters.rotation_surrogate_cells = self
@@ -15997,14 +16257,37 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             return Ok(());
         }
         self.pin_rotation_pose(input_index, off_grid.then_some(key));
+        // The pose is pinned, so it resolves for as long as it stays pinned.
+        // Recording the *pose* rather than the key is what
+        // `ensure_state_surrogates` compares against, and it is recorded here -
+        // beside the pin it describes - rather than in that loop, so that the
+        // other pinning caller (`move_sweep`'s accepted replacement) keeps it
+        // in step for free.
+        if let Some(slot) = self.rotation_cache.ensured.get_mut(input_index) {
+            *slot = Some((rotation_deg.to_bits(), mirrored));
+        }
         Ok(())
     }
 
     /// Moves piece `input_index`'s state pin from whatever it held to `key`.
+    ///
+    /// Forgetting [`RotationCache::ensured`] first is what makes that slot's
+    /// invariant local instead of a fact about the call graph. The slot says
+    /// "piece `i` is pinned at this pose", and it licenses
+    /// `ensure_state_surrogates` to skip the piece entirely; a caller that
+    /// moved the pin without going through `ensure_and_protect_pose` would
+    /// otherwise leave the slot claiming a pin that no longer exists, and the
+    /// skip would then be over an evictable pose. Clearing it here costs one
+    /// store on the path that moves a pin - which is rare, since the early
+    /// return above covers the unchanged case - and the normal caller
+    /// re-establishes it immediately.
     #[cfg(feature = "continuous-rotation")]
     fn pin_rotation_pose(&mut self, input_index: usize, key: Option<SurrogateKey>) {
         if self.rotation_cache.pinned[input_index] == key {
             return;
+        }
+        if let Some(slot) = self.rotation_cache.ensured.get_mut(input_index) {
+            *slot = None;
         }
         if let Some(previous) = self.rotation_cache.pinned[input_index].take() {
             self.release_rotation_key(previous);
@@ -16023,13 +16306,17 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         let count = self.rotation_cache.pin_counts.entry(key).or_insert(0);
         *count += 1;
         if *count == 1 {
+            let started = rotation_tax_clock();
             if let Some(position) = self
                 .rotation_cache
                 .probes
                 .iter()
                 .position(|entry| *entry == key)
             {
+                rotation_tax_scan(started, position + 1);
                 self.rotation_cache.probes.remove(position);
+            } else {
+                rotation_tax_scan(started, self.rotation_cache.probes.len());
             }
         }
     }
@@ -16051,14 +16338,23 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
     /// Refreshes an entry's position in the LRU window.
     #[cfg(feature = "continuous-rotation")]
     fn touch_rotation_probe(&mut self, key: SurrogateKey) {
+        let started = rotation_tax_clock();
+        // Only an entry already in the queue is refreshed. A pinned key is out
+        // of the queue on purpose and must stay out, so this may not be an
+        // unconditional `push_back`: that would queue a pinned pose for
+        // eviction while a placement still resolved it, which is the one
+        // failure the pin exists to prevent.
         if let Some(position) = self
             .rotation_cache
             .probes
             .iter()
             .position(|entry| *entry == key)
         {
+            rotation_tax_scan(started, position + 1);
             self.rotation_cache.probes.remove(position);
             self.rotation_cache.probes.push_back(key);
+        } else {
+            rotation_tax_scan(started, self.rotation_cache.probes.len());
         }
     }
 
@@ -16104,6 +16400,8 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
     fn ensure_state_surrogates(&mut self, state: &RelaxedState) -> Result<(), GeneralFastError> {
         #[cfg(feature = "continuous-rotation")]
         if self.continuous_rotation {
+            let started = rotation_tax_clock();
+            let _guard = RotationTaxEnsureState(started);
             for position in 0..state.placements.len() {
                 let placement = &state.placements[position];
                 let (input_index, rotation_deg, mirrored) = (
@@ -16111,6 +16409,23 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     placement.rotation_deg,
                     placement.mirrored,
                 );
+                // The piece has not moved since this lane last pinned it, so
+                // the pose it holds is the pose that is pinned, and a pin is
+                // never evicted: `pin_counts` holds it out of the eviction
+                // queue for exactly as long as it is a pin. There is therefore
+                // nothing for the ensure to establish, and skipping it skips
+                // the `fmod` of the key derivation, both ordered-map probes and
+                // the pin bookkeeping.
+                //
+                // Keyed on the rotation's *bit pattern* for the same reason
+                // [`AngleKeyCache`] is: the derivation canonicalises, so equal
+                // bits imply an equal key, and unequal bits at worst cost an
+                // ensure that had nothing to do.
+                if self.rotation_cache.ensured[input_index]
+                    == Some((rotation_deg.to_bits(), mirrored))
+                {
+                    continue;
+                }
                 self.ensure_and_protect_pose(input_index, rotation_deg, mirrored, false)?;
             }
         }
@@ -16130,6 +16445,31 @@ fn directional_nfp_preflight_fits(
 ) -> bool {
     (!enforce_candidate_limit || candidate_visits <= candidate_limit)
         && current_components.saturating_add(new_components) <= lane_limit
+}
+
+/// Opens the `rotation-tax-census` stage clock inside
+/// [`build_oriented_surrogate`], and nothing at all in any other build.
+#[inline(always)]
+fn build_stage_clock() -> Option<Instant> {
+    #[cfg(feature = "rotation-tax-census")]
+    {
+        Some(Instant::now())
+    }
+    #[cfg(not(feature = "rotation-tax-census"))]
+    {
+        None
+    }
+}
+
+/// Closes one build stage and opens the next, returning the new clock.
+#[inline(always)]
+fn build_stage_mark(
+    started: Option<Instant>,
+    slot: profiling::rotation_tax::Tax,
+) -> Option<Instant> {
+    let started = started?;
+    profiling::rotation_tax::add(slot, started.elapsed().as_nanos() as u64);
+    Some(Instant::now())
 }
 
 /// Builds one legacy oriented shape outside the catalogue.
@@ -16169,9 +16509,11 @@ fn build_oriented_surrogate(
     expansion_mm: f64,
     counters: &mut WorkCounters,
 ) -> Result<OrientedSurrogate, GeneralFastError> {
-    let polygon = source
-        .transformed(rotation_deg, mirrored, 0.0, 0.0)?
-        .offset(expansion_mm)?;
+    let stage = build_stage_clock();
+    let transformed = source.transformed(rotation_deg, mirrored, 0.0, 0.0)?;
+    let stage = build_stage_mark(stage, profiling::rotation_tax::Tax::BuildTransformNanos);
+    let polygon = transformed.offset(expansion_mm)?;
+    let stage = build_stage_mark(stage, profiling::rotation_tax::Tax::BuildOffsetNanos);
     if polygon
         .regions()
         .iter()
@@ -16186,6 +16528,7 @@ fn build_oriented_surrogate(
     for region in polygon.regions() {
         cells.extend(triangulate_ring(region.outer.points())?);
     }
+    let stage = build_stage_mark(stage, profiling::rotation_tax::Tax::BuildTriangulateNanos);
     if cells.is_empty() || cells.len() > MAX_CELLS_PER_PIECE {
         return Err(GeneralPolygonError::from_message(format!(
             "relaxed surrogate cell count must be between 1 and {MAX_CELLS_PER_PIECE}"
@@ -16209,6 +16552,7 @@ fn build_oriented_surrogate(
     let poles = cells.iter().copied().map(triangle_pole).collect();
     let cell_axes = cells.iter().copied().map(CellAxes::new).collect();
     let cell_index = CellIndex::new(&cells, bounds);
+    build_stage_mark(stage, profiling::rotation_tax::Tax::BuildIndexNanos);
     Ok(OrientedSurrogate {
         collision: polygon,
         cells,
@@ -16489,19 +16833,33 @@ fn scan_fixed_neighbors<K: ExplorationKernel<Shape = OrientedSurrogate>>(
         }
         profiling::census::count(Counter::ScanNeighborsVisited, 1);
         let fixed = &state.placements[fixed_index];
+        // The neighbour's key *and* the map that answered for it last time.
+        //
+        // This loop is where the continuous-rotation operator's resolution tax
+        // was: an armed layout is about half off-grid, and every off-grid
+        // neighbour used to descend the whole catalogue, fail, and then descend
+        // the overflow map. See `resolve_surrogate_routed` for why re-ordering
+        // the two probes on a remembered hint cannot change the answer.
+        let (fixed_angle_key, route) =
+            angle_keys.rotation_key_routed(fixed.input_index, fixed.rotation_deg, directional);
         let fixed_key = (
             catalog.geometry_class_by_input[fixed.input_index],
-            angle_keys.rotation_key(fixed.input_index, fixed.rotation_deg, directional),
+            fixed_angle_key,
             fixed.mirrored,
         );
         profiling::census::count(Counter::ScanCatalogDescents, 1);
-        let Some(fixed_shape) = resolve_surrogate(catalog, rotation_overflow, &fixed_key) else {
+        let Some((fixed_shape, answered)) =
+            resolve_surrogate_routed(catalog, rotation_overflow, &fixed_key, route)
+        else {
             return Some(missing_orientation_error(
                 pieces,
                 fixed.input_index,
                 fixed_key,
             ));
         };
+        if answered != route {
+            angle_keys.record_route(fixed.input_index, answered);
+        }
         let penalty = resolved_pair_row(
             kernel,
             counters,
@@ -20021,6 +20379,178 @@ mod tests {
         assert_eq!(lane.counters.rotation_surrogate_builds, 1);
         assert_eq!(lane.counters.rotation_surrogate_hits, 1);
         assert_eq!(lane.rotation_overflow.len(), 1);
+    }
+
+    /// A remembered route decides *where* a pose is looked for and never *what*
+    /// is found.
+    ///
+    /// This is the soundness property of the resolution-tax fix, and it is
+    /// checked against the two ways a hint can be wrong rather than only
+    /// against the way it is right: a hint that says "overflow" for a pose the
+    /// catalogue holds, and a hint that says "overflow" for a pose that has
+    /// been evicted. Both must answer exactly what the unrouted resolution
+    /// answers, because that is what the four pinned gates hash.
+    #[test]
+    #[cfg(all(feature = "continuous-rotation", feature = "compression-schedule"))]
+    fn a_remembered_route_never_changes_which_surrogate_resolves() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        let mut settings = coupled_experiment_test_settings(5);
+        settings.continuous_rotation = true;
+        let mut lane = LegacyLaneSearch::new(&pieces, fast_settings, settings, 29, catalog);
+
+        let off_grid_key = lane
+            .ensure_rotation_surrogate(0, OVERLAY_OFF_GRID_DEG, false)
+            .expect("the off-grid pose builds");
+        let grid_key = lane.surrogate_key(0, 5.0, false);
+        assert!(
+            lane.catalog.orientations.contains_key(&grid_key),
+            "the grid pose must come from the catalogue or the test is vacuous"
+        );
+        assert!(
+            !lane.catalog.orientations.contains_key(&off_grid_key),
+            "the off-grid pose must come from the overflow map"
+        );
+
+        for (key, expected) in [
+            (grid_key, SurrogateRoute::Catalog),
+            (off_grid_key, SurrogateRoute::Overflow),
+        ] {
+            let unrouted = resolve_surrogate(&lane.catalog, &lane.rotation_overflow, &key)
+                .expect("the unrouted resolution answers");
+            for hint in [
+                SurrogateRoute::Unknown,
+                SurrogateRoute::Catalog,
+                // The deliberately wrong one on the grid key.
+                SurrogateRoute::Overflow,
+            ] {
+                let (shape, answered) =
+                    resolve_surrogate_routed(&lane.catalog, &lane.rotation_overflow, &key, hint)
+                        .expect("a routed resolution answers whatever the unrouted one did");
+                assert_eq!(answered, expected, "the map that answered is reported");
+                assert!(
+                    std::ptr::eq(shape, unrouted),
+                    "a hint must return the very same surrogate, not an equal one"
+                );
+            }
+        }
+
+        // An evicted pose: the hint still says overflow, and the answer is the
+        // `None` the unrouted call also gives.
+        lane.release_rotation_holds();
+        Arc::make_mut(&mut lane.rotation_overflow).remove(&off_grid_key);
+        assert!(resolve_surrogate(&lane.catalog, &lane.rotation_overflow, &off_grid_key).is_none());
+        assert!(resolve_surrogate_routed(
+            &lane.catalog,
+            &lane.rotation_overflow,
+            &off_grid_key,
+            SurrogateRoute::Overflow,
+        )
+        .is_none());
+    }
+
+    /// `ensure_state_surrogates` does nothing for a piece that has not moved,
+    /// and everything for one that has.
+    ///
+    /// The skip is only sound because a pin is never evicted, so the test
+    /// checks the consequence rather than the mechanism: after the skip the
+    /// pose still resolves, and after the piece moves the new pose is built.
+    #[test]
+    #[cfg(all(feature = "continuous-rotation", feature = "compression-schedule"))]
+    fn a_state_ensure_skips_a_piece_that_has_not_moved() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        let mut settings = coupled_experiment_test_settings(6);
+        settings.continuous_rotation = true;
+        let mut lane = LegacyLaneSearch::new(&pieces, fast_settings, settings, 31, catalog);
+
+        let mut state = RelaxedState {
+            placements: vec![
+                RelaxedPlacement {
+                    input_index: 0,
+                    rotation_deg: OVERLAY_OFF_GRID_DEG,
+                    mirrored: false,
+                    translate_x: 20.0,
+                    translate_y: 20.0,
+                },
+                RelaxedPlacement {
+                    input_index: 1,
+                    // A grid angle, so the second piece exercises the skip on
+                    // the branch that pins nothing.
+                    rotation_deg: 5.0,
+                    mirrored: false,
+                    translate_x: 60.0,
+                    translate_y: 60.0,
+                },
+            ],
+            strip_depth_mm: 100.0,
+        };
+
+        lane.ensure_state_surrogates(&state)
+            .expect("the first ensure builds what the state holds");
+        assert_eq!(lane.counters.rotation_surrogate_builds, 1);
+        assert_eq!(lane.counters.rotation_surrogate_hits, 0);
+
+        // Nothing moved: the second ensure must not even reach the overflow
+        // map, which `rotation_surrogate_hits` is the witness for - it is
+        // incremented by every `ensure_rotation_surrogate` that finds a pose
+        // already resident.
+        for _ in 0..5 {
+            lane.ensure_state_surrogates(&state)
+                .expect("re-ensuring an unmoved state is a no-op");
+        }
+        assert_eq!(lane.counters.rotation_surrogate_builds, 1);
+        assert_eq!(
+            lane.counters.rotation_surrogate_hits, 0,
+            "an unmoved piece is skipped before the cache is consulted"
+        );
+        assert!(
+            lane.oriented(0, OVERLAY_OFF_GRID_DEG, false).is_ok(),
+            "the skipped pose is still resolvable, which is the whole claim"
+        );
+
+        // Move the piece: the skip must not survive it.
+        state.placements[0].rotation_deg = OVERLAY_OFF_GRID_DEG + 1.25;
+        lane.ensure_state_surrogates(&state)
+            .expect("a moved piece is ensured again");
+        assert_eq!(
+            lane.counters.rotation_surrogate_builds, 2,
+            "the new pose was built"
+        );
+        assert!(lane.oriented(0, OVERLAY_OFF_GRID_DEG + 1.25, false).is_ok());
+
+        // And the slot must not survive a pin being moved *behind* the
+        // ensure's back. Nothing in the engine does that today - the only
+        // production caller of `pin_rotation_pose` is `ensure_and_protect_pose`
+        // - but the skip is licensed by "this pose is pinned", so unpinning has
+        // to withdraw the licence locally rather than by anyone remembering to.
+        lane.pin_rotation_pose(0, None);
+        assert_eq!(
+            lane.rotation_cache.ensured[0], None,
+            "unpinning forgets the slot that licensed the skip"
+        );
+        lane.ensure_state_surrogates(&state)
+            .expect("the ensure runs again for an unpinned piece");
+        assert_eq!(
+            lane.counters.rotation_surrogate_hits, 1,
+            "and it went to the cache rather than being skipped"
+        );
     }
 
     /// Eviction may never take a pose the lane's own state is holding.

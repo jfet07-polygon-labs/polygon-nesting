@@ -646,6 +646,257 @@ pub mod census {
     pub const COMPILED_IN: bool = cfg!(feature = "relaxed-lane-census");
 }
 
+/// The continuous-rotation operator's wall decomposition, compiled out by
+/// default.
+///
+/// # What this is for, and why it is not [`census`]
+///
+/// docs/experiments/continuous-rotation/ §3 established the shape of the
+/// operator's negative — 0.87 s per mode-34 slice becomes 1.94 s — and could
+/// account for only 0.32 s of it, the surrogate builds, which
+/// `WorkCounters::rotation_surrogate_build_nanos` times directly. The rest was
+/// *reasoned* about rather than measured, and its §6 named two suspects: the
+/// double ordered-map descent every off-grid neighbour resolution pays, and
+/// the linear scans of a 48-entry deque in `touch_rotation_probe` and
+/// `acquire_rotation_key`.
+///
+/// This module is what settles that. It is deliberately **not** built on the
+/// [`census`] machinery, for one reason: `resolve_surrogate` runs tens of
+/// millions of times per slice, so a decomposition of it may not carry a
+/// clock. What it carries instead is an exact **count per outcome** — which of
+/// the two maps answered — and the wall is then obtained by ablation, one fix
+/// at a time, at equal work. The two regions that *are* timed here
+/// (`ROTATION_PROBE_NANOS`, `ENSURE_STATE_NANOS`) are called about a million
+/// and about ten thousand times a run respectively, where an `Instant` pair is
+/// a sub-percent distortion and says something a count cannot.
+///
+/// # Why process-global atomics are acceptable here and nowhere else
+///
+/// A search decision may never read any of this — nothing does; the counters
+/// are write-only until the process prints them. Contended atomics across
+/// eight fan-out lanes would be a real cost and are exactly why this feature
+/// is never compiled into a binary that carries a wall claim. The wall battery
+/// in docs/experiments/rotation-tax/ §4 runs on a build without it.
+pub mod rotation_tax {
+    #[cfg(feature = "rotation-tax-census")]
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    /// Which slot of the totals block a site adds to.
+    ///
+    /// Declaration order is reporting order, as everywhere else in this
+    /// module, so two runs print the same field sequence.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Tax {
+        /// Pose resolutions the surrogate catalogue answered — the cheap case,
+        /// one ordered-map descent, and the only case an unarmed lane has.
+        ResolveCatalogHit,
+        /// Pose resolutions that **missed the catalogue and hit the lane's
+        /// overflow map**: two ordered-map descents, one of them a full-depth
+        /// failed search. This is the resolution tax of the continuous-rotation
+        /// round's §1.2, counted rather than inferred.
+        ResolveOverflowHit,
+        /// Pose resolutions the overflow map answered on a remembered route,
+        /// without descending the catalogue first — the ones the tax fix
+        /// actually caught. `ResolveOverflowHit` is then the residue: off-grid
+        /// resolutions still paying both descents because no route was
+        /// remembered for them.
+        ResolveHintedOverflowHit,
+        /// Pose resolutions neither map answered. Non-zero means a lane raised
+        /// `missing_orientation`.
+        ResolveMiss,
+        /// Calls into the two deque linear scans (`touch_rotation_probe` and
+        /// `acquire_rotation_key`).
+        ProbeScanCalls,
+        /// Deque entries those calls compared, summed. This is the "tens of
+        /// millions of comparisons" of the continuous-rotation round's §6, as a
+        /// number.
+        ProbeScanSteps,
+        /// Wall inside those calls.
+        ProbeScanNanos,
+        /// Calls into `ensure_state_surrogates`, and the wall inside them. One
+        /// per whole-state entry point, each `O(pieces)` ensures.
+        EnsureStateCalls,
+        EnsureStateNanos,
+        /// Calls into `ensure_rotation_surrogate` — every rung the operator
+        /// proposed, plus every pose a state pinned.
+        EnsureRotationCalls,
+        /// Surrogate builds and the wall inside `build_oriented_surrogate`,
+        /// **process-wide**.
+        ///
+        /// `WorkCounters::rotation_surrogate_builds` already counts these, but
+        /// it is only ever *reported* on a mode-34 schedule slice, and the
+        /// coordinator arms the operator on modes 22 **and** 34
+        /// (`portfolio.rs`: `matches!(mode, 22 | 34)`). Every build a mode-22
+        /// lane paid for was therefore invisible to
+        /// docs/experiments/continuous-rotation/ §4, which is what made "only a
+        /// sixth of the slowdown is the surrogate builds" a statement about
+        /// mode 34 rather than about the run.
+        RotationBuildCalls,
+        RotationBuildNanos,
+        /// The four stages of one `build_oriented_surrogate`, timed separately,
+        /// so that "the builds are the tax" becomes "*this part* of the build
+        /// is the tax". `Transform` is `PolygonSet::transformed`, `Offset` is
+        /// the Clipper miter offset, `Triangulate` is the ring triangulation,
+        /// and `Index` is the pole series, the cell axes and the `CellIndex`
+        /// bin masks.
+        ///
+        /// Transform and offset are split apart rather than timed together
+        /// because they are attacked by completely different things: a ring
+        /// transform is `O(points)` trigonometry and an offset is a Minkowski
+        /// sum on Clipper's integer grid. The split is the whole reason
+        /// docs/experiments/rotation-tax/ §5 can name a specific next lever
+        /// instead of "make builds cheaper".
+        BuildTransformNanos,
+        BuildOffsetNanos,
+        BuildTriangulateNanos,
+        BuildIndexNanos,
+        /// Calls into `prepare_continuous_candidate` that were armed.
+        PrepareCandidateCalls,
+        /// Lookups in the lane's pair-NFP cache, and those that missed. Both
+        /// are expected to be **zero** on an armed lane: the operator refuses
+        /// the directional pressure model, which is that cache's only consumer.
+        /// They are counted so that "the pair-NFP cache is not on this path" is
+        /// a measurement rather than a code reading.
+        PairNfpLookups,
+        PairNfpMisses,
+    }
+
+    impl Tax {
+        /// Number of declared slots.
+        pub const COUNT: usize = Tax::PairNfpMisses as usize + 1;
+
+        /// Every slot, in reporting order.
+        pub const ALL: [Tax; Tax::COUNT] = [
+            Tax::ResolveCatalogHit,
+            Tax::ResolveOverflowHit,
+            Tax::ResolveHintedOverflowHit,
+            Tax::ResolveMiss,
+            Tax::ProbeScanCalls,
+            Tax::ProbeScanSteps,
+            Tax::ProbeScanNanos,
+            Tax::EnsureStateCalls,
+            Tax::EnsureStateNanos,
+            Tax::EnsureRotationCalls,
+            Tax::RotationBuildCalls,
+            Tax::RotationBuildNanos,
+            Tax::BuildTransformNanos,
+            Tax::BuildOffsetNanos,
+            Tax::BuildTriangulateNanos,
+            Tax::BuildIndexNanos,
+            Tax::PrepareCandidateCalls,
+            Tax::PairNfpLookups,
+            Tax::PairNfpMisses,
+        ];
+
+        /// The stable reporting name of this slot.
+        pub const fn name(self) -> &'static str {
+            match self {
+                Tax::ResolveCatalogHit => "resolveCatalogHit",
+                Tax::ResolveOverflowHit => "resolveOverflowHit",
+                Tax::ResolveHintedOverflowHit => "resolveHintedOverflowHit",
+                Tax::ResolveMiss => "resolveMiss",
+                Tax::ProbeScanCalls => "probeScanCalls",
+                Tax::ProbeScanSteps => "probeScanSteps",
+                Tax::ProbeScanNanos => "probeScanNanos",
+                Tax::EnsureStateCalls => "ensureStateCalls",
+                Tax::EnsureStateNanos => "ensureStateNanos",
+                Tax::EnsureRotationCalls => "ensureRotationCalls",
+                Tax::RotationBuildCalls => "rotationBuildCalls",
+                Tax::RotationBuildNanos => "rotationBuildNanos",
+                Tax::BuildTransformNanos => "buildTransformNanos",
+                Tax::BuildOffsetNanos => "buildOffsetNanos",
+                Tax::BuildTriangulateNanos => "buildTriangulateNanos",
+                Tax::BuildIndexNanos => "buildIndexNanos",
+                Tax::PrepareCandidateCalls => "prepareCandidateCalls",
+                Tax::PairNfpLookups => "pairNfpLookups",
+                Tax::PairNfpMisses => "pairNfpMisses",
+            }
+        }
+    }
+
+    /// One thread's private block, registered so the aggregator can read it
+    /// without the owning thread having exited.
+    ///
+    /// **Per-thread rather than one process-global array, and the difference is
+    /// not a detail.** The first version of this instrument used a single
+    /// `[AtomicU64]` and `fetch_add`, and the eight fan-out lanes turned
+    /// `ResolveCatalogHit` — 160 million calls in a ten-second run — into 160
+    /// million contended read-modify-writes on one cache line. That build was
+    /// slow enough that the coordinator never reached a mode-34 slice at all,
+    /// so the instrument destroyed the phase structure it was there to
+    /// describe. A thread-owned line written with relaxed loads and stores has
+    /// no coherence traffic and costs about a nanosecond.
+    #[cfg(feature = "rotation-tax-census")]
+    struct TaxBlock {
+        slots: [AtomicU64; Tax::COUNT],
+    }
+
+    #[cfg(feature = "rotation-tax-census")]
+    fn registry() -> &'static std::sync::Mutex<Vec<std::sync::Arc<TaxBlock>>> {
+        static REGISTRY: std::sync::OnceLock<std::sync::Mutex<Vec<std::sync::Arc<TaxBlock>>>> =
+            std::sync::OnceLock::new();
+        REGISTRY.get_or_init(|| std::sync::Mutex::new(Vec::new()))
+    }
+
+    #[cfg(feature = "rotation-tax-census")]
+    thread_local! {
+        static LOCAL: std::sync::Arc<TaxBlock> = {
+            let block = std::sync::Arc::new(TaxBlock {
+                slots: std::array::from_fn(|_| AtomicU64::new(0)),
+            });
+            if let Ok(mut blocks) = registry().lock() {
+                blocks.push(std::sync::Arc::clone(&block));
+            }
+            block
+        };
+    }
+
+    /// Adds `amount` to one slot of the calling thread's block.
+    #[cfg(feature = "rotation-tax-census")]
+    #[inline(always)]
+    pub fn add(slot: Tax, amount: u64) {
+        let _ = LOCAL.try_with(|block| {
+            let cell = &block.slots[slot as usize];
+            // Relaxed load-then-store rather than `fetch_add`: only the owning
+            // thread writes this slot and the aggregate is read after the
+            // workers are idle, so no read-modify-write is needed.
+            cell.store(
+                cell.load(Ordering::Relaxed).wrapping_add(amount),
+                Ordering::Relaxed,
+            );
+        });
+    }
+
+    /// Adds `amount` to one slot. Compiled out.
+    #[cfg(not(feature = "rotation-tax-census"))]
+    #[inline(always)]
+    pub fn add(_slot: Tax, _amount: u64) {}
+
+    /// Every slot's total across every thread that recorded anything, in
+    /// [`Tax::ALL`] order.
+    pub fn totals() -> [u64; Tax::COUNT] {
+        #[cfg(feature = "rotation-tax-census")]
+        {
+            let mut out = [0u64; Tax::COUNT];
+            if let Ok(blocks) = registry().lock() {
+                for block in blocks.iter() {
+                    for (slot, total) in out.iter_mut().enumerate() {
+                        *total = total.wrapping_add(block.slots[slot].load(Ordering::Relaxed));
+                    }
+                }
+            }
+            out
+        }
+        #[cfg(not(feature = "rotation-tax-census"))]
+        {
+            [0; Tax::COUNT]
+        }
+    }
+
+    /// Whether the decomposition sites are compiled in.
+    pub const COMPILED_IN: bool = cfg!(feature = "rotation-tax-census");
+}
+
 /// One phase's aggregated sample.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PhaseSample {
