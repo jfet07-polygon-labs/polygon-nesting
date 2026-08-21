@@ -373,6 +373,29 @@ impl SearchArchive {
         self.basins.push(basin);
     }
 
+    /// Withdraws a basin the caller has decided against, and says whether it
+    /// was there to withdraw.
+    ///
+    /// Charged to `evicted` rather than to a fourth counter, because from the
+    /// archive's point of view it is the same event as an eviction - a member
+    /// leaving to make room for a better decision - and a second counter would
+    /// invite the report to double-count the departures. The one caller is the
+    /// basin race, which uses it to make elimination mean something: an arm
+    /// that lost its audition and stayed in the archive is an arm the v3 queue
+    /// can rank anyway, and then the race has only spent work.
+    pub fn retire(&mut self, fingerprint: &str) -> bool {
+        let Some(index) = self
+            .basins
+            .iter()
+            .position(|basin| basin.fingerprint == fingerprint)
+        else {
+            return false;
+        };
+        self.basins.remove(index);
+        self.evicted += 1;
+        true
+    }
+
     /// Marks a basin as having been used as an operator parent.
     pub fn charge_descent(&mut self, fingerprint: &str) {
         if let Some(basin) = self
@@ -767,8 +790,17 @@ pub struct ScheduleSliceReport {
     pub sparse_rotation_episodes: usize,
     pub sparse_rotation_pieces_armed: usize,
     pub sparse_rotation_sweeps: usize,
+    /// The operator-specific chain. `sparse_rotation_committed_episodes` is the
+    /// one the disarm bit reads; see
+    /// `GeneralCompressionScheduleDiagnostics` for why
+    /// `rotation_accepted_moves` cannot be.
+    pub sparse_rotation_rungs_proposed: usize,
+    pub sparse_rotation_rung_winners: usize,
+    pub sparse_rotation_committed_moves: usize,
+    pub sparse_rotation_committed_episodes: usize,
     pub se2_witness_calls: usize,
     pub se2_witness_accepted: usize,
+    pub se2_witness_adoptions: usize,
     pub se2_witness_ms: f64,
     pub se2_witness_bought_mm: f64,
 }
@@ -1467,6 +1499,9 @@ pub struct PortfolioOutcome {
     pub phases: Vec<PhaseReport>,
     /// The v3 action loop's own report, `None` on the v2 phase schedule.
     pub schedule: Option<ScheduleReport>,
+    /// What the multi-basin race decided, or `None` when it was not armed.
+    #[cfg(feature = "compression-schedule")]
+    pub basin_race: Option<BasinRaceReport>,
     pub operator_calls: Vec<OperatorCallReport>,
     pub publications: Vec<PublicationEvent>,
     pub budget: PortfolioBudget,
@@ -1733,6 +1768,83 @@ pub struct PortfolioSettings {
     /// has ever proposed was waste, discoverable in one slice.
     #[cfg(feature = "sparse-rotation")]
     pub sparse_rotation_bit: bool,
+    /// The multi-basin race: two or three basins auditioned against each other
+    /// at a short cap before the v3 queue is allowed to commit to one.
+    ///
+    /// **Off by default**, and it is a phase rather than a class: the queue
+    /// cannot rank an arm it has not run, and the whole point of the race is
+    /// that the ranking happens on measured first-batch behaviour instead of on
+    /// a prior.
+    ///
+    /// The risk it addresses is the one Sol review 8 §4.3 and Grok review 3 §3
+    /// both put first: at ten seconds the best FCV arm spans **165.656-174.280
+    /// mm**, and that spread is not slice-to-slice noise inside one basin - it
+    /// is which basin the run committed to. Nothing else in the coordinator
+    /// re-decides that: phase 0 produces one incumbent, and the diversify class
+    /// is the only thing that can produce another, priced at a prior of
+    /// 0.005826 mm that never outranks anything.
+    ///
+    /// See [`run_basin_race`] for the arms, the three criteria and the halving.
+    #[cfg(feature = "compression-schedule")]
+    pub basin_race: bool,
+    /// How many arms the race starts with, **including the incumbent control**.
+    /// Clamped to 2..=4 by [`run_basin_race`]; three is the measured default.
+    #[cfg(feature = "compression-schedule")]
+    pub basin_race_arms: usize,
+    /// How many arms survive the halving. One at ten seconds, two at thirty -
+    /// the second survivor is only worth its slice when there is a slice left
+    /// for it to use.
+    #[cfg(feature = "compression-schedule")]
+    pub basin_race_keep: usize,
+    /// The audition slice, in rungs of the separator's own quantum, against the
+    /// [`SCHEDULE_RUNGS`] a full mode-34 action walks.
+    ///
+    /// The cap is expressed in **rungs and not in work units** for the reason
+    /// the schedule class already gives at its own call site: a work cap
+    /// expressed in the coordinator's currency reads zero when profiling is
+    /// off, and a wall-budget run has it off. A rung count is a number the
+    /// request supplies, so every arm gets the same audition on every box.
+    #[cfg(feature = "compression-schedule")]
+    pub basin_race_rungs: usize,
+    /// The share of what phase 0 left that the race may spend before it is cut
+    /// off mid-audition. A ceiling and not an allocation: the race returns as
+    /// soon as it has a winner, and everything it did not spend is what the
+    /// eliminated arms give back to the survivor.
+    #[cfg(feature = "compression-schedule")]
+    pub basin_race_share: f64,
+    /// Where the challenger arms come from: salted constructor draws (`true`,
+    /// the default) or the basins phase 0 has already archived (`false`).
+    ///
+    /// Both are real arms and this round measures both, because they are the
+    /// same race at two prices and the price is the finding.
+    ///
+    /// The salted draw is the mechanism Sol review 8 §4.3 and Grok review 3 §3
+    /// specify, and it is the one the ledger's lesson is about: mode 20 derives
+    /// its `construction_seed` from the *target*, so a salted clamp is a
+    /// different lottery where a salted seed would be a replica. It is also,
+    /// measured on mixed-61 seed 0, **3.156 s of wall charged 310 work units** -
+    /// so under a work budget the coordinator cannot see it at all and the
+    /// race's share ceiling does not bound its wall. See
+    /// `docs/experiments/basin-race/` §3.
+    ///
+    /// `false` auditions the archive instead. Phase 0 leaves two structurally
+    /// distinct basins there before the queue starts - the raw constructor and
+    /// the coupled-separator arm - and auditioning those costs the batches
+    /// alone, which are 0.07-0.29 s each on the same cell. It is a narrower
+    /// race, because the arms are the two phase 0 happened to produce rather
+    /// than an arbitrary number of fresh lotteries, and it is the only one of
+    /// the two that fits inside ten seconds.
+    #[cfg(feature = "compression-schedule")]
+    pub basin_race_draw: bool,
+    /// Whether an eliminated arm's basin is withheld from the archive.
+    ///
+    /// On by default, and it is what makes the race a *decision*. With it off
+    /// the losing basins stay in the archive, the v3 queue can rank them like
+    /// any other member, and the race degenerates into three extra constructor
+    /// draws - which is a real arm to measure, and is why the key exists, but
+    /// it is not the mechanism.
+    #[cfg(feature = "compression-schedule")]
+    pub basin_race_evict: bool,
     /// How many consecutive actions may publish nothing before the whole v3
     /// loop stops, with its queue still full. `0` disables the rule, which is
     /// merged-HEAD v3's behaviour.
@@ -1933,6 +2045,23 @@ impl PortfolioSettings {
             // spending. The battery runs it both ways anyway.
             #[cfg(feature = "sparse-rotation")]
             sparse_rotation_bit: true,
+            // The race is off, and the four numbers beside it are the shape it
+            // takes when a spec turns it on. They are defaults for an armed
+            // race, not defaults of the engine.
+            #[cfg(feature = "compression-schedule")]
+            basin_race: false,
+            #[cfg(feature = "compression-schedule")]
+            basin_race_arms: BASIN_RACE_ARMS,
+            #[cfg(feature = "compression-schedule")]
+            basin_race_keep: 1,
+            #[cfg(feature = "compression-schedule")]
+            basin_race_rungs: BASIN_RACE_RUNGS,
+            #[cfg(feature = "compression-schedule")]
+            basin_race_share: BASIN_RACE_SHARE,
+            #[cfg(feature = "compression-schedule")]
+            basin_race_draw: true,
+            #[cfg(feature = "compression-schedule")]
+            basin_race_evict: true,
             barren_action_patience: BARREN_ACTION_PATIENCE,
             diversify_in_queue: true,
             schedule_wall_prior: true,
@@ -2337,6 +2466,46 @@ struct SparseRotationBit {
     barren_calls: usize,
 }
 
+#[cfg(feature = "sparse-rotation")]
+impl SparseRotationBit {
+    /// The verdict, from one slice's own two numbers.
+    ///
+    /// `episodes` is how many stalls armed something and `committed` is how
+    /// many of the operator's own proposals reached a committed move. Both come
+    /// off the slice report and neither is inferred.
+    ///
+    /// `committed` **must** be `sparse_rotation_committed_moves` and not
+    /// `rotation_accepted_moves`. The second counts any accepted move whose
+    /// pose differs from the incumbent's, including the random catalogue starts
+    /// `search_piece` draws, so a lane that was offered no rung at all scores
+    /// thousands of them - 11,523 in the control arm of
+    /// `docs/experiments/sparse-rotation/`, against zero rungs (Sol review 8 §2
+    /// P0). Read that way the bit's evidence was about the catalogue and the
+    /// "the disarm was never necessary" finding was uninterpretable.
+    ///
+    /// Extracted as a method so the regression test drives this rule rather
+    /// than a copy of it.
+    fn observe_slice(&mut self, episodes: usize, committed: usize) {
+        if episodes == 0 {
+            // The mechanism did not get its trigger, so it does not get a
+            // verdict. Neither direction.
+            return;
+        }
+        if committed == 0 {
+            self.sterile_slices += 1;
+            if self.sterile_slices >= SPARSE_ROTATION_STERILE_SLICES {
+                self.disarmed = true;
+                self.barren_calls = 0;
+            }
+        } else {
+            // The audition disproved the bit: rotation is productive on this
+            // request after all, so the operator comes back for good.
+            self.disarmed = false;
+            self.sterile_slices = 0;
+        }
+    }
+}
+
 /// Sterile slices before the sparse operator comes off this request.
 ///
 /// One, and for the same reason `SCHEDULE_STERILE_ACTIONS` is one: the two
@@ -2618,25 +2787,27 @@ impl<'a> Coordinator<'a> {
         }
         // The bit's evidence, taken from the slice's own report rather than from
         // anything this function inferred. `sparse_rotation_episodes > 0` is
-        // "the mechanism fired"; `rotation_accepted_moves == 0` is "and not one
-        // of its proposals survived into a committed move".
+        // "the mechanism fired"; `sparse_rotation_committed_moves == 0` is "and
+        // not one of its proposals survived into a committed move".
+        //
+        // The second half used to read `rotation_accepted_moves`, which counts
+        // *any* accepted move whose pose differs from the incumbent's - a
+        // random catalogue start winning a sweep is one, and those happen on a
+        // lane that was never offered a rung at all. Sol review 8 §2 P0 has the
+        // material proof: the control arm of `docs/experiments/sparse-rotation/`
+        // ran zero rungs and reported 11,523 `rotationAcceptedMoves`, so
+        // "`accepted > 0`, the bit stays armed" was a verdict about the
+        // catalogue and not about the operator, and "the disarm was never
+        // necessary" was uninterpretable. `sparse_rotation_committed_moves` is
+        // the operator's own chain - proposal inside an open episode, winner
+        // that moved the pose, commit of that same pose - so a zero here is the
+        // operator failing and nothing else.
         #[cfg(feature = "sparse-rotation")]
         if self.settings.sparse_rotation_bit {
             let slice = population.compression_schedule.as_ref();
             let episodes = slice.map_or(0, |report| report.sparse_rotation_episodes);
-            let accepted = slice.map_or(0, |report| report.rotation_accepted_moves);
-            if episodes > 0 && accepted == 0 {
-                self.sparse_rotation_bit.sterile_slices += 1;
-                if self.sparse_rotation_bit.sterile_slices >= SPARSE_ROTATION_STERILE_SLICES {
-                    self.sparse_rotation_bit.disarmed = true;
-                    self.sparse_rotation_bit.barren_calls = 0;
-                }
-            } else if episodes > 0 && accepted > 0 {
-                // The audition disproved the bit: rotation is productive on this
-                // request after all, so the operator comes back for good.
-                self.sparse_rotation_bit.disarmed = false;
-                self.sparse_rotation_bit.sterile_slices = 0;
-            }
+            let committed = slice.map_or(0, |report| report.sparse_rotation_committed_moves);
+            self.sparse_rotation_bit.observe_slice(episodes, committed);
             if self.sparse_rotation_bit.disarmed {
                 if published {
                     self.sparse_rotation_bit.barren_calls = 0;
@@ -2963,6 +3134,16 @@ pub fn run_portfolio(
     // best state and its recombination operator never meet. v3 replaces the
     // pass with a queue that re-enumerates after every action, so a state born
     // late re-enters every class it is eligible for.
+    // The race runs *before* the queue and only inside v3, because it is a
+    // decision the queue then inherits: an eliminated arm is out of the
+    // archive by the time the first action is enumerated. Off by default; see
+    // `run_basin_race`.
+    #[cfg(feature = "compression-schedule")]
+    let basin_race_report = if settings.coordinator_v3 && settings.basin_race {
+        Some(run_basin_race(&mut coordinator, constructor_clamp_mm))
+    } else {
+        None
+    };
     let schedule_report = if settings.coordinator_v3 {
         Some(run_v3_schedule(&mut coordinator, constructor_clamp_mm))
     } else {
@@ -3384,6 +3565,8 @@ pub fn run_portfolio(
         m0_diagnostics: Box::new(m0.diagnostics),
         phases: coordinator.phases,
         schedule: schedule_report,
+        #[cfg(feature = "compression-schedule")]
+        basin_race: basin_race_report,
         operator_calls: coordinator.operator_calls,
         publications: coordinator.publications,
         budget,
@@ -3565,6 +3748,35 @@ const CROSSOVER_CUTS_PER_PAIR: usize = 2;
 /// and no millimetre crosses a request. It is the same derivation
 /// [`LADDER_RUNGS`] uses, at a different count, because it is the same quantum.
 const SCHEDULE_RUNGS: usize = 9;
+
+/// How many arms the basin race starts with, the incumbent control included.
+///
+/// Three, and the count is set by what an audition costs rather than by how
+/// many basins would be interesting. Each salted arm is a mode-20 draw, a
+/// mode-22 quantum and a short mode-34 batch; the incumbent arm is the batch
+/// alone, because the layout is already there. At ten seconds the whole run
+/// buys 1-6 schedule actions (`fast-contract-validator` §12's factorial), so
+/// four arms would spend the run on the audition and two would not be a race.
+#[cfg(feature = "compression-schedule")]
+const BASIN_RACE_ARMS: usize = 3;
+
+/// The audition slice, in rungs against [`SCHEDULE_RUNGS`]'s nine.
+///
+/// Three is a third of a scheduled action, and a third is the smallest fraction
+/// at which the three criteria are all *measurable*: the schedule confirms
+/// every fourth step by default, so a batch has to walk enough rungs to attempt
+/// more than one confirmation or `confirmations_accepted / attempted` - the
+/// binding-front stability criterion - is a coin toss with one flip.
+#[cfg(feature = "compression-schedule")]
+const BASIN_RACE_RUNGS: usize = 3;
+
+/// The ceiling on what the race may spend, as a share of what phase 0 left.
+///
+/// A ceiling, not an allocation. The race stops as soon as it has a winner and
+/// hands everything it did not spend to the v3 queue, which is where the
+/// eliminated arms' work goes.
+#[cfg(feature = "compression-schedule")]
+const BASIN_RACE_SHARE: f64 = 0.34;
 
 /// How many consecutive actions may publish nothing before the v3 loop stops.
 ///
@@ -4099,6 +4311,645 @@ impl Coordinator<'_> {
         let expected_delta =
             (PRIOR_ACTIONS * class.prior_delta_mm() + delta) / (PRIOR_ACTIONS + actions);
         expected_delta * self.phase_zero_cost / self.class_rank_cost_estimate(class)
+    }
+}
+
+// ---- the multi-basin race ------------------------------------------------
+
+/// One arm of the race, as it is judged and as it is reported.
+///
+/// The three criteria are Sol review 8 §4.3's, and none of them is the arm's
+/// immediate depth. That exclusion is the whole design: the review's own
+/// warning is that "l'early leader può essere il late loser", and a constructor
+/// basin's depth at the moment it is drawn is the single most misleading number
+/// available - Sol review 3's finding, quoted again in Grok review 3 §3 item 3,
+/// is that a *worse* constructor can open a *better* basin.
+#[cfg(feature = "compression-schedule")]
+#[derive(Clone, Debug)]
+struct BasinRaceArm {
+    /// The salt slot. `0` is the incumbent control and draws no constructor.
+    slot: usize,
+    /// What the arm is, in the report's own words.
+    kind: &'static str,
+    /// The layout the arm is currently carrying, and its depth.
+    placements: Vec<GeneralFastPlacement>,
+    fingerprint: String,
+    depth_mm: f64,
+    /// Every layout this arm has ever put into the archive: the one it was
+    /// created with, and one more per audition batch that improved it.
+    ///
+    /// Elimination has to retire all of them, not just the last. `run_operator`
+    /// archives whatever it produces, so an arm that was auditioned twice has
+    /// left two members behind, and retiring only the current fingerprint would
+    /// leave the arm's earlier layouts in the queue's reach - which is exactly
+    /// the "the race has only spent work" outcome `basin_race_evict` exists to
+    /// prevent.
+    archived: Vec<String>,
+    /// Criterion 1 - **first-batch mode-34 yield**: raw millimetres the
+    /// audition batch took off the arm's own parent. Higher is better. This is
+    /// a *delta*, so a shallow basin that compresses well beats a deep one that
+    /// has already fixpointed, which is the entire reason the criterion is not
+    /// depth.
+    yield_mm: f64,
+    /// Criterion 2 - **binding-front stability**: the fraction of the batch's
+    /// confirmation attempts that were accepted. A basin whose binding front
+    /// moves under the clamp refuses confirmations and reads low here; one
+    /// whose front is stable walks its rungs and keeps them. `1.0` when the
+    /// batch attempted nothing, so an arm is never rewarded for having been
+    /// too short to be measured - it is the neutral value, not a win, and
+    /// criterion 1 will already have scored it zero.
+    stability: f64,
+    /// Criterion 3 - **proxy infeasibility** at the arm's own parent, as
+    /// violating pairs plus boundary violations per piece. Lower is better. It
+    /// is read at the batch's *entry*, before any repair, so it describes the
+    /// basin and not the batch.
+    infeasibility: f64,
+    /// The batch's own account, for the report.
+    batch_steps: usize,
+    batch_confirmations: usize,
+    /// Rank sum over the three criteria, lowest wins. Filled by `judge`.
+    rank_sum: usize,
+    /// The round this arm was eliminated in, or `None` if it survived.
+    eliminated_round: Option<usize>,
+}
+
+/// What the race did, as a document.
+#[cfg(feature = "compression-schedule")]
+#[derive(Clone, Debug)]
+pub struct BasinRaceReport {
+    pub armed: bool,
+    pub arms_started: usize,
+    pub rounds: usize,
+    pub kept: usize,
+    pub retired: usize,
+    /// The winning slot. `Some(0)` means the race chose the incumbent - the
+    /// basin the run would have used anyway - and anything else means it did
+    /// not. This is the field the round's central question is asked of.
+    pub winner_slot: Option<usize>,
+    pub winner_fingerprint: Option<String>,
+    pub winner_depth_mm: Option<f64>,
+    /// The incumbent control's depth at the end of the race, so "the race
+    /// picked something else" can be read against what it passed over.
+    pub incumbent_arm_depth_mm: Option<f64>,
+    pub work_units: u64,
+    pub seconds: f64,
+    pub exit_cause: String,
+    pub arms: Vec<BasinRaceArmReport>,
+}
+
+/// One arm's row of [`BasinRaceReport`].
+#[cfg(feature = "compression-schedule")]
+#[derive(Clone, Debug)]
+pub struct BasinRaceArmReport {
+    pub slot: usize,
+    pub kind: String,
+    pub fingerprint: String,
+    pub depth_mm: f64,
+    pub yield_mm: f64,
+    pub stability: f64,
+    pub infeasibility: f64,
+    pub batch_steps: usize,
+    pub batch_confirmations: usize,
+    pub rank_sum: usize,
+    pub eliminated_round: Option<usize>,
+    pub retired_from_archive: bool,
+}
+
+#[cfg(feature = "compression-schedule")]
+impl BasinRaceReport {
+    fn unarmed() -> Self {
+        Self {
+            armed: false,
+            arms_started: 0,
+            rounds: 0,
+            kept: 0,
+            retired: 0,
+            winner_slot: None,
+            winner_fingerprint: None,
+            winner_depth_mm: None,
+            incumbent_arm_depth_mm: None,
+            work_units: 0,
+            seconds: 0.0,
+            exit_cause: PhaseExitCause::Completed.name().to_owned(),
+            arms: Vec::new(),
+        }
+    }
+}
+
+/// Ranks the arms on the three criteria and writes `rank_sum` into each.
+///
+/// A **rank sum** rather than a weighted score, and the choice is not a taste:
+/// the three criteria are in three incommensurable units - millimetres, a
+/// fraction, and a count per piece - so any weighting is three constants this
+/// round would have had to tune on the same nine cells it is trying to measure.
+/// A rank sum needs none, is invariant to every monotone rescaling of any
+/// criterion, and is exactly as total as its tie-break, which is the arm
+/// ordinal. Ties are broken toward the **lower slot**, so the incumbent control
+/// wins every tie: a race that cannot tell the arms apart must not move the
+/// run off the basin it already had.
+#[cfg(feature = "compression-schedule")]
+fn judge_basin_race(arms: &mut [usize], rows: &mut [BasinRaceArm]) {
+    // Three orderings over the live arms, each best-first.
+    let mut by_yield = arms.to_vec();
+    by_yield.sort_by(|first, second| {
+        rows[*second]
+            .yield_mm
+            .total_cmp(&rows[*first].yield_mm)
+            .then(first.cmp(second))
+    });
+    let mut by_stability = arms.to_vec();
+    by_stability.sort_by(|first, second| {
+        rows[*second]
+            .stability
+            .total_cmp(&rows[*first].stability)
+            .then(first.cmp(second))
+    });
+    let mut by_infeasibility = arms.to_vec();
+    by_infeasibility.sort_by(|first, second| {
+        rows[*first]
+            .infeasibility
+            .total_cmp(&rows[*second].infeasibility)
+            .then(first.cmp(second))
+    });
+    for index in arms.iter() {
+        let position = |order: &[usize]| {
+            order
+                .iter()
+                .position(|candidate| candidate == index)
+                .unwrap_or(0)
+        };
+        rows[*index].rank_sum =
+            position(&by_yield) + position(&by_stability) + position(&by_infeasibility);
+    }
+    arms.sort_by(|first, second| {
+        rows[*first]
+            .rank_sum
+            .cmp(&rows[*second].rank_sum)
+            .then(first.cmp(second))
+    });
+}
+
+/// The race, as a phase.
+///
+/// # Why this is a phase and not a class
+///
+/// The v3 queue ranks a class on a prior and then on the class's own measured
+/// yield. Neither can price a basin the run has not entered: the constructor's
+/// prior is one number for every draw, and a draw's *depth* - the only thing
+/// available before a slice is spent on it - is the number Sol review 3 says is
+/// anti-correlated with what follows. So the race runs the audition itself, in
+/// front of the queue, and hands the queue a decision instead of a ticket.
+///
+/// # The arms
+///
+/// Slot 0 is the **incumbent control**: the layout phase 0 published, with no
+/// constructor draw at all. It is in the race for two reasons. It is the arm
+/// that answers the round's question - a winner that is not slot 0 is a basin
+/// the un-raced run would never have used - and its audition batch is *not
+/// overhead*, because it is the first mode-34 action the v3 queue would have
+/// spent on that layout anyway. The race's true price is therefore the salted
+/// arms alone, which is what the equal-work gate has to clear.
+///
+/// Slots 1.. are salted constructor draws, and the salting is the ledger's:
+/// mode 20 derives `construction_seed` from
+/// `parent_seed_key ^ CONSTRUCTION_SEED_DOMAIN ^ grid_key(target_depth_mm)`, so
+/// two draws that differ only in their *seed* are replicas and two that differ
+/// in their **target** are different lotteries. Each slot therefore moves the
+/// clamp by [`BASIN_TARGET_SALT_RELATIVE_STEP`] and takes its own void-cell
+/// divisor, exactly as the diversify class does - and then descends the draw
+/// with one mode-22 quantum, because a raw constructor layout and a descended
+/// one are not the same kind of object and an audition that compared them
+/// would be measuring the descent.
+///
+/// # The halving
+///
+/// Round 1 auditions every arm at [`PortfolioSettings::basin_race_rungs`].
+/// Every round after it eliminates the bottom half - `keep = max(surviving / 2,
+/// target)` - and re-auditions the survivors at **double** the rungs, from
+/// wherever their last batch left them, until `target` arms remain. So an arm
+/// that survives is not re-run from its draw: its batch continues, and the
+/// eliminated arms' share is what pays for the longer batch. That is the
+/// "loser's work returns to the winner" of the brief, in the only currency the
+/// schedule has.
+///
+/// # What it costs when it is wrong
+///
+/// If the race eliminates the arm that would have won the run, the run is on a
+/// worse basin *and* has spent the audition. Both halves are priced in
+/// `docs/experiments/basin-race/`; the equal-work gate is what decides.
+#[cfg(feature = "compression-schedule")]
+fn run_basin_race(
+    coordinator: &mut Coordinator<'_>,
+    constructor_clamp_mm: f64,
+) -> BasinRaceReport {
+    if !coordinator.settings.basin_race {
+        return BasinRaceReport::unarmed();
+    }
+    let arm_count = coordinator.settings.basin_race_arms.clamp(2, 4);
+    let target = coordinator.settings.basin_race_keep.clamp(1, arm_count - 1);
+    let rungs = coordinator.settings.basin_race_rungs.max(1);
+    let evict = coordinator.settings.basin_race_evict;
+    let draw_arms = coordinator.settings.basin_race_draw;
+    let share = coordinator.settings.basin_race_share.clamp(0.0, 1.0);
+    let entered_work = coordinator.meter.work_units();
+    let entered_seconds = coordinator.meter.seconds();
+    let mut rows: Vec<BasinRaceArm> = Vec::new();
+    let mut live: Vec<usize> = Vec::new();
+    let mut rounds = 0usize;
+    let mut retired: Vec<String> = Vec::new();
+    coordinator.run_phase("race", share, |run| {
+        // ---- the arms -----------------------------------------------------
+        //
+        // Slot 0 first and unconditionally: it is the control, it costs no
+        // draw, and an arm list that could be empty is one the halving below
+        // would have to special-case.
+        let incumbent = run.incumbent.result.placements.clone();
+        if incumbent.len() != run.pieces.len() {
+            run.note_exit(PhaseExitCause::KeysExhausted);
+            return;
+        }
+        let Some(incumbent_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
+            run.pieces,
+            &incumbent,
+            run.fast_settings,
+        )
+        .ok() else {
+            run.note_exit(PhaseExitCause::KeysExhausted);
+            return;
+        };
+        rows.push(BasinRaceArm {
+            slot: 0,
+            kind: "incumbent",
+            fingerprint: general_placement_fingerprint(&incumbent),
+            archived: vec![general_placement_fingerprint(&incumbent)],
+            placements: incumbent,
+            depth_mm: incumbent_depth,
+            yield_mm: 0.0,
+            stability: 1.0,
+            infeasibility: f64::INFINITY,
+            batch_steps: 0,
+            batch_confirmations: 0,
+            rank_sum: 0,
+            eliminated_round: None,
+        });
+        live.push(0);
+        if draw_arms {
+            for slot in 1..arm_count {
+                // Affordability, checked the way the queue checks it: a draw
+                // plus a quantum, priced by whatever this run has already
+                // measured them at. An arm the race cannot pay for is an arm
+                // the race does not start, and the round is judged over the
+                // arms that ran.
+                //
+                // Honest caveat, measured rather than argued: under a *work*
+                // budget this check is nearly inert, because mode 20 costs 310
+                // work units for 3.156 s of wall. See
+                // `PortfolioSettings::basin_race_draw`.
+                let quantum = run.mean_operator_cost("mode22");
+                let draw = run.mean_operator_cost("mode20");
+                if let (Some(quantum), Some(draw)) = (quantum, draw) {
+                    if run.meter.remaining_to(run.deadline) < draw + quantum {
+                        run.note_exit(PhaseExitCause::Affordability);
+                        break;
+                    }
+                }
+                if !run.meter.has_room(run.deadline) {
+                    run.note_exit(PhaseExitCause::Deadline);
+                    break;
+                }
+                let Some(arm) = draw_race_arm(run, slot, constructor_clamp_mm) else {
+                    continue;
+                };
+                rows.push(arm);
+                live.push(rows.len() - 1);
+            }
+        } else {
+            // The archive's own arms. `distinct_frontier` is the same
+            // shallowest-first, pairwise-distinct selection the descent class
+            // draws its parents from, so the race is auditioning basins the
+            // queue could already reach rather than inventing a selection rule
+            // of its own. The incumbent is skipped by fingerprint because it is
+            // already slot 0, and asking for one more member than there are
+            // slots is what leaves room for that skip.
+            let candidates = run.archive.distinct_frontier(arm_count + 1);
+            let incumbent_fingerprint = rows[0].fingerprint.clone();
+            for basin in candidates {
+                if rows.len() >= arm_count {
+                    break;
+                }
+                if basin.fingerprint == incumbent_fingerprint {
+                    continue;
+                }
+                rows.push(BasinRaceArm {
+                    slot: rows.len(),
+                    kind: "archive-basin",
+                    archived: vec![basin.fingerprint.clone()],
+                    fingerprint: basin.fingerprint,
+                    placements: basin.placements,
+                    depth_mm: basin.raw_depth_mm,
+                    yield_mm: 0.0,
+                    stability: 1.0,
+                    infeasibility: f64::INFINITY,
+                    batch_steps: 0,
+                    batch_confirmations: 0,
+                    rank_sum: 0,
+                    eliminated_round: None,
+                });
+                live.push(rows.len() - 1);
+            }
+        }
+        // ---- the rounds ---------------------------------------------------
+        //
+        // A round runs only when there is still something to decide. The
+        // survivor is deliberately *not* auditioned again once it is alone:
+        // the winner's continuation is the v3 queue's first mode-34 action,
+        // priced by the queue at the queue's own rungs, and running it here
+        // would charge the race for work the run was always going to do. That
+        // is also the literal form of "the loser's work returns to the
+        // winner" - the race stops, and everything its share had left goes to
+        // the queue that is now working on the arm the race chose.
+        let mut round_rungs = rungs;
+        while live.len() > target {
+            if !run.meter.has_room(run.deadline) {
+                run.note_exit(PhaseExitCause::Deadline);
+                break;
+            }
+            rounds += 1;
+            for index in live.clone() {
+                if !run.meter.has_room(run.deadline) {
+                    run.note_exit(PhaseExitCause::Deadline);
+                    break;
+                }
+                audition_race_arm(run, &mut rows[index], round_rungs);
+            }
+            judge_basin_race(&mut live, &mut rows);
+            // Successive halving: drop the bottom half, never below the
+            // target. `live` is already best-first after the judge.
+            //
+            // `div_ceil` and not `/`, so three arms go 3 -> 2 -> 1 rather than
+            // 3 -> 1. The extra round is the point: Sol review 8 §4.3's named
+            // risk is that "l'early leader può essere il late loser", and
+            // committing on a single three-rung audition is exactly the
+            // decision that risk describes. It still strictly decreases at
+            // every length the loop can be entered with - `2 -> 1`, `3 -> 2`,
+            // `4 -> 2` - so the halving terminates.
+            let keep = live.len().div_ceil(2).max(target);
+            for index in live.split_off(keep) {
+                rows[index].eliminated_round = Some(rounds);
+            }
+            // Doubled, because the survivors inherit the eliminated arms'
+            // rungs - and capped at a full scheduled action, because mode 34 is
+            // atomic (Sol review 8 §3 condition 4) and an audition batch longer
+            // than the queue's own action would make the race's overrun larger
+            // than anything else in the run.
+            round_rungs = round_rungs.saturating_mul(2).min(SCHEDULE_RUNGS);
+        }
+        // One last judge over whatever survived, so `rank_sum` is filled on
+        // every live arm even when the loop exited on the deadline.
+        judge_basin_race(&mut live, &mut rows);
+        // ---- the decision -------------------------------------------------
+        //
+        // An eliminated arm's basin comes out of the archive, which is what
+        // makes this a commitment rather than three extra draws. The
+        // incumbent's is never retired even if it lost: it is the published
+        // layout, and the archive is not where publication lives.
+        if evict {
+            for row in rows.iter() {
+                if row.eliminated_round.is_none() || row.slot == 0 {
+                    continue;
+                }
+                for fingerprint in &row.archived {
+                    if run.archive.retire(fingerprint) {
+                        retired.push(fingerprint.clone());
+                    }
+                }
+            }
+        }
+    });
+    let exit_cause = coordinator
+        .phases
+        .last()
+        .map(|phase| phase.exit_cause.name().to_owned())
+        .unwrap_or_else(|| PhaseExitCause::Completed.name().to_owned());
+    let winner = live.first().map(|index| &rows[*index]);
+    BasinRaceReport {
+        armed: true,
+        arms_started: rows.len(),
+        rounds,
+        kept: live.len(),
+        retired: retired.len(),
+        winner_slot: winner.map(|arm| arm.slot),
+        winner_fingerprint: winner.map(|arm| arm.fingerprint.clone()),
+        winner_depth_mm: winner.map(|arm| arm.depth_mm),
+        incumbent_arm_depth_mm: rows.first().map(|arm| arm.depth_mm),
+        work_units: coordinator.meter.work_units().saturating_sub(entered_work),
+        seconds: coordinator.meter.seconds() - entered_seconds,
+        exit_cause,
+        arms: rows
+            .iter()
+            .map(|arm| BasinRaceArmReport {
+                slot: arm.slot,
+                kind: arm.kind.to_owned(),
+                fingerprint: arm.fingerprint.clone(),
+                depth_mm: arm.depth_mm,
+                yield_mm: arm.yield_mm,
+                stability: arm.stability,
+                infeasibility: arm.infeasibility,
+                batch_steps: arm.batch_steps,
+                batch_confirmations: arm.batch_confirmations,
+                rank_sum: arm.rank_sum,
+                eliminated_round: arm.eliminated_round,
+                retired_from_archive: arm
+                    .archived
+                    .iter()
+                    .any(|fingerprint| retired.contains(fingerprint)),
+            })
+            .collect(),
+    }
+}
+
+/// One salted constructor draw, descended by one alternation quantum.
+///
+/// The salting, the restart window and the divisor set are the diversify
+/// class's, field for field - see `execute_v3_action`'s `Diversify` arm - so
+/// the race is auditioning the basins that class would have produced and not a
+/// fourth kind of constructor.
+#[cfg(feature = "compression-schedule")]
+fn draw_race_arm(
+    run: &mut PhaseRun<'_, '_>,
+    slot: usize,
+    constructor_clamp_mm: f64,
+) -> Option<BasinRaceArm> {
+    let salt = slot as f64 * BASIN_TARGET_SALT_RELATIVE_STEP * constructor_clamp_mm;
+    let divisor = if run.settings.cell_divisor_salts.is_empty() {
+        None
+    } else {
+        Some(run.settings.cell_divisor_salts[slot % run.settings.cell_divisor_salts.len()])
+    };
+    let parent = run.incumbent.result.placements.clone();
+    let parent_fingerprint = run.incumbent.fingerprint.clone();
+    let drawn = run.run_operator(
+        20,
+        &parent,
+        Some(parent_fingerprint),
+        Some(constructor_clamp_mm + salt),
+        |relaxed| {
+            relaxed.construction_restart_window = Some((slot, 1));
+            relaxed.construction_void_cell_divisor = divisor;
+        },
+        None,
+        ParentRole::Prior,
+        Some(format!("race m20 slot{slot}")),
+    );
+    let basin =
+        crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(&drawn.final_placements);
+    if basin.len() != run.pieces.len() {
+        return None;
+    }
+    let basin_depth = crate::search::general_relaxed::coupled_raw_source_depth(
+        run.pieces,
+        &basin,
+        run.fast_settings,
+    )
+    .ok()?;
+    let basin_fingerprint = general_placement_fingerprint(&basin);
+    let basin_fingerprint_archived = basin_fingerprint.clone();
+    let cycles = run.settings.descent_cycles.max(1);
+    let epochs = run.settings.descent_relaxed_epochs.max(1);
+    let descended = run.run_operator(
+        22,
+        &basin,
+        Some(basin_fingerprint),
+        Some(basin_depth + ALTERNATION_RUNG_MM),
+        |relaxed| {
+            relaxed.alternation_max_cycles = Some(cycles);
+            relaxed.epochs = epochs;
+        },
+        None,
+        ParentRole::Descended,
+        Some(format!("race m22 quantum on slot{slot}")),
+    );
+    let settled = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+        &descended.final_placements,
+    );
+    let (placements, depth_mm) = if settled.len() == run.pieces.len() {
+        match crate::search::general_relaxed::coupled_raw_source_depth(
+            run.pieces,
+            &settled,
+            run.fast_settings,
+        ) {
+            Ok(depth) => (settled, depth),
+            Err(_) => (basin, basin_depth),
+        }
+    } else {
+        (basin, basin_depth)
+    };
+    Some(BasinRaceArm {
+        slot,
+        kind: "salted-constructor",
+        fingerprint: general_placement_fingerprint(&placements),
+        // The raw draw as well as the descended layout: both were archived on
+        // the way here, and both are this arm's to take back if it loses.
+        archived: vec![
+            basin_fingerprint_archived,
+            general_placement_fingerprint(&placements),
+        ],
+        placements,
+        depth_mm,
+        yield_mm: 0.0,
+        stability: 1.0,
+        infeasibility: f64::INFINITY,
+        batch_steps: 0,
+        batch_confirmations: 0,
+        rank_sum: 0,
+        eliminated_round: None,
+    })
+}
+
+/// One audition batch: a mode-34 slice of `rungs` rungs on the arm's current
+/// layout, with the three criteria read off its own report.
+///
+/// The batch is the arm's *continuation*: if it publishes deeper, the arm
+/// carries the deeper layout into the next round, so a survivor's second batch
+/// starts where its first stopped and the rungs are not re-walked.
+#[cfg(feature = "compression-schedule")]
+fn audition_race_arm(run: &mut PhaseRun<'_, '_>, arm: &mut BasinRaceArm, rungs: usize) {
+    let drop_mm = arm.depth_mm
+        * rungs as f64
+        * crate::search::general_relaxed::COUPLED_SEPARATOR_CONTRACTION_RATIO;
+    let bound = arm.depth_mm - drop_mm;
+    let legalize_entry = run.settings.schedule_legalize_entry;
+    let skip_infeasible_entry = run.settings.schedule_skip_infeasible_entry;
+    let skip_unpublishable_entry = run.settings.schedule_skip_unpublishable_entry;
+    let barren_probe_denominator = run.settings.schedule_probe_denominator;
+    #[cfg(feature = "parallel-compression-schedule")]
+    let schedule_lanes = run.settings.compression_schedule_lanes.max(1);
+    #[cfg(feature = "parallel-compression-schedule")]
+    let schedule_parallel_confirm = run.settings.compression_schedule_parallel_confirm;
+    let slot = arm.slot;
+    let parent = arm.placements.clone();
+    let parent_fingerprint = arm.fingerprint.clone();
+    let scheduled = run.run_operator(
+        34,
+        &parent,
+        Some(parent_fingerprint),
+        Some(bound),
+        |relaxed| {
+            #[allow(unused_mut)]
+            let mut schedule_settings =
+                crate::search::compression_schedule::CompressionScheduleSettings {
+                    legalize_entry,
+                    skip_infeasible_entry,
+                    skip_unpublishable_entry,
+                    barren_probe_denominator,
+                    ..crate::search::compression_schedule::CompressionScheduleSettings::default()
+                };
+            #[cfg(feature = "parallel-compression-schedule")]
+            {
+                schedule_settings.lanes = schedule_lanes;
+                schedule_settings.parallel_confirm = schedule_parallel_confirm;
+            }
+            relaxed.compression_schedule = Some(schedule_settings);
+        },
+        None,
+        ParentRole::Descended,
+        Some(format!("race m34 batch slot{slot} ({rungs} rungs)")),
+    );
+    // The three criteria, all off the slice's own report so that an arm the
+    // schedule refused to enter at all is scored on what actually happened
+    // rather than on what it would have been given.
+    if let Some(slice) = scheduled.compression_schedule.as_ref() {
+        arm.batch_steps = slice.steps_taken;
+        arm.batch_confirmations = slice.confirmations_attempted;
+        arm.stability = if slice.confirmations_attempted == 0 {
+            1.0
+        } else {
+            slice.confirmations_accepted as f64 / slice.confirmations_attempted as f64
+        };
+        arm.infeasibility = (slice.entry_collision_pairs + slice.entry_boundary_violations) as f64
+            / run.pieces.len().max(1) as f64;
+    }
+    let produced = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+        &scheduled.final_placements,
+    );
+    if produced.len() != run.pieces.len() {
+        return;
+    }
+    let Ok(depth) = crate::search::general_relaxed::coupled_raw_source_depth(
+        run.pieces,
+        &produced,
+        run.fast_settings,
+    ) else {
+        return;
+    };
+    // Yield accumulates across rounds, because a survivor's rounds are one
+    // continued batch and the criterion is what the whole audition bought.
+    if depth < arm.depth_mm {
+        arm.yield_mm += arm.depth_mm - depth;
+        arm.depth_mm = depth;
+        arm.fingerprint = general_placement_fingerprint(&produced);
+        arm.archived.push(arm.fingerprint.clone());
+        arm.placements = produced;
     }
 }
 
@@ -4817,8 +5668,13 @@ fn schedule_slice_report(
         sparse_rotation_episodes: report.sparse_rotation_episodes,
         sparse_rotation_pieces_armed: report.sparse_rotation_pieces_armed,
         sparse_rotation_sweeps: report.sparse_rotation_sweeps,
+        sparse_rotation_rungs_proposed: report.sparse_rotation_rungs_proposed,
+        sparse_rotation_rung_winners: report.sparse_rotation_rung_winners,
+        sparse_rotation_committed_moves: report.sparse_rotation_committed_moves,
+        sparse_rotation_committed_episodes: report.sparse_rotation_committed_episodes,
         se2_witness_calls: report.se2_witness_calls,
         se2_witness_accepted: report.se2_witness_accepted,
+        se2_witness_adoptions: report.se2_witness_adoptions,
         se2_witness_ms: report.se2_witness_ms,
         se2_witness_bought_mm: report.se2_witness_bought_mm,
     })
@@ -6732,27 +7588,17 @@ mod tests {
         assert_eq!(SPARSE_ROTATION_STERILE_SLICES, 1);
         assert_eq!(SPARSE_ROTATION_AUDITION_BARREN, BARREN_ACTION_PATIENCE);
 
+        // The rule itself, not a copy of it: `observe_slice` is the function
+        // the coordinator calls.
         let mut bit = SparseRotationBit::default();
-        // A slice that opened episodes and accepted nothing fires the bit.
-        let sterile = |bit: &mut SparseRotationBit, episodes: usize, accepted: usize| {
-            if episodes > 0 && accepted == 0 {
-                bit.sterile_slices += 1;
-                if bit.sterile_slices >= SPARSE_ROTATION_STERILE_SLICES {
-                    bit.disarmed = true;
-                    bit.barren_calls = 0;
-                }
-            } else if episodes > 0 && accepted > 0 {
-                bit.disarmed = false;
-                bit.sterile_slices = 0;
-            }
-        };
-        sterile(&mut bit, 12, 0);
+        // A slice that opened episodes and committed nothing fires the bit.
+        bit.observe_slice(12, 0);
         assert!(bit.disarmed, "one sterile slice is the evidence");
 
         // A slice that never opened an episode is not evidence either way: the
         // mechanism did not get its trigger, so it did not get its verdict.
         let mut untried = SparseRotationBit::default();
-        sterile(&mut untried, 0, 0);
+        untried.observe_slice(0, 0);
         assert!(
             !untried.disarmed,
             "a slice with no stall says nothing about whether rotation pays"
@@ -6768,9 +7614,243 @@ mod tests {
         // And a productive audition reverses the verdict rather than exhausting
         // it: `sterile_slices` goes back to zero, so the bit would need fresh
         // evidence to fire again.
-        sterile(&mut bit, 4, 3);
+        bit.observe_slice(4, 3);
         assert!(!bit.disarmed);
         assert_eq!(bit.sterile_slices, 0);
+    }
+
+    /// The disarm bit reads the operator's own committed moves, and the control
+    /// arm's numbers are the reason it has to.
+    ///
+    /// Sol review 8 §2 P0's material proof, replayed as a test: the
+    /// sparse-rotation round's control arm ran **zero rungs** and reported
+    /// **11,523 `rotationAcceptedMoves`**, because that counter is incremented
+    /// for any accepted move whose pose differs from the incumbent's and
+    /// `search_piece` draws random catalogue angles as refinement starts. Fed
+    /// to the bit, that number says "the operator is productive" about a lane
+    /// the operator never touched.
+    #[test]
+    #[cfg(feature = "sparse-rotation")]
+    fn the_disarm_bit_cannot_be_fed_the_catalogues_accepted_moves() {
+        // The control arm's cell, as measured: episodes fired, the operator
+        // committed nothing, and eleven thousand unrelated poses moved.
+        const CONTROL_ARM_ROTATION_ACCEPTED_MOVES: usize = 11_523;
+        const CONTROL_ARM_SPARSE_COMMITTED_MOVES: usize = 0;
+
+        let mut correct = SparseRotationBit::default();
+        correct.observe_slice(12, CONTROL_ARM_SPARSE_COMMITTED_MOVES);
+        assert!(
+            correct.disarmed,
+            "an operator that opened twelve episodes and committed nothing is              the sterile slice the bit exists to catch"
+        );
+
+        let mut misfed = SparseRotationBit::default();
+        misfed.observe_slice(12, CONTROL_ARM_ROTATION_ACCEPTED_MOVES);
+        assert!(
+            !misfed.disarmed,
+            "this is the bug: read through `rotationAcceptedMoves` the same              slice reads as productive, so the bit never fires and              'the disarm was never necessary' is not a finding"
+        );
+        assert_ne!(
+            correct.disarmed, misfed.disarmed,
+            "if the two counters ever agree on this cell the test is vacuous"
+        );
+    }
+
+    /// The race's judge ranks on the three criteria, breaks every tie toward
+    /// the incumbent, and never reads depth.
+    ///
+    /// Sol review 8 §4.3 names the criteria and excludes depth explicitly, and
+    /// Grok review 3 §3 item 3 gives the reason: a *worse* constructor can open
+    /// a *better* basin, so ranking arms on how deep they are right now
+    /// systematically prefers the arm that has already fixpointed. This is the
+    /// arrangement the exclusion is checked on - the deepest arm loses.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn the_race_judges_on_yield_stability_and_infeasibility_and_not_on_depth() {
+        let arm = |slot: usize, depth: f64, yield_mm: f64, stability: f64, infeasibility: f64| {
+            BasinRaceArm {
+                slot,
+                kind: "test",
+                placements: Vec::new(),
+                fingerprint: format!("arm{slot}"),
+                archived: vec![format!("arm{slot}")],
+                depth_mm: depth,
+                yield_mm,
+                stability,
+                infeasibility,
+                batch_steps: 0,
+                batch_confirmations: 0,
+                rank_sum: 0,
+                eliminated_round: None,
+            }
+        };
+        // Slot 0 is the deepest arm and the worst on all three criteria; slot 2
+        // is the shallowest and the best on all three. A judge that read depth
+        // would rank them the other way round.
+        let mut rows = vec![
+            arm(0, 150.0, 0.10, 0.20, 4.0),
+            arm(1, 170.0, 0.50, 0.50, 2.0),
+            arm(2, 190.0, 0.90, 0.80, 1.0),
+        ];
+        let mut live = vec![0usize, 1, 2];
+        judge_basin_race(&mut live, &mut rows);
+        assert_eq!(
+            live,
+            vec![2, 1, 0],
+            "the shallow arm that compresses, confirms and starts nearly              feasible wins over the deep arm that does none of the three"
+        );
+        assert_eq!(rows[2].rank_sum, 0, "best on all three ranks zero");
+        assert_eq!(rows[0].rank_sum, 6, "worst on all three ranks last thrice");
+
+        // The criteria disagree: the arm that yields most is the least stable.
+        // A rank sum resolves it without three weights this round would have
+        // had to tune on the cells it is trying to measure.
+        let mut split = vec![
+            arm(0, 170.0, 0.10, 0.90, 3.0),
+            arm(1, 170.0, 0.90, 0.10, 3.0),
+            arm(2, 170.0, 0.50, 0.50, 1.0),
+        ];
+        let mut live = vec![0usize, 1, 2];
+        judge_basin_race(&mut live, &mut split);
+        assert_eq!(
+            live[0], 2,
+            "the arm that is second on two criteria and first on the third              beats the two that are first on one and last on another"
+        );
+
+        // Every tie breaks toward the lower slot, and slot 0 is the incumbent
+        // control. A race that cannot tell its arms apart must not move the run
+        // off the basin it already had.
+        let mut tied = vec![
+            arm(0, 200.0, 0.4, 0.5, 2.0),
+            arm(1, 100.0, 0.4, 0.5, 2.0),
+            arm(2, 100.0, 0.4, 0.5, 2.0),
+        ];
+        let mut live = vec![0usize, 1, 2];
+        judge_basin_race(&mut live, &mut tied);
+        assert_eq!(
+            live,
+            vec![0, 1, 2],
+            "an unbroken three-way tie leaves the incumbent in front even              though it is by far the deepest arm"
+        );
+    }
+
+    /// The halving keeps the top half, never drops below the target, and
+    /// terminates.
+    ///
+    /// The arithmetic rather than the phase, because the phase needs a
+    /// coordinator and this is the part that can be wrong silently: a `keep`
+    /// that rounded the other way would eliminate the winner on the last
+    /// round, and a `keep` that never shrank would run the audition forever.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn the_halving_shrinks_to_the_target_and_stops() {
+        // `run_basin_race`'s loop, arithmetic only.
+        let halve = |arms: usize, target: usize| {
+            let mut live = arms;
+            let mut rounds = 0usize;
+            let mut rungs = BASIN_RACE_RUNGS;
+            let mut walked = 0usize;
+            while live > target {
+                rounds += 1;
+                walked += live * rungs;
+                live = live.div_ceil(2).max(target);
+                rungs = (rungs * 2).min(SCHEDULE_RUNGS);
+                assert!(rounds < 16, "the halving must terminate");
+            }
+            (rounds, live, walked)
+        };
+        // The default shape: three arms to one winner, in two rounds. The
+        // winner is never re-auditioned alone - its continuation is the v3
+        // queue's first action, which the run was always going to buy.
+        assert_eq!(halve(3, 1), (2, 1, 3 * 3 + 2 * 6));
+        // Two survivors at thirty seconds is one round and one elimination.
+        assert_eq!(halve(3, 2), (1, 2, 3 * 3));
+        // Four arms, and the target is still respected on the way down.
+        assert_eq!(halve(4, 1), (2, 1, 4 * 3 + 2 * 6));
+        // A target that is already met is not a race and costs nothing. The
+        // caller cannot reach this - `keep` is clamped to `arms - 1` - but the
+        // loop must terminate on it rather than audition forever.
+        assert_eq!(halve(2, 2), (0, 2, 0));
+
+        // The whole audition is bounded by two-and-a-bit scheduled actions,
+        // which is what makes it affordable at all: three arms to one winner
+        // walks 21 rungs against a full slice's nine.
+        let (_, _, walked) = halve(BASIN_RACE_ARMS, 1);
+        assert_eq!(walked, 21);
+        assert!(
+            walked <= 3 * SCHEDULE_RUNGS,
+            "an audition that costs more than three scheduled actions is not an audition, it is the run"
+        );
+        // No single batch is longer than one scheduled action, because mode 34
+        // is atomic and the batch is where the race can overrun its share.
+        let mut rungs = BASIN_RACE_RUNGS;
+        for _ in 0..8 {
+            assert!(rungs <= SCHEDULE_RUNGS);
+            rungs = (rungs * 2).min(SCHEDULE_RUNGS);
+        }
+    }
+
+    /// The race is off, and every knob beside it describes an armed race
+    /// rather than the engine.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn the_basin_race_is_off_by_default() {
+        let settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Work { units: 1 },
+        );
+        assert!(!settings.basin_race);
+        assert!(
+            settings.basin_race_evict,
+            "an armed race is a decision by default: the losers leave the              archive, or the race has only spent work"
+        );
+        assert_eq!(settings.basin_race_arms, BASIN_RACE_ARMS);
+        assert_eq!(settings.basin_race_keep, 1);
+        assert_eq!(settings.basin_race_rungs, BASIN_RACE_RUNGS);
+        assert!(
+            settings.basin_race_draw,
+            "the specified mechanism is the salted draw; the archive arm is              the cheap variant and has to be asked for"
+        );
+        assert!(settings.basin_race_rungs < SCHEDULE_RUNGS);
+        assert!(settings.basin_race_share > 0.0 && settings.basin_race_share < 1.0);
+    }
+
+    /// The archive gives a basin back when the race retires it, and says so.
+    #[test]
+    fn a_retired_basin_leaves_the_archive() {
+        let placements = |offset: f64| {
+            vec![GeneralFastPlacement {
+                piece_id: "a".to_owned(),
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_short_axis: offset,
+                translate_long_axis: 0.0,
+            }]
+        };
+        let basin = |offset: f64| ArchivedBasin {
+            fingerprint: format!("fp{offset}"),
+            raw_depth_mm: 100.0 + offset,
+            birth_seconds: 0.0,
+            birth_work_units: 0,
+            operator: BasinOperator::Mode(20),
+            parent_fingerprint: None,
+            secondary_parent_fingerprint: None,
+            exact_valid: true,
+            descents: 0,
+            placements: placements(offset),
+        };
+        let mut archive = SearchArchive::new(8, 1, 0.9);
+        archive.offer(basin(1.0));
+        archive.offer(basin(2.0));
+        assert_eq!(archive.basins().len(), 2);
+        assert!(archive.retire("fp1"), "the member was there");
+        assert_eq!(archive.basins().len(), 1);
+        assert_eq!(archive.basins()[0].fingerprint, "fp2");
+        assert!(
+            !archive.retire("fp1"),
+            "retiring what is not there is a `false`, not a second eviction"
+        );
+        assert_eq!(archive.basins().len(), 1);
     }
 
     /// A scheduled compression slice is nine rungs of the same quantum the

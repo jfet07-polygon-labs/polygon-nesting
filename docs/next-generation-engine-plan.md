@@ -6687,3 +6687,134 @@ reproduces `fast-contract-validator` §13.3's 18.6 mm to inside the spread this
 round measures.
 
 Evidence, drivers and every battery: `docs/experiments/calibrated-plan/`.
+
+## The multi-basin race never once picked a different basin, and three counters were measuring the wrong thing
+
+Sol review 8 §4 item 3 and Grok review 3 §3 item 2 are the same spend named
+twice — *"il rischio dominante è ancora entrare nel basin sbagliato"*, with the
+best FCV arm spanning 165.656–174.280 mm at ten seconds — and both reviews put
+three one-line fixes in front of it. This round does all four. Three of the four
+are negative results and they are worth more than the positive one would have
+been, because each one retires a claim the campaign was carrying.
+
+**Fix (a): trigger B was not the trigger the document describes.** The disarm
+compared the sweep's loss against the *step's historical minimum*, seeded with
+the entry loss, rather than against the loss the sweep was handed. On
+`10 → 8 → 9 → 8.5` the last sweep lowers the 9 it was handed — translation has
+demonstrably resumed — and the old rule stayed armed because 8.5 is not below
+the 8 the step touched two sweeps earlier. That is the normal shape of a
+weighted repair, because `update_weights` moves the weights under the frontier
+after every sweep. The rule is now one shared `StallDetector` that the serial
+loop and every fan-out worker both call, and the regression test runs the old
+rule beside the new one and asserts the two **disagree**, so a change that made
+them agree again fails rather than going quiet.
+
+**Fix (b): the disarm bit was reading the catalogue, and here is the control
+arm.** `rotation_accepted_moves` counts any accepted move whose committed pose
+differs from the incumbent's — including the random catalogue angles
+`search_piece` draws as refinement starts. Twelve pinned mixed-61 parents at a
+fixed 3,341,379-unit cap, three arms on one binary: the **control arm proposed
+zero rungs and reported 3,841 `rotationAcceptedMoves` against 0 committed sparse
+moves**, which is Sol's 11,523 cell reproduced on this tree. Design A, armed on
+every piece, scores zero in the sparse column too — correctly, because its rungs
+belong to no episode. Design B's own chain is 3,391 episodes → 104,244 sparse
+rungs → 29,247 winners (28.06%) → **3,833 committed moves** (13.11% of winners)
+in **2,322 distinct episodes**, so **68.48% of stalls converted** and the old
+counter overstates the operator by **1.602×**. The bit now reads the committed
+column, and its rule was extracted into a function so the test drives the
+production code instead of a copy of it — the previous test re-implemented the
+rule inline and would have passed straight through this bug.
+
+**Fix (c): design C was a no-op on the published depth, and the wire changes
+that.** Sol's diagnosis was that an accepted witness updated
+`published_depth_mm/placements` and never `state`, `confirmed_state`, the floor
+or the archive, so the round's 0/12 measured domination rather than composition.
+Measured, on the same twelve parents at equal work: **the witness-on arm equals
+the witness-off arm on 12 of 12 parents, to the digit**, having accepted **7
+witnesses across 5 parents** worth a cumulative 0.173 mm. Not one micron
+survived. With the accepted witness wired into a child frontier — both halves of
+the schedule's snapshot, the floor deliberately untouched because a floor is
+what a confirmation at the frontier leaves behind — the count is **2 of 12
+descendant publications**. Sol's stopping rule is *"se resta 0/12 … taglio
+witness/m33"*; 2/12 is not 0/12, so the rule does not fire and the null was the
+instrument. It still does not pay: 2 better, **3 worse**, 7 tied, median
+**0.000 mm**, and the counters say why — adopting the witness explodes the stall
+count on the two worst cells (807 → 2,308 and 254 → 2,468 episodes), because the
+child frontier's pairs are a layout the lane's weights know nothing about. The
+adoption ships as a spec key, off. The claim *"the witness does not compose"* is
+retired and replaced by *"the witness composes and the composition is not worth
+the frontier it disturbs"*.
+
+**The race: 0 of 18.** A phase in front of the v3 queue, spec-keyed and off.
+Slot 0 is the **incumbent control**, which is what makes the equal-work gate
+fair — its audition batch is the first mode-34 action the queue would have spent
+anyway, so the race's price is the challengers alone, and a winner that is not
+slot 0 is a basin the un-raced run would never have used. Challengers are salted
+constructor draws (the ledger's own lesson: `construction_seed` derives from the
+**target**, so a salted clamp is a different lottery and a salted seed is a
+replica) descended by one m22 quantum, or — the cheap variant — the basins phase
+0 already archived. Judged on Sol's three criteria with depth deliberately
+excluded, ranked by rank sum so no weighting has to be tuned, with every tie
+breaking toward the incumbent. Successive halving keeps `ceil(live/2)`, doubles
+the rungs, and stops the moment there is nothing left to decide.
+
+**It never moved the run.** Winner slot 0 in **18 of 18 cells** — both variants,
+three fixtures, three seeds — so the whole depth delta is cost and there is no
+quality upside to weigh against it. The arm rows say why, and it is a correction
+to the criteria rather than bad luck. Over all **45 arms**, **`stability` takes
+exactly one distinct value, 1.000**: the schedule steps by one canonical quantum,
+so a confirmation attempt essentially always succeeds on these three requests and
+the criterion has *zero variance*. And **`infeasibility` takes two values on the
+incumbent — 0.000 on mixed-61 and triangle-20, 0.353 on shapes-17 — against
+0.350–1.000 on the challengers, and strictly lower than every challenger of its
+own cell in all fifteen cells that had one**, which is structural: the incumbent
+is a published, exact-valid layout, so the proxy sees few or no violating
+pairs. Two of the three criteria discriminate
+among *peer* basins, and the arm set contains one arm that is not a peer.
+
+**The equal-work gate fails, and one ratio explains it.** The plan is installed
+at the end of phase 0, *before* the race, so both arms of a cell run the same
+phase 0 and read the same bit-identical probe counter; the only differing input
+is the one clock reading the ladder exists to absorb. The driver therefore
+*checks* that the two arms bought the same integer budget rather than assuming
+it, and the cells where the ladder straddled anyway are excluded rather than
+averaged in. On
+mixed-61, the only one of the three fixtures where a basin decision has room to
+matter at ten seconds, the two equal-work cells are **+2.366** and **+2.934 mm**
+worse. The cost decomposes to two rates in one phase of one run: **the work meter
+prices a second of mode 34 at 6,628,431 units and a second of mode 20 at 92.7 —
+a 71,500× spread.** The two constructor draws are **70.8% of the race phase's
+wall and 0.0123% of its work**, so the race's share ceiling — enforced, like
+everything else, in the budget's own currency — **cannot bound their wall**:
+every mixed-61 cell exits the phase on `deadline` having spent 8.2–9.6 s, and
+lands at 13.5–17.1 s against a ten-second target while the un-raced arm lands at
+7.2–7.8 s. Grok review 3 §3 predicted exactly this — *"mode 20 è quasi gratis in
+work units e il work budget lo sotto-prezza"* — and this is the number. It is
+Sol review 8 §3 condition 4 arriving from a new direction: the same meter, blind
+rather than expensive.
+
+The archive variant is the control the round did not have to build: on shapes-17
+the archive offered no distinct challenger, the race did nothing at all
+(`rounds = 0`, race work **0**), and its equal-work cells came out at **exactly
+0.0000 mm** with wall parity. A race with nothing to decide costs nothing
+measurable, so the phase itself is not the tax — the challengers are.
+
+Four pinned gates hit with the **whole-document digest identical to the base
+binary on all four**. Determinism across two processes at a **work** budget — the
+gate this round's own code is responsible for, because a work budget is a
+function of counters and not of the clock — is **9 of 9 with the race on and 9 of
+9 with it off**, so the race's decision, its eviction and its report all
+reproduce. Both suites pass first attempt, exits 0 and 0 over 1,268 and 1,322
+tests. The plan-mode rows are worse (7/9 and 5/9) on a box another agent was
+saturating throughout; all six misses are *plan* disagreements rather than
+document ones, and the base binary fails in the same manner, so they belong to
+`docs/experiments/calibrated-plan/` §7's ladder straddle under load and not to
+this round.
+
+**Recommendation.** Keep the three fixes; they are what make any further
+rotation or witness number readable. Keep the race off, and keep the code: the
+round says exactly what would have to change for it to be worth arming, and it
+is not the constants. Do not cut design C on the stated rule, and do not ship
+its adoption.
+
+Evidence, drivers and every battery: `docs/experiments/basin-race/`.

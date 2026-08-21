@@ -1,0 +1,57 @@
+{
+ "label": "race",
+ "binary": "/var/lib/t3/tmp/basinrace/bin/race-gate",
+ "env": {},
+ "gates": {
+  "g1": {
+   "depths": [
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073,
+    214.207,
+    214.738,
+    222.116
+   ],
+   "fingerprints": [
+    "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+    "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+   ],
+   "hit": true,
+   "wallSeconds": 28.717520236968994,
+   "docDigest": "e24b84517eae7483abec616bb29227c280c05d2c7f1a32d659c90b9b68a779c2"
+  },
+  "g2": {
+   "raw": 159.09233022733062,
+   "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+   "depth": 159.092,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.3782527446746826,
+   "docDigest": "5f8186b7322bd6e849e47969c77f095f138e426b91f36e9fbc9cf72122a05440"
+  },
+  "g3": {
+   "raw": 159.07876040364795,
+   "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+   "depth": 159.079,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.7090840339660645,
+   "docDigest": "de0c40b71def55134c5a86013f500769ee9bf5ea0c74de0fabb5e32a8e439014"
+  },
+  "g4": {
+   "raw": 164.0375677990678,
+   "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+   "depth": 164.038,
+   "exactValid": true,
+   "contractValid": true,
+   "hit": true,
+   "wallSeconds": 3.2880396842956543,
+   "docDigest": "2d2e93c3af1a6d175b4a503ba4884d55ef2bf84bee91b5b1ead135be5f3bcb0d"
+  }
+ },
+ "ALL_PASS": true
+}
