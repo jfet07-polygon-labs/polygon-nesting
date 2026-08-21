@@ -91,15 +91,15 @@ use crate::search::general_fast::{
     construct_short_side_first, validate_and_measure_placements, GeneralFastError,
     GeneralFastPiece, GeneralFastPlacement, GeneralFastResult, GeneralFastSettings,
 };
+#[cfg(feature = "compression-schedule")]
+use crate::search::compression_schedule::ScheduleCheckpoint;
+#[cfg(feature = "compression-schedule")]
+use crate::search::general_relaxed::SliceControl;
 use crate::search::general_relaxed::{
     general_placement_fingerprint, GeneralCoupledSeparatorArmDiagnostics,
     GeneralPersistentVacancyDiagnostics, GeneralPersistentVacancyPinnedParent,
     GeneralRelaxedSettings, ALTERNATION_MAX_CYCLES,
 };
-#[cfg(feature = "compression-schedule")]
-use crate::search::compression_schedule::ScheduleCheckpoint;
-#[cfg(feature = "compression-schedule")]
-use crate::search::general_relaxed::SliceControl;
 
 /// The relative cost of one exact Clipper pair test in candidate-query units.
 ///
@@ -2168,8 +2168,12 @@ pub struct PortfolioSettings {
     /// the larger of the two, which on the measured band it is by ~18x.
     #[cfg(feature = "compression-schedule")]
     pub compression_schedule_cap_to_budget: bool,
-    /// `m34wall`: whether a mode-34 slice is stopped at the first checkpoint
+    /// `m34wallstop`: whether a mode-34 slice is stopped at the first checkpoint
     /// **past the run's wall deadline**, holding its last exact-valid incumbent.
+    ///
+    /// The key is `m34wallstop` and not `m34wall`, which has meant
+    /// [`Self::schedule_wall_prior`] - how the queue *prices* a schedule action
+    /// before it buys one - since coordinator v4.
     ///
     /// `false` by default. This is Sol review 8 §3 condition 3 - *"stop wall tra
     /// checkpoint, restituire l'ultimo incumbent exact-valid"* - and the
@@ -3020,14 +3024,14 @@ impl BudgetMeter {
             self_metered_debit: 0,
             plan_probe: None,
             wall_target_seconds: match budget {
-                PortfolioBudget::Wall { millis } | PortfolioBudget::Plan { target_millis: millis } => {
-                    Some(millis as f64 / 1_000.0)
-                }
+                PortfolioBudget::Wall { millis }
+                | PortfolioBudget::Plan {
+                    target_millis: millis,
+                } => Some(millis as f64 / 1_000.0),
                 PortfolioBudget::Work { .. } => None,
             },
         }
     }
-
 
     /// Starts the phase-0 sampler, if this run wants one.
     ///
@@ -3798,8 +3802,7 @@ struct Coordinator<'a> {
     /// Always `None` unless [`PortfolioSettings::compression_schedule_yield_batches`]
     /// is non-zero.
     #[cfg(feature = "compression-schedule")]
-    suspended_slice:
-        Option<Box<crate::search::general_relaxed::SuspendedScheduleSlice<'a>>>,
+    suspended_slice: Option<Box<crate::search::general_relaxed::SuspendedScheduleSlice<'a>>>,
     /// Actions the queue has run since the slice above was suspended.
     ///
     /// The resume rule reads it and nothing else: a suspended slice is resumed
@@ -4193,18 +4196,17 @@ impl<'a> Coordinator<'a> {
         let pieces = self.pieces;
         let fast_settings = self.fast_settings;
         #[cfg(feature = "compression-schedule")]
-        let interruption =
-            if wall_stop_seconds.is_some()
-                || yield_after_batches.is_some()
-                || barren_batches.is_some()
-            {
-                Some(crate::search::general_relaxed::SliceInterruption {
-                    control: &mut control,
-                    suspended: &mut self.suspended_slice,
-                })
-            } else {
-                None
-            };
+        let interruption = if wall_stop_seconds.is_some()
+            || yield_after_batches.is_some()
+            || barren_batches.is_some()
+        {
+            Some(crate::search::general_relaxed::SliceInterruption {
+                control: &mut control,
+                suspended: &mut self.suspended_slice,
+            })
+        } else {
+            None
+        };
         #[cfg(not(feature = "compression-schedule"))]
         let interruption = None;
         let population = crate::search::general_relaxed::dispatch_persistent_vacancy_mode(
@@ -4929,6 +4931,17 @@ pub fn run_portfolio(
     } else {
         None
     };
+    // Both mode-34 dispatch sites - the queue's `Schedule` action and the
+    // race's audition batch - are reachable only inside v3, and `run_v3_schedule`
+    // drains the slot on its way out, so a run cannot end holding a live slice.
+    // Asserted rather than commented, because a third dispatch site added later
+    // would silently drop a slice's whole account and every aggregate would
+    // still look plausible.
+    #[cfg(feature = "compression-schedule")]
+    debug_assert!(
+        coordinator.suspended_slice.is_none(),
+        "a run ended holding a suspended mode-34 slice"
+    );
     if !settings.coordinator_v3 {
     coordinator.run_phase("descent", settings.schedule.descent_by, |run| {
         let mut cycles = run.settings.descent_cycles.max(1);

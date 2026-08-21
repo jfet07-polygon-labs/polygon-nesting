@@ -22117,14 +22117,29 @@ mod tests {
             resumed.step_digest, expected.step_digest,
             "the interleaved slice walked a different walk"
         );
-        assert_eq!(resumed.final_state_fingerprint, expected.final_state_fingerprint);
-        assert_eq!(resumed.final_tracker_fingerprint, expected.final_tracker_fingerprint);
-        assert_eq!(resumed.final_lane_fingerprint, expected.final_lane_fingerprint);
+        assert_eq!(
+            resumed.final_state_fingerprint,
+            expected.final_state_fingerprint
+        );
+        assert_eq!(
+            resumed.final_tracker_fingerprint,
+            expected.final_tracker_fingerprint
+        );
+        assert_eq!(
+            resumed.final_lane_fingerprint,
+            expected.final_lane_fingerprint
+        );
         assert_eq!(resumed.steps_taken, expected.steps_taken);
         assert_eq!(resumed.work_units, expected.work_units);
         assert_eq!(resumed.sweeps_run, expected.sweeps_run);
-        assert_eq!(resumed.confirmations_attempted, expected.confirmations_attempted);
-        assert_eq!(resumed.confirmations_accepted, expected.confirmations_accepted);
+        assert_eq!(
+            resumed.confirmations_attempted,
+            expected.confirmations_attempted
+        );
+        assert_eq!(
+            resumed.confirmations_accepted,
+            expected.confirmations_accepted
+        );
         assert_eq!(resumed.rollbacks, expected.rollbacks);
         assert_eq!(resumed.final_depth_mm, expected.final_depth_mm);
         assert_eq!(resumed.exit_cause, expected.exit_cause);

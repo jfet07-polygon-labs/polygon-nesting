@@ -2191,17 +2191,11 @@ fn parse_portfolio_spec(
             #[cfg(feature = "compression-schedule")]
             "m34past" => settings.compression_schedule_past_bound = value != "0",
             #[cfg(feature = "compression-schedule")]
-            "m34pastbatches" => {
-                settings.compression_schedule_past_bound_batches = value.parse()?
-            }
+            "m34pastbatches" => settings.compression_schedule_past_bound_batches = value.parse()?,
             #[cfg(feature = "compression-schedule")]
-            "m34pastbarren" => {
-                settings.compression_schedule_past_bound_barren = value.parse()?
-            }
+            "m34pastbarren" => settings.compression_schedule_past_bound_barren = value.parse()?,
             #[cfg(feature = "compression-schedule")]
-            "m34pastshare" => {
-                settings.compression_schedule_past_bound_share = value.parse()?
-            }
+            "m34pastshare" => settings.compression_schedule_past_bound_share = value.parse()?,
             // The certificate's **disarm**. Unknown without the feature for the
             // same reason `m34pconfirm` is: a binary that cannot honour a key
             // must refuse it rather than run the other arm under its label -

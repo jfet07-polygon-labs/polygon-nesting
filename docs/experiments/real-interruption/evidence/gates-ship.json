@@ -19,7 +19,7 @@
     "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
    ],
    "hit": true,
-   "wallSeconds": 26.513824462890625,
+   "wallSeconds": 26.480437755584717,
    "docDigest": "b3114ceb49e9fb4dc0ac321583ded181145a9f7a5a13f138781c66a0e5513298"
   },
   "g2": {
@@ -29,7 +29,7 @@
    "exactValid": true,
    "contractValid": true,
    "hit": true,
-   "wallSeconds": 3.1961898803710938,
+   "wallSeconds": 3.1558332443237305,
    "docDigest": "1b9c980c66dc3a959a814c694d58625e57378831426c39053a01326f4f7158af"
   },
   "g3": {
@@ -39,7 +39,7 @@
    "exactValid": true,
    "contractValid": true,
    "hit": true,
-   "wallSeconds": 3.4450480937957764,
+   "wallSeconds": 3.430955171585083,
    "docDigest": "cfde220b0604f5f3c89f6f887fbc69d970190f0f65b4fd1def171c2db7c7071d"
   },
   "g4": {
@@ -49,7 +49,7 @@
    "exactValid": true,
    "contractValid": true,
    "hit": true,
-   "wallSeconds": 3.0953176021575928,
+   "wallSeconds": 3.0921380519866943,
    "docDigest": "6db12bbed0731ec048ae954402179c7e749a399b5a4b9e8c28e97a162d851a6c"
   }
  },
