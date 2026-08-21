@@ -39,7 +39,7 @@ use crate::search::kernel::{
 #[cfg(feature = "compression-schedule")]
 use crate::search::compression_schedule::{
     CompressionRepairPolicy, CompressionSchedule, CompressionScheduleSettings,
-    GeneralCompressionScheduleDiagnostics, GeneralCompressionScheduleStepRow,
+    GeneralCompressionScheduleDiagnostics, GeneralCompressionScheduleStepRow, ScheduleCheckpoint,
 };
 #[cfg(feature = "parallel-compression-schedule")]
 use crate::parallel::map_slice_mut_with_job_pool;
@@ -6348,8 +6348,10 @@ fn drive_compression_schedule(
     // unless `lanes` asked for more than one.
     #[cfg(feature = "parallel-compression-schedule")]
     let repair_lanes = schedule_settings.lanes.max(1);
+    // Moved into `ScheduleSliceRun` below, which owns them for the whole slice
+    // and is where they are mutated.
     #[cfg(feature = "parallel-compression-schedule")]
-    let mut repair_workers = (0..repair_lanes)
+    let repair_workers = (0..repair_lanes)
         .filter(|_| repair_lanes > 1)
         .map(|worker| {
             LegacyLaneSearch::new(
@@ -6362,7 +6364,7 @@ fn drive_compression_schedule(
         })
         .collect::<Vec<_>>();
     #[cfg(feature = "parallel-compression-schedule")]
-    let mut parallel_report = GeneralCompressionScheduleParallelDiagnostics {
+    let parallel_report = GeneralCompressionScheduleParallelDiagnostics {
         lanes: repair_lanes,
         parallel_confirm: schedule_settings.parallel_confirm,
         lane_wins: vec![0; repair_lanes],
@@ -6375,7 +6377,7 @@ fn drive_compression_schedule(
     // a fan-out that only charged for the branch it kept would be buying its
     // depth with unmetered work.
     #[cfg(feature = "parallel-compression-schedule")]
-    let mut fan_out_queries = 0usize;
+    let fan_out_queries = 0usize;
     #[cfg(feature = "parallel-compression-schedule")]
     let confirm_in_parallel = schedule_settings.parallel_confirm;
     #[cfg(not(feature = "parallel-compression-schedule"))]
@@ -6621,76 +6623,315 @@ fn drive_compression_schedule(
         0 => 0,
         denominator => (steps_planned / denominator).max(1),
     };
-    let mut aborted_barren_probe = false;
 
     // The incumbent half of the asymmetry. It starts at the parent, so the
     // schedule's floor is the parent by construction.
-    let mut confirmed_state = state.clone();
-    let mut published_placements = parent_placements.to_vec();
-    let mut published_depth_mm = parent_depth_mm;
+    let confirmed_state = state.clone();
 
-    let mut rows = Vec::with_capacity(steps_planned.min(4_096));
-    let mut confirmation_ms = 0.0;
-    let mut repair_ms = 0.0;
-    let mut global_sweep = 0usize;
-    // Design C's account. Declared whether or not the certificate is compiled
-    // in, because "armed and never fired" and "not armed" must be
-    // distinguishable in the slice report rather than both reading as zero.
-    // `unused_mut` rather than a second `cfg`: without the certificate compiled
-    // in these four are read by the report and written by nothing, and a build
-    // that reports "armed, zero calls" is exactly what a binary missing
-    // `se2-rigidity-certificate` should say.
-    #[cfg(feature = "sparse-rotation")]
-    #[allow(unused_mut)]
-    let (
-        mut se2_witness_calls,
-        mut se2_witness_accepted,
-        mut se2_witness_ms,
-        mut se2_witness_bought_mm,
-    ) = (0usize, 0usize, 0.0f64, 0.0f64);
-    #[cfg(all(feature = "sparse-rotation", feature = "se2-rigidity-certificate"))]
-    let mut se2_witness_last_floor: Option<f64> = None;
+    // Everything the report needs that the batch loop never reads. Held apart
+    // from the loop's own state so that the thing handed across a batch
+    // boundary is exactly the thing a resumed batch may depend on: a field in
+    // here cannot influence a trajectory, and a field in `ScheduleSliceRun`
+    // must be carried or the concatenation gate fails.
+    let entry = ScheduleSliceEntry {
+        start_depth_mm,
+        parent_boundary_violations,
+        parent_collision_pairs,
+        parent_proxy_feasible,
+        parent_entry_loss,
+        entry_legalization_run,
+        entry_legalization_resolved,
+        entry_legalization_accepted,
+        entry_legalization_ms,
+        entry_legalization_reason,
+        entry_legalization_pairs_before,
+        entry_legalization_pairs_after,
+        entry_legalization_boundary_before,
+        entry_legalization_boundary_after,
+        entry_proxy_feasible,
+        entry_collision_pairs,
+        entry_boundary_violations,
+        entry_loss,
+        entry_source_depth_mm,
+        entry_depth_loss_mm,
+        overlay_entries,
+        overlay_off_grid_pieces,
+        overlay_setup_ms,
+        parent_pair_classification,
+    };
 
-    // The lane's spend as the schedule's budget sees it. Identical to
-    // `search.counters.surrogate_evaluations` on the serial schedule; on a
-    // fanned-out one the repair happens on the workers, so their queries are
-    // added here and the cap sees the whole bill.
+    let mut slice = ScheduleSliceRun {
+        pieces,
+        fast_settings,
+        relaxed_settings,
+        schedule_settings,
+        parent_depth_mm,
+        requested_drop_mm,
+        steps_planned,
+        sweeps_per_step,
+        repair_policy,
+        probe_steps,
+        confirm_in_parallel,
+        unbounded_tail: schedule_settings.continue_past_bound
+            && schedule_settings.work_cap_queries.is_some(),
+        search,
+        #[cfg(feature = "parallel-compression-schedule")]
+        repair_workers,
+        #[cfg(feature = "parallel-compression-schedule")]
+        repair_lanes,
+        #[cfg(feature = "parallel-compression-schedule")]
+        parallel_report,
+        #[cfg(feature = "parallel-compression-schedule")]
+        fan_out_queries,
+        state,
+        score,
+        schedule,
+        confirmed_state,
+        published_placements: parent_placements.to_vec(),
+        published_depth_mm: parent_depth_mm,
+        global_sweep: 0,
+        rows: Vec::with_capacity(steps_planned.min(4_096)),
+        confirmation_ms: 0.0,
+        repair_ms: 0.0,
+        aborted_barren_probe: false,
+        checkpoints: Vec::new(),
+        finished: false,
+        #[cfg(feature = "sparse-rotation")]
+        se2_witness_calls: 0,
+        #[cfg(feature = "sparse-rotation")]
+        se2_witness_accepted: 0,
+        #[cfg(feature = "sparse-rotation")]
+        se2_witness_ms: 0.0,
+        #[cfg(feature = "sparse-rotation")]
+        se2_witness_bought_mm: 0.0,
+        #[cfg(all(feature = "sparse-rotation", feature = "se2-rigidity-certificate"))]
+        se2_witness_last_floor: None,
+    };
+
+    // The batch loop, and it is one line because that is the whole claim.
+    //
+    // With `batch_work_units: None` this runs exactly once and the slice is the
+    // atomic arm every pinned m34 number in this repository was measured with.
+    // With a budget set it runs N times, and the N batches must produce the
+    // same document as the one - which is the gate
+    // `docs/experiments/replan/` §10 runs, and the reason `ScheduleSliceRun` is
+    // a struct rather than a block of locals: a loop-carried value that is not
+    // a field of it is a value the second batch would silently start over from.
+    while !slice.finished {
+        slice.advance()?;
+    }
+    slice.finish(entry)
+}
+
+/// The half of a slice's report the batch loop never reads.
+///
+/// It exists to make the *other* struct's field list load-bearing: a value that
+/// can influence the trajectory belongs to [`ScheduleSliceRun`] and is carried
+/// across a batch boundary; a value that is only ever reported belongs here.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+struct ScheduleSliceEntry {
+    start_depth_mm: f64,
+    parent_boundary_violations: usize,
+    parent_collision_pairs: usize,
+    parent_proxy_feasible: bool,
+    parent_entry_loss: f64,
+    entry_legalization_run: bool,
+    entry_legalization_resolved: bool,
+    entry_legalization_accepted: bool,
+    entry_legalization_ms: f64,
+    entry_legalization_reason: Option<String>,
+    entry_legalization_pairs_before: usize,
+    entry_legalization_pairs_after: usize,
+    entry_legalization_boundary_before: usize,
+    entry_legalization_boundary_after: usize,
+    entry_proxy_feasible: bool,
+    entry_collision_pairs: usize,
+    entry_boundary_violations: usize,
+    entry_loss: f64,
+    entry_source_depth_mm: Option<f64>,
+    entry_depth_loss_mm: Option<f64>,
+    overlay_entries: usize,
+    overlay_off_grid_pieces: usize,
+    overlay_setup_ms: f64,
+    parent_pair_classification:
+        Vec<crate::search::compression_schedule::GeneralCompressionSchedulePairClassification>,
+}
+
+/// A compression-schedule slice in flight, and the whole of what one batch
+/// hands to the next.
+///
+/// # Why this is a struct
+///
+/// Sol review 8 §4 spend 1 asks for the slice to be split into deterministic
+/// batches that terminate at a deepest-confirmed checkpoint and preserve
+/// frontier and cache, and names the risk in the same sentence: *"batching or
+/// cache reconstruction changes the trajectory"*. The gate it names - N
+/// concatenated batches reproduce the monolith at equal work - can only fail if
+/// batching is capable of losing something, so the implementation is
+/// deliberately the one that can: [`Self::advance`] returns to its caller
+/// between batches, and everything the next batch reads has to be a field here.
+///
+/// Three groups of fields, and the boundaries matter:
+///
+/// * **the request** - `pieces` through `unbounded_tail` - fixed for the whole
+///   slice, read by every batch, written by none;
+/// * **the frontier and its caches** - `search`, `repair_workers`, `state`,
+///   `score`, `schedule` - the part a naive "rebuild and resume" would get
+///   wrong, because a worker's surrogate and pair-NFP caches are what make its
+///   second step cheaper than its first and its *rng* is what makes the second
+///   step the same step;
+/// * **the account** - `rows` through the witness counters - carried so that a
+///   batched slice reports one slice rather than N.
+///
+/// The one thing that is *not* carried, on purpose, is the per-step episode
+/// state of design B's stall detector: `stall_loss` is initialised at the top of
+/// every step in both arms, so it cannot cross a batch boundary because it does
+/// not cross a step boundary either.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+struct ScheduleSliceRun<'a> {
+    pieces: &'a [GeneralFastPiece<'a>],
+    fast_settings: GeneralFastSettings,
+    relaxed_settings: GeneralRelaxedSettings,
+    schedule_settings: CompressionScheduleSettings,
+    parent_depth_mm: f64,
+    requested_drop_mm: f64,
+    steps_planned: usize,
+    sweeps_per_step: usize,
+    repair_policy: CompressionRepairPolicy,
+    probe_steps: usize,
+    confirm_in_parallel: bool,
+    unbounded_tail: bool,
+
+    search: LegacyLaneSearch<'a>,
     #[cfg(feature = "parallel-compression-schedule")]
-    macro_rules! queries_spent {
-        () => {
-            search
-                .counters
-                .surrogate_evaluations
-                .saturating_add(fan_out_queries)
-        };
-    }
-    #[cfg(not(feature = "parallel-compression-schedule"))]
-    macro_rules! queries_spent {
-        () => {
-            search.counters.surrogate_evaluations
-        };
+    repair_workers: Vec<LegacyLaneSearch<'a>>,
+    #[cfg(feature = "parallel-compression-schedule")]
+    repair_lanes: usize,
+    #[cfg(feature = "parallel-compression-schedule")]
+    parallel_report: GeneralCompressionScheduleParallelDiagnostics,
+    #[cfg(feature = "parallel-compression-schedule")]
+    fan_out_queries: usize,
+    state: RelaxedState,
+    score: PairTracker,
+    schedule: CompressionSchedule,
+    confirmed_state: RelaxedState,
+    published_placements: Vec<GeneralFastPlacement>,
+    published_depth_mm: f64,
+    global_sweep: usize,
+
+    rows: Vec<GeneralCompressionScheduleStepRow>,
+    confirmation_ms: f64,
+    repair_ms: f64,
+    aborted_barren_probe: bool,
+    checkpoints: Vec<ScheduleCheckpoint>,
+    finished: bool,
+
+    #[cfg(feature = "sparse-rotation")]
+    se2_witness_calls: usize,
+    #[cfg(feature = "sparse-rotation")]
+    se2_witness_accepted: usize,
+    #[cfg(feature = "sparse-rotation")]
+    se2_witness_ms: f64,
+    #[cfg(feature = "sparse-rotation")]
+    se2_witness_bought_mm: f64,
+    #[cfg(all(feature = "sparse-rotation", feature = "se2-rigidity-certificate"))]
+    se2_witness_last_floor: Option<f64>,
+}
+
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+impl ScheduleSliceRun<'_> {
+    /// The lane's spend as the schedule's budget sees it. Identical to
+    /// `search.counters.surrogate_evaluations` on the serial schedule; on a
+    /// fanned-out one the repair happens on the workers, so their queries are
+    /// added here and the cap sees the whole bill.
+    #[cfg(feature = "parallel-compression-schedule")]
+    fn queries_spent(&self) -> usize {
+        self.search
+            .counters
+            .surrogate_evaluations
+            .saturating_add(self.fan_out_queries)
     }
 
-    let unbounded_tail =
-        schedule_settings.continue_past_bound && schedule_settings.work_cap_queries.is_some();
-    while schedule.steps_taken() < steps_planned.max(1) || unbounded_tail {
-        if !schedule.may_step(queries_spent!()) {
-            break;
+    #[cfg(not(feature = "parallel-compression-schedule"))]
+    fn queries_spent(&self) -> usize {
+        self.search.counters.surrogate_evaluations
+    }
+
+    /// Runs one batch: steps until the slice ends or the batch budget is spent,
+    /// then stops at a checkpoint.
+    ///
+    /// The loop condition, the `may_step` call at the top of every iteration and
+    /// the order of everything inside are the atomic slice's, unchanged. The only
+    /// statement batching adds is the last one, and it is deliberately after the
+    /// probe: a batch boundary is a place the slice *may* be interrupted, and the
+    /// probe is a reason the slice is *over*, so the probe has to win or a
+    /// batched slice would carry a step further than the atomic one.
+    fn advance(&mut self) -> Result<(), GeneralFastError> {
+        let batch_started_units = self.schedule.work_units();
+        let mut stopped_at_batch_boundary = false;
+        while self.schedule.steps_taken() < self.steps_planned.max(1) || self.unbounded_tail {
+            if !self.schedule.may_step(self.queries_spent()) {
+                break;
+            }
+            self.take_one_step()?;
+            // The probe. A slice is bought on a prior; it is *continued* on
+            // evidence. If the lane has spent its probe and nothing it has
+            // reached beats the parent yet, the rest of the slice is given back
+            // - which is the only place in this design where the first slice's
+            // wall price can be charged at all, because no number available
+            // before step 0 separates the request where this class publishes on
+            // nine of nine from the two where it never has. See
+            // `CompressionScheduleSettings::barren_probe_denominator`.
+            if self.probe_steps > 0
+                && self.schedule.steps_taken() >= self.probe_steps
+                && grid_key(self.published_depth_mm) >= grid_key(self.parent_depth_mm)
+            {
+                self.aborted_barren_probe = true;
+                break;
+            }
+            if self.schedule.batch_exhausted(batch_started_units) {
+                stopped_at_batch_boundary = true;
+                break;
+            }
         }
-        let step = schedule.steps_taken();
-        let queries_before = queries_spent!();
-        schedule.step_down();
+        if !stopped_at_batch_boundary {
+            self.finish_tail()?;
+            self.finished = true;
+        }
+        // Recorded only on the batched arm, so the atomic slice's report is the
+        // one every pinned number was measured against, key for key.
+        if self.schedule_settings.batch_work_units.is_some() {
+            self.checkpoints.push(ScheduleCheckpoint {
+                batch: self.checkpoints.len(),
+                steps_taken: self.schedule.steps_taken(),
+                work_units: self.schedule.work_units(),
+                frontier_mm: self.schedule.depth_mm(),
+                floor_mm: self.schedule.floor_mm(),
+                confirmations_accepted: self.schedule.confirmations_accepted(),
+                published_depth_mm: self.published_depth_mm,
+                finished: self.finished,
+            });
+        }
+        Ok(())
+    }
+
+    /// One step of the schedule: lower the clamp, repair, confirm, roll back.
+    fn take_one_step(&mut self) -> Result<(), GeneralFastError> {
+        let step = self.schedule.steps_taken();
+        let queries_before = self.queries_spent();
+        self.schedule.step_down();
         // The step, taken here rather than left to the first sweep, so that the
         // residue below is the residue the *step* made rather than what one
         // sweep of repair left of it. `move_sweep` performs the same write, so
         // its schedule check finds the depth already in place and does nothing
         // - the write stays in the sweep because any other caller of a
         // schedule-armed lane needs it there.
-        state.strip_depth_mm = schedule.depth_mm();
-        search.refresh_boundary_rows(&state, &mut score)?;
-        let before_violations = score.boundary_violations;
-        let before_pairs = score.collision_pairs.len();
-        let before_loss = score.boundary_loss;
+        self.state.strip_depth_mm = self.schedule.depth_mm();
+        self.search
+            .refresh_boundary_rows(&self.state, &mut self.score)?;
+        let before_violations = self.score.boundary_violations;
+        let before_pairs = self.score.collision_pairs.len();
+        let before_loss = self.score.boundary_loss;
         let repair_started = Instant::now();
         let mut sweeps_run = 0usize;
         // The fan-out fires only where there is something to repair. A step the
@@ -6700,251 +6941,37 @@ fn drive_compression_schedule(
         // and it is the first of the two reasons the wall multiplier is not the
         // lane multiplier.
         #[cfg(feature = "parallel-compression-schedule")]
-        let fan_out = repair_lanes > 1 && !score.feasible();
+        let fan_out = self.repair_lanes > 1 && !self.score.feasible();
         #[cfg(not(feature = "parallel-compression-schedule"))]
         let fan_out = false;
         if !fan_out {
-            search.compression = Some(schedule);
-            // Design B's stall detector, and its whole state. The episode is
-            // scoped to this step: `disarm_rotation` at the top means no arming
-            // can outlive the stall that opened it, so "sparse" is a property of
-            // the control flow rather than of a heuristic that has to remember
-            // to switch off.
-            #[cfg(feature = "sparse-rotation")]
-            search.disarm_rotation();
-            // Hoisted so the control arm pays for none of this. With
-            // `sparse_rotation` off the two `common_loss` folds and the arming
-            // call below are not merely no-ops, they are not reached, and the
-            // serial repair loop is instruction for instruction the one the
-            // rotation-tax round measured.
-            #[cfg(feature = "sparse-rotation")]
-            let detect_stall = relaxed_settings.sparse_rotation;
-            #[cfg(feature = "sparse-rotation")]
-            let mut stall_loss = if detect_stall {
-                score.common_loss()
-            } else {
-                0.0
-            };
-            for _ in 0..sweeps_per_step.max(1) {
-                if score.feasible() {
-                    break;
-                }
-                #[cfg(feature = "sparse-rotation")]
-                if detect_stall && search.rotation_episode_open() {
-                    search.note_rotation_episode_sweep();
-                }
-                search.move_sweep(&mut state, &mut score, global_sweep)?;
-                global_sweep += 1;
-                sweeps_run += 1;
-                if score.feasible() {
-                    break;
-                }
-                // The stall, measured rather than assumed: a sweep that left the
-                // frontier infeasible *and* did not lower the loss it was
-                // handed. That is the moment the translation repair has stopped
-                // paying, and it is the only moment the rungs are offered - to
-                // the pieces the tracker is naming right now, and to nobody
-                // else. A sweep that does lower the loss disarms again, so an
-                // episode ends the moment translation resumes.
-                #[cfg(feature = "sparse-rotation")]
-                if detect_stall {
-                    let now = score.common_loss();
-                    if now < stall_loss {
-                        search.disarm_rotation();
-                    } else {
-                        search.arm_rotation_for_pairs(&score.collision_pairs);
-                    }
-                    stall_loss = stall_loss.min(now);
-                }
-                update_weights(&mut search.weights, &score.collision_pairs);
-                refresh_weighted_loss(&mut score, &search.weights);
-            }
-            #[cfg(feature = "sparse-rotation")]
-            search.disarm_rotation();
-            schedule = search
-                .compression
-                .take()
-                .expect("the lane keeps the schedule it was handed");
+            sweeps_run = self.repair_serial()?;
         }
         #[cfg(feature = "parallel-compression-schedule")]
         if fan_out {
-            // One clock, `repair_lanes` workers. Each worker repairs a private
-            // clone of *this* frontier at *this* depth; none of them owns the
-            // schedule, so none can step it, confirm against it or move its
-            // floor. The clone they are handed is read-only in effect: it is
-            // what `move_sweep`'s `apply_compression_schedule` reads the depth
-            // out of, and it is dropped at the end of the dispatch.
-            let schedule_view = schedule.clone();
-            let base_state = state.clone();
-            let base_score = score.clone();
-            let base_weights = search.weights.clone();
-            let sweeps_budget = sweeps_per_step.max(1);
-            let step_sweep = global_sweep;
-            let outcomes = map_slice_mut_with_job_pool(&mut repair_workers, |worker, lane| {
-                // Determinism, at its source: a worker's entire input is
-                // (frontier, weights, depth, step, worker ordinal). Nothing it
-                // reads depends on which thread ran it or on what any other
-                // worker did, so two processes dispatch the same eight
-                // computations and reduce them in the same order.
-                lane.rng = SplitMix64::new(derive_seed(
-                    derive_seed(
-                        relaxed_settings.seed,
-                        step,
-                        COMPRESSION_SCHEDULE_SEED_DOMAIN as usize,
-                    ),
-                    step,
-                    worker,
-                ));
-                lane.weights = base_weights.clone();
-                lane.compression = Some(schedule_view.clone());
-                let queries_before = lane.counters.surrogate_evaluations;
-                let mut lane_state = base_state.clone();
-                let mut lane_score = base_score.clone();
-                let mut lane_sweeps = 0usize;
-                let mut failure = None;
-                // The same stall detector the serial arm runs, on this worker's
-                // private frontier. It reads nothing outside `(lane_state,
-                // lane_score, lane.weights)`, so a worker's arming is a
-                // deterministic function of its own inputs and the reduce below
-                // stays a total order over the same eight computations.
-                #[cfg(feature = "sparse-rotation")]
-                lane.disarm_rotation();
-                #[cfg(feature = "sparse-rotation")]
-                let detect_stall = relaxed_settings.sparse_rotation;
-                #[cfg(feature = "sparse-rotation")]
-                let mut stall_loss = if detect_stall {
-                    lane_score.common_loss()
-                } else {
-                    0.0
-                };
-                for _ in 0..sweeps_budget {
-                    if lane_score.feasible() {
-                        break;
-                    }
-                    #[cfg(feature = "sparse-rotation")]
-                    if detect_stall && lane.rotation_episode_open() {
-                        lane.note_rotation_episode_sweep();
-                    }
-                    if let Err(error) =
-                        lane.move_sweep(&mut lane_state, &mut lane_score, step_sweep + lane_sweeps)
-                    {
-                        failure = Some(error);
-                        break;
-                    }
-                    lane_sweeps += 1;
-                    if lane_score.feasible() {
-                        break;
-                    }
-                    #[cfg(feature = "sparse-rotation")]
-                    if detect_stall {
-                        let now = lane_score.common_loss();
-                        if now < stall_loss {
-                            lane.disarm_rotation();
-                        } else {
-                            lane.arm_rotation_for_pairs(&lane_score.collision_pairs);
-                        }
-                        stall_loss = stall_loss.min(now);
-                    }
-                    update_weights(&mut lane.weights, &lane_score.collision_pairs);
-                    refresh_weighted_loss(&mut lane_score, &lane.weights);
-                }
-                #[cfg(feature = "sparse-rotation")]
-                lane.disarm_rotation();
-                let queries = lane
-                    .counters
-                    .surrogate_evaluations
-                    .saturating_sub(queries_before);
-                lane.compression = None;
-                (
-                    failure,
-                    lane_state,
-                    lane_score,
-                    std::mem::take(&mut lane.weights),
-                    lane_sweeps,
-                    queries,
-                )
-            });
-            // A failure on any worker is the schedule's failure, and it is the
-            // lowest-ordinal one so that two processes report the same error.
-            let mut outcomes = outcomes;
-            for outcome in outcomes.iter_mut() {
-                if let Some(error) = outcome.0.take() {
-                    return Err(error);
-                }
-            }
-            // The reduce, and the whole of the determinism argument above it:
-            // a total order on (feasible, common loss, worker ordinal). The
-            // ordinal tiebreak is what makes it total - two workers that find
-            // equally good states must not be separated by which finished
-            // first - and `total_cmp` is what keeps the middle term a total
-            // order over `f64`.
-            let mut winner = 0usize;
-            for candidate in 1..outcomes.len() {
-                let (_, _, best_score, ..) = &outcomes[winner];
-                let (_, _, other_score, ..) = &outcomes[candidate];
-                let better = match other_score.feasible().cmp(&best_score.feasible()) {
-                    Ordering::Greater => true,
-                    Ordering::Less => false,
-                    Ordering::Equal => {
-                        other_score.common_loss().total_cmp(&best_score.common_loss())
-                            == Ordering::Less
-                    }
-                };
-                if better {
-                    winner = candidate;
-                }
-            }
-            let step_queries: usize = outcomes
-                .iter()
-                .map(|(_, _, _, _, _, queries)| *queries)
-                .sum();
-            let (_, winner_state, winner_score, winner_weights, winner_sweeps, winner_queries) =
-                outcomes
-                    .into_iter()
-                    .nth(winner)
-                    .expect("the reduce always names a worker");
-            state = winner_state;
-            score = winner_score;
-            search.weights = winner_weights;
-            sweeps_run = winner_sweeps;
-            global_sweep += winner_sweeps;
-            // The clock's sweep counter follows the *adopted* branch, so
-            // `sweepsRun` stays the number of sweeps this schedule's frontier
-            // actually took and stays comparable with the serial arm's. What
-            // the discarded branches cost is reported separately, in queries.
-            for _ in 0..winner_sweeps {
-                schedule.note_sweep();
-            }
-            fan_out_queries = fan_out_queries.saturating_add(step_queries);
-            parallel_report.fanned_out_steps += 1;
-            parallel_report.winner_queries += winner_queries;
-            parallel_report.discarded_queries += step_queries.saturating_sub(winner_queries);
-            parallel_report.lane_wins[winner] += 1;
-            if winner != 0 {
-                parallel_report.steps_won_off_lane_zero += 1;
-            }
+            sweeps_run = self.repair_fanned_out(step)?;
         }
-        repair_ms += repair_started.elapsed().as_secs_f64() * 1_000.0;
+        self.repair_ms += repair_started.elapsed().as_secs_f64() * 1_000.0;
 
         let mut row = GeneralCompressionScheduleStepRow {
             step,
-            depth_mm: schedule.depth_mm(),
+            depth_mm: self.schedule.depth_mm(),
             boundary_violations_before: before_violations,
             collision_pairs_before: before_pairs,
             boundary_loss_before: before_loss,
-            boundary_violations_after: score.boundary_violations,
-            collision_pairs_after: score.collision_pairs.len(),
-            boundary_loss_after: score.boundary_loss,
+            boundary_violations_after: self.score.boundary_violations,
+            collision_pairs_after: self.score.collision_pairs.len(),
+            boundary_loss_after: self.score.boundary_loss,
             sweeps_run,
-            candidate_queries: queries_spent!().saturating_sub(queries_before),
-            proxy_feasible: score.feasible(),
+            candidate_queries: self.queries_spent().saturating_sub(queries_before),
+            proxy_feasible: self.score.feasible(),
             ..GeneralCompressionScheduleStepRow::default()
         };
 
-        if schedule.due_for_confirmation(score.feasible()) {
-            schedule.note_confirmation_attempt();
+        if self.schedule.due_for_confirmation(self.score.feasible()) {
+            self.schedule.note_confirmation_attempt();
             let started = Instant::now();
-            let placements = to_fast_placements(&state, pieces);
+            let placements = to_fast_placements(&self.state, self.pieces);
             let mut accepted = None;
             // Whether it was the *frontier itself* the validator accepted, as
             // opposed to something the repair pass made out of it. Only the
@@ -6953,17 +6980,23 @@ fn drive_compression_schedule(
             // holding, or a rollback would restore an infeasible state at a
             // depth the schedule believes was confirmed.
             let mut frontier_confirmed = false;
-            match confirm_placements(pieces, &placements, fast_settings, confirm_in_parallel) {
+            match confirm_placements(
+                self.pieces,
+                &placements,
+                self.fast_settings,
+                self.confirm_in_parallel,
+            ) {
                 Ok(_) => {
                     accepted = Some(placements.clone());
                     frontier_confirmed = true;
                 }
                 Err(_) => {
-                    schedule.note_refused();
+                    self.schedule.note_refused();
                     row.confirmation_refused = true;
-                    if repair_policy == CompressionRepairPolicy::MicroLegalizeOnReject {
-                        let (_, repaired) = micro_legalize(pieces, &placements, fast_settings);
-                        schedule.note_micro_legalization(repaired.is_some());
+                    if self.repair_policy == CompressionRepairPolicy::MicroLegalizeOnReject {
+                        let (_, repaired) =
+                            micro_legalize(self.pieces, &placements, self.fast_settings);
+                        self.schedule.note_micro_legalization(repaired.is_some());
                         if let Some(repaired) = repaired {
                             row.micro_legalized = true;
                             accepted = Some(repaired);
@@ -6975,223 +7008,494 @@ fn drive_compression_schedule(
                 // The confirmation's own measurement, on the untouched source
                 // rings: the only number this mode publishes on.
                 if let Ok(raw_depth_mm) =
-                    coupled_independent_source_depth(pieces, &accepted, fast_settings)
+                    coupled_independent_source_depth(self.pieces, &accepted, self.fast_settings)
                 {
                     row.raw_depth_mm = Some(raw_depth_mm);
                     if frontier_confirmed {
-                        schedule.note_confirmed();
+                        self.schedule.note_confirmed();
                         row.confirmed = true;
-                        confirmed_state = state.clone();
+                        self.confirmed_state = self.state.clone();
                     }
-                    if grid_key(raw_depth_mm) < grid_key(published_depth_mm) {
-                        published_depth_mm = raw_depth_mm;
-                        published_placements = accepted;
+                    if grid_key(raw_depth_mm) < grid_key(self.published_depth_mm) {
+                        self.published_depth_mm = raw_depth_mm;
+                        self.published_placements = accepted;
                     }
                 }
             }
-            confirmation_ms += started.elapsed().as_secs_f64() * 1_000.0;
+            self.confirmation_ms += started.elapsed().as_secs_f64() * 1_000.0;
         }
 
-        // ---- design C: the witness, when design B's stall outlived the step
-        //
-        // The trigger is deliberately the narrowest one available: the step ran
-        // its whole sweep budget, the frontier is still infeasible, and the
-        // rungs the violating pieces were offered did not clear it either. That
-        // is the state in which translation has fixpointed *and* sparse rotation
-        // has failed to move it, which is the only state a whole-parent solve
-        // could be worth its price in.
-        //
-        // It runs on `confirmed_state`, not on the frontier, and that is a
-        // requirement rather than a preference: the certificate's line search
-        // ends at `scale = 0` - the parent itself - and asserts that rung
-        // validates, so handing it an infeasible frontier makes it error out
-        // rather than answer. `confirmed_state` is the deepest layout an exact
-        // confirmation has accepted, so it is legal by construction.
-        //
-        // What comes back is already exactly validated by `validate_publication`
-        // at the scale the line search settled on, so "apply the witness vector
-        // as a candidate, validate exactly" is satisfied inside the certificate
-        // and the schedule's own confirmation is not spent twice. It is still
-        // re-measured here through `coupled_independent_source_depth`, on the
-        // untouched source rings, because that - and not the certificate's own
-        // measure - is the number this mode publishes on.
-        #[cfg(all(feature = "sparse-rotation", feature = "se2-rigidity-certificate"))]
-        if let Some(witness_settings) = relaxed_settings.se2_witness {
-            let stalled = !score.feasible() && sweeps_run >= sweeps_per_step.max(1);
-            // The certificate is a deterministic function of `(parent, trust,
-            // iterations)`, so calling it twice on the same incumbent spends a
-            // slice to learn what the previous call already returned. The floor
-            // moves only when a confirmation accepts the frontier, which is
-            // exactly the event that makes a second call worth its price.
-            let fresh = se2_witness_last_floor
-                .is_none_or(|floor| grid_key(floor) != grid_key(schedule.floor_mm()));
-            if stalled && fresh && se2_witness_calls < witness_settings.max_calls {
-                let started = Instant::now();
-                se2_witness_calls += 1;
-                se2_witness_last_floor = Some(schedule.floor_mm());
-                let confirmed_placements = to_fast_placements(&confirmed_state, pieces);
-                let proposal = crate::search::general_micro_legalization::se2_certificate::
-                    se2_witness_proposal(
-                        pieces,
-                        &confirmed_placements,
-                        fast_settings,
-                        witness_settings.trust_radius_mm,
-                        witness_settings.iterations,
-                    );
-                if let Ok(Some(proposal)) = proposal {
-                    if proposal.moved_pieces > 0 {
-                        if let Ok(raw_depth_mm) = coupled_independent_source_depth(
-                            pieces,
-                            &proposal.placements,
-                            fast_settings,
-                        ) {
-                            if grid_key(raw_depth_mm) < grid_key(published_depth_mm) {
-                                se2_witness_bought_mm += published_depth_mm - raw_depth_mm;
-                                published_depth_mm = raw_depth_mm;
-                                published_placements = proposal.placements;
-                                se2_witness_accepted += 1;
-                            }
-                        }
-                    }
-                }
-                se2_witness_ms += started.elapsed().as_secs_f64() * 1_000.0;
-            }
-        }
+        self.run_se2_witness(sweeps_run);
 
-        if schedule.due_for_rollback() {
+        if self.schedule.due_for_rollback() {
             // Both halves of the snapshot, restored in the same statement. The
             // depth the schedule returns to is its monotone floor, which is the
             // depth `confirmed_state` was confirmed at.
-            schedule.rollback_to_floor();
-            state = confirmed_state.clone();
-            state.strip_depth_mm = schedule.depth_mm();
-            search.weights.clear();
-            score = search.score_state(&state)?;
+            self.schedule.rollback_to_floor();
+            self.state = self.confirmed_state.clone();
+            self.state.strip_depth_mm = self.schedule.depth_mm();
+            self.search.weights.clear();
+            self.score = self.search.score_state(&self.state)?;
             row.rolled_back = true;
         }
 
-        rows.push(row);
+        self.rows.push(row);
+        Ok(())
+    }
 
-        // The probe. A slice is bought on a prior; it is *continued* on
-        // evidence. If the lane has spent its probe and nothing it has reached
-        // beats the parent yet, the rest of the slice is given back - which is
-        // the only place in this design where the first slice's wall price can
-        // be charged at all, because no number available before step 0
-        // separates the request where this class publishes on nine of nine
-        // from the two where it never has. See
-        // `CompressionScheduleSettings::barren_probe_denominator`.
-        if probe_steps > 0
-            && schedule.steps_taken() >= probe_steps
-            && grid_key(published_depth_mm) >= grid_key(parent_depth_mm)
-        {
-            aborted_barren_probe = true;
-            break;
+    /// The serial repair pass, and design B's stall detector with it.
+    fn repair_serial(&mut self) -> Result<usize, GeneralFastError> {
+        self.search.compression = Some(self.schedule.clone());
+        // Design B's stall detector, and its whole state. The episode is
+        // scoped to this step: `disarm_rotation` at the top means no arming
+        // can outlive the stall that opened it, so "sparse" is a property of
+        // the control flow rather than of a heuristic that has to remember
+        // to switch off.
+        #[cfg(feature = "sparse-rotation")]
+        self.search.disarm_rotation();
+        // Hoisted so the control arm pays for none of this. With
+        // `sparse_rotation` off the two `common_loss` folds and the arming
+        // call below are not merely no-ops, they are not reached, and the
+        // serial repair loop is instruction for instruction the one the
+        // rotation-tax round measured.
+        #[cfg(feature = "sparse-rotation")]
+        let detect_stall = self.relaxed_settings.sparse_rotation;
+        #[cfg(feature = "sparse-rotation")]
+        let mut stall_loss = if detect_stall {
+            self.score.common_loss()
+        } else {
+            0.0
+        };
+        let mut sweeps_run = 0usize;
+        let mut failure = None;
+        for _ in 0..self.sweeps_per_step.max(1) {
+            if self.score.feasible() {
+                break;
+            }
+            #[cfg(feature = "sparse-rotation")]
+            if detect_stall && self.search.rotation_episode_open() {
+                self.search.note_rotation_episode_sweep();
+            }
+            if let Err(error) =
+                self.search
+                    .move_sweep(&mut self.state, &mut self.score, self.global_sweep)
+            {
+                failure = Some(error);
+                break;
+            }
+            self.global_sweep += 1;
+            sweeps_run += 1;
+            if self.score.feasible() {
+                break;
+            }
+            // The stall, measured rather than assumed: a sweep that left the
+            // frontier infeasible *and* did not lower the loss it was
+            // handed. That is the moment the translation repair has stopped
+            // paying, and it is the only moment the rungs are offered - to
+            // the pieces the tracker is naming right now, and to nobody
+            // else. A sweep that does lower the loss disarms again, so an
+            // episode ends the moment translation resumes.
+            #[cfg(feature = "sparse-rotation")]
+            if detect_stall {
+                let now = self.score.common_loss();
+                if now < stall_loss {
+                    self.search.disarm_rotation();
+                } else {
+                    self.search.arm_rotation_for_pairs(&self.score.collision_pairs);
+                }
+                stall_loss = stall_loss.min(now);
+            }
+            update_weights(&mut self.search.weights, &self.score.collision_pairs);
+            refresh_weighted_loss(&mut self.score, &self.search.weights);
+        }
+        #[cfg(feature = "sparse-rotation")]
+        self.search.disarm_rotation();
+        self.schedule = self
+            .search
+            .compression
+            .take()
+            .expect("the lane keeps the schedule it was handed");
+        match failure {
+            Some(error) => Err(error),
+            None => Ok(sweeps_run),
         }
     }
 
-    // The last state the frontier reached never gets a scheduled confirmation
-    // if the run ended between cadences, and it is the deepest one there is.
-    if score.feasible() {
+    /// One clock, `repair_lanes` workers. Each worker repairs a private clone
+    /// of *this* frontier at *this* depth; none of them owns the schedule, so
+    /// none can step it, confirm against it or move its floor. The clone they
+    /// are handed is read-only in effect: it is what `move_sweep`'s
+    /// `apply_compression_schedule` reads the depth out of, and it is dropped at
+    /// the end of the dispatch.
+    #[cfg(feature = "parallel-compression-schedule")]
+    fn repair_fanned_out(&mut self, step: usize) -> Result<usize, GeneralFastError> {
+        let schedule_view = self.schedule.clone();
+        let base_state = self.state.clone();
+        let base_score = self.score.clone();
+        let base_weights = self.search.weights.clone();
+        let sweeps_budget = self.sweeps_per_step.max(1);
+        let step_sweep = self.global_sweep;
+        let relaxed_settings = self.relaxed_settings;
+        let outcomes = map_slice_mut_with_job_pool(&mut self.repair_workers, |worker, lane| {
+            // Determinism, at its source: a worker's entire input is
+            // (frontier, weights, depth, step, worker ordinal). Nothing it
+            // reads depends on which thread ran it or on what any other
+            // worker did, so two processes dispatch the same eight
+            // computations and reduce them in the same order.
+            lane.rng = SplitMix64::new(derive_seed(
+                derive_seed(
+                    relaxed_settings.seed,
+                    step,
+                    COMPRESSION_SCHEDULE_SEED_DOMAIN as usize,
+                ),
+                step,
+                worker,
+            ));
+            lane.weights = base_weights.clone();
+            lane.compression = Some(schedule_view.clone());
+            let queries_before = lane.counters.surrogate_evaluations;
+            let mut lane_state = base_state.clone();
+            let mut lane_score = base_score.clone();
+            let mut lane_sweeps = 0usize;
+            let mut failure = None;
+            // The same stall detector the serial arm runs, on this worker's
+            // private frontier. It reads nothing outside `(lane_state,
+            // lane_score, lane.weights)`, so a worker's arming is a
+            // deterministic function of its own inputs and the reduce below
+            // stays a total order over the same eight computations.
+            #[cfg(feature = "sparse-rotation")]
+            lane.disarm_rotation();
+            #[cfg(feature = "sparse-rotation")]
+            let detect_stall = relaxed_settings.sparse_rotation;
+            #[cfg(feature = "sparse-rotation")]
+            let mut stall_loss = if detect_stall {
+                lane_score.common_loss()
+            } else {
+                0.0
+            };
+            for _ in 0..sweeps_budget {
+                if lane_score.feasible() {
+                    break;
+                }
+                #[cfg(feature = "sparse-rotation")]
+                if detect_stall && lane.rotation_episode_open() {
+                    lane.note_rotation_episode_sweep();
+                }
+                if let Err(error) =
+                    lane.move_sweep(&mut lane_state, &mut lane_score, step_sweep + lane_sweeps)
+                {
+                    failure = Some(error);
+                    break;
+                }
+                lane_sweeps += 1;
+                if lane_score.feasible() {
+                    break;
+                }
+                #[cfg(feature = "sparse-rotation")]
+                if detect_stall {
+                    let now = lane_score.common_loss();
+                    if now < stall_loss {
+                        lane.disarm_rotation();
+                    } else {
+                        lane.arm_rotation_for_pairs(&lane_score.collision_pairs);
+                    }
+                    stall_loss = stall_loss.min(now);
+                }
+                update_weights(&mut lane.weights, &lane_score.collision_pairs);
+                refresh_weighted_loss(&mut lane_score, &lane.weights);
+            }
+            #[cfg(feature = "sparse-rotation")]
+            lane.disarm_rotation();
+            let queries = lane
+                .counters
+                .surrogate_evaluations
+                .saturating_sub(queries_before);
+            lane.compression = None;
+            (
+                failure,
+                lane_state,
+                lane_score,
+                std::mem::take(&mut lane.weights),
+                lane_sweeps,
+                queries,
+            )
+        });
+        // A failure on any worker is the schedule's failure, and it is the
+        // lowest-ordinal one so that two processes report the same error.
+        let mut outcomes = outcomes;
+        for outcome in outcomes.iter_mut() {
+            if let Some(error) = outcome.0.take() {
+                return Err(error);
+            }
+        }
+        // The reduce, and the whole of the determinism argument above it:
+        // a total order on (feasible, common loss, worker ordinal). The
+        // ordinal tiebreak is what makes it total - two workers that find
+        // equally good states must not be separated by which finished
+        // first - and `total_cmp` is what keeps the middle term a total
+        // order over `f64`.
+        let mut winner = 0usize;
+        for candidate in 1..outcomes.len() {
+            let (_, _, best_score, ..) = &outcomes[winner];
+            let (_, _, other_score, ..) = &outcomes[candidate];
+            let better = match other_score.feasible().cmp(&best_score.feasible()) {
+                Ordering::Greater => true,
+                Ordering::Less => false,
+                Ordering::Equal => {
+                    other_score.common_loss().total_cmp(&best_score.common_loss()) == Ordering::Less
+                }
+            };
+            if better {
+                winner = candidate;
+            }
+        }
+        let step_queries: usize = outcomes
+            .iter()
+            .map(|(_, _, _, _, _, queries)| *queries)
+            .sum();
+        let (_, winner_state, winner_score, winner_weights, winner_sweeps, winner_queries) =
+            outcomes
+                .into_iter()
+                .nth(winner)
+                .expect("the reduce always names a worker");
+        self.state = winner_state;
+        self.score = winner_score;
+        self.search.weights = winner_weights;
+        self.global_sweep += winner_sweeps;
+        // The clock's sweep counter follows the *adopted* branch, so
+        // `sweepsRun` stays the number of sweeps this schedule's frontier
+        // actually took and stays comparable with the serial arm's. What
+        // the discarded branches cost is reported separately, in queries.
+        for _ in 0..winner_sweeps {
+            self.schedule.note_sweep();
+        }
+        self.fan_out_queries = self.fan_out_queries.saturating_add(step_queries);
+        self.parallel_report.fanned_out_steps += 1;
+        self.parallel_report.winner_queries += winner_queries;
+        self.parallel_report.discarded_queries += step_queries.saturating_sub(winner_queries);
+        self.parallel_report.lane_wins[winner] += 1;
+        if winner != 0 {
+            self.parallel_report.steps_won_off_lane_zero += 1;
+        }
+        Ok(winner_sweeps)
+    }
+
+    /// Design C: the witness, when design B's stall outlived the step.
+    ///
+    /// The trigger is deliberately the narrowest one available: the step ran
+    /// its whole sweep budget, the frontier is still infeasible, and the
+    /// rungs the violating pieces were offered did not clear it either. That
+    /// is the state in which translation has fixpointed *and* sparse rotation
+    /// has failed to move it, which is the only state a whole-parent solve
+    /// could be worth its price in.
+    ///
+    /// It runs on `confirmed_state`, not on the frontier, and that is a
+    /// requirement rather than a preference: the certificate's line search
+    /// ends at `scale = 0` - the parent itself - and asserts that rung
+    /// validates, so handing it an infeasible frontier makes it error out
+    /// rather than answer. `confirmed_state` is the deepest layout an exact
+    /// confirmation has accepted, so it is legal by construction.
+    ///
+    /// What comes back is already exactly validated by `validate_publication`
+    /// at the scale the line search settled on, so "apply the witness vector
+    /// as a candidate, validate exactly" is satisfied inside the certificate
+    /// and the schedule's own confirmation is not spent twice. It is still
+    /// re-measured here through `coupled_independent_source_depth`, on the
+    /// untouched source rings, because that - and not the certificate's own
+    /// measure - is the number this mode publishes on.
+    #[cfg(all(feature = "sparse-rotation", feature = "se2-rigidity-certificate"))]
+    fn run_se2_witness(&mut self, sweeps_run: usize) {
+        let Some(witness_settings) = self.relaxed_settings.se2_witness else {
+            return;
+        };
+        let stalled = !self.score.feasible() && sweeps_run >= self.sweeps_per_step.max(1);
+        // The certificate is a deterministic function of `(parent, trust,
+        // iterations)`, so calling it twice on the same incumbent spends a
+        // slice to learn what the previous call already returned. The floor
+        // moves only when a confirmation accepts the frontier, which is
+        // exactly the event that makes a second call worth its price.
+        let fresh = self
+            .se2_witness_last_floor
+            .is_none_or(|floor| grid_key(floor) != grid_key(self.schedule.floor_mm()));
+        if !(stalled && fresh && self.se2_witness_calls < witness_settings.max_calls) {
+            return;
+        }
         let started = Instant::now();
-        let placements = to_fast_placements(&state, pieces);
-        if confirm_placements(pieces, &placements, fast_settings, confirm_in_parallel).is_ok() {
-            if let Ok(raw_depth_mm) =
-                coupled_independent_source_depth(pieces, &placements, fast_settings)
-            {
-                schedule.note_confirmation_attempt();
-                schedule.note_confirmed();
-                if grid_key(raw_depth_mm) < grid_key(published_depth_mm) {
-                    published_depth_mm = raw_depth_mm;
-                    published_placements = placements;
+        self.se2_witness_calls += 1;
+        self.se2_witness_last_floor = Some(self.schedule.floor_mm());
+        let confirmed_placements = to_fast_placements(&self.confirmed_state, self.pieces);
+        let proposal =
+            crate::search::general_micro_legalization::se2_certificate::se2_witness_proposal(
+                self.pieces,
+                &confirmed_placements,
+                self.fast_settings,
+                witness_settings.trust_radius_mm,
+                witness_settings.iterations,
+            );
+        if let Ok(Some(proposal)) = proposal {
+            if proposal.moved_pieces > 0 {
+                if let Ok(raw_depth_mm) = coupled_independent_source_depth(
+                    self.pieces,
+                    &proposal.placements,
+                    self.fast_settings,
+                ) {
+                    if grid_key(raw_depth_mm) < grid_key(self.published_depth_mm) {
+                        self.se2_witness_bought_mm += self.published_depth_mm - raw_depth_mm;
+                        self.published_depth_mm = raw_depth_mm;
+                        self.published_placements = proposal.placements;
+                        self.se2_witness_accepted += 1;
+                    }
                 }
             }
         }
-        confirmation_ms += started.elapsed().as_secs_f64() * 1_000.0;
+        self.se2_witness_ms += started.elapsed().as_secs_f64() * 1_000.0;
     }
 
-    schedule.may_step(queries_spent!());
-    let mut report = schedule.report();
-    #[cfg(feature = "parallel-compression-schedule")]
-    {
-        report.parallel = parallel_report;
+    #[cfg(not(all(feature = "sparse-rotation", feature = "se2-rigidity-certificate")))]
+    #[inline(always)]
+    fn run_se2_witness(&mut self, _sweeps_run: usize) {}
+
+    /// The last state the frontier reached never gets a scheduled confirmation
+    /// if the run ended between cadences, and it is the deepest one there is.
+    ///
+    /// It runs when the *slice* ends and never when a *batch* does, which is
+    /// the one asymmetry between the two arms and the reason it is a named
+    /// function: a batched slice that confirmed its frontier at every batch
+    /// boundary would ask the exact tier N times where the atomic slice asks it
+    /// once, and would neither reproduce the monolith nor be honest about what
+    /// it spent.
+    fn finish_tail(&mut self) -> Result<(), GeneralFastError> {
+        if self.score.feasible() {
+            let started = Instant::now();
+            let placements = to_fast_placements(&self.state, self.pieces);
+            if confirm_placements(
+                self.pieces,
+                &placements,
+                self.fast_settings,
+                self.confirm_in_parallel,
+            )
+            .is_ok()
+            {
+                if let Ok(raw_depth_mm) =
+                    coupled_independent_source_depth(self.pieces, &placements, self.fast_settings)
+                {
+                    self.schedule.note_confirmation_attempt();
+                    self.schedule.note_confirmed();
+                    if grid_key(raw_depth_mm) < grid_key(self.published_depth_mm) {
+                        self.published_depth_mm = raw_depth_mm;
+                        self.published_placements = placements;
+                    }
+                }
+            }
+            self.confirmation_ms += started.elapsed().as_secs_f64() * 1_000.0;
+        }
+        let spent = self.queries_spent();
+        self.schedule.may_step(spent);
+        Ok(())
     }
-    report.start_depth_mm = start_depth_mm;
-    report.parent_boundary_violations = parent_boundary_violations;
-    report.parent_collision_pairs = parent_collision_pairs;
-    report.parent_proxy_feasible = parent_proxy_feasible;
-    report.parent_entry_loss = parent_entry_loss;
-    report.entry_legalization_armed = schedule_settings.legalize_entry;
-    report.entry_legalization_run = entry_legalization_run;
-    report.entry_legalization_resolved = entry_legalization_resolved;
-    report.entry_legalization_accepted = entry_legalization_accepted;
-    report.entry_legalization_ms = entry_legalization_ms;
-    report.entry_legalization_reason = entry_legalization_reason;
-    report.entry_legalization_violating_pairs_before = entry_legalization_pairs_before;
-    report.entry_legalization_violating_pairs_after = entry_legalization_pairs_after;
-    report.entry_legalization_boundary_pieces_before = entry_legalization_boundary_before;
-    report.entry_legalization_boundary_pieces_after = entry_legalization_boundary_after;
-    report.entry_proxy_feasible = entry_proxy_feasible;
-    report.entry_collision_pairs = entry_collision_pairs;
-    report.entry_boundary_violations = entry_boundary_violations;
-    report.entry_loss = entry_loss;
-    report.entry_source_depth_mm = entry_source_depth_mm;
-    report.entry_depth_loss_mm = entry_depth_loss_mm;
-    report.requested_drop_mm = requested_drop_mm;
-    report.aborted_barren_probe = aborted_barren_probe;
-    report.probe_steps = probe_steps;
-    report.current_pose_overlay = relaxed_settings.current_pose_overlay;
-    report.current_pose_overlay_entries = overlay_entries;
-    report.current_pose_overlay_off_grid_pieces = overlay_off_grid_pieces;
-    report.current_pose_overlay_setup_ms = overlay_setup_ms;
-    report.parent_pair_classification = parent_pair_classification;
-    // The continuous-rotation operator's own account of itself. Read off the
-    // schedule lane's counters, which - unlike the coordinator's work meter -
-    // are live whether or not profiling is recording, so a wall-budget run
-    // reports them exactly as a work-budget run does. On a fanned-out slice the
-    // repair happens on the workers, so their counters are folded in here for
-    // the same reason `fan_out_queries` is: an operator that only counted the
-    // lane that did not do the work would report zero.
-    report.continuous_rotation = continuous_rotation_report_armed(relaxed_settings);
-    {
-        let mut counters = search.counters;
+
+    /// The slice's report, and the layout it publishes.
+    #[allow(clippy::type_complexity)]
+    fn finish(
+        self,
+        entry: ScheduleSliceEntry,
+    ) -> Result<
+        (
+            Vec<GeneralFastPlacement>,
+            f64,
+            GeneralCompressionScheduleDiagnostics,
+        ),
+        GeneralFastError,
+    > {
+        let mut report = self.schedule.report();
+        report.checkpoints = self.checkpoints;
         #[cfg(feature = "parallel-compression-schedule")]
-        for worker in &repair_workers {
-            counters.accumulate(worker.counters);
-        }
-        report.rotation_rungs_proposed = counters.rotation_rungs_proposed;
-        report.rotation_rungs_improved = counters.rotation_rungs_improved;
-        report.mirror_toggles_proposed = counters.mirror_toggles_proposed;
-        report.mirror_toggles_improved = counters.mirror_toggles_improved;
-        report.rotation_accepted_moves = counters.rotation_accepted_moves;
-        report.accepted_moves = counters.accepted_moves;
-        report.rotation_loss_bought_mm = counters.rotation_loss_bought;
-        report.translation_loss_bought_mm = counters.translation_loss_bought;
-        report.rotation_surrogate_builds = counters.rotation_surrogate_builds;
-        report.rotation_surrogate_hits = counters.rotation_surrogate_hits;
-        report.rotation_surrogate_evictions = counters.rotation_surrogate_evictions;
-        report.rotation_surrogate_build_ms =
-            counters.rotation_surrogate_build_nanos as f64 / 1_000_000.0;
-        report.rotation_surrogate_cells = counters.rotation_surrogate_cells;
-        report.rotation_builds_refused = counters.rotation_builds_refused;
-        #[cfg(feature = "sparse-rotation")]
         {
-            report.sparse_rotation = relaxed_settings.sparse_rotation;
-            report.rotation_equivariant_offset = relaxed_settings.rotation_equivariant_offset;
-            report.rotation_equivariant_builds = counters.rotation_equivariant_builds;
-            report.rotation_equivariant_fallbacks = counters.rotation_equivariant_fallbacks;
-            report.sparse_rotation_episodes = counters.sparse_rotation_episodes;
-            report.sparse_rotation_pieces_armed = counters.sparse_rotation_pieces_armed;
-            report.sparse_rotation_sweeps = counters.sparse_rotation_sweeps;
-            report.se2_witness_calls = se2_witness_calls;
-            report.se2_witness_accepted = se2_witness_accepted;
-            report.se2_witness_ms = se2_witness_ms;
-            report.se2_witness_bought_mm = se2_witness_bought_mm;
+            report.parallel = self.parallel_report;
         }
+        report.start_depth_mm = entry.start_depth_mm;
+        report.parent_boundary_violations = entry.parent_boundary_violations;
+        report.parent_collision_pairs = entry.parent_collision_pairs;
+        report.parent_proxy_feasible = entry.parent_proxy_feasible;
+        report.parent_entry_loss = entry.parent_entry_loss;
+        report.entry_legalization_armed = self.schedule_settings.legalize_entry;
+        report.entry_legalization_run = entry.entry_legalization_run;
+        report.entry_legalization_resolved = entry.entry_legalization_resolved;
+        report.entry_legalization_accepted = entry.entry_legalization_accepted;
+        report.entry_legalization_ms = entry.entry_legalization_ms;
+        report.entry_legalization_reason = entry.entry_legalization_reason;
+        report.entry_legalization_violating_pairs_before = entry.entry_legalization_pairs_before;
+        report.entry_legalization_violating_pairs_after = entry.entry_legalization_pairs_after;
+        report.entry_legalization_boundary_pieces_before = entry.entry_legalization_boundary_before;
+        report.entry_legalization_boundary_pieces_after = entry.entry_legalization_boundary_after;
+        report.entry_proxy_feasible = entry.entry_proxy_feasible;
+        report.entry_collision_pairs = entry.entry_collision_pairs;
+        report.entry_boundary_violations = entry.entry_boundary_violations;
+        report.entry_loss = entry.entry_loss;
+        report.entry_source_depth_mm = entry.entry_source_depth_mm;
+        report.entry_depth_loss_mm = entry.entry_depth_loss_mm;
+        report.requested_drop_mm = self.requested_drop_mm;
+        report.aborted_barren_probe = self.aborted_barren_probe;
+        report.probe_steps = self.probe_steps;
+        report.current_pose_overlay = self.relaxed_settings.current_pose_overlay;
+        report.current_pose_overlay_entries = entry.overlay_entries;
+        report.current_pose_overlay_off_grid_pieces = entry.overlay_off_grid_pieces;
+        report.current_pose_overlay_setup_ms = entry.overlay_setup_ms;
+        report.parent_pair_classification = entry.parent_pair_classification;
+        // The continuous-rotation operator's own account of itself. Read off the
+        // schedule lane's counters, which - unlike the coordinator's work meter -
+        // are live whether or not profiling is recording, so a wall-budget run
+        // reports them exactly as a work-budget run does. On a fanned-out slice the
+        // repair happens on the workers, so their counters are folded in here for
+        // the same reason `fan_out_queries` is: an operator that only counted the
+        // lane that did not do the work would report zero.
+        report.continuous_rotation = continuous_rotation_report_armed(self.relaxed_settings);
+        {
+            let mut counters = self.search.counters;
+            #[cfg(feature = "parallel-compression-schedule")]
+            for worker in &self.repair_workers {
+                counters.accumulate(worker.counters);
+            }
+            report.rotation_rungs_proposed = counters.rotation_rungs_proposed;
+            report.rotation_rungs_improved = counters.rotation_rungs_improved;
+            report.mirror_toggles_proposed = counters.mirror_toggles_proposed;
+            report.mirror_toggles_improved = counters.mirror_toggles_improved;
+            report.rotation_accepted_moves = counters.rotation_accepted_moves;
+            report.accepted_moves = counters.accepted_moves;
+            report.rotation_loss_bought_mm = counters.rotation_loss_bought;
+            report.translation_loss_bought_mm = counters.translation_loss_bought;
+            report.rotation_surrogate_builds = counters.rotation_surrogate_builds;
+            report.rotation_surrogate_hits = counters.rotation_surrogate_hits;
+            report.rotation_surrogate_evictions = counters.rotation_surrogate_evictions;
+            report.rotation_surrogate_build_ms =
+                counters.rotation_surrogate_build_nanos as f64 / 1_000_000.0;
+            report.rotation_surrogate_cells = counters.rotation_surrogate_cells;
+            report.rotation_builds_refused = counters.rotation_builds_refused;
+            #[cfg(feature = "sparse-rotation")]
+            {
+                report.sparse_rotation = self.relaxed_settings.sparse_rotation;
+                report.rotation_equivariant_offset =
+                    self.relaxed_settings.rotation_equivariant_offset;
+                report.rotation_equivariant_builds = counters.rotation_equivariant_builds;
+                report.rotation_equivariant_fallbacks = counters.rotation_equivariant_fallbacks;
+                report.sparse_rotation_episodes = counters.sparse_rotation_episodes;
+                report.sparse_rotation_pieces_armed = counters.sparse_rotation_pieces_armed;
+                report.sparse_rotation_sweeps = counters.sparse_rotation_sweeps;
+                report.se2_witness_calls = self.se2_witness_calls;
+                report.se2_witness_accepted = self.se2_witness_accepted;
+                report.se2_witness_ms = self.se2_witness_ms;
+                report.se2_witness_bought_mm = self.se2_witness_bought_mm;
+            }
+        }
+        report.confirmation_ms = self.confirmation_ms;
+        report.repair_ms = self.repair_ms;
+        // Computed before the rows are moved into the report, because the
+        // digest is the only form of them the coordinator's document carries.
+        report.step_digest =
+            crate::search::compression_schedule::step_rows_digest(&self.rows);
+        report.steps = self.rows;
+        Ok((self.published_placements, self.published_depth_mm, report))
     }
-    report.confirmation_ms = confirmation_ms;
-    report.repair_ms = repair_ms;
-    report.steps = rows;
-    Ok((published_placements, published_depth_mm, report))
 }
 
 /// Mode 27: the standalone micro-legalization probe.
@@ -20580,6 +20884,131 @@ mod tests {
             report.work_units,
             report.candidate_queries + 5 * report.exact_pair_tests
         );
+    }
+
+    /// Sol review 8 §4 spend 1's gate, at unit scale: **N concatenated batches
+    /// reproduce the monolithic slice at equal work**.
+    ///
+    /// The batteries in `docs/experiments/replan/` run this from the request on
+    /// three fixtures, which is the form that matters; this is the form that
+    /// runs in every suite, in every feature configuration, on every commit.
+    ///
+    /// It compares the step digest and not the aggregates, on purpose: two
+    /// slices that took different walks to the same depth would agree on
+    /// `stepsTaken`, `workUnits` and `finalDepthMm` and disagree here. And it
+    /// asserts the batching actually happened - a budget so large that the
+    /// slice runs in one batch would make the whole test vacuous, which is the
+    /// failure mode a "batches reproduce the monolith" test has.
+    #[test]
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn concatenated_batches_reproduce_the_monolithic_slice() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+        let slice = |batch: Option<usize>| {
+            let mut settings = coupled_experiment_test_settings(9);
+            settings.persistent_vacancy_mode = 34;
+            settings.persistent_vacancy_target_depth_mm = Some(1.0);
+            settings.compression_schedule = Some(CompressionScheduleSettings {
+                sweeps_per_step: 2,
+                confirm_every: 2,
+                // Armed, so the batch boundary has to survive a rollback as
+                // well as a plain step: a rollback rewrites the frontier, the
+                // score and the weights, and a batch that ended on one is the
+                // hardest resumption there is.
+                rollback_after_steps: 8,
+                work_cap_queries: Some(200_000),
+                continue_past_bound: false,
+                repair_policy: CompressionRepairPolicy::MicroLegalizeOnReject,
+                batch_work_units: batch,
+                ..CompressionScheduleSettings::default()
+            });
+            JobPool::new(Some(1)).run_scoped(|| {
+                run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+            })
+        };
+        let monolith = slice(None);
+        let monolith_report = monolith
+            .compression_schedule
+            .expect("an attempted schedule reports");
+        assert!(monolith_report.checkpoints.is_empty(), "the atomic arm records no checkpoint");
+        assert!(monolith_report.steps_taken > 0);
+
+        for batch in [20_000usize, 5_000, 1_000] {
+            let batched = slice(Some(batch));
+            let report = batched
+                .compression_schedule
+                .expect("an attempted schedule reports");
+            assert!(
+                report.checkpoints.len() > 1,
+                "batch {batch} produced {} checkpoints, so this cell proves nothing",
+                report.checkpoints.len()
+            );
+            assert_eq!(
+                report.step_digest, monolith_report.step_digest,
+                "batch {batch}: the batched slice walked a different walk"
+            );
+            assert_eq!(report.steps_taken, monolith_report.steps_taken);
+            assert_eq!(report.work_units, monolith_report.work_units);
+            assert_eq!(report.sweeps_run, monolith_report.sweeps_run);
+            assert_eq!(
+                report.confirmations_accepted,
+                monolith_report.confirmations_accepted
+            );
+            assert_eq!(report.rollbacks, monolith_report.rollbacks);
+            assert_eq!(report.final_depth_mm, monolith_report.final_depth_mm);
+            assert_eq!(
+                batched.independent_depth_mm,
+                monolith.independent_depth_mm,
+                "batch {batch}: the published layout moved"
+            );
+            assert_eq!(
+                batched.final_placement_fingerprint,
+                monolith.final_placement_fingerprint
+            );
+            // The checkpoint contract: every batch but the last hands back a
+            // resumable frontier, the last one says it finished, and the
+            // deepest-confirmed slot never gets looser.
+            let last = report.checkpoints.len() - 1;
+            for (index, point) in report.checkpoints.iter().enumerate() {
+                assert_eq!(point.batch, index);
+                assert_eq!(point.finished, index == last);
+                assert!(
+                    point.frontier_mm <= point.floor_mm + f64::EPSILON,
+                    "the frontier is never looser than the floor"
+                );
+                if index > 0 {
+                    let previous = &report.checkpoints[index - 1];
+                    assert!(point.steps_taken >= previous.steps_taken);
+                    assert!(point.work_units >= previous.work_units);
+                    assert!(point.floor_mm <= previous.floor_mm + f64::EPSILON);
+                    // The anytime contract: the incumbent a caller may keep at
+                    // a checkpoint is never worse than the one it could have
+                    // kept at the checkpoint before.
+                    assert!(
+                        point.published_depth_mm <= previous.published_depth_mm + f64::EPSILON
+                    );
+                }
+            }
+            assert_eq!(
+                report.checkpoints[last].steps_taken,
+                report.steps_taken,
+                "the last checkpoint is the slice's own end"
+            );
+        }
     }
 
     /// An L, for the `CurrentPoseOverlay` tests.

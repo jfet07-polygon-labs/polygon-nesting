@@ -1,0 +1,2487 @@
+{
+ "binary": "bin/ship-meas",
+ "requests": [
+  "mixed-61",
+  "shapes-17",
+  "triangle-20"
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "targets": [
+  "3000",
+  "10000"
+ ],
+ "arms": [
+  "plan",
+  "replan",
+  "wall"
+ ],
+ "rows": [
+  {
+   "request": "mixed-61",
+   "seed": 0,
+   "arm": "plan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=13:15:17:19,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.2224599439650774,
+     "rawDepthMm": 181.589,
+     "dualGateValid": true,
+     "planUnits": 9357620,
+     "tranches": 0,
+     "finalUnits": 9357620,
+     "digest": "49f32e52d273e192",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.2427150160074234,
+     "rawDepthMm": 181.589,
+     "dualGateValid": true,
+     "planUnits": 9357620,
+     "tranches": 0,
+     "finalUnits": 9357620,
+     "digest": "49f32e52d273e192",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 181.589,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.2427150160074234
+  },
+  {
+   "request": "mixed-61",
+   "seed": 0,
+   "arm": "replan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=13:15:17:19,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.2179214410716668,
+     "rawDepthMm": 181.589,
+     "dualGateValid": true,
+     "planUnits": 9357620,
+     "tranches": 0,
+     "finalUnits": 9357620,
+     "digest": "49f32e52d273e192",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.2259073939640075,
+     "rawDepthMm": 181.589,
+     "dualGateValid": true,
+     "planUnits": 9357620,
+     "tranches": 0,
+     "finalUnits": 9357620,
+     "digest": "49f32e52d273e192",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 181.589,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.2259073939640075
+  },
+  {
+   "request": "mixed-61",
+   "seed": 0,
+   "arm": "wall",
+   "targetMs": 3000,
+   "spec": "wall=3000,cells=13:15:17:19,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.681240823934786,
+     "rawDepthMm": 179.5868589805926,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "ff2739e965d0b8a7",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.6592955159721896,
+     "rawDepthMm": 179.5868589805926,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "0dd75be3bfceadaa",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 179.5868589805926,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.681240823934786
+  },
+  {
+   "request": "mixed-61",
+   "seed": 1,
+   "arm": "plan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=11:15:21:27,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.3720080609200522,
+     "rawDepthMm": 179.69,
+     "dualGateValid": true,
+     "planUnits": 10761264,
+     "tranches": 0,
+     "finalUnits": 10761264,
+     "digest": "bdd0d64894b1088e",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.3164903540164232,
+     "rawDepthMm": 179.69,
+     "dualGateValid": true,
+     "planUnits": 10761264,
+     "tranches": 0,
+     "finalUnits": 10761264,
+     "digest": "bdd0d64894b1088e",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 179.69,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.3720080609200522
+  },
+  {
+   "request": "mixed-61",
+   "seed": 1,
+   "arm": "replan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=11:15:21:27,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.3339351480826735,
+     "rawDepthMm": 179.69,
+     "dualGateValid": true,
+     "planUnits": 10761264,
+     "tranches": 0,
+     "finalUnits": 10761264,
+     "digest": "bdd0d64894b1088e",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.3350288859801367,
+     "rawDepthMm": 179.69,
+     "dualGateValid": true,
+     "planUnits": 10761264,
+     "tranches": 0,
+     "finalUnits": 10761264,
+     "digest": "bdd0d64894b1088e",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 179.69,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.3350288859801367
+  },
+  {
+   "request": "mixed-61",
+   "seed": 1,
+   "arm": "wall",
+   "targetMs": 3000,
+   "spec": "wall=3000,cells=11:15:21:27,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.5971427620388567,
+     "rawDepthMm": 179.63299999999998,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "a4cb1ab75cc7c38a",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.587452418054454,
+     "rawDepthMm": 179.63299999999998,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "c11c8c1bab312b99",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 179.63299999999998,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.5971427620388567
+  },
+  {
+   "request": "mixed-61",
+   "seed": 2,
+   "arm": "plan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=15:23:31:39,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.2981644771061838,
+     "rawDepthMm": 179.662,
+     "dualGateValid": true,
+     "planUnits": 9357620,
+     "tranches": 0,
+     "finalUnits": 9357620,
+     "digest": "20ffdb57830433bf",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.300806541927159,
+     "rawDepthMm": 179.662,
+     "dualGateValid": true,
+     "planUnits": 9357620,
+     "tranches": 0,
+     "finalUnits": 9357620,
+     "digest": "20ffdb57830433bf",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 179.662,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.300806541927159
+  },
+  {
+   "request": "mixed-61",
+   "seed": 2,
+   "arm": "replan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=15:23:31:39,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.29882810509298,
+     "rawDepthMm": 179.662,
+     "dualGateValid": true,
+     "planUnits": 9357620,
+     "tranches": 0,
+     "finalUnits": 9357620,
+     "digest": "20ffdb57830433bf",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.2783599629765376,
+     "rawDepthMm": 179.662,
+     "dualGateValid": true,
+     "planUnits": 9357620,
+     "tranches": 0,
+     "finalUnits": 9357620,
+     "digest": "20ffdb57830433bf",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 179.662,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.29882810509298
+  },
+  {
+   "request": "mixed-61",
+   "seed": 2,
+   "arm": "wall",
+   "targetMs": 3000,
+   "spec": "wall=3000,cells=15:23:31:39,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.533781092031859,
+     "rawDepthMm": 179.006,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "fe76fd0b56eea3ae",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.5085819099331275,
+     "rawDepthMm": 179.006,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "9cae2ac1fe4960f5",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 179.006,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.533781092031859
+  },
+  {
+   "request": "shapes-17",
+   "seed": 0,
+   "arm": "plan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=13:15:17:19,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 3.4135208670049906,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 2660019,
+     "tranches": 0,
+     "finalUnits": 2660019,
+     "digest": "2bcf6ab180fdcdc6",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 3.4493944250280038,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 2313060,
+     "tranches": 0,
+     "finalUnits": 2313060,
+     "digest": "fec5851021836940",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": false,
+   "wallMaxSeconds": 3.4493944250280038
+  },
+  {
+   "request": "shapes-17",
+   "seed": 0,
+   "arm": "replan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=13:15:17:19,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 3.4604638339951634,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 2313060,
+     "tranches": 0,
+     "finalUnits": 2313060,
+     "digest": "fec5851021836940",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 3.4349187209736556,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 2313060,
+     "tranches": 0,
+     "finalUnits": 2313060,
+     "digest": "fec5851021836940",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 3.4604638339951634
+  },
+  {
+   "request": "shapes-17",
+   "seed": 0,
+   "arm": "wall",
+   "targetMs": 3000,
+   "spec": "wall=3000,cells=13:15:17:19,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 1.8530337871052325,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "ff62f77ab3b99283",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 1.8152888310141861,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "11ab858feec6fb7f",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 1.8530337871052325
+  },
+  {
+   "request": "shapes-17",
+   "seed": 1,
+   "arm": "plan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=11:15:21:27,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.9900268759811297,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 2313060,
+     "tranches": 0,
+     "finalUnits": 2313060,
+     "digest": "501c71d00174053f",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.9848173370119184,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 2313060,
+     "tranches": 0,
+     "finalUnits": 2313060,
+     "digest": "501c71d00174053f",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.9900268759811297
+  },
+  {
+   "request": "shapes-17",
+   "seed": 1,
+   "arm": "replan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=11:15:21:27,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 3.0160960449138656,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 2313060,
+     "tranches": 0,
+     "finalUnits": 2313060,
+     "digest": "501c71d00174053f",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 3.011715673026629,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 2313060,
+     "tranches": 0,
+     "finalUnits": 2313060,
+     "digest": "501c71d00174053f",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 3.0160960449138656
+  },
+  {
+   "request": "shapes-17",
+   "seed": 1,
+   "arm": "wall",
+   "targetMs": 3000,
+   "spec": "wall=3000,cells=11:15:21:27,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 1.8602737579494715,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "62cba011ef06ac27",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 1.850114919943735,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "750fa018f5dcf09f",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 1.8602737579494715
+  },
+  {
+   "request": "shapes-17",
+   "seed": 2,
+   "arm": "plan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=15:23:31:39,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 3.0234424729133025,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 2660019,
+     "tranches": 0,
+     "finalUnits": 2660019,
+     "digest": "ae080b34b6c9ef83",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 1.9110575360246003,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 2313060,
+     "tranches": 0,
+     "finalUnits": 2313060,
+     "digest": "711ea8d49e8352cc",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": false,
+   "wallMaxSeconds": 3.0234424729133025
+  },
+  {
+   "request": "shapes-17",
+   "seed": 2,
+   "arm": "replan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=15:23:31:39,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 1.9234114909777418,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 2313060,
+     "tranches": 0,
+     "finalUnits": 2313060,
+     "digest": "711ea8d49e8352cc",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 1.9408029509941116,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 2313060,
+     "tranches": 0,
+     "finalUnits": 2313060,
+     "digest": "711ea8d49e8352cc",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 1.9408029509941116
+  },
+  {
+   "request": "shapes-17",
+   "seed": 2,
+   "arm": "wall",
+   "targetMs": 3000,
+   "spec": "wall=3000,cells=15:23:31:39,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 1.9018028338905424,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "88401632d27ee8e7",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 1.8792207220103592,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "f725d755382ac8f4",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 1.9018028338905424
+  },
+  {
+   "request": "triangle-20",
+   "seed": 0,
+   "arm": "plan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=13:15:17:19,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.1308022119337693,
+     "rawDepthMm": 70.7711336311948,
+     "dualGateValid": true,
+     "planUnits": 14231771,
+     "tranches": 0,
+     "finalUnits": 14231771,
+     "digest": "53266db7bb447ef5",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.1332937439437956,
+     "rawDepthMm": 70.7711336311948,
+     "dualGateValid": true,
+     "planUnits": 14231771,
+     "tranches": 0,
+     "finalUnits": 14231771,
+     "digest": "53266db7bb447ef5",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 70.7711336311948,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.1332937439437956
+  },
+  {
+   "request": "triangle-20",
+   "seed": 0,
+   "arm": "replan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=13:15:17:19,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 4.575294284964912,
+     "rawDepthMm": 70.7711336311948,
+     "dualGateValid": true,
+     "planUnits": 14231771,
+     "tranches": 1,
+     "finalUnits": 18821518,
+     "digest": "e1075b3ee6fca0d1",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 4.5612610130338,
+     "rawDepthMm": 70.7711336311948,
+     "dualGateValid": true,
+     "planUnits": 14231771,
+     "tranches": 1,
+     "finalUnits": 18821518,
+     "digest": "e1075b3ee6fca0d1",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 70.7711336311948,
+   "dualGateValid": true,
+   "tranches": 1,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 4.575294284964912
+  },
+  {
+   "request": "triangle-20",
+   "seed": 0,
+   "arm": "wall",
+   "targetMs": 3000,
+   "spec": "wall=3000,cells=13:15:17:19,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 3.137047203956172,
+     "rawDepthMm": 70.7711336311948,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "edae0835fef37624",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 3.1316525930305943,
+     "rawDepthMm": 70.7711336311948,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "c13c5ee13acc098b",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 70.7711336311948,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 3.137047203956172
+  },
+  {
+   "request": "triangle-20",
+   "seed": 1,
+   "arm": "plan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=11:15:21:27,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 1.7669497639872134,
+     "rawDepthMm": 70.74684851410467,
+     "dualGateValid": true,
+     "planUnits": 16366537,
+     "tranches": 0,
+     "finalUnits": 16366537,
+     "digest": "873f558e75044c94",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 1.7410663350019604,
+     "rawDepthMm": 70.74684851410467,
+     "dualGateValid": true,
+     "planUnits": 16366537,
+     "tranches": 0,
+     "finalUnits": 16366537,
+     "digest": "873f558e75044c94",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 70.74684851410467,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 1.7669497639872134
+  },
+  {
+   "request": "triangle-20",
+   "seed": 1,
+   "arm": "replan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=11:15:21:27,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.3873846649657935,
+     "rawDepthMm": 70.74684851410467,
+     "dualGateValid": true,
+     "planUnits": 16366537,
+     "tranches": 2,
+     "finalUnits": 21644745,
+     "digest": "0ae8352630c9866c",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.3850685979705304,
+     "rawDepthMm": 70.74684851410467,
+     "dualGateValid": true,
+     "planUnits": 16366537,
+     "tranches": 2,
+     "finalUnits": 21644745,
+     "digest": "0ae8352630c9866c",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 70.74684851410467,
+   "dualGateValid": true,
+   "tranches": 2,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.3873846649657935
+  },
+  {
+   "request": "triangle-20",
+   "seed": 1,
+   "arm": "wall",
+   "targetMs": 3000,
+   "spec": "wall=3000,cells=11:15:21:27,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.5203931940486655,
+     "rawDepthMm": 70.74684851410467,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "7c1a8ecd81733a75",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.5281084259040654,
+     "rawDepthMm": 70.74684851410467,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "dc5b07de690aae51",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 70.74684851410467,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.5281084259040654
+  },
+  {
+   "request": "triangle-20",
+   "seed": 2,
+   "arm": "plan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=15:23:31:39,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 2.2589909770758823,
+     "rawDepthMm": 70.74727715491606,
+     "dualGateValid": true,
+     "planUnits": 16366537,
+     "tranches": 0,
+     "finalUnits": 16366537,
+     "digest": "e287a56859363168",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 2.2513069259002805,
+     "rawDepthMm": 70.74727715491606,
+     "dualGateValid": true,
+     "planUnits": 16366537,
+     "tranches": 0,
+     "finalUnits": 16366537,
+     "digest": "e287a56859363168",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 70.74727715491606,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 2.2589909770758823
+  },
+  {
+   "request": "triangle-20",
+   "seed": 2,
+   "arm": "replan",
+   "targetMs": 3000,
+   "spec": "plan=3000,cells=15:23:31:39,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 4.955069178016856,
+     "rawDepthMm": 70.74727715491606,
+     "dualGateValid": true,
+     "planUnits": 16366537,
+     "tranches": 1,
+     "finalUnits": 21644745,
+     "digest": "9fa71b4c565d9c62",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 4.945437966031022,
+     "rawDepthMm": 70.74727715491606,
+     "dualGateValid": true,
+     "planUnits": 14231771,
+     "tranches": 2,
+     "finalUnits": 21644745,
+     "digest": "7610888c5a1ca629",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 70.74727715491606,
+   "dualGateValid": true,
+   "tranches": 1,
+   "trancheCountsAgree": false,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 4.955069178016856
+  },
+  {
+   "request": "triangle-20",
+   "seed": 2,
+   "arm": "wall",
+   "targetMs": 3000,
+   "spec": "wall=3000,cells=15:23:31:39,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 3.165060853934847,
+     "rawDepthMm": 70.74264651120441,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "ebffe05ffd2db6a0",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 3.1755067019257694,
+     "rawDepthMm": 70.74264651120441,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "5819e8458917f21b",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 70.74264651120441,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 3.1755067019257694
+  },
+  {
+   "request": "mixed-61",
+   "seed": 0,
+   "arm": "plan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 7.173165354994126,
+     "rawDepthMm": 175.3877782649107,
+     "dualGateValid": true,
+     "planUnits": 24891457,
+     "tranches": 0,
+     "finalUnits": 24891457,
+     "digest": "04d9c78541ff7ac9",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 7.152492798981257,
+     "rawDepthMm": 175.3877782649107,
+     "dualGateValid": true,
+     "planUnits": 24891457,
+     "tranches": 0,
+     "finalUnits": 24891457,
+     "digest": "04d9c78541ff7ac9",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 175.3877782649107,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 7.173165354994126
+  },
+  {
+   "request": "mixed-61",
+   "seed": 0,
+   "arm": "replan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 7.928902080981061,
+     "rawDepthMm": 175.1357388323935,
+     "dualGateValid": true,
+     "planUnits": 24891457,
+     "tranches": 1,
+     "finalUnits": 28625176,
+     "digest": "2eb9280abea15c80",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 7.928377905045636,
+     "rawDepthMm": 175.1357388323935,
+     "dualGateValid": true,
+     "planUnits": 24891457,
+     "tranches": 1,
+     "finalUnits": 28625176,
+     "digest": "2eb9280abea15c80",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 175.1357388323935,
+   "dualGateValid": true,
+   "tranches": 1,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 7.928902080981061
+  },
+  {
+   "request": "mixed-61",
+   "seed": 0,
+   "arm": "wall",
+   "targetMs": 10000,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 9.190031828940846,
+     "rawDepthMm": 170.45272923584588,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "c9fff03a7a05e384",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 10.060918916016817,
+     "rawDepthMm": 168.4836008374388,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "d12a7ededc832617",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": false,
+   "rawDepthMm": 170.45272923584588,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 10.060918916016817
+  },
+  {
+   "request": "mixed-61",
+   "seed": 1,
+   "arm": "plan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 6.421473106951453,
+     "rawDepthMm": 174.17000000000002,
+     "dualGateValid": true,
+     "planUnits": 24891457,
+     "tranches": 0,
+     "finalUnits": 24891457,
+     "digest": "8346c5e16481958f",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 6.3739008529810235,
+     "rawDepthMm": 174.17000000000002,
+     "dualGateValid": true,
+     "planUnits": 24891457,
+     "tranches": 0,
+     "finalUnits": 24891457,
+     "digest": "8346c5e16481958f",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 174.17000000000002,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 6.421473106951453
+  },
+  {
+   "request": "mixed-61",
+   "seed": 1,
+   "arm": "replan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 7.987904174020514,
+     "rawDepthMm": 171.3619986855876,
+     "dualGateValid": true,
+     "planUnits": 24891457,
+     "tranches": 1,
+     "finalUnits": 28625176,
+     "digest": "496ea772ad5ccca6",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 7.947767898091115,
+     "rawDepthMm": 171.3619986855876,
+     "dualGateValid": true,
+     "planUnits": 24891457,
+     "tranches": 1,
+     "finalUnits": 28625176,
+     "digest": "496ea772ad5ccca6",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "tranches": 1,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 7.987904174020514
+  },
+  {
+   "request": "mixed-61",
+   "seed": 1,
+   "arm": "wall",
+   "targetMs": 10000,
+   "spec": "wall=10000,cells=11:15:21:27,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 10.332934382022358,
+     "rawDepthMm": 165.65577826491065,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "cbb7690d0dac8008",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 10.263015549979173,
+     "rawDepthMm": 165.65577826491065,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "afd377cf6e3ee4a8",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 165.65577826491065,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 10.332934382022358
+  },
+  {
+   "request": "mixed-61",
+   "seed": 2,
+   "arm": "plan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 8.299595594988205,
+     "rawDepthMm": 176.16200000000003,
+     "dualGateValid": true,
+     "planUnits": 24891457,
+     "tranches": 0,
+     "finalUnits": 24891457,
+     "digest": "b983407d4a70a250",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 8.342499691061676,
+     "rawDepthMm": 176.16200000000003,
+     "dualGateValid": true,
+     "planUnits": 24891457,
+     "tranches": 0,
+     "finalUnits": 24891457,
+     "digest": "b983407d4a70a250",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 8.342499691061676
+  },
+  {
+   "request": "mixed-61",
+   "seed": 2,
+   "arm": "replan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 8.319768340094015,
+     "rawDepthMm": 176.16200000000003,
+     "dualGateValid": true,
+     "planUnits": 24891457,
+     "tranches": 0,
+     "finalUnits": 24891457,
+     "digest": "b983407d4a70a250",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 8.216288867057301,
+     "rawDepthMm": 176.16200000000003,
+     "dualGateValid": true,
+     "planUnits": 24891457,
+     "tranches": 0,
+     "finalUnits": 24891457,
+     "digest": "b983407d4a70a250",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 8.319768340094015
+  },
+  {
+   "request": "mixed-61",
+   "seed": 2,
+   "arm": "wall",
+   "targetMs": 10000,
+   "spec": "wall=10000,cells=15:23:31:39,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 9.663479909999296,
+     "rawDepthMm": 174.28,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "f7b4b5ff440c1e16",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 9.767066446947865,
+     "rawDepthMm": 174.28,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "5e5987be0aaaa51e",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 174.28,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 9.767066446947865
+  },
+  {
+   "request": "shapes-17",
+   "seed": 0,
+   "arm": "plan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 8.422896281001158,
+     "rawDepthMm": 200.349,
+     "dualGateValid": true,
+     "planUnits": 7075705,
+     "tranches": 0,
+     "finalUnits": 7075705,
+     "digest": "a0ff8cf51a41ebe1",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 8.404023403069004,
+     "rawDepthMm": 200.349,
+     "dualGateValid": true,
+     "planUnits": 7075705,
+     "tranches": 0,
+     "finalUnits": 7075705,
+     "digest": "a0ff8cf51a41ebe1",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 200.349,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 8.422896281001158
+  },
+  {
+   "request": "shapes-17",
+   "seed": 0,
+   "arm": "replan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 8.457370811025612,
+     "rawDepthMm": 200.349,
+     "dualGateValid": true,
+     "planUnits": 7075705,
+     "tranches": 0,
+     "finalUnits": 7075705,
+     "digest": "a0ff8cf51a41ebe1",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 8.44476410804782,
+     "rawDepthMm": 200.349,
+     "dualGateValid": true,
+     "planUnits": 7075705,
+     "tranches": 0,
+     "finalUnits": 7075705,
+     "digest": "a0ff8cf51a41ebe1",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 200.349,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 8.457370811025612
+  },
+  {
+   "request": "shapes-17",
+   "seed": 0,
+   "arm": "wall",
+   "targetMs": 10000,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 9.635786478989758,
+     "rawDepthMm": 200.349,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "dbd5c870a02b6e52",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 9.605783574050292,
+     "rawDepthMm": 200.349,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "65d655d95aef2326",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 200.349,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 9.635786478989758
+  },
+  {
+   "request": "shapes-17",
+   "seed": 1,
+   "arm": "plan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 7.511797706945799,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 7075705,
+     "tranches": 0,
+     "finalUnits": 7075705,
+     "digest": "8f0e92ba9d20980e",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 7.516218626056798,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 7075705,
+     "tranches": 0,
+     "finalUnits": 7075705,
+     "digest": "8f0e92ba9d20980e",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 7.516218626056798
+  },
+  {
+   "request": "shapes-17",
+   "seed": 1,
+   "arm": "replan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 7.441142242983915,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 7075705,
+     "tranches": 0,
+     "finalUnits": 7075705,
+     "digest": "8f0e92ba9d20980e",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 7.495344271999784,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": 7075705,
+     "tranches": 0,
+     "finalUnits": 7075705,
+     "digest": "8f0e92ba9d20980e",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 7.495344271999784
+  },
+  {
+   "request": "shapes-17",
+   "seed": 1,
+   "arm": "wall",
+   "targetMs": 10000,
+   "spec": "wall=10000,cells=11:15:21:27,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 9.67652978503611,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "4a8ed0b76c663a68",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 9.566955202957615,
+     "rawDepthMm": 200.34937729570953,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "6669521a28db1953",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 200.34937729570953,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 9.67652978503611
+  },
+  {
+   "request": "shapes-17",
+   "seed": 2,
+   "arm": "plan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 7.999511956004426,
+     "rawDepthMm": 200.349,
+     "dualGateValid": true,
+     "planUnits": 7075705,
+     "tranches": 0,
+     "finalUnits": 7075705,
+     "digest": "c2472ab9b55d10f7",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 8.00461586099118,
+     "rawDepthMm": 200.349,
+     "dualGateValid": true,
+     "planUnits": 7075705,
+     "tranches": 0,
+     "finalUnits": 7075705,
+     "digest": "c2472ab9b55d10f7",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 200.349,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 8.00461586099118
+  },
+  {
+   "request": "shapes-17",
+   "seed": 2,
+   "arm": "replan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 8.554943555034697,
+     "rawDepthMm": 200.349,
+     "dualGateValid": true,
+     "planUnits": 7075705,
+     "tranches": 1,
+     "finalUnits": 8137061,
+     "digest": "2ad3e337c5ebb38d",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 8.033495679032058,
+     "rawDepthMm": 200.349,
+     "dualGateValid": true,
+     "planUnits": 7075705,
+     "tranches": 0,
+     "finalUnits": 7075705,
+     "digest": "c2472ab9b55d10f7",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 200.349,
+   "dualGateValid": true,
+   "tranches": 1,
+   "trancheCountsAgree": false,
+   "finalUnitsAgree": false,
+   "wallMaxSeconds": 8.554943555034697
+  },
+  {
+   "request": "shapes-17",
+   "seed": 2,
+   "arm": "wall",
+   "targetMs": 10000,
+   "spec": "wall=10000,cells=15:23:31:39,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 9.27343745296821,
+     "rawDepthMm": 200.349,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "ccfb5108dc8487e3",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 9.321566135971807,
+     "rawDepthMm": 200.349,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "cc36957b55de6b58",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 200.349,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 9.321566135971807
+  },
+  {
+   "request": "triangle-20",
+   "seed": 0,
+   "arm": "plan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 7.038280821987428,
+     "rawDepthMm": 70.74196837433173,
+     "dualGateValid": true,
+     "planUnits": 43535314,
+     "tranches": 0,
+     "finalUnits": 43535314,
+     "digest": "1f7a50e42132f741",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 7.124552029999904,
+     "rawDepthMm": 70.74196837433173,
+     "dualGateValid": true,
+     "planUnits": 43535314,
+     "tranches": 0,
+     "finalUnits": 43535314,
+     "digest": "1f7a50e42132f741",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 70.74196837433173,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 7.124552029999904
+  },
+  {
+   "request": "triangle-20",
+   "seed": 0,
+   "arm": "replan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 8.295491809025407,
+     "rawDepthMm": 70.74038313599529,
+     "dualGateValid": true,
+     "planUnits": 43535314,
+     "tranches": 1,
+     "finalUnits": 50065612,
+     "digest": "1f49b52afd1ee167",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 8.322728337021545,
+     "rawDepthMm": 70.74038313599529,
+     "dualGateValid": true,
+     "planUnits": 43535314,
+     "tranches": 1,
+     "finalUnits": 50065612,
+     "digest": "1f49b52afd1ee167",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 70.74038313599529,
+   "dualGateValid": true,
+   "tranches": 1,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 8.322728337021545
+  },
+  {
+   "request": "triangle-20",
+   "seed": 0,
+   "arm": "wall",
+   "targetMs": 10000,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 9.15802855300717,
+     "rawDepthMm": 70.73006941379586,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "60ffbb5a392ef6c5",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 9.107199648045935,
+     "rawDepthMm": 70.73006941379586,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "664df89ee0b138fb",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 70.73006941379586,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 9.15802855300717
+  },
+  {
+   "request": "triangle-20",
+   "seed": 1,
+   "arm": "plan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 7.896828336990438,
+     "rawDepthMm": 70.74553343914744,
+     "dualGateValid": true,
+     "planUnits": 50065612,
+     "tranches": 0,
+     "finalUnits": 50065612,
+     "digest": "59d833e5ac947057",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 7.836943023023196,
+     "rawDepthMm": 70.74553343914744,
+     "dualGateValid": true,
+     "planUnits": 50065612,
+     "tranches": 0,
+     "finalUnits": 50065612,
+     "digest": "59d833e5ac947057",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 70.74553343914744,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 7.896828336990438
+  },
+  {
+   "request": "triangle-20",
+   "seed": 1,
+   "arm": "replan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 7.856568461982533,
+     "rawDepthMm": 70.74553343914744,
+     "dualGateValid": true,
+     "planUnits": 50065612,
+     "tranches": 0,
+     "finalUnits": 50065612,
+     "digest": "59d833e5ac947057",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 7.863452334073372,
+     "rawDepthMm": 70.74553343914744,
+     "dualGateValid": true,
+     "planUnits": 50065612,
+     "tranches": 0,
+     "finalUnits": 50065612,
+     "digest": "59d833e5ac947057",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 70.74553343914744,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 7.863452334073372
+  },
+  {
+   "request": "triangle-20",
+   "seed": 1,
+   "arm": "wall",
+   "targetMs": 10000,
+   "spec": "wall=10000,cells=11:15:21:27,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 9.493303136900067,
+     "rawDepthMm": 70.73005002608552,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "4542c81b658e9a5b",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 9.45549517404288,
+     "rawDepthMm": 70.73005002608552,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "07fbdcdc1cfdb9d3",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 70.73005002608552,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 9.493303136900067
+  },
+  {
+   "request": "triangle-20",
+   "seed": 2,
+   "arm": "plan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 7.765036521945149,
+     "rawDepthMm": 70.74164651120441,
+     "dualGateValid": true,
+     "planUnits": 43535314,
+     "tranches": 0,
+     "finalUnits": 43535314,
+     "digest": "7e0ffd03ca14489f",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 7.814712797990069,
+     "rawDepthMm": 70.74164651120441,
+     "dualGateValid": true,
+     "planUnits": 43535314,
+     "tranches": 0,
+     "finalUnits": 43535314,
+     "digest": "7e0ffd03ca14489f",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 70.74164651120441,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 7.814712797990069
+  },
+  {
+   "request": "triangle-20",
+   "seed": 2,
+   "arm": "replan",
+   "targetMs": 10000,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,replan=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 8.358538592001423,
+     "rawDepthMm": 70.74164651120441,
+     "dualGateValid": true,
+     "planUnits": 43535314,
+     "tranches": 1,
+     "finalUnits": 50065612,
+     "digest": "5fed7dad6a8932fe",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 8.364956371951848,
+     "rawDepthMm": 70.74164651120441,
+     "dualGateValid": true,
+     "planUnits": 43535314,
+     "tranches": 1,
+     "finalUnits": 50065612,
+     "digest": "5fed7dad6a8932fe",
+     "error": null
+    }
+   ],
+   "reproduced": true,
+   "depthsEqual": true,
+   "rawDepthMm": 70.74164651120441,
+   "dualGateValid": true,
+   "tranches": 1,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 8.364956371951848
+  },
+  {
+   "request": "triangle-20",
+   "seed": 2,
+   "arm": "wall",
+   "targetMs": 10000,
+   "spec": "wall=10000,cells=15:23:31:39,v3=1",
+   "processes": [
+    {
+     "process": "a",
+     "processWallSeconds": 9.447155244997703,
+     "rawDepthMm": 70.72882090841742,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "e609f6509ddc22a1",
+     "error": null
+    },
+    {
+     "process": "b",
+     "processWallSeconds": 9.463908985024318,
+     "rawDepthMm": 70.72882090841742,
+     "dualGateValid": true,
+     "planUnits": null,
+     "tranches": 0,
+     "finalUnits": null,
+     "digest": "4137e176230e9a6e",
+     "error": null
+    }
+   ],
+   "reproduced": false,
+   "depthsEqual": true,
+   "rawDepthMm": 70.72882090841742,
+   "dualGateValid": true,
+   "tranches": 0,
+   "trancheCountsAgree": true,
+   "finalUnitsAgree": true,
+   "wallMaxSeconds": 9.463908985024318
+  }
+ ],
+ "table": {
+  "mixed-61|3000|plan": {
+   "n": 3,
+   "medianDepthMm": 179.69,
+   "perSeedDepthMm": {
+    "0": 181.589,
+    "1": 179.69,
+    "2": 179.662
+   },
+   "reproducedCells": 3,
+   "wallMaxSeconds": 2.3720080609200522,
+   "wallMedianSeconds": 2.300806541927159,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.7906693536400174,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "mixed-61|3000|replan": {
+   "n": 3,
+   "medianDepthMm": 179.69,
+   "perSeedDepthMm": {
+    "0": 181.589,
+    "1": 179.69,
+    "2": 179.662
+   },
+   "reproducedCells": 3,
+   "wallMaxSeconds": 2.3350288859801367,
+   "wallMedianSeconds": 2.29882810509298,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.7783429619933789,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "mixed-61|3000|wall": {
+   "n": 3,
+   "medianDepthMm": 179.5868589805926,
+   "perSeedDepthMm": {
+    "0": 179.5868589805926,
+    "1": 179.63299999999998,
+    "2": 179.006
+   },
+   "reproducedCells": 0,
+   "wallMaxSeconds": 2.681240823934786,
+   "wallMedianSeconds": 2.5971427620388567,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.8937469413115954,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "mixed-61|10000|plan": {
+   "n": 3,
+   "medianDepthMm": 175.3877782649107,
+   "perSeedDepthMm": {
+    "0": 175.3877782649107,
+    "1": 174.17000000000002,
+    "2": 176.16200000000003
+   },
+   "reproducedCells": 3,
+   "wallMaxSeconds": 8.342499691061676,
+   "wallMedianSeconds": 7.173165354994126,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.8342499691061676,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "mixed-61|10000|replan": {
+   "n": 3,
+   "medianDepthMm": 175.1357388323935,
+   "perSeedDepthMm": {
+    "0": 175.1357388323935,
+    "1": 171.3619986855876,
+    "2": 176.16200000000003
+   },
+   "reproducedCells": 3,
+   "wallMaxSeconds": 8.319768340094015,
+   "wallMedianSeconds": 7.987904174020514,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.8319768340094015,
+   "trancheCounts": [
+    0,
+    1
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "mixed-61|10000|wall": {
+   "n": 3,
+   "medianDepthMm": 170.45272923584588,
+   "perSeedDepthMm": {
+    "0": 170.45272923584588,
+    "1": 165.65577826491065,
+    "2": 174.28
+   },
+   "reproducedCells": 0,
+   "wallMaxSeconds": 10.332934382022358,
+   "wallMedianSeconds": 10.060918916016817,
+   "overrunCells": 2,
+   "worstOverrunRatio": 1.0332934382022358,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "shapes-17|3000|plan": {
+   "n": 3,
+   "medianDepthMm": 200.34937729570953,
+   "perSeedDepthMm": {
+    "0": 200.34937729570953,
+    "1": 200.34937729570953,
+    "2": 200.34937729570953
+   },
+   "reproducedCells": 1,
+   "wallMaxSeconds": 3.4493944250280038,
+   "wallMedianSeconds": 3.0234424729133025,
+   "overrunCells": 2,
+   "worstOverrunRatio": 1.1497981416760013,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "shapes-17|3000|replan": {
+   "n": 3,
+   "medianDepthMm": 200.34937729570953,
+   "perSeedDepthMm": {
+    "0": 200.34937729570953,
+    "1": 200.34937729570953,
+    "2": 200.34937729570953
+   },
+   "reproducedCells": 3,
+   "wallMaxSeconds": 3.4604638339951634,
+   "wallMedianSeconds": 3.0160960449138656,
+   "overrunCells": 2,
+   "worstOverrunRatio": 1.1534879446650546,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "shapes-17|3000|wall": {
+   "n": 3,
+   "medianDepthMm": 200.34937729570953,
+   "perSeedDepthMm": {
+    "0": 200.34937729570953,
+    "1": 200.34937729570953,
+    "2": 200.34937729570953
+   },
+   "reproducedCells": 0,
+   "wallMaxSeconds": 1.9018028338905424,
+   "wallMedianSeconds": 1.8602737579494715,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.6339342779635141,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "shapes-17|10000|plan": {
+   "n": 3,
+   "medianDepthMm": 200.349,
+   "perSeedDepthMm": {
+    "0": 200.349,
+    "1": 200.34937729570953,
+    "2": 200.349
+   },
+   "reproducedCells": 3,
+   "wallMaxSeconds": 8.422896281001158,
+   "wallMedianSeconds": 8.00461586099118,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.8422896281001158,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "shapes-17|10000|replan": {
+   "n": 3,
+   "medianDepthMm": 200.349,
+   "perSeedDepthMm": {
+    "0": 200.349,
+    "1": 200.34937729570953,
+    "2": 200.349
+   },
+   "reproducedCells": 2,
+   "wallMaxSeconds": 8.554943555034697,
+   "wallMedianSeconds": 8.457370811025612,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.8554943555034697,
+   "trancheCounts": [
+    0,
+    1
+   ],
+   "trancheCountsAgree": false,
+   "allDualGateValid": true
+  },
+  "shapes-17|10000|wall": {
+   "n": 3,
+   "medianDepthMm": 200.349,
+   "perSeedDepthMm": {
+    "0": 200.349,
+    "1": 200.34937729570953,
+    "2": 200.349
+   },
+   "reproducedCells": 0,
+   "wallMaxSeconds": 9.67652978503611,
+   "wallMedianSeconds": 9.635786478989758,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.967652978503611,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "triangle-20|3000|plan": {
+   "n": 3,
+   "medianDepthMm": 70.74727715491606,
+   "perSeedDepthMm": {
+    "0": 70.7711336311948,
+    "1": 70.74684851410467,
+    "2": 70.74727715491606
+   },
+   "reproducedCells": 3,
+   "wallMaxSeconds": 2.2589909770758823,
+   "wallMedianSeconds": 2.1332937439437956,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.7529969923586274,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "triangle-20|3000|replan": {
+   "n": 3,
+   "medianDepthMm": 70.74727715491606,
+   "perSeedDepthMm": {
+    "0": 70.7711336311948,
+    "1": 70.74684851410467,
+    "2": 70.74727715491606
+   },
+   "reproducedCells": 2,
+   "wallMaxSeconds": 4.955069178016856,
+   "wallMedianSeconds": 4.575294284964912,
+   "overrunCells": 2,
+   "worstOverrunRatio": 1.6516897260056187,
+   "trancheCounts": [
+    1,
+    2
+   ],
+   "trancheCountsAgree": false,
+   "allDualGateValid": true
+  },
+  "triangle-20|3000|wall": {
+   "n": 3,
+   "medianDepthMm": 70.74684851410467,
+   "perSeedDepthMm": {
+    "0": 70.7711336311948,
+    "1": 70.74684851410467,
+    "2": 70.74264651120441
+   },
+   "reproducedCells": 0,
+   "wallMaxSeconds": 3.1755067019257694,
+   "wallMedianSeconds": 3.137047203956172,
+   "overrunCells": 2,
+   "worstOverrunRatio": 1.0585022339752566,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "triangle-20|10000|plan": {
+   "n": 3,
+   "medianDepthMm": 70.74196837433173,
+   "perSeedDepthMm": {
+    "0": 70.74196837433173,
+    "1": 70.74553343914744,
+    "2": 70.74164651120441
+   },
+   "reproducedCells": 3,
+   "wallMaxSeconds": 7.896828336990438,
+   "wallMedianSeconds": 7.814712797990069,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.7896828336990438,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "triangle-20|10000|replan": {
+   "n": 3,
+   "medianDepthMm": 70.74164651120441,
+   "perSeedDepthMm": {
+    "0": 70.74038313599529,
+    "1": 70.74553343914744,
+    "2": 70.74164651120441
+   },
+   "reproducedCells": 3,
+   "wallMaxSeconds": 8.364956371951848,
+   "wallMedianSeconds": 8.322728337021545,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.8364956371951848,
+   "trancheCounts": [
+    0,
+    1
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  },
+  "triangle-20|10000|wall": {
+   "n": 3,
+   "medianDepthMm": 70.73005002608552,
+   "perSeedDepthMm": {
+    "0": 70.73006941379586,
+    "1": 70.73005002608552,
+    "2": 70.72882090841742
+   },
+   "reproducedCells": 0,
+   "wallMaxSeconds": 9.493303136900067,
+   "wallMedianSeconds": 9.463908985024318,
+   "overrunCells": 0,
+   "worstOverrunRatio": 0.9493303136900068,
+   "trancheCounts": [
+    0
+   ],
+   "trancheCountsAgree": true,
+   "allDualGateValid": true
+  }
+ },
+ "allPlanCellsReproduced": false,
+ "allWallCellsReproduced": false,
+ "allReplanCellsReproduced": false,
+ "boxLoad": {
+  "n": 108,
+  "min": 2.7158203125,
+  "median": 4.419921875,
+  "max": 5.67822265625
+ }
+}

@@ -312,6 +312,64 @@ pub struct CompressionScheduleSettings {
     /// deepest-confirmed slot; it makes one confirmation cost less wall.
     #[cfg(feature = "parallel-compression-schedule")]
     pub parallel_confirm: bool,
+    /// How much of the schedule's own work currency one **batch** may spend
+    /// before the slice stops at a checkpoint and hands itself back.
+    ///
+    /// `None` - one atomic slice, the shipped arm - is the default, and it is
+    /// the shape Sol review 8 §3 condition 4 names as the thing to fix:
+    /// *"mode 34 oggi è atomico e senza work cap interno"*. An atomic slice is
+    /// the reason a wall target cannot be honoured between the moment the
+    /// coordinator dispatches m34 and the moment m34 returns, however long that
+    /// is.
+    ///
+    /// When set, the driver runs the same loop in batches. A batch ends at the
+    /// first **checkpoint** at or after this much of
+    /// [`CompressionSchedule::work_units`] has been spent since the batch
+    /// started; a checkpoint is a step boundary, which is the granularity at
+    /// which the slice's incumbent - `published_placements` - is an exact-valid
+    /// layout the caller may keep. Nothing is torn down between batches: the
+    /// frontier, the deepest-confirmed slot, the lane's rng, its weights and
+    /// every surrogate cache are carried across, which is what
+    /// `docs/experiments/replan/` §3 and §10 gate.
+    ///
+    /// It is a **budget and not a policy**: the batch boundary decides where
+    /// the slice may be interrupted, never whether it is. A slice that is never
+    /// interrupted runs exactly as many steps in N batches as it does in one,
+    /// and that is the hard gate.
+    pub batch_work_units: Option<usize>,
+}
+
+/// Where one batch of a resumable slice stopped, and what the caller may keep
+/// if it stops there.
+///
+/// The whole point of the type is the last field but one: at a checkpoint the
+/// slice always has an **exact-valid** layout to hand back, because
+/// `published_depth_mm` starts at the parent - which the caller validated
+/// before the slice was dispatched - and only ever moves onto a layout an exact
+/// confirmation accepted. So "stop at a checkpoint and return the incumbent" is
+/// the anytime contract Sol review 8 §3 condition 3 asks for, in the work
+/// currency rather than in seconds.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ScheduleCheckpoint {
+    /// Zero-based index of the batch that ended here.
+    pub batch: usize,
+    /// Steps the whole slice has taken, not just this batch.
+    pub steps_taken: usize,
+    /// [`CompressionSchedule::work_units`] at the checkpoint.
+    pub work_units: usize,
+    /// The frontier the next batch will resume from.
+    pub frontier_mm: f64,
+    /// The monotone floor: the depth of the deepest confirmed layout.
+    pub floor_mm: f64,
+    /// Accepted confirmations so far, which is what moves the floor.
+    pub confirmations_accepted: usize,
+    /// The raw source depth of the exact-valid layout the caller may keep if it
+    /// stops here.
+    pub published_depth_mm: f64,
+    /// Whether the slice reached its own end in this batch, in which case this
+    /// is the last checkpoint and there is nothing to resume.
+    pub finished: bool,
 }
 
 impl Default for CompressionScheduleSettings {
@@ -334,6 +392,9 @@ impl Default for CompressionScheduleSettings {
             lanes: 1,
             #[cfg(feature = "parallel-compression-schedule")]
             parallel_confirm: false,
+            // One atomic slice: the arm every pinned m34 number in this
+            // repository was measured with.
+            batch_work_units: None,
         }
     }
 }
@@ -560,6 +621,31 @@ impl CompressionSchedule {
         self.steps_taken
     }
 
+    /// Accepted confirmations, which is the count of times the deepest-confirmed
+    /// slot has been written. Read by the batch checkpoint so a caller can see
+    /// whether a batch moved the floor or only spent sweeps against it.
+    pub fn confirmations_accepted(&self) -> usize {
+        self.confirmations_accepted
+    }
+
+    /// How much of one batch's work budget is left, in the schedule's own work
+    /// currency, given the reading it started from. `None` under
+    /// [`CompressionScheduleSettings::batch_work_units`] of `None`, which is the
+    /// atomic slice.
+    ///
+    /// The comparison is `>=`, so a batch always runs **at least one** step: a
+    /// budget smaller than one step's work would otherwise produce an infinite
+    /// sequence of empty batches, and a mechanism that can stall is worse than
+    /// one that overshoots by a step.
+    pub fn batch_exhausted(&self, work_units_at_batch_start: usize) -> bool {
+        match self.settings.batch_work_units {
+            None => false,
+            Some(budget) => {
+                self.work_units().saturating_sub(work_units_at_batch_start) >= budget.max(1)
+            }
+        }
+    }
+
     pub fn exit(&self) -> CompressionScheduleExit {
         self.exit
     }
@@ -708,6 +794,9 @@ impl CompressionSchedule {
             rollback_after_steps: self.settings.rollback_after_steps,
             continue_past_bound: self.settings.continue_past_bound,
             work_cap_queries: self.settings.work_cap_queries,
+            batch_work_units: self.settings.batch_work_units,
+            checkpoints: Vec::new(),
+            step_digest: 0,
             candidate_queries: self.work_spent,
             exact_pair_tests: self.exact_pair_tests(),
             work_units: self.work_units(),
@@ -891,6 +980,47 @@ pub struct GeneralCompressionScheduleStepRow {
     pub rolled_back: bool,
 }
 
+/// FNV-1a over every step row, in order.
+///
+/// See [`GeneralCompressionScheduleDiagnostics::step_digest`] for why a
+/// per-step digest is the instrument the batching gate needs and an aggregate
+/// is not. Floats go in through `to_bits`, so a digest is sensitive to the last
+/// mantissa bit of a clamp or a measured depth rather than to a printed
+/// rounding of it - which is the whole point of running the gate at equal work.
+pub fn step_rows_digest(rows: &[GeneralCompressionScheduleStepRow]) -> u64 {
+    const OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
+    const PRIME: u64 = 0x0000_0100_0000_01b3;
+    let mut hash = OFFSET;
+    let mut eat = |word: u64| {
+        for byte in word.to_le_bytes() {
+            hash ^= byte as u64;
+            hash = hash.wrapping_mul(PRIME);
+        }
+    };
+    for row in rows {
+        eat(row.step as u64);
+        eat(row.depth_mm.to_bits());
+        eat(row.boundary_violations_before as u64);
+        eat(row.collision_pairs_before as u64);
+        eat(row.boundary_loss_before.to_bits());
+        eat(row.boundary_violations_after as u64);
+        eat(row.collision_pairs_after as u64);
+        eat(row.boundary_loss_after.to_bits());
+        eat(row.sweeps_run as u64);
+        eat(row.candidate_queries as u64);
+        eat(row.proxy_feasible as u64);
+        eat(row.confirmed as u64);
+        // `None` and `Some(0.0)` must not collide, so the discriminant is eaten
+        // separately from the payload rather than folded into a sentinel.
+        eat(row.raw_depth_mm.is_some() as u64);
+        eat(row.raw_depth_mm.unwrap_or(0.0).to_bits());
+        eat(row.confirmation_refused as u64);
+        eat(row.micro_legalized as u64);
+        eat(row.rolled_back as u64);
+    }
+    hash
+}
+
 /// The schedule's report.
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -904,6 +1034,17 @@ pub struct GeneralCompressionScheduleDiagnostics {
     pub rollback_after_steps: usize,
     pub continue_past_bound: bool,
     pub work_cap_queries: Option<usize>,
+    /// The batch budget this slice ran under, or `None` for the atomic arm.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub batch_work_units: Option<usize>,
+    /// One row per batch boundary, empty on the atomic arm.
+    ///
+    /// The last row of a slice that ran to its own end carries `finished:
+    /// true`; a slice that was stopped by its caller between batches has no
+    /// such row, which is how a report distinguishes "ran out of schedule" from
+    /// "was interrupted".
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub checkpoints: Vec<ScheduleCheckpoint>,
     /// The lane's candidate-query count: the first half of the work unit.
     pub candidate_queries: usize,
     /// The exact pair tests the confirmations cost: the second half.
@@ -1155,6 +1296,27 @@ pub struct GeneralCompressionScheduleDiagnostics {
     #[cfg(feature = "parallel-compression-schedule")]
     pub parallel: GeneralCompressionScheduleParallelDiagnostics,
     pub steps: Vec<GeneralCompressionScheduleStepRow>,
+    /// A 64-bit digest over **every** step row this slice produced.
+    ///
+    /// It exists for one reason and it is Sol review 8 §4 spend 1's gate. The
+    /// coordinator's document carries an *aggregate* of a slice -
+    /// `ScheduleSliceReport` deliberately drops the per-step rows, because they
+    /// are thousands of entries per call - so a comparison made on the document
+    /// alone can only say that two slices took the same number of steps and
+    /// reached the same depth, not that they took the *same* steps. A batched
+    /// slice that diverged at step 700 and re-converged by step 1,616 would
+    /// pass that comparison.
+    ///
+    /// So the digest is computed here, over the rows themselves, and reported as
+    /// one scalar the coordinator can carry: the step index, the clamp, the
+    /// sweeps, the candidate queries, the pair and boundary counts before and
+    /// after, the confirmation's three outcomes, and the raw depth an accepted
+    /// confirmation measured - every field of every row that is not a wall
+    /// clock. Two slices with the same digest walked the same walk.
+    ///
+    /// FNV-1a rather than anything cryptographic: this is a change detector for
+    /// a gate that also compares the aggregates, not an authentication tag.
+    pub step_digest: u64,
 }
 
 /// What the intra-arm fan-out did, so its multiplier is a measurement rather
@@ -1302,6 +1464,88 @@ mod tests {
         assert_eq!(taken, 300);
         assert_eq!(plan.exit(), CompressionScheduleExit::Bound);
         assert!(plan.depth_mm() >= 99.7 - 1e-9);
+    }
+
+    #[test]
+    fn the_atomic_slice_is_the_default_and_never_exhausts_a_batch() {
+        let plan = schedule(CompressionScheduleSettings::default());
+        assert_eq!(plan.settings.batch_work_units, None);
+        // Whatever reading it is handed, the atomic arm has no boundary.
+        for start in [0usize, 1, 1_000_000] {
+            assert!(!plan.batch_exhausted(start));
+        }
+    }
+
+    #[test]
+    fn a_batch_is_exhausted_by_its_own_spend_and_not_by_the_slices() {
+        let mut settings = CompressionScheduleSettings::default();
+        settings.batch_work_units = Some(100);
+        let mut plan = schedule(settings);
+        // `work_spent` is what `may_step` last recorded, so drive it the way
+        // the lane does.
+        plan.may_step(0);
+        assert!(!plan.batch_exhausted(0));
+        plan.may_step(99);
+        assert!(!plan.batch_exhausted(0), "99 of 100 is not a boundary");
+        plan.may_step(100);
+        assert!(plan.batch_exhausted(0), "100 of 100 is");
+        // And the budget is per batch: a second batch starting from 100 has its
+        // own 100 to spend, so the same reading is not a boundary for it.
+        assert!(!plan.batch_exhausted(100));
+        plan.may_step(200);
+        assert!(plan.batch_exhausted(100));
+    }
+
+    #[test]
+    fn a_zero_batch_budget_is_a_boundary_at_the_first_unit_and_not_at_zero() {
+        // `Some(0)` is the degenerate ask, and the `max(1)` is what stops it
+        // meaning "the batch is over before it started". The stall it would
+        // otherwise cause is *also* prevented structurally - the driver tests
+        // the boundary after taking a step, never before - so this is the
+        // second of two guards and the reason both exist is that only one of
+        // them is visible from inside this type.
+        let mut settings = CompressionScheduleSettings::default();
+        settings.batch_work_units = Some(0);
+        let mut plan = schedule(settings);
+        plan.may_step(0);
+        assert!(!plan.batch_exhausted(0), "zero spent is not a boundary");
+        plan.may_step(1);
+        assert!(plan.batch_exhausted(0), "one unit spent is");
+    }
+
+    #[test]
+    fn the_step_digest_separates_walks_the_aggregates_cannot() {
+        let row = |step: usize, sweeps: usize| GeneralCompressionScheduleStepRow {
+            step,
+            depth_mm: 1.0 - step as f64 * 0.001,
+            sweeps_run: sweeps,
+            candidate_queries: 10,
+            ..GeneralCompressionScheduleStepRow::default()
+        };
+        let left = vec![row(0, 2), row(1, 3)];
+        let right = vec![row(0, 3), row(1, 2)];
+        // Same number of rows, same total sweeps, same total queries, same
+        // final depth - and a different walk. This is exactly the case a
+        // comparison on `ScheduleSliceReport`'s aggregates cannot see.
+        assert_eq!(
+            left.iter().map(|r| r.sweeps_run).sum::<usize>(),
+            right.iter().map(|r| r.sweeps_run).sum::<usize>()
+        );
+        assert_ne!(step_rows_digest(&left), step_rows_digest(&right));
+        assert_eq!(step_rows_digest(&left), step_rows_digest(&left.clone()));
+        assert_eq!(step_rows_digest(&[]), step_rows_digest(&[]));
+    }
+
+    #[test]
+    fn the_step_digest_does_not_confuse_an_absent_depth_with_a_zero_one() {
+        let mut none = GeneralCompressionScheduleStepRow::default();
+        none.raw_depth_mm = None;
+        let mut zero = GeneralCompressionScheduleStepRow::default();
+        zero.raw_depth_mm = Some(0.0);
+        assert_ne!(
+            step_rows_digest(std::slice::from_ref(&none)),
+            step_rows_digest(std::slice::from_ref(&zero))
+        );
     }
 
     #[test]

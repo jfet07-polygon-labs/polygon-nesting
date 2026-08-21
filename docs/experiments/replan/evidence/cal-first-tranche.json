@@ -1,0 +1,869 @@
+{
+ "binary": "bin/ship-meas",
+ "request": "mixed-61",
+ "targets": [
+  10000,
+  30000
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "fractions": [
+  "off",
+  "1.0",
+  "0.6"
+ ],
+ "rounds": 2,
+ "rows": [
+  {
+   "tag": "foff-t10000-s0-r0",
+   "fraction": "off",
+   "target": 10000,
+   "seed": 0,
+   "round": 0,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,replan=0",
+   "processWallSeconds": 7.12786165997386,
+   "overran": false,
+   "overrunRatio": 0.712786165997386,
+   "rawDepthMm": 175.3877782649107,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "digest": "04d9c78541ff7ac9"
+  },
+  {
+   "tag": "foff-t10000-s1-r0",
+   "fraction": "off",
+   "target": 10000,
+   "seed": 1,
+   "round": 0,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,replan=0",
+   "processWallSeconds": 6.47411267796997,
+   "overran": false,
+   "overrunRatio": 0.647411267796997,
+   "rawDepthMm": 174.17000000000002,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "digest": "8346c5e16481958f"
+  },
+  {
+   "tag": "foff-t10000-s2-r0",
+   "fraction": "off",
+   "target": 10000,
+   "seed": 2,
+   "round": 0,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,replan=0",
+   "processWallSeconds": 8.268654083018191,
+   "overran": false,
+   "overrunRatio": 0.8268654083018191,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "digest": "b983407d4a70a250"
+  },
+  {
+   "tag": "foff-t30000-s0-r0",
+   "fraction": "off",
+   "target": 30000,
+   "seed": 0,
+   "round": 0,
+   "spec": "plan=30000,cells=13:15:17:19,v3=1,replan=0",
+   "processWallSeconds": 22.44804871699307,
+   "overran": false,
+   "overrunRatio": 0.7482682905664357,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 66211771,
+   "digest": "07eed34d84ceb894"
+  },
+  {
+   "tag": "foff-t30000-s1-r0",
+   "fraction": "off",
+   "target": 30000,
+   "seed": 1,
+   "round": 0,
+   "spec": "plan=30000,cells=11:15:21:27,v3=1,replan=0",
+   "processWallSeconds": 26.05680536600994,
+   "overran": false,
+   "overrunRatio": 0.868560178866998,
+   "rawDepthMm": 165.935,
+   "dualGateValid": true,
+   "planUnits": 76143537,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 76143537,
+   "digest": "b0c81633ae8759ed"
+  },
+  {
+   "tag": "foff-t30000-s2-r0",
+   "fraction": "off",
+   "target": 30000,
+   "seed": 2,
+   "round": 0,
+   "spec": "plan=30000,cells=15:23:31:39,v3=1,replan=0",
+   "processWallSeconds": 36.539715546008665,
+   "overran": true,
+   "overrunRatio": 1.2179905182002888,
+   "rawDepthMm": 164.171,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 66211771,
+   "digest": "f4f8569b2e1f98ce"
+  },
+  {
+   "tag": "f1.0-t10000-s0-r0",
+   "fraction": "1.0",
+   "target": 10000,
+   "seed": 0,
+   "round": 0,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,replan=1,planfirst=1.0",
+   "processWallSeconds": 7.934057533973828,
+   "overran": false,
+   "overrunRatio": 0.7934057533973828,
+   "rawDepthMm": 175.1357388323935,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": 1,
+   "trancheUnits": [
+    28625176
+   ],
+   "finalUnits": 28625176,
+   "digest": "2eb9280abea15c80"
+  },
+  {
+   "tag": "f1.0-t10000-s1-r0",
+   "fraction": "1.0",
+   "target": 10000,
+   "seed": 1,
+   "round": 0,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,replan=1,planfirst=1.0",
+   "processWallSeconds": 8.048136998957489,
+   "overran": false,
+   "overrunRatio": 0.8048136998957489,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": 1,
+   "trancheUnits": [
+    28625176
+   ],
+   "finalUnits": 28625176,
+   "digest": "496ea772ad5ccca6"
+  },
+  {
+   "tag": "f1.0-t10000-s2-r0",
+   "fraction": "1.0",
+   "target": 10000,
+   "seed": 2,
+   "round": 0,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,replan=1,planfirst=1.0",
+   "processWallSeconds": 8.255996391002554,
+   "overran": false,
+   "overrunRatio": 0.8255996391002555,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "digest": "b983407d4a70a250"
+  },
+  {
+   "tag": "f1.0-t30000-s0-r0",
+   "fraction": "1.0",
+   "target": 30000,
+   "seed": 0,
+   "round": 0,
+   "spec": "plan=30000,cells=13:15:17:19,v3=1,replan=1,planfirst=1.0",
+   "processWallSeconds": 24.66947597503895,
+   "overran": false,
+   "overrunRatio": 0.8223158658346317,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 1,
+   "trancheUnits": [
+    76143537
+   ],
+   "finalUnits": 76143537,
+   "digest": "6afba36fec1c973e"
+  },
+  {
+   "tag": "f1.0-t30000-s1-r0",
+   "fraction": "1.0",
+   "target": 30000,
+   "seed": 1,
+   "round": 0,
+   "spec": "plan=30000,cells=11:15:21:27,v3=1,replan=1,planfirst=1.0",
+   "processWallSeconds": 25.991716146003455,
+   "overran": false,
+   "overrunRatio": 0.8663905382001151,
+   "rawDepthMm": 165.935,
+   "dualGateValid": true,
+   "planUnits": 76143537,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 76143537,
+   "digest": "b0c81633ae8759ed"
+  },
+  {
+   "tag": "f1.0-t30000-s2-r0",
+   "fraction": "1.0",
+   "target": 30000,
+   "seed": 2,
+   "round": 0,
+   "spec": "plan=30000,cells=15:23:31:39,v3=1,replan=1,planfirst=1.0",
+   "processWallSeconds": 36.60770537395729,
+   "overran": true,
+   "overrunRatio": 1.2202568457985763,
+   "rawDepthMm": 164.171,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 66211771,
+   "digest": "f4f8569b2e1f98ce"
+  },
+  {
+   "tag": "f0.6-t10000-s0-r0",
+   "fraction": "0.6",
+   "target": 10000,
+   "seed": 0,
+   "round": 0,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,replan=1,planfirst=0.6",
+   "processWallSeconds": 7.983088361972477,
+   "overran": false,
+   "overrunRatio": 0.7983088361972477,
+   "rawDepthMm": 175.1357388323935,
+   "dualGateValid": true,
+   "planUnits": 16366537,
+   "tranches": 2,
+   "trancheUnits": [
+    21644745,
+    28625176
+   ],
+   "finalUnits": 28625176,
+   "digest": "b9b0a4ecd7109c90"
+  },
+  {
+   "tag": "f0.6-t10000-s1-r0",
+   "fraction": "0.6",
+   "target": 10000,
+   "seed": 1,
+   "round": 0,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,replan=1,planfirst=0.6",
+   "processWallSeconds": 7.959765059989877,
+   "overran": false,
+   "overrunRatio": 0.7959765059989877,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "planUnits": 16366537,
+   "tranches": 3,
+   "trancheUnits": [
+    18821518,
+    21644745,
+    28625176
+   ],
+   "finalUnits": 28625176,
+   "digest": "9d58156bace0cdbe"
+  },
+  {
+   "tag": "f0.6-t10000-s2-r0",
+   "fraction": "0.6",
+   "target": 10000,
+   "seed": 2,
+   "round": 0,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,replan=1,planfirst=0.6",
+   "processWallSeconds": 8.255096433975268,
+   "overran": false,
+   "overrunRatio": 0.8255096433975269,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "planUnits": 16366537,
+   "tranches": 2,
+   "trancheUnits": [
+    18821518,
+    24891457
+   ],
+   "finalUnits": 24891457,
+   "digest": "fc06e331ec2a5918"
+  },
+  {
+   "tag": "f0.6-t30000-s0-r0",
+   "fraction": "0.6",
+   "target": 30000,
+   "seed": 0,
+   "round": 0,
+   "spec": "plan=30000,cells=13:15:17:19,v3=1,replan=1,planfirst=0.6",
+   "processWallSeconds": 24.625279786007013,
+   "overran": false,
+   "overrunRatio": 0.820842659533567,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 43535314,
+   "tranches": 2,
+   "trancheUnits": [
+    66211771,
+    76143537
+   ],
+   "finalUnits": 76143537,
+   "digest": "0877c894e5ae836d"
+  },
+  {
+   "tag": "f0.6-t30000-s1-r0",
+   "fraction": "0.6",
+   "target": 30000,
+   "seed": 1,
+   "round": 0,
+   "spec": "plan=30000,cells=11:15:21:27,v3=1,replan=1,planfirst=0.6",
+   "processWallSeconds": 33.14732670900412,
+   "overran": true,
+   "overrunRatio": 1.1049108903001372,
+   "rawDepthMm": 162.846,
+   "dualGateValid": true,
+   "planUnits": 43535314,
+   "tranches": 2,
+   "trancheUnits": [
+    66211771,
+    87565068
+   ],
+   "finalUnits": 87565068,
+   "digest": "00f4dc48f8e5073e"
+  },
+  {
+   "tag": "f0.6-t30000-s2-r0",
+   "fraction": "0.6",
+   "target": 30000,
+   "seed": 2,
+   "round": 0,
+   "spec": "plan=30000,cells=15:23:31:39,v3=1,replan=1,planfirst=0.6",
+   "processWallSeconds": 34.08686836599372,
+   "overran": true,
+   "overrunRatio": 1.136228945533124,
+   "rawDepthMm": 166.15699999999998,
+   "dualGateValid": true,
+   "planUnits": 43535314,
+   "tranches": 1,
+   "trancheUnits": [
+    66211771
+   ],
+   "finalUnits": 66211771,
+   "digest": "276c84fbb9afc302"
+  },
+  {
+   "tag": "f1.0-t10000-s0-r1",
+   "fraction": "1.0",
+   "target": 10000,
+   "seed": 0,
+   "round": 1,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,replan=1,planfirst=1.0",
+   "processWallSeconds": 8.070537363004405,
+   "overran": false,
+   "overrunRatio": 0.8070537363004405,
+   "rawDepthMm": 175.1357388323935,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": 1,
+   "trancheUnits": [
+    28625176
+   ],
+   "finalUnits": 28625176,
+   "digest": "2eb9280abea15c80"
+  },
+  {
+   "tag": "f1.0-t10000-s1-r1",
+   "fraction": "1.0",
+   "target": 10000,
+   "seed": 1,
+   "round": 1,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,replan=1,planfirst=1.0",
+   "processWallSeconds": 8.019844916998409,
+   "overran": false,
+   "overrunRatio": 0.8019844916998409,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": 1,
+   "trancheUnits": [
+    28625176
+   ],
+   "finalUnits": 28625176,
+   "digest": "496ea772ad5ccca6"
+  },
+  {
+   "tag": "f1.0-t10000-s2-r1",
+   "fraction": "1.0",
+   "target": 10000,
+   "seed": 2,
+   "round": 1,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,replan=1,planfirst=1.0",
+   "processWallSeconds": 8.3055766930338,
+   "overran": false,
+   "overrunRatio": 0.8305576693033799,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "digest": "b983407d4a70a250"
+  },
+  {
+   "tag": "f1.0-t30000-s0-r1",
+   "fraction": "1.0",
+   "target": 30000,
+   "seed": 0,
+   "round": 1,
+   "spec": "plan=30000,cells=13:15:17:19,v3=1,replan=1,planfirst=1.0",
+   "processWallSeconds": 24.692404565983452,
+   "overran": false,
+   "overrunRatio": 0.8230801521994484,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 1,
+   "trancheUnits": [
+    76143537
+   ],
+   "finalUnits": 76143537,
+   "digest": "6afba36fec1c973e"
+  },
+  {
+   "tag": "f1.0-t30000-s1-r1",
+   "fraction": "1.0",
+   "target": 30000,
+   "seed": 1,
+   "round": 1,
+   "spec": "plan=30000,cells=11:15:21:27,v3=1,replan=1,planfirst=1.0",
+   "processWallSeconds": 26.45915781398071,
+   "overran": false,
+   "overrunRatio": 0.8819719271326903,
+   "rawDepthMm": 165.935,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 1,
+   "trancheUnits": [
+    76143537
+   ],
+   "finalUnits": 76143537,
+   "digest": "a81965644cbc66fe"
+  },
+  {
+   "tag": "f1.0-t30000-s2-r1",
+   "fraction": "1.0",
+   "target": 30000,
+   "seed": 2,
+   "round": 1,
+   "spec": "plan=30000,cells=15:23:31:39,v3=1,replan=1,planfirst=1.0",
+   "processWallSeconds": 36.60725298599573,
+   "overran": true,
+   "overrunRatio": 1.2202417661998577,
+   "rawDepthMm": 164.171,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 66211771,
+   "digest": "f4f8569b2e1f98ce"
+  },
+  {
+   "tag": "f0.6-t10000-s0-r1",
+   "fraction": "0.6",
+   "target": 10000,
+   "seed": 0,
+   "round": 1,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,replan=1,planfirst=0.6",
+   "processWallSeconds": 7.9635345980059355,
+   "overran": false,
+   "overrunRatio": 0.7963534598005936,
+   "rawDepthMm": 175.1357388323935,
+   "dualGateValid": true,
+   "planUnits": 16366537,
+   "tranches": 2,
+   "trancheUnits": [
+    21644745,
+    28625176
+   ],
+   "finalUnits": 28625176,
+   "digest": "b9b0a4ecd7109c90"
+  },
+  {
+   "tag": "f0.6-t10000-s1-r1",
+   "fraction": "0.6",
+   "target": 10000,
+   "seed": 1,
+   "round": 1,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,replan=1,planfirst=0.6",
+   "processWallSeconds": 8.077815241995268,
+   "overran": false,
+   "overrunRatio": 0.8077815241995268,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "planUnits": 16366537,
+   "tranches": 3,
+   "trancheUnits": [
+    18821518,
+    21644745,
+    28625176
+   ],
+   "finalUnits": 28625176,
+   "digest": "9d58156bace0cdbe"
+  },
+  {
+   "tag": "f0.6-t10000-s2-r1",
+   "fraction": "0.6",
+   "target": 10000,
+   "seed": 2,
+   "round": 1,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,replan=1,planfirst=0.6",
+   "processWallSeconds": 8.281734970980324,
+   "overran": false,
+   "overrunRatio": 0.8281734970980323,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "planUnits": 16366537,
+   "tranches": 2,
+   "trancheUnits": [
+    18821518,
+    24891457
+   ],
+   "finalUnits": 24891457,
+   "digest": "fc06e331ec2a5918"
+  },
+  {
+   "tag": "f0.6-t30000-s0-r1",
+   "fraction": "0.6",
+   "target": 30000,
+   "seed": 0,
+   "round": 1,
+   "spec": "plan=30000,cells=13:15:17:19,v3=1,replan=1,planfirst=0.6",
+   "processWallSeconds": 24.63869372504996,
+   "overran": false,
+   "overrunRatio": 0.8212897908349988,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 43535314,
+   "tranches": 2,
+   "trancheUnits": [
+    66211771,
+    76143537
+   ],
+   "finalUnits": 76143537,
+   "digest": "0877c894e5ae836d"
+  },
+  {
+   "tag": "f0.6-t30000-s1-r1",
+   "fraction": "0.6",
+   "target": 30000,
+   "seed": 1,
+   "round": 1,
+   "spec": "plan=30000,cells=11:15:21:27,v3=1,replan=1,planfirst=0.6",
+   "processWallSeconds": 33.3550721029751,
+   "overran": true,
+   "overrunRatio": 1.1118357367658367,
+   "rawDepthMm": 162.846,
+   "dualGateValid": true,
+   "planUnits": 43535314,
+   "tranches": 2,
+   "trancheUnits": [
+    66211771,
+    87565068
+   ],
+   "finalUnits": 87565068,
+   "digest": "00f4dc48f8e5073e"
+  },
+  {
+   "tag": "f0.6-t30000-s2-r1",
+   "fraction": "0.6",
+   "target": 30000,
+   "seed": 2,
+   "round": 1,
+   "spec": "plan=30000,cells=15:23:31:39,v3=1,replan=1,planfirst=0.6",
+   "processWallSeconds": 34.12571219803067,
+   "overran": true,
+   "overrunRatio": 1.1375237399343556,
+   "rawDepthMm": 166.15699999999998,
+   "dualGateValid": true,
+   "planUnits": 43535314,
+   "tranches": 1,
+   "trancheUnits": [
+    66211771
+   ],
+   "finalUnits": 66211771,
+   "digest": "276c84fbb9afc302"
+  },
+  {
+   "tag": "foff-t10000-s0-r1",
+   "fraction": "off",
+   "target": 10000,
+   "seed": 0,
+   "round": 1,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,replan=0",
+   "processWallSeconds": 7.218022282002494,
+   "overran": false,
+   "overrunRatio": 0.7218022282002494,
+   "rawDepthMm": 175.3877782649107,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "digest": "04d9c78541ff7ac9"
+  },
+  {
+   "tag": "foff-t10000-s1-r1",
+   "fraction": "off",
+   "target": 10000,
+   "seed": 1,
+   "round": 1,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,replan=0",
+   "processWallSeconds": 6.377775576023851,
+   "overran": false,
+   "overrunRatio": 0.6377775576023851,
+   "rawDepthMm": 174.17000000000002,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "digest": "8346c5e16481958f"
+  },
+  {
+   "tag": "foff-t10000-s2-r1",
+   "fraction": "off",
+   "target": 10000,
+   "seed": 2,
+   "round": 1,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,replan=0",
+   "processWallSeconds": 8.301064224040601,
+   "overran": false,
+   "overrunRatio": 0.8301064224040602,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "digest": "b983407d4a70a250"
+  },
+  {
+   "tag": "foff-t30000-s0-r1",
+   "fraction": "off",
+   "target": 30000,
+   "seed": 0,
+   "round": 1,
+   "spec": "plan=30000,cells=13:15:17:19,v3=1,replan=0",
+   "processWallSeconds": 22.4170307359891,
+   "overran": false,
+   "overrunRatio": 0.7472343578663033,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 66211771,
+   "digest": "07eed34d84ceb894"
+  },
+  {
+   "tag": "foff-t30000-s1-r1",
+   "fraction": "off",
+   "target": 30000,
+   "seed": 1,
+   "round": 1,
+   "spec": "plan=30000,cells=11:15:21:27,v3=1,replan=0",
+   "processWallSeconds": 26.032813144032843,
+   "overran": false,
+   "overrunRatio": 0.8677604381344282,
+   "rawDepthMm": 165.935,
+   "dualGateValid": true,
+   "planUnits": 76143537,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 76143537,
+   "digest": "b0c81633ae8759ed"
+  },
+  {
+   "tag": "foff-t30000-s2-r1",
+   "fraction": "off",
+   "target": 30000,
+   "seed": 2,
+   "round": 1,
+   "spec": "plan=30000,cells=15:23:31:39,v3=1,replan=0",
+   "processWallSeconds": 36.491019715962466,
+   "overran": true,
+   "overrunRatio": 1.2163673238654156,
+   "rawDepthMm": 164.171,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 66211771,
+   "digest": "f4f8569b2e1f98ce"
+  }
+ ],
+ "cells": {
+  "10000/off": {
+   "n": 6,
+   "wallP50": 7.12786165997386,
+   "wallP95": 8.301064224040601,
+   "wallMax": 8.301064224040601,
+   "overruns": 0,
+   "worstOverrunRatio": 0.8301064224040602,
+   "depthMedianMm": 175.3877782649107,
+   "perSeedDepthMedianMm": {
+    "0": 175.3877782649107,
+    "1": 174.17000000000002,
+    "2": 176.16200000000003
+   },
+   "trancheCounts": [
+    0
+   ],
+   "allDualGateValid": true,
+   "distinctDigestsPerSeed": {
+    "0": 1,
+    "1": 1,
+    "2": 1
+   }
+  },
+  "10000/1.0": {
+   "n": 6,
+   "wallP50": 8.048136998957489,
+   "wallP95": 8.3055766930338,
+   "wallMax": 8.3055766930338,
+   "overruns": 0,
+   "worstOverrunRatio": 0.8305576693033799,
+   "depthMedianMm": 175.1357388323935,
+   "perSeedDepthMedianMm": {
+    "0": 175.1357388323935,
+    "1": 171.3619986855876,
+    "2": 176.16200000000003
+   },
+   "trancheCounts": [
+    0,
+    1
+   ],
+   "allDualGateValid": true,
+   "distinctDigestsPerSeed": {
+    "0": 1,
+    "1": 1,
+    "2": 1
+   }
+  },
+  "10000/0.6": {
+   "n": 6,
+   "wallP50": 7.983088361972477,
+   "wallP95": 8.281734970980324,
+   "wallMax": 8.281734970980324,
+   "overruns": 0,
+   "worstOverrunRatio": 0.8281734970980323,
+   "depthMedianMm": 175.1357388323935,
+   "perSeedDepthMedianMm": {
+    "0": 175.1357388323935,
+    "1": 171.3619986855876,
+    "2": 176.16200000000003
+   },
+   "trancheCounts": [
+    2,
+    3
+   ],
+   "allDualGateValid": true,
+   "distinctDigestsPerSeed": {
+    "0": 1,
+    "1": 1,
+    "2": 1
+   }
+  },
+  "30000/off": {
+   "n": 6,
+   "wallP50": 26.032813144032843,
+   "wallP95": 36.539715546008665,
+   "wallMax": 36.539715546008665,
+   "overruns": 2,
+   "worstOverrunRatio": 1.2179905182002888,
+   "depthMedianMm": 164.188,
+   "perSeedDepthMedianMm": {
+    "0": 164.188,
+    "1": 165.935,
+    "2": 164.171
+   },
+   "trancheCounts": [
+    0
+   ],
+   "allDualGateValid": true,
+   "distinctDigestsPerSeed": {
+    "0": 1,
+    "1": 1,
+    "2": 1
+   }
+  },
+  "30000/1.0": {
+   "n": 6,
+   "wallP50": 25.991716146003455,
+   "wallP95": 36.60770537395729,
+   "wallMax": 36.60770537395729,
+   "overruns": 2,
+   "worstOverrunRatio": 1.2202568457985763,
+   "depthMedianMm": 164.188,
+   "perSeedDepthMedianMm": {
+    "0": 164.188,
+    "1": 165.935,
+    "2": 164.171
+   },
+   "trancheCounts": [
+    0,
+    1
+   ],
+   "allDualGateValid": true,
+   "distinctDigestsPerSeed": {
+    "0": 1,
+    "1": 2,
+    "2": 1
+   }
+  },
+  "30000/0.6": {
+   "n": 6,
+   "wallP50": 33.14732670900412,
+   "wallP95": 34.12571219803067,
+   "wallMax": 34.12571219803067,
+   "overruns": 4,
+   "worstOverrunRatio": 1.1375237399343556,
+   "depthMedianMm": 164.188,
+   "perSeedDepthMedianMm": {
+    "0": 164.188,
+    "1": 162.846,
+    "2": 166.15699999999998
+   },
+   "trancheCounts": [
+    1,
+    2
+   ],
+   "allDualGateValid": true,
+   "distinctDigestsPerSeed": {
+    "0": 1,
+    "1": 1,
+    "2": 1
+   }
+  }
+ },
+ "boxLoad": {
+  "n": 36,
+  "min": 2.92822265625,
+  "median": 4.32080078125,
+  "max": 5.8076171875
+ }
+}

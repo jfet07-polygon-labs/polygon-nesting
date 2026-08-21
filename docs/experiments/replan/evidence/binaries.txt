@@ -1,0 +1,21 @@
+a2ad9bad87cc3325ae326a71c0d6e0f9baa5f085063571dee7c9a9098fbb9488  base-gate
+5681046a61fc665e0448eec75c68cd163849792b084759d58410b25ecd3f7cc0  base-meas
+15514f314505a97a48d87a178d860a7b6a8dbe84cca33e30c64d9826ab036619  cal-meas
+5a58fb0ed6d3af18497e27bef7d093630c58a1a8986c34eaa228aa23c624bab3  ship-gate
+9c049366385ecee2ceaf294ca74d7f7df6686ff8b5aa70653de38810c22c1cf5  ship-meas
+
+# Two intermediate builds of the same worktree, kept because two evidence files
+# were measured on them and the README says so rather than rounding them away:
+#   554044c3082f91847c3ef25f55122aa157a1aae8079c8490b6c64c064ba1538e  stranded
+#     (horizon bounded, stranding not yet fixed) -> determinism-replan-stranded
+#   8201c5718b6c80f9a72fdd9b7b574a3570274746bb565691f01533b5cc41ece6  batched
+#     (stranding fixed, PLAN_FIRST_TRANCHE = 0.6) -> concat-*, determinism-work,
+#     determinism-plan, cal-first-tranche
+#   0c61e161d5d133a2d71bba95ea76af2590b4f8daeb87a4e7a23a720598e34a81  early
+#     (the batching code as it shipped, before either `replan` fix) -> concat-100k
+# `cal-meas` is the pilot build: the re-plan with the extrapolation unbounded,
+# before PLAN_TRANCHE_HORIZON existed -> cal-pilot-unbounded.
+#
+# Full combo is
+# jagua-experimental,compression-schedule,parallel-compression-schedule,
+# continuous-rotation,sparse-rotation,fast-contract-validator

@@ -1,0 +1,918 @@
+{
+ "note": "The pilot that ran the re-plan with the extrapolation unbounded - PLAN_TRANCHE_HORIZON did not exist yet. It was stopped part-way through its second round once the failure was identified, so it has no driver summary and these are the raw rows. Binary: cal-meas, 15514f314505a97a48d87a178d860a7b6a8dbe84cca33e30c64d9826ab036619.",
+ "rows": [
+  {
+   "tag": "f0.45-t10000-s0-r0",
+   "fraction": "0.45",
+   "targetMs": 10000,
+   "seed": 0,
+   "round": 0,
+   "coordinatorSeconds": 8.293104504,
+   "rawDepthMm": 175.1357388323935,
+   "dualGateValid": true,
+   "planUnits": 12375453,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 23,
+     "units": 24891457
+    },
+    {
+     "index": 2,
+     "rung": 24,
+     "units": 28625176
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 3.122018765,
+     "atWorkUnits": 10793256,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2280701.4489338077,
+     "queueSeconds": 0.883361126,
+     "rawUnits": 25795667.333723895,
+     "remainingSeconds": 6.577981234999999
+    },
+    {
+     "atSeconds": 7.456934662,
+     "atWorkUnits": 23356444,
+     "index": 2,
+     "queueRateUnitsPerSecond": 2793617.6894685337,
+     "queueSeconds": 5.218277023000001,
+     "rawUnits": 29622711.006870516,
+     "remainingSeconds": 2.243065337999999
+    }
+   ]
+  },
+  {
+   "tag": "f0.45-t10000-s1-r0",
+   "fraction": "0.45",
+   "targetMs": 10000,
+   "seed": 1,
+   "round": 0,
+   "coordinatorSeconds": 8.420274002,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "planUnits": 12375453,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 24,
+     "units": 28625176
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 3.22476406,
+     "atWorkUnits": 11887826,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2767847.351677922,
+     "queueSeconds": 0.8159311960000002,
+     "rawUnits": 29810290.6480187,
+     "remainingSeconds": 6.475235939999999
+    }
+   ]
+  },
+  {
+   "tag": "f0.45-t10000-s2-r0",
+   "fraction": "0.45",
+   "targetMs": 10000,
+   "seed": 2,
+   "round": 0,
+   "coordinatorSeconds": 8.646101719,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "planUnits": 12375453,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 23,
+     "units": 24891457
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 3.096840092,
+     "atWorkUnits": 10606873,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2376007.1949138436,
+     "queueSeconds": 0.6925614549999999,
+     "rawUnits": 26296028.450574633,
+     "remainingSeconds": 6.603159907999999
+    }
+   ]
+  },
+  {
+   "tag": "f0.45-t30000-s0-r0",
+   "fraction": "0.45",
+   "targetMs": 30000,
+   "seed": 0,
+   "round": 0,
+   "coordinatorSeconds": 25.765991502,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 32918952,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 31,
+     "units": 76143537
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 10.37630039,
+     "atWorkUnits": 30174185,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2645802.062726111,
+     "queueSeconds": 8.086626094000001,
+     "rawUnits": 79713388.05000207,
+     "remainingSeconds": 18.723699609999997
+    }
+   ]
+  },
+  {
+   "tag": "f0.45-t30000-s1-r0",
+   "fraction": "0.45",
+   "targetMs": 30000,
+   "seed": 1,
+   "round": 0,
+   "coordinatorSeconds": 26.694981721,
+   "rawDepthMm": 165.935,
+   "dualGateValid": true,
+   "planUnits": 32918952,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 30,
+     "units": 66211771
+    },
+    {
+     "index": 2,
+     "rung": 31,
+     "units": 76143537
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 10.893260129,
+     "atWorkUnits": 30357363,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2423154.9729322847,
+     "queueSeconds": 8.554100019,
+     "rawUnits": 74475115.25929815,
+     "remainingSeconds": 18.206739870999996
+    },
+    {
+     "atSeconds": 21.349999895,
+     "atWorkUnits": 64514995,
+     "index": 2,
+     "queueRateUnitsPerSecond": 2887065.6225984283,
+     "queueSeconds": 19.010839785,
+     "rawUnits": 86889753.8782797,
+     "remainingSeconds": 7.750000104999998
+    }
+   ]
+  },
+  {
+   "tag": "f0.45-t30000-s2-r0",
+   "fraction": "0.45",
+   "targetMs": 30000,
+   "seed": 2,
+   "round": 0,
+   "coordinatorSeconds": 32.285956887,
+   "rawDepthMm": 164.18599999999998,
+   "dualGateValid": true,
+   "planUnits": 32918952,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 30,
+     "units": 66211771
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 12.031590058,
+     "atWorkUnits": 32531925,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2415279.1000117497,
+     "queueSeconds": 9.758947941,
+     "rawUnits": 73756898.80334535,
+     "remainingSeconds": 17.068409941999995
+    }
+   ]
+  },
+  {
+   "tag": "f0.6-t10000-s0-r0",
+   "fraction": "0.6",
+   "targetMs": 10000,
+   "seed": 0,
+   "round": 0,
+   "coordinatorSeconds": 8.440315089,
+   "rawDepthMm": 175.1357388323935,
+   "dualGateValid": true,
+   "planUnits": 16366537,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 23,
+     "units": 24891457
+    },
+    {
+     "index": 2,
+     "rung": 24,
+     "units": 28625176
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 5.152340592,
+     "atWorkUnits": 16159458,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2619856.0145235523,
+     "queueSeconds": 2.817286507,
+     "rawUnits": 28073670.852053415,
+     "remainingSeconds": 4.5476594079999995
+    },
+    {
+     "atSeconds": 7.611664247,
+     "atWorkUnits": 23356444,
+     "index": 2,
+     "queueRateUnitsPerSecond": 2762734.132793037,
+     "queueSeconds": 5.276610162000001,
+     "rawUnits": 29125960.465545148,
+     "remainingSeconds": 2.088335752999999
+    }
+   ]
+  },
+  {
+   "tag": "f0.6-t10000-s1-r0",
+   "fraction": "0.6",
+   "targetMs": 10000,
+   "seed": 1,
+   "round": 0,
+   "coordinatorSeconds": 8.002168044,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "planUnits": 16366537,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 24,
+     "units": 28625176
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 3.912558706,
+     "atWorkUnits": 14420765,
+     "index": 1,
+     "queueRateUnitsPerSecond": 3021966.948371164,
+     "queueSeconds": 1.585494508,
+     "rawUnits": 31910221.306106437,
+     "remainingSeconds": 5.787441293999999
+    }
+   ]
+  },
+  {
+   "tag": "f0.6-t10000-s2-r0",
+   "fraction": "0.6",
+   "targetMs": 10000,
+   "seed": 2,
+   "round": 0,
+   "coordinatorSeconds": 8.509813179,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "planUnits": 16366537,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 23,
+     "units": 24891457
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 4.517062054,
+     "atWorkUnits": 14479589,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2497036.569281869,
+     "queueSeconds": 2.209918376,
+     "rawUnits": 27421574.587480657,
+     "remainingSeconds": 5.182937945999999
+    }
+   ]
+  },
+  {
+   "tag": "f0.6-t30000-s0-r0",
+   "fraction": "0.6",
+   "targetMs": 30000,
+   "seed": 0,
+   "round": 0,
+   "coordinatorSeconds": 26.087864747,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 37856795,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 31,
+     "units": 76143537
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 12.822222671,
+     "atWorkUnits": 35907718,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2584530.823189595,
+     "queueSeconds": 10.496738811,
+     "rawUnits": 77978135.23981729,
+     "remainingSeconds": 16.277777328999996
+    }
+   ]
+  },
+  {
+   "tag": "f0.6-t30000-s1-r0",
+   "fraction": "0.6",
+   "targetMs": 30000,
+   "seed": 1,
+   "round": 0,
+   "coordinatorSeconds": 26.562069091,
+   "rawDepthMm": 166.463,
+   "dualGateValid": true,
+   "planUnits": 43535314,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 31,
+     "units": 76143537
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 14.419510412,
+     "atWorkUnits": 41189795,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2609989.9465740477,
+     "queueSeconds": 12.092131635,
+     "rawUnits": 79505725.23546499,
+     "remainingSeconds": 14.680489587999999
+    }
+   ]
+  },
+  {
+   "tag": "f0.6-t30000-s2-r0",
+   "fraction": "0.6",
+   "targetMs": 30000,
+   "seed": 2,
+   "round": 0,
+   "coordinatorSeconds": 36.742444611,
+   "rawDepthMm": 164.171,
+   "dualGateValid": true,
+   "planUnits": 37856795,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 30,
+     "units": 66211771
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 13.641791578,
+     "atWorkUnits": 36768344,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2458191.1155645307,
+     "queueSeconds": 11.311977259999999,
+     "rawUnits": 74767574.6055052,
+     "remainingSeconds": 15.458208421999998
+    }
+   ]
+  },
+  {
+   "tag": "f0.75-t10000-s0-r0",
+   "fraction": "0.75",
+   "targetMs": 10000,
+   "seed": 0,
+   "round": 0,
+   "coordinatorSeconds": 8.041432636,
+   "rawDepthMm": 175.1357388323935,
+   "dualGateValid": true,
+   "planUnits": 18821518,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 24,
+     "units": 28625176
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 4.871587569,
+     "atWorkUnits": 16159458,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2771579.771461757,
+     "queueSeconds": 2.66306064,
+     "rawUnits": 29541788.22203408,
+     "remainingSeconds": 4.828412430999999
+    }
+   ]
+  },
+  {
+   "tag": "f0.75-t10000-s1-r0",
+   "fraction": "0.75",
+   "targetMs": 10000,
+   "seed": 1,
+   "round": 0,
+   "coordinatorSeconds": 8.389543063,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "planUnits": 18821518,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 24,
+     "units": 28625176
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 4.813952399,
+     "atWorkUnits": 16953704,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2981878.576846936,
+     "queueSeconds": 2.4562539389999998,
+     "rawUnits": 31523304.666876264,
+     "remainingSeconds": 4.886047601
+    }
+   ]
+  },
+  {
+   "tag": "f0.75-t10000-s2-r0",
+   "fraction": "0.75",
+   "targetMs": 10000,
+   "seed": 2,
+   "round": 0,
+   "coordinatorSeconds": 8.350361021,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "planUnits": 18821518,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 23,
+     "units": 24891457
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 6.064426437,
+     "atWorkUnits": 17936760,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2388550.6266447697,
+     "queueSeconds": 3.757683802,
+     "rawUnits": 26620511.512116805,
+     "remainingSeconds": 3.6355735629999995
+    }
+   ]
+  },
+  {
+   "tag": "f0.75-t30000-s0-r0",
+   "fraction": "0.75",
+   "targetMs": 30000,
+   "seed": 0,
+   "round": 0,
+   "coordinatorSeconds": 24.781925835,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 50065612,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 31,
+     "units": 76143537
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 16.12574329,
+     "atWorkUnits": 47107669,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2754551.372356799,
+     "queueSeconds": 13.914823439,
+     "rawUnits": 82845925.6258399,
+     "remainingSeconds": 12.974256709999999
+    }
+   ]
+  },
+  {
+   "tag": "f0.75-t30000-s1-r0",
+   "fraction": "0.75",
+   "targetMs": 30000,
+   "seed": 1,
+   "round": 0,
+   "coordinatorSeconds": 24.279149978,
+   "rawDepthMm": 167.66600000000003,
+   "dualGateValid": true,
+   "planUnits": 50065612,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 31,
+     "units": 76143537
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 16.52531428,
+     "atWorkUnits": 47666602,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2681999.948653338,
+     "queueSeconds": 14.182382449,
+     "rawUnits": 81391908.45537186,
+     "remainingSeconds": 12.574685719999998
+    }
+   ]
+  },
+  {
+   "tag": "f0.75-t30000-s2-r0",
+   "fraction": "0.75",
+   "targetMs": 30000,
+   "seed": 2,
+   "round": 0,
+   "coordinatorSeconds": 27.291219597,
+   "rawDepthMm": 165.1901833886767,
+   "dualGateValid": true,
+   "planUnits": 50065612,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 29,
+     "units": 57575453
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 20.800217276,
+     "atWorkUnits": 46978616,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2060950.3214983677,
+     "queueSeconds": 18.446477629,
+     "rawUnits": 64084055.87339439,
+     "remainingSeconds": 8.299782723999996
+    }
+   ]
+  },
+  {
+   "tag": "f1.0-t10000-s0-r0",
+   "fraction": "1.0",
+   "targetMs": 10000,
+   "seed": 0,
+   "round": 0,
+   "coordinatorSeconds": 8.403263453,
+   "rawDepthMm": 175.3877782649107,
+   "dualGateValid": true,
+   "planUnits": 21644745,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 23,
+     "units": 24891457
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 6.895140489,
+     "atWorkUnits": 19471857,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2445383.441512294,
+     "queueSeconds": 4.372845509,
+     "rawUnits": 26330814.00396767,
+     "remainingSeconds": 2.804859510999999
+    }
+   ]
+  },
+  {
+   "tag": "f1.0-t10000-s0-r1",
+   "fraction": "1.0",
+   "targetMs": 10000,
+   "seed": 0,
+   "round": 1,
+   "coordinatorSeconds": 8.120948386,
+   "rawDepthMm": 175.1357388323935,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 24,
+     "units": 28625176
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 7.292264057,
+     "atWorkUnits": 23356444,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2872372.148255821,
+     "queueSeconds": 5.075202741,
+     "rawUnits": 30272357.663027663,
+     "remainingSeconds": 2.4077359429999996
+    }
+   ]
+  },
+  {
+   "tag": "f1.0-t10000-s1-r0",
+   "fraction": "1.0",
+   "targetMs": 10000,
+   "seed": 1,
+   "round": 0,
+   "coordinatorSeconds": 7.801856359,
+   "rawDepthMm": 174.17000000000002,
+   "dualGateValid": true,
+   "planUnits": 21644745,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 23,
+     "units": 24891457
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 6.936266065,
+     "atWorkUnits": 20494930,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2681634.046210659,
+     "queueSeconds": 4.051811997,
+     "rawUnits": 27906253.014763758,
+     "remainingSeconds": 2.7637339349999994
+    }
+   ]
+  },
+  {
+   "tag": "f1.0-t10000-s1-r1",
+   "fraction": "1.0",
+   "targetMs": 10000,
+   "seed": 1,
+   "round": 1,
+   "coordinatorSeconds": 8.172774794,
+   "rawDepthMm": 171.3619986855876,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 24,
+     "units": 28625176
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 6.545290821,
+     "atWorkUnits": 22152474,
+     "index": 1,
+     "queueRateUnitsPerSecond": 3001652.268621215,
+     "queueSeconds": 4.172042555,
+     "rawUnits": 31621813.963985518,
+     "remainingSeconds": 3.1547091789999993
+    }
+   ]
+  },
+  {
+   "tag": "f1.0-t10000-s2-r0",
+   "fraction": "1.0",
+   "targetMs": 10000,
+   "seed": 2,
+   "round": 0,
+   "coordinatorSeconds": 7.7010370219999995,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "planUnits": 21644745,
+   "tranches": [],
+   "trancheCalibration": []
+  },
+  {
+   "tag": "f1.0-t10000-s2-r1",
+   "fraction": "1.0",
+   "targetMs": 10000,
+   "seed": 2,
+   "round": 1,
+   "coordinatorSeconds": 8.403513965,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": [],
+   "trancheCalibration": []
+  },
+  {
+   "tag": "f1.0-t30000-s0-r0",
+   "fraction": "1.0",
+   "targetMs": 30000,
+   "seed": 0,
+   "round": 0,
+   "coordinatorSeconds": 25.915587749,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 57575453,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 30,
+     "units": 66211771
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 22.017548372,
+     "atWorkUnits": 56150148,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2421437.880037196,
+     "queueSeconds": 19.563407094,
+     "rawUnits": 73299864.6555703,
+     "remainingSeconds": 7.082451627999998
+    }
+   ]
+  },
+  {
+   "tag": "f1.0-t30000-s0-r1",
+   "fraction": "1.0",
+   "targetMs": 30000,
+   "seed": 0,
+   "round": 1,
+   "coordinatorSeconds": 24.867204738,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 31,
+     "units": 76143537
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 22.656682304,
+     "atWorkUnits": 65320903,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2763537.3713286733,
+     "queueSeconds": 20.460128597,
+     "rawUnits": 83127252.24823935,
+     "remainingSeconds": 6.443317695999998
+    }
+   ]
+  },
+  {
+   "tag": "f1.0-t30000-s1-r0",
+   "fraction": "1.0",
+   "targetMs": 30000,
+   "seed": 1,
+   "round": 0,
+   "coordinatorSeconds": 32.447438423,
+   "rawDepthMm": 162.846,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 32,
+     "units": 87565068
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 20.740806157,
+     "atWorkUnits": 64514995,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2975479.722891537,
+     "queueSeconds": 18.445947246000003,
+     "rawUnits": 89387606.77956627,
+     "remainingSeconds": 8.359193842999996
+    }
+   ]
+  },
+  {
+   "tag": "f1.0-t30000-s1-r1",
+   "fraction": "1.0",
+   "targetMs": 30000,
+   "seed": 1,
+   "round": 1,
+   "coordinatorSeconds": 33.049602758,
+   "rawDepthMm": 162.846,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": [
+    {
+     "index": 1,
+     "rung": 32,
+     "units": 87565068
+    }
+   ],
+   "trancheCalibration": [
+    {
+     "atSeconds": 21.174796959,
+     "atWorkUnits": 64514995,
+     "index": 1,
+     "queueRateUnitsPerSecond": 2916910.244424866,
+     "queueSeconds": 18.816328717999998,
+     "rawUnits": 87632100.93944,
+     "remainingSeconds": 7.925203041
+    }
+   ]
+  },
+  {
+   "tag": "f1.0-t30000-s2-r0",
+   "fraction": "1.0",
+   "targetMs": 30000,
+   "seed": 2,
+   "round": 0,
+   "coordinatorSeconds": 36.587532709,
+   "rawDepthMm": 164.171,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": [],
+   "trancheCalibration": []
+  },
+  {
+   "tag": "foff-t10000-s0-r0",
+   "fraction": "off",
+   "targetMs": 10000,
+   "seed": 0,
+   "round": 0,
+   "coordinatorSeconds": 7.870878022,
+   "rawDepthMm": 175.3877782649107,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": [],
+   "trancheCalibration": []
+  },
+  {
+   "tag": "foff-t10000-s1-r0",
+   "fraction": "off",
+   "targetMs": 10000,
+   "seed": 1,
+   "round": 0,
+   "coordinatorSeconds": 7.113269554,
+   "rawDepthMm": 174.17000000000002,
+   "dualGateValid": true,
+   "planUnits": 24891457,
+   "tranches": [],
+   "trancheCalibration": []
+  },
+  {
+   "tag": "foff-t10000-s2-r0",
+   "fraction": "off",
+   "targetMs": 10000,
+   "seed": 2,
+   "round": 0,
+   "coordinatorSeconds": 7.406639749,
+   "rawDepthMm": 176.16200000000003,
+   "dualGateValid": true,
+   "planUnits": 21644745,
+   "tranches": [],
+   "trancheCalibration": []
+  },
+  {
+   "tag": "foff-t30000-s0-r0",
+   "fraction": "off",
+   "targetMs": 30000,
+   "seed": 0,
+   "round": 0,
+   "coordinatorSeconds": 24.505972326,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": [],
+   "trancheCalibration": []
+  },
+  {
+   "tag": "foff-t30000-s1-r0",
+   "fraction": "off",
+   "targetMs": 30000,
+   "seed": 1,
+   "round": 0,
+   "coordinatorSeconds": 22.503245727,
+   "rawDepthMm": 167.66600000000003,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": [],
+   "trancheCalibration": []
+  },
+  {
+   "tag": "foff-t30000-s2-r0",
+   "fraction": "off",
+   "targetMs": 30000,
+   "seed": 2,
+   "round": 0,
+   "coordinatorSeconds": 28.346457545,
+   "rawDepthMm": 165.1901833886767,
+   "dualGateValid": true,
+   "planUnits": 57575453,
+   "tranches": [],
+   "trancheCalibration": []
+  }
+ ]
+}

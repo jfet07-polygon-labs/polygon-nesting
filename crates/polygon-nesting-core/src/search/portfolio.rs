@@ -771,6 +771,19 @@ pub struct ScheduleSliceReport {
     pub se2_witness_accepted: usize,
     pub se2_witness_ms: f64,
     pub se2_witness_bought_mm: f64,
+    /// The batch budget the slice ran under, or `None` for the atomic slice.
+    #[cfg(feature = "compression-schedule")]
+    pub batch_work_units: Option<usize>,
+    /// One row per batch boundary, empty on the atomic slice. See
+    /// [`crate::search::compression_schedule::ScheduleCheckpoint`].
+    #[cfg(feature = "compression-schedule")]
+    pub checkpoints: Vec<crate::search::compression_schedule::ScheduleCheckpoint>,
+    /// The slice's per-step digest. See
+    /// [`crate::search::compression_schedule::GeneralCompressionScheduleDiagnostics::step_digest`].
+    /// This is the field the concatenation gate is decided on: the aggregates
+    /// above can agree while the walks differ, and this cannot.
+    #[cfg(feature = "compression-schedule")]
+    pub step_digest: u64,
 }
 
 /// Why a phase stopped issuing operator calls.
@@ -870,7 +883,178 @@ pub struct PlanReport {
     pub rung: Option<i64>,
     /// The work budget installed. **This is the plan.**
     pub units: u64,
+    /// The fraction of the target this first tranche aimed at. `1.0` is the
+    /// single-tranche plan; anything below it means the run intends to re-plan.
+    /// See [`PortfolioSettings::plan_first_tranche`].
+    pub first_tranche: f64,
 }
+
+/// One in-run re-plan: a second (or third) tranche of work, priced at the rate
+/// the **queue** is actually retiring units at rather than at the rate phase 0
+/// did.
+///
+/// This is `docs/experiments/calibrated-plan/` §13.1's fix, and the whole of why
+/// it works is that it swaps a guess for a measurement. [`PLAN_PHASE_ZERO_BIAS`]
+/// exists to correct phase 0's rate onto the queue's; a tranche measures the
+/// queue's rate directly, over a window that is the whole of the run so far, so
+/// its estimator's bias is 1 by construction and its window is three times the
+/// probe's.
+///
+/// # What is deterministic here and what is not
+///
+/// The same split as [`PlanReport`], and it has to be read carefully because
+/// this is the one place in the mode where a clock reading can change *how many*
+/// decisions a run makes rather than only how big one of them is:
+///
+/// * `index`, `rung` and `units` are the deterministic half. `units` is snapped
+///   to the same ladder [`PLAN_QUANTUM_STEP`] defines, so two processes that
+///   read slightly different clocks still land on the same rung.
+/// * `at_seconds`, `queue_seconds`, `queue_rate_units_per_second`,
+///   `remaining_seconds` and `raw_units` are clock readings.
+///
+/// **The decision to take a tranche at all is deliberately one whole rung
+/// coarse.** A tranche is taken only when the re-priced total lands *strictly
+/// above the rung the current budget already sits on* - a 15% growth at the
+/// shipped step - so a run whose remaining wall buys less than one rung takes no
+/// tranche and produces exactly the document it would have produced with
+/// re-planning off. That is what bounds the clock's influence: it is not a
+/// threshold chosen to be coarse, it is the ladder the mode already ships,
+/// re-read as a decision.
+#[derive(Clone, Copy, Debug)]
+pub struct TrancheReport {
+    /// 1 for the first re-plan, 2 for the second, and so on. Tranche 0 is the
+    /// initial plan and is reported as [`PlanReport`].
+    pub index: usize,
+    /// Seconds elapsed when the tranche was priced. The one clock read.
+    pub at_seconds: f64,
+    /// Work units spent when the tranche was priced. A counter.
+    pub at_work_units: u64,
+    /// Seconds the queue has been running - `at_seconds - probe_seconds`. The
+    /// window the rate below was measured over.
+    pub queue_seconds: f64,
+    /// The queue's own retirement rate, in work units per second. **No bias is
+    /// applied to it**: this is the quantity the bias exists to estimate.
+    pub queue_rate_units_per_second: f64,
+    /// What is left of `target * headroom` after `at_seconds`.
+    pub remaining_seconds: f64,
+    /// What the tranche actually priced, which is
+    /// `min(remaining_seconds, queue_seconds * PLAN_TRANCHE_HORIZON)`. When it
+    /// is below `remaining_seconds` the tranche refused to extrapolate and the
+    /// run intends to re-plan again.
+    pub horizon_seconds: f64,
+    /// The re-priced total before quantisation.
+    pub raw_units: f64,
+    /// The rung the new total landed on, or `None` when unquantised.
+    pub rung: Option<i64>,
+    /// The new **total** work budget. It is a total and not an increment, so a
+    /// run that takes three tranches has three budgets and not four.
+    pub units: u64,
+}
+
+/// The fraction of the wall target the *first* tranche of a re-planning run aims
+/// at.
+///
+/// `1.0` - aim at the whole target on the probe alone - is what
+/// `docs/experiments/calibrated-plan/` shipped, and it is still the default
+/// whenever re-planning is off. It has one failure mode and §10.2 of that round
+/// measured it: the bias rises with the budget, so a constant fitted at ten
+/// seconds is not conservative at thirty and mixed-61 seed 2 ran **36.39 s
+/// against a 30 s target**. A single plan cannot recover from that, because by
+/// the time the error is visible the budget is already spent.
+///
+/// A re-planning run aims the first tranche at a fraction of the target instead,
+/// and tops it up from the measured queue rate. The value is a trade with three
+/// ends and none of them is free:
+///
+/// * **too large** and the first tranche can overrun the whole target on its own,
+///   which is exactly the 30 s failure this exists to bound - and which no
+///   re-plan can undo, because by the time the error is visible the wall is
+///   gone;
+/// * **too small** and the first tranche is a short window to measure a rate
+///   over, and the run pays a re-plan's fixed cost more often than it needs to;
+/// * and it is **not only a safety knob**, which this round measured rather than
+///   assumed. The affordability rule refuses an action the *current* tranche
+///   cannot afford, so where a tranche boundary falls decides which actions the
+///   queue is allowed to buy before it. `docs/experiments/replan/` §9 has two
+///   fractions that arrive at the same final budget by different routes and
+///   publish different depths, which is the honest form of this: the boundary
+///   is a scheduling decision and not only a bookkeeping one.
+///
+/// **The shipped value is `1.0`, and that is a measurement rather than a
+/// decision not to use the knob.** `docs/experiments/replan/` §9.3 swept it on
+/// mixed-61 at both budgets, two rounds, three seeds:
+///
+/// * at **ten seconds** - the budget the user priority names - `0.6` and `1.0`
+///   produce the *same three depths* (175.136 / 171.362 / 176.162), both at
+///   0 of 6 over target and one document per seed. The gain over a
+///   non-re-planning run is the re-plan's, not the fraction's;
+/// * at **thirty seconds** `0.6` bounds the worst case (34.13 s against
+///   36.54 s) and makes the typical one worse - **4 of 6 over target at a p50
+///   of 33.15 s**, against `1.0`'s 2 of 6 at 25.99 s.
+///
+/// So the fraction that was introduced to bound the thirty-second overrun does
+/// not bound it; it moves the overrun from the tail into the middle. Shipping
+/// `1.0` keeps the ten-second gain, which is the one that was asked for, and
+/// leaves the thirty-second wall exactly where the single plan left it - which
+/// §9.3 states as the negative result it is.
+pub const PLAN_FIRST_TRANCHE: f64 = 1.0;
+
+/// The growth a re-priced total must show before a tranche is taken at all.
+///
+/// One ladder rung, and it is [`PLAN_QUANTUM_STEP`] rather than a second
+/// constant on purpose. Under quantisation the two are the same statement: a
+/// total that has not grown by a rung snaps back onto the rung it is already on,
+/// so the tranche would install the budget the run already has. Stating it as an
+/// explicit threshold makes the unquantised arm (`planq=1`) obey the same rule,
+/// which is what keeps that arm's tranche *count* as coarse a decision as the
+/// quantised arm's.
+pub const PLAN_TRANCHE_MIN_GROWTH: f64 = PLAN_QUANTUM_STEP;
+
+/// How far past the window it measured a tranche may extrapolate, as a multiple
+/// of that window.
+///
+/// **`1.0` - never predict more queue time than you have already watched.**
+///
+/// This is the round's second constant and it is the one the pilot forced.
+/// `evidence/cal-pilot-unbounded.json` ran the re-plan without it: on mixed-61
+/// seed 2 at a thirty-second target the first tranche ended at 13.6 s having
+/// watched the queue for 11.1 s, and priced the remaining **15.5 s** at the rate
+/// it had measured - an extrapolation 139% beyond its own window. The queue's
+/// rate does not hold over that range, and this document's own parent round
+/// says why (`calibrated-plan` §13: *"the fitted bias rises with the budget,
+/// because the queue's late actions cost more per unit than its early ones"*).
+/// The tranche bought 66.2 M units, the rate fell 42% below the reading, and the
+/// run took **36.74 s**. That is the same failure the single plan has, arrived
+/// at from the other side.
+///
+/// The fix is not a safety factor on the rate, which would be a second bias
+/// constant guessing the same thing the first one guessed. It is to stop
+/// extrapolating: cap the horizon at the observed window, buy what that
+/// justifies, and let the **next** tranche re-measure. The error per tranche is
+/// then bounded by the accuracy of a one-window prediction, and the sequence
+/// converges on the target from below instead of jumping past it.
+///
+/// It costs nothing at ten seconds, where the remaining wall is already shorter
+/// than the window - measured at 2.80 s remaining against a 4.37 s window - so
+/// this constant is inert on the budget the user priority names and active on
+/// the one where the mode was broken.
+pub const PLAN_TRANCHE_HORIZON: f64 = 1.0;
+
+/// How many re-plans one run may take.
+///
+/// A bound rather than a tuning knob. Each tranche is at least
+/// [`PLAN_TRANCHE_MIN_GROWTH`] bigger than the last, so the sequence terminates
+/// on its own long before this; the constant exists so that a box on which the
+/// rate estimate is pathological cannot turn a wall target into an unbounded
+/// loop.
+///
+/// It is **twelve** rather than a smaller number because a tranche is allowed to
+/// be as small as one rung (see [`BudgetMeter::replan`]), and a run whose first
+/// tranche was short may need several of them to climb back: `1.15^12` is 5.35x,
+/// which is more than the widest climb this round measured. A tranche that buys
+/// nothing costs one `run_phase` entry and one `enumerate_v3_actions`, so the
+/// bound is cheap to set loosely and expensive to set tightly.
+pub const PLAN_MAX_TRANCHES: usize = 12;
 
 /// The measured ratio `rate(phase 0) / rate(everything after phase 0)`, in work
 /// units per second.
@@ -1494,6 +1678,16 @@ pub struct PortfolioOutcome {
     /// calibrated to - so a caller reading `budget` alone cannot tell a plan
     /// from a replay of one, which is the point: they are the same run.
     pub plan: Option<PlanReport>,
+    /// The in-run re-plans, in order, empty when none was taken.
+    ///
+    /// Empty is the common case and it is *two* different cases that a reader
+    /// has to be able to tell apart, which is why `plan.first_tranche` is
+    /// reported next to it: `first_tranche == 1.0` with no tranches is a run
+    /// that never intended to re-plan, and `first_tranche < 1.0` with no
+    /// tranches is a run that intended to and found its remaining wall did not
+    /// buy a rung. The second is a *result*, and it is the one that makes a
+    /// re-planning run reproduce a non-re-planning one.
+    pub tranches: Vec<TrancheReport>,
 }
 
 /// When the constructor slice is allowed to draw a basin.
@@ -1665,6 +1859,44 @@ pub struct PortfolioSettings {
     /// arm's constant depth, sets `m34pconfirm=0`.
     #[cfg(feature = "parallel-compression-schedule")]
     pub compression_schedule_parallel_confirm: bool,
+    /// The mode-34 slice's **batch budget**, in the schedule's own work
+    /// currency, or `None` for the atomic slice.
+    ///
+    /// `None` is the default and it is the shipped arm: every pinned m34 number
+    /// in this repository was measured on a slice that runs from its entry to
+    /// its bound without ever handing itself back. Sol review 8 §3 condition 4
+    /// names that as the thing to fix - *"mode 34 oggi è atomico e senza work
+    /// cap interno"* - and §4 spend 1 names the gate, which is that the batched
+    /// slice must reproduce the atomic one.
+    ///
+    /// See [`crate::search::compression_schedule::CompressionScheduleSettings::batch_work_units`]
+    /// for what a batch boundary is. This field only carries the number down to
+    /// the operator; it decides nothing.
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule_batch_work_units: Option<usize>,
+    /// Whether the coordinator caps a mode-34 slice at its own **remaining
+    /// budget**, stopping the slice at the first checkpoint past it.
+    ///
+    /// `false` by default. This is the consumer of the batch mechanism above,
+    /// and it is the reason the mechanism is worth having: an atomic slice is
+    /// charged after it finishes, so a budget with 2 M units left can dispatch
+    /// a slice that spends 20 M and the affordability rule finds out afterwards.
+    /// With this armed the slice is handed
+    /// `batch_work_units = remaining_to(deadline)` and gives itself back at the
+    /// first checkpoint past it, with its last exact-valid incumbent intact.
+    ///
+    /// It is denominated in **work**, not in seconds, which is what keeps it
+    /// deterministic: the slice's own meter is a counter, so two processes stop
+    /// at the same checkpoint. That is the difference between this and Sol
+    /// review 8 §3 condition 3's wall stop, which cannot be deterministic and is
+    /// not implemented here.
+    ///
+    /// The two currencies line up by construction: `settle_operator_charge`
+    /// charges `max(global_units, operator_self_units)`, so what the coordinator
+    /// pays for a slice *is* the slice's own meter whenever the slice's meter is
+    /// the larger of the two, which on the measured band it is by ~18x.
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule_cap_to_budget: bool,
     /// Whether the exact-clearance contract validator's broad phase is armed.
     ///
     /// **`true` by default**, which is what the feature has always done: with
@@ -1690,6 +1922,26 @@ pub struct PortfolioSettings {
     /// [`PLAN_QUANTUM_STEP`], overridable per run. `1.0` switches quantisation
     /// off.
     pub plan_quantum_step: f64,
+    /// Whether a plan whose work is exhausted with wall left over prices a
+    /// second tranche from the rate **this run** measured.
+    ///
+    /// `false` by default, so a binary that is not asked for it produces the
+    /// single-tranche plan `docs/experiments/calibrated-plan/` measured, field
+    /// for field. When true the run may take up to [`PLAN_MAX_TRANCHES`] of
+    /// them; see [`TrancheReport`] for what is deterministic about that and what
+    /// is not.
+    pub plan_replan: bool,
+    /// [`PLAN_FIRST_TRANCHE`], overridable per run. Read **only** when
+    /// [`Self::plan_replan`] is armed: a run that cannot re-plan must aim the
+    /// one plan it gets at the whole target, and a first tranche of 0.6 with no
+    /// second tranche is simply a run that gave 40% of its wall away.
+    pub plan_first_tranche: f64,
+    /// [`PLAN_MAX_TRANCHES`], overridable per run.
+    pub plan_max_tranches: usize,
+    /// [`PLAN_TRANCHE_HORIZON`], overridable per run. A very large value
+    /// restores the unbounded extrapolation the pilot measured and is how
+    /// `evidence/cal-pilot-unbounded.json`'s arm is reproduced.
+    pub plan_tranche_horizon: f64,
     /// Whether the coordinator arms the continuous-rotation operator on the two
     /// operators whose relaxed lane the brief scopes it to: the alternation
     /// fixpoint (mode 22) and the compression schedule (mode 34).
@@ -1914,11 +2166,19 @@ impl PortfolioSettings {
             // exist.
             #[cfg(feature = "parallel-compression-schedule")]
             compression_schedule_parallel_confirm: true,
+            #[cfg(feature = "compression-schedule")]
+            compression_schedule_batch_work_units: None,
+            #[cfg(feature = "compression-schedule")]
+            compression_schedule_cap_to_budget: false,
             #[cfg(feature = "fast-contract-validator")]
             fast_contract_validator: true,
             plan_bias: PLAN_PHASE_ZERO_BIAS,
             plan_headroom: PLAN_HEADROOM,
             plan_quantum_step: PLAN_QUANTUM_STEP,
+            plan_replan: false,
+            plan_first_tranche: PLAN_FIRST_TRANCHE,
+            plan_max_tranches: PLAN_MAX_TRANCHES,
+            plan_tranche_horizon: PLAN_TRANCHE_HORIZON,
             #[cfg(feature = "continuous-rotation")]
             continuous_rotation: false,
             #[cfg(feature = "sparse-rotation")]
@@ -2016,18 +2276,38 @@ impl BudgetMeter {
         // retire units at - which is the probe's rate divided by the phase-zero
         // bias. Clamped at zero: a target already overspent by phase 0 buys a
         // plan of exactly the probe, never a negative one.
-        let remaining_seconds = (target_seconds * headroom - probe_seconds).max(0.0);
+        // The horizon this first tranche aims at. `1.0` - the whole target - is
+        // the single-plan mode; a re-planning run aims lower on purpose and
+        // tops the plan up from a measurement instead of a constant. See
+        // `PLAN_FIRST_TRANCHE`.
+        let mut first_tranche = if settings.plan_replan {
+            settings.plan_first_tranche.clamp(f64::MIN_POSITIVE, 1.0)
+        } else {
+            1.0
+        };
+        let mut remaining_seconds = target_seconds * headroom * first_tranche - probe_seconds;
+        // **The probe outran the tranche.** At a three-second target on
+        // mixed-61 phase 0 alone is 2.2 s, so a first tranche aimed at 60% of
+        // `target * headroom` - 1.75 s - is already behind by the time it is
+        // computed. Without this clause the run buys a plan of exactly the
+        // probe, the schedule phase is skipped, and the re-plan cannot rescue
+        // it: with no queue there is no rate to measure, so no tranche is taken
+        // and the run publishes phase 0's own layout. A re-planning run would
+        // be *worse than the mode it improves* at the one budget where the
+        // margin is thinnest.
+        //
+        // So the fraction degrades to the whole target, which is exactly what a
+        // non-re-planning run does. It is reported - `plan.firstTranche` says
+        // `1.0` - so a reader can see that the fraction was asked for and not
+        // applied rather than inferring it from a wall.
+        if remaining_seconds <= 0.0 {
+            first_tranche = 1.0;
+            remaining_seconds = target_seconds * headroom - probe_seconds;
+        }
+        let remaining_seconds = remaining_seconds.max(0.0);
         let raw_units = probe_work_units as f64 + remaining_seconds * rate / bias;
         let step = settings.plan_quantum_step;
-        let (rung, quantised) = if step > 1.0 && raw_units > PLAN_ANCHOR_UNITS {
-            // Floor, not round: the error is then one-sided and a plan is
-            // never larger than the probe justified. See `PLAN_QUANTUM_STEP`.
-            let index = ((raw_units / PLAN_ANCHOR_UNITS).ln() / step.ln()).floor();
-            let units = PLAN_ANCHOR_UNITS * step.powf(index);
-            (Some(index as i64), units)
-        } else {
-            (None, raw_units)
-        };
+        let (rung, quantised) = quantise_plan(raw_units, step);
         let units = quantised.max(1.0) as u64;
         self.budget = PortfolioBudget::Work { units };
         PlanReport {
@@ -2041,7 +2321,135 @@ impl BudgetMeter {
             raw_units,
             rung,
             units,
+            first_tranche,
         }
+    }
+
+    /// Re-prices the remaining wall at the rate the **queue** is actually
+    /// retiring units at, and installs the larger total if it buys a whole
+    /// ladder rung. Returns `None` when it does not, which is the case that
+    /// makes a re-planning run bit-identical to a non-re-planning one.
+    ///
+    /// `docs/experiments/calibrated-plan/` §13.1 asks for exactly this and
+    /// prices the two lines that make it awkward: `v3_loop`'s `run.deadline`
+    /// and `Coordinator::protected_fraction` are both fractions of the budget
+    /// that was installed when the phase was entered. This function does not
+    /// try to patch them in place. It installs a new *total* and the caller
+    /// recomputes `protected_fraction` from it and enters a **new phase**, so
+    /// every deadline downstream is derived from the budget that is actually in
+    /// force rather than from one that has been mutated underneath it.
+    ///
+    /// # The clock
+    ///
+    /// One read, `self.seconds()`, on the first line. Everything after it is
+    /// arithmetic on that one number and on counters. Its influence on the
+    /// document is bounded by the ladder in two separate ways, and both are
+    /// needed:
+    ///
+    /// * on **size**, because the installed total is snapped to the rung, so
+    ///   two processes whose readings differ by less than a rung install the
+    ///   same budget;
+    /// * on **count**, because a tranche is refused unless the re-priced total
+    ///   clears the next rung, so two processes whose readings differ by less
+    ///   than a rung also agree on *whether there is a tranche at all*.
+    ///
+    /// What it does not bound is a box that is loaded differently between two
+    /// runs by more than a rung's worth of rate, and no work-denominated budget
+    /// can: that is the same limit `install_plan` has, one reading later and
+    /// over a longer window - measured at 4.37 s of queue against a 2.52 s
+    /// probe on mixed-61 seed 0 at a ten-second target, so about 1.7x, not the
+    /// order of magnitude that would make the reading's spread negligible.
+    fn replan(
+        &mut self,
+        plan: &PlanReport,
+        settings: &PortfolioSettings,
+        index: usize,
+    ) -> Option<TrancheReport> {
+        let PortfolioBudget::Work { units: current } = self.budget else {
+            return None;
+        };
+        // The one clock read.
+        let at_seconds = self.seconds();
+        let at_work_units = self.work_units();
+        let target_seconds = plan.target_millis as f64 / 1_000.0;
+        let remaining_seconds = target_seconds * plan.headroom - at_seconds;
+        if !(remaining_seconds > 0.0) {
+            return None;
+        }
+        // The window, and it is the *queue's* window rather than the process's:
+        // phase 0 is excluded because including it would put the very bias this
+        // is replacing back into the estimate.
+        let queue_seconds = at_seconds - plan.probe_seconds;
+        let queue_units = at_work_units.saturating_sub(plan.probe_work_units);
+        if !(queue_seconds > 0.0) || queue_units == 0 || current == 0 {
+            return None;
+        }
+        let queue_rate = queue_units as f64 / queue_seconds;
+        // The horizon, and it is the whole of this round's second constant: a
+        // tranche prices what it can *see*, and it has seen `queue_seconds`.
+        // Beyond that it would be extrapolating a rate that this campaign has
+        // already measured as falling with the budget. See
+        // `PLAN_TRANCHE_HORIZON`.
+        let mut horizon_seconds =
+            remaining_seconds.min(queue_seconds * settings.plan_tranche_horizon);
+        // No bias divisor. This rate is measured on the queue, which is the
+        // thing the plan is buying more of.
+        let mut raw_units = at_work_units as f64 + horizon_seconds * queue_rate;
+        if !raw_units.is_finite() || queue_rate <= 0.0 {
+            return None;
+        }
+        // **A tranche may always buy one rung, if the remaining wall pays for
+        // it.**
+        let one_rung = next_rung_above(current, settings.plan_quantum_step);
+        if raw_units < one_rung {
+            // The window does not justify a whole rung - and a tranche below one
+            // rung is not a tranche, because it floors straight back onto the
+            // budget the run already has.
+            //
+            // Refusing here is what the first cut did, and it **strands the
+            // run**: `evidence/determinism-replan-stranded.json` caught
+            // mixed-61 seed 2 stopping with 5.7 s of a ten-second target
+            // unspent, three millimetres behind the mode it is supposed to
+            // improve, because its first tranche had been so short that the
+            // queue window it left could not justify a rung. That is worse than
+            // over-buying: it is not spending at all.
+            //
+            // So the question becomes the right one - *can the remaining wall
+            // pay for a rung at the rate we measured?* - and the answer buys
+            // **exactly** that and never more. The horizon is exceeded, which is
+            // the one place `PLAN_TRANCHE_HORIZON` is deliberately overridden,
+            // and the excess is bounded by a single rung rather than by the
+            // whole remaining wall, so §9.1's 36.74 s failure cannot come back
+            // through this door.
+            let needed_seconds = (one_rung - at_work_units as f64) / queue_rate;
+            if !(needed_seconds > 0.0) || needed_seconds > remaining_seconds {
+                return None;
+            }
+            horizon_seconds = needed_seconds;
+            raw_units = one_rung;
+        }
+        let (rung, quantised) = quantise_plan(raw_units, settings.plan_quantum_step);
+        // A tranche that would not raise the budget is not a tranche. The
+        // guard is belt and braces over the growth test above - under
+        // quantisation the two are the same statement - and it is here because
+        // a budget that went *down* would retire the run on the spot.
+        let units = quantised.max(1.0) as u64;
+        if units <= current {
+            return None;
+        }
+        self.budget = PortfolioBudget::Work { units };
+        Some(TrancheReport {
+            index,
+            at_seconds,
+            at_work_units,
+            queue_seconds,
+            queue_rate_units_per_second: queue_rate,
+            remaining_seconds,
+            horizon_seconds,
+            raw_units,
+            rung,
+            units,
+        })
     }
 
     /// The total charged so far for self-metered gaps, in work units.
@@ -2172,6 +2580,67 @@ impl BudgetMeter {
             PortfolioBudget::Wall { .. } => call.elapsed_seconds,
             PortfolioBudget::Work { .. } | PortfolioBudget::Plan { .. } => call.work_units as f64,
         }
+    }
+}
+
+/// Snaps a raw plan onto the quantisation ladder, returning the rung and the
+/// snapped units.
+///
+/// **Floor, not round**: the error is then one-sided and a plan is never larger
+/// than the measurement justified, which is what lets [`PLAN_HEADROOM`] be 0.97
+/// instead of 0.8. See [`PLAN_QUANTUM_STEP`].
+///
+/// Shared by [`BudgetMeter::install_plan`] and [`BudgetMeter::replan`] rather
+/// than written twice, because the whole determinism argument for a tranche is
+/// that it lands on *the same ladder* the initial plan does - a second copy of
+/// this arithmetic is a second ladder waiting to drift from the first.
+fn quantise_plan(raw_units: f64, step: f64) -> (Option<i64>, f64) {
+    if step > 1.0 && raw_units > PLAN_ANCHOR_UNITS {
+        let index = ((raw_units / PLAN_ANCHOR_UNITS).ln() / step.ln()).floor();
+        (Some(index as i64), PLAN_ANCHOR_UNITS * step.powf(index))
+    } else {
+        (None, raw_units)
+    }
+}
+
+/// The smallest plan that quantises to a **strictly higher rung** than `units`.
+///
+/// It is derived from the rung *index* rather than written as `units * step`,
+/// and the difference is not pedantry: [`quantise_plan`] floors, and a budget is
+/// a `u64`, so `current` is a rung that has already lost its fractional part.
+/// Multiplying that by `step` lands a fraction of a unit *below* the next rung
+/// and floors straight back onto the one it started from - which is a tranche
+/// that installs the budget the run already has, and is exactly the stranding
+/// this function exists to prevent.
+///
+/// Under `planq=1` there is no ladder, so the growth threshold is the one the
+/// quantised arm's rung happens to be: [`PLAN_TRANCHE_MIN_GROWTH`]. That keeps
+/// the unquantised arm's tranche *count* as coarse a decision as the quantised
+/// arm's, which is the property §6 of `docs/experiments/replan/` claims.
+fn next_rung_above(units: u64, step: f64) -> f64 {
+    if step > 1.0 && units as f64 > PLAN_ANCHOR_UNITS {
+        // Two nudges, and both are the log round-trip rather than the ladder.
+        //
+        // On the way **in**: `units` is a rung that `quantise_plan` floored and
+        // then truncated to `u64`, so `ln(units/anchor)/ln(step)` lands a few
+        // ulps below its own integer and `floor` returns `k-1`. The next rung
+        // above `k-1` is `k`, which is the rung the caller already has - a
+        // tranche that installs the budget the run is trying to leave.
+        //
+        // On the way **out**: `anchor * step^(k+1)` fed back through the same
+        // ratio lands below `k+1` for the same reason, so `quantise_plan` would
+        // floor the target straight back down.
+        //
+        // The inbound nudge is `1e-4` rather than `1e-6` because the deficit it
+        // has to cover is a **whole unit** of truncation: `1/units` in value,
+        // which is `1/(units * ln step)` in index, and that is 7.2e-6 at a
+        // million-unit rung. In index space a rung is `1.0`, so `1e-4` is one
+        // part in ten thousand of one and can only matter for a value that is a
+        // rung already.
+        let index = ((units as f64 / PLAN_ANCHOR_UNITS).ln() / step.ln() + 1e-4).floor();
+        PLAN_ANCHOR_UNITS * step.powf(index + 1.0) * (1.0 + 1e-6)
+    } else {
+        units as f64 * PLAN_TRANCHE_MIN_GROWTH
     }
 }
 
@@ -2963,8 +3432,14 @@ pub fn run_portfolio(
     // best state and its recombination operator never meet. v3 replaces the
     // pass with a queue that re-enumerates after every action, so a state born
     // late re-enters every class it is eligible for.
+    let mut tranches: Vec<TrancheReport> = Vec::new();
     let schedule_report = if settings.coordinator_v3 {
-        Some(run_v3_schedule(&mut coordinator, constructor_clamp_mm))
+        Some(run_v3_schedule(
+            &mut coordinator,
+            constructor_clamp_mm,
+            plan.as_ref(),
+            &mut tranches,
+        ))
     } else {
         None
     };
@@ -3377,6 +3852,7 @@ pub fn run_portfolio(
         ledger,
         probe,
         plan,
+        tranches,
         descent_stalled,
         result: coordinator.incumbent.result.clone(),
         incumbent: coordinator.incumbent,
@@ -4103,13 +4579,91 @@ impl Coordinator<'_> {
 }
 
 /// The v3 loop: enumerate, rank, spend the best affordable action, repeat.
-fn run_v3_schedule(coordinator: &mut Coordinator<'_>, constructor_clamp_mm: f64) -> ScheduleReport {
+fn run_v3_schedule(
+    coordinator: &mut Coordinator<'_>,
+    constructor_clamp_mm: f64,
+    plan: Option<&PlanReport>,
+    tranches: &mut Vec<TrancheReport>,
+) -> ScheduleReport {
     let mut actions: Vec<ScheduledActionReport> = Vec::new();
-    let schedule_by = coordinator.settings.schedule.schedule_by;
     let phase_zero_cost = coordinator.phase_zero_cost;
-    coordinator.run_phase("schedule", schedule_by, |run| {
-        v3_loop(run, constructor_clamp_mm, &mut actions);
-    });
+    let mut queue = V3QueueState::default();
+    run_v3_tranche(
+        coordinator,
+        constructor_clamp_mm,
+        &mut actions,
+        &mut queue,
+        "schedule",
+    );
+    // ---- the in-run re-plan ------------------------------------------------
+    //
+    // `docs/experiments/calibrated-plan/` §13.1: *"Install a provisional plan
+    // from phase 0, run to a deterministic work checkpoint, then re-price the
+    // remaining wall at the rate the queue is actually retiring units at."*
+    // The deterministic work checkpoint is the line above - the tranche's own
+    // budget is a counter, so where it stops is a counter's decision - and the
+    // re-pricing is `BudgetMeter::replan`.
+    //
+    // The two lines §13.1 names as the cost are handled by *not* patching them:
+    // rather than recomputing `run.deadline` and `protected_fraction` inside a
+    // phase that is already running against them, each tranche recomputes
+    // `protected_fraction` from the new total and enters a **new phase**. Every
+    // deadline a tranche runs against is therefore a fraction of the budget
+    // that is actually in force, which is the property the previous chapters'
+    // schedule numbers rest on and the reason that round left this undone.
+    if let Some(plan) = plan {
+        if coordinator.settings.plan_replan {
+            let max_tranches = coordinator.settings.plan_max_tranches;
+            for index in 1..=max_tranches {
+                // A tranche buys *budget*, so it is only worth buying when the
+                // budget is what ran out. A queue that stopped because it had
+                // nothing left to enumerate - `keysExhausted`, `patience`,
+                // `geometricFixpoint` - will stop again on the next line for
+                // the same reason, and a report carrying five empty `replanN`
+                // phases would describe a run that re-planned five times when
+                // what happened is that it finished early.
+                //
+                // `skippedDeadlinePassed` *is* in the list, and deliberately:
+                // it means phase 0 alone outspent the tranche it was given,
+                // which is the one case where a bigger budget turns a run that
+                // did nothing into a run that searches.
+                let budget_bound = matches!(
+                    coordinator.phases.last().map(|phase| phase.exit_cause),
+                    Some(
+                        PhaseExitCause::Deadline
+                            | PhaseExitCause::Affordability
+                            | PhaseExitCause::SkippedDeadlinePassed
+                    )
+                );
+                if !budget_bound {
+                    break;
+                }
+                // Cloned rather than borrowed: `replan` takes `&mut self` on a
+                // field of the same struct the settings live on, and a
+                // coordinator-wide borrow would put the two on opposite sides
+                // of the borrow checker for no gain - this runs at most
+                // `PLAN_MAX_TRANCHES` times per process.
+                let settings = coordinator.settings.clone();
+                let Some(tranche) = coordinator.meter.replan(plan, &settings, index) else {
+                    break;
+                };
+                // Phase 0's share of the *new* total. It shrinks with every
+                // tranche, which is correct: the protected phase is a fixed
+                // number of work units and the budget it is protected out of
+                // has grown.
+                coordinator.protected_fraction =
+                    (plan.probe_work_units as f64 / tranche.units as f64).clamp(0.0, 1.0);
+                tranches.push(tranche);
+                run_v3_tranche(
+                    coordinator,
+                    constructor_clamp_mm,
+                    &mut actions,
+                    &mut queue,
+                    &format!("replan{index}"),
+                );
+            }
+        }
+    }
     let exit_cause = coordinator
         .phases
         .last()
@@ -4140,38 +4694,99 @@ fn run_v3_schedule(coordinator: &mut Coordinator<'_>, constructor_clamp_mm: f64)
     }
 }
 
+/// One tranche of the v3 queue: a phase, against the budget in force now.
+///
+/// A named function rather than an inlined `run_phase` because the re-plan calls
+/// it more than once and every call has to be the *same* call - same loop, same
+/// share, same accumulator. The only thing that differs between tranches is the
+/// phase name, which is what makes the second one visible in the report instead
+/// of hidden inside the first one's row.
+fn run_v3_tranche(
+    coordinator: &mut Coordinator<'_>,
+    constructor_clamp_mm: f64,
+    actions: &mut Vec<ScheduledActionReport>,
+    queue: &mut V3QueueState,
+    name: &str,
+) {
+    let schedule_by = coordinator.settings.schedule.schedule_by;
+    coordinator.run_phase(name, schedule_by, |run| {
+        v3_loop(run, constructor_clamp_mm, actions, queue);
+    });
+}
+
+/// The v3 queue's own policy counters, held across tranches.
+///
+/// Every field here used to be a `let mut` inside [`v3_loop`], and moving them
+/// out is not a tidy-up: it is what makes a second tranche a **continuation**
+/// rather than a second run of the queue.
+///
+/// The difference is measurable and all of it is in the wrong direction. A
+/// tranche that restarted these would give the compression-schedule class a
+/// fresh audition it has already failed, reset the barren patience that
+/// coordinator v3 §4.2 measured at eight, and offer diversify slot 0 again on a
+/// run that has already spent it. None of those is what "the plan's work is
+/// exhausted, buy some more" means. The budget grew; the run's history did not
+/// reset, and neither does this.
+#[derive(Clone, Copy, Debug, Default)]
+struct V3QueueState {
+    diversify_slot: usize,
+    diversify_barren: usize,
+    diversify_done: bool,
+    /// The falsifiability half of Grok review 1 §2b item 4's sterile bit: the
+    /// class is offered once more after [`SCHEDULE_AUDITION_BARREN`] further
+    /// barren actions, and **once only** - which is a property of the run, not
+    /// of the tranche.
+    schedule_auditioned: bool,
+    barren_since_schedule: usize,
+    /// Consecutive actions of *any* class that published nothing. Reset by a
+    /// publication and by nothing else.
+    barren: usize,
+    /// The same count, additionally reset by a diversify action, so the audition
+    /// rule fires at most once per `DIVERSIFY_AUDITION_BARREN` barren actions
+    /// rather than on every action after the eighth.
+    barren_since_diversify: usize,
+}
+
 fn v3_loop(
     run: &mut PhaseRun<'_, '_>,
     constructor_clamp_mm: f64,
     out: &mut Vec<ScheduledActionReport>,
+    queue: &mut V3QueueState,
 ) {
     let patience = run.settings.basin_patience.max(1);
     let slots = run.settings.basin_slots;
     let barren_patience = run.settings.barren_action_patience;
     let ranked_diversify = run.settings.diversify_in_queue;
-    let mut diversify_slot = 0usize;
-    let mut diversify_barren = 0usize;
-    let mut diversify_done = run.settings.basin_trigger == BasinTrigger::Never;
     let sterile_bit = run.settings.schedule_sterile_bit;
-    // The one bit Grok review 1 §2b item 4 asks for, and it is one bit: once
-    // the compression-schedule class has spent [`SCHEDULE_STERILE_ACTIONS`]
-    // actions on *this* request and published nothing, it comes off the queue.
-    // `schedule_auditioned` is the falsifiability half - the class is offered
-    // once more after [`SCHEDULE_AUDITION_BARREN`] further barren actions, and
-    // once only, so the bit is a claim this run can still disprove rather than
-    // an absorbing state.
-    let mut schedule_auditioned = false;
-    let mut barren_since_schedule = 0usize;
-    // Consecutive actions of *any* class that published nothing. Reset by a
-    // publication and by nothing else.
-    let mut barren = 0usize;
-    // The same count, additionally reset by a diversify action, so the audition
-    // rule fires at most once per `DIVERSIFY_AUDITION_BARREN` barren actions
-    // rather than on every action after the eighth.
-    let mut barren_since_diversify = 0usize;
+    let V3QueueState {
+        mut diversify_slot,
+        mut diversify_barren,
+        mut diversify_done,
+        mut schedule_auditioned,
+        mut barren_since_schedule,
+        mut barren,
+        mut barren_since_diversify,
+    } = *queue;
+    diversify_done = diversify_done || run.settings.basin_trigger == BasinTrigger::Never;
+    // Written back on every exit, including the early ones, so a tranche cannot
+    // drop the history by returning through a path that forgot to save it.
+    macro_rules! save {
+        () => {
+            *queue = V3QueueState {
+                diversify_slot,
+                diversify_barren,
+                diversify_done,
+                schedule_auditioned,
+                barren_since_schedule,
+                barren,
+                barren_since_diversify,
+            };
+        };
+    }
     loop {
         if !run.meter.has_room(run.deadline) {
             run.note_exit(PhaseExitCause::Deadline);
+            save!();
             return;
         }
         let mut candidates = run.enumerate_v3_actions();
@@ -4249,6 +4864,7 @@ fn v3_loop(
                 // has left. That is a different finding from having no actions,
                 // and the exit cause says which.
                 run.note_exit(PhaseExitCause::Affordability);
+                save!();
                 return;
             }
             None => {
@@ -4256,15 +4872,18 @@ fn v3_loop(
                 // ticket is worth its price, and the only place v3 spends one.
                 if diversify_done || diversify_slot >= slots {
                     run.note_exit(PhaseExitCause::KeysExhausted);
+                    save!();
                     return;
                 }
                 let Some(quantum) = run.mean_operator_cost("mode22") else {
                     run.note_exit(PhaseExitCause::Affordability);
+                    save!();
                     return;
                 };
                 let arm = run.mean_operator_cost("mode20").unwrap_or(quantum);
                 if remaining < arm + quantum {
                     run.note_exit(PhaseExitCause::Affordability);
+                    save!();
                     return;
                 }
                 let slot = diversify_slot;
@@ -4402,6 +5021,7 @@ fn v3_loop(
             // fixpoint and not an affordability exit, and the three are
             // different findings about a run.
             run.note_exit(PhaseExitCause::Patience);
+            save!();
             return;
         }
     }
@@ -4618,6 +5238,25 @@ fn execute_v3_action(
             let schedule_lanes = run.settings.compression_schedule_lanes.max(1);
             #[cfg(feature = "parallel-compression-schedule")]
             let schedule_parallel_confirm = run.settings.compression_schedule_parallel_confirm;
+            // The batch budget, resolved here because this is the only place
+            // that can see both the slice's settings and the coordinator's
+            // remaining budget. An explicit `m34batch` wins over the cap, so a
+            // gate can pin a batch size without also arming the policy.
+            //
+            // `remaining_to` is in the meter's own currency, which for a work
+            // or a plan budget is the same currency the slice charges itself
+            // in - see `compression_schedule_cap_to_budget`. Under a *wall*
+            // budget it is seconds, and capping a work meter with a number of
+            // seconds would be a category error, so the cap is refused there
+            // and the slice stays atomic.
+            let batch_work_units = run
+                .settings
+                .compression_schedule_batch_work_units
+                .or_else(|| {
+                    let deadline = run.deadline;
+                    (run.settings.compression_schedule_cap_to_budget && !run.meter.is_wall())
+                        .then(|| run.meter.remaining_to(deadline).max(1.0) as usize)
+                });
             let scheduled = run.run_operator(
                 34,
                 &basin.placements,
@@ -4655,6 +5294,7 @@ fn execute_v3_action(
                             skip_infeasible_entry,
                             skip_unpublishable_entry,
                             barren_probe_denominator,
+                            batch_work_units,
                             ..crate::search::compression_schedule::CompressionScheduleSettings::default()
                         };
                     #[cfg(feature = "parallel-compression-schedule")]
@@ -4821,6 +5461,9 @@ fn schedule_slice_report(
         se2_witness_accepted: report.se2_witness_accepted,
         se2_witness_ms: report.se2_witness_ms,
         se2_witness_bought_mm: report.se2_witness_bought_mm,
+        batch_work_units: report.batch_work_units,
+        checkpoints: report.checkpoints.clone(),
+        step_digest: report.step_digest,
     })
 }
 
@@ -6127,6 +6770,358 @@ mod tests {
         // semantics-preserving.
         #[cfg(feature = "parallel-compression-schedule")]
         assert_eq!(settings.compression_schedule_lanes, 1);
+        // This round's three levers all ship off, so a binary that carries them
+        // and is not asked for them is the previous round's binary.
+        assert!(!settings.plan_replan);
+        #[cfg(feature = "compression-schedule")]
+        assert_eq!(settings.compression_schedule_batch_work_units, None);
+        #[cfg(feature = "compression-schedule")]
+        assert!(!settings.compression_schedule_cap_to_budget);
+    }
+
+    /// The ladder is one ladder, and it floors.
+    #[test]
+    fn the_quantiser_floors_onto_the_shipped_ladder() {
+        let rung = |k: i32| PLAN_ANCHOR_UNITS * PLAN_QUANTUM_STEP.powi(k);
+        for k in 0..30 {
+            // Exactly on a rung stays on it; a hair above stays on it too.
+            let (index, units) = quantise_plan(rung(k) * 1.000_001, PLAN_QUANTUM_STEP);
+            assert_eq!(index, Some(k as i64), "rung {k}");
+            assert!((units - rung(k)).abs() < rung(k) * 1e-9, "rung {k}");
+            // A hair below the *next* rung is still this rung: the floor is
+            // what makes the plan never larger than the measurement justified.
+            let (index, _) = quantise_plan(rung(k + 1) * 0.999_999, PLAN_QUANTUM_STEP);
+            assert_eq!(index, Some(k as i64), "rung {k}, just under the next");
+        }
+        // `planq=1` switches it off, and so does anything at or below the
+        // anchor - a plan smaller than one rung has no ladder to sit on.
+        assert_eq!(quantise_plan(5_000_000.0, 1.0), (None, 5_000_000.0));
+        assert_eq!(
+            quantise_plan(PLAN_ANCHOR_UNITS * 0.5, PLAN_QUANTUM_STEP),
+            (None, PLAN_ANCHOR_UNITS * 0.5)
+        );
+    }
+
+    /// The re-plan's two guards, which are the whole of its determinism claim.
+    ///
+    /// A tranche is taken only when the re-priced total clears the **next
+    /// rung**; below that the run keeps the budget it has and therefore
+    /// produces the document a `replan=0` run would have produced. So the
+    /// clock's influence on a re-planning run is bounded by a whole rung on the
+    /// tranche *count* as well as on the tranche *size*.
+    #[test]
+    fn a_tranche_is_refused_unless_it_buys_a_whole_rung() {
+        let settings =
+            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
+                millis: 10_000,
+            });
+        let plan = PlanReport {
+            target_millis: 10_000,
+            probe_seconds: 2.0,
+            probe_work_units: 8_000_000,
+            probe_rate_units_per_second: 4_000_000.0,
+            bias: PLAN_PHASE_ZERO_BIAS,
+            headroom: PLAN_HEADROOM,
+            quantum_step: PLAN_QUANTUM_STEP,
+            raw_units: 24_000_000.0,
+            rung: Some(23),
+            units: 24_000_000,
+            first_tranche: 0.6,
+        };
+        // A meter whose clock has already passed the target buys nothing: there
+        // is no remaining wall to re-price.
+        let mut spent = BudgetMeter::new(PortfolioBudget::Work { units: 24_000_000 });
+        spent.started = Instant::now() - std::time::Duration::from_secs(60);
+        assert!(spent.replan(&plan, &settings, 1).is_none());
+
+        // A meter under a wall budget has no work currency to install into.
+        let mut wall = BudgetMeter::new(PortfolioBudget::Wall { millis: 10_000 });
+        assert!(wall.replan(&plan, &settings, 1).is_none());
+
+        // And a plan whose probe has not been overtaken by the queue has no
+        // window to measure a rate over.
+        let mut fresh = BudgetMeter::new(PortfolioBudget::Work { units: 24_000_000 });
+        assert!(
+            fresh.replan(&plan, &settings, 1).is_none(),
+            "a run that has spent no queue time cannot price the queue"
+        );
+    }
+
+    /// A tranche installs a *total*, and it is on the same ladder.
+    #[test]
+    fn a_tranche_installs_a_larger_total_on_the_same_ladder() {
+        let settings =
+            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
+                millis: 10_000,
+            });
+        let plan = PlanReport {
+            target_millis: 10_000,
+            probe_seconds: 0.001,
+            probe_work_units: 0,
+            probe_rate_units_per_second: 0.0,
+            bias: PLAN_PHASE_ZERO_BIAS,
+            headroom: PLAN_HEADROOM,
+            quantum_step: PLAN_QUANTUM_STEP,
+            raw_units: 4_000_000.0,
+            rung: None,
+            units: 4_000_000,
+            first_tranche: 0.6,
+        };
+        let mut meter = BudgetMeter::new(PortfolioBudget::Work { units: 4_000_000 });
+        // A run 1 ms old with 4 M units already retired: a very fast queue and
+        // ~9.7 s of wall left, so the re-price is far above the next rung.
+        meter.started = Instant::now() - std::time::Duration::from_millis(1);
+        meter.self_metered_debit = 4_000_000;
+        let tranche = meter
+            .replan(&plan, &settings, 1)
+            .expect("9.7 s of remaining wall at this rate buys many rungs");
+        assert_eq!(tranche.index, 1);
+        assert!(tranche.units > 4_000_000, "{}", tranche.units);
+        assert_eq!(meter.budget, PortfolioBudget::Work { units: tranche.units });
+        // On the ladder, and it is the *same* ladder the initial plan uses.
+        let rung = tranche.rung.expect("quantised");
+        let expected = PLAN_ANCHOR_UNITS * PLAN_QUANTUM_STEP.powf(rung as f64);
+        assert!((tranche.units as f64 - expected).abs() < expected * 1e-6);
+        // No bias divisor: the rate is the queue's own, measured.
+        assert!(tranche.queue_rate_units_per_second > 0.0);
+        assert!(tranche.queue_seconds > 0.0);
+    }
+
+    /// A floored rung times the step is *not* the next rung.
+    ///
+    /// The one-line arithmetic bug behind the stranding fix's first cut: a
+    /// budget is a `u64`, so a rung has already lost its fractional part, and
+    /// `floor(rung) * 1.15` lands a fraction of a unit below the next rung and
+    /// quantises straight back onto the one it started from.
+    #[test]
+    fn the_next_rung_is_derived_from_the_index_and_not_from_a_multiplication() {
+        for k in 0..40 {
+            let rung = (PLAN_ANCHOR_UNITS * PLAN_QUANTUM_STEP.powi(k)) as u64;
+            if rung as f64 <= PLAN_ANCHOR_UNITS {
+                continue;
+            }
+            let next = next_rung_above(rung, PLAN_QUANTUM_STEP);
+            let (index, snapped) = quantise_plan(next, PLAN_QUANTUM_STEP);
+            assert_eq!(index, Some(k as i64 + 1), "rung {k}");
+            assert!(
+                snapped as u64 > rung,
+                "rung {k}: {} is not above {rung}",
+                snapped as u64
+            );
+            // The naive form is the bug, and it is a bug on most rungs.
+            let naive = rung as f64 * PLAN_QUANTUM_STEP;
+            let (naive_index, _) = quantise_plan(naive, PLAN_QUANTUM_STEP);
+            assert!(
+                naive_index == Some(k as i64) || naive_index == Some(k as i64 + 1),
+                "rung {k}: the naive form is off by more than one rung"
+            );
+        }
+        // Unquantised, the threshold is one rung's worth of growth.
+        assert_eq!(next_rung_above(1_000, 1.0), 1_000.0 * PLAN_TRANCHE_MIN_GROWTH);
+    }
+
+    /// A tranche whose window cannot justify a rung buys one anyway, if the
+    /// remaining wall pays for it.
+    ///
+    /// The **stranding** regression, and it is the second bug this round
+    /// shipped and caught: the first cut refused a tranche below one rung, and
+    /// `evidence/determinism-replan-stranded.json` caught mixed-61 seed 2
+    /// stopping with 5.7 s of a ten-second target unspent and three
+    /// millimetres behind the mode it improves, because a short first tranche
+    /// leaves a short queue window and a short window cannot justify a rung.
+    ///
+    /// The excess over [`PLAN_TRANCHE_HORIZON`] is bounded to exactly one rung,
+    /// which is what keeps §9.1's 36.74 s failure from coming back this way.
+    #[test]
+    fn a_window_too_short_for_a_rung_still_buys_one_when_the_wall_pays() {
+        let mut settings =
+            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
+                millis: 10_000,
+            });
+        settings.plan_replan = true;
+        let current = 9_357_620u64;
+        let plan = PlanReport {
+            target_millis: 10_000,
+            probe_seconds: 2.5,
+            probe_work_units: 8_778_573,
+            probe_rate_units_per_second: 3_511_429.0,
+            bias: PLAN_PHASE_ZERO_BIAS,
+            headroom: PLAN_HEADROOM,
+            quantum_step: PLAN_QUANTUM_STEP,
+            raw_units: current as f64,
+            rung: Some(31),
+            units: current,
+            first_tranche: 0.6,
+        };
+        // 4 s in: a 1.5 s queue window that retired 579 k units, and 5.7 s of
+        // the target still to spend. The horizon alone buys 1.5 s * 386 k/s =
+        // 579 k more, which is 6% - far short of the 15% rung.
+        let mut meter = BudgetMeter::new(PortfolioBudget::Work { units: current });
+        meter.started = Instant::now() - std::time::Duration::from_millis(4_000);
+        meter.self_metered_debit = current;
+        let tranche = meter
+            .replan(&plan, &settings, 1)
+            .expect("5.7 s of remaining wall pays for one rung at this rate");
+        assert!(
+            tranche.units > current,
+            "the run must not stop with wall unspent: {tranche:?}"
+        );
+        // Exactly one rung, and no more: the horizon was exceeded on purpose
+        // and the excess is bounded.
+        let (_, expected) = quantise_plan(
+            next_rung_above(current, PLAN_QUANTUM_STEP),
+            PLAN_QUANTUM_STEP,
+        );
+        assert_eq!(tranche.units, expected as u64, "one rung and no more");
+        assert!(
+            tranche.horizon_seconds > tranche.queue_seconds,
+            "this is the one place the horizon is exceeded: {tranche:?}"
+        );
+        assert!(tranche.horizon_seconds <= tranche.remaining_seconds);
+
+        // And when the wall cannot pay for a rung, it is still refused - the
+        // override is "buy a rung or nothing", never "buy what is left".
+        let mut broke = BudgetMeter::new(PortfolioBudget::Work { units: current });
+        broke.started = Instant::now() - std::time::Duration::from_millis(9_600);
+        broke.self_metered_debit = current;
+        assert!(broke.replan(&plan, &settings, 1).is_none());
+    }
+
+    /// A first tranche the probe has already outrun degrades to the whole
+    /// target instead of buying nothing.
+    ///
+    /// This is the three-second case and it is a **regression test for a bug
+    /// this round shipped and caught**: at a 3 s target phase 0 on mixed-61 is
+    /// 2.2 s, so `0.6 * 3 * 0.97 = 1.75 s` is already behind. Without the
+    /// degrade the plan is exactly the probe, the schedule phase is skipped,
+    /// and the re-plan cannot rescue it - with no queue there is no rate to
+    /// measure - so the run publishes phase 0's layout and a re-planning run is
+    /// *worse* than the mode it improves at the tightest budget there is.
+    #[test]
+    fn a_first_tranche_the_probe_outran_degrades_to_the_whole_target() {
+        let mut settings =
+            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
+                millis: 3_000,
+            });
+        settings.plan_replan = true;
+        settings.plan_first_tranche = 0.6;
+        let mut meter = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 3_000 });
+        // A probe of 2.2 s against a 1.746 s first-tranche horizon.
+        meter.started = Instant::now() - std::time::Duration::from_millis(2_200);
+        meter.self_metered_debit = 8_778_573;
+        let plan = meter.install_plan(3_000, &settings);
+        assert_eq!(
+            plan.first_tranche, 1.0,
+            "the fraction is reported as the one that was applied"
+        );
+        // `3 * 0.97 - 2.2 = 0.71 s` of probe-rate work, on top of the probe
+        // itself - which is strictly more than the probe alone.
+        assert!(
+            plan.raw_units > plan.probe_work_units as f64,
+            "a plan of exactly the probe is a run that never searches: {plan:?}"
+        );
+        // And the degrade is *conditional*: a target the probe has not outrun
+        // keeps the fraction it was given.
+        let mut roomy = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 10_000 });
+        roomy.started = Instant::now() - std::time::Duration::from_millis(2_200);
+        roomy.self_metered_debit = 8_778_573;
+        assert_eq!(roomy.install_plan(10_000, &settings).first_tranche, 0.6);
+    }
+
+    /// A tranche never prices more queue time than it has watched.
+    ///
+    /// The pilot in `docs/experiments/replan/` §9.1 is what this is for: an
+    /// unbounded tranche predicted 15.5 s of queue from an 11.1 s window, the
+    /// rate fell 42% below the reading, and a 30 s target took 36.74 s.
+    #[test]
+    fn a_tranche_does_not_extrapolate_past_the_window_it_measured() {
+        let mut settings =
+            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
+                millis: 30_000,
+            });
+        let plan = PlanReport {
+            target_millis: 30_000,
+            // A probe that finished 4 s ago, so the queue window below is
+            // exactly `at_seconds - 4.0`.
+            probe_seconds: 4.0,
+            probe_work_units: 0,
+            probe_rate_units_per_second: 0.0,
+            bias: PLAN_PHASE_ZERO_BIAS,
+            headroom: 1.0,
+            quantum_step: PLAN_QUANTUM_STEP,
+            raw_units: 4_000_000.0,
+            rung: None,
+            units: 4_000_000,
+            first_tranche: 0.6,
+        };
+        let priced = move |horizon: f64| {
+            let mut meter = BudgetMeter::new(PortfolioBudget::Work { units: 4_000_000 });
+            // 10 s in: a 6 s queue window, and 20 s of the target left. An
+            // unbounded tranche prices 20 s; a bounded one prices 6.
+            meter.started = Instant::now() - std::time::Duration::from_millis(10_000);
+            meter.self_metered_debit = 6_000_000;
+            let mut settings = settings.clone();
+            settings.plan_tranche_horizon = horizon;
+            meter
+                .replan(&plan, &settings, 1)
+                .expect("20 s of remaining wall buys many rungs either way")
+        };
+        let bounded = priced(1.0);
+        let unbounded = priced(1_000.0);
+        assert!(
+            (bounded.horizon_seconds - bounded.queue_seconds).abs() < 0.5,
+            "the bounded tranche prices its own window: {bounded:?}"
+        );
+        assert!(
+            unbounded.horizon_seconds > bounded.horizon_seconds * 2.0,
+            "the unbounded tranche prices the whole remaining wall: {unbounded:?}"
+        );
+        assert!(
+            unbounded.raw_units > bounded.raw_units,
+            "and therefore buys more"
+        );
+        assert!(
+            unbounded.units > bounded.units,
+            "by at least a rung, or the pilot's failure could not have happened"
+        );
+        // Both still report the *whole* remaining wall, so a reader can see
+        // what the cap refused rather than only what it allowed.
+        assert!(bounded.remaining_seconds > bounded.horizon_seconds);
+        // The two arms are two processes' worth of clock apart by construction
+        // - each builds its own meter - so this is "the same wall", not "the
+        // same float".
+        assert!(
+            (unbounded.remaining_seconds - bounded.remaining_seconds).abs() < 0.1,
+            "{} vs {}",
+            unbounded.remaining_seconds,
+            bounded.remaining_seconds
+        );
+    }
+
+    /// The first tranche is the whole target unless the run intends to re-plan.
+    ///
+    /// This is the guard that keeps `planfirst` from being a way to give 40% of
+    /// a wall target away by accident: a run that cannot take a second tranche
+    /// must aim the one plan it gets at the whole thing.
+    #[test]
+    fn the_first_tranche_is_the_whole_target_when_replanning_is_off() {
+        let mut settings =
+            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
+                millis: 10_000,
+            });
+        settings.plan_first_tranche = 0.25;
+        let mut off = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 10_000 });
+        let plan_off = off.install_plan(10_000, &settings);
+        assert_eq!(plan_off.first_tranche, 1.0);
+
+        settings.plan_replan = true;
+        let mut on = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 10_000 });
+        let plan_on = on.install_plan(10_000, &settings);
+        assert_eq!(plan_on.first_tranche, 0.25);
+        assert!(
+            plan_on.raw_units <= plan_off.raw_units,
+            "a quarter of the target cannot buy more than all of it"
+        );
     }
 
     /// The certificate arming is scoped to one run and restores what it found.

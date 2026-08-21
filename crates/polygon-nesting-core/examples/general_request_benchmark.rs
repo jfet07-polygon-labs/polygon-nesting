@@ -2036,6 +2036,14 @@ fn parse_portfolio_spec(
             "planbias" => settings.plan_bias = value.parse()?,
             "planhead" => settings.plan_headroom = value.parse()?,
             "planq" => settings.plan_quantum_step = value.parse()?,
+            // The in-run re-plan. `replan=1` aims the first tranche at
+            // `planfirst` of the target and tops it up from the rate the queue
+            // measured; with it off the mode is the single-tranche plan
+            // `docs/experiments/calibrated-plan/` shipped, unchanged.
+            "replan" => settings.plan_replan = value != "0",
+            "planfirst" => settings.plan_first_tranche = value.parse()?,
+            "plantranches" => settings.plan_max_tranches = value.parse()?,
+            "planhorizon" => settings.plan_tranche_horizon = value.parse()?,
             "slots" => settings.basin_slots = value.parse()?,
             "basins" => {
                 settings.basin_trigger = match value {
@@ -2084,6 +2092,21 @@ fn parse_portfolio_spec(
             "m34lanes" => settings.compression_schedule_lanes = value.parse()?,
             #[cfg(feature = "parallel-compression-schedule")]
             "m34pconfirm" => settings.compression_schedule_parallel_confirm = value != "0",
+            // The resumable slice's batch budget, in the schedule's own work
+            // currency. `0` is the atomic slice, which is also the default, so
+            // `m34batch=0` and no key at all are the same run - deliberately,
+            // because a gate that concatenates batches has to be able to name
+            // the monolithic arm with the same driver.
+            #[cfg(feature = "compression-schedule")]
+            "m34batch" => {
+                let units: usize = value.parse()?;
+                settings.compression_schedule_batch_work_units =
+                    (units > 0).then_some(units);
+            }
+            // The policy that consumes it: cap a slice at what the coordinator
+            // can still afford, rather than discovering the price afterwards.
+            #[cfg(feature = "compression-schedule")]
+            "m34cap" => settings.compression_schedule_cap_to_budget = value != "0",
             // The certificate's **disarm**. Unknown without the feature for the
             // same reason `m34pconfirm` is: a binary that cannot honour a key
             // must refuse it rather than run the other arm under its label -
@@ -2238,7 +2261,58 @@ fn schedule_slice_json(
         "se2WitnessAccepted": slice.se2_witness_accepted,
         "se2WitnessMs": slice.se2_witness_ms,
         "se2WitnessBoughtMm": slice.se2_witness_bought_mm,
+        // The resumable slice's own account of itself, in the build that has a
+        // slice at all. `stepDigest` is emitted on **both** arms, because the
+        // whole use of it is a comparison between an arm that batches and one
+        // that does not; `batchWorkUnits` and `checkpoints` exist only on the
+        // batched arm and are `null` otherwise, so every digest in this
+        // campaign drops them.
+        "stepDigest": resumable_slice_json(slice).0,
+        "batchWorkUnits": resumable_slice_json(slice).1,
+        "checkpoints": resumable_slice_json(slice).2,
     })
+}
+
+/// The three resumable-slice fields, or three `null`s in a build whose
+/// `ScheduleSliceReport` does not carry them.
+///
+/// A function rather than three `#[cfg]`s inside the `json!` above: `json!`
+/// takes an expression per key and `#[cfg]` cannot be written on one, so gating
+/// them in place would mean two copies of a sixty-key literal free to drift.
+#[allow(clippy::type_complexity)]
+fn resumable_slice_json(
+    slice: &polygon_nesting_core::search::portfolio::ScheduleSliceReport,
+) -> (
+    serde_json::Value,
+    serde_json::Value,
+    serde_json::Value,
+) {
+    #[cfg(feature = "compression-schedule")]
+    {
+        (
+            json!(slice.step_digest),
+            json!(slice.batch_work_units),
+            json!((!slice.checkpoints.is_empty()).then(|| slice
+                .checkpoints
+                .iter()
+                .map(|point| json!({
+                    "batch": point.batch,
+                    "stepsTaken": point.steps_taken,
+                    "workUnits": point.work_units,
+                    "frontierMm": point.frontier_mm,
+                    "floorMm": point.floor_mm,
+                    "confirmationsAccepted": point.confirmations_accepted,
+                    "publishedDepthMm": point.published_depth_mm,
+                    "finished": point.finished,
+                }))
+                .collect::<Vec<_>>())),
+        )
+    }
+    #[cfg(not(feature = "compression-schedule"))]
+    {
+        let _ = slice;
+        (json!(null), json!(null), json!(null))
+    }
 }
 
 /// The coordinator's report, as JSON.
@@ -2268,6 +2342,12 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
             "probeWorkUnits": plan.probe_work_units,
             "rung": plan.rung,
             "units": plan.units,
+            // Emitted only when the run intended to re-plan, so a
+            // single-tranche run's document is the one
+            // `docs/experiments/calibrated-plan/` measured, key for key: a
+            // `null` is dropped by every digest in this campaign and a `1.0`
+            // is not.
+            "firstTranche": (plan.first_tranche < 1.0).then_some(plan.first_tranche),
         })
     });
     let plan_calibration = outcome.plan.map(|plan| {
@@ -2277,10 +2357,48 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
             "rawUnits": plan.raw_units,
         })
     });
+    // The same split, one level down. `tranches` is what the run *decided* -
+    // how many re-plans it took and what each installed - and is deterministic
+    // to the extent the ladder makes it so, which is the claim
+    // `docs/experiments/replan/` measures. `trancheCalibration` is the clock
+    // half and differs every run by construction.
+    let tranches = outcome
+        .tranches
+        .iter()
+        .map(|tranche| {
+            json!({
+                "index": tranche.index,
+                "rung": tranche.rung,
+                "units": tranche.units,
+            })
+        })
+        .collect::<Vec<_>>();
+    let tranche_calibration = outcome
+        .tranches
+        .iter()
+        .map(|tranche| {
+            json!({
+                "index": tranche.index,
+                "atSeconds": tranche.at_seconds,
+                "atWorkUnits": tranche.at_work_units,
+                "queueSeconds": tranche.queue_seconds,
+                "queueRateUnitsPerSecond": tranche.queue_rate_units_per_second,
+                "remainingSeconds": tranche.remaining_seconds,
+                "horizonSeconds": tranche.horizon_seconds,
+                "rawUnits": tranche.raw_units,
+            })
+        })
+        .collect::<Vec<_>>();
     let mut report = json!({
         "budget": budget,
         "plan": plan,
         "planCalibration": plan_calibration,
+        // Same rule, one level up: absent rather than empty on a run that took
+        // no tranche, which is what lets a `replan=1` run that found no rung to
+        // buy produce the identical document to a `replan=0` one.
+        "tranches": (!tranches.is_empty()).then_some(tranches),
+        "trancheCalibration":
+            (!tranche_calibration.is_empty()).then_some(tranche_calibration),
         "elapsedSeconds": outcome.elapsed_seconds,
         "workUnits": outcome.work_units,
         "areaLowerBoundDepthMm": outcome.area_lower_bound_depth_mm,

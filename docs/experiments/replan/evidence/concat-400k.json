@@ -1,0 +1,748 @@
+{
+ "binaryA": "bin/ship-meas",
+ "binaryB": "bin/ship-meas",
+ "work": "30000000",
+ "extraA": "",
+ "extraB": "m34batch=400000",
+ "requests": [
+  "mixed-61",
+  "shapes-17",
+  "triangle-20"
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "rows": [
+  {
+   "tag": "mixed-61-s0",
+   "specA": "work=30000000,cells=13:15:17:19,v3=1",
+   "specB": "work=30000000,cells=13:15:17:19,v3=1,m34batch=400000",
+   "sliceDigestA": "eb4d5b1fe6a4d91a",
+   "sliceDigestB": "eb4d5b1fe6a4d91a",
+   "documentEqual": true,
+   "weakDigestA": "a6cc7162d0179058",
+   "weakDigestB": "a6cc7162d0179058",
+   "weakDigestEqual": true,
+   "rawDepthMmA": 173.57506393348288,
+   "rawDepthMmB": 173.57506393348288,
+   "workUnitsA": 27642964,
+   "workUnitsB": 27642964,
+   "m34CallsA": 1,
+   "m34CallsB": 1,
+   "stepDigestsA": [
+    8094261235934077622
+   ],
+   "stepDigestsB": [
+    8094261235934077622
+   ],
+   "stepDigestsComparable": true,
+   "stepDigestsEqual": true,
+   "processSecondsA": 8.766580683004577,
+   "processSecondsB": 8.753076751017943,
+   "batchedSlices": [
+    {
+     "batches": 9,
+     "stepsTaken": 1616,
+     "workUnits": 3311034,
+     "perBatchSteps": [
+      164,
+      381,
+      570,
+      761,
+      969,
+      1146,
+      1337,
+      1532,
+      1616
+     ],
+     "floorMm": [
+      179.657,
+      179.379,
+      179.193,
+      178.992,
+      178.784,
+      178.607,
+      178.416,
+      178.221,
+      178.188
+     ],
+     "publishedDepthMm": [
+      179.587,
+      179.277,
+      179.097,
+      178.924,
+      178.76,
+      178.507,
+      178.408,
+      178.211,
+      178.18
+     ],
+     "confirmationsAccepted": [
+      24,
+      46,
+      86,
+      126,
+      164,
+      208,
+      246,
+      286,
+      287
+     ]
+    }
+   ],
+   "totalBatches": 9,
+   "equal": true
+  },
+  {
+   "tag": "mixed-61-s1",
+   "specA": "work=30000000,cells=11:15:21:27,v3=1",
+   "specB": "work=30000000,cells=11:15:21:27,v3=1,m34batch=400000",
+   "sliceDigestA": "d49787558e9d0d76",
+   "sliceDigestB": "d49787558e9d0d76",
+   "documentEqual": true,
+   "weakDigestA": "c252a1e119bce103",
+   "weakDigestB": "c252a1e119bce103",
+   "weakDigestEqual": true,
+   "rawDepthMmA": 171.3619986855876,
+   "rawDepthMmB": 171.3619986855876,
+   "workUnitsA": 28636653,
+   "workUnitsB": 28636653,
+   "m34CallsA": 1,
+   "m34CallsB": 1,
+   "stepDigestsA": [
+    13470008650902116946
+   ],
+   "stepDigestsB": [
+    13470008650902116946
+   ],
+   "stepDigestsComparable": true,
+   "stepDigestsEqual": true,
+   "processSecondsA": 8.983603142027277,
+   "processSecondsB": 8.958424351993017,
+   "batchedSlices": [
+    {
+     "batches": 9,
+     "stepsTaken": 1617,
+     "workUnits": 3539786,
+     "perBatchSteps": [
+      174,
+      340,
+      547,
+      726,
+      902,
+      1081,
+      1257,
+      1471,
+      1617
+     ],
+     "floorMm": [
+      179.638,
+      179.298,
+      179.091,
+      178.912,
+      178.736,
+      178.557,
+      178.381,
+      178.237,
+      178.021
+     ],
+     "publishedDepthMm": [
+      179.633,
+      179.266,
+      179.076,
+      178.842,
+      178.62,
+      178.51,
+      178.319,
+      178.235,
+      177.908
+     ],
+     "confirmationsAccepted": [
+      0,
+      38,
+      72,
+      115,
+      159,
+      202,
+      246,
+      282,
+      308
+     ]
+    }
+   ],
+   "totalBatches": 9,
+   "equal": true
+  },
+  {
+   "tag": "mixed-61-s2",
+   "specA": "work=30000000,cells=15:23:31:39,v3=1",
+   "specB": "work=30000000,cells=15:23:31:39,v3=1,m34batch=400000",
+   "sliceDigestA": "4641aae523d3e2e5",
+   "sliceDigestB": "4641aae523d3e2e5",
+   "documentEqual": true,
+   "weakDigestA": "53c4f7c7ee568273",
+   "weakDigestB": "53c4f7c7ee568273",
+   "weakDigestEqual": true,
+   "rawDepthMmA": 174.28,
+   "rawDepthMmB": 174.28,
+   "workUnitsA": 27391297,
+   "workUnitsB": 27391297,
+   "m34CallsA": 2,
+   "m34CallsB": 2,
+   "stepDigestsA": [
+    4261813672146735768,
+    1113558791815050863
+   ],
+   "stepDigestsB": [
+    4261813672146735768,
+    1113558791815050863
+   ],
+   "stepDigestsComparable": true,
+   "stepDigestsEqual": true,
+   "processSecondsA": 10.230626549979206,
+   "processSecondsB": 10.17339080403326,
+   "batchedSlices": [
+    {
+     "batches": 9,
+     "stepsTaken": 1611,
+     "workUnits": 3455866,
+     "perBatchSteps": [
+      225,
+      420,
+      568,
+      744,
+      927,
+      1134,
+      1322,
+      1498,
+      1611
+     ],
+     "floorMm": [
+      179.008,
+      179.008,
+      178.44,
+      178.264,
+      178.081,
+      177.874,
+      177.686,
+      177.51,
+      177.397
+     ],
+     "publishedDepthMm": [
+      179.006,
+      179.006,
+      178.41,
+      178.181,
+      178.076,
+      177.858,
+      177.667,
+      177.504,
+      177.343
+     ],
+     "confirmationsAccepted": [
+      0,
+      0,
+      9,
+      53,
+      95,
+      133,
+      175,
+      219,
+      240
+     ]
+    },
+    {
+     "batches": 9,
+     "stepsTaken": 1585,
+     "workUnits": 3398525,
+     "perBatchSteps": [
+      158,
+      336,
+      512,
+      746,
+      920,
+      1122,
+      1336,
+      1525,
+      1585
+     ],
+     "floorMm": [
+      176.006,
+      175.828,
+      175.652,
+      175.418,
+      175.244,
+      175.201,
+      174.884,
+      174.884,
+      174.884
+     ],
+     "publishedDepthMm": [
+      175.976,
+      175.674,
+      175.622,
+      175.38,
+      175.209,
+      175.197,
+      174.881,
+      174.881,
+      174.881
+     ],
+     "confirmationsAccepted": [
+      36,
+      80,
+      124,
+      153,
+      196,
+      206,
+      229,
+      229,
+      229
+     ]
+    }
+   ],
+   "totalBatches": 18,
+   "equal": true
+  },
+  {
+   "tag": "shapes-17-s0",
+   "specA": "work=30000000,cells=13:15:17:19,v3=1",
+   "specB": "work=30000000,cells=13:15:17:19,v3=1,m34batch=400000",
+   "sliceDigestA": "337a915b544e3fb8",
+   "sliceDigestB": "337a915b544e3fb8",
+   "documentEqual": true,
+   "weakDigestA": "f4d7670dcfa2ba13",
+   "weakDigestB": "f4d7670dcfa2ba13",
+   "weakDigestEqual": true,
+   "rawDepthMmA": 200.349,
+   "rawDepthMmB": 200.349,
+   "workUnitsA": 17318544,
+   "workUnitsB": 17318544,
+   "m34CallsA": 1,
+   "m34CallsB": 1,
+   "stepDigestsA": [
+    2405049024705551141
+   ],
+   "stepDigestsB": [
+    2405049024705551141
+   ],
+   "stepDigestsComparable": true,
+   "stepDigestsEqual": true,
+   "processSecondsA": 18.35067972698016,
+   "processSecondsB": 18.38067724899156,
+   "batchedSlices": [
+    {
+     "batches": 3,
+     "stepsTaken": 1803,
+     "workUnits": 1176828,
+     "perBatchSteps": [
+      756,
+      1296,
+      1803
+     ],
+     "floorMm": [
+      200.903,
+      200.903,
+      200.903
+     ],
+     "publishedDepthMm": [
+      200.349,
+      200.349,
+      200.349
+     ],
+     "confirmationsAccepted": [
+      73,
+      73,
+      73
+     ]
+    }
+   ],
+   "totalBatches": 3,
+   "equal": true
+  },
+  {
+   "tag": "shapes-17-s1",
+   "specA": "work=30000000,cells=11:15:21:27,v3=1",
+   "specB": "work=30000000,cells=11:15:21:27,v3=1,m34batch=400000",
+   "sliceDigestA": "07e5538c1f57b423",
+   "sliceDigestB": "07e5538c1f57b423",
+   "documentEqual": true,
+   "weakDigestA": "41468b71e1db5b6b",
+   "weakDigestB": "41468b71e1db5b6b",
+   "weakDigestEqual": true,
+   "rawDepthMmA": 200.34937729570953,
+   "rawDepthMmB": 200.34937729570953,
+   "workUnitsA": 12388464,
+   "workUnitsB": 12388464,
+   "m34CallsA": 1,
+   "m34CallsB": 1,
+   "stepDigestsA": [
+    1254485136925707575
+   ],
+   "stepDigestsB": [
+    1254485136925707575
+   ],
+   "stepDigestsComparable": true,
+   "stepDigestsEqual": true,
+   "processSecondsA": 13.380250677990261,
+   "processSecondsB": 13.345622973982245,
+   "batchedSlices": [
+    {
+     "batches": 3,
+     "stepsTaken": 1803,
+     "workUnits": 1133164,
+     "perBatchSteps": [
+      749,
+      1325,
+      1803
+     ],
+     "floorMm": [
+      200.903,
+      200.903,
+      200.903
+     ],
+     "publishedDepthMm": [
+      200.349,
+      200.349,
+      200.349
+     ],
+     "confirmationsAccepted": [
+      77,
+      77,
+      77
+     ]
+    }
+   ],
+   "totalBatches": 3,
+   "equal": true
+  },
+  {
+   "tag": "shapes-17-s2",
+   "specA": "work=30000000,cells=15:23:31:39,v3=1",
+   "specB": "work=30000000,cells=15:23:31:39,v3=1,m34batch=400000",
+   "sliceDigestA": "88f8c471d1ab1709",
+   "sliceDigestB": "88f8c471d1ab1709",
+   "documentEqual": true,
+   "weakDigestA": "6c7c5c66862faaf3",
+   "weakDigestB": "6c7c5c66862faaf3",
+   "weakDigestEqual": true,
+   "rawDepthMmA": 200.349,
+   "rawDepthMmB": 200.349,
+   "workUnitsA": 16191595,
+   "workUnitsB": 16191595,
+   "m34CallsA": 1,
+   "m34CallsB": 1,
+   "stepDigestsA": [
+    5796218378112237518
+   ],
+   "stepDigestsB": [
+    5796218378112237518
+   ],
+   "stepDigestsComparable": true,
+   "stepDigestsEqual": true,
+   "processSecondsA": 16.845855473016854,
+   "processSecondsB": 16.961028291028924,
+   "batchedSlices": [
+    {
+     "batches": 3,
+     "stepsTaken": 1803,
+     "workUnits": 1190523,
+     "perBatchSteps": [
+      719,
+      1255,
+      1803
+     ],
+     "floorMm": [
+      200.905,
+      200.905,
+      200.905
+     ],
+     "publishedDepthMm": [
+      200.349,
+      200.349,
+      200.349
+     ],
+     "confirmationsAccepted": [
+      79,
+      79,
+      79
+     ]
+    }
+   ],
+   "totalBatches": 3,
+   "equal": true
+  },
+  {
+   "tag": "triangle-20-s0",
+   "specA": "work=30000000,cells=13:15:17:19,v3=1",
+   "specB": "work=30000000,cells=13:15:17:19,v3=1,m34batch=400000",
+   "sliceDigestA": "f474a838b0680e89",
+   "sliceDigestB": "f474a838b0680e89",
+   "documentEqual": true,
+   "weakDigestA": "d70590aa0d5af5e4",
+   "weakDigestB": "d70590aa0d5af5e4",
+   "weakDigestEqual": true,
+   "rawDepthMmA": 70.7711336311948,
+   "rawDepthMmB": 70.7711336311948,
+   "workUnitsA": 31818324,
+   "workUnitsB": 31818324,
+   "m34CallsA": 1,
+   "m34CallsB": 1,
+   "stepDigestsA": [
+    13477368446975279280
+   ],
+   "stepDigestsB": [
+    13477368446975279280
+   ],
+   "stepDigestsComparable": true,
+   "stepDigestsEqual": true,
+   "processSecondsA": 6.109300123003777,
+   "processSecondsB": 6.127428164996672,
+   "batchedSlices": [
+    {
+     "batches": 10,
+     "stepsTaken": 637,
+     "workUnits": 3949604,
+     "perBatchSteps": [
+      325,
+      361,
+      397,
+      433,
+      469,
+      505,
+      541,
+      577,
+      613,
+      637
+     ],
+     "floorMm": [
+      71.137,
+      71.137,
+      71.137,
+      71.137,
+      71.137,
+      71.137,
+      71.137,
+      71.137,
+      71.137,
+      71.137
+     ],
+     "publishedDepthMm": [
+      70.771,
+      70.771,
+      70.771,
+      70.771,
+      70.771,
+      70.771,
+      70.771,
+      70.771,
+      70.771,
+      70.771
+     ],
+     "confirmationsAccepted": [
+      74,
+      74,
+      74,
+      74,
+      74,
+      74,
+      74,
+      74,
+      74,
+      74
+     ]
+    }
+   ],
+   "totalBatches": 10,
+   "equal": true
+  },
+  {
+   "tag": "triangle-20-s1",
+   "specA": "work=30000000,cells=11:15:21:27,v3=1",
+   "specB": "work=30000000,cells=11:15:21:27,v3=1,m34batch=400000",
+   "sliceDigestA": "86f9d030d4f1de24",
+   "sliceDigestB": "86f9d030d4f1de24",
+   "documentEqual": true,
+   "weakDigestA": "908c36aaf64413ad",
+   "weakDigestB": "908c36aaf64413ad",
+   "weakDigestEqual": true,
+   "rawDepthMmA": 70.74684851410467,
+   "rawDepthMmB": 70.74684851410467,
+   "workUnitsA": 27652905,
+   "workUnitsB": 27652905,
+   "m34CallsA": 1,
+   "m34CallsB": 1,
+   "stepDigestsA": [
+    1392525776523405560
+   ],
+   "stepDigestsB": [
+    1392525776523405560
+   ],
+   "stepDigestsComparable": true,
+   "stepDigestsEqual": true,
+   "processSecondsA": 5.82540206797421,
+   "processSecondsB": 5.85981647396693,
+   "batchedSlices": [
+    {
+     "batches": 11,
+     "stepsTaken": 637,
+     "workUnits": 4480369,
+     "perBatchSteps": [
+      278,
+      314,
+      350,
+      386,
+      422,
+      458,
+      494,
+      530,
+      566,
+      602,
+      637
+     ],
+     "floorMm": [
+      71.14,
+      71.14,
+      71.14,
+      71.14,
+      71.14,
+      71.14,
+      71.14,
+      71.14,
+      71.14,
+      71.14,
+      71.14
+     ],
+     "publishedDepthMm": [
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747
+     ],
+     "confirmationsAccepted": [
+      61,
+      61,
+      61,
+      61,
+      61,
+      61,
+      61,
+      61,
+      61,
+      61,
+      61
+     ]
+    }
+   ],
+   "totalBatches": 11,
+   "equal": true
+  },
+  {
+   "tag": "triangle-20-s2",
+   "specA": "work=30000000,cells=15:23:31:39,v3=1",
+   "specB": "work=30000000,cells=15:23:31:39,v3=1,m34batch=400000",
+   "sliceDigestA": "06ffc57e053193fa",
+   "sliceDigestB": "06ffc57e053193fa",
+   "documentEqual": true,
+   "weakDigestA": "210394c812377fd4",
+   "weakDigestB": "210394c812377fd4",
+   "weakDigestEqual": true,
+   "rawDepthMmA": 70.74727715491606,
+   "rawDepthMmB": 70.74727715491606,
+   "workUnitsA": 26011084,
+   "workUnitsB": 26011084,
+   "m34CallsA": 1,
+   "m34CallsB": 1,
+   "stepDigestsA": [
+    5838508874815119922
+   ],
+   "stepDigestsB": [
+    5838508874815119922
+   ],
+   "stepDigestsComparable": true,
+   "stepDigestsEqual": true,
+   "processSecondsA": 5.853934724000283,
+   "processSecondsB": 5.670889321016148,
+   "batchedSlices": [
+    {
+     "batches": 11,
+     "stepsTaken": 636,
+     "workUnits": 4463564,
+     "perBatchSteps": [
+      279,
+      315,
+      351,
+      387,
+      423,
+      459,
+      495,
+      531,
+      567,
+      603,
+      636
+     ],
+     "floorMm": [
+      71.138,
+      71.138,
+      71.138,
+      71.138,
+      71.138,
+      71.138,
+      71.138,
+      71.138,
+      71.138,
+      71.138,
+      71.138
+     ],
+     "publishedDepthMm": [
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747,
+      70.747
+     ],
+     "confirmationsAccepted": [
+      62,
+      62,
+      62,
+      62,
+      62,
+      62,
+      62,
+      62,
+      62,
+      62,
+      62
+     ]
+    }
+   ],
+   "totalBatches": 11,
+   "equal": true
+  }
+ ],
+ "allEqual": true,
+ "allStepDigestsEqual": true,
+ "stepDigestCells": 9,
+ "totalBatches": 77,
+ "boxLoad": {
+  "n": 18,
+  "min": 2.91015625,
+  "median": 4.15234375,
+  "max": 5.3125
+ }
+}
