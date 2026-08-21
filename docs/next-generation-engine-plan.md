@@ -6245,3 +6245,120 @@ production measurement of what one of those rotations is worth (8.3% accepted,
 
 Evidence, drivers and every battery:
 `docs/experiments/continuous-rotation/`.
+
+## The rotation tax was mismeasured: mode 22 was never counted, the builds are 89% of it, and 81% of a build is one Clipper offset
+
+The brief was to make the proven rotation mechanism affordable on the wall and
+then measure the compound. The first half turned up a measurement error in the
+round that preceded it, and the error is the finding.
+
+**The previous chapter concluded that "only a sixth" of the armed slice's
+slowdown was surrogate builds and the other five sixths was the resolution tax.
+That is wrong, and it is wrong because of a reporting gap rather than a
+measurement error.** The coordinator arms the operator on modes **22 and 34**
+(`portfolio.rs`: `matches!(mode, 22 | 34)`), and `rotation_surrogate_builds` is
+only ever *reported* on a mode-34 schedule slice. Counted process-wide for the
+first time — a new `rotation-tax-census` feature, per-thread counters, off by
+default and never compiled into a binary that carries a wall claim — one armed
+ten-second mixed-61 run performs **1,129,375 surrogate builds costing 6,407 ms**,
+and the mode-34 slices of that same run report **169,772 builds costing 703 ms**.
+Fifteen per cent of the builds, eleven per cent of the wall. The instrument is
+not in doubt: 169,772 is the exact number the previous chapter's one-cell probe
+recorded for the same cell.
+
+**Four fifths of a build is one function call.** Timed stage by stage:
+`transformed` 0.51 µs, **`.offset()` — the Clipper miter offset — 4.71 µs
+(81.4%)**, `triangulate_ring` 0.16 µs, poles and cell index 0.41 µs.
+`prepare_continuous_candidate` was entered armed 1,429,252 times and 1,129,375
+of those (**79.0%**) landed on an angle the lane had never seen. That miss rate
+is compulsory, not a cache-sizing problem: the rung contracts on every rejection,
+so consecutive iterations never propose the same angle. Design A's price is one
+polygon offset per rung, and no cache fixes it.
+
+**Three fixes were built anyway, and they are answer-preserving.** A remembered
+route in the existing per-piece angle memo, so an off-grid neighbour stops
+descending the whole catalogue before reaching the map that has it (73.7% of
+88.2 M double descents removed); a per-piece pose slot so
+`ensure_state_surrogates` skips a piece that has not moved (428.2 ms → 39.1 ms
+over three isolated slices, 10.9x); and the indexed probe queue the previous
+chapter asked for, replacing a 48-entry linear scan whose cost it estimated at
+"tens of millions of comparisons" and which this round counted at **212.5 M**.
+**The third one was measured and taken back out**, and that is the second
+finding. The index works — it brings 212.5 M comparisons down to 2.0 M, one per
+call, reproducing the deque's eviction order element for element — and at the
+shipped 48-entry window it is **0.38% slower on the slice and 1.14% slower on
+the process**, 22 of 24 and 21 of 24 paired equal-work cells. Fifty-five
+contiguous 24-byte tuples are twenty-one cache lines the prefetcher walks in
+order; two ordered-map descents chase pointers. "Removable with an index" was
+true; "worth removing" was not; and the only way to tell those apart was to
+build both. The variant is committed as a patch, not as code, because the trade
+flips if the window is ever raised.
+
+At equal work, three pinned parents × 10 paired rounds: **1.0328x** on the slice,
+30 of 30 cells, against a within-arm spread of 1–2%; and **zero mismatches** on
+`fingerprint`, `rawSourceDepthMm`, `candidateQueries`, `exactPairTests`,
+`exactValid` and `contractValid` across all 30. From the bare request at ten
+seconds with the operator armed on both sides, the mode-34 slice costs
+**1.9775 s → 1.8243 s**, 1.0796x, 12 of 12 paired cells — and the slice count
+does not move, so the depth does not move.
+
+**The compound battery is negative, and by more than last time.** 162 runs,
+three requests × three seeds × three rounds × 3/10/30 s, both arms carrying
+`fast-contract-validator` and `m34pconfirm=1`:
+
+| request | 3 s | 10 s | 30 s |
+|---|---|---|---|
+| mixed-61 | +0.000 mm | **+6.735 mm worse, 3 of 9** | **+5.736 mm worse, 0 of 9** |
+| shapes-17 | +0.000 mm | +0.000 mm | +0.000 mm |
+| triangle-20 | +0.000 mm | +0.002 mm | +0.000 mm |
+
+The previous round measured +3.721 mm at ten seconds; this one measures +6.735
+mm with the tax **lower**. The reason is the fast contract validator, and it is
+the answer to the question the brief actually asked. A 5.57x confirmation is a
+multiplier on what a search can already do; it lifted the **base** arm from
+172.288 mm to **168.484 mm** and left the armed arm at 175.219 mm, because the
+armed lane's bottleneck is 1.13 M polygon offsets in the proxy tier and no
+confirmation speedup touches those. More slices per second makes the arm that
+fits more slices in win by more. Against Sparrow on the same box, the base arm
+is now **18.3 mm** behind at ten seconds where it was 22.1 mm; arming rotation
+puts it **25.1 mm** behind.
+
+Two readings that are not the verdict. The rungs still work — 8.9% accepted,
+**56.4%** of the proxy loss bought by rotation against 43.6% by all four
+translation axes, 68.9% of committed moves changing the pose, every number
+reproducing the previous chapter's. And the **89.4% cache hit rate that chapter
+published was not the operator's**: it counted the hits
+`ensure_state_surrogates` took re-confirming poses that had not moved. With
+those skipped the real figure is **54.0%** on mixed-61 and **72.1%** on
+shapes-17 — where the previous chapter reported 88.3% on an otherwise
+unit-identical armed run.
+
+**The next lever is named, priced, and deliberately not taken.** A miter-join
+offset is rotation-equivariant, so the operator could offset each piece once at
+zero degrees and derive every rung by transforming the already-offset ring —
+roughly four times cheaper per rung. It is not done here because the two orders
+round differently on Clipper's integer grid, so the surrogate's geometry
+changes, so trajectories change: that is a new operator geometry needing its own
+matched-arm quality battery, not a wall fix with a spot-check, and this round's
+licence was "answer-preserving". What this round contributes is the number that
+makes it worth doing.
+
+Four pinned gates hit on three binaries — the base commit, the committed gate
+build, and the committed measurement build with every flag off — and the
+**whole-document digest is identical across all three on all four**, which is
+the check that matters when the change touches `AngleKeyCache` and
+`resolve_surrogate`, both on the hot path of every mode in a default build.
+Flag-off document reproduction against the base commit is 9 of 9. Determinism
+across two processes with the operator armed is 9 of 9, a hard gate. Both
+suites pass; suite 1 needed the one rerun the campaign's known flake
+(`free_material_multi_eviction_shrinks_retained_container_capacity`) always
+needs, and the rerun is recorded rather than the first run discarded.
+
+The instrument that made all of this visible is a new feature,
+`rotation-tax-census`, off by default and never compiled into a binary that
+carries a wall claim. Its own first version was a finding: one shared atomic
+array across eight fan-out lanes was slow enough that the coordinator stopped
+reaching a mode-34 slice at all, so the instrument destroyed the phase structure
+it existed to describe.
+
+Evidence, drivers and every battery: `docs/experiments/rotation-tax/`.

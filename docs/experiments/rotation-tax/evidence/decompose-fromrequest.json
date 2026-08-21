@@ -1,0 +1,92 @@
+{
+ "binary": "/var/lib/t3/rt/bin/fix-census",
+ "request": "mixed-61",
+ "budget": "wall=10000",
+ "extra": "m34lanes=1,m34pconfirm=1",
+ "rows": [
+  {
+   "seed": 0,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,m34lanes=1,m34pconfirm=1,crot=0",
+   "processSeconds": 9.15971230698051,
+   "rawDepthMm": 171.111,
+   "m34Slices": 2,
+   "m34Published": 2,
+   "sliceSecondsTotal": 1.4538924619999989,
+   "perSliceSeconds": 0.7269462309999994,
+   "sliceTotals": {
+    "rotationRungsProposed": 0,
+    "rotationRungsImproved": 0,
+    "mirrorTogglesProposed": 0,
+    "mirrorTogglesImproved": 0,
+    "rotationSurrogateBuilds": 0,
+    "rotationSurrogateHits": 0,
+    "rotationSurrogateEvictions": 0,
+    "rotationSurrogateBuildMs": 0,
+    "rotationBuildsRefused": 0,
+    "confirmationMs": 144.63590199999993,
+    "repairMs": 1221.0646470000213
+   },
+   "census": {
+    "resolveCatalogHit": 157789789,
+    "resolveOverflowHit": 0,
+    "resolveHintedOverflowHit": 0,
+    "resolveMiss": 0,
+    "probeScanCalls": 0,
+    "probeScanSteps": 0,
+    "probeScanNanos": 0,
+    "ensureStateCalls": 0,
+    "ensureStateNanos": 0,
+    "ensureRotationCalls": 0,
+    "rotationBuildCalls": 0,
+    "rotationBuildNanos": 0,
+    "prepareCandidateCalls": 0,
+    "pairNfpLookups": 0,
+    "pairNfpMisses": 0
+   },
+   "loadError": null,
+   "arm": "base"
+  },
+  {
+   "seed": 0,
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,m34lanes=1,m34pconfirm=1,crot=1",
+   "processSeconds": 10.427525445003994,
+   "rawDepthMm": 175.21893730689536,
+   "m34Slices": 2,
+   "m34Published": 1,
+   "sliceSecondsTotal": 3.8067685449999997,
+   "perSliceSeconds": 1.9033842724999999,
+   "sliceTotals": {
+    "rotationRungsProposed": 130474,
+    "rotationRungsImproved": 4558,
+    "mirrorTogglesProposed": 130708,
+    "mirrorTogglesImproved": 4737,
+    "rotationSurrogateBuilds": 169772,
+    "rotationSurrogateHits": 204502,
+    "rotationSurrogateEvictions": 169566,
+    "rotationSurrogateBuildMs": 703.437407,
+    "rotationBuildsRefused": 0,
+    "confirmationMs": 84.73771600000003,
+    "repairMs": 3636.057635000012
+   },
+   "census": {
+    "resolveCatalogHit": 85240396,
+    "resolveOverflowHit": 13835082,
+    "resolveHintedOverflowHit": 39852303,
+    "resolveMiss": 0,
+    "probeScanCalls": 1140368,
+    "probeScanSteps": 1140368,
+    "probeScanNanos": 110417942,
+    "ensureStateCalls": 40055,
+    "ensureStateNanos": 16535436,
+    "ensureRotationCalls": 2116504,
+    "rotationBuildCalls": 1129375,
+    "rotationBuildNanos": 6407129016,
+    "prepareCandidateCalls": 1429252,
+    "pairNfpLookups": 0,
+    "pairNfpMisses": 0
+   },
+   "loadError": null,
+   "arm": "crot"
+  }
+ ]
+}

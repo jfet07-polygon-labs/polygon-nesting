@@ -1,0 +1,118 @@
+--- a/crates/polygon-nesting-core/src/search/general_relaxed.rs
++++ b/crates/polygon-nesting-core/src/search/general_relaxed.rs
+@@ -3979,6 +3979,56 @@
+     }
+ }
+ 
++/// The eviction order of [`RotationCache::probes`], as an index rather than a
++/// scan: the variant docs/experiments/rotation-tax/ §2.3 built, measured and
++/// did **not** ship.
++///
++/// Two ordered maps and a monotone stamp reproduce the deque's order to the
++/// element - `order` is the queue read front-to-back, `stamp` is the inverse -
++/// and every operation is `O(log n)` instead of a linear scan plus a memmove.
++/// At the shipped window of [`ROTATION_CACHE_PROBE_CAPACITY`] it is 0.38%
++/// slower on the slice and 1.14% slower on the process, over 24 paired
++/// equal-work cells. It is kept as a patch rather than as code because the
++/// trade flips if the window is ever raised.
++#[cfg(feature = "continuous-rotation")]
++#[derive(Default)]
++struct ProbeQueue {
++    stamp: BTreeMap<SurrogateKey, u64>,
++    order: BTreeMap<u64, SurrogateKey>,
++    next: u64,
++}
++
++#[cfg(feature = "continuous-rotation")]
++impl ProbeQueue {
++    fn len(&self) -> usize {
++        self.order.len()
++    }
++
++    fn contains(&self, key: &SurrogateKey) -> bool {
++        self.stamp.contains_key(key)
++    }
++
++    fn push_back(&mut self, key: SurrogateKey) {
++        if let Some(previous) = self.stamp.insert(key, self.next) {
++            self.order.remove(&previous);
++        }
++        self.order.insert(self.next, key);
++        self.next = self.next.wrapping_add(1);
++    }
++
++    fn remove(&mut self, key: &SurrogateKey) {
++        if let Some(previous) = self.stamp.remove(key) {
++            self.order.remove(&previous);
++        }
++    }
++
++    fn pop_front(&mut self) -> Option<SurrogateKey> {
++        let (_, key) = self.order.pop_first()?;
++        self.stamp.remove(&key);
++        Some(key)
++    }
++}
++
+ /// The bookkeeping half of the continuous-rotation surrogate cache: which keys
+ /// may not be evicted, and in what order the rest are.
+ ///
+@@ -4016,7 +4066,7 @@
+     /// tuples beats two ordered-map descents, and the queue is the shape the
+     /// measurement chose. See docs/experiments/rotation-tax/ §2.3, and
+     /// `drivers/run-probequeue-ab.sh`, which rebuilds the indexed variant.
+-    probes: VecDeque<SurrogateKey>,
++    probes: ProbeQueue,
+     /// Poses an in-flight refinement is carrying, released one piece later.
+     holds: Vec<SurrogateKey>,
+     /// Per-piece bounding radius about the rotation origin, `0.0` until first
+@@ -11928,7 +11978,7 @@
+             rotation_cache: RotationCache {
+                 pinned: vec![None; pieces.len()],
+                 pin_counts: BTreeMap::new(),
+-                probes: VecDeque::new(),
++                probes: ProbeQueue::default(),
+                 holds: Vec::new(),
+                 radii: vec![0.0; pieces.len()],
+                 ensured: vec![None; pieces.len()],
+@@ -16307,17 +16357,8 @@
+         *count += 1;
+         if *count == 1 {
+             let started = rotation_tax_clock();
+-            if let Some(position) = self
+-                .rotation_cache
+-                .probes
+-                .iter()
+-                .position(|entry| *entry == key)
+-            {
+-                rotation_tax_scan(started, position + 1);
+-                self.rotation_cache.probes.remove(position);
+-            } else {
+-                rotation_tax_scan(started, self.rotation_cache.probes.len());
+-            }
++            self.rotation_cache.probes.remove(&key);
++            rotation_tax_scan(started, 1);
+         }
+     }
+ 
+@@ -16344,18 +16385,10 @@
+         // unconditional `push_back`: that would queue a pinned pose for
+         // eviction while a placement still resolved it, which is the one
+         // failure the pin exists to prevent.
+-        if let Some(position) = self
+-            .rotation_cache
+-            .probes
+-            .iter()
+-            .position(|entry| *entry == key)
+-        {
+-            rotation_tax_scan(started, position + 1);
+-            self.rotation_cache.probes.remove(position);
++        if self.rotation_cache.probes.contains(&key) {
+             self.rotation_cache.probes.push_back(key);
+-        } else {
+-            rotation_tax_scan(started, self.rotation_cache.probes.len());
+         }
++        rotation_tax_scan(started, 1);
+     }
+ 
+     /// Ends the in-flight epoch: every pose a refinement was carrying goes back

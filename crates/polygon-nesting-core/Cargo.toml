@@ -373,6 +373,30 @@ se2-rigidity-certificate = []
 # feature is held to, and the reason it carries no document-visible counter of
 # its own. See docs/experiments/fast-contract-validator/.
 fast-contract-validator = []
+# The decomposition instrument for the continuous-rotation operator's wall tax,
+# and *only* an instrument: it adds counters and timed regions to the armed
+# lane, reports them on stderr, and is never compiled into a binary that carries
+# a wall claim.
+#
+# docs/experiments/continuous-rotation/ §3 measured a 2.2x per-slice wall on an
+# armed lane and could attribute only a sixth of it to surrogate builds; the
+# other five sixths were *inferred* to be the resolution tax of its §1.2. Both
+# halves of that turned out to be wrong, and for the same reason: the operator
+# is armed on modes 22 **and** 34 and `rotation_surrogate_builds` is only
+# reported on a mode-34 slice, so 85% of the builds were invisible. This feature
+# is what counts them. It tags every pose resolution by which of the two maps
+# answered it, counts every step of the two deque linear scans that round's §6
+# named, times `build_oriented_surrogate` stage by stage, and counts the
+# operator's own entry points.
+#
+# Off by default and stacked on `continuous-rotation`, whose sites it
+# instruments. The counters are per-thread blocks summed at exit, like
+# `profiling::ThreadProfile`, and never read by a search decision - the first
+# version used one shared atomic array and was slow enough that the coordinator
+# stopped reaching a mode-34 slice, which is the measurement that says why a
+# wall battery is run on a build without this. See
+# docs/experiments/rotation-tax/ §1.
+rotation-tax-census = ["continuous-rotation"]
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }

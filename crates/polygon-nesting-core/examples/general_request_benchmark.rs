@@ -1268,6 +1268,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
         }
     }
+    // The continuous-rotation operator's wall decomposition, on stderr and for
+    // the same reason as the census above: a `rotation-tax-census` build is an
+    // instrument, never a binary a wall or a depth is quoted from, and putting
+    // its numbers in `output` would invite exactly that. One line, in
+    // `Tax::ALL` order, silent in every build without the feature.
+    #[cfg(feature = "rotation-tax-census")]
+    {
+        use polygon_nesting_core::profiling::rotation_tax::{totals, Tax};
+        let values = totals();
+        let fields = Tax::ALL
+            .iter()
+            .zip(values.iter())
+            .map(|(slot, value)| format!("{}={value}", slot.name()))
+            .collect::<Vec<_>>()
+            .join(" ");
+        eprintln!("rotationTaxCensus {fields}");
+    }
     // Fail closed: a requested persistent-vacancy mode that never ran (the
     // machinery declined the arm, e.g. invalid parent or failed validation)
     // must not exit 0. Callers that only check depth fields for null would

@@ -1,0 +1,1297 @@
+{
+ "requests": {
+  "mixed-61": {
+   "binary": "/var/lib/t3/rt/bin/fix-meas",
+   "budgets": {
+    "3": {
+     "pairs": 9,
+     "medianDeltaMm": 0.0,
+     "minDeltaMm": -0.018999999999977035,
+     "maxDeltaMm": 0.6270000000000095,
+     "crotBetter": 3,
+     "baseBetter": 3,
+     "equal": 3,
+     "baseSpread": {
+      "n": 9,
+      "min": 179.006,
+      "max": 179.633,
+      "median": 179.587,
+      "spreadMm": 0.6270000000000095
+     },
+     "crotSpread": {
+      "n": 9,
+      "min": 179.568,
+      "max": 179.633,
+      "median": 179.633,
+      "spreadMm": 0.06499999999999773
+     },
+     "baseRotation": {
+      "rotationRungsProposed": 0,
+      "rotationRungsImproved": 0,
+      "mirrorTogglesProposed": 0,
+      "mirrorTogglesImproved": 0,
+      "rotationAcceptedMoves": 0,
+      "acceptedMoves": 0,
+      "rotationLossBoughtMm": 0,
+      "translationLossBoughtMm": 0,
+      "rotationSurrogateBuilds": 0,
+      "rotationSurrogateHits": 0,
+      "rotationSurrogateEvictions": 0,
+      "rotationSurrogateBuildMs": 0,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 0,
+      "m34Published": 0,
+      "m34Seconds": 0,
+      "rotationIterations": 0,
+      "rotationImproved": 0,
+      "rungAcceptance": null,
+      "rotationAcceptedMoveShare": null,
+      "rotationLossShare": null,
+      "msPerRotationIteration": null,
+      "buildsPerRotationIteration": null,
+      "cacheHitRate": null
+     },
+     "crotRotation": {
+      "rotationRungsProposed": 0,
+      "rotationRungsImproved": 0,
+      "mirrorTogglesProposed": 0,
+      "mirrorTogglesImproved": 0,
+      "rotationAcceptedMoves": 0,
+      "acceptedMoves": 0,
+      "rotationLossBoughtMm": 0,
+      "translationLossBoughtMm": 0,
+      "rotationSurrogateBuilds": 0,
+      "rotationSurrogateHits": 0,
+      "rotationSurrogateEvictions": 0,
+      "rotationSurrogateBuildMs": 0,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 0,
+      "m34Published": 0,
+      "m34Seconds": 0,
+      "rotationIterations": 0,
+      "rotationImproved": 0,
+      "rungAcceptance": null,
+      "rotationAcceptedMoveShare": null,
+      "rotationLossShare": null,
+      "msPerRotationIteration": null,
+      "buildsPerRotationIteration": null,
+      "cacheHitRate": null
+     },
+     "perPair": [
+      {
+       "seed": 0,
+       "round": 0,
+       "baseMm": 179.587,
+       "crotMm": 179.568,
+       "deltaMm": -0.018999999999977035
+      },
+      {
+       "seed": 0,
+       "round": 1,
+       "baseMm": 179.587,
+       "crotMm": 179.568,
+       "deltaMm": -0.018999999999977035
+      },
+      {
+       "seed": 0,
+       "round": 2,
+       "baseMm": 179.587,
+       "crotMm": 179.568,
+       "deltaMm": -0.018999999999977035
+      },
+      {
+       "seed": 1,
+       "round": 0,
+       "baseMm": 179.633,
+       "crotMm": 179.633,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 1,
+       "baseMm": 179.633,
+       "crotMm": 179.633,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 2,
+       "baseMm": 179.633,
+       "crotMm": 179.633,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 0,
+       "baseMm": 179.006,
+       "crotMm": 179.633,
+       "deltaMm": 0.6270000000000095
+      },
+      {
+       "seed": 2,
+       "round": 1,
+       "baseMm": 179.006,
+       "crotMm": 179.633,
+       "deltaMm": 0.6270000000000095
+      },
+      {
+       "seed": 2,
+       "round": 2,
+       "baseMm": 179.006,
+       "crotMm": 179.633,
+       "deltaMm": 0.6270000000000095
+      }
+     ]
+    },
+    "10": {
+     "pairs": 9,
+     "medianDeltaMm": 6.734999999999985,
+     "minDeltaMm": -1.13900000000001,
+     "maxDeltaMm": 10.931999999999988,
+     "crotBetter": 3,
+     "baseBetter": 6,
+     "equal": 0,
+     "baseSpread": {
+      "n": 9,
+      "min": 165.656,
+      "max": 174.28,
+      "median": 168.484,
+      "spreadMm": 8.623999999999995
+     },
+     "crotSpread": {
+      "n": 9,
+      "min": 173.141,
+      "max": 176.588,
+      "median": 175.219,
+      "spreadMm": 3.4470000000000027
+     },
+     "baseRotation": {
+      "rotationRungsProposed": 0,
+      "rotationRungsImproved": 0,
+      "mirrorTogglesProposed": 0,
+      "mirrorTogglesImproved": 0,
+      "rotationAcceptedMoves": 12412,
+      "acceptedMoves": 117411,
+      "rotationLossBoughtMm": 0,
+      "translationLossBoughtMm": 0,
+      "rotationSurrogateBuilds": 0,
+      "rotationSurrogateHits": 0,
+      "rotationSurrogateEvictions": 0,
+      "rotationSurrogateBuildMs": 0,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 40,
+      "m34Published": 40,
+      "m34Seconds": 31.379220879000002,
+      "rotationIterations": 0,
+      "rotationImproved": 0,
+      "rungAcceptance": null,
+      "rotationAcceptedMoveShare": 0.10571411537249491,
+      "rotationLossShare": null,
+      "msPerRotationIteration": null,
+      "buildsPerRotationIteration": null,
+      "cacheHitRate": null
+     },
+     "crotRotation": {
+      "rotationRungsProposed": 901866,
+      "rotationRungsImproved": 39540,
+      "mirrorTogglesProposed": 904224,
+      "mirrorTogglesImproved": 41247,
+      "rotationAcceptedMoves": 81381,
+      "acceptedMoves": 118191,
+      "rotationLossBoughtMm": 370770.9810573298,
+      "translationLossBoughtMm": 287161.8698230719,
+      "rotationSurrogateBuilds": 1160616,
+      "rotationSurrogateHits": 1364934,
+      "rotationSurrogateEvictions": 1159050,
+      "rotationSurrogateBuildMs": 4863.506189,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 15,
+      "m34Published": 12,
+      "m34Seconds": 24.992936020000002,
+      "rotationIterations": 903045.0,
+      "rotationImproved": 80787,
+      "rungAcceptance": 0.08946065810673887,
+      "rotationAcceptedMoveShare": 0.6885549661141711,
+      "rotationLossShare": 0.5635392434975528,
+      "msPerRotationIteration": 0.005385674234395849,
+      "buildsPerRotationIteration": 1.2852249887879341,
+      "cacheHitRate": 0.5404501989665618
+     },
+     "perPair": [
+      {
+       "seed": 0,
+       "round": 0,
+       "baseMm": 168.484,
+       "crotMm": 175.219,
+       "deltaMm": 6.734999999999985
+      },
+      {
+       "seed": 0,
+       "round": 1,
+       "baseMm": 168.484,
+       "crotMm": 175.219,
+       "deltaMm": 6.734999999999985
+      },
+      {
+       "seed": 0,
+       "round": 2,
+       "baseMm": 169.588,
+       "crotMm": 175.219,
+       "deltaMm": 5.631
+      },
+      {
+       "seed": 1,
+       "round": 0,
+       "baseMm": 165.656,
+       "crotMm": 176.588,
+       "deltaMm": 10.931999999999988
+      },
+      {
+       "seed": 1,
+       "round": 1,
+       "baseMm": 165.656,
+       "crotMm": 176.588,
+       "deltaMm": 10.931999999999988
+      },
+      {
+       "seed": 1,
+       "round": 2,
+       "baseMm": 165.656,
+       "crotMm": 176.588,
+       "deltaMm": 10.931999999999988
+      },
+      {
+       "seed": 2,
+       "round": 0,
+       "baseMm": 174.28,
+       "crotMm": 173.141,
+       "deltaMm": -1.13900000000001
+      },
+      {
+       "seed": 2,
+       "round": 1,
+       "baseMm": 174.28,
+       "crotMm": 173.141,
+       "deltaMm": -1.13900000000001
+      },
+      {
+       "seed": 2,
+       "round": 2,
+       "baseMm": 174.28,
+       "crotMm": 173.141,
+       "deltaMm": -1.13900000000001
+      }
+     ]
+    },
+    "30": {
+     "pairs": 9,
+     "medianDeltaMm": 5.73599999999999,
+     "minDeltaMm": 0.5560000000000116,
+     "maxDeltaMm": 10.448000000000008,
+     "crotBetter": 0,
+     "baseBetter": 9,
+     "equal": 0,
+     "baseSpread": {
+      "n": 9,
+      "min": 160.01,
+      "max": 166.666,
+      "median": 165.262,
+      "spreadMm": 6.656000000000006
+     },
+     "crotSpread": {
+      "n": 9,
+      "min": 165.818,
+      "max": 170.998,
+      "median": 170.458,
+      "spreadMm": 5.179999999999978
+     },
+     "baseRotation": {
+      "rotationRungsProposed": 0,
+      "rotationRungsImproved": 0,
+      "mirrorTogglesProposed": 0,
+      "mirrorTogglesImproved": 0,
+      "rotationAcceptedMoves": 35259,
+      "acceptedMoves": 253743,
+      "rotationLossBoughtMm": 0,
+      "translationLossBoughtMm": 0,
+      "rotationSurrogateBuilds": 0,
+      "rotationSurrogateHits": 0,
+      "rotationSurrogateEvictions": 0,
+      "rotationSurrogateBuildMs": 0,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 62,
+      "m34Published": 56,
+      "m34Seconds": 69.89638381900001,
+      "rotationIterations": 0,
+      "rotationImproved": 0,
+      "rungAcceptance": null,
+      "rotationAcceptedMoveShare": 0.13895555739468676,
+      "rotationLossShare": null,
+      "msPerRotationIteration": null,
+      "buildsPerRotationIteration": null,
+      "cacheHitRate": null
+     },
+     "crotRotation": {
+      "rotationRungsProposed": 1883242,
+      "rotationRungsImproved": 126470,
+      "mirrorTogglesProposed": 1867408,
+      "mirrorTogglesImproved": 118839,
+      "rotationAcceptedMoves": 169298,
+      "acceptedMoves": 223822,
+      "rotationLossBoughtMm": 825859.9563996051,
+      "translationLossBoughtMm": 663276.703594789,
+      "rotationSurrogateBuilds": 2477398,
+      "rotationSurrogateHits": 2726979,
+      "rotationSurrogateEvictions": 2473875,
+      "rotationSurrogateBuildMs": 11243.429607,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 34,
+      "m34Published": 25,
+      "m34Seconds": 53.391760798,
+      "rotationIterations": 1875325.0,
+      "rotationImproved": 245309,
+      "rungAcceptance": 0.13080879314252197,
+      "rotationAcceptedMoveShare": 0.7563957073031248,
+      "rotationLossShare": 0.5545897690831909,
+      "msPerRotationIteration": 0.005995456577926493,
+      "buildsPerRotationIteration": 1.3210499513417675,
+      "cacheHitRate": 0.5239779900649011
+     },
+     "perPair": [
+      {
+       "seed": 0,
+       "round": 0,
+       "baseMm": 165.262,
+       "crotMm": 170.998,
+       "deltaMm": 5.73599999999999
+      },
+      {
+       "seed": 0,
+       "round": 1,
+       "baseMm": 165.152,
+       "crotMm": 170.998,
+       "deltaMm": 5.846000000000004
+      },
+      {
+       "seed": 0,
+       "round": 2,
+       "baseMm": 165.262,
+       "crotMm": 165.818,
+       "deltaMm": 0.5560000000000116
+      },
+      {
+       "seed": 1,
+       "round": 0,
+       "baseMm": 160.01,
+       "crotMm": 170.458,
+       "deltaMm": 10.448000000000008
+      },
+      {
+       "seed": 1,
+       "round": 1,
+       "baseMm": 160.01,
+       "crotMm": 170.458,
+       "deltaMm": 10.448000000000008
+      },
+      {
+       "seed": 1,
+       "round": 2,
+       "baseMm": 160.01,
+       "crotMm": 170.458,
+       "deltaMm": 10.448000000000008
+      },
+      {
+       "seed": 2,
+       "round": 0,
+       "baseMm": 166.666,
+       "crotMm": 167.635,
+       "deltaMm": 0.9689999999999941
+      },
+      {
+       "seed": 2,
+       "round": 1,
+       "baseMm": 166.666,
+       "crotMm": 167.635,
+       "deltaMm": 0.9689999999999941
+      },
+      {
+       "seed": 2,
+       "round": 2,
+       "baseMm": 166.666,
+       "crotMm": 167.635,
+       "deltaMm": 0.9689999999999941
+      }
+     ]
+    }
+   }
+  },
+  "shapes-17": {
+   "binary": "/var/lib/t3/rt/bin/fix-meas",
+   "budgets": {
+    "3": {
+     "pairs": 9,
+     "medianDeltaMm": 0.0,
+     "minDeltaMm": 0.0,
+     "maxDeltaMm": 0.0,
+     "crotBetter": 0,
+     "baseBetter": 0,
+     "equal": 9,
+     "baseSpread": {
+      "n": 9,
+      "min": 200.349,
+      "max": 200.349,
+      "median": 200.349,
+      "spreadMm": 0.0
+     },
+     "crotSpread": {
+      "n": 9,
+      "min": 200.349,
+      "max": 200.349,
+      "median": 200.349,
+      "spreadMm": 0.0
+     },
+     "baseRotation": {
+      "rotationRungsProposed": 0,
+      "rotationRungsImproved": 0,
+      "mirrorTogglesProposed": 0,
+      "mirrorTogglesImproved": 0,
+      "rotationAcceptedMoves": 0,
+      "acceptedMoves": 0,
+      "rotationLossBoughtMm": 0,
+      "translationLossBoughtMm": 0,
+      "rotationSurrogateBuilds": 0,
+      "rotationSurrogateHits": 0,
+      "rotationSurrogateEvictions": 0,
+      "rotationSurrogateBuildMs": 0,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 0,
+      "m34Published": 0,
+      "m34Seconds": 0,
+      "rotationIterations": 0,
+      "rotationImproved": 0,
+      "rungAcceptance": null,
+      "rotationAcceptedMoveShare": null,
+      "rotationLossShare": null,
+      "msPerRotationIteration": null,
+      "buildsPerRotationIteration": null,
+      "cacheHitRate": null
+     },
+     "crotRotation": {
+      "rotationRungsProposed": 0,
+      "rotationRungsImproved": 0,
+      "mirrorTogglesProposed": 0,
+      "mirrorTogglesImproved": 0,
+      "rotationAcceptedMoves": 0,
+      "acceptedMoves": 0,
+      "rotationLossBoughtMm": 0,
+      "translationLossBoughtMm": 0,
+      "rotationSurrogateBuilds": 0,
+      "rotationSurrogateHits": 0,
+      "rotationSurrogateEvictions": 0,
+      "rotationSurrogateBuildMs": 0,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 0,
+      "m34Published": 0,
+      "m34Seconds": 0,
+      "rotationIterations": 0,
+      "rotationImproved": 0,
+      "rungAcceptance": null,
+      "rotationAcceptedMoveShare": null,
+      "rotationLossShare": null,
+      "msPerRotationIteration": null,
+      "buildsPerRotationIteration": null,
+      "cacheHitRate": null
+     },
+     "perPair": [
+      {
+       "seed": 0,
+       "round": 0,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 0,
+       "round": 1,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 0,
+       "round": 2,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 0,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 1,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 2,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 0,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 1,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 2,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      }
+     ]
+    },
+    "10": {
+     "pairs": 9,
+     "medianDeltaMm": 0.0,
+     "minDeltaMm": 0.0,
+     "maxDeltaMm": 0.0,
+     "crotBetter": 0,
+     "baseBetter": 0,
+     "equal": 9,
+     "baseSpread": {
+      "n": 9,
+      "min": 200.349,
+      "max": 200.349,
+      "median": 200.349,
+      "spreadMm": 0.0
+     },
+     "crotSpread": {
+      "n": 9,
+      "min": 200.349,
+      "max": 200.349,
+      "median": 200.349,
+      "spreadMm": 0.0
+     },
+     "baseRotation": {
+      "rotationRungsProposed": 0,
+      "rotationRungsImproved": 0,
+      "mirrorTogglesProposed": 0,
+      "mirrorTogglesImproved": 0,
+      "rotationAcceptedMoves": 477,
+      "acceptedMoves": 98181,
+      "rotationLossBoughtMm": 0,
+      "translationLossBoughtMm": 0,
+      "rotationSurrogateBuilds": 0,
+      "rotationSurrogateHits": 0,
+      "rotationSurrogateEvictions": 0,
+      "rotationSurrogateBuildMs": 0,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 9,
+      "m34Published": 0,
+      "m34Seconds": 9.767107085,
+      "rotationIterations": 0,
+      "rotationImproved": 0,
+      "rungAcceptance": null,
+      "rotationAcceptedMoveShare": 0.004858373819781832,
+      "rotationLossShare": null,
+      "msPerRotationIteration": null,
+      "buildsPerRotationIteration": null,
+      "cacheHitRate": null
+     },
+     "crotRotation": {
+      "rotationRungsProposed": 436092,
+      "rotationRungsImproved": 165,
+      "mirrorTogglesProposed": 437904,
+      "mirrorTogglesImproved": 66,
+      "rotationAcceptedMoves": 18846,
+      "acceptedMoves": 85041,
+      "rotationLossBoughtMm": 81215.27608642979,
+      "translationLossBoughtMm": 5833.959139389339,
+      "rotationSurrogateBuilds": 355404,
+      "rotationSurrogateHits": 918999,
+      "rotationSurrogateEvictions": 354870,
+      "rotationSurrogateBuildMs": 4002.940559,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 9,
+      "m34Published": 0,
+      "m34Seconds": 12.327458114999999,
+      "rotationIterations": 436998.0,
+      "rotationImproved": 231,
+      "rungAcceptance": 0.0005286065382450263,
+      "rotationAcceptedMoveShare": 0.22161075246057785,
+      "rotationLossShare": 0.9329809259753385,
+      "msPerRotationIteration": 0.009160088968370565,
+      "buildsPerRotationIteration": 0.8132851866598931,
+      "cacheHitRate": 0.7211211838013564
+     },
+     "perPair": [
+      {
+       "seed": 0,
+       "round": 0,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 0,
+       "round": 1,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 0,
+       "round": 2,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 0,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 1,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 2,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 0,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 1,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 2,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      }
+     ]
+    },
+    "30": {
+     "pairs": 9,
+     "medianDeltaMm": 0.0,
+     "minDeltaMm": 0.0,
+     "maxDeltaMm": 0.0,
+     "crotBetter": 0,
+     "baseBetter": 0,
+     "equal": 9,
+     "baseSpread": {
+      "n": 9,
+      "min": 200.349,
+      "max": 200.349,
+      "median": 200.349,
+      "spreadMm": 0.0
+     },
+     "crotSpread": {
+      "n": 9,
+      "min": 200.349,
+      "max": 200.349,
+      "median": 200.349,
+      "spreadMm": 0.0
+     },
+     "baseRotation": {
+      "rotationRungsProposed": 0,
+      "rotationRungsImproved": 0,
+      "mirrorTogglesProposed": 0,
+      "mirrorTogglesImproved": 0,
+      "rotationAcceptedMoves": 477,
+      "acceptedMoves": 98181,
+      "rotationLossBoughtMm": 0,
+      "translationLossBoughtMm": 0,
+      "rotationSurrogateBuilds": 0,
+      "rotationSurrogateHits": 0,
+      "rotationSurrogateEvictions": 0,
+      "rotationSurrogateBuildMs": 0,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 9,
+      "m34Published": 0,
+      "m34Seconds": 9.770468976,
+      "rotationIterations": 0,
+      "rotationImproved": 0,
+      "rungAcceptance": null,
+      "rotationAcceptedMoveShare": 0.004858373819781832,
+      "rotationLossShare": null,
+      "msPerRotationIteration": null,
+      "buildsPerRotationIteration": null,
+      "cacheHitRate": null
+     },
+     "crotRotation": {
+      "rotationRungsProposed": 436092,
+      "rotationRungsImproved": 165,
+      "mirrorTogglesProposed": 437904,
+      "mirrorTogglesImproved": 66,
+      "rotationAcceptedMoves": 18846,
+      "acceptedMoves": 85041,
+      "rotationLossBoughtMm": 81215.27608642979,
+      "translationLossBoughtMm": 5833.959139389339,
+      "rotationSurrogateBuilds": 355404,
+      "rotationSurrogateHits": 918999,
+      "rotationSurrogateEvictions": 354870,
+      "rotationSurrogateBuildMs": 3999.685459,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 9,
+      "m34Published": 0,
+      "m34Seconds": 12.308148289,
+      "rotationIterations": 436998.0,
+      "rotationImproved": 231,
+      "rungAcceptance": 0.0005286065382450263,
+      "rotationAcceptedMoveShare": 0.22161075246057785,
+      "rotationLossShare": 0.9329809259753385,
+      "msPerRotationIteration": 0.009152640192861295,
+      "buildsPerRotationIteration": 0.8132851866598931,
+      "cacheHitRate": 0.7211211838013564
+     },
+     "perPair": [
+      {
+       "seed": 0,
+       "round": 0,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 0,
+       "round": 1,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 0,
+       "round": 2,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 0,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 1,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 2,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 0,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 1,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 2,
+       "baseMm": 200.349,
+       "crotMm": 200.349,
+       "deltaMm": 0.0
+      }
+     ]
+    }
+   }
+  },
+  "triangle-20": {
+   "binary": "/var/lib/t3/rt/bin/fix-meas",
+   "budgets": {
+    "3": {
+     "pairs": 9,
+     "medianDeltaMm": 0.0,
+     "minDeltaMm": 0.0,
+     "maxDeltaMm": 0.0,
+     "crotBetter": 0,
+     "baseBetter": 0,
+     "equal": 9,
+     "baseSpread": {
+      "n": 9,
+      "min": 70.743,
+      "max": 70.771,
+      "median": 70.747,
+      "spreadMm": 0.028000000000005798
+     },
+     "crotSpread": {
+      "n": 9,
+      "min": 70.743,
+      "max": 70.771,
+      "median": 70.747,
+      "spreadMm": 0.028000000000005798
+     },
+     "baseRotation": {
+      "rotationRungsProposed": 0,
+      "rotationRungsImproved": 0,
+      "mirrorTogglesProposed": 0,
+      "mirrorTogglesImproved": 0,
+      "rotationAcceptedMoves": 0,
+      "acceptedMoves": 0,
+      "rotationLossBoughtMm": 0,
+      "translationLossBoughtMm": 0,
+      "rotationSurrogateBuilds": 0,
+      "rotationSurrogateHits": 0,
+      "rotationSurrogateEvictions": 0,
+      "rotationSurrogateBuildMs": 0,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 0,
+      "m34Published": 0,
+      "m34Seconds": 0,
+      "rotationIterations": 0,
+      "rotationImproved": 0,
+      "rungAcceptance": null,
+      "rotationAcceptedMoveShare": null,
+      "rotationLossShare": null,
+      "msPerRotationIteration": null,
+      "buildsPerRotationIteration": null,
+      "cacheHitRate": null
+     },
+     "crotRotation": {
+      "rotationRungsProposed": 0,
+      "rotationRungsImproved": 0,
+      "mirrorTogglesProposed": 0,
+      "mirrorTogglesImproved": 0,
+      "rotationAcceptedMoves": 0,
+      "acceptedMoves": 0,
+      "rotationLossBoughtMm": 0,
+      "translationLossBoughtMm": 0,
+      "rotationSurrogateBuilds": 0,
+      "rotationSurrogateHits": 0,
+      "rotationSurrogateEvictions": 0,
+      "rotationSurrogateBuildMs": 0,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 0,
+      "m34Published": 0,
+      "m34Seconds": 0,
+      "rotationIterations": 0,
+      "rotationImproved": 0,
+      "rungAcceptance": null,
+      "rotationAcceptedMoveShare": null,
+      "rotationLossShare": null,
+      "msPerRotationIteration": null,
+      "buildsPerRotationIteration": null,
+      "cacheHitRate": null
+     },
+     "perPair": [
+      {
+       "seed": 0,
+       "round": 0,
+       "baseMm": 70.771,
+       "crotMm": 70.771,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 0,
+       "round": 1,
+       "baseMm": 70.771,
+       "crotMm": 70.771,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 0,
+       "round": 2,
+       "baseMm": 70.771,
+       "crotMm": 70.771,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 0,
+       "baseMm": 70.747,
+       "crotMm": 70.747,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 1,
+       "baseMm": 70.747,
+       "crotMm": 70.747,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 2,
+       "baseMm": 70.747,
+       "crotMm": 70.747,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 0,
+       "baseMm": 70.743,
+       "crotMm": 70.743,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 1,
+       "baseMm": 70.743,
+       "crotMm": 70.743,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 2,
+       "baseMm": 70.743,
+       "crotMm": 70.743,
+       "deltaMm": 0.0
+      }
+     ]
+    },
+    "10": {
+     "pairs": 9,
+     "medianDeltaMm": 0.001999999999995339,
+     "minDeltaMm": 0.0,
+     "maxDeltaMm": 0.001999999999995339,
+     "crotBetter": 0,
+     "baseBetter": 6,
+     "equal": 3,
+     "baseSpread": {
+      "n": 9,
+      "min": 70.729,
+      "max": 70.73,
+      "median": 70.73,
+      "spreadMm": 0.0010000000000047748
+     },
+     "crotSpread": {
+      "n": 9,
+      "min": 70.73,
+      "max": 70.732,
+      "median": 70.731,
+      "spreadMm": 0.001999999999995339
+     },
+     "baseRotation": {
+      "rotationRungsProposed": 0,
+      "rotationRungsImproved": 0,
+      "mirrorTogglesProposed": 0,
+      "mirrorTogglesImproved": 0,
+      "rotationAcceptedMoves": 528,
+      "acceptedMoves": 393090,
+      "rotationLossBoughtMm": 0,
+      "translationLossBoughtMm": 0,
+      "rotationSurrogateBuilds": 0,
+      "rotationSurrogateHits": 0,
+      "rotationSurrogateEvictions": 0,
+      "rotationSurrogateBuildMs": 0,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 9,
+      "m34Published": 0,
+      "m34Seconds": 16.414692642000002,
+      "rotationIterations": 0,
+      "rotationImproved": 0,
+      "rungAcceptance": null,
+      "rotationAcceptedMoveShare": 0.0013432038464473784,
+      "rotationLossShare": null,
+      "msPerRotationIteration": null,
+      "buildsPerRotationIteration": null,
+      "cacheHitRate": null
+     },
+     "crotRotation": {
+      "rotationRungsProposed": 1343328,
+      "rotationRungsImproved": 6216,
+      "mirrorTogglesProposed": 1329708,
+      "mirrorTogglesImproved": 2610,
+      "rotationAcceptedMoves": 11277,
+      "acceptedMoves": 304461,
+      "rotationLossBoughtMm": 170345.99202129067,
+      "translationLossBoughtMm": 34776.17662349156,
+      "rotationSurrogateBuilds": 2145840,
+      "rotationSurrogateHits": 1449033,
+      "rotationSurrogateEvictions": 2145186,
+      "rotationSurrogateBuildMs": 8353.378993,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 9,
+      "m34Published": 0,
+      "m34Seconds": 21.813388815,
+      "rotationIterations": 1336518.0,
+      "rotationImproved": 8826,
+      "rungAcceptance": 0.006603726998065122,
+      "rotationAcceptedMoveShare": 0.03703922669898608,
+      "rotationLossShare": 0.830461149795492,
+      "msPerRotationIteration": 0.00625010586688694,
+      "buildsPerRotationIteration": 1.6055451553963358,
+      "cacheHitRate": 0.4030832243586908
+     },
+     "perPair": [
+      {
+       "seed": 0,
+       "round": 0,
+       "baseMm": 70.73,
+       "crotMm": 70.73,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 0,
+       "round": 1,
+       "baseMm": 70.73,
+       "crotMm": 70.73,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 0,
+       "round": 2,
+       "baseMm": 70.73,
+       "crotMm": 70.73,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 0,
+       "baseMm": 70.73,
+       "crotMm": 70.732,
+       "deltaMm": 0.001999999999995339
+      },
+      {
+       "seed": 1,
+       "round": 1,
+       "baseMm": 70.73,
+       "crotMm": 70.732,
+       "deltaMm": 0.001999999999995339
+      },
+      {
+       "seed": 1,
+       "round": 2,
+       "baseMm": 70.73,
+       "crotMm": 70.732,
+       "deltaMm": 0.001999999999995339
+      },
+      {
+       "seed": 2,
+       "round": 0,
+       "baseMm": 70.729,
+       "crotMm": 70.731,
+       "deltaMm": 0.001999999999995339
+      },
+      {
+       "seed": 2,
+       "round": 1,
+       "baseMm": 70.729,
+       "crotMm": 70.731,
+       "deltaMm": 0.001999999999995339
+      },
+      {
+       "seed": 2,
+       "round": 2,
+       "baseMm": 70.729,
+       "crotMm": 70.731,
+       "deltaMm": 0.001999999999995339
+      }
+     ]
+    },
+    "30": {
+     "pairs": 9,
+     "medianDeltaMm": 0.0,
+     "minDeltaMm": 0.0,
+     "maxDeltaMm": 0.0,
+     "crotBetter": 0,
+     "baseBetter": 0,
+     "equal": 9,
+     "baseSpread": {
+      "n": 9,
+      "min": 70.727,
+      "max": 70.727,
+      "median": 70.727,
+      "spreadMm": 0.0
+     },
+     "crotSpread": {
+      "n": 9,
+      "min": 70.727,
+      "max": 70.727,
+      "median": 70.727,
+      "spreadMm": 0.0
+     },
+     "baseRotation": {
+      "rotationRungsProposed": 0,
+      "rotationRungsImproved": 0,
+      "mirrorTogglesProposed": 0,
+      "mirrorTogglesImproved": 0,
+      "rotationAcceptedMoves": 528,
+      "acceptedMoves": 393090,
+      "rotationLossBoughtMm": 0,
+      "translationLossBoughtMm": 0,
+      "rotationSurrogateBuilds": 0,
+      "rotationSurrogateHits": 0,
+      "rotationSurrogateEvictions": 0,
+      "rotationSurrogateBuildMs": 0,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 9,
+      "m34Published": 0,
+      "m34Seconds": 16.398964474,
+      "rotationIterations": 0,
+      "rotationImproved": 0,
+      "rungAcceptance": null,
+      "rotationAcceptedMoveShare": 0.0013432038464473784,
+      "rotationLossShare": null,
+      "msPerRotationIteration": null,
+      "buildsPerRotationIteration": null,
+      "cacheHitRate": null
+     },
+     "crotRotation": {
+      "rotationRungsProposed": 1343328,
+      "rotationRungsImproved": 6216,
+      "mirrorTogglesProposed": 1329708,
+      "mirrorTogglesImproved": 2610,
+      "rotationAcceptedMoves": 11277,
+      "acceptedMoves": 304461,
+      "rotationLossBoughtMm": 170345.99202129067,
+      "translationLossBoughtMm": 34776.17662349156,
+      "rotationSurrogateBuilds": 2145840,
+      "rotationSurrogateHits": 1449033,
+      "rotationSurrogateEvictions": 2145186,
+      "rotationSurrogateBuildMs": 8314.977148,
+      "rotationSurrogateCells": 0,
+      "rotationBuildsRefused": 0,
+      "m34Slices": 9,
+      "m34Published": 0,
+      "m34Seconds": 21.733145364000002,
+      "rotationIterations": 1336518.0,
+      "rotationImproved": 8826,
+      "rungAcceptance": 0.006603726998065122,
+      "rotationAcceptedMoveShare": 0.03703922669898608,
+      "rotationLossShare": 0.830461149795492,
+      "msPerRotationIteration": 0.006221373111323604,
+      "buildsPerRotationIteration": 1.6055451553963358,
+      "cacheHitRate": 0.4030832243586908
+     },
+     "perPair": [
+      {
+       "seed": 0,
+       "round": 0,
+       "baseMm": 70.727,
+       "crotMm": 70.727,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 0,
+       "round": 1,
+       "baseMm": 70.727,
+       "crotMm": 70.727,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 0,
+       "round": 2,
+       "baseMm": 70.727,
+       "crotMm": 70.727,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 0,
+       "baseMm": 70.727,
+       "crotMm": 70.727,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 1,
+       "baseMm": 70.727,
+       "crotMm": 70.727,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 1,
+       "round": 2,
+       "baseMm": 70.727,
+       "crotMm": 70.727,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 0,
+       "baseMm": 70.727,
+       "crotMm": 70.727,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 1,
+       "baseMm": 70.727,
+       "crotMm": 70.727,
+       "deltaMm": 0.0
+      },
+      {
+       "seed": 2,
+       "round": 2,
+       "baseMm": 70.727,
+       "crotMm": 70.727,
+       "deltaMm": 0.0
+      }
+     ]
+    }
+   }
+  }
+ }
+}
