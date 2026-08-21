@@ -1,0 +1,1210 @@
+{
+ "arms": {
+  "off": "race=0",
+  "on": "race=3:1:3",
+  "on2": "race=3:1:3,cur2=1"
+ },
+ "binary": "/tmp/wc-bin/ship-combo",
+ "binarySha256": "c63e5af0b92747f1899a1c37dd1b91975e5bf32f458e48ec428dcdd5d90be05b",
+ "boxLoad": [
+  {
+   "after": 7.9658203125,
+   "before": 7.87548828125,
+   "out": "/tmp/wc-out/race-mixed-61-s0-off.json",
+   "wall": 7.395573979942128
+  },
+  {
+   "after": 7.6279296875,
+   "before": 7.9658203125,
+   "out": "/tmp/wc-out/race-mixed-61-s0-on.json",
+   "wall": 13.885753793059848
+  },
+  {
+   "after": 7.6181640625,
+   "before": 7.6279296875,
+   "out": "/tmp/wc-out/race-mixed-61-s0-on2.json",
+   "wall": 8.141591115039773
+  },
+  {
+   "after": 7.77734375,
+   "before": 7.6181640625,
+   "out": "/tmp/wc-out/race-mixed-61-s1-on.json",
+   "wall": 13.809591644909233
+  },
+  {
+   "after": 7.39453125,
+   "before": 7.77734375,
+   "out": "/tmp/wc-out/race-mixed-61-s1-on2.json",
+   "wall": 7.92887001298368
+  },
+  {
+   "after": 7.5234375,
+   "before": 7.39453125,
+   "out": "/tmp/wc-out/race-mixed-61-s1-off.json",
+   "wall": 6.631607525981963
+  },
+  {
+   "after": 7.65771484375,
+   "before": 7.5234375,
+   "out": "/tmp/wc-out/race-mixed-61-s2-on2.json",
+   "wall": 8.357833473943174
+  },
+  {
+   "after": 7.181640625,
+   "before": 7.65771484375,
+   "out": "/tmp/wc-out/race-mixed-61-s2-off.json",
+   "wall": 8.675313686020672
+  },
+  {
+   "after": 6.42138671875,
+   "before": 7.181640625,
+   "out": "/tmp/wc-out/race-mixed-61-s2-on.json",
+   "wall": 15.13634761609137
+  },
+  {
+   "after": 6.9716796875,
+   "before": 6.42138671875,
+   "out": "/tmp/wc-out/race-shapes-17-s0-on.json",
+   "wall": 10.170980256050825
+  },
+  {
+   "after": 6.7333984375,
+   "before": 6.9716796875,
+   "out": "/tmp/wc-out/race-shapes-17-s0-on2.json",
+   "wall": 6.36143170890864
+  },
+  {
+   "after": 7.30322265625,
+   "before": 6.7333984375,
+   "out": "/tmp/wc-out/race-shapes-17-s0-off.json",
+   "wall": 8.639629891025834
+  },
+  {
+   "after": 8.080078125,
+   "before": 7.30322265625,
+   "out": "/tmp/wc-out/race-shapes-17-s1-on2.json",
+   "wall": 5.889651461970061
+  },
+  {
+   "after": 8.01953125,
+   "before": 8.080078125,
+   "out": "/tmp/wc-out/race-shapes-17-s1-off.json",
+   "wall": 7.795391371939331
+  },
+  {
+   "after": 7.85595703125,
+   "before": 8.01953125,
+   "out": "/tmp/wc-out/race-shapes-17-s1-on.json",
+   "wall": 9.347456005052663
+  },
+  {
+   "after": 7.38671875,
+   "before": 7.85595703125,
+   "out": "/tmp/wc-out/race-shapes-17-s2-off.json",
+   "wall": 8.315861125010997
+  },
+  {
+   "after": 7.19921875,
+   "before": 7.38671875,
+   "out": "/tmp/wc-out/race-shapes-17-s2-on.json",
+   "wall": 10.00028264906723
+  },
+  {
+   "after": 7.263671875,
+   "before": 7.19921875,
+   "out": "/tmp/wc-out/race-shapes-17-s2-on2.json",
+   "wall": 5.858170105959289
+  },
+  {
+   "after": 7.7802734375,
+   "before": 7.263671875,
+   "out": "/tmp/wc-out/race-triangle-20-s0-on2.json",
+   "wall": 8.537519227014855
+  },
+  {
+   "after": 8.13525390625,
+   "before": 7.7802734375,
+   "out": "/tmp/wc-out/race-triangle-20-s0-off.json",
+   "wall": 7.457431570976041
+  },
+  {
+   "after": 7.71337890625,
+   "before": 8.13525390625,
+   "out": "/tmp/wc-out/race-triangle-20-s0-on.json",
+   "wall": 10.760111434035935
+  },
+  {
+   "after": 7.255859375,
+   "before": 7.71337890625,
+   "out": "/tmp/wc-out/race-triangle-20-s1-off.json",
+   "wall": 7.174553390941583
+  },
+  {
+   "after": 6.9150390625,
+   "before": 7.255859375,
+   "out": "/tmp/wc-out/race-triangle-20-s1-on.json",
+   "wall": 11.501808316912502
+  },
+  {
+   "after": 7.21630859375,
+   "before": 6.9150390625,
+   "out": "/tmp/wc-out/race-triangle-20-s1-on2.json",
+   "wall": 9.590934796025977
+  },
+  {
+   "after": 7.2373046875,
+   "before": 7.21630859375,
+   "out": "/tmp/wc-out/race-triangle-20-s2-on.json",
+   "wall": 9.397643086966127
+  },
+  {
+   "after": 7.39013671875,
+   "before": 7.2373046875,
+   "out": "/tmp/wc-out/race-triangle-20-s2-on2.json",
+   "wall": 8.992359712021425
+  },
+  {
+   "after": 8.080078125,
+   "before": 7.39013671875,
+   "out": "/tmp/wc-out/race-triangle-20-s2-off.json",
+   "wall": 6.890413295011967
+  }
+ ],
+ "raceSpec": "3:1:3",
+ "requests": [
+  "mixed-61",
+  "shapes-17",
+  "triangle-20"
+ ],
+ "rows": [
+  {
+   "armOrder": [
+    "off",
+    "on",
+    "on2"
+   ],
+   "deltaOn2Mm": 4.199080715681902,
+   "deltaOnMm": 4.245221735089302,
+   "equalWorkOn": true,
+   "equalWorkOn2": true,
+   "off": {
+    "coordinatorSeconds": 7.356059447,
+    "depthMm": 175.3877782649107,
+    "digest": "0ca1661e09b3d95c455373a666100c4ae3a2ab1f375521f19b662f40ea0ce5a9",
+    "draws": {
+     "calls": 0,
+     "chargedUnits": 0,
+     "classUnits": 0,
+     "globalUnits": 0,
+     "seconds": 0
+    },
+    "dualGateValid": true,
+    "operatorCalls": 6,
+    "planUnits": 24891457,
+    "processSeconds": 7.395573979942128,
+    "publications": 4,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 6,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,race=0",
+    "workCurrency": null,
+    "workUnits": 23356444
+   },
+   "on": {
+    "coordinatorSeconds": 13.850403619,
+    "depthMm": 179.633,
+    "digest": "112c4f5103b5f0f0390350b0851799480b4e41332560adf54c466e6acbb368b2",
+    "draws": {
+     "calls": 2,
+     "chargedUnits": 585,
+     "classUnits": 0,
+     "globalUnits": 585,
+     "seconds": 6.34692773
+    },
+    "dualGateValid": true,
+    "operatorCalls": 10,
+    "planUnits": 24891457,
+    "processSeconds": 13.885753793059848,
+    "publications": 2,
+    "race": {
+     "armsStarted": 3,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 1,
+     "seconds": 8.883847499,
+     "winnerSlot": 0,
+     "workUnits": 6064965
+    },
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 3,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,race=3:1:3",
+    "workCurrency": null,
+    "workUnits": 22372607
+   },
+   "on2": {
+    "coordinatorSeconds": 8.102315466,
+    "depthMm": 179.5868589805926,
+    "digest": "a06d5f0f3d5f0383e0ca56dc6df2d33b4f653903a2ddcdd7484c970e5b6aa843",
+    "draws": {
+     "calls": 1,
+     "chargedUnits": 8173849,
+     "classUnits": 8173849,
+     "globalUnits": 310,
+     "seconds": 3.185029496
+    },
+    "dualGateValid": true,
+    "operatorCalls": 4,
+    "planUnits": 24891457,
+    "processSeconds": 8.141591115039773,
+    "publications": 1,
+    "race": {
+     "armsStarted": 2,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 0,
+     "seconds": 3.993352873,
+     "winnerSlot": 0,
+     "workUnits": 8986454
+    },
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 2,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,race=3:1:3,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 8173539,
+     "classUnits": 13681518,
+     "globalUnits": 5507979,
+     "mode": "charge",
+     "operatorCalls": 4,
+     "operatorSeconds": 5.842472175
+    },
+    "workUnits": 22462811
+   },
+   "request": "mixed-61",
+   "seed": 0
+  },
+  {
+   "armOrder": [
+    "on",
+    "on2",
+    "off"
+   ],
+   "deltaOn2Mm": 5.462999999999965,
+   "deltaOnMm": 2.366269742281503,
+   "equalWorkOn": true,
+   "equalWorkOn2": true,
+   "off": {
+    "coordinatorSeconds": 6.596632273,
+    "depthMm": 174.17000000000002,
+    "digest": "028f5b92896e79ddb6aa7aee1fdf7def2a042b682f267141f8418bca50e88041",
+    "draws": {
+     "calls": 0,
+     "chargedUnits": 0,
+     "classUnits": 0,
+     "globalUnits": 0,
+     "seconds": 0
+    },
+    "dualGateValid": true,
+    "operatorCalls": 5,
+    "planUnits": 24891457,
+    "processSeconds": 6.631607525981963,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 5,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,race=0",
+    "workCurrency": null,
+    "workUnits": 22152474
+   },
+   "on": {
+    "coordinatorSeconds": 13.773830426,
+    "depthMm": 176.53626974228152,
+    "digest": "405c03a39dd72082b4418f2a97ba51e77b7cc64543f1e6c588770cbbdf5eb865",
+    "draws": {
+     "calls": 2,
+     "chargedUnits": 550,
+     "classUnits": 0,
+     "globalUnits": 550,
+     "seconds": 6.343151895999999
+    },
+    "dualGateValid": true,
+    "operatorCalls": 10,
+    "planUnits": 24891457,
+    "processSeconds": 13.809591644909233,
+    "publications": 2,
+    "race": {
+     "armsStarted": 3,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 1,
+     "seconds": 8.668959945000001,
+     "winnerSlot": 0,
+     "workUnits": 5523724
+    },
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 3,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,race=3:1:3",
+    "workCurrency": null,
+    "workUnits": 21857932
+   },
+   "on2": {
+    "coordinatorSeconds": 7.89292383,
+    "depthMm": 179.63299999999998,
+    "digest": "ff307d1fd9ad09630d3e6223e889fbe06b3b18a66d8ff756ef8f6c76c92a6db6",
+    "draws": {
+     "calls": 1,
+     "chargedUnits": 7830764,
+     "classUnits": 7830764,
+     "globalUnits": 285,
+     "seconds": 3.199594006
+    },
+    "dualGateValid": true,
+    "operatorCalls": 4,
+    "planUnits": 24891457,
+    "processSeconds": 7.92887001298368,
+    "publications": 1,
+    "race": {
+     "armsStarted": 2,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 0,
+     "seconds": 3.9659794419999996,
+     "winnerSlot": 0,
+     "workUnits": 8672343
+    },
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 2,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,race=3:1:3,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 7830479,
+     "classUnits": 13460915,
+     "globalUnits": 5630436,
+     "mode": "charge",
+     "operatorCalls": 4,
+     "operatorSeconds": 5.530835475999999
+    },
+    "workUnits": 23093108
+   },
+   "request": "mixed-61",
+   "seed": 1
+  },
+  {
+   "armOrder": [
+    "on2",
+    "off",
+    "on"
+   ],
+   "deltaOn2Mm": 2.8439999999999657,
+   "deltaOnMm": -0.6560000000000343,
+   "equalWorkOn": true,
+   "equalWorkOn2": true,
+   "off": {
+    "coordinatorSeconds": 8.638138488,
+    "depthMm": 176.16200000000003,
+    "digest": "d50502e7f9836bea57a9bfa2fc2cd4d8303e9c8bc55e4d6b77048453d0cc5343",
+    "draws": {
+     "calls": 0,
+     "chargedUnits": 0,
+     "classUnits": 0,
+     "globalUnits": 0,
+     "seconds": 0
+    },
+    "dualGateValid": true,
+    "operatorCalls": 7,
+    "planUnits": 24891457,
+    "processSeconds": 8.675313686020672,
+    "publications": 3,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 7,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,race=0",
+    "workCurrency": null,
+    "workUnits": 23859055
+   },
+   "on": {
+    "coordinatorSeconds": 15.095742152,
+    "depthMm": 175.506,
+    "digest": "f8ec0175eb84e18002f314fb090ae876073d288f8b4ab3d2c898fb6935605c32",
+    "draws": {
+     "calls": 2,
+     "chargedUnits": 640,
+     "classUnits": 0,
+     "globalUnits": 640,
+     "seconds": 6.236316157
+    },
+    "dualGateValid": true,
+    "operatorCalls": 12,
+    "planUnits": 24891457,
+    "processSeconds": 15.13634761609137,
+    "publications": 4,
+    "race": {
+     "armsStarted": 3,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 2,
+     "seconds": 9.78708019,
+     "winnerSlot": 0,
+     "workUnits": 6930251
+    },
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 4,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,race=3:1:3",
+    "workCurrency": null,
+    "workUnits": 24186710
+   },
+   "on2": {
+    "coordinatorSeconds": 8.320578793,
+    "depthMm": 179.006,
+    "digest": "e6f75d94833a244865dcf41d6cae4e448ff6702c49616fa39ca929533c81f2cf",
+    "draws": {
+     "calls": 1,
+     "chargedUnits": 8288047,
+     "classUnits": 8288047,
+     "globalUnits": 320,
+     "seconds": 3.202800632
+    },
+    "dualGateValid": true,
+    "operatorCalls": 5,
+    "planUnits": 24891457,
+    "processSeconds": 8.357833473943174,
+    "publications": 1,
+    "race": {
+     "armsStarted": 2,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 0,
+     "seconds": 3.7885364690000003,
+     "winnerSlot": 0,
+     "workUnits": 8813031
+    },
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 3,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,race=3:1:3,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 8287727,
+     "classUnits": 14328328,
+     "globalUnits": 6040601,
+     "mode": "charge",
+     "operatorCalls": 5,
+     "operatorSeconds": 5.972042368999999
+    },
+    "workUnits": 23292620
+   },
+   "request": "mixed-61",
+   "seed": 2
+  },
+  {
+   "armOrder": [
+    "on",
+    "on2",
+    "off"
+   ],
+   "deltaOn2Mm": 0.0003772957095407037,
+   "deltaOnMm": 0.0003772957095407037,
+   "equalWorkOn": true,
+   "equalWorkOn2": true,
+   "off": {
+    "coordinatorSeconds": 8.599391224,
+    "depthMm": 200.349,
+    "digest": "e96fcde67214c2c8192dd22cdd26de434ca5d57ae9f32494bc43cffd7ec33189",
+    "draws": {
+     "calls": 1,
+     "chargedUnits": 40,
+     "classUnits": 0,
+     "globalUnits": 40,
+     "seconds": 0.7833839920000001
+    },
+    "dualGateValid": true,
+    "operatorCalls": 12,
+    "planUnits": 7075705,
+    "processSeconds": 8.639629891025834,
+    "publications": 1,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 10,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,race=0",
+    "workCurrency": null,
+    "workUnits": 6907756
+   },
+   "on": {
+    "coordinatorSeconds": 10.133420713,
+    "depthMm": 200.34937729570953,
+    "digest": "f774dffd56afc48b2b8ceeb3010d0073576ff997e38cc2d7ce663294c79cc744",
+    "draws": {
+     "calls": 3,
+     "chargedUnits": 110,
+     "classUnits": 0,
+     "globalUnits": 110,
+     "seconds": 2.35170647
+    },
+    "dualGateValid": true,
+    "operatorCalls": 15,
+    "planUnits": 7075705,
+    "processSeconds": 10.170980256050825,
+    "publications": 0,
+    "race": {
+     "armsStarted": 3,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 2,
+     "seconds": 4.481573715000001,
+     "winnerSlot": 0,
+     "workUnits": 2219428
+    },
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 6,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,race=3:1:3",
+    "workCurrency": null,
+    "workUnits": 6486814
+   },
+   "on2": {
+    "coordinatorSeconds": 6.324020279,
+    "depthMm": 200.34937729570953,
+    "digest": "fb19178fad0f91bed1b92da1a4ee369bd53b56a20f99c13115149acf0955a356",
+    "draws": {
+     "calls": 2,
+     "chargedUnits": 3227631,
+     "classUnits": 3227631,
+     "globalUnits": 80,
+     "seconds": 1.5685835140000004
+    },
+    "dualGateValid": true,
+    "operatorCalls": 8,
+    "planUnits": 7075705,
+    "processSeconds": 6.36143170890864,
+    "publications": 0,
+    "race": {
+     "armsStarted": 2,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 1,
+     "seconds": 1.6592060180000001,
+     "winnerSlot": 0,
+     "workUnits": 2278134
+    },
+    "scheduleExitCause": "deadline",
+    "scheduleIterations": 4,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,race=3:1:3,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 3227551,
+     "classUnits": 5954523,
+     "globalUnits": 2726972,
+     "mode": "charge",
+     "operatorCalls": 8,
+     "operatorSeconds": 5.383171491000001
+    },
+    "workUnits": 7208562
+   },
+   "request": "shapes-17",
+   "seed": 0
+  },
+  {
+   "armOrder": [
+    "on2",
+    "off",
+    "on"
+   ],
+   "deltaOn2Mm": 0.0,
+   "deltaOnMm": 0.0,
+   "equalWorkOn": true,
+   "equalWorkOn2": true,
+   "off": {
+    "coordinatorSeconds": 7.756184437,
+    "depthMm": 200.34937729570953,
+    "digest": "9fd86ef22c7ab7befea6e71ef5f23c9abacb15ce28d58a35aa50176c188c5f72",
+    "draws": {
+     "calls": 1,
+     "chargedUnits": 40,
+     "classUnits": 0,
+     "globalUnits": 40,
+     "seconds": 0.7816016819999998
+    },
+    "dualGateValid": true,
+    "operatorCalls": 11,
+    "planUnits": 7075705,
+    "processSeconds": 7.795391371939331,
+    "publications": 0,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 9,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,race=0",
+    "workCurrency": null,
+    "workUnits": 6275648
+   },
+   "on": {
+    "coordinatorSeconds": 9.306358348,
+    "depthMm": 200.34937729570953,
+    "digest": "f9451cfc26ec94efc5b86333f471e0aeaf70b1c57a2628304e50d9d710c221a1",
+    "draws": {
+     "calls": 3,
+     "chargedUnits": 110,
+     "classUnits": 0,
+     "globalUnits": 110,
+     "seconds": 2.3416527300000003
+    },
+    "dualGateValid": true,
+    "operatorCalls": 15,
+    "planUnits": 7075705,
+    "processSeconds": 9.347456005052663,
+    "publications": 0,
+    "race": {
+     "armsStarted": 3,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 2,
+     "seconds": 4.093217462,
+     "winnerSlot": 0,
+     "workUnits": 2227712
+    },
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 6,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,race=3:1:3",
+    "workCurrency": null,
+    "workUnits": 6263980
+   },
+   "on2": {
+    "coordinatorSeconds": 5.850712253,
+    "depthMm": 200.34937729570953,
+    "digest": "6ce5b62238a7b78036c56b59a6a8a0e0706046e9631e39f21b7b8cdb3d60da23",
+    "draws": {
+     "calls": 2,
+     "chargedUnits": 3227631,
+     "classUnits": 3227631,
+     "globalUnits": 80,
+     "seconds": 1.5752412590000002
+    },
+    "dualGateValid": true,
+    "operatorCalls": 8,
+    "planUnits": 7075705,
+    "processSeconds": 5.889651461970061,
+    "publications": 0,
+    "race": {
+     "armsStarted": 2,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 1,
+     "seconds": 1.595489533,
+     "winnerSlot": 0,
+     "workUnits": 2287335
+    },
+    "scheduleExitCause": "deadline",
+    "scheduleIterations": 4,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,race=3:1:3,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 3227551,
+     "classUnits": 5902372,
+     "globalUnits": 2674821,
+     "mode": "charge",
+     "operatorCalls": 8,
+     "operatorSeconds": 4.903480390000001
+    },
+    "workUnits": 7156329
+   },
+   "request": "shapes-17",
+   "seed": 1
+  },
+  {
+   "armOrder": [
+    "off",
+    "on",
+    "on2"
+   ],
+   "deltaOn2Mm": 0.0003772957095407037,
+   "deltaOnMm": 0.0,
+   "equalWorkOn": true,
+   "equalWorkOn2": true,
+   "off": {
+    "coordinatorSeconds": 8.278050161,
+    "depthMm": 200.349,
+    "digest": "6664e646897f521b36724a2658a48d30ce7df6ff39ffe7d28fd2f941cf1883d2",
+    "draws": {
+     "calls": 1,
+     "chargedUnits": 40,
+     "classUnits": 0,
+     "globalUnits": 40,
+     "seconds": 0.7824285030000002
+    },
+    "dualGateValid": true,
+    "operatorCalls": 12,
+    "planUnits": 7075705,
+    "processSeconds": 8.315861125010997,
+    "publications": 1,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 10,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,race=0",
+    "workCurrency": null,
+    "workUnits": 6790467
+   },
+   "on": {
+    "coordinatorSeconds": 9.959415939,
+    "depthMm": 200.349,
+    "digest": "d3a6191017ed07041c4f12c109b8a81b3d8498210421dec5e7e228cb827f5886",
+    "draws": {
+     "calls": 3,
+     "chargedUnits": 110,
+     "classUnits": 0,
+     "globalUnits": 110,
+     "seconds": 2.339180924
+    },
+    "dualGateValid": true,
+    "operatorCalls": 16,
+    "planUnits": 7075705,
+    "processSeconds": 10.00028264906723,
+    "publications": 1,
+    "race": {
+     "armsStarted": 3,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 2,
+     "seconds": 4.138656132,
+     "winnerSlot": 0,
+     "workUnits": 2217775
+    },
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 7,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,race=3:1:3",
+    "workCurrency": null,
+    "workUnits": 6697716
+   },
+   "on2": {
+    "coordinatorSeconds": 5.818290484,
+    "depthMm": 200.34937729570953,
+    "digest": "d62b81fd463292f6244b45b2339ab11567b017bb4455d048e1776132017985ab",
+    "draws": {
+     "calls": 2,
+     "chargedUnits": 3227631,
+     "classUnits": 3227631,
+     "globalUnits": 80,
+     "seconds": 1.5599018539999996
+    },
+    "dualGateValid": true,
+    "operatorCalls": 8,
+    "planUnits": 7075705,
+    "processSeconds": 5.858170105959289,
+    "publications": 0,
+    "race": {
+     "armsStarted": 2,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 1,
+     "seconds": 1.5228139510000003,
+     "winnerSlot": 0,
+     "workUnits": 2186874
+    },
+    "scheduleExitCause": "deadline",
+    "scheduleIterations": 4,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,race=3:1:3,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 3227551,
+     "classUnits": 5916837,
+     "globalUnits": 2689286,
+     "mode": "charge",
+     "operatorCalls": 8,
+     "operatorSeconds": 4.857751374
+    },
+    "workUnits": 7204055
+   },
+   "request": "shapes-17",
+   "seed": 2
+  },
+  {
+   "armOrder": [
+    "on2",
+    "off",
+    "on"
+   ],
+   "deltaOn2Mm": -0.014706594298885989,
+   "deltaOnMm": -0.014706594298885989,
+   "equalWorkOn": false,
+   "equalWorkOn2": false,
+   "off": {
+    "coordinatorSeconds": 7.425344014,
+    "depthMm": 70.74196837433173,
+    "digest": "875242ac6050285ac897011ad163179ba5cef1a92669c73e00215ad525af0072",
+    "draws": {
+     "calls": 0,
+     "chargedUnits": 0,
+     "classUnits": 0,
+     "globalUnits": 0,
+     "seconds": 0
+    },
+    "dualGateValid": true,
+    "operatorCalls": 6,
+    "planUnits": 43535314,
+    "processSeconds": 7.457431570976041,
+    "publications": 2,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 6,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,race=0",
+    "workCurrency": null,
+    "workUnits": 39739528
+   },
+   "on": {
+    "coordinatorSeconds": 10.723367361,
+    "depthMm": 70.72726178003285,
+    "digest": "43f3f4ac3840aba1f944c4b95add89e6071e8a8c4278af594ca4ecbd203a8d5e",
+    "draws": {
+     "calls": 2,
+     "chargedUnits": 130,
+     "classUnits": 0,
+     "globalUnits": 130,
+     "seconds": 0.5935650009999999
+    },
+    "dualGateValid": true,
+    "operatorCalls": 11,
+    "planUnits": 37856795,
+    "processSeconds": 10.760111434035935,
+    "publications": 1,
+    "race": {
+     "armsStarted": 3,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 2,
+     "seconds": 6.024696661,
+     "winnerSlot": 0,
+     "workUnits": 15466810
+    },
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 3,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,race=3:1:3",
+    "workCurrency": null,
+    "workUnits": 35075277
+   },
+   "on2": {
+    "coordinatorSeconds": 8.506629685,
+    "depthMm": 70.72726178003285,
+    "digest": "7e1ba32ad6608311a6d5db2061443bea6f58235f4ce1da0ecaf12a731266ffcd",
+    "draws": {
+     "calls": 1,
+     "chargedUnits": 2032187,
+     "classUnits": 2032187,
+     "globalUnits": 65,
+     "seconds": 0.2981624879999999
+    },
+    "dualGateValid": true,
+    "operatorCalls": 9,
+    "planUnits": 37856795,
+    "processSeconds": 8.537519227014855,
+    "publications": 1,
+    "race": {
+     "armsStarted": 2,
+     "exitCause": "affordability",
+     "movedOffIncumbent": false,
+     "rounds": 1,
+     "seconds": 2.1823619809999997,
+     "winnerSlot": 0,
+     "workUnits": 8314721
+    },
+    "scheduleExitCause": "deadline",
+    "scheduleIterations": 5,
+    "spec": "plan=10000,cells=13:15:17:19,v3=1,race=3:1:3,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 2032122,
+     "classUnits": 33628383,
+     "globalUnits": 31596261,
+     "mode": "charge",
+     "operatorCalls": 9,
+     "operatorSeconds": 7.553100979
+    },
+    "workUnits": 40132975
+   },
+   "request": "triangle-20",
+   "seed": 0
+  },
+  {
+   "armOrder": [
+    "off",
+    "on",
+    "on2"
+   ],
+   "deltaOn2Mm": -0.01958673407182232,
+   "deltaOnMm": -0.01958673407182232,
+   "equalWorkOn": true,
+   "equalWorkOn2": true,
+   "off": {
+    "coordinatorSeconds": 7.140654313,
+    "depthMm": 70.74684851410467,
+    "digest": "2fec02484382465c470fa1376bc5c4476692eba1b24d3a2435080cc73f81c6e1",
+    "draws": {
+     "calls": 0,
+     "chargedUnits": 0,
+     "classUnits": 0,
+     "globalUnits": 0,
+     "seconds": 0
+    },
+    "dualGateValid": true,
+    "operatorCalls": 5,
+    "planUnits": 43535314,
+    "processSeconds": 7.174553390941583,
+    "publications": 1,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 5,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,race=0",
+    "workCurrency": null,
+    "workUnits": 37106382
+   },
+   "on": {
+    "coordinatorSeconds": 11.463992854,
+    "depthMm": 70.72726178003285,
+    "digest": "fbfab890d026a0f8764ff496318cdeaa838aaf10ea5311d0e271db88a16cfe37",
+    "draws": {
+     "calls": 2,
+     "chargedUnits": 115,
+     "classUnits": 0,
+     "globalUnits": 115,
+     "seconds": 0.5932411700000002
+    },
+    "dualGateValid": true,
+    "operatorCalls": 11,
+    "planUnits": 43535314,
+    "processSeconds": 11.501808316912502,
+    "publications": 1,
+    "race": {
+     "armsStarted": 3,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 2,
+     "seconds": 6.145284467,
+     "winnerSlot": 0,
+     "workUnits": 15771744
+    },
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 3,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,race=3:1:3",
+    "workCurrency": null,
+    "workUnits": 38783040
+   },
+   "on2": {
+    "coordinatorSeconds": 9.557190085,
+    "depthMm": 70.72726178003285,
+    "digest": "9af53b435b7b860b0dcfc1bf6e1e21b42ded3c3176e9d5b65d613813cdd33f7d",
+    "draws": {
+     "calls": 1,
+     "chargedUnits": 2000407,
+     "classUnits": 2000407,
+     "globalUnits": 50,
+     "seconds": 0.3287679000000001
+    },
+    "dualGateValid": true,
+    "operatorCalls": 9,
+    "planUnits": 43535314,
+    "processSeconds": 9.590934796025977,
+    "publications": 1,
+    "race": {
+     "armsStarted": 2,
+     "exitCause": "affordability",
+     "movedOffIncumbent": false,
+     "rounds": 1,
+     "seconds": 2.3094543960000005,
+     "winnerSlot": 0,
+     "workUnits": 8638851
+    },
+    "scheduleExitCause": "deadline",
+    "scheduleIterations": 5,
+    "spec": "plan=10000,cells=11:15:21:27,v3=1,race=3:1:3,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 2000357,
+     "classUnits": 36385592,
+     "globalUnits": 34385235,
+     "mode": "charge",
+     "operatorCalls": 9,
+     "operatorSeconds": 8.396927467000001
+    },
+    "workUnits": 45745163
+   },
+   "request": "triangle-20",
+   "seed": 1
+  },
+  {
+   "armOrder": [
+    "on",
+    "on2",
+    "off"
+   ],
+   "deltaOn2Mm": -0.015384731171565136,
+   "deltaOnMm": -0.015384731171565136,
+   "equalWorkOn": true,
+   "equalWorkOn2": false,
+   "off": {
+    "coordinatorSeconds": 6.8607337059999995,
+    "depthMm": 70.74264651120441,
+    "digest": "56680d876313a2e0aefb5d0863707f6f3f21908c92c6fde840f44c488a5f4a61",
+    "draws": {
+     "calls": 0,
+     "chargedUnits": 0,
+     "classUnits": 0,
+     "globalUnits": 0,
+     "seconds": 0
+    },
+    "dualGateValid": true,
+    "operatorCalls": 5,
+    "planUnits": 37856795,
+    "processSeconds": 6.890413295011967,
+    "publications": 2,
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 5,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,race=0",
+    "workCurrency": null,
+    "workUnits": 33172119
+   },
+   "on": {
+    "coordinatorSeconds": 9.36529833,
+    "depthMm": 70.72726178003285,
+    "digest": "a10e880090882a81ec8429b5af9aa8eafdf60b6de10125b5c76ab7eacd0d8d4d",
+    "draws": {
+     "calls": 2,
+     "chargedUnits": 95,
+     "classUnits": 0,
+     "globalUnits": 95,
+     "seconds": 0.5959433110000001
+    },
+    "dualGateValid": true,
+    "operatorCalls": 9,
+    "planUnits": 37856795,
+    "processSeconds": 9.397643086966127,
+    "publications": 1,
+    "race": {
+     "armsStarted": 3,
+     "exitCause": "deadline",
+     "movedOffIncumbent": false,
+     "rounds": 1,
+     "seconds": 3.236357004,
+     "winnerSlot": 0,
+     "workUnits": 10589689
+    },
+    "scheduleExitCause": "deadline",
+    "scheduleIterations": 4,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,race=3:1:3",
+    "workCurrency": null,
+    "workUnits": 38322468
+   },
+   "on2": {
+    "coordinatorSeconds": 8.959503649,
+    "depthMm": 70.72726178003285,
+    "digest": "30d70f4d5766bf9857386fb02f0a22889d7967157770d5422dfcbe29acf0483c",
+    "draws": {
+     "calls": 1,
+     "chargedUnits": 2014671,
+     "classUnits": 2014671,
+     "globalUnits": 40,
+     "seconds": 0.29827196899999997
+    },
+    "dualGateValid": true,
+    "operatorCalls": 9,
+    "planUnits": 43535314,
+    "processSeconds": 8.992359712021425,
+    "publications": 1,
+    "race": {
+     "armsStarted": 2,
+     "exitCause": "affordability",
+     "movedOffIncumbent": false,
+     "rounds": 1,
+     "seconds": 2.272346936,
+     "winnerSlot": 0,
+     "workUnits": 8563086
+    },
+    "scheduleExitCause": "affordability",
+    "scheduleIterations": 5,
+    "spec": "plan=10000,cells=15:23:31:39,v3=1,race=3:1:3,cur2=1",
+    "workCurrency": {
+     "chargedExtraUnits": 2014631,
+     "classUnits": 34026407,
+     "globalUnits": 32011776,
+     "mode": "charge",
+     "operatorCalls": 9,
+     "operatorSeconds": 7.924231185000001
+    },
+    "workUnits": 41735055
+   },
+   "request": "triangle-20",
+   "seed": 2
+  }
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "summary": {
+  "On": {
+   "better": 3,
+   "equalWorkCells": 8,
+   "meanDeltaMm": 0.7401121634796155,
+   "medianDeltaMm": 0.0,
+   "tied": 2,
+   "worse": 3
+  },
+  "On2": {
+   "better": 1,
+   "equalWorkCells": 7,
+   "meanDeltaMm": 1.7838926532898702,
+   "medianDeltaMm": 0.0003772957095407037,
+   "tied": 1,
+   "worse": 5
+  },
+  "cells": 9,
+  "on2DrawSeconds": [
+   3.185029496,
+   3.199594006,
+   3.202800632,
+   1.5685835140000004,
+   1.5752412590000002,
+   1.5599018539999996,
+   0.2981624879999999,
+   0.3287679000000001,
+   0.29827196899999997
+  ],
+  "on2MovedOffIncumbent": 0,
+  "on2RaceSeconds": [
+   3.993352873,
+   3.9659794419999996,
+   3.7885364690000003,
+   1.6592060180000001,
+   1.595489533,
+   1.5228139510000003,
+   2.1823619809999997,
+   2.3094543960000005,
+   2.272346936
+  ],
+  "on2RaceWorkUnits": [
+   8986454,
+   8672343,
+   8813031,
+   2278134,
+   2287335,
+   2186874,
+   8314721,
+   8638851,
+   8563086
+  ],
+  "onDrawSeconds": [
+   6.34692773,
+   6.343151895999999,
+   6.236316157,
+   2.35170647,
+   2.3416527300000003,
+   2.339180924,
+   0.5935650009999999,
+   0.5932411700000002,
+   0.5959433110000001
+  ],
+  "onMovedOffIncumbent": 0,
+  "onRaceSeconds": [
+   8.883847499,
+   8.668959945000001,
+   9.78708019,
+   4.481573715000001,
+   4.093217462,
+   4.138656132,
+   6.024696661,
+   6.145284467,
+   3.236357004
+  ],
+  "onRaceWorkUnits": [
+   6064965,
+   5523724,
+   6930251,
+   2219428,
+   2227712,
+   2217775,
+   15466810,
+   15771744,
+   10589689
+  ]
+ },
+ "targetMillis": 10000
+}
