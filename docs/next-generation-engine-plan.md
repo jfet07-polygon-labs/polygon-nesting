@@ -6818,3 +6818,110 @@ is not the constants. Do not cut design C on the stated rule, and do not ship
 its adoption.
 
 Evidence, drivers and every battery: `docs/experiments/basin-race/`.
+
+## The plan learned to re-price itself, mode 34 learned to stop, and the ten-second number turned out to be a quiet-box property
+
+`docs/experiments/calibrated-plan/` §13.1 named the fix for the largest of its
+three costs — *"install a provisional plan from phase 0, run to a deterministic
+work checkpoint, then re-price the remaining wall at the rate the queue is
+actually retiring units at"* — and declined to build it, because `v3_loop`'s
+`run.deadline` and `Coordinator::protected_fraction` are both fractions of the
+budget installed when the phase was entered. Sol review 8 §3 condition 4 named
+the other half one level down — mode 34 is atomic and has no internal work cap —
+and §4 spend 1 named the gate: **N concatenated batches must reproduce the
+monolith at equal work.**
+
+This round builds both, and the join is the point: **the deterministic work
+checkpoint the re-plan needs is the batch boundary the slice needs.**
+
+### Sol's gate, passed on two instruments
+
+`drive_compression_schedule` is now a struct whose `advance` returns to its
+caller between batches, and that shape is the load-bearing decision rather than a
+tidy-up: the risk Sol names is that batching changes the trajectory, and a gate
+can only find that if the implementation is *capable* of it. Everything the next
+batch reads has to be a field — the frontier, the deepest-confirmed slot, the
+lane's rng, its weights, every persistent worker's surrogate and pair-NFP cache.
+Two things are deliberately not carried and both are correctness statements:
+design B's per-step `stall_loss`, which does not cross a step boundary either,
+and the tail confirmation, which belongs to the *slice* and would otherwise be
+spent N times.
+
+The gate needed a second instrument, because `ScheduleSliceReport` is an
+aggregate — it drops the per-step rows, thousands per call — and a slice that
+diverged at step 700 and re-converged by step 1,616 would pass a comparison made
+on it. So the slice now computes a **step digest** over every row: the clamp, the
+sweeps, the queries, the pair and boundary counts before and after, the
+confirmation's three outcomes, the raw depth.
+
+**21 cells, three batch sizes, two budgets, 1,741 batch boundaries, and every
+cell equal as a whole document *and* as a per-step digest** — plus nine more
+cells and 299 more boundaries on an earlier build of the same batching code. The
+refactor itself is gated too: the resumable-slice binary reproduces the **base
+commit's whole document** on all nine cells at a pinned work budget, with real
+m34 slices in every one.
+
+The consumer is `m34cap=1`: the coordinator hands each slice its own remaining
+budget and the slice gives itself back at the first checkpoint past it, holding
+its last exact-valid incumbent. At thirty seconds on mixed-61 that takes the p50
+from **32.64 s to 25.91 s** and the overruns from 4 of 6 to 2 of 6, for
+**3.089 mm** on one seed — the slices it stops are the ones that were paying for
+that depth. It is denominated in the slice's own counter, so two processes stop
+at the same checkpoint and both arms produce one document per seed.
+
+### The re-plan, and two bugs it shipped and caught
+
+A tranche reads the clock **once**, prices the remaining wall at the rate the
+*queue* has been retiring units at — no bias divisor; that constant exists to
+guess this very quantity — and snaps the new total onto the ladder the plan
+already uses. The clock's influence is bounded by that ladder twice: on **size**,
+because the total is a rung, and on **count**, because a tranche is refused
+unless it clears the *next* rung. So a re-planning run whose remaining wall does
+not buy a rung produces exactly the document a non-re-planning run produces.
+
+Both of the round's constants were forced by failures its own gates found.
+`PLAN_TRANCHE_HORIZON` exists because an unbounded tranche predicted 15.5 s of
+queue from an 11.1 s window, the rate fell 42% below the reading, and a 30 s
+target took **36.74 s**. Capping the horizon at the window then **stranded** a
+run — mixed-61 seed 2 stopped with 5.7 s of ten unspent and three millimetres
+behind the mode it improves, because a short first tranche leaves a window that
+cannot justify a rung. A tranche may now always buy **one rung, and only one**, if
+the remaining wall pays for it.
+
+At ten seconds it works: **2.808 mm on mixed-61 seed 1, which is
+`calibrated-plan` §9's ladder-floor cost for that seed to three decimals**, and
+0.252 mm on the median of seed medians, spending 8.114 s of the target against
+the single plan's 7.159 s, at the same 1-in-60 overrun count. Over six (fixture,
+budget) rows of the anytime table the median gain is **0.000 mm** — one row moves
+and five do not, and that is the honest summary.
+
+At thirty seconds it does not work. The `plan` arm ran **41.15 s** against a 30 s
+target and re-planning brought it to **37.14 s**: reduced by four seconds, better
+on depth and on reproduction in the same cell, and still 24% over. The
+first-tranche fraction introduced to fix that was measured and **rejected**:
+`planfirst=0.6` bounds the worst case and moves the overrun into the median
+(4 of 6 over at a p50 of 33.15 s against 1.0's 2 of 6 at 25.99 s), so the shipped
+value is `1.0` and the sub-goal is recorded as a negative result.
+
+### What the twenty-round battery says about the previous chapter
+
+`calibrated-plan` §8.2's headline is *"one plan, one depth, one document per
+seed"* over sixty runs. Re-run here, on a box that had a competing workload for
+part of the window, **the same `plan=10000` arm produced 2 / 3 / 1 distinct
+depths per seed**. Its modal depth still holds 85-100% of the runs, so the mode
+is not broken — but *"a second process gets the same number"* is a **quiet-box**
+property, and this is the first time the campaign has looked at it any other way.
+The re-planning arm is worse on that axis (4 / 2 / 3, modal 80-90%) for a reason
+the mechanism makes obvious: two clock readings can cross a rung where one could.
+Neither is the `wall` arm, which produced **eight** distinct depths on one seed
+at a modal share of 40%, twenty distinct documents on every seed, and 24 of 60
+runs over target.
+
+Four pinned gates hit with the **whole-document digest identical to the base
+binary on all four**. Determinism across two processes is 9 of 9 at a work
+budget, 9 of 9 in plan mode, and **8 of 9 as documents — 9 of 9 as layouts** with
+re-planning, where the one document difference is an initial-plan rung straddle
+that the re-plan then repaired to the same final budget and the same depth. Both
+suites pass.
+
+Evidence, drivers and every battery: `docs/experiments/replan/`.

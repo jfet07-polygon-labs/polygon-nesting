@@ -1,0 +1,303 @@
+{
+ "binary": "bin/ship-meas",
+ "request": "mixed-61",
+ "targets": [
+  30000
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "fractions": [
+  "capoff",
+  "capon"
+ ],
+ "rounds": 2,
+ "rows": [
+  {
+   "tag": "fcapoff-t30000-s0-r0",
+   "fraction": "capoff",
+   "target": 30000,
+   "seed": 0,
+   "round": 0,
+   "spec": "plan=30000,cells=13:15:17:19,v3=1,replan=1,m34cap=0",
+   "processWallSeconds": 24.64629059098661,
+   "overran": false,
+   "overrunRatio": 0.8215430196995537,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 1,
+   "trancheUnits": [
+    76143537
+   ],
+   "finalUnits": 76143537,
+   "digest": "6afba36fec1c973e"
+  },
+  {
+   "tag": "fcapoff-t30000-s1-r0",
+   "fraction": "capoff",
+   "target": 30000,
+   "seed": 1,
+   "round": 0,
+   "spec": "plan=30000,cells=11:15:21:27,v3=1,replan=1,m34cap=0",
+   "processWallSeconds": 32.64371527603362,
+   "overran": true,
+   "overrunRatio": 1.088123842534454,
+   "rawDepthMm": 162.846,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 1,
+   "trancheUnits": [
+    87565068
+   ],
+   "finalUnits": 87565068,
+   "digest": "15f08ad3a13b5daf"
+  },
+  {
+   "tag": "fcapoff-t30000-s2-r0",
+   "fraction": "capoff",
+   "target": 30000,
+   "seed": 2,
+   "round": 0,
+   "spec": "plan=30000,cells=15:23:31:39,v3=1,replan=1,m34cap=0",
+   "processWallSeconds": 36.488677822984755,
+   "overran": true,
+   "overrunRatio": 1.2162892607661584,
+   "rawDepthMm": 164.171,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 66211771,
+   "digest": "f4f8569b2e1f98ce"
+  },
+  {
+   "tag": "fcapon-t30000-s0-r0",
+   "fraction": "capon",
+   "target": 30000,
+   "seed": 0,
+   "round": 0,
+   "spec": "plan=30000,cells=13:15:17:19,v3=1,replan=1,m34cap=1",
+   "processWallSeconds": 24.599537048023194,
+   "overran": false,
+   "overrunRatio": 0.8199845682674398,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 1,
+   "trancheUnits": [
+    76143537
+   ],
+   "finalUnits": 76143537,
+   "digest": "6afba36fec1c973e"
+  },
+  {
+   "tag": "fcapon-t30000-s1-r0",
+   "fraction": "capon",
+   "target": 30000,
+   "seed": 1,
+   "round": 0,
+   "spec": "plan=30000,cells=11:15:21:27,v3=1,replan=1,m34cap=1",
+   "processWallSeconds": 25.938458455028012,
+   "overran": false,
+   "overrunRatio": 0.8646152818342671,
+   "rawDepthMm": 165.935,
+   "dualGateValid": true,
+   "planUnits": 76143537,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 76143537,
+   "digest": "b0c81633ae8759ed"
+  },
+  {
+   "tag": "fcapon-t30000-s2-r0",
+   "fraction": "capon",
+   "target": 30000,
+   "seed": 2,
+   "round": 0,
+   "spec": "plan=30000,cells=15:23:31:39,v3=1,replan=1,m34cap=1",
+   "processWallSeconds": 36.398629758972675,
+   "overran": true,
+   "overrunRatio": 1.2132876586324224,
+   "rawDepthMm": 164.171,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 66211771,
+   "digest": "f4f8569b2e1f98ce"
+  },
+  {
+   "tag": "fcapon-t30000-s0-r1",
+   "fraction": "capon",
+   "target": 30000,
+   "seed": 0,
+   "round": 1,
+   "spec": "plan=30000,cells=13:15:17:19,v3=1,replan=1,m34cap=1",
+   "processWallSeconds": 24.567172771901824,
+   "overran": false,
+   "overrunRatio": 0.8189057590633941,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 1,
+   "trancheUnits": [
+    76143537
+   ],
+   "finalUnits": 76143537,
+   "digest": "6afba36fec1c973e"
+  },
+  {
+   "tag": "fcapon-t30000-s1-r1",
+   "fraction": "capon",
+   "target": 30000,
+   "seed": 1,
+   "round": 1,
+   "spec": "plan=30000,cells=11:15:21:27,v3=1,replan=1,m34cap=1",
+   "processWallSeconds": 25.90577736904379,
+   "overran": false,
+   "overrunRatio": 0.8635259123014597,
+   "rawDepthMm": 165.935,
+   "dualGateValid": true,
+   "planUnits": 76143537,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 76143537,
+   "digest": "b0c81633ae8759ed"
+  },
+  {
+   "tag": "fcapon-t30000-s2-r1",
+   "fraction": "capon",
+   "target": 30000,
+   "seed": 2,
+   "round": 1,
+   "spec": "plan=30000,cells=15:23:31:39,v3=1,replan=1,m34cap=1",
+   "processWallSeconds": 36.46991214796435,
+   "overran": true,
+   "overrunRatio": 1.2156637382654785,
+   "rawDepthMm": 164.171,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 66211771,
+   "digest": "f4f8569b2e1f98ce"
+  },
+  {
+   "tag": "fcapoff-t30000-s0-r1",
+   "fraction": "capoff",
+   "target": 30000,
+   "seed": 0,
+   "round": 1,
+   "spec": "plan=30000,cells=13:15:17:19,v3=1,replan=1,m34cap=0",
+   "processWallSeconds": 24.529133027070202,
+   "overran": false,
+   "overrunRatio": 0.8176377675690067,
+   "rawDepthMm": 164.188,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 1,
+   "trancheUnits": [
+    76143537
+   ],
+   "finalUnits": 76143537,
+   "digest": "6afba36fec1c973e"
+  },
+  {
+   "tag": "fcapoff-t30000-s1-r1",
+   "fraction": "capoff",
+   "target": 30000,
+   "seed": 1,
+   "round": 1,
+   "spec": "plan=30000,cells=11:15:21:27,v3=1,replan=1,m34cap=0",
+   "processWallSeconds": 32.72326230304316,
+   "overran": true,
+   "overrunRatio": 1.0907754101014386,
+   "rawDepthMm": 162.846,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 1,
+   "trancheUnits": [
+    87565068
+   ],
+   "finalUnits": 87565068,
+   "digest": "15f08ad3a13b5daf"
+  },
+  {
+   "tag": "fcapoff-t30000-s2-r1",
+   "fraction": "capoff",
+   "target": 30000,
+   "seed": 2,
+   "round": 1,
+   "spec": "plan=30000,cells=15:23:31:39,v3=1,replan=1,m34cap=0",
+   "processWallSeconds": 36.694398912019096,
+   "overran": true,
+   "overrunRatio": 1.2231466304006366,
+   "rawDepthMm": 164.171,
+   "dualGateValid": true,
+   "planUnits": 66211771,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 66211771,
+   "digest": "f4f8569b2e1f98ce"
+  }
+ ],
+ "cells": {
+  "30000/capoff": {
+   "n": 6,
+   "wallP50": 32.64371527603362,
+   "wallP95": 36.694398912019096,
+   "wallMax": 36.694398912019096,
+   "overruns": 4,
+   "worstOverrunRatio": 1.2231466304006366,
+   "depthMedianMm": 164.171,
+   "perSeedDepthMedianMm": {
+    "0": 164.188,
+    "1": 162.846,
+    "2": 164.171
+   },
+   "trancheCounts": [
+    0,
+    1
+   ],
+   "allDualGateValid": true,
+   "distinctDigestsPerSeed": {
+    "0": 1,
+    "1": 1,
+    "2": 1
+   }
+  },
+  "30000/capon": {
+   "n": 6,
+   "wallP50": 25.90577736904379,
+   "wallP95": 36.46991214796435,
+   "wallMax": 36.46991214796435,
+   "overruns": 2,
+   "worstOverrunRatio": 1.2156637382654785,
+   "depthMedianMm": 164.188,
+   "perSeedDepthMedianMm": {
+    "0": 164.188,
+    "1": 165.935,
+    "2": 164.171
+   },
+   "trancheCounts": [
+    0,
+    1
+   ],
+   "allDualGateValid": true,
+   "distinctDigestsPerSeed": {
+    "0": 1,
+    "1": 1,
+    "2": 1
+   }
+  }
+ },
+ "boxLoad": {
+  "n": 12,
+  "min": 2.92236328125,
+  "median": 4.35888671875,
+  "max": 9.107421875
+ }
+}
