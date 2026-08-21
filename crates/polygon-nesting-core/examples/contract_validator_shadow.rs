@@ -205,6 +205,17 @@ fn check(
 ) {
     totals.cases += 1;
 
+    // The certificate is process-wide armable as of the promotion round, and a
+    // *disarmed* process would make step 1 below compare the exact loop against
+    // itself and report a clean corpus for the wrong reason. Nothing here
+    // disarms it and the default is armed, so this is a guard against a future
+    // caller rather than a live risk - but a shadow harness that could pass
+    // vacuously is not a shadow harness.
+    assert!(
+        polygon_nesting_core::validation::general_polygon::contract_certificate_armed(),
+        "the shadow corpus is vacuous with the certificate disarmed"
+    );
+
     // 1. Two runtime implementations, same process, whole `Result` compared -
     //    the error *message* included, not just `is_ok`.
     let filtered =

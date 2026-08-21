@@ -1,0 +1,365 @@
+{
+ "binary": "/var/lib/t3/tmp/calplan/bin/base-meas",
+ "request": "mixed-61",
+ "units": "40000000",
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "rounds": 7,
+ "specExtra": "m34lanes=1,m34pconfirm=1",
+ "rows": [
+  {
+   "tag": "mixed-61-s0-r0",
+   "seed": 0,
+   "round": 0,
+   "processWallSeconds": 12.788594439043663,
+   "phaseZeroSeconds": 2.198839373,
+   "phaseZeroWorkUnits": 8778573,
+   "coordinatorSeconds": 12.758471198,
+   "coordinatorWorkUnits": 38857134,
+   "phaseZeroRate": 3992366.658426213,
+   "restRate": 2848447.8908430124,
+   "rawDepthMm": 169.891,
+   "bias": 1.4015937139873926
+  },
+  {
+   "tag": "mixed-61-s1-r0",
+   "seed": 1,
+   "round": 0,
+   "processWallSeconds": 12.289431384007912,
+   "phaseZeroSeconds": 2.2848072530000003,
+   "phaseZeroWorkUnits": 9629453,
+   "coordinatorSeconds": 12.256312159,
+   "coordinatorWorkUnits": 35773579,
+   "phaseZeroRate": 4214558.137171669,
+   "restRate": 2621883.68219813,
+   "rawDepthMm": 171.3619986855876,
+   "bias": 1.6074542763995827
+  },
+  {
+   "tag": "mixed-61-s2-r0",
+   "seed": 2,
+   "round": 0,
+   "processWallSeconds": 14.24672204599483,
+   "phaseZeroSeconds": 2.283610301,
+   "phaseZeroWorkUnits": 8961342,
+   "coordinatorSeconds": 14.212213624,
+   "coordinatorWorkUnits": 39106937,
+   "phaseZeroRate": 3924199.3242348754,
+   "restRate": 2527168.871637731,
+   "rawDepthMm": 170.155,
+   "bias": 1.5528045506875048
+  },
+  {
+   "tag": "mixed-61-s0-r1",
+   "seed": 0,
+   "round": 1,
+   "processWallSeconds": 12.839454804023262,
+   "phaseZeroSeconds": 2.23545338,
+   "phaseZeroWorkUnits": 8778573,
+   "coordinatorSeconds": 12.808050688,
+   "coordinatorWorkUnits": 38857134,
+   "phaseZeroRate": 3926976.549159795,
+   "restRate": 2844954.75650438,
+   "rawDepthMm": 169.891,
+   "bias": 1.3803300527650233
+  },
+  {
+   "tag": "mixed-61-s1-r1",
+   "seed": 1,
+   "round": 1,
+   "processWallSeconds": 12.300871599989478,
+   "phaseZeroSeconds": 2.2820062699999997,
+   "phaseZeroWorkUnits": 9629453,
+   "coordinatorSeconds": 12.268980935,
+   "coordinatorWorkUnits": 35773579,
+   "phaseZeroRate": 4219731.1754099615,
+   "restRate": 2617822.401374841,
+   "rawDepthMm": 171.3619986855876,
+   "bias": 1.6119241600170515
+  },
+  {
+   "tag": "mixed-61-s2-r1",
+   "seed": 2,
+   "round": 1,
+   "processWallSeconds": 14.286048484966159,
+   "phaseZeroSeconds": 2.2860794269999998,
+   "phaseZeroWorkUnits": 8961342,
+   "coordinatorSeconds": 14.256164226,
+   "coordinatorWorkUnits": 39106937,
+   "phaseZeroRate": 3919960.9139389717,
+   "restRate": 2518411.147974358,
+   "rawDepthMm": 170.155,
+   "bias": 1.556521427048132
+  },
+  {
+   "tag": "mixed-61-s0-r2",
+   "seed": 0,
+   "round": 2,
+   "processWallSeconds": 12.790041377011221,
+   "phaseZeroSeconds": 2.212004882,
+   "phaseZeroWorkUnits": 8778573,
+   "coordinatorSeconds": 12.754990121,
+   "coordinatorWorkUnits": 38857134,
+   "phaseZeroRate": 3968604.713052347,
+   "restRate": 2852945.3772480995,
+   "rawDepthMm": 169.891,
+   "bias": 1.391055273858903
+  },
+  {
+   "tag": "mixed-61-s1-r2",
+   "seed": 1,
+   "round": 2,
+   "processWallSeconds": 12.346928624028806,
+   "phaseZeroSeconds": 2.2906725679999997,
+   "phaseZeroWorkUnits": 9629453,
+   "coordinatorSeconds": 12.312919214,
+   "coordinatorWorkUnits": 35773579,
+   "phaseZeroRate": 4203766.672950353,
+   "restRate": 2608609.3191923625,
+   "rawDepthMm": 171.3619986855876,
+   "bias": 1.6114972226856332
+  },
+  {
+   "tag": "mixed-61-s2-r2",
+   "seed": 2,
+   "round": 2,
+   "processWallSeconds": 14.351366935996339,
+   "phaseZeroSeconds": 2.302948233,
+   "phaseZeroWorkUnits": 8961342,
+   "coordinatorSeconds": 14.321724162,
+   "coordinatorWorkUnits": 39106937,
+   "phaseZeroRate": 3891247.693538581,
+   "restRate": 2508208.4213968874,
+   "rawDepthMm": 170.155,
+   "bias": 1.5514052422212357
+  },
+  {
+   "tag": "mixed-61-s0-r3",
+   "seed": 0,
+   "round": 3,
+   "processWallSeconds": 12.74283209798159,
+   "phaseZeroSeconds": 2.2045908339999998,
+   "phaseZeroWorkUnits": 8778573,
+   "coordinatorSeconds": 12.710008881,
+   "coordinatorWorkUnits": 38857134,
+   "phaseZeroRate": 3981951.146949203,
+   "restRate": 2863147.460237381,
+   "rawDepthMm": 169.891,
+   "bias": 1.3907600646664084
+  },
+  {
+   "tag": "mixed-61-s1-r3",
+   "seed": 1,
+   "round": 3,
+   "processWallSeconds": 12.274258136982098,
+   "phaseZeroSeconds": 2.3027054600000003,
+   "phaseZeroWorkUnits": 9629453,
+   "coordinatorSeconds": 12.23946803,
+   "coordinatorWorkUnits": 35773579,
+   "phaseZeroRate": 4181799.699211205,
+   "restRate": 2631050.6883732458,
+   "rawDepthMm": 171.3619986855876,
+   "bias": 1.5894029399322491
+  },
+  {
+   "tag": "mixed-61-s2-r3",
+   "seed": 2,
+   "round": 3,
+   "processWallSeconds": 14.191080251999665,
+   "phaseZeroSeconds": 2.245219088,
+   "phaseZeroWorkUnits": 8961342,
+   "coordinatorSeconds": 14.159845956,
+   "coordinatorWorkUnits": 39106937,
+   "phaseZeroRate": 3991299.57868949,
+   "restRate": 2530133.3674967424,
+   "rawDepthMm": 170.155,
+   "bias": 1.5775056089783888
+  },
+  {
+   "tag": "mixed-61-s0-r4",
+   "seed": 0,
+   "round": 4,
+   "processWallSeconds": 12.807808190991636,
+   "phaseZeroSeconds": 2.190576184,
+   "phaseZeroWorkUnits": 8778573,
+   "coordinatorSeconds": 12.776160376,
+   "coordinatorWorkUnits": 38857134,
+   "phaseZeroRate": 4007426.4771610424,
+   "restRate": 2841464.4345025113,
+   "rawDepthMm": 169.891,
+   "bias": 1.4103384256726303
+  },
+  {
+   "tag": "mixed-61-s1-r4",
+   "seed": 1,
+   "round": 4,
+   "processWallSeconds": 12.333857497025747,
+   "phaseZeroSeconds": 2.274042406,
+   "phaseZeroWorkUnits": 9629453,
+   "coordinatorSeconds": 12.303332567,
+   "coordinatorWorkUnits": 35773579,
+   "phaseZeroRate": 4234508.984789793,
+   "restRate": 2606777.30729781,
+   "rawDepthMm": 171.3619986855876,
+   "bias": 1.6244229888510473
+  },
+  {
+   "tag": "mixed-61-s2-r4",
+   "seed": 2,
+   "round": 4,
+   "processWallSeconds": 14.341432153945789,
+   "phaseZeroSeconds": 2.296887406,
+   "phaseZeroWorkUnits": 8961342,
+   "coordinatorSeconds": 14.305334961,
+   "coordinatorWorkUnits": 39106937,
+   "phaseZeroRate": 3901515.5799935623,
+   "restRate": 2510365.7122979374,
+   "rawDepthMm": 170.155,
+   "bias": 1.5541622325705664
+  },
+  {
+   "tag": "mixed-61-s0-r5",
+   "seed": 0,
+   "round": 5,
+   "processWallSeconds": 12.797111762978602,
+   "phaseZeroSeconds": 2.222356922,
+   "phaseZeroWorkUnits": 8778573,
+   "coordinatorSeconds": 12.764111632,
+   "coordinatorWorkUnits": 38857134,
+   "phaseZeroRate": 3950118.4139673496,
+   "restRate": 2853278.3988482687,
+   "rawDepthMm": 169.891,
+   "bias": 1.3844139483766542
+  },
+  {
+   "tag": "mixed-61-s1-r5",
+   "seed": 1,
+   "round": 5,
+   "processWallSeconds": 12.320969488995615,
+   "phaseZeroSeconds": 2.2934777970000004,
+   "phaseZeroWorkUnits": 9629453,
+   "coordinatorSeconds": 12.285810132,
+   "coordinatorWorkUnits": 35773579,
+   "phaseZeroRate": 4198624.906068798,
+   "restRate": 2616418.782272217,
+   "rawDepthMm": 171.3619986855876,
+   "bias": 1.6047220477535793
+  },
+  {
+   "tag": "mixed-61-s2-r5",
+   "seed": 2,
+   "round": 5,
+   "processWallSeconds": 14.339076393982396,
+   "phaseZeroSeconds": 2.301865991,
+   "phaseZeroWorkUnits": 8961342,
+   "coordinatorSeconds": 14.308894817,
+   "coordinatorWorkUnits": 39106937,
+   "phaseZeroRate": 3893077.1969513837,
+   "restRate": 2510662.332609944,
+   "rawDepthMm": 170.155,
+   "bias": 1.5506175985459416
+  },
+  {
+   "tag": "mixed-61-s0-r6",
+   "seed": 0,
+   "round": 6,
+   "processWallSeconds": 12.71480804705061,
+   "phaseZeroSeconds": 2.1863146920000003,
+   "phaseZeroWorkUnits": 8778573,
+   "coordinatorSeconds": 12.683373395,
+   "coordinatorWorkUnits": 38857134,
+   "phaseZeroRate": 4015237.6197817726,
+   "restRate": 2865427.5308000054,
+   "rawDepthMm": 169.891,
+   "bias": 1.4012699943106741
+  },
+  {
+   "tag": "mixed-61-s1-r6",
+   "seed": 1,
+   "round": 6,
+   "processWallSeconds": 12.250399256008677,
+   "phaseZeroSeconds": 2.28719746,
+   "phaseZeroWorkUnits": 9629453,
+   "coordinatorSeconds": 12.219149233,
+   "coordinatorWorkUnits": 35773579,
+   "phaseZeroRate": 4210153.766085417,
+   "restRate": 2632325.1056325887,
+   "rawDepthMm": 171.3619986855876,
+   "bias": 1.5994049356124844
+  },
+  {
+   "tag": "mixed-61-s2-r6",
+   "seed": 2,
+   "round": 6,
+   "processWallSeconds": 14.290652993018739,
+   "phaseZeroSeconds": 2.2671459080000003,
+   "phaseZeroWorkUnits": 8961342,
+   "coordinatorSeconds": 14.257569288,
+   "coordinatorWorkUnits": 39106937,
+   "phaseZeroRate": 3952697.5164582124,
+   "restRate": 2514139.3297490054,
+   "rawDepthMm": 170.155,
+   "bias": 1.5721871376368082
+  }
+ ],
+ "wall": {
+  "p50": 12.790041377011221,
+  "p95": 14.341432153945789,
+  "max": 14.351366935996339,
+  "min": 12.250399256008677,
+  "n": 21
+ },
+ "headroom": 0.8918245569702234,
+ "bias": {
+  "median": 1.5541622325705664,
+  "min": 1.3803300527650233,
+  "max": 1.6244229888510473
+ },
+ "perSeed": {
+  "0": {
+   "n": 7,
+   "phaseZeroSecondsMedian": 2.2045908339999998,
+   "phaseZeroSecondsMin": 2.1863146920000003,
+   "phaseZeroSecondsMax": 2.23545338,
+   "phaseZeroSecondsRelSpread": 0.02228925533126832,
+   "phaseZeroWorkUnitsDistinct": [
+    8778573
+   ],
+   "phaseZeroWorkUnitsDeterministic": true,
+   "depthsDistinct": [
+    169.891
+   ]
+  },
+  "1": {
+   "n": 7,
+   "phaseZeroSecondsMedian": 2.28719746,
+   "phaseZeroSecondsMin": 2.274042406,
+   "phaseZeroSecondsMax": 2.3027054600000003,
+   "phaseZeroSecondsRelSpread": 0.012531954280851796,
+   "phaseZeroWorkUnitsDistinct": [
+    9629453
+   ],
+   "phaseZeroWorkUnitsDeterministic": true,
+   "depthsDistinct": [
+    171.3619986855876
+   ]
+  },
+  "2": {
+   "n": 7,
+   "phaseZeroSecondsMedian": 2.2860794269999998,
+   "phaseZeroSecondsMin": 2.245219088,
+   "phaseZeroSecondsMax": 2.302948233,
+   "phaseZeroSecondsRelSpread": 0.02525246687327813,
+   "phaseZeroWorkUnitsDistinct": [
+    8961342
+   ],
+   "phaseZeroWorkUnitsDeterministic": true,
+   "depthsDistinct": [
+    170.155
+   ]
+  }
+ }
+}

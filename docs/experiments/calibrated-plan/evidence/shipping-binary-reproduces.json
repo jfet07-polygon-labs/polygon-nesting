@@ -1,0 +1,195 @@
+{
+ "binary": "/var/lib/t3/tmp/calplan/bin/ship-meas",
+ "request": "mixed-61",
+ "targetMs": "10000",
+ "targetSeconds": 10.0,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "rounds": 2,
+ "arms": [
+  "plan"
+ ],
+ "extra": "",
+ "rows": [
+  {
+   "tag": "plan-s0-r0",
+   "arm": "plan",
+   "seed": 0,
+   "round": 0,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1",
+   "processWallSeconds": 7.1120304290088825,
+   "overran": false,
+   "rawDepthMm": 175.3877782649107,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23356444,
+   "digest": "8f2949e8bd9e5b8c",
+   "probeSeconds": 2.1916572739999998,
+   "rawUnits": 26469331.364656825
+  },
+  {
+   "tag": "plan-s1-r0",
+   "arm": "plan",
+   "seed": 1,
+   "round": 0,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1",
+   "processWallSeconds": 6.366154767980333,
+   "overran": false,
+   "rawDepthMm": 174.17000000000002,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 22152474,
+   "digest": "c2c07a40c5ffdfa2",
+   "probeSeconds": 2.276439194,
+   "rawUnits": 28101240.006973136
+  },
+  {
+   "tag": "plan-s2-r0",
+   "arm": "plan",
+   "seed": 2,
+   "round": 0,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1",
+   "processWallSeconds": 8.22892793599749,
+   "overran": false,
+   "rawDepthMm": 176.16200000000003,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23859055,
+   "digest": "b7a7fafdcec25b10",
+   "probeSeconds": 2.258142007,
+   "rawUnits": 26333519.54918911
+  },
+  {
+   "tag": "plan-s0-r1",
+   "arm": "plan",
+   "seed": 0,
+   "round": 1,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1",
+   "processWallSeconds": 7.1565477440017276,
+   "overran": false,
+   "rawDepthMm": 175.3877782649107,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23356444,
+   "digest": "8f2949e8bd9e5b8c",
+   "probeSeconds": 2.195974427,
+   "rawUnits": 26424400.553551637
+  },
+  {
+   "tag": "plan-s1-r1",
+   "arm": "plan",
+   "seed": 1,
+   "round": 1,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1",
+   "processWallSeconds": 6.3855197640368715,
+   "overran": false,
+   "rawDepthMm": 174.17000000000002,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 22152474,
+   "digest": "c2c07a40c5ffdfa2",
+   "probeSeconds": 2.30253543,
+   "rawUnits": 27827687.987057216
+  },
+  {
+   "tag": "plan-s2-r1",
+   "arm": "plan",
+   "seed": 2,
+   "round": 1,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1",
+   "processWallSeconds": 8.236849643988535,
+   "overran": false,
+   "rawDepthMm": 176.16200000000003,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23859055,
+   "digest": "b7a7fafdcec25b10",
+   "probeSeconds": 2.2738076830000002,
+   "rawUnits": 26177514.007539902
+  }
+ ],
+ "byArm": {
+  "plan": {
+   "n": 6,
+   "wallP50": 7.1120304290088825,
+   "wallP95": 8.236849643988535,
+   "wallMax": 8.236849643988535,
+   "wallMin": 6.366154767980333,
+   "overruns": 0,
+   "perSeed": {
+    "0": {
+     "n": 2,
+     "wallP50": 7.1120304290088825,
+     "wallP95": 7.1565477440017276,
+     "wallMax": 7.1565477440017276,
+     "wallMin": 7.1120304290088825,
+     "overruns": 0,
+     "distinctPlanUnits": [
+      24891457
+     ],
+     "distinctDepthsMm": [
+      175.3877782649107
+     ],
+     "distinctDigests": [
+      "8f2949e8bd9e5b8c"
+     ],
+     "planStable": true,
+     "depthStable": true,
+     "documentStable": true,
+     "depthMedianMm": 175.3877782649107,
+     "modalDepthShare": 1.0
+    },
+    "1": {
+     "n": 2,
+     "wallP50": 6.366154767980333,
+     "wallP95": 6.3855197640368715,
+     "wallMax": 6.3855197640368715,
+     "wallMin": 6.366154767980333,
+     "overruns": 0,
+     "distinctPlanUnits": [
+      24891457
+     ],
+     "distinctDepthsMm": [
+      174.17000000000002
+     ],
+     "distinctDigests": [
+      "c2c07a40c5ffdfa2"
+     ],
+     "planStable": true,
+     "depthStable": true,
+     "documentStable": true,
+     "depthMedianMm": 174.17000000000002,
+     "modalDepthShare": 1.0
+    },
+    "2": {
+     "n": 2,
+     "wallP50": 8.22892793599749,
+     "wallP95": 8.236849643988535,
+     "wallMax": 8.236849643988535,
+     "wallMin": 8.22892793599749,
+     "overruns": 0,
+     "distinctPlanUnits": [
+      24891457
+     ],
+     "distinctDepthsMm": [
+      176.16200000000003
+     ],
+     "distinctDigests": [
+      "b7a7fafdcec25b10"
+     ],
+     "planStable": true,
+     "depthStable": true,
+     "documentStable": true,
+     "depthMedianMm": 176.16200000000003,
+     "modalDepthShare": 1.0
+    }
+   },
+   "allSeedsPlanStable": true,
+   "allSeedsDocumentStable": true,
+   "seedMedianOfMedians": 175.3877782649107
+  }
+ }
+}

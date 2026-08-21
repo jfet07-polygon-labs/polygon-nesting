@@ -81,6 +81,56 @@ pub fn validate_publication(
     validate_publication_inner(placements, settings, false, true)
 }
 
+/// The process-wide arming of the clearance certificate.
+///
+/// `true`, so a build that compiles `fast-contract-validator` runs the filter
+/// unless something takes it off - which is what the feature has always done
+/// and is why this constant is the default rather than a promotion.
+///
+/// It exists because promotion needed a **disarm**, not an arm.
+/// docs/experiments/fast-contract-validator/ §13.2 makes that the first of the
+/// four conditions on default-on: *"promotion to default-on means the exact
+/// loop becomes unreachable in a shipping build, and a way to disarm it in the
+/// field is worth more than its absence"*. Before this switch the only way to
+/// reach the exact loop in a release binary was to call
+/// [`validate_publication_exact_reference`] directly, which no production route
+/// does and no spec key could reach.
+///
+/// A process-wide `AtomicBool` rather than a parameter on
+/// [`validate_publication`] because the certificate's callers are the whole
+/// acceptance path - `general_fast`, `general_relaxed`,
+/// `general_persistent_vacancy`, `general_micro_legalization` - and threading a
+/// tuning flag through a *contract* settings struct would put an engine
+/// preference inside the type that means "what the request asked for". The
+/// coordinator sets it once, before any search thread exists, and puts it back
+/// on the way out; see `ContractCertificateArming` in `search::portfolio`.
+#[cfg(feature = "fast-contract-validator")]
+static CERTIFICATE_ARMED: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(true);
+
+/// Whether the clearance certificate is armed in this process.
+#[cfg(feature = "fast-contract-validator")]
+pub fn contract_certificate_armed() -> bool {
+    CERTIFICATE_ARMED.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// Arms or disarms the clearance certificate process-wide, returning what it
+/// was.
+///
+/// Disarmed, every pair goes to the exact loop and the result is the one a
+/// build without the feature produces - that is the equivalence
+/// `examples/contract_validator_shadow.rs` measures, now reachable from a spec
+/// key instead of only from a second binary.
+///
+/// `Relaxed` on both sides is sufficient and deliberate: the value is read once
+/// per `validate_publication` call to seal a broad phase, never to publish or
+/// acquire anything else, and the coordinator writes it before it spawns any
+/// search work and after it joins all of it.
+#[cfg(feature = "fast-contract-validator")]
+pub fn set_contract_certificate_armed(armed: bool) -> bool {
+    CERTIFICATE_ARMED.swap(armed, std::sync::atomic::Ordering::Relaxed)
+}
+
 /// [`validate_publication`] with the broad phase **disarmed**: the exact loop
 /// runs on every pair, as it does in a build without this feature.
 ///
@@ -160,14 +210,23 @@ fn validate_publication_inner(
     // The broad phase, sealed once for the whole call: `O(total points)` to
     // build against the `O(pairs * edges^2)` it filters. Its verdict is a proof
     // of clearance, never an estimate of it - see `ClearanceBroadPhase::new`.
+    //
+    // `use_broad_phase` is the *call site's* choice - it is `false` for
+    // [`validate_publication_exact_reference`], which must stay exact whatever
+    // any switch says - and [`contract_certificate_armed`] is the process's.
+    // Read once here, into the seal, so the scan row below is byte-identical
+    // either way: a disarmed phase answers `provably_clear` `false` constantly
+    // without the loop acquiring a branch it did not have (§8.1).
     #[cfg(feature = "fast-contract-validator")]
-    let broad_phase = if use_broad_phase {
+    let armed = use_broad_phase && contract_certificate_armed();
+    #[cfg(feature = "fast-contract-validator")]
+    let broad_phase = if armed {
         ClearanceBroadPhase::new(&transformed, pair_clearance)
     } else {
         ClearanceBroadPhase::disarmed(transformed.len())
     };
     #[cfg(feature = "fast-contract-validator")]
-    if use_broad_phase {
+    if armed {
         contract_validator_census(&broad_phase, transformed.len());
     }
     // One row per first index. Named so the serial nest and the job-pool

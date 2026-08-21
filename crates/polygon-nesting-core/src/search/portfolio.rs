@@ -585,6 +585,26 @@ pub enum PortfolioBudget {
     /// Work units, per this module's header. The reproducible mode: two runs
     /// take the same branches and produce the same layout.
     Work { units: u64 },
+    /// A wall **target**, spent as a work plan sized to fit it.
+    ///
+    /// The caller names seconds; the coordinator measures how fast this box is
+    /// running this request, converts the target into a work budget, and then
+    /// runs [`Work`][Self::Work] - so the trajectory is a function of the plan
+    /// and not of the clock, and the clock is read exactly once.
+    ///
+    /// This is the mode `docs/sol-review-5-se2-and-pose-freedom.md` §5 asks for
+    /// when it refuses "l'efficienza mm/work di m34 come prestazione di
+    /// produzione": a work envelope is not a wall envelope, and the way to make
+    /// it one is to price the work in seconds *on the box that will run it*
+    /// rather than to quote a work number and hope. It is also the answer to
+    /// `docs/experiments/sparse-rotation/` §7.2, where the same unchanged arm
+    /// published medians 2-5 mm apart between sessions because a wall budget
+    /// converts box load into depth.
+    ///
+    /// The calibration is [`PlanReport`]; `run_portfolio` replaces this variant
+    /// with [`Work`][Self::Work] as soon as phase 0 has priced the box, so no
+    /// budget decision is ever taken against this variant.
+    Plan { target_millis: u64 },
 }
 
 /// One improvement of the published incumbent, with the phase that caused it.
@@ -811,6 +831,137 @@ impl PhaseExitCause {
         }
     }
 }
+
+/// How a [`PortfolioBudget::Plan`] turned a wall target into a work budget.
+///
+/// Every field is reported because the plan is a *prediction* and a reader has
+/// to be able to audit it against the wall the run actually took. The split
+/// between the two halves matters and is the reason this is one struct rather
+/// than a scalar:
+///
+/// * `target_millis`, `bias`, `headroom`, `quantum_step`, `probe_work_units`
+///   and `units` are **deterministic** for a given (request, seed, settings).
+///   `probe_work_units` is a counter, not a clock.
+/// * `probe_seconds`, `probe_rate_units_per_second` and `raw_units` are
+///   **clock readings**. Two processes on one box do not agree on them and
+///   never will.
+///
+/// `units` is what the run is actually budgeted at, and it is in the first
+/// group *only because it is quantised*: see [`PLAN_QUANTUM_STEP`].
+#[derive(Clone, Copy, Debug)]
+pub struct PlanReport {
+    /// The wall target the caller asked for, in milliseconds.
+    pub target_millis: u64,
+    /// Phase 0's own elapsed seconds - the probe. A clock reading.
+    pub probe_seconds: f64,
+    /// Phase 0's own work units. Deterministic per (request, seed).
+    pub probe_work_units: u64,
+    /// `probe_work_units / probe_seconds`.
+    pub probe_rate_units_per_second: f64,
+    /// The phase-0 bias correction actually applied. See [`PLAN_PHASE_ZERO_BIAS`].
+    pub bias: f64,
+    /// The headroom actually applied. See [`PLAN_HEADROOM`].
+    pub headroom: f64,
+    /// The quantisation step actually applied. `1.0` means unquantised.
+    pub quantum_step: f64,
+    /// The plan before quantisation.
+    pub raw_units: f64,
+    /// The rung index on the quantisation ladder, or `None` when unquantised.
+    pub rung: Option<i64>,
+    /// The work budget installed. **This is the plan.**
+    pub units: u64,
+}
+
+/// The measured ratio `rate(phase 0) / rate(everything after phase 0)`, in work
+/// units per second.
+///
+/// **A probe is only a rate estimator for the work it resembles**, and phase 0
+/// does not resemble the rest of the run: it is one protected mode-0 pipeline,
+/// and what follows is a ranked queue over eight classes whose most expensive
+/// members are exact confirmations. `docs/experiments/calibrated-plan/` §2
+/// measures the gap on mixed-61, shapes-17 and triangle-20 and it is large and
+/// stable in sign - phase 0 always retires work units *faster* than the queue
+/// that follows it, so a plan sized at phase 0's own rate overruns its wall
+/// target, never undershoots it.
+///
+/// Three things about the value, and the third is the honest caveat:
+///
+/// 1. **It is the maximum, not the median.** Over eighteen cells at a ten
+///    second target the fitted bias runs `1.116 .. 1.586`, median `1.449`
+///    (§2.3). Overestimating shortens the plan and costs depth;
+///    underestimating overruns the wall, and the wall is the promise.
+/// 2. **It is self-consistent.** `1.70` is the constant those eighteen runs
+///    were themselves measured *with*, and every one of them fitted below it
+///    and landed under target - so this is not an extrapolation from a
+///    differently-configured binary.
+/// 3. **A single constant cannot fit a 1.42x range.** The bias is a property
+///    of the (request, seed), not of the box: it is `1.116` on mixed-61 seed 0
+///    and `1.586` on seed 2 of the same fixture, and it *rises with the
+///    budget*, because the queue's late actions cost more per unit than its
+///    early ones. Shipping the maximum therefore means the low-bias cells run
+///    short - 7.1 s against a 10 s target on the worst of them - and that lost
+///    budget is real depth. §5.2 measures it and §7 says what would fix it,
+///    which is an in-run re-plan rather than a better constant.
+pub const PLAN_PHASE_ZERO_BIAS: f64 = 1.70;
+
+/// The fraction of the wall target a plan is allowed to aim at.
+///
+/// This is the part of the wall the plan cannot control, because it happens
+/// after the plan is fixed: at a *pinned* work budget, twenty-one runs of
+/// mixed-61 on this box spread 0.8-1.1% within a seed
+/// (`docs/experiments/calibrated-plan/` §2.1). `0.97` covers that with room and
+/// nothing more, because [`PLAN_QUANTUM_STEP`] already rounds **down** and is
+/// the larger of the two margins by an order of magnitude.
+pub const PLAN_HEADROOM: f64 = 0.97;
+
+/// The geometric ladder a plan is floored onto, so that two processes agree on
+/// it.
+///
+/// This is the round's central tradeoff and it is a dial, not a discovery.
+/// `probe_seconds` is a clock reading with a measured 1.2-2.5% spread within a
+/// cell, and it is the *only* non-deterministic input to the plan; so two
+/// processes agree on `units` exactly when no rung boundary falls inside that
+/// spread. Rung width is `ln(step)`:
+///
+/// * a fine ladder tracks the wall target closely and disagrees between
+///   processes whenever the estimate straddles a boundary;
+/// * a coarse ladder agrees between processes and throws away up to
+///   `1 - 1/step` of the budget.
+///
+/// `1.15` is a **14.0%** rung. The measured within-cell spread of the plan
+/// estimate is 0.2-2.6% over nine cells, median 1.0%
+/// (`docs/experiments/calibrated-plan/` §3.1), so the rung is about fourteen
+/// times the typical noise and five times the worst; and on that nine-cell
+/// pilot, with every cell's observed band doubled first, it is the *smallest*
+/// step at which no cell straddles a boundary. Finer steps do straddle - 1.05
+/// puts six of nine cells across a boundary - and coarser ones cost budget
+/// without buying stability those nine cells could detect.
+///
+/// It is **floored, not rounded**, so the error is one-sided: a plan is never
+/// larger than the probe justified, which is what lets [`PLAN_HEADROOM`] be
+/// 0.97 instead of 0.8. The price is that the floor throws away a median 7.5%
+/// and a worst 11.0% of the budget on that same pilot, and that is the largest
+/// single cost this mode carries after the work counters themselves.
+///
+/// Set it to `1.0` to switch quantisation off entirely. That arm is measured
+/// too, and it is the honest other end of Sol review 5 §5's point: a run can
+/// have the wall target or the cross-process plan, and this constant is where
+/// the trade is made rather than assumed away.
+pub const PLAN_QUANTUM_STEP: f64 = 1.15;
+
+/// The ladder's anchor, in work units. Rungs are `PLAN_ANCHOR * step^k`.
+///
+/// A round number well below any plan this engine produces - the smallest
+/// measured is 7.6 M on shapes-17 at a ten second target - so the ladder is a
+/// property of the step alone and not of a fixture, and no cell can be tuned
+/// onto a favourable rung by moving the anchor.
+///
+/// It is also the floor below which quantisation does not happen at all: a plan
+/// under one rung is left exact rather than rounded to the anchor, because the
+/// only way to be under it is for phase 0 to have already spent the target, and
+/// clipping such a run to a round number would be arithmetic pretending to be a
+/// budget.
+pub const PLAN_ANCHOR_UNITS: f64 = 1_000_000.0;
 
 /// One phase of the schedule, as run.
 #[derive(Clone, Debug)]
@@ -1335,6 +1486,14 @@ pub struct PortfolioOutcome {
     pub ledger: Option<PortfolioLedger>,
     /// What the probe arm did, when one was asked for.
     pub probe: Option<ProbeReport>,
+    /// How a [`PortfolioBudget::Plan`] was calibrated, `None` under either of
+    /// the two direct budgets.
+    ///
+    /// Note that `budget` above reports what the run was actually *spent*
+    /// against, which for a plan is the [`PortfolioBudget::Work`] this
+    /// calibrated to - so a caller reading `budget` alone cannot tell a plan
+    /// from a replay of one, which is the point: they are the same run.
+    pub plan: Option<PlanReport>,
 }
 
 /// When the constructor slice is allowed to draw a basin.
@@ -1481,14 +1640,56 @@ pub struct PortfolioSettings {
     #[cfg(feature = "parallel-compression-schedule")]
     pub compression_schedule_lanes: usize,
     /// Whether the coordinator's mode-34 slice spreads its exact confirmation
-    /// over the job pool. `false` by default.
+    /// over the job pool.
+    ///
+    /// **`true` by default inside v3 as of the promotion round**, and the same
+    /// shape as [`Self::schedule_wall_prior`] and [`Self::schedule_sterile_bit`]:
+    /// a default *within* a flag that is itself off at the Cargo level, so a
+    /// build without `parallel-compression-schedule` does not have this field
+    /// and every pinned gate is measured on a binary that does not compile it.
+    /// The v2 phase schedule never reads it either - the only read is
+    /// `execute_v3_action`'s mode-34 dispatch.
     ///
     /// Unlike `compression_schedule_lanes` this one is semantics-preserving -
     /// measured on the 174-179 mm band, an armed slice differs from the serial
     /// one in exactly the diagnostic flag that says it was armed - so it moves
     /// wall without moving the search's trajectory.
+    ///
+    /// The promotion evidence is `docs/experiments/fast-contract-validator/`
+    /// §12-13: `+1.527 mm` on top of the certificate over nine paired cells,
+    /// and §13.2(4)'s qualification, which is the reason `m34pconfirm=0` stays
+    /// a key rather than becoming unreachable - **its 1.5 mm is contingent on
+    /// spare cores**, and on a contended box it decays to parity with the
+    /// serial arm while costing the cross-round reproducibility §12.2 measures.
+    /// A deployment that cannot promise the cores, or that wants the serial
+    /// arm's constant depth, sets `m34pconfirm=0`.
     #[cfg(feature = "parallel-compression-schedule")]
     pub compression_schedule_parallel_confirm: bool,
+    /// Whether the exact-clearance contract validator's broad phase is armed.
+    ///
+    /// **`true` by default**, which is what the feature has always done: with
+    /// `fast-contract-validator` compiled, `validate_publication` used the
+    /// certificate unconditionally and no lever could take it off. What this
+    /// field adds is that lever, which is
+    /// `docs/experiments/fast-contract-validator/` §13.2's first condition on
+    /// calling the arming a default at all: *"a way to disarm it in the field
+    /// is worth more than its absence"*.
+    ///
+    /// Read once, at the top of a v3 run, and applied through
+    /// [`crate::validation::general_polygon::set_contract_certificate_armed`]
+    /// for the duration of that run only. Disarmed, every pair goes to the
+    /// exact loop and the engine produces the document a build without the
+    /// feature produces - the equivalence
+    /// `examples/contract_validator_shadow.rs` measures.
+    #[cfg(feature = "fast-contract-validator")]
+    pub fast_contract_validator: bool,
+    /// [`PLAN_PHASE_ZERO_BIAS`], overridable per run.
+    pub plan_bias: f64,
+    /// [`PLAN_HEADROOM`], overridable per run.
+    pub plan_headroom: f64,
+    /// [`PLAN_QUANTUM_STEP`], overridable per run. `1.0` switches quantisation
+    /// off.
+    pub plan_quantum_step: f64,
     /// Whether the coordinator arms the continuous-rotation operator on the two
     /// operators whose relaxed lane the brief scopes it to: the alternation
     /// fixpoint (mode 22) and the compression schedule (mode 34).
@@ -1707,8 +1908,17 @@ impl PortfolioSettings {
             compression_schedule_class: true,
             #[cfg(feature = "parallel-compression-schedule")]
             compression_schedule_lanes: 1,
+            // On by default *inside v3*, per the promotion package. The Cargo
+            // feature is still off by default, so the default build and all
+            // four pinned gates are binaries in which this field does not
+            // exist.
             #[cfg(feature = "parallel-compression-schedule")]
-            compression_schedule_parallel_confirm: false,
+            compression_schedule_parallel_confirm: true,
+            #[cfg(feature = "fast-contract-validator")]
+            fast_contract_validator: true,
+            plan_bias: PLAN_PHASE_ZERO_BIAS,
+            plan_headroom: PLAN_HEADROOM,
+            plan_quantum_step: PLAN_QUANTUM_STEP,
             #[cfg(feature = "continuous-rotation")]
             continuous_rotation: false,
             #[cfg(feature = "sparse-rotation")]
@@ -1772,6 +1982,68 @@ impl BudgetMeter {
             .saturating_add(self.self_metered_debit)
     }
 
+    /// Replaces a [`PortfolioBudget::Plan`] with the work budget it calibrated
+    /// to, and returns the calibration.
+    ///
+    /// Called exactly once, from `run_portfolio`, between the end of phase 0
+    /// and the first line that reads a budget - `protected_fraction`. After it
+    /// the meter is a work meter in every respect, including
+    /// [`Self::is_wall`], [`Self::debit_self_metered`] and every phase
+    /// deadline, so nothing downstream has a third case to handle.
+    ///
+    /// **Phase 0 is inside the plan, not beside it.** `work_base` was read
+    /// before phase 0 ran, so `work_units()` already contains the probe's own
+    /// units; the plan is therefore a total and the probe is charged to it,
+    /// which is what makes the wall target a promise about the whole process
+    /// rather than about the part after the measurement.
+    fn install_plan(&mut self, target_millis: u64, settings: &PortfolioSettings) -> PlanReport {
+        let probe_seconds = self.seconds();
+        let probe_work_units = self.work_units();
+        let target_seconds = target_millis as f64 / 1_000.0;
+        let bias = settings.plan_bias.max(f64::MIN_POSITIVE);
+        let headroom = settings.plan_headroom;
+        // A rate of zero is not a slow box, it is a build whose counters are
+        // off; and a probe that took no measurable time cannot price anything.
+        // Both fall back to the whole target at a nominal rate rather than to a
+        // division that would produce an infinity.
+        let rate = if probe_seconds > 0.0 {
+            probe_work_units as f64 / probe_seconds
+        } else {
+            0.0
+        };
+        // What is left of the target after the probe has already spent
+        // `probe_seconds` of it, priced at the rate the *rest* of the run will
+        // retire units at - which is the probe's rate divided by the phase-zero
+        // bias. Clamped at zero: a target already overspent by phase 0 buys a
+        // plan of exactly the probe, never a negative one.
+        let remaining_seconds = (target_seconds * headroom - probe_seconds).max(0.0);
+        let raw_units = probe_work_units as f64 + remaining_seconds * rate / bias;
+        let step = settings.plan_quantum_step;
+        let (rung, quantised) = if step > 1.0 && raw_units > PLAN_ANCHOR_UNITS {
+            // Floor, not round: the error is then one-sided and a plan is
+            // never larger than the probe justified. See `PLAN_QUANTUM_STEP`.
+            let index = ((raw_units / PLAN_ANCHOR_UNITS).ln() / step.ln()).floor();
+            let units = PLAN_ANCHOR_UNITS * step.powf(index);
+            (Some(index as i64), units)
+        } else {
+            (None, raw_units)
+        };
+        let units = quantised.max(1.0) as u64;
+        self.budget = PortfolioBudget::Work { units };
+        PlanReport {
+            target_millis,
+            probe_seconds,
+            probe_work_units,
+            probe_rate_units_per_second: rate,
+            bias,
+            headroom,
+            quantum_step: step,
+            raw_units,
+            rung,
+            units,
+        }
+    }
+
     /// The total charged so far for self-metered gaps, in work units.
     ///
     /// Read by the schedule loop to attribute a debit to the action that
@@ -1822,6 +2094,15 @@ impl BudgetMeter {
     }
 
     /// The fraction of the budget already spent, in the budget's own currency.
+    ///
+    /// [`PortfolioBudget::Plan`] has no currency: it is a wall target that has
+    /// not yet been priced, and it survives only from `BudgetMeter::new` to
+    /// [`Self::install_plan`], across the protected phase 0, which is never
+    /// budget-checked. Reporting it as fully spent is the fail-closed answer -
+    /// a build that somehow reached a deadline with the plan still uninstalled
+    /// returns phase 0's own layout with every later phase marked skipped,
+    /// which is visible in the report, rather than silently running to an
+    /// infinite budget.
     fn spent_fraction(&self) -> f64 {
         match self.budget {
             PortfolioBudget::Wall { millis } => {
@@ -1836,6 +2117,7 @@ impl BudgetMeter {
                 }
                 self.work_units() as f64 / units as f64
             }
+            PortfolioBudget::Plan { .. } => f64::INFINITY,
         }
     }
 
@@ -1850,6 +2132,8 @@ impl BudgetMeter {
         match self.budget {
             PortfolioBudget::Wall { millis } => millis as f64 / 1_000.0,
             PortfolioBudget::Work { units } => units as f64,
+            // See `spent_fraction`: an uninstalled plan has no currency.
+            PortfolioBudget::Plan { .. } => 0.0,
         }
     }
 
@@ -1867,7 +2151,13 @@ impl BudgetMeter {
     fn currency_spent(&self) -> f64 {
         match self.budget {
             PortfolioBudget::Wall { .. } => self.seconds(),
-            PortfolioBudget::Work { .. } => self.work_units() as f64,
+            // A plan's currency is work once it is installed, and the probe's
+            // own units are already inside `work_units()` - `work_base` was
+            // read before phase 0. Reading it the same way before installation
+            // keeps `phase_zero_cost` a work number in both.
+            PortfolioBudget::Work { .. } | PortfolioBudget::Plan { .. } => {
+                self.work_units() as f64
+            }
         }
     }
 
@@ -1880,7 +2170,7 @@ impl BudgetMeter {
     fn call_cost(&self, call: &OperatorCallReport) -> f64 {
         match self.budget {
             PortfolioBudget::Wall { .. } => call.elapsed_seconds,
-            PortfolioBudget::Work { .. } => call.work_units as f64,
+            PortfolioBudget::Work { .. } | PortfolioBudget::Plan { .. } => call.work_units as f64,
         }
     }
 }
@@ -2453,6 +2743,36 @@ impl<'a> Coordinator<'a> {
     }
 }
 
+/// Holds the exact-clearance certificate at one arming for the length of one
+/// coordinator run, and puts back what it found on the way out.
+///
+/// Scoped rather than set-and-leave because the switch is process-wide and this
+/// crate is a library: a napi or CLI host that runs two requests in one process
+/// must not have the first request's `fcv=0` silently disarm the second. `Drop`
+/// rather than a matching call at the end of `run_portfolio` because that
+/// function has a dozen `?` returns and one of them would eventually be the one
+/// that leaked.
+#[cfg(feature = "fast-contract-validator")]
+struct ContractCertificateArming {
+    previous: bool,
+}
+
+#[cfg(feature = "fast-contract-validator")]
+impl ContractCertificateArming {
+    fn install(armed: bool) -> Self {
+        Self {
+            previous: crate::validation::general_polygon::set_contract_certificate_armed(armed),
+        }
+    }
+}
+
+#[cfg(feature = "fast-contract-validator")]
+impl Drop for ContractCertificateArming {
+    fn drop(&mut self) {
+        crate::validation::general_polygon::set_contract_certificate_armed(self.previous);
+    }
+}
+
 /// Runs the portfolio from the request only: no pinned parent, no warm start,
 /// no fixture anywhere.
 ///
@@ -2465,10 +2785,33 @@ pub fn run_portfolio(
     fast_settings: GeneralFastSettings,
     settings: &PortfolioSettings,
 ) -> Result<PortfolioOutcome, GeneralFastError> {
-    if matches!(settings.budget, PortfolioBudget::Work { .. }) {
-        // A work budget is a function of the counters, so it needs them.
+    if matches!(
+        settings.budget,
+        PortfolioBudget::Work { .. } | PortfolioBudget::Plan { .. }
+    ) {
+        // A work budget is a function of the counters, so it needs them. A
+        // plan *is* a work budget from the moment phase 0 ends, and its probe
+        // is denominated in the same counters, so it needs them from before
+        // phase 0 begins - which is here, and is the reason the plan's wall
+        // target buys a run that carries the counters' cost for the whole of
+        // the wall it was given. `docs/experiments/calibrated-plan/` §9 prices
+        // that in millimetres; it is the one cost of the mode that no constant
+        // and no ladder can remove.
         profiling::set_enabled(true);
     }
+    // The v3 coordinator's own arming of the exact-clearance certificate, for
+    // the duration of this run and no longer. Off the v3 path this is not
+    // constructed at all, so nothing about a v2 or a direct-engine caller
+    // changes - and with the feature compiled and the setting at its `true`
+    // default, arming it is what the process was already doing.
+    #[cfg(feature = "fast-contract-validator")]
+    let _certificate_arming = if settings.coordinator_v3 {
+        Some(ContractCertificateArming::install(
+            settings.fast_contract_validator,
+        ))
+    } else {
+        None
+    };
     let meter = BudgetMeter::new(settings.budget);
 
     // ---- phase 0: protected mode 0 and shared preprocessing ---------------
@@ -2577,6 +2920,23 @@ pub fn run_portfolio(
         skipped: false,
         exit_cause: PhaseExitCause::Completed,
     });
+    // ---- the calibrated work plan -----------------------------------------
+    // Here, and nowhere else: phase 0 has finished, so the probe is complete,
+    // and `protected_fraction` on the next line is the first statement in the
+    // whole function that reads a budget. Between `BudgetMeter::new` and this
+    // line the budget is only ever *recorded*, never *spent against*, which is
+    // what makes `PortfolioBudget::Plan` a two-line lifetime rather than a
+    // third case for the schedule to carry.
+    let plan = match coordinator.meter.budget {
+        PortfolioBudget::Plan { target_millis } => {
+            Some(coordinator.meter.install_plan(target_millis, settings))
+        }
+        _ => None,
+    };
+    debug_assert!(
+        !matches!(coordinator.meter.budget, PortfolioBudget::Plan { .. }),
+        "the plan must be installed before any budget is read"
+    );
     // Everything after this point is a fraction of what phase 0 left, not of
     // the whole budget. See `PhaseSchedule`.
     coordinator.protected_fraction = coordinator.meter.spent_fraction().clamp(0.0, 1.0);
@@ -3016,6 +3376,7 @@ pub fn run_portfolio(
     Ok(PortfolioOutcome {
         ledger,
         probe,
+        plan,
         descent_stalled,
         result: coordinator.incumbent.result.clone(),
         incumbent: coordinator.incumbent,
@@ -5629,6 +5990,164 @@ mod tests {
     fn a_zero_budget_has_room_for_nothing() {
         let meter = BudgetMeter::new(PortfolioBudget::Wall { millis: 0 });
         assert!(!meter.has_room(1.0));
+    }
+
+    /// A plan that has not been installed must not look affordable.
+    ///
+    /// This is the fail-closed half of `BudgetMeter::spent_fraction`: the only
+    /// window in which `PortfolioBudget::Plan` is the live budget is the
+    /// protected phase 0, which is never budget-checked, so any reader of it is
+    /// a bug - and this is what such a bug does. It returns phase 0's own
+    /// layout with every later phase skipped, which is visible in the report.
+    #[test]
+    fn an_uninstalled_plan_has_room_for_nothing() {
+        let meter = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 10_000,
+        });
+        assert!(!meter.has_room(1.0));
+        assert_eq!(meter.spent_fraction(), f64::INFINITY);
+        assert!(!meter.is_wall());
+    }
+
+    /// The plan is `probe + (aim - probe wall) * rate / bias`, floored onto the
+    /// ladder, and every term is checked against hand arithmetic here rather
+    /// than against the function that produced it.
+    #[test]
+    fn a_plan_prices_the_remaining_target_at_the_probes_rate() {
+        let mut meter = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 10_000,
+        });
+        // Freeze the probe: 2 s of wall and 8 M units, a rate of 4 M/s. The
+        // meter reads the clock, so the probe wall is forced by rewinding
+        // `started`, and the work is forced by the debit accumulator - which is
+        // legitimate because `install_plan` reads `work_units()` and that is
+        // exactly what a self-metered charge moves.
+        meter.started = Instant::now() - std::time::Duration::from_secs(2);
+        meter.self_metered_debit = 8_000_000;
+        let mut settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Plan {
+                target_millis: 10_000,
+            },
+        );
+        settings.plan_bias = 2.0;
+        settings.plan_headroom = 1.0;
+        settings.plan_quantum_step = 1.0;
+        let plan = meter.install_plan(10_000, &settings);
+
+        // The probe is inside the plan, not beside it.
+        assert_eq!(plan.probe_work_units, 8_000_000);
+        assert!((plan.probe_seconds - 2.0).abs() < 0.05, "{plan:?}");
+        // 8 M + (10 s - 2 s) * 4 M/s / 2 = 8 M + 16 M = 24 M.
+        assert!((plan.raw_units - 24_000_000.0).abs() < 200_000.0, "{plan:?}");
+        assert_eq!(plan.rung, None);
+        // Installed, so nothing downstream sees a plan.
+        assert_eq!(
+            meter.budget,
+            PortfolioBudget::Work { units: plan.units }
+        );
+        assert!(!meter.is_wall());
+        assert_eq!(meter.currency_total(), plan.units as f64);
+    }
+
+    /// Quantisation floors onto `anchor * step^k` and never rounds up.
+    ///
+    /// The direction is the whole reason `PLAN_HEADROOM` can be 0.97: a plan
+    /// that could round *up* would need headroom for half a rung, which at the
+    /// shipped step is 7%.
+    #[test]
+    fn the_plan_ladder_floors_and_never_rounds_up() {
+        for step in [1.15_f64, 1.25, 2.0] {
+            let mut meter = BudgetMeter::new(PortfolioBudget::Plan {
+                target_millis: 10_000,
+            });
+            meter.started = Instant::now() - std::time::Duration::from_secs(2);
+            meter.self_metered_debit = 8_000_000;
+            let mut settings = PortfolioSettings::new(
+                GeneralRelaxedSettings::mixed_61_probe(0, 1),
+                PortfolioBudget::Plan {
+                    target_millis: 10_000,
+                },
+            );
+            settings.plan_bias = 2.0;
+            settings.plan_headroom = 1.0;
+            settings.plan_quantum_step = step;
+            let plan = meter.install_plan(10_000, &settings);
+            let rung = plan.rung.expect("a step above 1.0 quantises");
+            let expected = PLAN_ANCHOR_UNITS * step.powi(rung as i32);
+            assert_eq!(plan.units, expected as u64, "step {step}");
+            assert!(
+                (plan.units as f64) <= plan.raw_units,
+                "step {step} rounded up: {plan:?}"
+            );
+            // ...and it is the *largest* rung that does, so the floor never
+            // gives away more than one whole rung.
+            assert!(
+                (plan.units as f64) * step > plan.raw_units,
+                "step {step} floored more than one rung: {plan:?}"
+            );
+        }
+    }
+
+    /// A target already overspent by phase 0 buys the probe and nothing more.
+    #[test]
+    fn a_target_smaller_than_the_probe_buys_no_extra_work() {
+        let mut meter = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 1 });
+        meter.started = Instant::now() - std::time::Duration::from_secs(2);
+        meter.self_metered_debit = 8_000_000;
+        let mut settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Plan { target_millis: 1 },
+        );
+        settings.plan_quantum_step = 1.0;
+        let plan = meter.install_plan(1, &settings);
+        assert_eq!(plan.raw_units, 8_000_000.0);
+        assert_eq!(plan.units, 8_000_000);
+    }
+
+    /// The two flags the promotion round turns on are on, and the Cargo
+    /// features that carry them are still off.
+    ///
+    /// The second half is what keeps every pinned gate untouched: the gate
+    /// binary is built `--features jagua-experimental`, which compiles neither
+    /// `parallel-compression-schedule` nor `fast-contract-validator`, so the
+    /// fields asserted below do not exist in it at all.
+    #[test]
+    fn the_promoted_defaults_are_on_inside_v3_and_v3_is_off() {
+        let settings =
+            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
+                millis: 10_000,
+            });
+        assert!(!settings.coordinator_v3);
+        #[cfg(feature = "parallel-compression-schedule")]
+        assert!(settings.compression_schedule_parallel_confirm);
+        #[cfg(feature = "fast-contract-validator")]
+        assert!(settings.fast_contract_validator);
+        // The lanes lever is *not* promoted: it is the one that is not
+        // semantics-preserving.
+        #[cfg(feature = "parallel-compression-schedule")]
+        assert_eq!(settings.compression_schedule_lanes, 1);
+    }
+
+    /// The certificate arming is scoped to one run and restores what it found.
+    ///
+    /// A library that left a `fcv=0` request's disarm behind would hand the
+    /// next request in the same process a different engine.
+    #[cfg(feature = "fast-contract-validator")]
+    #[test]
+    fn the_certificate_arming_is_restored_on_the_way_out() {
+        use crate::validation::general_polygon::contract_certificate_armed;
+        assert!(contract_certificate_armed(), "the default is armed");
+        {
+            let _guard = ContractCertificateArming::install(false);
+            assert!(!contract_certificate_armed());
+            {
+                let _nested = ContractCertificateArming::install(true);
+                assert!(contract_certificate_armed());
+            }
+            assert!(!contract_certificate_armed(), "the nested guard restored");
+        }
+        assert!(contract_certificate_armed(), "the outer guard restored");
     }
 
     #[test]

@@ -1980,9 +1980,22 @@ fn relevant_source_tree_sha256() -> Option<String> {
 ///
 /// One argument rather than a dozen positional ones on purpose: every replay
 /// driver in this repository pins the positional tail by index, and a schedule
-/// gains knobs. Exactly one of `wall` and `work` must be given - the budget's
-/// *currency* is the one thing the coordinator cannot default, because the two
-/// modes make different promises about reproducibility.
+/// gains knobs. Exactly one of `wall`, `work` and `plan` must be given - the
+/// budget's *currency* is the one thing the coordinator cannot default, because
+/// the three modes make different promises:
+///
+/// * `wall=<ms>` spends milliseconds. Not reproducible: box load becomes depth.
+/// * `work=<units>` spends work units. Reproducible, and the mode every gate
+///   and determinism check in this repository uses.
+/// * `plan=<ms>` asks for a wall target and spends it as a work budget the
+///   coordinator sizes from its own phase 0. Reproducible *and* wall-targeted,
+///   at the cost the last argument names; the plan it chose is reported under
+///   `portfolio.plan.units`, so a caller who wants the guarantee without the
+///   calibration replays it as `work=<units>`. See
+///   `docs/experiments/calibrated-plan/`.
+///
+/// A later key wins, so a spec that names two budgets runs the last one rather
+/// than being refused - unchanged from when there were two.
 fn parse_portfolio_spec(
     spec: &str,
     relaxed_template: GeneralRelaxedSettings,
@@ -2005,6 +2018,24 @@ fn parse_portfolio_spec(
                     units: value.parse()?,
                 })
             }
+            // The calibrated plan: a wall target in milliseconds, spent as a
+            // work budget the coordinator sizes from its own phase 0. Not a
+            // third schedule - it becomes `work=` before the first budget is
+            // read, and the plan it chose is reported so a caller can replay
+            // it exactly with `work=<units>`.
+            "plan" => {
+                budget = Some(PortfolioBudget::Plan {
+                    target_millis: value.parse()?,
+                })
+            }
+            // The plan's three calibration constants, so a battery can price
+            // the box it is on instead of inheriting this one's. See
+            // `PLAN_PHASE_ZERO_BIAS`, `PLAN_HEADROOM` and `PLAN_QUANTUM_STEP`;
+            // `planq=1` switches quantisation off and is the arm that shows
+            // what quantisation costs.
+            "planbias" => settings.plan_bias = value.parse()?,
+            "planhead" => settings.plan_headroom = value.parse()?,
+            "planq" => settings.plan_quantum_step = value.parse()?,
             "slots" => settings.basin_slots = value.parse()?,
             "basins" => {
                 settings.basin_trigger = match value {
@@ -2053,6 +2084,15 @@ fn parse_portfolio_spec(
             "m34lanes" => settings.compression_schedule_lanes = value.parse()?,
             #[cfg(feature = "parallel-compression-schedule")]
             "m34pconfirm" => settings.compression_schedule_parallel_confirm = value != "0",
+            // The certificate's **disarm**. Unknown without the feature for the
+            // same reason `m34pconfirm` is: a binary that cannot honour a key
+            // must refuse it rather than run the other arm under its label -
+            // and here that matters more than usual, because a build without
+            // `fast-contract-validator` has no broad phase to take off, so
+            // silently accepting `fcv=0` would report an unarmed run and an
+            // unarmed binary as two different things when they are one.
+            #[cfg(feature = "fast-contract-validator")]
+            "fcv" => settings.fast_contract_validator = value != "0",
             // The continuous-rotation operator. Unknown in a build without the
             // feature, deliberately: an unarmed binary refuses an armed
             // driver's spec instead of silently running without the operator
@@ -2114,7 +2154,8 @@ fn parse_portfolio_spec(
             other => return Err(format!("unknown portfolio spec key {other:?}").into()),
         }
     }
-    settings.budget = budget.ok_or("portfolio spec requires wall=<ms> or work=<units>")?;
+    settings.budget =
+        budget.ok_or("portfolio spec requires wall=<ms>, work=<units> or plan=<ms>")?;
     Ok(settings)
 }
 
@@ -2205,9 +2246,41 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
     let budget = match outcome.budget {
         PortfolioBudget::Wall { millis } => json!({"kind": "wall", "millis": millis}),
         PortfolioBudget::Work { units } => json!({"kind": "work", "units": units}),
+        // Unreachable in a completed run - `run_portfolio` replaces a plan with
+        // the work budget it calibrated to before any budget is read - and
+        // reported rather than `unreachable!()` so a future path that does not
+        // install one shows up in the document instead of aborting a batch.
+        PortfolioBudget::Plan { target_millis } => {
+            json!({"kind": "planUninstalled", "targetMillis": target_millis})
+        }
     };
+    // Split in two, and the split is load-bearing for every determinism check
+    // in this repository: `plan` is the deterministic half - a function of
+    // (request, seed, settings) alone, `units` included, because `units` is
+    // quantised - and `planCalibration` is the clock. A digest that means "the
+    // same search ran" strips `planCalibration` and keeps `plan`.
+    let plan = outcome.plan.map(|plan| {
+        json!({
+            "targetMillis": plan.target_millis,
+            "bias": plan.bias,
+            "headroom": plan.headroom,
+            "quantumStep": plan.quantum_step,
+            "probeWorkUnits": plan.probe_work_units,
+            "rung": plan.rung,
+            "units": plan.units,
+        })
+    });
+    let plan_calibration = outcome.plan.map(|plan| {
+        json!({
+            "probeSeconds": plan.probe_seconds,
+            "probeRateUnitsPerSecond": plan.probe_rate_units_per_second,
+            "rawUnits": plan.raw_units,
+        })
+    });
     let mut report = json!({
         "budget": budget,
+        "plan": plan,
+        "planCalibration": plan_calibration,
         "elapsedSeconds": outcome.elapsed_seconds,
         "workUnits": outcome.work_units,
         "areaLowerBoundDepthMm": outcome.area_lower_bound_depth_mm,

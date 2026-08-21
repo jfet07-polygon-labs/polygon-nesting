@@ -1,0 +1,292 @@
+mixed-61 3000ms plan s0: depth=181.589 reproduced=True wallMax=2.23
+mixed-61 3000ms wall s0: depth=179.5868589805926 reproduced=False wallMax=2.64
+mixed-61 3000ms plan s1: depth=179.69 reproduced=True wallMax=2.33
+mixed-61 3000ms wall s1: depth=179.63299999999998 reproduced=False wallMax=2.60
+mixed-61 3000ms plan s2: depth=179.662 reproduced=True wallMax=2.32
+mixed-61 3000ms wall s2: depth=179.006 reproduced=False wallMax=2.56
+shapes-17 3000ms plan s0: depth=200.34937729570953 reproduced=True wallMax=3.47
+shapes-17 3000ms wall s0: depth=200.34937729570953 reproduced=False wallMax=1.84
+shapes-17 3000ms plan s1: depth=200.34937729570953 reproduced=True wallMax=2.99
+shapes-17 3000ms wall s1: depth=200.34937729570953 reproduced=False wallMax=1.84
+shapes-17 3000ms plan s2: depth=200.34937729570953 reproduced=False wallMax=3.04
+shapes-17 3000ms wall s2: depth=200.34937729570953 reproduced=False wallMax=1.90
+triangle-20 3000ms plan s0: depth=70.7711336311948 reproduced=True wallMax=2.16
+triangle-20 3000ms wall s0: depth=70.7711336311948 reproduced=False wallMax=3.17
+triangle-20 3000ms plan s1: depth=70.74684851410467 reproduced=True wallMax=1.77
+triangle-20 3000ms wall s1: depth=70.74684851410467 reproduced=False wallMax=2.55
+triangle-20 3000ms plan s2: depth=70.74727715491606 reproduced=True wallMax=1.64
+triangle-20 3000ms wall s2: depth=70.74264651120441 reproduced=False wallMax=3.21
+mixed-61 10000ms plan s0: depth=175.3877782649107 reproduced=True wallMax=7.15
+mixed-61 10000ms wall s0: depth=168.4836008374388 reproduced=False wallMax=9.96
+mixed-61 10000ms plan s1: depth=174.17000000000002 reproduced=True wallMax=6.40
+mixed-61 10000ms wall s1: depth=165.65577826491065 reproduced=False wallMax=10.31
+mixed-61 10000ms plan s2: depth=176.16200000000003 reproduced=True wallMax=8.31
+mixed-61 10000ms wall s2: depth=174.28 reproduced=False wallMax=9.76
+shapes-17 10000ms plan s0: depth=200.349 reproduced=True wallMax=8.40
+shapes-17 10000ms wall s0: depth=200.349 reproduced=False wallMax=9.73
+shapes-17 10000ms plan s1: depth=200.34937729570953 reproduced=True wallMax=7.49
+shapes-17 10000ms wall s1: depth=200.34937729570953 reproduced=False wallMax=9.59
+shapes-17 10000ms plan s2: depth=200.349 reproduced=True wallMax=8.05
+shapes-17 10000ms wall s2: depth=200.349 reproduced=False wallMax=9.78
+triangle-20 10000ms plan s0: depth=70.74196837433173 reproduced=True wallMax=7.09
+triangle-20 10000ms wall s0: depth=70.73006941379586 reproduced=False wallMax=9.99
+triangle-20 10000ms plan s1: depth=70.74553343914744 reproduced=True wallMax=7.86
+triangle-20 10000ms wall s1: depth=70.73005002608552 reproduced=False wallMax=9.49
+triangle-20 10000ms plan s2: depth=70.74164651120441 reproduced=True wallMax=7.76
+triangle-20 10000ms wall s2: depth=70.72882090841742 reproduced=False wallMax=9.50
+mixed-61 30000ms plan s0: depth=164.188 reproduced=True wallMax=22.37
+mixed-61 30000ms wall s0: depth=165.262 reproduced=False wallMax=28.73
+mixed-61 30000ms plan s1: depth=167.66600000000003 reproduced=False wallMax=25.80
+mixed-61 30000ms wall s1: depth=160.0102211323408 reproduced=False wallMax=28.96
+mixed-61 30000ms plan s2: depth=164.171 reproduced=True wallMax=36.39
+mixed-61 30000ms wall s2: depth=166.666 reproduced=False wallMax=41.23
+shapes-17 30000ms plan s0: depth=200.349 reproduced=True wallMax=18.28
+shapes-17 30000ms wall s0: depth=200.349 reproduced=False wallMax=17.76
+shapes-17 30000ms plan s1: depth=200.34937729570953 reproduced=True wallMax=13.29
+shapes-17 30000ms wall s1: depth=200.34937729570953 reproduced=False wallMax=12.92
+shapes-17 30000ms plan s2: depth=200.349 reproduced=True wallMax=16.83
+shapes-17 30000ms wall s2: depth=200.349 reproduced=False wallMax=16.34
+triangle-20 30000ms plan s0: depth=70.73006941379586 reproduced=True wallMax=15.79
+triangle-20 30000ms wall s0: depth=70.72726178003285 reproduced=False wallMax=27.16
+triangle-20 30000ms plan s1: depth=70.73005002608552 reproduced=True wallMax=18.18
+triangle-20 30000ms wall s1: depth=70.72726178003285 reproduced=False wallMax=28.76
+triangle-20 30000ms plan s2: depth=70.72882090841742 reproduced=True wallMax=18.96
+triangle-20 30000ms wall s2: depth=70.72726178003285 reproduced=False wallMax=29.17
+{
+ "mixed-61|3000|plan": {
+  "n": 3,
+  "medianDepthMm": 179.69,
+  "perSeedDepthMm": {
+   "0": 181.589,
+   "1": 179.69,
+   "2": 179.662
+  },
+  "reproducedCells": 3,
+  "wallMaxSeconds": 2.3290282379603013,
+  "wallMedianSeconds": 2.319847977021709,
+  "overrunCells": 0
+ },
+ "mixed-61|3000|wall": {
+  "n": 3,
+  "medianDepthMm": 179.5868589805926,
+  "perSeedDepthMm": {
+   "0": 179.5868589805926,
+   "1": 179.63299999999998,
+   "2": 179.006
+  },
+  "reproducedCells": 0,
+  "wallMaxSeconds": 2.6432461210060865,
+  "wallMedianSeconds": 2.5961628269869834,
+  "overrunCells": 0
+ },
+ "mixed-61|10000|plan": {
+  "n": 3,
+  "medianDepthMm": 175.3877782649107,
+  "perSeedDepthMm": {
+   "0": 175.3877782649107,
+   "1": 174.17000000000002,
+   "2": 176.16200000000003
+  },
+  "reproducedCells": 3,
+  "wallMaxSeconds": 8.311349219002295,
+  "wallMedianSeconds": 7.147227473033126,
+  "overrunCells": 0
+ },
+ "mixed-61|10000|wall": {
+  "n": 3,
+  "medianDepthMm": 168.4836008374388,
+  "perSeedDepthMm": {
+   "0": 168.4836008374388,
+   "1": 165.65577826491065,
+   "2": 174.28
+  },
+  "reproducedCells": 0,
+  "wallMaxSeconds": 10.310993469960522,
+  "wallMedianSeconds": 9.959082625049632,
+  "overrunCells": 1
+ },
+ "mixed-61|30000|plan": {
+  "n": 3,
+  "medianDepthMm": 164.188,
+  "perSeedDepthMm": {
+   "0": 164.188,
+   "1": 167.66600000000003,
+   "2": 164.171
+  },
+  "reproducedCells": 2,
+  "wallMaxSeconds": 36.38906296895584,
+  "wallMedianSeconds": 25.802105174050666,
+  "overrunCells": 1
+ },
+ "mixed-61|30000|wall": {
+  "n": 3,
+  "medianDepthMm": 165.262,
+  "perSeedDepthMm": {
+   "0": 165.262,
+   "1": 160.0102211323408,
+   "2": 166.666
+  },
+  "reproducedCells": 0,
+  "wallMaxSeconds": 41.2326098959893,
+  "wallMedianSeconds": 28.963858505012468,
+  "overrunCells": 1
+ },
+ "shapes-17|3000|plan": {
+  "n": 3,
+  "medianDepthMm": 200.34937729570953,
+  "perSeedDepthMm": {
+   "0": 200.34937729570953,
+   "1": 200.34937729570953,
+   "2": 200.34937729570953
+  },
+  "reproducedCells": 2,
+  "wallMaxSeconds": 3.4747122839908116,
+  "wallMedianSeconds": 3.0400144559680484,
+  "overrunCells": 2
+ },
+ "shapes-17|3000|wall": {
+  "n": 3,
+  "medianDepthMm": 200.34937729570953,
+  "perSeedDepthMm": {
+   "0": 200.34937729570953,
+   "1": 200.34937729570953,
+   "2": 200.34937729570953
+  },
+  "reproducedCells": 0,
+  "wallMaxSeconds": 1.904772393987514,
+  "wallMedianSeconds": 1.840559076052159,
+  "overrunCells": 0
+ },
+ "shapes-17|10000|plan": {
+  "n": 3,
+  "medianDepthMm": 200.349,
+  "perSeedDepthMm": {
+   "0": 200.349,
+   "1": 200.34937729570953,
+   "2": 200.349
+  },
+  "reproducedCells": 3,
+  "wallMaxSeconds": 8.400788241007831,
+  "wallMedianSeconds": 8.051064273982774,
+  "overrunCells": 0
+ },
+ "shapes-17|10000|wall": {
+  "n": 3,
+  "medianDepthMm": 200.349,
+  "perSeedDepthMm": {
+   "0": 200.349,
+   "1": 200.34937729570953,
+   "2": 200.349
+  },
+  "reproducedCells": 0,
+  "wallMaxSeconds": 9.784288469993044,
+  "wallMedianSeconds": 9.7258772989735,
+  "overrunCells": 0
+ },
+ "shapes-17|30000|plan": {
+  "n": 3,
+  "medianDepthMm": 200.349,
+  "perSeedDepthMm": {
+   "0": 200.349,
+   "1": 200.34937729570953,
+   "2": 200.349
+  },
+  "reproducedCells": 3,
+  "wallMaxSeconds": 18.281908735982142,
+  "wallMedianSeconds": 16.829300405981485,
+  "overrunCells": 0
+ },
+ "shapes-17|30000|wall": {
+  "n": 3,
+  "medianDepthMm": 200.349,
+  "perSeedDepthMm": {
+   "0": 200.349,
+   "1": 200.34937729570953,
+   "2": 200.349
+  },
+  "reproducedCells": 0,
+  "wallMaxSeconds": 17.76094969402766,
+  "wallMedianSeconds": 16.336924389004707,
+  "overrunCells": 0
+ },
+ "triangle-20|3000|plan": {
+  "n": 3,
+  "medianDepthMm": 70.74727715491606,
+  "perSeedDepthMm": {
+   "0": 70.7711336311948,
+   "1": 70.74684851410467,
+   "2": 70.74727715491606
+  },
+  "reproducedCells": 3,
+  "wallMaxSeconds": 2.155214228958357,
+  "wallMedianSeconds": 1.7681236949865706,
+  "overrunCells": 0
+ },
+ "triangle-20|3000|wall": {
+  "n": 3,
+  "medianDepthMm": 70.74684851410467,
+  "perSeedDepthMm": {
+   "0": 70.7711336311948,
+   "1": 70.74684851410467,
+   "2": 70.74264651120441
+  },
+  "reproducedCells": 0,
+  "wallMaxSeconds": 3.2141086300252937,
+  "wallMedianSeconds": 3.165736631024629,
+  "overrunCells": 2
+ },
+ "triangle-20|10000|plan": {
+  "n": 3,
+  "medianDepthMm": 70.74196837433173,
+  "perSeedDepthMm": {
+   "0": 70.74196837433173,
+   "1": 70.74553343914744,
+   "2": 70.74164651120441
+  },
+  "reproducedCells": 3,
+  "wallMaxSeconds": 7.864806316967588,
+  "wallMedianSeconds": 7.763394900015555,
+  "overrunCells": 0
+ },
+ "triangle-20|10000|wall": {
+  "n": 3,
+  "medianDepthMm": 70.73005002608552,
+  "perSeedDepthMm": {
+   "0": 70.73006941379586,
+   "1": 70.73005002608552,
+   "2": 70.72882090841742
+  },
+  "reproducedCells": 0,
+  "wallMaxSeconds": 9.987720497010741,
+  "wallMedianSeconds": 9.503091155027505,
+  "overrunCells": 0
+ },
+ "triangle-20|30000|plan": {
+  "n": 3,
+  "medianDepthMm": 70.73005002608552,
+  "perSeedDepthMm": {
+   "0": 70.73006941379586,
+   "1": 70.73005002608552,
+   "2": 70.72882090841742
+  },
+  "reproducedCells": 3,
+  "wallMaxSeconds": 18.959153518953826,
+  "wallMedianSeconds": 18.183216610981617,
+  "overrunCells": 0
+ },
+ "triangle-20|30000|wall": {
+  "n": 3,
+  "medianDepthMm": 70.72726178003285,
+  "perSeedDepthMm": {
+   "0": 70.72726178003285,
+   "1": 70.72726178003285,
+   "2": 70.72726178003285
+  },
+  "reproducedCells": 0,
+  "wallMaxSeconds": 29.168585383042227,
+  "wallMedianSeconds": 28.762222010002006,
+  "overrunCells": 0
+ }
+}
+allPlanCellsReproduced=False
+allWallCellsReproduced=False
