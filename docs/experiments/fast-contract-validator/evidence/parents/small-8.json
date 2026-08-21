@@ -1,0 +1,80 @@
+{
+ "schemaVersion": 1,
+ "description": "small-8 pinned parent for the fast-contract-validator per-confirmation wall",
+ "requestSha256": "bc89c25f9bbd70866fca48381621048c72e2e5845e7c37d94d716df6d2265397",
+ "expectedPlacementFingerprint": "3c5da904712cf7006fd9242310368d249b735e11b474a7f23b19af707b796159",
+ "reportedDepthMm": 70.504,
+ "independentDepthMm": 70.252,
+ "provenance": {
+  "source": "/var/lib/t3/tmp/fcv2/parents/small-8-run.json",
+  "binary": "/var/lib/t3/tmp/fcv2/bin-off",
+  "spec": "wall=20000,cells=13:15:17:19,v3=1,m34lanes=1,m34pconfirm=1",
+  "request": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_4111958b-3b3-1/tests/vectors/core/thread-equality-mixed61-8-piece-request.json"
+ },
+ "settings": {
+  "sheetShortAxisMm": 2000.0,
+  "sheetLongAxisMm": 2700.0,
+  "totalPaddingMm": 5.0,
+  "sheetEdgeClearanceMm": 5.0,
+  "clearanceSafetyMarginMm": 0.25,
+  "flatteningSagToleranceMm": 0.25
+ },
+ "placements": [
+  {
+   "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+   "rotationDeg": 0.0,
+   "mirrored": false,
+   "translateShortAxis": 5.709,
+   "translateLongAxis": 5.252
+  },
+  {
+   "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-2",
+   "rotationDeg": 0.0,
+   "mirrored": false,
+   "translateShortAxis": 112.127,
+   "translateLongAxis": 5.252
+  },
+  {
+   "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+   "rotationDeg": 0.0,
+   "mirrored": false,
+   "translateShortAxis": 218.545,
+   "translateLongAxis": 5.252
+  },
+  {
+   "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+   "rotationDeg": 0.0,
+   "mirrored": false,
+   "translateShortAxis": 1893.682,
+   "translateLongAxis": 5.252
+  },
+  {
+   "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
+   "rotationDeg": 0.0,
+   "mirrored": false,
+   "translateShortAxis": 1786.046,
+   "translateLongAxis": 5.252
+  },
+  {
+   "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+   "rotationDeg": 0.0,
+   "mirrored": false,
+   "translateShortAxis": 1678.41,
+   "translateLongAxis": 5.252
+  },
+  {
+   "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+   "rotationDeg": 0.0,
+   "mirrored": false,
+   "translateShortAxis": 1570.774,
+   "translateLongAxis": 5.252
+  },
+  {
+   "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+   "rotationDeg": 0.0,
+   "mirrored": false,
+   "translateShortAxis": 1463.138,
+   "translateLongAxis": 5.252
+  }
+ ]
+}

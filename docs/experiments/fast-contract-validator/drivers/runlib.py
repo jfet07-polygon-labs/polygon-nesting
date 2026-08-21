@@ -15,7 +15,7 @@ import os
 import subprocess
 import time
 
-ROOT = '/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_c2459b6d-78e-2'
+ROOT = '/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_4111958b-3b3-1'
 OUT = '/var/lib/t3/tmp/ledger'
 
 REQUESTS = {

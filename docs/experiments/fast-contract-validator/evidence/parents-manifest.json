@@ -1,0 +1,31 @@
+{
+ "binary": "/var/lib/t3/tmp/fcv2/bin-off",
+ "binarySha256": "a6680138287c282b75f7acb48e3ffc5f5e89ec7754222312fb7245facadb7b4f",
+ "budgetSeconds": 20.0,
+ "parents": {
+  "shapes-17": {
+   "path": "/var/lib/t3/tmp/fcv2/parents/shapes-17.json",
+   "pieces": 17,
+   "reportedDepthMm": 200.903,
+   "independentDepthMm": 200.349,
+   "sha256": "a6bb22cf568295fa4953a1f11e0a4dfb8ba1a4c12bd0e0efce083f2fe12ad9b1",
+   "processWallSeconds": 19.369511436030734
+  },
+  "triangle-20": {
+   "path": "/var/lib/t3/tmp/fcv2/parents/triangle-20.json",
+   "pieces": 20,
+   "reportedDepthMm": 70.979,
+   "independentDepthMm": 70.727,
+   "sha256": "bde0ee7f4f9a684a7398f57b1f3c453b300521a54f76354d5500669ad2257ae7",
+   "processWallSeconds": 18.758023659000173
+  },
+  "small-8": {
+   "path": "/var/lib/t3/tmp/fcv2/parents/small-8.json",
+   "pieces": 8,
+   "reportedDepthMm": 70.504,
+   "independentDepthMm": 70.252,
+   "sha256": "294b75c30d2e8d210cf99dd1dcaea1c3f4965d28ce51223f67d164018348fb9c",
+   "processWallSeconds": 5.282808224961627
+  }
+ }
+}

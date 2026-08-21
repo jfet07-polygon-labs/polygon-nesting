@@ -1,0 +1,72 @@
+{
+ "label": "shapes-17",
+ "parentDepthMm": 200.349,
+ "binary": "/var/lib/t3/tmp/fcv2/bin-off",
+ "rows": [
+  {
+   "dropMm": 0.05,
+   "targetDepthMm": 200.29899999999998,
+   "confirmationsAttempted": 0,
+   "confirmationsAccepted": 0,
+   "confirmationsSkippedInfeasible": 47,
+   "stepsTaken": 50,
+   "exitCause": "bound",
+   "finalDepthMm": 200.853,
+   "rawSourceDepthMm": 200.349,
+   "perConfirmationMs": null,
+   "processWallSeconds": 1.0925380940316245
+  },
+  {
+   "dropMm": 0.1,
+   "targetDepthMm": 200.249,
+   "confirmationsAttempted": 0,
+   "confirmationsAccepted": 0,
+   "confirmationsSkippedInfeasible": 97,
+   "stepsTaken": 100,
+   "exitCause": "bound",
+   "finalDepthMm": 200.803,
+   "rawSourceDepthMm": 200.349,
+   "perConfirmationMs": null,
+   "processWallSeconds": 1.131660710030701
+  },
+  {
+   "dropMm": 0.2,
+   "targetDepthMm": 200.149,
+   "confirmationsAttempted": 0,
+   "confirmationsAccepted": 0,
+   "confirmationsSkippedInfeasible": 197,
+   "stepsTaken": 200,
+   "exitCause": "bound",
+   "finalDepthMm": 200.703,
+   "rawSourceDepthMm": 200.349,
+   "perConfirmationMs": null,
+   "processWallSeconds": 1.2027340240310878
+  },
+  {
+   "dropMm": 0.4,
+   "targetDepthMm": 199.94899999999998,
+   "confirmationsAttempted": 0,
+   "confirmationsAccepted": 0,
+   "confirmationsSkippedInfeasible": 397,
+   "stepsTaken": 400,
+   "exitCause": "bound",
+   "finalDepthMm": 200.503,
+   "rawSourceDepthMm": 200.349,
+   "perConfirmationMs": null,
+   "processWallSeconds": 1.2757739800144918
+  },
+  {
+   "dropMm": 0.8,
+   "targetDepthMm": 199.54899999999998,
+   "confirmationsAttempted": 0,
+   "confirmationsAccepted": 0,
+   "confirmationsSkippedInfeasible": 797,
+   "stepsTaken": 800,
+   "exitCause": "bound",
+   "finalDepthMm": 200.103,
+   "rawSourceDepthMm": 200.349,
+   "perConfirmationMs": null,
+   "processWallSeconds": 1.4447346570086665
+  }
+ ]
+}

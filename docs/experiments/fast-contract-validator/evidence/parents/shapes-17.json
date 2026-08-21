@@ -1,0 +1,143 @@
+{
+ "schemaVersion": 1,
+ "description": "shapes-17 pinned parent for the fast-contract-validator per-confirmation wall",
+ "requestSha256": "e8748f553554a1eddaebb75323d047dec24596b386c0030791032bc48af3d9d2",
+ "expectedPlacementFingerprint": "97daab7073faaa9122ea7e288161dbd0263382ad369de2ae04207dcb67c07440",
+ "reportedDepthMm": 200.903,
+ "independentDepthMm": 200.349,
+ "provenance": {
+  "source": "/var/lib/t3/tmp/fcv2/parents/shapes-17-run.json",
+  "binary": "/var/lib/t3/tmp/fcv2/bin-off",
+  "spec": "wall=20000,cells=13:15:17:19,v3=1,m34lanes=1,m34pconfirm=1",
+  "request": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_4111958b-3b3-1/tests/fixtures/shapes-17/2000x2700-compact/request.json"
+ },
+ "settings": {
+  "sheetShortAxisMm": 2000.0,
+  "sheetLongAxisMm": 2700.0,
+  "totalPaddingMm": 5.0,
+  "sheetEdgeClearanceMm": 5.0,
+  "clearanceSafetyMarginMm": 0.25,
+  "flatteningSagToleranceMm": 0.25
+ },
+ "placements": [
+  {
+   "pieceId": "shapes-17-1",
+   "rotationDeg": 335.0,
+   "mirrored": false,
+   "translateShortAxis": 613.626,
+   "translateLongAxis": 57.987
+  },
+  {
+   "pieceId": "shapes-17-2",
+   "rotationDeg": 130.0,
+   "mirrored": false,
+   "translateShortAxis": 340.6,
+   "translateLongAxis": 84.03
+  },
+  {
+   "pieceId": "shapes-17-3",
+   "rotationDeg": 180.0,
+   "mirrored": false,
+   "translateShortAxis": 105.366,
+   "translateLongAxis": 194.997
+  },
+  {
+   "pieceId": "shapes-17-4",
+   "rotationDeg": 22.5,
+   "mirrored": true,
+   "translateShortAxis": 1356.672,
+   "translateLongAxis": 142.143
+  },
+  {
+   "pieceId": "shapes-17-5",
+   "rotationDeg": 62.5,
+   "mirrored": true,
+   "translateShortAxis": 1811.784,
+   "translateLongAxis": 143.729
+  },
+  {
+   "pieceId": "shapes-17-6",
+   "rotationDeg": 50.0,
+   "mirrored": true,
+   "translateShortAxis": 995.754,
+   "translateLongAxis": 100.104
+  },
+  {
+   "pieceId": "shapes-17-7",
+   "rotationDeg": 177.5,
+   "mirrored": true,
+   "translateShortAxis": 1345.718,
+   "translateLongAxis": 194.051
+  },
+  {
+   "pieceId": "shapes-17-8",
+   "rotationDeg": 90.0,
+   "mirrored": false,
+   "translateShortAxis": 1361.804,
+   "translateLongAxis": 30.872
+  },
+  {
+   "pieceId": "shapes-17-9",
+   "rotationDeg": 265.0,
+   "mirrored": false,
+   "translateShortAxis": 524.237,
+   "translateLongAxis": 123.358
+  },
+  {
+   "pieceId": "shapes-17-10",
+   "rotationDeg": 122.5,
+   "mirrored": false,
+   "translateShortAxis": 1229.138,
+   "translateLongAxis": 116.362
+  },
+  {
+   "pieceId": "shapes-17-11",
+   "rotationDeg": 82.5,
+   "mirrored": false,
+   "translateShortAxis": 506.394,
+   "translateLongAxis": 75.978
+  },
+  {
+   "pieceId": "shapes-17-12",
+   "rotationDeg": 240.0,
+   "mirrored": false,
+   "translateShortAxis": 1045.489,
+   "translateLongAxis": 149.823
+  },
+  {
+   "pieceId": "shapes-17-13",
+   "rotationDeg": 227.5,
+   "mirrored": false,
+   "translateShortAxis": 1660.592,
+   "translateLongAxis": 143.151
+  },
+  {
+   "pieceId": "shapes-17-14",
+   "rotationDeg": 92.5,
+   "mirrored": false,
+   "translateShortAxis": 1997.75,
+   "translateLongAxis": 13.589
+  },
+  {
+   "pieceId": "shapes-17-15",
+   "rotationDeg": 180.0,
+   "mirrored": true,
+   "translateShortAxis": 1430.961,
+   "translateLongAxis": 195.349
+  },
+  {
+   "pieceId": "shapes-17-16",
+   "rotationDeg": 2.5,
+   "mirrored": false,
+   "translateShortAxis": 362.689,
+   "translateLongAxis": 4.446
+  },
+  {
+   "pieceId": "shapes-17-17",
+   "rotationDeg": 175.0,
+   "mirrored": true,
+   "translateShortAxis": 746.718,
+   "translateLongAxis": 187.826
+  }
+ ]
+}

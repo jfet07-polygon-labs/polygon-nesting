@@ -6362,3 +6362,164 @@ reaching a mode-34 slice at all, so the instrument destroyed the phase structure
 it existed to describe.
 
 Evidence, drivers and every battery: `docs/experiments/rotation-tax/`.
+
+## Closing the contract validator: the lemma was true for an unwritten reason, the margin is a derivation, and `pconfirm` stopped being worth anything
+
+Sol review 7 §1 refused to promote the broad phase and listed five things
+promotion needed. This is those five, worked, plus the recommendation. **No
+default is flipped by this round**; the recommendation is the deliverable.
+
+**The `!is_finite` lemma was true, and the previous chapter's proof of it was
+not.** That chapter argued "a skip requires both sets to have a point, hence a
+ring, hence a segment pair, hence a finite minimum". Sol was right that the last
+step does not follow: `point_segment_distance` has squares, products and a
+division that manufacture `inf` and `NaN` from finite inputs, `f64::min` returns
+the *non*-`NaN` operand and so leaves `INFINITY` standing, and a non-finite
+minimum is a **rejection**. The committed witness builds two material sets at
+`x = ±1.3e308` whose exact minimum is non-finite — so the scan row rejects them —
+and whose unguarded slab gap overflows to `+inf` and clears every threshold. The
+old certificate would have skipped a rejection.
+
+**But it is unreachable, and finding out why is the actual result.** The grid
+contract bounds the *source* ring at `9.007e12 mm` and does not survive the
+transform: `translate_x` is only checked finite. `validate_sheet` cannot be
+leaned on either — it runs after the transform, over outer rings only, against a
+sheet width that is itself only required to be finite. The bound that holds comes
+from **`interior_sample`**, via `transform_placement`, which rejects a region
+with no discoverable material interior. That needs two *distinct* `f64` y-levels
+and two distinct x-intersections; two distinct doubles of magnitude `M` differ by
+at least `M * 2^-53`, and both differences are bounded by the region's diameter,
+`2*sqrt(2)*9.007e12 ~= 2.55e13 mm`. So every coordinate `transform_placement`
+admits satisfies `|x| <= 2.55e13 * 2^53 ~= 2.29e29`, and nothing overflows there.
+**The validator's soundness was resting on an unstated consequence of a helper
+whose declared job is "this piece has no interior".** It now rests on a check:
+`CLEARANCE_SLAB_MAX_COORDINATE_MM = 2^112`, fail-closed, sitting `2.3e4` above
+that structural ceiling (so it refuses nothing contractual) and 385 binades below
+the `2^497` horizon where `orient2d`'s splitter would overflow (so it proves
+finiteness on its own). The domain is also what keeps `orient2d` exactly signed,
+which is what makes `rings_properly_cross` and `classify_point_in_ring` exact —
+load-bearing for the overlap half of every skip.
+
+**"A handful of ulps" is replaced by two separate things.** The slab side is now
+a certificate with no epsilon in it: diagonal projections are rounded *outward*,
+so the stored interval is a guaranteed superset and `next_down(gap)` is a
+rigorous lower bound on the true gap. The exact loop's own error is derived
+rather than asserted — tracking every rounding through the clamped parameter (in
+`[0, 1]`, so `S + p(E-S)` is a real point *on* the segment), `closest`, the
+difference and `hypot` gives `computed >= true - 16.5*C*u`, and the overlap half's
+rounded midpoints need `1.5*C*u`. `32u = 3.553e-15` dominates both; the shipped
+margin is `1e-12`, **281x** that, so nothing moved. The margin is computed as
+`max(shipped, derived)`, which makes the proof structural rather than tested.
+
+**The hot loop is byte-identical, on purpose.** The first implementation put the
+outward rounding on the gap and cost ~3x the filter's arithmetic per pair. Since
+`next_down` is monotonic, `next_down(g) >= t` is exactly `g >= next_up(t)`, so
+the rounding moved to the threshold — `O(directions)` per call instead of
+`O(pairs * directions)`. `provably_clear` is unchanged from the binary the 5.57x
+was measured on, which is what lets that number stand without a re-run.
+
+**The release shadow corpus, which is the gate the previous round could not
+pass.** Its `debug_assert` is compiled out of release, so its 5.9 M-pair census
+had no checking behind it, and its equivalence test compared one path against
+enumerated expectations rather than against an implementation.
+`validate_publication_exact_reference` now runs the validator with the broad
+phase *disarmed* — every slab `None`, every threshold infinite, costing the armed
+path nothing — so one release binary holds both implementations, and
+`contract_validator_shadow_audit` re-checks both bypassed tests per certified
+pair with explicit branches. Over five seeds: **1,051,980 layouts, 1,695,677
+pairs, 1,002,726 certified, 470,524 layouts rejected, zero verdict mismatches
+(whole `Result`, error message included) and zero per-pair audit mismatches**.
+The tightest certificate sits **2.1 nanometres** above the clearance — the
+randomized regime could only reach 7.8e-2 mm, so a deterministic axis-aligned
+sweep steps the separation through `clearance + k*margin` for `k = -10..10`, and
+no `k < 0` was ever certified. Holes, multi-region sets, slivers to 0.001 mm and
+the contractual `0.0005 mm` clearance are all in it.
+
+**The density prediction is refuted, in the favourable direction.** The previous
+chapter's caveat was that 96% was measured only at 171–179 mm and "could be
+materially lower" at the 155 mm record line. Walking the campaign's own pinned
+layouts — the same 61 pieces on the same sheet — the record line at
+155.264–164.038 mm skips **96.47%** against the band's **96.02%**. Packing 16 mm
+deeper costs nothing: with 61 pieces on a 2000x2700 sheet most pairs are across
+the sheet, and depth compression moves pieces closer only locally. Every fixture
+the campaign has lands in **95.5%–97.2%** (shapes-17 95.90, triangle-20 97.19,
+small-8 96.43).
+
+**And the 5.93 M-pair census is bit-identical to the previous chapter's** —
+3,243 calls, 5,934,690 pairs, 5,698,534 proved clear, `skipRate`
+0.9602075255826337, every per-parent rate matching. The guard, the outward
+rounding and the doubly-bumped threshold changed **not one of 5,934,690
+pair-level certificate decisions**. The four pinned gates now run against *four*
+binaries rather than three, which separates two questions the old three-way
+conflated: `base-off == off` says the default build did not move, and
+`base-on == on` says the **certificate** did not move — the question that only
+exists because this round edited the flag-on path. Both hold, with all four gates
+hitting their pins and one digest per gate across all four arms.
+
+**Per-confirmation coverage, including two honest absences.** On triangle-20,
+paired and interleaved over 10 rounds at equal walk, **0.2090 ms → 0.1062 ms,
+1.97x, 10/10 above parity** — not 5.57x, and that is the right direction: 20
+pieces offer 190 pairs where mixed-61 offers 1,830, so the filter's value scales
+with the pairs it removes rather than with the fraction. On shapes-17, the
+eight-piece request and the 155.264 mm record parent there is **no
+per-confirmation wall at all**, because the validator is never called: all three
+replay with `confirmationsAttempted = 0` and `confirmationsSkippedInfeasible`
+equal to `stepsTaken - 3`, and a drop sweep over `0.05–0.8 mm` on shapes-17 found
+zero confirmations at every step. The proxy tier calls every reduced layout
+infeasible and the exact validator is never reached. On those fixtures the
+feature is worth exactly zero — not because the filter fails but because the
+operator it accelerates never gets to its expensive step.
+
+**The factorial answers the `pconfirm` question both reviewers raised, and the
+answer turned out to be about the box.** Four cells at a 10 s wall, 3 seeds x 3
+rounds, paired and interleaved with cell order rotated:
+
+| cell | median depth | per accepted confirmation |
+|---|---:|---:|
+| off / pconfirm 0 | 173.575 mm | 4.6116 ms |
+| **on** / pconfirm 0 | **170.453 mm** | 0.7952 ms |
+| off / pconfirm 1 | 172.288 mm | 0.9870 ms |
+| **on** / pconfirm 1 | **168.756 mm** | **0.2774 ms** |
+
+The tax hypothesis is **refuted at the microbenchmark**: `pconfirm` still buys
+2.87x on top of the filter, so its dispatch has not overtaken the work. And both
+levers compose — baseline → fcv alone is **+3.122 mm, 9/0/0**; baseline →
+pconfirm alone is +1.882 mm, 9/0/0; baseline → both is **+4.819 mm, 9/0/0**; and
+fcv alone → both is **+1.527 mm, 5 wins / 3 ties / 1 loss**.
+
+**That last contrast is the one to be careful about, and this chapter had it
+wrong once.** The battery was run twice on behaviourally identical binaries. The
+first pass, on a busier box, put `on / pconfirm 1` at 171.111 mm and made
+`fcv alone → both` **+0.000 mm, 4/3/2** — and it was written up as "`pconfirm`
+buys nothing in depth", with a recommendation to ship it disarmed. **That is
+retracted.** Both batteries are kept
+(`evidence/factorial-10s-loaded-box.json`), because together they say something
+neither says alone: **the two `pconfirm=0` cells are identical across the two
+batteries to the millimetre on every seed, and the `on / pconfirm 1` cell moved
+2.4 mm between them.** `pconfirm`'s value is a function of the cores actually
+available; the serial arm's is a constant. On a contended machine the parallel
+confirmation decays toward parity with serial.
+
+It also costs cross-round reproducibility, and over both batteries that is 24
+seed-cells with no ambiguity: **every one of the 12 `pconfirm=0` seed-cells
+reproduced its depth exactly, and all four cells that varied were `pconfirm=1`.**
+At a wall budget the parallel confirmation's jitter becomes how many actions fit,
+and therefore depth. (The work-budget determinism gate still passes on all 18
+cells with both binaries; this is a wall-budget statement.)
+
+**Recommendation: arm `fast-contract-validator`, and keep `m34pconfirm=1`** —
+which is what the previous chapter shipped, so this confirms it rather than
+changing it. The qualification is new: a deployment that cannot promise spare
+cores should expect the filter's `+3.1 mm` and not the combined `+4.8 mm`, and
+one that needs reproducible wall-budget runs should prefer `m34pconfirm=0` and
+accept `+3.1 mm`.
+
+**What this does not settle.** `fcv on, pconfirm 1` at 168.756 mm reproduces the
+rotation-tax chapter's 168.484 mm to 0.27 mm on the same commit, spec and
+request — so this round confirms that number rather than improving on it, and
+the gap to Sparrow's 150.165 mm is **18.6 mm**, exactly where the previous
+chapter left it. Absolute wall-budget depths still do not travel between
+batteries; only the paired contrasts inside one window are the claim, and the
+retraction above is the demonstration of why. The seed set is still three.
+Everything is still one x86_64 box. This round makes an operator sound and
+covered, and adds no degree of freedom.
