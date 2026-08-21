@@ -639,6 +639,12 @@ impl CompressionSchedule {
         self.confirmations_accepted
     }
 
+    /// Whole-layout exact confirmations asked for, accepted or not. Read by the
+    /// gate that pins *"a drain asks the exact tier nothing"*.
+    pub fn confirmations_attempted(&self) -> usize {
+        self.confirmations_attempted
+    }
+
     /// How much of one batch's work budget is left, in the schedule's own work
     /// currency, given the reading it started from. `None` under
     /// [`CompressionScheduleSettings::batch_work_units`] of `None`, which is the

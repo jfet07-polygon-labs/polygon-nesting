@@ -5403,6 +5403,29 @@ fn run_coupled_dynamic_separator_experiment<'a>(
     }
 }
 
+/// The mode-34 interruption, as one argument.
+///
+/// It is a struct rather than two parameters because the two halves are only
+/// ever meaningful together: a policy that may answer
+/// [`SliceControl::Suspend`] without a slot to park the slice in is a policy
+/// that would drop a live slice on the floor, and a slot without a policy is
+/// one nothing can ever fill.
+///
+/// In a build without `compression-schedule` the type still exists and carries
+/// nothing, so [`dispatch_persistent_vacancy_mode`] has one signature in every
+/// feature configuration and the separator's call site is `None` in all of them.
+#[cfg(feature = "jagua-experimental")]
+pub(super) struct SliceInterruption<'s, 'a> {
+    /// Consulted at every checkpoint. See [`drive_slice_batches`].
+    #[cfg(feature = "compression-schedule")]
+    pub control: &'s mut ScheduleSliceControl<'s>,
+    /// Where a suspended slice is parked for the caller to resume.
+    #[cfg(feature = "compression-schedule")]
+    pub suspended: &'s mut Option<Box<SuspendedScheduleSlice<'a>>>,
+    #[cfg(not(feature = "compression-schedule"))]
+    pub unused: std::marker::PhantomData<(&'s (), &'a ())>,
+}
+
 /// Runs one deep-operator (persistent-vacancy) mode against one parent layout.
 ///
 /// This is the whole of what the coupled separator's mode slot used to do
@@ -5417,28 +5440,6 @@ fn run_coupled_dynamic_separator_experiment<'a>(
 /// adoption rule lives in [`adopt_published_placements`] and is the only door
 /// to a published result for either caller.
 ///
-/// The mode-34 interruption, as one argument.
-///
-/// It is a struct rather than two parameters because the two halves are only
-/// ever meaningful together: a policy that may answer
-/// [`SliceControl::Suspend`] without a slot to park the slice in is a policy
-/// that would drop a live slice on the floor, and a slot without a policy is
-/// one nothing can ever fill.
-///
-/// In a build without `compression-schedule` the type still exists and carries
-/// nothing, so the dispatch has one signature in every feature configuration
-/// and the separator's call site is `None` in all of them.
-#[cfg(feature = "jagua-experimental")]
-pub(super) struct SliceInterruption<'s, 'a> {
-    /// Consulted at every checkpoint. See [`drive_slice_batches`].
-    #[cfg(feature = "compression-schedule")]
-    pub control: &'s mut ScheduleSliceControl<'s>,
-    /// Where a suspended slice is parked for the caller to resume.
-    #[cfg(feature = "compression-schedule")]
-    pub suspended: &'s mut Option<Box<SuspendedScheduleSlice<'a>>>,
-    #[cfg(not(feature = "compression-schedule"))]
-    pub unused: std::marker::PhantomData<(&'s (), &'a ())>,
-}
 /// `interruption` is the mode-34 checkpoint policy and the slot a suspended
 /// slice is parked in. Every other mode ignores it, and `None` is the previous
 /// round's behaviour for mode 34 as well: run the slice to completion.
@@ -7134,7 +7135,22 @@ impl SuspendedScheduleSlice<'_> {
         self.run.batches_run
     }
 
+    /// Steps the slice has taken so far.
+    pub(super) fn steps_taken(&self) -> usize {
+        self.run.schedule.steps_taken()
+    }
+
+    /// Whole-layout exact confirmations the slice has asked for so far.
+    pub(super) fn confirmations_attempted(&self) -> usize {
+        self.run.schedule.confirmations_attempted()
+    }
+
     /// The slice's own work meter, in the portfolio's currency.
+    ///
+    /// One step behind the lane at a batch boundary, deliberately: the
+    /// schedule's meter is written by `may_step`, which runs at the *top* of a
+    /// step. See [`ScheduleSliceRun::stop_at_checkpoint`], which is where the
+    /// two are reconciled.
     pub(super) fn work_units(&self) -> usize {
         self.run.schedule.work_units()
     }
@@ -7404,6 +7420,19 @@ impl ScheduleSliceRun<'_> {
     /// What the slice hands back is `published_placements`, which the exact
     /// tier has already accepted.
     fn stop_at_checkpoint(&mut self) {
+        // The schedule's own meter first, and only then the exit. `may_step`
+        // is what copies the lane's query count onto the schedule, and it is
+        // called at the *top* of a step - so at a batch boundary the schedule's
+        // `work_units()` is one step behind the lane. The uninterrupted arm
+        // catches up inside `finish_tail`; a stopped slice has no tail, so
+        // without this line it would under-report the work it spent and the
+        // coordinator would under-charge it by the last step.
+        //
+        // The order matters the other way round too: `may_step` writes `exit`,
+        // so `note_interrupted` has to be second or the report would say
+        // `bound` about a slice its caller stopped.
+        let spent = self.queries_spent();
+        self.schedule.may_step(spent);
         self.finished = true;
         self.interrupted = true;
         self.schedule.note_interrupted();
@@ -21951,12 +21980,16 @@ mod tests {
                 "stop {stop_after}: it did not actually stop early"
             );
             // The tail confirmation runs when the *slice* ends and never when a
-            // batch does; a stop is a batch boundary, so it must not have run.
+            // batch does; a stop is a batch boundary, so it must not have run,
+            // and the floor the checkpoint reported must be the floor the report
+            // carries.
             assert_eq!(
-                report.confirmations_attempted,
-                last.confirmations_accepted
-                    + (report.confirmations_attempted - report.confirmations_accepted),
-                "stop {stop_after}: the accepted count moved after the checkpoint"
+                report.confirmations_accepted, last.confirmations_accepted,
+                "stop {stop_after}: an accepted confirmation landed after the checkpoint"
+            );
+            assert_eq!(
+                report.final_depth_mm, last.frontier_mm,
+                "stop {stop_after}: the frontier moved after the checkpoint"
             );
             // The published layout re-validates against the real request, which
             // is the only sense in which "exact-valid" is a claim rather than a
@@ -22182,6 +22215,13 @@ mod tests {
         );
     }
 
+    /// The exact half of the work unit, for a given confirmation count: five
+    /// units per pair test, and one confirmation asks every pair.
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn work_before_exact(confirmations: usize, pieces: &[GeneralFastPiece<'_>]) -> usize {
+        confirmations * pieces.len() * (pieces.len() - 1) / 2
+    }
+
     /// A slice the caller suspends and never resumes still reports itself.
     ///
     /// The coordinator's drain path. Nothing further is run - no batch, no
@@ -22233,7 +22273,9 @@ mod tests {
             )
         });
         let slice = parked.take().expect("the first checkpoint suspended");
-        let steps_before = slice.batches_run();
+        let batches_before = slice.batches_run();
+        let steps_before = slice.steps_taken();
+        let confirmations_before = slice.confirmations_attempted();
         let work_before = slice.work_units();
         let outcome = stop_suspended_slice(slice).expect("a drained slice reports");
         let mut drained = None;
@@ -22254,10 +22296,21 @@ mod tests {
             .expect("the drain writes the report");
         assert!(report.interrupted);
         assert_eq!(report.exit_cause, "interrupted");
-        assert_eq!(report.batches, steps_before);
-        assert_eq!(
-            report.work_units, work_before,
-            "the drain spends nothing further"
+        assert_eq!(report.batches, batches_before);
+        // The drain runs no step and asks the exact tier nothing.
+        assert_eq!(report.steps_taken, steps_before);
+        assert_eq!(report.confirmations_attempted, confirmations_before);
+        assert_eq!(report.exact_pair_tests, work_before_exact(confirmations_before, &pieces));
+        // Its work is nonetheless *larger* than the checkpoint's reading, and
+        // by exactly the amount the schedule's meter was behind the lane: the
+        // schedule learns the lane's query count in `may_step`, at the top of a
+        // step, so a batch boundary always sits one step behind. A drain that
+        // reported the stale number would under-charge the slice by that step,
+        // which is the bug this assertion exists to keep fixed.
+        assert!(
+            report.work_units >= work_before,
+            "the drain must not lose work: {} < {work_before}",
+            report.work_units
         );
         assert_eq!(
             population.independent_depth_mm,

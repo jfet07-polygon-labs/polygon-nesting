@@ -334,7 +334,72 @@ bound it, and they are different in kind:
 
 ## 13. Honest caveats
 
-<!--CAVEATS-->
+* **A wall stop cannot be deterministic, and this one is not.** `m34wallstop`
+  reads a clock at a checkpoint, so two processes agree on the layout only while
+  they cross the deadline between the same two checkpoints. That is the trade,
+  it is stated where the field is defined, and it is why the key ships off. A
+  caller who needs one document per seed leaves it off and accepts the overrun;
+  a caller who needs ten seconds arms it and accepts the spread. The §11 table
+  reports both ends of that trade rather than one.
+
+* **The barren rule applies to every batch of a past-bound slice, not only to
+  the batches past the bound.** An exact reading would need the checkpoint to
+  carry "am I past the bound", which is a field on the serialised checkpoint and
+  a change to a document the previous round pinned. The simplification is safe
+  in one direction only: with `m34past` off, no checkpoint policy is installed at
+  all, so no pinned number in this repository is measured by a coordinator that
+  has ever consulted the rule. It is *not* safe as a reading of the sweep, and
+  §8's table therefore reports the barren stops separately from the work-cap
+  stops rather than folding them together.
+
+* **The barren counter does not survive a suspension.** It lives in the
+  checkpoint policy's closure, and `resume_suspended_slice` builds a fresh one.
+  So a slice that is suspended and resumed gets its barren run reset. This
+  matters only when `m34past` and `m34yield` are armed together, which is the
+  `pastyield` arm and nothing that ships.
+
+* **The interleave's batch size is a fraction of the *remaining budget*, not of
+  the slice's expected cost.** With `m34yield` armed and no `m34batch`, the batch
+  is `remaining_to(deadline) / 8`, and on the measured band a bounded slice costs
+  far less than an eighth of what is left - so a nine-rung slice yields once or
+  twice rather than eight times. The mechanism is not limited by that; the
+  default is. A caller who wants a finer interleave names `m34batch` and gets it.
+
+* **A suspended call publishes but carries no slice report, so two sums over the
+  document disagree.** Work totalled over `operatorCalls` and work totalled over
+  slice reports are different numbers when a slice was suspended, and only the
+  second is the slice's own meter. §3.1 says so; every driver here reads the
+  second.
+
+* **The self-metered charge of an interleaved slice is slightly conservative.**
+  `settle_operator_charge` charges `max(global, self)` per call, and a resumed
+  call's self-meter is the *whole* slice's while its global delta is only the
+  resumed part's. So an interleaved slice is charged marginally more than the
+  same slice run atomically. It is an over-charge and not an under-charge, which
+  is the safe direction for a budget, and it is another reason the interleave is
+  a key rather than a default.
+
+* **`m34past` moves the depth in the wrong direction at the budget the user
+  priority names, and §8 is that result.** The lever works - the bound is
+  genuinely unlocked, the first slice walks further than 1.6160 mm, and the exit
+  stops being `bound` - and the run is worse for it on this fixture at this
+  budget. `robust-plan` §13.1's guess that *"the other classes spend it better
+  than a denser slice would"* is the thing this round measured, and it survived.
+
+* **Three fixtures, three seeds and a handful of rounds are not a distribution.**
+  Every table here says its `n`. The per-seed table is printed beside the median
+  of seed medians for exactly this reason: a median of three is not three
+  agreeing runs.
+
+* **The box was shared with this round's own gate runs for part of the window.**
+  Every driver records `os.getloadavg()` before and after every process and every
+  evidence file carries the min/median/max; the load line is printed above each
+  wall table rather than at the end of the document.
+
+* **Nothing here is wired into a production route.** `m34wallstop`, `m34yield`,
+  `m34past` and its two dials are spec keys on the benchmark example, the
+  coordinator that reads them is still `coordinator_v3`, and `coordinator_v3` is
+  still off by default.
 
 ## 14. Reproducing this
 
