@@ -27,7 +27,8 @@ use polygon_nesting_core::search::general_relaxed::{
     GeneralRelaxedSettings,
 };
 use polygon_nesting_core::search::portfolio::{
-    self, BasinTrigger, PortfolioBudget, PortfolioOutcome, PortfolioSettings, ProbeArm,
+    self, BasinTrigger, PlanCalibrationSource, PortfolioBudget, PortfolioOutcome,
+    PortfolioSettings, ProbeArm,
 };
 use polygon_nesting_core::search::shadow_rescore;
 use polygon_nesting_core::validation::general_polygon::{
@@ -2046,6 +2047,47 @@ fn parse_portfolio_spec(
             "planfirst" => settings.plan_first_tranche = value.parse()?,
             "plantranches" => settings.plan_max_tranches = value.parse()?,
             "planhorizon" => settings.plan_tranche_horizon = value.parse()?,
+            // The load-robustness levers, all three off by default. See
+            // `docs/experiments/robust-plan/`.
+            //
+            // `planprobe=<k>` cuts phase 0 into k equal-work buckets and prices
+            // the box at the fastest of them - the least-loaded estimate this
+            // run can see. `plancal=<path>` takes the clock out of the decision
+            // entirely, keyed on `probe_work_units`, which is a counter;
+            // `plancalwrite=1` merges this run's own probe back into that file
+            // under the min rule, and is the calibration pass rather than the
+            // measurement; `plancalband=<x>` is how far the live probe may sit
+            // from the file before the file is refused.
+            "planprobe" => {
+                settings.plan_probe_buckets = match value {
+                    // The measured default, by name, so a caller who wants the
+                    // mechanism does not have to remember the number and a
+                    // driver that pins a different one is visibly doing so.
+                    "on" => portfolio::PLAN_PROBE_BUCKETS,
+                    other => other.parse()?,
+                }
+            }
+            "plancal" => {
+                settings.plan_calibration_path =
+                    (!value.is_empty()).then(|| value.to_owned())
+            }
+            "plancalwrite" => settings.plan_calibration_write = value != "0",
+            "plancalband" => settings.plan_calibration_band = value.parse()?,
+            // The confirmation-density lever, first m34 slice only. See
+            // `PortfolioSettings::schedule_first_slice_step_grid`.
+            //
+            // `#[cfg]`-gated for the same reason `m34batch` is: a build without
+            // the compression schedule has no first slice, and accepting the key
+            // there would let a driver believe it had armed something. An
+            // unarmed binary exits non-zero with `unknown portfolio spec key`.
+            #[cfg(feature = "compression-schedule")]
+            "m34grid1" => {
+                settings.schedule_first_slice_step_grid = Some(value.parse()?)
+            }
+            #[cfg(feature = "compression-schedule")]
+            "m34confirm1" => {
+                settings.schedule_first_slice_confirm_every = Some(value.parse()?)
+            }
             "slots" => settings.basin_slots = value.parse()?,
             "basins" => {
                 settings.basin_trigger = match value {
@@ -2394,6 +2436,16 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
             // `null` is dropped by every digest in this campaign and a `1.0`
             // is not.
             "firstTranche": (plan.first_tranche < 1.0).then_some(plan.first_tranche),
+            // Where the probe wall came from, and it belongs in the
+            // deterministic half: two processes that priced their plan off
+            // different sources did not run the same calibration, so a digest
+            // has to say so even when they happen to land on the same rung.
+            // Emitted only when it is not the shipped `live`, by the same rule
+            // as `firstTranche`, so an unarmed run's document is byte for byte
+            // the one `docs/experiments/calibrated-plan/` measured.
+            "calibrationSource": (plan.calibration_source
+                != PlanCalibrationSource::Live)
+                .then(|| plan.calibration_source.name()),
         })
     });
     let plan_calibration = outcome.plan.map(|plan| {
@@ -2401,6 +2453,13 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
             "probeSeconds": plan.probe_seconds,
             "probeRateUnitsPerSecond": plan.probe_rate_units_per_second,
             "rawUnits": plan.raw_units,
+            // The wall the arithmetic used, which is `probeSeconds` in the
+            // shipped mode and a file constant when the calibration is in force.
+            // It is here, in the clock half, because it is a clock reading in
+            // two of the three sources; `plan.calibrationSource` is the
+            // deterministic statement about which.
+            "probeEffectiveSeconds": plan.probe_effective_seconds,
+            "probeSamples": plan.probe_samples,
         })
     });
     // The same split, one level down. `tranches` is what the run *decided* -
