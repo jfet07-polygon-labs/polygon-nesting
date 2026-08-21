@@ -333,6 +333,51 @@ fn continuous_rotation_requested() -> bool {
         .unwrap_or(false)
 }
 
+/// The sparse operator's two booleans on the **direct mode-34 door**, for the
+/// same reason [`continuous_rotation_requested`] exists: the equal-work
+/// matched-arm gate replays a pinned parent through mode 34 and never enters
+/// the coordinator, so it cannot reach a portfolio spec key. Under the
+/// coordinator these are `roteq=` and `sparserot=`.
+#[cfg(feature = "sparse-rotation")]
+fn env_flag(name: &str) -> bool {
+    env::var(name)
+        .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+        .unwrap_or(false)
+}
+
+/// Design C's budget on the direct door, as
+/// `POLYGON_NESTING_SE2_WITNESS="trust:iterations:maxcalls"`. Unset is off,
+/// which is every invocation that does not ask for it.
+#[cfg(feature = "sparse-rotation")]
+fn se2_witness_requested()
+-> Result<Option<polygon_nesting_core::search::general_relaxed::Se2WitnessSettings>, String> {
+    let Ok(spec) = env::var("POLYGON_NESTING_SE2_WITNESS") else {
+        return Ok(None);
+    };
+    if spec.is_empty() || spec == "0" {
+        return Ok(None);
+    }
+    let parts = spec.split(':').collect::<Vec<_>>();
+    if parts.len() != 3 {
+        return Err(format!(
+            "POLYGON_NESTING_SE2_WITNESS takes trust:iterations:maxcalls, not `{spec}`"
+        ));
+    }
+    Ok(Some(
+        polygon_nesting_core::search::general_relaxed::Se2WitnessSettings {
+            trust_radius_mm: parts[0]
+                .parse()
+                .map_err(|_| format!("se2 witness trust radius: `{}`", parts[0]))?,
+            iterations: parts[1]
+                .parse()
+                .map_err(|_| format!("se2 witness iterations: `{}`", parts[1]))?,
+            max_calls: parts[2]
+                .parse()
+                .map_err(|_| format!("se2 witness max calls: `{}`", parts[2]))?,
+        },
+    ))
+}
+
 /// Whether mode 34 should also emit the per-pair classification Sol review 6
 /// §2 asks for (`parentPairClassification`).
 ///
@@ -645,6 +690,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(feature = "continuous-rotation")]
         {
             relaxed_settings.continuous_rotation = continuous_rotation_requested();
+        }
+        #[cfg(feature = "sparse-rotation")]
+        {
+            relaxed_settings.rotation_equivariant_offset = env_flag(
+                "POLYGON_NESTING_ROTATION_EQUIVARIANT",
+            ) && relaxed_settings.continuous_rotation;
+            relaxed_settings.sparse_rotation = env_flag("POLYGON_NESTING_SPARSE_ROTATION")
+                && persistent_vacancy_mode == 34;
+            relaxed_settings.se2_witness =
+                se2_witness_requested()?.filter(|_| relaxed_settings.sparse_rotation);
         }
         relaxed_settings
     };
@@ -2004,6 +2059,44 @@ fn parse_portfolio_spec(
             // under an armed label.
             #[cfg(feature = "continuous-rotation")]
             "crot" => settings.continuous_rotation = value != "0",
+            // The sparse operator's three keys, unknown in a build without
+            // `sparse-rotation` for exactly the reason `crot` is unknown without
+            // `continuous-rotation`.
+            //
+            // `roteq` and `sparserot` are independent on purpose: the
+            // equivariant construction is a quality question about the geometry
+            // and design B is a question about when to propose, and a battery
+            // that could only move them together could not attribute either.
+            #[cfg(feature = "sparse-rotation")]
+            "roteq" => settings.rotation_equivariant_offset = value != "0",
+            #[cfg(feature = "sparse-rotation")]
+            "sparserot" => settings.sparse_rotation = value != "0",
+            #[cfg(feature = "sparse-rotation")]
+            "rotbit" => settings.sparse_rotation_bit = value != "0",
+            // Design C, as `trust:iterations:maxcalls` or `0` for off. One key
+            // rather than three because the three are one budget: a trust radius
+            // without an iteration count is not a price.
+            #[cfg(feature = "sparse-rotation")]
+            "se2w" => {
+                settings.se2_witness = if value == "0" || value.is_empty() {
+                    None
+                } else {
+                    let parts = value.split(':').collect::<Vec<_>>();
+                    if parts.len() != 3 {
+                        return Err(format!(
+                            "se2w takes trust:iterations:maxcalls, not {value:?}"
+                        )
+                        .into());
+                    }
+                    Some(
+                        polygon_nesting_core::search::general_relaxed::Se2WitnessSettings {
+                            trust_radius_mm: parts[0].parse()?,
+                            iterations: parts[1].parse()?,
+                            max_calls: parts[2].parse()?,
+                        },
+                    )
+                };
+            }
             "barren" => settings.barren_action_patience = value.parse()?,
             "divq" => settings.diversify_in_queue = value != "0",
             "m34wall" => settings.schedule_wall_prior = value != "0",
@@ -2093,6 +2186,17 @@ fn schedule_slice_json(
         "rotationSurrogateBuildMs": slice.rotation_surrogate_build_ms,
         "rotationSurrogateCells": slice.rotation_surrogate_cells,
         "rotationBuildsRefused": slice.rotation_builds_refused,
+        "sparseRotation": slice.sparse_rotation,
+        "rotationEquivariantOffset": slice.rotation_equivariant_offset,
+        "rotationEquivariantBuilds": slice.rotation_equivariant_builds,
+        "rotationEquivariantFallbacks": slice.rotation_equivariant_fallbacks,
+        "sparseRotationEpisodes": slice.sparse_rotation_episodes,
+        "sparseRotationPiecesArmed": slice.sparse_rotation_pieces_armed,
+        "sparseRotationSweeps": slice.sparse_rotation_sweeps,
+        "se2WitnessCalls": slice.se2_witness_calls,
+        "se2WitnessAccepted": slice.se2_witness_accepted,
+        "se2WitnessMs": slice.se2_witness_ms,
+        "se2WitnessBoughtMm": slice.se2_witness_bought_mm,
     })
 }
 

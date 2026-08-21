@@ -753,6 +753,17 @@ impl CompressionSchedule {
             rotation_surrogate_build_ms: 0.0,
             rotation_surrogate_cells: 0,
             rotation_builds_refused: 0,
+            sparse_rotation: false,
+            rotation_equivariant_offset: false,
+            rotation_equivariant_builds: 0,
+            rotation_equivariant_fallbacks: 0,
+            sparse_rotation_episodes: 0,
+            sparse_rotation_pieces_armed: 0,
+            sparse_rotation_sweeps: 0,
+            se2_witness_calls: 0,
+            se2_witness_accepted: 0,
+            se2_witness_ms: 0.0,
+            se2_witness_bought_mm: 0.0,
             current_pose_overlay_off_grid_pieces: 0,
             current_pose_overlay_setup_ms: 0.0,
             parent_pair_classification: Vec::new(),
@@ -1069,6 +1080,37 @@ pub struct GeneralCompressionScheduleDiagnostics {
     /// the first thing to read if an armed slice under-performs.
     pub rotation_surrogate_cells: usize,
     pub rotation_builds_refused: usize,
+    /// The sparse operator's own account of the slice, and it answers a
+    /// different question from the six above: those price *rotation*, these
+    /// price **sparsity** and the construction it depends on.
+    ///
+    /// * **coverage** - `rotation_equivariant_builds` against
+    ///   `rotation_surrogate_builds`. Equal means every rung took the offset-once
+    ///   path; a gap is `rotation_equivariant_fallbacks` pieces whose offset ring
+    ///   did not survive rotation onto the grid;
+    /// * **sparsity** - `sparse_rotation_episodes` is the number of stalls that
+    ///   armed anything at all, `sparse_rotation_pieces_armed / episodes` is the
+    ///   mean episode width against the piece count, and
+    ///   `sparse_rotation_sweeps` is how many sweeps ran with an episode open.
+    ///   If the last is close to the slice's whole sweep count, design B has
+    ///   quietly become design A and the depth delta must be read that way;
+    /// * **witness** - the design-C counters. `se2_witness_ms` is the wall the
+    ///   certificate took *out of this slice's repair budget*, and it is
+    ///   reported whether or not the witness bought anything, because a
+    ///   proposal source that costs a slice and returns nothing is the finding.
+    ///
+    /// All zero without `sparse-rotation` compiled in.
+    pub sparse_rotation: bool,
+    pub rotation_equivariant_offset: bool,
+    pub rotation_equivariant_builds: usize,
+    pub rotation_equivariant_fallbacks: usize,
+    pub sparse_rotation_episodes: usize,
+    pub sparse_rotation_pieces_armed: usize,
+    pub sparse_rotation_sweeps: usize,
+    pub se2_witness_calls: usize,
+    pub se2_witness_accepted: usize,
+    pub se2_witness_ms: f64,
+    pub se2_witness_bought_mm: f64,
     /// Per-pair classification of the parent's proxy collisions, empty unless
     /// `current_pose_overlay_classify_pairs` armed it.
     ///

@@ -1,0 +1,216 @@
+{
+ "budget": "30",
+ "binaries": [
+  "/var/lib/t3/tmp/sparserot/bin/meas"
+ ],
+ "batteries": [
+  "/var/lib/t3/tmp/sparserot/out/curve-mixed61/battery.json",
+  "/var/lib/t3/tmp/sparserot/out/curve-mixed61-seeds345/battery.json"
+ ],
+ "perSeed": {
+  "0": {
+   "rounds": 3,
+   "medianDeltaMm": -0.027999999999991587,
+   "minDeltaMm": -0.13800000000000523,
+   "maxDeltaMm": 1.0089999999999861,
+   "baseMedianMm": 165.262,
+   "armMedianMm": 165.124,
+   "baseWithinSeedSpreadMm": 0.11000000000001364,
+   "armWithinSeedSpreadMm": 1.1469999999999914
+  },
+  "1": {
+   "rounds": 3,
+   "medianDeltaMm": 2.936000000000007,
+   "minDeltaMm": 2.936000000000007,
+   "maxDeltaMm": 2.936000000000007,
+   "baseMedianMm": 160.01,
+   "armMedianMm": 162.946,
+   "baseWithinSeedSpreadMm": 0.0,
+   "armWithinSeedSpreadMm": 0.0
+  },
+  "2": {
+   "rounds": 3,
+   "medianDeltaMm": 2.551000000000016,
+   "minDeltaMm": 2.551000000000016,
+   "maxDeltaMm": 3.2120000000000175,
+   "baseMedianMm": 166.666,
+   "armMedianMm": 169.217,
+   "baseWithinSeedSpreadMm": 0.6610000000000014,
+   "armWithinSeedSpreadMm": 0.0
+  },
+  "3": {
+   "rounds": 3,
+   "medianDeltaMm": 0.22100000000000364,
+   "minDeltaMm": -0.367999999999995,
+   "maxDeltaMm": 0.7750000000000057,
+   "baseMedianMm": 166.031,
+   "armMedianMm": 166.806,
+   "baseWithinSeedSpreadMm": 3.4669999999999845,
+   "armWithinSeedSpreadMm": 2.877999999999986
+  },
+  "4": {
+   "rounds": 3,
+   "medianDeltaMm": 1.375,
+   "minDeltaMm": -0.9960000000000093,
+   "maxDeltaMm": 2.447999999999979,
+   "baseMedianMm": 164.198,
+   "armMedianMm": 165.573,
+   "baseWithinSeedSpreadMm": 5.225999999999999,
+   "armWithinSeedSpreadMm": 1.7820000000000107
+  },
+  "5": {
+   "rounds": 3,
+   "medianDeltaMm": 1.5900000000000034,
+   "minDeltaMm": 1.2870000000000061,
+   "maxDeltaMm": 2.158999999999992,
+   "baseMedianMm": 166.415,
+   "armMedianMm": 168.005,
+   "baseWithinSeedSpreadMm": 0.4310000000000116,
+   "armWithinSeedSpreadMm": 1.3029999999999973
+  }
+ },
+ "perRound": [
+  {
+   "seed": 0,
+   "round": 0,
+   "baseMm": 165.262,
+   "armMm": 166.271,
+   "deltaMm": 1.0089999999999861
+  },
+  {
+   "seed": 0,
+   "round": 1,
+   "baseMm": 165.262,
+   "armMm": 165.124,
+   "deltaMm": -0.13800000000000523
+  },
+  {
+   "seed": 0,
+   "round": 2,
+   "baseMm": 165.152,
+   "armMm": 165.124,
+   "deltaMm": -0.027999999999991587
+  },
+  {
+   "seed": 1,
+   "round": 0,
+   "baseMm": 160.01,
+   "armMm": 162.946,
+   "deltaMm": 2.936000000000007
+  },
+  {
+   "seed": 1,
+   "round": 1,
+   "baseMm": 160.01,
+   "armMm": 162.946,
+   "deltaMm": 2.936000000000007
+  },
+  {
+   "seed": 1,
+   "round": 2,
+   "baseMm": 160.01,
+   "armMm": 162.946,
+   "deltaMm": 2.936000000000007
+  },
+  {
+   "seed": 2,
+   "round": 0,
+   "baseMm": 166.005,
+   "armMm": 169.217,
+   "deltaMm": 3.2120000000000175
+  },
+  {
+   "seed": 2,
+   "round": 1,
+   "baseMm": 166.666,
+   "armMm": 169.217,
+   "deltaMm": 2.551000000000016
+  },
+  {
+   "seed": 2,
+   "round": 2,
+   "baseMm": 166.666,
+   "armMm": 169.217,
+   "deltaMm": 2.551000000000016
+  },
+  {
+   "seed": 3,
+   "round": 0,
+   "baseMm": 167.469,
+   "armMm": 167.101,
+   "deltaMm": -0.367999999999995
+  },
+  {
+   "seed": 3,
+   "round": 1,
+   "baseMm": 164.002,
+   "armMm": 164.223,
+   "deltaMm": 0.22100000000000364
+  },
+  {
+   "seed": 3,
+   "round": 2,
+   "baseMm": 166.031,
+   "armMm": 166.806,
+   "deltaMm": 0.7750000000000057
+  },
+  {
+   "seed": 4,
+   "round": 0,
+   "baseMm": 162.514,
+   "armMm": 164.962,
+   "deltaMm": 2.447999999999979
+  },
+  {
+   "seed": 4,
+   "round": 1,
+   "baseMm": 167.74,
+   "armMm": 166.744,
+   "deltaMm": -0.9960000000000093
+  },
+  {
+   "seed": 4,
+   "round": 2,
+   "baseMm": 164.198,
+   "armMm": 165.573,
+   "deltaMm": 1.375
+  },
+  {
+   "seed": 5,
+   "round": 0,
+   "baseMm": 166.415,
+   "armMm": 168.005,
+   "deltaMm": 1.5900000000000034
+  },
+  {
+   "seed": 5,
+   "round": 1,
+   "baseMm": 166.415,
+   "armMm": 167.702,
+   "deltaMm": 1.2870000000000061
+  },
+  {
+   "seed": 5,
+   "round": 2,
+   "baseMm": 166.846,
+   "armMm": 169.005,
+   "deltaMm": 2.158999999999992
+  }
+ ],
+ "seedLevel": {
+  "seeds": 6,
+  "medianOfSeedMediansMm": 1.4825000000000017,
+  "meanOfSeedMediansMm": 1.4408333333333398,
+  "seedsArmBetter": 1,
+  "seedsBaseBetter": 5,
+  "seedsEqual": 0,
+  "minSeedMedianMm": -0.027999999999991587,
+  "maxSeedMedianMm": 2.936000000000007
+ },
+ "roundLevel": {
+  "cells": 18,
+  "medianDeltaMm": 1.4825000000000017,
+  "armBetter": 4,
+  "baseBetter": 14
+ }
+}
