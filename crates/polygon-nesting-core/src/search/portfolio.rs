@@ -4483,7 +4483,7 @@ impl<'a> Coordinator<'a> {
             seed_domain: crate::search::general_relaxed::COMPRESSION_SCHEDULE_SEED_DOMAIN,
             ..GeneralPersistentVacancyDiagnostics::default()
         };
-        let population = match crate::search::general_relaxed::resume_schedule_slice(
+        let mut population = match crate::search::general_relaxed::resume_schedule_slice(
             suspended,
             &mut control,
         ) {
@@ -4501,6 +4501,13 @@ impl<'a> Coordinator<'a> {
                 diagnostics
             }
         };
+        // The same contract check every dispatched operator gets. It runs here
+        // because a resumption does not go through
+        // `dispatch_persistent_vacancy_mode` - there is no parent to dispatch
+        // against, only a slice with its own frontier - and an operator call
+        // whose layout was never contract-checked would be the one call in the
+        // run that is not.
+        self.record_schedule_contract(&mut population);
         Some(self.settle_operator_call(
             34,
             population,
@@ -4548,7 +4555,8 @@ impl<'a> Coordinator<'a> {
             seed_domain: crate::search::general_relaxed::COMPRESSION_SCHEDULE_SEED_DOMAIN,
             ..GeneralPersistentVacancyDiagnostics::default()
         };
-        let population = match crate::search::general_relaxed::stop_suspended_slice(suspended) {
+        let mut population = match crate::search::general_relaxed::stop_suspended_slice(suspended)
+        {
             Ok(outcome) => crate::search::general_relaxed::finish_schedule_outcome(
                 outcome,
                 diagnostics,
@@ -4559,6 +4567,7 @@ impl<'a> Coordinator<'a> {
                 diagnostics
             }
         };
+        self.record_schedule_contract(&mut population);
         self.settle_operator_call(
             34,
             population,
@@ -4574,6 +4583,22 @@ impl<'a> Coordinator<'a> {
             Some(format!("m34 drain at batch {batches_before}")),
             #[cfg(feature = "sparse-rotation")]
             false,
+        );
+    }
+
+    /// The contract half of `record_persistent_vacancy_contract_report`, for the
+    /// two mode-34 calls that do not go through the dispatch.
+    ///
+    /// The parent argument is empty because it is only ever read as a *fallback
+    /// layout* when the diagnostics carry none, and a resumed or drained slice
+    /// always carries the incumbent it is holding.
+    #[cfg(feature = "compression-schedule")]
+    fn record_schedule_contract(&self, population: &mut GeneralPersistentVacancyDiagnostics) {
+        crate::search::general_relaxed::record_persistent_vacancy_contract_report(
+            population,
+            self.pieces,
+            self.fast_settings,
+            &GeneralCoupledSeparatorArmDiagnostics::default(),
         );
     }
 

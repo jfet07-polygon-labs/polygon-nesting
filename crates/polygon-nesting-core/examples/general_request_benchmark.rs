@@ -2987,6 +2987,46 @@ mod tests {
         }
     }
 
+    /// Every key this round adds reaches the field it names, and an unarmed
+    /// spec leaves all four at the shipped default.
+    ///
+    /// It is a round trip and not an eyeball because the previous round's P0 had
+    /// a second half that was exactly this: `evidence/cap-30s.json` carried
+    /// `m34cap=1` in its `spec` field and the committed driver could not
+    /// generate that string. A key nobody parses and a key nobody emits fail the
+    /// same way - silently, under an armed label.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn the_interruption_keys_reach_their_fields() {
+        let template = GeneralRelaxedSettings::mixed_61_probe(0, 1);
+        let parse = |spec: &str| parse_portfolio_spec(spec, template).unwrap();
+
+        let unarmed = parse("plan=10000,v3=1");
+        assert!(!unarmed.compression_schedule_wall_stop);
+        assert_eq!(unarmed.compression_schedule_yield_batches, 0);
+        assert!(!unarmed.compression_schedule_past_bound);
+        assert_eq!(unarmed.compression_schedule_past_bound_share, 1.0);
+
+        let armed = parse(
+            "plan=10000,v3=1,m34wallstop=1,m34yield=3,m34past=1,\
+             m34pastshare=0.5,m34pastbatches=4,m34pastbarren=1",
+        );
+        assert!(armed.compression_schedule_wall_stop);
+        assert_eq!(armed.compression_schedule_yield_batches, 3);
+        assert!(armed.compression_schedule_past_bound);
+        assert_eq!(armed.compression_schedule_past_bound_share, 0.5);
+        assert_eq!(armed.compression_schedule_past_bound_batches, 4);
+        assert_eq!(armed.compression_schedule_past_bound_barren, 1);
+
+        // `m34wall` is a *different* key with a nine-round history - the
+        // schedule class's affordability prior - and the two must not have
+        // collided. This is the assertion that would have caught the collision
+        // the compiler only warned about.
+        let prior = parse("plan=10000,v3=1,m34wall=1");
+        assert!(prior.schedule_wall_prior);
+        assert!(!prior.compression_schedule_wall_stop);
+    }
+
     fn rectangle(width: f64, height: f64) -> PolygonSet {
         PolygonSet::from_outer(vec![
             IrregularPoint::new(0.0, 0.0),

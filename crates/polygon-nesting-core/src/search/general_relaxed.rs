@@ -12745,7 +12745,7 @@ fn persistent_vacancy_reported_layout(
 /// This changes no search behavior. It reads the layout the arm already
 /// reported and adds two measurements of it.
 #[cfg(feature = "jagua-experimental")]
-fn record_persistent_vacancy_contract_report(
+pub(super) fn record_persistent_vacancy_contract_report(
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,

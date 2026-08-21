@@ -1,0 +1,5 @@
+commit daedd9d66ad09562a7064e876f55ece2a22888a7
+features-gate jagua-experimental
+features-ship jagua-experimental,compression-schedule,parallel-compression-schedule,continuous-rotation,sparse-rotation,fast-contract-validator
+1b352da7932e7fff1a5930bfca2a534fed937451c95cfc848d36ae7186611f60  /var/lib/t3/tmp/realint/bin/gate-meas
+2323a2adc7c4f79e53d6e682d4fb88d5a28a42072a89eac78ae22f1cde1f1556  /var/lib/t3/tmp/realint/bin/ship-meas
