@@ -1,0 +1,118 @@
+{
+ "baseBinary": "/var/lib/t3/tmp/crot/bin/base-meas",
+ "newBinary": "/var/lib/t3/tmp/crot/bin/final-meas",
+ "offArm": "",
+ "workUnits": "40000000",
+ "rows": [
+  {
+   "tag": "mixed-61-s0",
+   "baseSpec": "work=40000000,cells=13:15:17:19,v3=1",
+   "newSpec": "work=40000000,cells=13:15:17:19,v3=1",
+   "baseDigest": "432a3a3344560d94975fc200f09d3880f748301cabc14e064ea3ebad66128c04",
+   "newDigest": "432a3a3344560d94975fc200f09d3880f748301cabc14e064ea3ebad66128c04",
+   "equal": true,
+   "baseRawDepthMm": 169.891,
+   "newRawDepthMm": 169.891
+  },
+  {
+   "tag": "mixed-61-s1",
+   "baseSpec": "work=40000000,cells=11:15:21:27,v3=1",
+   "newSpec": "work=40000000,cells=11:15:21:27,v3=1",
+   "baseDigest": "820f83d91a4a5110e97784ca7a1fa94eb1215427126012f92cda063dfc333b8d",
+   "newDigest": "820f83d91a4a5110e97784ca7a1fa94eb1215427126012f92cda063dfc333b8d",
+   "equal": true,
+   "baseRawDepthMm": 171.3619986855876,
+   "newRawDepthMm": 171.3619986855876
+  },
+  {
+   "tag": "mixed-61-s2",
+   "baseSpec": "work=40000000,cells=15:23:31:39,v3=1",
+   "newSpec": "work=40000000,cells=15:23:31:39,v3=1",
+   "baseDigest": "d78e43291463358236f82e5287ed0c206af177de13caf039e06b28a3785778d5",
+   "newDigest": "d78e43291463358236f82e5287ed0c206af177de13caf039e06b28a3785778d5",
+   "equal": true,
+   "baseRawDepthMm": 170.155,
+   "newRawDepthMm": 170.155
+  },
+  {
+   "tag": "shapes-17-s0",
+   "baseSpec": "work=40000000,cells=13:15:17:19,v3=1",
+   "newSpec": "work=40000000,cells=13:15:17:19,v3=1",
+   "baseDigest": "367d2b0f7cc4f520670ed1eec105a395da002395d02c17a09be8d0d148d9630e",
+   "newDigest": "367d2b0f7cc4f520670ed1eec105a395da002395d02c17a09be8d0d148d9630e",
+   "equal": true,
+   "baseRawDepthMm": 200.349,
+   "newRawDepthMm": 200.349
+  },
+  {
+   "tag": "shapes-17-s1",
+   "baseSpec": "work=40000000,cells=11:15:21:27,v3=1",
+   "newSpec": "work=40000000,cells=11:15:21:27,v3=1",
+   "baseDigest": "2a2a4f7d7b5b11fbde51e404ead70e67db7fa316a6318843c0540342b400d714",
+   "newDigest": "2a2a4f7d7b5b11fbde51e404ead70e67db7fa316a6318843c0540342b400d714",
+   "equal": true,
+   "baseRawDepthMm": 200.34937729570953,
+   "newRawDepthMm": 200.34937729570953
+  },
+  {
+   "tag": "shapes-17-s2",
+   "baseSpec": "work=40000000,cells=15:23:31:39,v3=1",
+   "newSpec": "work=40000000,cells=15:23:31:39,v3=1",
+   "baseDigest": "ea20a63bf2b348ca398837f5ba9c02d3c4c3f7b4cd7f1a340df92b7a5daf90cb",
+   "newDigest": "ea20a63bf2b348ca398837f5ba9c02d3c4c3f7b4cd7f1a340df92b7a5daf90cb",
+   "equal": true,
+   "baseRawDepthMm": 200.349,
+   "newRawDepthMm": 200.349
+  },
+  {
+   "tag": "triangle-20-s0",
+   "baseSpec": "work=40000000,cells=13:15:17:19,v3=1",
+   "newSpec": "work=40000000,cells=13:15:17:19,v3=1",
+   "baseDigest": "76e9261921b987b4b42c29a74b5f0b14690e55a0d5f050d201e052094a2a19ba",
+   "newDigest": "76e9261921b987b4b42c29a74b5f0b14690e55a0d5f050d201e052094a2a19ba",
+   "equal": true,
+   "baseRawDepthMm": 70.7711336311948,
+   "newRawDepthMm": 70.7711336311948
+  },
+  {
+   "tag": "triangle-20-s1",
+   "baseSpec": "work=40000000,cells=11:15:21:27,v3=1",
+   "newSpec": "work=40000000,cells=11:15:21:27,v3=1",
+   "baseDigest": "cadbdc55416f1d53ff6b6900467029408527715656d1a169ca85bedfa118f806",
+   "newDigest": "cadbdc55416f1d53ff6b6900467029408527715656d1a169ca85bedfa118f806",
+   "equal": true,
+   "baseRawDepthMm": 70.74684851410467,
+   "newRawDepthMm": 70.74684851410467
+  },
+  {
+   "tag": "triangle-20-s2",
+   "baseSpec": "work=40000000,cells=15:23:31:39,v3=1",
+   "newSpec": "work=40000000,cells=15:23:31:39,v3=1",
+   "baseDigest": "ef1fdb7506129627e83c8c65e589b4926f2cbbabe300e70240dc196ae3f84139",
+   "newDigest": "ef1fdb7506129627e83c8c65e589b4926f2cbbabe300e70240dc196ae3f84139",
+   "equal": true,
+   "baseRawDepthMm": 70.74164651120441,
+   "newRawDepthMm": 70.74164651120441
+  }
+ ],
+ "volatileFieldsRemoved": [
+  "actualThreads",
+  "buildProfile",
+  "cpuModel",
+  "engineCommit",
+  "engineWorktreeDirty",
+  "engineWorktreeStatus",
+  "executableSha256",
+  "occupancyOverTime",
+  "relevantSourceTreeSha256",
+  "requestedThreads",
+  "rustflags",
+  "scheduleSlice",
+  "seconds"
+ ],
+ "volatileSuffixesRemoved": [
+  "Seconds",
+  "Ms"
+ ],
+ "allEqual": true
+}

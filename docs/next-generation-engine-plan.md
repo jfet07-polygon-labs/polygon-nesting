@@ -6143,3 +6143,105 @@ worth a few percent against a real increase in hand-proved geometry.
 
 Evidence, drivers and every battery:
 `docs/experiments/fast-contract-validator/`.
+## Continuous rotation in the relaxed lane: 8.3% of the rungs are accepted, they buy 56% of the loss, and the arm is 3.7 mm worse at ten seconds
+
+The continuous-rotation brief's design A, built and measured: rotation as a
+degree of freedom **in the relaxed lane's own candidate loop**, at production
+cost, feature-flagged `continuous-rotation` and off by default. The accumulated
+evidence pointed here hard — the 2.5-degree snap costs 0.448 mm of entry damage,
+the record line's productive rungs are 0.0032 degrees, the SE(2) certificate
+finds 1.2-3x more room in rotation than in translation on every parent tested,
+and both reviewers converged on "rotation as a continuous degree of freedom in
+the search" as the thing standing between the engine and the ~12-16 mm below it.
+
+**It does not work at ten seconds, and the reason is not the one the brief
+prepared for.**
+
+`refine_candidate`'s axis schedule gains a rotation rung derived per piece,
+`dtheta = dx / r` in both signs — `r` the piece's bounding radius, `dx` the live
+translation step of the same schedule, so the descent's own contraction
+contracts the rung and nothing is tuned — plus a mirror toggle as a discrete
+companion, recentred so a flip is a candidate rather than a teleport. Surrogates
+at continuous angles are built on demand through the overlay round's
+construction path into a lane-local cache with the brief's shape: a per-piece
+pinned slot, an in-flight hold set, a 48-entry LRU, eviction at exactly one
+site. The catalogue is never cloned and the angle space is never enumerated.
+
+**The publication path was checked first, as the brief instructed, and it needed
+nothing.** `validate_and_measure_placements` rebuilds a placement by
+transforming the real polygon and enforces two rotation rules — finite, and zero
+when `allow_rotation` is false. `canonical_angle` does not exist outside
+`general_relaxed.rs`. The warm-start snap at `general_relaxed.rs:16313` runs
+before the lane starts, on the parent's placements, and the operator's angles
+never pass through it. An accepted rung is published at the angle it was
+accepted at.
+
+**Anytime WALL, paired, both arms with `pconfirm` armed, three seeds x three
+rounds:** mixed-61 is **+3.721 mm worse at ten seconds on 0 of 9 rounds** and
++7.071 mm worse at thirty on 1 of 9; shapes-17 and triangle-20 are **0.000 mm**
+at every budget, because their mode-34 slice publishes on 0 of 9 runs in *both*
+arms. Against Sparrow on the same box the base arm is 22.1 mm behind at ten
+seconds and the armed arm 25.1 mm: the operator moves the engine away from the
+target the binding user priority names.
+
+**And yet the mechanism works.** 655,477 rotation/mirror iterations at ten
+seconds on mixed-61, **8.3% of them improving the incumbent**; **56.0% of all
+the proxy loss the refinement removed was removed by a rotation or mirror move**,
+against 44.0% for the four translation axes — the same instrument, the same
+quantity, the same iterations. **67.1%** of committed moves changed the pose,
+against 8.9% unarmed. The rungs reach the sheet: an armed publication carries
+46 of 61 pieces at angles the 2.5-degree catalogue cannot express. The SE(2)
+certificate's claim reproduces *inside the search at production cost*.
+
+**What it loses is the clock, and the coordinator's action log says so
+directly.** One ten-second run: the base arm makes 9 operator calls and descends
+179.59 → 176.11 → 175.39 → 175.14 → 173.58 → 172.29; the armed arm makes 7,
+reaches 175.22, and stalls. Over the nine paired rounds the base arm ran 30
+mode-34 slices and published on 30; the armed arm ran 11 and published on 8. Per
+slice, 0.87 s becomes 1.94 s — and **only a sixth of that is the surrogate
+builds** (0.32 s per slice, 5.4 microseconds per rotation iteration at an 89.4%
+cache hit rate). The rest is the resolution tax: an accepted rung forces the
+lane's keys continuous, so every neighbour of an off-grid piece misses the
+catalogue and then hits the lane map — two ordered-map descents where there was
+one, on the file's most-called path.
+
+**At equal WORK the loss disappears.** Replaying the twelve pinned 171-179 mm
+parents through mode 34 under the same query cap, the two arms differ only in
+the environment flag: paired median **+0.005 mm, six better and six worse**,
+every loss under 0.15 mm — and one cell where the unarmed arm publishes nothing
+at all and the armed arm descends **1.681 mm**. On the two record-lineage
+parents (156.418, 155.422 at `''` 0.0005) neither arm publishes anything, at the
+highest acceptance rate in the round (**33.0%**). The operator is therefore a
+*wall* problem, not a search problem: it is worth its candidates and not its
+seconds.
+
+Two defects are recorded rather than quietly fixed. The first killed the very
+first armed run — `build_oriented_surrogate` enforces `MAX_CELLS_PER_JOB`
+against a *cumulative* counter, which is right for a catalogue that stays
+resident and wrong for surrogates that are evicted, so the slice failed with
+"at most 524288 generated cells" and the incumbent fell back to the m22 arm; it
+is now a residency guard over what the cache actually holds, and the battery
+confirms it never binds. The second no measurement in this round could have
+caught: the mirror companion's second probe rotates, so a piece the request
+forbids rotating would have been committed at a rotated pose and refused at
+publication. Every piece of all three campaign requests allows both transforms.
+It is now conditioned on `allow_rotation`, and the test that pins it was checked
+against the bug rather than assumed to catch it.
+
+Four pinned gates reproduce as whole documents on three binaries — the base
+commit, the patched build without the feature, and the patched build with it
+compiled and unarmed. Flag-off document reproduction against the base commit is
+9 of 9. Determinism across two processes with the operator armed is 9 of 9, a
+hard gate. Both suites pass, 1,261 and 1,293 tests.
+
+What the round recommends is not in its brief. Five sixths of the price is the
+*resolution* tax, not the geometry, and the attack on that is a catalogue whose
+keys are continuous by construction rather than a 2.5-degree grid with a
+lane-local overflow beside it. Designs B and C — rungs when the compression
+clamp binds, and witness-driven rungs from the SE(2) dual — both propose orders
+of magnitude fewer rotations than A's one-in-six, and A's numbers are the first
+production measurement of what one of those rotations is worth (8.3% accepted,
+56% of the loss) and what it costs (5.4 us of geometry, and a 2.2x slice).
+
+Evidence, drivers and every battery:
+`docs/experiments/continuous-rotation/`.

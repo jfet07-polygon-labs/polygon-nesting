@@ -7,6 +7,8 @@
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
+#[cfg(feature = "continuous-rotation")]
+use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
@@ -486,6 +488,36 @@ pub struct GeneralRelaxedSettings {
     /// overlay build carries the continuous one.
     #[cfg(feature = "compression-schedule")]
     pub current_pose_overlay_classify_pairs: bool,
+    /// Arms the continuous-rotation operator: rotation as a degree of freedom
+    /// in this lane's own coordinate-descent candidate loop.
+    ///
+    /// `false` - the default, and what every existing caller constructs -
+    /// leaves the axis schedule proposing the four translation axes exactly as
+    /// it does today, with the legacy `CoordinateAxis::Rotation` reachable only
+    /// where it always was (`refine_rotation` on a `DynamicPoles` lane).
+    ///
+    /// `true` adds, per refinement iteration and per piece: a rotation rung
+    /// `dtheta = dx / r` in both signs, and - for a piece the request allows to
+    /// mirror - a mirror toggle as a discrete companion move. `r` is the
+    /// piece's bounding radius about its own rotation origin and `dx` is the
+    /// live translation step of the same schedule, so the rung shrinks with the
+    /// descent instead of carrying a second, independently tuned ladder.
+    ///
+    /// Surrogates at the continuous angles this proposes are built on demand
+    /// through [`build_oriented_surrogate`] - the same construction path
+    /// `CurrentPoseOverlay` uses - and cached lane-locally. The catalogue is
+    /// never rebuilt, never cloned and never enumerated over a continuous angle
+    /// space. A rotation move is priced like any other candidate and *also*
+    /// charged for its surrogate build on a cache miss; see
+    /// [`WorkCounters::rotation_surrogate_builds`].
+    ///
+    /// Only armed on a lane that resolves poses through the surrogate
+    /// catalogue with the non-directional pressure model - see
+    /// [`continuous_rotation_lane`] - which is the lane mode 34 builds and the
+    /// one mode 22 builds when it is not on the dynamic-hazard backend. The
+    /// setting is inert on every other lane, so a coordinator may set it once.
+    #[cfg(feature = "continuous-rotation")]
+    pub continuous_rotation: bool,
 }
 
 impl GeneralRelaxedSettings {
@@ -519,6 +551,8 @@ impl GeneralRelaxedSettings {
             current_pose_overlay: false,
             #[cfg(feature = "compression-schedule")]
             current_pose_overlay_classify_pairs: false,
+            #[cfg(feature = "continuous-rotation")]
+            continuous_rotation: false,
         }
     }
 
@@ -2625,7 +2659,46 @@ fn continuous_rotation_keys(relaxed_settings: GeneralRelaxedSettings) -> bool {
         && relaxed_settings.pressure_model == GeneralRelaxedPressureModel::DirectionalPenetration;
     #[cfg(feature = "compression-schedule")]
     let directional = directional || relaxed_settings.current_pose_overlay;
+    // The continuous-rotation operator introduces continuous angles *into the
+    // lane's own state*, so every lookup for a piece that accepted a rotation
+    // rung has to derive its key from the exact angle. Without this the
+    // `canonical_angle` in `derive_rotation_key`'s `else` branch would snap the
+    // accepted pose back onto the 2.5-degree grid on the way into every
+    // catalogue descent - the placement would carry 13.37 degrees and every
+    // score would be computed at 12.5 - which is exactly the silent failure
+    // `docs/experiments/current-pose-overlay/README.md` §0.1 caught for the
+    // overlay. Same predicate as `continuous_rotation_lane`, deliberately: a
+    // lane whose keys are continuous and a lane that may propose a continuous
+    // angle must be the same lane.
+    #[cfg(feature = "continuous-rotation")]
+    let directional = directional || continuous_rotation_lane(relaxed_settings);
     directional
+}
+
+/// Whether the continuous-rotation operator is armed for a lane with these
+/// settings.
+///
+/// Three clauses, and all three are load-bearing:
+///
+/// * the setting itself, off by default;
+/// * `RollbackTriangle`, because the operator's whole cost model is "one
+///   `OrientedSurrogate` build per unseen continuous pose, resolved out of the
+///   surrogate catalogue" - a `DynamicHazard` lane answers a pose out of
+///   `JaguaHazardIndex` instead and would need its own continuous-angle path;
+/// * `StructuredTrianglePoles`, because `DirectionalPenetration` already works
+///   in continuous angles through a `CurrentAssignment` catalogue and a
+///   pair-NFP table this operator does not populate.
+///
+/// The predicate reads only `relaxed_settings`, which a lane never mutates, so
+/// [`LaneSearch::new`] resolves it once into
+/// [`LaneSearch::continuous_rotation`] and no hot site re-derives it - the same
+/// correction Sol review 6 §2 made to [`continuous_rotation_keys`].
+#[cfg(feature = "continuous-rotation")]
+#[inline]
+fn continuous_rotation_lane(relaxed_settings: GeneralRelaxedSettings) -> bool {
+    relaxed_settings.continuous_rotation
+        && relaxed_settings.collision_backend == GeneralRelaxedCollisionBackend::RollbackTriangle
+        && relaxed_settings.pressure_model == GeneralRelaxedPressureModel::StructuredTrianglePoles
 }
 
 impl CellIndex {
@@ -2818,6 +2891,55 @@ struct WorkCounters {
     angular_repair_successors: usize,
     angular_repair_improvements: usize,
     angular_repair_queries: usize,
+    // ---- the continuous-rotation operator's attribution ----
+    //
+    // These answer the three questions the round is judged on, and they are
+    // deliberately *paired* with a translation column wherever a comparison is
+    // the point: "rotation bought X" is not a finding unless "translation
+    // bought Y" was measured in the same currency by the same instrument.
+    //
+    /// Candidates proposed on the derived rotation axis (two per iteration).
+    rotation_rungs_proposed: usize,
+    /// Rotation iterations whose winner strictly improved the incumbent.
+    rotation_rungs_improved: usize,
+    /// Candidates proposed on the mirror companion axis (two per iteration).
+    mirror_toggles_proposed: usize,
+    /// Mirror iterations whose winner strictly improved the incumbent.
+    mirror_toggles_improved: usize,
+    /// Weighted loss removed by winning rotation/mirror iterations, in the
+    /// tracker's own millimetres (boundary loss plus weighted penetration).
+    rotation_loss_bought: f64,
+    /// The same quantity for the four translation axes, so the two are one
+    /// measurement rather than a number and an anecdote.
+    translation_loss_bought: f64,
+    /// Accepted moves whose committed pose differs from the incumbent's in
+    /// rotation or mirror, against `accepted_moves` for the denominator.
+    rotation_accepted_moves: usize,
+    /// Continuous poses this lane had to build, hit in its own cache, and
+    /// evicted from it - the operator's price and the cache's yield.
+    rotation_surrogate_builds: usize,
+    rotation_surrogate_hits: usize,
+    rotation_surrogate_evictions: usize,
+    /// Wall spent inside `build_oriented_surrogate` for those builds. A
+    /// nanosecond total rather than a rate, because the rate a reader wants -
+    /// per rotation move, per accepted rotation move - depends on which
+    /// denominator they are arguing about, and all of them are here.
+    rotation_surrogate_build_nanos: u64,
+    /// Cells the operator has ever built, and the cells its cache is holding
+    /// right now.
+    ///
+    /// Deliberately *not* folded into `generated_cells`, which is the input to
+    /// the catalogue's `MAX_CELLS_PER_JOB` guard - a lifetime cap on geometry
+    /// that stays resident. The operator's geometry does not stay resident, so
+    /// it is guarded by the second counter here, against the same constant. See
+    /// `LaneSearch::ensure_rotation_surrogate`.
+    rotation_surrogate_cells: usize,
+    rotation_resident_cells: usize,
+    /// Rungs refused because the residency guard would have been breached. A
+    /// non-zero value here means the operator stopped proposing rather than
+    /// failing a slice, and it is the number to look at first if an armed arm
+    /// under-performs.
+    rotation_builds_refused: usize,
 }
 
 impl WorkCounters {
@@ -2949,6 +3071,44 @@ impl WorkCounters {
         self.angular_repair_queries = self
             .angular_repair_queries
             .saturating_add(other.angular_repair_queries);
+        self.rotation_rungs_proposed = self
+            .rotation_rungs_proposed
+            .saturating_add(other.rotation_rungs_proposed);
+        self.rotation_rungs_improved = self
+            .rotation_rungs_improved
+            .saturating_add(other.rotation_rungs_improved);
+        self.mirror_toggles_proposed = self
+            .mirror_toggles_proposed
+            .saturating_add(other.mirror_toggles_proposed);
+        self.mirror_toggles_improved = self
+            .mirror_toggles_improved
+            .saturating_add(other.mirror_toggles_improved);
+        self.rotation_loss_bought += other.rotation_loss_bought;
+        self.translation_loss_bought += other.translation_loss_bought;
+        self.rotation_accepted_moves = self
+            .rotation_accepted_moves
+            .saturating_add(other.rotation_accepted_moves);
+        self.rotation_surrogate_builds = self
+            .rotation_surrogate_builds
+            .saturating_add(other.rotation_surrogate_builds);
+        self.rotation_surrogate_hits = self
+            .rotation_surrogate_hits
+            .saturating_add(other.rotation_surrogate_hits);
+        self.rotation_surrogate_evictions = self
+            .rotation_surrogate_evictions
+            .saturating_add(other.rotation_surrogate_evictions);
+        self.rotation_surrogate_build_nanos = self
+            .rotation_surrogate_build_nanos
+            .saturating_add(other.rotation_surrogate_build_nanos);
+        self.rotation_surrogate_cells = self
+            .rotation_surrogate_cells
+            .saturating_add(other.rotation_surrogate_cells);
+        self.rotation_resident_cells = self
+            .rotation_resident_cells
+            .saturating_add(other.rotation_resident_cells);
+        self.rotation_builds_refused = self
+            .rotation_builds_refused
+            .saturating_add(other.rotation_builds_refused);
     }
 }
 
@@ -3414,6 +3574,56 @@ enum CoordinateAxis {
     ForwardDiagonal,
     BackwardDiagonal,
     Rotation,
+    /// The mirror toggle: the continuous-rotation operator's discrete
+    /// companion move. Only [`LaneSearch::random_coordinate_axis`] with the
+    /// operator armed ever produces it, so no unarmed schedule can select it
+    /// and every `match` arm added for it is unreachable in a default build.
+    Mirror,
+}
+
+/// Whether an axis belongs to the rotation family - the continuous rung or its
+/// mirror companion - rather than to the four translation axes.
+///
+/// One predicate rather than two comparisons at four sites, so the evaluation
+/// counter, the attribution and the proposal counter cannot come to different
+/// conclusions about what a rotation move is.
+#[inline(always)]
+fn axis_is_continuous(axis: CoordinateAxis) -> bool {
+    matches!(axis, CoordinateAxis::Rotation | CoordinateAxis::Mirror)
+}
+
+/// Whether a schedule slice should report itself as having run the
+/// continuous-rotation operator.
+///
+/// The same predicate the lane arms on, reachable from the report assembly in a
+/// build without the feature (where it is a constant `false`), so the reported
+/// bit and the lane's own bit cannot disagree.
+#[inline]
+fn continuous_rotation_report_armed(relaxed_settings: GeneralRelaxedSettings) -> bool {
+    #[cfg(feature = "continuous-rotation")]
+    {
+        continuous_rotation_lane(relaxed_settings)
+    }
+    #[cfg(not(feature = "continuous-rotation"))]
+    {
+        let _ = relaxed_settings;
+        false
+    }
+}
+
+/// The rotation rung of the brief: `dtheta = dx / r`, in degrees, clamped.
+///
+/// `dx / r` is the angle in radians that carries a point at radius `r` through
+/// an arc of length `dx`; the descent's translation step is `dx`, so the rung
+/// is the rotation that moves the piece's furthest point about as far as the
+/// translation probe of the same iteration moves the whole piece. Nothing here
+/// is tuned: the schedule that contracts `dx` contracts the rung with it.
+#[inline]
+fn continuous_rotation_rung_deg(step_mm: f64, radius_mm: f64) -> f64 {
+    if !(radius_mm > 0.0) {
+        return 0.0;
+    }
+    (step_mm / radius_mm).to_degrees().min(ROTATION_RUNG_CAP_DEG)
 }
 
 /// One relaxed-search lane.
@@ -3462,6 +3672,36 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
     /// `docs/experiments/current-pose-overlay/README.md` §5.1 carries the
     /// paired flag-off A/B that shows the hot path did not move.
     continuous_rotation_keys: bool,
+    /// [`continuous_rotation_lane`] for this lane's settings, resolved once.
+    /// `false` in every build without the feature, where it is a constant the
+    /// optimiser folds away.
+    continuous_rotation: bool,
+    /// The lane's own surrogates for poses the catalogue does not carry.
+    ///
+    /// This is the continuous-rotation operator's cache and the *only* place a
+    /// continuous-angle surrogate ever lives: `build_surrogate_catalog` is
+    /// untouched, the catalogue `Arc` is never cloned-to-mutate, and no angle
+    /// space is enumerated. [`resolve_surrogate`] consults it after the
+    /// catalogue misses, which is why it is a plain field rather than something
+    /// behind the feature's `#[cfg]`: the candidate scan's hot loop takes the
+    /// map as a parameter and `#[cfg]` cannot be written on a parameter, so
+    /// gating it would mean two copies of that loop free to drift.
+    ///
+    /// **With `continuous-rotation` off this map is provably empty** - its only
+    /// insert site is [`LaneSearch::ensure_rotation_surrogate`], which is
+    /// compiled only under the feature - so the fallback costs one
+    /// `BTreeMap::get` against a `None` root, on the path where today's code
+    /// raises `missing_orientation` and nowhere else.
+    ///
+    /// `Arc` rather than a bare map so the sites that must hold resolved
+    /// borrows across a `&mut self` call (`score_state`) can take a handle the
+    /// way they already take one on the catalogue. Inserts go through
+    /// `Arc::make_mut`, which at every insert site is uniquely owned and
+    /// therefore does not clone.
+    rotation_overflow: Arc<BTreeMap<SurrogateKey, OrientedSurrogate>>,
+    /// Pins, eviction order and per-piece radii for [`Self::rotation_overflow`].
+    #[cfg(feature = "continuous-rotation")]
+    rotation_cache: RotationCache,
     /// Reusable buffer the accepted-move merge writes its new collision list
     /// into. It is swapped with the incumbent list rather than copied, so after
     /// the first move of a lane neither list allocates again.
@@ -3526,6 +3766,98 @@ struct LaneSearch<'a, K: ExplorationKernel<Shape = OrientedSurrogate> = LegacyKe
 
 type SurrogateKey = (usize, i64, bool);
 type PairNfpKey = (usize, i64, bool, usize, i64, bool);
+
+/// One pose resolution: the catalogue first, then the lane's own
+/// continuous-angle surrogates.
+///
+/// Every site in this file that turns a [`SurrogateKey`] into an
+/// [`OrientedSurrogate`] for the *legacy* (non-directional, non-hazard) tier
+/// goes through here, so "which map answered" is one decision written once
+/// rather than eight copies of a `.get().or_else()`.
+///
+/// The order is the whole contract: the catalogue is authoritative and the
+/// overflow can only ever *add* a pose the catalogue has no entry for. A
+/// grid-native pose therefore resolves exactly where it always did, and the
+/// second probe is reached only where today's code would have raised
+/// `missing_orientation`. With `continuous-rotation` off the overflow is empty
+/// and `BTreeMap::get` on an empty map is a null-root test.
+#[inline(always)]
+fn resolve_surrogate<'a>(
+    catalog: &'a SurrogateCatalog,
+    overflow: &'a BTreeMap<SurrogateKey, OrientedSurrogate>,
+    key: &SurrogateKey,
+) -> Option<&'a OrientedSurrogate> {
+    match catalog.orientations.get(key) {
+        found @ Some(_) => found,
+        None => overflow.get(key),
+    }
+}
+
+/// The bookkeeping half of the continuous-rotation surrogate cache: which keys
+/// may not be evicted, and in what order the rest are.
+///
+/// The brief's shape, exactly: **a per-piece current-angle slot plus a small
+/// bounded LRU.** The slot is what makes the cache correct rather than merely
+/// fast - a piece that accepted a rotation rung carries an off-grid pose in the
+/// lane's state, and every later scan that meets it as a *fixed neighbour*
+/// resolves that pose, so evicting it would turn a held placement into a
+/// `missing_orientation` error. The LRU holds probe poses, which by definition
+/// nothing holds once the probe loses.
+///
+/// Eviction happens only inside `&mut self` (there is no interior mutability
+/// here), so no resolved `&OrientedSurrogate` can be alive when an entry is
+/// dropped; the borrow checker proves that rather than a comment asserting it.
+#[cfg(feature = "continuous-rotation")]
+#[derive(Default)]
+struct RotationCache {
+    /// The off-grid key each piece's current placement holds, or `None` when
+    /// that piece is grid-native. Indexed by input index.
+    pinned: Vec<Option<SurrogateKey>>,
+    /// How many pieces pin each key. Two instances of one geometry class at one
+    /// continuous pose share a key and must both release it before it may be
+    /// evicted.
+    pin_counts: BTreeMap<SurrogateKey, usize>,
+    /// Unpinned entries in least-recently-ensured order.
+    probes: VecDeque<SurrogateKey>,
+    /// Poses an in-flight refinement is carrying, released one piece later.
+    holds: Vec<SurrogateKey>,
+    /// Per-piece bounding radius about the rotation origin, `0.0` until first
+    /// asked. This is the `r` of `dtheta = dx / r`.
+    radii: Vec<f64>,
+}
+
+/// How many *unpinned* continuous-angle surrogates a lane keeps.
+///
+/// Small on purpose. The pinned slots already cover every pose the lane holds,
+/// so this window only has to catch the reuse a coordinate descent actually
+/// generates: the same rung revisited as the step ladder oscillates, and the
+/// `+dtheta` / `-dtheta` pair of one iteration meeting the next iteration's
+/// pair. Beyond that a bigger window buys nothing and costs resident memory -
+/// an `OrientedSurrogate` carries a ring, its triangulation, its poles and a
+/// cell index.
+#[cfg(feature = "continuous-rotation")]
+const ROTATION_CACHE_PROBE_CAPACITY: usize = 48;
+
+/// The largest rotation rung the derivation may propose, in degrees.
+///
+/// `dtheta = dx / r` is unbounded above as `r` shrinks, and the first
+/// refinement iteration's `dx` is a fraction of the piece's own minimum
+/// dimension, so a small round piece can derive a rung of hundreds of degrees -
+/// a *reorientation*, not a descent step, and one that costs a surrogate build
+/// to find out. Clamped rather than dropped, because the clamp still proposes
+/// the largest rung the schedule can justify.
+const ROTATION_RUNG_CAP_DEG: f64 = 45.0;
+
+/// How far the derived rung may be narrowed below `dx / r` by its own
+/// rejections, as a fraction.
+///
+/// `1/64` is six halvings, which is the same depth of contraction the
+/// translation ladder reaches before `step_limit` ends the refinement. Below
+/// this a rung stops being a probe: at `dx = 0.001 mm` on a 60 mm radius the
+/// unscaled rung is already `0.00095` degrees, and a further factor of a
+/// thousand would round to the `1e-6` degree angle-key quantum and propose the
+/// incumbent back to itself.
+const ROTATION_SCALE_FLOOR: f64 = 1.0 / 64.0;
 
 #[derive(Clone, PartialEq)]
 struct ConvexNfp {
@@ -6278,6 +6610,36 @@ fn drive_compression_schedule(
     report.current_pose_overlay_off_grid_pieces = overlay_off_grid_pieces;
     report.current_pose_overlay_setup_ms = overlay_setup_ms;
     report.parent_pair_classification = parent_pair_classification;
+    // The continuous-rotation operator's own account of itself. Read off the
+    // schedule lane's counters, which - unlike the coordinator's work meter -
+    // are live whether or not profiling is recording, so a wall-budget run
+    // reports them exactly as a work-budget run does. On a fanned-out slice the
+    // repair happens on the workers, so their counters are folded in here for
+    // the same reason `fan_out_queries` is: an operator that only counted the
+    // lane that did not do the work would report zero.
+    report.continuous_rotation = continuous_rotation_report_armed(relaxed_settings);
+    {
+        let mut counters = search.counters;
+        #[cfg(feature = "parallel-compression-schedule")]
+        for worker in &repair_workers {
+            counters.accumulate(worker.counters);
+        }
+        report.rotation_rungs_proposed = counters.rotation_rungs_proposed;
+        report.rotation_rungs_improved = counters.rotation_rungs_improved;
+        report.mirror_toggles_proposed = counters.mirror_toggles_proposed;
+        report.mirror_toggles_improved = counters.mirror_toggles_improved;
+        report.rotation_accepted_moves = counters.rotation_accepted_moves;
+        report.accepted_moves = counters.accepted_moves;
+        report.rotation_loss_bought_mm = counters.rotation_loss_bought;
+        report.translation_loss_bought_mm = counters.translation_loss_bought;
+        report.rotation_surrogate_builds = counters.rotation_surrogate_builds;
+        report.rotation_surrogate_hits = counters.rotation_surrogate_hits;
+        report.rotation_surrogate_evictions = counters.rotation_surrogate_evictions;
+        report.rotation_surrogate_build_ms =
+            counters.rotation_surrogate_build_nanos as f64 / 1_000_000.0;
+        report.rotation_surrogate_cells = counters.rotation_surrogate_cells;
+        report.rotation_builds_refused = counters.rotation_builds_refused;
+    }
     report.confirmation_ms = confirmation_ms;
     report.repair_ms = repair_ms;
     report.steps = rows;
@@ -11341,6 +11703,19 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             proxy_rows: ProxyRowCache::new(pieces.len()),
             angle_keys: AngleKeyCache::new(pieces.len()),
             continuous_rotation_keys: continuous_rotation_keys(relaxed_settings),
+            #[cfg(feature = "continuous-rotation")]
+            continuous_rotation: continuous_rotation_lane(relaxed_settings),
+            #[cfg(not(feature = "continuous-rotation"))]
+            continuous_rotation: false,
+            rotation_overflow: Arc::new(BTreeMap::new()),
+            #[cfg(feature = "continuous-rotation")]
+            rotation_cache: RotationCache {
+                pinned: vec![None; pieces.len()],
+                pin_counts: BTreeMap::new(),
+                probes: VecDeque::new(),
+                holds: Vec::new(),
+                radii: vec![0.0; pieces.len()],
+            },
             collision_merge_scratch: Vec::new(),
             #[cfg(feature = "relaxed-row-buffer-reuse")]
             row_pool: Vec::new(),
@@ -11667,10 +12042,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     .rotation_key(input_index, rotation_deg, directional),
                 mirrored,
             );
-            let bounds = self
-                .catalog
-                .orientations
-                .get(&key)
+            let bounds = resolve_surrogate(&self.catalog, &self.rotation_overflow, &key)
                 .map(|shape| shape.bounds);
             bounds.ok_or_else(|| self.missing_orientation(input_index, key))
         }
@@ -12161,6 +12533,12 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
     ) -> Result<(), GeneralFastError> {
         let _span = profiling::span(Phase::MoveSweep);
         self.apply_compression_schedule(state, score)?;
+        // Whatever state this sweep was handed, its poses resolve. A fan-out
+        // worker is handed a clone of a frontier another lane rotated; a
+        // schedule rollback hands back a confirmed layout this lane has not
+        // scored since; a caller can sweep a state it built itself. See
+        // `ensure_state_surrogates`.
+        self.ensure_state_surrogates(state)?;
         if !score.feasible() {
             let mut forced = BTreeSet::new();
             let mut active = score
@@ -12232,6 +12610,17 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 }
                 if move_tie_key(&replacement) != move_tie_key(&current) {
                     self.counters.accepted_moves = self.counters.accepted_moves.saturating_add(1);
+                    // The acceptance half of the operator's attribution: an
+                    // accepted move whose *pose* changed, against the accepted
+                    // moves of the same sweep. `move_tie_key` has already
+                    // decided the move is a move; this only asks which degree
+                    // of freedom carried it.
+                    if angle_key(replacement.rotation_deg) != angle_key(current.rotation_deg)
+                        || replacement.mirrored != current.mirrored
+                    {
+                        self.counters.rotation_accepted_moves =
+                            self.counters.rotation_accepted_moves.saturating_add(1);
+                    }
                     if self.uses_directional_pressure() {
                         for (_, _, penalty) in &replacement_score.collision_pairs {
                             self.counters
@@ -12248,6 +12637,20 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 piece_index.remove(input_index, old_bounds);
                 piece_index.insert(input_index, replacement_bounds);
                 self.commit_dynamic_hazard(&replacement)?;
+                // The pose the state now holds is pinned before anything else
+                // can evict it: from here until this piece moves again, every
+                // other piece's candidate scan resolves it as a fixed
+                // neighbour. A grid-native replacement - every replacement on
+                // an unarmed lane - pins nothing.
+                #[cfg(feature = "continuous-rotation")]
+                if self.continuous_rotation {
+                    self.ensure_and_protect_pose(
+                        input_index,
+                        replacement.rotation_deg,
+                        replacement.mirrored,
+                        false,
+                    )?;
+                }
                 state.placements[input_index] = replacement;
                 update_score_after_move(
                     score,
@@ -12336,6 +12739,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
     /// costs one `placement_bounds` call per piece.
     #[cfg(feature = "compression-schedule")]
     fn tight_strip_depth(&mut self, state: &RelaxedState) -> Result<f64, GeneralFastError> {
+        self.ensure_state_surrogates(state)?;
         let inset = collision_sheet_inset_mm(self.fast_settings);
         let mut deepest = f64::NEG_INFINITY;
         for index in 0..state.placements.len() {
@@ -12360,6 +12764,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         state: &RelaxedState,
         score: &mut PairTracker,
     ) -> Result<(), GeneralFastError> {
+        self.ensure_state_surrogates(state)?;
         let depth_mm = state.strip_depth_mm;
         let mut violations = 0usize;
         let mut loss = 0.0;
@@ -12953,6 +13358,17 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         input_index: usize,
         piece_index: &PieceIndex,
     ) -> Result<(RelaxedPlacement, MovedRowDelta), GeneralFastError> {
+        // The end of the previous piece's in-flight epoch, and the operator's
+        // only eviction point. It runs here rather than at the end of the
+        // previous call because the winner of that call was still being carried
+        // - through `confirm_dynamic_replacement`, `placement_bounds` and the
+        // commit itself - after the call returned. By the time control is back
+        // here, `move_sweep` has either pinned it into the piece's state slot
+        // or discarded it.
+        #[cfg(feature = "continuous-rotation")]
+        if self.continuous_rotation {
+            self.release_rotation_holds();
+        }
         let current = state.placements[input_index].clone();
         let current_bounds =
             self.local_shape_bounds(input_index, current.rotation_deg, current.mirrored)?;
@@ -13034,6 +13450,30 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 5.0,
                 1.0,
                 per_start_budget,
+                // No derived rungs in the pre-refinement pass, and this is the
+                // round's one measured design decision rather than a taste.
+                //
+                // The pre-pass runs once per *start* - up to `1 + focused +
+                // global` of them - at `PRE_REFINEMENT_INITIAL_RATIO = 0.25` of
+                // the piece's minimum dimension, and it owns three quarters of
+                // the refinement budget. A rung derived from a step that large
+                // is a *reorientation* (tens of degrees, clamped at 45), which
+                // is the move `random_candidate`'s own angle sampling already
+                // makes for free out of the catalogue - and every one of them
+                // costs an `OrientedSurrogate` build that the next start throws
+                // away.
+                //
+                // Measured, on mixed-61 seed 0 at a ten-second wall with the
+                // rungs offered in every pass: 476,735 surrogate builds costing
+                // 2.07 s inside a 4.21 s m34 slice, against 0.89 s for the same
+                // slice unarmed - and the slice published 178.178 mm against
+                // the unarmed 178.180 mm. Two microns for 3.3 seconds, and the
+                // coordinator got 3 operator calls in the run instead of 9. The
+                // productive rungs the record line actually adopted are
+                // 0.0032 / 0.008 / 0.00128 degrees, which is the *fine* pass's
+                // regime, so that is the pass the operator is offered in. See
+                // docs/experiments/continuous-rotation/.
+                false,
             )?;
             refinement_evaluations = refinement_evaluations.saturating_add(evaluations);
             refined.push((candidate, score));
@@ -13069,6 +13509,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     0.5,
                     0.05,
                     remaining,
+                    true,
                 )?;
                 return Ok((best, best_score));
             }
@@ -13085,6 +13526,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             0.5,
             0.05,
             final_budget,
+            true,
         )?;
         Ok((best, best_score))
     }
@@ -13121,6 +13563,10 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         initial_rotation_step_deg: f64,
         rotation_step_limit_deg: f64,
         evaluation_budget: usize,
+        // Whether the continuous-rotation operator's derived axes are offered
+        // in *this* pass. See the call sites: the pre-refinement pass says
+        // `false` and the two final passes say `true`.
+        continuous_axes: bool,
     ) -> Result<(RelaxedPlacement, MovedRowDelta, usize), GeneralFastError> {
         let mut step_x = minimum_dimension * initial_step_ratio;
         let mut step_y = minimum_dimension * initial_step_ratio;
@@ -13128,6 +13574,65 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         let can_refine_rotation = self.refine_rotation
             && self.uses_dynamic_pressure()
             && self.pieces[input_index].allow_rotation;
+        // The continuous-rotation operator's two axes, and the radius its rung
+        // is derived from. Both are `false` and the radius is never asked for
+        // on an unarmed lane, so nothing below this line runs in a build
+        // without the feature or a run without the setting.
+        //
+        // `can_refine_rotation` and `continuous_rotation` are mutually
+        // exclusive by construction - the first needs `DynamicPoles`, the
+        // second refuses anything but `StructuredTrianglePoles` - so the two
+        // rotation schedules can never both be feeding `CoordinateAxis::
+        // Rotation` in one refinement, and the derived rung below cannot
+        // silently displace the legacy ladder.
+        #[cfg(feature = "continuous-rotation")]
+        let (continuous_rotation, continuous_mirror, rotation_radius) = {
+            let armed = self.continuous_rotation && continuous_axes;
+            let rotation = armed && self.pieces[input_index].allow_rotation;
+            // The mirror toggle is a *companion* to the rotation rung, and this
+            // conjunction is what keeps it one.
+            //
+            // Its second probe is the flip one rung away from the incumbent's
+            // angle, so offering it to a piece the request forbids rotating
+            // would propose a rotated pose for that piece - which the proxy
+            // tier would happily score, the sweep would happily commit, and
+            // `validate_and_measure_placements` would then refuse with "piece
+            // uses a forbidden rotation" at publication, failing the whole
+            // slice. Every piece of all three campaign requests allows both, so
+            // this changes nothing measured; it is the request that allows
+            // mirroring and forbids rotation that it protects.
+            let mirror = rotation && self.pieces[input_index].allow_mirror;
+            let radius = if rotation || mirror {
+                self.rotation_radius(input_index)?
+            } else {
+                0.0
+            };
+            (rotation, mirror, radius)
+        };
+        // Read through the field rather than written as a literal `false`, so
+        // both branches describe the same lane state and a build without the
+        // feature still carries the one constant the operator is switched by.
+        // `LaneSearch::new` sets it to `false` unconditionally there.
+        #[cfg(not(feature = "continuous-rotation"))]
+        let (continuous_rotation, continuous_mirror, rotation_radius) = (
+            self.continuous_rotation && continuous_axes,
+            self.continuous_rotation && continuous_axes,
+            0.0,
+        );
+        let derived_rungs = continuous_rotation || continuous_mirror;
+        // The derived family's own contraction, on top of `dx / r`.
+        //
+        // It exists so that a rotation outcome moves the rotation rung and
+        // nothing else: contracting `step_x`/`step_y` on a rejected rotation
+        // would shorten the *translation* descent as a side effect, and a round
+        // that reported "rotation bought nothing" while quietly having cut the
+        // translation ladder short would not have measured rotation at all.
+        // Bounded above by 1.0 - the brief's rung is the ceiling, never
+        // something to overshoot - and below by
+        // [`ROTATION_SCALE_FLOOR`], so a run of rejections narrows the probe
+        // without ever collapsing it to the angle quantum, where every
+        // candidate would be the incumbent again.
+        let mut rotation_scale = 1.0_f64;
         let mut rotation_step_deg = initial_rotation_step_deg;
         let mut axis = self.random_coordinate_axis(
             step_x,
@@ -13136,6 +13641,8 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             rotation_step_deg,
             rotation_step_limit_deg,
             can_refine_rotation,
+            continuous_rotation,
+            continuous_mirror,
         );
         let mut evaluations = 0usize;
         while evaluations + 2 <= evaluation_budget
@@ -13143,7 +13650,24 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 || step_y >= step_limit
                 || (can_refine_rotation && rotation_step_deg >= rotation_step_limit_deg))
         {
-            let offsets = coordinate_offsets(axis, step_x, step_y, rotation_step_deg);
+            // The rung, derived per piece from the schedule's own live
+            // translation step: `dtheta = dx / r`, so a rotation probe moves
+            // the piece's furthest point by about as far as the translation
+            // probe of the same iteration would have moved the whole piece.
+            // That is the entire reason this operator does not carry a second
+            // ladder to tune - the descent's own contraction shrinks the rung,
+            // and the 0.0032-degree rungs the record line adopted are what
+            // `dx = 0.001 mm` on a 20 mm radius *is*.
+            //
+            // `dx` is the larger of the two live axis steps, so the rung stays
+            // alive exactly as long as the refinement does.
+            let rotation_offset_deg = if derived_rungs {
+                continuous_rotation_rung_deg(rotation_scale * step_x.max(step_y), rotation_radius)
+            } else {
+                rotation_step_deg
+            };
+            let offsets = coordinate_offsets(axis, step_x, step_y, rotation_offset_deg);
+            let flip = axis == CoordinateAxis::Mirror;
             let first_candidate = RelaxedPlacement {
                 input_index,
                 rotation_deg: continuous_angle(best.rotation_deg + offsets[0].2),
@@ -13151,6 +13675,13 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 translate_x: snap_mm(best.translate_x + offsets[0].0),
                 translate_y: snap_mm(best.translate_y + offsets[0].1),
             };
+            let first_candidate = self.prepare_continuous_candidate(
+                input_index,
+                &best,
+                first_candidate,
+                flip,
+                derived_rungs && axis_is_continuous(axis),
+            )?;
             let first_score = self.score_placement(
                 state,
                 input_index,
@@ -13165,6 +13696,13 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 translate_x: snap_mm(best.translate_x + offsets[1].0),
                 translate_y: snap_mm(best.translate_y + offsets[1].1),
             };
+            let second_candidate = self.prepare_continuous_candidate(
+                input_index,
+                &best,
+                second_candidate,
+                flip,
+                derived_rungs && axis_is_continuous(axis),
+            )?;
             let second_score = self.score_placement(
                 state,
                 input_index,
@@ -13173,7 +13711,16 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 Some(best_score.weighted_loss),
             )?;
             evaluations += 2;
-            if axis == CoordinateAxis::Rotation {
+            if derived_rungs && axis_is_continuous(axis) {
+                if flip {
+                    self.counters.mirror_toggles_proposed =
+                        self.counters.mirror_toggles_proposed.saturating_add(2);
+                } else {
+                    self.counters.rotation_rungs_proposed =
+                        self.counters.rotation_rungs_proposed.saturating_add(2);
+                }
+            }
+            if axis_is_continuous(axis) {
                 self.counters.rotation_evaluations =
                     self.counters.rotation_evaluations.saturating_add(2);
             } else {
@@ -13200,10 +13747,51 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             };
             self.recycle_row_buffer(discarded.collision_pairs);
             let comparison = compare_score_objective(&score, &best_score);
+            // The attribution, taken here because here is the only place both
+            // sides of the trade exist: the loss the incumbent carried and the
+            // loss its replacement carries, in the tracker's own millimetres.
+            // Charged to the axis that proposed the winner, so "millimetres
+            // bought by rotation" and "millimetres bought by translation" are
+            // the same measurement of the same quantity by the same
+            // instrument, and neither is an inference from the other.
+            let bought = if comparison == Ordering::Less {
+                (best_score.weighted_loss - score.weighted_loss).max(0.0)
+            } else {
+                0.0
+            };
+            if derived_rungs && bought > 0.0 {
+                if axis_is_continuous(axis) {
+                    self.counters.rotation_loss_bought += bought;
+                    if flip {
+                        self.counters.mirror_toggles_improved =
+                            self.counters.mirror_toggles_improved.saturating_add(1);
+                    } else {
+                        self.counters.rotation_rungs_improved =
+                            self.counters.rotation_rungs_improved.saturating_add(1);
+                    }
+                } else {
+                    self.counters.translation_loss_bought += bought;
+                }
+            }
             if comparison != Ordering::Greater {
                 best = candidate;
                 let displaced = std::mem::replace(&mut best_score, score);
                 self.recycle_row_buffer(displaced.collision_pairs);
+                // The new incumbent is what the *next* iteration probes around
+                // and what this call returns, and neither is a place a
+                // surrogate may disappear from. An off-grid incumbent is
+                // therefore held until the piece after this one - see
+                // `release_rotation_holds`. Grid-native incumbents, which is
+                // every incumbent on an unarmed lane, cost nothing here.
+                #[cfg(feature = "continuous-rotation")]
+                if derived_rungs {
+                    self.ensure_and_protect_pose(
+                        input_index,
+                        best.rotation_deg,
+                        best.mirrored,
+                        true,
+                    )?;
+                }
             } else {
                 self.recycle_row_buffer(score.collision_pairs);
             }
@@ -13219,6 +13807,9 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 &mut rotation_step_deg,
                 multiplier,
             );
+            if derived_rungs && axis_is_continuous(axis) {
+                rotation_scale = (rotation_scale * multiplier).clamp(ROTATION_SCALE_FLOOR, 1.0);
+            }
             if comparison != Ordering::Less
                 && (step_x >= step_limit
                     || step_y >= step_limit
@@ -13231,10 +13822,98 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     rotation_step_deg,
                     rotation_step_limit_deg,
                     can_refine_rotation,
+                    continuous_rotation,
+                    continuous_mirror,
                 );
             }
         }
         Ok((best, best_score, evaluations))
+    }
+
+    /// Finishes a candidate the derived axes proposed, and makes it resolvable.
+    ///
+    /// Does nothing at all - not a branch a build without the feature can even
+    /// reach - unless the continuous axes are armed *and* this iteration is one
+    /// of theirs. On a translation iteration of an armed lane the candidate
+    /// carries the incumbent's own pose, which is already resident, so this
+    /// returns it untouched too.
+    ///
+    /// The mirror companion is the part that needs the work. A raw mirror flip
+    /// is not a local move: reflecting about the piece's own origin can throw
+    /// its silhouette a bounding box away, which is why the record line's
+    /// 155.456 -> 155.422 step needed a ~130x50 mm relocation to go with its
+    /// flip. Recentring - translating so the flipped pose's bounds keep the
+    /// centre the unflipped one had - is what turns it back into a *candidate*
+    /// the descent can judge against its neighbours instead of a teleport that
+    /// always loses.
+    #[allow(unused_variables)]
+    fn prepare_continuous_candidate(
+        &mut self,
+        input_index: usize,
+        incumbent: &RelaxedPlacement,
+        candidate: RelaxedPlacement,
+        flip: bool,
+        armed: bool,
+    ) -> Result<RelaxedPlacement, GeneralFastError> {
+        #[cfg(feature = "continuous-rotation")]
+        {
+            if !armed {
+                return Ok(candidate);
+            }
+            if !self.rotation_residency_available() {
+                // The cache is full to its ceiling. Propose the incumbent's own
+                // pose - a candidate that needs nothing built and scores as the
+                // incumbent - so the refinement carries on with translation
+                // instead of the lane raising. Counted, because an armed arm
+                // that quietly stopped proposing would otherwise look like an
+                // operator that found nothing.
+                self.counters.rotation_builds_refused =
+                    self.counters.rotation_builds_refused.saturating_add(1);
+                return Ok(incumbent.clone());
+            }
+            let mut candidate = candidate;
+            if flip {
+                candidate.mirrored = !incumbent.mirrored;
+                // Both bounds are needed before the translation can be fixed,
+                // and the flipped pose has to exist before its bounds can be
+                // asked for.
+                self.ensure_rotation_surrogate(
+                    input_index,
+                    candidate.rotation_deg,
+                    candidate.mirrored,
+                )?;
+                let before = self.local_shape_bounds(
+                    input_index,
+                    incumbent.rotation_deg,
+                    incumbent.mirrored,
+                )?;
+                let after = self.local_shape_bounds(
+                    input_index,
+                    candidate.rotation_deg,
+                    candidate.mirrored,
+                )?;
+                candidate.translate_x = snap_mm(
+                    candidate.translate_x
+                        + (before.min_x + before.max_x - after.min_x - after.max_x) / 2.0,
+                );
+                candidate.translate_y = snap_mm(
+                    candidate.translate_y
+                        + (before.min_y + before.max_y - after.min_y - after.max_y) / 2.0,
+                );
+            } else {
+                self.ensure_rotation_surrogate(
+                    input_index,
+                    candidate.rotation_deg,
+                    candidate.mirrored,
+                )?;
+            }
+            Ok(candidate)
+        }
+        #[cfg(not(feature = "continuous-rotation"))]
+        {
+            let _ = (input_index, incumbent, flip, armed);
+            Ok(candidate)
+        }
     }
 
     fn minimize_candidate_axes(
@@ -13280,7 +13959,8 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     CoordinateAxis::Vertical => candidate.translate_y = value,
                     CoordinateAxis::ForwardDiagonal
                     | CoordinateAxis::BackwardDiagonal
-                    | CoordinateAxis::Rotation => {
+                    | CoordinateAxis::Rotation
+                    | CoordinateAxis::Mirror => {
                         unreachable!("axis minimization only uses cardinal axes")
                     }
                 }
@@ -13345,7 +14025,8 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             ),
             CoordinateAxis::ForwardDiagonal
             | CoordinateAxis::BackwardDiagonal
-            | CoordinateAxis::Rotation => {
+            | CoordinateAxis::Rotation
+            | CoordinateAxis::Mirror => {
                 unreachable!("axis minimization only uses cardinal axes")
             }
         };
@@ -13492,7 +14173,8 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                         ),
                         CoordinateAxis::ForwardDiagonal
                         | CoordinateAxis::BackwardDiagonal
-                        | CoordinateAxis::Rotation => {
+                        | CoordinateAxis::Rotation
+                        | CoordinateAxis::Mirror => {
                             unreachable!("axis minimization only uses cardinal axes")
                         }
                     };
@@ -13617,11 +14299,17 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         rotation_step_deg: f64,
         rotation_step_limit_deg: f64,
         can_refine_rotation: bool,
+        continuous_rotation: bool,
+        continuous_mirror: bool,
     ) -> CoordinateAxis {
-        // At most six candidates, chosen by index from a fixed-order list: a
+        // At most eight candidates, chosen by index from a fixed-order list: a
         // stack array carries them exactly as the `Vec` did, without asking the
-        // allocator once per refinement step.
-        let mut axes = [CoordinateAxis::Horizontal; 6];
+        // allocator once per refinement step. Six of the eight are the legacy
+        // schedule's and are pushed under exactly the conditions they always
+        // were; the last two are the continuous-rotation operator's and are
+        // unreachable unless it is armed, so an unarmed lane draws from the
+        // same list, in the same order, at the same length as before.
+        let mut axes = [CoordinateAxis::Horizontal; 8];
         let mut len = 0usize;
         let mut push = |axis| {
             axes[len] = axis;
@@ -13640,6 +14328,26 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         if can_refine_rotation && rotation_step_deg >= rotation_step_limit_deg {
             push(CoordinateAxis::Rotation);
             push(CoordinateAxis::Rotation);
+        }
+        // The continuous-rotation operator's slots: **one each**, against the
+        // legacy ladder's two.
+        //
+        // The asymmetry is a price, not a preference. A translation probe costs
+        // a candidate scan; a rotation probe costs a candidate scan *and*, on a
+        // cache miss, an `OrientedSurrogate` build - a ring transform, an
+        // offset, a triangulation, a pole series and a cell index, which the
+        // overlay round priced at tens of microseconds per piece. At one slot
+        // in six a rotation iteration is 1/6 of probes and the schedule still
+        // spends most of its budget where a probe is nearly free; at the legacy
+        // ladder's two it would be a third, and the operator would have to buy
+        // back a third of the lane's throughput before its first millimetre.
+        // No gating on a rotation-specific limit, because the derived rung has
+        // none: it lives as long as the translation steps it is derived from.
+        if continuous_rotation {
+            push(CoordinateAxis::Rotation);
+        }
+        if continuous_mirror {
+            push(CoordinateAxis::Mirror);
         }
         drop(push);
         axes[(self.rng.next_u64() as usize) % len]
@@ -13779,6 +14487,15 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         // bump per whole-layout score, against `n * (n - 1)` ordered-map
         // descents saved.
         let catalog = Arc::clone(&self.catalog);
+        // The lane's own continuous-angle surrogates, taken by handle for the
+        // same reason the catalogue is: the resolved borrows below outlive the
+        // `&mut self` calls in the scoring loop. A whole-state score is also
+        // the coarsest place the operator's invariant can be restored - see
+        // `ensure_state_surrogates` - so a state that arrived from a rollback,
+        // a fan-out worker's clone or a caller that never ran a sweep resolves
+        // here instead of raising.
+        self.ensure_state_surrogates(state)?;
+        let rotation_overflow = Arc::clone(&self.rotation_overflow);
         let mut shapes = Vec::with_capacity(piece_count);
         for placement in &state.placements {
             let key = self.surrogate_key(
@@ -13786,7 +14503,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 placement.rotation_deg,
                 placement.mirrored,
             );
-            let Some(shape) = catalog.orientations.get(&key) else {
+            let Some(shape) = resolve_surrogate(&catalog, &rotation_overflow, &key) else {
                 return Err(self.missing_orientation(placement.input_index, key));
             };
             shapes.push(shape);
@@ -14064,6 +14781,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 angle_keys,
                 weights,
                 continuous_rotation_keys: directional,
+                rotation_overflow,
                 ..
             } = self;
             let directional = *directional;
@@ -14074,7 +14792,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             );
             profiling::census::count(Counter::ScanCatalogDescents, 1);
             let scan_span = profiling::census::start(Phase::ScoreScan);
-            failure = match catalog.orientations.get(&candidate_key) {
+            failure = match resolve_surrogate(catalog, rotation_overflow, &candidate_key) {
                 None => Some(missing_orientation_error(
                     pieces,
                     candidate.input_index,
@@ -14083,6 +14801,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 Some(candidate_shape) => scan_fixed_neighbors(
                     pieces,
                     catalog,
+                    rotation_overflow,
                     kernel,
                     counters,
                     angle_keys,
@@ -14118,6 +14837,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 angle_keys,
                 weights,
                 continuous_rotation_keys: directional,
+                rotation_overflow,
                 piece_query_scratch,
                 scan_order_scratch,
                 ..
@@ -14129,7 +14849,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                 candidate.mirrored,
             );
             profiling::census::count(Counter::ScanCatalogDescents, 1);
-            failure = match catalog.orientations.get(&candidate_key) {
+            failure = match resolve_surrogate(catalog, rotation_overflow, &candidate_key) {
                 None => Some(missing_orientation_error(
                     pieces,
                     candidate.input_index,
@@ -14158,6 +14878,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
                     let outcome = scan_fixed_neighbors(
                         pieces,
                         catalog,
+                        rotation_overflow,
                         kernel,
                         counters,
                         angle_keys,
@@ -14584,6 +15305,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
 
     fn build_piece_index(&mut self, state: &RelaxedState) -> Result<PieceIndex, GeneralFastError> {
         let _span = profiling::span(Phase::PieceIndexBuild);
+        self.ensure_state_surrogates(state)?;
         let inset = collision_sheet_inset_mm(self.fast_settings);
         let mut index = PieceIndex::new(IrregularBounds::new(
             inset,
@@ -15007,9 +15729,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         mirrored: bool,
     ) -> Result<&OrientedSurrogate, GeneralFastError> {
         let key = self.surrogate_key(input_index, rotation_deg, mirrored);
-        self.catalog
-            .orientations
-            .get(&key)
+        resolve_surrogate(&self.catalog, &self.rotation_overflow, &key)
             .ok_or_else(|| self.missing_orientation(input_index, key))
     }
 
@@ -15067,10 +15787,336 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         mirrored: bool,
     ) -> Result<SurrogateKey, GeneralFastError> {
         let key = self.surrogate_key(input_index, rotation_deg, mirrored);
-        if !self.catalog.orientations.contains_key(&key) {
+        if resolve_surrogate(&self.catalog, &self.rotation_overflow, &key).is_none() {
             return Err(self.missing_orientation(input_index, key));
         }
         Ok(key)
+    }
+
+    // ---------------------------------------------------------------------
+    // The continuous-rotation operator's surrogate cache.
+    //
+    // Four rules, and the correctness of the whole operator is these four:
+    //
+    // 1. **The catalogue is never touched.** Everything below writes to
+    //    `rotation_overflow`, a lane-local map. Two lanes sharing a catalogue
+    //    `Arc` cannot see each other's continuous poses, which is what makes a
+    //    fan-out worker's cache its own and the reduce still deterministic.
+    // 2. **Nothing is ever evicted while it might be resolved.** Eviction runs
+    //    in exactly one place - `release_rotation_holds`, at the top of
+    //    `search_piece` - and never inside `ensure_rotation_surrogate`. A
+    //    surrogate a candidate, an incumbent or a placement is holding
+    //    therefore cannot vanish under it, and the borrow checker guarantees
+    //    the rest: eviction takes `&mut self`, so no `&OrientedSurrogate` can
+    //    be alive across it.
+    // 3. **Two kinds of protection, because there are two kinds of holder.**
+    //    `pinned[i]` is the pose piece `i`'s *state placement* holds - a
+    //    neighbour scan resolves it on every candidate query of every other
+    //    piece, for as long as the piece sits there. `holds` is the set of
+    //    poses an *in-flight* refinement is carrying: `search_piece` refines
+    //    several starts before it compares them, so the loser of iteration one
+    //    must still be resolvable at iteration four. Holds are released at the
+    //    start of the next `search_piece`, which is after `move_sweep` has
+    //    committed the winner and pinned it.
+    // 4. **A pose is charged to the work meter the first time it is built.**
+    //    `build_oriented_surrogate` takes the lane's own `WorkCounters`, so a
+    //    rotation rung's real price - a ring transform, an offset, a
+    //    triangulation, a pole series and a cell index - lands in the same
+    //    counter the catalogue's own builds land in, plus the two counters
+    //    that make it attributable.
+    // ---------------------------------------------------------------------
+
+    /// The piece's bounding radius about its own rotation origin: the `r` of
+    /// `dtheta = dx / r`.
+    ///
+    /// Taken from the zero-degree surrogate's bounds rather than its ring,
+    /// because `transformed` rotates about the local origin and the corner of
+    /// the axis-aligned box at zero degrees is the furthest any point of the
+    /// piece can be from that origin. Over-estimating `r` under-estimates the
+    /// rung, which is the safe direction: a smaller rung is a smaller probe.
+    ///
+    /// Memoised per piece. The zero-degree, unmirrored entry exists in every
+    /// `StructuredGrid` catalogue by construction, so this cannot introduce a
+    /// new failure mode on an armed lane.
+    #[cfg(feature = "continuous-rotation")]
+    fn rotation_radius(&mut self, input_index: usize) -> Result<f64, GeneralFastError> {
+        let cached = self.rotation_cache.radii[input_index];
+        if cached > 0.0 {
+            return Ok(cached);
+        }
+        let bounds = self.oriented(input_index, 0.0, false)?.bounds;
+        let radius = bounds
+            .min_x
+            .abs()
+            .max(bounds.max_x.abs())
+            .hypot(bounds.min_y.abs().max(bounds.max_y.abs()))
+            .max(0.001);
+        self.rotation_cache.radii[input_index] = radius;
+        Ok(radius)
+    }
+
+    /// Makes one pose resolvable, building its surrogate if this lane has never
+    /// seen it.
+    ///
+    /// Three outcomes, and each is counted separately because they have
+    /// completely different prices: the catalogue already had it (a grid angle,
+    /// free); this lane already built it (a cache hit, one ordered-map descent);
+    /// or it is new (one `build_oriented_surrogate`, the cost this operator
+    /// lives or dies on).
+    #[cfg(feature = "continuous-rotation")]
+    fn ensure_rotation_surrogate(
+        &mut self,
+        input_index: usize,
+        rotation_deg: f64,
+        mirrored: bool,
+    ) -> Result<SurrogateKey, GeneralFastError> {
+        let key = self.surrogate_key(input_index, rotation_deg, mirrored);
+        if self.catalog.orientations.contains_key(&key) {
+            return Ok(key);
+        }
+        if self.rotation_overflow.contains_key(&key) {
+            self.counters.rotation_surrogate_hits =
+                self.counters.rotation_surrogate_hits.saturating_add(1);
+            self.touch_rotation_probe(key);
+            return Ok(key);
+        }
+        let started = Instant::now();
+        // The build runs on a **scratch counter**, and this is load-bearing
+        // rather than tidy.
+        //
+        // `build_oriented_surrogate` enforces `MAX_CELLS_PER_JOB` against the
+        // *cumulative* `generated_cells` of the counters it is handed. That cap
+        // is the catalogue's own guard: a catalogue is built once, is resident
+        // for the whole job, and its cells are the job's memory. The operator's
+        // surrogates are the opposite - transient, evicted, and bounded by the
+        // LRU window - so charging them to a lifetime counter conflates "how
+        // much geometry exists" with "how much geometry was ever built", and it
+        // fails the whole slice the moment enough rungs have been proposed.
+        // That is not a hypothetical: the first armed smoke run on mixed-61
+        // died with `relaxed surrogate job may contain at most 524288 generated
+        // cells` after a single m34 slice, and the coordinator's incumbent fell
+        // to the mode-22 arm.
+        //
+        // What replaces it is a *residency* guard, checked here, over the cells
+        // this lane's overflow map is actually holding. Nothing about the
+        // catalogue's own cap changes: `self.counters.generated_cells` is left
+        // exactly where the catalogue build put it, so the guard the legacy
+        // path is protected by is the guard it always had.
+        if !self.rotation_residency_available() {
+            // Unreachable in practice and an error rather than a silent snap on
+            // purpose. `prepare_continuous_candidate` asks
+            // `rotation_residency_available` *before* it proposes anything, so
+            // a lane at its residency ceiling stops offering rungs and the
+            // descent carries on with translation alone. Reaching here means
+            // something the lane is *already holding* - a committed placement,
+            // through `ensure_state_surrogates` - needs a surrogate that cannot
+            // be built, and there is no honest answer to that but to raise: the
+            // alternative is scoring a held pose against a shape that is not
+            // its own, which is the silent failure this whole file is organised
+            // against.
+            self.counters.rotation_builds_refused =
+                self.counters.rotation_builds_refused.saturating_add(1);
+            return Err(self.missing_orientation(input_index, key));
+        }
+        let mut build_counters = WorkCounters::default();
+        let shape = build_oriented_surrogate(
+            self.pieces[input_index].polygon,
+            // The key's own angle, not the caller's: the catalogue builder
+            // quantises the same way, so the shape and the key that finds it
+            // describe the same rotation to the last bit.
+            angle_from_key(key.1),
+            mirrored,
+            collision_expansion_mm(self.fast_settings),
+            &mut build_counters,
+        )?;
+        self.counters.rotation_surrogate_build_nanos = self
+            .counters
+            .rotation_surrogate_build_nanos
+            .saturating_add(started.elapsed().as_nanos() as u64);
+        self.counters.rotation_surrogate_builds =
+            self.counters.rotation_surrogate_builds.saturating_add(1);
+        self.counters.rotation_surrogate_cells = self
+            .counters
+            .rotation_surrogate_cells
+            .saturating_add(build_counters.generated_cells);
+        self.counters.rotation_resident_cells = self
+            .counters
+            .rotation_resident_cells
+            .saturating_add(shape.cells.len());
+        Arc::make_mut(&mut self.rotation_overflow).insert(key, shape);
+        self.rotation_cache.probes.push_back(key);
+        Ok(key)
+    }
+
+    /// Whether the operator's cache may hold one more surrogate.
+    ///
+    /// A **residency** bound, against the same `MAX_CELLS_PER_JOB` the
+    /// catalogue's own guard uses, and it is the operator's substitute for that
+    /// guard rather than an addition to it: the catalogue's cap is cumulative
+    /// over a job because catalogue geometry is resident for the job, and the
+    /// operator's geometry is evicted, so the honest analogue of "how much
+    /// geometry does this lane hold" is what its cache holds now.
+    ///
+    /// It cannot bind in any configuration this campaign runs - pins are at
+    /// most one per piece and probes at most
+    /// [`ROTATION_CACHE_PROBE_CAPACITY`], so about 110 surrogates at
+    /// `MAX_CELLS_PER_PIECE` = 512 cells each is an order of magnitude below
+    /// the ceiling - which is exactly why it is worth having: the failure it
+    /// prevents is the one nobody would predict.
+    #[cfg(feature = "continuous-rotation")]
+    #[inline]
+    fn rotation_residency_available(&self) -> bool {
+        self.counters
+            .rotation_resident_cells
+            .saturating_add(MAX_CELLS_PER_PIECE)
+            <= MAX_CELLS_PER_JOB
+    }
+
+    /// [`Self::ensure_rotation_surrogate`] plus the protection the caller needs,
+    /// for a pose that is about to be *held*.
+    ///
+    /// `hold` distinguishes the two holders of rule 3 above: `false` pins the
+    /// pose into piece `input_index`'s state slot, `true` adds it to the
+    /// in-flight set. A grid-native pose needs neither and is left alone -
+    /// there is nothing to protect it from.
+    #[cfg(feature = "continuous-rotation")]
+    fn ensure_and_protect_pose(
+        &mut self,
+        input_index: usize,
+        rotation_deg: f64,
+        mirrored: bool,
+        hold: bool,
+    ) -> Result<(), GeneralFastError> {
+        let key = self.ensure_rotation_surrogate(input_index, rotation_deg, mirrored)?;
+        let off_grid = !self.catalog.orientations.contains_key(&key);
+        if hold {
+            if off_grid {
+                self.rotation_cache.holds.push(key);
+                self.acquire_rotation_key(key);
+            }
+            return Ok(());
+        }
+        self.pin_rotation_pose(input_index, off_grid.then_some(key));
+        Ok(())
+    }
+
+    /// Moves piece `input_index`'s state pin from whatever it held to `key`.
+    #[cfg(feature = "continuous-rotation")]
+    fn pin_rotation_pose(&mut self, input_index: usize, key: Option<SurrogateKey>) {
+        if self.rotation_cache.pinned[input_index] == key {
+            return;
+        }
+        if let Some(previous) = self.rotation_cache.pinned[input_index].take() {
+            self.release_rotation_key(previous);
+        }
+        self.rotation_cache.pinned[input_index] = key;
+        if let Some(key) = key {
+            self.acquire_rotation_key(key);
+        }
+    }
+
+    /// Takes a reference on `key`, and takes it out of the eviction queue while
+    /// it is held. Two pieces of one geometry class at one continuous pose
+    /// share the entry, so this is a count and not a flag.
+    #[cfg(feature = "continuous-rotation")]
+    fn acquire_rotation_key(&mut self, key: SurrogateKey) {
+        let count = self.rotation_cache.pin_counts.entry(key).or_insert(0);
+        *count += 1;
+        if *count == 1 {
+            if let Some(position) = self
+                .rotation_cache
+                .probes
+                .iter()
+                .position(|entry| *entry == key)
+            {
+                self.rotation_cache.probes.remove(position);
+            }
+        }
+    }
+
+    /// Drops a reference on `key`, returning it to the eviction queue as the
+    /// most recently used entry when the last holder lets go.
+    #[cfg(feature = "continuous-rotation")]
+    fn release_rotation_key(&mut self, key: SurrogateKey) {
+        let Some(count) = self.rotation_cache.pin_counts.get_mut(&key) else {
+            return;
+        };
+        *count -= 1;
+        if *count == 0 {
+            self.rotation_cache.pin_counts.remove(&key);
+            self.rotation_cache.probes.push_back(key);
+        }
+    }
+
+    /// Refreshes an entry's position in the LRU window.
+    #[cfg(feature = "continuous-rotation")]
+    fn touch_rotation_probe(&mut self, key: SurrogateKey) {
+        if let Some(position) = self
+            .rotation_cache
+            .probes
+            .iter()
+            .position(|entry| *entry == key)
+        {
+            self.rotation_cache.probes.remove(position);
+            self.rotation_cache.probes.push_back(key);
+        }
+    }
+
+    /// Ends the in-flight epoch: every pose a refinement was carrying goes back
+    /// into the eviction queue, and the queue is trimmed to its window.
+    ///
+    /// This is the operator's **only** eviction site, and it runs at the top of
+    /// `search_piece` - one piece after the poses it frees stopped being
+    /// candidates, and after `move_sweep` pinned whichever of them it accepted.
+    #[cfg(feature = "continuous-rotation")]
+    fn release_rotation_holds(&mut self) {
+        while let Some(key) = self.rotation_cache.holds.pop() {
+            self.release_rotation_key(key);
+        }
+        while self.rotation_cache.probes.len() > ROTATION_CACHE_PROBE_CAPACITY {
+            let Some(key) = self.rotation_cache.probes.pop_front() else {
+                break;
+            };
+            if let Some(evicted) = Arc::make_mut(&mut self.rotation_overflow).remove(&key) {
+                self.counters.rotation_resident_cells = self
+                    .counters
+                    .rotation_resident_cells
+                    .saturating_sub(evicted.cells.len());
+            }
+            self.counters.rotation_surrogate_evictions =
+                self.counters.rotation_surrogate_evictions.saturating_add(1);
+        }
+    }
+
+    /// Makes every pose a state holds resolvable, and pins it.
+    ///
+    /// The coarse restoration point of the operator's invariant. A lane can be
+    /// handed a state it never built - a fan-out worker's clone of the
+    /// frontier, a schedule rollback to the last confirmed layout, a caller
+    /// that scores a candidate state it constructed elsewhere - and any of
+    /// those can carry continuous poses this lane's cache has never seen or has
+    /// already evicted. Every whole-state entry point calls this first, so
+    /// "which lane built the pose" never becomes a correctness question.
+    ///
+    /// A no-op on an unarmed lane, and `n` ordered-map descents with no builds
+    /// on an armed lane whose state is grid-native - against the `O(n^2)` pair
+    /// work every one of its callers is about to do.
+    fn ensure_state_surrogates(&mut self, state: &RelaxedState) -> Result<(), GeneralFastError> {
+        #[cfg(feature = "continuous-rotation")]
+        if self.continuous_rotation {
+            for position in 0..state.placements.len() {
+                let placement = &state.placements[position];
+                let (input_index, rotation_deg, mirrored) = (
+                    placement.input_index,
+                    placement.rotation_deg,
+                    placement.mirrored,
+                );
+                self.ensure_and_protect_pose(input_index, rotation_deg, mirrored, false)?;
+            }
+        }
+        #[cfg(not(feature = "continuous-rotation"))]
+        let _ = state;
+        Ok(())
     }
 }
 
@@ -15421,6 +16467,7 @@ fn order_scan_neighbors(
 fn scan_fixed_neighbors<K: ExplorationKernel<Shape = OrientedSurrogate>>(
     pieces: &[GeneralFastPiece<'_>],
     catalog: &SurrogateCatalog,
+    rotation_overflow: &BTreeMap<SurrogateKey, OrientedSurrogate>,
     kernel: &mut K,
     counters: &mut WorkCounters,
     angle_keys: &mut AngleKeyCache,
@@ -15448,7 +16495,7 @@ fn scan_fixed_neighbors<K: ExplorationKernel<Shape = OrientedSurrogate>>(
             fixed.mirrored,
         );
         profiling::census::count(Counter::ScanCatalogDescents, 1);
-        let Some(fixed_shape) = catalog.orientations.get(&fixed_key) else {
+        let Some(fixed_shape) = resolve_surrogate(catalog, rotation_overflow, &fixed_key) else {
             return Some(missing_orientation_error(
                 pieces,
                 fixed.input_index,
@@ -17347,6 +18394,13 @@ fn coordinate_offsets(
             (0.0, 0.0, rotation_step_deg),
             (0.0, 0.0, -rotation_step_deg),
         ],
+        // The mirror companion probes the flip twice: once at the incumbent's
+        // own angle, once one rung away from it. The flip itself is not
+        // expressible as an offset, so it is applied by
+        // `prepare_continuous_candidate`; what this contributes is the second
+        // probe's angle, which is why a mirror iteration is a *rotation*
+        // iteration with a discrete companion rather than a separate ladder.
+        CoordinateAxis::Mirror => [(0.0, 0.0, 0.0), (0.0, 0.0, rotation_step_deg)],
     }
 }
 
@@ -17507,6 +18561,16 @@ fn apply_coordinate_multiplier(
             *step_y *= diagonal_multiplier;
         }
         CoordinateAxis::Rotation => *rotation_step_deg *= multiplier,
+        // The derived family does not contract here. Its rung is
+        // `rotation_scale * max(step_x, step_y) / r`, recomputed every
+        // iteration, and it is `rotation_scale` that a rotation outcome moves -
+        // in `refine_candidate`, where the scale lives. Contracting the shared
+        // translation steps instead would make a run of rejected rotations
+        // shorten the *translation* descent, which would confound the one
+        // question this operator exists to answer: a translation ladder that
+        // collapsed because rotation kept failing is not a measurement of
+        // rotation. An unarmed build never reaches this arm.
+        CoordinateAxis::Mirror => {}
     }
 }
 
@@ -18794,6 +19858,534 @@ mod tests {
         // round reported only the first and called it a piece count.
         assert_eq!(overlay.entries.len(), 1);
         assert_eq!(overlay.off_grid_pieces, 2);
+    }
+
+    // ------------------------------------------------------------------
+    // The continuous-rotation operator.
+    //
+    // The overlay fixtures above are reused deliberately: the L with a bite
+    // out of it and the thin bar are the two shapes in this file whose
+    // surrogates move materially per degree, which is the property every
+    // assertion here needs. A test on symmetric squares would pass against an
+    // operator that proposed nothing.
+    // ------------------------------------------------------------------
+
+    /// The rung is the brief's derivation and nothing else: `dtheta = dx / r`,
+    /// converted to degrees, clamped at [`ROTATION_RUNG_CAP_DEG`].
+    ///
+    /// The rows are the regimes that matter: the record line's own scale (a
+    /// micron of step on a centimetre-scale radius is thousandths of a degree -
+    /// the 0.0032-degree rungs the record line adopted are what this derivation
+    /// *is*), a mid-range step, and the small-radius case the cap exists for.
+    #[test]
+    #[cfg(feature = "continuous-rotation")]
+    fn continuous_rotation_rung_is_the_arc_length_derivation() {
+        let fine = continuous_rotation_rung_deg(0.001, 20.0);
+        assert!(
+            (fine - (0.001_f64 / 20.0).to_degrees()).abs() < 1e-15,
+            "the rung is dx / r in degrees, got {fine}"
+        );
+        assert!(
+            fine > 0.0028 && fine < 0.0029,
+            "a micron of step on a 20 mm radius is thousandths of a degree, got {fine}"
+        );
+        let coarse = continuous_rotation_rung_deg(1.0, 60.0);
+        assert!(
+            (coarse - (1.0_f64 / 60.0).to_degrees()).abs() < 1e-15,
+            "got {coarse}"
+        );
+        // A large step on a tiny radius saturates rather than proposing a
+        // reorientation the descent cannot judge.
+        assert_eq!(
+            continuous_rotation_rung_deg(100.0, 0.5),
+            ROTATION_RUNG_CAP_DEG
+        );
+        // A degenerate radius proposes nothing at all instead of an infinity.
+        assert_eq!(continuous_rotation_rung_deg(1.0, 0.0), 0.0);
+    }
+
+    /// The arming predicate refuses every lane whose pose resolution this
+    /// operator does not own.
+    ///
+    /// This is the guard that lets the coordinator set one bit for both m22 and
+    /// m34 without auditing which backend each of them ended up on.
+    #[test]
+    #[cfg(feature = "continuous-rotation")]
+    fn continuous_rotation_arms_only_the_catalogue_resolved_lane() {
+        let mut settings = coupled_experiment_test_settings(1);
+        settings.continuous_rotation = true;
+        assert!(
+            continuous_rotation_lane(settings),
+            "RollbackTriangle + StructuredTrianglePoles is the lane the operator owns"
+        );
+        assert!(
+            continuous_rotation_keys(settings),
+            "an armed lane must derive continuous keys, or every accepted rung \
+             would be snapped back onto the 2.5-degree grid by the next lookup"
+        );
+
+        let mut off = settings;
+        off.continuous_rotation = false;
+        assert!(!continuous_rotation_lane(off));
+
+        let mut dynamic = settings;
+        dynamic.collision_backend = GeneralRelaxedCollisionBackend::DynamicHazard;
+        assert!(
+            !continuous_rotation_lane(dynamic),
+            "a dynamic-hazard lane answers poses out of the hazard index"
+        );
+
+        let mut directional = settings;
+        directional.pressure_model = GeneralRelaxedPressureModel::DirectionalPenetration;
+        assert!(
+            !continuous_rotation_lane(directional),
+            "the directional engine already works in continuous angles"
+        );
+    }
+
+    /// A pose the catalogue does not carry is built once, hit thereafter, and
+    /// resolvable through the same `oriented` every hot site uses.
+    ///
+    /// The counters are the point as much as the resolution is: the operator's
+    /// whole cost model is "one build per unseen pose", and a cache that
+    /// silently rebuilt would still pass a resolution-only test.
+    #[test]
+    #[cfg(all(feature = "continuous-rotation", feature = "compression-schedule"))]
+    fn rotation_surrogate_is_built_once_and_then_cached() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        let mut settings = coupled_experiment_test_settings(4);
+        settings.continuous_rotation = true;
+        let mut lane = LegacyLaneSearch::new(&pieces, fast_settings, settings, 11, catalog.clone());
+
+        let off_grid = OVERLAY_OFF_GRID_DEG;
+        let key = lane.surrogate_key(0, off_grid, false);
+        assert!(
+            !catalog.orientations.contains_key(&key),
+            "the fixture angle must be off the grid or this test is vacuous"
+        );
+        assert!(
+            lane.oriented(0, off_grid, false).is_err(),
+            "before the operator builds it, the pose does not resolve"
+        );
+
+        lane.ensure_rotation_surrogate(0, off_grid, false)
+            .expect("the operator builds the pose");
+        assert_eq!(lane.counters.rotation_surrogate_builds, 1);
+        assert_eq!(lane.counters.rotation_surrogate_hits, 0);
+        assert!(lane.counters.rotation_surrogate_build_nanos > 0);
+
+        // The shape now resolves, and it is the *continuous* shape - equal to a
+        // directly constructed surrogate at the same angle and unequal to the
+        // grid snap of it.
+        let direct = build_oriented_surrogate(
+            &polygons[0],
+            continuous_angle(off_grid),
+            false,
+            collision_expansion_mm(fast_settings),
+            &mut WorkCounters::default(),
+        )
+        .expect("the reference surrogate builds");
+        let resolved = lane
+            .oriented(0, off_grid, false)
+            .expect("the pose resolves once built");
+        assert_eq!(resolved.bounds, direct.bounds);
+        let snapped_key = (
+            catalog.geometry_class_by_input[0],
+            angle_key(canonical_angle(off_grid)),
+            false,
+        );
+        let snapped_bounds = catalog.orientations[&snapped_key].bounds;
+        assert_ne!(
+            direct.bounds, snapped_bounds,
+            "the continuous pose must differ from its grid snap or nothing above is observable"
+        );
+
+        // Asking again is a hit, not a second build.
+        lane.ensure_rotation_surrogate(0, off_grid, false)
+            .expect("the pose is already resident");
+        assert_eq!(lane.counters.rotation_surrogate_builds, 1);
+        assert_eq!(lane.counters.rotation_surrogate_hits, 1);
+
+        // And a grid angle is neither: the catalogue answers it.
+        lane.ensure_rotation_surrogate(0, 5.0, false)
+            .expect("a grid angle needs nothing built");
+        assert_eq!(lane.counters.rotation_surrogate_builds, 1);
+        assert_eq!(lane.counters.rotation_surrogate_hits, 1);
+        assert_eq!(lane.rotation_overflow.len(), 1);
+    }
+
+    /// Eviction may never take a pose the lane's own state is holding.
+    ///
+    /// This is the failure the per-piece pinned slot exists to prevent, and it
+    /// is not hypothetical: a piece that accepted a rotation rung is resolved
+    /// as a *fixed neighbour* by every other piece's candidate scan for as long
+    /// as it sits there, so an evicted pin is a `missing_orientation` error in
+    /// the middle of a sweep. The test floods the probe window with more than
+    /// its capacity of distinct angles and then asks for the pinned pose.
+    #[test]
+    #[cfg(all(feature = "continuous-rotation", feature = "compression-schedule"))]
+    fn rotation_cache_evicts_probes_but_never_a_pinned_pose() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        let mut settings = coupled_experiment_test_settings(5);
+        settings.continuous_rotation = true;
+        let mut lane = LegacyLaneSearch::new(&pieces, fast_settings, settings, 13, catalog);
+
+        // Piece 0 holds an off-grid pose, the way an accepted rung leaves it.
+        lane.ensure_and_protect_pose(0, OVERLAY_OFF_GRID_DEG, false, false)
+            .expect("the held pose builds");
+        let pinned_key = lane.surrogate_key(0, OVERLAY_OFF_GRID_DEG, false);
+        assert_eq!(lane.rotation_cache.pin_counts.get(&pinned_key), Some(&1));
+
+        // Twice the window of distinct probe angles, none of them held.
+        let probes = ROTATION_CACHE_PROBE_CAPACITY * 2;
+        for step in 1..=probes {
+            let angle = OVERLAY_OFF_GRID_DEG + step as f64 * 0.017;
+            lane.ensure_rotation_surrogate(1, angle, false)
+                .expect("probe poses build");
+        }
+        assert_eq!(lane.counters.rotation_surrogate_builds, probes + 1);
+        // Nothing is evicted until the epoch ends - a probe in flight is a
+        // probe something may still be holding.
+        assert_eq!(lane.counters.rotation_surrogate_evictions, 0);
+
+        lane.release_rotation_holds();
+        assert!(
+            lane.counters.rotation_surrogate_evictions > 0,
+            "the window must actually bound the cache"
+        );
+        assert!(
+            lane.rotation_overflow.len() <= ROTATION_CACHE_PROBE_CAPACITY + 1,
+            "resident entries are the window plus what is pinned, got {}",
+            lane.rotation_overflow.len()
+        );
+        assert!(
+            lane.oriented(0, OVERLAY_OFF_GRID_DEG, false).is_ok(),
+            "the pinned pose survived a flood of probes"
+        );
+
+        // Unpinning returns it to the queue, and it can then be evicted like
+        // anything else - a pin is a hold, not a leak.
+        lane.pin_rotation_pose(0, None);
+        assert!(lane.rotation_cache.pin_counts.is_empty());
+        for step in 1..=probes {
+            let angle = 200.0 + step as f64 * 0.019;
+            lane.ensure_rotation_surrogate(1, angle, false)
+                .expect("probe poses build");
+        }
+        lane.release_rotation_holds();
+        assert!(
+            lane.oriented(0, OVERLAY_OFF_GRID_DEG, false).is_err(),
+            "an unpinned pose is evictable"
+        );
+    }
+
+    /// A state the lane has never scored resolves, because every whole-state
+    /// entry point restores the invariant first.
+    ///
+    /// This is the fan-out worker's case and the schedule rollback's case in
+    /// one: `state` here carries continuous poses that *no* lane built.
+    #[test]
+    #[cfg(all(feature = "continuous-rotation", feature = "compression-schedule"))]
+    fn a_foreign_state_with_continuous_poses_scores_without_raising() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        let mut armed_settings = coupled_experiment_test_settings(6);
+        armed_settings.continuous_rotation = true;
+        let state = RelaxedState {
+            placements: vec![
+                RelaxedPlacement {
+                    input_index: 0,
+                    rotation_deg: OVERLAY_OFF_GRID_DEG,
+                    mirrored: false,
+                    translate_x: 20.0,
+                    translate_y: 20.0,
+                },
+                RelaxedPlacement {
+                    input_index: 1,
+                    rotation_deg: 41.113,
+                    mirrored: true,
+                    translate_x: 60.0,
+                    translate_y: 60.0,
+                },
+            ],
+            strip_depth_mm: 100.0,
+        };
+
+        let mut disarmed = LegacyLaneSearch::new(
+            &pieces,
+            fast_settings,
+            coupled_experiment_test_settings(6),
+            17,
+            catalog.clone(),
+        );
+        // Without the operator the same state is *snapped*, which is today's
+        // behaviour and is why this is not a regression: nothing raises, the
+        // grid answers, and the score is the snapped one.
+        assert!(disarmed.score_state(&state).is_ok());
+        assert_eq!(disarmed.rotation_overflow.len(), 0);
+
+        let mut armed = LegacyLaneSearch::new(&pieces, fast_settings, armed_settings, 17, catalog);
+        armed
+            .score_state(&state)
+            .expect("an armed lane resolves a state it never built");
+        assert_eq!(
+            armed.counters.rotation_surrogate_builds, 2,
+            "both off-grid poses were built, exactly once each"
+        );
+        assert!(armed.oriented(0, OVERLAY_OFF_GRID_DEG, false).is_ok());
+        assert!(armed.oriented(1, 41.113, true).is_ok());
+    }
+
+    /// The publication path takes a continuous rotation as it is.
+    ///
+    /// Step 2 of the brief asked this be established before the operator was
+    /// written, because the whole design depends on it: the exact tier
+    /// validates `placement.rotation_deg` by *transforming the real polygon*,
+    /// and the only rotation rule it enforces is `allow_rotation`. There is no
+    /// `canonical_angle` anywhere in `validate_and_measure_placements` - the
+    /// function does not exist outside `general_relaxed.rs` at all - so an
+    /// accepted rung is published at the angle it was accepted at and is never
+    /// re-snapped.
+    #[test]
+    fn the_exact_validator_accepts_a_continuous_rotation() {
+        let polygon = PolygonSet::from_outer(vec![
+            point(0.0, 0.0),
+            point(30.0, 0.0),
+            point(30.0, 8.0),
+            point(8.0, 8.0),
+            point(8.0, 30.0),
+            point(0.0, 30.0),
+        ])
+        .unwrap();
+        let pieces = [GeneralFastPiece {
+            id: "ell",
+            polygon: &polygon,
+            allow_rotation: true,
+            allow_mirror: false,
+        }];
+        let fast_settings = GeneralFastSettings::deterministic_test(200.0, 200.0);
+        // Three angles the 2.5-degree catalogue cannot express, including the
+        // record line's own rung scale.
+        for rotation_deg in [13.37, 0.0032, 47.008_12] {
+            assert_ne!(
+                angle_key(rotation_deg),
+                angle_key(canonical_angle(rotation_deg)),
+                "the angle must be off the grid or the test proves nothing"
+            );
+            let placements = vec![GeneralFastPlacement {
+                piece_id: "ell".to_owned(),
+                rotation_deg,
+                mirrored: false,
+                translate_short_axis: 60.0,
+                translate_long_axis: 60.0,
+            }];
+            let metrics = validate_and_measure_placements(&pieces, &placements, fast_settings)
+                .unwrap_or_else(|error| {
+                    panic!("the exact tier refused {rotation_deg} degrees: {error}")
+                });
+            assert!(metrics.used_long_axis_depth_mm > 0.0);
+        }
+    }
+
+    /// The operator proposes off-grid rungs inside a real sweep, and the state
+    /// it leaves behind is still resolvable, still scorable, and still
+    /// publishable.
+    ///
+    /// End to end at unit scale: two interacting rotation-sensitive pieces, one
+    /// armed lane, one disarmed lane, the same seed. The disarmed lane must
+    /// propose nothing and leave every rotation on the grid; the armed lane
+    /// must propose rungs and pay for them, and whatever it leaves in the state
+    /// must pass the exact validator - the only tier allowed to answer a
+    /// publication question.
+    #[test]
+    #[cfg(all(feature = "continuous-rotation", feature = "compression-schedule"))]
+    fn an_armed_sweep_proposes_rungs_and_leaves_a_publishable_state() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = overlay_pieces(&polygons);
+        let fast_settings = GeneralFastSettings::deterministic_test(60.0, 60.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        // Deliberately overlapping, so the sweep has something to repair and
+        // the refinement loop actually runs.
+        let state = RelaxedState {
+            placements: vec![
+                RelaxedPlacement {
+                    input_index: 0,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 15.0,
+                    translate_y: 15.0,
+                },
+                RelaxedPlacement {
+                    input_index: 1,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 17.0,
+                    translate_y: 17.0,
+                },
+            ],
+            strip_depth_mm: 60.0,
+        };
+
+        let run = |armed: bool| {
+            let mut settings = coupled_experiment_test_settings(8);
+            settings.coupled_dynamic_separator = false;
+            settings.continuous_rotation = armed;
+            let mut lane =
+                LegacyLaneSearch::new(&pieces, fast_settings, settings, 23, catalog.clone());
+            let mut state = state.clone();
+            let mut score = lane.score_state(&state).expect("the state scores");
+            for sweep in 0..3 {
+                lane.move_sweep(&mut state, &mut score, sweep)
+                    .expect("the sweep runs");
+            }
+            (state, lane.counters)
+        };
+
+        let (disarmed_state, disarmed_counters) = run(false);
+        assert_eq!(
+            disarmed_counters.rotation_rungs_proposed, 0,
+            "an unarmed lane proposes no rungs"
+        );
+        assert_eq!(disarmed_counters.rotation_surrogate_builds, 0);
+        for placement in &disarmed_state.placements {
+            assert_eq!(
+                angle_key(placement.rotation_deg),
+                angle_key(canonical_angle(placement.rotation_deg)),
+                "an unarmed lane leaves every rotation on the 2.5-degree grid"
+            );
+        }
+
+        let (armed_state, armed_counters) = run(true);
+        assert!(
+            armed_counters.rotation_rungs_proposed > 0,
+            "the armed lane must actually propose rotation candidates"
+        );
+        assert!(
+            armed_counters.rotation_surrogate_builds > 0,
+            "and pay for them"
+        );
+        // Whatever the sweep left - grid or off-grid - the exact tier is the
+        // authority, and it must accept it.
+        let published = to_fast_placements(&armed_state, &pieces);
+        validate_and_measure_placements(&pieces, &published, fast_settings)
+            .expect("the armed lane's state is publishable as it stands");
+    }
+
+    /// A piece the request forbids rotating is never offered the mirror
+    /// companion, and therefore never leaves the lane with a forbidden
+    /// rotation.
+    ///
+    /// The companion's second probe is the flip *one rung away* from the
+    /// incumbent's angle. Offered to a no-rotation piece it would propose a
+    /// rotated pose that the proxy tier scores, the sweep commits and
+    /// `validate_and_measure_placements` then refuses at publication - a defect
+    /// that is silent until the slice fails. Every piece of all three campaign
+    /// requests allows both transforms, so this is the case the campaign could
+    /// not have caught.
+    #[test]
+    #[cfg(all(feature = "continuous-rotation", feature = "compression-schedule"))]
+    fn a_piece_forbidden_to_rotate_is_never_offered_the_mirror_companion() {
+        let polygons = [overlay_l_shape(), overlay_bar()];
+        let pieces = [
+            GeneralFastPiece {
+                id: "ell",
+                polygon: &polygons[0],
+                allow_rotation: false,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "bar",
+                polygon: &polygons[1],
+                allow_rotation: false,
+                allow_mirror: true,
+            },
+        ];
+        let fast_settings = GeneralFastSettings::deterministic_test(60.0, 60.0);
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
+        let mut settings = coupled_experiment_test_settings(12);
+        settings.coupled_dynamic_separator = false;
+        settings.continuous_rotation = true;
+        let mut lane = LegacyLaneSearch::new(&pieces, fast_settings, settings, 29, catalog);
+        let mut state = RelaxedState {
+            placements: vec![
+                RelaxedPlacement {
+                    input_index: 0,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 15.0,
+                    translate_y: 15.0,
+                },
+                RelaxedPlacement {
+                    input_index: 1,
+                    rotation_deg: 0.0,
+                    mirrored: false,
+                    translate_x: 17.0,
+                    translate_y: 17.0,
+                },
+            ],
+            strip_depth_mm: 60.0,
+        };
+        let mut score = lane.score_state(&state).expect("the state scores");
+        for sweep in 0..3 {
+            lane.move_sweep(&mut state, &mut score, sweep)
+                .expect("the sweep runs");
+        }
+        assert_eq!(
+            lane.counters.rotation_rungs_proposed, 0,
+            "no rotation rungs for a piece that may not rotate"
+        );
+        assert_eq!(
+            lane.counters.mirror_toggles_proposed, 0,
+            "and no mirror companion either, because its second probe rotates"
+        );
+        for placement in &state.placements {
+            assert_eq!(
+                angle_key(placement.rotation_deg),
+                0,
+                "every pose must still be at zero degrees"
+            );
+        }
+        let published = to_fast_placements(&state, &pieces);
+        validate_and_measure_placements(&pieces, &published, fast_settings)
+            .expect("the exact tier accepts the state a no-rotation request left");
     }
 
     /// Sol review 6 §2.2: the merge must not clone the catalogue.

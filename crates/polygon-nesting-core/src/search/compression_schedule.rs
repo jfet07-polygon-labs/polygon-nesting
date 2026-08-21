@@ -738,6 +738,21 @@ impl CompressionSchedule {
             skipped_infeasible_entry: false,
             current_pose_overlay: false,
             current_pose_overlay_entries: 0,
+            continuous_rotation: false,
+            rotation_rungs_proposed: 0,
+            rotation_rungs_improved: 0,
+            mirror_toggles_proposed: 0,
+            mirror_toggles_improved: 0,
+            rotation_accepted_moves: 0,
+            accepted_moves: 0,
+            rotation_loss_bought_mm: 0.0,
+            translation_loss_bought_mm: 0.0,
+            rotation_surrogate_builds: 0,
+            rotation_surrogate_hits: 0,
+            rotation_surrogate_evictions: 0,
+            rotation_surrogate_build_ms: 0.0,
+            rotation_surrogate_cells: 0,
+            rotation_builds_refused: 0,
             current_pose_overlay_off_grid_pieces: 0,
             current_pose_overlay_setup_ms: 0.0,
             parent_pair_classification: Vec::new(),
@@ -1016,6 +1031,44 @@ pub struct GeneralCompressionScheduleDiagnostics {
     /// reported by the run itself rather than inferred from process wall.
     /// `0.0` whenever the overlay is off, and no `Instant` is read then.
     pub current_pose_overlay_setup_ms: f64,
+    /// Whether the continuous-rotation operator was armed for this slice, and
+    /// what it did. See `GeneralRelaxedSettings::continuous_rotation`.
+    ///
+    /// The six counters are the slice's own answer to the three questions the
+    /// operator is judged on, and they are reported together because no one of
+    /// them means anything alone:
+    ///
+    /// * **acceptance** - `rotation_rungs_improved` against
+    ///   `rotation_rungs_proposed`, and `rotation_accepted_moves` against
+    ///   `accepted_moves`;
+    /// * **yield** - `rotation_loss_bought_mm` against
+    ///   `translation_loss_bought_mm`, the same quantity measured the same way
+    ///   for both families, so "rotation bought millimetres" is a comparison
+    ///   and not an assertion;
+    /// * **price** - `rotation_surrogate_builds` and the milliseconds they
+    ///   took, against `rotation_surrogate_hits`, which is what the cache
+    ///   saved.
+    ///
+    /// All zero when the operator is off, which is every run that does not
+    /// pass `crot=1` to a build with the feature.
+    pub continuous_rotation: bool,
+    pub rotation_rungs_proposed: usize,
+    pub rotation_rungs_improved: usize,
+    pub mirror_toggles_proposed: usize,
+    pub mirror_toggles_improved: usize,
+    pub rotation_accepted_moves: usize,
+    pub accepted_moves: usize,
+    pub rotation_loss_bought_mm: f64,
+    pub translation_loss_bought_mm: f64,
+    pub rotation_surrogate_builds: usize,
+    pub rotation_surrogate_hits: usize,
+    pub rotation_surrogate_evictions: usize,
+    pub rotation_surrogate_build_ms: f64,
+    /// Cells the operator built, and rungs it refused to build because its
+    /// residency guard would have been breached. A non-zero refusal count is
+    /// the first thing to read if an armed slice under-performs.
+    pub rotation_surrogate_cells: usize,
+    pub rotation_builds_refused: usize,
     /// Per-pair classification of the parent's proxy collisions, empty unless
     /// `current_pose_overlay_classify_pairs` armed it.
     ///
