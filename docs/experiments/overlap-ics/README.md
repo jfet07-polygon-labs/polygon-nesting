@@ -425,6 +425,18 @@ compile it. `overlap_ics_benchmark` declares
 `required-features = ["overlap-ics"]` precisely so it never does that to anyone
 else.
 
+One thing that is **not** a regression and is recorded here so nobody has to
+rediscover it: `cargo check --workspace --all-targets` on default features
+fails at HEAD and failed at `0a05239` before this round, with `unresolved
+import polygon_nesting_core::search::portfolio` from
+`examples/general_request_benchmark.rs`. That example has no `[[example]]`
+entry and therefore no `required-features`, so every default-feature target
+scan tries to build it. This round did not touch that file
+(`git diff 0a05239 HEAD -- .../general_request_benchmark.rs` is empty) and
+`cargo check --workspace` without `--all-targets` is clean, as is the spec's
+own default-build isolation, `cargo check -p polygon-nesting-core
+--no-default-features --lib`.
+
 Suite 5's first run tripped the campaign's known flake,
 `free_material_multi_eviction_shrinks_retained_container_capacity` — an
 allocator property, not a search one. Both runs are committed
