@@ -412,6 +412,19 @@ geometry-side confirmation of the mode-13 recalibration finding. The
 155 mm session target is not excluded by area: the residual gap is packing
 structure, which is exactly what the mode-20 constructor now attacks.
 
+> **SUPERSEDED, 2026-08-22.** Every number in the paragraph above belongs to
+> the retired 5.5 mm pair / 5.25 mm boundary contract. Under this branch's
+> exact-clearance 5.0/5.0 contract the same construction gives
+> **130.19990218310795 mm** strengthened and 125.19990218310794 mm plain, and
+> **130.2140326353513 mm** for the composite envelope the engine actually
+> publishes under. The 7.09 mm of "contract overhead" is gone with the
+> contract that caused it - Sparrow's separation and this branch's are now the
+> same 5.0 mm, so there is one bound and not two, and the residual asymmetry at
+> the bound level is the 0.0141 mm the search allowance adds. Re-pin, derivation
+> and the identity check against the retired file (the r = 2.5 inflated area
+> agrees to 0.0 mm^2, which is what says only the constants moved):
+> `docs/experiments/depth-lower-bound/depth-lower-bound-exact-clearance-evidence.json`.
+
 The second structural exit is now built and measured end to end. Mode 20 -
 the skyline beam constructor - produces complete exact-valid dual-gate
 Mixed-61 layouts from an empty sheet in twelve seconds (four seeded order
@@ -7203,3 +7216,170 @@ points straight at it.
 
 Evidence, drivers, both passes and the retraction:
 `docs/experiments/contact-block/`.
+
+## Gate A: Sparrow's 150.165 is contract-legal, the miter envelope refuses it, and the join is 100% of the reason
+
+Grok review 6 §2 named a one-round diagnostic that nobody had ever run: import
+the committed Sparrow 10-second x86 solution through the committed converter and
+take three verdicts on the *same poses* — contract only, composite miter (the
+acceptance authority), composite round — then read the answer off its own
+interpretation table. This is that round. No default changed, nothing was
+promoted, no search path was touched; the deliverable is three verdicts and what
+they mean. Kimi review 1's margin note is settled in the same round.
+
+**The verdicts.** On the imported pose set, at the from-request envelope radius
+2.502 mm: the raw-source contract validator **accepts**; the composite miter
+validator - `validate_and_measure_placements`, what HEAD accepts with - **rejects**
+on 37 of 1830 pairs and 4 of 61 boundaries; an experimental round-join envelope at
+the same radius rejects only 2 pairs and no boundary. At the *contract* radius,
+`total_padding/2 = 2.5 mm` - the radius Sol review 11 and Grok's §A.1 both name -
+the round envelope **accepts the layout entirely**, 0 of 1830 and 0 of 61, while
+the miter still refuses 31 pairs and 2 boundaries. **31 of 31 pair refusals and 2
+of 2 boundary refusals at the contract radius are caused by the miter join shape
+alone; not one is caused by the envelope radius.** The two extra refusals at the
+shipping radius *are* radius-caused - their material clearance, 5.000840 mm and
+5.002879 mm, is under `2 x 2.502` - and that is a separate and much smaller tax:
+0.004 mm of pair clearance against the join's 0.5057 mm median on a refused
+pair, a factor of 126. It is the only part a round kernel would not remove.
+
+**The instrument, and why a boolean was not the deliverable.** "The composite
+rejects" is compatible with the join rejecting and with the radius rejecting, and
+those demand opposite spends, so the shadow measures a quantity that separates
+them: the **critical radius** `r*(i, j)`, the largest integer-micrometre radius at
+which a pair's two envelopes still have zero intersection area. Offsets are
+nested and increasing in `r`, so it bisects; the canonical grid step *is* one
+micrometre, so it is exact rather than interpolated. For an exact disc join
+`2 r*` **is** the material clearance; for any join containing the disc the deficit
+`d - 2 r*` is the material clearance the representation spends on that pair and
+cannot give back. Priced that way the miter costs, on the 31 pairs it refuses at
+the contract radius, a **median 0.5057 mm and a maximum 2.3343 mm**; the round
+join's own figure over the same rows spans [-0.0012, +0.0022] mm, entirely
+inside the grid's derived quantization budget of 0.0036 mm - so a round envelope
+costs the material nothing the grid can measure, and the miter's median cost on
+a refused pair is 140 times that whole budget.
+The worst row is not a tight one: items 21 and 57 carry **7.0843 mm** of material
+between them - 2.08 mm more than the contract asks - and the miter grid credits
+them **4.750 mm**, less than the 5.0 mm the contract itself requires.
+
+**The boundary asymmetry, which Grok asked for by name.** The contract demands
+5.0 mm of material edge clearance on all four sheet edges, which is exactly what
+Sparrow was validated at. A round envelope demands `inset + radius`, flat -
+5.002 mm at the from-request allowance. A miter envelope demands
+`inset + k * radius` where `k = 1/sin(half-angle)` capped at
+`CLIPPER_MITER_LIMIT = 2.0`, and **k is a property of the pose, not of the
+contract**: measured on this layout it is 1.19973 and 1.22318 on the two refused
+placements, so the demand is **5.5017 mm and 5.5604 mm** where the contract says
+5.0, with a structural ceiling of `inset + 2 x radius = 7.504 mm`. The allowance
+asymmetry is +0.002 mm; the join asymmetry is +0.56 mm.
+
+**Grok's case 3 obtains** - miter rejects, contract accepts - so the
+representation *is* the residual, and Sol review 11's Certified Round-Envelope
+Kernel is the named spend. Case 4 (miter accepts, only an engine replacement
+remains) and case 5 (contract rejects, 150.165 stops being comparable) are both
+excluded by measurement. What this does **not** license, stated so nobody has to
+re-derive it: a round authority would stop *forbidding* 150.165, not start
+*finding* it - Grok's §1 is untouched, the constructor still saturates near
+180 mm in 1.4 s and 40 M -> 120 M work still buys 5.964 mm. Nor does it
+discharge Sol's own gate: Sol's item 1 asks for the round shadow against the
+source-ring validator on three populations - the canonical corpus, the committed
+material-valid/canonical-invalid proposals, and a +-1 um boundary sweep - at zero
+false accepts, and this round ran one pose set that offered no opportunity for a
+false accept at all, because the contract accepts every row of it. And the grid
+is the floor under all of it: at radius 2.5 the round envelope admits the layout with
+**exactly zero** grid margin on pair 38-39, whose 5.000840 mm of material leaves
+0.42 um of radius margin - below the 1 um grid step - so Sol's outward-only
+discretisation with the error inside the margin would refuse that one pair. The
+miter join is the whole of the multi-millimetre refusal; the last micrometre
+belongs to the grid.
+
+**It is one layout** - n = 1 pose set, 61 placements, 1830 pairs. That is enough
+to falsify "the legal set already contains Sparrow", one counterexample being
+all that takes, and enough to price the join on the rows it refuses; it is not a
+distribution over layouts and nothing here reports one. What generalises is the
+mechanism - `offset_miter(P, e)` strictly contains `P (+) disc(e)` at every
+convex corner - and that it is worth millimetres rather than micrometres where
+it bites. What does not generalise is "31 pairs".
+
+**Legality is not reachability, and the second barrier is already in the tree.**
+Sparrow ran with continuous rotations, and **57 of the 61 imported poses are off
+the engine's 2.5 degree surrogate-angle lattice** (`SURROGATE_ANGLE_STEP_DEG`,
+`general_relaxed.rs:75`; `canonical_angle` snaps to it), worst deviation
+1.24586 degrees, 59 distinct rotations over 61 pieces. A round envelope would
+stop *forbidding* these poses; the default relaxed lane still could not
+*propose* them. That is orthogonal to this round's finding and to Sol's kernel,
+and its own arm is already priced - `continuous-rotation` measured -3.7 mm at
+ten seconds, `sparse-rotation` a null. Anyone costing the round-envelope kernel
+should cost this alongside it rather than after it.
+
+**The import was audited before it was used**, because a conversion artefact
+would have faked all three verdicts. The committed converter is loaded as a
+module and pointed at the 10-second solution rather than re-implemented; every
+placement is then re-derived independently. Sparrow `items[i].id == i` and
+`items[i].dxf == request.pieces[i].id` on all 61, every ring is vertex-for-vertex
+the request's own source chain (neither frame recentres), the rigid map
+`(x_e, y_e) = (2000 - y_s, x_s)` has determinant +1 and no mirror, and the worst
+vertex error over all 61 transformed rings is **2.27e-13 mm**. Against the
+committed validation: the minimum pair is `[38, 39]` in both, at
+5.000840472766861 here against 5.000840472766719 there (**1.4e-13 mm**), a second
+hand-verified pair `[50, 52]` agrees to 1.0e-13 mm measured in *both* frames, and
+the bounding extents agree to 7.1e-15 mm. One committed number does not transfer
+and the reason is recorded: Sparrow's `minimumBoundaryDistance` 5.00096 is its
+*far* strip edge, which maps into the interior of the engine's 2700 mm sheet, so
+the engine-frame binding edge is the long-axis origin at 5.002254 mm. In the
+engine's published convention the imported pose set measures **150.16451 mm**,
+0.00096 mm under Sparrow's reported strip width.
+
+**Kimi's stale bound, re-pinned.** `depth-lower-bound-evidence.json`'s
+131.97838540260466 mm belongs to the retired 5.5/5.25 contract. The same
+construction under exact-clearance 5.0/5.0 gives **130.19990218310795 mm**
+strengthened (125.19990218310794 plain), and **130.2140326353513 mm** for the
+composite authority that actually publishes - so the envelope adds 0.0141 mm at
+the bound level and nothing else. The check that says only the constants moved is
+that the certified `r = 2.5` inflated area agrees with the retired file's own
+`sparrow_bound_mm x 2000` to **0.0 mm^2**. Kimi's suggested replacement, 124.887,
+is *not* the right figure either: it is `SUM_2.5 / 2000`, the full width with no
+boundary term and no depth-metric term, written as a calibration of an outside
+packer. And the finding that dies with the old contract is the 7.09 mm of
+"contract overhead": Sparrow's separation and this branch's are now the same
+5.0 mm, so there is one bound and not two. The bound has never been binding on
+this instance and still is not - Sparrow sits 19.965 mm above it, the record
+25.064 mm.
+
+**What the round leaves standing.** The shadow is `#[cfg(feature =
+"import-gate-shadow")]`, off by default, named by nothing in `src/` outside
+itself, and reaching no search, scoring or publication route;
+`PolygonSet::offset` is byte-for-byte unchanged and the shadow **asserts at run
+time** that its own miter configuration reproduces it on every piece it measures
+before trusting a round number - which held on all three radii. The strongest
+check is a different one: `validate_and_measure_placements` short-circuits and
+names the *lowest-indexed* placement whose envelope leaves the inset sheet,
+while the shadow enumerates, so the shadow's lowest-indexed boundary failure has
+to be the piece the real validator names - and it is, on all three radii. That
+is what says the shadow's envelope half **is** the composite's envelope half
+rather than a second implementation agreeing in aggregate. Three more soundness
+checks ran on every row: containment (`r*_miter <= r*_round`) holds,
+with 9 rows inverting by *exactly* one 0.001 mm grid step and none more, which is
+the inscribed-arc floor; the disc identity `d - 2 r*_round` lands in
+[-0.001243, +0.002226] mm against a derived quantization budget of 0.003614 mm;
+and the failure counts are monotone in the radius. Clipper's default round-join
+arc tolerance would have been `radius/500` = 5 um - five grid steps, six times
+the margin under measurement - so it is set explicitly to 0.0001 mm and the round
+envelopes carry 20 601-20 669 vertices against the miter's 377. Rows whose
+bisection saturates its ceiling are labelled and excluded from every statistic;
+no pair row saturates. Four pinned gates hit on a binary rebuilt from this tree,
+and all four suites pass - **1294**, **1358**, **19** and **1299** tests, zero
+failures, the fourth being suite 1 plus the five unit tests this round added to
+the shadow. The campaign's known-flaky
+`free_material_multi_eviction_shrinks_retained_container_capacity` tripped once
+here (`assertion failed: cache.entries.capacity() < entries_capacity_before` -
+an allocator property, not a search one) and passed on the protocol's rerun;
+both runs are kept, and `run-suites.sh` now performs that rerun itself. One
+pre-existing condition is recorded rather than worked around: suite 4 is stacked
+on `jagua-experimental` because `examples/general_request_benchmark.rs` names
+`search::portfolio` and declares no `required-features`, so **any** feature set
+without `jagua-experimental` fails to compile it - verified on the base commit
+with `cargo check --features shadow-rescore --examples`.
+
+Evidence, drivers, the audited fixture and the named refusals:
+`docs/experiments/gate-a-sparrow-import/`. Re-pin:
+`docs/experiments/depth-lower-bound/depth-lower-bound-exact-clearance-evidence.json`.

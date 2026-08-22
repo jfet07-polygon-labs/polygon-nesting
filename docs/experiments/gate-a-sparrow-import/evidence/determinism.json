@@ -1,0 +1,43 @@
+{
+  "experiment": "gate-a-sparrow-import",
+  "step": "determinism, two processes, whole document",
+  "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_f674db6b-1e0-1/target/release/examples/sparrow_import_gate",
+  "binarySha256": "75e8f66baec9dd0c3bd68b835a1a37ef018661f4b9ac563057b920f9f18a4b62",
+  "arguments": {
+    "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+    "poses": "docs/experiments/gate-a-sparrow-import/fixture/sparrow-10s-x86-poses.json",
+    "sheetEdgeClearanceMm": 5,
+    "pairClearanceMm": 5,
+    "allowances": "0.002,0.0005,0.0",
+    "arcToleranceGridUnits": "0.1",
+    "bisectTop": "40"
+  },
+  "runs": [
+    {
+      "process": 0,
+      "exit": 0,
+      "sha256": "149c83d1bf87dcc6634f424aa50f76ba90e7d1f09af46e5be4d0ea5c9300c5b8",
+      "bytes": 550639,
+      "stderr": ""
+    },
+    {
+      "process": 1,
+      "exit": 0,
+      "sha256": "149c83d1bf87dcc6634f424aa50f76ba90e7d1f09af46e5be4d0ea5c9300c5b8",
+      "bytes": 550639,
+      "stderr": ""
+    }
+  ],
+  "identical": true,
+  "exitsZero": true,
+  "provenanceStamp": {
+    "binaries": {
+      "sparrow_import_gate": "75e8f66baec9dd0c3bd68b835a1a37ef018661f4b9ac563057b920f9f18a4b62",
+      "general_request_benchmark": "d011b480c3285db8e56d9efbf36f640fc8de9d16ed17d406b29f42d76107a83c"
+    },
+    "binariesManifest": "docs/experiments/gate-a-sparrow-import/evidence/binaries.txt",
+    "commit": "1ca3315a8a357f99c029a9eee36d778cd0769113",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "python": "3.14.6"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "label": "gatea",
+  "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_f674db6b-1e0-1/target/release/examples/general_request_benchmark",
+  "env": {},
+  "gates": {
+    "g1": {
+      "depths": [
+        206.869,
+        207.239,
+        211.194,
+        211.825,
+        213.073,
+        214.207,
+        214.738,
+        222.116
+      ],
+      "fingerprints": [
+        "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+        "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+      ],
+      "hit": true,
+      "wallSeconds": 26.469698190689087,
+      "docDigest": "bbc38dff7c1e13b818020750acde187d2d3008f3bb523216d272b2cc5cbb5789"
+    },
+    "g2": {
+      "raw": 159.09233022733062,
+      "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+      "depth": 159.092,
+      "exactValid": true,
+      "contractValid": true,
+      "hit": true,
+      "wallSeconds": 3.186767816543579,
+      "docDigest": "1097c03ff8ad2ebd8fbfdee502c8eb4ad90a195c594160a3a656a8194d2f2789"
+    },
+    "g3": {
+      "raw": 159.07876040364795,
+      "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+      "depth": 159.079,
+      "exactValid": true,
+      "contractValid": true,
+      "hit": true,
+      "wallSeconds": 3.4230682849884033,
+      "docDigest": "3c8a35f7858343278b85990f047cf86e82fe0714182ad529e3fcff79b4cab653"
+    },
+    "g4": {
+      "raw": 164.0375677990678,
+      "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+      "depth": 164.038,
+      "exactValid": true,
+      "contractValid": true,
+      "hit": true,
+      "wallSeconds": 3.0785677433013916,
+      "docDigest": "2aad6b66d2b7f4ebc6ea999c1813c38e1b373196105564f34991bd58007fa361"
+    }
+  },
+  "ALL_PASS": true,
+  "provenanceStamp": {
+    "binaries": {
+      "sparrow_import_gate": "75e8f66baec9dd0c3bd68b835a1a37ef018661f4b9ac563057b920f9f18a4b62",
+      "general_request_benchmark": "d011b480c3285db8e56d9efbf36f640fc8de9d16ed17d406b29f42d76107a83c"
+    },
+    "binariesManifest": "docs/experiments/gate-a-sparrow-import/evidence/binaries.txt",
+    "commit": "1ca3315a8a357f99c029a9eee36d778cd0769113",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "python": "3.14.6"
+  }
+}

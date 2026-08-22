@@ -1,0 +1,302 @@
+{
+  "experiment": "gate-a-sparrow-import",
+  "step": "1 - import and conversion audit",
+  "inputs": {
+    "sparrowSolution": "docs/experiments/sparrow-mixed61/solution-10s-x86.json",
+    "sparrowSolutionSha256": "7af1e883a497834a8f8181d1d41dda7b0a456f2ac7904f4a60dca07b7052584d",
+    "sparrowInstance": "docs/experiments/sparrow-mixed61/input.json",
+    "sparrowInstanceSha256": "39dbc276cb1ce94fed5ec95daf66dc4adc1d2e5ffebbdd2c7756f1a8276817e9",
+    "sparrowValidation": "docs/experiments/sparrow-mixed61/validation-10s-x86.json",
+    "sparrowValidationSha256": "e7ba267b5f1ee65fa66fc645dcfcc4d242193c6514db76c3f252befb2245fffd",
+    "converter": "docs/experiments/persistent-vacancy-descent/sparrow-to-hint-fixture.py",
+    "converterSha256": "b6ecdef635f3dc8e0357103b08dbf240cddf70aa20b33a2698443106ee6af286",
+    "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+    "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+    "plainRequest": "tests/fixtures/mixed-61/mixed61-request.json",
+    "plainRequestSha256": "dfd2ceecf02efe3475e3344dfefbfb2a2a5bd8a673008b449f5689507c933ba1",
+    "driver": "docs/experiments/gate-a-sparrow-import/drivers/import10s.py"
+  },
+  "output": {
+    "fixture": "docs/experiments/gate-a-sparrow-import/fixture/sparrow-10s-x86-poses.json",
+    "fixtureSha256": "456c5a9527fefde31b7da731da31c78dc34acc44dcaf39827e7e9ebd990d0838"
+  },
+  "transformation": {
+    "rigidMap": "(x_e, y_e) = (2000 - y_s, x_s)",
+    "linearPart": "[[0, -1], [1, 0]], determinant +1, no mirroring",
+    "rotation": "rotationDeg = sparrowRotation + 90, normalised to [0, 360)",
+    "translation": "translateShortAxis = 2000 - t_y; translateLongAxis = t_x",
+    "units": "millimetres in both frames; no scale factor (depthStretchFactor = 1.0)",
+    "origin": "both frames put the piece's local origin at the source DXF origin: Sparrow's shape.data is the request's geometry.segments (x1, y1) chain verbatim, and the engine's PolygonRing keeps that same untouched f64 ring as source_points - neither recentres to bounds or centroid",
+    "sheetInset": "Sparrow ran with a 5 mm inset on all four strip edges (0, strip_width) x (0, 2000). Three of those map onto engine sheet edges; the fourth (x_s = strip_width) maps to the engine long axis at y = 150.165, which is interior to the 2700 mm sheet and therefore imposes nothing here",
+    "rotationConvention": "both frames use x' = x cos - y sin + t_x, y' = x sin + y cos + t_y (counter-clockwise, degrees). cos(t+90) = -sin(t) and sin(t+90) = cos(t) make the +90 rotation exactly the map's linear part"
+  },
+  "checks": {
+    "requestPiecesIdentical": true,
+    "requestSourceGeometryIdentical": true,
+    "sheet": {
+      "shortAxisMm": 2000,
+      "longAxisMm": 2700,
+      "sparrowStripHeightMm": 2000,
+      "sparrowStripWidthMm": 150.16547
+    },
+    "itemIdIsIndex": true,
+    "itemDxfIsPieceId": true,
+    "itemDemandAllOne": true,
+    "shapeRingsIdentical": true,
+    "shapeMismatchItemIds": [],
+    "converterMatchesIndependentDerivation": true,
+    "placementCount": 61,
+    "distinctPieceIds": 61,
+    "coversEveryRequestPiece": true,
+    "mirroredAny": false,
+    "worstMappingVertexErrorMm": 2.2737367544323206e-13,
+    "engineFrameBounds": {
+      "minX": 5.006230585172496,
+      "maxX": 1994.9885599108104,
+      "minY": 5.002254000000001,
+      "maxY": 145.16451
+    },
+    "sparrowFrameBoundsCommitted": {
+      "minimumX": 5.002254000000001,
+      "maximumX": 145.16451,
+      "minimumY": 5.011440089189676,
+      "maximumY": 1994.9937694148275
+    },
+    "boundsMapConsistency": {
+      "minXvs2000MinusMaxY": 7.105427357601002e-15,
+      "maxXvs2000MinusMinY": 0.0,
+      "minYvsMinX": 0.0,
+      "maxYvsMaxX": 0.0
+    },
+    "engineExtent": {
+      "shortAxisSpanMm": 1989.982329325638,
+      "longAxisSpanMm": 140.162256
+    },
+    "engineConventionDepthMm": 150.16451,
+    "sparrowReportedStripWidthMm": 150.16547,
+    "reportedMinusEngineConventionMm": 0.0009599999999920783,
+    "minimumPairDistanceEngineFrameMm": 5.000840472766861,
+    "minimumPairEngineFrame": [
+      38,
+      39
+    ],
+    "committedMinimumPairDistanceMm": 5.000840472766719,
+    "committedMinimumPair": [
+      38,
+      39
+    ],
+    "minimumPairAgreesWithCommitted": true,
+    "handVerifiedPairs": [
+      {
+        "itemIds": [
+          38,
+          39
+        ],
+        "pieceIds": [
+          "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+          "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2"
+        ],
+        "engineFrameMm": 5.000840472766861,
+        "sparrowFrameMm": 5.000840472766719,
+        "frameDeltaMm": 1.4210854715202004e-13
+      },
+      {
+        "itemIds": [
+          50,
+          52
+        ],
+        "pieceIds": [
+          "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+          "d06db288-d2d6-4f40-874e-98287f516d93-copy-12"
+        ],
+        "engineFrameMm": 5.002879392045225,
+        "sparrowFrameMm": 5.002879392045327,
+        "frameDeltaMm": -1.021405182655144e-13
+      }
+    ],
+    "tightestTwentyPairsMm": [
+      {
+        "itemIds": [
+          38,
+          39
+        ],
+        "distanceMm": 5.000840472766861
+      },
+      {
+        "itemIds": [
+          50,
+          52
+        ],
+        "distanceMm": 5.002879392045225
+      },
+      {
+        "itemIds": [
+          7,
+          34
+        ],
+        "distanceMm": 5.005079999999992
+      },
+      {
+        "itemIds": [
+          27,
+          29
+        ],
+        "distanceMm": 5.005655000000161
+      },
+      {
+        "itemIds": [
+          41,
+          53
+        ],
+        "distanceMm": 5.007668336025099
+      },
+      {
+        "itemIds": [
+          3,
+          4
+        ],
+        "distanceMm": 5.008226435428456
+      },
+      {
+        "itemIds": [
+          38,
+          27
+        ],
+        "distanceMm": 5.0103970775744155
+      },
+      {
+        "itemIds": [
+          29,
+          30
+        ],
+        "distanceMm": 5.012090589808395
+      },
+      {
+        "itemIds": [
+          39,
+          40
+        ],
+        "distanceMm": 5.013734701672098
+      },
+      {
+        "itemIds": [
+          10,
+          13
+        ],
+        "distanceMm": 5.0161188771059235
+      },
+      {
+        "itemIds": [
+          38,
+          25
+        ],
+        "distanceMm": 5.016198932841445
+      },
+      {
+        "itemIds": [
+          16,
+          9
+        ],
+        "distanceMm": 5.01739573086067
+      },
+      {
+        "itemIds": [
+          3,
+          54
+        ],
+        "distanceMm": 5.017835905432383
+      },
+      {
+        "itemIds": [
+          39,
+          28
+        ],
+        "distanceMm": 5.018507279241766
+      },
+      {
+        "itemIds": [
+          2,
+          3
+        ],
+        "distanceMm": 5.023669052777099
+      },
+      {
+        "itemIds": [
+          2,
+          47
+        ],
+        "distanceMm": 5.025770144543452
+      },
+      {
+        "itemIds": [
+          1,
+          2
+        ],
+        "distanceMm": 5.028469137999506
+      },
+      {
+        "itemIds": [
+          25,
+          27
+        ],
+        "distanceMm": 5.028831174316284
+      },
+      {
+        "itemIds": [
+          57,
+          58
+        ],
+        "distanceMm": 5.034973812962535
+      },
+      {
+        "itemIds": [
+          1,
+          7
+        ],
+        "distanceMm": 5.035273645413875
+      }
+    ],
+    "pairsBelow5p004Mm": 2,
+    "pairsBelow5p001Mm": 1,
+    "pairsBelow5p0Mm": 0,
+    "pairCount": 1830,
+    "angularLattice": {
+      "step2.5Deg": {
+        "offLatticeCount": 57,
+        "ofPlacements": 61,
+        "worstDeviationDeg": 1.2458599999999933
+      },
+      "step1.0Deg": {
+        "offLatticeCount": 57,
+        "ofPlacements": 61,
+        "worstDeviationDeg": 0.4963700000000131
+      },
+      "step90.0Deg": {
+        "offLatticeCount": 57,
+        "ofPlacements": 61,
+        "worstDeviationDeg": 44.318386000000004
+      }
+    },
+    "distinctRotations": 59,
+    "angularLatticeNote": "Sparrow ran with continuous rotations. The engine's default relaxed lane proposes poses from a 2.5 degree surrogate catalogue, so these poses are legal-set members the default search cannot express - a reachability barrier independent of which envelope decides legality.",
+    "engineFrameBoundaryMm": {
+      "shortAxisLow": 5.006230585172496,
+      "shortAxisHigh": 5.011440089189591,
+      "longAxisLow": 5.002254000000001,
+      "longAxisHigh": 2554.83549
+    },
+    "engineFrameMinimumBoundaryMm": 5.002254000000001,
+    "committedMinimumBoundaryMm": 5.000959999999992,
+    "boundaryNote": "Sparrow's committed minimum boundary 5.000959999999992 is its far strip edge (strip_width - maximumX), which maps to the engine long axis at y=150.16547 - INSIDE the 2700 mm sheet, so it is not a sheet edge here. The engine-frame binding edge is the long-axis origin (y=0), at min source y = Sparrow's minimumX."
+  },
+  "provenanceStamp": {
+    "binaries": {
+      "sparrow_import_gate": "75e8f66baec9dd0c3bd68b835a1a37ef018661f4b9ac563057b920f9f18a4b62",
+      "general_request_benchmark": "d011b480c3285db8e56d9efbf36f640fc8de9d16ed17d406b29f42d76107a83c"
+    },
+    "binariesManifest": "docs/experiments/gate-a-sparrow-import/evidence/binaries.txt",
+    "commit": "1ca3315a8a357f99c029a9eee36d778cd0769113",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "python": "3.14.6"
+  }
+}

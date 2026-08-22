@@ -1,0 +1,2673 @@
+{
+  "experiment": "gate-a-sparrow-import",
+  "step": "4 - every row the composite-miter envelope refuses",
+  "source": "docs/experiments/gate-a-sparrow-import/evidence/verdicts.json",
+  "note": "`causedBy` is 'radius' when the round join at the SAME radius also refuses the row - the envelope is offset by total_padding/2 + margin + search_offset_allowance and that exceeds the contract's total_padding/2 - and 'join shape' when the round join accepts it, which is the miter representation and nothing else.",
+  "rows": [
+    {
+      "searchOffsetAllowanceMm": 0.002,
+      "envelopeRadiusMm": 2.502,
+      "pairFailures": [
+        {
+          "poseIndices": [
+            41,
+            45
+          ],
+          "sparrowItemIds": [
+            49,
+            53
+          ],
+          "pieceIds": [
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-13"
+          ],
+          "materialClearanceMm": 5.072053687508574,
+          "contractSurplusMm": 0.072053687508574,
+          "miterCriticalRadiusMm": 1.7,
+          "miterCreditedClearanceMm": 3.4,
+          "miterJoinCostMm": 1.672053687508574,
+          "miterRadiusShortfallMm": -0.8019999999999998,
+          "miterClearanceShortfallMm": -1.6039999999999996,
+          "envelopeIntersectionAreaMm2": 3.349663,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            35,
+            37
+          ],
+          "sparrowItemIds": [
+            43,
+            45
+          ],
+          "pieceIds": [
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-5"
+          ],
+          "materialClearanceMm": 5.254355587544872,
+          "contractSurplusMm": 0.25435558754487175,
+          "miterCriticalRadiusMm": 1.748,
+          "miterCreditedClearanceMm": 3.496,
+          "miterJoinCostMm": 1.7583555875448718,
+          "miterRadiusShortfallMm": -0.7539999999999998,
+          "miterClearanceShortfallMm": -1.5079999999999996,
+          "envelopeIntersectionAreaMm2": 2.8493435,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            39,
+            46
+          ],
+          "sparrowItemIds": [
+            47,
+            54
+          ],
+          "pieceIds": [
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-7",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-14"
+          ],
+          "materialClearanceMm": 5.3376566173901505,
+          "contractSurplusMm": 0.3376566173901505,
+          "miterCriticalRadiusMm": 1.7890000000000001,
+          "miterCreditedClearanceMm": 3.5780000000000003,
+          "miterJoinCostMm": 1.7596566173901502,
+          "miterRadiusShortfallMm": -0.7129999999999996,
+          "miterClearanceShortfallMm": -1.4259999999999993,
+          "envelopeIntersectionAreaMm2": 2.6454275,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            5,
+            48
+          ],
+          "sparrowItemIds": [
+            14,
+            56
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-16"
+          ],
+          "materialClearanceMm": 5.361390360732602,
+          "contractSurplusMm": 0.3613903607326021,
+          "miterCriticalRadiusMm": 1.903,
+          "miterCreditedClearanceMm": 3.806,
+          "miterJoinCostMm": 1.555390360732602,
+          "miterRadiusShortfallMm": -0.5989999999999998,
+          "miterClearanceShortfallMm": -1.1979999999999995,
+          "envelopeIntersectionAreaMm2": 2.118568,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            6,
+            23
+          ],
+          "sparrowItemIds": [
+            15,
+            18
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2"
+          ],
+          "materialClearanceMm": 5.124343372330353,
+          "contractSurplusMm": 0.12434337233035286,
+          "miterCriticalRadiusMm": 2.012,
+          "miterCreditedClearanceMm": 4.024,
+          "miterJoinCostMm": 1.1003433723303528,
+          "miterRadiusShortfallMm": -0.48999999999999977,
+          "miterClearanceShortfallMm": -0.9799999999999995,
+          "envelopeIntersectionAreaMm2": 1.79365,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            23,
+            28
+          ],
+          "sparrowItemIds": [
+            18,
+            33
+          ],
+          "pieceIds": [
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+            "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1"
+          ],
+          "materialClearanceMm": 5.126007357139783,
+          "contractSurplusMm": 0.12600735713978306,
+          "miterCriticalRadiusMm": 2.052,
+          "miterCreditedClearanceMm": 4.104,
+          "miterJoinCostMm": 1.022007357139783,
+          "miterRadiusShortfallMm": -0.44999999999999973,
+          "miterClearanceShortfallMm": -0.8999999999999995,
+          "envelopeIntersectionAreaMm2": 1.425108,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            24,
+            27
+          ],
+          "sparrowItemIds": [
+            10,
+            13
+          ],
+          "pieceIds": [
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4"
+          ],
+          "materialClearanceMm": 5.0161188771059235,
+          "contractSurplusMm": 0.016118877105923524,
+          "miterCriticalRadiusMm": 2.174,
+          "miterCreditedClearanceMm": 4.348,
+          "miterJoinCostMm": 0.6681188771059237,
+          "miterRadiusShortfallMm": -0.32799999999999985,
+          "miterClearanceShortfallMm": -0.6559999999999997,
+          "envelopeIntersectionAreaMm2": 0.6781675,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            29,
+            39
+          ],
+          "sparrowItemIds": [
+            34,
+            47
+          ],
+          "pieceIds": [
+            "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-2",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-7"
+          ],
+          "materialClearanceMm": 5.15984755465391,
+          "contractSurplusMm": 0.15984755465391043,
+          "miterCriticalRadiusMm": 2.174,
+          "miterCreditedClearanceMm": 4.348,
+          "miterJoinCostMm": 0.8118475546539106,
+          "miterRadiusShortfallMm": -0.32799999999999985,
+          "miterClearanceShortfallMm": -0.6559999999999997,
+          "envelopeIntersectionAreaMm2": 0.68325,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            28,
+            36
+          ],
+          "sparrowItemIds": [
+            33,
+            44
+          ],
+          "pieceIds": [
+            "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-4"
+          ],
+          "materialClearanceMm": 5.495339277737673,
+          "contractSurplusMm": 0.4953392777376733,
+          "miterCriticalRadiusMm": 2.217,
+          "miterCreditedClearanceMm": 4.434,
+          "miterJoinCostMm": 1.0613392777376731,
+          "miterRadiusShortfallMm": -0.2849999999999997,
+          "miterClearanceShortfallMm": -0.5699999999999994,
+          "envelopeIntersectionAreaMm2": 0.5706605,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            22,
+            25
+          ],
+          "sparrowItemIds": [
+            17,
+            11
+          ],
+          "pieceIds": [
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2"
+          ],
+          "materialClearanceMm": 5.092010449134819,
+          "contractSurplusMm": 0.09201044913481926,
+          "miterCriticalRadiusMm": 2.269,
+          "miterCreditedClearanceMm": 4.538,
+          "miterJoinCostMm": 0.554010449134819,
+          "miterRadiusShortfallMm": -0.23299999999999965,
+          "miterClearanceShortfallMm": -0.4659999999999993,
+          "envelopeIntersectionAreaMm2": 0.4329265,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            12,
+            22
+          ],
+          "sparrowItemIds": [
+            0,
+            17
+          ],
+          "pieceIds": [
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1"
+          ],
+          "materialClearanceMm": 5.211441120445986,
+          "contractSurplusMm": 0.21144112044598629,
+          "miterCriticalRadiusMm": 2.283,
+          "miterCreditedClearanceMm": 4.566,
+          "miterJoinCostMm": 0.6454411204459864,
+          "miterRadiusShortfallMm": -0.21899999999999986,
+          "miterClearanceShortfallMm": -0.4379999999999997,
+          "envelopeIntersectionAreaMm2": 0.4070195,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            7,
+            54
+          ],
+          "sparrowItemIds": [
+            16,
+            26
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-2"
+          ],
+          "materialClearanceMm": 5.496830385785419,
+          "contractSurplusMm": 0.4968303857854188,
+          "miterCriticalRadiusMm": 2.2960000000000003,
+          "miterCreditedClearanceMm": 4.5920000000000005,
+          "miterJoinCostMm": 0.9048303857854183,
+          "miterRadiusShortfallMm": -0.20599999999999952,
+          "miterClearanceShortfallMm": -0.41199999999999903,
+          "envelopeIntersectionAreaMm2": 0.257733,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            20,
+            22
+          ],
+          "sparrowItemIds": [
+            8,
+            17
+          ],
+          "pieceIds": [
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1"
+          ],
+          "materialClearanceMm": 5.388575930292688,
+          "contractSurplusMm": 0.38857593029268767,
+          "miterCriticalRadiusMm": 2.326,
+          "miterCreditedClearanceMm": 4.652,
+          "miterJoinCostMm": 0.7365759302926875,
+          "miterRadiusShortfallMm": -0.1759999999999997,
+          "miterClearanceShortfallMm": -0.3519999999999994,
+          "envelopeIntersectionAreaMm2": 0.318309,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            5,
+            26
+          ],
+          "sparrowItemIds": [
+            14,
+            12
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3"
+          ],
+          "materialClearanceMm": 5.129886859821605,
+          "contractSurplusMm": 0.12988685982160497,
+          "miterCriticalRadiusMm": 2.33,
+          "miterCreditedClearanceMm": 4.66,
+          "miterJoinCostMm": 0.46988685982160483,
+          "miterRadiusShortfallMm": -0.1719999999999997,
+          "miterClearanceShortfallMm": -0.3439999999999994,
+          "envelopeIntersectionAreaMm2": 0.219798,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            26,
+            36
+          ],
+          "sparrowItemIds": [
+            12,
+            44
+          ],
+          "pieceIds": [
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-4"
+          ],
+          "materialClearanceMm": 5.17768954060092,
+          "contractSurplusMm": 0.17768954060091957,
+          "miterCriticalRadiusMm": 2.336,
+          "miterCreditedClearanceMm": 4.672,
+          "miterJoinCostMm": 0.5056895406009199,
+          "miterRadiusShortfallMm": -0.16599999999999993,
+          "miterClearanceShortfallMm": -0.33199999999999985,
+          "envelopeIntersectionAreaMm2": 0.23765,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            25,
+            34
+          ],
+          "sparrowItemIds": [
+            11,
+            42
+          ],
+          "pieceIds": [
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-2"
+          ],
+          "materialClearanceMm": 5.100518474402932,
+          "contractSurplusMm": 0.10051847440293216,
+          "miterCriticalRadiusMm": 2.37,
+          "miterCreditedClearanceMm": 4.74,
+          "miterJoinCostMm": 0.36051847440293194,
+          "miterRadiusShortfallMm": -0.13199999999999967,
+          "miterClearanceShortfallMm": -0.26399999999999935,
+          "envelopeIntersectionAreaMm2": 0.171499,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            10,
+            49
+          ],
+          "sparrowItemIds": [
+            21,
+            57
+          ],
+          "pieceIds": [
+            "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-17"
+          ],
+          "materialClearanceMm": 7.084258120914202,
+          "contractSurplusMm": 2.0842581209142024,
+          "miterCriticalRadiusMm": 2.375,
+          "miterCreditedClearanceMm": 4.75,
+          "miterJoinCostMm": 2.3342581209142024,
+          "miterRadiusShortfallMm": -0.12699999999999978,
+          "miterClearanceShortfallMm": -0.25399999999999956,
+          "envelopeIntersectionAreaMm2": 0.0843645,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            6,
+            59
+          ],
+          "sparrowItemIds": [
+            15,
+            31
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7"
+          ],
+          "materialClearanceMm": 5.158000782035629,
+          "contractSurplusMm": 0.15800078203562862,
+          "miterCriticalRadiusMm": 2.392,
+          "miterCreditedClearanceMm": 4.784,
+          "miterJoinCostMm": 0.3740007820356288,
+          "miterRadiusShortfallMm": -0.10999999999999988,
+          "miterClearanceShortfallMm": -0.21999999999999975,
+          "envelopeIntersectionAreaMm2": 0.114716,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            7,
+            59
+          ],
+          "sparrowItemIds": [
+            16,
+            31
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7"
+          ],
+          "materialClearanceMm": 5.311025984558988,
+          "contractSurplusMm": 0.311025984558988,
+          "miterCriticalRadiusMm": 2.4,
+          "miterCreditedClearanceMm": 4.8,
+          "miterJoinCostMm": 0.5110259845589882,
+          "miterRadiusShortfallMm": -0.10199999999999987,
+          "miterClearanceShortfallMm": -0.20399999999999974,
+          "envelopeIntersectionAreaMm2": 0.0761585,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            21,
+            28
+          ],
+          "sparrowItemIds": [
+            9,
+            33
+          ],
+          "pieceIds": [
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
+            "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1"
+          ],
+          "materialClearanceMm": 5.290762578193695,
+          "contractSurplusMm": 0.29076257819369467,
+          "miterCriticalRadiusMm": 2.442,
+          "miterCreditedClearanceMm": 4.884,
+          "miterJoinCostMm": 0.4067625781936943,
+          "miterRadiusShortfallMm": -0.05999999999999961,
+          "miterClearanceShortfallMm": -0.11999999999999922,
+          "envelopeIntersectionAreaMm2": 0.028488,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            3,
+            27
+          ],
+          "sparrowItemIds": [
+            23,
+            13
+          ],
+          "pieceIds": [
+            "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4"
+          ],
+          "materialClearanceMm": 5.1158072028926735,
+          "contractSurplusMm": 0.11580720289267354,
+          "miterCriticalRadiusMm": 2.455,
+          "miterCreditedClearanceMm": 4.91,
+          "miterJoinCostMm": 0.2058072028926734,
+          "miterRadiusShortfallMm": -0.04699999999999971,
+          "miterClearanceShortfallMm": -0.09399999999999942,
+          "envelopeIntersectionAreaMm2": 0.038535,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            20,
+            52
+          ],
+          "sparrowItemIds": [
+            8,
+            60
+          ],
+          "pieceIds": [
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-20"
+          ],
+          "materialClearanceMm": 5.215711753134306,
+          "contractSurplusMm": 0.2157117531343058,
+          "miterCriticalRadiusMm": 2.472,
+          "miterCreditedClearanceMm": 4.944,
+          "miterJoinCostMm": 0.27171175313430584,
+          "miterRadiusShortfallMm": -0.029999999999999805,
+          "miterClearanceShortfallMm": -0.05999999999999961,
+          "envelopeIntersectionAreaMm2": 0.0294785,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            7,
+            21
+          ],
+          "sparrowItemIds": [
+            16,
+            9
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5"
+          ],
+          "materialClearanceMm": 5.01739573086067,
+          "contractSurplusMm": 0.017395730860670255,
+          "miterCriticalRadiusMm": 2.474,
+          "miterCreditedClearanceMm": 4.948,
+          "miterJoinCostMm": 0.06939573086066986,
+          "miterRadiusShortfallMm": -0.02799999999999958,
+          "miterClearanceShortfallMm": -0.05599999999999916,
+          "envelopeIntersectionAreaMm2": 0.011751,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            57,
+            58
+          ],
+          "sparrowItemIds": [
+            29,
+            30
+          ],
+          "pieceIds": [
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6"
+          ],
+          "materialClearanceMm": 5.012090589808395,
+          "contractSurplusMm": 0.012090589808394725,
+          "miterCriticalRadiusMm": 2.476,
+          "miterCreditedClearanceMm": 4.952,
+          "miterJoinCostMm": 0.06009058980839477,
+          "miterRadiusShortfallMm": -0.0259999999999998,
+          "miterClearanceShortfallMm": -0.0519999999999996,
+          "envelopeIntersectionAreaMm2": 0.0567365,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            14,
+            39
+          ],
+          "sparrowItemIds": [
+            2,
+            47
+          ],
+          "pieceIds": [
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-7"
+          ],
+          "materialClearanceMm": 5.025770144543452,
+          "contractSurplusMm": 0.02577014454345239,
+          "miterCriticalRadiusMm": 2.477,
+          "miterCreditedClearanceMm": 4.954,
+          "miterJoinCostMm": 0.07177014454345265,
+          "miterRadiusShortfallMm": -0.02499999999999991,
+          "miterClearanceShortfallMm": -0.04999999999999982,
+          "envelopeIntersectionAreaMm2": 0.0735115,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            53,
+            55
+          ],
+          "sparrowItemIds": [
+            25,
+            27
+          ],
+          "pieceIds": [
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3"
+          ],
+          "materialClearanceMm": 5.028831174316284,
+          "contractSurplusMm": 0.028831174316284347,
+          "miterCriticalRadiusMm": 2.477,
+          "miterCreditedClearanceMm": 4.954,
+          "miterJoinCostMm": 0.07483117431628461,
+          "miterRadiusShortfallMm": -0.02499999999999991,
+          "miterClearanceShortfallMm": -0.04999999999999982,
+          "envelopeIntersectionAreaMm2": 0.042522,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            0,
+            53
+          ],
+          "sparrowItemIds": [
+            38,
+            25
+          ],
+          "pieceIds": [
+            "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1"
+          ],
+          "materialClearanceMm": 5.016198932841445,
+          "contractSurplusMm": 0.016198932841445135,
+          "miterCriticalRadiusMm": 2.479,
+          "miterCreditedClearanceMm": 4.958,
+          "miterJoinCostMm": 0.05819893284144495,
+          "miterRadiusShortfallMm": -0.022999999999999687,
+          "miterClearanceShortfallMm": -0.045999999999999375,
+          "envelopeIntersectionAreaMm2": 0.046624,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            1,
+            56
+          ],
+          "sparrowItemIds": [
+            39,
+            28
+          ],
+          "pieceIds": [
+            "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4"
+          ],
+          "materialClearanceMm": 5.018507279241766,
+          "contractSurplusMm": 0.018507279241766206,
+          "miterCriticalRadiusMm": 2.489,
+          "miterCreditedClearanceMm": 4.978,
+          "miterJoinCostMm": 0.04050727924176645,
+          "miterRadiusShortfallMm": -0.0129999999999999,
+          "miterClearanceShortfallMm": -0.0259999999999998,
+          "envelopeIntersectionAreaMm2": 0.0222615,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            55,
+            57
+          ],
+          "sparrowItemIds": [
+            27,
+            29
+          ],
+          "pieceIds": [
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5"
+          ],
+          "materialClearanceMm": 5.005655000000161,
+          "contractSurplusMm": 0.005655000000160726,
+          "miterCriticalRadiusMm": 2.495,
+          "miterCreditedClearanceMm": 4.99,
+          "miterJoinCostMm": 0.015655000000160513,
+          "miterRadiusShortfallMm": -0.006999999999999673,
+          "miterClearanceShortfallMm": -0.013999999999999346,
+          "envelopeIntersectionAreaMm2": 0.016275,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            0,
+            55
+          ],
+          "sparrowItemIds": [
+            38,
+            27
+          ],
+          "pieceIds": [
+            "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3"
+          ],
+          "materialClearanceMm": 5.0103970775744155,
+          "contractSurplusMm": 0.010397077574415547,
+          "miterCriticalRadiusMm": 2.497,
+          "miterCreditedClearanceMm": 4.994,
+          "miterJoinCostMm": 0.016397077574415775,
+          "miterRadiusShortfallMm": -0.004999999999999893,
+          "miterClearanceShortfallMm": -0.009999999999999787,
+          "envelopeIntersectionAreaMm2": 0.00791,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            15,
+            46
+          ],
+          "sparrowItemIds": [
+            3,
+            54
+          ],
+          "pieceIds": [
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-14"
+          ],
+          "materialClearanceMm": 5.017835905432383,
+          "contractSurplusMm": 0.017835905432383115,
+          "miterCriticalRadiusMm": 2.497,
+          "miterCreditedClearanceMm": 4.994,
+          "miterJoinCostMm": 0.023835905432383342,
+          "miterRadiusShortfallMm": -0.004999999999999893,
+          "miterClearanceShortfallMm": -0.009999999999999787,
+          "envelopeIntersectionAreaMm2": 0.0027435,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            42,
+            44
+          ],
+          "sparrowItemIds": [
+            50,
+            52
+          ],
+          "pieceIds": [
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-12"
+          ],
+          "materialClearanceMm": 5.002879392045225,
+          "contractSurplusMm": 0.0028793920452248045,
+          "miterCriticalRadiusMm": 2.5,
+          "miterCreditedClearanceMm": 5.0,
+          "miterJoinCostMm": 0.0028793920452248045,
+          "miterRadiusShortfallMm": -0.0019999999999997797,
+          "miterClearanceShortfallMm": -0.0039999999999995595,
+          "envelopeIntersectionAreaMm2": 0.003134,
+          "roundAtSameRadiusOverlaps": true,
+          "causedBy": "radius"
+        },
+        {
+          "poseIndices": [
+            15,
+            16
+          ],
+          "sparrowItemIds": [
+            3,
+            4
+          ],
+          "pieceIds": [
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5"
+          ],
+          "materialClearanceMm": 5.008226435428456,
+          "contractSurplusMm": 0.00822643542845558,
+          "miterCriticalRadiusMm": 2.5,
+          "miterCreditedClearanceMm": 5.0,
+          "miterJoinCostMm": 0.00822643542845558,
+          "miterRadiusShortfallMm": -0.0019999999999997797,
+          "miterClearanceShortfallMm": -0.0039999999999995595,
+          "envelopeIntersectionAreaMm2": 0.00232,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            0,
+            1
+          ],
+          "sparrowItemIds": [
+            38,
+            39
+          ],
+          "pieceIds": [
+            "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2"
+          ],
+          "materialClearanceMm": 5.000840472766861,
+          "contractSurplusMm": 0.0008404727668613887,
+          "miterCriticalRadiusMm": 2.501,
+          "miterCreditedClearanceMm": 5.002,
+          "miterJoinCostMm": -0.001159527233138391,
+          "miterRadiusShortfallMm": -0.0009999999999998899,
+          "miterClearanceShortfallMm": -0.0019999999999997797,
+          "envelopeIntersectionAreaMm2": 0.1226295,
+          "roundAtSameRadiusOverlaps": true,
+          "causedBy": "radius"
+        },
+        {
+          "poseIndices": [
+            33,
+            45
+          ],
+          "sparrowItemIds": [
+            41,
+            53
+          ],
+          "pieceIds": [
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-1",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-13"
+          ],
+          "materialClearanceMm": 5.007668336025099,
+          "contractSurplusMm": 0.007668336025099087,
+          "miterCriticalRadiusMm": 2.501,
+          "miterCreditedClearanceMm": 5.002,
+          "miterJoinCostMm": 0.0056683360250993076,
+          "miterRadiusShortfallMm": -0.0009999999999998899,
+          "miterClearanceShortfallMm": -0.0019999999999997797,
+          "envelopeIntersectionAreaMm2": 0.0010715,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            10,
+            38
+          ],
+          "sparrowItemIds": [
+            21,
+            46
+          ],
+          "pieceIds": [
+            "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-6"
+          ],
+          "materialClearanceMm": 5.036120893190529,
+          "contractSurplusMm": 0.036120893190529024,
+          "miterCriticalRadiusMm": 2.501,
+          "miterCreditedClearanceMm": 5.002,
+          "miterJoinCostMm": 0.034120893190529245,
+          "miterRadiusShortfallMm": -0.0009999999999998899,
+          "miterClearanceShortfallMm": -0.0019999999999997797,
+          "envelopeIntersectionAreaMm2": 3.75e-05,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            19,
+            52
+          ],
+          "sparrowItemIds": [
+            7,
+            60
+          ],
+          "pieceIds": [
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-20"
+          ],
+          "materialClearanceMm": 5.119082147280226,
+          "contractSurplusMm": 0.11908214728022593,
+          "miterCriticalRadiusMm": 2.501,
+          "miterCreditedClearanceMm": 5.002,
+          "miterJoinCostMm": 0.11708214728022615,
+          "miterRadiusShortfallMm": -0.0009999999999998899,
+          "miterClearanceShortfallMm": -0.0019999999999997797,
+          "envelopeIntersectionAreaMm2": 4.6e-05,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        }
+      ],
+      "boundaryFailures": [
+        {
+          "poseIndex": 5,
+          "sparrowItemId": 14,
+          "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+          "materialClearanceMm": [
+            1109.0813892557596,
+            792.5301443993503,
+            5.125013879438626,
+            2590.961163787998
+          ],
+          "bindingMaterialClearanceMm": 5.125013879438626,
+          "contractSurplusMm": 0.12501387943862596,
+          "miterCriticalRadiusMm": 2.188,
+          "miterRadiusShortfallMm": -0.3139999999999996,
+          "envelopeExcursionMm": [
+            -1103.857,
+            -787.0129999999999,
+            0.3769999999999998,
+            -2585.684
+          ],
+          "roundAtSameRadiusFits": true,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndex": 6,
+          "sparrowItemId": 15,
+          "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+          "materialClearanceMm": [
+            978.2492750296598,
+            920.2377076718612,
+            5.2068895989217765,
+            2594.1053588650357
+          ],
+          "bindingMaterialClearanceMm": 5.2068895989217765,
+          "contractSurplusMm": 0.2068895989217765,
+          "miterCriticalRadiusMm": 2.213,
+          "miterRadiusShortfallMm": -0.2889999999999997,
+          "envelopeExcursionMm": [
+            -972.775,
+            -914.8889999999999,
+            0.3530000000000002,
+            -2589.045
+          ],
+          "roundAtSameRadiusFits": true,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndex": 16,
+          "sparrowItemId": 4,
+          "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+          "materialClearanceMm": [
+            24.29366335995637,
+            1875.7064042989539,
+            5.004304426935754,
+            2634.902675233682
+          ],
+          "bindingMaterialClearanceMm": 5.004304426935754,
+          "contractSurplusMm": 0.004304426935753725,
+          "miterCriticalRadiusMm": 2.5,
+          "miterRadiusShortfallMm": -0.0019999999999997797,
+          "envelopeExcursionMm": [
+            -18.326,
+            -1869.732,
+            0.0019999999999997797,
+            -2629.899
+          ],
+          "roundAtSameRadiusFits": true,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndex": 4,
+          "sparrowItemId": 24,
+          "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2",
+          "materialClearanceMm": [
+            1192.0489886094276,
+            659.726262201631,
+            5.12897814200473,
+            2592.170394311584
+          ],
+          "bindingMaterialClearanceMm": 5.12897814200473,
+          "contractSurplusMm": 0.1289781420047298,
+          "miterCriticalRadiusMm": 2.501,
+          "miterRadiusShortfallMm": -0.0009999999999998899,
+          "envelopeExcursionMm": [
+            -1186.546,
+            -654.223,
+            0.0009999999999998899,
+            -2587.04
+          ],
+          "roundAtSameRadiusFits": true,
+          "causedBy": "join shape"
+        }
+      ]
+    },
+    {
+      "searchOffsetAllowanceMm": 0.0005,
+      "envelopeRadiusMm": 2.5005,
+      "pairFailures": [
+        {
+          "poseIndices": [
+            41,
+            45
+          ],
+          "sparrowItemIds": [
+            49,
+            53
+          ],
+          "pieceIds": [
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-13"
+          ],
+          "materialClearanceMm": 5.072053687508574,
+          "contractSurplusMm": 0.072053687508574,
+          "miterCriticalRadiusMm": 1.7,
+          "miterCreditedClearanceMm": 3.4,
+          "miterJoinCostMm": 1.672053687508574,
+          "miterRadiusShortfallMm": -0.8005000000000002,
+          "miterClearanceShortfallMm": -1.6010000000000004,
+          "envelopeIntersectionAreaMm2": 3.341882,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            35,
+            37
+          ],
+          "sparrowItemIds": [
+            43,
+            45
+          ],
+          "pieceIds": [
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-5"
+          ],
+          "materialClearanceMm": 5.254355587544872,
+          "contractSurplusMm": 0.25435558754487175,
+          "miterCriticalRadiusMm": 1.748,
+          "miterCreditedClearanceMm": 3.496,
+          "miterJoinCostMm": 1.7583555875448718,
+          "miterRadiusShortfallMm": -0.7525000000000002,
+          "miterClearanceShortfallMm": -1.5050000000000003,
+          "envelopeIntersectionAreaMm2": 2.8417785,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            39,
+            46
+          ],
+          "sparrowItemIds": [
+            47,
+            54
+          ],
+          "pieceIds": [
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-7",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-14"
+          ],
+          "materialClearanceMm": 5.3376566173901505,
+          "contractSurplusMm": 0.3376566173901505,
+          "miterCriticalRadiusMm": 1.7890000000000001,
+          "miterCreditedClearanceMm": 3.5780000000000003,
+          "miterJoinCostMm": 1.7596566173901502,
+          "miterRadiusShortfallMm": -0.7115,
+          "miterClearanceShortfallMm": -1.423,
+          "envelopeIntersectionAreaMm2": 2.637442,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            5,
+            48
+          ],
+          "sparrowItemIds": [
+            14,
+            56
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-16"
+          ],
+          "materialClearanceMm": 5.361390360732602,
+          "contractSurplusMm": 0.3613903607326021,
+          "miterCriticalRadiusMm": 1.903,
+          "miterCreditedClearanceMm": 3.806,
+          "miterJoinCostMm": 1.555390360732602,
+          "miterRadiusShortfallMm": -0.5975000000000001,
+          "miterClearanceShortfallMm": -1.1950000000000003,
+          "envelopeIntersectionAreaMm2": 2.111424,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            6,
+            23
+          ],
+          "sparrowItemIds": [
+            15,
+            18
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2"
+          ],
+          "materialClearanceMm": 5.124343372330353,
+          "contractSurplusMm": 0.12434337233035286,
+          "miterCriticalRadiusMm": 2.012,
+          "miterCreditedClearanceMm": 4.024,
+          "miterJoinCostMm": 1.1003433723303528,
+          "miterRadiusShortfallMm": -0.48850000000000016,
+          "miterClearanceShortfallMm": -0.9770000000000003,
+          "envelopeIntersectionAreaMm2": 1.782372,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            23,
+            28
+          ],
+          "sparrowItemIds": [
+            18,
+            33
+          ],
+          "pieceIds": [
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+            "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1"
+          ],
+          "materialClearanceMm": 5.126007357139783,
+          "contractSurplusMm": 0.12600735713978306,
+          "miterCriticalRadiusMm": 2.052,
+          "miterCreditedClearanceMm": 4.104,
+          "miterJoinCostMm": 1.022007357139783,
+          "miterRadiusShortfallMm": -0.4485000000000001,
+          "miterClearanceShortfallMm": -0.8970000000000002,
+          "envelopeIntersectionAreaMm2": 1.416815,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            24,
+            27
+          ],
+          "sparrowItemIds": [
+            10,
+            13
+          ],
+          "pieceIds": [
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4"
+          ],
+          "materialClearanceMm": 5.0161188771059235,
+          "contractSurplusMm": 0.016118877105923524,
+          "miterCriticalRadiusMm": 2.174,
+          "miterCreditedClearanceMm": 4.348,
+          "miterJoinCostMm": 0.6681188771059237,
+          "miterRadiusShortfallMm": -0.32650000000000023,
+          "miterClearanceShortfallMm": -0.6530000000000005,
+          "envelopeIntersectionAreaMm2": 0.673527,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            29,
+            39
+          ],
+          "sparrowItemIds": [
+            34,
+            47
+          ],
+          "pieceIds": [
+            "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-2",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-7"
+          ],
+          "materialClearanceMm": 5.15984755465391,
+          "contractSurplusMm": 0.15984755465391043,
+          "miterCriticalRadiusMm": 2.174,
+          "miterCreditedClearanceMm": 4.348,
+          "miterJoinCostMm": 0.8118475546539106,
+          "miterRadiusShortfallMm": -0.32650000000000023,
+          "miterClearanceShortfallMm": -0.6530000000000005,
+          "envelopeIntersectionAreaMm2": 0.679932,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            28,
+            36
+          ],
+          "sparrowItemIds": [
+            33,
+            44
+          ],
+          "pieceIds": [
+            "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-4"
+          ],
+          "materialClearanceMm": 5.495339277737673,
+          "contractSurplusMm": 0.4953392777376733,
+          "miterCriticalRadiusMm": 2.217,
+          "miterCreditedClearanceMm": 4.434,
+          "miterJoinCostMm": 1.0613392777376731,
+          "miterRadiusShortfallMm": -0.2835000000000001,
+          "miterClearanceShortfallMm": -0.5670000000000002,
+          "envelopeIntersectionAreaMm2": 0.566135,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            22,
+            25
+          ],
+          "sparrowItemIds": [
+            17,
+            11
+          ],
+          "pieceIds": [
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2"
+          ],
+          "materialClearanceMm": 5.092010449134819,
+          "contractSurplusMm": 0.09201044913481926,
+          "miterCriticalRadiusMm": 2.269,
+          "miterCreditedClearanceMm": 4.538,
+          "miterJoinCostMm": 0.554010449134819,
+          "miterRadiusShortfallMm": -0.23150000000000004,
+          "miterClearanceShortfallMm": -0.4630000000000001,
+          "envelopeIntersectionAreaMm2": 0.4291895,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            12,
+            22
+          ],
+          "sparrowItemIds": [
+            0,
+            17
+          ],
+          "pieceIds": [
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1"
+          ],
+          "materialClearanceMm": 5.211441120445986,
+          "contractSurplusMm": 0.21144112044598629,
+          "miterCriticalRadiusMm": 2.283,
+          "miterCreditedClearanceMm": 4.566,
+          "miterJoinCostMm": 0.6454411204459864,
+          "miterRadiusShortfallMm": -0.21750000000000025,
+          "miterClearanceShortfallMm": -0.4350000000000005,
+          "envelopeIntersectionAreaMm2": 0.4002525,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            7,
+            54
+          ],
+          "sparrowItemIds": [
+            16,
+            26
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-2"
+          ],
+          "materialClearanceMm": 5.496830385785419,
+          "contractSurplusMm": 0.4968303857854188,
+          "miterCriticalRadiusMm": 2.2960000000000003,
+          "miterCreditedClearanceMm": 4.5920000000000005,
+          "miterJoinCostMm": 0.9048303857854183,
+          "miterRadiusShortfallMm": -0.2044999999999999,
+          "miterClearanceShortfallMm": -0.4089999999999998,
+          "envelopeIntersectionAreaMm2": 0.255675,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            20,
+            22
+          ],
+          "sparrowItemIds": [
+            8,
+            17
+          ],
+          "pieceIds": [
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1"
+          ],
+          "materialClearanceMm": 5.388575930292688,
+          "contractSurplusMm": 0.38857593029268767,
+          "miterCriticalRadiusMm": 2.326,
+          "miterCreditedClearanceMm": 4.652,
+          "miterJoinCostMm": 0.7365759302926875,
+          "miterRadiusShortfallMm": -0.1745000000000001,
+          "miterClearanceShortfallMm": -0.3490000000000002,
+          "envelopeIntersectionAreaMm2": 0.3147045,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            5,
+            26
+          ],
+          "sparrowItemIds": [
+            14,
+            12
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3"
+          ],
+          "materialClearanceMm": 5.129886859821605,
+          "contractSurplusMm": 0.12988685982160497,
+          "miterCriticalRadiusMm": 2.33,
+          "miterCreditedClearanceMm": 4.66,
+          "miterJoinCostMm": 0.46988685982160483,
+          "miterRadiusShortfallMm": -0.1705000000000001,
+          "miterClearanceShortfallMm": -0.3410000000000002,
+          "envelopeIntersectionAreaMm2": 0.217512,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            26,
+            36
+          ],
+          "sparrowItemIds": [
+            12,
+            44
+          ],
+          "pieceIds": [
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-4"
+          ],
+          "materialClearanceMm": 5.17768954060092,
+          "contractSurplusMm": 0.17768954060091957,
+          "miterCriticalRadiusMm": 2.336,
+          "miterCreditedClearanceMm": 4.672,
+          "miterJoinCostMm": 0.5056895406009199,
+          "miterRadiusShortfallMm": -0.1645000000000003,
+          "miterClearanceShortfallMm": -0.3290000000000006,
+          "envelopeIntersectionAreaMm2": 0.23455,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            25,
+            34
+          ],
+          "sparrowItemIds": [
+            11,
+            42
+          ],
+          "pieceIds": [
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-2"
+          ],
+          "materialClearanceMm": 5.100518474402932,
+          "contractSurplusMm": 0.10051847440293216,
+          "miterCriticalRadiusMm": 2.37,
+          "miterCreditedClearanceMm": 4.74,
+          "miterJoinCostMm": 0.36051847440293194,
+          "miterRadiusShortfallMm": -0.13050000000000006,
+          "miterClearanceShortfallMm": -0.2610000000000001,
+          "envelopeIntersectionAreaMm2": 0.168706,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            10,
+            49
+          ],
+          "sparrowItemIds": [
+            21,
+            57
+          ],
+          "pieceIds": [
+            "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-17"
+          ],
+          "materialClearanceMm": 7.084258120914202,
+          "contractSurplusMm": 2.0842581209142024,
+          "miterCriticalRadiusMm": 2.375,
+          "miterCreditedClearanceMm": 4.75,
+          "miterJoinCostMm": 2.3342581209142024,
+          "miterRadiusShortfallMm": -0.12550000000000017,
+          "miterClearanceShortfallMm": -0.25100000000000033,
+          "envelopeIntersectionAreaMm2": 0.083136,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            6,
+            59
+          ],
+          "sparrowItemIds": [
+            15,
+            31
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7"
+          ],
+          "materialClearanceMm": 5.158000782035629,
+          "contractSurplusMm": 0.15800078203562862,
+          "miterCriticalRadiusMm": 2.392,
+          "miterCreditedClearanceMm": 4.784,
+          "miterJoinCostMm": 0.3740007820356288,
+          "miterRadiusShortfallMm": -0.10850000000000026,
+          "miterClearanceShortfallMm": -0.21700000000000053,
+          "envelopeIntersectionAreaMm2": 0.11269,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            7,
+            59
+          ],
+          "sparrowItemIds": [
+            16,
+            31
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7"
+          ],
+          "materialClearanceMm": 5.311025984558988,
+          "contractSurplusMm": 0.311025984558988,
+          "miterCriticalRadiusMm": 2.4,
+          "miterCreditedClearanceMm": 4.8,
+          "miterJoinCostMm": 0.5110259845589882,
+          "miterRadiusShortfallMm": -0.10050000000000026,
+          "miterClearanceShortfallMm": -0.2010000000000005,
+          "envelopeIntersectionAreaMm2": 0.0747,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            21,
+            28
+          ],
+          "sparrowItemIds": [
+            9,
+            33
+          ],
+          "pieceIds": [
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
+            "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1"
+          ],
+          "materialClearanceMm": 5.290762578193695,
+          "contractSurplusMm": 0.29076257819369467,
+          "miterCriticalRadiusMm": 2.442,
+          "miterCreditedClearanceMm": 4.884,
+          "miterJoinCostMm": 0.4067625781936943,
+          "miterRadiusShortfallMm": -0.058499999999999996,
+          "miterClearanceShortfallMm": -0.11699999999999999,
+          "envelopeIntersectionAreaMm2": 0.0276015,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            3,
+            27
+          ],
+          "sparrowItemIds": [
+            23,
+            13
+          ],
+          "pieceIds": [
+            "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4"
+          ],
+          "materialClearanceMm": 5.1158072028926735,
+          "contractSurplusMm": 0.11580720289267354,
+          "miterCriticalRadiusMm": 2.455,
+          "miterCreditedClearanceMm": 4.91,
+          "miterJoinCostMm": 0.2058072028926734,
+          "miterRadiusShortfallMm": -0.045500000000000096,
+          "miterClearanceShortfallMm": -0.09100000000000019,
+          "envelopeIntersectionAreaMm2": 0.0370285,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            20,
+            52
+          ],
+          "sparrowItemIds": [
+            8,
+            60
+          ],
+          "pieceIds": [
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-20"
+          ],
+          "materialClearanceMm": 5.215711753134306,
+          "contractSurplusMm": 0.2157117531343058,
+          "miterCriticalRadiusMm": 2.472,
+          "miterCreditedClearanceMm": 4.944,
+          "miterJoinCostMm": 0.27171175313430584,
+          "miterRadiusShortfallMm": -0.028500000000000192,
+          "miterClearanceShortfallMm": -0.057000000000000384,
+          "envelopeIntersectionAreaMm2": 0.0277225,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            7,
+            21
+          ],
+          "sparrowItemIds": [
+            16,
+            9
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5"
+          ],
+          "materialClearanceMm": 5.01739573086067,
+          "contractSurplusMm": 0.017395730860670255,
+          "miterCriticalRadiusMm": 2.474,
+          "miterCreditedClearanceMm": 4.948,
+          "miterJoinCostMm": 0.06939573086066986,
+          "miterRadiusShortfallMm": -0.026499999999999968,
+          "miterClearanceShortfallMm": -0.052999999999999936,
+          "envelopeIntersectionAreaMm2": 0.011006,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            57,
+            58
+          ],
+          "sparrowItemIds": [
+            29,
+            30
+          ],
+          "pieceIds": [
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6"
+          ],
+          "materialClearanceMm": 5.012090589808395,
+          "contractSurplusMm": 0.012090589808394725,
+          "miterCriticalRadiusMm": 2.476,
+          "miterCreditedClearanceMm": 4.952,
+          "miterJoinCostMm": 0.06009058980839477,
+          "miterRadiusShortfallMm": -0.02450000000000019,
+          "miterClearanceShortfallMm": -0.04900000000000038,
+          "envelopeIntersectionAreaMm2": 0.05253,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            14,
+            39
+          ],
+          "sparrowItemIds": [
+            2,
+            47
+          ],
+          "pieceIds": [
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-7"
+          ],
+          "materialClearanceMm": 5.025770144543452,
+          "contractSurplusMm": 0.02577014454345239,
+          "miterCriticalRadiusMm": 2.477,
+          "miterCreditedClearanceMm": 4.954,
+          "miterJoinCostMm": 0.07177014454345265,
+          "miterRadiusShortfallMm": -0.0235000000000003,
+          "miterClearanceShortfallMm": -0.0470000000000006,
+          "envelopeIntersectionAreaMm2": 0.067739,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            53,
+            55
+          ],
+          "sparrowItemIds": [
+            25,
+            27
+          ],
+          "pieceIds": [
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3"
+          ],
+          "materialClearanceMm": 5.028831174316284,
+          "contractSurplusMm": 0.028831174316284347,
+          "miterCriticalRadiusMm": 2.477,
+          "miterCreditedClearanceMm": 4.954,
+          "miterJoinCostMm": 0.07483117431628461,
+          "miterRadiusShortfallMm": -0.0235000000000003,
+          "miterClearanceShortfallMm": -0.0470000000000006,
+          "envelopeIntersectionAreaMm2": 0.0392625,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            0,
+            53
+          ],
+          "sparrowItemIds": [
+            38,
+            25
+          ],
+          "pieceIds": [
+            "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1"
+          ],
+          "materialClearanceMm": 5.016198932841445,
+          "contractSurplusMm": 0.016198932841445135,
+          "miterCriticalRadiusMm": 2.479,
+          "miterCreditedClearanceMm": 4.958,
+          "miterJoinCostMm": 0.05819893284144495,
+          "miterRadiusShortfallMm": -0.021500000000000075,
+          "miterClearanceShortfallMm": -0.04300000000000015,
+          "envelopeIntersectionAreaMm2": 0.0427275,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            1,
+            56
+          ],
+          "sparrowItemIds": [
+            39,
+            28
+          ],
+          "pieceIds": [
+            "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4"
+          ],
+          "materialClearanceMm": 5.018507279241766,
+          "contractSurplusMm": 0.018507279241766206,
+          "miterCriticalRadiusMm": 2.489,
+          "miterCreditedClearanceMm": 4.978,
+          "miterJoinCostMm": 0.04050727924176645,
+          "miterRadiusShortfallMm": -0.011500000000000288,
+          "miterClearanceShortfallMm": -0.023000000000000576,
+          "envelopeIntersectionAreaMm2": 0.0190875,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            55,
+            57
+          ],
+          "sparrowItemIds": [
+            27,
+            29
+          ],
+          "pieceIds": [
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5"
+          ],
+          "materialClearanceMm": 5.005655000000161,
+          "contractSurplusMm": 0.005655000000160726,
+          "miterCriticalRadiusMm": 2.495,
+          "miterCreditedClearanceMm": 4.99,
+          "miterJoinCostMm": 0.015655000000160513,
+          "miterRadiusShortfallMm": -0.00550000000000006,
+          "miterClearanceShortfallMm": -0.01100000000000012,
+          "envelopeIntersectionAreaMm2": 0.0122265,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            0,
+            55
+          ],
+          "sparrowItemIds": [
+            38,
+            27
+          ],
+          "pieceIds": [
+            "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3"
+          ],
+          "materialClearanceMm": 5.0103970775744155,
+          "contractSurplusMm": 0.010397077574415547,
+          "miterCriticalRadiusMm": 2.497,
+          "miterCreditedClearanceMm": 4.994,
+          "miterJoinCostMm": 0.016397077574415775,
+          "miterRadiusShortfallMm": -0.0035000000000002807,
+          "miterClearanceShortfallMm": -0.007000000000000561,
+          "envelopeIntersectionAreaMm2": 0.005172,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            15,
+            46
+          ],
+          "sparrowItemIds": [
+            3,
+            54
+          ],
+          "pieceIds": [
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-14"
+          ],
+          "materialClearanceMm": 5.017835905432383,
+          "contractSurplusMm": 0.017835905432383115,
+          "miterCriticalRadiusMm": 2.497,
+          "miterCreditedClearanceMm": 4.994,
+          "miterJoinCostMm": 0.023835905432383342,
+          "miterRadiusShortfallMm": -0.0035000000000002807,
+          "miterClearanceShortfallMm": -0.007000000000000561,
+          "envelopeIntersectionAreaMm2": 0.001698,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            42,
+            44
+          ],
+          "sparrowItemIds": [
+            50,
+            52
+          ],
+          "pieceIds": [
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-12"
+          ],
+          "materialClearanceMm": 5.002879392045225,
+          "contractSurplusMm": 0.0028793920452248045,
+          "miterCriticalRadiusMm": 2.5,
+          "miterCreditedClearanceMm": 5.0,
+          "miterJoinCostMm": 0.0028793920452248045,
+          "miterRadiusShortfallMm": -0.000500000000000167,
+          "miterClearanceShortfallMm": -0.001000000000000334,
+          "envelopeIntersectionAreaMm2": 0.000906,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            15,
+            16
+          ],
+          "sparrowItemIds": [
+            3,
+            4
+          ],
+          "pieceIds": [
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5"
+          ],
+          "materialClearanceMm": 5.008226435428456,
+          "contractSurplusMm": 0.00822643542845558,
+          "miterCriticalRadiusMm": 2.5,
+          "miterCreditedClearanceMm": 5.0,
+          "miterJoinCostMm": 0.00822643542845558,
+          "miterRadiusShortfallMm": -0.000500000000000167,
+          "miterClearanceShortfallMm": -0.001000000000000334,
+          "envelopeIntersectionAreaMm2": 0.0008,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        }
+      ],
+      "boundaryFailures": [
+        {
+          "poseIndex": 5,
+          "sparrowItemId": 14,
+          "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+          "materialClearanceMm": [
+            1109.0813892557596,
+            792.5301443993503,
+            5.125013879438626,
+            2590.961163787998
+          ],
+          "bindingMaterialClearanceMm": 5.125013879438626,
+          "contractSurplusMm": 0.12501387943862596,
+          "miterCriticalRadiusMm": 2.188,
+          "miterRadiusShortfallMm": -0.3125,
+          "envelopeExcursionMm": [
+            -1103.858,
+            -787.0139999999999,
+            0.3759999999999999,
+            -2585.685
+          ],
+          "roundAtSameRadiusFits": true,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndex": 6,
+          "sparrowItemId": 15,
+          "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+          "materialClearanceMm": [
+            978.2492750296598,
+            920.2377076718612,
+            5.2068895989217765,
+            2594.1053588650357
+          ],
+          "bindingMaterialClearanceMm": 5.2068895989217765,
+          "contractSurplusMm": 0.2068895989217765,
+          "miterCriticalRadiusMm": 2.213,
+          "miterRadiusShortfallMm": -0.2875000000000001,
+          "envelopeExcursionMm": [
+            -972.776,
+            -914.8910000000001,
+            0.35199999999999987,
+            -2589.046
+          ],
+          "roundAtSameRadiusFits": true,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndex": 16,
+          "sparrowItemId": 4,
+          "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+          "materialClearanceMm": [
+            24.29366335995637,
+            1875.7064042989539,
+            5.004304426935754,
+            2634.902675233682
+          ],
+          "bindingMaterialClearanceMm": 5.004304426935754,
+          "contractSurplusMm": 0.004304426935753725,
+          "miterCriticalRadiusMm": 2.5,
+          "miterRadiusShortfallMm": -0.000500000000000167,
+          "envelopeExcursionMm": [
+            -18.327,
+            -1869.733,
+            0.0009999999999998899,
+            -2629.9
+          ],
+          "roundAtSameRadiusFits": true,
+          "causedBy": "join shape"
+        }
+      ]
+    },
+    {
+      "searchOffsetAllowanceMm": 0.0,
+      "envelopeRadiusMm": 2.5,
+      "pairFailures": [
+        {
+          "poseIndices": [
+            41,
+            45
+          ],
+          "sparrowItemIds": [
+            49,
+            53
+          ],
+          "pieceIds": [
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-13"
+          ],
+          "materialClearanceMm": 5.072053687508574,
+          "contractSurplusMm": 0.072053687508574,
+          "miterCriticalRadiusMm": 1.7,
+          "miterCreditedClearanceMm": 3.4,
+          "miterJoinCostMm": 1.672053687508574,
+          "miterRadiusShortfallMm": -0.8,
+          "miterClearanceShortfallMm": -1.6,
+          "envelopeIntersectionAreaMm2": 3.3329125,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            35,
+            37
+          ],
+          "sparrowItemIds": [
+            43,
+            45
+          ],
+          "pieceIds": [
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-5"
+          ],
+          "materialClearanceMm": 5.254355587544872,
+          "contractSurplusMm": 0.25435558754487175,
+          "miterCriticalRadiusMm": 1.748,
+          "miterCreditedClearanceMm": 3.496,
+          "miterJoinCostMm": 1.7583555875448718,
+          "miterRadiusShortfallMm": -0.752,
+          "miterClearanceShortfallMm": -1.504,
+          "envelopeIntersectionAreaMm2": 2.8344555,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            39,
+            46
+          ],
+          "sparrowItemIds": [
+            47,
+            54
+          ],
+          "pieceIds": [
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-7",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-14"
+          ],
+          "materialClearanceMm": 5.3376566173901505,
+          "contractSurplusMm": 0.3376566173901505,
+          "miterCriticalRadiusMm": 1.7890000000000001,
+          "miterCreditedClearanceMm": 3.5780000000000003,
+          "miterJoinCostMm": 1.7596566173901502,
+          "miterRadiusShortfallMm": -0.7109999999999999,
+          "miterClearanceShortfallMm": -1.4219999999999997,
+          "envelopeIntersectionAreaMm2": 2.632842,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            5,
+            48
+          ],
+          "sparrowItemIds": [
+            14,
+            56
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-16"
+          ],
+          "materialClearanceMm": 5.361390360732602,
+          "contractSurplusMm": 0.3613903607326021,
+          "miterCriticalRadiusMm": 1.903,
+          "miterCreditedClearanceMm": 3.806,
+          "miterJoinCostMm": 1.555390360732602,
+          "miterRadiusShortfallMm": -0.597,
+          "miterClearanceShortfallMm": -1.194,
+          "envelopeIntersectionAreaMm2": 2.104323,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            6,
+            23
+          ],
+          "sparrowItemIds": [
+            15,
+            18
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2"
+          ],
+          "materialClearanceMm": 5.124343372330353,
+          "contractSurplusMm": 0.12434337233035286,
+          "miterCriticalRadiusMm": 2.012,
+          "miterCreditedClearanceMm": 4.024,
+          "miterJoinCostMm": 1.1003433723303528,
+          "miterRadiusShortfallMm": -0.488,
+          "miterClearanceShortfallMm": -0.976,
+          "envelopeIntersectionAreaMm2": 1.772724,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            23,
+            28
+          ],
+          "sparrowItemIds": [
+            18,
+            33
+          ],
+          "pieceIds": [
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+            "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1"
+          ],
+          "materialClearanceMm": 5.126007357139783,
+          "contractSurplusMm": 0.12600735713978306,
+          "miterCriticalRadiusMm": 2.052,
+          "miterCreditedClearanceMm": 4.104,
+          "miterJoinCostMm": 1.022007357139783,
+          "miterRadiusShortfallMm": -0.44799999999999995,
+          "miterClearanceShortfallMm": -0.8959999999999999,
+          "envelopeIntersectionAreaMm2": 1.412051,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            24,
+            27
+          ],
+          "sparrowItemIds": [
+            10,
+            13
+          ],
+          "pieceIds": [
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4"
+          ],
+          "materialClearanceMm": 5.0161188771059235,
+          "contractSurplusMm": 0.016118877105923524,
+          "miterCriticalRadiusMm": 2.174,
+          "miterCreditedClearanceMm": 4.348,
+          "miterJoinCostMm": 0.6681188771059237,
+          "miterRadiusShortfallMm": -0.32600000000000007,
+          "miterClearanceShortfallMm": -0.6520000000000001,
+          "envelopeIntersectionAreaMm2": 0.670038,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            29,
+            39
+          ],
+          "sparrowItemIds": [
+            34,
+            47
+          ],
+          "pieceIds": [
+            "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-2",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-7"
+          ],
+          "materialClearanceMm": 5.15984755465391,
+          "contractSurplusMm": 0.15984755465391043,
+          "miterCriticalRadiusMm": 2.174,
+          "miterCreditedClearanceMm": 4.348,
+          "miterJoinCostMm": 0.8118475546539106,
+          "miterRadiusShortfallMm": -0.32600000000000007,
+          "miterClearanceShortfallMm": -0.6520000000000001,
+          "envelopeIntersectionAreaMm2": 0.675423,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            28,
+            36
+          ],
+          "sparrowItemIds": [
+            33,
+            44
+          ],
+          "pieceIds": [
+            "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-4"
+          ],
+          "materialClearanceMm": 5.495339277737673,
+          "contractSurplusMm": 0.4953392777376733,
+          "miterCriticalRadiusMm": 2.217,
+          "miterCreditedClearanceMm": 4.434,
+          "miterJoinCostMm": 1.0613392777376731,
+          "miterRadiusShortfallMm": -0.2829999999999999,
+          "miterClearanceShortfallMm": -0.5659999999999998,
+          "envelopeIntersectionAreaMm2": 0.562764,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            22,
+            25
+          ],
+          "sparrowItemIds": [
+            17,
+            11
+          ],
+          "pieceIds": [
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2"
+          ],
+          "materialClearanceMm": 5.092010449134819,
+          "contractSurplusMm": 0.09201044913481926,
+          "miterCriticalRadiusMm": 2.269,
+          "miterCreditedClearanceMm": 4.538,
+          "miterJoinCostMm": 0.554010449134819,
+          "miterRadiusShortfallMm": -0.23099999999999987,
+          "miterClearanceShortfallMm": -0.46199999999999974,
+          "envelopeIntersectionAreaMm2": 0.425752,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            12,
+            22
+          ],
+          "sparrowItemIds": [
+            0,
+            17
+          ],
+          "pieceIds": [
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1"
+          ],
+          "materialClearanceMm": 5.211441120445986,
+          "contractSurplusMm": 0.21144112044598629,
+          "miterCriticalRadiusMm": 2.283,
+          "miterCreditedClearanceMm": 4.566,
+          "miterJoinCostMm": 0.6454411204459864,
+          "miterRadiusShortfallMm": -0.21700000000000008,
+          "miterClearanceShortfallMm": -0.43400000000000016,
+          "envelopeIntersectionAreaMm2": 0.396851,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            7,
+            54
+          ],
+          "sparrowItemIds": [
+            16,
+            26
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-2"
+          ],
+          "materialClearanceMm": 5.496830385785419,
+          "contractSurplusMm": 0.4968303857854188,
+          "miterCriticalRadiusMm": 2.2960000000000003,
+          "miterCreditedClearanceMm": 4.5920000000000005,
+          "miterJoinCostMm": 0.9048303857854183,
+          "miterRadiusShortfallMm": -0.20399999999999974,
+          "miterClearanceShortfallMm": -0.4079999999999995,
+          "envelopeIntersectionAreaMm2": 0.253203,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            20,
+            22
+          ],
+          "sparrowItemIds": [
+            8,
+            17
+          ],
+          "pieceIds": [
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+            "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1"
+          ],
+          "materialClearanceMm": 5.388575930292688,
+          "contractSurplusMm": 0.38857593029268767,
+          "miterCriticalRadiusMm": 2.326,
+          "miterCreditedClearanceMm": 4.652,
+          "miterJoinCostMm": 0.7365759302926875,
+          "miterRadiusShortfallMm": -0.17399999999999993,
+          "miterClearanceShortfallMm": -0.34799999999999986,
+          "envelopeIntersectionAreaMm2": 0.3097785,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            5,
+            26
+          ],
+          "sparrowItemIds": [
+            14,
+            12
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3"
+          ],
+          "materialClearanceMm": 5.129886859821605,
+          "contractSurplusMm": 0.12988685982160497,
+          "miterCriticalRadiusMm": 2.33,
+          "miterCreditedClearanceMm": 4.66,
+          "miterJoinCostMm": 0.46988685982160483,
+          "miterRadiusShortfallMm": -0.16999999999999993,
+          "miterClearanceShortfallMm": -0.33999999999999986,
+          "envelopeIntersectionAreaMm2": 0.216194,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            26,
+            36
+          ],
+          "sparrowItemIds": [
+            12,
+            44
+          ],
+          "pieceIds": [
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-4"
+          ],
+          "materialClearanceMm": 5.17768954060092,
+          "contractSurplusMm": 0.17768954060091957,
+          "miterCriticalRadiusMm": 2.336,
+          "miterCreditedClearanceMm": 4.672,
+          "miterJoinCostMm": 0.5056895406009199,
+          "miterRadiusShortfallMm": -0.16400000000000015,
+          "miterClearanceShortfallMm": -0.3280000000000003,
+          "envelopeIntersectionAreaMm2": 0.231075,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            25,
+            34
+          ],
+          "sparrowItemIds": [
+            11,
+            42
+          ],
+          "pieceIds": [
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-2"
+          ],
+          "materialClearanceMm": 5.100518474402932,
+          "contractSurplusMm": 0.10051847440293216,
+          "miterCriticalRadiusMm": 2.37,
+          "miterCreditedClearanceMm": 4.74,
+          "miterJoinCostMm": 0.36051847440293194,
+          "miterRadiusShortfallMm": -0.1299999999999999,
+          "miterClearanceShortfallMm": -0.2599999999999998,
+          "envelopeIntersectionAreaMm2": 0.1658575,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            10,
+            49
+          ],
+          "sparrowItemIds": [
+            21,
+            57
+          ],
+          "pieceIds": [
+            "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-17"
+          ],
+          "materialClearanceMm": 7.084258120914202,
+          "contractSurplusMm": 2.0842581209142024,
+          "miterCriticalRadiusMm": 2.375,
+          "miterCreditedClearanceMm": 4.75,
+          "miterJoinCostMm": 2.3342581209142024,
+          "miterRadiusShortfallMm": -0.125,
+          "miterClearanceShortfallMm": -0.25,
+          "envelopeIntersectionAreaMm2": 0.081723,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            6,
+            59
+          ],
+          "sparrowItemIds": [
+            15,
+            31
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7"
+          ],
+          "materialClearanceMm": 5.158000782035629,
+          "contractSurplusMm": 0.15800078203562862,
+          "miterCriticalRadiusMm": 2.392,
+          "miterCreditedClearanceMm": 4.784,
+          "miterJoinCostMm": 0.3740007820356288,
+          "miterRadiusShortfallMm": -0.1080000000000001,
+          "miterClearanceShortfallMm": -0.2160000000000002,
+          "envelopeIntersectionAreaMm2": 0.110916,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            7,
+            59
+          ],
+          "sparrowItemIds": [
+            16,
+            31
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7"
+          ],
+          "materialClearanceMm": 5.311025984558988,
+          "contractSurplusMm": 0.311025984558988,
+          "miterCriticalRadiusMm": 2.4,
+          "miterCreditedClearanceMm": 4.8,
+          "miterJoinCostMm": 0.5110259845589882,
+          "miterRadiusShortfallMm": -0.10000000000000009,
+          "miterClearanceShortfallMm": -0.20000000000000018,
+          "envelopeIntersectionAreaMm2": 0.0734785,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            21,
+            28
+          ],
+          "sparrowItemIds": [
+            9,
+            33
+          ],
+          "pieceIds": [
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
+            "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1"
+          ],
+          "materialClearanceMm": 5.290762578193695,
+          "contractSurplusMm": 0.29076257819369467,
+          "miterCriticalRadiusMm": 2.442,
+          "miterCreditedClearanceMm": 4.884,
+          "miterJoinCostMm": 0.4067625781936943,
+          "miterRadiusShortfallMm": -0.05799999999999983,
+          "miterClearanceShortfallMm": -0.11599999999999966,
+          "envelopeIntersectionAreaMm2": 0.0263305,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            3,
+            27
+          ],
+          "sparrowItemIds": [
+            23,
+            13
+          ],
+          "pieceIds": [
+            "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+            "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4"
+          ],
+          "materialClearanceMm": 5.1158072028926735,
+          "contractSurplusMm": 0.11580720289267354,
+          "miterCriticalRadiusMm": 2.455,
+          "miterCreditedClearanceMm": 4.91,
+          "miterJoinCostMm": 0.2058072028926734,
+          "miterRadiusShortfallMm": -0.04499999999999993,
+          "miterClearanceShortfallMm": -0.08999999999999986,
+          "envelopeIntersectionAreaMm2": 0.035552,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            20,
+            52
+          ],
+          "sparrowItemIds": [
+            8,
+            60
+          ],
+          "pieceIds": [
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-20"
+          ],
+          "materialClearanceMm": 5.215711753134306,
+          "contractSurplusMm": 0.2157117531343058,
+          "miterCriticalRadiusMm": 2.472,
+          "miterCreditedClearanceMm": 4.944,
+          "miterJoinCostMm": 0.27171175313430584,
+          "miterRadiusShortfallMm": -0.028000000000000025,
+          "miterClearanceShortfallMm": -0.05600000000000005,
+          "envelopeIntersectionAreaMm2": 0.0256515,
+          "roundAtSameRadiusOverlaps": null,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            7,
+            21
+          ],
+          "sparrowItemIds": [
+            16,
+            9
+          ],
+          "pieceIds": [
+            "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5"
+          ],
+          "materialClearanceMm": 5.01739573086067,
+          "contractSurplusMm": 0.017395730860670255,
+          "miterCriticalRadiusMm": 2.474,
+          "miterCreditedClearanceMm": 4.948,
+          "miterJoinCostMm": 0.06939573086066986,
+          "miterRadiusShortfallMm": -0.0259999999999998,
+          "miterClearanceShortfallMm": -0.0519999999999996,
+          "envelopeIntersectionAreaMm2": 0.0100985,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            57,
+            58
+          ],
+          "sparrowItemIds": [
+            29,
+            30
+          ],
+          "pieceIds": [
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6"
+          ],
+          "materialClearanceMm": 5.012090589808395,
+          "contractSurplusMm": 0.012090589808394725,
+          "miterCriticalRadiusMm": 2.476,
+          "miterCreditedClearanceMm": 4.952,
+          "miterJoinCostMm": 0.06009058980839477,
+          "miterRadiusShortfallMm": -0.02400000000000002,
+          "miterClearanceShortfallMm": -0.04800000000000004,
+          "envelopeIntersectionAreaMm2": 0.0484855,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            14,
+            39
+          ],
+          "sparrowItemIds": [
+            2,
+            47
+          ],
+          "pieceIds": [
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-7"
+          ],
+          "materialClearanceMm": 5.025770144543452,
+          "contractSurplusMm": 0.02577014454345239,
+          "miterCriticalRadiusMm": 2.477,
+          "miterCreditedClearanceMm": 4.954,
+          "miterJoinCostMm": 0.07177014454345265,
+          "miterRadiusShortfallMm": -0.02300000000000013,
+          "miterClearanceShortfallMm": -0.04600000000000026,
+          "envelopeIntersectionAreaMm2": 0.062226,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            53,
+            55
+          ],
+          "sparrowItemIds": [
+            25,
+            27
+          ],
+          "pieceIds": [
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3"
+          ],
+          "materialClearanceMm": 5.028831174316284,
+          "contractSurplusMm": 0.028831174316284347,
+          "miterCriticalRadiusMm": 2.477,
+          "miterCreditedClearanceMm": 4.954,
+          "miterJoinCostMm": 0.07483117431628461,
+          "miterRadiusShortfallMm": -0.02300000000000013,
+          "miterClearanceShortfallMm": -0.04600000000000026,
+          "envelopeIntersectionAreaMm2": 0.036132,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            0,
+            53
+          ],
+          "sparrowItemIds": [
+            38,
+            25
+          ],
+          "pieceIds": [
+            "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1"
+          ],
+          "materialClearanceMm": 5.016198932841445,
+          "contractSurplusMm": 0.016198932841445135,
+          "miterCriticalRadiusMm": 2.479,
+          "miterCreditedClearanceMm": 4.958,
+          "miterJoinCostMm": 0.05819893284144495,
+          "miterRadiusShortfallMm": -0.020999999999999908,
+          "miterClearanceShortfallMm": -0.041999999999999815,
+          "envelopeIntersectionAreaMm2": 0.0390225,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            1,
+            56
+          ],
+          "sparrowItemIds": [
+            39,
+            28
+          ],
+          "pieceIds": [
+            "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4"
+          ],
+          "materialClearanceMm": 5.018507279241766,
+          "contractSurplusMm": 0.018507279241766206,
+          "miterCriticalRadiusMm": 2.489,
+          "miterCreditedClearanceMm": 4.978,
+          "miterJoinCostMm": 0.04050727924176645,
+          "miterRadiusShortfallMm": -0.01100000000000012,
+          "miterClearanceShortfallMm": -0.02200000000000024,
+          "envelopeIntersectionAreaMm2": 0.0161575,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            55,
+            57
+          ],
+          "sparrowItemIds": [
+            27,
+            29
+          ],
+          "pieceIds": [
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5"
+          ],
+          "materialClearanceMm": 5.005655000000161,
+          "contractSurplusMm": 0.005655000000160726,
+          "miterCriticalRadiusMm": 2.495,
+          "miterCreditedClearanceMm": 4.99,
+          "miterJoinCostMm": 0.015655000000160513,
+          "miterRadiusShortfallMm": -0.004999999999999893,
+          "miterClearanceShortfallMm": -0.009999999999999787,
+          "envelopeIntersectionAreaMm2": 0.0087505,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            0,
+            55
+          ],
+          "sparrowItemIds": [
+            38,
+            27
+          ],
+          "pieceIds": [
+            "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3"
+          ],
+          "materialClearanceMm": 5.0103970775744155,
+          "contractSurplusMm": 0.010397077574415547,
+          "miterCriticalRadiusMm": 2.497,
+          "miterCreditedClearanceMm": 4.994,
+          "miterJoinCostMm": 0.016397077574415775,
+          "miterRadiusShortfallMm": -0.0030000000000001137,
+          "miterClearanceShortfallMm": -0.006000000000000227,
+          "envelopeIntersectionAreaMm2": 0.003009,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndices": [
+            15,
+            46
+          ],
+          "sparrowItemIds": [
+            3,
+            54
+          ],
+          "pieceIds": [
+            "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+            "d06db288-d2d6-4f40-874e-98287f516d93-copy-14"
+          ],
+          "materialClearanceMm": 5.017835905432383,
+          "contractSurplusMm": 0.017835905432383115,
+          "miterCriticalRadiusMm": 2.497,
+          "miterCreditedClearanceMm": 4.994,
+          "miterJoinCostMm": 0.023835905432383342,
+          "miterRadiusShortfallMm": -0.0030000000000001137,
+          "miterClearanceShortfallMm": -0.006000000000000227,
+          "envelopeIntersectionAreaMm2": 0.0009015,
+          "roundAtSameRadiusOverlaps": false,
+          "causedBy": "join shape"
+        }
+      ],
+      "boundaryFailures": [
+        {
+          "poseIndex": 5,
+          "sparrowItemId": 14,
+          "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+          "materialClearanceMm": [
+            1109.0813892557596,
+            792.5301443993503,
+            5.125013879438626,
+            2590.961163787998
+          ],
+          "bindingMaterialClearanceMm": 5.125013879438626,
+          "contractSurplusMm": 0.12501387943862596,
+          "miterCriticalRadiusMm": 2.188,
+          "miterRadiusShortfallMm": -0.31199999999999983,
+          "envelopeExcursionMm": [
+            -1103.859,
+            -787.0150000000001,
+            0.375,
+            -2585.686
+          ],
+          "roundAtSameRadiusFits": true,
+          "causedBy": "join shape"
+        },
+        {
+          "poseIndex": 6,
+          "sparrowItemId": 15,
+          "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+          "materialClearanceMm": [
+            978.2492750296598,
+            920.2377076718612,
+            5.2068895989217765,
+            2594.1053588650357
+          ],
+          "bindingMaterialClearanceMm": 5.2068895989217765,
+          "contractSurplusMm": 0.2068895989217765,
+          "miterCriticalRadiusMm": 2.213,
+          "miterRadiusShortfallMm": -0.2869999999999999,
+          "envelopeExcursionMm": [
+            -972.778,
+            -914.892,
+            0.351,
+            -2589.047
+          ],
+          "roundAtSameRadiusFits": true,
+          "causedBy": "join shape"
+        }
+      ]
+    }
+  ],
+  "provenanceStamp": {
+    "binaries": {
+      "sparrow_import_gate": "75e8f66baec9dd0c3bd68b835a1a37ef018661f4b9ac563057b920f9f18a4b62",
+      "general_request_benchmark": "d011b480c3285db8e56d9efbf36f640fc8de9d16ed17d406b29f42d76107a83c"
+    },
+    "binariesManifest": "docs/experiments/gate-a-sparrow-import/evidence/binaries.txt",
+    "commit": "1ca3315a8a357f99c029a9eee36d778cd0769113",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "python": "3.14.6"
+  }
+}

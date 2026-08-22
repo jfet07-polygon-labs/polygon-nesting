@@ -1,0 +1,31 @@
+How `suites-runner.txt` and the four suite logs relate, so nothing here has to
+be inferred.
+
+`suites-runner.txt` is the transcript of one `run-suites.sh` invocation. Its
+final `EXITS jagua=101 combo=0 example=0 shadow=0` records that suite 1 exited
+101 on THAT run, on the campaign's known-flaky
+`free_material_multi_eviction_shrinks_retained_container_capacity`
+(`assertion failed: cache.entries.capacity() < entries_capacity_before` at
+`crates/polygon-nesting-core/src/search/layout_scorer.rs:1450`) - an allocator
+property, not a search one.
+
+Two things then happened, in this order, and both are in the evidence:
+
+  1. that run's suite-1 log was preserved as `suite-jagua-run2-flaky.log`
+     (883 passed, 1 failed; `cargo test` aborts the remaining targets at the
+     first failing one, which is why it carries 5 result blocks and not 62);
+  2. suite 1 was rerun on the same tree and passed - 1294 passed, 0 failed,
+     2 ignored, 62 result blocks, exit 0 - and that rerun is what
+     `suite-jagua.log` holds. The flaky test reads `... ok` in it.
+
+`run-suites.sh` has since been given that rerun-once-on-the-known-flake step, so
+a reproduction emits a `suite-jagua-rerun exit=` line into its own transcript and
+`suitetotals.py` reads it. This transcript predates that step, which is why the
+rerun is recorded here in prose instead.
+
+`suite-shadow.log` was likewise rerun after this transcript, because the round
+subsequently added five unit tests to `search::import_gate` and suite 4 is the
+only suite that compiles them.
+
+Every one of the four suites' logs on disk is a passing run. The 101 above is
+real, it is the known flake, and it is reported rather than hidden.
