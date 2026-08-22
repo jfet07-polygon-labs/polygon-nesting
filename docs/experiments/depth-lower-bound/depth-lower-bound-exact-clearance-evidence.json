@@ -1,0 +1,76 @@
+{
+  "experiment": "contract-native area lower bound for Mixed-61 strip depth, RE-PINNED for the exact-clearance contract",
+  "supersedes": {
+    "file": "docs/experiments/depth-lower-bound/depth-lower-bound-evidence.json",
+    "figure": "contract_bound_strengthened_mm = 131.97838540260466",
+    "why": "that construction inflates at r = 2.75 and adds 4.75 because the contract then was 5.5 mm pair / 5.25 mm boundary. This branch's contract is exact-clearance 5.0/5.0 (tests/fixtures/mixed-61/mixed61-request-exact-clearance.json, geometry sag 0.0 and clearance safety margin 0.0; every pinned gate runs positional sheet-edge-clearance 5 and pair-clearance 5), so r = 2.5 and the depth term is 5.0. Flagged by Kimi review 1, docs/kimi-review-1-the-band-audition.md:49.",
+    "whyTheOldFilesSparrowFigureIsNotTheReplacement": "depth-lower-bound-evidence.json's sparrow_bound_mm = 124.88690242765017 is SUM_2.5 / 2000: the r = 2.5 inflated area over the FULL 2000 mm width, with no boundary term and no depth-metric term. It was a calibration of an outside packer under an assumption about what Sparrow counts, not this engine's bound. The current figures divide by the usable width 1995 and add the boundary and depth terms.",
+    "identityCheckAgainstTheRetiredFile": {
+      "retiredSparrowBoundTimesStripWidthMm2": 249773.80485530035,
+      "repinnedInflatedSumR2p5Mm2": 249773.80485530035,
+      "differenceMm2": 0.0,
+      "meaning": "the same certified r = 2.5 inflated area to within one ulp, which is what says the geometry code is unchanged and only the contract constants moved"
+    }
+  },
+  "question": "what depth is provably unreachable under THIS branch's exact-clearance contract (5.0 mm pair separation, 5.0 mm boundary clearance, 2000 mm width), and what does the composite envelope add to it?",
+  "method": "the committed construction of mixed61-lower-bound.py with three constants changed and the depth term re-derived; the geometry - shoelace raw areas, exact Steiner formula for the convex pieces, certified 0.02 mm grid LOWER bound for the 9 non-convex stars - is unchanged",
+  "script": "docs/experiments/depth-lower-bound/mixed61-lower-bound-exact-clearance.py",
+  "scriptSha256": "b48fbca41ac58bd77dfd5d1aa7f59e256424fc86013e392ed7d993293799b1a9",
+  "fixture": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+  "fixtureSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+  "contract": {
+    "pairClearanceMm": 5.0,
+    "sheetClearanceMm": 5.0,
+    "pairClearanceDerivation": "total_padding + 2 * flattening_sag = 5.0 + 0.0 (validation/general_polygon.rs, validate_publication_inner)",
+    "sheetClearanceDerivation": "sheet_edge_clearance + flattening_sag = 5.0 + 0.0, on all four sheet edges (validate_sheet)",
+    "depthConvention": "D = max placed source y + sheet_edge_clearance(5.0) (raw_source_long_axis_depth_mm)",
+    "compositeEnvelopeRadiusMm": 2.502,
+    "compositeEnvelopeDerivation": "total_padding/2 + clearance_safety_margin + search_offset_allowance = 2.5 + 0.0 + 0.002 (collision_expansion_mm, from-request allowance). A miter offset contains the disc offset at the same radius, so anything the composite publishes has material pair separation >= 5.004 and material boundary clearance >= inset + expansion = 5.002."
+  },
+  "derivation": [
+    "r = 5.0/2 = 2.5. Inflate every placed piece by disc(r). Pair separation >= 2r, so the inflated interiors are pairwise disjoint.",
+    "Material x in [5.0, 1995.0], so inflated x in [2.5, 1997.5]: usable width 2000 - 2*(5.0 - 2.5) = 1995.",
+    "If the raw pieces span y-extent E, the inflated pieces lie in a band of height E + 2r = E + 5.0, so SUM_2.5 <= 1995 * (E + 5.0), i.e. E >= SUM_2.5/1995 - 5.0.",
+    "D = y_max + 5.0 = E + y_min + 5.0 and y_min >= 5.0, so D >= E + 10.0 >= SUM_2.5/1995 + 5.0  [strengthened].",
+    "Dropping the depth-metric argument: D >= SUM_2.5/1995  [plain].",
+    "Composite variant: r = 2.502 and b = inset + r = 5.002, so b - r = 2.5 and the usable width is 1995 again; D >= SUM_2.502/1995 + (b + 5.0 - 2r) = SUM_2.502/1995 + 4.998."
+  ],
+  "numbers": {
+    "raw_area_sum_mm2": 210619.03259454283,
+    "inflated_sum_r2_500_mm2": 249773.80485530035,
+    "inflated_sum_r2_502_mm2": 249805.98510752583,
+    "usable_width_mm": 1995.0,
+    "usable_width_composite_mm": 1995.0,
+    "naive_bound_mm": 105.30951629727141,
+    "contract_bound_plain_mm": 125.19990218310794,
+    "contract_bound_strengthened_mm": 130.19990218310795,
+    "composite_bound_plain_mm": 125.2160326353513,
+    "composite_bound_strengthened_mm": 130.2140326353513,
+    "same_material_as_legacy_fixture": true,
+    "superseded_5p5_contract_strengthened_mm": 131.97838540260466
+  },
+  "keyFindings": [
+    "RE-PINNED contract-native lower bound: depth >= 130.19990218310795 mm (plain, without the depth-metric argument: 125.19990218310794 mm).",
+    "Under the CURRENT acceptance authority the bound is 130.2140326353513 mm: the composite envelope's 0.002 mm allowance buys 0.0141 mm of lower bound, which is the whole of what the envelope adds at the bound level.",
+    "The retired 131.97838540260466 mm figure is 1.7785 mm too high for this contract. Anything quoting it as the invariant is quoting the 5.5/5.25 era.",
+    "The 7.09 mm of 'contract overhead' the retired file attributed to the engine-vs-Sparrow gap is GONE: Sparrow's 5.0 mm separation and this branch's contract are the same number, so there is one bound and not two. At the bound level the residual asymmetry is the 0.0141 mm the search allowance adds.",
+    "Neither Sparrow's 150.16451 mm (this engine's depth convention on the imported pose set) nor the campaign record 155.264 mm is excluded by area: 150.16451 sits 19.965 mm above the re-pinned bound. The area bound has never been the binding constraint on this instance and still is not."
+  ],
+  "reference": {
+    "sparrowTenSecondX86ReportedStripWidthMm": 150.16547,
+    "sparrowTenSecondX86EngineConventionDepthMm": 150.16451,
+    "campaignRecordMm": 155.264,
+    "headroomRecordAboveRepinnedBoundMm": 25.06409781689206,
+    "headroomSparrowAboveRepinnedBoundMm": 19.964607816892055
+  },
+  "provenanceStamp": {
+    "binaries": {
+      "sparrow_import_gate": "75e8f66baec9dd0c3bd68b835a1a37ef018661f4b9ac563057b920f9f18a4b62",
+      "general_request_benchmark": "d011b480c3285db8e56d9efbf36f640fc8de9d16ed17d406b29f42d76107a83c"
+    },
+    "binariesManifest": "docs/experiments/gate-a-sparrow-import/evidence/binaries.txt",
+    "commit": "1ca3315a8a357f99c029a9eee36d778cd0769113",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "python": "3.14.6"
+  }
+}

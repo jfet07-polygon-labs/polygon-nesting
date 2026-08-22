@@ -1,0 +1,699 @@
+{
+  "experiment": "gate-a-sparrow-import",
+  "step": "3 - the three verdicts and their interpretation",
+  "source": {
+    "verdicts": "docs/experiments/gate-a-sparrow-import/evidence/verdicts.json",
+    "request": {
+      "normalizeAxes": false,
+      "path": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_f674db6b-1e0-1/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+      "requestTotalPaddingMm": 10.0,
+      "sha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+      "sheetLongAxisMm": 2700.0,
+      "sheetShortAxisMm": 2000.0
+    },
+    "poses": {
+      "path": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_f674db6b-1e0-1/docs/experiments/gate-a-sparrow-import/fixture/sparrow-10s-x86-poses.json",
+      "placementCount": 61,
+      "sha256": "456c5a9527fefde31b7da731da31c78dc34acc44dcaf39827e7e9ebd990d0838"
+    },
+    "contract": {
+      "clearanceSafetyMarginMm": 0.0,
+      "flatteningSagToleranceMm": 0.0,
+      "pairClearanceMm": 5.0,
+      "sheetEdgeClearanceMm": 5.0
+    },
+    "canonicalGridStepMm": 0.001,
+    "bisectTop": 40
+  },
+  "soundnessChecks": {
+    "containmentViolations": [],
+    "containmentGridTies": [
+      {
+        "allowance": 0.002,
+        "join": "miter",
+        "pair": [
+          0,
+          1
+        ],
+        "join_r": 2.501,
+        "round_r": 2.5,
+        "excessMm": 0.0009999999999998899
+      },
+      {
+        "allowance": 0.002,
+        "join": "miter",
+        "pair": [
+          0,
+          57
+        ],
+        "join_r": 2.5580000000000003,
+        "round_r": 2.557,
+        "excessMm": 0.001000000000000334
+      },
+      {
+        "allowance": 0.002,
+        "join": "square",
+        "pair": [
+          0,
+          1
+        ],
+        "join_r": 2.501,
+        "round_r": 2.5,
+        "excessMm": 0.0009999999999998899
+      },
+      {
+        "allowance": 0.0005,
+        "join": "miter",
+        "pair": [
+          0,
+          1
+        ],
+        "join_r": 2.501,
+        "round_r": 2.5,
+        "excessMm": 0.0009999999999998899
+      },
+      {
+        "allowance": 0.0005,
+        "join": "miter",
+        "pair": [
+          0,
+          57
+        ],
+        "join_r": 2.5580000000000003,
+        "round_r": 2.557,
+        "excessMm": 0.001000000000000334
+      },
+      {
+        "allowance": 0.0005,
+        "join": "square",
+        "pair": [
+          0,
+          1
+        ],
+        "join_r": 2.501,
+        "round_r": 2.5,
+        "excessMm": 0.0009999999999998899
+      },
+      {
+        "allowance": 0.0,
+        "join": "miter",
+        "pair": [
+          0,
+          1
+        ],
+        "join_r": 2.501,
+        "round_r": 2.5,
+        "excessMm": 0.0009999999999998899
+      },
+      {
+        "allowance": 0.0,
+        "join": "miter",
+        "pair": [
+          0,
+          57
+        ],
+        "join_r": 2.5580000000000003,
+        "round_r": 2.557,
+        "excessMm": 0.001000000000000334
+      },
+      {
+        "allowance": 0.0,
+        "join": "square",
+        "pair": [
+          0,
+          1
+        ],
+        "join_r": 2.501,
+        "round_r": 2.5,
+        "excessMm": 0.0009999999999998899
+      }
+    ],
+    "discIdentityWorstMm": 0.0022264354284553534,
+    "discIdentityWorstPair": {
+      "allowance": 0.002,
+      "pair": [
+        15,
+        16
+      ],
+      "materialClearanceMm": 5.008226435428456,
+      "twiceCriticalRadiusMm": 5.006,
+      "signedMm": 0.0022264354284553534
+    },
+    "productionOffsetReproduced": [
+      true,
+      true,
+      true
+    ],
+    "monotoneViolations": [],
+    "realValidatorAgreement": [
+      {
+        "searchOffsetAllowanceMm": 0.002,
+        "shadowLowestBoundaryFailureIndex": 4,
+        "shadowLowestBoundaryFailurePieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2",
+        "realValidatorMessage": "piece c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2 violates the canonical-grid sheet boundary",
+        "agrees": true
+      },
+      {
+        "searchOffsetAllowanceMm": 0.0005,
+        "shadowLowestBoundaryFailureIndex": 5,
+        "shadowLowestBoundaryFailurePieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+        "realValidatorMessage": "piece 0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1 violates the canonical-grid sheet boundary",
+        "agrees": true
+      },
+      {
+        "searchOffsetAllowanceMm": 0.0,
+        "shadowLowestBoundaryFailureIndex": 5,
+        "shadowLowestBoundaryFailurePieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+        "realValidatorMessage": "piece 0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1 violates the canonical-grid sheet boundary",
+        "agrees": true
+      }
+    ],
+    "discIdentitySignedRangeMm": [
+      -0.0012430171458222006,
+      0.0022264354284553534
+    ],
+    "discIdentityBudgetMm": 0.0036142135623730954,
+    "discIdentityBudgetTerms": {
+      "integerRadiusQuantizationMm": 0.002,
+      "twoSidedVertexRoundingMm": 0.0014142135623730952,
+      "twoSidedArcInscriptionMm": 0.0002
+    },
+    "discIdentityWithinBudget": true,
+    "containmentHolds": true,
+    "containmentGridTieCount": 9,
+    "containmentNote": "every inversion is exactly one 0.001 mm grid step, which is what an inscribed round join plus integer-grid vertex rounding produces; none exceeds it",
+    "monotoneHolds": true,
+    "productionOffsetHolds": true,
+    "realValidatorAgreementHolds": true,
+    "allSoundnessChecksHold": true
+  },
+  "rows": [
+    {
+      "searchOffsetAllowanceMm": 0.002,
+      "envelopeRadiusMm": 2.502,
+      "contractPairClearanceMm": 5.0,
+      "contractSheetClearanceMm": 5.0,
+      "envelopeImpliedPairClearanceMm": 5.004,
+      "envelopeImpliedSheetClearanceMm": 5.002,
+      "verdictA_contractOnly": {
+        "accepted": true
+      },
+      "verdictB_compositeMiter": {
+        "accepted": false,
+        "message": "piece c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2 violates the canonical-grid sheet boundary"
+      },
+      "verdictC_compositeRound": {
+        "envelopeAdmissible": false,
+        "pairFailures": 2,
+        "boundaryFailures": 0,
+        "saturatedPairRows": 0,
+        "saturatedBoundaryRows": 18,
+        "worstPairRadiusSlackMm": -0.0019999999999997797,
+        "worstPairClearanceSlackMm": -0.0039999999999995595,
+        "worstPair": [
+          0,
+          1
+        ],
+        "worstBoundaryRadiusSlackMm": 4.440892098500626e-16,
+        "worstBoundaryPlacement": 59
+      },
+      "compositeMiterCensus": {
+        "envelopeAdmissible": false,
+        "pairFailures": 37,
+        "boundaryFailures": 4,
+        "saturatedPairRows": 0,
+        "saturatedBoundaryRows": 18,
+        "worstPairRadiusSlackMm": -0.8019999999999998,
+        "worstPairClearanceSlackMm": -1.6039999999999996,
+        "worstPair": [
+          41,
+          45
+        ],
+        "worstBoundaryRadiusSlackMm": -0.3139999999999996,
+        "worstBoundaryPlacement": 5
+      },
+      "compositeSquareCensus": {
+        "envelopeAdmissible": false,
+        "pairFailures": 26,
+        "boundaryFailures": 2,
+        "saturatedPairRows": 0,
+        "saturatedBoundaryRows": 18,
+        "worstPairRadiusSlackMm": -0.32799999999999985,
+        "worstPairClearanceSlackMm": -0.6559999999999997,
+        "worstPair": [
+          24,
+          27
+        ],
+        "worstBoundaryRadiusSlackMm": -0.3139999999999996,
+        "worstBoundaryPlacement": 5
+      },
+      "failureDecomposition": {
+        "pairFailuresMiter": 37,
+        "pairFailuresRoundSameRadius": 2,
+        "pairFailuresCausedByRadius": 2,
+        "pairFailuresCausedByJoinShape": 35,
+        "roundRefusesMiterAcceptsPairs": [],
+        "boundaryFailuresMiter": 4,
+        "boundaryFailuresRoundSameRadius": 0,
+        "boundaryFailuresCausedByRadius": 0,
+        "boundaryFailuresCausedByJoinShape": 4,
+        "roundRefusesMiterAcceptsBoundaries": [],
+        "accountsForEveryMiterPairFailure": true,
+        "accountsForEveryMiterBoundaryFailure": true
+      },
+      "miterPairJoinCostMm": {
+        "population": "the pairs the shadow bisected: the 40 tightest by material clearance, plus every failing pair",
+        "bisectedPairs": 56,
+        "max": 2.3342581209142024,
+        "median": 0.05914476132491986,
+        "min": -0.0014008477968303623
+      },
+      "miterFailingPairJoinCostMm": {
+        "pairs": 37,
+        "max": 2.3342581209142024,
+        "median": 0.3740007820356288,
+        "min": -0.001159527233138391
+      },
+      "boundarySemantics": {
+        "contractDemandMm": 5.0,
+        "sparrowValidatedAtMm": 5.0,
+        "roundEnvelopeFlatDemandMm": 5.002,
+        "miterWorstRows": [
+          {
+            "placementIndex": 5,
+            "bindingMaterialClearanceMm": 5.125013879438626,
+            "criticalRadiusMm": 2.188,
+            "miterReachFactor": 1.1997321204015656,
+            "impliedMaterialClearanceDemandMm": 5.501729765244717,
+            "fits": false
+          },
+          {
+            "placementIndex": 6,
+            "bindingMaterialClearanceMm": 5.2068895989217765,
+            "criticalRadiusMm": 2.213,
+            "miterReachFactor": 1.2231765019980914,
+            "impliedMaterialClearanceDemandMm": 5.560387607999225,
+            "fits": false
+          },
+          {
+            "placementIndex": 16,
+            "bindingMaterialClearanceMm": 5.004304426935754,
+            "criticalRadiusMm": 2.5,
+            "miterReachFactor": 1.0017217707743016,
+            "impliedMaterialClearanceDemandMm": 5.006307870477302,
+            "fits": false
+          },
+          {
+            "placementIndex": 4,
+            "bindingMaterialClearanceMm": 5.12897814200473,
+            "criticalRadiusMm": 2.501,
+            "miterReachFactor": 1.0511707884864974,
+            "impliedMaterialClearanceDemandMm": 5.130029312793216,
+            "fits": false
+          }
+        ],
+        "roundWorstRows": [
+          {
+            "placementIndex": 59,
+            "bindingMaterialClearanceMm": 5.002254000000001,
+            "criticalRadiusMm": 2.5020000000000002,
+            "miterReachFactor": 1.0001015187849722,
+            "impliedMaterialClearanceDemandMm": 5.002254000000001,
+            "fits": true
+          },
+          {
+            "placementIndex": 14,
+            "bindingMaterialClearanceMm": 5.00412328439792,
+            "criticalRadiusMm": 2.504,
+            "miterReachFactor": 1.0000492349831949,
+            "impliedMaterialClearanceDemandMm": 5.002123185927953,
+            "fits": true
+          },
+          {
+            "placementIndex": 16,
+            "bindingMaterialClearanceMm": 5.004304426935754,
+            "criticalRadiusMm": 2.504,
+            "miterReachFactor": 1.000121576252298,
+            "impliedMaterialClearanceDemandMm": 5.002304183783249,
+            "fits": true
+          },
+          {
+            "placementIndex": 18,
+            "bindingMaterialClearanceMm": 5.006230585172496,
+            "criticalRadiusMm": 2.5060000000000002,
+            "miterReachFactor": 1.0000920132372288,
+            "impliedMaterialClearanceDemandMm": 5.002230217119546,
+            "fits": true
+          }
+        ],
+        "miterLimitCeilingMm": 7.504
+      },
+      "roundInwardDeviationMm": 0.0001,
+      "roundEnvelopeVertexTotal": 20601,
+      "miterEnvelopeVertexTotal": 377
+    },
+    {
+      "searchOffsetAllowanceMm": 0.0005,
+      "envelopeRadiusMm": 2.5005,
+      "contractPairClearanceMm": 5.0,
+      "contractSheetClearanceMm": 5.0,
+      "envelopeImpliedPairClearanceMm": 5.001,
+      "envelopeImpliedSheetClearanceMm": 5.000500000000001,
+      "verdictA_contractOnly": {
+        "accepted": true
+      },
+      "verdictB_compositeMiter": {
+        "accepted": false,
+        "message": "piece 0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1 violates the canonical-grid sheet boundary"
+      },
+      "verdictC_compositeRound": {
+        "envelopeAdmissible": false,
+        "pairFailures": 1,
+        "boundaryFailures": 0,
+        "saturatedPairRows": 0,
+        "saturatedBoundaryRows": 18,
+        "worstPairRadiusSlackMm": -0.000500000000000167,
+        "worstPairClearanceSlackMm": -0.001000000000000334,
+        "worstPair": [
+          0,
+          1
+        ],
+        "worstBoundaryRadiusSlackMm": 0.0015000000000000568,
+        "worstBoundaryPlacement": 59
+      },
+      "compositeMiterCensus": {
+        "envelopeAdmissible": false,
+        "pairFailures": 33,
+        "boundaryFailures": 3,
+        "saturatedPairRows": 0,
+        "saturatedBoundaryRows": 18,
+        "worstPairRadiusSlackMm": -0.8005000000000002,
+        "worstPairClearanceSlackMm": -1.6010000000000004,
+        "worstPair": [
+          41,
+          45
+        ],
+        "worstBoundaryRadiusSlackMm": -0.3125,
+        "worstBoundaryPlacement": 5
+      },
+      "compositeSquareCensus": {
+        "envelopeAdmissible": false,
+        "pairFailures": 21,
+        "boundaryFailures": 2,
+        "saturatedPairRows": 0,
+        "saturatedBoundaryRows": 18,
+        "worstPairRadiusSlackMm": -0.32650000000000023,
+        "worstPairClearanceSlackMm": -0.6530000000000005,
+        "worstPair": [
+          24,
+          27
+        ],
+        "worstBoundaryRadiusSlackMm": -0.3125,
+        "worstBoundaryPlacement": 5
+      },
+      "failureDecomposition": {
+        "pairFailuresMiter": 33,
+        "pairFailuresRoundSameRadius": 1,
+        "pairFailuresCausedByRadius": 0,
+        "pairFailuresCausedByJoinShape": 33,
+        "roundRefusesMiterAcceptsPairs": [
+          [
+            0,
+            1
+          ]
+        ],
+        "boundaryFailuresMiter": 3,
+        "boundaryFailuresRoundSameRadius": 0,
+        "boundaryFailuresCausedByRadius": 0,
+        "boundaryFailuresCausedByJoinShape": 3,
+        "roundRefusesMiterAcceptsBoundaries": [],
+        "accountsForEveryMiterPairFailure": true,
+        "accountsForEveryMiterBoundaryFailure": true
+      },
+      "miterPairJoinCostMm": {
+        "population": "the pairs the shadow bisected: the 40 tightest by material clearance, plus every failing pair",
+        "bisectedPairs": 56,
+        "max": 2.3342581209142024,
+        "median": 0.05914476132491986,
+        "min": -0.0014008477968303623
+      },
+      "miterFailingPairJoinCostMm": {
+        "pairs": 33,
+        "max": 2.3342581209142024,
+        "median": 0.46988685982160483,
+        "min": 0.0028793920452248045
+      },
+      "boundarySemantics": {
+        "contractDemandMm": 5.0,
+        "sparrowValidatedAtMm": 5.0,
+        "roundEnvelopeFlatDemandMm": 5.000500000000001,
+        "miterWorstRows": [
+          {
+            "placementIndex": 5,
+            "bindingMaterialClearanceMm": 5.125013879438626,
+            "criticalRadiusMm": 2.188,
+            "miterReachFactor": 1.1997321204015656,
+            "impliedMaterialClearanceDemandMm": 5.4999301670641145,
+            "fits": false
+          },
+          {
+            "placementIndex": 6,
+            "bindingMaterialClearanceMm": 5.2068895989217765,
+            "criticalRadiusMm": 2.213,
+            "miterReachFactor": 1.2231765019980914,
+            "impliedMaterialClearanceDemandMm": 5.558552843246227,
+            "fits": false
+          },
+          {
+            "placementIndex": 16,
+            "bindingMaterialClearanceMm": 5.004304426935754,
+            "criticalRadiusMm": 2.5,
+            "miterReachFactor": 1.0017217707743016,
+            "impliedMaterialClearanceDemandMm": 5.004805287821141,
+            "fits": false
+          },
+          {
+            "placementIndex": 4,
+            "bindingMaterialClearanceMm": 5.12897814200473,
+            "criticalRadiusMm": 2.501,
+            "miterReachFactor": 1.0511707884864974,
+            "impliedMaterialClearanceDemandMm": 5.128452556610487,
+            "fits": true
+          }
+        ],
+        "roundWorstRows": [
+          {
+            "placementIndex": 59,
+            "bindingMaterialClearanceMm": 5.002254000000001,
+            "criticalRadiusMm": 2.5020000000000002,
+            "miterReachFactor": 1.0001015187849722,
+            "impliedMaterialClearanceDemandMm": 5.000753847721823,
+            "fits": true
+          },
+          {
+            "placementIndex": 14,
+            "bindingMaterialClearanceMm": 5.00412328439792,
+            "criticalRadiusMm": 2.504,
+            "miterReachFactor": 1.0000492349831949,
+            "impliedMaterialClearanceDemandMm": 5.000623112075479,
+            "fits": true
+          },
+          {
+            "placementIndex": 16,
+            "bindingMaterialClearanceMm": 5.004304426935754,
+            "criticalRadiusMm": 2.504,
+            "miterReachFactor": 1.000121576252298,
+            "impliedMaterialClearanceDemandMm": 5.000804001418871,
+            "fits": true
+          },
+          {
+            "placementIndex": 18,
+            "bindingMaterialClearanceMm": 5.006230585172496,
+            "criticalRadiusMm": 2.5060000000000002,
+            "miterReachFactor": 1.0000920132372288,
+            "impliedMaterialClearanceDemandMm": 5.000730079099691,
+            "fits": true
+          }
+        ],
+        "miterLimitCeilingMm": 7.501
+      },
+      "roundInwardDeviationMm": 0.0001,
+      "roundEnvelopeVertexTotal": 20652,
+      "miterEnvelopeVertexTotal": 377
+    },
+    {
+      "searchOffsetAllowanceMm": 0.0,
+      "envelopeRadiusMm": 2.5,
+      "contractPairClearanceMm": 5.0,
+      "contractSheetClearanceMm": 5.0,
+      "envelopeImpliedPairClearanceMm": 5.0,
+      "envelopeImpliedSheetClearanceMm": 5.0,
+      "verdictA_contractOnly": {
+        "accepted": true
+      },
+      "verdictB_compositeMiter": {
+        "accepted": false,
+        "message": "piece 0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1 violates the canonical-grid sheet boundary"
+      },
+      "verdictC_compositeRound": {
+        "envelopeAdmissible": true,
+        "pairFailures": 0,
+        "boundaryFailures": 0,
+        "saturatedPairRows": 0,
+        "saturatedBoundaryRows": 18,
+        "worstPairRadiusSlackMm": 0.0,
+        "worstPairClearanceSlackMm": 0.0,
+        "worstPair": [
+          0,
+          1
+        ],
+        "worstBoundaryRadiusSlackMm": 0.002000000000000224,
+        "worstBoundaryPlacement": 59
+      },
+      "compositeMiterCensus": {
+        "envelopeAdmissible": false,
+        "pairFailures": 31,
+        "boundaryFailures": 2,
+        "saturatedPairRows": 0,
+        "saturatedBoundaryRows": 18,
+        "worstPairRadiusSlackMm": -0.8,
+        "worstPairClearanceSlackMm": -1.6,
+        "worstPair": [
+          41,
+          45
+        ],
+        "worstBoundaryRadiusSlackMm": -0.31199999999999983,
+        "worstBoundaryPlacement": 5
+      },
+      "compositeSquareCensus": {
+        "envelopeAdmissible": false,
+        "pairFailures": 19,
+        "boundaryFailures": 2,
+        "saturatedPairRows": 0,
+        "saturatedBoundaryRows": 18,
+        "worstPairRadiusSlackMm": -0.32600000000000007,
+        "worstPairClearanceSlackMm": -0.6520000000000001,
+        "worstPair": [
+          24,
+          27
+        ],
+        "worstBoundaryRadiusSlackMm": -0.31199999999999983,
+        "worstBoundaryPlacement": 5
+      },
+      "failureDecomposition": {
+        "pairFailuresMiter": 31,
+        "pairFailuresRoundSameRadius": 0,
+        "pairFailuresCausedByRadius": 0,
+        "pairFailuresCausedByJoinShape": 31,
+        "roundRefusesMiterAcceptsPairs": [],
+        "boundaryFailuresMiter": 2,
+        "boundaryFailuresRoundSameRadius": 0,
+        "boundaryFailuresCausedByRadius": 0,
+        "boundaryFailuresCausedByJoinShape": 2,
+        "roundRefusesMiterAcceptsBoundaries": [],
+        "accountsForEveryMiterPairFailure": true,
+        "accountsForEveryMiterBoundaryFailure": true
+      },
+      "miterPairJoinCostMm": {
+        "population": "the pairs the shadow bisected: the 40 tightest by material clearance, plus every failing pair",
+        "bisectedPairs": 56,
+        "max": 2.3342581209142024,
+        "median": 0.05914476132491986,
+        "min": -0.0014008477968303623
+      },
+      "miterFailingPairJoinCostMm": {
+        "pairs": 31,
+        "max": 2.3342581209142024,
+        "median": 0.5056895406009199,
+        "min": 0.015655000000160513
+      },
+      "boundarySemantics": {
+        "contractDemandMm": 5.0,
+        "sparrowValidatedAtMm": 5.0,
+        "roundEnvelopeFlatDemandMm": 5.0,
+        "miterWorstRows": [
+          {
+            "placementIndex": 5,
+            "bindingMaterialClearanceMm": 5.125013879438626,
+            "criticalRadiusMm": 2.188,
+            "miterReachFactor": 1.1997321204015656,
+            "impliedMaterialClearanceDemandMm": 5.499330301003914,
+            "fits": false
+          },
+          {
+            "placementIndex": 6,
+            "bindingMaterialClearanceMm": 5.2068895989217765,
+            "criticalRadiusMm": 2.213,
+            "miterReachFactor": 1.2231765019980914,
+            "impliedMaterialClearanceDemandMm": 5.557941254995228,
+            "fits": false
+          },
+          {
+            "placementIndex": 16,
+            "bindingMaterialClearanceMm": 5.004304426935754,
+            "criticalRadiusMm": 2.5,
+            "miterReachFactor": 1.0017217707743016,
+            "impliedMaterialClearanceDemandMm": 5.004304426935754,
+            "fits": true
+          },
+          {
+            "placementIndex": 4,
+            "bindingMaterialClearanceMm": 5.12897814200473,
+            "criticalRadiusMm": 2.501,
+            "miterReachFactor": 1.0511707884864974,
+            "impliedMaterialClearanceDemandMm": 5.127926971216244,
+            "fits": true
+          }
+        ],
+        "roundWorstRows": [
+          {
+            "placementIndex": 59,
+            "bindingMaterialClearanceMm": 5.002254000000001,
+            "criticalRadiusMm": 2.5020000000000002,
+            "miterReachFactor": 1.0001015187849722,
+            "impliedMaterialClearanceDemandMm": 5.000253796962431,
+            "fits": true
+          },
+          {
+            "placementIndex": 14,
+            "bindingMaterialClearanceMm": 5.00412328439792,
+            "criticalRadiusMm": 2.504,
+            "miterReachFactor": 1.0000492349831949,
+            "impliedMaterialClearanceDemandMm": 5.000123087457987,
+            "fits": true
+          },
+          {
+            "placementIndex": 16,
+            "bindingMaterialClearanceMm": 5.004304426935754,
+            "criticalRadiusMm": 2.504,
+            "miterReachFactor": 1.000121576252298,
+            "impliedMaterialClearanceDemandMm": 5.000303940630745,
+            "fits": true
+          },
+          {
+            "placementIndex": 18,
+            "bindingMaterialClearanceMm": 5.006230585172496,
+            "criticalRadiusMm": 2.5060000000000002,
+            "miterReachFactor": 1.0000920132372288,
+            "impliedMaterialClearanceDemandMm": 5.000230033093072,
+            "fits": true
+          }
+        ],
+        "miterLimitCeilingMm": 7.5
+      },
+      "roundInwardDeviationMm": 0.0001,
+      "roundEnvelopeVertexTotal": 20669,
+      "miterEnvelopeVertexTotal": 377
+    }
+  ],
+  "provenanceStamp": {
+    "binaries": {
+      "sparrow_import_gate": "75e8f66baec9dd0c3bd68b835a1a37ef018661f4b9ac563057b920f9f18a4b62",
+      "general_request_benchmark": "d011b480c3285db8e56d9efbf36f640fc8de9d16ed17d406b29f42d76107a83c"
+    },
+    "binariesManifest": "docs/experiments/gate-a-sparrow-import/evidence/binaries.txt",
+    "commit": "1ca3315a8a357f99c029a9eee36d778cd0769113",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "python": "3.14.6"
+  }
+}

@@ -299,6 +299,57 @@ fn validate_publication_inner(
     Ok(())
 }
 
+/// The contract validator's own pair measurement, exposed for the Gate A
+/// shadow. **Diagnostic only.**
+///
+/// [`validate_publication`] reduces this to a boolean against `total_padding +
+/// 2 * sag`. Gate A has to report *how much* clearance a pair has, in the same
+/// measure the contract is decided by, so the two numbers in a verdict cannot
+/// come from two different distance functions - which is exactly how an import
+/// audit fakes itself. This calls the same [`minimum_boundary_distance`] on the
+/// same [`transform_placement`] output the real loop uses; the only thing it
+/// omits is the comparison.
+///
+/// `INFINITY` for a pair with no measurable rings; `0.0` where the material
+/// touches or crosses, as `segment_distance` defines it.
+#[cfg(feature = "import-gate-shadow")]
+pub fn material_pair_distance_mm(
+    first: &GeneralPlacement<'_>,
+    second: &GeneralPlacement<'_>,
+) -> Result<f64, PublicationValidationError> {
+    Ok(minimum_boundary_distance(
+        &transform_placement(first)?,
+        &transform_placement(second)?,
+    ))
+}
+
+/// The contract validator's own sheet-edge measurement, exposed for the Gate A
+/// shadow. **Diagnostic only.**
+///
+/// Returns `(low short axis, high short axis, low long axis, high long axis)`
+/// clearances of one placement's transformed source rings, in millimetres, over
+/// exactly the vertices [`validate_sheet`] tests - the outer rings, in `f64`,
+/// never the canonical grid. [`validate_publication`] rejects when any of the
+/// four is below `sheet_edge_clearance + sag`.
+#[cfg(feature = "import-gate-shadow")]
+pub fn material_sheet_clearance_mm(
+    placement: &GeneralPlacement<'_>,
+    sheet_width_mm: f64,
+    sheet_height_mm: f64,
+) -> Result<[f64; 4], PublicationValidationError> {
+    let geometry = transform_placement(placement)?;
+    let mut clearance = [f64::INFINITY; 4];
+    for region in &geometry.regions {
+        for point in &region.outer {
+            clearance[0] = clearance[0].min(point.x);
+            clearance[1] = clearance[1].min(sheet_width_mm - point.x);
+            clearance[2] = clearance[2].min(point.y);
+            clearance[3] = clearance[3].min(sheet_height_mm - point.y);
+        }
+    }
+    Ok(clearance)
+}
+
 fn validate_settings(
     settings: PublicationValidationSettings,
 ) -> Result<(), PublicationValidationError> {

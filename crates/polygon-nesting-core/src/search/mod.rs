@@ -15,6 +15,11 @@ pub mod general_fast;
 pub mod general_hazard;
 pub mod general_micro_legalization;
 pub mod general_relaxed;
+/// Gate A's shadow instrument: three verdicts on one imported pose set, and the
+/// per-pair slacks behind them. Compiled only under `import-gate-shadow`;
+/// nothing in `src/` outside it names this module, and it publishes nothing.
+#[cfg(feature = "import-gate-shadow")]
+pub mod import_gate;
 pub mod kernel;
 pub mod layout_scorer;
 pub mod placement_scorer;

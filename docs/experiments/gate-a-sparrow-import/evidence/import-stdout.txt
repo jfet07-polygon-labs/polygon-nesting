@@ -1,0 +1,119 @@
+/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_f674db6b-1e0-1/docs/experiments/gate-a-sparrow-import/fixture/sparrow-10s-x86-poses.json 3eb94de08074550237e79f0cfccbee7897a031ba46a46b9224293055d3434323
+{
+  "requestPiecesIdentical": true,
+  "requestSourceGeometryIdentical": true,
+  "sheet": {
+    "shortAxisMm": 2000,
+    "longAxisMm": 2700,
+    "sparrowStripHeightMm": 2000,
+    "sparrowStripWidthMm": 150.16547
+  },
+  "itemIdIsIndex": true,
+  "itemDxfIsPieceId": true,
+  "itemDemandAllOne": true,
+  "shapeRingsIdentical": true,
+  "shapeMismatchItemIds": [],
+  "converterMatchesIndependentDerivation": true,
+  "placementCount": 61,
+  "distinctPieceIds": 61,
+  "coversEveryRequestPiece": true,
+  "mirroredAny": false,
+  "worstMappingVertexErrorMm": 2.2737367544323206e-13,
+  "engineFrameBounds": {
+    "minX": 5.006230585172496,
+    "maxX": 1994.9885599108104,
+    "minY": 5.002254000000001,
+    "maxY": 145.16451
+  },
+  "sparrowFrameBoundsCommitted": {
+    "minimumX": 5.002254000000001,
+    "maximumX": 145.16451,
+    "minimumY": 5.011440089189676,
+    "maximumY": 1994.9937694148275
+  },
+  "boundsMapConsistency": {
+    "minXvs2000MinusMaxY": 7.105427357601002e-15,
+    "maxXvs2000MinusMinY": 0.0,
+    "minYvsMinX": 0.0,
+    "maxYvsMaxX": 0.0
+  },
+  "engineExtent": {
+    "shortAxisSpanMm": 1989.982329325638,
+    "longAxisSpanMm": 140.162256
+  },
+  "engineConventionDepthMm": 150.16451,
+  "sparrowReportedStripWidthMm": 150.16547,
+  "reportedMinusEngineConventionMm": 0.0009599999999920783,
+  "minimumPairDistanceEngineFrameMm": 5.000840472766861,
+  "minimumPairEngineFrame": [
+    38,
+    39
+  ],
+  "committedMinimumPairDistanceMm": 5.000840472766719,
+  "committedMinimumPair": [
+    38,
+    39
+  ],
+  "minimumPairAgreesWithCommitted": true,
+  "handVerifiedPairs": [
+    {
+      "itemIds": [
+        38,
+        39
+      ],
+      "pieceIds": [
+        "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+        "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2"
+      ],
+      "engineFrameMm": 5.000840472766861,
+      "sparrowFrameMm": 5.000840472766719,
+      "frameDeltaMm": 1.4210854715202004e-13
+    },
+    {
+      "itemIds": [
+        50,
+        52
+      ],
+      "pieceIds": [
+        "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+        "d06db288-d2d6-4f40-874e-98287f516d93-copy-12"
+      ],
+      "engineFrameMm": 5.002879392045225,
+      "sparrowFrameMm": 5.002879392045327,
+      "frameDeltaMm": -1.021405182655144e-13
+    }
+  ],
+  "pairsBelow5p004Mm": 2,
+  "pairsBelow5p001Mm": 1,
+  "pairsBelow5p0Mm": 0,
+  "pairCount": 1830,
+  "angularLattice": {
+    "step2.5Deg": {
+      "offLatticeCount": 57,
+      "ofPlacements": 61,
+      "worstDeviationDeg": 1.2458599999999933
+    },
+    "step1.0Deg": {
+      "offLatticeCount": 57,
+      "ofPlacements": 61,
+      "worstDeviationDeg": 0.4963700000000131
+    },
+    "step90.0Deg": {
+      "offLatticeCount": 57,
+      "ofPlacements": 61,
+      "worstDeviationDeg": 44.318386000000004
+    }
+  },
+  "distinctRotations": 59,
+  "angularLatticeNote": "Sparrow ran with continuous rotations. The engine's default relaxed lane proposes poses from a 2.5 degree surrogate catalogue, so these poses are legal-set members the default search cannot express - a reachability barrier independent of which envelope decides legality.",
+  "engineFrameBoundaryMm": {
+    "shortAxisLow": 5.006230585172496,
+    "shortAxisHigh": 5.011440089189591,
+    "longAxisLow": 5.002254000000001,
+    "longAxisHigh": 2554.83549
+  },
+  "engineFrameMinimumBoundaryMm": 5.002254000000001,
+  "committedMinimumBoundaryMm": 5.000959999999992,
+  "boundaryNote": "Sparrow's committed minimum boundary 5.000959999999992 is its far strip edge (strip_width - maximumX), which maps to the engine long axis at y=150.16547 - INSIDE the 2700 mm sheet, so it is not a sheet edge here. The engine-frame binding edge is the long-axis origin (y=0), at min source y = Sparrow's minimumX."
+}
+/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_f674db6b-1e0-1/docs/experiments/gate-a-sparrow-import/fixture/sparrow-10s-x86-poses.json 456c5a9527fefde31b7da731da31c78dc34acc44dcaf39827e7e9ebd990d0838

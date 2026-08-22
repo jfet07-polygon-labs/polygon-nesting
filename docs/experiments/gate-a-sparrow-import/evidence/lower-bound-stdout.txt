@@ -1,0 +1,50 @@
+shape                          n convex       area     perim  infl2.50 lo  infl2.502 lo
+trapezoid #1                   5   True   4800.000   286.491     5535.863      5536.467
+trapezoid #1                   5   True   2900.000   242.082     3524.841      3525.357
+star #1                        4  False   1434.891   274.413     2131.336      2131.889
+star #1                        3  False   3587.228   380.161     4549.262      4550.044
+star #1                        2  False   1434.891   282.431     2150.598      2151.179
+hexagon #1                     4   True   5250.000   272.047     5949.751      5950.327
+hexagon #1                     2   True  10500.000   397.321    11512.938     11513.764
+rectangle #1                   8   True    900.000   120.000     1219.635      1219.906
+rectangle #1                   5   True   2700.000   240.000     3319.635      3320.146
+7cd85036-5d7c-421c-a8b2-fb092b1a1980 #1   3   True  16016.000   516.000    17325.635     17326.698
+triangle #1                   20   True   2100.000   208.924     2641.946      2642.395
+
+pieces: 61   distinct shapes: 11   grid h = 0.02 mm
+same material as the legacy fixture: True
+raw area sum                  = 210619.032595 mm^2
+inflated sum r=2.500 (LOWER)  = 249773.804855 mm^2
+inflated sum r=2.500 (upper)  = 249846.798023 mm^2 (sanity)
+inflated sum r=2.502 (LOWER)  = 249805.985108 mm^2
+usable width                  = 1995.000000 mm (contract), 1995.000000 mm (composite)
+
+[TRUE] naive bound                 D >= 105.3095 mm   (raw/2000)
+[TRUE] contract bound (plain)      D >= 125.1999 mm   (SUM_2.5/1995)
+[TRUE] contract bound (+y)         D >= 130.1999 mm   (SUM_2.5/1995 + 5.00)
+[TRUE] composite bound (plain)     D >= 125.2160 mm
+[TRUE] composite bound (+y)        D >= 130.2140 mm
+
+SUPERSEDED (5.5/5.25 contract):    D >= 131.9784 mm
+delta from the retired figure:     -1.7785 mm
+/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_f674db6b-1e0-1/docs/experiments/depth-lower-bound/depth-lower-bound-exact-clearance-evidence.json
+[
+ "RE-PINNED contract-native lower bound: depth >= 130.19990218310795 mm (plain, without the depth-metric argument: 125.19990218310794 mm).",
+ "Under the CURRENT acceptance authority the bound is 130.2140326353513 mm: the composite envelope's 0.002 mm allowance buys 0.0141 mm of lower bound, which is the whole of what the envelope adds at the bound level.",
+ "The retired 131.97838540260466 mm figure is 1.7785 mm too high for this contract. Anything quoting it as the invariant is quoting the 5.5/5.25 era.",
+ "The 7.09 mm of 'contract overhead' the retired file attributed to the engine-vs-Sparrow gap is GONE: Sparrow's 5.0 mm separation and this branch's contract are the same number, so there is one bound and not two. At the bound level the residual asymmetry is the 0.0141 mm the search allowance adds.",
+ "Neither Sparrow's 150.16451 mm (this engine's depth convention on the imported pose set) nor the campaign record 155.264 mm is excluded by area: 150.16451 sits 19.965 mm above the re-pinned bound. The area bound has never been the binding constraint on this instance and still is not."
+]
+{
+ "sparrowTenSecondX86ReportedStripWidthMm": 150.16547,
+ "sparrowTenSecondX86EngineConventionDepthMm": 150.16451,
+ "campaignRecordMm": 155.264,
+ "headroomRecordAboveRepinnedBoundMm": 25.06409781689206,
+ "headroomSparrowAboveRepinnedBoundMm": 19.964607816892055
+}
+{
+ "retiredSparrowBoundTimesStripWidthMm2": 249773.80485530035,
+ "repinnedInflatedSumR2p5Mm2": 249773.80485530035,
+ "differenceMm2": 0.0,
+ "meaning": "the same certified r = 2.5 inflated area to within one ulp, which is what says the geometry code is unchanged and only the contract constants moved"
+}

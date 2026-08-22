@@ -443,6 +443,27 @@ rotation-tax-census = ["continuous-rotation"]
 # runtime spec keys - `roteq`, `sparserot` and `rotbit` - so one binary can hold
 # every arm of the battery. See docs/experiments/sparse-rotation/.
 sparse-rotation = ["continuous-rotation"]
+# Gate A's shadow instrument (Grok review 6 §2): run the contract-only
+# validator, the composite miter validator, and an experimental round-join
+# variant of the same envelope over one imported pose set, and report the
+# per-pair and per-boundary slacks rather than three booleans.
+#
+# Off by default and reachable from nothing. It compiles in
+# `search::import_gate`, one extra `PolygonSet` method that takes the join type
+# as an argument (`offset_with_join_shadow` — `PolygonSet::offset` itself is
+# untouched, and the shadow asserts at run time that its miter configuration
+# reproduces it), and two measurement accessors on the contract validator that
+# return the distances the real loop already computes without the comparison.
+# No search path, scorer or publication route names any of them, so a build
+# without this feature is the shipping engine exactly, and a build *with* it
+# reaches the round join only from the `sparrow_import_gate` example.
+#
+# It is a diagnostic, not a candidate authority: Clipper's round join inscribes
+# its arcs, so a round envelope UNDER-approximates `P (+) disc(r)` and could
+# accept what the disc refuses. Promotion would need Sol review 11's
+# outward-only discretisation with the error inside the margin. See
+# docs/experiments/gate-a-sparrow-import/.
+import-gate-shadow = []
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }
@@ -470,3 +491,13 @@ required-features = ["jagua-experimental"]
 name = "contract_validator_shadow"
 path = "examples/contract_validator_shadow.rs"
 required-features = ["fast-contract-validator"]
+
+# Gate A's driver: reads a request and an imported pose set, runs the three
+# verdicts, and writes the slacks as JSON. An example for the same reason
+# `contract_validator_shadow` is one - the measurement has to happen in a
+# release build, against the same Clipper the campaign measures - and because
+# nothing in the shipped crate may depend on it.
+[[example]]
+name = "sparrow_import_gate"
+path = "examples/sparrow_import_gate.rs"
+required-features = ["import-gate-shadow"]

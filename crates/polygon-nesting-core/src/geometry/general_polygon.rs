@@ -397,6 +397,72 @@ impl PolygonSet {
         Ok(result)
     }
 
+    /// [`PolygonSet::offset`] with the join, miter limit and arc tolerance left
+    /// open. **Diagnostic only.**
+    ///
+    /// The search envelope is a *miter* offset at [`CLIPPER_MITER_LIMIT`], and
+    /// that is the shape the acceptance authority is pinned to. This function
+    /// exists so a shadow instrument can build the same offset with a round or
+    /// square join at the same radius and measure the difference, without any
+    /// production route being able to reach a different join: it is compiled
+    /// only under `import-gate-shadow`, it is not called from anywhere in
+    /// `src/` outside [`crate::search::import_gate`], and
+    /// [`PolygonSet::offset`] above is left byte-for-byte as it was.
+    ///
+    /// `arc_tolerance_grid` is in **canonical grid units** (1 unit = 0.001 mm)
+    /// and follows Clipper's own rule: a value at or below `0.01` means "use
+    /// the default", which is `radius * ARC_CONST` = `radius / 500`. At the
+    /// 2.5 mm collision radius the default is a 5 µm *inward* chord deviation -
+    /// five times the canonical grid step - so a diagnostic that wants the
+    /// round join to mean `P (+) disc(r)` to within the grid has to pass a
+    /// tolerance explicitly. See `import_gate`'s soundness note.
+    ///
+    /// Passing `(JoinType::Miter, CLIPPER_MITER_LIMIT, CLIPPER_ARC_TOLERANCE)`
+    /// must reproduce [`PolygonSet::offset`] exactly; `import_gate` asserts
+    /// that at run time on every piece it measures, rather than trusting this
+    /// comment.
+    #[cfg(feature = "import-gate-shadow")]
+    pub fn offset_with_join_shadow(
+        &self,
+        distance_mm: f64,
+        join: JoinType,
+        miter_limit: f64,
+        arc_tolerance_grid: f64,
+    ) -> Result<Self, GeneralPolygonError> {
+        if !distance_mm.is_finite() {
+            return Err(GeneralPolygonError::new("offset distance must be finite"));
+        }
+        let Some(distance_grid) = to_grid_mm(distance_mm) else {
+            return Err(GeneralPolygonError::new(
+                "offset distance is outside the contractual grid",
+            ));
+        };
+        if distance_grid == 0.0 {
+            return Ok(self.clone());
+        }
+
+        let paths = self.paths();
+        let mut offset = ClipperOffset::new(miter_limit, arc_tolerance_grid, false, false);
+        offset.add_paths(&paths, join, EndType::Polygon);
+        let tree = offset.execute_poly_tree(distance_grid).map_err(|error| {
+            GeneralPolygonError::new(format!("Clipper offset failed: {error:?}"))
+        })?;
+        let result = polygon_set_from_tree(&tree)?;
+        if distance_grid > 0.0 && !self.regions.is_empty() && result.regions.is_empty() {
+            return Err(GeneralPolygonError::new(
+                "an outward offset of non-empty material returned no geometry",
+            ));
+        }
+        Ok(result)
+    }
+
+    /// The production envelope's join constants, for the shadow's own
+    /// equivalence assertion. `(miter limit, arc tolerance in grid units)`.
+    #[cfg(feature = "import-gate-shadow")]
+    pub fn production_offset_join_shadow() -> (f64, f64) {
+        (CLIPPER_MITER_LIMIT, CLIPPER_ARC_TOLERANCE)
+    }
+
     pub fn intersection_area_mm2(&self, other: &Self) -> Result<f64, GeneralPolygonError> {
         Ok(self.intersection_area_with_complexity(other)?.area_mm2)
     }

@@ -1,0 +1,122 @@
+warning: unused variable: `settings`
+    --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:4519:5
+     |
+4519 |     settings: GeneralFastSettings,
+     |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_settings`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `continuous_rotation_report_armed` is never used
+    --> crates/polygon-nesting-core/src/search/general_relaxed.rs:3862:4
+     |
+3862 | fn continuous_rotation_report_armed(relaxed_settings: GeneralRelaxedSettings) -> bool {
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `resolved_pair_collides` is never used
+     --> crates/polygon-nesting-core/src/search/general_relaxed.rs:17261:8
+      |
+13155 | impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'a, K> {
+      | ------------------------------------------------------------------------------------- method in this implementation
+...
+17261 |     fn resolved_pair_collides(
+      |        ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: multiple fields are never read
+   --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:468:5
+    |
+467 | struct VacancyQuotas {
+    |        ------------- fields in this struct
+468 |     piece_count: usize,
+    |     ^^^^^^^^^^^
+...
+473 |     settle_selected_piece_slots: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+474 |     reconstruction_selected_piece_slots: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+475 |     lns_settle_selected_piece_slots: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+476 |     construction_selected_piece_slots: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+477 |     construction_void_scan_cap: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+478 |     bridge_void_scan_cap: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^
+479 |     group_drop_pair_visits: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+480 |     separation_pair_visits: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `VacancyQuotas` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: struct `SettleKey` is never constructed
+    --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:4298:8
+     |
+4298 | struct SettleKey {
+     |        ^^^^^^^^^
+
+warning: function `settle_key_for` is never used
+    --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:4304:4
+     |
+4304 | fn settle_key_for(
+     |    ^^^^^^^^^^^^^^
+
+warning: function `settle_key_less` is never used
+    --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:4318:4
+     |
+4318 | fn settle_key_less(first: SettleKey, second: SettleKey) -> bool {
+     |    ^^^^^^^^^^^^^^^
+
+warning: method `proven_overlap` is never used
+   --> crates/polygon-nesting-core/src/search/construction_reject_certificate.rs:643:23
+    |
+613 |     impl RejectCertificates {
+    |     ----------------------- method in this implementation
+...
+643 |         pub(crate) fn proven_overlap(&self, active: &[bool], discs: usize) -> Option<f64> {
+    |                       ^^^^^^^^^^^^^^
+
+warning: field `wall_target_seconds` is never read
+    --> crates/polygon-nesting-core/src/search/portfolio.rs:3134:5
+     |
+3110 | struct BudgetMeter {
+     |        ----------- field in this struct
+...
+3134 |     wall_target_seconds: Option<f64>,
+     |     ^^^^^^^^^^^^^^^^^^^
+
+warning: constant `SCHEDULE_RUNGS` is never used
+    --> crates/polygon-nesting-core/src/search/portfolio.rs:5838:7
+     |
+5838 | const SCHEDULE_RUNGS: usize = 9;
+     |       ^^^^^^^^^^^^^^
+
+warning: `polygon-nesting-core` (lib) generated 10 warnings (run `cargo fix --lib -p polygon-nesting-core` to apply 1 suggestion)
+   Compiling polygon-nesting-core v0.3.0 (/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_f674db6b-1e0-1/crates/polygon-nesting-core)
+    Finished `release` profile [optimized] target(s) in 4.69s
+     Running unittests examples/general_request_benchmark.rs (target/release/examples/general_request_benchmark-4d6475dc99068bdf)
+
+running 19 tests
+test tests::current_request_settings_are_authoritative ... ok
+test tests::envelope_depth_convention_is_margin_plus_allowance_above_the_source ... ok
+test tests::parent_fixture_matching_settings_block_loads ... ok
+test tests::parent_fixture_mismatched_settings_block_hard_errors ... ok
+test tests::persistent_vacancy_unrun_reason_defaults_message_when_reason_absent ... ok
+test tests::persistent_vacancy_unrun_reason_flags_missing_population_block ... ok
+test tests::persistent_vacancy_unrun_reason_flags_unattempted_arm ... ok
+test tests::persistent_vacancy_unrun_reason_is_none_when_arm_ran ... ok
+test tests::parent_fixture_placing_an_unknown_piece_hard_errors ... ok
+test tests::physical_axis_normalization_keeps_subgrid_source_violations_visible ... ok
+test tests::physical_height_short_axis_is_rotated_into_normalized_x ... ok
+test tests::placement_fingerprint_labels_are_told_apart_from_digests ... ok
+test tests::pressure_model_argument_is_independent_from_angle_seed_policy ... ok
+test tests::parent_fixture_pins_the_search_offset_allowance_when_it_records_one ... ok
+test tests::parent_fixture_reported_depth_may_exceed_but_never_understate_the_layout ... ok
+test tests::parent_fixture_placement_fingerprint_is_recomputed_when_it_is_a_digest ... ok
+test tests::parent_fixture_without_settings_block_loads_unchanged ... ok
+test tests::parent_fixture_depth_accepts_every_reporting_convention_and_nothing_else ... ok
+test tests::parent_fixture_independent_depth_is_recomputed_from_its_placements ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,8 @@
+stamped docs/experiments/gate-a-sparrow-import/evidence/determinism.json
+stamped docs/experiments/gate-a-sparrow-import/evidence/gates.json
+stamped docs/experiments/gate-a-sparrow-import/evidence/import.json
+stamped docs/experiments/gate-a-sparrow-import/evidence/miter-failures.json
+stamped docs/experiments/gate-a-sparrow-import/evidence/suites.json
+stamped docs/experiments/gate-a-sparrow-import/evidence/summary.json
+stamped docs/experiments/gate-a-sparrow-import/evidence/verdicts.json
+stamped docs/experiments/depth-lower-bound/depth-lower-bound-exact-clearance-evidence.json
