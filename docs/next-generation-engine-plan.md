@@ -7275,7 +7275,10 @@ per seed to measure.
 on a rebuilt `jagua-experimental` binary are a check that the measurement was
 taken on the tree it claims: 206.869/`8a7737381238fa4d`,
 159.09233022733062/`fa01012af1d559ae`, 159.07876040364795/`e28fba007f8031d4`,
-164.0375677990678/`49f094d7e59a9008`, all four hit. All twelve parents clear the
+164.0375677990678/`49f094d7e59a9008`, all four hit - and they were run twice on
+the same binary, either side of the commit, with all four documents identical
+field for field across 3246-3265 scalars except `engineCommit` and
+`engineWorktreeDirty`. All twelve parents clear the
 authoritative publication gate and reproduce their pinned depth and fingerprint.
 Determinism across two processes is **6 of 6** whole documents on three cells for
 both arms, placements and work counters included - after three `searchProfile`

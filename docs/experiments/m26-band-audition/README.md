@@ -357,6 +357,25 @@ opinions:
 `ALL_PASS: true`. This round changes no engine code, so the gates are a check
 that the measurement was taken on the tree it claims and not a check on a patch.
 
+They were run **twice on the same binary, before and after the audition
+commit**, and the four documents compared field by field with the clocks
+stripped — `evidence/gates-base-post-commit.json`,
+`evidence/gates-pre-post-docdiff.json`, `drivers/docdiff.py`:
+
+| gate | scalar fields compared | differences |
+|---|---:|---|
+| g1 | 3265 | `engineCommit`, `engineWorktreeDirty` |
+| g2 | 3246 | `engineCommit`, `engineWorktreeDirty` |
+| g3 | 3246 | `engineCommit`, `engineWorktreeDirty` |
+| g4 | 3246 | `engineCommit`, `engineWorktreeDirty` |
+
+`ONLY_BUILD_IDENTITY_DIFFERS: true`. Every search-visible field of all four
+documents is identical; the two that move are the commit id and the dirty flag,
+which is the round becoming a commit. The `engineCommit` recorded in the `post`
+documents is `cde147c`, the audition commit itself — the second commit in this
+worktree adds only this cross-check, because a document cannot record the hash
+of the commit that contains it.
+
 **Determinism, two processes, three cells, both arms** —
 `evidence/determinism.json`, **6 of 6 identical**:
 
@@ -455,7 +474,10 @@ captured exit codes are `evidence/suites-exits.log`.
   `evidence/verdict.json`. A number here that it does not print is a number this
   document made up.
 * `drivers/run-suites.sh` — the three suites.
-* `evidence/gates-base.json`, `evidence/replay.json`,
+* `drivers/docdiff.py` — the four gate documents compared field by field
+  across two runs, so a moved digest says *what* moved.
+* `evidence/gates-base.json`, `evidence/gates-base-post-commit.json`,
+  `evidence/gates-pre-post-docdiff.json`, `evidence/replay.json`,
   `evidence/audition-arm.json`, `evidence/audition-control-curve.json`,
   `evidence/audition-control-workmatched.json`,
   `evidence/audition-first-pass-RETRACTED.json`,
