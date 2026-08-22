@@ -151,6 +151,14 @@ ARM_SPECS = {
     # are wrong on their own.
     'plandebit': ('plan', '{target}', 'lanedebit=1'),
     'caldebit': ('plan', '{target}', 'plancal={live},lanedebit=1'),
+    # The shipping shape of the debit: the file is written by a calibration
+    # pass that itself ran with the debit armed, so the rate the plan is priced
+    # from is the rate the run will actually retire work at. `caldebit` above
+    # reads a file written by the *profiler* arm and therefore under-buys by
+    # exactly the ratio this round measures; this arm is the one a deployment
+    # would use, and the two are separated so the round can say which half of
+    # any difference is the wall and which is the budget.
+    'caldebitfile': ('plan', '{target}', 'plancal={debit},lanedebit=1'),
     # The thirty-second wall-stop arms, all on the calibrated plan so that the
     # budget is the same number in every one of them and the only variable is
     # which classes the deadline binds.
@@ -171,6 +179,9 @@ CAL_LIVE = os.environ.get('PLAN_CAL_LIVE',
                           '/var/lib/t3/tmp/consol/cal/live.json')
 CAL_PROBE = os.environ.get('PLAN_CAL_PROBE',
                            '/var/lib/t3/tmp/consol/cal/probe.json')
+# The third file: written by a calibration pass that ran with `lanedebit=1`.
+CAL_DEBIT = os.environ.get('PLAN_CAL_DEBIT',
+                           '/var/lib/t3/tmp/consol/cal/debit.json')
 
 
 def main():
@@ -189,7 +200,8 @@ def main():
         order = arms[rnd % len(arms):] + arms[:rnd % len(arms)]
         for arm in order:
             key, value, arm_extra = ARM_SPECS[arm]
-            arm_extra = arm_extra.format(live=CAL_LIVE, probe=CAL_PROBE)
+            arm_extra = arm_extra.format(live=CAL_LIVE, probe=CAL_PROBE,
+                                         debit=CAL_DEBIT)
             pieces = [p for p in (arm_extra, extra) if p]
             for seed in seeds:
                 spec = runlib.spec_for(seed, key,

@@ -620,6 +620,25 @@ a work budget run with `profiling::set_enabled(false)` and take the 1.882 mm
 back. It is a well-defined next spend, it is not this one, and this round
 claims **none** of that millimetre.
 
+> **Spent, 2026-08-22, and the diagnosis above is half right.**
+> `docs/experiments/consolidation/` §2 took the millimetre and found that the
+> lift this paragraph specifies was **not what was needed**, for a reason this
+> round could not see: the meter's exact half - `5 x ExactPairTests` - is
+> **27%** of it (2.93 M of 10.79 M units on a measured mixed-61 plan run), and
+> that half is counted in `kernel::exact`, which has no lane. A lane-local
+> candidate-query counter alone would have under-charged a work budget by a
+> quarter.
+>
+> What the flag turned out to be worth is the whole of it. The counters were
+> never the cost - `meterOnly` is identical to `countersOff` on all three seeds
+> in that round's re-measurement of `calibrated-plan` §9 - the **spans** were,
+> and one flag armed both. `profiling::metering_enabled` is the second flag;
+> the two counters the budget reads move onto it, and the budget is
+> numerically unchanged because they are the same counters at the same sites.
+>
+> Measured: **84.9%** of the seconds for the same work at 24.9 M units,
+> **82.5%** at 120 M, with the whole document identical on 9 of 9 cells.
+
 ---
 
 # Part III — the protocol

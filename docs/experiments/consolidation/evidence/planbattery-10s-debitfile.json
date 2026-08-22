@@ -1,0 +1,1199 @@
+{
+ "binary": "/var/lib/t3/tmp/consol/bin/ship-meas",
+ "binarySha256": "87ff8ded175009e12580441da46df72d1c1cdc9ed5ea1dfe10a4c7642a1a3e18",
+ "request": "mixed-61",
+ "targetMs": "10000",
+ "targetSeconds": 10.0,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "rounds": 3,
+ "arms": [
+  "callive",
+  "caldebit",
+  "caldebitfile"
+ ],
+ "extra": "",
+ "rows": [
+  {
+   "tag": "callive-s0-r0",
+   "arm": "callive",
+   "seed": 0,
+   "round": 0,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json",
+   "processWallSeconds": 7.754255100036971,
+   "overran": false,
+   "rawDepthMm": 175.3877782649107,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23356444,
+   "digest": "081e6a9315d4f046",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 6,
+   "workMeterArming": null,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.2647322340000002,
+   "rawUnits": 26339151.17642354,
+   "probeEffectiveSeconds": 2.204212492,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "callive-s1-r0",
+   "arm": "callive",
+   "seed": 1,
+   "round": 0,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json",
+   "processWallSeconds": 6.617382165975869,
+   "overran": false,
+   "rawDepthMm": 174.17000000000002,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 22152474,
+   "digest": "a4aca8067d916763",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 5,
+   "workMeterArming": null,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.381282242,
+   "rawUnits": 27713053.33606097,
+   "probeEffectiveSeconds": 2.313650072,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "callive-s2-r0",
+   "arm": "callive",
+   "seed": 2,
+   "round": 0,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json",
+   "processWallSeconds": 8.531852629967034,
+   "overran": false,
+   "rawDepthMm": 176.16200000000003,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23859055,
+   "digest": "c7ac866dadc71661",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 7,
+   "workMeterArming": null,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.3089213969999998,
+   "rawUnits": 25755031.781158675,
+   "probeEffectiveSeconds": 2.317344524,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebit-s0-r0",
+   "arm": "caldebit",
+   "seed": 0,
+   "round": 0,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json,lanedebit=1",
+   "processWallSeconds": 6.85122549906373,
+   "overran": false,
+   "rawDepthMm": 175.3877782649107,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23356444,
+   "digest": "a0236cfd0243465a",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 6,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.157434145,
+   "rawUnits": 26339151.17642354,
+   "probeEffectiveSeconds": 2.204212492,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebit-s1-r0",
+   "arm": "caldebit",
+   "seed": 1,
+   "round": 0,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json,lanedebit=1",
+   "processWallSeconds": 5.776705860043876,
+   "overran": false,
+   "rawDepthMm": 174.17000000000002,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 22152474,
+   "digest": "0072a9c115a8b8fa",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 5,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.118463437,
+   "rawUnits": 27713053.33606097,
+   "probeEffectiveSeconds": 2.313650072,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebit-s2-r0",
+   "arm": "caldebit",
+   "seed": 2,
+   "round": 0,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json,lanedebit=1",
+   "processWallSeconds": 7.26414767105598,
+   "overran": false,
+   "rawDepthMm": 176.16200000000003,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23859055,
+   "digest": "261b6619c6a7f64b",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 7,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.029679287,
+   "rawUnits": 25755031.781158675,
+   "probeEffectiveSeconds": 2.317344524,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebitfile-s0-r0",
+   "arm": "caldebitfile",
+   "seed": 0,
+   "round": 0,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,plancal=/var/lib/t3/tmp/consol/cal/debit.json,lanedebit=1",
+   "processWallSeconds": 7.2782810889184475,
+   "overran": false,
+   "rawDepthMm": 175.1357388323935,
+   "planUnits": 28625176,
+   "planRung": 24,
+   "coordinatorWorkUnits": 25576207,
+   "digest": "e8eafd05c07250ba",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 7,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 28625176,
+   "probeSeconds": 2.048444105,
+   "rawUnits": 29843902.902742304,
+   "probeEffectiveSeconds": 1.909685072,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebitfile-s1-r0",
+   "arm": "caldebitfile",
+   "seed": 1,
+   "round": 0,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,plancal=/var/lib/t3/tmp/consol/cal/debit.json,lanedebit=1",
+   "processWallSeconds": 7.270899703959003,
+   "overran": false,
+   "rawDepthMm": 171.3619986855876,
+   "planUnits": 28625176,
+   "planRung": 24,
+   "coordinatorWorkUnits": 26260386,
+   "digest": "f604af4fec8fb141",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 7,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 28625176,
+   "probeSeconds": 2.025413827,
+   "rawUnits": 31834616.41958173,
+   "probeEffectiveSeconds": 1.9714897009999999,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebitfile-s2-r0",
+   "arm": "caldebitfile",
+   "seed": 2,
+   "round": 0,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,plancal=/var/lib/t3/tmp/consol/cal/debit.json,lanedebit=1",
+   "processWallSeconds": 8.657868001027964,
+   "overran": false,
+   "rawDepthMm": 174.28,
+   "planUnits": 28625176,
+   "planRung": 24,
+   "coordinatorWorkUnits": 27391297,
+   "digest": "d421d78497ebb3af",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 8,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 28625176,
+   "probeSeconds": 1.99633561,
+   "rawUnits": 30152236.376834333,
+   "probeEffectiveSeconds": 1.932274112,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebit-s0-r1",
+   "arm": "caldebit",
+   "seed": 0,
+   "round": 1,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json,lanedebit=1",
+   "processWallSeconds": 6.227352848974988,
+   "overran": false,
+   "rawDepthMm": 175.3877782649107,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23356444,
+   "digest": "a0236cfd0243465a",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 6,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 1.934749655,
+   "rawUnits": 26339151.17642354,
+   "probeEffectiveSeconds": 2.204212492,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebit-s1-r1",
+   "arm": "caldebit",
+   "seed": 1,
+   "round": 1,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json,lanedebit=1",
+   "processWallSeconds": 5.543740396038629,
+   "overran": false,
+   "rawDepthMm": 174.17000000000002,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 22152474,
+   "digest": "0072a9c115a8b8fa",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 5,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 1.969218589,
+   "rawUnits": 27713053.33606097,
+   "probeEffectiveSeconds": 2.313650072,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebit-s2-r1",
+   "arm": "caldebit",
+   "seed": 2,
+   "round": 1,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json,lanedebit=1",
+   "processWallSeconds": 7.113813825999387,
+   "overran": false,
+   "rawDepthMm": 176.16200000000003,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23859055,
+   "digest": "261b6619c6a7f64b",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 7,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 1.9991625640000001,
+   "rawUnits": 25755031.781158675,
+   "probeEffectiveSeconds": 2.317344524,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebitfile-s0-r1",
+   "arm": "caldebitfile",
+   "seed": 0,
+   "round": 1,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,plancal=/var/lib/t3/tmp/consol/cal/debit.json,lanedebit=1",
+   "processWallSeconds": 6.993260617018677,
+   "overran": false,
+   "rawDepthMm": 175.1357388323935,
+   "planUnits": 28625176,
+   "planRung": 24,
+   "coordinatorWorkUnits": 25576207,
+   "digest": "e8eafd05c07250ba",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 7,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 28625176,
+   "probeSeconds": 1.9321271979999999,
+   "rawUnits": 29843902.902742304,
+   "probeEffectiveSeconds": 1.909685072,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebitfile-s1-r1",
+   "arm": "caldebitfile",
+   "seed": 1,
+   "round": 1,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,plancal=/var/lib/t3/tmp/consol/cal/debit.json,lanedebit=1",
+   "processWallSeconds": 6.912425447022542,
+   "overran": false,
+   "rawDepthMm": 171.3619986855876,
+   "planUnits": 28625176,
+   "planRung": 24,
+   "coordinatorWorkUnits": 26260386,
+   "digest": "f604af4fec8fb141",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 7,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 28625176,
+   "probeSeconds": 1.945111533,
+   "rawUnits": 31834616.41958173,
+   "probeEffectiveSeconds": 1.9714897009999999,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebitfile-s2-r1",
+   "arm": "caldebitfile",
+   "seed": 2,
+   "round": 1,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,plancal=/var/lib/t3/tmp/consol/cal/debit.json,lanedebit=1",
+   "processWallSeconds": 8.464622547966428,
+   "overran": false,
+   "rawDepthMm": 174.28,
+   "planUnits": 28625176,
+   "planRung": 24,
+   "coordinatorWorkUnits": 27391297,
+   "digest": "d421d78497ebb3af",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 8,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 28625176,
+   "probeSeconds": 1.9438842680000001,
+   "rawUnits": 30152236.376834333,
+   "probeEffectiveSeconds": 1.932274112,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "callive-s0-r1",
+   "arm": "callive",
+   "seed": 0,
+   "round": 1,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json",
+   "processWallSeconds": 7.225858878926374,
+   "overran": false,
+   "rawDepthMm": 175.3877782649107,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23356444,
+   "digest": "081e6a9315d4f046",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 6,
+   "workMeterArming": null,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.213766065,
+   "rawUnits": 26339151.17642354,
+   "probeEffectiveSeconds": 2.204212492,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "callive-s1-r1",
+   "arm": "callive",
+   "seed": 1,
+   "round": 1,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json",
+   "processWallSeconds": 6.494579553953372,
+   "overran": false,
+   "rawDepthMm": 174.17000000000002,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 22152474,
+   "digest": "a4aca8067d916763",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 5,
+   "workMeterArming": null,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.34280992,
+   "rawUnits": 27713053.33606097,
+   "probeEffectiveSeconds": 2.313650072,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "callive-s2-r1",
+   "arm": "callive",
+   "seed": 2,
+   "round": 1,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json",
+   "processWallSeconds": 8.368895462015644,
+   "overran": false,
+   "rawDepthMm": 176.16200000000003,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23859055,
+   "digest": "c7ac866dadc71661",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 7,
+   "workMeterArming": null,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.3068917,
+   "rawUnits": 25755031.781158675,
+   "probeEffectiveSeconds": 2.317344524,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebitfile-s0-r2",
+   "arm": "caldebitfile",
+   "seed": 0,
+   "round": 2,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,plancal=/var/lib/t3/tmp/consol/cal/debit.json,lanedebit=1",
+   "processWallSeconds": 6.815949013107456,
+   "overran": false,
+   "rawDepthMm": 175.1357388323935,
+   "planUnits": 28625176,
+   "planRung": 24,
+   "coordinatorWorkUnits": 25576207,
+   "digest": "e8eafd05c07250ba",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 7,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 28625176,
+   "probeSeconds": 1.879489801,
+   "rawUnits": 29843902.902742304,
+   "probeEffectiveSeconds": 1.909685072,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebitfile-s1-r2",
+   "arm": "caldebitfile",
+   "seed": 1,
+   "round": 2,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,plancal=/var/lib/t3/tmp/consol/cal/debit.json,lanedebit=1",
+   "processWallSeconds": 6.984738745028153,
+   "overran": false,
+   "rawDepthMm": 171.3619986855876,
+   "planUnits": 28625176,
+   "planRung": 24,
+   "coordinatorWorkUnits": 26260386,
+   "digest": "f604af4fec8fb141",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 7,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 28625176,
+   "probeSeconds": 1.9937747799999999,
+   "rawUnits": 31834616.41958173,
+   "probeEffectiveSeconds": 1.9714897009999999,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebitfile-s2-r2",
+   "arm": "caldebitfile",
+   "seed": 2,
+   "round": 2,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,plancal=/var/lib/t3/tmp/consol/cal/debit.json,lanedebit=1",
+   "processWallSeconds": 8.653823916916735,
+   "overran": false,
+   "rawDepthMm": 174.28,
+   "planUnits": 28625176,
+   "planRung": 24,
+   "coordinatorWorkUnits": 27391297,
+   "digest": "d421d78497ebb3af",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 8,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 28625176,
+   "probeSeconds": 1.9664808950000001,
+   "rawUnits": 30152236.376834333,
+   "probeEffectiveSeconds": 1.932274112,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "callive-s0-r2",
+   "arm": "callive",
+   "seed": 0,
+   "round": 2,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json",
+   "processWallSeconds": 7.25947853398975,
+   "overran": false,
+   "rawDepthMm": 175.3877782649107,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23356444,
+   "digest": "081e6a9315d4f046",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 6,
+   "workMeterArming": null,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.215796222,
+   "rawUnits": 26339151.17642354,
+   "probeEffectiveSeconds": 2.204212492,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "callive-s1-r2",
+   "arm": "callive",
+   "seed": 1,
+   "round": 2,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json",
+   "processWallSeconds": 7.064730760990642,
+   "overran": false,
+   "rawDepthMm": 174.17000000000002,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 22152474,
+   "digest": "a4aca8067d916763",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 5,
+   "workMeterArming": null,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.3177522870000002,
+   "rawUnits": 27713053.33606097,
+   "probeEffectiveSeconds": 2.313650072,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "callive-s2-r2",
+   "arm": "callive",
+   "seed": 2,
+   "round": 2,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json",
+   "processWallSeconds": 8.868622142937966,
+   "overran": false,
+   "rawDepthMm": 176.16200000000003,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23859055,
+   "digest": "c7ac866dadc71661",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 7,
+   "workMeterArming": null,
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.376928098,
+   "rawUnits": 25755031.781158675,
+   "probeEffectiveSeconds": 2.317344524,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebit-s0-r2",
+   "arm": "caldebit",
+   "seed": 0,
+   "round": 2,
+   "spec": "plan=10000,cells=13:15:17:19,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json,lanedebit=1",
+   "processWallSeconds": 6.494539791019633,
+   "overran": false,
+   "rawDepthMm": 175.3877782649107,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23356444,
+   "digest": "a0236cfd0243465a",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 6,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 1.9523109459999999,
+   "rawUnits": 26339151.17642354,
+   "probeEffectiveSeconds": 2.204212492,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebit-s1-r2",
+   "arm": "caldebit",
+   "seed": 1,
+   "round": 2,
+   "spec": "plan=10000,cells=11:15:21:27,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json,lanedebit=1",
+   "processWallSeconds": 5.563515622983687,
+   "overran": false,
+   "rawDepthMm": 174.17000000000002,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 22152474,
+   "digest": "0072a9c115a8b8fa",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 5,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 1.9701483560000002,
+   "rawUnits": 27713053.33606097,
+   "probeEffectiveSeconds": 2.313650072,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  },
+  {
+   "tag": "caldebit-s2-r2",
+   "arm": "caldebit",
+   "seed": 2,
+   "round": 2,
+   "spec": "plan=10000,cells=15:23:31:39,v3=1,plancal=/var/lib/t3/tmp/consol/cal/live.json,lanedebit=1",
+   "processWallSeconds": 9.855410904972814,
+   "overran": false,
+   "rawDepthMm": 176.16200000000003,
+   "planUnits": 24891457,
+   "planRung": 23,
+   "coordinatorWorkUnits": 23859055,
+   "digest": "261b6619c6a7f64b",
+   "dualGateValid": true,
+   "exitCause": "affordability",
+   "scheduleActions": 7,
+   "workMeterArming": {
+    "deferredToProfiler": false,
+    "meteringArmed": true,
+    "needed": true,
+    "profilerArmed": false
+   },
+   "tranches": 0,
+   "trancheUnits": [],
+   "finalUnits": 24891457,
+   "probeSeconds": 2.009845072,
+   "rawUnits": 25755031.781158675,
+   "probeEffectiveSeconds": 2.317344524,
+   "probeSamples": 0,
+   "calibrationSource": "file"
+  }
+ ],
+ "byArm": {
+  "callive": {
+   "n": 9,
+   "wallP50": 7.25947853398975,
+   "wallP95": 8.868622142937966,
+   "wallMax": 8.868622142937966,
+   "wallMin": 6.494579553953372,
+   "overruns": 0,
+   "exactValid": 9,
+   "exitCauses": {
+    "affordability": 9
+   },
+   "worstOverrunSeconds": -1.1313778570620343,
+   "perSeed": {
+    "0": {
+     "n": 3,
+     "wallP50": 7.25947853398975,
+     "wallP95": 7.754255100036971,
+     "wallMax": 7.754255100036971,
+     "wallMin": 7.225858878926374,
+     "overruns": 0,
+     "distinctFinalUnits": [
+      24891457
+     ],
+     "distinctFirstPlanUnits": [
+      24891457
+     ],
+     "distinctTrancheCounts": [
+      0
+     ],
+     "distinctDepthsMm": [
+      175.3877782649107
+     ],
+     "distinctDigests": [
+      "081e6a9315d4f046"
+     ],
+     "planStable": true,
+     "depthStable": true,
+     "documentStable": true,
+     "depthMedianMm": 175.3877782649107,
+     "modalDepthShare": 1.0,
+     "calibrationSources": {
+      "file": 3
+     },
+     "probeSecondsMin": 2.213766065,
+     "probeSecondsMax": 2.2647322340000002,
+     "probeEffectiveSecondsDistinct": [
+      2.204212492
+     ]
+    },
+    "1": {
+     "n": 3,
+     "wallP50": 6.617382165975869,
+     "wallP95": 7.064730760990642,
+     "wallMax": 7.064730760990642,
+     "wallMin": 6.494579553953372,
+     "overruns": 0,
+     "distinctFinalUnits": [
+      24891457
+     ],
+     "distinctFirstPlanUnits": [
+      24891457
+     ],
+     "distinctTrancheCounts": [
+      0
+     ],
+     "distinctDepthsMm": [
+      174.17000000000002
+     ],
+     "distinctDigests": [
+      "a4aca8067d916763"
+     ],
+     "planStable": true,
+     "depthStable": true,
+     "documentStable": true,
+     "depthMedianMm": 174.17000000000002,
+     "modalDepthShare": 1.0,
+     "calibrationSources": {
+      "file": 3
+     },
+     "probeSecondsMin": 2.3177522870000002,
+     "probeSecondsMax": 2.381282242,
+     "probeEffectiveSecondsDistinct": [
+      2.313650072
+     ]
+    },
+    "2": {
+     "n": 3,
+     "wallP50": 8.531852629967034,
+     "wallP95": 8.868622142937966,
+     "wallMax": 8.868622142937966,
+     "wallMin": 8.368895462015644,
+     "overruns": 0,
+     "distinctFinalUnits": [
+      24891457
+     ],
+     "distinctFirstPlanUnits": [
+      24891457
+     ],
+     "distinctTrancheCounts": [
+      0
+     ],
+     "distinctDepthsMm": [
+      176.16200000000003
+     ],
+     "distinctDigests": [
+      "c7ac866dadc71661"
+     ],
+     "planStable": true,
+     "depthStable": true,
+     "documentStable": true,
+     "depthMedianMm": 176.16200000000003,
+     "modalDepthShare": 1.0,
+     "calibrationSources": {
+      "file": 3
+     },
+     "probeSecondsMin": 2.3068917,
+     "probeSecondsMax": 2.376928098,
+     "probeEffectiveSecondsDistinct": [
+      2.317344524
+     ]
+    }
+   },
+   "allSeedsPlanStable": true,
+   "allSeedsDocumentStable": true,
+   "seedMedianOfMedians": 175.3877782649107
+  },
+  "caldebit": {
+   "n": 9,
+   "wallP50": 6.494539791019633,
+   "wallP95": 9.855410904972814,
+   "wallMax": 9.855410904972814,
+   "wallMin": 5.543740396038629,
+   "overruns": 0,
+   "exactValid": 9,
+   "exitCauses": {
+    "affordability": 9
+   },
+   "worstOverrunSeconds": -0.14458909502718598,
+   "perSeed": {
+    "0": {
+     "n": 3,
+     "wallP50": 6.494539791019633,
+     "wallP95": 6.85122549906373,
+     "wallMax": 6.85122549906373,
+     "wallMin": 6.227352848974988,
+     "overruns": 0,
+     "distinctFinalUnits": [
+      24891457
+     ],
+     "distinctFirstPlanUnits": [
+      24891457
+     ],
+     "distinctTrancheCounts": [
+      0
+     ],
+     "distinctDepthsMm": [
+      175.3877782649107
+     ],
+     "distinctDigests": [
+      "a0236cfd0243465a"
+     ],
+     "planStable": true,
+     "depthStable": true,
+     "documentStable": true,
+     "depthMedianMm": 175.3877782649107,
+     "modalDepthShare": 1.0,
+     "calibrationSources": {
+      "file": 3
+     },
+     "probeSecondsMin": 1.934749655,
+     "probeSecondsMax": 2.157434145,
+     "probeEffectiveSecondsDistinct": [
+      2.204212492
+     ]
+    },
+    "1": {
+     "n": 3,
+     "wallP50": 5.563515622983687,
+     "wallP95": 5.776705860043876,
+     "wallMax": 5.776705860043876,
+     "wallMin": 5.543740396038629,
+     "overruns": 0,
+     "distinctFinalUnits": [
+      24891457
+     ],
+     "distinctFirstPlanUnits": [
+      24891457
+     ],
+     "distinctTrancheCounts": [
+      0
+     ],
+     "distinctDepthsMm": [
+      174.17000000000002
+     ],
+     "distinctDigests": [
+      "0072a9c115a8b8fa"
+     ],
+     "planStable": true,
+     "depthStable": true,
+     "documentStable": true,
+     "depthMedianMm": 174.17000000000002,
+     "modalDepthShare": 1.0,
+     "calibrationSources": {
+      "file": 3
+     },
+     "probeSecondsMin": 1.969218589,
+     "probeSecondsMax": 2.118463437,
+     "probeEffectiveSecondsDistinct": [
+      2.313650072
+     ]
+    },
+    "2": {
+     "n": 3,
+     "wallP50": 7.26414767105598,
+     "wallP95": 9.855410904972814,
+     "wallMax": 9.855410904972814,
+     "wallMin": 7.113813825999387,
+     "overruns": 0,
+     "distinctFinalUnits": [
+      24891457
+     ],
+     "distinctFirstPlanUnits": [
+      24891457
+     ],
+     "distinctTrancheCounts": [
+      0
+     ],
+     "distinctDepthsMm": [
+      176.16200000000003
+     ],
+     "distinctDigests": [
+      "261b6619c6a7f64b"
+     ],
+     "planStable": true,
+     "depthStable": true,
+     "documentStable": true,
+     "depthMedianMm": 176.16200000000003,
+     "modalDepthShare": 1.0,
+     "calibrationSources": {
+      "file": 3
+     },
+     "probeSecondsMin": 1.9991625640000001,
+     "probeSecondsMax": 2.029679287,
+     "probeEffectiveSecondsDistinct": [
+      2.317344524
+     ]
+    }
+   },
+   "allSeedsPlanStable": true,
+   "allSeedsDocumentStable": true,
+   "seedMedianOfMedians": 175.3877782649107
+  },
+  "caldebitfile": {
+   "n": 9,
+   "wallP50": 7.270899703959003,
+   "wallP95": 8.657868001027964,
+   "wallMax": 8.657868001027964,
+   "wallMin": 6.815949013107456,
+   "overruns": 0,
+   "exactValid": 9,
+   "exitCauses": {
+    "affordability": 9
+   },
+   "worstOverrunSeconds": -1.342131998972036,
+   "perSeed": {
+    "0": {
+     "n": 3,
+     "wallP50": 6.993260617018677,
+     "wallP95": 7.2782810889184475,
+     "wallMax": 7.2782810889184475,
+     "wallMin": 6.815949013107456,
+     "overruns": 0,
+     "distinctFinalUnits": [
+      28625176
+     ],
+     "distinctFirstPlanUnits": [
+      28625176
+     ],
+     "distinctTrancheCounts": [
+      0
+     ],
+     "distinctDepthsMm": [
+      175.1357388323935
+     ],
+     "distinctDigests": [
+      "e8eafd05c07250ba"
+     ],
+     "planStable": true,
+     "depthStable": true,
+     "documentStable": true,
+     "depthMedianMm": 175.1357388323935,
+     "modalDepthShare": 1.0,
+     "calibrationSources": {
+      "file": 3
+     },
+     "probeSecondsMin": 1.879489801,
+     "probeSecondsMax": 2.048444105,
+     "probeEffectiveSecondsDistinct": [
+      1.909685072
+     ]
+    },
+    "1": {
+     "n": 3,
+     "wallP50": 6.984738745028153,
+     "wallP95": 7.270899703959003,
+     "wallMax": 7.270899703959003,
+     "wallMin": 6.912425447022542,
+     "overruns": 0,
+     "distinctFinalUnits": [
+      28625176
+     ],
+     "distinctFirstPlanUnits": [
+      28625176
+     ],
+     "distinctTrancheCounts": [
+      0
+     ],
+     "distinctDepthsMm": [
+      171.3619986855876
+     ],
+     "distinctDigests": [
+      "f604af4fec8fb141"
+     ],
+     "planStable": true,
+     "depthStable": true,
+     "documentStable": true,
+     "depthMedianMm": 171.3619986855876,
+     "modalDepthShare": 1.0,
+     "calibrationSources": {
+      "file": 3
+     },
+     "probeSecondsMin": 1.945111533,
+     "probeSecondsMax": 2.025413827,
+     "probeEffectiveSecondsDistinct": [
+      1.9714897009999999
+     ]
+    },
+    "2": {
+     "n": 3,
+     "wallP50": 8.653823916916735,
+     "wallP95": 8.657868001027964,
+     "wallMax": 8.657868001027964,
+     "wallMin": 8.464622547966428,
+     "overruns": 0,
+     "distinctFinalUnits": [
+      28625176
+     ],
+     "distinctFirstPlanUnits": [
+      28625176
+     ],
+     "distinctTrancheCounts": [
+      0
+     ],
+     "distinctDepthsMm": [
+      174.28
+     ],
+     "distinctDigests": [
+      "d421d78497ebb3af"
+     ],
+     "planStable": true,
+     "depthStable": true,
+     "documentStable": true,
+     "depthMedianMm": 174.28,
+     "modalDepthShare": 1.0,
+     "calibrationSources": {
+      "file": 3
+     },
+     "probeSecondsMin": 1.9438842680000001,
+     "probeSecondsMax": 1.99633561,
+     "probeEffectiveSecondsDistinct": [
+      1.932274112
+     ]
+    }
+   },
+   "allSeedsPlanStable": true,
+   "allSeedsDocumentStable": true,
+   "seedMedianOfMedians": 174.28
+  }
+ },
+ "boxLoad": {
+  "n": 27,
+  "min": 6.0869140625,
+  "median": 7.64892578125,
+  "max": 8.93798828125
+ }
+}

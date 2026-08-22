@@ -600,6 +600,19 @@ binary 84dccd2529e23a99 lever='m34wallstop=1'
   the wall-stop" is not what was measured - "measurably compressed, not
   eliminated" is.
 
+  > **The first of those two reasons is now answered and the second is not.**
+  > `docs/experiments/consolidation/` §3 adds `m34wallstopall`, which puts the
+  > same deadline in front of the **queue** so that no class starts an action
+  > after it. On a forced overrun it is decisive - a 10 s target over-bought
+  > 3x runs **26.42 s with no policy, 24.16 s with this one's checkpoint stop,
+  > and 10.18 s with the queue rule**, exact-valid, exiting on a new `wallStop`
+  > cause. On the calibrated thirty-second battery the *count* of crossings
+  > does not go to zero, and that is the second reason: what is left is the one
+  > action in flight when the deadline passes. What collapses is its **size** -
+  > worst overrun **+12.38 s → +1.31 s**, wallMax 42.38 s → 31.31 s - at
+  > +0.000 mm of median depth and 9 of 9 exact-valid. "0 of 9" was the
+  > deliverable that round aimed at and it is **not** what was measured.
+
 * **`m34past` without `m34wallstop` makes the overrun worse, not better.**
   §9's `past100` and `pastwall` rows buy real depth (-2.000 mm / -2.864 mm) at
   9-of-9 overrun and a wallMax up to 47.96 s: past the bound the walk has no

@@ -49,6 +49,14 @@ SLICE_VOLATILE = {
     # per-step rows and the published layout - is compared, and `stepDigest` is
     # compared explicitly below.
     'checkpoints', 'batchWorkUnits', 'batches', 'resumptions', 'interrupted',
+    # This round's addition, and it is on the list for the same reason
+    # `checkpoints` is: it is the arm's *account of which flag it armed*, it is
+    # absent on the arm that armed the profiler as every run always has, and a
+    # gate that compared it would be asserting that the debit arm did not take
+    # the debit. What it could hide is nothing - the budget, the counters, the
+    # trajectory and the published layout are all compared, and they are the
+    # whole of the claim that the two arms are the same search.
+    'workMeterArming',
     # a key the base binary does not emit at all, so it cannot be compared
     # across binaries; it is compared *explicitly*, per slice, below, which is
     # the stronger of the two comparisons and the one the batching gate turns on

@@ -1,0 +1,8 @@
+base-commit 40852e6
+head-commit 9ead1818e8388d226f7fa4dd7e7a0fb54e1dfd1c
+features-gate jagua-experimental
+features-ship jagua-experimental,compression-schedule,parallel-compression-schedule,continuous-rotation,sparse-rotation,fast-contract-validator
+d186b73e5514dc00a013989e29efce391dbc4ea2606e0fa97b9c29e162234260  /var/lib/t3/tmp/consol/bin/base-gate
+84dccd2529e23a9922f7e1088ed44d73cc376fcb5c69ad3f276e96f901e113f6  /var/lib/t3/tmp/consol/bin/base-combo
+20d1aff857495163a5cefd7ca05bfbdd7162247a2ba8c5909c70a2c2559dbfd8  /var/lib/t3/tmp/consol/bin/ship-gate
+87ff8ded175009e12580441da46df72d1c1cdc9ed5ea1dfe10a4c7642a1a3e18  /var/lib/t3/tmp/consol/bin/ship-meas

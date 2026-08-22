@@ -27,7 +27,7 @@ It works, it reproduces, and it costs. All three are measured below.
 | **The promotion, as wall** | **3.11x / 3.17x** faster per accepted confirmation on mixed-61 than the base binary's default, **1.73x / 1.61x** on triangle-20 |
 | **`plan=<ms>`** | a wall target spent as a work budget the coordinator sizes from its own phase 0, reported so it can be replayed with `work=` |
 | **What one command answers at `wall=10000`** | mixed-61 seed 0, twenty runs, one binary, one afternoon: **three different depths**, spanning **2.627 mm** - two of which two previous chapters published as separate results (§8.1) |
-| **What `plan=10000` answers** | the same twenty runs: **one plan, one depth, one document, per seed** - and **0 of 60 runs over the target**, against the wall arm's 21 of 60 (§8.2) |
+| **What `plan=10000` answers** | the same twenty runs: **one plan, one depth, one document, per seed** - and **0 of 60 runs over the target**, against the wall arm's 21 of 60 (§8.2). **Quiet-box only**: under load the same arm splits 2 / 3 / 1 (`replan` §11.1) and the fix is `plancal` (`robust-plan` §9). See §8.2's banner |
 | **The canonical production table** | 27 cells, two processes each: **`plan` reproduced 25, `wall` reproduced 0** (§10) |
 | **The price of that** | over nine (fixture, budget) rows, a **median of +0.000 mm** - seven rows at parity, one 1.074 mm better, and the entire cost on mixed-61 at ten seconds at +6.904 mm (§10.1) |
 | **Determinism, two processes** | 9/9 work mode, 9/9 plan mode |
@@ -426,7 +426,25 @@ And the arm does not honour its own budget either. `wall=10000` **overran ten
 seconds on 21 of 60 runs**, reaching 10.382 s - seed 1 overran on 19 of 20 -
 because the deadline is checked between actions and an action in flight finishes.
 
-### 8.2 The plan reproduces, sixty runs out of sixty
+### 8.2 The plan reproduces, sixty runs out of sixty — **on a quiet box**
+
+> **Qualified, 2026-08-21, by `docs/experiments/replan/` §11.1.** The 60/60
+> below is a **quiet-box** property and this section did not test it any other
+> way. Re-measured on a box carrying a competing workload, the **same
+> `plan=10000` arm** produced **2 / 3 / 1 distinct depths per seed**
+> ([`replan/README.md:85`](../replan/README.md)), and
+> `docs/experiments/robust-plan/` §9 re-measured it again at box load median
+> 13.9 as **3 / 2 / 2 distinct depths and 3 / 2 / 3 distinct documents**, with
+> seed 1 splitting ten runs at 177.9079 against ten at 174.1700 - a 3.738 mm
+> coin toss.
+>
+> **The mechanism below is not retracted.** Probe → ladder → work cap does what
+> this section says it does; what is conditional on the box is the sentence
+> *"a second process gets the same one"*. The fix is `plancal=<path>`, a
+> persisted calibration keyed on `probe_work_units`, **which is a counter** -
+> and its own 60/60 *is* measured under load
+> ([`robust-plan/README.md:41`](../robust-plan/README.md)). A reader quoting
+> this section for a determinism claim should quote that one instead.
 
 Every `plan` cell chose **one** plan (`24,891,457` units, ladder rung 23, all
 three seeds), produced **one** depth, and produced **one** whole-document digest
@@ -437,7 +455,7 @@ That is the deliverable, and it is worth being precise about what it says. It is
 not "the plan is close to ten seconds"; it is *"the number this configuration
 produces at a ten-second target is a **number**, per seed, and a second process
 gets the same one"* - which is the property §8.1 shows the incumbent does not
-have.
+have, and which the banner above bounds to the box this ran on.
 
 ### 8.3 Without the ladder: twenty plans, twenty documents, and a depth that mostly does not care
 
@@ -505,8 +523,38 @@ seeds x three rounds, paired and interleaved: `drivers/countertax.py`,
 **The work counters cost 1.882 mm of depth at a ten-second wall on mixed-61**,
 and that is a floor under the plan mode: any work-denominated budget pays it,
 because a work budget is a reading of the counters. It is the price of
-denominating a budget in something a clock cannot perturb, and there is no
-version of this mode that avoids it.
+denominating a budget in something a clock cannot perturb, and ~~there is no
+version of this mode that avoids it~~.
+
+> ## Corrected, 2026-08-22 — the number is right, the last clause is wrong
+>
+> `docs/experiments/consolidation/` re-ran this exact battery on the same
+> fixture at the same budget and **reproduced the 1.882 mm to four decimals**,
+> then split it with a third arm the instrument of the day could not express.
+> The split is not close:
+>
+> | | seed 0 | seed 1 | seed 2 | median |
+> |---|---:|---:|---:|---:|
+> | whole tax (`countersOn` − `countersOff`) | +1.177 | +10.400 | +1.882 | **+1.882** |
+> | **the counting** (`meterOnly` − `countersOff`) | +0.000 | +0.000 | +0.000 | **+0.000** |
+> | **the timing** (`countersOn` − `meterOnly`) | +1.177 | +10.400 | +1.882 | **+1.882** |
+>
+> `meterOnly` is identical to `countersOff` **to every digit on all three
+> seeds**. The tax this section priced is the *spans*, not the counts, and one
+> flag armed both, so no arm here could have separated them.
+>
+> `profiling::metering_enabled` separates them and
+> `PortfolioSettings::lane_local_debit` is the setting that takes the counting
+> without the timing. Measured in the currency it is actually paid in - same
+> `work=` budget, both arms, **documents identical field for field on 9 of 9
+> cells** - the debit retires the same work in **84.9%** of the seconds at
+> 24.9 M units and **82.5%** at 120 M, which is `search::portfolio`'s own
+> "~17% they cost" header, confirmed.
+>
+> End to end at a calibrated ten-second plan: **the same depth, the same
+> document, and p95 8.89 s → 7.40 s**. So the mode does have a version that
+> avoids it, and §13.1's ordering is unchanged - the bias constant is still the
+> largest of the three costs.
 
 **The three, on the medians, on mixed-61 at ten seconds:**
 
@@ -741,6 +789,13 @@ agreed about nothing else.
 
 **9 of 9 on both halves: nine cells agreed on the plan, and nine cells produced
 the same document.** `evidence/determinism-plan.json`.
+
+> **Quiet-box, like §8.2, and for the same reason**: agreeing on the plan is
+> agreeing on a clock reading's ladder rung. `docs/experiments/robust-plan/`
+> §12 re-runs this under load and gets **8 of 9** on both the plan and the
+> calibrated arms. The work-mode gate in §12.2 is *not* conditional - a work
+> budget reads no clock - and it is the one to quote when the claim has to hold
+> on an arbitrary box.
 
 Note what this does and does not add to §10.3, where two of 27 cells straddled.
 These nine cells are three requests x three seeds at **ten seconds**; §10.3's

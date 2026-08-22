@@ -175,9 +175,25 @@ step 1,616 would pass it.
 So the slice computes a **step digest**: FNV-1a over every row - the step index,
 the clamp, the sweeps, the candidate queries, the pair and boundary counts
 before and after, the confirmation's three outcomes, and the raw depth an
-accepted confirmation measured. Floats go in through `to_bits`. Two slices with
-the same digest walked the same walk. It is reported as one scalar on **both**
+accepted confirmation measured. Floats go in through `to_bits`. ~~Two slices with
+the same digest walked the same walk.~~ It is reported as one scalar on **both**
 arms, because the whole use of it is a comparison between them.
+
+> **Corrected, 2026-08-21.** The struck sentence is false and
+> `docs/sol-review-9-m34cap-provenance.md` §P1 is why: the payload carries the
+> clamp, the counts and aggregate loss, and it carries **no** placement
+> fingerprint, no pair identity, no weights, no RNG state and no winning lane -
+> so *"due cammini differenti possono avere lo stesso payload senza alcuna
+> collisione FNV"*. FNV-1a over that payload is an adequate regression
+> checksum and not a certificate, which is all this section is entitled to
+> claim for it.
+>
+> `docs/experiments/real-interruption/` §4 is the repair: three SHA-256
+> fingerprints - the frontier's geometry, the tracker's per-boundary and
+> per-pair state, and the lane's RNG position and guided weights - computed at
+> the instant a slice ends, `#[serde(skip)]` so they exist in the gate and in
+> no document. The concatenation gate asserts all three against the monolith at
+> three batch sizes.
 
 The gate is then: whole document equal **and** step digests equal, from the bare
 request, at a pinned work budget, with the batch budget as the only difference

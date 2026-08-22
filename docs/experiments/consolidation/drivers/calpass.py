@@ -40,6 +40,16 @@ import runlib  # noqa: E402
 LIVE = os.environ.get('PLAN_CAL_LIVE', '/var/lib/t3/tmp/consol/cal/live.json')
 PROBE = os.environ.get('PLAN_CAL_PROBE', '/var/lib/t3/tmp/consol/cal/probe.json')
 
+# Appended to every pass's spec. `docs/experiments/consolidation/` uses it to
+# run the pass with `lanedebit=1`, and that is not a cosmetic difference: the
+# file records **the least-loaded probe wall observed for a cell**, and a pass
+# that ran the phase without the profiler's spans observed a shorter one. The
+# key of the entry is `probe_work_units`, a counter, which is identical in both
+# arms - so a file written by one arm and read by the other would hand the
+# reader a budget priced from a rate it does not have. Two files, named by the
+# arm that wrote them, is the only honest arrangement.
+PASS_EXTRA = os.environ.get('PLAN_CAL_EXTRA', '')
+
 
 def entries(path):
     try:
@@ -68,6 +78,8 @@ def main():
                         ('live', f'plancal={LIVE},plancalwrite=1'),
                         ('probe',
                          f'planprobe=8,plancal={PROBE},plancalwrite=1')):
+                    if PASS_EXTRA:
+                        extra = f'{extra},{PASS_EXTRA}'
                     spec = runlib.spec_for(seed, 'plan', target, True, extra)
                     tag = f'{pass_name}-{fixture}-s{seed}-r{rnd}'
                     doc, wall, err = runlib.run(binary, fixture, seed, spec,
