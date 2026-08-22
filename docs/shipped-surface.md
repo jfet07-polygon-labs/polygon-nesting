@@ -115,7 +115,31 @@ review 5 §"Prossime 3 spese" item 1 is the instruction this section discharges:
 | the in-run re-plan, as a *quality* mechanism | `replan=1` | **2.808 mm on one seed, 0.252 mm of median.** It adds a second clock reading, which makes the load axis worse (4 / 2 / 3 distinct depths against `plan`'s 2 / 3 / 1) | `next-generation-engine-plan.md:6908-6913`, `replan/` §11.1 |
 | `m34cap` as a stop | `m34cap=1` | **RETRACTED.** It could not stop the slice at the HEAD its evidence was taken on: `advance` recorded a checkpoint and left `finished=false`, and the caller looped to the end of the monolith. `m34cap=0` and `m34cap=1` produce identical depth, fingerprint, work, call count and step digests | `real-interruption/` §2, `replan/README.md:3-42`, `sol-review-9-m34cap-provenance.md` §P0 |
 
-### 3.1 The one row that is not a retirement
+### 3.1 The three keys this consolidation added
+
+They are in neither list above because they are new, and two of the three are
+**ships-off-available** rather than retirements. `docs/experiments/consolidation/`
+is the round.
+
+| lever | key | verdict | what it is worth |
+|---|---|---|---|
+| the lane-local debit | `lanedebit=1` | **ships-off-available**, and it is the one a deployment should consider | a work or plan budget runs with `profiling::set_enabled(false)`, taking the meter's two counters from their own flag. Measured at identical work with **identical documents on 9 of 9 cells**: the same work in **84.9%** of the seconds at 24.9 M units, **82.5%** at 120 M. End to end on a calibrated plan: either **−1.108 mm** at ten seconds (with its own calibration file) or **the same depth and the same document at p50 7.31 s → 6.27 s** (with the incumbent's) |
+| the wall stop, all classes | `m34wallstopall=1` | **ships-off-available** as a 30 s dial, exactly like `m34wallstop` | on a forced overrun, worst overrun **+26.63 s → +0.99 s**, 6/6 exact-valid. On the calibrated 30 s battery: **+0.000 mm** of median depth, worst overrun **+12.38 s → +1.31 s**, and the *count* of crossings does **not** reach 0 of 9 |
+| the wall reserve | `m34wallreserve=<multiple>` | **retired-with-negative** | **worse** than the plain admission rule: +1.87 s against +0.99 s worst overrun. It prices classes by mean seconds, mode 34's mean is the largest, so near the deadline it refuses the one class that can stop itself mid-action and buys an uninterruptible one instead |
+
+Two corrections this round applied to the board above rather than to itself:
+
+* `calibrated-plan` §9's *"the work counters… there is no version of this mode
+  that avoids it"* is **struck**. The +1.882 mm reproduced to four decimals and
+  then split: the counting is +0.000 mm median on all three seeds and the
+  *timing* is the whole of it. One flag armed both, which is why the round that
+  measured it could not have attributed it.
+* `work-currency` §6's specified fix - lift `surrogate_evaluations` onto the
+  relaxed lane - would **not** have worked. The meter's exact half is 27% of it
+  (2.93 M of 10.79 M units on a measured run) and lives in `kernel::exact`,
+  which has no lane.
+
+### 3.2 The one row that is not a retirement
 
 `m34wallstop` is **not** on the board above, and the distinction is worth being
 exact about because it is easy to file it there:
@@ -131,8 +155,9 @@ depth becomes a function of the box, because a wall stop reads a clock - and it
 is why the key ships off and the §11 anytime table reports both ends of the
 trade.
 
-`docs/experiments/consolidation/` extends it to the classes that own no
-checkpoint (`m34wallstopall`, `m34wallreserve`) and measures what that closes.
+`docs/experiments/consolidation/` §6-§9 extends it to the classes that own no
+checkpoint and measures what that closes: the overrun's *size*, not its count.
+See §3.1.
 
 ---
 
@@ -169,7 +194,17 @@ have to re-discover them:
 3. **A digest is not a certificate.** `replan/README.md:126`'s *"same digest
    walked the same walk"* is false: FNV-1a over clamp, counts and aggregate loss
    contains no placement fingerprint, no RNG state and no winning lane, so two
-   different walks can agree without any collision (`sol-review-9` §P1).
+   different walks can agree without any collision (`sol-review-9` §P1). The
+   sentence is struck in place and `real-interruption` §4's three SHA-256
+   fingerprints are the repair.
+4. **A wall-budget arm cannot carry a millimetre between sessions.** The same
+   counter tax has been published at 2.700 / 1.527 / 1.882 mm
+   (`calibrated-plan` §9), 7.553 / 10.400 / 4.006 mm (`work-currency` §6) and
+   1.177 / 10.400 / 1.882 mm (`consolidation` §2.1) on the same three seeds.
+   The *medians* agree; the per-seed numbers are the arm's own spread. When a
+   claim can be made at a fixed **work** budget instead - where the documents
+   are provably identical and only the seconds move - it should be
+   (`consolidation` §3).
 
 ---
 

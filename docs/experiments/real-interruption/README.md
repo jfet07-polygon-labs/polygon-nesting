@@ -603,10 +603,11 @@ binary 84dccd2529e23a99 lever='m34wallstop=1'
   > **The first of those two reasons is now answered and the second is not.**
   > `docs/experiments/consolidation/` §3 adds `m34wallstopall`, which puts the
   > same deadline in front of the **queue** so that no class starts an action
-  > after it. On a forced overrun it is decisive - a 10 s target over-bought
-  > 3x runs **26.42 s with no policy, 24.16 s with this one's checkpoint stop,
-  > and 10.18 s with the queue rule**, exact-valid, exiting on a new `wallStop`
-  > cause. On the calibrated thirty-second battery the *count* of crossings
+  > after it. On a forced overrun it is decisive - a 10 s target over-bought 3x,
+  > six runs per arm, worst overrun **+26.63 s with no policy, +20.05 s with
+  > this one's checkpoint stop, and +0.99 s with the queue rule** - 6 of 6
+  > exact-valid, 6 of 6 exiting on a new `wallStop` cause. On the calibrated
+  > thirty-second battery the *count* of crossings
   > does not go to zero, and that is the second reason: what is left is the one
   > action in flight when the deadline passes. What collapses is its **size** -
   > worst overrun **+12.38 s → +1.31 s**, wallMax 42.38 s → 31.31 s - at

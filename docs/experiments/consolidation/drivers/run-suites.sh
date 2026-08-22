@@ -29,5 +29,18 @@ S2=$?
 echo "suite-combo exit=$S2"
 grep -hE "^test result:" "$E/suite-combo.log" | tail -6
 
-echo "EXITS jagua=$S1 combo=$S2"
-[ "$S1" -eq 0 ] && [ "$S2" -eq 0 ]
+# The third suite, and the reason it exists. `cargo test` **builds** an example
+# and does not run its test harness, so every spec-key round-trip test in this
+# repository has been invisible to both suites above - including the one the
+# previous round added specifically to catch a key nobody parses, which is the
+# `m34cap` failure mode. Until the example is a test target or the parser moves
+# into the library, this is what makes those tests reachable.
+echo "== suite 3: the benchmark example's own harness"
+cargo test --features "$COMBO" --example general_request_benchmark \
+  > "$E/suite-example.log" 2>&1
+S3=$?
+echo "suite-example exit=$S3"
+grep -hE "^test result:" "$E/suite-example.log" | tail -2
+
+echo "EXITS jagua=$S1 combo=$S2 example=$S3"
+[ "$S1" -eq 0 ] && [ "$S2" -eq 0 ] && [ "$S3" -eq 0 ]

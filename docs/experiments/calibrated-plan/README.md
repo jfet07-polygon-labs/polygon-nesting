@@ -539,9 +539,14 @@ version of this mode that avoids it~~.
 > | **the counting** (`meterOnly` − `countersOff`) | +0.000 | +0.000 | +0.000 | **+0.000** |
 > | **the timing** (`countersOn` − `meterOnly`) | +1.177 | +10.400 | +1.882 | **+1.882** |
 >
-> `meterOnly` is identical to `countersOff` **to every digit on all three
-> seeds**. The tax this section priced is the *spans*, not the counts, and one
-> flag armed both, so no arm here could have separated them.
+> `meterOnly`'s median is identical to `countersOff`'s **to every digit on all
+> three seeds**. Stated precisely, because a wall-budget arm has run-to-run
+> spread and these two do: the *medians* coincide exactly on 3 of 3, while the
+> per-run distributions overlap rather than collapse (seed 0's `meterOnly` runs
+> were 169.572 and 171.111). The claim the table supports is that the counting's
+> median contribution is **+0.000 mm on every seed**, not that two runs are the
+> same run. The tax this section priced is the *spans*, and one flag armed both,
+> so no arm here could have separated them.
 >
 > `profiling::metering_enabled` separates them and
 > `PortfolioSettings::lane_local_debit` is the setting that takes the counting
