@@ -50,6 +50,13 @@
 //! A record is one line of JSON whose `placements` array is exactly the pose
 //! fixture shape `round_envelope_battery` already reads, so the scoring stage
 //! needs no second reader.
+//!
+//! A **tally sidecar** is written beside the JSONL at `<path>.tally.json`,
+//! carrying `written + duplicates + overCap`. It exists so the driver can check
+//! the dump against the schedule's own `confirmationsSkippedInfeasible`
+//! *exactly*: those three add to it, and a dump whose lines merely number fewer
+//! than the skips would otherwise be indistinguishable from a dump that lost
+//! records.
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -70,11 +77,29 @@ pub const DEFAULT_CAP: usize = 20_000;
 
 struct Sink {
     writer: BufWriter<File>,
+    tally_path: String,
     seen: HashSet<String>,
     cap: usize,
     written: usize,
     duplicates: usize,
     over_cap: usize,
+}
+
+impl Sink {
+    /// Rewrites the tally sidecar. Called after every offer, including the ones
+    /// that wrote nothing, because the counts that matter most to the driver -
+    /// duplicates and over-cap - only move on those.
+    fn write_tally(&self) {
+        let text = format!(
+            "{{\"written\":{},\"duplicates\":{},\"overCap\":{},\"cap\":{},\"offered\":{}}}",
+            self.written,
+            self.duplicates,
+            self.over_cap,
+            self.cap,
+            self.written + self.duplicates + self.over_cap
+        );
+        let _ = std::fs::write(&self.tally_path, text);
+    }
 }
 
 fn sink() -> Option<&'static Mutex<Sink>> {
@@ -89,14 +114,20 @@ fn sink() -> Option<&'static Mutex<Sink>> {
             .and_then(|value| value.parse::<usize>().ok())
             .unwrap_or(DEFAULT_CAP);
         let file = File::create(&path).ok()?;
-        Some(Mutex::new(Sink {
+        let sink = Sink {
             writer: BufWriter::new(file),
+            tally_path: format!("{path}.tally.json"),
             seen: HashSet::new(),
             cap,
             written: 0,
             duplicates: 0,
             over_cap: 0,
-        }))
+        };
+        // Written once at open, so an armed cell that skipped nothing at all
+        // still leaves a tally rather than leaving the driver to guess whether
+        // the run was armed.
+        sink.write_tally();
+        Some(Mutex::new(sink))
     })
     .as_ref()
 }
@@ -128,8 +159,14 @@ pub struct SkipRecord<'a> {
     pub work_units: usize,
     /// The clamp the step had just lowered to.
     pub frontier_depth_mm: f64,
-    /// The deepest exact-confirmed depth at the moment of the skip.
+    /// The deepest exact-confirmed depth at the moment of the skip, in the
+    /// schedule's clamp units.
     pub floor_depth_mm: f64,
+    /// The incumbent: the best raw source depth this slice has published so
+    /// far. This is the number a confirmation would have had to beat, so it is
+    /// what turns "the miter refused a legal layout" into "the miter refused a
+    /// legal layout that would have published".
+    pub published_depth_mm: f64,
     pub parent_depth_mm: f64,
     pub requested_drop_mm: f64,
     /// The proxy's own reasons, which are what made `proxy_feasible` false.
@@ -144,7 +181,11 @@ pub struct SkipRecord<'a> {
 ///
 /// Failures are swallowed on purpose. This is an instrument bolted to a search
 /// loop; a full disk must not change what the search publishes, or the
-/// measurement would be a function of the measuring.
+/// measurement would be a function of the measuring. They are not swallowed
+/// *silently*, though: a failed write returns without counting the offer
+/// anywhere, so the sidecar's `offered` falls below the schedule's own skip
+/// count and the driver's equality check fails. Losing records loudly is the
+/// point.
 pub fn record(entry: &SkipRecord<'_>) {
     let Some(lock) = sink() else {
         return;
@@ -154,10 +195,12 @@ pub fn record(entry: &SkipRecord<'_>) {
     };
     if guard.written >= guard.cap {
         guard.over_cap += 1;
+        guard.write_tally();
         return;
     }
     if !guard.seen.insert(entry.fingerprint.to_owned()) {
         guard.duplicates += 1;
+        guard.write_tally();
         return;
     }
     let line = serde_json::json!({
@@ -167,6 +210,7 @@ pub fn record(entry: &SkipRecord<'_>) {
         "workUnits": entry.work_units,
         "frontierDepthMm": entry.frontier_depth_mm,
         "floorDepthMm": entry.floor_depth_mm,
+        "publishedDepthMm": entry.published_depth_mm,
         "parentDepthMm": entry.parent_depth_mm,
         "requestedDropMm": entry.requested_drop_mm,
         "collisionPairs": entry.collision_pairs,
@@ -192,11 +236,16 @@ pub fn record(entry: &SkipRecord<'_>) {
     // last line would be a sample this instrument silently lost.
     let _ = guard.writer.flush();
     guard.written += 1;
+    guard.write_tally();
 }
 
-/// What the sink did, for the driver to assert on.
+/// What the sink did, in process: `(written, duplicates, over cap)`.
 ///
-/// `(written, duplicates, over cap)`. `None` when disarmed.
+/// The same three numbers the sidecar carries, and the sidecar is what the
+/// driver reads — a separate process cannot call this. It exists because it is
+/// the only way to distinguish *disarmed* (`None`) from *armed and full*
+/// (`Some` with `written == cap`), which [`armed`] reports identically as
+/// `false`, and that distinction is what this module's own test checks.
 pub fn tally() -> Option<(usize, usize, usize)> {
     let lock = sink()?;
     let guard = lock.lock().ok()?;
@@ -222,6 +271,7 @@ mod tests {
             work_units: 0,
             frontier_depth_mm: 1.0,
             floor_depth_mm: 2.0,
+            published_depth_mm: 2.5,
             parent_depth_mm: 3.0,
             requested_drop_mm: 1.0,
             collision_pairs: 1,

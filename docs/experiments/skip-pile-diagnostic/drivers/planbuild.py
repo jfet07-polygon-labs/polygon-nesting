@@ -41,8 +41,13 @@ def main():
             'label': cell['label'],
             'path': cell['dumpPath'],
             'sample': sample,
-            'expectedSkips': cell['measured'].get(
+            # The schedule's own count, and the sink's. They differ by exactly
+            # the repeated fingerprints, and the scorer restates both so the
+            # scoring document carries the reproduction on its face.
+            'skipsSuppressed': cell['measured'].get(
                 'schedule_confirmationsSkippedInfeasible'),
+            'distinctExpected': (cell['dump'].get('tally') or {}).get(
+                'written'),
         })
     plan = {
         '_note': ('The skip pile, scored by the material contract, by HEAD\'s '
@@ -64,8 +69,11 @@ def main():
     json.dump(plan, open(plan_out, 'w'), indent=1)
     print(json.dumps({'plan': plan_out, 'cells': len(cells),
                       'samplePerCell': sample, 'censusPerCell': census,
-                      'expectedSkipsTotal': sum(
-                          c['expectedSkips'] or 0 for c in cells)}, indent=1))
+                      'skipsSuppressedTotal': sum(
+                          c['skipsSuppressed'] or 0 for c in cells),
+                      'distinctExpectedTotal': sum(
+                          c['distinctExpected'] or 0 for c in cells)},
+                     indent=1))
 
 
 if __name__ == '__main__':

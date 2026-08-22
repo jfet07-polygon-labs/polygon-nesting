@@ -1,4 +1,4 @@
-# The skip pile: what the proxy is hiding
+# The skip pile: the released region exists, and everything in it is worse than what the run already had
 
 Grok review 8 item 2. The round-envelope gate found that
 `schedule_confirmationsRefused = 0` on all 108 runs of its twelve-parent matched
@@ -27,12 +27,33 @@ what proves the default build did not move.
 
 ---
 
+## The answer in one paragraph
+
+Six cells of the gate's own ladder were reproduced digest-for-digest with the
+dump armed, and **every one of their 13 867 distinct suppressed frontiers was
+scored** — a census, not a sample. At the shipping radius **111 of 13 867
+(0.80 %)** are released: the material contract accepts, the disc kernel accepts,
+HEAD's miter authority refuses. The released material is squarely in the
+**join-tax class** — a median **0.380 mm** of pair excursion and **0.928 mm** of
+boundary excursion, with **zero of 111 rows** inside a ≤10 µm bound. And then the
+number that decides it: **none of those 111 layouts is deeper than the layout its
+own cell had already published.** The best released frontier in the three cells
+that have any is **0.053 mm, 0.080 mm and 0.438 mm *worse*** than that cell's own
+answer. The region is real, it is millimetre-sized in geometry, and it is empty
+of anything worth publishing.
+
+| | |
+|---|---|
+| **the one number** | **0.80 %** released (111 / 13 867), **join-tax class**, **0.000 mm** of depth |
+| **verdict on option (b)** | **killed on this population**, by the pre-committed rule and by a stronger one it did not anticipate |
+
+---
+
 ## 0. Pre-committed interpretation
 
 > **This section was written and committed before a single frontier was
-> scored.** It is here so that the answer cannot be read backwards into the
-> question. The commit that carries it carries the instrument and no evidence;
-> `git log --follow` on this file is the proof.
+> scored**, in commit `f989c21`, which carries the instrument and no evidence.
+> It is reproduced here **unaltered**; §5 reads the answer against it.
 
 The proposal-geometry surgery Grok's review calls **option (b)** — moving the
 schedule's proposal geometry off the miter proxy so that disc-legal frontiers
@@ -72,7 +93,7 @@ One cargo feature, `skip-pile-dump`, and three edits behind it:
 |---|---|
 | `search/compression_schedule.rs` | one `cfg`-gated accessor, `confirmations_skipped_infeasible()` |
 | `search/general_relaxed.rs` | one `cfg`-gated block **after** the confirmation branch of a schedule step |
-| `search/skip_pile_dump.rs` | the sink: JSONL, deduplicated by the engine's own placement fingerprint, capped |
+| `search/skip_pile_dump.rs` | the sink: JSONL, deduplicated by the engine's own placement fingerprint, capped, with a tally sidecar |
 
 Four properties, each a mechanism rather than a claim:
 
@@ -86,38 +107,322 @@ Four properties, each a mechanism rather than a claim:
   published. Its only cost is wall.
 * **and wall is not in the trajectory here**, because a mode-34 slice under
   `past=1,rollback=0,work=W,lanes=1,pconfirm=0` is capped in *work units*. That
-  is an argument, so §3 replaces it with a measurement: every dumped cell is
-  checked against the round-envelope gate's committed `matched.json` on the
-  schedule's **step digest**, its skip count, its confirmation counts, its step
-  count and its published depth.
+  is an argument, so §2 replaces it with a measurement.
 
 The scoring stage is a second example, `skip_pile_score`, which needs
 `round-envelope-kernel` and `import-gate-shadow` and **not** `skip-pile-dump`:
 the writing binary and the reading binary are different programs.
 
-## 2. The three authorities
+### 1.1 The tally sidecar, and why the first pass needed one
 
-Every sampled frontier is asked of three, at two radii:
+The sink deduplicates by placement fingerprint, so a cell's line count is
+legitimately smaller than its skip count — and a first pass could not tell that
+apart from a dump that had silently lost records. Two cells came out 22 and 15
+lines short and the driver could only report the discrepancy, not explain it.
+The sink now writes `<path>.tally.json` with `written + duplicates + overCap`,
+and the driver asserts that those three sum to the schedule's own
+`confirmationsSkippedInfeasible` **exactly**. They do, on all six cells, with
+`overCap = 0` everywhere: the cap never bound and the dump is the whole pile.
 
-| verdict | function | what it is |
+## 2. The reproduction: six cells, digest for digest
+
+Six cells of the round-envelope gate's miter ladder, chosen to span both the
+size of the pile and the depth of the ladder, re-run with the dump armed and
+checked against `round-envelope-gate/evidence/matched.json` on thirteen pinned
+fields — the step digest, all four confirmation counters, the step count, the
+work units, the exit cause, the final and published depths, the fingerprint and
+both validity flags.
+
+| cell | parent | steps | confirmations | refused | **skips** | distinct dumped | step digest | published |
+|---|---:|---:|---:|---:|---:|---:|---|---:|
+| seed10@3341379 | 176.362 | 1499 | 351 | 0 | 99 | 99 | `15208230584541081695` | 175.394 |
+| seed0@3341379 | 174.208 | 1550 | 328 | 0 | 242 | 242 | `18417416165943714955` | 173.380 |
+| seed2@3341379 | 179.006 | 1565 | 229 | 0 | 653 | 653 | `3524879778271727066` | 177.343 |
+| seed3@3341379 | 176.061 | 2810 | 0 | 0 | 2807 | 2807 | `13882956371924736073` | 176.061 |
+| seed4@16000000 | 171.650 | 6906 | 686 | 0 | 4159 | 4137 | `1225229695193028453` | 166.734 |
+| seed0@32000000 | 174.208 | 12395 | 1612 | 0 | 5944 | 5929 | `9052932834971917816` | 164.008 |
+
+**6 of 6 reproduced, 0 differing fields**, on a binary whose SHA-256 is not the
+gate's (`c16356bf…` against `9e6ad285…`) because this round's source is not that
+round's. `refused = 0` on every cell is the finding this round exists to explain,
+reproduced here rather than cited.
+
+**13 904 skips, 13 867 distinct** — 37 repeated fingerprints, all in the two deep
+cells. Every distinct one was dumped and every distinct one was scored, so §3 is
+a **census of these six cells' entire skip pile** and the only sampling anywhere
+in this round is which *cells* were run.
+
+## 3. The joint table
+
+Three authorities on every one of the 13 867 frontiers, at two radii. Both
+composites run the material contract on the same placements, so *kernel accept ∧
+miter refuse* is a released **layout** and not a weaker authority's opinion.
+
+**Three properties hold on all 27 734 readings, and each one would catch a
+different way of asking the wrong question:**
+
+| checked | why it matters | result |
 |---|---|---|
-| contract | `import_gate::authority_verdict().contract_only` | the untouched material contract validator |
-| miter | `round_envelope_gate::wired_verdicts().miter` | HEAD's authority, through `validate_and_measure_placements` |
-| kernel | `round_envelope_gate::wired_verdicts().exclusive` | the certified disc kernel, same wire point |
-| union | `round_envelope_gate::wired_verdicts().union` | whichever half admits it |
+| the miter verdict read **twice**, through `import_gate::authority_verdict` and through `round_envelope_gate::wired_verdicts` | two committed instruments, two code paths; if they disagreed, one of them is not asking what it says | **27 734 / 27 734 agree** |
+| `union == (kernel ∨ miter)` | the wire point's own hybrid must be the disjunction it claims to be | **0 exceptions** |
+| no composite accepts where the contract refuses | this is what makes a released row a *publishable* layout rather than an envelope opinion | **0 exceptions** |
 
-Both composites run the material contract on the same placements, so
-**kernel-accept ∧ miter-refuse is a released layout** and not a weaker
-authority's opinion. The per-pair attribution beside it is `census` against
-`miter_census` — the soundness battery's own pair, so a magnitude here is
-comparable to Gate A's 0.5057 mm and to the 1 µm grid step.
+### 3.1 At the shipping radius, expansion **2.502 mm** (allowance 0.002)
 
-The two radii are **2.502 mm** (allowance 0.002, the expansion the skip actually
-happened at) and **2.500 mm** (allowance 0.0, the contract radius itself). The
-collision expansion is `total_padding/2 + margin + allowance` and this population
-is the exact-clearance 5.0/5.0 contract with a zero safety margin, so those two
-numbers are the whole difference.
+| contract | miter | kernel | records | share | what it is |
+|:--:|:--:|:--:|---:|---:|---|
+| ✗ | ✗ | ✗ | **8 129** | **58.62 %** | bulk overlap — Grok's prior |
+| ✓ | ✓ | ✓ | **4 439** | **32.01 %** | legal under every authority, never asked |
+| ✓ | ✗ | ✗ | 1 187 | 8.56 % | the 2 µm search-offset allowance, and only that |
+| ✓ | ✗ | ✓ | **111** | **0.80 %** | **released** |
+| ✓ | ✓ | ✗ | 1 | 0.007 % | a one-grid-step artefact — §3.4 |
+| all other combinations | | | **0** | | |
 
----
+### 3.2 At the contract radius, expansion **2.500 mm** (allowance 0.0)
 
-*(Sections 3 onward are written after the runs.)*
+| contract | miter | kernel | records | share |
+|:--:|:--:|:--:|---:|---:|
+| ✗ | ✗ | ✗ | 8 129 | 58.62 % |
+| ✓ | ✓ | ✓ | 5 626 | 40.57 % |
+| ✓ | ✗ | ✓ | **112** | **0.81 %** |
+| ✓ | ✓ | ✗ | **0** | — |
+| all other combinations | | | 0 | |
+
+The two tables differ by exactly **1 187 rows**, which move from *all three
+accept* to *contract only*. That is the whole of what `search_offset_allowance =
+0.002` buys and costs: 8.56 % of this pile is material the contract admits and
+both envelopes refuse at 2.502 mm and both admit at 2.500 mm. It is a deliberate
+margin, not a defect, and it is named here because it is larger than the
+released region by a factor of eleven.
+
+### 3.3 Split by the proxy's own reason
+
+`feasible()` is `boundary_violations == 0 && collision_pairs.is_empty()`, so a
+skip is either an *overlap* skip or a *boundary-only* skip — a frontier whose
+pieces do not overlap but have not yet been compressed above the clamp the step
+just lowered to. They are not the same population:
+
+| proxy reason | records | all three refuse | all three accept | released |
+|---|---:|---:|---:|---:|
+| **overlap** | 5 956 (43.0 %) | **5 908 — 99.2 %** | 1 | 46 |
+| **boundary-only** | 7 911 (57.0 %) | 2 221 — 28.1 % | **4 438 — 56.1 %** | 65 |
+
+**Grok's prior is exactly right about the overlap half and wrong about the other
+one.** Where the proxy sees an overlap it is almost never wrong: 99.2 % of those
+frontiers are refused by the contract, by the miter and by the disc alike. Where
+it sees only a boundary violation it is refusing a legal layout more often than
+not — the frontier simply has not reached the clamp yet.
+
+### 3.4 The one row where the disc refused and the miter admitted
+
+Not a P0. `seed2@3341379` seq 375, placements 1 and 2, at 2.502 mm only:
+
+| quantity | value |
+|---|---:|
+| demanded `2r` | 5.004 mm |
+| the kernel's exact critical `2r` | 5.003 mm |
+| shortfall | **−1.000 µm** |
+| **material clearance, untouched source rings** | **5.0039882 mm** |
+| material shortfall against `2r` | **−11.8 nanometres** |
+| miter envelope intersection area | **0.000 mm²** |
+
+The material really is short of `2r`, by twelve nanometres, and the disc is the
+authority that notices. The miter admits it because Clipper's offset output is
+re-quantized to the 1 µm canonical grid and a sliver that thin rounds away — an
+intersection area of exactly zero is that rounding, measured. Twelve nanometres
+is **120x** inside the round-envelope battery's own
+`CANONICALIZATION_BUDGET_MM = 0.0014143`, and the row does not exist at all at
+the contract radius. This is the kernel being conservative on the grid, which is
+the direction a soundness argument needs it to err in.
+
+## 4. What the released region is made of, and what it is worth
+
+### 4.1 Its class: join-tax, unambiguously
+
+Every released layout was censused pair by pair and boundary by boundary,
+`census` against `miter_census` over the **full** scan.
+
+| population | rows | median | min | max | grid-class (≤10 µm) | intermediate | join-tax (≥0.1 mm) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| released **pairs** | 46 | **0.380 mm** | 0.034 mm | 2.432 mm | **0** | 2 | **44** |
+| released **boundaries** | 65 | **0.928 mm** | 0.055 mm | 0.928 mm | **0** | 7 | **58** |
+
+The excursion is `kernel critical radius − r`: how much room the disc has where
+the miter has none. The grid-class bound is deliberately generous — **ten** grid
+steps, against a canonicalisation budget of 1.4143 µm — and **not one released
+row of 111 falls inside it.** The answer to "the ~1 µm class or the ~0.5 mm
+class" is the 0.5 mm class, and it is not close.
+
+The 111 released layouts split by *why the miter refused them* exactly as the
+proxy split them: **65 boundary refusals**, every one of them a boundary-only
+proxy skip, and **46 pair-overlap refusals**, every one of them an overlap proxy
+skip. The two halves never mix.
+
+### 4.2 Its depth: zero
+
+This is the reading the verdict rests on, and it needs no counterfactual. For
+each cell, take the deepest layout in its **entire** skip pile under each
+authority and compare it with what that cell actually published. Both numbers are
+`raw_source_long_axis_depth_mm` of a finished layout, so the comparison is
+apples to apples.
+
+| cell | published | deepest **released** | released beats published by | deepest **all-three-legal** | that beats published by |
+|---|---:|---:|---:|---:|---:|
+| seed10@3341379 | 175.394 | — (0 released) | — | 175.470 | **−0.077 mm** |
+| seed0@3341379 | 173.380 | 173.818 | **−0.438 mm** | 173.651 | **−0.271 mm** |
+| seed2@3341379 | 177.343 | — (0 released) | — | 177.483 | **−0.140 mm** |
+| seed3@3341379 | 176.061 | — (0 released) | — | — (none legal) | — |
+| seed4@16000000 | 166.734 | 166.814 | **−0.080 mm** | 166.692 | **+0.042 mm** |
+| seed0@32000000 | 164.008 | 164.061 | **−0.053 mm** | 164.008 | **0.000 mm** |
+
+**Not one of the 111 released layouts is deeper than the layout its own cell had
+already published.** The released region is real and it is millimetre-sized in
+geometry; the *best* member of it in each cell is between **0.053 mm and
+0.438 mm worse** than the run's own answer, and the rest are worse than that.
+Arming the disc as the proposal authority on these six cells would have released
+111 layouts and published **none** of them.
+
+The column beside it prices the much larger 32 % row for free: across 13 867
+suppressed frontiers in six cells, **exactly one cell contains a suppressed
+layout deeper than its own published answer, by 0.042 mm** — and that layout is
+accepted by all three authorities, so it is a question about how often the
+schedule confirms, not about which envelope it confirms with.
+
+That one layout is worth looking at, because it is the whole opportunity this
+pile contains: `seed4@16000000` seq 3198, **step 5961**, raw source depth
+**166.692 mm**, incumbent at that moment **166.734 mm** — and the cell went on to
+publish exactly **166.734 mm**, so the incumbent never improved again. The proxy
+suppressed it with **0 collision pairs and 1 boundary violation** against a clamp
+of 166.735 mm, while the layout's own depth was 166.692 mm. **The proxy's
+boundary test and the composite's are not the same test**, and this row is what
+that costs: 0.042 mm, once, in 13 867 frontiers.
+
+### 4.3 The weaker reading, and why it is the weaker one
+
+Against the *incumbent at the step of the skip*, 104 of the 111 released rows
+would have improved it, at a median of 0.068 mm. That number is in the evidence
+(`publicationValueByJointRow`) and it is **not** the one quoted above, for two
+reasons: it is a counterfactual — publishing the first improvement moves the
+incumbent the next one is judged against — and it mixes two depth conventions
+by up to one grid step, because the slice's own `published_depth_mm` is measured
+on grid-snapped bounds and the scorer's on untouched source rings. §4.2 has
+neither problem.
+
+## 5. The pre-committed rule, read against the answer
+
+| clause, as committed in `f989c21` | measured | reading |
+|---|---|---|
+| ~0 released rows → killed a priori | **111 rows, 0.80 %** | **does not apply.** The region is not empty |
+| material fraction (≥1 %), sub-micron class → not funded | 0.80 %, and **0 of 111 rows** inside the ≤10 µm bucket | **does not apply** on either half |
+| material fraction (≥1 %), 0.5 mm class → size it | class **yes**, fraction **0.80 % — below the 1 % line** | the letter of the rule says *existence proof, not a rate* |
+
+**The pre-commitment did not anticipate the answer, and it is worth saying so
+plainly.** It was written on the assumption that a released region large enough
+to matter would be a region worth publishing from, so it fixed a threshold on
+*size* and a threshold on *class* and nothing on *value*. The measurement
+satisfies the class test outright, misses the size test by a fifth, and then
+fails a test the rule never wrote down: **the released layouts are all worse than
+what the run already had.** Option (b) is killed on this population — not because
+the region behind the proxy is empty, but because it is empty of improvements.
+
+What the pre-commitment did get right is that it was written first. Had the
+threshold been set afterwards, 0.80 % would have been argued either way.
+
+## 6. Reproduction, gates, suites, determinism
+
+```sh
+bash docs/experiments/skip-pile-diagnostic/drivers/collect.sh all
+bash docs/experiments/skip-pile-diagnostic/drivers/run-suites.sh
+```
+
+Do **not** pipe either into `tee` or `tail`: you will read the pipe's status
+instead of the script's. Every exit status inside them is read directly on the
+line after the command.
+
+### 6.1 The four pinned gates
+
+| gate | pinned | feature ABSENT | feature COMPILED, unarmed |
+|---|---|:--:|:--:|
+| g1 | 206.869 / `8a7737381238fa4d` | ✅ | ✅ |
+| g2 | 159.09233022733062 / `fa01012af1d559ae` | ✅ | ✅ |
+| g3 | 159.07876040364795 / `e28fba007f8031d4` | ✅ | ✅ |
+| g4 | 164.0375677990678 / `49f094d7e59a9008` | ✅ | ✅ |
+
+`ALL_PASS: true` on both binaries, and stronger: **all eight whole-document
+digests are identical to each other and to the ones the pre-instrument binary
+produced** — `17cf86ef3880b374`, `822ccc256623e1ee`, `12b402bda35e0b89`,
+`27ce9cfea5df93e9`. Compiling the hook changes nothing a document can see.
+
+### 6.2 A correction the gates forced: the binary is a function of the source *text*
+
+The round-envelope gate's §5.4 established that git metadata is read at run time
+and not compiled in, so the same source builds the same binary. True — but the
+converse does not follow, and this round measured that.
+
+Adding **one line inside a `#[cfg(feature = "skip-pile-dump")]` block** — code
+that cannot be compiled without the feature — moved the feature-absent binary
+from `87d41243…` to `69b42abf…`. Suspecting the obvious, a **pure comment** was
+then inserted at an unrelated point in the same file and the binary moved again,
+to `62d99caa…`. Both were confirmed against a fresh `CARGO_TARGET_DIR`, so
+neither is build noise.
+
+The mechanism is line numbers: a release build still bakes `Location { file,
+line, col }` into every panic path, so anything inserted above other code in a
+6 000-line file rewrites thousands of them. **A changed binary hash is therefore
+not evidence that behaviour changed** — the whole-document gate digest is what
+distinguishes the two, and in §6.1 it does.
+
+### 6.3 Determinism, two processes, three artefacts
+
+`evidence/determinism.json`, `ALL_IDENTICAL: true`:
+
+| artefact | cases | compared on | result |
+|---|---|---|---|
+| the armed run's document | 2 cells × 2 processes | whole document, wall-clock fields stripped by name, plus 8 verdict paths compared directly outside the digest | identical |
+| **the dump the armed run wrote** | the same | SHA-256 of the JSONL | identical |
+| the scored document | 1 plan × 2 processes | raw SHA-256 **and** stripped digest **and** 6 verdict paths | identical |
+
+The stripped set is `round-envelope-gate/drivers/determinism.py`'s, verbatim —
+including `milliseconds`, `leafMilliseconds` and `leafSharePercent`, which the
+protocol names, and the mode-34 schedule's own six millisecond fields. The
+scored document carries no clock at all, which is why it is compared unstripped
+as well and why the raw hashes match.
+
+### 6.4 Suites
+
+All `--release`, every exit status read directly rather than through a pipe. See
+§7 of this file's evidence directory for the logs.
+
+## 7. Caveats, stated rather than left to be found
+
+* **Six cells, one request, one platform.** mixed-61 at the exact-clearance
+  5.0/5.0 contract on x86_64. Within those six cells the scoring is a **census**
+  — every distinct suppressed frontier — but the six cells are a sample of the
+  gate's forty-eight, chosen before any of them was scored to span both the size
+  of the pile (99 to 5 944 skips) and the depth of the ladder (3.3 M to 32 M
+  work).
+* **The control arm only.** `POLYGON_NESTING_ROUND_ENVELOPE_KERNEL` is unset
+  throughout. The gate's own evidence records the union arm's skip counts as
+  cell-for-cell identical to the control's on all 48 matched cells, so dumping
+  one is dumping both — but that is an inheritance, not a measurement this round
+  made.
+* **37 of 13 904 skips were repeats** and are deduplicated by placement
+  fingerprint. The tally sidecar accounts for all 13 904; nothing was lost.
+* **"Released" is a statement about a layout, not about a search.** These are
+  frontier states the schedule declined to *confirm*. Whether a schedule with a
+  different proposal geometry would reach the same states at all is a different
+  question and this round does not answer it.
+* **§4.2 compares against what each cell published**, which is a bound the run
+  itself achieved. A cell run to a deeper budget would publish deeper and the
+  comparison would be harsher, not kinder.
+* **The 0.042 mm in seed4@16000000 is one layout**, and it is an existence proof
+  that the 32 % row is not entirely worthless, not a rate.
+* **The 1 187-row allowance effect is measured at two radii only**, 2.502 and
+  2.500. Nothing here says where between them it turns over.
+* **The dump costs wall, and the cost is not separable from the box.** The six
+  armed cells' operator walls against the gate's committed ones are
+  `[0.896, 1.026]x` — the two deepest at 17.558 s / 17.223 s and 27.846 s /
+  27.130 s — so the hook's price is inside the variation between two differently
+  loaded boxes and this round does not claim to have measured it. It does not
+  need to: **nothing here is a wall claim**, and the trajectory identity is the
+  step digest, which is exact.

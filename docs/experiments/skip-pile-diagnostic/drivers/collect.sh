@@ -12,6 +12,9 @@
 #   dump    the six reproduced cells, with the dump armed
 #   score   the joint table
 #   det     two processes, on the armed run, on the dump, and on the scorer
+#   final   the protocol's closing gate: a FRESH target directory, the clean
+#           committed tree, all four gates with the feature off and again with
+#           it compiled and unarmed
 #   all     every stage above, in order
 #
 # Every exit status is read directly on the line after the command rather than
@@ -30,8 +33,13 @@ COMBO=jagua-experimental,compression-schedule,parallel-compression-schedule,cont
 # confirms nothing at all), plus two deep cells so the sample is not a sample of
 # the shallow end of the ladder.
 CELLS='10@3341379,0@3341379,2@3341379,3@3341379,4@16000000,0@32000000'
-SAMPLE=300
-CENSUS=60
+# 20000 is above every cell's dump, so the scoring stage is a **census** of
+# these six cells' whole skip pile and not a sample of it. It is affordable
+# because the three composite verdicts short-circuit on the first violation and
+# most of this pile violates early; the expensive full pair-and-boundary scan is
+# what CENSUS budgets, and every disagreeing record gets one whatever it says.
+SAMPLE=20000
+CENSUS=400
 cd "$W" || exit 3
 mkdir -p "$E" "$T/bin" "$T/out" "$T/dump" "$T/gates" "$T/det"
 STAGE="${1:-all}"
@@ -116,23 +124,46 @@ run_score() {
   S2=$?
   echo "score exit=$S2"
   python3 "$D/drivers/summarize.py" "$T/out/score.json" "$E/summary.json" \
-    > "$E/summarize-stdout.txt" 2>&1
+    "$T/out/dumpladder.json" > "$E/summarize-stdout.txt" 2>&1
   S3=$?
   echo "summarize exit=$S3"
-  # The whole scoring document is large; the released rows, the joint table and
-  # every censused record's per-pair attribution are what the README reads, so
-  # those are committed and the raw document stays under $T.
+  # The whole scoring document is ~40 MB because it carries a row per frontier
+  # per allowance. What a reader needs is every record that DISAGREED - those
+  # are the finding - plus enough agreeing censused records to characterise the
+  # rest of the pile. Both are kept; the raw document stays under $T.
   python3 - "$T/out/score.json" "$E/score-records.json" <<'PY'
 import json, sys
+KEEP_AGREEING = 40
 score = json.load(open(sys.argv[1]))
 trimmed = {k: v for k, v in score.items() if k != 'cells'}
-trimmed['cells'] = [{
-    **{k: v for k, v in cell.items() if k != 'records'},
-    'records': [r for r in cell['records'] if r.get('census')],
-} for cell in score['cells']]
+cells = []
+for cell in score['cells']:
+    interesting, agreeing = [], []
+    for record in cell['records']:
+        if not record.get('census'):
+            continue
+        census = record['census']
+        disagrees = (
+            any(row['released'] or row['kernelRefusesMiterAccepts']
+                for row in record['allowances'])
+            or census['kernelAdmitsMiterRefuses']
+            or census['miterAdmitsKernelRefuses']
+            or census['boundaries']['kernelAdmitsMiterRefuses']
+            or census['boundaries']['miterAdmitsKernelRefuses'])
+        (interesting if disagrees else agreeing).append(record)
+    step = max(1, len(agreeing) // KEEP_AGREEING)
+    cells.append({
+        **{k: v for k, v in cell.items() if k != 'records'},
+        'censusedRecordsThatDisagreed': len(interesting),
+        'censusedRecordsThatAgreed': len(agreeing),
+        'agreeingRecordsKeptStride': step,
+        'records': interesting + agreeing[::step][:KEEP_AGREEING],
+    })
+trimmed['cells'] = cells
 json.dump(trimmed, open(sys.argv[2], 'w'), indent=1)
-print(json.dumps({'censusedRecordsKept': sum(len(c['records'])
-                                             for c in trimmed['cells'])}))
+print(json.dumps({'disagreeingKept': sum(c['censusedRecordsThatDisagreed']
+                                         for c in cells),
+                  'recordsKept': sum(len(c['records']) for c in cells)}))
 PY
   S4=$?
   echo "trim exit=$S4"
@@ -152,12 +183,66 @@ run_det() {
   cp "$T/out/det-plan.json" "$E/det-plan.json"
 }
 
+run_final() {
+  # The protocol's closing requirement, run as a stage rather than by hand: a
+  # FRESH target directory, the clean committed tree, all four gates with the
+  # feature off. `git status --porcelain` is printed first because the claim is
+  # about the committed tree and a dirty one would not be it.
+  echo "== closing gate: git status --porcelain (must be empty)"
+  git status --porcelain | tee "$E/final-worktree-status.txt"
+  echo "== closing gate: fresh build of the clean committed tree"
+  rm -rf "$T/final"
+  CARGO_TARGET_DIR="$T/final" cargo build --release --example general_request_benchmark \
+    --features jagua-experimental > "$E/build-final-gate.log" 2>&1
+  F1=$?
+  echo "build-final-gate exit=$F1"
+  [ "$F1" -eq 0 ] || return 1
+  cp "$T/final/release/examples/general_request_benchmark" "$T/bin/gate-final"
+  CARGO_TARGET_DIR="$T/final" cargo build --release --example general_request_benchmark \
+    --features "$COMBO,round-envelope-kernel,skip-pile-dump" > "$E/build-final-meas.log" 2>&1
+  F2=$?
+  echo "build-final-meas exit=$F2"
+  [ "$F2" -eq 0 ] || return 1
+  cp "$T/final/release/examples/general_request_benchmark" "$T/bin/meas-final"
+  CARGO_TARGET_DIR="$T/final" cargo build --release --example skip_pile_score \
+    --features round-envelope-kernel,import-gate-shadow > "$E/build-final-score.log" 2>&1
+  F3=$?
+  echo "build-final-score exit=$F3"
+  [ "$F3" -eq 0 ] || return 1
+  cp "$T/final/release/examples/skip_pile_score" "$T/bin/score-final"
+  {
+    sha256sum "$T/bin/gate-final" "$T/bin/meas-final" "$T/bin/score-final"
+    echo "# rustc: $(rustc --version)"
+    echo "# cargo: $(cargo --version)"
+    echo "# commit: $(git rev-parse HEAD)"
+    echo "# uname: $(uname -m) $(uname -r)"
+    echo "# loadavg: $(cat /proc/loadavg)"
+  } > "$E/binaries-final.txt"
+  cat "$E/binaries-final.txt"
+  echo "== closing gate: the four gates on the fresh feature-ABSENT binary"
+  python3 "$D/drivers/gates.py" final "$T/bin/gate-final" "$T/gates/final" \
+    > "$E/gates-final-stdout.txt" 2>&1
+  F4=$?
+  echo "gates-final exit=$F4"
+  cp "$T/gates/final/gates-final.json" "$E/gates-final.json"
+  grep -E '"ALL_PASS"' "$E/gates-final-stdout.txt"
+  echo "== closing gate: the same on the fresh measurement binary, dump UNARMED"
+  python3 "$D/drivers/gates.py" finalmeas "$T/bin/meas-final" "$T/gates/finalmeas" \
+    > "$E/gates-finalmeas-stdout.txt" 2>&1
+  F5=$?
+  echo "gates-finalmeas exit=$F5"
+  cp "$T/gates/finalmeas/gates-finalmeas.json" "$E/gates-finalmeas.json"
+  grep -E '"ALL_PASS"' "$E/gates-finalmeas-stdout.txt"
+  echo "FINAL exits=$F1/$F2/$F3/$F4/$F5"
+}
+
 case "$STAGE" in
   build) run_build ;;
   gates) run_gates ;;
   dump) run_dump ;;
   score) run_score ;;
   det) run_det ;;
-  all) run_build && run_gates && run_dump && run_score && run_det ;;
+  final) run_final ;;
+  all) run_build && run_gates && run_dump && run_score && run_det && run_final ;;
   *) echo "unknown stage $STAGE"; exit 2 ;;
 esac

@@ -7572,6 +7572,7 @@ impl ScheduleSliceRun<'_> {
                     work_units: self.schedule.work_units(),
                     frontier_depth_mm: self.schedule.depth_mm(),
                     floor_depth_mm: self.schedule.floor_mm(),
+                    published_depth_mm: self.published_depth_mm,
                     parent_depth_mm: self.parent_depth_mm,
                     requested_drop_mm: self.requested_drop_mm,
                     collision_pairs: self.score.collision_pairs.len(),

@@ -142,9 +142,19 @@ def run_cell(binary, seed, fixture, target, work, out_path, dump_path, cap):
 
 
 def dump_stats(path):
+    """The dump, and the sink's own tally beside it.
+
+    The sink deduplicates by placement fingerprint, so a cell's line count is
+    the number of *distinct* suppressed frontiers and is legitimately smaller
+    than its skip count. The sidecar is what makes that checkable instead of
+    plausible: `written + duplicates + overCap` is every offer the hook
+    received, and it must equal the schedule's own
+    `confirmationsSkippedInfeasible` exactly. Without it, a dump that silently
+    lost records would look the same as one that deduplicated them.
+    """
     if not os.path.exists(path):
         return {'lines': 0, 'distinctFingerprints': 0, 'bytes': 0,
-                'firstStep': None, 'lastStep': None}
+                'firstStep': None, 'lastStep': None, 'tally': None}
     seen = set()
     lines = 0
     first = last = None
@@ -159,9 +169,12 @@ def dump_stats(path):
             if first is None:
                 first = record['step']
             last = record['step']
+    tally_path = path + '.tally.json'
+    tally = (json.load(open(tally_path))
+             if os.path.exists(tally_path) else None)
     return {'lines': lines, 'distinctFingerprints': len(seen),
             'bytes': os.path.getsize(path), 'firstStep': first,
-            'lastStep': last}
+            'lastStep': last, 'tally': tally}
 
 
 def main():
@@ -198,10 +211,18 @@ def main():
         differences = {key: [reference.get(key), row.get(key)]
                        for key in PINNED if reference.get(key) != row.get(key)}
         stats = dump_stats(dump_path)
-        # The dump has to be the *whole* pile, not a prefix of it, or the
-        # sample downstream would be a sample of the shallow end.
-        whole_pile = (stats['lines'] ==
-                      row.get('schedule_confirmationsSkippedInfeasible'))
+        skips = row.get('schedule_confirmationsSkippedInfeasible')
+        tally = stats['tally'] or {}
+        # The dump has to account for the *whole* pile, not a prefix of it, or
+        # the sample downstream would be a sample of the shallow end. It
+        # accounts for it exactly: every offer the hook received is written,
+        # deduplicated or over cap, and those three sum to the schedule's own
+        # skip count. `lines == written` checks the file against the sink that
+        # wrote it; `overCap == 0` checks that the cap never bound.
+        whole_pile = (tally.get('offered') == skips
+                      and stats['lines'] == tally.get('written')
+                      and stats['lines'] == stats['distinctFingerprints']
+                      and tally.get('overCap') == 0)
         reproduced = row.get('exitCode') == 0 and not differences
         ok = ok and reproduced and whole_pile
         result['cells'].append({
@@ -216,12 +237,13 @@ def main():
             'operatorWallSeconds': row.get('operatorWallSeconds'),
             'committedOperatorWallSeconds': reference.get(
                 'operatorWallSeconds'),
-            'dump': stats, 'dumpIsWholeSkipPile': whole_pile,
+            'dump': stats, 'skipPileFullyAccountedFor': whole_pile,
+            'skipsSuppressed': skips,
         })
         json.dump(result, open(f'{outdir}/dumpladder.json', 'w'), indent=1)
-        print(f"{label} reproduced={reproduced} wholePile={whole_pile} "
-              f"skips={row.get('schedule_confirmationsSkippedInfeasible')} "
-              f"dumped={stats['lines']} distinct={stats['distinctFingerprints']}"
+        print(f"{label} reproduced={reproduced} accountedFor={whole_pile} "
+              f"skips={skips} dumped={stats['lines']} "
+              f"dup={tally.get('duplicates')} overCap={tally.get('overCap')}"
               f" digest={row.get('schedule_stepDigest')} "
               f"wall={row.get('processWallSeconds'):.1f}s "
               f"(committed opwall {reference.get('operatorWallSeconds')}) "

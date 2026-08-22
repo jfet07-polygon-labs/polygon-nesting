@@ -7695,3 +7695,93 @@ collecting: `engineCommit`, `engineWorktreeDirty` and `relevantSourceTreeSha256`
 are read at run time, not compiled in.
 
 Evidence, drivers and the full caveat list: `docs/experiments/round-envelope-gate/`.
+
+## The skip pile: the released region is real, it is millimetre-sized, and every layout in it is worse than what the run already had
+
+Grok review 8 item 2, run as a census rather than a sample. The round-envelope
+gate measured `confirmationsRefused = 0` on all 108 runs of its twelve-parent
+matched gate and named the reason: **the confirmation is not the filter.**
+`due_for_confirmation` refuses to ask the exact tier about a frontier the relaxed
+surrogate already calls infeasible, and that surrogate's collision geometry is
+the production miter offset. **149 762** frontiers were suppressed one level
+above the confirmation across the miter ladder, cell for cell identical on the
+union arm. The question was whether that proxy hides a *released region*: a
+frontier the disc kernel accepts and the miter refuses.
+
+**It does, and it is worthless.** Six cells of the gate's own ladder were
+reproduced digest-for-digest with a dump armed, and **all 13 867 of their
+distinct suppressed frontiers were scored** by three authorities at two radii —
+not a sample of them. At the shipping 2.502 mm expansion, **111 of 13 867
+(0.80 %)** are released: the untouched material contract accepts, the certified
+disc kernel accepts, HEAD's miter authority refuses. The released material is
+**join-tax class and nothing else** — a median **0.380 mm** of pair excursion and
+**0.928 mm** of boundary excursion, with **zero of 111 rows** inside a grid-class
+bound set at ten grid steps. And then the number that settles it: **not one of those 111 layouts is
+deeper than the layout its own cell had already published.** The best released
+frontier per cell is **0.053, 0.080 and 0.438 mm *worse*** than that cell's own
+answer. Arming the disc as the proposal authority on these six cells would have
+released 111 layouts and published none of them. **Option (b) — the
+proposal-geometry surgery — is killed on this population.**
+
+**The pre-committed rule missed the shape of its own answer, and that is
+recorded rather than smoothed.** It was committed before any frontier was scored
+(`f989c21`, instrument and interpretation, no evidence) and it fixed thresholds
+on *size* and on *class* because it assumed a region large enough to matter would
+be a region worth publishing from. The measurement passes the class test
+outright, misses the 1 % size test by a fifth at 0.80 %, and then fails a test
+the rule never wrote down. The rule's value was that it was written first; had
+0.80 % been judged afterwards it could have been argued either way.
+
+**Grok's bulk-overlap prior is exactly right about half the pile and wrong about
+the other half.** `feasible()` is two clauses, so a skip is either an overlap
+skip or a boundary-only skip — a frontier whose pieces do not overlap but which
+has not yet been compressed above the clamp the step just lowered to. Of the
+**5 956** overlap skips, **99.2 %** are refused by the contract, the miter and
+the disc alike. Of the **7 911** boundary-only skips, **56.1 %** are accepted by
+**all three** — legal layouts the schedule never asked about. That 32 %-of-pile
+row is the largest in the joint table and it is not a kernel question at all: it
+is a question about how often the schedule confirms. Priced across all six
+cells, it contains **exactly one** layout deeper than its own cell's published
+answer, by **0.042 mm**.
+
+**Two smaller findings fall out.** The `search_offset_allowance = 0.002` costs
+**1 187 rows — 8.56 % of the pile**, eleven times the released region: material
+the contract admits and *both* envelopes refuse at 2.502 mm and both admit at
+2.500 mm. And the single row where the disc refused a pair the miter admitted is
+**not a P0**: the material clearance is 5.0039882 mm against a demanded 5.004 mm,
+short by **twelve nanometres**, with a miter envelope intersection area of
+exactly **0.000 mm²** — Clipper's output re-quantized to the 1 µm grid, **120x**
+inside the round-envelope battery's own canonicalisation budget, and absent
+entirely at the contract radius. The disc is the authority that noticed.
+
+**The instrument.** One cargo feature, `skip-pile-dump`, compiled out by default
+and disarmed by default when compiled; one `cfg`-gated accessor, one `cfg`-gated
+block after the confirmation branch, one module. It reads and does not decide.
+Its one cost is wall, and a mode-34 slice is capped in work units — an argument,
+replaced by a measurement: **6 of 6 cells reproduced the gate's committed step
+digest, skip count, confirmation counts, step count, depth and fingerprint, with
+0 differing fields.** The sink deduplicates by the engine's own placement
+fingerprint and writes a tally sidecar so that `written + duplicates + overCap`
+can be checked to equal the schedule's own skip count exactly; it does, on all
+six cells, and the cap never bound.
+
+**A correction to the previous chapter's provenance note.** That round
+established that git metadata is read at run time and not compiled in, so the
+same source builds the same binary — true, but the converse does not follow.
+Adding **one line inside a `#[cfg]` block that cannot be compiled without its
+feature** moved the feature-absent binary's SHA-256; a **pure comment** inserted
+elsewhere in the same file moved it again, both confirmed against fresh target
+directories. Release builds bake `Location { file, line, col }` into every panic
+path, so a line inserted mid-file rewrites thousands of them. **A changed binary
+hash is not evidence that behaviour changed** — the whole-document gate digest
+is, and here all eight of them are identical to the pre-instrument binary's.
+
+**Gates, suites, determinism.** Four pinned gates 4/4 on the feature-absent
+binary and on the measurement binary with the hook compiled and unarmed, with all
+eight whole-document digests identical. Determinism is two processes on three
+artefacts — the armed run's document (stripped by name, plus eight verdict paths
+compared directly), **the JSONL dump it wrote** (raw SHA-256), and the scored
+document (raw hash, stripped digest and six verdict paths) — `ALL_IDENTICAL:
+true`.
+
+Evidence, drivers and the full caveat list: `docs/experiments/skip-pile-diagnostic/`.

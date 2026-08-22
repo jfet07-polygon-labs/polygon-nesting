@@ -58,10 +58,11 @@ use polygon_nesting_core::search::general_fast::{
 };
 use polygon_nesting_core::search::import_gate::authority_verdict;
 use polygon_nesting_core::search::round_envelope_gate::{
-    census, miter_census, miter_pair_intersection_area_mm2, wired_verdicts, ArmedKernel, Census,
+    census, miter_census, miter_pair_intersection_area_mm2, trim, wired_verdicts, ArmedKernel,
+    Census,
 };
 use polygon_nesting_core::validation::general_polygon::{
-    material_pair_distance_mm, GeneralPlacement,
+    material_pair_distance_mm, material_sheet_clearance_mm, GeneralPlacement,
 };
 use polygon_nesting_core::validation::round_envelope::KernelMode;
 use serde::Deserialize;
@@ -97,11 +98,17 @@ struct Cell {
     path: String,
     /// How many records to score. Taken evenly spread across the whole file.
     sample: usize,
-    /// The cell's `confirmationsSkippedInfeasible` as the committed evidence
-    /// records it. Reported beside the dumped count so a reader can see the
-    /// reproduction rather than take it on trust.
+    /// The cell's `confirmationsSkippedInfeasible`, as the run that wrote this
+    /// dump reported it. Restated here so the scoring document carries the
+    /// reproduction rather than pointing at another file for it.
     #[serde(default)]
-    expected_skips: Option<usize>,
+    skips_suppressed: Option<usize>,
+    /// How many *distinct* frontiers the sink says it wrote. The dump
+    /// deduplicates by placement fingerprint, so this is smaller than
+    /// `skips_suppressed` by exactly the repeated ones, and the scorer checks
+    /// the file it read against it.
+    #[serde(default)]
+    distinct_expected: Option<usize>,
 }
 
 // ------------------------------------------------------- the request loader
@@ -195,6 +202,10 @@ struct SkipLine {
     work_units: usize,
     frontier_depth_mm: f64,
     floor_depth_mm: f64,
+    /// The slice's incumbent at the moment of the skip. A released layout whose
+    /// own depth beats this is not just a legal layout HEAD refused — it is a
+    /// **publication** HEAD refused.
+    published_depth_mm: f64,
     parent_depth_mm: f64,
     collision_pairs: usize,
     boundary_violations: usize,
@@ -276,6 +287,39 @@ fn pair_material_distance(
     material_pair_distance_mm(&build(first)?, &build(second)?).ok()
 }
 
+/// The binding edge clearance of one placement, on untouched source rings.
+///
+/// The contract validator's own accessor, so a boundary release's magnitude can
+/// be read against the material the contract demands rather than against a
+/// second implementation of the same distance.
+fn sheet_material_clearance(
+    piece_by_id: &BTreeMap<String, GeneralFastPiece<'_>>,
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+    index: usize,
+) -> Option<f64> {
+    let placement = placements.get(index)?;
+    let piece = piece_by_id.get(&placement.piece_id)?;
+    let independent = GeneralPlacement {
+        piece_id: piece.id,
+        polygon: piece.polygon,
+        rotation_deg: placement.rotation_deg,
+        mirrored: placement.mirrored,
+        translate_x: placement.translate_short_axis,
+        translate_y: placement.translate_long_axis,
+    };
+    material_sheet_clearance_mm(
+        &independent,
+        settings.sheet_short_axis_mm,
+        settings.sheet_long_axis_mm,
+    )
+    .ok()?
+    .into_iter()
+    .fold(None, |best: Option<f64>, value| {
+        Some(best.map_or(value, |current| current.min(value)))
+    })
+}
+
 /// The per-pair comparison between the two envelopes, over the **full** scan.
 struct PairSplit {
     both_admit: usize,
@@ -315,19 +359,60 @@ fn split(kernel: &Census, miter: &Census) -> PairSplit {
     result
 }
 
-/// The class a released pair falls in, named rather than left to the reader.
+/// The same comparison on the **sheet boundary**, which is where the first
+/// release this diagnostic found actually lived.
+///
+/// The miter envelope's binding corner sticks further out than the disc's, so a
+/// placement can fit the inset rectangle under one envelope and not the other
+/// with no pair involved at all. A per-pair-only reading would have reported
+/// that layout as an unattributed release.
+struct BoundarySplit {
+    both_admit: usize,
+    both_refuse: usize,
+    kernel_admits_miter_refuses: Vec<usize>,
+    miter_admits_kernel_refuses: Vec<usize>,
+}
+
+fn split_boundaries(kernel: &Census, miter: &Census) -> BoundarySplit {
+    let mut result = BoundarySplit {
+        both_admit: 0,
+        both_refuse: 0,
+        kernel_admits_miter_refuses: Vec::new(),
+        miter_admits_kernel_refuses: Vec::new(),
+    };
+    let miter_boundaries = miter
+        .boundaries
+        .iter()
+        .map(|row| (row.index, row.admissible))
+        .collect::<BTreeMap<_, _>>();
+    for row in &kernel.boundaries {
+        let Some(&miter_admits) = miter_boundaries.get(&row.index) else {
+            continue;
+        };
+        match (row.admissible, miter_admits) {
+            (true, true) => result.both_admit += 1,
+            (false, false) => result.both_refuse += 1,
+            (true, false) => result.kernel_admits_miter_refuses.push(row.index),
+            (false, true) => result.miter_admits_kernel_refuses.push(row.index),
+        }
+    }
+    result
+}
+
+/// The class an excursion falls in, named rather than left to the reader.
 ///
 /// The two classes the diagnostic was written to tell apart are the canonical
 /// grid's own step — one micrometre, where a disagreement is quantisation and
 /// buys nothing — and the join tax Gate A measured at a median 0.5057 mm on a
-/// miter-refused pair. The boundary is deliberately generous to the small
-/// class: the canonicalisation budget is `sqrt(2)` µm and one whole grid step
-/// on top of it is `2.4143` µm, so anything at or below `0.01` mm is called
-/// sub-micron-class rather than argued about.
+/// miter-refused pair. The cut is deliberately generous to the small class:
+/// the canonicalisation budget is `sqrt(2)` µm and one whole grid step on top
+/// of it is `2.4143` µm, so anything at or below **ten** of them is called
+/// grid-class rather than argued about. The label says `grid-class` and not
+/// `sub-micron` because the bound is 10 µm and a label has to be true.
 fn shortfall_class(millimetres: f64) -> &'static str {
     let magnitude = millimetres.abs();
     if magnitude <= 0.01 {
-        "sub-micron-class (<=10 um)"
+        "grid-class (<=10 um)"
     } else if magnitude < 0.1 {
         "intermediate (10 um .. 0.1 mm)"
     } else {
@@ -438,6 +523,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut joint: BTreeMap<(String, bool, bool, bool), usize> = BTreeMap::new();
     let mut released_rows = Vec::new();
     let mut released_pair_shortfalls: Vec<f64> = Vec::new();
+    let mut released_boundary_excursions: Vec<f64> = Vec::new();
     let mut p0_rows = Vec::new();
     let mut composite_readings_agree = true;
 
@@ -494,6 +580,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .or_insert(0) += 1;
                 let released = kernel && !miter;
                 let p0 = miter && !kernel;
+                // What this frontier was worth, whatever the authorities said
+                // about it: the incumbent it would have had to beat, read at
+                // the step of the skip, minus its own depth. Computed for every
+                // record and not only the released ones, because the largest
+                // row of the joint table turns out to be layouts *all three*
+                // authorities accept — and the only interesting question about
+                // that row is whether confirming them would have bought
+                // anything.
+                let gain = line.published_depth_mm - authority.raw_source_depth_mm;
                 if (*allowance - plan.census_allowance_mm).abs() < f64::EPSILON {
                     if released {
                         cell_released += 1;
@@ -509,14 +604,53 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let wants_census = (*allowance - plan.census_allowance_mm).abs() < f64::EPSILON
                     && (released || p0 || census_positions.contains(&position));
                 if wants_census {
-                    let kernel_census =
-                        census(&cell.label, &pieces, &placements, settings, plan.report_top)
+                    // `usize::MAX`, and `trim` afterwards, because `census`'s
+                    // `report_top` argument *reduces the row lists it returns*
+                    // — and the comparison below reads those lists. Asking for
+                    // a trimmed census and then comparing it finds only the
+                    // disagreements that happened to survive the trim. A first
+                    // pass of this driver passed `report_top` straight in and
+                    // attributed 2 pair rows and 7 boundary rows across the
+                    // whole corpus; the full scan finds 53 and 70. The layout
+                    // verdicts were never affected — they come from
+                    // `wired_verdicts` — but the attribution was nearly empty.
+                    // This is `round_envelope_battery`'s own order, and `trim`'s
+                    // own doc comment says why it is a separate function.
+                    let mut kernel_census =
+                        census(&cell.label, &pieces, &placements, settings, usize::MAX)
                             .map_err(|error| -> Box<dyn std::error::Error> { error.into() })?;
-                    let miter_scan =
-                        miter_census(&cell.label, &pieces, &placements, settings, plan.report_top)
+                    let mut miter_scan =
+                        miter_census(&cell.label, &pieces, &placements, settings, usize::MAX)
                             .map_err(|error| -> Box<dyn std::error::Error> { error.into() })?;
                     let pair_split = split(&kernel_census, &miter_scan);
+                    let boundary_split = split_boundaries(&kernel_census, &miter_scan);
                     let two_r = 2.0 * kernel_census.expansion_mm;
+                    let radius = kernel_census.expansion_mm;
+                    let mut boundary_attributed = Vec::new();
+                    for index in &boundary_split.kernel_admits_miter_refuses {
+                        let critical = kernel_census
+                            .boundaries
+                            .iter()
+                            .find(|row| row.index == *index)
+                            .and_then(|row| row.critical_radius_mm);
+                        let excursion = critical.map(|value| value - radius);
+                        if released {
+                            if let Some(value) = excursion {
+                                released_boundary_excursions.push(value);
+                            }
+                        }
+                        boundary_attributed.push(json!({
+                            "placementIndex": index,
+                            "pieceId": placements.get(*index).map(|p| p.piece_id.clone()),
+                            "kernelCriticalRadiusMm": critical,
+                            "radiusMm": radius,
+                            "excursionMm": excursion,
+                            "excursionMicron": excursion.map(|value| value * 1000.0),
+                            "class": excursion.map(shortfall_class),
+                            "materialSheetClearanceMm": sheet_material_clearance(
+                                &piece_by_id, &placements, settings, *index),
+                        }));
+                    }
                     let mut attributed = Vec::new();
                     for (first, second) in &pair_split.kernel_admits_miter_refuses {
                         let critical = kernel_census
@@ -544,6 +678,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 &piece_by_id, &placements, *first, *second),
                         }));
                     }
+                    // The other direction, attributed with the same three
+                    // quantities. A row here is the promotion rule's KILL
+                    // clause — the disc refusing a pair HEAD's authority
+                    // admits — so it gets numbers rather than a count, and the
+                    // number that decides whether it is a soundness failure or
+                    // a radius artefact is the material clearance: a pair whose
+                    // untouched source rings are closer than `2r` is one the
+                    // disc is *right* to refuse.
+                    let mut p0_attributed = Vec::new();
+                    for (first, second) in &pair_split.miter_admits_kernel_refuses {
+                        let critical = kernel_census
+                            .pairs
+                            .iter()
+                            .find(|row| (row.first_index, row.second_index) == (*first, *second))
+                            .and_then(|row| row.critical_two_r_mm);
+                        p0_attributed.push(json!({
+                            "placementIndices": [first, second],
+                            "kernelCriticalTwoRMm": critical,
+                            "twoRMm": two_r,
+                            "shortfallMm": critical.map(|value| value - two_r),
+                            "shortfallMicron": critical.map(|value| (value - two_r) * 1000.0),
+                            "miterEnvelopeIntersectionAreaMm2":
+                                miter_pair_intersection_area_mm2(
+                                    &pieces, &placements, settings, *first, *second).ok(),
+                            "materialClearanceMm": pair_material_distance(
+                                &piece_by_id, &placements, *first, *second),
+                        }));
+                    }
+                    // Only now, after every comparison the caller wanted has
+                    // been taken over the full scan.
+                    trim(&mut kernel_census, plan.report_top);
+                    trim(&mut miter_scan, plan.report_top);
                     census_json = json!({
                         "allowanceMm": allowance,
                         "expansionMm": kernel_census.expansion_mm,
@@ -561,7 +727,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             pair_split.miter_admits_kernel_refuses.len(),
                         "miterAdmitsKernelRefusesRows":
                             pair_split.miter_admits_kernel_refuses,
+                        "miterAdmitsKernelRefusesAttributed": p0_attributed,
                         "kernelAdmitsMiterRefusesAttributed": attributed,
+                        "boundaries": {
+                            "bothAdmit": boundary_split.both_admit,
+                            "bothRefuse": boundary_split.both_refuse,
+                            "kernelAdmitsMiterRefuses":
+                                boundary_split.kernel_admits_miter_refuses.len(),
+                            "miterAdmitsKernelRefuses":
+                                boundary_split.miter_admits_kernel_refuses.len(),
+                            "miterAdmitsKernelRefusesRows":
+                                boundary_split.miter_admits_kernel_refuses,
+                            "kernelAdmitsMiterRefusesAttributed":
+                                boundary_attributed,
+                        },
                     });
                 }
                 allowance_rows.push(json!({
@@ -579,6 +758,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "released": released,
                     "kernelRefusesMiterAccepts": p0,
                     "rawSourceDepthMm": authority.raw_source_depth_mm,
+                    "gainOverIncumbentMm": gain,
+                    "wouldHavePublished": gain > 0.0,
                 }));
                 if released {
                     released_rows.push(json!({
@@ -588,7 +769,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         "allowanceMm": allowance,
                         "fingerprint": line.fingerprint,
                         "frontierDepthMm": line.frontier_depth_mm,
+                        "floorDepthMm": line.floor_depth_mm,
+                        "incumbentPublishedDepthMm": line.published_depth_mm,
+                        "rawSourceDepthMm": authority.raw_source_depth_mm,
+                        "gainOverIncumbentMm": gain,
+                        "wouldHavePublished": gain > 0.0,
                         "proxyCollisionPairs": line.collision_pairs,
+                        "proxyBoundaryViolations": line.boundary_violations,
+                        "miterMessage": wired.miter.clone().err(),
                     }));
                 }
                 if p0 {
@@ -608,6 +796,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "fingerprint": line.fingerprint,
                 "frontierDepthMm": line.frontier_depth_mm,
                 "floorDepthMm": line.floor_depth_mm,
+                "incumbentPublishedDepthMm": line.published_depth_mm,
                 "parentDepthMm": line.parent_depth_mm,
                 "proxyCollisionPairs": line.collision_pairs,
                 "proxyBoundaryViolations": line.boundary_violations,
@@ -627,8 +816,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "path": cell.path,
             "dumpedRecords": lines.len(),
             "distinctFingerprints": distinct,
-            "expectedSkips": cell.expected_skips,
-            "dumpIsWholeSkipPile": cell.expected_skips.map(|value| value == lines.len()),
+            "skipsSuppressed": cell.skips_suppressed,
+            "distinctExpected": cell.distinct_expected,
+            "dumpMatchesSinkTally": cell
+                .distinct_expected
+                .map(|value| value == lines.len() && distinct == lines.len()),
+            "duplicateSkips": match (cell.skips_suppressed, cell.distinct_expected) {
+                (Some(skips), Some(distinct_expected)) => {
+                    json!(skips.saturating_sub(distinct_expected))
+                }
+                _ => serde_json::Value::Null,
+            },
             "sampledRecords": records.len(),
             "censusRecords": census_positions.len(),
             "releasedAtCensusAllowance": cell_released,
@@ -637,16 +835,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }));
     }
 
-    let mut shortfalls = released_pair_shortfalls.clone();
-    shortfalls.sort_by(f64::total_cmp);
-    let median = if shortfalls.is_empty() {
-        serde_json::Value::Null
-    } else {
-        let middle = shortfalls.len() / 2;
-        json!(if shortfalls.len() % 2 == 1 {
-            shortfalls[middle]
+    let describe = |values: &[f64]| -> serde_json::Value {
+        let mut ordered = values.to_vec();
+        ordered.sort_by(f64::total_cmp);
+        let median = if ordered.is_empty() {
+            serde_json::Value::Null
         } else {
-            (shortfalls[middle - 1] + shortfalls[middle]) / 2.0
+            let middle = ordered.len() / 2;
+            json!(if ordered.len() % 2 == 1 {
+                ordered[middle]
+            } else {
+                (ordered[middle - 1] + ordered[middle]) / 2.0
+            })
+        };
+        json!({
+            "count": ordered.len(),
+            "median": median,
+            "min": ordered.first(),
+            "max": ordered.last(),
         })
     };
     let joint_rows = joint
@@ -687,12 +893,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "releasedLayoutCount": released_rows.len(),
         "kernelRefusesMiterAcceptsLayouts": p0_rows,
         "kernelRefusesMiterAcceptsCount": p0_rows.len(),
-        "releasedPairExcursionMm": {
-            "count": released_pair_shortfalls.len(),
-            "median": median,
-            "min": shortfalls.first(),
-            "max": shortfalls.last(),
-        },
+        "releasedPairExcursionMm": describe(&released_pair_shortfalls),
+        "releasedBoundaryExcursionMm": describe(&released_boundary_excursions),
         "compositeReadingsAgree": composite_readings_agree,
         "cells": cell_rows,
     });
