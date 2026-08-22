@@ -1,0 +1,66 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "two-process-fixed-work-smoke",
+ "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_7f77514b-f9a-1/target/release/examples/overlap_ics_benchmark",
+ "proposalBudget": 200000,
+ "s0": {
+  "pins": {
+   "placementCount": 61,
+   "rawSourceDepthMm": 150.16451,
+   "phiBits": 0,
+   "twoRMicron": 5000.0,
+   "pairClearanceMm": 5.0,
+   "kernelExclusiveValid": true,
+   "contractValid": true,
+   "repairRows": 0,
+   "repairDepthGivebackMm": 0.0
+  },
+  "twoProcess": {
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "474722b7e62f2aba3d7ad3a5ec84ce73e8f98cb988d3b75f476b046a128d0598",
+   "digestB": "474722b7e62f2aba3d7ad3a5ec84ce73e8f98cb988d3b75f476b046a128d0598",
+   "strippedFields": [
+    "wall"
+   ],
+   "bitIdentical": true
+  },
+  "pass": true
+ },
+ "s1": {
+  "measured": {
+   "lockedWmm": 150.16547,
+   "perturbationMm": 0.5,
+   "perturbationDeg": 2.0,
+   "perturbedPoseDigest": "79a26aaf44fdef2d467819934744c8c2fd8edb1e2245d0bd4dbcba4441357a2c",
+   "entryRawPhi": 433.4919406020829,
+   "finalRawPhi": 0.0004482304876309415,
+   "finalMaxViolationMm": 0.012634958179553735,
+   "finalRawDepthMm": 150.1729903315535,
+   "republished": false,
+   "publishedRawDepthMm": null,
+   "maxRepairMm": 0.0,
+   "maxGivebackMm": 0.0,
+   "invalidPublications": 0,
+   "exactCheckpoints": 0
+  },
+  "twoProcess": {
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "2a8e9aee85c8f2be12d1eadf0be602f6342b46f0ac08e796553698641306986e",
+   "digestB": "2a8e9aee85c8f2be12d1eadf0be602f6342b46f0ac08e796553698641306986e",
+   "strippedFields": [
+    "wall"
+   ],
+   "bitIdentical": true
+  },
+  "invariantsHold": true,
+  "pass": false
+ },
+ "SMOKE_PASS": false,
+ "INVARIANTS_PASS": true
+}

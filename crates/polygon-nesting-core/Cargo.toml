@@ -522,6 +522,30 @@ round-envelope-kernel = []
 # asserts that rather than asserting this comment. See
 # docs/experiments/skip-pile-diagnostic/.
 skip-pile-dump = ["compression-schedule"]
+# The overlap-tolerant continuous engine (locked-strip-then-shrink ICS), as
+# specified by docs/overlap-ics-converged-spec.md and Sol review 14 Round 2 §4.
+#
+# It is a *search* module that never quantizes a move: continuous `f64`
+# `(x, y, theta)` over the unoffset source material, a signed convex gap as the
+# only overlap measure, and exact geometry consulted **only** when a state is
+# offered for publication. The integer round kernel is the publication judge and
+# never participates in the continuous measure - which is why this feature
+# implies `round-envelope-kernel` (the Exclusive pair/boundary predicates at the
+# request's own radius) and `fast-contract-validator` (an acceleration of the
+# same final contract verdict, never a different one).
+#
+# It must NOT imply `jagua-experimental`, `compression-schedule`, or anything in
+# the relaxed/coordinator stack: the Chinese wall of this campaign is that
+# `jagua-rs` stays out of the resolved dependency tree, and
+# docs/experiments/overlap-ics/drivers/fast.sh fails the iteration if
+# `cargo tree --features overlap-ics` ever names it.
+#
+# Off by default and reachable from nothing in `src/` outside its own module:
+# the only driver is `examples/overlap_ics_benchmark.rs`, whose
+# `required-features` are exactly this one. No portfolio route, no
+# `ExplorationKernel`, no `GeneralRelaxedOutcome.result` - and none of those
+# until the Round-2 gate in the converged spec passes.
+overlap-ics = ["round-envelope-kernel", "fast-contract-validator"]
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }
@@ -586,3 +610,15 @@ required-features = ["round-envelope-kernel", "import-gate-shadow"]
 name = "skip_pile_score"
 path = "examples/skip_pile_score.rs"
 required-features = ["round-envelope-kernel", "import-gate-shadow"]
+
+# The overlap-ICS vertical slice's only driver. An example for the same reason
+# the four above are examples - the measurement has to happen in a release
+# build, and nothing in the shipped crate may depend on it - and it carries
+# exactly one required feature, which is the Chinese wall in the dependency
+# graph: `overlap-ics` implies `round-envelope-kernel` and
+# `fast-contract-validator` and nothing else, so this binary cannot be built
+# with `jagua-experimental` by accident. See docs/experiments/overlap-ics/.
+[[example]]
+name = "overlap_ics_benchmark"
+path = "examples/overlap_ics_benchmark.rs"
+required-features = ["overlap-ics"]

@@ -7870,3 +7870,89 @@ any schedule or parallel work, Round 1 single-thread with its own kill,
 Round 2's 168.484@10s as the family's life-or-death line. Consultations
 verbatim: docs/sol-review-14-the-overlap-engine-design.md,
 docs/grok-review-9-the-overlap-engine-design.md.
+
+## Gate 0: the vertical slice is sound and fast, the field has a 0.25 mm basin, and three fatal cells stop the round
+
+The engine of docs/overlap-ics-converged-spec.md exists and runs, behind
+`overlap-ics = ["round-envelope-kernel","fast-contract-validator"]` and an
+example-only driver: continuous `f64` poses over the unoffset source material,
+a streamed allocation-free signed convex gap as the only overlap measure,
+damped deterministic PGS with continuous θ from the first sweep, guided integer
+weights, one topology jump, and a publication path of continuous rings ->
+`GridSet::of` -> request-scoped Exclusive at r=2.500 allowance 0 -> frozen-θ
+same-strip ≤4n-row ≤16 µm repair -> the untouched contract validator ->
+`best_exact`. `homotopy.rs` is a stub, deliberately: every Gate-0 cell runs at a
+locked strip, because a schedule that bisects toward a reachable target would
+have turned this round's three failures into slow successes.
+
+**Three of the six fatal cells fail: S1, C175, the triangle-20 canary. Gate 0
+is STOP, and no schedule or parallel work follows it.**
+
+What passed is not small. **S0** reproduces the pin exactly — 61 placements,
+raw source depth **150.16451**, `phi.to_bits() == 0` at c_pair 5.0, Exclusive
+accepts at `two_r = 5000`, the contract accepts, zero repair, zero giveback —
+so the measure does not lie about a known-legal layout and the whole
+contract/radius wiring is fixed in place. **Numeric soundness** passes at 1,000
+and again at 10,000 states with a second implementation as the oracle: **zero**
+proxy-feasible/exact-invalid states outside the 4 µm band (worst deficit 0 µm),
+**zero** containment false-feasible on 589 independently detected containment
+states, **zero** incremental-versus-cold mismatches, and 5001/5001 force
+correlation on the population the spec defines. **Throughput** clears every
+kill by 5x to 10x: cold mixed-61 Φ **40.5 µs** against 200, one moved-piece row
+rebuild **1.358 µs** against 20, **6.83 M** convex-cell gap evals/s against 1 M,
+and **987,861** complete piece proposals projected into eight seconds against
+100,000. Sol review 14 §6's two named ways to waste the month — a fast field
+that goes nowhere, a good field that cannot run often enough — the second one
+is closed.
+
+The failures all have one shape, and it is not the one the designers feared
+most. Φ falls by two to four orders of magnitude, the **pair** rows clear, and
+the trajectory stalls tens to hundreds of micrometres outside the publication
+band with the residual in **boundary** rows. The triangle-20 canary states it
+without ambiguity: **zero active pair rows** — all 190 pairs clear the 5.0 mm
+contract — 5 boundary rows violated by at most **117.6 µm**, and the layout's
+own depth at 70.602 against a locked 70.742, so **140 µm of strip is unused**.
+A single rigid translation would legalize it, and this move set cannot express
+one: it moves one piece per proposal and accepts only a strict decrease in that
+piece's own incident guided Φ, so a layout that is collectively 0.12 mm too low
+is jammed. S1 misses by **12.6 µm** of `max_g` against a 4 µm band and 7.5 µm
+of depth against the locked 150.16547, unchanged from 200 K to 2 M proposals;
+widening the attempt band to 16 µm still produces zero checkpoints, because the
+blocker is the strip gate and the repair machinery is never reached. C175
+returns **0 of 3** strict children from the 0.10 (D₀−L) shock, at `max_g`
+2.10/2.24/2.16 mm, inside its two solver seconds.
+
+The basin sweep is the round's most useful measurement. Perturb the S0 pin and
+descend at the locked W: at **0.005, 0.020, 0.050, 0.100 and 0.250 mm** (with
+0.02–1.0° of rotation) the engine drives Φ to **exactly 0.0** and republishes a
+dual-valid child inside the strip, with repair ≤ **6 µm** against a 16 µm cap
+and giveback ≤ **2.93 µm** against a 50 µm cap. At 0.5 mm / 2° it does not. So
+the whole vertical slice works end to end — descent, canonicalization, both
+exact authorities, bounded µm repair, protected incumbent, no millimetre-scale
+legalization anywhere — and the field has a basin between **0.25 mm and 0.5 mm**
+of SE(2) displacement on a critically packed 61-piece layout. That is the
+answer to Sol review 14 §6's risk: the deepest-cell witness field *is* a useful
+navigation field, over a distance the specified move set cannot cross.
+
+Two defects the battery found and this round fixed, both of the kind a
+falsifier battery exists to surface: a converged state was being counted as a
+stall, so a trajectory at Φ = 0 eventually relocated a piece out of a feasible
+layout (the 0.005 mm row was driven from Φ = 0 back to **Φ = 142.58** by its
+own escape mechanism); and an unchanged state was re-checkpointed forever,
+because the attempt gate compares the proxy depth while repair can give back
+more than the 1 µm the gate asks for — one basin row spent **3,266** exact
+checkpoints republishing the identical layout. One knob moved on measurement:
+the topology jump commits only when it improves guided Φ, which the spec calls
+a KNOB and which is **200x** closer on S1 than the unconditional reading
+(0.012635 mm versus 2.552630 mm). Neither setting changes the verdict.
+
+The FAST tier is committed and runs in minutes:
+`docs/experiments/overlap-ics/drivers/fast.sh` — default-build compile check,
+`jagua-rs` absence in the `overlap-ics` feature tree, the module's 23 unit
+vectors including both oracles, the three pinned vector suites, the 1,000-state
+corpus, and the two-process fixed-work smoke. It exits **1** today, on S1's
+mechanism clause alone; its invariant clauses all hold and both smoke cells are
+**bit-identical across two processes** after stripping one named `wall` field.
+A FAST tier that went green while Gate 0 said STOP would be the lie the
+two-tier discipline exists to prevent. Evidence, drivers and the full verdict
+table: docs/experiments/overlap-ics/.

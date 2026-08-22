@@ -22,6 +22,13 @@ pub mod general_relaxed;
 pub mod import_gate;
 pub mod kernel;
 pub mod layout_scorer;
+/// The overlap-tolerant continuous engine: locked-strip-then-shrink ICS over
+/// continuous `f64` poses, with the integer round kernel as publication judge
+/// only. Compiled only under `overlap-ics`; nothing in `src/` outside it names
+/// this module, and it publishes nothing into any production route. See
+/// docs/overlap-ics-converged-spec.md.
+#[cfg(feature = "overlap-ics")]
+pub mod overlap_ics;
 pub mod placement_scorer;
 /// The anytime portfolio coordinator. Requires the deep operators, so it is
 /// compiled only where they are.

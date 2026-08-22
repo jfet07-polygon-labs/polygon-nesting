@@ -1,0 +1,122 @@
+{
+  "cell": "triangle",
+  "constructor": {
+    "halfShockMm": 0.14810000000000018,
+    "lowerScaleMm": 70.0,
+    "placementCount": 20,
+    "placementFingerprint": "b3dc78a7f26f0402f41199b1c2aa2b6b361b6134288a55fdd475ffcaf514830f",
+    "rawSourceDepthMm": 72.962,
+    "shockMm": 2.219999999999999,
+    "shockResidual": 0.1
+  },
+  "contract": {
+    "expansionMm": 2.75,
+    "flatteningSagToleranceMm": 0.25,
+    "pairClearanceMm": 5.5,
+    "searchOffsetAllowanceMm": 0.002,
+    "sheetEdgeClearanceMm": 5.25,
+    "sheetInsetMm": 2.5,
+    "twoRMicron": 5500.0
+  },
+  "entry": {
+    "guidedPhi": 2.720747437232599,
+    "lockedTargetMm": 70.742,
+    "maxViolationMm": 0.36883370433705576,
+    "rawPhi": 2.720747437232599,
+    "rawSourceDepthMm": 70.48286549664516
+  },
+  "executableSha256": "68fa7cf09b835a7a6fd11fe01a3ca46d8e81d60c468450e21838c7ee83bc9d98",
+  "experiment": "overlap-ics",
+  "finalPoseDigest": "7fa09159985d5a7188026fd1a318483de5658e840b51f56097f66d4167d08328",
+  "instrument": "crates/polygon-nesting-core/src/search/overlap_ics/",
+  "lowerScaleMm": 70.0,
+  "outcome": {
+    "boundaryEdgeViolations": {
+      "activeEdgeRows": 40,
+      "maxEdgeViolationMm": 0.18000152920688883
+    },
+    "census": {
+      "activeEdgeRows": 40,
+      "activePairRows": 0,
+      "maxEdgeViolationMm": 0.18000152920688883,
+      "maxGuidedPenalty": 1667,
+      "maxPairViolationMm": 0.0
+    },
+    "exactCheckpoints": [],
+    "firstStrictChildProposal": null,
+    "guidedStalls": 66660,
+    "incumbent": {
+      "constructorFingerprint": "b3dc78a7f26f0402f41199b1c2aa2b6b361b6134288a55fdd475ffcaf514830f",
+      "fingerprintDiffersFromConstructor": false,
+      "fromConstructor": true,
+      "placementCount": 20,
+      "placementFingerprint": "b3dc78a7f26f0402f41199b1c2aa2b6b361b6134288a55fdd475ffcaf514830f",
+      "rawSourceDepthMm": 72.962
+    },
+    "invalidPublications": 0,
+    "jumps": 1,
+    "jumpsImprovingGuided": 0,
+    "proxy": {
+      "guidedPhi": 2157.431603011534,
+      "maxViolationMm": 0.18000152920688883,
+      "rawPhi": 1.2938120557687927,
+      "rawSourceDepthMm": 70.67194655133265
+    },
+    "proxySamples": [
+      {
+        "guidedPhi": 2.720747437232599,
+        "maxViolationMm": 0.36883370433705576,
+        "proposalOrdinal": 0,
+        "rawPhi": 2.720747437232599,
+        "rawSourceDepthMm": 70.48286549664516,
+        "targetDepthMm": 70.742
+      },
+      {
+        "guidedPhi": 2157.431603011534,
+        "maxViolationMm": 0.18000152920688883,
+        "proposalOrdinal": 1999984,
+        "rawPhi": 1.2938120557687927,
+        "rawSourceDepthMm": 70.67194655133265,
+        "targetDepthMm": 70.742
+      }
+    ],
+    "publications": 0,
+    "qualitySeries": [],
+    "repairMaxDisplacementMm": 0.0,
+    "repairMaxGivebackMm": 0.0,
+    "sweeps": 99996,
+    "work": {
+      "acceptedMoves": 66863,
+      "broadPhaseRejects": 567328391,
+      "convexCellGapQueries": 95,
+      "exactCheckpoints": 0,
+      "jumpProposals": 16,
+      "pairRowProbes": 567328486,
+      "pieceProposals": 1999984,
+      "poseTransforms": 29859404,
+      "repairRows": 0,
+      "weightUpdates": 66660
+    }
+  },
+  "request": {
+    "normalizeAxes": false,
+    "path": "tests/fixtures/triangle-20/2000x2700-compact/request.json",
+    "pieceCount": 20,
+    "sha256": "811595741286ced9fda7a97fd7c6f6c9e0bf7ba24aef186f97fe4f40f5b923d4",
+    "sheetLongAxisMm": 2700.0,
+    "sheetShortAxisMm": 2000.0
+  },
+  "rotationFrozen": true,
+  "seed": 0,
+  "shock": {
+    "affineFactor": 0.9483264280061452,
+    "shockDeg": 1.0,
+    "shockMm": 0.25,
+    "shockedPoseDigest": "c0e8813c3e4979b6d965b26685f1e6c52a966102979ff37e78f713956a4862f3"
+  },
+  "wall": {
+    "constructorSeconds": 0.008438083,
+    "solverSeconds": 3.90496136,
+    "totalSeconds": 3.913447895
+  }
+}
