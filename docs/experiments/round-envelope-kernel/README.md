@@ -59,7 +59,8 @@ sheet and to be pairwise disjoint.
 `crates/polygon-nesting-core/src/validation/round_envelope.rs` is a second
 implementation of **that second half only**, with the miter join replaced by a
 disc. The material contract validator is untouched and remains the final
-authority; §6 says how that is enforced rather than asserted.
+authority in every mode; §7's file table is what says so — the wire point is
+one branch, and the contract half is not inside it.
 
 ### It is exact, and that is a correction to Sol's specification rather than a shortcut around it
 
@@ -554,6 +555,11 @@ the example.
   nearest-micrometre snapping and convex combination. The battery's largest
   observed deviation, 1.970 µm on a *floored* comparison, is consistent with it
   and does not test it independently.
+* **"Bit-identical across platforms" is a derivation, not a measurement.** It
+  follows from the predicates being integer comparisons with no division and no
+  `f64`, and this round ran on x86_64 only. What *is* measured is bit-identity
+  across two processes and across two binaries with different feature sets, on
+  this machine.
 * **The parallel confirmation path is not parallel when the kernel decides.**
   `validate_and_measure_placements_parallel` routes through the same wire point
   and the kernel's own loops are serial. On the measured corpus the kernel's
