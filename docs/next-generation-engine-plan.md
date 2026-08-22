@@ -8090,3 +8090,33 @@ rows by side, and if two of them were on opposite sides no single translation
 exists. It is a reading, not a measurement, and deciding it needs a per-edge
 census the instrument does not emit. Evidence and drivers:
 docs/experiments/overlap-ics/gate0-verification/.
+
+## The autopsy of Gate 0: the STOP survives as process, dies as verdict
+
+Both refuters, independently, from the code: no fatal cell is presently
+paradigm evidence. triangle-20 is a clearance-split defect (the locked-strip
+top is a depth target, not a sheet edge — one wrong helper reused at seven
+sites, including a homotopy floor that manufactures bottom residuals and a
+jump box that collapses all 16 relocations to one midpoint). The jump was
+neutered three independent ways against the converged spec (commit default
+inverted; "local sweep" = four self-moves of the relocated piece; the
+one-shot allowance spent on discarded evaluations) — every fatal cell shows
+"evaluated 16, installed 0". S1's fixed point is real but is Gauss-Seidel
+strict-decrease + GLS weight equalization on a tied 4-row active set, not a
+bookkeeping bug (the layer-2 candidate (c) refuted line-by-line by both);
+whether the FAMILY dies there is answerable only after a scale-matched
+micro-jump exists. C175 as run was not the pre-committed cell (perturbation
+applied after compression, entry 0.8 mm past target; jump a no-op; only 1.4
+of the 2 licensed seconds used). Sol adds three latent defects Grok did not
+name (zero-normal at exact contact, depth-only unchanged-state guard, repair
+slack from uncorrected geometry); Grok adds the collapsed jump box and the
+allowance-spend defect. The frozen fix list, the two arbitrations
+(micro-ball radius max(4*max_g, ladder_top) translational with rho/R
+angular; C175 budget 240k derived from the 2-second clause at measured
+throughput), and the pre-committed re-run reading are in the fix-round brief
+and in both review docs. The re-run's only admissible paradigm outcomes:
+S1 still frozen after a correct micro-jump = STOP for the single-piece
+strict-decrease MEMBER (a chain solver is a new decision, not a retrofit);
+C175 0/3 after a real installed jump = the family's separator fails.
+Reviews verbatim: docs/sol-review-15-the-autopsy-of-gate-0.md,
+docs/grok-review-10-the-autopsy-of-gate-0.md.
