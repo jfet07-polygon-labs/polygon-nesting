@@ -94,4 +94,4 @@ warning: constant `SCHEDULE_RUNGS` is never used
      |       ^^^^^^^^^^^^^^
 
 warning: `polygon-nesting-core` (lib) generated 10 warnings (run `cargo fix --lib -p polygon-nesting-core` to apply 1 suggestion)
-    Finished `release` profile [optimized] target(s) in 58.95s
+    Finished `release` profile [optimized] target(s) in 58.67s

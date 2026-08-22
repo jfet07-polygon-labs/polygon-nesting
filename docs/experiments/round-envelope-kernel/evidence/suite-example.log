@@ -94,29 +94,29 @@ warning: constant `SCHEDULE_RUNGS` is never used
 
 warning: `polygon-nesting-core` (lib) generated 10 warnings (run `cargo fix --lib -p polygon-nesting-core` to apply 1 suggestion)
    Compiling polygon-nesting-core v0.3.0 (/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core)
-    Finished `release` profile [optimized] target(s) in 4.61s
+    Finished `release` profile [optimized] target(s) in 4.57s
      Running unittests examples/general_request_benchmark.rs (target/release/examples/general_request_benchmark-4d6475dc99068bdf)
 
 running 19 tests
+test tests::current_request_settings_are_authoritative ... ok
 test tests::envelope_depth_convention_is_margin_plus_allowance_above_the_source ... ok
 test tests::parent_fixture_mismatched_settings_block_hard_errors ... ok
-test tests::parent_fixture_pins_the_search_offset_allowance_when_it_records_one ... ok
-test tests::parent_fixture_depth_accepts_every_reporting_convention_and_nothing_else ... ok
-test tests::current_request_settings_are_authoritative ... ok
+test tests::persistent_vacancy_unrun_reason_flags_missing_population_block ... ok
 test tests::persistent_vacancy_unrun_reason_defaults_message_when_reason_absent ... ok
 test tests::parent_fixture_placing_an_unknown_piece_hard_errors ... ok
-test tests::persistent_vacancy_unrun_reason_flags_missing_population_block ... ok
-test tests::persistent_vacancy_unrun_reason_flags_unattempted_arm ... ok
-test tests::parent_fixture_reported_depth_may_exceed_but_never_understate_the_layout ... ok
-test tests::persistent_vacancy_unrun_reason_is_none_when_arm_ran ... ok
-test tests::physical_axis_normalization_keeps_subgrid_source_violations_visible ... ok
 test tests::parent_fixture_without_settings_block_loads_unchanged ... ok
+test tests::physical_axis_normalization_keeps_subgrid_source_violations_visible ... ok
 test tests::physical_height_short_axis_is_rotated_into_normalized_x ... ok
-test tests::parent_fixture_matching_settings_block_loads ... ok
 test tests::placement_fingerprint_labels_are_told_apart_from_digests ... ok
-test tests::parent_fixture_placement_fingerprint_is_recomputed_when_it_is_a_digest ... ok
+test tests::persistent_vacancy_unrun_reason_is_none_when_arm_ran ... ok
+test tests::persistent_vacancy_unrun_reason_flags_unattempted_arm ... ok
 test tests::pressure_model_argument_is_independent_from_angle_seed_policy ... ok
+test tests::parent_fixture_reported_depth_may_exceed_but_never_understate_the_layout ... ok
+test tests::parent_fixture_pins_the_search_offset_allowance_when_it_records_one ... ok
+test tests::parent_fixture_placement_fingerprint_is_recomputed_when_it_is_a_digest ... ok
+test tests::parent_fixture_matching_settings_block_loads ... ok
 test tests::parent_fixture_independent_depth_is_recomputed_from_its_placements ... ok
+test tests::parent_fixture_depth_accepts_every_reporting_convention_and_nothing_else ... ok
 
 test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 

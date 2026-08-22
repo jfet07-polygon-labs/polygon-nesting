@@ -1,3 +1,4 @@
+   Compiling polygon-nesting-core v0.3.0 (/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core)
 warning: unused imports: `KernelPose` and `LEGACY`
   --> crates/polygon-nesting-core/src/search/general_relaxed.rs:48:24
    |
@@ -532,4 +533,4 @@ warning: method `resolved_pair_collides` is never used
       |        ^^^^^^^^^^^^^^^^^^^^^^
 
 warning: `polygon-nesting-core` (lib) generated 78 warnings (run `cargo fix --lib -p polygon-nesting-core` to apply 1 suggestion)
-    Finished `release` profile [optimized] target(s) in 0.04s
+    Finished `release` profile [optimized] target(s) in 37.90s

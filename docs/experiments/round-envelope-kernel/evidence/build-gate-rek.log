@@ -1,3 +1,4 @@
+   Compiling polygon-nesting-core v0.3.0 (/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core)
 warning: unused variable: `settings`
     --> crates/polygon-nesting-core/src/search/general_persistent_vacancy.rs:4519:5
      |
@@ -93,4 +94,4 @@ warning: constant `SCHEDULE_RUNGS` is never used
      |       ^^^^^^^^^^^^^^
 
 warning: `polygon-nesting-core` (lib) generated 10 warnings (run `cargo fix --lib -p polygon-nesting-core` to apply 1 suggestion)
-    Finished `release` profile [optimized] target(s) in 0.04s
+    Finished `release` profile [optimized] target(s) in 59.25s

@@ -25,7 +25,7 @@ and §7 says exactly what this round hands it.
 | every currently canonical-valid layout stays valid | all | **`union`: 17/17 layouts at all three radii, 0 rows lost of 96 441.** `exclusive`: 13 rows lost, every one at exactly **−1 µm** | ⚠️ see §3 |
 | the Sparrow differential's four pre-committed expectations | all | **4 of 4** | ✅ |
 | the ±1 µm sweeps agree with the exact material distance, monotonically | all | **30 of 30 monotone, 0 steps disagreeing outside the canonicalization band, flip within one grid step on 30 of 30** | ✅ |
-| confirmation-class cost ≤ 1.25x | ≤1.25 | envelope half **0.122x** median; whole confirmation **0.905x** (`exclusive`) and **1.008x** (`union`); with `fast-contract-validator` armed, **0.471x** and **1.048x** | ✅ |
+| confirmation-class cost ≤ 1.25x | ≤1.25 | envelope half **0.121x** median; whole confirmation **0.904x** (`exclusive`) and **1.005x** (`union`); with `fast-contract-validator` armed, **0.470x** and **1.046x** | ✅ |
 | two-process determinism on every battery document | byte-identical | **identical**, and identical again across a *second binary* built with a different feature set | ✅ |
 
 The one qualified row is the round's main finding and it is not a defect in the
@@ -44,7 +44,7 @@ kernel is never the permissive one anywhere in this battery.
 `KernelMode::Union` — admit what either half admits — closes the row by
 construction and is the mode a promotion would be asked for. It is Sol review 12
 §3.2's *"serve un ibrido"* and Sol review 8's internal-filter architecture, and
-it costs 1.008x of a HEAD confirmation.
+it costs 1.005x of a HEAD confirmation.
 
 ---
 
@@ -353,12 +353,12 @@ Those cells are flagged and the medians are taken over them alone.
 
 | quantity | HEAD (miter) | kernel (`exclusive`) | `union` |
 |---|---:|---:|---:|
-| **envelope half**, median ratio over 17 cells | 1.000 | **0.1223** | — |
-| envelope half, worst cell | 1.000 | 0.1356 | — |
-| **whole confirmation**, median over the 7 comparable cells | 1.000 | **0.905** | **1.008** |
-| whole confirmation, with `fast-contract-validator` armed | 1.000 | **0.471** | 1.048 |
+| **envelope half**, median ratio over 17 cells | 1.000 | **0.1207** | — |
+| envelope half, worst cell | 1.000 | 0.1337 | — |
+| **whole confirmation**, median over the 7 comparable cells | 1.000 | **0.904** | **1.005** |
+| whole confirmation, with `fast-contract-validator` armed | 1.000 | **0.470** | 1.046 |
 
-The envelope half is **8.2x cheaper**: it builds no offset at all, walks 290
+The envelope half is **8.3x cheaper**: it builds no offset at all, walks 290
 integer vertices instead of 377 floating-point ones, and its broad phase
 certifies 95.3% of pairs with four integer comparisons.
 
@@ -368,10 +368,10 @@ validator is the other 90% of a confirmation
 mode-34 confirmation's milliseconds in that loop). Arming
 `fast-contract-validator` — which is verdict-preserving, and §8's equivalence
 check says so on this round's own corpus — shrinks that half and the kernel's
-saving becomes **2.1x on a whole confirmation**: a median 0.8126 ms → 0.3737 ms per
+saving becomes **2.1x on a whole confirmation**: a median 0.8114 ms → 0.3708 ms per
 confirmation on the seven comparable cells.
 
-`union` costs 1.008x / 1.048x, because on the cells the kernel admits it *is*
+`union` costs 1.005x / 1.046x, because on the cells the kernel admits it *is*
 the kernel (0.46–0.48x with the certificate armed) and on the cells the kernel
 refuses it pays the kernel and then the miter. Both are inside the budget.
 

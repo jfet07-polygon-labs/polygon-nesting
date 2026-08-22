@@ -533,4 +533,4 @@ warning: method `resolved_pair_collides` is never used
       |        ^^^^^^^^^^^^^^^^^^^^^^
 
 warning: `polygon-nesting-core` (lib) generated 78 warnings (run `cargo fix --lib -p polygon-nesting-core` to apply 1 suggestion)
-    Finished `release` profile [optimized] target(s) in 38.03s
+    Finished `release` profile [optimized] target(s) in 38.01s

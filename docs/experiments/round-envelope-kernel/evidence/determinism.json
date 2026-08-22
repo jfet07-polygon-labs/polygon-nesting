@@ -2,7 +2,7 @@
   "experiment": "round-envelope-kernel",
   "step": "determinism, two processes, whole document less the timings",
   "binary": "/var/lib/t3/tmp/rek-battery-base",
-  "binarySha256": "76d6083d36ebb211d9f02e28d04e92639f256b675628cd178a5ce46d1234b7d6",
+  "binarySha256": "bdc537cba3fab74798057086be59aab905ce29a86bf9e20436cf702d2a315eca",
   "plan": "docs/experiments/round-envelope-kernel/drivers/battery-plan.json",
   "strippedFields": [
     "confirmationMiterMs",
@@ -24,17 +24,17 @@
     {
       "process": 0,
       "exit": 0,
-      "rawSha256": "d3222db53b6dfb3eb2d2394789ce44d56ed2b7641addfa3a8dd4f22d4876e20d",
-      "strippedSha256": "909959fa21174ef2e2d8e058a044facb34f486aa8f9cce39de380fb30ff690a9",
-      "bytes": 1073026,
+      "rawSha256": "c04612f1de4c1044ec68aa7e30d1b388ca3f66cb1d2283cac516db420957002e",
+      "strippedSha256": "525296fc8487bfd9b6c8cfb17f32b21bd544c61728628cd61b4eb4751c7d7cdd",
+      "bytes": 1073030,
       "stderr": ""
     },
     {
       "process": 1,
       "exit": 0,
-      "rawSha256": "abff5ced8f9dbf93a4d50915a6621a3c0539576b2e7596d98fb8c024782385b3",
-      "strippedSha256": "909959fa21174ef2e2d8e058a044facb34f486aa8f9cce39de380fb30ff690a9",
-      "bytes": 1073034,
+      "rawSha256": "16cb26790ccea5aad940603bfff5e39a09aa938bfe53c14f9f417840b94ca794",
+      "strippedSha256": "525296fc8487bfd9b6c8cfb17f32b21bd544c61728628cd61b4eb4751c7d7cdd",
+      "bytes": 1073018,
       "stderr": ""
     }
   ],
@@ -43,13 +43,13 @@
   "exitsZero": true,
   "provenanceStamp": {
     "binaries": {
-      "rek-battery-base": "76d6083d36ebb211d9f02e28d04e92639f256b675628cd178a5ce46d1234b7d6",
-      "rek-battery-fcv": "4a3212560ef6a62f6e30f5b19d3c6d7fe49747eb2c14c3f6f975cacac8f0d68b",
-      "bench-off": "63ba99a11299148ac22a9ab4d8b961ea1a243cd235713943ff31df8f151effe8",
-      "bench-on": "93b0a3a92430d1856454c4b5992c79471bb3de34f61ca8851075b9dfdd086e8d"
+      "rek-battery-base": "bdc537cba3fab74798057086be59aab905ce29a86bf9e20436cf702d2a315eca",
+      "rek-battery-fcv": "e904d9619159db8a35eb2b3013fe2f72aef6bef52b620cdfb7579c5ef40d301c",
+      "bench-off": "ba5f08275573a9e50b7403a04caba28abb280683d52b161f11bc6b39061c5e35",
+      "bench-on": "56690c5d7e6e752ff23f5a5134bd73cf783e7b7032d4983e6126c36d692951a6"
     },
     "binariesManifest": "docs/experiments/round-envelope-kernel/evidence/binaries.txt",
-    "commit": "e523c91b3471bcf6a6ac9c061a2b4e8e7b96304b",
+    "commit": "47def17f083e146bc56f9c5bf000be74377b1284",
     "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
     "python": "3.14.6"
   }

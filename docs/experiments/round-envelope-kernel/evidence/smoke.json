@@ -50,7 +50,7 @@
       "spec": "work=8000000,slots=4,cells=13:15:17:19,v3=1,rek=1",
       "exit": 0,
       "stderr": "",
-      "docDigest": "19085054a0870743a33a6eca22aa9213a496a946524b15a5b3d8a93b71a7465c",
+      "docDigest": "620f169dcb21741cd2dc535ded112d1580ca1ce5387dd29658b7e334c3f0bd58",
       "independentDepthsMm": []
     },
     {
@@ -78,13 +78,13 @@
   },
   "provenanceStamp": {
     "binaries": {
-      "rek-battery-base": "76d6083d36ebb211d9f02e28d04e92639f256b675628cd178a5ce46d1234b7d6",
-      "rek-battery-fcv": "4a3212560ef6a62f6e30f5b19d3c6d7fe49747eb2c14c3f6f975cacac8f0d68b",
-      "bench-off": "63ba99a11299148ac22a9ab4d8b961ea1a243cd235713943ff31df8f151effe8",
-      "bench-on": "93b0a3a92430d1856454c4b5992c79471bb3de34f61ca8851075b9dfdd086e8d"
+      "rek-battery-base": "bdc537cba3fab74798057086be59aab905ce29a86bf9e20436cf702d2a315eca",
+      "rek-battery-fcv": "e904d9619159db8a35eb2b3013fe2f72aef6bef52b620cdfb7579c5ef40d301c",
+      "bench-off": "ba5f08275573a9e50b7403a04caba28abb280683d52b161f11bc6b39061c5e35",
+      "bench-on": "56690c5d7e6e752ff23f5a5134bd73cf783e7b7032d4983e6126c36d692951a6"
     },
     "binariesManifest": "docs/experiments/round-envelope-kernel/evidence/binaries.txt",
-    "commit": "e523c91b3471bcf6a6ac9c061a2b4e8e7b96304b",
+    "commit": "47def17f083e146bc56f9c5bf000be74377b1284",
     "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
     "python": "3.14.6"
   }

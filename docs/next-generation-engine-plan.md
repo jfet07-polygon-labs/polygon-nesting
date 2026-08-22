@@ -7569,13 +7569,13 @@ canonical-valid layout (0 of 51 cells, all three radii), adds no false-accept
 surface beyond HEAD's own, and asks the cheap authority first. `rek=2`
 (exclusive) stays as the certified-exact measurement arm.
 
-**Economy.** The envelope half is **0.122x** median (8.2x cheaper, worst cell
-0.136x): no offset is built, 290 canonical integer vertices against the miter's
+**Economy.** The envelope half is **0.121x** median (8.3x cheaper, worst cell
+0.134x): no offset is built, 290 canonical integer vertices against the miter's
 377 and against the 20.6k of Gate A's inscribed shadow, and an integer box gap
-certifies 95.34% of pairs. A whole confirmation is 0.905x (exclusive) / 1.008x
+certifies 95.34% of pairs. A whole confirmation is 0.904x (exclusive) / 1.005x
 (union); with `fast-contract-validator` armed — the shipping-relevant
 configuration, since the contract half is ~90% of a confirmation — it is
-**0.471x**, a median 0.8126 → 0.3737 ms. Sol's ≤1.25x is met in every reading.
+**0.470x**, a median 0.8114 → 0.3708 ms. Sol's ≤1.25x is met in every reading.
 
 **Gates and suites.** All four pinned gates hit on a fresh feature-off build
 *and* on a build carrying the feature compiled but unarmed, with the two

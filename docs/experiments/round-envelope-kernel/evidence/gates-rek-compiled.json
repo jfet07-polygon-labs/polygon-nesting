@@ -19,7 +19,7 @@
         "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
       ],
       "hit": true,
-      "wallSeconds": 26.481608152389526,
+      "wallSeconds": 26.49136233329773,
       "docDigest": "11d4cd5ee27cba63909d42d5f0941842100ff27c676f1e53c172e06554df05f7"
     },
     "g2": {
@@ -29,7 +29,7 @@
       "exactValid": true,
       "contractValid": true,
       "hit": true,
-      "wallSeconds": 3.152794361114502,
+      "wallSeconds": 3.140723705291748,
       "docDigest": "ec485efc968998835cc13379ef9bb6b796758be9e0bf0a481b159ef9ee1e1f70"
     },
     "g3": {
@@ -39,7 +39,7 @@
       "exactValid": true,
       "contractValid": true,
       "hit": true,
-      "wallSeconds": 3.414706230163574,
+      "wallSeconds": 3.400192975997925,
       "docDigest": "4940fb0c98e7864b45378037d404e99eed3fd0c9444e35ab3b987b5cc8784d32"
     },
     "g4": {
@@ -49,20 +49,20 @@
       "exactValid": true,
       "contractValid": true,
       "hit": true,
-      "wallSeconds": 3.1122589111328125,
+      "wallSeconds": 3.092522382736206,
       "docDigest": "7b15179742ea91353a33e1451ee611d050e3e092294a954dce3dfb423f2bf30e"
     }
   },
   "ALL_PASS": true,
   "provenanceStamp": {
     "binaries": {
-      "rek-battery-base": "76d6083d36ebb211d9f02e28d04e92639f256b675628cd178a5ce46d1234b7d6",
-      "rek-battery-fcv": "4a3212560ef6a62f6e30f5b19d3c6d7fe49747eb2c14c3f6f975cacac8f0d68b",
-      "bench-off": "63ba99a11299148ac22a9ab4d8b961ea1a243cd235713943ff31df8f151effe8",
-      "bench-on": "93b0a3a92430d1856454c4b5992c79471bb3de34f61ca8851075b9dfdd086e8d"
+      "rek-battery-base": "bdc537cba3fab74798057086be59aab905ce29a86bf9e20436cf702d2a315eca",
+      "rek-battery-fcv": "e904d9619159db8a35eb2b3013fe2f72aef6bef52b620cdfb7579c5ef40d301c",
+      "bench-off": "ba5f08275573a9e50b7403a04caba28abb280683d52b161f11bc6b39061c5e35",
+      "bench-on": "56690c5d7e6e752ff23f5a5134bd73cf783e7b7032d4983e6126c36d692951a6"
     },
     "binariesManifest": "docs/experiments/round-envelope-kernel/evidence/binaries.txt",
-    "commit": "e523c91b3471bcf6a6ac9c061a2b4e8e7b96304b",
+    "commit": "47def17f083e146bc56f9c5bf000be74377b1284",
     "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
     "python": "3.14.6"
   }

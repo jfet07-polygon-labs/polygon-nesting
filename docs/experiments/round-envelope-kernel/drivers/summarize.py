@@ -181,6 +181,9 @@ def summarize(raw, fcv=None):
             "confirmationRatioMedianComparable": fcv["economy"][
                 "confirmationRatioMedianComparable"
             ],
+            "confirmationUnionRatioMedianComparable": fcv["economy"][
+                "confirmationUnionRatioMedianComparable"
+            ],
             "comparableCells": sum(
                 1 for row in fcv["economy"]["rows"] if row["confirmationComparable"]
             ),

@@ -246,10 +246,10 @@
   "outsideSweepFloorBudget": 0
  },
  "economy": {
-  "envelopeHalfRatioMedian": 0.12230655751488607,
-  "envelopeHalfRatioMax": 0.13562818000255492,
-  "confirmationRatioMedianComparable": 0.905315805538306,
-  "confirmationUnionRatioMedianComparable": 1.0077717615226338,
+  "envelopeHalfRatioMedian": 0.12068462639868484,
+  "envelopeHalfRatioMax": 0.13368353674673955,
+  "confirmationRatioMedianComparable": 0.9042922562591235,
+  "confirmationUnionRatioMedianComparable": 1.0050853241697146,
   "comparableCells": 7,
   "cells": 17
  },

@@ -3,13 +3,6 @@ stamped docs/experiments/round-envelope-kernel/evidence/battery.json
 stamped docs/experiments/round-envelope-kernel/evidence/determinism.json
 stamped docs/experiments/round-envelope-kernel/evidence/gates-rek-base.json
 stamped docs/experiments/round-envelope-kernel/evidence/gates-rek-compiled.json
-stamped docs/experiments/round-envelope-kernel/evidence/rek-base-g1.json
-stamped docs/experiments/round-envelope-kernel/evidence/rek-base-g2.json
-stamped docs/experiments/round-envelope-kernel/evidence/rek-base-g3.json
-stamped docs/experiments/round-envelope-kernel/evidence/rek-base-g4.json
-stamped docs/experiments/round-envelope-kernel/evidence/rek-compiled-g1.json
-stamped docs/experiments/round-envelope-kernel/evidence/rek-compiled-g2.json
-stamped docs/experiments/round-envelope-kernel/evidence/rek-compiled-g3.json
-stamped docs/experiments/round-envelope-kernel/evidence/rek-compiled-g4.json
 stamped docs/experiments/round-envelope-kernel/evidence/smoke.json
+stamped docs/experiments/round-envelope-kernel/evidence/suites.json
 stamped docs/experiments/round-envelope-kernel/evidence/summary.json

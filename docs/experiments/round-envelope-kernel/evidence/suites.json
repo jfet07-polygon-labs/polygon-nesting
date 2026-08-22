@@ -81,5 +81,17 @@
       "knownFlaky": "not present",
       "explicitFailures": 0
     }
-  ]
+  ],
+  "provenanceStamp": {
+    "binaries": {
+      "rek-battery-base": "bdc537cba3fab74798057086be59aab905ce29a86bf9e20436cf702d2a315eca",
+      "rek-battery-fcv": "e904d9619159db8a35eb2b3013fe2f72aef6bef52b620cdfb7579c5ef40d301c",
+      "bench-off": "ba5f08275573a9e50b7403a04caba28abb280683d52b161f11bc6b39061c5e35",
+      "bench-on": "56690c5d7e6e752ff23f5a5134bd73cf783e7b7032d4983e6126c36d692951a6"
+    },
+    "binariesManifest": "docs/experiments/round-envelope-kernel/evidence/binaries.txt",
+    "commit": "47def17f083e146bc56f9c5bf000be74377b1284",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "python": "3.14.6"
+  }
 }
