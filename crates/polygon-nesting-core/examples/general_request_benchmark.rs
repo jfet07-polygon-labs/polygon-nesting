@@ -314,6 +314,78 @@ fn unpinned_vacancy_parent_requested() -> bool {
         .unwrap_or(false)
 }
 
+/// The name of the round-envelope kernel's **second** arming door: the one the
+/// pinned-parent single-mode path can reach.
+///
+/// `rek` is a *portfolio spec* key, so it arms only the v3 coordinator - and
+/// `run_portfolio` runs from the request alone, with no pinned parent and no
+/// fixture anywhere. Sol review 12 §3.2's remaining kill is written on twelve
+/// pinned parents driven through one mode-34 slice each, which is the
+/// `improve_complete_layout_with_pinned_vacancy_parent` path and never reaches
+/// the coordinator's RAII guard. Without this door that gate cannot be run at
+/// all; with it, the arm and the control are the same binary and the same
+/// command differing in one environment variable, which is what a matched gate
+/// wants.
+///
+/// It is an environment variable for the reason profiling and the unpinned
+/// parent are: the positional argument list is a pinned contract that replay
+/// drivers depend on, and the meaning of a replayed command may not change.
+///
+/// See `docs/experiments/round-envelope-gate/`.
+const ROUND_ENVELOPE_KERNEL_ENV: &str = "POLYGON_NESTING_ROUND_ENVELOPE_KERNEL";
+
+/// Which mode the environment asks for, strictly parsed.
+///
+/// `0`/`off`, `1`/`union`, `2`/`exclusive` - [`KernelMode::parse`]'s own
+/// vocabulary, refusing anything else rather than falling back to a boolean, so
+/// a driver that mistypes the mode gets a refusal instead of a different arm
+/// under its label. Absent is [`KernelMode::Off`], which is what the process
+/// was already doing.
+#[cfg(feature = "round-envelope-kernel")]
+fn round_envelope_kernel_mode_from(
+    value: Option<&str>,
+) -> Result<polygon_nesting_core::validation::round_envelope::KernelMode, String> {
+    use polygon_nesting_core::validation::round_envelope::KernelMode;
+    match value {
+        None => Ok(KernelMode::Off),
+        Some(value) => KernelMode::parse(value).ok_or_else(|| {
+            format!(
+                "{ROUND_ENVELOPE_KERNEL_ENV} takes 0/off, 1/union or 2/exclusive, not {value:?}"
+            )
+        }),
+    }
+}
+
+#[cfg(feature = "round-envelope-kernel")]
+fn round_envelope_kernel_requested(
+) -> Result<polygon_nesting_core::validation::round_envelope::KernelMode, String> {
+    round_envelope_kernel_mode_from(env::var(ROUND_ENVELOPE_KERNEL_ENV).ok().as_deref())
+}
+
+/// A binary without the feature **refuses** the variable rather than ignoring
+/// it.
+///
+/// The same rule the `rek` spec key follows, and for the stronger of the two
+/// reasons Grok review 7 gave: a build that cannot honour the request would
+/// otherwise run the *miter* authority and report it under a round label, and
+/// an environment variable - unlike a spec key - is invisible in the command
+/// line a driver logs.
+#[cfg(not(feature = "round-envelope-kernel"))]
+fn round_envelope_kernel_refused_for(value: Option<&str>) -> Result<(), String> {
+    match value {
+        None => Ok(()),
+        Some(_) => Err(format!(
+            "{ROUND_ENVELOPE_KERNEL_ENV} is set, but this binary was built \
+             without the `round-envelope-kernel` feature and cannot honour it"
+        )),
+    }
+}
+
+#[cfg(not(feature = "round-envelope-kernel"))]
+fn round_envelope_kernel_refused() -> Result<(), String> {
+    round_envelope_kernel_refused_for(env::var(ROUND_ENVELOPE_KERNEL_ENV).ok().as_deref())
+}
+
 /// Whether mode 34 should arm `CurrentPoseOverlay` (Sol review 5 §3: the
 /// `StructuredGrid + CurrentPoseOverlay` arm, B in the A/B/C campaign).
 ///
@@ -570,6 +642,13 @@ fn contact_block_requested() -> Result<
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let profiling_armed = profiling_requested();
     let unpinned_vacancy_parent_armed = unpinned_vacancy_parent_requested();
+    // Read before anything is loaded, so a mistyped mode - or a binary that
+    // cannot honour the variable at all - fails before a measurement exists to
+    // mislabel.
+    #[cfg(feature = "round-envelope-kernel")]
+    let round_envelope_env_mode = round_envelope_kernel_requested()?;
+    #[cfg(not(feature = "round-envelope-kernel"))]
+    round_envelope_kernel_refused()?;
     profiling::set_enabled(profiling_armed);
     profiling::set_metering_enabled(work_meter_requested());
     let mut arguments = env::args().skip(1);
@@ -737,6 +816,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if runs == 0 || arguments.next().is_some() {
         return Err("runs must be positive and no extra arguments are accepted".into());
     }
+    // Two doors to one atomic is one door too many when both are open at once:
+    // `run_portfolio` installs `settings.round_envelope_kernel` over whatever
+    // this process armed and puts it back on the way out, so a coordinator run
+    // that carried the variable but no `rek` key would silently be a *miter*
+    // run under a round label. Refused rather than resolved, because either
+    // resolution would be a rule a reader has to know.
+    #[cfg(feature = "round-envelope-kernel")]
+    if round_envelope_env_mode != polygon_nesting_core::validation::round_envelope::KernelMode::Off
+        && portfolio_spec.is_some()
+    {
+        return Err(format!(
+            "{ROUND_ENVELOPE_KERNEL_ENV} arms the single-mode path; a portfolio \
+             run arms the kernel with the `rek` spec key, and setting both is refused"
+        )
+        .into());
+    }
+    // The single-mode path's arming, process-wide for the rest of this run.
+    // This process serves exactly one request and exits, so there is no later
+    // request for a leaked arming to change; `RoundEnvelopeArming`'s RAII
+    // discipline exists because `run_portfolio` is a library entry point that
+    // may be called again, and that path is refused above.
+    #[cfg(feature = "round-envelope-kernel")]
+    polygon_nesting_core::validation::round_envelope::set_kernel_mode(round_envelope_env_mode);
     #[cfg(feature = "compression-schedule")]
     let compression_schedule_armed = compression_schedule_settings()?;
     // The relaxed configuration, assembled once. It used to be built inside the
@@ -1432,6 +1534,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // report, unconditionally, so no artifact of one can be read as a replay.
     if unpinned_vacancy_parent_armed {
         output["unpinnedVacancyParent"] = json!(true);
+    }
+    // An environment-armed run says so in its own report, so a driver can
+    // *assert* the arm took rather than trust that it set the variable on the
+    // right binary. Emitted only when the kernel was actually armed this way,
+    // so an unarmed run's document is byte-identical - including in a build
+    // that carries the feature, which is what the four pinned gates check.
+    #[cfg(feature = "round-envelope-kernel")]
+    if round_envelope_env_mode != polygon_nesting_core::validation::round_envelope::KernelMode::Off
+    {
+        output["roundEnvelopeKernel"] = json!({
+            "armedBy": ROUND_ENVELOPE_KERNEL_ENV,
+            "mode": round_envelope_env_mode.label(),
+        });
     }
     // The coordinator's own report. Present only when the coordinator ran, so
     // every existing invocation's document is unchanged.
@@ -3203,6 +3318,55 @@ mod tests {
                 expected
             );
         }
+    }
+
+    /// The round-envelope kernel's environment door reads the same three
+    /// values the `rek` spec key does, and refuses everything else.
+    ///
+    /// A mode key that fell back to a boolean would silently pick an arm, and
+    /// this door is worse-placed to survive that than the spec key is: an
+    /// environment variable does not appear in the command line a driver logs,
+    /// so a mistyped value would produce a *miter* run whose only trace of the
+    /// mistake is its absence. `docs/experiments/round-envelope-gate/` is what
+    /// this serves.
+    #[test]
+    #[cfg(feature = "round-envelope-kernel")]
+    fn the_kernel_environment_door_reads_modes_and_refuses_booleans() {
+        use polygon_nesting_core::validation::round_envelope::KernelMode;
+        assert_eq!(round_envelope_kernel_mode_from(None).unwrap(), KernelMode::Off);
+        for (value, expected) in [
+            ("0", KernelMode::Off),
+            ("off", KernelMode::Off),
+            ("1", KernelMode::Union),
+            ("union", KernelMode::Union),
+            ("2", KernelMode::Exclusive),
+            ("exclusive", KernelMode::Exclusive),
+        ] {
+            assert_eq!(
+                round_envelope_kernel_mode_from(Some(value)).unwrap(),
+                expected,
+                "{value}"
+            );
+        }
+        for value in ["true", "yes", "on", "1 ", "Union", "3", ""] {
+            let error = round_envelope_kernel_mode_from(Some(value))
+                .expect_err("a mistyped mode must be refused, not read as a boolean");
+            assert!(error.contains(ROUND_ENVELOPE_KERNEL_ENV), "{error}");
+        }
+    }
+
+    /// A binary without the feature refuses the variable rather than running
+    /// the miter authority under a round label.
+    #[test]
+    #[cfg(not(feature = "round-envelope-kernel"))]
+    fn the_kernel_environment_door_is_refused_without_the_feature() {
+        // The default build must be *inert* when the variable is absent, which
+        // is what every pinned gate depends on, and must refuse it when it is
+        // present, which is what a mislabelled measurement depends on.
+        assert!(round_envelope_kernel_refused_for(None).is_ok());
+        let error = round_envelope_kernel_refused_for(Some("1"))
+            .expect_err("a binary that cannot honour the variable must refuse it");
+        assert!(error.contains(ROUND_ENVELOPE_KERNEL_ENV), "{error}");
     }
 
     /// Every key this round adds reaches the field it names, and an unarmed
