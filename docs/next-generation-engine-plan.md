@@ -8120,3 +8120,112 @@ strict-decrease MEMBER (a chain solver is a new decision, not a retrofit);
 C175 0/3 after a real installed jump = the family's separator fails.
 Reviews verbatim: docs/sol-review-15-the-autopsy-of-gate-0.md,
 docs/grok-review-10-the-autopsy-of-gate-0.md.
+
+## The re-run under the frozen fix list: triangle-20 and S1 come back, C175 does not, and the census finds a fourth defect
+
+The autopsy's fix list was applied whole and nothing else was: the clearance
+split at all seven sites, the real jump, the C175 driver order, Sol's three
+latent defects, and the instrumentation both refuters demanded. The
+pre-committed reading was copied into
+`docs/experiments/overlap-ics/gate0-rerun/README.md` §0 **and committed** before
+the battery ran, together with the derivation of C175's 240,000-proposal quota
+(`floor(987,861 / 8 s × 2 s)`, from the original round's slowest measured
+throughput and the spec's two-solver-second clause).
+
+**Five of the six fatal cells pass; C175 is 0/3.** S0 is bit-for-bit —
+150.16451, Φ-bits 0, dual-valid, zero repair. **triangle-20 passes**: Φ 17.84 →
+**0.0** with **zero** active rows on every side, a dual-valid child at
+**70.74150389598567** inside the locked 70.742, 5 µm of repair, zero giveback,
+at proposal **780** of 200,000 — and three of its four attempts were refused by
+the target-immutability guard, which is that invariant working in the one round
+where it had something to refuse. **S1 passes**: Φ 433.49 → **0.0**, republished
+at **150.16536149919963** inside the locked 150.16547 with **zero** repair rows,
+at proposal **6,710** of 200,000. Its §0.3 clause is verified in the document
+rather than argued — `jumpAttempted: 1`, `jumpCommitted: 1`, `kind: "ball"` at
+`max_g = 0.0337 mm` — so the strip jump never fired, the two-scale gate chose
+the ball, and the installed jump was a deliberate step *backwards* in guided Φ
+(0.00556 → 0.07031, `improvedGuided: false`) from which the descent reached
+zero. Soundness and throughput are unchanged and unbroken: 0 outside the 4 µm
+band on 1,000 and 10,000 states, 0 containment false-feasible, 0 incremental
+mismatches, 5001/5001 on the scored population; 37.07 µs, 1.250 µs, 7.43 M
+cell-gaps/s, 981,975 projected proposals. The **FAST tier is green, EXIT=0**,
+for the first time in three rounds.
+
+The A/B isolates the cause with no room left. At 0.5 mm / 2° with
+`--jumpcommit=guided` — same clearance split, same real `n`-piece sweep, same
+two-scale gate — the trajectory attempts **169** jumps, installs **none**, and
+freezes at raw Φ `0.0004482304876309415`, `max_g` `0.012634958179553735`, depth
+`150.1729903315535`: every digit of the previous round's `cell-s1.json`. The
+only difference between republishing and freezing at 12.635 µm is whether the
+jump may commit a candidate that does not improve guided Φ. That is Grok review
+10 Finding 2 measured — *"evaluated once and discarded"*. The basin now
+includes 0.5 mm / 2.0° and stops between there and 2 mm / 10°.
+
+**C175 is 0/3 and this round refuses to call it paradigm evidence.** All three
+seeds now enter exactly at `T` (the driver asserts it as a hard failure); Φ
+543/544/546 → 31.3/50.9/33.1, `max_g` 2.22/2.90/2.21 mm, 1.45/1.59/1.89 solver
+seconds. §0.4's first escape clause is closed — Φ does **not** explode as it did
+under the old unconditional arm's 925 and 3,359, so the local sweep is a sweep —
+and its literal antecedent is satisfied on seeds 0 and 2, which stalled above
+0.1 mm, took the strip branch and **installed** the relocation. (Seed 1 never
+stalled at all and was still improving at its quota.) What stops the verdict is
+the rejection census the reviews themselves mandated. It answers Sol's question
+first: on all 32 sampled rejections at C175's stall the **active** incident rows
+carry penalty **0** while the layout's `maxGuidedPenalty` is **226** — the
+guided escalation never reached a blocking row, so that counter was never
+evidence that it had. Then it points elsewhere: every mixed-61 proposal is
+direction-class `combined`, the rotational share is 0.78–1.00, and the incident
+guided energy rises **linearly in the step** down to the 0.25 µm rung, which is
+a first-order *ascent* coefficient where a correct steepest descent has
+`−|∇|`. The mechanism is in the code and measured on the fixtures:
+`incident_gradient` takes the torque about the transformed **centroid** while
+`apply_pose` rotates about the pose **origin** `(tx, ty)`, and on **every piece
+of both fixtures** the offset between them is **1.00–1.35×** the piece's own
+circumradius — so every rotational step carries an unmodelled rigid translation
+larger than the rotation it models. Neither refuter named it; it is a candidate
+explanation for the SE(2)-coupling "inefficiency" both of them observed and
+declined to promote (triangle-20 frozen-θ: 66,863 accepts against 175).
+
+**It was reported and not repaired**, on purpose: the list was frozen and this
+was found after the numbers were in hand, so fixing it and re-running C175 would
+produce a number that is not a pre-committed measurement of anything — the exact
+failure mode the autopsy round existed to correct. The next round's frozen list
+should contain that one item and re-run C175 against it; a 0/3 with a correct
+SE(2) gradient and an installed jump has nothing left to blame.
+
+Two more things the new instrumentation settled. The S1 frozen-θ probe Grok
+review 10 asked for by name exists now and does **not** promote coupling to the
+cause: freezing θ makes S1 far worse (Φ 5,039, `max_g` 61 mm), because the
+cell's own perturbation is ±2° and only rotation undoes it — the rotational
+*direction* is wrong while rotation itself is necessary, and both have to be
+true at once. And the per-side census answers the verification round's one open
+question, for the reproduced S1 fixed point rather than for triangle-20 (which
+no longer has a stall to decompose): **1 bottom row at 12.635 µm and 1 top row
+at 7.520 µm, on different pieces**, so no single rigid translation legalizes it.
+
+Honest costs, recorded rather than buried. S2 and C168 are *worse* than the
+previous round — Φ 1,137.59 and 1,139.40 against 362.36 and 468.83 — which is
+the price of the unconditional strip commit at 9–11 mm of residual; random-T is
+better (4,207 against 8,688, 8 of 8 installed). All three were failing
+diagnostics before and still are. A `--jumpcommit=guided` run no longer spends
+its one-shot on a refusal, so it re-fires every second stall and can burn 82 %
+of its quota on jumps it never installs. And the determinism claim is narrowed
+in the code and the documents: the pose transform is `std::f64::sin_cos`, not
+`libm`, so the contract is same-box, same-toolchain, same-target — no
+cross-platform `sin`/`cos` identity is claimed.
+
+The round boundary is clean. Two-process determinism on **every** cell document,
+11 of 11 bit-identical over the whole document minus `wall` (throughput excepted
+and said so: every number in it is a timing, and its four verdict booleans are
+identical). All four pinned gates reproduce on a binary with the feature absent
+and on one with it compiled — 206.869 / `8a7737381238fa4d`,
+159.09233022733062 / `fa01012af1d559ae`, 159.07876040364795 /
+`e28fba007f8031d4`, 164.0375677990678 / `49f094d7e59a9008` — with
+`WHOLE_DOCUMENT_IDENTITY: true` on all four, and the `base` binary is
+**byte-identical to the verification round's** (`61befdc544b4135a…`), which is
+the check that matters after a round that rewrote half of the module: the
+default build did not move one byte. Five suites, 0 failures, no flake: 1293,
+1357, 20, **1342**, **1152** — suites 1–3 unchanged and suites 4 and 5 each +2
+against 1340 and 1150, which is the two sag-specific vectors this round added
+and nothing else. Evidence, drivers, the pre-committed reading and the full
+caveat list: `docs/experiments/overlap-ics/gate0-rerun/`.
