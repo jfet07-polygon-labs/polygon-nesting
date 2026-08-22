@@ -1,0 +1,8 @@
+{
+ "left": "/var/lib/t3/tmp/overlapics-v2/budget/triangle20-budget.json",
+ "right": "/var/lib/t3/tmp/overlapics-v2/scoped/budget/triangle20-budget.json",
+ "scalarFieldsCompared": 84,
+ "pathFieldsIgnored": 0,
+ "differingFields": [],
+ "IDENTICAL_MODULO_PATHS_AND_BINARY": true
+}

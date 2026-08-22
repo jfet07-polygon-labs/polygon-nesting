@@ -7870,3 +7870,223 @@ any schedule or parallel work, Round 1 single-thread with its own kill,
 Round 2's 168.484@10s as the family's life-or-death line. Consultations
 verbatim: docs/sol-review-14-the-overlap-engine-design.md,
 docs/grok-review-9-the-overlap-engine-design.md.
+
+## Gate 0: the vertical slice is sound and fast, the field has a 0.25 mm basin, and three fatal cells stop the round
+
+The engine of docs/overlap-ics-converged-spec.md exists and runs, behind
+`overlap-ics = ["round-envelope-kernel","fast-contract-validator"]` and an
+example-only driver: continuous `f64` poses over the unoffset source material,
+a streamed allocation-free signed convex gap as the only overlap measure,
+damped deterministic PGS with continuous θ from the first sweep, guided integer
+weights, one topology jump, and a publication path of continuous rings ->
+`GridSet::of` -> request-scoped Exclusive at r=2.500 allowance 0 -> frozen-θ
+same-strip ≤4n-row ≤16 µm repair -> the untouched contract validator ->
+`best_exact`. `homotopy.rs` is a stub, deliberately: every Gate-0 cell runs at a
+locked strip, because a schedule that bisects toward a reachable target would
+have turned this round's three failures into slow successes.
+
+**Three of the six fatal cells fail: S1, C175, the triangle-20 canary. Gate 0
+is STOP, and no schedule or parallel work follows it.**
+
+What passed is not small. **S0** reproduces the pin exactly — 61 placements,
+raw source depth **150.16451**, `phi.to_bits() == 0` at c_pair 5.0, Exclusive
+accepts at `two_r = 5000`, the contract accepts, zero repair, zero giveback —
+so the measure does not lie about a known-legal layout and the whole
+contract/radius wiring is fixed in place. **Numeric soundness** passes at 1,000
+and again at 10,000 states with a second implementation as the oracle: **zero**
+proxy-feasible/exact-invalid states outside the 4 µm band (worst deficit 0 µm),
+**zero** containment false-feasible on 589 independently detected containment
+states, **zero** incremental-versus-cold mismatches, and 5001/5001 force
+correlation on the population the spec defines. **Throughput** clears every
+kill by 5x to 10x: cold mixed-61 Φ **40.5 µs** against 200, one moved-piece row
+rebuild **1.358 µs** against 20, **6.83 M** convex-cell gap evals/s against 1 M,
+and **987,861** complete piece proposals projected into eight seconds against
+100,000. Sol review 14 §6's two named ways to waste the month — a fast field
+that goes nowhere, a good field that cannot run often enough — the second one
+is closed.
+
+The failures all have one shape, and it is not the one the designers feared
+most. Φ falls by two to four orders of magnitude, the **pair** rows clear, and
+the trajectory stalls tens to hundreds of micrometres outside the publication
+band with the residual in **boundary** rows. The triangle-20 canary states it
+without ambiguity: **zero active pair rows** — all 190 pairs clear the 5.0 mm
+contract — 5 boundary rows violated by at most **117.6 µm**, and the layout's
+own depth at 70.602 against a locked 70.742, so **140 µm of strip is unused**.
+A single rigid translation would legalize it, and this move set cannot express
+one: it moves one piece per proposal and accepts only a strict decrease in that
+piece's own incident guided Φ, so a layout that is collectively 0.12 mm too low
+is jammed. S1 misses by **12.6 µm** of `max_g` against a 4 µm band and 7.5 µm
+of depth against the locked 150.16547, unchanged from 200 K to 2 M proposals;
+widening the attempt band to 16 µm still produces zero checkpoints, because the
+blocker is the strip gate and the repair machinery is never reached. C175
+returns **0 of 3** strict children from the 0.10 (D₀−L) shock, at `max_g`
+2.10/2.24/2.16 mm, inside its two solver seconds.
+
+The basin sweep is the round's most useful measurement. Perturb the S0 pin and
+descend at the locked W: at **0.005, 0.020, 0.050, 0.100 and 0.250 mm** (with
+0.02–1.0° of rotation) the engine drives Φ to **exactly 0.0** and republishes a
+dual-valid child inside the strip, with repair ≤ **6 µm** against a 16 µm cap
+and giveback ≤ **2.93 µm** against a 50 µm cap. At 0.5 mm / 2° it does not. So
+the whole vertical slice works end to end — descent, canonicalization, both
+exact authorities, bounded µm repair, protected incumbent, no millimetre-scale
+legalization anywhere — and the field has a basin between **0.25 mm and 0.5 mm**
+of SE(2) displacement on a critically packed 61-piece layout. That is the
+answer to Sol review 14 §6's risk: the deepest-cell witness field *is* a useful
+navigation field, over a distance the specified move set cannot cross.
+
+Two defects the battery found and this round fixed, both of the kind a
+falsifier battery exists to surface: a converged state was being counted as a
+stall, so a trajectory at Φ = 0 eventually relocated a piece out of a feasible
+layout (the 0.005 mm row was driven from Φ = 0 back to **Φ = 142.58** by its
+own escape mechanism); and an unchanged state was re-checkpointed forever,
+because the attempt gate compares the proxy depth while repair can give back
+more than the 1 µm the gate asks for — one basin row spent **3,266** exact
+checkpoints republishing the identical layout. One knob moved on measurement:
+the topology jump commits only when it improves guided Φ, which the spec calls
+a KNOB and which is **200x** closer on S1 than the unconditional reading
+(0.012635 mm versus 2.552630 mm). Neither setting changes the verdict.
+
+The FAST tier is committed and runs in minutes:
+`docs/experiments/overlap-ics/drivers/fast.sh` — default-build compile check,
+`jagua-rs` absence in the `overlap-ics` feature tree, the module's 23 unit
+vectors including both oracles, the three pinned vector suites, the 1,000-state
+corpus, and the two-process fixed-work smoke. It exits **1** today, on S1's
+mechanism clause alone; its invariant clauses all hold and both smoke cells are
+**bit-identical across two processes** after stripping one named `wall` field.
+A FAST tier that went green while Gate 0 said STOP would be the lie the
+two-tier discipline exists to prevent.
+
+The round-boundary battery is clean. All four pinned gates reproduce on a
+binary with the feature absent and on one with it compiled — 206.869 /
+`8a7737381238fa4d`, 159.09233022733062 / `fa01012af1d559ae`,
+159.07876040364795 / `e28fba007f8031d4`, 164.0375677990678 /
+`49f094d7e59a9008` — and the **whole documents are identical** on all four
+under the protocol's own volatile-field list, so compiling `overlap-ics` in
+changes nothing a gate document can see. Five suites, 0 failures: 1293
+(`jagua-experimental`), 1357 (the full combo), 20 (the example harness), 1340
+(`jagua-experimental,overlap-ics`) and 1150 (`overlap-ics` alone, `--lib
+--tests`, the Chinese wall as a build rather than a `cargo tree` grep; its
+first run tripped the campaign's known allocator flake and both runs are
+committed). Determinism holds in both forms: two processes of one binary on S0
+and S1, and two builds from separate target directories on S0, S1, C175 and
+triangle-20, all bit-identical after stripping `wall` and the binary's own
+hash — with the honest deflation that on the final tree those two builds are
+byte-identical to each other, so that row reduces to a second two-process
+cell; it was not degenerate on the pre-relocation tree, where the same
+procedure produced two different binaries and the same four document digests.
+Evidence, drivers and the full verdict table: docs/experiments/overlap-ics/.
+
+## Gate 0's STOP, verified in a second worktree: every number reproduces, the exact authorities agree, and the stall is a fixed point
+
+The previous round's Gate 0 said STOP on three fatal cells. This round's
+instruction was conditional on exactly that — *if the report says STOP on a fatal
+Gate-0 cell, do not build the schedule; verify the failure evidence
+independently* — so **`homotopy.rs` is still the stub, and there is no strip
+schedule, no eight-epoch ladder, no nine-seed 3/10/30 curve and no Round-1
+clause verdict in this round.** Round 1's own clauses cannot be evaluated,
+because the gate that licenses Round 1 has not passed.
+
+**The STOP is confirmed.** Re-run from the previous round's own committed
+drivers, on a build made from nothing in a second worktree with a `target/`
+directory that did not exist: `GATE0_PASS: false`, `fatalFailures: ["S1",
+"C175", "triangle-20"]`. S0 reproduces its pin (61 placements, **150.16451**,
+`phi.to_bits() == 0`, both authorities accepting, zero repair); numeric soundness
+passes at 1,000 states; throughput clears every kill. The three failures
+reproduce to the last bit of every `f64`: S1 at Φ **433.4919406020829** →
+**0.0004482304876309415** with `max_g` **0.012634958179553735** and depth
+**150.1729903315535**; triangle-20 at Φ **22.21647333933925** →
+**0.049891136703974694** with **zero** active pair rows and `max_g`
+**0.11764791331265201**; C175 at **0 of 3** strict children with `max_g`
+2.1032/2.2435/2.1631 mm. Seven documents were compared leaf by leaf rather than
+by digest — a digest cannot cross worktrees, because the documents embed their
+own absolute paths — and across 6 cell documents (510 scalar leaves) **not one
+non-path leaf differs**; the 1,000-state corpus document differs in exactly one
+leaf, a wall reading its driver writes outside the `wall` object. The FAST tier
+exits **1** here too, with the same single red stage.
+
+Reproducing a number is not verifying it, so three questions the previous round
+left open were answered from its own instrument.
+
+**The exact authorities agree with Φ, asked directly.** At the shipped 4 µm band
+all three fatal cells make **zero** publication attempts, so the round kernel and
+the untouched contract validator never see their states and Φ — the thing under
+suspicion — is the only witness against them. Widening the band with the
+committed `--band` diagnosis knob puts them in front of the authorities.
+triangle-20 then makes **three** attempts, at proxy depths 70.66182, 70.60020 and
+70.59775, all *inside* the locked 70.742 — and all three are **refused**:
+`kernelExclusiveValid false`, `contractValid false`, and `repairRows 0`, so the
+kernel refused on its first scan before a single repair row ran. An authority
+that shares no code with Φ refuses the same layouts. S1 and C175 still make zero
+attempts at any band, because the band was never their only gate: they sit
+7.53 µm and 1.18 mm *outside* their locked strips and `proxy_depth <= T` is not a
+band.
+
+**The residual is not an artefact of the strip target.** The strip `T` is an
+objective device that the kernel does not model — its boundaries are the
+sheet's — so a residual living entirely in the strip's own top row would be
+invisible to the exact authorities. That row can be bounded exactly, with no new
+run: writing `E` for `Contract::edge_clearance_mm()` and `s` for the sag,
+`max top-row residual = depth − T + s`. In every failing cell `max_g` **exceeds**
+it — 0.11765 against 0.11027 on triangle-20, 0.01263 against 0.00752 on S1,
+2.10319 against 1.17800 on C175 — so at least one violated row is a left, right
+or bottom row of the **sheet**, which is why the kernel refused. The derivation
+also exposes an asymmetry nobody had written down: `raw_source_depth_mm` and the
+`proxy_depth <= T` gate use `Contract::sheet_edge_clearance_mm`, while
+`boundary_residuals` uses `edge_clearance_mm()`, which is that field **plus the
+sag**. On mixed-61's exact-clearance contract `s = 0` and they coincide; on
+triangle-20 `s = 0.25 mm` and **Φ's strip boundary is a quarter of a millimetre
+stricter than the publication gate it is descending toward**. That reconciles the
+canary's "140 µm of unused strip" with a top row that is violated at the same
+instant. It changes no verdict — the maximum is already carried by a sheet row —
+but a locked-strip cell that is 0.25 mm harder than its own publication gate is
+worth knowing before the next round designs a schedule out of locked strips.
+
+**The stall is a fixed point, not a short quota.** At ten times the work quota —
+2,000,000 piece proposals — S1's `max_g` is `0.012634958179553735` and
+triangle-20's is `0.11764791331265201`, the identical `f64` in both cases, and
+the **accepted-move counters are identical too**: 1,044 and 175, exactly as at
+200,000. In 1.8 million further proposals, across 29,509 and 90,000 additional
+sweeps, the solver accepted **not one move**, while the guided weights it raises
+in order to escape grew 10.7× and 10.0×. Equal `max_g` is consistent with a
+trajectory that keeps moving and keeps arriving back; equal accepted moves is
+not. Both states are exact fixed points of the specified move set under its own
+escape mechanism.
+
+The round-boundary battery is clean on this tree and this box. All four pinned
+gates reproduce on a binary with `overlap-ics` absent and on one with it
+compiled — 206.869 / `8a7737381238fa4d`, 159.09233022733062 / `fa01012af1d559ae`,
+159.07876040364795 / `e28fba007f8031d4`, 164.0375677990678 / `49f094d7e59a9008` —
+with **`WHOLE_DOCUMENT_IDENTITY: true`** on all four. Five suites, 0 failures:
+1293, 1357, 20, 1340, 1150, no flake, no rerun clause fired — the same five
+totals as the previous round, which is the expected result of a round that
+changed no crate source.
+
+**And the two-binary determinism deflation is finally lifted, by an accident
+worth recording because the accident is the evidence.** Both previous rounds had
+to admit that two builds of this example in two target directories come out
+byte-identical, so the cell reduced to a second two-process cell. This round's
+battery script happened to build the example without `-p`, which makes cargo
+unify features across the workspace's default members and pull in one extra
+dependency feature, `feature="full"` — producing a second binary from the same
+commit, `3e53e1f194ca8e3d` against `fast.sh`'s `e7eebee90d598bbc`. Run against
+each other on S0, S1, C175 and triangle-20 the two **different** binaries produce
+the same four document digests, which is the two-binary claim in the form its
+name promises. Two corrections came with it: an earlier draft of this round's
+write-up claimed the build is not reproducible across worktree paths, which was
+wrong — built the same way, this worktree reproduces `e7eebee9` exactly, and the
+difference was the command; and the battery's first determinism run used the
+wrong pair and was re-run on both. What remains true is that no document digest
+here is comparable with one from the previous round, because every document
+contains its own absolute paths: cross-round agreement is the field-by-field
+comparison, not a hash.
+
+One claim is explicitly **not** verified, and it is the previous round's central
+structural sentence: *"a single global translation would legalize"* triangle-20.
+Everything measured is consistent with it — zero pair violations, the whole
+residual in boundary rows, and `homotopy::compressed` moving centroids along the
+long axis only and toward the floor, which is a mechanism that manufactures
+bottom-edge violations — but the cell documents do not decompose the five active
+rows by side, and if two of them were on opposite sides no single translation
+exists. It is a reading, not a measurement, and deciding it needs a per-edge
+census the instrument does not emit. Evidence and drivers:
+docs/experiments/overlap-ics/gate0-verification/.

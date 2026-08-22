@@ -1,0 +1,5 @@
+847af8f6b60f7cb913ce32222a93c40e7724767b304895a76c8d5f45da18e88b  /var/lib/t3/tmp/overlapics/bin/base2
+590ba695df7e0b7a7334a2226df38c14a7d198a376292ec230c645f9704502c5  /var/lib/t3/tmp/overlapics/bin/meas2
+e7eebee90d598bbc14789c44f1467421eb4f0897b7d544e7d0d4aba784428708  /var/lib/t3/tmp/overlapics/bin/ics-a2
+e7eebee90d598bbc14789c44f1467421eb4f0897b7d544e7d0d4aba784428708  /var/lib/t3/tmp/overlapics/bin/ics-b2
+ddeea8d The nine-point Minkowski oracle moves into tests, with its own segment distance

@@ -1,0 +1,122 @@
+{
+  "cell": "triangle",
+  "constructor": {
+    "halfShockMm": 0.1734000000000002,
+    "lowerScaleMm": 70.0,
+    "placementCount": 20,
+    "placementFingerprint": "17be2327fc72125a525a7a9059d653d4ce2aa727921beaf7054dad29d0d09a86",
+    "rawSourceDepthMm": 73.468,
+    "shockMm": 2.725999999999999,
+    "shockResidual": 0.1
+  },
+  "contract": {
+    "expansionMm": 2.75,
+    "flatteningSagToleranceMm": 0.25,
+    "pairClearanceMm": 5.5,
+    "searchOffsetAllowanceMm": 0.002,
+    "sheetEdgeClearanceMm": 5.25,
+    "sheetInsetMm": 2.5,
+    "twoRMicron": 5500.0
+  },
+  "entry": {
+    "guidedPhi": 22.21647333933925,
+    "lockedTargetMm": 70.742,
+    "maxViolationMm": 3.043236978836248,
+    "rawPhi": 22.21647333933925,
+    "rawSourceDepthMm": 70.48286549664516
+  },
+  "executableSha256": "68fa7cf09b835a7a6fd11fe01a3ca46d8e81d60c468450e21838c7ee83bc9d98",
+  "experiment": "overlap-ics",
+  "finalPoseDigest": "54b4ddbf1e7301fdea5010039f53a44197b0cdffac13ea417bbf3b555c194230",
+  "instrument": "crates/polygon-nesting-core/src/search/overlap_ics/",
+  "lowerScaleMm": 70.0,
+  "outcome": {
+    "boundaryEdgeViolations": {
+      "activeEdgeRows": 5,
+      "maxEdgeViolationMm": 0.11764791331265201
+    },
+    "census": {
+      "activeEdgeRows": 5,
+      "activePairRows": 0,
+      "maxEdgeViolationMm": 0.11764791331265201,
+      "maxGuidedPenalty": 2545,
+      "maxPairViolationMm": 0.0
+    },
+    "exactCheckpoints": [],
+    "firstStrictChildProposal": null,
+    "guidedStalls": 9976,
+    "incumbent": {
+      "constructorFingerprint": "17be2327fc72125a525a7a9059d653d4ce2aa727921beaf7054dad29d0d09a86",
+      "fingerprintDiffersFromConstructor": false,
+      "fromConstructor": true,
+      "placementCount": 20,
+      "placementFingerprint": "17be2327fc72125a525a7a9059d653d4ce2aa727921beaf7054dad29d0d09a86",
+      "rawSourceDepthMm": 73.468
+    },
+    "invalidPublications": 0,
+    "jumps": 1,
+    "jumpsImprovingGuided": 0,
+    "proxy": {
+      "guidedPhi": 120.02034123403358,
+      "maxViolationMm": 0.11764791331265201,
+      "rawPhi": 0.049891136703974694,
+      "rawSourceDepthMm": 70.60227107358449
+    },
+    "proxySamples": [
+      {
+        "guidedPhi": 22.21647333933925,
+        "maxViolationMm": 3.043236978836248,
+        "proposalOrdinal": 0,
+        "rawPhi": 22.21647333933925,
+        "rawSourceDepthMm": 70.48286549664516,
+        "targetDepthMm": 70.742
+      },
+      {
+        "guidedPhi": 120.02034123403358,
+        "maxViolationMm": 0.11764791331265201,
+        "proposalOrdinal": 199982,
+        "rawPhi": 0.049891136703974694,
+        "rawSourceDepthMm": 70.60227107358449,
+        "targetDepthMm": 70.742
+      }
+    ],
+    "publications": 0,
+    "qualitySeries": [],
+    "repairMaxDisplacementMm": 0.0,
+    "repairMaxGivebackMm": 0.0,
+    "sweeps": 9996,
+    "work": {
+      "acceptedMoves": 175,
+      "broadPhaseRejects": 5549081,
+      "convexCellGapQueries": 149969,
+      "exactCheckpoints": 0,
+      "jumpProposals": 16,
+      "pairRowProbes": 5699050,
+      "pieceProposals": 199982,
+      "poseTransforms": 299960,
+      "repairRows": 0,
+      "weightUpdates": 9976
+    }
+  },
+  "request": {
+    "normalizeAxes": false,
+    "path": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_7f77514b-f9a-1/tests/fixtures/triangle-20/2000x2700-compact/request.json",
+    "pieceCount": 20,
+    "sha256": "811595741286ced9fda7a97fd7c6f6c9e0bf7ba24aef186f97fe4f40f5b923d4",
+    "sheetLongAxisMm": 2700.0,
+    "sheetShortAxisMm": 2000.0
+  },
+  "rotationFrozen": false,
+  "seed": 0,
+  "shock": {
+    "affineFactor": 0.9372871997791481,
+    "shockDeg": 1.0,
+    "shockMm": 0.25,
+    "shockedPoseDigest": "ac5796a53487b08f9b9aa8a8e21ccbcd12a7f6151f773a4db363d3c2a4c7e797"
+  },
+  "wall": {
+    "constructorSeconds": 0.024511333,
+    "solverSeconds": 0.101281106,
+    "totalSeconds": 0.125847201
+  }
+}

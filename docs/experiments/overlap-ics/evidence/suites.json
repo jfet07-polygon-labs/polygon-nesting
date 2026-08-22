@@ -1,0 +1,57 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "round-boundary-suites",
+ "suites": [
+  {
+   "suite": "1",
+   "features": "jagua-experimental",
+   "log": "suite-jagua.log",
+   "targets": 55,
+   "passed": 1293,
+   "failed": 0,
+   "ignored": 2,
+   "rerunAfterKnownFlake": false
+  },
+  {
+   "suite": "2",
+   "features": "the protocol full combo",
+   "log": "suite-combo.log",
+   "targets": 55,
+   "passed": 1357,
+   "failed": 0,
+   "ignored": 2,
+   "rerunAfterKnownFlake": false
+  },
+  {
+   "suite": "3",
+   "features": "jagua-experimental --example general_request_benchmark",
+   "log": "suite-example.log",
+   "targets": 1,
+   "passed": 20,
+   "failed": 0,
+   "ignored": 0,
+   "rerunAfterKnownFlake": false
+  },
+  {
+   "suite": "4",
+   "features": "jagua-experimental,overlap-ics",
+   "log": "suite-overlap-ics-stacked.log",
+   "targets": 55,
+   "passed": 1340,
+   "failed": 0,
+   "ignored": 2,
+   "rerunAfterKnownFlake": false
+  },
+  {
+   "suite": "5",
+   "features": "overlap-ics --lib --tests",
+   "log": "suite-overlap-ics.log",
+   "targets": 50,
+   "passed": 1150,
+   "failed": 0,
+   "ignored": 0,
+   "rerunAfterKnownFlake": false
+  }
+ ],
+ "SUITES_PASS": true
+}

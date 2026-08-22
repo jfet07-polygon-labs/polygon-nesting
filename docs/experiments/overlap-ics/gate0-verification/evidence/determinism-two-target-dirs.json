@@ -1,0 +1,58 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "two-binary-determinism",
+ "binaryA": "/var/lib/t3/tmp/overlapics-v2/bin/ics-scoped-a",
+ "binaryB": "/var/lib/t3/tmp/overlapics-v2/bin/ics-scoped-b",
+ "proposalBudget": 200000,
+ "strippedFields": [
+  "wall",
+  "executableSha256"
+ ],
+ "cells": [
+  {
+   "cell": "s0",
+   "request": "mixed-61",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "03969cfb68c333fc8159582e9bb47e040eda81d17d246b273188a150eede2d0c",
+   "digestB": "03969cfb68c333fc8159582e9bb47e040eda81d17d246b273188a150eede2d0c",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  },
+  {
+   "cell": "s1",
+   "request": "mixed-61",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "ecfac1e66a71004a4d1de0bc4d6e81374fb03585c8a2199c197634aec97ef890",
+   "digestB": "ecfac1e66a71004a4d1de0bc4d6e81374fb03585c8a2199c197634aec97ef890",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  },
+  {
+   "cell": "c175",
+   "request": "mixed-61",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "ec889de152b10c4a4b4b98bf39e34eb73a1a583f6b39f3d0f140d4217f532d22",
+   "digestB": "ec889de152b10c4a4b4b98bf39e34eb73a1a583f6b39f3d0f140d4217f532d22",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  },
+  {
+   "cell": "triangle",
+   "request": "triangle-20",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "b95565af2dfd5e3cc4ae5fead74e81a6559af3a51ad31059c60627b4bed6c445",
+   "digestB": "b95565af2dfd5e3cc4ae5fead74e81a6559af3a51ad31059c60627b4bed6c445",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  }
+ ],
+ "TWO_BINARY_IDENTICAL": true
+}

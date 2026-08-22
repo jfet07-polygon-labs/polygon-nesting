@@ -1,0 +1,10 @@
+[verify] fast.sh EXIT=1  (1 is this round's expected value: S1's mechanism clause)
+[verify] cells.py s0 s1 c175 triangle EXIT=0
+[verify] cells.py corpus throughput EXIT=0
+[verify] docdiff cell-s0.json EXIT=0
+[verify] docdiff cell-s1.json EXIT=0
+[verify] docdiff cell-triangle20.json EXIT=0
+[verify] docdiff cell-c175-seed0.json EXIT=0
+[verify] docdiff cell-c175-seed1.json EXIT=0
+[verify] docdiff cell-c175-seed2.json EXIT=0
+[verify] FAILURES=0
