@@ -1,0 +1,15 @@
+== suite-jagua: cargo test --release --features jagua-experimental
+suite-jagua EXIT=0
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+== suite-combo: cargo test --release --features jagua-experimental,compression-schedule,parallel-compression-schedule,continuous-rotation,sparse-rotation,fast-contract-validator
+suite-combo EXIT=0
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+== suite-example: cargo test --release --features jagua-experimental --example general_request_benchmark
+suite-example EXIT=0
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
