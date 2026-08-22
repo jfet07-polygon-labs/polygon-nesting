@@ -77,7 +77,7 @@ certificate-gated code.
 | **Or, at the same depth** | the same file the profiler arm wrote: **identical depth and identical document on 3 of 3 seeds**, p50 7.31 s → 6.27 s |
 | **The wall stop, on a forced overrun** | worst overrun **+26.63 s → +20.05 s (checkpoint) → +0.99 s (queue)**, 6 of 6 exact-valid, 6 of 6 exiting `wallStop` |
 | **The wall stop, calibrated at 30 s** | **the deliverable was 0 of 9 and it was not met.** The *count* does not fall - 3/9 → 4/9, inside the load's own noise - and the *size* collapses: worst overrun **+12.38 s → +1.31 s**, wallMax 42.38 s → 31.31 s, at **+0.000 mm** of median depth and 9 of 9 exact-valid |
-| **The reserve is a negative** | `m34wallreserve=1` is **worse** than the plain admission rule (+1.87 s against +0.99 s on the forced overrun), and §3.3 names the mechanism: it diverts the queue away from the one class that can stop itself mid-action |
+| **The reserve is a negative** | `m34wallreserve=1` is **worse** than the plain admission rule (+1.87 s against +0.99 s on the forced overrun), and §9 names the mechanism: it diverts the queue away from the one class that can stop itself mid-action |
 | **Gates** | 4 of 4 on all four binaries, whole-document digests **identical across the base commit, this round's code, the reformatted tree and the head** |
 | **Equivalence** | 9/9 four ways: this head with every key off against the base binary; the debit arm against the profiler arm; the reformatted tree against the pre-format one; the head against the batteries' binary |
 | **Determinism** | work mode 9/9 unarmed and 9/9 with `lanedebit=1` |
