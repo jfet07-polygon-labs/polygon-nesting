@@ -1,0 +1,3821 @@
+{
+  "cell": "c175",
+  "constructor": {
+    "halfShockMm": 3.3568645076748034,
+    "lowerScaleMm": 115.83870984650393,
+    "placementCount": 61,
+    "placementFingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+    "rawSourceDepthMm": 182.976,
+    "shockMm": 6.7137290153496,
+    "shockResidual": 0.1
+  },
+  "contract": {
+    "depthTopInsetMm": 5.0,
+    "expansionMm": 2.5,
+    "flatteningSagToleranceMm": 0.0,
+    "pairClearanceMm": 5.0,
+    "physicalEdgeClearanceMm": 5.0,
+    "searchOffsetAllowanceMm": 0.002,
+    "sheetEdgeClearanceMm": 5.0,
+    "sheetInsetMm": 2.5,
+    "twoRMicron": 5000.0
+  },
+  "entry": {
+    "guidedPhi": 542.9878204208828,
+    "lockedTargetMm": 176.2622709846504,
+    "maxViolationMm": 5.5672145384168115,
+    "rawPhi": 542.9878204208828,
+    "rawSourceDepthMm": 176.2622709846504
+  },
+  "executableSha256": "f421161ff95a1631715da134f2bec64dd36606f948b0f926d921ddd354185ad0",
+  "experiment": "overlap-ics",
+  "finalPoseDigest": "c10a2ef23ecb9fb67fa52f8abbbf3e789ebfb6413f30e29721b483d52a1358d1",
+  "instrument": "crates/polygon-nesting-core/src/search/overlap_ics/",
+  "lowerScaleMm": 115.83870984650393,
+  "outcome": {
+    "boundaryEdgeViolations": {
+      "activeEdgeRows": 25,
+      "maxEdgeViolationMm": 8.06976096271788
+    },
+    "census": {
+      "activeEdgeRows": 25,
+      "activeEdgeRowsBySide": {
+        "bottom": 9,
+        "left": 0,
+        "right": 2,
+        "top": 14
+      },
+      "activePairRows": 29,
+      "maxEdgeViolationBySideMm": {
+        "bottom": 8.06976096271788,
+        "left": 0.0,
+        "right": 2.8730512970312247,
+        "top": 7.0535268403607745
+      },
+      "maxEdgeViolationMm": 8.06976096271788,
+      "maxGuidedPenalty": 252,
+      "maxPairViolationMm": 8.296904849970161,
+      "piecesSqueezedOnOppositeSides": 0
+    },
+    "exactCheckpoints": [],
+    "firstStrictChildProposal": null,
+    "guidedStalls": 2487,
+    "incumbent": {
+      "constructorFingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+      "fingerprintDiffersFromConstructor": false,
+      "fromConstructor": true,
+      "placementCount": 61,
+      "placementFingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+      "rawSourceDepthMm": 182.976
+    },
+    "invalidPublications": 0,
+    "jumpAttempted": 1,
+    "jumpCommitted": 1,
+    "jumpEvents": [
+      {
+        "baselineGuidedPhi": 45.24887102544435,
+        "bestGuidedPhi": 9363.678991969358,
+        "improvedGuided": false,
+        "installed": true,
+        "kind": "strip",
+        "maxViolationMm": 2.168977891666905,
+        "piece": 38,
+        "proposalOrdinal": 8174,
+        "radiusMm": "strip"
+      }
+    ],
+    "jumps": 1,
+    "jumpsImprovingGuided": 0,
+    "proxy": {
+      "guidedPhi": 60429.71889559119,
+      "maxViolationMm": 8.296904849970161,
+      "rawPhi": 326.977175920481,
+      "rawSourceDepthMm": 183.31579782501117
+    },
+    "proxySamples": [
+      {
+        "guidedPhi": 542.9878204208828,
+        "maxViolationMm": 5.5672145384168115,
+        "proposalOrdinal": 0,
+        "rawPhi": 542.9878204208828,
+        "rawSourceDepthMm": 176.2622709846504,
+        "targetDepthMm": 176.2622709846504
+      },
+      {
+        "guidedPhi": 60429.71889559119,
+        "maxViolationMm": 8.296904849970161,
+        "proposalOrdinal": 239974,
+        "rawPhi": 326.977175920481,
+        "rawSourceDepthMm": 183.31579782501117,
+        "targetDepthMm": 176.2622709846504
+      }
+    ],
+    "publications": 0,
+    "qualitySeries": [],
+    "rejectionCensus": {
+      "acceptedByDirectionClass": {
+        "combined": 10964,
+        "rotation": 0,
+        "translation": 0
+      },
+      "acceptedProposals": 10964,
+      "armed": true,
+      "rejectedByDirectionClass": {
+        "combined": 115482,
+        "rotation": 0,
+        "translation": 0
+      },
+      "rejectedProposals": 115482,
+      "rejections": [
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 3,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38280507824435,
+          "incidentGuidedBefore": 5.0572638284385505,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 0,
+          "proposalOrdinal": 7139,
+          "rawPhiBefore": 36.67833998370454,
+          "rotationShare": 0.9315253829040252,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 5.232911073158078,
+              "deltaMaxViolationMm": 0.3503123991410182,
+              "deltaRawPhi": 5.232911073158078,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 2.3150258377969894,
+              "deltaMaxViolationMm": 0.06460710998428754,
+              "deltaRawPhi": 2.315025837796995,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 1.0920040246053597,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.0920040246053588,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.5288715672161652,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.5288715672161715,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.2588616386038636,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.2588616386038609,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.126897877854093,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.12689787785409123,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.06169588782198243,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.06169588782198332,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.02929234213426657,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.029292342134269234,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.013140242835877558,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.013140242835874005,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.005076650572116925,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.005076650572121366,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0016857877241989172,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0016857877241989172,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0006543791118680531,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0006543791118645004,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00013877188891342485,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00013877188891342485,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.00004555701433606174,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00004555701433162085,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.363676313506268
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 3,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38279885516591,
+          "incidentGuidedBefore": 3.84685879258255,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 2,
+          "proposalOrdinal": 7141,
+          "rawPhiBefore": 36.678333760626096,
+          "rotationShare": 0.9750519560982669,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 5.722101263727472,
+              "deltaMaxViolationMm": 0.21688729826551212,
+              "deltaRawPhi": 5.722101263727481,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 2.338053308069214,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.3380533080692203,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 1.0643410361784813,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.0643410361784902,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.5126854083565275,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.512685408356532,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.2511304553446685,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.25113045534467915,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.12391964803449884,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.1239196480345015,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.06120571534885766,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0612057153488621,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.030071592015030735,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.030071592015033843,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.014560237996851022,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.014560237996860792,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.006818487511168314,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.006818487511168314,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0029510938505263873,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0029510938505268314,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0010182674097016786,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0010182674097052313,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00013477164438358002,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00013477164438313594,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.000056290490016319694,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000056290490022092854,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.22197676209221398
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 6,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38279885516591,
+          "incidentGuidedBefore": 3.7958966794217672,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 40,
+          "proposalOrdinal": 7142,
+          "rawPhiBefore": 36.678333760626096,
+          "rotationShare": 0.9397998402147297,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 7.057152349741765,
+              "deltaMaxViolationMm": 0.7432551861535468,
+              "deltaRawPhi": 7.05715234974177,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 2.7020890772958803,
+              "deltaMaxViolationMm": 0.08147827303498145,
+              "deltaRawPhi": 2.7020890772958808,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 1.126227184321372,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.1262271843213796,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.501857265410806,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.5018572654108198,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.23566651795230653,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.23566651795231053,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.11386751294244757,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.11386751294244846,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.05576650436046693,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.05576650436047714,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.027412406657596033,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.027412406657589372,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.013409056380933482,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.01340905638093659,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0064507554457939875,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00645075544579754,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.002982442220520465,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0029824422205280143,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0012509941296827698,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0012509941296912075,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00038594711611716903,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0003859471161149486,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.0002295947924513264,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00022959479245798775,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.3417254165735532
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38279885516591,
+          "incidentGuidedBefore": 3.627965705321159,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 1,
+          "proposalOrdinal": 7143,
+          "rawPhiBefore": 36.678333760626096,
+          "rotationShare": 0.997970137313574,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 6.5265254743212004,
+              "deltaMaxViolationMm": 0.25738435543317983,
+              "deltaRawPhi": 6.526525474321204,
+              "newlyActivatedRows": 2,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 2.6992167042534185,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.6992167042534305,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 1.232967611661723,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.2329676116617208,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.5906274685091959,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.5906274685091972,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.2884009502791778,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.28840095027918267,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.14201879998687383,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.1420187999868716,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.07000990126684714,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.07000990126685736,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.034300920707523996,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.034300920707522664,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.016520288201747224,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.01652028820174678,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.007648435213224669,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00764843521322689,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.003217124387627557,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0032171243876319977,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0010026228735444676,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.001002622873556902,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.0000444916131674411,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00004449161316699701,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 7.047207679633516e-6,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 7.0472076885153e-6,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.06368363235813533
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 3,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38279885516591,
+          "incidentGuidedBefore": 2.402011217688492,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 46,
+          "proposalOrdinal": 7144,
+          "rawPhiBefore": 36.678333760626096,
+          "rotationShare": 0.9901715962904031,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 2.831985547591345,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.8319855475913442,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 1.189474139680744,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.1894741396807404,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.5188432549183859,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.5188432549183943,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.23909923060763116,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.2390992306076356,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.1144050034082813,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.11440500340827953,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.055867319359622414,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.05586731935963485,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.027551082599133636,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.02755108259913186,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.013631146810161088,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.013631146810169525,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.006730728491143978,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.006730728491149307,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0032954072175641613,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0032954072175641613,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0015814686138924117,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0015814686138924117,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0007254298279466553,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0007254298279519844,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.0003010286699645093,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00030102866996628563,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.0002373754924782645,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0002373754924747118,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.139857820302316
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 3,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38279885516591,
+          "incidentGuidedBefore": 2.129214523251233,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 3,
+          "proposalOrdinal": 7145,
+          "rawPhiBefore": 36.678333760626096,
+          "rotationShare": 0.8936647546816138,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 5.432860863354476,
+              "deltaMaxViolationMm": 0.26606399319298646,
+              "deltaRawPhi": 5.4328608633544775,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 2.1430503267073413,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.143050326707339,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.9330970871238455,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.9330970871238549,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.4317906221157979,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.43179062211579833,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.2071712586429073,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.20717125864291575,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.10138455396722224,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.10138455396722179,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.05012375762806753,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.05012375762807153,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.02490172479961439,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.024901724799619274,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.012392828005408862,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0123928280054173,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.00616391304848829,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.006163913048496283,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0030558393719108956,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0030558393719246624,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0015033985393149152,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0015033985393273497,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.0007275771313772772,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0007275771313857149,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.0005873370156019853,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0005873370156024293,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.44873522955062417
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38279885516591,
+          "incidentGuidedBefore": 2.101513374366233,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 7,
+          "proposalOrdinal": 7146,
+          "rawPhiBefore": 36.678333760626096,
+          "rotationShare": 0.9205999554709292,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 4.124655768554886,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 4.124655768554888,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 1.7444886344332167,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.7444886344332247,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.7919783357868284,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.7919783357868369,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.37576607437687404,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.3757660743768838,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.18275124643960217,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.18275124643960794,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.09002669178208356,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.09002669178208578,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.04461138103160556,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.04461138103161488,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.02214062361596758,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.022140623615968025,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.010964488927841742,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.010964488927839966,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.005391235029276409,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.005391235029279073,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0026083117463580052,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.002608311746357117,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0012177760598075515,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0012177760598177656,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.0005227397099143438,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0005227397099218933,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.0003970936117161372,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0003970936117241308,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.3905070063224515
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 3,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38279885516591,
+          "incidentGuidedBefore": 2.083808733337948,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 8,
+          "proposalOrdinal": 7147,
+          "rawPhiBefore": 36.678333760626096,
+          "rotationShare": 0.9999999705247461,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 4.770780904238324,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 4.770780904238322,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 1.89721809367432,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.8972180936743257,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.825725005947723,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.8257250059477315,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.3818043788415011,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.3818043788415082,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.18286225478095774,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.1828622547809715,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.08915337409659907,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.08915337409661106,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.04374042833424685,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.04374042833426017,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.021394447440274522,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.021394447440286513,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.010311594763247278,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.010311594763251719,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.004792704712724305,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.004792704712727414,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0020388939900053415,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0020388939900186642,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0006633972331240301,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0006633972331258065,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.000023772110273601044,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00002377211028203874,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.000016322947183233794,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000016322947189451043,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.00024279725397705523
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38279885516591,
+          "incidentGuidedBefore": 1.907779925985116,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 9,
+          "proposalOrdinal": 7148,
+          "rawPhiBefore": 36.678333760626096,
+          "rotationShare": 0.9982662060221643,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 5.475932531542213,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 5.475932531542213,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 2.113438728168381,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.11343872816839,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.9158310666955056,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.9158310666955174,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.43286868768216613,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.43286868768217346,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.21054400071440393,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.21054400071440682,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.10378186790981814,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.1037818679098308,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.051500464848312166,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.05150046484831705,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.025634630291867078,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.025634630291875737,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.01277042363733738,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.012770423637348927,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.006355497200355442,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.006355497200360105,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0031523281086189847,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0031523281086265342,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0015518170824606603,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0015518170824719846,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.0007518299478377344,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0007518299478448398,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.0006072113724362449,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0006072113724400197,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.05886069923228973
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 4,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38279885516591,
+          "incidentGuidedBefore": 1.7237258721699218,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 6,
+          "proposalOrdinal": 7149,
+          "rawPhiBefore": 36.678333760626096,
+          "rotationShare": 0.8961461847085633,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 4.5407662929600825,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 4.540766292960086,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 1.5670973095591803,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.5670973095591876,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.589064973566001,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.5890649735660105,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.22974172760504685,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.2297417276050595,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.0985870806740532,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.09858708067406496,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.045153334150412006,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.045153334150413116,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.021472953020358565,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.021472953020364116,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.01039195905788981,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.010391959057898248,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.0050412703505173795,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0050412703505173795,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0024133792011216126,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0024133792011298283,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0011112970692321866,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.001111297069243733,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.00046322188165426326,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00046322188165959233,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00013992575970167564,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0001399257597114456,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.00008152658619065001,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00008152658620019793,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.44375896118533253
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38279885516591,
+          "incidentGuidedBefore": 1.3106941837608974,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 56,
+          "proposalOrdinal": 7150,
+          "rawPhiBefore": 36.678333760626096,
+          "rotationShare": 0.9870428171887159,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 3.183203627841506,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 3.1832036278415146,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 1.1848184984183794,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.1848184984183874,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.49129987217954874,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.4912998721795532,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.22048077121785226,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.2204807712178578,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.10387561556601721,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.1038756155660252,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.05025150429442937,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.050251504294443805,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.024606233238724018,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.024606233238728237,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.012074939661112394,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.012074939661125939,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.005882084073869365,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.005882084073874694,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0028038485441581606,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0028038485441683747,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.001269278153229525,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0012692781532379627,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0005031297146758096,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0005031297146800284,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00012033967380231658,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00012033967381341881,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.000051151457048481674,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0000511514570575855,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.16045708783398424
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 4,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38279885516591,
+          "incidentGuidedBefore": 1.2768125367727672,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 44,
+          "proposalOrdinal": 7151,
+          "rawPhiBefore": 36.678333760626096,
+          "rotationShare": 0.9670833119698533,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 2.084894241839703,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.084894241839706,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 0.7803508835403248,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.7803508835403221,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.3011088865682139,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.30110888656821544,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.11868401227531811,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.11868401227532388,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.04924108809305272,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.04924108809305494,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.021970268210919297,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.021970268210921517,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.01020125549996953,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.010201255499978856,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.0047838153025097085,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.004783815302516814,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.00219192008485658,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0021919200848543596,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0009251859880143876,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0009251859880237134,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.00031790469583370395,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00031790469583370395,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.00015332381651678162,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00015332381651944615,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00007164769520828784,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00007164769520784375,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.00005692436934223721,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000056924369346234016,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.2544599530563095
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38279885516591,
+          "incidentGuidedBefore": 1.1045950531546276,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 45,
+          "proposalOrdinal": 7152,
+          "rawPhiBefore": 36.678333760626096,
+          "rotationShare": 0.9555974331627858,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 2.1247499499856874,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.1247499499856843,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 0.9342463218143244,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.934246321814328,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.433907169204095,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.43390716920410455,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.2084948833271083,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.20849488332711985,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.10210766560958984,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.10210766560959428,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.05051004718588992,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.050510047185895246,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.025112271607557135,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.02511227160756846,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.012513896955893777,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.012513896955894666,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.006239869769423256,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.006239869769430584,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.003109150193918886,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0031091501939215505,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0015453644085001716,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0015453644084999496,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0007638650785299905,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0007638650785395384,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00037321381213839544,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0003732138121392836,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.00030259106577945616,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0003025910657896702,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.29467532257163187
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38276019166927,
+          "incidentGuidedBefore": 0.6658214427655642,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 42,
+          "proposalOrdinal": 7154,
+          "rawPhiBefore": 36.67829509712946,
+          "rotationShare": 0.9886162835181157,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 2.5566785462484587,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.556678546248456,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 0.8587728309647782,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.8587728309647744,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.3716834421121895,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.37168344211218596,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.173666399412145,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.17366639941214146,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.08375456135672144,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.083754561356713,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.04108809085994802,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.041088090859943804,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.02032913025678673,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0203291302567834,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.010093457854088328,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.010093457854082999,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.005011603542967702,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.005011603542961041,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0024796756000522446,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0024796756000426967,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0012159618993787813,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0012159618993763388,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0005846676751009028,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000584667675092021,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.0002691612268246324,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00026916122681797106,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.00021212767125111665,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00021212767124012544,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.1504587782843823
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38276019166927,
+          "incidentGuidedBefore": 0.6652808804071544,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 60,
+          "proposalOrdinal": 7155,
+          "rawPhiBefore": 36.67829509712946,
+          "rotationShare": 0.9875482737574038,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 2.721914108603286,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.721914108603279,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 0.9634361964100104,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.963436196410008,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.3814847780073882,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.38148477800738334,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.1655097759868316,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.16550977598682692,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.07635742884000352,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.07635742883999797,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.03650067235214227,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.036500672352140384,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.017753477322334232,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.017753477322330014,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.008675341750379983,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.008675341750375765,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.00421016021887799,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.004210160218875103,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.001996043612925824,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.001996043612919607,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0008936041744317391,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0008936041744291856,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.00034353921183871705,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0003435392118404934,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00006879542480353606,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0000687954248022038,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.00001914229257637956,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000019142292572382757,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.1573162642538016
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 3,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38276019166927,
+          "incidentGuidedBefore": 0.6648412479578008,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 43,
+          "proposalOrdinal": 7156,
+          "rawPhiBefore": 36.67829509712946,
+          "rotationShare": 0.9886748518515999,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 4.27507233759162,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 4.275072337591617,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 1.3391258519840898,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.339125851984086,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.47395583560682275,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.473955835606823,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.1920647616514799,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.1920647616514799,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.08687082223758869,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0868708222375858,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.041026675399989276,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.04102667539999061,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.019756922895299622,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.01975692289529718,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.009535466894441846,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.009535466894440958,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.0045281364477616215,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.004528136447760289,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0020503259234949667,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0020503259234985194,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0008208167468650718,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0008208167468595207,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.00031830818058598,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0003183081805815391,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00006755052276896656,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00006755052276474771,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.00002224887995860847,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00002224887995083691,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.15007343974273676
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38264901182617,
+          "incidentGuidedBefore": 0.5341310829292023,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 53,
+          "proposalOrdinal": 7158,
+          "rawPhiBefore": 36.678183917286354,
+          "rotationShare": 0.9992142866600868,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 2.282183229618071,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.282183229618063,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 0.841254211548035,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.8412542115480335,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.34470227334959447,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.3447022733495899,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.15319696776817482,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.15319696776817437,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.07173650589263558,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.07173650589263048,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.03459179067818763,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.034591790678184964,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.01691737216806488,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.016917372168066436,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.008304842810878954,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.008304842810872515,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.004054772503542803,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.004054772503543802,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0019437889927558238,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0019437889927544916,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0008918105293279632,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0008918105293247436,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0003666996682258894,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0003666996682269996,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00010436383635237245,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00010436383635692437,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.0000569491453961124,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000056949145395890355,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.039633437074948485
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38264901182617,
+          "incidentGuidedBefore": 0.2993159927897862,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 59,
+          "proposalOrdinal": 7159,
+          "rawPhiBefore": 36.678183917286354,
+          "rotationShare": 0.9828521574444659,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 2.431920650765974,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.4319206507659743,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 0.7933303967620124,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.7933303967620162,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.2902389284987014,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.29023892849870236,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.11838529254119606,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.11838529254119834,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.05246170903910313,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.05246170903910752,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.02451075479103526,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.024510754791037925,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.01178924077961846,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.011789240779620513,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.005742131275894069,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.005742131275894735,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.002797007990378242,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.002797007990380962,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0013440566630757433,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0013440566630791295,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0006224838843973401,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0006224838843991165,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0002629232545819371,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00026292325458854293,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00008344938431553706,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00008344938432003346,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.00005102231623527187,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000051022316235105336,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.18439532696562277
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38264901182617,
+          "incidentGuidedBefore": 0.299042542829441,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 58,
+          "proposalOrdinal": 7160,
+          "rawPhiBefore": 36.678183917286354,
+          "rotationShare": 0.9867893815282114,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 2.374288406936101,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.3742884069361025,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 0.7830629108988307,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.7830629108988347,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.28969553023613626,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.2896955302361377,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.11924360449463212,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.11924360449463478,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.0531594955775081,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.05315949557751054,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.02491339931118386,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0249133993111883,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.011990652874389607,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.01199065287439538,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.005829519116761328,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00582951911676588,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.002824032608834459,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0028240326088422307,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0013400620108539596,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0013400620108541261,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0006027701962929566,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000602770196294955,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.00023529770014207863,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00023529770014363294,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00005185480987801583,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00005185480988245672,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.000018709211668521686,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000018709211666134706,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.16200838405209167
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 4,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38264901182617,
+          "incidentGuidedBefore": 0.26652250731257005,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 48,
+          "proposalOrdinal": 7161,
+          "rawPhiBefore": 36.678183917286354,
+          "rotationShare": 0.9329409747117863,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 4.272522404622982,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 4.272522404622983,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 1.3432314402654264,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.343231440265427,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.4743379907307373,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.47433799073073857,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.1878543356175008,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.18785433561749443,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.08147988510082582,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.08147988510082627,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.0374939876812464,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.03749398768124479,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.01779942566991294,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.01779942566991366,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.008526497826905566,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00852649782690662,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.0040335917349735295,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0040335917349736405,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0018230243374371957,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00182302433743331,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.000742374978311755,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0007423749783086464,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.00030256404981848783,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00030256404981798823,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00008303215911525941,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00008303215911098505,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.000043367377983494215,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00004336737798382728,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.360029356725007
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 41.38264901182617,
+          "incidentGuidedBefore": 0.1634186659995011,
+          "maxViolationBeforeMm": 2.168977891666905,
+          "piece": 57,
+          "proposalOrdinal": 7162,
+          "rawPhiBefore": 36.678183917286354,
+          "rotationShare": 0.9701621506807421,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 2.4070263150841087,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.40702631508411,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 0.7299811837465919,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.7299811837465953,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.2459239293305493,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.24592392933055152,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.09308256152719746,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.09308256152719707,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.039028780188396395,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.03902878018839573,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.017602371252223997,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.017602371252223747,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.008290381389197521,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.008290381389194579,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.003984826858093038,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.003984826858093982,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.0019196767848503882,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0019196767848512764,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0009090106827501776,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0009090106827542854,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0004091551323588405,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00040915513235972867,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.00016059676573304538,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00016059676573831894,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00003665993870582973,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00003665993870782813,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.00001427652357696707,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000014276523579326295,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.24245700935736417
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 3,
+          "directionClass": "combined",
+          "guidedPhiBefore": 15506.170045542456,
+          "incidentGuidedBefore": 5.0572638284385505,
+          "maxViolationBeforeMm": 65.87425210907963,
+          "piece": 0,
+          "proposalOrdinal": 7207,
+          "rawPhiBefore": 15458.548593240728,
+          "rotationShare": 0.9315253829040252,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 5.232911073158078,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 5.232911073158903,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 2.3150258377969894,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.315025837799112,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 1.0920040246053597,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.0920040246073768,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.5288715672161652,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.5288715672195394,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.2588616386038636,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.2588616386074136,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.126897877854093,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.12689787785529916,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.06169588782198243,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.061695887823589146,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.02929234213426657,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.029292342134795035,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.013140242835877558,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.013140242836016114,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.005076650572116925,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0050766505737556145,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0016857877241989172,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0016857877253642073,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0006543791118680531,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0006543791132571641,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00013877188891342485,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0001387718912155833,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.00004555701433606174,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000045557015255326405,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.363676313506268
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 3,
+          "directionClass": "combined",
+          "guidedPhiBefore": 15506.170045542456,
+          "incidentGuidedBefore": 3.84685879258255,
+          "maxViolationBeforeMm": 65.87425210907963,
+          "piece": 2,
+          "proposalOrdinal": 7208,
+          "rawPhiBefore": 15458.548593240728,
+          "rotationShare": 0.9750519560982669,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 5.722101263727472,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 5.722101263727382,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 2.338053308069214,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.338053308068993,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 1.0643410361784813,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.0643410361790302,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.5126854083565275,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.5126854083591752,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.2511304553446685,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.25113045534635603,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.12391964803449884,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.12391964803464361,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.06120571534885766,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.061205715350297396,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.030071592015030735,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.030071592016611248,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.014560237996851022,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.014560237998011871,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.006818487511168314,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.006818487510827254,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0029510938505263873,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.002951093851152109,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0010182674097016786,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0010182674104726175,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00013477164438358002,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0001347716442978708,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.000056290490016319694,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00005629049337585457,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.22197676209221398
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 6,
+          "directionClass": "combined",
+          "guidedPhiBefore": 15506.170045542456,
+          "incidentGuidedBefore": 3.795902480309687,
+          "maxViolationBeforeMm": 65.87425210907963,
+          "piece": 40,
+          "proposalOrdinal": 7209,
+          "rawPhiBefore": 15458.548593240728,
+          "rotationShare": 0.9414307289734933,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 7.05519911948665,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 7.055199119486133,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 2.7039593992470206,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.7039593992467417,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 1.1278720185578752,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.1278720185600832,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.502906630799167,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.502906630797952,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.23624163310442814,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.23624163310341828,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.1141627791539701,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.11416277915304818,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.055911344424131926,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.055911344426931464,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.02747943083372295,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.027479430835228413,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.013436524746995193,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.01343652474861301,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.006458284295430161,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.006458284296968486,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.002979960953636507,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0029799609510519076,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.001243497720471165,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0012434977197699482,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00038011586582342716,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00038011586548236664,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.00022482339387863703,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00022482339409179986,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.3372064390613517
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 15506.170045542456,
+          "incidentGuidedBefore": 3.627965705321159,
+          "maxViolationBeforeMm": 65.87425210907963,
+          "piece": 1,
+          "proposalOrdinal": 7210,
+          "rawPhiBefore": 15458.548593240728,
+          "rotationShare": 0.997970137313574,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 6.5265254743212004,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 6.526525474320806,
+              "newlyActivatedRows": 2,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 2.6992167042534185,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.6992167042535584,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 1.232967611661723,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.2329676116623887,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.5906274685091959,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.5906274685112294,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.2884009502791778,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.2884009502813569,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.14201879998687383,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.14201879998836375,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.07000990126684714,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0700099012683495,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.034300920707523996,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.03430092070811952,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.016520288201747224,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.01652028820171836,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.007648435213224669,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.007648435212104232,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.003217124387627557,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.003217124389266246,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0010026228735444676,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0010026228737842757,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.0000444916131674411,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00004449161497177556,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 7.047207679633516e-6,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 7.047208782751113e-6,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.06368363235813533
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 3,
+          "directionClass": "combined",
+          "guidedPhiBefore": 15506.170045542456,
+          "incidentGuidedBefore": 2.402011217688492,
+          "maxViolationBeforeMm": 65.87425210907963,
+          "piece": 46,
+          "proposalOrdinal": 7211,
+          "rawPhiBefore": 15458.548593240728,
+          "rotationShare": 0.9901715962904031,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 2.831985547591345,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.8319855475929216,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 1.189474139680744,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.1894741396845347,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.5188432549183859,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.5188432549221034,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.23909923060763116,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.23909923060818983,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.1144050034082813,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.11440500340904691,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.055867319359622414,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.055867319360913825,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.027551082599133636,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.027551082601348753,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.013631146810161088,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.013631146810439532,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.006730728491143978,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.006730728491675109,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0032954072175641613,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0032954072194115724,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0015814686138924117,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.001581468613949255,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0007254298279466553,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0007254298288899008,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.0003010286699645093,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000301028672765824,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.0002373754924782645,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00023737549599900376,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.139857820302316
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 3,
+          "directionClass": "combined",
+          "guidedPhiBefore": 15506.170045542456,
+          "incidentGuidedBefore": 2.129214523251233,
+          "maxViolationBeforeMm": 65.87425210907963,
+          "piece": 3,
+          "proposalOrdinal": 7212,
+          "rawPhiBefore": 15458.548593240728,
+          "rotationShare": 0.8936647546816138,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 5.432860863354476,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 5.4328608633550175,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 2.1430503267073413,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.1430503267092718,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.9330970871238455,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.9330970871233149,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.4317906221157979,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.43179062211675046,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.2071712586429073,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.20717125864393893,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.10138455396722224,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.1013845539673639,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.05012375762806753,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.050123757628171006,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.02490172479961439,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.024901724802475655,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.012392828005408862,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.012392828006341006,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.00616391304848829,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.006163913049022085,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0030558393719108956,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.003055839373701019,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0015033985393149152,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0015033985382615356,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.0007275771313772772,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0007275771331478609,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.0005873370156019853,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0005873370155313751,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.44873522955062417
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 15506.170045542456,
+          "incidentGuidedBefore": 2.101513374366233,
+          "maxViolationBeforeMm": 65.87425210907963,
+          "piece": 7,
+          "proposalOrdinal": 7213,
+          "rawPhiBefore": 15458.548593240728,
+          "rotationShare": 0.9205999554709292,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 4.124655768554886,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 4.124655768555385,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 1.7444886344332167,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.7444886344346742,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.7919783357868284,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.7919783357865526,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.37576607437687404,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.3757660743794986,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.18275124643960217,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.1827512464406027,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.09002669178208356,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.09002669178153155,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.04461138103160556,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.044611381032154895,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.02214062361596758,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.022140623615996446,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.010964488927841742,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.010964488927129423,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.005391235029276409,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.005391235030401731,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0026083117463580052,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0026083117481903173,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0012177760598075515,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0012177760618214961,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.0005227397099143438,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0005227397123235278,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.0003970936117161372,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0003970936122641433,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.3905070063224515
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 3,
+          "directionClass": "combined",
+          "guidedPhiBefore": 15506.170045542456,
+          "incidentGuidedBefore": 2.083808733337948,
+          "maxViolationBeforeMm": 65.87425210907963,
+          "piece": 8,
+          "proposalOrdinal": 7214,
+          "rawPhiBefore": 15458.548593240728,
+          "rotationShare": 0.9999999705247461,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 4.770780904238324,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 4.770780904240382,
+              "newlyActivatedRows": 0,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 1.89721809367432,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.8972180936762015,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.825725005947723,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.8257250059505168,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.3818043788415011,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.3818043788414798,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.18286225478095774,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.18286225478368578,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.08915337409659907,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.08915337409780477,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.04374042833424685,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.043740428336604964,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.021394447440274522,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.021394447441707598,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.010311594763247278,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.010311594764061738,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.004792704712724305,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.004792704712599516,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0020388939900053415,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.002038893991993973,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0006633972331240301,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0006633972334384453,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.000023772110273601044,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000023772110580466688,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.000016322947183233794,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000016322948795277625,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.00024279725397705523
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 15506.170045542456,
+          "incidentGuidedBefore": 1.907779925985116,
+          "maxViolationBeforeMm": 65.87425210907963,
+          "piece": 9,
+          "proposalOrdinal": 7215,
+          "rawPhiBefore": 15458.548593240728,
+          "rotationShare": 0.9982662060221643,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 5.475932531542213,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 5.4759325315426395,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 2.113438728168381,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 2.113438728170877,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.9158310666955056,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.9158310666971374,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.43286868768216613,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.43286868768336717,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.21054400071440393,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.21054400071443524,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.10378186790981814,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.10378186791058397,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.051500464848312166,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.05150046484777704,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.025634630291867078,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.025634630292188376,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.01277042363733738,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.012770423640176887,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.006355497200355442,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00635549720027484,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0031523281086189847,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0031523281104455236,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0015518170824606603,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0015518170839641243,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.0007518299478377344,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000751829949876992,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.0006072113724362449,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0006072113719710615,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.05886069923228973
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 4,
+          "directionClass": "combined",
+          "guidedPhiBefore": 15506.170045542456,
+          "incidentGuidedBefore": 1.7237258721699218,
+          "maxViolationBeforeMm": 65.87425210907963,
+          "piece": 6,
+          "proposalOrdinal": 7216,
+          "rawPhiBefore": 15458.548593240728,
+          "rotationShare": 0.8961461847085633,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 4.5407662929600825,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 4.540766292961052,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 1.5670973095591803,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.5670973095584486,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.589064973566001,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.5890649735665647,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.22974172760504685,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.22974172760586953,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.0985870806740532,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.09858708067622501,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.045153334150412006,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.04515333415110945,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.021472953020358565,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.021472953019838315,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.01039195905788981,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.010391959058324574,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.0050412703505173795,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.005041270353103755,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0024133792011216126,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0024133792030625045,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.0011112970692321866,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0011112970714748371,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.00046322188165426326,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0004632218842743896,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00013992575970167564,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.000139925759867765,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.00008152658619065001,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00008152658847393468,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.44375896118533253
+        },
+        {
+          "activeIncidentPenaltyMax": 0,
+          "activeIncidentPenaltySum": 0,
+          "activeIncidentRows": 2,
+          "directionClass": "combined",
+          "guidedPhiBefore": 15506.170045542456,
+          "incidentGuidedBefore": 1.3106941837608974,
+          "maxViolationBeforeMm": 65.87425210907963,
+          "piece": 56,
+          "proposalOrdinal": 7217,
+          "rawPhiBefore": 15458.548593240728,
+          "rotationShare": 0.9870428171887159,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 3.183203627841506,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 3.183203627839248,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.25
+            },
+            {
+              "deltaIncidentGuided": 1.1848184984183794,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 1.1848184984191903,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.625
+            },
+            {
+              "deltaIncidentGuided": 0.49129987217954874,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.4912998721792974,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.3125
+            },
+            {
+              "deltaIncidentGuided": 0.22048077121785226,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.22048077121689857,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.15625
+            },
+            {
+              "deltaIncidentGuided": 0.10387561556601721,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.10387561556672154,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.078125
+            },
+            {
+              "deltaIncidentGuided": 0.05025150429442937,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.05025150429355563,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0390625
+            },
+            {
+              "deltaIncidentGuided": 0.024606233238724018,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.02460623323895561,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.01953125
+            },
+            {
+              "deltaIncidentGuided": 0.012074939661112394,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.012074939661033568,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.009765625
+            },
+            {
+              "deltaIncidentGuided": 0.005882084073869365,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.005882084073164151,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0048828125
+            },
+            {
+              "deltaIncidentGuided": 0.0028038485441581606,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0028038485452270834,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00244140625
+            },
+            {
+              "deltaIncidentGuided": 0.001269278153229525,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0012692781529040076,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.001220703125
+            },
+            {
+              "deltaIncidentGuided": 0.0005031297146758096,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.0005031297132518375,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0006103515625
+            },
+            {
+              "deltaIncidentGuided": 0.00012033967380231658,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00012033967323077377,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00030517578125
+            },
+            {
+              "deltaIncidentGuided": 0.000051151457048481674,
+              "deltaMaxViolationMm": 0.0,
+              "deltaRawPhi": 0.00005115145722811576,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.16045708783398424
+        }
+      ],
+      "sampledRejections": 32,
+      "zeroEnergyProposals": 113528
+    },
+    "repairMaxDisplacementMm": 0.0,
+    "repairMaxGivebackMm": 0.0,
+    "sweeps": 3918,
+    "work": {
+      "acceptedMoves": 10964,
+      "broadPhaseRejects": 101890119,
+      "convexCellGapQueries": 8075024,
+      "exactCheckpoints": 0,
+      "jumpProposals": 16,
+      "pairRowProbes": 109086150,
+      "pieceProposals": 239974,
+      "poseTransforms": 1818133,
+      "repairRows": 0,
+      "weightUpdates": 2487
+    }
+  },
+  "request": {
+    "normalizeAxes": false,
+    "path": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_16cf0332-938-1/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+    "pieceCount": 61,
+    "sha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+    "sheetLongAxisMm": 2700.0,
+    "sheetShortAxisMm": 2000.0
+  },
+  "rotationFrozen": false,
+  "seed": 0,
+  "shock": {
+    "affineFactor": 0.947787049313921,
+    "entryDepthSlackMm": 0.0,
+    "entryDepthWithinTarget": true,
+    "shockDeg": 1.0,
+    "shockMm": 0.25,
+    "shockedPoseDigest": "66c6cc9efcf8ff2c95cc65a44123c0d84240d4ea0bc50a7068c3d6c2edcae8cd"
+  },
+  "wall": {
+    "constructorSeconds": 2.303839823,
+    "solverSeconds": 2.223328168,
+    "totalSeconds": 4.527739463
+  }
+}

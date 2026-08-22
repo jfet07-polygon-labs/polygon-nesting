@@ -1,0 +1,400 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "basin-sweep-rerun",
+ "lockedWmm": 150.16547,
+ "proposalBudget": 200000,
+ "jumpCommitRule": "derived default (unconditional)",
+ "parent": "S0 (the Sparrow correctness pin)",
+ "rows": [
+  {
+   "perturbationMm": 0.005,
+   "perturbationDeg": 0.02,
+   "entryRawPhi": 0.0033281795291538727,
+   "entryMaxViolationMm": 0.03663484549336271,
+   "finalRawPhi": 0.0,
+   "finalMaxViolationMm": 0.0,
+   "census": {
+    "activeEdgeRows": 0,
+    "activeEdgeRowsBySide": {
+     "bottom": 0,
+     "left": 0,
+     "right": 0,
+     "top": 0
+    },
+    "activePairRows": 0,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 0.0,
+     "left": 0.0,
+     "right": 0.0,
+     "top": 0.0
+    },
+    "maxEdgeViolationMm": 0.0,
+    "maxGuidedPenalty": 0,
+    "maxPairViolationMm": 0.0,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "exactCheckpoints": 2,
+   "publications": 1,
+   "publishedRawDepthMm": 150.16229310134784,
+   "invalidPublications": 0,
+   "maxRepairUm": 0.0,
+   "maxGivebackMm": 0.0,
+   "republished": true,
+   "jumps": 0,
+   "jumpAttempted": 0,
+   "jumpCommitted": 0,
+   "jumpsImprovingGuided": 0,
+   "jumpEvents": [],
+   "solverSeconds": 0.047965386,
+   "wallSeconds": 0.05184319301042706,
+   "work": {
+    "acceptedMoves": 14,
+    "broadPhaseRejects": 5940,
+    "convexCellGapQueries": 354,
+    "exactCheckpoints": 2,
+    "jumpProposals": 0,
+    "pairRowProbes": 6210,
+    "pieceProposals": 199958,
+    "poseTransforms": 134,
+    "repairRows": 1,
+    "weightUpdates": 0
+   }
+  },
+  {
+   "perturbationMm": 0.02,
+   "perturbationDeg": 0.08,
+   "entryRawPhi": 0.15789538638724832,
+   "entryMaxViolationMm": 0.2129029915331193,
+   "finalRawPhi": 0.0,
+   "finalMaxViolationMm": 0.0,
+   "census": {
+    "activeEdgeRows": 0,
+    "activeEdgeRowsBySide": {
+     "bottom": 0,
+     "left": 0,
+     "right": 0,
+     "top": 0
+    },
+    "activePairRows": 0,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 0.0,
+     "left": 0.0,
+     "right": 0.0,
+     "top": 0.0
+    },
+    "maxEdgeViolationMm": 0.0,
+    "maxGuidedPenalty": 0,
+    "maxPairViolationMm": 0.0,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "exactCheckpoints": 1,
+   "publications": 1,
+   "publishedRawDepthMm": 150.1444712362983,
+   "invalidPublications": 0,
+   "maxRepairUm": 0.0,
+   "maxGivebackMm": 0.0,
+   "republished": true,
+   "jumps": 0,
+   "jumpAttempted": 0,
+   "jumpCommitted": 0,
+   "jumpsImprovingGuided": 0,
+   "jumpEvents": [],
+   "solverSeconds": 0.0444464,
+   "wallSeconds": 0.04768886393867433,
+   "work": {
+    "acceptedMoves": 32,
+    "broadPhaseRejects": 8831,
+    "convexCellGapQueries": 763,
+    "exactCheckpoints": 1,
+    "jumpProposals": 0,
+    "pairRowProbes": 9330,
+    "pieceProposals": 199958,
+    "poseTransforms": 186,
+    "repairRows": 0,
+    "weightUpdates": 0
+   }
+  },
+  {
+   "perturbationMm": 0.05,
+   "perturbationDeg": 0.2,
+   "entryRawPhi": 1.5671378918634133,
+   "entryMaxViolationMm": 0.5654384166031088,
+   "finalRawPhi": 0.0,
+   "finalMaxViolationMm": 0.0,
+   "census": {
+    "activeEdgeRows": 0,
+    "activeEdgeRowsBySide": {
+     "bottom": 0,
+     "left": 0,
+     "right": 0,
+     "top": 0
+    },
+    "activePairRows": 0,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 0.0,
+     "left": 0.0,
+     "right": 0.0,
+     "top": 0.0
+    },
+    "maxEdgeViolationMm": 0.0,
+    "maxGuidedPenalty": 0,
+    "maxPairViolationMm": 0.0,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "exactCheckpoints": 1,
+   "publications": 1,
+   "publishedRawDepthMm": 150.14874799054974,
+   "invalidPublications": 0,
+   "maxRepairUm": 0.0,
+   "maxGivebackMm": 0.0,
+   "republished": true,
+   "jumps": 0,
+   "jumpAttempted": 0,
+   "jumpCommitted": 0,
+   "jumpsImprovingGuided": 0,
+   "jumpEvents": [],
+   "solverSeconds": 0.039551722,
+   "wallSeconds": 0.04233930504415184,
+   "work": {
+    "acceptedMoves": 72,
+    "broadPhaseRejects": 16534,
+    "convexCellGapQueries": 1860,
+    "exactCheckpoints": 1,
+    "jumpProposals": 0,
+    "pairRowProbes": 17490,
+    "pieceProposals": 199958,
+    "poseTransforms": 322,
+    "repairRows": 0,
+    "weightUpdates": 0
+   }
+  },
+  {
+   "perturbationMm": 0.1,
+   "perturbationDeg": 0.4,
+   "entryRawPhi": 9.742075402260559,
+   "entryMaxViolationMm": 1.152991570808371,
+   "finalRawPhi": 0.0,
+   "finalMaxViolationMm": 0.0,
+   "census": {
+    "activeEdgeRows": 0,
+    "activeEdgeRowsBySide": {
+     "bottom": 0,
+     "left": 0,
+     "right": 0,
+     "top": 0
+    },
+    "activePairRows": 0,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 0.0,
+     "left": 0.0,
+     "right": 0.0,
+     "top": 0.0
+    },
+    "maxEdgeViolationMm": 0.0,
+    "maxGuidedPenalty": 0,
+    "maxPairViolationMm": 0.0,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "exactCheckpoints": 1,
+   "publications": 1,
+   "publishedRawDepthMm": 150.16060972705287,
+   "invalidPublications": 0,
+   "maxRepairUm": 0.0,
+   "maxGivebackMm": 0.0,
+   "republished": true,
+   "jumps": 0,
+   "jumpAttempted": 0,
+   "jumpCommitted": 0,
+   "jumpsImprovingGuided": 0,
+   "jumpEvents": [],
+   "solverSeconds": 0.03988687,
+   "wallSeconds": 0.042412383016198874,
+   "work": {
+    "acceptedMoves": 128,
+    "broadPhaseRejects": 24422,
+    "convexCellGapQueries": 2825,
+    "exactCheckpoints": 1,
+    "jumpProposals": 0,
+    "pairRowProbes": 25890,
+    "pieceProposals": 199958,
+    "poseTransforms": 462,
+    "repairRows": 0,
+    "weightUpdates": 0
+   }
+  },
+  {
+   "perturbationMm": 0.25,
+   "perturbationDeg": 1.0,
+   "entryRawPhi": 90.18985098534753,
+   "entryMaxViolationMm": 2.9155466182130074,
+   "finalRawPhi": 0.0,
+   "finalMaxViolationMm": 0.0,
+   "census": {
+    "activeEdgeRows": 0,
+    "activeEdgeRowsBySide": {
+     "bottom": 0,
+     "left": 0,
+     "right": 0,
+     "top": 0
+    },
+    "activePairRows": 0,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 0.0,
+     "left": 0.0,
+     "right": 0.0,
+     "top": 0.0
+    },
+    "maxEdgeViolationMm": 0.0,
+    "maxGuidedPenalty": 0,
+    "maxPairViolationMm": 0.0,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "exactCheckpoints": 2,
+   "publications": 1,
+   "publishedRawDepthMm": 150.1569010342746,
+   "invalidPublications": 0,
+   "maxRepairUm": 0.0,
+   "maxGivebackMm": 0.0,
+   "republished": true,
+   "jumps": 0,
+   "jumpAttempted": 0,
+   "jumpCommitted": 0,
+   "jumpsImprovingGuided": 0,
+   "jumpEvents": [],
+   "solverSeconds": 0.040476362,
+   "wallSeconds": 0.043242311920039356,
+   "work": {
+    "acceptedMoves": 213,
+    "broadPhaseRejects": 37367,
+    "convexCellGapQueries": 4285,
+    "exactCheckpoints": 2,
+    "jumpProposals": 0,
+    "pairRowProbes": 39630,
+    "pieceProposals": 199958,
+    "poseTransforms": 691,
+    "repairRows": 0,
+    "weightUpdates": 0
+   }
+  },
+  {
+   "perturbationMm": 0.5,
+   "perturbationDeg": 2.0,
+   "entryRawPhi": 433.4919406020829,
+   "entryMaxViolationMm": 5.852397365955659,
+   "finalRawPhi": 0.0,
+   "finalMaxViolationMm": 0.0,
+   "census": {
+    "activeEdgeRows": 0,
+    "activeEdgeRowsBySide": {
+     "bottom": 0,
+     "left": 0,
+     "right": 0,
+     "top": 0
+    },
+    "activePairRows": 0,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 0.0,
+     "left": 0.0,
+     "right": 0.0,
+     "top": 0.0
+    },
+    "maxEdgeViolationMm": 0.0,
+    "maxGuidedPenalty": 0,
+    "maxPairViolationMm": 0.0,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "exactCheckpoints": 2,
+   "publications": 2,
+   "publishedRawDepthMm": 150.16374161751165,
+   "invalidPublications": 0,
+   "maxRepairUm": 6.500000000000001,
+   "maxGivebackMm": 0.002786809347185226,
+   "republished": true,
+   "jumps": 0,
+   "jumpAttempted": 0,
+   "jumpCommitted": 0,
+   "jumpsImprovingGuided": 0,
+   "jumpEvents": [],
+   "solverSeconds": 0.041520312,
+   "wallSeconds": 0.04436092602554709,
+   "work": {
+    "acceptedMoves": 358,
+    "broadPhaseRejects": 63802,
+    "convexCellGapQueries": 7131,
+    "exactCheckpoints": 2,
+    "jumpProposals": 0,
+    "pairRowProbes": 67710,
+    "pieceProposals": 199958,
+    "poseTransforms": 1159,
+    "repairRows": 3,
+    "weightUpdates": 0
+   }
+  },
+  {
+   "perturbationMm": 2.0,
+   "perturbationDeg": 10.0,
+   "entryRawPhi": 12668.141430765654,
+   "entryMaxViolationMm": 30.08751993102254,
+   "finalRawPhi": 1003.3638673821924,
+   "finalMaxViolationMm": 21.32833962453364,
+   "census": {
+    "activeEdgeRows": 35,
+    "activeEdgeRowsBySide": {
+     "bottom": 15,
+     "left": 1,
+     "right": 1,
+     "top": 18
+    },
+    "activePairRows": 72,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 13.296579259488219,
+     "left": 1.0611923291894243,
+     "right": 0.2668490310004472,
+     "top": 4.660347651762038
+    },
+    "maxEdgeViolationMm": 13.296579259488219,
+    "maxGuidedPenalty": 2,
+    "maxPairViolationMm": 21.32833962453364,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "exactCheckpoints": 0,
+   "publications": 0,
+   "publishedRawDepthMm": null,
+   "invalidPublications": 0,
+   "maxRepairUm": 0.0,
+   "maxGivebackMm": 0.0,
+   "republished": false,
+   "jumps": 1,
+   "jumpAttempted": 1,
+   "jumpCommitted": 1,
+   "jumpsImprovingGuided": 0,
+   "jumpEvents": [
+    {
+     "baselineGuidedPhi": 458.58755502395337,
+     "bestGuidedPhi": 2214.62803728148,
+     "improvedGuided": false,
+     "installed": true,
+     "kind": "strip",
+     "maxViolationMm": 10.475358359357827,
+     "piece": 14,
+     "proposalOrdinal": 31415,
+     "radiusMm": "strip"
+    }
+   ],
+   "solverSeconds": 3.894741936,
+   "wallSeconds": 3.898832901963033,
+   "work": {
+    "acceptedMoves": 29026,
+    "broadPhaseRejects": 136108942,
+    "convexCellGapQueries": 16280151,
+    "exactCheckpoints": 0,
+    "jumpProposals": 16,
+    "pairRowProbes": 144783510,
+    "pieceProposals": 199958,
+    "poseTransforms": 2413089,
+    "repairRows": 0,
+    "weightUpdates": 2
+   }
+  }
+ ]
+}

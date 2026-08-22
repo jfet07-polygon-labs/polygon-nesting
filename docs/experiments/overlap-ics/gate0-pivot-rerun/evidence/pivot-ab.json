@@ -1,0 +1,252 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "gate-0-pivot-rerun A/B: the descent alone, both pivots",
+ "binaries": {
+  "base": "/var/lib/t3/tmp/pivot/base-tree/target/release/examples/overlap_ics_benchmark",
+  "pivot": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_16cf0332-938-1/target/release/examples/overlap_ics_benchmark"
+ },
+ "baseCommit": "1f5cd5b0a2ba68df84d441c145afe6e367199cd7",
+ "note": "`--jumps=0` on both arms, so no topology move fires and the only difference between the columns is the pivot a proposal turns about. Read-only diagnostic; not a cell and not a verdict.",
+ "arms": [
+  {
+   "arm": "base",
+   "seed": 0,
+   "exit": 0,
+   "entryRawPhi": 542.9878204208828,
+   "entryMaxViolationMm": 5.5672145384168115,
+   "shockedPoseDigest": "66c6cc9efcf8ff2c95cc65a44123c0d84240d4ea0bc50a7068c3d6c2edcae8cd",
+   "finalRawPhi": 38.04053433682298,
+   "finalMaxViolationMm": 2.2727424089583153,
+   "finalRawDepthMm": 177.59707164403028,
+   "proposals": 239974,
+   "acceptedProposals": 3878,
+   "rejectedProposals": 94660,
+   "zeroEnergyProposals": 141436,
+   "acceptanceRateAmongGradientForming": 0.0393553755911425,
+   "guidedStalls": 2238,
+   "exactCheckpointAttempts": 0,
+   "publications": 0,
+   "census": {
+    "activeEdgeRows": 22,
+    "activeEdgeRowsBySide": {
+     "bottom": 7,
+     "left": 1,
+     "right": 0,
+     "top": 14
+    },
+    "activePairRows": 22,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 2.2727424089583153,
+     "left": 0.00584720152389373,
+     "right": 0.0,
+     "top": 1.33480065937988
+    },
+    "maxEdgeViolationMm": 2.2727424089583153,
+    "maxGuidedPenalty": 148,
+    "maxPairViolationMm": 1.1958663186232372,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "solverSeconds": 1.627370156
+  },
+  {
+   "arm": "base",
+   "seed": 1,
+   "exit": 0,
+   "entryRawPhi": 543.6979862462363,
+   "entryMaxViolationMm": 5.567214500269516,
+   "shockedPoseDigest": "81f45cbdb8be6a2a2f238aa95d9a19a2629ddfd183ec7871cde91f21f1617b86",
+   "finalRawPhi": 50.91455628062652,
+   "finalMaxViolationMm": 2.8964641235985904,
+   "finalRawDepthMm": 176.8779485908243,
+   "proposals": 239974,
+   "acceptedProposals": 5918,
+   "rejectedProposals": 92628,
+   "zeroEnergyProposals": 141428,
+   "acceptanceRateAmongGradientForming": 0.06005317313741806,
+   "guidedStalls": 0,
+   "exactCheckpointAttempts": 0,
+   "publications": 0,
+   "census": {
+    "activeEdgeRows": 22,
+    "activeEdgeRowsBySide": {
+     "bottom": 7,
+     "left": 1,
+     "right": 0,
+     "top": 14
+    },
+    "activePairRows": 23,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 2.3532350017276107,
+     "left": 0.0702912996274847,
+     "right": 0.0,
+     "top": 0.6156776061739038
+    },
+    "maxEdgeViolationMm": 2.3532350017276107,
+    "maxGuidedPenalty": 0,
+    "maxPairViolationMm": 2.8964641235985904,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "solverSeconds": 1.591119768
+  },
+  {
+   "arm": "base",
+   "seed": 2,
+   "exit": 0,
+   "entryRawPhi": 546.4705550396386,
+   "entryMaxViolationMm": 5.567213597471957,
+   "shockedPoseDigest": "d187706e023e0a421e4d06f5c7c8906d64a3e1309d12049f393684e71bf3e6db",
+   "finalRawPhi": 38.94068733115112,
+   "finalMaxViolationMm": 2.422167036349144,
+   "finalRawDepthMm": 177.23990765891756,
+   "proposals": 239974,
+   "acceptedProposals": 6973,
+   "rejectedProposals": 91566,
+   "zeroEnergyProposals": 141435,
+   "acceptanceRateAmongGradientForming": 0.07076385999451994,
+   "guidedStalls": 803,
+   "exactCheckpointAttempts": 0,
+   "publications": 0,
+   "census": {
+    "activeEdgeRows": 22,
+    "activeEdgeRowsBySide": {
+     "bottom": 7,
+     "left": 1,
+     "right": 0,
+     "top": 14
+    },
+    "activePairRows": 21,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 2.422167036349144,
+     "left": 0.0029068625883503785,
+     "right": 0.0,
+     "top": 0.9776366742671598
+    },
+    "maxEdgeViolationMm": 2.422167036349144,
+    "maxGuidedPenalty": 56,
+    "maxPairViolationMm": 1.1637080309393917,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "solverSeconds": 1.613704043
+  },
+  {
+   "arm": "pivot",
+   "seed": 0,
+   "exit": 0,
+   "entryRawPhi": 542.9878204208828,
+   "entryMaxViolationMm": 5.5672145384168115,
+   "shockedPoseDigest": "66c6cc9efcf8ff2c95cc65a44123c0d84240d4ea0bc50a7068c3d6c2edcae8cd",
+   "finalRawPhi": 35.90858372947178,
+   "finalMaxViolationMm": 1.619689427884372,
+   "finalRawDepthMm": 177.46244460745496,
+   "proposals": 239974,
+   "acceptedProposals": 4686,
+   "rejectedProposals": 93821,
+   "zeroEnergyProposals": 141467,
+   "acceptanceRateAmongGradientForming": 0.04757022343589796,
+   "guidedStalls": 2639,
+   "exactCheckpointAttempts": 0,
+   "publications": 0,
+   "census": {
+    "activeEdgeRows": 21,
+    "activeEdgeRowsBySide": {
+     "bottom": 7,
+     "left": 0,
+     "right": 0,
+     "top": 14
+    },
+    "activePairRows": 25,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 1.619689427884372,
+     "left": 0.0,
+     "right": 0.0,
+     "top": 1.2001736228045559
+    },
+    "maxEdgeViolationMm": 1.619689427884372,
+    "maxGuidedPenalty": 117,
+    "maxPairViolationMm": 1.3389517990117965,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "solverSeconds": 1.692058063
+  },
+  {
+   "arm": "pivot",
+   "seed": 1,
+   "exit": 0,
+   "entryRawPhi": 543.6979862462363,
+   "entryMaxViolationMm": 5.567214500269516,
+   "shockedPoseDigest": "81f45cbdb8be6a2a2f238aa95d9a19a2629ddfd183ec7871cde91f21f1617b86",
+   "finalRawPhi": 36.02309274048053,
+   "finalMaxViolationMm": 1.59662033255373,
+   "finalRawDepthMm": 177.39860365837913,
+   "proposals": 239974,
+   "acceptedProposals": 5254,
+   "rejectedProposals": 93274,
+   "zeroEnergyProposals": 141446,
+   "acceptanceRateAmongGradientForming": 0.05332494316336473,
+   "guidedStalls": 1469,
+   "exactCheckpointAttempts": 0,
+   "publications": 0,
+   "census": {
+    "activeEdgeRows": 21,
+    "activeEdgeRowsBySide": {
+     "bottom": 7,
+     "left": 0,
+     "right": 0,
+     "top": 14
+    },
+    "activePairRows": 24,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 1.59662033255373,
+     "left": 0.0,
+     "right": 0.0,
+     "top": 1.136332673728731
+    },
+    "maxEdgeViolationMm": 1.59662033255373,
+    "maxGuidedPenalty": 65,
+    "maxPairViolationMm": 1.2938663838974551,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "solverSeconds": 1.6810579159999999
+  },
+  {
+   "arm": "pivot",
+   "seed": 2,
+   "exit": 0,
+   "entryRawPhi": 546.4705550396386,
+   "entryMaxViolationMm": 5.567213597471957,
+   "shockedPoseDigest": "d187706e023e0a421e4d06f5c7c8906d64a3e1309d12049f393684e71bf3e6db",
+   "finalRawPhi": 36.154660309334155,
+   "finalMaxViolationMm": 1.6073967293692322,
+   "finalRawDepthMm": 177.362960413062,
+   "proposals": 239974,
+   "acceptedProposals": 4299,
+   "rejectedProposals": 94223,
+   "zeroEnergyProposals": 141452,
+   "acceptanceRateAmongGradientForming": 0.04363492417937111,
+   "guidedStalls": 1946,
+   "exactCheckpointAttempts": 0,
+   "publications": 0,
+   "census": {
+    "activeEdgeRows": 21,
+    "activeEdgeRowsBySide": {
+     "bottom": 7,
+     "left": 0,
+     "right": 0,
+     "top": 14
+    },
+    "activePairRows": 23,
+    "maxEdgeViolationBySideMm": {
+     "bottom": 1.6073967293692322,
+     "left": 0.0,
+     "right": 0.0,
+     "top": 1.1006894284116129
+    },
+    "maxEdgeViolationMm": 1.6073967293692322,
+    "maxGuidedPenalty": 86,
+    "maxPairViolationMm": 1.250196111468513,
+    "piecesSqueezedOnOppositeSides": 0
+   },
+   "solverSeconds": 1.663026696
+  }
+ ]
+}
