@@ -14,12 +14,18 @@
 # `state::compose_proposal`, a function the fix introduces. Remove that trailing
 # block and the file is this one:
 #
-#     git show <fix commit>:crates/polygon-nesting-core/src/search/overlap_ics/tests.rs \
+#     git show 5685ca3:crates/polygon-nesting-core/src/search/overlap_ics/tests.rs \
 #       | head -1076 | sha256sum
 #     834f13b22c758843b4ca47295f2fc51102cebbed3902cf88aaf2419b1f467656
 #
 # So the red run and the green run are runs of the same source, and nothing in
 # the two vectors was adjusted after seeing either.
+#
+# The commit is PINNED in that recipe rather than written as "the fix commit"
+# because a later commit corrects one arithmetic slip in a doc comment inside
+# the first vector - a decomposition of a rate, not the rate itself and not an
+# assertion. 5685ca3 is the tree these two vectors were run on in both
+# directions, and it stays in history for exactly this check.
 # date (UTC)      : 2026-08-22T23:22:47Z
 # host            : Linux 6.18.38 x86_64
 # rustc           : rustc 1.97.1 (8bab26f4f 2026-07-14)

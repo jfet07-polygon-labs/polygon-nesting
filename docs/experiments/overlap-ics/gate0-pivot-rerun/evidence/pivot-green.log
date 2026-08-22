@@ -1,3 +1,19 @@
+# The same vectors, GREEN against the fixed tree
+#
+# fix commit      : 5685ca312e260795168ee11daa61360594994e6c
+#                   "Proposals turn about the centroid the torque was taken about"
+# tests.rs sha256 : 73929defb1ebeca16ce44a1d5546b72adf7cd4badf2b3bd8f2bbbab4d41b7268
+#                   - its first 1076 lines sha256 to
+#                     834f13b22c758843b4ca47295f2fc51102cebbed3902cf88aaf2419b1f467656,
+#                     which is the whole of the file `pivot-red.log` was produced
+#                     from. The two red vectors are byte-identical here; the
+#                     third block is the post-fix vector, which cannot compile on
+#                     the un-fixed tree because it names `state::compose_proposal`.
+# host            : Linux 6.18.38 x86_64
+# rustc           : rustc 1.97.1 (8bab26f4f 2026-07-14)
+#
+# command: the same one `pivot-red.log` records, plus the third vector.
+#
 warning: unused imports: `KernelPose` and `LEGACY`
   --> crates/polygon-nesting-core/src/search/general_relaxed.rs:48:24
    |
@@ -83,3 +99,4 @@ test search::overlap_ics::tests::a_pure_rotation_proposal_leaves_the_transformed
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 743 filtered out; finished in 0.00s
 
+EXIT=0

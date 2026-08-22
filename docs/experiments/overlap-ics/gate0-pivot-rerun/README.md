@@ -162,10 +162,12 @@ rows and 0 giveback. It is well inside both caps (16 µm, 0.050 mm) and it buys
 strictly better on all three: 0 repair rows against 1, 0.0 µm against 5.0 µm,
 and 3.7 µm deeper.
 
-And both of them do it with **`jumpAttempted: 0`**. Last round S1 needed a ball
-jump and triangle-20 fired one it did not need; this round neither trajectory
-ever reaches a second guided stall. The stall ladder is not being escaped — it
-is not being entered.
+And both of them do it with **`jumpAttempted: 0`** — and with
+`guidedStalls: 0` and `weightUpdates: 0`. Last round S1 needed a ball jump and
+triangle-20 fired one it did not need; this round **neither trajectory stalls
+even once**, so the guided-weight machinery never fires and the jump is never
+licensed. The stall ladder is not being escaped: it is not being entered.
+S1 reaches Φ = 0 in 358 accepted moves and triangle-20 in 178.
 
 ---
 
@@ -202,9 +204,9 @@ at exactly `T`, not above it.
 
 The three seeds' terminal numbers are noisy — 326.98 / 30.42 / 42.53 of raw Φ —
 because the one permitted jump is a strip teleport that commits
-unconditionally, and on all three seeds it is catastrophic (guided Φ up by 21x,
-207x and 135x). A verdict read off those three numbers would be a verdict about
-a lottery.
+unconditionally, and on all three seeds it is catastrophic (guided Φ up by
+**207x, 21x and 135x**, in seed order). A verdict read off those three numbers
+would be a verdict about a lottery.
 
 So the same cell was run with **`--jumps=0`** on both this round's binary and on
 **commit 1f5cd5b**, the tree with the pivot broken. Same three seeds, same
@@ -273,10 +275,13 @@ The corrected SE(2) move set — the one the converged spec actually specifies,
 with the torque and the coordinate now taken about the same point — converges
 reproducibly, from three independent shocked entries, to a fixed point whose
 worst violation is **1.6 mm** against a **4 µm** band, and the one topology
-move the spec licenses moves it *away* from legality on all three seeds. Zero
-publication attempts in 719,922 proposals of C175 across the three seeds, and
-zero in the 719,922 of the jump-free A/B, and zero in the 719,922 the previous
-round spent on the broken pivot.
+move the spec licenses moves it *away* from legality on all three seeds.
+
+Four independent C175 batteries of 719,922 proposals each — this round's cell,
+the jump-free fixed-pivot arm, the jump-free broken-pivot arm, and the previous
+round's cell — and **`exactCheckpointAttempts` is 0 in every one of the twelve
+trajectories**. In 2,879,688 piece proposals this cell has never once been
+close enough to legality for the publication path to be called.
 
 There is nothing left to blame that this campaign has not now measured.
 
@@ -405,10 +410,11 @@ every one of them, and the previous round's headline A/B result is superseded:
 > guided Φ."*
 
 That was true of the code that measured it. It is not true any more. With the
-pivot corrected, S1 never reaches a second guided stall, never licenses a jump,
-and republishes on the descent alone. The commit rule is now **unobservable**
-anywhere inside the basin, and the 169-attempt / 164,944-proposal cost the
-`guided` arm used to pay on S1 is gone with it — it attempts **0**.
+pivot corrected, S1 never stalls at all (`guidedStalls: 0`), never licenses a
+jump, and republishes on the descent alone. The commit rule is now
+**unobservable** anywhere inside the basin, and the 169-attempt /
+164,944-proposal cost the `guided` arm used to pay on S1 is gone with it — it
+attempts **0**.
 
 The two arms separate only at 2.0 mm / 10°, where the residual is
 millimetre-scale, the strip branch is licensed, and the unconditional commit is
@@ -512,9 +518,13 @@ untouched adjacent things is also written down.
   origin. It is a low-discrepancy *sample*, not a gradient step, so it is not
   the mismatch this round named; what the origin pivot distorts there is the
   shape of the ball, and the ball still contains offsets at every scale below
-  `rho`. Not material to any verdict here either: every jump that fired in this
-  battery took the **strip** branch, which already positions by transformed
-  centroid.
+  `rho`. And it is not material to a single number in this document: across
+  **every** JSON in the battery — ten cells, fourteen basin rows, five probes,
+  six A/B arms — there are **165 jump events and all 165 are `strip`**. The
+  ball branch did not fire once. That is the two-scale gate working from both
+  ends: everything that stalls, stalls in millimetres, and everything below
+  0.1 mm no longer stalls at all. The strip branch already positions by
+  transformed centroid.
 * **`Engine::displace`** — the cells' own perturbation operator. Untouched, and
   that is why every entry in §1 is bit-identical to the previous round's.
 * **`publish.rs` repair** — pure translation, no rotation, nothing to pivot.

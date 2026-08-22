@@ -8229,3 +8229,144 @@ default build did not move one byte. Five suites, 0 failures, no flake: 1293,
 against 1340 and 1150, which is the two sag-specific vectors this round added
 and nothing else. Evidence, drivers, the pre-committed reading and the full
 caveat list: `docs/experiments/overlap-ics/gate0-rerun/`.
+
+## The pivot fix: the corrected move set is measurably better, converges to a fixed point 400x outside the band, and C175 is the separator
+
+The previous round found a fourth defect after its numbers were in hand and
+refused to repair it, naming the one thing that would settle it: *"a step of `s`
+along the SE(2) direction lowers the incident guided energy for small `s`" — and
+that vector cannot be committed in this round, because on this code it would be
+RED.* This round wrote that vector first, ran it against the un-fixed tree, and
+committed the transcript before touching a line of the engine
+(`gate0-pivot-rerun/evidence/pivot-red.log`): the ladder refuses **every one of
+its fourteen rungs**, and Δ(incident guided) is positive and **linear in the
+step** — 81.98 at 1.25 mm, 0.007350 at the 0.25 µm floor, coefficient
+29.4 mm⁻¹ at both ends. A second vector measures the same defect kinematically:
+the accepted step translated by 1.2438575 mm and moved the transformed centroid
+**0.9618590 mm** away from where that translation put it, 77.3 % of the whole
+modelled displacement.
+
+**The fix is one line of behaviour and it is on the coordinate, not the torque.**
+`state::compose_proposal` is the standard rigid composition
+`theta' = theta + dtheta`, `t' = c + R(dtheta)(t − c) + dt`, with `c` — the
+piece's transformed centroid — read **once per proposal**, before the ladder
+overwrites the cached geometry with the first rung's transform. Turning the
+torque about the origin instead would have made the two agree just as well and
+would have repudiated the spec's own `tau = (p − c_i) × (w v n)` and its `R_i`.
+A third vector, new with the fix, holds the invariant the other two are
+consequences of: a proposal with `dt = 0` moves the centroid **not at all**, at
+ten angles from 1 µdeg to 359.9°, both mirror flags, four starting rotations,
+exact to round-off rather than to first order.
+
+**Five of the six fatal cells pass; C175 is 0/3, and this time the verdict
+stands.** The pre-committed reading was in `gate0-pivot-rerun/README.md` §0 and
+committed before the battery ran; its operative clause was written by the parent
+session and not by this round: *if C175 is 0/3 with the pivot fixed, the jump
+real and installed on stalled trajectories, and the clearances right, the
+verdict STANDS as the family separator failing.* All three antecedents hold, and
+each is shown rather than asserted. S0 is bit-for-bit — a zero-energy layout
+never forms a gradient, so the fix is unreachable on it by construction. **S1
+and triangle-20 publish sooner and deeper than last round — 854 and 480
+proposals against 6,710 and 780, 150.16374 against 150.16536 and 70.73784
+against 70.74150 — and each does it with `jumpAttempted: 0`, `guidedStalls: 0`
+and `weightUpdates: 0`.** Neither trajectory stalls even once, so the
+guided-weight machinery never fires and the jump is never licensed: the stall
+ladder is not being escaped, it is not being entered. Every cell's entry is
+bit-identical to the previous round's — entry Φ to the last bit,
+`perturbedPoseDigest` and `shockedPoseDigest` where they exist, on all ten cells
+— so every comparison in the document is clean, including C168's, which the
+previous round had to disown.
+
+**The measurement that decides C175 is an A/B against the un-fixed binary with
+the jump removed from both arms.** The three seeds' terminal numbers are noisy
+because the one permitted jump is a strip teleport that commits unconditionally
+and is catastrophic on all three (guided Φ up 207×, 21×, 135×, installed anyway,
+with 96.6 %, 98.6 % and 92.7 % of the quota left to fail to recover in). So the
+cell was re-run at `--jumps=0` on this tree and on commit `1f5cd5b`, same seeds,
+same 240,000-proposal quota, everything else identical; with no topology move
+there is nothing stochastic left and the two columns differ by the pivot alone.
+`max_g` — the only quantity the publication band is measured against — falls
+**2.27274 → 1.61969 mm (−28.7 %)**, **2.89646 → 1.59662 (−44.9 %)** and
+**2.42217 → 1.60740 (−33.6 %)**. The corrected descent has an attractor the
+broken one did not: three independent shocked entries landing within **0.7 % in
+Φ and 1.4 % in `max_g`**, against a broken-pivot scatter of 38.0–50.9 and
+2.27–2.90.
+
+**And that attractor is 399× outside the 4 µm band.** Four independent C175
+batteries of 719,922 proposals each — this round's cell, both jump-free arms,
+and the previous round's cell — and `exactCheckpointAttempts` is **0 in every
+one of the twelve trajectories**. In 2,879,688 piece proposals this cell has
+never once been close enough to legality for the publication path to be *called*.
+The residual has the same shape on all three fixed-pivot seeds: 21 active
+boundary rows, **7 at the sheet bottom and 14 at the strip top**, left and right
+completely clear, `piecesSqueezedOnOppositeSides` **0**. No single rigid
+translation satisfies both sets and no single piece is squeezed both ways, so
+there is no per-piece move of any size that reduces the pair. The cell asks for
+6.714 mm of compression and the descent distributes the last 1.6 mm of it across
+21 pieces along the one axis it is being compressed on. **That is the family
+separator, and there is nothing left to blame that this campaign has not now
+measured.**
+
+Both of §0's escape clauses were checked and both are closed. Φ does not
+explode — seed 0's 326.98 is the jump's damage and nothing else; without the
+jump the same seed lands at 35.909 — so the local sweep is a sweep. And 3 of 3
+seeds stall above 0.100 mm, take the strip branch and install, where last round
+seed 1 never stalled at all and the antecedent could only be claimed on two.
+
+**The mandated census found no new defect of the pivot's concreteness**, and
+reports two uncomfortable things instead. The step-scaling signature moved and
+did not vanish: the local exponent's median goes 1.174 → 1.770 and 1.284 →
+1.656, and the first-order-ascent population roughly halves (21/32 → 11/32,
+22/32 → 14/32). The residue is the subgradient of a **max** — `v_ij` is a max
+over cell pairs, each boundary residual a max over ring vertices — which is the
+spec's own force model and not a disagreement between two pieces of code; no
+second pivot exists. And a correction to the *previous* round's §2.1, which is
+this round's to make: the rejection census arms on the **first** stalled sweep
+and fills immediately, so `activeIncidentPenaltyMax = 0` describes ordinals
+7,139–7,217 of 239,974 — 3.0 % in, where the whole layout carries guided/raw
+**1.13** against **184.8** at the end. It is a code line and a measurement,
+reported unrepaired, and it explicitly does **not** license another round: the
+census is read-only, so no scoping of it can change 0/3, 1.6 mm, or zero
+attempts.
+
+**The basin A/B no longer separates anything, and that supersedes the previous
+round's headline.** Both arms are byte-equal on all six passing rungs including
+S1's 0.5 mm / 2.0°, because **no jump fires on any of them**. "The only
+difference between republishing and freezing at 12.635 µm is whether the jump
+may commit" was true of the code that measured it and is not true any more; the
+commit rule is now unobservable inside the basin, and the 164,944 proposals the
+`guided` arm used to burn on S1 are gone with it. The arms separate only at
+2.0 mm / 10°, where the unconditional commit is worse: Φ 1,003.36 against
+235.18, `max_g` 21.33 mm against 10.48, 1 installed against 13 attempted and 0
+installed. That is also the honest reading of the three diagnostics, all of
+which fire strip relocations and all of which move the wrong way on `max_g`
+(S2 16.77 → 21.33, C168 11.40 → 11.67, random-T 20.74 → 23.86) while two of the
+three improve on Φ. They are dominated by the jump, not by the descent, and the
+controlled evidence about the descent is the A/B above.
+
+Honest costs, recorded rather than buried. C175 seed 0 spent **2.223 solver
+seconds**, 11 % over the clause its 240,000-proposal quota was derived to fit —
+the quota did not move and the seed spent exactly 239,974 proposals like the
+other two, so this is the box being slower today, and the cell fails on the
+proposal clause regardless. S1 now pays 6.5 µm of repair and 0.0028 mm of
+giveback where it paid zero, well inside both caps, in exchange for 1.6 µm of
+depth. The frozen-θ probes are not bit-comparable across rounds:
+`compose_proposal` at `dtheta = 0` computes `pivot + (t − pivot) + dt` rather
+than `t + dt`, which can differ by an ulp, and the round did **not** special-case
+it to hide that — doing so would have been a second behaviour change made after
+seeing a number. `forceActiveAtLeast95AllFamilies` is still `false` at 0.775 and
+0.778 on both corpora, exactly as in the previous two rounds, and Sol review
+15 §D's reading of it stands unaddressed.
+
+The round boundary is clean. Two-process determinism on **every** cell document,
+11 of 11 bit-identical over the whole document minus `wall` (throughput excepted
+and said so). All four pinned gates reproduce on a binary with the feature absent
+and on one with it compiled — 206.869 / `8a7737381238fa4d`,
+159.09233022733062 / `fa01012af1d559ae`, 159.07876040364795 /
+`e28fba007f8031d4`, 164.0375677990678 / `49f094d7e59a9008` — with
+`WHOLE_DOCUMENT_IDENTITY: true` on all four, and the `base` binary is
+**byte-identical to the previous two rounds'** (`61befdc544b4135a…`), which is
+the check that matters after a round that changed the move set: the default
+build did not move one byte. FAST tier green, EXIT=0, ten stages. Evidence,
+drivers, the pre-committed reading and the full six-item caveat list:
+`docs/experiments/overlap-ics/gate0-pivot-rerun/`.

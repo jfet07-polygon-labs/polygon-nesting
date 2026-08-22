@@ -912,9 +912,10 @@ fn state_at(fixture: &Fixture, pose: Pose, target: f64) -> (Vec<PieceSource>, Co
 /// 0.816 translational one. The arithmetic of the two pivots is not close.
 ///
 /// * about the **centroid**, the bottom-most material rises at 0.408 mm per mm
-///   of step (1.225 mm/mm of lift from the translation, less 0.816 of drop from
-///   the 10 mm arm), so the row closes and the step is accepted on the first
-///   rung;
+///   of step: 0.816 of lift from the translation, less 0.408 at the corner the
+///   10 mm arm carries downward — which is the corner that *becomes* the lowest
+///   one, so the min is taken there. The row closes and the step is accepted on
+///   the first rung;
 /// * about the **origin**, the 141.421 mm arm drags the same material *down* at
 ///   3.674 mm per mm - nine times faster, in the opposite direction - so the row
 ///   opens on every rung of the ladder, from 1.25 mm to 0.25 µm.
