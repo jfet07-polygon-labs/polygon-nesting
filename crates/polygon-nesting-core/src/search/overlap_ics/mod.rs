@@ -358,8 +358,25 @@ impl<'a> Engine<'a> {
                     } = *self;
                     descent.on_stalled_sweep(state, sources, contract, &mut trace.work)
                 };
-                if jumped {
-                    self.trace.jumps_improving_guided += 1;
+                if jumped.attempted {
+                    self.trace.jump_attempted += 1;
+                    if jumped.installed {
+                        self.trace.jump_committed += 1;
+                    }
+                    if jumped.improved_guided {
+                        self.trace.jumps_improving_guided += 1;
+                    }
+                    self.trace.jump_events.push(diagnostics::JumpEvent {
+                        proposal_ordinal: self.descent.proposals,
+                        piece: jumped.piece,
+                        kind: jumped.kind.label(),
+                        radius_mm: jumped.radius_mm,
+                        max_violation_mm: jumped.max_violation_mm,
+                        baseline_guided: jumped.baseline_guided,
+                        best_guided: jumped.best_guided,
+                        installed: jumped.installed,
+                        improved_guided: jumped.improved_guided,
+                    });
                 }
                 self.trace.jumps = self.descent.jumps_spent() as u64;
             }

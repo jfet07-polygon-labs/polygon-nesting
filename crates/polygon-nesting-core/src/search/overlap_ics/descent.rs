@@ -33,28 +33,29 @@ pub struct DescentConfig {
     pub stalls_before_jump: u32,
     /// Deterministic low-discrepancy relocations evaluated per jump.
     pub jump_samples: usize,
-    /// Bounded local proposals run from each relocation candidate.
+    /// Complete `n`-piece sweeps run from each relocation candidate — Sol R2
+    /// §4's "one bounded local **sweep** from each", which is `n` proposals in
+    /// this module's own vocabulary (`sweep`, below) and not four proposals of
+    /// the relocated piece.
     pub jump_local_proposals: u32,
     /// How many jumps the whole trajectory may spend. Round 1 is 1.
     pub jump_allowance: u32,
     /// Whether the jump commits its best candidate unconditionally.
     ///
-    /// `true` is the spec's literal reading - Sol R2 §2's jump "chooses by
-    /// guided Φ" among the 16 relocations and "commits for a full epoch even
-    /// if raw Φ temporarily worsens", with staying put not in the choice set.
-    /// `false` keeps the pre-jump pose when no relocation beat it, and is the
-    /// **default**, on Gate 0's own measurement:
+    /// **`true`, and back to the spec's literal reading.** Sol R2 §2's jump
+    /// "chooses by guided Φ" among the 16 relocations and "commits for a full
+    /// epoch even if raw Φ temporarily worsens", with staying put not in the
+    /// choice set. Gate 0 defaulted this to `false` on an A/B whose `true` arm
+    /// was a *4-self-move strip teleport applied to a 12 µm residual* — both
+    /// reviews' Finding 2 refuses that measurement as evidence about the
+    /// mechanism, because the mechanism was never built. With a real `n`-piece
+    /// sweep and the two-scale gate ([`JUMP_STRIP_THRESHOLD_MM`]), the
+    /// unconditional commit is what makes a jump a topology change rather than
+    /// one more descent step that "cannot change a topology at all".
     ///
-    /// | cell | `true` | `false` |
-    /// |---|---|---|
-    /// | S1 (0.5 mm / 2°) final `max_g` | 2.552630 mm | **0.012635 mm** |
-    /// | S2 (2 mm / 10°) final raw Φ | 1308.79 | **362.36** |
-    ///
-    /// Two hundred times closer on the fatal cell. This is a **knob** in the
-    /// spec's own words - "jump type/order/stall threshold are KNOBS, not
-    /// architectural disagreements" - so choosing it on evidence is what Gate 0
-    /// is for, and both settings stay reachable so the next round can re-run
-    /// the comparison. See docs/experiments/overlap-ics/README.md §4.
+    /// `false` stays reachable (`--jumpcommit=guided`) so the A/B is one
+    /// command, but a `false` run can re-fire its jump on every second stall,
+    /// because an uncommitted evaluation no longer spends the allowance.
     pub jump_commits_unconditionally: bool,
     /// The counter-based source's key. Never a clock, never an address.
     pub seed: u64,
@@ -82,9 +83,9 @@ impl DescentConfig {
             ladder_bottom_mm: 0.00025,
             stalls_before_jump: 2,
             jump_samples: 16,
-            jump_local_proposals: 4,
+            jump_local_proposals: 1,
             jump_allowance: 1,
-            jump_commits_unconditionally: false,
+            jump_commits_unconditionally: true,
             seed,
         }
     }
@@ -123,6 +124,81 @@ pub struct SweepOutcome {
     pub raw_after: f64,
     pub totals: Totals,
 }
+
+/// The scale a jump fired at. Derived from `max_g` alone, never from a knob.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum JumpKind {
+    /// `max_g > 0.100 mm`: the residual is millimetre-scale separation and the
+    /// candidates are relocations anywhere in the usable strip.
+    Strip,
+    /// `max_g <= 0.100 mm`: no teleport. The candidates are drawn in a local
+    /// SE(2) ball around the current pose.
+    Ball,
+}
+
+impl JumpKind {
+    pub fn label(self) -> &'static str {
+        match self {
+            JumpKind::Strip => "strip",
+            JumpKind::Ball => "ball",
+        }
+    }
+}
+
+/// What one jump did — evaluated, installed, and at what scale.
+///
+/// `attempted` and `installed` are separate on purpose. The previous round's
+/// documents could not tell a no-op from a committed guided improvement,
+/// because the only counter was "the best candidate beat the baseline" and the
+/// pose had already been restored (Grok review 10, "Same-class latent
+/// defects"). Both numbers now reach the evidence.
+#[derive(Clone, Copy, Debug)]
+pub struct JumpOutcome {
+    /// The 16 candidates were evaluated.
+    pub attempted: bool,
+    /// A candidate state was adopted. This, and only this, spends the
+    /// trajectory's jump allowance.
+    pub installed: bool,
+    /// The best candidate's guided Φ beat the pre-jump guided Φ. Reported,
+    /// never a gate under the default commit rule.
+    pub improved_guided: bool,
+    pub kind: JumpKind,
+    pub piece: usize,
+    /// The ball's translational radius; infinite for a strip relocation, whose
+    /// candidates are bounded by the strip and not by a radius.
+    pub radius_mm: f64,
+    /// `max_g` at the moment the scale was chosen.
+    pub max_violation_mm: f64,
+    pub baseline_guided: f64,
+    pub best_guided: f64,
+}
+
+impl Default for JumpOutcome {
+    fn default() -> Self {
+        Self {
+            attempted: false,
+            installed: false,
+            improved_guided: false,
+            kind: JumpKind::Ball,
+            piece: 0,
+            radius_mm: 0.0,
+            max_violation_mm: 0.0,
+            baseline_guided: 0.0,
+            best_guided: 0.0,
+        }
+    }
+}
+
+/// The two-scale gate, derived from the publication band and frozen before the
+/// re-run: `25 * EPSILON_GRID_MM`.
+///
+/// Above it a residual is millimetre-scale separation that a strip relocation
+/// can address. At or below it the layout is within 25 canonical bands of
+/// legality and a strip teleport is measured nonsense. Neither review fitted
+/// this to a cell: Grok review 10 Finding 2 derives it from the band, Sol
+/// review 15 §A.2 states the same number, and Grok review 9 Round 1's
+/// independent 0.05 mm stall threshold is the corroboration.
+pub const JUMP_STRIP_THRESHOLD_MM: f64 = 25.0 * super::publish::EPSILON_GRID_MM;
 
 impl Descent {
     pub fn new(config: DescentConfig, allow_rotation: Vec<bool>) -> Self {
@@ -245,25 +321,34 @@ impl Descent {
     /// topology jump after `stalls_before_jump` guided updates that did not
     /// recover raw Φ.
     ///
-    /// Returns `true` when a jump was committed.
+    /// **The allowance is spent on an installed relocation, not on an
+    /// evaluation.** `jumps_spent += 1` used to run *before* `jump()`, so a
+    /// jump that evaluated 16 candidates and restored the original pose still
+    /// consumed the trajectory's one-shot: every fatal cell in the previous
+    /// round reported `jumpProposals: 16, jumps: 1` and had no jump left for
+    /// the remaining 190,000 proposals (Grok review 10 Finding 2.3, Sol review
+    /// 15 §A.2). A suppressed or uncommitted evaluation is now free.
     pub fn on_stalled_sweep(
         &mut self,
         state: &mut IcsState,
         sources: &[PieceSource],
         contract: &Contract,
         work: &mut WorkVector,
-    ) -> bool {
+    ) -> JumpOutcome {
         if super::energy::guided_update(state).is_some() {
             work.weight_updates += 1;
         }
         self.stalls += 1;
         if self.stalls < self.config.stalls_before_jump || self.jumps_spent >= self.config.jump_allowance
         {
-            return false;
+            return JumpOutcome::default();
         }
         self.stalls = 0;
-        self.jumps_spent += 1;
-        self.jump(state, sources, contract, work)
+        let outcome = self.jump(state, sources, contract, work);
+        if outcome.installed {
+            self.jumps_spent += 1;
+        }
+        outcome
     }
 
     /// Records that a sweep improved raw Φ, which resets the stall ladder.
@@ -271,28 +356,63 @@ impl Descent {
         self.stalls = 0;
     }
 
-    /// The single topology jump: `jump_samples` deterministic low-discrepancy
-    /// relocations of the highest-pressure piece, each followed by a bounded
-    /// local sweep, chosen by guided Φ with a stable ordinal tie-break.
+    /// The topology jump, at the scale the residual is on.
     ///
-    /// It commits even when raw Φ temporarily worsens - that is the point of a
-    /// topology change - and it never touches the protected exact incumbent.
+    /// `jump_samples` deterministic low-discrepancy relocations of the
+    /// highest-pressure piece; **one full `n`-piece sweep from each**; the best
+    /// by guided Φ, with a stable ordinal tie-break; one total adoption. Three
+    /// things here are the frozen fix list, not new design:
     ///
-    /// Returns whether the committed relocation *improved* guided Φ. The jump
-    /// happens either way; this is a fact reported about it, not a gate on it.
+    /// 1. **a sweep is a sweep.** The previous implementation ran four
+    ///    `propose(piece)` calls on the relocated piece alone, so no neighbour
+    ///    ever settled and the candidate's guided Φ was measured on a state
+    ///    nobody had accommodated. That is why `jumpsImprovingGuided` was 0 on
+    ///    every near-minimum cell and 4/8 on the wild random throw (Grok review
+    ///    10 Finding 2.2). `jump_local_proposals` is now the number of full
+    ///    sweeps, and it is 1.
+    /// 2. **the full state is snapshotted between candidates.** Once
+    ///    neighbours move, saving one pose leaves candidate `k+1` starting from
+    ///    candidate `k`'s wreckage (Grok review 10 Finding 2, `descent.rs:291`).
+    /// 3. **two scales, both derived.** Above `25 * EPSILON_GRID_MM` = 0.100 mm
+    ///    the residual is millimetre-scale separation and the candidates are
+    ///    strip-wide relocations. At or below it the layout is a micrometre
+    ///    from its band, a strip teleport is measured nonsense (S1 under the
+    ///    old unconditional commit: 12.6 µm → 2.55 mm), and the same 16
+    ///    candidates are drawn in a local SE(2) ball of translational radius
+    ///    `max(4 * max_g, ladder_top)` with the metric-equivalent angular
+    ///    radius `rho / R_piece`. The threshold is the publication band's own
+    ///    25×; neither number is fitted to a cell.
+    ///
+    /// It never touches the protected exact incumbent.
     pub fn jump(
         &mut self,
         state: &mut IcsState,
         sources: &[PieceSource],
         contract: &Contract,
         work: &mut WorkVector,
-    ) -> bool {
+    ) -> JumpOutcome {
         let piece = super::energy::highest_pressure_piece(state);
         let original = state.poses[piece];
-        let baseline = fold(state).guided;
-        let mut best: Option<(f64, Pose)> = None;
+        let entry = fold(state);
+        let baseline = entry.guided;
+        let max_violation_mm = entry.max_violation_mm;
+        let kind = if max_violation_mm > JUMP_STRIP_THRESHOLD_MM {
+            JumpKind::Strip
+        } else {
+            JumpKind::Ball
+        };
+        let radius = sources[piece].max_radius_mm.max(1e-9);
+        // Frozen and derived. `ladder_top_mm` is the descent's own top rung, so
+        // the floor of the ball is one full step of the move set it is trying
+        // to unstick - not a number read off S1's 12.635 µm.
+        let ball_radius_mm = (4.0 * max_violation_mm).max(self.config.ladder_top_mm);
+        let snapshot = state.clone();
+        let mut best: Option<(f64, IcsState)> = None;
         for ordinal in 0..self.config.jump_samples {
             work.jump_proposals += 1;
+            if ordinal > 0 {
+                state.clone_from(&snapshot);
+            }
             let key = counter_hash(&[
                 self.config.seed,
                 self.jumps_spent as u64,
@@ -305,57 +425,84 @@ impl Descent {
                 rotated_halton(3, ordinal as u64 + 1, key >> 21),
                 rotated_halton(5, ordinal as u64 + 1, key >> 42),
             ];
-            let theta = if self.allow_rotation[piece] {
-                u[2] * 360.0
-            } else {
-                original.theta_deg
+            let candidate = match kind {
+                JumpKind::Strip => {
+                    let theta = if self.allow_rotation[piece] {
+                        u[2] * 360.0
+                    } else {
+                        original.theta_deg
+                    };
+                    // The usable strip, for **this candidate's own rotation**.
+                    // The circumradius box this replaced was wrong twice over:
+                    // it charged one clearance to all four sides, and it
+                    // bounded a piece by its circumradius, which for a 70x60
+                    // triangle in a 60.24 mm strip made `low_y > high_y` and
+                    // collapsed all 16 relocations onto one point (Grok review
+                    // 10, "Same-class latent defects"). The spec asked for
+                    // positions *in the strip*; that is an axis-aligned box
+                    // question and the piece's own rotated AABB is the honest
+                    // half-extent.
+                    let extents =
+                        centroid_relative_extents(&sources[piece], theta, original.mirrored);
+                    let box_mm = strip_sample_box(contract, state.target_depth_mm, extents);
+                    let centre_x = mix(box_mm[0], box_mm[2], u[0]);
+                    let centre_y = mix(box_mm[1], box_mm[3], u[1]);
+                    let (sin, cos) = super::state::pose_sin_cos(theta);
+                    let source_centroid = sources[piece].centroid;
+                    let mirror_x = if original.mirrored {
+                        -source_centroid[0]
+                    } else {
+                        source_centroid[0]
+                    };
+                    let rotated = [
+                        mirror_x * cos - source_centroid[1] * sin,
+                        mirror_x * sin + source_centroid[1] * cos,
+                    ];
+                    Pose {
+                        tx_mm: centre_x - rotated[0],
+                        ty_mm: centre_y - rotated[1],
+                        theta_deg: theta,
+                        mirrored: original.mirrored,
+                    }
+                }
+                JumpKind::Ball => {
+                    // The SE(2) ball around the *current* pose. The angular
+                    // radius is `rho / R` radians, which is the rotation whose
+                    // arc length at the piece's own radius is `rho` - the same
+                    // `|dt|^2 + (R dtheta)^2` metric the ladder steps in.
+                    let angular = if self.allow_rotation[piece] {
+                        mix(-ball_radius_mm / radius, ball_radius_mm / radius, u[2])
+                    } else {
+                        0.0
+                    };
+                    Pose {
+                        tx_mm: original.tx_mm + mix(-ball_radius_mm, ball_radius_mm, u[0]),
+                        ty_mm: original.ty_mm + mix(-ball_radius_mm, ball_radius_mm, u[1]),
+                        theta_deg: original.theta_deg + angular.to_degrees(),
+                        mirrored: original.mirrored,
+                    }
+                }
             };
-            // The usable strip, for **this candidate's own rotation**. The
-            // circumradius box this replaced was wrong twice over: it charged
-            // one clearance to all four sides, and it bounded a piece by its
-            // circumradius, which for a 70x60 triangle in a 60.24 mm strip made
-            // `low_y > high_y` and collapsed all 16 relocations onto one point
-            // (Grok review 10, "Same-class latent defects"). The spec asked for
-            // positions *in the strip*; that is an axis-aligned box question
-            // and the piece's own rotated AABB is the honest half-extent.
-            let extents = centroid_relative_extents(&sources[piece], theta, original.mirrored);
-            let box_mm = strip_sample_box(contract, state.target_depth_mm, extents);
-            let centre_x = mix(box_mm[0], box_mm[2], u[0]);
-            let centre_y = mix(box_mm[1], box_mm[3], u[1]);
-            let (sin, cos) = super::state::pose_sin_cos(theta);
-            let source_centroid = sources[piece].centroid;
-            let mirror_x = if original.mirrored {
-                -source_centroid[0]
-            } else {
-                source_centroid[0]
-            };
-            let rotated = [
-                mirror_x * cos - source_centroid[1] * sin,
-                mirror_x * sin + source_centroid[1] * cos,
-            ];
-            let candidate = Pose {
-                tx_mm: centre_x - rotated[0],
-                ty_mm: centre_y - rotated[1],
-                theta_deg: theta,
-                mirrored: original.mirrored,
-            };
+            if !candidate.tx_mm.is_finite()
+                || !candidate.ty_mm.is_finite()
+                || !candidate.theta_deg.is_finite()
+            {
+                continue;
+            }
             state.poses[piece] = candidate;
             transform_piece(sources, &mut state.geometry, &state.poses, piece);
             work.pose_transforms += 1;
             rebuild_piece_rows(state, contract, piece, work);
             for _ in 0..self.config.jump_local_proposals {
-                if !self.propose(state, sources, contract, piece, work) {
-                    break;
-                }
+                self.sweep(state, sources, contract, work);
             }
             let guided = fold(state).guided;
-            let settled = state.poses[piece];
             let replace = match &best {
                 None => true,
                 Some((current, _)) => guided < *current,
             };
             if replace {
-                best = Some((guided, settled));
+                best = Some((guided, state.clone()));
             }
         }
         // The spec commits the best candidate, and that is not an oversight
@@ -363,20 +510,44 @@ impl Descent {
         // guided total improved" is just another descent step and cannot change
         // a topology at all. Sol R2 §2 says it "commits for a full epoch even
         // if raw Φ temporarily worsens"; the 16 candidates are the choice set
-        // and staying put is not one of them.
+        // and staying put is not one of them. What makes that safe at ball
+        // scale is that the ball *contains* near-zero offsets - a stratified
+        // draw inside `[-rho, rho]` has candidates at every scale below `rho` -
+        // so the choice set is not "16 places far away" the way a strip
+        // teleport's is.
         //
         // `improved_guided` is reported so the evidence can say how often the
-        // jump was a step backwards, which is a fact about the field.
-        let improved_guided = best.map(|(guided, _)| guided < baseline).unwrap_or(false);
-        let chosen = match best {
-            Some((_, pose)) if self.config.jump_commits_unconditionally || improved_guided => pose,
-            _ => original,
+        // jump was a step backwards, which is a fact about the field, not a
+        // gate on it.
+        let improved_guided = best
+            .as_ref()
+            .map(|(guided, _)| *guided < baseline)
+            .unwrap_or(false);
+        let install = self.config.jump_commits_unconditionally || improved_guided;
+        let mut outcome = JumpOutcome {
+            attempted: true,
+            installed: false,
+            improved_guided,
+            kind,
+            piece,
+            radius_mm: match kind {
+                JumpKind::Strip => f64::INFINITY,
+                JumpKind::Ball => ball_radius_mm,
+            },
+            max_violation_mm,
+            baseline_guided: baseline,
+            best_guided: best.as_ref().map(|(guided, _)| *guided).unwrap_or(baseline),
         };
-        state.poses[piece] = chosen;
-        transform_piece(sources, &mut state.geometry, &state.poses, piece);
-        work.pose_transforms += 1;
-        rebuild_piece_rows(state, contract, piece, work);
-        improved_guided
+        match best {
+            Some((_, adopted)) if install => {
+                *state = adopted;
+                outcome.installed = true;
+            }
+            _ => {
+                state.clone_from(&snapshot);
+            }
+        }
+        outcome
     }
 
     /// The piece a jump would move next. Diagnostic.

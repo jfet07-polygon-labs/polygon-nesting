@@ -248,7 +248,22 @@ fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
         "sweeps": outcome.trace.sweeps,
         "guidedStalls": outcome.trace.guided_stalls,
         "jumps": outcome.trace.jumps,
+        "jumpAttempted": outcome.trace.jump_attempted,
+        "jumpCommitted": outcome.trace.jump_committed,
+        // Named for what it is: "the best candidate beat the pre-jump guided
+        // Φ", not "a relocation was installed". Read it beside `jumpCommitted`.
         "jumpsImprovingGuided": outcome.trace.jumps_improving_guided,
+        "jumpEvents": outcome.trace.jump_events.iter().map(|row| json!({
+            "proposalOrdinal": row.proposal_ordinal,
+            "piece": row.piece,
+            "kind": row.kind,
+            "radiusMm": if row.radius_mm.is_finite() { json!(row.radius_mm) } else { json!("strip") },
+            "maxViolationMm": row.max_violation_mm,
+            "baselineGuidedPhi": row.baseline_guided,
+            "bestGuidedPhi": row.best_guided,
+            "installed": row.installed,
+            "improvedGuided": row.improved_guided,
+        })).collect::<Vec<_>>(),
         "work": work_json(&outcome.trace.work),
         "qualitySeries": outcome.trace.quality.iter().map(|point| json!({
             "proposalOrdinal": point.proposal_ordinal,
@@ -867,8 +882,13 @@ fn descent_config(
     config.jump_allowance = options.integer("jumps", config.jump_allowance as u64)? as u32;
     config.stalls_before_jump =
         options.integer("stalls", config.stalls_before_jump as u64)? as u32;
+    // Absent means the *derived* default, which after the Gate-0 autopsy is the
+    // spec's literal reading: the best candidate commits. `guided` stays
+    // reachable so the A/B is one command, but it is no longer the default and
+    // no longer silently overrides `DescentConfig::derive`.
     config.jump_commits_unconditionally = match options.get("jumpcommit") {
-        None | Some("guided") => false,
+        None => config.jump_commits_unconditionally,
+        Some("guided") => false,
         Some("always") => true,
         Some(other) => return Err(format!("--jumpcommit must be always|guided, not `{other}`")),
     };
