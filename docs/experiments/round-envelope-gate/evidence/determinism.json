@@ -1,0 +1,156 @@
+{
+ "binary": "/var/lib/t3/tmp/rekgate/bin/meas",
+ "binarySha256": "9e6ad285f0e3980c3a2b5720e44e2a0baf7e4c13f57d794305da3b47467df4a2",
+ "volatileFieldsStripped": [
+  "allocatedBytes",
+  "atSeconds",
+  "binaryPath",
+  "birthSeconds",
+  "buildIdentity",
+  "confirmationMs",
+  "currentPoseOverlaySetupMs",
+  "durationMs",
+  "elapsedMs",
+  "elapsedSeconds",
+  "engineCommit",
+  "engineElapsedSeconds",
+  "engineVersion",
+  "engineWorktreeDirty",
+  "engineWorktreeStatus",
+  "entryLegalizationMs",
+  "executableSha256",
+  "firstQuartileElapsedMs",
+  "horizonSeconds",
+  "leafMilliseconds",
+  "leafSeconds",
+  "leafSharePercent",
+  "maxElapsedMs",
+  "medianElapsedMs",
+  "milliseconds",
+  "minElapsedMs",
+  "ms",
+  "occupancyOverTime",
+  "peakResidentBytes",
+  "phaseProfile",
+  "phases",
+  "probeEffectiveSeconds",
+  "probeRateUnitsPerSecond",
+  "probeSeconds",
+  "processWallSeconds",
+  "profile",
+  "publishedSeconds",
+  "queueRateUnitsPerSecond",
+  "queueSeconds",
+  "rawUnits",
+  "relevantSourceTreeSha256",
+  "remainingSeconds",
+  "repairMs",
+  "rotationSurrogateBuildMs",
+  "se2WitnessMs",
+  "seconds",
+  "startedSeconds",
+  "thirdQuartileElapsedMs",
+  "timestamp",
+  "totalMs",
+  "wallMs"
+ ],
+ "cases": [
+  {
+   "label": "m34-seed0-miter",
+   "arm": "miter",
+   "kind": "m34",
+   "payload": "/var/lib/t3/tmp/csched/parents/parent-seed0.json;173.20812003998896;16000000",
+   "exits": [
+    0,
+    0
+   ],
+   "strippedDigests": [
+    "24ec602c94c1004e15ed727b0124edd920eb836d337343dc2c12996de9bc1347",
+    "24ec602c94c1004e15ed727b0124edd920eb836d337343dc2c12996de9bc1347"
+   ],
+   "verdictFieldsThatDiffer": [],
+   "identical": true
+  },
+  {
+   "label": "m34-seed0-union",
+   "arm": "union",
+   "kind": "m34",
+   "payload": "/var/lib/t3/tmp/csched/parents/parent-seed0.json;173.20812003998896;16000000",
+   "exits": [
+    0,
+    0
+   ],
+   "strippedDigests": [
+    "96a2f0325d11e6713570ecc2815fd4d7affeee8c98d33b29fd560f97edf1795a",
+    "96a2f0325d11e6713570ecc2815fd4d7affeee8c98d33b29fd560f97edf1795a"
+   ],
+   "verdictFieldsThatDiffer": [],
+   "identical": true
+  },
+  {
+   "label": "m34-seed4-union",
+   "arm": "union",
+   "kind": "m34",
+   "payload": "/var/lib/t3/tmp/csched/parents2/parent-seed4.json;170.64953207726535;16000000",
+   "exits": [
+    0,
+    0
+   ],
+   "strippedDigests": [
+    "f030fb35ccc8c1391e0bc37db276a1e05ea4c6913474b33d6cff900827a8cbe1",
+    "f030fb35ccc8c1391e0bc37db276a1e05ea4c6913474b33d6cff900827a8cbe1"
+   ],
+   "verdictFieldsThatDiffer": [],
+   "identical": true
+  },
+  {
+   "label": "v3-plan-canonical",
+   "arm": "miter",
+   "kind": "v3",
+   "payload": "0;plan=10000,cells=13:15:17:19,v3=1,replan=1",
+   "exits": [
+    0,
+    0
+   ],
+   "strippedDigests": [
+    "6d35cb761a907ddcd7f3d9d1f41fff383b8d84b618a5a494f5ab7cc6937171a0",
+    "6d35cb761a907ddcd7f3d9d1f41fff383b8d84b618a5a494f5ab7cc6937171a0"
+   ],
+   "verdictFieldsThatDiffer": [],
+   "identical": true
+  },
+  {
+   "label": "v3-plan-rek",
+   "arm": "miter",
+   "kind": "v3",
+   "payload": "0;plan=10000,cells=13:15:17:19,v3=1,replan=1,rek=1",
+   "exits": [
+    0,
+    0
+   ],
+   "strippedDigests": [
+    "094f146e7079c6f12b1072a6293016e38d0e99b1473242fe21c08069315cf4f8",
+    "094f146e7079c6f12b1072a6293016e38d0e99b1473242fe21c08069315cf4f8"
+   ],
+   "verdictFieldsThatDiffer": [],
+   "identical": true
+  },
+  {
+   "label": "v3-work-rekcrot",
+   "arm": "miter",
+   "kind": "v3",
+   "payload": "1;work=40000000,cells=11:15:21:27,v3=1,crot=1,rek=1",
+   "exits": [
+    0,
+    0
+   ],
+   "strippedDigests": [
+    "926b1d54b97a5ff1f5bcf3a8faa11aadc0465078ae5d1d07e77afc9e793d1ce7",
+    "926b1d54b97a5ff1f5bcf3a8faa11aadc0465078ae5d1d07e77afc9e793d1ce7"
+   ],
+   "verdictFieldsThatDiffer": [],
+   "identical": true
+  }
+ ],
+ "ALL_IDENTICAL": true
+}

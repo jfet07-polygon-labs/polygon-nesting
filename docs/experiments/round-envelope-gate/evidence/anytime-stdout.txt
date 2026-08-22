@@ -1,0 +1,113 @@
+canonical-plan3000-s0-r0: raw=181.589 dual=True coord=2.21347305 work=8778573 off2p5=0 rek=None wall=2.25s
+rek-plan3000-s0-r0: raw=179.621 dual=True coord=1.99745752 work=7695687 off2p5=16 rek=None wall=2.04s
+canonical-plan3000-s1-r0: raw=179.69 dual=True coord=2.281182807 work=9629453 off2p5=0 rek=None wall=2.32s
+rek-plan3000-s1-r0: raw=180.6964376266633 dual=True coord=2.341196951 work=9574943 off2p5=11 rek=None wall=2.38s
+canonical-plan3000-s2-r0: raw=179.662 dual=True coord=2.260648138 work=8961342 off2p5=0 rek=None wall=2.30s
+rek-plan3000-s2-r0: raw=179.72977826491072 dual=True coord=2.373685827 work=9417288 off2p5=0 rek=None wall=2.41s
+rek-plan3000-s0-r1: raw=179.621 dual=True coord=1.975336042 work=7695687 off2p5=16 rek=None wall=2.01s
+canonical-plan3000-s0-r1: raw=181.589 dual=True coord=2.213020307 work=8778573 off2p5=0 rek=None wall=2.25s
+rek-plan3000-s1-r1: raw=180.6964376266633 dual=True coord=2.366167176 work=9574943 off2p5=11 rek=None wall=2.40s
+canonical-plan3000-s1-r1: raw=179.69 dual=True coord=2.322498344 work=9629453 off2p5=0 rek=None wall=2.36s
+rek-plan3000-s2-r1: raw=179.72977826491072 dual=True coord=2.403147846 work=9417288 off2p5=0 rek=None wall=2.44s
+canonical-plan3000-s2-r1: raw=179.662 dual=True coord=2.309162706 work=8961342 off2p5=0 rek=None wall=2.34s
+canonical-plan10000-s0-r0: raw=175.1357388323935 dual=True coord=8.000554025 work=25576207 off2p5=50 rek=None wall=8.04s
+rek-plan10000-s0-r0: raw=171.202 dual=True coord=8.898846325 work=26841819 off2p5=0 rek=None wall=8.93s
+canonical-plan10000-s1-r0: raw=171.3619986855876 dual=True coord=7.959110139 work=26260386 off2p5=31 rek=None wall=7.99s
+rek-plan10000-s1-r0: raw=173.3465801543412 dual=True coord=8.67021366 work=26931578 off2p5=31 rek=None wall=8.71s
+canonical-plan10000-s2-r0: raw=176.16200000000003 dual=True coord=8.200094424 work=23859055 off2p5=23 rek=None wall=8.24s
+rek-plan10000-s2-r0: raw=167.6449975183662 dual=True coord=8.973537118 work=27755562 off2p5=57 rek=None wall=9.01s
+rek-plan10000-s0-r1: raw=171.202 dual=True coord=8.972864131 work=26841819 off2p5=0 rek=None wall=9.01s
+canonical-plan10000-s0-r1: raw=175.1357388323935 dual=True coord=7.938250372 work=25576207 off2p5=50 rek=None wall=7.97s
+rek-plan10000-s1-r1: raw=173.3465801543412 dual=True coord=8.693758024 work=26931578 off2p5=31 rek=None wall=8.73s
+canonical-plan10000-s1-r1: raw=171.3619986855876 dual=True coord=8.010865062 work=26260386 off2p5=31 rek=None wall=8.05s
+rek-plan10000-s2-r1: raw=167.6449975183662 dual=True coord=9.006440874 work=27755562 off2p5=57 rek=None wall=9.04s
+canonical-plan10000-s2-r1: raw=176.16200000000003 dual=True coord=8.242149641 work=23859055 off2p5=23 rek=None wall=8.28s
+canonical-plan30000-s0-r0: raw=164.188 dual=True coord=24.58458292 work=72515003 off2p5=0 rek=None wall=24.62s
+rek-plan30000-s0-r0: raw=164.1361172510575 dual=True coord=26.050693407 work=63527710 off2p5=52 rek=None wall=26.09s
+canonical-plan30000-s1-r0: raw=162.846 dual=True coord=32.578050975 work=83552213 off2p5=37 rek=None wall=32.62s
+rek-plan30000-s1-r0: raw=166.34726117262804 dual=True coord=24.884736345 work=70120265 off2p5=60 rek=None wall=24.92s
+canonical-plan30000-s2-r0: raw=164.171 dual=True coord=36.493219902 work=64343165 off2p5=0 rek=None wall=36.53s
+rek-plan30000-s2-r0: raw=161.08277826491073 dual=True coord=27.208190007 work=72908770 off2p5=38 rek=None wall=27.25s
+rek-plan30000-s0-r1: raw=164.1361172510575 dual=True coord=25.966487774 work=63527710 off2p5=52 rek=None wall=26.00s
+canonical-plan30000-s0-r1: raw=164.188 dual=True coord=24.532598101 work=72515003 off2p5=0 rek=None wall=24.57s
+rek-plan30000-s1-r1: raw=166.34726117262804 dual=True coord=24.792062727 work=70120265 off2p5=60 rek=None wall=24.83s
+canonical-plan30000-s1-r1: raw=162.846 dual=True coord=32.518473448 work=83552213 off2p5=37 rek=None wall=32.56s
+rek-plan30000-s2-r1: raw=161.08277826491073 dual=True coord=27.186358134 work=72908770 off2p5=38 rek=None wall=27.22s
+canonical-plan30000-s2-r1: raw=164.171 dual=True coord=36.330399521 work=64343165 off2p5=0 rek=None wall=36.37s
+{
+ "plan=3000": {
+  "canonical": {
+   "n": 6,
+   "medianRawDepthMm": 179.69,
+   "minRawDepthMm": 179.662,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 0.0
+  },
+  "rek": {
+   "n": 6,
+   "medianRawDepthMm": 179.72977826491072,
+   "minRawDepthMm": 179.621,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 11.0,
+   "pairedVsBaseMm": {
+    "n": 6,
+    "median": 0.06777826491071437,
+    "better": 2,
+    "range": [
+     -1.9679999999999893,
+     1.0064376266633133
+    ]
+   }
+  }
+ },
+ "plan=10000": {
+  "canonical": {
+   "n": 6,
+   "medianRawDepthMm": 175.1357388323935,
+   "minRawDepthMm": 171.3619986855876,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 31.0
+  },
+  "rek": {
+   "n": 6,
+   "medianRawDepthMm": 171.202,
+   "minRawDepthMm": 167.6449975183662,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 31.0,
+   "pairedVsBaseMm": {
+    "n": 6,
+    "median": -3.933738832393516,
+    "better": 4,
+    "range": [
+     -8.517002481633824,
+     1.9845814687536176
+    ]
+   }
+  }
+ },
+ "plan=30000": {
+  "canonical": {
+   "n": 6,
+   "medianRawDepthMm": 164.171,
+   "minRawDepthMm": 162.846,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 0.0
+  },
+  "rek": {
+   "n": 6,
+   "medianRawDepthMm": 164.1361172510575,
+   "minRawDepthMm": 161.08277826491073,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 52.0,
+   "pairedVsBaseMm": {
+    "n": 6,
+    "median": -0.05188274894248934,
+    "better": 4,
+    "range": [
+     -3.088221735089263,
+     3.501261172628034
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,39 @@
+canonical-wall10000-s0-r0: raw=168.4836008374388 dual=True coord=9.953590126 work=0 off2p5=35 rek=None wall=9.99s
+rek-wall10000-s0-r0: raw=169.26299999999998 dual=True coord=9.900428978 work=0 off2p5=30 rek=None wall=9.94s
+canonical-wall10000-s1-r0: raw=165.65577826491065 dual=True coord=10.241090549 work=0 off2p5=0 rek=None wall=10.28s
+rek-wall10000-s1-r0: raw=171.9527695409736 dual=True coord=9.272909873 work=0 off2p5=58 rek=None wall=9.31s
+canonical-wall10000-s2-r0: raw=174.28 dual=True coord=9.83126014 work=0 off2p5=18 rek=None wall=9.86s
+rek-wall10000-s2-r0: raw=164.053 dual=True coord=11.984263065 work=0 off2p5=0 rek=None wall=12.02s
+rek-wall10000-s0-r1: raw=169.16504165198234 dual=True coord=9.256527235 work=0 off2p5=37 rek=None wall=9.29s
+canonical-wall10000-s0-r1: raw=168.4836008374388 dual=True coord=9.98276237 work=0 off2p5=35 rek=None wall=10.02s
+rek-wall10000-s1-r1: raw=171.9527695409736 dual=True coord=9.274658928000001 work=0 off2p5=58 rek=None wall=9.31s
+canonical-wall10000-s1-r1: raw=165.65577826491065 dual=True coord=10.260629787 work=0 off2p5=0 rek=None wall=10.29s
+rek-wall10000-s2-r1: raw=163.60777826491073 dual=True coord=11.802287448 work=0 off2p5=0 rek=None wall=11.84s
+canonical-wall10000-s2-r1: raw=174.28 dual=True coord=9.749804719 work=0 off2p5=18 rek=None wall=9.78s
+{
+ "wall=10000": {
+  "canonical": {
+   "n": 6,
+   "medianRawDepthMm": 168.4836008374388,
+   "minRawDepthMm": 165.65577826491065,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 18.0
+  },
+  "rek": {
+   "n": 6,
+   "medianRawDepthMm": 169.21402082599116,
+   "minRawDepthMm": 163.60777826491073,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 33.5,
+   "pairedVsBaseMm": {
+    "n": 6,
+    "median": 0.7304199885523701,
+    "better": 2,
+    "range": [
+     -10.672221735089266,
+     6.296991276062954
+    ]
+   }
+  }
+ }
+}

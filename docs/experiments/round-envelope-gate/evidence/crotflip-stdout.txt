@@ -1,0 +1,22 @@
+{
+ "wall=10000": {
+  "miterTaxMedianMm": 6.4629373068953555,
+  "roundTaxMedianMm": 7.2490087239371235,
+  "flipped": false,
+  "roundArmedPublicationsUsingOffLatticePoses": [
+   0,
+   30,
+   37,
+   58
+  ]
+ },
+ "work=40000000": {
+  "miterTaxMedianMm": 0.9690013104075206,
+  "roundTaxMedianMm": -1.2141322089375137,
+  "flipped": true,
+  "roundArmedPublicationsUsingOffLatticePoses": [
+   0,
+   49
+  ]
+ }
+}

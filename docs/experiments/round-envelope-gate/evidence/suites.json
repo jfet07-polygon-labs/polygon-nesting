@@ -1,0 +1,48 @@
+{
+ "suite-jagua": {
+  "passed": 1293,
+  "failed": 0,
+  "ignored": 2,
+  "knownFlakeFired": false
+ },
+ "suite-combo": {
+  "passed": 1357,
+  "failed": 0,
+  "ignored": 2,
+  "knownFlakeFired": false
+ },
+ "suite-example": {
+  "passed": 20,
+  "failed": 0,
+  "ignored": 0,
+  "knownFlakeFired": false
+ },
+ "suite-kernel": {
+  "passed": 1307,
+  "failed": 0,
+  "ignored": 2,
+  "knownFlakeFired": false
+ },
+ "suite-example-rek": {
+  "passed": 20,
+  "failed": 0,
+  "ignored": 0,
+  "knownFlakeFired": false
+ },
+ "suite-example-combo-rek": {
+  "passed": 22,
+  "failed": 0,
+  "ignored": 0,
+  "knownFlakeFired": false
+ },
+ "exits": {
+  "suite-jagua": "0",
+  "suite-combo": "0",
+  "suite-example": "0",
+  "suite-kernel": "0",
+  "suite-example-rek": "0",
+  "suite-example-combo-rek": "0"
+ },
+ "EXITS_LINE": "EXITS jagua=0 combo=0 example=0 kernel=0 examplerek=0 examplecomborek=0",
+ "ALL_ZERO": true
+}

@@ -7597,3 +7597,95 @@ not reachability. 469 insertions and 0 deletions against the seven pre-existing
 files.
 
 Evidence, drivers and the full caveat list: `docs/experiments/round-envelope-kernel/`.
+
+## The matched-arm gate: the two authorities agreed on every confirmation, and the kernel is not promoted
+
+Sol review 12 §3.2's remaining kill, run — the certified round-envelope kernel
+against the canonical miter authority on the twelve pinned parents at equal
+operator wall — with Grok review 7 §3's reachability co-requirement and the
+anytime table measured in the same round rather than deferred to a sequel.
+
+**DO-NOT-PROMOTE**, on one clause: *≥1 mm median improvement vs the miter
+control at equal operator wall*, measured at **0.0007–0.0632 mm**. Every other
+clause passes.
+
+**The gate could not be run as specified, and that is worth recording.** `rek` is
+a *portfolio spec* key, and `run_portfolio` runs from the request alone — "no
+pinned parent, no warm start, no fixture anywhere" — while Sol's kill is written
+on twelve pinned parents driven through one mode-34 slice each, a path that never
+reaches the coordinator's RAII guard. The round's only production change is the
+second door, `POLYGON_NESTING_ROUND_ENVELOPE_KERNEL`: **164 insertions, 0
+deletions, in `examples/general_request_benchmark.rs`**, with no line of the
+library touched. It takes modes rather than booleans, a binary without the
+feature **refuses** it rather than ignoring it, it refuses to coexist with a
+portfolio spec, and an armed run says so in its own document so a driver can
+assert the arm took — 96 of 96 cells did. The two arms of the gate are one
+binary and one environment variable.
+
+**The finding is an identity, not a margin.** On 48 paired cells — twelve parents
+× four work budgets — the two authorities produced the same published depth, the
+same placement fingerprint, the same schedule step digest and the same
+confirmation counts. **48 of 48.** The union admits what either half admits, so
+the kernel released no move the miter was pinning, not once in the 44 710
+confirmations the control attempted. The publication audit says it again
+independently: 192 layouts from every arm in this round, written back out as pose
+fixtures and re-asked of both authorities through
+`validate_and_measure_placements` itself — **192 union-accepts, 0 regressions, 0
+false accepts**, and 187 of them accepted by the miter too.
+
+**So the arm's whole advantage is cost, and the cost is in the wrong place.** It
+is **1.92x cheaper per confirmation** (0.5216x median, 0.6631x worst — Sol's
+≤1.25x met twice over) but only **1.07x cheaper per slice**, because a mode-34
+slice does not spend its wall inside the confirmation. Seven per cent more work
+at these budgets buys **0.06 mm**. The equal-wall win *count* does reach 8/12 at
+two of four budgets; the millimetre does not, by a factor of sixteen. The
+equal-work reading is 0/12 and 0.0000 mm at every budget, exactly, and needs no
+clock.
+
+**`rek=2` is not a runnable arm at the shipping allowance**: 12 of 12 parents
+exit 1 before any search runs, inside the short-side-first constructor's own
+self-check. The previous round predicted six of twelve from the corpus side; end
+to end through a real slice it is twelve of twelve. `union` is the only arm a
+promotion could be asked for.
+
+**Reachability (diagnostic, no promotion).** Under the round authority the `crot`
+tax flips sign on the median at a reproducible work budget — **+1.325 mm →
+−0.693 mm** on nine paired seeds — and does **not** flip at a wall budget
+(+6.463 → +7.249). The per-seed range under the round authority is **[−14.9,
++13.3] mm**, so the flip is worth less than the noise it sits in. The round-armed
+arm publishes off-2.5°-lattice poses in most runs **without** `crot` — the
+relaxed engine's own continuous separator reaches them by refinement — and its
+best win at ten seconds was published with **zero** off-lattice poses, so the
+wins are not attributable to off-lattice legality.
+
+**Exactly one distinct new admission exists in this round's 192 publications**: a
+from-request `wall=10 s` layout at **171.9528 mm** with 58 of 61 poses off the
+lattice, accepted by the contract and by the round kernel and refused by HEAD's
+miter envelope. It is **6.30 mm worse** than what the miter authority published
+from the same seed in the same wall. Gate A's case 3, occurring for the first
+time in a real publication rather than on an imported fixture — and the cleanest
+available demonstration of Grok review 7's warning that legalising a pose does
+not make a good one appear.
+
+**Anytime.** mixed-61 from a bare request, plan mode, two processes per cell. The
+canonical arm reproduces `replan`'s published seed medians exactly at 3 s and
+10 s. Arming the kernel moves the reproducible ten-second median by **−2.135 mm**
+on nine seeds (6/9 better) with a per-seed range of **[−8.5, +9.9] mm** — a basin
+lottery, not a curve. Against Sparrow's 150.165 at ten seconds the best arm here
+is still **18.3 mm** away. The Sparrow layout itself is publishable through the
+full armed path **only at zero search-offset allowance**; at the shipping 0.002
+the 2.502 mm expansion refuses it, which is the allowance tax and not the join.
+
+**Gates and suites.** All four pinned gates hit on a fresh feature-absent build
+*and* on the measurement binary with the feature compiled and unarmed, with
+identical whole-document digests per gate. Six `--release` suites green
+(1293 / 1357 / 20 / 1307 / 20 / 22), the known flake silent. Determinism: the
+first pass **failed** on the three coordinator cases and is committed as it
+failed; the two documents were diffed to 32 differences in fourteen field names,
+every one a clock or a rate divided by one, and the second pass is 6 of 6
+identical with fourteen verdict paths compared directly outside the digest. The
+ladder was collected twice on two binaries — **96 of 96 cells identical** on
+every non-clock field — because committing the instrument changes the binary and
+"the refactor cannot have changed anything" is an argument, not a measurement.
+
+Evidence, drivers and the full caveat list: `docs/experiments/round-envelope-gate/`.

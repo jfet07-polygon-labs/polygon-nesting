@@ -1,0 +1,20 @@
+{
+ "publications": 96,
+ "plan": "/var/lib/t3/tmp/rekgate/out/publications-plan.json"
+}
+{
+ "publications": 12,
+ "plan": "/var/lib/t3/tmp/rekgate/out/pub-reach-work-plan.json"
+}
+{
+ "publications": 36,
+ "plan": "/var/lib/t3/tmp/rekgate/out/pub-reach-wall-plan.json"
+}
+{
+ "publications": 36,
+ "plan": "/var/lib/t3/tmp/rekgate/out/pub-anytime-plan.json"
+}
+{
+ "publications": 12,
+ "plan": "/var/lib/t3/tmp/rekgate/out/pub-anytime-wall-plan.json"
+}

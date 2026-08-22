@@ -1,0 +1,655 @@
+{
+ "sources": [
+  "/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/docs/experiments/round-envelope-gate/evidence/reach-work.json",
+  "/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/docs/experiments/round-envelope-gate/evidence/reach-wall.json"
+ ],
+ "budgets": [
+  "wall=10000",
+  "work=40000000"
+ ],
+ "miterTaxAt10sFromContinuousRotationReadmeMm": 3.721,
+ "perBudget": {
+  "wall=10000": {
+   "crotTaxUnderMiter": {
+    "stats": {
+     "n": 9,
+     "medianMm": 6.4629373068953555,
+     "betterCount": 3,
+     "worseCount": 6,
+     "range": [
+      -1.13900000000001,
+      10.932694288658467
+     ]
+    },
+    "rows": [
+     {
+      "budget": "wall=10000",
+      "seed": 0,
+      "round": 0,
+      "leftMm": 175.21893730689536,
+      "rightMm": 168.4836008374388,
+      "deltaMm": 6.73533646945657,
+      "leftOffLattice2p5": 46,
+      "rightOffLattice2p5": 35,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 0,
+      "round": 1,
+      "leftMm": 175.21893730689536,
+      "rightMm": 168.756,
+      "deltaMm": 6.4629373068953555,
+      "leftOffLattice2p5": 46,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 0,
+      "round": 2,
+      "leftMm": 175.21893730689536,
+      "rightMm": 171.111,
+      "deltaMm": 4.107937306895366,
+      "leftOffLattice2p5": 46,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 1,
+      "round": 0,
+      "leftMm": 176.58847255356912,
+      "rightMm": 165.65577826491065,
+      "deltaMm": 10.932694288658467,
+      "leftOffLattice2p5": 44,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 1,
+      "round": 1,
+      "leftMm": 176.58847255356912,
+      "rightMm": 165.65577826491065,
+      "deltaMm": 10.932694288658467,
+      "leftOffLattice2p5": 44,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 1,
+      "round": 2,
+      "leftMm": 176.58847255356912,
+      "rightMm": 165.65577826491065,
+      "deltaMm": 10.932694288658467,
+      "leftOffLattice2p5": 44,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 2,
+      "round": 0,
+      "leftMm": 173.141,
+      "rightMm": 174.28,
+      "deltaMm": -1.13900000000001,
+      "leftOffLattice2p5": 45,
+      "rightOffLattice2p5": 18,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 2,
+      "round": 1,
+      "leftMm": 173.141,
+      "rightMm": 174.28,
+      "deltaMm": -1.13900000000001,
+      "leftOffLattice2p5": 45,
+      "rightOffLattice2p5": 18,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 2,
+      "round": 2,
+      "leftMm": 173.141,
+      "rightMm": 174.28,
+      "deltaMm": -1.13900000000001,
+      "leftOffLattice2p5": 45,
+      "rightOffLattice2p5": 18,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     }
+    ]
+   },
+   "crotTaxUnderRound": {
+    "stats": {
+     "n": 9,
+     "medianMm": 7.2490087239371235,
+     "betterCount": 0,
+     "worseCount": 9,
+     "range": [
+      5.189875466953453,
+      15.910567929873224
+     ]
+    },
+    "rows": [
+     {
+      "budget": "wall=10000",
+      "seed": 0,
+      "round": 0,
+      "leftMm": 174.45287546695343,
+      "rightMm": 169.16504165198234,
+      "deltaMm": 5.287833814971094,
+      "leftOffLattice2p5": 36,
+      "rightOffLattice2p5": 37,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 0,
+      "round": 1,
+      "leftMm": 175.028,
+      "rightMm": 169.26299999999998,
+      "deltaMm": 5.765000000000015,
+      "leftOffLattice2p5": 22,
+      "rightOffLattice2p5": 30,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 0,
+      "round": 2,
+      "leftMm": 174.45287546695343,
+      "rightMm": 169.26299999999998,
+      "deltaMm": 5.189875466953453,
+      "leftOffLattice2p5": 36,
+      "rightOffLattice2p5": 30,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 1,
+      "round": 0,
+      "leftMm": 179.5067393502041,
+      "rightMm": 171.9527695409736,
+      "deltaMm": 7.5539698092304945,
+      "leftOffLattice2p5": 55,
+      "rightOffLattice2p5": 58,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 1,
+      "round": 1,
+      "leftMm": 179.20177826491073,
+      "rightMm": 171.9527695409736,
+      "deltaMm": 7.2490087239371235,
+      "leftOffLattice2p5": 0,
+      "rightOffLattice2p5": 58,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 1,
+      "round": 2,
+      "leftMm": 179.20177826491073,
+      "rightMm": 171.9527695409736,
+      "deltaMm": 7.2490087239371235,
+      "leftOffLattice2p5": 0,
+      "rightOffLattice2p5": 58,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 2,
+      "round": 0,
+      "leftMm": 179.51834619478396,
+      "rightMm": 164.053,
+      "deltaMm": 15.465346194783962,
+      "leftOffLattice2p5": 14,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 2,
+      "round": 1,
+      "leftMm": 179.51834619478396,
+      "rightMm": 164.053,
+      "deltaMm": 15.465346194783962,
+      "leftOffLattice2p5": 14,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 2,
+      "round": 2,
+      "leftMm": 179.51834619478396,
+      "rightMm": 163.60777826491073,
+      "deltaMm": 15.910567929873224,
+      "leftOffLattice2p5": 14,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     }
+    ]
+   },
+   "roundAuthorityAtCrot0": {
+    "stats": {
+     "n": 9,
+     "medianMm": 0.5069999999999766,
+     "betterCount": 4,
+     "worseCount": 5,
+     "range": [
+      -10.672221735089266,
+      6.296991276062954
+     ]
+    },
+    "rows": [
+     {
+      "budget": "wall=10000",
+      "seed": 0,
+      "round": 0,
+      "leftMm": 169.16504165198234,
+      "rightMm": 168.4836008374388,
+      "deltaMm": 0.6814408145435493,
+      "leftOffLattice2p5": 37,
+      "rightOffLattice2p5": 35,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 0,
+      "round": 1,
+      "leftMm": 169.26299999999998,
+      "rightMm": 168.756,
+      "deltaMm": 0.5069999999999766,
+      "leftOffLattice2p5": 30,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 0,
+      "round": 2,
+      "leftMm": 169.26299999999998,
+      "rightMm": 171.111,
+      "deltaMm": -1.8480000000000132,
+      "leftOffLattice2p5": 30,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 1,
+      "round": 0,
+      "leftMm": 171.9527695409736,
+      "rightMm": 165.65577826491065,
+      "deltaMm": 6.296991276062954,
+      "leftOffLattice2p5": 58,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 1,
+      "round": 1,
+      "leftMm": 171.9527695409736,
+      "rightMm": 165.65577826491065,
+      "deltaMm": 6.296991276062954,
+      "leftOffLattice2p5": 58,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 1,
+      "round": 2,
+      "leftMm": 171.9527695409736,
+      "rightMm": 165.65577826491065,
+      "deltaMm": 6.296991276062954,
+      "leftOffLattice2p5": 58,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 2,
+      "round": 0,
+      "leftMm": 164.053,
+      "rightMm": 174.28,
+      "deltaMm": -10.227000000000004,
+      "leftOffLattice2p5": 0,
+      "rightOffLattice2p5": 18,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 2,
+      "round": 1,
+      "leftMm": 164.053,
+      "rightMm": 174.28,
+      "deltaMm": -10.227000000000004,
+      "leftOffLattice2p5": 0,
+      "rightOffLattice2p5": 18,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "wall=10000",
+      "seed": 2,
+      "round": 2,
+      "leftMm": 163.60777826491073,
+      "rightMm": 174.28,
+      "deltaMm": -10.672221735089266,
+      "leftOffLattice2p5": 0,
+      "rightOffLattice2p5": 18,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     }
+    ]
+   },
+   "offLattice2p5": {
+    "base": [
+     0,
+     18,
+     35
+    ],
+    "crot": [
+     44,
+     45,
+     46
+    ],
+    "rek": [
+     0,
+     30,
+     37,
+     58
+    ],
+    "rekcrot": [
+     0,
+     14,
+     22,
+     36,
+     55
+    ]
+   },
+   "distinctRotations": {
+    "base": [
+     33,
+     38,
+     44,
+     47,
+     52
+    ],
+    "crot": [
+     56,
+     57,
+     58
+    ],
+    "rek": [
+     38,
+     41,
+     53,
+     54,
+     61
+    ],
+    "rekcrot": [
+     35,
+     43,
+     46,
+     52,
+     60
+    ]
+   },
+   "allDualGateValid": true,
+   "FLIPPED": false
+  },
+  "work=40000000": {
+   "crotTaxUnderMiter": {
+    "stats": {
+     "n": 3,
+     "medianMm": 0.9690013104075206,
+     "betterCount": 1,
+     "worseCount": 2,
+     "range": [
+      -0.4389984292036786,
+      5.327937306895365
+     ]
+    },
+    "rows": [
+     {
+      "budget": "work=40000000",
+      "seed": 0,
+      "round": 0,
+      "leftMm": 175.21893730689536,
+      "rightMm": 169.891,
+      "deltaMm": 5.327937306895365,
+      "leftOffLattice2p5": 46,
+      "rightOffLattice2p5": 57,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "work=40000000",
+      "seed": 1,
+      "round": 0,
+      "leftMm": 172.3309999959951,
+      "rightMm": 171.3619986855876,
+      "deltaMm": 0.9690013104075206,
+      "leftOffLattice2p5": 26,
+      "rightOffLattice2p5": 31,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "work=40000000",
+      "seed": 2,
+      "round": 0,
+      "leftMm": 169.71600157079632,
+      "rightMm": 170.155,
+      "deltaMm": -0.4389984292036786,
+      "leftOffLattice2p5": 36,
+      "rightOffLattice2p5": 14,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     }
+    ]
+   },
+   "crotTaxUnderRound": {
+    "stats": {
+     "n": 3,
+     "medianMm": -1.2141322089375137,
+     "betterCount": 2,
+     "worseCount": 1,
+     "range": [
+      -3.748858848245902,
+      13.347071327702253
+     ]
+    },
+    "rows": [
+     {
+      "budget": "work=40000000",
+      "seed": 0,
+      "round": 0,
+      "leftMm": 166.95586779106247,
+      "rightMm": 168.17,
+      "deltaMm": -1.2141322089375137,
+      "leftOffLattice2p5": 44,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "work=40000000",
+      "seed": 1,
+      "round": 0,
+      "leftMm": 167.4881411517541,
+      "rightMm": 171.237,
+      "deltaMm": -3.748858848245902,
+      "leftOffLattice2p5": 33,
+      "rightOffLattice2p5": 0,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "work=40000000",
+      "seed": 2,
+      "round": 0,
+      "leftMm": 179.51834619478396,
+      "rightMm": 166.1712748670817,
+      "deltaMm": 13.347071327702253,
+      "leftOffLattice2p5": 14,
+      "rightOffLattice2p5": 49,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     }
+    ]
+   },
+   "roundAuthorityAtCrot0": {
+    "stats": {
+     "n": 3,
+     "medianMm": -1.7210000000000036,
+     "betterCount": 3,
+     "worseCount": 0,
+     "range": [
+      -3.9837251329182948,
+      -0.12499868558759886
+     ]
+    },
+    "rows": [
+     {
+      "budget": "work=40000000",
+      "seed": 0,
+      "round": 0,
+      "leftMm": 168.17,
+      "rightMm": 169.891,
+      "deltaMm": -1.7210000000000036,
+      "leftOffLattice2p5": 0,
+      "rightOffLattice2p5": 57,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "work=40000000",
+      "seed": 1,
+      "round": 0,
+      "leftMm": 171.237,
+      "rightMm": 171.3619986855876,
+      "deltaMm": -0.12499868558759886,
+      "leftOffLattice2p5": 0,
+      "rightOffLattice2p5": 31,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     },
+     {
+      "budget": "work=40000000",
+      "seed": 2,
+      "round": 0,
+      "leftMm": 166.1712748670817,
+      "rightMm": 170.155,
+      "deltaMm": -3.9837251329182948,
+      "leftOffLattice2p5": 49,
+      "rightOffLattice2p5": 14,
+      "leftDualGateValid": true,
+      "rightDualGateValid": true
+     }
+    ]
+   },
+   "offLattice2p5": {
+    "base": [
+     14,
+     31,
+     57
+    ],
+    "crot": [
+     26,
+     36,
+     46
+    ],
+    "rek": [
+     0,
+     49
+    ],
+    "rekcrot": [
+     14,
+     33,
+     44
+    ]
+   },
+   "distinctRotations": {
+    "base": [
+     40,
+     48,
+     61
+    ],
+    "crot": [
+     44,
+     53,
+     58
+    ],
+    "rek": [
+     34,
+     38,
+     57
+    ],
+    "rekcrot": [
+     35,
+     51,
+     55
+    ]
+   },
+   "allDualGateValid": true,
+   "FLIPPED": true
+  }
+ },
+ "ANSWER": {
+  "wall=10000": {
+   "miterTaxMedianMm": 6.4629373068953555,
+   "roundTaxMedianMm": 7.2490087239371235,
+   "flipped": false,
+   "roundArmedPublicationsUsingOffLatticePoses": [
+    0,
+    30,
+    37,
+    58
+   ]
+  },
+  "work=40000000": {
+   "miterTaxMedianMm": 0.9690013104075206,
+   "roundTaxMedianMm": -1.2141322089375137,
+   "flipped": true,
+   "roundArmedPublicationsUsingOffLatticePoses": [
+    0,
+    49
+   ]
+  }
+ }
+}

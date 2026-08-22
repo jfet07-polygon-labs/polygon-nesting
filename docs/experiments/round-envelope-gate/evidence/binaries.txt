@@ -1,0 +1,9 @@
+9e6ad285f0e3980c3a2b5720e44e2a0baf7e4c13f57d794305da3b47467df4a2  /var/lib/t3/tmp/rekgate/bin/meas
+971918823ca7aade8af0130dc0944285776ce94ad28170f56ad81462d0b41838  /var/lib/t3/tmp/rekgate/bin/gate-base
+bdc537cba3fab74798057086be59aab905ce29a86bf9e20436cf702d2a315eca  /var/lib/t3/tmp/rekgate/bin/battery
+# rustc: rustc 1.97.1 (8bab26f4f 2026-07-14)
+# cargo: cargo 1.97.1 (c980f4866 2026-06-30)
+# commit: 368544525431a50c28b900c2f7b813aa6d5bf64e
+# python: Python 3.14.6
+# uname: x86_64 6.18.38
+# loadavg: 1.94 2.18 2.33 1/640 3618007

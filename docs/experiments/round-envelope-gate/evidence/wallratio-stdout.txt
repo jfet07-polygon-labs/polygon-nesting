@@ -1,0 +1,40 @@
+seed0 r0 miter opwall=7.558s depth=167.422
+seed0 r0 union opwall=6.701s depth=167.422
+seed0 r1 union opwall=6.703s depth=167.422
+seed0 r1 miter opwall=7.537s depth=167.422
+seed0 r2 miter opwall=7.573s depth=167.422
+seed0 r2 union opwall=6.707s depth=167.422
+seed0 r3 union opwall=6.683s depth=167.422
+seed0 r3 miter opwall=7.557s depth=167.422
+seed0 r4 miter opwall=7.556s depth=167.422
+seed0 r4 union opwall=6.694s depth=167.422
+seed1 r0 miter opwall=7.948s depth=168.348
+seed1 r0 union opwall=7.400s depth=168.348
+seed1 r1 union opwall=7.373s depth=168.348
+seed1 r1 miter opwall=7.967s depth=168.348
+seed1 r2 miter opwall=7.895s depth=168.348
+seed1 r2 union opwall=7.395s depth=168.348
+seed1 r3 union opwall=7.385s depth=168.348
+seed1 r3 miter opwall=7.890s depth=168.348
+seed1 r4 miter opwall=7.904s depth=168.348
+seed1 r4 union opwall=7.361s depth=168.348
+seed2 r0 miter opwall=7.268s depth=171.4
+seed2 r0 union opwall=6.827s depth=171.4
+seed2 r1 union opwall=6.803s depth=171.4
+seed2 r1 miter opwall=7.295s depth=171.4
+seed2 r2 miter opwall=7.277s depth=171.4
+seed2 r2 union opwall=6.758s depth=171.4
+seed2 r3 union opwall=6.751s depth=171.4
+seed2 r3 miter opwall=7.232s depth=171.4
+seed2 r4 miter opwall=7.290s depth=171.4
+seed2 r4 union opwall=6.754s depth=171.4
+{
+ "cells": 3,
+ "medianPairedOperatorWallRatio": 0.9312760594454466,
+ "range": [
+  0.8858585397519211,
+  0.932497946656537
+ ],
+ "allDepthsIdenticalWithinArm": true,
+ "allArmsAgreeOnDepth": true
+}

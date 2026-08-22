@@ -1,0 +1,208 @@
+{
+ "binary": "/var/lib/t3/tmp/rekgate/bin/meas",
+ "binarySha256": "9e6ad285f0e3980c3a2b5720e44e2a0baf7e4c13f57d794305da3b47467df4a2",
+ "parents": "/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/docs/experiments/contact-block/drivers/parents12.json",
+ "works": [
+  3341379
+ ],
+ "arms": [
+  "exclusive"
+ ],
+ "dropMm": 1.0,
+ "allowance": "0.002",
+ "spec": "past=1,rollback=0,work={work},lanes=1,pconfirm=0",
+ "cells": [
+  {
+   "seed": 0,
+   "parentRawDepthMm": 174.20812003998896,
+   "targetDepthMm": 173.20812003998896,
+   "arms": {
+    "exclusive:3341379": {
+     "arm": "exclusive",
+     "workCap": 3341379,
+     "exitCode": 1,
+     "processWallSeconds": 0.6531262790085748,
+     "error": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")\n",
+     "rawSourceDepthMm": 174.20812003998896,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 1,
+   "parentRawDepthMm": 176.05599999999998,
+   "targetDepthMm": 175.05599999999998,
+   "arms": {
+    "exclusive:3341379": {
+     "arm": "exclusive",
+     "workCap": 3341379,
+     "exitCode": 1,
+     "processWallSeconds": 0.6574994149850681,
+     "error": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")\n",
+     "rawSourceDepthMm": 176.05599999999998,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 2,
+   "parentRawDepthMm": 179.006,
+   "targetDepthMm": 178.006,
+   "arms": {
+    "exclusive:3341379": {
+     "arm": "exclusive",
+     "workCap": 3341379,
+     "exitCode": 1,
+     "processWallSeconds": 0.6558020040392876,
+     "error": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")\n",
+     "rawSourceDepthMm": 179.006,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 3,
+   "parentRawDepthMm": 176.061,
+   "targetDepthMm": 175.061,
+   "arms": {
+    "exclusive:3341379": {
+     "arm": "exclusive",
+     "workCap": 3341379,
+     "exitCode": 1,
+     "processWallSeconds": 0.6452386589953676,
+     "error": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")\n",
+     "rawSourceDepthMm": 176.061,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 4,
+   "parentRawDepthMm": 171.64953207726535,
+   "targetDepthMm": 170.64953207726535,
+   "arms": {
+    "exclusive:3341379": {
+     "arm": "exclusive",
+     "workCap": 3341379,
+     "exitCode": 1,
+     "processWallSeconds": 0.65795669099316,
+     "error": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")\n",
+     "rawSourceDepthMm": 171.64953207726535,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 5,
+   "parentRawDepthMm": 179.05182605364416,
+   "targetDepthMm": 178.05182605364416,
+   "arms": {
+    "exclusive:3341379": {
+     "arm": "exclusive",
+     "workCap": 3341379,
+     "exitCode": 1,
+     "processWallSeconds": 0.6595185220940039,
+     "error": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")\n",
+     "rawSourceDepthMm": 179.05182605364416,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 6,
+   "parentRawDepthMm": 179.6200102363703,
+   "targetDepthMm": 178.6200102363703,
+   "arms": {
+    "exclusive:3341379": {
+     "arm": "exclusive",
+     "workCap": 3341379,
+     "exitCode": 1,
+     "processWallSeconds": 0.6554616140201688,
+     "error": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")\n",
+     "rawSourceDepthMm": 179.6200102363703,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 7,
+   "parentRawDepthMm": 179.52233303152792,
+   "targetDepthMm": 178.52233303152792,
+   "arms": {
+    "exclusive:3341379": {
+     "arm": "exclusive",
+     "workCap": 3341379,
+     "exitCode": 1,
+     "processWallSeconds": 0.6562179198954254,
+     "error": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")\n",
+     "rawSourceDepthMm": 179.52233303152792,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 8,
+   "parentRawDepthMm": 178.93200000000002,
+   "targetDepthMm": 177.93200000000002,
+   "arms": {
+    "exclusive:3341379": {
+     "arm": "exclusive",
+     "workCap": 3341379,
+     "exitCode": 1,
+     "processWallSeconds": 0.6566826649941504,
+     "error": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")\n",
+     "rawSourceDepthMm": 178.93200000000002,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 9,
+   "parentRawDepthMm": 174.96558182288433,
+   "targetDepthMm": 173.96558182288433,
+   "arms": {
+    "exclusive:3341379": {
+     "arm": "exclusive",
+     "workCap": 3341379,
+     "exitCode": 1,
+     "processWallSeconds": 0.6667788239428774,
+     "error": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")\n",
+     "rawSourceDepthMm": 174.96558182288433,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 10,
+   "parentRawDepthMm": 176.3622237458826,
+   "targetDepthMm": 175.3622237458826,
+   "arms": {
+    "exclusive:3341379": {
+     "arm": "exclusive",
+     "workCap": 3341379,
+     "exitCode": 1,
+     "processWallSeconds": 0.6564507320290431,
+     "error": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")\n",
+     "rawSourceDepthMm": 176.3622237458826,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 11,
+   "parentRawDepthMm": 171.6141235046606,
+   "targetDepthMm": 170.6141235046606,
+   "arms": {
+    "exclusive:3341379": {
+     "arm": "exclusive",
+     "workCap": 3341379,
+     "exitCode": 1,
+     "processWallSeconds": 0.6545015439623967,
+     "error": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")\n",
+     "rawSourceDepthMm": 171.6141235046606,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  }
+ ]
+}

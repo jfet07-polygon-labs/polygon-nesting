@@ -1,0 +1,541 @@
+   Compiling num-traits v0.2.19
+   Compiling either v1.17.0
+   Compiling rayon v1.12.0
+   Compiling num-integer v0.1.46
+   Compiling num-bigint v0.4.8
+   Compiling polygon-nesting-core v0.3.0 (/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core)
+warning: unused imports: `KernelPose` and `LEGACY`
+  --> crates/polygon-nesting-core/src/search/general_relaxed.rs:48:24
+   |
+48 |     ExplorationKernel, KernelPose, KernelProbes, LegacyKernel, PairRow, PosedShape, LEGACY,
+   |                        ^^^^^^^^^^                                                   ^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused macro definition: `ladder_time`
+    --> crates/polygon-nesting-core/src/search/general_relaxed.rs:5969:14
+     |
+5969 | macro_rules! ladder_time {
+     |              ^^^^^^^^^^^
+     |
+     = note: `#[warn(unused_macros)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `MICRO_LEGALIZATION_MARGIN_MM` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:155:7
+    |
+155 | const MICRO_LEGALIZATION_MARGIN_MM: f64 = 0.002;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `MICRO_LEGALIZATION_ESCALATIONS` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:160:7
+    |
+160 | const MICRO_LEGALIZATION_ESCALATIONS: usize = 3;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `MICRO_LEGALIZATION_ROUNDS` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:163:7
+    |
+163 | const MICRO_LEGALIZATION_ROUNDS: usize = 64;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `MICRO_LEGALIZATION_CAP_FACTOR` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:168:7
+    |
+168 | const MICRO_LEGALIZATION_CAP_FACTOR: f64 = 8.0;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `MICRO_LEGALIZATION_MIN_CAP_RATIO` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:172:7
+    |
+172 | const MICRO_LEGALIZATION_MIN_CAP_RATIO: f64 = 0.01;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `MICRO_LEGALIZATION_MIN_CAP_MM` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:175:7
+    |
+175 | const MICRO_LEGALIZATION_MIN_CAP_MM: f64 = 0.01;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `MICRO_LEGALIZATION_MAX_DEFICIT_RATIO` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:180:7
+    |
+180 | const MICRO_LEGALIZATION_MAX_DEFICIT_RATIO: f64 = 0.25;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `MICRO_LEGALIZATION_MAX_DEFICIT_EXTENT_RATIO` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:184:7
+    |
+184 | const MICRO_LEGALIZATION_MAX_DEFICIT_EXTENT_RATIO: f64 = 0.005;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `MICRO_LEGALIZATION_NEIGHBOURHOOD_LIMIT_FACTOR` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:190:7
+    |
+190 | const MICRO_LEGALIZATION_NEIGHBOURHOOD_LIMIT_FACTOR: usize = 4;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `GRID_MM` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:193:7
+    |
+193 | const GRID_MM: f64 = 0.001;
+    |       ^^^^^^^
+
+warning: constant `MICRO_LEGALIZATION_SNAP_SLACK_MM` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:202:7
+    |
+202 | const MICRO_LEGALIZATION_SNAP_SLACK_MM: f64 = GRID_MM * std::f64::consts::SQRT_2;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `GLOBAL_LEGALIZATION_ROUNDS` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:207:7
+    |
+207 | const GLOBAL_LEGALIZATION_ROUNDS: usize = 24;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `GLOBAL_LEGALIZATION_DUAL_SWEEPS` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:212:7
+    |
+212 | const GLOBAL_LEGALIZATION_DUAL_SWEEPS: usize = 512;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `GLOBAL_LEGALIZATION_ESCALATIONS` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:218:7
+    |
+218 | const GLOBAL_LEGALIZATION_ESCALATIONS: usize = 3;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `GLOBAL_LEGALIZATION_TRUST_FACTOR` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:229:7
+    |
+229 | const GLOBAL_LEGALIZATION_TRUST_FACTOR: f64 = 1.0;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `GLOBAL_LEGALIZATION_CAP_FACTOR` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:236:7
+    |
+236 | const GLOBAL_LEGALIZATION_CAP_FACTOR: f64 = 16.0;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `GLOBAL_LEGALIZATION_PAIR_PROBES_PER_ROUND` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:247:7
+    |
+247 | const GLOBAL_LEGALIZATION_PAIR_PROBES_PER_ROUND: usize = 64;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `global_legalization_worst_case_pair_visits` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:256:15
+    |
+256 | pub(crate) fn global_legalization_worst_case_pair_visits(piece_count: usize) -> usize {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `global_legalization_worst_case_collision_builds` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:270:15
+    |
+270 | pub(crate) fn global_legalization_worst_case_collision_builds(piece_count: usize) -> usize {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `micro_legalization_component_limit` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:348:15
+    |
+348 | pub(crate) fn micro_legalization_component_limit(piece_count: usize) -> usize {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `replacement_ejection_limit` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:361:15
+    |
+361 | pub(crate) fn replacement_ejection_limit(piece_count: usize) -> usize {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ViolationPair` is never constructed
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:368:19
+    |
+368 | pub(crate) struct ViolationPair {
+    |                   ^^^^^^^^^^^^^
+
+warning: struct `LayoutViolations` is never constructed
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:398:19
+    |
+398 | pub(crate) struct LayoutViolations {
+    |                   ^^^^^^^^^^^^^^^^
+
+warning: methods `largest_component_pieces`, `incident_mass`, and `pair_components` are never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:413:19
+    |
+412 | impl LayoutViolations {
+    | --------------------- methods in this implementation
+413 |     pub(crate) fn largest_component_pieces(&self) -> usize {
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+418 |     pub(crate) fn incident_mass(&self, slots: usize) -> Vec<f64> {
+    |                   ^^^^^^^^^^^^^
+...
+443 |     pub(crate) fn pair_components(&self) -> Vec<Vec<usize>> {
+    |                   ^^^^^^^^^^^^^^^
+
+warning: function `survey_layout_violations` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:467:15
+    |
+467 | pub(crate) fn survey_layout_violations(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `separating_translation` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:565:15
+    |
+565 | pub(crate) fn separating_translation(
+    |               ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `grid_key_pair` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:727:4
+    |
+727 | fn grid_key_pair(translation: (f64, f64)) -> (i64, i64) {
+    |    ^^^^^^^^^^^^^
+
+warning: enum `Gate` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:736:6
+    |
+736 | enum Gate {
+    |      ^^^^
+
+warning: constant `GATES` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:743:7
+    |
+743 | const GATES: [Gate; 2] = [Gate::Material, Gate::Collision];
+    |       ^^^^^
+
+warning: struct `PieceGeometry` is never constructed
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:749:8
+    |
+749 | struct PieceGeometry {
+    |        ^^^^^^^^^^^^^
+
+warning: method `outline` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:769:8
+    |
+768 | impl PieceGeometry {
+    | ------------------ method in this implementation
+769 |     fn outline(&self, gate: Gate) -> &Outline {
+    |        ^^^^^^^
+
+warning: struct `Outline` is never constructed
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:777:8
+    |
+777 | struct Outline {
+    |        ^^^^^^^
+
+warning: struct `Bounds` is never constructed
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:788:8
+    |
+788 | struct Bounds {
+    |        ^^^^^^
+
+warning: associated items `empty`, `observe`, `translated`, `gap`, and `min_extent` are never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:796:8
+    |
+795 | impl Bounds {
+    | ----------- associated items in this implementation
+796 |     fn empty() -> Self {
+    |        ^^^^^
+...
+805 |     fn observe(&mut self, point: IrregularPoint) {
+    |        ^^^^^^^
+...
+812 |     fn translated(self, dx: f64, dy: f64) -> Self {
+    |        ^^^^^^^^^^
+...
+823 |     fn gap(self, other: Self) -> f64 {
+    |        ^^^
+...
+833 |     fn min_extent(self) -> f64 {
+    |        ^^^^^^^^^^
+
+warning: struct `Approach` is never constructed
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:840:8
+    |
+840 | struct Approach {
+    |        ^^^^^^^^
+
+warning: struct `Contracts` is never constructed
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:872:8
+    |
+872 | struct Contracts {
+    |        ^^^^^^^^^
+
+warning: methods `pair` and `edge` are never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:882:8
+    |
+881 | impl Contracts {
+    | -------------- methods in this implementation
+882 |     fn pair(&self, gate: Gate) -> f64 {
+    |        ^^^^
+...
+892 |     fn edge(&self, gate: Gate) -> f64 {
+    |        ^^^^
+
+warning: function `micro_legalize` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:904:15
+    |
+904 | pub(crate) fn micro_legalize(
+    |               ^^^^^^^^^^^^^^
+
+warning: struct `Survey` is never constructed
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1123:8
+     |
+1123 | struct Survey {
+     |        ^^^^^^
+
+warning: method `deficit_scale` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1143:8
+     |
+1141 | impl Survey {
+     | ----------- method in this implementation
+1142 |     /// The largest travel any single piece has to make to clear the residue.
+1143 |     fn deficit_scale(&self) -> f64 {
+     |        ^^^^^^^^^^^^^
+
+warning: function `survey_violations` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1153:4
+     |
+1153 | fn survey_violations(
+     |    ^^^^^^^^^^^^^^^^^
+
+warning: function `displacement_ceiling` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1273:4
+     |
+1273 | fn displacement_ceiling(contracts: &Contracts) -> f64 {
+     |    ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `separation_push` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1289:4
+     |
+1289 | fn separation_push(
+     |    ^^^^^^^^^^^^^^^
+
+warning: function `separation_direction` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1330:4
+     |
+1330 | fn separation_direction(
+     |    ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `boundary_deficit` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1353:4
+     |
+1353 | fn boundary_deficit(bounds: Bounds, edge_mm: f64, settings: GeneralFastSettings) -> f64 {
+     |    ^^^^^^^^^^^^^^^^
+
+warning: function `violation_components` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1362:4
+     |
+1362 | fn violation_components(survey: &Survey, piece_count: usize) -> (Vec<Vec<usize>>, Vec<bool>) {
+     |    ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `expand_movable_neighbourhood` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1419:4
+     |
+1419 | fn expand_movable_neighbourhood(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `Solution` is never constructed
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1451:8
+     |
+1451 | struct Solution {
+     |        ^^^^^^^^
+
+warning: struct `PairConstraint` is never constructed
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1461:8
+     |
+1461 | struct PairConstraint {
+     |        ^^^^^^^^^^^^^^
+
+warning: function `solve` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1469:4
+     |
+1469 | fn solve(
+     |    ^^^^^
+
+warning: function `snap_grid` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1681:4
+     |
+1681 | fn snap_grid(value: f64) -> f64 {
+     |    ^^^^^^^^^
+
+warning: function `normalize` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1688:4
+     |
+1688 | fn normalize(dx: f64, dy: f64) -> Option<(f64, f64)> {
+     |    ^^^^^^^^^
+
+warning: function `apply_translations` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1696:4
+     |
+1696 | fn apply_translations(
+     |    ^^^^^^^^^^^^^^^^^^
+
+warning: function `build_geometry` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1716:4
+     |
+1716 | fn build_geometry(
+     |    ^^^^^^^^^^^^^^
+
+warning: function `envelopes_overlap` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1750:4
+     |
+1750 | fn envelopes_overlap(
+     |    ^^^^^^^^^^^^^^^^^
+
+warning: function `translated_shape` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1771:4
+     |
+1771 | fn translated_shape(shape: &PolygonSet, translation: (f64, f64)) -> Option<Cow<'_, PolygonSet>> {
+     |    ^^^^^^^^^^^^^^^^
+
+warning: function `build_outline` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1782:4
+     |
+1782 | fn build_outline(polygon: &PolygonSet) -> Option<Outline> {
+     |    ^^^^^^^^^^^^^
+
+warning: function `measure_approach` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1846:4
+     |
+1846 | fn measure_approach(
+     |    ^^^^^^^^^^^^^^^^
+
+warning: function `segments_touch_or_cross` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1949:4
+     |
+1949 | fn segments_touch_or_cross(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `shift` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:1996:4
+     |
+1996 | fn shift(point: IrregularPoint, dx: f64, dy: f64) -> IrregularPoint {
+     |    ^^^^^
+
+warning: function `segment_bounds` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:2000:4
+     |
+2000 | fn segment_bounds(start: IrregularPoint, end: IrregularPoint) -> Bounds {
+     |    ^^^^^^^^^^^^^^
+
+warning: function `bounds_intersect` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:2009:4
+     |
+2009 | fn bounds_intersect(first: Bounds, second: Bounds) -> bool {
+     |    ^^^^^^^^^^^^^^^^
+
+warning: function `segment_witness` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:2018:4
+     |
+2018 | fn segment_witness(
+     |    ^^^^^^^^^^^^^^^
+
+warning: function `point_segment_witness` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:2046:4
+     |
+2046 | fn point_segment_witness(
+     |    ^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `point_on_segment` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:2063:4
+     |
+2063 | fn point_on_segment(point: IrregularPoint, start: IrregularPoint, end: IrregularPoint) -> bool {
+     |    ^^^^^^^^^^^^^^^^
+
+warning: enum `GlobalRow` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:2165:6
+     |
+2165 | enum GlobalRow {
+     |      ^^^^^^^^^
+
+warning: methods `rhs_mm`, `norm_squared`, `value`, and `apply` are never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:2190:8
+     |
+2189 | impl GlobalRow {
+     | -------------- methods in this implementation
+2190 |     fn rhs_mm(self) -> f64 {
+     |        ^^^^^^
+...
+2196 |     fn norm_squared(self) -> f64 {
+     |        ^^^^^^^^^^^^
+...
+2203 |     fn value(self, translations: &[(f64, f64)]) -> f64 {
+     |        ^^^^^
+...
+2227 |     fn apply(self, translations: &mut [(f64, f64)], step: f64) {
+     |        ^^^^^
+
+warning: struct `GlobalLegalizationBudget` is never constructed
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:2262:8
+     |
+2262 | struct GlobalLegalizationBudget {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: associated items `for_piece_count` and `charge_round` are never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:2267:8
+     |
+2266 | impl GlobalLegalizationBudget {
+     | ----------------------------- associated items in this implementation
+2267 |     fn for_piece_count(piece_count: usize) -> Self {
+     |        ^^^^^^^^^^^^^^^
+...
+2274 |     fn charge_round(&mut self, complete_pairs: usize) -> Result<(), &'static str> {
+     |        ^^^^^^^^^^^^
+
+warning: function `global_legalize` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:2352:15
+     |
+2352 | pub(crate) fn global_legalize(
+     |               ^^^^^^^^^^^^^^^
+
+warning: function `build_global_rows` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:2640:4
+     |
+2640 | fn build_global_rows(
+     |    ^^^^^^^^^^^^^^^^^
+
+warning: function `solve_minimum_norm_step` is never used
+    --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:2831:4
+     |
+2831 | fn solve_minimum_norm_step(rows: &[GlobalRow], slots: usize) -> (Vec<(f64, f64)>, usize, f64) {
+     |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: variant `ToleratesPoleRounding` is never constructed
+    --> crates/polygon-nesting-core/src/search/general_relaxed.rs:3621:5
+     |
+3607 | pub(crate) enum CoupledRollbackComparison {
+     |                 ------------------------- variant in this enum
+...
+3621 |     ToleratesPoleRounding,
+     |     ^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `CoupledRollbackComparison` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: method `label` is never used
+    --> crates/polygon-nesting-core/src/search/general_relaxed.rs:3628:8
+     |
+3624 | impl CoupledRollbackComparison {
+     | ------------------------------ method in this implementation
+...
+3628 |     fn label(self) -> Option<&'static str> {
+     |        ^^^^^
+
+warning: function `continuous_rotation_report_armed` is never used
+    --> crates/polygon-nesting-core/src/search/general_relaxed.rs:3862:4
+     |
+3862 | fn continuous_rotation_report_armed(relaxed_settings: GeneralRelaxedSettings) -> bool {
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: method `resolved_pair_collides` is never used
+     --> crates/polygon-nesting-core/src/search/general_relaxed.rs:17261:8
+      |
+13155 | impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'a, K> {
+      | ------------------------------------------------------------------------------------- method in this implementation
+...
+17261 |     fn resolved_pair_collides(
+      |        ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `polygon-nesting-core` (lib) generated 78 warnings (run `cargo fix --lib -p polygon-nesting-core` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 38.73s

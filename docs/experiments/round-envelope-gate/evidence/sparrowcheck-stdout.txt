@@ -1,0 +1,9 @@
+{
+ "publishableUnderArmedAuthorityAtAllowancesMm": [
+  0.0
+ ],
+ "publishableAtShippingAllowance": false,
+ "publishableAtZeroAllowance": true,
+ "publishableUnderMiterAtAnyAllowance": false,
+ "contractAcceptsAtEveryAllowance": true
+}

@@ -1,0 +1,9 @@
+m34-seed0-miter [miter] identical=True digest=24ec602c94c1004e verdictDiffs=[]
+m34-seed0-union [union] identical=True digest=96a2f0325d11e671 verdictDiffs=[]
+m34-seed4-union [union] identical=True digest=f030fb35ccc8c139 verdictDiffs=[]
+v3-plan-canonical [miter] identical=True digest=6d35cb761a907ddc verdictDiffs=[]
+v3-plan-rek [miter] identical=True digest=094f146e7079c6f1 verdictDiffs=[]
+v3-work-rekcrot [miter] identical=True digest=926b1d54b97a5ff1 verdictDiffs=[]
+{
+ "ALL_IDENTICAL": true
+}

@@ -1,0 +1,74 @@
+{
+ "preCommittedRule": {
+  "clausesPerBudget": {
+   "3341379": {
+    "equalWallWins": 7,
+    "equalWallWinsRequired": 8,
+    "equalWallWinClausePasses": false,
+    "equalWallMedianImprovementMm": 0.04571060950972594,
+    "medianImprovementClausePasses": false,
+    "equalWallWinsNoInterpolation": 0,
+    "equalWallMedianImprovementNoInterpolationMm": -0.0,
+    "equalWorkWins": 0,
+    "equalWorkMedianImprovementMm": -0.0
+   },
+   "8000000": {
+    "equalWallWins": 9,
+    "equalWallWinsRequired": 8,
+    "equalWallWinClausePasses": true,
+    "equalWallMedianImprovementMm": 0.1995595986489178,
+    "medianImprovementClausePasses": false,
+    "equalWallWinsNoInterpolation": 0,
+    "equalWallMedianImprovementNoInterpolationMm": -0.0,
+    "equalWorkWins": 0,
+    "equalWorkMedianImprovementMm": -0.0
+   },
+   "16000000": {
+    "equalWallWins": 8,
+    "equalWallWinsRequired": 8,
+    "equalWallWinClausePasses": true,
+    "equalWallMedianImprovementMm": 0.09130806398390234,
+    "medianImprovementClausePasses": false,
+    "equalWallWinsNoInterpolation": 0,
+    "equalWallMedianImprovementNoInterpolationMm": -0.0,
+    "equalWorkWins": 0,
+    "equalWorkMedianImprovementMm": -0.0
+   },
+   "32000000": {
+    "equalWallWins": 6,
+    "equalWallWinsRequired": 8,
+    "equalWallWinClausePasses": false,
+    "equalWallMedianImprovementMm": 0.0009198398897751758,
+    "medianImprovementClausePasses": false,
+    "equalWallWinsNoInterpolation": 0,
+    "equalWallMedianImprovementNoInterpolationMm": -0.0,
+    "equalWorkWins": 0,
+    "equalWorkMedianImprovementMm": -0.0
+   }
+  },
+  "perConfirmationOverheadClausePasses": true,
+  "perConfirmationOverheadMax": 0.6503905602980558,
+  "everyPublicationPassesUntouchedContractValidator": true,
+  "everyArmRunReportedItsArm": true,
+  "anyBudgetSatisfiesBothQualityClauses": false,
+  "VERDICT": "DO-NOT-PROMOTE",
+  "failingClauses": [
+   ">=8/12 paired wins at equal operator wall AND >=1 mm median improvement (at any measured budget)"
+  ],
+  "depthClassNote": {
+   "contactBlockClassMm": 0.506,
+   "m34ClassMm": 1.104
+  }
+ },
+ "perConfirmationOverhead": {
+  "cells": 47,
+  "median": 0.5201174638698817,
+  "max": 0.6503905602980558,
+  "min": 0.4932030858760552
+ },
+ "aborts": {
+  "union": 1,
+  "miter": 1
+ },
+ "publicationAudit": {}
+}

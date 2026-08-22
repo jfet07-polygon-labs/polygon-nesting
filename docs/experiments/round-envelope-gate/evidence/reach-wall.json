@@ -1,0 +1,2920 @@
+{
+ "binary": "/var/lib/t3/tmp/rekgate/bin/meas",
+ "binarySha256": "9e6ad285f0e3980c3a2b5720e44e2a0baf7e4c13f57d794305da3b47467df4a2",
+ "request": "mixed-61",
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "rounds": 3,
+ "budgetKey": "wall",
+ "budgetValues": [
+  "10000"
+ ],
+ "arms": [
+  {
+   "label": "base",
+   "extra": ""
+  },
+  {
+   "label": "crot",
+   "extra": "crot=1"
+  },
+  {
+   "label": "rek",
+   "extra": "rek=1"
+  },
+  {
+   "label": "rekcrot",
+   "extra": "crot=1,rek=1"
+  }
+ ],
+ "rows": [
+  {
+   "spec": "wall=10000,cells=13:15:17:19,v3=1",
+   "processWallSeconds": 10.008967682020739,
+   "rawDepthMm": 168.4836008374388,
+   "engineDepthMm": 168.484,
+   "usedLongAxisDepthMm": 168.488,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 9.974014435,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.974054334,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+     "phase": "compression",
+     "previousRawDepthMm": 181.589,
+     "rawDepthMm": 179.5868589805926,
+     "seconds": 2.642427344,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "33a059fc6c2cfa35c590e020993a9137ba0328bbd65a0c3ce14f9970273f5946",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.5868589805926,
+     "rawDepthMm": 178.1797782649107,
+     "seconds": 4.816328643,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "a94167c00cc2fbc53c9597ae55adfd343317dffa6250ff7a7abb7d11165f0a11",
+     "phase": "compression",
+     "previousRawDepthMm": 178.1797782649107,
+     "rawDepthMm": 176.10777659602962,
+     "seconds": 5.4675664489999996,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "c5af743f39b3d597606c3ffb41093207c69f0e8fcd1293efbed2211698501f43",
+     "phase": "compression",
+     "previousRawDepthMm": 176.10777659602962,
+     "rawDepthMm": 175.3877782649107,
+     "seconds": 6.035214449,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "7b3565e18fbf808fb5309d76572973542305be159f6a23db555e8b73b342c31c",
+     "phase": "compression",
+     "previousRawDepthMm": 175.3877782649107,
+     "rawDepthMm": 175.1357388323935,
+     "seconds": 6.7279867,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "2051b2cf45dcd310d7749343821c7fc91f181b6d2294a2b0ae25c78595bc5fec",
+     "phase": "compression",
+     "previousRawDepthMm": 175.1357388323935,
+     "rawDepthMm": 173.57506393348288,
+     "seconds": 7.41682476,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "4fd0cbd232bafe941aca2ae8df6a9c29583d0081fdfa4be1c4348d218c6da5fc",
+     "phase": "compression",
+     "previousRawDepthMm": 173.57506393348288,
+     "rawDepthMm": 172.2875460463765,
+     "seconds": 8.224858124,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "59b634e3d754f503b9bf568528eb8b38dcd43a2498c23d3c0d2ecc1874321ba7",
+     "phase": "schedule",
+     "previousRawDepthMm": 172.2875460463765,
+     "rawDepthMm": 171.111,
+     "seconds": 9.009427505,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "5911ea656d657fcb5c5be19aed70a62cfd60589e66ae4877b8329216f4b60185",
+     "phase": "compression",
+     "previousRawDepthMm": 171.111,
+     "rawDepthMm": 168.4836008374388,
+     "seconds": 9.974014435,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 35,
+   "offLattice2p5WorstDeg": 1.229137999999999,
+   "offLattice1p0Count": 43,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 52,
+   "arm": "base",
+   "seed": 0,
+   "round": 0,
+   "budget": "wall=10000",
+   "tag": "base-wall10000-s0-r0"
+  },
+  {
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,crot=1",
+   "processWallSeconds": 10.21973973303102,
+   "rawDepthMm": 175.21893730689536,
+   "engineDepthMm": 175.219,
+   "usedLongAxisDepthMm": 175.223,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 6.386385595,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 10.182772254,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "86bcb94ff81376d3c208cdfc2234b7885975683219af7c8d1f84e52e52341a03",
+     "phase": "compression",
+     "previousRawDepthMm": 181.589,
+     "rawDepthMm": 179.5679856628203,
+     "seconds": 2.595356181,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "9bd1a31a179973d15662de867d82571056654fbcdcc8dd30b38763085307d97b",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.5679856628203,
+     "rawDepthMm": 178.19422257970422,
+     "seconds": 5.497765162,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "749faa5ef20737b8ae40facfa00f9f72d1cd43459eefcadef139245784744e55",
+     "phase": "compression",
+     "previousRawDepthMm": 178.19422257970422,
+     "rawDepthMm": 175.21893730689536,
+     "seconds": 6.386385595,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 46,
+   "offLattice2p5WorstDeg": 1.1650450000000063,
+   "offLattice1p0Count": 51,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 58,
+   "arm": "crot",
+   "seed": 0,
+   "round": 0,
+   "budget": "wall=10000",
+   "tag": "crot-wall10000-s0-r0"
+  },
+  {
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,rek=1",
+   "processWallSeconds": 9.176896541030146,
+   "rawDepthMm": 169.16504165198234,
+   "engineDepthMm": 169.165,
+   "usedLongAxisDepthMm": 169.167,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 7.65420183,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.139932356,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "5fcb55aac38f2b1912344b0d9b1021c5900bad4a9c20a06364e5fa4bda180389",
+     "phase": "compression",
+     "previousRawDepthMm": 179.814,
+     "rawDepthMm": 179.52512842091468,
+     "seconds": 2.256452763,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "1d97f9db9f12270123286ef1f2cc033b5db0c12ef7d496413191b50b299edc4b",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.52512842091468,
+     "rawDepthMm": 178.18200000000002,
+     "seconds": 3.9835713249999998,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "a481723d5f53aa23b412946d962d8aec8e396de5a5afbf7b8fb20d237d8305c0",
+     "phase": "compression",
+     "previousRawDepthMm": 178.18200000000002,
+     "rawDepthMm": 171.771,
+     "seconds": 5.07690986,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "cd96eb9474d909bc313096f4ab3428e0436aa55c93368a90f6a6c7b4814ab126",
+     "phase": "schedule",
+     "previousRawDepthMm": 171.771,
+     "rawDepthMm": 171.202,
+     "seconds": 6.816925827,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "d915563bfebe2e863a8a5d101eaf4c1458299c2bc01bfbc2a27f02aba54cf7a5",
+     "phase": "compression",
+     "previousRawDepthMm": 171.202,
+     "rawDepthMm": 169.16504165198234,
+     "seconds": 7.65420183,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 37,
+   "offLattice2p5WorstDeg": 1.1432639999999878,
+   "offLattice1p0Count": 44,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 54,
+   "arm": "rek",
+   "seed": 0,
+   "round": 0,
+   "budget": "wall=10000",
+   "tag": "rek-wall10000-s0-r0"
+  },
+  {
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,crot=1,rek=1",
+   "processWallSeconds": 10.378378591965884,
+   "rawDepthMm": 174.45287546695343,
+   "engineDepthMm": 174.453,
+   "usedLongAxisDepthMm": 174.455,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 8.567681212,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 10.340007721,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "5fcb55aac38f2b1912344b0d9b1021c5900bad4a9c20a06364e5fa4bda180389",
+     "phase": "compression",
+     "previousRawDepthMm": 179.814,
+     "rawDepthMm": 179.52512842091468,
+     "seconds": 2.484222056,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "cb4f5303f7366e3c0aac92912227f707dd13009e0e3e1fc84cb3d082858166d7",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.52512842091468,
+     "rawDepthMm": 178.13987341338725,
+     "seconds": 4.555585578,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "f52cda2b4bc9c6e9cb2595b3ce0ed953a758816f9e3d0d4d273604413f206d80",
+     "phase": "schedule",
+     "previousRawDepthMm": 178.13987341338725,
+     "rawDepthMm": 177.46499745382505,
+     "seconds": 4.773549308,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "6f58ef50b6ad44b48eada34aa0e3cd3e666ff75326b406e4c53958b0cff51fd1",
+     "phase": "schedule",
+     "previousRawDepthMm": 177.46499745382505,
+     "rawDepthMm": 175.98999998032653,
+     "seconds": 5.511263341,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "d5d8b07dd83c2720ea52982a5437e15da8580bdb74c02ac29087c4d52790a572",
+     "phase": "schedule",
+     "previousRawDepthMm": 175.98999998032653,
+     "rawDepthMm": 175.03300000000002,
+     "seconds": 6.77375055,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "dbc3dccc85c4bd5c1e68fc3b72c38a50d07ed836d74575a032bd9c7e7e5885d7",
+     "phase": "compression",
+     "previousRawDepthMm": 175.03300000000002,
+     "rawDepthMm": 175.028,
+     "seconds": 7.621043036,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "916b40ad290842c570611e5ad9a7e0910de6e2b18a3a5df67cd0bb6889ee13fb",
+     "phase": "compression",
+     "previousRawDepthMm": 175.028,
+     "rawDepthMm": 174.45287546695343,
+     "seconds": 8.567681212,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 36,
+   "offLattice2p5WorstDeg": 0.783767,
+   "offLattice1p0Count": 45,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 52,
+   "arm": "rekcrot",
+   "seed": 0,
+   "round": 0,
+   "budget": "wall=10000",
+   "tag": "rekcrot-wall10000-s0-r0"
+  },
+  {
+   "spec": "wall=10000,cells=11:15:21:27,v3=1",
+   "processWallSeconds": 10.247284099110402,
+   "rawDepthMm": 165.65577826491065,
+   "engineDepthMm": 165.656,
+   "usedLongAxisDepthMm": 165.675,
+   "dualGateValid": true,
+   "incumbentSource": "mode34",
+   "publishedSeconds": 10.20767855,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 10.207692412,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+     "phase": "compression",
+     "previousRawDepthMm": 179.69,
+     "rawDepthMm": 179.63299999999998,
+     "seconds": 2.539563871,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "49826f36371717fa7444586177b314eea3666318a64a2ba84fe68130dd2ccaf3",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.63299999999998,
+     "rawDepthMm": 177.90786925189622,
+     "seconds": 4.590158327,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "13823b4793f6fab1f549fe456b42e255035bc2b01b86038fb343d08e9bb9c34d",
+     "phase": "schedule",
+     "previousRawDepthMm": 177.90786925189622,
+     "rawDepthMm": 176.39763516896454,
+     "seconds": 4.771797176,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "dc6d062ca10a53a1cc3200f2b9931264f29d8a3af3f172472d01df780b8f3730",
+     "phase": "schedule",
+     "previousRawDepthMm": 176.39763516896454,
+     "rawDepthMm": 174.888,
+     "seconds": 5.373442649,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "0537727d2d92e52291814885fb3f43aaa8e92cafd2e1fa203aff18a36597fdef",
+     "phase": "schedule",
+     "previousRawDepthMm": 174.888,
+     "rawDepthMm": 173.29200000000003,
+     "seconds": 5.824321805,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "412f1aea4879c3dc9fdee95f5ecf4434a852351c32d32fe9aa65204b9108fb79",
+     "phase": "schedule",
+     "previousRawDepthMm": 173.29200000000003,
+     "rawDepthMm": 171.759,
+     "seconds": 6.234949915,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "588b50ac6e9ba7ee71a084c53db3cf5988c5b2f082e2b8aac5217137222ef55e",
+     "phase": "schedule",
+     "previousRawDepthMm": 171.759,
+     "rawDepthMm": 170.221,
+     "seconds": 6.583506116,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "6a5ce1eddc2dab0464bb756e9d95d5ba05d8c7f26e85628bd2897cb3988be8da",
+     "phase": "schedule",
+     "previousRawDepthMm": 170.221,
+     "rawDepthMm": 168.708,
+     "seconds": 7.289761329,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "e504cf38d020e3877f562ae5d292af783c0fae0b8f804597f2c7e086d51b4aa8",
+     "phase": "schedule",
+     "previousRawDepthMm": 168.708,
+     "rawDepthMm": 167.183,
+     "seconds": 8.210215422,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "9816f78fddf1d0ef86708457d06516686dc68d4c1e058f9d44f8fbea7e49d2a5",
+     "phase": "schedule",
+     "previousRawDepthMm": 167.183,
+     "rawDepthMm": 165.65577826491065,
+     "seconds": 10.20767855,
+     "source": "mode34",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 0,
+   "offLattice2p5WorstDeg": 0.0,
+   "offLattice1p0Count": 15,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 33,
+   "arm": "base",
+   "seed": 1,
+   "round": 0,
+   "budget": "wall=10000",
+   "tag": "base-wall10000-s1-r0"
+  },
+  {
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,crot=1",
+   "processWallSeconds": 9.112905082060024,
+   "rawDepthMm": 176.58847255356912,
+   "engineDepthMm": 176.588,
+   "usedLongAxisDepthMm": 176.601,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 8.214661247,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.076833786,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+     "phase": "compression",
+     "previousRawDepthMm": 179.69,
+     "rawDepthMm": 179.63299999999998,
+     "seconds": 2.737172928,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "eadbc436f4bb7b15907632d02efdd08772a57f87820181b61b274b76147c3790",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.63299999999998,
+     "rawDepthMm": 178.02319630507574,
+     "seconds": 6.40735741,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "f2b7aac506b4ff7faedaa82f04de8719a367ce130b545aebf21abdbb491e73fd",
+     "phase": "compression",
+     "previousRawDepthMm": 178.02319630507574,
+     "rawDepthMm": 177.76213754121855,
+     "seconds": 7.262548025,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "88f58048c757199ca7a17019473e1018398eeda668658f46262f2c7fbb11a4bf",
+     "phase": "compression",
+     "previousRawDepthMm": 177.76213754121855,
+     "rawDepthMm": 176.58847255356912,
+     "seconds": 8.214661247,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 44,
+   "offLattice2p5WorstDeg": 1.156412000000003,
+   "offLattice1p0Count": 52,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 57,
+   "arm": "crot",
+   "seed": 1,
+   "round": 0,
+   "budget": "wall=10000",
+   "tag": "crot-wall10000-s1-r0"
+  },
+  {
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,rek=1",
+   "processWallSeconds": 9.269371778005734,
+   "rawDepthMm": 171.9527695409736,
+   "engineDepthMm": 171.953,
+   "usedLongAxisDepthMm": 171.955,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 9.231479503,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.231773804,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "58f349dae3d250fa519b93aeb0faaa498e6d6e63b9920045227a806d60e1e5a2",
+     "phase": "compression",
+     "previousRawDepthMm": 180.885,
+     "rawDepthMm": 180.5824376266633,
+     "seconds": 2.554030891,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "ff00b3e022fb31799b8bb1595c6653faa0270d97e7a060f970ece624d5436b53",
+     "phase": "compression",
+     "previousRawDepthMm": 180.5824376266633,
+     "rawDepthMm": 179.65062377171648,
+     "seconds": 3.216311237,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "35e707f8ad2827a5c7c677d5a43c918056c9b490305594d20e8d7c7d8ca779d0",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.65062377171648,
+     "rawDepthMm": 178.147,
+     "seconds": 5.7727026089999995,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "b91c8f26310ca3e2f2b2e9b12fc9bdfb49c1be64eb60b04623824fe1500c83af",
+     "phase": "compression",
+     "previousRawDepthMm": 178.147,
+     "rawDepthMm": 176.93257339904468,
+     "seconds": 6.409199193,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "c90158fbb9ed1c46eec317d715aa1f6d89592362525dc26984183ce59737ed9c",
+     "phase": "compression",
+     "previousRawDepthMm": 176.93257339904468,
+     "rawDepthMm": 173.3465801543412,
+     "seconds": 7.281071982,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "c5847acd7763e601df355e0b7f3c380c6cacbac17e822269a252010a4b610389",
+     "phase": "compression",
+     "previousRawDepthMm": 173.3465801543412,
+     "rawDepthMm": 172.3635040514015,
+     "seconds": 8.265541592,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "3b2a14b4bb51df2ba4113268b8996ea2f5798d028f305a3271f8c7474347aa5d",
+     "phase": "compression",
+     "previousRawDepthMm": 172.3635040514015,
+     "rawDepthMm": 171.9527695409736,
+     "seconds": 9.231479503,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 58,
+   "offLattice2p5WorstDeg": 1.2356719999999939,
+   "offLattice1p0Count": 58,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 61,
+   "arm": "rek",
+   "seed": 1,
+   "round": 0,
+   "budget": "wall=10000",
+   "tag": "rek-wall10000-s1-r0"
+  },
+  {
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,crot=1,rek=1",
+   "processWallSeconds": 8.494223379995674,
+   "rawDepthMm": 179.5067393502041,
+   "engineDepthMm": 179.507,
+   "usedLongAxisDepthMm": 179.509,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 3.79383404,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 8.455857624,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "58f349dae3d250fa519b93aeb0faaa498e6d6e63b9920045227a806d60e1e5a2",
+     "phase": "compression",
+     "previousRawDepthMm": 180.885,
+     "rawDepthMm": 180.5824376266633,
+     "seconds": 2.825949725,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "4ae6d4f007adb3b527f5671b73da5d120c6bec0d1eecb42c7ec10f9e32df5c01",
+     "phase": "compression",
+     "previousRawDepthMm": 180.5824376266633,
+     "rawDepthMm": 179.5067393502041,
+     "seconds": 3.79383404,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 55,
+   "offLattice2p5WorstDeg": 1.111049,
+   "offLattice1p0Count": 57,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 60,
+   "arm": "rekcrot",
+   "seed": 1,
+   "round": 0,
+   "budget": "wall=10000",
+   "tag": "rekcrot-wall10000-s1-r0"
+  },
+  {
+   "spec": "wall=10000,cells=15:23:31:39,v3=1",
+   "processWallSeconds": 9.80816447304096,
+   "rawDepthMm": 174.28,
+   "engineDepthMm": 174.28,
+   "usedLongAxisDepthMm": 174.282,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 8.354870421,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.771296125,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "phase": "compression",
+     "previousRawDepthMm": 179.662,
+     "rawDepthMm": 179.006,
+     "seconds": 2.502086095,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "6d0ddb941e82342ddb2333327b2e496537d94aca889b51f37b553dcf8bef59e1",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.006,
+     "rawDepthMm": 177.34300000000002,
+     "seconds": 4.921123337,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "0459cff9a107209327783986a19c193b599beff0f27f14ed0166dfd180995150",
+     "phase": "compression",
+     "previousRawDepthMm": 177.34300000000002,
+     "rawDepthMm": 176.16200000000003,
+     "seconds": 5.584237013,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "4133d3b514e2a82a1637d401b1b083f392c0297d3cfda692268dbbcfb5a9d2fe",
+     "phase": "schedule",
+     "previousRawDepthMm": 176.16200000000003,
+     "rawDepthMm": 174.881,
+     "seconds": 7.513532131,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "ef3c02d28f644901de4ce04157cb880cc4b94eefd1ac6c5336f5d1bde3a963b1",
+     "phase": "compression",
+     "previousRawDepthMm": 174.881,
+     "rawDepthMm": 174.28,
+     "seconds": 8.354870421,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 18,
+   "offLattice2p5WorstDeg": 1.0134660000000002,
+   "offLattice1p0Count": 30,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 47,
+   "arm": "base",
+   "seed": 2,
+   "round": 0,
+   "budget": "wall=10000",
+   "tag": "base-wall10000-s2-r0"
+  },
+  {
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,crot=1",
+   "processWallSeconds": 9.724161063088104,
+   "rawDepthMm": 173.141,
+   "engineDepthMm": 173.141,
+   "usedLongAxisDepthMm": 173.144,
+   "dualGateValid": true,
+   "incumbentSource": "mode34",
+   "publishedSeconds": 9.68777426,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.688060099,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "646eae65a6372d41bdd8064b9156c3deb0738fc90f8c1cdcca78afb849153d2e",
+     "phase": "compression",
+     "previousRawDepthMm": 179.662,
+     "rawDepthMm": 179.633,
+     "seconds": 2.7194998249999998,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "4a1a9954bf982f4a93a549599b6f5b7ee0c4d644dc78976b747eaf93f84b146a",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.633,
+     "rawDepthMm": 178.00087410773443,
+     "seconds": 5.547641592,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "ac8f1ee57abcc8d6f8fa589f0a8e7cbf0e40a79e1d706ff5ecdbf61abe25a01b",
+     "phase": "compression",
+     "previousRawDepthMm": 178.00087410773443,
+     "rawDepthMm": 175.3308562342454,
+     "seconds": 6.282396218,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "0164e2980526471e811ef235e2b812af27b7c49bc41ecb9f9495377eded002b2",
+     "phase": "compression",
+     "previousRawDepthMm": 175.3308562342454,
+     "rawDepthMm": 174.67563635516416,
+     "seconds": 7.13929085,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "40bb5aac71a7ffb0ed11e9f555739a74bdbd2037e2af0e7b85e65ab534593289",
+     "phase": "schedule",
+     "previousRawDepthMm": 174.67563635516416,
+     "rawDepthMm": 173.141,
+     "seconds": 9.68777426,
+     "source": "mode34",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 45,
+   "offLattice2p5WorstDeg": 1.2345420000000047,
+   "offLattice1p0Count": 46,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 56,
+   "arm": "crot",
+   "seed": 2,
+   "round": 0,
+   "budget": "wall=10000",
+   "tag": "crot-wall10000-s2-r0"
+  },
+  {
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,rek=1",
+   "processWallSeconds": 12.023843411006965,
+   "rawDepthMm": 164.053,
+   "engineDepthMm": 164.053,
+   "usedLongAxisDepthMm": 164.055,
+   "dualGateValid": true,
+   "incumbentSource": "mode34",
+   "publishedSeconds": 11.989098407,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 11.989113064,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "cbc7991de7143d89286baa9c118454566c427efe46d2e1fba83891b58fec1ee0",
+     "phase": "compression",
+     "previousRawDepthMm": 179.72977826491072,
+     "rawDepthMm": 179.51834619478396,
+     "seconds": 2.639538064,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "43b471729eef36fe14c8f590401ea02dfbfcbcc9ab3434b4570ce3b6333f7fe8",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.51834619478396,
+     "rawDepthMm": 178.197,
+     "seconds": 4.655108932,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "314d62bab7b84267c118ed6022894928f048e134229b92569c579c4cc5d79c8f",
+     "phase": "compression",
+     "previousRawDepthMm": 178.197,
+     "rawDepthMm": 175.006,
+     "seconds": 5.1206644709999996,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "9e36709a701837bdba472b4a162b5cd17c5f2e37caee684c6cf53518b7ef22cd",
+     "phase": "compression",
+     "previousRawDepthMm": 175.006,
+     "rawDepthMm": 168.02997398583278,
+     "seconds": 6.912811069,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "e95f2a9e503a91f6adb6ee9b27c57a2de11a2fb59134a72b2509e068c100513c",
+     "phase": "schedule",
+     "previousRawDepthMm": 168.02997398583278,
+     "rawDepthMm": 166.942,
+     "seconds": 7.754384113,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "188925037ae4317e24144a4cdea883c5e8c03d1c56e2d083d882eadc4866af7e",
+     "phase": "schedule",
+     "previousRawDepthMm": 166.942,
+     "rawDepthMm": 165.58677826491072,
+     "seconds": 8.756126102,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "59bc79e2c8c55a81e17f71de3b5c9baa727bd57aaf445cfb467f130bcede1ebe",
+     "phase": "schedule",
+     "previousRawDepthMm": 165.58677826491072,
+     "rawDepthMm": 164.053,
+     "seconds": 11.989098407,
+     "source": "mode34",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 0,
+   "offLattice2p5WorstDeg": 0.0,
+   "offLattice1p0Count": 24,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 41,
+   "arm": "rek",
+   "seed": 2,
+   "round": 0,
+   "budget": "wall=10000",
+   "tag": "rek-wall10000-s2-r0"
+  },
+  {
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,crot=1,rek=1",
+   "processWallSeconds": 9.52555587189272,
+   "rawDepthMm": 179.51834619478396,
+   "engineDepthMm": 179.518,
+   "usedLongAxisDepthMm": 179.52,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 2.825240297,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.491055047,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "cbc7991de7143d89286baa9c118454566c427efe46d2e1fba83891b58fec1ee0",
+     "phase": "compression",
+     "previousRawDepthMm": 179.72977826491072,
+     "rawDepthMm": 179.51834619478396,
+     "seconds": 2.825240297,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 14,
+   "offLattice2p5WorstDeg": 1.175,
+   "offLattice1p0Count": 25,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 35,
+   "arm": "rekcrot",
+   "seed": 2,
+   "round": 0,
+   "budget": "wall=10000",
+   "tag": "rekcrot-wall10000-s2-r0"
+  },
+  {
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,crot=1",
+   "processWallSeconds": 10.182402459089644,
+   "rawDepthMm": 175.21893730689536,
+   "engineDepthMm": 175.219,
+   "usedLongAxisDepthMm": 175.223,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 6.367867038,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 10.146897072,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "86bcb94ff81376d3c208cdfc2234b7885975683219af7c8d1f84e52e52341a03",
+     "phase": "compression",
+     "previousRawDepthMm": 181.589,
+     "rawDepthMm": 179.5679856628203,
+     "seconds": 2.591855362,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "9bd1a31a179973d15662de867d82571056654fbcdcc8dd30b38763085307d97b",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.5679856628203,
+     "rawDepthMm": 178.19422257970422,
+     "seconds": 5.511198282,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "749faa5ef20737b8ae40facfa00f9f72d1cd43459eefcadef139245784744e55",
+     "phase": "compression",
+     "previousRawDepthMm": 178.19422257970422,
+     "rawDepthMm": 175.21893730689536,
+     "seconds": 6.367867038,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 46,
+   "offLattice2p5WorstDeg": 1.1650450000000063,
+   "offLattice1p0Count": 51,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 58,
+   "arm": "crot",
+   "seed": 0,
+   "round": 1,
+   "budget": "wall=10000",
+   "tag": "crot-wall10000-s0-r1"
+  },
+  {
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,rek=1",
+   "processWallSeconds": 9.994628982967697,
+   "rawDepthMm": 169.26299999999998,
+   "engineDepthMm": 169.263,
+   "usedLongAxisDepthMm": 169.265,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 8.369665399,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.960907469,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "5fcb55aac38f2b1912344b0d9b1021c5900bad4a9c20a06364e5fa4bda180389",
+     "phase": "compression",
+     "previousRawDepthMm": 179.814,
+     "rawDepthMm": 179.52512842091468,
+     "seconds": 2.28077229,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "1d97f9db9f12270123286ef1f2cc033b5db0c12ef7d496413191b50b299edc4b",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.52512842091468,
+     "rawDepthMm": 178.18200000000002,
+     "seconds": 4.033281134,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "2102b914119020716ccb7f5d53b52651aa660815416fb07e7780e8c0ad4e12fd",
+     "phase": "schedule",
+     "previousRawDepthMm": 178.18200000000002,
+     "rawDepthMm": 176.58100000000002,
+     "seconds": 4.441693857,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "2ac6135b96425aa68e508bcb65e6511a8201059d6df6e3f9e98c5566282bfab2",
+     "phase": "schedule",
+     "previousRawDepthMm": 176.58100000000002,
+     "rawDepthMm": 174.983,
+     "seconds": 4.958078324,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "5ee04634662796feb99a00d1f347102fe8b9a3872b904bf1dc8e23c17781bed6",
+     "phase": "schedule",
+     "previousRawDepthMm": 174.983,
+     "rawDepthMm": 173.431,
+     "seconds": 5.267461834,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "6cc3924c3bc678a3ddc36959a8ab900475ba3ff5806edbba55b8140c03d41a7c",
+     "phase": "schedule",
+     "previousRawDepthMm": 173.431,
+     "rawDepthMm": 171.9,
+     "seconds": 5.747550458,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "5e332253cfe102ecc38ab46a047de21168eabd7ea9d950ee30b10870bea9cbaf",
+     "phase": "schedule",
+     "previousRawDepthMm": 171.9,
+     "rawDepthMm": 170.1336920545537,
+     "seconds": 7.533031973,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "75dba5ec980bdc2edc0f014759b02d212e20c45d2bda70292aa75fc1ccfb2624",
+     "phase": "compression",
+     "previousRawDepthMm": 170.1336920545537,
+     "rawDepthMm": 169.26299999999998,
+     "seconds": 8.369665399,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 30,
+   "offLattice2p5WorstDeg": 1.0875000000000057,
+   "offLattice1p0Count": 39,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 53,
+   "arm": "rek",
+   "seed": 0,
+   "round": 1,
+   "budget": "wall=10000",
+   "tag": "rek-wall10000-s0-r1"
+  },
+  {
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,crot=1,rek=1",
+   "processWallSeconds": 9.292328972020186,
+   "rawDepthMm": 175.028,
+   "engineDepthMm": 175.028,
+   "usedLongAxisDepthMm": 175.03,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 7.715769756,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.256462916,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "5fcb55aac38f2b1912344b0d9b1021c5900bad4a9c20a06364e5fa4bda180389",
+     "phase": "compression",
+     "previousRawDepthMm": 179.814,
+     "rawDepthMm": 179.52512842091468,
+     "seconds": 2.501672165,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "cb4f5303f7366e3c0aac92912227f707dd13009e0e3e1fc84cb3d082858166d7",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.52512842091468,
+     "rawDepthMm": 178.13987341338725,
+     "seconds": 4.621296075,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "f52cda2b4bc9c6e9cb2595b3ce0ed953a758816f9e3d0d4d273604413f206d80",
+     "phase": "schedule",
+     "previousRawDepthMm": 178.13987341338725,
+     "rawDepthMm": 177.46499745382505,
+     "seconds": 4.841833132,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "6f58ef50b6ad44b48eada34aa0e3cd3e666ff75326b406e4c53958b0cff51fd1",
+     "phase": "schedule",
+     "previousRawDepthMm": 177.46499745382505,
+     "rawDepthMm": 175.98999998032653,
+     "seconds": 5.579194034,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "d5d8b07dd83c2720ea52982a5437e15da8580bdb74c02ac29087c4d52790a572",
+     "phase": "schedule",
+     "previousRawDepthMm": 175.98999998032653,
+     "rawDepthMm": 175.03300000000002,
+     "seconds": 6.841960862,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "dbc3dccc85c4bd5c1e68fc3b72c38a50d07ed836d74575a032bd9c7e7e5885d7",
+     "phase": "compression",
+     "previousRawDepthMm": 175.03300000000002,
+     "rawDepthMm": 175.028,
+     "seconds": 7.715769756,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 22,
+   "offLattice2p5WorstDeg": 1.1597189999999955,
+   "offLattice1p0Count": 35,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 46,
+   "arm": "rekcrot",
+   "seed": 0,
+   "round": 1,
+   "budget": "wall=10000",
+   "tag": "rekcrot-wall10000-s0-r1"
+  },
+  {
+   "spec": "wall=10000,cells=13:15:17:19,v3=1",
+   "processWallSeconds": 10.498161910916679,
+   "rawDepthMm": 168.756,
+   "engineDepthMm": 168.756,
+   "usedLongAxisDepthMm": 168.758,
+   "dualGateValid": true,
+   "incumbentSource": "mode34",
+   "publishedSeconds": 10.46408452,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 10.464099064,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+     "phase": "compression",
+     "previousRawDepthMm": 181.589,
+     "rawDepthMm": 179.5868589805926,
+     "seconds": 2.622249965,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "33a059fc6c2cfa35c590e020993a9137ba0328bbd65a0c3ce14f9970273f5946",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.5868589805926,
+     "rawDepthMm": 178.1797782649107,
+     "seconds": 5.021645846,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "a94167c00cc2fbc53c9597ae55adfd343317dffa6250ff7a7abb7d11165f0a11",
+     "phase": "compression",
+     "previousRawDepthMm": 178.1797782649107,
+     "rawDepthMm": 176.10777659602962,
+     "seconds": 5.679655896,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "c5af743f39b3d597606c3ffb41093207c69f0e8fcd1293efbed2211698501f43",
+     "phase": "compression",
+     "previousRawDepthMm": 176.10777659602962,
+     "rawDepthMm": 175.3877782649107,
+     "seconds": 6.248381054,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "7b3565e18fbf808fb5309d76572973542305be159f6a23db555e8b73b342c31c",
+     "phase": "compression",
+     "previousRawDepthMm": 175.3877782649107,
+     "rawDepthMm": 175.1357388323935,
+     "seconds": 6.934021669,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "abc1c5c071633f8a49ca600663e0abe6ff461504b4db9981aaa2c55aa4fb363d",
+     "phase": "schedule",
+     "previousRawDepthMm": 175.1357388323935,
+     "rawDepthMm": 173.92777826491067,
+     "seconds": 7.450221429,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "a81a73270fc0c7018fc968b8134aee1d3c725b2a3e3c2ff9b1b56e8d01e9719e",
+     "phase": "schedule",
+     "previousRawDepthMm": 173.92777826491067,
+     "rawDepthMm": 172.60577826491067,
+     "seconds": 7.594965051,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "1475fadc47007bee69f22289e19ce1535aec5f9b7cf12a0a8ff2fab60981ffaa",
+     "phase": "schedule",
+     "previousRawDepthMm": 172.60577826491067,
+     "rawDepthMm": 171.067,
+     "seconds": 7.879127339,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "fbd6f385740a99cf3d040144e15c81da25d35b0fae7c55a9affa296cbd5fc43b",
+     "phase": "schedule",
+     "previousRawDepthMm": 171.067,
+     "rawDepthMm": 169.572,
+     "seconds": 8.684333954,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "cd917d584f817a5c3871a146f86cba345c4e69e055d4d82bf25f5b54877bacd7",
+     "phase": "schedule",
+     "previousRawDepthMm": 169.572,
+     "rawDepthMm": 168.756,
+     "seconds": 10.46408452,
+     "source": "mode34",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 0,
+   "offLattice2p5WorstDeg": 0.0,
+   "offLattice1p0Count": 18,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 44,
+   "arm": "base",
+   "seed": 0,
+   "round": 1,
+   "budget": "wall=10000",
+   "tag": "base-wall10000-s0-r1"
+  },
+  {
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,crot=1",
+   "processWallSeconds": 9.126549294916913,
+   "rawDepthMm": 176.58847255356912,
+   "engineDepthMm": 176.588,
+   "usedLongAxisDepthMm": 176.601,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 8.207141496,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.090968619,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+     "phase": "compression",
+     "previousRawDepthMm": 179.69,
+     "rawDepthMm": 179.63299999999998,
+     "seconds": 2.738084754,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "eadbc436f4bb7b15907632d02efdd08772a57f87820181b61b274b76147c3790",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.63299999999998,
+     "rawDepthMm": 178.02319630507574,
+     "seconds": 6.385379062,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "f2b7aac506b4ff7faedaa82f04de8719a367ce130b545aebf21abdbb491e73fd",
+     "phase": "compression",
+     "previousRawDepthMm": 178.02319630507574,
+     "rawDepthMm": 177.76213754121855,
+     "seconds": 7.237238181,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "88f58048c757199ca7a17019473e1018398eeda668658f46262f2c7fbb11a4bf",
+     "phase": "compression",
+     "previousRawDepthMm": 177.76213754121855,
+     "rawDepthMm": 176.58847255356912,
+     "seconds": 8.207141496,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 44,
+   "offLattice2p5WorstDeg": 1.156412000000003,
+   "offLattice1p0Count": 52,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 57,
+   "arm": "crot",
+   "seed": 1,
+   "round": 1,
+   "budget": "wall=10000",
+   "tag": "crot-wall10000-s1-r1"
+  },
+  {
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,rek=1",
+   "processWallSeconds": 9.249643107992597,
+   "rawDepthMm": 171.9527695409736,
+   "engineDepthMm": 171.953,
+   "usedLongAxisDepthMm": 171.955,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 9.214060344,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.214385937,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "58f349dae3d250fa519b93aeb0faaa498e6d6e63b9920045227a806d60e1e5a2",
+     "phase": "compression",
+     "previousRawDepthMm": 180.885,
+     "rawDepthMm": 180.5824376266633,
+     "seconds": 2.537834068,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "ff00b3e022fb31799b8bb1595c6653faa0270d97e7a060f970ece624d5436b53",
+     "phase": "compression",
+     "previousRawDepthMm": 180.5824376266633,
+     "rawDepthMm": 179.65062377171648,
+     "seconds": 3.216153456,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "35e707f8ad2827a5c7c677d5a43c918056c9b490305594d20e8d7c7d8ca779d0",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.65062377171648,
+     "rawDepthMm": 178.147,
+     "seconds": 5.774907617,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "b91c8f26310ca3e2f2b2e9b12fc9bdfb49c1be64eb60b04623824fe1500c83af",
+     "phase": "compression",
+     "previousRawDepthMm": 178.147,
+     "rawDepthMm": 176.93257339904468,
+     "seconds": 6.404487329,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "c90158fbb9ed1c46eec317d715aa1f6d89592362525dc26984183ce59737ed9c",
+     "phase": "compression",
+     "previousRawDepthMm": 176.93257339904468,
+     "rawDepthMm": 173.3465801543412,
+     "seconds": 7.285372535,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "c5847acd7763e601df355e0b7f3c380c6cacbac17e822269a252010a4b610389",
+     "phase": "compression",
+     "previousRawDepthMm": 173.3465801543412,
+     "rawDepthMm": 172.3635040514015,
+     "seconds": 8.288912753,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "3b2a14b4bb51df2ba4113268b8996ea2f5798d028f305a3271f8c7474347aa5d",
+     "phase": "compression",
+     "previousRawDepthMm": 172.3635040514015,
+     "rawDepthMm": 171.9527695409736,
+     "seconds": 9.214060344,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 58,
+   "offLattice2p5WorstDeg": 1.2356719999999939,
+   "offLattice1p0Count": 58,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 61,
+   "arm": "rek",
+   "seed": 1,
+   "round": 1,
+   "budget": "wall=10000",
+   "tag": "rek-wall10000-s1-r1"
+  },
+  {
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,crot=1,rek=1",
+   "processWallSeconds": 9.57989871094469,
+   "rawDepthMm": 179.20177826491073,
+   "engineDepthMm": 179.202,
+   "usedLongAxisDepthMm": 179.204,
+   "dualGateValid": true,
+   "incumbentSource": "mode23",
+   "publishedSeconds": 9.540717195,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.541005187,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "58f349dae3d250fa519b93aeb0faaa498e6d6e63b9920045227a806d60e1e5a2",
+     "phase": "compression",
+     "previousRawDepthMm": 180.885,
+     "rawDepthMm": 180.5824376266633,
+     "seconds": 2.775652342,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "4ae6d4f007adb3b527f5671b73da5d120c6bec0d1eecb42c7ec10f9e32df5c01",
+     "phase": "compression",
+     "previousRawDepthMm": 180.5824376266633,
+     "rawDepthMm": 179.5067393502041,
+     "seconds": 3.730968315,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "9d6b307f23e64a20ed6df7a88789f9bfcbcee3d1964129cbecec69f942bd52cb",
+     "phase": "crossover",
+     "previousRawDepthMm": 179.5067393502041,
+     "rawDepthMm": 179.20177826491073,
+     "seconds": 9.540717195,
+     "source": "mode23",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 0,
+   "offLattice2p5WorstDeg": 0.0,
+   "offLattice1p0Count": 30,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 43,
+   "arm": "rekcrot",
+   "seed": 1,
+   "round": 1,
+   "budget": "wall=10000",
+   "tag": "rekcrot-wall10000-s1-r1"
+  },
+  {
+   "spec": "wall=10000,cells=11:15:21:27,v3=1",
+   "processWallSeconds": 10.329152353922836,
+   "rawDepthMm": 165.65577826491065,
+   "engineDepthMm": 165.656,
+   "usedLongAxisDepthMm": 165.675,
+   "dualGateValid": true,
+   "incumbentSource": "mode34",
+   "publishedSeconds": 10.292331039,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 10.292345142,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+     "phase": "compression",
+     "previousRawDepthMm": 179.69,
+     "rawDepthMm": 179.63299999999998,
+     "seconds": 2.547051602,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "49826f36371717fa7444586177b314eea3666318a64a2ba84fe68130dd2ccaf3",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.63299999999998,
+     "rawDepthMm": 177.90786925189622,
+     "seconds": 4.639924583,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "13823b4793f6fab1f549fe456b42e255035bc2b01b86038fb343d08e9bb9c34d",
+     "phase": "schedule",
+     "previousRawDepthMm": 177.90786925189622,
+     "rawDepthMm": 176.39763516896454,
+     "seconds": 4.837353672,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "dc6d062ca10a53a1cc3200f2b9931264f29d8a3af3f172472d01df780b8f3730",
+     "phase": "schedule",
+     "previousRawDepthMm": 176.39763516896454,
+     "rawDepthMm": 174.888,
+     "seconds": 5.442519645,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "0537727d2d92e52291814885fb3f43aaa8e92cafd2e1fa203aff18a36597fdef",
+     "phase": "schedule",
+     "previousRawDepthMm": 174.888,
+     "rawDepthMm": 173.29200000000003,
+     "seconds": 5.890636889,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "412f1aea4879c3dc9fdee95f5ecf4434a852351c32d32fe9aa65204b9108fb79",
+     "phase": "schedule",
+     "previousRawDepthMm": 173.29200000000003,
+     "rawDepthMm": 171.759,
+     "seconds": 6.302831756,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "588b50ac6e9ba7ee71a084c53db3cf5988c5b2f082e2b8aac5217137222ef55e",
+     "phase": "schedule",
+     "previousRawDepthMm": 171.759,
+     "rawDepthMm": 170.221,
+     "seconds": 6.651076914,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "6a5ce1eddc2dab0464bb756e9d95d5ba05d8c7f26e85628bd2897cb3988be8da",
+     "phase": "schedule",
+     "previousRawDepthMm": 170.221,
+     "rawDepthMm": 168.708,
+     "seconds": 7.369693309,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "e504cf38d020e3877f562ae5d292af783c0fae0b8f804597f2c7e086d51b4aa8",
+     "phase": "schedule",
+     "previousRawDepthMm": 168.708,
+     "rawDepthMm": 167.183,
+     "seconds": 8.290228669,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "9816f78fddf1d0ef86708457d06516686dc68d4c1e058f9d44f8fbea7e49d2a5",
+     "phase": "schedule",
+     "previousRawDepthMm": 167.183,
+     "rawDepthMm": 165.65577826491065,
+     "seconds": 10.292331039,
+     "source": "mode34",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 0,
+   "offLattice2p5WorstDeg": 0.0,
+   "offLattice1p0Count": 15,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 33,
+   "arm": "base",
+   "seed": 1,
+   "round": 1,
+   "budget": "wall=10000",
+   "tag": "base-wall10000-s1-r1"
+  },
+  {
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,crot=1",
+   "processWallSeconds": 9.769698851974681,
+   "rawDepthMm": 173.141,
+   "engineDepthMm": 173.141,
+   "usedLongAxisDepthMm": 173.144,
+   "dualGateValid": true,
+   "incumbentSource": "mode34",
+   "publishedSeconds": 9.731095129,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.731382103,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "646eae65a6372d41bdd8064b9156c3deb0738fc90f8c1cdcca78afb849153d2e",
+     "phase": "compression",
+     "previousRawDepthMm": 179.662,
+     "rawDepthMm": 179.633,
+     "seconds": 2.7221088079999998,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "4a1a9954bf982f4a93a549599b6f5b7ee0c4d644dc78976b747eaf93f84b146a",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.633,
+     "rawDepthMm": 178.00087410773443,
+     "seconds": 5.606765488,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "ac8f1ee57abcc8d6f8fa589f0a8e7cbf0e40a79e1d706ff5ecdbf61abe25a01b",
+     "phase": "compression",
+     "previousRawDepthMm": 178.00087410773443,
+     "rawDepthMm": 175.3308562342454,
+     "seconds": 6.336481468,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "0164e2980526471e811ef235e2b812af27b7c49bc41ecb9f9495377eded002b2",
+     "phase": "compression",
+     "previousRawDepthMm": 175.3308562342454,
+     "rawDepthMm": 174.67563635516416,
+     "seconds": 7.183308646,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "40bb5aac71a7ffb0ed11e9f555739a74bdbd2037e2af0e7b85e65ab534593289",
+     "phase": "schedule",
+     "previousRawDepthMm": 174.67563635516416,
+     "rawDepthMm": 173.141,
+     "seconds": 9.731095129,
+     "source": "mode34",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 45,
+   "offLattice2p5WorstDeg": 1.2345420000000047,
+   "offLattice1p0Count": 46,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 56,
+   "arm": "crot",
+   "seed": 2,
+   "round": 1,
+   "budget": "wall=10000",
+   "tag": "crot-wall10000-s2-r1"
+  },
+  {
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,rek=1",
+   "processWallSeconds": 12.026786361006089,
+   "rawDepthMm": 164.053,
+   "engineDepthMm": 164.053,
+   "usedLongAxisDepthMm": 164.055,
+   "dualGateValid": true,
+   "incumbentSource": "mode34",
+   "publishedSeconds": 11.991968785,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 11.991984651,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "cbc7991de7143d89286baa9c118454566c427efe46d2e1fba83891b58fec1ee0",
+     "phase": "compression",
+     "previousRawDepthMm": 179.72977826491072,
+     "rawDepthMm": 179.51834619478396,
+     "seconds": 2.604106472,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "43b471729eef36fe14c8f590401ea02dfbfcbcc9ab3434b4570ce3b6333f7fe8",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.51834619478396,
+     "rawDepthMm": 178.197,
+     "seconds": 4.631922207,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "314d62bab7b84267c118ed6022894928f048e134229b92569c579c4cc5d79c8f",
+     "phase": "compression",
+     "previousRawDepthMm": 178.197,
+     "rawDepthMm": 175.006,
+     "seconds": 5.117069077,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "9e36709a701837bdba472b4a162b5cd17c5f2e37caee684c6cf53518b7ef22cd",
+     "phase": "compression",
+     "previousRawDepthMm": 175.006,
+     "rawDepthMm": 168.02997398583278,
+     "seconds": 6.921893279,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "e95f2a9e503a91f6adb6ee9b27c57a2de11a2fb59134a72b2509e068c100513c",
+     "phase": "schedule",
+     "previousRawDepthMm": 168.02997398583278,
+     "rawDepthMm": 166.942,
+     "seconds": 7.761928474,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "188925037ae4317e24144a4cdea883c5e8c03d1c56e2d083d882eadc4866af7e",
+     "phase": "schedule",
+     "previousRawDepthMm": 166.942,
+     "rawDepthMm": 165.58677826491072,
+     "seconds": 8.762513904,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "59bc79e2c8c55a81e17f71de3b5c9baa727bd57aaf445cfb467f130bcede1ebe",
+     "phase": "schedule",
+     "previousRawDepthMm": 165.58677826491072,
+     "rawDepthMm": 164.053,
+     "seconds": 11.991968785,
+     "source": "mode34",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 0,
+   "offLattice2p5WorstDeg": 0.0,
+   "offLattice1p0Count": 24,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 41,
+   "arm": "rek",
+   "seed": 2,
+   "round": 1,
+   "budget": "wall=10000",
+   "tag": "rek-wall10000-s2-r1"
+  },
+  {
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,crot=1,rek=1",
+   "processWallSeconds": 9.487966534099542,
+   "rawDepthMm": 179.51834619478396,
+   "engineDepthMm": 179.518,
+   "usedLongAxisDepthMm": 179.52,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 2.81213346,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.45018973,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "cbc7991de7143d89286baa9c118454566c427efe46d2e1fba83891b58fec1ee0",
+     "phase": "compression",
+     "previousRawDepthMm": 179.72977826491072,
+     "rawDepthMm": 179.51834619478396,
+     "seconds": 2.81213346,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 14,
+   "offLattice2p5WorstDeg": 1.175,
+   "offLattice1p0Count": 25,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 35,
+   "arm": "rekcrot",
+   "seed": 2,
+   "round": 1,
+   "budget": "wall=10000",
+   "tag": "rekcrot-wall10000-s2-r1"
+  },
+  {
+   "spec": "wall=10000,cells=15:23:31:39,v3=1",
+   "processWallSeconds": 9.706566318986006,
+   "rawDepthMm": 174.28,
+   "engineDepthMm": 174.28,
+   "usedLongAxisDepthMm": 174.282,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 8.952265762,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.668515193,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "phase": "compression",
+     "previousRawDepthMm": 179.662,
+     "rawDepthMm": 179.006,
+     "seconds": 2.485119894,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "6d0ddb941e82342ddb2333327b2e496537d94aca889b51f37b553dcf8bef59e1",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.006,
+     "rawDepthMm": 177.34300000000002,
+     "seconds": 4.892668241,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "0459cff9a107209327783986a19c193b599beff0f27f14ed0166dfd180995150",
+     "phase": "compression",
+     "previousRawDepthMm": 177.34300000000002,
+     "rawDepthMm": 176.16200000000003,
+     "seconds": 5.539241179,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "4133d3b514e2a82a1637d401b1b083f392c0297d3cfda692268dbbcfb5a9d2fe",
+     "phase": "schedule",
+     "previousRawDepthMm": 176.16200000000003,
+     "rawDepthMm": 174.881,
+     "seconds": 8.100678311,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "ef3c02d28f644901de4ce04157cb880cc4b94eefd1ac6c5336f5d1bde3a963b1",
+     "phase": "compression",
+     "previousRawDepthMm": 174.881,
+     "rawDepthMm": 174.28,
+     "seconds": 8.952265762,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 18,
+   "offLattice2p5WorstDeg": 1.0134660000000002,
+   "offLattice1p0Count": 30,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 47,
+   "arm": "base",
+   "seed": 2,
+   "round": 1,
+   "budget": "wall=10000",
+   "tag": "base-wall10000-s2-r1"
+  },
+  {
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,rek=1",
+   "processWallSeconds": 9.906818575924262,
+   "rawDepthMm": 169.26299999999998,
+   "engineDepthMm": 169.263,
+   "usedLongAxisDepthMm": 169.265,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 8.286104876,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.86987371,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "5fcb55aac38f2b1912344b0d9b1021c5900bad4a9c20a06364e5fa4bda180389",
+     "phase": "compression",
+     "previousRawDepthMm": 179.814,
+     "rawDepthMm": 179.52512842091468,
+     "seconds": 2.265291991,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "1d97f9db9f12270123286ef1f2cc033b5db0c12ef7d496413191b50b299edc4b",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.52512842091468,
+     "rawDepthMm": 178.18200000000002,
+     "seconds": 3.98878068,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "2102b914119020716ccb7f5d53b52651aa660815416fb07e7780e8c0ad4e12fd",
+     "phase": "schedule",
+     "previousRawDepthMm": 178.18200000000002,
+     "rawDepthMm": 176.58100000000002,
+     "seconds": 4.3975324780000005,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "2ac6135b96425aa68e508bcb65e6511a8201059d6df6e3f9e98c5566282bfab2",
+     "phase": "schedule",
+     "previousRawDepthMm": 176.58100000000002,
+     "rawDepthMm": 174.983,
+     "seconds": 4.913784176,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "5ee04634662796feb99a00d1f347102fe8b9a3872b904bf1dc8e23c17781bed6",
+     "phase": "schedule",
+     "previousRawDepthMm": 174.983,
+     "rawDepthMm": 173.431,
+     "seconds": 5.223407324,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "6cc3924c3bc678a3ddc36959a8ab900475ba3ff5806edbba55b8140c03d41a7c",
+     "phase": "schedule",
+     "previousRawDepthMm": 173.431,
+     "rawDepthMm": 171.9,
+     "seconds": 5.705611321,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "5e332253cfe102ecc38ab46a047de21168eabd7ea9d950ee30b10870bea9cbaf",
+     "phase": "schedule",
+     "previousRawDepthMm": 171.9,
+     "rawDepthMm": 170.1336920545537,
+     "seconds": 7.449745265,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "75dba5ec980bdc2edc0f014759b02d212e20c45d2bda70292aa75fc1ccfb2624",
+     "phase": "compression",
+     "previousRawDepthMm": 170.1336920545537,
+     "rawDepthMm": 169.26299999999998,
+     "seconds": 8.286104876,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 30,
+   "offLattice2p5WorstDeg": 1.0875000000000057,
+   "offLattice1p0Count": 39,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 53,
+   "arm": "rek",
+   "seed": 0,
+   "round": 2,
+   "budget": "wall=10000",
+   "tag": "rek-wall10000-s0-r2"
+  },
+  {
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,crot=1,rek=1",
+   "processWallSeconds": 10.443387189996429,
+   "rawDepthMm": 174.45287546695343,
+   "engineDepthMm": 174.453,
+   "usedLongAxisDepthMm": 174.455,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 8.609639254,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 10.406582464,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "5fcb55aac38f2b1912344b0d9b1021c5900bad4a9c20a06364e5fa4bda180389",
+     "phase": "compression",
+     "previousRawDepthMm": 179.814,
+     "rawDepthMm": 179.52512842091468,
+     "seconds": 2.526152294,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "cb4f5303f7366e3c0aac92912227f707dd13009e0e3e1fc84cb3d082858166d7",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.52512842091468,
+     "rawDepthMm": 178.13987341338725,
+     "seconds": 4.59692216,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "f52cda2b4bc9c6e9cb2595b3ce0ed953a758816f9e3d0d4d273604413f206d80",
+     "phase": "schedule",
+     "previousRawDepthMm": 178.13987341338725,
+     "rawDepthMm": 177.46499745382505,
+     "seconds": 4.818432511,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "6f58ef50b6ad44b48eada34aa0e3cd3e666ff75326b406e4c53958b0cff51fd1",
+     "phase": "schedule",
+     "previousRawDepthMm": 177.46499745382505,
+     "rawDepthMm": 175.98999998032653,
+     "seconds": 5.556029132,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "d5d8b07dd83c2720ea52982a5437e15da8580bdb74c02ac29087c4d52790a572",
+     "phase": "schedule",
+     "previousRawDepthMm": 175.98999998032653,
+     "rawDepthMm": 175.03300000000002,
+     "seconds": 6.81972872,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "dbc3dccc85c4bd5c1e68fc3b72c38a50d07ed836d74575a032bd9c7e7e5885d7",
+     "phase": "compression",
+     "previousRawDepthMm": 175.03300000000002,
+     "rawDepthMm": 175.028,
+     "seconds": 7.66102646,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "916b40ad290842c570611e5ad9a7e0910de6e2b18a3a5df67cd0bb6889ee13fb",
+     "phase": "compression",
+     "previousRawDepthMm": 175.028,
+     "rawDepthMm": 174.45287546695343,
+     "seconds": 8.609639254,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 36,
+   "offLattice2p5WorstDeg": 0.783767,
+   "offLattice1p0Count": 45,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 52,
+   "arm": "rekcrot",
+   "seed": 0,
+   "round": 2,
+   "budget": "wall=10000",
+   "tag": "rekcrot-wall10000-s0-r2"
+  },
+  {
+   "spec": "wall=10000,cells=13:15:17:19,v3=1",
+   "processWallSeconds": 9.141231234068982,
+   "rawDepthMm": 171.111,
+   "engineDepthMm": 171.111,
+   "usedLongAxisDepthMm": 171.188,
+   "dualGateValid": true,
+   "incumbentSource": "mode34",
+   "publishedSeconds": 9.101531344,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.101821645,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "02f5afe48f84f963d8eb5dcec611897954b6c626b8bcf8a616bbde05d79ed931",
+     "phase": "compression",
+     "previousRawDepthMm": 181.589,
+     "rawDepthMm": 179.5868589805926,
+     "seconds": 2.632017943,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "33a059fc6c2cfa35c590e020993a9137ba0328bbd65a0c3ce14f9970273f5946",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.5868589805926,
+     "rawDepthMm": 178.1797782649107,
+     "seconds": 4.819713901,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "a94167c00cc2fbc53c9597ae55adfd343317dffa6250ff7a7abb7d11165f0a11",
+     "phase": "compression",
+     "previousRawDepthMm": 178.1797782649107,
+     "rawDepthMm": 176.10777659602962,
+     "seconds": 5.500936906,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "c5af743f39b3d597606c3ffb41093207c69f0e8fcd1293efbed2211698501f43",
+     "phase": "compression",
+     "previousRawDepthMm": 176.10777659602962,
+     "rawDepthMm": 175.3877782649107,
+     "seconds": 6.085030198,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "7b3565e18fbf808fb5309d76572973542305be159f6a23db555e8b73b342c31c",
+     "phase": "compression",
+     "previousRawDepthMm": 175.3877782649107,
+     "rawDepthMm": 175.1357388323935,
+     "seconds": 6.788975811,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "2051b2cf45dcd310d7749343821c7fc91f181b6d2294a2b0ae25c78595bc5fec",
+     "phase": "compression",
+     "previousRawDepthMm": 175.1357388323935,
+     "rawDepthMm": 173.57506393348288,
+     "seconds": 7.459234136,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "4fd0cbd232bafe941aca2ae8df6a9c29583d0081fdfa4be1c4348d218c6da5fc",
+     "phase": "compression",
+     "previousRawDepthMm": 173.57506393348288,
+     "rawDepthMm": 172.2875460463765,
+     "seconds": 8.319012843,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "59b634e3d754f503b9bf568528eb8b38dcd43a2498c23d3c0d2ecc1874321ba7",
+     "phase": "schedule",
+     "previousRawDepthMm": 172.2875460463765,
+     "rawDepthMm": 171.111,
+     "seconds": 9.101531344,
+     "source": "mode34",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 0,
+   "offLattice2p5WorstDeg": 0.0,
+   "offLattice1p0Count": 24,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 38,
+   "arm": "base",
+   "seed": 0,
+   "round": 2,
+   "budget": "wall=10000",
+   "tag": "base-wall10000-s0-r2"
+  },
+  {
+   "spec": "wall=10000,cells=13:15:17:19,v3=1,crot=1",
+   "processWallSeconds": 10.197042180923745,
+   "rawDepthMm": 175.21893730689536,
+   "engineDepthMm": 175.219,
+   "usedLongAxisDepthMm": 175.223,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 6.377196362,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 10.161966557,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "86bcb94ff81376d3c208cdfc2234b7885975683219af7c8d1f84e52e52341a03",
+     "phase": "compression",
+     "previousRawDepthMm": 181.589,
+     "rawDepthMm": 179.5679856628203,
+     "seconds": 2.5675252840000002,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "9bd1a31a179973d15662de867d82571056654fbcdcc8dd30b38763085307d97b",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.5679856628203,
+     "rawDepthMm": 178.19422257970422,
+     "seconds": 5.500748359,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "749faa5ef20737b8ae40facfa00f9f72d1cd43459eefcadef139245784744e55",
+     "phase": "compression",
+     "previousRawDepthMm": 178.19422257970422,
+     "rawDepthMm": 175.21893730689536,
+     "seconds": 6.377196362,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 46,
+   "offLattice2p5WorstDeg": 1.1650450000000063,
+   "offLattice1p0Count": 51,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 58,
+   "arm": "crot",
+   "seed": 0,
+   "round": 2,
+   "budget": "wall=10000",
+   "tag": "crot-wall10000-s0-r2"
+  },
+  {
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,rek=1",
+   "processWallSeconds": 9.345979827921838,
+   "rawDepthMm": 171.9527695409736,
+   "engineDepthMm": 171.953,
+   "usedLongAxisDepthMm": 171.955,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 9.30869408,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.309005481,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "58f349dae3d250fa519b93aeb0faaa498e6d6e63b9920045227a806d60e1e5a2",
+     "phase": "compression",
+     "previousRawDepthMm": 180.885,
+     "rawDepthMm": 180.5824376266633,
+     "seconds": 2.56028852,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "ff00b3e022fb31799b8bb1595c6653faa0270d97e7a060f970ece624d5436b53",
+     "phase": "compression",
+     "previousRawDepthMm": 180.5824376266633,
+     "rawDepthMm": 179.65062377171648,
+     "seconds": 3.252144157,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "35e707f8ad2827a5c7c677d5a43c918056c9b490305594d20e8d7c7d8ca779d0",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.65062377171648,
+     "rawDepthMm": 178.147,
+     "seconds": 5.844356942,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "b91c8f26310ca3e2f2b2e9b12fc9bdfb49c1be64eb60b04623824fe1500c83af",
+     "phase": "compression",
+     "previousRawDepthMm": 178.147,
+     "rawDepthMm": 176.93257339904468,
+     "seconds": 6.480656203,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "c90158fbb9ed1c46eec317d715aa1f6d89592362525dc26984183ce59737ed9c",
+     "phase": "compression",
+     "previousRawDepthMm": 176.93257339904468,
+     "rawDepthMm": 173.3465801543412,
+     "seconds": 7.375338201,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "c5847acd7763e601df355e0b7f3c380c6cacbac17e822269a252010a4b610389",
+     "phase": "compression",
+     "previousRawDepthMm": 173.3465801543412,
+     "rawDepthMm": 172.3635040514015,
+     "seconds": 8.380199136,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "3b2a14b4bb51df2ba4113268b8996ea2f5798d028f305a3271f8c7474347aa5d",
+     "phase": "compression",
+     "previousRawDepthMm": 172.3635040514015,
+     "rawDepthMm": 171.9527695409736,
+     "seconds": 9.30869408,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 58,
+   "offLattice2p5WorstDeg": 1.2356719999999939,
+   "offLattice1p0Count": 58,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 61,
+   "arm": "rek",
+   "seed": 1,
+   "round": 2,
+   "budget": "wall=10000",
+   "tag": "rek-wall10000-s1-r2"
+  },
+  {
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,crot=1,rek=1",
+   "processWallSeconds": 9.591182230971754,
+   "rawDepthMm": 179.20177826491073,
+   "engineDepthMm": 179.202,
+   "usedLongAxisDepthMm": 179.204,
+   "dualGateValid": true,
+   "incumbentSource": "mode23",
+   "publishedSeconds": 9.556120728,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.556414992,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "58f349dae3d250fa519b93aeb0faaa498e6d6e63b9920045227a806d60e1e5a2",
+     "phase": "compression",
+     "previousRawDepthMm": 180.885,
+     "rawDepthMm": 180.5824376266633,
+     "seconds": 2.827783089,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "4ae6d4f007adb3b527f5671b73da5d120c6bec0d1eecb42c7ec10f9e32df5c01",
+     "phase": "compression",
+     "previousRawDepthMm": 180.5824376266633,
+     "rawDepthMm": 179.5067393502041,
+     "seconds": 3.787392281,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "9d6b307f23e64a20ed6df7a88789f9bfcbcee3d1964129cbecec69f942bd52cb",
+     "phase": "crossover",
+     "previousRawDepthMm": 179.5067393502041,
+     "rawDepthMm": 179.20177826491073,
+     "seconds": 9.556120728,
+     "source": "mode23",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 0,
+   "offLattice2p5WorstDeg": 0.0,
+   "offLattice1p0Count": 30,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 43,
+   "arm": "rekcrot",
+   "seed": 1,
+   "round": 2,
+   "budget": "wall=10000",
+   "tag": "rekcrot-wall10000-s1-r2"
+  },
+  {
+   "spec": "wall=10000,cells=11:15:21:27,v3=1",
+   "processWallSeconds": 10.30932439607568,
+   "rawDepthMm": 165.65577826491065,
+   "engineDepthMm": 165.656,
+   "usedLongAxisDepthMm": 165.675,
+   "dualGateValid": true,
+   "incumbentSource": "mode34",
+   "publishedSeconds": 10.272837688,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 10.272851127,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+     "phase": "compression",
+     "previousRawDepthMm": 179.69,
+     "rawDepthMm": 179.63299999999998,
+     "seconds": 2.5779708980000002,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "49826f36371717fa7444586177b314eea3666318a64a2ba84fe68130dd2ccaf3",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.63299999999998,
+     "rawDepthMm": 177.90786925189622,
+     "seconds": 4.65472222,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "13823b4793f6fab1f549fe456b42e255035bc2b01b86038fb343d08e9bb9c34d",
+     "phase": "schedule",
+     "previousRawDepthMm": 177.90786925189622,
+     "rawDepthMm": 176.39763516896454,
+     "seconds": 4.842153366,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "dc6d062ca10a53a1cc3200f2b9931264f29d8a3af3f172472d01df780b8f3730",
+     "phase": "schedule",
+     "previousRawDepthMm": 176.39763516896454,
+     "rawDepthMm": 174.888,
+     "seconds": 5.443595321,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "0537727d2d92e52291814885fb3f43aaa8e92cafd2e1fa203aff18a36597fdef",
+     "phase": "schedule",
+     "previousRawDepthMm": 174.888,
+     "rawDepthMm": 173.29200000000003,
+     "seconds": 5.887041985,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "412f1aea4879c3dc9fdee95f5ecf4434a852351c32d32fe9aa65204b9108fb79",
+     "phase": "schedule",
+     "previousRawDepthMm": 173.29200000000003,
+     "rawDepthMm": 171.759,
+     "seconds": 6.29868612,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "588b50ac6e9ba7ee71a084c53db3cf5988c5b2f082e2b8aac5217137222ef55e",
+     "phase": "schedule",
+     "previousRawDepthMm": 171.759,
+     "rawDepthMm": 170.221,
+     "seconds": 6.6458061520000005,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "6a5ce1eddc2dab0464bb756e9d95d5ba05d8c7f26e85628bd2897cb3988be8da",
+     "phase": "schedule",
+     "previousRawDepthMm": 170.221,
+     "rawDepthMm": 168.708,
+     "seconds": 7.351761402,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "e504cf38d020e3877f562ae5d292af783c0fae0b8f804597f2c7e086d51b4aa8",
+     "phase": "schedule",
+     "previousRawDepthMm": 168.708,
+     "rawDepthMm": 167.183,
+     "seconds": 8.272947722,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "9816f78fddf1d0ef86708457d06516686dc68d4c1e058f9d44f8fbea7e49d2a5",
+     "phase": "schedule",
+     "previousRawDepthMm": 167.183,
+     "rawDepthMm": 165.65577826491065,
+     "seconds": 10.272837688,
+     "source": "mode34",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 0,
+   "offLattice2p5WorstDeg": 0.0,
+   "offLattice1p0Count": 15,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 33,
+   "arm": "base",
+   "seed": 1,
+   "round": 2,
+   "budget": "wall=10000",
+   "tag": "base-wall10000-s1-r2"
+  },
+  {
+   "spec": "wall=10000,cells=11:15:21:27,v3=1,crot=1",
+   "processWallSeconds": 9.173619671026245,
+   "rawDepthMm": 176.58847255356912,
+   "engineDepthMm": 176.588,
+   "usedLongAxisDepthMm": 176.601,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 8.271159138,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.136878856,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "000f27d387ad5c2fa954f781048b1ca21cc64fd0e20a131fb108d418dd63a48f",
+     "phase": "compression",
+     "previousRawDepthMm": 179.69,
+     "rawDepthMm": 179.63299999999998,
+     "seconds": 2.778477375,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "eadbc436f4bb7b15907632d02efdd08772a57f87820181b61b274b76147c3790",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.63299999999998,
+     "rawDepthMm": 178.02319630507574,
+     "seconds": 6.457416721,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "f2b7aac506b4ff7faedaa82f04de8719a367ce130b545aebf21abdbb491e73fd",
+     "phase": "compression",
+     "previousRawDepthMm": 178.02319630507574,
+     "rawDepthMm": 177.76213754121855,
+     "seconds": 7.304349802,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "88f58048c757199ca7a17019473e1018398eeda668658f46262f2c7fbb11a4bf",
+     "phase": "compression",
+     "previousRawDepthMm": 177.76213754121855,
+     "rawDepthMm": 176.58847255356912,
+     "seconds": 8.271159138,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 44,
+   "offLattice2p5WorstDeg": 1.156412000000003,
+   "offLattice1p0Count": 52,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 57,
+   "arm": "crot",
+   "seed": 1,
+   "round": 2,
+   "budget": "wall=10000",
+   "tag": "crot-wall10000-s1-r2"
+  },
+  {
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,rek=1",
+   "processWallSeconds": 11.870751635055058,
+   "rawDepthMm": 163.60777826491073,
+   "engineDepthMm": 163.608,
+   "usedLongAxisDepthMm": 163.61,
+   "dualGateValid": true,
+   "incumbentSource": "mode34",
+   "publishedSeconds": 11.832651298,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 11.832668594,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "cbc7991de7143d89286baa9c118454566c427efe46d2e1fba83891b58fec1ee0",
+     "phase": "compression",
+     "previousRawDepthMm": 179.72977826491072,
+     "rawDepthMm": 179.51834619478396,
+     "seconds": 2.635662479,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "43b471729eef36fe14c8f590401ea02dfbfcbcc9ab3434b4570ce3b6333f7fe8",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.51834619478396,
+     "rawDepthMm": 178.197,
+     "seconds": 4.641490714,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "314d62bab7b84267c118ed6022894928f048e134229b92569c579c4cc5d79c8f",
+     "phase": "compression",
+     "previousRawDepthMm": 178.197,
+     "rawDepthMm": 175.006,
+     "seconds": 5.13691074,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "9e36709a701837bdba472b4a162b5cd17c5f2e37caee684c6cf53518b7ef22cd",
+     "phase": "compression",
+     "previousRawDepthMm": 175.006,
+     "rawDepthMm": 168.02997398583278,
+     "seconds": 6.921991681,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "e95f2a9e503a91f6adb6ee9b27c57a2de11a2fb59134a72b2509e068c100513c",
+     "phase": "schedule",
+     "previousRawDepthMm": 168.02997398583278,
+     "rawDepthMm": 166.942,
+     "seconds": 7.786907258,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "a17a5076e6ec7ee02c5ac558d15a7d400ea6df6ae6a0b1c108c174ab0020ae11",
+     "phase": "compression",
+     "previousRawDepthMm": 166.942,
+     "rawDepthMm": 164.04189975759783,
+     "seconds": 8.761998561,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "81ef8cebe5adf9268a35b2278ad6ba749691ab87a4a69980199e884a578eb43c",
+     "phase": "schedule",
+     "previousRawDepthMm": 164.04189975759783,
+     "rawDepthMm": 163.60777826491073,
+     "seconds": 11.832651298,
+     "source": "mode34",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 0,
+   "offLattice2p5WorstDeg": 0.0,
+   "offLattice1p0Count": 19,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 38,
+   "arm": "rek",
+   "seed": 2,
+   "round": 2,
+   "budget": "wall=10000",
+   "tag": "rek-wall10000-s2-r2"
+  },
+  {
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,crot=1,rek=1",
+   "processWallSeconds": 9.541511764982715,
+   "rawDepthMm": 179.51834619478396,
+   "engineDepthMm": 179.518,
+   "usedLongAxisDepthMm": 179.52,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 2.846638876,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.503918529,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "cbc7991de7143d89286baa9c118454566c427efe46d2e1fba83891b58fec1ee0",
+     "phase": "compression",
+     "previousRawDepthMm": 179.72977826491072,
+     "rawDepthMm": 179.51834619478396,
+     "seconds": 2.846638876,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 14,
+   "offLattice2p5WorstDeg": 1.175,
+   "offLattice1p0Count": 25,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 35,
+   "arm": "rekcrot",
+   "seed": 2,
+   "round": 2,
+   "budget": "wall=10000",
+   "tag": "rekcrot-wall10000-s2-r2"
+  },
+  {
+   "spec": "wall=10000,cells=15:23:31:39,v3=1",
+   "processWallSeconds": 9.824349639005959,
+   "rawDepthMm": 174.28,
+   "engineDepthMm": 174.28,
+   "usedLongAxisDepthMm": 174.282,
+   "dualGateValid": true,
+   "incumbentSource": "mode22",
+   "publishedSeconds": 8.327424389,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.786415366,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "phase": "compression",
+     "previousRawDepthMm": 179.662,
+     "rawDepthMm": 179.006,
+     "seconds": 2.510651696,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "6d0ddb941e82342ddb2333327b2e496537d94aca889b51f37b553dcf8bef59e1",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.006,
+     "rawDepthMm": 177.34300000000002,
+     "seconds": 4.928150656,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "0459cff9a107209327783986a19c193b599beff0f27f14ed0166dfd180995150",
+     "phase": "compression",
+     "previousRawDepthMm": 177.34300000000002,
+     "rawDepthMm": 176.16200000000003,
+     "seconds": 5.580541536,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "4133d3b514e2a82a1637d401b1b083f392c0297d3cfda692268dbbcfb5a9d2fe",
+     "phase": "schedule",
+     "previousRawDepthMm": 176.16200000000003,
+     "rawDepthMm": 174.881,
+     "seconds": 7.515819812,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "ef3c02d28f644901de4ce04157cb880cc4b94eefd1ac6c5336f5d1bde3a963b1",
+     "phase": "compression",
+     "previousRawDepthMm": 174.881,
+     "rawDepthMm": 174.28,
+     "seconds": 8.327424389,
+     "source": "mode22",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 18,
+   "offLattice2p5WorstDeg": 1.0134660000000002,
+   "offLattice1p0Count": 30,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 47,
+   "arm": "base",
+   "seed": 2,
+   "round": 2,
+   "budget": "wall=10000",
+   "tag": "base-wall10000-s2-r2"
+  },
+  {
+   "spec": "wall=10000,cells=15:23:31:39,v3=1,crot=1",
+   "processWallSeconds": 9.726106383022852,
+   "rawDepthMm": 173.141,
+   "engineDepthMm": 173.141,
+   "usedLongAxisDepthMm": 173.144,
+   "dualGateValid": true,
+   "incumbentSource": "mode34",
+   "publishedSeconds": 9.688225657,
+   "publishedWorkUnits": 0,
+   "coordinatorSeconds": 9.688509217,
+   "workUnits": 0,
+   "publications": [
+    {
+     "fingerprint": "646eae65a6372d41bdd8064b9156c3deb0738fc90f8c1cdcca78afb849153d2e",
+     "phase": "compression",
+     "previousRawDepthMm": 179.662,
+     "rawDepthMm": 179.633,
+     "seconds": 2.700623881,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "4a1a9954bf982f4a93a549599b6f5b7ee0c4d644dc78976b747eaf93f84b146a",
+     "phase": "schedule",
+     "previousRawDepthMm": 179.633,
+     "rawDepthMm": 178.00087410773443,
+     "seconds": 5.52945141,
+     "source": "mode34",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "ac8f1ee57abcc8d6f8fa589f0a8e7cbf0e40a79e1d706ff5ecdbf61abe25a01b",
+     "phase": "compression",
+     "previousRawDepthMm": 178.00087410773443,
+     "rawDepthMm": 175.3308562342454,
+     "seconds": 6.279609005,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "0164e2980526471e811ef235e2b812af27b7c49bc41ecb9f9495377eded002b2",
+     "phase": "compression",
+     "previousRawDepthMm": 175.3308562342454,
+     "rawDepthMm": 174.67563635516416,
+     "seconds": 7.147378662,
+     "source": "mode22",
+     "workUnits": 0
+    },
+    {
+     "fingerprint": "40bb5aac71a7ffb0ed11e9f555739a74bdbd2037e2af0e7b85e65ab534593289",
+     "phase": "schedule",
+     "previousRawDepthMm": 174.67563635516416,
+     "rawDepthMm": 173.141,
+     "seconds": 9.688225657,
+     "source": "mode34",
+     "workUnits": 0
+    }
+   ],
+   "placementCount": 61,
+   "reportedKernelMode": null,
+   "error": null,
+   "offLattice2p5Count": 45,
+   "offLattice2p5WorstDeg": 1.2345420000000047,
+   "offLattice1p0Count": 46,
+   "offLattice1p0WorstDeg": 0.5,
+   "distinctRotations": 56,
+   "arm": "crot",
+   "seed": 2,
+   "round": 2,
+   "budget": "wall=10000",
+   "tag": "crot-wall10000-s2-r2"
+  }
+ ],
+ "summary": {
+  "wall=10000": {
+   "base": {
+    "n": 9,
+    "medianRawDepthMm": 168.756,
+    "minRawDepthMm": 165.65577826491065,
+    "allDualGateValid": true,
+    "medianOffLattice2p5": 0
+   },
+   "crot": {
+    "n": 9,
+    "medianRawDepthMm": 175.21893730689536,
+    "minRawDepthMm": 173.141,
+    "allDualGateValid": true,
+    "medianOffLattice2p5": 45,
+    "pairedVsBaseMm": {
+     "n": 9,
+     "median": 6.4629373068953555,
+     "better": 3,
+     "range": [
+      -1.13900000000001,
+      10.932694288658467
+     ]
+    }
+   },
+   "rek": {
+    "n": 9,
+    "medianRawDepthMm": 169.26299999999998,
+    "minRawDepthMm": 163.60777826491073,
+    "allDualGateValid": true,
+    "medianOffLattice2p5": 30,
+    "pairedVsBaseMm": {
+     "n": 9,
+     "median": 0.5069999999999766,
+     "better": 4,
+     "range": [
+      -10.672221735089266,
+      6.296991276062954
+     ]
+    }
+   },
+   "rekcrot": {
+    "n": 9,
+    "medianRawDepthMm": 179.20177826491073,
+    "minRawDepthMm": 174.45287546695343,
+    "allDualGateValid": true,
+    "medianOffLattice2p5": 14,
+    "pairedVsBaseMm": {
+     "n": 9,
+     "median": 5.9692746295146435,
+     "better": 0,
+     "range": [
+      3.3418754669534394,
+      13.850961085293449
+     ]
+    }
+   }
+  }
+ }
+}

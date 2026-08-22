@@ -1,0 +1,51 @@
+{
+ "a": "/var/lib/t3/tmp/rekgate/out/matched-precommit/matchedgate.json",
+ "b": "/var/lib/t3/tmp/rekgate/out/matched/matchedgate.json",
+ "cellsInA": 96,
+ "cellsInB": 96,
+ "cellsCompared": 96,
+ "onlyInA": [],
+ "onlyInB": [],
+ "exactFieldsCompared": [
+  "rawSourceDepthMm",
+  "fingerprint",
+  "exactValid",
+  "contractValid",
+  "schedule_stepDigest",
+  "schedule_confirmationsAttempted",
+  "schedule_confirmationsAccepted",
+  "schedule_confirmationsRefused",
+  "schedule_stepsTaken",
+  "schedule_finalDepthMm",
+  "schedule_workUnits",
+  "reportedKernelMode"
+ ],
+ "mismatches": [],
+ "ALL_IDENTICAL": true,
+ "timingRatiosBOverA": {
+  "operatorWallSeconds": {
+   "median": 1.009323602729089,
+   "range": [
+    0.9920700032276797,
+    2.5222503682338147
+   ],
+   "n": 96
+  },
+  "processWallSeconds": {
+   "median": 1.009900976564521,
+   "range": [
+    0.9932907593102677,
+    2.517267753792182
+   ],
+   "n": 96
+  },
+  "msPerConfirmation": {
+   "median": 1.0095554631836574,
+   "range": [
+    0.9970254258997455,
+    1.3560302028640072
+   ],
+   "n": 94
+  }
+ }
+}

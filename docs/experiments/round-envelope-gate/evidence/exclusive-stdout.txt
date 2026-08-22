@@ -1,0 +1,16 @@
+seed0 exclusive:3341379 depth=174.2081 delta=0.0000mm work=0.00M opwall=0.00s wall=0.65s conf=None armOk=None
+seed1 exclusive:3341379 depth=176.0560 delta=0.0000mm work=0.00M opwall=0.00s wall=0.66s conf=None armOk=None
+seed2 exclusive:3341379 depth=179.0060 delta=0.0000mm work=0.00M opwall=0.00s wall=0.66s conf=None armOk=None
+seed3 exclusive:3341379 depth=176.0610 delta=0.0000mm work=0.00M opwall=0.00s wall=0.65s conf=None armOk=None
+seed4 exclusive:3341379 depth=171.6495 delta=0.0000mm work=0.00M opwall=0.00s wall=0.66s conf=None armOk=None
+seed5 exclusive:3341379 depth=179.0518 delta=0.0000mm work=0.00M opwall=0.00s wall=0.66s conf=None armOk=None
+seed6 exclusive:3341379 depth=179.6200 delta=0.0000mm work=0.00M opwall=0.00s wall=0.66s conf=None armOk=None
+seed7 exclusive:3341379 depth=179.5223 delta=0.0000mm work=0.00M opwall=0.00s wall=0.66s conf=None armOk=None
+seed8 exclusive:3341379 depth=178.9320 delta=0.0000mm work=0.00M opwall=0.00s wall=0.66s conf=None armOk=None
+seed9 exclusive:3341379 depth=174.9656 delta=0.0000mm work=0.00M opwall=0.00s wall=0.67s conf=None armOk=None
+seed10 exclusive:3341379 depth=176.3622 delta=0.0000mm work=0.00M opwall=0.00s wall=0.66s conf=None armOk=None
+seed11 exclusive:3341379 depth=171.6141 delta=0.0000mm work=0.00M opwall=0.00s wall=0.65s conf=None armOk=None
+{
+ "cells": 12,
+ "armsReportedCorrectly": false
+}

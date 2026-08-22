@@ -13,6 +13,7 @@
 #   matchedrest  the arm's extra rung, the merge and the wall-ratio replicas
 #   reach     deliverable 2: the reachability A/B
 #   anytime   deliverable 3: the anytime table
+#   exclusive the `rek=2` arm on the same parents, for the record
 #   audit     every arm's publications, re-asked of both authorities, and the
 #             pre-committed rule. Runs last because it audits all three.
 #   det       two-process determinism
@@ -127,6 +128,20 @@ run_matchedrest() {
 
 run_matched() { run_ladder && run_matchedrest; }
 
+run_exclusive() {
+  # The arm the brief specified, measured rather than cited. The previous round
+  # reported that six of the twelve parents are not `exclusive`-valid at the
+  # 0.002 record-lineage allowance; this is that claim re-run at the cheapest
+  # rung of this round's own ladder, so the choice of `union` as the promotion
+  # candidate is this round's measurement and not an inherited one.
+  echo "== the exclusive arm on the same twelve parents, cheapest rung"
+  python3 "$D/drivers/matchedgate.py" "$T/out/exclusive" "$T/bin/meas" "$PARENTS" \
+    3341379 exclusive 1.0 0.002 > "$E/exclusive-stdout.txt" 2>&1
+  X1=$?
+  echo "exclusive exit=$X1"
+  cp "$T/out/exclusive/matchedgate.json" "$E/exclusive.json"
+}
+
 run_audit() {
   echo "== deliverable 1: every publication, re-asked of both authorities"
   python3 "$D/drivers/publications.py" "$E/matched.json" "$T/out/matched" \
@@ -231,12 +246,13 @@ case "$STAGE" in
   ladder) run_ladder ;;
   matchedrest) run_matchedrest ;;
   audit) run_audit ;;
+  exclusive) run_exclusive ;;
   reach) run_reach ;;
   anytime) run_anytime ;;
   det) run_det ;;
   all)
     run_build && run_gates && run_matched && run_reach && run_anytime \
-      && run_audit && run_det
+      && run_exclusive && run_audit && run_det
     ;;
   *) echo "unknown stage $STAGE"; exit 2 ;;
 esac

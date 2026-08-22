@@ -1,0 +1,50 @@
+{
+ "layouts": 96,
+ "unionAcceptsAll": true,
+ "miterAcceptsAll": true,
+ "roundAcceptsCount": 96,
+ "newAdmissionCount": 0,
+ "regressionCount": 0,
+ "armLayouts": 48,
+ "unionRefusals": []
+}
+{
+ "layouts": 12,
+ "unionAcceptsAll": true,
+ "miterAcceptsAll": true,
+ "roundAcceptsCount": 6,
+ "newAdmissionCount": 0,
+ "regressionCount": 0,
+ "armLayouts": 12,
+ "unionRefusals": []
+}
+{
+ "layouts": 36,
+ "unionAcceptsAll": true,
+ "miterAcceptsAll": false,
+ "roundAcceptsCount": 20,
+ "newAdmissionCount": 3,
+ "regressionCount": 0,
+ "armLayouts": 36,
+ "unionRefusals": []
+}
+{
+ "layouts": 36,
+ "unionAcceptsAll": true,
+ "miterAcceptsAll": true,
+ "roundAcceptsCount": 30,
+ "newAdmissionCount": 0,
+ "regressionCount": 0,
+ "armLayouts": 36,
+ "unionRefusals": []
+}
+{
+ "layouts": 12,
+ "unionAcceptsAll": true,
+ "miterAcceptsAll": false,
+ "roundAcceptsCount": 9,
+ "newAdmissionCount": 2,
+ "regressionCount": 0,
+ "armLayouts": 12,
+ "unionRefusals": []
+}

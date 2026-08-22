@@ -1,0 +1,71 @@
+base-work40000000-s0-r0: raw=169.891 dual=True coord=12.733067661 work=38857134 off2p5=57 rek=None wall=12.77s
+crot-work40000000-s0-r0: raw=175.21893730689536 dual=True coord=14.993461067 work=34466132 off2p5=46 rek=None wall=15.03s
+rek-work40000000-s0-r0: raw=168.17 dual=True coord=12.601354737 work=37911175 off2p5=0 rek=None wall=12.64s
+rekcrot-work40000000-s0-r0: raw=166.95586779106247 dual=True coord=14.582855547 work=37443245 off2p5=44 rek=None wall=14.62s
+base-work40000000-s1-r0: raw=171.3619986855876 dual=True coord=12.303224067 work=35773579 off2p5=31 rek=None wall=12.34s
+crot-work40000000-s1-r0: raw=172.3309999959951 dual=True coord=14.252897985 work=38136724 off2p5=26 rek=None wall=14.29s
+rek-work40000000-s1-r0: raw=171.237 dual=True coord=12.45701101 work=38713839 off2p5=0 rek=None wall=12.50s
+rekcrot-work40000000-s1-r0: raw=167.4881411517541 dual=True coord=17.877673098 work=37559663 off2p5=33 rek=None wall=17.91s
+base-work40000000-s2-r0: raw=170.155 dual=True coord=14.283305602 work=39106937 off2p5=14 rek=None wall=14.32s
+crot-work40000000-s2-r0: raw=169.71600157079632 dual=True coord=16.787760762 work=39002908 off2p5=36 rek=None wall=16.82s
+rek-work40000000-s2-r0: raw=166.1712748670817 dual=True coord=12.599497821 work=38761448 off2p5=49 rek=None wall=12.64s
+rekcrot-work40000000-s2-r0: raw=179.51834619478396 dual=True coord=13.207884116 work=34780700 off2p5=14 rek=None wall=13.24s
+{
+ "work=40000000": {
+  "base": {
+   "n": 3,
+   "medianRawDepthMm": 170.155,
+   "minRawDepthMm": 169.891,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 31
+  },
+  "crot": {
+   "n": 3,
+   "medianRawDepthMm": 172.3309999959951,
+   "minRawDepthMm": 169.71600157079632,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 36,
+   "pairedVsBaseMm": {
+    "n": 3,
+    "median": 0.9690013104075206,
+    "better": 1,
+    "range": [
+     -0.4389984292036786,
+     5.327937306895365
+    ]
+   }
+  },
+  "rek": {
+   "n": 3,
+   "medianRawDepthMm": 168.17,
+   "minRawDepthMm": 166.1712748670817,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 0,
+   "pairedVsBaseMm": {
+    "n": 3,
+    "median": -1.7210000000000036,
+    "better": 3,
+    "range": [
+     -3.9837251329182948,
+     -0.12499868558759886
+    ]
+   }
+  },
+  "rekcrot": {
+   "n": 3,
+   "medianRawDepthMm": 167.4881411517541,
+   "minRawDepthMm": 166.95586779106247,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 33,
+   "pairedVsBaseMm": {
+    "n": 3,
+    "median": -2.9351322089375174,
+    "better": 2,
+    "range": [
+     -3.873857533833501,
+     9.363346194783958
+    ]
+   }
+  }
+ }
+}

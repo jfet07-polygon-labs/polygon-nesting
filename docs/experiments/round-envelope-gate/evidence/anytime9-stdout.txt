@@ -1,0 +1,45 @@
+canonical-plan10000-s0-r0: raw=175.3877782649107 dual=True coord=7.783604208 work=23356444 off2p5=0 rek=None wall=7.82s
+rek-plan10000-s0-r0: raw=169.16504165198234 dual=True coord=9.546145541 work=26910373 off2p5=37 rek=None wall=9.58s
+canonical-plan10000-s1-r0: raw=171.3619986855876 dual=True coord=8.23859235 work=26260386 off2p5=31 rek=None wall=8.27s
+rek-plan10000-s1-r0: raw=173.3465801543412 dual=True coord=8.946360619 work=26931578 off2p5=31 rek=None wall=8.98s
+canonical-plan10000-s2-r0: raw=176.16200000000003 dual=True coord=8.543381898 work=23859055 off2p5=23 rek=None wall=8.58s
+rek-plan10000-s2-r0: raw=167.6449975183662 dual=True coord=9.085470573 work=27755562 off2p5=57 rek=None wall=9.12s
+canonical-plan10000-s3-r0: raw=175.11434374948186 dual=True coord=7.592773832 work=25604436 off2p5=47 rek=None wall=7.63s
+rek-plan10000-s3-r0: raw=173.398 dual=True coord=8.31142449 work=26601423 off2p5=0 rek=None wall=8.35s
+canonical-plan10000-s4-r0: raw=173.49099999999999 dual=True coord=8.047293232 work=26405452 off2p5=0 rek=None wall=8.08s
+rek-plan10000-s4-r0: raw=175.183 dual=True coord=9.101364205 work=27742792 off2p5=0 rek=None wall=9.14s
+canonical-plan10000-s5-r0: raw=177.87792156332728 dual=True coord=8.496061378 work=24425920 off2p5=0 rek=None wall=8.53s
+rek-plan10000-s5-r0: raw=173.716 dual=True coord=8.296660813999999 work=26025666 off2p5=0 rek=None wall=8.34s
+canonical-plan10000-s6-r0: raw=169.7719534752905 dual=True coord=8.878405439 work=26700834 off2p5=53 rek=None wall=8.91s
+rek-plan10000-s6-r0: raw=179.63299999999998 dual=True coord=8.13364337 work=20987140 off2p5=0 rek=None wall=8.17s
+canonical-plan10000-s7-r0: raw=175.6479984721405 dual=True coord=8.335681975 work=26417851 off2p5=54 rek=None wall=8.37s
+rek-plan10000-s7-r0: raw=168.50908320589798 dual=True coord=9.833946251 work=30691898 off2p5=0 rek=None wall=9.87s
+canonical-plan10000-s8-r0: raw=175.63477826491072 dual=True coord=7.659397471 work=26243354 off2p5=0 rek=None wall=7.70s
+rek-plan10000-s8-r0: raw=173.4999978641432 dual=True coord=8.540971730999999 work=23088916 off2p5=46 rek=None wall=8.58s
+{
+ "plan=10000": {
+  "canonical": {
+   "n": 9,
+   "medianRawDepthMm": 175.3877782649107,
+   "minRawDepthMm": 169.7719534752905,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 23
+  },
+  "rek": {
+   "n": 9,
+   "medianRawDepthMm": 173.398,
+   "minRawDepthMm": 167.6449975183662,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 0,
+   "pairedVsBaseMm": {
+    "n": 9,
+    "median": -2.134780400767511,
+    "better": 6,
+    "range": [
+     -8.517002481633824,
+     9.86104652470948
+    ]
+   }
+  }
+ }
+}

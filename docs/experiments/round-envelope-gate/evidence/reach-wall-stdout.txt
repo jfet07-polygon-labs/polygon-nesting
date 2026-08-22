@@ -1,0 +1,95 @@
+base-wall10000-s0-r0: raw=168.4836008374388 dual=True coord=9.974054334 work=0 off2p5=35 rek=None wall=10.01s
+crot-wall10000-s0-r0: raw=175.21893730689536 dual=True coord=10.182772254 work=0 off2p5=46 rek=None wall=10.22s
+rek-wall10000-s0-r0: raw=169.16504165198234 dual=True coord=9.139932356 work=0 off2p5=37 rek=None wall=9.18s
+rekcrot-wall10000-s0-r0: raw=174.45287546695343 dual=True coord=10.340007721 work=0 off2p5=36 rek=None wall=10.38s
+base-wall10000-s1-r0: raw=165.65577826491065 dual=True coord=10.207692412 work=0 off2p5=0 rek=None wall=10.25s
+crot-wall10000-s1-r0: raw=176.58847255356912 dual=True coord=9.076833786 work=0 off2p5=44 rek=None wall=9.11s
+rek-wall10000-s1-r0: raw=171.9527695409736 dual=True coord=9.231773804 work=0 off2p5=58 rek=None wall=9.27s
+rekcrot-wall10000-s1-r0: raw=179.5067393502041 dual=True coord=8.455857624 work=0 off2p5=55 rek=None wall=8.49s
+base-wall10000-s2-r0: raw=174.28 dual=True coord=9.771296125 work=0 off2p5=18 rek=None wall=9.81s
+crot-wall10000-s2-r0: raw=173.141 dual=True coord=9.688060099 work=0 off2p5=45 rek=None wall=9.72s
+rek-wall10000-s2-r0: raw=164.053 dual=True coord=11.989113064 work=0 off2p5=0 rek=None wall=12.02s
+rekcrot-wall10000-s2-r0: raw=179.51834619478396 dual=True coord=9.491055047 work=0 off2p5=14 rek=None wall=9.53s
+crot-wall10000-s0-r1: raw=175.21893730689536 dual=True coord=10.146897072 work=0 off2p5=46 rek=None wall=10.18s
+rek-wall10000-s0-r1: raw=169.26299999999998 dual=True coord=9.960907469 work=0 off2p5=30 rek=None wall=9.99s
+rekcrot-wall10000-s0-r1: raw=175.028 dual=True coord=9.256462916 work=0 off2p5=22 rek=None wall=9.29s
+base-wall10000-s0-r1: raw=168.756 dual=True coord=10.464099064 work=0 off2p5=0 rek=None wall=10.50s
+crot-wall10000-s1-r1: raw=176.58847255356912 dual=True coord=9.090968619 work=0 off2p5=44 rek=None wall=9.13s
+rek-wall10000-s1-r1: raw=171.9527695409736 dual=True coord=9.214385937 work=0 off2p5=58 rek=None wall=9.25s
+rekcrot-wall10000-s1-r1: raw=179.20177826491073 dual=True coord=9.541005187 work=0 off2p5=0 rek=None wall=9.58s
+base-wall10000-s1-r1: raw=165.65577826491065 dual=True coord=10.292345142 work=0 off2p5=0 rek=None wall=10.33s
+crot-wall10000-s2-r1: raw=173.141 dual=True coord=9.731382103 work=0 off2p5=45 rek=None wall=9.77s
+rek-wall10000-s2-r1: raw=164.053 dual=True coord=11.991984651 work=0 off2p5=0 rek=None wall=12.03s
+rekcrot-wall10000-s2-r1: raw=179.51834619478396 dual=True coord=9.45018973 work=0 off2p5=14 rek=None wall=9.49s
+base-wall10000-s2-r1: raw=174.28 dual=True coord=9.668515193 work=0 off2p5=18 rek=None wall=9.71s
+rek-wall10000-s0-r2: raw=169.26299999999998 dual=True coord=9.86987371 work=0 off2p5=30 rek=None wall=9.91s
+rekcrot-wall10000-s0-r2: raw=174.45287546695343 dual=True coord=10.406582464 work=0 off2p5=36 rek=None wall=10.44s
+base-wall10000-s0-r2: raw=171.111 dual=True coord=9.101821645 work=0 off2p5=0 rek=None wall=9.14s
+crot-wall10000-s0-r2: raw=175.21893730689536 dual=True coord=10.161966557 work=0 off2p5=46 rek=None wall=10.20s
+rek-wall10000-s1-r2: raw=171.9527695409736 dual=True coord=9.309005481 work=0 off2p5=58 rek=None wall=9.35s
+rekcrot-wall10000-s1-r2: raw=179.20177826491073 dual=True coord=9.556414992 work=0 off2p5=0 rek=None wall=9.59s
+base-wall10000-s1-r2: raw=165.65577826491065 dual=True coord=10.272851127 work=0 off2p5=0 rek=None wall=10.31s
+crot-wall10000-s1-r2: raw=176.58847255356912 dual=True coord=9.136878856 work=0 off2p5=44 rek=None wall=9.17s
+rek-wall10000-s2-r2: raw=163.60777826491073 dual=True coord=11.832668594 work=0 off2p5=0 rek=None wall=11.87s
+rekcrot-wall10000-s2-r2: raw=179.51834619478396 dual=True coord=9.503918529 work=0 off2p5=14 rek=None wall=9.54s
+base-wall10000-s2-r2: raw=174.28 dual=True coord=9.786415366 work=0 off2p5=18 rek=None wall=9.82s
+crot-wall10000-s2-r2: raw=173.141 dual=True coord=9.688509217 work=0 off2p5=45 rek=None wall=9.73s
+{
+ "wall=10000": {
+  "base": {
+   "n": 9,
+   "medianRawDepthMm": 168.756,
+   "minRawDepthMm": 165.65577826491065,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 0
+  },
+  "crot": {
+   "n": 9,
+   "medianRawDepthMm": 175.21893730689536,
+   "minRawDepthMm": 173.141,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 45,
+   "pairedVsBaseMm": {
+    "n": 9,
+    "median": 6.4629373068953555,
+    "better": 3,
+    "range": [
+     -1.13900000000001,
+     10.932694288658467
+    ]
+   }
+  },
+  "rek": {
+   "n": 9,
+   "medianRawDepthMm": 169.26299999999998,
+   "minRawDepthMm": 163.60777826491073,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 30,
+   "pairedVsBaseMm": {
+    "n": 9,
+    "median": 0.5069999999999766,
+    "better": 4,
+    "range": [
+     -10.672221735089266,
+     6.296991276062954
+    ]
+   }
+  },
+  "rekcrot": {
+   "n": 9,
+   "medianRawDepthMm": 179.20177826491073,
+   "minRawDepthMm": 174.45287546695343,
+   "allDualGateValid": true,
+   "medianOffLattice2p5": 14,
+   "pairedVsBaseMm": {
+    "n": 9,
+    "median": 5.9692746295146435,
+    "better": 0,
+    "range": [
+     3.3418754669534394,
+     13.850961085293449
+    ]
+   }
+  }
+ }
+}

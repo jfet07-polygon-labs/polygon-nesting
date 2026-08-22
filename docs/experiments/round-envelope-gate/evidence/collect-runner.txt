@@ -1,0 +1,75 @@
+===== stage: build
+== build: the measurement binary (the combo plus the kernel)
+build-meas exit=0
+== build: the gate binary (jagua-experimental, feature ABSENT)
+build-gate exit=0
+== build: the battery instrument (the publication audit's authority)
+build-battery exit=0
+9e6ad285f0e3980c3a2b5720e44e2a0baf7e4c13f57d794305da3b47467df4a2  /var/lib/t3/tmp/rekgate/bin/meas
+971918823ca7aade8af0130dc0944285776ce94ad28170f56ad81462d0b41838  /var/lib/t3/tmp/rekgate/bin/gate-base
+bdc537cba3fab74798057086be59aab905ce29a86bf9e20436cf702d2a315eca  /var/lib/t3/tmp/rekgate/bin/battery
+# rustc: rustc 1.97.1 (8bab26f4f 2026-07-14)
+# cargo: cargo 1.97.1 (c980f4866 2026-06-30)
+# commit: 368544525431a50c28b900c2f7b813aa6d5bf64e
+# python: Python 3.14.6
+# uname: x86_64 6.18.38
+# loadavg: 1.94 2.18 2.33 1/640 3618007
+===== stage: gates
+== gates: the feature-ABSENT binary, which is the protocol's gate
+gates-base exit=0
+ "ALL_PASS": true
+== gates: the measurement binary, feature compiled and UNARMED
+gates-meas exit=0
+ "ALL_PASS": true
+GATES exits=0/0
+===== stage: ladder2
+== deliverable 1: the twelve-parent matched gate, both arms, four budgets
+matchedgate exit=0
+===== stage: matchedrest
+== the arm's own ladder, one rung above the control's top budget
+matchedgate-top exit=0
+mergeladders exit=0
+== the wall ratio, five interleaved replicas on three parents
+wallratio exit=0
+MATCHED exits=0/0/0
+docs/experiments/round-envelope-gate/drivers/collect.sh: line 246: unexpected EOF while looking for matching `''
+===== stage: reach
+== deliverable 2: reachability, work=40M (the reproducible 10 s equivalent)
+reach-work exit=0
+== deliverable 2: reachability, wall=10 s (the budget the -3.721 mm is on)
+reach-wall exit=0
+crotflip exit=0
+REACH exits=0/0/0
+===== stage: anytime
+== deliverable 3: the anytime table, plan mode, two processes per cell
+anytime exit=0
+== the same at wall=10 s, the arm every earlier millimetre is on
+anytime-wall exit=0
+ANYTIME exits=0/0
+===== stage: exclusive
+== the exclusive arm on the same twelve parents, cheapest rung
+exclusive exit=0
+===== stage: det
+== determinism: two processes, whole document, timings stripped by name
+determinism exit=1
+===== stage: det2
+== determinism: two processes, whole document, timings stripped by name
+determinism exit=0
+===== stage: audit
+== deliverable 1: every publication, re-asked of both authorities
+publications exit=0
+publication-battery exit=0
+pubaudit exit=0
+sparrowcheck exit=0
+== the coordinator arms' publications, on the same authority
+publication-battery-reach-work exit=0
+pubaudit-reach-work exit=0
+publication-battery-reach-wall exit=0
+pubaudit-reach-wall exit=0
+publication-battery-anytime exit=0
+pubaudit-anytime exit=0
+publication-battery-anytime-wall exit=0
+pubaudit-anytime-wall exit=0
+== the pre-committed rule, clause by clause
+gateverdict exit=0
+AUDIT exits=0/0/0/0/0

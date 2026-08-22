@@ -1,0 +1,2965 @@
+{
+ "arm": "union",
+ "control": "miter",
+ "works": [
+  3341379,
+  8000000,
+  16000000,
+  32000000,
+  48000000
+ ],
+ "parents": 12,
+ "equalWork": {
+  "3341379": {
+   "rows": [
+    {
+     "seed": 0,
+     "parentMm": 174.20812003998896,
+     "armDepthMm": 173.37991578608327,
+     "controlDepthMm": 173.37991578608327,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 0.8282042539056818,
+     "controlDeltaVsParentMm": 0.8282042539056818,
+     "armOperatorWallSeconds": 5.733355468,
+     "controlOperatorWallSeconds": 3.147020367,
+     "armProcessWorkUnits": 8049216,
+     "controlProcessWorkUnits": 9291157,
+     "armConfirmations": 328,
+     "controlConfirmations": 328,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 1,
+     "parentMm": 176.05599999999998,
+     "armDepthMm": 174.57600000000002,
+     "controlDepthMm": 174.57600000000002,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 1.4799999999999613,
+     "controlDeltaVsParentMm": 1.4799999999999613,
+     "armOperatorWallSeconds": 7.642172318,
+     "controlOperatorWallSeconds": 7.289557556,
+     "armProcessWorkUnits": 9925637,
+     "controlProcessWorkUnits": 10140647,
+     "armConfirmations": 327,
+     "controlConfirmations": 327,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 2,
+     "parentMm": 179.006,
+     "armDepthMm": 177.34300000000002,
+     "controlDepthMm": 177.34300000000002,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 1.6629999999999825,
+     "controlDeltaVsParentMm": 1.6629999999999825,
+     "armOperatorWallSeconds": 8.908780672,
+     "controlOperatorWallSeconds": 4.608317908,
+     "armProcessWorkUnits": 10677266,
+     "controlProcessWorkUnits": 10319910,
+     "armConfirmations": 229,
+     "controlConfirmations": 229,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 3,
+     "parentMm": 176.061,
+     "armDepthMm": 176.061,
+     "controlDepthMm": 176.061,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 0.0,
+     "controlDeltaVsParentMm": 0.0,
+     "armOperatorWallSeconds": 6.803184958,
+     "controlOperatorWallSeconds": 7.317075212,
+     "armProcessWorkUnits": 12139002,
+     "controlProcessWorkUnits": 13898276,
+     "armConfirmations": 0,
+     "controlConfirmations": 0,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 4,
+     "parentMm": 171.64953207726535,
+     "armDepthMm": 171.08177826491067,
+     "controlDepthMm": 171.08177826491067,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 0.567753812354681,
+     "controlDeltaVsParentMm": 0.567753812354681,
+     "armOperatorWallSeconds": 4.295910072,
+     "controlOperatorWallSeconds": 4.409306804,
+     "armProcessWorkUnits": 10235427,
+     "controlProcessWorkUnits": 10355037,
+     "armConfirmations": 235,
+     "controlConfirmations": 235,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 5,
+     "parentMm": 179.05182605364416,
+     "armDepthMm": 177.56277826491072,
+     "controlDepthMm": 177.56277826491072,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 1.4890477887334441,
+     "controlDeltaVsParentMm": 1.4890477887334441,
+     "armOperatorWallSeconds": 3.39484185,
+     "controlOperatorWallSeconds": 3.439549581,
+     "armProcessWorkUnits": 8292361,
+     "controlProcessWorkUnits": 8351927,
+     "armConfirmations": 233,
+     "controlConfirmations": 233,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 6,
+     "parentMm": 179.6200102363703,
+     "armDepthMm": 178.40299999999996,
+     "controlDepthMm": 178.40299999999996,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 1.217010236370328,
+     "controlDeltaVsParentMm": 1.217010236370328,
+     "armOperatorWallSeconds": 3.8418771,
+     "controlOperatorWallSeconds": 3.4322969199999998,
+     "armProcessWorkUnits": 11761098,
+     "controlProcessWorkUnits": 8869308,
+     "armConfirmations": 246,
+     "controlConfirmations": 246,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 7,
+     "parentMm": 179.52233303152792,
+     "armDepthMm": 178.264,
+     "controlDepthMm": 178.264,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 1.2583330315279113,
+     "controlDeltaVsParentMm": 1.2583330315279113,
+     "armOperatorWallSeconds": 2.982240532,
+     "controlOperatorWallSeconds": 3.429285105,
+     "armProcessWorkUnits": 8384363,
+     "controlProcessWorkUnits": 9847688,
+     "armConfirmations": 286,
+     "controlConfirmations": 286,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 8,
+     "parentMm": 178.93200000000002,
+     "armDepthMm": 177.28,
+     "controlDepthMm": 177.28,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 1.6520000000000152,
+     "controlDeltaVsParentMm": 1.6520000000000152,
+     "armOperatorWallSeconds": 3.17701027,
+     "controlOperatorWallSeconds": 3.6147461089999995,
+     "armProcessWorkUnits": 10658862,
+     "controlProcessWorkUnits": 12445472,
+     "armConfirmations": 324,
+     "controlConfirmations": 324,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 9,
+     "parentMm": 174.96558182288433,
+     "armDepthMm": 173.97377826491066,
+     "controlDepthMm": 173.97377826491066,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 0.9918035579736681,
+     "controlDeltaVsParentMm": 0.9918035579736681,
+     "armOperatorWallSeconds": 3.299157611,
+     "controlOperatorWallSeconds": 2.729830734,
+     "armProcessWorkUnits": 10766273,
+     "controlProcessWorkUnits": 7372622,
+     "armConfirmations": 325,
+     "controlConfirmations": 325,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 10,
+     "parentMm": 176.3622237458826,
+     "armDepthMm": 175.39367511657755,
+     "controlDepthMm": 175.39367511657755,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 0.9685486293050474,
+     "controlDeltaVsParentMm": 0.9685486293050474,
+     "armOperatorWallSeconds": 2.837967372,
+     "controlOperatorWallSeconds": 2.346830549,
+     "armProcessWorkUnits": 9132252,
+     "controlProcessWorkUnits": 7343055,
+     "armConfirmations": 351,
+     "controlConfirmations": 351,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 11,
+     "parentMm": 171.6141235046606,
+     "armDepthMm": 170.868,
+     "controlDepthMm": 170.868,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 0.7461235046606021,
+     "controlDeltaVsParentMm": 0.7461235046606021,
+     "armOperatorWallSeconds": 3.758186737,
+     "controlOperatorWallSeconds": 3.891124309,
+     "armProcessWorkUnits": 10361641,
+     "controlProcessWorkUnits": 11035542,
+     "armConfirmations": 287,
+     "controlConfirmations": 287,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    }
+   ],
+   "stats": {
+    "n": 12,
+    "armWins": 0,
+    "controlWins": 0,
+    "ties": 12,
+    "medianArmMinusControlMm": 0.0,
+    "medianImprovementMm": -0.0,
+    "rangeMm": [
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "8000000": {
+   "rows": [
+    {
+     "seed": 0,
+     "parentMm": 174.20812003998896,
+     "armDepthMm": 171.41899999999998,
+     "controlDepthMm": 171.41899999999998,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 2.7891200399889726,
+     "controlDeltaVsParentMm": 2.7891200399889726,
+     "armOperatorWallSeconds": 6.619595219,
+     "controlOperatorWallSeconds": 7.640448647,
+     "armProcessWorkUnits": 8430560,
+     "controlProcessWorkUnits": 9902061,
+     "armConfirmations": 796,
+     "controlConfirmations": 796,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 1,
+     "parentMm": 176.05599999999998,
+     "armDepthMm": 172.2413399423672,
+     "controlDepthMm": 172.2413399423672,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 3.8146600576327785,
+     "controlDeltaVsParentMm": 3.8146600576327785,
+     "armOperatorWallSeconds": 4.666976978,
+     "controlOperatorWallSeconds": 8.162248467,
+     "armProcessWorkUnits": 10699722,
+     "controlProcessWorkUnits": 11115852,
+     "armConfirmations": 753,
+     "controlConfirmations": 753,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 2,
+     "parentMm": 179.006,
+     "armDepthMm": 175.1847782649107,
+     "controlDepthMm": 175.1847782649107,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 3.8212217350892956,
+     "controlDeltaVsParentMm": 3.8212217350892956,
+     "armOperatorWallSeconds": 5.541889071,
+     "controlOperatorWallSeconds": 9.398788343,
+     "armProcessWorkUnits": 11152116,
+     "controlProcessWorkUnits": 10993315,
+     "armConfirmations": 686,
+     "controlConfirmations": 686,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 3,
+     "parentMm": 176.061,
+     "armDepthMm": 169.882,
+     "controlDepthMm": 169.882,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 6.179000000000002,
+     "controlDeltaVsParentMm": 6.179000000000002,
+     "armOperatorWallSeconds": 13.150228746,
+     "controlOperatorWallSeconds": 13.642223786,
+     "armProcessWorkUnits": 16633426,
+     "controlProcessWorkUnits": 18401885,
+     "armConfirmations": 19,
+     "controlConfirmations": 19,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 4,
+     "parentMm": 171.64953207726535,
+     "armDepthMm": 169.59699999999998,
+     "controlDepthMm": 169.59699999999998,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 2.0525320772653686,
+     "controlDeltaVsParentMm": 2.0525320772653686,
+     "armOperatorWallSeconds": 8.844988075,
+     "controlOperatorWallSeconds": 9.003829468,
+     "armProcessWorkUnits": 13336709,
+     "controlProcessWorkUnits": 13540754,
+     "armConfirmations": 404,
+     "controlConfirmations": 404,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 5,
+     "parentMm": 179.05182605364416,
+     "armDepthMm": 175.196,
+     "controlDepthMm": 175.196,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 3.855826053644165,
+     "controlDeltaVsParentMm": 3.855826053644165,
+     "armOperatorWallSeconds": 4.9776726369999995,
+     "controlOperatorWallSeconds": 5.157452545,
+     "armProcessWorkUnits": 9333473,
+     "controlProcessWorkUnits": 9585739,
+     "armConfirmations": 627,
+     "controlConfirmations": 627,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 6,
+     "parentMm": 179.6200102363703,
+     "armDepthMm": 175.87699999999998,
+     "controlDepthMm": 175.87699999999998,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 3.74301023637031,
+     "controlDeltaVsParentMm": 3.74301023637031,
+     "armOperatorWallSeconds": 5.027980608,
+     "controlOperatorWallSeconds": 4.797469517,
+     "armProcessWorkUnits": 12556191,
+     "controlProcessWorkUnits": 9838541,
+     "armConfirmations": 670,
+     "controlConfirmations": 670,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 7,
+     "parentMm": 179.52233303152792,
+     "armDepthMm": 176.322,
+     "controlDepthMm": 176.322,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 3.2003330315279186,
+     "controlDeltaVsParentMm": 3.2003330315279186,
+     "armOperatorWallSeconds": 3.514982904,
+     "controlOperatorWallSeconds": 4.183305713000001,
+     "armProcessWorkUnits": 8667154,
+     "controlProcessWorkUnits": 10352639,
+     "armConfirmations": 765,
+     "controlConfirmations": 765,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 8,
+     "parentMm": 178.93200000000002,
+     "armDepthMm": 174.935,
+     "controlDepthMm": 174.935,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 3.997000000000014,
+     "controlDeltaVsParentMm": 3.997000000000014,
+     "armOperatorWallSeconds": 4.825087756,
+     "controlOperatorWallSeconds": 5.549176488,
+     "armProcessWorkUnits": 12045339,
+     "controlProcessWorkUnits": 13989674,
+     "armConfirmations": 682,
+     "controlConfirmations": 682,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 9,
+     "parentMm": 174.96558182288433,
+     "armDepthMm": 171.624,
+     "controlDepthMm": 171.624,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 3.3415818228843364,
+     "controlDeltaVsParentMm": 3.3415818228843364,
+     "armOperatorWallSeconds": 5.062111732,
+     "controlOperatorWallSeconds": 4.683156299,
+     "armProcessWorkUnits": 11949249,
+     "controlProcessWorkUnits": 8729073,
+     "armConfirmations": 705,
+     "controlConfirmations": 705,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 10,
+     "parentMm": 176.3622237458826,
+     "armDepthMm": 173.251,
+     "controlDepthMm": 173.251,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 3.1112237458825973,
+     "controlDeltaVsParentMm": 3.1112237458825973,
+     "armOperatorWallSeconds": 3.590160564,
+     "controlOperatorWallSeconds": 3.299153658,
+     "armProcessWorkUnits": 9606512,
+     "controlProcessWorkUnits": 8030075,
+     "armConfirmations": 809,
+     "controlConfirmations": 809,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 11,
+     "parentMm": 171.6141235046606,
+     "armDepthMm": 169.234,
+     "controlDepthMm": 169.234,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 2.380123504660588,
+     "controlDeltaVsParentMm": 2.380123504660588,
+     "armOperatorWallSeconds": 7.404486059,
+     "controlOperatorWallSeconds": 7.648474457,
+     "armProcessWorkUnits": 13058788,
+     "controlProcessWorkUnits": 13838164,
+     "armConfirmations": 500,
+     "controlConfirmations": 500,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    }
+   ],
+   "stats": {
+    "n": 12,
+    "armWins": 0,
+    "controlWins": 0,
+    "ties": 12,
+    "medianArmMinusControlMm": 0.0,
+    "medianImprovementMm": -0.0,
+    "rangeMm": [
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "16000000": {
+   "rows": [
+    {
+     "seed": 0,
+     "parentMm": 174.20812003998896,
+     "armDepthMm": 167.422,
+     "controlDepthMm": 167.422,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 6.786120039988958,
+     "controlDeltaVsParentMm": 6.786120039988958,
+     "armOperatorWallSeconds": 6.757051797,
+     "controlOperatorWallSeconds": 7.758333235,
+     "armProcessWorkUnits": 10278211,
+     "controlProcessWorkUnits": 12083227,
+     "armConfirmations": 1468,
+     "controlConfirmations": 1468,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 1,
+     "parentMm": 176.05599999999998,
+     "armDepthMm": 168.348,
+     "controlDepthMm": 168.348,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 7.70799999999997,
+     "controlDeltaVsParentMm": 7.70799999999997,
+     "armOperatorWallSeconds": 7.561985179,
+     "controlOperatorWallSeconds": 8.466620024000001,
+     "armProcessWorkUnits": 12774471,
+     "controlProcessWorkUnits": 13467811,
+     "armConfirmations": 1401,
+     "controlConfirmations": 1401,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 2,
+     "parentMm": 179.006,
+     "armDepthMm": 171.4,
+     "controlDepthMm": 171.4,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 7.6059999999999945,
+     "controlDeltaVsParentMm": 7.6059999999999945,
+     "armOperatorWallSeconds": 7.140875867,
+     "controlOperatorWallSeconds": 7.504000746,
+     "armProcessWorkUnits": 12338111,
+     "controlProcessWorkUnits": 12514160,
+     "armConfirmations": 1431,
+     "controlConfirmations": 1431,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 3,
+     "parentMm": 176.061,
+     "armDepthMm": 168.582,
+     "controlDepthMm": 168.582,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 7.479000000000013,
+     "controlDeltaVsParentMm": 7.479000000000013,
+     "armOperatorWallSeconds": 23.345185921,
+     "controlOperatorWallSeconds": 23.733629324,
+     "armProcessWorkUnits": 24339650,
+     "controlProcessWorkUnits": 26122969,
+     "armConfirmations": 50,
+     "controlConfirmations": 50,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 4,
+     "parentMm": 171.64953207726535,
+     "armDepthMm": 166.73399999999998,
+     "controlDepthMm": 166.73399999999998,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 4.915532077265368,
+     "controlDeltaVsParentMm": 4.915532077265368,
+     "armOperatorWallSeconds": 16.95891322,
+     "controlOperatorWallSeconds": 17.22309131,
+     "armProcessWorkUnits": 18757630,
+     "controlProcessWorkUnits": 19096365,
+     "armConfirmations": 686,
+     "controlConfirmations": 686,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 5,
+     "parentMm": 179.05182605364416,
+     "armDepthMm": 170.95600000000002,
+     "controlDepthMm": 170.95600000000002,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 8.095826053644146,
+     "controlDeltaVsParentMm": 8.095826053644146,
+     "armOperatorWallSeconds": 9.471447328,
+     "controlOperatorWallSeconds": 9.919668897,
+     "armProcessWorkUnits": 12302152,
+     "controlProcessWorkUnits": 12827558,
+     "armConfirmations": 1178,
+     "controlConfirmations": 1178,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 6,
+     "parentMm": 179.6200102363703,
+     "armDepthMm": 171.63,
+     "controlDepthMm": 171.63,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 7.990010236370296,
+     "controlDeltaVsParentMm": 7.990010236370296,
+     "armOperatorWallSeconds": 7.5980264779999995,
+     "controlOperatorWallSeconds": 7.617729916,
+     "armProcessWorkUnits": 14325151,
+     "controlProcessWorkUnits": 11920176,
+     "armConfirmations": 1351,
+     "controlConfirmations": 1351,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 7,
+     "parentMm": 179.52233303152792,
+     "armDepthMm": 172.41500000000002,
+     "controlDepthMm": 172.41500000000002,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 7.107333031527901,
+     "controlDeltaVsParentMm": 7.107333031527901,
+     "armOperatorWallSeconds": 5.486327696,
+     "controlOperatorWallSeconds": 6.395541738,
+     "armProcessWorkUnits": 9999805,
+     "controlProcessWorkUnits": 12027980,
+     "armConfirmations": 1493,
+     "controlConfirmations": 1493,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 8,
+     "parentMm": 178.93200000000002,
+     "armDepthMm": 170.963,
+     "controlDepthMm": 170.963,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 7.9690000000000225,
+     "controlDeltaVsParentMm": 7.9690000000000225,
+     "armOperatorWallSeconds": 7.934058919,
+     "controlOperatorWallSeconds": 8.826804884,
+     "armProcessWorkUnits": 14190517,
+     "controlProcessWorkUnits": 16445957,
+     "armConfirmations": 1322,
+     "controlConfirmations": 1322,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 9,
+     "parentMm": 174.96558182288433,
+     "armDepthMm": 167.56577826491065,
+     "controlDepthMm": 167.56577826491065,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 7.399803557973684,
+     "controlDeltaVsParentMm": 7.399803557973684,
+     "armOperatorWallSeconds": 8.774203635,
+     "controlOperatorWallSeconds": 8.58385634,
+     "armProcessWorkUnits": 14515025,
+     "controlProcessWorkUnits": 11553029,
+     "armConfirmations": 1298,
+     "controlConfirmations": 1298,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 10,
+     "parentMm": 176.3622237458826,
+     "armDepthMm": 169.579,
+     "controlDepthMm": 169.579,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 6.783223745882594,
+     "controlDeltaVsParentMm": 6.783223745882594,
+     "armOperatorWallSeconds": 5.627819921,
+     "controlOperatorWallSeconds": 5.635542289,
+     "armProcessWorkUnits": 10902276,
+     "controlProcessWorkUnits": 9656549,
+     "armConfirmations": 1541,
+     "controlConfirmations": 1541,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 11,
+     "parentMm": 171.6141235046606,
+     "armDepthMm": 164.77877826491067,
+     "controlDepthMm": 164.77877826491067,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 6.835345239749927,
+     "controlDeltaVsParentMm": 6.835345239749927,
+     "armOperatorWallSeconds": 12.148873112,
+     "controlOperatorWallSeconds": 12.651933954,
+     "armProcessWorkUnits": 16355526,
+     "controlProcessWorkUnits": 17378387,
+     "armConfirmations": 1015,
+     "controlConfirmations": 1015,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    }
+   ],
+   "stats": {
+    "n": 12,
+    "armWins": 0,
+    "controlWins": 0,
+    "ties": 12,
+    "medianArmMinusControlMm": 0.0,
+    "medianImprovementMm": -0.0,
+    "rangeMm": [
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "32000000": {
+   "rows": [
+    {
+     "seed": 0,
+     "parentMm": 174.20812003998896,
+     "armDepthMm": 164.008,
+     "controlDepthMm": 164.008,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 10.200120039988946,
+     "controlDeltaVsParentMm": 10.200120039988946,
+     "armOperatorWallSeconds": 26.871607665,
+     "controlOperatorWallSeconds": 27.130488181,
+     "armProcessWorkUnits": 24951453,
+     "controlProcessWorkUnits": 26827024,
+     "armConfirmations": 1612,
+     "controlConfirmations": 1612,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 1,
+     "parentMm": 176.05599999999998,
+     "armDepthMm": 164.103,
+     "controlDepthMm": 164.103,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 11.952999999999975,
+     "controlDeltaVsParentMm": 11.952999999999975,
+     "armOperatorWallSeconds": 23.781429723,
+     "controlOperatorWallSeconds": 24.540937282,
+     "armProcessWorkUnits": 24347344,
+     "controlProcessWorkUnits": 25260339,
+     "armConfirmations": 1884,
+     "controlConfirmations": 1884,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 2,
+     "parentMm": 179.006,
+     "armDepthMm": 165.48500000000004,
+     "controlDepthMm": 165.48500000000004,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 13.520999999999958,
+     "controlDeltaVsParentMm": 13.520999999999958,
+     "armOperatorWallSeconds": 20.635220872,
+     "controlOperatorWallSeconds": 21.39551632,
+     "armProcessWorkUnits": 22084669,
+     "controlProcessWorkUnits": 22591043,
+     "armConfirmations": 2113,
+     "controlConfirmations": 2113,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 3,
+     "parentMm": 176.061,
+     "armDepthMm": 168.582,
+     "controlDepthMm": 168.582,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 7.479000000000013,
+     "controlDeltaVsParentMm": 7.479000000000013,
+     "armOperatorWallSeconds": 45.365592358,
+     "controlOperatorWallSeconds": 45.680368825,
+     "armProcessWorkUnits": 40339317,
+     "controlProcessWorkUnits": 42122636,
+     "armConfirmations": 50,
+     "controlConfirmations": 50,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 4,
+     "parentMm": 171.64953207726535,
+     "armDepthMm": 164.155,
+     "controlDepthMm": 164.155,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 7.494532077265347,
+     "controlDeltaVsParentMm": 7.494532077265347,
+     "armOperatorWallSeconds": 36.412427977,
+     "controlOperatorWallSeconds": 36.833394412,
+     "armProcessWorkUnits": 33295360,
+     "controlProcessWorkUnits": 33713015,
+     "armConfirmations": 846,
+     "controlConfirmations": 846,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 5,
+     "parentMm": 179.05182605364416,
+     "armDepthMm": 165.659,
+     "controlDepthMm": 165.659,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 13.392826053644171,
+     "controlDeltaVsParentMm": 13.392826053644171,
+     "armOperatorWallSeconds": 23.110476578,
+     "controlOperatorWallSeconds": 23.731892157,
+     "armProcessWorkUnits": 21862027,
+     "controlProcessWorkUnits": 22729978,
+     "armConfirmations": 1881,
+     "controlConfirmations": 1881,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 6,
+     "parentMm": 179.6200102363703,
+     "armDepthMm": 164.087,
+     "controlDepthMm": 164.087,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 15.533010236370302,
+     "controlDeltaVsParentMm": 15.533010236370302,
+     "armOperatorWallSeconds": 16.289878994,
+     "controlOperatorWallSeconds": 16.648993621,
+     "armProcessWorkUnits": 19905221,
+     "controlProcessWorkUnits": 18023341,
+     "armConfirmations": 2488,
+     "controlConfirmations": 2488,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 7,
+     "parentMm": 179.52233303152792,
+     "armDepthMm": 164.704,
+     "controlDepthMm": 164.704,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 14.818333031527914,
+     "controlDeltaVsParentMm": 14.818333031527914,
+     "armOperatorWallSeconds": 19.492529922,
+     "controlOperatorWallSeconds": 20.687203527,
+     "armProcessWorkUnits": 20200137,
+     "controlProcessWorkUnits": 22541587,
+     "armConfirmations": 2127,
+     "controlConfirmations": 2127,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 8,
+     "parentMm": 178.93200000000002,
+     "armDepthMm": 166.66599999999997,
+     "controlDepthMm": 166.66599999999997,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 12.266000000000048,
+     "controlDeltaVsParentMm": 12.266000000000048,
+     "armOperatorWallSeconds": 24.27524849,
+     "controlOperatorWallSeconds": 25.423009299,
+     "armProcessWorkUnits": 25848689,
+     "controlProcessWorkUnits": 28335624,
+     "armConfirmations": 1795,
+     "controlConfirmations": 1795,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 9,
+     "parentMm": 174.96558182288433,
+     "armDepthMm": 164.127,
+     "controlDepthMm": 164.127,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 10.838581822884322,
+     "controlDeltaVsParentMm": 10.838581822884322,
+     "armOperatorWallSeconds": 27.524421814,
+     "controlOperatorWallSeconds": 27.474938268,
+     "armProcessWorkUnits": 28320273,
+     "controlProcessWorkUnits": 25464622,
+     "armConfirmations": 1538,
+     "controlConfirmations": 1538,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 10,
+     "parentMm": 176.3622237458826,
+     "armDepthMm": 161.49077826491072,
+     "controlDepthMm": 161.49077826491072,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 14.871445480971886,
+     "controlDeltaVsParentMm": 14.871445480971886,
+     "armOperatorWallSeconds": 16.227820524,
+     "controlOperatorWallSeconds": 16.655989497,
+     "armProcessWorkUnits": 17817739,
+     "controlProcessWorkUnits": 17016237,
+     "armConfirmations": 2533,
+     "controlConfirmations": 2533,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    },
+    {
+     "seed": 11,
+     "parentMm": 171.6141235046606,
+     "armDepthMm": 164.716,
+     "controlDepthMm": 164.716,
+     "armMinusControlMm": 0.0,
+     "armDeltaVsParentMm": 6.898123504660589,
+     "controlDeltaVsParentMm": 6.898123504660589,
+     "armOperatorWallSeconds": 33.796450773,
+     "controlOperatorWallSeconds": 34.301747161,
+     "armProcessWorkUnits": 32287955,
+     "controlProcessWorkUnits": 33314086,
+     "armConfirmations": 1022,
+     "controlConfirmations": 1022,
+     "sameFingerprint": true,
+     "sameStepDigest": true
+    }
+   ],
+   "stats": {
+    "n": 12,
+    "armWins": 0,
+    "controlWins": 0,
+    "ties": 12,
+    "medianArmMinusControlMm": 0.0,
+    "medianImprovementMm": -0.0,
+    "rangeMm": [
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "48000000": {
+   "rows": [],
+   "stats": null
+  }
+ },
+ "equalOperatorWall": {
+  "3341379": {
+   "rows": [
+    {
+     "seed": 0,
+     "targetOperatorWallSeconds": 3.147020367,
+     "controlDepthMm": 173.37991578608327,
+     "armDepthAtControlWallMm": 173.37991578608327,
+     "armMinusControlMm": 0.0,
+     "armAchievedDepthWithinControlWallMm": null,
+     "armAchievedMinusControlMm": null,
+     "interpolationClamped": true,
+     "armLadder": [
+      [
+       5.733355468,
+       173.37991578608327
+      ],
+      [
+       6.619595219,
+       171.41899999999998
+      ],
+      [
+       6.757051797,
+       167.422
+      ],
+      [
+       26.871607665,
+       164.008
+      ],
+      [
+       48.581059661,
+       164.008
+      ]
+     ]
+    },
+    {
+     "seed": 1,
+     "targetOperatorWallSeconds": 7.289557556,
+     "controlDepthMm": 174.57600000000002,
+     "armDepthAtControlWallMm": 168.71437317492354,
+     "armMinusControlMm": -5.861626825076485,
+     "armAchievedDepthWithinControlWallMm": 172.2413399423672,
+     "armAchievedMinusControlMm": -2.334660057632817,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       4.666976978,
+       172.2413399423672
+      ],
+      [
+       7.561985179,
+       168.348
+      ],
+      [
+       7.642172318,
+       174.57600000000002
+      ],
+      [
+       23.781429723,
+       164.103
+      ],
+      [
+       45.319166974,
+       164.103
+      ]
+     ]
+    },
+    {
+     "seed": 2,
+     "targetOperatorWallSeconds": 4.608317908,
+     "controlDepthMm": 177.34300000000002,
+     "armDepthAtControlWallMm": 175.1847782649107,
+     "armMinusControlMm": -2.158221735089313,
+     "armAchievedDepthWithinControlWallMm": null,
+     "armAchievedMinusControlMm": null,
+     "interpolationClamped": true,
+     "armLadder": [
+      [
+       5.541889071,
+       175.1847782649107
+      ],
+      [
+       7.140875867,
+       171.4
+      ],
+      [
+       8.908780672,
+       177.34300000000002
+      ],
+      [
+       20.635220872,
+       165.48500000000004
+      ],
+      [
+       42.645643718,
+       164.30400000000003
+      ]
+     ]
+    },
+    {
+     "seed": 3,
+     "targetOperatorWallSeconds": 7.317075212,
+     "controlDepthMm": 176.061,
+     "armDepthAtControlWallMm": 175.56071546037396,
+     "armMinusControlMm": -0.5002845396260511,
+     "armAchievedDepthWithinControlWallMm": 176.061,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       6.803184958,
+       176.061
+      ],
+      [
+       13.150228746,
+       169.882
+      ],
+      [
+       23.345185921,
+       168.582
+      ],
+      [
+       45.365592358,
+       168.582
+      ],
+      [
+       66.849386452,
+       168.582
+      ]
+     ]
+    },
+    {
+     "seed": 4,
+     "targetOperatorWallSeconds": 4.409306804,
+     "controlDepthMm": 171.08177826491067,
+     "armDepthAtControlWallMm": 171.04476658850623,
+     "armMinusControlMm": -0.03701167640443259,
+     "armAchievedDepthWithinControlWallMm": 171.08177826491067,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       4.295910072,
+       171.08177826491067
+      ],
+      [
+       8.844988075,
+       169.59699999999998
+      ],
+      [
+       16.95891322,
+       166.73399999999998
+      ],
+      [
+       36.412427977,
+       164.155
+      ],
+      [
+       58.333765172,
+       164.155
+      ]
+     ]
+    },
+    {
+     "seed": 5,
+     "targetOperatorWallSeconds": 3.439549581,
+     "controlDepthMm": 177.56277826491072,
+     "armDepthAtControlWallMm": 177.49592760287322,
+     "armMinusControlMm": -0.06685066203749557,
+     "armAchievedDepthWithinControlWallMm": 177.56277826491072,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.39484185,
+       177.56277826491072
+      ],
+      [
+       4.9776726369999995,
+       175.196
+      ],
+      [
+       9.471447328,
+       170.95600000000002
+      ],
+      [
+       23.110476578,
+       165.659
+      ],
+      [
+       44.015582587,
+       165.659
+      ]
+     ]
+    },
+    {
+     "seed": 6,
+     "targetOperatorWallSeconds": 3.4322969199999998,
+     "controlDepthMm": 178.40299999999996,
+     "armDepthAtControlWallMm": 178.40299999999996,
+     "armMinusControlMm": 0.0,
+     "armAchievedDepthWithinControlWallMm": null,
+     "armAchievedMinusControlMm": null,
+     "interpolationClamped": true,
+     "armLadder": [
+      [
+       3.8418771,
+       178.40299999999996
+      ],
+      [
+       5.027980608,
+       175.87699999999998
+      ],
+      [
+       7.5980264779999995,
+       171.63
+      ],
+      [
+       16.289878994,
+       164.087
+      ],
+      [
+       37.676714141,
+       164.002
+      ]
+     ]
+    },
+    {
+     "seed": 7,
+     "targetOperatorWallSeconds": 3.429285105,
+     "controlDepthMm": 178.264,
+     "armDepthAtControlWallMm": 176.6343932587401,
+     "armMinusControlMm": -1.62960674125992,
+     "armAchievedDepthWithinControlWallMm": 178.264,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       2.982240532,
+       178.264
+      ],
+      [
+       3.514982904,
+       176.322
+      ],
+      [
+       5.486327696,
+       172.41500000000002
+      ],
+      [
+       19.492529922,
+       164.704
+      ],
+      [
+       39.70821649,
+       164.06
+      ]
+     ]
+    },
+    {
+     "seed": 8,
+     "targetOperatorWallSeconds": 3.6147461089999995,
+     "controlDepthMm": 177.28,
+     "armDepthAtControlWallMm": 176.6571588100834,
+     "armMinusControlMm": -0.6228411899166133,
+     "armAchievedDepthWithinControlWallMm": 177.28,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.17701027,
+       177.28
+      ],
+      [
+       4.825087756,
+       174.935
+      ],
+      [
+       7.934058919,
+       170.963
+      ],
+      [
+       24.27524849,
+       166.66599999999997
+      ],
+      [
+       43.339356272,
+       161.523
+      ]
+     ]
+    },
+    {
+     "seed": 9,
+     "targetOperatorWallSeconds": 2.729830734,
+     "controlDepthMm": 173.97377826491066,
+     "armDepthAtControlWallMm": 173.97377826491066,
+     "armMinusControlMm": 0.0,
+     "armAchievedDepthWithinControlWallMm": null,
+     "armAchievedMinusControlMm": null,
+     "interpolationClamped": true,
+     "armLadder": [
+      [
+       3.299157611,
+       173.97377826491066
+      ],
+      [
+       5.062111732,
+       171.624
+      ],
+      [
+       8.774203635,
+       167.56577826491065
+      ],
+      [
+       27.524421814,
+       164.127
+      ],
+      [
+       49.568909333,
+       164.127
+      ]
+     ]
+    },
+    {
+     "seed": 10,
+     "targetOperatorWallSeconds": 2.346830549,
+     "controlDepthMm": 175.39367511657755,
+     "armDepthAtControlWallMm": 175.39367511657755,
+     "armMinusControlMm": 0.0,
+     "armAchievedDepthWithinControlWallMm": null,
+     "armAchievedMinusControlMm": null,
+     "interpolationClamped": true,
+     "armLadder": [
+      [
+       2.837967372,
+       175.39367511657755
+      ],
+      [
+       3.590160564,
+       173.251
+      ],
+      [
+       5.627819921,
+       169.579
+      ],
+      [
+       16.227820524,
+       161.49077826491072
+      ],
+      [
+       39.041170916,
+       160.98477826491072
+      ]
+     ]
+    },
+    {
+     "seed": 11,
+     "targetOperatorWallSeconds": 3.891124309,
+     "controlDepthMm": 170.868,
+     "armDepthAtControlWallMm": 170.80842727338992,
+     "armMinusControlMm": -0.05957272661007096,
+     "armAchievedDepthWithinControlWallMm": 170.868,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.758186737,
+       170.868
+      ],
+      [
+       7.404486059,
+       169.234
+      ],
+      [
+       12.148873112,
+       164.77877826491067
+      ],
+      [
+       33.796450773,
+       164.716
+      ],
+      [
+       56.874694686,
+       159.05
+      ]
+     ]
+    }
+   ],
+   "stats": {
+    "n": 12,
+    "armWins": 8,
+    "controlWins": 0,
+    "ties": 4,
+    "medianArmMinusControlMm": -0.06321169432378326,
+    "medianImprovementMm": 0.06321169432378326,
+    "rangeMm": [
+     -5.861626825076485,
+     0.0
+    ]
+   },
+   "statsNoInterpolation": {
+    "n": 7,
+    "armWins": 1,
+    "controlWins": 0,
+    "ties": 6,
+    "medianArmMinusControlMm": 0.0,
+    "medianImprovementMm": -0.0,
+    "rangeMm": [
+     -2.334660057632817,
+     0.0
+    ]
+   }
+  },
+  "8000000": {
+   "rows": [
+    {
+     "seed": 0,
+     "targetOperatorWallSeconds": 7.640448647,
+     "controlDepthMm": 171.41899999999998,
+     "armDepthAtControlWallMm": 167.27206296605843,
+     "armMinusControlMm": -4.146937033941555,
+     "armAchievedDepthWithinControlWallMm": 167.422,
+     "armAchievedMinusControlMm": -3.9969999999999857,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       5.733355468,
+       173.37991578608327
+      ],
+      [
+       6.619595219,
+       171.41899999999998
+      ],
+      [
+       6.757051797,
+       167.422
+      ],
+      [
+       26.871607665,
+       164.008
+      ],
+      [
+       48.581059661,
+       164.008
+      ]
+     ]
+    },
+    {
+     "seed": 1,
+     "targetOperatorWallSeconds": 8.162248467,
+     "controlDepthMm": 172.2413399423672,
+     "armDepthAtControlWallMm": 174.23851498617344,
+     "armMinusControlMm": 1.9971750438062372,
+     "armAchievedDepthWithinControlWallMm": 168.348,
+     "armAchievedMinusControlMm": -3.8933399423671915,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       4.666976978,
+       172.2413399423672
+      ],
+      [
+       7.561985179,
+       168.348
+      ],
+      [
+       7.642172318,
+       174.57600000000002
+      ],
+      [
+       23.781429723,
+       164.103
+      ],
+      [
+       45.319166974,
+       164.103
+      ]
+     ]
+    },
+    {
+     "seed": 2,
+     "targetOperatorWallSeconds": 9.398788343,
+     "controlDepthMm": 175.1847782649107,
+     "armDepthAtControlWallMm": 176.84749489669358,
+     "armMinusControlMm": 1.662716631782871,
+     "armAchievedDepthWithinControlWallMm": 171.4,
+     "armAchievedMinusControlMm": -3.784778264910699,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       5.541889071,
+       175.1847782649107
+      ],
+      [
+       7.140875867,
+       171.4
+      ],
+      [
+       8.908780672,
+       177.34300000000002
+      ],
+      [
+       20.635220872,
+       165.48500000000004
+      ],
+      [
+       42.645643718,
+       164.30400000000003
+      ]
+     ]
+    },
+    {
+     "seed": 3,
+     "targetOperatorWallSeconds": 13.642223786,
+     "controlDepthMm": 169.882,
+     "armDepthAtControlWallMm": 169.81926373333198,
+     "armMinusControlMm": -0.06273626666802556,
+     "armAchievedDepthWithinControlWallMm": 169.882,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       6.803184958,
+       176.061
+      ],
+      [
+       13.150228746,
+       169.882
+      ],
+      [
+       23.345185921,
+       168.582
+      ],
+      [
+       45.365592358,
+       168.582
+      ],
+      [
+       66.849386452,
+       168.582
+      ]
+     ]
+    },
+    {
+     "seed": 4,
+     "targetOperatorWallSeconds": 9.003829468,
+     "controlDepthMm": 169.59699999999998,
+     "armDepthAtControlWallMm": 169.54095278486895,
+     "armMinusControlMm": -0.056047215131030725,
+     "armAchievedDepthWithinControlWallMm": 169.59699999999998,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       4.295910072,
+       171.08177826491067
+      ],
+      [
+       8.844988075,
+       169.59699999999998
+      ],
+      [
+       16.95891322,
+       166.73399999999998
+      ],
+      [
+       36.412427977,
+       164.155
+      ],
+      [
+       58.333765172,
+       164.155
+      ]
+     ]
+    },
+    {
+     "seed": 5,
+     "targetOperatorWallSeconds": 5.157452545,
+     "controlDepthMm": 175.196,
+     "armDepthAtControlWallMm": 175.02637271284502,
+     "armMinusControlMm": -0.16962728715498088,
+     "armAchievedDepthWithinControlWallMm": 175.196,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.39484185,
+       177.56277826491072
+      ],
+      [
+       4.9776726369999995,
+       175.196
+      ],
+      [
+       9.471447328,
+       170.95600000000002
+      ],
+      [
+       23.110476578,
+       165.659
+      ],
+      [
+       44.015582587,
+       165.659
+      ]
+     ]
+    },
+    {
+     "seed": 6,
+     "targetOperatorWallSeconds": 4.797469517,
+     "controlDepthMm": 175.87699999999998,
+     "armDepthAtControlWallMm": 176.36791079483257,
+     "armMinusControlMm": 0.4909107948325868,
+     "armAchievedDepthWithinControlWallMm": 178.40299999999996,
+     "armAchievedMinusControlMm": 2.525999999999982,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.8418771,
+       178.40299999999996
+      ],
+      [
+       5.027980608,
+       175.87699999999998
+      ],
+      [
+       7.5980264779999995,
+       171.63
+      ],
+      [
+       16.289878994,
+       164.087
+      ],
+      [
+       37.676714141,
+       164.002
+      ]
+     ]
+    },
+    {
+     "seed": 7,
+     "targetOperatorWallSeconds": 4.183305713000001,
+     "controlDepthMm": 176.322,
+     "armDepthAtControlWallMm": 174.99745381946408,
+     "armMinusControlMm": -1.3245461805359184,
+     "armAchievedDepthWithinControlWallMm": 176.322,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       2.982240532,
+       178.264
+      ],
+      [
+       3.514982904,
+       176.322
+      ],
+      [
+       5.486327696,
+       172.41500000000002
+      ],
+      [
+       19.492529922,
+       164.704
+      ],
+      [
+       39.70821649,
+       164.06
+      ]
+     ]
+    },
+    {
+     "seed": 8,
+     "targetOperatorWallSeconds": 5.549176488,
+     "controlDepthMm": 174.935,
+     "armDepthAtControlWallMm": 174.0099092568846,
+     "armMinusControlMm": -0.9250907431153905,
+     "armAchievedDepthWithinControlWallMm": 174.935,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.17701027,
+       177.28
+      ],
+      [
+       4.825087756,
+       174.935
+      ],
+      [
+       7.934058919,
+       170.963
+      ],
+      [
+       24.27524849,
+       166.66599999999997
+      ],
+      [
+       43.339356272,
+       161.523
+      ]
+     ]
+    },
+    {
+     "seed": 9,
+     "targetOperatorWallSeconds": 4.683156299,
+     "controlDepthMm": 171.624,
+     "armDepthAtControlWallMm": 172.12909609366812,
+     "armMinusControlMm": 0.5050960936681292,
+     "armAchievedDepthWithinControlWallMm": 173.97377826491066,
+     "armAchievedMinusControlMm": 2.349778264910668,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.299157611,
+       173.97377826491066
+      ],
+      [
+       5.062111732,
+       171.624
+      ],
+      [
+       8.774203635,
+       167.56577826491065
+      ],
+      [
+       27.524421814,
+       164.127
+      ],
+      [
+       49.568909333,
+       164.127
+      ]
+     ]
+    },
+    {
+     "seed": 10,
+     "targetOperatorWallSeconds": 3.299153658,
+     "controlDepthMm": 173.251,
+     "armDepthAtControlWallMm": 174.0799536024389,
+     "armMinusControlMm": 0.8289536024389008,
+     "armAchievedDepthWithinControlWallMm": 175.39367511657755,
+     "armAchievedMinusControlMm": 2.14267511657755,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       2.837967372,
+       175.39367511657755
+      ],
+      [
+       3.590160564,
+       173.251
+      ],
+      [
+       5.627819921,
+       169.579
+      ],
+      [
+       16.227820524,
+       161.49077826491072
+      ],
+      [
+       39.041170916,
+       160.98477826491072
+      ]
+     ]
+    },
+    {
+     "seed": 11,
+     "targetOperatorWallSeconds": 7.648474457,
+     "controlDepthMm": 169.234,
+     "armDepthAtControlWallMm": 169.00488243397177,
+     "armMinusControlMm": -0.2291175660282363,
+     "armAchievedDepthWithinControlWallMm": 169.234,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.758186737,
+       170.868
+      ],
+      [
+       7.404486059,
+       169.234
+      ],
+      [
+       12.148873112,
+       164.77877826491067
+      ],
+      [
+       33.796450773,
+       164.716
+      ],
+      [
+       56.874694686,
+       159.05
+      ]
+     ]
+    }
+   ],
+   "stats": {
+    "n": 12,
+    "armWins": 7,
+    "controlWins": 5,
+    "ties": 0,
+    "medianArmMinusControlMm": -0.059391740899528145,
+    "medianImprovementMm": 0.059391740899528145,
+    "rangeMm": [
+     -4.146937033941555,
+     1.9971750438062372
+    ]
+   },
+   "statsNoInterpolation": {
+    "n": 12,
+    "armWins": 3,
+    "controlWins": 3,
+    "ties": 6,
+    "medianArmMinusControlMm": 0.0,
+    "medianImprovementMm": -0.0,
+    "rangeMm": [
+     -3.9969999999999857,
+     2.525999999999982
+    ]
+   }
+  },
+  "16000000": {
+   "rows": [
+    {
+     "seed": 0,
+     "targetOperatorWallSeconds": 7.758333235,
+     "controlDepthMm": 167.422,
+     "armDepthAtControlWallMm": 167.25205467027138,
+     "armMinusControlMm": -0.16994532972861975,
+     "armAchievedDepthWithinControlWallMm": 167.422,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       5.733355468,
+       173.37991578608327
+      ],
+      [
+       6.619595219,
+       171.41899999999998
+      ],
+      [
+       6.757051797,
+       167.422
+      ],
+      [
+       26.871607665,
+       164.008
+      ],
+      [
+       48.581059661,
+       164.008
+      ]
+     ]
+    },
+    {
+     "seed": 1,
+     "targetOperatorWallSeconds": 8.466620024000001,
+     "controlDepthMm": 168.348,
+     "armDepthAtControlWallMm": 174.04100383454676,
+     "armMinusControlMm": 5.693003834546744,
+     "armAchievedDepthWithinControlWallMm": 168.348,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       4.666976978,
+       172.2413399423672
+      ],
+      [
+       7.561985179,
+       168.348
+      ],
+      [
+       7.642172318,
+       174.57600000000002
+      ],
+      [
+       23.781429723,
+       164.103
+      ],
+      [
+       45.319166974,
+       164.103
+      ]
+     ]
+    },
+    {
+     "seed": 2,
+     "targetOperatorWallSeconds": 7.504000746,
+     "controlDepthMm": 171.4,
+     "armDepthAtControlWallMm": 172.62068289525183,
+     "armMinusControlMm": 1.2206828952518265,
+     "armAchievedDepthWithinControlWallMm": 171.4,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       5.541889071,
+       175.1847782649107
+      ],
+      [
+       7.140875867,
+       171.4
+      ],
+      [
+       8.908780672,
+       177.34300000000002
+      ],
+      [
+       20.635220872,
+       165.48500000000004
+      ],
+      [
+       42.645643718,
+       164.30400000000003
+      ]
+     ]
+    },
+    {
+     "seed": 3,
+     "targetOperatorWallSeconds": 23.733629324,
+     "controlDepthMm": 168.582,
+     "armDepthAtControlWallMm": 168.582,
+     "armMinusControlMm": 0.0,
+     "armAchievedDepthWithinControlWallMm": 168.582,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       6.803184958,
+       176.061
+      ],
+      [
+       13.150228746,
+       169.882
+      ],
+      [
+       23.345185921,
+       168.582
+      ],
+      [
+       45.365592358,
+       168.582
+      ],
+      [
+       66.849386452,
+       168.582
+      ]
+     ]
+    },
+    {
+     "seed": 4,
+     "targetOperatorWallSeconds": 17.22309131,
+     "controlDepthMm": 166.73399999999998,
+     "armDepthAtControlWallMm": 166.69897726489938,
+     "armMinusControlMm": -0.03502273510059695,
+     "armAchievedDepthWithinControlWallMm": 166.73399999999998,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       4.295910072,
+       171.08177826491067
+      ],
+      [
+       8.844988075,
+       169.59699999999998
+      ],
+      [
+       16.95891322,
+       166.73399999999998
+      ],
+      [
+       36.412427977,
+       164.155
+      ],
+      [
+       58.333765172,
+       164.155
+      ]
+     ]
+    },
+    {
+     "seed": 5,
+     "targetOperatorWallSeconds": 9.919668897,
+     "controlDepthMm": 170.95600000000002,
+     "armDepthAtControlWallMm": 170.7819238537088,
+     "armMinusControlMm": -0.17407614629121326,
+     "armAchievedDepthWithinControlWallMm": 170.95600000000002,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.39484185,
+       177.56277826491072
+      ],
+      [
+       4.9776726369999995,
+       175.196
+      ],
+      [
+       9.471447328,
+       170.95600000000002
+      ],
+      [
+       23.110476578,
+       165.659
+      ],
+      [
+       44.015582587,
+       165.659
+      ]
+     ]
+    },
+    {
+     "seed": 6,
+     "targetOperatorWallSeconds": 7.617729916,
+     "controlDepthMm": 171.63,
+     "armDepthAtControlWallMm": 171.61290087958113,
+     "armMinusControlMm": -0.017099120418862412,
+     "armAchievedDepthWithinControlWallMm": 171.63,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.8418771,
+       178.40299999999996
+      ],
+      [
+       5.027980608,
+       175.87699999999998
+      ],
+      [
+       7.5980264779999995,
+       171.63
+      ],
+      [
+       16.289878994,
+       164.087
+      ],
+      [
+       37.676714141,
+       164.002
+      ]
+     ]
+    },
+    {
+     "seed": 7,
+     "targetOperatorWallSeconds": 6.395541738,
+     "controlDepthMm": 172.41500000000002,
+     "armDepthAtControlWallMm": 171.91443965075365,
+     "armMinusControlMm": -0.5005603492463706,
+     "armAchievedDepthWithinControlWallMm": 172.41500000000002,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       2.982240532,
+       178.264
+      ],
+      [
+       3.514982904,
+       176.322
+      ],
+      [
+       5.486327696,
+       172.41500000000002
+      ],
+      [
+       19.492529922,
+       164.704
+      ],
+      [
+       39.70821649,
+       164.06
+      ]
+     ]
+    },
+    {
+     "seed": 8,
+     "targetOperatorWallSeconds": 8.826804884,
+     "controlDepthMm": 170.963,
+     "armDepthAtControlWallMm": 170.7282478483933,
+     "armMinusControlMm": -0.23475215160669904,
+     "armAchievedDepthWithinControlWallMm": 170.963,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.17701027,
+       177.28
+      ],
+      [
+       4.825087756,
+       174.935
+      ],
+      [
+       7.934058919,
+       170.963
+      ],
+      [
+       24.27524849,
+       166.66599999999997
+      ],
+      [
+       43.339356272,
+       161.523
+      ]
+     ]
+    },
+    {
+     "seed": 9,
+     "targetOperatorWallSeconds": 8.58385634,
+     "controlDepthMm": 167.56577826491065,
+     "armDepthAtControlWallMm": 167.77387427922542,
+     "armMinusControlMm": 0.2080960143147763,
+     "armAchievedDepthWithinControlWallMm": 171.624,
+     "armAchievedMinusControlMm": 4.058221735089347,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.299157611,
+       173.97377826491066
+      ],
+      [
+       5.062111732,
+       171.624
+      ],
+      [
+       8.774203635,
+       167.56577826491065
+      ],
+      [
+       27.524421814,
+       164.127
+      ],
+      [
+       49.568909333,
+       164.127
+      ]
+     ]
+    },
+    {
+     "seed": 10,
+     "targetOperatorWallSeconds": 5.635542289,
+     "controlDepthMm": 169.579,
+     "armDepthAtControlWallMm": 169.57310752630653,
+     "armMinusControlMm": -0.0058924736934784505,
+     "armAchievedDepthWithinControlWallMm": 169.579,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       2.837967372,
+       175.39367511657755
+      ],
+      [
+       3.590160564,
+       173.251
+      ],
+      [
+       5.627819921,
+       169.579
+      ],
+      [
+       16.227820524,
+       161.49077826491072
+      ],
+      [
+       39.041170916,
+       160.98477826491072
+      ]
+     ]
+    },
+    {
+     "seed": 11,
+     "targetOperatorWallSeconds": 12.651933954,
+     "controlDepthMm": 164.77877826491067,
+     "armDepthAtControlWallMm": 164.77731938173676,
+     "armMinusControlMm": -0.001458883173910408,
+     "armAchievedDepthWithinControlWallMm": 164.77877826491067,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.758186737,
+       170.868
+      ],
+      [
+       7.404486059,
+       169.234
+      ],
+      [
+       12.148873112,
+       164.77877826491067
+      ],
+      [
+       33.796450773,
+       164.716
+      ],
+      [
+       56.874694686,
+       159.05
+      ]
+     ]
+    }
+   ],
+   "stats": {
+    "n": 12,
+    "armWins": 8,
+    "controlWins": 3,
+    "ties": 1,
+    "medianArmMinusControlMm": -0.011495797056170431,
+    "medianImprovementMm": 0.011495797056170431,
+    "rangeMm": [
+     -0.5005603492463706,
+     5.693003834546744
+    ]
+   },
+   "statsNoInterpolation": {
+    "n": 12,
+    "armWins": 0,
+    "controlWins": 1,
+    "ties": 11,
+    "medianArmMinusControlMm": 0.0,
+    "medianImprovementMm": -0.0,
+    "rangeMm": [
+     0.0,
+     4.058221735089347
+    ]
+   }
+  },
+  "32000000": {
+   "rows": [
+    {
+     "seed": 0,
+     "targetOperatorWallSeconds": 27.130488181,
+     "controlDepthMm": 164.008,
+     "armDepthAtControlWallMm": 164.008,
+     "armMinusControlMm": 0.0,
+     "armAchievedDepthWithinControlWallMm": 164.008,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       5.733355468,
+       173.37991578608327
+      ],
+      [
+       6.619595219,
+       171.41899999999998
+      ],
+      [
+       6.757051797,
+       167.422
+      ],
+      [
+       26.871607665,
+       164.008
+      ],
+      [
+       48.581059661,
+       164.008
+      ]
+     ]
+    },
+    {
+     "seed": 1,
+     "targetOperatorWallSeconds": 24.540937282,
+     "controlDepthMm": 164.103,
+     "armDepthAtControlWallMm": 164.103,
+     "armMinusControlMm": 0.0,
+     "armAchievedDepthWithinControlWallMm": 164.103,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       4.666976978,
+       172.2413399423672
+      ],
+      [
+       7.561985179,
+       168.348
+      ],
+      [
+       7.642172318,
+       174.57600000000002
+      ],
+      [
+       23.781429723,
+       164.103
+      ],
+      [
+       45.319166974,
+       164.103
+      ]
+     ]
+    },
+    {
+     "seed": 2,
+     "targetOperatorWallSeconds": 21.39551632,
+     "controlDepthMm": 165.48500000000004,
+     "armDepthAtControlWallMm": 165.4442052851338,
+     "armMinusControlMm": -0.040794714866251525,
+     "armAchievedDepthWithinControlWallMm": 165.48500000000004,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       5.541889071,
+       175.1847782649107
+      ],
+      [
+       7.140875867,
+       171.4
+      ],
+      [
+       8.908780672,
+       177.34300000000002
+      ],
+      [
+       20.635220872,
+       165.48500000000004
+      ],
+      [
+       42.645643718,
+       164.30400000000003
+      ]
+     ]
+    },
+    {
+     "seed": 3,
+     "targetOperatorWallSeconds": 45.680368825,
+     "controlDepthMm": 168.582,
+     "armDepthAtControlWallMm": 168.582,
+     "armMinusControlMm": 0.0,
+     "armAchievedDepthWithinControlWallMm": 168.582,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       6.803184958,
+       176.061
+      ],
+      [
+       13.150228746,
+       169.882
+      ],
+      [
+       23.345185921,
+       168.582
+      ],
+      [
+       45.365592358,
+       168.582
+      ],
+      [
+       66.849386452,
+       168.582
+      ]
+     ]
+    },
+    {
+     "seed": 4,
+     "targetOperatorWallSeconds": 36.833394412,
+     "controlDepthMm": 164.155,
+     "armDepthAtControlWallMm": 164.155,
+     "armMinusControlMm": 0.0,
+     "armAchievedDepthWithinControlWallMm": 164.155,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       4.295910072,
+       171.08177826491067
+      ],
+      [
+       8.844988075,
+       169.59699999999998
+      ],
+      [
+       16.95891322,
+       166.73399999999998
+      ],
+      [
+       36.412427977,
+       164.155
+      ],
+      [
+       58.333765172,
+       164.155
+      ]
+     ]
+    },
+    {
+     "seed": 5,
+     "targetOperatorWallSeconds": 23.731892157,
+     "controlDepthMm": 165.659,
+     "armDepthAtControlWallMm": 165.659,
+     "armMinusControlMm": 0.0,
+     "armAchievedDepthWithinControlWallMm": 165.659,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.39484185,
+       177.56277826491072
+      ],
+      [
+       4.9776726369999995,
+       175.196
+      ],
+      [
+       9.471447328,
+       170.95600000000002
+      ],
+      [
+       23.110476578,
+       165.659
+      ],
+      [
+       44.015582587,
+       165.659
+      ]
+     ]
+    },
+    {
+     "seed": 6,
+     "targetOperatorWallSeconds": 16.648993621,
+     "controlDepthMm": 164.087,
+     "armDepthAtControlWallMm": 164.08557273209965,
+     "armMinusControlMm": -0.001427267900339757,
+     "armAchievedDepthWithinControlWallMm": 164.087,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.8418771,
+       178.40299999999996
+      ],
+      [
+       5.027980608,
+       175.87699999999998
+      ],
+      [
+       7.5980264779999995,
+       171.63
+      ],
+      [
+       16.289878994,
+       164.087
+      ],
+      [
+       37.676714141,
+       164.002
+      ]
+     ]
+    },
+    {
+     "seed": 7,
+     "targetOperatorWallSeconds": 20.687203527,
+     "controlDepthMm": 164.704,
+     "armDepthAtControlWallMm": 164.6659419405306,
+     "armMinusControlMm": -0.03805805946942087,
+     "armAchievedDepthWithinControlWallMm": 164.704,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       2.982240532,
+       178.264
+      ],
+      [
+       3.514982904,
+       176.322
+      ],
+      [
+       5.486327696,
+       172.41500000000002
+      ],
+      [
+       19.492529922,
+       164.704
+      ],
+      [
+       39.70821649,
+       164.06
+      ]
+     ]
+    },
+    {
+     "seed": 8,
+     "targetOperatorWallSeconds": 25.423009299,
+     "controlDepthMm": 166.66599999999997,
+     "armDepthAtControlWallMm": 166.3563640124055,
+     "armMinusControlMm": -0.30963598759447564,
+     "armAchievedDepthWithinControlWallMm": 166.66599999999997,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.17701027,
+       177.28
+      ],
+      [
+       4.825087756,
+       174.935
+      ],
+      [
+       7.934058919,
+       170.963
+      ],
+      [
+       24.27524849,
+       166.66599999999997
+      ],
+      [
+       43.339356272,
+       161.523
+      ]
+     ]
+    },
+    {
+     "seed": 9,
+     "targetOperatorWallSeconds": 27.474938268,
+     "controlDepthMm": 164.127,
+     "armDepthAtControlWallMm": 164.1360752513294,
+     "armMinusControlMm": 0.009075251329392131,
+     "armAchievedDepthWithinControlWallMm": 167.56577826491065,
+     "armAchievedMinusControlMm": 3.4387782649106384,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.299157611,
+       173.97377826491066
+      ],
+      [
+       5.062111732,
+       171.624
+      ],
+      [
+       8.774203635,
+       167.56577826491065
+      ],
+      [
+       27.524421814,
+       164.127
+      ],
+      [
+       49.568909333,
+       164.127
+      ]
+     ]
+    },
+    {
+     "seed": 10,
+     "targetOperatorWallSeconds": 16.655989497,
+     "controlDepthMm": 161.49077826491072,
+     "armDepthAtControlWallMm": 161.4812814791859,
+     "armMinusControlMm": -0.009496785724820711,
+     "armAchievedDepthWithinControlWallMm": 161.49077826491072,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       2.837967372,
+       175.39367511657755
+      ],
+      [
+       3.590160564,
+       173.251
+      ],
+      [
+       5.627819921,
+       169.579
+      ],
+      [
+       16.227820524,
+       161.49077826491072
+      ],
+      [
+       39.041170916,
+       160.98477826491072
+      ]
+     ]
+    },
+    {
+     "seed": 11,
+     "targetOperatorWallSeconds": 34.301747161,
+     "controlDepthMm": 164.716,
+     "armDepthAtControlWallMm": 164.59194336270988,
+     "armMinusControlMm": -0.12405663729012417,
+     "armAchievedDepthWithinControlWallMm": 164.716,
+     "armAchievedMinusControlMm": 0.0,
+     "interpolationClamped": false,
+     "armLadder": [
+      [
+       3.758186737,
+       170.868
+      ],
+      [
+       7.404486059,
+       169.234
+      ],
+      [
+       12.148873112,
+       164.77877826491067
+      ],
+      [
+       33.796450773,
+       164.716
+      ],
+      [
+       56.874694686,
+       159.05
+      ]
+     ]
+    }
+   ],
+   "stats": {
+    "n": 12,
+    "armWins": 6,
+    "controlWins": 1,
+    "ties": 5,
+    "medianArmMinusControlMm": -0.0007136339501698785,
+    "medianImprovementMm": 0.0007136339501698785,
+    "rangeMm": [
+     -0.30963598759447564,
+     0.009075251329392131
+    ]
+   },
+   "statsNoInterpolation": {
+    "n": 12,
+    "armWins": 0,
+    "controlWins": 1,
+    "ties": 11,
+    "medianArmMinusControlMm": 0.0,
+    "medianImprovementMm": -0.0,
+    "rangeMm": [
+     0.0,
+     3.4387782649106384
+    ]
+   }
+  },
+  "48000000": {
+   "rows": [],
+   "stats": null,
+   "statsNoInterpolation": null
+  }
+ },
+ "perConfirmationOverhead": {
+  "cells": 47,
+  "median": 0.5216259341092523,
+  "max": 0.6630740493866195,
+  "min": 0.43484662684938996,
+  "rows": [
+   {
+    "seed": 0,
+    "work": 3341379,
+    "armMsPerConfirmation": 0.6184426402439017,
+    "controlMsPerConfirmation": 0.9326901585365852,
+    "ratio": 0.6630740493866195
+   },
+   {
+    "seed": 0,
+    "work": 8000000,
+    "armMsPerConfirmation": 0.6094675012562817,
+    "controlMsPerConfirmation": 1.0119547035175875,
+    "ratio": 0.6022675710066397
+   },
+   {
+    "seed": 0,
+    "work": 16000000,
+    "armMsPerConfirmation": 0.5096590013623975,
+    "controlMsPerConfirmation": 0.9425215320163481,
+    "ratio": 0.5407399025379055
+   },
+   {
+    "seed": 0,
+    "work": 32000000,
+    "armMsPerConfirmation": 0.5081603076923074,
+    "controlMsPerConfirmation": 0.9327748771712149,
+    "ratio": 0.5447834414595113
+   },
+   {
+    "seed": 1,
+    "work": 3341379,
+    "armMsPerConfirmation": 0.5745978715596325,
+    "controlMsPerConfirmation": 1.183687804281345,
+    "ratio": 0.48543025405967527
+   },
+   {
+    "seed": 1,
+    "work": 8000000,
+    "armMsPerConfirmation": 0.44655463346613566,
+    "controlMsPerConfirmation": 0.8900953439575023,
+    "ratio": 0.5016930337829701
+   },
+   {
+    "seed": 1,
+    "work": 16000000,
+    "armMsPerConfirmation": 0.4566308629550317,
+    "controlMsPerConfirmation": 0.8712758229835834,
+    "ratio": 0.5240944955770173
+   },
+   {
+    "seed": 1,
+    "work": 32000000,
+    "armMsPerConfirmation": 0.45649144585987245,
+    "controlMsPerConfirmation": 0.8777036199575367,
+    "ratio": 0.5200974856204393
+   },
+   {
+    "seed": 2,
+    "work": 3341379,
+    "armMsPerConfirmation": 0.5052704235807862,
+    "controlMsPerConfirmation": 0.8249263100436688,
+    "ratio": 0.6125037078209312
+   },
+   {
+    "seed": 2,
+    "work": 8000000,
+    "armMsPerConfirmation": 0.40335867201166137,
+    "controlMsPerConfirmation": 0.9275883658892116,
+    "ratio": 0.43484662684938996
+   },
+   {
+    "seed": 2,
+    "work": 16000000,
+    "armMsPerConfirmation": 0.4063571844863732,
+    "controlMsPerConfirmation": 0.8105565569531806,
+    "ratio": 0.5013310681414243
+   },
+   {
+    "seed": 2,
+    "work": 32000000,
+    "armMsPerConfirmation": 0.41919751585423626,
+    "controlMsPerConfirmation": 0.8219058045433023,
+    "ratio": 0.5100310930242989
+   },
+   {
+    "seed": 3,
+    "work": 8000000,
+    "armMsPerConfirmation": 0.48505273684210526,
+    "controlMsPerConfirmation": 0.9195111052631578,
+    "ratio": 0.5275115592032861
+   },
+   {
+    "seed": 3,
+    "work": 16000000,
+    "armMsPerConfirmation": 0.4918933999999999,
+    "controlMsPerConfirmation": 0.9237359799999997,
+    "ratio": 0.532504320119695
+   },
+   {
+    "seed": 3,
+    "work": 32000000,
+    "armMsPerConfirmation": 0.49355776000000007,
+    "controlMsPerConfirmation": 0.9290242999999998,
+    "ratio": 0.5312646396870353
+   },
+   {
+    "seed": 4,
+    "work": 3341379,
+    "armMsPerConfirmation": 0.4560411531914895,
+    "controlMsPerConfirmation": 0.883695719148937,
+    "ratio": 0.5160612904526574
+   },
+   {
+    "seed": 4,
+    "work": 8000000,
+    "armMsPerConfirmation": 0.46037485148514856,
+    "controlMsPerConfirmation": 0.8900323539603963,
+    "ratio": 0.5172563103314263
+   },
+   {
+    "seed": 4,
+    "work": 16000000,
+    "armMsPerConfirmation": 0.4664234256559763,
+    "controlMsPerConfirmation": 0.894172231778426,
+    "ratio": 0.5216259341092523
+   },
+   {
+    "seed": 4,
+    "work": 32000000,
+    "armMsPerConfirmation": 0.47046953427896,
+    "controlMsPerConfirmation": 0.8982211252955081,
+    "ratio": 0.5237791909249284
+   },
+   {
+    "seed": 5,
+    "work": 3341379,
+    "armMsPerConfirmation": 0.4603344935622318,
+    "controlMsPerConfirmation": 0.8891851845493561,
+    "ratio": 0.5177037377152565
+   },
+   {
+    "seed": 5,
+    "work": 8000000,
+    "armMsPerConfirmation": 0.46849590271132363,
+    "controlMsPerConfirmation": 0.8947393285486446,
+    "ratio": 0.5236116126372473
+   },
+   {
+    "seed": 5,
+    "work": 16000000,
+    "armMsPerConfirmation": 0.48633465789473745,
+    "controlMsPerConfirmation": 0.9179143556876066,
+    "ratio": 0.5298257455952149
+   },
+   {
+    "seed": 5,
+    "work": 32000000,
+    "armMsPerConfirmation": 0.4893861802232847,
+    "controlMsPerConfirmation": 0.9225570366826157,
+    "ratio": 0.5304671264370255
+   },
+   {
+    "seed": 6,
+    "work": 3341379,
+    "armMsPerConfirmation": 0.3924172723577235,
+    "controlMsPerConfirmation": 0.7991147398373978,
+    "ratio": 0.49106499078914717
+   },
+   {
+    "seed": 6,
+    "work": 8000000,
+    "armMsPerConfirmation": 0.39020565671641766,
+    "controlMsPerConfirmation": 0.7829677402985084,
+    "ratio": 0.49836747624832
+   },
+   {
+    "seed": 6,
+    "work": 16000000,
+    "armMsPerConfirmation": 0.4146070051813478,
+    "controlMsPerConfirmation": 0.8096919526276842,
+    "ratio": 0.512055237594777
+   },
+   {
+    "seed": 6,
+    "work": 32000000,
+    "armMsPerConfirmation": 0.4415889835209004,
+    "controlMsPerConfirmation": 0.8371199618167202,
+    "ratio": 0.5275097998649593
+   },
+   {
+    "seed": 7,
+    "work": 3341379,
+    "armMsPerConfirmation": 0.4159436363636363,
+    "controlMsPerConfirmation": 0.8233101748251755,
+    "ratio": 0.5052089104230483
+   },
+   {
+    "seed": 7,
+    "work": 8000000,
+    "armMsPerConfirmation": 0.42782054117647045,
+    "controlMsPerConfirmation": 0.83894228496732,
+    "ratio": 0.5099522921211864
+   },
+   {
+    "seed": 7,
+    "work": 16000000,
+    "armMsPerConfirmation": 0.4364663127930337,
+    "controlMsPerConfirmation": 0.842215987943738,
+    "ratio": 0.5182356058790357
+   },
+   {
+    "seed": 7,
+    "work": 32000000,
+    "armMsPerConfirmation": 0.44904085331452764,
+    "controlMsPerConfirmation": 0.8743441462153257,
+    "ratio": 0.5135744949608685
+   },
+   {
+    "seed": 8,
+    "work": 3341379,
+    "armMsPerConfirmation": 0.40517200925925917,
+    "controlMsPerConfirmation": 0.8296483302469144,
+    "ratio": 0.4883659672269509
+   },
+   {
+    "seed": 8,
+    "work": 8000000,
+    "armMsPerConfirmation": 0.4073151656891493,
+    "controlMsPerConfirmation": 0.822010667155425,
+    "ratio": 0.49551080291776134
+   },
+   {
+    "seed": 8,
+    "work": 16000000,
+    "armMsPerConfirmation": 0.43233773449319185,
+    "controlMsPerConfirmation": 0.8482958577912246,
+    "ratio": 0.5096544212993142
+   },
+   {
+    "seed": 8,
+    "work": 32000000,
+    "armMsPerConfirmation": 0.4456194323119769,
+    "controlMsPerConfirmation": 0.8653793103064072,
+    "ratio": 0.5149411674219426
+   },
+   {
+    "seed": 9,
+    "work": 3341379,
+    "armMsPerConfirmation": 0.4692537507692311,
+    "controlMsPerConfirmation": 0.903002129230769,
+    "ratio": 0.5196596282325152
+   },
+   {
+    "seed": 9,
+    "work": 8000000,
+    "armMsPerConfirmation": 0.4755057900709216,
+    "controlMsPerConfirmation": 0.8976205687943254,
+    "ratio": 0.5297403007482505
+   },
+   {
+    "seed": 9,
+    "work": 16000000,
+    "armMsPerConfirmation": 0.47996023882896727,
+    "controlMsPerConfirmation": 0.894508610169492,
+    "ratio": 0.5365630172503584
+   },
+   {
+    "seed": 9,
+    "work": 32000000,
+    "armMsPerConfirmation": 0.48173584330299124,
+    "controlMsPerConfirmation": 0.8913123420026011,
+    "ratio": 0.5404792692768361
+   },
+   {
+    "seed": 10,
+    "work": 3341379,
+    "armMsPerConfirmation": 0.4238304643874644,
+    "controlMsPerConfirmation": 0.8496352678062681,
+    "ratio": 0.4988381255427185
+   },
+   {
+    "seed": 10,
+    "work": 8000000,
+    "armMsPerConfirmation": 0.4366003312731764,
+    "controlMsPerConfirmation": 0.8512646044499387,
+    "ratio": 0.5128843945711736
+   },
+   {
+    "seed": 10,
+    "work": 16000000,
+    "armMsPerConfirmation": 0.44950933484750105,
+    "controlMsPerConfirmation": 0.860180140817651,
+    "ratio": 0.5225758111785939
+   },
+   {
+    "seed": 10,
+    "work": 32000000,
+    "armMsPerConfirmation": 0.4586382751677837,
+    "controlMsPerConfirmation": 0.8632792506908818,
+    "ratio": 0.5312745265228324
+   },
+   {
+    "seed": 11,
+    "work": 3341379,
+    "armMsPerConfirmation": 0.5980485714285713,
+    "controlMsPerConfirmation": 0.9119329128919862,
+    "ratio": 0.6558032536976841
+   },
+   {
+    "seed": 11,
+    "work": 8000000,
+    "armMsPerConfirmation": 0.5438405279999998,
+    "controlMsPerConfirmation": 0.9062832660000006,
+    "ratio": 0.6000778657210686
+   },
+   {
+    "seed": 11,
+    "work": 16000000,
+    "armMsPerConfirmation": 0.5050297399014778,
+    "controlMsPerConfirmation": 0.9005869605911336,
+    "ratio": 0.5607784278488586
+   },
+   {
+    "seed": 11,
+    "work": 32000000,
+    "armMsPerConfirmation": 0.5042121066536206,
+    "controlMsPerConfirmation": 0.9037529951076313,
+    "ratio": 0.5579091957460922
+   }
+  ]
+ },
+ "aborts": {
+  "union": 1,
+  "miter": 1
+ },
+ "contractValidFailures": [],
+ "exactValidFailures": [],
+ "armLabelFailures": [],
+ "publicationAudit": {
+  "layouts": 96,
+  "unionAcceptsAll": true,
+  "miterRefusesUnionAccepts": 0,
+  "contractRefusals": [],
+  "newAdmissions": []
+ },
+ "preCommittedRule": {
+  "clausesPerBudget": {
+   "3341379": {
+    "equalWallWins": 8,
+    "equalWallWinsRequired": 8,
+    "equalWallWinClausePasses": true,
+    "equalWallMedianImprovementMm": 0.06321169432378326,
+    "medianImprovementClausePasses": false,
+    "equalWallWinsNoInterpolation": 1,
+    "equalWallMedianImprovementNoInterpolationMm": -0.0,
+    "equalWorkWins": 0,
+    "equalWorkMedianImprovementMm": -0.0
+   },
+   "8000000": {
+    "equalWallWins": 7,
+    "equalWallWinsRequired": 8,
+    "equalWallWinClausePasses": false,
+    "equalWallMedianImprovementMm": 0.059391740899528145,
+    "medianImprovementClausePasses": false,
+    "equalWallWinsNoInterpolation": 3,
+    "equalWallMedianImprovementNoInterpolationMm": -0.0,
+    "equalWorkWins": 0,
+    "equalWorkMedianImprovementMm": -0.0
+   },
+   "16000000": {
+    "equalWallWins": 8,
+    "equalWallWinsRequired": 8,
+    "equalWallWinClausePasses": true,
+    "equalWallMedianImprovementMm": 0.011495797056170431,
+    "medianImprovementClausePasses": false,
+    "equalWallWinsNoInterpolation": 0,
+    "equalWallMedianImprovementNoInterpolationMm": -0.0,
+    "equalWorkWins": 0,
+    "equalWorkMedianImprovementMm": -0.0
+   },
+   "32000000": {
+    "equalWallWins": 6,
+    "equalWallWinsRequired": 8,
+    "equalWallWinClausePasses": false,
+    "equalWallMedianImprovementMm": 0.0007136339501698785,
+    "medianImprovementClausePasses": false,
+    "equalWallWinsNoInterpolation": 0,
+    "equalWallMedianImprovementNoInterpolationMm": -0.0,
+    "equalWorkWins": 0,
+    "equalWorkMedianImprovementMm": -0.0
+   }
+  },
+  "perConfirmationOverheadClausePasses": true,
+  "perConfirmationOverheadMax": 0.6630740493866195,
+  "everyPublicationPassesUntouchedContractValidator": true,
+  "everyArmRunReportedItsArm": true,
+  "anyBudgetSatisfiesBothQualityClauses": false,
+  "VERDICT": "DO-NOT-PROMOTE",
+  "failingClauses": [
+   ">=8/12 paired wins at equal operator wall AND >=1 mm median improvement (at any measured budget)"
+  ],
+  "depthClassNote": {
+   "contactBlockClassMm": 0.506,
+   "m34ClassMm": 1.104
+  }
+ }
+}

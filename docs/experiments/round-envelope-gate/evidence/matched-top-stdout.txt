@@ -1,0 +1,16 @@
+seed0 union:48000000 depth=164.0080 delta=10.2001mm work=40.95M opwall=48.58s wall=48.67s conf=1612 armOk=True
+seed1 union:48000000 depth=164.1030 delta=11.9530mm work=40.35M opwall=45.32s wall=45.41s conf=1884 armOk=True
+seed2 union:48000000 depth=164.3040 delta=14.7020mm work=37.87M opwall=42.65s wall=42.72s conf=2136 armOk=True
+seed3 union:48000000 depth=168.5820 delta=7.4790mm work=56.34M opwall=66.85s wall=66.94s conf=50 armOk=True
+seed4 union:48000000 depth=164.1550 delta=7.4945mm work=49.30M opwall=58.33s wall=58.42s conf=846 armOk=True
+seed5 union:48000000 depth=165.6590 delta=13.3928mm work=37.86M opwall=44.02s wall=44.11s conf=1881 armOk=True
+seed6 union:48000000 depth=164.0020 delta=15.6180mm work=35.82M opwall=37.68s wall=37.78s conf=2498 armOk=True
+seed7 union:48000000 depth=164.0600 delta=15.4623mm work=35.73M opwall=39.71s wall=39.81s conf=2177 armOk=True
+seed8 union:48000000 depth=161.5230 delta=17.4090mm work=39.67M opwall=43.34s wall=43.43s conf=2033 armOk=True
+seed9 union:48000000 depth=164.1270 delta=10.8386mm work=44.33M opwall=49.57s wall=49.66s conf=1538 armOk=True
+seed10 union:48000000 depth=160.9848 delta=15.3774mm work=33.52M opwall=39.04s wall=39.13s conf=2566 armOk=True
+seed11 union:48000000 depth=159.0500 delta=12.5641mm work=48.00M opwall=56.87s wall=56.97s conf=1053 armOk=True
+{
+ "cells": 12,
+ "armsReportedCorrectly": true
+}

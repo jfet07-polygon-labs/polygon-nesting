@@ -1,0 +1,378 @@
+{
+ "binary": "/var/lib/t3/tmp/rekgate/bin/meas",
+ "binarySha256": "9e6ad285f0e3980c3a2b5720e44e2a0baf7e4c13f57d794305da3b47467df4a2",
+ "workCap": 16000000,
+ "replicas": 5,
+ "cells": [
+  {
+   "seed": 0,
+   "runs": [
+    {
+     "replica": 0,
+     "arm": "miter",
+     "operatorWallSeconds": 7.557540078,
+     "processWallSeconds": 7.616872926009819,
+     "rawSourceDepthMm": 167.422,
+     "fingerprint": "7b8f54b4677c65cf6c896f69d775ca3fdbba6a3425ae9fe04b074720b7adcc22",
+     "msPerConfirmation": 0.9342907765667582,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 0,
+     "arm": "union",
+     "operatorWallSeconds": 6.70100147,
+     "processWallSeconds": 6.768708462012,
+     "rawSourceDepthMm": 167.422,
+     "fingerprint": "7b8f54b4677c65cf6c896f69d775ca3fdbba6a3425ae9fe04b074720b7adcc22",
+     "msPerConfirmation": 0.5082884386920977,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 1,
+     "arm": "union",
+     "operatorWallSeconds": 6.703251219,
+     "processWallSeconds": 6.769413462956436,
+     "rawSourceDepthMm": 167.422,
+     "fingerprint": "7b8f54b4677c65cf6c896f69d775ca3fdbba6a3425ae9fe04b074720b7adcc22",
+     "msPerConfirmation": 0.5088916648501368,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 1,
+     "arm": "miter",
+     "operatorWallSeconds": 7.537129162,
+     "processWallSeconds": 7.596172474091873,
+     "rawSourceDepthMm": 167.422,
+     "fingerprint": "7b8f54b4677c65cf6c896f69d775ca3fdbba6a3425ae9fe04b074720b7adcc22",
+     "msPerConfirmation": 0.936037930517711,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 2,
+     "arm": "miter",
+     "operatorWallSeconds": 7.573157814,
+     "processWallSeconds": 7.6355071070138365,
+     "rawSourceDepthMm": 167.422,
+     "fingerprint": "7b8f54b4677c65cf6c896f69d775ca3fdbba6a3425ae9fe04b074720b7adcc22",
+     "msPerConfirmation": 0.9431592452316071,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 2,
+     "arm": "union",
+     "operatorWallSeconds": 6.706681929,
+     "processWallSeconds": 6.770348947029561,
+     "rawSourceDepthMm": 167.422,
+     "fingerprint": "7b8f54b4677c65cf6c896f69d775ca3fdbba6a3425ae9fe04b074720b7adcc22",
+     "msPerConfirmation": 0.5090979264305177,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 3,
+     "arm": "union",
+     "operatorWallSeconds": 6.683294402,
+     "processWallSeconds": 6.741899603046477,
+     "rawSourceDepthMm": 167.422,
+     "fingerprint": "7b8f54b4677c65cf6c896f69d775ca3fdbba6a3425ae9fe04b074720b7adcc22",
+     "msPerConfirmation": 0.5082604925068125,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 3,
+     "arm": "miter",
+     "operatorWallSeconds": 7.557482971,
+     "processWallSeconds": 7.62010341999121,
+     "rawSourceDepthMm": 167.422,
+     "fingerprint": "7b8f54b4677c65cf6c896f69d775ca3fdbba6a3425ae9fe04b074720b7adcc22",
+     "msPerConfirmation": 0.9358281083106273,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 4,
+     "arm": "miter",
+     "operatorWallSeconds": 7.556018857,
+     "processWallSeconds": 7.612133105052635,
+     "rawSourceDepthMm": 167.422,
+     "fingerprint": "7b8f54b4677c65cf6c896f69d775ca3fdbba6a3425ae9fe04b074720b7adcc22",
+     "msPerConfirmation": 0.9344948501362391,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 4,
+     "arm": "union",
+     "operatorWallSeconds": 6.693563831,
+     "processWallSeconds": 6.751580459997058,
+     "rawSourceDepthMm": 167.422,
+     "fingerprint": "7b8f54b4677c65cf6c896f69d775ca3fdbba6a3425ae9fe04b074720b7adcc22",
+     "msPerConfirmation": 0.5083966137602185,
+     "armReportedCorrectly": true
+    }
+   ],
+   "depthsIdenticalWithinArm": true,
+   "armsAgreeOnDepth": true,
+   "medianOperatorWallSeconds": {
+    "miter": 7.557482971,
+    "union": 6.70100147
+   },
+   "operatorWallRatio": 0.8866710643892233,
+   "pairedRatios": [
+    0.8866643644413631,
+    0.8893639839417681,
+    0.8855859198657919,
+    0.8843280795531414,
+    0.8858585397519211
+   ],
+   "medianPairedRatio": 0.8858585397519211
+  },
+  {
+   "seed": 1,
+   "runs": [
+    {
+     "replica": 0,
+     "arm": "miter",
+     "operatorWallSeconds": 7.947753303,
+     "processWallSeconds": 8.012935584993102,
+     "rawSourceDepthMm": 168.348,
+     "fingerprint": "2b5dd208fdb76c1be16e85eb33737bb3eace10d1ab6f86fc5605f61520502789",
+     "msPerConfirmation": 0.8648864489650252,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 0,
+     "arm": "union",
+     "operatorWallSeconds": 7.399646935,
+     "processWallSeconds": 7.456943714991212,
+     "rawSourceDepthMm": 168.348,
+     "fingerprint": "2b5dd208fdb76c1be16e85eb33737bb3eace10d1ab6f86fc5605f61520502789",
+     "msPerConfirmation": 0.4488276302640976,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 1,
+     "arm": "union",
+     "operatorWallSeconds": 7.372654053,
+     "processWallSeconds": 7.4349092489574105,
+     "rawSourceDepthMm": 168.348,
+     "fingerprint": "2b5dd208fdb76c1be16e85eb33737bb3eace10d1ab6f86fc5605f61520502789",
+     "msPerConfirmation": 0.44906398857958607,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 1,
+     "arm": "miter",
+     "operatorWallSeconds": 7.967253129,
+     "processWallSeconds": 8.034192153951153,
+     "rawSourceDepthMm": 168.348,
+     "fingerprint": "2b5dd208fdb76c1be16e85eb33737bb3eace10d1ab6f86fc5605f61520502789",
+     "msPerConfirmation": 0.8680383547466116,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 2,
+     "arm": "miter",
+     "operatorWallSeconds": 7.894823375,
+     "processWallSeconds": 7.953081186977215,
+     "rawSourceDepthMm": 168.348,
+     "fingerprint": "2b5dd208fdb76c1be16e85eb33737bb3eace10d1ab6f86fc5605f61520502789",
+     "msPerConfirmation": 0.8614598986438248,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 2,
+     "arm": "union",
+     "operatorWallSeconds": 7.394550596,
+     "processWallSeconds": 7.459600484929979,
+     "rawSourceDepthMm": 168.348,
+     "fingerprint": "2b5dd208fdb76c1be16e85eb33737bb3eace10d1ab6f86fc5605f61520502789",
+     "msPerConfirmation": 0.45012650749464655,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 3,
+     "arm": "union",
+     "operatorWallSeconds": 7.385425074,
+     "processWallSeconds": 7.4394921499770135,
+     "rawSourceDepthMm": 168.348,
+     "fingerprint": "2b5dd208fdb76c1be16e85eb33737bb3eace10d1ab6f86fc5605f61520502789",
+     "msPerConfirmation": 0.4476852419700218,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 3,
+     "arm": "miter",
+     "operatorWallSeconds": 7.8896335650000005,
+     "processWallSeconds": 7.9497523760655895,
+     "rawSourceDepthMm": 168.348,
+     "fingerprint": "2b5dd208fdb76c1be16e85eb33737bb3eace10d1ab6f86fc5605f61520502789",
+     "msPerConfirmation": 0.8657787380442553,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 4,
+     "arm": "miter",
+     "operatorWallSeconds": 7.904447513,
+     "processWallSeconds": 7.970597882056609,
+     "rawSourceDepthMm": 168.348,
+     "fingerprint": "2b5dd208fdb76c1be16e85eb33737bb3eace10d1ab6f86fc5605f61520502789",
+     "msPerConfirmation": 0.8656125367594559,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 4,
+     "arm": "union",
+     "operatorWallSeconds": 7.361222732,
+     "processWallSeconds": 7.418999386951327,
+     "rawSourceDepthMm": 168.348,
+     "fingerprint": "2b5dd208fdb76c1be16e85eb33737bb3eace10d1ab6f86fc5605f61520502789",
+     "msPerConfirmation": 0.4462034225553178,
+     "armReportedCorrectly": true
+    }
+   ],
+   "depthsIdenticalWithinArm": true,
+   "armsAgreeOnDepth": true,
+   "medianOperatorWallSeconds": {
+    "miter": 7.904447513,
+    "union": 7.385425074
+   },
+   "operatorWallRatio": 0.9343379232835194,
+   "pairedRatios": [
+    0.9310363133952448,
+    0.9253696265986932,
+    0.936632809217217,
+    0.9360922802249307,
+    0.9312760594454466
+   ],
+   "medianPairedRatio": 0.9312760594454466
+  },
+  {
+   "seed": 2,
+   "runs": [
+    {
+     "replica": 0,
+     "arm": "miter",
+     "operatorWallSeconds": 7.268464031,
+     "processWallSeconds": 7.323645356926136,
+     "rawSourceDepthMm": 171.4,
+     "fingerprint": "a8e64f4f4aabd7e90d70761fcce1c4eb29c9e25e8c59ef9a94e88a3aea35a983",
+     "msPerConfirmation": 0.8050541481481482,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 0,
+     "arm": "union",
+     "operatorWallSeconds": 6.827236575,
+     "processWallSeconds": 6.882829246926121,
+     "rawSourceDepthMm": 171.4,
+     "fingerprint": "a8e64f4f4aabd7e90d70761fcce1c4eb29c9e25e8c59ef9a94e88a3aea35a983",
+     "msPerConfirmation": 0.4092834619147442,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 1,
+     "arm": "union",
+     "operatorWallSeconds": 6.802715318,
+     "processWallSeconds": 6.866823628079146,
+     "rawSourceDepthMm": 171.4,
+     "fingerprint": "a8e64f4f4aabd7e90d70761fcce1c4eb29c9e25e8c59ef9a94e88a3aea35a983",
+     "msPerConfirmation": 0.40894169811320713,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 1,
+     "arm": "miter",
+     "operatorWallSeconds": 7.2951531339999995,
+     "processWallSeconds": 7.356679983087815,
+     "rawSourceDepthMm": 171.4,
+     "fingerprint": "a8e64f4f4aabd7e90d70761fcce1c4eb29c9e25e8c59ef9a94e88a3aea35a983",
+     "msPerConfirmation": 0.8093561376659675,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 2,
+     "arm": "miter",
+     "operatorWallSeconds": 7.277384663,
+     "processWallSeconds": 7.343615132966079,
+     "rawSourceDepthMm": 171.4,
+     "fingerprint": "a8e64f4f4aabd7e90d70761fcce1c4eb29c9e25e8c59ef9a94e88a3aea35a983",
+     "msPerConfirmation": 0.807125880503144,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 2,
+     "arm": "union",
+     "operatorWallSeconds": 6.7578924350000005,
+     "processWallSeconds": 6.822731783031486,
+     "rawSourceDepthMm": 171.4,
+     "fingerprint": "a8e64f4f4aabd7e90d70761fcce1c4eb29c9e25e8c59ef9a94e88a3aea35a983",
+     "msPerConfirmation": 0.41337534591194974,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 3,
+     "arm": "union",
+     "operatorWallSeconds": 6.750932665,
+     "processWallSeconds": 6.8156604409450665,
+     "rawSourceDepthMm": 171.4,
+     "fingerprint": "a8e64f4f4aabd7e90d70761fcce1c4eb29c9e25e8c59ef9a94e88a3aea35a983",
+     "msPerConfirmation": 0.4081566023759611,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 3,
+     "arm": "miter",
+     "operatorWallSeconds": 7.231633386,
+     "processWallSeconds": 7.297128766076639,
+     "rawSourceDepthMm": 171.4,
+     "fingerprint": "a8e64f4f4aabd7e90d70761fcce1c4eb29c9e25e8c59ef9a94e88a3aea35a983",
+     "msPerConfirmation": 0.806140483577917,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 4,
+     "arm": "miter",
+     "operatorWallSeconds": 7.289840437,
+     "processWallSeconds": 7.347979680052958,
+     "rawSourceDepthMm": 171.4,
+     "fingerprint": "a8e64f4f4aabd7e90d70761fcce1c4eb29c9e25e8c59ef9a94e88a3aea35a983",
+     "msPerConfirmation": 0.8087735856044719,
+     "armReportedCorrectly": true
+    },
+    {
+     "replica": 4,
+     "arm": "union",
+     "operatorWallSeconds": 6.754024,
+     "processWallSeconds": 6.812672232976183,
+     "rawSourceDepthMm": 171.4,
+     "fingerprint": "a8e64f4f4aabd7e90d70761fcce1c4eb29c9e25e8c59ef9a94e88a3aea35a983",
+     "msPerConfirmation": 0.4069224171907758,
+     "armReportedCorrectly": true
+    }
+   ],
+   "depthsIdenticalWithinArm": true,
+   "armsAgreeOnDepth": true,
+   "medianOperatorWallSeconds": {
+    "miter": 7.277384663,
+    "union": 6.7578924350000005
+   },
+   "operatorWallRatio": 0.9286155326320422,
+   "pairedRatios": [
+    0.9392956401630159,
+    0.932497946656537,
+    0.9286155326320422,
+    0.9335280571702366,
+    0.9264981940783734
+   ],
+   "medianPairedRatio": 0.932497946656537
+  }
+ ],
+ "summary": {
+  "cells": 3,
+  "medianPairedOperatorWallRatio": 0.9312760594454466,
+  "range": [
+   0.8858585397519211,
+   0.932497946656537
+  ],
+  "allDepthsIdenticalWithinArm": true,
+  "allArmsAgreeOnDepth": true
+ }
+}
