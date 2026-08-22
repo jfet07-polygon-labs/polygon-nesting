@@ -132,9 +132,9 @@ Every other cell keeps **200,000**.
 | **triangle-20** — locked `W = 70.742` | fatal | **PASS** *(was FAIL)* | Φ 17.8407 → **0.0**, **0** active rows of any kind, dual-valid child at **70.74150389598567** ≤ 70.742, repair **5.0 µm**, giveback **0.0**, first strict child at proposal **780** of 200,000 |
 | **numeric soundness** — 1,000 states | fatal | **PASS** | 0 outside the 4 µm band (worst **0 µm**), 0 containment false-feasible on **60**, 0 incremental mismatches, **501/501** force on the scored population |
 | **throughput** | fatal | **PASS** | cold Φ **37.07 µs** (≤200), row rebuild **1.250 µs** (≤20), **7.43 M** cell gaps/s (≥1 M), **981,975** proposals projected into 8 s (≥100 K) |
-| S2 — ±2 mm / ±10° | diagnostic | fail | Φ 12,668 → **1,137.59**, `max_g` **16.77 mm** — *worse* than the previous round's 362.36 / 9.13 |
-| C168 — squeezed to 168.484 | diagnostic | fail | Φ 2,117.88 → **1,139.40**, `max_g` **11.40 mm** |
-| random-T — uniform throw, 8 jumps | diagnostic | fail | Φ 182,899 → **4,207.06**, `max_g` **20.74 mm**; 8 jumps, **8 installed**, 7 improving — *better* than the previous round's 8,688.3 / 28.29 |
+| S2 — ±2 mm / ±10° | diagnostic | fail | Φ 12,668 → **1,137.59**, `max_g` **16.77 mm** — *worse* than the previous round's 362.36 / 9.13, from a bit-identical entry |
+| C168 — squeezed to 168.484 | diagnostic | fail | Φ 2,117.88 → **1,139.40**, `max_g` **11.40 mm** — worse, but from a *different* entry (2,117.88 against 1,932.92), so not a clean comparison |
+| random-T — uniform throw, 8 jumps | diagnostic | fail | Φ 182,899 → **4,207.06**, `max_g` **20.74 mm**; 8 jumps, **8 installed**, 7 improving — *better* than the previous round's 8,688.3 / 28.29, from a bit-identical entry |
 | 10,000-state corpus | diagnostic | **pass** | 0 outside band, 0 containment false-feasible on **589**, 0 incremental mismatches, **5001/5001** |
 
 `GATE0_PASS: false`, `fatalFailures: ["C175"]` (`evidence/gate0-rerun.json`).
@@ -184,9 +184,11 @@ be checked, and they give opposite answers:
 * *"If 0/3 with a real INSTALLED jump on trajectories stalling above 0.1 mm:
   the family's separator fails."* Seeds 0 and 2 stalled at `max_g` 2.27 and
   2.42 mm, took the **strip** branch, and **installed** the relocation
-  (`jumpCommitted: 1` on both). Seed 1 never stalled at all — `weightUpdates`
-  and `maxGuidedPenalty` are both 0 — so no jump was ever licensed on it, and
-  it was still improving when the quota ran out at 1.59 s of its 2.0 s.
+  (`jumpCommitted: 1` on both). Seed 1 never stalled at all: `guidedStalls: 0`
+  over **3,934** sweeps, `weightUpdates: 0`, `maxGuidedPenalty: 0`. Every one of
+  its sweeps strictly improved raw Φ, so the stall ladder never fired, no jump
+  was ever licensed, and it was still descending when the quota ran out at
+  1.59 s of its 2.0 s. Seed 1 is a **budget** failure; seeds 0 and 2 are stalls.
 
 So the literal antecedent of §0.4 is satisfied on two of three seeds. **§2
 explains why this document nevertheless does not call C175 paradigm
@@ -246,10 +248,11 @@ source origin. On this campaign's fixtures it never does:
 | triangle-20 (20 pieces) | 53.15 mm | 40.31 mm | **1.32** |
 
 So every rotational step carries an unmodelled rigid translation of
-`|centroid − origin| · dtheta`, which on **every piece of both fixtures** is
-larger than the rotational displacement `R · dtheta` the gradient does model.
-The direction the ladder walks is not the direction the gradient computed, and
-the error term is the dominant one.
+`|centroid − origin| · dtheta`, which on **every piece of both fixtures** is at
+least as large as — and up to 1.35 times — the rotational displacement
+`R · dtheta` that the gradient does model. The direction the ladder walks is not
+the direction the gradient computed, and the unmodelled part is the same size
+as the modelled part or bigger.
 
 This is a defect of exactly the class the two reviews were hunting — a
 force model and a coordinate that disagree — and neither of them named it. It
@@ -266,6 +269,15 @@ pre-committed measurement of anything — which is the precise failure mode §0
 exists to prevent, and the one the autopsy round was called to correct. It is
 therefore **reported and not repaired**, and it belongs in the next round's
 frozen list, not this one's.
+
+**And it is a reading plus two measurements, not a proof.** The two
+measurements are the offset table above and the census's step-scaling; the
+reading is the four lines of `incident_gradient` and `apply_pose` quoted. What
+would settle it is a unit vector — "a step of `s` along the SE(2) direction
+lowers the incident guided energy for small `s`" — and that vector cannot be
+committed in this round, because on this code it would be **red**. Writing it
+is the first thing the next round should do, before the fix, so that the fix
+has something to turn green.
 
 ### 2.4 Why it changes C175's reading and not S1's or triangle-20's
 
@@ -327,6 +339,27 @@ not upgrade it to a family kill.**
 
 Nothing in this round widened a band, raised a budget beyond §0.6's derivation,
 granted extra jump allowance, or disabled sag.
+
+### 3.1 What the three diagnostics cost
+
+S2's entry is **bit-identical** across the two rounds (Φ 12,668.141430765654,
+same `perturbedPoseDigest`), so its comparison is clean and it is **worse**:
+362.36 → 1,137.59 of raw Φ, 9.13 → 16.77 mm of `max_g`. Its one jump was a
+**strip** relocation at `max_g = 9.13 mm`, installed, guided Φ 578.6 → 2,455.1,
+and the trajectory did not recover inside its quota. That is the cost of the
+unconditional commit at a scale where the strip branch is licensed, and it is
+the same trade the previous round measured on its `always` arm — narrowed now
+to the cells that actually stall in millimetres.
+
+C168 is also worse but its entry moved too (2,117.88 against 1,932.92, because
+the corrected shock order compresses a perturbed parent), so its comparison is
+not clean and is not offered as one.
+
+random-T is **better** from a bit-identical entry: 8,688.3 → 4,207.06, and
+8 of 8 jumps installed against the previous round's "8 jumps, 4 improving".
+
+None of the three carries a fatal verdict; all three failed before and all
+three fail now.
 
 ---
 
@@ -428,7 +461,62 @@ only when, the cell it was watching came back.
 
 ---
 
-## 7. Reproduction
+## 7. The round-boundary battery
+
+Run from the clean committed tree, on binaries rebuilt from it.
+`drivers/heavy.sh`, `FAILURES=0`.
+
+### 7.1 The four pinned gates, on two binaries
+
+`evidence/gates.json`, `evidence/binaries.txt`. The `base` binary is
+`--features jagua-experimental` (this round's feature **absent**); the `meas`
+binary is `--features jagua-experimental,overlap-ics` (**compiled**, and
+unarmed — nothing outside the example can reach it).
+
+| gate | pinned | base | meas | documents identical |
+|---|---|:--:|:--:|:--:|
+| g1 | 206.869 / `8a7737381238fa4d` | ✅ | ✅ | ✅ |
+| g2 | 159.09233022733062 / `fa01012af1d559ae` | ✅ | ✅ | ✅ |
+| g3 | 159.07876040364795 / `e28fba007f8031d4` | ✅ | ✅ | ✅ |
+| g4 | 164.0375677990678 / `49f094d7e59a9008` | ✅ | ✅ | ✅ |
+
+`BASE_ALL_PASS: true`, `MEAS_ALL_PASS: true`,
+**`WHOLE_DOCUMENT_IDENTITY: true`** on all four. g2, g3 and g4 also report
+`exactValid: true` and `contractValid: true`.
+
+The `base` binary's sha256 is `61befdc544b4135a…` — **byte-identical to the
+verification round's base binary**, which is the check that matters here: this
+round changed `search::overlap_ics` substantially and the default build did not
+move one byte. The `meas` binary is `2fc9ac2c00511ca8…` and differs from the
+previous rounds', as it must.
+
+### 7.2 The suites
+
+`evidence/suites.json` and `evidence/suite-*.log`. All `--release`, every exit
+status read directly on the line after its command, no pipelines. `SUITES_PASS:
+true`; no suite tripped the campaign's known allocator flake, so no rerun clause
+fired.
+
+| # | features | targets | passed | failed | ignored | exit |
+|---|---|---:|---:|---:|---:|---:|
+| 1 | `jagua-experimental` | 55 | 1293 | 0 | 2 | **0** |
+| 2 | the protocol's full combo | 55 | 1357 | 0 | 2 | **0** |
+| 3 | `jagua-experimental`, `--example general_request_benchmark` | 1 | 20 | 0 | 0 | **0** |
+| 4 | `jagua-experimental,overlap-ics` | 55 | **1342** | 0 | 2 | **0** |
+| 5 | `overlap-ics` alone, `--lib --tests` | 50 | **1152** | 0 | 0 | **0** |
+
+Suites 1, 2 and 3 are unchanged from both previous rounds. Suites 4 and 5 are
+each **+2** (1340 → 1342, 1150 → 1152): the two sag-specific vectors this round
+added, and nothing else.
+
+`run-suites.sh` writes its five logs into the previous round's committed
+`evidence/`, so `heavy.sh` copies them here and restores the previous round's
+with `git checkout` — the same procedure the verification round used, so all
+three rounds' logs exist and none overwrote another.
+
+---
+
+## 8. Reproduction
 
 ```sh
 bash docs/experiments/overlap-ics/gate0-rerun/drivers/rerun.sh   # every cell + basin + determinism
