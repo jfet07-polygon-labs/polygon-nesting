@@ -11,7 +11,7 @@ use crate::geometry::general_polygon::PolygonSet;
 use crate::search::general_fast::{GeneralFastPiece, GeneralFastSettings};
 use crate::validation::sat::measure_convex_sat_penetration;
 
-use super::contact::{convex_cell_gap, triangle_minkowski_signed_distance};
+use super::contact::convex_cell_gap;
 use super::decomposition::{decompose, ear_clip, is_convex, signed_area, source_ring};
 use super::descent::{counter_hash, rotated_halton, DescentConfig};
 use super::diagnostics::WorkVector;
@@ -45,6 +45,117 @@ fn square(x: f64, y: f64, size: f64) -> Vec<[f64; 2]> {
 fn triangle(a: [f64; 2], b: [f64; 2], c: [f64; 2]) -> [[f64; 2]; 3] {
     [a, b, c]
 }
+
+/// Oracle two: the independent nine-point Minkowski hull for the triangle
+/// path.
+///
+/// `C = conv{a_u - b_v}` over the nine vertex differences; the signed distance
+/// is `dist(0, C)` outside and `-dist(0, ∂C)` inside. This is Sol review 14
+/// Round 1's construction, retained by the convergence as the small-cell test
+/// oracle and never as the hot path. It is `pub` so the module's own tests and
+/// the corpus driver can differential it against [`convex_cell_gap`]; nothing
+/// in the descent calls it.
+fn triangle_minkowski_signed_distance(a: &[[f64; 2]; 3], b: &[[f64; 2]; 3]) -> f64 {
+    let mut difference = [[0.0f64; 2]; 9];
+    let mut count = 0;
+    for u in a.iter() {
+        for v in b.iter() {
+            difference[count] = [u[0] - v[0], u[1] - v[1]];
+            count += 1;
+        }
+    }
+    let built = convex_hull_9(&difference);
+    let hull = &built.0[..built.1];
+    if hull.len() < 3 {
+        // Degenerate difference body: the two cells are collinear or a point.
+        let mut best = f64::INFINITY;
+        for index in 0..hull.len() {
+            let first = hull[index];
+            let second = hull[(index + 1) % hull.len().max(1)];
+            best = best.min(origin_to_segment(first, second));
+        }
+        return if best.is_finite() { best } else { 0.0 };
+    }
+    let mut inside = true;
+    for index in 0..hull.len() {
+        let first = hull[index];
+        let second = hull[(index + 1) % hull.len()];
+        let side = (second[0] - first[0]) * (0.0 - first[1])
+            - (second[1] - first[1]) * (0.0 - first[0]);
+        if side < 0.0 {
+            inside = false;
+            break;
+        }
+    }
+    let mut boundary = f64::INFINITY;
+    for index in 0..hull.len() {
+        let first = hull[index];
+        let second = hull[(index + 1) % hull.len()];
+        boundary = boundary.min(origin_to_segment(first, second));
+    }
+    if inside {
+        -boundary
+    } else {
+        boundary
+    }
+}
+
+/// A fixed-capacity monotone-chain hull of the nine point differences.
+fn convex_hull_9(points: &[[f64; 2]; 9]) -> ([[f64; 2]; 18], usize) {
+    let mut sorted = *points;
+    sorted.sort_by(|left, right| {
+        left[0]
+            .partial_cmp(&right[0])
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then(
+                left[1]
+                    .partial_cmp(&right[1])
+                    .unwrap_or(std::cmp::Ordering::Equal),
+            )
+    });
+    let count = sorted.len();
+    let mut hull = [[0.0f64; 2]; 18];
+    let mut length = 0usize;
+    let push = |hull: &mut [[f64; 2]; 18], length: &mut usize, floor: usize, point: [f64; 2]| {
+        while *length >= floor + 2 {
+            let a = hull[*length - 2];
+            let b = hull[*length - 1];
+            let turn = (b[0] - a[0]) * (point[1] - a[1]) - (b[1] - a[1]) * (point[0] - a[0]);
+            if turn > 0.0 {
+                break;
+            }
+            *length -= 1;
+        }
+        hull[*length] = point;
+        *length += 1;
+    };
+    for index in 0..count {
+        push(&mut hull, &mut length, 0, sorted[index]);
+    }
+    let floor = length;
+    for index in (0..count.saturating_sub(1)).rev() {
+        push(&mut hull, &mut length, floor - 1, sorted[index]);
+    }
+    if length > 1 {
+        length -= 1;
+    }
+    (hull, length)
+}
+
+/// The distance from the origin to a segment. The oracle's own, deliberately:
+/// `contact.rs` has a segment-segment routine and borrowing it would make the
+/// two implementations one.
+fn origin_to_segment(a: [f64; 2], b: [f64; 2]) -> f64 {
+    let (dx, dy) = (b[0] - a[0], b[1] - a[1]);
+    let length_squared = dx * dx + dy * dy;
+    let t = if length_squared > 0.0 {
+        ((-a[0] * dx - a[1] * dy) / length_squared).clamp(0.0, 1.0)
+    } else {
+        0.0
+    };
+    libm::hypot(a[0] + t * dx, a[1] + t * dy)
+}
+
 
 // ---------------------------------------------------------------- contact ---
 

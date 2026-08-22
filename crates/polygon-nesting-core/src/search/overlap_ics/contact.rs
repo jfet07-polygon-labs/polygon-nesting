@@ -10,7 +10,10 @@
 //! keeps *two* independent oracles for it: the crate's existing
 //! [`crate::validation::sat::measure_convex_sat_penetration`] for the
 //! overlapping convex case, and the nine-point triangle Minkowski hull for the
-//! triangle case. Both live in the test module, never here.
+//! triangle case. **Both live in `tests.rs` and neither is reachable from
+//! here** — an oracle that shares code with the thing it audits is not an
+//! oracle, and one compiled into the shipped module is dead weight in a hot
+//! path.
 //!
 //! Three properties this function is written for, in order:
 //!
@@ -246,101 +249,4 @@ fn segment_distance(
     let pa = [a0[0] + d1[0] * s, a0[1] + d1[1] * s];
     let pb = [b0[0] + d2[0] * t, b0[1] + d2[1] * t];
     (libm::hypot(pa[0] - pb[0], pa[1] - pb[1]), pa, pb)
-}
-
-/// The independent nine-point Minkowski oracle for the triangle path.
-///
-/// `C = conv{a_u - b_v}` over the nine vertex differences; the signed distance
-/// is `dist(0, C)` outside and `-dist(0, ∂C)` inside. This is Sol review 14
-/// Round 1's construction, retained by the convergence as the small-cell test
-/// oracle and never as the hot path. It is `pub` so the module's own tests and
-/// the corpus driver can differential it against [`convex_cell_gap`]; nothing
-/// in the descent calls it.
-pub fn triangle_minkowski_signed_distance(a: &[[f64; 2]; 3], b: &[[f64; 2]; 3]) -> f64 {
-    let mut difference = [[0.0f64; 2]; 9];
-    let mut count = 0;
-    for u in a.iter() {
-        for v in b.iter() {
-            difference[count] = [u[0] - v[0], u[1] - v[1]];
-            count += 1;
-        }
-    }
-    let built = convex_hull_9(&difference);
-    let hull = &built.0[..built.1];
-    if hull.len() < 3 {
-        // Degenerate difference body: the two cells are collinear or a point.
-        let mut best = f64::INFINITY;
-        for index in 0..hull.len() {
-            let first = hull[index];
-            let second = hull[(index + 1) % hull.len().max(1)];
-            let (distance, _, _) = segment_distance(first, second, [0.0, 0.0], [0.0, 0.0]);
-            best = best.min(distance);
-        }
-        return if best.is_finite() { best } else { 0.0 };
-    }
-    let mut inside = true;
-    for index in 0..hull.len() {
-        let first = hull[index];
-        let second = hull[(index + 1) % hull.len()];
-        let side = (second[0] - first[0]) * (0.0 - first[1])
-            - (second[1] - first[1]) * (0.0 - first[0]);
-        if side < 0.0 {
-            inside = false;
-            break;
-        }
-    }
-    let mut boundary = f64::INFINITY;
-    for index in 0..hull.len() {
-        let first = hull[index];
-        let second = hull[(index + 1) % hull.len()];
-        let (distance, _, _) = segment_distance(first, second, [0.0, 0.0], [0.0, 0.0]);
-        boundary = boundary.min(distance);
-    }
-    if inside {
-        -boundary
-    } else {
-        boundary
-    }
-}
-
-/// A fixed-capacity monotone-chain hull of the nine point differences.
-fn convex_hull_9(points: &[[f64; 2]; 9]) -> ([[f64; 2]; 18], usize) {
-    let mut sorted = *points;
-    sorted.sort_by(|left, right| {
-        left[0]
-            .partial_cmp(&right[0])
-            .unwrap_or(std::cmp::Ordering::Equal)
-            .then(
-                left[1]
-                    .partial_cmp(&right[1])
-                    .unwrap_or(std::cmp::Ordering::Equal),
-            )
-    });
-    let count = sorted.len();
-    let mut hull = [[0.0f64; 2]; 18];
-    let mut length = 0usize;
-    let push = |hull: &mut [[f64; 2]; 18], length: &mut usize, floor: usize, point: [f64; 2]| {
-        while *length >= floor + 2 {
-            let a = hull[*length - 2];
-            let b = hull[*length - 1];
-            let turn = (b[0] - a[0]) * (point[1] - a[1]) - (b[1] - a[1]) * (point[0] - a[0]);
-            if turn > 0.0 {
-                break;
-            }
-            *length -= 1;
-        }
-        hull[*length] = point;
-        *length += 1;
-    };
-    for index in 0..count {
-        push(&mut hull, &mut length, 0, sorted[index]);
-    }
-    let floor = length;
-    for index in (0..count.saturating_sub(1)).rev() {
-        push(&mut hull, &mut length, floor - 1, sorted[index]);
-    }
-    if length > 1 {
-        length -= 1;
-    }
-    (hull, length)
 }

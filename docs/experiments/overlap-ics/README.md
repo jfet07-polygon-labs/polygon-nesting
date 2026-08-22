@@ -343,6 +343,14 @@ and raw depth. Both cells: **bit-identical**.
 `examples/overlap_ics_benchmark.rs`, `required-features = ["overlap-ics"]`, is
 the only driver.
 
+**Both differential oracles live in `tests.rs` and nowhere else**: the crate's
+existing `validation::sat::measure_convex_sat_penetration` for the overlapping
+convex case (81 configurations, 25 of them overlapping), and the nine-point
+triangle Minkowski hull for the triangle path (289 configurations). The second
+carries its own point-to-segment distance rather than calling `contact.rs`'s
+segment-segment routine, because an oracle that shares code with the thing it
+audits cannot falsify it. Neither is compiled into the shipped module.
+
 ### Two implementation notes that are not free choices
 
 **θ is carried in degrees.** `PolygonSet::transformed` and
