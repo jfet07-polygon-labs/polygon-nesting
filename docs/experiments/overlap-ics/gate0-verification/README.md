@@ -310,7 +310,16 @@ allocator flake, so no rerun clause fired.
 | 5 | `overlap-ics` alone, `--lib --tests` | 50 | 1150 | 0 | 0 | **0** |
 
 The same five totals as the previous round, which is the expected result: this
-round changed no crate source at all.
+round changed no crate source at all — `git diff 6bd208b HEAD -- crates/` is
+empty, and the `ics-scoped-*` binaries were built from that tree.
+
+The previous round's caveat 7 is independently confirmed here rather than taken
+on trust: `cargo check --workspace` exits **0**, `cargo check --workspace
+--all-targets` exits **101** with `unresolved import
+polygon_nesting_core::search::portfolio` from
+`examples/general_request_benchmark.rs`, and
+`git diff 0a05239 HEAD -- .../general_request_benchmark.rs` is empty. That
+condition predates the whole overlap-ICS campaign.
 
 `run-suites.sh` writes its logs into `../evidence/`, which is the previous
 round's committed record. This round copied its five logs into
