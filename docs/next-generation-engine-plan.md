@@ -7975,3 +7975,104 @@ byte-identical to each other, so that row reduces to a second two-process
 cell; it was not degenerate on the pre-relocation tree, where the same
 procedure produced two different binaries and the same four document digests.
 Evidence, drivers and the full verdict table: docs/experiments/overlap-ics/.
+
+## Gate 0's STOP, verified in a second worktree: every number reproduces, the exact authorities agree, and the stall is a fixed point
+
+The previous round's Gate 0 said STOP on three fatal cells. This round's
+instruction was conditional on exactly that — *if the report says STOP on a fatal
+Gate-0 cell, do not build the schedule; verify the failure evidence
+independently* — so **`homotopy.rs` is still the stub, and there is no strip
+schedule, no eight-epoch ladder, no nine-seed 3/10/30 curve and no Round-1
+clause verdict in this round.** Round 1's own clauses cannot be evaluated,
+because the gate that licenses Round 1 has not passed.
+
+**The STOP is confirmed.** Re-run from the previous round's own committed
+drivers, on a build made from nothing in a second worktree with a `target/`
+directory that did not exist: `GATE0_PASS: false`, `fatalFailures: ["S1",
+"C175", "triangle-20"]`. S0 reproduces its pin (61 placements, **150.16451**,
+`phi.to_bits() == 0`, both authorities accepting, zero repair); numeric soundness
+passes at 1,000 states; throughput clears every kill. The three failures
+reproduce to the last bit of every `f64`: S1 at Φ **433.4919406020829** →
+**0.0004482304876309415** with `max_g` **0.012634958179553735** and depth
+**150.1729903315535**; triangle-20 at Φ **22.21647333933925** →
+**0.049891136703974694** with **zero** active pair rows and `max_g`
+**0.11764791331265201**; C175 at **0 of 3** strict children with `max_g`
+2.1032/2.2435/2.1631 mm. Seven documents were compared leaf by leaf rather than
+by digest — a digest cannot cross worktrees, because the documents embed their
+own absolute paths — and across 6 cell documents (510 scalar leaves) **not one
+non-path leaf differs**; the 1,000-state corpus document differs in exactly one
+leaf, a wall reading its driver writes outside the `wall` object. The FAST tier
+exits **1** here too, with the same single red stage.
+
+Reproducing a number is not verifying it, so three questions the previous round
+left open were answered from its own instrument.
+
+**The exact authorities agree with Φ, asked directly.** At the shipped 4 µm band
+all three fatal cells make **zero** publication attempts, so the round kernel and
+the untouched contract validator never see their states and Φ — the thing under
+suspicion — is the only witness against them. Widening the band with the
+committed `--band` diagnosis knob puts them in front of the authorities.
+triangle-20 then makes **three** attempts, at proxy depths 70.66182, 70.60020 and
+70.59775, all *inside* the locked 70.742 — and all three are **refused**:
+`kernelExclusiveValid false`, `contractValid false`, and `repairRows 0`, so the
+kernel refused on its first scan before a single repair row ran. An authority
+that shares no code with Φ refuses the same layouts. S1 and C175 still make zero
+attempts at any band, because the band was never their only gate: they sit
+7.53 µm and 1.18 mm *outside* their locked strips and `proxy_depth <= T` is not a
+band.
+
+**The residual is not an artefact of the strip target.** The strip `T` is an
+objective device that the kernel does not model — its boundaries are the
+sheet's — so a residual living entirely in the strip's own top row would be
+invisible to the exact authorities. That row can be bounded exactly, with no new
+run: writing `E` for `Contract::edge_clearance_mm()` and `s` for the sag,
+`max top-row residual = depth − T + s`. In every failing cell `max_g` **exceeds**
+it — 0.11765 against 0.11027 on triangle-20, 0.01263 against 0.00752 on S1,
+2.10319 against 1.17800 on C175 — so at least one violated row is a left, right
+or bottom row of the **sheet**, which is why the kernel refused. The derivation
+also exposes an asymmetry nobody had written down: `raw_source_depth_mm` and the
+`proxy_depth <= T` gate use `Contract::sheet_edge_clearance_mm`, while
+`boundary_residuals` uses `edge_clearance_mm()`, which is that field **plus the
+sag**. On mixed-61's exact-clearance contract `s = 0` and they coincide; on
+triangle-20 `s = 0.25 mm` and **Φ's strip boundary is a quarter of a millimetre
+stricter than the publication gate it is descending toward**. That reconciles the
+canary's "140 µm of unused strip" with a top row that is violated at the same
+instant. It changes no verdict — the maximum is already carried by a sheet row —
+but a locked-strip cell that is 0.25 mm harder than its own publication gate is
+worth knowing before the next round designs a schedule out of locked strips.
+
+**The stall is a fixed point, not a short quota.** At ten times the work quota —
+2,000,000 piece proposals — S1's `max_g` is `0.012634958179553735` and
+triangle-20's is `0.11764791331265201`, the identical `f64` in both cases, and
+the **accepted-move counters are identical too**: 1,044 and 175, exactly as at
+200,000. In 1.8 million further proposals, across 29,509 and 90,000 additional
+sweeps, the solver accepted **not one move**, while the guided weights it raises
+in order to escape grew 10.7× and 10.0×. Equal `max_g` is consistent with a
+trajectory that keeps moving and keeps arriving back; equal accepted moves is
+not. Both states are exact fixed points of the specified move set under its own
+escape mechanism.
+
+The round-boundary battery is clean on this tree and this box. All four pinned
+gates reproduce on a binary with `overlap-ics` absent and on one with it
+compiled — 206.869 / `8a7737381238fa4d`, 159.09233022733062 / `fa01012af1d559ae`,
+159.07876040364795 / `e28fba007f8031d4`, 164.0375677990678 / `49f094d7e59a9008` —
+with **`WHOLE_DOCUMENT_IDENTITY: true`** on all four. Five suites, 0 failures:
+1293, 1357, 20, 1340, 1150, no flake, no rerun clause fired — the same five
+totals as the previous round, which is the expected result of a round that
+changed no crate source. Determinism holds in both forms, with the previous
+round's deflation intact and sharpened: two builds in two target directories are
+byte-identical, but two builds in two *worktrees* are not, from the same source
+and toolchain — so the worktree path is baked into the binary, and that is also
+why no document digest here is comparable with one from the previous round.
+Cross-round agreement is the field-by-field comparison, not a hash.
+
+One claim is explicitly **not** verified, and it is the previous round's central
+structural sentence: *"a single global translation would legalize"* triangle-20.
+Everything measured is consistent with it — zero pair violations, the whole
+residual in boundary rows, and `homotopy::compressed` moving centroids along the
+long axis only and toward the floor, which is a mechanism that manufactures
+bottom-edge violations — but the cell documents do not decompose the five active
+rows by side, and if two of them were on opposite sides no single translation
+exists. It is a reading, not a measurement, and deciding it needs a per-edge
+census the instrument does not emit. Evidence and drivers:
+docs/experiments/overlap-ics/gate0-verification/.

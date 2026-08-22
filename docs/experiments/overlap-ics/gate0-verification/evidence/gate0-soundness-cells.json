@@ -1,0 +1,81 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "gate-0",
+ "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_7f77514b-f9a-2/target/release/examples/overlap_ics_benchmark",
+ "cells": [
+  {
+   "cell": "corpus-1000",
+   "fatal": true,
+   "pass": true,
+   "compressedStates": 501,
+   "containmentFalseFeasible": 0,
+   "containmentFamilyStates": 166,
+   "containmentStates": 60,
+   "forceActiveImprovedByFamily": {
+    "compressed": 501,
+    "containment": 30,
+    "grazing": 245
+   },
+   "forceActiveImprovedRate": 1.0,
+   "forceActiveImprovedRateAllFamilies": 0.8264110756123536,
+   "forceSteps": 939,
+   "forceStepsByFamily": {
+    "compressed": 501,
+    "containment": 145,
+    "grazing": 293
+   },
+   "forceStepsScored": 501,
+   "forceTotalNotWorseByFamily": {
+    "compressed": 501,
+    "containment": 30,
+    "grazing": 245
+   },
+   "forceTotalNotWorseRate": 1.0,
+   "forceTotalNotWorseRateAllFamilies": 0.8264110756123536,
+   "grazingStates": 333,
+   "incrementalMismatches": 0,
+   "kernelUnmeasurable": 0,
+   "lockedTargetMm": 182.976,
+   "outsideFourMicrometreBand": 0,
+   "proxyFeasible": 40,
+   "proxyFeasibleExactInvalid": 0,
+   "states": 1000,
+   "worstBandMicron": 0,
+   "containmentNeverFalseFeasible": true,
+   "containmentPopulationNonEmpty": true,
+   "forceActiveAtLeast95": true,
+   "forceActiveAtLeast95AllFamilies": false,
+   "forceScoredOn": "compressed",
+   "forceTotalAtLeast80": true,
+   "forceTotalAtLeast80AllFamilies": true,
+   "incrementalEqualsCold": true,
+   "outsideBandZero": true,
+   "proxyFeasiblePopulationNonEmpty": true,
+   "wallSeconds": 4.146292338031344,
+   "corpusSeconds": 1.817242762
+  },
+  {
+   "cell": "throughput",
+   "fatal": true,
+   "pass": true,
+   "acceptedMovesDuringProposals": 1626,
+   "cellGapAtLeast1MPerSecond": true,
+   "coldPhiMicroseconds": 36.81318666666667,
+   "coldPhiUnder200us": true,
+   "convexCellGapEvaluations": 36952,
+   "convexCellGapEvaluationsPerSecond": 7519260.576198545,
+   "lockedTargetMm": 173.8272,
+   "movedPieceRowRebuildMicroseconds": 1.244375,
+   "pieceProposals": 20000,
+   "pieceProposalsPerSecond": 132653.04342461715,
+   "projectedAtLeast100K": true,
+   "projectedProposalsInEightSeconds": 1061224.3473969372,
+   "rawPhiAfterProposals": 118.1449736824989,
+   "rawPhiBeforeProposals": 565.3763292381366,
+   "rowRebuildUnder20us": true,
+   "wallSeconds": 2.490932979970239
+  }
+ ],
+ "fatalFailures": [],
+ "GATE0_PASS": true
+}

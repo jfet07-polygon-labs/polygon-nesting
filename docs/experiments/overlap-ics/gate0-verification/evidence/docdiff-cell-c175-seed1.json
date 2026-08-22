@@ -1,0 +1,8 @@
+{
+ "left": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_7f77514b-f9a-2/docs/experiments/overlap-ics/evidence/cell-c175-seed1.json",
+ "right": "/var/lib/t3/tmp/overlapics-v2/cells/c175-seed1.json",
+ "scalarFieldsCompared": 84,
+ "pathFieldsIgnored": 1,
+ "differingFields": [],
+ "IDENTICAL_MODULO_PATHS_AND_BINARY": true
+}

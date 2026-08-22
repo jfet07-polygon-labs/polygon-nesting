@@ -9,6 +9,15 @@ Gate-0 failure stops the round before any schedule or parallel work. That is
 what this document reports. `homotopy.rs` remains the stub it was written as,
 no epoch schedule was built, and nothing here is wired into a production route.
 
+**This STOP was verified independently in a second worktree**, from these
+drivers on a from-scratch build: see `gate0-verification/README.md`. Every
+non-path field of all six fatal-cell documents reproduced, the exact authorities
+were asked directly and refused the triangle canary's own states, and the stall
+was shown to be a fixed point of the move set at ten times the work quota. That
+document also records one asymmetry this one does not mention — on triangle-20
+Φ's strip boundary is one sag tolerance stricter than the publication depth gate
+— and marks one sentence of §3.1 below as a reading rather than a measurement.
+
 The spec of record is docs/overlap-ics-converged-spec.md, whose body is Sol
 review 14 Round 2 §4 (the implementation spec) plus §3 (the two-tier test
 discipline), with Grok review 9 Round 2 §4's amendments as arbitrated there.

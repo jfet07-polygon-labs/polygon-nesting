@@ -1,0 +1,14 @@
+{
+ "left": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_7f77514b-f9a-2/docs/experiments/overlap-ics/evidence/corpus-gate-1000.json",
+ "right": "/var/lib/t3/tmp/overlapics-v2/fast/corpus-gate-1000.json",
+ "scalarFieldsCompared": 220,
+ "pathFieldsIgnored": 1,
+ "differingFields": [
+  {
+   "field": ".wallSeconds",
+   "left": 4.1515480959787965,
+   "right": 4.138158365036361
+  }
+ ],
+ "IDENTICAL_MODULO_PATHS_AND_BINARY": false
+}
