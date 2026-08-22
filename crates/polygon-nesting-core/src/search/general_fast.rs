@@ -4023,6 +4023,18 @@ fn validate_and_measure_placements_inner(
 
     validate_placements_against_contract_inner(pieces, placements, settings, parallel)?;
     let metrics = layout_metrics(&rebuilt, settings);
+    // In `KernelMode::Union`, a layout the kernel refused and the miter admitted
+    // still reports the *round* envelope's extent, for the reason given at the
+    // wire point above: the depth the search minimises may not change basis at
+    // a one-micrometre row. `round_envelope_metrics` is `None` in every other
+    // configuration, including every build without the feature.
+    //
+    // Before the trace below and not after it, so the quality-frontier stream
+    // and the returned metric are the same number. They would otherwise
+    // disagree on exactly the rows the union falls through on, which are the
+    // rows a reader of that stream would most want to trust.
+    #[cfg(feature = "round-envelope-kernel")]
+    let metrics = round_envelope_metrics.unwrap_or(metrics);
     // The quality frontier trace's single choke point. Every exact-valid
     // candidate the search sees reaches this line, published or not, complete
     // or partial - which is precisely the population the depth-versus-time
@@ -4040,13 +4052,6 @@ fn validate_and_measure_placements_inner(
             metrics.used_long_axis_depth_mm,
         );
     }
-    // In `KernelMode::Union`, a layout the kernel refused and the miter admitted
-    // still reports the *round* envelope's extent, for the reason given at the
-    // wire point above: the depth the search minimises may not change basis at
-    // a one-micrometre row. `round_envelope_metrics` is `None` in every other
-    // configuration, including every build without the feature.
-    #[cfg(feature = "round-envelope-kernel")]
-    let metrics = round_envelope_metrics.unwrap_or(metrics);
     Ok(GeneralPlacementMetrics {
         used_short_axis_span_mm: metrics.used_short_axis_span_mm,
         used_long_axis_depth_mm: metrics.used_long_axis_depth_mm,
