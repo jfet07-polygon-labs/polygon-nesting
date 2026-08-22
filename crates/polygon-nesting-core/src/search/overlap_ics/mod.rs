@@ -105,6 +105,8 @@ pub struct IcsOutcome {
     pub first_strict_child_proposal: Option<u64>,
     /// Which rows are still active at the end, and how bad the worst is.
     pub final_census: energy::RowCensus,
+    /// Why the proposals that were refused were refused.
+    pub rejection_census: descent::RejectionCensus,
 }
 
 /// Everything one trajectory owns. Built once; the descent allocates nothing
@@ -414,6 +416,7 @@ impl<'a> Engine<'a> {
                 .count() as u64,
             first_strict_child_proposal: first_strict_child,
             final_census: energy::census(&self.state),
+            rejection_census: self.descent.rejection_census().clone(),
         }
     }
 

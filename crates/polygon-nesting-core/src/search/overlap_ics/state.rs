@@ -51,10 +51,17 @@ impl Pose {
 /// unbounded, which is all the spec asks of it - no catalogue, no window, no
 /// 2.5° step.
 ///
-/// Sol R2 §4 asks for `libm` trigonometry for cross-version determinism.
-/// Identity with the publication transform is the stronger requirement and is
-/// the one taken here; the determinism contract already carries the libm
-/// implementation in its environment tuple.
+/// **This is `std::f64::sin_cos`, not `libm`, and the determinism claim is
+/// narrowed to match.** Sol R2 §4 asks for `libm` trigonometry so that the
+/// contract can span toolchains; identity with the publication transform - which
+/// calls `f64::to_radians().sin_cos()` - is the stronger requirement and is the
+/// one taken here, because without it an imported pose set does not reproduce
+/// its own depth. The price is that the determinism contract is a **same-box,
+/// same-toolchain, same-target** contract: bit-identical poses, checkpoints and
+/// publications per `(request, seed, binary, x86, toolchain, features, workers,
+/// quota)`, with the trig implementation fixed by the toolchain rather than
+/// vendored. No cross-platform `sin`/`cos` identity is claimed here or anywhere
+/// in this campaign (Sol review 15 §D, last bullet).
 #[inline]
 pub fn pose_sin_cos(theta_deg: f64) -> (f64, f64) {
     theta_deg.to_radians().sin_cos()

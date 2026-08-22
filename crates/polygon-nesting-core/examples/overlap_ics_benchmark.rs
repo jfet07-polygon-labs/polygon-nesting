@@ -37,7 +37,9 @@ use polygon_nesting_core::search::general_fast::{
 };
 use polygon_nesting_core::search::overlap_ics::contact::convex_cell_gap;
 use polygon_nesting_core::search::overlap_ics::corpus;
-use polygon_nesting_core::search::overlap_ics::descent::{counter_hash, DescentConfig};
+use polygon_nesting_core::search::overlap_ics::descent::{
+    counter_hash, DescentConfig, RejectionCensus,
+};
 use polygon_nesting_core::search::overlap_ics::diagnostics::WorkVector;
 use polygon_nesting_core::search::overlap_ics::homotopy;
 use polygon_nesting_core::search::overlap_ics::publish::{
@@ -219,6 +221,50 @@ fn work_json(work: &WorkVector) -> Value {
     Value::Object(object)
 }
 
+/// The rejection census both reviews require before any statement about the
+/// move set: the whole population's accept/reject split by direction class, and
+/// a bounded rung-by-rung decomposition of the rejections **at the stall**.
+fn rejection_census_json(census: &RejectionCensus) -> Value {
+    json!({
+        "armed": census.armed,
+        "acceptedProposals": census.accepted,
+        "rejectedProposals": census.rejected,
+        "zeroEnergyProposals": census.zero_energy,
+        "acceptedByDirectionClass": {
+            "translation": census.accepted_by_class[0],
+            "rotation": census.accepted_by_class[1],
+            "combined": census.accepted_by_class[2],
+        },
+        "rejectedByDirectionClass": {
+            "translation": census.rejected_by_class[0],
+            "rotation": census.rejected_by_class[1],
+            "combined": census.rejected_by_class[2],
+        },
+        "sampledRejections": census.records.len(),
+        "rejections": census.records.iter().map(|row| json!({
+            "proposalOrdinal": row.proposal_ordinal,
+            "piece": row.piece,
+            "directionClass": row.direction_class,
+            "translationShare": row.translation_share,
+            "rotationShare": row.rotation_share,
+            "incidentGuidedBefore": row.incident_guided_before,
+            "rawPhiBefore": row.raw_before,
+            "guidedPhiBefore": row.guided_before,
+            "maxViolationBeforeMm": row.max_violation_before_mm,
+            "activeIncidentRows": row.active_incident_rows,
+            "activeIncidentPenaltyMax": row.active_incident_penalty_max,
+            "activeIncidentPenaltySum": row.active_incident_penalty_sum,
+            "rungs": row.rungs.iter().map(|rung| json!({
+                "stepMm": rung.step_mm,
+                "deltaIncidentGuided": rung.delta_incident_guided,
+                "deltaRawPhi": rung.delta_raw,
+                "deltaMaxViolationMm": rung.delta_max_violation_mm,
+                "newlyActivatedRows": rung.newly_activated_rows,
+            })).collect::<Vec<_>>(),
+        })).collect::<Vec<_>>(),
+    })
+}
+
 fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
     json!({
         "incumbent": {
@@ -244,7 +290,25 @@ fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
             "maxPairViolationMm": outcome.final_census.max_pair_violation_mm,
             "maxEdgeViolationMm": outcome.final_census.max_edge_violation_mm,
             "maxGuidedPenalty": outcome.final_census.max_penalty,
+            // The per-side split. Two rows on opposite sides of one piece mean
+            // no single rigid translation legalizes the layout, which is the
+            // claim the previous round's README could not settle.
+            "activeEdgeRowsBySide": {
+                "left": outcome.final_census.active_edges_by_side[0],
+                "right": outcome.final_census.active_edges_by_side[1],
+                "bottom": outcome.final_census.active_edges_by_side[2],
+                "top": outcome.final_census.active_edges_by_side[3],
+            },
+            "maxEdgeViolationBySideMm": {
+                "left": outcome.final_census.max_edge_violation_by_side_mm[0],
+                "right": outcome.final_census.max_edge_violation_by_side_mm[1],
+                "bottom": outcome.final_census.max_edge_violation_by_side_mm[2],
+                "top": outcome.final_census.max_edge_violation_by_side_mm[3],
+            },
+            "piecesSqueezedOnOppositeSides":
+                outcome.final_census.pieces_squeezed_on_opposite_sides,
         },
+        "rejectionCensus": rejection_census_json(&outcome.rejection_census),
         "sweeps": outcome.trace.sweeps,
         "guidedStalls": outcome.trace.guided_stalls,
         "jumps": outcome.trace.jumps,
@@ -910,6 +974,8 @@ fn descent_config(
 ) -> Result<DescentConfig, String> {
     let mut config = DescentConfig::derive(contract, sources, seed);
     config.jump_allowance = options.integer("jumps", config.jump_allowance as u64)? as u32;
+    config.rejection_census_samples =
+        options.integer("rejectioncensus", config.rejection_census_samples as u64)? as usize;
     config.stalls_before_jump =
         options.integer("stalls", config.stalls_before_jump as u64)? as u32;
     // Absent means the *derived* default, which after the Gate-0 autopsy is the

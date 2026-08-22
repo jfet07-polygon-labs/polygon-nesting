@@ -40,6 +40,10 @@ pub struct DescentConfig {
     pub jump_local_proposals: u32,
     /// How many jumps the whole trajectory may spend. Round 1 is 1.
     pub jump_allowance: u32,
+    /// How many rejected proposals the census decomposes rung by rung, once it
+    /// arms on the first stalled sweep. Read-only instrumentation; it cannot
+    /// change a trajectory.
+    pub rejection_census_samples: usize,
     /// Whether the jump commits its best candidate unconditionally.
     ///
     /// **`true`, and back to the spec's literal reading.** Sol R2 §2's jump
@@ -86,6 +90,7 @@ impl DescentConfig {
             jump_local_proposals: 1,
             jump_allowance: 1,
             jump_commits_unconditionally: true,
+            rejection_census_samples: 32,
             seed,
         }
     }
@@ -114,6 +119,10 @@ pub struct Descent {
     jumps_spent: u32,
     /// Monotone proposal ordinal: the trajectory's own clock.
     pub proposals: u64,
+    census: RejectionCensus,
+    /// Scratch for the census's before/after row activity. Never read outside
+    /// a recorded rejection.
+    census_activity: Vec<bool>,
 }
 
 /// What one sweep did.
@@ -189,6 +198,78 @@ impl Default for JumpOutcome {
     }
 }
 
+/// One rung of a rejected proposal, decomposed.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct RejectionRung {
+    pub step_mm: f64,
+    /// The quantity the acceptance test actually reads. A rejection means this
+    /// was `>= 0` on **every** rung.
+    pub delta_incident_guided: f64,
+    /// What the same step did to the *global* raw Φ. A step that lowers raw Φ
+    /// while raising the incident guided energy is the guided weights refusing
+    /// a real improvement, and it is worth being able to see that separately.
+    pub delta_raw: f64,
+    pub delta_max_violation_mm: f64,
+    /// Rows incident on this piece that were clear before the step and are not
+    /// after it: the violation the move would transfer onto a neighbour.
+    pub newly_activated_rows: usize,
+}
+
+/// One rejected proposal, with everything both reviews asked to see before any
+/// verdict about the move set is written down.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RejectionRecord {
+    pub proposal_ordinal: u64,
+    pub piece: usize,
+    /// `"translation"`, `"rotation"` or `"combined"`, from the SE(2)-normalized
+    /// direction the whole ladder is walked along.
+    pub direction_class: &'static str,
+    /// The translational and rotational shares of that unit direction; their
+    /// squares sum to 1 because the metric is `|dt|^2 + (R dtheta)^2`.
+    pub translation_share: f64,
+    pub rotation_share: f64,
+    pub incident_guided_before: f64,
+    pub raw_before: f64,
+    pub guided_before: f64,
+    pub max_violation_before_mm: f64,
+    /// Rows incident on this piece that carry a violation, and the guided
+    /// penalties of **those rows only** - Sol review 15 §A.3's objection to
+    /// `maxGuidedPenalty`, which includes inactive rows and so cannot show that
+    /// the blocking row ever received the weight.
+    pub active_incident_rows: usize,
+    pub active_incident_penalty_max: u32,
+    pub active_incident_penalty_sum: u64,
+    pub rungs: Vec<RejectionRung>,
+}
+
+/// The rejection census: a cheap count over the whole population and a bounded
+/// decomposition of the rejections at the stall.
+///
+/// Both reviews refuse a move-set verdict without it (Sol review 15 §A.3,
+/// Grok review 10 §B.4). It is **read-only**: enabling it cannot move a
+/// trajectory, which is why the cells run with it on rather than as a separate
+/// probe whose numbers would be a different run's.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct RejectionCensus {
+    /// Proposals that formed a gradient and were rejected on every rung.
+    pub rejected: u64,
+    /// Proposals that formed a gradient and were accepted.
+    pub accepted: u64,
+    /// Proposals that returned before forming a gradient because the piece had
+    /// no incident energy at all. A zero-energy neighbour is immovable by
+    /// construction (`before <= 0.0`), and that is the complement Grok review
+    /// 10 Finding 3 names.
+    pub zero_energy: u64,
+    /// `[translation, rotation, combined]`.
+    pub rejected_by_class: [u64; 3],
+    pub accepted_by_class: [u64; 3],
+    /// Whether the bounded sample has started collecting: it arms on the first
+    /// stalled sweep, so the recorded rejections are the ones at the deadlock
+    /// and not the ones on the way down.
+    pub armed: bool,
+    pub records: Vec<RejectionRecord>,
+}
+
 /// The two-scale gate, derived from the publication band and frozen before the
 /// re-run: `25 * EPSILON_GRID_MM`.
 ///
@@ -210,11 +291,17 @@ impl Descent {
             stalls: 0,
             jumps_spent: 0,
             proposals: 0,
+            census: RejectionCensus::default(),
+            census_activity: Vec::new(),
         }
     }
 
     pub fn jumps_spent(&self) -> u32 {
         self.jumps_spent
+    }
+
+    pub fn rejection_census(&self) -> &RejectionCensus {
+        &self.census
     }
 
     pub fn stalls(&self) -> u32 {
@@ -235,6 +322,7 @@ impl Descent {
         work.piece_proposals += 1;
         let before = incident_guided(state, piece);
         if before <= 0.0 {
+            self.census.zero_energy += 1;
             return false;
         }
         let gradient = incident_gradient(state, piece);
@@ -246,6 +334,7 @@ impl Descent {
         };
         let norm = libm::hypot(libm::hypot(gradient[0], gradient[1]), radius * angular);
         if !(norm > 0.0) || !norm.is_finite() {
+            self.census.zero_energy += 1;
             return false;
         }
         let direction = [
@@ -253,6 +342,27 @@ impl Descent {
             gradient[1] / norm,
             angular / norm,
         ];
+        let translation_share = libm::hypot(direction[0], direction[1]);
+        let rotation_share = (radius * direction[2]).abs();
+        let class = if rotation_share <= 0.0 {
+            0
+        } else if translation_share <= 0.0 {
+            1
+        } else {
+            2
+        };
+        // The bounded sample arms on the first stalled sweep, so what it holds
+        // is the deadlock and not the descent on the way down.
+        let recording =
+            self.census.armed && self.census.records.len() < self.config.rejection_census_samples;
+        let entry = if recording {
+            let totals = fold(state);
+            incident_activity(state, piece, &mut self.census_activity);
+            Some((totals, self.census_activity.clone()))
+        } else {
+            None
+        };
+        let mut rungs = Vec::new();
         let original = state.poses[piece];
         for rung in 0..self.ladder.len() {
             let step = self.ladder[rung];
@@ -277,8 +387,28 @@ impl Descent {
             transform_piece(sources, &mut state.geometry, &state.poses, piece);
             work.pose_transforms += 1;
             rebuild_piece_rows(state, contract, piece, work);
-            if incident_guided(state, piece) < before {
+            let after = incident_guided(state, piece);
+            if let Some((totals, ref activity)) = entry {
+                let totals_after = fold(state);
+                incident_activity(state, piece, &mut self.census_activity);
+                let newly_activated = activity
+                    .iter()
+                    .zip(self.census_activity.iter())
+                    .filter(|(was, is)| !**was && **is)
+                    .count();
+                rungs.push(RejectionRung {
+                    step_mm: step,
+                    delta_incident_guided: after - before,
+                    delta_raw: totals_after.raw - totals.raw,
+                    delta_max_violation_mm: totals_after.max_violation_mm
+                        - totals.max_violation_mm,
+                    newly_activated_rows: newly_activated,
+                });
+            }
+            if after < before {
                 work.accepted_moves += 1;
+                self.census.accepted += 1;
+                self.census.accepted_by_class[class] += 1;
                 return true;
             }
         }
@@ -286,6 +416,26 @@ impl Descent {
         transform_piece(sources, &mut state.geometry, &state.poses, piece);
         work.pose_transforms += 1;
         rebuild_piece_rows(state, contract, piece, work);
+        self.census.rejected += 1;
+        self.census.rejected_by_class[class] += 1;
+        if let Some((totals, _)) = entry {
+            let (active, penalty_max, penalty_sum) = incident_active_penalties(state, piece);
+            self.census.records.push(RejectionRecord {
+                proposal_ordinal: self.proposals,
+                piece,
+                direction_class: ["translation", "rotation", "combined"][class],
+                translation_share,
+                rotation_share,
+                incident_guided_before: before,
+                raw_before: totals.raw,
+                guided_before: totals.guided,
+                max_violation_before_mm: totals.max_violation_mm,
+                active_incident_rows: active,
+                active_incident_penalty_max: penalty_max,
+                active_incident_penalty_sum: penalty_sum,
+                rungs,
+            });
+        }
         false
     }
 
@@ -335,6 +485,7 @@ impl Descent {
         contract: &Contract,
         work: &mut WorkVector,
     ) -> JumpOutcome {
+        self.census.armed = true;
         if super::energy::guided_update(state).is_some() {
             work.weight_updates += 1;
         }
@@ -571,6 +722,60 @@ fn mix(low: f64, high: f64, unit: f64) -> f64 {
     } else {
         low + unit * (high - low)
     }
+}
+
+/// Which rows incident on one piece carry a violation: its `n-1` pair rows in
+/// the module's fixed pair order, then its four boundary rows `L, R, B, T`.
+fn incident_activity(state: &IcsState, piece: usize, out: &mut Vec<bool>) {
+    out.clear();
+    let count = state.poses.len();
+    for other in 0..count {
+        if other == piece {
+            continue;
+        }
+        let (first, second) = if other < piece {
+            (other, piece)
+        } else {
+            (piece, other)
+        };
+        let row = &state.pair_rows[super::state::pair_index(count, first, second)];
+        out.push(row.violation_mm > 0.0);
+    }
+    for row in &state.edge_rows[piece] {
+        out.push(row.violation_mm > 0.0);
+    }
+}
+
+/// The guided penalties of the rows incident on one piece **that are actually
+/// active**: `(count, max, sum)`.
+fn incident_active_penalties(state: &IcsState, piece: usize) -> (usize, u32, u64) {
+    let count = state.poses.len();
+    let mut active = 0usize;
+    let mut max = 0u32;
+    let mut sum = 0u64;
+    let mut fold_row = |violation: f64, penalty: u32| {
+        if violation > 0.0 {
+            active += 1;
+            max = max.max(penalty);
+            sum += penalty as u64;
+        }
+    };
+    for other in 0..count {
+        if other == piece {
+            continue;
+        }
+        let (first, second) = if other < piece {
+            (other, piece)
+        } else {
+            (piece, other)
+        };
+        let row = &state.pair_rows[super::state::pair_index(count, first, second)];
+        fold_row(row.violation_mm, row.penalty);
+    }
+    for row in &state.edge_rows[piece] {
+        fold_row(row.violation_mm, row.penalty);
+    }
+    (active, max, sum)
 }
 
 /// The extent of a piece's transformed outer ring relative to its own
