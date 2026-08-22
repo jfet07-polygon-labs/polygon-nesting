@@ -242,8 +242,8 @@ fn compression_schedule_settings(
                     "sweeps" => CompressionRepairPolicy::SweepsOnly,
                     other => {
                         return Err(format!(
-                            "compression schedule repair policy must be `micro` or `sweeps`, not `{other}`"
-                        ))
+                    "compression schedule repair policy must be `micro` or `sweeps`, not `{other}`"
+                ))
                     }
                 }
             }
@@ -258,9 +258,7 @@ fn compression_schedule_settings(
                     .parse()
                     .map_err(|_| format!("compression schedule lanes: `{value}`"))?;
                 if lanes == 0 {
-                    return Err(
-                        "compression schedule lanes must be at least 1, not `0`".to_owned()
-                    );
+                    return Err("compression schedule lanes must be at least 1, not `0`".to_owned());
                 }
                 settings.lanes = lanes;
             }
@@ -368,8 +366,8 @@ fn env_flag(name: &str) -> bool {
 /// `POLYGON_NESTING_SE2_WITNESS="trust:iterations:maxcalls"`. Unset is off,
 /// which is every invocation that does not ask for it.
 #[cfg(feature = "sparse-rotation")]
-fn se2_witness_requested()
--> Result<Option<polygon_nesting_core::search::general_relaxed::Se2WitnessSettings>, String> {
+fn se2_witness_requested(
+) -> Result<Option<polygon_nesting_core::search::general_relaxed::Se2WitnessSettings>, String> {
     let Ok(spec) = env::var("POLYGON_NESTING_SE2_WITNESS") else {
         return Ok(None);
     };
@@ -452,7 +450,10 @@ fn se2_rigidity_certificate_requested() -> Result<Option<Se2CertificateSpec>, St
         iterations: 20_000,
         reference_mm: None,
     };
-    for item in spec.split(',').filter(|item| !item.is_empty() && *item != "1") {
+    for item in spec
+        .split(',')
+        .filter(|item| !item.is_empty() && *item != "1")
+    {
         let (key, value) = item
             .split_once('=')
             .ok_or_else(|| format!("se2 certificate spec entry `{item}` is not key=value"))?;
@@ -478,7 +479,9 @@ fn se2_rigidity_certificate_requested() -> Result<Option<Se2CertificateSpec>, St
                     .parse()
                     .map_err(|_| format!("se2 certificate reference: `{value}`"))?;
                 if !reference.is_finite() {
-                    return Err(format!("se2 certificate reference must be finite: `{value}`"));
+                    return Err(format!(
+                        "se2 certificate reference must be finite: `{value}`"
+                    ));
                 }
                 out.reference_mm = Some(reference);
             }
@@ -715,11 +718,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         #[cfg(feature = "sparse-rotation")]
         {
-            relaxed_settings.rotation_equivariant_offset = env_flag(
-                "POLYGON_NESTING_ROTATION_EQUIVARIANT",
-            ) && relaxed_settings.continuous_rotation;
-            relaxed_settings.sparse_rotation = env_flag("POLYGON_NESTING_SPARSE_ROTATION")
-                && persistent_vacancy_mode == 34;
+            relaxed_settings.rotation_equivariant_offset =
+                env_flag("POLYGON_NESTING_ROTATION_EQUIVARIANT")
+                    && relaxed_settings.continuous_rotation;
+            relaxed_settings.sparse_rotation =
+                env_flag("POLYGON_NESTING_SPARSE_ROTATION") && persistent_vacancy_mode == 34;
             relaxed_settings.se2_witness =
                 se2_witness_requested()?.filter(|_| relaxed_settings.sparse_rotation);
         }
@@ -2077,9 +2080,7 @@ fn parse_portfolio_spec(
                     "0" | "off" => WorkCurrencyMode::Off,
                     "1" | "charge" => WorkCurrencyMode::Charge,
                     "2" | "observe" => WorkCurrencyMode::Observe,
-                    other => {
-                        return Err(format!("unknown cur2 mode {other:?}").into())
-                    }
+                    other => return Err(format!("unknown cur2 mode {other:?}").into()),
                 }
             }
             // The load-robustness levers, all three off by default. See
@@ -2103,8 +2104,7 @@ fn parse_portfolio_spec(
                 }
             }
             "plancal" => {
-                settings.plan_calibration_path =
-                    (!value.is_empty()).then(|| value.to_owned())
+                settings.plan_calibration_path = (!value.is_empty()).then(|| value.to_owned())
             }
             "plancalwrite" => settings.plan_calibration_write = value != "0",
             "plancalband" => settings.plan_calibration_band = value.parse()?,
@@ -2116,13 +2116,9 @@ fn parse_portfolio_spec(
             // there would let a driver believe it had armed something. An
             // unarmed binary exits non-zero with `unknown portfolio spec key`.
             #[cfg(feature = "compression-schedule")]
-            "m34grid1" => {
-                settings.schedule_first_slice_step_grid = Some(value.parse()?)
-            }
+            "m34grid1" => settings.schedule_first_slice_step_grid = Some(value.parse()?),
             #[cfg(feature = "compression-schedule")]
-            "m34confirm1" => {
-                settings.schedule_first_slice_confirm_every = Some(value.parse()?)
-            }
+            "m34confirm1" => settings.schedule_first_slice_confirm_every = Some(value.parse()?),
             "slots" => settings.basin_slots = value.parse()?,
             "basins" => {
                 settings.basin_trigger = match value {
@@ -2179,8 +2175,7 @@ fn parse_portfolio_spec(
             #[cfg(feature = "compression-schedule")]
             "m34batch" => {
                 let units: usize = value.parse()?;
-                settings.compression_schedule_batch_work_units =
-                    (units > 0).then_some(units);
+                settings.compression_schedule_batch_work_units = (units > 0).then_some(units);
             }
             // The policy that consumes it: cap a slice at what the coordinator
             // can still afford, rather than discovering the price afterwards.

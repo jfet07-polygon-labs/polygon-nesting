@@ -1810,8 +1810,7 @@ fn candidate_is_feasible(
     settings: GeneralFastSettings,
 ) -> Result<bool, GeneralFastError> {
     #[cfg(feature = "constructor-census")]
-    let _census =
-        crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
+    let _census = crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
     if !collision_fits_sheet(&candidate.collision, settings) {
         return Ok(false);
     }
@@ -1837,8 +1836,7 @@ fn publication_confirmed_candidate(
 ) -> Result<Option<Candidate>, GeneralFastError> {
     let _span = profiling::span(Phase::PublicationConfirm);
     #[cfg(feature = "constructor-census")]
-    let _census =
-        crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
+    let _census = crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
     candidate.collision = transformed_collision(
         piece,
         candidate.rotation_deg,
@@ -2200,8 +2198,7 @@ fn transformed_collision(
 ) -> Result<PolygonSet, GeneralPolygonError> {
     let _span = profiling::span(Phase::CollisionPolygonBuild);
     #[cfg(feature = "constructor-census")]
-    let _census =
-        crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
+    let _census = crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
     #[cfg(feature = "constructor-census")]
     crate::constructor_census::build_recorded();
     profiling::count(Counter::CollisionPolygonBuilds, 1);
@@ -2272,8 +2269,7 @@ fn any_exact_overlap(
     placed: &[PlacedState],
 ) -> Result<bool, GeneralPolygonError> {
     #[cfg(feature = "constructor-census")]
-    let _census =
-        crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
+    let _census = crate::constructor_census::site(crate::constructor_census::Site::ShortSideFirst);
     let candidate_bounds = candidate.bounds();
     for (index, fixed) in placed.iter().enumerate() {
         if !polygons_overlap_exact_within(
@@ -3609,52 +3605,51 @@ fn validate_and_measure_placements_inner(
     // Named rather than inline so the serial and the job-pool paths below run
     // the *same* body: the parallel confirmation must be the serial validator
     // with a different traversal, not a second implementation of it.
-    let rebuild_one =
-        |placement: &GeneralFastPlacement| -> Result<PlacedState, GeneralFastError> {
-            let (input_index, piece) = pieces_by_id
-                .get(placement.piece_id.as_str())
-                .copied()
-                .ok_or_else(|| {
-                    GeneralFastError::InvalidInput(format!(
-                        "a result placement references unknown piece {}",
-                        placement.piece_id
-                    ))
-                })?;
-            if !placement.rotation_deg.is_finite() {
-                return Err(GeneralFastError::InvalidInput(format!(
-                    "piece {} has a non-finite rotation",
+    let rebuild_one = |placement: &GeneralFastPlacement| -> Result<PlacedState, GeneralFastError> {
+        let (input_index, piece) = pieces_by_id
+            .get(placement.piece_id.as_str())
+            .copied()
+            .ok_or_else(|| {
+                GeneralFastError::InvalidInput(format!(
+                    "a result placement references unknown piece {}",
                     placement.piece_id
-                )));
-            }
-            if !piece.allow_rotation && angle_key(placement.rotation_deg) != 0 {
-                return Err(GeneralFastError::InvalidInput(format!(
-                    "piece {} uses a forbidden rotation",
-                    placement.piece_id
-                )));
-            }
-            if placement.mirrored && !piece.allow_mirror {
-                return Err(GeneralFastError::InvalidInput(format!(
-                    "piece {} uses a forbidden mirror transform",
-                    placement.piece_id
-                )));
-            }
-            let collision = piece
-                .polygon
-                .transformed(
-                    placement.rotation_deg,
-                    placement.mirrored,
-                    placement.translate_short_axis,
-                    placement.translate_long_axis,
-                )?
-                .offset(expansion)?;
-            if !collision_fits_sheet(&collision, settings) {
-                return Err(GeneralFastError::InvalidInput(format!(
-                    "piece {} violates the canonical-grid sheet boundary",
-                    placement.piece_id
-                )));
-            }
-            Ok(PlacedState::new(input_index, placement.clone(), collision))
-        };
+                ))
+            })?;
+        if !placement.rotation_deg.is_finite() {
+            return Err(GeneralFastError::InvalidInput(format!(
+                "piece {} has a non-finite rotation",
+                placement.piece_id
+            )));
+        }
+        if !piece.allow_rotation && angle_key(placement.rotation_deg) != 0 {
+            return Err(GeneralFastError::InvalidInput(format!(
+                "piece {} uses a forbidden rotation",
+                placement.piece_id
+            )));
+        }
+        if placement.mirrored && !piece.allow_mirror {
+            return Err(GeneralFastError::InvalidInput(format!(
+                "piece {} uses a forbidden mirror transform",
+                placement.piece_id
+            )));
+        }
+        let collision = piece
+            .polygon
+            .transformed(
+                placement.rotation_deg,
+                placement.mirrored,
+                placement.translate_short_axis,
+                placement.translate_long_axis,
+            )?
+            .offset(expansion)?;
+        if !collision_fits_sheet(&collision, settings) {
+            return Err(GeneralFastError::InvalidInput(format!(
+                "piece {} violates the canonical-grid sheet boundary",
+                placement.piece_id
+            )));
+        }
+        Ok(PlacedState::new(input_index, placement.clone(), collision))
+    };
     // `collect::<Result<Vec<_>, _>>` over an in-order iterator yields the
     // lowest-indexed failure in both branches: serially because it
     // short-circuits there, and in the job-pool branch because
@@ -3696,10 +3691,9 @@ fn validate_and_measure_placements_inner(
     #[cfg(feature = "parallel-compression-schedule")]
     let overlap = if parallel {
         let rows = (0..rebuilt.len()).collect::<Vec<_>>();
-        let scanned =
-            crate::parallel::map_slice_with_job_pool(&rows, |first| {
-                first_overlap(*first).map(|second| second.map(|second| (*first, second)))
-            });
+        let scanned = crate::parallel::map_slice_with_job_pool(&rows, |first| {
+            first_overlap(*first).map(|second| second.map(|second| (*first, second)))
+        });
         let mut found = None;
         for row in scanned {
             if let Some(pair) = row? {
@@ -3748,7 +3742,12 @@ fn validate_and_measure_placements_inner(
     // layout.
     #[cfg(feature = "quality-trace")]
     if crate::quality_trace::active() {
-        trace_exact_candidate(pieces, placements, settings, metrics.used_long_axis_depth_mm);
+        trace_exact_candidate(
+            pieces,
+            placements,
+            settings,
+            metrics.used_long_axis_depth_mm,
+        );
     }
     Ok(GeneralPlacementMetrics {
         used_short_axis_span_mm: metrics.used_short_axis_span_mm,
@@ -3793,12 +3792,11 @@ fn trace_exact_candidate(
     let edge_clearance_mm = settings
         .sheet_edge_clearance_mm
         .unwrap_or(settings.total_padding_mm / 2.0);
-    let raw_depth_mm =
-        crate::validation::general_polygon::raw_source_long_axis_depth_mm(
-            &independent,
-            edge_clearance_mm,
-        )
-        .unwrap_or(f64::NAN);
+    let raw_depth_mm = crate::validation::general_polygon::raw_source_long_axis_depth_mm(
+        &independent,
+        edge_clearance_mm,
+    )
+    .unwrap_or(f64::NAN);
     let fingerprint = crate::search::general_relaxed::general_placement_fingerprint(placements);
     crate::quality_trace::exact_candidate(
         raw_depth_mm,

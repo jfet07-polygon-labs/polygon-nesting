@@ -354,8 +354,7 @@ mod tests {
         for step_x in -40..=40 {
             for step_y in -40..=40 {
                 let (dx, dy) = (step_x as f64, step_y as f64);
-                let moved: Vec<(f64, f64)> =
-                    bar.iter().map(|(x, y)| (x + dx, y + dy)).collect();
+                let moved: Vec<(f64, f64)> = bar.iter().map(|(x, y)| (x + dx, y + dy)).collect();
                 let second = polygon(&moved);
                 let separated = first_shield.separated_from(&shield(&moved));
                 let overlapping = first

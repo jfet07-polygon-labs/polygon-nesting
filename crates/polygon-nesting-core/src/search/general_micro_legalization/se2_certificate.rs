@@ -699,11 +699,13 @@ fn push_boundary_rows(
     family: RowFamily,
 ) {
     let along = |point: &IrregularPoint| normal.0 * point.x + normal.1 * point.y;
-    let Some(extreme) = vertices
-        .iter()
-        .copied()
-        .reduce(|best, point| if along(&point) < along(&best) { point } else { best })
-    else {
+    let Some(extreme) = vertices.iter().copied().reduce(|best, point| {
+        if along(&point) < along(&best) {
+            point
+        } else {
+            best
+        }
+    }) else {
         return;
     };
     let extreme_along = along(&extreme);
@@ -713,7 +715,10 @@ fn push_boundary_rows(
         if spread > 0.0 {
             let rotational_spread = rotation_coefficient(
                 normal,
-                IrregularPoint::new(point.x - extreme.x + centre.x, point.y - extreme.y + centre.y),
+                IrregularPoint::new(
+                    point.x - extreme.x + centre.x,
+                    point.y - extreme.y + centre.y,
+                ),
                 centre,
             )
             .abs();
@@ -1031,11 +1036,11 @@ fn solve_program(
     // below - the box projection, the step size, the dual's closed-form box
     // maximum - then uses one radius for all six coordinates of a piece, and
     // the scale is multiplied back out at the end.
-    let scales: Vec<f64> = theta_caps
+    let scales: Vec<f64> = theta_caps.iter().map(|cap| cap / trust_radius_mm).collect();
+    let rows: Vec<Row> = unscaled_rows
         .iter()
-        .map(|cap| cap / trust_radius_mm)
+        .map(|row| row.scaled(&scales))
         .collect();
-    let rows: Vec<Row> = unscaled_rows.iter().map(|row| row.scaled(&scales)).collect();
     let rows = rows.as_slice();
     let cube = vec![trust_radius_mm; slots];
 
@@ -1142,8 +1147,8 @@ fn solve_program(
                         row.accumulate(weight, &mut c);
                     }
                 }
-                best_dual_mm = best_dual_mm
-                    .min(dual_bound_mm(rows, &weights, slots, trust_radius_mm, &cube));
+                best_dual_mm =
+                    best_dual_mm.min(dual_bound_mm(rows, &weights, slots, trust_radius_mm, &cube));
 
                 // The same weighting's box maximizer is a point in the box, so
                 // it is a primal candidate for free. It is only *used* when it
@@ -1400,9 +1405,7 @@ pub fn se2_rigidity_certificate(
 
     let headline = programs
         .iter()
-        .find(|result| {
-            result.program == Se2Program::DepthOnly && result.motion == Se2Motion::Se2
-        })
+        .find(|result| result.program == Se2Program::DepthOnly && result.motion == Se2Motion::Se2)
         .map(|result| result.verdict)
         .unwrap_or("no-program");
 
@@ -1991,7 +1994,11 @@ mod tests {
         }
     }
 
-    fn piece<'a>(id: &'a str, polygon: &'a PolygonSet, allow_rotation: bool) -> GeneralFastPiece<'a> {
+    fn piece<'a>(
+        id: &'a str,
+        polygon: &'a PolygonSet,
+        allow_rotation: bool,
+    ) -> GeneralFastPiece<'a> {
         GeneralFastPiece {
             id,
             polygon,
@@ -2012,10 +2019,12 @@ mod tests {
                 result.program, result.motion, result.lp.primal_feasible
             )
         });
-        let upper = result
-            .lp
-            .dual_upper_mm
-            .unwrap_or_else(|| panic!("{:?}/{:?} has no dual upper bound", result.program, result.motion));
+        let upper = result.lp.dual_upper_mm.unwrap_or_else(|| {
+            panic!(
+                "{:?}/{:?} has no dual upper bound",
+                result.program, result.motion
+            )
+        });
         assert!(
             lower <= upper,
             "{:?}/{:?} bracket inverted: [{lower}, {upper}]",
@@ -2086,9 +2095,8 @@ mod tests {
                 .unwrap();
             // The far corner is the third vertex of the only region.
             let moved_probe = moved_set.regions[0].outer.source_points()[2];
-            let measured = (normal.0 * (moved_probe.x - probe.x)
-                + normal.1 * (moved_probe.y - probe.y))
-                / h;
+            let measured =
+                (normal.0 * (moved_probe.x - probe.x) + normal.1 * (moved_probe.y - probe.y)) / h;
             let predicted = rotation_coefficient(normal, probe, centre);
             assert!(
                 (measured - predicted).abs() < 1e-3 * predicted.abs().max(1.0),
@@ -2718,8 +2726,7 @@ mod tests {
             assert!(
                 witness.exact_valid,
                 "{:?}/{:?} returned a witness the exact validator rejects",
-                result.program,
-                result.motion
+                result.program, result.motion
             );
             assert!(
                 witness.delta_mm.is_some(),
@@ -2803,8 +2810,7 @@ mod tests {
             assert!(
                 result.lp.primal_feasible,
                 "{:?}/{:?} found no feasible point on a legal parent",
-                result.program,
-                result.motion
+                result.program, result.motion
             );
         }
     }

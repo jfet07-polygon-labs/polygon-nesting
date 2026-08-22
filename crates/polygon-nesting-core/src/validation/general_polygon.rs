@@ -105,8 +105,7 @@ pub fn validate_publication(
 /// coordinator sets it once, before any search thread exists, and puts it back
 /// on the way out; see `ContractCertificateArming` in `search::portfolio`.
 #[cfg(feature = "fast-contract-validator")]
-static CERTIFICATE_ARMED: std::sync::atomic::AtomicBool =
-    std::sync::atomic::AtomicBool::new(true);
+static CERTIFICATE_ARMED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
 
 /// Whether the clearance certificate is armed in this process.
 #[cfg(feature = "fast-contract-validator")]

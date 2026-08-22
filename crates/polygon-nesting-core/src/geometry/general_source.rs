@@ -107,15 +107,15 @@ pub fn polygon_set_from_imported_piece(
                     ));
                 }
                 arc::sample_points_bounded(
-                *segment_arc,
-                flattening_sag_tolerance_mm,
-                max_segment_points,
-            )
-            .ok_or_else(|| {
-                error(format!(
-                    "sampled source cycle exceeds the {GENERAL_MAX_RING_VERTICES}-vertex limit"
-                ))
-            })?
+                    *segment_arc,
+                    flattening_sag_tolerance_mm,
+                    max_segment_points,
+                )
+                .ok_or_else(|| {
+                    error(format!(
+                        "sampled source cycle exceeds the {GENERAL_MAX_RING_VERTICES}-vertex limit"
+                    ))
+                })?
             }
         };
         if points.len() < 2 {

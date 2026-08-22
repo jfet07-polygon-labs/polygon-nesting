@@ -406,8 +406,8 @@ mod tests {
             pair_visits: 999_999,
             ..ClassCounts::default()
         };
-        let shipped = counts.candidate_queries
-            + WORK_UNITS_PER_EXACT_PAIR_TEST * counts.exact_pair_tests;
+        let shipped =
+            counts.candidate_queries + WORK_UNITS_PER_EXACT_PAIR_TEST * counts.exact_pair_tests;
         assert_eq!(DEFAULT_CLASS_PRICE.units(&counts), shipped);
         // And the number that call actually reported to the coordinator.
         assert_eq!(shipped, 2_013_198);
@@ -481,8 +481,8 @@ mod tests {
             full_rescores: 1_912,
             ..ClassCounts::default()
         };
-        let shipped = counts.candidate_queries
-            + WORK_UNITS_PER_EXACT_PAIR_TEST * counts.exact_pair_tests;
+        let shipped =
+            counts.candidate_queries + WORK_UNITS_PER_EXACT_PAIR_TEST * counts.exact_pair_tests;
         for mode in [22usize, 23, 26, 27, 30, 31, 34] {
             assert_eq!(
                 price_for(mode).units(&counts),

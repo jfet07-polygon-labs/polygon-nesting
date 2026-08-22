@@ -87,12 +87,12 @@ use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
 use crate::profiling::{self, Counter};
+#[cfg(feature = "compression-schedule")]
+use crate::search::compression_schedule::ScheduleCheckpoint;
 use crate::search::general_fast::{
     construct_short_side_first, validate_and_measure_placements, GeneralFastError,
     GeneralFastPiece, GeneralFastPlacement, GeneralFastResult, GeneralFastSettings,
 };
-#[cfg(feature = "compression-schedule")]
-use crate::search::compression_schedule::ScheduleCheckpoint;
 #[cfg(feature = "compression-schedule")]
 use crate::search::general_relaxed::SliceControl;
 use crate::search::general_relaxed::{
@@ -3176,9 +3176,7 @@ impl BudgetMeter {
             .name("plan-probe".to_owned())
             .spawn(move || {
                 while !thread_stop.load(Ordering::Relaxed) {
-                    std::thread::sleep(std::time::Duration::from_millis(
-                        PLAN_PROBE_SAMPLE_MILLIS,
-                    ));
+                    std::thread::sleep(std::time::Duration::from_millis(PLAN_PROBE_SAMPLE_MILLIS));
                     let seconds = started.elapsed().as_secs_f64();
                     let units = work_units_now().saturating_sub(work_base);
                     if let Ok(mut samples) = thread_samples.lock() {
@@ -3259,8 +3257,8 @@ impl BudgetMeter {
         if let Some(path) = settings.plan_calibration_path.as_deref() {
             let band = settings.plan_calibration_band.max(1.0);
             match read_plan_calibration(path).get(&probe_work_units) {
-                Some(&stored) if probe_seconds <= stored * band
-                    && probe_seconds * band >= stored =>
+                Some(&stored)
+                    if probe_seconds <= stored * band && probe_seconds * band >= stored =>
                 {
                     probe_effective_seconds = stored;
                     calibration_source = PlanCalibrationSource::File;
@@ -3272,11 +3270,7 @@ impl BudgetMeter {
                 // The run's own least-loaded estimate, which is the bucketed one
                 // when it exists: a calibration pass under a load spike writes
                 // the fastest stretch it saw rather than the average it endured.
-                write_plan_calibration(
-                    path,
-                    probe_work_units,
-                    bucketed.unwrap_or(probe_seconds),
-                );
+                write_plan_calibration(path, probe_work_units, bucketed.unwrap_or(probe_seconds));
             }
         }
         let probe_effective_seconds = probe_effective_seconds;
@@ -3619,9 +3613,7 @@ impl BudgetMeter {
             // own units are already inside `work_units()` - `work_base` was
             // read before phase 0. Reading it the same way before installation
             // keeps `phase_zero_cost` a work number in both.
-            PortfolioBudget::Work { .. } | PortfolioBudget::Plan { .. } => {
-                self.work_units() as f64
-            }
+            PortfolioBudget::Work { .. } | PortfolioBudget::Plan { .. } => self.work_units() as f64,
         }
     }
 
@@ -4237,7 +4229,10 @@ impl<'a> Coordinator<'a> {
             relaxed.rotation_equivariant_offset =
                 self.settings.rotation_equivariant_offset && relaxed.continuous_rotation;
             relaxed.sparse_rotation = armed && mode == 34;
-            relaxed.se2_witness = self.settings.se2_witness.filter(|_| relaxed.sparse_rotation);
+            relaxed.se2_witness = self
+                .settings
+                .se2_witness
+                .filter(|_| relaxed.sparse_rotation);
             // Design A's mode-22 arming has no trigger under design B, so it is
             // withdrawn rather than left proposing rungs no stall asked for.
             if self.settings.sparse_rotation && mode == 22 {
@@ -4448,8 +4443,7 @@ impl<'a> Coordinator<'a> {
             after.operator_collision_builds = (work.experimental_collision_builds as u64)
                 .saturating_add(work.validator_collision_builds as u64);
             after.confirmations = schedule_confirmations_attempted(&population);
-            let counts =
-                crate::search::work_currency::ClassCounts::delta(&after, &counts_before);
+            let counts = crate::search::work_currency::ClassCounts::delta(&after, &counts_before);
             let class_units = crate::search::work_currency::price_for(mode).units(&counts);
             (counts, class_units)
         });
@@ -4489,8 +4483,7 @@ impl<'a> Coordinator<'a> {
                 // settlement added in total: zero unless the class price was
                 // the strict maximum of the three.
                 charged_extra_units: if currency.charges() {
-                    class_units
-                        .saturating_sub(global_units.max(self_metered.unwrap_or(0)))
+                    class_units.saturating_sub(global_units.max(self_metered.unwrap_or(0)))
                 } else {
                     0
                 },
@@ -4611,8 +4604,8 @@ impl<'a> Coordinator<'a> {
             || self.settings.compression_schedule_wall_stop_all)
             .then(|| self.meter.wall_target_seconds)
             .flatten();
-        let yield_after_batches = Some(self.settings.compression_schedule_yield_batches)
-            .filter(|batches| *batches > 0);
+        let yield_after_batches =
+            Some(self.settings.compression_schedule_yield_batches).filter(|batches| *batches > 0);
         let started = self.meter.started;
         let mut control = move |checkpoint: &ScheduleCheckpoint| {
             if let Some(limit) = wall_stop_seconds {
@@ -4631,24 +4624,23 @@ impl<'a> Coordinator<'a> {
             seed_domain: crate::search::general_relaxed::COMPRESSION_SCHEDULE_SEED_DOMAIN,
             ..GeneralPersistentVacancyDiagnostics::default()
         };
-        let mut population = match crate::search::general_relaxed::resume_schedule_slice(
-            suspended,
-            &mut control,
-        ) {
-            Ok(outcome) => crate::search::general_relaxed::finish_schedule_outcome(
-                outcome,
-                diagnostics,
-                &mut self.suspended_slice,
-            ),
-            Err(error) => {
-                // A slice that fails on resumption is a failed operator call and
-                // not a failed run: the incumbent it was holding was published
-                // by the call that suspended it, so the run is never worse off
-                // than it was before the suspension.
-                diagnostics.failure_reason = Some(format!("compression schedule resume: {error}"));
-                diagnostics
-            }
-        };
+        let mut population =
+            match crate::search::general_relaxed::resume_schedule_slice(suspended, &mut control) {
+                Ok(outcome) => crate::search::general_relaxed::finish_schedule_outcome(
+                    outcome,
+                    diagnostics,
+                    &mut self.suspended_slice,
+                ),
+                Err(error) => {
+                    // A slice that fails on resumption is a failed operator call and
+                    // not a failed run: the incumbent it was holding was published
+                    // by the call that suspended it, so the run is never worse off
+                    // than it was before the suspension.
+                    diagnostics.failure_reason =
+                        Some(format!("compression schedule resume: {error}"));
+                    diagnostics
+                }
+            };
         // The same contract check every dispatched operator gets. It runs here
         // because a resumption does not go through
         // `dispatch_persistent_vacancy_mode` - there is no parent to dispatch
@@ -4703,8 +4695,7 @@ impl<'a> Coordinator<'a> {
             seed_domain: crate::search::general_relaxed::COMPRESSION_SCHEDULE_SEED_DOMAIN,
             ..GeneralPersistentVacancyDiagnostics::default()
         };
-        let mut population = match crate::search::general_relaxed::stop_suspended_slice(suspended)
-        {
+        let mut population = match crate::search::general_relaxed::stop_suspended_slice(suspended) {
             Ok(outcome) => crate::search::general_relaxed::finish_schedule_outcome(
                 outcome,
                 diagnostics,
@@ -5227,304 +5218,190 @@ pub fn run_portfolio(
         "a run ended holding a suspended mode-34 slice"
     );
     if !settings.coordinator_v3 {
-    coordinator.run_phase("descent", settings.schedule.descent_by, |run| {
-        let mut cycles = run.settings.descent_cycles.max(1);
-        let mut epochs = run.settings.descent_relaxed_epochs.max(1);
-        loop {
-            // Re-selected every round, because a quantum's own output is an
-            // archive member and therefore a candidate parent for the next
-            // round. That is what turns a round-robin over the frontier into a
-            // progressive descent rather than a repeated one.
-            let frontier = run.archive.distinct_frontier(run.settings.descent_states);
-            if frontier.is_empty() {
-                run.note_exit(PhaseExitCause::GeometricFixpoint);
-                return;
+        coordinator.run_phase("descent", settings.schedule.descent_by, |run| {
+            let mut cycles = run.settings.descent_cycles.max(1);
+            let mut epochs = run.settings.descent_relaxed_epochs.max(1);
+            loop {
+                // Re-selected every round, because a quantum's own output is an
+                // archive member and therefore a candidate parent for the next
+                // round. That is what turns a round-robin over the frontier into a
+                // progressive descent rather than a repeated one.
+                let frontier = run.archive.distinct_frontier(run.settings.descent_states);
+                if frontier.is_empty() {
+                    run.note_exit(PhaseExitCause::GeometricFixpoint);
+                    return;
+                }
+                let mut spent_any = false;
+                for basin in frontier {
+                    if let Some(cause) = run.affordability(run.deadline, "mode22", 1.0) {
+                        run.note_exit(cause);
+                        return;
+                    }
+                    // The quantum's *size* is part of the key: a second pass at a
+                    // deeper quantum is a different operator call, not a repeat.
+                    if run.already_attempted(format!("22:{cycles}:{epochs}:{}", basin.fingerprint))
+                    {
+                        continue;
+                    }
+                    spent_any = true;
+                    let target = basin.raw_depth_mm + ALTERNATION_RUNG_MM;
+                    run.run_operator(
+                        22,
+                        &basin.placements.clone(),
+                        Some(basin.fingerprint.clone()),
+                        Some(target),
+                        |relaxed| {
+                            relaxed.alternation_max_cycles = Some(cycles);
+                            relaxed.epochs = epochs;
+                        },
+                        None,
+                        ParentRole::Descended,
+                        None,
+                    );
+                }
+                if spent_any {
+                    continue;
+                }
+                // The frontier is a fixpoint *at this quantum size*: every distinct
+                // state has had this much alternation and none of it produced a new
+                // layout.
+                //
+                // The obvious next move is to deepen the quantum rather than hand
+                // the remaining budget to a later phase, and this is that move,
+                // measured and declined. Doubling the cycle and epoch counts until
+                // the mode's own bound and the caller's own epoch count are reached
+                // does keep the phase busy - and on the measured stream it takes
+                // the budget away from the crossover phase, which is the *second*
+                // most productive operator here (three publications in nine calls),
+                // and the result gets worse: seed 1 goes from 176.056 to 179.633
+                // under the review's schedule and to 176.753 under the focused one.
+                // So the default is off, and the flag stays as the instrument that
+                // priced it.
+                if !run.settings.descent_iterated_deepening {
+                    run.descent_stalled = true;
+                    run.note_exit(PhaseExitCause::KeysExhausted);
+                    break;
+                }
+                let deepened_cycles = (cycles * 2).min(ALTERNATION_MAX_CYCLES);
+                let deepened_epochs = (epochs * 2).min(template_epochs);
+                if deepened_cycles == cycles && deepened_epochs == epochs {
+                    run.descent_stalled = true;
+                    run.note_exit(PhaseExitCause::KeysExhausted);
+                    break;
+                }
+                cycles = deepened_cycles;
+                epochs = deepened_epochs;
             }
-            let mut spent_any = false;
-            for basin in frontier {
-                if let Some(cause) = run.affordability(run.deadline, "mode22", 1.0) {
+        });
+
+        // ---- phase 2: crossovers over the distinct archive pairs --------------
+        // Second, not fourth, and repeatable. The review called mode 23
+        // "conditional but currently evidence-required"; the v1 measurement made it
+        // evidence-*producing* - the largest single published gains in the run -
+        // and then gave it 0.6 s of a ten-second budget. The condition stays what
+        // the review wrote it as: two structurally distinct archive states.
+        coordinator.run_phase("crossover", settings.schedule.crossover_by, |run| {
+            for _ in 0..run.settings.crossover_attempts {
+                if let Some(cause) = run.affordability(run.deadline, "mode23", 1.0) {
                     run.note_exit(cause);
                     return;
                 }
-                // The quantum's *size* is part of the key: a second pass at a
-                // deeper quantum is a different operator call, not a repeat.
-                if run.already_attempted(format!("22:{cycles}:{epochs}:{}", basin.fingerprint)) {
-                    continue;
+                // Re-selected every attempt: a crossover that published moved the
+                // incumbent, and the next pair should be drawn from where the
+                // archive is now, not from where it was.
+                let frontier = run
+                    .archive
+                    .distinct_frontier(run.settings.crossover_states.max(2));
+                if frontier.len() < 2 {
+                    run.note_exit(PhaseExitCause::GeometricFixpoint);
+                    return;
                 }
-                spent_any = true;
-                let target = basin.raw_depth_mm + ALTERNATION_RUNG_MM;
+                let fingerprints = frontier
+                    .iter()
+                    .map(|basin| basin.fingerprint.clone())
+                    .collect::<Vec<_>>();
+                let Some((left, right, key)) =
+                    first_unattempted_crossover_pair(&fingerprints, &run.attempted)
+                else {
+                    run.note_exit(PhaseExitCause::KeysExhausted);
+                    return;
+                };
+                run.already_attempted(key);
+                let parent_b = GeneralPersistentVacancyPinnedParent {
+                    placements: frontier[right].placements.clone(),
+                    source: "archive".to_owned(),
+                    source_sha256: frontier[right].fingerprint.clone(),
+                };
                 run.run_operator(
-                    22,
-                    &basin.placements.clone(),
-                    Some(basin.fingerprint.clone()),
-                    Some(target),
-                    |relaxed| {
-                        relaxed.alternation_max_cycles = Some(cycles);
-                        relaxed.epochs = epochs;
-                    },
-                    None,
+                    23,
+                    &frontier[left].placements.clone(),
+                    Some(frontier[left].fingerprint.clone()),
+                    Some(CROSSOVER_CUT_FRACTION),
+                    |_| {},
+                    Some(&parent_b),
                     ParentRole::Descended,
-                    None,
+                    Some(format!(
+                        "x:forward:{left}->{right}@{CROSSOVER_CUT_FRACTION}"
+                    )),
                 );
+                // Both parents were descended from. v1 charged only the first,
+                // which is the same defect - a descent that happened going
+                // uncharged - as charging the constructor's pose prior, in the
+                // other direction.
+                let right_fingerprint = frontier[right].fingerprint.clone();
+                run.archive.charge_descent(&right_fingerprint);
             }
-            if spent_any {
-                continue;
-            }
-            // The frontier is a fixpoint *at this quantum size*: every distinct
-            // state has had this much alternation and none of it produced a new
-            // layout.
-            //
-            // The obvious next move is to deepen the quantum rather than hand
-            // the remaining budget to a later phase, and this is that move,
-            // measured and declined. Doubling the cycle and epoch counts until
-            // the mode's own bound and the caller's own epoch count are reached
-            // does keep the phase busy - and on the measured stream it takes
-            // the budget away from the crossover phase, which is the *second*
-            // most productive operator here (three publications in nine calls),
-            // and the result gets worse: seed 1 goes from 176.056 to 179.633
-            // under the review's schedule and to 176.753 under the focused one.
-            // So the default is off, and the flag stays as the instrument that
-            // priced it.
-            if !run.settings.descent_iterated_deepening {
-                run.descent_stalled = true;
-                run.note_exit(PhaseExitCause::KeysExhausted);
-                break;
-            }
-            let deepened_cycles = (cycles * 2).min(ALTERNATION_MAX_CYCLES);
-            let deepened_epochs = (epochs * 2).min(template_epochs);
-            if deepened_cycles == cycles && deepened_epochs == epochs {
-                run.descent_stalled = true;
-                run.note_exit(PhaseExitCause::KeysExhausted);
-                break;
-            }
-            cycles = deepened_cycles;
-            epochs = deepened_epochs;
-        }
-    });
+        });
 
-    // ---- phase 2: crossovers over the distinct archive pairs --------------
-    // Second, not fourth, and repeatable. The review called mode 23
-    // "conditional but currently evidence-required"; the v1 measurement made it
-    // evidence-*producing* - the largest single published gains in the run -
-    // and then gave it 0.6 s of a ten-second budget. The condition stays what
-    // the review wrote it as: two structurally distinct archive states.
-    coordinator.run_phase("crossover", settings.schedule.crossover_by, |run| {
-        for _ in 0..run.settings.crossover_attempts {
-            if let Some(cause) = run.affordability(run.deadline, "mode23", 1.0) {
+        // ---- phase 3: micro-descent, and m31 only on a residue -----------------
+        // The order is inverted from v1. v1 asked mode 31 to legalize a *clean*
+        // mode-22 fixpoint one rung below its own depth: six calls, zero
+        // exact-valid results, every one "global legalization did not reach a
+        // feasible fixpoint". The review's own sentence is that m31 is
+        // production-worthy "only as the legalizer for a compressed/perturbed
+        // frontier", so v2 does the compression first and hands m31 the residue if
+        // and only if one exists - a complete layout the compressing descent
+        // returned that the exact validator refuses.
+        coordinator.run_phase("compression", settings.schedule.compression_by, |run| {
+            if let Some(cause) = run.affordability(run.deadline, "mode22", 1.0) {
                 run.note_exit(cause);
                 return;
             }
-            // Re-selected every attempt: a crossover that published moved the
-            // incumbent, and the next pair should be drawn from where the
-            // archive is now, not from where it was.
-            let frontier = run
-                .archive
-                .distinct_frontier(run.settings.crossover_states.max(2));
-            if frontier.len() < 2 {
+            let parent = run.incumbent.result.placements.clone();
+            let fingerprint = run.incumbent.fingerprint.clone();
+            let Some(depth) = run.incumbent.raw_depth_mm else {
                 run.note_exit(PhaseExitCause::GeometricFixpoint);
                 return;
-            }
-            let fingerprints = frontier
-                .iter()
-                .map(|basin| basin.fingerprint.clone())
-                .collect::<Vec<_>>();
-            let Some((left, right, key)) =
-                first_unattempted_crossover_pair(&fingerprints, &run.attempted)
-            else {
+            };
+            if run.already_attempted(format!("22c:{fingerprint}")) {
                 run.note_exit(PhaseExitCause::KeysExhausted);
                 return;
-            };
-            run.already_attempted(key);
-            let parent_b = GeneralPersistentVacancyPinnedParent {
-                placements: frontier[right].placements.clone(),
-                source: "archive".to_owned(),
-                source_sha256: frontier[right].fingerprint.clone(),
-            };
-            run.run_operator(
-                23,
-                &frontier[left].placements.clone(),
-                Some(frontier[left].fingerprint.clone()),
-                Some(CROSSOVER_CUT_FRACTION),
-                |_| {},
-                Some(&parent_b),
-                ParentRole::Descended,
-                Some(format!("x:forward:{left}->{right}@{CROSSOVER_CUT_FRACTION}")),
-            );
-            // Both parents were descended from. v1 charged only the first,
-            // which is the same defect - a descent that happened going
-            // uncharged - as charging the constructor's pose prior, in the
-            // other direction.
-            let right_fingerprint = frontier[right].fingerprint.clone();
-            run.archive.charge_descent(&right_fingerprint);
-        }
-    });
-
-    // ---- phase 3: micro-descent, and m31 only on a residue -----------------
-    // The order is inverted from v1. v1 asked mode 31 to legalize a *clean*
-    // mode-22 fixpoint one rung below its own depth: six calls, zero
-    // exact-valid results, every one "global legalization did not reach a
-    // feasible fixpoint". The review's own sentence is that m31 is
-    // production-worthy "only as the legalizer for a compressed/perturbed
-    // frontier", so v2 does the compression first and hands m31 the residue if
-    // and only if one exists - a complete layout the compressing descent
-    // returned that the exact validator refuses.
-    coordinator.run_phase("compression", settings.schedule.compression_by, |run| {
-        if let Some(cause) = run.affordability(run.deadline, "mode22", 1.0) {
-            run.note_exit(cause);
-            return;
-        }
-        let parent = run.incumbent.result.placements.clone();
-        let fingerprint = run.incumbent.fingerprint.clone();
-        let Some(depth) = run.incumbent.raw_depth_mm else {
-            run.note_exit(PhaseExitCause::GeometricFixpoint);
-            return;
-        };
-        if run.already_attempted(format!("22c:{fingerprint}")) {
-            run.note_exit(PhaseExitCause::KeysExhausted);
-            return;
-        }
-        let epochs = run.settings.descent_relaxed_epochs;
-        let compressed = run.run_operator(
-            22,
-            &parent,
-            Some(fingerprint),
-            Some(depth + ALTERNATION_RUNG_MM),
-            |relaxed| {
-                relaxed.alternation_max_cycles = Some(1);
-                relaxed.epochs = epochs;
-            },
-            None,
-            ParentRole::Descended,
-            None,
-        );
-        if compressed.exact_valid {
-            // Nothing to legalize. This is the whole demotion: on this stream
-            // the trigger does not fire, and a phase that does not fire costs
-            // nothing instead of costing six refused calls.
-            run.note_exit(PhaseExitCause::NoResidue);
-            return;
-        }
-        let residue = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
-            &compressed.final_placements,
-        );
-        if residue.len() != run.pieces.len() {
-            run.note_exit(PhaseExitCause::NoCompleteLayout);
-            return;
-        }
-        if !run.meter.has_room(run.deadline) {
-            run.note_exit(PhaseExitCause::Deadline);
-            return;
-        }
-        let Some(residue_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
-            run.pieces,
-            &residue,
-            run.fast_settings,
-        )
-        .ok() else {
-            run.note_exit(PhaseExitCause::GeometricFixpoint);
-            return;
-        };
-        // One rung of the engine's own construction drop ladder below the
-        // residue, which is the smallest bound this engine ever asks a
-        // legalizer for.
-        let bound = residue_depth - COMPRESSION_RUNG_MM;
-        if bound <= 0.0 {
-            run.note_exit(PhaseExitCause::GeometricFixpoint);
-            return;
-        }
-        let residue_fingerprint = general_placement_fingerprint(&residue);
-        if run.already_attempted(format!("31:{residue_fingerprint}")) {
-            run.note_exit(PhaseExitCause::KeysExhausted);
-            return;
-        }
-        run.run_operator(
-            31,
-            &residue,
-            Some(residue_fingerprint),
-            Some(bound),
-            |_| {},
-            None,
-            ParentRole::Descended,
-            None,
-        );
-    });
-
-    // ---- phase 4: diversify - draw a basin only if it can be descended ----
-    // The constructor slice, conditional and last. Each iteration draws one
-    // salted arm and immediately spends a quantum on it, because the v1
-    // measurement's finding was not "mode 20 is bad" - all nineteen arms were
-    // exact-valid - but "nineteen arms that nobody descended from published
-    // nothing". An arm that is drawn is now descended from in the same
-    // iteration or it is not drawn at all.
-    coordinator.run_phase("diversify", settings.schedule.diversify_by, |run| {
-        match run.settings.basin_trigger {
-            BasinTrigger::Never => {
-                run.note_exit(PhaseExitCause::TriggerRefused);
-                return;
             }
-            BasinTrigger::OnStall if !run.descent_stalled => {
-                run.note_exit(PhaseExitCause::TriggerRefused);
-                return;
-            }
-            _ => {}
-        }
-        let priced = run.settings.basin_trigger == BasinTrigger::WhenDescendable;
-        let patience = run.settings.basin_patience.max(1);
-        let mut barren = 0usize;
-        for slot in 0..run.settings.basin_slots {
-            let publications_before = run.publications.len();
-            if !run.meter.has_room(run.deadline) {
-                run.note_exit(PhaseExitCause::Deadline);
-                return;
-            }
-            if priced {
-                // A quantum is the price of *using* a basin, and a basin that
-                // is not used is the 19/19 refusal. An arm has never been
-                // priced when the first one is drawn, so it is charged a
-                // quantum's price until it has priced itself.
-                let Some(quantum) = run.mean_operator_cost("mode22") else {
-                    run.note_exit(PhaseExitCause::Affordability);
-                    return;
-                };
-                let arm = run.mean_operator_cost("mode20").unwrap_or(quantum);
-                if run.meter.remaining_to(run.deadline) < arm + quantum {
-                    run.note_exit(PhaseExitCause::Affordability);
-                    return;
-                }
-            }
-            let salt = slot as f64 * BASIN_TARGET_SALT_RELATIVE_STEP * constructor_clamp_mm;
-            let divisor = if run.settings.cell_divisor_salts.is_empty() {
-                None
-            } else {
-                Some(run.settings.cell_divisor_salts[slot % run.settings.cell_divisor_salts.len()])
-            };
-            let parent = run.incumbent.result.placements.clone();
-            let parent_fingerprint = run.incumbent.fingerprint.clone();
-            let drawn = run.run_operator(
-                20,
+            let epochs = run.settings.descent_relaxed_epochs;
+            let compressed = run.run_operator(
+                22,
                 &parent,
-                Some(parent_fingerprint),
-                Some(constructor_clamp_mm + salt),
+                Some(fingerprint),
+                Some(depth + ALTERNATION_RUNG_MM),
                 |relaxed| {
-                    relaxed.construction_restart_window = Some((slot, 1));
-                    relaxed.construction_void_cell_divisor = divisor;
+                    relaxed.alternation_max_cycles = Some(1);
+                    relaxed.epochs = epochs;
                 },
                 None,
-                // The constructor builds from scratch; the incumbent is only
-                // its pose prior, so this is not that basin's quantum.
-                ParentRole::Prior,
-                Some(format!("m20:slot{slot}")),
+                ParentRole::Descended,
+                None,
             );
-            let basin = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
-                &drawn.final_placements,
+            if compressed.exact_valid {
+                // Nothing to legalize. This is the whole demotion: on this stream
+                // the trigger does not fire, and a phase that does not fire costs
+                // nothing instead of costing six refused calls.
+                run.note_exit(PhaseExitCause::NoResidue);
+                return;
+            }
+            let residue = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+                &compressed.final_placements,
             );
-            if basin.len() != run.pieces.len() {
-                // An arm that produced no complete layout is evidence about the
-                // clamp, not about this slot: consecutive slots differ only in
-                // a salt of one part in ten thousand, so the next arm would be
-                // refused for the same reason at the same price. Stopping here
-                // is what turns "the clamp was wrong" from eight wasted arms -
-                // 2.04 s of a 3.88 s shapes-17 run, measured - into one.
+            if residue.len() != run.pieces.len() {
                 run.note_exit(PhaseExitCause::NoCompleteLayout);
                 return;
             }
@@ -5532,57 +5409,178 @@ pub fn run_portfolio(
                 run.note_exit(PhaseExitCause::Deadline);
                 return;
             }
-            let Some(basin_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
+            let Some(residue_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
                 run.pieces,
-                &basin,
+                &residue,
                 run.fast_settings,
             )
             .ok() else {
-                barren += 1;
-                if barren >= patience {
-                    run.note_exit(PhaseExitCause::Patience);
-                    return;
-                }
-                continue;
+                run.note_exit(PhaseExitCause::GeometricFixpoint);
+                return;
             };
-            let basin_fingerprint = general_placement_fingerprint(&basin);
-            let cycles = run.settings.descent_cycles.max(1);
-            let epochs = run.settings.descent_relaxed_epochs.max(1);
-            if run.already_attempted(format!("22:{cycles}:{epochs}:{basin_fingerprint}")) {
-                // The arm rebuilt a layout some quantum has already descended
-                // from, so it bought nothing. That is a barren iteration on the
-                // same terms as one whose descent published nothing.
-                barren += 1;
-                if barren >= patience {
-                    run.note_exit(PhaseExitCause::Patience);
-                    return;
-                }
-                continue;
+            // One rung of the engine's own construction drop ladder below the
+            // residue, which is the smallest bound this engine ever asks a
+            // legalizer for.
+            let bound = residue_depth - COMPRESSION_RUNG_MM;
+            if bound <= 0.0 {
+                run.note_exit(PhaseExitCause::GeometricFixpoint);
+                return;
+            }
+            let residue_fingerprint = general_placement_fingerprint(&residue);
+            if run.already_attempted(format!("31:{residue_fingerprint}")) {
+                run.note_exit(PhaseExitCause::KeysExhausted);
+                return;
             }
             run.run_operator(
-                22,
-                &basin,
-                Some(basin_fingerprint),
-                Some(basin_depth + ALTERNATION_RUNG_MM),
-                |relaxed| {
-                    relaxed.alternation_max_cycles = Some(cycles);
-                    relaxed.epochs = epochs;
-                },
+                31,
+                &residue,
+                Some(residue_fingerprint),
+                Some(bound),
+                |_| {},
                 None,
                 ParentRole::Descended,
-                Some(format!("m22:slot{slot}")),
+                None,
             );
-            if run.publications.len() > publications_before {
-                barren = 0;
-            } else {
-                barren += 1;
-                if barren >= patience {
-                    run.note_exit(PhaseExitCause::Patience);
+        });
+
+        // ---- phase 4: diversify - draw a basin only if it can be descended ----
+        // The constructor slice, conditional and last. Each iteration draws one
+        // salted arm and immediately spends a quantum on it, because the v1
+        // measurement's finding was not "mode 20 is bad" - all nineteen arms were
+        // exact-valid - but "nineteen arms that nobody descended from published
+        // nothing". An arm that is drawn is now descended from in the same
+        // iteration or it is not drawn at all.
+        coordinator.run_phase("diversify", settings.schedule.diversify_by, |run| {
+            match run.settings.basin_trigger {
+                BasinTrigger::Never => {
+                    run.note_exit(PhaseExitCause::TriggerRefused);
                     return;
                 }
+                BasinTrigger::OnStall if !run.descent_stalled => {
+                    run.note_exit(PhaseExitCause::TriggerRefused);
+                    return;
+                }
+                _ => {}
             }
-        }
-    });
+            let priced = run.settings.basin_trigger == BasinTrigger::WhenDescendable;
+            let patience = run.settings.basin_patience.max(1);
+            let mut barren = 0usize;
+            for slot in 0..run.settings.basin_slots {
+                let publications_before = run.publications.len();
+                if !run.meter.has_room(run.deadline) {
+                    run.note_exit(PhaseExitCause::Deadline);
+                    return;
+                }
+                if priced {
+                    // A quantum is the price of *using* a basin, and a basin that
+                    // is not used is the 19/19 refusal. An arm has never been
+                    // priced when the first one is drawn, so it is charged a
+                    // quantum's price until it has priced itself.
+                    let Some(quantum) = run.mean_operator_cost("mode22") else {
+                        run.note_exit(PhaseExitCause::Affordability);
+                        return;
+                    };
+                    let arm = run.mean_operator_cost("mode20").unwrap_or(quantum);
+                    if run.meter.remaining_to(run.deadline) < arm + quantum {
+                        run.note_exit(PhaseExitCause::Affordability);
+                        return;
+                    }
+                }
+                let salt = slot as f64 * BASIN_TARGET_SALT_RELATIVE_STEP * constructor_clamp_mm;
+                let divisor = if run.settings.cell_divisor_salts.is_empty() {
+                    None
+                } else {
+                    Some(
+                        run.settings.cell_divisor_salts
+                            [slot % run.settings.cell_divisor_salts.len()],
+                    )
+                };
+                let parent = run.incumbent.result.placements.clone();
+                let parent_fingerprint = run.incumbent.fingerprint.clone();
+                let drawn = run.run_operator(
+                    20,
+                    &parent,
+                    Some(parent_fingerprint),
+                    Some(constructor_clamp_mm + salt),
+                    |relaxed| {
+                        relaxed.construction_restart_window = Some((slot, 1));
+                        relaxed.construction_void_cell_divisor = divisor;
+                    },
+                    None,
+                    // The constructor builds from scratch; the incumbent is only
+                    // its pose prior, so this is not that basin's quantum.
+                    ParentRole::Prior,
+                    Some(format!("m20:slot{slot}")),
+                );
+                let basin =
+                    crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+                        &drawn.final_placements,
+                    );
+                if basin.len() != run.pieces.len() {
+                    // An arm that produced no complete layout is evidence about the
+                    // clamp, not about this slot: consecutive slots differ only in
+                    // a salt of one part in ten thousand, so the next arm would be
+                    // refused for the same reason at the same price. Stopping here
+                    // is what turns "the clamp was wrong" from eight wasted arms -
+                    // 2.04 s of a 3.88 s shapes-17 run, measured - into one.
+                    run.note_exit(PhaseExitCause::NoCompleteLayout);
+                    return;
+                }
+                if !run.meter.has_room(run.deadline) {
+                    run.note_exit(PhaseExitCause::Deadline);
+                    return;
+                }
+                let Some(basin_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
+                    run.pieces,
+                    &basin,
+                    run.fast_settings,
+                )
+                .ok() else {
+                    barren += 1;
+                    if barren >= patience {
+                        run.note_exit(PhaseExitCause::Patience);
+                        return;
+                    }
+                    continue;
+                };
+                let basin_fingerprint = general_placement_fingerprint(&basin);
+                let cycles = run.settings.descent_cycles.max(1);
+                let epochs = run.settings.descent_relaxed_epochs.max(1);
+                if run.already_attempted(format!("22:{cycles}:{epochs}:{basin_fingerprint}")) {
+                    // The arm rebuilt a layout some quantum has already descended
+                    // from, so it bought nothing. That is a barren iteration on the
+                    // same terms as one whose descent published nothing.
+                    barren += 1;
+                    if barren >= patience {
+                        run.note_exit(PhaseExitCause::Patience);
+                        return;
+                    }
+                    continue;
+                }
+                run.run_operator(
+                    22,
+                    &basin,
+                    Some(basin_fingerprint),
+                    Some(basin_depth + ALTERNATION_RUNG_MM),
+                    |relaxed| {
+                        relaxed.alternation_max_cycles = Some(cycles);
+                        relaxed.epochs = epochs;
+                    },
+                    None,
+                    ParentRole::Descended,
+                    Some(format!("m22:slot{slot}")),
+                );
+                if run.publications.len() > publications_before {
+                    barren = 0;
+                } else {
+                    barren += 1;
+                    if barren >= patience {
+                        run.note_exit(PhaseExitCause::Patience);
+                        return;
+                    }
+                }
+            }
+        });
     } // end of the v2 phase sequence
 
     // ---- phase 5: drain ---------------------------------------------------
@@ -5738,7 +5736,12 @@ impl<'a> Coordinator<'a> {
     /// its allowance is a fixed number of work units measured from wherever the
     /// schedule saturated, so that every arm gets the same allowance from the
     /// same state.
-    fn run_phase_to(&mut self, name: &str, deadline: f64, body: impl FnOnce(&mut PhaseRun<'_, 'a>)) {
+    fn run_phase_to(
+        &mut self,
+        name: &str,
+        deadline: f64,
+        body: impl FnOnce(&mut PhaseRun<'_, 'a>),
+    ) {
         let entered_seconds = self.meter.seconds();
         let entered_work = self.meter.work_units();
         let calls_before = self.operator_calls.len();
@@ -6147,7 +6150,8 @@ impl Coordinator<'_> {
                     * SCHEDULE_RUNGS as f64
                     * crate::search::general_relaxed::COUPLED_SEPARATOR_CONTRACTION_RATIO;
                 let key = format!("34:{}", basin.fingerprint);
-                if rank < quantum_states && depth - drop_mm > 0.0 && !self.attempted.contains(&key) {
+                if rank < quantum_states && depth - drop_mm > 0.0 && !self.attempted.contains(&key)
+                {
                     actions.push(ScheduledAction {
                         class: ActionClass::Schedule,
                         key,
@@ -6393,9 +6397,7 @@ impl Coordinator<'_> {
     /// Whether `class` is the one class this run prices differently for
     /// affordability than for rank.
     fn schedule_wall_priced(&self, class: ActionClass) -> bool {
-        self.settings.schedule_wall_prior
-            && class == ActionClass::Schedule
-            && self.meter.is_wall()
+        self.settings.schedule_wall_prior && class == ActionClass::Schedule && self.meter.is_wall()
     }
 
     /// The queue's ranking value: expected millimetres of published raw depth
@@ -6642,10 +6644,7 @@ fn judge_basin_race(arms: &mut [usize], rows: &mut [BasinRaceArm]) {
 /// worse basin *and* has spent the audition. Both halves are priced in
 /// `docs/experiments/basin-race/`; the equal-work gate is what decides.
 #[cfg(feature = "compression-schedule")]
-fn run_basin_race(
-    coordinator: &mut Coordinator<'_>,
-    constructor_clamp_mm: f64,
-) -> BasinRaceReport {
+fn run_basin_race(coordinator: &mut Coordinator<'_>, constructor_clamp_mm: f64) -> BasinRaceReport {
     if !coordinator.settings.basin_race {
         return BasinRaceReport::unarmed();
     }
@@ -6905,8 +6904,9 @@ fn draw_race_arm(
         ParentRole::Prior,
         Some(format!("race m20 slot{slot}")),
     );
-    let basin =
-        crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(&drawn.final_placements);
+    let basin = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+        &drawn.final_placements,
+    );
     if basin.len() != run.pieces.len() {
         return None;
     }
@@ -7901,10 +7901,7 @@ fn execute_v3_action(
                 .settings
                 .compression_schedule_batch_work_units
                 .or_else(|| {
-                    let batches = run
-                        .settings
-                        .compression_schedule_past_bound_batches
-                        .max(1);
+                    let batches = run.settings.compression_schedule_past_bound_batches.max(1);
                     wants_checkpoints
                         .then_some(past_bound_cap.or(action_budget_units))
                         .flatten()
@@ -8110,11 +8107,9 @@ fn schedule_slice_report(
         entry_legalization_accepted: report.entry_legalization_accepted,
         entry_legalization_ms: report.entry_legalization_ms,
         entry_legalization_reason: report.entry_legalization_reason.clone(),
-        entry_legalization_violating_pairs_before: report
-            .entry_legalization_violating_pairs_before,
+        entry_legalization_violating_pairs_before: report.entry_legalization_violating_pairs_before,
         entry_legalization_violating_pairs_after: report.entry_legalization_violating_pairs_after,
-        entry_legalization_boundary_pieces_before: report
-            .entry_legalization_boundary_pieces_before,
+        entry_legalization_boundary_pieces_before: report.entry_legalization_boundary_pieces_before,
         entry_legalization_boundary_pieces_after: report.entry_legalization_boundary_pieces_after,
         skipped_infeasible_entry: report.skipped_infeasible_entry,
         aborted_barren_probe: report.aborted_barren_probe,
@@ -8381,8 +8376,7 @@ fn enumerate_crossover_actions(
                 // fingerprints rather than from the ranks: an action whose
                 // parents were ranked the other way round when the phase made
                 // it is still the same attempted action.
-                let schedule_key =
-                    format!("23:{}:{}", parent_a.fingerprint, parent_b.fingerprint);
+                let schedule_key = format!("23:{}:{}", parent_a.fingerprint, parent_b.fingerprint);
                 let mut bands = derived_cut_bands(&parent_a.placements, &parent_b.placements);
                 bands.sort_by(|first, second| {
                     (first.0 - CROSSOVER_CUT_FRACTION)
@@ -8491,7 +8485,9 @@ fn build_ledger(coordinator: &Coordinator<'_>) -> PortfolioLedger {
     let next_action = frontier_actions
         .iter()
         .find(|action| {
-            !action.attempted && !action.degenerate && !existing.contains(&action.hybrid_fingerprint)
+            !action.attempted
+                && !action.degenerate
+                && !existing.contains(&action.hybrid_fingerprint)
         })
         .cloned();
 
@@ -8779,7 +8775,9 @@ fn run_probe_phase(
     let mut steps: Vec<String> = Vec::new();
     coordinator.run_phase_to("probe", deadline, |run| match arm {
         ProbeArm::NextDerivedCrossover => probe_next_derived_crossover(run, &mut steps),
-        ProbeArm::ConstructorTicket => probe_constructor_ticket(run, constructor_clamp_mm, &mut steps),
+        ProbeArm::ConstructorTicket => {
+            probe_constructor_ticket(run, constructor_clamp_mm, &mut steps)
+        }
         ProbeArm::LadderRung => probe_ladder_rung(run, &mut steps),
         ProbeArm::DescentControl => probe_descent_control(run, &mut steps),
         ProbeArm::None => {}
@@ -9032,7 +9030,11 @@ fn probe_ladder_rung(run: &mut PhaseRun<'_, '_>, steps: &mut Vec<String>) {
             rungs.steps_run,
             rungs.step_mm,
             rungs.published_step,
-            rungs.steps.iter().map(|step| step.arms.len()).sum::<usize>(),
+            rungs
+                .steps
+                .iter()
+                .map(|step| step.arms.len())
+                .sum::<usize>(),
         ));
     }
     let produced = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
@@ -9386,13 +9388,13 @@ mod tests {
         assert_eq!(plan.probe_work_units, 8_000_000);
         assert!((plan.probe_seconds - 2.0).abs() < 0.05, "{plan:?}");
         // 8 M + (10 s - 2 s) * 4 M/s / 2 = 8 M + 16 M = 24 M.
-        assert!((plan.raw_units - 24_000_000.0).abs() < 200_000.0, "{plan:?}");
+        assert!(
+            (plan.raw_units - 24_000_000.0).abs() < 200_000.0,
+            "{plan:?}"
+        );
         assert_eq!(plan.rung, None);
         // Installed, so nothing downstream sees a plan.
-        assert_eq!(
-            meter.budget,
-            PortfolioBudget::Work { units: plan.units }
-        );
+        assert_eq!(meter.budget, PortfolioBudget::Work { units: plan.units });
         assert!(!meter.is_wall());
         assert_eq!(meter.currency_total(), plan.units as f64);
     }
@@ -9713,10 +9715,10 @@ mod tests {
     /// fields asserted below do not exist in it at all.
     #[test]
     fn the_promoted_defaults_are_on_inside_v3_and_v3_is_off() {
-        let settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 10_000,
-            });
+        let settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 10_000 },
+        );
         assert!(!settings.coordinator_v3);
         #[cfg(feature = "parallel-compression-schedule")]
         assert!(settings.compression_schedule_parallel_confirm);
@@ -9789,10 +9791,10 @@ mod tests {
     /// tranche *count* as well as on the tranche *size*.
     #[test]
     fn a_tranche_is_refused_unless_it_buys_a_whole_rung() {
-        let settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 10_000,
-            });
+        let settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 10_000 },
+        );
         let plan = PlanReport {
             target_millis: 10_000,
             probe_seconds: 2.0,
@@ -9831,10 +9833,10 @@ mod tests {
     /// A tranche installs a *total*, and it is on the same ladder.
     #[test]
     fn a_tranche_installs_a_larger_total_on_the_same_ladder() {
-        let settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 10_000,
-            });
+        let settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 10_000 },
+        );
         let plan = PlanReport {
             target_millis: 10_000,
             probe_seconds: 0.001,
@@ -9861,7 +9863,12 @@ mod tests {
             .expect("9.7 s of remaining wall at this rate buys many rungs");
         assert_eq!(tranche.index, 1);
         assert!(tranche.units > 4_000_000, "{}", tranche.units);
-        assert_eq!(meter.budget, PortfolioBudget::Work { units: tranche.units });
+        assert_eq!(
+            meter.budget,
+            PortfolioBudget::Work {
+                units: tranche.units
+            }
+        );
         // On the ladder, and it is the *same* ladder the initial plan uses.
         let rung = tranche.rung.expect("quantised");
         let expected = PLAN_ANCHOR_UNITS * PLAN_QUANTUM_STEP.powf(rung as f64);
@@ -9901,7 +9908,10 @@ mod tests {
             );
         }
         // Unquantised, the threshold is one rung's worth of growth.
-        assert_eq!(next_rung_above(1_000, 1.0), 1_000.0 * PLAN_TRANCHE_MIN_GROWTH);
+        assert_eq!(
+            next_rung_above(1_000, 1.0),
+            1_000.0 * PLAN_TRANCHE_MIN_GROWTH
+        );
     }
 
     /// A tranche whose window cannot justify a rung buys one anyway, if the
@@ -9918,10 +9928,10 @@ mod tests {
     /// which is what keeps §9.1's 36.74 s failure from coming back this way.
     #[test]
     fn a_window_too_short_for_a_rung_still_buys_one_when_the_wall_pays() {
-        let mut settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 10_000,
-            });
+        let mut settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 10_000 },
+        );
         settings.plan_replan = true;
         let current = 9_357_620u64;
         let plan = PlanReport {
@@ -9986,13 +9996,15 @@ mod tests {
     /// *worse* than the mode it improves at the tightest budget there is.
     #[test]
     fn a_first_tranche_the_probe_outran_degrades_to_the_whole_target() {
-        let mut settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 3_000,
-            });
+        let mut settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 3_000 },
+        );
         settings.plan_replan = true;
         settings.plan_first_tranche = 0.6;
-        let mut meter = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 3_000 });
+        let mut meter = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 3_000,
+        });
         // A probe of 2.2 s against a 1.746 s first-tranche horizon.
         meter.started = Instant::now() - std::time::Duration::from_millis(2_200);
         meter.self_metered_debit = 8_778_573;
@@ -10009,7 +10021,9 @@ mod tests {
         );
         // And the degrade is *conditional*: a target the probe has not outrun
         // keeps the fraction it was given.
-        let mut roomy = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 10_000 });
+        let mut roomy = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 10_000,
+        });
         roomy.started = Instant::now() - std::time::Duration::from_millis(2_200);
         roomy.self_metered_debit = 8_778_573;
         assert_eq!(roomy.install_plan(10_000, &settings).first_tranche, 0.6);
@@ -10022,10 +10036,10 @@ mod tests {
     /// rate fell 42% below the reading, and a 30 s target took 36.74 s.
     #[test]
     fn a_tranche_does_not_extrapolate_past_the_window_it_measured() {
-        let mut settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 30_000,
-            });
+        let mut settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 30_000 },
+        );
         let plan = PlanReport {
             target_millis: 30_000,
             // A probe that finished 4 s ago, so the queue window below is
@@ -10095,17 +10109,21 @@ mod tests {
     /// must aim the one plan it gets at the whole thing.
     #[test]
     fn the_first_tranche_is_the_whole_target_when_replanning_is_off() {
-        let mut settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 10_000,
-            });
+        let mut settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 10_000 },
+        );
         settings.plan_first_tranche = 0.25;
-        let mut off = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 10_000 });
+        let mut off = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 10_000,
+        });
         let plan_off = off.install_plan(10_000, &settings);
         assert_eq!(plan_off.first_tranche, 1.0);
 
         settings.plan_replan = true;
-        let mut on = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 10_000 });
+        let mut on = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 10_000,
+        });
         let plan_on = on.install_plan(10_000, &settings);
         assert_eq!(plan_on.first_tranche, 0.25);
         assert!(
@@ -10495,7 +10513,10 @@ mod tests {
             schedule_slice: None,
             work_currency: None,
         };
-        assert_eq!(report.work_units, report.global_units + report.debited_units);
+        assert_eq!(
+            report.work_units,
+            report.global_units + report.debited_units
+        );
         assert_ne!(report.work_units, report.global_units);
     }
 
@@ -10745,7 +10766,11 @@ mod tests {
         assert!((SCHEDULE_WALL_PRIOR_PHASE_ZEROS - 1.6414530680000001 / 0.733602375).abs() < 5e-4);
         // And it is above every measured cell, including mixed-61's, which is
         // what makes it a bound rather than an average.
-        for measured in [1.1466399653696229_f64, 1.6193018185283783, 2.2375242010360177] {
+        for measured in [
+            1.1466399653696229_f64,
+            1.6193018185283783,
+            2.2375242010360177,
+        ] {
             assert!(SCHEDULE_WALL_PRIOR_PHASE_ZEROS >= measured - 5e-5);
         }
     }
@@ -11200,7 +11225,10 @@ mod tests {
         // would be a class that is enumerated and never ranked, which sorts as
         // a panic in the ranking map rather than as a mis-ordering.
         assert_eq!(
-            all.iter().copied().collect::<std::collections::BTreeSet<_>>().len(),
+            all.iter()
+                .copied()
+                .collect::<std::collections::BTreeSet<_>>()
+                .len(),
             all.len()
         );
         // The declaration order is the deterministic tie-break after the value,
@@ -11220,9 +11248,8 @@ mod tests {
     /// error the ledger exists to avoid.
     #[test]
     fn a_v3_crossover_key_is_parent_and_cut_ordered_never_rank_ordered() {
-        let key = |left: &str, right: &str, cut: f64| {
-            format!("23:{left}:{right}:{:016x}", cut.to_bits())
-        };
+        let key =
+            |left: &str, right: &str, cut: f64| format!("23:{left}:{right}:{:016x}", cut.to_bits());
         // Same pair, two directions: two keys.
         assert_ne!(key("a", "b", 0.5), key("b", "a", 0.5));
         // Same ordered pair, two cuts: two keys.
@@ -11245,8 +11272,7 @@ mod tests {
         // One compression and one descent per quantum state, one ladder on
         // rank 0, and the constant cut plus `CROSSOVER_CUTS_PER_PAIR` derived
         // cuts per ordered pair.
-        let ceiling =
-            2 * quantum_states + 1 + ordered_pairs * (CROSSOVER_CUTS_PER_PAIR + 1);
+        let ceiling = 2 * quantum_states + 1 + ordered_pairs * (CROSSOVER_CUTS_PER_PAIR + 1);
         assert_eq!(ordered_pairs, 6);
         assert_eq!(ceiling, 21);
         // Plus one compression-schedule slice per quantum state and one ranked

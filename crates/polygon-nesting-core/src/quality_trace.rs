@@ -255,7 +255,9 @@ mod sink {
     }
 
     fn elapsed_seconds() -> f64 {
-        ORIGIN.get().map_or(0.0, |origin| origin.elapsed().as_secs_f64())
+        ORIGIN
+            .get()
+            .map_or(0.0, |origin| origin.elapsed().as_secs_f64())
     }
 
     /// Formats one event and appends it to the sink.
@@ -277,7 +279,10 @@ mod sink {
             let line = &mut *buffer;
             line.push('{');
             let thread = THREAD.with(|ordinal| *ordinal);
-            let _ = write!(line, "\"seq\":{seq},\"t\":{elapsed:.9},\"thread\":{thread},");
+            let _ = write!(
+                line,
+                "\"seq\":{seq},\"t\":{elapsed:.9},\"thread\":{thread},"
+            );
             match &frame {
                 Some(frame) => {
                     let _ = write!(line, "\"operator\":");

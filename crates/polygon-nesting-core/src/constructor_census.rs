@@ -249,7 +249,9 @@ mod armed {
             }
             let accepted = rows.iter().filter(|(_, accepted)| *accepted).count();
             ORDERING.slots.fetch_add(1, Ordering::Relaxed);
-            ORDERING.rows.fetch_add(rows.len() as u64, Ordering::Relaxed);
+            ORDERING
+                .rows
+                .fetch_add(rows.len() as u64, Ordering::Relaxed);
             ORDERING
                 .acceptances
                 .fetch_add(accepted as u64, Ordering::Relaxed);
@@ -519,9 +521,8 @@ mod armed {
 
 #[cfg(feature = "constructor-census")]
 pub use armed::{
-    build_recorded, build_wasted, pair, row_accepted, row_certificate,
-    row_rejected_by_containment, row_rejected_by_overlap, row_started, site, slot_begin, slot_end,
-    snapshot, Site, SiteGuard,
+    build_recorded, build_wasted, pair, row_accepted, row_certificate, row_rejected_by_containment,
+    row_rejected_by_overlap, row_started, site, slot_begin, slot_end, snapshot, Site, SiteGuard,
 };
 
 /// Whether the census sites are compiled into this build.

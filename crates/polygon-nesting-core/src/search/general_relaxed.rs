@@ -6,9 +6,9 @@
 //! in `general_fast` accept a strict improvement.
 
 use std::cmp::Ordering;
-use std::collections::{BTreeMap, BTreeSet};
 #[cfg(feature = "continuous-rotation")]
 use std::collections::VecDeque;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
@@ -22,9 +22,20 @@ use crate::geometry::convex::bounds_for_points;
 use crate::geometry::general_polygon::{GeneralPolygonError, PolygonSet};
 use crate::geometry::predicates::orientation;
 use crate::nfp_ifp::compute_relative_nfp_boundary_reference;
+#[cfg(feature = "parallel-compression-schedule")]
+use crate::parallel::map_slice_mut_with_job_pool;
 use crate::parallel::map_slice_with_job_pool;
 use crate::profiling::{self, Counter, Phase};
 use crate::quality_trace;
+#[cfg(feature = "parallel-compression-schedule")]
+use crate::search::compression_schedule::GeneralCompressionScheduleParallelDiagnostics;
+#[cfg(feature = "compression-schedule")]
+use crate::search::compression_schedule::{
+    CompressionRepairPolicy, CompressionSchedule, CompressionScheduleSettings,
+    GeneralCompressionScheduleDiagnostics, GeneralCompressionScheduleStepRow, ScheduleCheckpoint,
+};
+#[cfg(feature = "parallel-compression-schedule")]
+use crate::search::general_fast::validate_and_measure_placements_parallel;
 use crate::search::general_fast::{
     collision_expansion_mm, collision_sheet_inset_mm, collision_sheet_short_axis_mm,
     polygons_overlap_exact, validate_and_measure_placements, GeneralFastError, GeneralFastPiece,
@@ -36,17 +47,6 @@ use crate::search::general_micro_legalization::{
 use crate::search::kernel::{
     ExplorationKernel, KernelPose, KernelProbes, LegacyKernel, PairRow, PosedShape, LEGACY,
 };
-#[cfg(feature = "compression-schedule")]
-use crate::search::compression_schedule::{
-    CompressionRepairPolicy, CompressionSchedule, CompressionScheduleSettings,
-    GeneralCompressionScheduleDiagnostics, GeneralCompressionScheduleStepRow, ScheduleCheckpoint,
-};
-#[cfg(feature = "parallel-compression-schedule")]
-use crate::parallel::map_slice_mut_with_job_pool;
-#[cfg(feature = "parallel-compression-schedule")]
-use crate::search::compression_schedule::GeneralCompressionScheduleParallelDiagnostics;
-#[cfg(feature = "parallel-compression-schedule")]
-use crate::search::general_fast::validate_and_measure_placements_parallel;
 #[cfg(feature = "shadow-rescore")]
 use crate::search::shadow_rescore;
 // The added contract-validity and raw-depth reporting is reachable only through
@@ -449,7 +449,8 @@ pub struct GeneralRelaxedSettings {
     /// field does not exist, so no caller can name it and no build carries a
     /// branch on it. See [`crate::search::compression_schedule`].
     #[cfg(feature = "compression-schedule")]
-    pub compression_schedule: Option<crate::search::compression_schedule::CompressionScheduleSettings>,
+    pub compression_schedule:
+        Option<crate::search::compression_schedule::CompressionScheduleSettings>,
     /// Arms `CurrentPoseOverlay`: a per-piece lookup of the parent's own
     /// continuous rotation, consulted only when the `StructuredGrid` catalogue
     /// has no entry for the pose a placement currently holds.
@@ -2924,8 +2925,13 @@ impl CellIndex {
             bounds.max_x - translate_x,
             bounds.max_y - translate_y,
         );
-        let (min_x, max_x, min_y, max_y) =
-            bin_range_within(local, self.bounds, self.span_x, self.span_y, CELL_INDEX_SIDE);
+        let (min_x, max_x, min_y, max_y) = bin_range_within(
+            local,
+            self.bounds,
+            self.span_x,
+            self.span_y,
+            CELL_INDEX_SIDE,
+        );
         // One word covers every surrogate the catalogue actually builds; the
         // general loop stays for the declared 512-cell ceiling.
         if self.words == 1 {
@@ -3877,7 +3883,9 @@ fn continuous_rotation_rung_deg(step_mm: f64, radius_mm: f64) -> f64 {
     if !(radius_mm > 0.0) {
         return 0.0;
     }
-    (step_mm / radius_mm).to_degrees().min(ROTATION_RUNG_CAP_DEG)
+    (step_mm / radius_mm)
+        .to_degrees()
+        .min(ROTATION_RUNG_CAP_DEG)
 }
 
 /// One relaxed-search lane.
@@ -4084,7 +4092,8 @@ fn resolve_surrogate<'a>(
     overflow: &'a BTreeMap<SurrogateKey, OrientedSurrogate>,
     key: &SurrogateKey,
 ) -> Option<&'a OrientedSurrogate> {
-    resolve_surrogate_routed(catalog, overflow, key, SurrogateRoute::Unknown).map(|(shape, _)| shape)
+    resolve_surrogate_routed(catalog, overflow, key, SurrogateRoute::Unknown)
+        .map(|(shape, _)| shape)
 }
 
 /// [`resolve_surrogate`] with a hint about which map answered last time, and
@@ -4589,11 +4598,8 @@ pub(crate) fn improve_complete_layout_under_rollback_comparison(
     }
     for epoch in 0..relaxed_settings.epochs {
         #[cfg(feature = "quality-trace")]
-        let _trace_epoch = quality_trace::scope(
-            format!("m0.epoch{epoch}"),
-            relaxed_settings.seed,
-            None,
-        );
+        let _trace_epoch =
+            quality_trace::scope(format!("m0.epoch{epoch}"), relaxed_settings.seed, None);
         diagnostics.epochs_attempted += 1;
         let incumbent_depth_before_mm = protected.used_long_axis_depth_mm;
         let protected_depth = protected
@@ -5265,11 +5271,8 @@ fn run_coupled_dynamic_separator_experiment<'a>(
         };
         let control = {
             #[cfg(feature = "quality-trace")]
-            let _trace = quality_trace::scope(
-                "coupled.control".to_owned(),
-                relaxed_settings.seed,
-                None,
-            );
+            let _trace =
+                quality_trace::scope("coupled.control".to_owned(), relaxed_settings.seed, None);
             run_coupled_separator_arm(
                 pieces,
                 fast_settings,
@@ -5283,11 +5286,8 @@ fn run_coupled_dynamic_separator_experiment<'a>(
         };
         let treatment = {
             #[cfg(feature = "quality-trace")]
-            let _trace = quality_trace::scope(
-                "coupled.treatment".to_owned(),
-                relaxed_settings.seed,
-                None,
-            );
+            let _trace =
+                quality_trace::scope("coupled.treatment".to_owned(), relaxed_settings.seed, None);
             run_coupled_separator_arm(
                 pieces,
                 fast_settings,
@@ -6291,11 +6291,7 @@ fn run_ladder_compression(
             // Everything the rung spent outside its own arms: the two
             // warm-start fingerprints, the warm-start clones, and the
             // publication bookkeeping between attempts.
-            let arm_ms = row
-                .arms
-                .iter()
-                .map(|arm| arm.anatomy.wall_ms)
-                .sum::<f64>();
+            let arm_ms = row.arms.iter().map(|arm| arm.anatomy.wall_ms).sum::<f64>();
             row.anatomy.orchestration_ms = (row.anatomy.wall_ms - arm_ms).max(0.0);
         }
         ladder.steps.push(row);
@@ -6410,21 +6406,24 @@ fn run_compression_schedule<'a>(
     diagnostics.parent_fingerprint = Some(coupled_fast_placement_fingerprint(&parent_placements));
     diagnostics.initial_state_fingerprint = diagnostics.parent_fingerprint.clone();
     if let Err(error) = validate_and_measure_placements(pieces, &parent_placements, fast_settings) {
-        diagnostics.failure_reason = Some(format!("compression schedule parent validation: {error}"));
+        diagnostics.failure_reason =
+            Some(format!("compression schedule parent validation: {error}"));
         return diagnostics;
     }
     let parent_depth_mm =
         match coupled_independent_source_depth(pieces, &parent_placements, fast_settings) {
             Ok(depth) => depth,
             Err(error) => {
-                diagnostics.failure_reason = Some(format!("compression schedule parent depth: {error}"));
+                diagnostics.failure_reason =
+                    Some(format!("compression schedule parent depth: {error}"));
                 return diagnostics;
             }
         };
     diagnostics.parent_independent_depth_mm = Some(parent_depth_mm);
     if grid_key(final_bound_mm) >= grid_key(parent_depth_mm) {
-        diagnostics.failure_reason =
-            Some("persistent vacancy mode 34 final bound must be below the parent depth".to_owned());
+        diagnostics.failure_reason = Some(
+            "persistent vacancy mode 34 final bound must be below the parent depth".to_owned(),
+        );
         return diagnostics;
     }
     diagnostics.attempted = true;
@@ -7638,7 +7637,8 @@ impl ScheduleSliceRun<'_> {
             #[cfg(feature = "sparse-rotation")]
             if detect_stall {
                 if stall.observe(self.score.common_loss()) {
-                    self.search.arm_rotation_for_pairs(&self.score.collision_pairs);
+                    self.search
+                        .arm_rotation_for_pairs(&self.score.collision_pairs);
                 } else {
                     self.search.disarm_rotation();
                 }
@@ -7782,7 +7782,10 @@ impl ScheduleSliceRun<'_> {
                 Ordering::Greater => true,
                 Ordering::Less => false,
                 Ordering::Equal => {
-                    other_score.common_loss().total_cmp(&best_score.common_loss()) == Ordering::Less
+                    other_score
+                        .common_loss()
+                        .total_cmp(&best_score.common_loss())
+                        == Ordering::Less
                 }
             };
             if better {
@@ -8108,8 +8111,7 @@ impl ScheduleSliceRun<'_> {
         report.repair_ms = self.repair_ms;
         // Computed before the rows are moved into the report, because the
         // digest is the only form of them the coordinator's document carries.
-        report.step_digest =
-            crate::search::compression_schedule::step_rows_digest(&self.rows);
+        report.step_digest = crate::search::compression_schedule::step_rows_digest(&self.rows);
         report.steps = self.rows;
         Ok((self.published_placements, self.published_depth_mm, report))
     }
@@ -14353,8 +14355,13 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         refresh_weighted_loss(&mut shadow, &self.weights);
         match shadow_tracker_disagreement(&shadow, incremental) {
             ShadowAgreement::Rows(rendered) => {
-                let detail = self
-                    .render_structural_detail(state, &shadow, incremental, moved_index, piece_index);
+                let detail = self.render_structural_detail(
+                    state,
+                    &shadow,
+                    incremental,
+                    moved_index,
+                    piece_index,
+                );
                 shadow_rescore::record_disagreement(rendered, detail);
             }
             ShadowAgreement::MagnitudeOnly {
@@ -15129,8 +15136,9 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         // silently displace the legacy ladder.
         #[cfg(feature = "continuous-rotation")]
         let (continuous_rotation, continuous_mirror, rotation_radius) = {
-            let armed =
-                self.continuous_rotation && continuous_axes && self.piece_rotation_armed(input_index);
+            let armed = self.continuous_rotation
+                && continuous_axes
+                && self.piece_rotation_armed(input_index);
             let rotation = armed && self.pieces[input_index].allow_rotation;
             // The mirror toggle is a *companion* to the rotation rung, and this
             // conjunction is what keeps it one.
@@ -17462,9 +17470,7 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
             match &self.rotation_arming {
                 RotationArming::Everything => true,
                 RotationArming::Nobody => false,
-                RotationArming::Pieces(armed) => {
-                    armed.get(input_index).copied().unwrap_or(false)
-                }
+                RotationArming::Pieces(armed) => armed.get(input_index).copied().unwrap_or(false),
             }
         }
         #[cfg(not(feature = "sparse-rotation"))]
@@ -18312,11 +18318,8 @@ pub(crate) fn surrogate_pair_collides(
                 *word &= *word - 1;
                 let second_cell_index = word_index * 64 + bit;
                 let second_cell = second_shape.cells[second_cell_index];
-                let second_cell_bounds = translated_bounds(
-                    second_cell.bounds,
-                    second_translate_x,
-                    second_translate_y,
-                );
+                let second_cell_bounds =
+                    translated_bounds(second_cell.bounds, second_translate_x, second_translate_y);
                 if !bounds_overlap(first_cell_bounds, second_cell_bounds) {
                     continue;
                 }
@@ -18746,12 +18749,8 @@ fn kernel_pair_collides<K: ExplorationKernel<Shape = OrientedSurrogate>>(
     second: &RelaxedPlacement,
 ) -> bool {
     #[cfg(feature = "canonical-pair-order")]
-    let (first_shape, first, second_shape, second) = canonical_pair_operands(
-        first_shape,
-        first,
-        second_shape,
-        second,
-    );
+    let (first_shape, first, second_shape, second) =
+        canonical_pair_operands(first_shape, first, second_shape, second);
     let mut probes = KernelProbes::default();
     let collides = kernel.pair_collides(
         PosedShape::new(first_shape, first.translate_x, first.translate_y),
@@ -19214,8 +19213,10 @@ fn classify_current_pose_overlay_pairs(
     settings: GeneralFastSettings,
     catalog: &SurrogateCatalog,
     state: &RelaxedState,
-) -> Result<Vec<crate::search::compression_schedule::GeneralCompressionSchedulePairClassification>, GeneralFastError>
-{
+) -> Result<
+    Vec<crate::search::compression_schedule::GeneralCompressionSchedulePairClassification>,
+    GeneralFastError,
+> {
     use crate::search::compression_schedule::GeneralCompressionSchedulePairClassification;
 
     let expansion = collision_expansion_mm(settings);
@@ -19241,10 +19242,9 @@ fn classify_current_pose_overlay_pairs(
             angle_key(canonical_angle(placement.rotation_deg)),
             placement.mirrored,
         );
-        let continuous_shape = catalog
-            .orientations
-            .get(&continuous_key)
-            .ok_or_else(|| missing_orientation_error(pieces, placement.input_index, continuous_key))?;
+        let continuous_shape = catalog.orientations.get(&continuous_key).ok_or_else(|| {
+            missing_orientation_error(pieces, placement.input_index, continuous_key)
+        })?;
         let snapped_shape = catalog
             .orientations
             .get(&snapped_key)
@@ -19311,7 +19311,9 @@ fn classify_current_pose_overlay_pairs(
                     second_piece_id: pieces[state.placements[second].input_index].id.to_owned(),
                     first_rotation_deg: continuous_angle(state.placements[first].rotation_deg),
                     second_rotation_deg: continuous_angle(state.placements[second].rotation_deg),
-                    first_snapped_rotation_deg: canonical_angle(state.placements[first].rotation_deg),
+                    first_snapped_rotation_deg: canonical_angle(
+                        state.placements[first].rotation_deg,
+                    ),
                     second_snapped_rotation_deg: canonical_angle(
                         state.placements[second].rotation_deg,
                     ),
@@ -21704,9 +21706,8 @@ mod tests {
             ..CompressionScheduleSettings::default()
         });
 
-        let population = JobPool::new(Some(1)).run_scoped(|| {
-            schedule_to_completion(&pieces, fast_settings, settings, &parent, None)
-        });
+        let population = JobPool::new(Some(1))
+            .run_scoped(|| schedule_to_completion(&pieces, fast_settings, settings, &parent, None));
         assert!(population.attempted, "{:?}", population.failure_reason);
         assert!(population.exact_valid);
         let report = population
@@ -21801,7 +21802,10 @@ mod tests {
         let monolith_report = monolith
             .compression_schedule
             .expect("an attempted schedule reports");
-        assert!(monolith_report.checkpoints.is_empty(), "the atomic arm records no checkpoint");
+        assert!(
+            monolith_report.checkpoints.is_empty(),
+            "the atomic arm records no checkpoint"
+        );
         assert!(monolith_report.steps_taken > 0);
 
         for batch in [20_000usize, 5_000, 1_000] {
@@ -21828,8 +21832,7 @@ mod tests {
             assert_eq!(report.rollbacks, monolith_report.rollbacks);
             assert_eq!(report.final_depth_mm, monolith_report.final_depth_mm);
             assert_eq!(
-                batched.independent_depth_mm,
-                monolith.independent_depth_mm,
+                batched.independent_depth_mm, monolith.independent_depth_mm,
                 "batch {batch}: the published layout moved"
             );
             assert_eq!(
@@ -21855,14 +21858,11 @@ mod tests {
                     // The anytime contract: the incumbent a caller may keep at
                     // a checkpoint is never worse than the one it could have
                     // kept at the checkpoint before.
-                    assert!(
-                        point.published_depth_mm <= previous.published_depth_mm + f64::EPSILON
-                    );
+                    assert!(point.published_depth_mm <= previous.published_depth_mm + f64::EPSILON);
                 }
             }
             assert_eq!(
-                report.checkpoints[last].steps_taken,
-                report.steps_taken,
+                report.checkpoints[last].steps_taken, report.steps_taken,
                 "the last checkpoint is the slice's own end"
             );
             // Sol review 9 §P1: the FNV step digest is a regression checksum and
@@ -21939,12 +21939,16 @@ mod tests {
             });
             settings
         };
-        let whole = JobPool::new(Some(1))
-            .run_scoped(|| schedule_to_completion(&pieces, fast_settings, settings(), &parent, None));
+        let whole = JobPool::new(Some(1)).run_scoped(|| {
+            schedule_to_completion(&pieces, fast_settings, settings(), &parent, None)
+        });
         let whole_report = whole
             .compression_schedule
             .expect("an attempted schedule reports");
-        assert!(whole_report.batches > 3, "this fixture must batch to prove anything");
+        assert!(
+            whole_report.batches > 3,
+            "this fixture must batch to prove anything"
+        );
 
         for stop_after in [1usize, 2] {
             let mut suspended = None;
@@ -21975,7 +21979,10 @@ mod tests {
                 .expect("a stopped slice still reports");
             let last = *seen.last().expect("the policy was consulted");
             assert!(!last.finished, "the driver stopped at a live checkpoint");
-            assert!(population.exact_valid, "a stop returns an exact-valid layout");
+            assert!(
+                population.exact_valid,
+                "a stop returns an exact-valid layout"
+            );
             assert_eq!(
                 population.independent_depth_mm,
                 Some(last.published_depth_mm),
@@ -22064,8 +22071,9 @@ mod tests {
             });
             settings
         };
-        let uninterrupted = JobPool::new(Some(1))
-            .run_scoped(|| schedule_to_completion(&pieces, fast_settings, settings(), &parent, None));
+        let uninterrupted = JobPool::new(Some(1)).run_scoped(|| {
+            schedule_to_completion(&pieces, fast_settings, settings(), &parent, None)
+        });
         let expected = uninterrupted
             .compression_schedule
             .clone()
@@ -22124,8 +22132,9 @@ mod tests {
             // the property.
             other.epochs = 1;
             other.alternation_max_cycles = Some(1);
-            let elsewhere = JobPool::new(Some(1))
-                .run_scoped(|| run_alternation_fixpoint(&pieces, fast_settings, other, &parent, None));
+            let elsewhere = JobPool::new(Some(1)).run_scoped(|| {
+                run_alternation_fixpoint(&pieces, fast_settings, other, &parent, None)
+            });
             assert!(elsewhere.attempted, "the interleaved action really ran");
 
             let outcome = JobPool::new(Some(1))
@@ -22142,7 +22151,10 @@ mod tests {
                 &mut parked,
             );
         }
-        assert!(interleaves >= 1, "at least one interleave has to have happened");
+        assert!(
+            interleaves >= 1,
+            "at least one interleave has to have happened"
+        );
         let resumed = population
             .compression_schedule
             .clone()
@@ -22309,7 +22321,10 @@ mod tests {
         // The drain runs no step and asks the exact tier nothing.
         assert_eq!(report.steps_taken, steps_before);
         assert_eq!(report.confirmations_attempted, confirmations_before);
-        assert_eq!(report.exact_pair_tests, work_before_exact(confirmations_before, &pieces));
+        assert_eq!(
+            report.exact_pair_tests,
+            work_before_exact(confirmations_before, &pieces)
+        );
         // Its work is nonetheless *larger* than the checkpoint's reading, and
         // by exactly the amount the schedule's meter was behind the lane: the
         // schedule learns the lane's query count in `may_step`, at the top of a
@@ -22322,8 +22337,7 @@ mod tests {
             report.work_units
         );
         assert_eq!(
-            population.independent_depth_mm,
-            suspended_population.independent_depth_mm,
+            population.independent_depth_mm, suspended_population.independent_depth_mm,
             "the drained slice publishes the incumbent the suspension was already holding"
         );
     }
@@ -22424,9 +22438,13 @@ mod tests {
         let polygons = [overlay_l_shape(), overlay_bar()];
         let pieces = overlay_pieces(&polygons);
         let fast_settings = GeneralFastSettings::deterministic_test(100.0, 100.0);
-        let (catalog, _) =
-            build_surrogate_catalog(&pieces, fast_settings, SurrogateCatalogMode::StructuredGrid, None)
-                .expect("the grid catalogue builds");
+        let (catalog, _) = build_surrogate_catalog(
+            &pieces,
+            fast_settings,
+            SurrogateCatalogMode::StructuredGrid,
+            None,
+        )
+        .expect("the grid catalogue builds");
         let parent = overlay_parent_placements();
 
         let overlay = build_current_pose_overlay(&pieces, fast_settings, &catalog, &parent)
@@ -22834,14 +22852,9 @@ mod tests {
         // an off-grid one is what the operator actually builds.
         for angle in [OVERLAY_OFF_GRID_DEG, 17.5, -3.25] {
             for mirrored in [false, true] {
-                let per_rung = build_oriented_surrogate(
-                    source,
-                    angle,
-                    mirrored,
-                    expansion_mm,
-                    &mut counters,
-                )
-                .expect("the per-rung construction succeeds");
+                let per_rung =
+                    build_oriented_surrogate(source, angle, mirrored, expansion_mm, &mut counters)
+                        .expect("the per-rung construction succeeds");
                 let equivariant =
                     build_oriented_surrogate_equivariant(&base, angle, mirrored, &mut counters)
                         .expect("the equivariant construction succeeds");
@@ -22888,13 +22901,9 @@ mod tests {
             &mut counters,
         )
         .expect("the per-rung construction succeeds");
-        let equivariant = build_oriented_surrogate_equivariant(
-            &base,
-            OVERLAY_OFF_GRID_DEG,
-            false,
-            &mut counters,
-        )
-        .expect("the equivariant construction succeeds");
+        let equivariant =
+            build_oriented_surrogate_equivariant(&base, OVERLAY_OFF_GRID_DEG, false, &mut counters)
+                .expect("the equivariant construction succeeds");
         assert_ne!(
             per_rung.collision, equivariant.collision,
             "if the two orders produced identical rings the quality battery \
@@ -23809,8 +23818,13 @@ mod tests {
 
         let mut disarmed_settings = coupled_experiment_test_settings(9);
         disarmed_settings.current_pose_overlay = false;
-        let mut disarmed =
-            LegacyLaneSearch::new(&pieces, fast_settings, disarmed_settings, 7, catalog.clone());
+        let mut disarmed = LegacyLaneSearch::new(
+            &pieces,
+            fast_settings,
+            disarmed_settings,
+            7,
+            catalog.clone(),
+        );
         assert!(!disarmed.continuous_rotation_keys);
 
         // 1. `rotation_key` - the uncached derivation.
@@ -23971,8 +23985,13 @@ mod tests {
 
         let mut disarmed_settings = coupled_experiment_test_settings(9);
         disarmed_settings.current_pose_overlay = false;
-        let mut disarmed =
-            LegacyLaneSearch::new(&pieces, fast_settings, disarmed_settings, 7, catalog.clone());
+        let mut disarmed = LegacyLaneSearch::new(
+            &pieces,
+            fast_settings,
+            disarmed_settings,
+            7,
+            catalog.clone(),
+        );
         let disarmed_score = disarmed
             .score_state(&state)
             .expect("the disarmed lane scores");
@@ -24050,9 +24069,8 @@ mod tests {
             ..CompressionScheduleSettings::default()
         });
 
-        let without_overlay = JobPool::new(Some(1)).run_scoped(|| {
-            schedule_to_completion(&pieces, fast_settings, settings, &parent, None)
-        });
+        let without_overlay = JobPool::new(Some(1))
+            .run_scoped(|| schedule_to_completion(&pieces, fast_settings, settings, &parent, None));
         let report = without_overlay
             .compression_schedule
             .expect("an attempted schedule reports");
@@ -24064,9 +24082,8 @@ mod tests {
         assert!(report.parent_proxy_feasible, "{report:?}");
 
         settings.current_pose_overlay = true;
-        let with_overlay = JobPool::new(Some(1)).run_scoped(|| {
-            schedule_to_completion(&pieces, fast_settings, settings, &parent, None)
-        });
+        let with_overlay = JobPool::new(Some(1))
+            .run_scoped(|| schedule_to_completion(&pieces, fast_settings, settings, &parent, None));
         let overlay_report = with_overlay
             .compression_schedule
             .expect("an attempted schedule reports");
@@ -24224,9 +24241,8 @@ mod tests {
             repair_policy: CompressionRepairPolicy::SweepsOnly,
             ..CompressionScheduleSettings::default()
         });
-        let population = JobPool::new(Some(1)).run_scoped(|| {
-            schedule_to_completion(&pieces, fast_settings, settings, &parent, None)
-        });
+        let population = JobPool::new(Some(1))
+            .run_scoped(|| schedule_to_completion(&pieces, fast_settings, settings, &parent, None));
         let report = population
             .compression_schedule
             .expect("an attempted schedule reports");
@@ -24471,9 +24487,8 @@ mod tests {
         settings.persistent_vacancy_mode = 34;
         settings.persistent_vacancy_target_depth_mm = Some(1.0);
         settings.compression_schedule = None;
-        let population = JobPool::new(Some(1)).run_scoped(|| {
-            schedule_to_completion(&pieces, fast_settings, settings, &parent, None)
-        });
+        let population = JobPool::new(Some(1))
+            .run_scoped(|| schedule_to_completion(&pieces, fast_settings, settings, &parent, None));
         assert!(!population.attempted);
         assert!(population
             .failure_reason
@@ -25569,7 +25584,11 @@ mod tests {
         let shape = |index: usize| {
             catalog
                 .orientations
-                .get(&(catalog.geometry_class_by_input[index], angle_key(0.0), false))
+                .get(&(
+                    catalog.geometry_class_by_input[index],
+                    angle_key(0.0),
+                    false,
+                ))
                 .expect("zero-degree surrogate")
         };
         let mut kernel = LegacyKernel::default();
@@ -25744,7 +25763,11 @@ mod tests {
         let shape = |index: usize| {
             catalog
                 .orientations
-                .get(&(catalog.geometry_class_by_input[index], angle_key(0.0), false))
+                .get(&(
+                    catalog.geometry_class_by_input[index],
+                    angle_key(0.0),
+                    false,
+                ))
                 .expect("zero-degree surrogate")
         };
         let mut kernel = LegacyKernel::default();
@@ -25939,7 +25962,8 @@ mod tests {
             ],
             strip_depth_mm: 100.0,
         };
-        let mut cold = LegacyLaneSearch::new(&pieces, fast_settings, relaxed_settings, 0, cold_catalog);
+        let mut cold =
+            LegacyLaneSearch::new(&pieces, fast_settings, relaxed_settings, 0, cold_catalog);
         let mut shared = LegacyLaneSearch::new(
             &pieces,
             fast_settings,
@@ -26141,7 +26165,8 @@ mod tests {
             None,
         )
         .unwrap();
-        let mut search = LegacyLaneSearch::new(&pieces, fast_settings, relaxed_settings, 0, catalog);
+        let mut search =
+            LegacyLaneSearch::new(&pieces, fast_settings, relaxed_settings, 0, catalog);
         let state = RelaxedState {
             placements: vec![
                 RelaxedPlacement {
@@ -26988,7 +27013,8 @@ mod tests {
         )
         .unwrap();
         let hazard_catalog = Arc::new(JaguaHazardCatalog::new(&pieces, fast_settings).unwrap());
-        let mut search = LegacyLaneSearch::new(&pieces, fast_settings, relaxed_settings, 7, catalog);
+        let mut search =
+            LegacyLaneSearch::new(&pieces, fast_settings, relaxed_settings, 7, catalog);
         search.hazard_catalog = Some(hazard_catalog);
         let worker = Mutex::new(search);
         let state = RelaxedState {
