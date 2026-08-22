@@ -1,0 +1,1038 @@
+{
+  "experiment": "round-envelope-kernel",
+  "source": "docs/experiments/round-envelope-kernel/evidence/battery.json",
+  "canonicalGridStepMm": 0.001,
+  "canonicalizationBudgetMm": 0.0014143,
+  "population1": {
+    "layouts": 17,
+    "cells": 51,
+    "pairRowsCompared": 93330,
+    "boundaryRowsCompared": 3111,
+    "byAllowance": [
+      {
+        "searchOffsetAllowanceMm": 0.002,
+        "layouts": 17,
+        "miterAccepts": 14,
+        "kernelAccepts": 7,
+        "unionAccepts": 14,
+        "layoutsMiterAcceptsKernelRefuses": 7,
+        "layoutsMiterAcceptsUnionRefuses": 0,
+        "layoutsKernelAcceptsMiterRefuses": 0,
+        "pairRowsKernelAdmitsMiterRefuses": 143,
+        "pairRowsMiterAdmitsKernelRefuses": 11,
+        "boundaryRowsKernelAdmitsMiterRefuses": 52,
+        "boundaryRowsMiterAdmitsKernelRefuses": 0
+      },
+      {
+        "searchOffsetAllowanceMm": 0.0005,
+        "layouts": 17,
+        "miterAccepts": 17,
+        "kernelAccepts": 15,
+        "unionAccepts": 17,
+        "layoutsMiterAcceptsKernelRefuses": 2,
+        "layoutsMiterAcceptsUnionRefuses": 0,
+        "layoutsKernelAcceptsMiterRefuses": 0,
+        "pairRowsKernelAdmitsMiterRefuses": 0,
+        "pairRowsMiterAdmitsKernelRefuses": 2,
+        "boundaryRowsKernelAdmitsMiterRefuses": 0,
+        "boundaryRowsMiterAdmitsKernelRefuses": 0
+      },
+      {
+        "searchOffsetAllowanceMm": 0.0,
+        "layouts": 17,
+        "miterAccepts": 17,
+        "kernelAccepts": 17,
+        "unionAccepts": 17,
+        "layoutsMiterAcceptsKernelRefuses": 0,
+        "layoutsMiterAcceptsUnionRefuses": 0,
+        "layoutsKernelAcceptsMiterRefuses": 0,
+        "pairRowsKernelAdmitsMiterRefuses": 0,
+        "pairRowsMiterAdmitsKernelRefuses": 0,
+        "boundaryRowsKernelAdmitsMiterRefuses": 0,
+        "boundaryRowsMiterAdmitsKernelRefuses": 0
+      }
+    ],
+    "p0RowCount": 13,
+    "p0Cells": [
+      "constructor-fresh@0.002",
+      "parent-seed0@0.002",
+      "parent-seed2@0.002",
+      "parent-seed4@0.002",
+      "parent-seed5@0.002",
+      "parent-seed10@0.002",
+      "parent-seed11@0.002",
+      "gate-g2-parent-159.092@0.0005",
+      "gate-g3-parent-159.079@0.0005"
+    ],
+    "p0DistinctShortfallsMicron": [
+      -1.0
+    ],
+    "p0DistinctMiterIntersectionAreasMm2": [
+      0.0
+    ],
+    "p0RowsWithMaterialBelowDemanded": 11,
+    "p0Attributed": [
+      {
+        "layout": "constructor-fresh",
+        "searchOffsetAllowanceMm": 0.002,
+        "placementIndices": [
+          3,
+          33
+        ],
+        "shortfallMicron": -0.9999999999994458,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.004018225270448,
+        "demandedTwoRMm": 5.004,
+        "materialBelowDemanded": false
+      },
+      {
+        "layout": "constructor-fresh",
+        "searchOffsetAllowanceMm": 0.002,
+        "placementIndices": [
+          15,
+          16
+        ],
+        "shortfallMicron": -0.9999999999994458,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.003355713918346,
+        "demandedTwoRMm": 5.004,
+        "materialBelowDemanded": true
+      },
+      {
+        "layout": "parent-seed0",
+        "searchOffsetAllowanceMm": 0.002,
+        "placementIndices": [
+          36,
+          38
+        ],
+        "shortfallMicron": -0.9999999999994458,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.003431181285036,
+        "demandedTwoRMm": 5.004,
+        "materialBelowDemanded": true
+      },
+      {
+        "layout": "parent-seed2",
+        "searchOffsetAllowanceMm": 0.002,
+        "placementIndices": [
+          52,
+          55
+        ],
+        "shortfallMicron": -0.9999999999994458,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.002987465785646,
+        "demandedTwoRMm": 5.004,
+        "materialBelowDemanded": true
+      },
+      {
+        "layout": "parent-seed4",
+        "searchOffsetAllowanceMm": 0.002,
+        "placementIndices": [
+          23,
+          30
+        ],
+        "shortfallMicron": -0.9999999999994458,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.004001045066026,
+        "demandedTwoRMm": 5.004,
+        "materialBelowDemanded": false
+      },
+      {
+        "layout": "parent-seed5",
+        "searchOffsetAllowanceMm": 0.002,
+        "placementIndices": [
+          8,
+          35
+        ],
+        "shortfallMicron": -0.9999999999994458,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.003877977636502,
+        "demandedTwoRMm": 5.004,
+        "materialBelowDemanded": true
+      },
+      {
+        "layout": "parent-seed5",
+        "searchOffsetAllowanceMm": 0.002,
+        "placementIndices": [
+          33,
+          36
+        ],
+        "shortfallMicron": -0.9999999999994458,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.003258596034106,
+        "demandedTwoRMm": 5.004,
+        "materialBelowDemanded": true
+      },
+      {
+        "layout": "parent-seed5",
+        "searchOffsetAllowanceMm": 0.002,
+        "placementIndices": [
+          40,
+          58
+        ],
+        "shortfallMicron": -0.9999999999994458,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.003203640010642,
+        "demandedTwoRMm": 5.004,
+        "materialBelowDemanded": true
+      },
+      {
+        "layout": "parent-seed10",
+        "searchOffsetAllowanceMm": 0.002,
+        "placementIndices": [
+          6,
+          31
+        ],
+        "shortfallMicron": -0.9999999999994458,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.003376669694349,
+        "demandedTwoRMm": 5.004,
+        "materialBelowDemanded": true
+      },
+      {
+        "layout": "parent-seed10",
+        "searchOffsetAllowanceMm": 0.002,
+        "placementIndices": [
+          8,
+          9
+        ],
+        "shortfallMicron": -0.9999999999994458,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.002890665141327,
+        "demandedTwoRMm": 5.004,
+        "materialBelowDemanded": true
+      },
+      {
+        "layout": "parent-seed11",
+        "searchOffsetAllowanceMm": 0.002,
+        "placementIndices": [
+          46,
+          58
+        ],
+        "shortfallMicron": -0.9999999999994458,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.003633417440413,
+        "demandedTwoRMm": 5.004,
+        "materialBelowDemanded": true
+      },
+      {
+        "layout": "gate-g2-parent-159.092",
+        "searchOffsetAllowanceMm": 0.0005,
+        "placementIndices": [
+          7,
+          40
+        ],
+        "shortfallMicron": -1.000000000000334,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.000956821494642,
+        "demandedTwoRMm": 5.001,
+        "materialBelowDemanded": true
+      },
+      {
+        "layout": "gate-g3-parent-159.079",
+        "searchOffsetAllowanceMm": 0.0005,
+        "placementIndices": [
+          7,
+          40
+        ],
+        "shortfallMicron": -1.000000000000334,
+        "miterEnvelopeIntersectionAreaMm2": 0.0,
+        "materialClearanceMm": 5.000841822734528,
+        "demandedTwoRMm": 5.001,
+        "materialBelowDemanded": true
+      }
+    ]
+  },
+  "population2": {
+    "proposalCount": 194,
+    "kernelAcceptCount": 82,
+    "falseAcceptCount": 0,
+    "insideCanonicalizationBudgetCount": 3,
+    "insideCanonicalizationBudget": [
+      {
+        "contractAccepts": true,
+        "kernelAccepts": true,
+        "kernelCriticalTwoRMm": 5.004,
+        "kernelPrimaryAdmissible": true,
+        "kind": "pair",
+        "materialClearanceMm": 5.003943760912691,
+        "miterAccepts": false,
+        "miterPrimaryAdmissible": false,
+        "placementIndices": [
+          5,
+          56
+        ],
+        "source": "parent-seed0",
+        "step": 1,
+        "twoRMm": 5.004,
+        "unionAccepts": true
+      },
+      {
+        "contractAccepts": true,
+        "kernelAccepts": true,
+        "kernelCriticalTwoRMm": 5.004,
+        "kernelPrimaryAdmissible": true,
+        "kind": "pair",
+        "materialClearanceMm": 5.003703525843338,
+        "miterAccepts": false,
+        "miterPrimaryAdmissible": false,
+        "placementIndices": [
+          9,
+          52
+        ],
+        "source": "parent-seed1",
+        "step": 12,
+        "twoRMm": 5.004,
+        "unionAccepts": true
+      },
+      {
+        "contractAccepts": true,
+        "kernelAccepts": true,
+        "kernelCriticalTwoRMm": null,
+        "kernelPrimaryAdmissible": true,
+        "kind": "boundary",
+        "materialClearanceMm": 5.001985356028991,
+        "miterAccepts": false,
+        "miterPrimaryAdmissible": false,
+        "placementIndices": [
+          1
+        ],
+        "source": "gate-g2-parent-159.092",
+        "step": 1,
+        "twoRMm": 5.002,
+        "unionAccepts": true
+      }
+    ]
+  },
+  "population3": {
+    "rows": [
+      {
+        "searchOffsetAllowanceMm": 0.002,
+        "expansionMm": 2.502,
+        "radiusMicron": 2502,
+        "contractOnlyAccepts": true,
+        "compositeMiterAccepts": false,
+        "compositeRoundAccepts": false,
+        "compositeUnionAccepts": false,
+        "kernelPairFailureCount": 2,
+        "kernelBoundaryFailureCount": 0,
+        "kernelRefusedPairIndices": [
+          [
+            0,
+            1
+          ],
+          [
+            42,
+            44
+          ]
+        ],
+        "pair38x39": {
+          "admissible": false,
+          "criticalTwoRMm": 5.001
+        },
+        "pair50x52": {
+          "admissible": false,
+          "criticalTwoRMm": 5.002
+        }
+      },
+      {
+        "searchOffsetAllowanceMm": 0.0005,
+        "expansionMm": 2.5005,
+        "radiusMicron": 2501,
+        "contractOnlyAccepts": true,
+        "compositeMiterAccepts": false,
+        "compositeRoundAccepts": false,
+        "compositeUnionAccepts": false,
+        "kernelPairFailureCount": 1,
+        "kernelBoundaryFailureCount": 0,
+        "kernelRefusedPairIndices": [
+          [
+            0,
+            1
+          ]
+        ],
+        "pair38x39": {
+          "admissible": false,
+          "criticalTwoRMm": 5.001
+        },
+        "pair50x52": {
+          "admissible": true,
+          "criticalTwoRMm": 5.002
+        }
+      },
+      {
+        "searchOffsetAllowanceMm": 0.0,
+        "expansionMm": 2.5,
+        "radiusMicron": 2500,
+        "contractOnlyAccepts": true,
+        "compositeMiterAccepts": false,
+        "compositeRoundAccepts": true,
+        "compositeUnionAccepts": true,
+        "kernelPairFailureCount": 0,
+        "kernelBoundaryFailureCount": 0,
+        "kernelRefusedPairIndices": [],
+        "pair38x39": {
+          "admissible": true,
+          "criticalTwoRMm": 5.001
+        },
+        "pair50x52": {
+          "admissible": true,
+          "criticalTwoRMm": 5.002
+        }
+      }
+    ],
+    "expectations": [
+      {
+        "expectation": "at r=2.502 the kernel refuses exactly the two radius-caused pairs and no boundary",
+        "met": true
+      },
+      {
+        "expectation": "the contract accepts the Sparrow pose set at every radius",
+        "met": true
+      },
+      {
+        "expectation": "at r=2.500 the kernel accepts all 1830 pairs and all 61 boundaries",
+        "met": true
+      },
+      {
+        "expectation": "pair 38x39 (pose indices 0,1) is ACCEPTED at r=2.500",
+        "met": true
+      }
+    ]
+  },
+  "population4": {
+    "sweepCount": 30,
+    "stepMm": 0.001,
+    "stepsEachWay": 8,
+    "monotoneInMaterial": 30,
+    "monotoneInStep": 30,
+    "stepsDisagreeingOutsideCanonicalizationBudget": 0,
+    "kernelMinusMaterialFlipSteps": {
+      "-1": 3,
+      "0": 19,
+      "1": 8
+    },
+    "worstKernelVersusMaterialMm": 0.001970416947420617,
+    "sweepFloorBudgetMm": 0.0024143,
+    "outsideSweepFloorBudget": 0
+  },
+  "economy": {
+    "envelopeHalfRatioMedian": 0.12230655751488607,
+    "envelopeHalfRatioMax": 0.13562818000255492,
+    "confirmationRatioMedianComparable": 0.905315805538306,
+    "confirmationUnionRatioMedianComparable": 1.0077717615226338,
+    "comparableCells": 7,
+    "cells": 17,
+    "rows": [
+      {
+        "confirmationComparable": false,
+        "confirmationMiterMs": 4.938381,
+        "confirmationRatio": 0.015879293233956635,
+        "confirmationRoundMs": 0.078418,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 4.990442,
+        "confirmationUnionRatio": 1.0105421189657096,
+        "envelopeHalfMiterMs": 0.470534,
+        "envelopeHalfRatio": 0.12403779535591476,
+        "envelopeHalfRoundMs": 0.058364,
+        "label": "parent-seed0",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": false,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": true,
+        "confirmationMiterMs": 4.789481,
+        "confirmationRatio": 0.9111135423650287,
+        "confirmationRoundMs": 4.363761,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 4.375247,
+        "confirmationUnionRatio": 0.9135117145260624,
+        "envelopeHalfMiterMs": 0.426959,
+        "envelopeHalfRatio": 0.12816218887527842,
+        "envelopeHalfRoundMs": 0.05472,
+        "label": "parent-seed1",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": true,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": false,
+        "confirmationMiterMs": 4.340934,
+        "confirmationRatio": 0.016497601668212417,
+        "confirmationRoundMs": 0.071615,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 4.394655,
+        "confirmationUnionRatio": 1.0123754473115694,
+        "envelopeHalfMiterMs": 0.385093,
+        "envelopeHalfRatio": 0.1295349435071528,
+        "envelopeHalfRoundMs": 0.049883,
+        "label": "parent-seed2",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": false,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": true,
+        "confirmationMiterMs": 4.723041,
+        "confirmationRatio": 0.9114060199773832,
+        "confirmationRoundMs": 4.304608,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 4.286596,
+        "confirmationUnionRatio": 0.9075923753361447,
+        "envelopeHalfMiterMs": 0.426834,
+        "envelopeHalfRatio": 0.12355623029093278,
+        "envelopeHalfRoundMs": 0.052738,
+        "label": "parent-seed3",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": true,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": false,
+        "confirmationMiterMs": 4.827477,
+        "confirmationRatio": 0.01499002481006124,
+        "confirmationRoundMs": 0.072364,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 4.864995,
+        "confirmationUnionRatio": 1.0077717615226338,
+        "envelopeHalfMiterMs": 0.475106,
+        "envelopeHalfRatio": 0.12103825251628057,
+        "envelopeHalfRoundMs": 0.057506,
+        "label": "parent-seed4",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": false,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": false,
+        "confirmationMiterMs": 4.849484,
+        "confirmationRatio": 0.012360696519464752,
+        "confirmationRoundMs": 0.059943,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 4.903909,
+        "confirmationUnionRatio": 1.0112228435025252,
+        "envelopeHalfMiterMs": 0.471176,
+        "envelopeHalfRatio": 0.12142384162181435,
+        "envelopeHalfRoundMs": 0.057212,
+        "label": "parent-seed5",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": false,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": true,
+        "confirmationMiterMs": 4.100142,
+        "confirmationRatio": 0.9025121568960295,
+        "confirmationRoundMs": 3.700428,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 3.713549,
+        "confirmationUnionRatio": 0.9057122899645915,
+        "envelopeHalfMiterMs": 0.392481,
+        "envelopeHalfRatio": 0.12230655751488607,
+        "envelopeHalfRoundMs": 0.048003,
+        "label": "parent-seed6",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": true,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": true,
+        "confirmationMiterMs": 4.342984,
+        "confirmationRatio": 0.9001315685252352,
+        "confirmationRoundMs": 3.909257,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 3.901651,
+        "confirmationUnionRatio": 0.8983802381035711,
+        "envelopeHalfMiterMs": 0.441348,
+        "envelopeHalfRatio": 0.11797719713242158,
+        "envelopeHalfRoundMs": 0.052069,
+        "label": "parent-seed7",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": true,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": true,
+        "confirmationMiterMs": 4.541477,
+        "confirmationRatio": 0.9033512665593154,
+        "confirmationRoundMs": 4.102549,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 4.10322,
+        "confirmationUnionRatio": 0.9034990158488087,
+        "envelopeHalfMiterMs": 0.44159,
+        "envelopeHalfRatio": 0.11846056296564687,
+        "envelopeHalfRoundMs": 0.052311,
+        "label": "parent-seed8",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": true,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": true,
+        "confirmationMiterMs": 4.75055,
+        "confirmationRatio": 0.905315805538306,
+        "confirmationRoundMs": 4.300748,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 4.29629,
+        "confirmationUnionRatio": 0.9043773878814032,
+        "envelopeHalfMiterMs": 0.449957,
+        "envelopeHalfRatio": 0.12700546941152155,
+        "envelopeHalfRoundMs": 0.057147,
+        "label": "parent-seed9",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": true,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": false,
+        "confirmationMiterMs": 4.363388,
+        "confirmationRatio": 0.012413748215835952,
+        "confirmationRoundMs": 0.054166,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 4.409807,
+        "confirmationUnionRatio": 1.0106382929961764,
+        "envelopeHalfMiterMs": 0.446395,
+        "envelopeHalfRatio": 0.12335263611823609,
+        "envelopeHalfRoundMs": 0.055064,
+        "label": "parent-seed10",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": false,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": false,
+        "confirmationMiterMs": 4.830877,
+        "confirmationRatio": 0.016401576773741083,
+        "confirmationRoundMs": 0.079234,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 4.900404,
+        "confirmationUnionRatio": 1.0143922107724954,
+        "envelopeHalfMiterMs": 0.464019,
+        "envelopeHalfRatio": 0.11883996129468836,
+        "envelopeHalfRoundMs": 0.055144,
+        "label": "parent-seed11",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": false,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": true,
+        "confirmationMiterMs": 4.180958,
+        "confirmationRatio": 0.922221414326573,
+        "confirmationRoundMs": 3.855769,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 3.853619,
+        "confirmationUnionRatio": 0.9217071781156376,
+        "envelopeHalfMiterMs": 0.320951,
+        "envelopeHalfRatio": 0.13562818000255492,
+        "envelopeHalfRoundMs": 0.04353,
+        "label": "gate-g1-parent-ex5-seed-native",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": true,
+        "unionAccepts": true
+      },
+      {
+        "confirmationComparable": false,
+        "confirmationMiterMs": 0.008016,
+        "confirmationRatio": 3.492140718562874,
+        "confirmationRoundMs": 0.027993,
+        "confirmationUnionComparable": false,
+        "confirmationUnionMs": 0.032797,
+        "confirmationUnionRatio": 4.091442115768463,
+        "envelopeHalfMiterMs": 0.50247,
+        "envelopeHalfRatio": 0.11544171791350727,
+        "envelopeHalfRoundMs": 0.058006,
+        "label": "gate-g2-parent-159.092",
+        "miterAccepts": false,
+        "repetitions": 15,
+        "roundAccepts": false,
+        "unionAccepts": false
+      },
+      {
+        "confirmationComparable": false,
+        "confirmationMiterMs": 0.008111,
+        "confirmationRatio": 3.4270743434841573,
+        "confirmationRoundMs": 0.027797,
+        "confirmationUnionComparable": false,
+        "confirmationUnionMs": 0.032777,
+        "confirmationUnionRatio": 4.041055356922698,
+        "envelopeHalfMiterMs": 0.49411,
+        "envelopeHalfRatio": 0.11565036125559086,
+        "envelopeHalfRoundMs": 0.057144,
+        "label": "gate-g3-parent-159.079",
+        "miterAccepts": false,
+        "repetitions": 15,
+        "roundAccepts": false,
+        "unionAccepts": false
+      },
+      {
+        "confirmationComparable": false,
+        "confirmationMiterMs": 0.005495,
+        "confirmationRatio": 5.189808917197452,
+        "confirmationRoundMs": 0.028518,
+        "confirmationUnionComparable": false,
+        "confirmationUnionMs": 0.030513,
+        "confirmationUnionRatio": 5.552866242038217,
+        "envelopeHalfMiterMs": 0.500156,
+        "envelopeHalfRatio": 0.1166656003326962,
+        "envelopeHalfRoundMs": 0.058351,
+        "label": "gate-g4-parent-164.0376",
+        "miterAccepts": false,
+        "repetitions": 15,
+        "roundAccepts": false,
+        "unionAccepts": false
+      },
+      {
+        "confirmationComparable": false,
+        "confirmationMiterMs": 2.877477,
+        "confirmationRatio": 0.016281972019237687,
+        "confirmationRoundMs": 0.046851,
+        "confirmationUnionComparable": true,
+        "confirmationUnionMs": 2.912891,
+        "confirmationUnionRatio": 1.0123073094936987,
+        "envelopeHalfMiterMs": 0.236488,
+        "envelopeHalfRatio": 0.12297875579310578,
+        "envelopeHalfRoundMs": 0.029083,
+        "label": "constructor-fresh",
+        "miterAccepts": true,
+        "repetitions": 15,
+        "roundAccepts": false,
+        "unionAccepts": true
+      }
+    ],
+    "withFastContractValidator": {
+      "envelopeHalfRatioMedian": 0.12191780821917808,
+      "confirmationRatioMedianComparable": 0.47110794110000864,
+      "comparableCells": 7,
+      "rows": [
+        {
+          "confirmationComparable": false,
+          "confirmationMiterMs": 0.913405,
+          "confirmationRatio": 0.08485283089100673,
+          "confirmationRoundMs": 0.077505,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.978598,
+          "confirmationUnionRatio": 1.0713735965973472,
+          "envelopeHalfMiterMs": 0.468628,
+          "envelopeHalfRatio": 0.1232726170864737,
+          "envelopeHalfRoundMs": 0.057769,
+          "label": "parent-seed0",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": false,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": true,
+          "confirmationMiterMs": 0.815802,
+          "confirmationRatio": 0.4840377934842033,
+          "confirmationRoundMs": 0.394879,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.387225,
+          "confirmationUnionRatio": 0.474655614965396,
+          "envelopeHalfMiterMs": 0.432281,
+          "envelopeHalfRatio": 0.12918217548307698,
+          "envelopeHalfRoundMs": 0.055843,
+          "label": "parent-seed1",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": true,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": false,
+          "confirmationMiterMs": 0.732866,
+          "confirmationRatio": 0.09655789735094819,
+          "confirmationRoundMs": 0.070764,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.79202,
+          "confirmationUnionRatio": 1.0807159835495166,
+          "envelopeHalfMiterMs": 0.384001,
+          "envelopeHalfRatio": 0.130327785604725,
+          "envelopeHalfRoundMs": 0.050046,
+          "label": "parent-seed2",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": false,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": true,
+          "confirmationMiterMs": 0.793056,
+          "confirmationRatio": 0.468118266553686,
+          "confirmationRoundMs": 0.371244,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.364924,
+          "confirmationUnionRatio": 0.46014909413711014,
+          "envelopeHalfMiterMs": 0.426254,
+          "envelopeHalfRatio": 0.12457595705846748,
+          "envelopeHalfRoundMs": 0.053101,
+          "label": "parent-seed3",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": true,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": false,
+          "confirmationMiterMs": 0.858784,
+          "confirmationRatio": 0.08283922383276819,
+          "confirmationRoundMs": 0.071141,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.920345,
+          "confirmationUnionRatio": 1.0716839158624287,
+          "envelopeHalfMiterMs": 0.472198,
+          "envelopeHalfRatio": 0.12000897928411387,
+          "envelopeHalfRoundMs": 0.056668,
+          "label": "parent-seed4",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": false,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": false,
+          "confirmationMiterMs": 0.861727,
+          "confirmationRatio": 0.06821882104193092,
+          "confirmationRoundMs": 0.058786,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.907374,
+          "confirmationUnionRatio": 1.0529715327476104,
+          "envelopeHalfMiterMs": 0.470144,
+          "envelopeHalfRatio": 0.11942298529812143,
+          "envelopeHalfRoundMs": 0.056146,
+          "label": "parent-seed5",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": false,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": true,
+          "confirmationMiterMs": 0.750085,
+          "confirmationRatio": 0.47110794110000864,
+          "confirmationRoundMs": 0.353371,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.346064,
+          "confirmationUnionRatio": 0.46136637847710593,
+          "envelopeHalfMiterMs": 0.39639,
+          "envelopeHalfRatio": 0.12191780821917808,
+          "envelopeHalfRoundMs": 0.048327,
+          "label": "parent-seed6",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": true,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": true,
+          "confirmationMiterMs": 0.812565,
+          "confirmationRatio": 0.45995335757754763,
+          "confirmationRoundMs": 0.373742,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.370564,
+          "confirmationUnionRatio": 0.4560422858479014,
+          "envelopeHalfMiterMs": 0.437627,
+          "envelopeHalfRatio": 0.1183085138714019,
+          "envelopeHalfRoundMs": 0.051775,
+          "label": "parent-seed7",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": true,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": true,
+          "confirmationMiterMs": 0.816856,
+          "confirmationRatio": 0.4689125133438452,
+          "confirmationRoundMs": 0.383034,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.377448,
+          "confirmationUnionRatio": 0.4620740987395575,
+          "envelopeHalfMiterMs": 0.444467,
+          "envelopeHalfRatio": 0.11644059064002502,
+          "envelopeHalfRoundMs": 0.051754,
+          "label": "parent-seed8",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": true,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": true,
+          "confirmationMiterMs": 0.854381,
+          "confirmationRatio": 0.48508335274309705,
+          "confirmationRoundMs": 0.414446,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.407789,
+          "confirmationUnionRatio": 0.4772917468904388,
+          "envelopeHalfMiterMs": 0.450096,
+          "envelopeHalfRatio": 0.12522217482492623,
+          "envelopeHalfRoundMs": 0.056362,
+          "label": "parent-seed9",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": true,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": false,
+          "confirmationMiterMs": 0.847486,
+          "confirmationRatio": 0.06219335776638198,
+          "confirmationRoundMs": 0.052708,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.887885,
+          "confirmationUnionRatio": 1.0476692240343792,
+          "envelopeHalfMiterMs": 0.450874,
+          "envelopeHalfRatio": 0.1221139387057138,
+          "envelopeHalfRoundMs": 0.055058,
+          "label": "parent-seed10",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": false,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": false,
+          "confirmationMiterMs": 0.909442,
+          "confirmationRatio": 0.08532154881784655,
+          "confirmationRoundMs": 0.077595,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.967214,
+          "confirmationUnionRatio": 1.063524666773692,
+          "envelopeHalfMiterMs": 0.461674,
+          "envelopeHalfRatio": 0.11932445838405455,
+          "envelopeHalfRoundMs": 0.055089,
+          "label": "parent-seed11",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": false,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": true,
+          "confirmationMiterMs": 0.637686,
+          "confirmationRatio": 0.48292106146285163,
+          "confirmationRoundMs": 0.307952,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.30889,
+          "confirmationUnionRatio": 0.4843920048425087,
+          "envelopeHalfMiterMs": 0.322296,
+          "envelopeHalfRatio": 0.1356672127485293,
+          "envelopeHalfRoundMs": 0.043725,
+          "label": "gate-g1-parent-ex5-seed-native",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": true,
+          "unionAccepts": true
+        },
+        {
+          "confirmationComparable": false,
+          "confirmationMiterMs": 0.007961,
+          "confirmationRatio": 3.4795879914583594,
+          "confirmationRoundMs": 0.027701,
+          "confirmationUnionComparable": false,
+          "confirmationUnionMs": 0.03321,
+          "confirmationUnionRatio": 4.171586484110036,
+          "envelopeHalfMiterMs": 0.493704,
+          "envelopeHalfRatio": 0.11873511253706674,
+          "envelopeHalfRoundMs": 0.05862,
+          "label": "gate-g2-parent-159.092",
+          "miterAccepts": false,
+          "repetitions": 15,
+          "roundAccepts": false,
+          "unionAccepts": false
+        },
+        {
+          "confirmationComparable": false,
+          "confirmationMiterMs": 0.007868,
+          "confirmationRatio": 3.5191916624300967,
+          "confirmationRoundMs": 0.027689,
+          "confirmationUnionComparable": false,
+          "confirmationUnionMs": 0.032688,
+          "confirmationUnionRatio": 4.1545500762582614,
+          "envelopeHalfMiterMs": 0.494039,
+          "envelopeHalfRatio": 0.11546861685008673,
+          "envelopeHalfRoundMs": 0.057046,
+          "label": "gate-g3-parent-159.079",
+          "miterAccepts": false,
+          "repetitions": 15,
+          "roundAccepts": false,
+          "unionAccepts": false
+        },
+        {
+          "confirmationComparable": false,
+          "confirmationMiterMs": 0.005609,
+          "confirmationRatio": 5.01836334462471,
+          "confirmationRoundMs": 0.028148,
+          "confirmationUnionComparable": false,
+          "confirmationUnionMs": 0.030699,
+          "confirmationUnionRatio": 5.47316812266001,
+          "envelopeHalfMiterMs": 0.502901,
+          "envelopeHalfRatio": 0.11707672086553815,
+          "envelopeHalfRoundMs": 0.058878,
+          "label": "gate-g4-parent-164.0376",
+          "miterAccepts": false,
+          "repetitions": 15,
+          "roundAccepts": false,
+          "unionAccepts": false
+        },
+        {
+          "confirmationComparable": false,
+          "confirmationMiterMs": 0.300211,
+          "confirmationRatio": 0.12753030368640722,
+          "confirmationRoundMs": 0.038286,
+          "confirmationUnionComparable": true,
+          "confirmationUnionMs": 0.332755,
+          "confirmationUnionRatio": 1.1084037560249291,
+          "envelopeHalfMiterMs": 0.234773,
+          "envelopeHalfRatio": 0.12271002202127161,
+          "envelopeHalfRoundMs": 0.028809,
+          "label": "constructor-fresh",
+          "miterAccepts": true,
+          "repetitions": 15,
+          "roundAccepts": false,
+          "unionAccepts": true
+        }
+      ]
+    }
+  },
+  "verdicts": {
+    "zeroFalseAccepts": true,
+    "everySparrowExpectationMet": true,
+    "everySweepMonotoneInMaterial": true,
+    "everySweepFlipWithinOneGridStep": true,
+    "canonicalCorpusRegressionRows": 13,
+    "unionLosesNoCanonicalValidLayout": true,
+    "canonicalCorpusRegressionsAreAllOneGridStepConservative": true,
+    "envelopeHalfWithinBudget": true,
+    "confirmationWithinBudget": true,
+    "unionConfirmationWithinBudget": true
+  },
+  "provenanceStamp": {
+    "binaries": {
+      "rek-battery-base": "76d6083d36ebb211d9f02e28d04e92639f256b675628cd178a5ce46d1234b7d6",
+      "rek-battery-fcv": "4a3212560ef6a62f6e30f5b19d3c6d7fe49747eb2c14c3f6f975cacac8f0d68b",
+      "bench-off": "63ba99a11299148ac22a9ab4d8b961ea1a243cd235713943ff31df8f151effe8",
+      "bench-on": "93b0a3a92430d1856454c4b5992c79471bb3de34f61ca8851075b9dfdd086e8d"
+    },
+    "binariesManifest": "docs/experiments/round-envelope-kernel/evidence/binaries.txt",
+    "commit": "e523c91b3471bcf6a6ac9c061a2b4e8e7b96304b",
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "python": "3.14.6"
+  }
+}

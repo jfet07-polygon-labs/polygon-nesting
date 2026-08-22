@@ -1,0 +1,268 @@
+{
+ "experiment": "round-envelope-kernel",
+ "source": "docs/experiments/round-envelope-kernel/evidence/battery.json",
+ "canonicalGridStepMm": 0.001,
+ "canonicalizationBudgetMm": 0.0014143,
+ "population1": {
+  "layouts": 17,
+  "cells": 51,
+  "pairRowsCompared": 93330,
+  "boundaryRowsCompared": 3111,
+  "byAllowance": [
+   {
+    "searchOffsetAllowanceMm": 0.002,
+    "layouts": 17,
+    "miterAccepts": 14,
+    "kernelAccepts": 7,
+    "unionAccepts": 14,
+    "layoutsMiterAcceptsKernelRefuses": 7,
+    "layoutsMiterAcceptsUnionRefuses": 0,
+    "layoutsKernelAcceptsMiterRefuses": 0,
+    "pairRowsKernelAdmitsMiterRefuses": 143,
+    "pairRowsMiterAdmitsKernelRefuses": 11,
+    "boundaryRowsKernelAdmitsMiterRefuses": 52,
+    "boundaryRowsMiterAdmitsKernelRefuses": 0
+   },
+   {
+    "searchOffsetAllowanceMm": 0.0005,
+    "layouts": 17,
+    "miterAccepts": 17,
+    "kernelAccepts": 15,
+    "unionAccepts": 17,
+    "layoutsMiterAcceptsKernelRefuses": 2,
+    "layoutsMiterAcceptsUnionRefuses": 0,
+    "layoutsKernelAcceptsMiterRefuses": 0,
+    "pairRowsKernelAdmitsMiterRefuses": 0,
+    "pairRowsMiterAdmitsKernelRefuses": 2,
+    "boundaryRowsKernelAdmitsMiterRefuses": 0,
+    "boundaryRowsMiterAdmitsKernelRefuses": 0
+   },
+   {
+    "searchOffsetAllowanceMm": 0.0,
+    "layouts": 17,
+    "miterAccepts": 17,
+    "kernelAccepts": 17,
+    "unionAccepts": 17,
+    "layoutsMiterAcceptsKernelRefuses": 0,
+    "layoutsMiterAcceptsUnionRefuses": 0,
+    "layoutsKernelAcceptsMiterRefuses": 0,
+    "pairRowsKernelAdmitsMiterRefuses": 0,
+    "pairRowsMiterAdmitsKernelRefuses": 0,
+    "boundaryRowsKernelAdmitsMiterRefuses": 0,
+    "boundaryRowsMiterAdmitsKernelRefuses": 0
+   }
+  ],
+  "p0RowCount": 13,
+  "p0Cells": [
+   "constructor-fresh@0.002",
+   "parent-seed0@0.002",
+   "parent-seed2@0.002",
+   "parent-seed4@0.002",
+   "parent-seed5@0.002",
+   "parent-seed10@0.002",
+   "parent-seed11@0.002",
+   "gate-g2-parent-159.092@0.0005",
+   "gate-g3-parent-159.079@0.0005"
+  ],
+  "p0DistinctShortfallsMicron": [
+   -1.0
+  ],
+  "p0DistinctMiterIntersectionAreasMm2": [
+   0.0
+  ],
+  "p0RowsWithMaterialBelowDemanded": 11
+ },
+ "population2": {
+  "proposalCount": 194,
+  "kernelAcceptCount": 82,
+  "falseAcceptCount": 0,
+  "insideCanonicalizationBudgetCount": 3,
+  "insideCanonicalizationBudget": [
+   {
+    "contractAccepts": true,
+    "kernelAccepts": true,
+    "kernelCriticalTwoRMm": 5.004,
+    "kernelPrimaryAdmissible": true,
+    "kind": "pair",
+    "materialClearanceMm": 5.003943760912691,
+    "miterAccepts": false,
+    "miterPrimaryAdmissible": false,
+    "placementIndices": [
+     5,
+     56
+    ],
+    "source": "parent-seed0",
+    "step": 1,
+    "twoRMm": 5.004,
+    "unionAccepts": true
+   },
+   {
+    "contractAccepts": true,
+    "kernelAccepts": true,
+    "kernelCriticalTwoRMm": 5.004,
+    "kernelPrimaryAdmissible": true,
+    "kind": "pair",
+    "materialClearanceMm": 5.003703525843338,
+    "miterAccepts": false,
+    "miterPrimaryAdmissible": false,
+    "placementIndices": [
+     9,
+     52
+    ],
+    "source": "parent-seed1",
+    "step": 12,
+    "twoRMm": 5.004,
+    "unionAccepts": true
+   },
+   {
+    "contractAccepts": true,
+    "kernelAccepts": true,
+    "kernelCriticalTwoRMm": null,
+    "kernelPrimaryAdmissible": true,
+    "kind": "boundary",
+    "materialClearanceMm": 5.001985356028991,
+    "miterAccepts": false,
+    "miterPrimaryAdmissible": false,
+    "placementIndices": [
+     1
+    ],
+    "source": "gate-g2-parent-159.092",
+    "step": 1,
+    "twoRMm": 5.002,
+    "unionAccepts": true
+   }
+  ]
+ },
+ "population3": {
+  "rows": [
+   {
+    "searchOffsetAllowanceMm": 0.002,
+    "expansionMm": 2.502,
+    "radiusMicron": 2502,
+    "contractOnlyAccepts": true,
+    "compositeMiterAccepts": false,
+    "compositeRoundAccepts": false,
+    "compositeUnionAccepts": false,
+    "kernelPairFailureCount": 2,
+    "kernelBoundaryFailureCount": 0,
+    "kernelRefusedPairIndices": [
+     [
+      0,
+      1
+     ],
+     [
+      42,
+      44
+     ]
+    ],
+    "pair38x39": {
+     "admissible": false,
+     "criticalTwoRMm": 5.001
+    },
+    "pair50x52": {
+     "admissible": false,
+     "criticalTwoRMm": 5.002
+    }
+   },
+   {
+    "searchOffsetAllowanceMm": 0.0005,
+    "expansionMm": 2.5005,
+    "radiusMicron": 2501,
+    "contractOnlyAccepts": true,
+    "compositeMiterAccepts": false,
+    "compositeRoundAccepts": false,
+    "compositeUnionAccepts": false,
+    "kernelPairFailureCount": 1,
+    "kernelBoundaryFailureCount": 0,
+    "kernelRefusedPairIndices": [
+     [
+      0,
+      1
+     ]
+    ],
+    "pair38x39": {
+     "admissible": false,
+     "criticalTwoRMm": 5.001
+    },
+    "pair50x52": {
+     "admissible": true,
+     "criticalTwoRMm": 5.002
+    }
+   },
+   {
+    "searchOffsetAllowanceMm": 0.0,
+    "expansionMm": 2.5,
+    "radiusMicron": 2500,
+    "contractOnlyAccepts": true,
+    "compositeMiterAccepts": false,
+    "compositeRoundAccepts": true,
+    "compositeUnionAccepts": true,
+    "kernelPairFailureCount": 0,
+    "kernelBoundaryFailureCount": 0,
+    "kernelRefusedPairIndices": [],
+    "pair38x39": {
+     "admissible": true,
+     "criticalTwoRMm": 5.001
+    },
+    "pair50x52": {
+     "admissible": true,
+     "criticalTwoRMm": 5.002
+    }
+   }
+  ],
+  "expectations": [
+   {
+    "expectation": "at r=2.502 the kernel refuses exactly the two radius-caused pairs and no boundary",
+    "met": true
+   },
+   {
+    "expectation": "the contract accepts the Sparrow pose set at every radius",
+    "met": true
+   },
+   {
+    "expectation": "at r=2.500 the kernel accepts all 1830 pairs and all 61 boundaries",
+    "met": true
+   },
+   {
+    "expectation": "pair 38x39 (pose indices 0,1) is ACCEPTED at r=2.500",
+    "met": true
+   }
+  ]
+ },
+ "population4": {
+  "sweepCount": 30,
+  "stepMm": 0.001,
+  "stepsEachWay": 8,
+  "monotoneInMaterial": 30,
+  "monotoneInStep": 30,
+  "stepsDisagreeingOutsideCanonicalizationBudget": 0,
+  "kernelMinusMaterialFlipSteps": {
+   "-1": 3,
+   "0": 19,
+   "1": 8
+  },
+  "worstKernelVersusMaterialMm": 0.001970416947420617,
+  "sweepFloorBudgetMm": 0.0024143,
+  "outsideSweepFloorBudget": 0
+ },
+ "economy": {
+  "envelopeHalfRatioMedian": 0.12230655751488607,
+  "envelopeHalfRatioMax": 0.13562818000255492,
+  "confirmationRatioMedianComparable": 0.905315805538306,
+  "confirmationUnionRatioMedianComparable": 1.0077717615226338,
+  "comparableCells": 7,
+  "cells": 17
+ },
+ "verdicts": {
+  "zeroFalseAccepts": true,
+  "everySparrowExpectationMet": true,
+  "everySweepMonotoneInMaterial": true,
+  "everySweepFlipWithinOneGridStep": true,
+  "canonicalCorpusRegressionRows": 13,
+  "unionLosesNoCanonicalValidLayout": true,
+  "canonicalCorpusRegressionsAreAllOneGridStepConservative": true,
+  "envelopeHalfWithinBudget": true,
+  "confirmationWithinBudget": true,
+  "unionConfirmationWithinBudget": true
+ }
+}

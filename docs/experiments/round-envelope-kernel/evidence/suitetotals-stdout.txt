@@ -1,0 +1,85 @@
+{
+ "experiment": "round-envelope-kernel",
+ "step": "suite totals",
+ "runnerTranscriptExits": {
+  "jagua": 0,
+  "combo": 0,
+  "example": 0,
+  "kernel": 0,
+  "kerneldebug": 0
+ },
+ "allZero": true,
+ "suites": [
+  {
+   "suite": "1",
+   "features": "jagua-experimental",
+   "log": "suite-jagua.log",
+   "present": true,
+   "resultBlocks": 55,
+   "passed": 1293,
+   "failed": 0,
+   "ignored": 2,
+   "exit": 0,
+   "knownFlaky": "ok",
+   "explicitFailures": 0
+  },
+  {
+   "suite": "2",
+   "features": "the protocol's full combo",
+   "log": "suite-combo.log",
+   "present": true,
+   "resultBlocks": 55,
+   "passed": 1357,
+   "failed": 0,
+   "ignored": 2,
+   "exit": 0,
+   "knownFlaky": "ok",
+   "explicitFailures": 0
+  },
+  {
+   "suite": "3",
+   "features": "the example harness",
+   "log": "suite-example.log",
+   "present": true,
+   "resultBlocks": 1,
+   "passed": 19,
+   "failed": 0,
+   "ignored": 0,
+   "exit": 0,
+   "knownFlaky": "not present",
+   "explicitFailures": 0
+  },
+  {
+   "suite": "4",
+   "features": "jagua-experimental,round-envelope-kernel",
+   "log": "suite-kernel.log",
+   "present": true,
+   "resultBlocks": 55,
+   "passed": 1307,
+   "failed": 0,
+   "ignored": 2,
+   "exit": 0,
+   "knownFlaky": "ok",
+   "explicitFailures": 0
+  },
+  {
+   "suite": "1 (rerun after known flake)",
+   "features": "jagua-experimental",
+   "log": "suite-jagua-run1-flaky.log",
+   "present": false
+  },
+  {
+   "suite": "5 (supplementary, debug)",
+   "features": "jagua-experimental,round-envelope-kernel",
+   "log": "suite-kernel-debug.log",
+   "present": true,
+   "resultBlocks": 5,
+   "passed": 14,
+   "failed": 0,
+   "ignored": 0,
+   "exit": 0,
+   "knownFlaky": "not present",
+   "explicitFailures": 0
+  }
+ ]
+}

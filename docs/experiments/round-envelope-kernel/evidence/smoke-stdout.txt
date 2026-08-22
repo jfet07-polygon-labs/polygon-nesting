@@ -1,0 +1,79 @@
+{
+ "experiment": "round-envelope-kernel",
+ "step": "the spec key's own gate",
+ "offBinary": "/var/lib/t3/tmp/rek/bench-off",
+ "onBinary": "/var/lib/t3/tmp/rek/bench-on",
+ "budget": "work=8000000,slots=4,cells=13:15:17:19,v3=1",
+ "cells": [
+  {
+   "tag": "off-rek1",
+   "spec": "work=8000000,slots=4,cells=13:15:17:19,v3=1,rek=1",
+   "exit": 1,
+   "stderr": "Error: \"unknown portfolio spec key \\\"rek\\\"\"",
+   "docDigest": null,
+   "independentDepthsMm": []
+  },
+  {
+   "tag": "off-plain",
+   "spec": "work=8000000,slots=4,cells=13:15:17:19,v3=1",
+   "exit": 0,
+   "stderr": "",
+   "docDigest": "29e8633402f40d84cca17d4623f7663e54bd5d8030149059d8ccfefb7c05ca42",
+   "independentDepthsMm": []
+  },
+  {
+   "tag": "on-rekbad",
+   "spec": "work=8000000,slots=4,cells=13:15:17:19,v3=1,rek=yes",
+   "exit": 1,
+   "stderr": "Error: \"rek takes 0/off, 1/union or 2/exclusive, not \\\"yes\\\"\"",
+   "docDigest": null,
+   "independentDepthsMm": []
+  },
+  {
+   "tag": "on-plain",
+   "spec": "work=8000000,slots=4,cells=13:15:17:19,v3=1",
+   "exit": 0,
+   "stderr": "",
+   "docDigest": "29e8633402f40d84cca17d4623f7663e54bd5d8030149059d8ccfefb7c05ca42",
+   "independentDepthsMm": []
+  },
+  {
+   "tag": "on-rek0",
+   "spec": "work=8000000,slots=4,cells=13:15:17:19,v3=1,rek=0",
+   "exit": 0,
+   "stderr": "",
+   "docDigest": "29e8633402f40d84cca17d4623f7663e54bd5d8030149059d8ccfefb7c05ca42",
+   "independentDepthsMm": []
+  },
+  {
+   "tag": "on-union",
+   "spec": "work=8000000,slots=4,cells=13:15:17:19,v3=1,rek=1",
+   "exit": 0,
+   "stderr": "",
+   "docDigest": "19085054a0870743a33a6eca22aa9213a496a946524b15a5b3d8a93b71a7465c",
+   "independentDepthsMm": []
+  },
+  {
+   "tag": "on-exclusive",
+   "spec": "work=8000000,slots=4,cells=13:15:17:19,v3=1,rek=2",
+   "exit": 1,
+   "stderr": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")",
+   "docDigest": null,
+   "independentDepthsMm": []
+  }
+ ],
+ "checks": {
+  "unarmedBinaryRefusesTheKey": true,
+  "armedBinaryRefusesAnUnknownMode": true,
+  "armedBinaryWithoutTheKeyEqualsUnarmed": true,
+  "armedBinaryWithRekZeroEqualsUnarmed": true,
+  "unionRunSucceeds": true,
+  "unionRunDiffersFromUnarmed": true
+ },
+ "allChecksPass": true,
+ "exclusiveModeObserved": {
+  "exit": 1,
+  "stderr": "Error: InvalidInput(\"pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1 and 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 overlap on the canonical collision grid\")",
+  "note": "reported, not asserted: see this file's header"
+ }
+}

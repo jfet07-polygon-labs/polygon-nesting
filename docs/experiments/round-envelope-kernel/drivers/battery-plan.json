@@ -1,0 +1,120 @@
+{
+ "_note": "The round-envelope kernel's soundness battery plan. Paths under /var/lib/t3/tmp are this box's pinned parent fixtures (docs/experiments/contact-block/drivers/parents12.json names the same twelve); everything else is repo-relative from the worktree root.",
+ "request": "tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "edgeClearanceMm": 5.0,
+ "pairClearanceMm": 5.0,
+ "corpusAllowancesMm": [
+  0.002,
+  0.0005,
+  0.0
+ ],
+ "canonicalCorpus": [
+  {
+   "label": "parent-seed0",
+   "path": "/var/lib/t3/tmp/csched/parents/parent-seed0.json"
+  },
+  {
+   "label": "parent-seed1",
+   "path": "/var/lib/t3/tmp/csched/parents/parent-seed1.json"
+  },
+  {
+   "label": "parent-seed2",
+   "path": "/var/lib/t3/tmp/csched/parents/parent-seed2.json"
+  },
+  {
+   "label": "parent-seed3",
+   "path": "/var/lib/t3/tmp/csched/parents2/parent-seed3.json"
+  },
+  {
+   "label": "parent-seed4",
+   "path": "/var/lib/t3/tmp/csched/parents2/parent-seed4.json"
+  },
+  {
+   "label": "parent-seed5",
+   "path": "/var/lib/t3/tmp/csched/parents2/parent-seed5.json"
+  },
+  {
+   "label": "parent-seed6",
+   "path": "/var/lib/t3/tmp/csched/parents2/parent-seed6.json"
+  },
+  {
+   "label": "parent-seed7",
+   "path": "/var/lib/t3/tmp/csched/parents2/parent-seed7.json"
+  },
+  {
+   "label": "parent-seed8",
+   "path": "/var/lib/t3/tmp/csched/parents2/parent-seed8.json"
+  },
+  {
+   "label": "parent-seed9",
+   "path": "/var/lib/t3/tmp/csched/parents2/parent-seed9.json"
+  },
+  {
+   "label": "parent-seed10",
+   "path": "/var/lib/t3/tmp/csched/parents2/parent-seed10.json"
+  },
+  {
+   "label": "parent-seed11",
+   "path": "/var/lib/t3/tmp/csched/parents2/parent-seed11.json"
+  },
+  {
+   "label": "gate-g1-parent-ex5-seed-native",
+   "path": "/var/lib/t3/tmp/ex5-seed-native.json"
+  },
+  {
+   "label": "gate-g2-parent-159.092",
+   "path": "docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/record-159.092/pinned-parent-159.092.json"
+  },
+  {
+   "label": "gate-g3-parent-159.079",
+   "path": "docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/finer-ladder/pinned-parent-159.079.json"
+  },
+  {
+   "label": "gate-g4-parent-164.0376",
+   "path": "docs/experiments/persistent-vacancy-descent/exact-contract/true-contract/finer-ladder/pinned-fs-parent-164.0376.json"
+  }
+ ],
+ "sparrow": {
+  "path": "docs/experiments/gate-a-sparrow-import/fixture/sparrow-10s-x86-poses.json",
+  "allowancesMm": [
+   0.002,
+   0.0005,
+   0.0
+  ]
+ },
+ "sweeps": {
+  "sources": [
+   "parent-seed0",
+   "parent-seed1",
+   "parent-seed2",
+   "parent-seed4",
+   "gate-g2-parent-159.092"
+  ],
+  "pairsPerSource": 4,
+  "boundariesPerSource": 2,
+  "stepsEachWay": 8
+ },
+ "economy": {
+  "sources": [
+   "parent-seed0",
+   "parent-seed1",
+   "parent-seed2",
+   "parent-seed3",
+   "parent-seed4",
+   "parent-seed5",
+   "parent-seed6",
+   "parent-seed7",
+   "parent-seed8",
+   "parent-seed9",
+   "parent-seed10",
+   "parent-seed11",
+   "gate-g1-parent-ex5-seed-native",
+   "gate-g2-parent-159.092",
+   "gate-g3-parent-159.079",
+   "gate-g4-parent-164.0376",
+   "constructor-fresh"
+  ],
+  "repetitions": 15
+ },
+ "reportTop": 6
+}

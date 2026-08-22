@@ -1,0 +1,23 @@
+{
+ "experiment": "round-envelope-kernel",
+ "step": "the two battery binaries agree on every verdict",
+ "left": "/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/docs/experiments/round-envelope-kernel/evidence/battery.json",
+ "right": "/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/docs/experiments/round-envelope-kernel/evidence/battery-fcv.json",
+ "strippedFields": [
+  "confirmationMiterMs",
+  "confirmationRatio",
+  "confirmationRatioMedianComparable",
+  "confirmationRoundMs",
+  "confirmationUnionMs",
+  "confirmationUnionRatio",
+  "confirmationUnionRatioMedianComparable",
+  "envelopeHalfMiterMs",
+  "envelopeHalfRatio",
+  "envelopeHalfRatioMedian",
+  "envelopeHalfRoundMs",
+  "executableSha256"
+ ],
+ "identical": true,
+ "differenceCount": 0,
+ "differences": []
+}

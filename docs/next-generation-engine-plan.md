@@ -7517,3 +7517,83 @@ a budget/basin problem 10s does not buy).
 
 Reviews verbatim: `docs/sol-review-12-the-effective-tax-and-the-hybrid-kernel.md`,
 `docs/grok-review-7-the-product-question-first.md`.
+
+## The certified round-envelope kernel: exact, zero false accepts, 8x cheaper — and the grid step it exposes is the miter's
+
+Sol review 11's kernel, built to Sol 12 §3.2's kills with Grok 7 §2's addition
+(*"inscribed Clipper round is not this kernel"*). It replaces the composite's
+**envelope half only** — `P ⊕ disc(r)` instead of a Clipper miter offset at limit
+2.0 — and the material contract validator is untouched and still final.
+
+**It is exact rather than outward-discretized, and that is a correction to Sol's
+own specification.** Gate A measured the row an outward approximation cannot
+serve: Sparrow pair 38·39 has 0.42 µm of radius margin at `r = 2.5`, below the
+1 µm grid step. So there is no approximating polygon at all: canonical rings are
+integers on a 1 µm grid, squared segment distances between them are rationals,
+and `d² ≥ (2r)²` is one `i128` comparison after cross-multiplication. No `f64`
+enters a decision; the verdict is a function of the integer grid alone, with no
+rounding mode and no error budget. Containment is asked separately, because
+minimum boundary distance alone false-accepts a contained piece. The domain
+bound is evaluated in a unit test at its own extreme rather than argued, and the
+kernel fail-closes (to the miter authority) outside it and at zero expansion.
+
+**The battery.** Zero false accepts: 194 material-valid / canonical-invalid
+proposals, 82 kernel accepts, 0 below the contract validator's own source-ring
+clearance outside the derived √2 µm canonicalization band (3 inside it, reported
+as their own count). The Sparrow differential meets all four pre-committed
+expectations — at `r = 2.500` the kernel accepts all 1830 pairs and all 61
+boundaries and **pair 38·39 with it**; at `r = 2.502` it refuses exactly the two
+radius-caused pairs Gate A named and zero boundaries. Thirty ±1 µm sweeps,
+windows centred on the located crossing: 30/30 monotone in the material
+clearance, 0 steps disagreeing outside the band, flip within one grid step on
+30/30.
+
+**The finding.** On the canonical corpus — 17 layouts × 3 radii, 93 330 pair rows
+and 3 111 boundary rows against `PolygonSet::offset` itself — the exclusive
+kernel loses 13 rows. Every one at exactly **−1 µm**, every one with the miter
+envelopes' measured intersection area exactly `0.0` mm², and on 11 of the 13 the
+untouched source-ring clearance is *itself* below the composite's own demanded
+`2r`. The attribution is a proof: `offset_miter(P, r) ⊇ P ⊕ disc(r)` exactly, so
+an exact distance below `2r` means the **true** miter envelopes overlap — and the
+only thing between that and a measured zero is `do_round()` re-quantizing the
+offset output to the canonical grid. **The shipped miter authority is one grid
+step permissive of its own declared envelope at contact, and the
+short-side-first constructor places pieces exactly at contact**: with the
+exclusive kernel armed, a bare-request run aborts inside
+`general_fast::validate_result`, the constructor's own self-check refusing the
+layout the constructor just built.
+
+**So the shippable form is the hybrid Sol 12 §3.2 asked for.** `rek=1`
+(`KernelMode::Union`) admits what either half admits: it cannot lose a
+canonical-valid layout (0 of 51 cells, all three radii), adds no false-accept
+surface beyond HEAD's own, and asks the cheap authority first. `rek=2`
+(exclusive) stays as the certified-exact measurement arm.
+
+**Economy.** The envelope half is **0.122x** median (8.2x cheaper, worst cell
+0.136x): no offset is built, 290 canonical integer vertices against the miter's
+377 and against the 20.6k of Gate A's inscribed shadow, and an integer box gap
+certifies 95.34% of pairs. A whole confirmation is 0.905x (exclusive) / 1.008x
+(union); with `fast-contract-validator` armed — the shipping-relevant
+configuration, since the contract half is ~90% of a confirmation — it is
+**0.471x**, a median 0.8126 → 0.3737 ms. Sol's ≤1.25x is met in every reading.
+
+**Gates and suites.** All four pinned gates hit on a fresh feature-off build
+*and* on a build carrying the feature compiled but unarmed, with the two
+binaries' whole-document digests identical per gate. Four `--release` suites
+green (1293 / 1357 / 19 / 1307) plus a supplementary debug run of the kernel's
+14 tests, which is the only profile that compiles its domain `debug_assert!` in.
+Determinism holds across two processes and, separately, across two *binaries*
+built with different feature sets: `equiv.py` requires `battery.json` and
+`battery-fcv.json` to agree on every verdict and reports 0 differences, which is
+also this round's own confirmation that the contract certificate is
+verdict-preserving.
+
+**What it does not close.** No search ran. The twelve-parent matched gate at
+equal operator wall — Sol 12 §3.2's remaining kill, ≥8/12 and ≥1 mm median — is
+untouched and is the next round's assignment; the handover, including the fact
+that an armed run's `used_long_axis_depth_mm` moves to the round envelope's
+basis while the raw source depth does not, is `README.md` §7. Legality is still
+not reachability. 464 insertions and 0 deletions against the seven pre-existing
+files.
+
+Evidence, drivers and the full caveat list: `docs/experiments/round-envelope-kernel/`.
