@@ -7383,3 +7383,99 @@ with `cargo check --features shadow-rescore --examples`.
 Evidence, drivers, the audited fixture and the named refusals:
 `docs/experiments/gate-a-sparrow-import/`. Re-pin:
 `docs/experiments/depth-lower-bound/depth-lower-bound-exact-clearance-evidence.json`.
+
+## The m26 band audition: the ladder reproduces, loses to its own shipped port by 8.4x, and is cut
+
+Kimi review 1 §1 named the one cell in this campaign's map with a measured
+multi-millimetre gain and no matched-arm gate: mode 26's short ladder in the
+171-179 mm band, where the plan's arm C published -4.9571 and -4.3170 mm on two
+of three seeds and where "non esiste ne un positivo gated ne un negativo gated".
+It pre-committed the gate, the kill rule and a ~50/50 expectation. The gate ran.
+**The arm is cut, at five of five control budgets, 0 of 12 parents below the
+control at matched work** - and the interesting half is why, because the
+mechanism claim was right.
+
+**Arm C reproduces, lifted out of the coordinator.** Grok review 5 archived arm
+C as an artefact of its precondition, a saturated archive after ~16 s of v2. Run
+from the twelve pinned from-request parents instead, the uncapped drop-1.0
+ladder publishes **-5.7266 mm on seed 0 and -8.2890 mm on seed 1** against arm
+C's -4.9571 and -4.3170, and nothing on seed 2 - the same two-of-three, larger.
+The precondition argument is falsified: the gain survives the lift.
+
+**And it loses anyway, to the control, at every budget.** The arm is one m26
+rung, which is exactly the drop-1.0 ladder truncated at the anatomy's own
+equal-budget figure of 33,413,789 work units, because `ladder_compression_bounds`
+turns any drop from 0.175 to 1.4 mm at a 174 mm parent into the same 0.174208 mm
+rung-1 bound. Median drop **0.2332 mm against the work-matched control's
+7.0129 mm**; in the currency Kimi insisted the arm be priced in, **0.1547 against
+1.2991 mm per million coordinator work units - 8.4x**. The control at that
+budget spends 4.5% *less* work than the arm. At one tenth of the arm's work the
+control's median is *still* better, 0.2534 against 0.2332. The uncapped six-rung
+ladder buys 3.3784 mm for 45.5 M operator units where the control buys 12.1095
+for 17.5 M. There is no budget in the measured range where the ladder is the
+better use of the coordinator's work, and the ladder's yield per work unit
+*falls* as rungs are added (0.1547 -> 0.0756), so a longer one moves away from
+the control rather than toward it.
+
+**The reason is that the follow-up the review reserved for a pass had already
+shipped, and it is the control.** Kimi §1 closes that even a passing arm would
+need "il porting del rung ... il design di `mode26-rung-anatomy` §3". That port
+is `compression_schedule.rs` - its own module documentation says so - and it is
+reached as mode 34, which is what `matched.py`'s control arm runs. The audition
+was therefore never a new action against the shipping schedule; it was **mode 26
+against its own port**, and the port dominates its parent mechanism on the band
+the parent mechanism was best at. There is no porting price to state because
+there is no porting left to do.
+
+**Three measurements the round corrects, all against itself.** First, the
+anatomy's 85.4% rollback-tracker abort rate does **not** transfer: 1 of 14 rung
+arms here (7.1%), 23 of 113 over the six-rung ladders (20.4%), and 6 of 14 arms
+producing an exact-valid state against the anatomy's 0 of 171. A rung at 174 mm
+is also 8x cheaper than one at 159 mm, 4.09 M operator units against 33.4 M,
+because it publishes on its first arm instead of grinding through 4.9. The
+honest consequence is that the arm's loss cannot be blamed on its known bug:
+repairing the one-f64-ulp rule recovers a fifth of a 20% abort rate against an
+8.4x deficit. Second, **a sub-grid difference in the rung's bound is worth
+6.5 mm of outcome.** The round's first pass derived the single-rung target from
+`rawDepthMm` where the ladder uses the grid-snapped `independentDepthMm`; on
+seed 10 both passes still ran exactly one rung, with bounds 2.235e-4 mm apart -
+22% of one canonical grid unit - and published 169.5948 against 176.0952. That is
+the review's own §0 thesis, the endpoint dominated by trajectory luck, measured
+on the review's own mechanism, and it is why no verdict here is read off a single
+m26 cell. Third, `matched.py`'s process work meter carries a **9 M-unit floor**
+that belongs to neither arm: a mode-34 process that refuses its mode and runs no
+search at all burns 6.84-11.91 M units in phase 0. Read raw, the arm's 13.00 M
+against the control's 12.39 M looks like a fair fight; net of the floor it is
+4.09 M against 3.91 M and the control is the one being starved. Any future
+matched-arm gate on this harness should subtract it; it costs one 2.5 s process
+per seed to measure.
+
+**What the round leaves standing.** No engine code changed - the diff is
+`docs/experiments/m26-band-audition/` and nothing else - so the four pinned gates
+on a rebuilt `jagua-experimental` binary are a check that the measurement was
+taken on the tree it claims: 206.869/`8a7737381238fa4d`,
+159.09233022733062/`fa01012af1d559ae`, 159.07876040364795/`e28fba007f8031d4`,
+164.0375677990678/`49f094d7e59a9008`, all four hit - and they were run twice on
+the same binary, either side of the commit, with all four documents identical
+field for field across 3246-3265 scalars except `engineCommit` and
+`engineWorktreeDirty`. All twelve parents clear the
+authoritative publication gate and reproduce their pinned depth and fingerprint.
+Determinism across two processes is **6 of 6** whole documents on three cells for
+both arms, placements and work counters included - after three `searchProfile`
+fields had to be added to the strip list by name, since `gatelib.strip_times`
+misses `milliseconds`, `leafMilliseconds` and `leafSharePercent` and the first
+run reported 0 of 6 on wall clocks alone while every depth, fingerprint and
+counter already agreed. All three suites pass with zero failures - 1293, 1357 and
+19 tests, the third being the example harness the other two do not run - and the
+campaign's known-flaky `free_material_multi_eviction...` passed first time in
+both library suites.
+
+**What it does not close.** The brief pre-committed drop 1.0, six of the eight
+rungs `LADDER_COMPRESSION_STEPS` allows; a ~1.4 mm drop would buy the other two
+and was not run, on the argument above that added rungs are worse per work unit,
+not better. And the retirement is of m26 *as a spend in the 10 s band on this
+request*: the mechanism is not deleted, it is priced, and re-opening it needs a
+new mechanism rather than another sweep.
+
+Evidence, drivers, both passes and the retirement entry for
+`shipped-surface.md`'s board: `docs/experiments/m26-band-audition/`.

@@ -1,0 +1,72 @@
+{
+ "label": "base-pre",
+ "binary": "/var/lib/t3/tmp/m26band/bin/gate-base",
+ "env": {},
+ "gates": {
+  "g1": {
+   "gate": "g1",
+   "wantDepthMm": 206.869,
+   "wantFingerprintPrefix": "8a7737381238fa4d",
+   "depthHit": true,
+   "fingerprintHit": true,
+   "hit": true,
+   "depthsSeen": [
+    181.626,
+    206.869,
+    207.239,
+    211.194,
+    211.825,
+    213.073
+   ],
+   "loadError": null,
+   "wallSeconds": 26.74868392944336,
+   "docDigest": "ee453960d0b641809c8488d8ba2678df7248f261c7e7652b53cfc8aa83fe46c9"
+  },
+  "g2": {
+   "gate": "g2",
+   "wantDepthMm": 159.09233022733062,
+   "wantFingerprintPrefix": "fa01012af1d559ae09c",
+   "depthHit": true,
+   "fingerprintHit": true,
+   "hit": true,
+   "depthsSeen": [
+    159.092,
+    159.092330227
+   ],
+   "loadError": null,
+   "wallSeconds": 3.2529959678649902,
+   "docDigest": "64ed83a760614c40076b6d26d0cd42910ecb5b1ea91f44df85110674c7cfa1fa"
+  },
+  "g3": {
+   "gate": "g3",
+   "wantDepthMm": 159.07876040364795,
+   "wantFingerprintPrefix": "e28fba007f8031d49f",
+   "depthHit": true,
+   "fingerprintHit": true,
+   "hit": true,
+   "depthsSeen": [
+    159.078760404,
+    159.079
+   ],
+   "loadError": null,
+   "wallSeconds": 3.5328285694122314,
+   "docDigest": "77156da3b1ba98b1ab2d75fc6eeb10ead73f6fa47d20c9bac12449599899fbd6"
+  },
+  "g4": {
+   "gate": "g4",
+   "wantDepthMm": 164.0375677990678,
+   "wantFingerprintPrefix": "49f094d7e59a9008",
+   "depthHit": true,
+   "fingerprintHit": true,
+   "hit": true,
+   "depthsSeen": [
+    164.037567799,
+    164.038
+   ],
+   "loadError": null,
+   "wallSeconds": 3.142611265182495,
+   "docDigest": "1f5f61c73b8a8588e9d746564f2be082a9a53124b37067a84e1e802ce95a2ee2"
+  }
+ },
+ "ALL_PASS": true
+}

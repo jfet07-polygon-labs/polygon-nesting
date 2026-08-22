@@ -1,0 +1,150 @@
+{
+ "binary": "/var/lib/t3/tmp/m26band/bin/meas",
+ "binarySha256": "8d961552fe03a93ec751166f632def9e3e35043925fd65158c804a994519e23e",
+ "parents": "docs/experiments/m26-band-audition/drivers/parents12.json",
+ "seeds": [
+  0,
+  1,
+  9
+ ],
+ "workUnits": 15000000,
+ "allowance": "0.002",
+ "controlSpec": "past=1,rollback=0,work=15000000,lanes=1,pconfirm=0",
+ "cells": [
+  {
+   "seed": 0,
+   "arms": {
+    "m26:1rung": {
+     "docDigests": [
+      "b9b7675d209968185be242296179ba7f4dbf17244a4c14be8061478776abde30",
+      "b9b7675d209968185be242296179ba7f4dbf17244a4c14be8061478776abde30"
+     ],
+     "rawSourceDepthMm": [
+      172.5135461640932,
+      172.5135461640932
+     ],
+     "fingerprints": [
+      "2c86ae077864713073037d6622ec0574a0effbe5e8bf846d3ebc6eb660858c60",
+      "2c86ae077864713073037d6622ec0574a0effbe5e8bf846d3ebc6eb660858c60"
+     ],
+     "processWorkUnits": [
+      12883716,
+      12883716
+     ],
+     "identical": true
+    },
+    "m34:15000000": {
+     "docDigests": [
+      "cdceda4649e08813957be6f8af34be16f65f8ab81ad8f7ffe3515559d39a36ae",
+      "cdceda4649e08813957be6f8af34be16f65f8ab81ad8f7ffe3515559d39a36ae"
+     ],
+     "rawSourceDepthMm": [
+      167.906,
+      167.906
+     ],
+     "fingerprints": [
+      "16c95ac13c35568b1cb3779655fe3e8806a8a4fe054de8676d5730280db43906",
+      "16c95ac13c35568b1cb3779655fe3e8806a8a4fe054de8676d5730280db43906"
+     ],
+     "processWorkUnits": [
+      11759830,
+      11759830
+     ],
+     "identical": true
+    }
+   }
+  },
+  {
+   "seed": 1,
+   "arms": {
+    "m26:1rung": {
+     "docDigests": [
+      "73fc53cfd67bd16571e5f40862e9fdfa6059ae9747b07c75bebd4246a9b713ef",
+      "73fc53cfd67bd16571e5f40862e9fdfa6059ae9747b07c75bebd4246a9b713ef"
+     ],
+     "rawSourceDepthMm": [
+      173.38,
+      173.38
+     ],
+     "fingerprints": [
+      "9f0be427673cfbca7cee97573798fc769357ed3606dd308ce2323cc3fce0fe15",
+      "9f0be427673cfbca7cee97573798fc769357ed3606dd308ce2323cc3fce0fe15"
+     ],
+     "processWorkUnits": [
+      21788716,
+      21788716
+     ],
+     "identical": true
+    },
+    "m34:15000000": {
+     "docDigests": [
+      "9c35576208a92e51a689ba6ac679e432ea0173066947842904b13f037c3753f7",
+      "9c35576208a92e51a689ba6ac679e432ea0173066947842904b13f037c3753f7"
+     ],
+     "rawSourceDepthMm": [
+      168.945,
+      168.945
+     ],
+     "fingerprints": [
+      "3c92060049862132f5133d54d95dc7255aa54af035c8f407be66d2d6cda6d054",
+      "3c92060049862132f5133d54d95dc7255aa54af035c8f407be66d2d6cda6d054"
+     ],
+     "processWorkUnits": [
+      12891700,
+      12891700
+     ],
+     "identical": true
+    }
+   }
+  },
+  {
+   "seed": 9,
+   "arms": {
+    "m26:1rung": {
+     "docDigests": [
+      "a558a02fec9b13a7dfe9671e35acb3f3a5c7f8f2d779f875c9c649499020123e",
+      "a558a02fec9b13a7dfe9671e35acb3f3a5c7f8f2d779f875c9c649499020123e"
+     ],
+     "rawSourceDepthMm": [
+      171.68476662453673,
+      171.68476662453673
+     ],
+     "fingerprints": [
+      "73a5292c7f32d66c5c259510bb5b8c31923e176021d5febad87812cc45533971",
+      "73a5292c7f32d66c5c259510bb5b8c31923e176021d5febad87812cc45533971"
+     ],
+     "processWorkUnits": [
+      15890631,
+      15890631
+     ],
+     "identical": true
+    },
+    "m34:15000000": {
+     "docDigests": [
+      "0f65d62dc90984314d0a842730d0bba69c822f02f14e7ab565937a44c15bec33",
+      "0f65d62dc90984314d0a842730d0bba69c822f02f14e7ab565937a44c15bec33"
+     ],
+     "rawSourceDepthMm": [
+      168.03476662453676,
+      168.03476662453676
+     ],
+     "fingerprints": [
+      "a7e903131352525a9c38ade692a247e3b0e1e67a046d7f3be4e954ddabd24b96",
+      "a7e903131352525a9c38ade692a247e3b0e1e67a046d7f3be4e954ddabd24b96"
+     ],
+     "processWorkUnits": [
+      11104048,
+      11104048
+     ],
+     "identical": true
+    }
+   }
+  }
+ ],
+ "summary": {
+  "cells": 3,
+  "armRuns": 6,
+  "identical": 6,
+  "ALL_IDENTICAL": true
+ }
+}

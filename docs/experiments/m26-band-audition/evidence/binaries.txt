@@ -1,0 +1,17 @@
+82984c93a6fdcc144e1110ef8df5353b95b8c78fca404718a60a4e5e9d20992b  /var/lib/t3/tmp/m26band/bin/gate-base  gate binary (jagua-experimental)
+8d961552fe03a93ec751166f632def9e3e35043925fd65158c804a994519e23e  /var/lib/t3/tmp/m26band/bin/meas  measurement binary (full combo)
+ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3  /var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_f674db6b-1e0-2/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json  request
+298180e16bc1b8ff0e6588dc1e44237128c2e01a86b057b80c96e3a779657217  /var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_f674db6b-1e0-2/docs/experiments/m26-band-audition/drivers/parents12.json  parents12
+664c557ee194d542b631567648ae18cf6d64d5a57b69cc504fed6cb28abb49df  /var/lib/t3/tmp/ex5-seed-native.json  g1 seed fixture
+9ea1d482d20a049b8d608e681e332fcc7fdea3c70dc1e9bcace076ca43990a69  /var/lib/t3/tmp/csched/parents/parent-seed0.json  pinned parent seed 0
+ef0e893fddf5fbdd97f097bb9ea3f04ca22fd3e01a3c3ac914758e239357539a  /var/lib/t3/tmp/csched/parents/parent-seed1.json  pinned parent seed 1
+0bdc84fcf8b68a6f69ccef511cef779887dd892586061031b3a6567c7fb64000  /var/lib/t3/tmp/csched/parents/parent-seed2.json  pinned parent seed 2
+61adddfdd08ce3b0822785b91645d03a72b0a130c368f21475ab9d7c9f0995e8  /var/lib/t3/tmp/csched/parents2/parent-seed3.json  pinned parent seed 3
+9b228f1f769350fc5e303dce168ecc21653f5c9ae78158728fbf44de368c56a3  /var/lib/t3/tmp/csched/parents2/parent-seed4.json  pinned parent seed 4
+128fdc8dd47249a7f797f9a50cfde3c5f2ac57088f40ad50102bfc44fae8c5fc  /var/lib/t3/tmp/csched/parents2/parent-seed5.json  pinned parent seed 5
+351a77952863b82ab7d318ac7056321a47711022b96fb768bd050f286089d5d6  /var/lib/t3/tmp/csched/parents2/parent-seed6.json  pinned parent seed 6
+a9ae26938a96587280275455d7c0fba9a04ce9ef53f4d978b21cb3f750f2f414  /var/lib/t3/tmp/csched/parents2/parent-seed7.json  pinned parent seed 7
+beb3badda188a96f2207cf9bb83dbccfe6c83ea089d61a22a00a093a2a76e357  /var/lib/t3/tmp/csched/parents2/parent-seed8.json  pinned parent seed 8
+63a08c34a390e235c88134e73314fcc535e3b487dbbdfd380733b265fc9f2ec2  /var/lib/t3/tmp/csched/parents2/parent-seed9.json  pinned parent seed 9
+d4c8dee0d23ae95de72d106493c68f2c6746090e25faabd965efa4cc4d1b945d  /var/lib/t3/tmp/csched/parents2/parent-seed10.json  pinned parent seed 10
+94d45807ab008cec4959d75b531c2df8fd56c693c0a51aee11f1dba6a2b8663d  /var/lib/t3/tmp/csched/parents2/parent-seed11.json  pinned parent seed 11

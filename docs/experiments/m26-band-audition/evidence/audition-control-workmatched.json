@@ -1,0 +1,422 @@
+{
+ "binary": "/var/lib/t3/tmp/m26band/bin/meas",
+ "binarySha256": "8d961552fe03a93ec751166f632def9e3e35043925fd65158c804a994519e23e",
+ "parents": "docs/experiments/m26-band-audition/drivers/parents12.json",
+ "workUnits": [
+  15000000
+ ],
+ "dropMm": 1.0,
+ "arms": [
+  "m34"
+ ],
+ "allowance": "0.002",
+ "controlSpecs": [
+  "past=1,rollback=0,work=15000000,lanes=1,pconfirm=0"
+ ],
+ "cells": [
+  {
+   "seed": 0,
+   "parentRawDepthMm": 174.20812003998896,
+   "parentIndependentDepthMm": 174.208,
+   "fixture": "/var/lib/t3/tmp/csched/parents/parent-seed0.json",
+   "singleRungTargetMm": 174.033792,
+   "singleRungDropMm": 0.17420799999999304,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.174208,
+   "arms": {
+    "m34:15000000": {
+     "processCandidateQueries": 8148575,
+     "processExactPairTests": 722251,
+     "processWorkUnits": 11759830,
+     "processWallSeconds": 7.153112072031945,
+     "exitCode": 0,
+     "targetDepthMm": 173.20812003998896,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 167.906,
+     "independentDepthMm": 167.906,
+     "fingerprint": "16c95ac13c35568b1cb3779655fe3e8806a8a4fe054de8676d5730280db43906",
+     "failureReason": null,
+     "scheduleWorkUnits": 15015542,
+     "confirmationsAttempted": 1390,
+     "confirmationsAccepted": 1390,
+     "stepsTaken": 7154,
+     "deltaVsParentMm": 6.302120039988949
+    }
+   }
+  },
+  {
+   "seed": 1,
+   "parentRawDepthMm": 176.05599999999998,
+   "parentIndependentDepthMm": 176.056,
+   "fixture": "/var/lib/t3/tmp/csched/parents/parent-seed1.json",
+   "singleRungTargetMm": 175.87994400000002,
+   "singleRungDropMm": 0.17605599999998844,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.17605600000000002,
+   "arms": {
+    "m34:15000000": {
+     "processCandidateQueries": 9340105,
+     "processExactPairTests": 710319,
+     "processWorkUnits": 12891700,
+     "processWallSeconds": 7.295312125002965,
+     "exitCode": 0,
+     "targetDepthMm": 175.05599999999998,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 168.945,
+     "independentDepthMm": 168.945,
+     "fingerprint": "3c92060049862132f5133d54d95dc7255aa54af035c8f407be66d2d6cda6d054",
+     "failureReason": null,
+     "scheduleWorkUnits": 15000272,
+     "confirmationsAttempted": 1351,
+     "confirmationsAccepted": 1351,
+     "stepsTaken": 7127,
+     "deltaVsParentMm": 7.11099999999999
+    }
+   }
+  },
+  {
+   "seed": 2,
+   "parentRawDepthMm": 179.006,
+   "parentIndependentDepthMm": 179.006,
+   "fixture": "/var/lib/t3/tmp/csched/parents/parent-seed2.json",
+   "singleRungTargetMm": 178.826994,
+   "singleRungDropMm": 0.1790059999999869,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.179006,
+   "arms": {
+    "m34:15000000": {
+     "processCandidateQueries": 8837130,
+     "processExactPairTests": 703002,
+     "processWorkUnits": 12352140,
+     "processWallSeconds": 7.123603263054974,
+     "exitCode": 0,
+     "targetDepthMm": 178.006,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 171.911,
+     "independentDepthMm": 171.911,
+     "fingerprint": "e9bfe473be727d41da4b1592a712ccbeeec87fac419c746bf983c76fd826654d",
+     "failureReason": null,
+     "scheduleWorkUnits": 15000698,
+     "confirmationsAttempted": 1333,
+     "confirmationsAccepted": 1333,
+     "stepsTaken": 7120,
+     "deltaVsParentMm": 7.094999999999999
+    }
+   }
+  },
+  {
+   "seed": 3,
+   "parentRawDepthMm": 176.061,
+   "parentIndependentDepthMm": 176.061,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed3.json",
+   "singleRungTargetMm": 175.88493900000003,
+   "singleRungDropMm": 0.17606099999997582,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.17606100000000002,
+   "arms": {
+    "m34:15000000": {
+     "processCandidateQueries": 22170887,
+     "processExactPairTests": 590435,
+     "processWorkUnits": 25123062,
+     "processWallSeconds": 22.13974285905715,
+     "exitCode": 0,
+     "targetDepthMm": 175.061,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 168.582,
+     "independentDepthMm": 168.582,
+     "fingerprint": "8643915479c922a60161cf509375cce72316a02b45e6e7c649a7234a3eeaa901",
+     "failureReason": null,
+     "scheduleWorkUnits": 15001010,
+     "confirmationsAttempted": 50,
+     "confirmationsAccepted": 50,
+     "stepsTaken": 8917,
+     "deltaVsParentMm": 7.479000000000013
+    }
+   }
+  },
+  {
+   "seed": 4,
+   "parentRawDepthMm": 171.64953207726535,
+   "parentIndependentDepthMm": 171.65,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed4.json",
+   "singleRungTargetMm": 171.47835,
+   "singleRungDropMm": 0.17164999999999964,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.17165,
+   "arms": {
+    "m34:15000000": {
+     "processCandidateQueries": 14834568,
+     "processExactPairTests": 652595,
+     "processWorkUnits": 18097543,
+     "processWallSeconds": 15.805349320056848,
+     "exitCode": 0,
+     "targetDepthMm": 170.64953207726535,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 166.73399999999998,
+     "independentDepthMm": 166.734,
+     "fingerprint": "04ab2631ce6d9893e64f1131ecc8c122e972aa91a7ced56d2d6a970baffb808f",
+     "failureReason": null,
+     "scheduleWorkUnits": 15002679,
+     "confirmationsAttempted": 686,
+     "confirmationsAccepted": 686,
+     "stepsTaken": 6715,
+     "deltaVsParentMm": 4.915532077265368
+    }
+   }
+  },
+  {
+   "seed": 5,
+   "parentRawDepthMm": 179.05182605364416,
+   "parentIndependentDepthMm": 179.052,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed5.json",
+   "singleRungTargetMm": 178.872948,
+   "singleRungDropMm": 0.17905199999998445,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.179052,
+   "arms": {
+    "m34:15000000": {
+     "processCandidateQueries": 8951800,
+     "processExactPairTests": 694042,
+     "processWorkUnits": 12422010,
+     "processWallSeconds": 9.294709181063809,
+     "exitCode": 0,
+     "targetDepthMm": 178.05182605364416,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 171.605,
+     "independentDepthMm": 171.605,
+     "fingerprint": "6be11e290f474e79c625b9a703e8e3e0de0bbe8d32e679e139f55e4e70190d8c",
+     "failureReason": null,
+     "scheduleWorkUnits": 15000232,
+     "confirmationsAttempted": 1108,
+     "confirmationsAccepted": 1108,
+     "stepsTaken": 7532,
+     "deltaVsParentMm": 7.446826053644173
+    }
+   }
+  },
+  {
+   "seed": 6,
+   "parentRawDepthMm": 179.6200102363703,
+   "parentIndependentDepthMm": 179.62,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed6.json",
+   "singleRungTargetMm": 179.44038,
+   "singleRungDropMm": 0.1796199999999999,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.17962,
+   "arms": {
+    "m34:15000000": {
+     "processCandidateQueries": 8339416,
+     "processExactPairTests": 693753,
+     "processWorkUnits": 11808181,
+     "processWallSeconds": 7.370936868013814,
+     "exitCode": 0,
+     "targetDepthMm": 178.6200102363703,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 172.19346684745327,
+     "independentDepthMm": 172.193,
+     "fingerprint": "9b4ccddbd2ac8292ac1083c7d7382dfa0df5f39759a05dc73381db8ff57dcb0b",
+     "failureReason": null,
+     "scheduleWorkUnits": 15010338,
+     "confirmationsAttempted": 1248,
+     "confirmationsAccepted": 1248,
+     "stepsTaken": 7656,
+     "deltaVsParentMm": 7.426543388917025
+    }
+   }
+  },
+  {
+   "seed": 7,
+   "parentRawDepthMm": 179.52233303152792,
+   "parentIndependentDepthMm": 179.522,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed7.json",
+   "singleRungTargetMm": 179.342478,
+   "singleRungDropMm": 0.17952199999999152,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.179522,
+   "arms": {
+    "m34:15000000": {
+     "processCandidateQueries": 8151963,
+     "processExactPairTests": 716532,
+     "processWorkUnits": 11734623,
+     "processWallSeconds": 6.035423933062702,
+     "exitCode": 0,
+     "targetDepthMm": 178.52233303152792,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 172.898,
+     "independentDepthMm": 172.898,
+     "fingerprint": "6447d14aac8d21c469aa59f65f496118bb06de1f8f529311f29c5f48aa97cb3f",
+     "failureReason": null,
+     "scheduleWorkUnits": 15015873,
+     "confirmationsAttempted": 1412,
+     "confirmationsAccepted": 1412,
+     "stepsTaken": 7062,
+     "deltaVsParentMm": 6.624333031527925
+    }
+   }
+  },
+  {
+   "seed": 8,
+   "parentRawDepthMm": 178.93200000000002,
+   "parentIndependentDepthMm": 178.932,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed8.json",
+   "singleRungTargetMm": 178.753068,
+   "singleRungDropMm": 0.17893199999997478,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.17893199999999998,
+   "arms": {
+    "m34:15000000": {
+     "processCandidateQueries": 12070032,
+     "processExactPairTests": 706394,
+     "processWorkUnits": 15602002,
+     "processWallSeconds": 7.800993653945625,
+     "exitCode": 0,
+     "targetDepthMm": 177.93200000000002,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 171.43200000000002,
+     "independentDepthMm": 171.432,
+     "fingerprint": "86f4268d060eedc29ae583c6ce18a05bc3e2c96aeb1d3fbb46eea8b176faf753",
+     "failureReason": null,
+     "scheduleWorkUnits": 15000381,
+     "confirmationsAttempted": 1302,
+     "confirmationsAccepted": 1302,
+     "stepsTaken": 7517,
+     "deltaVsParentMm": 7.5
+    }
+   }
+  },
+  {
+   "seed": 9,
+   "parentRawDepthMm": 174.96558182288433,
+   "parentIndependentDepthMm": 174.966,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed9.json",
+   "singleRungTargetMm": 174.79103400000002,
+   "singleRungDropMm": 0.17496599999998352,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.174966,
+   "arms": {
+    "m34:15000000": {
+     "processCandidateQueries": 7616128,
+     "processExactPairTests": 697584,
+     "processWorkUnits": 11104048,
+     "processWallSeconds": 8.038844045018777,
+     "exitCode": 0,
+     "targetDepthMm": 173.96558182288433,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 168.03476662453676,
+     "independentDepthMm": 168.035,
+     "fingerprint": "a7e903131352525a9c38ade692a247e3b0e1e67a046d7f3be4e954ddabd24b96",
+     "failureReason": null,
+     "scheduleWorkUnits": 15010806,
+     "confirmationsAttempted": 1236,
+     "confirmationsAccepted": 1236,
+     "stepsTaken": 7588,
+     "deltaVsParentMm": 6.930815198347574
+    }
+   }
+  },
+  {
+   "seed": 10,
+   "parentRawDepthMm": 176.3622237458826,
+   "parentIndependentDepthMm": 176.362,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed10.json",
+   "singleRungTargetMm": 176.185638,
+   "singleRungDropMm": 0.17636199999998325,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.176362,
+   "arms": {
+    "m34:15000000": {
+     "processCandidateQueries": 6014270,
+     "processExactPairTests": 718223,
+     "processWorkUnits": 9605385,
+     "processWallSeconds": 5.6114614479010925,
+     "exitCode": 0,
+     "targetDepthMm": 175.3622237458826,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 169.94752321095189,
+     "independentDepthMm": 169.948,
+     "fingerprint": "080cbf7931c35f9fb3b05d63d9a2283edddb04e85218223f3b16bc73e1797a0a",
+     "failureReason": null,
+     "scheduleWorkUnits": 15017122,
+     "confirmationsAttempted": 1433,
+     "confirmationsAccepted": 1433,
+     "stepsTaken": 6960,
+     "deltaVsParentMm": 6.4147005349307165
+    }
+   }
+  },
+  {
+   "seed": 11,
+   "parentRawDepthMm": 171.6141235046606,
+   "parentIndependentDepthMm": 171.614,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed11.json",
+   "singleRungTargetMm": 171.44238600000003,
+   "singleRungDropMm": 0.17161399999997684,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.17161400000000002,
+   "arms": {
+    "m34:15000000": {
+     "processCandidateQueries": 13368748,
+     "processExactPairTests": 680012,
+     "processWorkUnits": 16768808,
+     "processWallSeconds": 12.054617285961285,
+     "exitCode": 0,
+     "targetDepthMm": 170.6141235046606,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 165.41877826491066,
+     "independentDepthMm": 165.419,
+     "fingerprint": "8b6a2e907cffdfdffa8b84a062de5dfa03da64f5368e4544cf36a4c046ca1087",
+     "failureReason": null,
+     "scheduleWorkUnits": 15000128,
+     "confirmationsAttempted": 969,
+     "confirmationsAccepted": 969,
+     "stepsTaken": 6928,
+     "deltaVsParentMm": 6.1953452397499404
+    }
+   }
+  }
+ ],
+ "summary": {
+  "m34:15000000": {
+   "cells": 12,
+   "medianDeltaMm": 7.012907599173786,
+   "meanDeltaMm": 6.786767963697639,
+   "minDeltaMm": 4.915532077265368,
+   "maxDeltaMm": 7.5,
+   "cellsMoved": 12,
+   "medianWorkUnits": 12387075.0,
+   "totalWorkUnits": 169269332,
+   "medianWallSeconds": 7.5859652609797195,
+   "totalWallSeconds": 115.72410605417099,
+   "medianMmPerMegaWork": 0.5580535010763692,
+   "aggregateMmPerMegaWork": 0.48113391009525386,
+   "medianMmPerSecond": 0.9212239510475401,
+   "aggregateMmPerSecond": 0.7037532484912752,
+   "deltasMm": [
+    6.302120039988949,
+    7.11099999999999,
+    7.094999999999999,
+    7.479000000000013,
+    4.915532077265368,
+    7.446826053644173,
+    7.426543388917025,
+    6.624333031527925,
+    7.5,
+    6.930815198347574,
+    6.4147005349307165,
+    6.1953452397499404
+   ]
+  }
+ }
+}

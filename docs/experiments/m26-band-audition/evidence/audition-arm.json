@@ -1,0 +1,604 @@
+{
+ "binary": "/var/lib/t3/tmp/m26band/bin/meas",
+ "binarySha256": "8d961552fe03a93ec751166f632def9e3e35043925fd65158c804a994519e23e",
+ "parents": "docs/experiments/m26-band-audition/drivers/parents12.json",
+ "workUnits": 33413789,
+ "dropMm": 1.0,
+ "arms": [
+  "m26rung"
+ ],
+ "allowance": "0.002",
+ "controlSpec": "past=1,rollback=0,work=33413789,lanes=1,pconfirm=0",
+ "cells": [
+  {
+   "seed": 0,
+   "parentRawDepthMm": 174.20812003998896,
+   "parentIndependentDepthMm": 174.208,
+   "fixture": "/var/lib/t3/tmp/csched/parents/parent-seed0.json",
+   "singleRungTargetMm": 174.033792,
+   "singleRungDropMm": 0.17420799999999304,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.174208,
+   "arms": {
+    "m26:1rung": {
+     "processCandidateQueries": 9947101,
+     "processExactPairTests": 587323,
+     "processWorkUnits": 12883716,
+     "processWallSeconds": 3.7103811679407954,
+     "exitCode": 0,
+     "targetDepthMm": 174.033792,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 172.5135461640932,
+     "independentDepthMm": 172.514,
+     "fingerprint": "2c86ae077864713073037d6622ec0574a0effbe5e8bf846d3ebc6eb660858c60",
+     "failureReason": null,
+     "engineParentDepthMm": 174.208,
+     "ladderStepMm": 0.174208,
+     "stepsPlanned": 1,
+     "stepsRun": 1,
+     "publishedStep": 0,
+     "publishedBoundMm": 174.033792,
+     "finalBoundMm": 174.033792,
+     "rungBoundsMm": [
+      174.033792
+     ],
+     "armsRun": 1,
+     "armsAbortedByRollbackDisagreement": 0,
+     "armsProducingNoState": 0,
+     "armsExactValid": 1,
+     "armsLegalizedByTier": {},
+     "publishedRepairTier": null,
+     "rollbackDisagreementsTolerated": 0,
+     "stepsPlannedAsDerived": true,
+     "deltaVsParentMm": 1.6945738758957418
+    }
+   }
+  },
+  {
+   "seed": 1,
+   "parentRawDepthMm": 176.05599999999998,
+   "parentIndependentDepthMm": 176.056,
+   "fixture": "/var/lib/t3/tmp/csched/parents/parent-seed1.json",
+   "singleRungTargetMm": 175.87994400000002,
+   "singleRungDropMm": 0.17605599999998844,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.17605600000000002,
+   "arms": {
+    "m26:1rung": {
+     "processCandidateQueries": 18789406,
+     "processExactPairTests": 599862,
+     "processWorkUnits": 21788716,
+     "processWallSeconds": 6.109067477984354,
+     "exitCode": 0,
+     "targetDepthMm": 175.87994400000002,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 173.38,
+     "independentDepthMm": 173.38,
+     "fingerprint": "9f0be427673cfbca7cee97573798fc769357ed3606dd308ce2323cc3fce0fe15",
+     "failureReason": null,
+     "engineParentDepthMm": 176.056,
+     "ladderStepMm": 0.17605600000000002,
+     "stepsPlanned": 1,
+     "stepsRun": 1,
+     "publishedStep": 0,
+     "publishedBoundMm": 175.87994400000002,
+     "finalBoundMm": 175.87994400000002,
+     "rungBoundsMm": [
+      175.87994400000002
+     ],
+     "armsRun": 2,
+     "armsAbortedByRollbackDisagreement": 0,
+     "armsProducingNoState": 0,
+     "armsExactValid": 1,
+     "armsLegalizedByTier": {},
+     "publishedRepairTier": null,
+     "rollbackDisagreementsTolerated": 0,
+     "stepsPlannedAsDerived": true,
+     "deltaVsParentMm": 2.6759999999999877
+    }
+   }
+  },
+  {
+   "seed": 2,
+   "parentRawDepthMm": 179.006,
+   "parentIndependentDepthMm": 179.006,
+   "fixture": "/var/lib/t3/tmp/csched/parents/parent-seed2.json",
+   "singleRungTargetMm": 178.826994,
+   "singleRungDropMm": 0.1790059999999869,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.179006,
+   "arms": {
+    "m26:1rung": {
+     "processCandidateQueries": 8777587,
+     "processExactPairTests": 585502,
+     "processWorkUnits": 11705097,
+     "processWallSeconds": 3.209143577958457,
+     "exitCode": 0,
+     "targetDepthMm": 178.826994,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 179.006,
+     "independentDepthMm": 179.006,
+     "fingerprint": "c429b1a245b842e20c1b75f17ec818d57eef354172e57605b4bb181210fb22b4",
+     "failureReason": null,
+     "engineParentDepthMm": 179.006,
+     "ladderStepMm": 0.179006,
+     "stepsPlanned": 1,
+     "stepsRun": 1,
+     "publishedStep": null,
+     "publishedBoundMm": null,
+     "finalBoundMm": 178.826994,
+     "rungBoundsMm": [
+      178.826994
+     ],
+     "armsRun": 1,
+     "armsAbortedByRollbackDisagreement": 0,
+     "armsProducingNoState": 0,
+     "armsExactValid": 1,
+     "armsLegalizedByTier": {},
+     "publishedRepairTier": null,
+     "rollbackDisagreementsTolerated": 0,
+     "stepsPlannedAsDerived": true,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 3,
+   "parentRawDepthMm": 176.061,
+   "parentIndependentDepthMm": 176.061,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed3.json",
+   "singleRungTargetMm": 175.88493900000003,
+   "singleRungDropMm": 0.17606099999997582,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.17606100000000002,
+   "arms": {
+    "m26:1rung": {
+     "processCandidateQueries": 15208070,
+     "processExactPairTests": 586168,
+     "processWorkUnits": 18138910,
+     "processWallSeconds": 4.734073385945521,
+     "exitCode": 0,
+     "targetDepthMm": 175.88493900000003,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 175.449,
+     "independentDepthMm": 175.449,
+     "fingerprint": "d72974ac3395289757f323cc1e65edf46afde5e072d8eedc46f3a21bcf7681c1",
+     "failureReason": null,
+     "engineParentDepthMm": 176.061,
+     "ladderStepMm": 0.17606100000000002,
+     "stepsPlanned": 1,
+     "stepsRun": 1,
+     "publishedStep": 0,
+     "publishedBoundMm": 175.88493900000003,
+     "finalBoundMm": 175.88493900000003,
+     "rungBoundsMm": [
+      175.88493900000003
+     ],
+     "armsRun": 1,
+     "armsAbortedByRollbackDisagreement": 0,
+     "armsProducingNoState": 0,
+     "armsExactValid": 1,
+     "armsLegalizedByTier": {},
+     "publishedRepairTier": null,
+     "rollbackDisagreementsTolerated": 0,
+     "stepsPlannedAsDerived": true,
+     "deltaVsParentMm": 0.6119999999999948
+    }
+   }
+  },
+  {
+   "seed": 4,
+   "parentRawDepthMm": 171.64953207726535,
+   "parentIndependentDepthMm": 171.65,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed4.json",
+   "singleRungTargetMm": 171.47835,
+   "singleRungDropMm": 0.17164999999999964,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.17165,
+   "arms": {
+    "m26:1rung": {
+     "processCandidateQueries": 10187075,
+     "processExactPairTests": 585928,
+     "processWorkUnits": 13116715,
+     "processWallSeconds": 3.496221596025862,
+     "exitCode": 0,
+     "targetDepthMm": 171.47835,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 171.64653207726536,
+     "independentDepthMm": 171.647,
+     "fingerprint": "95ef481c56a567fa1a4da41024a57012332164a3d49d5afdf243598ee1dbd7ba",
+     "failureReason": null,
+     "engineParentDepthMm": 171.65,
+     "ladderStepMm": 0.17165,
+     "stepsPlanned": 1,
+     "stepsRun": 1,
+     "publishedStep": 0,
+     "publishedBoundMm": 171.47835,
+     "finalBoundMm": 171.47835,
+     "rungBoundsMm": [
+      171.47835
+     ],
+     "armsRun": 1,
+     "armsAbortedByRollbackDisagreement": 0,
+     "armsProducingNoState": 0,
+     "armsExactValid": 0,
+     "armsLegalizedByTier": {
+      "microLegalization": 1
+     },
+     "publishedRepairTier": "microLegalization",
+     "rollbackDisagreementsTolerated": 0,
+     "stepsPlannedAsDerived": true,
+     "deltaVsParentMm": 0.002999999999985903
+    }
+   }
+  },
+  {
+   "seed": 5,
+   "parentRawDepthMm": 179.05182605364416,
+   "parentIndependentDepthMm": 179.052,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed5.json",
+   "singleRungTargetMm": 178.872948,
+   "singleRungDropMm": 0.17905199999998445,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.179052,
+   "arms": {
+    "m26:1rung": {
+     "processCandidateQueries": 7159865,
+     "processExactPairTests": 585808,
+     "processWorkUnits": 10088905,
+     "processWallSeconds": 2.717214516014792,
+     "exitCode": 0,
+     "targetDepthMm": 178.872948,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 179.05182605364416,
+     "independentDepthMm": 179.052,
+     "fingerprint": "370efb7fc0c29c08b12908505251e97475cb9ec2f0f4f5b588ebc297c35148bf",
+     "failureReason": null,
+     "engineParentDepthMm": 179.052,
+     "ladderStepMm": 0.179052,
+     "stepsPlanned": 1,
+     "stepsRun": 1,
+     "publishedStep": null,
+     "publishedBoundMm": null,
+     "finalBoundMm": 178.872948,
+     "rungBoundsMm": [
+      178.872948
+     ],
+     "armsRun": 1,
+     "armsAbortedByRollbackDisagreement": 0,
+     "armsProducingNoState": 0,
+     "armsExactValid": 0,
+     "armsLegalizedByTier": {
+      "microLegalization": 1
+     },
+     "publishedRepairTier": null,
+     "rollbackDisagreementsTolerated": 0,
+     "stepsPlannedAsDerived": true,
+     "deltaVsParentMm": 0.0
+    }
+   }
+  },
+  {
+   "seed": 6,
+   "parentRawDepthMm": 179.6200102363703,
+   "parentIndependentDepthMm": 179.62,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed6.json",
+   "singleRungTargetMm": 179.44038,
+   "singleRungDropMm": 0.1796199999999999,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.17962,
+   "arms": {
+    "m26:1rung": {
+     "processCandidateQueries": 8508851,
+     "processExactPairTests": 586444,
+     "processWorkUnits": 11441071,
+     "processWallSeconds": 3.0550097069935873,
+     "exitCode": 0,
+     "targetDepthMm": 179.44038,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 179.56809087924444,
+     "independentDepthMm": 179.568,
+     "fingerprint": "b782aed31e8dde6de1d486bcdfcfe3ba3a37a45c431477f2f5c0fbea8c0a5e7f",
+     "failureReason": null,
+     "engineParentDepthMm": 179.62,
+     "ladderStepMm": 0.17962,
+     "stepsPlanned": 1,
+     "stepsRun": 1,
+     "publishedStep": 0,
+     "publishedBoundMm": 179.44038,
+     "finalBoundMm": 179.44038,
+     "rungBoundsMm": [
+      179.44038
+     ],
+     "armsRun": 1,
+     "armsAbortedByRollbackDisagreement": 0,
+     "armsProducingNoState": 0,
+     "armsExactValid": 0,
+     "armsLegalizedByTier": {
+      "microLegalization": 1
+     },
+     "publishedRepairTier": "microLegalization",
+     "rollbackDisagreementsTolerated": 0,
+     "stepsPlannedAsDerived": true,
+     "deltaVsParentMm": 0.05191935712585405
+    }
+   }
+  },
+  {
+   "seed": 7,
+   "parentRawDepthMm": 179.52233303152792,
+   "parentIndependentDepthMm": 179.522,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed7.json",
+   "singleRungTargetMm": 179.342478,
+   "singleRungDropMm": 0.17952199999999152,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.179522,
+   "arms": {
+    "m26:1rung": {
+     "processCandidateQueries": 9445477,
+     "processExactPairTests": 587063,
+     "processWorkUnits": 12380792,
+     "processWallSeconds": 3.272594710928388,
+     "exitCode": 0,
+     "targetDepthMm": 179.342478,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 179.48182611209816,
+     "independentDepthMm": 179.482,
+     "fingerprint": "902e0708f64f3d63c2b84e9c361b8ac155fc4b3ef2101f5eeace793cda64f021",
+     "failureReason": null,
+     "engineParentDepthMm": 179.522,
+     "ladderStepMm": 0.179522,
+     "stepsPlanned": 1,
+     "stepsRun": 1,
+     "publishedStep": 0,
+     "publishedBoundMm": 179.342478,
+     "finalBoundMm": 179.342478,
+     "rungBoundsMm": [
+      179.342478
+     ],
+     "armsRun": 1,
+     "armsAbortedByRollbackDisagreement": 0,
+     "armsProducingNoState": 0,
+     "armsExactValid": 0,
+     "armsLegalizedByTier": {
+      "microLegalization": 1
+     },
+     "publishedRepairTier": "microLegalization",
+     "rollbackDisagreementsTolerated": 0,
+     "stepsPlannedAsDerived": true,
+     "deltaVsParentMm": 0.04050691942975959
+    }
+   }
+  },
+  {
+   "seed": 8,
+   "parentRawDepthMm": 178.93200000000002,
+   "parentIndependentDepthMm": 178.932,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed8.json",
+   "singleRungTargetMm": 178.753068,
+   "singleRungDropMm": 0.17893199999997478,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.17893199999999998,
+   "arms": {
+    "m26:1rung": {
+     "processCandidateQueries": 17055241,
+     "processExactPairTests": 587026,
+     "processWorkUnits": 19990371,
+     "processWallSeconds": 5.14793565904256,
+     "exitCode": 0,
+     "targetDepthMm": 178.753068,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 177.19,
+     "independentDepthMm": 177.19,
+     "fingerprint": "3fbd624550d90497d2e5cf8135368fef7adf53ee0318f868c2a80ac568e3e093",
+     "failureReason": null,
+     "engineParentDepthMm": 178.932,
+     "ladderStepMm": 0.17893199999999998,
+     "stepsPlanned": 1,
+     "stepsRun": 1,
+     "publishedStep": 0,
+     "publishedBoundMm": 178.753068,
+     "finalBoundMm": 178.753068,
+     "rungBoundsMm": [
+      178.753068
+     ],
+     "armsRun": 1,
+     "armsAbortedByRollbackDisagreement": 0,
+     "armsProducingNoState": 0,
+     "armsExactValid": 1,
+     "armsLegalizedByTier": {},
+     "publishedRepairTier": null,
+     "rollbackDisagreementsTolerated": 0,
+     "stepsPlannedAsDerived": true,
+     "deltaVsParentMm": 1.7420000000000186
+    }
+   }
+  },
+  {
+   "seed": 9,
+   "parentRawDepthMm": 174.96558182288433,
+   "parentIndependentDepthMm": 174.966,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed9.json",
+   "singleRungTargetMm": 174.79103400000002,
+   "singleRungDropMm": 0.17496599999998352,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.174966,
+   "arms": {
+    "m26:1rung": {
+     "processCandidateQueries": 12955366,
+     "processExactPairTests": 587053,
+     "processWorkUnits": 15890631,
+     "processWallSeconds": 4.599154592026025,
+     "exitCode": 0,
+     "targetDepthMm": 174.79103400000002,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 171.68476662453673,
+     "independentDepthMm": 171.685,
+     "fingerprint": "73a5292c7f32d66c5c259510bb5b8c31923e176021d5febad87812cc45533971",
+     "failureReason": null,
+     "engineParentDepthMm": 174.966,
+     "ladderStepMm": 0.174966,
+     "stepsPlanned": 1,
+     "stepsRun": 1,
+     "publishedStep": 0,
+     "publishedBoundMm": 174.79103400000002,
+     "finalBoundMm": 174.79103400000002,
+     "rungBoundsMm": [
+      174.79103400000002
+     ],
+     "armsRun": 1,
+     "armsAbortedByRollbackDisagreement": 0,
+     "armsProducingNoState": 0,
+     "armsExactValid": 1,
+     "armsLegalizedByTier": {},
+     "publishedRepairTier": null,
+     "rollbackDisagreementsTolerated": 0,
+     "stepsPlannedAsDerived": true,
+     "deltaVsParentMm": 3.2808151983475966
+    }
+   }
+  },
+  {
+   "seed": 10,
+   "parentRawDepthMm": 176.3622237458826,
+   "parentIndependentDepthMm": 176.362,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed10.json",
+   "singleRungTargetMm": 176.185638,
+   "singleRungDropMm": 0.17636199999998325,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.176362,
+   "arms": {
+    "m26:1rung": {
+     "processCandidateQueries": 6830889,
+     "processExactPairTests": 586789,
+     "processWorkUnits": 9764834,
+     "processWallSeconds": 2.720215009059757,
+     "exitCode": 0,
+     "targetDepthMm": 176.185638,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 176.0951602474156,
+     "independentDepthMm": 176.095,
+     "fingerprint": "806b8fcd20a60729f2867c660c36169404ad5cadc968059e34f7b236f868a888",
+     "failureReason": null,
+     "engineParentDepthMm": 176.362,
+     "ladderStepMm": 0.176362,
+     "stepsPlanned": 1,
+     "stepsRun": 1,
+     "publishedStep": 0,
+     "publishedBoundMm": 176.185638,
+     "finalBoundMm": 176.185638,
+     "rungBoundsMm": [
+      176.185638
+     ],
+     "armsRun": 1,
+     "armsAbortedByRollbackDisagreement": 0,
+     "armsProducingNoState": 0,
+     "armsExactValid": 0,
+     "armsLegalizedByTier": {
+      "microLegalization": 1
+     },
+     "publishedRepairTier": "microLegalization",
+     "rollbackDisagreementsTolerated": 0,
+     "stepsPlannedAsDerived": true,
+     "deltaVsParentMm": 0.26706349846699595
+    }
+   }
+  },
+  {
+   "seed": 11,
+   "parentRawDepthMm": 171.6141235046606,
+   "parentIndependentDepthMm": 171.614,
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed11.json",
+   "singleRungTargetMm": 171.44238600000003,
+   "singleRungDropMm": 0.17161399999997684,
+   "drop1LadderStepsDerived": 6,
+   "drop1LadderStepMmDerived": 0.17161400000000002,
+   "arms": {
+    "m26:1rung": {
+     "processCandidateQueries": 14747707,
+     "processExactPairTests": 586294,
+     "processWorkUnits": 17679177,
+     "processWallSeconds": 4.809802282950841,
+     "exitCode": 0,
+     "targetDepthMm": 171.44238600000003,
+     "exactValid": true,
+     "contractValid": true,
+     "rawSourceDepthMm": 171.41487994118336,
+     "independentDepthMm": 171.415,
+     "fingerprint": "80cf820109f718f60cd9c58bc14e6282cf8b3e837320226ec130d3fccce9d617",
+     "failureReason": null,
+     "engineParentDepthMm": 171.614,
+     "ladderStepMm": 0.17161400000000002,
+     "stepsPlanned": 1,
+     "stepsRun": 1,
+     "publishedStep": 0,
+     "publishedBoundMm": 171.44238600000003,
+     "finalBoundMm": 171.44238600000003,
+     "rungBoundsMm": [
+      171.44238600000003
+     ],
+     "armsRun": 2,
+     "armsAbortedByRollbackDisagreement": 1,
+     "armsProducingNoState": 1,
+     "armsExactValid": 0,
+     "armsLegalizedByTier": {
+      "microLegalization": 1
+     },
+     "publishedRepairTier": "microLegalization",
+     "rollbackDisagreementsTolerated": 2,
+     "stepsPlannedAsDerived": true,
+     "deltaVsParentMm": 0.19924356347723915
+    }
+   }
+  }
+ ],
+ "summary": {
+  "m26:1rung": {
+   "cells": 12,
+   "medianDeltaMm": 0.23315353097211755,
+   "meanDeltaMm": 0.8805935343952646,
+   "minDeltaMm": 0.0,
+   "maxDeltaMm": 3.2808151983475966,
+   "cellsMoved": 10,
+   "medianWorkUnits": 13000215.5,
+   "totalWorkUnits": 174868935,
+   "medianWallSeconds": 3.6033013819833286,
+   "totalWallSeconds": 47.58081368287094,
+   "medianMmPerMegaWork": 0.019309737223749204,
+   "aggregateMmPerMegaWork": 0.060428814373137074,
+   "medianMmPerSecond": 0.0698009150508909,
+   "aggregateMmPerSecond": 0.22208788784432518,
+   "deltasMm": [
+    1.6945738758957418,
+    2.6759999999999877,
+    0.0,
+    0.6119999999999948,
+    0.002999999999985903,
+    0.0,
+    0.05191935712585405,
+    0.04050691942975959,
+    1.7420000000000186,
+    3.2808151983475966,
+    0.26706349846699595,
+    0.19924356347723915
+   ],
+   "armsRun": 14,
+   "armsAbortedByRollbackDisagreement": 1,
+   "abortShare": 0.07142857142857142,
+   "armsProducingNoState": 1,
+   "rungsRun": 12,
+   "cellsPublishingBelowParent": 10
+  }
+ }
+}
