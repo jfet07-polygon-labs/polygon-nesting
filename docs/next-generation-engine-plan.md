@@ -7845,3 +7845,28 @@ different commits whose Rust source is identical and whose docs are not — and
 whole-document digests.
 
 Evidence, drivers and the full caveat list: `docs/experiments/skip-pile-diagnostic/`.
+
+## The overlap-ICS consultation: two designers, two rounds, one spec
+
+The owner rejected settling ("155 in hours is unacceptable") and funded the
+next engine generation contingent on a three-way consultation with full
+cross-exchange. Sol 14 and Grok 9 each designed independently against the
+same six-question brief, then read each other verbatim and converged. Grok
+yielded the geometric primitive (Sol's signed convex gap, with his
+SAT/closest-feature as the hot path and the nine-point Minkowski as the
+independent oracle) and called Sol's publication pipeline "the engine I would
+hand over tomorrow"; Sol yielded the Round-2 kill bar (withdrew 175.388 —
+the bar is 168.484 median at 10 s, work-capped, contemporaneous paired
+control) and accepted a Round-1 paradigm gate, continuous θ from the first
+sweep, one topology jump, and Exclusive@2.500 publication. Three residual
+deltas were arbitrated by the main session (fatal-cell placement, the random
+throw as diagnostic, naming) — docs/overlap-ics-converged-spec.md is the
+spec of record, quoting Sol R2 §3-§4 as its body. The two-tier test
+discipline the owner asked for is part of the spec: a FAST tier in minutes
+with the pinned S0 canary (Sparrow fixture at Φ-bits 0 / 150.16451 /
+dual-valid) on every iteration, the full battery only at round boundaries.
+Implementation launches from this commit: Gate 0's falsifier battery before
+any schedule or parallel work, Round 1 single-thread with its own kill,
+Round 2's 168.484@10s as the family's life-or-death line. Consultations
+verbatim: docs/sol-review-14-the-overlap-engine-design.md,
+docs/grok-review-9-the-overlap-engine-design.md.
