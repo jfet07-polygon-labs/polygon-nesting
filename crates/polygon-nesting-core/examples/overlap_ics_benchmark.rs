@@ -417,7 +417,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         "contract": {
             "pairClearanceMm": contract.pair_clearance_mm(),
-            "sheetEdgeClearanceMm": contract.edge_clearance_mm(),
+            // `sheetEdgeClearanceMm` keeps its previous meaning and value -
+            // `edge + sag`, the physical sheet rule - so the previous round's
+            // documents and `residual_split.py` stay readable. The two names
+            // beside it are the split this round introduced.
+            "sheetEdgeClearanceMm": contract.physical_edge_clearance_mm(),
+            "physicalEdgeClearanceMm": contract.physical_edge_clearance_mm(),
+            "depthTopInsetMm": contract.depth_top_inset_mm(),
             "expansionMm": contract.expansion_mm(),
             "twoRMicron": (contract.expansion_mm() * 2000.0).round(),
             "sheetInsetMm": contract.sheet_inset_mm(),
@@ -898,17 +904,23 @@ fn uniform_throw(
     target_mm: f64,
     seed: u64,
 ) -> Vec<Pose> {
-    let edge = contract.edge_clearance_mm();
+    // The same L/R/B-physical, top-inset split Phi and the jump box use. The
+    // circumradius convention is kept here on purpose: random-T is the uniform
+    // *throw* diagnostic, its whole point is a dense scatter with no structure,
+    // and it is not a cell any verdict rests on.
+    let physical = contract.physical_edge_clearance_mm();
+    let top = (target_mm - contract.depth_top_inset_mm())
+        .min(contract.sheet_long_axis_mm - physical);
     sources
         .iter()
         .enumerate()
         .map(|(index, source)| {
             let key = counter_hash(&[seed, index as u64, 0x7470]);
             let radius = source.max_radius_mm;
-            let low_x = edge + radius;
-            let high_x = contract.sheet_short_axis_mm - edge - radius;
-            let low_y = edge + radius;
-            let high_y = target_mm - edge - radius;
+            let low_x = physical + radius;
+            let high_x = contract.sheet_short_axis_mm - physical - radius;
+            let low_y = physical + radius;
+            let high_y = top - radius;
             let theta = if pieces[index].allow_rotation {
                 unit(key >> 34) * 360.0
             } else {

@@ -100,9 +100,33 @@ impl Contract {
         self.total_padding_mm + 2.0 * self.flattening_sag_tolerance_mm
     }
 
-    /// The material contract's own sheet clearance.
-    pub fn edge_clearance_mm(&self) -> f64 {
+    /// The clearance a **true sheet edge** demands: the settings' own sheet
+    /// edge clearance plus the flattening sag tolerance, exactly as
+    /// `validation::general_polygon` charges it on the physical 2000x2700
+    /// sheet. Left, right, bottom - and the physical top at
+    /// `sheet_long_axis_mm`, which no Gate-0 cell reaches but which is a real
+    /// boundary and is charged as one.
+    ///
+    /// **This is not the strip top.** See [`Contract::depth_top_inset_mm`].
+    /// One `edge_clearance_mm()` on all four sides was the defect Sol review 15
+    /// §A.1 and Grok review 10 Finding 1 name: it charged a *sheet* rule
+    /// against a *depth target*, which manufactured up to one sag tolerance of
+    /// phantom top-row violation on any request with `sag > 0`.
+    pub fn physical_edge_clearance_mm(&self) -> f64 {
         self.sheet_edge_clearance_mm + self.flattening_sag_tolerance_mm
+    }
+
+    /// The inset the **depth convention** carries, and therefore the one the
+    /// locked strip's top uses: sag-less.
+    ///
+    /// `raw_source_depth_mm` is `max source y + sheet_edge_clearance_mm`
+    /// ([`raw_source_depth_mm`], `publish::raw_depth_of`) and the publication
+    /// gate is `proxy_depth <= T` in that same convention. A strip top charged
+    /// at `edge + sag` would be one sag tolerance stricter than the gate the
+    /// descent is descending toward - which is precisely the asymmetry
+    /// `gate0-verification/README.md` §3.4 recorded and this split removes.
+    pub fn depth_top_inset_mm(&self) -> f64 {
+        self.sheet_edge_clearance_mm
     }
 
     /// The round kernel's radius at **allowance zero**. The search-offset

@@ -291,12 +291,6 @@ impl Descent {
         let original = state.poses[piece];
         let baseline = fold(state).guided;
         let mut best: Option<(f64, Pose)> = None;
-        let edge = contract.edge_clearance_mm();
-        let radius = sources[piece].max_radius_mm;
-        let low_x = edge + radius;
-        let high_x = contract.sheet_short_axis_mm - edge - radius;
-        let low_y = edge + radius;
-        let high_y = state.target_depth_mm - edge - radius;
         for ordinal in 0..self.config.jump_samples {
             work.jump_proposals += 1;
             let key = counter_hash(&[
@@ -311,13 +305,23 @@ impl Descent {
                 rotated_halton(3, ordinal as u64 + 1, key >> 21),
                 rotated_halton(5, ordinal as u64 + 1, key >> 42),
             ];
-            let centre_x = mix(low_x, high_x, u[0]);
-            let centre_y = mix(low_y, high_y, u[1]);
             let theta = if self.allow_rotation[piece] {
                 u[2] * 360.0
             } else {
                 original.theta_deg
             };
+            // The usable strip, for **this candidate's own rotation**. The
+            // circumradius box this replaced was wrong twice over: it charged
+            // one clearance to all four sides, and it bounded a piece by its
+            // circumradius, which for a 70x60 triangle in a 60.24 mm strip made
+            // `low_y > high_y` and collapsed all 16 relocations onto one point
+            // (Grok review 10, "Same-class latent defects"). The spec asked for
+            // positions *in the strip*; that is an axis-aligned box question
+            // and the piece's own rotated AABB is the honest half-extent.
+            let extents = centroid_relative_extents(&sources[piece], theta, original.mirrored);
+            let box_mm = strip_sample_box(contract, state.target_depth_mm, extents);
+            let centre_x = mix(box_mm[0], box_mm[2], u[0]);
+            let centre_y = mix(box_mm[1], box_mm[3], u[1]);
             let (sin, cos) = super::state::pose_sin_cos(theta);
             let source_centroid = sources[piece].centroid;
             let mirror_x = if original.mirrored {
@@ -381,6 +385,14 @@ impl Descent {
     }
 }
 
+/// One axis of a low-discrepancy draw inside `[low, high]`.
+///
+/// **The infeasible case is clamped per axis and only per axis.** When a piece
+/// cannot fit the interval at all (`high <= low`) this returns that interval's
+/// midpoint, which is the deterministic best-centred position on *that* axis
+/// and leaves the other axis and the angle free to keep varying. What it must
+/// never do is let one jammed axis collapse the whole sample set to a single
+/// pose, which is what the circumradius box did on triangle-20.
 #[inline]
 fn mix(low: f64, high: f64, unit: f64) -> f64 {
     if high <= low {
@@ -388,6 +400,46 @@ fn mix(low: f64, high: f64, unit: f64) -> f64 {
     } else {
         low + unit * (high - low)
     }
+}
+
+/// The extent of a piece's transformed outer ring relative to its own
+/// transformed centroid, `[min dx, min dy, max dx, max dy]`, at one rotation.
+fn centroid_relative_extents(source: &PieceSource, theta_deg: f64, mirrored: bool) -> [f64; 4] {
+    let (sin, cos) = super::state::pose_sin_cos(theta_deg);
+    let centre = super::state::apply_pose(source.centroid, mirrored, sin, cos, 0.0, 0.0);
+    let mut out = [
+        f64::INFINITY,
+        f64::INFINITY,
+        f64::NEG_INFINITY,
+        f64::NEG_INFINITY,
+    ];
+    for point in &source.decomposition.ring {
+        let placed = super::state::apply_pose(*point, mirrored, sin, cos, 0.0, 0.0);
+        out[0] = out[0].min(placed[0] - centre[0]);
+        out[1] = out[1].min(placed[1] - centre[1]);
+        out[2] = out[2].max(placed[0] - centre[0]);
+        out[3] = out[3].max(placed[1] - centre[1]);
+    }
+    out
+}
+
+/// The box of **centroid** positions whose piece AABB lies inside the usable
+/// strip, given that piece's centroid-relative extents.
+///
+/// The four sides carry the split of Sol review 15 §B.1 / Grok review 10 §B.1:
+/// left, right and bottom are physical sheet edges at `edge + sag`; the top is
+/// the tighter of the locked strip in the sag-less depth convention and the
+/// physical sheet top.
+fn strip_sample_box(contract: &Contract, target_depth_mm: f64, extents: [f64; 4]) -> [f64; 4] {
+    let physical = contract.physical_edge_clearance_mm();
+    let top = (target_depth_mm - contract.depth_top_inset_mm())
+        .min(contract.sheet_long_axis_mm - physical);
+    [
+        physical - extents[0],
+        physical - extents[1],
+        contract.sheet_short_axis_mm - physical - extents[2],
+        top - extents[3],
+    ]
 }
 
 /// SplitMix64 over a fixed key vector: the counter-based source Sol review 14

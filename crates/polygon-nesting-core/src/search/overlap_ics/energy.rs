@@ -95,12 +95,7 @@ pub fn measure_edges(
     target_depth_mm: f64,
     previous: [EdgeRow; 4],
 ) -> [EdgeRow; 4] {
-    let residuals = boundary_residuals(
-        geometry.piece_bounds[piece],
-        contract.sheet_short_axis_mm,
-        target_depth_mm,
-        contract.edge_clearance_mm(),
-    );
+    let residuals = boundary_residuals(geometry.piece_bounds[piece], contract, target_depth_mm);
     let ring = geometry.ring_slice(piece);
     let mut rows = [EdgeRow::default(); 4];
     for edge in 0..4 {
