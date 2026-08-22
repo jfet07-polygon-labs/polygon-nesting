@@ -176,6 +176,23 @@ impl PolygonRing {
     fn path(&self) -> &Path64 {
         &self.path
     }
+
+    /// This ring on the canonical integer grid, for the round-envelope kernel.
+    ///
+    /// The kernel's whole claim is that it decides `P (+) disc(r)` in exact
+    /// integer arithmetic, and that claim is only worth anything if the
+    /// integers it reads are the *same* ones `PolygonSet::offset` is handed —
+    /// not a re-quantization of [`PolygonRing::points`], which would introduce
+    /// a second rounding between the two authorities and make their
+    /// disagreements uninterpretable. So it reads the canonical path itself.
+    ///
+    /// Feature-gated, and read-only: nothing here mutates, and
+    /// [`PolygonSet::offset`] is untouched. See
+    /// [`crate::validation::round_envelope`].
+    #[cfg(feature = "round-envelope-kernel")]
+    pub(crate) fn grid_path(&self) -> &Path64 {
+        &self.path
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]

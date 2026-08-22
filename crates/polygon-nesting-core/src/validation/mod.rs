@@ -19,5 +19,9 @@
 
 pub mod general_polygon;
 pub mod placement;
+/// The certified round-envelope kernel, compiled only under
+/// `round-envelope-kernel` and armed by nothing unless a v3 run asks for it.
+#[cfg(feature = "round-envelope-kernel")]
+pub mod round_envelope;
 pub mod sat;
 pub mod spatial_index;

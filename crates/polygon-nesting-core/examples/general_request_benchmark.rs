@@ -2384,6 +2384,33 @@ fn parse_portfolio_spec(
             // unarmed binary as two different things when they are one.
             #[cfg(feature = "fast-contract-validator")]
             "fcv" => settings.fast_contract_validator = value != "0",
+            // The round-envelope kernel's **arm**. Unknown without the feature
+            // for the same reason `fcv` is unknown without its own, and here
+            // the reason is stronger rather than weaker: `fcv=0` on an unarmed
+            // binary would report two identical runs as two different ones,
+            // while `rek=1` on an unarmed binary would report a *miter* run
+            // under a round label - an authority claim the binary cannot
+            // honour. An unarmed binary refuses the key.
+            //
+            // Three values, not two, because the round measured that they are
+            // different engines. `rek=1` (union) admits what either envelope
+            // half admits and therefore cannot lose a canonical-valid layout;
+            // `rek=2` (exclusive) makes the kernel the envelope half outright
+            // and is one canonical grid step stricter than HEAD at contact,
+            // which the short-side-first constructor places pieces exactly at.
+            // A mistyped value is refused rather than read as a boolean, so
+            // `rek=true` cannot silently mean "exclusive". See
+            // docs/experiments/round-envelope-kernel/.
+            #[cfg(feature = "round-envelope-kernel")]
+            "rek" => {
+                settings.round_envelope_kernel =
+                    polygon_nesting_core::validation::round_envelope::KernelMode::parse(value)
+                        .ok_or_else(|| {
+                            format!(
+                                "rek takes 0/off, 1/union or 2/exclusive, not {value:?}"
+                            )
+                        })?;
+            }
             // The continuous-rotation operator. Unknown in a build without the
             // feature, deliberately: an unarmed binary refuses an armed
             // driver's spec instead of silently running without the operator

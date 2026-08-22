@@ -2377,6 +2377,26 @@ pub struct PortfolioSettings {
     /// `examples/contract_validator_shadow.rs` measures.
     #[cfg(feature = "fast-contract-validator")]
     pub fast_contract_validator: bool,
+    /// How the certified round-envelope kernel participates in the composite's
+    /// envelope half for this run.
+    ///
+    /// **`false` by default**, and that is the difference from
+    /// [`PortfolioSettings::fast_contract_validator`], which is `true`. The
+    /// clearance certificate is verdict-preserving — it only ever skips work
+    /// the exact loop would have agreed with — so arming it changes nothing a
+    /// document can see. This changes the **acceptance authority**: a disc
+    /// envelope accepts layouts a miter envelope refuses
+    /// (docs/experiments/gate-a-sparrow-import/ measured 31 pairs and 2
+    /// boundaries of one 61-piece layout), so an armed run is a different
+    /// engine and has to be asked for by name.
+    ///
+    /// Read once, at the top of a v3 run, and applied through
+    /// [`crate::validation::round_envelope::set_kernel_mode`] for the duration
+    /// of that run only. The material contract validator is unaffected by any
+    /// of the three: publication stays the conjunction, and this is one half of
+    /// it.
+    #[cfg(feature = "round-envelope-kernel")]
+    pub round_envelope_kernel: crate::validation::round_envelope::KernelMode,
     /// [`PLAN_PHASE_ZERO_BIAS`], overridable per run.
     pub plan_bias: f64,
     /// [`PLAN_HEADROOM`], overridable per run.
@@ -2836,6 +2856,8 @@ impl PortfolioSettings {
             compression_schedule_past_bound_share: 1.0,
             #[cfg(feature = "fast-contract-validator")]
             fast_contract_validator: true,
+            #[cfg(feature = "round-envelope-kernel")]
+            round_envelope_kernel: crate::validation::round_envelope::KernelMode::Off,
             plan_bias: PLAN_PHASE_ZERO_BIAS,
             plan_headroom: PLAN_HEADROOM,
             plan_quantum_step: PLAN_QUANTUM_STEP,
@@ -4988,6 +5010,38 @@ impl Drop for ContractCertificateArming {
     }
 }
 
+/// Holds the round-envelope kernel at one arming for the length of one
+/// coordinator run, and puts back what it found on the way out.
+///
+/// Identical in shape to [`ContractCertificateArming`] and for the same two
+/// reasons — the switch is process-wide, and `run_portfolio` has too many `?`
+/// returns for a matching call at the end to be safe — with one difference that
+/// matters more here than there. The certificate is verdict-preserving, so a
+/// leaked arming would be invisible; this one changes what the engine accepts,
+/// so a leaked arming would silently make every later request in the same
+/// process a different engine. That is why it is `Drop` and why it is
+/// constructed only on the v3 path.
+#[cfg(feature = "round-envelope-kernel")]
+struct RoundEnvelopeArming {
+    previous: crate::validation::round_envelope::KernelMode,
+}
+
+#[cfg(feature = "round-envelope-kernel")]
+impl RoundEnvelopeArming {
+    fn install(mode: crate::validation::round_envelope::KernelMode) -> Self {
+        Self {
+            previous: crate::validation::round_envelope::set_kernel_mode(mode),
+        }
+    }
+}
+
+#[cfg(feature = "round-envelope-kernel")]
+impl Drop for RoundEnvelopeArming {
+    fn drop(&mut self) {
+        crate::validation::round_envelope::set_kernel_mode(self.previous);
+    }
+}
+
 /// Runs the portfolio from the request only: no pinned parent, no warm start,
 /// no fixture anywhere.
 ///
@@ -5020,6 +5074,17 @@ pub fn run_portfolio(
         Some(ContractCertificateArming::install(
             settings.fast_contract_validator,
         ))
+    } else {
+        None
+    };
+    // The round-envelope kernel's arming, on the same terms and only on the v3
+    // path. Off the v3 path this is not constructed at all, so a v2 or a direct
+    // engine caller keeps HEAD's miter authority whatever the setting says -
+    // and with the feature compiled and the setting at its `false` default, the
+    // guard installs `false`, which is what the process was already doing.
+    #[cfg(feature = "round-envelope-kernel")]
+    let _round_envelope_arming = if settings.coordinator_v3 {
+        Some(RoundEnvelopeArming::install(settings.round_envelope_kernel))
     } else {
         None
     };

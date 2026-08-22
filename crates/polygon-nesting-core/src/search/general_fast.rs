@@ -3575,6 +3575,237 @@ pub(crate) fn validate_and_measure_placements_parallel(
     validate_and_measure_placements_inner(pieces, placements, settings, true)
 }
 
+/// What the round-envelope kernel could say about one layout.
+#[cfg(feature = "round-envelope-kernel")]
+enum RoundEnvelopeOutcome {
+    /// The kernel admitted the layout, and these are the round envelope's own
+    /// metrics.
+    Decided(LayoutMetrics),
+    /// The kernel refused the layout, with the message it refused it with — and
+    /// the round envelope's metrics anyway, because
+    /// [`crate::validation::round_envelope::KernelMode::Union`] may still admit
+    /// the layout through the miter half and must not change metric basis when
+    /// it does.
+    Refused(GeneralFastError, LayoutMetrics),
+    /// The kernel refused to *answer*. The caller must use the miter authority.
+    NotCertified,
+}
+
+/// The composite's envelope half, decided as `P (+) disc(expansion)` in exact
+/// integer arithmetic instead of as a Clipper miter offset.
+///
+/// # What it computes, and why the metrics move with it
+///
+/// The miter path builds every placement's offset polygon and reads the
+/// layout's extent off *those*. A miter corner reaches `expansion /
+/// sin(half-angle)` along its bisector, capped at `2 x expansion` by
+/// `CLIPPER_MITER_LIMIT`, so the miter envelope's bounding box can exceed the
+/// material's box grown by `expansion` — docs/experiments/gate-a-sparrow-import/
+/// §4 measured 0.377 mm of that on one placement of one layout. A disc reaches
+/// exactly `expansion` in every direction, so the round envelope's box is the
+/// material's box grown by `expansion` and nothing more.
+///
+/// That means an armed run's `used_long_axis_depth_mm` is **not** on the same
+/// basis as a miter run's: it is the same quantity for the same layout under a
+/// different envelope, and it is smaller by whatever the binding corner's miter
+/// excursion was. The raw *source* depth (`raw_source_long_axis_depth_mm`),
+/// which is what this repository's records are quoted in, is untouched by
+/// either — it never reads an envelope at all. Any A/B that compares an armed
+/// arm against a miter arm has to say which of the two depths it is reading.
+///
+/// # Fail-closed
+///
+/// `NotCertified` on: an expansion whose doubled grid radius the kernel does
+/// not certify (zero, or beyond its integer domain); a sheet inset that is not
+/// representable on the canonical grid; and any placement whose canonical rings
+/// leave the kernel's coordinate domain. In every one of those the caller falls
+/// through to the miter authority, so the kernel can only ever be asked
+/// questions it can answer exactly.
+#[cfg(feature = "round-envelope-kernel")]
+fn round_envelope_layout_metrics(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+    expansion: f64,
+) -> Result<RoundEnvelopeOutcome, GeneralFastError> {
+    use crate::validation::round_envelope::{
+        boundary_admissible, certifies, pair_admissible, GridSet,
+    };
+
+    // The radius the *miter* path hands Clipper, on the grid, read the same
+    // way: `PolygonSet::offset` quantizes its distance with `to_grid_mm` before
+    // it offsets by it. Taking the same integer here is what makes the two
+    // authorities two answers to one question rather than two questions.
+    let Some(radius_grid) = to_grid_mm(expansion) else {
+        return Ok(RoundEnvelopeOutcome::NotCertified);
+    };
+    if radius_grid.fract() != 0.0 || radius_grid < 0.0 {
+        return Ok(RoundEnvelopeOutcome::NotCertified);
+    }
+    let radius = radius_grid as i64;
+    if !certifies(2 * radius) {
+        return Ok(RoundEnvelopeOutcome::NotCertified);
+    }
+    // The inset rectangle, read exactly as `PolygonSet::fits_rect` reads it -
+    // `to_grid_mm` on each of the four `f64` bounds, not `to_grid_mm` of the
+    // sheet minus `to_grid_mm` of the inset.
+    let inset = collision_sheet_inset_mm(settings);
+    let (
+        Some(low_x_grid),
+        Some(low_y_grid),
+        Some(high_x_grid),
+        Some(high_y_grid),
+    ) = (
+        to_grid_mm(inset),
+        to_grid_mm(inset),
+        to_grid_mm(settings.sheet_short_axis_mm - inset),
+        to_grid_mm(settings.sheet_long_axis_mm - inset),
+    ) else {
+        return Ok(RoundEnvelopeOutcome::NotCertified);
+    };
+    if [low_x_grid, low_y_grid, high_x_grid, high_y_grid]
+        .iter()
+        .any(|value| value.fract() != 0.0)
+    {
+        return Ok(RoundEnvelopeOutcome::NotCertified);
+    }
+    let (low_x, low_y, high_x, high_y) = (
+        low_x_grid as i64,
+        low_y_grid as i64,
+        high_x_grid as i64,
+        high_y_grid as i64,
+    );
+
+    let pieces_by_id = pieces
+        .iter()
+        .map(|piece| (piece.id, piece))
+        .collect::<BTreeMap<_, _>>();
+    let mut sets = Vec::with_capacity(placements.len());
+    for placement in placements {
+        let piece = pieces_by_id
+            .get(placement.piece_id.as_str())
+            .copied()
+            .ok_or_else(|| {
+                GeneralFastError::InvalidInput(format!(
+                    "a result placement references unknown piece {}",
+                    placement.piece_id
+                ))
+            })?;
+        if !placement.rotation_deg.is_finite() {
+            return Err(GeneralFastError::InvalidInput(format!(
+                "piece {} has a non-finite rotation",
+                placement.piece_id
+            )));
+        }
+        if !piece.allow_rotation && angle_key(placement.rotation_deg) != 0 {
+            return Err(GeneralFastError::InvalidInput(format!(
+                "piece {} uses a forbidden rotation",
+                placement.piece_id
+            )));
+        }
+        if placement.mirrored && !piece.allow_mirror {
+            return Err(GeneralFastError::InvalidInput(format!(
+                "piece {} uses a forbidden mirror transform",
+                placement.piece_id
+            )));
+        }
+        // The same canonicalization the miter path performs, and then no
+        // offset: the expansion enters the predicates as a number.
+        let transformed = piece.polygon.transformed(
+            placement.rotation_deg,
+            placement.mirrored,
+            placement.translate_short_axis,
+            placement.translate_long_axis,
+        )?;
+        let Some(set) = GridSet::of(&transformed) else {
+            return Ok(RoundEnvelopeOutcome::NotCertified);
+        };
+        sets.push(set);
+    }
+
+    // The metrics, off the round envelope's own extent: the material box grown
+    // by the radius, dequantized by the same `from_grid` the miter path's
+    // `bounds_for_path` uses.
+    //
+    // Computed *before* the two legality halves, and unconditionally, because
+    // `KernelMode::Union` needs them on the refusal path too - see
+    // [`RoundEnvelopeOutcome::Refused`]. It is one `O(n)` pass over 61 integer
+    // boxes against the `O(n^2)` below it.
+    let mut layout: Option<(i64, i64, i64, i64)> = None;
+    let mut intervals = Vec::with_capacity(sets.len());
+    for set in &sets {
+        let (min_x, min_y, max_x, max_y) = set.bounds_micron();
+        let (min_x, min_y, max_x, max_y) = (
+            min_x - radius,
+            min_y - radius,
+            max_x + radius,
+            max_y + radius,
+        );
+        layout = Some(match layout {
+            None => (min_x, min_y, max_x, max_y),
+            Some(current) => (
+                current.0.min(min_x),
+                current.1.min(min_y),
+                current.2.max(max_x),
+                current.3.max(max_y),
+            ),
+        });
+        intervals.push((from_grid(min_x as f64), from_grid(max_x as f64)));
+    }
+    let bounds = layout.map(|(min_x, min_y, max_x, max_y)| {
+        (
+            from_grid(min_x as f64),
+            from_grid(min_y as f64),
+            from_grid(max_x as f64),
+            from_grid(max_y as f64),
+        )
+    });
+    intervals.sort_by(|first, second| first.0.total_cmp(&second.0));
+    let metrics = LayoutMetrics {
+        used_short_axis_span_mm: bounds.map(|b| b.2 - b.0).unwrap_or(0.0),
+        used_long_axis_depth_mm: bounds
+            .map(|b| b.3 + collision_sheet_inset_mm(settings))
+            .unwrap_or(0.0),
+        unused_short_axis_projection_mm: (collision_sheet_short_axis_mm(settings)
+            - merged_interval_length(&intervals))
+        .max(0.0),
+        occupied_envelope_area_mm2: bounds
+            .map(|b| (b.2 - b.0) * (b.3 - b.1))
+            .unwrap_or(0.0),
+    };
+
+    // The boundary half, in placement order, so the placement this names is the
+    // one the miter authority names: `rebuild_one` fails on the lowest-indexed
+    // placement whose envelope leaves the inset sheet.
+    for (placement, set) in placements.iter().zip(&sets) {
+        if !boundary_admissible(set, radius, low_x, low_y, high_x, high_y) {
+            return Ok(RoundEnvelopeOutcome::Refused(
+                GeneralFastError::InvalidInput(format!(
+                    "piece {} violates the canonical-grid sheet boundary",
+                    placement.piece_id
+                )),
+                metrics,
+            ));
+        }
+    }
+    // The pair half, in the same lexicographic order the miter nest visits, so
+    // the pair this names is the pair that one would have named.
+    for first_index in 0..sets.len() {
+        for second_index in (first_index + 1)..sets.len() {
+            if !pair_admissible(&sets[first_index], &sets[second_index], 2 * radius) {
+                return Ok(RoundEnvelopeOutcome::Refused(
+                    GeneralFastError::InvalidInput(format!(
+                        "pieces {} and {} overlap on the canonical collision grid",
+                        placements[first_index].piece_id, placements[second_index].piece_id
+                    )),
+                    metrics,
+                ));
+            }
+        }
+    }
+    Ok(RoundEnvelopeOutcome::Decided(metrics))
+}
+
 fn validate_and_measure_placements_inner(
     pieces: &[GeneralFastPiece<'_>],
     placements: &[GeneralFastPlacement],
@@ -3602,6 +3833,66 @@ fn validate_and_measure_placements_inner(
         }
     }
     let expansion = collision_expansion_mm(settings);
+    // The round-envelope kernel's one wire point.
+    //
+    // Compiled out entirely without `round-envelope-kernel`, and inert with the
+    // feature compiled unless a v3 run armed it - so a default build reaches the
+    // miter authority below on the same line it always has, which is what the
+    // four pinned regression gates check. `NotCertified` is the fail-closed
+    // answer (zero expansion, a coordinate outside the kernel's integer domain,
+    // an inset that is not on the grid) and falls through to that same
+    // authority rather than deciding anything.
+    //
+    // The *contract* half is not in this branch: it runs below, on the same
+    // function, from the same placements. Arming the kernel replaces one half of
+    // the publication conjunction and cannot reach the other.
+    #[cfg(feature = "round-envelope-kernel")]
+    let round_envelope_mode = crate::validation::round_envelope::kernel_mode();
+    #[cfg(feature = "round-envelope-kernel")]
+    let mut round_envelope_metrics = None;
+    #[cfg(feature = "round-envelope-kernel")]
+    if round_envelope_mode != crate::validation::round_envelope::KernelMode::Off {
+        use crate::validation::round_envelope::KernelMode;
+        match round_envelope_layout_metrics(pieces, placements, settings, expansion)? {
+            RoundEnvelopeOutcome::Decided(metrics) => {
+                // The kernel admitted the envelope half. In both armed modes
+                // that is the answer, and the miter is never built.
+                validate_placements_against_contract_inner(pieces, placements, settings, parallel)?;
+                #[cfg(feature = "quality-trace")]
+                if crate::quality_trace::active() {
+                    trace_exact_candidate(
+                        pieces,
+                        placements,
+                        settings,
+                        metrics.used_long_axis_depth_mm,
+                    );
+                }
+                return Ok(GeneralPlacementMetrics {
+                    used_short_axis_span_mm: metrics.used_short_axis_span_mm,
+                    used_long_axis_depth_mm: metrics.used_long_axis_depth_mm,
+                    unused_short_axis_projection_mm: metrics.unused_short_axis_projection_mm,
+                    occupied_envelope_area_mm2: metrics.occupied_envelope_area_mm2,
+                });
+            }
+            RoundEnvelopeOutcome::Refused(error, metrics) => {
+                if round_envelope_mode == KernelMode::Exclusive {
+                    return Err(error);
+                }
+                // Union: the miter authority below gets its turn. Its metrics
+                // are *not* what this returns if it admits the layout - the
+                // round envelope's are, and they were computed above. A metric
+                // that changed basis at the one-micrometre row where the two
+                // authorities disagree would put a step of the binding corner's
+                // miter excursion into the depth the search minimises, at a
+                // boundary the search can walk across.
+                round_envelope_metrics = Some(metrics);
+            }
+            // Fail-closed: zero expansion, a coordinate outside the kernel's
+            // integer domain, an inset that is not on the grid. The miter
+            // authority is the only answer and neither armed mode changes that.
+            RoundEnvelopeOutcome::NotCertified => {}
+        }
+    }
     // Named rather than inline so the serial and the job-pool paths below run
     // the *same* body: the parallel confirmation must be the serial validator
     // with a different traversal, not a second implementation of it.
@@ -3749,6 +4040,13 @@ fn validate_and_measure_placements_inner(
             metrics.used_long_axis_depth_mm,
         );
     }
+    // In `KernelMode::Union`, a layout the kernel refused and the miter admitted
+    // still reports the *round* envelope's extent, for the reason given at the
+    // wire point above: the depth the search minimises may not change basis at
+    // a one-micrometre row. `round_envelope_metrics` is `None` in every other
+    // configuration, including every build without the feature.
+    #[cfg(feature = "round-envelope-kernel")]
+    let metrics = round_envelope_metrics.unwrap_or(metrics);
     Ok(GeneralPlacementMetrics {
         used_short_axis_span_mm: metrics.used_short_axis_span_mm,
         used_long_axis_depth_mm: metrics.used_long_axis_depth_mm,

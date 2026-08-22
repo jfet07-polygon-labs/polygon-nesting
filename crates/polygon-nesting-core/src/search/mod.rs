@@ -27,6 +27,12 @@ pub mod placement_scorer;
 /// compiled only where they are.
 #[cfg(feature = "jagua-experimental")]
 pub mod portfolio;
+/// The round-envelope kernel's soundness battery instrument: every pair and
+/// every boundary of a pose set under the kernel and under HEAD's miter
+/// authority, plus the economy. Compiled only under `round-envelope-kernel`;
+/// nothing in `src/` outside it names this module, and it publishes nothing.
+#[cfg(feature = "round-envelope-kernel")]
+pub mod round_envelope_gate;
 pub mod score_grid;
 pub mod shadow_rescore;
 pub mod sort_pieces;
