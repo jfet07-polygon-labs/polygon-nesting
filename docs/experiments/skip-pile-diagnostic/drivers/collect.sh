@@ -189,7 +189,13 @@ run_final() {
   # feature off. `git status --porcelain` is printed first because the claim is
   # about the committed tree and a dirty one would not be it.
   echo "== closing gate: git status --porcelain (must be empty)"
-  git status --porcelain | tee "$E/final-worktree-status.txt"
+  # Written outside the repository and copied in afterwards. A `tee` straight
+  # into `$E` creates the file before `git status` has finished walking the
+  # tree, so the check reports its own output file as untracked and can never
+  # print nothing - which is exactly the one thing it exists to print.
+  git status --porcelain > "$T/final-worktree-status.txt"
+  cat "$T/final-worktree-status.txt"
+  echo "(end of status; empty above means clean)"
   echo "== closing gate: fresh build of the clean committed tree"
   rm -rf "$T/final"
   CARGO_TARGET_DIR="$T/final" cargo build --release --example general_request_benchmark \
@@ -219,6 +225,7 @@ run_final() {
     echo "# loadavg: $(cat /proc/loadavg)"
   } > "$E/binaries-final.txt"
   cat "$E/binaries-final.txt"
+  cp "$T/final-worktree-status.txt" "$E/final-worktree-status.txt"
   echo "== closing gate: the four gates on the fresh feature-ABSENT binary"
   python3 "$D/drivers/gates.py" final "$T/bin/gate-final" "$T/gates/final" \
     > "$E/gates-final-stdout.txt" 2>&1

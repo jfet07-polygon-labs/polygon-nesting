@@ -457,6 +457,34 @@ allocation history. That is an observation and not a diagnosis; nothing in this
 round touches `layout_scorer`. Both logs are committed
 (`suite-dump-run1-flaky.log` beside `suite-dump.log`).
 
+### 6.5 The closing gate: a fresh build of the clean committed tree
+
+The protocol's last requirement, run as a stage (`collect.sh final`) rather than
+by hand. With `git status --porcelain` printing nothing, a **fresh**
+`CARGO_TARGET_DIR` was built from the committed tree and all three binaries came
+back **byte-identical** to the ones every number above was measured on:
+
+| binary | features | measured on | fresh rebuild |
+|---|---|---|---|
+| gate | `jagua-experimental` | `69b42abf…` | **`69b42abf…`** |
+| measurement | the combo + kernel + dump | `16ac9d90…` | **`16ac9d90…`** |
+| scorer | kernel + import-gate-shadow | `a1c84416…` | **`a1c84416…`** |
+
+`ALL_PASS: true` on the fresh gate binary and on the fresh measurement binary,
+and **all twelve** per-gate whole-document digests across the three independent
+build-and-gate cycles this round ran are the same four values. Section 6.2's
+point holds in the other direction too: the binary is a function of the source
+text, and this source text builds this binary, every time.
+
+`evidence/binaries-final.txt`, `evidence/gates-final.json`,
+`evidence/gates-finalmeas.json`, `evidence/final-worktree-status.txt`.
+
+> The first run of this stage `tee`-d `git status --porcelain` straight into the
+> evidence directory, which creates the output file before `git status` finishes
+> walking the tree — so the check reported its own output file as untracked and
+> could never print nothing, which is the one thing it exists to print. It now
+> writes outside the repository and copies the file in afterwards.
+
 ## 7. Caveats, stated rather than left to be found
 
 * **Six cells, one request, one platform.** mixed-61 at the exact-clearance
