@@ -91,6 +91,10 @@ use crate::search::general_fast::{
     construct_short_side_first, validate_and_measure_placements, GeneralFastError,
     GeneralFastPiece, GeneralFastPlacement, GeneralFastResult, GeneralFastSettings,
 };
+#[cfg(feature = "compression-schedule")]
+use crate::search::compression_schedule::ScheduleCheckpoint;
+#[cfg(feature = "compression-schedule")]
+use crate::search::general_relaxed::SliceControl;
 use crate::search::general_relaxed::{
     general_placement_fingerprint, GeneralCoupledSeparatorArmDiagnostics,
     GeneralPersistentVacancyDiagnostics, GeneralPersistentVacancyPinnedParent,
@@ -902,6 +906,17 @@ pub struct ScheduleSliceReport {
     /// [`crate::search::compression_schedule::ScheduleCheckpoint`].
     #[cfg(feature = "compression-schedule")]
     pub checkpoints: Vec<crate::search::compression_schedule::ScheduleCheckpoint>,
+    /// Batches, resumptions and whether the caller stopped the slice. See the
+    /// three fields of the same name on
+    /// [`crate::search::compression_schedule::GeneralCompressionScheduleDiagnostics`],
+    /// which carry the same silence rules: an atomic, never-interrupted slice
+    /// emits none of them and its document is the previous round's, key for key.
+    #[cfg(feature = "compression-schedule")]
+    pub batches: usize,
+    #[cfg(feature = "compression-schedule")]
+    pub resumptions: usize,
+    #[cfg(feature = "compression-schedule")]
+    pub interrupted: bool,
     /// The slice's per-step digest. See
     /// [`crate::search::compression_schedule::GeneralCompressionScheduleDiagnostics::step_digest`].
     /// This is the field the concatenation gate is decided on: the aggregates
@@ -2153,6 +2168,117 @@ pub struct PortfolioSettings {
     /// the larger of the two, which on the measured band it is by ~18x.
     #[cfg(feature = "compression-schedule")]
     pub compression_schedule_cap_to_budget: bool,
+    /// `m34wallstop`: whether a mode-34 slice is stopped at the first checkpoint
+    /// **past the run's wall deadline**, holding its last exact-valid incumbent.
+    ///
+    /// The key is `m34wallstop` and not `m34wall`, which has meant
+    /// [`Self::schedule_wall_prior`] - how the queue *prices* a schedule action
+    /// before it buys one - since coordinator v4.
+    ///
+    /// `false` by default. This is Sol review 8 §3 condition 3 - *"stop wall tra
+    /// checkpoint, restituire l'ultimo incumbent exact-valid"* - and the
+    /// previous round shipped the checkpoints without it, on the grounds that a
+    /// wall stop cannot be deterministic. It cannot, and it is still the only
+    /// thing that bounds a wall: `m34cap` stops on the slice's own *work* meter,
+    /// which says nothing about seconds under load, and every overrun
+    /// `docs/experiments/replan/` §12.1 measured is an action that was in flight
+    /// when the deadline passed.
+    ///
+    /// The honest form of the trade, and it is the reason this is a key and not
+    /// a default: with it armed the *depth* becomes a function of the box, in
+    /// exactly the way `PortfolioBudget::Wall` already is. Two processes agree
+    /// on the layout only while they cross the deadline between the same two
+    /// checkpoints. A run that needs one document per seed leaves this off and
+    /// accepts the overrun; a run that needs ten seconds arms it and accepts the
+    /// spread. `docs/experiments/real-interruption/` measures both ends.
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule_wall_stop: bool,
+    /// `m34yield`: suspend a mode-34 slice toward the coordinator after this
+    /// many batches, so that another action can run before it is resumed.
+    ///
+    /// `0` - the default - never suspends. A non-zero value is the mechanism
+    /// Grok review 4 §4 names as the missing piece: *"senza portare uno slice
+    /// sospeso alla coda, m34 non può cedere a un'altra classe"*. The slice is
+    /// parked on the coordinator with its frontier, its caches, its rng and its
+    /// step account intact; the queue runs one more action; the slice is then
+    /// resumed and finishes as one report.
+    ///
+    /// It is a **count of batches** rather than a work figure so that the two
+    /// knobs compose: `m34batch` decides how long a batch is, this decides how
+    /// many of them the slice may run before it has to offer its turn back.
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule_yield_batches: usize,
+    /// `m34past`: whether a mode-34 slice may continue past its nine-rung bound,
+    /// under the coordinator's own budget rather than under a fixed walk.
+    ///
+    /// `false` by default. `docs/experiments/robust-plan/` §13.1 is why this
+    /// exists: the confirmation-density sweep was flat-to-negative at every one
+    /// of twelve cells in both budget modes, and the cause was not the knob it
+    /// swept. **Every cell exited on `bound` and every cell's first slice
+    /// dropped exactly 1.6160 mm** - the coordinator's slice is a walk of a
+    /// *fixed distance*, so a finer clamp walks the same distance in four times
+    /// as many steps and buys nothing. `record-line-cascade`'s millimetre was
+    /// bought on the opposite arm: `past=1` at a pinned work budget, where the
+    /// walk is budget-limited and a finer clamp converts spare budget into extra
+    /// distance.
+    ///
+    /// So this is the lever that section names - *"the bound, not the grid"* -
+    /// and the budget it runs under is the coordinator's remaining budget for
+    /// the action, cut into batches. Past the bound the slice is affordability-
+    /// limited at every checkpoint rather than distance-limited once.
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule_past_bound: bool,
+    /// How many batches the past-bound budget is cut into, when
+    /// [`Self::compression_schedule_past_bound`] is armed.
+    ///
+    /// The batch is the granularity at which the coordinator re-asks "can I
+    /// still afford this?", so it is the resolution of the per-batch
+    /// affordability rule and nothing else. Eight is the default because it puts
+    /// a checkpoint roughly every one to two rungs of the nine-rung walk on the
+    /// measured band, which is often enough for the wall stop to bound an
+    /// overrun and rare enough that the checkpoint bookkeeping is not the cost.
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule_past_bound_batches: usize,
+    /// `m34pastbarren`: how many consecutive batches a past-bound slice may run
+    /// **without deepening its published incumbent** before the coordinator
+    /// takes its turn back.
+    ///
+    /// This is the per-batch affordability rule, and it is the one thing in this
+    /// round that the previous round's mechanism could not have expressed. A
+    /// work cap is a number the slice checks against its own meter; it can say
+    /// *"you have spent enough"* and it cannot say *"you have stopped buying
+    /// anything"*. The checkpoint can, because it carries `published_depth_mm` -
+    /// the depth of the exact-valid layout the coordinator would keep if it
+    /// stopped here - so two checkpoints are a **derivative**.
+    ///
+    /// `2` by default and `0` switches the rule off, letting the slice run to
+    /// its budget. It applies **only to a slice on which
+    /// [`Self::compression_schedule_past_bound`] is armed**, and to every batch
+    /// of one including the batches inside the nine rungs. That is a deliberate
+    /// simplification rather than an exact reading of "past the bound", and the
+    /// reason it is safe is that it changes nothing about a bounded slice: with
+    /// the lever off no checkpoint policy is installed at all, so every pinned
+    /// number in this repository is measured by a coordinator that has never
+    /// heard of this rule.
+    ///
+    /// Two and not one: `confirm_every` is four steps and a batch is one to two
+    /// rungs, so a single batch can straddle a cadence gap and be barren because
+    /// the exact tier was never asked rather than because it refused. Two
+    /// consecutive batches cannot.
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule_past_bound_barren: usize,
+    /// `m34pastshare`: what fraction of the budget the coordinator has left for
+    /// this action a past-bound slice may spend.
+    ///
+    /// `1.0` by default - the whole of it, which is the arm
+    /// `record-line-cascade` bought its millimetre on (`past=1,work=20000000`).
+    /// It is a key because `docs/experiments/robust-plan/` §13.1's claim is
+    /// precisely about the alternative: *"it stops at 1.616 mm and hands the
+    /// rest back to the queue, **where the other classes spend it better than a
+    /// denser slice would**"*. That sentence is a hypothesis about a share, and
+    /// the only way to test it is to vary the share.
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule_past_bound_share: f64,
     /// Whether the exact-clearance contract validator's broad phase is armed.
     ///
     /// **`true` by default**, which is what the feature has always done: with
@@ -2578,6 +2704,18 @@ impl PortfolioSettings {
             compression_schedule_batch_work_units: None,
             #[cfg(feature = "compression-schedule")]
             compression_schedule_cap_to_budget: false,
+            #[cfg(feature = "compression-schedule")]
+            compression_schedule_wall_stop: false,
+            #[cfg(feature = "compression-schedule")]
+            compression_schedule_yield_batches: 0,
+            #[cfg(feature = "compression-schedule")]
+            compression_schedule_past_bound: false,
+            #[cfg(feature = "compression-schedule")]
+            compression_schedule_past_bound_batches: SCHEDULE_PAST_BOUND_BATCHES,
+            #[cfg(feature = "compression-schedule")]
+            compression_schedule_past_bound_barren: SCHEDULE_PAST_BOUND_BARREN,
+            #[cfg(feature = "compression-schedule")]
+            compression_schedule_past_bound_share: 1.0,
             #[cfg(feature = "fast-contract-validator")]
             fast_contract_validator: true,
             plan_bias: PLAN_PHASE_ZERO_BIAS,
@@ -2863,6 +3001,18 @@ struct BudgetMeter {
     /// The phase-0 sampler, when one was armed. Dropped - and joined - by
     /// [`Self::install_plan`], so it never outlives the probe it measures.
     plan_probe: Option<PlanProbe>,
+    /// The wall target the run was *asked* for, in seconds, or `None` for a run
+    /// that named a work budget and no wall at all.
+    ///
+    /// Read by nothing that decides a trajectory. It exists because
+    /// [`Self::install_plan`] replaces `Plan { target_millis }` with `Work {
+    /// units }` as soon as phase 0 has priced the box - which is what makes the
+    /// search a function of a counter rather than of a clock - and a wall stop
+    /// at a checkpoint needs the seconds the caller asked for after that
+    /// substitution has happened. Carried on the meter rather than recomputed
+    /// from the plan report so that `wall` and `plan` runs answer it the same
+    /// way.
+    wall_target_seconds: Option<f64>,
 }
 
 impl BudgetMeter {
@@ -2873,6 +3023,13 @@ impl BudgetMeter {
             work_base: work_units_now(),
             self_metered_debit: 0,
             plan_probe: None,
+            wall_target_seconds: match budget {
+                PortfolioBudget::Wall { millis }
+                | PortfolioBudget::Plan {
+                    target_millis: millis,
+                } => Some(millis as f64 / 1_000.0),
+                PortfolioBudget::Work { .. } => None,
+            },
         }
     }
 
@@ -3579,6 +3736,20 @@ enum ParentRole {
     Prior,
 }
 
+/// The readings one operator call takes before it dispatches.
+///
+/// Held together so that [`Coordinator::settle_operator_call`] takes one
+/// argument rather than four, and so that the *pairing* is visible: every one
+/// of these is a "before" whose only use is a delta, and a settlement that read
+/// any of them from the live meter instead would be charging the call for
+/// everything the run had spent.
+struct OperatorCallOpen {
+    started_seconds: f64,
+    started_work: u64,
+    currency: WorkCurrencyMode,
+    counts_before: crate::search::work_currency::ClassCounts,
+}
+
 /// The coordinator's mutable state during a run.
 struct Coordinator<'a> {
     pieces: &'a [GeneralFastPiece<'a>],
@@ -3618,6 +3789,28 @@ struct Coordinator<'a> {
     /// how many slices each bought, not only what the first one did.
     #[cfg(feature = "compression-schedule")]
     schedule_slices: usize,
+    /// A mode-34 slice the coordinator is holding between actions.
+    ///
+    /// This field is the whole of what "the coordinator regains control at a
+    /// checkpoint" means. The slice is not a report and not a snapshot: it owns
+    /// its frontier, its deepest-confirmed slot, its lane's rng and weights,
+    /// every surrogate and pair-NFP cache, and the step rows it has written so
+    /// far. The queue may run any other action while it sits here, and the
+    /// resumption is bit-identical to the run that was never suspended - which
+    /// is the gate `docs/experiments/real-interruption/` §4 runs.
+    ///
+    /// Always `None` unless [`PortfolioSettings::compression_schedule_yield_batches`]
+    /// is non-zero.
+    #[cfg(feature = "compression-schedule")]
+    suspended_slice: Option<Box<crate::search::general_relaxed::SuspendedScheduleSlice<'a>>>,
+    /// Actions the queue has run since the slice above was suspended.
+    ///
+    /// The resume rule reads it and nothing else: a suspended slice is resumed
+    /// once at least one *other* action has run, which is what makes the
+    /// mechanism an interleave rather than a more expensive way to write the
+    /// same loop.
+    #[cfg(feature = "compression-schedule")]
+    actions_since_suspension: usize,
     /// The sparse operator's request-adaptive disarm. See [`SparseRotationBit`].
     #[cfg(feature = "sparse-rotation")]
     sparse_rotation_bit: SparseRotationBit,
@@ -3932,14 +4125,153 @@ impl<'a> Coordinator<'a> {
             .armed()
             .then(work_currency_counts_now)
             .unwrap_or_default();
+        // The checkpoint policy, built here because this is the only place that
+        // can see both the operator about to run and the meter it runs against.
+        //
+        // Everything the closure reads is copied out first, so it borrows no
+        // field of `self` and the suspension slot below can be borrowed
+        // mutably beside it. That is not a lifetime workaround: a policy that
+        // could read the coordinator's live state at a checkpoint would be a
+        // policy whose answer depends on when it is asked, and the whole point
+        // of a checkpoint is that the answer is a *decision* and not a race.
+        #[cfg(feature = "compression-schedule")]
+        let wall_stop_seconds = (mode == 34 && self.settings.compression_schedule_wall_stop)
+            .then(|| self.meter.wall_target_seconds)
+            .flatten();
+        // Refused while a slice is already parked, because the slot holds one:
+        // a second suspension would overwrite the first and the run would lose
+        // a live slice - and with it the work already charged for it.
+        #[cfg(feature = "compression-schedule")]
+        let yield_after_batches = (mode == 34 && self.suspended_slice.is_none())
+            .then_some(self.settings.compression_schedule_yield_batches)
+            .filter(|batches| *batches > 0);
+        // The barren rule, armed only on a past-bound slice. Inside the nine
+        // rungs the operator is doing the thing every pinned number in this
+        // repository was measured doing, and this round does not put a new
+        // stopping rule in front of it.
+        #[cfg(feature = "compression-schedule")]
+        let barren_batches = (mode == 34 && self.settings.compression_schedule_past_bound)
+            .then_some(self.settings.compression_schedule_past_bound_barren)
+            .filter(|batches| *batches > 0);
+        #[cfg(feature = "compression-schedule")]
+        let started = self.meter.started;
+        // The closure's own state, and the reason a checkpoint policy is an
+        // `FnMut` rather than a function pointer: "has this batch bought
+        // anything" is a question about two checkpoints, not one.
+        #[cfg(feature = "compression-schedule")]
+        let mut deepest_seen = f64::INFINITY;
+        #[cfg(feature = "compression-schedule")]
+        let mut barren_run = 0usize;
+        #[cfg(feature = "compression-schedule")]
+        let mut control = move |checkpoint: &ScheduleCheckpoint| {
+            // The wall stop wins over everything, because a slice suspended past
+            // the deadline is a slice the run will never get back to: the queue
+            // that would resume it is itself out of budget.
+            if let Some(limit) = wall_stop_seconds {
+                if started.elapsed().as_secs_f64() >= limit {
+                    return SliceControl::Stop;
+                }
+            }
+            if let Some(limit) = barren_batches {
+                if checkpoint.published_depth_mm < deepest_seen {
+                    deepest_seen = checkpoint.published_depth_mm;
+                    barren_run = 0;
+                } else {
+                    barren_run += 1;
+                    if barren_run >= limit {
+                        return SliceControl::Stop;
+                    }
+                }
+            }
+            match yield_after_batches {
+                // `batch` is zero-based, so "after n batches" is the checkpoint
+                // whose index is n - 1, and the modulo makes a slice that is
+                // resumed offer its turn back again rather than run to the end.
+                Some(n) if (checkpoint.batch + 1) % n == 0 => SliceControl::Suspend,
+                _ => SliceControl::Continue,
+            }
+        };
+        // Read out before the suspension slot is borrowed mutably, so the two
+        // borrows are of two fields and not of `self`.
+        let pieces = self.pieces;
+        let fast_settings = self.fast_settings;
+        #[cfg(feature = "compression-schedule")]
+        let interruption = if wall_stop_seconds.is_some()
+            || yield_after_batches.is_some()
+            || barren_batches.is_some()
+        {
+            Some(crate::search::general_relaxed::SliceInterruption {
+                control: &mut control,
+                suspended: &mut self.suspended_slice,
+            })
+        } else {
+            None
+        };
+        #[cfg(not(feature = "compression-schedule"))]
+        let interruption = None;
         let population = crate::search::general_relaxed::dispatch_persistent_vacancy_mode(
-            self.pieces,
-            self.fast_settings,
+            pieces,
+            fast_settings,
             relaxed,
             &parent_arm,
             None,
             secondary,
+            interruption,
         );
+        // The clock the interleave runs on. Zeroed here rather than where the
+        // slice is parked, because "how many actions have run since" is a
+        // property of the queue and the operator has no idea there is one.
+        #[cfg(feature = "compression-schedule")]
+        if population.schedule_slice_suspended {
+            self.actions_since_suspension = 0;
+        }
+        self.settle_operator_call(
+            mode,
+            population,
+            OperatorCallOpen {
+                started_seconds,
+                started_work,
+                currency,
+                counts_before,
+            },
+            parent_fingerprint,
+            secondary_fingerprint,
+            parent_role,
+            action,
+            #[cfg(feature = "sparse-rotation")]
+            sparse_audition,
+        )
+    }
+
+    /// The second half of one operator call: price it, charge it, archive it,
+    /// publish it, report it.
+    ///
+    /// Split out of [`Self::run_operator`] because there are now **two** ways
+    /// one operator call can happen. The ordinary one dispatches a mode against
+    /// a parent. The other resumes a mode-34 slice the coordinator suspended in
+    /// an earlier action, which cannot go through `run_operator` - there is no
+    /// parent to dispatch against, only a slice to hand back its own frontier -
+    /// and which must nonetheless be charged, archived, published and reported
+    /// by exactly the same rules, or the interleaved run and the atomic run
+    /// would not be comparable.
+    #[allow(clippy::too_many_arguments)]
+    fn settle_operator_call(
+        &mut self,
+        mode: usize,
+        population: GeneralPersistentVacancyDiagnostics,
+        open: OperatorCallOpen,
+        parent_fingerprint: Option<String>,
+        secondary_fingerprint: Option<String>,
+        parent_role: ParentRole,
+        action: Option<String>,
+        #[cfg(feature = "sparse-rotation")] sparse_audition: bool,
+    ) -> GeneralPersistentVacancyDiagnostics {
+        let OperatorCallOpen {
+            started_seconds,
+            started_work,
+            currency,
+            counts_before,
+        } = open;
         // Step two of the transaction: what did this call cost? The global
         // counter's delta is read *before* the debit, so it is the global
         // counter's own number and nothing else - `work_units()` folds in
@@ -4099,6 +4431,177 @@ impl<'a> Coordinator<'a> {
             work_currency: work_currency_report,
         });
         population
+    }
+
+    /// Resumes the mode-34 slice this coordinator suspended in an earlier
+    /// action, and settles it as one more operator call.
+    ///
+    /// This is the other end of [`SliceControl::Suspend`], and it is the whole
+    /// of what "the coordinator may run another action first" means. Nothing is
+    /// rebuilt: the slice that comes back off `suspended_slice` still holds the
+    /// frontier it stopped on, the deepest-confirmed slot, the lane's rng and
+    /// weights and every surrogate and pair-NFP cache, so the batches after the
+    /// interleave are the batches the uninterrupted slice would have run.
+    ///
+    /// It returns `None` when there is nothing suspended, so the queue can call
+    /// it unconditionally.
+    #[cfg(feature = "compression-schedule")]
+    fn resume_suspended_slice(&mut self) -> Option<GeneralPersistentVacancyDiagnostics> {
+        let suspended = self.suspended_slice.take()?;
+        let batches_before = suspended.batches_run();
+        let started_seconds = self.meter.seconds();
+        let started_work = self.meter.work_units();
+        let currency = self.settings.work_currency;
+        let counts_before = currency
+            .armed()
+            .then(work_currency_counts_now)
+            .unwrap_or_default();
+        // The same policy the dispatch built, rebuilt from the same fields: a
+        // resumed slice is subject to the wall stop and may suspend itself
+        // again, which is what makes `m34yield` an interleave rather than a
+        // single hand-back.
+        let wall_stop_seconds = self
+            .settings
+            .compression_schedule_wall_stop
+            .then(|| self.meter.wall_target_seconds)
+            .flatten();
+        let yield_after_batches = Some(self.settings.compression_schedule_yield_batches)
+            .filter(|batches| *batches > 0);
+        let started = self.meter.started;
+        let mut control = move |checkpoint: &ScheduleCheckpoint| {
+            if let Some(limit) = wall_stop_seconds {
+                if started.elapsed().as_secs_f64() >= limit {
+                    return SliceControl::Stop;
+                }
+            }
+            match yield_after_batches {
+                Some(n) if (checkpoint.batch + 1) % n == 0 => SliceControl::Suspend,
+                _ => SliceControl::Continue,
+            }
+        };
+        let mut diagnostics = GeneralPersistentVacancyDiagnostics {
+            mode: 34,
+            attempted: true,
+            seed_domain: crate::search::general_relaxed::COMPRESSION_SCHEDULE_SEED_DOMAIN,
+            ..GeneralPersistentVacancyDiagnostics::default()
+        };
+        let mut population = match crate::search::general_relaxed::resume_schedule_slice(
+            suspended,
+            &mut control,
+        ) {
+            Ok(outcome) => crate::search::general_relaxed::finish_schedule_outcome(
+                outcome,
+                diagnostics,
+                &mut self.suspended_slice,
+            ),
+            Err(error) => {
+                // A slice that fails on resumption is a failed operator call and
+                // not a failed run: the incumbent it was holding was published
+                // by the call that suspended it, so the run is never worse off
+                // than it was before the suspension.
+                diagnostics.failure_reason = Some(format!("compression schedule resume: {error}"));
+                diagnostics
+            }
+        };
+        // The same contract check every dispatched operator gets. It runs here
+        // because a resumption does not go through
+        // `dispatch_persistent_vacancy_mode` - there is no parent to dispatch
+        // against, only a slice with its own frontier - and an operator call
+        // whose layout was never contract-checked would be the one call in the
+        // run that is not.
+        self.record_schedule_contract(&mut population);
+        Some(self.settle_operator_call(
+            34,
+            population,
+            OperatorCallOpen {
+                started_seconds,
+                started_work,
+                currency,
+                counts_before,
+            },
+            None,
+            None,
+            // No descent is charged: the descent was charged when the slice was
+            // dispatched, and charging it again would move the parent to the
+            // back of a fairness queue it has already paid its way down.
+            ParentRole::Prior,
+            Some(format!("m34 resume from batch {batches_before}")),
+            #[cfg(feature = "sparse-rotation")]
+            false,
+        ))
+    }
+
+    /// Ends a slice that is still parked when the run is over, where it stands.
+    ///
+    /// No batch is run and no confirmation is asked: the slice is told it was
+    /// interrupted at the checkpoint it is already sitting on, and its report is
+    /// written. So this costs the run nothing it has not already spent, and what
+    /// it buys is that the slice's steps, sweeps, queries and confirmations
+    /// appear in exactly one report rather than in none.
+    #[cfg(feature = "compression-schedule")]
+    fn drain_suspended_slice(&mut self) {
+        let Some(suspended) = self.suspended_slice.take() else {
+            return;
+        };
+        let batches_before = suspended.batches_run();
+        let started_seconds = self.meter.seconds();
+        let started_work = self.meter.work_units();
+        let currency = self.settings.work_currency;
+        let counts_before = currency
+            .armed()
+            .then(work_currency_counts_now)
+            .unwrap_or_default();
+        let mut diagnostics = GeneralPersistentVacancyDiagnostics {
+            mode: 34,
+            attempted: true,
+            seed_domain: crate::search::general_relaxed::COMPRESSION_SCHEDULE_SEED_DOMAIN,
+            ..GeneralPersistentVacancyDiagnostics::default()
+        };
+        let mut population = match crate::search::general_relaxed::stop_suspended_slice(suspended)
+        {
+            Ok(outcome) => crate::search::general_relaxed::finish_schedule_outcome(
+                outcome,
+                diagnostics,
+                &mut self.suspended_slice,
+            ),
+            Err(error) => {
+                diagnostics.failure_reason = Some(format!("compression schedule drain: {error}"));
+                diagnostics
+            }
+        };
+        self.record_schedule_contract(&mut population);
+        self.settle_operator_call(
+            34,
+            population,
+            OperatorCallOpen {
+                started_seconds,
+                started_work,
+                currency,
+                counts_before,
+            },
+            None,
+            None,
+            ParentRole::Prior,
+            Some(format!("m34 drain at batch {batches_before}")),
+            #[cfg(feature = "sparse-rotation")]
+            false,
+        );
+    }
+
+    /// The contract half of `record_persistent_vacancy_contract_report`, for the
+    /// two mode-34 calls that do not go through the dispatch.
+    ///
+    /// The parent argument is empty because it is only ever read as a *fallback
+    /// layout* when the diagnostics carry none, and a resumed or drained slice
+    /// always carries the incumbent it is holding.
+    #[cfg(feature = "compression-schedule")]
+    fn record_schedule_contract(&self, population: &mut GeneralPersistentVacancyDiagnostics) {
+        crate::search::general_relaxed::record_persistent_vacancy_contract_report(
+            population,
+            self.pieces,
+            self.fast_settings,
+            &GeneralCoupledSeparatorArmDiagnostics::default(),
+        );
     }
 
     fn base_relaxed_settings(&self) -> GeneralRelaxedSettings {
@@ -4317,6 +4820,10 @@ pub fn run_portfolio(
         class_stats: BTreeMap::new(),
         #[cfg(feature = "compression-schedule")]
         schedule_slices: 0,
+        #[cfg(feature = "compression-schedule")]
+        suspended_slice: None,
+        #[cfg(feature = "compression-schedule")]
+        actions_since_suspension: 0,
         #[cfg(feature = "sparse-rotation")]
         sparse_rotation_bit: SparseRotationBit::default(),
     };
@@ -4424,6 +4931,17 @@ pub fn run_portfolio(
     } else {
         None
     };
+    // Both mode-34 dispatch sites - the queue's `Schedule` action and the
+    // race's audition batch - are reachable only inside v3, and `run_v3_schedule`
+    // drains the slot on its way out, so a run cannot end holding a live slice.
+    // Asserted rather than commented, because a third dispatch site added later
+    // would silently drop a slice's whole account and every aggregate would
+    // still look plausible.
+    #[cfg(feature = "compression-schedule")]
+    debug_assert!(
+        coordinator.suspended_slice.is_none(),
+        "a run ended holding a suspended mode-34 slice"
+    );
     if !settings.coordinator_v3 {
     coordinator.run_phase("descent", settings.schedule.descent_by, |run| {
         let mut cycles = run.settings.descent_cycles.max(1);
@@ -5025,6 +5543,25 @@ const CROSSOVER_CUTS_PER_PAIR: usize = 2;
 /// and no millimetre crosses a request. It is the same derivation
 /// [`LADDER_RUNGS`] uses, at a different count, because it is the same quantum.
 const SCHEDULE_RUNGS: usize = 9;
+
+/// How many batches a past-bound slice's budget is cut into by default.
+///
+/// See [`PortfolioSettings::compression_schedule_past_bound_batches`]. Eight,
+/// and the number is a resolution rather than a tuning: it is how often the
+/// coordinator gets to re-ask "can I still afford this?" over one action, and on
+/// the measured band it puts a checkpoint about every one to two of the nine
+/// rungs the bounded slice walks.
+#[cfg(feature = "compression-schedule")]
+const SCHEDULE_PAST_BOUND_BATCHES: usize = 8;
+
+/// How many consecutive barren batches end a past-bound slice by default.
+///
+/// See [`PortfolioSettings::compression_schedule_past_bound_barren`]. Two, and
+/// not one: `confirm_every` is four steps and a batch is one to two rungs, so a
+/// single batch can straddle a cadence gap and be barren because it was never
+/// asked rather than because it was refused. Two consecutive batches cannot.
+#[cfg(feature = "compression-schedule")]
+const SCHEDULE_PAST_BOUND_BARREN: usize = 2;
 
 /// How many arms the basin race starts with, the incumbent control included.
 ///
@@ -6316,6 +6853,14 @@ fn run_v3_schedule(
             }
         }
     }
+    // A slice may still be parked when the budget runs out, and the run must not
+    // end holding one: its incumbent was already published by the call that
+    // suspended it, but its *report* has not been written, and a run that
+    // silently drops a slice's account is a run whose work numbers do not add
+    // up. Ending it here costs no further geometry - no batch is run, no
+    // confirmation is asked - which is why this is a drain and not a resume.
+    #[cfg(feature = "compression-schedule")]
+    coordinator.drain_suspended_slice();
     let exit_cause = coordinator
         .phases
         .last()
@@ -6441,6 +6986,81 @@ fn v3_loop(
             save!();
             return;
         }
+        // The resumption, and it is the *first* thing the loop does because a
+        // suspended slice is not a candidate: it is an action already bought,
+        // half spent, holding a frontier whose caches are the reason its next
+        // step is cheap. Ranking it against the queue would be pricing a sunk
+        // cost.
+        //
+        // `actions_since_suspension >= 1` is the whole rule. It is what makes
+        // this an interleave: the slice hands its turn back, the queue spends
+        // exactly one action on whichever class outranks it now, and then the
+        // slice gets its turn back. Zero would be a more expensive way to write
+        // the loop the previous round already had.
+        #[cfg(feature = "compression-schedule")]
+        if run.suspended_slice.is_some() && run.actions_since_suspension >= 1 {
+            let iteration = out.len();
+            let entry_raw_depth_mm = run.incumbent.raw_depth_mm;
+            let cost_before = run.meter.currency_spent();
+            let work_before = run.meter.work_units();
+            let debit_before = run.meter.self_metered_debit();
+            let seconds_before = run.meter.seconds();
+            let publications_before = run.publications.len();
+            let calls_before = run.operator_calls.len();
+            let resumed = run.resume_suspended_slice();
+            let self_metered_units = resumed.as_ref().and_then(schedule_self_cost_units);
+            run.coordinator.actions_since_suspension = 0;
+            let debited_units = run.meter.self_metered_debit().saturating_sub(debit_before);
+            let charged_cost = (run.meter.currency_spent() - cost_before).max(0.0);
+            let metered_cost = if run.meter.is_wall() {
+                charged_cost
+            } else {
+                (charged_cost - debited_units as f64).max(0.0)
+            };
+            let cost = match self_metered_units {
+                Some(units) if !run.meter.is_wall() => charged_cost.max(units as f64),
+                _ => charged_cost,
+            };
+            let publications = run.publications.len() - publications_before;
+            let work_units = run.meter.work_units().saturating_sub(work_before);
+            let seconds = run.meter.seconds() - seconds_before;
+            let operator_calls = run.operator_calls.len() - calls_before;
+            let exit_raw_depth_mm = run.incumbent.raw_depth_mm;
+            let gained = match (entry_raw_depth_mm, exit_raw_depth_mm) {
+                (Some(entry), Some(exit)) => (entry - exit).max(0.0),
+                _ => 0.0,
+            };
+            {
+                let stats = run.class_stats.entry(ActionClass::Schedule).or_default();
+                stats.actions += 1;
+                stats.publications += publications;
+                stats.work_units += work_units;
+                stats.seconds += seconds;
+                stats.cost_total += cost;
+                stats.cost_max = stats.cost_max.max(cost);
+                stats.delta_raw_mm += gained;
+            }
+            out.push(ScheduledActionReport {
+                iteration,
+                class: ActionClass::Schedule.name().to_owned(),
+                key: "schedule:resume".to_owned(),
+                label: "m34 resume".to_owned(),
+                value: 0.0,
+                estimated_cost: 0.0,
+                actual_cost: cost,
+                work_units,
+                seconds,
+                operator_calls,
+                publications,
+                entry_raw_depth_mm,
+                exit_raw_depth_mm,
+                candidates: 0,
+                metered_cost,
+                self_metered_units,
+                debited_units,
+            });
+            continue;
+        }
         let mut candidates = run.enumerate_v3_actions();
         // The diversify class competes on rank like every other class, instead
         // of being gated on the priced queue emptying - which coordinator v3
@@ -6562,6 +7182,15 @@ fn v3_loop(
         let calls_before = run.operator_calls.len();
         let iteration = out.len();
 
+        // Counted *before* the action, and that ordering is the interleave.
+        // `run_operator` zeroes this counter at the instant it suspends a slice,
+        // so an increment afterwards would credit the suspending action itself
+        // as "the other action that ran" and the slice would be resumed on the
+        // very next iteration with nothing in between.
+        #[cfg(feature = "compression-schedule")]
+        {
+            run.coordinator.actions_since_suspension += 1;
+        }
         let self_metered_units = execute_v3_action(run, &action, constructor_clamp_mm);
 
         // The debit is applied inside the operator transaction now (see
@@ -6901,9 +7530,61 @@ fn execute_v3_action(
             // budget it is seconds, and capping a work meter with a number of
             // seconds would be a category error, so the cap is refused there
             // and the slice stays atomic.
+            //
+            // The past-bound lever is the third source, and it is a *budget*
+            // for the whole action: past the bound the walk has no natural end
+            // short of the sheet floor, so the number the coordinator can
+            // afford for this action is what stops it, and cutting that number
+            // into `past_bound_batches` is what turns "afford it once, at
+            // dispatch, on an estimate" into "re-ask at every checkpoint".
+            let past_bound = run.settings.compression_schedule_past_bound;
+            let action_budget_units = (!run.meter.is_wall())
+                .then(|| run.meter.remaining_to(run.deadline).max(1.0) as usize);
+            // The share is applied here rather than at a checkpoint, because a
+            // work cap is exactly the right instrument for "you have spent
+            // enough": it fires at the top of a step, not at the end of a
+            // batch, so the slice cannot overshoot it by a batch. What the
+            // checkpoint policy owns is the other question - "you have stopped
+            // buying anything" - which no cap can express.
+            let past_bound_cap = past_bound
+                .then_some(action_budget_units)
+                .flatten()
+                .map(|units| {
+                    let share = run
+                        .settings
+                        .compression_schedule_past_bound_share
+                        .clamp(0.0, 1.0);
+                    ((units as f64 * share) as usize).max(1)
+                });
+            // A checkpoint policy with no checkpoints to answer at is a policy
+            // that never runs, so all three keys that consume checkpoints -
+            // `m34past`, `m34wallstop` and `m34yield` - give the slice a batch
+            // budget when no explicit `m34batch` named one. The divisor is the
+            // same in all three because it means the same thing in all three:
+            // how many times the coordinator gets to decide over one action.
+            //
+            // This is the trap the previous round fell into from the other side.
+            // `m34cap` handed the slice a batch budget and then never asked it
+            // anything; arming a policy without a batch budget is the mirror
+            // image - the coordinator would be ready to answer at a checkpoint
+            // the slice never reaches - and it would look exactly as armed in
+            // the spec and do exactly as little.
+            let wants_checkpoints = past_bound
+                || run.settings.compression_schedule_wall_stop
+                || run.settings.compression_schedule_yield_batches > 0;
             let batch_work_units = run
                 .settings
                 .compression_schedule_batch_work_units
+                .or_else(|| {
+                    let batches = run
+                        .settings
+                        .compression_schedule_past_bound_batches
+                        .max(1);
+                    wants_checkpoints
+                        .then_some(past_bound_cap.or(action_budget_units))
+                        .flatten()
+                        .map(|units| (units / batches).max(1))
+                })
                 .or_else(|| {
                     let deadline = run.deadline;
                     (run.settings.compression_schedule_cap_to_budget && !run.meter.is_wall())
@@ -6979,6 +7660,18 @@ fn execute_v3_action(
                     }
                     if let Some(confirm_every) = first_slice_confirm_every {
                         schedule_settings.confirm_every = confirm_every;
+                    }
+                    // The bound lever, and it is two writes because the slice's
+                    // own loop needs both: `continue_past_bound` alone takes the
+                    // *lower limit* down to the sheet floor but leaves the loop
+                    // bounded by `steps_planned`, and only the work cap makes
+                    // the tail unbounded (`ScheduleSliceRun::unbounded_tail`).
+                    // Arming one without the other is a lever that does nothing,
+                    // which is why they are written together and from one
+                    // `Option`.
+                    if let Some(cap) = past_bound_cap {
+                        schedule_settings.continue_past_bound = true;
+                        schedule_settings.work_cap_queries = Some(cap);
                     }
                     relaxed.compression_schedule = Some(schedule_settings);
                 },
@@ -7146,6 +7839,9 @@ fn schedule_slice_report(
         se2_witness_bought_mm: report.se2_witness_bought_mm,
         batch_work_units: report.batch_work_units,
         checkpoints: report.checkpoints.clone(),
+        batches: report.batches,
+        resumptions: report.resumptions,
+        interrupted: report.interrupted,
         step_digest: report.step_digest,
     })
 }
@@ -8712,6 +9408,28 @@ mod tests {
         assert_eq!(settings.compression_schedule_batch_work_units, None);
         #[cfg(feature = "compression-schedule")]
         assert!(!settings.compression_schedule_cap_to_budget);
+        // And this round's four. All off, so a binary that carries the real
+        // interruption and is not asked for it is the previous round's binary -
+        // which is the claim the equivalence gate in
+        // `docs/experiments/real-interruption/` §5 measures from the request.
+        #[cfg(feature = "compression-schedule")]
+        {
+            assert!(!settings.compression_schedule_wall_stop);
+            assert_eq!(settings.compression_schedule_yield_batches, 0);
+            assert!(!settings.compression_schedule_past_bound);
+            // The two that are *values* rather than switches still ship at the
+            // number the lever means when it is armed, and neither is read at
+            // all while `past_bound` is false.
+            assert_eq!(
+                settings.compression_schedule_past_bound_batches,
+                SCHEDULE_PAST_BOUND_BATCHES
+            );
+            assert_eq!(
+                settings.compression_schedule_past_bound_barren,
+                SCHEDULE_PAST_BOUND_BARREN
+            );
+            assert_eq!(settings.compression_schedule_past_bound_share, 1.0);
+        }
     }
 
     /// The ladder is one ladder, and it floors.

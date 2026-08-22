@@ -1,0 +1,22 @@
+The base binary: the code the retraction is about.
+
+`capreplay-30M.json` and the `binaryA` side of `equiv-base.json` were produced
+by a binary built from the **base commit of this round**, which is the commit
+the retracted claim was made at:
+
+  commit        ea7c843  (Merge robust plan: persisted calibration ships,
+                          min-of-k self-rejected, density hard negative)
+  features      jagua-experimental,compression-schedule,
+                parallel-compression-schedule,continuous-rotation,
+                sparse-rotation,fast-contract-validator
+  command       cargo build --release --example general_request_benchmark \
+                  --features <the six above>
+  sha256        c41cd0943974fedaad8a5832b46007f0e7d4f7d716ed53a7c21b6ee567466ac6
+  path          /var/lib/t3/tmp/realint/bin/combo-base
+                (copied to .../base-ship-meas for `equiv.py`)
+
+It is a separate build from `binaries.txt`'s two, and deliberately so: a
+retraction measured on the binary that replaces the code would be measuring the
+replacement. The tree was clean at `ea7c843` when it was built - the worktree
+was hard-reset onto that commit before the first `cargo build` of the round and
+nothing was edited until after this binary was copied out.

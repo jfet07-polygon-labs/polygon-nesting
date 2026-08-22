@@ -1,5 +1,54 @@
 # The re-plan, and a mode 34 that can stop
 
+> ## Correction, 2026-08-21 — §12.3 and the `m34cap` headline row are retracted
+>
+> **`m34cap` did not stop anything at the HEAD this round measured, and this
+> document's claim that it did is withdrawn.** Sol review 9's P0 names the line:
+> `ScheduleSliceRun::advance` recorded a checkpoint and left `finished = false`,
+> and its caller looped `while !slice.finished` to the end of the monolith, so
+> **the coordinator never regained control at a checkpoint.** The cap changed the
+> checkpoint *report* and nothing else.
+>
+> The retraction has been reproduced rather than argued.
+> `docs/experiments/real-interruption/` §2 replays `m34cap=0` against
+> `m34cap=1` at `work=30000000` on mixed-61 seeds 0/1/2, on a binary built from
+> the committed base tree: **identical raw depth, identical incumbent
+> fingerprint, identical total work, identical operator-call count and identical
+> per-slice step digest on all three seeds.** Seed 1 is 171.3619986855876 mm at
+> 28,636,653 units over 8 operator calls on both arms. The whole document is
+> equal once the `scheduleSlice` block is dropped, and unequal only because of
+> the checkpoint list.
+>
+> Specifically withdrawn:
+>
+> * **the headline row** *"The checkpoint's consumer — `m34cap=1` at thirty
+>   seconds: p50 32.64 s → 25.91 s, overruns 4 of 6 → 2 of 6, for 3.1 mm on one
+>   seed"*;
+> * **§12.3 in full**, including *"It works, and it is priced"*, the 162.846 →
+>   165.935 mm attribution on seed 1, and *"That is the whole argument for the
+>   batch mechanism in one table"*.
+>
+> The wall numbers in that table are real measurements of real processes. What
+> does not survive is the attribution: they are two runs of **one trajectory**,
+> and §7 of this same document already records that the box was not quiet.
+>
+> There is a second, independent defect, and it is a provenance break rather
+> than a semantic one: **the committed driver cannot generate the arms whose
+> specs the evidence file carries.** `drivers/trancheq.py:44` parses any
+> fraction other than `off` as `replan=1,planfirst=<value>`, so `capon` would
+> have produced `replan=1,planfirst=capon` — not the `replan=1,m34cap=1` that
+> appears in every `spec` field of `evidence/cap-30s.json`. Source, driver and
+> measured binary do not agree. `evidence/cap-30s.json` now carries a
+> `SUPERSEDED` block saying so.
+>
+> **What replaces it.** `docs/experiments/real-interruption/` makes the
+> interruption real: `advance_one_batch() -> Checkpoint|Finished` returns to a
+> driver that consults a policy at every checkpoint, and the coordinator may
+> stop with the exact-valid incumbent the checkpoint holds, or suspend the slice
+> alive and resume it after another action. Everything else in this document —
+> the concatenation gate, the struct, the step digest, the re-plan, the
+> quiet-box retraction of `calibrated-plan` §8.2 — stands.
+
 Two mechanisms, one budget, and they are the same idea at two scales.
 
 `docs/experiments/calibrated-plan/` made the ten-second number reproducible and
@@ -30,7 +79,7 @@ checkpoint §13.1 needs is the batch boundary Sol asked for.**
 |---|---|
 | **Sol's concatenation gate** | **1,741 batches over 21 cells, three batch sizes and two budgets: every cell equal as a whole document *and* as a per-step digest** (§10) |
 | **The resumable slice** | `m34batch=<units>`: the slice stops at a checkpoint holding an exact-valid incumbent and resumes with frontier, deepest-confirmed slot, rng, weights and every surrogate cache intact |
-| **The checkpoint's consumer** | `m34cap=1` at thirty seconds: p50 **32.64 s → 25.91 s**, overruns 4 of 6 → 2 of 6, for 3.1 mm on one seed (§12.2) |
+| ~~**The checkpoint's consumer**~~ | ~~`m34cap=1` at thirty seconds: p50 **32.64 s → 25.91 s**, overruns 4 of 6 → 2 of 6, for 3.1 mm on one seed (§12.2)~~ **RETRACTED — see the correction at the top of this file.** `m34cap` could not stop the slice: the caller looped to the end of the monolith, so the coordinator never regained control. The two arms are one trajectory. |
 | **The in-run re-plan** | `replan=1` recovers **2.808 mm on mixed-61 seed 1 at ten seconds - exactly `calibrated-plan` §9's ladder-floor cost for that seed** - and 0.252 mm on the median of seed medians, at the same overrun count (§11) |
 | **What it does *not* fix** | the thirty-second overrun. The `plan` arm ran **41.15 s** against a 30 s target and re-planning brought it to **37.14 s**: reduced by 4 s, not removed (§12.1) |
 | **A retraction-grade finding** | `calibrated-plan` §8.2's *"one plan, one depth, one document per seed, 60 of 60"* is a **quiet-box** property. Re-measured under a competing workload the same arm produced **2 / 3 / 1** distinct depths per seed (§11.1) |
@@ -798,7 +847,20 @@ overrun belongs to the work-denominated modes**, and this round does not close
 it.
 
 
-### 12.3 The checkpoint's consumer, priced
+### 12.3 The checkpoint's consumer, priced — **RETRACTED**
+
+> **This section is withdrawn in full.** See the correction at the top of this
+> file. `m34cap` could not change a trajectory at this HEAD: `advance` recorded
+> a checkpoint and left `finished = false`, and the caller looped
+> `while !slice.finished` to the end of the monolith. The two arms below are two
+> processes running **one** trajectory, and the difference between their walls
+> is a measurement of the box.
+>
+> The replay is `docs/experiments/real-interruption/evidence/capreplay-30M.json`:
+> at `work=30000000` on mixed-61 seeds 0/1/2, `m34cap=0` and `m34cap=1` produce
+> identical depth, fingerprint, work, operator-call count and per-slice step
+> digest. Nothing below is deleted, so the retraction can be audited against
+> what it retracts.
 
 mixed-61, 2 rounds x 3 seeds - load1 min 2.92 / median 4.36 / max 9.11 over 12 runs
 
@@ -811,6 +873,9 @@ mixed-61, 2 rounds x 3 seeds - load1 min 2.92 / median 4.36 / max 9.11 over 12 r
 each slice its own remaining budget and the slice gives itself back at the first
 checkpoint past it, holding its last exact-valid incumbent. Both arms re-plan, so
 the cap is the only difference between them.
+
+**RETRACTED — the paragraph below is what was claimed, and it is wrong.** The two
+arms are one trajectory; nothing here is caused by the cap.
 
 **It works, and it is priced.** The p50 falls from **32.64 s to 25.91 s** and the
 overruns from **4 of 6 to 2 of 6**; the cost is on seed 1, where the depth goes

@@ -2167,6 +2167,35 @@ fn parse_portfolio_spec(
             // can still afford, rather than discovering the price afterwards.
             #[cfg(feature = "compression-schedule")]
             "m34cap" => settings.compression_schedule_cap_to_budget = value != "0",
+            // The wall stop at a checkpoint: Sol review 8 §3 condition 3, which
+            // `m34cap` is *not* - that one stops on the slice's own work meter,
+            // which says nothing about seconds. See
+            // `PortfolioSettings::compression_schedule_wall_stop` for the trade
+            // this key buys, which is depth spread for a bounded wall.
+            //
+            // `m34wallstop` and not `m34wall`, which has been the *affordability
+            // prior*'s key since coordinator v4 and means something else
+            // entirely: how the queue prices a schedule action before it buys
+            // one. Two keys one character apart would be worse than a long name.
+            #[cfg(feature = "compression-schedule")]
+            "m34wallstop" => settings.compression_schedule_wall_stop = value != "0",
+            // The interleave: suspend the slice toward the coordinator after
+            // this many batches so another action can run before it resumes.
+            // `0` is the default and never suspends.
+            #[cfg(feature = "compression-schedule")]
+            "m34yield" => settings.compression_schedule_yield_batches = value.parse()?,
+            // The bound lever. `docs/experiments/robust-plan/` §13.1: the
+            // coordinator's slice is a walk of a *fixed distance*, every cell of
+            // the density sweep exited on `bound` dropping exactly 1.6160 mm,
+            // and the next lever is the bound rather than the grid.
+            #[cfg(feature = "compression-schedule")]
+            "m34past" => settings.compression_schedule_past_bound = value != "0",
+            #[cfg(feature = "compression-schedule")]
+            "m34pastbatches" => settings.compression_schedule_past_bound_batches = value.parse()?,
+            #[cfg(feature = "compression-schedule")]
+            "m34pastbarren" => settings.compression_schedule_past_bound_barren = value.parse()?,
+            #[cfg(feature = "compression-schedule")]
+            "m34pastshare" => settings.compression_schedule_past_bound_share = value.parse()?,
             // The certificate's **disarm**. Unknown without the feature for the
             // same reason `m34pconfirm` is: a binary that cannot honour a key
             // must refuse it rather than run the other arm under its label -
@@ -2374,19 +2403,29 @@ fn schedule_slice_json(
         "stepDigest": resumable_slice_json(slice).0,
         "batchWorkUnits": resumable_slice_json(slice).1,
         "checkpoints": resumable_slice_json(slice).2,
+        // The interruption's own three columns. `null` on an atomic slice that
+        // nobody stopped, for the same reason `batchWorkUnits` is: a document
+        // from a run with none of this armed has to be the previous round's
+        // document, and a `0` where there used to be nothing is a difference.
+        "batches": resumable_slice_json(slice).3,
+        "resumptions": resumable_slice_json(slice).4,
+        "interrupted": resumable_slice_json(slice).5,
     })
 }
 
-/// The three resumable-slice fields, or three `null`s in a build whose
+/// The resumable slice's fields, or `null`s in a build whose
 /// `ScheduleSliceReport` does not carry them.
 ///
-/// A function rather than three `#[cfg]`s inside the `json!` above: `json!`
-/// takes an expression per key and `#[cfg]` cannot be written on one, so gating
-/// them in place would mean two copies of a sixty-key literal free to drift.
+/// A function rather than `#[cfg]`s inside the `json!` above: `json!` takes an
+/// expression per key and `#[cfg]` cannot be written on one, so gating them in
+/// place would mean two copies of a sixty-key literal free to drift.
 #[allow(clippy::type_complexity)]
 fn resumable_slice_json(
     slice: &polygon_nesting_core::search::portfolio::ScheduleSliceReport,
 ) -> (
+    serde_json::Value,
+    serde_json::Value,
+    serde_json::Value,
     serde_json::Value,
     serde_json::Value,
     serde_json::Value,
@@ -2410,12 +2449,22 @@ fn resumable_slice_json(
                     "finished": point.finished,
                 }))
                 .collect::<Vec<_>>())),
+            json!((slice.batches > 1).then_some(slice.batches)),
+            json!((slice.resumptions > 0).then_some(slice.resumptions)),
+            json!(slice.interrupted.then_some(true)),
         )
     }
     #[cfg(not(feature = "compression-schedule"))]
     {
         let _ = slice;
-        (json!(null), json!(null), json!(null))
+        (
+            json!(null),
+            json!(null),
+            json!(null),
+            json!(null),
+            json!(null),
+            json!(null),
+        )
     }
 }
 
@@ -2930,6 +2979,46 @@ mod tests {
                 expected
             );
         }
+    }
+
+    /// Every key this round adds reaches the field it names, and an unarmed
+    /// spec leaves all four at the shipped default.
+    ///
+    /// It is a round trip and not an eyeball because the previous round's P0 had
+    /// a second half that was exactly this: `evidence/cap-30s.json` carried
+    /// `m34cap=1` in its `spec` field and the committed driver could not
+    /// generate that string. A key nobody parses and a key nobody emits fail the
+    /// same way - silently, under an armed label.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn the_interruption_keys_reach_their_fields() {
+        let template = GeneralRelaxedSettings::mixed_61_probe(0, 1);
+        let parse = |spec: &str| parse_portfolio_spec(spec, template).unwrap();
+
+        let unarmed = parse("plan=10000,v3=1");
+        assert!(!unarmed.compression_schedule_wall_stop);
+        assert_eq!(unarmed.compression_schedule_yield_batches, 0);
+        assert!(!unarmed.compression_schedule_past_bound);
+        assert_eq!(unarmed.compression_schedule_past_bound_share, 1.0);
+
+        let armed = parse(
+            "plan=10000,v3=1,m34wallstop=1,m34yield=3,m34past=1,\
+             m34pastshare=0.5,m34pastbatches=4,m34pastbarren=1",
+        );
+        assert!(armed.compression_schedule_wall_stop);
+        assert_eq!(armed.compression_schedule_yield_batches, 3);
+        assert!(armed.compression_schedule_past_bound);
+        assert_eq!(armed.compression_schedule_past_bound_share, 0.5);
+        assert_eq!(armed.compression_schedule_past_bound_batches, 4);
+        assert_eq!(armed.compression_schedule_past_bound_barren, 1);
+
+        // `m34wall` is a *different* key with a nine-round history - the
+        // schedule class's affordability prior - and the two must not have
+        // collided. This is the assertion that would have caught the collision
+        // the compiler only warned about.
+        let prior = parse("plan=10000,v3=1,m34wall=1");
+        assert!(prior.schedule_wall_prior);
+        assert!(!prior.compression_schedule_wall_stop);
     }
 
     fn rectangle(width: f64, height: f64) -> PolygonSet {

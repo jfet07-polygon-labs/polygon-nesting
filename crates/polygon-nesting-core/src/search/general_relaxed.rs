@@ -183,7 +183,7 @@ const GLOBAL_LEGALIZATION_SEED_DOMAIN: u64 = 0x474C_4F42_414C_3330;
 // rebuilding a whole pipeline per rung, bought instead one canonical grid unit
 // at a time inside a single lane's sweeps.
 #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
-const COMPRESSION_SCHEDULE_SEED_DOMAIN: u64 = 0x434F_4D50_5343_4834;
+pub(super) const COMPRESSION_SCHEDULE_SEED_DOMAIN: u64 = 0x434F_4D50_5343_4834;
 // The four repair tiers a mode-26 rung may publish through, reported per rung
 // so a ladder table can say which mechanism reached which residue. Tier one is
 // mode 27's translation-only projection; tier two is mode 28's
@@ -867,6 +867,17 @@ pub struct GeneralPersistentVacancyDiagnostics {
     #[cfg(feature = "compression-schedule")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub compression_schedule: Option<GeneralCompressionScheduleDiagnostics>,
+    /// Mode 34: whether this call ended by **suspending** its slice toward the
+    /// caller rather than by finishing it.
+    ///
+    /// A suspended call publishes its checkpoint incumbent and carries no
+    /// `compression_schedule` report, because the slice is still running: the
+    /// report is written once, by whichever call finishes it. A reader adding
+    /// up slice work across a run must therefore add up the reports and not the
+    /// calls, and this bit is how a call that has no report says why.
+    #[cfg(feature = "compression-schedule")]
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub schedule_slice_suspended: bool,
     pub cap_exhausted: Option<String>,
     pub failure_reason: Option<String>,
 }
@@ -5346,6 +5357,10 @@ fn run_coupled_dynamic_separator_experiment<'a>(
                     effective_parent,
                     parent_source,
                     secondary_pinned_vacancy_parent,
+                    // The separator's own mode slot has no queue to hand a
+                    // suspended slice back to, so it runs the slice to
+                    // completion - which is what it has always done.
+                    None,
                 )
             });
         GeneralCoupledSeparatorDiagnostics {
@@ -5388,6 +5403,29 @@ fn run_coupled_dynamic_separator_experiment<'a>(
     }
 }
 
+/// The mode-34 interruption, as one argument.
+///
+/// It is a struct rather than two parameters because the two halves are only
+/// ever meaningful together: a policy that may answer
+/// [`SliceControl::Suspend`] without a slot to park the slice in is a policy
+/// that would drop a live slice on the floor, and a slot without a policy is
+/// one nothing can ever fill.
+///
+/// In a build without `compression-schedule` the type still exists and carries
+/// nothing, so [`dispatch_persistent_vacancy_mode`] has one signature in every
+/// feature configuration and the separator's call site is `None` in all of them.
+#[cfg(feature = "jagua-experimental")]
+pub(super) struct SliceInterruption<'s, 'a> {
+    /// Consulted at every checkpoint. See [`drive_slice_batches`].
+    #[cfg(feature = "compression-schedule")]
+    pub control: &'s mut ScheduleSliceControl<'s>,
+    /// Where a suspended slice is parked for the caller to resume.
+    #[cfg(feature = "compression-schedule")]
+    pub suspended: &'s mut Option<Box<SuspendedScheduleSlice<'a>>>,
+    #[cfg(not(feature = "compression-schedule"))]
+    pub unused: std::marker::PhantomData<(&'s (), &'a ())>,
+}
+
 /// Runs one deep-operator (persistent-vacancy) mode against one parent layout.
 ///
 /// This is the whole of what the coupled separator's mode slot used to do
@@ -5401,15 +5439,22 @@ fn run_coupled_dynamic_separator_experiment<'a>(
 /// found and `record_persistent_vacancy_contract_report` measures it; the
 /// adoption rule lives in [`adopt_published_placements`] and is the only door
 /// to a published result for either caller.
+///
+/// `interruption` is the mode-34 checkpoint policy and the slot a suspended
+/// slice is parked in. Every other mode ignores it, and `None` is the previous
+/// round's behaviour for mode 34 as well: run the slice to completion.
 #[cfg(feature = "jagua-experimental")]
-pub(super) fn dispatch_persistent_vacancy_mode(
-    pieces: &[GeneralFastPiece<'_>],
+pub(super) fn dispatch_persistent_vacancy_mode<'a>(
+    pieces: &'a [GeneralFastPiece<'a>],
     fast_settings: GeneralFastSettings,
     relaxed_settings: GeneralRelaxedSettings,
     effective_parent: &GeneralCoupledSeparatorArmDiagnostics,
     parent_source: Option<String>,
     secondary_pinned_vacancy_parent: Option<&GeneralPersistentVacancyPinnedParent>,
+    interruption: Option<SliceInterruption<'_, 'a>>,
 ) -> GeneralPersistentVacancyDiagnostics {
+    #[cfg(not(feature = "compression-schedule"))]
+    let _ = interruption;
     // One scope per deep-operator dispatch, named by mode and
     // rooted at the parent it descends from, so every exact-valid
     // candidate the mode produces is attributed to both.
@@ -5458,13 +5503,31 @@ pub(super) fn dispatch_persistent_vacancy_mode(
         ),
         27 => run_micro_legalization_probe(pieces, fast_settings, effective_parent, parent_source),
         #[cfg(feature = "compression-schedule")]
-        34 => run_compression_schedule(
-            pieces,
-            fast_settings,
-            relaxed_settings,
-            effective_parent,
-            parent_source,
-        ),
+        34 => {
+            // One call site for the mode, and the unarmed path is a *value*
+            // rather than a second call: `run_slice_to_completion` is exactly
+            // the policy the previous round's `while !slice.finished` loop
+            // implemented, written down where it can be substituted.
+            let mut parked: Option<Box<SuspendedScheduleSlice<'a>>> = None;
+            let mut always_continue: fn(&ScheduleCheckpoint) -> SliceControl =
+                run_slice_to_completion;
+            let (control, out): (
+                &mut ScheduleSliceControl<'_>,
+                &mut Option<Box<SuspendedScheduleSlice<'a>>>,
+            ) = match interruption {
+                Some(interruption) => (interruption.control, interruption.suspended),
+                None => (&mut always_continue, &mut parked),
+            };
+            run_compression_schedule(
+                pieces,
+                fast_settings,
+                relaxed_settings,
+                effective_parent,
+                parent_source,
+                control,
+                out,
+            )
+        }
         // Modes 32 and 33 are modes 28 and 29 with the
         // orientation-perturbation candidate stream armed; nothing
         // else about the two pipelines differs, which is why they
@@ -6300,12 +6363,14 @@ fn run_ladder_compression(
 /// is validated against the *real* request; the schedule's clamp is a proxy-tier
 /// scalar and never touches `fast_settings.sheet_long_axis_mm`.
 #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
-fn run_compression_schedule(
-    pieces: &[GeneralFastPiece<'_>],
+fn run_compression_schedule<'a>(
+    pieces: &'a [GeneralFastPiece<'a>],
     fast_settings: GeneralFastSettings,
     relaxed_settings: GeneralRelaxedSettings,
     parent: &GeneralCoupledSeparatorArmDiagnostics,
     parent_source: Option<String>,
+    control: &mut ScheduleSliceControl<'_>,
+    suspended_out: &mut Option<Box<SuspendedScheduleSlice<'a>>>,
 ) -> GeneralPersistentVacancyDiagnostics {
     let mut diagnostics = GeneralPersistentVacancyDiagnostics {
         mode: 34,
@@ -6372,8 +6437,41 @@ fn run_compression_schedule(
         &parent_placements,
         parent_depth_mm,
         parent_depth_mm - final_bound_mm,
+        control,
     ) {
-        Ok((published_placements, published_depth_mm, report)) => {
+        Ok(outcome) => finish_schedule_outcome(outcome, diagnostics, suspended_out),
+        Err(error) => {
+            diagnostics.failure_reason = Some(format!("compression schedule: {error}"));
+            diagnostics
+        }
+    }
+}
+
+/// Turns a slice outcome into the mode's diagnostics, parking a suspended slice
+/// on the way through.
+///
+/// The two cases report the same *incumbent* and a different *account*, and the
+/// asymmetry is deliberate:
+///
+/// * a completed slice carries `compression_schedule`, which is the one report
+///   for the whole slice however many batches and resumptions it took;
+/// * a suspended slice carries no report at all. Its work is not finished being
+///   counted, and a call that emitted a half report would be the second
+///   instrument in this campaign that describes N slices where one ran (see
+///   `ScheduleSliceRun::se2_witness_adoptions` for the first).
+///
+/// A suspended slice still publishes: `exact_valid` is true and the placements
+/// are the checkpoint's incumbent, because refusing to publish a layout the
+/// exact tier has already accepted would make interruption cost depth it does
+/// not cost.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+pub(super) fn finish_schedule_outcome<'a>(
+    outcome: ScheduleSliceOutcome<'a>,
+    mut diagnostics: GeneralPersistentVacancyDiagnostics,
+    suspended_out: &mut Option<Box<SuspendedScheduleSlice<'a>>>,
+) -> GeneralPersistentVacancyDiagnostics {
+    match outcome {
+        ScheduleSliceOutcome::Completed((published_placements, published_depth_mm, report)) => {
             diagnostics.complete_states = 1;
             diagnostics.exact_valid = true;
             diagnostics.independent_depth_mm = Some(published_depth_mm);
@@ -6382,8 +6480,17 @@ fn run_compression_schedule(
             diagnostics.final_placements = coupled_placement_diagnostics(&published_placements);
             diagnostics.compression_schedule = Some(report);
         }
-        Err(error) => {
-            diagnostics.failure_reason = Some(format!("compression schedule: {error}"));
+        ScheduleSliceOutcome::Suspended(slice) => {
+            let (placements, depth_mm) = slice.incumbent();
+            let placements = placements.to_vec();
+            diagnostics.complete_states = 1;
+            diagnostics.exact_valid = true;
+            diagnostics.independent_depth_mm = Some(depth_mm);
+            diagnostics.final_placement_fingerprint =
+                Some(coupled_fast_placement_fingerprint(&placements));
+            diagnostics.final_placements = coupled_placement_diagnostics(&placements);
+            diagnostics.schedule_slice_suspended = true;
+            *suspended_out = Some(slice);
         }
     }
     diagnostics
@@ -6415,26 +6522,21 @@ fn confirm_placements(
 /// The schedule's driver loop: step, repair, confirm.
 ///
 /// Returns the deepest exact-valid layout it reached with its raw source depth,
-/// plus the schedule's report. The parent is the floor of both, so the worst
-/// this can return is the parent unchanged.
+/// plus the schedule's report - or, if `control` asked to suspend at a
+/// checkpoint, the live slice for the caller to resume later. The parent is the
+/// floor of both, so the worst this can return is the parent unchanged.
 #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
 #[allow(clippy::type_complexity)]
-fn drive_compression_schedule(
-    pieces: &[GeneralFastPiece<'_>],
+fn drive_compression_schedule<'a>(
+    pieces: &'a [GeneralFastPiece<'a>],
     fast_settings: GeneralFastSettings,
     relaxed_settings: GeneralRelaxedSettings,
     schedule_settings: CompressionScheduleSettings,
     parent_placements: &[GeneralFastPlacement],
     parent_depth_mm: f64,
     requested_drop_mm: f64,
-) -> Result<
-    (
-        Vec<GeneralFastPlacement>,
-        f64,
-        GeneralCompressionScheduleDiagnostics,
-    ),
-    GeneralFastError,
-> {
+    control: &mut ScheduleSliceControl<'_>,
+) -> Result<ScheduleSliceOutcome<'a>, GeneralFastError> {
     let incumbent = general_fast_result_seed(parent_placements.to_vec(), parent_depth_mm);
     let catalog_mode = if relaxed_settings.pressure_model
         == GeneralRelaxedPressureModel::DirectionalPenetration
@@ -6756,7 +6858,13 @@ fn drive_compression_schedule(
         report.current_pose_overlay_off_grid_pieces = overlay_off_grid_pieces;
         report.current_pose_overlay_setup_ms = overlay_setup_ms;
         report.parent_pair_classification = parent_pair_classification;
-        return Ok((parent_placements.to_vec(), parent_depth_mm, report));
+        // The entry gate refused before a single step, so there is no slice to
+        // suspend and the checkpoint policy is never consulted.
+        return Ok(ScheduleSliceOutcome::Completed((
+            parent_placements.to_vec(),
+            parent_depth_mm,
+            report,
+        )));
     }
 
     // Read after the entry repair, because an accepted repair rebuilt the
@@ -6844,6 +6952,9 @@ fn drive_compression_schedule(
         aborted_barren_probe: false,
         checkpoints: Vec::new(),
         finished: false,
+        batches_run: 0,
+        resumptions: 0,
+        interrupted: false,
         #[cfg(feature = "sparse-rotation")]
         se2_witness_calls: 0,
         #[cfg(feature = "sparse-rotation")]
@@ -6858,19 +6969,205 @@ fn drive_compression_schedule(
         se2_witness_last_floor: None,
     };
 
-    // The batch loop, and it is one line because that is the whole claim.
-    //
-    // With `batch_work_units: None` this runs exactly once and the slice is the
-    // atomic arm every pinned m34 number in this repository was measured with.
-    // With a budget set it runs N times, and the N batches must produce the
-    // same document as the one - which is the gate
-    // `docs/experiments/replan/` §10 runs, and the reason `ScheduleSliceRun` is
-    // a struct rather than a block of locals: a loop-carried value that is not
-    // a field of it is a value the second batch would silently start over from.
-    while !slice.finished {
-        slice.advance()?;
+    drive_slice_batches(SuspendedScheduleSlice { run: slice, entry }, control)
+}
+
+/// The batch loop, and the one place a checkpoint policy is consulted.
+///
+/// # Why this is a free function and not a `while` at the call site
+///
+/// The previous round wrote it as `while !slice.finished { slice.advance()?; }`
+/// at the end of [`drive_compression_schedule`], and Sol review 9's P0 is that
+/// sentence: *"il chiamante lo richiama immediatamente in `while
+/// !slice.finished`, fino alla fine del monolite. Il coordinatore non riottiene
+/// mai il controllo al checkpoint."* A checkpoint that the caller cannot answer
+/// is a report and not an interruption, and the round that shipped it measured
+/// a lever that could not exist.
+///
+/// So the loop is here, it consults `control` at **every** checkpoint, and the
+/// three answers are three different things:
+///
+/// * [`SliceControl::Continue`] - the previous round's only behaviour.
+/// * [`SliceControl::Stop`] - end the slice **now**, with the exact-valid
+///   incumbent it holds at this checkpoint, and without the tail confirmation.
+///   That is Sol review 8 §3 condition 3's anytime contract: *"return the last
+///   exact-valid incumbent between checkpoints"*. The tail is deliberately not
+///   run, because a caller that stopped on a wall deadline does not have the
+///   milliseconds a whole-layout confirmation costs, and because a stop that
+///   ran it would not be resumable-equivalent.
+/// * [`SliceControl::Suspend`] - hand the slice back **alive**. The caller owns
+///   a [`SuspendedScheduleSlice`], may run any number of other actions, and may
+///   resume it later with [`resume_schedule_slice`]. Nothing is torn down: the
+///   frontier, the deepest-confirmed slot, the lane's rng, its weights, every
+///   surrogate and pair-NFP cache and the whole step account are fields on
+///   [`ScheduleSliceRun`], which is what makes the resumption bit-identical to
+///   the run that was never interrupted.
+///
+/// With `batch_work_units: None` the policy is never consulted at all - there is
+/// exactly one call to [`ScheduleSliceRun::advance_one_batch`], it returns
+/// [`SliceProgress::Finished`], and the slice is the atomic arm every pinned m34
+/// number in this repository was measured with.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+fn drive_slice_batches<'a>(
+    mut suspended: SuspendedScheduleSlice<'a>,
+    control: &mut ScheduleSliceControl<'_>,
+) -> Result<ScheduleSliceOutcome<'a>, GeneralFastError> {
+    loop {
+        match suspended.run.advance_one_batch()? {
+            SliceProgress::Finished(_) => {
+                return Ok(ScheduleSliceOutcome::Completed(
+                    suspended.run.finish(suspended.entry)?,
+                ));
+            }
+            SliceProgress::Checkpoint(checkpoint) => match (control)(&checkpoint) {
+                SliceControl::Continue => continue,
+                SliceControl::Stop => {
+                    suspended.run.stop_at_checkpoint();
+                    return Ok(ScheduleSliceOutcome::Completed(
+                        suspended.run.finish(suspended.entry)?,
+                    ));
+                }
+                SliceControl::Suspend => {
+                    return Ok(ScheduleSliceOutcome::Suspended(Box::new(suspended)));
+                }
+            },
+        }
     }
-    slice.finish(entry)
+}
+
+/// Resumes a slice the caller suspended, from the checkpoint it stopped at.
+///
+/// The only thing this does that [`drive_slice_batches`] does not is count the
+/// resumption, so a report can distinguish *"N batches inside one call"* -
+/// segmentation, which the previous round shipped - from *"N batches with
+/// another coordinator action in between"*, which is the piece Grok review 4 §4
+/// names as missing.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+pub(super) fn resume_schedule_slice<'a>(
+    mut suspended: Box<SuspendedScheduleSlice<'a>>,
+    control: &mut ScheduleSliceControl<'_>,
+) -> Result<ScheduleSliceOutcome<'a>, GeneralFastError> {
+    suspended.run.resumptions += 1;
+    drive_slice_batches(*suspended, control)
+}
+
+/// Ends a suspended slice where it stands, without running another batch.
+///
+/// The caller that has no more budget still owes the run a report: the slice's
+/// steps, sweeps, queries and confirmations were charged, and a run that
+/// dropped the slice would be a run whose class totals do not add up. This
+/// writes that report and asks the exact tier nothing, so it is free.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+pub(super) fn stop_suspended_slice<'a>(
+    suspended: Box<SuspendedScheduleSlice<'a>>,
+) -> Result<ScheduleSliceOutcome<'a>, GeneralFastError> {
+    let mut suspended = *suspended;
+    suspended.run.stop_at_checkpoint();
+    Ok(ScheduleSliceOutcome::Completed(
+        suspended.run.finish(suspended.entry)?,
+    ))
+}
+
+/// What one call to [`ScheduleSliceRun::advance_one_batch`] ended on.
+///
+/// Both variants carry the checkpoint, and only the batched arm *records* it:
+/// the value a caller needs to decide with is not the same thing as the row the
+/// report keeps, and conflating them is what made the atomic arm's document
+/// depend on whether anyone was listening.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+#[derive(Clone, Copy, Debug)]
+pub(super) enum SliceProgress {
+    /// The batch ended at a step boundary and the slice can go on.
+    Checkpoint(ScheduleCheckpoint),
+    /// The slice reached its own end: the bound, the work cap, the step budget,
+    /// the sheet floor or the barren probe. There is nothing to resume.
+    Finished(ScheduleCheckpoint),
+}
+
+/// What a caller decides at a checkpoint. See [`drive_slice_batches`].
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum SliceControl {
+    Continue,
+    Stop,
+    Suspend,
+}
+
+/// The checkpoint policy, as the driver sees it.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+pub(super) type ScheduleSliceControl<'c> = dyn FnMut(&ScheduleCheckpoint) -> SliceControl + 'c;
+
+/// The policy an unarmed call runs under: the previous round's behaviour, in
+/// one line, so that "nobody is listening" is a value rather than an `Option`
+/// threaded through four signatures.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+pub(super) fn run_slice_to_completion(_: &ScheduleCheckpoint) -> SliceControl {
+    SliceControl::Continue
+}
+
+/// A slice in flight, outside the function that started it.
+///
+/// This is the type Grok review 4 §4 asks for by name: *"portare uno slice
+/// sospeso alla coda"*. It owns the whole of [`ScheduleSliceRun`] plus the
+/// report half the batch loop never reads, so the coordinator can hold it
+/// across other actions and hand it back later.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+pub(super) struct SuspendedScheduleSlice<'a> {
+    run: ScheduleSliceRun<'a>,
+    entry: ScheduleSliceEntry,
+}
+
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+impl SuspendedScheduleSlice<'_> {
+    /// The exact-valid layout the caller may keep while the slice is suspended,
+    /// with its raw source depth.
+    ///
+    /// It is exact-valid by the same construction the checkpoint contract rests
+    /// on: it starts at the parent, which the caller validated before the slice
+    /// was dispatched, and only ever moves onto a layout the schedule's own
+    /// exact confirmation accepted.
+    pub(super) fn incumbent(&self) -> (&[GeneralFastPlacement], f64) {
+        (&self.run.published_placements, self.run.published_depth_mm)
+    }
+
+    /// Batches run so far, across every call.
+    pub(super) fn batches_run(&self) -> usize {
+        self.run.batches_run
+    }
+
+    /// Steps the slice has taken so far.
+    pub(super) fn steps_taken(&self) -> usize {
+        self.run.schedule.steps_taken()
+    }
+
+    /// Whole-layout exact confirmations the slice has asked for so far.
+    pub(super) fn confirmations_attempted(&self) -> usize {
+        self.run.schedule.confirmations_attempted()
+    }
+
+    /// The slice's own work meter, in the portfolio's currency.
+    ///
+    /// One step behind the lane at a batch boundary, deliberately: the
+    /// schedule's meter is written by `may_step`, which runs at the *top* of a
+    /// step. See [`ScheduleSliceRun::stop_at_checkpoint`], which is where the
+    /// two are reconciled.
+    pub(super) fn work_units(&self) -> usize {
+        self.run.schedule.work_units()
+    }
+}
+
+/// What a dispatched slice hands back.
+#[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+#[allow(clippy::large_enum_variant)]
+pub(super) enum ScheduleSliceOutcome<'a> {
+    Completed(
+        (
+            Vec<GeneralFastPlacement>,
+            f64,
+            GeneralCompressionScheduleDiagnostics,
+        ),
+    ),
+    Suspended(Box<SuspendedScheduleSlice<'a>>),
 }
 
 /// The half of a slice's report the batch loop never reads.
@@ -6979,6 +7276,17 @@ struct ScheduleSliceRun<'a> {
     aborted_barren_probe: bool,
     checkpoints: Vec<ScheduleCheckpoint>,
     finished: bool,
+    /// Calls to [`Self::advance_one_batch`], across every resumption.
+    ///
+    /// Carried rather than derived from `checkpoints.len()` because the
+    /// checkpoint list is only recorded on the batched arm, and because a slice
+    /// resumed in a second coordinator action has to keep counting from where
+    /// it left off or the report would describe two slices.
+    batches_run: usize,
+    /// Batches entered by resuming a suspended slice.
+    resumptions: usize,
+    /// Whether the caller stopped the slice at a checkpoint.
+    interrupted: bool,
 
     #[cfg(feature = "sparse-rotation")]
     se2_witness_calls: usize,
@@ -7025,7 +7333,7 @@ impl ScheduleSliceRun<'_> {
     }
 
     /// Runs one batch: steps until the slice ends or the batch budget is spent,
-    /// then stops at a checkpoint.
+    /// then **returns to its caller** at a checkpoint.
     ///
     /// The loop condition, the `may_step` call at the top of every iteration and
     /// the order of everything inside are the atomic slice's, unchanged. The only
@@ -7033,7 +7341,14 @@ impl ScheduleSliceRun<'_> {
     /// probe: a batch boundary is a place the slice *may* be interrupted, and the
     /// probe is a reason the slice is *over*, so the probe has to win or a
     /// batched slice would carry a step further than the atomic one.
-    fn advance(&mut self) -> Result<(), GeneralFastError> {
+    ///
+    /// The return value is the whole of the difference between this round and
+    /// the last. [`SliceProgress::Checkpoint`] is a question for the caller;
+    /// [`SliceProgress::Finished`] is a statement. The previous round returned
+    /// `Result<()>` and set a `finished` field, and its caller looped on that
+    /// field to the end of the monolith - so the checkpoint existed in the
+    /// report and nowhere else. See [`drive_slice_batches`].
+    fn advance_one_batch(&mut self) -> Result<SliceProgress, GeneralFastError> {
         let batch_started_units = self.schedule.work_units();
         let mut stopped_at_batch_boundary = false;
         while self.schedule.steps_taken() < self.steps_planned.max(1) || self.unbounded_tail {
@@ -7065,21 +7380,62 @@ impl ScheduleSliceRun<'_> {
             self.finish_tail()?;
             self.finished = true;
         }
+        let checkpoint = ScheduleCheckpoint {
+            // `batches_run` and `checkpoints.len()` advance together on the
+            // batched arm - both are incremented once per call to this
+            // function - so the recorded row is the one the previous round
+            // recorded, index for index. The counter exists because the
+            // *returned* checkpoint has to carry a batch index on the atomic
+            // arm too, where nothing is recorded.
+            batch: self.batches_run,
+            steps_taken: self.schedule.steps_taken(),
+            work_units: self.schedule.work_units(),
+            frontier_mm: self.schedule.depth_mm(),
+            floor_mm: self.schedule.floor_mm(),
+            confirmations_accepted: self.schedule.confirmations_accepted(),
+            published_depth_mm: self.published_depth_mm,
+            finished: self.finished,
+        };
+        self.batches_run += 1;
         // Recorded only on the batched arm, so the atomic slice's report is the
         // one every pinned number was measured against, key for key.
         if self.schedule_settings.batch_work_units.is_some() {
-            self.checkpoints.push(ScheduleCheckpoint {
-                batch: self.checkpoints.len(),
-                steps_taken: self.schedule.steps_taken(),
-                work_units: self.schedule.work_units(),
-                frontier_mm: self.schedule.depth_mm(),
-                floor_mm: self.schedule.floor_mm(),
-                confirmations_accepted: self.schedule.confirmations_accepted(),
-                published_depth_mm: self.published_depth_mm,
-                finished: self.finished,
-            });
+            self.checkpoints.push(checkpoint);
         }
-        Ok(())
+        Ok(if self.finished {
+            SliceProgress::Finished(checkpoint)
+        } else {
+            SliceProgress::Checkpoint(checkpoint)
+        })
+    }
+
+    /// Ends the slice at the checkpoint it is sitting on, because its caller
+    /// said so.
+    ///
+    /// Three writes and no geometry. The tail confirmation is **not** run: a
+    /// caller that stopped on a wall deadline does not have the milliseconds a
+    /// whole-layout confirmation costs, and a stop that ran it would publish a
+    /// layout the equivalent uninterrupted run would have reached later, which
+    /// would make "stop at K then resume" and "never stop" two different walks.
+    /// What the slice hands back is `published_placements`, which the exact
+    /// tier has already accepted.
+    fn stop_at_checkpoint(&mut self) {
+        // The schedule's own meter first, and only then the exit. `may_step`
+        // is what copies the lane's query count onto the schedule, and it is
+        // called at the *top* of a step - so at a batch boundary the schedule's
+        // `work_units()` is one step behind the lane. The uninterrupted arm
+        // catches up inside `finish_tail`; a stopped slice has no tail, so
+        // without this line it would under-report the work it spent and the
+        // coordinator would under-charge it by the last step.
+        //
+        // The order matters the other way round too: `may_step` writes `exit`,
+        // so `note_interrupted` has to be second or the report would say
+        // `bound` about a slice its caller stopped.
+        let spent = self.queries_spent();
+        self.schedule.may_step(spent);
+        self.finished = true;
+        self.interrupted = true;
+        self.schedule.note_interrupted();
     }
 
     /// One step of the schedule: lower the clamp, repair, confirm, roll back.
@@ -7653,6 +8009,17 @@ impl ScheduleSliceRun<'_> {
     > {
         let mut report = self.schedule.report();
         report.checkpoints = self.checkpoints;
+        report.batches = self.batches_run;
+        report.resumptions = self.resumptions;
+        report.interrupted = self.interrupted;
+        // The three gate-only fingerprints, computed here because this is the
+        // last moment the frontier and the lane still exist. Three SHA-256
+        // digests over a few kilobytes, once per slice - against a slice that
+        // spends millions of work units - so they are taken unconditionally
+        // rather than behind a flag no gate would remember to set.
+        report.final_state_fingerprint = coupled_state_fingerprint(&self.state);
+        report.final_tracker_fingerprint = pair_tracker_fingerprint(&self.score);
+        report.final_lane_fingerprint = self.search.lane_fingerprint();
         #[cfg(feature = "parallel-compression-schedule")]
         {
             report.parallel = self.parallel_report;
@@ -12407,7 +12774,7 @@ fn persistent_vacancy_reported_layout(
 /// This changes no search behavior. It reads the layout the arm already
 /// reported and adds two measurements of it.
 #[cfg(feature = "jagua-experimental")]
-fn record_persistent_vacancy_contract_report(
+pub(super) fn record_persistent_vacancy_contract_report(
     diagnostics: &mut GeneralPersistentVacancyDiagnostics,
     pieces: &[GeneralFastPiece<'_>],
     fast_settings: GeneralFastSettings,
@@ -12784,6 +13151,34 @@ fn run_synchronized_lanes<'a>(
 }
 
 impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'a, K> {
+    /// The lane's own hidden state, as one digest: the rng position and every
+    /// guided weight.
+    ///
+    /// These are the two things a "rebuild the lane and resume" implementation
+    /// gets wrong while every aggregate still agrees, and they are the two Sol
+    /// review 9 §P1 names as absent from the FNV step digest - *"non contiene
+    /// [...] pesi, stato RNG"*. A lane whose rng has advanced by one draw takes
+    /// a different next step, and one whose weights differ ranks the same
+    /// candidates differently; neither shows up in a step row until it has
+    /// already changed the walk.
+    ///
+    /// Gate-only: read from
+    /// [`GeneralCompressionScheduleDiagnostics::final_lane_fingerprint`], which
+    /// is `#[serde(skip)]`.
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn lane_fingerprint(&self) -> String {
+        let mut digest = Sha256::new();
+        digest.update(b"lane-rng-weights-v1");
+        digest.update(self.rng.state.to_le_bytes());
+        digest.update((self.weights.len() as u64).to_le_bytes());
+        for ((left, right), weight) in &self.weights {
+            digest.update((*left as u64).to_le_bytes());
+            digest.update((*right as u64).to_le_bytes());
+            digest.update(weight.to_bits().to_le_bytes());
+        }
+        format!("{:x}", digest.finalize())
+    }
+
     fn new(
         pieces: &'a [GeneralFastPiece<'a>],
         fast_settings: GeneralFastSettings,
@@ -21186,6 +21581,39 @@ mod tests {
         assert_eq!(first, second);
     }
 
+    /// Mode 34 as every test but the interruption ones want it: run the slice
+    /// to completion, and assert that nothing was suspended.
+    ///
+    /// The assertion is the useful half. `run_slice_to_completion` is the policy
+    /// the previous round's `while !slice.finished` loop implemented, so a test
+    /// that used it and still got a slice back would be a test that had found a
+    /// suspension nobody asked for.
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn schedule_to_completion<'a>(
+        pieces: &'a [GeneralFastPiece<'a>],
+        fast_settings: GeneralFastSettings,
+        relaxed_settings: GeneralRelaxedSettings,
+        parent: &GeneralCoupledSeparatorArmDiagnostics,
+        parent_source: Option<String>,
+    ) -> GeneralPersistentVacancyDiagnostics {
+        let mut suspended = None;
+        let mut control: fn(&ScheduleCheckpoint) -> SliceControl = run_slice_to_completion;
+        let population = run_compression_schedule(
+            pieces,
+            fast_settings,
+            relaxed_settings,
+            parent,
+            parent_source,
+            &mut control,
+            &mut suspended,
+        );
+        assert!(
+            suspended.is_none(),
+            "a run-to-completion policy suspended a slice"
+        );
+        population
+    }
+
     /// Two squares in a 100x100 sheet, constructed short-side-first, wrapped
     /// as a mode-26 parent. Small enough that a whole ladder runs in a test.
     #[cfg(feature = "jagua-experimental")]
@@ -21268,7 +21696,7 @@ mod tests {
         });
 
         let population = JobPool::new(Some(1)).run_scoped(|| {
-            run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+            schedule_to_completion(&pieces, fast_settings, settings, &parent, None)
         });
         assert!(population.attempted, "{:?}", population.failure_reason);
         assert!(population.exact_valid);
@@ -21357,7 +21785,7 @@ mod tests {
                 ..CompressionScheduleSettings::default()
             });
             JobPool::new(Some(1)).run_scoped(|| {
-                run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+                schedule_to_completion(&pieces, fast_settings, settings, &parent, None)
             })
         };
         let monolith = slice(None);
@@ -21428,7 +21856,467 @@ mod tests {
                 report.steps_taken,
                 "the last checkpoint is the slice's own end"
             );
+            // Sol review 9 §P1: the FNV step digest is a regression checksum and
+            // not a certificate - *"due cammini differenti possono avere lo
+            // stesso payload senza alcuna collisione FNV"*. These three are the
+            // certificate: the frontier's geometry, the tracker's every pair and
+            // boundary, and the lane's rng position and guided weights. A
+            // batched slice that walked a different walk and re-converged on the
+            // rows fails here.
+            assert_eq!(
+                report.final_state_fingerprint, monolith_report.final_state_fingerprint,
+                "batch {batch}: the frontier's geometry moved"
+            );
+            assert_eq!(
+                report.final_tracker_fingerprint, monolith_report.final_tracker_fingerprint,
+                "batch {batch}: the tracker moved"
+            );
+            assert_eq!(
+                report.final_lane_fingerprint, monolith_report.final_lane_fingerprint,
+                "batch {batch}: the lane's rng or weights moved"
+            );
+            assert!(
+                report.batches > 1,
+                "batch {batch}: the batch counter did not see the batching"
+            );
+            assert_eq!(report.resumptions, 0, "nothing was suspended here");
+            assert!(!report.interrupted);
         }
+    }
+
+    /// The batched slice under a driver that **stops** at a checkpoint, and the
+    /// two things Sol review 8 §3 condition 3 asks of one.
+    ///
+    /// 1. What comes back is the last **exact-valid** incumbent, and it is
+    ///    exactly the depth the checkpoint reported - not the frontier, which at
+    ///    a checkpoint may be anywhere.
+    /// 2. It really stopped: fewer steps than the uninterrupted slice, an
+    ///    `interrupted` exit, and no tail confirmation.
+    ///
+    /// The stop is at checkpoint K for K = 1 and K = 2, so the assertion is
+    /// about the mechanism rather than about one lucky boundary.
+    #[test]
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn stopping_at_a_checkpoint_returns_the_exact_valid_incumbent() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+        let settings = || {
+            let mut settings = coupled_experiment_test_settings(9);
+            settings.persistent_vacancy_mode = 34;
+            settings.persistent_vacancy_target_depth_mm = Some(1.0);
+            settings.compression_schedule = Some(CompressionScheduleSettings {
+                sweeps_per_step: 2,
+                confirm_every: 2,
+                rollback_after_steps: 8,
+                work_cap_queries: Some(200_000),
+                continue_past_bound: false,
+                repair_policy: CompressionRepairPolicy::MicroLegalizeOnReject,
+                batch_work_units: Some(1_000),
+                ..CompressionScheduleSettings::default()
+            });
+            settings
+        };
+        let whole = JobPool::new(Some(1))
+            .run_scoped(|| schedule_to_completion(&pieces, fast_settings, settings(), &parent, None));
+        let whole_report = whole
+            .compression_schedule
+            .expect("an attempted schedule reports");
+        assert!(whole_report.batches > 3, "this fixture must batch to prove anything");
+
+        for stop_after in [1usize, 2] {
+            let mut suspended = None;
+            let mut seen: Vec<ScheduleCheckpoint> = Vec::new();
+            let mut control = |checkpoint: &ScheduleCheckpoint| {
+                seen.push(*checkpoint);
+                if seen.len() >= stop_after {
+                    SliceControl::Stop
+                } else {
+                    SliceControl::Continue
+                }
+            };
+            let population = JobPool::new(Some(1)).run_scoped(|| {
+                run_compression_schedule(
+                    &pieces,
+                    fast_settings,
+                    settings(),
+                    &parent,
+                    None,
+                    &mut control,
+                    &mut suspended,
+                )
+            });
+            assert!(suspended.is_none(), "a stop is not a suspension");
+            let report = population
+                .compression_schedule
+                .as_ref()
+                .expect("a stopped slice still reports");
+            let last = *seen.last().expect("the policy was consulted");
+            assert!(!last.finished, "the driver stopped at a live checkpoint");
+            assert!(population.exact_valid, "a stop returns an exact-valid layout");
+            assert_eq!(
+                population.independent_depth_mm,
+                Some(last.published_depth_mm),
+                "the layout handed back is the incumbent the checkpoint named"
+            );
+            assert!(report.interrupted);
+            assert_eq!(report.exit_cause, "interrupted");
+            assert_eq!(report.batches, stop_after);
+            assert!(
+                report.steps_taken < whole_report.steps_taken,
+                "stop {stop_after}: it did not actually stop early"
+            );
+            // The tail confirmation runs when the *slice* ends and never when a
+            // batch does; a stop is a batch boundary, so it must not have run,
+            // and the floor the checkpoint reported must be the floor the report
+            // carries.
+            assert_eq!(
+                report.confirmations_accepted, last.confirmations_accepted,
+                "stop {stop_after}: an accepted confirmation landed after the checkpoint"
+            );
+            assert_eq!(
+                report.final_depth_mm, last.frontier_mm,
+                "stop {stop_after}: the frontier moved after the checkpoint"
+            );
+            // The published layout re-validates against the real request, which
+            // is the only sense in which "exact-valid" is a claim rather than a
+            // flag this function set.
+            let produced = fast_placements_from_coupled_diagnostics(&population.final_placements);
+            assert_eq!(produced.len(), pieces.len());
+            JobPool::new(Some(1))
+                .run_scoped(|| validate_and_measure_placements(&pieces, &produced, fast_settings))
+                .expect("the incumbent a stop returns is valid against the request");
+        }
+    }
+
+    /// The piece Grok review 4 §4 named as missing: **suspend the slice, run
+    /// another operator, resume, and land on the uninterrupted run.**
+    ///
+    /// The action in between is a whole mode-22 alternation fixpoint on the same
+    /// pieces - not a no-op, and not something that shares the slice's lane. It
+    /// allocates, it runs the job pool, it drives the same proxy tier and it
+    /// advances every process-global counter the slice's own meter is *not*
+    /// derived from. If the slice's frontier, caches, rng or weights were
+    /// rebuilt on resumption rather than carried, this is where it shows.
+    ///
+    /// The comparison is the strong one: the step digest, all three gate
+    /// fingerprints, the whole report bar the batch bookkeeping, and the
+    /// published layout.
+    #[test]
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn a_suspended_slice_resumes_onto_the_uninterrupted_run() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+        let settings = || {
+            let mut settings = coupled_experiment_test_settings(9);
+            settings.persistent_vacancy_mode = 34;
+            settings.persistent_vacancy_target_depth_mm = Some(1.0);
+            settings.compression_schedule = Some(CompressionScheduleSettings {
+                sweeps_per_step: 2,
+                confirm_every: 2,
+                rollback_after_steps: 8,
+                work_cap_queries: Some(200_000),
+                continue_past_bound: false,
+                repair_policy: CompressionRepairPolicy::MicroLegalizeOnReject,
+                // Ten thousand and not the thousand the stop gate uses: this
+                // test runs a whole other operator between every second batch,
+                // so a batch small enough to produce a hundred of them would
+                // make the test's own wall the interleave's price rather than
+                // the mechanism's.
+                batch_work_units: Some(10_000),
+                ..CompressionScheduleSettings::default()
+            });
+            settings
+        };
+        let uninterrupted = JobPool::new(Some(1))
+            .run_scoped(|| schedule_to_completion(&pieces, fast_settings, settings(), &parent, None));
+        let expected = uninterrupted
+            .compression_schedule
+            .clone()
+            .expect("an attempted schedule reports");
+        assert!(
+            expected.batches > 2,
+            "the fixture must run several batches or the interleave proves nothing"
+        );
+
+        // The interleaved run. It suspends at every second checkpoint, so a
+        // slice of N batches is cut into roughly N/2 coordinator turns.
+        let mut parked = None;
+        let mut batches_seen = 0usize;
+        let mut control = |_: &ScheduleCheckpoint| {
+            batches_seen += 1;
+            if batches_seen % 4 == 0 {
+                SliceControl::Suspend
+            } else {
+                SliceControl::Continue
+            }
+        };
+        let mut population = JobPool::new(Some(1)).run_scoped(|| {
+            run_compression_schedule(
+                &pieces,
+                fast_settings,
+                settings(),
+                &parent,
+                None,
+                &mut control,
+                &mut parked,
+            )
+        });
+        assert!(parked.is_some(), "the policy asked for a suspension");
+        assert!(population.schedule_slice_suspended);
+        assert!(
+            population.compression_schedule.is_none(),
+            "a suspended call carries no report; the slice is not finished being counted"
+        );
+        assert!(
+            population.exact_valid,
+            "a suspended slice still publishes the incumbent it holds"
+        );
+
+        let mut interleaves = 0usize;
+        while let Some(slice) = parked.take() {
+            interleaves += 1;
+            assert!(interleaves < 1_000, "the resume loop did not terminate");
+            // The other action. A whole operator, on the same pieces, between
+            // two batches of the suspended slice.
+            let mut other = coupled_experiment_test_settings(3);
+            other.persistent_vacancy_target_depth_mm = Some(50.0);
+            // One epoch and one cycle: the operator has to *run*, allocate,
+            // drive the job pool and move every process-global counter. It does
+            // not have to run long, and a suite that paid for a full fixpoint
+            // per interleave would be paying for the fixture rather than for
+            // the property.
+            other.epochs = 1;
+            other.alternation_max_cycles = Some(1);
+            let elsewhere = JobPool::new(Some(1))
+                .run_scoped(|| run_alternation_fixpoint(&pieces, fast_settings, other, &parent, None));
+            assert!(elsewhere.attempted, "the interleaved action really ran");
+
+            let outcome = JobPool::new(Some(1))
+                .run_scoped(|| resume_schedule_slice(slice, &mut control))
+                .expect("the resumed slice runs");
+            population = finish_schedule_outcome(
+                outcome,
+                GeneralPersistentVacancyDiagnostics {
+                    mode: 34,
+                    attempted: true,
+                    seed_domain: COMPRESSION_SCHEDULE_SEED_DOMAIN,
+                    ..GeneralPersistentVacancyDiagnostics::default()
+                },
+                &mut parked,
+            );
+        }
+        assert!(interleaves >= 1, "at least one interleave has to have happened");
+        let resumed = population
+            .compression_schedule
+            .clone()
+            .expect("the call that finished the slice carries the one report");
+        assert_eq!(
+            resumed.resumptions, interleaves,
+            "every resumption is counted, and only resumptions are"
+        );
+        assert_eq!(
+            resumed.batches, expected.batches,
+            "the interleaved slice ran the same batches as the one that was never stopped"
+        );
+        assert_eq!(
+            resumed.step_digest, expected.step_digest,
+            "the interleaved slice walked a different walk"
+        );
+        assert_eq!(
+            resumed.final_state_fingerprint,
+            expected.final_state_fingerprint
+        );
+        assert_eq!(
+            resumed.final_tracker_fingerprint,
+            expected.final_tracker_fingerprint
+        );
+        assert_eq!(
+            resumed.final_lane_fingerprint,
+            expected.final_lane_fingerprint
+        );
+        assert_eq!(resumed.steps_taken, expected.steps_taken);
+        assert_eq!(resumed.work_units, expected.work_units);
+        assert_eq!(resumed.sweeps_run, expected.sweeps_run);
+        assert_eq!(
+            resumed.confirmations_attempted,
+            expected.confirmations_attempted
+        );
+        assert_eq!(
+            resumed.confirmations_accepted,
+            expected.confirmations_accepted
+        );
+        assert_eq!(resumed.rollbacks, expected.rollbacks);
+        assert_eq!(resumed.final_depth_mm, expected.final_depth_mm);
+        assert_eq!(resumed.exit_cause, expected.exit_cause);
+        // The whole report, field for field, with the six wall-clock fields
+        // zeroed on both sides. They are the only fields in it that are a
+        // function of the box rather than of the walk, and a gate that demanded
+        // they match would be asserting that two runs took the same number of
+        // nanoseconds. Everything else - including the batch bookkeeping, which
+        // is *supposed* to be equal because the interleave ran the same batches
+        // - is compared exactly.
+        let strip_wall_clock = |report: &GeneralCompressionScheduleDiagnostics| {
+            let mut report = report.clone();
+            report.entry_legalization_ms = 0.0;
+            report.current_pose_overlay_setup_ms = 0.0;
+            report.rotation_surrogate_build_ms = 0.0;
+            #[cfg(feature = "sparse-rotation")]
+            {
+                report.se2_witness_ms = 0.0;
+            }
+            report.confirmation_ms = 0.0;
+            report.repair_ms = 0.0;
+            // The one field that is *meant* to differ, and it is asserted
+            // exactly, above: the interleaved slice was resumed and the
+            // uninterrupted one was not.
+            report.resumptions = 0;
+            report
+        };
+        assert_eq!(
+            strip_wall_clock(&resumed),
+            strip_wall_clock(&expected),
+            "the whole report, field for field, wall clock aside"
+        );
+        assert_eq!(
+            population.independent_depth_mm,
+            uninterrupted.independent_depth_mm
+        );
+        assert_eq!(
+            population.final_placement_fingerprint,
+            uninterrupted.final_placement_fingerprint
+        );
+    }
+
+    /// The exact half of the work unit, for a given confirmation count: five
+    /// units per pair test, and one confirmation asks every pair.
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn work_before_exact(confirmations: usize, pieces: &[GeneralFastPiece<'_>]) -> usize {
+        confirmations * pieces.len() * (pieces.len() - 1) / 2
+    }
+
+    /// A slice the caller suspends and never resumes still reports itself.
+    ///
+    /// The coordinator's drain path. Nothing further is run - no batch, no
+    /// confirmation - so the report is the account of what was already spent,
+    /// and the incumbent is the one the last checkpoint held.
+    #[test]
+    #[cfg(all(feature = "jagua-experimental", feature = "compression-schedule"))]
+    fn a_suspended_slice_can_be_ended_where_it_stands() {
+        let (polygons, fast_settings) = two_piece_ladder_fixture();
+        let pieces = [
+            GeneralFastPiece {
+                id: "large",
+                polygon: &polygons[0],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+            GeneralFastPiece {
+                id: "small",
+                polygon: &polygons[1],
+                allow_rotation: true,
+                allow_mirror: true,
+            },
+        ];
+        let parent = two_piece_ladder_parent(&polygons, fast_settings);
+        let mut settings = coupled_experiment_test_settings(9);
+        settings.persistent_vacancy_mode = 34;
+        settings.persistent_vacancy_target_depth_mm = Some(1.0);
+        settings.compression_schedule = Some(CompressionScheduleSettings {
+            sweeps_per_step: 2,
+            confirm_every: 2,
+            rollback_after_steps: 8,
+            work_cap_queries: Some(200_000),
+            continue_past_bound: false,
+            repair_policy: CompressionRepairPolicy::MicroLegalizeOnReject,
+            batch_work_units: Some(1_000),
+            ..CompressionScheduleSettings::default()
+        });
+        let mut parked = None;
+        let mut control = |_: &ScheduleCheckpoint| SliceControl::Suspend;
+        let suspended_population = JobPool::new(Some(1)).run_scoped(|| {
+            run_compression_schedule(
+                &pieces,
+                fast_settings,
+                settings,
+                &parent,
+                None,
+                &mut control,
+                &mut parked,
+            )
+        });
+        let slice = parked.take().expect("the first checkpoint suspended");
+        let batches_before = slice.batches_run();
+        let steps_before = slice.steps_taken();
+        let confirmations_before = slice.confirmations_attempted();
+        let work_before = slice.work_units();
+        let outcome = stop_suspended_slice(slice).expect("a drained slice reports");
+        let mut drained = None;
+        let population = finish_schedule_outcome(
+            outcome,
+            GeneralPersistentVacancyDiagnostics {
+                mode: 34,
+                attempted: true,
+                seed_domain: COMPRESSION_SCHEDULE_SEED_DOMAIN,
+                ..GeneralPersistentVacancyDiagnostics::default()
+            },
+            &mut drained,
+        );
+        assert!(drained.is_none());
+        let report = population
+            .compression_schedule
+            .as_ref()
+            .expect("the drain writes the report");
+        assert!(report.interrupted);
+        assert_eq!(report.exit_cause, "interrupted");
+        assert_eq!(report.batches, batches_before);
+        // The drain runs no step and asks the exact tier nothing.
+        assert_eq!(report.steps_taken, steps_before);
+        assert_eq!(report.confirmations_attempted, confirmations_before);
+        assert_eq!(report.exact_pair_tests, work_before_exact(confirmations_before, &pieces));
+        // Its work is nonetheless *larger* than the checkpoint's reading, and
+        // by exactly the amount the schedule's meter was behind the lane: the
+        // schedule learns the lane's query count in `may_step`, at the top of a
+        // step, so a batch boundary always sits one step behind. A drain that
+        // reported the stale number would under-charge the slice by that step,
+        // which is the bug this assertion exists to keep fixed.
+        assert!(
+            report.work_units >= work_before,
+            "the drain must not lose work: {} < {work_before}",
+            report.work_units
+        );
+        assert_eq!(
+            population.independent_depth_mm,
+            suspended_population.independent_depth_mm,
+            "the drained slice publishes the incumbent the suspension was already holding"
+        );
     }
 
     /// An L, for the `CurrentPoseOverlay` tests.
@@ -23154,7 +24042,7 @@ mod tests {
         });
 
         let without_overlay = JobPool::new(Some(1)).run_scoped(|| {
-            run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+            schedule_to_completion(&pieces, fast_settings, settings, &parent, None)
         });
         let report = without_overlay
             .compression_schedule
@@ -23168,7 +24056,7 @@ mod tests {
 
         settings.current_pose_overlay = true;
         let with_overlay = JobPool::new(Some(1)).run_scoped(|| {
-            run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+            schedule_to_completion(&pieces, fast_settings, settings, &parent, None)
         });
         let overlay_report = with_overlay
             .compression_schedule
@@ -23242,7 +24130,7 @@ mod tests {
         });
 
         let grid = JobPool::new(Some(1))
-            .run_scoped(|| run_compression_schedule(&pieces, fast_settings, settings, &parent, None))
+            .run_scoped(|| schedule_to_completion(&pieces, fast_settings, settings, &parent, None))
             .compression_schedule
             .expect("an attempted schedule reports");
         assert!(!grid.current_pose_overlay);
@@ -23251,7 +24139,7 @@ mod tests {
 
         settings.current_pose_overlay = true;
         let overlay = JobPool::new(Some(1))
-            .run_scoped(|| run_compression_schedule(&pieces, fast_settings, settings, &parent, None))
+            .run_scoped(|| schedule_to_completion(&pieces, fast_settings, settings, &parent, None))
             .compression_schedule
             .expect("an attempted schedule reports");
         assert!(overlay.current_pose_overlay);
@@ -23328,7 +24216,7 @@ mod tests {
             ..CompressionScheduleSettings::default()
         });
         let population = JobPool::new(Some(1)).run_scoped(|| {
-            run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+            schedule_to_completion(&pieces, fast_settings, settings, &parent, None)
         });
         let report = population
             .compression_schedule
@@ -23390,7 +24278,7 @@ mod tests {
             ..CompressionScheduleSettings::default()
         });
         JobPool::new(Some(pool_threads))
-            .run_scoped(|| run_compression_schedule(&pieces, fast_settings, settings, &parent, None))
+            .run_scoped(|| schedule_to_completion(&pieces, fast_settings, settings, &parent, None))
     }
 
     /// The hard gate: an armed, work-capped schedule is bit-reproducible, and
@@ -23575,7 +24463,7 @@ mod tests {
         settings.persistent_vacancy_target_depth_mm = Some(1.0);
         settings.compression_schedule = None;
         let population = JobPool::new(Some(1)).run_scoped(|| {
-            run_compression_schedule(&pieces, fast_settings, settings, &parent, None)
+            schedule_to_completion(&pieces, fast_settings, settings, &parent, None)
         });
         assert!(!population.attempted);
         assert!(population

@@ -6821,6 +6821,19 @@ Evidence, drivers and every battery: `docs/experiments/basin-race/`.
 
 ## The plan learned to re-price itself, mode 34 learned to stop, and the ten-second number turned out to be a quiet-box property
 
+> **Corrected by the chapter after next ("The checkpoint was a report, not an
+> interruption"), 2026-08-21.** The claim in this chapter's title that *mode 34
+> learned to stop* is **withdrawn**, and with it the `m34cap` paragraph below.
+> `ScheduleSliceRun::advance` recorded a checkpoint and left `finished = false`,
+> and its caller looped `while !slice.finished` to the end of the monolith, so
+> the coordinator never regained control at a checkpoint: the cap changed the
+> checkpoint *report* and nothing else. Replayed at `work=30000000` on mixed-61
+> seeds 0/1/2, `m34cap=0` and `m34cap=1` produce identical depth, fingerprint,
+> work, operator-call count and per-slice step digest. What mode 34 learned in
+> this round is to be **segmented**; it learned to *stop* in the later one.
+> Everything else here — the concatenation gate, the struct, the step digest,
+> the re-plan, the quiet-box retraction of `calibrated-plan` §8.2 — stands.
+
 `docs/experiments/calibrated-plan/` §13.1 named the fix for the largest of its
 three costs — *"install a provisional plan from phase 0, run to a deterministic
 work checkpoint, then re-price the remaining wall at the rate the queue is
@@ -6861,13 +6874,17 @@ refactor itself is gated too: the resumable-slice binary reproduces the **base
 commit's whole document** on all nine cells at a pinned work budget, with real
 m34 slices in every one.
 
-The consumer is `m34cap=1`: the coordinator hands each slice its own remaining
+~~The consumer is `m34cap=1`: the coordinator hands each slice its own remaining
 budget and the slice gives itself back at the first checkpoint past it, holding
 its last exact-valid incumbent. At thirty seconds on mixed-61 that takes the p50
 from **32.64 s to 25.91 s** and the overruns from 4 of 6 to 2 of 6, for
 **3.089 mm** on one seed — the slices it stops are the ones that were paying for
-that depth. It is denominated in the slice's own counter, so two processes stop
-at the same checkpoint and both arms produce one document per seed.
+that depth.~~ **Retracted; see the note at the head of this chapter.** The slice
+never gave itself back, because the caller asked it again immediately. `m34cap`
+computes a batch budget and the batch boundary then goes unanswered, so the two
+arms are one trajectory measured twice. The claim that the checkpoint's
+denomination in a counter makes the *stop* deterministic survives, because it is
+about the mechanism the next round actually builds on.
 
 ### The re-plan, and two bugs it shipped and caught
 
