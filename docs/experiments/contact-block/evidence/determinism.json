@@ -1,0 +1,157 @@
+{
+ "binary": "/var/lib/t3/tmp/cblock/bin/meas",
+ "binarySha256": "9e0cab2af094ef2c393edef1abd08789349caa71b3c294db1019e12e6de64430",
+ "parents": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_d252e868-756-2/docs/experiments/contact-block/drivers/parents12.json",
+ "spec": "trust=0.5,iters=256,block=5,rounds=64,seeds=3,band=2",
+ "cells": [
+  {
+   "seed": 0,
+   "digests": [
+    "0c8c0f33e1aa9817df971688c8ad44677d3798cbbe4a839626706282a72cba84",
+    "0c8c0f33e1aa9817df971688c8ad44677d3798cbbe4a839626706282a72cba84"
+   ],
+   "depths": [
+    174.20731397055943,
+    174.20731397055943
+   ],
+   "identical": true
+  },
+  {
+   "seed": 1,
+   "digests": [
+    "4200c0480e7f476958eae24b71aa9b4a886663be9c8d9b2a5754901e4b3f8c53",
+    "4200c0480e7f476958eae24b71aa9b4a886663be9c8d9b2a5754901e4b3f8c53"
+   ],
+   "depths": [
+    175.93721626176597,
+    175.93721626176597
+   ],
+   "identical": true
+  },
+  {
+   "seed": 2,
+   "digests": [
+    "e1ad451ac71457f96752618c77e246c93e53dd2dc9b462df183d8a983a6a4c4f",
+    "e1ad451ac71457f96752618c77e246c93e53dd2dc9b462df183d8a983a6a4c4f"
+   ],
+   "depths": [
+    179.0055007446324,
+    179.0055007446324
+   ],
+   "identical": true
+  },
+  {
+   "seed": 3,
+   "digests": [
+    "ff44016ec1c13a778c4e4ed832b27cfcea845e1bf07fde15a196d170709c264a",
+    "ff44016ec1c13a778c4e4ed832b27cfcea845e1bf07fde15a196d170709c264a"
+   ],
+   "depths": [
+    176.06050073242318,
+    176.06050073242318
+   ],
+   "identical": true
+  },
+  {
+   "seed": 4,
+   "digests": [
+    "78c76a2073c0e1bc74e374ea0a4f40bc1bb3999174d36c85aa6844df7fd4844b",
+    "78c76a2073c0e1bc74e374ea0a4f40bc1bb3999174d36c85aa6844df7fd4844b"
+   ],
+   "depths": [
+    171.64953207726535,
+    171.64953207726535
+   ],
+   "identical": true
+  },
+  {
+   "seed": 5,
+   "digests": [
+    "373b594b266e81d31f418d8d5ddade63b7f4f957083d13587b36a1a7015cd446",
+    "373b594b266e81d31f418d8d5ddade63b7f4f957083d13587b36a1a7015cd446"
+   ],
+   "depths": [
+    179.0115029435321,
+    179.0115029435321
+   ],
+   "identical": true
+  },
+  {
+   "seed": 6,
+   "digests": [
+    "4026222a14d9fabea642bc7f3768ed6d6392bda0bc05ff54924f843f59e501b3",
+    "4026222a14d9fabea642bc7f3768ed6d6392bda0bc05ff54924f843f59e501b3"
+   ],
+   "depths": [
+    179.52282143370437,
+    179.52282143370437
+   ],
+   "identical": true
+  },
+  {
+   "seed": 7,
+   "digests": [
+    "3322181bd5988caf5d7a833318308c08c8899b0e6a194e503203ae4a9f497929",
+    "3322181bd5988caf5d7a833318308c08c8899b0e6a194e503203ae4a9f497929"
+   ],
+   "depths": [
+    179.47501304903136,
+    179.47501304903136
+   ],
+   "identical": true
+  },
+  {
+   "seed": 8,
+   "digests": [
+    "25d6b25897d123db2cc5293ac4bfbd5bcd3c935e0e106d91d6f9b859ae6e40e5",
+    "25d6b25897d123db2cc5293ac4bfbd5bcd3c935e0e106d91d6f9b859ae6e40e5"
+   ],
+   "depths": [
+    178.8822033145144,
+    178.8822033145144
+   ],
+   "identical": true
+  },
+  {
+   "seed": 9,
+   "digests": [
+    "7e27209669404ecdaedbc20418298ff74c2b364d9e2d43358384237313fd7485",
+    "7e27209669404ecdaedbc20418298ff74c2b364d9e2d43358384237313fd7485"
+   ],
+   "depths": [
+    174.63321441274,
+    174.63321441274
+   ],
+   "identical": true
+  },
+  {
+   "seed": 10,
+   "digests": [
+    "49f8adb76ad520d103a0926bb036dc2d0b6b0bd78742d65c8ef5166ab765c82a",
+    "49f8adb76ad520d103a0926bb036dc2d0b6b0bd78742d65c8ef5166ab765c82a"
+   ],
+   "depths": [
+    176.36166274894953,
+    176.36166274894953
+   ],
+   "identical": true
+  },
+  {
+   "seed": 11,
+   "digests": [
+    "a39ebfbb425491b504829b6232ab98120a200fb290ada2a7e728782770e337c6",
+    "a39ebfbb425491b504829b6232ab98120a200fb290ada2a7e728782770e337c6"
+   ],
+   "depths": [
+    171.3207029883856,
+    171.3207029883856
+   ],
+   "identical": true
+  }
+ ],
+ "summary": {
+  "cells": 12,
+  "identical": 12,
+  "ALL_IDENTICAL": true
+ }
+}

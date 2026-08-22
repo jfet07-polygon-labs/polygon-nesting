@@ -7091,3 +7091,115 @@ explicitly. That does not make them unmissable, and saying so is the point.
 Evidence, drivers, binary hashes and every battery:
 `docs/experiments/consolidation/`. The map every future session should start
 from: `docs/shipped-surface.md`.
+## Active-contact block SE(2): the last idea in the operator space, and the gate it fails
+
+Sol review 10 §3 named one search action outside the closed space
+`{m20, m22, m23, m26, m31, m33, m34 + continuous/sparse rotation + overlay +
+race}`: build the graph of near-binding contacts touching the depth-setting
+pieces, take a small connected component containing the setter, propose one
+joint `(dx, dy, dtheta)` for the whole block inside a trust region, apply it as
+ONE action, and re-derive the graph and repeat. Both reviewers agreed it was the
+last idea in the current space and that its honest failure would complete the
+map. It was built, gated, and it fails.
+
+**The operator is real and it is not any of the three things it resembles.**
+`search::general_micro_legalization::contact_block`, feature
+`contact-block-se2` stacked on `se2-rigidity-certificate`, off by default and
+reachable only through `POLYGON_NESTING_CONTACT_BLOCK` on the benchmark's
+diagnostic door. Three variables per block piece and none per pinned piece, so a
+five-piece block is a fifteen-variable program; rows built from the same exact
+closest-approach witness and the same chord-error relaxation the SE(2)
+certificate uses, with a row between a block piece and a pinned piece keeping the
+block piece's coefficients and dropping the pinned one's. It is not m33, which
+moves one piece and hopes the operators downstream compose an exit; it is not
+`global_legalize`, which is translation-only; and it is not
+`se2_witness_proposal`, which solves the whole layout in one shot at a radius
+small enough that the answer is the box. The restriction to a block is what buys
+the large radius and the round-by-round re-linearization, and it is the only
+reason a strictly smaller feasible set could ever beat its own relaxation.
+
+**THE FIRST PASS WAS WRONG AND THE RETRACTION IS THE MORE USEFUL HALF OF THE
+ROUND.** The line search validated its steps with `validate_publication` — the
+*contract* half of the engine's acceptance check, and exactly what
+`se2_certificate`'s witness line search uses. The engine's authority is
+`general_fast::validate_and_measure_placements`, which is that check plus
+canonical-collision-grid admissibility, and `general_relaxed.rs:6413` runs it on
+any parent handed to mode 34. At the certificate's 0.025 mm radius the two never
+disagree; at this operator's 0.5 mm they disagree on every parent. The wrong gate
+reported a median **0.506 mm** across twelve pinned parents with 12/12 seeds
+moved — and **all twelve outputs were refused as parents**, "pieces ... overlap
+on the canonical collision grid". The right gate reports **0.044 mm**. What did
+not catch it was the round trip built to catch it: it read `exactValid`, got
+`False`, compared against a control that also read `False`, and concluded the
+output was judged as its parent was. The two `False`s had different causes — the
+control's was a target the driver had set above the parent's own depth, the
+operator's was outright refusal — and one boolean covered both. What caught it
+was a composition test noticing that `blockThenM34` equalled `blockOnly` to the
+last digit on all twelve seeds. The driver now asserts on the `failureReason`
+prefix, and `BlockRound::contract_only_accepts` counts the difference per round
+so the correction stays in the data. This is the same methodological failure the
+joint-replacement negatives paid for once already, reintroduced in a new shape.
+
+**The gate, corrected.** Twelve pinned from-request parents at 171.614-179.620,
+block against the shipping m34 continuation from the same parent at
+`past=1,rollback=0,work=W,lanes=1,pconfirm=0`, three cost axes because the arms
+do not spend work in the same shape. Median block drop **0.0438 mm** at 1919
+composite validations and 1.18 s; median control drop **1.1044 mm** at 287
+confirmations and 3.46 s. Clause one, ">= 2/3 seeds moved": the block is
+strictly shallower on **1 of 12**, and that one is seed 3 by 0.0005 mm and only
+because the control found nothing there at all. Clause two, "net mm/work
+improvement": the paired ratio of millimetres per composite validation is
+**0.0030**. On the block's own best axis — both operators priced alone, the
+block's `elapsedMs` against the slice's `repairMs + confirmationMs`, at 1180 ms
+against 1125 ms - it buys 0.021 mm/s against the slice's 0.967 mm/s and leads on
+**0 of 12** seeds. More budget cannot rescue it: the round budget is never
+exhausted, the loop exits on the trust-region contraction floor, and
+`rounds=4096` is *worse* than `rounds=64` while the control goes 0.000 -> 0.168
+-> 1.104 mm as its cap triples.
+
+**The decomposition, which is what a research round owes.** Of Sol's three
+candidate explanations the answer is the second, sharpened to a mechanism. *No
+components* is refuted: a component of at least two pieces is found on **99.8%**
+of rounds, median size 5, median 5 contact edges. *Blocks rejected by exact* is
+the answer: **44%** of rounds cannot take any step of any length, the model's
+full-length vector survives the composite gate **one time in four**, and the
+median accepted scale is **0.01** — one percent of the model's own vector, which
+leaves sub-micron motion against a model upper bound of 0.18-0.23 mm. *Gains
+dominated* is the second-order effect: 22-27% of rounds move the block a
+validated distance and the published depth does not fall, and 12-20% of the
+rounds that do move land exactly at their own headroom, the published depth
+minus the deepest piece the block does not contain, whose median is 0.0036 mm.
+The mechanism in one sentence: **the binding constraint is the canonical
+collision-envelope grid, not the material contract, and the program models the
+envelope gate as a first-order contact at zero clearance, so it has no margin to
+linearize.** The knob sweep confirms it as a trend rather than an average — eight
+times the solver iterations makes one parent *worse*, because the better the
+linearization is optimized the further outside the true envelope constraint its
+optimum sits.
+
+**What the round leaves standing.** Four pinned gates hit on both binaries with
+every field of all four documents identical except `executableSha256` — 3246-3265
+fields compared per gate. Determinism across two processes is **12 of 12** as
+whole documents including the moved placements. All three suites pass with zero
+failures - 1293, 1356 and 1377 tests - and the campaign's known-flaky
+`free_material_multi_eviction...` passed first time in each. Of the twelve parents eleven
+produce a proposal at all, and of those eleven **zero are refused as parents**
+and **eleven have their depth reproduced by the engine's own independent
+re-derivation to the 1 um grid**. This crate does not build bit-reproducibly, so
+the evidence's provenance is established by re-deriving rather than by comparing
+hashes: a fresh build of the committed tree reproduces all twelve depths **to the
+last digit of the f64**. Composition is the only axis with a positive
+sign and it is small: block-then-slice is shallower than slice-alone on 8 of 11
+seeds, median **-0.030 mm** at about 3% more work, with a spread from -0.395 mm
+to **+0.659 mm** on the seed where the slice stalls completely on the block's
+output and republishes it unchanged.
+
+**What it does not close, stated so nobody has to re-derive it.** A block program
+whose envelope rows carry a real margin - asking the envelopes to separate by
+some epsilon rather than merely to miss - would have slack to linearize and might
+take steps the composite gate accepts. That is a different program from the one
+Sol specified, it was not what this round was funded for, and §4's mechanism
+points straight at it.
+
+Evidence, drivers, both passes and the retraction:
+`docs/experiments/contact-block/`.

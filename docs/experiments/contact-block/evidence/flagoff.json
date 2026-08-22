@@ -1,0 +1,39 @@
+{
+ "baseDir": "/var/lib/t3/tmp/cblock/gates/base",
+ "cbDir": "/var/lib/t3/tmp/cblock/gates/cb",
+ "gates": {
+  "g1": {
+   "fields": 3265,
+   "differing": [
+    "/executableSha256"
+   ],
+   "unexpectedDiffering": [],
+   "bitReproducesModuloExecutableHash": true
+  },
+  "g2": {
+   "fields": 3246,
+   "differing": [
+    "/executableSha256"
+   ],
+   "unexpectedDiffering": [],
+   "bitReproducesModuloExecutableHash": true
+  },
+  "g3": {
+   "fields": 3246,
+   "differing": [
+    "/executableSha256"
+   ],
+   "unexpectedDiffering": [],
+   "bitReproducesModuloExecutableHash": true
+  },
+  "g4": {
+   "fields": 3246,
+   "differing": [
+    "/executableSha256"
+   ],
+   "unexpectedDiffering": [],
+   "bitReproducesModuloExecutableHash": true
+  }
+ },
+ "ALL_CLEAN": true
+}

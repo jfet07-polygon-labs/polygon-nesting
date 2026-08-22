@@ -1,0 +1,6 @@
+{
+ "note": "One parent, for calibrating the matched arms before the twelve-parent run.",
+ "rows": [
+  {"seed": 0, "spec": "work=120000000,cells=13:15:17:19", "fixture": "/var/lib/t3/tmp/csched/parents/parent-seed0.json", "rawDepthMm": 174.20812003998896, "independentDepthMm": 174.208}
+ ]
+}

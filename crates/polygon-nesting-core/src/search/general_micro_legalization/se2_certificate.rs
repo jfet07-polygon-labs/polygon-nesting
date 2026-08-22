@@ -341,57 +341,64 @@ impl Row {
 /// really does contain the exact real value, so a bracket assertion on them is
 /// meaningful rather than decorative.
 #[derive(Clone, Copy, Debug, Default)]
-struct RoundedSum {
+pub(super) struct RoundedSum {
     sum: f64,
     abs_sum: f64,
     terms: usize,
 }
 
 impl RoundedSum {
-    fn add(&mut self, term: f64) {
+    pub(super) fn add(&mut self, term: f64) {
         self.sum += term;
         self.abs_sum += term.abs();
         self.terms += 1;
     }
 
-    fn allowance(&self) -> f64 {
+    /// The running sum itself, with no allowance applied. Only a caller that is
+    /// about to fold this into another [`RoundedSum`] — and so will pay the
+    /// allowance once, at the end — may read it.
+    pub(super) fn value(&self) -> f64 {
+        self.sum
+    }
+
+    pub(super) fn allowance(&self) -> f64 {
         (self.terms as f64 + 2.0) * f64::EPSILON * self.abs_sum
     }
 
-    fn low(&self) -> f64 {
+    pub(super) fn low(&self) -> f64 {
         self.sum - self.allowance()
     }
 
-    fn high(&self) -> f64 {
+    pub(super) fn high(&self) -> f64 {
         self.sum + self.allowance()
     }
 }
 
 /// One piece, at its parent pose, in both gates.
-struct Geometry {
-    material: Outline,
-    collision: Outline,
+pub(super) struct Geometry {
+    pub(super) material: Outline,
+    pub(super) collision: Outline,
     /// Outer-ring vertices of the transformed material outline. The published
     /// depth measure and the sheet containment check both read outer rings
     /// only — a hole is inside its own outer ring by construction — so these
     /// are the vertices the boundary families are built from.
-    material_outer: Vec<IrregularPoint>,
-    collision_outer: Vec<IrregularPoint>,
+    pub(super) material_outer: Vec<IrregularPoint>,
+    pub(super) collision_outer: Vec<IrregularPoint>,
     /// The rotation centre. The same point is used to build every rotational
     /// coefficient and to apply the resulting `dtheta` exactly, which is what
     /// makes the witness reproduce the linearization to first order.
-    centre: IrregularPoint,
+    pub(super) centre: IrregularPoint,
     /// The farthest any vertex of *either* gate sits from `centre`. The
     /// rotation cap is `trust / reach`, so a rotation inside the box moves no
     /// vertex of either gate further than a translation inside the box may
     /// move the whole piece. That is what makes the pair guard band's
     /// rotational term a real bound rather than an estimate.
-    reach_mm: f64,
+    pub(super) reach_mm: f64,
     /// Whether the request lets this piece rotate at all. A piece the request
     /// pins cannot be handed rotational freedom by a diagnostic: publishing
     /// the resulting placement would violate the request, so the witness would
     /// not be applicable — which is the whole point of returning one.
-    rotatable: bool,
+    pub(super) rotatable: bool,
 }
 
 /// The certificate for one parent.
@@ -569,7 +576,7 @@ pub struct WitnessOutcome {
 /// bound them. The pair rows are a first-order contact model and get no such
 /// treatment, which is stated rather than glossed: the achievable number this
 /// certificate reports is the exactly-validated one.
-fn rotation_chord_slack_mm(reach_mm: f64, theta_cap: f64) -> f64 {
+pub(super) fn rotation_chord_slack_mm(reach_mm: f64, theta_cap: f64) -> f64 {
     0.5 * reach_mm * theta_cap * theta_cap
 }
 
@@ -579,13 +586,17 @@ fn rotation_chord_slack_mm(reach_mm: f64, theta_cap: f64) -> f64 {
 /// `J` is the quarter-turn generator `J(x, y) = (-y, x)`: rotating `p` about
 /// `c` by `theta` moves it, to first order, by `theta * J(p - c)`, and the
 /// constraint only feels the component of that motion along its own normal.
-fn rotation_coefficient(normal: (f64, f64), point: IrregularPoint, centre: IrregularPoint) -> f64 {
+pub(super) fn rotation_coefficient(
+    normal: (f64, f64),
+    point: IrregularPoint,
+    centre: IrregularPoint,
+) -> f64 {
     let rx = point.x - centre.x;
     let ry = point.y - centre.y;
     normal.0 * (-ry) + normal.1 * rx
 }
 
-fn build_geometry(
+pub(super) fn build_geometry(
     polygon: &PolygonSet,
     placement: &GeneralFastPlacement,
     expansion_mm: f64,
@@ -651,7 +662,7 @@ fn build_geometry(
 /// `T' = C + (dx, dy) - R(r + d) M c_src`, and `R(r + d) M c_src = R(d) (C -
 /// T)` — so the new translation needs only the world centre, the old
 /// translation and `d`, and never has to reach into the source frame.
-fn apply_se2(
+pub(super) fn apply_se2(
     placement: &GeneralFastPlacement,
     centre: IrregularPoint,
     delta: (f64, f64, f64),
@@ -1700,7 +1711,7 @@ fn verdict_for(
 /// with an explicit `'p` rather than a closure: inferred, the borrow checker
 /// ties the result to the *placements* and the whole witness path then demands
 /// `'static` pieces.
-fn exact_placements<'p>(
+pub(super) fn exact_placements<'p>(
     pieces: &[GeneralFastPiece<'p>],
     pieces_by_id: &BTreeMap<&str, usize>,
     placements: &[GeneralFastPlacement],

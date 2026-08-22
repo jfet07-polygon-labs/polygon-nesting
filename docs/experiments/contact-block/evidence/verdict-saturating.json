@@ -1,0 +1,258 @@
+{
+ "blockArm": "block:trust=1.0,iters=256,block=5,rounds=4096,seeds=8,band=4",
+ "controlArm": "m34:3341379",
+ "seeds": 12,
+ "seedsBlockShallower": 1,
+ "seedsControlShallower": 11,
+ "seedsEqual": 0,
+ "clauseOneTwoThirdsSeedsMoved": false,
+ "medianBlockMinusControlMm": 1.0131043684750125,
+ "medianBlockDeltaMm": 0.0361377218378891,
+ "medianControlDeltaMm": 1.104406897171998,
+ "medianBlockMmPerKiloExact": 0.005006055536662004,
+ "medianControlMmPerKiloExact": 4.399765844503186,
+ "medianPairedEfficiencyRatioBlockOverControl": 0.0013363407369381011,
+ "medianBlockExactValidations": 3124.0,
+ "medianControlExactValidations": 286.5,
+ "medianBlockOperatorMs": 2175.009903,
+ "medianBlockWallSeconds": 2.177279880095739,
+ "medianControlWallSeconds": 3.4572756164707243,
+ "rows": [
+  {
+   "seed": 0,
+   "parentMm": 174.20812003998896,
+   "blockDepthMm": 174.20760755118783,
+   "controlDepthMm": 173.37991578608327,
+   "blockMinusControlMm": 0.8276917651045608,
+   "blockDeltaMm": 0.0005124888011209805,
+   "controlDeltaMm": 0.8282042539056818,
+   "blockExact": 1748,
+   "controlExact": 328,
+   "blockWall": 1.477416031062603,
+   "controlWall": 3.22360078105703,
+   "blockOperatorMs": 1475.488927,
+   "blockRefusals": {
+    "moved": 5,
+    "exact-rejected": 17
+   },
+   "blockHeadroomMm": 0.13760755118784118
+  },
+  {
+   "seed": 1,
+   "parentMm": 176.05599999999998,
+   "blockDepthMm": 175.8689669877132,
+   "controlDepthMm": 174.57600000000002,
+   "blockMinusControlMm": 1.2929669877131857,
+   "blockDeltaMm": 0.1870330122867756,
+   "controlDeltaMm": 1.4799999999999613,
+   "blockExact": 3797,
+   "controlExact": 327,
+   "blockWall": 2.667617772007361,
+   "controlWall": 3.1668129810132086,
+   "blockOperatorMs": 2663.570978,
+   "blockRefusals": {
+    "moved": 21,
+    "no-depth-gain": 24,
+    "exact-rejected": 13
+   },
+   "blockHeadroomMm": 0.0
+  },
+  {
+   "seed": 2,
+   "parentMm": 179.006,
+   "blockDepthMm": 179.0055019573714,
+   "controlDepthMm": 177.34300000000002,
+   "blockMinusControlMm": 1.6625019573713757,
+   "blockDeltaMm": 0.0004980426286067541,
+   "controlDeltaMm": 1.6629999999999825,
+   "blockExact": 492,
+   "controlExact": 229,
+   "blockWall": 0.2449135819915682,
+   "controlWall": 4.148315632017329,
+   "blockOperatorMs": 243.161566,
+   "blockRefusals": {
+    "moved": 3,
+    "exact-rejected": 3,
+    "no-depth-gain": 11
+   },
+   "blockHeadroomMm": 1.000638902397725
+  },
+  {
+   "seed": 3,
+   "parentMm": 176.061,
+   "blockDepthMm": 176.06050202695124,
+   "controlDepthMm": 176.061,
+   "blockMinusControlMm": -0.0004979730487661982,
+   "blockDeltaMm": 0.0004979730487661982,
+   "controlDeltaMm": 0.0,
+   "blockExact": 1386,
+   "controlExact": 0,
+   "blockWall": 0.9149136329069734,
+   "controlWall": 7.053935195086524,
+   "blockOperatorMs": 912.624517,
+   "blockRefusals": {
+    "moved": 4,
+    "exact-rejected": 12,
+    "no-depth-gain": 3
+   },
+   "blockHeadroomMm": 0.0
+  },
+  {
+   "seed": 4,
+   "parentMm": 171.64953207726535,
+   "blockDepthMm": 171.64953207726535,
+   "controlDepthMm": 171.08177826491067,
+   "blockMinusControlMm": 0.567753812354681,
+   "blockDeltaMm": 0.0,
+   "controlDeltaMm": 0.567753812354681,
+   "blockExact": 614,
+   "controlExact": 235,
+   "blockWall": 0.43334539502393454,
+   "controlWall": 4.590774914016947,
+   "blockOperatorMs": 431.304535,
+   "blockRefusals": {
+    "exact-rejected": 7
+   },
+   "blockHeadroomMm": 0.32678956880670285
+  },
+  {
+   "seed": 5,
+   "parentMm": 179.05182605364416,
+   "blockDepthMm": 179.0235005177926,
+   "controlDepthMm": 177.56277826491072,
+   "blockMinusControlMm": 1.4607222528818795,
+   "blockDeltaMm": 0.02832553585156461,
+   "controlDeltaMm": 1.4890477887334441,
+   "blockExact": 2998,
+   "controlExact": 233,
+   "blockWall": 1.91670323908329,
+   "controlWall": 3.4658084149705246,
+   "blockOperatorMs": 1914.25392,
+   "blockRefusals": {
+    "moved": 10,
+    "exact-rejected": 32
+   },
+   "blockHeadroomMm": 0.0
+  },
+  {
+   "seed": 6,
+   "parentMm": 179.6200102363703,
+   "blockDepthMm": 179.48135576621578,
+   "controlDepthMm": 178.40299999999996,
+   "blockMinusControlMm": 1.0783557662158216,
+   "blockDeltaMm": 0.13865447015450627,
+   "controlDeltaMm": 1.217010236370328,
+   "blockExact": 33552,
+   "controlExact": 246,
+   "blockWall": 19.118366581969894,
+   "controlWall": 3.448742817970924,
+   "blockOperatorMs": 19112.757182999998,
+   "blockRefusals": {
+    "moved": 108,
+    "exact-rejected": 104,
+    "no-depth-gain": 159
+   },
+   "blockHeadroomMm": 0.0
+  },
+  {
+   "seed": 7,
+   "parentMm": 179.52233303152792,
+   "blockDepthMm": 179.4783831237037,
+   "controlDepthMm": 178.264,
+   "blockMinusControlMm": 1.2143831237036977,
+   "blockDeltaMm": 0.0439499078242136,
+   "controlDeltaMm": 1.2583330315279113,
+   "blockExact": 7475,
+   "controlExact": 286,
+   "blockWall": 5.267977528041229,
+   "controlWall": 3.383866304066032,
+   "blockOperatorMs": 5265.307118,
+   "blockRefusals": {
+    "moved": 26,
+    "exact-rejected": 54
+   },
+   "blockHeadroomMm": 0.0
+  },
+  {
+   "seed": 8,
+   "parentMm": 178.93200000000002,
+   "blockDepthMm": 178.87724869896368,
+   "controlDepthMm": 177.28,
+   "blockMinusControlMm": 1.597248698963682,
+   "blockDeltaMm": 0.05475130103633319,
+   "controlDeltaMm": 1.6520000000000152,
+   "blockExact": 2043,
+   "controlExact": 324,
+   "blockWall": 1.3115109410136938,
+   "controlWall": 3.6158340030815452,
+   "blockOperatorMs": 1308.9316310000002,
+   "blockRefusals": {
+    "moved": 8,
+    "exact-rejected": 11,
+    "no-depth-gain": 10
+   },
+   "blockHeadroomMm": 0.0
+  },
+  {
+   "seed": 9,
+   "parentMm": 174.96558182288433,
+   "blockDepthMm": 174.6354857019412,
+   "controlDepthMm": 173.97377826491066,
+   "blockMinusControlMm": 0.6617074370305431,
+   "blockDeltaMm": 0.330096120943125,
+   "controlDeltaMm": 0.9918035579736681,
+   "blockExact": 3250,
+   "controlExact": 325,
+   "blockWall": 2.4378565211081877,
+   "controlWall": 2.8126517940545455,
+   "blockOperatorMs": 2435.765886,
+   "blockRefusals": {
+    "moved": 14,
+    "exact-rejected": 19,
+    "no-depth-gain": 9
+   },
+   "blockHeadroomMm": 0.19270668182170425
+  },
+  {
+   "seed": 10,
+   "parentMm": 176.3622237458826,
+   "blockDepthMm": 176.34152808731176,
+   "controlDepthMm": 175.39367511657755,
+   "blockMinusControlMm": 0.9478529707342034,
+   "blockDeltaMm": 0.02069565857084399,
+   "controlDeltaMm": 0.9685486293050474,
+   "blockExact": 8549,
+   "controlExact": 351,
+   "blockWall": 6.021198573987931,
+   "controlWall": 2.388650840963237,
+   "blockOperatorMs": 6018.409904,
+   "blockRefusals": {
+    "moved": 18,
+    "exact-rejected": 53
+   },
+   "blockHeadroomMm": 0.0
+  },
+  {
+   "seed": 11,
+   "parentMm": 171.6141235046606,
+   "blockDepthMm": 171.34596720064437,
+   "controlDepthMm": 170.868,
+   "blockMinusControlMm": 0.4779672006443718,
+   "blockDeltaMm": 0.26815630401623025,
+   "controlDeltaMm": 0.7461235046606021,
+   "blockExact": 5150,
+   "controlExact": 287,
+   "blockWall": 3.6054483820917085,
+   "controlWall": 3.9970667159650475,
+   "blockOperatorMs": 3602.91354,
+   "blockRefusals": {
+    "moved": 18,
+    "exact-rejected": 31,
+    "no-depth-gain": 5
+   },
+   "blockHeadroomMm": 0.0
+  }
+ ],
+ "clauseTwoNetMmPerWorkImprovement": false,
+ "GATE_PASS": false
+}
