@@ -396,7 +396,7 @@ counts next to them (`boxCertifiedPairs`, `narrowSegmentPairs`,
 | `examples/general_request_benchmark.rs` | the `rek` spec key, feature-gated |
 | `search/mod.rs`, `validation/mod.rs`, `Cargo.toml` | the `#[cfg]`-gated module declarations, the feature, the example target |
 
-**464 insertions and 0 deletions** against the seven pre-existing files. No line
+**469 insertions and 0 deletions** against the seven pre-existing files. No line
 of the production path was edited, only added beside.
 
 ### Arming, and how a mistake is refused rather than absorbed

@@ -7593,7 +7593,7 @@ equal operator wall — Sol 12 §3.2's remaining kill, ≥8/12 and ≥1 mm media
 untouched and is the next round's assignment; the handover, including the fact
 that an armed run's `used_long_axis_depth_mm` moves to the round envelope's
 basis while the raw source depth does not, is `README.md` §7. Legality is still
-not reachability. 464 insertions and 0 deletions against the seven pre-existing
+not reachability. 469 insertions and 0 deletions against the seven pre-existing
 files.
 
 Evidence, drivers and the full caveat list: `docs/experiments/round-envelope-kernel/`.
