@@ -284,6 +284,13 @@ python3 docs/experiments/overlap-ics/drivers/smoke.py 200000            # two-pr
 python3 docs/experiments/overlap-ics/drivers/corpus_gate.py 10000       # the heavy corpus
 python3 docs/experiments/overlap-ics/drivers/basin.py 200000 guided     # the basin sweep
 python3 docs/experiments/overlap-ics/drivers/basin.py 200000 always     # the jump A/B
+
+bash docs/experiments/overlap-ics/drivers/run-suites.sh                 # round boundary
+python3 docs/experiments/overlap-ics/drivers/suitetotals.py
+python3 docs/experiments/overlap-ics/drivers/gates.py base  BASE_BINARY
+python3 docs/experiments/overlap-ics/drivers/gates.py meas  MEAS_BINARY
+python3 docs/experiments/overlap-ics/drivers/gatecompare.py BASE_DIR MEAS_DIR
+python3 docs/experiments/overlap-ics/drivers/determinism.py ICS_A ICS_B 200000
 ```
 
 Do **not** pipe any of them into `tee` or `tail`: you would read the pipe's
@@ -369,7 +376,78 @@ pin and is read by no other cell.
 
 ---
 
-## 7. What the next round would have to change
+## 7. The round-boundary battery
+
+Run from the clean committed tree at `97c7ef5`, on binaries rebuilt from it.
+
+### 7.1 The four pinned gates, on two binaries
+
+`evidence/gates.json`, `drivers/gates.py` + `drivers/gatecompare.py`. The
+`base` binary is `--features jagua-experimental` (this round's feature
+**absent**); the `meas` binary is `--features jagua-experimental,overlap-ics`
+(**compiled**, and unarmed — nothing outside the example can reach it).
+
+| gate | pinned | base | meas | documents identical |
+|---|---|:--:|:--:|:--:|
+| g1 | 206.869 / `8a7737381238fa4d` | ✅ | ✅ | ✅ |
+| g2 | 159.09233022733062 / `fa01012af1d559ae` | ✅ | ✅ | ✅ |
+| g3 | 159.07876040364795 / `e28fba007f8031d4` | ✅ | ✅ | ✅ |
+| g4 | 164.0375677990678 / `49f094d7e59a9008` | ✅ | ✅ | ✅ |
+
+`BASE_ALL_PASS: true`, `MEAS_ALL_PASS: true`, and the stronger claim:
+**`WHOLE_DOCUMENT_IDENTITY: true`** on all four. The document comparison strips
+`gatelib.VOLATILE` — the round-envelope-gate protocol's own field list, copied
+rather than re-derived — which removes the elapsed-derived summary statistics,
+the binary hash and the worktree identity and nothing else. Compiling
+`overlap-ics` in changes nothing a gate document can see.
+
+### 7.2 The suites
+
+`evidence/suites.json`, `drivers/run-suites.sh` + `drivers/suitetotals.py`. All
+`--release`, every exit status read directly on the line after its command, no
+pipelines.
+
+| # | features | targets | passed | failed | ignored | exit |
+|---|---|---:|---:|---:|---:|---:|
+| 1 | `jagua-experimental` | 55 | 1293 | 0 | 2 | **0** |
+| 2 | the protocol's full combo | 55 | 1357 | 0 | 2 | **0** |
+| 3 | `jagua-experimental`, `--example general_request_benchmark` | 1 | 20 | 0 | 0 | **0** |
+| 4 | `jagua-experimental,overlap-ics` | 55 | 1340 | 0 | 2 | **0** |
+| 5 | `overlap-ics` alone, `--lib --tests` | 50 | 1150 | 0 | 0 | **0** |
+
+Suite 4 is this round's feature. Suite 5 is it **alone** — the Chinese wall
+checked as a build rather than only as a `cargo tree` grep — and it is scoped to
+`--lib --tests` for a pre-existing reason the round-envelope-gate protocol
+already documents: an unscoped `cargo test` builds
+`general_request_benchmark`, which names `search::portfolio` and declares no
+`required-features`, so any feature set without `jagua-experimental` fails to
+compile it. `overlap_ics_benchmark` declares
+`required-features = ["overlap-ics"]` precisely so it never does that to anyone
+else.
+
+Suite 5's first run tripped the campaign's known flake,
+`free_material_multi_eviction_shrinks_retained_container_capacity` — an
+allocator property, not a search one. Both runs are committed
+(`suite-overlap-ics-run1-flaky.log` and `suite-overlap-ics.log`); the rerun is
+clean.
+
+### 7.3 Determinism
+
+| comparison | cells | verdict |
+|---|---|:--:|
+| two processes, one binary | S0, S1 | **bit-identical** (`evidence/smoke-two-process.json`) |
+| two independently built binaries | S0, S1, C175, triangle-20 | **bit-identical** (`evidence/determinism-two-binary.json`) |
+
+The two-binary comparison strips `wall` and `executableSha256` — the second is
+the thing being varied, so leaving it in would make the comparison trivially
+false — and nothing else. The two binaries were built into different target
+directories from the same commit and have different SHA-256s
+(`evidence/binaries.txt`). Cross-platform `sin`/`cos` identity is not a claim,
+here or anywhere in this campaign.
+
+---
+
+## 8. What the next round would have to change
 
 Not a knob. The three failures agree on one thing: the specified move set —
 **one piece, strict decrease in its own incident guided Φ** — cannot express the
@@ -400,7 +478,7 @@ work."* Neither of those missed. What missed is inflation — S1, C175, the
 triangle canary — which the same section makes fatal and which stops the round
 before `homotopy.rs`, workers, or a 3/10/30 driver.
 
-## 8. Wall, and why it is not a claim here
+## 9. Wall, and why it is not a claim here
 
 The machine this ran on has a polluted wall. Every wall number in the evidence
 is inside a `wall` object, is excluded from every determinism comparison, and is

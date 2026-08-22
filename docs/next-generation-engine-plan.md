@@ -7954,5 +7954,21 @@ corpus, and the two-process fixed-work smoke. It exits **1** today, on S1's
 mechanism clause alone; its invariant clauses all hold and both smoke cells are
 **bit-identical across two processes** after stripping one named `wall` field.
 A FAST tier that went green while Gate 0 said STOP would be the lie the
-two-tier discipline exists to prevent. Evidence, drivers and the full verdict
-table: docs/experiments/overlap-ics/.
+two-tier discipline exists to prevent.
+
+The round-boundary battery is clean. All four pinned gates reproduce on a
+binary with the feature absent and on one with it compiled — 206.869 /
+`8a7737381238fa4d`, 159.09233022733062 / `fa01012af1d559ae`,
+159.07876040364795 / `e28fba007f8031d4`, 164.0375677990678 /
+`49f094d7e59a9008` — and the **whole documents are identical** on all four
+under the protocol's own volatile-field list, so compiling `overlap-ics` in
+changes nothing a gate document can see. Five suites, 0 failures: 1293
+(`jagua-experimental`), 1357 (the full combo), 20 (the example harness), 1340
+(`jagua-experimental,overlap-ics`) and 1150 (`overlap-ics` alone, `--lib
+--tests`, the Chinese wall as a build rather than a `cargo tree` grep; its
+first run tripped the campaign's known allocator flake and both runs are
+committed). Determinism holds in both forms: two processes of one binary on S0
+and S1, and **two independently built binaries** on S0, S1, C175 and
+triangle-20, all bit-identical after stripping `wall` and the binary's own
+hash. Evidence, drivers and the full verdict table:
+docs/experiments/overlap-ics/.
