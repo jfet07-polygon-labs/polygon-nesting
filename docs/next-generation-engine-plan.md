@@ -8059,12 +8059,26 @@ compiled — 206.869 / `8a7737381238fa4d`, 159.09233022733062 / `fa01012af1d559a
 with **`WHOLE_DOCUMENT_IDENTITY: true`** on all four. Five suites, 0 failures:
 1293, 1357, 20, 1340, 1150, no flake, no rerun clause fired — the same five
 totals as the previous round, which is the expected result of a round that
-changed no crate source. Determinism holds in both forms, with the previous
-round's deflation intact and sharpened: two builds in two target directories are
-byte-identical, but two builds in two *worktrees* are not, from the same source
-and toolchain — so the worktree path is baked into the binary, and that is also
-why no document digest here is comparable with one from the previous round.
-Cross-round agreement is the field-by-field comparison, not a hash.
+changed no crate source.
+
+**And the two-binary determinism deflation is finally lifted, by an accident
+worth recording because the accident is the evidence.** Both previous rounds had
+to admit that two builds of this example in two target directories come out
+byte-identical, so the cell reduced to a second two-process cell. This round's
+battery script happened to build the example without `-p`, which makes cargo
+unify features across the workspace's default members and pull in one extra
+dependency feature, `feature="full"` — producing a second binary from the same
+commit, `3e53e1f194ca8e3d` against `fast.sh`'s `e7eebee90d598bbc`. Run against
+each other on S0, S1, C175 and triangle-20 the two **different** binaries produce
+the same four document digests, which is the two-binary claim in the form its
+name promises. Two corrections came with it: an earlier draft of this round's
+write-up claimed the build is not reproducible across worktree paths, which was
+wrong — built the same way, this worktree reproduces `e7eebee9` exactly, and the
+difference was the command; and the battery's first determinism run used the
+wrong pair and was re-run on both. What remains true is that no document digest
+here is comparable with one from the previous round, because every document
+contains its own absolute paths: cross-round agreement is the field-by-field
+comparison, not a hash.
 
 One claim is explicitly **not** verified, and it is the previous round's central
 structural sentence: *"a single global translation would legalize"* triangle-20.

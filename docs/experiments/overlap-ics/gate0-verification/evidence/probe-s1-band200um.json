@@ -109,7 +109,7 @@
   "rotationFrozen": false,
   "seed": 0,
   "wall": {
-    "solverSeconds": 0.214699436,
-    "totalSeconds": 0.214829888
+    "solverSeconds": 0.213048781,
+    "totalSeconds": 0.213175832
   }
 }

@@ -23,11 +23,18 @@ committed drivers, the pinned toolchain (`rustc 1.97.1 (8bab26f4f 2026-07-14)`),
 and the box.
 
 It shares nothing else. A **different worktree**, a `target/` directory that did
-not exist when this round began, a separately compiled binary
-(`3e53e1f194ca8e3d…` here against `68fa7cf0…` and `e7eebee9…` there), and a
-different absolute path in every document.
+not exist when this round began, a from-scratch compile, and a different absolute
+path in every document.
 
-What it therefore **cannot** claim: that the failures are not a property of this
+**The machine code is not one of the differences, and that is worth stating
+plainly rather than being quietly assumed.** The FAST tier's own build command
+produces `e7eebee90d598bbc1…` here — byte-for-byte the previous round's
+final-tree binary, from a different worktree and a different target directory. So
+the reproduction's independence rests on the build being made from nothing and on
+the paths differing, not on the binary differing. §5.3 turns that into evidence
+rather than leaving it as an assumption.
+
+What this therefore **cannot** claim: that the failures are not a property of this
 box, this toolchain or this x86 target. Nothing here is a cross-platform claim,
 and this campaign has never made one.
 
@@ -263,12 +270,13 @@ evidence and none of them carries a fatal verdict.
 
 Run from the clean committed tree, on binaries built from it in this worktree.
 
-| binary | features | sha256 |
+| binary | build command | sha256 |
 |---|---|---|
-| `base` | `jagua-experimental` (overlap-ics **absent**) | `61befdc544b4135a…` |
-| `meas` | `jagua-experimental,overlap-ics` (**compiled**, unarmed) | `8ab2d882731a4d36…` |
-| `ics-a` | `overlap-ics`, worktree `target/` | `3e53e1f194ca8e3d…` |
-| `ics-b` | `overlap-ics`, freshly deleted separate `CARGO_TARGET_DIR` | `3e53e1f194ca8e3d…` |
+| `base` | `--features jagua-experimental --example general_request_benchmark` (overlap-ics **absent**) | `61befdc544b4135a…` |
+| `meas` | `--features jagua-experimental,overlap-ics --example general_request_benchmark` (**compiled**, unarmed) | `8ab2d882731a4d36…` |
+| `ics-scoped-a` | `-p polygon-nesting-core --features overlap-ics`, target dir A | `e7eebee90d598bbc…` |
+| `ics-scoped-b` | the same command, target dir B | `e7eebee90d598bbc…` |
+| `ics-workspace` | the same features **without** `-p` — one extra dependency feature | `3e53e1f194ca8e3d…` |
 
 ### 5.1 The four pinned gates, on both binaries
 
@@ -309,28 +317,56 @@ round's committed record. This round copied its five logs into
 `evidence/suite-*.log` here and restored theirs with `git checkout`, so both
 rounds' logs exist and neither overwrote the other.
 
-### 5.3 Determinism, in both forms
+### 5.3 Determinism — and the deflation finally lifted
 
 | comparison | cells | verdict |
 |---|---|:--:|
 | two processes, one binary | S0, S1 | **bit-identical** (`INVARIANTS_PASS: true`, `SMOKE_PASS: false`) |
-| two builds, separate target directories | S0, S1, C175, triangle-20 | **bit-identical**, `TWO_BINARY_IDENTICAL: true` |
+| two builds, two target directories (`e7eebee9…` vs `e7eebee9…`) | S0, S1, C175, triangle-20 | **bit-identical**, `TWO_BINARY_IDENTICAL: true` |
+| **two genuinely different binaries** (`e7eebee9…` vs `3e53e1f1…`) | S0, S1, C175, triangle-20 | **bit-identical**, `TWO_BINARY_IDENTICAL: true` |
 
-**The same honest deflation the previous round recorded still applies, and this
-round sharpens it.** `ics-a` and `ics-b` came out byte-identical again, so the
-two-binary cell reduces to a second two-process cell. But the two binaries built
-in *different worktrees* are **not** identical (`3e53e1f1…` here against
-`e7eebee9…` there) from the same source and toolchain — so the release build of
-this example is reproducible across target directories and **not** across
-worktree paths. That is a fact about what is baked into the binary, and the
-practical consequence is that on this toolchain a genuinely non-degenerate
-"two independently built binaries" cell needs two directories, not two builds.
+Both previous rounds' two-binary cells came with a deflation attached: two builds
+of this example in two target directories are byte-identical on this toolchain,
+so the cell reduced to a second two-process cell. That is confirmed again here —
+and the deflation is now **lifted**, by an accident worth recording because the
+accident is the evidence.
 
-For the same reason **none of this round's document digests is comparable with
-the previous round's**: every one of them is taken over a document that contains
-its own absolute paths. Cross-round agreement is established field by field in
-§2, which is the comparison that survives the move; the digests here establish
-agreement *within* this round only.
+This round's battery script built the example with
+`cargo build --release --features overlap-ics --example overlap_ics_benchmark`,
+without `-p`. `fast.sh` builds it with `-p polygon-nesting-core`. The two
+resolve differently: without `-p`, cargo unifies features across the workspace's
+default members and one extra dependency feature, `feature="full"`, comes along
+(`evidence/build-features-*.txt` are the two resolved sets, diffed). The result
+is two binaries from the same commit that differ in their machine code —
+`e7eebee90d598bbc…` and `3e53e1f194ca8e3d…`.
+
+Run against each other on all four cells, they produce **the same four document
+digests** — `03969cfb…`, `ecfac1e6…`, `ec889de1…`, `b95565af…` — identical to the
+two-target-directory pair's. That is the two-binary claim in the form its name
+promises: same request, seed, toolchain, x86 target and work quota; **different
+binary**; bit-identical poses, checkpoints and publications.
+
+The 2 M-proposal budget probe was independently run on both binaries as well, and
+its documents are field-identical across them
+(`docdiff-probe-*-across-binaries.json`).
+
+Two corrections this round owes its own §1, both from the same discovery:
+
+1. An earlier draft of this document claimed the release build is **not**
+   reproducible across worktree paths, on the strength of `3e53e1f1…` here
+   against `e7eebee9…` there. That was wrong: the difference was the build
+   command, not the worktree. Built the same way, this worktree reproduces
+   `e7eebee9…` exactly.
+2. The battery's first determinism run therefore used a pair of `3e53e1f1…`
+   binaries — a valid two-process cell, but not the pair the protocol asks for.
+   It was re-run on both pairs above, and `evidence/determinism-two-binary.json`
+   was replaced by the two files that say which pair each result is about.
+
+**None of this round's document digests is comparable with the previous
+round's** — every one is taken over a document that contains its own absolute
+paths. Cross-round agreement is the field-by-field comparison in §2, which is the
+comparison that survives the move; the digests here establish agreement *within*
+this round.
 
 ---
 

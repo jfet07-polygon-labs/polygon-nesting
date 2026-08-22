@@ -17,7 +17,7 @@
     "rawPhiBits": 4646333687059437652,
     "rawSourceDepthMm": 152.78460392900604
   },
-  "executableSha256": "3e53e1f194ca8e3da4bfcc0a3348189dd0aec4b0998425b2fc8e6b404e2a3334",
+  "executableSha256": "e7eebee90d598bbc14789c44f1467421eb4f0897b7d544e7d0d4aba784428708",
   "experiment": "overlap-ics",
   "instrument": "crates/polygon-nesting-core/src/search/overlap_ics/",
   "lowerScaleMm": 115.83870984650393,
@@ -109,7 +109,7 @@
   "rotationFrozen": false,
   "seed": 0,
   "wall": {
-    "solverSeconds": 2.137319688,
-    "totalSeconds": 2.137488293
+    "solverSeconds": 2.120122925,
+    "totalSeconds": 2.120256589
   }
 }

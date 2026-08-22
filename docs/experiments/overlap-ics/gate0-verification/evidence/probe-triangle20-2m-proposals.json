@@ -25,7 +25,7 @@
     "rawPhi": 22.21647333933925,
     "rawSourceDepthMm": 70.48286549664516
   },
-  "executableSha256": "3e53e1f194ca8e3da4bfcc0a3348189dd0aec4b0998425b2fc8e6b404e2a3334",
+  "executableSha256": "e7eebee90d598bbc14789c44f1467421eb4f0897b7d544e7d0d4aba784428708",
   "experiment": "overlap-ics",
   "finalPoseDigest": "54b4ddbf1e7301fdea5010039f53a44197b0cdffac13ea417bbf3b555c194230",
   "instrument": "crates/polygon-nesting-core/src/search/overlap_ics/",
@@ -115,8 +115,8 @@
     "shockedPoseDigest": "ac5796a53487b08f9b9aa8a8e21ccbcd12a7f6151f773a4db363d3c2a4c7e797"
   },
   "wall": {
-    "constructorSeconds": 0.024644469,
-    "solverSeconds": 0.916715154,
-    "totalSeconds": 0.941416648
+    "constructorSeconds": 0.024441899,
+    "solverSeconds": 0.916723833,
+    "totalSeconds": 0.941224324
   }
 }

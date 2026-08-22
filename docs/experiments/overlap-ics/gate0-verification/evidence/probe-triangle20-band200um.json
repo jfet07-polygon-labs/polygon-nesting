@@ -155,8 +155,8 @@
     "shockedPoseDigest": "ac5796a53487b08f9b9aa8a8e21ccbcd12a7f6151f773a4db363d3c2a4c7e797"
   },
   "wall": {
-    "constructorSeconds": 0.019908773,
-    "solverSeconds": 0.092064576,
-    "totalSeconds": 0.112025318
+    "constructorSeconds": 0.019698083,
+    "solverSeconds": 0.092320835,
+    "totalSeconds": 0.112071151
   }
 }

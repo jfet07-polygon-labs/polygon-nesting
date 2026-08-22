@@ -1,0 +1,8 @@
+{
+ "left": "/var/lib/t3/tmp/overlapics-v2/budget/s1-budget.json",
+ "right": "/var/lib/t3/tmp/overlapics-v2/scoped/budget/s1-budget.json",
+ "scalarFieldsCompared": 80,
+ "pathFieldsIgnored": 0,
+ "differingFields": [],
+ "IDENTICAL_MODULO_PATHS_AND_BINARY": true
+}
