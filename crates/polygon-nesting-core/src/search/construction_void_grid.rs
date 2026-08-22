@@ -939,7 +939,12 @@ mod tests {
         // construction.
         for scale in [1e-3, 0.25, 1.0, 3.0, 250.0, 1e4] {
             let base = derived_cell_mm(30.0, 2000.0, 2700.0, VOID_CELLS_PER_MIN_PIECE_EXTENT);
-            let scaled = derived_cell_mm(30.0 * scale, 2000.0 * scale, 2700.0 * scale, VOID_CELLS_PER_MIN_PIECE_EXTENT);
+            let scaled = derived_cell_mm(
+                30.0 * scale,
+                2000.0 * scale,
+                2700.0 * scale,
+                VOID_CELLS_PER_MIN_PIECE_EXTENT,
+            );
             let relative = (scaled - base * scale).abs() / (base * scale);
             assert!(
                 relative < 1e-12,
@@ -955,7 +960,10 @@ mod tests {
         // The calibration exists so that this profile's first delivery is a
         // speed change with an unchanged constructor endpoint; if this
         // assertion ever moves, the mode-20 quality evidence moves with it.
-        assert_eq!(derived_cell_mm(30.0, 2000.0, 2700.0, VOID_CELLS_PER_MIN_PIECE_EXTENT), 2.0);
+        assert_eq!(
+            derived_cell_mm(30.0, 2000.0, 2700.0, VOID_CELLS_PER_MIN_PIECE_EXTENT),
+            2.0
+        );
     }
 
     #[test]
@@ -966,7 +974,10 @@ mod tests {
         let tiny = derived_cell_mm(0.1, 2000.0, 2700.0, VOID_CELLS_PER_MIN_PIECE_EXTENT);
         assert!(tiny > 0.1 / VOID_CELLS_PER_MIN_PIECE_EXTENT);
         assert!((2000.0 / tiny).ceil() * (2700.0 / tiny).ceil() <= VOID_MAX_GRID_CELLS * 1.01);
-        assert_eq!(derived_cell_mm(3000.0, 2000.0, 2700.0, VOID_CELLS_PER_MIN_PIECE_EXTENT), 200.0);
+        assert_eq!(
+            derived_cell_mm(3000.0, 2000.0, 2700.0, VOID_CELLS_PER_MIN_PIECE_EXTENT),
+            200.0
+        );
     }
 
     #[test]

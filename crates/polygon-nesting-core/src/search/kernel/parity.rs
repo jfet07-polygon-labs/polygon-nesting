@@ -164,14 +164,7 @@ fn jagua_kernel_agrees_with_the_legacy_kernel_outside_the_ambiguity_band() {
     for (slot, index) in selected.iter().copied().enumerate() {
         let (id, source) = &sources[index];
         for (rotation_deg, mirrored) in orientations {
-            prepared.push(prepare(
-                slot,
-                id,
-                source,
-                rotation_deg,
-                mirrored,
-                band_mm,
-            ));
+            prepared.push(prepare(slot, id, source, rotation_deg, mirrored, band_mm));
         }
     }
 

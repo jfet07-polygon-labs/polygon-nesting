@@ -1,5 +1,45 @@
 # The multi-basin race, and three counters that were measuring the wrong thing
 
+> ## Qualified, 2026-08-22 — the verdict stands, §4.3's explanation does not
+>
+> `docs/sol-review-9-m34cap-provenance.md` §P0 (second) audited this round and
+> agreed with **the decision** - the race is off and stays off - while refusing
+> **the reason** §4.3 gives for it. *"«0/21 perché i criteri sono una
+> landslide» non è dimostrato."* Four defects, each of which would produce 0/21
+> on its own:
+>
+> * the ranker is not dense - it orders by arm number and then by array
+>   position, so an identical `stability = 1.0` on every arm still assigns rank
+>   0/1/2 and a zero-variance criterion votes for slot 0
+>   (`portfolio.rs:4927` at that HEAD);
+> * `confirmations_attempted == 0` scores `stability = 1.0`, and since higher is
+>   better that is the **maximum**, not the neutral value §4.3 calls it
+>   (`portfolio.rs:5397`);
+> * the arms are not isolated - every audition archives and immediately tries to
+>   publish (`portfolio.rs:3246` at that HEAD), so a challenger can become the
+>   incumbent before it is judged and stay there after it is eliminated;
+>   §4.1's retirement paragraph is about the *archive* and does not undo a
+>   publication;
+> * the winner is never adopted: some challengers are removed and slot 0 is
+>   never retired (`portfolio.rs:5192`), so the race produces a queue ticket
+>   rather than a decision.
+>
+> To it, §10.7's caveat below is the closest this document comes to the finding
+> and it does not reach it: a criterion with zero variance is not merely
+> uninformative here, it is *actively voting for slot 0* through the tie-break.
+>
+> **What is unaffected.** The cost diagnosis - m20 priced 71,500x below what it
+> costs, so a share ceiling in the legacy currency cannot bound the draws - is
+> sound, was re-measured in `docs/experiments/work-currency/` §4, and is the
+> reason the retirement is not merely a null. The equal-work depth deltas
+> (+2.366 / +2.934 mm at ten seconds, +1.879 mm at thirty) are measurements and
+> stand.
+>
+> **What would have to change before re-opening it**, per that review: dense
+> ranks, arms that do not publish globally, equal maturation, and explicit
+> adoption of the winner. Under the ten-second mandate it is cut from the board
+> - see [`docs/shipped-surface.md`](../../shipped-surface.md) §3.
+
 Four things. The three fixes are what both reviews said had to happen before any
 further sparse-rotation or design-C number could be read at all; the race is the
 spend both reviews ranked first.
@@ -611,6 +651,32 @@ have to be won recorded here.
 In one line: this round turned *"the witness does not compose"* into *"the
 witness composes and the composition is not worth the frontier it disturbs"*,
 which is a different claim about a different thing.
+
+> **Qualified, 2026-08-22.** `docs/sol-review-9-m34cap-provenance.md` §P0
+> (third) accepts *"do not ship the adoption"* and refuses *"the composition"*
+> as a description of what 2/12 shows. Three reasons, and each is checkable in
+> this round's own artefacts:
+>
+> * **`descendant` is defined as `final(adopt) < final(publish)`**
+>   (`drivers/witnessab.py:150`), which is *"the trajectory changed and ended
+>   lower"* and not *"a confirmation after the witness published"*. It refutes
+>   "the trajectory never changes"; it does not establish composition.
+> * **The arms are not equal-work.** Seed 1 is `10,150,405` units on one arm
+>   against `10,433,031` on the other
+>   (`evidence/witnessab-12parents.json:132,190`), so "at equal work over twelve
+>   parents" above is 2.8% out on at least one cell.
+> * **The adoption breaks the `confirmed` invariant.** It assigns the child to
+>   `confirmed_state`, moves it onto the clamp frontier, and only then builds
+>   the surrogate and tracker behind a fallible `?`; the ordinary path writes
+>   `confirmed_state` only after the frontier has passed the composite
+>   validator. So a rollback can restore a contract-valid but
+>   envelope-infeasible snapshot, and a mode-34 `exactValid = true` can describe
+>   a layout that never passed the internal composite gate.
+>
+> The verdict - `adopt` stays a spec key, off - is unchanged and is now
+> **over**determined. What a retry would need: transactional construction in
+> temporaries, the composite/proxy gate at the floor, the work charged, and an
+> explicit *"post-adoption confirmation published"* counter.
 
 ---
 

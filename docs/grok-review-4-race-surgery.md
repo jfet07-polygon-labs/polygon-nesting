@@ -2,6 +2,27 @@
 
 > Verbatim reply from the local Grok CLI (xhigh, read-only) at HEAD 8e7f82e, 2026-08-22.
 
+> **One input to this review was retracted after it was written, and the text
+> below is left unedited because it is a record of what was said.** §2's
+> parenthesis *"`m34cap` è stop in work (p50 32.64→25.91, 3.089 mm su un seed)"*
+> quotes `docs/experiments/replan/` §12.3, which
+> `docs/experiments/real-interruption/` §2 retracted on 2026-08-21: at the HEAD
+> that evidence was taken on, `m34cap=0` and `m34cap=1` produce **identical**
+> depth, fingerprint, work, operator-call count and per-slice step digest,
+> because `advance` recorded a checkpoint and left `finished = false` while its
+> caller looped to the end of the monolith. `m34cap` was not a stop of any
+> kind.
+>
+> The review's *conclusions* do not rest on it and are unaffected - §4's
+> reading that a work stop is not a wall stop and that Sol §3.3's checkpoint
+> stop "ancora non costruito" is exactly right, and it is what
+> `real-interruption/` then built. Only the parenthesised price is withdrawn.
+> Retraction chain: [`replan/README.md:3-42`](experiments/replan/README.md),
+> [`replan/evidence/cap-30s.json`](experiments/replan/evidence/cap-30s.json)'s
+> `SUPERSEDED` block,
+> [`next-generation-engine-plan.md:6824`](next-generation-engine-plan.md), and
+> [`sol-review-9-m34cap-provenance.md`](sol-review-9-m34cap-provenance.md) §P0.
+
 
 **Diagnosi: completa sul meccanismo, un filo larga sul yield.**
 

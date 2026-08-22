@@ -523,8 +523,7 @@ impl CompressionSchedule {
             },
             ..settings
         };
-        let steps_planned =
-            ((start_grid - target_grid).max(0.0) / settings.step_grid) as usize;
+        let steps_planned = ((start_grid - target_grid).max(0.0) / settings.step_grid) as usize;
         Self {
             settings,
             depth_grid: start_grid,
@@ -611,9 +610,8 @@ impl CompressionSchedule {
     /// this port reports is on the coordinator's counter rather than on this
     /// one, so the two never get mixed.
     pub fn work_units(&self) -> usize {
-        self.work_spent.saturating_add(
-            WORK_UNITS_PER_EXACT_PAIR_TEST.saturating_mul(self.exact_pair_tests()),
-        )
+        self.work_spent
+            .saturating_add(WORK_UNITS_PER_EXACT_PAIR_TEST.saturating_mul(self.exact_pair_tests()))
     }
 
     /// The exact pair tests the schedule's own confirmations have cost.

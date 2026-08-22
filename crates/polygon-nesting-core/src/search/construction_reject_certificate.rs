@@ -548,8 +548,7 @@ mod armed {
                 let Some((_, fixed)) = slot else { continue };
                 for candidate in self.candidate.discs.iter().take(discs) {
                     for other in fixed.discs.iter().take(discs) {
-                        let reach =
-                            candidate.r - self.inflation + other.r - LENS_MARGIN_MM;
+                        let reach = candidate.r - self.inflation + other.r - LENS_MARGIN_MM;
                         if reach <= 0.0 {
                             continue;
                         }
@@ -732,7 +731,10 @@ mod tests {
                 overlaps += usize::from(overlapping);
             }
         }
-        assert!(proofs > 100, "expected many proved placements, got {proofs}");
+        assert!(
+            proofs > 100,
+            "expected many proved placements, got {proofs}"
+        );
         assert!(
             overlaps > proofs,
             "the certificate is conservative, so it cannot prove more than exist"
@@ -743,7 +745,14 @@ mod tests {
     /// disc centres travel through the same transform the polygon does.
     #[test]
     fn a_mirrored_pose_transforms_its_cover_the_same_way() {
-        let wedge = [(0.0, 0.0), (20.0, 0.0), (20.0, 4.0), (6.0, 4.0), (6.0, 14.0), (0.0, 14.0)];
+        let wedge = [
+            (0.0, 0.0),
+            (20.0, 0.0),
+            (20.0, 4.0),
+            (6.0, 4.0),
+            (6.0, 14.0),
+            (0.0, 14.0),
+        ];
         let expansion = 0.75;
         let source = polygon(&wedge);
         let fixed = Arc::new(

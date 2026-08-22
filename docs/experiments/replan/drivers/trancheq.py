@@ -16,6 +16,25 @@ both ends on the same cells at the same time:
 Reported per (target, fraction) so the answer can be different at three seconds
 and at thirty - which, given that the whole reason this constant exists is that
 the bias grows with the budget, it may well be.
+
+**This driver cannot produce `evidence/cap-30s.json`, and that is a finding
+rather than a limitation.** Sol review 9 §P0 opened on it: the committed file
+carries rows whose `spec` field reads `...,m34cap=0` and `...,m34cap=1`, and the
+only branch below turns a `fraction` other than `off` into `planfirst=<value>`,
+so `capoff`/`capon` would have emitted `replan=1,planfirst=capon`. There is no
+path here that writes `m34cap` at all. The file was produced by a driver that is
+not this one, or by this one modified during the collection - either way the
+source, the driver and the measured binary did not agree, which is the provenance
+break that round was retracted for.
+
+The claim itself is retracted for a *separate and larger* reason - `m34cap`
+could not stop a committed slice at that HEAD, so the two arms were one
+trajectory - and `docs/experiments/real-interruption/` §2 is the replay that
+established it. See the correction at the head of `../README.md` and the
+`SUPERSEDED` block in `../evidence/cap-30s.json`.
+
+Nothing here is changed to make the retracted rows reproducible: the point of
+leaving the driver as it was is that a reader can check the claim above.
 """
 import json
 import os

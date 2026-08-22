@@ -87,12 +87,12 @@ use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
 use crate::profiling::{self, Counter};
+#[cfg(feature = "compression-schedule")]
+use crate::search::compression_schedule::ScheduleCheckpoint;
 use crate::search::general_fast::{
     construct_short_side_first, validate_and_measure_placements, GeneralFastError,
     GeneralFastPiece, GeneralFastPlacement, GeneralFastResult, GeneralFastSettings,
 };
-#[cfg(feature = "compression-schedule")]
-use crate::search::compression_schedule::ScheduleCheckpoint;
 #[cfg(feature = "compression-schedule")]
 use crate::search::general_relaxed::SliceControl;
 use crate::search::general_relaxed::{
@@ -953,6 +953,18 @@ pub enum PhaseExitCause {
     Affordability,
     /// The phase deadline was reached mid-phase.
     Deadline,
+    /// The run's **wall** deadline was reached mid-phase, with
+    /// [`PortfolioSettings::compression_schedule_wall_stop_all`] armed.
+    ///
+    /// Distinct from [`Self::Deadline`], which is a fraction of the budget's
+    /// own currency, because under a plan or a work budget that currency is a
+    /// counter and this one is a clock. A phase that exits here has budget left
+    /// and refused to spend it; a phase that exits on `Deadline` has not.
+    ///
+    /// It is also what keeps the re-plan loop out: `run_v3_schedule` buys
+    /// another tranche only for the three budget-bound causes, and a run out of
+    /// seconds is not one of them.
+    WallStop,
     /// The diversify phase's patience rule fired: `basin_patience` consecutive
     /// iterations published nothing.
     Patience,
@@ -976,6 +988,7 @@ impl PhaseExitCause {
             PhaseExitCause::KeysExhausted => "keysExhausted",
             PhaseExitCause::Affordability => "affordability",
             PhaseExitCause::Deadline => "deadline",
+            PhaseExitCause::WallStop => "wallStop",
             PhaseExitCause::Patience => "patience",
             PhaseExitCause::TriggerRefused => "triggerRefused",
             PhaseExitCause::NoResidue => "noResidue",
@@ -1924,6 +1937,15 @@ pub struct PortfolioOutcome {
     /// rather than a reader inferring it from whether the per-call block is
     /// present.
     pub work_currency: WorkCurrencyMode,
+    /// Which flag the run armed to get its work counters, and `None` when that
+    /// is the shipped answer.
+    ///
+    /// Present only when the run did something the settings alone do not say:
+    /// it took the counters off the work meter's own flag, or it asked to and
+    /// was deferred. A default work or plan run therefore produces the document
+    /// it always produced, byte for byte, which is what lets the unarmed arm of
+    /// this round's battery be a document diff rather than a scalar comparison.
+    pub work_meter_arming: Option<WorkMeterArmingReport>,
     pub budget: PortfolioBudget,
     pub elapsed_seconds: f64,
     pub work_units: u64,
@@ -2193,6 +2215,64 @@ pub struct PortfolioSettings {
     /// spread. `docs/experiments/real-interruption/` measures both ends.
     #[cfg(feature = "compression-schedule")]
     pub compression_schedule_wall_stop: bool,
+    /// `m34wallstopall`: the same wall deadline, applied to **the queue** rather
+    /// than only to a mode-34 checkpoint.
+    ///
+    /// `false` by default. It is a strict extension of
+    /// [`Self::compression_schedule_wall_stop`] and arms it: a run that names
+    /// this key gets the mode-34 checkpoint stop *and* an admission rule in
+    /// front of every other class.
+    ///
+    /// # Why the checkpoint stop alone leaves an overrun
+    ///
+    /// `docs/experiments/real-interruption/` §13 names the two reasons its
+    /// thirty-second `wallstop` row still crossed 3 of 9 times: *"the policy
+    /// only binds the mode-34 checkpoint it is consulted at; it cannot stop an
+    /// operator class that never asks it a question, and it cannot
+    /// retroactively shorten a batch already in flight"*. This key answers the
+    /// first of the two and nothing else. Under a plan or work budget the
+    /// queue's own stopping rule is denominated in work units, which say
+    /// nothing about seconds under load, so a queue whose m34 slice has just
+    /// stopped on the wall goes straight on to buy an m22 action with the work
+    /// it still nominally has - and that action is the overrun.
+    ///
+    /// The second reason is [`Self::compression_schedule_wall_stop_reserve`],
+    /// and it is a separate key because it is a separate mechanism: this one
+    /// refuses to *start* an action after the deadline and is exact; that one
+    /// refuses to start an action it *predicts* will cross the deadline and is
+    /// an estimate.
+    ///
+    /// It exits the phase on [`PhaseExitCause::WallStop`], which is
+    /// deliberately **not** in the re-plan loop's `budget_bound` set: a tranche
+    /// buys work, and a run that stopped because it was out of *seconds* must
+    /// not be handed more of them.
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule_wall_stop_all: bool,
+    /// `m34wallreserve`: seconds of the wall deadline held back for the action
+    /// the queue is about to start, when
+    /// [`Self::compression_schedule_wall_stop_all`] is armed.
+    ///
+    /// `0.0` by default, which is the pure admission rule: an action may start
+    /// at any time up to the deadline, and whatever it costs after that is the
+    /// residual overrun. A positive value additionally refuses a class whose
+    /// **own measured mean seconds in this run** would not fit in what is left,
+    /// scaled by this number - so `1.0` is *"only start what you expect to
+    /// finish"* and `2.0` is *"only start what you expect to finish twice"*.
+    ///
+    /// It is a multiple of the class's measured mean rather than a number of
+    /// seconds because the two ends of the trade are different sizes on
+    /// different fixtures, and because an unpriced class must not be refused -
+    /// the same rule [`Coordinator::affordability`] already applies to work.
+    /// A class this run has never bought is admitted, or it would never be
+    /// priced.
+    ///
+    /// **It is an estimate, and it can be wrong in both directions.** A class
+    /// whose mean is dragged down by cheap early calls will still be admitted
+    /// for an expensive one; a class whose mean is dragged up will be refused
+    /// while it would have fitted. The evidence reports the overrun with and
+    /// without it rather than claiming a bound.
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule_wall_stop_reserve: f64,
     /// `m34yield`: suspend a mode-34 slice toward the coordinator after this
     /// many batches, so that another action can run before it is resumed.
     ///
@@ -2501,6 +2581,40 @@ pub struct PortfolioSettings {
     /// "un ticket m20 quando non rimangono coppie complementari" rule, which
     /// coordinator v3 §4.2 measured never firing on triangle-20 at all.
     pub diversify_in_queue: bool,
+    /// `lanedebit`: whether a work or plan budget runs with
+    /// `profiling::set_enabled(false)`, taking its two counters from the work
+    /// meter's own recording flag instead.
+    ///
+    /// `false` by default, which is the shipped behaviour exactly: a work
+    /// budget arms the profiler and pays for every span in the engine.
+    ///
+    /// # What it buys, and why it is not a free lunch
+    ///
+    /// `docs/experiments/calibrated-plan/` §9 measured the counters at
+    /// **+1.882 mm** on mixed-61 at a ten-second wall and called it *"a floor
+    /// under any work-denominated budget... there is no version of this mode
+    /// that avoids it"*. The floor is real and the attribution was not
+    /// separable at the time, because one flag armed both the counting and the
+    /// timing. `profiling::metering_enabled` separates them, and this setting
+    /// is what a coordinator uses to take the first without the second.
+    ///
+    /// **The budget it runs against is numerically identical.** The same two
+    /// counters are incremented at the same two sites by the same amounts, so
+    /// `work_units_now` returns what it always returned and every plan rung,
+    /// every `plancal` key and every pinned `work=` replay is on the same
+    /// scale. That is the property that makes a paired A/B interpretable: the
+    /// two arms differ in what the instrument costs and in nothing else.
+    ///
+    /// # The one combination it refuses
+    ///
+    /// `search::work_currency` prices three further counters - `NeighborTests`,
+    /// `CollisionPolygonBuilds`, `FullRescores` - which the meter does not read
+    /// and the metering flag therefore does not arm. A run that arms both this
+    /// and [`Self::work_currency`] would compute a class price from three
+    /// counters reading zero, so this setting **defers**: the profiler is armed
+    /// as before and the run pays the tax. Refusing silently would be worse;
+    /// the report carries `workMeterArming` so a reader can see which happened.
+    pub lane_local_debit: bool,
     /// Whether the compression-schedule class is priced on the clock by its own
     /// measured wall, instead of by the work-denominated prior that is 2.6-5.9x
     /// low there.
@@ -2707,6 +2821,10 @@ impl PortfolioSettings {
             #[cfg(feature = "compression-schedule")]
             compression_schedule_wall_stop: false,
             #[cfg(feature = "compression-schedule")]
+            compression_schedule_wall_stop_all: false,
+            #[cfg(feature = "compression-schedule")]
+            compression_schedule_wall_stop_reserve: 0.0,
+            #[cfg(feature = "compression-schedule")]
             compression_schedule_yield_batches: 0,
             #[cfg(feature = "compression-schedule")]
             compression_schedule_past_bound: false,
@@ -2763,6 +2881,7 @@ impl PortfolioSettings {
             basin_race_evict: true,
             barren_action_patience: BARREN_ACTION_PATIENCE,
             diversify_in_queue: true,
+            lane_local_debit: false,
             schedule_wall_prior: true,
             // Off by default: these two change the state every m34 slice walks
             // from, and the round that measures them has to be able to run the
@@ -3057,9 +3176,7 @@ impl BudgetMeter {
             .name("plan-probe".to_owned())
             .spawn(move || {
                 while !thread_stop.load(Ordering::Relaxed) {
-                    std::thread::sleep(std::time::Duration::from_millis(
-                        PLAN_PROBE_SAMPLE_MILLIS,
-                    ));
+                    std::thread::sleep(std::time::Duration::from_millis(PLAN_PROBE_SAMPLE_MILLIS));
                     let seconds = started.elapsed().as_secs_f64();
                     let units = work_units_now().saturating_sub(work_base);
                     if let Ok(mut samples) = thread_samples.lock() {
@@ -3140,8 +3257,8 @@ impl BudgetMeter {
         if let Some(path) = settings.plan_calibration_path.as_deref() {
             let band = settings.plan_calibration_band.max(1.0);
             match read_plan_calibration(path).get(&probe_work_units) {
-                Some(&stored) if probe_seconds <= stored * band
-                    && probe_seconds * band >= stored =>
+                Some(&stored)
+                    if probe_seconds <= stored * band && probe_seconds * band >= stored =>
                 {
                     probe_effective_seconds = stored;
                     calibration_source = PlanCalibrationSource::File;
@@ -3153,11 +3270,7 @@ impl BudgetMeter {
                 // The run's own least-loaded estimate, which is the bucketed one
                 // when it exists: a calibration pass under a load spike writes
                 // the fastest stretch it saw rather than the average it endured.
-                write_plan_calibration(
-                    path,
-                    probe_work_units,
-                    bucketed.unwrap_or(probe_seconds),
-                );
+                write_plan_calibration(path, probe_work_units, bucketed.unwrap_or(probe_seconds));
             }
         }
         let probe_effective_seconds = probe_effective_seconds;
@@ -3461,6 +3574,27 @@ impl BudgetMeter {
         }
     }
 
+    /// Whether the run's wall target has already passed, with `reserve_seconds`
+    /// still to spend after now.
+    ///
+    /// `false` for a run that named a work budget and no wall at all: there is
+    /// no clock to be past. The reading is [`Self::started`] and not
+    /// [`Self::seconds`] only so the intent is legible - they are the same
+    /// number - and the reserve is added to *now* rather than subtracted from
+    /// the target so that a target smaller than the reserve refuses everything
+    /// instead of wrapping.
+    ///
+    /// This is the one place the wall stop is a *question about the run*, and
+    /// it is deliberately not a question about the phase: `deadline` is a
+    /// fraction of the budget's own currency, which under a plan is a counter.
+    /// See [`PortfolioSettings::compression_schedule_wall_stop_all`].
+    #[cfg(feature = "compression-schedule")]
+    fn wall_target_passed(&self, reserve_seconds: f64) -> bool {
+        self.wall_target_seconds.is_some_and(|limit| {
+            self.started.elapsed().as_secs_f64() + reserve_seconds.max(0.0) >= limit
+        })
+    }
+
     /// Whether the budget's currency is the clock rather than the work meter.
     ///
     /// The one thing the schedule below reads a *currency* for rather than a
@@ -3479,9 +3613,7 @@ impl BudgetMeter {
             // own units are already inside `work_units()` - `work_base` was
             // read before phase 0. Reading it the same way before installation
             // keeps `phase_zero_cost` a work number in both.
-            PortfolioBudget::Work { .. } | PortfolioBudget::Plan { .. } => {
-                self.work_units() as f64
-            }
+            PortfolioBudget::Work { .. } | PortfolioBudget::Plan { .. } => self.work_units() as f64,
         }
     }
 
@@ -4097,7 +4229,10 @@ impl<'a> Coordinator<'a> {
             relaxed.rotation_equivariant_offset =
                 self.settings.rotation_equivariant_offset && relaxed.continuous_rotation;
             relaxed.sparse_rotation = armed && mode == 34;
-            relaxed.se2_witness = self.settings.se2_witness.filter(|_| relaxed.sparse_rotation);
+            relaxed.se2_witness = self
+                .settings
+                .se2_witness
+                .filter(|_| relaxed.sparse_rotation);
             // Design A's mode-22 arming has no trigger under design B, so it is
             // withdrawn rather than left proposing rungs no stall asked for.
             if self.settings.sparse_rotation && mode == 22 {
@@ -4134,8 +4269,15 @@ impl<'a> Coordinator<'a> {
         // could read the coordinator's live state at a checkpoint would be a
         // policy whose answer depends on when it is asked, and the whole point
         // of a checkpoint is that the answer is a *decision* and not a race.
+        //
+        // `wall_stop_all` arms the checkpoint stop as well as the queue rule,
+        // so the extension is strict: every overrun the checkpoint stop
+        // measurably compressed stays compressed, and the queue rule is added
+        // in front of it rather than instead of it.
         #[cfg(feature = "compression-schedule")]
-        let wall_stop_seconds = (mode == 34 && self.settings.compression_schedule_wall_stop)
+        let wall_stop_seconds = (mode == 34
+            && (self.settings.compression_schedule_wall_stop
+                || self.settings.compression_schedule_wall_stop_all))
             .then(|| self.meter.wall_target_seconds)
             .flatten();
         // Refused while a slice is already parked, because the slot holds one:
@@ -4301,8 +4443,7 @@ impl<'a> Coordinator<'a> {
             after.operator_collision_builds = (work.experimental_collision_builds as u64)
                 .saturating_add(work.validator_collision_builds as u64);
             after.confirmations = schedule_confirmations_attempted(&population);
-            let counts =
-                crate::search::work_currency::ClassCounts::delta(&after, &counts_before);
+            let counts = crate::search::work_currency::ClassCounts::delta(&after, &counts_before);
             let class_units = crate::search::work_currency::price_for(mode).units(&counts);
             (counts, class_units)
         });
@@ -4342,8 +4483,7 @@ impl<'a> Coordinator<'a> {
                 // settlement added in total: zero unless the class price was
                 // the strict maximum of the three.
                 charged_extra_units: if currency.charges() {
-                    class_units
-                        .saturating_sub(global_units.max(self_metered.unwrap_or(0)))
+                    class_units.saturating_sub(global_units.max(self_metered.unwrap_or(0)))
                 } else {
                     0
                 },
@@ -4460,13 +4600,12 @@ impl<'a> Coordinator<'a> {
         // resumed slice is subject to the wall stop and may suspend itself
         // again, which is what makes `m34yield` an interleave rather than a
         // single hand-back.
-        let wall_stop_seconds = self
-            .settings
-            .compression_schedule_wall_stop
+        let wall_stop_seconds = (self.settings.compression_schedule_wall_stop
+            || self.settings.compression_schedule_wall_stop_all)
             .then(|| self.meter.wall_target_seconds)
             .flatten();
-        let yield_after_batches = Some(self.settings.compression_schedule_yield_batches)
-            .filter(|batches| *batches > 0);
+        let yield_after_batches =
+            Some(self.settings.compression_schedule_yield_batches).filter(|batches| *batches > 0);
         let started = self.meter.started;
         let mut control = move |checkpoint: &ScheduleCheckpoint| {
             if let Some(limit) = wall_stop_seconds {
@@ -4485,24 +4624,23 @@ impl<'a> Coordinator<'a> {
             seed_domain: crate::search::general_relaxed::COMPRESSION_SCHEDULE_SEED_DOMAIN,
             ..GeneralPersistentVacancyDiagnostics::default()
         };
-        let mut population = match crate::search::general_relaxed::resume_schedule_slice(
-            suspended,
-            &mut control,
-        ) {
-            Ok(outcome) => crate::search::general_relaxed::finish_schedule_outcome(
-                outcome,
-                diagnostics,
-                &mut self.suspended_slice,
-            ),
-            Err(error) => {
-                // A slice that fails on resumption is a failed operator call and
-                // not a failed run: the incumbent it was holding was published
-                // by the call that suspended it, so the run is never worse off
-                // than it was before the suspension.
-                diagnostics.failure_reason = Some(format!("compression schedule resume: {error}"));
-                diagnostics
-            }
-        };
+        let mut population =
+            match crate::search::general_relaxed::resume_schedule_slice(suspended, &mut control) {
+                Ok(outcome) => crate::search::general_relaxed::finish_schedule_outcome(
+                    outcome,
+                    diagnostics,
+                    &mut self.suspended_slice,
+                ),
+                Err(error) => {
+                    // A slice that fails on resumption is a failed operator call and
+                    // not a failed run: the incumbent it was holding was published
+                    // by the call that suspended it, so the run is never worse off
+                    // than it was before the suspension.
+                    diagnostics.failure_reason =
+                        Some(format!("compression schedule resume: {error}"));
+                    diagnostics
+                }
+            };
         // The same contract check every dispatched operator gets. It runs here
         // because a resumption does not go through
         // `dispatch_persistent_vacancy_mode` - there is no parent to dispatch
@@ -4557,8 +4695,7 @@ impl<'a> Coordinator<'a> {
             seed_domain: crate::search::general_relaxed::COMPRESSION_SCHEDULE_SEED_DOMAIN,
             ..GeneralPersistentVacancyDiagnostics::default()
         };
-        let mut population = match crate::search::general_relaxed::stop_suspended_slice(suspended)
-        {
+        let mut population = match crate::search::general_relaxed::stop_suspended_slice(suspended) {
             Ok(outcome) => crate::search::general_relaxed::finish_schedule_outcome(
                 outcome,
                 diagnostics,
@@ -4663,6 +4800,13 @@ impl<'a> Coordinator<'a> {
         operator: &str,
         multiple: f64,
     ) -> Option<PhaseExitCause> {
+        // Asked first, and asked in *seconds*: under a plan or a work budget
+        // every clause below this one is denominated in a counter, and a
+        // counter cannot see a box under load. This is the whole of what
+        // `m34wallstopall` adds to the classes that own no checkpoint.
+        if self.wall_stop_refuses(None) {
+            return Some(PhaseExitCause::WallStop);
+        }
         if !self.meter.has_room(deadline) {
             return Some(PhaseExitCause::Deadline);
         }
@@ -4673,9 +4817,144 @@ impl<'a> Coordinator<'a> {
         }
     }
 
+    /// Whether the wall stop refuses to start an action now, optionally of a
+    /// named class.
+    ///
+    /// `None` is the question the phase loops ask - *"is the deadline already
+    /// behind us?"* - and it is exact. `Some(class)` additionally applies
+    /// [`PortfolioSettings::compression_schedule_wall_stop_reserve`] against
+    /// that class's own measured mean seconds in this run, and it is an
+    /// estimate: a class this run has never bought has no mean, and is
+    /// admitted rather than refused, for the reason
+    /// [`Self::affordability`] admits an unpriced operator.
+    ///
+    /// Always `false` when the key is off, when the budget named no wall, and
+    /// in a build without the compression schedule - so this is a no-op on
+    /// every path any pinned number in this repository was measured on.
+    #[allow(unused_variables)]
+    fn wall_stop_refuses(&self, class: Option<ActionClass>) -> bool {
+        #[cfg(feature = "compression-schedule")]
+        {
+            if !self.settings.compression_schedule_wall_stop_all {
+                return false;
+            }
+            let reserve = match class {
+                None => 0.0,
+                Some(class) => {
+                    let multiple = self.settings.compression_schedule_wall_stop_reserve;
+                    if multiple <= 0.0 {
+                        0.0
+                    } else {
+                        self.mean_class_seconds(class).unwrap_or(0.0) * multiple
+                    }
+                }
+            };
+            self.meter.wall_target_passed(reserve)
+        }
+        #[cfg(not(feature = "compression-schedule"))]
+        {
+            false
+        }
+    }
+
+    /// One class's mean wall cost per action in this run, or `None` when the
+    /// run has not bought one.
+    ///
+    /// The class's own accumulated seconds rather than a per-operator mean:
+    /// the reserve is about the *action* the queue is about to buy, and a
+    /// diversify action is a constructor arm plus a legalization quantum
+    /// rather than one operator call.
+    #[cfg(feature = "compression-schedule")]
+    fn mean_class_seconds(&self, class: ActionClass) -> Option<f64> {
+        self.class_stats
+            .get(&class)
+            .filter(|stats| stats.actions > 0)
+            .map(|stats| stats.seconds / stats.actions as f64)
+    }
+
     /// Records why the phase in flight stopped.
     fn note_exit(&mut self, cause: PhaseExitCause) {
         self.exit_cause = cause;
+    }
+}
+
+/// Which flag a run armed to get its work counters, and what it found there.
+///
+/// Reported rather than inferred: `PortfolioSettings::lane_local_debit` names a
+/// preference and this names the outcome, and the two differ whenever
+/// `work_currency` is armed beside it. A reader of an evidence document must be
+/// able to see which arm actually ran without re-deriving it from three
+/// settings.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct WorkMeterArmingReport {
+    /// Whether the run needed work counters at all: `false` for a wall budget,
+    /// which is the one mode that never reads them.
+    pub needed: bool,
+    /// Whether the profiler was armed - every counter and every span.
+    pub profiler_armed: bool,
+    /// Whether the work meter's own flag was armed instead.
+    pub metering_armed: bool,
+    /// Whether `lane_local_debit` was asked for and refused, which happens
+    /// only when `work_currency` is armed beside it.
+    pub deferred_to_profiler: bool,
+}
+
+/// Arms the counters one run needs, and puts back what it found on the way out.
+///
+/// Scoped, and deliberately more careful than the `profiling::set_enabled(true)`
+/// it replaces: that call leaked, so one work-budgeted request left the
+/// profiler armed for every later request in the same process - including a
+/// wall-budgeted one, which would then silently pay the tax this whole setting
+/// exists to remove. A napi or CLI host runs many requests in one process.
+struct WorkMeterArming {
+    previous_profiler: bool,
+    previous_metering: bool,
+    report: WorkMeterArmingReport,
+}
+
+impl WorkMeterArming {
+    fn install(settings: &PortfolioSettings) -> Self {
+        let previous_profiler = profiling::enabled();
+        let previous_metering = profiling::metering_enabled();
+        let needed = matches!(
+            settings.budget,
+            PortfolioBudget::Work { .. } | PortfolioBudget::Plan { .. }
+        );
+        // The currency prices three counters the meter does not read, so it
+        // cannot run on the meter's flag. Deferring rather than refusing keeps
+        // the currency honest and keeps the key from silently meaning nothing.
+        let currency_needs_profiler = settings.work_currency.armed();
+        let metering = needed && settings.lane_local_debit && !currency_needs_profiler;
+        let profiler = needed && !metering;
+        if profiler {
+            profiling::set_enabled(true);
+        }
+        if metering {
+            profiling::set_metering_enabled(true);
+        }
+        Self {
+            previous_profiler,
+            previous_metering,
+            report: WorkMeterArmingReport {
+                needed,
+                profiler_armed: profiler || previous_profiler,
+                metering_armed: metering || previous_metering,
+                deferred_to_profiler: needed
+                    && settings.lane_local_debit
+                    && currency_needs_profiler,
+            },
+        }
+    }
+
+    fn report(&self) -> WorkMeterArmingReport {
+        self.report
+    }
+}
+
+impl Drop for WorkMeterArming {
+    fn drop(&mut self) {
+        profiling::set_enabled(self.previous_profiler);
+        profiling::set_metering_enabled(self.previous_metering);
     }
 }
 
@@ -4721,20 +5000,16 @@ pub fn run_portfolio(
     fast_settings: GeneralFastSettings,
     settings: &PortfolioSettings,
 ) -> Result<PortfolioOutcome, GeneralFastError> {
-    if matches!(
-        settings.budget,
-        PortfolioBudget::Work { .. } | PortfolioBudget::Plan { .. }
-    ) {
-        // A work budget is a function of the counters, so it needs them. A
-        // plan *is* a work budget from the moment phase 0 ends, and its probe
-        // is denominated in the same counters, so it needs them from before
-        // phase 0 begins - which is here, and is the reason the plan's wall
-        // target buys a run that carries the counters' cost for the whole of
-        // the wall it was given. `docs/experiments/calibrated-plan/` §9 prices
-        // that in millimetres; it is the one cost of the mode that no constant
-        // and no ladder can remove.
-        profiling::set_enabled(true);
-    }
+    // A work budget is a function of the counters, so it needs them. A plan
+    // *is* a work budget from the moment phase 0 ends, and its probe is
+    // denominated in the same counters, so it needs them from before phase 0
+    // begins - which is here, and is the reason the plan's wall target buys a
+    // run that carries the counters' cost for the whole of the wall it was
+    // given. `docs/experiments/calibrated-plan/` §9 priced that in millimetres
+    // and called it a floor; `PortfolioSettings::lane_local_debit` is the
+    // setting that takes the counting without the timing, and this is where the
+    // choice between the two is made.
+    let _work_meter_arming = WorkMeterArming::install(settings);
     // The v3 coordinator's own arming of the exact-clearance certificate, for
     // the duration of this run and no longer. Off the v3 path this is not
     // constructed at all, so nothing about a v2 or a direct-engine caller
@@ -4943,304 +5218,190 @@ pub fn run_portfolio(
         "a run ended holding a suspended mode-34 slice"
     );
     if !settings.coordinator_v3 {
-    coordinator.run_phase("descent", settings.schedule.descent_by, |run| {
-        let mut cycles = run.settings.descent_cycles.max(1);
-        let mut epochs = run.settings.descent_relaxed_epochs.max(1);
-        loop {
-            // Re-selected every round, because a quantum's own output is an
-            // archive member and therefore a candidate parent for the next
-            // round. That is what turns a round-robin over the frontier into a
-            // progressive descent rather than a repeated one.
-            let frontier = run.archive.distinct_frontier(run.settings.descent_states);
-            if frontier.is_empty() {
-                run.note_exit(PhaseExitCause::GeometricFixpoint);
-                return;
+        coordinator.run_phase("descent", settings.schedule.descent_by, |run| {
+            let mut cycles = run.settings.descent_cycles.max(1);
+            let mut epochs = run.settings.descent_relaxed_epochs.max(1);
+            loop {
+                // Re-selected every round, because a quantum's own output is an
+                // archive member and therefore a candidate parent for the next
+                // round. That is what turns a round-robin over the frontier into a
+                // progressive descent rather than a repeated one.
+                let frontier = run.archive.distinct_frontier(run.settings.descent_states);
+                if frontier.is_empty() {
+                    run.note_exit(PhaseExitCause::GeometricFixpoint);
+                    return;
+                }
+                let mut spent_any = false;
+                for basin in frontier {
+                    if let Some(cause) = run.affordability(run.deadline, "mode22", 1.0) {
+                        run.note_exit(cause);
+                        return;
+                    }
+                    // The quantum's *size* is part of the key: a second pass at a
+                    // deeper quantum is a different operator call, not a repeat.
+                    if run.already_attempted(format!("22:{cycles}:{epochs}:{}", basin.fingerprint))
+                    {
+                        continue;
+                    }
+                    spent_any = true;
+                    let target = basin.raw_depth_mm + ALTERNATION_RUNG_MM;
+                    run.run_operator(
+                        22,
+                        &basin.placements.clone(),
+                        Some(basin.fingerprint.clone()),
+                        Some(target),
+                        |relaxed| {
+                            relaxed.alternation_max_cycles = Some(cycles);
+                            relaxed.epochs = epochs;
+                        },
+                        None,
+                        ParentRole::Descended,
+                        None,
+                    );
+                }
+                if spent_any {
+                    continue;
+                }
+                // The frontier is a fixpoint *at this quantum size*: every distinct
+                // state has had this much alternation and none of it produced a new
+                // layout.
+                //
+                // The obvious next move is to deepen the quantum rather than hand
+                // the remaining budget to a later phase, and this is that move,
+                // measured and declined. Doubling the cycle and epoch counts until
+                // the mode's own bound and the caller's own epoch count are reached
+                // does keep the phase busy - and on the measured stream it takes
+                // the budget away from the crossover phase, which is the *second*
+                // most productive operator here (three publications in nine calls),
+                // and the result gets worse: seed 1 goes from 176.056 to 179.633
+                // under the review's schedule and to 176.753 under the focused one.
+                // So the default is off, and the flag stays as the instrument that
+                // priced it.
+                if !run.settings.descent_iterated_deepening {
+                    run.descent_stalled = true;
+                    run.note_exit(PhaseExitCause::KeysExhausted);
+                    break;
+                }
+                let deepened_cycles = (cycles * 2).min(ALTERNATION_MAX_CYCLES);
+                let deepened_epochs = (epochs * 2).min(template_epochs);
+                if deepened_cycles == cycles && deepened_epochs == epochs {
+                    run.descent_stalled = true;
+                    run.note_exit(PhaseExitCause::KeysExhausted);
+                    break;
+                }
+                cycles = deepened_cycles;
+                epochs = deepened_epochs;
             }
-            let mut spent_any = false;
-            for basin in frontier {
-                if let Some(cause) = run.affordability(run.deadline, "mode22", 1.0) {
+        });
+
+        // ---- phase 2: crossovers over the distinct archive pairs --------------
+        // Second, not fourth, and repeatable. The review called mode 23
+        // "conditional but currently evidence-required"; the v1 measurement made it
+        // evidence-*producing* - the largest single published gains in the run -
+        // and then gave it 0.6 s of a ten-second budget. The condition stays what
+        // the review wrote it as: two structurally distinct archive states.
+        coordinator.run_phase("crossover", settings.schedule.crossover_by, |run| {
+            for _ in 0..run.settings.crossover_attempts {
+                if let Some(cause) = run.affordability(run.deadline, "mode23", 1.0) {
                     run.note_exit(cause);
                     return;
                 }
-                // The quantum's *size* is part of the key: a second pass at a
-                // deeper quantum is a different operator call, not a repeat.
-                if run.already_attempted(format!("22:{cycles}:{epochs}:{}", basin.fingerprint)) {
-                    continue;
+                // Re-selected every attempt: a crossover that published moved the
+                // incumbent, and the next pair should be drawn from where the
+                // archive is now, not from where it was.
+                let frontier = run
+                    .archive
+                    .distinct_frontier(run.settings.crossover_states.max(2));
+                if frontier.len() < 2 {
+                    run.note_exit(PhaseExitCause::GeometricFixpoint);
+                    return;
                 }
-                spent_any = true;
-                let target = basin.raw_depth_mm + ALTERNATION_RUNG_MM;
+                let fingerprints = frontier
+                    .iter()
+                    .map(|basin| basin.fingerprint.clone())
+                    .collect::<Vec<_>>();
+                let Some((left, right, key)) =
+                    first_unattempted_crossover_pair(&fingerprints, &run.attempted)
+                else {
+                    run.note_exit(PhaseExitCause::KeysExhausted);
+                    return;
+                };
+                run.already_attempted(key);
+                let parent_b = GeneralPersistentVacancyPinnedParent {
+                    placements: frontier[right].placements.clone(),
+                    source: "archive".to_owned(),
+                    source_sha256: frontier[right].fingerprint.clone(),
+                };
                 run.run_operator(
-                    22,
-                    &basin.placements.clone(),
-                    Some(basin.fingerprint.clone()),
-                    Some(target),
-                    |relaxed| {
-                        relaxed.alternation_max_cycles = Some(cycles);
-                        relaxed.epochs = epochs;
-                    },
-                    None,
+                    23,
+                    &frontier[left].placements.clone(),
+                    Some(frontier[left].fingerprint.clone()),
+                    Some(CROSSOVER_CUT_FRACTION),
+                    |_| {},
+                    Some(&parent_b),
                     ParentRole::Descended,
-                    None,
+                    Some(format!(
+                        "x:forward:{left}->{right}@{CROSSOVER_CUT_FRACTION}"
+                    )),
                 );
+                // Both parents were descended from. v1 charged only the first,
+                // which is the same defect - a descent that happened going
+                // uncharged - as charging the constructor's pose prior, in the
+                // other direction.
+                let right_fingerprint = frontier[right].fingerprint.clone();
+                run.archive.charge_descent(&right_fingerprint);
             }
-            if spent_any {
-                continue;
-            }
-            // The frontier is a fixpoint *at this quantum size*: every distinct
-            // state has had this much alternation and none of it produced a new
-            // layout.
-            //
-            // The obvious next move is to deepen the quantum rather than hand
-            // the remaining budget to a later phase, and this is that move,
-            // measured and declined. Doubling the cycle and epoch counts until
-            // the mode's own bound and the caller's own epoch count are reached
-            // does keep the phase busy - and on the measured stream it takes
-            // the budget away from the crossover phase, which is the *second*
-            // most productive operator here (three publications in nine calls),
-            // and the result gets worse: seed 1 goes from 176.056 to 179.633
-            // under the review's schedule and to 176.753 under the focused one.
-            // So the default is off, and the flag stays as the instrument that
-            // priced it.
-            if !run.settings.descent_iterated_deepening {
-                run.descent_stalled = true;
-                run.note_exit(PhaseExitCause::KeysExhausted);
-                break;
-            }
-            let deepened_cycles = (cycles * 2).min(ALTERNATION_MAX_CYCLES);
-            let deepened_epochs = (epochs * 2).min(template_epochs);
-            if deepened_cycles == cycles && deepened_epochs == epochs {
-                run.descent_stalled = true;
-                run.note_exit(PhaseExitCause::KeysExhausted);
-                break;
-            }
-            cycles = deepened_cycles;
-            epochs = deepened_epochs;
-        }
-    });
+        });
 
-    // ---- phase 2: crossovers over the distinct archive pairs --------------
-    // Second, not fourth, and repeatable. The review called mode 23
-    // "conditional but currently evidence-required"; the v1 measurement made it
-    // evidence-*producing* - the largest single published gains in the run -
-    // and then gave it 0.6 s of a ten-second budget. The condition stays what
-    // the review wrote it as: two structurally distinct archive states.
-    coordinator.run_phase("crossover", settings.schedule.crossover_by, |run| {
-        for _ in 0..run.settings.crossover_attempts {
-            if let Some(cause) = run.affordability(run.deadline, "mode23", 1.0) {
+        // ---- phase 3: micro-descent, and m31 only on a residue -----------------
+        // The order is inverted from v1. v1 asked mode 31 to legalize a *clean*
+        // mode-22 fixpoint one rung below its own depth: six calls, zero
+        // exact-valid results, every one "global legalization did not reach a
+        // feasible fixpoint". The review's own sentence is that m31 is
+        // production-worthy "only as the legalizer for a compressed/perturbed
+        // frontier", so v2 does the compression first and hands m31 the residue if
+        // and only if one exists - a complete layout the compressing descent
+        // returned that the exact validator refuses.
+        coordinator.run_phase("compression", settings.schedule.compression_by, |run| {
+            if let Some(cause) = run.affordability(run.deadline, "mode22", 1.0) {
                 run.note_exit(cause);
                 return;
             }
-            // Re-selected every attempt: a crossover that published moved the
-            // incumbent, and the next pair should be drawn from where the
-            // archive is now, not from where it was.
-            let frontier = run
-                .archive
-                .distinct_frontier(run.settings.crossover_states.max(2));
-            if frontier.len() < 2 {
+            let parent = run.incumbent.result.placements.clone();
+            let fingerprint = run.incumbent.fingerprint.clone();
+            let Some(depth) = run.incumbent.raw_depth_mm else {
                 run.note_exit(PhaseExitCause::GeometricFixpoint);
                 return;
-            }
-            let fingerprints = frontier
-                .iter()
-                .map(|basin| basin.fingerprint.clone())
-                .collect::<Vec<_>>();
-            let Some((left, right, key)) =
-                first_unattempted_crossover_pair(&fingerprints, &run.attempted)
-            else {
+            };
+            if run.already_attempted(format!("22c:{fingerprint}")) {
                 run.note_exit(PhaseExitCause::KeysExhausted);
                 return;
-            };
-            run.already_attempted(key);
-            let parent_b = GeneralPersistentVacancyPinnedParent {
-                placements: frontier[right].placements.clone(),
-                source: "archive".to_owned(),
-                source_sha256: frontier[right].fingerprint.clone(),
-            };
-            run.run_operator(
-                23,
-                &frontier[left].placements.clone(),
-                Some(frontier[left].fingerprint.clone()),
-                Some(CROSSOVER_CUT_FRACTION),
-                |_| {},
-                Some(&parent_b),
-                ParentRole::Descended,
-                Some(format!("x:forward:{left}->{right}@{CROSSOVER_CUT_FRACTION}")),
-            );
-            // Both parents were descended from. v1 charged only the first,
-            // which is the same defect - a descent that happened going
-            // uncharged - as charging the constructor's pose prior, in the
-            // other direction.
-            let right_fingerprint = frontier[right].fingerprint.clone();
-            run.archive.charge_descent(&right_fingerprint);
-        }
-    });
-
-    // ---- phase 3: micro-descent, and m31 only on a residue -----------------
-    // The order is inverted from v1. v1 asked mode 31 to legalize a *clean*
-    // mode-22 fixpoint one rung below its own depth: six calls, zero
-    // exact-valid results, every one "global legalization did not reach a
-    // feasible fixpoint". The review's own sentence is that m31 is
-    // production-worthy "only as the legalizer for a compressed/perturbed
-    // frontier", so v2 does the compression first and hands m31 the residue if
-    // and only if one exists - a complete layout the compressing descent
-    // returned that the exact validator refuses.
-    coordinator.run_phase("compression", settings.schedule.compression_by, |run| {
-        if let Some(cause) = run.affordability(run.deadline, "mode22", 1.0) {
-            run.note_exit(cause);
-            return;
-        }
-        let parent = run.incumbent.result.placements.clone();
-        let fingerprint = run.incumbent.fingerprint.clone();
-        let Some(depth) = run.incumbent.raw_depth_mm else {
-            run.note_exit(PhaseExitCause::GeometricFixpoint);
-            return;
-        };
-        if run.already_attempted(format!("22c:{fingerprint}")) {
-            run.note_exit(PhaseExitCause::KeysExhausted);
-            return;
-        }
-        let epochs = run.settings.descent_relaxed_epochs;
-        let compressed = run.run_operator(
-            22,
-            &parent,
-            Some(fingerprint),
-            Some(depth + ALTERNATION_RUNG_MM),
-            |relaxed| {
-                relaxed.alternation_max_cycles = Some(1);
-                relaxed.epochs = epochs;
-            },
-            None,
-            ParentRole::Descended,
-            None,
-        );
-        if compressed.exact_valid {
-            // Nothing to legalize. This is the whole demotion: on this stream
-            // the trigger does not fire, and a phase that does not fire costs
-            // nothing instead of costing six refused calls.
-            run.note_exit(PhaseExitCause::NoResidue);
-            return;
-        }
-        let residue = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
-            &compressed.final_placements,
-        );
-        if residue.len() != run.pieces.len() {
-            run.note_exit(PhaseExitCause::NoCompleteLayout);
-            return;
-        }
-        if !run.meter.has_room(run.deadline) {
-            run.note_exit(PhaseExitCause::Deadline);
-            return;
-        }
-        let Some(residue_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
-            run.pieces,
-            &residue,
-            run.fast_settings,
-        )
-        .ok() else {
-            run.note_exit(PhaseExitCause::GeometricFixpoint);
-            return;
-        };
-        // One rung of the engine's own construction drop ladder below the
-        // residue, which is the smallest bound this engine ever asks a
-        // legalizer for.
-        let bound = residue_depth - COMPRESSION_RUNG_MM;
-        if bound <= 0.0 {
-            run.note_exit(PhaseExitCause::GeometricFixpoint);
-            return;
-        }
-        let residue_fingerprint = general_placement_fingerprint(&residue);
-        if run.already_attempted(format!("31:{residue_fingerprint}")) {
-            run.note_exit(PhaseExitCause::KeysExhausted);
-            return;
-        }
-        run.run_operator(
-            31,
-            &residue,
-            Some(residue_fingerprint),
-            Some(bound),
-            |_| {},
-            None,
-            ParentRole::Descended,
-            None,
-        );
-    });
-
-    // ---- phase 4: diversify - draw a basin only if it can be descended ----
-    // The constructor slice, conditional and last. Each iteration draws one
-    // salted arm and immediately spends a quantum on it, because the v1
-    // measurement's finding was not "mode 20 is bad" - all nineteen arms were
-    // exact-valid - but "nineteen arms that nobody descended from published
-    // nothing". An arm that is drawn is now descended from in the same
-    // iteration or it is not drawn at all.
-    coordinator.run_phase("diversify", settings.schedule.diversify_by, |run| {
-        match run.settings.basin_trigger {
-            BasinTrigger::Never => {
-                run.note_exit(PhaseExitCause::TriggerRefused);
-                return;
             }
-            BasinTrigger::OnStall if !run.descent_stalled => {
-                run.note_exit(PhaseExitCause::TriggerRefused);
-                return;
-            }
-            _ => {}
-        }
-        let priced = run.settings.basin_trigger == BasinTrigger::WhenDescendable;
-        let patience = run.settings.basin_patience.max(1);
-        let mut barren = 0usize;
-        for slot in 0..run.settings.basin_slots {
-            let publications_before = run.publications.len();
-            if !run.meter.has_room(run.deadline) {
-                run.note_exit(PhaseExitCause::Deadline);
-                return;
-            }
-            if priced {
-                // A quantum is the price of *using* a basin, and a basin that
-                // is not used is the 19/19 refusal. An arm has never been
-                // priced when the first one is drawn, so it is charged a
-                // quantum's price until it has priced itself.
-                let Some(quantum) = run.mean_operator_cost("mode22") else {
-                    run.note_exit(PhaseExitCause::Affordability);
-                    return;
-                };
-                let arm = run.mean_operator_cost("mode20").unwrap_or(quantum);
-                if run.meter.remaining_to(run.deadline) < arm + quantum {
-                    run.note_exit(PhaseExitCause::Affordability);
-                    return;
-                }
-            }
-            let salt = slot as f64 * BASIN_TARGET_SALT_RELATIVE_STEP * constructor_clamp_mm;
-            let divisor = if run.settings.cell_divisor_salts.is_empty() {
-                None
-            } else {
-                Some(run.settings.cell_divisor_salts[slot % run.settings.cell_divisor_salts.len()])
-            };
-            let parent = run.incumbent.result.placements.clone();
-            let parent_fingerprint = run.incumbent.fingerprint.clone();
-            let drawn = run.run_operator(
-                20,
+            let epochs = run.settings.descent_relaxed_epochs;
+            let compressed = run.run_operator(
+                22,
                 &parent,
-                Some(parent_fingerprint),
-                Some(constructor_clamp_mm + salt),
+                Some(fingerprint),
+                Some(depth + ALTERNATION_RUNG_MM),
                 |relaxed| {
-                    relaxed.construction_restart_window = Some((slot, 1));
-                    relaxed.construction_void_cell_divisor = divisor;
+                    relaxed.alternation_max_cycles = Some(1);
+                    relaxed.epochs = epochs;
                 },
                 None,
-                // The constructor builds from scratch; the incumbent is only
-                // its pose prior, so this is not that basin's quantum.
-                ParentRole::Prior,
-                Some(format!("m20:slot{slot}")),
+                ParentRole::Descended,
+                None,
             );
-            let basin = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
-                &drawn.final_placements,
+            if compressed.exact_valid {
+                // Nothing to legalize. This is the whole demotion: on this stream
+                // the trigger does not fire, and a phase that does not fire costs
+                // nothing instead of costing six refused calls.
+                run.note_exit(PhaseExitCause::NoResidue);
+                return;
+            }
+            let residue = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+                &compressed.final_placements,
             );
-            if basin.len() != run.pieces.len() {
-                // An arm that produced no complete layout is evidence about the
-                // clamp, not about this slot: consecutive slots differ only in
-                // a salt of one part in ten thousand, so the next arm would be
-                // refused for the same reason at the same price. Stopping here
-                // is what turns "the clamp was wrong" from eight wasted arms -
-                // 2.04 s of a 3.88 s shapes-17 run, measured - into one.
+            if residue.len() != run.pieces.len() {
                 run.note_exit(PhaseExitCause::NoCompleteLayout);
                 return;
             }
@@ -5248,57 +5409,178 @@ pub fn run_portfolio(
                 run.note_exit(PhaseExitCause::Deadline);
                 return;
             }
-            let Some(basin_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
+            let Some(residue_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
                 run.pieces,
-                &basin,
+                &residue,
                 run.fast_settings,
             )
             .ok() else {
-                barren += 1;
-                if barren >= patience {
-                    run.note_exit(PhaseExitCause::Patience);
-                    return;
-                }
-                continue;
+                run.note_exit(PhaseExitCause::GeometricFixpoint);
+                return;
             };
-            let basin_fingerprint = general_placement_fingerprint(&basin);
-            let cycles = run.settings.descent_cycles.max(1);
-            let epochs = run.settings.descent_relaxed_epochs.max(1);
-            if run.already_attempted(format!("22:{cycles}:{epochs}:{basin_fingerprint}")) {
-                // The arm rebuilt a layout some quantum has already descended
-                // from, so it bought nothing. That is a barren iteration on the
-                // same terms as one whose descent published nothing.
-                barren += 1;
-                if barren >= patience {
-                    run.note_exit(PhaseExitCause::Patience);
-                    return;
-                }
-                continue;
+            // One rung of the engine's own construction drop ladder below the
+            // residue, which is the smallest bound this engine ever asks a
+            // legalizer for.
+            let bound = residue_depth - COMPRESSION_RUNG_MM;
+            if bound <= 0.0 {
+                run.note_exit(PhaseExitCause::GeometricFixpoint);
+                return;
+            }
+            let residue_fingerprint = general_placement_fingerprint(&residue);
+            if run.already_attempted(format!("31:{residue_fingerprint}")) {
+                run.note_exit(PhaseExitCause::KeysExhausted);
+                return;
             }
             run.run_operator(
-                22,
-                &basin,
-                Some(basin_fingerprint),
-                Some(basin_depth + ALTERNATION_RUNG_MM),
-                |relaxed| {
-                    relaxed.alternation_max_cycles = Some(cycles);
-                    relaxed.epochs = epochs;
-                },
+                31,
+                &residue,
+                Some(residue_fingerprint),
+                Some(bound),
+                |_| {},
                 None,
                 ParentRole::Descended,
-                Some(format!("m22:slot{slot}")),
+                None,
             );
-            if run.publications.len() > publications_before {
-                barren = 0;
-            } else {
-                barren += 1;
-                if barren >= patience {
-                    run.note_exit(PhaseExitCause::Patience);
+        });
+
+        // ---- phase 4: diversify - draw a basin only if it can be descended ----
+        // The constructor slice, conditional and last. Each iteration draws one
+        // salted arm and immediately spends a quantum on it, because the v1
+        // measurement's finding was not "mode 20 is bad" - all nineteen arms were
+        // exact-valid - but "nineteen arms that nobody descended from published
+        // nothing". An arm that is drawn is now descended from in the same
+        // iteration or it is not drawn at all.
+        coordinator.run_phase("diversify", settings.schedule.diversify_by, |run| {
+            match run.settings.basin_trigger {
+                BasinTrigger::Never => {
+                    run.note_exit(PhaseExitCause::TriggerRefused);
                     return;
                 }
+                BasinTrigger::OnStall if !run.descent_stalled => {
+                    run.note_exit(PhaseExitCause::TriggerRefused);
+                    return;
+                }
+                _ => {}
             }
-        }
-    });
+            let priced = run.settings.basin_trigger == BasinTrigger::WhenDescendable;
+            let patience = run.settings.basin_patience.max(1);
+            let mut barren = 0usize;
+            for slot in 0..run.settings.basin_slots {
+                let publications_before = run.publications.len();
+                if !run.meter.has_room(run.deadline) {
+                    run.note_exit(PhaseExitCause::Deadline);
+                    return;
+                }
+                if priced {
+                    // A quantum is the price of *using* a basin, and a basin that
+                    // is not used is the 19/19 refusal. An arm has never been
+                    // priced when the first one is drawn, so it is charged a
+                    // quantum's price until it has priced itself.
+                    let Some(quantum) = run.mean_operator_cost("mode22") else {
+                        run.note_exit(PhaseExitCause::Affordability);
+                        return;
+                    };
+                    let arm = run.mean_operator_cost("mode20").unwrap_or(quantum);
+                    if run.meter.remaining_to(run.deadline) < arm + quantum {
+                        run.note_exit(PhaseExitCause::Affordability);
+                        return;
+                    }
+                }
+                let salt = slot as f64 * BASIN_TARGET_SALT_RELATIVE_STEP * constructor_clamp_mm;
+                let divisor = if run.settings.cell_divisor_salts.is_empty() {
+                    None
+                } else {
+                    Some(
+                        run.settings.cell_divisor_salts
+                            [slot % run.settings.cell_divisor_salts.len()],
+                    )
+                };
+                let parent = run.incumbent.result.placements.clone();
+                let parent_fingerprint = run.incumbent.fingerprint.clone();
+                let drawn = run.run_operator(
+                    20,
+                    &parent,
+                    Some(parent_fingerprint),
+                    Some(constructor_clamp_mm + salt),
+                    |relaxed| {
+                        relaxed.construction_restart_window = Some((slot, 1));
+                        relaxed.construction_void_cell_divisor = divisor;
+                    },
+                    None,
+                    // The constructor builds from scratch; the incumbent is only
+                    // its pose prior, so this is not that basin's quantum.
+                    ParentRole::Prior,
+                    Some(format!("m20:slot{slot}")),
+                );
+                let basin =
+                    crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+                        &drawn.final_placements,
+                    );
+                if basin.len() != run.pieces.len() {
+                    // An arm that produced no complete layout is evidence about the
+                    // clamp, not about this slot: consecutive slots differ only in
+                    // a salt of one part in ten thousand, so the next arm would be
+                    // refused for the same reason at the same price. Stopping here
+                    // is what turns "the clamp was wrong" from eight wasted arms -
+                    // 2.04 s of a 3.88 s shapes-17 run, measured - into one.
+                    run.note_exit(PhaseExitCause::NoCompleteLayout);
+                    return;
+                }
+                if !run.meter.has_room(run.deadline) {
+                    run.note_exit(PhaseExitCause::Deadline);
+                    return;
+                }
+                let Some(basin_depth) = crate::search::general_relaxed::coupled_raw_source_depth(
+                    run.pieces,
+                    &basin,
+                    run.fast_settings,
+                )
+                .ok() else {
+                    barren += 1;
+                    if barren >= patience {
+                        run.note_exit(PhaseExitCause::Patience);
+                        return;
+                    }
+                    continue;
+                };
+                let basin_fingerprint = general_placement_fingerprint(&basin);
+                let cycles = run.settings.descent_cycles.max(1);
+                let epochs = run.settings.descent_relaxed_epochs.max(1);
+                if run.already_attempted(format!("22:{cycles}:{epochs}:{basin_fingerprint}")) {
+                    // The arm rebuilt a layout some quantum has already descended
+                    // from, so it bought nothing. That is a barren iteration on the
+                    // same terms as one whose descent published nothing.
+                    barren += 1;
+                    if barren >= patience {
+                        run.note_exit(PhaseExitCause::Patience);
+                        return;
+                    }
+                    continue;
+                }
+                run.run_operator(
+                    22,
+                    &basin,
+                    Some(basin_fingerprint),
+                    Some(basin_depth + ALTERNATION_RUNG_MM),
+                    |relaxed| {
+                        relaxed.alternation_max_cycles = Some(cycles);
+                        relaxed.epochs = epochs;
+                    },
+                    None,
+                    ParentRole::Descended,
+                    Some(format!("m22:slot{slot}")),
+                );
+                if run.publications.len() > publications_before {
+                    barren = 0;
+                } else {
+                    barren += 1;
+                    if barren >= patience {
+                        run.note_exit(PhaseExitCause::Patience);
+                        return;
+                    }
+                }
+            }
+        });
     } // end of the v2 phase sequence
 
     // ---- phase 5: drain ---------------------------------------------------
@@ -5364,6 +5646,12 @@ pub fn run_portfolio(
         operator_calls: coordinator.operator_calls,
         publications: coordinator.publications,
         work_currency: settings.work_currency,
+        // `filter` and not `Some`: a run that armed the profiler exactly as it
+        // always has has nothing to report, and a key that appeared on every
+        // plan document would make every pinned document digest in this
+        // repository a digest of a different document.
+        work_meter_arming: Some(_work_meter_arming.report())
+            .filter(|report| report.metering_armed || report.deferred_to_profiler),
         budget,
         elapsed_seconds,
         work_units,
@@ -5448,7 +5736,12 @@ impl<'a> Coordinator<'a> {
     /// its allowance is a fixed number of work units measured from wherever the
     /// schedule saturated, so that every arm gets the same allowance from the
     /// same state.
-    fn run_phase_to(&mut self, name: &str, deadline: f64, body: impl FnOnce(&mut PhaseRun<'_, 'a>)) {
+    fn run_phase_to(
+        &mut self,
+        name: &str,
+        deadline: f64,
+        body: impl FnOnce(&mut PhaseRun<'_, 'a>),
+    ) {
         let entered_seconds = self.meter.seconds();
         let entered_work = self.meter.work_units();
         let calls_before = self.operator_calls.len();
@@ -5857,7 +6150,8 @@ impl Coordinator<'_> {
                     * SCHEDULE_RUNGS as f64
                     * crate::search::general_relaxed::COUPLED_SEPARATOR_CONTRACTION_RATIO;
                 let key = format!("34:{}", basin.fingerprint);
-                if rank < quantum_states && depth - drop_mm > 0.0 && !self.attempted.contains(&key) {
+                if rank < quantum_states && depth - drop_mm > 0.0 && !self.attempted.contains(&key)
+                {
                     actions.push(ScheduledAction {
                         class: ActionClass::Schedule,
                         key,
@@ -6103,9 +6397,7 @@ impl Coordinator<'_> {
     /// Whether `class` is the one class this run prices differently for
     /// affordability than for rank.
     fn schedule_wall_priced(&self, class: ActionClass) -> bool {
-        self.settings.schedule_wall_prior
-            && class == ActionClass::Schedule
-            && self.meter.is_wall()
+        self.settings.schedule_wall_prior && class == ActionClass::Schedule && self.meter.is_wall()
     }
 
     /// The queue's ranking value: expected millimetres of published raw depth
@@ -6352,10 +6644,7 @@ fn judge_basin_race(arms: &mut [usize], rows: &mut [BasinRaceArm]) {
 /// worse basin *and* has spent the audition. Both halves are priced in
 /// `docs/experiments/basin-race/`; the equal-work gate is what decides.
 #[cfg(feature = "compression-schedule")]
-fn run_basin_race(
-    coordinator: &mut Coordinator<'_>,
-    constructor_clamp_mm: f64,
-) -> BasinRaceReport {
+fn run_basin_race(coordinator: &mut Coordinator<'_>, constructor_clamp_mm: f64) -> BasinRaceReport {
     if !coordinator.settings.basin_race {
         return BasinRaceReport::unarmed();
     }
@@ -6615,8 +6904,9 @@ fn draw_race_arm(
         ParentRole::Prior,
         Some(format!("race m20 slot{slot}")),
     );
-    let basin =
-        crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(&drawn.final_placements);
+    let basin = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
+        &drawn.final_placements,
+    );
     if basin.len() != run.pieces.len() {
         return None;
     }
@@ -6981,6 +7271,16 @@ fn v3_loop(
         };
     }
     loop {
+        // Asked before the resumption and before the enumeration, because a
+        // queue that is out of *seconds* must not spend one more of them on
+        // either. A suspended slice is not lost by exiting here: its incumbent
+        // was published by the call that suspended it, and `drain_suspended_slice`
+        // writes its report without running a batch.
+        if run.wall_stop_refuses(None) {
+            run.note_exit(PhaseExitCause::WallStop);
+            save!();
+            return;
+        }
         if !run.meter.has_room(run.deadline) {
             run.note_exit(PhaseExitCause::Deadline);
             save!();
@@ -7125,6 +7425,21 @@ fn v3_loop(
                 candidates.insert(0, promoted);
             }
         }
+        // The wall reserve, applied to the *candidate list* rather than folded
+        // into the affordability `find` below, so that "every action left would
+        // cross the deadline" exits on its own cause instead of being reported
+        // as a work-affordability exit. With the reserve at its `0.0` default
+        // this retains every candidate and the list is the one the queue has
+        // always ranked.
+        let wall_reserved = candidate_count > 0 && {
+            candidates.retain(|action| !run.wall_stop_refuses(Some(action.class)));
+            candidates.is_empty()
+        };
+        if wall_reserved {
+            run.note_exit(PhaseExitCause::WallStop);
+            save!();
+            return;
+        }
         let remaining = run.meter.remaining_to(run.deadline);
         let chosen = candidates
             .into_iter()
@@ -7144,6 +7459,15 @@ fn v3_loop(
                 // ticket is worth its price, and the only place v3 spends one.
                 if diversify_done || diversify_slot >= slots {
                     run.note_exit(PhaseExitCause::KeysExhausted);
+                    save!();
+                    return;
+                }
+                // This ticket is not on the ranked list, so the reserve filter
+                // above never saw it. It is the most expensive action the queue
+                // buys - a constructor arm plus a legalization quantum - so it
+                // is the last one that should be allowed through the wall.
+                if run.wall_stop_refuses(Some(ActionClass::Diversify)) {
+                    run.note_exit(PhaseExitCause::WallStop);
                     save!();
                     return;
                 }
@@ -7571,15 +7895,13 @@ fn execute_v3_action(
             // the spec and do exactly as little.
             let wants_checkpoints = past_bound
                 || run.settings.compression_schedule_wall_stop
+                || run.settings.compression_schedule_wall_stop_all
                 || run.settings.compression_schedule_yield_batches > 0;
             let batch_work_units = run
                 .settings
                 .compression_schedule_batch_work_units
                 .or_else(|| {
-                    let batches = run
-                        .settings
-                        .compression_schedule_past_bound_batches
-                        .max(1);
+                    let batches = run.settings.compression_schedule_past_bound_batches.max(1);
                     wants_checkpoints
                         .then_some(past_bound_cap.or(action_budget_units))
                         .flatten()
@@ -7785,11 +8107,9 @@ fn schedule_slice_report(
         entry_legalization_accepted: report.entry_legalization_accepted,
         entry_legalization_ms: report.entry_legalization_ms,
         entry_legalization_reason: report.entry_legalization_reason.clone(),
-        entry_legalization_violating_pairs_before: report
-            .entry_legalization_violating_pairs_before,
+        entry_legalization_violating_pairs_before: report.entry_legalization_violating_pairs_before,
         entry_legalization_violating_pairs_after: report.entry_legalization_violating_pairs_after,
-        entry_legalization_boundary_pieces_before: report
-            .entry_legalization_boundary_pieces_before,
+        entry_legalization_boundary_pieces_before: report.entry_legalization_boundary_pieces_before,
         entry_legalization_boundary_pieces_after: report.entry_legalization_boundary_pieces_after,
         skipped_infeasible_entry: report.skipped_infeasible_entry,
         aborted_barren_probe: report.aborted_barren_probe,
@@ -8056,8 +8376,7 @@ fn enumerate_crossover_actions(
                 // fingerprints rather than from the ranks: an action whose
                 // parents were ranked the other way round when the phase made
                 // it is still the same attempted action.
-                let schedule_key =
-                    format!("23:{}:{}", parent_a.fingerprint, parent_b.fingerprint);
+                let schedule_key = format!("23:{}:{}", parent_a.fingerprint, parent_b.fingerprint);
                 let mut bands = derived_cut_bands(&parent_a.placements, &parent_b.placements);
                 bands.sort_by(|first, second| {
                     (first.0 - CROSSOVER_CUT_FRACTION)
@@ -8166,7 +8485,9 @@ fn build_ledger(coordinator: &Coordinator<'_>) -> PortfolioLedger {
     let next_action = frontier_actions
         .iter()
         .find(|action| {
-            !action.attempted && !action.degenerate && !existing.contains(&action.hybrid_fingerprint)
+            !action.attempted
+                && !action.degenerate
+                && !existing.contains(&action.hybrid_fingerprint)
         })
         .cloned();
 
@@ -8454,7 +8775,9 @@ fn run_probe_phase(
     let mut steps: Vec<String> = Vec::new();
     coordinator.run_phase_to("probe", deadline, |run| match arm {
         ProbeArm::NextDerivedCrossover => probe_next_derived_crossover(run, &mut steps),
-        ProbeArm::ConstructorTicket => probe_constructor_ticket(run, constructor_clamp_mm, &mut steps),
+        ProbeArm::ConstructorTicket => {
+            probe_constructor_ticket(run, constructor_clamp_mm, &mut steps)
+        }
         ProbeArm::LadderRung => probe_ladder_rung(run, &mut steps),
         ProbeArm::DescentControl => probe_descent_control(run, &mut steps),
         ProbeArm::None => {}
@@ -8707,7 +9030,11 @@ fn probe_ladder_rung(run: &mut PhaseRun<'_, '_>, steps: &mut Vec<String>) {
             rungs.steps_run,
             rungs.step_mm,
             rungs.published_step,
-            rungs.steps.iter().map(|step| step.arms.len()).sum::<usize>(),
+            rungs
+                .steps
+                .iter()
+                .map(|step| step.arms.len())
+                .sum::<usize>(),
         ));
     }
     let produced = crate::search::general_relaxed::fast_placements_from_coupled_diagnostics(
@@ -9061,13 +9388,13 @@ mod tests {
         assert_eq!(plan.probe_work_units, 8_000_000);
         assert!((plan.probe_seconds - 2.0).abs() < 0.05, "{plan:?}");
         // 8 M + (10 s - 2 s) * 4 M/s / 2 = 8 M + 16 M = 24 M.
-        assert!((plan.raw_units - 24_000_000.0).abs() < 200_000.0, "{plan:?}");
+        assert!(
+            (plan.raw_units - 24_000_000.0).abs() < 200_000.0,
+            "{plan:?}"
+        );
         assert_eq!(plan.rung, None);
         // Installed, so nothing downstream sees a plan.
-        assert_eq!(
-            meter.budget,
-            PortfolioBudget::Work { units: plan.units }
-        );
+        assert_eq!(meter.budget, PortfolioBudget::Work { units: plan.units });
         assert!(!meter.is_wall());
         assert_eq!(meter.currency_total(), plan.units as f64);
     }
@@ -9388,10 +9715,10 @@ mod tests {
     /// fields asserted below do not exist in it at all.
     #[test]
     fn the_promoted_defaults_are_on_inside_v3_and_v3_is_off() {
-        let settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 10_000,
-            });
+        let settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 10_000 },
+        );
         assert!(!settings.coordinator_v3);
         #[cfg(feature = "parallel-compression-schedule")]
         assert!(settings.compression_schedule_parallel_confirm);
@@ -9464,10 +9791,10 @@ mod tests {
     /// tranche *count* as well as on the tranche *size*.
     #[test]
     fn a_tranche_is_refused_unless_it_buys_a_whole_rung() {
-        let settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 10_000,
-            });
+        let settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 10_000 },
+        );
         let plan = PlanReport {
             target_millis: 10_000,
             probe_seconds: 2.0,
@@ -9506,10 +9833,10 @@ mod tests {
     /// A tranche installs a *total*, and it is on the same ladder.
     #[test]
     fn a_tranche_installs_a_larger_total_on_the_same_ladder() {
-        let settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 10_000,
-            });
+        let settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 10_000 },
+        );
         let plan = PlanReport {
             target_millis: 10_000,
             probe_seconds: 0.001,
@@ -9536,7 +9863,12 @@ mod tests {
             .expect("9.7 s of remaining wall at this rate buys many rungs");
         assert_eq!(tranche.index, 1);
         assert!(tranche.units > 4_000_000, "{}", tranche.units);
-        assert_eq!(meter.budget, PortfolioBudget::Work { units: tranche.units });
+        assert_eq!(
+            meter.budget,
+            PortfolioBudget::Work {
+                units: tranche.units
+            }
+        );
         // On the ladder, and it is the *same* ladder the initial plan uses.
         let rung = tranche.rung.expect("quantised");
         let expected = PLAN_ANCHOR_UNITS * PLAN_QUANTUM_STEP.powf(rung as f64);
@@ -9576,7 +9908,10 @@ mod tests {
             );
         }
         // Unquantised, the threshold is one rung's worth of growth.
-        assert_eq!(next_rung_above(1_000, 1.0), 1_000.0 * PLAN_TRANCHE_MIN_GROWTH);
+        assert_eq!(
+            next_rung_above(1_000, 1.0),
+            1_000.0 * PLAN_TRANCHE_MIN_GROWTH
+        );
     }
 
     /// A tranche whose window cannot justify a rung buys one anyway, if the
@@ -9593,10 +9928,10 @@ mod tests {
     /// which is what keeps §9.1's 36.74 s failure from coming back this way.
     #[test]
     fn a_window_too_short_for_a_rung_still_buys_one_when_the_wall_pays() {
-        let mut settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 10_000,
-            });
+        let mut settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 10_000 },
+        );
         settings.plan_replan = true;
         let current = 9_357_620u64;
         let plan = PlanReport {
@@ -9661,13 +9996,15 @@ mod tests {
     /// *worse* than the mode it improves at the tightest budget there is.
     #[test]
     fn a_first_tranche_the_probe_outran_degrades_to_the_whole_target() {
-        let mut settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 3_000,
-            });
+        let mut settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 3_000 },
+        );
         settings.plan_replan = true;
         settings.plan_first_tranche = 0.6;
-        let mut meter = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 3_000 });
+        let mut meter = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 3_000,
+        });
         // A probe of 2.2 s against a 1.746 s first-tranche horizon.
         meter.started = Instant::now() - std::time::Duration::from_millis(2_200);
         meter.self_metered_debit = 8_778_573;
@@ -9684,7 +10021,9 @@ mod tests {
         );
         // And the degrade is *conditional*: a target the probe has not outrun
         // keeps the fraction it was given.
-        let mut roomy = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 10_000 });
+        let mut roomy = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 10_000,
+        });
         roomy.started = Instant::now() - std::time::Duration::from_millis(2_200);
         roomy.self_metered_debit = 8_778_573;
         assert_eq!(roomy.install_plan(10_000, &settings).first_tranche, 0.6);
@@ -9697,10 +10036,10 @@ mod tests {
     /// rate fell 42% below the reading, and a 30 s target took 36.74 s.
     #[test]
     fn a_tranche_does_not_extrapolate_past_the_window_it_measured() {
-        let mut settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 30_000,
-            });
+        let mut settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 30_000 },
+        );
         let plan = PlanReport {
             target_millis: 30_000,
             // A probe that finished 4 s ago, so the queue window below is
@@ -9770,17 +10109,21 @@ mod tests {
     /// must aim the one plan it gets at the whole thing.
     #[test]
     fn the_first_tranche_is_the_whole_target_when_replanning_is_off() {
-        let mut settings =
-            PortfolioSettings::new(GeneralRelaxedSettings::mixed_61_probe(0, 1), PortfolioBudget::Wall {
-                millis: 10_000,
-            });
+        let mut settings = PortfolioSettings::new(
+            GeneralRelaxedSettings::mixed_61_probe(0, 1),
+            PortfolioBudget::Wall { millis: 10_000 },
+        );
         settings.plan_first_tranche = 0.25;
-        let mut off = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 10_000 });
+        let mut off = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 10_000,
+        });
         let plan_off = off.install_plan(10_000, &settings);
         assert_eq!(plan_off.first_tranche, 1.0);
 
         settings.plan_replan = true;
-        let mut on = BudgetMeter::new(PortfolioBudget::Plan { target_millis: 10_000 });
+        let mut on = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 10_000,
+        });
         let plan_on = on.install_plan(10_000, &settings);
         assert_eq!(plan_on.first_tranche, 0.25);
         assert!(
@@ -10170,7 +10513,10 @@ mod tests {
             schedule_slice: None,
             work_currency: None,
         };
-        assert_eq!(report.work_units, report.global_units + report.debited_units);
+        assert_eq!(
+            report.work_units,
+            report.global_units + report.debited_units
+        );
         assert_ne!(report.work_units, report.global_units);
     }
 
@@ -10420,7 +10766,11 @@ mod tests {
         assert!((SCHEDULE_WALL_PRIOR_PHASE_ZEROS - 1.6414530680000001 / 0.733602375).abs() < 5e-4);
         // And it is above every measured cell, including mixed-61's, which is
         // what makes it a bound rather than an average.
-        for measured in [1.1466399653696229_f64, 1.6193018185283783, 2.2375242010360177] {
+        for measured in [
+            1.1466399653696229_f64,
+            1.6193018185283783,
+            2.2375242010360177,
+        ] {
             assert!(SCHEDULE_WALL_PRIOR_PHASE_ZEROS >= measured - 5e-5);
         }
     }
@@ -10875,7 +11225,10 @@ mod tests {
         // would be a class that is enumerated and never ranked, which sorts as
         // a panic in the ranking map rather than as a mis-ordering.
         assert_eq!(
-            all.iter().copied().collect::<std::collections::BTreeSet<_>>().len(),
+            all.iter()
+                .copied()
+                .collect::<std::collections::BTreeSet<_>>()
+                .len(),
             all.len()
         );
         // The declaration order is the deterministic tie-break after the value,
@@ -10895,9 +11248,8 @@ mod tests {
     /// error the ledger exists to avoid.
     #[test]
     fn a_v3_crossover_key_is_parent_and_cut_ordered_never_rank_ordered() {
-        let key = |left: &str, right: &str, cut: f64| {
-            format!("23:{left}:{right}:{:016x}", cut.to_bits())
-        };
+        let key =
+            |left: &str, right: &str, cut: f64| format!("23:{left}:{right}:{:016x}", cut.to_bits());
         // Same pair, two directions: two keys.
         assert_ne!(key("a", "b", 0.5), key("b", "a", 0.5));
         // Same ordered pair, two cuts: two keys.
@@ -10920,8 +11272,7 @@ mod tests {
         // One compression and one descent per quantum state, one ladder on
         // rank 0, and the constant cut plus `CROSSOVER_CUTS_PER_PAIR` derived
         // cuts per ordered pair.
-        let ceiling =
-            2 * quantum_states + 1 + ordered_pairs * (CROSSOVER_CUTS_PER_PAIR + 1);
+        let ceiling = 2 * quantum_states + 1 + ordered_pairs * (CROSSOVER_CUTS_PER_PAIR + 1);
         assert_eq!(ordered_pairs, 6);
         assert_eq!(ceiling, 21);
         // Plus one compression-schedule slice per quantum state and one ranked
@@ -10936,6 +11287,126 @@ mod tests {
         // re-enumerates after every action rather than walking the rest blindly.
         assert!(ceiling < 360);
         assert!(CROSSOVER_BANDS_SCANNED >= CROSSOVER_CUTS_PER_PAIR);
+    }
+
+    /// The wall stop reads the wall the *caller asked for*, under either budget
+    /// that names one, and refuses to answer at all under a bare work budget.
+    ///
+    /// The third case is the one worth a test: `PortfolioBudget::Work` has no
+    /// wall, so a run that arms `m34wallstopall` against a work budget must
+    /// behave exactly as it does today rather than stop at some default.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn the_wall_stop_reads_the_requested_wall_and_only_when_one_was_named() {
+        let plan = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 10_000,
+        });
+        assert_eq!(plan.wall_target_seconds, Some(10.0));
+        // Nothing has elapsed, so ten seconds have not passed and a ten-second
+        // reserve is exactly the boundary - `>=`, so it refuses.
+        assert!(!plan.wall_target_passed(0.0));
+        assert!(plan.wall_target_passed(10.0));
+        // A negative reserve is clamped rather than credited back.
+        assert!(!plan.wall_target_passed(-1_000.0));
+
+        let wall = BudgetMeter::new(PortfolioBudget::Wall { millis: 3_000 });
+        assert_eq!(wall.wall_target_seconds, Some(3.0));
+        assert!(wall.wall_target_passed(3.0));
+
+        let work = BudgetMeter::new(PortfolioBudget::Work { units: 40_000_000 });
+        assert_eq!(work.wall_target_seconds, None);
+        assert!(!work.wall_target_passed(0.0));
+        assert!(!work.wall_target_passed(1_000_000.0));
+    }
+
+    /// A run takes the counters it needs from exactly one flag, and puts back
+    /// what it found.
+    ///
+    /// The restore is the half that is a bug fix rather than a feature: the
+    /// `profiling::set_enabled(true)` this replaced leaked, so in a host that
+    /// runs many requests in one process the first work-budgeted request left
+    /// every later wall-budgeted one paying a tax it never asked for.
+    ///
+    /// Serialised against every other test in the crate that touches the
+    /// recording flags, through `profiling::recording_test_lock` and not
+    /// through a mutex of this module's own: the flags are process-global,
+    /// `cargo test` runs the crate's tests in parallel threads of one process,
+    /// and a private lock here would serialise this test against its siblings
+    /// while still racing `profiling::tests`. That cross-module form of the
+    /// trap is the one `work_units_from`'s doc comment records this file
+    /// falling into once already.
+    #[test]
+    fn the_work_meter_arms_one_flag_and_restores_both() {
+        let _guard = profiling::recording_test_lock();
+        let before_profiler = profiling::enabled();
+        let before_metering = profiling::metering_enabled();
+
+        let template = GeneralRelaxedSettings::mixed_61_probe(0, 1);
+        let plan = |debit: bool, currency: WorkCurrencyMode| {
+            let mut settings = PortfolioSettings::new(
+                template,
+                PortfolioBudget::Plan {
+                    target_millis: 10_000,
+                },
+            );
+            settings.lane_local_debit = debit;
+            settings.work_currency = currency;
+            settings
+        };
+
+        // The shipped path: the profiler, exactly as before.
+        {
+            let settings = plan(false, WorkCurrencyMode::Off);
+            let arming = WorkMeterArming::install(&settings);
+            assert!(profiling::enabled());
+            assert!(!profiling::metering_enabled());
+            let report = arming.report();
+            assert!(report.needed && report.profiler_armed);
+            assert!(!report.metering_armed && !report.deferred_to_profiler);
+        }
+        assert_eq!(profiling::enabled(), before_profiler);
+        assert_eq!(profiling::metering_enabled(), before_metering);
+
+        // The debit: the meter's own flag, and the profiler left alone.
+        {
+            let settings = plan(true, WorkCurrencyMode::Off);
+            let arming = WorkMeterArming::install(&settings);
+            assert!(!profiling::enabled());
+            assert!(profiling::metering_enabled());
+            let report = arming.report();
+            assert!(report.metering_armed && !report.profiler_armed);
+            assert!(!report.deferred_to_profiler);
+        }
+        assert_eq!(profiling::enabled(), before_profiler);
+        assert_eq!(profiling::metering_enabled(), before_metering);
+
+        // The currency prices three counters the meter does not read, so the
+        // debit defers rather than handing it three zeros.
+        {
+            let settings = plan(true, WorkCurrencyMode::Observe);
+            let arming = WorkMeterArming::install(&settings);
+            assert!(profiling::enabled());
+            let report = arming.report();
+            assert!(report.deferred_to_profiler && report.profiler_armed);
+        }
+        assert_eq!(profiling::enabled(), before_profiler);
+        assert_eq!(profiling::metering_enabled(), before_metering);
+
+        // A wall budget reads no counter, so it arms neither - with or without
+        // the key, which is what "inert under a wall budget" has to mean.
+        for debit in [false, true] {
+            let mut settings =
+                PortfolioSettings::new(template, PortfolioBudget::Wall { millis: 10_000 });
+            settings.lane_local_debit = debit;
+            let arming = WorkMeterArming::install(&settings);
+            assert!(!profiling::enabled());
+            assert!(!profiling::metering_enabled());
+            let report = arming.report();
+            assert!(!report.needed);
+            assert!(!report.metering_armed && !report.deferred_to_profiler);
+        }
+        assert_eq!(profiling::enabled(), before_profiler);
+        assert_eq!(profiling::metering_enabled(), before_metering);
     }
 }
 
@@ -11141,6 +11612,7 @@ mod ledger_tests {
             PhaseExitCause::TriggerRefused,
             PhaseExitCause::NoResidue,
             PhaseExitCause::NoCompleteLayout,
+            PhaseExitCause::WallStop,
         ];
         let names = all
             .iter()

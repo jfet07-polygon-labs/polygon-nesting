@@ -1,0 +1,26 @@
+base-commit 40852e6
+head-commit 2c5d687
+features-gate jagua-experimental
+features-ship jagua-experimental,compression-schedule,parallel-compression-schedule,continuous-rotation,sparse-rotation,fast-contract-validator
+
+# The four `drivers/run-build.sh` wrote, at head 9ead181.
+d186b73e5514dc00a013989e29efce391dbc4ea2606e0fa97b9c29e162234260  /var/lib/t3/tmp/consol/bin/base-gate
+84dccd2529e23a9922f7e1088ed44d73cc376fcb5c69ad3f276e96f901e113f6  /var/lib/t3/tmp/consol/bin/base-combo
+20d1aff857495163a5cefd7ca05bfbdd7162247a2ba8c5909c70a2c2559dbfd8  /var/lib/t3/tmp/consol/bin/ship-gate
+87ff8ded175009e12580441da46df72d1c1cdc9ed5ea1dfe10a4c7642a1a3e18  /var/lib/t3/tmp/consol/bin/ship-meas
+
+# The two later code commits, each rebuilt and each gated against the four
+# above. `0a30453` is `cargo fmt`; `2c5d687` fixes the test race this round
+# introduced. Neither is bit-identical to its predecessor and neither was going
+# to be - a release build embeds `panic::Location` line numbers - which is why
+# the gate is a document gate: see README 12 and 14.
+83b381349ee219344732f4cf588fe9ae6a50cf1ab47dcb3846180f8acff4634d  /var/lib/t3/tmp/consol/bin/fmt-gate      # 0a30453
+6191dcdd369b1f5e8d1fbd700a9d081de447243203184dcbe97f3b316312d9d8  /var/lib/t3/tmp/consol/bin/fmt-meas      # 0a30453
+281fa3715493c6291b84f1c9855f6a64c5d18137fd9b0bf96eeb90358cb99333  /var/lib/t3/tmp/consol/bin/final-gate    # 2c5d687
+99c62fc84eb3ccee6b1ebe2691b8d93d1a8877a60e651f74de9fcb16ed9aeabf  /var/lib/t3/tmp/consol/bin/final-meas    # 2c5d687
+
+# The provenance gate this round opens with: base-gate and base-combo above are
+# byte-identical to docs/experiments/real-interruption/evidence/binaries.txt's
+# gate-meas and ship-meas, which were built at 3c093df. Sol review 9 required a
+# clean rebuild before any promotion; this is it, and it says the previous
+# round's binaries and the committed tree agree.

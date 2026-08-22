@@ -1,0 +1,15 @@
+{
+  "entries": {
+    "8778573": {
+      "probeSeconds": 1.909685072
+    },
+    "8961342": {
+      "probeSeconds": 1.932274112
+    },
+    "9629453": {
+      "probeSeconds": 1.9714897009999999
+    }
+  },
+  "note": "probeWorkUnits -> the least-loaded probe wall observed for that cell",
+  "version": 1
+}

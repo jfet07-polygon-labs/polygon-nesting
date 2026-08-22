@@ -6942,3 +6942,152 @@ that the re-plan then repaired to the same final budget and the same depth. Both
 suites pass.
 
 Evidence, drivers and every battery: `docs/experiments/replan/`.
+
+## Consolidation: the counter tax was the clock reads, the wall stop bound one class of nine, and four claims were carrying corrections in the wrong place
+
+> **This chapter skips three rounds, and the gap is the point.** The chapter
+> above is `replan`'s. `robust-plan` (the `plancal` fix, and the 60/60 that *is*
+> measured under load), `work-currency` (the 71,500x mispricing, and the
+> currency's own null) and `real-interruption` (the `m34cap` retraction, and the
+> interruption that is real) each produced a README and none produced a ledger
+> chapter. Rather than write this one as though they had,
+> `docs/shipped-surface.md` is the map that stands in for the missing three:
+> every flag and key the campaign built, with a verdict and the evidence that
+> earned it.
+
+The owner's instruction after Grok review 5 (*"fermarsi e consolidare"*) and Sol
+review 10 (*"il wall engineering può probabilmente portare 175 → circa 169; 169
+→ 150 richiede una nuova azione di ricerca"*) was to close the shipped surface
+before starting the active-contact block SE(2) research. Four items, and three
+of them came back with a result the instruction did not expect.
+
+### The millimetre was there, and the specified way to get it would not have worked
+
+`calibrated-plan` §9 priced the work counters at **+1.882 mm** on mixed-61 at a
+ten-second wall and closed with *"there is no version of this mode that avoids
+it"*. `work-currency` §6 named the fix both reviewers then endorsed: lift
+`surrogate_evaluations` onto the relaxed lane so modes 22 and 23 self-report,
+and run the work budget with `profiling::set_enabled(false)`.
+
+Measuring the meter before building anything is what killed that plan.
+`work_units_from` is `CandidateQueries + 5 x ExactPairTests`, and on a measured
+mixed-61 plan run those are 7,859,321 and 586,787 — so the **exact half is 27%
+of the meter**, not the ~4% the compression schedule's own share suggested, and
+it is counted in `kernel::exact`, a free function with no lane. A lane-local
+candidate-query counter alone would have under-charged every work budget in the
+engine by a quarter.
+
+What was actually costing the millimetre is two lines apart. The lane's
+`score_placement` opens a `Phase::ScorePlacement` span — two `Instant::now`
+reads against a call that costs about a microsecond — and increments a counter,
+one relaxed add on a thread-local block, and **one flag armed both**. Re-running
+§9's own battery with a third arm the instrument of the day could not express
+reproduces **+1.882 mm to four decimals** and splits it: the counting is
+**+0.000 mm median on all three seeds** and the timing is the whole of it.
+
+`profiling::metering_enabled` is the second flag and `lanedebit=1` is the
+setting. The budget is numerically unchanged — same counters, same sites, same
+amounts — which is what makes the A/B a comparison. Measured at a fixed `work=`
+budget where the depth is identical by construction and the driver asserts it,
+**documents identical field for field on 9 of 9 cells**, the debit retires the
+same work in **84.9%** of the seconds at 24.9 M units and **82.5%** at 120 M.
+That is `search::portfolio`'s own "~17% they cost" header, measured as a paired
+ratio at identical work for the first time.
+
+End to end it buys one of two things and the round reports both. Reading the
+incumbent's calibration file: **identical depth and identical document on 3 of
+3 seeds, p50 7.31 s → 6.27 s**. Reading a file a debit-armed calibration pass
+wrote: **−1.108 mm** median of seed medians at ten seconds — one plan, one
+depth, one whole document per seed, 0 of 9 over target, p95 8.87 s → 8.66 s.
+The three per-seed deltas are 0.252 / 2.808 / 1.882 mm, which is one ladder
+rung, which is why they are not a smooth 17%.
+
+The cautionary arm is the debit with a *live* plan: same −1.108 mm, and seed 1
+straddles the rung with two plans and two documents in three runs. A live plan
+reads a clock, the debit moves the clock, and near a rung boundary that is a
+coin toss. **The debit has to be calibrated into the file**, and the file a
+profiler-armed pass wrote is not the right file.
+
+### The wall stop binds eight more classes and still does not reach zero
+
+`real-interruption` §13 named two reasons its thirty-second `wallstop` row still
+crossed 3 of 9 times: the policy binds only the mode-34 checkpoint it is
+consulted at, and it cannot shorten a batch already in flight.
+`m34wallstopall` answers the **first** — an admission rule in seconds at the top
+of the v3 queue and in `Coordinator::affordability`, exiting on a new `wallStop`
+cause that is deliberately outside the re-plan loop's budget-bound set, because
+a run out of seconds must not be handed more work.
+
+On a forced overrun — `planhead=3.0` buys a plan a ten-second wall cannot pay
+for — it is decisive: worst overrun **+26.63 s with no policy, +20.05 s with the
+shipped checkpoint stop, +0.99 s with the queue rule**, 6 of 6 exact-valid, 6 of
+6 exiting `wallStop`. The `checkpoint` row is the measurement of §13's first
+sentence: it takes 6.6 s off a 26.6 s overrun and leaves 20.
+
+On the calibrated thirty-second battery **the deliverable was 0 of 9 and it was
+not met.** The count goes 3/9 → 4/9, which is inside the noise of a box running
+at median load 9.57 with a spike to 21.7. What collapses is the *size*: worst
+overrun **+12.38 s → +1.31 s**, wallMax **42.38 s → 31.31 s**, at **+0.000 mm**
+of median depth and 9 of 9 exact-valid. The residue is exactly §13's second
+sentence — the one action in flight when the deadline passes — and bounding it
+needs an operator that can be interrupted mid-action, which is Sol review 10's
+governor round and which the owner deferred.
+
+The reserve dial is a **negative with a nameable cause**. `m34wallreserve=1`
+refuses a class whose measured mean seconds would not fit, and it is worse than
+the plain admission rule (+1.87 s against +0.99 s). The rows say why: at the same
+plan it consistently runs one more action and 3–5 M more work, because
+`m34wallstopall` arms the mode-34 checkpoint stop as well, so mode 34 is the one
+class that can give its turn back mid-action — and the reserve, pricing classes
+by mean seconds, refuses precisely that one near the deadline and buys an
+uninterruptible class instead.
+
+### The provenance break closes by rebuild, and four claims move to where they belong
+
+Sol review 9 required *"clean rebuild + evidence rigenerata"* before any
+promotion. A clean build of the base commit reproduces
+`real-interruption/evidence/binaries.txt`'s two sha256s **byte for byte**, so
+the previous round's binaries and the committed tree agree and every number it
+published is comparable to every number here.
+
+Four claims were carrying a correction three documents away, or none.
+`calibrated-plan` §8.2's *"60 of 60"* now says at the claim that it is a
+quiet-box property and points at `plancal`, whose own 60/60 is measured under
+load. §9's *"no version of this mode that avoids it"* is struck. `replan` §3's
+*"two slices with the same digest walked the same walk"* is struck, with
+`real-interruption` §4's three SHA-256 fingerprints as the repair. `basin-race`
+gets two banners: the race's verdict stands and §4.3's landslide explanation
+does not — Sol review 9 names four defects each sufficient on its own, including
+a ranker that is not dense and a `confirmations_attempted == 0` that scores the
+maximum rather than the neutral value — and §5.4's *"the witness composes"*
+overstates a 2/12 whose driver defines descendant as `final(adopt) <
+final(publish)` on arms 2.8% apart in work. `grok-review-4`'s verbatim text is
+left unedited with a header note, because it is a record of what was said.
+
+`cargo fmt` was 158 diffs across 17 files, all of them files the campaign
+touched, and it took two passes to converge. It is **not** whitespace-only —
+trailing commas, one closure's braces, and `use` items reordered within their
+group — so the claim made for it is *"the documents are identical"* and not
+*"the bytes are"*: the four pinned gates hit on the reformatted binary with
+whole-document digests identical to the base and pre-format binaries on all
+four, and the work-budget equivalence gate is 9 of 9 with step digests equal.
+
+Determinism across two processes is 9 of 9 at a work budget both unarmed and
+with `lanedebit=1`. The suites pass, and neither passed first time: the combo
+ran red on a race **this round introduced** - two tests in one process both
+calling `profiling::reset()`, which the file had been handling by convention -
+and the jagua on the campaign's known allocator-capacity flake. Both attempts
+are reported.
+
+One thing fell out of checking that the suite counts add up, and it is worth
+more than the round that found it. The counts decompose to +1 and +2 exactly,
+and the third test this round added is in neither suite: **`cargo test` builds
+an example and does not run its test harness**, so no spec-key round-trip test
+in this repository has ever been reachable from either suite the protocol names
+- including the one the previous round added specifically to catch a key nobody
+parses, which is the `m34cap` failure mode. A third suite now runs them
+explicitly. That does not make them unmissable, and saying so is the point.
+
+Evidence, drivers, binary hashes and every battery:
+`docs/experiments/consolidation/`. The map every future session should start
+from: `docs/shipped-surface.md`.

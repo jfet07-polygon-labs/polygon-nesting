@@ -419,10 +419,10 @@ fn translation_for(
     translate_x: f64,
     translate_y: f64,
 ) -> Result<DTransformation, String> {
-    let x = checked_f32(shape.anchor.x + translate_x, "pose x")
-        .map_err(|error| error.to_string())?;
-    let y = checked_f32(shape.anchor.y + translate_y, "pose y")
-        .map_err(|error| error.to_string())?;
+    let x =
+        checked_f32(shape.anchor.x + translate_x, "pose x").map_err(|error| error.to_string())?;
+    let y =
+        checked_f32(shape.anchor.y + translate_y, "pose y").map_err(|error| error.to_string())?;
     Ok(DTransformation::new(0.0, (x, y)))
 }
 
@@ -442,8 +442,8 @@ fn build_container(bounds: IrregularBounds, cde_config: CDEConfig) -> Result<Con
             checked_f32(y, "container y").map_err(|error| error.to_string())?,
         ));
     }
-    let outer = SPolygon::new(points)
-        .map_err(|error| format!("invalid pair container: {error}"))?;
+    let outer =
+        SPolygon::new(points).map_err(|error| format!("invalid pair container: {error}"))?;
     let original_outer = Arc::new(OriginalShape {
         shape: outer.clone(),
         pre_transform: DTransformation::empty(),

@@ -352,8 +352,7 @@ const ORIENTATION_PERTURBATION_LADDER_DEG: [f64; 10] = [
 // ladder in both signs mirrored. A piece whose request forbids rotation or
 // mirroring contributes only the families it is allowed, and duplicates on the
 // angle grid are dropped, so this is a ceiling rather than a count.
-const ORIENTATION_PERTURBATION_VARIANTS: usize =
-    4 * ORIENTATION_PERTURBATION_LADDER_DEG.len() + 1;
+const ORIENTATION_PERTURBATION_VARIANTS: usize = 4 * ORIENTATION_PERTURBATION_LADDER_DEG.len() + 1;
 // The orientation stream's own charged-row budget, held apart from both the
 // station stream's and the anchor-local stream's for the same reason those two
 // are held apart: an additive degree of freedom must never be able to spend the
@@ -366,8 +365,7 @@ const ORIENTATION_PERTURBATION_VARIANTS: usize =
 // derived rather than tuned, and it matters: at a budget that truncates the
 // stream to its leading ranks the record basin's depth-setting piece produced
 // no finalist at all, and at full coverage it produced two.
-const ORIENTATION_PERTURBATION_ROWS: usize =
-    ORIENTATION_PERTURBATION_VARIANTS * ANCHOR_LOCAL_ROWS;
+const ORIENTATION_PERTURBATION_ROWS: usize = ORIENTATION_PERTURBATION_VARIANTS * ANCHOR_LOCAL_ROWS;
 // Bucket ordinals the anchor-local stream may consume for one piece: its whole
 // cloud, plus one vacated-translation pose per orientation prior. The
 // orientation stream starts its own ordinals above this so the coarse spatial
@@ -1928,9 +1926,9 @@ fn replace_ejected_under_bound(
             }
             let vacated_pose = &anchor.placements[index];
             orientation.accepted_rotation_deg = Some(pose.rotation_deg);
-            orientation.accepted_rotation_delta_deg = Some(
-                angle_from_key(angle_key(pose.rotation_deg) - angle_key(vacated_pose.rotation_deg)),
-            );
+            orientation.accepted_rotation_delta_deg = Some(angle_from_key(
+                angle_key(pose.rotation_deg) - angle_key(vacated_pose.rotation_deg),
+            ));
             orientation.accepted_mirror_flipped = Some(pose.mirrored != vacated_pose.mirrored);
         }
         match chosen {
@@ -7020,21 +7018,24 @@ fn construct_candidate_poses(
                 candidate,
             )
         })
-        .chain(orientation_candidates.into_iter().enumerate().map(
-            |(index, candidate)| {
-                (
-                    false,
-                    ORIENTATION_PERTURBATION_BUCKET_BASE + index,
-                    CandidateProvenance {
-                        zero_prior: false,
-                        anchor_local: false,
-                        vacated: false,
-                        orientation_perturbed: true,
-                    },
-                    candidate,
-                )
-            },
-        ))
+        .chain(
+            orientation_candidates
+                .into_iter()
+                .enumerate()
+                .map(|(index, candidate)| {
+                    (
+                        false,
+                        ORIENTATION_PERTURBATION_BUCKET_BASE + index,
+                        CandidateProvenance {
+                            zero_prior: false,
+                            anchor_local: false,
+                            vacated: false,
+                            orientation_perturbed: true,
+                        },
+                        candidate,
+                    )
+                }),
+        )
         .chain(
             candidates
                 .into_iter()
@@ -7106,9 +7107,8 @@ fn construct_candidate_poses(
         }
         let Some(collision) = ({
             #[cfg(feature = "constructor-census")]
-            let _census = crate::constructor_census::site(
-                crate::constructor_census::Site::Candidate,
-            );
+            let _census =
+                crate::constructor_census::site(crate::constructor_census::Site::Candidate);
             construction_confirm_row(
                 pieces,
                 work_settings,
@@ -7227,9 +7227,8 @@ fn construction_slide(
         *rows += 1;
         let confirmed = {
             #[cfg(feature = "constructor-census")]
-            let _census = crate::constructor_census::site(
-                crate::constructor_census::Site::SlideLadder,
-            );
+            let _census =
+                crate::constructor_census::site(crate::constructor_census::Site::SlideLadder);
             construction_confirm_row(
                 pieces,
                 work_settings,
@@ -7264,9 +7263,8 @@ fn construction_slide(
             *rows += 1;
             let confirmed = {
                 #[cfg(feature = "constructor-census")]
-                let _census = crate::constructor_census::site(
-                    crate::constructor_census::Site::SlideBisect,
-                );
+                let _census =
+                    crate::constructor_census::site(crate::constructor_census::Site::SlideBisect);
                 construction_confirm_row(
                     pieces,
                     work_settings,
@@ -7356,7 +7354,10 @@ fn construction_confirm_row(
     #[cfg(feature = "fast-constructor-reject")]
     if work
         .reject_certificates
-        .proven_overlap(&parent.active, construction_reject_certificate::REJECT_DISCS)
+        .proven_overlap(
+            &parent.active,
+            construction_reject_certificate::REJECT_DISCS,
+        )
         .is_some()
     {
         debug_assert!(
@@ -7460,11 +7461,13 @@ fn certified_row_really_overlaps(
     };
     (0..pieces.len()).any(|fixed_index| {
         parent.active[fixed_index]
-            && parent.collisions[fixed_index].as_ref().is_some_and(|fixed| {
-                collision
-                    .intersection_area_mm2(fixed)
-                    .is_ok_and(|area| area > 0.0)
-            })
+            && parent.collisions[fixed_index]
+                .as_ref()
+                .is_some_and(|fixed| {
+                    collision
+                        .intersection_area_mm2(fixed)
+                        .is_ok_and(|area| area > 0.0)
+                })
     })
 }
 
@@ -11377,8 +11380,9 @@ mod tests {
 
         // The opt-in admits an in-process parent, and only that: it moves the
         // gate, it does not remove it, and it is off in the default settings.
-        assert!(!GeneralRelaxedSettings::mixed_61_probe(0, 1)
-            .persistent_vacancy_allow_unpinned_parent);
+        assert!(
+            !GeneralRelaxedSettings::mixed_61_probe(0, 1).persistent_vacancy_allow_unpinned_parent
+        );
         let mut unpinned = relaxed;
         unpinned.persistent_vacancy_allow_unpinned_parent = true;
         let result = run_persistent_vacancy_population(&pieces, fast, unpinned, &parent, None, 20);
@@ -11882,7 +11886,10 @@ mod tests {
         assert!(*ladder.last().expect("a last rung") < 5.0, "{ladder:?}");
         // Every rung is representable on the angle grid, so no two rungs can
         // collapse onto one another and re-spend the same charged rows.
-        let mut keys = ladder.iter().map(|rung| angle_key(*rung)).collect::<Vec<_>>();
+        let mut keys = ladder
+            .iter()
+            .map(|rung| angle_key(*rung))
+            .collect::<Vec<_>>();
         keys.dedup();
         assert_eq!(keys.len(), ladder.len(), "{ladder:?}");
         // The floor's own justification, stated as arithmetic rather than as a
@@ -12046,7 +12053,10 @@ mod tests {
             .iter()
             .zip(legacy.diagnostics.pieces.iter())
         {
-            let orientation = row.orientation.as_ref().expect("an armed attribution block");
+            let orientation = row
+                .orientation
+                .as_ref()
+                .expect("an armed attribution block");
             assert_eq!(
                 orientation.variants, ORIENTATION_PERTURBATION_VARIANTS,
                 "{orientation:?}"

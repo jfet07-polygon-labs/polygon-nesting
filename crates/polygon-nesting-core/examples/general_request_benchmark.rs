@@ -242,8 +242,8 @@ fn compression_schedule_settings(
                     "sweeps" => CompressionRepairPolicy::SweepsOnly,
                     other => {
                         return Err(format!(
-                            "compression schedule repair policy must be `micro` or `sweeps`, not `{other}`"
-                        ))
+                    "compression schedule repair policy must be `micro` or `sweeps`, not `{other}`"
+                ))
                     }
                 }
             }
@@ -258,9 +258,7 @@ fn compression_schedule_settings(
                     .parse()
                     .map_err(|_| format!("compression schedule lanes: `{value}`"))?;
                 if lanes == 0 {
-                    return Err(
-                        "compression schedule lanes must be at least 1, not `0`".to_owned()
-                    );
+                    return Err("compression schedule lanes must be at least 1, not `0`".to_owned());
                 }
                 settings.lanes = lanes;
             }
@@ -279,6 +277,24 @@ fn compression_schedule_settings(
 /// depend on, and profiling must never change what a replayed command means.
 fn profiling_requested() -> bool {
     env::var("POLYGON_NESTING_PROFILE")
+        .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+        .unwrap_or(false)
+}
+
+/// Whether the harness should arm the **work meter's** counters alone.
+///
+/// Read from the environment for the same two reasons profiling is: the
+/// positional argument list is a pinned contract, and the meaning of a replayed
+/// command may not change.
+///
+/// It is a separate variable from `POLYGON_NESTING_PROFILE` and not a value of
+/// it because the two arm different things - see `profiling::metering_enabled`
+/// - and because the one battery that needs this needs it under a **wall**
+/// budget, where `PortfolioSettings::lane_local_debit` is inert by design. A
+/// wall run reads no counter, so nothing but a driver measuring the
+/// instrument's own cost would ever want this.
+fn work_meter_requested() -> bool {
+    env::var("POLYGON_NESTING_METER")
         .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
         .unwrap_or(false)
 }
@@ -350,8 +366,8 @@ fn env_flag(name: &str) -> bool {
 /// `POLYGON_NESTING_SE2_WITNESS="trust:iterations:maxcalls"`. Unset is off,
 /// which is every invocation that does not ask for it.
 #[cfg(feature = "sparse-rotation")]
-fn se2_witness_requested()
--> Result<Option<polygon_nesting_core::search::general_relaxed::Se2WitnessSettings>, String> {
+fn se2_witness_requested(
+) -> Result<Option<polygon_nesting_core::search::general_relaxed::Se2WitnessSettings>, String> {
     let Ok(spec) = env::var("POLYGON_NESTING_SE2_WITNESS") else {
         return Ok(None);
     };
@@ -434,7 +450,10 @@ fn se2_rigidity_certificate_requested() -> Result<Option<Se2CertificateSpec>, St
         iterations: 20_000,
         reference_mm: None,
     };
-    for item in spec.split(',').filter(|item| !item.is_empty() && *item != "1") {
+    for item in spec
+        .split(',')
+        .filter(|item| !item.is_empty() && *item != "1")
+    {
         let (key, value) = item
             .split_once('=')
             .ok_or_else(|| format!("se2 certificate spec entry `{item}` is not key=value"))?;
@@ -460,7 +479,9 @@ fn se2_rigidity_certificate_requested() -> Result<Option<Se2CertificateSpec>, St
                     .parse()
                     .map_err(|_| format!("se2 certificate reference: `{value}`"))?;
                 if !reference.is_finite() {
-                    return Err(format!("se2 certificate reference must be finite: `{value}`"));
+                    return Err(format!(
+                        "se2 certificate reference must be finite: `{value}`"
+                    ));
                 }
                 out.reference_mm = Some(reference);
             }
@@ -474,6 +495,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let profiling_armed = profiling_requested();
     let unpinned_vacancy_parent_armed = unpinned_vacancy_parent_requested();
     profiling::set_enabled(profiling_armed);
+    profiling::set_metering_enabled(work_meter_requested());
     let mut arguments = env::args().skip(1);
     let request_path = arguments.next().ok_or(
         "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy] [persistent-vacancy-parent-fixture] [persistent-vacancy-target-depth-mm] [warm-start-fixture] [search-offset-allowance-mm] [portfolio-spec]",
@@ -696,11 +718,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         #[cfg(feature = "sparse-rotation")]
         {
-            relaxed_settings.rotation_equivariant_offset = env_flag(
-                "POLYGON_NESTING_ROTATION_EQUIVARIANT",
-            ) && relaxed_settings.continuous_rotation;
-            relaxed_settings.sparse_rotation = env_flag("POLYGON_NESTING_SPARSE_ROTATION")
-                && persistent_vacancy_mode == 34;
+            relaxed_settings.rotation_equivariant_offset =
+                env_flag("POLYGON_NESTING_ROTATION_EQUIVARIANT")
+                    && relaxed_settings.continuous_rotation;
+            relaxed_settings.sparse_rotation =
+                env_flag("POLYGON_NESTING_SPARSE_ROTATION") && persistent_vacancy_mode == 34;
             relaxed_settings.se2_witness =
                 se2_witness_requested()?.filter(|_| relaxed_settings.sparse_rotation);
         }
@@ -2058,9 +2080,7 @@ fn parse_portfolio_spec(
                     "0" | "off" => WorkCurrencyMode::Off,
                     "1" | "charge" => WorkCurrencyMode::Charge,
                     "2" | "observe" => WorkCurrencyMode::Observe,
-                    other => {
-                        return Err(format!("unknown cur2 mode {other:?}").into())
-                    }
+                    other => return Err(format!("unknown cur2 mode {other:?}").into()),
                 }
             }
             // The load-robustness levers, all three off by default. See
@@ -2084,8 +2104,7 @@ fn parse_portfolio_spec(
                 }
             }
             "plancal" => {
-                settings.plan_calibration_path =
-                    (!value.is_empty()).then(|| value.to_owned())
+                settings.plan_calibration_path = (!value.is_empty()).then(|| value.to_owned())
             }
             "plancalwrite" => settings.plan_calibration_write = value != "0",
             "plancalband" => settings.plan_calibration_band = value.parse()?,
@@ -2097,13 +2116,9 @@ fn parse_portfolio_spec(
             // there would let a driver believe it had armed something. An
             // unarmed binary exits non-zero with `unknown portfolio spec key`.
             #[cfg(feature = "compression-schedule")]
-            "m34grid1" => {
-                settings.schedule_first_slice_step_grid = Some(value.parse()?)
-            }
+            "m34grid1" => settings.schedule_first_slice_step_grid = Some(value.parse()?),
             #[cfg(feature = "compression-schedule")]
-            "m34confirm1" => {
-                settings.schedule_first_slice_confirm_every = Some(value.parse()?)
-            }
+            "m34confirm1" => settings.schedule_first_slice_confirm_every = Some(value.parse()?),
             "slots" => settings.basin_slots = value.parse()?,
             "basins" => {
                 settings.basin_trigger = match value {
@@ -2160,8 +2175,7 @@ fn parse_portfolio_spec(
             #[cfg(feature = "compression-schedule")]
             "m34batch" => {
                 let units: usize = value.parse()?;
-                settings.compression_schedule_batch_work_units =
-                    (units > 0).then_some(units);
+                settings.compression_schedule_batch_work_units = (units > 0).then_some(units);
             }
             // The policy that consumes it: cap a slice at what the coordinator
             // can still afford, rather than discovering the price afterwards.
@@ -2179,6 +2193,26 @@ fn parse_portfolio_spec(
             // one. Two keys one character apart would be worse than a long name.
             #[cfg(feature = "compression-schedule")]
             "m34wallstop" => settings.compression_schedule_wall_stop = value != "0",
+            // The same deadline, applied to the queue. `m34wallstop` binds only
+            // the checkpoint it is consulted at, which is why
+            // `docs/experiments/real-interruption/` §9's thirty-second row still
+            // crossed 3 of 9 times; this refuses to *start* any class after the
+            // deadline. It arms `m34wallstop` too, so the key is a strict
+            // extension rather than an alternative.
+            #[cfg(feature = "compression-schedule")]
+            "m34wallstopall" => {
+                settings.compression_schedule_wall_stop_all = value != "0";
+            }
+            // The reserve, as a multiple of the class's own measured mean
+            // seconds in this run. `0` - the default - is the pure admission
+            // rule; `1` additionally refuses a class the queue does not expect
+            // to finish before the deadline. Inert unless `m34wallstopall` is
+            // armed, and named separately because it is an estimate and the
+            // admission rule is exact.
+            #[cfg(feature = "compression-schedule")]
+            "m34wallreserve" => {
+                settings.compression_schedule_wall_stop_reserve = value.parse()?;
+            }
             // The interleave: suspend the slice toward the coordinator after
             // this many batches so another action can run before it resumes.
             // `0` is the default and never suspends.
@@ -2290,6 +2324,13 @@ fn parse_portfolio_spec(
             "racedraw" => settings.basin_race_draw = value != "0",
             "barren" => settings.barren_action_patience = value.parse()?,
             "divq" => settings.diversify_in_queue = value != "0",
+            // The lane-local debit. `1` runs a work or plan budget with
+            // `profiling::set_enabled(false)` and takes the meter's two
+            // counters from `profiling::metering_enabled` instead, which is the
+            // spend `docs/experiments/work-currency/` §6 names and Grok review
+            // 5 §2 prices at up to 1.882 mm. Inert under a wall budget, which
+            // reads no counter, and deferred when `cur2` is armed beside it.
+            "lanedebit" => settings.lane_local_debit = value != "0",
             "m34wall" => settings.schedule_wall_prior = value != "0",
             "m34entry" => settings.schedule_legalize_entry = value != "0",
             "m34skip" => settings.schedule_skip_infeasible_entry = value != "0",
@@ -2706,6 +2747,17 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
             "operatorSeconds": seconds,
         });
     }
+    // Present only when the run took its counters off the work meter's own flag
+    // or asked to and was deferred, so a default plan document is the document
+    // it has always been - see `PortfolioOutcome::work_meter_arming`.
+    if let Some(arming) = outcome.work_meter_arming.as_ref() {
+        report["workMeterArming"] = json!({
+            "needed": arming.needed,
+            "profilerArmed": arming.profiler_armed,
+            "meteringArmed": arming.metering_armed,
+            "deferredToProfiler": arming.deferred_to_profiler,
+        });
+    }
     if let Some(schedule) = outcome.schedule.as_ref() {
         report["schedule"] = json!({
             "iterations": schedule.iterations,
@@ -3019,6 +3071,39 @@ mod tests {
         let prior = parse("plan=10000,v3=1,m34wall=1");
         assert!(prior.schedule_wall_prior);
         assert!(!prior.compression_schedule_wall_stop);
+    }
+
+    /// This round's three keys reach their fields, and an unarmed spec leaves
+    /// all three at the shipped default.
+    ///
+    /// Same round trip and same reason as the test above: the previous round's
+    /// P0 was an evidence file carrying an armed label for a key its committed
+    /// driver could not emit, and a key nobody parses fails exactly that way.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn the_consolidation_keys_reach_their_fields() {
+        let template = GeneralRelaxedSettings::mixed_61_probe(0, 1);
+        let parse = |spec: &str| parse_portfolio_spec(spec, template).unwrap();
+
+        let unarmed = parse("plan=10000,v3=1");
+        assert!(!unarmed.compression_schedule_wall_stop_all);
+        assert_eq!(unarmed.compression_schedule_wall_stop_reserve, 0.0);
+        assert!(!unarmed.lane_local_debit);
+
+        let armed = parse("plan=30000,v3=1,m34wallstopall=1,m34wallreserve=1.5,lanedebit=1");
+        assert!(armed.compression_schedule_wall_stop_all);
+        assert_eq!(armed.compression_schedule_wall_stop_reserve, 1.5);
+        assert!(armed.lane_local_debit);
+
+        // `m34wallstopall` is a strict extension of `m34wallstop` and not an
+        // alternative to it, so arming the queue rule alone must still leave
+        // the checkpoint rule off *as a setting* - the coordinator is what
+        // reads the two together, and a spec that wrote the other field back
+        // would make the two keys indistinguishable in a document.
+        assert!(!armed.compression_schedule_wall_stop);
+        let checkpoint = parse("plan=30000,v3=1,m34wallstop=1");
+        assert!(checkpoint.compression_schedule_wall_stop);
+        assert!(!checkpoint.compression_schedule_wall_stop_all);
     }
 
     fn rectangle(width: f64, height: f64) -> PolygonSet {
