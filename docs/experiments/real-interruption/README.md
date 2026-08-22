@@ -30,7 +30,16 @@ second and the second is only worth building once the first is admitted:
 
 ## The headline
 
-<!--HEADLINE-->
+| | |
+|---|---|
+| **The retraction** | `m34cap` never stopped anything: `m34cap=0` vs `m34cap=1` at `work=30000000` on mixed-61 seeds 0/1/2 produce **identical** depth, fingerprint, work, operator-call count and per-slice step digest on a binary built from the retracted claim's own base commit. §12.3's 162.846 → 165.935 mm attribution and the headline row it came from are struck through in place; `evidence/cap-30s.json` carries a `SUPERSEDED` block; the ledger carries a *"Corrected by"* note (§1-§2) |
+| **The interruption is real** | `advance_one_batch() -> Checkpoint\|Finished` returns to a driver that decides `Continue`/`Stop`/`Suspend` at every checkpoint. Gate (a): **1,118 batches over 27 cells, three batch sizes**, every cell equal as a whole document, a per-step digest, *and* all three new SHA-256 fingerprints (frontier geometry, tracker, lane rng/weights). Gate (b): three unit tests - stop-at-K is exact-valid and re-validates against the request; a slice suspended, resumed after a whole other operator ran, lands bit-identical on every field the uninterrupted run has; a drained slice spends nothing further. Gate (c): work-mode determinism 2 processes, 4 arms x 9 cells, **all 36 equal**; the refactor itself is bit-identical to the base binary unarmed on 9/9 cells (§3-§6) |
+| **The bound lever moves the wrong way at the shipped budget** | `m34past=1` genuinely unlocks the nine-rung bound - `firstSliceExit` stops reading `bound` and starts reading `workCap` - but at mixed-61's calibrated ten-second instrument it costs **+0.331 mm** at full share (`past100`/`pastwall`) and **+0.361 mm** interleaved (`yield2`); only a quarter- or half-share buys anything back (-0.264/-0.221 mm) (§8) |
+| **At thirty seconds it trades depth for wall, and only partly for wall** | `past100` buys **-2.000 mm** and `pastwall` **-2.864 mm**, but both *worsen* the overrun (wallMax 47.96 s / 40.95 s against base's 36.42 s, 9/9 over). `m34wallstop` alone holds the depth even and cuts wallMax to 31.98 s - **not to zero**: 3/9 still cross 30 s, because the checkpoint policy only binds the mode-34 slice and not the other operator classes sharing the action budget (§9) |
+| **The record-line lever does not transfer from-request** | re-tested at `step=0.25` with the bound unlocked, on the canonical calibrated-plan instrument: `grid25` alone costs +2.622 mm (reproducing `robust-plan` §14's control to the mm), and pairing it with `m34past` makes it **worse, not better** - `past100grid25` +3.570 mm, `past50grid25` +3.618 mm. The mechanism that bought a millimetre at a pinned 20 M-unit work budget loses depth at this budget and instrument (§10) |
+| **Sparrow gap, unmoved** | mixed-61: **+21.719 mm at 3 s, +25.223 mm at 10 s** against Sparrow's 157.971 / 150.165 - the same gap the previous round measured, because every lever here ships off by default and the one that is safe to arm (`m34wallstop`) has nothing to stop at a budget nothing overruns (§11-§12) |
+| **Gates** | 4 of 4 pinned hit; both suites pass (883 lib tests, 0 failed, plus every integration/doc-test crate); determinism 9/9 across 4 arms; refactor equivalence 9/9 unarmed |
+| **Everything new ships off** | `m34wallstop`, `m34yield`, `m34past` and its three dials are spec keys on the benchmark example; `coordinator_v3` is still off by default |
 
 ---
 
@@ -94,7 +103,12 @@ from the committed base commit `ea7c843` - the commit this round starts from, so
 the replay is of the code the claim was made about and not of the code that
 replaces it.
 
-<!--CAPREPLAY-->
+binary c41cd0943974fedaad8a5832b46007f0e7d4f7d716ed53a7c21b6ee567466ac6
+| seed | depth m34cap=0 | depth m34cap=1 | equal | work | calls | step digests | doc without slice | doc with slice |
+|---:|---:|---:|:--:|---:|---:|:--:|:--:|:--:|
+| 0 | 173.57506393348288 | 173.57506393348288 | True | 27,642,964 | 8 | True | True | False |
+| 1 | 171.3619986855876 | 171.3619986855876 | True | 28,636,653 | 8 | True | True | False |
+| 2 | 174.28 | 174.28 | True | 27,391,297 | 8 | True | True | False |
 
 Every column that could carry a trajectory is equal: the raw depth to seventeen
 digits, the incumbent's placement fingerprint, the total work, the operator-call
@@ -221,7 +235,50 @@ against the monolith at three batch sizes, on top of the step digest, the
 aggregates and the published layout. From the request, the gate is
 `drivers/equiv.py`:
 
-<!--CONCAT-->
+A 84dccd2529e23a99  extraA=''
+B 84dccd2529e23a99  extraB='m34batch=25000'
+| cell | document equal | step digests equal | depth A | depth B | batches |
+|---|:--:|:--:|---:|---:|---:|
+| mixed-61-s0 | True | True | 173.57506393348288 | 173.57506393348288 | 120 |
+| mixed-61-s1 | True | True | 171.3619986855876 | 171.3619986855876 | 129 |
+| mixed-61-s2 | True | True | 174.28 | 174.28 | 252 |
+| shapes-17-s0 | True | True | 200.349 | 200.349 | 47 |
+| shapes-17-s1 | True | True | 200.34937729570953 | 200.34937729570953 | 45 |
+| shapes-17-s2 | True | True | 200.349 | 200.349 | 47 |
+| triangle-20-s0 | True | True | 70.7711336311948 | 70.7711336311948 | 117 |
+| triangle-20-s1 | True | True | 70.74684851410467 | 70.74684851410467 | 133 |
+| triangle-20-s2 | True | True | 70.74727715491606 | 70.74727715491606 | 132 |
+allEqual=True totalBatches=1022 allStepDigestsEqual=True
+
+A 84dccd2529e23a99  extraA=''
+B 84dccd2529e23a99  extraB='m34batch=400000'
+| cell | document equal | step digests equal | depth A | depth B | batches |
+|---|:--:|:--:|---:|---:|---:|
+| mixed-61-s0 | True | True | 173.57506393348288 | 173.57506393348288 | 9 |
+| mixed-61-s1 | True | True | 171.3619986855876 | 171.3619986855876 | 9 |
+| mixed-61-s2 | True | True | 174.28 | 174.28 | 18 |
+| shapes-17-s0 | True | True | 200.349 | 200.349 | 3 |
+| shapes-17-s1 | True | True | 200.34937729570953 | 200.34937729570953 | 3 |
+| shapes-17-s2 | True | True | 200.349 | 200.349 | 3 |
+| triangle-20-s0 | True | True | 70.7711336311948 | 70.7711336311948 | 10 |
+| triangle-20-s1 | True | True | 70.74684851410467 | 70.74684851410467 | 11 |
+| triangle-20-s2 | True | True | 70.74727715491606 | 70.74727715491606 | 11 |
+allEqual=True totalBatches=77 allStepDigestsEqual=True
+
+A 84dccd2529e23a99  extraA=''
+B 84dccd2529e23a99  extraB='m34batch=2000000'
+| cell | document equal | step digests equal | depth A | depth B | batches |
+|---|:--:|:--:|---:|---:|---:|
+| mixed-61-s0 | True | True | 173.57506393348288 | 173.57506393348288 | 2 |
+| mixed-61-s1 | True | True | 171.3619986855876 | 171.3619986855876 | 2 |
+| mixed-61-s2 | True | True | 174.28 | 174.28 | 4 |
+| shapes-17-s0 | True | True | 200.349 | 200.349 | 1 |
+| shapes-17-s1 | True | True | 200.34937729570953 | 200.34937729570953 | 1 |
+| shapes-17-s2 | True | True | 200.349 | 200.349 | 1 |
+| triangle-20-s0 | True | True | 70.7711336311948 | 70.7711336311948 | 2 |
+| triangle-20-s1 | True | True | 70.74684851410467 | 70.74684851410467 | 3 |
+| triangle-20-s2 | True | True | 70.74727715491606 | 70.74727715491606 | 3 |
+allEqual=True totalBatches=19 allStepDigestsEqual=True
 
 ## 5. Gate (b): stop at K is exact-valid; resume-later is bit-identical
 
@@ -258,11 +315,70 @@ suspension was already holding.
 
 ## 6. Gate (c): determinism, two processes, and the equivalence
 
-<!--DETERMINISM-->
+binary 84dccd2529e23a99 extra='' work=30000000
+  mixed-61-s0: equal=True depth=173.57506393348288
+  mixed-61-s1: equal=True depth=171.3619986855876
+  mixed-61-s2: equal=True depth=174.28
+  shapes-17-s0: equal=True depth=200.349
+  shapes-17-s1: equal=True depth=200.34937729570953
+  shapes-17-s2: equal=True depth=200.349
+  triangle-20-s0: equal=True depth=70.7711336311948
+  triangle-20-s1: equal=True depth=70.74684851410467
+  triangle-20-s2: equal=True depth=70.74727715491606
+allEqual=True
+
+binary 84dccd2529e23a99 extra='m34past=1' work=30000000
+  mixed-61-s0: equal=True depth=173.215
+  mixed-61-s1: equal=True depth=173.73777826491073
+  mixed-61-s2: equal=True depth=171.798
+  shapes-17-s0: equal=True depth=200.349
+  shapes-17-s1: equal=True depth=200.34937729570953
+  shapes-17-s2: equal=True depth=200.349
+  triangle-20-s0: equal=True depth=70.7711336311948
+  triangle-20-s1: equal=True depth=70.74684851410467
+  triangle-20-s2: equal=True depth=70.74727715491606
+allEqual=True
+
+binary 84dccd2529e23a99 extra='m34past=1,m34yield=2' work=30000000
+  mixed-61-s0: equal=True depth=173.215
+  mixed-61-s1: equal=True depth=171.67677826491072
+  mixed-61-s2: equal=True depth=171.798
+  shapes-17-s0: equal=True depth=200.34937729570953
+  shapes-17-s1: equal=True depth=200.34937729570953
+  shapes-17-s2: equal=True depth=200.34937729570953
+  triangle-20-s0: equal=True depth=70.7711336311948
+  triangle-20-s1: equal=True depth=70.74684851410467
+  triangle-20-s2: equal=True depth=70.74727715491606
+allEqual=True
+
+binary 84dccd2529e23a99 extra='m34batch=400000' work=30000000
+  mixed-61-s0: equal=True depth=173.57506393348288
+  mixed-61-s1: equal=True depth=171.3619986855876
+  mixed-61-s2: equal=True depth=174.28
+  shapes-17-s0: equal=True depth=200.349
+  shapes-17-s1: equal=True depth=200.34937729570953
+  shapes-17-s2: equal=True depth=200.349
+  triangle-20-s0: equal=True depth=70.7711336311948
+  triangle-20-s1: equal=True depth=70.74684851410467
+  triangle-20-s2: equal=True depth=70.74727715491606
+allEqual=True
 
 And the refactor itself, against the base binary with nothing armed:
 
-<!--EQUIV-->
+A c41cd0943974feda  extraA=''
+B 84dccd2529e23a99  extraB=''
+| cell | document equal | step digests equal | depth A | depth B | batches |
+|---|:--:|:--:|---:|---:|---:|
+| mixed-61-s0 | True | True | 173.57506393348288 | 173.57506393348288 | 0 |
+| mixed-61-s1 | True | True | 171.3619986855876 | 171.3619986855876 | 0 |
+| mixed-61-s2 | True | True | 174.28 | 174.28 | 0 |
+| shapes-17-s0 | True | True | 200.349 | 200.349 | 0 |
+| shapes-17-s1 | True | True | 200.34937729570953 | 200.34937729570953 | 0 |
+| shapes-17-s2 | True | True | 200.349 | 200.349 | 0 |
+| triangle-20-s0 | True | True | 70.7711336311948 | 70.7711336311948 | 0 |
+| triangle-20-s1 | True | True | 70.74684851410467 | 70.74684851410467 | 0 |
+| triangle-20-s2 | True | True | 70.74727715491606 | 70.74727715491606 | 0 |
+allEqual=True totalBatches=0 allStepDigestsEqual=True
 
 ---
 
@@ -308,15 +424,73 @@ bound it, and they are different in kind:
 
 ## 8. The bound at ten seconds
 
-<!--BOUND10-->
+binary 84dccd2529e23a99  mixed-61 target=10000ms seeds=[0, 1, 2] rounds=3
+load1 min 3.38427734375 / median 4.3583984375 / max 5.10400390625 over 63 runs
+
+| arm | depth (median of seed medians) | vs base | wall p50 | wall max | over target | first-slice drop | first-slice exit | batches | resumes | interrupted |
+|---|---:|---:|---:|---:|---:|---:|---|---:|---:|---:|
+| base | 175.388 | +0.000 | 7.20 s | 8.34 s | 0/9 | 1.6160 | bound | 1 | 0 | 0 |
+| past25 | 175.124 | -0.264 | 7.07 s | 7.28 s | 0/9 | 0.8540 | interrupted/workCap | 8 | 0 | 3 |
+| past50 | 175.167 | -0.221 | 6.48 s | 8.14 s | 0/9 | 2.0170 | workCap | 8 | 0 | 0 |
+| past100 | 175.719 | +0.331 | 6.40 s | 6.90 s | 0/9 | 4.0020 | workCap | 8 | 0 | 0 |
+| pastwall | 175.719 | +0.331 | 6.35 s | 6.93 s | 0/9 | 4.0020 | workCap | 8 | 0 | 0 |
+| wallstop | 175.388 | +0.000 | 7.13 s | 8.28 s | 0/9 | 1.6160 | bound | 4 | 0 | 0 |
+| yield2 | 175.749 | +0.361 | 6.80 s | 7.62 s | 0/9 | 1.6160 | bound | 4 | 9 | 0 |
+
+Per seed, so a median of three is not read as three agreeing runs:
+| arm | seed 0 | seed 1 | seed 2 | distinct depths | distinct documents |
+|---|---:|---:|---:|---:|---:|
+| base | 175.388 | 174.170 | 176.162 | 3 | 3 |
+| past25 | 175.006 | 175.124 | 179.006 | 3 | 3 |
+| past50 | 176.108 | 175.167 | 172.483 | 3 | 3 |
+| past100 | 175.719 | 176.092 | 174.270 | 3 | 3 |
+| pastwall | 175.719 | 176.092 | 174.270 | 3 | 3 |
+| wallstop | 175.388 | 174.170 | 176.162 | 3 | 3 |
+| yield2 | 175.749 | 176.577 | 173.134 | 3 | 3 |
 
 ## 9. The bound at thirty seconds, and the overrun
 
-<!--BOUND30-->
+binary 84dccd2529e23a99  mixed-61 target=30000ms seeds=[0, 1, 2] rounds=3
+load1 min 1.67236328125 / median 2.9794921875 / max 5.52880859375 over 45 runs
+
+| arm | depth (median of seed medians) | vs base | wall p50 | wall max | over target | first-slice drop | first-slice exit | batches | resumes | interrupted |
+|---|---:|---:|---:|---:|---:|---:|---|---:|---:|---:|
+| base | 164.188 | +0.000 | 22.26 s | 36.42 s | 3/9 | 1.6160 | bound | 4 | 0 | 0 |
+| past50 | 165.228 | +1.040 | 20.02 s | 21.16 s | 0/9 | 12.0550 | workCap | 8 | 0 | 0 |
+| past100 | 162.188 | -2.000 | 40.44 s | 47.96 s | 9/9 | 20.2110 | workCap | 8 | 0 | 0 |
+| pastwall | 161.324 | -2.864 | 36.90 s | 40.95 s | 9/9 | 19.7510 | interrupted/workCap | 7 | 0 | 6 |
+| wallstop | 164.188 | +0.000 | 22.33 s | 31.98 s | 3/9 | 1.6160 | bound | 8 | 0 | 3 |
+
+Per seed, so a median of three is not read as three agreeing runs:
+| arm | seed 0 | seed 1 | seed 2 | distinct depths | distinct documents |
+|---|---:|---:|---:|---:|---:|
+| base | 164.188 | 167.666 | 164.171 | 3 | 3 |
+| past50 | 165.228 | 165.111 | 166.680 | 3 | 3 |
+| past100 | 162.188 | 160.885 | 164.304 | 3 | 3 |
+| pastwall | 161.324 | 160.885 | 164.258 | 3 | 4 |
+| wallstop | 164.188 | 167.666 | 164.171 | 3 | 3 |
 
 ## 10. The density point, re-tested with the bound unlocked
 
-<!--DENSITY-->
+binary 84dccd2529e23a99  mixed-61 target=10000ms seeds=[0, 1, 2] rounds=2
+load1 min 3.251953125 / median 3.83447265625 / max 4.3388671875 over 30 runs
+
+| arm | depth (median of seed medians) | vs base | wall p50 | wall max | over target | first-slice drop | first-slice exit | batches | resumes | interrupted |
+|---|---:|---:|---:|---:|---:|---:|---|---:|---:|---:|
+| base | 175.388 | +0.000 | 7.14 s | 8.28 s | 0/6 | 1.6160 | bound | 1 | 0 | 0 |
+| grid25 | 178.010 | +2.622 | 7.70 s | 11.51 s | 2/6 | 1.6160 | bound | 1 | 0 | 0 |
+| past100 | 175.719 | +0.331 | 6.34 s | 6.97 s | 0/6 | 4.0020 | workCap | 8 | 0 | 0 |
+| past100grid25 | 178.958 | +3.570 | 7.60 s | 8.66 s | 0/6 | 0.6157 | interrupted/workCap | 6 | 0 | 4 |
+| past50grid25 | 179.006 | +3.618 | 8.12 s | 8.45 s | 0/6 | 0.2647 | interrupted | 3 | 0 | 6 |
+
+Per seed, so a median of three is not read as three agreeing runs:
+| arm | seed 0 | seed 1 | seed 2 | distinct depths | distinct documents |
+|---|---:|---:|---:|---:|---:|
+| base | 175.388 | 174.170 | 176.162 | 3 | 3 |
+| grid25 | 178.086 | 178.010 | 177.364 | 3 | 3 |
+| past100 | 175.719 | 176.092 | 174.270 | 3 | 3 |
+| past100grid25 | 179.587 | 178.958 | 177.579 | 3 | 3 |
+| past50grid25 | 179.587 | 175.195 | 179.006 | 3 | 3 |
 
 ---
 
@@ -324,11 +498,42 @@ bound it, and they are different in kind:
 
 ## 11. The anytime table, and Sparrow
 
-<!--ANYTIME-->
+binary 84dccd2529e23a99 lever='m34wallstop=1'
+| fixture | target | arm | median depth | reproduced | wall max | Sparrow | gap |
+|---|---:|---|---:|---:|---:|---:|---:|
+| mixed-61 | 3000 | callive | 179.690 | 3/3 | 2.32 s | 157.971 | +21.719 |
+| mixed-61 | 3000 | wall | 179.587 | 0/3 | 2.67 s | 157.971 | +21.616 |
+| mixed-61 | 3000 | lever | 179.690 | 3/3 | 2.35 s | 157.971 | +21.719 |
+| mixed-61 | 10000 | callive | 175.388 | 3/3 | 8.28 s | 150.165 | +25.223 |
+| mixed-61 | 10000 | wall | 168.484 | 0/3 | 10.30 s | 150.165 | +18.319 |
+| mixed-61 | 10000 | lever | 175.388 | 3/3 | 8.28 s | 150.165 | +25.223 |
+| shapes-17 | 3000 | callive | 200.349 | 3/3 | 3.48 s | - |  |
+| shapes-17 | 3000 | wall | 200.349 | 0/3 | 1.93 s | - |  |
+| shapes-17 | 3000 | lever | 200.349 | 3/3 | 3.11 s | - |  |
+| shapes-17 | 10000 | callive | 200.349 | 3/3 | 8.41 s | - |  |
+| shapes-17 | 10000 | wall | 200.349 | 0/3 | 9.78 s | - |  |
+| shapes-17 | 10000 | lever | 200.349 | 3/3 | 8.43 s | - |  |
+| triangle-20 | 3000 | callive | 70.747 | 3/3 | 2.29 s | - |  |
+| triangle-20 | 3000 | wall | 70.747 | 0/3 | 3.22 s | - |  |
+| triangle-20 | 3000 | lever | 70.747 | 3/3 | 2.31 s | - |  |
+| triangle-20 | 10000 | callive | 70.742 | 3/3 | 7.88 s | - |  |
+| triangle-20 | 10000 | wall | 70.730 | 0/3 | 9.51 s | - |  |
+| triangle-20 | 10000 | lever | 70.742 | 3/3 | 7.87 s | - |  |
 
 ## 12. Thirty seconds on three fixtures
 
-<!--ANYTIME30-->
+binary 84dccd2529e23a99 lever='m34wallstop=1'
+| fixture | target | arm | median depth | reproduced | wall max | Sparrow | gap |
+|---|---:|---|---:|---:|---:|---:|---:|
+| mixed-61 | 30000 | callive | 164.188 | 3/3 | 36.32 s | - |  |
+| mixed-61 | 30000 | wall | 165.262 | 0/3 | 41.13 s | - |  |
+| mixed-61 | 30000 | lever | 164.188 | 3/3 | 31.97 s | - |  |
+| shapes-17 | 30000 | callive | 200.349 | 3/3 | 18.25 s | - |  |
+| shapes-17 | 30000 | wall | 200.349 | 0/3 | 17.71 s | - |  |
+| shapes-17 | 30000 | lever | 200.349 | 3/3 | 18.32 s | - |  |
+| triangle-20 | 30000 | callive | 70.730 | 3/3 | 19.04 s | - |  |
+| triangle-20 | 30000 | wall | 70.727 | 0/3 | 29.09 s | - |  |
+| triangle-20 | 30000 | lever | 70.730 | 3/3 | 18.94 s | - |  |
 
 ---
 
@@ -385,6 +590,31 @@ bound it, and they are different in kind:
   stops being `bound` - and the run is worse for it on this fixture at this
   budget. `robust-plan` §13.1's guess that *"the other classes spend it better
   than a denser slice would"* is the thing this round measured, and it survived.
+
+* **`m34wallstop` cuts the thirty-second overrun; it does not kill it.**
+  §9's `wallstop` row holds `base`'s depth exactly and takes wallMax from
+  36.42 s to 31.98 s, but 3 of 9 runs still cross 30 s. The policy only binds
+  the mode-34 checkpoint it is consulted at; it cannot stop an operator class
+  that never asks it a question, and it cannot retroactively shorten a batch
+  already in flight when the deadline is crossed mid-batch. "Finally killed by
+  the wall-stop" is not what was measured - "measurably compressed, not
+  eliminated" is.
+
+* **`m34past` without `m34wallstop` makes the overrun worse, not better.**
+  §9's `past100` and `pastwall` rows buy real depth (-2.000 mm / -2.864 mm) at
+  9-of-9 overrun and a wallMax up to 47.96 s: past the bound the walk has no
+  natural end short of the sheet floor, and a work cap denominated in the
+  coordinator's own currency is not a wall cap. Arming the bound without the
+  wall stop trades the ten-second promise for depth; the two dials answer two
+  different questions and this round does not fold them into one default.
+
+* **The record-line-cascade lever does not transfer to this instrument.**
+  §10 re-tests its exact arm - `step=0.25` with the bound unlocked - on the
+  calibrated-plan canonical instrument rather than at a pinned 20 M-unit work
+  budget, and it costs depth instead of buying it: `past100grid25` +3.570 mm,
+  `past50grid25` +3.618 mm, both worse than the bounded `grid25` control's
+  already-negative +2.622 mm. A lever measured under one budget regime is not
+  automatically the same lever under another.
 
 * **Three fixtures, three seeds and a handful of rounds are not a distribution.**
   Every table here says its `n`. The per-seed table is printed beside the median

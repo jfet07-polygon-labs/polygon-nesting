@@ -1,11 +1,11 @@
 {
- "binaryA": "/var/lib/t3/tmp/realint/bin/base-ship-meas",
+ "binaryA": "/var/lib/t3/tmp/realint/bin/ship-meas",
  "binaryB": "/var/lib/t3/tmp/realint/bin/ship-meas",
- "binaryAsha256": "c41cd0943974fedaad8a5832b46007f0e7d4f7d716ed53a7c21b6ee567466ac6",
+ "binaryAsha256": "84dccd2529e23a9922f7e1088ed44d73cc376fcb5c69ad3f276e96f901e113f6",
  "binaryBsha256": "84dccd2529e23a9922f7e1088ed44d73cc376fcb5c69ad3f276e96f901e113f6",
  "work": "30000000",
  "extraA": "",
- "extraB": "",
+ "extraB": "m34batch=2000000",
  "requests": [
   "mixed-61",
   "shapes-17",
@@ -20,7 +20,7 @@
   {
    "tag": "mixed-61-s0",
    "specA": "work=30000000,cells=13:15:17:19,v3=1",
-   "specB": "work=30000000,cells=13:15:17:19,v3=1",
+   "specB": "work=30000000,cells=13:15:17:19,v3=1,m34batch=2000000",
    "sliceDigestA": "c7f0cef8286eb43d",
    "sliceDigestB": "c7f0cef8286eb43d",
    "documentEqual": true,
@@ -41,16 +41,38 @@
    ],
    "stepDigestsComparable": true,
    "stepDigestsEqual": true,
-   "processSecondsA": 8.761221561930142,
-   "processSecondsB": 8.75073150510434,
-   "batchedSlices": [],
-   "totalBatches": 0,
+   "processSecondsA": 8.878371638944373,
+   "processSecondsB": 8.93021157500334,
+   "batchedSlices": [
+    {
+     "batches": 2,
+     "stepsTaken": 1616,
+     "workUnits": 3311034,
+     "perBatchSteps": [
+      969,
+      1616
+     ],
+     "floorMm": [
+      178.784,
+      178.188
+     ],
+     "publishedDepthMm": [
+      178.76,
+      178.18
+     ],
+     "confirmationsAccepted": [
+      164,
+      287
+     ]
+    }
+   ],
+   "totalBatches": 2,
    "equal": true
   },
   {
    "tag": "mixed-61-s1",
    "specA": "work=30000000,cells=11:15:21:27,v3=1",
-   "specB": "work=30000000,cells=11:15:21:27,v3=1",
+   "specB": "work=30000000,cells=11:15:21:27,v3=1,m34batch=2000000",
    "sliceDigestA": "adf9365f2ea52b83",
    "sliceDigestB": "adf9365f2ea52b83",
    "documentEqual": true,
@@ -71,16 +93,38 @@
    ],
    "stepDigestsComparable": true,
    "stepDigestsEqual": true,
-   "processSecondsA": 9.030276612960733,
-   "processSecondsB": 8.84661237290129,
-   "batchedSlices": [],
-   "totalBatches": 0,
+   "processSecondsA": 8.966221367008984,
+   "processSecondsB": 8.946657050983049,
+   "batchedSlices": [
+    {
+     "batches": 2,
+     "stepsTaken": 1617,
+     "workUnits": 3539786,
+     "perBatchSteps": [
+      894,
+      1617
+     ],
+     "floorMm": [
+      178.744,
+      178.021
+     ],
+     "publishedDepthMm": [
+      178.62,
+      177.908
+     ],
+     "confirmationsAccepted": [
+      157,
+      308
+     ]
+    }
+   ],
+   "totalBatches": 2,
    "equal": true
   },
   {
    "tag": "mixed-61-s2",
    "specA": "work=30000000,cells=15:23:31:39,v3=1",
-   "specB": "work=30000000,cells=15:23:31:39,v3=1",
+   "specB": "work=30000000,cells=15:23:31:39,v3=1,m34batch=2000000",
    "sliceDigestA": "c468ab2550c69c86",
    "sliceDigestB": "c468ab2550c69c86",
    "documentEqual": true,
@@ -103,16 +147,59 @@
    ],
    "stepDigestsComparable": true,
    "stepDigestsEqual": true,
-   "processSecondsA": 10.205056027974933,
-   "processSecondsB": 10.179401086992584,
-   "batchedSlices": [],
-   "totalBatches": 0,
+   "processSecondsA": 10.366570797050372,
+   "processSecondsB": 10.345657362951897,
+   "batchedSlices": [
+    {
+     "batches": 2,
+     "stepsTaken": 1611,
+     "workUnits": 3455866,
+     "perBatchSteps": [
+      923,
+      1611
+     ],
+     "floorMm": [
+      178.085,
+      177.397
+     ],
+     "publishedDepthMm": [
+      178.076,
+      177.343
+     ],
+     "confirmationsAccepted": [
+      94,
+      240
+     ]
+    },
+    {
+     "batches": 2,
+     "stepsTaken": 1585,
+     "workUnits": 3398525,
+     "perBatchSteps": [
+      912,
+      1585
+     ],
+     "floorMm": [
+      175.252,
+      174.884
+     ],
+     "publishedDepthMm": [
+      175.209,
+      174.881
+     ],
+     "confirmationsAccepted": [
+      194,
+      229
+     ]
+    }
+   ],
+   "totalBatches": 4,
    "equal": true
   },
   {
    "tag": "shapes-17-s0",
    "specA": "work=30000000,cells=13:15:17:19,v3=1",
-   "specB": "work=30000000,cells=13:15:17:19,v3=1",
+   "specB": "work=30000000,cells=13:15:17:19,v3=1,m34batch=2000000",
    "sliceDigestA": "6df3255191efe91c",
    "sliceDigestB": "6df3255191efe91c",
    "documentEqual": true,
@@ -133,16 +220,34 @@
    ],
    "stepDigestsComparable": true,
    "stepDigestsEqual": true,
-   "processSecondsA": 18.286885384004563,
-   "processSecondsB": 18.37304438801948,
-   "batchedSlices": [],
-   "totalBatches": 0,
+   "processSecondsA": 18.7768560659606,
+   "processSecondsB": 18.63046975398902,
+   "batchedSlices": [
+    {
+     "batches": 1,
+     "stepsTaken": 1803,
+     "workUnits": 1176828,
+     "perBatchSteps": [
+      1803
+     ],
+     "floorMm": [
+      200.903
+     ],
+     "publishedDepthMm": [
+      200.349
+     ],
+     "confirmationsAccepted": [
+      73
+     ]
+    }
+   ],
+   "totalBatches": 1,
    "equal": true
   },
   {
    "tag": "shapes-17-s1",
    "specA": "work=30000000,cells=11:15:21:27,v3=1",
-   "specB": "work=30000000,cells=11:15:21:27,v3=1",
+   "specB": "work=30000000,cells=11:15:21:27,v3=1,m34batch=2000000",
    "sliceDigestA": "91de5ae0baaa6437",
    "sliceDigestB": "91de5ae0baaa6437",
    "documentEqual": true,
@@ -163,16 +268,34 @@
    ],
    "stepDigestsComparable": true,
    "stepDigestsEqual": true,
-   "processSecondsA": 13.31902345502749,
-   "processSecondsB": 13.38254459190648,
-   "batchedSlices": [],
-   "totalBatches": 0,
+   "processSecondsA": 13.367507038987242,
+   "processSecondsB": 13.356514235027134,
+   "batchedSlices": [
+    {
+     "batches": 1,
+     "stepsTaken": 1803,
+     "workUnits": 1133164,
+     "perBatchSteps": [
+      1803
+     ],
+     "floorMm": [
+      200.903
+     ],
+     "publishedDepthMm": [
+      200.349
+     ],
+     "confirmationsAccepted": [
+      77
+     ]
+    }
+   ],
+   "totalBatches": 1,
    "equal": true
   },
   {
    "tag": "shapes-17-s2",
    "specA": "work=30000000,cells=15:23:31:39,v3=1",
-   "specB": "work=30000000,cells=15:23:31:39,v3=1",
+   "specB": "work=30000000,cells=15:23:31:39,v3=1,m34batch=2000000",
    "sliceDigestA": "181e818bc69cb8c8",
    "sliceDigestB": "181e818bc69cb8c8",
    "documentEqual": true,
@@ -193,16 +316,34 @@
    ],
    "stepDigestsComparable": true,
    "stepDigestsEqual": true,
-   "processSecondsA": 16.863271818961948,
-   "processSecondsB": 16.940768945030868,
-   "batchedSlices": [],
-   "totalBatches": 0,
+   "processSecondsA": 16.965015430934727,
+   "processSecondsB": 16.852723694057204,
+   "batchedSlices": [
+    {
+     "batches": 1,
+     "stepsTaken": 1803,
+     "workUnits": 1190523,
+     "perBatchSteps": [
+      1803
+     ],
+     "floorMm": [
+      200.905
+     ],
+     "publishedDepthMm": [
+      200.349
+     ],
+     "confirmationsAccepted": [
+      79
+     ]
+    }
+   ],
+   "totalBatches": 1,
    "equal": true
   },
   {
    "tag": "triangle-20-s0",
    "specA": "work=30000000,cells=13:15:17:19,v3=1",
-   "specB": "work=30000000,cells=13:15:17:19,v3=1",
+   "specB": "work=30000000,cells=13:15:17:19,v3=1,m34batch=2000000",
    "sliceDigestA": "2e380b191b3a4586",
    "sliceDigestB": "2e380b191b3a4586",
    "documentEqual": true,
@@ -223,16 +364,38 @@
    ],
    "stepDigestsComparable": true,
    "stepDigestsEqual": true,
-   "processSecondsA": 6.131134787108749,
-   "processSecondsB": 6.132149568991736,
-   "batchedSlices": [],
-   "totalBatches": 0,
+   "processSecondsA": 6.1430108019849285,
+   "processSecondsB": 6.146506511024199,
+   "batchedSlices": [
+    {
+     "batches": 2,
+     "stepsTaken": 637,
+     "workUnits": 3949604,
+     "perBatchSteps": [
+      466,
+      637
+     ],
+     "floorMm": [
+      71.137,
+      71.137
+     ],
+     "publishedDepthMm": [
+      70.771,
+      70.771
+     ],
+     "confirmationsAccepted": [
+      74,
+      74
+     ]
+    }
+   ],
+   "totalBatches": 2,
    "equal": true
   },
   {
    "tag": "triangle-20-s1",
    "specA": "work=30000000,cells=11:15:21:27,v3=1",
-   "specB": "work=30000000,cells=11:15:21:27,v3=1",
+   "specB": "work=30000000,cells=11:15:21:27,v3=1,m34batch=2000000",
    "sliceDigestA": "4db2b2d324981a8c",
    "sliceDigestB": "4db2b2d324981a8c",
    "documentEqual": true,
@@ -253,16 +416,42 @@
    ],
    "stepDigestsComparable": true,
    "stepDigestsEqual": true,
-   "processSecondsA": 5.783580650924705,
-   "processSecondsB": 5.8074342019390315,
-   "batchedSlices": [],
-   "totalBatches": 0,
+   "processSecondsA": 5.875819894019514,
+   "processSecondsB": 5.874905459000729,
+   "batchedSlices": [
+    {
+     "batches": 3,
+     "stepsTaken": 637,
+     "workUnits": 4480369,
+     "perBatchSteps": [
+      419,
+      597,
+      637
+     ],
+     "floorMm": [
+      71.14,
+      71.14,
+      71.14
+     ],
+     "publishedDepthMm": [
+      70.747,
+      70.747,
+      70.747
+     ],
+     "confirmationsAccepted": [
+      61,
+      61,
+      61
+     ]
+    }
+   ],
+   "totalBatches": 3,
    "equal": true
   },
   {
    "tag": "triangle-20-s2",
    "specA": "work=30000000,cells=15:23:31:39,v3=1",
-   "specB": "work=30000000,cells=15:23:31:39,v3=1",
+   "specB": "work=30000000,cells=15:23:31:39,v3=1,m34batch=2000000",
    "sliceDigestA": "1cff581d7bf2009c",
    "sliceDigestB": "1cff581d7bf2009c",
    "documentEqual": true,
@@ -283,21 +472,47 @@
    ],
    "stepDigestsComparable": true,
    "stepDigestsEqual": true,
-   "processSecondsA": 5.608329896000214,
-   "processSecondsB": 5.553143406054005,
-   "batchedSlices": [],
-   "totalBatches": 0,
+   "processSecondsA": 5.681209241040051,
+   "processSecondsB": 5.5896119109820575,
+   "batchedSlices": [
+    {
+     "batches": 3,
+     "stepsTaken": 636,
+     "workUnits": 4463564,
+     "perBatchSteps": [
+      420,
+      597,
+      636
+     ],
+     "floorMm": [
+      71.138,
+      71.138,
+      71.138
+     ],
+     "publishedDepthMm": [
+      70.747,
+      70.747,
+      70.747
+     ],
+     "confirmationsAccepted": [
+      62,
+      62,
+      62
+     ]
+    }
+   ],
+   "totalBatches": 3,
    "equal": true
   }
  ],
  "allEqual": true,
  "allStepDigestsEqual": true,
  "stepDigestCells": 9,
- "totalBatches": 0,
+ "totalBatches": 19,
  "boxLoad": {
   "n": 18,
-  "min": 1.59716796875,
-  "median": 2.620849609375,
-  "max": 3.32177734375
+  "min": 4.181640625,
+  "median": 5.33251953125,
+  "max": 6.37548828125
  }
 }

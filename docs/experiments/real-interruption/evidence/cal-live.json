@@ -1,0 +1,33 @@
+{
+  "entries": {
+    "1154177": {
+      "probeSeconds": 0.891607299
+    },
+    "1160739": {
+      "probeSeconds": 0.909211147
+    },
+    "1184708": {
+      "probeSeconds": 0.926698512
+    },
+    "6376387": {
+      "probeSeconds": 0.849267268
+    },
+    "7598248": {
+      "probeSeconds": 0.977588144
+    },
+    "8778573": {
+      "probeSeconds": 2.180730594
+    },
+    "8961342": {
+      "probeSeconds": 2.246930305
+    },
+    "9249221": {
+      "probeSeconds": 1.087843243
+    },
+    "9629453": {
+      "probeSeconds": 2.2869119319999998
+    }
+  },
+  "note": "probeWorkUnits -> the least-loaded probe wall observed for that cell",
+  "version": 1
+}

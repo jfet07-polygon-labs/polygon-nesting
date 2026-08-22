@@ -166,7 +166,7 @@ def anytime(doc, title):
         gap = ('' if sparrow is None
                else f'{cell["medianDepthMm"] - sparrow:+.3f}')
         print(f'| {request} | {target} | {arm} | {cell["medianDepthMm"]:.3f} | '
-              f'{cell["reproduced"]}/{cell["n"]} | '
+              f'{cell["reproducedCells"]}/{cell["n"]} | '
               f'{cell["wallMaxSeconds"]:.2f} s | '
               f'{sparrow if sparrow else "-"} | {gap} |')
 
