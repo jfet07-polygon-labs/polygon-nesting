@@ -691,3 +691,41 @@ runtime, not compiled in.
 * **The publication audit ran at one allowance (0.002)**, the allowance the runs
   were made at. A publication is legal or not at the allowance it was made under.
 * **No claim here is about a platform other than x86_64.**
+
+## Errata — from the post-round dual review (Sol 13 + Grok 8, 2026-08-22)
+
+DO-NOT-PROMOTE stands under both reviews, and is **stronger** than §4's table:
+neither reviewer found an evidence contradiction, but three interpretations
+are corrected.
+
+1. **The equal-wall interpolation is withdrawn as an observation.** Wall and
+   work are not monotone on 2/12 seeds (load, not speed — a 16 M cell can
+   finish before an 8 M cell), and best-so-far depth is a staircase, not a
+   linear response; the interpolant books a 5.86 mm "win" on seed 1 for an arm
+   whose same-work cell is bit-identical to the control. The honest reading is
+   the published no-interpolation column — **0–3/12 wins, and equal work
+   0/12 at 0.0000 mm everywhere**. The 8/12-at-two-budgets tick was a false
+   pass of the model, and both quality clauses fail without it.
+2. **The per-row-union Sparrow claim is false.** The republish message is the
+   first short-circuit of `rebuild_one`, not a census; Gate A's census at the
+   same radius shows 37 pair + 4 boundary miter failures with the two
+   radius-caused pairs refused by BOTH halves (`roundRefusesMiterAcceptsPairs`
+   is empty). A per-row OR would still refuse Sparrow at allowance 0.002; the
+   refusal is the 2.502 expansion (the allowance/radius tax), and per-layout
+   union is the right design — a per-row disjunction is a third authority
+   corresponding to no envelope, and both reviewers reject building it.
+3. **"The two authorities never disagreed" and "the residual is 100%
+   reachability" are narrowed.** Union does not record component verdicts
+   (kernel-refuse/miter-accept disagreements are invisible by construction —
+   and known to exist from the exclusive-parent failures), and union returns
+   the round metrics even on miter-admitted rows, so the from-request anytime
+   A/B moves acceptance, cost, and an internal metric basis at once — the
+   −2.135 mm median cannot be attributed to released legality. The licensed
+   conclusion is narrower and sharper: **on these 12 parents, in mode 34, no
+   round-valid/miter-invalid state ever reached the confirmation call**
+   (44,710 attempted, 44,710 accepted, 0 refused), because
+   `due_for_confirmation` skips 149,762 frontiers on the miter-geometry
+   surrogate one level up, identically in both arms. The one unmeasured
+   population — and the single remaining falsifier both reviewers converge on
+   — is that skip pile: what fraction is contract-valid ∧ round-valid ∧
+   miter-proxy-infeasible, at which radius, and with how much immediate depth.

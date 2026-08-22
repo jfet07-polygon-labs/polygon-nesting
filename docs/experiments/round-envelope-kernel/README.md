@@ -570,3 +570,46 @@ the example.
   It is inside the measured 0.05 ms and it is not free; a promotion that runs
   the kernel inside a candidate scan rather than a confirmation should reuse the
   buffers, as `relaxed-row-buffer-reuse` did for the scorer.
+
+## Errata — from the post-round dual review (Sol 13 + Grok 8, 2026-08-22)
+
+Both reviewers confirm the kernel is sound, exact on its stated domain, and
+worth keeping; neither found an evidence contradiction. Five formulations are
+corrected; the code carries two matching fixes (the domain-bound test now
+evaluates its right-hand side at `2·MAX_RADIUS` as `certifies()` admits, and
+the census doc-comment states the floor semantics).
+
+1. **"Zero false accepts" needs its qualifier**: the precise sentence is
+   *0 violations outside the √2 µm representation band; 3 source/canonical
+   disagreements inside it* (shortfalls 0.056/0.296/0.015 µm, all above the
+   public 5.0 mm contract). Grok adds the design point: folding the in-band
+   rows into the count would force the outward-only-with-margin policy that
+   must refuse Sparrow pair 38·39 — counting them separately is what keeps
+   that pair a unit test.
+2. **The P0 leak's identifier was wrong** (same class of slip Sol 12 caught on
+   Gate A): production miter never calls `do_round()` — that is Round-join arc
+   emission. The leak lives in the implemented offset pipeline's grid-rounded
+   vertex emission (`do_miter`/`do_square` via `math_round`, plus the finishing
+   union's sliver drops). The finding itself is untouched: the proof runs
+   through `offset_miter ⊇ P⊕disc`, and a reported critical value of `2r−1 µm`
+   proves a positive shortfall of *at most* one micrometre, not exactly one.
+3. **Cross-platform bit-identity is narrower than "no f64"**: the predicate is
+   integer-only, but its canonical *input* passes through `sin_cos`,
+   translation and grid rounding. Exactness holds given identical canonical
+   rings; end-to-end cross-platform identity is unproved (x86_64 measured).
+4. **`critical_two_r_micron` returns a floor**, the largest admitted integer
+   threshold — the floor of the true rational distance, one-sided by <1 µm.
+5. **Population 2 is a constructed threshold-walk family, not 194 independent
+   production proposals** (the README said so; the review sharpens why it
+   matters: promotion to any production role still wants a live shadow over
+   actual rejected search states — which is exactly the skip-pile diagnostic
+   both reviewers name as the one remaining falsifier). Grok adds that Gate
+   A's 31 join-fail pairs, all accepted by the kernel in population 3, are the
+   stronger inherited test and already exist.
+
+Production caveats both reviewers flag for any future arming: the process-global
+atomic is not promotable in a concurrent library (two coordinators can
+overwrite each other's authority — production needs a request-scoped policy),
+and `pair_admissible`'s release-mode `two_r.max(1)` silently certifies at 1 µm
+for a direct caller at 0 (production is guarded by `certifies()` at the wire
+point; the debug_assert documents the contract).

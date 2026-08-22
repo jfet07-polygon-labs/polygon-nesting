@@ -15,11 +15,13 @@
 //! # What it measures, and against what
 //!
 //! * [`census`] — every pair and every boundary of one pose set under the
-//!   kernel, with the *exact* critical clearance `2r*` at which each flips.
-//!   Gate A's `import_gate` bisects a Clipper offset and its `r*` therefore
-//!   carries that offset's own output quantization; this bisects a predicate
-//!   that is exact at every radius, so `2r*` here is the canonical rings'
-//!   minimum boundary distance in integer micrometres, full stop.
+//!   kernel, with the critical clearance `2r*` at which each flips. Gate A's
+//!   `import_gate` bisects a Clipper offset and its `r*` therefore carries
+//!   that offset's own output quantization; this bisects a predicate that is
+//!   exact at every integer radius, so `2r*` here is the largest integer
+//!   micrometre threshold the canonical rings still admit — the *floor* of
+//!   their true rational minimum boundary distance, one-sided by less than
+//!   1 µm (sol-review-13 corrected the earlier "full stop" wording).
 //! * [`miter_census`] — the same two questions asked of HEAD's authority: the
 //!   miter offset rebuilt per placement and `polygons_overlap_exact` per pair.
 //!   Same loop, same order, different envelope, so a per-row disagreement is

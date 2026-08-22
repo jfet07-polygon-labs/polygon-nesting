@@ -797,9 +797,12 @@ mod tests {
         // `cross * cross`, the interior branch's left-hand side. This is the
         // largest quantity the kernel ever forms.
         let cross_squared = cross * cross;
-        // `threshold^2 * |v|^2`, the interior branch's right-hand side.
-        let radius = MAX_RADIUS_MICRON as i128;
-        let right_hand_side = radius * radius * squared_length;
+        // `threshold^2 * |v|^2`, the interior branch's right-hand side. The
+        // threshold is the doubled radius, and `certifies()` admits it up to
+        // `2 * MAX_RADIUS_MICRON` — the bound must be evaluated there, not at
+        // the bare radius (sol-review-13 caught the earlier mismatch).
+        let two_r = 2 * (MAX_RADIUS_MICRON as i128);
+        let right_hand_side = two_r * two_r * squared_length;
         // `box_gap_squared`, and the point-in-ring cross-multiplications.
         let box_gap = 2 * delta * delta;
         let in_ring = delta * delta;

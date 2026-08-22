@@ -7695,3 +7695,43 @@ collecting: `engineCommit`, `engineWorktreeDirty` and `relevantSourceTreeSha256`
 are read at run time, not compiled in.
 
 Evidence, drivers and the full caveat list: `docs/experiments/round-envelope-gate/`.
+
+## The dual review of the kernel round: the interpolant withdrawn, the skip pile named as the last falsifier
+
+Sol 13 and Grok 8 reviewed the kernel + gate round from the raw evidence.
+Convergent verdict: DO-NOT-PROMOTE stands and is stronger than the gate's own
+table — the equal-wall interpolation is withdrawn (wall/work non-monotone on
+2/12 seeds; the honest column is 0-3/12 with equal work 0/12 at 0.0000), the
+per-row-union Sparrow claim is false (both halves refuse the radius pairs; the
+republish message was a short-circuit, not a census), and the kernel is sound
+with five wording corrections applied in place (the "zero false accepts"
+band qualifier; the do_round misattribution — the leak is the offset
+pipeline's grid-rounded emission; cross-platform as derivation; critical
+distance as floor; population 2's constructed nature). Two code corrections
+land with this chapter: the domain-bound test now evaluates at 2·MAX_RADIUS
+as certifies() admits, and the census doc-comment states the floor semantics.
+
+The sharpened interpretation both reviewers sign: on the 12 parents no
+round-valid/miter-invalid state ever REACHED confirmation (44,710/44,710
+accepted, 0 refused) — the filter is due_for_confirmation skipping 149,762
+frontiers on the miter-geometry relaxed surrogate, identically in both arms.
+The single remaining falsifier is that skip pile, and both reviewers
+independently specified the same diagnostic (in flight as this chapter is
+written): score the skipped states under contract/miter/round at both radii.
+Sol's pre-committed kills for the whole round-search direction: fewer than
+8/12 parents exposing a contract-valid, round-valid, miter-proxy-infeasible
+state with >= 1 mm immediate gain; or median best gain < 1 mm; or useful
+states existing only at r=2.500 while the product ships 2.502; or projected
+confirmation cost consuming the gain. If the pile is empty, the honest
+decision on 150@10s via representation is stop, with the kernel kept as the
+exact correctness surface (Exclusive = canonical round oracle, Union =
+backward-compatible hybrid experiment, neither default). Sizing if it ever
+passes: mode-34-only round proposal prototype L (1-2 weeks), full migration
+XL (~44k lines of search surface), and Sol requires ~5 mm robust median at
+10 s plus transfer to two non-mixed instances before authorizing the full
+program. Neither reviewer funds per-row union or a contact-block redesign
+(a zero-code-cost 12-parent rerun under union is the only defensible
+contact-block diagnostic, with the original >=8/12 and >=1 mm kill).
+
+Reviews verbatim: docs/sol-review-13-the-floor-the-band-and-the-shadow-gate.md,
+docs/grok-review-8-the-promoter-not-the-bouncer.md.
