@@ -470,20 +470,31 @@ back **byte-identical** to the ones every number above was measured on:
 | measurement | the combo + kernel + dump | `16ac9d90…` | **`16ac9d90…`** |
 | scorer | kernel + import-gate-shadow | `a1c84416…` | **`a1c84416…`** |
 
-`ALL_PASS: true` on the fresh gate binary and on the fresh measurement binary,
-and **all twelve** per-gate whole-document digests across the three independent
-build-and-gate cycles this round ran are the same four values. Section 6.2's
-point holds in the other direction too: the binary is a function of the source
-text, and this source text builds this binary, every time.
+`ALL_PASS: true` on the fresh gate binary and on the fresh measurement binary.
+Counting every gate run this round made — two binaries at the measurement stage
+and two at the closing stage, four gates each — that is **16 of 16 passing with
+the same four whole-document digests**: `17cf86ef3880b374`, `822ccc256623e1ee`,
+`12b402bda35e0b89`, `27ce9cfea5df93e9`.
 
-`evidence/binaries-final.txt`, `evidence/gates-final.json`,
-`evidence/gates-finalmeas.json`, `evidence/final-worktree-status.txt`.
+`evidence/final-worktree-status.txt` is **zero bytes**, which is the check
+passing. `evidence/binaries-final.txt`, `evidence/gates-final.json`,
+`evidence/gates-finalmeas.json`.
 
-> The first run of this stage `tee`-d `git status --porcelain` straight into the
-> evidence directory, which creates the output file before `git status` finishes
-> walking the tree — so the check reported its own output file as untracked and
-> could never print nothing, which is the one thing it exists to print. It now
-> writes outside the repository and copies the file in afterwards.
+One more thing the stage happened to prove, because it was run twice on two
+different commits (`fa7e557` and `62b971f`) whose **Rust** source is identical
+and whose docs are not: the three binaries came back byte-identical both times.
+That is the round-envelope gate's §5.4 — git metadata is read at run time, not
+compiled in — holding on this round's own tree, and §6.2 above is the other half
+of the same fact: the binary is a function of the source *text*, so identical
+text gives identical binaries and a changed comment gives a changed hash without
+a changed behaviour.
+
+> **Correction, from the stage's own first run.** It `tee`-d `git status
+> --porcelain` straight into the evidence directory, which creates the output
+> file before `git status` finishes walking the tree — so the check reported its
+> own output file as untracked and could never print nothing, which is the one
+> thing it exists to print. It now writes outside the repository and copies the
+> file in afterwards, and the committed file is empty.
 
 ## 7. Caveats, stated rather than left to be found
 

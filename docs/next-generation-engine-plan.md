@@ -7793,4 +7793,15 @@ eight verdict paths compared directly), **the JSONL dump it wrote** (raw
 SHA-256), and the scored document (raw hash, stripped digest and six verdict
 paths) — `ALL_IDENTICAL: true`.
 
+**The closing gate is a stage this round, not a hand-run.** `collect.sh final`
+rebuilds the clean committed tree into a fresh target directory and gates it, and
+running it found a defect in its own first draft: it piped `git status
+--porcelain` into the evidence directory through `tee`, which creates the output
+file before `git status` finishes walking the tree, so the check reported its own
+output as untracked and could never print nothing. Fixed, the committed status
+file is **zero bytes**, all three binaries rebuild **byte-identically** — on two
+different commits whose Rust source is identical and whose docs are not — and
+**16 of 16** gate runs across this round's four binaries pass with the same four
+whole-document digests.
+
 Evidence, drivers and the full caveat list: `docs/experiments/skip-pile-diagnostic/`.
