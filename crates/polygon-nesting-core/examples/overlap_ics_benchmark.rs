@@ -559,8 +559,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 document["lockedTargetMm"] = json!(target);
             } else {
                 // The shock, written out rather than hidden inside the engine:
-                // the constructor's poses, affinely compressed onto the locked
-                // target, then displaced by a seed-keyed SE(2) vector.
+                // the constructor's poses displaced by a seed-keyed SE(2)
+                // vector, and *then* affinely compressed onto the locked
+                // target.
                 //
                 // The displacement is what makes three seeds three
                 // *trajectories*. Without it the descent is seed-independent
@@ -571,15 +572,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // objection Sol review 14 §3 raises. Sol R2 §4 sanctions the
                 // construction: distinct workers use "distinct deterministic
                 // affine perturbations/jump streams" from the same constructor.
-                let factor =
-                    homotopy::affine_compression_factor(&sources, &parent, &contract, target);
-                let compressed = homotopy::compressed(&sources, &parent, &contract, factor);
-                let shocked = perturb(
-                    &compressed,
+                //
+                // **The order was wrong and it changed the cell.** Compressing
+                // first and perturbing after put the entry state up to one
+                // shock magnitude *outside* the locked strip - about 0.8 mm on
+                // C175 - so what ran was "affine shock plus a random throw past
+                // the target", not the cell the arbitration named (Sol review
+                // 15 §A.4). Perturbing the parent and compressing each
+                // perturbed parent onto the same `T` gives three distinct
+                // trajectories that all start inside their own target, which is
+                // what the assertion below now requires of every seed.
+                let perturbed_parent = perturb(
+                    &parent,
                     seed,
                     options.number("shockmm", 0.25)?,
                     options.number("shockdeg", 1.0)?,
                 );
+                let factor = homotopy::affine_compression_factor(
+                    &sources,
+                    &perturbed_parent,
+                    &contract,
+                    target,
+                );
+                let shocked =
+                    homotopy::compressed(&sources, &perturbed_parent, &contract, factor);
                 let config = IcsConfig {
                     target_depth_mm: target,
                     proposal_budget: options.integer("budget", 100_000)?,
@@ -605,6 +621,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
                 let entry_totals = engine.totals();
                 let entry_depth = engine.raw_depth_mm();
+                // A hard failure, not a warning. The whole point of the shock
+                // is that the trajectory starts *at* a target it cannot yet
+                // satisfy; a state that starts outside the strip is a different
+                // cell and must not be reported as this one.
+                if entry_depth > target + 1e-9 {
+                    return Err(format!(
+                        "cell `{cell}` entered at {entry_depth} mm, outside its locked target \
+                         {target} mm: the shock must be applied to the parent and compressed \
+                         onto the target, never applied after the compression"
+                    )
+                    .into());
+                }
                 let outcome = engine.run();
                 wall.insert(
                     "solverSeconds".to_owned(),
@@ -612,6 +640,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
                 document["shock"] = json!({
                     "affineFactor": factor,
+                    "entryDepthWithinTarget": entry_depth <= target + 1e-9,
+                    "entryDepthSlackMm": target - entry_depth,
                     "shockMm": options.number("shockmm", 0.25)?,
                     "shockDeg": options.number("shockdeg", 1.0)?,
                     "shockedPoseDigest": pose_digest(&shocked),
