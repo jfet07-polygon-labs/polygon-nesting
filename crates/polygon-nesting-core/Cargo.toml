@@ -498,6 +498,30 @@ import-gate-shadow = []
 # the key rather than running the miter arm under a round label. See
 # docs/experiments/round-envelope-kernel/.
 round-envelope-kernel = []
+# The skip pile diagnostic's dump hook, and nothing else.
+#
+# `CompressionSchedule::due_for_confirmation` refuses to ask the exact tier
+# about a frontier the *relaxed surrogate* already calls infeasible, and the
+# surrogate's collision geometry is the production miter offset. The
+# round-envelope gate measured what that costs in visibility:
+# `confirmationsRefused = 0` on all 108 runs of its twelve-parent matched gate,
+# because 149 762 frontiers were suppressed one level above the confirmation and
+# never reached it. This feature writes those frontiers out as poses so the disc
+# kernel and the material contract can be asked about them.
+#
+# Instrument only. It adds one `cfg`-gated accessor to `CompressionSchedule`,
+# one `cfg`-gated block after the confirmation branch of a schedule step, and
+# one module that nothing in `src/` outside itself names. It returns nothing to
+# the search and publishes no field. It implies `compression-schedule` because a
+# hook on that schedule's own step has no meaning without it.
+#
+# Off at compile time, and off at run time even when compiled: the sink opens
+# only when `POLYGON_NESTING_SKIP_PILE_DUMP` names a path. Its cost is wall, and
+# every cell it is used on is work-capped - which is why an armed run has to
+# reproduce the committed cell's step digest and skip count, and why the driver
+# asserts that rather than asserting this comment. See
+# docs/experiments/skip-pile-diagnostic/.
+skip-pile-dump = ["compression-schedule"]
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }
@@ -547,4 +571,18 @@ required-features = ["import-gate-shadow"]
 [[example]]
 name = "round_envelope_battery"
 path = "examples/round_envelope_battery.rs"
+required-features = ["round-envelope-kernel", "import-gate-shadow"]
+
+# The skip pile diagnostic's scoring stage: the frontiers `skip-pile-dump` wrote
+# out, re-asked of the material contract, of HEAD's miter authority and of the
+# disc kernel. An example for the same reasons the three above are examples, and
+# it needs the same two features they do - the composite verdicts come from
+# `round_envelope_gate::wired_verdicts` and the material clearances from the
+# contract validator's own accessor. It deliberately does NOT need
+# `skip-pile-dump`: the writing binary and the scoring binary are different
+# programs, and a scorer that could only be built beside the hook would be one
+# more thing to keep in step. See docs/experiments/skip-pile-diagnostic/.
+[[example]]
+name = "skip_pile_score"
+path = "examples/skip_pile_score.rs"
 required-features = ["round-envelope-kernel", "import-gate-shadow"]

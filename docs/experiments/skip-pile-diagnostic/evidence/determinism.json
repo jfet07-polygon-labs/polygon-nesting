@@ -1,0 +1,117 @@
+{
+ "measBinary": "/var/lib/t3/tmp/skippile/bin/meas",
+ "measBinarySha256": "16ac9d90e5bf296872cc781af09b177a0c4d67eb753697df6c1a52dbe6a6e8fb",
+ "scoreBinary": "/var/lib/t3/tmp/skippile/bin/score",
+ "scoreBinarySha256": "a1c844162ef288f838169929875241ab50af339081ce3645c626e824a5e47358",
+ "plan": "/var/lib/t3/tmp/skippile/out/det-plan.json",
+ "volatileFieldsStripped": [
+  "allocatedBytes",
+  "atSeconds",
+  "binaryPath",
+  "birthSeconds",
+  "buildIdentity",
+  "confirmationMs",
+  "currentPoseOverlaySetupMs",
+  "durationMs",
+  "elapsedMs",
+  "elapsedSeconds",
+  "engineCommit",
+  "engineElapsedSeconds",
+  "engineVersion",
+  "engineWorktreeDirty",
+  "engineWorktreeStatus",
+  "entryLegalizationMs",
+  "executableSha256",
+  "firstQuartileElapsedMs",
+  "horizonSeconds",
+  "leafMilliseconds",
+  "leafSeconds",
+  "leafSharePercent",
+  "maxElapsedMs",
+  "medianElapsedMs",
+  "milliseconds",
+  "minElapsedMs",
+  "ms",
+  "occupancyOverTime",
+  "peakResidentBytes",
+  "phaseProfile",
+  "phases",
+  "probeEffectiveSeconds",
+  "probeRateUnitsPerSecond",
+  "probeSeconds",
+  "processWallSeconds",
+  "profile",
+  "publishedSeconds",
+  "queueRateUnitsPerSecond",
+  "queueSeconds",
+  "rawUnits",
+  "relevantSourceTreeSha256",
+  "remainingSeconds",
+  "repairMs",
+  "rotationSurrogateBuildMs",
+  "se2WitnessMs",
+  "seconds",
+  "startedSeconds",
+  "thirdQuartileElapsedMs",
+  "timestamp",
+  "totalMs",
+  "wallMs"
+ ],
+ "cases": [
+  {
+   "label": "run:seed10@3341379",
+   "kind": "armed-run",
+   "exits": [
+    0,
+    0
+   ],
+   "strippedDigests": [
+    "e7835b48e45ddc15b83f6b63785aa33576c3571846d4087467a1ab179d782ccf",
+    "e7835b48e45ddc15b83f6b63785aa33576c3571846d4087467a1ab179d782ccf"
+   ],
+   "dumpSha256": [
+    "f1ab3ca909e156a8af76171c075e852a9226fc812662be0d60b55da4b1c67b22",
+    "f1ab3ca909e156a8af76171c075e852a9226fc812662be0d60b55da4b1c67b22"
+   ],
+   "verdictFieldsThatDiffer": [],
+   "identical": true
+  },
+  {
+   "label": "run:seed2@3341379",
+   "kind": "armed-run",
+   "exits": [
+    0,
+    0
+   ],
+   "strippedDigests": [
+    "046689226f09316a188a4cfd97fda2a8094c9abe8f64409a5297491971768ed9",
+    "046689226f09316a188a4cfd97fda2a8094c9abe8f64409a5297491971768ed9"
+   ],
+   "dumpSha256": [
+    "56e21c0bd3f9d7b3694171cbad12b3b2849a12128b0dd2cec403d916ac02c5aa",
+    "56e21c0bd3f9d7b3694171cbad12b3b2849a12128b0dd2cec403d916ac02c5aa"
+   ],
+   "verdictFieldsThatDiffer": [],
+   "identical": true
+  },
+  {
+   "label": "score",
+   "kind": "scored-document",
+   "exits": [
+    0,
+    0
+   ],
+   "rawSha256": [
+    "609e1f026c8f373a879cf82c18a157c38d9730b1735d92a5d5b32c8bab5f2a66",
+    "609e1f026c8f373a879cf82c18a157c38d9730b1735d92a5d5b32c8bab5f2a66"
+   ],
+   "strippedDigests": [
+    "edc2298528f5584627c6055c39d1f2e33673862f1cf02007e618ad83b71ec1cd",
+    "edc2298528f5584627c6055c39d1f2e33673862f1cf02007e618ad83b71ec1cd"
+   ],
+   "verdictFieldsThatDiffer": [],
+   "identical": true
+  }
+ ],
+ "ALL_IDENTICAL": true
+}

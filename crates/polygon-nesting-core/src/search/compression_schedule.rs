@@ -643,6 +643,20 @@ impl CompressionSchedule {
         self.confirmations_attempted
     }
 
+    /// Confirmations the cadence made due and the feasibility clause of
+    /// [`Self::due_for_confirmation`] then suppressed.
+    ///
+    /// Already published as `confirmationsSkippedInfeasible`; this reads it
+    /// live, so a caller can tell *which* of the two clauses returned `false`
+    /// by comparing the counter across the call. Compiled only under
+    /// `skip-pile-dump`, because the skip pile diagnostic is the only caller
+    /// that needs to distinguish them and a reader of the shipped struct should
+    /// not have to wonder why it could.
+    #[cfg(feature = "skip-pile-dump")]
+    pub fn confirmations_skipped_infeasible(&self) -> usize {
+        self.confirmations_skipped_infeasible
+    }
+
     /// How much of one batch's work budget is left, in the schedule's own work
     /// currency, given the reading it started from. `None` under
     /// [`CompressionScheduleSettings::batch_work_units`] of `None`, which is the
