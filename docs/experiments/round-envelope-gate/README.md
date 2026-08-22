@@ -535,6 +535,9 @@ digests are identical on all four gates**, so the feature being compiled changes
 nothing a document can see. `evidence/gates-base.json`,
 `evidence/gates-meas.json`.
 
+A **third** run closes the protocol's provenance loop after the evidence was
+committed — §5.6.
+
 ### 5.2 Suites
 
 All `--release`, every exit status read directly rather than through a pipe.
@@ -593,11 +596,21 @@ differences, exit 0.**
 ### 5.4 The ladder was collected twice, on two binaries
 
 The four-rung ladder in `evidence/matched.json` was collected once before the
-instrument was committed and once after. The commit changes the binary whether or
-not it changes behaviour — the benchmark embeds `engineCommit`,
-`engineWorktreeDirty` and `relevantSourceTreeSha256` — and the door's parse was
-split into a testable function on the way in, so "the refactor cannot have
-changed anything" would have been an argument rather than a measurement.
+instrument was committed and once after. The binary changed between them because
+the **source** did: the door's parse was split into a testable function on the
+way in and its two tests were added, so "the refactor cannot have changed
+anything" would have been an argument rather than a measurement.
+
+> **Correction, made after §5.6 measured it.** An earlier draft of this
+> paragraph said the commit changes the binary *whether or not* it changes
+> behaviour, "because the benchmark embeds `engineCommit`,
+> `engineWorktreeDirty` and `relevantSourceTreeSha256`". That is wrong: all
+> three are read at **run** time, by shelling out to `git`
+> (`general_request_benchmark.rs:1349` and `relevant_source_tree_sha256()`),
+> and none of them is compiled in. The binary is a function of the source
+> alone, which §5.6 then confirmed by rebuilding it. The re-collection was
+> still the right call — the source *had* changed — but the reason given for it
+> was not.
 
 `evidence/ladder-cross-binary.json`: **96 of 96 cells identical** on every
 non-clock field — depth, fingerprint, step digest, confirmation counts, schedule
@@ -615,6 +628,26 @@ the two and is in `evidence/gate-verdict-precommit.json`.
 commit and the box's load at build time. The order actually executed was: build
 from the committed tree → gate both binaries → measure. The one exception is
 stated in §5.4 and is why the ladder was collected twice.
+
+### 5.6 The closing gate: a fresh build of the clean committed tree
+
+After the evidence commit, with `git status --porcelain` printing **nothing**, a
+`cargo build --release --features jagua-experimental` into a **fresh**
+`CARGO_TARGET_DIR` produced
+
+```
+971918823ca7aade8af0130dc0944285776ce94ad28170f56ad81462d0b41838
+```
+
+which is **byte-identical** to the gate-stage binary in `evidence/binaries.txt`,
+and its four per-gate whole-document digests are identical to that run's as
+well. `ALL_PASS: true`. `evidence/gates-final.json`,
+`evidence/binaries-final.txt`.
+
+That is the protocol's closing requirement — all four gates on a fresh build with
+the feature off — and it is also what corrected §5.4: the same source at two
+different commits builds the same binary, so the git metadata in the report is
+runtime, not compiled in.
 
 ---
 

@@ -7685,7 +7685,13 @@ failed; the two documents were diffed to 32 differences in fourteen field names,
 every one a clock or a rate divided by one, and the second pass is 6 of 6
 identical with fourteen verdict paths compared directly outside the digest. The
 ladder was collected twice on two binaries — **96 of 96 cells identical** on
-every non-clock field — because committing the instrument changes the binary and
-"the refactor cannot have changed anything" is an argument, not a measurement.
+every non-clock field — because the instrument's own source changed on the way
+in and "the refactor cannot have changed anything" is an argument, not a
+measurement. The closing gate then rebuilt the clean committed tree into a fresh
+target directory and got a **byte-identical** gate binary with identical
+per-gate document digests, which is the protocol's last requirement and is also
+what corrected this round's first explanation of why the two ladders needed
+collecting: `engineCommit`, `engineWorktreeDirty` and `relevantSourceTreeSha256`
+are read at run time, not compiled in.
 
 Evidence, drivers and the full caveat list: `docs/experiments/round-envelope-gate/`.

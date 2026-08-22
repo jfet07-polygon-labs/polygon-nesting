@@ -1,0 +1,13 @@
+# The protocol's closing gate: a FRESH build from the clean committed tree, feature OFF.
+#
+# Order actually executed: commit 5e5ef80 -> 'git status --porcelain' printed
+# NOTHING -> cargo build (fresh CARGO_TARGET_DIR) -> gates. This file and the
+# two gates-final documents beside it were written after that, so a 'git status'
+# run now would not be clean and the check above is the one that counts.
+971918823ca7aade8af0130dc0944285776ce94ad28170f56ad81462d0b41838  /var/lib/t3/tmp/rekgate/final/bin/gate-final
+# ... which is byte-identical to the gate-stage binary in binaries.txt, and its
+# four per-gate whole-document digests are identical to that run's as well.
+# commit: 5e5ef80dae001a98e45c929bc5ce2db32dc62f28
+# rustc: rustc 1.97.1 (8bab26f4f 2026-07-14)
+# cargo: cargo 1.97.1 (c980f4866 2026-06-30)
+# loadavg at gate time: 0.94 1.17 2.60
