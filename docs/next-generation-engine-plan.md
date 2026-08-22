@@ -7968,7 +7968,10 @@ changes nothing a gate document can see. Five suites, 0 failures: 1293
 --tests`, the Chinese wall as a build rather than a `cargo tree` grep; its
 first run tripped the campaign's known allocator flake and both runs are
 committed). Determinism holds in both forms: two processes of one binary on S0
-and S1, and **two independently built binaries** on S0, S1, C175 and
+and S1, and two builds from separate target directories on S0, S1, C175 and
 triangle-20, all bit-identical after stripping `wall` and the binary's own
-hash. Evidence, drivers and the full verdict table:
-docs/experiments/overlap-ics/.
+hash — with the honest deflation that on the final tree those two builds are
+byte-identical to each other, so that row reduces to a second two-process
+cell; it was not degenerate on the pre-relocation tree, where the same
+procedure produced two different binaries and the same four document digests.
+Evidence, drivers and the full verdict table: docs/experiments/overlap-ics/.

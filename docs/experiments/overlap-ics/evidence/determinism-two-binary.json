@@ -1,8 +1,8 @@
 {
  "experiment": "overlap-ics",
  "battery": "two-binary-determinism",
- "binaryA": "/var/lib/t3/tmp/overlapics/bin/ics-a",
- "binaryB": "/var/lib/t3/tmp/overlapics/bin/ics-b",
+ "binaryA": "/var/lib/t3/tmp/overlapics/bin/ics-a2",
+ "binaryB": "/var/lib/t3/tmp/overlapics/bin/ics-b2",
  "proposalBudget": 200000,
  "strippedFields": [
   "wall",

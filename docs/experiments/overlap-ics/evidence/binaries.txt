@@ -1,5 +1,5 @@
-847af8f6b60f7cb913ce32222a93c40e7724767b304895a76c8d5f45da18e88b  /var/lib/t3/tmp/overlapics/bin/base
-48a52050facbc0b5df8ba95276f17221095278e476f4e4ec3e45c222a504c6ee  /var/lib/t3/tmp/overlapics/bin/meas
-3a7ec5322dd4c807011dfa4a1e97a9ecc9e7c54bd82718875951edb820254734  /var/lib/t3/tmp/overlapics/bin/ics-a
-68fa7cf09b835a7a6fd11fe01a3ca46d8e81d60c468450e21838c7ee83bc9d98  /var/lib/t3/tmp/overlapics/bin/ics-b
-97c7ef5 The overlap-ICS vertical slice, and Gate 0's verdict: the field has a 0.25 mm basin and three fatal cells stop the round
+847af8f6b60f7cb913ce32222a93c40e7724767b304895a76c8d5f45da18e88b  /var/lib/t3/tmp/overlapics/bin/base2
+590ba695df7e0b7a7334a2226df38c14a7d198a376292ec230c645f9704502c5  /var/lib/t3/tmp/overlapics/bin/meas2
+e7eebee90d598bbc14789c44f1467421eb4f0897b7d544e7d0d4aba784428708  /var/lib/t3/tmp/overlapics/bin/ics-a2
+e7eebee90d598bbc14789c44f1467421eb4f0897b7d544e7d0d4aba784428708  /var/lib/t3/tmp/overlapics/bin/ics-b2
+ddeea8d The nine-point Minkowski oracle moves into tests, with its own segment distance

@@ -1,6 +1,8 @@
 {
  "baseDir": "/var/lib/t3/tmp/overlapics/gates/base",
- "measDir": "/var/lib/t3/tmp/overlapics/gates/meas",
+ "measDir": "/var/lib/t3/tmp/overlapics/gates/meas2",
+ "baseLabel": "base",
+ "measLabel": "meas2",
  "gates": {
   "g1": {
    "pinnedDepthMm": 206.869,

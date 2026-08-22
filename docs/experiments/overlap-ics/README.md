@@ -386,7 +386,10 @@ pin and is read by no other cell.
 
 ## 7. The round-boundary battery
 
-Run from the clean committed tree at `97c7ef5`, on binaries rebuilt from it.
+Run from the clean committed tree, on binaries rebuilt from it. The gate and
+suite numbers below were re-measured on the final commit after the
+Minkowski-oracle relocation; `evidence/binaries.txt` carries the four hashes
+and the commit they were built from.
 
 ### 7.1 The four pinned gates, on two binaries
 
@@ -445,25 +448,40 @@ scan tries to build it. This round did not touch that file
 own default-build isolation, `cargo check -p polygon-nesting-core
 --no-default-features --lib`.
 
-Suite 5's first run tripped the campaign's known flake,
+An earlier run of suite 5 tripped the campaign's known flake,
 `free_material_multi_eviction_shrinks_retained_container_capacity` — an
-allocator property, not a search one. Both runs are committed
-(`suite-overlap-ics-run1-flaky.log` and `suite-overlap-ics.log`); the rerun is
-clean.
+allocator property, not a search one, which asserts that a container capacity
+*shrank* after eviction. The rerun clause for it is in `run-suites.sh`
+alongside the ones suites 1 and 2 already carry. The committed log is from a
+run that did not trip it.
 
 ### 7.3 Determinism
 
 | comparison | cells | verdict |
 |---|---|:--:|
 | two processes, one binary | S0, S1 | **bit-identical** (`evidence/smoke-two-process.json`) |
-| two independently built binaries | S0, S1, C175, triangle-20 | **bit-identical** (`evidence/determinism-two-binary.json`) |
+| two builds, separate target directories | S0, S1, C175, triangle-20 | **bit-identical** (`evidence/determinism-two-binary.json`) |
 
-The two-binary comparison strips `wall` and `executableSha256` — the second is
-the thing being varied, so leaving it in would make the comparison trivially
-false — and nothing else. The two binaries were built into different target
-directories from the same commit and have different SHA-256s
-(`evidence/binaries.txt`). Cross-platform `sin`/`cos` identity is not a claim,
-here or anywhere in this campaign.
+The two-binary comparison strips `wall` and `executableSha256` and nothing
+else — the second because it is the field being varied, so leaving it in would
+make the comparison trivially false.
+
+**One honest deflation of that second row.** On the final tree the two builds —
+one in the worktree's `target/`, one in a *freshly deleted* separate
+`CARGO_TARGET_DIR` — produced a **byte-identical** binary,
+`e7eebee90d598bbc14789c44f1467421eb4f0897b7d544e7d0d4aba784428708`. The release
+build of this example is reproducible across target directories on this
+toolchain, so on the final tree the two-binary cell reduces to a second
+two-process cell and is weaker evidence than its name suggests. It was *not*
+degenerate on the pre-relocation tree, where the same procedure produced two
+different binaries (`3a7ec532…` and `68fa7cf0…`) and all four cells still
+compared identical; that run is what the row's claim actually rests on, and the
+final-tree run reproduces its four document digests exactly
+(`ca61aa59…`, `22ef8ccf…`, `2a6c35b3…`, `53f124e4…`), which is also how the
+oracle relocation is shown to have changed nothing in any trajectory.
+
+Cross-platform `sin`/`cos` identity is not a claim, here or anywhere in this
+campaign.
 
 ---
 
