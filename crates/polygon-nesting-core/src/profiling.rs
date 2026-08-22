@@ -1187,9 +1187,41 @@ unsafe impl<A: GlobalAlloc> GlobalAlloc for CountingAllocator<A> {
     }
 }
 
+/// Serialises every test in this crate that touches the recording flags, the
+/// thread blocks, or [`reset`].
+///
+/// The flags and the blocks are **process-global** and `cargo test` runs the
+/// crate's tests in parallel threads of one process, so two tests that both
+/// call `reset()` are a race over each other's counts. This module used to
+/// manage that by convention - *"keep exactly one enabling test"* - and the
+/// convention held only while the enabling test was the only thing recording.
+/// It stopped holding the moment a second test recorded under the **metering**
+/// flag: `recording_is_inert_while_disabled` asserts zero and passes whoever
+/// wins, while a test that asserts a count loses whenever the other's
+/// `reset()` lands between its `meter` and its `snapshot`.
+///
+/// A lock rather than more convention, because the failure is a race and a race
+/// does not fail every run: the first version of this passed the
+/// `jagua-experimental` suite and failed the combo's, which is the worst way
+/// for a test to be wrong. `search::portfolio`'s own flag test takes the same
+/// lock, because it flips `ENABLED` and would otherwise break
+/// `recording_is_inert_while_disabled`'s span assertion from another module -
+/// which is the cross-module form of the same bug and the reason this is
+/// `pub(crate)` rather than private to `mod tests`.
+///
+/// `unwrap_or_else(PoisonError::into_inner)` so a panic in one of these tests
+/// fails that test rather than cascading into every sibling.
+#[cfg(test)]
+pub(crate) fn recording_test_lock() -> std::sync::MutexGuard<'static, ()> {
+    static LOCK: Mutex<()> = Mutex::new(());
+    LOCK.lock().unwrap_or_else(|err| err.into_inner())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use super::recording_test_lock as recording_lock;
 
     #[test]
     fn phase_and_counter_tables_are_complete_and_ordered() {
@@ -1221,8 +1253,12 @@ mod tests {
     #[test]
     fn recording_is_inert_while_disabled() {
         // The shared flag makes this test order-dependent with any test that
-        // enables profiling, so this file keeps exactly one enabling test and
-        // runs it in the same test function as its own reset.
+        // enables profiling, and its `reset()` is order-dependent with any test
+        // that counts. `recording_lock` is what makes both safe; the "exactly
+        // one enabling test" convention this comment used to state is kept
+        // below because it is still the tidier arrangement, but it is no longer
+        // what the correctness rests on.
+        let _guard = recording_lock();
         set_enabled(false);
         reset();
         count(Counter::CandidateQueries, 7);
@@ -1234,6 +1270,7 @@ mod tests {
 
     #[test]
     fn enabled_recording_accumulates_and_resets() {
+        let _guard = recording_lock();
         set_enabled(true);
         reset();
         count(Counter::NeighborTests, 3);

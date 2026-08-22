@@ -11327,14 +11327,17 @@ mod tests {
     /// runs many requests in one process the first work-budgeted request left
     /// every later wall-budgeted one paying a tax it never asked for.
     ///
-    /// Serialised against its siblings through a mutex, because the flags are
-    /// process-global and `cargo test` runs this module's tests in parallel
-    /// threads of one process - the same trap `work_units_from`'s doc comment
-    /// records this file falling into once already.
+    /// Serialised against every other test in the crate that touches the
+    /// recording flags, through `profiling::recording_test_lock` and not
+    /// through a mutex of this module's own: the flags are process-global,
+    /// `cargo test` runs the crate's tests in parallel threads of one process,
+    /// and a private lock here would serialise this test against its siblings
+    /// while still racing `profiling::tests`. That cross-module form of the
+    /// trap is the one `work_units_from`'s doc comment records this file
+    /// falling into once already.
     #[test]
     fn the_work_meter_arms_one_flag_and_restores_both() {
-        static SERIAL: Mutex<()> = Mutex::new(());
-        let _guard = SERIAL.lock().unwrap_or_else(|err| err.into_inner());
+        let _guard = profiling::recording_test_lock();
         let before_profiler = profiling::enabled();
         let before_metering = profiling::metering_enabled();
 
