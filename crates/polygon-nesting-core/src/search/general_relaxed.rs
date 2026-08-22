@@ -7490,6 +7490,13 @@ impl ScheduleSliceRun<'_> {
             ..GeneralCompressionScheduleStepRow::default()
         };
 
+        // Read across the call rather than re-derived: `due_for_confirmation`
+        // returns `false` for two different reasons and only one of them is the
+        // skip pile. The counter it bumps is the authority on which reason
+        // fired, so the diagnostic asks it rather than re-implementing the
+        // cadence clause beside it and drifting from it.
+        #[cfg(feature = "skip-pile-dump")]
+        let skips_before = self.schedule.confirmations_skipped_infeasible();
         if self.schedule.due_for_confirmation(self.score.feasible()) {
             self.schedule.note_confirmation_attempt();
             let started = Instant::now();
@@ -7545,6 +7552,35 @@ impl ScheduleSliceRun<'_> {
                 }
             }
             self.confirmation_ms += started.elapsed().as_secs_f64() * 1_000.0;
+        }
+
+        // The skip pile. Nothing is read back into the step, nothing is
+        // returned, and the branch exists only in a build carrying
+        // `skip-pile-dump`. The `armed()` guard is first so that a compiled but
+        // unarmed binary pays one lock and no allocation - the placements and
+        // the fingerprint below are the expensive half.
+        #[cfg(feature = "skip-pile-dump")]
+        if self.schedule.confirmations_skipped_infeasible() > skips_before
+            && crate::search::skip_pile_dump::armed()
+        {
+            let placements = to_fast_placements(&self.state, self.pieces);
+            let fingerprint = coupled_fast_placement_fingerprint(&placements);
+            crate::search::skip_pile_dump::record(
+                &crate::search::skip_pile_dump::SkipRecord {
+                    step,
+                    steps_taken: self.schedule.steps_taken(),
+                    work_units: self.schedule.work_units(),
+                    frontier_depth_mm: self.schedule.depth_mm(),
+                    floor_depth_mm: self.schedule.floor_mm(),
+                    parent_depth_mm: self.parent_depth_mm,
+                    requested_drop_mm: self.requested_drop_mm,
+                    collision_pairs: self.score.collision_pairs.len(),
+                    boundary_violations: self.score.boundary_violations,
+                    boundary_loss: self.score.boundary_loss,
+                    fingerprint: &fingerprint,
+                    placements: &placements,
+                },
+            );
         }
 
         self.run_se2_witness(sweeps_run)?;

@@ -35,6 +35,12 @@ pub mod portfolio;
 pub mod round_envelope_gate;
 pub mod score_grid;
 pub mod shadow_rescore;
+/// The skip pile diagnostic's dump hook: the frontiers the compression
+/// schedule's feasibility clause suppressed, written out as poses. Compiled
+/// only under `skip-pile-dump`; the shipped build cannot contain a byte of it,
+/// and a build that carries it writes nothing unless a run names a path.
+#[cfg(feature = "skip-pile-dump")]
+pub mod skip_pile_dump;
 pub mod sort_pieces;
 pub mod strict_decoder;
 pub mod strict_family;
