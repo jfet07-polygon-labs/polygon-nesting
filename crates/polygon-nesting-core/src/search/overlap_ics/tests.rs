@@ -178,6 +178,15 @@ fn touching_squares_report_exactly_zero() {
     let b = square(10.0, 0.0, 10.0);
     let gap = convex_cell_gap(&a, &b);
     assert_eq!(gap.signed_gap_mm, 0.0, "{gap:?}");
+    // Sol review 15 §B.6: exact material contact must still name a direction.
+    // The gap is zero, but the row's *violation* is the whole pair clearance,
+    // and a positive violation with a zero normal is weight in Phi with no
+    // force in the gradient - a piece charged for an overlap it is given no way
+    // to leave. The SAT's own separating axis is that direction.
+    assert_eq!(gap.normal, [-1.0, 0.0], "a must move left to separate: {gap:?}");
+    let reversed = convex_cell_gap(&b, &a);
+    assert_eq!(reversed.signed_gap_mm, 0.0, "{reversed:?}");
+    assert_eq!(reversed.normal, [1.0, 0.0], "{reversed:?}");
 }
 
 #[test]
