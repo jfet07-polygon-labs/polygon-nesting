@@ -1,0 +1,44 @@
+{
+ "note": "Three parents spanning the 171-179 band, for calibrating the operator knobs.",
+ "rows": [
+  {
+   "seed": 0,
+   "spec": "work=120000000,cells=13:15:17:19",
+   "fixture": "/var/lib/t3/tmp/csched/parents/parent-seed0.json",
+   "rawDepthMm": 174.20812003998896,
+   "independentDepthMm": 174.208,
+   "dualGateValid": true,
+   "fingerprint": "70ea4238be33dd31291c696b052261dc02fe1eef6be4837c1e96a44f21a74cb6",
+   "workUnits": 32393757,
+   "processWallSeconds": 16.076248288998613,
+   "archiveMembers": 0,
+   "inBand": true
+  },
+  {
+   "seed": 4,
+   "spec": "work=120000000,cells=11:15:21:27",
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed4.json",
+   "rawDepthMm": 171.64953207726535,
+   "independentDepthMm": 171.65,
+   "dualGateValid": true,
+   "fingerprint": "6abc2510b5ff79391a79aa18dec829fa16669939ff44f8117a71902ff41eb2ed",
+   "workUnits": 31897492,
+   "processWallSeconds": 16.531955864018528,
+   "archiveMembers": 0,
+   "inBand": false
+  },
+  {
+   "seed": 6,
+   "spec": "work=120000000,cells=13:15:17:19",
+   "fixture": "/var/lib/t3/tmp/csched/parents2/parent-seed6.json",
+   "rawDepthMm": 179.6200102363703,
+   "independentDepthMm": 179.62,
+   "dualGateValid": true,
+   "fingerprint": "2e0a15901af40d0575a9974dcbfa37a74513f5934ea53aaa7a14abea6fa3ef53",
+   "workUnits": 31130162,
+   "processWallSeconds": 15.343823842995334,
+   "archiveMembers": 0,
+   "inBand": false
+  }
+ ]
+}

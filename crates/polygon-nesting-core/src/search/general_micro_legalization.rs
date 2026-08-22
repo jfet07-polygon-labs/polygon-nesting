@@ -138,6 +138,18 @@ use crate::search::general_fast::{
 #[cfg(feature = "se2-rigidity-certificate")]
 pub mod se2_certificate;
 
+/// The active-contact block SE(2) operator: Sol review 10 §3's new search
+/// action.
+///
+/// A sibling of [`se2_certificate`] and a child of this module for the same
+/// reason that one is — it reuses this module's private geometry and that
+/// module's `Geometry`, `apply_se2` and exact closest-approach witness without
+/// any of it becoming crate-visible. Stacked on the certificate's feature
+/// because the witness pair it linearizes contacts at is behind that gate. See
+/// `docs/experiments/contact-block/`.
+#[cfg(feature = "contact-block-se2")]
+pub mod contact_block;
+
 /// Grid slack added on top of each exact contract so the projection lands
 /// strictly inside it rather than on its boundary.
 const MICRO_LEGALIZATION_MARGIN_MM: f64 = 0.002;

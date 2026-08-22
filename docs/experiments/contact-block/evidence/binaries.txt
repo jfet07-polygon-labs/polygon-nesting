@@ -1,0 +1,5 @@
+# The binaries every number in this round was measured on.
+f01a8c35e5f909e844a38a1a1310c66d2b79a9228254257aeebd95b571dba3cc  /var/lib/t3/tmp/cblock/bin/gate-base
+90b3847620b1ecaa30ff9ec996bcadf6af13a3b11d1fcc1d53d60f8f8e814ba8  /var/lib/t3/tmp/cblock/bin/gate-cb
+9e0cab2af094ef2c393edef1abd08789349caa71b3c294db1019e12e6de64430  /var/lib/t3/tmp/cblock/bin/meas
+35bf159570d1925e2e6aadc38061727664acbad39761547956dfaf1b6d7c035d  /var/lib/t3/tmp/cblock/bin/meas-base

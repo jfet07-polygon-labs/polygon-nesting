@@ -1,0 +1,87 @@
+{
+ "binary": "/var/lib/t3/tmp/cblock/bin/meas",
+ "binarySha256": "5655b572f396be946f3d646881f53bd0409db7c642ba036f20607aad591121b7",
+ "committedEvidence": "docs/experiments/contact-block/evidence/blockprobe.json",
+ "committedBinarySha256": "9e0cab2af094ef2c393edef1abd08789349caa71b3c294db1019e12e6de64430",
+ "spec": "trust=0.5,iters=256,block=5,rounds=64,seeds=3,band=2",
+ "note": "the two binary hashes differ by construction; the depths are what is compared",
+ "cells": [
+  {
+   "seed": 0,
+   "committedDepthMm": 174.20731397055943,
+   "rebuiltDepthMm": 174.20731397055943,
+   "identical": true
+  },
+  {
+   "seed": 1,
+   "committedDepthMm": 175.93721626176597,
+   "rebuiltDepthMm": 175.93721626176597,
+   "identical": true
+  },
+  {
+   "seed": 2,
+   "committedDepthMm": 179.0055007446324,
+   "rebuiltDepthMm": 179.0055007446324,
+   "identical": true
+  },
+  {
+   "seed": 3,
+   "committedDepthMm": 176.06050073242318,
+   "rebuiltDepthMm": 176.06050073242318,
+   "identical": true
+  },
+  {
+   "seed": 4,
+   "committedDepthMm": 171.64953207726535,
+   "rebuiltDepthMm": 171.64953207726535,
+   "identical": true
+  },
+  {
+   "seed": 5,
+   "committedDepthMm": 179.0115029435321,
+   "rebuiltDepthMm": 179.0115029435321,
+   "identical": true
+  },
+  {
+   "seed": 6,
+   "committedDepthMm": 179.52282143370437,
+   "rebuiltDepthMm": 179.52282143370437,
+   "identical": true
+  },
+  {
+   "seed": 7,
+   "committedDepthMm": 179.47501304903136,
+   "rebuiltDepthMm": 179.47501304903136,
+   "identical": true
+  },
+  {
+   "seed": 8,
+   "committedDepthMm": 178.8822033145144,
+   "rebuiltDepthMm": 178.8822033145144,
+   "identical": true
+  },
+  {
+   "seed": 9,
+   "committedDepthMm": 174.63321441274,
+   "rebuiltDepthMm": 174.63321441274,
+   "identical": true
+  },
+  {
+   "seed": 10,
+   "committedDepthMm": 176.36166274894953,
+   "rebuiltDepthMm": 176.36166274894953,
+   "identical": true
+  },
+  {
+   "seed": 11,
+   "committedDepthMm": 171.3207029883856,
+   "rebuiltDepthMm": 171.3207029883856,
+   "identical": true
+  }
+ ],
+ "summary": {
+  "cells": 12,
+  "identical": 12,
+  "ALL_IDENTICAL": true
+ }
+}

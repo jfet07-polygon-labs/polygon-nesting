@@ -1,0 +1,66 @@
+{
+ "probeDir": "/var/lib/t3/tmp/cblock/out/probe12-fixed",
+ "source": "/var/lib/t3/tmp/cblock/out/probe12-fixed/blockprobe.json",
+ "specs": {
+  "trust=0.5,iters=256,block=5,rounds=64,seeds=3,band=2": {
+   "rounds": 481,
+   "refusalCount": {
+    "exact-rejected": 213,
+    "moved": 163,
+    "no-depth-gain": 104,
+    "no-component": 1
+   },
+   "refusalShare": {
+    "exact-rejected": 0.44282744282744285,
+    "moved": 0.3388773388773389,
+    "no-depth-gain": 0.21621621621621623,
+    "no-component": 0.002079002079002079
+   },
+   "roundsMoved": 163,
+   "roundsAtHeadroomCeiling": 19,
+   "headroomAtCeilingShare": 0.1165644171779141,
+   "roundsWithComponentOfTwoOrMore": 480,
+   "componentShare": 0.997920997920998,
+   "medianBlockSize": 5,
+   "medianContactEdges": 5,
+   "medianDepthBandPieces": 4,
+   "medianHeadroomMm": 0.003597574008523452,
+   "medianModelUpperMm": 0.18417517126641497,
+   "fullStepExactValidShare": 0.24791666666666667,
+   "medianScale": 0.01,
+   "medianValidatedDeltaMm": 0.0,
+   "medianMaxAbsDthetaDeg": 6.58801636311901e-05,
+   "medianMaxAbsTranslationMm": 7.843532925910622e-05,
+   "documents": 12
+  },
+  "trust=1.0,iters=256,block=5,rounds=4096,seeds=8,band=4": {
+   "rounds": 812,
+   "refusalCount": {
+    "exact-rejected": 356,
+    "moved": 235,
+    "no-depth-gain": 221
+   },
+   "refusalShare": {
+    "exact-rejected": 0.43842364532019706,
+    "moved": 0.2894088669950739,
+    "no-depth-gain": 0.27216748768472904
+   },
+   "roundsMoved": 235,
+   "roundsAtHeadroomCeiling": 47,
+   "headroomAtCeilingShare": 0.2,
+   "roundsWithComponentOfTwoOrMore": 812,
+   "componentShare": 1.0,
+   "medianBlockSize": 5.0,
+   "medianContactEdges": 5.0,
+   "medianDepthBandPieces": 7.0,
+   "medianHeadroomMm": 0.0,
+   "medianModelUpperMm": 0.22859035899491534,
+   "fullStepExactValidShare": 0.2857142857142857,
+   "medianScale": 0.01,
+   "medianValidatedDeltaMm": 0.0,
+   "medianMaxAbsDthetaDeg": 3.14638435395223e-05,
+   "medianMaxAbsTranslationMm": 4.799100590770581e-05,
+   "documents": 12
+  }
+ }
+}

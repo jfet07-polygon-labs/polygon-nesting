@@ -1,0 +1,259 @@
+{
+ "blockArm": "block:trust=0.5,iters=256,block=5,rounds=64,seeds=3,band=2",
+ "controlArm": "m34:3341379",
+ "seeds": 12,
+ "seedsBlockShallower": 1,
+ "seedsControlShallower": 11,
+ "seedsEqual": 0,
+ "clauseOneTwoThirdsSeedsMoved": false,
+ "medianBlockMinusControlMm": 1.0439045330381873,
+ "medianBlockDeltaMm": 0.04382154630431501,
+ "medianControlDeltaMm": 1.104406897171998,
+ "medianBlockMmPerKiloExact": 0.013794810709432143,
+ "medianControlMmPerKiloExact": 4.399765844503186,
+ "medianPairedEfficiencyRatioBlockOverControl": 0.00300338280734072,
+ "medianBlockExactValidations": 1919.5,
+ "medianControlExactValidations": 286.5,
+ "medianBlockOperatorMs": 1179.768313,
+ "medianBlockWallSeconds": 1.182395692972932,
+ "medianControlWallSeconds": 3.4572756164707243,
+ "rows": [
+  {
+   "seed": 0,
+   "parentMm": 174.20812003998896,
+   "blockDepthMm": 174.20731397055943,
+   "controlDepthMm": 173.37991578608327,
+   "blockMinusControlMm": 0.8273981844761522,
+   "blockDeltaMm": 0.0008060694295295434,
+   "controlDeltaMm": 0.8282042539056818,
+   "blockExact": 892,
+   "controlExact": 328,
+   "blockWall": 0.7319634140003473,
+   "controlWall": 3.22360078105703,
+   "blockOperatorMs": 729.732613,
+   "blockRefusals": {
+    "moved": 5,
+    "exact-rejected": 13
+   },
+   "blockHeadroomMm": 0.137316792609397
+  },
+  {
+   "seed": 1,
+   "parentMm": 176.05599999999998,
+   "blockDepthMm": 175.93721626176597,
+   "controlDepthMm": 174.57600000000002,
+   "blockMinusControlMm": 1.3612162617659465,
+   "blockDeltaMm": 0.11878373823401489,
+   "controlDeltaMm": 1.4799999999999613,
+   "blockExact": 2539,
+   "controlExact": 327,
+   "blockWall": 1.8353118799859658,
+   "controlWall": 3.1668129810132086,
+   "blockOperatorMs": 1832.955332,
+   "blockRefusals": {
+    "moved": 27,
+    "no-depth-gain": 8,
+    "exact-rejected": 27
+   },
+   "blockHeadroomMm": 0.07834097299993914
+  },
+  {
+   "seed": 2,
+   "parentMm": 179.006,
+   "blockDepthMm": 179.0055007446324,
+   "controlDepthMm": 177.34300000000002,
+   "blockMinusControlMm": 1.662500744632382,
+   "blockDeltaMm": 0.0004992553676004263,
+   "controlDeltaMm": 1.6629999999999825,
+   "blockExact": 330,
+   "controlExact": 229,
+   "blockWall": 0.13465264497790486,
+   "controlWall": 4.148315632017329,
+   "blockOperatorMs": 132.85296,
+   "blockRefusals": {
+    "moved": 4,
+    "no-depth-gain": 18
+   },
+   "blockHeadroomMm": 1.00063891081777
+  },
+  {
+   "seed": 3,
+   "parentMm": 176.061,
+   "blockDepthMm": 176.06050073242318,
+   "controlDepthMm": 176.061,
+   "blockMinusControlMm": -0.0004992675768278332,
+   "blockDeltaMm": 0.0004992675768278332,
+   "controlDeltaMm": 0.0,
+   "blockExact": 848,
+   "controlExact": 0,
+   "blockWall": 0.5989985839696601,
+   "controlWall": 7.053935195086524,
+   "blockOperatorMs": 597.055285,
+   "blockRefusals": {
+    "moved": 4,
+    "exact-rejected": 14,
+    "no-depth-gain": 4
+   },
+   "blockHeadroomMm": 0.344823229024513
+  },
+  {
+   "seed": 4,
+   "parentMm": 171.64953207726535,
+   "blockDepthMm": 171.64953207726535,
+   "controlDepthMm": 171.08177826491067,
+   "blockMinusControlMm": 0.567753812354681,
+   "blockDeltaMm": 0.0,
+   "controlDeltaMm": 0.567753812354681,
+   "blockExact": 307,
+   "controlExact": 235,
+   "blockWall": 0.24371842306572944,
+   "controlWall": 4.590774914016947,
+   "blockOperatorMs": 241.650403,
+   "blockRefusals": {
+    "exact-rejected": 7
+   },
+   "blockHeadroomMm": 0.32678956880670285
+  },
+  {
+   "seed": 5,
+   "parentMm": 179.05182605364416,
+   "blockDepthMm": 179.0115029435321,
+   "controlDepthMm": 177.56277826491072,
+   "blockMinusControlMm": 1.4487246786213746,
+   "blockDeltaMm": 0.04032311011206957,
+   "controlDeltaMm": 1.4890477887334441,
+   "blockExact": 2805,
+   "controlExact": 233,
+   "blockWall": 1.7040042489534244,
+   "controlWall": 3.4658084149705246,
+   "blockOperatorMs": 1701.7685820000002,
+   "blockRefusals": {
+    "moved": 24,
+    "exact-rejected": 35,
+    "no-depth-gain": 5
+   },
+   "blockHeadroomMm": 0.0
+  },
+  {
+   "seed": 6,
+   "parentMm": 179.6200102363703,
+   "blockDepthMm": 179.52282143370437,
+   "controlDepthMm": 178.40299999999996,
+   "blockMinusControlMm": 1.1198214337044021,
+   "blockDeltaMm": 0.09718880266592578,
+   "controlDeltaMm": 1.217010236370328,
+   "blockExact": 2487,
+   "controlExact": 246,
+   "blockWall": 1.3523282270180061,
+   "controlWall": 3.448742817970924,
+   "blockOperatorMs": 1348.995494,
+   "blockRefusals": {
+    "moved": 29,
+    "no-depth-gain": 31,
+    "exact-rejected": 4
+   },
+   "blockHeadroomMm": 0.010078301831185854
+  },
+  {
+   "seed": 7,
+   "parentMm": 179.52233303152792,
+   "blockDepthMm": 179.47501304903136,
+   "controlDepthMm": 178.264,
+   "blockMinusControlMm": 1.2110130490313509,
+   "blockDeltaMm": 0.04731998249656044,
+   "controlDeltaMm": 1.2583330315279113,
+   "blockExact": 3581,
+   "controlExact": 286,
+   "blockWall": 2.625411865999922,
+   "controlWall": 3.383866304066032,
+   "blockOperatorMs": 2622.80217,
+   "blockRefusals": {
+    "moved": 21,
+    "exact-rejected": 38
+   },
+   "blockHeadroomMm": 0.0025031569068403314
+  },
+  {
+   "seed": 8,
+   "parentMm": 178.93200000000002,
+   "blockDepthMm": 178.8822033145144,
+   "controlDepthMm": 177.28,
+   "blockMinusControlMm": 1.6022033145144121,
+   "blockDeltaMm": 0.04979668548560312,
+   "controlDeltaMm": 1.6520000000000152,
+   "blockExact": 809,
+   "controlExact": 324,
+   "blockWall": 0.511641361983493,
+   "controlWall": 3.6158340030815452,
+   "blockOperatorMs": 509.4746999999999,
+   "blockRefusals": {
+    "moved": 7,
+    "no-depth-gain": 13,
+    "exact-rejected": 2
+   },
+   "blockHeadroomMm": 0.01912989865903114
+  },
+  {
+   "seed": 9,
+   "parentMm": 174.96558182288433,
+   "blockDepthMm": 174.63321441274,
+   "controlDepthMm": 173.97377826491066,
+   "blockMinusControlMm": 0.6594361478293251,
+   "blockDeltaMm": 0.332367410144343,
+   "controlDeltaMm": 0.9918035579736681,
+   "blockExact": 2741,
+   "controlExact": 325,
+   "blockWall": 2.1096804999979213,
+   "controlWall": 2.8126517940545455,
+   "blockOperatorMs": 2107.010084,
+   "blockRefusals": {
+    "moved": 16,
+    "exact-rejected": 36
+   },
+   "blockHeadroomMm": 0.003338142566605029
+  },
+  {
+   "seed": 10,
+   "parentMm": 176.3622237458826,
+   "blockDepthMm": 176.36166274894953,
+   "controlDepthMm": 175.39367511657755,
+   "blockMinusControlMm": 0.9679876323719725,
+   "blockDeltaMm": 0.0005609969330748754,
+   "controlDeltaMm": 0.9685486293050474,
+   "blockExact": 1352,
+   "controlExact": 351,
+   "blockWall": 1.0124631589278579,
+   "controlWall": 2.388650840963237,
+   "blockOperatorMs": 1010.541132,
+   "blockRefusals": {
+    "moved": 4,
+    "exact-rejected": 17,
+    "no-depth-gain": 4
+   },
+   "blockHeadroomMm": 0.0
+  },
+  {
+   "seed": 11,
+   "parentMm": 171.6141235046606,
+   "blockDepthMm": 171.3207029883856,
+   "controlDepthMm": 170.868,
+   "blockMinusControlMm": 0.452702988385596,
+   "blockDeltaMm": 0.2934205162750061,
+   "controlDeltaMm": 0.7461235046606021,
+   "blockExact": 3099,
+   "controlExact": 287,
+   "blockWall": 2.04267910704948,
+   "controlWall": 3.9970667159650475,
+   "blockOperatorMs": 2040.0523119999998,
+   "blockRefusals": {
+    "moved": 22,
+    "exact-rejected": 20,
+    "no-depth-gain": 21,
+    "no-component": 1
+   },
+   "blockHeadroomMm": 0.0
+  }
+ ],
+ "clauseTwoNetMmPerWorkImprovement": false,
+ "GATE_PASS": false
+}

@@ -470,6 +470,82 @@ fn se2_rigidity_certificate_requested() -> Result<Option<Se2CertificateSpec>, St
     Ok(Some(out))
 }
 
+/// The active-contact block operator's knobs on the diagnostic door, parsed
+/// from the environment for exactly the reason the certificate's are: the
+/// positional argument list is a pinned contract that replay drivers depend on,
+/// and a new operator may not change what a replayed command means. `None` is
+/// "not requested", which is every invocation of an armed build that does not
+/// set the variable — so an armed build run without it is the shipping
+/// benchmark, and the four pinned gates hold that on both binaries.
+///
+///   `POLYGON_NESTING_CONTACT_BLOCK="trust=0.5,iters=256,block=5,rounds=8,seeds=3,band=2"`
+///
+/// `trust` is the block trust radius in millimetres, `iters` the primal
+/// iteration budget per penalty weight per solve, `block` the largest connected
+/// component the walk may return, `rounds` the sequential-convexification
+/// budget, `seeds` how many depth-setting seeds a round may try, and `band` the
+/// near-binding band as a multiple of the trust radius.
+#[cfg(feature = "contact-block-se2")]
+fn contact_block_requested() -> Result<
+    Option<polygon_nesting_core::search::general_micro_legalization::contact_block::ContactBlockSettings>,
+    String,
+> {
+    use polygon_nesting_core::search::general_micro_legalization::contact_block::ContactBlockSettings;
+    let Ok(spec) = env::var("POLYGON_NESTING_CONTACT_BLOCK") else {
+        return Ok(None);
+    };
+    if spec.is_empty() || spec == "0" {
+        return Ok(None);
+    }
+    let mut out = ContactBlockSettings {
+        trust_radius_mm: 0.5,
+        iterations: 256,
+        max_block_pieces: 5,
+        rounds: 8,
+        seeds: 3,
+        band_trust_multiple: 2.0,
+    };
+    for item in spec.split(',').filter(|item| !item.is_empty() && *item != "1") {
+        let (key, value) = item
+            .split_once('=')
+            .ok_or_else(|| format!("contact block spec entry `{item}` is not key=value"))?;
+        match key {
+            "trust" => {
+                out.trust_radius_mm = value
+                    .parse()
+                    .map_err(|_| format!("contact block trust radius: `{value}`"))?
+            }
+            "iters" => {
+                out.iterations = value
+                    .parse()
+                    .map_err(|_| format!("contact block iterations: `{value}`"))?
+            }
+            "block" => {
+                out.max_block_pieces = value
+                    .parse()
+                    .map_err(|_| format!("contact block size: `{value}`"))?
+            }
+            "rounds" => {
+                out.rounds = value
+                    .parse()
+                    .map_err(|_| format!("contact block rounds: `{value}`"))?
+            }
+            "seeds" => {
+                out.seeds = value
+                    .parse()
+                    .map_err(|_| format!("contact block seeds: `{value}`"))?
+            }
+            "band" => {
+                out.band_trust_multiple = value
+                    .parse()
+                    .map_err(|_| format!("contact block band multiple: `{value}`"))?
+            }
+            other => return Err(format!("unknown contact block key `{other}`")),
+        }
+    }
+    Ok(Some(out))
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let profiling_armed = profiling_requested();
     let unpinned_vacancy_parent_armed = unpinned_vacancy_parent_requested();
@@ -833,6 +909,75 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 spec.reference_mm,
             )?;
         println!("{}", serde_json::to_string_pretty(&certificate)?);
+        return Ok(());
+    }
+
+    // The active-contact block SE(2) operator, on the same read-only door and
+    // under the same rule: the pinned parent and nothing else. It publishes
+    // nothing and feeds no search; what it prints is the decomposition Sol
+    // review 10 §3's gate asks for — components found, block proposals, exact
+    // pass rate, depth deltas, work spent — plus the headroom, which is the
+    // number that tells a null result about the operator apart from a null
+    // result about the layout.
+    #[cfg(feature = "contact-block-se2")]
+    if let Some(block_settings) = contact_block_requested()? {
+        let parent = pinned_vacancy_parent
+            .as_ref()
+            .ok_or("contact block requires a pinned parent fixture (argument 43)")?;
+        let (report, proposal) =
+            polygon_nesting_core::search::general_micro_legalization::contact_block::contact_block_proposal(
+                &pieces,
+                &parent.placements,
+                settings,
+                block_settings,
+            )?;
+        let mut document = serde_json::to_value(&report)?;
+        document["proposalMovedPieces"] = match &proposal {
+            Some(proposal) => json!(proposal.moved_pieces),
+            None => json!(0),
+        };
+        // The moved layout itself, in the pinned-parent fixture's own placement
+        // shape. It is emitted so the operator's output can be handed **back to
+        // the engine** as a parent and re-judged by the engine's own publication
+        // path — `load_pinned_vacancy_parent` re-derives the depth from the
+        // placements and hard-errors on a mismatch, and mode 34 then reports
+        // `exactValid` and `contractValid` on it. Without that round trip the
+        // only witness that the block's layout is publishable is the block's own
+        // call to `validate_publication`, which is not an independent check.
+        document["proposalPlacements"] = match &proposal {
+            Some(proposal) => serde_json::Value::Array(
+                proposal
+                    .placements
+                    .iter()
+                    .map(|placement| {
+                        json!({
+                            "pieceId": placement.piece_id,
+                            "rotationDeg": placement.rotation_deg,
+                            "mirrored": placement.mirrored,
+                            "translateShortAxis": placement.translate_short_axis,
+                            "translateLongAxis": placement.translate_long_axis,
+                        })
+                    })
+                    .collect(),
+            ),
+            None => serde_json::Value::Null,
+        };
+        // The operator's price **in the coordinator's own currency**, so the
+        // matched-arm gate can put it beside a mode-34 slice without a
+        // conversion factor anybody has to trust. `candidateQueries + 5 *
+        // exactPairTests` is the portfolio's work meter verbatim
+        // (`workgate.py`'s `processWorkUnits`), and the block spends its work
+        // almost entirely in `validate_publication`'s narrow phase, which is
+        // what `ExactPairTests` counts. Requires `POLYGON_NESTING_PROFILE=1`;
+        // without it the counters are zero and the field says so.
+        let counters = profiling::counter_totals();
+        let candidate_queries = counters[profiling::Counter::CandidateQueries as usize];
+        let exact_pair_tests = counters[profiling::Counter::ExactPairTests as usize];
+        document["processCandidateQueries"] = json!(candidate_queries);
+        document["processExactPairTests"] = json!(exact_pair_tests);
+        document["processWorkUnits"] = json!(candidate_queries + 5 * exact_pair_tests);
+        document["profilingArmed"] = json!(profiling_armed);
+        println!("{}", serde_json::to_string_pretty(&document)?);
         return Ok(());
     }
 

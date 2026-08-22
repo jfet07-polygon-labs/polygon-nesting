@@ -1,0 +1,68 @@
+{
+ "probeDir": "/var/lib/t3/tmp/cblock/out/probe12",
+ "source": "/var/lib/t3/tmp/cblock/out/probe12/blockprobe.json",
+ "specs": {
+  "trust=0.5,iters=256,block=5,rounds=64,seeds=3,band=2": {
+   "rounds": 559,
+   "refusalCount": {
+    "moved": 280,
+    "no-depth-gain": 159,
+    "exact-rejected": 112,
+    "model-blocked": 8
+   },
+   "refusalShare": {
+    "moved": 0.5008944543828264,
+    "no-depth-gain": 0.2844364937388193,
+    "exact-rejected": 0.2003577817531306,
+    "model-blocked": 0.014311270125223614
+   },
+   "roundsMoved": 280,
+   "roundsAtHeadroomCeiling": 114,
+   "headroomAtCeilingShare": 0.40714285714285714,
+   "roundsWithComponentOfTwoOrMore": 559,
+   "componentShare": 1.0,
+   "medianBlockSize": 5,
+   "medianContactEdges": 6,
+   "medianDepthBandPieces": 6,
+   "medianHeadroomMm": 0.005154255280615416,
+   "medianModelUpperMm": 0.23205584770908136,
+   "fullStepExactValidShare": 0.41144901610017887,
+   "medianScale": 0.1,
+   "medianValidatedDeltaMm": 1.0563854289102892e-06,
+   "medianMaxAbsDthetaDeg": 0.004811814360000547,
+   "medianMaxAbsTranslationMm": 0.00642386985343291,
+   "documents": 12
+  },
+  "trust=1.0,iters=256,block=5,rounds=4096,seeds=8,band=4": {
+   "rounds": 1538,
+   "refusalCount": {
+    "moved": 592,
+    "no-depth-gain": 529,
+    "exact-rejected": 414,
+    "no-component": 3
+   },
+   "refusalShare": {
+    "moved": 0.38491547464239273,
+    "no-depth-gain": 0.3439531859557867,
+    "exact-rejected": 0.26918075422626786,
+    "no-component": 0.0019505851755526658
+   },
+   "roundsMoved": 592,
+   "roundsAtHeadroomCeiling": 155,
+   "headroomAtCeilingShare": 0.26182432432432434,
+   "roundsWithComponentOfTwoOrMore": 1535,
+   "componentShare": 0.9980494148244473,
+   "medianBlockSize": 5.0,
+   "medianContactEdges": 5.0,
+   "medianDepthBandPieces": 7.0,
+   "medianHeadroomMm": 0.0,
+   "medianModelUpperMm": 0.41264673623332254,
+   "fullStepExactValidShare": 0.40716612377850164,
+   "medianScale": 0.25,
+   "medianValidatedDeltaMm": 0.0,
+   "medianMaxAbsDthetaDeg": 0.01933288121430673,
+   "medianMaxAbsTranslationMm": 0.03074312233246817,
+   "documents": 12
+  }
+ }
+}

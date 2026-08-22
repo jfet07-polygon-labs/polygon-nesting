@@ -341,6 +341,26 @@ continuous-rotation = []
 # build run without it is the shipping benchmark. The four pinned gates are run
 # on both binaries to hold that.
 se2-rigidity-certificate = []
+# Sol review 10 §3's new search action: the active-contact block SE(2) operator.
+# Build the graph of near-binding contacts touching the depth-setting pieces,
+# take a small connected component containing the setter, and propose one joint
+# `(dx, dy, dtheta)` for the whole block inside a trust region — then apply it as
+# ONE action, validated exactly, and re-derive the graph and repeat.
+#
+# Stacked on `se2-rigidity-certificate` because it reuses that module's geometry
+# and its exact closest-approach witness pair, which is itself behind that gate
+# so a default build's `Approach` neither grows nor does extra work. It is NOT
+# the same program: the certificate solves the whole layout at one small radius
+# in one shot, and this restricts to five pieces so it can afford a large radius
+# and sequential re-linearization. See
+# `search::general_micro_legalization::contact_block` and
+# docs/experiments/contact-block/.
+#
+# Off by default, off in every shipping path, and reachable only through the
+# `POLYGON_NESTING_CONTACT_BLOCK` environment variable on the benchmark's
+# diagnostic door — so an armed build run without it is the shipping benchmark,
+# which the four pinned gates are run on both binaries to hold.
+contact-block-se2 = ["se2-rigidity-certificate"]
 # A sound broad phase for the exact-clearance contract validator's all-pairs
 # loop, `validation::general_polygon::validate_publication`.
 #
