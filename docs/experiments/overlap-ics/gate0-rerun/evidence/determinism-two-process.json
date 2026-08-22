@@ -1,0 +1,187 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "two-process-determinism-every-cell",
+ "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_72c0d771-eb6-1/target/release/examples/overlap_ics_benchmark",
+ "rows": [
+  {
+   "cell": "s0",
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "81fc33ba9352c860de3901ad466c1e17cc46656f01322e2a544cbb374286aa8e",
+   "digestB": "81fc33ba9352c860de3901ad466c1e17cc46656f01322e2a544cbb374286aa8e",
+   "strippedFields": [
+    "wall"
+   ],
+   "comparison": "whole document minus the wall object",
+   "bitIdentical": true
+  },
+  {
+   "cell": "s1",
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "eea4b4ec200ee82c52b2eb270ee144474621e9ea1f51d846737479db6157861f",
+   "digestB": "eea4b4ec200ee82c52b2eb270ee144474621e9ea1f51d846737479db6157861f",
+   "strippedFields": [
+    "wall"
+   ],
+   "comparison": "whole document minus the wall object",
+   "bitIdentical": true
+  },
+  {
+   "cell": "s2",
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "eead8ff2601c8d42a5bc6f4213f8bb4b049d75b73591bf242d3e36ed19b31787",
+   "digestB": "eead8ff2601c8d42a5bc6f4213f8bb4b049d75b73591bf242d3e36ed19b31787",
+   "strippedFields": [
+    "wall"
+   ],
+   "comparison": "whole document minus the wall object",
+   "bitIdentical": true
+  },
+  {
+   "cell": "c175-seed0",
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "d1b9f5860ae217d28d817defd7e5a25a5bf6f210b686773c7cabe8f4339ec148",
+   "digestB": "d1b9f5860ae217d28d817defd7e5a25a5bf6f210b686773c7cabe8f4339ec148",
+   "strippedFields": [
+    "wall"
+   ],
+   "comparison": "whole document minus the wall object",
+   "bitIdentical": true
+  },
+  {
+   "cell": "c175-seed1",
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "7d7114b0278da8442c859e7c1d3aff4d4de9105382d9dfaa6e4f7e0bb37a6391",
+   "digestB": "7d7114b0278da8442c859e7c1d3aff4d4de9105382d9dfaa6e4f7e0bb37a6391",
+   "strippedFields": [
+    "wall"
+   ],
+   "comparison": "whole document minus the wall object",
+   "bitIdentical": true
+  },
+  {
+   "cell": "c175-seed2",
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "7be96c1f6a816c67e782d1de5f56c9c815de672b47fc10bff4185b83ecef2845",
+   "digestB": "7be96c1f6a816c67e782d1de5f56c9c815de672b47fc10bff4185b83ecef2845",
+   "strippedFields": [
+    "wall"
+   ],
+   "comparison": "whole document minus the wall object",
+   "bitIdentical": true
+  },
+  {
+   "cell": "triangle20",
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "6d6882c34ed602903b2a14a478112347bf5dde234b79d47f3616e419078b9d1f",
+   "digestB": "6d6882c34ed602903b2a14a478112347bf5dde234b79d47f3616e419078b9d1f",
+   "strippedFields": [
+    "wall"
+   ],
+   "comparison": "whole document minus the wall object",
+   "bitIdentical": true
+  },
+  {
+   "cell": "c168",
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "14a875d99c22e2277ded9380bab29e7311ce03640be3baba06fbfbaca51ce17b",
+   "digestB": "14a875d99c22e2277ded9380bab29e7311ce03640be3baba06fbfbaca51ce17b",
+   "strippedFields": [
+    "wall"
+   ],
+   "comparison": "whole document minus the wall object",
+   "bitIdentical": true
+  },
+  {
+   "cell": "randomt",
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "360e59d3575da0c3c21e2f866421ff1e2f7ecbcf490f7b32971b24aab6bc3967",
+   "digestB": "360e59d3575da0c3c21e2f866421ff1e2f7ecbcf490f7b32971b24aab6bc3967",
+   "strippedFields": [
+    "wall"
+   ],
+   "comparison": "whole document minus the wall object",
+   "bitIdentical": true
+  },
+  {
+   "cell": "corpus-1000",
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "d46641e0756fe79b96440113f44ad93f29e7e6c455725676271d7f441fad12d7",
+   "digestB": "d46641e0756fe79b96440113f44ad93f29e7e6c455725676271d7f441fad12d7",
+   "strippedFields": [
+    "wall"
+   ],
+   "comparison": "whole document minus the wall object",
+   "bitIdentical": true
+  },
+  {
+   "cell": "corpus-10000",
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "681f5e15c8921b575eb7b8c02f689795c163c2f1b70a1f9c35abd0e175d3cc2f",
+   "digestB": "681f5e15c8921b575eb7b8c02f689795c163c2f1b70a1f9c35abd0e175d3cc2f",
+   "strippedFields": [
+    "wall"
+   ],
+   "comparison": "whole document minus the wall object",
+   "bitIdentical": true
+  },
+  {
+   "cell": "throughput",
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "comparison": "the four verdict booleans only - every number in this cell is a timing, so bit-identity is not claimed",
+   "verdictsA": {
+    "coldPhiUnder200us": true,
+    "rowRebuildUnder20us": true,
+    "cellGapAtLeast1MPerSecond": true,
+    "projectedAtLeast100K": true,
+    "pass": true
+   },
+   "verdictsB": {
+    "coldPhiUnder200us": true,
+    "rowRebuildUnder20us": true,
+    "cellGapAtLeast1MPerSecond": true,
+    "projectedAtLeast100K": true,
+    "pass": true
+   },
+   "bitIdentical": null,
+   "verdictsIdentical": true
+  }
+ ],
+ "ALL_BIT_IDENTICAL": true,
+ "THROUGHPUT_VERDICTS_IDENTICAL": true
+}

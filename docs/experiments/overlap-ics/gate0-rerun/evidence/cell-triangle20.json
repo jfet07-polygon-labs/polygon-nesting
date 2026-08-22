@@ -1,0 +1,346 @@
+{
+  "cell": "triangle",
+  "constructor": {
+    "halfShockMm": 0.16090000000000018,
+    "lowerScaleMm": 70.25,
+    "placementCount": 20,
+    "placementFingerprint": "17be2327fc72125a525a7a9059d653d4ce2aa727921beaf7054dad29d0d09a86",
+    "rawSourceDepthMm": 73.468,
+    "shockMm": 2.725999999999999,
+    "shockResidual": 0.1
+  },
+  "contract": {
+    "depthTopInsetMm": 5.0,
+    "expansionMm": 2.75,
+    "flatteningSagToleranceMm": 0.25,
+    "pairClearanceMm": 5.5,
+    "physicalEdgeClearanceMm": 5.25,
+    "searchOffsetAllowanceMm": 0.002,
+    "sheetEdgeClearanceMm": 5.25,
+    "sheetInsetMm": 2.5,
+    "twoRMicron": 5500.0
+  },
+  "entry": {
+    "guidedPhi": 17.840669359418893,
+    "lockedTargetMm": 70.742,
+    "maxViolationMm": 2.870039198367955,
+    "rawPhi": 17.840669359418893,
+    "rawSourceDepthMm": 70.742
+  },
+  "executableSha256": "ca5ac55360c7fbd51af31b117175b66d1c82322962e58a2541175753d8db1a6c",
+  "experiment": "overlap-ics",
+  "finalPoseDigest": "a2bb71e02ffa861c9e8fa87f1eeb72ebcdda41d28e9e9a820d34c64efd6fd794",
+  "instrument": "crates/polygon-nesting-core/src/search/overlap_ics/",
+  "lowerScaleMm": 70.25,
+  "outcome": {
+    "boundaryEdgeViolations": {
+      "activeEdgeRows": 0,
+      "maxEdgeViolationMm": 0.0
+    },
+    "census": {
+      "activeEdgeRows": 0,
+      "activeEdgeRowsBySide": {
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0
+      },
+      "activePairRows": 0,
+      "maxEdgeViolationBySideMm": {
+        "bottom": 0.0,
+        "left": 0.0,
+        "right": 0.0,
+        "top": 0.0
+      },
+      "maxEdgeViolationMm": 0.0,
+      "maxGuidedPenalty": 2,
+      "maxPairViolationMm": 0.0,
+      "piecesSqueezedOnOppositeSides": 0
+    },
+    "exactCheckpoints": [
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0019844590340483137,
+        "proposalOrdinal": 160,
+        "proxyRawDepthMm": 70.74150389598567,
+        "publishedRawDepthMm": null,
+        "refusal": "repair would have enlarged the locked strip; the target is immutable",
+        "repairDepthGivebackMm": 0.005612078651026309,
+        "repairMaxDisplacementMm": 0.006,
+        "repairRows": 1,
+        "targetDepthMm": 70.742
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0007471415623214739,
+        "proposalOrdinal": 200,
+        "proxyRawDepthMm": 70.74175027722217,
+        "publishedRawDepthMm": null,
+        "refusal": "repair would have enlarged the locked strip; the target is immutable",
+        "repairDepthGivebackMm": 0.0049999999999954525,
+        "repairMaxDisplacementMm": 0.005,
+        "repairRows": 1,
+        "targetDepthMm": 70.742
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0025683598951040665,
+        "proposalOrdinal": 760,
+        "proxyRawDepthMm": 70.74150389598567,
+        "publishedRawDepthMm": null,
+        "refusal": "repair would have enlarged the locked strip; the target is immutable",
+        "repairDepthGivebackMm": 0.0019154418001789963,
+        "repairMaxDisplacementMm": 0.007,
+        "repairRows": 1,
+        "targetDepthMm": 70.742
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0009759945469340892,
+        "proposalOrdinal": 780,
+        "proxyRawDepthMm": 70.74150389598567,
+        "publishedRawDepthMm": 70.74150389598567,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.005,
+        "repairRows": 1,
+        "targetDepthMm": 70.742
+      }
+    ],
+    "firstStrictChildProposal": 780,
+    "guidedStalls": 3,
+    "incumbent": {
+      "constructorFingerprint": "17be2327fc72125a525a7a9059d653d4ce2aa727921beaf7054dad29d0d09a86",
+      "fingerprintDiffersFromConstructor": true,
+      "fromConstructor": false,
+      "placementCount": 20,
+      "placementFingerprint": "97c20900b17f55e526a3ea5d392b3502713216ca58c073c0d569bfb4ad8881a5",
+      "rawSourceDepthMm": 70.74150389598567
+    },
+    "invalidPublications": 0,
+    "jumpAttempted": 1,
+    "jumpCommitted": 1,
+    "jumpEvents": [
+      {
+        "baselineGuidedPhi": 1.924958437634274e-7,
+        "bestGuidedPhi": 0.03511225812593149,
+        "improvedGuided": false,
+        "installed": true,
+        "kind": "ball",
+        "maxViolationMm": 0.00025180950945014047,
+        "piece": 9,
+        "proposalOrdinal": 600,
+        "radiusMm": 1.375
+      }
+    ],
+    "jumps": 1,
+    "jumpsImprovingGuided": 0,
+    "proxy": {
+      "guidedPhi": 0.0,
+      "maxViolationMm": 0.0,
+      "rawPhi": 0.0,
+      "rawSourceDepthMm": 70.74150389598567
+    },
+    "proxySamples": [
+      {
+        "guidedPhi": 17.840669359418893,
+        "maxViolationMm": 2.870039198367955,
+        "proposalOrdinal": 0,
+        "rawPhi": 17.840669359418893,
+        "rawSourceDepthMm": 70.742,
+        "targetDepthMm": 70.742
+      },
+      {
+        "guidedPhi": 0.0,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 200000,
+        "rawPhi": 0.0,
+        "rawSourceDepthMm": 70.74150389598567,
+        "targetDepthMm": 70.742
+      }
+    ],
+    "publications": 1,
+    "qualitySeries": [
+      {
+        "proposalOrdinal": 780,
+        "rawSourceDepthMm": 70.74150389598567,
+        "strictChild": true
+      }
+    ],
+    "rejectionCensus": {
+      "acceptedByDirectionClass": {
+        "combined": 109,
+        "rotation": 0,
+        "translation": 0
+      },
+      "acceptedProposals": 109,
+      "armed": true,
+      "rejectedByDirectionClass": {
+        "combined": 2,
+        "rotation": 0,
+        "translation": 0
+      },
+      "rejectedProposals": 2,
+      "rejections": [
+        {
+          "activeIncidentPenaltyMax": 1,
+          "activeIncidentPenaltySum": 1,
+          "activeIncidentRows": 3,
+          "directionClass": "combined",
+          "guidedPhiBefore": 1.2908781471390701e-7,
+          "incidentGuidedBefore": 1.2908781471390701e-7,
+          "maxViolationBeforeMm": 0.00025180950945014047,
+          "piece": 9,
+          "proposalOrdinal": 261,
+          "rawPhiBefore": 6.567978566438663e-8,
+          "rotationShare": 0.687984402900398,
+          "rungs": [
+            {
+              "deltaIncidentGuided": 7.833230197512231,
+              "deltaMaxViolationMm": 2.2058920550486647,
+              "deltaRawPhi": 7.83323026092026,
+              "newlyActivatedRows": 1,
+              "stepMm": 1.375
+            },
+            {
+              "deltaIncidentGuided": 1.9514186369557476,
+              "deltaMaxViolationMm": 1.1049636743170197,
+              "deltaRawPhi": 1.9514187003637766,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.6875
+            },
+            {
+              "deltaIncidentGuided": 0.4773791660514378,
+              "deltaMaxViolationMm": 0.5529042927127676,
+              "deltaRawPhi": 0.47737922945946687,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.34375
+            },
+            {
+              "deltaIncidentGuided": 0.11359849473997524,
+              "deltaMaxViolationMm": 0.27648035498214085,
+              "deltaRawPhi": 0.11359855814800429,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.171875
+            },
+            {
+              "deltaIncidentGuided": 0.025833422779970073,
+              "deltaMaxViolationMm": 0.138170395107025,
+              "deltaRawPhi": 0.025833486187999122,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.0859375
+            },
+            {
+              "deltaIncidentGuided": 0.0055841433436916955,
+              "deltaMaxViolationMm": 0.06899098887284083,
+              "deltaRawPhi": 0.005584206751720745,
+              "newlyActivatedRows": 1,
+              "stepMm": 0.04296875
+            },
+            {
+              "deltaIncidentGuided": 0.001318443620375082,
+              "deltaMaxViolationMm": 0.03439518812075448,
+              "deltaRawPhi": 0.0013185070284041313,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.021484375
+            },
+            {
+              "deltaIncidentGuided": 0.00033040317613104996,
+              "deltaMaxViolationMm": 0.017095764453770812,
+              "deltaRawPhi": 0.0003304665841600995,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0107421875
+            },
+            {
+              "deltaIncidentGuided": 0.00008293682572953617,
+              "deltaMaxViolationMm": 0.008445671937337806,
+              "deltaRawPhi": 0.0000830002337585857,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00537109375
+            },
+            {
+              "deltaIncidentGuided": 0.00002085309776561874,
+              "deltaMaxViolationMm": 0.004120530525838717,
+              "deltaRawPhi": 0.000020916505794668258,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.002685546875
+            },
+            {
+              "deltaIncidentGuided": 5.224968023032021e-6,
+              "deltaMaxViolationMm": 0.001957936033946339,
+              "deltaRawPhi": 5.288376052081541e-6,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.0013427734375
+            },
+            {
+              "deltaIncidentGuided": 1.2645082670816793e-6,
+              "deltaMaxViolationMm": 0.0008766328417664226,
+              "deltaRawPhi": 1.3279162961311997e-6,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00067138671875
+            },
+            {
+              "deltaIncidentGuided": 2.4770111214663097e-7,
+              "deltaMaxViolationMm": 0.0003359797591286906,
+              "deltaRawPhi": 3.1110914119615133e-7,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.000335693359375
+            },
+            {
+              "deltaIncidentGuided": 9.104443627297193e-8,
+              "deltaMaxViolationMm": 0.00019796561340967855,
+              "deltaRawPhi": 1.5445246532249231e-7,
+              "newlyActivatedRows": 0,
+              "stepMm": 0.00025
+            }
+          ],
+          "translationShare": 0.7257254724520719
+        }
+      ],
+      "sampledRejections": 1,
+      "zeroEnergyProposals": 199889
+    },
+    "repairMaxDisplacementMm": 0.007,
+    "repairMaxGivebackMm": 0.0,
+    "sweeps": 9984,
+    "work": {
+      "acceptedMoves": 109,
+      "broadPhaseRejects": 8813,
+      "convexCellGapQueries": 345,
+      "exactCheckpoints": 4,
+      "jumpProposals": 16,
+      "pairRowProbes": 9158,
+      "pieceProposals": 200000,
+      "poseTransforms": 492,
+      "repairRows": 4,
+      "weightUpdates": 3
+    }
+  },
+  "request": {
+    "normalizeAxes": false,
+    "path": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_72c0d771-eb6-1/tests/fixtures/triangle-20/2000x2700-compact/request.json",
+    "pieceCount": 20,
+    "sha256": "811595741286ced9fda7a97fd7c6f6c9e0bf7ba24aef186f97fe4f40f5b923d4",
+    "sheetLongAxisMm": 2700.0,
+    "sheetShortAxisMm": 2000.0
+  },
+  "rotationFrozen": false,
+  "seed": 0,
+  "shock": {
+    "affineFactor": 0.941752001367204,
+    "entryDepthSlackMm": 0.0,
+    "entryDepthWithinTarget": true,
+    "shockDeg": 1.0,
+    "shockMm": 0.25,
+    "shockedPoseDigest": "6a5f767df43bb02429b06a1106a00d8ac5c812e18e34d30ae576caff8f76c203"
+  },
+  "wall": {
+    "constructorSeconds": 0.020288296,
+    "solverSeconds": 0.014876608,
+    "totalSeconds": 0.035234405
+  }
+}

@@ -1,5 +1,14 @@
 # overlap-ICS — the vertical slice, and Gate 0
 
+> **Superseded in part, and left standing as the record of its own round.**
+> Two of the three fatal failures below were implementation defects, named by
+> Sol review 15 and Grok review 10 and fixed under a frozen list: **S1 and
+> triangle-20 now pass**, and the FAST tier is green. **C175 is still 0/3.**
+> The re-run's verdict table, its pre-committed reading, and one defect the
+> re-run's own new instrumentation found and deliberately did not fix are in
+> `gate0-rerun/README.md`. Every number below is still what this round
+> measured; several of them are no longer what the engine does.
+
 **Verdict: STOP.** Three of the six fatal cells fail: **S1**, **C175** and the
 **triangle-20 canary**. The other three fatal cells — S0, numeric soundness,
 throughput — pass, several of them by an order of magnitude.
