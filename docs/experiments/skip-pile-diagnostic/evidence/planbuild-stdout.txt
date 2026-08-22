@@ -1,0 +1,8 @@
+{
+ "plan": "/var/lib/t3/tmp/skippile/out/score-plan.json",
+ "cells": 6,
+ "samplePerCell": 20000,
+ "censusPerCell": 400,
+ "skipsSuppressedTotal": 13904,
+ "distinctExpectedTotal": 13867
+}

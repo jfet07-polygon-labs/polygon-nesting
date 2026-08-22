@@ -1,0 +1,11 @@
+seed10@3341379 reproduced=True accountedFor=True skips=99 dumped=99 dup=0 overCap=0 digest=15208230584541081695 wall=2.4s (committed opwall 2.346830549) diffs=[]
+seed0@3341379 reproduced=True accountedFor=True skips=242 dumped=242 dup=0 overCap=0 digest=18417416165943714955 wall=3.2s (committed opwall 3.147020367) diffs=[]
+seed2@3341379 reproduced=True accountedFor=True skips=653 dumped=653 dup=0 overCap=0 digest=3524879778271727066 wall=4.2s (committed opwall 4.608317908) diffs=[]
+seed3@3341379 reproduced=True accountedFor=True skips=2807 dumped=2807 dup=0 overCap=0 digest=13882956371924736073 wall=7.2s (committed opwall 7.317075212) diffs=[]
+seed4@16000000 reproduced=True accountedFor=True skips=4159 dumped=4137 dup=22 overCap=0 digest=1225229695193028453 wall=17.7s (committed opwall 17.22309131) diffs=[]
+seed0@32000000 reproduced=True accountedFor=True skips=5944 dumped=5929 dup=15 overCap=0 digest=9052932834971917816 wall=27.9s (committed opwall 27.130488181) diffs=[]
+{
+ "ALL_REPRODUCED": true,
+ "cells": 6,
+ "dumpedTotal": 13867
+}

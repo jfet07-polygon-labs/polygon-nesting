@@ -240,6 +240,13 @@ def main():
                 'beatsCellPublishedByMm': (
                     published - deepest
                     if deepest is not None and published is not None else None),
+                # Not just the best one. "The deepest suppressed frontier is
+                # 0.042 mm better" and "two suppressed frontiers are better"
+                # are different statements and the second is the one a reader
+                # needs to size the opportunity.
+                'beatsCellPublishedCount': (
+                    sum(1 for value in depths if value < published)
+                    if published is not None else None),
             }
         best.append(row)
 

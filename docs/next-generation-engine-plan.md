@@ -7716,12 +7716,13 @@ not a sample of them. At the shipping 2.502 mm expansion, **111 of 13 867
 disc kernel accepts, HEAD's miter authority refuses. The released material is
 **join-tax class and nothing else** — a median **0.380 mm** of pair excursion and
 **0.928 mm** of boundary excursion, with **zero of 111 rows** inside a grid-class
-bound set at ten grid steps. And then the number that settles it: **not one of those 111 layouts is
-deeper than the layout its own cell had already published.** The best released
-frontier per cell is **0.053, 0.080 and 0.438 mm *worse*** than that cell's own
-answer. Arming the disc as the proposal authority on these six cells would have
-released 111 layouts and published none of them. **Option (b) — the
-proposal-geometry surgery — is killed on this population.**
+bound set at ten grid steps. And then the number that settles it: **not one of
+those 111 layouts is deeper than the layout its own cell had already published.**
+The 111 sit in three of the six cells — 3, 25 and 83 rows — and the *best* of
+each is **0.438, 0.080 and 0.053 mm worse** than that cell's own answer. Arming
+the disc as the proposal authority on these six cells would have released 111
+layouts and published none of them. **Option (b) — the proposal-geometry surgery
+— is killed on this population.**
 
 **The pre-committed rule missed the shape of its own answer, and that is
 recorded rather than smoothed.** It was committed before any frontier was scored
@@ -7741,8 +7742,10 @@ the disc alike. Of the **7 911** boundary-only skips, **56.1 %** are accepted by
 **all three** — legal layouts the schedule never asked about. That 32 %-of-pile
 row is the largest in the joint table and it is not a kernel question at all: it
 is a question about how often the schedule confirms. Priced across all six
-cells, it contains **exactly one** layout deeper than its own cell's published
-answer, by **0.042 mm**.
+cells, it contains **exactly two** layouts deeper than their own cell's published
+answer, both in one cell and both by **0.042 mm** — and both accepted by HEAD's
+own miter authority, so publishing them needs no kernel and no surgery, only a
+schedule that asked.
 
 **Two smaller findings fall out.** The `search_offset_allowance = 0.002` costs
 **1 187 rows — 8.56 % of the pile**, eleven times the released region: material
@@ -7772,16 +7775,22 @@ Adding **one line inside a `#[cfg]` block that cannot be compiled without its
 feature** moved the feature-absent binary's SHA-256; a **pure comment** inserted
 elsewhere in the same file moved it again, both confirmed against fresh target
 directories. Release builds bake `Location { file, line, col }` into every panic
-path, so a line inserted mid-file rewrites thousands of them. **A changed binary
-hash is not evidence that behaviour changed** — the whole-document gate digest
-is, and here all eight of them are identical to the pre-instrument binary's.
+path, so a line inserted mid-file — `general_relaxed.rs` is 27 679 of them —
+rewrites thousands. **A changed binary hash is not evidence that behaviour
+changed**; the whole-document gate digest is, and here all eight of them are
+identical to the pre-instrument binary's.
 
 **Gates, suites, determinism.** Four pinned gates 4/4 on the feature-absent
 binary and on the measurement binary with the hook compiled and unarmed, with all
-eight whole-document digests identical. Determinism is two processes on three
-artefacts — the armed run's document (stripped by name, plus eight verdict paths
-compared directly), **the JSONL dump it wrote** (raw SHA-256), and the scored
-document (raw hash, stripped digest and six verdict paths) — `ALL_IDENTICAL:
-true`.
+eight whole-document digests identical. Seven `--release` suites green
+(1293 / 1357 / 20 / 1343 / 1329 / …), and the campaign's known flake is recorded
+with a pattern rather than waved through: it fired on the **first pass of suite 5
+in both independent runs of the suite script** and on no other suite in either,
+and passed on the rerun both times. Suite 5 is the only set here that compiles
+`compression-schedule` without `round-envelope-kernel`. Determinism is two
+processes on three artefacts — the armed run's document (stripped by name, plus
+eight verdict paths compared directly), **the JSONL dump it wrote** (raw
+SHA-256), and the scored document (raw hash, stripped digest and six verdict
+paths) — `ALL_IDENTICAL: true`.
 
 Evidence, drivers and the full caveat list: `docs/experiments/skip-pile-diagnostic/`.

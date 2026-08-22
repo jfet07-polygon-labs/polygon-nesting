@@ -1,0 +1,8 @@
+{
+ "plan": "/var/lib/t3/tmp/skippile/out/det-plan.json",
+ "cells": 6,
+ "samplePerCell": 12,
+ "censusPerCell": 4,
+ "skipsSuppressedTotal": 13904,
+ "distinctExpectedTotal": 13867
+}

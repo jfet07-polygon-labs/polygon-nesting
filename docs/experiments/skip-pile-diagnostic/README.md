@@ -98,10 +98,10 @@ One cargo feature, `skip-pile-dump`, and three edits behind it:
 Four properties, each a mechanism rather than a claim:
 
 * **compiled out by default.** The module does not exist without the feature and
-  the call site is behind the same `cfg`. §4.1 is the measurement.
+  the call site is behind the same `cfg`. §6.1 is the measurement.
 * **disarmed by default when compiled.** The sink opens only when
   `POLYGON_NESTING_SKIP_PILE_DUMP` names a path. A compiled-but-unarmed binary
-  reproduces all four gates *as whole documents* — §4.1 again.
+  reproduces all four gates *as whole documents* — §6.1 again.
 * **it reads, it does not decide.** The block runs after
   `due_for_confirmation` has already returned; nothing is fed back, no field is
   published. Its only cost is wall.
@@ -143,7 +143,7 @@ both validity flags.
 | seed0@32000000 | 174.208 | 12395 | 1612 | 0 | 5944 | 5929 | `9052932834971917816` | 164.008 |
 
 **6 of 6 reproduced, 0 differing fields**, on a binary whose SHA-256 is not the
-gate's (`c16356bf…` against `9e6ad285…`) because this round's source is not that
+gate's (`16ac9d90…` against `9e6ad285…`) because this round's source is not that
 round's. `refused = 0` on every cell is the finding this round exists to explain,
 reproduced here rather than cited.
 
@@ -282,20 +282,27 @@ geometry; the *best* member of it in each cell is between **0.053 mm and
 Arming the disc as the proposal authority on these six cells would have released
 111 layouts and published **none** of them.
 
-The column beside it prices the much larger 32 % row for free: across 13 867
-suppressed frontiers in six cells, **exactly one cell contains a suppressed
-layout deeper than its own published answer, by 0.042 mm** — and that layout is
-accepted by all three authorities, so it is a question about how often the
-schedule confirms, not about which envelope it confirms with.
+The column beside it prices the much larger 32 % row for free. Counted exactly —
+suppressed frontiers that **all three** authorities accept *and* whose own depth
+beats what their cell published:
 
-That one layout is worth looking at, because it is the whole opportunity this
-pile contains: `seed4@16000000` seq 3198, **step 5961**, raw source depth
-**166.692 mm**, incumbent at that moment **166.734 mm** — and the cell went on to
-publish exactly **166.734 mm**, so the incumbent never improved again. The proxy
-suppressed it with **0 collision pairs and 1 boundary violation** against a clamp
-of 166.735 mm, while the layout's own depth was 166.692 mm. **The proxy's
-boundary test and the composite's are not the same test**, and this row is what
-that costs: 0.042 mm, once, in 13 867 frontiers.
+| cell | such frontiers | best gain |
+|---|---:|---:|
+| seed4@16000000 | **2** | **0.042 mm** |
+| the other five | **0** | — |
+
+**Two frontiers out of 13 867.** They are `seed4@16000000` seq 3198 (step 5961)
+and seq 3199 (step 5967), both at raw source depth **166.692 mm** against an
+incumbent of **166.734 mm** — and the cell went on to publish exactly
+**166.734 mm**, so the incumbent never improved again after step 5961. Both were
+suppressed with **0 collision pairs and 1 boundary violation**, against clamps of
+166.735 mm and 166.729 mm, while the layouts' own depth was 166.692 mm. **The
+proxy's boundary test and the composite's are not the same test**, and these two
+rows are what that costs on this population: 0.042 mm, in one cell of six.
+
+Note what that row is *not*: both layouts are accepted by HEAD's own miter
+authority. Publishing them needs no kernel and no proposal-geometry surgery —
+only a schedule that asked.
 
 ### 4.3 The weaker reading, and why it is the weaker one
 
@@ -309,6 +316,13 @@ on grid-snapped bounds and the scorer's on untouched source rings. §4.2 has
 neither problem.
 
 ## 5. The pre-committed rule, read against the answer
+
+§0 above is byte-identical to `f989c21`'s copy of it — the check is one `git
+show` and a string compare — including the one part of it that went stale: *"≥1 %
+of sampled skipped frontiers, which on the sample below is ≥18 rows"* was written
+when the plan was to score 1 800 records. The **fraction** is the clause; 18 was
+an illustration of it on a sample that became a census. On 13 867 records the
+same 1 % is 139 rows.
 
 | clause, as committed in `f989c21` | measured | reading |
 |---|---|---|
@@ -324,6 +338,17 @@ satisfies the class test outright, misses the size test by a fifth, and then
 fails a test the rule never wrote down: **the released layouts are all worse than
 what the run already had.** Option (b) is killed on this population — not because
 the region behind the proxy is empty, but because it is empty of improvements.
+
+The third clause asked for the region to be **sized — rows, millimetres, per
+seed — if the class test passed**, and the class test did pass, so it is
+discharged rather than skipped:
+
+| | |
+|---|---|
+| **rows** | 111 at 2.502 mm, 112 at 2.500 mm, of 13 867 |
+| **millimetres, geometry** | 46 pair excursions, median 0.380 mm; 65 boundary excursions, median 0.928 mm |
+| **millimetres, depth** | **0.000** — the released set contains nothing deeper than what its cells published |
+| **per seed** | seed 0 at 3.3 M: 3 rows, best 0.438 mm worse. seed 4 at 16 M: 25 rows, best 0.080 mm worse. seed 0 at 32 M: 83 rows, best 0.053 mm worse. seeds 2, 3 and 10: **0 rows** |
 
 What the pre-commitment did get right is that it was written first. Had the
 threshold been set afterwards, 0.80 % would have been argued either way.
@@ -367,10 +392,12 @@ to `62d99caa…`. Both were confirmed against a fresh `CARGO_TARGET_DIR`, so
 neither is build noise.
 
 The mechanism is line numbers: a release build still bakes `Location { file,
-line, col }` into every panic path, so anything inserted above other code in a
-6 000-line file rewrites thousands of them. **A changed binary hash is therefore
-not evidence that behaviour changed** — the whole-document gate digest is what
-distinguishes the two, and in §6.1 it does.
+line, col }` into every panic path, so anything inserted above other code in
+`general_relaxed.rs` — **27 679 lines** — rewrites thousands of them. **A changed
+binary hash is therefore not evidence that behaviour changed**; the
+whole-document gate digest is what distinguishes the two, and in §6.1 it does,
+across a source change that moved the hash and eight digests that did not move
+at all.
 
 ### 6.3 Determinism, two processes, three artefacts
 
@@ -390,17 +417,62 @@ as well and why the raw hashes match.
 
 ### 6.4 Suites
 
-All `--release`, every exit status read directly rather than through a pipe. See
-§7 of this file's evidence directory for the logs.
+All `--release`, every exit status read directly rather than through a pipe.
+
+| # | features | passed / failed / ignored | exit | log |
+|---|---|---|---:|---|
+| 1 | `jagua-experimental` | 1293 / 0 / 2 | **0** | `suite-jagua.log` |
+| 2 | the protocol's full combo | 1357 / 0 / 2 | **0** | `suite-combo.log` |
+| 3 | `jagua-experimental`, `--example general_request_benchmark` | 20 / 0 / 0 | **0** | `suite-example.log` |
+| 4 | `jagua-experimental,round-envelope-kernel,skip-pile-dump` | 1343 / 0 / 2 | **0** | `suite-kernel-dump.log` |
+| 5 | `jagua-experimental,skip-pile-dump` — the feature without the kernel beside it | 1329 / 0 / 2 | **0** | `suite-dump.log` |
+| 6 | the measurement binary's own feature set | 1372 / 0 / 2 | **0** | `suite-meas.log` |
+| 7 | the scorer's feature set, `--example skip_pile_score` | 0 / 0 / 0 (it has no tests; this compiles it) | **0** | `suite-scorer.log` |
+
+Suite 4 is the protocol's `jagua-experimental,round-envelope-kernel` **plus this
+round's new feature**, which is separate. Suite 5 exists because
+`skip-pile-dump` and `round-envelope-kernel` are independent and a suite that
+only ever compiled them together could not say so. `skip-pile-dump` implies
+`compression-schedule`, which is why suites 4 and 5 carry more tests than the
+kernel round's 1307.
+
+**The campaign's known flake fired, and its pattern is worth recording rather
+than waving through.** `free_material_multi_eviction_shrinks_retained_container_capacity`
+asserts `cache.entries.capacity() < entries_capacity_before` after an eviction —
+an allocator property, not a search one, which is why the campaign calls it a
+flake and the protocol says to rerun once and keep both logs.
+
+This round ran the whole suite script **twice** (once mid-round, once on the
+clean committed tree) and the observation is the same both times:
+
+* it fired on the **first pass of suite 5**, both times — 2 of 2;
+* it fired on **no other suite**, either time — 0 of 12;
+* the **rerun passed both times**, on the same binary and the same feature set,
+  which is what keeps "flake" the right word rather than "failure".
+
+Suite 5 is `jagua-experimental,skip-pile-dump`, the only set here that compiles
+`compression-schedule` *without* `round-envelope-kernel`, so it runs a different
+test population in a different order and reaches this assertion with a different
+allocation history. That is an observation and not a diagnosis; nothing in this
+round touches `layout_scorer`. Both logs are committed
+(`suite-dump-run1-flaky.log` beside `suite-dump.log`).
 
 ## 7. Caveats, stated rather than left to be found
 
 * **Six cells, one request, one platform.** mixed-61 at the exact-clearance
   5.0/5.0 contract on x86_64. Within those six cells the scoring is a **census**
   — every distinct suppressed frontier — but the six cells are a sample of the
-  gate's forty-eight, chosen before any of them was scored to span both the size
-  of the pile (99 to 5 944 skips) and the depth of the ladder (3.3 M to 32 M
-  work).
+  gate's forty-eight. They were fixed in the pre-commit
+  (`git show f989c21:…/collect.sh` line 32, the same commit as §0) to span both
+  the size of the pile (99 to 5 944 skips) and the depth of the ladder (3.3 M to
+  32 M work), so which cells were run is not a function of what they said.
+  Nothing generalises from six cells to forty-eight without measuring the other
+  forty-two.
+* **The scoring budget was raised after the pilot, and the direction matters.**
+  The plan's `sample` began at 300 per cell; a timing pilot showed the whole
+  pile was affordable and it was raised to cover all of it. Widening a sample to
+  a census can only make the estimate less selective, and the released fraction
+  is reported over the census.
 * **The control arm only.** `POLYGON_NESTING_ROUND_ENVELOPE_KERNEL` is unset
   throughout. The gate's own evidence records the union arm's skip counts as
   cell-for-cell identical to the control's on all 48 matched cells, so dumping
@@ -415,13 +487,13 @@ All `--release`, every exit status read directly rather than through a pipe. See
 * **§4.2 compares against what each cell published**, which is a bound the run
   itself achieved. A cell run to a deeper budget would publish deeper and the
   comparison would be harsher, not kinder.
-* **The 0.042 mm in seed4@16000000 is one layout**, and it is an existence proof
-  that the 32 % row is not entirely worthless, not a rate.
+* **The 0.042 mm in seed4@16000000 is two layouts in one cell**, and it is an
+  existence proof that the 32 % row is not entirely worthless, not a rate.
 * **The 1 187-row allowance effect is measured at two radii only**, 2.502 and
   2.500. Nothing here says where between them it turns over.
 * **The dump costs wall, and the cost is not separable from the box.** The six
   armed cells' operator walls against the gate's committed ones are
-  `[0.896, 1.026]x` — the two deepest at 17.558 s / 17.223 s and 27.846 s /
+  `[0.893, 1.026]x` — the two deepest at 17.614 s / 17.223 s and 27.833 s /
   27.130 s — so the hook's price is inside the variation between two differently
   loaded boxes and this round does not claim to have measured it. It does not
   need to: **nothing here is a wall claim**, and the trajectory identity is the
