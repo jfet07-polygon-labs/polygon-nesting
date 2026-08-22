@@ -24,6 +24,7 @@ use super::contact::{box_gap, convex_cell_gap, Contact};
 use super::diagnostics::WorkVector;
 use super::state::{
     pair_index, Contract, EdgeRow, Geometry, IcsState, PairRow, EDGE_BOTTOM, EDGE_LEFT, EDGE_RIGHT,
+    EDGE_TOP,
 };
 
 /// The two folded totals plus the largest single residual.
@@ -95,12 +96,7 @@ pub fn measure_edges(
     target_depth_mm: f64,
     previous: [EdgeRow; 4],
 ) -> [EdgeRow; 4] {
-    let residuals = boundary_residuals(
-        geometry.piece_bounds[piece],
-        contract.sheet_short_axis_mm,
-        target_depth_mm,
-        contract.edge_clearance_mm(),
-    );
+    let residuals = boundary_residuals(geometry.piece_bounds[piece], contract, target_depth_mm);
     let ring = geometry.ring_slice(piece);
     let mut rows = [EdgeRow::default(); 4];
     for edge in 0..4 {
@@ -413,6 +409,13 @@ pub fn pair_row(state: &IcsState, first: usize, second: usize) -> PairRow {
 /// statement about a layout - twenty pairs at 1.5 mm and one pair at 6.8 mm are
 /// the same number and completely different failures - and Gate 0 has to be
 /// able to tell those apart in the evidence rather than in a debugger.
+/// **The four boundary sides are counted apart.** Grok review 10 §B.4 and Sol
+/// review 15 §B.5: with one `activeEdgeRows` number, the previous round's
+/// README could claim "a single global translation would legalize it" and the
+/// verification round could only answer "that is a reading, not a
+/// measurement" - because two rows on *opposite* sides mean no such
+/// translation exists, and nothing in the evidence said which sides they were
+/// on. It says now.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct RowCensus {
     pub active_pairs: usize,
@@ -420,6 +423,14 @@ pub struct RowCensus {
     pub max_pair_violation_mm: f64,
     pub max_edge_violation_mm: f64,
     pub max_penalty: u32,
+    /// Active row counts, `[left, right, bottom, top]`.
+    pub active_edges_by_side: [usize; 4],
+    /// The worst violation on each side, `[left, right, bottom, top]`.
+    pub max_edge_violation_by_side_mm: [f64; 4],
+    /// Pieces carrying an active row on two **opposite** sides at once
+    /// (left+right, or bottom+top). A nonzero count is the shape no single
+    /// rigid translation can fix.
+    pub pieces_squeezed_on_opposite_sides: usize,
 }
 
 pub fn census(state: &IcsState) -> RowCensus {
@@ -432,12 +443,20 @@ pub fn census(state: &IcsState) -> RowCensus {
         }
     }
     for rows in &state.edge_rows {
-        for row in rows {
+        let mut active = [false; 4];
+        for (edge, row) in rows.iter().enumerate() {
             out.max_penalty = out.max_penalty.max(row.penalty);
             if row.violation_mm > 0.0 {
+                active[edge] = true;
                 out.active_edges += 1;
+                out.active_edges_by_side[edge] += 1;
                 out.max_edge_violation_mm = out.max_edge_violation_mm.max(row.violation_mm);
+                out.max_edge_violation_by_side_mm[edge] =
+                    out.max_edge_violation_by_side_mm[edge].max(row.violation_mm);
             }
+        }
+        if (active[EDGE_LEFT] && active[EDGE_RIGHT]) || (active[EDGE_BOTTOM] && active[EDGE_TOP]) {
+            out.pieces_squeezed_on_opposite_sides += 1;
         }
     }
     out

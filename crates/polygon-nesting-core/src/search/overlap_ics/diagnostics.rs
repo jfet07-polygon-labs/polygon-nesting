@@ -111,10 +111,42 @@ pub struct Trace {
     pub proxy_samples: Vec<ProxySample>,
     pub sweeps: u64,
     pub guided_stalls: u64,
+    /// Jumps whose relocation was **installed**: the trajectory's spent
+    /// allowance.
     pub jumps: u64,
-    /// Jumps whose committed relocation improved guided Φ. Every jump commits;
-    /// this counts the ones that were an improvement rather than a detour.
+    /// Jumps whose 16 candidates were evaluated at all, installed or not.
+    pub jump_attempted: u64,
+    /// Jumps that adopted a candidate state. Equal to `jumps`; kept beside
+    /// `jump_attempted` because the pair is what tells a no-op from a
+    /// relocation, and the previous round's documents could not.
+    pub jump_committed: u64,
+    /// Jumps whose **best candidate beat the pre-jump guided Φ**.
+    ///
+    /// This is the counter Grok review 10 asks to be named for what it is: it
+    /// is not "a relocation was installed" and never was. Under the default
+    /// commit rule a jump installs whether or not this is true, so a `0` here
+    /// beside a nonzero `jumpCommitted` means the jump was a deliberate step
+    /// backwards - which is the point of a topology change - and not a no-op.
     pub jumps_improving_guided: u64,
+    /// One row per attempted jump: the scale it fired at and what it did.
+    pub jump_events: Vec<JumpEvent>,
+}
+
+/// One attempted jump, recorded whatever it did.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct JumpEvent {
+    pub proposal_ordinal: u64,
+    pub piece: usize,
+    /// `"strip"` above the 0.100 mm gate, `"ball"` at or below it.
+    pub kind: &'static str,
+    /// The ball's translational radius; infinite for a strip relocation.
+    pub radius_mm: f64,
+    /// `max_g` at the moment the scale was chosen.
+    pub max_violation_mm: f64,
+    pub baseline_guided: f64,
+    pub best_guided: f64,
+    pub installed: bool,
+    pub improved_guided: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

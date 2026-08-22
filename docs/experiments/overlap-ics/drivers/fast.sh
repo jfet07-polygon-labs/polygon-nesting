@@ -17,12 +17,17 @@
 #   5. the 1,000-state deterministic contact corpus
 #   6. the two-process fixed-work smoke, S0 canary and S1 locked strip
 #
-# Stage 6 is red in this round and that is the round's finding, not a broken
-# script: S1's *mechanism* clause (republish inside the locked strip) fails at
-# max_g = 12.6 um against a 4 um attempt band. Its *invariant* clauses - no
-# invalid publication, repair <= 16 um, giveback <= 0.050 mm, two-process
-# bit-identity - all hold, and `INVARIANTS_PASS` in the smoke document is the
-# field that says so. See docs/experiments/overlap-ics/README.md.
+# Stage 6 was red for two rounds and that was the finding, not a broken script:
+# S1's *mechanism* clause (republish inside the locked strip) failed at
+# max_g = 12.6 um against a 4 um attempt band, while its *invariant* clauses -
+# no invalid publication, repair <= 16 um, giveback <= 0.050 mm, two-process
+# bit-identity - all held. `INVARIANTS_PASS` in the smoke document is the field
+# that separates the two.
+#
+# **It is green as of the Gate-0 re-run**: S1 republishes at 150.16536 inside
+# the locked 150.16547 with zero repair rows, so this script exits 0. See
+# docs/experiments/overlap-ics/gate0-rerun/README.md §6. If it goes red again,
+# read `INVARIANTS_PASS` before `SMOKE_PASS`.
 
 set -u
 

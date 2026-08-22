@@ -116,6 +116,9 @@ pub fn convex_cell_gap(a: &[[f64; 2]], b: &[[f64; 2]]) -> Contact {
     let mut best_depth = f64::INFINITY;
     let mut best_axis = [0.0f64, 0.0];
     let mut separated = false;
+    // The axis that proved separation, oriented so that moving `a` along it
+    // increases the gap. Kept for the exact-contact case below.
+    let mut touch_axis = [0.0f64, 0.0];
     'axes: for source in 0..2 {
         let ring = if source == 0 { a } else { b };
         for index in 0..ring.len() {
@@ -134,6 +137,16 @@ pub fn convex_cell_gap(a: &[[f64; 2]], b: &[[f64; 2]]) -> Contact {
             let move_negative = a_high - b_low;
             if move_positive <= 0.0 || move_negative <= 0.0 {
                 separated = true;
+                // `move_positive <= 0` means `b` lies entirely on the negative
+                // side of this axis, so `a` separates further along `+axis`;
+                // `move_negative <= 0` is the mirror. Both can hold only when
+                // both cells project to the same point, which the length guard
+                // above has already excluded for this axis.
+                touch_axis = if move_positive <= 0.0 {
+                    axis
+                } else {
+                    [-axis[0], -axis[1]]
+                };
                 break 'axes;
             }
             let (depth, signed_axis) = if move_negative <= move_positive {
@@ -157,7 +170,31 @@ pub fn convex_cell_gap(a: &[[f64; 2]], b: &[[f64; 2]]) -> Contact {
             witness_b,
         };
     }
-    closest_feature(a, b)
+    let mut contact = closest_feature(a, b);
+    if contact.normal == [0.0, 0.0] {
+        // **Exact material contact keeps the SAT axis.** At `distance == 0` the
+        // witness difference is the zero vector and `closest_feature` has no
+        // direction to report - but the row's violation is `c_pair - 0`, which
+        // is the *full* pair clearance and very much positive. A positive
+        // violation with a zero normal contributes weight to Phi and no force
+        // to the gradient: the piece is charged for an overlap it is given no
+        // way to leave (Sol review 15 §B.6, `contact.rs:187`).
+        //
+        // The separating axis the streamed SAT stopped on is that direction,
+        // and it is deterministic - the first axis in edge-index order that
+        // proved zero overlap, oriented so that moving `a` along it increases
+        // the gap.
+        contact.normal = if touch_axis != [0.0, 0.0] {
+            touch_axis
+        } else {
+            // Two degenerate rings (no edge with positive length) meeting at a
+            // point. There is no geometric axis; +x is a fixed, deterministic,
+            // documented choice rather than a zero that silently disables the
+            // row.
+            [1.0, 0.0]
+        };
+    }
+    contact
 }
 
 /// The closest material feature between two disjoint (or touching) convex

@@ -349,6 +349,12 @@ pub fn attempt(
 
     let mut result = scan(&sets, two_r, radius, inset);
     let mut displacement = vec![0.0f64; placements.len()];
+    // The *vector* each piece has already been moved by inside this repair
+    // pass. `displacement` is the scalar cap; this is what the next row's slack
+    // has to be measured from, because `state.geometry` is the pre-repair
+    // geometry and a second row that reads it would grant slack a previous
+    // correction has already spent (Sol review 15 §D, `publish.rs:550`).
+    let mut offsets = vec![[0.0f64; 2]; placements.len()];
     let mut rows = 0u64;
     let row_budget = limits.repair_rows_per_piece * placements.len();
     while !result.admissible {
@@ -366,6 +372,7 @@ pub fn attempt(
             state,
             &mut poses,
             &mut displacement,
+            &mut offsets,
             contract,
             &limits,
             two_r,
@@ -468,6 +475,7 @@ fn repair_one_row(
     state: &IcsState,
     poses: &mut [Pose],
     displacement: &mut [f64],
+    offsets: &mut [[f64; 2]],
     contract: &Contract,
     limits: &PublicationLimits,
     two_r: i64,
@@ -516,6 +524,8 @@ fn repair_one_row(
         poses[index].tx_mm += direction[0] * correction;
         poses[index].ty_mm += direction[1] * correction;
         displacement[index] += correction;
+        offsets[index][0] += direction[0] * correction;
+        offsets[index][1] += direction[1] * correction;
         return Some(vec![index]);
     }
     let (first, second) = scan_result.failing_pairs.first().copied()?;
@@ -547,21 +557,18 @@ fn repair_one_row(
         }
         [delta[0] / length, delta[1] / length]
     };
-    let edge = contract.edge_clearance_mm();
     let slack_first = sheet_slack(
-        state.geometry.piece_bounds[first],
+        shifted_bounds(state.geometry.piece_bounds[first], offsets[first]),
         normal,
         contract,
         state.target_depth_mm,
-        edge,
     )
     .min(limits.max_piece_displacement_mm - displacement[first]);
     let slack_second = sheet_slack(
-        state.geometry.piece_bounds[second],
+        shifted_bounds(state.geometry.piece_bounds[second], offsets[second]),
         [-normal[0], -normal[1]],
         contract,
         state.target_depth_mm,
-        edge,
     )
     .min(limits.max_piece_displacement_mm - displacement[second]);
     if slack_first.max(0.0) + slack_second.max(0.0) < correction {
@@ -582,30 +589,54 @@ fn repair_one_row(
     poses[second].ty_mm -= normal[1] * share_second;
     displacement[first] += share_first;
     displacement[second] += share_second;
+    offsets[first][0] += normal[0] * share_first;
+    offsets[first][1] += normal[1] * share_first;
+    offsets[second][0] -= normal[0] * share_second;
+    offsets[second][1] -= normal[1] * share_second;
     Some(vec![first, second])
+}
+
+/// A pre-repair box translated by what this repair pass has already spent on
+/// that piece. Repair freezes rotation, so a rigid translation moves the box
+/// exactly - no re-derivation from geometry is needed and none would be more
+/// accurate.
+#[inline]
+fn shifted_bounds(bounds: [f64; 4], offset: [f64; 2]) -> [f64; 4] {
+    [
+        bounds[0] + offset[0],
+        bounds[1] + offset[1],
+        bounds[2] + offset[0],
+        bounds[3] + offset[1],
+    ]
 }
 
 /// How far a piece may move along `direction` before its material leaves the
 /// strip. Never negative-infinite: an axis the direction does not touch does
 /// not bind.
+///
+/// The four sides carry the same split Phi does: left, right and bottom are
+/// physical sheet edges at `edge + sag`; the top is the tighter of the locked
+/// strip in the sag-less depth convention and the physical sheet top at
+/// `edge + sag` (Grok review 10 §B.1, `publish.rs:550-608`).
 fn sheet_slack(
     bounds: [f64; 4],
     direction: [f64; 2],
     contract: &Contract,
     target_depth_mm: f64,
-    edge_clearance_mm: f64,
 ) -> f64 {
+    let physical = contract.physical_edge_clearance_mm();
+    let top = (target_depth_mm - contract.depth_top_inset_mm())
+        .min(contract.sheet_long_axis_mm - physical);
     let mut slack = f64::INFINITY;
     if direction[0] > 0.0 {
-        slack = slack
-            .min((contract.sheet_short_axis_mm - edge_clearance_mm - bounds[2]) / direction[0]);
+        slack = slack.min((contract.sheet_short_axis_mm - physical - bounds[2]) / direction[0]);
     } else if direction[0] < 0.0 {
-        slack = slack.min((bounds[0] - edge_clearance_mm) / -direction[0]);
+        slack = slack.min((bounds[0] - physical) / -direction[0]);
     }
     if direction[1] > 0.0 {
-        slack = slack.min((target_depth_mm - edge_clearance_mm - bounds[3]) / direction[1]);
+        slack = slack.min((top - bounds[3]) / direction[1]);
     } else if direction[1] < 0.0 {
-        slack = slack.min((bounds[1] - edge_clearance_mm) / -direction[1]);
+        slack = slack.min((bounds[1] - physical) / -direction[1]);
     }
     if slack.is_finite() {
         slack.max(0.0)

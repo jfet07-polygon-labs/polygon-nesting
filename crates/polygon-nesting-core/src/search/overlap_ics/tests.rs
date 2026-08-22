@@ -178,6 +178,15 @@ fn touching_squares_report_exactly_zero() {
     let b = square(10.0, 0.0, 10.0);
     let gap = convex_cell_gap(&a, &b);
     assert_eq!(gap.signed_gap_mm, 0.0, "{gap:?}");
+    // Sol review 15 §B.6: exact material contact must still name a direction.
+    // The gap is zero, but the row's *violation* is the whole pair clearance,
+    // and a positive violation with a zero normal is weight in Phi with no
+    // force in the gradient - a piece charged for an overlap it is given no way
+    // to leave. The SAT's own separating axis is that direction.
+    assert_eq!(gap.normal, [-1.0, 0.0], "a must move left to separate: {gap:?}");
+    let reversed = convex_cell_gap(&b, &a);
+    assert_eq!(reversed.signed_gap_mm, 0.0, "{reversed:?}");
+    assert_eq!(reversed.normal, [1.0, 0.0], "{reversed:?}");
 }
 
 #[test]
@@ -751,4 +760,88 @@ fn the_ladder_runs_from_the_derived_top_to_a_quarter_micrometre() {
     assert!((ladder[0] - 1.25).abs() < 1e-12, "top rung {}", ladder[0]);
     assert_eq!(*ladder.last().expect("a bottom rung"), 0.00025);
     assert!(ladder.len() > 8);
+}
+
+/// Sol review 15 §B.7, verbatim: *"Test sag-specifico: top virtuale
+/// soddisfatto a `max_y = T - edge`, mentre left/right/bottom continuano a
+/// richiedere `edge + sag`."*
+///
+/// The four rows of one box, on a contract with `sag = 0.25`, placed so that
+/// each side is *exactly* on its own threshold. If the strip top were charged
+/// `edge + sag` like a sheet edge, the first assertion would read `0.25`
+/// instead of `0`, and every triangle-20 trajectory would be descending toward
+/// a target a quarter of a millimetre stricter than the gate it publishes
+/// through.
+#[test]
+fn the_strip_top_is_sag_less_while_the_sheet_edges_are_not() {
+    let mut settings = GeneralFastSettings::deterministic_test(2000.0, 2700.0);
+    settings.total_padding_mm = 5.0;
+    settings.sheet_edge_clearance_mm = Some(5.0);
+    settings.flattening_sag_tolerance_mm = 0.25;
+    let contract = Contract::from_settings(settings);
+    assert_eq!(contract.physical_edge_clearance_mm(), 5.25);
+    assert_eq!(contract.depth_top_inset_mm(), 5.0);
+
+    let target = 70.742;
+    // A box whose top is exactly at `T - depth_top_inset` and whose other three
+    // sides are exactly on the physical `edge + sag` thresholds.
+    let satisfied = [
+        contract.physical_edge_clearance_mm(),
+        contract.physical_edge_clearance_mm(),
+        settings.sheet_short_axis_mm - contract.physical_edge_clearance_mm(),
+        target - contract.depth_top_inset_mm(),
+    ];
+    let rows = super::broad_phase::boundary_residuals(satisfied, &contract, target);
+    assert_eq!(rows, [0.0, 0.0, 0.0, 0.0], "every side is exactly satisfied");
+
+    // One micrometre past the sag-less top is a violation, of exactly that.
+    let over = [satisfied[0], satisfied[1], satisfied[2], satisfied[3] + 0.001];
+    let rows = super::broad_phase::boundary_residuals(over, &contract, target);
+    assert!((rows[3] - 0.001).abs() < 1e-12, "top row {rows:?}");
+
+    // The three physical sides keep charging the sag: a box sitting on the
+    // sag-*less* inset on the left is violating by exactly one sag tolerance.
+    let shy = [
+        contract.depth_top_inset_mm(),
+        satisfied[1],
+        satisfied[2],
+        satisfied[3],
+    ];
+    let rows = super::broad_phase::boundary_residuals(shy, &contract, target);
+    assert!((rows[0] - 0.25).abs() < 1e-12, "left row {rows:?}");
+
+    // And the physical sheet top is still a boundary, even though no Gate-0
+    // cell reaches it: a locked target beyond the sheet cannot buy depth.
+    let deep = [satisfied[0], satisfied[1], satisfied[2], 2700.0 - 5.0];
+    let rows = super::broad_phase::boundary_residuals(deep, &contract, 3000.0);
+    assert!((rows[3] - 0.25).abs() < 1e-12, "sheet top row {rows:?}");
+}
+
+/// The same split, one level up: `lower_scale_mm` is sag-aware and asymmetric.
+///
+/// Sol review 15 §A.1 computes triangle-20's correct floor as
+/// `60 + 5.25 + 5.0 = 70.25`, against the 70.0 the symmetric `2 * edge`
+/// produced. The bound is a *lower* bound on a depth in the sag-less
+/// publication convention, so it carries one physical bottom edge and one
+/// sag-less top inset - not two of either.
+#[test]
+fn the_lower_scale_carries_one_physical_edge_and_one_depth_inset() {
+    let fixture = Fixture::squares(1, 60.0);
+    let pieces = fixture.pieces();
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+
+    let mut settings = GeneralFastSettings::deterministic_test(2000.0, 2700.0);
+    settings.total_padding_mm = 5.0;
+    settings.sheet_edge_clearance_mm = Some(5.0);
+    settings.flattening_sag_tolerance_mm = 0.25;
+    let sagged = super::homotopy::lower_scale_mm(&sources, &Contract::from_settings(settings));
+
+    settings.flattening_sag_tolerance_mm = 0.0;
+    let exact = super::homotopy::lower_scale_mm(&sources, &Contract::from_settings(settings));
+
+    // 60 mm of minimum width, plus 5.25 below and 5.0 above.
+    assert!((sagged - 70.25).abs() < 1e-9, "sagged {sagged}");
+    // With `sag = 0` the two clearances coincide and the bound is unchanged,
+    // which is why mixed-61's `L` - and therefore C175's target - does not move.
+    assert!((exact - 70.0).abs() < 1e-9, "exact {exact}");
 }

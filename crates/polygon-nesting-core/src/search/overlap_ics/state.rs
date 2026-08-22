@@ -51,10 +51,17 @@ impl Pose {
 /// unbounded, which is all the spec asks of it - no catalogue, no window, no
 /// 2.5° step.
 ///
-/// Sol R2 §4 asks for `libm` trigonometry for cross-version determinism.
-/// Identity with the publication transform is the stronger requirement and is
-/// the one taken here; the determinism contract already carries the libm
-/// implementation in its environment tuple.
+/// **This is `std::f64::sin_cos`, not `libm`, and the determinism claim is
+/// narrowed to match.** Sol R2 §4 asks for `libm` trigonometry so that the
+/// contract can span toolchains; identity with the publication transform - which
+/// calls `f64::to_radians().sin_cos()` - is the stronger requirement and is the
+/// one taken here, because without it an imported pose set does not reproduce
+/// its own depth. The price is that the determinism contract is a **same-box,
+/// same-toolchain, same-target** contract: bit-identical poses, checkpoints and
+/// publications per `(request, seed, binary, x86, toolchain, features, workers,
+/// quota)`, with the trig implementation fixed by the toolchain rather than
+/// vendored. No cross-platform `sin`/`cos` identity is claimed here or anywhere
+/// in this campaign (Sol review 15 §D, last bullet).
 #[inline]
 pub fn pose_sin_cos(theta_deg: f64) -> (f64, f64) {
     theta_deg.to_radians().sin_cos()
@@ -100,9 +107,33 @@ impl Contract {
         self.total_padding_mm + 2.0 * self.flattening_sag_tolerance_mm
     }
 
-    /// The material contract's own sheet clearance.
-    pub fn edge_clearance_mm(&self) -> f64 {
+    /// The clearance a **true sheet edge** demands: the settings' own sheet
+    /// edge clearance plus the flattening sag tolerance, exactly as
+    /// `validation::general_polygon` charges it on the physical 2000x2700
+    /// sheet. Left, right, bottom - and the physical top at
+    /// `sheet_long_axis_mm`, which no Gate-0 cell reaches but which is a real
+    /// boundary and is charged as one.
+    ///
+    /// **This is not the strip top.** See [`Contract::depth_top_inset_mm`].
+    /// One `edge_clearance_mm()` on all four sides was the defect Sol review 15
+    /// §A.1 and Grok review 10 Finding 1 name: it charged a *sheet* rule
+    /// against a *depth target*, which manufactured up to one sag tolerance of
+    /// phantom top-row violation on any request with `sag > 0`.
+    pub fn physical_edge_clearance_mm(&self) -> f64 {
         self.sheet_edge_clearance_mm + self.flattening_sag_tolerance_mm
+    }
+
+    /// The inset the **depth convention** carries, and therefore the one the
+    /// locked strip's top uses: sag-less.
+    ///
+    /// `raw_source_depth_mm` is `max source y + sheet_edge_clearance_mm`
+    /// ([`raw_source_depth_mm`], `publish::raw_depth_of`) and the publication
+    /// gate is `proxy_depth <= T` in that same convention. A strip top charged
+    /// at `edge + sag` would be one sag tolerance stricter than the gate the
+    /// descent is descending toward - which is precisely the asymmetry
+    /// `gate0-verification/README.md` §3.4 recorded and this split removes.
+    pub fn depth_top_inset_mm(&self) -> f64 {
+        self.sheet_edge_clearance_mm
     }
 
     /// The round kernel's radius at **allowance zero**. The search-offset

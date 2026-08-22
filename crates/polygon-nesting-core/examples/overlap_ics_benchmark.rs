@@ -37,7 +37,9 @@ use polygon_nesting_core::search::general_fast::{
 };
 use polygon_nesting_core::search::overlap_ics::contact::convex_cell_gap;
 use polygon_nesting_core::search::overlap_ics::corpus;
-use polygon_nesting_core::search::overlap_ics::descent::{counter_hash, DescentConfig};
+use polygon_nesting_core::search::overlap_ics::descent::{
+    counter_hash, DescentConfig, RejectionCensus,
+};
 use polygon_nesting_core::search::overlap_ics::diagnostics::WorkVector;
 use polygon_nesting_core::search::overlap_ics::homotopy;
 use polygon_nesting_core::search::overlap_ics::publish::{
@@ -219,6 +221,50 @@ fn work_json(work: &WorkVector) -> Value {
     Value::Object(object)
 }
 
+/// The rejection census both reviews require before any statement about the
+/// move set: the whole population's accept/reject split by direction class, and
+/// a bounded rung-by-rung decomposition of the rejections **at the stall**.
+fn rejection_census_json(census: &RejectionCensus) -> Value {
+    json!({
+        "armed": census.armed,
+        "acceptedProposals": census.accepted,
+        "rejectedProposals": census.rejected,
+        "zeroEnergyProposals": census.zero_energy,
+        "acceptedByDirectionClass": {
+            "translation": census.accepted_by_class[0],
+            "rotation": census.accepted_by_class[1],
+            "combined": census.accepted_by_class[2],
+        },
+        "rejectedByDirectionClass": {
+            "translation": census.rejected_by_class[0],
+            "rotation": census.rejected_by_class[1],
+            "combined": census.rejected_by_class[2],
+        },
+        "sampledRejections": census.records.len(),
+        "rejections": census.records.iter().map(|row| json!({
+            "proposalOrdinal": row.proposal_ordinal,
+            "piece": row.piece,
+            "directionClass": row.direction_class,
+            "translationShare": row.translation_share,
+            "rotationShare": row.rotation_share,
+            "incidentGuidedBefore": row.incident_guided_before,
+            "rawPhiBefore": row.raw_before,
+            "guidedPhiBefore": row.guided_before,
+            "maxViolationBeforeMm": row.max_violation_before_mm,
+            "activeIncidentRows": row.active_incident_rows,
+            "activeIncidentPenaltyMax": row.active_incident_penalty_max,
+            "activeIncidentPenaltySum": row.active_incident_penalty_sum,
+            "rungs": row.rungs.iter().map(|rung| json!({
+                "stepMm": rung.step_mm,
+                "deltaIncidentGuided": rung.delta_incident_guided,
+                "deltaRawPhi": rung.delta_raw,
+                "deltaMaxViolationMm": rung.delta_max_violation_mm,
+                "newlyActivatedRows": rung.newly_activated_rows,
+            })).collect::<Vec<_>>(),
+        })).collect::<Vec<_>>(),
+    })
+}
+
 fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
     json!({
         "incumbent": {
@@ -244,11 +290,44 @@ fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
             "maxPairViolationMm": outcome.final_census.max_pair_violation_mm,
             "maxEdgeViolationMm": outcome.final_census.max_edge_violation_mm,
             "maxGuidedPenalty": outcome.final_census.max_penalty,
+            // The per-side split. Two rows on opposite sides of one piece mean
+            // no single rigid translation legalizes the layout, which is the
+            // claim the previous round's README could not settle.
+            "activeEdgeRowsBySide": {
+                "left": outcome.final_census.active_edges_by_side[0],
+                "right": outcome.final_census.active_edges_by_side[1],
+                "bottom": outcome.final_census.active_edges_by_side[2],
+                "top": outcome.final_census.active_edges_by_side[3],
+            },
+            "maxEdgeViolationBySideMm": {
+                "left": outcome.final_census.max_edge_violation_by_side_mm[0],
+                "right": outcome.final_census.max_edge_violation_by_side_mm[1],
+                "bottom": outcome.final_census.max_edge_violation_by_side_mm[2],
+                "top": outcome.final_census.max_edge_violation_by_side_mm[3],
+            },
+            "piecesSqueezedOnOppositeSides":
+                outcome.final_census.pieces_squeezed_on_opposite_sides,
         },
+        "rejectionCensus": rejection_census_json(&outcome.rejection_census),
         "sweeps": outcome.trace.sweeps,
         "guidedStalls": outcome.trace.guided_stalls,
         "jumps": outcome.trace.jumps,
+        "jumpAttempted": outcome.trace.jump_attempted,
+        "jumpCommitted": outcome.trace.jump_committed,
+        // Named for what it is: "the best candidate beat the pre-jump guided
+        // Φ", not "a relocation was installed". Read it beside `jumpCommitted`.
         "jumpsImprovingGuided": outcome.trace.jumps_improving_guided,
+        "jumpEvents": outcome.trace.jump_events.iter().map(|row| json!({
+            "proposalOrdinal": row.proposal_ordinal,
+            "piece": row.piece,
+            "kind": row.kind,
+            "radiusMm": if row.radius_mm.is_finite() { json!(row.radius_mm) } else { json!("strip") },
+            "maxViolationMm": row.max_violation_mm,
+            "baselineGuidedPhi": row.baseline_guided,
+            "bestGuidedPhi": row.best_guided,
+            "installed": row.installed,
+            "improvedGuided": row.improved_guided,
+        })).collect::<Vec<_>>(),
         "work": work_json(&outcome.trace.work),
         "qualitySeries": outcome.trace.quality.iter().map(|point| json!({
             "proposalOrdinal": point.proposal_ordinal,
@@ -417,7 +496,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         "contract": {
             "pairClearanceMm": contract.pair_clearance_mm(),
-            "sheetEdgeClearanceMm": contract.edge_clearance_mm(),
+            // `sheetEdgeClearanceMm` keeps its previous meaning and value -
+            // `edge + sag`, the physical sheet rule - so the previous round's
+            // documents and `residual_split.py` stay readable. The two names
+            // beside it are the split this round introduced.
+            "sheetEdgeClearanceMm": contract.physical_edge_clearance_mm(),
+            "physicalEdgeClearanceMm": contract.physical_edge_clearance_mm(),
+            "depthTopInsetMm": contract.depth_top_inset_mm(),
             "expansionMm": contract.expansion_mm(),
             "twoRMicron": (contract.expansion_mm() * 2000.0).round(),
             "sheetInsetMm": contract.sheet_inset_mm(),
@@ -538,8 +623,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 document["lockedTargetMm"] = json!(target);
             } else {
                 // The shock, written out rather than hidden inside the engine:
-                // the constructor's poses, affinely compressed onto the locked
-                // target, then displaced by a seed-keyed SE(2) vector.
+                // the constructor's poses displaced by a seed-keyed SE(2)
+                // vector, and *then* affinely compressed onto the locked
+                // target.
                 //
                 // The displacement is what makes three seeds three
                 // *trajectories*. Without it the descent is seed-independent
@@ -550,15 +636,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // objection Sol review 14 §3 raises. Sol R2 §4 sanctions the
                 // construction: distinct workers use "distinct deterministic
                 // affine perturbations/jump streams" from the same constructor.
-                let factor =
-                    homotopy::affine_compression_factor(&sources, &parent, &contract, target);
-                let compressed = homotopy::compressed(&sources, &parent, &contract, factor);
-                let shocked = perturb(
-                    &compressed,
+                //
+                // **The order was wrong and it changed the cell.** Compressing
+                // first and perturbing after put the entry state up to one
+                // shock magnitude *outside* the locked strip - about 0.8 mm on
+                // C175 - so what ran was "affine shock plus a random throw past
+                // the target", not the cell the arbitration named (Sol review
+                // 15 §A.4). Perturbing the parent and compressing each
+                // perturbed parent onto the same `T` gives three distinct
+                // trajectories that all start inside their own target, which is
+                // what the assertion below now requires of every seed.
+                let perturbed_parent = perturb(
+                    &parent,
                     seed,
                     options.number("shockmm", 0.25)?,
                     options.number("shockdeg", 1.0)?,
                 );
+                let factor = homotopy::affine_compression_factor(
+                    &sources,
+                    &perturbed_parent,
+                    &contract,
+                    target,
+                );
+                let shocked =
+                    homotopy::compressed(&sources, &perturbed_parent, &contract, factor);
                 let config = IcsConfig {
                     target_depth_mm: target,
                     proposal_budget: options.integer("budget", 100_000)?,
@@ -584,6 +685,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
                 let entry_totals = engine.totals();
                 let entry_depth = engine.raw_depth_mm();
+                // A hard failure, not a warning. The whole point of the shock
+                // is that the trajectory starts *at* a target it cannot yet
+                // satisfy; a state that starts outside the strip is a different
+                // cell and must not be reported as this one.
+                if entry_depth > target + 1e-9 {
+                    return Err(format!(
+                        "cell `{cell}` entered at {entry_depth} mm, outside its locked target \
+                         {target} mm: the shock must be applied to the parent and compressed \
+                         onto the target, never applied after the compression"
+                    )
+                    .into());
+                }
                 let outcome = engine.run();
                 wall.insert(
                     "solverSeconds".to_owned(),
@@ -591,6 +704,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
                 document["shock"] = json!({
                     "affineFactor": factor,
+                    "entryDepthWithinTarget": entry_depth <= target + 1e-9,
+                    "entryDepthSlackMm": target - entry_depth,
                     "shockMm": options.number("shockmm", 0.25)?,
                     "shockDeg": options.number("shockdeg", 1.0)?,
                     "shockedPoseDigest": pose_digest(&shocked),
@@ -859,10 +974,17 @@ fn descent_config(
 ) -> Result<DescentConfig, String> {
     let mut config = DescentConfig::derive(contract, sources, seed);
     config.jump_allowance = options.integer("jumps", config.jump_allowance as u64)? as u32;
+    config.rejection_census_samples =
+        options.integer("rejectioncensus", config.rejection_census_samples as u64)? as usize;
     config.stalls_before_jump =
         options.integer("stalls", config.stalls_before_jump as u64)? as u32;
+    // Absent means the *derived* default, which after the Gate-0 autopsy is the
+    // spec's literal reading: the best candidate commits. `guided` stays
+    // reachable so the A/B is one command, but it is no longer the default and
+    // no longer silently overrides `DescentConfig::derive`.
     config.jump_commits_unconditionally = match options.get("jumpcommit") {
-        None | Some("guided") => false,
+        None => config.jump_commits_unconditionally,
+        Some("guided") => false,
         Some("always") => true,
         Some(other) => return Err(format!("--jumpcommit must be always|guided, not `{other}`")),
     };
@@ -898,17 +1020,23 @@ fn uniform_throw(
     target_mm: f64,
     seed: u64,
 ) -> Vec<Pose> {
-    let edge = contract.edge_clearance_mm();
+    // The same L/R/B-physical, top-inset split Phi and the jump box use. The
+    // circumradius convention is kept here on purpose: random-T is the uniform
+    // *throw* diagnostic, its whole point is a dense scatter with no structure,
+    // and it is not a cell any verdict rests on.
+    let physical = contract.physical_edge_clearance_mm();
+    let top = (target_mm - contract.depth_top_inset_mm())
+        .min(contract.sheet_long_axis_mm - physical);
     sources
         .iter()
         .enumerate()
         .map(|(index, source)| {
             let key = counter_hash(&[seed, index as u64, 0x7470]);
             let radius = source.max_radius_mm;
-            let low_x = edge + radius;
-            let high_x = contract.sheet_short_axis_mm - edge - radius;
-            let low_y = edge + radius;
-            let high_y = target_mm - edge - radius;
+            let low_x = physical + radius;
+            let high_x = contract.sheet_short_axis_mm - physical - radius;
+            let low_y = physical + radius;
+            let high_y = top - radius;
             let theta = if pieces[index].allow_rotation {
                 unit(key >> 34) * 360.0
             } else {

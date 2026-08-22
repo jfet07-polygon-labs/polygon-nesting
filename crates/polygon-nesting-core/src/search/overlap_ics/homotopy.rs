@@ -69,8 +69,16 @@ impl StripSchedule {
 /// This deliberately does not call `portfolio::area_lower_bound_depth_mm`: that
 /// bound is offset with the miter/search allowance and so is not a statement
 /// about raw material.
+///
+/// **Sag-aware, and asymmetrically so.** The usable width and the floor are
+/// bounded by two *physical* sheet edges, which cost `edge + sag` each; the
+/// depth this returns is in the sag-less publication convention, whose top term
+/// is `depth_top_inset_mm`. On triangle-20 (`sag = 0.25`) that is
+/// `60.0 + 5.25 + 5.0 = 70.25`, not the 70.0 the symmetric `2 * edge` produced
+/// (Sol review 15 §A.1). On mixed-61 `sag = 0` and `L` is unchanged to the last
+/// bit, which is why C175's `T = D - 0.10 (D - L)` does not move.
 pub fn lower_scale_mm(sources: &[PieceSource], contract: &Contract) -> f64 {
-    let edge = contract.sheet_edge_clearance_mm;
+    let edge = contract.physical_edge_clearance_mm();
     let usable_width = (contract.sheet_short_axis_mm - 2.0 * edge).max(f64::MIN_POSITIVE);
     let mut area = 0.0f64;
     let mut tallest = 0.0f64;
@@ -78,7 +86,7 @@ pub fn lower_scale_mm(sources: &[PieceSource], contract: &Contract) -> f64 {
         area += source.area_mm2;
         tallest = tallest.max(source.min_width_mm);
     }
-    (area / usable_width).max(tallest) + 2.0 * edge
+    (area / usable_width).max(tallest) + edge + contract.depth_top_inset_mm()
 }
 
 /// The affine factor that compresses a layout's centroids along the long axis
@@ -112,13 +120,20 @@ pub fn affine_compression_factor(
 
 /// The poses a compression factor produces. Rigid: `theta` and the mirror are
 /// untouched and only the long-axis offset from the strip's floor scales.
+///
+/// The floor is the **physical** bottom edge, `edge + sag`, because that is
+/// what Phi's bottom row charges. Anchoring the compression at the sag-less
+/// inset instead pushed every centroid one sag tolerance below the row that
+/// judges it and *manufactured* bottom residuals of up to `sag` on any request
+/// with `sag > 0` (Grok review 10 §B.2). On mixed-61 `sag = 0` and this is a
+/// no-op to the last bit.
 pub fn compressed(
     sources: &[PieceSource],
     poses: &[Pose],
     contract: &Contract,
     factor: f64,
 ) -> Vec<Pose> {
-    let floor = contract.sheet_edge_clearance_mm;
+    let floor = contract.physical_edge_clearance_mm();
     sources
         .iter()
         .zip(poses)

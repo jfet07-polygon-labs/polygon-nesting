@@ -105,6 +105,8 @@ pub struct IcsOutcome {
     pub first_strict_child_proposal: Option<u64>,
     /// Which rows are still active at the end, and how bad the worst is.
     pub final_census: energy::RowCensus,
+    /// Why the proposals that were refused were refused.
+    pub rejection_census: descent::RejectionCensus,
 }
 
 /// Everything one trajectory owns. Built once; the descent allocates nothing
@@ -119,8 +121,8 @@ pub struct Engine<'a> {
     pub trace: Trace,
     pub config: IcsConfig,
     descent: Descent,
-    /// The proxy depth of the last state offered for publication.
-    last_attempt_depth_mm: Option<f64>,
+    /// The pose-bits digest of the last state offered for publication.
+    last_attempt_pose_digest: Option<[u8; 32]>,
 }
 
 impl<'a> Engine<'a> {
@@ -194,7 +196,7 @@ impl<'a> Engine<'a> {
             trace,
             config,
             descent,
-            last_attempt_depth_mm: None,
+            last_attempt_pose_digest: None,
         }
     }
 
@@ -257,19 +259,22 @@ impl<'a> Engine<'a> {
     /// One publication attempt at the current state, recorded whatever it does.
     pub fn checkpoint(&mut self) -> bool {
         let totals = energy::fold(&self.state);
-        // Do not re-attempt an unchanged state. The attempt gate compares the
-        // *proxy* depth against the incumbent, and publication repair can give
-        // back more than the 1 µm the gate asks for - so a converged state
-        // whose repaired depth is worse than its proxy depth passes the gate on
-        // every sweep, republishes the identical layout, and never improves the
+        // Do not re-attempt an **unchanged** state. The attempt gate compares
+        // the *proxy* depth against the incumbent, and publication repair can
+        // give back more than the 1 µm the gate asks for - so a converged state
+        // whose repaired depth is worse than its proxy depth passed the gate on
+        // every sweep, republished the identical layout, and never improved the
         // incumbent. One basin row spent 3,266 exact checkpoints that way.
-        // Exact checkpoints are the scarcest thing in the work vector; a
-        // trajectory that has not moved has nothing new to offer.
-        let depth = self.raw_depth_mm();
-        if let Some(previous) = self.last_attempt_depth_mm {
-            if depth > previous - self.config.limits.minimum_improvement_mm {
-                return false;
-            }
+        //
+        // "Unchanged" is a statement about the **poses**, not about the depth.
+        // Comparing depth alone skipped a genuinely different layout that
+        // happened to be equally deep - and equal depth is not rare, it is what
+        // a strip-bound layout converges to (Sol review 15 §D, `mod.rs:257`).
+        // The digest is over every `x`, `y`, `theta` bit and the mirror flag,
+        // so two states compare equal here only if they are the same state.
+        let digest = pose_bits_digest(&self.state.poses);
+        if self.last_attempt_pose_digest == Some(digest) {
+            return false;
         }
         let Some(attempt) = publish::attempt(
             &self.state,
@@ -285,7 +290,7 @@ impl<'a> Engine<'a> {
         ) else {
             return false;
         };
-        self.last_attempt_depth_mm = Some(depth);
+        self.last_attempt_pose_digest = Some(digest);
         self.trace.checkpoints.push(attempt.checkpoint);
         let Some(publication) = attempt.publication else {
             return false;
@@ -358,8 +363,25 @@ impl<'a> Engine<'a> {
                     } = *self;
                     descent.on_stalled_sweep(state, sources, contract, &mut trace.work)
                 };
-                if jumped {
-                    self.trace.jumps_improving_guided += 1;
+                if jumped.attempted {
+                    self.trace.jump_attempted += 1;
+                    if jumped.installed {
+                        self.trace.jump_committed += 1;
+                    }
+                    if jumped.improved_guided {
+                        self.trace.jumps_improving_guided += 1;
+                    }
+                    self.trace.jump_events.push(diagnostics::JumpEvent {
+                        proposal_ordinal: self.descent.proposals,
+                        piece: jumped.piece,
+                        kind: jumped.kind.label(),
+                        radius_mm: jumped.radius_mm,
+                        max_violation_mm: jumped.max_violation_mm,
+                        baseline_guided: jumped.baseline_guided,
+                        best_guided: jumped.best_guided,
+                        installed: jumped.installed,
+                        improved_guided: jumped.improved_guided,
+                    });
                 }
                 self.trace.jumps = self.descent.jumps_spent() as u64;
             }
@@ -394,6 +416,7 @@ impl<'a> Engine<'a> {
                 .count() as u64,
             first_strict_child_proposal: first_strict_child,
             final_census: energy::census(&self.state),
+            rejection_census: self.descent.rejection_census().clone(),
         }
     }
 
@@ -414,6 +437,25 @@ impl<'a> Engine<'a> {
     pub fn work(&self) -> WorkVector {
         self.trace.work
     }
+}
+
+/// A digest over every pose bit: `x`, `y`, `theta` and the mirror flag, in
+/// piece order.
+///
+/// Not a fingerprint. `publish::placement_fingerprint` keys the angle at 1e-6
+/// degrees and the translations on the 1 µm canonical grid, because it exists
+/// to answer "is this the constructor's layout"; this exists to answer "has
+/// anything at all moved", so it compares raw bits and nothing is rounded away.
+pub fn pose_bits_digest(poses: &[Pose]) -> [u8; 32] {
+    use sha2::{Digest, Sha256};
+    let mut digest = Sha256::new();
+    for pose in poses {
+        digest.update(pose.tx_mm.to_bits().to_le_bytes());
+        digest.update(pose.ty_mm.to_bits().to_le_bytes());
+        digest.update(pose.theta_deg.to_bits().to_le_bytes());
+        digest.update([u8::from(pose.mirrored)]);
+    }
+    digest.finalize().into()
 }
 
 /// Maps a constructor's placements onto poses in the piece set's own order.

@@ -170,7 +170,6 @@ pub fn independent_score(
 ) -> IndependentScore {
     let count = geometry.piece_rings.len();
     let clearance = contract.pair_clearance_mm();
-    let edge = contract.edge_clearance_mm();
     let mut score = IndependentScore::default();
     for first in 0..count {
         for second in (first + 1)..count {
@@ -186,12 +185,13 @@ pub fn independent_score(
     }
     for piece in 0..count {
         let box_mm = geometry.piece_bounds[piece];
-        for deficit in super::broad_phase::boundary_residuals(
-            box_mm,
-            contract.sheet_short_axis_mm,
-            target_depth_mm,
-            edge,
-        ) {
+        // The same L/R/B-physical, top-inset split Phi uses. This is the one
+        // place the "independent" oracle is not independent - it shares
+        // `boundary_residuals` - and that is exactly why it could not have
+        // caught the phantom top (Sol review 15 §D). The conventions are kept
+        // identical on purpose rather than diverging silently; the share is
+        // recorded in the round's README as a limit of the oracle.
+        for deficit in super::broad_phase::boundary_residuals(box_mm, contract, target_depth_mm) {
             score.total_violation_mm += deficit;
             score.max_violation_mm = score.max_violation_mm.max(deficit);
         }
@@ -217,12 +217,9 @@ pub fn independent_incident(
             independent_ring_gap(geometry.ring_slice(piece), geometry.ring_slice(other));
         total += (clearance - gap).max(0.0);
     }
-    for deficit in super::broad_phase::boundary_residuals(
-        geometry.piece_bounds[piece],
-        contract.sheet_short_axis_mm,
-        target_depth_mm,
-        contract.edge_clearance_mm(),
-    ) {
+    for deficit in
+        super::broad_phase::boundary_residuals(geometry.piece_bounds[piece], contract, target_depth_mm)
+    {
         total += deficit;
     }
     total
