@@ -7479,3 +7479,41 @@ new mechanism rather than another sweep.
 
 Evidence, drivers, both passes and the retirement entry for
 `shipped-surface.md`'s board: `docs/experiments/m26-band-audition/`.
+
+## The dual review of Gate A and the audition: five overclaims corrected, the product question named first
+
+Sol 12 and Grok 7 reviewed the merged round from the raw evidence (both
+verified the counts, the import fidelity at 2.27e-13 mm, and the re-pin
+digit-for-digit; Grok re-derived the refusal-cause attribution from
+`summarize.py:decompose` and called it sound). Five formulations were too
+strong and are corrected in place — `d−2·r*` renamed an effective quantized
+tax with the cause resting on the full-scan counterfactual; the round
+deviation measured on 15 of 31 rows, not all; the grid budget re-derived at
+≈5.0 µm (observed 2.2 still passes); the audition kill tally stated exactly
+(strict 5/5, weak 4/5, designated control both); the Grok-5 falsification
+narrowed to the in-process-artefact half, with the economic precondition
+confirmed. Errata sections in both READMEs; the m26 retirement row applied to
+`shipped-surface.md` §3 (it had been drafted in the audition README and never
+landed — Grok caught the gap).
+
+Both reviewers rank the same next step and it is not engine work: **the
+product question — is `JoinType::Miter` at limit 2.0 an immutable half of the
+publication AND?** Written answer required before any spend. If immutable:
+stop on 150@10s (the operator space is measured out and the legal set
+provably excludes Sparrow-class layouts). If the join may change: Sol's
+certified kernel with unmodified gates — zero false accepts on three
+populations plus ±1 µm cases, ≤1.25x cost, ≥8/12 at equal operator-wall — and
+Sol adds the economics kill nobody had priced: the shadow round offset
+produces 20.6k vertices against miter's 377 (55x); a shippable kernel is a
+hybrid (cheap broad phase + analytic arc distance at the margin), not
+Clipper-round-in-the-candidate-loop. Off-lattice reachability is costed in
+the same round as a co-requirement, not a sequel (57/61 poses off both the
+2.5 and 1.0 degree lattices; crot remains a measured negative). Neither
+reviewer funds an m26 follow-up, a crot revival, or a promotion A/B on the
+inscribed shadow. Three barriers stand between a legal round envelope and
+150@10s: legality (this round), reachability, and search economics (the 13 mm
+from wall 168.5 to record 155.264 lies *inside* the current legal set and is
+a budget/basin problem 10s does not buy).
+
+Reviews verbatim: `docs/sol-review-12-the-effective-tax-and-the-hybrid-kernel.md`,
+`docs/grok-review-7-the-product-question-first.md`.

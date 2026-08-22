@@ -504,3 +504,38 @@ python3 drivers/verdict.py OUT/verdict.json OUT/replay/replay.json \
 python3 drivers/tables.py OUT/verdict.json
 bash drivers/run-suites.sh
 ```
+
+## Errata — from the post-round dual review (Sol 12 + Grok 7, 2026-08-22)
+
+Both reviewers confirm the CUT and that the five-budget curve neutralizes the
+W-choice objection *for the rule Kimi wrote*. Three formulations need
+precision; none reopens the arm.
+
+1. **The kill-rule tally, stated exactly: strict rule CUT 5/5 budgets; weak
+   rule CUT 4/5; the designated control (`m34:15000000`) CUT under both.** At
+   the smallest control budget (`m34:1670689`) `survivesWeak: true` — clause B
+   passes 8/12 there while clause A fails (the arm's median, 0.2332 mm, is
+   below even that one-tenth-work control's 0.2534). Any summary sentence
+   saying "both readings fail at all five budgets" overstates by that one
+   cell. The published `verdict` field is governed by the strict reading,
+   which is Kimi's connective.
+2. **"Work-matched" means matched on the *median* — the per-parent
+   control/arm work ratio spans ≈0.27–2.22.** "0/12 below the control" is
+   against the configuration whose median operator work is nearest the arm's,
+   not twelve equal-work duels. The aggregate dominance (8.4× mm per work
+   unit, and the wall column) is unaffected.
+3. **On Grok review 5: what this round falsifies is narrower than §5's
+   sentence.** The audition proves the gain survives being lifted out of the
+   coordinator onto pinned parents — so "artefact of the in-process context"
+   is dead. The *economic* half of Grok 5's archival (a precondition available
+   only after ~16 s of v2) is **confirmed**, not refuted: the full ladder
+   costs 16.39 s even warm. Grok 7's own reading: the death certificate
+   changes from "wrong precondition" to "dominated by its own port
+   (`compression_schedule.rs`, mode 34)" — which is more final, not less.
+   Arm C stays archived either way.
+4. **The curve measured the 1-rung and 6-rung endpoints, not the 2–5-rung
+   prefixes a literally-enforced 15–35 M cap would have produced.** The
+   closure is "the executed one-rung and six-rung variants lose, and yield
+   per work unit falls with rungs (0.1547 → 0.0756 mm/M)" — not "every cap
+   was tried". Neither reviewer funds another round on this axis: m34
+   dominates at equal wall as well (1.1044 mm in 3.55 s vs 0.2332 in 3.60 s).

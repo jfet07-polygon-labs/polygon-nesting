@@ -498,3 +498,56 @@ Another campaign round was running on this box for part of this session, so no
 wall-clock number here is a measurement of anything. Nothing in this round
 depends on one: every claim is a verdict, a pinned depth, a fingerprint, or an
 exact geometric quantity on a 1 µm grid.
+
+## Errata — from the post-round dual review (Sol 12 + Grok 7, 2026-08-22)
+
+Both reviewers confirm the headline: case 3 is real, the counts reproduce from
+the raw JSON, the import is not an artefact (worst vertex error 2.27e-13 mm),
+and the re-pin arithmetic is right. Five formulations above are too strong;
+none moves the verdict. The evidence files are untouched — these corrections
+say what the numbers already are.
+
+1. **`d − 2·r*` is an *effective miter tax, quantized* — not an exact causal
+   isolation of the join.** It compares `d` (source rings in f64) against `r*`
+   (canonicalized transform + Clipper offset + output re-quantization), and the
+   bisected population itself contains values down to −0.0014 mm
+   (`summary.json`), impossible for an exact "miter contains the source disc"
+   identity. The **cause** attribution (31/31 pairs, 2/2 boundaries = join, 0 =
+   radius) does not rest on this number: it rests on the counterfactual
+   full-scan set intersection in `summarize.py:decompose` — miter overlaps
+   where round, at the same radius and via the composite's own
+   `polygons_overlap_exact`, does not. That attribution stands.
+2. **The "same rows under the round join" table line is measured on 15 of the
+   31 miter-refused pairs, not all 31.** The other 16 (including the worst row,
+   items 21·57) have `roundAtSameRadiusOverlaps: null` — the round envelope
+   never refused them in the full 1830-pair scan, which is a valid acceptance
+   *inference*, but no per-row round `r*` was bisected there. On the 15
+   measured rows the round deviation is [−0.0006, +0.0018] mm.
+3. **The 0.0036 mm quantization budget under-counts one rounding.** The path
+   quantizes twice (canonical reconstruction in `transformed()`, then
+   `do_round()` on the offset output); a conservative budget is ≈0.0050 mm.
+   The observed maximum deviation, 0.0022 mm, passes either budget — the proof
+   changes, the verdict does not. It sharpens the standing caveat: pair 38·39's
+   0.42 µm radius margin is sub-grid under *any* of these budgets, and an
+   outward-only discretized envelope must refuse it without an analytic
+   fallback.
+4. **`k` is an observed *effective reach factor* (the wall-normal component of
+   the miter offset at the binding vertex), not `1/sin(half-angle)` of a named
+   corner** — the binding vertex may change with radius. The measured
+   excursions (0.377 mm past the inset line, predicted 0.3767) carry the
+   boundary claim on their own; the 7.504 mm ceiling is the structural
+   maximum (limit 2.0), not an observation (max observed k = 1.223).
+5. **The 0.0 mm² identity check proves the re-pin reuses the retired file's
+   certified area sum — nothing more.** The per-shape contributions, the
+   directed rounding of the raster bound, and disc-in-miter containment are
+   inherited from the retired evidence, not re-proven here. 130.19990218310795
+   is arithmetically defensible on that inheritance; the composite-native
+   130.2140326353513 inflates by the *disc* at 2.502 (valid but weaker than a
+   miter-native bound) and should be quoted as a numerical bound.
+
+Two review findings worth promoting, not correcting: **square is a negative in
+its own right** (19/1830 + 2/61 at the contract radius — the product question
+is specifically miter vs round, not "any super-disc join"), and **the +0.56 mm
+boundary tax sits on the strip origin (`min y`), not the depth-setting edge**:
+the join does not shave 0.56 mm off Sparrow's 150.16451, it forbids publishing
+the layout at all.
