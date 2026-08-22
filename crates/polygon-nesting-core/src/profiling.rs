@@ -355,6 +355,67 @@ pub fn set_enabled(value: bool) {
     ENABLED.store(value, Ordering::Relaxed);
 }
 
+/// The work meter's own recording flag, independent of [`ENABLED`].
+static METERING: AtomicBool = AtomicBool::new(false);
+
+/// Whether the **work meter's** counters are recording.
+///
+/// # Why this is a second flag and not the first one
+///
+/// `search::portfolio::work_units_from` denominates a work budget in exactly
+/// two of the counters below - [`Counter::CandidateQueries`] and
+/// [`Counter::ExactPairTests`] - and until this flag existed the only way to
+/// have them was [`set_enabled`], which also arms every [`span`] in the
+/// engine. That is what `docs/experiments/calibrated-plan/` §9 priced at
+/// **+1.882 mm** on mixed-61 at a ten-second wall and called *"a floor under
+/// any work-denominated budget"*, and the floor is real but it was priced to
+/// the wrong cause: the lane's `score_placement` opens a span *and* increments
+/// a counter on the same line, and the span is two `Instant::now` reads
+/// against a call that costs about a microsecond, while the counter is one
+/// relaxed add on a thread-local block.
+///
+/// So the two are separated here. A run that wants the budget takes the
+/// counters; a run that wants the profile takes both. Nothing that reads
+/// [`counter_totals`] changes, because the counters recorded are the same
+/// counters incremented at the same sites with the same amounts - this flag
+/// moves *which flag the site consults*, not what it counts, which is why the
+/// budget stays numerically identical and the arm is comparable.
+///
+/// The three counters the meter does **not** read - `NeighborTests`,
+/// `CollisionPolygonBuilds`, `FullRescores` - are deliberately left on
+/// [`enabled`] alone. `NeighborTests` is the hottest counter in the engine
+/// (about 30.9 M against the meter's 7.9 M candidate queries on one measured
+/// mixed-61 plan run), and arming it here would put back the cost this flag
+/// exists to remove. A consumer that needs all five - `search::work_currency`
+/// is the only one - must arm the profiler.
+#[inline(always)]
+pub fn metering_enabled() -> bool {
+    METERING.load(Ordering::Relaxed)
+}
+
+/// Turns the work meter's counters on or off, returning the previous value.
+///
+/// Returns the previous value so a caller can restore it: this is a
+/// process-global flag in a library crate, and a host that runs two requests
+/// in one process must not have the first one's setting decide the second's.
+/// See `search::portfolio::WorkMeterArming`.
+pub fn set_metering_enabled(value: bool) -> bool {
+    METERING.swap(value, Ordering::Relaxed)
+}
+
+/// Adds `amount` to one of the two counters a **work budget** is denominated
+/// in, when either the profiler or the work meter is recording.
+///
+/// The only difference from [`count`] is the guard. Use it at a site whose
+/// count a budget reads; use [`count`] at a site whose count only a profile
+/// reads. See [`metering_enabled`].
+#[inline(always)]
+pub fn meter(counter: Counter, amount: u64) {
+    if enabled() || metering_enabled() {
+        record_count(counter, amount);
+    }
+}
+
 /// One thread's private counter block.
 ///
 /// The atomics exist so the aggregator can read a block that its owning thread
@@ -1196,6 +1257,41 @@ mod tests {
         // Same enabling window, because the recording flag is process-global
         // and this file keeps exactly one test that turns it on.
         allocator_tallies_gross_demand_without_re_entering_itself();
+        the_work_meter_records_without_the_profiler();
+    }
+
+    /// The work meter's flag records the meter's counters and arms no span.
+    ///
+    /// That separation is the whole of `PortfolioSettings::lane_local_debit`:
+    /// `docs/experiments/calibrated-plan/` §9 priced one flag at +1.882 mm and
+    /// could not say which half of it was the cost, because one flag armed
+    /// both. This asserts the two halves are now independent - the counter
+    /// arrives, the span does not - which is the property that makes the
+    /// millimetre buyable.
+    ///
+    /// Called from inside the file's single enabling test, and it restores both
+    /// flags itself, because they are process-global and `cargo test` runs this
+    /// module in parallel threads of one process.
+    fn the_work_meter_records_without_the_profiler() {
+        let previous_profiler = enabled();
+        set_enabled(false);
+        let previous = set_metering_enabled(true);
+        reset();
+        meter(Counter::CandidateQueries, 5);
+        meter(Counter::ExactPairTests, 2);
+        // `count` is the profiler's entry point and stays on the profiler's
+        // flag: a metering run must not start paying for counters no budget
+        // reads.
+        count(Counter::NeighborTests, 9);
+        assert!(span(Phase::ScorePlacement).is_none());
+        let recorded = snapshot();
+        set_metering_enabled(previous);
+        set_enabled(previous_profiler);
+        assert_eq!(recorded.counter(Counter::CandidateQueries), 5);
+        assert_eq!(recorded.counter(Counter::ExactPairTests), 2);
+        assert_eq!(recorded.counter(Counter::NeighborTests), 0);
+        assert_eq!(recorded.leaf_nanos(), 0);
+        reset();
     }
 
     /// The counting allocator must report through global atomics only.

@@ -173,7 +173,13 @@ fn exact_pair_overlaps_within(
     // Guarding it measurably slowed the stream; guarding only the narrow phase
     // measures the cost that matters and costs nothing on the common path.
     let _span = profiling::span(Phase::ExactOverlapTest);
-    profiling::count(Counter::ExactPairTests, 1);
+    // `meter` and not `count`: this is the exact half of
+    // `portfolio::work_units_from`, and on a measured mixed-61 plan run it is
+    // 2.93 M of the meter's 10.79 M units - 27%, not a rounding error - so a
+    // work budget that could not read it would under-charge by a quarter. The
+    // span above stays on the profiler's flag. See
+    // `profiling::metering_enabled`.
+    profiling::meter(Counter::ExactPairTests, 1);
     let overlaps = first.intersection_area_mm2(second)? > 0.0;
     #[cfg(feature = "constructor-census")]
     crate::constructor_census::pair(first, second, true, overlaps);

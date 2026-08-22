@@ -16289,7 +16289,16 @@ impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'
         upper_bound: Option<f64>,
     ) -> Result<MovedRowDelta, GeneralFastError> {
         let _span = profiling::span(Phase::ScorePlacement);
-        profiling::count(Counter::CandidateQueries, 1);
+        // `meter` and not `count`: this is the candidate-query half of
+        // `portfolio::work_units_from`, so a work budget needs it and a profile
+        // only wants it. The span above stays on the profiler's flag, which is
+        // the whole of the separation - see `profiling::metering_enabled`.
+        //
+        // The lane's own `counters.surrogate_evaluations` is incremented on all
+        // three arms below and is the same number; `CompressionSchedule::work_spent`
+        // reads that one, and this site is what lets every other class be
+        // charged from the same count without arming the profiler.
+        profiling::meter(Counter::CandidateQueries, 1);
         if self.uses_directional_pressure() {
             return self.score_placement_directional(
                 state,

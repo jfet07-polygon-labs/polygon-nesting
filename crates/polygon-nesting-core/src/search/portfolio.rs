@@ -953,6 +953,18 @@ pub enum PhaseExitCause {
     Affordability,
     /// The phase deadline was reached mid-phase.
     Deadline,
+    /// The run's **wall** deadline was reached mid-phase, with
+    /// [`PortfolioSettings::compression_schedule_wall_stop_all`] armed.
+    ///
+    /// Distinct from [`Self::Deadline`], which is a fraction of the budget's
+    /// own currency, because under a plan or a work budget that currency is a
+    /// counter and this one is a clock. A phase that exits here has budget left
+    /// and refused to spend it; a phase that exits on `Deadline` has not.
+    ///
+    /// It is also what keeps the re-plan loop out: `run_v3_schedule` buys
+    /// another tranche only for the three budget-bound causes, and a run out of
+    /// seconds is not one of them.
+    WallStop,
     /// The diversify phase's patience rule fired: `basin_patience` consecutive
     /// iterations published nothing.
     Patience,
@@ -976,6 +988,7 @@ impl PhaseExitCause {
             PhaseExitCause::KeysExhausted => "keysExhausted",
             PhaseExitCause::Affordability => "affordability",
             PhaseExitCause::Deadline => "deadline",
+            PhaseExitCause::WallStop => "wallStop",
             PhaseExitCause::Patience => "patience",
             PhaseExitCause::TriggerRefused => "triggerRefused",
             PhaseExitCause::NoResidue => "noResidue",
@@ -1924,6 +1937,15 @@ pub struct PortfolioOutcome {
     /// rather than a reader inferring it from whether the per-call block is
     /// present.
     pub work_currency: WorkCurrencyMode,
+    /// Which flag the run armed to get its work counters, and `None` when that
+    /// is the shipped answer.
+    ///
+    /// Present only when the run did something the settings alone do not say:
+    /// it took the counters off the work meter's own flag, or it asked to and
+    /// was deferred. A default work or plan run therefore produces the document
+    /// it always produced, byte for byte, which is what lets the unarmed arm of
+    /// this round's battery be a document diff rather than a scalar comparison.
+    pub work_meter_arming: Option<WorkMeterArmingReport>,
     pub budget: PortfolioBudget,
     pub elapsed_seconds: f64,
     pub work_units: u64,
@@ -2193,6 +2215,64 @@ pub struct PortfolioSettings {
     /// spread. `docs/experiments/real-interruption/` measures both ends.
     #[cfg(feature = "compression-schedule")]
     pub compression_schedule_wall_stop: bool,
+    /// `m34wallstopall`: the same wall deadline, applied to **the queue** rather
+    /// than only to a mode-34 checkpoint.
+    ///
+    /// `false` by default. It is a strict extension of
+    /// [`Self::compression_schedule_wall_stop`] and arms it: a run that names
+    /// this key gets the mode-34 checkpoint stop *and* an admission rule in
+    /// front of every other class.
+    ///
+    /// # Why the checkpoint stop alone leaves an overrun
+    ///
+    /// `docs/experiments/real-interruption/` §13 names the two reasons its
+    /// thirty-second `wallstop` row still crossed 3 of 9 times: *"the policy
+    /// only binds the mode-34 checkpoint it is consulted at; it cannot stop an
+    /// operator class that never asks it a question, and it cannot
+    /// retroactively shorten a batch already in flight"*. This key answers the
+    /// first of the two and nothing else. Under a plan or work budget the
+    /// queue's own stopping rule is denominated in work units, which say
+    /// nothing about seconds under load, so a queue whose m34 slice has just
+    /// stopped on the wall goes straight on to buy an m22 action with the work
+    /// it still nominally has - and that action is the overrun.
+    ///
+    /// The second reason is [`Self::compression_schedule_wall_stop_reserve`],
+    /// and it is a separate key because it is a separate mechanism: this one
+    /// refuses to *start* an action after the deadline and is exact; that one
+    /// refuses to start an action it *predicts* will cross the deadline and is
+    /// an estimate.
+    ///
+    /// It exits the phase on [`PhaseExitCause::WallStop`], which is
+    /// deliberately **not** in the re-plan loop's `budget_bound` set: a tranche
+    /// buys work, and a run that stopped because it was out of *seconds* must
+    /// not be handed more of them.
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule_wall_stop_all: bool,
+    /// `m34wallreserve`: seconds of the wall deadline held back for the action
+    /// the queue is about to start, when
+    /// [`Self::compression_schedule_wall_stop_all`] is armed.
+    ///
+    /// `0.0` by default, which is the pure admission rule: an action may start
+    /// at any time up to the deadline, and whatever it costs after that is the
+    /// residual overrun. A positive value additionally refuses a class whose
+    /// **own measured mean seconds in this run** would not fit in what is left,
+    /// scaled by this number - so `1.0` is *"only start what you expect to
+    /// finish"* and `2.0` is *"only start what you expect to finish twice"*.
+    ///
+    /// It is a multiple of the class's measured mean rather than a number of
+    /// seconds because the two ends of the trade are different sizes on
+    /// different fixtures, and because an unpriced class must not be refused -
+    /// the same rule [`Coordinator::affordability`] already applies to work.
+    /// A class this run has never bought is admitted, or it would never be
+    /// priced.
+    ///
+    /// **It is an estimate, and it can be wrong in both directions.** A class
+    /// whose mean is dragged down by cheap early calls will still be admitted
+    /// for an expensive one; a class whose mean is dragged up will be refused
+    /// while it would have fitted. The evidence reports the overrun with and
+    /// without it rather than claiming a bound.
+    #[cfg(feature = "compression-schedule")]
+    pub compression_schedule_wall_stop_reserve: f64,
     /// `m34yield`: suspend a mode-34 slice toward the coordinator after this
     /// many batches, so that another action can run before it is resumed.
     ///
@@ -2501,6 +2581,40 @@ pub struct PortfolioSettings {
     /// "un ticket m20 quando non rimangono coppie complementari" rule, which
     /// coordinator v3 §4.2 measured never firing on triangle-20 at all.
     pub diversify_in_queue: bool,
+    /// `lanedebit`: whether a work or plan budget runs with
+    /// `profiling::set_enabled(false)`, taking its two counters from the work
+    /// meter's own recording flag instead.
+    ///
+    /// `false` by default, which is the shipped behaviour exactly: a work
+    /// budget arms the profiler and pays for every span in the engine.
+    ///
+    /// # What it buys, and why it is not a free lunch
+    ///
+    /// `docs/experiments/calibrated-plan/` §9 measured the counters at
+    /// **+1.882 mm** on mixed-61 at a ten-second wall and called it *"a floor
+    /// under any work-denominated budget... there is no version of this mode
+    /// that avoids it"*. The floor is real and the attribution was not
+    /// separable at the time, because one flag armed both the counting and the
+    /// timing. `profiling::metering_enabled` separates them, and this setting
+    /// is what a coordinator uses to take the first without the second.
+    ///
+    /// **The budget it runs against is numerically identical.** The same two
+    /// counters are incremented at the same two sites by the same amounts, so
+    /// `work_units_now` returns what it always returned and every plan rung,
+    /// every `plancal` key and every pinned `work=` replay is on the same
+    /// scale. That is the property that makes a paired A/B interpretable: the
+    /// two arms differ in what the instrument costs and in nothing else.
+    ///
+    /// # The one combination it refuses
+    ///
+    /// `search::work_currency` prices three further counters - `NeighborTests`,
+    /// `CollisionPolygonBuilds`, `FullRescores` - which the meter does not read
+    /// and the metering flag therefore does not arm. A run that arms both this
+    /// and [`Self::work_currency`] would compute a class price from three
+    /// counters reading zero, so this setting **defers**: the profiler is armed
+    /// as before and the run pays the tax. Refusing silently would be worse;
+    /// the report carries `workMeterArming` so a reader can see which happened.
+    pub lane_local_debit: bool,
     /// Whether the compression-schedule class is priced on the clock by its own
     /// measured wall, instead of by the work-denominated prior that is 2.6-5.9x
     /// low there.
@@ -2707,6 +2821,10 @@ impl PortfolioSettings {
             #[cfg(feature = "compression-schedule")]
             compression_schedule_wall_stop: false,
             #[cfg(feature = "compression-schedule")]
+            compression_schedule_wall_stop_all: false,
+            #[cfg(feature = "compression-schedule")]
+            compression_schedule_wall_stop_reserve: 0.0,
+            #[cfg(feature = "compression-schedule")]
             compression_schedule_yield_batches: 0,
             #[cfg(feature = "compression-schedule")]
             compression_schedule_past_bound: false,
@@ -2763,6 +2881,7 @@ impl PortfolioSettings {
             basin_race_evict: true,
             barren_action_patience: BARREN_ACTION_PATIENCE,
             diversify_in_queue: true,
+            lane_local_debit: false,
             schedule_wall_prior: true,
             // Off by default: these two change the state every m34 slice walks
             // from, and the round that measures them has to be able to run the
@@ -3461,6 +3580,27 @@ impl BudgetMeter {
         }
     }
 
+    /// Whether the run's wall target has already passed, with `reserve_seconds`
+    /// still to spend after now.
+    ///
+    /// `false` for a run that named a work budget and no wall at all: there is
+    /// no clock to be past. The reading is [`Self::started`] and not
+    /// [`Self::seconds`] only so the intent is legible - they are the same
+    /// number - and the reserve is added to *now* rather than subtracted from
+    /// the target so that a target smaller than the reserve refuses everything
+    /// instead of wrapping.
+    ///
+    /// This is the one place the wall stop is a *question about the run*, and
+    /// it is deliberately not a question about the phase: `deadline` is a
+    /// fraction of the budget's own currency, which under a plan is a counter.
+    /// See [`PortfolioSettings::compression_schedule_wall_stop_all`].
+    #[cfg(feature = "compression-schedule")]
+    fn wall_target_passed(&self, reserve_seconds: f64) -> bool {
+        self.wall_target_seconds.is_some_and(|limit| {
+            self.started.elapsed().as_secs_f64() + reserve_seconds.max(0.0) >= limit
+        })
+    }
+
     /// Whether the budget's currency is the clock rather than the work meter.
     ///
     /// The one thing the schedule below reads a *currency* for rather than a
@@ -4134,8 +4274,15 @@ impl<'a> Coordinator<'a> {
         // could read the coordinator's live state at a checkpoint would be a
         // policy whose answer depends on when it is asked, and the whole point
         // of a checkpoint is that the answer is a *decision* and not a race.
+        //
+        // `wall_stop_all` arms the checkpoint stop as well as the queue rule,
+        // so the extension is strict: every overrun the checkpoint stop
+        // measurably compressed stays compressed, and the queue rule is added
+        // in front of it rather than instead of it.
         #[cfg(feature = "compression-schedule")]
-        let wall_stop_seconds = (mode == 34 && self.settings.compression_schedule_wall_stop)
+        let wall_stop_seconds = (mode == 34
+            && (self.settings.compression_schedule_wall_stop
+                || self.settings.compression_schedule_wall_stop_all))
             .then(|| self.meter.wall_target_seconds)
             .flatten();
         // Refused while a slice is already parked, because the slot holds one:
@@ -4460,9 +4607,8 @@ impl<'a> Coordinator<'a> {
         // resumed slice is subject to the wall stop and may suspend itself
         // again, which is what makes `m34yield` an interleave rather than a
         // single hand-back.
-        let wall_stop_seconds = self
-            .settings
-            .compression_schedule_wall_stop
+        let wall_stop_seconds = (self.settings.compression_schedule_wall_stop
+            || self.settings.compression_schedule_wall_stop_all)
             .then(|| self.meter.wall_target_seconds)
             .flatten();
         let yield_after_batches = Some(self.settings.compression_schedule_yield_batches)
@@ -4663,6 +4809,13 @@ impl<'a> Coordinator<'a> {
         operator: &str,
         multiple: f64,
     ) -> Option<PhaseExitCause> {
+        // Asked first, and asked in *seconds*: under a plan or a work budget
+        // every clause below this one is denominated in a counter, and a
+        // counter cannot see a box under load. This is the whole of what
+        // `m34wallstopall` adds to the classes that own no checkpoint.
+        if self.wall_stop_refuses(None) {
+            return Some(PhaseExitCause::WallStop);
+        }
         if !self.meter.has_room(deadline) {
             return Some(PhaseExitCause::Deadline);
         }
@@ -4673,9 +4826,144 @@ impl<'a> Coordinator<'a> {
         }
     }
 
+    /// Whether the wall stop refuses to start an action now, optionally of a
+    /// named class.
+    ///
+    /// `None` is the question the phase loops ask - *"is the deadline already
+    /// behind us?"* - and it is exact. `Some(class)` additionally applies
+    /// [`PortfolioSettings::compression_schedule_wall_stop_reserve`] against
+    /// that class's own measured mean seconds in this run, and it is an
+    /// estimate: a class this run has never bought has no mean, and is
+    /// admitted rather than refused, for the reason
+    /// [`Self::affordability`] admits an unpriced operator.
+    ///
+    /// Always `false` when the key is off, when the budget named no wall, and
+    /// in a build without the compression schedule - so this is a no-op on
+    /// every path any pinned number in this repository was measured on.
+    #[allow(unused_variables)]
+    fn wall_stop_refuses(&self, class: Option<ActionClass>) -> bool {
+        #[cfg(feature = "compression-schedule")]
+        {
+            if !self.settings.compression_schedule_wall_stop_all {
+                return false;
+            }
+            let reserve = match class {
+                None => 0.0,
+                Some(class) => {
+                    let multiple = self.settings.compression_schedule_wall_stop_reserve;
+                    if multiple <= 0.0 {
+                        0.0
+                    } else {
+                        self.mean_class_seconds(class).unwrap_or(0.0) * multiple
+                    }
+                }
+            };
+            self.meter.wall_target_passed(reserve)
+        }
+        #[cfg(not(feature = "compression-schedule"))]
+        {
+            false
+        }
+    }
+
+    /// One class's mean wall cost per action in this run, or `None` when the
+    /// run has not bought one.
+    ///
+    /// The class's own accumulated seconds rather than a per-operator mean:
+    /// the reserve is about the *action* the queue is about to buy, and a
+    /// diversify action is a constructor arm plus a legalization quantum
+    /// rather than one operator call.
+    #[cfg(feature = "compression-schedule")]
+    fn mean_class_seconds(&self, class: ActionClass) -> Option<f64> {
+        self.class_stats
+            .get(&class)
+            .filter(|stats| stats.actions > 0)
+            .map(|stats| stats.seconds / stats.actions as f64)
+    }
+
     /// Records why the phase in flight stopped.
     fn note_exit(&mut self, cause: PhaseExitCause) {
         self.exit_cause = cause;
+    }
+}
+
+/// Which flag a run armed to get its work counters, and what it found there.
+///
+/// Reported rather than inferred: `PortfolioSettings::lane_local_debit` names a
+/// preference and this names the outcome, and the two differ whenever
+/// `work_currency` is armed beside it. A reader of an evidence document must be
+/// able to see which arm actually ran without re-deriving it from three
+/// settings.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct WorkMeterArmingReport {
+    /// Whether the run needed work counters at all: `false` for a wall budget,
+    /// which is the one mode that never reads them.
+    pub needed: bool,
+    /// Whether the profiler was armed - every counter and every span.
+    pub profiler_armed: bool,
+    /// Whether the work meter's own flag was armed instead.
+    pub metering_armed: bool,
+    /// Whether `lane_local_debit` was asked for and refused, which happens
+    /// only when `work_currency` is armed beside it.
+    pub deferred_to_profiler: bool,
+}
+
+/// Arms the counters one run needs, and puts back what it found on the way out.
+///
+/// Scoped, and deliberately more careful than the `profiling::set_enabled(true)`
+/// it replaces: that call leaked, so one work-budgeted request left the
+/// profiler armed for every later request in the same process - including a
+/// wall-budgeted one, which would then silently pay the tax this whole setting
+/// exists to remove. A napi or CLI host runs many requests in one process.
+struct WorkMeterArming {
+    previous_profiler: bool,
+    previous_metering: bool,
+    report: WorkMeterArmingReport,
+}
+
+impl WorkMeterArming {
+    fn install(settings: &PortfolioSettings) -> Self {
+        let previous_profiler = profiling::enabled();
+        let previous_metering = profiling::metering_enabled();
+        let needed = matches!(
+            settings.budget,
+            PortfolioBudget::Work { .. } | PortfolioBudget::Plan { .. }
+        );
+        // The currency prices three counters the meter does not read, so it
+        // cannot run on the meter's flag. Deferring rather than refusing keeps
+        // the currency honest and keeps the key from silently meaning nothing.
+        let currency_needs_profiler = settings.work_currency.armed();
+        let metering = needed && settings.lane_local_debit && !currency_needs_profiler;
+        let profiler = needed && !metering;
+        if profiler {
+            profiling::set_enabled(true);
+        }
+        if metering {
+            profiling::set_metering_enabled(true);
+        }
+        Self {
+            previous_profiler,
+            previous_metering,
+            report: WorkMeterArmingReport {
+                needed,
+                profiler_armed: profiler || previous_profiler,
+                metering_armed: metering || previous_metering,
+                deferred_to_profiler: needed
+                    && settings.lane_local_debit
+                    && currency_needs_profiler,
+            },
+        }
+    }
+
+    fn report(&self) -> WorkMeterArmingReport {
+        self.report
+    }
+}
+
+impl Drop for WorkMeterArming {
+    fn drop(&mut self) {
+        profiling::set_enabled(self.previous_profiler);
+        profiling::set_metering_enabled(self.previous_metering);
     }
 }
 
@@ -4721,20 +5009,16 @@ pub fn run_portfolio(
     fast_settings: GeneralFastSettings,
     settings: &PortfolioSettings,
 ) -> Result<PortfolioOutcome, GeneralFastError> {
-    if matches!(
-        settings.budget,
-        PortfolioBudget::Work { .. } | PortfolioBudget::Plan { .. }
-    ) {
-        // A work budget is a function of the counters, so it needs them. A
-        // plan *is* a work budget from the moment phase 0 ends, and its probe
-        // is denominated in the same counters, so it needs them from before
-        // phase 0 begins - which is here, and is the reason the plan's wall
-        // target buys a run that carries the counters' cost for the whole of
-        // the wall it was given. `docs/experiments/calibrated-plan/` §9 prices
-        // that in millimetres; it is the one cost of the mode that no constant
-        // and no ladder can remove.
-        profiling::set_enabled(true);
-    }
+    // A work budget is a function of the counters, so it needs them. A plan
+    // *is* a work budget from the moment phase 0 ends, and its probe is
+    // denominated in the same counters, so it needs them from before phase 0
+    // begins - which is here, and is the reason the plan's wall target buys a
+    // run that carries the counters' cost for the whole of the wall it was
+    // given. `docs/experiments/calibrated-plan/` §9 priced that in millimetres
+    // and called it a floor; `PortfolioSettings::lane_local_debit` is the
+    // setting that takes the counting without the timing, and this is where the
+    // choice between the two is made.
+    let _work_meter_arming = WorkMeterArming::install(settings);
     // The v3 coordinator's own arming of the exact-clearance certificate, for
     // the duration of this run and no longer. Off the v3 path this is not
     // constructed at all, so nothing about a v2 or a direct-engine caller
@@ -5364,6 +5648,12 @@ pub fn run_portfolio(
         operator_calls: coordinator.operator_calls,
         publications: coordinator.publications,
         work_currency: settings.work_currency,
+        // `filter` and not `Some`: a run that armed the profiler exactly as it
+        // always has has nothing to report, and a key that appeared on every
+        // plan document would make every pinned document digest in this
+        // repository a digest of a different document.
+        work_meter_arming: Some(_work_meter_arming.report())
+            .filter(|report| report.metering_armed || report.deferred_to_profiler),
         budget,
         elapsed_seconds,
         work_units,
@@ -6981,6 +7271,16 @@ fn v3_loop(
         };
     }
     loop {
+        // Asked before the resumption and before the enumeration, because a
+        // queue that is out of *seconds* must not spend one more of them on
+        // either. A suspended slice is not lost by exiting here: its incumbent
+        // was published by the call that suspended it, and `drain_suspended_slice`
+        // writes its report without running a batch.
+        if run.wall_stop_refuses(None) {
+            run.note_exit(PhaseExitCause::WallStop);
+            save!();
+            return;
+        }
         if !run.meter.has_room(run.deadline) {
             run.note_exit(PhaseExitCause::Deadline);
             save!();
@@ -7125,6 +7425,21 @@ fn v3_loop(
                 candidates.insert(0, promoted);
             }
         }
+        // The wall reserve, applied to the *candidate list* rather than folded
+        // into the affordability `find` below, so that "every action left would
+        // cross the deadline" exits on its own cause instead of being reported
+        // as a work-affordability exit. With the reserve at its `0.0` default
+        // this retains every candidate and the list is the one the queue has
+        // always ranked.
+        let wall_reserved = candidate_count > 0 && {
+            candidates.retain(|action| !run.wall_stop_refuses(Some(action.class)));
+            candidates.is_empty()
+        };
+        if wall_reserved {
+            run.note_exit(PhaseExitCause::WallStop);
+            save!();
+            return;
+        }
         let remaining = run.meter.remaining_to(run.deadline);
         let chosen = candidates
             .into_iter()
@@ -7144,6 +7459,15 @@ fn v3_loop(
                 // ticket is worth its price, and the only place v3 spends one.
                 if diversify_done || diversify_slot >= slots {
                     run.note_exit(PhaseExitCause::KeysExhausted);
+                    save!();
+                    return;
+                }
+                // This ticket is not on the ranked list, so the reserve filter
+                // above never saw it. It is the most expensive action the queue
+                // buys - a constructor arm plus a legalization quantum - so it
+                // is the last one that should be allowed through the wall.
+                if run.wall_stop_refuses(Some(ActionClass::Diversify)) {
+                    run.note_exit(PhaseExitCause::WallStop);
                     save!();
                     return;
                 }
@@ -7571,6 +7895,7 @@ fn execute_v3_action(
             // the spec and do exactly as little.
             let wants_checkpoints = past_bound
                 || run.settings.compression_schedule_wall_stop
+                || run.settings.compression_schedule_wall_stop_all
                 || run.settings.compression_schedule_yield_batches > 0;
             let batch_work_units = run
                 .settings
@@ -10937,6 +11262,123 @@ mod tests {
         assert!(ceiling < 360);
         assert!(CROSSOVER_BANDS_SCANNED >= CROSSOVER_CUTS_PER_PAIR);
     }
+
+    /// The wall stop reads the wall the *caller asked for*, under either budget
+    /// that names one, and refuses to answer at all under a bare work budget.
+    ///
+    /// The third case is the one worth a test: `PortfolioBudget::Work` has no
+    /// wall, so a run that arms `m34wallstopall` against a work budget must
+    /// behave exactly as it does today rather than stop at some default.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn the_wall_stop_reads_the_requested_wall_and_only_when_one_was_named() {
+        let plan = BudgetMeter::new(PortfolioBudget::Plan {
+            target_millis: 10_000,
+        });
+        assert_eq!(plan.wall_target_seconds, Some(10.0));
+        // Nothing has elapsed, so ten seconds have not passed and a ten-second
+        // reserve is exactly the boundary - `>=`, so it refuses.
+        assert!(!plan.wall_target_passed(0.0));
+        assert!(plan.wall_target_passed(10.0));
+        // A negative reserve is clamped rather than credited back.
+        assert!(!plan.wall_target_passed(-1_000.0));
+
+        let wall = BudgetMeter::new(PortfolioBudget::Wall { millis: 3_000 });
+        assert_eq!(wall.wall_target_seconds, Some(3.0));
+        assert!(wall.wall_target_passed(3.0));
+
+        let work = BudgetMeter::new(PortfolioBudget::Work { units: 40_000_000 });
+        assert_eq!(work.wall_target_seconds, None);
+        assert!(!work.wall_target_passed(0.0));
+        assert!(!work.wall_target_passed(1_000_000.0));
+    }
+
+    /// A run takes the counters it needs from exactly one flag, and puts back
+    /// what it found.
+    ///
+    /// The restore is the half that is a bug fix rather than a feature: the
+    /// `profiling::set_enabled(true)` this replaced leaked, so in a host that
+    /// runs many requests in one process the first work-budgeted request left
+    /// every later wall-budgeted one paying a tax it never asked for.
+    ///
+    /// Serialised against its siblings through a mutex, because the flags are
+    /// process-global and `cargo test` runs this module's tests in parallel
+    /// threads of one process - the same trap `work_units_from`'s doc comment
+    /// records this file falling into once already.
+    #[test]
+    fn the_work_meter_arms_one_flag_and_restores_both() {
+        static SERIAL: Mutex<()> = Mutex::new(());
+        let _guard = SERIAL.lock().unwrap_or_else(|err| err.into_inner());
+        let before_profiler = profiling::enabled();
+        let before_metering = profiling::metering_enabled();
+
+        let template = GeneralRelaxedSettings::mixed_61_probe(0, 1);
+        let plan = |debit: bool, currency: WorkCurrencyMode| {
+            let mut settings = PortfolioSettings::new(
+                template,
+                PortfolioBudget::Plan {
+                    target_millis: 10_000,
+                },
+            );
+            settings.lane_local_debit = debit;
+            settings.work_currency = currency;
+            settings
+        };
+
+        // The shipped path: the profiler, exactly as before.
+        {
+            let settings = plan(false, WorkCurrencyMode::Off);
+            let arming = WorkMeterArming::install(&settings);
+            assert!(profiling::enabled());
+            assert!(!profiling::metering_enabled());
+            let report = arming.report();
+            assert!(report.needed && report.profiler_armed);
+            assert!(!report.metering_armed && !report.deferred_to_profiler);
+        }
+        assert_eq!(profiling::enabled(), before_profiler);
+        assert_eq!(profiling::metering_enabled(), before_metering);
+
+        // The debit: the meter's own flag, and the profiler left alone.
+        {
+            let settings = plan(true, WorkCurrencyMode::Off);
+            let arming = WorkMeterArming::install(&settings);
+            assert!(!profiling::enabled());
+            assert!(profiling::metering_enabled());
+            let report = arming.report();
+            assert!(report.metering_armed && !report.profiler_armed);
+            assert!(!report.deferred_to_profiler);
+        }
+        assert_eq!(profiling::enabled(), before_profiler);
+        assert_eq!(profiling::metering_enabled(), before_metering);
+
+        // The currency prices three counters the meter does not read, so the
+        // debit defers rather than handing it three zeros.
+        {
+            let settings = plan(true, WorkCurrencyMode::Observe);
+            let arming = WorkMeterArming::install(&settings);
+            assert!(profiling::enabled());
+            let report = arming.report();
+            assert!(report.deferred_to_profiler && report.profiler_armed);
+        }
+        assert_eq!(profiling::enabled(), before_profiler);
+        assert_eq!(profiling::metering_enabled(), before_metering);
+
+        // A wall budget reads no counter, so it arms neither - with or without
+        // the key, which is what "inert under a wall budget" has to mean.
+        for debit in [false, true] {
+            let mut settings =
+                PortfolioSettings::new(template, PortfolioBudget::Wall { millis: 10_000 });
+            settings.lane_local_debit = debit;
+            let arming = WorkMeterArming::install(&settings);
+            assert!(!profiling::enabled());
+            assert!(!profiling::metering_enabled());
+            let report = arming.report();
+            assert!(!report.needed);
+            assert!(!report.metering_armed && !report.deferred_to_profiler);
+        }
+        assert_eq!(profiling::enabled(), before_profiler);
+        assert_eq!(profiling::metering_enabled(), before_metering);
+    }
 }
 
 #[cfg(all(test, feature = "portfolio-ledger"))]
@@ -11141,6 +11583,7 @@ mod ledger_tests {
             PhaseExitCause::TriggerRefused,
             PhaseExitCause::NoResidue,
             PhaseExitCause::NoCompleteLayout,
+            PhaseExitCause::WallStop,
         ];
         let names = all
             .iter()

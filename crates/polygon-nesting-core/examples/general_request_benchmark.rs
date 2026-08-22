@@ -2179,6 +2179,26 @@ fn parse_portfolio_spec(
             // one. Two keys one character apart would be worse than a long name.
             #[cfg(feature = "compression-schedule")]
             "m34wallstop" => settings.compression_schedule_wall_stop = value != "0",
+            // The same deadline, applied to the queue. `m34wallstop` binds only
+            // the checkpoint it is consulted at, which is why
+            // `docs/experiments/real-interruption/` §9's thirty-second row still
+            // crossed 3 of 9 times; this refuses to *start* any class after the
+            // deadline. It arms `m34wallstop` too, so the key is a strict
+            // extension rather than an alternative.
+            #[cfg(feature = "compression-schedule")]
+            "m34wallstopall" => {
+                settings.compression_schedule_wall_stop_all = value != "0";
+            }
+            // The reserve, as a multiple of the class's own measured mean
+            // seconds in this run. `0` - the default - is the pure admission
+            // rule; `1` additionally refuses a class the queue does not expect
+            // to finish before the deadline. Inert unless `m34wallstopall` is
+            // armed, and named separately because it is an estimate and the
+            // admission rule is exact.
+            #[cfg(feature = "compression-schedule")]
+            "m34wallreserve" => {
+                settings.compression_schedule_wall_stop_reserve = value.parse()?;
+            }
             // The interleave: suspend the slice toward the coordinator after
             // this many batches so another action can run before it resumes.
             // `0` is the default and never suspends.
@@ -2290,6 +2310,13 @@ fn parse_portfolio_spec(
             "racedraw" => settings.basin_race_draw = value != "0",
             "barren" => settings.barren_action_patience = value.parse()?,
             "divq" => settings.diversify_in_queue = value != "0",
+            // The lane-local debit. `1` runs a work or plan budget with
+            // `profiling::set_enabled(false)` and takes the meter's two
+            // counters from `profiling::metering_enabled` instead, which is the
+            // spend `docs/experiments/work-currency/` §6 names and Grok review
+            // 5 §2 prices at up to 1.882 mm. Inert under a wall budget, which
+            // reads no counter, and deferred when `cur2` is armed beside it.
+            "lanedebit" => settings.lane_local_debit = value != "0",
             "m34wall" => settings.schedule_wall_prior = value != "0",
             "m34entry" => settings.schedule_legalize_entry = value != "0",
             "m34skip" => settings.schedule_skip_infeasible_entry = value != "0",
@@ -2706,6 +2733,17 @@ fn portfolio_report_json(outcome: &PortfolioOutcome) -> serde_json::Value {
             "operatorSeconds": seconds,
         });
     }
+    // Present only when the run took its counters off the work meter's own flag
+    // or asked to and was deferred, so a default plan document is the document
+    // it has always been - see `PortfolioOutcome::work_meter_arming`.
+    if let Some(arming) = outcome.work_meter_arming.as_ref() {
+        report["workMeterArming"] = json!({
+            "needed": arming.needed,
+            "profilerArmed": arming.profiler_armed,
+            "meteringArmed": arming.metering_armed,
+            "deferredToProfiler": arming.deferred_to_profiler,
+        });
+    }
     if let Some(schedule) = outcome.schedule.as_ref() {
         report["schedule"] = json!({
             "iterations": schedule.iterations,
@@ -3019,6 +3057,39 @@ mod tests {
         let prior = parse("plan=10000,v3=1,m34wall=1");
         assert!(prior.schedule_wall_prior);
         assert!(!prior.compression_schedule_wall_stop);
+    }
+
+    /// This round's three keys reach their fields, and an unarmed spec leaves
+    /// all three at the shipped default.
+    ///
+    /// Same round trip and same reason as the test above: the previous round's
+    /// P0 was an evidence file carrying an armed label for a key its committed
+    /// driver could not emit, and a key nobody parses fails exactly that way.
+    #[test]
+    #[cfg(feature = "compression-schedule")]
+    fn the_consolidation_keys_reach_their_fields() {
+        let template = GeneralRelaxedSettings::mixed_61_probe(0, 1);
+        let parse = |spec: &str| parse_portfolio_spec(spec, template).unwrap();
+
+        let unarmed = parse("plan=10000,v3=1");
+        assert!(!unarmed.compression_schedule_wall_stop_all);
+        assert_eq!(unarmed.compression_schedule_wall_stop_reserve, 0.0);
+        assert!(!unarmed.lane_local_debit);
+
+        let armed = parse("plan=30000,v3=1,m34wallstopall=1,m34wallreserve=1.5,lanedebit=1");
+        assert!(armed.compression_schedule_wall_stop_all);
+        assert_eq!(armed.compression_schedule_wall_stop_reserve, 1.5);
+        assert!(armed.lane_local_debit);
+
+        // `m34wallstopall` is a strict extension of `m34wallstop` and not an
+        // alternative to it, so arming the queue rule alone must still leave
+        // the checkpoint rule off *as a setting* - the coordinator is what
+        // reads the two together, and a spec that wrote the other field back
+        // would make the two keys indistinguishable in a document.
+        assert!(!armed.compression_schedule_wall_stop);
+        let checkpoint = parse("plan=30000,v3=1,m34wallstop=1");
+        assert!(checkpoint.compression_schedule_wall_stop);
+        assert!(!checkpoint.compression_schedule_wall_stop_all);
     }
 
     fn rectangle(width: f64, height: f64) -> PolygonSet {
