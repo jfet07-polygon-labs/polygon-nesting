@@ -283,6 +283,24 @@ fn profiling_requested() -> bool {
         .unwrap_or(false)
 }
 
+/// Whether the harness should arm the **work meter's** counters alone.
+///
+/// Read from the environment for the same two reasons profiling is: the
+/// positional argument list is a pinned contract, and the meaning of a replayed
+/// command may not change.
+///
+/// It is a separate variable from `POLYGON_NESTING_PROFILE` and not a value of
+/// it because the two arm different things - see `profiling::metering_enabled`
+/// - and because the one battery that needs this needs it under a **wall**
+/// budget, where `PortfolioSettings::lane_local_debit` is inert by design. A
+/// wall run reads no counter, so nothing but a driver measuring the
+/// instrument's own cost would ever want this.
+fn work_meter_requested() -> bool {
+    env::var("POLYGON_NESTING_METER")
+        .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+        .unwrap_or(false)
+}
+
 /// Whether the pinned-parent band may descend from this process's own coupled
 /// arm instead of a fixture.
 ///
@@ -474,6 +492,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let profiling_armed = profiling_requested();
     let unpinned_vacancy_parent_armed = unpinned_vacancy_parent_requested();
     profiling::set_enabled(profiling_armed);
+    profiling::set_metering_enabled(work_meter_requested());
     let mut arguments = env::args().skip(1);
     let request_path = arguments.next().ok_or(
         "usage: general_request_benchmark REQUEST.json [runs] [order-variants] [exploratory-evaluations-per-piece] [repair-targets] [repair-evaluations-per-piece] [local-angle-evaluations-per-piece] [catalog-variants] [catalog-evaluations-per-piece] [pairing-evaluations-per-piece] [pairing-band-variants] [partial-layouts] [beam-evaluations-per-state] [angle-seed-count] [max-angles-per-piece] [threads] [sheet-long-axis-override-mm] [tightening-passes] [sheet-edge-clearance-mm] [pair-clearance-mm] [relaxed-epochs] [relaxed-lanes] [relaxed-sweeps] [relaxed-global-samples] [relaxed-focused-samples] [relaxed-refinement-rounds] [relaxed-seed] [relaxed-initial-shrink-ratio] [relaxed-minimum-shrink-ratio] [relaxed-failed-attempts-per-depth] [relaxed-infeasible-pool-size] [relaxed-synchronize-lanes] [relaxed-dynamic-hazard] [relaxed-continuous-seeds] [relaxed-pressure-model] [relaxed-angular-repair] [relaxed-repair-neighborhood] [coupled-dynamic-separator] [pair-template-diagnostics] [pair-constructor-diagnostics] [precompression-frontier-vacancy] [exact-pair-terminal] [persistent-vacancy] [persistent-vacancy-parent-fixture] [persistent-vacancy-target-depth-mm] [warm-start-fixture] [search-offset-allowance-mm] [portfolio-spec]",
