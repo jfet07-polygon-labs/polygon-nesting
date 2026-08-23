@@ -93,6 +93,15 @@ impl DescentConfig {
 }
 
 /// Reusable scratch so a sweep allocates only its permutation.
+///
+/// **`Clone` is the Algorithm-10 tournament's seam.** Every master iteration
+/// clones this into eight workers, each of which gets its own stream ordinal
+/// via [`Descent::set_stream`] and its own colliding-set permutation; the
+/// winner's clone is then taken back as the master, which is why the census and
+/// the proposal ordinal live here rather than in the engine. Nothing is shared
+/// between workers, so a worker's sweep is a pure function of the state it was
+/// handed and the key it was given.
+#[derive(Clone)]
 pub struct Descent {
     pub config: DescentConfig,
     order: Vec<usize>,
@@ -130,6 +139,31 @@ pub struct SweepOutcome {
     pub raw_before: f64,
     pub raw_after: f64,
     pub totals: Totals,
+}
+
+/// What the Gauss-Seidel half of a sweep did, before anything is folded.
+#[derive(Clone, Copy, Debug, Default)]
+struct GaussSeidelPass {
+    accepted: usize,
+    relocated: usize,
+    container_commits: usize,
+    max_displacement_mm: f64,
+    raw_before: f64,
+}
+
+impl GaussSeidelPass {
+    fn finish(self, active_rows: u64, totals: Totals) -> SweepOutcome {
+        SweepOutcome {
+            accepted: self.accepted,
+            relocated: self.relocated,
+            container_commits: self.container_commits,
+            max_displacement_mm: self.max_displacement_mm,
+            active_rows,
+            raw_before: self.raw_before,
+            raw_after: totals.raw,
+            totals,
+        }
+    }
 }
 
 /// The population census of the sweep's moves.
@@ -237,6 +271,16 @@ impl Descent {
         &self.census
     }
 
+    /// The per-piece rotation freedom the sweep was built with.
+    ///
+    /// [`super::disrupt::disrupt`] needs it and the explore loop owns the call
+    /// site, so it is read out of here rather than stored twice: two copies of
+    /// "may this piece turn" is exactly how a swap and a relocate end up
+    /// disagreeing about a frozen piece.
+    pub fn allow_rotation(&self) -> &[bool] {
+        &self.allow_rotation
+    }
+
     /// One complete relocate of one piece, with the sweep's own bookkeeping.
     ///
     /// This is the single-piece entry the microbenchmarks and the unit vectors
@@ -317,16 +361,58 @@ impl Descent {
         contract: &Contract,
         work: &mut WorkVector,
     ) -> SweepOutcome {
+        let pass = self.gauss_seidel(state, sources, contract, work);
+        let active_rows = gls_update(state);
+        work.weight_updates += 1;
+        let totals = fold(state);
+        pass.finish(active_rows, totals)
+    }
+
+    /// **One worker's half of a master iteration: the Gauss-Seidel pass alone,
+    /// with no weight update.**
+    ///
+    /// The Algorithm-10 tournament clones the master into eight workers, each
+    /// of which runs exactly this, and then the *master* runs one
+    /// [`super::energy::gls_update`] over the winner's rows
+    /// ([`super::Engine::tournament`]). Sol review 17 Round 2 §5 spells the
+    /// order out - "install only that state; update all master weights once" -
+    /// and it is the difference between one Algorithm-8 pass per master
+    /// iteration and eight of them per iteration on eight diverging landscapes.
+    ///
+    /// The returned `totals` are therefore **pre-update**, which is what the
+    /// tournament ranks on: the workers all descended the same weighted
+    /// landscape and the comparison has to be made in it.
+    pub fn worker_sweep(
+        &mut self,
+        state: &mut IcsState,
+        sources: &[PieceSource],
+        contract: &Contract,
+        work: &mut WorkVector,
+    ) -> SweepOutcome {
+        let pass = self.gauss_seidel(state, sources, contract, work);
+        let totals = fold(state);
+        pass.finish(0, totals)
+    }
+
+    /// The pass itself: collect the colliding set once, permute it from the
+    /// counter stream, relocate each member that is still colliding at its turn.
+    fn gauss_seidel(
+        &mut self,
+        state: &mut IcsState,
+        sources: &[PieceSource],
+        contract: &Contract,
+        work: &mut WorkVector,
+    ) -> GaussSeidelPass {
         let count = state.poses.len();
         let entry_proposals = self.proposals;
         let raw_before = fold(state).raw;
         let key = self.stream_key();
         colliding_permutation(state, key, &mut self.order);
         let order = std::mem::take(&mut self.order);
-        let mut accepted = 0usize;
-        let mut relocated = 0usize;
-        let mut container_commits = 0usize;
-        let mut max_displacement_mm = 0.0f64;
+        let mut pass = GaussSeidelPass {
+            raw_before,
+            ..GaussSeidelPass::default()
+        };
         for piece in &order {
             let outcome = relocate(
                 state,
@@ -340,13 +426,14 @@ impl Descent {
             );
             self.record(&outcome);
             if outcome.ran {
-                relocated += 1;
+                pass.relocated += 1;
             }
             if outcome.moved {
-                accepted += 1;
-                max_displacement_mm = max_displacement_mm.max(outcome.displacement_mm);
+                pass.accepted += 1;
+                pass.max_displacement_mm =
+                    pass.max_displacement_mm.max(outcome.displacement_mm);
                 if outcome.origin == SampleOrigin::Container {
-                    container_commits += 1;
+                    pass.container_commits += 1;
                 }
             }
         }
@@ -359,50 +446,8 @@ impl Descent {
         // The operator's own count is `relocates`.
         self.proposals = entry_proposals + count as u64;
         work.piece_proposals += count as u64;
-        let active_rows = gls_update(state);
-        work.weight_updates += 1;
         self.iteration += 1;
-        let totals = fold(state);
-        SweepOutcome {
-            accepted,
-            relocated,
-            container_commits,
-            max_displacement_mm,
-            active_rows,
-            raw_before,
-            raw_after: totals.raw,
-            totals,
-        }
-    }
-
-    /// The stall hook, now empty.
-    ///
-    /// Algorithm 8 fires inside [`Descent::sweep`] on every master iteration,
-    /// so there is nothing left for a stall to trigger: no second weight
-    /// dialect, and no jump. A stalled separation is the explore loop's signal
-    /// to disrupt ([`super::disrupt`]), which is the schedule agent's call site
-    /// and not this one's.
-    pub fn on_stalled_sweep(
-        &mut self,
-        _state: &mut IcsState,
-        _sources: &[PieceSource],
-        _contract: &Contract,
-        _work: &mut WorkVector,
-    ) -> JumpOutcome {
-        JumpOutcome::default()
-    }
-
-    /// Vestigial: the old stall ladder's reset. Nothing accumulates now.
-    pub fn on_improving_sweep(&mut self) {}
-
-    /// Vestigial: the old one-shot jump allowance, permanently unspent.
-    pub fn jumps_spent(&self) -> u32 {
-        0
-    }
-
-    /// Vestigial: the old consecutive-stall counter.
-    pub fn stalls(&self) -> u32 {
-        0
+        pass
     }
 
     /// The piece carrying the most incident guided energy. Diagnostic.
@@ -411,59 +456,17 @@ impl Descent {
     }
 }
 
-// ------------------------------------------------- the vestigial jump seam ---
+// The vestigial jump seam - `JumpKind`, `JumpOutcome`, `on_stalled_sweep`,
+// `on_improving_sweep`, `jumps_spent`, `stalls` - is **gone**. The core wave
+// kept it emptied because it was forbidden to edit `Engine::run`, and named
+// this wave as the one that deletes it "together with the loop". Nothing could
+// reach it: `attempted` was never true. `Trace`'s four `jump*` counters and
+// `WorkVector::jump_proposals` survive at zero because the Gate-0 driver still
+// prints them and this wave does not own the driver; the evidence agent retires
+// those with the option surface.
 //
-// `Engine::run` still names these three types. The loop is the schedule
-// agent's file and this wave is forbidden to edit it, so the seam is kept and
-// emptied rather than removed: `attempted` is never true, so the whole branch
-// behind it is dead and every `jump*` counter in the evidence document reads
-// zero. The schedule agent deletes the seam together with the loop.
-
-/// Vestigial. The two scales the old topology jump fired at.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum JumpKind {
-    Strip,
-    Ball,
-}
-
-impl JumpKind {
-    pub fn label(self) -> &'static str {
-        match self {
-            JumpKind::Strip => "strip",
-            JumpKind::Ball => "ball",
-        }
-    }
-}
-
-/// Vestigial. Always `attempted: false` under `CutCloseRelocate`.
-#[derive(Clone, Copy, Debug)]
-pub struct JumpOutcome {
-    pub attempted: bool,
-    pub installed: bool,
-    pub improved_guided: bool,
-    pub kind: JumpKind,
-    pub piece: usize,
-    pub radius_mm: f64,
-    pub max_violation_mm: f64,
-    pub baseline_guided: f64,
-    pub best_guided: f64,
-}
-
-impl Default for JumpOutcome {
-    fn default() -> Self {
-        Self {
-            attempted: false,
-            installed: false,
-            improved_guided: false,
-            kind: JumpKind::Ball,
-            piece: 0,
-            radius_mm: 0.0,
-            max_violation_mm: 0.0,
-            baseline_guided: 0.0,
-            best_guided: 0.0,
-        }
-    }
-}
+// Disruption is not a stall handler. It is Algorithm 12's *failed-separation*
+// path and its one call site is `Engine::run_cutclose`.
 
 /// SplitMix64 over a fixed key vector: the counter-based source Sol review 14
 /// §4 asks for, keyed by the trajectory's own coordinates and never by a clock,
