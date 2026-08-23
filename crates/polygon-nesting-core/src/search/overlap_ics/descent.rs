@@ -239,10 +239,15 @@ impl Descent {
 
     /// One complete relocate of one piece, with the sweep's own bookkeeping.
     ///
-    /// This is the single-piece entry the corpus, the microbenchmarks and the
-    /// unit vectors use. A piece with no incident raw Φ is not in the colliding
-    /// set and returns immediately, which is the same early return the sweep
-    /// takes.
+    /// This is the single-piece entry the microbenchmarks and the unit vectors
+    /// use. A piece with no incident raw Φ is not in the colliding set and
+    /// returns immediately, which is the same early return the sweep takes.
+    ///
+    /// It advances the stream coordinate as a sweep does, so that calling it
+    /// repeatedly on one piece is not a fixed point: the sample key would
+    /// otherwise be identical every time and the second call would re-draw the
+    /// same 75 poses, pay for them, and stay put. The throughput cell drives
+    /// exactly that loop.
     pub fn propose(
         &mut self,
         state: &mut IcsState,
@@ -263,6 +268,7 @@ impl Descent {
             self.stream_key(),
             work,
         );
+        self.iteration += 1;
         self.record(&outcome);
         outcome.moved
     }
