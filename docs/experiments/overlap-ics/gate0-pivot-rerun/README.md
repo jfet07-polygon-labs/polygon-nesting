@@ -506,7 +506,94 @@ than `libm`, no cross-platform `sin`/`cos` identity claimed.
 
 ---
 
-## 7. What this round did not change
+## 7. The round-boundary battery
+
+Run from the **clean committed tree**, on binaries rebuilt from it.
+`drivers/heavy.sh`, `FAILURES=0`; `drivers/fast.sh`, `FAILURES=0`.
+
+This is the second attempt and the first one that counts, and the reason is
+worth recording rather than hiding. The first attempt was stopped after two
+suites because I noticed and corrected an arithmetic slip in a doc comment in
+`tests.rs` **while it was running** (§9, caveat 7). A round-boundary battery
+that straddles an edit is not a round-boundary battery: the previous round's
+suite logs were restored with `git checkout`, the partial evidence was deleted,
+and the whole thing was re-run from the tree the last commit leaves behind. One
+incidental confirmation falls out of that: **both binaries rebuilt
+byte-identically across the two attempts** — `61befdc5…` and `cbf01fe3…` —
+which is independent evidence that the corrected comment changed nothing
+executable.
+
+### 7.1 The four pinned gates, on two binaries
+
+`evidence/gates.json`, `evidence/binaries.txt`. The `base` binary is
+`--features jagua-experimental` (this round's feature **absent**); the `meas`
+binary is `--features jagua-experimental,overlap-ics` (**compiled**, and
+unarmed — nothing outside the example can reach it).
+
+| gate | pinned | base | meas | documents identical |
+|---|---|:--:|:--:|:--:|
+| g1 | 206.869 / `8a7737381238fa4d` | ✅ | ✅ | ✅ |
+| g2 | 159.09233022733062 / `fa01012af1d559ae` | ✅ | ✅ | ✅ |
+| g3 | 159.07876040364795 / `e28fba007f8031d4` | ✅ | ✅ | ✅ |
+| g4 | 164.0375677990678 / `49f094d7e59a9008` | ✅ | ✅ | ✅ |
+
+`BASE_ALL_PASS: true`, `MEAS_ALL_PASS: true`,
+**`WHOLE_DOCUMENT_IDENTITY: true`** on all four. g2, g3 and g4 also report
+`exactValid: true` and `contractValid: true`.
+
+The `base` binary's sha256 is `61befdc544b4135a…` — **byte-identical to the
+previous two rounds' base binary**, and that is the check that matters after a
+round which changed the engine's move set: the default build did not move one
+byte. The `meas` binary is `cbf01fe3c83f68db…` and differs from the previous
+round's `2fc9ac2c00511ca8…`, as it must.
+
+### 7.2 The suites
+
+`evidence/suites.json` and `evidence/suite-*.log`. All `--release`, every exit
+status read directly on the line after its command, no pipelines.
+`SUITES_PASS: true`; no suite tripped the campaign's known allocator flake, so
+no rerun clause fired.
+
+| # | features | targets | passed | failed | ignored | exit |
+|---|---|---:|---:|---:|---:|---:|
+| 1 | `jagua-experimental` | 55 | 1293 | 0 | 2 | **0** |
+| 2 | the protocol's full combo | 55 | 1357 | 0 | 2 | **0** |
+| 3 | `jagua-experimental`, `--example general_request_benchmark` | 1 | 20 | 0 | 0 | **0** |
+| 4 | `jagua-experimental,overlap-ics` | 55 | **1345** | 0 | 2 | **0** |
+| 5 | `overlap-ics` alone, `--lib --tests` | 50 | **1155** | 0 | 0 | **0** |
+
+Suites 1, 2 and 3 are unchanged from all three previous rounds. Suites 4 and 5
+are each exactly **+3** (1342 → 1345, 1152 → 1155): the three pivot vectors
+this round added, and nothing else.
+
+`run-suites.sh` writes its five logs into the **original** round's committed
+`evidence/`, so `heavy.sh` copies them here and restores that round's with
+`git checkout` — the same procedure the previous two rounds used, so all four
+rounds' logs exist and none overwrote another.
+
+### 7.3 The FAST tier
+
+`evidence/fast-tier-stdout.txt`: **EXIT=0**, ten stages, no red.
+
+    default-build compile check                       EXIT=0
+    cargo tree --features overlap-ics                 EXIT=0
+    dependency hygiene: jagua-rs ABSENT               EXIT=0
+    module unit vectors                               EXIT=0
+    validation_vectors::sat_penetration_...           EXIT=0
+    canonical_grid_vectors                            EXIT=0
+    collision_builder_vectors                         EXIT=0
+    release example build                             EXIT=0
+    1,000-state contact corpus                        EXIT=0
+    two-process fixed-work smoke                      EXIT=0
+
+`evidence/smoke-two-process.json`: `SMOKE_PASS: true`,
+`INVARIANTS_PASS: true`, S0's two-process digest `716baae468196ade…` —
+the previous round's, unmoved. Stage 6's S1 clause is green as it was last
+round; what changed is that it is now green **without a jump**.
+
+---
+
+## 8. What this round did not change
 
 Named explicitly, because a one-line round is only credible if the list of
 untouched adjacent things is also written down.
@@ -545,7 +632,7 @@ read, neither of which is a cell and neither of which carries a verdict.
 
 ---
 
-## 8. Caveats, in full
+## 9. Caveats, in full
 
 1. **C175 seed 0 spent 2.223 solver seconds**, 11 % over the two-second clause
    the 240,000-proposal quota was derived to fit, so
@@ -574,3 +661,61 @@ read, neither of which is a cell and neither of which carries a verdict.
    on the compressed population per the original arbitration and passes at
    1.000 there; the all-families number is reported and is not a gate. Sol
    review 15 §D's reading of it stands unchanged and unaddressed by this round.
+7. **One of this document's own vectors shipped with a wrong sentence in its
+   doc comment.** The first vector described its accepted
+   step's rate as *"1.225 mm/mm of lift from the translation, less 0.816 of
+   drop from the 10 mm arm"*. Those are the wrong two numbers: the translation
+   lifts at 0.816 and the arm moves each corner by ±0.408, and the minimum is
+   taken at the corner the arm carries **down**, so the rate is
+   0.816 − 0.408 = 0.408. The conclusion the comment drew — 0.408 mm/mm, nine
+   times slower than the 3.674 the origin pivot drags it the other way — was
+   right, and no assertion was ever wrong. It is corrected, `pivot-red.log`'s
+   verification recipe is pinned at `5685ca3` so it still checks, and §7 records
+   what correcting it cost the battery.
+
+---
+
+## 10. Reproduction
+
+```sh
+bash docs/experiments/overlap-ics/gate0-pivot-rerun/drivers/rerun.sh      # every cell + basin + determinism
+python3 docs/experiments/overlap-ics/gate0-pivot-rerun/drivers/probes.py  # the read-only probes
+python3 docs/experiments/overlap-ics/gate0-pivot-rerun/drivers/ab.py      # the jump-free A/B against 1f5cd5b
+bash docs/experiments/overlap-ics/gate0-pivot-rerun/drivers/heavy.sh      # gates + suites, round boundary
+ICS_ROOT=<worktree> bash docs/experiments/overlap-ics/drivers/fast.sh
+```
+
+`ab.py` needs the un-fixed tree built first — that is the whole point of it, so
+it is not optional and it is not a path the script can guess:
+
+```sh
+mkdir -p /tmp/base-tree && git archive 1f5cd5b | tar -x -C /tmp/base-tree
+cd /tmp/base-tree && cargo build -p polygon-nesting-core --release \
+  --features overlap-ics --example overlap_ics_benchmark
+```
+
+Do **not** pipe any of them into `tee` or `tail`: you would read the pipe's
+status instead of the script's.
+
+The committed documents are the drivers' output with one renaming, following
+the previous rounds' convention: `s0.json` is committed as `cell-s0.json` and
+so on, so all four rounds' evidence files line up by name.
+
+### 10.1 The three vectors, red and green
+
+```sh
+# RED, against the tree with the defect
+git checkout 1f5cd5b
+git show 5685ca3:crates/polygon-nesting-core/src/search/overlap_ics/tests.rs \
+  | head -1076 > crates/polygon-nesting-core/src/search/overlap_ics/tests.rs
+cargo test -p polygon-nesting-core --release --features overlap-ics --lib \
+  -- --exact --test-threads=1 \
+  search::overlap_ics::tests::a_ladder_step_descends_the_energy_its_own_gradient_was_taken_from \
+  search::overlap_ics::tests::a_proposal_moves_the_transformed_centroid_by_its_translation_alone
+# exit 101; the transcript is evidence/pivot-red.log
+
+# GREEN, against this tree, all three
+cargo test -p polygon-nesting-core --release --features overlap-ics --lib \
+  search::overlap_ics::tests:: 
+# exit 0; evidence/pivot-green.log is the three vectors alone
+```

@@ -8,5 +8,5 @@
 [fast] release example build EXIT=0
 [fast] 1,000-state contact corpus EXIT=0
 [fast] two-process fixed-work smoke (S0 canary, S1 locked strip) EXIT=0
-[fast] logs in /var/lib/t3/tmp/pivot/fast/log
+[fast] logs in /var/lib/t3/tmp/pivot/fast2/log
 [fast] FAILURES=0
