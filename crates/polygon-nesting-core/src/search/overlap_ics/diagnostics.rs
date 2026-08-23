@@ -18,26 +18,70 @@
 
 use std::collections::BTreeMap;
 
-/// The six counters of the work vector, plus the piece-proposal currency the
-/// throughput gate is written in.
+/// The six counters of the work vector, the piece-visit currency the work quota
+/// is written in, and the **new, separately named** relocate economics.
+///
+/// Arbitration 4 of docs/cutclose-relocate-spec.md, which is Sol review 17
+/// Round 2 §2's correction: the committed cold-Φ, row-rebuild and cell-gap
+/// thresholds keep their literal meaning and their literal numbers, and the
+/// relocate gets a **new metric version** rather than a rename. A sample
+/// evaluation is not the old piece proposal - one relocate is hundreds of them
+/// - and quietly re-denominating the 100 K pin would manufacture a continuity
+/// that does not exist. So `sampleEvaluations`, `relocates`, `containerWinners`,
+/// `focusedWinners`, `stayPutWinners` and `containerCommits` are new names, and
+/// the two ratios the gate reads (`sampleEvaluationsPerRelocate`,
+/// `relocatesPerSecond`) are derived from them here rather than in a driver.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct WorkVector {
     pub pair_row_probes: u64,
     pub convex_cell_gap_queries: u64,
     pub pose_transforms: u64,
+    /// Vestigial: candidates of the retired topology jump. Always zero under
+    /// `CutCloseRelocate`.
     pub jump_proposals: u64,
     pub exact_checkpoints: u64,
     pub repair_rows: u64,
-    /// One complete piece proposal: a piece selected, its gradient formed, and
-    /// the backtracking ladder walked to accept or reject. This is the unit the
-    /// 100K-in-8-seconds kill is stated in.
+    /// One piece **visit** of a sweep: the currency `IcsConfig::proposal_budget`
+    /// is denominated in, and the ordinal `Descent::proposals` advances by.
+    ///
+    /// **Its mechanism changed and the name is kept only because the work quota
+    /// is.** It used to be "a gradient formed and a backtracking ladder walked";
+    /// it is now "a relocate attempted on this piece". It is therefore **not**
+    /// the unit of the old 100 K-in-8-seconds proposal pin, and nothing here
+    /// claims parity with it - read `relocates` and `sampleEvaluations`.
     pub piece_proposals: u64,
-    /// Proposals whose ladder found a strict decrease.
+    /// Piece visits that committed a pose different from the entry pose.
     pub accepted_moves: u64,
-    /// Guided weight increments.
+    /// Algorithm-8 passes: one per master iteration, over every row.
     pub weight_updates: u64,
     /// Pair rows the piece-box proof zeroed without a cell query.
     pub broad_phase_rejects: u64,
+
+    // ------------------------------------------- the relocate metric version --
+    /// One incremental incident-Φ evaluation of one candidate pose - a pool
+    /// sample or a coordinate-descent candidate. **The member's work currency.**
+    pub sample_evaluations: u64,
+    /// Relocates that actually ran, i.e. piece visits whose piece was in the
+    /// colliding set.
+    pub relocates: u64,
+    /// Pool draws inside the piece's own current AABB.
+    pub focused_samples: u64,
+    /// Pool draws across the usable strip at the current `T`.
+    pub container_samples: u64,
+    /// Relocates whose winning finalist descended from a container-wide draw.
+    pub container_winners: u64,
+    /// ... from a focused draw.
+    pub focused_winners: u64,
+    /// ... from the pose the piece already had.
+    pub stay_put_winners: u64,
+    /// Container winners that **moved the piece**. This is the neutered-relocate
+    /// tripwire's counter: `containerSamples >= 50` with `containerCommits == 0`
+    /// on a fixture with a distant vacancy is the defect, not a preference.
+    pub container_commits: u64,
+    /// Algorithm-12 disruptions fired.
+    pub disruptions: u64,
+    /// Pieces moved by a disruption, the two swapped ones included.
+    pub disruption_moves: u64,
 }
 
 impl WorkVector {
@@ -52,6 +96,37 @@ impl WorkVector {
         self.accepted_moves += other.accepted_moves;
         self.weight_updates += other.weight_updates;
         self.broad_phase_rejects += other.broad_phase_rejects;
+        self.sample_evaluations += other.sample_evaluations;
+        self.relocates += other.relocates;
+        self.focused_samples += other.focused_samples;
+        self.container_samples += other.container_samples;
+        self.container_winners += other.container_winners;
+        self.focused_winners += other.focused_winners;
+        self.stay_put_winners += other.stay_put_winners;
+        self.container_commits += other.container_commits;
+        self.disruptions += other.disruptions;
+        self.disruption_moves += other.disruption_moves;
+    }
+
+    /// `sampleEvaluationsPerRelocate`: how many candidate poses one relocate
+    /// actually paid for. A relocate that reports 76 has not run its coordinate
+    /// descents; one that reports 0 has not run at all.
+    pub fn sample_evaluations_per_relocate(&self) -> f64 {
+        if self.relocates == 0 {
+            0.0
+        } else {
+            self.sample_evaluations as f64 / self.relocates as f64
+        }
+    }
+
+    /// `relocatesPerSecond`, given the wall the caller measured around whole
+    /// sweeps. The seconds are the driver's; this module never reads a clock.
+    pub fn relocates_per_second(&self, seconds: f64) -> f64 {
+        if seconds <= 0.0 {
+            0.0
+        } else {
+            self.relocates as f64 / seconds
+        }
     }
 
     pub fn to_map(self) -> BTreeMap<&'static str, u64> {
@@ -66,6 +141,16 @@ impl WorkVector {
         map.insert("acceptedMoves", self.accepted_moves);
         map.insert("weightUpdates", self.weight_updates);
         map.insert("broadPhaseRejects", self.broad_phase_rejects);
+        map.insert("sampleEvaluations", self.sample_evaluations);
+        map.insert("relocates", self.relocates);
+        map.insert("focusedSamples", self.focused_samples);
+        map.insert("containerSamples", self.container_samples);
+        map.insert("containerWinners", self.container_winners);
+        map.insert("focusedWinners", self.focused_winners);
+        map.insert("stayPutWinners", self.stay_put_winners);
+        map.insert("containerCommits", self.container_commits);
+        map.insert("disruptions", self.disruptions);
+        map.insert("disruptionMoves", self.disruption_moves);
         map
     }
 }

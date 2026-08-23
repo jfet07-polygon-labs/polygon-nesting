@@ -206,6 +206,28 @@ pub struct PieceSource {
     pub max_radius_mm: f64,
     pub area_mm2: f64,
     pub min_width_mm: f64,
+    /// `min(bbox width, bbox height)` of the ring in its own source frame.
+    ///
+    /// This is the length every relocate step is denominated in: the uniqueness
+    /// threshold is `0.05 * min_dim` and both coordinate-descent stages take
+    /// their translation steps as ratios of it. Sparrow reads the same quantity
+    /// off the item's own shape (`sample/search.rs::search_placement` and
+    /// `prerefine_cd_config`, rev `14f4868f`, `f32::min(bbox.width(),
+    /// bbox.height())`); ours is the source ring's bbox, not a simplified
+    /// shape's, because this engine never searches on a simplified polygon.
+    pub min_bbox_dim_mm: f64,
+    /// A point **guaranteed inside the material**, in the source frame:
+    /// [`decomposition::interior_witness`]. Arbitration 1 of
+    /// docs/cutclose-relocate-spec.md - the disruption follower test transforms
+    /// this and asks whether it is inside a swapped source ring. An area
+    /// centroid would not do: on a nonconvex piece it can sit in a notch.
+    pub interior_witness: [f64; 2],
+    /// The area of the ring's convex hull: Sparrow's "large item" measure in
+    /// Algorithm 12 (`optimizer/explore.rs::disrupt_solution`).
+    pub convex_hull_area_mm2: f64,
+    /// The largest distance between two points of the ring. Half of Algorithm
+    /// 12's distinctness test.
+    pub diameter_mm: f64,
 }
 
 impl PieceSource {
@@ -220,10 +242,15 @@ impl PieceSource {
                 point[1] - centroid[1],
             ));
         }
+        let bounds = decomposition::ring_bounds(&decomposition.ring);
         Ok(Self {
             id: id.to_owned(),
             area_mm2: decomposition::signed_area(&decomposition.ring),
             min_width_mm: decomposition::minimum_width(&decomposition.ring),
+            min_bbox_dim_mm: (bounds[2] - bounds[0]).min(bounds[3] - bounds[1]),
+            interior_witness: decomposition::interior_witness(&decomposition),
+            convex_hull_area_mm2: decomposition::convex_hull_area(&decomposition.ring),
+            diameter_mm: decomposition::diameter(&decomposition.ring),
             decomposition,
             centroid,
             max_radius_mm: max_radius,
@@ -248,17 +275,28 @@ pub fn pair_count(count: usize) -> usize {
 pub struct PairRow {
     /// `v_ij = max over cell pairs of [c_pair - s_ab]_+`.
     pub violation_mm: f64,
-    /// The guided integer weight `w = 1 + p`.
-    pub penalty: u32,
+    /// The guided weight `w`, a continuous `f64` at or above [`GLS_WEIGHT_FLOOR`].
+    ///
+    /// **This replaced the integer penalty `p` with `w = 1 + p`.** There is now
+    /// exactly one guided dialect - Algorithm 8's multiplicative schedule on
+    /// every row, every sweep ([`super::energy::gls_update`]) - and the
+    /// stall-only single-row increment is gone. Grok review 12 Round 2 §6.4 and
+    /// Sol review 17 Round 2 §1 both refuse two dialects; keeping the integer
+    /// beside a float weight is how a round ends up with two.
+    pub weight: f64,
     /// The active cell's contact, oriented from the **lower-index** piece.
     pub contact: Contact,
 }
+
+/// The floor every inactive row decays toward, and the value a fresh or reset
+/// row carries: `w = 1`, so `guided == raw` on an unweighted landscape.
+pub const GLS_WEIGHT_FLOOR: f64 = 1.0;
 
 impl Default for PairRow {
     fn default() -> Self {
         Self {
             violation_mm: 0.0,
-            penalty: 0,
+            weight: GLS_WEIGHT_FLOOR,
             contact: Contact {
                 signed_gap_mm: f64::INFINITY,
                 normal: [0.0, 0.0],
@@ -270,11 +308,21 @@ impl Default for PairRow {
 }
 
 /// One of the four boundary rows of a piece: left, right, bottom, top.
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug)]
 pub struct EdgeRow {
     pub violation_mm: f64,
-    pub penalty: u32,
+    pub weight: f64,
     pub witness: [f64; 2],
+}
+
+impl Default for EdgeRow {
+    fn default() -> Self {
+        Self {
+            violation_mm: 0.0,
+            weight: GLS_WEIGHT_FLOOR,
+            witness: [0.0, 0.0],
+        }
+    }
 }
 
 pub const EDGE_LEFT: usize = 0;

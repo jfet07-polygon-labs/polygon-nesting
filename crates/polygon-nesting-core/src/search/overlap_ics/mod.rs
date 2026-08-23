@@ -40,6 +40,8 @@ pub mod diagnostics;
 pub mod energy;
 pub mod homotopy;
 pub mod publish;
+/// The routine move: Algorithm 5-6's global relocate of one colliding piece.
+pub mod relocate;
 pub mod state;
 
 #[cfg(test)]
