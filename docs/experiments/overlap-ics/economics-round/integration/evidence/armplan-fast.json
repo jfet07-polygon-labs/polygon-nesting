@@ -1,0 +1,359 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "economics-round-integration",
+ "cellSources": [
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/arm-default.json",
+   "sha256": "1bbf1d786fecd9aae3f00a664539fa427856ac9c08a73da646ffd5416b191680",
+   "bytes": 241007,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/arm-control.json",
+   "sha256": "3e71b001089d8c21e7fb27e3bcf88c341326f7ae430f901377d45cc95e05052b",
+   "bytes": 241008,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/arm-treatment.json",
+   "sha256": "8cdde0a766f4d298cf4122a872e1bd87e3d7107d63b65891bd2786ec9a7d2621",
+   "bytes": 241001,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/plan-calibration.json",
+   "sha256": "fce0d4ccf1e6ef4d6245d78e37262534f688b182f8251fe0f91efe094b195aff",
+   "bytes": 651048,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/plan-spend-a.json",
+   "sha256": "de842cf629a9af9dc7d7913d7d4ee12e295d574deab91496a75d10087cd6eb97",
+   "bytes": 684927,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/plan-spend-b.json",
+   "sha256": "a65072bc1fdfaabbd9657be25677d1a828ffd54ec25a737dcf14d73d1ca0029f",
+   "bytes": 684934,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/plan-miss-requestSha256.json",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "exit": 1,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/plan-miss-workers.json",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "exit": 1,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/plan-miss-binaryKey-executableSha256.json",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "exit": 1,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/plan-miss-binaryKey-features.json",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "exit": 1,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/plan-miss-currencyVersion.json",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "exit": 1,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/plan-miss-schema.json",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "exit": 1,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/plan-miss-one-phase.json",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "bytes": 0,
+   "exit": 1,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/batches-a.json",
+   "sha256": "2acfcaf9bc611e37df6ba8fe2b174315bebf7d081741933b0045ab0638693a35",
+   "bytes": 644011,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/batches-b.json",
+   "sha256": "b05b509fff15874c3fd83f7c5f16901d91eeed77b90d42d8a03b74b2f4a6332e",
+   "bytes": 644010,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark"
+  }
+ ],
+ "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark",
+ "stagesRun": [
+  "arms",
+  "plan",
+  "batches"
+ ],
+ "stages": [
+  {
+   "stage": "arms",
+   "options": {
+    "mode": "fixed",
+    "bites": 6,
+    "attempts": 2,
+    "iters": 300,
+    "compressbites": 2,
+    "workers": 8,
+    "seed": 0
+   },
+   "defaultArmLabel": "control-iteration-strikes",
+   "defaultArmIsControl": true,
+   "namingTheControlChangesNothing": true,
+   "treatmentArmLabel": "treatment-work-strikes",
+   "treatmentExplorePatience": "work",
+   "treatmentExploreQuantum": 1630000,
+   "treatmentCompressQuantum": 815000,
+   "frozenLiteralsIntact": true,
+   "differencesOutsideTheArm": [],
+   "differenceCountOutsideTheArm": 0,
+   "strikesFiredOnEitherArm": 0,
+   "controlStrikePolicy": {
+    "compress": {
+     "iterationsWithoutImprovement": 100,
+     "patience": "iterations",
+     "strikes": 5,
+     "workQuantumSampleEvaluations": null
+    },
+    "explore": {
+     "iterationsWithoutImprovement": 200,
+     "patience": "iterations",
+     "strikes": 3,
+     "workQuantumSampleEvaluations": null
+    },
+    "frozenLiteralsIntact": true,
+    "improvingResetRatio": 0.98
+   },
+   "sourceSha256": "8cdde0a766f4d298cf4122a872e1bd87e3d7107d63b65891bd2786ec9a7d2621",
+   "pass": true
+  },
+  {
+   "stage": "plan",
+   "calibration": {
+    "options": {
+     "mode": "wall",
+     "wall": 3.0,
+     "workers": 8,
+     "seed": 0
+    },
+    "planPath": "/var/lib/t3/tmp/overlapics/fast-w3-v2/armplan.icscal.json",
+    "planSha256": "eba43bba2542f3e5073d97e34987cfd29269f4a5fb9cbaa3bb6082f2c2534067",
+    "summary": "icscal/v1 U0-sample-evaluations workers=8 executor=ephemeral-scope explore=2253025u/s compress=2677914u/s",
+    "phases": [
+     {
+      "phase": "explore",
+      "safeUnitsPerSecond": 2253024.917546514,
+      "measuredUnitsPerSecond": 2816281.146933142,
+      "observedUnits": 1589703,
+      "observedSeconds": 0.564468857
+     },
+     {
+      "phase": "compress",
+      "safeUnitsPerSecond": 2677913.976509732,
+      "measuredUnitsPerSecond": 3347392.470637165,
+      "observedUnits": 454213,
+      "observedSeconds": 0.13569158799999992
+     }
+    ]
+   },
+   "spend": {
+    "options": {
+     "mode": "calibrated",
+     "wall": 1.0,
+     "workers": 8,
+     "seed": 0
+    },
+    "exitA": 0,
+    "exitB": 0,
+    "stderr": "",
+    "bitIdentical": true,
+    "ledger": {
+     "budgetSeconds": 1.0,
+     "chargeIdentityHolds": true,
+     "charged": {
+      "actualPublicationAttemptCalls": 39,
+      "disruptionMoves": 0,
+      "masterBatches": 171,
+      "repairRows": 22,
+      "sampleEvaluations": 2348613
+     },
+     "compressAllocationUnits": 535582,
+     "compressBatches": 37,
+     "compressConsumedUnits": 542677,
+     "compressCrossingBatchUnits": 27556,
+     "consumedUnits": 2348613,
+     "consumedUnitsMatchCharged": true,
+     "currencyVersion": "U0-sample-evaluations",
+     "exploreAllocationUnits": 1802419,
+     "exploreBatches": 134,
+     "exploreConsumedUnits": 1805936,
+     "exploreCrossingBatchUnits": 19856,
+     "exploreRatio": 0.8,
+     "planKey": {
+      "binaryKey": {
+       "executableSha256": "2c5da1ac5b7c7898de53a59983218fd3499ea797fdfa242b54a9ff7e5732b5cd",
+       "features": [
+        "overlap-ics"
+       ]
+      },
+      "currencyVersion": "U0-sample-evaluations",
+      "executor": "ephemeral-scope",
+      "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+      "workers": 8
+     },
+     "trajectory": {
+      "actualPublicationAttemptCalls": 39,
+      "disruptionMoves": 0,
+      "masterBatches": 171,
+      "repairRows": 22,
+      "sampleEvaluations": 2348613
+     },
+     "unchargedTail": {
+      "actualPublicationAttemptCalls": 0,
+      "disruptionMoves": 0,
+      "masterBatches": 0,
+      "repairRows": 0,
+      "sampleEvaluations": 0
+     }
+    },
+    "ledgerAgainstTheEngineCounters": {
+     "sampleEvaluations": true,
+     "masterBatches": true,
+     "repairRows": true,
+     "actualPublicationAttemptCalls": true,
+     "disruptionMoves": true,
+     "batchesChargedEqualsBatchesCounted": true
+    },
+    "loopSearchSeconds": null,
+    "noPublicationCarriesASecond": true,
+    "exploreOvershootUnits": 3517,
+    "compressOvershootUnits": 7095,
+    "exploreCrossingBatchUnits": 19856,
+    "compressCrossingBatchUnits": 27556
+   },
+   "misses": [
+    {
+     "field": "requestSha256",
+     "exit": 1,
+     "refused": true,
+     "namedTheField": true,
+     "stderr": "uestSha256.icscal.json` is not this run's plan: requestSha256: wanted `ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3`, plan has `0000000000000000000000000000000000000000000000000000000000000000`. A miss is an answer, not a licence to measure one now: calibrate offline and re-run.\""
+    },
+    {
+     "field": "workers",
+     "exit": 1,
+     "refused": true,
+     "namedTheField": true,
+     "stderr": "Error: \"the plan at `/var/lib/t3/tmp/overlapics/fast-w3-v2/miss-workers.icscal.json` is not this run's plan: workers: wanted 8, plan has 4. A miss is an answer, not a licence to measure one now: calibrate offline and re-run.\""
+    },
+    {
+     "field": "binaryKey.executableSha256",
+     "exit": 1,
+     "refused": true,
+     "namedTheField": true,
+     "stderr": "scal.json` is not this run's plan: binaryKey.executableSha256: wanted `2c5da1ac5b7c7898de53a59983218fd3499ea797fdfa242b54a9ff7e5732b5cd`, plan has `1111111111111111111111111111111111111111111111111111111111111111`. A miss is an answer, not a licence to measure one now: calibrate offline and re-run.\""
+    },
+    {
+     "field": "binaryKey.features",
+     "exit": 1,
+     "refused": true,
+     "namedTheField": true,
+     "stderr": "Error: \"the plan at `/var/lib/t3/tmp/overlapics/fast-w3-v2/miss-binaryKey-features.icscal.json` is not this run's plan: binaryKey.features: wanted [\\\"overlap-ics\\\"], plan has [\\\"overlap-ics\\\", \\\"ics-profile\\\"]. A miss is an answer, not a licence to measure one now: calibrate offline and re-run.\""
+    },
+    {
+     "field": "currencyVersion",
+     "exit": 1,
+     "refused": true,
+     "namedTheField": true,
+     "stderr": "Error: \"the plan at `/var/lib/t3/tmp/overlapics/fast-w3-v2/armplan.icscal.json` is not this run's plan: currencyVersion: wanted `U1-weighted-vector`, plan has `U0-sample-evaluations`. A miss is an answer, not a licence to measure one now: calibrate offline and re-run.\""
+    },
+    {
+     "field": "schema",
+     "exit": 1,
+     "refused": true,
+     "namedTheField": true,
+     "stderr": "Error: \"schema `icscal/v2` is not `icscal/v1`: this reader accepts one version and refuses the rest\""
+    }
+   ],
+   "onePhasePlanRefused": {
+    "path": "/var/lib/t3/tmp/overlapics/fast-w3-v2/miss-one-phase.icscal.json",
+    "exit": 1,
+    "refused": true,
+    "namedTheMissingPhase": true,
+    "stderr": "Error: \"the plan carries no compress rate\""
+   },
+   "pass": true
+  },
+  {
+   "stage": "batches",
+   "options": {
+    "mode": "fixed",
+    "bites": 22,
+    "attempts": 2,
+    "iters": 800,
+    "compressbites": 1,
+    "workers": 8,
+    "seed": 1
+   },
+   "masterBatches": 1741,
+   "strikes": 2,
+   "disruptions": 1,
+   "poolRestoresWithADisruption": 1,
+   "failedSeparations": 2,
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "45b275b9c9535975cdbc57407a90768d4c0bd27c6b3d23795c9961b269a064e2",
+   "digestB": "45b275b9c9535975cdbc57407a90768d4c0bd27c6b3d23795c9961b269a064e2",
+   "sourceShaA": "2acfcaf9bc611e37df6ba8fe2b174315bebf7d081741933b0045ab0638693a35",
+   "sourceShaB": "b05b509fff15874c3fd83f7c5f16901d91eeed77b90d42d8a03b74b2f4a6332e",
+   "bitIdentical": true,
+   "pass": true
+  }
+ ],
+ "failures": [],
+ "ARMPLAN_PASS": true
+}

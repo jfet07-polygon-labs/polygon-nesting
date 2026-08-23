@@ -22,6 +22,10 @@
 #   7. the `CutCloseRelocate` additions (`cutclose.py`): the first-bite canary,
 #      the four driver-level tripwires, the K=8 two-process bite sequence and
 #      the eight-worker merge across two processes
+#   8. the economics round's integration stages (`armplan.py`): the two strike
+#      arms on one cell, the calibrated plan's hit/miss and two-process
+#      identity, and the K >= 1,024 batch identity with strike, pool restore
+#      and disruption
 #
 # **Stage 7's canary is a stop, not a report.** Grok review 12 Round 2 §6.3.4:
 # "FAIL here is a member fail; do not run the 9-seed wall." `wall.py` reads
@@ -224,6 +228,34 @@ else
 fi
 record "cutclose FAST additions (canary, tripwires, K=8 bites, 8-worker merge)" \
   "$CUTCLOSE_STATUS"
+
+# ------------------------------- 8. the economics round's integration wave --
+# Three of the spec's FAST-union additions that need the shipped binary rather
+# than a unit vector, because all three are claims about a *trajectory*:
+#
+#   * the two arms on one fixed-work cell, with everything outside the strike
+#     policy identical, and the default invocation - no `--arm` at all - being
+#     the control. If that last one ever went red, every committed cell in the
+#     campaign would have changed arm without anyone saying so.
+#   * the calibrated plan: one wall process writes an `icscal/v1` file, two
+#     later processes spend it and must agree bit for bit, and six tampered or
+#     mismatched copies of it must each be REFUSED by name. A miss that fell
+#     back to measuring a fresh rate would be the live probe on a gated
+#     trajectory the spec forbids, so the refusal is an exit status.
+#   * K >= 1,024 master batches, two processes, bit-identical, on a cell that
+#     really struck, really restored a pooled layout and really disrupted. The
+#     spec asks for this as an ephemeral/persistent comparison; the persistent
+#     executor was refused by its own measured gate, so this is the half of the
+#     clause that has an executor to run on.
+#
+# The **cross-binary** half of the control-arm claim - that its trajectory is
+# bit-identical to the round's base binary, field for field - is not here,
+# because FAST cannot cheaply build a second binary. It is
+# `economics-round/integration/armgate.py <base-binary>`, and the integration
+# wave's evidence records its verdict.
+ICS_OUT="$OUT" python3 "$ROOT/docs/experiments/overlap-ics/drivers/armplan.py" \
+  > "$LOG/armplan.log" 2>&1
+record "economics round (two arms, calibrated plan hit/miss, K>=1,024 identity)" $?
 
 note "logs in $LOG"
 note "FAILURES=$FAILURES"

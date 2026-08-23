@@ -352,6 +352,16 @@ impl<C: PlanClock> WorkPlanPacer<C> {
         self.allocation(phase).saturating_sub(self.consumed(phase))
     }
 
+    /// Master batches charged to `phase`. The denominator of the ledger the
+    /// integration wave emits, and the number the double-debit identity counts
+    /// `charge_batch` calls with.
+    pub fn batches(&self, phase: PlanPhase) -> u64 {
+        match phase {
+            PlanPhase::Explore => self.explore_batches,
+            PlanPhase::Compress => self.compress_batches,
+        }
+    }
+
     /// **The compress bite's decay parameter.** Consumed compress units over
     /// the compress allocation, through the frozen `time_based_step`.
     ///

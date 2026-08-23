@@ -7,10 +7,13 @@
 //! > workers=8, executor implementation, per-phase safe units/s; read/write
 //! > separate; no live probe on a gated trajectory.
 //!
-//! Wave 1 builds the schema and the write path. **There is no reader in this
-//! module and there is no `Pacer` change anywhere in this round**, because the
-//! spec sequences the pacer after the strike experiment and the executor
-//! freeze, and because a reader that exists is a reader something can call.
+//! Wave 1 built the schema and the write path, and **no reader at all**,
+//! because the spec sequences the pacer after the strike experiment and the
+//! executor freeze and because a reader that exists is a reader something can
+//! call. Wave 3 calls one, so [`icscal_read`](super::icscal_read) exists - a
+//! separate module, importing nothing from this one and imported by nothing in
+//! it. **There is still no reader in this file**, and that is the rule rather
+//! than an accident of where the code was put.
 //!
 //! # Why "read/write separate" is a layout rule and not a style note
 //!
@@ -44,7 +47,10 @@
 //!   R*repair_rows + D*disruption_moves`). Coefficients measured under one
 //!   version may not be read under another, so the version is a key and not a
 //!   comment. Wave 1 can only honestly write [`CurrencyVersion::U0Samples`];
-//!   `U1` is Wave 3's to write once B/E/R/D are measured.
+//!   `U1` becomes writable once B/E/R/D are measured, and Wave 2b's
+//!   calibration measured them and then **rejected** them - worst transfer
+//!   error 291 %, because `U` has no per-bite term at all - so nothing in this
+//!   round writes one either, and the pacer spends `U0`.
 //! * `binary_key` - the executable's own sha256 **and** the feature set. A
 //!   `ics-profile` build and a default build are different binaries and the
 //!   census proves they take the same trajectory, not that they take the same
