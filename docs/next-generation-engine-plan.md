@@ -8795,3 +8795,19 @@ index quoted the census's spawn-tax maximum as 5.154 %, a number from the
 census's load-repeat band rather than its committed verdict of 5.082 %.
 Evidence: docs/experiments/overlap-ics/economics-round/ (census/, meter/,
 integration/, gate/).
+
+## The currency amendment: one NO that made the text stricter
+
+The reject rule's stop went back to the three signatories as a one-formula
+amendment. Sol and ox-alpha signed the draft; Grok voted NO and supplied a
+tighter text — R dropped absolutely (restorable only in a future funding
+under a pre-written identifiability rule), and the fallback's p95 clause
+kept BINDING ("a claim, not a report" — the silent-wall-promise hole
+ox-alpha had pre-ranked). ox-alpha's three riders bind: the published_bites
+counter proven bit-identical before P is fitted; collinear E/P vectors
+collapse to one term; this is the last currency proposal this funding sees.
+Both others confirmed Grok's text verbatim. U' = sample_evaluations +
+B·batches + E·exact_checkpoint_calls + P·published_bites + D·disruptions;
+same derivation, same reject rule; on failure the single-fixture work plan
+runs the gate anyway with clauses (1)-(6) intact. docs/currency-amendment.md
+carries the votes verbatim. The wave-4 re-run is licensed.
