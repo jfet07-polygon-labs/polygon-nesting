@@ -260,7 +260,12 @@ field, per cell, until the first divergence:
   entire autopsy is about — and on four of the remaining six the prefix runs to
   72, 75, 105 or 109, which are precisely the cells whose bite 22 published in
   131-137 iterations and never consulted the counter;
-* the field that first differs is `masterIterations` on every cell.
+* `masterIterations` is among the first fields to differ on **26 of 27** cells.
+  The exception is `10s-seed6`, whose first divergence is at ordinal 76, a
+  *compress* bite, in `widthAfterMm`/`deltaMm`/`step` and at the 11th
+  significant figure (`169.73924324081753` against `169.739242731619`) — a
+  compress step is a function of the incumbent depth, which had already drifted,
+  not of the counter.
 
 This is corroborative, not decisive — a wall-clocked separation can differ
 between rounds without any code change — but the direction is exactly right and
