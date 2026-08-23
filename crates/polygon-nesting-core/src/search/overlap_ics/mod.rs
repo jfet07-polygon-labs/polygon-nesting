@@ -1066,6 +1066,16 @@ impl<'a> Engine<'a> {
             bites.push(record);
         }
 
+        // **A failed child is discarded**, including the one a phase deadline
+        // interrupted. The continuous state the loop hands back is the last
+        // dual-valid parent, so "legal-to-legal" is true of the trajectory's
+        // ends as well as of its middle, and no reader can mistake an
+        // interrupted child's proxy depth for progress. What that child reached
+        // is not lost - every bite record carries its own `min_raw_phi`,
+        // `proxy_band_reached` and `exact_attempts`, which is the funnel row the
+        // failure license asks for.
+        self.install_poses(&parent_poses, depth_mm);
+        width_mm = depth_mm;
         self.sample_proxy();
         let totals = energy::fold(&self.state);
         ScheduleOutcome {
