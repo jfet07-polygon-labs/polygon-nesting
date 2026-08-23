@@ -33,6 +33,13 @@
 //!   outside the container. Our four boundary rows are already part of Φ, so a
 //!   pose hanging out of the strip is a *collision*, scored and ranked like any
 //!   other. Only a non-finite pose is refused outright.
+//! * **no early exit on the pool's upper bound.** They hand the evaluator
+//!   `Some(best_samples.upper_bound())` so a hopeless sample can be abandoned
+//!   part-way through their collision-detection cascade. Our evaluation is one
+//!   incremental row rebuild of the moving piece and is already the cheapest
+//!   form of itself, so every sample is scored in full. That costs work and
+//!   buys an ordering that does not depend on how far a partial evaluation
+//!   happened to get.
 //!
 //! What is deliberately **absent**, because it is what a neutered relocate is
 //! made of (Grok review 12 Round 2 §6.4, the pre-named most-likely defect):
